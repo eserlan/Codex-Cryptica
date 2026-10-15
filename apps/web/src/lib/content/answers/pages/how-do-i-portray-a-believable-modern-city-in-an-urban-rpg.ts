@@ -110,7 +110,7 @@ export const howDoIPortrayABelievableModernCityInAnUrbanRpg: AnswerConfigInput =
         items: [
           {
             term: "Daily routine",
-            text: "Where they expect to be at the hours the game uses, and what they do there. Example: closes the shop at 2 a.m., cashes up, catches the night bus from the stop opposite.",
+            text: "Where they expect to be at the hours the game uses, and what they do there. Example: a colleague takes over at 1.45 a.m., she finishes the till count by 1.50, then catches the 2 a.m. night bus from the stop opposite.",
           },
           {
             term: "Immediate want",
@@ -150,7 +150,7 @@ export const howDoIPortrayABelievableModernCityInAnUrbanRpg: AnswerConfigInput =
         rows: [
           [
             "Aisha Begum, 34, convenience-store worker",
-            "Last hour of a night shift in the all-night shop; cashes up at 2 a.m. and takes the night bus home",
+            "Finishing a night shift in the all-night shop; a colleague takes over at 1.45 a.m., she finishes the till count by 1.50, and catches the 2 a.m. bus from the stop opposite",
             "Wants the till to balance and to leave on time; her manager checks stock counts and has warned her about letting people shelter inside",
           ],
           [
@@ -169,7 +169,7 @@ export const howDoIPortrayABelievableModernCityInAnUrbanRpg: AnswerConfigInput =
         kind: "example",
         heading: "Worked example: one rainy block at 1.40 a.m.",
         paragraphs: [
-          "Rain has emptied the block except for the all-night shop. Flats sit above a shuttered cafe and an empty retail unit. The night bus is due in twenty minutes. The coterie needs to cross the block without being recorded arguing, because a rival claims this street as part of their domain and will treat careless feeding or a public confrontation as a breach worth reporting.",
+          "Rain has emptied the block except for the all-night shop. Flats sit above a shuttered cafe and an empty retail unit. At 1.40 a.m., the 2 a.m. bus is due in twenty minutes. The coterie needs to cross the block without feeding or starting a public confrontation: a rival claims this street as part of their domain and has told them that either, if witnessed, counts as a breach. They can cross quietly along the street; the covered service passage offers shelter from the rain, but its gate is locked.",
         ],
         items: [
           {
@@ -178,19 +178,19 @@ export const howDoIPortrayABelievableModernCityInAnUrbanRpg: AnswerConfigInput =
           },
           {
             term: "One natural friction",
-            text: "Daniel's firm manages the empty unit and has fitted a new lock to its rear door. The fitting narrowed the covered doorway where Ruth sleeps and blocked the shortcut Aisha's colleague uses to reach the bus stop with the shop's banking bag. Daniel regards the lock as a fire safety fix and wants the doorway kept clear. Ruth regards the new lock as a decision to move her on without saying so. Aisha lets Ruth charge her phone inside when the manager is absent, which puts Aisha's job at risk if Daniel complains. The disagreement existed before the coterie arrived and does not need a villain.",
+            text: "Daniel's firm manages the empty unit and has installed a lockable gate across the covered service passage behind it and the shop. When shut, the gate leaves only a narrow covered recess beside the shop's shuttered rear entrance accessible from the shop side, where Ruth sleeps; it also blocks the staff shortcut to the bus stop with the banking bag. Daniel regards the gate as a fire safety measure and wants the passage kept clear. Ruth sees the reduced shelter as a decision to move her on without saying so. Aisha lets Ruth charge her phone inside when the manager is absent, though the manager has warned her not to let people shelter there. The disagreement existed before the coterie arrived and does not need a villain.",
           },
           {
             term: "What a vampire might need from each",
-            text: "From Aisha, quiet access to the shop's back corridor for ten minutes, or a straight answer about who bought a particular item earlier. From Daniel, influence over the building: delay the doorway works, share who attends the investor gatherings, or keep a planning objection from becoming public. From Ruth, only what she chooses to share about who uses the rear alley after 2 a.m., offered in exchange for something specific she asks for, such as a lift to an appointment or help recovering property stored with an acquaintance. Each request has a different price, and Ruth's refusal must stand if the coterie will not meet it.",
+            text: "If they want the covered route, the coterie can ask Daniel to unlock the gate. He agrees if they keep the fire exit clear, which he wants unobstructed for safety and to avoid complaints. They can ask Aisha who bought a particular item earlier, but she will answer after the colleague takes over and she finishes the till count. Separately, Daniel may share who attends the investor gatherings or discuss the doorway works. Ruth may choose to say who uses the rear alley after 2 a.m., in exchange for something specific she asks for, such as a lift to an appointment or help recovering property stored with an acquaintance. Each is an optional request, and Ruth's refusal must stand if the coterie will not meet her terms.",
           },
           {
             term: "The choice it gives the coterie",
-            text: "The coterie can feed from a willing or careless stranger near the bus stop and risk Aisha seeing enough to ask questions. They can court Daniel, gaining building influence while becoming associated with a decision that harms Ruth. They can help Ruth on her terms, spending time and visibility to earn limited trust. They can also do none of this, cross the block, and accept that the rival's watcher saw them hesitate. The scene works because every option costs time, secrecy, goodwill, or a future obligation.",
+            text: "The coterie can simply cross the block quietly and catch the bus without involving anyone. If they want the covered route, they can ask Daniel to unlock it and keep the fire exit clear. They might instead feed near the stop, where Aisha could see from the shopfront, or help Ruth on her terms, spending time to earn limited trust. They can also approach Daniel about the building, knowing that backing his gate may worsen Ruth's shelter. These are optional openings, not tolls for crossing; consequences follow from what the coterie chooses and what the residents already need.",
           },
           {
             term: "Why it works",
-            text: "You improvised from routines and limits, not from a survey of modern life. If the players return next week, change one ordinary detail: the doorway has a new railing, Aisha is on a different shift, Daniel's meeting ran late, or Ruth has chosen a different covered spot and will say why if asked respectfully. Note only the detail the players witnessed, add one consequence, and leave the rest of the city unwritten until they go there.",
+            text: "You improvised from routines and limits, not from a survey of modern life. If the players return next week, carry forward what happened: Daniel may have left the gate unlocked if the coterie persuaded him, Aisha may be on a different shift, Daniel's meeting may have run late, or Ruth may have chosen another covered spot if the coterie disrupted her usual one. Note details the players witnessed and changes caused by their actions; if routines continued unchanged, record that too. Leave the rest of the city unwritten until they go there.",
           },
         ],
       },
@@ -206,14 +206,14 @@ export const howDoIPortrayABelievableModernCityInAnUrbanRpg: AnswerConfigInput =
           "Add one everyday conflict that would continue if the coterie never arrived.",
           "Add one supernatural pressure that interrupts an ordinary arrangement, and name who would notice.",
           "Invite players to contribute one routine, workplace detail, or local habit their characters would know, and record who supplied it.",
-          "After the session, note only what the players touched, one visible change, and one question to research before next time.",
+          "After the session, note what the players touched, any change caused by their actions or an established routine, and one question to research before next time.",
         ],
       },
     ],
     codexConnection: {
       heading: "Keep residents, routines, and consequences connected",
       paragraphs: [
-        "A modern city stays manageable when each resident, workplace, doorway, and debt is recorded once and linked to the others. Note Aisha's shift, Ruth's chosen doorway, Daniel's building interest, and the coterie's domain claim as connected entities. When the lock changes, the shift swaps, or a favour is called in, the links show whose routine should change next without your having to hold the whole city in memory.",
+        "A modern city stays manageable when each resident, workplace, doorway, and debt is recorded once and linked to the others. Note Aisha's shift, Ruth's chosen doorway, Daniel's building interest, and the coterie's domain claim as connected entities. When the gate changes, the shift swaps, or a favour is called in, the links show whose routine may need to change without your having to hold the whole city in memory.",
       ],
       linkText: "Try the NPC generator",
       href: "/generators/npc",

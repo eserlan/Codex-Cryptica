@@ -71,7 +71,7 @@ describe("answer registry", () => {
       "Choose one neighbourhood and name the block, bus stop, shop, and doorway the coterie will actually use.",
     );
     expect(checklist.items).toContain(
-      "After the session, note only what the players touched, one visible change, and one question to research before next time.",
+      "After the session, note what the players touched, any change caused by their actions or an established routine, and one question to research before next time.",
     );
   });
 
