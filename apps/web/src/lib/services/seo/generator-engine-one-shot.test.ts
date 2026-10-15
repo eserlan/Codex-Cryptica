@@ -53,6 +53,79 @@ function gappyReply() {
   return JSON.stringify(a);
 }
 
+describe("DefaultGeneratorEngine one-shot reliability", () => {
+  const options = {
+    durationHours: 3,
+    genre: "Horror",
+    emphasis: "Investigation / mystery",
+  };
+
+  it("asks for room: a long output cap and JSON mode, on both calls", async () => {
+    const draft = JSON.stringify(generateOneShotLocal(options).oneShot);
+    const requests: unknown[] = [];
+    const client = {
+      getModel: vi.fn().mockResolvedValue({
+        generateContent: async (request: unknown) => {
+          requests.push(request);
+          return {
+            response: { text: () => (requests.length === 1 ? draft : "{}") },
+          };
+        },
+      }),
+    };
+    const e = new DefaultGeneratorEngine(client as never);
+    await e.generateOneShot({ ...options, useAI: true });
+    expect(requests).toHaveLength(2);
+    for (const request of requests) {
+      expect((request as any).generationConfig).toMatchObject({
+        maxOutputTokens: 16384,
+        responseMimeType: "application/json",
+      });
+    }
+  });
+
+  it("keeps the draft and flags it when the review call fails", async () => {
+    const draft = JSON.stringify(generateOneShotLocal(options).oneShot);
+    const { client } = modelInSequence([draft, null]);
+    const e = new DefaultGeneratorEngine(client as never);
+    const out = await e.generateOneShot({ ...options, useAI: true });
+    expect(out.aiFallback).toBeUndefined();
+    expect(out.aiReviewSkipped).toBe(true);
+    expect(out.oneShot).toBeDefined();
+  });
+
+  it("flags a review reply that can't be read, but not an empty one", async () => {
+    const draft = JSON.stringify(generateOneShotLocal(options).oneShot);
+    const unreadable = new DefaultGeneratorEngine(
+      modelInSequence([draft, "I could not review this."]).client as never,
+    );
+    expect(
+      (await unreadable.generateOneShot({ ...options, useAI: true }))
+        .aiReviewSkipped,
+    ).toBe(true);
+    const empty = new DefaultGeneratorEngine(
+      modelInSequence([draft, "{}"]).client as never,
+    );
+    expect(
+      (await empty.generateOneShot({ ...options, useAI: true }))
+        .aiReviewSkipped,
+    ).toBeUndefined();
+  });
+
+  it("does not flag a reviewed adventure", async () => {
+    const draft = JSON.stringify(generateOneShotLocal(options).oneShot);
+    const review = JSON.stringify({
+      briefing: { trigger: "A bell rang at dawn." },
+    });
+    const e = new DefaultGeneratorEngine(
+      modelInSequence([draft, review]).client as never,
+    );
+    const out = await e.generateOneShot({ ...options, useAI: true });
+    expect(out.aiReviewSkipped).toBeUndefined();
+    expect(out.oneShot?.briefing.trigger).toBe("A bell rang at dawn.");
+  });
+});
+
 describe("DefaultGeneratorEngine one-shot playability", () => {
   it("asks the model to fill the gaps it left, then uses the repair", async () => {
     const { client, calls } = modelInSequence([

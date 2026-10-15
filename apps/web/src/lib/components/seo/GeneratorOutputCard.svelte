@@ -46,6 +46,7 @@
     copiedSectionId,
     contextTrimmed,
     onDismissAiFallback,
+    onRetryAi,
     onSaveToCodex,
     onRefine,
     onCopyMarkdown,
@@ -79,6 +80,8 @@
     copiedSectionId: string | null;
     contextTrimmed: boolean;
     onDismissAiFallback: () => void;
+    /** Run the same generation again with AI, from a fallback notice. */
+    onRetryAi?: () => void;
     onSaveToCodex: () => void;
     onRefine?: (data: GeneratorOutput) => void;
     onCopyMarkdown: () => void;
@@ -125,20 +128,52 @@
   });
 </script>
 
-{#if generatedData?.aiFallback && !aiFallbackDismissed}
+{#if (generatedData?.aiFallback || generatedData?.aiReviewSkipped) && !aiFallbackDismissed}
+  {@const isOneShot = generatedData?.kind === "one-shot"}
   <div
     transition:fade={{ duration: 150 }}
     class="mb-4 p-3 border border-theme-warning/40 bg-theme-warning/10 rounded-xl flex items-start gap-2.5"
     role="status"
     aria-live="polite"
+    data-testid="ai-fallback-notice"
   >
     <span
       class="icon-[lucide--info] w-4 h-4 text-theme-warning shrink-0 mt-0.5"
       aria-hidden="true"
     ></span>
-    <p class="text-xs text-theme-text/80 leading-snug flex-grow">
-      AI generation was unavailable, so Codex created a local draft instead.
-    </p>
+    <div class="text-xs text-theme-text/80 leading-snug flex-grow">
+      {#if generatedData?.aiFallback && isOneShot}
+        <p class="font-bold text-theme-text">AI generation didn't finish</p>
+        <p class="mt-0.5">
+          It may have timed out or been unavailable. Codex built a basic
+          adventure outline instead. This is not the full AI-generated
+          adventure.
+        </p>
+      {:else if generatedData?.aiFallback}
+        <p>
+          AI generation was unavailable, so Codex created a local draft instead.
+        </p>
+      {:else}
+        <p class="font-bold text-theme-text">
+          Generated, but the AI review didn't finish
+        </p>
+        <p class="mt-0.5">
+          This adventure may still have gaps. Anything left open is listed under
+          Before You Run It.
+        </p>
+      {/if}
+      {#if onRetryAi && !isBusy}
+        <button
+          type="button"
+          onclick={onRetryAi}
+          class="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 bg-theme-surface/60 border border-theme-border/60 rounded-lg text-micro font-bold uppercase tracking-wider text-theme-text hover:bg-theme-primary hover:text-theme-bg hover:border-theme-primary transition-all cursor-pointer"
+        >
+          <span class="icon-[lucide--refresh-cw] h-3.5 w-3.5" aria-hidden="true"
+          ></span>
+          Retry with AI
+        </button>
+      {/if}
+    </div>
     <button
       type="button"
       onclick={onDismissAiFallback}

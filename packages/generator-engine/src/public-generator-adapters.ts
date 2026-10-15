@@ -76,6 +76,8 @@ export interface PublicGeneratorOutput {
    * (#1494). Absent on ordinary AI or explicitly-local results.
    */
   aiFallback?: boolean;
+  /** The AI draft is complete but its editorial review didn't finish. */
+  aiReviewSkipped?: boolean;
   languageProfile?: LanguageProfileV1;
   languageProfileVersion?: 1;
   /** Structured major-body list for star systems, driving the mechanical side-view diagram. */

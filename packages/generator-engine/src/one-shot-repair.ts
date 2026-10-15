@@ -220,6 +220,15 @@ function mergeRepair(
   };
 }
 
+/** Whether a review reply is JSON an editor could act on, even if empty. */
+export function isReadableRepair(text: string): boolean {
+  try {
+    return typeof parseFencedJson(text) === "object";
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Merge a review reply into the adventure. Returns the original when the
  * reply can't be read or would break the adventure's structure.

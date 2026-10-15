@@ -467,6 +467,8 @@ export interface GeneratorOutput {
    * local tables, so the layout can show a friendly notice (#1494).
    */
   aiFallback?: boolean;
+  /** The AI draft is complete but its editorial review didn't finish. */
+  aiReviewSkipped?: boolean;
   /** Structured major-body list for star systems, driving the mechanical side-view diagram. */
   bodies?: StarSystemBody[];
   /** Primary star's spectral class/type (e.g. "G", "M", "Neutron Star"), for star systems. */

@@ -478,4 +478,87 @@ describe("GeneratorOutputCard", () => {
 
     expect(onSendToMonsterLabs).toHaveBeenCalledWith(itemData);
   });
+
+  describe("AI notices", () => {
+    function renderNotice(
+      data: Partial<GeneratorOutput>,
+      extra: Record<string, unknown> = {},
+    ) {
+      const props = {
+        generatedData: { ...sampleData, ...data },
+        aiFallbackDismissed: false,
+        isBusy: false,
+        isExampleDraft: false,
+        generatedSingular: "Faction",
+        variant: "default",
+        worldTheme: "Classic Fantasy",
+        documentContent: sampleData.content,
+        documentSections: sampleSections,
+        copied: false,
+        copiedSectionId: null,
+        contextTrimmed: false,
+        onDismissAiFallback: vi.fn(),
+        onSaveToCodex: vi.fn(),
+        onCopyMarkdown: vi.fn(),
+        onCopySection: vi.fn(),
+        onContainerClick: vi.fn(),
+        onContainerKeydown: vi.fn(),
+        onSelectHubEntity: vi.fn(),
+        onSaveHubToCodex: vi.fn(),
+        ...extra,
+      };
+      render(GeneratorOutputCard, { props: props as never });
+      return props;
+    }
+
+    it("keeps the short message for other generators and offers a retry", async () => {
+      const onRetryAi = vi.fn();
+      renderNotice({ aiFallback: true }, { onRetryAi });
+      expect(
+        screen.getByText(/AI generation was unavailable, so Codex created/),
+      ).toBeTruthy();
+      await fireEvent.click(
+        screen.getByRole("button", { name: /retry with ai/i }),
+      );
+      expect(onRetryAi).toHaveBeenCalledTimes(1);
+    });
+
+    it("says plainly that a one-shot fallback is not the full adventure", () => {
+      renderNotice({ aiFallback: true, kind: "one-shot" });
+      expect(screen.getByText("AI generation didn't finish")).toBeTruthy();
+      expect(screen.getByText(/may have timed out/)).toBeTruthy();
+      expect(
+        screen.getByText(/not the full AI-generated adventure/),
+      ).toBeTruthy();
+    });
+
+    it("tells the GM when the AI review didn't finish", () => {
+      renderNotice({ aiReviewSkipped: true, kind: "one-shot" });
+      expect(
+        screen.getByText("Generated, but the AI review didn't finish"),
+      ).toBeTruthy();
+      expect(screen.getByText(/Before You Run It/)).toBeTruthy();
+    });
+
+    it("shows no notice for a clean AI draft or a local one", () => {
+      renderNotice({});
+      expect(screen.queryByTestId("ai-fallback-notice")).toBeNull();
+    });
+
+    it("hides the retry button while generating and without a handler", () => {
+      renderNotice({ aiFallback: true }, { onRetryAi: vi.fn(), isBusy: true });
+      expect(
+        screen.queryByRole("button", { name: /retry with ai/i }),
+      ).toBeNull();
+    });
+
+    it("stays until dismissed, then goes away", async () => {
+      const props = renderNotice({ aiFallback: true, kind: "one-shot" });
+      expect(screen.getByTestId("ai-fallback-notice")).toBeTruthy();
+      await fireEvent.click(
+        screen.getByRole("button", { name: "Dismiss notice" }),
+      );
+      expect(props.onDismissAiFallback).toHaveBeenCalledTimes(1);
+    });
+  });
 });

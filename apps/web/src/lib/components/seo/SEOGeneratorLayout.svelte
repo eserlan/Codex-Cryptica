@@ -343,6 +343,7 @@
         copiedSectionId={clipboard.copiedSectionId}
         contextTrimmed={contextSelection.trimmed}
         onDismissAiFallback={session.dismissAiFallback}
+        onRetryAi={() => void session.handleGenerate()}
         onSaveToCodex={save.handleSaveToCodex}
         onRefine={when(canFollowUp, refinement.openForCurrentOutput)}
         onCopyMarkdown={clipboard.handleCopyMarkdown}

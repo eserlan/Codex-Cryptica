@@ -51,6 +51,7 @@ import { antagonistOf } from "./one-shot-integrity";
 import {
   applyOneShotRepair,
   buildOneShotRepairPrompt,
+  isReadableRepair,
 } from "./one-shot-repair";
 import {
   mergeNpcReply,
@@ -999,4 +1000,5 @@ export {
   checkPlayability,
   buildOneShotRepairPrompt,
   applyOneShotRepair,
+  isReadableRepair,
 };
