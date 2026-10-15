@@ -9,10 +9,21 @@
 import { bufferFor } from "./one-shot-validate";
 import type { ResolvedOneShot } from "./one-shot-types";
 import {
+  CLOCK_DATA_RULE,
+  CLOCK_RULE,
+  COMMITMENT_RULE,
+  CONTINUITY_RULE,
+  DECISIONS_RULE,
   EMPHASIS_HINT,
-  describeOneShotOptions,
-  sceneCountFor,
-} from "./public-one-shot";
+  ENDINGS_RULE,
+  PACING_RULE,
+  REQUIREMENT_RULE,
+  ROUTES_RULE,
+  THEORIES_RULE,
+  THREAD_DATA_RULE,
+  WHEREABOUTS_RULE,
+} from "./one-shot-rules";
+import { describeOneShotOptions, sceneCountFor } from "./public-one-shot";
 
 export interface StagePrompt {
   systemInstruction: string;
@@ -73,17 +84,23 @@ Rules:
 - Scene "minutes" are multiples of 5 and, with a ${buffer}-minute buffer, add up to ${resolved.durationMinutes}. The climax gets the largest share. Optional scenes take at most a fifth of the time.
 - The patron is "npc-1" and the antagonist "npc-2"; add 1–3 supporting NPCs as "npc-3" onwards (name and role only). The antagonist appears in the climax. NPCs met in the opening return or pay off later.
 - Exactly 3 vital clues, each with a short "label" and the actual fact as "text", discoverable in at least two scenes, one of them an essential scene before the climax.
-- "clock": ONE rule advances it; 3–6 ticks; "deadline" is what happens at the last tick, the only irreversible step. If the fiction counts something (bell notes, nights, seals), that count IS the ticks.
-- "threads": every promise the hook and briefing make, with its payoff and the later scene where it happens.
-- Plan for the emphasis (${resolved.emphasis}): ${EMPHASIS_HINT[resolved.emphasis] ?? "match the scenes to it"}.
+- "clock": ${CLOCK_RULE} ${CLOCK_DATA_RULE}
+- "threads": every promise the hook and briefing make, with its payoff and the later scene where it happens. ${THREAD_DATA_RULE}
+- Plan for the emphasis (${resolved.emphasis}) as play, not just theme: ${EMPHASIS_HINT[resolved.emphasis] ?? "match the scenes to it"}.
+- ${COMMITMENT_RULE}
+- ${WHEREABOUTS_RULE} ${CONTINUITY_RULE}
+- ${ROUTES_RULE}
+- ${THEORIES_RULE} Only for an investigation or mystery; otherwise leave "theories" out.
+- ${PACING_RULE}
 
 Return JSON shaped like:
 {
-  "scenes": [{ "id": "scene-1", "title": "", "kind": "opening", "essential": true, "minutes": 30, "purpose": "", "location": "", "npcIds": ["npc-1"], "challengeType": "social", "next": ["scene-2"] }],
+  "scenes": [{ "id": "scene-1", "title": "", "kind": "opening", "essential": true, "minutes": 30, "purpose": "", "location": "", "npcIds": ["npc-1"], "whereabouts": [{ "who": "npc-1", "kind": "npc", "state": "free", "where": "", "how": "" }], "challengeType": "social", "next": ["scene-2"], "routes": [{ "to": "scene-2", "risk": "", "find": "" }] }],
   "npcs": [{ "id": "npc-3", "name": "", "role": "" }],
-  "clues": [{ "id": "clue-1", "label": "", "text": "", "essential": true, "routes": [{ "sceneId": "scene-1", "method": "" }, { "sceneId": "scene-2", "method": "" }] }],
-  "clock": { "name": "", "advances": "", "ticks": [{ "trigger": "", "effect": "" }], "slow": "", "deadline": "" },
-  "threads": [{ "setup": "", "payoff": "", "sceneIds": ["scene-3"] }],
+  "clues": [{ "id": "clue-1", "label": "", "text": "", "essential": true, "routes": [{ "sceneId": "scene-1", "method": "" }, { "sceneId": "scene-2", "method": "" }], "supports": ["theory-2"], "contradicts": ["theory-1"] }],
+  "clock": { "name": "", "advances": "", "schedule": ["scene-end-after-opening", "finale-start"], "startsAt": 1, "pushes": "", "ticks": [{ "trigger": "", "effect": "" }], "slow": "", "deadline": "" },
+  "threads": [{ "about": "npc-3", "kind": "rescue", "setup": "", "payoff": "", "sceneIds": ["scene-3"] }],
+  "theories": [{ "id": "theory-1", "name": "", "summary": "", "isTrue": false, "obvious": true }],
   "runningLate": ["steps to finish on time, most painless first"]
 }
 ${JSON_ONLY}`);
@@ -95,13 +112,17 @@ export function finalePrompt(core: unknown, structure: unknown): StagePrompt {
 Core: ${JSON.stringify(core)}
 Plan: ${JSON.stringify(structure)}
 
-The solution names everything the finale needs with its real content and the earlier essential scenes where each is found, the steps the party takes, at least one other way through, and what each kind of mistake costs. At least two endings, each reached by a player decision.
+The solution names everything the finale needs with its real content and the scenes where each is found or done (clues in earlier essential scenes), the steps the party takes, at least one other way through, and what each kind of mistake costs.
+${REQUIREMENT_RULE}
+${ENDINGS_RULE}
+${DECISIONS_RULE}
 ${STYLE}
 
 Return JSON shaped like:
 {
-  "solution": { "summary": "", "requirements": [{ "what": "", "detail": "", "sceneIds": ["scene-2"] }], "steps": [""], "alternatives": [""], "mistakes": [""] },
-  "endings": [{ "id": "end-1", "title": "", "condition": "", "consequence": "" }],
+  "solution": { "summary": "", "requirements": [{ "kind": "clue", "what": "", "detail": "", "sceneIds": ["scene-2"] }], "steps": [""], "alternatives": [""], "mistakes": [""] },
+  "decisions": [{ "id": "stopped", "question": "" }],
+  "endings": [{ "id": "end-1", "title": "", "condition": "", "consequence": "", "requires": { "stopped": true } }],
   "epilogueHook": ""
 }
 ${JSON_ONLY}`);
@@ -139,7 +160,9 @@ Rules:
 - Keep its title, location, NPCs and place in the plan. If an NPC appears in several scenes, say why they are here; respect every NPC's limits.
 - The challenge says what the party must actually achieve ("success"), how force, lies, magic or an unexpected plan play out ("otherApproaches") and what happens on failure ("failForward"; failure never stops the adventure).
 - Fights and hazards get "opposition": who or what opposes the party, how they fight and one thing that changes mid-scene.
-- Deliver the emphasis (${resolved.emphasis}). Only an optional scene gets "skip".
+- Deliver the emphasis (${resolved.emphasis}): ${EMPHASIS_HINT[resolved.emphasis] ?? "match the challenge to it"}. Only an optional scene gets "skip".
+- If "next" lists more than one scene, the situation describes each route out: what it risks and what it finds.
+- Where each NPC is, and their state, follows the plan's "whereabouts" for this scene and agrees with every earlier scene. ${CONTINUITY_RULE}
 ${STYLE}
 
 Return JSON shaped like:

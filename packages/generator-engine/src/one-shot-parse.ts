@@ -4,8 +4,23 @@
  * and the time budget is rebuilt, so only the writing is taken on trust.
  */
 
+import { dedupeOneShot } from "./one-shot-dedupe";
+import { list, rec, str, strs } from "./one-shot-json";
+import {
+  normaliseState,
+  parseDecisions,
+  parseRequires,
+  parseRoutes,
+  parseSchedule,
+  parseStartsAt,
+  parseTheories,
+  parseThreadKind,
+  parseVerdicts,
+  parseWhereabouts,
+} from "./one-shot-state";
 import { parseFencedJson } from "./llm-response-utils";
 import { normaliseTimeBudget, validateOneShot } from "./one-shot-validate";
+import { ONE_SHOT_REQUIREMENT_KINDS } from "./one-shot-types";
 import type {
   OneShotAdventure,
   OneShotChallenge,
@@ -18,10 +33,9 @@ import type {
   OneShotNpc,
   OneShotScene,
   OneShotSceneKind,
+  OneShotTheory,
   ResolvedOneShot,
 } from "./one-shot-types";
-
-type Rec = Record<string, unknown>;
 
 const CHALLENGE_TYPES: OneShotChallenge["type"][] = [
   "combat",
@@ -31,13 +45,7 @@ const CHALLENGE_TYPES: OneShotChallenge["type"][] = [
   "hazard",
 ];
 
-export const rec = (v: unknown): Rec =>
-  v && typeof v === "object" && !Array.isArray(v) ? (v as Rec) : {};
-const list = (v: unknown): unknown[] => (Array.isArray(v) ? v : []);
-export const str = (v: unknown, fallback = ""): string =>
-  typeof v === "string" && v.trim() ? v.trim() : fallback;
-export const strs = (v: unknown): string[] =>
-  list(v).filter((x): x is string => typeof x === "string" && !!x.trim());
+export { rec, str, strs };
 const positive = (v: unknown, fallback: number): number =>
   Number(v) > 0 ? Number(v) : fallback;
 
@@ -91,6 +99,8 @@ function parseScene(raw: unknown, i: number, count: number): OneShotScene {
     next: strs(r.next),
     shorten: str(r.shorten, "Run it as a single decisive beat, then move on."),
     skip: undefined,
+    whereabouts: parseWhereabouts(r.whereabouts),
+    routes: parseRoutes(r.routes),
   };
 }
 
@@ -146,6 +156,7 @@ function parseClue(
   raw: unknown,
   i: number,
   sceneIds: Map<string, string>,
+  theories?: OneShotTheory[],
 ): OneShotClue {
   const c = rec(raw);
   const routes = list(c.routes).map((route) => {
@@ -161,6 +172,8 @@ function parseClue(
     text: str(c.text, `Clue ${i + 1}`),
     essential: c.essential !== false,
     routes: routes.filter((r) => r.sceneId),
+    supports: parseVerdicts(c.supports, theories),
+    contradicts: parseVerdicts(c.contradicts, theories),
   };
 }
 
@@ -171,6 +184,7 @@ function parseEnding(raw: unknown, i: number): OneShotEnding {
     title: str(e.title, `Ending ${i + 1}`),
     condition: str(e.condition),
     consequence: str(e.consequence),
+    requires: parseRequires(e.requires),
   };
 }
 
@@ -187,6 +201,9 @@ function parseScenes(rawScenes: unknown[]) {
     scene.next = scene.next
       .map((id) => sceneIds.get(id))
       .filter((id): id is string => !!id);
+    scene.routes = scene.routes
+      ?.map((r) => ({ ...r, to: sceneIds.get(r.to) ?? "" }))
+      .filter((r) => r.to);
     if (scene.kind !== "climax" && scene.next.length === 0) {
       scene.next = [`scene-${i + 2}`];
     }
@@ -238,7 +255,11 @@ export function parseSolution(
   const requirements = list(s.requirements)
     .map((r) => {
       const req = rec(r);
+      const kind = ONE_SHOT_REQUIREMENT_KINDS.find(
+        (k) => k === str(req.kind).toLowerCase(),
+      );
       return {
+        ...(kind ? { kind } : {}),
         what: str(req.what),
         detail: str(req.detail),
         sceneIds: strs(req.sceneIds)
@@ -266,6 +287,8 @@ export function parseThreads(
     .map((t) => {
       const thread = rec(t);
       return {
+        about: str(thread.about) || undefined,
+        kind: parseThreadKind(thread.kind),
         setup: str(thread.setup),
         payoff: str(thread.payoff),
         sceneIds: strs(thread.sceneIds)
@@ -285,6 +308,9 @@ export function parseClock(raw: unknown): OneShotClock | undefined {
   return {
     name: str(c.name, "The clock"),
     advances: str(c.advances),
+    schedule: parseSchedule(c.schedule),
+    startsAt: parseStartsAt(c.startsAt),
+    pushes: str(c.pushes) || undefined,
     ticks,
     slow: str(c.slow),
     deadline: str(c.deadline) || undefined,
@@ -318,43 +344,52 @@ export function parseOneShotAdventure(
   for (const scene of scenes) {
     scene.npcIds = scene.npcIds.filter((id) => npcIds.has(id));
   }
-  const clues = list(data.clues).map((c, i) => parseClue(c, i, sceneIds));
+  const theories = parseTheories(data.theories);
+  const clues = list(data.clues).map((c, i) =>
+    parseClue(c, i, sceneIds, theories),
+  );
   attachClues(scenes, clues);
 
   const opening = rec(data.opening);
   const runningLate = strs(data.runningLate);
-  const adventure = normaliseTimeBudget({
-    version: 1,
-    title: str(data.title, "Untitled One-Shot"),
-    genre: resolved.genre,
-    system: resolved.system,
-    emphasis: resolved.emphasis,
-    structure: resolved.structure,
-    tone: resolved.tone,
-    durationMinutes: resolved.durationMinutes,
-    partySize: resolved.partySize,
-    partyLevel: resolved.partyLevel,
-    briefing: parseBriefing(data.briefing),
-    opening: {
-      situation: str(opening.situation, scenes[0].situation),
-      readAloud: str(opening.readAloud) || undefined,
-      firstDecision: str(opening.firstDecision),
-      involvement: strs(opening.involvement),
-    },
-    scenes,
-    npcs,
-    clues,
-    endings: list(data.endings).map(parseEnding),
-    antagonistId: findAntagonist(data.antagonistId, npcs),
-    threads: parseThreads(data.threads, (id) => sceneIds.get(id)),
-    solution: parseSolution(data.solution, (id) => sceneIds.get(id)),
-    clock: parseClock(data.clock),
-    epilogueHook: str(data.epilogueHook) || undefined,
-    timeBudget: {
-      bufferMinutes: 0,
-      runningLate: runningLate.length ? runningLate : DEFAULT_RUNNING_LATE,
-    },
-  });
+  const adventure = dedupeOneShot(
+    normaliseState(
+      normaliseTimeBudget({
+        version: 1,
+        title: str(data.title, "Untitled One-Shot"),
+        genre: resolved.genre,
+        system: resolved.system,
+        emphasis: resolved.emphasis,
+        structure: resolved.structure,
+        tone: resolved.tone,
+        durationMinutes: resolved.durationMinutes,
+        partySize: resolved.partySize,
+        partyLevel: resolved.partyLevel,
+        briefing: parseBriefing(data.briefing),
+        opening: {
+          situation: str(opening.situation, scenes[0].situation),
+          readAloud: str(opening.readAloud) || undefined,
+          firstDecision: str(opening.firstDecision),
+          involvement: strs(opening.involvement),
+        },
+        scenes,
+        npcs,
+        clues,
+        endings: list(data.endings).map(parseEnding),
+        antagonistId: findAntagonist(data.antagonistId, npcs),
+        threads: parseThreads(data.threads, (id) => sceneIds.get(id)),
+        decisions: parseDecisions(data.decisions),
+        theories,
+        solution: parseSolution(data.solution, (id) => sceneIds.get(id)),
+        clock: parseClock(data.clock),
+        epilogueHook: str(data.epilogueHook) || undefined,
+        timeBudget: {
+          bufferMinutes: 0,
+          runningLate: runningLate.length ? runningLate : DEFAULT_RUNNING_LATE,
+        },
+      }),
+    ),
+  );
   const errors = validateOneShot(adventure).filter(
     (i) => i.severity === "error",
   );

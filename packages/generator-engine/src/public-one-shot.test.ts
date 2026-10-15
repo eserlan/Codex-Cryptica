@@ -155,6 +155,13 @@ describe("regeneration", () => {
     expect(b.clues).toEqual(a.clues);
     expect(b.briefing).toEqual(a.briefing);
     expect(b.timeBudget).toEqual(a.timeBudget);
+    const middle = b.scenes.filter((scene) => scene.kind === "middle");
+    expect(
+      new Set(middle.map((scene) => scene.challenge.description)).size,
+    ).toBe(middle.length);
+    expect(new Set(middle.map((scene) => scene.situation)).size).toBe(
+      middle.length,
+    );
   });
 
   it("keeps an NPC's name and role", () => {

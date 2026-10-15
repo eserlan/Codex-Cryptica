@@ -41,16 +41,20 @@ function replies(a: OneShotAdventure) {
         location: s.location,
         npcIds: s.npcIds,
         next: s.next,
+        whereabouts: s.whereabouts,
+        routes: s.routes,
       })),
       npcs: supporting.map((n) => ({ id: n.id, name: n.name, role: n.role })),
       clues: a.clues,
       clock: a.clock,
+      theories: a.theories,
       threads: a.threads,
       runningLate: a.timeBudget.runningLate,
     },
     finale: {
       solution: a.solution,
       endings: a.endings,
+      decisions: a.decisions,
       epilogueHook: a.epilogueHook,
     },
     scene: (title: string) => {
@@ -213,6 +217,97 @@ describe("runOneShotStages", () => {
       status: "fallback",
       detail: "1 from templates",
     });
+  });
+
+  it("keeps template-filled middle scenes distinct after multiple failures", async () => {
+    const structure = "Five-room adventure";
+    const a = generateOneShotLocal(
+      { ...options, durationHours: 4, structure },
+      seeded(),
+    ).oneShot!;
+    const { call } = fakeModel(a, { scene: 6 });
+    const result = await runOneShotStages(
+      { ...options, durationHours: 4, structure },
+      { call, concurrency: 1 },
+      "",
+      seeded(),
+    );
+    const middle = result.adventure.scenes.filter(
+      (scene) => scene.kind === "middle",
+    );
+
+    expect(result.fallbackParts).toHaveLength(3);
+    expect(middle.length).toBeGreaterThan(1);
+    expect(
+      new Set(middle.map((scene) => scene.challenge.description)).size,
+    ).toBe(middle.length);
+    expect(new Set(middle.map((scene) => scene.situation)).size).toBe(
+      middle.length,
+    );
+  });
+
+  it("avoids a template challenge used by a successful AI scene of another type", async () => {
+    const structure = "Five-room adventure";
+    const a = generateOneShotLocal(
+      { ...options, durationHours: 4, structure },
+      seeded(),
+    ).oneShot!;
+
+    const runWithSceneFailure = async (reuse?: {
+      description: string;
+      type: string;
+    }) => {
+      const { call } = fakeModel(a);
+      let sceneCalls = 0;
+      return runOneShotStages(
+        { ...options, durationHours: 4, structure },
+        {
+          call: async (prompt) => {
+            if (stageOf(prompt) === "scene") {
+              sceneCalls += 1;
+              if (sceneCalls === 3 || sceneCalls === 4)
+                throw new Error("timeout");
+            }
+            const response = await call(prompt);
+            if (sceneCalls !== 2 || !reuse) return response;
+
+            const scene = JSON.parse(response) as {
+              challenge: { type: string; description: string };
+            };
+            scene.challenge.description = reuse.description;
+            scene.challenge.type = reuse.type;
+            return JSON.stringify(scene);
+          },
+          concurrency: 1,
+        },
+        "",
+        seeded(19),
+      );
+    };
+
+    const templateFallback = await runWithSceneFailure();
+    const middle = templateFallback.adventure.scenes.filter(
+      (scene) => scene.kind === "middle",
+    );
+    const repeatedTemplateDescription =
+      middle[1].challenge.description.replaceAll(
+        middle[1].location,
+        middle[0].location,
+      );
+    const repeatedTemplateType = middle[1].challenge.type;
+    const differentType =
+      repeatedTemplateType === "social" ? "combat" : "social";
+    const mixed = await runWithSceneFailure({
+      description: repeatedTemplateDescription,
+      type: differentType,
+    });
+    const mixedMiddle = mixed.adventure.scenes.filter(
+      (scene) => scene.kind === "middle",
+    );
+    expect(mixedMiddle[0].challenge.type).toBe(differentType);
+    expect(
+      new Set(mixedMiddle.map((scene) => scene.challenge.description)).size,
+    ).toBe(mixedMiddle.length);
   });
 
   it("keeps going without a finale and says so", async () => {
