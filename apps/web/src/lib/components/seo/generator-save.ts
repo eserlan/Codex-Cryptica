@@ -1,6 +1,8 @@
 import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
 import type { ProvenanceRecord, SessionEntity } from "generator-engine";
 
+import type { TovMagicItemMechanics } from "generator-engine";
+
 export interface GeneratorSaveLayout {
   content: string;
   lore: string;
@@ -15,6 +17,7 @@ export interface GeneratorSavePayload {
   labels: string[];
   status: GeneratorOutput["status"];
   mapImageDataUrl?: string;
+  metadata?: Record<string, unknown>;
 }
 
 export interface HubSaveDraft {
@@ -26,6 +29,29 @@ export interface HubSaveDraft {
   labels: string[];
   status: SessionEntity["status"];
   references?: string[];
+}
+
+export function formatTovMagicItemMarkdown(
+  item: TovMagicItemMechanics,
+): string {
+  const parts: string[] = ["### Game Statistics (Tales of the Valiant)"];
+  parts.push(`- **Rarity & Category:** ${item.rarity} ${item.category}`);
+  parts.push(
+    `- **Attunement:** ${item.attunement ? (item.attunementRequirement ? `Requires attunement (${item.attunementRequirement})` : "Requires attunement") : "No"}`,
+  );
+  parts.push(`- **Activation:** ${item.activationAction}`);
+  if (item.charges) {
+    parts.push(
+      `- **Charges:** ${item.charges} ${item.rechargeRate ? `(${item.rechargeRate})` : ""}`.trim(),
+    );
+  }
+  if (item.savingThrowDc) {
+    parts.push(`- **Saving Throw DC:** ${item.savingThrowDc}`);
+  }
+  if (item.rulesText) {
+    parts.push(`\n${item.rulesText}`);
+  }
+  return parts.join("\n");
 }
 
 /** Build the vault payload while keeping adventure-specific layout rules out of the page. */
@@ -43,9 +69,19 @@ export function buildGeneratorSavePayload(
     : data.summary
       ? `*${data.summary}*\n\n${layout.content}`
       : layout.content;
-  const lore = isAdventure
+  let lore = isAdventure
     ? [data.content, data.lore].filter(Boolean).join("\n\n")
     : layout.lore;
+
+  let metadata: Record<string, unknown> | undefined = undefined;
+  if (data.mechanics && data.mechanics.kind === "tov-magic-item") {
+    const statsMarkdown = formatTovMagicItemMarkdown(data.mechanics.data);
+    lore = lore ? `${lore}\n\n${statsMarkdown}` : statsMarkdown;
+    metadata = {
+      tovMechanics: data.mechanics.data,
+      systemId: data.systemId ?? "tales-of-the-valiant",
+    };
+  }
 
   return {
     type: isAdventure ? "note" : data.type,
@@ -56,6 +92,7 @@ export function buildGeneratorSavePayload(
     labels: data.labels,
     status: data.status,
     ...(mapImageDataUrl ? { mapImageDataUrl } : {}),
+    ...(metadata ? { metadata } : {}),
   };
 }
 

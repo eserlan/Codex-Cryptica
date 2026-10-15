@@ -83,4 +83,56 @@ describe("generator save payloads", () => {
 
     expect(drafts[0].references).toEqual(["First"]);
   });
+
+  it("formats Tales of the Valiant magic item mechanics into Game Statistics markdown section and metadata", () => {
+    const tovMagicItem: GeneratorOutput = {
+      type: "item",
+      title: "Ring of Shadow Step",
+      summary: "A ring forged of darkened silver.",
+      content: "Forged in the deep gloom.",
+      lore: "Wearers can slip between shadows.",
+      labels: ["magic-item"],
+      status: "draft",
+      systemId: "tales-of-the-valiant",
+      mechanics: {
+        systemId: "tales-of-the-valiant",
+        kind: "tov-magic-item",
+        isHomebrew: false,
+        data: {
+          rarity: "Rare",
+          category: "Ring",
+          attunement: true,
+          attunementRequirement: "by a rogue or shadow caster",
+          activationAction: "Bonus Action",
+          charges: 3,
+          rechargeRate: "recharges 1d3 at dusk",
+          savingThrowDc: 15,
+          rulesText:
+            "As a bonus action, teleport up to 30 feet to an unoccupied space in dim light or darkness.",
+          isHomebrew: false,
+        },
+      },
+    };
+
+    const payload = buildGeneratorSavePayload(tovMagicItem, {
+      content: "## Description\nA ring of silver.",
+      lore: "Wearers can slip between shadows.",
+    });
+
+    expect(payload.lore).toContain(
+      "### Game Statistics (Tales of the Valiant)",
+    );
+    expect(payload.lore).toContain("- **Rarity & Category:** Rare Ring");
+    expect(payload.lore).toContain(
+      "- **Attunement:** Requires attunement (by a rogue or shadow caster)",
+    );
+    expect(payload.lore).toContain("- **Activation:** Bonus Action");
+    expect(payload.lore).toContain("- **Charges:** 3 (recharges 1d3 at dusk)");
+    expect(payload.lore).toContain("- **Saving Throw DC:** 15");
+    expect(payload.lore).toContain("teleport up to 30 feet");
+    expect(payload.metadata).toEqual({
+      tovMechanics: tovMagicItem.mechanics?.data,
+      systemId: "tales-of-the-valiant",
+    });
+  });
 });

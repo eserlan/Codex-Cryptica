@@ -1,1 +1,3 @@
-{ "feature_directory": "specs/4052-oracle-entity-mentions" }
+{
+  "feature_directory": "specs/3948-tov-generator-mechanics"
+}

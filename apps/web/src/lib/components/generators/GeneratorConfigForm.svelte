@@ -98,6 +98,7 @@
     GeneratorFavoritesStore,
     generatorFavoritesStore,
   } from "$lib/stores/ui/generator-favorites.svelte";
+  import { systemProfileStore } from "$lib/stores/system-profile.svelte";
 
   interface Props {
     generatorId: GeneratorId | null;
@@ -339,10 +340,20 @@
     // to prevent intermediate array allocations and reduce GC overhead.
     const nextValues: Record<string, unknown> = {};
     for (const option of definition.options) {
-      nextValues[option.id] =
-        typeof previousValues[option.id] !== "undefined"
-          ? previousValues[option.id]
-          : (definition.defaults[option.id] ?? option.defaultValue ?? "");
+      if (typeof previousValues[option.id] !== "undefined") {
+        nextValues[option.id] = previousValues[option.id];
+      } else if (option.id === "gameSystem") {
+        // Vault profile inheritance: default to ToV if vault profile is ToV and AI is available
+        const isTovVault =
+          systemProfileStore.vaultSystemId === "tales-of-the-valiant" ||
+          systemProfileStore.isTalesOfTheValiant;
+        nextValues[option.id] = isTovVault
+          ? "tales-of-the-valiant"
+          : (definition.defaults[option.id] ?? "system-neutral");
+      } else {
+        nextValues[option.id] =
+          definition.defaults[option.id] ?? option.defaultValue ?? "";
+      }
     }
     optionValues = nextValues;
   });
@@ -924,12 +935,23 @@
       <span class="text-sm text-chrome-text">Use AI generation</span>
     </label>
   {:else if aiUnavailableReason}
-    <p
-      class="rounded border border-amber-800/40 bg-amber-950/30 px-3 py-2 text-xs text-amber-400"
-      data-testid="ai-unavailable-notice"
-    >
-      {aiUnavailableReason}
-    </p>
+    <div class="flex flex-col gap-2">
+      <p
+        class="rounded border border-amber-800/40 bg-amber-950/30 px-3 py-2 text-xs text-amber-400"
+        data-testid="ai-unavailable-notice"
+      >
+        {aiUnavailableReason}
+      </p>
+      {#if stringValue("gameSystem") === "tales-of-the-valiant"}
+        <p
+          class="rounded border border-amber-800/30 bg-amber-950/20 px-3 py-2 text-micro leading-relaxed text-amber-300"
+          data-testid="tov-offline-notice"
+        >
+          Tales of the Valiant mechanics require AI Lore generation. Content
+          will be generated using neutral lore tables.
+        </p>
+      {/if}
+    </div>
   {/if}
 
   <div class="flex justify-end border-t border-chrome-border pt-4">

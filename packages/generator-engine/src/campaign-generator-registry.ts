@@ -9,6 +9,8 @@ import {
   SUPPORTED_GENERATOR_IDS,
   UnsupportedGeneratorError,
 } from "./campaign-generator-types";
+import { buildTovPromptInstructions } from "./tov-mechanics-prompt";
+import { mapTovMechanicsToStatSheet } from "@codex/stat-sheet-engine";
 import {
   generateRandomTableLocal,
   parseRandomTableResponse,
@@ -285,6 +287,20 @@ function mapOutputToDraft(
       }
     }
 
+    const mechanics = output.mechanics;
+    const systemId =
+      output.systemId ??
+      (mechanics && "systemId" in mechanics
+        ? (mechanics.systemId as string)
+        : undefined) ??
+      (request.options?.gameSystem &&
+      request.options.gameSystem !== "system-neutral"
+        ? (request.options.gameSystem as string)
+        : undefined);
+    const statSheet = mechanics
+      ? (mapTovMechanicsToStatSheet(mechanics) ?? undefined)
+      : undefined;
+
     return {
       title: output.title,
       entityType: resolveEntityType(generatorId, availableIds),
@@ -317,6 +333,9 @@ function mapOutputToDraft(
       contextProvenance: contextProvenance.length
         ? contextProvenance
         : undefined,
+      mechanics,
+      systemId,
+      statSheet,
     };
   };
 }
@@ -630,13 +649,21 @@ function contextChain(request: GeneratorRunRequest): string {
 }
 
 function npcPrompt(request: GeneratorRunRequest): string {
+  const gameSystem = request.options?.gameSystem;
+  let tovInstructions = "";
+  if (gameSystem === "tales-of-the-valiant") {
+    const detail =
+      request.options?.npcDetail === "leveled" ? "npc-leveled" : "npc-quick";
+    tovInstructions = `\n\n${buildTovPromptInstructions(detail)}`;
+  }
+
   return `${contextChain(request)}
 
 Generate a campaign NPC. Return ONLY a JSON object matching this schema:
 ${OUTPUT_SCHEMA}
 ${exemplarBlock(request, "npc")}${groundingNote(request)}
 ${syntheticAdaptationNote(request)}
-${loreGuidance(request, "who they are, what they want, a secret, and a first-scene hook")}`;
+${loreGuidance(request, "who they are, what they want, a secret, and a first-scene hook")}${tovInstructions}`;
 }
 
 function factionPrompt(request: GeneratorRunRequest): string {
@@ -658,12 +685,18 @@ ${loreGuidance(request, "points of interest, power structure, notable rumours, a
 }
 
 function magicItemPrompt(request: GeneratorRunRequest): string {
+  const gameSystem = request.options?.gameSystem;
+  let tovInstructions = "";
+  if (gameSystem === "tales-of-the-valiant") {
+    tovInstructions = `\n\n${buildTovPromptInstructions("magic-item")}`;
+  }
+
   return `${contextChain(request)}
 
 Generate a campaign magic item or artefact. Return ONLY a JSON object matching this schema:
 ${OUTPUT_SCHEMA}
 ${exemplarBlock(request, "magic-item")}${groundingNote(request)}
-${loreGuidance(request, "item history, its power/effect, a side effect or curse, and how it might enter play")}`;
+${loreGuidance(request, "item history, its power/effect, a side effect or curse, and how it might enter play")}${tovInstructions}`;
 }
 
 function eventPrompt(request: GeneratorRunRequest): string {
@@ -1443,7 +1476,12 @@ function minorMagicItemPrompt(request: GeneratorRunRequest): string {
     minorMagicItemOptions(request),
     contextChain(request),
   );
-  return `${prompt.systemInstruction}\n\n${prompt.userMessage}`;
+  const gameSystem = request.options?.gameSystem;
+  let tovInstructions = "";
+  if (gameSystem === "tales-of-the-valiant") {
+    tovInstructions = `\n\n${buildTovPromptInstructions("magic-item")}`;
+  }
+  return `${prompt.systemInstruction}\n\n${prompt.userMessage}${tovInstructions}`;
 }
 
 function artifactOptions(
@@ -1787,6 +1825,12 @@ function generateCreature(request: GeneratorRunRequest): GeneratorOutput {
 }
 
 function creaturePrompt(request: GeneratorRunRequest): string {
+  const gameSystem = request.options?.gameSystem;
+  let tovInstructions = "";
+  if (gameSystem === "tales-of-the-valiant") {
+    tovInstructions = `\n\n${buildTovPromptInstructions("creature")}`;
+  }
+
   return `${contextChain(request)}
 
 ${buildCreaturePrompt(creatureOptions(request)).userMessage}
@@ -1797,7 +1841,7 @@ ${exemplarBlock(request, "creature")}${groundingNote(request)}
 ${loreGuidance(
   request,
   "the true origin & hidden ecology; hidden abilities & surprises; secret weaknesses; tactical notes & ambush strategies; truth behind rumours; adventure & encounter hooks; and secret motives if sapient",
-)}`;
+)}${tovInstructions}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -2027,8 +2071,37 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
         control: "select",
         choices: NPC_ROLES.map((r) => ({ value: r, label: r })),
       },
+      {
+        id: "gameSystem",
+        label: "Game System",
+        control: "select",
+        choices: [
+          { value: "system-neutral", label: "System Neutral" },
+          { value: "tales-of-the-valiant", label: "Tales of the Valiant" },
+        ],
+        defaultValue: "system-neutral",
+      },
+      {
+        id: "npcDetail",
+        label: "NPC Format",
+        control: "select",
+        choices: [
+          { value: "quick", label: "Quick NPC (CR-based)" },
+          { value: "leveled", label: "Leveled Character (Hero / Companion)" },
+        ],
+        defaultValue: "quick",
+        visibleWhen: {
+          optionId: "gameSystem",
+          values: ["tales-of-the-valiant"],
+        },
+      },
     ],
-    defaults: { race: "", role: "" },
+    defaults: {
+      race: "",
+      role: "",
+      gameSystem: "system-neutral",
+      npcDetail: "quick",
+    },
     generate: generateNpc,
     mapOutputToDraft: mapOutputToDraft("npc"),
     buildPrompt: npcPrompt,
@@ -2142,8 +2215,17 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
         control: "select",
         choices: ITEM_KINDS.map((k) => ({ value: k, label: k })),
       },
+      {
+        id: "gameSystem",
+        label: "Rules System",
+        control: "select",
+        choices: [
+          { value: "system-neutral", label: "System Neutral" },
+          { value: "tales-of-the-valiant", label: "Tales of the Valiant" },
+        ],
+      },
     ],
-    defaults: { rarity: "", kind: "" },
+    defaults: { rarity: "", kind: "", gameSystem: "system-neutral" },
     generate: generateMagicItem,
     mapOutputToDraft: mapOutputToDraft("magic-item"),
     buildPrompt: magicItemPrompt,
@@ -2215,6 +2297,15 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
           })),
         ],
       },
+      {
+        id: "gameSystem",
+        label: "Rules System",
+        control: "select",
+        choices: [
+          { value: "system-neutral", label: "System Neutral" },
+          { value: "tales-of-the-valiant", label: "Tales of the Valiant" },
+        ],
+      },
     ],
     defaults: {
       genre: "",
@@ -2222,6 +2313,7 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
       utility: "",
       activation: "",
       quirkSeverity: "",
+      gameSystem: "system-neutral",
     },
     generate: generateMinorMagicItem,
     mapOutputToDraft: mapOutputToDraft("minor-magic-item"),
@@ -3769,6 +3861,16 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
           label: value,
         })),
       },
+      {
+        id: "gameSystem",
+        label: "Game System",
+        control: "select",
+        choices: [
+          { value: "system-neutral", label: "System Neutral" },
+          { value: "tales-of-the-valiant", label: "Tales of the Valiant" },
+        ],
+        defaultValue: "system-neutral",
+      },
     ],
     defaults: {
       genre: "Classic Fantasy",
@@ -3778,6 +3880,7 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
       temperament: creatureConfig.temperaments[0],
       habitat: creatureConfig.habitats[0],
       ecologicalRole: creatureConfig.ecologicalRoles[0],
+      gameSystem: "system-neutral",
     },
     generate: generateCreature,
     mapOutputToDraft: mapOutputToDraft("creature"),

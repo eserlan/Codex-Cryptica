@@ -7,6 +7,7 @@
   import SessionHubWidget from "./SessionHubWidget.svelte";
   import GeneratorAiNotice, { hasAiNotice } from "./GeneratorAiNotice.svelte";
   import GenerationProgressList from "./GenerationProgressList.svelte";
+  import GeneratorMechanicsPreview from "$lib/components/generators/GeneratorMechanicsPreview.svelte";
   import {
     isFactionDraft,
     isFactionRosterDraft,
@@ -352,6 +353,12 @@
           </div>
         </div>
       </div>
+
+      {#if generatedData.mechanics}
+        <div class="mb-6">
+          <GeneratorMechanicsPreview mechanics={generatedData.mechanics} />
+        </div>
+      {/if}
 
       <div
         role="none"

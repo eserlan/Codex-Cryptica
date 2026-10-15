@@ -56,6 +56,8 @@ export class CampaignGeneratorPersistenceService extends CampaignGeneratorStream
           : undefined,
       languageProfile: draft.languageProfile,
       languageProfileVersion: draft.languageProfileVersion,
+      statSheet: draft.statSheet,
+      systemId: draft.systemId,
       ...(request.start_date ? { start_date: request.start_date } : {}),
     });
   }

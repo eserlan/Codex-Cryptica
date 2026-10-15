@@ -3,6 +3,7 @@
   import type { Category } from "schema";
   import { getDelveLocationTypeLabel } from "$lib/utils/delve-terminology";
   import DraftBody from "./DraftBody.svelte";
+  import GeneratorMechanicsPreview from "./GeneratorMechanicsPreview.svelte";
 
   interface Props {
     draft: GeneratedDraft;
@@ -168,6 +169,17 @@
   </div>
 
   <DraftBody {draft} {spoilerShield} />
+
+  {#if draft.mechanics}
+    <div class="flex flex-col gap-1">
+      <span
+        class="text-micro font-bold uppercase tracking-wider text-chrome-muted"
+      >
+        Game Mechanics
+      </span>
+      <GeneratorMechanicsPreview mechanics={draft.mechanics} />
+    </div>
+  {/if}
 
   {#if draft.connections?.length}
     <div class="flex flex-col gap-1">

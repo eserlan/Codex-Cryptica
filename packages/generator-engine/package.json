@@ -17,6 +17,7 @@
   "dependencies": {
     "@codex/oracle-engine": "workspace:*",
     "@codex/runtime": "workspace:*",
+    "@codex/stat-sheet-engine": "workspace:*",
     "schema": "workspace:*"
   },
   "devDependencies": {
