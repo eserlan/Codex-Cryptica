@@ -13,6 +13,12 @@ import type {
   OneShotRequirement,
   OneShotScene,
 } from "./one-shot-types";
+import {
+  endingWhen,
+  routesOut,
+  theoriesBlock,
+  whereEveryoneIs,
+} from "./one-shot-render-state";
 import { checkPlayability } from "./one-shot-playability";
 import { antagonistOf } from "./one-shot-integrity";
 import { coreMinutes } from "./one-shot-validate";
@@ -96,7 +102,9 @@ function sceneBlock(
     `**Challenge (${scene.challenge.type}):** ${scene.challenge.description}`,
     scene.kind === "climax"
       ? ""
-      : `**Leads to:** ${sceneTitles(adventure, scene.next)}`,
+      : scene.routes?.length
+        ? routesOut(adventure, scene)
+        : `**Leads to:** ${sceneTitles(adventure, scene.next)}`,
   ]
     .filter(Boolean)
     .join("\n\n");
@@ -151,7 +159,10 @@ export function renderOneShotMarkdown(adventure: OneShotAdventure): string {
     .map((s, i) => sceneBlock(adventure, s, i + 1))
     .join("\n\n");
   const endings = adventure.endings
-    .map((e) => `- **${e.title}** — ${e.condition} ${e.consequence}`)
+    .map(
+      (e) =>
+        `- **${e.title}** — ${e.condition} ${e.consequence}${endingWhen(adventure, e)}`,
+    )
     .join("\n");
   const core = coreMinutes(adventure);
   const optional = adventure.scenes.filter((s) => !s.essential);
@@ -287,14 +298,15 @@ ${lines(
 ## Timeline
 ${adventure.scenes.map((s, i) => `${i + 1}. ${s.title} — ${s.minutes} min${s.essential ? "" : " (optional)"} → ${sceneTitles(adventure, s.next)}`).join("\n")}
 
+${whereEveryoneIs(adventure)}
 ## Running Each Scene
 ${adventure.scenes.map((s, i) => runScene(s, i + 1)).join("\n\n")}
 ${sheetAntagonist(adventure)}
 ## Vital Clues
 ${vital.map((c) => `- ${clueName(c)} — ${c.routes.map((r) => adventure.scenes.find((s) => s.id === r.sceneId)?.title).join(" / ")}`).join("\n")}
-${sheetSolution(adventure)}${sheetClock(adventure)}${sheetThreads(adventure)}${sheetQuestions(adventure)}
+${theoriesBlock(adventure)}${sheetSolution(adventure)}${sheetClock(adventure)}${sheetThreads(adventure)}${sheetQuestions(adventure)}
 ## Endings
-${adventure.endings.map((e) => `- **${e.title}:** ${e.condition}`).join("\n")}
+${adventure.endings.map((e) => `- **${e.title}:** ${e.condition}${endingWhen(adventure, e)}`).join("\n")}
 
 ## Running Late
 ${bullets(adventure.timeBudget.runningLate)}
