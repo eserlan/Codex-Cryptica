@@ -1,9 +1,35 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const defaultStorage = vi.hoisted(() => {
+  const values = new Map<string, string>();
+  return {
+    values,
+    storage: {
+      getItem: vi.fn((key: string) => values.get(key) ?? null),
+      setItem: vi.fn((key: string, value: string) => values.set(key, value)),
+      removeItem: vi.fn((key: string) => values.delete(key)),
+      get length() {
+        return values.size;
+      },
+      key: vi.fn((index: number) => Array.from(values.keys())[index] ?? null),
+    },
+  };
+});
+
+vi.mock("$lib/utils/runtime-deps", () => ({
+  browserStorage: defaultStorage.storage,
+}));
+
 import {
   readSidebarCollapsed,
   writeSidebarCollapsed,
 } from "./zen-sidebar-preference";
 import type { StorageLike } from "$lib/utils/runtime-deps";
+
+beforeEach(() => {
+  defaultStorage.values.clear();
+  vi.clearAllMocks();
+});
 
 function createMemoryStorage(): StorageLike {
   const store = new Map<string, string>();
@@ -20,10 +46,18 @@ function createMemoryStorage(): StorageLike {
 
 function createBlockedStorage(): StorageLike {
   return {
-    getItem: () => { throw new Error("blocked"); },
-    setItem: () => { throw new Error("blocked"); },
-    removeItem: () => { throw new Error("blocked"); },
-    get length() { return 0; },
+    getItem: () => {
+      throw new Error("blocked");
+    },
+    setItem: () => {
+      throw new Error("blocked");
+    },
+    removeItem: () => {
+      throw new Error("blocked");
+    },
+    get length() {
+      return 0;
+    },
     key: () => null,
   };
 }
@@ -40,6 +74,22 @@ describe("zen sidebar preference", () => {
     expect(readSidebarCollapsed(storage)).toBe(true);
     writeSidebarCollapsed(false, storage);
     expect(readSidebarCollapsed(storage)).toBe(false);
+  });
+
+  it("uses browserStorage and the sidebar preference key by default", () => {
+    defaultStorage.values.set("zen-sidebar-collapsed", "1");
+
+    expect(readSidebarCollapsed()).toBe(true);
+    expect(defaultStorage.storage.getItem).toHaveBeenCalledWith(
+      "zen-sidebar-collapsed",
+    );
+
+    writeSidebarCollapsed(false);
+    expect(defaultStorage.storage.setItem).toHaveBeenCalledWith(
+      "zen-sidebar-collapsed",
+      "0",
+    );
+    expect(defaultStorage.values.get("zen-sidebar-collapsed")).toBe("0");
   });
 
   it("does not throw when storage is blocked", () => {
