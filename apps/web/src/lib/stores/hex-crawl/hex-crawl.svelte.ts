@@ -106,7 +106,8 @@ export class HexCrawlStore {
     const next = change(this.stateFor(mapId));
     map.hexCrawl = next;
     try {
-      await this.deps.saveMaps();
+      const saved = await this.deps.saveMaps();
+      if (!saved) throw new Error("Could not persist map state.");
     } catch (error) {
       // Do not overwrite a newer write if another operation committed while
       // this persistence attempt was pending.

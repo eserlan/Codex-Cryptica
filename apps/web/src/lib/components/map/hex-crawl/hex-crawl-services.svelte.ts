@@ -51,10 +51,7 @@ function regionContext(): string | undefined {
 export function createHexCrawlServices(): HexCrawlServices {
   const store = new HexCrawlStore({
     getMap: (id) => vault.maps[id],
-    saveMaps: async () => {
-      await vault.saveMaps();
-      return true;
-    },
+    saveMaps: () => vault.saveMapsWithResult(),
     clock: systemClock,
     publishCapture: (payload) =>
       publishSoloMapMove(

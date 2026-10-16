@@ -97,6 +97,19 @@ describe("HexCrawlStore (T010)", () => {
     expect(store.recordFor(MAP_ID, { q: 2, r: 3 })).toBeUndefined();
   });
 
+  it("restores the previous map state when persistence resolves false", async () => {
+    const { store, maps, deps } = setup();
+    const previous = maps[MAP_ID].hexCrawl;
+    vi.mocked(deps.saveMaps).mockResolvedValueOnce(false);
+
+    await expect(store.setDraft(MAP_ID, { q: 2, r: 3 }, null)).rejects.toThrow(
+      /Could not persist/,
+    );
+
+    expect(maps[MAP_ID].hexCrawl).toBe(previous);
+    expect(store.recordFor(MAP_ID, { q: 2, r: 3 })).toBeUndefined();
+  });
+
   it("sets and removes a discovery draft, pruning the record when nothing else is left (FR-033a)", async () => {
     const { store } = setup();
     const hex = { q: 3, r: 3 };

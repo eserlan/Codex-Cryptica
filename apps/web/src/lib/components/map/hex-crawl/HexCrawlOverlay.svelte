@@ -144,7 +144,7 @@
     } else {
       items = collectByCoordinates(records, bounds, projection);
     }
-    return items.slice(0, MAX_RENDER_ITEMS);
+    return items.length > MAX_RENDER_ITEMS ? [] : items;
   });
 
   const markerSize = $derived(Math.max(8, gridConfig.size * zoom));

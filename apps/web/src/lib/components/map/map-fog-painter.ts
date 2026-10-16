@@ -96,6 +96,22 @@ export class MapFogPainter {
   private lastPaintedHexKey: string | null = null;
 
   cancel() {
+    const maskCanvas = this.deps.getMaskCanvas();
+    const snapshot = this.maskSnapshot;
+    if (
+      this.painting &&
+      maskCanvas &&
+      snapshot &&
+      this.deps.mapStore.activeMapId === this.activeMapId
+    ) {
+      const ctx = maskCanvas.getContext("2d");
+      if (ctx) {
+        ctx.clearRect(0, 0, maskCanvas.width, maskCanvas.height);
+        if (snapshot.width > 0 && snapshot.height > 0) {
+          ctx.drawImage(snapshot, 0, 0);
+        }
+      }
+    }
     this.reset();
   }
 

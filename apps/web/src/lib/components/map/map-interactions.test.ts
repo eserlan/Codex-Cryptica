@@ -1,5 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { MapInteractionManager } from "./map-interactions.svelte";
+import { MapFogPainter } from "./map-fog-painter";
 
 // Mocking stores
 vi.mock("../../stores/map.svelte", () => ({
@@ -136,6 +137,66 @@ describe("MapInteractionManager", () => {
     expect(hexClick).not.toHaveBeenCalled();
     expect(mapClick).not.toHaveBeenCalled();
     expect(manager.isPanning).toBe(false);
+  });
+
+  it("restores the fog mask when the browser cancels an active pointer stroke", () => {
+    const ctx = {
+      save: vi.fn(),
+      restore: vi.fn(),
+      beginPath: vi.fn(),
+      moveTo: vi.fn(),
+      lineTo: vi.fn(),
+      stroke: vi.fn(),
+      fill: vi.fn(),
+      arc: vi.fn(),
+      clearRect: vi.fn(),
+      drawImage: vi.fn(),
+      globalCompositeOperation: "",
+      fillStyle: "",
+      strokeStyle: "",
+      lineCap: "",
+      lineJoin: "",
+      lineWidth: 0,
+    } as any;
+    const mask = {
+      width: 100,
+      height: 80,
+      getContext: vi.fn(() => ctx),
+    } as unknown as HTMLCanvasElement;
+    const painter = new MapFogPainter({
+      mapStore: {
+        activeMapId: "map-1",
+        brushRadius: 10,
+        unproject: (point) => point,
+        saveMask: vi.fn(async () => undefined),
+      },
+      oracle: { pushUndoAction: vi.fn() },
+      getMaskCanvas: () => mask,
+      getMapImage: () => null,
+      createCanvas: () =>
+        ({
+          width: 100,
+          height: 80,
+          getContext: () => ({ drawImage: vi.fn() }),
+        }) as unknown as HTMLCanvasElement,
+    });
+    manager = new MapInteractionManager({
+      painter,
+      getContainer: () => containerMock,
+    });
+    const pointer = (type: string, clientX: number, clientY: number) =>
+      Object.assign(
+        new MouseEvent(type, { clientX, clientY, button: 0, altKey: true }),
+        { pointerId: 4 },
+      ) as unknown as PointerEvent;
+
+    manager.onPointerDown(pointer("pointerdown", 20, 30));
+    manager.onPointerMove(pointer("pointermove", 35, 45));
+    manager.onPointerCancel(pointer("pointercancel", 35, 45));
+
+    expect(ctx.clearRect).toHaveBeenCalledWith(0, 0, 100, 80);
+    expect(ctx.drawImage).toHaveBeenCalledWith(expect.anything(), 0, 0);
+    expect(painter.isPainting).toBe(false);
   });
 
   it("cancels an active token drag without ending or committing it", async () => {

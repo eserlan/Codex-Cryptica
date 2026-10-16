@@ -114,4 +114,20 @@ describe("HexCrawlOverlay", () => {
       container.querySelectorAll('[data-testid="hex-explored-marker"]'),
     ).toHaveLength(0);
   });
+
+  it("omits the overlay when visible items exceed the render limit", () => {
+    const denseVisibleRecords: Record<string, HexRecord> = {};
+    for (let q = 0; q <= 2_000; q++) {
+      denseVisibleRecords[`${q},0`] = { explored: true, updatedAt: 1 };
+    }
+    const { container } = setup({
+      records: denseVisibleRecords,
+      gridConfig: { ...GRID, size: 5 },
+      viewport: { width: 20_000, height: 2_000 },
+    });
+
+    expect(
+      container.querySelectorAll('[data-testid="hex-explored-marker"]'),
+    ).toHaveLength(0);
+  });
 });
