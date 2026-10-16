@@ -32,6 +32,20 @@ describe("howDoIOrganiseATalesOfTheValiantCampaign answer", () => {
     expect(sections.some((s) => s.kind === "checklist")).toBe(true);
   });
 
+  it("qualifies Luck rests and avoids claiming unavailable profile or import flows", () => {
+    const serialized = JSON.stringify(howDoIOrganiseATalesOfTheValiantCampaign);
+
+    expect(serialized).toContain("resting variant");
+    expect(serialized).toContain("update each counter manually");
+    expect(serialized).toContain(
+      "vault-wide profile selection is not currently available",
+    );
+    expect(serialized).not.toContain("TovChargen Import");
+    expect(serialized).not.toContain(
+      "Luck resets to a character's starting value",
+    );
+  });
+
   it("uses British English spellings and avoids American travel conjugations", () => {
     const serialized = JSON.stringify(howDoIOrganiseATalesOfTheValiantCampaign);
     expect(serialized).toContain("organise");

@@ -52,7 +52,7 @@ export const forEntries: DiscoveryEntryInput[] = [
     audience: "Tales of the Valiant game masters and players",
     userJob: "adopt-workflow",
     uniqueValue:
-      "Campaign organisation designed for Black Flag Roleplaying: distinct Lineage and Heritage tracking, interactive Luck point reserves across sheets and VTT tokens, Doom tracking for bosses, and BFRD stat-block imports.",
+      "Campaign organisation designed for Black Flag Roleplaying: distinct Lineage and Heritage tracking, interactive Luck point reserves across sheets and VTT tokens, Doom tracking for bosses, and built-in BFRD stat sheets and generators.",
     parentCluster: "system-guides",
     indexable: true,
     status: "live",

@@ -28,6 +28,20 @@ describe("talesOfTheValiant landing page config", () => {
     ).toBe(true);
   });
 
+  it("describes manual Luck updates and the available templates and generators", () => {
+    const luck = talesOfTheValiant.useCases.find((u) =>
+      u.title.includes("Luck"),
+    );
+    const sheets = talesOfTheValiant.useCases.find((u) =>
+      u.title.includes("Stat Sheets"),
+    );
+
+    expect(luck?.description).toContain("updated manually");
+    expect(luck?.description).not.toContain("automatic Long Rest resets");
+    expect(sheets?.title).toContain("Generators");
+    expect(sheets?.title).not.toContain("Import");
+  });
+
   it("defines a sample campaign web connecting ToV concepts", () => {
     expect(talesOfTheValiant.exampleGraph?.steps.length).toBeGreaterThanOrEqual(
       4,

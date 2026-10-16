@@ -40,6 +40,23 @@ describe("help registry against the real in-app help articles", () => {
     expect(tovArticle?.content).toContain("Doom");
   });
 
+  it("states the current ToV profile, import, and Luck reset limitations", () => {
+    const tovArticle = articles.find((a) => a.id === "tales-of-the-valiant");
+    expect(tovArticle?.content).toContain(
+      "Vault-wide system profile selection is not currently available",
+    );
+    expect(tovArticle?.content).toContain(
+      "does not currently import ToV character JSON",
+    );
+    expect(tovArticle?.content).toContain(
+      "update the counter manually after the rest",
+    );
+    expect(tovArticle?.content).not.toContain("RPG System Profile");
+    expect(tovArticle?.content).not.toContain(
+      "automatically detects the Black Flag schema",
+    );
+  });
+
   it("would catch a removed article", () => {
     const withoutConnections = new Set(
       [...helpIds].filter((id) => id !== "connections-tab"),

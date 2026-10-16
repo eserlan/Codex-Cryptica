@@ -31,7 +31,7 @@ export const talesOfTheValiant: LandingPageConfig = {
     {
       title: "Interactive Luck Tracking Across Sheets & VTT",
       description:
-        "Track party Luck points with one-click spend and gain controls. Adjust Luck from character sheets or directly on tokens in the virtual tabletop with automatic Long Rest resets.",
+        "Track party Luck points with one-click spend and gain controls from character sheets or tokens in the virtual tabletop. Resting variants determine how Luck changes after a Long Rest, and counters are updated manually.",
       icon: "icon-[lucide--clover]",
     },
     {
@@ -41,9 +41,9 @@ export const talesOfTheValiant: LandingPageConfig = {
       icon: "icon-[lucide--skull]",
     },
     {
-      title: "BFRD Stat Blocks & TovChargen Import",
+      title: "BFRD Stat Sheets & Generators",
       description:
-        "Generate or import official Black Flag Reference Document monsters, Quick NPCs, and magic items with native armour class, saves, and attack routines ready for session prep.",
+        "Use built-in Black Flag stat sheet templates and generators for monsters, Quick NPCs, and magic items, with armour class, saves, and attack routines ready for session prep.",
       icon: "icon-[lucide--scroll]",
     },
   ],

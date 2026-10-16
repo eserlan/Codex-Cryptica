@@ -23,10 +23,9 @@ rank: 9
 
 Codex Cryptica supports generating non-player characters, monsters, and magic items with native **Tales of the Valiant (BFRD)** mechanics.
 
-### Activating Tales of the Valiant Mode
+### Selecting Tales of the Valiant
 
-- **Vault Profile Inheritance**: If your active campaign vault is configured with the Tales of the Valiant system profile, generators automatically pre-select **Tales of the Valiant** under the **Game System** option.
-- **Manual Selection**: On any campaign generator or public generator page, set the **Game System** selector to **Tales of the Valiant**.
+Vault-wide system profile selection is not currently available. On a campaign generator or public generator page, select **Tales of the Valiant** from the **Game System** option when it is available.
 
 ### Supported Generators
 
@@ -42,7 +41,7 @@ Codex Cryptica supports generating non-player characters, monsters, and magic it
 
 ### Complete Campaign Guide
 
-For comprehensive documentation on system profiles, Luck and Doom tracking, and BFRD stat-block imports, see the [Tales of the Valiant Campaign Guide](help:tales-of-the-valiant).
+For more on the built-in stat sheet templates and manually tracking Luck and Doom, see the [Tales of the Valiant Campaign Guide](help:tales-of-the-valiant).
 
 ### Offline & AI Availability
 

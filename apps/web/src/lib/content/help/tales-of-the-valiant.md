@@ -1,7 +1,7 @@
 ---
 id: tales-of-the-valiant
 title: Tales of the Valiant (BFRD) Campaign Guide
-description: Complete guide to running Tales of the Valiant campaigns in Codex Cryptica, including system profiles, Luck and Doom tracking, and BFRD stat blocks.
+description: Complete guide to using Tales of the Valiant stat sheet templates, generators, Luck and Doom tracking in Codex Cryptica.
 tags:
   [
     tales of the valiant,
@@ -11,7 +11,6 @@ tags:
     luck,
     doom,
     stat sheets,
-    character import,
     encounters,
   ]
 rank: 8
@@ -23,13 +22,9 @@ Codex Cryptica provides native support for **Tales of the Valiant (ToV)** and th
 
 ---
 
-### 1. Activating the System Profile
+### 1. Using Tales of the Valiant templates
 
-You can configure any campaign vault to automatically inherit Tales of the Valiant rules:
-
-1. Open **Vault Settings** (or Campaign Overview) from the sidebar.
-2. Under **RPG System Profile**, select **Tales of the Valiant**.
-3. Once active, new character, creature, and NPC sheets automatically default to official ToV templates, and generator dialogues pre-select Tales of the Valiant.
+Vault-wide system profile selection is not currently available. To use Tales of the Valiant in a generator, choose it from the **Game System** option when available. The built-in ToV sheets listed below can be applied to individual entities.
 
 ---
 
@@ -49,7 +44,7 @@ In Tales of the Valiant, characters gain Luck when they fail d20 attack rolls or
 
 - **Character Sheets**: Use the minus and plus controls on the Luck counter to spend or gain points.
 - **Virtual Tabletop (VTT)**: When a character token is selected on the combat map, their Luck meter appears in **Token Quick Stats** for instantaneous mid-battle adjustments.
-- **Long Rest Reset**: Luck points reset to a character's starting baseline value upon completing a Long Rest.
+- **Long Rest**: The campaign's resting variant determines whether unspent Luck is preserved or reset towards the pool maximum. Codex Cryptica does not reset Luck automatically; update the counter manually after the rest according to the rules your campaign uses.
 
 ---
 
@@ -73,13 +68,9 @@ The Encounter Generator provides qualitative challenge pacing tailored to your p
 
 ---
 
-### 6. Importing from tov-chargen & External Tools
+### 6. Using characters from external tools
 
-You can import characters created in external builders like `tov-chargen`:
-
-1. In `tov-chargen`, export your character as standard JSON.
-2. Open the **Importer** in Codex Cryptica and paste or drop the JSON file.
-3. The importer automatically detects the Black Flag schema and maps ability scores, skills, lineage, heritage, and Luck values directly into a `builtin-tov-character` entity.
+Codex Cryptica does not currently import ToV character JSON from `tov-chargen` or other external builders. To bring a character's details into your campaign, create an entity and enter its values manually using the character sheet described above.
 
 ---
 

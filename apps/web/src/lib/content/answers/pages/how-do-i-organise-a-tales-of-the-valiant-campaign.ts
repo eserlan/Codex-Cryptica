@@ -7,7 +7,7 @@ export const howDoIOrganiseATalesOfTheValiantCampaign: AnswerConfigInput = {
   question: "How do I organise a Tales of the Valiant campaign?",
   kind: "framework",
   shortAnswer:
-    "Organise a Tales of the Valiant campaign by centring notes on what distinguishes Black Flag Roleplaying: separate each hero's Lineage from their cultural Heritage in your cast web, track party Luck point pools with regular session resets, manage Doom budgets for major adversary encounters, and maintain direct connections between martial talents, patrons, and regional factions.",
+    "Organise a Tales of the Valiant campaign by centring notes on what distinguishes Black Flag Roleplaying: separate each hero's Lineage from their cultural Heritage in your cast web, track party Luck according to your campaign's resting variant, manage Doom budgets for major adversary encounters, and maintain direct connections between martial talents, patrons, and regional factions.",
   sections: [
     {
       kind: "prose",
@@ -25,7 +25,7 @@ export const howDoIOrganiseATalesOfTheValiantCampaign: AnswerConfigInput = {
       items: [
         {
           term: "Active Luck pools across sessions",
-          text: "Characters earn Luck when they fail attack rolls or saving throws, spending points on subsequent d20 tests. Because unused Luck resets to a character's starting value at the end of a Long Rest, keep Luck meters visible during session prep to assess party momentum before pacing difficult encounters.",
+          text: "Characters earn Luck when they fail attack rolls or saving throws, spending points on subsequent d20 tests. A campaign's resting variant determines whether unspent Luck is preserved or reset towards the pool maximum after a Long Rest. Codex Cryptica does not change Luck automatically, so update each counter manually according to the chosen rules.",
         },
         {
           term: "Adversary Doom points and encounter budgets",
@@ -64,7 +64,7 @@ export const howDoIOrganiseATalesOfTheValiantCampaign: AnswerConfigInput = {
       items: [
         "Verify each player character sheet has starting Luck calculated and recorded.",
         "Split character backstories into separate Lineage contacts and Heritage communities.",
-        "Check whether the party completed a Long Rest to reset Luck pools to baseline values.",
+        "After a Long Rest, apply the campaign's resting variant to each Luck pool and update the counter manually.",
         "Assign explicit Doom budgets to solo boss creatures rather than generic minions.",
         "Review relevant BFRD monster stat blocks, confirming spell circles and save proficiencies.",
         "Link magic item rewards to specific crafting lineages or forgotten Black Flag factions.",
@@ -74,7 +74,7 @@ export const howDoIOrganiseATalesOfTheValiantCampaign: AnswerConfigInput = {
   codexConnection: {
     heading: "Native Tales of the Valiant campaign support in Codex Cryptica",
     paragraphs: [
-      "Codex Cryptica includes an opt-in Tales of the Valiant system profile. Activating it configures your campaign vault with native BFRD character, NPC, and monster stat sheets, complete with one-click Luck controls, Doom counters on combat tokens, and qualitative encounter challenge guidance tailored to your party level and size.",
+      "Codex Cryptica includes built-in Tales of the Valiant character, NPC, and monster stat sheet templates, with one-click Luck controls, Doom counters on combat tokens, and qualitative encounter challenge guidance tailored to your party level and size. Choose Tales of the Valiant manually in a generator's Game System option when available; vault-wide profile selection is not currently available.",
       "Everything runs locally in your browser through private OPFS storage, allowing you to prep and run sessions entirely offline with full CC BY 4.0 Black Flag compliance.",
     ],
     linkText: "Explore the Tales of the Valiant guide",
@@ -113,7 +113,7 @@ export const howDoIOrganiseATalesOfTheValiantCampaign: AnswerConfigInput = {
       "black flag roleplaying campaign notes",
     ],
     uniqueValue:
-      "A campaign prep framework built for Black Flag Roleplaying: splitting Lineage from Heritage, tracking active Luck pools and Long Rest resets, managing boss Doom points, and structuring BFRD encounters.",
+      "A campaign prep framework built for Black Flag Roleplaying: splitting Lineage from Heritage, tracking Luck according to resting variants, managing boss Doom points, and structuring BFRD encounters.",
     relatedIntents: [
       "for-tales-of-the-valiant",
       "answer-dnd-campaign-organisation",
