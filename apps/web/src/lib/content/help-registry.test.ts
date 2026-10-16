@@ -55,6 +55,20 @@ describe("help registry against the real in-app help articles", () => {
     expect(tovArticle?.content).not.toContain(
       "automatically detects the Black Flag schema",
     );
+
+    const tovGeneratorArticle = articles.find(
+      (a) => a.id === "tales-of-the-valiant-generators",
+    );
+    expect(tovGeneratorArticle).toBeDefined();
+    expect(tovGeneratorArticle?.content).toContain(
+      "Vault-wide system profile selection is not currently available",
+    );
+    expect(tovGeneratorArticle?.content).not.toContain(
+      "Vault Profile Inheritance",
+    );
+    expect(tovGeneratorArticle?.content).not.toContain(
+      "generators automatically pre-select",
+    );
   });
 
   it("would catch a removed article", () => {
