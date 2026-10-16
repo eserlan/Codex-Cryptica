@@ -17,6 +17,9 @@ describe("HexExploreOffer", () => {
 
     await fireEvent.click(screen.getByRole("button", { name: "Explore" }));
     expect(onExplore).toHaveBeenCalledTimes(1);
+    expect(onExplore).toHaveBeenCalledWith(
+      screen.getByRole("button", { name: "Explore" }),
+    );
   });
 
   it("goes away on Not now without exploring", async () => {

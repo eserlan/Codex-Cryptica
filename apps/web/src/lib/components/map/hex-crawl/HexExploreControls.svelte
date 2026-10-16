@@ -7,6 +7,7 @@
     draftPending,
     explored,
     generating,
+    exploreBlocked = false,
     onReview,
     onExplore,
     onCancel,
@@ -14,6 +15,7 @@
     draftPending: boolean;
     explored: boolean;
     generating: boolean;
+    exploreBlocked?: boolean;
     onReview: () => void;
     onExplore: () => void;
     onCancel: () => void;
@@ -33,7 +35,7 @@
     <button
       type="button"
       onclick={onExplore}
-      disabled={generating}
+      disabled={generating || exploreBlocked}
       class={explored
         ? "w-full rounded-lg border border-theme-border px-3 py-2 text-micro font-bold uppercase tracking-widest text-theme-muted hover:text-theme-text disabled:opacity-50"
         : "w-full rounded-lg bg-theme-primary px-3 py-2 text-micro font-bold uppercase tracking-widest text-theme-bg disabled:opacity-50"}

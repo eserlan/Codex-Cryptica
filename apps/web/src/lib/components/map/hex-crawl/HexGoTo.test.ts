@@ -26,7 +26,7 @@ describe("HexGoTo", () => {
     await fireEvent.input(input, { target: { value: "  d04 " } });
     await fireEvent.click(go);
 
-    expect(onGo).toHaveBeenCalledWith({ q: 2, r: 3 });
+    expect(onGo).toHaveBeenCalledWith({ q: 2, r: 3 }, go);
     expect(screen.queryByRole("status")?.textContent ?? "").toBe("");
   });
 

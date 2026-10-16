@@ -123,6 +123,7 @@ export class HexDiscoveryController {
       modelRunner: aiDisabled ? undefined : this.modelRunner(),
       signal,
     });
+    if (signal.aborted) throw abortError();
     await this.persistDraft(mapId, hex, result);
     return result;
   }
@@ -146,6 +147,7 @@ export class HexDiscoveryController {
       modelRunner: aiDisabled ? undefined : this.modelRunner(),
       signal,
     });
+    if (signal.aborted) throw abortError();
     await this.persistDraft(mapId, hex, result);
     return result;
   }
@@ -200,7 +202,7 @@ export class HexDiscoveryController {
       plan.entity.title,
       {
         status: plan.entity.status,
-        content: plan.entity.content,
+        content: sanitizeAiText(plan.entity.content),
         labels: plan.entity.labels,
       },
     );
@@ -410,7 +412,31 @@ export class HexDiscoveryController {
         { signal },
       );
       if (signal?.aborted) throw abortError();
-      return JSON.parse(extractJsonObject(response.response.text()));
+      return sanitizeAiImages(
+        JSON.parse(extractJsonObject(response.response.text())),
+      );
     };
   }
+}
+
+/** Sanitize all text fields in the untrusted model response before validation. */
+function sanitizeAiImages(value: unknown): unknown {
+  if (typeof value === "string") return sanitizeAiText(value);
+  if (Array.isArray(value)) return value.map(sanitizeAiImages);
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, item]) => [key, sanitizeAiImages(item)]),
+    );
+  }
+  return value;
+}
+
+/** Remove remote image fetches from untrusted model text before it is saved. */
+function sanitizeAiText(text: string): string {
+  return text
+    .replace(/!\[([^\]]*)\](?:\([^)]*\)|\[[^\]]*\])?/g, "$1")
+    .replace(
+      /<\/?(?:img|picture|source|svg|image|video|audio|iframe|object|embed)\b[^>]*>/gi,
+      "",
+    );
 }

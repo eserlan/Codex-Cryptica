@@ -13,13 +13,13 @@
   }: {
     labelConfig: HexLabelConfig | undefined;
     orientation: HexOrientation;
-    onGo: (hex: HexCoord) => void;
+    onGo: (hex: HexCoord, opener: HTMLElement) => void;
   } = $props();
 
   let text = $state("");
   let message = $state("");
 
-  function submit() {
+  function submit(opener: HTMLElement | null) {
     const typed = text.trim();
     if (!typed) {
       message = "";
@@ -31,7 +31,7 @@
       return;
     }
     message = "";
-    onGo(hex);
+    if (opener) onGo(hex, opener);
   }
 </script>
 
@@ -39,7 +39,11 @@
   class="flex flex-col gap-1"
   onsubmit={(event) => {
     event.preventDefault();
-    submit();
+    const opener =
+      event.submitter instanceof HTMLElement
+        ? event.submitter
+        : event.currentTarget.querySelector("input");
+    submit(opener);
   }}
 >
   <label
@@ -60,7 +64,7 @@
     />
     <button
       type="button"
-      onclick={submit}
+      onclick={(event) => submit(event.currentTarget)}
       class="rounded-lg border border-theme-border px-3 py-1.5 text-micro font-bold uppercase tracking-widest text-theme-text hover:border-theme-primary/40"
     >
       Go

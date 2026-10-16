@@ -7,7 +7,7 @@
     onExplore,
     onDismiss,
   }: {
-    onExplore: () => void;
+    onExplore: (opener: HTMLElement) => void;
     onDismiss: () => void;
   } = $props();
 </script>
@@ -23,7 +23,7 @@
   <p class="flex-1 text-sm text-theme-text">This hex is new to the party.</p>
   <button
     type="button"
-    onclick={onExplore}
+    onclick={(event) => onExplore(event.currentTarget as HTMLElement)}
     class="rounded-lg bg-theme-primary px-3 py-1.5 text-micro font-bold uppercase tracking-widest text-theme-bg hover:opacity-90"
   >
     Explore

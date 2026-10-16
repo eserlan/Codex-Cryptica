@@ -28,6 +28,11 @@
   } from "./discovery-controls";
   import type { NoticeStorage } from "./hex-discovery-notice";
   import {
+    AI_NOTICE_TEXT,
+    dismissAiNotice,
+    isAiNoticeDismissed,
+  } from "./hex-discovery-notice";
+  import {
     HEX_HINT_TEXT,
     isHexHintSeen,
     markHexHintSeen,
@@ -112,6 +117,10 @@
   let generating = $state(false);
   let failure = $state<"ai-failed" | null>(null);
   let controller: AbortController | null = null;
+  let noticeAcknowledged = $state(untrack(() => isAiNoticeDismissed(storage)));
+  const showAiNotice = $derived(
+    discovery?.aiEnabled === true && !noticeAcknowledged,
+  );
 
   onMount(() => {
     header?.focus();
@@ -125,6 +134,7 @@
 
   async function explore() {
     if (!discovery || generating) return;
+    if (showAiNotice) return;
     const current = new AbortController();
     controller = current;
     generating = true;
@@ -139,6 +149,11 @@
       if (controller === current) controller = null;
       refresh();
     }
+  }
+
+  function acknowledgeAiNotice() {
+    dismissAiNotice(storage);
+    noticeAcknowledged = true;
   }
 
   function cancelGeneration() {
@@ -178,6 +193,24 @@
 
   const hexKey = $derived(`${mapId}:${hex.q},${hex.r}`);
 </script>
+
+{#snippet AiDisclosure()}
+  {#if showAiNotice}
+    <div
+      class="mt-3 flex flex-wrap items-start gap-2 rounded-lg border border-theme-primary/40 bg-theme-primary/5 p-3"
+    >
+      <p class="flex-1 text-micro text-theme-text">{AI_NOTICE_TEXT}</p>
+      <button
+        type="button"
+        aria-label="Acknowledge AI notice"
+        onclick={acknowledgeAiNotice}
+        class="text-micro font-bold uppercase tracking-widest text-theme-muted hover:text-theme-text"
+      >
+        I understand
+      </button>
+    </div>
+  {/if}
+{/snippet}
 
 {#if visible}
   <section
@@ -233,11 +266,13 @@
     {/if}
 
     {#if exploreVisible}
+      {@render AiDisclosure()}
       <div class="mt-3">
         <HexExploreControls
           {draftPending}
           {explored}
           {generating}
+          exploreBlocked={showAiNotice}
           onReview={reviewDraft}
           onExplore={explore}
           onCancel={cancelGeneration}
@@ -254,8 +289,6 @@
           factionMatch={discovery.factionMatch}
           {failure}
           customTerrainLabel={discovery.customTerrainLabel}
-          aiEnabled={discovery.aiEnabled}
-          {storage}
           onCancel={cancelGeneration}
         />
       </div>

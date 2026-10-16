@@ -30,6 +30,7 @@ function setup(overrides: Record<string, unknown> = {}) {
     showTerrainIcons: true,
     gridConfig: GRID,
     project: (point: { x: number; y: number }) => point,
+    unproject: (point: { x: number; y: number }) => point,
     viewport: { width: 800, height: 600 },
     zoom: 1,
     ...overrides,

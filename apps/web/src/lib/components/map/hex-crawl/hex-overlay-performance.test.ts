@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { render } from "@testing-library/svelte";
 import HexCrawlOverlay from "./HexCrawlOverlay.svelte";
 import type { HexRecord } from "hex-crawl-engine";
@@ -38,6 +38,7 @@ describe("HexCrawlOverlay performance (T092, SC-002)", () => {
       showTerrainIcons: true,
       gridConfig: GRID,
       project: (p: { x: number; y: number }) => p,
+      unproject: (p: { x: number; y: number }) => p,
       viewport: { width: 800, height: 600 },
       zoom: 1,
     });
@@ -56,9 +57,34 @@ describe("HexCrawlOverlay performance (T092, SC-002)", () => {
       showTerrainIcons: true,
       gridConfig: GRID,
       project: (p: { x: number; y: number }) => p,
+      unproject: (p: { x: number; y: number }) => p,
       viewport: { width: 800, height: 600 },
       zoom: 1,
     });
     expect(container.querySelectorAll('span[class*="icon-["]').length).toBe(0);
+  });
+
+  it("does not project records outside the inverse-projected viewport bounds", () => {
+    const records: Record<string, HexRecord> = {};
+    for (let q = 10_000; q < 11_000; q++) {
+      records[`${q},${q}`] = {
+        terrain: { kind: "preset", id: "forest" },
+        updatedAt: 1,
+      };
+    }
+    const project = vi.fn((point: { x: number; y: number }) => point);
+
+    render(HexCrawlOverlay, {
+      records,
+      visible: true,
+      showTerrainIcons: true,
+      gridConfig: GRID,
+      project,
+      unproject: (point: { x: number; y: number }) => point,
+      viewport: { width: 800, height: 600 },
+      zoom: 1,
+    });
+
+    expect(project).not.toHaveBeenCalled();
   });
 });

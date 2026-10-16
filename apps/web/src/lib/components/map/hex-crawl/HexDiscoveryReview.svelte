@@ -1,14 +1,9 @@
 <script lang="ts">
+  import { onDestroy } from "svelte";
   import HexDiscoveryFailure from "./HexDiscoveryFailure.svelte";
   import HexDiscoveryPartActions from "./HexDiscoveryPartActions.svelte";
   import type { DiscoveryPartId, HexDiscoveryDraft } from "hex-crawl-engine";
   import HexDiscoveryPartCard from "./HexDiscoveryPartCard.svelte";
-  import {
-    AI_NOTICE_TEXT,
-    dismissAiNotice,
-    isAiNoticeDismissed,
-    type NoticeStorage,
-  } from "./hex-discovery-notice";
   import type { HexDiscoveryControls } from "./discovery-controls";
 
   let {
@@ -18,8 +13,6 @@
     factionMatch,
     failure,
     customTerrainLabel,
-    aiEnabled,
-    storage,
     onCancel,
   }: {
     draft: HexDiscoveryDraft;
@@ -28,8 +21,6 @@
     factionMatch: { id: string; title: string } | null;
     failure: "ai-failed" | null;
     customTerrainLabel?: string;
-    aiEnabled: boolean;
-    storage: NoticeStorage | null;
     onCancel: () => void;
   } = $props();
 
@@ -45,11 +36,13 @@
   let busy = $state(false);
   let status = $state("");
   let linkTicked = $state(true);
-  let noticeHidden = $state(isAiNoticeDismissed(storage));
   let controller: AbortController | null = null;
 
-  const showNotice = $derived(aiEnabled && !noticeHidden);
   const factionName = $derived(draft.parts.factionPresence.factionName ?? "");
+
+  onDestroy(() => {
+    controller?.abort();
+  });
 
   /** Generation can be cancelled; saves and discards are quick and are not. */
   async function generate(task: (signal: AbortSignal) => Promise<unknown>) {
@@ -77,11 +70,6 @@
     onCancel();
   }
 
-  function dismissNotice() {
-    dismissAiNotice(storage);
-    noticeHidden = true;
-  }
-
   function terrainFallbackMessage(): string | null {
     if (!draft.usedGeneralTables || !customTerrainLabel) return null;
     return `No tables for '${customTerrainLabel}', so general tables were used.`;
@@ -89,22 +77,6 @@
 </script>
 
 <section aria-label="Discovery review" class="space-y-3">
-  {#if showNotice}
-    <div
-      class="flex flex-wrap items-start gap-2 rounded-lg border border-theme-primary/40 bg-theme-primary/5 p-3"
-    >
-      <p class="flex-1 text-micro text-theme-text">{AI_NOTICE_TEXT}</p>
-      <button
-        type="button"
-        aria-label="Dismiss AI notice"
-        onclick={dismissNotice}
-        class="text-micro font-bold uppercase tracking-widest text-theme-muted hover:text-theme-text"
-      >
-        Dismiss
-      </button>
-    </div>
-  {/if}
-
   {#if terrainFallbackMessage()}
     <p class="text-micro text-theme-muted">{terrainFallbackMessage()}</p>
   {/if}

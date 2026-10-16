@@ -113,12 +113,14 @@ function setup(
   const vault = {
     entities,
     maps,
-    createEntity: vi.fn(async (type: string, title: string) => {
-      created += 1;
-      const id = `new-${created}`;
-      entities[id] = entity(id, type, title);
-      return id;
-    }),
+    createEntity: vi.fn(
+      async (type: string, title: string, _data?: Partial<Entity>) => {
+        created += 1;
+        const id = `new-${created}`;
+        entities[id] = entity(id, type, title);
+        return id;
+      },
+    ),
     addConnection: vi.fn(async () => undefined),
   };
 
@@ -182,6 +184,44 @@ describe("HexDiscoveryController (T060, FR-021, FR-043)", () => {
     expect(h.store.recordFor(MAP_ID, HEX)?.draft?.source).toBe("ai");
   });
 
+  it("removes remote Markdown and HTML images from saved AI entity content", async () => {
+    const modelOutput = {
+      ...VALID_OUTPUT,
+      landmark: {
+        title: "The Glass Obelisk",
+        description:
+          'A spire. ![tracking](https://tracker.example/pixel.png) <img src="https://tracker.example/raw.png">',
+      },
+    };
+    const h = setup({ modelText: JSON.stringify(modelOutput) });
+    await h.controller.explore(MAP_ID, HEX, new AbortController().signal);
+    expect(
+      h.store.recordFor(MAP_ID, HEX)?.draft?.parts.landmark.text,
+    ).not.toContain("https://tracker.example");
+
+    const legacyDraft = h.store.recordFor(MAP_ID, HEX)?.draft;
+    expect(legacyDraft).toBeDefined();
+    await h.store.setDraft(MAP_ID, HEX, {
+      ...legacyDraft!,
+      parts: {
+        ...legacyDraft!.parts,
+        landmark: {
+          ...legacyDraft!.parts.landmark,
+          text: 'Old draft\n![tracking](https://tracker.example/pixel.png) <img src="https://tracker.example/raw.png">',
+        },
+      },
+    });
+    await h.controller.saveEntityPart(MAP_ID, HEX, "landmark", {
+      linkTicked: false,
+    });
+
+    const savedEntity = vi.mocked(h.vault.createEntity).mock.calls[0]?.[2];
+    expect(savedEntity?.content).toContain("tracking");
+    expect(savedEntity?.content).not.toContain("https://tracker.example");
+    expect(savedEntity?.content).not.toContain("![");
+    expect(savedEntity?.content).not.toContain("<img");
+  });
+
   it("returns the pending draft instead of generating again", async () => {
     const h = setup();
     await h.controller.explore(MAP_ID, HEX, new AbortController().signal);
@@ -195,6 +235,43 @@ describe("HexDiscoveryController (T060, FR-021, FR-043)", () => {
 
     expect(h.getModel).not.toHaveBeenCalled();
     expect(again.draft?.source).toBe("ai");
+  });
+
+  it("does not persist a result if its signal was aborted during generation", async () => {
+    const h = setup();
+    const deps = (
+      h.controller as unknown as { deps: HexDiscoveryControllerDeps }
+    ).deps;
+    let finish!: (
+      result: Awaited<ReturnType<HexDiscoveryService["generate"]>>,
+    ) => void;
+    deps.service = {
+      generate: () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+    } as unknown as HexDiscoveryService;
+    const controller = new AbortController();
+    const pending = h.controller.explore(MAP_ID, HEX, controller.signal);
+    controller.abort();
+    finish({
+      draft: {
+        source: "ai",
+        createdAt: NOW,
+        parts: {
+          landmark: { text: "A", source: "ai", status: "pending" },
+          encounter: { text: "B", source: "ai", status: "pending" },
+          hazard: { text: "C", source: "ai", status: "pending" },
+          secret: { text: "D", source: "ai", status: "pending" },
+          factionPresence: { text: "E", source: "ai", status: "pending" },
+          atmosphere: { text: "F", source: "ai", status: "pending" },
+        },
+      },
+      fellBackToTables: false,
+    });
+
+    await expect(pending).rejects.toMatchObject({ name: "AbortError" });
+    expect(h.store.recordFor(MAP_ID, HEX)?.draft).toBeUndefined();
   });
 
   it("never calls the model when AI is disabled, and rolls on the tables instead (FR-043)", async () => {

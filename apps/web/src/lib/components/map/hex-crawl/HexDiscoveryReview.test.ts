@@ -4,7 +4,6 @@ import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import type { HexDiscoveryDraft } from "hex-crawl-engine";
 import HexDiscoveryReview from "./HexDiscoveryReview.svelte";
-import { AI_NOTICE_KEY } from "./hex-discovery-notice";
 import type { HexDiscoveryControls } from "./discovery-controls";
 
 function makeDraft(
@@ -47,21 +46,9 @@ function makeControls(overrides: Partial<HexDiscoveryControls> = {}) {
   return controls;
 }
 
-function memoryStorage(initial: Record<string, string> = {}) {
-  const data = { ...initial };
-  return {
-    getItem: (key: string) => data[key] ?? null,
-    setItem: (key: string, value: string) => {
-      data[key] = value;
-    },
-    data,
-  };
-}
-
 function renderReview(overrides: Partial<Record<string, unknown>> = {}) {
   const controls = makeControls();
   const onCancel = vi.fn();
-  const storage = memoryStorage();
   render(HexDiscoveryReview, {
     draft: makeDraft(),
     controls,
@@ -69,12 +56,10 @@ function renderReview(overrides: Partial<Record<string, unknown>> = {}) {
     factionMatch: null,
     failure: null,
     customTerrainLabel: undefined,
-    aiEnabled: false,
-    storage,
     onCancel,
     ...overrides,
   });
-  return { controls, onCancel, storage };
+  return { controls, onCancel };
 }
 
 describe("HexDiscoveryReview", () => {
@@ -195,8 +180,6 @@ describe("HexDiscoveryReview", () => {
       proposedLink: null,
       factionMatch: null,
       failure: null,
-      aiEnabled: false,
-      storage: memoryStorage(),
       onCancel: vi.fn(),
     });
 
@@ -216,46 +199,30 @@ describe("HexDiscoveryReview", () => {
     expect(status.getAttribute("aria-live")).toBe("polite");
   });
 
-  it("shows the AI notice until dismissed, then keeps it hidden on this device", async () => {
-    const storage = memoryStorage();
-    const first = render(HexDiscoveryReview, {
-      draft: makeDraft("ai"),
-      controls: makeControls(),
-      proposedLink: null,
-      factionMatch: null,
-      failure: null,
-      aiEnabled: true,
-      storage,
-      onCancel: vi.fn(),
-    });
-
-    expect(
-      screen.getByText(
-        /Exploring sends this hex's terrain, notes and nearby lore/,
+  it("aborts active regeneration when the review unmounts", async () => {
+    let seen: AbortSignal | undefined;
+    const controls = makeControls({
+      regenerate: vi.fn(
+        (_part, signal) =>
+          new Promise<void>(() => {
+            seen = signal;
+          }),
       ),
-    ).toBeTruthy();
-    await fireEvent.click(
-      screen.getByRole("button", { name: "Dismiss AI notice" }),
-    );
-    expect(storage.data[AI_NOTICE_KEY]).toBe("1");
-    first.unmount();
-
-    render(HexDiscoveryReview, {
+    });
+    const view = render(HexDiscoveryReview, {
       draft: makeDraft("ai"),
-      controls: makeControls(),
+      controls,
       proposedLink: null,
       factionMatch: null,
       failure: null,
-      aiEnabled: true,
-      storage,
       onCancel: vi.fn(),
     });
-    expect(screen.queryByText(/Exploring sends this hex/)).toBeNull();
-  });
 
-  it("does not show the AI notice when AI is disabled", () => {
-    renderReview({ aiEnabled: false });
-
-    expect(screen.queryByText(/Exploring sends this hex/)).toBeNull();
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Regenerate Secret" }),
+    );
+    expect(seen?.aborted).toBe(false);
+    view.unmount();
+    expect(seen?.aborted).toBe(true);
   });
 });

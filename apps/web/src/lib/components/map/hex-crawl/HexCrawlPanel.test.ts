@@ -21,6 +21,7 @@ vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({ modalUIStore: modalMock }));
 
 import HexCrawlPanel from "./HexCrawlPanel.svelte";
 import { HEX_HINT_KEY } from "./hex-crawl-hint";
+import { AI_NOTICE_KEY } from "./hex-discovery-notice";
 
 const GRID = {
   orientation: "pointy",
@@ -253,6 +254,32 @@ describe("HexCrawlPanel", () => {
       renderPanel(store, { revealed: false, discovery });
 
       await fireEvent.click(screen.getByRole("button", { name: "Explore" }));
+      expect(discovery.explore).toHaveBeenCalledWith(expect.any(AbortSignal));
+    });
+
+    it("requires acknowledgement before the first AI-backed Explore", async () => {
+      const { store } = makeHarness();
+      const storage = memoryStorage();
+      const discovery = discoveryStub({ aiEnabled: true });
+      renderPanel(store, { revealed: false, discovery, storage });
+
+      expect(
+        screen.getByText(
+          /Exploring sends this hex's terrain, notes and nearby lore/,
+        ),
+      ).toBeTruthy();
+      const explore = screen.getByRole("button", { name: "Explore" });
+      expect(explore.hasAttribute("disabled")).toBe(true);
+      await fireEvent.click(explore);
+      expect(discovery.explore).not.toHaveBeenCalled();
+      expect(storage.data[AI_NOTICE_KEY]).toBeUndefined();
+
+      await fireEvent.click(
+        screen.getByRole("button", { name: "Acknowledge AI notice" }),
+      );
+      expect(storage.data[AI_NOTICE_KEY]).toBe("1");
+      expect(explore.hasAttribute("disabled")).toBe(false);
+      await fireEvent.click(explore);
       expect(discovery.explore).toHaveBeenCalledWith(expect.any(AbortSignal));
     });
 

@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { hexToPoint, type HexGridConfig } from "map-engine";
+  import { hexToPoint, pointToHex, type HexGridConfig } from "map-engine";
   import type { Point } from "schema";
-  import { parseHexKey, terrainIcon, type HexRecord } from "hex-crawl-engine";
+  import { terrainIcon, type HexRecord } from "hex-crawl-engine";
 
   let {
     records,
@@ -9,6 +9,7 @@
     showTerrainIcons,
     gridConfig,
     project,
+    unproject,
     viewport,
     zoom,
   }: {
@@ -18,6 +19,7 @@
     showTerrainIcons: boolean;
     gridConfig: HexGridConfig;
     project: (point: Point) => Point;
+    unproject: (point: Point) => Point;
     viewport: { width: number; height: number };
     zoom: number;
   } = $props();
@@ -28,19 +30,33 @@
     if (!visible) return [];
     const items: { key: string; x: number; y: number; record: HexRecord }[] =
       [];
-    for (const [key, record] of Object.entries(records)) {
-      const hex = parseHexKey(key);
-      if (!hex) continue;
-      const pos = project(hexToPoint(hex, gridConfig));
-      if (
-        pos.x < -MARGIN ||
-        pos.y < -MARGIN ||
-        pos.x > viewport.width + MARGIN ||
-        pos.y > viewport.height + MARGIN
-      ) {
-        continue;
+    const corners = [
+      unproject({ x: -MARGIN, y: -MARGIN }),
+      unproject({ x: viewport.width + MARGIN, y: -MARGIN }),
+      unproject({ x: -MARGIN, y: viewport.height + MARGIN }),
+      unproject({ x: viewport.width + MARGIN, y: viewport.height + MARGIN }),
+    ].map((point) => pointToHex(point, gridConfig));
+    const minQ = Math.min(...corners.map(({ q }) => q)) - 2;
+    const maxQ = Math.max(...corners.map(({ q }) => q)) + 2;
+    const minR = Math.min(...corners.map(({ r }) => r)) - 2;
+    const maxR = Math.max(...corners.map(({ r }) => r)) + 2;
+
+    for (let q = minQ; q <= maxQ; q++) {
+      for (let r = minR; r <= maxR; r++) {
+        const key = `${q},${r}`;
+        const record = records[key];
+        if (!record) continue;
+        const pos = project(hexToPoint({ q, r }, gridConfig));
+        if (
+          pos.x < -MARGIN ||
+          pos.y < -MARGIN ||
+          pos.x > viewport.width + MARGIN ||
+          pos.y > viewport.height + MARGIN
+        ) {
+          continue;
+        }
+        items.push({ key, x: pos.x, y: pos.y, record });
       }
-      items.push({ key, x: pos.x, y: pos.y, record });
     }
     return items;
   });

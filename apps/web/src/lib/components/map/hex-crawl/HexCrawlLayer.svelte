@@ -109,16 +109,16 @@
     mapStore.updateViewport({ x: -point.x * zoom, y: -point.y * zoom }, zoom);
   }
 
-  function openOffered() {
+  function openOffered(opener: HTMLElement) {
     if (!offered) return;
-    services.store.openHex(offered.mapId, offered.hex);
+    services.store.openHex(offered.mapId, offered.hex, opener);
     services.offer.current = null;
   }
 
-  function goTo(hex: HexCoord) {
+  function goTo(hex: HexCoord, opener: HTMLElement) {
     if (!mapId) return;
     centreOn(hex);
-    services.store.openHex(mapId, hex);
+    services.store.openHex(mapId, hex, opener);
   }
 
   const project = (point: Point) => mapStore.project(point);
@@ -132,6 +132,7 @@
     showTerrainIcons={mapStore.showTerrainIcons}
     gridConfig={config}
     {project}
+    unproject={(point) => mapStore.unproject(point)}
     viewport={viewportSize}
     {zoom}
   />
