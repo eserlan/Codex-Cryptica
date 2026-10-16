@@ -41,7 +41,7 @@
     <div class="min-w-0 flex-1">
       <div class="flex items-center gap-1.5 mb-1">
         <span
-          class="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-micro font-bold uppercase tracking-wider bg-theme-primary/15 text-theme-primary"
+          class="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-micro font-bold uppercase tracking-wider bg-theme-primary/15 text-theme-text"
         >
           <span class="icon-[lucide--sparkles] h-3 w-3" aria-hidden="true"
           ></span>
