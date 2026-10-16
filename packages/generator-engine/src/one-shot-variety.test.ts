@@ -41,13 +41,15 @@ describe("one-shot seed pools", () => {
     expect(seedKeyForGenre("Post-Apocalyptic")).toBe("wasteland");
     expect(seedKeyForGenre("Western / Frontier")).toBe("frontier");
     expect(seedKeyForGenre("Classic Fantasy")).toBe("fantasy");
-    expect(seedKeyForGenre("Vampire / Gothic Noir")).toBe("horror");
+    expect(seedKeyForGenre("Vampire / Gothic Noir")).toBe("darkfantasy");
+    expect(seedKeyForGenre("Cosmic Horror")).toBe("horror");
     expect(seedKeyForGenre("Something new")).toBe("fantasy");
   });
 
-  it("maps the eight builder genres onto eight different buckets", () => {
+  it("maps every builder genre onto a seed pool, and reaches all eight pools", () => {
     const buckets = oneShotConfig.genres.map(seedKeyForGenre);
-    expect(new Set(buckets).size).toBe(oneShotConfig.genres.length);
+    for (const key of buckets) expect(ONE_SHOT_SEEDS[key]).toBeDefined();
+    expect(new Set(buckets)).toEqual(new Set(Object.keys(ONE_SHOT_SEEDS)));
   });
 
   it("only uses placeholders the builder fills in", () => {

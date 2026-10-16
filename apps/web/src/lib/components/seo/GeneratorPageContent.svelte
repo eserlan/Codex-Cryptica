@@ -87,6 +87,7 @@
     mapShipGenreToTheme,
     mapStarSystemGenreToTheme,
     mapWorldGenreToTheme,
+    mapOneShotGenreToTheme,
     resolveHubGeneratorGenre,
     shouldSyncGeneratorTheme,
   } from "./generator-theme-maps";
@@ -786,6 +787,8 @@
       artifact,
       creature,
       tome,
+      oneShot,
+      mapOneShotGenre: mapOneShotGenreToTheme,
       themeToQuestGenre,
       mapSocialHubGenre: (genre) =>
         SOCIAL_HUB_GENRE_TO_THEME[genre] ?? "Classic Fantasy",

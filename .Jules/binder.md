@@ -314,3 +314,9 @@
 **Learning:** When defining default factory functions for dependencies like IDs, relying on browser globals like `crypto.randomUUID()` introduces a hidden hardcoded dependency that cannot be intercepted by standard testing mocks without polluting the global scope.
 
 **Action:** Always utilize centralized dependency injection utilities like `@codex/runtime`'s `systemIdGenerator` which defaults to `crypto.randomUUID()` but provides a testable seam to mock IDs deterministically across the codebase.
+
+## 2026-10-15 - Inject StorageLike to remove jsdom in preference tests
+
+**Learning:** When tests for simple preference utilities rely on `@vitest-environment jsdom` and global `localStorage` mocks, they become brittle and slow. In components like `zen-sidebar-preference`, direct `localStorage` usage hid the storage dependency.
+
+**Action:** Inject `StorageLike` (defaulting to `browserStorage`) into preference read/write functions. This allows tests to pass an isolated in-memory `Map`-backed fake, removing the need for jsdom and global prototype mocking.

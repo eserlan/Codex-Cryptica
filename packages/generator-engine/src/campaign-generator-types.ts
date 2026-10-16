@@ -5,7 +5,8 @@
  * app builds the bounded {@link GeneratorVaultContext} and injects vault
  * persistence dependencies into {@link CampaignGeneratorService}.
  */
-import type { LanguageProfileV1 } from "schema";
+import type { LanguageProfileV1, StatSheet } from "schema";
+import type { GeneratorMechanicsBundle } from "./tov-mechanics-schema";
 import type { OverusedNamePatterns } from "./naming-policy";
 import type { StarSystemBody } from "./public-star-system";
 import type {
@@ -86,6 +87,9 @@ export interface GeneratorOptionDefinition {
   description?: string;
   control: "radio" | "select" | "checkbox" | "text" | "textarea" | "number";
   choices?: Array<{ value: string; label: string }>;
+  min?: number;
+  max?: number;
+  step?: number;
   required?: boolean;
   defaultValue?: unknown;
   visibleWhen?: {
@@ -150,6 +154,10 @@ export interface GeneratorOutput {
   interpretations?: ConstellationInterpretation[];
   /** Night-sky mode's full set of constellations for one culture. */
   nightSky?: NightSkyData;
+  /** Structured system mechanics (e.g. Tales of the Valiant BFRD stats). */
+  mechanics?: GeneratorMechanicsBundle;
+  /** Associated game system id (e.g. "tales-of-the-valiant"). */
+  systemId?: string;
 }
 
 /** An excerpt of an existing entity included in {@link GeneratorVaultContext}. */
@@ -298,6 +306,12 @@ export interface GeneratedDraft {
    * that grounded this generation.
    */
   contextProvenance?: Array<{ id: string; title: string }>;
+  /** Structured system mechanics (e.g. Tales of the Valiant BFRD stats). */
+  mechanics?: GeneratorMechanicsBundle;
+  /** Associated game system id (e.g. "tales-of-the-valiant"). */
+  systemId?: string;
+  /** Bound stat sheet to attach upon vault save. */
+  statSheet?: StatSheet;
 }
 
 /** The user's explicit decision to save a reviewed draft. */

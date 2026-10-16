@@ -270,4 +270,45 @@ describe("TokenQuickStats", () => {
     expect(screen.queryByTestId("token-tov-luck")).toBeNull();
     expect(screen.getByTestId("token-quick-stats-empty")).toBeTruthy();
   });
+
+  it("always shows ToV Doom for monster template and persists changes", async () => {
+    const entity = buildEntity({
+      statSheet: {
+        templateId: "builtin-tov-monster",
+        fields: [
+          {
+            id: "doom",
+            label: "Doom Points",
+            type: "counter",
+            value: 3,
+            min: 0,
+            max: 10,
+          },
+        ],
+      },
+    });
+    render(TokenQuickStats, { entity });
+    expect(screen.getByTestId("token-tov-doom-value").textContent).toMatch(
+      /3\s*\/\s*10/,
+    );
+    await fireEvent.click(screen.getByLabelText("Spend 1 Doom Points"));
+    expect(updateEntity).toHaveBeenCalledWith("goblin-1", {
+      statSheet: {
+        templateId: "builtin-tov-monster",
+        fields: [expect.objectContaining({ id: "doom", value: 2 })],
+      },
+    });
+  });
+
+  it("omits ToV Doom for non-ToV templates", () => {
+    const entity = buildEntity({
+      statSheet: {
+        templateId: "builtin-mythras-character",
+        fields: [{ id: "doom", label: "Doom", type: "counter", value: 3 }],
+      },
+    });
+    render(TokenQuickStats, { entity });
+    expect(screen.queryByTestId("token-tov-doom")).toBeNull();
+    expect(screen.getByTestId("token-quick-stats-empty")).toBeTruthy();
+  });
 });

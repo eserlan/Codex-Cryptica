@@ -48,6 +48,7 @@ export const ImportDraftSchema = z.object({
     )
     .optional(),
   discoverySource: z.string().optional(),
+  systemId: z.string().optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
   /**
    * A rasterized diagram (e.g. the star-system generator's orbital diagram)
@@ -166,6 +167,7 @@ export class SeoImportService {
               ...(draft.discoverySource
                 ? { discoverySource: draft.discoverySource }
                 : {}),
+              systemId: draft.systemId,
               ...(draft.metadata ? { metadata: draft.metadata } : {}),
             },
           );

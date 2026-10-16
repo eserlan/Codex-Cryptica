@@ -1,6 +1,11 @@
 import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
 import type { ProvenanceRecord, SessionEntity } from "generator-engine";
 
+import type {
+  TovMagicItemMechanics,
+  TovEncounterMechanics,
+} from "generator-engine";
+
 export interface GeneratorSaveLayout {
   content: string;
   lore: string;
@@ -14,7 +19,9 @@ export interface GeneratorSavePayload {
   lore: string;
   labels: string[];
   status: GeneratorOutput["status"];
+  systemId?: string;
   mapImageDataUrl?: string;
+  metadata?: Record<string, unknown>;
 }
 
 export interface HubSaveDraft {
@@ -28,7 +35,93 @@ export interface HubSaveDraft {
   references?: string[];
 }
 
+function formatTovMagicItemMarkdown(item: TovMagicItemMechanics): string {
+  const parts: string[] = ["### Game Statistics (Tales of the Valiant)"];
+  parts.push(`- **Rarity & Category:** ${item.rarity} ${item.category}`);
+  parts.push(
+    `- **Attunement:** ${item.attunement ? (item.attunementRequirement ? `Requires attunement (${stripMarkdownImages(item.attunementRequirement)})` : "Requires attunement") : "No"}`,
+  );
+  parts.push(`- **Activation:** ${item.activationAction}`);
+  if (item.charges) {
+    parts.push(
+      `- **Charges:** ${item.charges} ${item.rechargeRate ? `(${stripMarkdownImages(item.rechargeRate)})` : ""}`.trim(),
+    );
+  }
+  if (item.savingThrowDc) {
+    parts.push(`- **Saving Throw DC:** ${item.savingThrowDc}`);
+  }
+  if (item.rulesText) {
+    parts.push(`\n${stripMarkdownImages(item.rulesText)}`);
+  }
+  return parts.join("\n");
+}
+
+function formatTovEncounterMarkdown(encounter: TovEncounterMechanics): string {
+  const parts: string[] = [
+    "### Game Mechanics & Challenge Guidance (Tales of the Valiant)",
+  ];
+  parts.push(
+    `- **Challenge Assessment:** ${stripMarkdownImages(encounter.qualitativeDifficulty)}`,
+  );
+  parts.push(
+    `- **Recommended CR Distribution:** ${stripMarkdownImages(encounter.recommendedCrRange)}`,
+  );
+  if (encounter.suggestedCreatures?.length) {
+    parts.push("- **Suggested Participants:**");
+    for (const c of encounter.suggestedCreatures) {
+      const homebrewTag = c.isHomebrew ? " *(Homebrew)*" : "";
+      parts.push(
+        `  - ${c.count}x ${stripMarkdownImages(c.name)} (CR ${c.cr}, ${stripMarkdownImages(c.role)})${homebrewTag}`,
+      );
+    }
+  }
+  if (encounter.tacticalAdvice) {
+    parts.push(
+      `- **Tactical Guidance:** ${stripMarkdownImages(encounter.tacticalAdvice)}`,
+    );
+  }
+  if (encounter.doomNotes) {
+    parts.push(
+      `- **Doom Guidance:** ${stripMarkdownImages(encounter.doomNotes)}`,
+    );
+  }
+  return parts.join("\n");
+}
+
+/** Keep untrusted rules text from persisting Markdown or HTML image requests. */
+function stripMarkdownImages(text: string): string {
+  return text
+    .replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/!\[([^\]]*)\]\[[^\]]*\]/g, "$1")
+    .replace(/<img\b[^>]*>/gi, "");
+}
+
 /** Build the vault payload while keeping adventure-specific layout rules out of the page. */
+function resolveMechanicsSaveExtension(
+  mechanics: GeneratorOutput["mechanics"],
+): {
+  markdown?: string;
+  metadata?: Record<string, unknown>;
+} {
+  if (!mechanics) return {};
+
+  if (mechanics.kind === "tov-magic-item") {
+    return {
+      markdown: formatTovMagicItemMarkdown(mechanics.data),
+      metadata: { tovMechanics: mechanics.data },
+    };
+  }
+
+  if (mechanics.kind === "tov-encounter") {
+    return {
+      markdown: formatTovEncounterMarkdown(mechanics.data),
+      metadata: { tovMechanics: mechanics.data },
+    };
+  }
+
+  return {};
+}
+
 export function buildGeneratorSavePayload(
   data: GeneratorOutput,
   layout: GeneratorSaveLayout,
@@ -43,9 +136,14 @@ export function buildGeneratorSavePayload(
     : data.summary
       ? `*${data.summary}*\n\n${layout.content}`
       : layout.content;
-  const lore = isAdventure
+  let lore = isAdventure
     ? [data.content, data.lore].filter(Boolean).join("\n\n")
     : layout.lore;
+
+  const { markdown, metadata } = resolveMechanicsSaveExtension(data.mechanics);
+  if (markdown) {
+    lore = lore ? `${lore}\n\n${markdown}` : markdown;
+  }
 
   return {
     type: isAdventure ? "note" : data.type,
@@ -55,7 +153,9 @@ export function buildGeneratorSavePayload(
     lore,
     labels: data.labels,
     status: data.status,
+    systemId: data.systemId ?? data.mechanics?.systemId,
     ...(mapImageDataUrl ? { mapImageDataUrl } : {}),
+    ...(metadata ? { metadata } : {}),
   };
 }
 
