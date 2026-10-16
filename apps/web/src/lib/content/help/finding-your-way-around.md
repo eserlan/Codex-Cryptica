@@ -25,7 +25,7 @@ The **top bar** across the top of the screen holds search, **Create**, your vaul
 The Activity Bar has two kinds of button:
 
 - **Views** take you to a different screen. The button for the screen you are on is highlighted.
-- **Tools** open something beside or on top of the screen you are on, such as a panel. Click the button again to close it.
+- **Tools** open something beside or on top of the screen you are on, such as a panel. Click the button again to close it. The one exception is the Session Journal button, which only opens the journal. Close it with the **Notes** button.
 
 ## Views
 
@@ -41,16 +41,16 @@ The Activity Bar has two kinds of button:
 
 ## Tools
 
-| Button                                    | What it does                                                                                    | Read more                                               |
-| ----------------------------------------- | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
-| **Entities**                              | Opens the Entity Explorer, a searchable list of your entries beside whatever screen you are on. | [Entity Explorer](/help#help/entity-explorer)           |
-| **Oracle**                                | Opens the Lore Oracle, the optional AI assistant for your world. You choose when to use it.     | [Lore Oracle](/help#help/oracle-guide)                  |
-| **Generators**                            | Opens the generators for characters, factions, locations and campaign lore.                     | [In-App Generators](/help#help/in-app-generators)       |
-| **Shelf**                                 | Opens the Shelf, where you carry entries from one vault into another.                           | [The Shelf](/help#help/entity-shelf)                    |
-| **Notes**                                 | Opens the QuickNote scratchpad for jotting things down. A badge counts your active notes.       | [QuickNote](/help#help/quicknote)                       |
-| **Start / Open / Resume Session Journal** | Opens the Session Journal, a running record of your session. Its name changes with its state.   | [QuickNote](/help#help/quicknote)                       |
-| **Chat**                                  | Lets you speak with characters in-character, where the vault has Guest Chat available.          | [Guest Character Chat](/help#help/guest-character-chat) |
-| **Ask Cif** (bottom of the bar)           | Opens Cif, the in-app guide, so you can ask how to do something.                                | [Cif](/help#help/help-assistant)                        |
+| Button                                    | What it does                                                                                                                                                | Read more                                               |
+| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| **Entities**                              | Opens the Entity Explorer, a searchable list of your entries beside whatever screen you are on.                                                             | [Entity Explorer](/help#help/entity-explorer)           |
+| **Oracle**                                | Opens the Lore Oracle, the optional AI assistant for your world. You choose when to use it.                                                                 | [Lore Oracle](/help#help/oracle-guide)                  |
+| **Generators**                            | Opens the generators for characters, factions, locations and campaign lore.                                                                                 | [In-App Generators](/help#help/in-app-generators)       |
+| **Shelf**                                 | Opens the Shelf, where you carry entries from one vault into another.                                                                                       | [The Shelf](/help#help/entity-shelf)                    |
+| **Notes**                                 | Opens the QuickNote scratchpad for jotting things down. A badge counts your active notes.                                                                   | [QuickNote](/help#help/quicknote)                       |
+| **Start / Open / Resume Session Journal** | Opens the Session Journal, a running record of your session, in the QuickNote window. Clicking it again does not close it. Its name changes with its state. | [QuickNote](/help#help/quicknote)                       |
+| **Chat**                                  | Lets you speak with characters in-character, where the vault has Guest Chat available.                                                                      | [Guest Character Chat](/help#help/guest-character-chat) |
+| **Ask Cif** (bottom of the bar)           | Opens Cif, the in-app guide, so you can ask how to do something.                                                                                            | [Cif](/help#help/help-assistant)                        |
 
 ## The top bar
 

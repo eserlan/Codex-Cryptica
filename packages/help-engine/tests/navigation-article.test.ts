@@ -86,6 +86,36 @@ describe("sidebar overview article", () => {
   });
 });
 
+/** The source of one nav item, from its id up to the next item's id. */
+export function navItemSource(navSource: string, id: string): string {
+  const start = navSource.indexOf(`id: "${id}"`);
+  if (start < 0) return "";
+  const next = navSource.indexOf("\n    items.push", start);
+  return navSource.slice(start, next < 0 ? undefined : next);
+}
+
+describe("which tools close when clicked again", () => {
+  it("says the Session Journal button only opens the journal", () => {
+    // The article says tools close when clicked again, with this one
+    // exception. If the button is changed to toggle, the article is wrong.
+    const journal = navItemSource(nav, "session-journal");
+    expect(journal).toContain("openJournal()");
+    expect(journal).not.toMatch(/toggle/i);
+    expect(article).toContain("Clicking it again does not close it");
+    expect(article).toContain("Close it with the **Notes** button");
+  });
+
+  it("closes with the Notes button, which really toggles", () => {
+    expect(navItemSource(nav, "quicknote")).toContain(
+      "quickNoteStore.toggle()",
+    );
+  });
+
+  it("finds nothing for a tool that does not exist", () => {
+    expect(navItemSource(nav, "no-such-tool")).toBe("");
+  });
+});
+
 describe("top bar section of the overview article", () => {
   it("finds the controls it is meant to check", () => {
     const labels = topBarLabels();
