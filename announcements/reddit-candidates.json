@@ -1,5 +1,5 @@
 {
-  "updated_at": 1792167811,
+  "updated_at": 1792169071,
   "candidates": [
     {
       "id": "reddit-38391363178-five-new-answer-guides-from-first-dm-ner",
@@ -42,14 +42,14 @@
       "created_at": 1792137167
     },
     {
-      "id": "reddit-38926756319-trying-chronica-i-added-a-comparison-and",
-      "title": "Trying Chronica? I added a comparison and a bulk import",
-      "body": "Moving a campaign off a hosted tool usually breaks in the same place: you copy locations one by one, secrets end up in player-facing text, and the links that made the place make sense disappear.\n\nI added two things for Chronica: a straight comparison page and a bulk import that takes Chronica JSON exports at once and keeps that structure intact.\n\nNo account needed to compare or to preview. The comparison tries to say where Chronica is still the better fit, and the import leaves your original files untouched so you can run them side by side.\n\n- places become Locations\n- GM secrets stay in private lore, not in the main description\n- links become real connections in the graph\n- drop multiple JSON files at once, review everything before anything is written to the vault\n\nI have not tried to map every Chronica-specific field one to one, so a few notes may land as lore to edit after import rather than as a perfect typed entity.\n\nIf you have moved a campaign off a hosted wiki before, what broke first for you, the secrets or the connections?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-38926756319-1.png)",
-      "url": "https://codexcryptica.com/vs/chronica",
-      "image_url": "https://assets.codexcryptica.com/announcements/release-38926756319-1.png",
+      "id": "reddit-38926756319-a-starting-point-for-tales-of-the-valian",
+      "title": "A starting point for Tales of the Valiant in Codex",
+      "body": "Starting a Tales of the Valiant campaign had me flipping tabs: lineage versus heritage, how Luck and Doom should sit on the sheet, and what a BFRD sheet should actually track once play starts.\n\nI put together an onboarding hub for Black Flag tables: a For pack that gathers the workflow in one place, a help guide and answer framework that explains the choices in Codex terms.\n\nYou can read it without importing anything, or use it as the base and add your house rules after.\n\nhttps://codexcryptica.com/for/tales-of-the-valiant\n\n- lineage versus heritage explained as Codex options, not just rules text\n- interactive Luck and Doom tracking on the stat sheet and on VTT tokens, spend and recover where you play\n- BFRD stat-sheet templates that match the pack\n- links to the generators that fit a ToV tone, without turning every NPC into generic fantasy\n\nIt is opinionated toward BFRD as the reference, so if your table uses a different variant you will still tweak a few fields.\n\nFor your ToV table, do you keep Luck visible to everyone and Doom a little more private, or track both openly?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-38926756319-2.png)",
+      "url": "https://codexcryptica.com/for/tales-of-the-valiant",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-38926756319-2.png",
       "source_id": "38926756319",
       "status": "approved",
-      "created_at": 1792167811
+      "created_at": 1792169071
     }
   ]
 }
