@@ -306,6 +306,7 @@
               {@const isSelected = selectedPalette.id === palette.id}
               <button
                 type="button"
+                aria-pressed={isSelected}
                 onclick={() => (selectedPalette = palette)}
                 class="flex items-center gap-2 p-2 rounded-xl text-left border transition-all cursor-pointer {isSelected
                   ? 'bg-theme-base border-theme-accent ring-2 ring-theme-accent/40 shadow-sm'
@@ -388,6 +389,7 @@
               {@const isActive = selectedGenre === chip.id}
               <button
                 type="button"
+                aria-pressed={isActive}
                 data-testid="genre-filter-{chip.id}"
                 onclick={() => (selectedGenre = chip.id)}
                 class="px-3 py-1 rounded-full whitespace-nowrap transition-colors cursor-pointer {isActive
@@ -418,6 +420,7 @@
               {@const isActive = selectedCategory === chip.id}
               <button
                 type="button"
+                aria-pressed={isActive}
                 data-testid="category-filter-{chip.id}"
                 onclick={() => (selectedCategory = chip.id)}
                 class="px-2.5 py-1 rounded-lg whitespace-nowrap transition-colors cursor-pointer {isActive
@@ -495,6 +498,7 @@
               {@const isHovered = hoveredSilhouette?.id === s.id}
               <button
                 type="button"
+                aria-pressed={isSelected}
                 data-testid="silhouette-card"
                 data-silhouette-id={s.id}
                 onclick={() => (selectedSilhouetteId = s.id)}
