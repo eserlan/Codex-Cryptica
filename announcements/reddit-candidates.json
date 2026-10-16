@@ -1,5 +1,5 @@
 {
-  "updated_at": 1792137167,
+  "updated_at": 1792166312,
   "candidates": [
     {
       "id": "reddit-38391363178-five-new-answer-guides-from-first-dm-ner",
@@ -40,6 +40,16 @@
       "source_id": "38865885868",
       "status": "approved",
       "created_at": 1792137167
+    },
+    {
+      "id": "reddit-38926756319-point-crawl-networks-you-can-actually-tr",
+      "title": "Point-crawl networks you can actually traverse",
+      "body": "My travel maps kept falling into two bad shapes: a hex grid where nothing happened for days, or a single road the party had to follow because I had not given them a real choice.\n\nI built a point-crawl generator that drafts a small network of named places and the routes between them, and checks that keys come before locks so the network is traversable without me patching it after.\n\nIt sits with the other generators and is meant for overland stretches, city underworlds, or station-to-station crawls where the route is the decision.\n\n- key-before-lock playability on every draft, so a locked route never appears without its key somewhere reachable\n- interactive graph you can drag and inspect, each route shows its cost and hazard without opening five entities\n- refine a single node or a single route when one piece is off, instead of rerolling the whole network\n- save as linked Location entities with Routes in private lore plus an overview Note that maps to your vault\n\nIt leans toward small, hand-holdable networks rather than a big frontier survey. A sprawling wilderness where the point is not knowing what is out there still wants a hex map.\n\nWhen you run travel, do your players choose a route for time, for safety, or for what they might stumble into along the way?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-38926756319-0.png)",
+      "url": "https://codexcryptica.com/generators/point-crawl",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-38926756319-0.png",
+      "source_id": "38926756319",
+      "status": "approved",
+      "created_at": 1792166312
     }
   ]
 }
