@@ -81,6 +81,7 @@ describe("proof-of-concept registry", () => {
         "entity-explorer",
         "entity-shelf",
         "solo-session",
+        "app-navigation",
       ].sort(),
     );
   });
