@@ -130,6 +130,7 @@ export const howDoYouTrackUnresolvedPlotHooksInAnRpgCampaign: AnswerConfigInput 
       },
     ],
     relatedAnswers: [
+      "how-do-i-organise-a-tales-of-the-valiant-campaign",
       "how-do-you-organise-rpg-campaign-notes",
       "how-do-you-organise-npc-relationships",
       "how-much-prep-do-you-need-for-an-rpg-session",

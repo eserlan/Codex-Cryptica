@@ -29,6 +29,48 @@ describe("help registry against the real in-app help articles", () => {
     expect(helpIds.has("session-hub")).toBe(true);
   });
 
+  it("includes the Tales of the Valiant campaign guide article", () => {
+    expect(helpIds.has("tales-of-the-valiant")).toBe(true);
+    const tovArticle = articles.find((a) => a.id === "tales-of-the-valiant");
+    expect(tovArticle).toBeDefined();
+    expect(tovArticle?.title).toBe(
+      "Tales of the Valiant (BFRD) Campaign Guide",
+    );
+    expect(tovArticle?.content).toContain("Luck");
+    expect(tovArticle?.content).toContain("Doom");
+  });
+
+  it("states the current ToV profile, import, and Luck reset limitations", () => {
+    const tovArticle = articles.find((a) => a.id === "tales-of-the-valiant");
+    expect(tovArticle?.content).toContain(
+      "Vault-wide system profile selection is not currently available",
+    );
+    expect(tovArticle?.content).toContain(
+      "does not currently import ToV character JSON",
+    );
+    expect(tovArticle?.content).toContain(
+      "update the counter manually after the rest",
+    );
+    expect(tovArticle?.content).not.toContain("RPG System Profile");
+    expect(tovArticle?.content).not.toContain(
+      "automatically detects the Black Flag schema",
+    );
+
+    const tovGeneratorArticle = articles.find(
+      (a) => a.id === "tales-of-the-valiant-generators",
+    );
+    expect(tovGeneratorArticle).toBeDefined();
+    expect(tovGeneratorArticle?.content).toContain(
+      "Vault-wide system profile selection is not currently available",
+    );
+    expect(tovGeneratorArticle?.content).not.toContain(
+      "Vault Profile Inheritance",
+    );
+    expect(tovGeneratorArticle?.content).not.toContain(
+      "generators automatically pre-select",
+    );
+  });
+
   it("would catch a removed article", () => {
     const withoutConnections = new Set(
       [...helpIds].filter((id) => id !== "connections-tab"),
