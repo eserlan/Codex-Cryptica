@@ -85,7 +85,7 @@
       </div>
       <button
         type="button"
-        class="touch-target min-h-11 min-w-11 px-2 rounded-md flex items-center justify-center text-theme-muted/80 hover:text-theme-error hover:bg-theme-error/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary"
+        class="touch-target min-h-11 min-w-11 px-2 rounded-md flex items-center justify-center text-theme-muted/80 hover:text-theme-danger hover:bg-theme-danger/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary"
         data-testid="journey-exit"
         onclick={() => store.exit()}
       >
