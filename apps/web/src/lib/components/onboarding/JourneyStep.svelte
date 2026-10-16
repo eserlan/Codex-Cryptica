@@ -6,92 +6,91 @@
 
   const step = $derived(store.step);
   const position = $derived(store.position);
-
-  const button =
-    "min-h-11 min-w-11 rounded-lg px-3 py-1.5 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary disabled:opacity-40 disabled:cursor-not-allowed";
-  const quiet = `${button} text-theme-muted hover:text-theme-primary`;
-  const primary = `${button} bg-theme-primary font-bold text-theme-bg hover:opacity-90`;
-  const outline = `${button} border border-theme-primary/40 text-theme-primary hover:bg-theme-primary/10`;
 </script>
 
 {#if step}
-  <p
-    class="mt-2 text-xs leading-relaxed text-theme-text/90"
-    data-testid="journey-step-instruction"
-  >
-    {store.instruction}
-  </p>
-  <div class="mt-3 flex flex-wrap gap-2">
-    {#if step.showMe && !store.showingFallback && !store.stepDone}
-      <button
-        type="button"
-        class="{primary} inline-flex items-center gap-1.5"
-        data-testid="journey-show-me"
-        onclick={() => void store.showMe()}
-      >
-        <span class="icon-[lucide--sparkles] h-3.5 w-3.5" aria-hidden="true"
-        ></span>
-        Show me
-      </button>
-    {/if}
-    {#if store.canAskCif && !store.stepDone}
-      <button
-        type="button"
-        class="{outline} inline-flex items-center gap-1.5"
-        data-testid="journey-ask-cif"
-        onclick={() => store.askCif()}
-      >
-        <span
-          class="icon-[lucide--message-square] h-3.5 w-3.5"
-          aria-hidden="true"
-        ></span>
-        Ask Cif
-      </button>
-    {/if}
-    {#if store.viewingEarlier}
-      <button
-        type="button"
-        class="{outline} inline-flex items-center gap-1.5"
-        data-testid="journey-return-current"
-        onclick={() => store.returnToCurrent()}
-      >
-        <span class="icon-[lucide--arrow-right] h-3.5 w-3.5" aria-hidden="true"
-        ></span>
-        Back to current step
-      </button>
-    {/if}
-  </div>
-  <div
-    class="mt-2 flex flex-wrap items-center justify-between gap-1 border-t border-theme-border pt-2"
-  >
-    <div class="flex gap-1">
-      <button
-        type="button"
-        class={quiet}
-        data-testid="journey-back"
-        disabled={position.index === 0}
-        onclick={() => store.back()}
-      >
-        Back
-      </button>
-      {#if !store.stepDone}
+  <div class="mt-3 space-y-3">
+    <!-- Prompt Instruction -->
+    <p
+      class="text-xs leading-relaxed text-theme-text/90 bg-theme-bg/30 p-2.5 rounded-lg border border-theme-border/40 font-sans"
+      data-testid="journey-step-instruction"
+    >
+      {store.instruction}
+    </p>
+
+    <!-- Action Buttons -->
+    <div class="flex flex-col gap-2">
+      {#if step.showMe && !store.showingFallback && !store.stepDone}
         <button
           type="button"
-          class={quiet}
-          data-testid="journey-skip"
-          onclick={() => store.skip()}
+          class="touch-target min-h-11 w-full flex items-center justify-center gap-2 rounded-lg bg-theme-primary px-4 py-2 text-xs font-bold text-theme-bg shadow-sm transition-all hover:opacity-95 hover:shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary"
+          data-testid="journey-show-me"
+          onclick={() => void store.showMe()}
         >
-          Skip
+          <span class="icon-[lucide--sparkles] h-4 w-4" aria-hidden="true"
+          ></span>
+          Show me
+        </button>
+      {/if}
+      {#if store.canAskCif && !store.stepDone}
+        <button
+          type="button"
+          class="touch-target min-h-11 w-full flex items-center justify-center gap-2 rounded-lg border border-theme-primary/50 bg-theme-primary/5 px-4 py-2 text-xs font-semibold text-theme-primary transition-colors hover:bg-theme-primary/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary"
+          data-testid="journey-ask-cif"
+          onclick={() => store.askCif()}
+        >
+          <span class="icon-[lucide--message-square] h-4 w-4" aria-hidden="true"
+          ></span>
+          Ask Cif
+        </button>
+      {/if}
+      {#if store.viewingEarlier}
+        <button
+          type="button"
+          class="touch-target min-h-11 w-full flex items-center justify-center gap-2 rounded-lg border border-theme-primary/50 bg-theme-primary/5 px-4 py-2 text-xs font-semibold text-theme-primary transition-colors hover:bg-theme-primary/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary"
+          data-testid="journey-return-current"
+          onclick={() => store.returnToCurrent()}
+        >
+          <span class="icon-[lucide--arrow-right] h-4 w-4" aria-hidden="true"
+          ></span>
+          Back to current step
         </button>
       {/if}
     </div>
-    <button
-      type="button"
-      class={quiet}
-      data-testid="journey-exit"
-      onclick={() => store.exit()}
+
+    <!-- Footer Controls -->
+    <div
+      class="flex items-center justify-between gap-1 border-t border-theme-border/50 pt-2 text-micro"
     >
-      Stop guided setup
-    </button>
+      <div class="flex items-center gap-1">
+        <button
+          type="button"
+          class="touch-target min-h-11 min-w-11 px-2.5 rounded-md flex items-center justify-center text-theme-muted hover:text-theme-primary hover:bg-theme-primary/5 transition-colors disabled:opacity-30 disabled:pointer-events-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary"
+          data-testid="journey-back"
+          disabled={position.index === 0}
+          onclick={() => store.back()}
+        >
+          ‹ Back
+        </button>
+        {#if !store.stepDone}
+          <button
+            type="button"
+            class="touch-target min-h-11 min-w-11 px-2.5 rounded-md flex items-center justify-center text-theme-muted hover:text-theme-primary hover:bg-theme-primary/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary"
+            data-testid="journey-skip"
+            onclick={() => store.skip()}
+          >
+            Skip ›
+          </button>
+        {/if}
+      </div>
+      <button
+        type="button"
+        class="touch-target min-h-11 min-w-11 px-2 rounded-md flex items-center justify-center text-theme-muted/80 hover:text-theme-error hover:bg-theme-error/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary"
+        data-testid="journey-exit"
+        onclick={() => store.exit()}
+      >
+        Stop guided setup
+      </button>
+    </div>
   </div>
 {/if}
