@@ -167,7 +167,7 @@ export const shouldIShareWorldbuildingNotesWithMyPlayers: AnswerConfigInput = {
     heading: "Keeping the public layer separate from your working notes",
     paragraphs: [
       "The practical difficulty in this approach is not writing lore, it is keeping the public version clean while your private notes keep changing. Keeping settlements, factions, and NPCs as separate linked notes or entities, rather than as one long document, makes it easier to see which facts belong to a place, which rumours attach to a faction, and which secrets must stay on the GM side of the line. Portable Markdown notes suit the same habit, because a short player-facing page can be copied into a handout, a wiki, or a shared folder without moving your whole campaign.",
-      "Codex Cryptica can publish a read-only guest snapshot, with entities marked GM-only or private excluded from the export. Review the snapshot and visibility settings before sharing, and publish only material intended for your players; keep working notes and unrevealed truths in the private layer.",
+      "Codex Cryptica can publish a read-only guest snapshot. It excludes drafts and entities hidden by the guest visibility settings, such as entities with the “hidden” label or those excluded by a hidden default visibility setting. Review the snapshot before sharing, and publish only material intended for your players; keep working notes and unrevealed truths in the private layer.",
     ],
     linkText: "See the campaign manager",
     href: "/solutions/campaign-manager",
