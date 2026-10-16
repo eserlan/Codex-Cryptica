@@ -125,6 +125,7 @@ export const howMuchCampaignLoreShouldPlayersBeExpectedToRemember: AnswerConfigI
       "how-do-you-make-npcs-memorable-without-lots-of-prep",
       "how-do-you-run-a-campaign-when-you-only-play-once-a-month",
       "how-do-i-take-useful-rpg-notes-during-play",
+      "should-i-share-worldbuilding-notes-with-my-players",
     ],
     discovery: {
       id: "answer-lore-memory-expectations",
