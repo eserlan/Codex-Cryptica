@@ -25,7 +25,7 @@ The **top bar** across the top of the screen holds search, **Create**, your vaul
 The Activity Bar has two kinds of button:
 
 - **Views** take you to a different screen. The button for the screen you are on is highlighted.
-- **Tools** open something beside or on top of the screen you are on, such as a panel. Click the button again to close it. The one exception is the Session Journal button, which only opens the journal. Close it with the **Notes** button.
+- **Tools** open something beside or on top of the screen you are on, such as a panel. Some tools close when clicked again. The Session Journal button opens or focuses its tab; click **Notes** to close the window.
 
 ## Views
 

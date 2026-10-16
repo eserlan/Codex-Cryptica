@@ -95,14 +95,15 @@ export function navItemSource(navSource: string, id: string): string {
 }
 
 describe("which tools close when clicked again", () => {
-  it("says the Session Journal button only opens the journal", () => {
-    // The article says tools close when clicked again, with this one
-    // exception. If the button is changed to toggle, the article is wrong.
+  it("distinguishes toggling tools from the Session Journal button", () => {
     const journal = navItemSource(nav, "session-journal");
     expect(journal).toContain("openJournal()");
     expect(journal).not.toMatch(/toggle/i);
-    expect(article).toContain("Clicking it again does not close it");
-    expect(article).toContain("Close it with the **Notes** button");
+    expect(article).toContain("Some tools close when clicked again");
+    expect(article).toContain(
+      "The Session Journal button opens or focuses its tab",
+    );
+    expect(article).toContain("click **Notes** to close the window");
   });
 
   it("closes with the Notes button, which really toggles", () => {
