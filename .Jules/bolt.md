@@ -59,5 +59,11 @@
 **Action:** Replace `[...set].filter(...).map(...)` with an imperative `for...of` loop over the set or array, manually checking the condition and pushing the mapped value directly into a newly created array.
 
 ## 2026-10-15 - Prevent chained intermediate array allocations in vault mutations
+
 **Learning:** When generating arrays of entities for bulk update events (like \`vaultEventBus.emit({ type: "BATCH_UPDATED" })\`), using \`Object.keys(updates).map(id => entities[id])\` forces the JavaScript engine to allocate an intermediate array of keys before creating the final mapped array. In hot paths that run constantly (like vault entity batch mutations), this creates unnecessary garbage collection pressure and CPU overhead.
 **Action:** Replace \`Object.keys(obj).map(...)\` with an imperative \`for...in\` loop to iterate and explicitly push into a single array, avoiding the intermediate allocation entirely. Also ensure to remove any adjacent \`Object.keys(obj).length\` checks by tracking emptiness inside the loop.
+
+## 2024-11-20 - Avoid chained array operations inside nested loops
+
+**Learning:** In \`sceneBriefs\`, the nested use of `.map().filter()` inside an outer \`list(structure.scenes).map(...)\` causes a geometric explosion of intermediate array allocations, significantly increasing garbage collection pressure.
+**Action:** Replace nested chained operations like `.map().filter()` with a single imperative `for...of` loop when extracting relationships between collections, pushing the results directly to an array.
