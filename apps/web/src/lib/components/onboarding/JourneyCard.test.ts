@@ -146,7 +146,11 @@ describe("JourneyCard", () => {
   it("Exit stops guidance", async () => {
     const { store } = setup();
     const { container } = render(JourneyCard, { store });
-    await fireEvent.click(screen.getByTestId("journey-exit"));
+    const exitButton = screen.getByTestId("journey-exit");
+    expect(exitButton.className).toContain("hover:text-theme-danger");
+    expect(exitButton.className).toContain("hover:bg-theme-danger/10");
+    expect(exitButton.className).not.toContain("theme-error");
+    await fireEvent.click(exitButton);
     expect(store.active).toBe(false);
     expect(store.progress?.outcome).toBe("exited");
     expect(container.querySelector('[data-testid="journey-card"]')).toBeNull();
