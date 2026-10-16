@@ -621,6 +621,12 @@ export class MapInteractionManager {
     this.activePointerId = null;
     this.isPanning = false;
     this.boxSelection.clear();
+    this.tokenDrag.cancel();
+    this.tokenRotation.cancel();
+    this.pinInteractions.cancel();
+    this.gridInteractions.cancelGridFit();
+    this.gridInteractions.cancelGridMove();
+    this.fogInteractions.cancel();
   };
   onMouseUp = (e: MouseEvent) => this.handlePointerUp(e);
 

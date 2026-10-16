@@ -193,4 +193,29 @@ export class TokenDragHandler {
     this.dragState = null;
     return true;
   }
+
+  cancel() {
+    if (!this.dragState) return false;
+    const { tokenId, initialPosition, hasMoved } = this.dragState;
+    if (hasMoved) {
+      if (this.deps.isHostMode()) {
+        this.deps.moveToken(tokenId, initialPosition.x, initialPosition.y);
+      } else {
+        this.deps.requestTokenMove(
+          tokenId,
+          initialPosition.x,
+          initialPosition.y,
+          true,
+        );
+        this.deps.sendTokenMoveRequest(
+          tokenId,
+          initialPosition.x,
+          initialPosition.y,
+        );
+      }
+    }
+    this.deps.setDraggingTokenId(null);
+    this.dragState = null;
+    return true;
+  }
 }

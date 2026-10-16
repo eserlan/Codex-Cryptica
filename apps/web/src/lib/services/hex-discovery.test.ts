@@ -485,6 +485,9 @@ describe("HexDiscoveryController (T060, FR-021, FR-043)", () => {
     expect(h.mapStore.removePin).toHaveBeenCalledWith("new-1");
     expect(h.vault.deleteEntity).toHaveBeenCalledWith("new-1");
     expect(h.vault.entities["new-1"]).toBeUndefined();
+    expect(h.store.recordFor(MAP_ID, HEX)?.draft?.parts.landmark.status).toBe(
+      "pending",
+    );
   });
 
   it("links the landmark to the nearest location only when the link is still ticked", async () => {

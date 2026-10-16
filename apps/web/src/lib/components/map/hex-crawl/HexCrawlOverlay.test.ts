@@ -2,7 +2,7 @@ import type { HexRecord } from "hex-crawl-engine";
 /** @vitest-environment jsdom */
 
 import { render } from "@testing-library/svelte";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import HexCrawlOverlay from "./HexCrawlOverlay.svelte";
 
 // Gridsize 50 with a 100px offset puts hex 0,0 at (100, 100): well inside the viewport.
@@ -94,5 +94,24 @@ describe("HexCrawlOverlay", () => {
     expect(container.querySelectorAll('[class*="lucide--trees"]')).toHaveLength(
       0,
     );
+  });
+
+  it("skips an excessively dense viewport instead of rendering an unbounded overlay", () => {
+    const project = vi.fn((point: { x: number; y: number }) => point);
+    const denseRecords: Record<string, HexRecord> = {};
+    for (let q = 0; q < 25_001; q++) {
+      denseRecords[`${q},0`] = { updatedAt: 1 };
+    }
+    const { container } = setup({
+      records: denseRecords,
+      gridConfig: { ...GRID, size: 5 },
+      project,
+      viewport: { width: 10_000, height: 10_000 },
+    });
+
+    expect(project).not.toHaveBeenCalled();
+    expect(
+      container.querySelectorAll('[data-testid="hex-explored-marker"]'),
+    ).toHaveLength(0);
   });
 });

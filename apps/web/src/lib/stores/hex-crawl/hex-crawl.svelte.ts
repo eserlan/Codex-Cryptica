@@ -102,8 +102,20 @@ export class HexCrawlStore {
     if (!this.canWrite()) return false;
     const map = this.deps.getMap(mapId);
     if (!map) return false;
-    map.hexCrawl = change(this.stateFor(mapId));
-    await this.deps.saveMaps();
+    const previous = map.hexCrawl;
+    const next = change(this.stateFor(mapId));
+    map.hexCrawl = next;
+    try {
+      await this.deps.saveMaps();
+    } catch (error) {
+      // Do not overwrite a newer write if another operation committed while
+      // this persistence attempt was pending.
+      if (map.hexCrawl === next) {
+        if (previous === undefined) delete map.hexCrawl;
+        else map.hexCrawl = previous;
+      }
+      throw error;
+    }
     return true;
   }
 

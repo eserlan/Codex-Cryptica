@@ -73,11 +73,12 @@
 
   function collectByStoredRecords(
     records: Record<string, HexRecord>,
+    keys: string[],
     bounds: HexBounds,
     projection: Projection,
   ): OverlayItem[] {
     const items: OverlayItem[] = [];
-    for (const key of Object.keys(records)) {
+    for (const key of keys) {
       const match = /^(-?\d+),(-?\d+)$/.exec(key);
       if (!match) continue;
       const q = Number(match[1]);
@@ -96,8 +97,25 @@
     return items;
   }
 
+  /** Return at most `limit` own keys, or null as soon as the set exceeds it. */
+  function boundedRecordKeys(
+    records: Record<string, HexRecord>,
+    limit: number,
+  ): string[] | null {
+    const keys: string[] = [];
+    for (const key in records) {
+      if (!Object.hasOwn(records, key)) continue;
+      if (keys.length === limit) return null;
+      keys.push(key);
+    }
+    return keys;
+  }
+
   /** Hexes with records, culled to the viewport plus a margin. */
   const MARGIN = 80;
+  // Bound both work and DOM nodes during extreme zoom-out or dense-map cases.
+  const MAX_CANDIDATES = 25_000;
+  const MAX_RENDER_ITEMS = 2_000;
   const shown = $derived.by(() => {
     if (!visible) return [];
     const corners = [
@@ -114,10 +132,19 @@
     };
     const candidateCount =
       (bounds.maxQ - bounds.minQ + 1) * (bounds.maxR - bounds.minR + 1);
+    // A sparse map can still be scanned safely by its stored records. If both
+    // the coordinate area and record set exceed the budget, omit the cosmetic
+    // overlay rather than block the main thread or render a misleading subset.
     const projection = { gridConfig, project, viewport };
-    return candidateCount < Object.keys(records).length
-      ? collectByCoordinates(records, bounds, projection)
-      : collectByStoredRecords(records, bounds, projection);
+    let items: OverlayItem[];
+    if (candidateCount > MAX_CANDIDATES) {
+      const keys = boundedRecordKeys(records, MAX_CANDIDATES);
+      if (!keys) return [];
+      items = collectByStoredRecords(records, keys, bounds, projection);
+    } else {
+      items = collectByCoordinates(records, bounds, projection);
+    }
+    return items.slice(0, MAX_RENDER_ITEMS);
   });
 
   const markerSize = $derived(Math.max(8, gridConfig.size * zoom));

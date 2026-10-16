@@ -31,6 +31,7 @@ vi.mock("../../stores/map-session.svelte", () => ({
     activeLayer: "token",
     canViewToken: vi.fn(() => true),
     canMoveToken: vi.fn(() => true),
+    moveToken: vi.fn(),
     setDraggingTokenId: vi.fn(),
     measurement: { active: false, start: null, end: null, locked: false },
     tileDeckManager: { pendingPlacement: null },
@@ -135,6 +136,31 @@ describe("MapInteractionManager", () => {
     expect(hexClick).not.toHaveBeenCalled();
     expect(mapClick).not.toHaveBeenCalled();
     expect(manager.isPanning).toBe(false);
+  });
+
+  it("cancels an active token drag without ending or committing it", async () => {
+    const pointer = (type: string, clientX: number, clientY: number) =>
+      Object.assign(new MouseEvent(type, { clientX, clientY, button: 0 }), {
+        pointerId: 1,
+      }) as unknown as PointerEvent;
+    manager.onPointerDown(pointer("pointerdown", 20, 30));
+    manager.tokenDrag.dragState = {
+      tokenId: "token-a",
+      initialPosition: { x: 10, y: 20 },
+      offset: { x: 0, y: 0 },
+      startPoint: { x: 20, y: 30 },
+      hasMoved: true,
+    };
+    const cancel = vi.spyOn(manager.tokenDrag, "cancel");
+    const end = vi.spyOn(manager.tokenDrag, "end");
+
+    manager.onPointerCancel(pointer("pointercancel", 50, 60));
+
+    expect(cancel).toHaveBeenCalledOnce();
+    expect(end).not.toHaveBeenCalled();
+    expect(manager.tokenDrag.dragState).toBeNull();
+    const { mapSession } = await import("../../stores/map-session.svelte");
+    expect(mapSession.moveToken).toHaveBeenCalledWith("token-a", 10, 20);
   });
 
   it("should ignore touch jitter until the drag threshold is crossed", async () => {
