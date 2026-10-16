@@ -25,30 +25,38 @@
     {#if step.showMe && !store.showingFallback && !store.stepDone}
       <button
         type="button"
-        class={primary}
+        class="{primary} inline-flex items-center gap-1.5"
         data-testid="journey-show-me"
         onclick={() => void store.showMe()}
       >
+        <span class="icon-[lucide--sparkles] h-3.5 w-3.5" aria-hidden="true"
+        ></span>
         Show me
       </button>
     {/if}
     {#if store.canAskCif && !store.stepDone}
       <button
         type="button"
-        class={outline}
+        class="{outline} inline-flex items-center gap-1.5"
         data-testid="journey-ask-cif"
         onclick={() => store.askCif()}
       >
+        <span
+          class="icon-[lucide--message-square] h-3.5 w-3.5"
+          aria-hidden="true"
+        ></span>
         Ask Cif
       </button>
     {/if}
     {#if store.viewingEarlier}
       <button
         type="button"
-        class={outline}
+        class="{outline} inline-flex items-center gap-1.5"
         data-testid="journey-return-current"
         onclick={() => store.returnToCurrent()}
       >
+        <span class="icon-[lucide--arrow-right] h-3.5 w-3.5" aria-hidden="true"
+        ></span>
         Back to current step
       </button>
     {/if}
