@@ -133,7 +133,11 @@ describe("JourneyCard", () => {
     await fireEvent.click(screen.getByTestId("journey-back"));
     expect(screen.getByText(/Step 1 of 4/)).toBeTruthy();
     expect(screen.queryByTestId("journey-skip")).toBeNull();
-    await fireEvent.click(screen.getByTestId("journey-return-current"));
+    const returnToCurrent = screen.getByTestId("journey-return-current");
+    expect(
+      returnToCurrent.querySelector(".icon-\\[lucide--arrow-right\\]"),
+    ).toBeTruthy();
+    await fireEvent.click(returnToCurrent);
     expect(screen.getByText(/Step 2 of 4/)).toBeTruthy();
     await fireEvent.click(screen.getByTestId("journey-skip"));
     expect(screen.getByText(/Step 3 of 4/)).toBeTruthy();
