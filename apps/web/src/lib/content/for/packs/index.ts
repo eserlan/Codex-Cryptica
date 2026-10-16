@@ -1,3 +1,5 @@
+// A new pack is not done until it has had a fan-language review:
+// docs/seo/for-pack-fan-language-review.md
 import type { LandingPageConfig } from "../schema";
 import { vampireTheMasquerade } from "./vampire-the-masquerade";
 import { fantasyWorldbuilding } from "./fantasy-worldbuilding";
