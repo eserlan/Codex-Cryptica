@@ -38,6 +38,15 @@ export function hexGridConfigFor(grid: HexGridFields): HexGridConfig {
 }
 
 /**
+ * The grid the hex crawl works on. Unlike the fog helper, this does not depend on
+ * whether grid lines are drawn: hiding the lines must not switch off hex crawl
+ * or stop exploration being recorded. Null when the map is not a hex grid.
+ */
+export function activeHexGridConfig(grid: HexGridFields): HexGridConfig | null {
+  return isHexGridType(grid.gridType) ? hexGridConfigFor(grid) : null;
+}
+
+/**
  * The hex's label in the map's own style. When labels are hidden or unset,
  * the default numeric format is used, so a hex can always be named (FR-003c).
  */

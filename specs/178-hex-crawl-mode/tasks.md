@@ -433,8 +433,8 @@ No discovery-intent task: this feature adds no public, indexable page (plan: Dis
 
 ## Phase 9: Polish & Cross-Cutting Concerns
 
-- [ ] T090 Write one Playwright journey in `apps/web/tests/hex-crawl.spec.ts`. With **AI Disabled**:
-  - **Not written:** needs the app running in a browser to verify; not written unverified.
+- [x] T090 Write one Playwright journey in `apps/web/tests/hex-crawl.spec.ts`. With **AI Disabled**:
+  - **Done (2026-10-16):** `apps/web/tests/hex-crawl.spec.ts`, three tests passing against this branch (journey with AI disabled, Player View negative path, 2,000-record budget). Fixed on the way: hex crawl read the grid through the fog helper, which returned nothing when grid lines were hidden, so hiding lines switched off the panel and exploration.
   - enable Hex Crawl mode on a hex map, click a hex, set terrain, attach an entity
   - Explore, save the landmark with the link, reload, and assert persistence
   - check Player View shows no markers
@@ -442,8 +442,8 @@ No discovery-intent task: this feature adds no public, indexable page (plan: Dis
   - `type="button"` everywhere, `aria-label` on icon-only controls, `aria-hidden` on decorative icons, labelled regions
   - chip and badge text alongside colour
   - 3:1 contrast in the Fantasy Dark, Modern Light and Cyberpunk themes
-- [ ] T092 [P] Performance check against SC-002: seed 2,000 hex records in a test map and confirm the panel opens in under 0.5s and the overlay renders only in-viewport records. Record the result in `specs/178-hex-crawl-mode/quickstart.md` notes
-  - **Partial (2026-10-16):** the culling check passes in `apps/web/src/lib/components/map/hex-crawl/hex-overlay-performance.test.ts` (2,000 records render only the in-view hexes). Frame timing on a real device, and panel-open time, still need a browser run.
+- [x] T092 [P] Performance check against SC-002: seed 2,000 hex records in a test map and confirm the panel opens in under 0.5s and the overlay renders only in-viewport records. Record the result in `specs/178-hex-crawl-mode/quickstart.md` notes
+  - **Done (2026-10-16):** click to panel open with 2,000 records measured at 179 ms in Chromium (budget 500 ms; test in `hex-crawl.spec.ts`). Overlay culling covered by `hex-overlay-performance.test.ts`. Pan frame timing was not measured.
 - [ ] T093 [P] Grounding check for SC-004 using AI: build 10 fixture hexes in `packages/hex-crawl-engine/tests/fixtures/grounding-hexes.ts` (each with terrain, and 6 of them with a location or faction within 2 hexes), run them through the AI path, and record in `specs/178-hex-crawl-mode/quickstart.md` notes how many drafts mention the terrain (target 10/10) and the nearby location or faction or its surroundings (target at least 5 of 6, i.e. 80%). Manual run; not part of CI
   - **Not run:** needs a live model key. The 10 fixtures exist; the run is manual.
 - [ ] T094 Run the quickstart scenarios 1–9 in `specs/178-hex-crawl-mode/quickstart.md` and fix any mismatch

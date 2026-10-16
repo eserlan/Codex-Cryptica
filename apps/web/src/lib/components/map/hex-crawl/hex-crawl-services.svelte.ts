@@ -11,7 +11,7 @@ import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
 import { systemClock } from "$lib/utils/runtime-deps";
 import { publishSoloMapMove } from "../solo-exploration-recorder.svelte";
-import { getActiveHexConfig } from "../hex-fog-stroke";
+import { activeHexGridConfig } from "./hex-crawl-view";
 import { pinAtHex as pinAtHexOnScreen } from "./hex-map-port";
 
 const REGION_CONTEXT_LIMIT = 1_500;
@@ -78,7 +78,7 @@ export function createHexCrawlServices(): HexCrawlServices {
       pinAtHex: (mapId, entityId, hex) =>
         pinAtHexOnScreen(
           mapStore,
-          getActiveHexConfig(mapStore),
+          activeHexGridConfig(mapStore),
           mapId,
           entityId,
           hex,
@@ -94,7 +94,7 @@ export function createHexCrawlServices(): HexCrawlServices {
   const observer = new HexCrawlMoveObserver({
     store,
     getActiveMapId: () => mapStore.activeMapId,
-    getHexConfig: () => getActiveHexConfig(mapStore),
+    getHexConfig: () => activeHexGridConfig(mapStore),
     isHexCrawlOn: (mapId) => store.isEnabled(mapId),
     isGM: () => !sessionModeStore.isGuestMode && mapStore.isGMMode,
     isSolo: () => mapStore.soloFog,

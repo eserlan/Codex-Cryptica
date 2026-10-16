@@ -10,11 +10,14 @@
   import { mapStore } from "$lib/stores/map.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
-  import { getActiveHexConfig } from "../hex-fog-stroke";
   import type { MapFogPainter } from "../map-fog-painter";
   import type { HexCrawlServices } from "./hex-crawl-services.svelte";
   import { buildDiscoveryWiring } from "./hex-discovery-wiring";
-  import { canSeeHexCrawl, isHexGridType } from "./hex-crawl-view";
+  import {
+    activeHexGridConfig,
+    canSeeHexCrawl,
+    isHexGridType,
+  } from "./hex-crawl-view";
   import HexCrawlOverlay from "./HexCrawlOverlay.svelte";
   import HexCrawlPanel from "./HexCrawlPanel.svelte";
   import HexGoTo from "./HexGoTo.svelte";
@@ -37,7 +40,7 @@
   } = $props();
 
   const mapId = $derived(mapStore.activeMapId);
-  const config = $derived(getActiveHexConfig(mapStore));
+  const config = $derived(activeHexGridConfig(mapStore));
   const hexMode = $derived(
     mapId !== null &&
       isHexGridType(mapStore.gridType) &&
