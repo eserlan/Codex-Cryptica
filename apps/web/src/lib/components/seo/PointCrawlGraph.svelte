@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onDestroy } from "svelte";
   import {
     buildPointCrawlDiagramLayout,
     type PointCrawlNetwork,
@@ -8,6 +9,7 @@
   } from "generator-engine";
   import { svgToPngBlob } from "$lib/utils/svg-export";
   import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
+  import { focusTrap } from "$lib/actions/focusTrap";
   import PointCrawlGraphToolbar from "./PointCrawlGraphToolbar.svelte";
   import PointCrawlInspector from "./PointCrawlInspector.svelte";
 
@@ -48,11 +50,24 @@
   let inspectedNodeId = $state<string | null>(null);
   let inspectedRouteId = $state<string | null>(null);
   let draggingNodeId = $state<string | null>(null);
+  let pendingDrag: {
+    nodeId: string;
+    clientX: number;
+    clientY: number;
+    nodeX: number;
+    nodeY: number;
+  } | null = null;
   let inlineSvgEl = $state<SVGSVGElement | undefined>();
   let fitMode = $state<"actual" | "box">("box");
   let showFullscreen = $state(false);
   let copyState = $state<"idle" | "copied" | "downloaded" | "error">("idle");
   let copyTimeout: ReturnType<typeof setTimeout> | undefined;
+  let isDestroyed = false;
+
+  onDestroy(() => {
+    isDestroyed = true;
+    clearTimeout(copyTimeout);
+  });
 
   const layout = $derived(
     crawl ? buildPointCrawlDiagramLayout(crawl, overrides) : null,
@@ -171,14 +186,49 @@
 
   function handleNodePointerDown(event: PointerEvent, nodeId: string) {
     if (event.button !== 0) return;
-    draggingNodeId = nodeId;
+    const node = layout?.nodes.find((item) => item.id === nodeId);
+    if (!node) return;
+    pendingDrag = {
+      nodeId,
+      clientX: event.clientX,
+      clientY: event.clientY,
+      nodeX: node.x,
+      nodeY: node.y,
+    };
+    draggingNodeId = null;
     selectNode(nodeId);
     const target = event.currentTarget as Element | null;
     target?.setPointerCapture?.(event.pointerId);
   }
 
   function handleSvgPointerMove(event: PointerEvent) {
-    if (!draggingNodeId || !inlineSvgEl) return;
+    if (!inlineSvgEl) return;
+    if (!draggingNodeId && pendingDrag) {
+      const deltaX = event.clientX - pendingDrag.clientX;
+      const deltaY = event.clientY - pendingDrag.clientY;
+      if (Math.hypot(deltaX, deltaY) < 4) return;
+      const start = clientToSvgCoords(
+        inlineSvgEl,
+        pendingDrag.clientX,
+        pendingDrag.clientY,
+      );
+      const current = clientToSvgCoords(
+        inlineSvgEl,
+        event.clientX,
+        event.clientY,
+      );
+      if (!start || !current) return;
+      draggingNodeId = pendingDrag.nodeId;
+      overrides = {
+        ...overrides,
+        [pendingDrag.nodeId]: {
+          x: pendingDrag.nodeX + current.x - start.x,
+          y: pendingDrag.nodeY + current.y - start.y,
+        },
+      };
+      return;
+    }
+    if (!draggingNodeId) return;
     const pt = clientToSvgCoords(inlineSvgEl, event.clientX, event.clientY);
     if (!pt) return;
     overrides = {
@@ -189,6 +239,11 @@
 
   function handleSvgPointerUp() {
     draggingNodeId = null;
+    pendingDrag = null;
+  }
+
+  function handleFullscreenKeydown(event: KeyboardEvent) {
+    if (showFullscreen && event.key === "Escape") showFullscreen = false;
   }
 
   /** Direct programmatic move helper (also used by tests and keyboard). */
@@ -229,7 +284,7 @@
     clearTimeout(copyTimeout);
     try {
       const blob = await exportPng();
-      if (!blob) return;
+      if (!blob || isDestroyed) return;
       const filename = `${(crawl.title || "point-crawl").toLowerCase().replace(/[^a-z0-9]+/g, "-")}-graph.png`;
       if (
         typeof ClipboardItem !== "undefined" &&
@@ -239,18 +294,24 @@
         await navigator.clipboard.write([
           new ClipboardItem({ "image/png": blob }),
         ]);
+        if (isDestroyed) return;
         copyState = "copied";
       } else {
         downloadBlob(blob, filename);
+        if (isDestroyed) return;
         copyState = "downloaded";
       }
     } catch (error) {
+      if (isDestroyed) return;
       console.error("Copy point-crawl diagram failed", error);
       copyState = "error";
     }
+    if (isDestroyed) return;
     copyTimeout = setTimeout(() => (copyState = "idle"), 2200);
   }
 </script>
+
+<svelte:window onkeydown={handleFullscreenKeydown} />
 
 {#snippet graphSvg(
   fitContainer: boolean,
@@ -480,15 +541,15 @@
 {/if}
 
 {#if showFullscreen}
+  <!-- svelte-ignore a11y_click_events_have_key_events -->
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
     class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-6"
     role="dialog"
     aria-modal="true"
     aria-label="Point crawl graph, fit to screen"
     tabindex="-1"
-    onkeydown={(e) => {
-      if (e.key === "Escape") showFullscreen = false;
-    }}
+    use:focusTrap
     onclick={(e) => {
       if (e.target === e.currentTarget) showFullscreen = false;
     }}

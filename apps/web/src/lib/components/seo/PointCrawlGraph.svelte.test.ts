@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
 import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   buildPointCrawlDiagramLayout,
   generatePointCrawlNetworkLocal,
@@ -19,7 +19,12 @@ const crawl = generatePointCrawlNetworkLocal({ pointCount: 6 });
 
 describe("PointCrawlGraph", () => {
   beforeEach(() => {
-    svgToPngBlob.mockClear();
+    svgToPngBlob.mockReset();
+    svgToPngBlob.mockResolvedValue(new Blob(["png"], { type: "image/png" }));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it("shows structural labels, selects nodes and routes, and preserves save toggles", async () => {
@@ -108,5 +113,133 @@ describe("PointCrawlGraph", () => {
     clickSpy.mockRestore();
     createUrlSpy.mockRestore();
     revokeUrlSpy.mockRestore();
+  });
+
+  it("does not move a node for click-sized pointer jitter", async () => {
+    render(PointCrawlGraph, { props: { crawl } });
+    const svg = screen.getByRole("img", {
+      name: `Interactive point crawl network graph for ${crawl.title}`,
+    });
+    const layout = buildPointCrawlDiagramLayout(crawl);
+    vi.spyOn(svg, "getBoundingClientRect").mockReturnValue({
+      x: 0,
+      y: 0,
+      top: 0,
+      left: 0,
+      right: layout.width,
+      bottom: layout.height,
+      width: layout.width,
+      height: layout.height,
+      toJSON: () => ({}),
+    });
+    const node = screen.getByTestId(`point-crawl-node-${crawl.nodes[1].id}`);
+    const before = node.getAttribute("transform");
+    await fireEvent.pointerDown(node, {
+      button: 0,
+      pointerId: 1,
+      clientX: 80,
+      clientY: 80,
+    });
+    await fireEvent.pointerMove(svg, {
+      pointerId: 1,
+      clientX: 82,
+      clientY: 81,
+    });
+    await fireEvent.pointerUp(svg, { pointerId: 1 });
+    expect(node.getAttribute("transform")).toBe(before);
+  });
+
+  it("enters the fullscreen dialog, closes on Escape, and restores focus", async () => {
+    render(PointCrawlGraph, { props: { crawl } });
+    const trigger = screen.getByRole("button", {
+      name: "Fit diagram to screen",
+    });
+    trigger.focus();
+    await fireEvent.click(trigger);
+
+    const dialog = screen.getByRole("dialog", {
+      name: "Point crawl graph, fit to screen",
+    });
+    await waitFor(() =>
+      expect(dialog.contains(document.activeElement)).toBe(true),
+    );
+    await fireEvent.keyDown(document.body, { key: "Escape" });
+    expect(screen.queryByRole("dialog")).toBeNull();
+    await waitFor(() => expect(document.activeElement).toBe(trigger));
+    expect(dialog.isConnected).toBe(false);
+  });
+
+  it("expires copy feedback after 2200 ms and restarts the timer on a new copy", async () => {
+    vi.useFakeTimers();
+    render(PointCrawlGraph, { props: { crawl } });
+    await vi.advanceTimersToNextFrame();
+    const copyButton = screen.getByRole("button", {
+      name: "Copy diagram as image",
+    });
+    const timeoutSpy = vi.spyOn(globalThis, "setTimeout");
+    const clearTimeoutSpy = vi.spyOn(globalThis, "clearTimeout");
+
+    await fireEvent.click(copyButton);
+    await waitFor(() =>
+      expect(copyButton.getAttribute("title")).toBe("Downloaded"),
+    );
+    const firstFeedbackTimerIndex = timeoutSpy.mock.calls.findIndex(
+      ([, delay]) => delay === 2200,
+    );
+    expect(firstFeedbackTimerIndex).toBeGreaterThanOrEqual(0);
+    const firstFeedbackTimer =
+      timeoutSpy.mock.results[firstFeedbackTimerIndex]!.value;
+    await vi.advanceTimersByTimeAsync(1500);
+
+    await fireEvent.click(copyButton);
+    await waitFor(() =>
+      expect(copyButton.getAttribute("title")).toBe("Downloaded"),
+    );
+    expect(clearTimeoutSpy).toHaveBeenCalledWith(firstFeedbackTimer);
+    await vi.advanceTimersByTimeAsync(700);
+    expect(copyButton.getAttribute("title")).toBe("Downloaded");
+    await vi.advanceTimersByTimeAsync(1500);
+    expect(copyButton.getAttribute("title")).toBe("Copy network graph as PNG");
+  });
+
+  it("clears copy feedback timers on unmount and ignores a pending export", async () => {
+    vi.useFakeTimers();
+    const rendered = render(PointCrawlGraph, { props: { crawl } });
+    await vi.advanceTimersToNextFrame();
+    const copyButton = screen.getByRole("button", {
+      name: "Copy diagram as image",
+    });
+    const timeoutSpy = vi.spyOn(globalThis, "setTimeout");
+    const clearTimeoutSpy = vi.spyOn(globalThis, "clearTimeout");
+    await fireEvent.click(copyButton);
+    await waitFor(() =>
+      expect(copyButton.getAttribute("title")).toBe("Downloaded"),
+    );
+    const feedbackTimerIndex = timeoutSpy.mock.calls.findIndex(
+      ([, delay]) => delay === 2200,
+    );
+    expect(feedbackTimerIndex).toBeGreaterThanOrEqual(0);
+    const feedbackTimer = timeoutSpy.mock.results[feedbackTimerIndex]!.value;
+    rendered.unmount();
+    expect(clearTimeoutSpy).toHaveBeenCalledWith(feedbackTimer);
+
+    let finishExport!: (blob: Blob) => void;
+    svgToPngBlob.mockImplementation(
+      () => new Promise((resolve) => (finishExport = resolve)),
+    );
+    const pending = render(PointCrawlGraph, { props: { crawl } });
+    await vi.advanceTimersToNextFrame();
+    timeoutSpy.mockClear();
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Copy diagram as image" }),
+    );
+    await waitFor(() => expect(svgToPngBlob).toHaveBeenCalled());
+    pending.unmount();
+    finishExport(new Blob(["png"], { type: "image/png" }));
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(timeoutSpy.mock.calls.some(([, delay]) => delay === 2200)).toBe(
+      false,
+    );
   });
 });
