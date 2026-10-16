@@ -25,6 +25,8 @@ export interface ParsedEntity {
   type: EntityType;
   title: string;
   content: string;
+  /** GM-only text, kept out of the visible content. */
+  lore?: string;
   labels: string[];
   references?: string[];
   relationships?: ParsedRelationship[];

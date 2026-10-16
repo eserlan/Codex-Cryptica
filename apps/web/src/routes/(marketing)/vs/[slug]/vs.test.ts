@@ -98,3 +98,32 @@ describe("Kanka self-hosted comparison config", () => {
     expect(pageCopy).toMatch(/Unlimited campaigns and entries/i);
   });
 });
+
+describe("Chronica comparison config", () => {
+  it("points switchers to the Chronica import and gives fair-fit guidance", async () => {
+    const { comparisons: realComparisons } = (await vi.importActual(
+      "$lib/config/seo-comparisons",
+    )) as typeof import("$lib/config/seo-comparisons");
+    const chronica = realComparisons.chronica;
+
+    expect(chronica.secondaryCtaHref).toBe("/import/chronica");
+    expect(chronica.relatedLinks).toContainEqual({
+      href: "/import/chronica",
+      label: "Import Chronica exports",
+    });
+    expect(chronica.decisionGuidance?.map((group) => group.title)).toEqual([
+      "Choose Chronica if…",
+      "Choose Codex Cryptica if…",
+    ]);
+  });
+
+  it("does not claim Chronica lacks features we could not verify", async () => {
+    const { comparisons: realComparisons } = (await vi.importActual(
+      "$lib/config/seo-comparisons",
+    )) as typeof import("$lib/config/seo-comparisons");
+
+    for (const row of realComparisons.chronica.comparisonTable) {
+      expect(row.competitorHas, row.feature).not.toBe("No");
+    }
+  });
+});

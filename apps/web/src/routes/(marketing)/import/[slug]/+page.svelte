@@ -4,6 +4,7 @@
   import { fade } from "svelte/transition";
   import { safeJsonLd } from "$lib/utils/json-ld";
   import {
+    parseChronicaFiles,
     parseObsidianFiles,
     parseJsonExport,
     traverseEntry,
@@ -14,6 +15,10 @@
   const pageData = $derived(data.importPage);
 
   let isDragging = $state(false);
+  // Chronica exports one JSON file per campaign section, so it takes several.
+  const acceptsMultipleFiles = $derived(
+    pageData.slug === "obsidian-vault" || pageData.slug === "chronica",
+  );
   const ENTITY_TYPES = [
     "character",
     "creature",
@@ -73,6 +78,7 @@
   });
 
   let errorMessage = $state<string | null>(null);
+  let parseRequest = 0;
 
   // Drag over handler
   function handleDragOver(e: DragEvent) {
@@ -84,8 +90,35 @@
     isDragging = false;
   }
 
+  async function parseSelectedFiles(list: File[]) {
+    if (pageData.slug === "obsidian-vault") {
+      return parseObsidianFiles(list);
+    }
+    if (pageData.slug === "chronica") {
+      return parseChronicaFiles(list);
+    }
+
+    const requiredExtension = pageData.slug === "kanka-json" ? ".zip" : ".json";
+    const exportFile = list.find((file) =>
+      file.name.toLowerCase().endsWith(requiredExtension),
+    );
+    if (!exportFile) {
+      throw new Error(
+        `Please upload a valid ${requiredExtension.toUpperCase()} file for ` +
+          pageData.competitorName +
+          " export.",
+      );
+    }
+    return parseJsonExport(exportFile, pageData.slug);
+  }
+
   // Handle files select/drop
-  async function handleFiles(files: FileList | File[]) {
+  async function handleFiles(
+    files: FileList | File[],
+    request = ++parseRequest,
+  ) {
+    if (request !== parseRequest) return;
+
     errorMessage = null;
     filesParsed = [];
     const list = Array.from(files);
@@ -93,25 +126,12 @@
     if (list.length === 0) return;
 
     try {
-      if (pageData.slug === "obsidian-vault") {
-        filesParsed = await parseObsidianFiles(list);
-      } else {
-        const requiredExtension =
-          pageData.slug === "kanka-json" ? ".zip" : ".json";
-        const exportFile = list.find((file) =>
-          file.name.toLowerCase().endsWith(requiredExtension),
-        );
-        if (!exportFile) {
-          throw new Error(
-            `Please upload a valid ${requiredExtension.toUpperCase()} file for ` +
-              pageData.competitorName +
-              " export.",
-          );
-        }
-        filesParsed = await parseJsonExport(exportFile, pageData.slug);
-      }
+      const parsed = await parseSelectedFiles(list);
+      if (request === parseRequest) filesParsed = parsed;
     } catch (err: any) {
-      errorMessage = err.message || "Failed to parse files.";
+      if (request === parseRequest) {
+        errorMessage = err.message || "Failed to parse files.";
+      }
     }
   }
 
@@ -120,6 +140,7 @@
     e.preventDefault();
     isDragging = false;
     if (!e.dataTransfer) return;
+    const request = ++parseRequest;
 
     // Check for directories
     const items = Array.from(e.dataTransfer.items);
@@ -129,9 +150,9 @@
         return entry ? traverseEntry(entry) : Promise.resolve([]);
       });
       const results = await Promise.all(entryPromises);
-      await handleFiles(results.flat());
+      await handleFiles(results.flat(), request);
     } else {
-      await handleFiles(e.dataTransfer.files);
+      await handleFiles(e.dataTransfer.files, request);
     }
   }
 
@@ -331,7 +352,9 @@
             ? "markdown files or vault folders"
             : pageData.slug === "kanka-json"
               ? "your Kanka export ZIP"
-              : "your export JSON"} here
+              : pageData.slug === "chronica"
+                ? "all your Chronica export JSON files"
+                : "your export JSON"} here
         </h3>
         <p class="text-meta text-theme-muted leading-relaxed max-w-md mx-auto">
           All files are processed client-side in your browser. Your creative
@@ -344,13 +367,13 @@
           for="file-upload"
           class="px-5 py-2.5 bg-theme-primary text-theme-bg font-bold font-header text-micro rounded-lg hover:brightness-110 cursor-pointer shadow-sm transition-all"
         >
-          Select File
+          {acceptsMultipleFiles ? "Select Files" : "Select File"}
         </label>
         <input
           type="file"
           id="file-upload"
           class="hidden"
-          multiple={pageData.slug === "obsidian-vault"}
+          multiple={acceptsMultipleFiles}
           accept={pageData.slug === "obsidian-vault"
             ? ".md"
             : pageData.slug === "kanka-json"
