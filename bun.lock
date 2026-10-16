@@ -435,9 +435,9 @@
       "name": "hex-crawl-engine",
       "version": "0.0.0",
       "dependencies": {
+        "dice-engine": "workspace:*",
         "map-engine": "workspace:*",
         "random-source-engine": "workspace:*",
-        "schema": "workspace:*",
         "zod": "^4.4.3",
       },
       "devDependencies": {
