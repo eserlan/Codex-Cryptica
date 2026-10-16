@@ -33,4 +33,13 @@ describe("talesOfTheValiant landing page config", () => {
       4,
     );
   });
+
+  it("links the NPC recommendation to the published NPC generator route", () => {
+    const npcGenerator = talesOfTheValiant.recommendedTools.find(
+      (tool) => tool.title === "NPC Generator",
+    );
+
+    expect(npcGenerator?.href).toBe("/generators/npc");
+    expect(npcGenerator?.href).not.toBe("/generators/quick-npc");
+  });
 });

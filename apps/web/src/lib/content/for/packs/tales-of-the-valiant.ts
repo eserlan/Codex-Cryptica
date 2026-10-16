@@ -95,7 +95,7 @@ export const talesOfTheValiant: LandingPageConfig = {
       title: "NPC Generator",
       description:
         "Produce Quick NPCs with challenge ratings or full levelled adventurers with BFRD stats.",
-      href: "/generators/quick-npc",
+      href: "/generators/npc",
       badge: "Generator",
     },
     {
