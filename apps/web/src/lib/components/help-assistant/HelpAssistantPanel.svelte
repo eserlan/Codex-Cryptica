@@ -20,6 +20,7 @@
     onClose,
     onPopOut,
     variant = "docked",
+    avatarAway = false,
   }: {
     assistant: HelpAssistantView;
     onAccept: (action: GuidanceAction) => void;
@@ -30,6 +31,8 @@
     onPopOut?: () => void;
     /** `window` fills a pop-out window instead of floating beside the sidebar. */
     variant?: "docked" | "window";
+    /** Cif is out pointing at something, so the header leaves his spot empty. */
+    avatarAway?: boolean;
   } = $props();
 
   const docked = $derived(variant === "docked");
@@ -140,6 +143,7 @@
       onStartOver={() => assistant.reset()}
       {onPopOut}
       {onClose}
+      {avatarAway}
     />
 
     <div
