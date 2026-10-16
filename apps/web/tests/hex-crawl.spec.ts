@@ -143,4 +143,42 @@ test.describe("Hex crawl journey (AI disabled)", () => {
       .count();
     expect(icons).toBeLessThan(2000);
   });
+
+  test("Go to hex opens a typed hex, rejects an unknown one, and the grid survives a reload", async ({
+    page,
+  }) => {
+    // Quickstart scenarios 1 (grid kept) and 8 (keyboard access). Cross-device
+    // travel needs two devices, so only persistence on this device is checked.
+    await openGridSettings(page);
+    const pointy = page.getByRole("button", { name: /pointy/i });
+    await pointy.scrollIntoViewIfNeeded();
+    await pointy.click();
+    const mode = page.getByRole("switch", { name: /hex crawl/i });
+    await mode.scrollIntoViewIfNeeded();
+    await mode.check();
+    await applyGridSettings(page);
+    // Settings are saved on a 250 ms debounce; wait so the reload is not racing it.
+    await page.waitForTimeout(1000);
+
+    await page.reload();
+    await expect(page.locator("canvas").first()).toBeVisible({
+      timeout: 15000,
+    });
+    await openGridSettings(page);
+    await expect(page.getByRole("button", { name: /pointy/i })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    await applyGridSettings(page);
+
+    const goTo = page.getByLabel("Go to hex");
+    await goTo.fill("ZZ99");
+    await page.getByRole("button", { name: "Go", exact: true }).click();
+    await expect(page.getByText(/There is no hex/)).toBeVisible();
+    await expect(page.locator("#hex-panel-title")).toHaveCount(0);
+
+    await goTo.fill("00.00");
+    await page.getByRole("button", { name: "Go", exact: true }).click();
+    await expect(page.locator("#hex-panel-title")).toBeVisible();
+  });
 });
