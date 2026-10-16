@@ -48,8 +48,12 @@ test.describe("Hex crawl journey (AI disabled)", () => {
   }) => {
     // Hex grid and Hex Crawl mode, from grid settings.
     await openGridSettings(page);
-    await page.getByRole("button", { name: /pointy/i }).click();
-    await page.getByRole("switch", { name: /hex crawl/i }).check();
+    const pointy = page.getByRole("button", { name: /pointy/i });
+    await pointy.scrollIntoViewIfNeeded();
+    await pointy.click();
+    const mode = page.getByRole("switch", { name: /hex crawl/i });
+    await mode.scrollIntoViewIfNeeded();
+    await mode.check();
     await applyGridSettings(page);
 
     // Click a hex: the GM panel opens.
@@ -86,8 +90,12 @@ test.describe("Hex crawl journey (AI disabled)", () => {
     page,
   }) => {
     await openGridSettings(page);
-    await page.getByRole("button", { name: /pointy/i }).click();
-    await page.getByRole("switch", { name: /hex crawl/i }).check();
+    const pointy = page.getByRole("button", { name: /pointy/i });
+    await pointy.scrollIntoViewIfNeeded();
+    await pointy.click();
+    const mode = page.getByRole("switch", { name: /hex crawl/i });
+    await mode.scrollIntoViewIfNeeded();
+    await mode.check();
     await applyGridSettings(page);
 
     await page.getByTestId("shared-mode-toggle").click();
@@ -100,8 +108,12 @@ test.describe("Hex crawl journey (AI disabled)", () => {
   }) => {
     // T092: seeds 2,000 touched hexes into the real vault, then times click to panel.
     await openGridSettings(page);
-    await page.getByRole("button", { name: /pointy/i }).click();
-    await page.getByRole("switch", { name: /hex crawl/i }).check();
+    const pointy = page.getByRole("button", { name: /pointy/i });
+    await pointy.scrollIntoViewIfNeeded();
+    await pointy.click();
+    const mode = page.getByRole("switch", { name: /hex crawl/i });
+    await mode.scrollIntoViewIfNeeded();
+    await mode.check();
     await applyGridSettings(page);
 
     await page.evaluate(() => {
