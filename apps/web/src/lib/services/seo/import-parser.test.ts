@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { strToU8, zipSync } from "fflate";
 import {
   parseObsidianFiles,
+  parseChronicaFiles,
   parseJsonExport,
   traverseEntry,
 } from "./import-parser";
@@ -158,6 +159,86 @@ describe("import-parser", () => {
         kankaModelId: 1,
       },
     });
+  });
+});
+
+describe("parseChronicaFiles", () => {
+  const jsonFile = (name: string, value: unknown) =>
+    new File([JSON.stringify(value)], name, { type: "application/json" });
+
+  const charactersExport = {
+    export_created_at: "2026-06-27T20:00:00Z",
+    campaign: {
+      id: "grecia-1",
+      name: "Grecia",
+      characters: [
+        {
+          id: "char-1",
+          name: "Ariadne",
+          description: "<p>Scout of the party.</p>",
+          gm_secrets: "<p>Secret heir.</p>",
+          place_id: "place-1",
+        },
+      ],
+    },
+  };
+  const placesExport = {
+    export_created_at: "2026-06-27T20:00:01Z",
+    campaign: {
+      id: "grecia-1",
+      name: "Grecia",
+      places: [
+        { id: "place-1", name: "Knossos", description: "<p>Labyrinth.</p>" },
+      ],
+    },
+  };
+
+  it("merges one campaign's section files into linked entities", async () => {
+    const parsed = await parseChronicaFiles([
+      jsonFile("characters.json", charactersExport),
+      jsonFile("places.json", placesExport),
+    ]);
+
+    const ariadne = parsed.find((entity) => entity.title === "Ariadne");
+    const knossos = parsed.find((entity) => entity.title === "Knossos");
+    expect(ariadne?.type).toBe("character");
+    expect(knossos?.type).toBe("location");
+    expect(ariadne?.relationships).toEqual([
+      { title: "Knossos", type: "related_to" },
+    ]);
+  });
+
+  it("keeps GM secrets in lore rather than the visible content", async () => {
+    const [ariadne] = await parseChronicaFiles([
+      jsonFile("characters.json", charactersExport),
+    ]);
+
+    expect(ariadne.lore).toContain("Secret heir.");
+    expect(ariadne.content).not.toContain("Secret heir.");
+  });
+
+  it("rejects files from two different campaigns", async () => {
+    await expect(
+      parseChronicaFiles([
+        jsonFile("characters.json", charactersExport),
+        jsonFile("other.json", {
+          ...placesExport,
+          campaign: { ...placesExport.campaign, id: "other-campaign" },
+        }),
+      ]),
+    ).rejects.toThrow(/multiple campaigns/i);
+  });
+
+  it("rejects a JSON file that is not a Chronica export", async () => {
+    await expect(
+      parseChronicaFiles([jsonFile("notes.json", { pages: [] })]),
+    ).rejects.toThrow(/not a supported Chronica export/i);
+  });
+
+  it("rejects a selection with no JSON files", async () => {
+    await expect(
+      parseChronicaFiles([new File(["# hi"], "notes.md")]),
+    ).rejects.toThrow(/JSON files from your Chronica export/i);
   });
 });
 

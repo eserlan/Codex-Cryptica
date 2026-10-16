@@ -6,6 +6,7 @@ import {
 } from "./wa-parser";
 import {
   convertThreadWeaverJsonToCif,
+  parseChronicaExports,
   parseKankaExportZip,
   parseScabardExport,
 } from "@codex/importer";
@@ -236,6 +237,68 @@ export async function parseJsonExport(
     );
   }
   return parsed;
+}
+
+/**
+ * Chronica exports each campaign section (characters, places, quests…) as its
+ * own JSON file, so the whole selection is parsed together as one campaign.
+ */
+export async function parseChronicaFiles(
+  files: File[],
+): Promise<ParsedEntity[]> {
+  const jsonFiles = files.filter((file) =>
+    file.name.toLowerCase().endsWith(".json"),
+  );
+  if (jsonFiles.length === 0) {
+    throw new Error("Please upload the .JSON files from your Chronica export.");
+  }
+
+  const documents = await Promise.all(
+    jsonFiles.map(async (file) => {
+      try {
+        return { fileName: file.name, json: JSON.parse(await file.text()) };
+      } catch {
+        throw new Error(`${file.name} is not valid JSON.`);
+      }
+    }),
+  );
+  const pkg = parseChronicaExports(documents);
+
+  const refFor = (draft: (typeof pkg.entityDrafts)[number]) =>
+    `chronica:${draft.sourceType ?? "note"}:${draft.sourceId}`;
+  const titlesByRef = new Map(
+    pkg.entityDrafts.map((draft) => [refFor(draft), draft.title]),
+  );
+  const relationshipsByRef = new Map<string, ParsedRelationship[]>();
+  for (const relationship of pkg.relationshipDrafts) {
+    const targetTitle = titlesByRef.get(relationship.toRef);
+    if (!targetTitle) continue;
+    const relationships = relationshipsByRef.get(relationship.fromRef) ?? [];
+    relationships.push({ title: targetTitle, type: relationship.type });
+    relationshipsByRef.set(relationship.fromRef, relationships);
+  }
+
+  return pkg.entityDrafts.map((draft) => {
+    const discoverySource = refFor(draft);
+    const relationships = relationshipsByRef.get(discoverySource);
+    return {
+      type: toKnownType(
+        draft.sourceType === "place" ? "location" : draft.sourceType,
+      ),
+      title: draft.title,
+      content: draft.content ?? "",
+      ...(draft.lore ? { lore: draft.lore } : {}),
+      labels: draft.labels ?? [],
+      discoverySource,
+      metadata: draft.metadata,
+      ...(relationships && relationships.length > 0
+        ? {
+            relationships,
+            references: [...new Set(relationships.map((r) => r.title))],
+          }
+        : {}),
+    };
+  });
 }
 
 // Helper to recursively fetch files from entries

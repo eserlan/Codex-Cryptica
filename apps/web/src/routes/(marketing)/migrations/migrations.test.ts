@@ -34,6 +34,16 @@ describe("Migration Hub", () => {
     ).toBeTruthy();
   });
 
+  it("includes the chronica importer", () => {
+    render(Page);
+
+    expect(
+      screen
+        .getByRole("link", { name: /chronica campaign importer/i })
+        .getAttribute("href"),
+    ).toBe("/import/chronica");
+  });
+
   it("injects a breadcrumb JSON-LD schema", () => {
     render(Page);
 

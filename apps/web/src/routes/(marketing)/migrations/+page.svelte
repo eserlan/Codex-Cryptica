@@ -32,7 +32,7 @@
   <title>Migration Hub | Import Your Campaign into Codex Cryptica</title>
   <meta
     name="description"
-    content="Every way to bring your campaign into Codex Cryptica: Obsidian, World Anvil, Kanka, LegendKeeper, Scabard, and Thread Weaver Engine exports, all converted and previewed offline in your browser."
+    content="Every way to bring your campaign into Codex Cryptica: Obsidian, World Anvil, Kanka, LegendKeeper, Scabard, Chronica, and Thread Weaver Engine exports, all converted and previewed offline in your browser."
   />
   <meta name="robots" content="index, follow" />
   <link rel="canonical" href={pageUrl} />
