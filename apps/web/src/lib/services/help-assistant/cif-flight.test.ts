@@ -169,7 +169,7 @@ describe("locateCifHome", () => {
     document.body.innerHTML = `
       <div data-testid="help-assistant-panel"><span data-cif-avatar></span></div>
       <button data-testid="help-assistant-button"></button>`;
-    const avatar = document.querySelector("[data-cif-avatar]")!;
+    const avatar = document.querySelector<HTMLElement>("[data-cif-avatar]")!;
     const button = document.querySelector(
       '[data-testid="help-assistant-button"]',
     )!;
@@ -193,6 +193,12 @@ describe("locateCifHome", () => {
     document
       .querySelector('[data-testid="help-assistant-panel"]')!
       .setAttribute("aria-hidden", "true");
+    expect(locateCifHome(document, true)).toEqual(launcher);
+  });
+
+  it("skips a header avatar hidden with CSS", () => {
+    const { avatar } = mount();
+    avatar.style.visibility = "hidden";
     expect(locateCifHome(document, true)).toEqual(launcher);
   });
 

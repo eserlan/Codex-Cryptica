@@ -135,6 +135,7 @@ const LAUNCHERS =
 const onScreen = (el: Element): HighlightRect | null => {
   // A closing panel is marked aria-hidden while it slides away.
   if (el.closest("[hidden], [aria-hidden='true']")) return null;
+  if (getComputedStyle(el).visibility === "hidden") return null;
   const r = el.getBoundingClientRect();
   if (r.width === 0 || r.height === 0) return null;
   return { top: r.top, left: r.left, width: r.width, height: r.height };
