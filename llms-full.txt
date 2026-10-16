@@ -19,6 +19,9 @@ It is especially relevant to users searching for:
 
 ## Core Features
 
+### Mention an entity
+Type @ and a name to pick an entity. The Oracle answers from that exact entry, even when two entities share a name. Hidden entities are never offered.
+
 ### Entity templates
 Pick the markdown a new note starts with. Duplicate a built-in template to make your own, edit it as plain markdown, then set it as the default for that type. Changing a template only affects notes you create afterwards; existing notes stay as they are.
 
@@ -285,6 +288,9 @@ Change how a Stat Sheet looks without touching its data. Click Presentations to 
 
 ### Hexcrawl & Hex Grids
 Run overland exploration with point-to-point hex grids. Choose pointy-topped or flat-topped orientation, toggle in-cell coordinates, snap tokens and pins to hex centers, and reveal or hide fog of war by hex. Rulers measure travel distance directly in hexes.
+
+### Point Crawl Generator
+Design interconnected adventure maps with named locations, explicit travel routes, terrain hazards, and secrets. Preview the interactive map, drag nodes to customize layout, and export clean SVG or PNG diagrams. Saving creates Location entities with route lore and a master Point Crawl overview Note.
 
 
 ## Help Documentation
@@ -621,6 +627,10 @@ The **Entity Table** lists every entry in your vault in one grid, so you can sca
 
 To explore the same entries as a network instead, choose **View as graph** at the top right.
 
+## Vault Audit
+
+Choose **Audit** in the table toolbar to review entries missing a portrait, description or connection. You can also open it from the **Vault Audit** workbench card on the Front Page. Toggle **Audit** again to return to the full table list. See [Vault Audit](/help#help/vault-audit) for what each card counts.
+
 ## What each column shows
 
 | Column          | What it is                                                          |
@@ -701,6 +711,16 @@ A small card shows the current step. A step is ticked off only when you really d
 - **Show me** opens the right screen or points at the right control. It only runs when you tap it.
 - **Back** shows an earlier step, **Skip** moves past a step, and **Stop guided setup** ends it straight away. Press **Escape** inside the card, or use the minimise button, to shrink it to a small pill.
 - If you reload the page, the card comes back on the same step. When you come back another day, it stays out of the way until you choose **Continue**.
+
+## Tips from Cif
+
+Once guided setup has finished or you have left it, Cif can offer one small tip about something that suits the goal you chose. Tips are off until you turn them on in **Settings → AI → Show tips from Cif**. When guided setup ends, you are also asked once whether you would like occasional tips; either answer means you are not asked again.
+
+- A tip shows as a small chip beside the Cif button. It shows at most once per visit.
+- Nothing is sent until you tap the tip, and then Cif answers the question it names.
+- Tips never appear while you are typing, in a dialog, or while a tour or Cif is open.
+- Dismissing a tip removes it for good. Dismissing two tips on the same screen quiets that screen until you turn the setting off and on again.
+- Tips never read your vault, and they are off when AI is turned off.
 
 ## What it never does
 
@@ -1130,6 +1150,44 @@ and Table, see [Entity Reports](/help#help/entity-reports).
 
 ---
 
+### VAULT AUDIT
+
+The **Vault Audit** is a checklist for your vault. It counts the entries that are missing something, so you can see what still needs work and go straight to those entries.
+
+## Open it
+
+- In the **Table**, choose **Audit** in the toolbar. Choose **Audit** again to return to the full table list.
+- Or use the **Vault Audit** card on the Front Page.
+
+## What it checks
+
+The **Findings** tab shows one card for each gap, with a count:
+
+| Card                  | What it counts                                  |
+| --------------------- | ----------------------------------------------- |
+| **Missing portraits** | Entries with no image, or only a placeholder    |
+| **No summary**        | Entries with an empty description               |
+| **No connections**    | Entries that are not connected to anything else |
+| **Unlabelled**        | Entries with no labels                          |
+| **All flagged**       | Entries missing any of the above                |
+
+Choose a card to filter the table to just those entries. From there you can open an entry and fill in the gap.
+
+## Quick presets
+
+Presets filter the table for common jobs, such as **Characters missing portraits**, **Unconnected characters** and **Sparse locations**. A preset replaces your current search and filters. To go back, use **Clear all filters** in the table.
+
+## Distribution
+
+Switch to the **Distribution** tab to see how your entries are spread across types and labels. Choose a type or label to filter the table to it.
+
+## Good to know
+
+- The audit only reads your vault. It never changes an entry.
+- It runs on your device, so nothing is sent anywhere.
+
+---
+
 ### VTT OVERVIEW & MODES
 
 Codex Cryptica includes an integrated **Virtual Tabletop (VTT)** mode on your campaign maps. Turn it on to place tokens, track initiative, measure distance, work with tile decks, and share the live table with your players. It adds a layer on top of the map; your map image, pins and fog are not changed by turning it on or off.
@@ -1554,6 +1612,41 @@ Tokens marked as **Vision Source (PC)** reveal the fog around them as they move.
 
 ---
 
+### MENTION ENTITIES WITH @
+
+Type **@** in the Lore Oracle input, then start typing a name. A short list of matching entities appears above the input. Choose one and the Oracle answers from that exact entry.
+
+- **Pick with the mouse or a tap**: select the entity in the list.
+- **Pick with the keyboard**: use **Up** and **Down** to move, then **Enter** or **Tab** to choose.
+- **Close the list**: press **Escape**. Your text stays as it is.
+
+A chosen entity appears in the message as a link. Select the link to open the entity.
+
+### Mention several entities
+
+Add as many mentions as you need in one question, for example "How is @Elara Voss connected to @Royal Academy of Pagen?". Every mentioned entity is included in what the Oracle reads.
+
+### Type a name without picking
+
+You can type `@` and a name, then send. If one entity matches the name or one of its aliases, the Oracle uses it. If several entities match, the Oracle asks you which one you mean. Choose one, or choose **Send as text** to send the message without a link. If nothing matches, you see a short note and the message is sent as plain text.
+
+### What the Oracle can see
+
+- Only entities in the Vault you have open are offered.
+- In a guest or shared view, hidden entities are never suggested, linked, or sent to the Oracle. A mention for one is sent as plain text.
+- In your own Vault, mentions follow the same rules as the rest of the Oracle's context.
+- Mentions only pin an entity into the Oracle's context. Your entries are not changed.
+
+### Limits
+
+- Mentions work in the Lore Oracle for the Vault you have open.
+- They are not available in the Cif help assistant or in VTT Chat yet.
+- When an entity is renamed, its mention shows the new name. When an entity is deleted, the mention shows as unavailable and is no longer a link.
+
+See [The Lore Oracle](/help#help/oracle-guide) for the wider chat workflow.
+
+---
+
 ### ORACLE AI ACCESS AND PERSONAL KEYS
 
 Open **Settings → Intelligence**. **Connection Mode** shows whether you are using the **System Proxy** or **Direct Connection: Custom Key**.
@@ -1816,7 +1909,7 @@ Image generation uses Art Direction from your world before falling back to shipp
 
 ### IN-APP CAMPAIGN GENERATORS
 
-The **Campaign Generators** let you create NPCs, factions, settlements, magic items, and more directly inside your active campaign vault. The **Holiday & Festival** generator creates one observance or a connected calendar. Every result is previewed before you choose to open it as an entity draft.
+The **Campaign Generators** let you create NPCs, factions, settlements, point crawl travel maps, magic items, and more directly inside your active campaign vault. The **Holiday & Festival** generator creates one observance or a connected calendar. Every result is previewed before you choose to open it as an entity draft.
 
 ### Use generators with AI turned off
 
@@ -1949,6 +2042,16 @@ Kanka's structured campaign export works without an AI key:
 
 Codex imports a copy and does not change the campaign in Kanka. Kanka permissions, dashboards, family-tree layouts, plugins, themes, and bookmarks are not part of Kanka's standard export and cannot be recreated by this import.
 
+## Import a Chronica Campaign
+
+Chronica's JSON exports also work without an AI key:
+
+1. In Chronica, export your campaign as JSON. You get one file per section (characters, places, quests and so on).
+2. Drop all the files from that campaign into Codex's importer at once. Files from a different campaign are refused.
+3. Review the entries and their connections before committing them to the current vault.
+
+Characters, places, kinships and encounters become characters, locations, factions and events. Quests, adventure notes and maps come across as notes, and GM secrets go into each entry's private lore. Map images are not included, and stats are kept as metadata rather than stat sheets. Codex imports a copy and does not change your campaign in Chronica.
+
 ## Resilient Imports
 
 Large documents can take time to process. The system automatically tracks your progress:
@@ -1964,6 +2067,84 @@ If you want to re-analyze a file from scratch, click the **Restart** button in t
 ## Related Blog Posts
 
 - [How Import Works: Local-First Migration](/blog/how-import-works) — Comprehensive guide to converting notes into structured knowledge graphs.
+
+---
+
+### TALES OF THE VALIANT (BFRD) CAMPAIGN GUIDE
+
+Codex Cryptica provides native support for **Tales of the Valiant (ToV)** and the open **Black Flag Reference Document (BFRD)** published by Kobold Press under the Creative Commons Attribution 4.0 International license.
+
+---
+
+### 1. Using Tales of the Valiant templates
+
+Vault-wide system profile selection is not currently available. To use Tales of the Valiant in a generator, choose it from the **Game System** option when available. The built-in ToV sheets listed below can be applied to individual entities.
+
+---
+
+### 2. Built-in Stat Sheet Templates
+
+Codex Cryptica includes three pre-configured ToV stat sheet templates:
+
+- **Tales of the Valiant Character** (`builtin-tov-character`): A full adventurer sheet featuring Lineage, Heritage, class levels, saving throw proficiencies, weapon actions, spell circles, and an interactive **Luck** resource counter.
+- **Tales of the Valiant Monster** (`builtin-tov-monster`): Complete BFRD creature stat block with challenge rating, armour class, traits, action routines, reactions, and an optional **Doom** counter for solo bosses.
+- **Tales of the Valiant Quick NPC** (`builtin-tov-npc`): A lightweight, CR-based block designed for rapid session prep, retaining core combat stats without the overhead of full character tracking.
+
+---
+
+### 3. Interactive Luck Tracking
+
+In Tales of the Valiant, characters gain Luck when they fail d20 attack rolls or saving throws, spending accumulated points to improve subsequent d20 rolls.
+
+- **Character Sheets**: Use the minus and plus controls on the Luck counter to spend or gain points.
+- **Virtual Tabletop (VTT)**: When a character token is selected on the combat map, their Luck meter appears in **Token Quick Stats** for instantaneous mid-battle adjustments.
+- **Long Rest**: The campaign's resting variant determines whether unspent Luck is preserved or reset towards the pool maximum. Codex Cryptica does not reset Luck automatically; update the counter manually after the rest according to the rules your campaign uses.
+
+---
+
+### 4. Adversary Doom Resource Tracking
+
+Major villains, legendary monsters, and solo encounter bosses can harness **Doom Points** to execute villainous actions, interrupt player turns, or trigger explosive reactions.
+
+- **Verified Counter**: Doom controls appear exclusively on creatures with an active Doom counter (e.g. `builtin-tov-monster` with Doom configured).
+- **VTT HUD**: Adjust Doom pools live from token quick stats during combat encounters.
+- **Bounded Pool**: Unlike Luck, Doom points are strictly scoped to the individual adversary token and are never shared as an arbitrary global pool.
+
+---
+
+### 5. Encounters & Challenge Guidance
+
+The Encounter Generator provides qualitative challenge pacing tailored to your party:
+
+- Select your **Party Size** (1 to 8 adventurers) and **Party Level** (Level 1 to 20).
+- Encounters calculate a qualitative challenge rating (**Trivial**, **Moderate**, **Dangerous**, or **Deadly**) along with recommended CR distributions.
+- Suggested adversary creatures indicate whether they match official BFRD templates or are custom homebrew concepts.
+
+---
+
+### 6. Using characters from external tools
+
+Codex Cryptica does not currently import ToV character JSON from `tov-chargen` or other external builders. To bring a character's details into your campaign, create an entity and enter its values manually using the character sheet described above.
+
+---
+
+### 7. Attribution & Legal Disclosures
+
+Codex Cryptica is an independent application and is not affiliated with, endorsed, or sponsored by Open Design LLC d/b/a Kobold Press.
+
+This work includes open game mechanics from the **Black Flag Reference Document**, made available under the **Creative Commons Attribution 4.0 International License (CC BY 4.0)** by Open Design LLC d/b/a Kobold Press.
+
+---
+
+### TOME & FORBIDDEN BOOK GENERATOR
+
+Open **Generators** from the activity bar and choose **Tome & Forbidden Book**. Set its setting, book type, physical format, rarity, custodian, primary reading hazard, and language. Add campaign context to connect its history and clues to your world, or leave options open for the generator to choose.
+
+The draft includes a physical description, provenance and transmission history, contents and revelations, study risks, adventure hooks, and GM reference notes. Review the claims and adapt details to fit your campaign before keeping them.
+
+With **AI Disabled**, the generator uses a local template and needs no AI key or network request. It still uses the selected setting, era, format, custodian, language, and primary hazard, though its prose is more structured than an AI draft.
+
+The result stays a draft until you choose **Open in Editor**. Review and edit it there, then use **Apply Changes** to keep it or **Discard** to remove it.
 
 ---
 
@@ -2041,6 +2222,36 @@ Use the **Connections** section on an entity’s **Status** tab, or either graph
 ### AI Context
 
 The Lore Oracle understands these labels. If you label someone as a "Rival," the AI will remember that conflict when you ask for plot ideas!
+
+---
+
+### TALES OF THE VALIANT (BFRD) GENERATORS
+
+Codex Cryptica supports generating non-player characters, monsters, and magic items with native **Tales of the Valiant (BFRD)** mechanics.
+
+### Selecting Tales of the Valiant
+
+Vault-wide system profile selection is not currently available. On a campaign generator or public generator page, select **Tales of the Valiant** from the **Game System** option when it is available.
+
+### Supported Generators
+
+1. **NPC Generator**:
+   - **Quick NPC**: Produces a lightweight, Challenge Rating (CR)-based stat block with Armor Class, Hit Points, ability modifiers, and core attack actions. Maps directly to the built-in Quick NPC stat sheet (`builtin-tov-npc`).
+   - **Leveled Character**: Produces a full adventurer or companion stat block with complete ability scores, save proficiencies, weapon attacks, spellcasting details, and features. Maps directly to the character stat sheet (`builtin-tov-character`).
+2. **Creature / Monster Generator**:
+   - Generates authentic BFRD monster stat blocks with creature size, type, Armor Class, Hit Points, speed, ability scores, Doom counters, traits, actions, and reactions. Maps to the monster stat sheet (`builtin-tov-monster`).
+3. **Magic Item / Minor Magic Item Generator**:
+   - Generates BFRD item statistics including rarity, category, attunement criteria, activation action economy, charges, and saving throw DCs. When saved, game statistics are appended to the entity under `### Game Statistics (Tales of the Valiant)`.
+4. **Encounter Generator**:
+   - Injects qualitative challenge pacing (Trivial, Moderate, Dangerous, Deadly) and adversary recommendations according to party size and level.
+
+### Complete Campaign Guide
+
+For more on the built-in stat sheet templates and manually tracking Luck and Doom, see the [Tales of the Valiant Campaign Guide](help:tales-of-the-valiant).
+
+### Offline & AI Availability
+
+Tales of the Valiant mechanics generation requires the AI Lore Co-Author. When working offline or with AI generation disabled, generators produce system-neutral lore and notes to ensure your worldbuilding workflow is never interrupted.
 
 ---
 
@@ -2797,6 +3008,48 @@ Templates you make in Settings are saved as files in your vault's `.codex/templa
 
 ---
 
+### POINT CRAWL GENERATOR
+
+The **Point Crawl Generator** designs interconnected adventure maps made of named locations (nodes) and travel routes (edges). Unlike open-grid hex crawls, a point crawl structures overland or regional journeys into deliberate paths, meaningful shortcuts, locked gates, and navigational dilemmas.
+
+### What is in a Point Crawl?
+
+Every generated point crawl consists of:
+
+- **Locations**: Start locations, landmarks, settlements, crossroad hubs, hazard zones, discovery sites, and final destinations with environmental tags, encounters, and interactive discoveries.
+- **Routes & Exits**: Explicit paths between locations with travel times, terrain types, travel hazards, encounter chances, and optional passage requirements (such as climbing gear, tidal timing, or magical keys).
+- **Network Topology**: Verified navigable structure ensuring no orphaned branches, guaranteed path to the goal, and tactical navigation choices (loops, alternate branches, and optional secrets).
+- **Interactive Visual Preview**: Drag and rearrange nodes to adjust layout, inspect locations and route details, and export the diagram as standalone **SVG** or high-resolution **PNG**.
+
+### Generating In-App
+
+To create a point crawl directly inside your campaign vault:
+
+1. Open **Campaign Generators** (click the wand icon in the vault toolbar or select **Point Crawl Generator**).
+2. Choose a **Setting & Genre** (Fantasy, Grimdark, Sci-Fi, Cyberpunk, Post-Apocalyptic, etc.) or provide custom steering notes.
+3. Select your network scale: **Micro (5-7 nodes)** for quick delves or local fens, **Standard (8-12 nodes)** for regional adventures, or **Sprawling (13-18 nodes)** for large expeditions.
+4. Pick an **Environment / Topology** (Fen / Marshland, Mountain Pass, Underdark / Caverns, Derelict Space Hulk, Neon Megacity, Sunken Coast, etc.).
+5. Click **Generate Point Crawl**.
+
+### Interactive Refinement & Diagram Export
+
+Once generated:
+
+- **Inspect Nodes**: Click any location on the map diagram to open its full dossier, encounters, clues, and outgoing paths.
+- **Rearrange & Tidy**: Drag nodes on the canvas to customize visual placement for your notes, or click **Reset Layout** to re-apply the auto-layout algorithm.
+- **Surgical Refinement**: Select any location or route and request AI refinements (e.g., _"Make the bridge guarded by troll mercenaries"_ or _"Add a hidden flooded tunnel"_).
+- **Export**: Click **Export SVG** or **Export PNG** in the diagram toolbar to download the visual map for player handouts or VTT display.
+
+### Saving to Your Vault
+
+Click **Save to Vault** to convert the point crawl into your local campaign workspace:
+
+- Creates a dedicated **Location entity** for each selected node, complete with sensory descriptions, hazards, and a markdown `## Routes & Exits` section.
+- Automatically establishes bidirectional connections between connected locations with route summaries as connection labels.
+- Creates an overarching **Note entity** (`kind: "point-crawl"`) summarizing the crawl's premise, navigation rules, and links to all generated locations.
+
+---
+
 ### SHARING AND PUBLISHING WORLDS
 
 Codex Cryptica allows you to publish a read-only, player-safe snapshot of your campaign lore to the cloud. This lets your players browse the world lore independently, navigate relationship graphs, and read entries even when you are offline or the browser window is closed.
@@ -3248,6 +3501,19 @@ A new shop does not have to start empty. On a shop's Stats tab, choose **Suggest
 
 Suggested prices are rough starting points, not official prices. Each added line is marked as a suggestion in your private line note.
 
+## Market pressure (optional)
+
+Most shops never need this. If you want a shop to react to events in your setting, open **Market pressure** on its Stats tab.
+
+- Pick a kind: **Shortage**, **Glut**, **Embargo**, **Festival** or **Restock**. Each fills in starting numbers you can change: a price change in whole percent, a quantity change, and a status such as Sold out.
+- Choose which lines it applies to. Type a word such as "iron" to pick matching lines, and untick any line you want left alone.
+- You see every change before anything happens: the price before and after, the quantity, and the status. Lines that cannot take the change say why.
+- Choose **Apply**. Name the change and say why, for example "Road to the mine is closed". It is recorded with whether you or an outside signal caused it.
+- The shop then shows the usual price next to the asking price for each affected line, with the reason.
+- **Undo** puts back the values the change set. If you have since set a price yourself, or a trade changed a quantity, that value is kept and you are told which.
+
+Prices stay in the shop's own currency and decimal places, and nothing is converted. Nothing changes unless you press Apply, other shops and your Items are never touched, and the history is never shared with players.
+
 ## Make your own shop template
 
 Use **Edit Layout** to add fields to your shop, then save the layout from **Templates**. Saved layouts can be shared like any other template. Saved templates keep the field layout, not your stock.
@@ -3531,6 +3797,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** Finding a tabletop RPG group comes down to three main routes: using a dedicated group-finding platform with structured filters (for system, schedule, language, and play format), tapping into local offline communities like friendly game stores, conventions, and clubs, or building a table yourself with friends or fellow players. Selecting the right route depends on whether you are looking for an in-person or online game, and taking a few minutes to check group fit and table expectations beforehand makes joining a new group substantially smoother.
 
+### [How do I get my friends interested in playing D&D for the first time?](https://codexcryptica.com/answers/how-do-i-get-my-friends-interested-in-playing-dnd)
+
+**Direct answer:** Do not ask your friends to care about your campaign before they have had a chance to enjoy playing it. Invite them to try a short, low-pressure adventure with a clear ending, let them help choose the premise and tone, and make their choices matter at the table. Send no required homework, treat actual-play shows as optional inspiration, and explain the rules as you play. Curiosity is a good starting point: enthusiasm may grow after the first session, and it is normal for it to differ from yours.
+
 ### [How do I get my RPG party to work together?](https://codexcryptica.com/answers/how-do-i-get-my-rpg-party-to-work-together)
 
 **Direct answer:** Give the characters a reason to stay together, situations where combining their strengths helps, and decisions whose outcomes affect the whole group. First work out whether the trouble comes from the fiction, unclear player expectations, or one person dominating decisions; talk with the players when it is a table issue, and use shared objectives and consequences when the characters simply lack ties.
@@ -3599,6 +3869,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** Organise a D&D campaign by things and relationships, not as one long document. Promote an NPC, location, faction, quest or item to its own page when you expect to retrieve or update it independently. Keep world truth, what the party knows, session history and disposable prep distinct; that split keeps abandoned ideas from becoming canon and makes the fact you need during play easier to find.
 
+### [How do I organise a Tales of the Valiant campaign?](https://codexcryptica.com/answers/how-do-i-organise-a-tales-of-the-valiant-campaign)
+
+**Direct answer:** Organise a Tales of the Valiant campaign by centring notes on what distinguishes Black Flag Roleplaying: separate each hero's Lineage from their cultural Heritage in your cast web, track party Luck according to your campaign's resting variant, manage Doom budgets for major adversary encounters, and maintain direct connections between martial talents, patrons, and regional factions.
+
 ### [How do I organise my GM notes and references when running an RPG in person?](https://codexcryptica.com/answers/how-do-i-organise-gm-notes-for-in-person-play)
 
 **Direct answer:** Bring a session-facing subset to the table, not the whole campaign file: one page of what might matter tonight, a few reference pages you can reach without scrolling, somewhere to catch names and decisions as they happen, and a place the session gets filed afterwards. Paper, tablet and laptop all do that job, so choose by how fast you need an answer and how much screen you want sitting between you and the players.
@@ -3611,6 +3885,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** Sketch the campaign's central tensions and possible direction, develop the current arc and a few future possibilities, but prepare only the next session in detail. Give each arc its own problem and resolution that changes the situation, and let player decisions decide what follows. A simple way to keep prep light is three horizons: a broad campaign horizon for threats and factions, an arc horizon for the current conflict and its stakes, and a session horizon for the locations, NPCs and choices you need next time you play.
 
+### [How do I portray a believable modern city in an urban RPG?](https://codexcryptica.com/answers/how-do-i-portray-a-believable-modern-city-in-an-urban-rpg)
+
+**Direct answer:** You do not need a wide social circle to portray a believable modern city: start with one neighbourhood, three recurring residents who each have an ordinary routine and an immediate need, and one everyday disagreement, then let checked research supply a few accurate details and let play decide what to expand. Portray people through what they want, what limits them, and how they react, rather than through a class label, job title, or accent, and show the supernatural changing ordinary arrangements instead of replacing them.
+
 ### [How do I prepare a D&D session?](https://codexcryptica.com/answers/how-do-i-prepare-a-dnd-session)
 
 **Direct answer:** Prepare a D&D session by deciding what changed since last time, identifying tonight's main situation, and getting ready for the choices your group is likely to make. Prepare the kinds of play that fit the situation and give different characters meaningful ways to contribute. Look at the abilities and resources the current party can bring, work out likely NPCs and places, and give any key information more than one route to the players. Decide what important actors want, what they will do next, and what changes if the party intervenes or leaves things alone. Keep a small reserve of names, rumours and complications, then put the information you need during play somewhere easy to find.
@@ -3622,6 +3900,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 ### [How do I read a D&D character sheet as a beginner?](https://codexcryptica.com/answers/how-do-i-read-a-dnd-character-sheet-as-a-beginner)
 
 **Direct answer:** A D&D character sheet is a reference for play, not a document to memorise. At the table you will reach for four things constantly: your current and maximum hit points, your Armour Class, the labelled modifier you add to a d20 roll, and the block that lists your main attacks, spells, or actions. Learn where those live first, then let ability scores, skills, saving throws, and resources make sense around them.
+
+### [How do I roleplay NPCs if I'm not good at acting?](https://codexcryptica.com/answers/how-do-i-roleplay-npcs-if-im-not-good-at-acting)
+
+**Direct answer:** You do not need acting talent to roleplay believable NPCs: speaking in third person such as "The guard explains the gate stays shut until sunrise" is full roleplay, not a lesser version of it. Give each NPC a want, an attitude toward the party, and one small behavioural or speech habit, then use simple signals like tempo, word choice, or posture to mark who is speaking and name the speaker when you switch.
 
 ### [How do I run a bard or face without sidelining the party?](https://codexcryptica.com/answers/how-do-i-run-a-bard-or-face-without-sidelining-the-party)
 
@@ -3650,6 +3932,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 ### [How do I run a rogue or scout without splitting the party?](https://codexcryptica.com/answers/how-do-i-run-a-rogue-or-scout-without-splitting-the-party)
 
 **Direct answer:** Characters can be apart without excluding their players. Let the scout move ahead, but keep each solo beat short: resolve its uncertainty, then return information, pressure, or a choice to the group while they can still act. The rogue earns useful information, position, or access; companions can watch exits, prepare a diversion, or change the conditions outside.
+
+### [How do I run a stealth mission in a tabletop RPG?](https://codexcryptica.com/answers/how-do-i-run-a-stealth-mission-in-a-tabletop-rpg)
+
+**Direct answer:** Plan a stealth mission as a short sequence of security zones where players choose how to approach each change in risk, and call for a roll only when the outcome is uncertain and failure would matter. One group check can cover a coherent crossing while new checks belong to new problems such as a fresh patrol, an exposed courtyard or a riskier plan. Use a light suspicion track to make detection gradual, and let a failed roll create a new choice rather than sounding the whole complex at once.
 
 ### [How do I run a successful Session 0?](https://codexcryptica.com/answers/how-do-i-run-a-successful-session-0)
 
@@ -3979,6 +4265,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** Use a point crawl when play is about choosing between known or rumoured destinations and routes, with each journey carrying a clear cost. Use a hex crawl when finding the landscape is itself the game: the party chooses a direction, exposes unknown ground, and manages time and supplies across a broad region. Neither is more open by default; they make different parts of exploration visible at the table.
 
+### [What are the best classless fantasy RPGs with skill-based progression?](https://codexcryptica.com/answers/what-are-the-best-classless-fantasy-rpgs-with-skill-based-progression)
+
+**Direct answer:** For a group leaving Warhammer Fantasy Roleplay 4e, Mythras and GURPS are conditional candidates; neither is a verified winner. Mythras offers classless skill improvement and session-refreshing Luck that can downgrade a Major Wound, but its injury rules can still maim or kill. GURPS offers classless point-buy and a limited reroll, while injury, resurrection, and campaign pace depend on the chosen rules package. Verify those trade-offs against your group's own requirements before choosing. Dragonbane is a lighter, profession-framed option whose push rerolls cost a condition but do not protect a character from death. Savage Worlds has no fixed classes, but its Rank-based Advances gate Edges. Against the Darkmaster is a vocation-and-level mismatch.
+
 ### [What are the pros and cons of becoming a Dungeon Master?](https://codexcryptica.com/answers/what-are-the-pros-and-cons-of-becoming-a-dungeon-master)
 
 **Direct answer:** Becoming a Dungeon Master may appeal if you enjoy setting up situations, improvising around unexpected player choices, and helping the group have memorable moments at the table. The role brings different responsibilities from playing: you prepare situations, make rulings, and share attention fairly. A low-risk way to find out is to run a short standalone one-shot for your group or a few friends while you keep playing in your current campaign.
@@ -4285,7 +4575,11 @@ The canonical, no-login-required tools that actually generate and let you save a
 
 - [Dungeon / Delve Idea Generator](https://codexcryptica.com/generators/dungeon-generator): Create rich, multi-layered dungeons, ancient ruins, abandoned facilities, or subterranean vaults for any RPG genre or world theme. Generates evocative premises, original histories, current operational states, signature landmarks, active conflicts, sectors, factions, hazards, secrets, treasures, and adventure hooks. Every generated delve can also become a fully explorable, room-by-room map — the interactive Dungeon Canvas is exclusive to Codex Cryptica, free to open once you're in the app.
 
+- [Point Crawl Generator](https://codexcryptica.com/generators/point-crawl): Generate an interconnected network of 6–15 locations with explicit travel routes, signposts, loops, hidden shortcuts, and key-before-lock gates. Inspect and rearrange the live node-and-edge graph, then save all or selected points directly into your Codex Cryptica vault.
+
 - [Adventure Idea Generator](https://codexcryptica.com/generators/adventure-generator): Create rich, multi-layered adventure scenarios across any RPG genre or world theme. Generates initial situations, primary pressures, key locations, key actors, threats, discoveries, complications, stakes, and non-linear possible outcomes — a situation, not a plot.
+
+- [One-Shot Adventure Builder](https://codexcryptica.com/generators/one-shot-adventure-generator): Pick a genre, session length and style, and get a complete single-session adventure: a GM briefing, an opening scene, three to six scenes with minute budgets, NPCs, challenges, clues, a finale and a cheat sheet. Each scene is marked essential or optional, with a way to shorten or skip it and a running-late path. Regenerate one scene or NPC without changing the rest. Works without login.
 
 - [Adventure Idea Generator](https://codexcryptica.com/generators/adventure-idea-generator): Create rich, multi-layered adventure scenarios across any RPG genre or world theme. Generates initial situations, primary pressures, key locations, key actors, threats, discoveries, complications, stakes, and non-linear possible outcomes — a situation, not a plot.
 
@@ -4298,6 +4592,8 @@ The canonical, no-login-required tools that actually generate and let you save a
 - [RPG Artifact & Relic Generator](https://codexcryptica.com/generators/artifact-generator): Create legendary artifacts and ancient relics with deep lore, multi-tier powers (dormant, awakened, ascendant), consequential costs, pursuing factions, and adventure hooks. Works without login.
 
 - [RPG Item Generator](https://codexcryptica.com/generators/item): Design magic items, weaponry, or rare relics with customizable properties and history. Works without login.
+
+- [Tome & Forbidden Book Generator](https://codexcryptica.com/generators/tome): Create sinister grimoires, heretical treatises, and esoteric manuscripts with binding details, readable excerpts, investigation risks, and adventure hooks. Works without login, then saves directly to your local Codex vault.
 
 - [RPG Ship Generator](https://codexcryptica.com/generators/ship-generator): Create a campaign-ready vessel for any RPG genre. Sci-fi starships, fantasy galleons, pirate sloops, steampunk airships — pick the role, scale, and condition and get a ship with a crew, a mission, a problem, and a secret.
 
@@ -4455,6 +4751,12 @@ Codex Cryptica provides specialized, tailored landing pages, knowledge graphs, a
 **Summary:** Connect the inventions that change what is possible with the people, places, and power struggles they leave behind.
 
 **Overview:** Steampunk campaigns turn on what invention makes possible—and who gains or loses power when it succeeds. A stolen prototype, strike, noble investment, or act of sabotage can reshape an industrial city, scientific expedition, or airship voyage. In Codex Cryptica, connect inventions to their inventors, workers, patrons, rivals, routes, and consequences, from guild intrigue to gaslamp investigation and weird science.
+
+### [Codex Cryptica for Tales of the Valiant Campaigns](https://codexcryptica.com/for/tales-of-the-valiant)
+
+**Summary:** Manage lineages, heritages, interactive Luck reserves, adversary Doom points, and BFRD stat blocks without getting bogged down in paper.
+
+**Overview:** Black Flag campaigns give heroes deeper origins with distinct Lineages and Heritages, volatile Luck economies, and tactical monster actions. Running an adventure path means keeping track of who earned Luck last encounter, which villain holds Doom points, and where every faction patron stands when your players go off-book.
 
 ### [Codex Cryptica for Traveller Campaign Management](https://codexcryptica.com/for/traveller)
 

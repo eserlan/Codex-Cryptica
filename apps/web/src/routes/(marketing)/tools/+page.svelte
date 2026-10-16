@@ -280,6 +280,13 @@
               icon: "icon-[lucide--map]",
             },
             {
+              href: "/generators/point-crawl",
+              label: "Point Crawl Generator",
+              summary:
+                "Generate an interconnected point-crawl map of named locations and travel routes with loops, secret paths, locked gates, and SVG/PNG export.",
+              icon: "icon-[lucide--waypoints]",
+            },
+            {
               href: "/generators/magic-item",
               label: "Magic Item Generator",
               summary:

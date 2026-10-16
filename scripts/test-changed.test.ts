@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import {
   findCoLocatedTests,
+  getLocalTestEnv,
   getWorkspaceTestInvocation,
   groupTestsByWorkspace,
   isUnitTestFile,
@@ -87,5 +88,15 @@ describe("test-changed", () => {
       cwd: ".",
       args: ["test", "scripts/sync-help-generators.test.ts"],
     });
+  });
+
+  test("caps vitest workers at half the cores for local runs", () => {
+    expect(getLocalTestEnv({}, 4)).toEqual({ VITEST_MAX_WORKERS: "2" });
+    expect(getLocalTestEnv({}, 1)).toEqual({ VITEST_MAX_WORKERS: "1" });
+  });
+
+  test("leaves CI and explicit worker overrides untouched", () => {
+    expect(getLocalTestEnv({ CI: "true" }, 8)).toEqual({});
+    expect(getLocalTestEnv({ VITEST_MAX_WORKERS: "6" }, 8)).toEqual({});
   });
 });

@@ -185,6 +185,9 @@ export default defineConfig({
     environment: "jsdom",
     globals: true,
     pool: "forks",
+    // Leave half the cores free locally so a test run doesn't freeze the
+    // machine; CI keeps vitest's default. VITEST_MAX_WORKERS overrides both.
+    maxWorkers: process.env.CI ? undefined : "50%",
     silent: true,
     testTimeout: 15000,
     setupFiles: ["tests/setup.ts"],

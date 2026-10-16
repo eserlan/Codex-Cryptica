@@ -73,6 +73,7 @@ describe("registry lookup", () => {
       "heist",
       "holiday",
       "tome",
+      "point-crawl",
     ]);
   });
 
@@ -1375,7 +1376,6 @@ describe("buildPrompt cultural naming", () => {
           applyTemplate: false,
           neighbors: [],
           worldSample: [],
-          existingTitles: [],
           labelSuggestions: [],
           includedContext: [],
           nameExamples: ["Aranyvér"],
@@ -1812,6 +1812,7 @@ describe("generator id -> vault category mapping (FR-041)", () => {
       heist: "note",
       holiday: "note",
       tome: "item",
+      "point-crawl": "note",
     });
   });
 
@@ -1879,5 +1880,37 @@ describe("tome generator", () => {
     const draft = generator.mapOutputToDraft(output, request);
     expect(draft.entityType).toBe("item");
     expect(draft.labels).toContain("tome");
+  });
+});
+
+describe("point-crawl generator", () => {
+  it("builds and generates a point-crawl draft with note entityType and structured pointCrawl", () => {
+    const generator = getGenerator("point-crawl");
+    const request = run("point-crawl", {
+      options: {
+        scale: "Dungeon",
+        pointCount: "9",
+        density: "Highly interconnected",
+        dangerLevel: "High / Deadly",
+        secretFrequency: "Frequent (3+ secret routes)",
+      },
+    });
+
+    expect(GENERATOR_ENTITY_TYPE["point-crawl"]).toBe("note");
+    const prompt = generator.buildPrompt(request);
+    expect(prompt).toContain("Dungeon");
+    expect(prompt).toContain("9");
+    expect(prompt).toContain("Highly interconnected");
+
+    const output = generator.generate(request);
+    expect(output.title).toBeTruthy();
+    expect(output.pointCrawl?.nodes).toHaveLength(9);
+    expect(output.content).toContain("## Keyed Locations");
+    expect(output.lore).toContain("## GM Navigation & Key-Lock Reference");
+
+    const draft = generator.mapOutputToDraft(output, request);
+    expect(draft.entityType).toBe("note");
+    expect(draft.pointCrawl?.nodes).toHaveLength(9);
+    expect(draft.labels).toContain("point-crawl");
   });
 });

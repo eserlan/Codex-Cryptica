@@ -119,6 +119,7 @@ export const howDoYouKeepTrackOfNpcsInALongCampaign: AnswerConfigInput = {
     },
   ],
   relatedAnswers: [
+    "how-do-i-organise-a-tales-of-the-valiant-campaign",
     "how-do-you-help-players-remember-what-happened-in-a-ttrpg-campaign",
     "how-do-you-recap-a-ttrpg-session",
     "how-do-you-organise-rpg-campaign-notes",

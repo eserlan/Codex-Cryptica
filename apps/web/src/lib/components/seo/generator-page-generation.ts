@@ -15,6 +15,7 @@ export const NON_STREAMABLE_SLUGS: readonly ValidSlug[] = [
   "adventure-generator",
   "adventure-idea-generator",
   "one-shot-adventure-generator",
+  "point-crawl",
   "language-generator",
 ] as const;
 
@@ -73,6 +74,7 @@ export interface GenerationContext {
   origin: Record<string, unknown>;
   villainScheme: Record<string, unknown>;
   oneShot: Record<string, unknown>;
+  pointCrawl?: Record<string, unknown>;
   world: Record<string, unknown>;
   starSystem: Record<string, unknown>;
   constellation: Record<string, unknown>;
@@ -349,6 +351,18 @@ export function createGeneratorHandlers(
         primaryHazard: (ctx.tome as Record<string, unknown>).hazard,
         useAI,
       } as never),
+    "point-crawl": (useAI: boolean) => {
+      ctx.onOneShotProgress?.(null);
+      const pc = (ctx.pointCrawl ?? {}) as Record<string, unknown>;
+      return engine.generatePointCrawl({
+        ...pc,
+        genre: (pc.genre as string) || ctx.getActiveTheme(),
+        pointCount: Number(pc.pointCount) || 8,
+        useAI,
+        onProgress: ctx.onOneShotProgress,
+        signal: ctx.oneShotRuns?.start(),
+      } as never);
+    },
   } as GeneratorHandlers;
 }
 

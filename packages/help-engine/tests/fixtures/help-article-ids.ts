@@ -57,4 +57,5 @@ export const KNOWN_HELP_IDS = [
   "adventure-mode",
   "entity-explorer",
   "entity-shelf",
+  "finding-your-way-around",
 ] as const;

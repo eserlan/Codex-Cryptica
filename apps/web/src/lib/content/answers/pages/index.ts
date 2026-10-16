@@ -29,6 +29,7 @@ import { howDoIMakeRivalCaptainsNaviesAndPirateFactionsMatter } from "./how-do-i
 import { howDoIMakeRoleplayMoreEngaging } from "./how-do-i-make-roleplay-more-engaging";
 import { howDoIMakeSeaTravelInterestingInATtrpg } from "./how-do-i-make-sea-travel-interesting-in-a-ttrpg";
 import { howDoIOrganiseADndCampaign } from "./how-do-i-organise-a-dnd-campaign";
+import { howDoIOrganiseATalesOfTheValiantCampaign } from "./how-do-i-organise-a-tales-of-the-valiant-campaign";
 import { howDoIOrganiseGmNotesForInPersonPlay } from "./how-do-i-organise-gm-notes-for-in-person-play";
 import { howDoIPaceAnRpgOneShot } from "./how-do-i-pace-an-rpg-one-shot";
 import { howDoIPlanStoryArcsForAnRpgCampaign } from "./how-do-i-plan-story-arcs-for-an-rpg-campaign";
@@ -198,6 +199,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIMakeRoleplayMoreEngaging,
     howDoIMakeSeaTravelInterestingInATtrpg,
     howDoIOrganiseADndCampaign,
+    howDoIOrganiseATalesOfTheValiantCampaign,
     howDoIOrganiseGmNotesForInPersonPlay,
     howDoIPaceAnRpgOneShot,
     howDoIPlanStoryArcsForAnRpgCampaign,

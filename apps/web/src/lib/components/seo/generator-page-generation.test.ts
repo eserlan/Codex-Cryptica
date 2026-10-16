@@ -225,8 +225,8 @@ describe("generator-page-generation", () => {
       expect(isStreamableSlug("settlement" as ValidSlug)).toBe(true);
     });
 
-    it("exposes exactly six non-streamable slugs", () => {
-      expect(NON_STREAMABLE_SLUGS).toHaveLength(6);
+    it("exposes exactly seven non-streamable slugs", () => {
+      expect(NON_STREAMABLE_SLUGS).toHaveLength(7);
       expect([...NON_STREAMABLE_SLUGS].sort()).toEqual(
         [
           "adventure-generator",
@@ -235,6 +235,7 @@ describe("generator-page-generation", () => {
           "dungeon-generator",
           "language-generator",
           "one-shot-adventure-generator",
+          "point-crawl",
         ].sort(),
       );
     });

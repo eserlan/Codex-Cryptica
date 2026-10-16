@@ -256,6 +256,13 @@
           icon: "icon-[lucide--hourglass]",
         },
         {
+          href: "/generators/point-crawl",
+          label: "Point Crawl Generator",
+          summary:
+            "Build an interconnected network of named locations and travel routes withloops, secret paths, locked gates, and SVG/PNG diagram export.",
+          icon: "icon-[lucide--waypoints]",
+        },
+        {
           href: "/generators/magic-item",
           label: "Magic Item Generator",
           summary:

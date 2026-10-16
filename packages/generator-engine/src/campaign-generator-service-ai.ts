@@ -14,8 +14,11 @@ import {
   buildCampaignTomePrompt,
   getGenerator,
   isTitleBanned,
+  pointCrawlOptions,
   SYSTEM_INSTRUCTION,
 } from "./campaign-generator-registry";
+import { generatePointCrawlStaged } from "./point-crawl-staged";
+import { pointCrawlToOutput } from "./public-point-crawl";
 import { suggestName } from "./name-candidates";
 import {
   buildDungeonCoherencePrompt,
@@ -305,6 +308,7 @@ export class CampaignGeneratorAIGenerationService extends CampaignGeneratorLangu
     }
   }
 
+  // fallow-ignore-next-line complexity
   protected async generateAIDraft(
     generator: ReturnType<typeof getGenerator>,
     request: GeneratorRunRequest,
@@ -333,6 +337,32 @@ export class CampaignGeneratorAIGenerationService extends CampaignGeneratorLangu
         return this.generateLanguageWithAI(generator, request, bannedNames);
       case "council-vote":
         return generateCouncilVoteWithAI(gateway, generator, request);
+      case "point-crawl":
+        try {
+          const network = await generatePointCrawlStaged(
+            pointCrawlOptions(request),
+            async (prompt) =>
+              completeText(
+                await gateway.complete(prompt, SYSTEM_INSTRUCTION, { signal }),
+              ),
+            undefined,
+            signal,
+          );
+          const output = pointCrawlToOutput(network);
+          return generator.mapOutputToDraft(
+            {
+              title: output.title,
+              summary: output.summary ?? "",
+              content: output.content,
+              lore: output.lore,
+              labels: output.labels,
+              pointCrawl: output.pointCrawl,
+            },
+            request,
+          );
+        } catch {
+          return null;
+        }
       default:
         return this.generateGenericWithAI(generator, request, bannedNames);
     }

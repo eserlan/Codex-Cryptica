@@ -1,5 +1,9 @@
 import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
-import type { ProvenanceRecord, SessionEntity } from "generator-engine";
+import {
+  buildPointCrawlSaveDrafts,
+  type ProvenanceRecord,
+  type SessionEntity,
+} from "generator-engine";
 import {
   buildGeneratorSavePayload,
   buildHubSaveDrafts,
@@ -26,6 +30,7 @@ export async function saveGeneratorOutput(
   generatorType: string,
   dependencies: GeneratorSaveFlowDependencies,
   exportMapImage?: () => Promise<string | undefined>,
+  selectedNodeIds?: string[],
 ): Promise<string> {
   let mapImageDataUrl: string | undefined;
   if (exportMapImage) {
@@ -35,6 +40,31 @@ export async function saveGeneratorOutput(
       // Map export is best effort; saving the generated draft remains available.
       console.error("Failed to rasterize generator diagram:", error);
     }
+  }
+
+  const pointCrawl = data.pointCrawl ?? (data.metadata?.pointCrawlState as any);
+  if (pointCrawl) {
+    const drafts = buildPointCrawlSaveDrafts(pointCrawl, {
+      selectedNodeIds,
+      mapImageDataUrl,
+      status: data.status,
+    });
+    dependencies.store(PENDING_IMPORT_KEY, JSON.stringify(drafts));
+    dependencies.track({
+      generatorType,
+      isHubBatch: true,
+      itemCount: drafts.length,
+      relatedEntityCount: drafts.reduce(
+        (sum, d) =>
+          sum +
+          dependencies.countRelatedEntities(
+            d.content,
+            d.relationships?.map((r) => r.title),
+          ),
+        0,
+      ),
+    });
+    return `?utm_source=generator-point-crawl&utm_medium=save-to-vault&utm_campaign=seo-funnel`;
   }
 
   const payload = buildGeneratorSavePayload(data, layout, mapImageDataUrl);

@@ -50,6 +50,16 @@ Kanka's structured campaign export works without an AI key:
 
 Codex imports a copy and does not change the campaign in Kanka. Kanka permissions, dashboards, family-tree layouts, plugins, themes, and bookmarks are not part of Kanka's standard export and cannot be recreated by this import.
 
+## Import a Chronica Campaign
+
+Chronica's JSON exports also work without an AI key:
+
+1. In Chronica, export your campaign as JSON. You get one file per section (characters, places, quests and so on).
+2. Drop all the files from that campaign into Codex's importer at once. Files from a different campaign are refused.
+3. Review the entries and their connections before committing them to the current vault.
+
+Characters, places, kinships and encounters become characters, locations, factions and events. Quests, adventure notes and maps come across as notes, and GM secrets go into each entry's private lore. Map images are not included, and stats are kept as metadata rather than stat sheets. Codex imports a copy and does not change your campaign in Chronica.
+
 ## Resilient Imports
 
 Large documents can take time to process. The system automatically tracks your progress:

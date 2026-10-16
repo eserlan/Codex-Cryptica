@@ -1,3 +1,4 @@
+import { generatePointCrawlLocal } from "generator-engine";
 import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
 import type { ValidSlug } from "./generator-page-meta";
 
@@ -258,4 +259,14 @@ export const slugDrafts: Partial<Record<ValidSlug, GeneratorOutput>> = {
     labels: ["tome-generator", "forbidden-book", "occult", "item"],
     status: "draft",
   },
+  "point-crawl": generatePointCrawlLocal({
+    genre: "Classic Fantasy",
+    scale: "Wilderness",
+    pointCount: 8,
+    density: "Balanced branching",
+    dangerLevel: "Moderate / Hazardous",
+    secretFrequency: "Standard (1-2 secret routes)",
+    instruction:
+      "A mist-choked pilgrimage trail climbing through flooded watchtowers and basalt ravines toward the Sunken Reliquary.",
+  }) as GeneratorOutput,
 };

@@ -40,6 +40,24 @@ export const forEntries: DiscoveryEntryInput[] = [
     status: "live",
   },
   {
+    id: "for-tales-of-the-valiant",
+    pageKind: "for",
+    canonicalPath: "/for/tales-of-the-valiant",
+    primaryIntent: "tales of the valiant campaign manager",
+    intentAliases: [
+      "tov campaign organiser",
+      "black flag roleplaying campaign notes app",
+      "tales of the valiant dm notes",
+    ],
+    audience: "Tales of the Valiant game masters and players",
+    userJob: "adopt-workflow",
+    uniqueValue:
+      "Campaign organisation designed for Black Flag Roleplaying: distinct Lineage and Heritage tracking, interactive Luck point reserves across sheets and VTT tokens, Doom tracking for bosses, and built-in BFRD stat sheets and generators.",
+    parentCluster: "system-guides",
+    indexable: true,
+    status: "live",
+  },
+  {
     id: "for-pathfinder-2e",
     pageKind: "for",
     canonicalPath: "/for/pathfinder-2e",

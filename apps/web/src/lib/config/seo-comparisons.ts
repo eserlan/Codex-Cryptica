@@ -561,4 +561,155 @@ export const comparisons: Record<string, SEOComparisonPageData> = {
       },
     ],
   },
+  chronica: {
+    slug: "chronica",
+    competitorName: "Chronica",
+    title: "Codex Cryptica vs Chronica: Party Hub or Local Lore Graph?",
+    description:
+      "Compare Codex Cryptica and Chronica. Chronica is an online party hub with player accounts; Codex is a local-first lore graph for the GM. See which fits your table.",
+    eyebrow: "Comparing Chronica alternatives",
+    h1: "Codex Cryptica vs Chronica",
+    subheading:
+      "An online hub your players log into, or a private campaign brain that lives in your browser.",
+    introText:
+      "Chronica is a browser-based campaign manager built around the whole party: every player has an account, and the GM shares quests, inventories, shops, maps and calendars with them in one online hub.\n\nCodex Cryptica starts from the other end. It is the GM's lore graph: characters, factions, places and events, all connected, stored locally in your browser and usable offline. Players join live sessions by link when you want them to, without accounts.",
+    ctaText: "Open Codex, No Account Required",
+    secondaryCtaText: "Import a Chronica Copy",
+    secondaryCtaHref: "/import/chronica",
+    keywords: [
+      "codex cryptica vs chronica",
+      "chronica alternative",
+      "chronica campaign manager alternative",
+      "chronica ventures alternative",
+      "offline chronica alternative",
+    ],
+    migrationStrip: [
+      { icon: "icon-[lucide--copy]", label: "Your Chronica JSON Exports" },
+      { icon: "icon-[lucide--file-text]", label: "Local Markdown Vault" },
+      { icon: "icon-[lucide--network]", label: "Interactive Entity Graph" },
+    ],
+    features: [
+      {
+        title: "Relationship Graph",
+        description:
+          "See how NPCs, factions, places and events connect in one interactive graph, built from the entities you write.",
+        icon: "icon-[lucide--network]",
+      },
+      {
+        title: "Calendars, Timelines & Maps",
+        description:
+          "Track events on custom calendars and pin locations to maps, so campaign history and geography stay tied to your lore.",
+        icon: "icon-[lucide--calendar-days]",
+      },
+      {
+        title: "Local and Offline",
+        description:
+          "Your vault lives in your browser and works without a connection. Sync it to a folder on your computer or back it up when you choose.",
+        icon: "icon-[lucide--hard-drive]",
+      },
+    ],
+    comparisonTable: [
+      {
+        feature: "Where campaign data lives",
+        competitorHas: "Online hub, with an account",
+        codexHas: "In your browser, no account needed",
+      },
+      {
+        feature: "Works offline",
+        competitorHas: "Online service",
+        codexHas: "Yes",
+      },
+      {
+        feature: "Player accounts and permissions",
+        competitorHas: "Yes, an account per player",
+        codexHas: "No accounts; players join live sessions by link",
+      },
+      {
+        feature: "Party and personal inventories",
+        competitorHas: "Yes",
+        codexHas: "Not built in",
+      },
+      {
+        feature: "Kingdom-building tools",
+        competitorHas: "Yes",
+        codexHas: "No",
+      },
+      {
+        feature: "In-game shops",
+        competitorHas: "Yes",
+        codexHas: "Yes (merchant stock sheets)",
+      },
+      {
+        feature: "Custom calendars and timeline events",
+        competitorHas: "Yes",
+        codexHas: "Yes",
+      },
+      {
+        feature: "Interactive relationship graph",
+        competitorHas: "Not a listed feature",
+        codexHas: "Yes",
+      },
+      {
+        feature: "Portable Markdown files",
+        competitorHas: "Not a listed feature",
+        codexHas: "Yes (folder sync and export)",
+      },
+    ],
+    verdict:
+      "These tools solve different problems. Chronica is the stronger fit when you want your players inside the tool between sessions, tracking their own inventories, quests and kingdom alongside you.\n\nCodex Cryptica is the stronger fit when the campaign mostly lives in the GM's head and notes, and you want that lore connected, private, offline and in files you own.",
+    decisionGuidance: [
+      {
+        title: "Choose Chronica if…",
+        description: "You want a shared online home for the whole party.",
+        items: [
+          "Every player should have their own login",
+          "Players track their own inventories and quests between sessions",
+          "Kingdom building is part of your campaign",
+          "You are happy for the campaign to live online",
+        ],
+      },
+      {
+        title: "Choose Codex Cryptica if…",
+        description: "You want a private, connected record of your world.",
+        items: [
+          "You mostly prep and run the campaign yourself",
+          "You want to see how characters, factions and places connect",
+          "Offline access matters at your table",
+          "You want no account and your notes in local files",
+        ],
+      },
+    ],
+    relatedLinks: [
+      { href: "/import/chronica", label: "Import Chronica exports" },
+      { href: "/vs/kanka-alternative", label: "vs Kanka" },
+      { href: "/vs/legendkeeper", label: "vs LegendKeeper" },
+      {
+        href: "/free-rpg-campaign-manager",
+        label: "Free RPG campaign manager",
+      },
+    ],
+    faq: [
+      {
+        question: "Can I bring my Chronica campaign into Codex Cryptica?",
+        answer:
+          "Yes. Export your campaign from Chronica as JSON and import a copy. Characters, places, quests, encounters, kinships and notes come across, with GM secrets kept in each entry's private lore. Your Chronica campaign stays as it is.",
+      },
+      {
+        question: "Do my players need accounts in Codex Cryptica?",
+        answer:
+          "No. Codex is built around the GM's vault. When you want players at the table, you host a live session from your browser and send them a link; they join without signing up.",
+      },
+      {
+        question:
+          "Does Codex have inventories and kingdom building like Chronica?",
+        answer:
+          "Not in the same way. Codex has shop stock sheets and stat sheets, but no party inventory tracker or kingdom builder. If those are central to your game, Chronica covers them better.",
+      },
+      {
+        question: "Does Codex Cryptica work offline?",
+        answer:
+          "Yes. The core campaign workflow runs in your browser and stores the vault locally, so you can prep and run sessions without a connection.",
+      },
+    ],
+  },
 };

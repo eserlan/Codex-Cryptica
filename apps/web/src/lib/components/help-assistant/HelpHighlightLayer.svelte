@@ -1,8 +1,23 @@
 <script lang="ts">
+  import { untrack } from "svelte";
+  import type { CifFlight } from "$lib/services/help-assistant/cif-flight.svelte";
   import type { HelpHighlightService } from "$lib/services/help-assistant/help-highlight.svelte";
   import CifPointer from "./CifPointer.svelte";
 
-  let { highlight }: { highlight: HelpHighlightService } = $props();
+  let {
+    highlight,
+    flight,
+  }: { highlight: HelpHighlightService; flight: CifFlight } = $props();
+
+  // Cif flies out with each new highlight and home again when it ends.
+  // Only the highlight drives this; what the flight reads to find home does not.
+  $effect(() => {
+    const current = highlight.current;
+    untrack(() => flight.follow(current));
+  });
+  // Torn down mid-flight (help turned off): bring Cif home, so the header does
+  // not keep his spot empty the next time the chat opens.
+  $effect(() => () => untrack(() => flight.land()));
 
   const PAD = 4;
 </script>
@@ -30,9 +45,18 @@
       {label}
     </span>
   </div>
-  <!-- Keyed so each new highlight gets its own flight, even for the same control. -->
-  {#key highlight.current.id}
-    <CifPointer {rect} />
+{/if}
+
+<!-- Outside the highlight block: Cif is still on screen while he flies home.
+     Keyed so each new highlight gets its own flight, even for the same control. -->
+{#if flight.phase !== "idle" && flight.target}
+  {#key flight.flightId}
+    <CifPointer
+      rect={flight.target}
+      phase={flight.phase}
+      from={flight.from}
+      home={flight.home}
+    />
   {/key}
 {/if}
 
