@@ -2,6 +2,7 @@ import type { Point } from "schema";
 import type { Token } from "../../../../types/vtt";
 import { hitTestToken } from "$lib/utils/vtt-helpers";
 import { snapPointToHexCenter, type HexOrientation } from "map-engine";
+import { POINTER_DISPLACEMENT_THRESHOLD } from "./pointer-thresholds";
 
 export interface TokenGridConfig {
   enabled: boolean;
@@ -43,8 +44,6 @@ export interface TokenDragState {
   startPoint: Point;
   hasMoved: boolean;
 }
-
-const TOKEN_DRAG_THRESHOLD = 5;
 
 export class TokenDragHandler {
   dragState: TokenDragState | null = null;
@@ -105,7 +104,7 @@ export class TokenDragHandler {
         viewportPoint.x - this.dragState.startPoint.x,
         viewportPoint.y - this.dragState.startPoint.y,
       );
-      if (displacement < TOKEN_DRAG_THRESHOLD) return true;
+      if (displacement < POINTER_DISPLACEMENT_THRESHOLD) return true;
       this.dragState.hasMoved = true;
     }
 

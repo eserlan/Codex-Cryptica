@@ -11,7 +11,9 @@
     "lint": "eslint \"src/**/*.ts\""
   },
   "dependencies": {
+    "dice-engine": "workspace:*",
     "map-engine": "workspace:*",
+    "random-source-engine": "workspace:*",
     "zod": "^4.4.3"
   },
   "devDependencies": {

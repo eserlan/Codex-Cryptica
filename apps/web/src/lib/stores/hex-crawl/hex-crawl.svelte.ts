@@ -1,6 +1,7 @@
 import {
   getHexRecord,
   normalizeHexCrawlState,
+  terrainLabel,
   upsertHexRecord,
   type HexCoord,
   type HexCrawlState,
@@ -8,7 +9,14 @@ import {
   type HexRecord,
   type Terrain,
 } from "hex-crawl-engine";
+import {
+  formatHexExplored,
+  type JournalCapturePayload,
+} from "session-journal-engine";
 import type { Map as MapRecord } from "schema";
+
+/** Who marked a hex explored: a party move or the GM by hand (FR-019). */
+export type ExploredVia = "gm" | "party";
 
 /**
  * Dependencies for the hex crawl store, injected so tests need no vault or
@@ -18,9 +26,11 @@ export interface HexCrawlStoreDeps {
   getMap: (mapId: string) => MapRecord | undefined;
   saveMaps: () => Promise<boolean>;
   clock: { now: () => number };
-  publishCapture: (payload: unknown) => void;
+  publishCapture: (payload: JournalCapturePayload) => void;
   isGM: () => boolean;
   isGuest: () => boolean;
+  /** Label for a hex in the journal, e.g. "B03". Defaults to "q,r". */
+  formatHex?: (mapId: string, hex: HexCoord) => string;
 }
 
 export interface SelectedHex {
@@ -49,6 +59,35 @@ export class HexCrawlStore {
 
   recordFor(mapId: string, hex: HexCoord): HexRecord | undefined {
     return getHexRecord(this.stateFor(mapId), hex);
+  }
+
+  /**
+   * Mark a hex explored or unexplored (FR-016, FR-017). Publishes one journal
+   * capture when a hex goes from not explored to explored, whichever side
+   * made the move, and nothing otherwise (FR-019). `via` is kept for the solo
+   * offer, which only party moves trigger.
+   */
+  async setExplored(
+    mapId: string,
+    hex: HexCoord,
+    explored: boolean,
+    _via: ExploredVia,
+  ): Promise<{ newlyExplored: boolean }> {
+    const wasExplored = this.recordFor(mapId, hex)?.explored === true;
+    const written = await this.patchHex(mapId, hex, { explored });
+    const newlyExplored = written && explored && !wasExplored;
+    if (newlyExplored) {
+      const terrain = this.recordFor(mapId, hex)?.terrain;
+      this.deps.publishCapture(
+        formatHexExplored({
+          mapId,
+          hex,
+          hexLabel: this.deps.formatHex?.(mapId, hex) ?? `${hex.q},${hex.r}`,
+          terrainLabel: terrain ? terrainLabel(terrain) : null,
+        }),
+      );
+    }
+    return { newlyExplored };
   }
 
   private canWrite(): boolean {
@@ -96,6 +135,15 @@ export class HexCrawlStore {
 
   setAiNotes(mapId: string, hex: HexCoord, aiNotes: string): Promise<boolean> {
     return this.patchHex(mapId, hex, { aiNotes });
+  }
+
+  /** Apply several fields to one hex in a single save (used by discovery saves). */
+  updateHex(
+    mapId: string,
+    hex: HexCoord,
+    patch: Partial<HexRecord>,
+  ): Promise<boolean> {
+    return this.patchHex(mapId, hex, patch);
   }
 
   setDraft(

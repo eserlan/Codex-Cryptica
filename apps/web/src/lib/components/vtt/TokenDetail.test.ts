@@ -7,6 +7,17 @@ import { mapSession } from "$lib/stores/map-session.svelte";
 import { mapStore } from "$lib/stores/map.svelte";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { vault } from "$lib/stores/vault.svelte";
+import { pointToHex } from "map-engine";
+
+const hexStoreMock = vi.hoisted(() => ({
+  current: null as null | {
+    isEnabled: (id: string) => boolean;
+    openHex: (mapId: string, hex: unknown, opener?: HTMLElement) => void;
+  },
+}));
+vi.mock("$lib/components/map/hex-crawl/hex-crawl-context", () => ({
+  useHexCrawlStore: () => hexStoreMock.current,
+}));
 
 vi.mock("$lib/stores/vault.svelte", () => ({
   vault: {
@@ -493,6 +504,79 @@ describe("TokenDetail", () => {
       await screen.findByText("Goblin");
       expect(screen.queryByTestId("token-tile-beneath")).toBeNull();
       expect(screen.queryByDisplayValue("Wolves")).toBeNull();
+    });
+  });
+
+  describe("This hex (FR-003b)", () => {
+    const CENTRE_HEX_CONFIG = {
+      orientation: "pointy",
+      size: 50,
+      offsetX: 0,
+      offsetY: 0,
+    } as const;
+
+    function enterHexGrid(gridType = "hex-pointy") {
+      Object.assign(mapStore as object, {
+        isGMMode: true,
+        activeMapId: "map-1",
+        gridType,
+        gridSize: 50,
+        gridOffsetX: 0,
+        gridOffsetY: 0,
+      });
+    }
+
+    function hexStore(enabled = true) {
+      const store = {
+        isEnabled: vi.fn(() => enabled),
+        openHex: vi.fn(),
+      };
+      hexStoreMock.current = store;
+      return store;
+    }
+
+    beforeEach(() => {
+      (sessionModeStore as { isGuestMode: boolean }).isGuestMode = false;
+    });
+
+    it("opens the hex the selected token stands in", async () => {
+      enterHexGrid();
+      const store = hexStore(true);
+      render(TokenDetail);
+
+      await fireEvent.click(screen.getByRole("button", { name: "This hex" }));
+
+      // The token centre is (10 + 25, 10 + 25).
+      expect(store.openHex).toHaveBeenCalledWith(
+        "map-1",
+        pointToHex({ x: 35, y: 35 }, CENTRE_HEX_CONFIG),
+        expect.any(HTMLElement),
+      );
+    });
+
+    it("is absent when Hex Crawl mode is off", () => {
+      enterHexGrid();
+      hexStore(false);
+      render(TokenDetail);
+
+      expect(screen.queryByRole("button", { name: "This hex" })).toBeNull();
+    });
+
+    it("is absent on a non-hex grid", () => {
+      enterHexGrid("square");
+      hexStore(true);
+      render(TokenDetail);
+
+      expect(screen.queryByRole("button", { name: "This hex" })).toBeNull();
+    });
+
+    it("is absent for guests", () => {
+      enterHexGrid();
+      hexStore(true);
+      (sessionModeStore as { isGuestMode: boolean }).isGuestMode = true;
+      render(TokenDetail);
+
+      expect(screen.queryByRole("button", { name: "This hex" })).toBeNull();
     });
   });
 });

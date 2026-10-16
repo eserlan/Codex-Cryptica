@@ -35,6 +35,7 @@ export class MapInteractionManager {
   boxSelection!: MapInteractionHandlers["boxSelection"];
   fogInteractions!: MapInteractionHandlers["fogInteractions"];
   creationInteractions!: MapInteractionHandlers["creationInteractions"];
+  hexClickInteractions!: MapInteractionHandlers["hexClickInteractions"];
 
   isPanning = $state(false);
   lastMousePos = $state({ x: 0, y: 0 });
@@ -73,6 +74,8 @@ export class MapInteractionManager {
   private activePointerId: number | null = null;
   private activeTouches = new Map<number, { x: number; y: number }>();
   private pinchLastDistance: number | null = null;
+  /** Where an empty-map press began, for the hex click handler. */
+  private hexPressStart: { x: number; y: number } | null = null;
   KEYBOARD_PAN_STEP = 50;
   KEYBOARD_ZOOM_STEP = 0.1;
 
@@ -86,7 +89,13 @@ export class MapInteractionManager {
   ) {
     this.painter = opts.painter;
     this.getContainer = opts.getContainer;
-    Object.assign(this, createMapInteractionHandlers(this.painter, opts));
+    Object.assign(
+      this,
+      createMapInteractionHandlers(this.painter, {
+        ...opts,
+        getMapContainer: opts.getContainer,
+      }),
+    );
   }
 
   updateCachedRect() {
@@ -382,6 +391,7 @@ export class MapInteractionManager {
       return;
     } else if (e.button === 0) {
       this.isPanning = true;
+      this.hexPressStart = { ...this.lastMousePos };
     }
   };
 
@@ -585,11 +595,13 @@ export class MapInteractionManager {
             { x: e.clientX, y: e.clientY },
           )
         ) {
+          this.handleHexClick(e);
           this.handleMapClick(e);
         }
       }
       this.isPanning = false;
     } finally {
+      this.hexPressStart = null;
       if ("pointerId" in e) {
         this.activePointerId = null;
       }
@@ -599,6 +611,19 @@ export class MapInteractionManager {
   onPointerUp = (e: PointerEvent) => this.handlePointerUp(e);
   onPointerCancel = (e: PointerEvent) => this.handlePointerUp(e);
   onMouseUp = (e: MouseEvent) => this.handlePointerUp(e);
+
+  private handleHexClick(e: MouseEvent) {
+    if (!this.hexPressStart) return;
+    const rect = this.cachedRect;
+    this.hexClickInteractions.handle({
+      start: this.hexPressStart,
+      end: {
+        x: e.clientX - (rect?.left ?? 0),
+        y: e.clientY - (rect?.top ?? 0),
+      },
+      altKey: e.altKey,
+    });
+  }
 
   handleMapClick = (e: MouseEvent) => {
     const el = this.getContainer();

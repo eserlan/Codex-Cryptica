@@ -138,3 +138,104 @@ describe("HexCrawlStore (T010)", () => {
     expect(opener.focus).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("HexCrawlStore.setExplored (T046, FR-019)", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it.each(["party", "gm"] as const)(
+    "marks a hex explored via %s and publishes exactly one capture",
+    async (via) => {
+      const { store, deps } = setup({
+        formatHex: (_mapId, hex) => `Hex ${hex.q}.${hex.r}`,
+      });
+      const hex = { q: 2, r: 3 };
+      await store.setTerrain(MAP_ID, hex, { kind: "preset", id: "forest" });
+
+      const result = await store.setExplored(MAP_ID, hex, true, via);
+
+      expect(result).toEqual({ newlyExplored: true });
+      expect(store.recordFor(MAP_ID, hex)?.explored).toBe(true);
+      expect(deps.publishCapture).toHaveBeenCalledTimes(1);
+      expect(deps.publishCapture).toHaveBeenCalledWith(
+        expect.objectContaining({
+          entryType: "hex-explored",
+          content: "Explored hex Hex 2.3 (Forest)",
+        }),
+      );
+    },
+  );
+
+  it("sets exploredAt from the injected clock", async () => {
+    const { store } = setup();
+    await store.setExplored(MAP_ID, { q: 0, r: 0 }, true, "party");
+    expect(store.recordFor(MAP_ID, { q: 0, r: 0 })?.exploredAt).toBe(NOW);
+  });
+
+  it("returns newlyExplored false and publishes nothing for an already explored hex", async () => {
+    const { store, deps } = setup();
+    const hex = { q: 1, r: 0 };
+    await store.setExplored(MAP_ID, hex, true, "party");
+    vi.mocked(deps.publishCapture).mockClear();
+
+    const again = await store.setExplored(MAP_ID, hex, true, "gm");
+
+    expect(again).toEqual({ newlyExplored: false });
+    expect(deps.publishCapture).not.toHaveBeenCalled();
+  });
+
+  it("clears exploredAt and publishes nothing when a hex is marked unexplored", async () => {
+    const { store, deps } = setup();
+    const hex = { q: 4, r: 4 };
+    await store.setExplored(MAP_ID, hex, true, "party");
+    vi.mocked(deps.publishCapture).mockClear();
+
+    const result = await store.setExplored(MAP_ID, hex, false, "gm");
+
+    expect(result).toEqual({ newlyExplored: false });
+    expect(store.recordFor(MAP_ID, hex)?.explored).toBeUndefined();
+    expect(store.recordFor(MAP_ID, hex)?.exploredAt).toBeUndefined();
+    expect(deps.publishCapture).not.toHaveBeenCalled();
+  });
+
+  it("does nothing for guests and non-GM clients (negative cases)", async () => {
+    for (const overrides of [{ isGuest: () => true }, { isGM: () => false }]) {
+      const { store, deps } = setup(overrides);
+      const result = await store.setExplored(
+        MAP_ID,
+        { q: 0, r: 0 },
+        true,
+        "party",
+      );
+      expect(result).toEqual({ newlyExplored: false });
+      expect(store.recordFor(MAP_ID, { q: 0, r: 0 })).toBeUndefined();
+      expect(deps.publishCapture).not.toHaveBeenCalled();
+    }
+  });
+});
+
+describe("HexCrawlStore.updateHex (atomic multi-field write)", () => {
+  it("applies several fields in one save and prunes the record when they clear it", async () => {
+    const { store, deps } = setup();
+    const hex = { q: 7, r: 7 };
+    await store.setTerrain(MAP_ID, hex, { kind: "preset", id: "hills" });
+    vi.mocked(deps.saveMaps).mockClear();
+
+    const written = await store.updateHex(MAP_ID, hex, {
+      aiNotes: "Hazard: sinkholes",
+      draft: undefined,
+    });
+
+    expect(written).toBe(true);
+    expect(deps.saveMaps).toHaveBeenCalledTimes(1);
+    expect(store.recordFor(MAP_ID, hex)?.aiNotes).toBe("Hazard: sinkholes");
+    expect(store.recordFor(MAP_ID, hex)?.notes).toBeUndefined();
+  });
+
+  it("writes nothing for a guest (negative case)", async () => {
+    const { store, deps } = setup({ isGuest: () => true });
+    expect(await store.updateHex(MAP_ID, { q: 0, r: 0 }, { notes: "x" })).toBe(
+      false,
+    );
+    expect(deps.saveMaps).not.toHaveBeenCalled();
+  });
+});

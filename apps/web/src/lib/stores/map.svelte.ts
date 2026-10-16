@@ -50,6 +50,8 @@ type PersistedMapSettings = {
   showGrid: boolean;
   gridType: GridType;
   showHexCoordinates: boolean;
+  /** GM display preference: terrain icons on hex crawl hexes (device-local). */
+  showTerrainIcons: boolean;
   hexLabelConfig?: HexLabelConfig;
   brushRadius: number;
   gridSize: number;
@@ -106,6 +108,7 @@ const DEFAULT_MAP_SETTINGS: PersistedMapSettings = {
   showGrid: false,
   gridType: "square",
   showHexCoordinates: false,
+  showTerrainIcons: false,
   hexLabelConfig: { style: "none" },
   brushRadius: 50,
   gridSize: 50,
@@ -189,6 +192,7 @@ export class MapStore {
   showGrid = $state(false);
   gridType = $state<GridType>("square");
   showHexCoordinates = $state(false);
+  showTerrainIcons = $state(false);
   hexLabelConfig = $state<HexLabelConfig>({ style: "none" });
   gridSize = $state(50);
   gridOffsetX = $state(0);
@@ -247,6 +251,7 @@ export class MapStore {
             this.showGrid,
             this.gridType,
             this.showHexCoordinates,
+            this.showTerrainIcons,
             this.hexLabelConfig,
             this.brushRadius,
             this.gridSize,
@@ -349,6 +354,10 @@ export class MapStore {
           typeof parsed.showHexCoordinates === "boolean"
             ? parsed.showHexCoordinates
             : DEFAULT_MAP_SETTINGS.showHexCoordinates,
+        showTerrainIcons:
+          typeof parsed.showTerrainIcons === "boolean"
+            ? parsed.showTerrainIcons
+            : DEFAULT_MAP_SETTINGS.showTerrainIcons,
         hexLabelConfig: isPersistedHexLabelConfig(parsed.hexLabelConfig)
           ? parsed.hexLabelConfig
           : {
@@ -437,6 +446,7 @@ export class MapStore {
       showGrid: this.showGrid,
       gridType: this.gridType,
       showHexCoordinates: this.showHexCoordinates,
+      showTerrainIcons: this.showTerrainIcons,
       hexLabelConfig: this.hexLabelConfig,
       brushRadius: this.brushRadius,
       gridSize: this.gridSize,
@@ -601,6 +611,7 @@ export class MapStore {
       this.soloFog = next.soloFog;
       this.showGrid = next.showGrid;
       this.showHexCoordinates = next.showHexCoordinates;
+      this.showTerrainIcons = next.showTerrainIcons;
       this.brushRadius = next.brushRadius;
       Object.assign(this, gridFieldsFor(geometry, next));
       this.gridColor = next.gridColor;

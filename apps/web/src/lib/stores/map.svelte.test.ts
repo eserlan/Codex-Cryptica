@@ -114,6 +114,7 @@ describe("MapStore settings persistence", () => {
         showGrid: true,
         gridType: "square",
         showHexCoordinates: false,
+        showTerrainIcons: false,
         hexLabelConfig: { style: "none" },
         brushRadius: 88,
         gridSize: 120,
@@ -192,6 +193,39 @@ describe("MapStore settings persistence", () => {
     expect(store2.showHexCoordinates).toBe(true);
     expect(store2.hexLabelConfig.style).toBe("alphanumeric");
     expect(store2.formatHex({ q: 1, r: 0 })).toBe("B01");
+  });
+
+  it("hides terrain icons by default and persists the device-local toggle", async () => {
+    const store = new MapStore();
+    store.selectMap("map-terrain-icons");
+    expect(store.showTerrainIcons).toBe(false);
+
+    store.showTerrainIcons = true;
+    await waitFor(() => {
+      const raw = window.localStorage.getItem(
+        "codex-map-settings:map-terrain-icons",
+      );
+      expect(JSON.parse(raw!).showTerrainIcons).toBe(true);
+    });
+
+    const restored = new MapStore();
+    restored.selectMap("map-terrain-icons");
+    expect(restored.showTerrainIcons).toBe(true);
+
+    restored.selectMap("map-terrain-other");
+    expect(restored.showTerrainIcons).toBe(false);
+  });
+
+  it("treats a non-boolean saved terrain icon flag as off", () => {
+    window.localStorage.setItem(
+      "codex-map-settings:map-terrain-bad",
+      JSON.stringify({ showTerrainIcons: "yes" }),
+    );
+
+    const store = new MapStore();
+    store.selectMap("map-terrain-bad");
+
+    expect(store.showTerrainIcons).toBe(false);
   });
 
   it("falls back to the legacy numeric style for invalid saved label configs", () => {
