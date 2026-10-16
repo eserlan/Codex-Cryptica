@@ -1,4 +1,3 @@
-// fallow-ignore-file unused-file
 /**
  * Contract definitions for the Point Crawl Generator (`177-point-crawl-generator`).
  *
