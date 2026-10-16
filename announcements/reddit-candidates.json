@@ -1,5 +1,5 @@
 {
-  "updated_at": 1792135471,
+  "updated_at": 1792137167,
   "candidates": [
     {
       "id": "reddit-38391363178-five-new-answer-guides-from-first-dm-ner",
@@ -32,14 +32,14 @@
       "created_at": 1792076725
     },
     {
-      "id": "reddit-38865885868-my-tales-of-the-valiant-npcs-kept-showin",
-      "title": "My Tales of the Valiant NPCs kept showing race blocks and flat hit points",
-      "body": "I run Tales of the Valiant and every generator I tried gave me 5e wording back. Race where it should be lineage and heritage, hit points as a single number with no hit dice, and saves and skills that did not line up with the block. I was fixing it by hand every time.\n\nI built Tales of the Valiant as a proper option in the NPC, creature and magic item generators in my project Codex Cryptica, so the stat block follows the BFRD when you pick it.\n\nYou can try it here: https://codexcryptica.com/generators/npc - it also applies to the creature and magic item generators with the same switch.\n\nWhat you get when Tales of the Valiant is selected:\n\n- lineage and heritage instead of race, so you do not have to rewrite ancestry at the table\n- AC and HP with hit dice shown, plus dice formulas you can actually roll\n- ability scores with saves and skills derived from the block, not filled in from generic fantasy\n- homebrew flagged automatically when the result steps outside BFRD assumptions\n\nI kept the BFRD as the source of truth, so a few 5e specific tags will not appear when you pick Tales of the Valiant. It can feel sparse at first if you are used to them, but it means the block is correct rather than patched.\n\nWhich lineage and heritage combination do you actually see most at your table, and does the heritage choice change how you play that character?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-38865885868-2.png)",
-      "url": "https://codexcryptica.com/help/tales-of-the-valiant-generators",
-      "image_url": "https://assets.codexcryptica.com/announcements/release-38865885868-2.png",
+      "id": "reddit-38865885868-my-tales-of-the-valiant-encounters-had-c",
+      "title": "My Tales of the Valiant encounters had CR numbers but no real guidance",
+      "body": "I had a CR number for an encounter but no sense what it meant for four level 3 characters versus six level 5 ones. And Doom was on a separate note I kept forgetting to use, so it never mattered at the right moment.\n\nI built tailored encounter guidance and verified Doom tracking in Codex Cryptica, my own local-first campaign tool, so the advice fits your actual party and the Doom counter lives where you run the fight.\n\nYou can try it here: https://codexcryptica.com/generators/encounter\n\nWhat changed:\n\n- qualitative difficulty plus a CR range tuned to your party size and level, not a fixed number for everyone\n- suggested creatures that fit the range and environment instead of a generic list\n- tactical advice tied to that encounter, with notes on when to spend or hold Doom\n- monster sheets and VTT token quick stats with a verified +/- Doom counter that stays between 0 and 10 and cannot go invalid\n\nI capped Doom at 0 to 10 with guardrails, so you cannot accidentally set it to 12 or -1 mid fight even on a fast click. If your table house rules beyond 10, you will need to track that part in your notes for now.\n\nWhen you run Doom at your table, do you spend it early to pressure the party or hold it for the boss turn?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-38865885868-1.png)",
+      "url": "https://codexcryptica.com/generators/encounter",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-38865885868-1.png",
       "source_id": "38865885868",
       "status": "approved",
-      "created_at": 1792135471
+      "created_at": 1792137167
     }
   ]
 }
