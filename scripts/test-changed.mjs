@@ -2,6 +2,7 @@
 
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
+import { availableParallelism, setPriority } from "node:os";
 import { dirname, join, relative, resolve } from "node:path";
 import { getChangedFiles } from "./lint-changed.mjs";
 
@@ -176,6 +177,29 @@ function runWorkspaceTests(workspace, files, cwd) {
   }
 }
 
+/**
+ * Local runs share the machine with an editor and browser, so cap vitest at
+ * half the cores and drop the test processes' scheduling priority (children
+ * inherit it). CI keeps full parallelism; an explicit VITEST_MAX_WORKERS wins.
+ */
+export function getLocalTestEnv(
+  env = process.env,
+  cores = availableParallelism(),
+) {
+  if (env.CI || env.VITEST_MAX_WORKERS) return {};
+  return { VITEST_MAX_WORKERS: String(Math.max(1, Math.floor(cores / 2))) };
+}
+
+function throttleLocalRun() {
+  Object.assign(process.env, getLocalTestEnv());
+  if (process.env.CI) return;
+  try {
+    setPriority(10);
+  } catch {
+    // Not permitted on every platform; running at normal priority is fine.
+  }
+}
+
 export function runTestChanged({
   base,
   head = "HEAD",
@@ -222,6 +246,7 @@ if (import.meta.main) {
   const headIndex = process.argv.indexOf("--head");
   const head = headIndex !== -1 ? process.argv[headIndex + 1] : "HEAD";
 
+  throttleLocalRun();
   const success = runTestChanged({ base, head });
   if (!success) {
     process.exit(1);
