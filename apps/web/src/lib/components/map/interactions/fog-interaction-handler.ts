@@ -51,4 +51,10 @@ export class FogInteractionHandler {
     }
     return true;
   }
+
+  cancel() {
+    if (!this.deps.painter.isPainting) return false;
+    this.deps.painter.cancel();
+    return true;
+  }
 }

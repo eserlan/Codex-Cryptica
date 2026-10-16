@@ -20,6 +20,7 @@ export const FEATURE_HELP_ARTICLES = {
   COMMUNITY_STAT_SHEET_TEMPLATES: "stat-sheets",
   SHARING_ENTITY_TEMPLATES: "sharing-templates",
   HEXCRAWL_MAPS: "hexcrawl-maps",
+  HEX_CRAWL_MODE: "hex-crawl-mode",
   POINT_CRAWL_GENERATOR: "point-crawl-generator",
   TOV_GENERATORS: "tales-of-the-valiant-generators",
 } as const;
@@ -42,6 +43,8 @@ export const HINT_KEYS = {
   ORACLE_MENTIONS: "oracle-mention-hint-seen",
   CREATURE_PACKS: "creature-packs-hint-seen",
   ADVENTURE: "adventure-hint-seen",
+  /** The Explore area's AI disclosure for hex discovery (FR-031). Device-local. */
+  HEX_CRAWL_AI_NOTICE: "hex-crawl-ai-notice-seen",
 } as const;
 
 /**
@@ -813,6 +816,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     title: "Hexcrawl & Hex Grids",
     content:
       "Run overland exploration with point-to-point hex grids. Choose pointy-topped or flat-topped orientation, toggle in-cell coordinates, snap tokens and pins to hex centers, and reveal or hide fog of war by hex. Rulers measure travel distance directly in hexes.",
+    icon: "icon-[lucide--hexagon]",
+  },
+  "hex-crawl-mode": {
+    id: "hex-crawl-mode",
+    title: "Hex Crawl mode",
+    content:
+      "Click a hex with no pin or token to open its panel. Track its terrain, your notes and whether the party has explored it. Only you see this: players and guests never see hex notes, terrain, drafts or explored markers.",
     icon: "icon-[lucide--hexagon]",
   },
   "point-crawl-generator": {

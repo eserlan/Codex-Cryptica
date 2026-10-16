@@ -118,4 +118,14 @@ export class PinInteractionHandler {
     }
     return { type: "dragged", pinId };
   }
+
+  cancel() {
+    if (!this.dragState) return false;
+    const { pinId, originalCoordinates, hasMoved } = this.dragState;
+    this.dragState = null;
+    if (hasMoved && originalCoordinates && this.deps.canEditPins()) {
+      this.deps.updatePinCoordinates(pinId, originalCoordinates);
+    }
+    return true;
+  }
 }

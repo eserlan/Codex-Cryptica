@@ -6,10 +6,19 @@
     type HexLabelStyle,
     formatHexLabel,
   } from "map-engine";
+  import { onDestroy } from "svelte";
   import { fade } from "svelte/transition";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { hexGridChangeGuard } from "$lib/stores/hex-crawl/grid-change-guard.instance";
   import VTTGridFitSection from "./VTTGridFitSection.svelte";
+  import HexCrawlModeToggle from "./hex-crawl/HexCrawlModeToggle.svelte";
+  import type { HexCrawlStore } from "$lib/stores/hex-crawl/hex-crawl.svelte";
 
-  let { close }: { close: () => void } = $props();
+  let {
+    close,
+    hexCrawlStore,
+  }: { close: () => void; hexCrawlStore?: HexCrawlStore | null } = $props();
 
   let gridSize = $state(mapStore.gridSize);
   let gridType = $state<GridType>(mapStore.gridType);
@@ -24,6 +33,16 @@
   let hexInvertRow = $state(initialHexConfig.invertRow ?? false);
   let gridUnit = $state(mapSession.gridUnit);
   let gridDistance = $state(mapSession.gridDistance);
+
+  // Geometry as it was when the dialog opened. Cancelling a guarded change
+  // restores it (FR-039).
+  const mapId = mapStore.activeMapId ?? "";
+  const geometryAtOpen = {
+    gridSize: mapStore.gridSize,
+    gridType: mapStore.gridType,
+  };
+  hexGridChangeGuard.beginSession(mapId);
+  onDestroy(() => hexGridChangeGuard.endSession());
 
   const isHex = $derived(gridType !== "square");
   const hexAxis = $derived(
@@ -53,8 +72,26 @@
     );
   });
 
-  /** Start the fit with the grid type chosen here, not the one last saved. */
-  function startFit() {
+  /**
+   * Run a change that could move hex records. With no records it runs at once;
+   * otherwise it waits for the guard, and a cancel restores the size and type
+   * from when the dialog opened.
+   */
+  function guarded(apply: () => void) {
+    if (!hexGridChangeGuard.hasRecords(mapId)) {
+      apply();
+      return;
+    }
+    void hexGridChangeGuard.requestChange(mapId).then((allowed) => {
+      if (allowed) apply();
+      else {
+        gridSize = geometryAtOpen.gridSize;
+        gridType = geometryAtOpen.gridType;
+      }
+    });
+  }
+
+  function applyFit() {
     mapSession.setGridSettings({
       gridType,
       showHexCoordinates: hexLabelsEnabled,
@@ -66,7 +103,26 @@
     close();
   }
 
-  function save() {
+  /** Start the fit with the grid type chosen here, not the one last saved. */
+  function startFit() {
+    guarded(applyFit);
+  }
+
+  function applyMove() {
+    mapSession.gridMoveMode = true;
+    close();
+    notificationStore.notify(
+      "Drag the map to align it with the grid — release to apply. Esc to cancel.",
+      "info",
+      true,
+    );
+  }
+
+  function startMove() {
+    guarded(applyMove);
+  }
+
+  function applySave() {
     mapSession.setGridSettings({
       gridSize,
       gridType,
@@ -76,6 +132,17 @@
       gridDistance,
     });
     close();
+  }
+
+  function save() {
+    const geometryChanged =
+      gridSize !== geometryAtOpen.gridSize ||
+      gridType !== geometryAtOpen.gridType;
+    if (!geometryChanged) {
+      applySave();
+      return;
+    }
+    guarded(applySave);
   }
 
   function onKeyDown(e: KeyboardEvent) {
@@ -182,6 +249,16 @@
           </button>
         </div>
       </div>
+
+      {#if hexCrawlStore}
+        <HexCrawlModeToggle
+          store={hexCrawlStore}
+          mapId={mapStore.activeMapId ?? ""}
+          {gridType}
+          isGM={mapStore.isGMMode}
+          isGuest={sessionModeStore.isGuestMode}
+        />
+      {/if}
 
       {#if gridType === "hex-pointy" || gridType === "hex-flat"}
         <div
@@ -425,7 +502,12 @@
         </div>
       </div>
 
-      <VTTGridFitSection {isHex} {hexAxis} {close} onStartFit={startFit} />
+      <VTTGridFitSection
+        {isHex}
+        {hexAxis}
+        onStartFit={startFit}
+        onStartMove={startMove}
+      />
 
       <div class="pt-2 flex gap-3">
         <button

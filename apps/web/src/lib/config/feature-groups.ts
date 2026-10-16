@@ -117,6 +117,7 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
       "map-mode",
       "fog-of-war",
       "hexcrawl-maps",
+      "hex-crawl-mode",
       "guest-entity-links",
       "vtt-entity-list",
       "vtt-tile-decks",

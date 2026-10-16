@@ -252,7 +252,8 @@ export async function openMapWithUpload(page: Page, mapName = "E2E Test Map") {
           (vault.allEntities?.length ?? 0) > 0)
       );
     },
-    { timeout: 30000 },
+    // A cold dev server can take ~25 s to load the demo, so allow more than 30 s.
+    { timeout: 60000 },
   );
   await page.goto("/map");
   await page.click('button:has-text("Upload World Image")');

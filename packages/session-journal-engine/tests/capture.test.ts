@@ -6,6 +6,7 @@ import {
   buildCaptureFromRoll,
   captureToEntryInput,
   formatMapMove,
+  formatHexExplored,
   JOURNAL_CAPTURE_LIMITS,
   type CapturableRoll,
 } from "../src/capture";
@@ -550,5 +551,51 @@ describe("spec 174 formatters", () => {
     expect(formatThreadChange("reopened", thread).content).toBe(
       "Thread reopened: Why is the keeper lying?",
     );
+  });
+});
+
+describe("formatHexExplored (Hex Crawl, FR-019)", () => {
+  const base = { mapId: "map-1", hex: { q: 4, r: 12 }, hexLabel: "0412" };
+
+  it("summarises the explored hex with its terrain", () => {
+    const payload = formatHexExplored({ ...base, terrainLabel: "Forest" });
+    expect(payload.entryType).toBe("hex-explored");
+    expect(payload.content).toBe("Explored hex 0412 (Forest)");
+  });
+
+  it("omits the parentheses when there is no terrain", () => {
+    const payload = formatHexExplored({ ...base, terrainLabel: null });
+    expect(payload.content).toBe("Explored hex 0412");
+  });
+
+  it("is name-free and keeps only the map id and hex as reference", () => {
+    const payload = formatHexExplored({ ...base, terrainLabel: "Forest" });
+    expect(payload.sourceRef).toEqual({
+      kind: "hex",
+      mapId: "map-1",
+      hex: { q: 4, r: 12 },
+    });
+    const result = captureToEntryInput(payload);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.input.content.length).toBeLessThanOrEqual(
+        JOURNAL_CAPTURE_LIMITS.summary,
+      );
+    }
+  });
+
+  it("truncates an over-long terrain label instead of throwing", () => {
+    const long = "x".repeat(300);
+    const payload = formatHexExplored({ ...base, terrainLabel: long });
+    expect(payload.content.length).toBeLessThanOrEqual(
+      JOURNAL_CAPTURE_LIMITS.summary,
+    );
+    expect(payload.content.startsWith("Explored hex 0412 (")).toBe(true);
+    expect(payload.content.endsWith(")")).toBe(true);
+  });
+
+  it("treats a blank terrain label as no terrain", () => {
+    const payload = formatHexExplored({ ...base, terrainLabel: "   " });
+    expect(payload.content).toBe("Explored hex 0412");
   });
 });

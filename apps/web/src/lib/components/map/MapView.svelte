@@ -14,6 +14,8 @@
   import { MapInteractionManager } from "./map-interactions.svelte";
   import MapCanvas from "./MapCanvas.svelte";
   import MapOverlays from "./MapOverlays.svelte";
+  import HexCrawlLayer from "./hex-crawl/HexCrawlLayer.svelte";
+  import type { HexCrawlServices } from "./hex-crawl/hex-crawl-services.svelte";
   import MapContextMenu from "./MapContextMenu.svelte";
   import { clampPointToBounds } from "$lib/utils/vtt-helpers";
   import { mapSession } from "../../stores/map-session.svelte";
@@ -33,11 +35,13 @@
 
   let {
     children,
+    hexCrawl,
     onMapDragOver,
     onMapDragLeave,
     onMapDrop,
   }: {
     children?: Snippet;
+    hexCrawl: HexCrawlServices;
     onMapDragOver?: (event: DragEvent) => void;
     onMapDragLeave?: (event: DragEvent) => void;
     onMapDrop?: (event: DragEvent) => void;
@@ -73,13 +77,15 @@
   const interactions = new MapInteractionManager({
     painter,
     getContainer: () => container,
+    hexCrawlStore: hexCrawl.store,
     onMoveSettled: (ids) => {
       const sources = visionSourceTokens.filter((token) =>
         ids.includes(token.id),
       );
       void soloRecorder
         .onVisionChanged(sources)
-        .then(() => soloRecorder.onMoveSettled(sources));
+        .then(() => soloRecorder.onMoveSettled(sources))
+        .then(() => hexCrawl.observer.onMoveSettled(sources));
     },
   });
 
@@ -440,8 +446,10 @@
 
     void untrack(() => soloRecorder.onVisionChanged(tokens)).then(
       async (revealed) => {
-        if (!interactions.tokenDrag.dragState)
+        if (!interactions.tokenDrag.dragState) {
           await soloRecorder.onMoveSettled(tokens);
+          await hexCrawl.observer.onMoveSettled(tokens);
+        }
         if (revealed && mapSession.vttEnabled) {
           void broadcastActiveMapFogSync();
         }
@@ -560,6 +568,14 @@
   </div>
 
   <MapOverlays {interactions} />
+
+  <HexCrawlLayer
+    services={hexCrawl}
+    {painter}
+    isGM={mapStore.isGMMode}
+    isGuest={sessionModeStore.isGuestMode}
+    viewportSize={mapStore.canvasSize}
+  />
 
   {#if interactions.contextMenu}
     <MapContextMenu

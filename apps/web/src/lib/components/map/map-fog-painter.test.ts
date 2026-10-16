@@ -100,6 +100,18 @@ describe("MapFogPainter", () => {
     );
   });
 
+  it("restores the pre-stroke mask when a fog gesture is cancelled", () => {
+    painter.begin({ x: 20, y: 30 }, false);
+    painter.move({ x: 30, y: 40 }, false);
+
+    painter.cancel();
+
+    expect(mask.ctx.clearRect).toHaveBeenCalledWith(0, 0, 100, 80);
+    expect(mask.ctx.drawImage).toHaveBeenCalledWith(expect.anything(), 0, 0);
+    expect(painter.isPainting).toBe(false);
+    expect(saveMask).not.toHaveBeenCalled();
+  });
+
   it("keeps undo/redo tied to the live mask canvas", async () => {
     painter.begin({ x: 20, y: 30 }, false);
     painter.move({ x: 30, y: 40 }, false);

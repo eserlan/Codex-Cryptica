@@ -12,6 +12,7 @@
   import { themeStore } from "$lib/stores/theme.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import HexThisHexButton from "$lib/components/map/hex-crawl/HexThisHexButton.svelte";
 
   const selectedToken = $derived(mapSession.selectedToken);
   const linkedEntity = $derived.by(() => {
@@ -517,6 +518,22 @@
           Vision Source (PC)
         </span>
       </label>
+
+      <HexThisHexButton
+        point={{
+          x: selectedToken.x + selectedToken.width / 2,
+          y: selectedToken.y + selectedToken.height / 2,
+        }}
+        mapId={mapStore.activeMapId ?? null}
+        grid={{
+          gridType: mapStore.gridType,
+          gridSize: mapStore.gridSize,
+          gridOffsetX: mapStore.gridOffsetX,
+          gridOffsetY: mapStore.gridOffsetY,
+        }}
+        isGM={mapStore.isGMMode}
+        isGuest={sessionModeStore.isGuestMode}
+      />
 
       <div class="flex items-stretch gap-2">
         {#if !isInInitiative}
