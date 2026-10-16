@@ -20,6 +20,7 @@ export function useGeneratorSave(deps: {
   getGeneratedData: () => GeneratorOutput | null;
   getDocumentLayout: () => DocumentLayout;
   exportDiagramImage: () => Promise<string | undefined>;
+  getSelectedNodeIds?: () => string[] | undefined;
   setError: (message: string) => void;
 }) {
   let showSaveModal = $state(false);
@@ -72,10 +73,14 @@ export function useGeneratorSave(deps: {
     const generatedData = deps.getGeneratedData();
     if (!generatedData) return;
     const generatorType = deps.getGeneratorType();
+    const selectedNodeIds = deps.getSelectedNodeIds?.();
+    const itemCount = generatedData.pointCrawl
+      ? (selectedNodeIds?.length ?? generatedData.pointCrawl.nodes.length) + 1
+      : 1;
     trackPublicGeneratorAction("save_to_codex", {
       generator_type: generatorType,
-      is_hub_batch: false,
-      item_count: 1,
+      is_hub_batch: Boolean(generatedData.pointCrawl),
+      item_count: itemCount,
     });
 
     try {
@@ -85,6 +90,7 @@ export function useGeneratorSave(deps: {
         generatorType,
         storage,
         deps.exportDiagramImage,
+        selectedNodeIds,
       );
       showSaveModal = true;
     } catch {

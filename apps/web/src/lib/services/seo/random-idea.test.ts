@@ -30,6 +30,7 @@ describe("randomIdeaCategories", () => {
       "npc",
       "origin",
       "pantheon",
+      "point-crawl",
       "quest",
       "secret-society",
       "social-hub",
@@ -69,6 +70,7 @@ describe("randomIdeaCategories", () => {
       generateOrigin: vi.fn().mockResolvedValue("origin-result"),
       generateHoliday: vi.fn().mockResolvedValue("holiday-result"),
       generateTome: vi.fn().mockResolvedValue("tome-result"),
+      generatePointCrawl: vi.fn().mockResolvedValue("point-crawl-result"),
     } as unknown as DefaultGeneratorEngine;
     const theme = "Cyberpunk / Corporate";
 
@@ -155,6 +157,10 @@ describe("randomIdeaCategories", () => {
     expect(engine.generateTome).toHaveBeenCalledWith({
       useAI: true,
       theme,
+    });
+    expect(engine.generatePointCrawl).toHaveBeenCalledWith({
+      useAI: true,
+      genre: theme,
     });
   });
 

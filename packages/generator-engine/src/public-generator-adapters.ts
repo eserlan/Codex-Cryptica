@@ -26,6 +26,7 @@ import type {
 } from "./campaign-generator-types";
 import type { LanguageProfileV1 } from "schema";
 import type { OneShotAdventure } from "./one-shot-types";
+import type { PointCrawlNetwork } from "./point-crawl-state";
 import type { StarSystemBody } from "./public-star-system";
 import type {
   ConstellationPattern,
@@ -117,6 +118,8 @@ export interface PublicGeneratorOutput {
   connections?: SuggestedConnection[];
   /** Structured one-shot adventure, kept so single scenes can be regenerated. */
   oneShot?: OneShotAdventure;
+  /** Structured point-crawl network, kept so single nodes/routes can be regenerated and saved. */
+  pointCrawl?: PointCrawlNetwork;
   /** Structured canonical facts for tomes; prose is derived from these. */
   tomeFacts?: TomeCanonicalFacts;
 }
@@ -132,7 +135,11 @@ function firstNonBlank(...values: Array<string | undefined>): string {
 function toPublic(draft: GeneratedDraft): PublicGeneratorOutput {
   return {
     type: draft.entityType,
-    kind: draft.sourceGeneratorId === "language" ? "language" : undefined,
+    kind:
+      draft.sourceGeneratorId === "language" ||
+      draft.sourceGeneratorId === "point-crawl"
+        ? draft.sourceGeneratorId
+        : undefined,
     title: draft.title,
     summary: draft.summary,
     // Prefer the rich body; fall back to lore, then the one-line summary, so the
@@ -145,6 +152,7 @@ function toPublic(draft: GeneratedDraft): PublicGeneratorOutput {
     observances: draft.observances ? [...draft.observances] : undefined,
     languageProfile: draft.languageProfile,
     languageProfileVersion: draft.languageProfileVersion,
+    pointCrawl: draft.pointCrawl,
   };
 }
 

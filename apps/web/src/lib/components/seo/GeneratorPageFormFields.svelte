@@ -42,6 +42,7 @@
   import AlienRaceFormFields from "$lib/components/seo/AlienRaceFormFields.svelte";
   import CreatureFormFields from "$lib/components/seo/CreatureFormFields.svelte";
   import TomeFormFields from "$lib/components/seo/TomeFormFields.svelte";
+  import PointCrawlFormFields from "$lib/components/seo/PointCrawlFormFields.svelte";
   type StringState = Record<string, string>;
   type PantheonState = StringState & {
     mode: "single" | "pantheon";
@@ -106,6 +107,7 @@
     origin = $bindable(),
     villainScheme = $bindable(),
     oneShot = $bindable(),
+    pointCrawl = $bindable(),
     world = $bindable(),
     starSystem = $bindable(),
     constellation = $bindable(),
@@ -162,6 +164,7 @@
     origin: StringState;
     villainScheme: StringState;
     oneShot: StringState;
+    pointCrawl?: StringState;
     world: StringState;
     starSystem: StringState;
     constellation: ConstellationState;
@@ -222,6 +225,7 @@
     "adventure-generator",
     "adventure-idea-generator",
     "one-shot-adventure-generator",
+    "point-crawl",
     "plot-twist-generator",
     "bbeg-generator",
     "comic-book-event-generator",
@@ -660,6 +664,18 @@
       bind:premise={oneShot.premise}
       bind:boundaries={oneShot.boundaries}
       bind:campaignContext={oneShot.campaignContext}
+      onSurprise={trigger}
+    />
+  {:else if slug === "point-crawl" && pointCrawl}
+    <PointCrawlFormFields
+      bind:genre={activeTheme}
+      bind:scale={pointCrawl.scale}
+      bind:pointCount={pointCrawl.pointCount}
+      bind:density={pointCrawl.density}
+      bind:dangerLevel={pointCrawl.dangerLevel}
+      bind:secretFrequency={pointCrawl.secretFrequency}
+      bind:premise={pointCrawl.premise}
+      bind:campaignContext={pointCrawl.campaignContext}
       onSurprise={trigger}
     />
   {:else if slug === "villain-scheme-generator"}

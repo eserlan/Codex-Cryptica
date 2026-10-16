@@ -32,6 +32,7 @@
 
       // Adventures & Encounters
       adventure: "adventures-encounters",
+      "point-crawl": "adventures-encounters",
       quest: "adventures-encounters",
       encounter: "adventures-encounters",
       heist: "adventures-encounters",

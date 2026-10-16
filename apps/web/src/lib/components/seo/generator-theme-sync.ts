@@ -36,6 +36,7 @@ export interface GeneratorThemeSyncContext {
   artifact: ThemeState;
   creature: ThemeState;
   tome?: ThemeState;
+  pointCrawl?: ThemeState;
   themeToQuestGenre: Record<string, string | undefined>;
   mapSocialHubGenre: (genre: string) => string;
   mapWorldGenre: (genre: string) => string;
@@ -77,6 +78,7 @@ export function syncGeneratorTheme({
   artifact,
   creature,
   tome,
+  pointCrawl,
   themeToQuestGenre,
   mapSocialHubGenre,
   mapWorldGenre,
@@ -124,4 +126,5 @@ export function syncGeneratorTheme({
   else if (slug === "creature") creature.genre = activeTheme;
   else if (slug === "personality") personality.genre = activeTheme;
   else if (slug === "tome" && tome) tome.theme = activeTheme;
+  else if (slug === "point-crawl" && pointCrawl) pointCrawl.genre = activeTheme;
 }

@@ -8,6 +8,7 @@
   import { UI_STORAGE_KEYS, UIPersistence } from "$lib/stores/ui/persistence";
   import SEOGeneratorLayout from "./SEOGeneratorLayout.svelte";
   import OneShotRefinePanel from "./OneShotRefinePanel.svelte";
+  import PointCrawlRefinePanel from "./PointCrawlRefinePanel.svelte";
   import GeneratorPageFormFields from "./GeneratorPageFormFields.svelte";
   import {
     npcConfig,
@@ -46,6 +47,7 @@
     originConfig,
     villainSchemeConfig,
     oneShotConfig,
+    pointCrawlConfig,
     worldConfig,
     starSystemConfig,
     constellationConfig,
@@ -601,6 +603,17 @@
     campaignContext: "",
   });
 
+  let pointCrawl = $state({
+    genre: pointCrawlConfig.genres[0],
+    scale: "Wilderness",
+    pointCount: "8",
+    density: "Balanced branching",
+    dangerLevel: "Moderate",
+    secretFrequency: "Balanced",
+    premise: "",
+    campaignContext: "",
+  });
+
   let villainScheme = $state({
     powerScale: villainSchemeConfig.powerScales[0],
     tone: villainSchemeConfig.tones[0],
@@ -786,6 +799,7 @@
       artifact,
       creature,
       tome,
+      pointCrawl,
       themeToQuestGenre,
       mapSocialHubGenre: (genre) =>
         SOCIAL_HUB_GENRE_TO_THEME[genre] ?? "Classic Fantasy",
@@ -953,6 +967,7 @@
     origin,
     villainScheme,
     oneShot,
+    pointCrawl,
     world,
     starSystem,
     constellation,
@@ -1003,10 +1018,13 @@
     "dungeon-generator",
     "adventure-generator",
     "adventure-idea-generator",
+    "one-shot-adventure-generator",
+    "point-crawl",
     "language-generator",
   ].includes(slug)}
   {generate}
-  progressSteps={slug === "one-shot-adventure-generator"
+  progressSteps={slug === "one-shot-adventure-generator" ||
+  slug === "point-crawl"
     ? oneShotProgress
     : null}
   {initialDraft}
@@ -1026,6 +1044,8 @@
   {#snippet outputExtras(output, replaceOutput, useAI)}
     {#if slug === "one-shot-adventure-generator"}
       <OneShotRefinePanel {output} {useAI} onReplace={replaceOutput} />
+    {:else if slug === "point-crawl"}
+      <PointCrawlRefinePanel {output} {useAI} onReplace={replaceOutput} />
     {/if}
   {/snippet}
   {#snippet formFields(trigger)}
@@ -1071,6 +1091,7 @@
       bind:origin
       bind:villainScheme
       bind:oneShot
+      bind:pointCrawl
       bind:world
       bind:starSystem
       bind:constellation

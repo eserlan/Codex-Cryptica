@@ -1,8 +1,11 @@
 # Codex-Cryptica Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-10-13
+Auto-generated from all feature plans. Last updated: 2026-10-16
 
 ## Active Technologies
+
+- TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + `packages/generator-engine` (extended with `point-crawl-*` modules), `schema`, `@codex/ai-engine` / `aiGeneratorGateway`, existing `$lib/utils/svg-export.ts`, Tailwind 4 semantic tokens, Lucide Iconify utility classes (`icon-[lucide--*]`). Zero new third-party dependencies. (177-point-crawl-generator)
+- Transient client-side reactive state during generation; `localStorage` (`__codex_pending_import` array of `ImportDraft[]` via existing `SeoImportService`) for public-to-vault handoff; OPFS & IndexedDB (via existing `vault.createEntity` and `vault.addConnection`) when saving `Location` entities and the master overview `Note` entity in-app. Zero database migrations required. (177-point-crawl-generator)
 
 - TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + Existing `search-orchestrator` (`searchService`) and the Explorer's `entity-search-match`; `schema` (`isEntityVisible`, `Entity`); `@codex/ai-engine` (`DefaultContextRetrievalService.retrieveContext`); `@codex/oracle-engine` (`ChatMessage`, `OracleIntent`, `OracleGenerator.retrieveForQuery`); existing `CommandMenu` placement via Floating UI; `categories` store for type icons. New internal package `packages/entity-mention-engine`. No new third-party dependency. (4052-oracle-entity-mentions)
 - Mentions are an optional `mentions` array on the existing persisted `ChatMessage` (chat history already in IndexedDB through `ChatHistoryService`). No new store, OPFS or vault schema change, so no migration. Old messages without the field stay valid. (4052-oracle-entity-mentions)
@@ -268,11 +271,11 @@ TypeScript: Follow standard conventions
 
 ## Recent Changes
 
+- 177-point-crawl-generator: Added TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + `packages/generator-engine` (extended with `point-crawl-*` modules), `schema`, `@codex/ai-engine` / `aiGeneratorGateway`, existing `$lib/utils/svg-export.ts`, Tailwind 4 semantic tokens, Lucide Iconify utility classes (`icon-[lucide--*]`). Zero new third-party dependencies.
+
 - 4052-oracle-entity-mentions: Added TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + Existing `search-orchestrator` (`searchService`) and the Explorer's `entity-search-match`; `schema` (`isEntityVisible`, `Entity`); `@codex/ai-engine` (`DefaultContextRetrievalService.retrieveContext`); `@codex/oracle-engine` (`ChatMessage`, `OracleIntent`, `OracleGenerator.retrieveForQuery`); existing `CommandMenu` placement via Floating UI; `categories` store for type icons. New internal package `packages/entity-mention-engine`. No new third-party dependency.
 
 - 176-cif-contextual-tips: Added TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + Existing `onboarding-journey-engine` (extended), `help-engine` (`QUICK_PROMPT_SETS`, `FEATURE_REGISTRY`, `HelpArea`), `JourneyStore` (read-only outcome), `OnboardingStore` (`chosenGoal`, `goalInvitation`), `helpAssistant` and `cifPopout` (open and ask), `isHelpAssistantAvailable`, `helpStore` (tour), `modalUIStore` (dialogs), Floating UI (already a dependency), Tailwind 4 semantic tokens, Iconify classes. No new third-party dependency.
-
-- 175-cif-guided-onboarding: Added TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + Existing `help-engine` (guidance action schema, catalogue, `validateAction`, quick prompts; extended with shell controls and `extraAvailable`), `HelpActionRunner` and `HelpHighlightService`, `onboarding-orchestrator` (extended), `OnboardingStore`, `helpStore` tour, `GettingStartedChecklist`, `vaultEventBus`, `@codex/events` app bus (`JOURNAL:CAPTURE`), `categories` store, `zod`. New internal package `packages/onboarding-journey-engine`. No new third-party dependency.
 
 <!-- MANUAL ADDITIONS START -->
 

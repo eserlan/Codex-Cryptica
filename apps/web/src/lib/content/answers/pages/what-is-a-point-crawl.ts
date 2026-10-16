@@ -106,6 +106,12 @@ export const whatIsAPointCrawl: AnswerConfigInput = {
       href: "/generators/settlement",
     },
     {
+      title: "Point Crawl Generator",
+      description:
+        "Builds a playable 6 to 15 node point crawl network with an interactive graph, branching route trade-offs, loops, and locked passages.",
+      href: "/generators/point-crawl",
+    },
+    {
       title: "Encounter generator",
       description: "Fills the links: what the party meets between the nodes.",
       href: "/generators/encounter",
@@ -140,7 +146,10 @@ export const whatIsAPointCrawl: AnswerConfigInput = {
     intentAliases: ["point crawl meaning"],
     uniqueValue:
       "Defines the structure, names its parts, works a fen example with real travel costs, and says when not to use one.",
-    relatedIntents: ["answer-point-crawl-vs-hex-crawl"],
+    relatedIntents: [
+      "answer-point-crawl-vs-hex-crawl",
+      "generator-point-crawl",
+    ],
     acknowledgedOverlap: [
       {
         with: "answer-point-crawl-vs-hex-crawl",

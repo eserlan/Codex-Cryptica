@@ -46,6 +46,7 @@ export const GENERATOR_SLUGS_WITH_THEME = new Set([
   "holiday",
   "personality",
   "tome",
+  "point-crawl",
 ]);
 
 export function shouldSyncGeneratorTheme(s: string) {
@@ -167,6 +168,7 @@ export const SLUGS_USING_STORED_THEME = new Set([
   "constellation",
   "personality",
   "tome",
+  "point-crawl",
 ]);
 
 // Maps a resolved hub genre to the nearest ship-generator genre (the ship

@@ -163,6 +163,12 @@ import {
   tomeConfig,
   type TomeGeneratorOptions,
 } from "./public-tome";
+import {
+  buildPointCrawlPrompt,
+  generatePointCrawlLocal,
+  pointCrawlConfig,
+  type PointCrawlGeneratorOptions,
+} from "./public-point-crawl";
 
 /**
  * Generator id -> default vault category id.
@@ -202,6 +208,7 @@ export const GENERATOR_ENTITY_TYPE: Record<GeneratorId, string> = {
   heist: "note",
   holiday: "note",
   tome: "item",
+  "point-crawl": "note",
 };
 
 /** Fallback category used when a mapped category is absent from the campaign. */
@@ -314,6 +321,7 @@ function mapOutputToDraft(
         ? [...output.interpretations]
         : undefined,
       nightSky: output.nightSky,
+      pointCrawl: output.pointCrawl,
       contextProvenance: contextProvenance.length
         ? contextProvenance
         : undefined,
@@ -2000,6 +2008,54 @@ function generateSecretSociety(request: GeneratorRunRequest): GeneratorOutput {
 function secretSocietyPrompt(request: GeneratorRunRequest): string {
   const { systemInstruction, userMessage } = buildSecretSocietyPrompt(
     request.options as SecretSocietyGeneratorOptions,
+    contextChain(request),
+  );
+  return `${systemInstruction}\n\n${userMessage}`;
+}
+
+export function pointCrawlOptions(
+  request: GeneratorRunRequest,
+): PointCrawlGeneratorOptions {
+  const rawCount = Number(request.options.pointCount);
+  return {
+    genre:
+      optionString(request, "genre", "") ||
+      themeIdToLabel[request.themeId] ||
+      request.vaultContext?.themeName ||
+      "Classic Fantasy",
+    scale: optionString(request, "scale", "Wilderness"),
+    pointCount: Number.isFinite(rawCount) && rawCount > 0 ? rawCount : 8,
+    density: optionString(request, "density", "Balanced branching"),
+    dangerLevel: optionString(request, "dangerLevel", "Moderate / Hazardous"),
+    secretFrequency: optionString(
+      request,
+      "secretFrequency",
+      "Standard (1-2 secret routes)",
+    ),
+    campaignContext: request.instructions,
+    instruction: request.instructions,
+    avoidNames: [
+      ...(request.vaultContext?.bannedNames ?? []),
+      ...(request.vaultContext?.existingTitles ?? []),
+    ],
+  };
+}
+
+function generatePointCrawl(request: GeneratorRunRequest): GeneratorOutput {
+  const output = generatePointCrawlLocal(pointCrawlOptions(request));
+  return {
+    title: output.title,
+    summary: output.summary ?? "",
+    content: output.content,
+    lore: output.lore,
+    labels: output.labels,
+    pointCrawl: output.pointCrawl,
+  };
+}
+
+function pointCrawlPrompt(request: GeneratorRunRequest): string {
+  const { systemInstruction, userMessage } = buildPointCrawlPrompt(
+    pointCrawlOptions(request),
     contextChain(request),
   );
   return `${systemInstruction}\n\n${userMessage}`;
@@ -3937,6 +3993,73 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
     generate: generateTome,
     mapOutputToDraft: mapOutputToDraft("tome"),
     buildPrompt: tomePrompt,
+  },
+  "point-crawl": {
+    id: "point-crawl",
+    label: "Point Crawl",
+    description:
+      "Generate an interconnected point-of-interest network with branching routes, loops, secret shortcuts, and key-before-lock gates.",
+    entityType: GENERATOR_ENTITY_TYPE["point-crawl"],
+    defaultInstruction:
+      "An interconnected point crawl network of 6-15 locations with distinct travel routes, terrain hazards, signposts, loops, secret shortcuts, and key-before-lock progression.",
+    icon: "lucide:waypoints",
+    options: [
+      {
+        id: "scale",
+        label: "Scale",
+        control: "select",
+        choices: pointCrawlConfig.scales.map((s) => ({ value: s, label: s })),
+      },
+      {
+        id: "pointCount",
+        label: "Number of Locations",
+        control: "select",
+        choices: pointCrawlConfig.pointCounts.map((c) => ({
+          value: String(c),
+          label: `${c} Locations`,
+        })),
+      },
+      {
+        id: "density",
+        label: "Route Interconnection",
+        control: "select",
+        choices: pointCrawlConfig.densities.map((d) => ({
+          value: d,
+          label: d,
+        })),
+      },
+      {
+        id: "dangerLevel",
+        label: "Danger Level",
+        control: "select",
+        choices: pointCrawlConfig.dangerLevels.map((dl) => ({
+          value: dl,
+          label: dl,
+        })),
+      },
+      {
+        id: "secretFrequency",
+        label: "Secret Routes & Shortcuts",
+        control: "select",
+        choices: pointCrawlConfig.secretFrequencies.map((sf) => ({
+          value: sf,
+          label: sf,
+        })),
+      },
+    ],
+    defaults: {
+      scale: "Wilderness",
+      pointCount: "8",
+      density: "Balanced branching",
+      dangerLevel: "Moderate / Hazardous",
+      secretFrequency: "Standard (1-2 secret routes)",
+    },
+    generate: generatePointCrawl,
+    mapOutputToDraft: (output, request) => ({
+      ...mapOutputToDraft("point-crawl")(output, request),
+      lore: [output.content, output.lore].filter(Boolean).join("\n\n"),
+    }),
+    buildPrompt: pointCrawlPrompt,
   },
 };
 

@@ -60,7 +60,8 @@ export const load: PageLoad = ({ params }) => {
       | "heist"
       | "holiday"
       | "personality"
-      | "tome",
+      | "tome"
+      | "point-crawl",
   };
 };
 

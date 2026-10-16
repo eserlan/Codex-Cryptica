@@ -74,6 +74,10 @@ export { alienRaceConfig } from "generator-engine";
 export { creatureConfig } from "generator-engine";
 export { tomeConfig } from "generator-engine";
 export {
+  pointCrawlConfig,
+  type PointCrawlGeneratorOptions,
+} from "generator-engine";
+export {
   nameTable,
   pickFrom,
   getRandomItems,

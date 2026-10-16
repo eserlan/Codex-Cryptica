@@ -204,6 +204,7 @@
     getDocumentLayout: () => documentLayout,
     exportDiagramImage: () =>
       diagrams?.exportDataUrl() ?? Promise.resolve(undefined),
+    getSelectedNodeIds: () => diagrams?.getSelectedPointCrawlNodeIds(),
     setError: (message) => (session.errorMessage = message),
   });
   const handoffs = useGeneratorHandoffs({
@@ -331,6 +332,10 @@
       <GeneratorDiagrams
         bind:this={diagrams}
         generatedData={session.generatedData}
+        useAI={session.useAI}
+        onReplaceOutput={!session.isExampleDraft
+          ? session.replaceOutput
+          : undefined}
         onCopy={clipboard.trackDiagramCopy}
       />
       <GeneratorOutputCard
