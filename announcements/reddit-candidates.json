@@ -1,5 +1,5 @@
 {
-  "updated_at": 1792086108,
+  "updated_at": 1792135471,
   "candidates": [
     {
       "id": "reddit-38391363178-five-new-answer-guides-from-first-dm-ner",
@@ -30,6 +30,16 @@
       "source_id": "38743453215",
       "status": "approved",
       "created_at": 1792076725
+    },
+    {
+      "id": "reddit-38865885868-my-tales-of-the-valiant-npcs-kept-showin",
+      "title": "My Tales of the Valiant NPCs kept showing race blocks and flat hit points",
+      "body": "I run Tales of the Valiant and every generator I tried gave me 5e wording back. Race where it should be lineage and heritage, hit points as a single number with no hit dice, and saves and skills that did not line up with the block. I was fixing it by hand every time.\n\nI built Tales of the Valiant as a proper option in the NPC, creature and magic item generators in my project Codex Cryptica, so the stat block follows the BFRD when you pick it.\n\nYou can try it here: https://codexcryptica.com/generators/npc - it also applies to the creature and magic item generators with the same switch.\n\nWhat you get when Tales of the Valiant is selected:\n\n- lineage and heritage instead of race, so you do not have to rewrite ancestry at the table\n- AC and HP with hit dice shown, plus dice formulas you can actually roll\n- ability scores with saves and skills derived from the block, not filled in from generic fantasy\n- homebrew flagged automatically when the result steps outside BFRD assumptions\n\nI kept the BFRD as the source of truth, so a few 5e specific tags will not appear when you pick Tales of the Valiant. It can feel sparse at first if you are used to them, but it means the block is correct rather than patched.\n\nWhich lineage and heritage combination do you actually see most at your table, and does the heritage choice change how you play that character?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-38865885868-2.png)",
+      "url": "https://codexcryptica.com/help/tales-of-the-valiant-generators",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-38865885868-2.png",
+      "source_id": "38865885868",
+      "status": "approved",
+      "created_at": 1792135471
     }
   ]
 }
