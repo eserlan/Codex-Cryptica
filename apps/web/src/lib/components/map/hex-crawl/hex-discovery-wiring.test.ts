@@ -108,4 +108,38 @@ describe("buildDiscoveryWiring", () => {
 
     expect(wiring.factionMatch).toBeNull();
   });
+
+  it("names custom terrain so the offline message can say which tables were missing", () => {
+    const { controller } = fakes();
+    const store = {
+      recordFor: vi.fn(() => ({
+        terrain: { kind: "custom", label: "Glass dunes" },
+      })),
+    };
+    const wiring = buildDiscoveryWiring({
+      controller: controller as never,
+      store: store as never,
+      mapId: "m1",
+      hex,
+      factions: [],
+      aiEnabled: false,
+    });
+    expect(wiring.customTerrainLabel).toBe("Glass dunes");
+  });
+
+  it("leaves the name empty for preset terrain (negative path)", () => {
+    const { controller } = fakes();
+    const store = {
+      recordFor: vi.fn(() => ({ terrain: { kind: "preset", id: "forest" } })),
+    };
+    const wiring = buildDiscoveryWiring({
+      controller: controller as never,
+      store: store as never,
+      mapId: "m1",
+      hex,
+      factions: [],
+      aiEnabled: false,
+    });
+    expect(wiring.customTerrainLabel).toBeUndefined();
+  });
 });

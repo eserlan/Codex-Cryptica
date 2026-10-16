@@ -181,4 +181,54 @@ test.describe("Hex crawl journey (AI disabled)", () => {
     await page.getByRole("button", { name: "Go", exact: true }).click();
     await expect(page.locator("#hex-panel-title")).toBeVisible();
   });
+
+  test("quickstart 5: custom terrain explores offline with the general-tables message", async ({
+    page,
+  }) => {
+    await enableHexMode(page);
+    await clickCentreHex(page);
+    await expect(page.locator("#hex-panel-title")).toBeVisible();
+
+    await page.getByRole("button", { name: "Custom…" }).click();
+    await page.getByLabel("Custom terrain name").fill("Glass dunes");
+    await page.getByRole("button", { name: "Use custom terrain" }).click();
+    await page.getByRole("button", { name: "Explore", exact: true }).click();
+    await expect(
+      page.getByText(
+        "No tables for 'Glass dunes', so general tables were used.",
+      ),
+    ).toBeVisible();
+  });
+
+  test("quickstart 7: changing the grid of a map with hex records asks first, and cancel keeps it", async ({
+    page,
+  }) => {
+    await enableHexMode(page);
+    await clickCentreHex(page);
+    await page.getByRole("button", { name: "Forest", exact: true }).click();
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(1000);
+
+    await openGridSettings(page);
+    const radius = page.getByRole("slider", { name: "Hex Radius (Pixels)" });
+    await radius.fill("60");
+    await page
+      .getByRole("button", { name: "Apply to All", exact: true })
+      .click();
+    await expect(page.getByText(/hex records/)).toBeVisible();
+    await page.getByRole("button", { name: "Cancel", exact: true }).click();
+    await expect(page.getByText(/hex records/)).toHaveCount(0);
+  });
 });
+
+/** Opens grid settings and sets a hex grid with Hex Crawl mode on, then applies it. */
+async function enableHexMode(page: Page) {
+  await openGridSettings(page);
+  const pointy = page.getByRole("button", { name: /pointy/i });
+  await pointy.scrollIntoViewIfNeeded();
+  await pointy.click();
+  const mode = page.getByRole("switch", { name: /hex crawl/i });
+  await mode.scrollIntoViewIfNeeded();
+  await mode.check();
+  await applyGridSettings(page);
+}

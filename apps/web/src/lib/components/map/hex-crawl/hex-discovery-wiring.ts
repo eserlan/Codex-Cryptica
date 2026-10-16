@@ -55,5 +55,15 @@ export function buildDiscoveryWiring(
     },
     proposedLink: controller.proposedLinkFor(mapId, hex),
     factionMatch,
+    customTerrainLabel: customTerrainLabelOf(
+      store.recordFor(mapId, hex)?.terrain,
+    ),
   };
+}
+
+/** Custom terrain is named in the card's offline message; presets need no name. */
+function customTerrainLabelOf(
+  terrain: { kind: string; label?: string } | undefined,
+): string | undefined {
+  return terrain?.kind === "custom" ? terrain.label : undefined;
 }
