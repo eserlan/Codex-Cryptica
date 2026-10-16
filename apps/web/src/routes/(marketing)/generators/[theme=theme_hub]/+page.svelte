@@ -169,6 +169,13 @@
       icon: "icon-[lucide--hourglass]",
     },
     {
+      slug: "point-crawl",
+      label: "Point Crawl Generator",
+      summary:
+        "Generate an interconnected network of named locations, travel routes, loops, and secret paths.",
+      icon: "icon-[lucide--waypoints]",
+    },
+    {
       slug: "minor-magic-item",
       label: "Minor Magic Item Generator",
       summary:

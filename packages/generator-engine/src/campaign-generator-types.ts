@@ -14,6 +14,7 @@ import type {
   ConstellationInterpretation,
   NightSkyData,
 } from "./public-constellation";
+import type { PointCrawlNetwork } from "./point-crawl-state";
 
 export type GeneratorId =
   | "npc"
@@ -45,7 +46,8 @@ export type GeneratorId =
   | "encounter"
   | "heist"
   | "holiday"
-  | "tome";
+  | "tome"
+  | "point-crawl";
 
 export const SUPPORTED_GENERATOR_IDS: readonly GeneratorId[] = [
   "npc",
@@ -78,6 +80,7 @@ export const SUPPORTED_GENERATOR_IDS: readonly GeneratorId[] = [
   "heist",
   "holiday",
   "tome",
+  "point-crawl",
 ] as const;
 
 /** A user-configurable field for a generator. */
@@ -154,6 +157,8 @@ export interface GeneratorOutput {
   interpretations?: ConstellationInterpretation[];
   /** Night-sky mode's full set of constellations for one culture. */
   nightSky?: NightSkyData;
+  /** Structured point-crawl network graph and keyed locations. */
+  pointCrawl?: PointCrawlNetwork;
   /** Structured system mechanics (e.g. Tales of the Valiant BFRD stats). */
   mechanics?: GeneratorMechanicsBundle;
   /** Associated game system id (e.g. "tales-of-the-valiant"). */
@@ -306,6 +311,8 @@ export interface GeneratedDraft {
    * that grounded this generation.
    */
   contextProvenance?: Array<{ id: string; title: string }>;
+  /** Carried through from {@link GeneratorOutput.pointCrawl}. */
+  pointCrawl?: PointCrawlNetwork;
   /** Structured system mechanics (e.g. Tales of the Valiant BFRD stats). */
   mechanics?: GeneratorMechanicsBundle;
   /** Associated game system id (e.g. "tales-of-the-valiant"). */

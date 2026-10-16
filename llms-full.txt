@@ -289,6 +289,9 @@ Change how a Stat Sheet looks without touching its data. Click Presentations to 
 ### Hexcrawl & Hex Grids
 Run overland exploration with point-to-point hex grids. Choose pointy-topped or flat-topped orientation, toggle in-cell coordinates, snap tokens and pins to hex centers, and reveal or hide fog of war by hex. Rulers measure travel distance directly in hexes.
 
+### Point Crawl Generator
+Design interconnected adventure maps with named locations, explicit travel routes, terrain hazards, and secrets. Preview the interactive map, drag nodes to customize layout, and export clean SVG or PNG diagrams. Saving creates Location entities with route lore and a master Point Crawl overview Note.
+
 
 ## Help Documentation
 
@@ -1906,7 +1909,7 @@ Image generation uses Art Direction from your world before falling back to shipp
 
 ### IN-APP CAMPAIGN GENERATORS
 
-The **Campaign Generators** let you create NPCs, factions, settlements, magic items, and more directly inside your active campaign vault. The **Holiday & Festival** generator creates one observance or a connected calendar. Every result is previewed before you choose to open it as an entity draft.
+The **Campaign Generators** let you create NPCs, factions, settlements, point crawl travel maps, magic items, and more directly inside your active campaign vault. The **Holiday & Festival** generator creates one observance or a connected calendar. Every result is previewed before you choose to open it as an entity draft.
 
 ### Use generators with AI turned off
 
@@ -2038,6 +2041,16 @@ Kanka's structured campaign export works without an AI key:
 3. Review the entities, labels, attributes, explicit relations, and linked images before committing them to the current vault.
 
 Codex imports a copy and does not change the campaign in Kanka. Kanka permissions, dashboards, family-tree layouts, plugins, themes, and bookmarks are not part of Kanka's standard export and cannot be recreated by this import.
+
+## Import a Chronica Campaign
+
+Chronica's JSON exports also work without an AI key:
+
+1. In Chronica, export your campaign as JSON. You get one file per section (characters, places, quests and so on).
+2. Drop all the files from that campaign into Codex's importer at once. Files from a different campaign are refused.
+3. Review the entries and their connections before committing them to the current vault.
+
+Characters, places, kinships and encounters become characters, locations, factions and events. Quests, adventure notes and maps come across as notes, and GM secrets go into each entry's private lore. Map images are not included, and stats are kept as metadata rather than stat sheets. Codex imports a copy and does not change your campaign in Chronica.
 
 ## Resilient Imports
 
@@ -2992,6 +3005,48 @@ Templates you make in Settings are saved as files in your vault's `.codex/templa
 ## Related Blog Posts
 
 - [Default Entity Templates & Custom Vault Overrides](/blog/default-templates-announcement) — Deep dive into customizing domain structures and custom schema overrides.
+
+---
+
+### POINT CRAWL GENERATOR
+
+The **Point Crawl Generator** designs interconnected adventure maps made of named locations (nodes) and travel routes (edges). Unlike open-grid hex crawls, a point crawl structures overland or regional journeys into deliberate paths, meaningful shortcuts, locked gates, and navigational dilemmas.
+
+### What is in a Point Crawl?
+
+Every generated point crawl consists of:
+
+- **Locations**: Start locations, landmarks, settlements, crossroad hubs, hazard zones, discovery sites, and final destinations with environmental tags, encounters, and interactive discoveries.
+- **Routes & Exits**: Explicit paths between locations with travel times, terrain types, travel hazards, encounter chances, and optional passage requirements (such as climbing gear, tidal timing, or magical keys).
+- **Network Topology**: Verified navigable structure ensuring no orphaned branches, guaranteed path to the goal, and tactical navigation choices (loops, alternate branches, and optional secrets).
+- **Interactive Visual Preview**: Drag and rearrange nodes to adjust layout, inspect locations and route details, and export the diagram as standalone **SVG** or high-resolution **PNG**.
+
+### Generating In-App
+
+To create a point crawl directly inside your campaign vault:
+
+1. Open **Campaign Generators** (click the wand icon in the vault toolbar or select **Point Crawl Generator**).
+2. Choose a **Setting & Genre** (Fantasy, Grimdark, Sci-Fi, Cyberpunk, Post-Apocalyptic, etc.) or provide custom steering notes.
+3. Select your network scale: **Micro (5-7 nodes)** for quick delves or local fens, **Standard (8-12 nodes)** for regional adventures, or **Sprawling (13-18 nodes)** for large expeditions.
+4. Pick an **Environment / Topology** (Fen / Marshland, Mountain Pass, Underdark / Caverns, Derelict Space Hulk, Neon Megacity, Sunken Coast, etc.).
+5. Click **Generate Point Crawl**.
+
+### Interactive Refinement & Diagram Export
+
+Once generated:
+
+- **Inspect Nodes**: Click any location on the map diagram to open its full dossier, encounters, clues, and outgoing paths.
+- **Rearrange & Tidy**: Drag nodes on the canvas to customize visual placement for your notes, or click **Reset Layout** to re-apply the auto-layout algorithm.
+- **Surgical Refinement**: Select any location or route and request AI refinements (e.g., _"Make the bridge guarded by troll mercenaries"_ or _"Add a hidden flooded tunnel"_).
+- **Export**: Click **Export SVG** or **Export PNG** in the diagram toolbar to download the visual map for player handouts or VTT display.
+
+### Saving to Your Vault
+
+Click **Save to Vault** to convert the point crawl into your local campaign workspace:
+
+- Creates a dedicated **Location entity** for each selected node, complete with sensory descriptions, hazards, and a markdown `## Routes & Exits` section.
+- Automatically establishes bidirectional connections between connected locations with route summaries as connection labels.
+- Creates an overarching **Note entity** (`kind: "point-crawl"`) summarizing the crawl's premise, navigation rules, and links to all generated locations.
 
 ---
 
@@ -4519,6 +4574,8 @@ The canonical, no-login-required tools that actually generate and let you save a
 - [RPG Puzzle Generator](https://codexcryptica.com/generators/puzzle): Build thematic encounter puzzles that give every player a way to contribute. Get layered clues, alternate solutions, and consequences that keep your adventure moving.
 
 - [Dungeon / Delve Idea Generator](https://codexcryptica.com/generators/dungeon-generator): Create rich, multi-layered dungeons, ancient ruins, abandoned facilities, or subterranean vaults for any RPG genre or world theme. Generates evocative premises, original histories, current operational states, signature landmarks, active conflicts, sectors, factions, hazards, secrets, treasures, and adventure hooks. Every generated delve can also become a fully explorable, room-by-room map — the interactive Dungeon Canvas is exclusive to Codex Cryptica, free to open once you're in the app.
+
+- [Point Crawl Generator](https://codexcryptica.com/generators/point-crawl): Generate an interconnected network of 6–15 locations with explicit travel routes, signposts, loops, hidden shortcuts, and key-before-lock gates. Inspect and rearrange the live node-and-edge graph, then save all or selected points directly into your Codex Cryptica vault.
 
 - [Adventure Idea Generator](https://codexcryptica.com/generators/adventure-generator): Create rich, multi-layered adventure scenarios across any RPG genre or world theme. Generates initial situations, primary pressures, key locations, key actors, threats, discoveries, complications, stakes, and non-linear possible outcomes — a situation, not a plot.
 

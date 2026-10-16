@@ -177,6 +177,12 @@ export const GENERATORS = [
     description:
       "Generate grimoires, occult treatises, heretical chronicles, research logs, and dangerous manuscripts with physical provenance, hazardous study costs, and adventure hooks.",
   },
+  {
+    id: "point-crawl",
+    label: "Point Crawl",
+    description:
+      "Generate an interconnected point-of-interest network with branching routes, loops, secret shortcuts, and key-before-lock gates.",
+  },
 ] as const;
 
 export type GeneratorId = (typeof GENERATORS)[number]["id"];

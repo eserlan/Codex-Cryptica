@@ -3,13 +3,18 @@
   import type { Category } from "schema";
   import { getDelveLocationTypeLabel } from "$lib/utils/delve-terminology";
   import DraftBody from "./DraftBody.svelte";
+  import PointCrawlGraph from "$lib/components/seo/PointCrawlGraph.svelte";
   import GeneratorMechanicsPreview from "./GeneratorMechanicsPreview.svelte";
 
   interface Props {
     draft: GeneratedDraft;
     categories: Category[];
     saving: boolean;
-    onsave: (draft: GeneratedDraft, createRelationship: boolean) => void;
+    onsave: (
+      draft: GeneratedDraft,
+      createRelationship: boolean,
+      options?: { selectedNodeIds?: string[]; openInGraph?: boolean },
+    ) => void;
     onback: () => void;
     /** When true, show the relationship creation toggle (contextual launch). */
     showRelationshipToggle?: boolean;
@@ -51,26 +56,49 @@
   let title = $state(draft.title);
   let entityType = $state(draft.entityType);
   let labelsRaw = $state(draft.labels?.join(", ") ?? "");
+  let selectedPointCrawlNodeIds = $state<string[]>(
+    draft.pointCrawl ? draft.pointCrawl.nodes.map((n) => n.id) : [],
+  );
+  let pointCrawlGraphRef = $state<ReturnType<typeof PointCrawlGraph> | null>(
+    null,
+  );
+
+  export async function exportPointCrawlPng(): Promise<Blob | null> {
+    if (!pointCrawlGraphRef) return null;
+    return pointCrawlGraphRef.exportPng();
+  }
 
   const disabled = $derived(saving);
 
+  function buildUpdatedDraft(): GeneratedDraft {
+    return {
+      ...draft,
+      title: title.trim(),
+      entityType,
+      labels: labelsRaw
+        .split(",")
+        .map((l) => l.trim())
+        .filter(Boolean),
+    };
+  }
+
   function handleSave(e: SubmitEvent) {
     e.preventDefault();
-    onsave(
-      {
-        ...draft,
-        title: title.trim(),
-        entityType,
-        labels: labelsRaw
-          .split(",")
-          .map((l) => l.trim())
-          .filter(Boolean),
-      },
-      createRelationship,
-    );
+    onsave(buildUpdatedDraft(), createRelationship, {
+      selectedNodeIds: draft.pointCrawl ? selectedPointCrawlNodeIds : undefined,
+      openInGraph: false,
+    });
+  }
+
+  function handleSaveAndOpenGraph() {
+    onsave(buildUpdatedDraft(), createRelationship, {
+      selectedNodeIds: draft.pointCrawl ? selectedPointCrawlNodeIds : undefined,
+      openInGraph: true,
+    });
   }
 </script>
 
+<!-- fallow-ignore-next-line complexity -->
 <form onsubmit={handleSave} class="flex flex-col gap-4">
   <p class="text-xs text-chrome-muted">
     Review the draft below, then open in the editor to accept or discard.
@@ -171,6 +199,14 @@
     />
   </div>
 
+  {#if draft.pointCrawl?.nodes?.length}
+    <PointCrawlGraph
+      bind:this={pointCrawlGraphRef}
+      crawl={draft.pointCrawl}
+      bind:selectedNodeIds={selectedPointCrawlNodeIds}
+    />
+  {/if}
+
   <DraftBody {draft} {spoilerShield} />
 
   {#if draft.mechanics}
@@ -259,12 +295,29 @@
           Generate Boss / Key NPC
         </button>
       {/if}
+      {#if draft.pointCrawl}
+        <button
+          type="button"
+          onclick={handleSaveAndOpenGraph}
+          disabled={saving}
+          class="inline-flex items-center gap-2 rounded-lg border border-chrome-accent/60 px-4 py-2 text-xs font-bold uppercase tracking-wider text-chrome-accent transition-colors hover:bg-chrome-accent/10 disabled:pointer-events-none disabled:opacity-50"
+          data-testid="save-point-crawl-open-graph"
+        >
+          <span aria-hidden="true" class="icon-[lucide--network] h-3.5 w-3.5"
+          ></span>
+          Save & Open in Graph
+        </button>
+      {/if}
       <button
         type="submit"
         disabled={saving}
         class="rounded-lg bg-chrome-accent px-5 py-2 text-xs font-bold uppercase tracking-wider text-chrome-surface transition-all hover:brightness-110 active:scale-95 disabled:pointer-events-none disabled:opacity-50"
       >
-        {saving ? "Opening…" : "Open in Editor"}
+        {saving
+          ? "Opening…"
+          : draft.pointCrawl
+            ? `Save ${selectedPointCrawlNodeIds.length} Locations + Overview`
+            : "Open in Editor"}
       </button>
     </div>
   </div>

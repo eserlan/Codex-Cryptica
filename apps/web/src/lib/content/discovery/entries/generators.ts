@@ -431,6 +431,48 @@ export const generatorEntries: DiscoveryEntryInput[] = [
     status: "live",
   },
   {
+    id: "generator-point-crawl",
+    pageKind: "generator",
+    canonicalPath: "/generators/point-crawl",
+    primaryIntent: "point crawl generator",
+    intentAliases: [
+      "pointcrawl generator",
+      "rpg point crawl generator",
+      "dnd point crawl generator",
+      "random point crawl",
+      "point crawl map generator",
+    ],
+    userJob: "create",
+    uniqueValue:
+      "Interactive 6–15 node point crawl networks across dungeon, city, wilderness, region, and planetary scales with branching routes, loops, secret shortcuts, key-before-lock validation, and a visual node-and-edge graph.",
+    parentCluster: "adventure-mapping",
+    relatedIntents: [
+      "answer-point-crawl",
+      "answer-build-a-point-crawl",
+      "answer-point-crawl-vs-hex-crawl",
+      "generator-dungeon-generator",
+    ],
+    acknowledgedOverlap: [
+      {
+        with: "answer-point-crawl",
+        reason:
+          "The answer page explains what a point crawl is and when to use one (understand); this generator builds a playable 6–15 node point crawl network with an interactive graph (create).",
+      },
+      {
+        with: "answer-build-a-point-crawl",
+        reason:
+          "The how-to answer teaches a five-step manual design procedure (understand); this tool generates a complete, playability-checked point crawl network in the browser (create).",
+      },
+      {
+        with: "generator-dungeon-generator",
+        reason:
+          "The dungeon generator creates a single delve site's rooms, history, and boss; the point crawl generator creates a navigable node-and-route network across any scale (dungeon, city, wilderness, region, or star system) with explicit route trade-offs, loops, and gated passages.",
+      },
+    ],
+    indexable: true,
+    status: "live",
+  },
+  {
     id: "generator-adventure-generator",
     pageKind: "generator",
     canonicalPath: "/generators/adventure-generator",

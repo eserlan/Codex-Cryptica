@@ -229,5 +229,6 @@
 **Action:** Always include `aria-hidden="true"` on inner decorative icon elements, regardless of whether their classes are static or dynamic.
 
 ## 2024-11-20 - Add aria-pressed to toggle buttons
+
 **Learning:** When filter chips or selection cards act as toggle buttons (e.g. Genre chips, Category chips, Palette selectors, and Silhouette cards), adding `aria-pressed={isActive}` correctly communicates the pressed/selected state to screen readers, improving the accessibility of custom interactive elements.
 **Action:** Always add `aria-pressed={isActive}` or `aria-pressed={isSelected}` to toggle-like buttons or selection cards.

@@ -1986,4 +1986,70 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       },
     ],
   },
+  "point-crawl": {
+    pageTitle:
+      "Point Crawl Generator | Interactive RPG Map & Route Network Builder | Codex Cryptica",
+    metaDescription:
+      "Generate playable 6–15 node point crawls for Dungeons, Cities, Wilderness, Regions, and Star Systems. Includes branching paths, loops, hidden shortcuts, key-before-lock gates, and an interactive SVG graph.",
+    introTitle: "Point Crawl Generator",
+    eyebrow: "Point Crawl Generator",
+    introText:
+      "Generate an interconnected network of 6–15 locations with explicit travel routes, signposts, loops, hidden shortcuts, and key-before-lock gates. Inspect and rearrange the live node-and-edge graph, then save all or selected points directly into your Codex Cryptica vault.",
+    canonicalPath: "/generators/point-crawl",
+    labels: ["exploration", "hexcrawl", "dungeon", "adventure"],
+    ogImage: "https://assets.codexcryptica.com/og/generator-point-crawl.jpg",
+    ogImageAlt:
+      "Codex Cryptica Point Crawl Generator showing an interactive node-and-route network diagram with start, hub, secret, and goal locations",
+    keywords: [
+      "point crawl generator",
+      "pointcrawl generator",
+      "rpg point crawl",
+      "dnd point crawl generator",
+      "point crawl map generator",
+      "tabletop rpg exploration generator",
+      "node based adventure generator",
+    ],
+    faqs: [
+      {
+        question: "What does the Point Crawl Generator create?",
+        answer:
+          "It builds a connected network of 6 to 15 locations (with a Start, hubs, obstacles, optional side nodes, secrets, and a Goal) linked by explicit travel routes. Every node includes sensory details, an encounter or feature, and concrete signposts pointing to connected routes. Every route includes distance or travel time, terrain, risk, and optional gates.",
+      },
+      {
+        question: "How does it prevent dead-end or unsolvable locked routes?",
+        answer:
+          "A deterministic topology and playability verifier checks every generated network using breadth-first search (BFS). It guarantees at least two branching choice nodes, at least one loop for tactical flanking or retreat, at least one hidden or rumoured shortcut, and verifies that any key, clue, or tool required by a gated route is placed at a node reachable from the Start without crossing that locked route.",
+      },
+      {
+        question:
+          "Can I use it for cities, wilderness, or sci-fi star systems?",
+        answer:
+          "Yes. Choose from six scales — Dungeon, Settlement, City, Wilderness, Region, or Planet / System — across all 13 genres. Route travel times, terrain types, and hazards automatically adapt to your chosen scale and theme.",
+      },
+      {
+        question:
+          "How does saving a point crawl to my Codex Cryptica vault work?",
+        answer:
+          "When you click 'Save to Codex', you can save all generated points or toggle a subset on the interactive graph. Each selected point is imported as a Location entity with automatic route connections and a 'Routes & Exits' lore section, alongside a master overview Note entity that links the entire crawl together.",
+      },
+    ],
+    relatedLinks: [
+      {
+        href: "/answers/what-is-a-point-crawl",
+        label: "What Is a Point Crawl in Tabletop RPGs?",
+      },
+      {
+        href: "/generators/dungeon-generator",
+        label: "Dungeon & Delve Generator",
+      },
+      {
+        href: "/generators/one-shot-adventure-generator",
+        label: "One-Shot Adventure Generator",
+      },
+      {
+        href: "/generators/settlement",
+        label: "Settlement Generator",
+      },
+    ],
+  },
 };

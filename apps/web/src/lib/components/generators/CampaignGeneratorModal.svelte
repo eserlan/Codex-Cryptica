@@ -65,6 +65,7 @@
   import { revisionService } from "$lib/services/RevisionService.svelte";
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
   import { openSavedEntityInEditor } from "$lib/services/generators/generator-save-handoff";
+  import { savePointCrawlToVault } from "$lib/services/generators/point-crawl-vault-save";
 
   import GeneratorConfigForm from "./GeneratorConfigForm.svelte";
   import GeneratorDraftReview from "./GeneratorDraftReview.svelte";
@@ -77,7 +78,7 @@
 
   // Generators whose output is a plot the player will go on to play. During a
   // solo session these open with the spoilers hidden.
-  const SPOILER_SHIELDED_GENERATORS = new Set(["adventure"]);
+  const SPOILER_SHIELDED_GENERATORS = new Set(["adventure", "point-crawl"]);
   const shouldShieldSpoilers = (id?: string | null) =>
     soloSessionStore.isActive && SPOILER_SHIELDED_GENERATORS.has(id ?? "");
 
@@ -132,6 +133,9 @@
   let constellationChartRef = $state<ReturnType<
     typeof ConstellationChart
   > | null>(null);
+  let draftReviewRef = $state<ReturnType<typeof GeneratorDraftReview> | null>(
+    null,
+  );
   let errorMsg = $state<string | null>(null);
   let generatorId = $state<GeneratorId | null>(null);
   $effect(() => {
@@ -486,11 +490,71 @@
     }
   }
 
-  async function onSave(reviewed: GeneratedDraft, createRelationship: boolean) {
+  async function onSave(
+    reviewed: GeneratedDraft,
+    createRelationship: boolean,
+    saveOptions?: { selectedNodeIds?: string[]; openInGraph?: boolean },
+  ) {
     if (stage === "saving") return;
     stage = "saving";
     errorMsg = null;
     try {
+      if (reviewed.pointCrawl) {
+        const result = await savePointCrawlToVault(
+          reviewed.pointCrawl,
+          {
+            createEntity: (type, title, data) =>
+              vault.createEntity(type, title, data),
+            addConnection: (src, tgt, rel, label) =>
+              vault.addConnection(src, tgt, rel, label),
+          },
+          {
+            selectedNodeIds: saveOptions?.selectedNodeIds,
+            overviewTitle: reviewed.title,
+            overviewLabels: reviewed.labels,
+            sourceEntityId: workflow.sourceEntityId ?? undefined,
+            createSourceRelationship: createRelationship,
+          },
+        );
+        try {
+          publishGeneratedSaved(
+            { title: reviewed.title, category: reviewed.entityType },
+            { clock: systemClock },
+          );
+        } catch (err) {
+          console.error("Could not record the save:", err);
+        }
+        if (draftReviewRef) {
+          try {
+            const blob = await draftReviewRef.exportPointCrawlPng();
+            if (blob) {
+              const file = blobToFile(blob, `${reviewed.title}.png`);
+              await entityMapLinkingService.linkImageToEntity(
+                file,
+                `${reviewed.title} Map`,
+                result.overviewNoteId,
+              );
+            }
+          } catch (err) {
+            console.error("Failed to link generated point-crawl diagram:", err);
+          }
+        }
+        vault.selectedEntityId = result.overviewNoteId;
+        if (saveOptions?.openInGraph) {
+          layoutUIStore.mainViewMode = "visualization";
+        } else {
+          openSavedEntityInEditor(result.overviewNoteId, reviewed.title, {
+            isFocusMode:
+              layoutUIStore.mainViewMode === "focus" || layoutUIStore.isMobile,
+            selectEntity: (id) => {
+              vault.selectedEntityId = id;
+            },
+          });
+        }
+        close({ preserveSession: true });
+        return;
+      }
+
       // Create the entity skeleton (title + type + labels, no content yet).
       const result = await svc.saveDraft({
         draft: {
@@ -806,6 +870,7 @@
         </div>
       {/if}
       <GeneratorDraftReview
+        bind:this={draftReviewRef}
         bind:draft
         categories={categories.list}
         saving={stage === "saving"}

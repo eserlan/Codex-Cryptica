@@ -757,6 +757,99 @@ export {
   type LanguageOutputAssessment,
 } from "./language-output-assessment";
 
+export {
+  POINT_CRAWL_SCALES,
+  POINT_CRAWL_DENSITIES,
+  POINT_CRAWL_DANGER_LEVELS,
+  POINT_CRAWL_SECRET_FREQUENCIES,
+  POINT_CRAWL_NODE_ROLES,
+  POINT_CRAWL_ROUTE_VISIBILITIES,
+  POINT_CRAWL_ROUTE_DIRECTIONS,
+  POINT_CRAWL_GATE_KINDS,
+  ROLE_LABELS,
+  formatRouteConnectionLabel,
+  renderPointCrawlRouteSummary,
+  renderPointCrawlMarkdown,
+  renderPointCrawlGmSheet,
+  type PointCrawlScale,
+  type PointCrawlDensity,
+  type PointCrawlDangerLevel,
+  type PointCrawlSecretFrequency,
+  type PointCrawlNodeRole,
+  type PointCrawlRouteVisibility,
+  type PointCrawlRouteDirection,
+  type PointCrawlGateKind,
+  type PointCrawlGate,
+  type PointCrawlNode,
+  type PointCrawlRoute,
+  type PointCrawlGap,
+  type PointCrawlRegenTarget,
+  type PointCrawlNetwork,
+} from "./point-crawl-state";
+export {
+  SCALE_VOCABULARY,
+  GATE_TEMPLATES_BY_GENRE,
+  getScaleVocabulary,
+  getGateTemplates,
+  type ScaleVocabulary,
+  type GateRequirementTemplate,
+} from "./point-crawl-tables";
+export {
+  clampPointCount,
+  reachableNodesBfs,
+  simulateKeyLockReachability,
+  buildPointCrawlTopology,
+  normalizePointCrawlTopology,
+  type TopologyBuildOptions,
+} from "./point-crawl-topology";
+export {
+  isVaguePointCrawlFact,
+  checkPointCrawlPlayability,
+  repairPointCrawlPlayability,
+  type PointCrawlIssueCode,
+  type PointCrawlIssue,
+} from "./point-crawl-playability";
+export {
+  buildPointCrawlDiagramLayout,
+  type PointCrawlNodePositionOverride,
+  type PointCrawlDiagramNode,
+  type PointCrawlDiagramEdge,
+  type PointCrawlDiagramLayout,
+} from "./point-crawl-layout";
+export {
+  regeneratePointCrawlPartLocal,
+  buildPointCrawlRegenPrompt,
+  regeneratePointCrawlPart,
+  type RegeneratePointCrawlPartOptions,
+  type RegeneratePointCrawlPartResult,
+  type RegeneratePointCrawlPartResult as PointCrawlRegenResult,
+} from "./point-crawl-repair";
+export {
+  fillFailedPointCrawlParts,
+  generatePointCrawlStaged,
+  type PointCrawlStagedOptions,
+} from "./point-crawl-staged";
+export {
+  buildPointCrawlSaveDrafts,
+  type PointCrawlBatchSaveRelationship,
+  type PointCrawlBatchSaveDraft,
+  type BuildPointCrawlSaveDraftsOptions,
+  type BuildPointCrawlSaveDraftsOptions as PointCrawlSaveOptions,
+} from "./point-crawl-save";
+export {
+  pointCrawlConfig,
+  resolvePointCrawl,
+  pointCrawlToOutput,
+  generatePointCrawlNetworkLocal,
+  generatePointCrawlLocal,
+  buildPointCrawlPrompt,
+  parsePointCrawlNetwork,
+  parsePointCrawlResponse,
+  type PointCrawlGeneratorOptions,
+  type ResolvedPointCrawl,
+  type PointCrawlPrompt,
+} from "./public-point-crawl";
+
 export { parseTovMechanics } from "./tov-mechanics-parser";
 
 export {

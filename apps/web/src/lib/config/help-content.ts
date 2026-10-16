@@ -20,6 +20,7 @@ export const FEATURE_HELP_ARTICLES = {
   COMMUNITY_STAT_SHEET_TEMPLATES: "stat-sheets",
   SHARING_ENTITY_TEMPLATES: "sharing-templates",
   HEXCRAWL_MAPS: "hexcrawl-maps",
+  POINT_CRAWL_GENERATOR: "point-crawl-generator",
   TOV_GENERATORS: "tales-of-the-valiant-generators",
 } as const;
 
@@ -813,6 +814,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     content:
       "Run overland exploration with point-to-point hex grids. Choose pointy-topped or flat-topped orientation, toggle in-cell coordinates, snap tokens and pins to hex centers, and reveal or hide fog of war by hex. Rulers measure travel distance directly in hexes.",
     icon: "icon-[lucide--hexagon]",
+  },
+  "point-crawl-generator": {
+    id: "point-crawl-generator",
+    title: "Point Crawl Generator",
+    content:
+      "Design interconnected adventure maps with named locations, explicit travel routes, terrain hazards, and secrets. Preview the interactive map, drag nodes to customize layout, and export clean SVG or PNG diagrams. Saving creates Location entities with route lore and a master Point Crawl overview Note.",
+    icon: "icon-[lucide--waypoints]",
   },
 };
 

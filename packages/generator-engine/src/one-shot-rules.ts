@@ -104,7 +104,7 @@ export const DECISIONS_RULE =
 export const THREAD_DATA_RULE =
   'Each thread has "kind" ("rescue", "rule", "history", "promise" or "protect") and "about" (the NPC id, or the object\'s name, it concerns). A rescue is about an NPC who is trapped, captive or missing in a scene. "protect" is for people who are safe but depend on the outcome (sick children, a village that needs the cure): no scene has to show them in danger.';
 
-export const RESOURCE_RULE =
+const RESOURCE_RULE =
   '"resources" (2–4): pick the supplies that actually run short in this place and in a few hours of play, such as light, air, ammunition, a ship\'s hull or a ward\'s strength; food only for days of travel. Each has "id", "name", "start" (boxes the party has, 2–9), "unit" (what one box stands for), "spends" (each with "sceneId", "what" and "amount" in boxes) and "whenEmpty". Resources are spent in at least two scenes, so a choice in scene 1 changes what is possible in scene 3, and the boxes a careful party must spend before the finale stay below the start. Never leave the GM to invent how much the party has.';
 
 /** The supplies rule for Survival one-shots only; other emphases get none. */

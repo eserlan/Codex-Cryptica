@@ -24,6 +24,17 @@ import {
   resolveTome,
   generateTomeTwoPass,
   type TomeGeneratorOptions,
+  generatePointCrawlLocal,
+  generatePointCrawlStaged,
+  regeneratePointCrawlPart,
+  regeneratePointCrawlPartLocal,
+  resolvePointCrawl,
+  pointCrawlToOutput,
+  type PointCrawlGeneratorOptions,
+  type PointCrawlNetwork,
+  type PointCrawlRegenTarget,
+  type PointCrawlRegenResult,
+  type OneShotProgressStep,
 } from "generator-engine";
 import { getSessionContext } from "./session-context";
 import {
@@ -33,6 +44,7 @@ import {
 } from "./generation-input-history";
 
 import type { GeneratorOutput } from "./generator-helpers";
+import { ONE_SHOT_GENERATION_CONFIG } from "./generator-ai-transport";
 
 import { GeneratorEngineWorldbuilding } from "./generator-engine-worldbuilding";
 
@@ -267,5 +279,95 @@ export class GeneratorEngineSpecialized extends GeneratorEngineWorldbuilding {
     );
     recordTomeHistory(output, inputSummary, selectedDeceptionKey);
     return output;
+  }
+
+  /**
+   * Point crawl generation runs the staged AI pipeline when AI is enabled,
+   * falling back to the deterministic local topology + tables generator.
+   */
+  async generatePointCrawl(
+    options: PointCrawlGeneratorOptions & {
+      useAI?: boolean;
+      onProgress?: (steps: OneShotProgressStep[]) => void;
+      signal?: AbortSignal;
+    } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, onProgress, signal, ...crawlOptions } = options;
+    const recentInputs = generationInputHistoryStore.recent("point-crawl");
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const resolved = resolvePointCrawl(crawlOptions);
+        generationInputHistoryStore.record(
+          "point-crawl",
+          summarizeResolvedInputs(resolved),
+        );
+        const network = await generatePointCrawlStaged(
+          {
+            ...crawlOptions,
+            campaignContext:
+              (crawlOptions.campaignContext ?? "") +
+              "\n" +
+              getSessionContext() +
+              formatRecentInputsNote(recentInputs),
+          },
+          (prompt: string) =>
+            this.runModel(
+              "You are an expert TTRPG worldbuilder creating non-linear point crawl networks. Return valid JSON only.",
+              prompt,
+              ONE_SHOT_GENERATION_CONFIG,
+              true,
+              signal,
+            ),
+          onProgress,
+          signal,
+        );
+        return pointCrawlToOutput(network) as unknown as GeneratorOutput;
+      },
+      () => generatePointCrawlLocal(crawlOptions),
+    );
+  }
+
+  /**
+   * Surgically regenerate one node or route of a point crawl, leaving topology
+   * and sibling items untouched.
+   */
+  async regeneratePointCrawlPart(
+    crawl: PointCrawlNetwork,
+    target: PointCrawlRegenTarget,
+    options: {
+      useAI?: boolean;
+      instruction?: string;
+      signal?: AbortSignal;
+    } = {},
+  ): Promise<PointCrawlRegenResult> {
+    if (!options.useAI) {
+      return regeneratePointCrawlPartLocal(crawl, target, options.instruction);
+    }
+    try {
+      return await regeneratePointCrawlPart(crawl, target, {
+        useAI: true,
+        instruction: options.instruction,
+        complete: (prompt: string) =>
+          this.runModel(
+            "You are an expert TTRPG worldbuilder refining point crawl details. Return valid JSON only.",
+            prompt,
+            undefined,
+            true,
+            options.signal,
+          ),
+        signal: options.signal,
+      });
+    } catch {
+      if (options.instruction?.trim()) {
+        return {
+          crawl,
+          warnings: [
+            "Couldn't reach the AI, so your change wasn't applied. Nothing was changed.",
+          ],
+        };
+      }
+      return regeneratePointCrawlPartLocal(crawl, target);
+    }
   }
 }

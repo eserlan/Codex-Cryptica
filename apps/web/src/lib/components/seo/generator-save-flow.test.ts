@@ -114,4 +114,94 @@ describe("generator save flows", () => {
       relatedEntityCount: 2,
     });
   });
+
+  it("handles point-crawl batch save with location entities and master note", async () => {
+    const deps = dependencies();
+    const pointCrawlOutput: GeneratorOutput = {
+      type: "note",
+      title: "Whispering Fen",
+      summary: "A sunken marshland hiding drowned barrows.",
+      content: "Overview content",
+      lore: "Overview lore",
+      labels: ["point-crawl"],
+      status: "draft",
+      pointCrawl: {
+        title: "Whispering Fen",
+        premise: "A sunken marshland hiding drowned barrows.",
+        genre: "Classic Fantasy",
+        scale: "Region",
+        pointCount: 2,
+        density: "Balanced branching",
+        dangerLevel: "Moderate / Hazardous",
+        secretFrequency: "Standard (1-2 secret routes)",
+        startNodeId: "n1",
+        goalNodeIds: ["n2"],
+        warnings: [],
+        nodes: [
+          {
+            id: "n1",
+            name: "Node 1",
+            role: "start",
+            layer: 0,
+            rail: 0,
+            summary: "Starting outpost",
+            sensoryDescription: "Rotting wood and peat smoke.",
+            whyVisit: "Safe haven",
+            encounterOrHazard: "Fisherman guide",
+            clueOrReward: "Fen map",
+            unlocksRouteIds: [],
+          },
+          {
+            id: "n2",
+            name: "Node 2",
+            role: "goal",
+            layer: 1,
+            rail: 0,
+            summary: "Sunken barrow",
+            sensoryDescription: "Drowned tombs under black water.",
+            whyVisit: "Ancient treasure",
+            encounterOrHazard: "Drowned dead",
+            clueOrReward: "Sunken crown",
+            unlocksRouteIds: [],
+          },
+        ],
+        routes: [
+          {
+            id: "r1",
+            fromNodeId: "n1",
+            toNodeId: "n2",
+            direction: "bidirectional",
+            visibility: "obvious",
+            travelTime: "2 hours",
+            terrain: "Plankway",
+            risk: "Slippery rotted planks",
+            signpost: "Carved wooden posts",
+          },
+        ],
+      },
+    };
+
+    const query = await saveGeneratorOutput(
+      pointCrawlOutput,
+      { content: "Rendered overview", lore: "Rendered lore" },
+      "point-crawl",
+      deps,
+    );
+
+    expect(query).toContain("utm_source=generator-point-crawl");
+    // Verify stored payload in __codex_pending_import
+    const stored = JSON.parse(deps.store.mock.calls[0][1]);
+    expect(stored).toBeInstanceOf(Array);
+    expect(stored).toHaveLength(3); // 2 Locations + 1 Master Note
+    expect(stored[0].type).toBe("location");
+    expect(stored[1].type).toBe("location");
+    expect(stored[2].type).toBe("note");
+    expect(stored[2].kind).toBe("point-crawl");
+    expect(deps.track).toHaveBeenCalledWith({
+      generatorType: "point-crawl",
+      isHubBatch: true,
+      itemCount: 3,
+      relatedEntityCount: 6,
+    });
+  });
 });

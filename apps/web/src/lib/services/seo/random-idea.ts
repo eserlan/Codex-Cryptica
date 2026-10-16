@@ -23,7 +23,8 @@ export interface RandomIdeaCategory {
     | "encounter"
     | "origin"
     | "holiday"
-    | "tome";
+    | "tome"
+    | "point-crawl";
   label: string;
   generate: (
     engine: DefaultGeneratorEngine,
@@ -186,6 +187,12 @@ export const randomIdeaCategories: RandomIdeaCategory[] = [
     key: "tome",
     label: "Forbidden Tome",
     generate: (engine, useAI, theme) => engine.generateTome({ theme, useAI }),
+  },
+  {
+    key: "point-crawl",
+    label: "Point Crawl",
+    generate: (engine, useAI, theme) =>
+      engine.generatePointCrawl({ genre: theme, useAI }),
   },
 ];
 

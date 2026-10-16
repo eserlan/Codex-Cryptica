@@ -359,7 +359,7 @@ export interface CampaignGeneratorServiceDeps {
 export const MAX_AI_ATTEMPTS = 3;
 
 function isGenericStreamable(generatorId: string): boolean {
-  return !["dungeon", "language", "tome"].includes(generatorId);
+  return !["dungeon", "language", "tome", "point-crawl"].includes(generatorId);
 }
 
 /** User-readable error raised when a save is blocked or invalid. */
