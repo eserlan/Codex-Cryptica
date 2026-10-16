@@ -10,10 +10,11 @@
 
 import {
   formatRouteConnectionLabel,
-  ROLE_LABELS,
+  pointCrawlNodeRoleLabel,
   type PointCrawlGate,
   type PointCrawlNetwork,
   type PointCrawlNodeRole,
+  type PointCrawlStructuralRole,
   type PointCrawlRouteDirection,
   type PointCrawlRouteVisibility,
 } from "./point-crawl-state";
@@ -28,6 +29,7 @@ export interface PointCrawlDiagramNode {
   index: number;
   name: string;
   role: PointCrawlNodeRole;
+  structuralRole?: PointCrawlStructuralRole;
   roleLabel: string;
   layer: number;
   rail: number;
@@ -134,7 +136,8 @@ export function buildPointCrawlDiagramLayout(
       index: idx + 1,
       name: node.name,
       role: node.role,
-      roleLabel: ROLE_LABELS[node.role] ?? node.role,
+      structuralRole: node.structuralRole,
+      roleLabel: pointCrawlNodeRoleLabel(node),
       layer: node.layer,
       rail: computedRail,
       x,

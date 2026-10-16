@@ -21,7 +21,7 @@ import {
   renderPointCrawlGmSheet,
   renderPointCrawlMarkdown,
   renderPointCrawlRouteSummary,
-  ROLE_LABELS,
+  pointCrawlNodeRoleLabel,
   type PointCrawlNetwork,
   type PointCrawlNode,
   type PointCrawlRoute,
@@ -58,7 +58,7 @@ export interface BuildPointCrawlSaveDraftsOptions {
 }
 
 function buildLocationContent(node: PointCrawlNode): string {
-  const roleLabel = ROLE_LABELS[node.role] ?? node.role;
+  const roleLabel = pointCrawlNodeRoleLabel(node);
   return [
     `## Overview (${roleLabel})`,
     node.summary,
@@ -92,7 +92,9 @@ function buildLocationLore(
     lines.push("- No connected routes recorded in this save subset.");
   } else {
     for (const route of incidentRoutes) {
-      lines.push(`- ${renderPointCrawlRouteSummary(route, nodesById)}`);
+      lines.push(
+        `- ${renderPointCrawlRouteSummary(route, nodesById, node.id)}`,
+      );
     }
   }
 
@@ -159,7 +161,8 @@ export function buildPointCrawlSaveDrafts(
         labels: [
           "point-crawl",
           "point-crawl-location",
-          `role:${node.role}`,
+          `role:${node.structuralRole ?? node.role}`,
+          ...(node.traits ?? []).map((trait) => `trait:${trait}`),
           ...(crawl.scale
             ? [crawl.scale.toLowerCase().replace(/\s+/g, "-")]
             : []),
@@ -181,6 +184,41 @@ export function buildPointCrawlSaveDrafts(
     pointCount: selectedNodes.length,
     nodes: selectedNodes,
     routes: activeRoutes,
+    adventurePlan: crawl.adventurePlan
+      ? {
+          ...crawl.adventurePlan,
+          discoveries: crawl.adventurePlan.discoveries
+            .filter((entry) => selectedSet.has(entry.nodeId))
+            .map((entry) => ({
+              ...entry,
+              enablesOutcomeIds: entry.enablesOutcomeIds.filter((id) =>
+                crawl.adventurePlan!.outcomes.some(
+                  (outcome) => outcome.id === id,
+                ),
+              ),
+            })),
+          outcomes: crawl.adventurePlan.outcomes.map((outcome) => ({
+            ...outcome,
+            requirementDiscoveryIds: outcome.requirementDiscoveryIds.filter(
+              (id) =>
+                crawl.adventurePlan!.discoveries.some(
+                  (entry) => entry.id === id && selectedSet.has(entry.nodeId),
+                ),
+            ),
+            requirementRouteIds: outcome.requirementRouteIds.filter((id) =>
+              activeRoutes.some((route) => route.id === id),
+            ),
+          })),
+          detourPayoffs: crawl.adventurePlan.detourPayoffs.filter((entry) =>
+            selectedSet.has(entry.nodeId),
+          ),
+          ...(crawl.adventurePlan.clock &&
+          crawl.adventurePlan.clock.startsAt !== "crawl-start" &&
+          !selectedSet.has(crawl.adventurePlan.clock.startsAt.nodeId)
+            ? { clock: undefined }
+            : {}),
+        }
+      : undefined,
   };
 
   const masterNoteDraft: PointCrawlBatchSaveDraft = {
@@ -200,7 +238,7 @@ export function buildPointCrawlSaveDrafts(
     relationships: locationDrafts.map((loc, idx) => ({
       title: loc.title,
       type: "contains",
-      label: `${ROLE_LABELS[selectedNodes[idx]?.role ?? "side"]} (#${idx + 1})`,
+      label: `${selectedNodes[idx] ? pointCrawlNodeRoleLabel(selectedNodes[idx]) : "Location"} (#${idx + 1})`,
     })),
     ...(options.mapImageDataUrl
       ? { mapImageDataUrl: options.mapImageDataUrl }

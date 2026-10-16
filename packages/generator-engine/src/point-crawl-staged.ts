@@ -32,6 +32,7 @@ import {
 } from "./point-crawl-topology";
 import type {
   PointCrawlDangerLevel,
+  PointCrawlClock,
   PointCrawlDensity,
   PointCrawlGap,
   PointCrawlNetwork,
@@ -41,6 +42,10 @@ import type {
   PointCrawlSecretFrequency,
 } from "./point-crawl-state";
 import { type Rng, defaultRng } from "./random-utils";
+import {
+  parsePointCrawlDuration,
+  fastestPlayableTravelTime,
+} from "./point-crawl-graph-analysis";
 
 export interface PointCrawlStagedOptions {
   genre?: string;
@@ -151,14 +156,147 @@ ${formatCampaignContextBlock(campaignContext)}${avoidBlock}
 Here is the topological skeleton (keep every node "id" and "role" intact):
 ${JSON.stringify(base.nodes.map((n) => ({ id: n.id, role: n.role, layer: n.layer })))}
 
+Shared adventure plan. Keep all IDs and mechanical dependencies stable. Add an optional clock only when its trigger and time budget are coherent with the listed route durations:
+${JSON.stringify(base.adventurePlan)}
+
 Return ONLY a JSON object with this shape:
 {
   "title": "Evocative point crawl title",
   "premise": "2-3 sentences explaining why the party is exploring this network and what waits at the goal",
   "nodes": [
     { "id": "node-1", "name": "Distinct location name", "summary": "1-sentence overview" }
-  ]
+  ],
+  "adventurePlan": {
+    "objective": "...",
+    "travelAssumption": "...",
+    "discoveries": [{ "id": "existing stable discovery id", "name": "...", "nodeId": "existing node id", "enablesOutcomeIds": ["existing outcome id"] }],
+    "outcomes": [{ "id": "existing stable outcome id", "name": "...", "requirementDiscoveryIds": ["existing discovery id"], "requirementRouteIds": ["existing route id"] }],
+    "detourPayoffs": [{ "nodeId": "existing optional node id", "benefit": "..." }],
+    "clock": { "label": "...", "startsAt": "crawl-start", "budget": { "value": 12, "unit": "hour" }, "expiry": "..." }
+  }
 }`;
+}
+
+const planText = (value: unknown, fallback: string): string =>
+  typeof value === "string" && value.trim() ? value.trim() : fallback;
+
+function enrichPlanEntries<T extends { id: string; name: string }>(
+  raw: unknown,
+  existing: T[],
+): T[] {
+  if (!Array.isArray(raw)) return existing;
+  return raw.flatMap((item) => {
+    if (!item || typeof item !== "object") return [];
+    const draft = item as Record<string, unknown>;
+    const fallback = existing.find((entry) => entry.id === draft.id);
+    return fallback
+      ? [{ ...fallback, name: planText(draft.name, fallback.name) }]
+      : [];
+  });
+}
+
+// fallow-ignore-next-line complexity -- Validates the untrusted clock budget shape in one boundary helper.
+function parsePlanDuration(raw: unknown) {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+  const rawBudget = (raw as Record<string, unknown>).budget;
+  if (!rawBudget || typeof rawBudget !== "object" || Array.isArray(rawBudget))
+    return null;
+  const budget = rawBudget as Record<string, unknown>;
+  const unitValues = ["minute", "hour", "day", "turn", "jump"] as const;
+  if (
+    typeof budget.value === "number" &&
+    unitValues.includes(budget.unit as (typeof unitValues)[number])
+  ) {
+    return {
+      value: budget.value,
+      unit: budget.unit as (typeof unitValues)[number],
+    };
+  }
+  return typeof budget.value === "string"
+    ? parsePointCrawlDuration(budget.value)
+    : null;
+}
+
+function parseClockStart(
+  raw: unknown,
+  crawl: PointCrawlNetwork,
+): PointCrawlClock["startsAt"] | null {
+  if (raw === "crawl-start") return raw;
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+  const nodeId = (raw as Record<string, unknown>).nodeId;
+  if (
+    typeof nodeId !== "string" ||
+    !crawl.nodes.some((node) => node.id === nodeId)
+  )
+    return null;
+  return { nodeId };
+}
+
+// fallow-ignore-next-line complexity -- Validates trigger, duration, expiry, and route feasibility as one clock contract.
+function parsePlanClock(
+  raw: unknown,
+  base: PointCrawlNetwork,
+): PointCrawlClock | undefined {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return;
+  const value = raw as Record<string, unknown>;
+  const duration = parsePlanDuration(raw);
+  const startsAt = parseClockStart(value.startsAt, base);
+  if (
+    !duration ||
+    duration.value <= 0 ||
+    !startsAt ||
+    typeof value.expiry !== "string"
+  )
+    return;
+  const trigger =
+    startsAt === "crawl-start" ? base.startNodeId : startsAt.nodeId;
+  const fastest = fastestPlayableTravelTime(base, trigger, duration.unit);
+  if (fastest === null || fastest > duration.value) return;
+  return {
+    label: planText(value.label, "Deadline"),
+    startsAt,
+    budget: duration,
+    expiry: value.expiry,
+  };
+}
+
+function mergeAdventurePlan(
+  base: PointCrawlNetwork,
+  raw: unknown,
+): PointCrawlNetwork["adventurePlan"] {
+  const fallback = base.adventurePlan;
+  if (!fallback || !raw || typeof raw !== "object" || Array.isArray(raw))
+    return fallback;
+  const value = raw as Record<string, unknown>;
+  const discoveries = enrichPlanEntries(
+    value.discoveries,
+    fallback.discoveries,
+  );
+  const outcomes = enrichPlanEntries(value.outcomes, fallback.outcomes);
+  const detourPayoffs = Array.isArray(value.detourPayoffs)
+    ? value.detourPayoffs.flatMap((item) => {
+        if (!item || typeof item !== "object") return [];
+        const draft = item as Record<string, unknown>;
+        const prior = fallback.detourPayoffs.find(
+          (entry) => entry.nodeId === draft.nodeId,
+        );
+        return prior
+          ? [{ ...prior, benefit: planText(draft.benefit, prior.benefit) }]
+          : [];
+      })
+    : fallback.detourPayoffs;
+  return {
+    ...fallback,
+    objective: planText(value.objective, fallback.objective),
+    travelAssumption: planText(
+      value.travelAssumption,
+      fallback.travelAssumption,
+    ),
+    discoveries: discoveries.length ? discoveries : fallback.discoveries,
+    outcomes: outcomes.length ? outcomes : fallback.outcomes,
+    detourPayoffs,
+    clock: parsePlanClock(value.clock, base),
+  };
 }
 
 function buildBatchDetailPrompt(
@@ -182,6 +320,8 @@ function buildBatchDetailPrompt(
   return `Write concrete, table-ready location details and route trade-offs for a batch of ${crawl.genre} (${crawl.scale} scale, ${crawl.dangerLevel}) point crawl "${crawl.title}".
 Premise: ${crawl.premise}
 ${formatCampaignContextBlock(campaignContext)}${lockNotes ? `Key-Before-Lock Requirements:\n${lockNotes}\n` : ""}
+Shared adventure plan (use as immutable context; do not invent new mandatory dependencies):
+${JSON.stringify(crawl.adventurePlan)}
 Locations to detail:
 ${JSON.stringify(
   nodeBatch.map((n) => ({
@@ -206,7 +346,8 @@ ${JSON.stringify(
 
 Rules:
 - State concrete facts outright (real names, passphrases, tools, hazards). Never write vague placeholders like "the secret key" or "a hidden clue".
-- Route travelTime and terrain MUST match the ${crawl.scale} scale.
+- Do not change route duration, endpoints, direction, visibility, gates, or assigned discoveries.
+- Do not introduce mandatory keys, rituals, vehicles, countdowns, or finale requirements that are absent from the shared plan.
 - Sibling routes must have distinct terrain, risk, and signpost trade-offs.
 
 Return ONLY a JSON object:
@@ -226,7 +367,9 @@ Return ONLY a JSON object:
       "travelTime": "scale-appropriate duration",
       "terrain": "concrete passage/terrain",
       "risk": "specific hazard or cost on this route",
-      "signpost": "what players observe at the trailhead"
+      "signpost": "what players observe at the trailhead",
+      "approachFromSource": "what travellers from the origin experience; required for bidirectional routes",
+      "approachFromTarget": "what travellers from the destination experience; required for bidirectional routes"
     }
   ]
 }`;
@@ -292,10 +435,23 @@ export function fillFailedPointCrawlParts(
 
     return {
       ...route,
-      travelTime: str(draft.travelTime, route.travelTime),
+      travelTime: route.travelTime,
+      duration: route.duration,
       terrain: str(draft.terrain, route.terrain),
       risk: str(draft.risk, route.risk),
       signpost: str(draft.signpost, route.signpost),
+      approachFromSource: str(
+        draft.approachFromSource,
+        route.approachFromSource ?? route.signpost,
+      ),
+      ...(route.direction === "bidirectional"
+        ? {
+            approachFromTarget: str(
+              draft.approachFromTarget,
+              route.approachFromTarget ?? route.signpost,
+            ),
+          }
+        : {}),
       fromFallback: false,
     };
   });
@@ -365,6 +521,7 @@ export async function generatePointCrawlStaged(
           summary: str(match.summary, n.summary),
         };
       }),
+      adventurePlan: mergeAdventurePlan(base, topoReply.adventurePlan),
     };
     progress.set("structure", "done");
   } else {

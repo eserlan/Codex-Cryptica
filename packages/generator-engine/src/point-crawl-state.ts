@@ -58,6 +58,11 @@ export const POINT_CRAWL_NODE_ROLES = [
 
 export type PointCrawlNodeRole = (typeof POINT_CRAWL_NODE_ROLES)[number];
 
+export type PointCrawlStructuralRole =
+  "start" | "goal" | "hub" | "chokepoint" | "secret" | "optional" | "connector";
+
+export type PointCrawlSiteTrait = "hazard" | "obstacle";
+
 export const POINT_CRAWL_ROUTE_VISIBILITIES = [
   "obvious",
   "hidden",
@@ -93,6 +98,49 @@ export interface PointCrawlGate {
   requirement: string;
 }
 
+export type PointCrawlDurationUnit =
+  "minute" | "hour" | "day" | "turn" | "jump";
+
+export interface PointCrawlDuration {
+  value: number;
+  unit: PointCrawlDurationUnit;
+}
+
+export interface PointCrawlClock {
+  label: string;
+  startsAt: "crawl-start" | { nodeId: string };
+  budget: PointCrawlDuration;
+  expiry: string;
+}
+
+export interface PointCrawlDiscovery {
+  id: string;
+  name: string;
+  nodeId: string;
+  enablesOutcomeIds: string[];
+}
+
+export interface PointCrawlOutcome {
+  id: string;
+  name: string;
+  requirementDiscoveryIds: string[];
+  requirementRouteIds: string[];
+}
+
+export interface PointCrawlDetourPayoff {
+  nodeId: string;
+  benefit: string;
+}
+
+export interface PointCrawlAdventurePlan {
+  objective: string;
+  travelAssumption: string;
+  discoveries: PointCrawlDiscovery[];
+  outcomes: PointCrawlOutcome[];
+  detourPayoffs: PointCrawlDetourPayoff[];
+  clock?: PointCrawlClock;
+}
+
 export interface PointCrawlNode {
   /** Stable identifier within the crawl, e.g. "node-1" .. "node-15". */
   id: string;
@@ -100,6 +148,11 @@ export interface PointCrawlNode {
   name: string;
   /** Structural role in the point crawl topology. */
   role: PointCrawlNodeRole;
+  /** Derived from the final graph and used for structural badges. */
+  structuralRole?: PointCrawlStructuralRole;
+  /** Fictional site qualities, independent of graph structure. */
+  // fallow-ignore-next-line code-duplication -- This interface intentionally mirrors the public API contract in specs/177-point-crawl-generator.
+  traits?: PointCrawlSiteTrait[];
   /** Depth layer from start (0 = start), used for deterministic topological layout. */
   layer: number;
   /** Vertical rail index within its layer (-1, 0, +1, etc.) for initial SVG layout. */
@@ -133,12 +186,16 @@ export interface PointCrawlRoute {
   visibility: PointCrawlRouteVisibility;
   /** Scale-appropriate travel duration or distance (e.g. "20 min", "2 hrs", "2 days"). */
   travelTime: string;
+  /** Mechanical duration; `travelTime` remains its display label. */
+  duration?: PointCrawlDuration;
   /** Concrete passage or terrain type (e.g. "Sunken causeway", "Maintenance duct"). */
   terrain: string;
   /** Hazard, patrol, toll, or resource cost risked along this route. */
   risk: string;
   /** What players can observe at the trailhead or discover along the way. */
   signpost: string;
+  approachFromSource?: string;
+  approachFromTarget?: string;
   /** Optional lock/blocker requiring leverage from an earlier reachable node. */
   gate?: PointCrawlGate;
   /** True when this route is a loop or shortcut edge. */
@@ -169,6 +226,7 @@ export interface PointCrawlNetwork {
   goalNodeIds: string[];
   nodes: PointCrawlNode[];
   routes: PointCrawlRoute[];
+  adventurePlan?: PointCrawlAdventurePlan;
   /** Playability & structural warnings (empty when all checks pass or are auto-repaired). */
   warnings: string[];
   /** Parts that used local template fallback during staged AI generation. */
@@ -179,11 +237,28 @@ export const ROLE_LABELS: Record<PointCrawlNodeRole, string> = {
   start: "Start Point",
   hub: "Junction Hub",
   hazard: "Hazard Site",
-  obstacle: "Chokepoint",
+  obstacle: "Obstacle",
   secret: "Secret Site",
   side: "Side Landmark",
   goal: "Destination / Goal",
 };
+
+export const STRUCTURAL_ROLE_LABELS: Record<PointCrawlStructuralRole, string> =
+  {
+    start: "Start Point",
+    goal: "Destination / Goal",
+    hub: "Junction Hub",
+    chokepoint: "Chokepoint",
+    secret: "Secret Site",
+    optional: "Optional Site",
+    connector: "Connector",
+  };
+
+export function pointCrawlNodeRoleLabel(node: PointCrawlNode): string {
+  return node.structuralRole
+    ? STRUCTURAL_ROLE_LABELS[node.structuralRole]
+    : (ROLE_LABELS[node.role] ?? node.role);
+}
 
 /**
  * Formats a concise connection label for entity relationship edges in the vault
@@ -209,6 +284,7 @@ export function formatRouteConnectionLabel(route: PointCrawlRoute): string {
 export function renderPointCrawlRouteSummary(
   route: PointCrawlRoute,
   nodesById: ReadonlyMap<string, PointCrawlNode>,
+  fromNodeId = route.fromNodeId,
 ): string {
   const fromName = nodesById.get(route.fromNodeId)?.name ?? route.fromNodeId;
   const toName = nodesById.get(route.toNodeId)?.name ?? route.toNodeId;
@@ -226,7 +302,57 @@ export function renderPointCrawlRouteSummary(
   const gateSentence = route.gate
     ? ` **Locked (${route.gate.kind})**: requires ${route.gate.requirement} (found at **${gateNodeName}**).`
     : "";
-  return `**${fromName} ${arrow} ${toName}**${visibilityNote} — *${route.travelTime} via ${route.terrain}*. **Signpost**: ${route.signpost} **Risk**: ${route.risk}${gateSentence}`;
+  const reverse = fromNodeId === route.toNodeId;
+  const approach = reverse
+    ? route.approachFromTarget
+    : route.approachFromSource;
+  return `**${fromName} ${arrow} ${toName}**${visibilityNote} — *${route.travelTime} via ${route.terrain}*. **Signpost**: ${approach ?? route.signpost} **Risk**: ${route.risk}${gateSentence}`;
+}
+
+function renderPointCrawlLocations(crawl: PointCrawlNetwork): string[] {
+  return crawl.nodes.flatMap((node, idx) => {
+    const roleLabel = pointCrawlNodeRoleLabel(node);
+    return [
+      `### ${idx + 1}. ${node.name} *(${roleLabel})*`,
+      node.summary,
+      "",
+      `- **Sights & Atmosphere**: ${node.sensoryDescription}`,
+      `- **Why Visit**: ${node.whyVisit}`,
+      `- **Encounter / Complication**: ${node.encounterOrHazard}`,
+      `- **Clue / Reward**: ${node.clueOrReward}`,
+      "",
+    ];
+  });
+}
+
+function renderPointCrawlRoutes(
+  crawl: PointCrawlNetwork,
+  nodesById: ReadonlyMap<string, PointCrawlNode>,
+): string[] {
+  return crawl.routes.flatMap((route) => [
+    `- ${renderPointCrawlRouteSummary(route, nodesById)}`,
+    ...(route.direction === "bidirectional" && route.approachFromTarget
+      ? [
+          `  - From **${nodesById.get(route.toNodeId)?.name ?? route.toNodeId}**: ${route.approachFromTarget}`,
+        ]
+      : []),
+  ]);
+}
+
+function renderPointCrawlClock(
+  crawl: PointCrawlNetwork,
+  nodesById: ReadonlyMap<string, PointCrawlNode>,
+): string[] {
+  const clock = crawl.adventurePlan?.clock;
+  if (!clock) return [];
+  const start =
+    clock.startsAt === "crawl-start"
+      ? "when the crawl begins"
+      : `at ${nodesById.get(clock.startsAt.nodeId)?.name ?? clock.startsAt.nodeId}`;
+  const plural = clock.budget.value === 1 ? "" : "s";
+  return [
+    `- **Clock**: ${clock.label} starts ${start}; ${clock.budget.value} ${clock.budget.unit}${plural}. Expiry: ${clock.expiry}`,
+  ];
 }
 
 /**
@@ -247,44 +373,20 @@ export function renderPointCrawlMarkdown(crawl: PointCrawlNetwork): string {
     `- **Interconnection**: ${crawl.density} · **Danger**: ${crawl.dangerLevel}`,
     `- **Starting Point**: **${startNode?.name ?? "Point 1"}**`,
     `- **Primary Goal${goalNames.length > 1 ? "s" : ""}**: ${goalNames.map((n) => `**${n}**`).join(", ") || "None"}`,
+    ...(crawl.adventurePlan?.objective
+      ? [`- **Objective**: ${crawl.adventurePlan.objective}`]
+      : []),
+    ...renderPointCrawlClock(crawl, nodesById),
     "",
     "## Keyed Locations",
   ];
 
-  crawl.nodes.forEach((node, idx) => {
-    const roleLabel = ROLE_LABELS[node.role] ?? node.role;
-    const outgoing = crawl.routes.filter(
-      (r) =>
-        r.fromNodeId === node.id ||
-        (r.direction === "bidirectional" && r.toNodeId === node.id),
-    );
-    lines.push(
-      `### ${idx + 1}. ${node.name} *(${roleLabel})*`,
-      node.summary,
-      "",
-      `- **Sights & Atmosphere**: ${node.sensoryDescription}`,
-      `- **Why Visit**: ${node.whyVisit}`,
-      `- **Encounter / Complication**: ${node.encounterOrHazard}`,
-      `- **Clue / Reward**: ${node.clueOrReward}`,
-    );
-    if (outgoing.length > 0) {
-      lines.push("- **Exits**:");
-      for (const route of outgoing) {
-        const targetId =
-          route.fromNodeId === node.id ? route.toNodeId : route.fromNodeId;
-        const targetName = nodesById.get(targetId)?.name ?? targetId;
-        lines.push(
-          `  - To **${targetName}** (${formatRouteConnectionLabel(route)}): ${route.signpost} *Risk*: ${route.risk}`,
-        );
-      }
-    }
-    lines.push("");
-  });
+  lines.push(...renderPointCrawlLocations(crawl));
 
-  lines.push("## Route Network & Trade-Offs");
-  for (const route of crawl.routes) {
-    lines.push(`- ${renderPointCrawlRouteSummary(route, nodesById)}`);
-  }
+  lines.push(
+    "## Route Network & Trade-Offs",
+    ...renderPointCrawlRoutes(crawl, nodesById),
+  );
 
   return lines.join("\n").trim();
 }
@@ -302,6 +404,11 @@ export function renderPointCrawlGmSheet(crawl: PointCrawlNetwork): string {
     "## GM Navigation & Key-Lock Reference",
     `- **Title**: ${crawl.title}`,
     `- **Scale & Density**: ${crawl.scale} · ${crawl.density} · ${crawl.dangerLevel}`,
+    ...(crawl.adventurePlan?.clock
+      ? [
+          `- **Clock**: ${crawl.adventurePlan.clock.label} starts ${crawl.adventurePlan.clock.startsAt === "crawl-start" ? "at the beginning" : `at ${nodesById.get(crawl.adventurePlan.clock.startsAt.nodeId)?.name ?? crawl.adventurePlan.clock.startsAt.nodeId}`}; ${crawl.adventurePlan.clock.budget.value} ${crawl.adventurePlan.clock.budget.unit}${crawl.adventurePlan.clock.budget.value === 1 ? "" : "s"}. Expiry: ${crawl.adventurePlan.clock.expiry}`,
+        ]
+      : []),
     "",
     "### Locks, Gates & Where Keys Are Found",
   ];
@@ -335,13 +442,6 @@ export function renderPointCrawlGmSheet(crawl: PointCrawlNetwork): string {
       );
     }
   }
-
-  lines.push("", "### Quick Node Index");
-  crawl.nodes.forEach((node, idx) => {
-    lines.push(
-      `${idx + 1}. **${node.name}** [${ROLE_LABELS[node.role]}] — *Risk*: ${node.encounterOrHazard} · *Find*: ${node.clueOrReward}`,
-    );
-  });
 
   return lines.join("\n").trim();
 }
