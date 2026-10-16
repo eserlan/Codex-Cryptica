@@ -193,6 +193,59 @@ export function checkPointCrawlPlayability(
   return issues;
 }
 
+function hasSiblingOverlap(siblings: readonly PointCrawlRoute[]): {
+  overlapFound: boolean;
+  routeToUpdate?: PointCrawlRoute;
+  altIndex: number;
+} {
+  for (let i = 0; i < siblings.length; i++) {
+    for (let j = i + 1; j < siblings.length; j++) {
+      const a = siblings[i];
+      const b = siblings[j];
+      const textA = `${a.terrain} ${a.risk} ${a.signpost}`;
+      const textB = `${b.terrain} ${b.risk} ${b.signpost}`;
+      if (textOverlap(textA, textB) >= 0.6) {
+        return { overlapFound: true, routeToUpdate: b, altIndex: j };
+      }
+    }
+  }
+  return { overlapFound: false, altIndex: 0 };
+}
+
+function differentiateSiblingRoutes(
+  routeList: PointCrawlRoute[],
+  vocab: ReturnType<typeof getScaleVocabulary>,
+): void {
+  const routesByOrigin = new Map<string, PointCrawlRoute[]>();
+  for (const route of routeList) {
+    const list = routesByOrigin.get(route.fromNodeId) ?? [];
+    list.push(route);
+    routesByOrigin.set(route.fromNodeId, list);
+  }
+  let altCounter = 0;
+  for (const siblings of routesByOrigin.values()) {
+    if (siblings.length <= 1) continue;
+    let attempts = 0;
+    while (attempts < 50) {
+      attempts++;
+      const { overlapFound, routeToUpdate, altIndex } =
+        hasSiblingOverlap(siblings);
+      if (!overlapFound || !routeToUpdate) break;
+      altCounter++;
+      routeToUpdate.terrain =
+        vocab.terrains[(altIndex + altCounter + 2) % vocab.terrains.length];
+      routeToUpdate.travelTime =
+        vocab.travelTimes[
+          (altIndex + altCounter + 1) % vocab.travelTimes.length
+        ];
+      routeToUpdate.risk =
+        vocab.risks[(altIndex + altCounter + 3) % vocab.risks.length];
+      routeToUpdate.signpost =
+        vocab.signposts[(altIndex + altCounter + 4) % vocab.signposts.length];
+    }
+  }
+}
+
 /**
  * Deterministic repair pass: fixes topology/key-before-lock issues, replaces
  * vague gate requirements with concrete genre templates, and differentiates
@@ -218,33 +271,7 @@ export function repairPointCrawlPlayability(
   });
 
   // Differentiate any overlapping sibling routes
-  const routesByOrigin = new Map<string, PointCrawlRoute[]>();
-  for (const route of routes) {
-    const list = routesByOrigin.get(route.fromNodeId) ?? [];
-    list.push(route);
-    routesByOrigin.set(route.fromNodeId, list);
-  }
-  let altCounter = 0;
-  for (const siblings of routesByOrigin.values()) {
-    for (let i = 0; i < siblings.length; i++) {
-      for (let j = i + 1; j < siblings.length; j++) {
-        const a = siblings[i];
-        const b = siblings[j];
-        const textA = `${a.terrain} ${a.risk} ${a.signpost}`;
-        const textB = `${b.terrain} ${b.risk} ${b.signpost}`;
-        if (textOverlap(textA, textB) >= 0.6) {
-          altCounter++;
-          b.terrain =
-            vocab.terrains[(j + altCounter + 2) % vocab.terrains.length];
-          b.travelTime =
-            vocab.travelTimes[(j + altCounter + 1) % vocab.travelTimes.length];
-          b.risk = vocab.risks[(j + altCounter + 3) % vocab.risks.length];
-          b.signpost =
-            vocab.signposts[(j + altCounter + 4) % vocab.signposts.length];
-        }
-      }
-    }
-  }
+  differentiateSiblingRoutes(routes, vocab);
 
   // Ensure concrete clueOrReward on all nodes
   const nodes = repaired.nodes.map((n, idx) => {
@@ -260,6 +287,9 @@ export function repairPointCrawlPlayability(
     gateTemplates,
     vocab,
   );
+
+  // If normalizePointCrawlTopology added any new loop routes, guarantee distinctness again
+  differentiateSiblingRoutes(repaired.routes, vocab);
 
   const remainingIssues = checkPointCrawlPlayability(repaired);
   return {
