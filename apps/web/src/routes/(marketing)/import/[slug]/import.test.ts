@@ -3,6 +3,8 @@ import { fireEvent, render, screen } from "@testing-library/svelte";
 import { load, entries } from "./+page";
 import Page from "./+page.svelte";
 import { importsConfig } from "$lib/config/seo-imports";
+import * as importParser from "$lib/services/seo/import-parser";
+import type { ParsedEntity } from "$lib/services/seo/wa-parser";
 
 vi.mock("$app/environment", () => ({
   browser: true,
@@ -28,6 +30,8 @@ if (typeof Element !== "undefined" && !Element.prototype.animate) {
 }
 
 describe("Imports SvelteKit Route", () => {
+  afterEach(() => vi.restoreAllMocks());
+
   describe("load", () => {
     it("should successfully load valid importer pages", () => {
       const res = load({ params: { slug: "obsidian-vault" } } as any) as any;
@@ -87,7 +91,10 @@ describe("Imports SvelteKit Route", () => {
 
     const selectFiles = async (container: HTMLElement, files: File[]) => {
       const input = container.querySelector<HTMLInputElement>("#file-upload")!;
-      Object.defineProperty(input, "files", { value: files });
+      Object.defineProperty(input, "files", {
+        value: files,
+        configurable: true,
+      });
       await fireEvent.change(input);
     };
 
@@ -124,6 +131,43 @@ describe("Imports SvelteKit Route", () => {
       expect(
         await screen.findByText(/not a supported Chronica export/i),
       ).toBeTruthy();
+    });
+
+    it("keeps the newest selection when parses finish out of order", async () => {
+      let resolveFirst!: (entities: ParsedEntity[]) => void;
+      let resolveSecond!: (entities: ParsedEntity[]) => void;
+      const firstParse = new Promise<ParsedEntity[]>((resolve) => {
+        resolveFirst = resolve;
+      });
+      const secondParse = new Promise<ParsedEntity[]>((resolve) => {
+        resolveSecond = resolve;
+      });
+      vi.spyOn(importParser, "parseChronicaFiles")
+        .mockReturnValueOnce(firstParse)
+        .mockReturnValueOnce(secondParse);
+      const { container } = render(Page, {
+        props: { data: { importPage: importsConfig.chronica } },
+      });
+
+      await selectFiles(container, [
+        chronicaFile("first.json", { characters: [] }),
+      ]);
+      await selectFiles(container, [
+        chronicaFile("second.json", { characters: [] }),
+      ]);
+
+      resolveSecond([
+        { type: "character", title: "New Selection", content: "", labels: [] },
+      ]);
+      expect(await screen.findByDisplayValue("New Selection")).toBeTruthy();
+
+      resolveFirst([
+        { type: "character", title: "Old Selection", content: "", labels: [] },
+      ]);
+      await Promise.resolve();
+
+      expect(screen.getByDisplayValue("New Selection")).toBeTruthy();
+      expect(screen.queryByDisplayValue("Old Selection")).toBeNull();
     });
 
     it("keeps single-file importers to one file", () => {

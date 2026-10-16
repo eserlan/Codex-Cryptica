@@ -1,5 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { strToU8, zipSync } from "fflate";
+import { GuestExporter } from "@codex/vault-engine";
+import type { Entity } from "schema";
 import {
   parseObsidianFiles,
   parseChronicaFiles,
@@ -215,6 +217,33 @@ describe("parseChronicaFiles", () => {
 
     expect(ariadne.lore).toContain("Secret heir.");
     expect(ariadne.content).not.toContain("Secret heir.");
+  });
+
+  it("omits GM secrets from metadata and the guest projection", async () => {
+    const [ariadne] = await parseChronicaFiles([
+      jsonFile("characters.json", charactersExport),
+    ]);
+
+    expect(ariadne.metadata).not.toHaveProperty("gm_secrets");
+    const bundle = GuestExporter.export({
+      entities: [
+        {
+          id: "ariadne",
+          type: "character",
+          title: ariadne.title,
+          status: "active",
+          content: ariadne.content,
+          metadata: ariadne.metadata,
+        } as Entity,
+      ],
+      defaultVisibility: "visible",
+      publishId: "test",
+      vaultTitle: "Test",
+      publisherVersion: "1.0.0",
+    });
+
+    expect(JSON.stringify(bundle.entities)).not.toContain("Secret heir.");
+    expect(bundle.entities[0]).not.toHaveProperty("metadata.gm_secrets");
   });
 
   it("rejects files from two different campaigns", async () => {

@@ -281,6 +281,11 @@ export async function parseChronicaFiles(
   return pkg.entityDrafts.map((draft) => {
     const discoverySource = refFor(draft);
     const relationships = relationshipsByRef.get(discoverySource);
+    const metadata = Object.fromEntries(
+      Object.entries(draft.metadata ?? {}).filter(
+        ([key]) => key !== "gm_secrets",
+      ),
+    );
     return {
       type: toKnownType(
         draft.sourceType === "place" ? "location" : draft.sourceType,
@@ -290,7 +295,7 @@ export async function parseChronicaFiles(
       ...(draft.lore ? { lore: draft.lore } : {}),
       labels: draft.labels ?? [],
       discoverySource,
-      metadata: draft.metadata,
+      metadata,
       ...(relationships && relationships.length > 0
         ? {
             relationships,

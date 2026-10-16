@@ -78,6 +78,7 @@
   });
 
   let errorMessage = $state<string | null>(null);
+  let parseRequest = 0;
 
   // Drag over handler
   function handleDragOver(e: DragEvent) {
@@ -89,8 +90,33 @@
     isDragging = false;
   }
 
+  async function parseSelectedFiles(list: File[]) {
+    if (pageData.slug === "obsidian-vault") {
+      return parseObsidianFiles(list);
+    }
+    if (pageData.slug === "chronica") {
+      return parseChronicaFiles(list);
+    }
+
+    const requiredExtension = pageData.slug === "kanka-json" ? ".zip" : ".json";
+    const exportFile = list.find((file) =>
+      file.name.toLowerCase().endsWith(requiredExtension),
+    );
+    if (!exportFile) {
+      throw new Error(
+        `Please upload a valid ${requiredExtension.toUpperCase()} file for ` +
+          pageData.competitorName +
+          " export.",
+      );
+    }
+    return parseJsonExport(exportFile, pageData.slug);
+  }
+
   // Handle files select/drop
-  async function handleFiles(files: FileList | File[]) {
+  async function handleFiles(
+    files: FileList | File[],
+    request = ++parseRequest,
+  ) {
     errorMessage = null;
     filesParsed = [];
     const list = Array.from(files);
@@ -98,27 +124,12 @@
     if (list.length === 0) return;
 
     try {
-      if (pageData.slug === "obsidian-vault") {
-        filesParsed = await parseObsidianFiles(list);
-      } else if (pageData.slug === "chronica") {
-        filesParsed = await parseChronicaFiles(list);
-      } else {
-        const requiredExtension =
-          pageData.slug === "kanka-json" ? ".zip" : ".json";
-        const exportFile = list.find((file) =>
-          file.name.toLowerCase().endsWith(requiredExtension),
-        );
-        if (!exportFile) {
-          throw new Error(
-            `Please upload a valid ${requiredExtension.toUpperCase()} file for ` +
-              pageData.competitorName +
-              " export.",
-          );
-        }
-        filesParsed = await parseJsonExport(exportFile, pageData.slug);
-      }
+      const parsed = await parseSelectedFiles(list);
+      if (request === parseRequest) filesParsed = parsed;
     } catch (err: any) {
-      errorMessage = err.message || "Failed to parse files.";
+      if (request === parseRequest) {
+        errorMessage = err.message || "Failed to parse files.";
+      }
     }
   }
 
@@ -127,6 +138,7 @@
     e.preventDefault();
     isDragging = false;
     if (!e.dataTransfer) return;
+    const request = ++parseRequest;
 
     // Check for directories
     const items = Array.from(e.dataTransfer.items);
@@ -136,9 +148,9 @@
         return entry ? traverseEntry(entry) : Promise.resolve([]);
       });
       const results = await Promise.all(entryPromises);
-      await handleFiles(results.flat());
+      await handleFiles(results.flat(), request);
     } else {
-      await handleFiles(e.dataTransfer.files);
+      await handleFiles(e.dataTransfer.files, request);
     }
   }
 
