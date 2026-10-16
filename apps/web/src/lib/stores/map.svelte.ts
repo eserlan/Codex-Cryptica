@@ -1058,6 +1058,18 @@ export class MapStore {
     }
   }
 
+  /** Removes pins for a just-created entity from any map after a failed save. */
+  async removePinsForEntity(entityId: string) {
+    let changed = false;
+    for (const map of Object.values(vault.maps ?? {})) {
+      const pins = map.pins.filter((pin: MapPin) => pin.entityId !== entityId);
+      if (pins.length === map.pins.length) continue;
+      map.pins = pins;
+      changed = true;
+    }
+    if (changed) await vault.saveMaps();
+  }
+
   jumpToPin(pinId: string) {
     const pin = this.pins.find((p: MapPin) => p.id === pinId);
     if (pin) {

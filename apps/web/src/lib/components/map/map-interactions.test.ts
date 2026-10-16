@@ -118,6 +118,25 @@ describe("MapInteractionManager", () => {
     expect(mapStore.updateViewport).toHaveBeenCalledWith({ x: 14, y: 25 }, 1);
   });
 
+  it("does not dispatch a click when the browser cancels a stationary pointer", () => {
+    const pointer = (type: string) =>
+      Object.assign(
+        new MouseEvent(type, { clientX: 300, clientY: 300, button: 0 }),
+        {
+          pointerId: 9,
+        },
+      ) as unknown as PointerEvent;
+    const hexClick = vi.spyOn(manager.hexClickInteractions, "handle");
+    const mapClick = vi.spyOn(manager, "handleMapClick");
+
+    manager.onPointerDown(pointer("pointerdown"));
+    manager.onPointerCancel(pointer("pointercancel"));
+
+    expect(hexClick).not.toHaveBeenCalled();
+    expect(mapClick).not.toHaveBeenCalled();
+    expect(manager.isPanning).toBe(false);
+  });
+
   it("should ignore touch jitter until the drag threshold is crossed", async () => {
     const { mapStore } = await import("../../stores/map.svelte");
     const pointer = (type: string, clientX: number, clientY: number) =>

@@ -46,12 +46,14 @@ export interface HexVaultPort {
     targetId: string,
     type: string,
   ): Promise<unknown>;
+  deleteEntity(id: string): Promise<unknown>;
 }
 
 /** The slice of the map store this controller uses. */
 export interface HexMapPort {
   /** Pins an entity at the centre of a hex on the map (FR-008, FR-024). */
   pinAtHex(mapId: string, entityId: string, hex: HexCoord): Promise<void>;
+  removePin(entityId: string): Promise<void>;
   /** Formats a hex the way the map labels it. */
   formatHex(hex: HexCoord): string;
 }
@@ -102,6 +104,8 @@ function abortError(): Error {
  * Guest vaults are refused by every write (FR-032).
  */
 export class HexDiscoveryController {
+  private readonly savingParts = new Set<string>();
+
   constructor(private readonly deps: HexDiscoveryControllerDeps) {}
 
   /** Starts a discovery, or returns the pending draft if there is one (FR-033a). */
@@ -189,44 +193,9 @@ export class HexDiscoveryController {
     options: SaveEntityOptions,
   ): Promise<{ entityId: string }> {
     this.assertWritable();
-    const proposed = this.proposedLinkFor(mapId, hex);
-    const plan = planDiscoverySave({
-      draft: this.draftOf(mapId, hex),
-      part,
-      encounterType: options.encounterType,
-      proposedLink: proposed ? { entityId: proposed.entityId } : null,
-      linkTicked: options.linkTicked,
-    });
-    const entityId = await this.deps.vault.createEntity(
-      plan.entity.type,
-      plan.entity.title,
-      {
-        status: plan.entity.status,
-        content: sanitizeAiText(plan.entity.content),
-        labels: plan.entity.labels,
-      },
+    return this.withPartSaveGuard(mapId, hex, part, () =>
+      this.performEntityPartSave(mapId, hex, part, options),
     );
-    await this.deps.mapStore.pinAtHex(mapId, entityId, hex);
-    if (plan.link) {
-      await this.deps.vault.addConnection(
-        entityId,
-        plan.link.toEntityId,
-        plan.link.type,
-      );
-    }
-    if (plan.factionLink) {
-      await this.deps.vault.addConnection(
-        entityId,
-        plan.factionLink.toEntityId,
-        plan.factionLink.type,
-      );
-    }
-    publishGeneratedSaved(
-      { title: plan.entity.title, category: plan.entity.type },
-      { clock: this.deps.clock },
-    );
-    await this.deps.store.setDraft(mapId, hex, settleDraft(plan.draft) ?? null);
-    return { entityId };
   }
 
   /** Adds a hazard, secret or atmosphere to AI-drafted notes only (FR-026, FR-027). */
@@ -236,13 +205,15 @@ export class HexDiscoveryController {
     part: "hazard" | "secret" | "atmosphere",
   ): Promise<void> {
     this.assertWritable();
-    const { patch } = appendToAiNotes(
-      this.deps.store.recordFor(mapId, hex),
-      part,
-      this.draftOf(mapId, hex),
-      this.deps.clock.now(),
-    );
-    await this.deps.store.updateHex(mapId, hex, patch);
+    return this.withPartSaveGuard(mapId, hex, part, async () => {
+      const { patch } = appendToAiNotes(
+        this.deps.store.recordFor(mapId, hex),
+        part,
+        this.draftOf(mapId, hex),
+        this.deps.clock.now(),
+      );
+      await this.deps.store.updateHex(mapId, hex, patch);
+    });
   }
 
   /**
@@ -256,50 +227,9 @@ export class HexDiscoveryController {
     options: { createIfMissing: boolean },
   ): Promise<{ factionId: string | null }> {
     this.assertWritable();
-    const draft = this.draftOf(mapId, hex);
-    const name = draft.parts.factionPresence.factionName;
-    if (!name) return { factionId: null };
-
-    const factions = Object.values(this.deps.vault.entities)
-      .filter((entity) => entity.type === "faction")
-      .map((entity) => ({ id: entity.id, title: entity.title }));
-    const existing = matchFaction(name, factions);
-    let factionId: string;
-    let factionTitle: string;
-    if (existing) {
-      factionId = existing.id;
-      factionTitle = factions.find((f) => f.id === existing.id)?.title ?? name;
-    } else if (options.createIfMissing) {
-      factionId = await this.deps.vault.createEntity("faction", name, {
-        status: "draft",
-        labels: [
-          DISCOVERY_LABEL,
-          draft.parts.factionPresence.source === "ai" ? "ai-drafted" : "rolled",
-        ],
-      });
-      factionTitle = name;
-    } else {
-      return { factionId: null };
-    }
-
-    const savedEntityIds = this.savedDiscoveryEntityIds(mapId, hex);
-    const plan = planFactionSave({
-      draft,
-      factionId,
-      factionTitle,
-      savedEntityIds,
-      record: this.deps.store.recordFor(mapId, hex),
-      now: this.deps.clock.now(),
-    });
-    for (const link of plan.links) {
-      await this.deps.vault.addConnection(
-        link.fromEntityId,
-        link.toEntityId,
-        link.type,
-      );
-    }
-    await this.deps.store.updateHex(mapId, hex, plan.patch);
-    return { factionId };
+    return this.withPartSaveGuard(mapId, hex, "factionPresence", () =>
+      this.performFactionSave(mapId, hex, options),
+    );
   }
 
   /**
@@ -330,6 +260,185 @@ export class HexDiscoveryController {
   private assertWritable(): void {
     if (this.deps.isGuest()) {
       throw new Error("Hex discovery is not available in a guest vault.");
+    }
+  }
+
+  private async withPartSaveGuard<T>(
+    mapId: string,
+    hex: HexCoord,
+    part: DiscoveryPartId,
+    save: () => Promise<T>,
+  ): Promise<T> {
+    const key = `${mapId}:${hex.q},${hex.r}:${part}`;
+    if (this.savingParts.has(key)) {
+      throw new Error(`The ${part} part is already being saved.`);
+    }
+    this.savingParts.add(key);
+    try {
+      return await save();
+    } finally {
+      this.savingParts.delete(key);
+    }
+  }
+
+  private async performEntityPartSave(
+    mapId: string,
+    hex: HexCoord,
+    part: "landmark" | "encounter",
+    options: SaveEntityOptions,
+  ): Promise<{ entityId: string }> {
+    const proposed = this.proposedLinkFor(mapId, hex);
+    const plan = planDiscoverySave({
+      draft: this.draftOf(mapId, hex),
+      part,
+      encounterType: options.encounterType,
+      proposedLink: proposed ? { entityId: proposed.entityId } : null,
+      linkTicked: options.linkTicked,
+    });
+    const entityId = await this.deps.vault.createEntity(
+      plan.entity.type,
+      plan.entity.title,
+      {
+        status: plan.entity.status,
+        content: sanitizeAiText(plan.entity.content),
+        labels: plan.entity.labels,
+      },
+    );
+
+    try {
+      await this.deps.mapStore.pinAtHex(mapId, entityId, hex);
+      const connections = [plan.link, plan.factionLink].filter(
+        (link): link is NonNullable<typeof link> => link !== null,
+      );
+      const connectionResults = await Promise.allSettled(
+        connections.map((link) =>
+          this.deps.vault.addConnection(entityId, link.toEntityId, link.type),
+        ),
+      );
+      const connectionFailure = connectionResults.find(
+        (result) => result.status === "rejected",
+      );
+      if (connectionFailure?.status === "rejected") {
+        throw connectionFailure.reason;
+      }
+      await this.deps.store.setDraft(
+        mapId,
+        hex,
+        settleDraft(plan.draft) ?? null,
+      );
+    } catch (error) {
+      await this.rollbackCreatedEntity(entityId, error);
+      throw error;
+    }
+
+    publishGeneratedSaved(
+      { title: plan.entity.title, category: plan.entity.type },
+      { clock: this.deps.clock },
+    );
+    return { entityId };
+  }
+
+  private async rollbackCreatedEntity(
+    entityId: string,
+    cause: unknown,
+  ): Promise<void> {
+    const cleanup = await Promise.allSettled([
+      this.deps.mapStore.removePin(entityId),
+      this.deps.vault.deleteEntity(entityId),
+    ]);
+    const failures = cleanup.flatMap((result) =>
+      result.status === "rejected" ? [result.reason] : [],
+    );
+    if (failures.length > 0) {
+      throw new AggregateError(
+        [cause, ...failures],
+        "Saving this discovery failed, and cleanup was incomplete.",
+        { cause },
+      );
+    }
+  }
+
+  private async performFactionSave(
+    mapId: string,
+    hex: HexCoord,
+    options: { createIfMissing: boolean },
+  ): Promise<{ factionId: string | null }> {
+    const draft = this.draftOf(mapId, hex);
+    const name = draft.parts.factionPresence.factionName;
+    if (!name) return { factionId: null };
+    const faction = await this.resolveFactionForSave(name, draft, options);
+    if (!faction) return { factionId: null };
+
+    const savedEntityIds = this.savedDiscoveryEntityIds(mapId, hex);
+    try {
+      const plan = planFactionSave({
+        draft,
+        factionId: faction.id,
+        factionTitle: faction.title,
+        savedEntityIds,
+        record: this.deps.store.recordFor(mapId, hex),
+        now: this.deps.clock.now(),
+      });
+      const linkResults = await Promise.allSettled(
+        plan.links.map((link) =>
+          this.deps.vault.addConnection(
+            link.fromEntityId,
+            link.toEntityId,
+            link.type,
+          ),
+        ),
+      );
+      const linkFailure = linkResults.find(
+        (result) => result.status === "rejected",
+      );
+      if (linkFailure?.status === "rejected") throw linkFailure.reason;
+      await this.deps.store.updateHex(mapId, hex, plan.patch);
+    } catch (error) {
+      if (faction.created) await this.rollbackCreatedFaction(faction.id, error);
+      throw error;
+    }
+    return { factionId: faction.id };
+  }
+
+  private async resolveFactionForSave(
+    name: string,
+    draft: HexDiscoveryDraft,
+    options: { createIfMissing: boolean },
+  ): Promise<{ id: string; title: string; created: boolean } | null> {
+    const factions = Object.values(this.deps.vault.entities)
+      .filter((entity) => entity.type === "faction")
+      .map((entity) => ({ id: entity.id, title: entity.title }));
+    const existing = matchFaction(name, factions);
+    if (existing) {
+      return {
+        id: existing.id,
+        title: factions.find((item) => item.id === existing.id)?.title ?? name,
+        created: false,
+      };
+    }
+    if (!options.createIfMissing) return null;
+    const id = await this.deps.vault.createEntity("faction", name, {
+      status: "draft",
+      labels: [
+        DISCOVERY_LABEL,
+        draft.parts.factionPresence.source === "ai" ? "ai-drafted" : "rolled",
+      ],
+    });
+    return { id, title: name, created: true };
+  }
+
+  private async rollbackCreatedFaction(
+    factionId: string,
+    cause: unknown,
+  ): Promise<void> {
+    try {
+      await this.deps.vault.deleteEntity(factionId);
+    } catch (cleanupError) {
+      throw new AggregateError(
+        [cause, cleanupError],
+        "Saving this faction failed, and cleanup was incomplete.",
+        { cause: cleanupError },
+      );
     }
   }
 

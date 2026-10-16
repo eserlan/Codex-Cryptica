@@ -83,6 +83,7 @@ export function createHexCrawlServices(): HexCrawlServices {
           entityId,
           hex,
         ),
+      removePin: (entityId) => mapStore.removePinsForEntity(entityId),
       formatHex: (hex) =>
         formatHexLabel(hex, mapStore.hexLabelConfig, activeOrientation()),
     },

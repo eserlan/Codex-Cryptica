@@ -11,7 +11,11 @@ import {
   type HexDiscoveryDraft,
   type DiscoveryPartId,
 } from "../src/discovery/draft";
-import { upsertHexRecord, type HexRecord } from "../src/model";
+import {
+  NOTES_MAX_LENGTH,
+  upsertHexRecord,
+  type HexRecord,
+} from "../src/model";
 
 const part = (
   text: string,
@@ -137,6 +141,20 @@ describe("appendToAiNotes (T059)", () => {
     ).toThrow();
   });
 
+  it("negative: preserves full AI notes and leaves the part pending", () => {
+    const existing = "x".repeat(NOTES_MAX_LENGTH);
+    expect(() =>
+      appendToAiNotes(
+        { aiNotes: existing, updatedAt: 1 },
+        "hazard",
+        draftOf(),
+        5,
+      ),
+    ).toThrow(/AI notes are full/);
+    expect(existing).toHaveLength(NOTES_MAX_LENGTH);
+    expect(draftOf().parts.hazard.status).toBe("pending");
+  });
+
   it("property: the patch never contains notes, across random records", () => {
     let seed = 1;
     const rand = () => {
@@ -255,6 +273,21 @@ describe("planFactionSave (T059, FR-025)", () => {
         now: 3,
       }),
     ).toThrow();
+  });
+
+  it("negative: refuses a faction note that will not fit without settling its part", () => {
+    const draft = draftOf();
+    expect(() =>
+      planFactionSave({
+        draft,
+        factionId: "f1",
+        factionTitle: "Iron Guild",
+        savedEntityIds: [],
+        record: { aiNotes: "x".repeat(NOTES_MAX_LENGTH), updatedAt: 1 },
+        now: 3,
+      }),
+    ).toThrow(/AI notes are full/);
+    expect(draft.parts.factionPresence.status).toBe("pending");
   });
 });
 

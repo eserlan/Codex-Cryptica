@@ -23,8 +23,24 @@
   } = $props();
 
   const linked = $derived(proposedLink !== null && linkTicked);
+  let saving = $state(false);
+  let saveMessage = $state("");
   const chip =
     "rounded-lg border border-theme-border px-2.5 py-1 text-micro font-bold uppercase tracking-widest text-theme-text hover:border-theme-primary/40";
+
+  async function save(task: () => Promise<unknown>) {
+    if (saving) return;
+    saving = true;
+    saveMessage = "";
+    try {
+      await task();
+    } catch (error) {
+      saveMessage =
+        error instanceof Error ? error.message : "Could not save this part.";
+    } finally {
+      saving = false;
+    }
+  }
 </script>
 
 {#if partId === "landmark"}
@@ -40,8 +56,9 @@
   {/if}
   <button
     type="button"
+    disabled={saving}
     onclick={() =>
-      void controls.saveEntityPart("landmark", { linkTicked: linked })}
+      save(() => controls.saveEntityPart("landmark", { linkTicked: linked }))}
     class="rounded-lg bg-theme-primary px-2.5 py-1 text-micro font-bold uppercase tracking-widest text-theme-bg"
   >
     Save as location
@@ -50,11 +67,14 @@
   {#each ["event", "note"] as const as kind (kind)}
     <button
       type="button"
+      disabled={saving}
       onclick={() =>
-        void controls.saveEntityPart("encounter", {
-          encounterType: kind,
-          linkTicked: linked,
-        })}
+        save(() =>
+          controls.saveEntityPart("encounter", {
+            encounterType: kind,
+            linkTicked: linked,
+          }),
+        )}
       class={chip}
     >
       Save as {kind}
@@ -65,8 +85,9 @@
     {#if factionMatch}
       <button
         type="button"
+        disabled={saving}
         onclick={() =>
-          void controls.saveFactionPart({ createIfMissing: false })}
+          save(() => controls.saveFactionPart({ createIfMissing: false }))}
         class={chip}
       >
         Link {factionMatch.title}
@@ -74,7 +95,9 @@
     {:else}
       <button
         type="button"
-        onclick={() => void controls.saveFactionPart({ createIfMissing: true })}
+        disabled={saving}
+        onclick={() =>
+          save(() => controls.saveFactionPart({ createIfMissing: true }))}
         class={chip}
       >
         Create faction {factionName}
@@ -84,9 +107,15 @@
 {:else}
   <button
     type="button"
-    onclick={() => void controls.saveNotePart(partId as NotePartId)}
+    disabled={saving}
+    onclick={() => save(() => controls.saveNotePart(partId as NotePartId))}
     class={chip}
   >
     Add to AI notes
   </button>
+{/if}
+{#if saveMessage}
+  <p role="status" class="basis-full text-micro text-theme-danger">
+    {saveMessage}
+  </p>
 {/if}

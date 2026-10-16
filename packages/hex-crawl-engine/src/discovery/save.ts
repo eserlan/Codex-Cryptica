@@ -55,6 +55,14 @@ function splitTitle(text: string): { title: string; content: string } {
   return { title: first.trim(), content: rest.join("\n").trim() };
 }
 
+function appendWithinLimit(existing: string, line: string): string {
+  const combined = [existing, line].filter(Boolean).join("\n\n");
+  if (combined.length > NOTES_MAX_LENGTH) {
+    throw new Error("AI notes are full. Shorten them before saving this part.");
+  }
+  return combined;
+}
+
 export function planDiscoverySave(input: {
   draft: HexDiscoveryDraft;
   part: "landmark" | "encounter";
@@ -105,10 +113,7 @@ export function appendToAiNotes(
   }
   assertPending(draft, part);
   const line = `${AI_NOTE_LABEL[part as keyof typeof AI_NOTE_LABEL]}: ${draft.parts[part].text}`;
-  const aiNotes = [record?.aiNotes, line]
-    .filter((value): value is string => Boolean(value))
-    .join("\n\n")
-    .slice(0, NOTES_MAX_LENGTH);
+  const aiNotes = appendWithinLimit(record?.aiNotes ?? "", line);
   return {
     patch: {
       aiNotes,
@@ -158,7 +163,7 @@ export function planFactionSave(input: {
   const existing = record?.aiNotes ?? "";
   const aiNotes = existing.includes(line)
     ? existing
-    : [existing, line].filter(Boolean).join("\n\n").slice(0, NOTES_MAX_LENGTH);
+    : appendWithinLimit(existing, line);
 
   const saved: HexDiscoveryDraft = {
     ...withPartStatus(draft, "factionPresence", "saved"),

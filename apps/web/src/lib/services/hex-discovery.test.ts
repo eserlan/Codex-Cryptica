@@ -121,6 +121,9 @@ function setup(
         return id;
       },
     ),
+    deleteEntity: vi.fn(async (id: string) => {
+      delete entities[id];
+    }),
     addConnection: vi.fn(async () => undefined),
   };
 
@@ -138,6 +141,7 @@ function setup(
     activeMapId: MAP_ID,
     formatHex: (hex: { q: number; r: number }) => `${hex.q},${hex.r}`,
     pinAtHex: vi.fn(async () => undefined),
+    removePin: vi.fn(async () => undefined),
   };
 
   const deps: HexDiscoveryControllerDeps = {
@@ -414,6 +418,73 @@ describe("HexDiscoveryController (T060, FR-021, FR-043)", () => {
       expect.objectContaining({ type: "JOURNAL:CAPTURE" }),
     );
     emit.mockRestore();
+  });
+
+  it("rejects a repeated save while the first save is still creating its entity", async () => {
+    const h = setup({ aiDisabled: true });
+    await h.controller.rollTables(MAP_ID, HEX);
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    vi.mocked(h.vault.createEntity).mockImplementationOnce(
+      async (type, title, _data) => {
+        await gate;
+        h.vault.entities["new-wait"] = entity("new-wait", type, title);
+        return "new-wait";
+      },
+    );
+
+    const first = h.controller.saveEntityPart(MAP_ID, HEX, "landmark", {
+      linkTicked: false,
+    });
+    await expect(
+      h.controller.saveEntityPart(MAP_ID, HEX, "landmark", {
+        linkTicked: false,
+      }),
+    ).rejects.toThrow(/already being saved/);
+    release();
+    await first;
+
+    expect(h.vault.createEntity).toHaveBeenCalledTimes(1);
+  });
+
+  it("removes the just-created entity when pinning fails after a map switch", async () => {
+    const h = setup({ aiDisabled: true });
+    await h.controller.rollTables(MAP_ID, HEX);
+    h.mapStore.pinAtHex.mockRejectedValueOnce(
+      new Error("Open this map to pin an entity to a hex."),
+    );
+
+    await expect(
+      h.controller.saveEntityPart(MAP_ID, HEX, "landmark", {
+        linkTicked: false,
+      }),
+    ).rejects.toThrow(/Open this map/);
+
+    expect(h.vault.deleteEntity).toHaveBeenCalledWith("new-1");
+    expect(h.vault.entities["new-1"]).toBeUndefined();
+    expect(h.store.recordFor(MAP_ID, HEX)?.draft?.parts.landmark.status).toBe(
+      "pending",
+    );
+  });
+
+  it("removes a pin and entity when a later save step fails", async () => {
+    const h = setup({ aiDisabled: true });
+    await h.controller.rollTables(MAP_ID, HEX);
+    vi.spyOn(h.store, "setDraft").mockRejectedValueOnce(
+      new Error("Could not persist the updated draft."),
+    );
+
+    await expect(
+      h.controller.saveEntityPart(MAP_ID, HEX, "landmark", {
+        linkTicked: false,
+      }),
+    ).rejects.toThrow(/Could not persist/);
+
+    expect(h.mapStore.removePin).toHaveBeenCalledWith("new-1");
+    expect(h.vault.deleteEntity).toHaveBeenCalledWith("new-1");
+    expect(h.vault.entities["new-1"]).toBeUndefined();
   });
 
   it("links the landmark to the nearest location only when the link is still ticked", async () => {

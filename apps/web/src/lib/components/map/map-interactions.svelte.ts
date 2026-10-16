@@ -609,7 +609,19 @@ export class MapInteractionManager {
   };
 
   onPointerUp = (e: PointerEvent) => this.handlePointerUp(e);
-  onPointerCancel = (e: PointerEvent) => this.handlePointerUp(e);
+  onPointerCancel = (e: PointerEvent) => {
+    if (this.isTouchPointer(e)) {
+      this.activeTouches.delete(e.pointerId);
+      this.pinchLastDistance = null;
+    }
+    if (this.activePointerId !== null && this.activePointerId !== e.pointerId) {
+      return;
+    }
+    this.hexPressStart = null;
+    this.activePointerId = null;
+    this.isPanning = false;
+    this.boxSelection.clear();
+  };
   onMouseUp = (e: MouseEvent) => this.handlePointerUp(e);
 
   private handleHexClick(e: MouseEvent) {

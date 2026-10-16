@@ -24,41 +24,100 @@
     zoom: number;
   } = $props();
 
+  type OverlayItem = { key: string; x: number; y: number; record: HexRecord };
+  type HexBounds = { minQ: number; maxQ: number; minR: number; maxR: number };
+  type Projection = {
+    gridConfig: HexGridConfig;
+    project: (point: Point) => Point;
+    viewport: { width: number; height: number };
+  };
+
+  function itemInViewport(
+    key: string,
+    record: HexRecord,
+    q: number,
+    r: number,
+    projection: Projection,
+  ): OverlayItem | null {
+    const point = projection.project(
+      hexToPoint({ q, r }, projection.gridConfig),
+    );
+    if (
+      point.x < -MARGIN ||
+      point.y < -MARGIN ||
+      point.x > projection.viewport.width + MARGIN ||
+      point.y > projection.viewport.height + MARGIN
+    ) {
+      return null;
+    }
+    return { key, x: point.x, y: point.y, record };
+  }
+
+  function collectByCoordinates(
+    records: Record<string, HexRecord>,
+    bounds: HexBounds,
+    projection: Projection,
+  ): OverlayItem[] {
+    const items: OverlayItem[] = [];
+    for (let q = bounds.minQ; q <= bounds.maxQ; q++) {
+      for (let r = bounds.minR; r <= bounds.maxR; r++) {
+        const key = `${q},${r}`;
+        const record = records[key];
+        if (!record) continue;
+        const item = itemInViewport(key, record, q, r, projection);
+        if (item) items.push(item);
+      }
+    }
+    return items;
+  }
+
+  function collectByStoredRecords(
+    records: Record<string, HexRecord>,
+    bounds: HexBounds,
+    projection: Projection,
+  ): OverlayItem[] {
+    const items: OverlayItem[] = [];
+    for (const key of Object.keys(records)) {
+      const match = /^(-?\d+),(-?\d+)$/.exec(key);
+      if (!match) continue;
+      const q = Number(match[1]);
+      const r = Number(match[2]);
+      if (
+        q < bounds.minQ ||
+        q > bounds.maxQ ||
+        r < bounds.minR ||
+        r > bounds.maxR
+      ) {
+        continue;
+      }
+      const item = itemInViewport(key, records[key], q, r, projection);
+      if (item) items.push(item);
+    }
+    return items;
+  }
+
   /** Hexes with records, culled to the viewport plus a margin. */
   const MARGIN = 80;
   const shown = $derived.by(() => {
     if (!visible) return [];
-    const items: { key: string; x: number; y: number; record: HexRecord }[] =
-      [];
     const corners = [
       unproject({ x: -MARGIN, y: -MARGIN }),
       unproject({ x: viewport.width + MARGIN, y: -MARGIN }),
       unproject({ x: -MARGIN, y: viewport.height + MARGIN }),
       unproject({ x: viewport.width + MARGIN, y: viewport.height + MARGIN }),
     ].map((point) => pointToHex(point, gridConfig));
-    const minQ = Math.min(...corners.map(({ q }) => q)) - 2;
-    const maxQ = Math.max(...corners.map(({ q }) => q)) + 2;
-    const minR = Math.min(...corners.map(({ r }) => r)) - 2;
-    const maxR = Math.max(...corners.map(({ r }) => r)) + 2;
-
-    for (let q = minQ; q <= maxQ; q++) {
-      for (let r = minR; r <= maxR; r++) {
-        const key = `${q},${r}`;
-        const record = records[key];
-        if (!record) continue;
-        const pos = project(hexToPoint({ q, r }, gridConfig));
-        if (
-          pos.x < -MARGIN ||
-          pos.y < -MARGIN ||
-          pos.x > viewport.width + MARGIN ||
-          pos.y > viewport.height + MARGIN
-        ) {
-          continue;
-        }
-        items.push({ key, x: pos.x, y: pos.y, record });
-      }
-    }
-    return items;
+    const bounds = {
+      minQ: Math.min(...corners.map(({ q }) => q)) - 2,
+      maxQ: Math.max(...corners.map(({ q }) => q)) + 2,
+      minR: Math.min(...corners.map(({ r }) => r)) - 2,
+      maxR: Math.max(...corners.map(({ r }) => r)) + 2,
+    };
+    const candidateCount =
+      (bounds.maxQ - bounds.minQ + 1) * (bounds.maxR - bounds.minR + 1);
+    const projection = { gridConfig, project, viewport };
+    return candidateCount < Object.keys(records).length
+      ? collectByCoordinates(records, bounds, projection)
+      : collectByStoredRecords(records, bounds, projection);
   });
 
   const markerSize = $derived(Math.max(8, gridConfig.size * zoom));

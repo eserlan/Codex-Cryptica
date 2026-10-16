@@ -87,4 +87,38 @@ describe("HexCrawlOverlay performance (T092, SC-002)", () => {
 
     expect(project).not.toHaveBeenCalled();
   });
+
+  it("bounds candidate work at the minimum hex size and zoom", () => {
+    const records: Record<string, HexRecord> = {
+      "0,0": {
+        terrain: { kind: "preset", id: "forest" },
+        updatedAt: 1,
+      },
+    };
+    for (let q = 10_000; q < 11_999; q++) {
+      records[`${q},${q}`] = {
+        terrain: { kind: "preset", id: "forest" },
+        updatedAt: 1,
+      };
+    }
+    const project = vi.fn((point: { x: number; y: number }) => point);
+    const { container } = render(HexCrawlOverlay, {
+      records,
+      visible: true,
+      showTerrainIcons: true,
+      gridConfig: { ...GRID, size: 5 },
+      project,
+      unproject: (point: { x: number; y: number }) => ({
+        x: point.x * 10,
+        y: point.y * 10,
+      }),
+      viewport: { width: 1920, height: 1080 },
+      zoom: 0.1,
+    });
+
+    expect(project.mock.calls.length).toBeLessThanOrEqual(
+      Object.keys(records).length,
+    );
+    expect(container.querySelectorAll('span[class*="icon-["]')).toHaveLength(1);
+  });
 });
