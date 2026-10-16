@@ -214,6 +214,23 @@ export const COVERAGE_QUESTIONS = [
     "Can I send an entry to another person with the Shelf?",
     "holdout",
   ],
+  [
+    "app-navigation",
+    "What are the different options in the left sidebar?",
+    "tune",
+  ],
+  ["app-navigation", "What do the buttons in the Activity Bar do?", "tune"],
+  ["app-navigation", "Where is the Generators button on my phone?", "tune"],
+  ["app-navigation", "What are the menu items on the left for?", "holdout"],
+  ["app-navigation", "Why can I not see the Shelf in the menu?", "holdout"],
+  ["app-navigation", "What are the buttons in the top bar for?", "tune"],
+  ["app-navigation", "What does the Manage vault menu contain?", "tune"],
+  ["app-navigation", "Where did the Save button go in Guided Mode?", "holdout"],
+  [
+    "app-navigation",
+    "What is the cloud icon at the top of the screen?",
+    "holdout",
+  ],
 ] as const;
 
 export const COVERAGE_HELP: Record<string, string[]> = {
@@ -234,6 +251,7 @@ export const COVERAGE_HELP: Record<string, string[]> = {
   "solo-adventure": ["adventure-mode"],
   "entity-explorer": ["entity-explorer"],
   "entity-shelf": ["entity-shelf"],
+  "app-navigation": ["finding-your-way-around"],
   "lore-oracle": ["oracle-guide", "chat-commands"],
   "backup-and-restore": ["export-and-backup", "cloud-backup", "offline-sync"],
 };
