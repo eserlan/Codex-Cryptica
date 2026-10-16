@@ -456,14 +456,14 @@ No discovery-intent task: this feature adds no public, indexable page (plan: Dis
     - `apps/web/src/lib/components/vtt/TokenDetail.svelte` (583, was 566): selected-token detail. Adds one **This hex** button.
     - `apps/web/src/lib/components/map/VTTGridSettings.svelte` (530, was 448): grid settings. Adds the mode switch and the grid-change guard calls.
     - `apps/web/src/lib/config/help-content.ts` (866): a data module, exempt from the size trigger (Principle XIV rule 4).
-- [ ] T096 Run the PR quality gate defined in `AGENTS.md` (PR Quality Gate):
+- [x] T096 Run the PR quality gate defined in `AGENTS.md` (PR Quality Gate, opened as #4152):
   - `bun run --filter hex-crawl-engine test`, plus the map-engine, session-journal-engine, vault-engine and schema tests
   - `bun run --filter hex-crawl-engine test:coverage` shows **at least 70%** coverage for the new package (Constitution X)
   - `bun scripts/test-changed.mjs` and `bun scripts/lint-changed.mjs`
   - `bunx svelte-check --tsconfig ./tsconfig.json --threshold error` in `apps/web`
   - `bunx fallow audit --format json --quiet --explain --gate-marker agent`
   - the `codex-review` specialist review
-- [ ] T097 Open a GitHub follow-up issue "Unify the three `extractJsonObject` variants" (research D10) and add its number to the "Out of this feature" list in `specs/178-hex-crawl-mode/research.md`. The changelog entry is written at release via the `write-release-entry` skill, not in this branch
+- [x] T097 Open a GitHub follow-up issue (filed as #4153) "Unify the three `extractJsonObject` variants" (research D10) and add its number to the "Out of this feature" list in `specs/178-hex-crawl-mode/research.md`. The changelog entry is written at release via the `write-release-entry` skill, not in this branch
 
 ---
 
