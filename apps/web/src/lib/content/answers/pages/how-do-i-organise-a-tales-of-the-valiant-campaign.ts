@@ -75,7 +75,7 @@ export const howDoIOrganiseATalesOfTheValiantCampaign: AnswerConfigInput = {
     heading: "Native Tales of the Valiant campaign support in Codex Cryptica",
     paragraphs: [
       "Codex Cryptica includes built-in Tales of the Valiant character, NPC, and monster stat sheet templates, with one-click Luck controls, Doom counters on combat tokens, and qualitative encounter challenge guidance tailored to your party level and size. Choose Tales of the Valiant manually in a generator's Game System option when available; vault-wide profile selection is not currently available.",
-      "Everything runs locally in your browser through private OPFS storage, allowing you to prep and run sessions entirely offline with full CC BY 4.0 Black Flag compliance.",
+      "Your notes and saved stat sheets stay in private, local OPFS storage and remain available offline. ToV-specific generator mechanics require the AI Lore Co-Author; when you are offline or AI generation is disabled, generators produce system-neutral lore and notes. The content uses CC BY 4.0 Black Flag material.",
     ],
     linkText: "Explore the Tales of the Valiant guide",
     href: "/for/tales-of-the-valiant",

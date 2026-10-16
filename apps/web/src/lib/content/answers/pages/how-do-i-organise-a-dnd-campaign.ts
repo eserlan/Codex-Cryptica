@@ -255,6 +255,7 @@ export const howDoIOrganiseADndCampaign: AnswerConfigInput = {
     },
   ],
   relatedAnswers: [
+    "how-do-i-organise-a-tales-of-the-valiant-campaign",
     "how-do-i-start-a-dnd-campaign",
     "how-do-i-prepare-a-dnd-session",
     "how-do-you-organise-rpg-campaign-notes",

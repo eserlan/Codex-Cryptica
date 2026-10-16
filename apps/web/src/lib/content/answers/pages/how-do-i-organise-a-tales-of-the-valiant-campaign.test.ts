@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { howDoIOrganiseATalesOfTheValiantCampaign } from "./how-do-i-organise-a-tales-of-the-valiant-campaign";
+import { howDoIOrganiseADndCampaign } from "./how-do-i-organise-a-dnd-campaign";
+import { howDoYouOrganiseRpgCampaignNotes } from "./how-do-you-organise-rpg-campaign-notes";
+import { howDoYouKeepTrackOfNpcsInALongCampaign } from "./how-do-you-keep-track-of-npcs-in-a-long-campaign";
+import { howDoYouTrackUnresolvedPlotHooksInAnRpgCampaign } from "./how-do-you-track-unresolved-plot-hooks-in-an-rpg-campaign";
 
 describe("howDoIOrganiseATalesOfTheValiantCampaign answer", () => {
   it("defines valid answer configuration with required minimum length", () => {
@@ -44,6 +48,24 @@ describe("howDoIOrganiseATalesOfTheValiantCampaign answer", () => {
     expect(serialized).not.toContain(
       "Luck resets to a character's starting value",
     );
+  });
+
+  it("limits offline claims and has reciprocal related-answer links", () => {
+    const serialized = JSON.stringify(howDoIOrganiseATalesOfTheValiantCampaign);
+    expect(serialized).toContain("remain available offline");
+    expect(serialized).toContain("require the AI Lore Co-Author");
+    expect(serialized).toContain("produce system-neutral lore and notes");
+    expect(serialized).not.toContain("run sessions entirely offline");
+
+    const slug = howDoIOrganiseATalesOfTheValiantCampaign.slug;
+    for (const answer of [
+      howDoIOrganiseADndCampaign,
+      howDoYouOrganiseRpgCampaignNotes,
+      howDoYouKeepTrackOfNpcsInALongCampaign,
+      howDoYouTrackUnresolvedPlotHooksInAnRpgCampaign,
+    ]) {
+      expect(answer.relatedAnswers).toContain(slug);
+    }
   });
 
   it("uses British English spellings and avoids American travel conjugations", () => {
