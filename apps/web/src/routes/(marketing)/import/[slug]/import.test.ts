@@ -170,6 +170,39 @@ describe("Imports SvelteKit Route", () => {
       expect(screen.queryByDisplayValue("Old Selection")).toBeNull();
     });
 
+    it("keeps the newest selection when a directory drop finishes late", async () => {
+      let resolveTraversal!: (files: File[]) => void;
+      vi.spyOn(importParser, "traverseEntry").mockReturnValue(
+        new Promise((resolve) => {
+          resolveTraversal = resolve;
+        }),
+      );
+      const { container } = render(Page, {
+        props: { data: { importPage: importsConfig.chronica } },
+      });
+      const dropzone = screen.getByRole("region", {
+        name: "File Upload Dropzone",
+      });
+
+      fireEvent.drop(dropzone, {
+        dataTransfer: {
+          items: [{ webkitGetAsEntry: () => ({ isDirectory: true }) }],
+          files: [],
+        },
+      });
+      await selectFiles(container, [
+        chronicaFile("newer.json", {
+          characters: [{ id: "c2", name: "Newer Selection" }],
+        }),
+      ]);
+      expect(await screen.findByDisplayValue("Newer Selection")).toBeTruthy();
+
+      resolveTraversal([]);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      expect(screen.getByDisplayValue("Newer Selection")).toBeTruthy();
+    });
+
     it("keeps single-file importers to one file", () => {
       const { container } = render(Page, {
         props: { data: { importPage: importsConfig.scabard } },

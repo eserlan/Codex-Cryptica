@@ -117,6 +117,8 @@
     files: FileList | File[],
     request = ++parseRequest,
   ) {
+    if (request !== parseRequest) return;
+
     errorMessage = null;
     filesParsed = [];
     const list = Array.from(files);
