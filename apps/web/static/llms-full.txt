@@ -2042,6 +2042,16 @@ Kanka's structured campaign export works without an AI key:
 
 Codex imports a copy and does not change the campaign in Kanka. Kanka permissions, dashboards, family-tree layouts, plugins, themes, and bookmarks are not part of Kanka's standard export and cannot be recreated by this import.
 
+## Import a Chronica Campaign
+
+Chronica's JSON exports also work without an AI key:
+
+1. In Chronica, export your campaign as JSON. You get one file per section (characters, places, quests and so on).
+2. Drop all the files from that campaign into Codex's importer at once. Files from a different campaign are refused.
+3. Review the entries and their connections before committing them to the current vault.
+
+Characters, places, kinships and encounters become characters, locations, factions and events. Quests, adventure notes and maps come across as notes, and GM secrets go into each entry's private lore. Map images are not included, and stats are kept as metadata rather than stat sheets. Codex imports a copy and does not change your campaign in Chronica.
+
 ## Resilient Imports
 
 Large documents can take time to process. The system automatically tracks your progress:
@@ -2057,6 +2067,72 @@ If you want to re-analyze a file from scratch, click the **Restart** button in t
 ## Related Blog Posts
 
 - [How Import Works: Local-First Migration](/blog/how-import-works) — Comprehensive guide to converting notes into structured knowledge graphs.
+
+---
+
+### TALES OF THE VALIANT (BFRD) CAMPAIGN GUIDE
+
+Codex Cryptica provides native support for **Tales of the Valiant (ToV)** and the open **Black Flag Reference Document (BFRD)** published by Kobold Press under the Creative Commons Attribution 4.0 International license.
+
+---
+
+### 1. Using Tales of the Valiant templates
+
+Vault-wide system profile selection is not currently available. To use Tales of the Valiant in a generator, choose it from the **Game System** option when available. The built-in ToV sheets listed below can be applied to individual entities.
+
+---
+
+### 2. Built-in Stat Sheet Templates
+
+Codex Cryptica includes three pre-configured ToV stat sheet templates:
+
+- **Tales of the Valiant Character** (`builtin-tov-character`): A full adventurer sheet featuring Lineage, Heritage, class levels, saving throw proficiencies, weapon actions, spell circles, and an interactive **Luck** resource counter.
+- **Tales of the Valiant Monster** (`builtin-tov-monster`): Complete BFRD creature stat block with challenge rating, armour class, traits, action routines, reactions, and an optional **Doom** counter for solo bosses.
+- **Tales of the Valiant Quick NPC** (`builtin-tov-npc`): A lightweight, CR-based block designed for rapid session prep, retaining core combat stats without the overhead of full character tracking.
+
+---
+
+### 3. Interactive Luck Tracking
+
+In Tales of the Valiant, characters gain Luck when they fail d20 attack rolls or saving throws, spending accumulated points to improve subsequent d20 rolls.
+
+- **Character Sheets**: Use the minus and plus controls on the Luck counter to spend or gain points.
+- **Virtual Tabletop (VTT)**: When a character token is selected on the combat map, their Luck meter appears in **Token Quick Stats** for instantaneous mid-battle adjustments.
+- **Long Rest**: The campaign's resting variant determines whether unspent Luck is preserved or reset towards the pool maximum. Codex Cryptica does not reset Luck automatically; update the counter manually after the rest according to the rules your campaign uses.
+
+---
+
+### 4. Adversary Doom Resource Tracking
+
+Major villains, legendary monsters, and solo encounter bosses can harness **Doom Points** to execute villainous actions, interrupt player turns, or trigger explosive reactions.
+
+- **Verified Counter**: Doom controls appear exclusively on creatures with an active Doom counter (e.g. `builtin-tov-monster` with Doom configured).
+- **VTT HUD**: Adjust Doom pools live from token quick stats during combat encounters.
+- **Bounded Pool**: Unlike Luck, Doom points are strictly scoped to the individual adversary token and are never shared as an arbitrary global pool.
+
+---
+
+### 5. Encounters & Challenge Guidance
+
+The Encounter Generator provides qualitative challenge pacing tailored to your party:
+
+- Select your **Party Size** (1 to 8 adventurers) and **Party Level** (Level 1 to 20).
+- Encounters calculate a qualitative challenge rating (**Trivial**, **Moderate**, **Dangerous**, or **Deadly**) along with recommended CR distributions.
+- Suggested adversary creatures indicate whether they match official BFRD templates or are custom homebrew concepts.
+
+---
+
+### 6. Using characters from external tools
+
+Codex Cryptica does not currently import ToV character JSON from `tov-chargen` or other external builders. To bring a character's details into your campaign, create an entity and enter its values manually using the character sheet described above.
+
+---
+
+### 7. Attribution & Legal Disclosures
+
+Codex Cryptica is an independent application and is not affiliated with, endorsed, or sponsored by Open Design LLC d/b/a Kobold Press.
+
+This work includes open game mechanics from the **Black Flag Reference Document**, made available under the **Creative Commons Attribution 4.0 International License (CC BY 4.0)** by Open Design LLC d/b/a Kobold Press.
 
 ---
 
@@ -2153,10 +2229,9 @@ The Lore Oracle understands these labels. If you label someone as a "Rival," the
 
 Codex Cryptica supports generating non-player characters, monsters, and magic items with native **Tales of the Valiant (BFRD)** mechanics.
 
-### Activating Tales of the Valiant Mode
+### Selecting Tales of the Valiant
 
-- **Vault Profile Inheritance**: If your active campaign vault is configured with the Tales of the Valiant system profile, generators automatically pre-select **Tales of the Valiant** under the **Game System** option.
-- **Manual Selection**: On any campaign generator or public generator page, set the **Game System** selector to **Tales of the Valiant**.
+Vault-wide system profile selection is not currently available. On a campaign generator or public generator page, select **Tales of the Valiant** from the **Game System** option when it is available.
 
 ### Supported Generators
 
@@ -2167,6 +2242,12 @@ Codex Cryptica supports generating non-player characters, monsters, and magic it
    - Generates authentic BFRD monster stat blocks with creature size, type, Armor Class, Hit Points, speed, ability scores, Doom counters, traits, actions, and reactions. Maps to the monster stat sheet (`builtin-tov-monster`).
 3. **Magic Item / Minor Magic Item Generator**:
    - Generates BFRD item statistics including rarity, category, attunement criteria, activation action economy, charges, and saving throw DCs. When saved, game statistics are appended to the entity under `### Game Statistics (Tales of the Valiant)`.
+4. **Encounter Generator**:
+   - Injects qualitative challenge pacing (Trivial, Moderate, Dangerous, Deadly) and adversary recommendations according to party size and level.
+
+### Complete Campaign Guide
+
+For more on the built-in stat sheet templates and manually tracking Luck and Doom, see the [Tales of the Valiant Campaign Guide](help:tales-of-the-valiant).
 
 ### Offline & AI Availability
 
@@ -3788,6 +3869,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** Organise a D&D campaign by things and relationships, not as one long document. Promote an NPC, location, faction, quest or item to its own page when you expect to retrieve or update it independently. Keep world truth, what the party knows, session history and disposable prep distinct; that split keeps abandoned ideas from becoming canon and makes the fact you need during play easier to find.
 
+### [How do I organise a Tales of the Valiant campaign?](https://codexcryptica.com/answers/how-do-i-organise-a-tales-of-the-valiant-campaign)
+
+**Direct answer:** Organise a Tales of the Valiant campaign by centring notes on what distinguishes Black Flag Roleplaying: separate each hero's Lineage from their cultural Heritage in your cast web, track party Luck according to your campaign's resting variant, manage Doom budgets for major adversary encounters, and maintain direct connections between martial talents, patrons, and regional factions.
+
 ### [How do I organise my GM notes and references when running an RPG in person?](https://codexcryptica.com/answers/how-do-i-organise-gm-notes-for-in-person-play)
 
 **Direct answer:** Bring a session-facing subset to the table, not the whole campaign file: one page of what might matter tonight, a few reference pages you can reach without scrolling, somewhere to catch names and decisions as they happen, and a place the session gets filed afterwards. Paper, tablet and laptop all do that job, so choose by how fast you need an answer and how much screen you want sitting between you and the players.
@@ -4666,6 +4751,12 @@ Codex Cryptica provides specialized, tailored landing pages, knowledge graphs, a
 **Summary:** Connect the inventions that change what is possible with the people, places, and power struggles they leave behind.
 
 **Overview:** Steampunk campaigns turn on what invention makes possible—and who gains or loses power when it succeeds. A stolen prototype, strike, noble investment, or act of sabotage can reshape an industrial city, scientific expedition, or airship voyage. In Codex Cryptica, connect inventions to their inventors, workers, patrons, rivals, routes, and consequences, from guild intrigue to gaslamp investigation and weird science.
+
+### [Codex Cryptica for Tales of the Valiant Campaigns](https://codexcryptica.com/for/tales-of-the-valiant)
+
+**Summary:** Manage lineages, heritages, interactive Luck reserves, adversary Doom points, and BFRD stat blocks without getting bogged down in paper.
+
+**Overview:** Black Flag campaigns give heroes deeper origins with distinct Lineages and Heritages, volatile Luck economies, and tactical monster actions. Running an adventure path means keeping track of who earned Luck last encounter, which villain holds Doom points, and where every faction patron stands when your players go off-book.
 
 ### [Codex Cryptica for Traveller Campaign Management](https://codexcryptica.com/for/traveller)
 

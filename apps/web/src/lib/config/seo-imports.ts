@@ -325,4 +325,63 @@ export const importsConfig: Record<string, SEOImportPageData> = {
       },
     ],
   },
+  chronica: {
+    slug: "chronica",
+    competitorName: "Chronica",
+    title: "Import Chronica Campaigns to Codex Cryptica | Free JSON Import",
+    description:
+      "Import your Chronica campaign exports. Characters, places, quests, encounters and kinships become linked entities, with GM secrets kept private. Previewed offline.",
+    h1: "Chronica Campaign Importer",
+    subheading: "Bring a copy of your Chronica campaign into Codex Cryptica.",
+    introText:
+      "Chronica exports each part of a campaign (characters, places, quests and so on) as its own JSON file. Drop all of them here together to preview every entry and connection before anything is written to your vault, entirely offline. Your Chronica campaign is not changed.",
+    ctaText: "Start Chronica Import",
+    keywords: [
+      "import chronica",
+      "chronica export",
+      "chronica campaign json",
+      "move campaign from chronica",
+    ],
+    features: [
+      {
+        title: "Campaign Sections Merged",
+        description:
+          "Drop every export file from one campaign at once. They are merged into a single import, and files from a different campaign are refused.",
+        icon: "icon-[lucide--files]",
+      },
+      {
+        title: "Mapped to Entity Types",
+        description:
+          "Characters, places, kinships and encounters become characters, locations, factions and events. Quests, adventure notes and maps come across as notes.",
+        icon: "icon-[lucide--shapes]",
+      },
+      {
+        title: "Links and GM Secrets",
+        description:
+          "References between records become connections, and GM secrets go into each entry's private lore, separate from the visible description.",
+        icon: "icon-[lucide--link]",
+      },
+    ],
+    faq: [
+      {
+        question: "Where do I get my Chronica export?",
+        answer:
+          "Export your campaign from Chronica as JSON. Chronica produces one file per section of the campaign; keep them together and drop them all in at once.",
+      },
+      {
+        question: "What doesn't come across?",
+        answer:
+          "Map images are not included, only each map's entry. Stats and stat groups are kept as metadata on the import rather than turned into stat sheets. Player accounts and permissions stay in Chronica.",
+      },
+      {
+        question: "Will this change my Chronica campaign?",
+        answer:
+          "No. The import reads a copy of your exported files in your browser. Nothing is sent back to Chronica.",
+      },
+    ],
+    relatedLinks: [
+      { href: "/vs/chronica", label: "Codex vs Chronica" },
+      { href: "/migrations", label: "All import sources" },
+    ],
+  },
 };

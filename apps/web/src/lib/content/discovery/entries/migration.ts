@@ -110,6 +110,27 @@ export const migrationEntries: DiscoveryEntryInput[] = [
     ],
   },
   {
+    id: "comparison-chronica",
+    pageKind: "comparison",
+    canonicalPath: "/vs/chronica",
+    primaryIntent: "codex cryptica vs chronica",
+    intentAliases: ["chronica alternative"],
+    userJob: "evaluate",
+    uniqueValue:
+      "Comparison against Chronica's online party hub, including where its player accounts, inventories and kingdom building are the better fit.",
+    parentCluster: "migration",
+    relatedIntents: ["import-chronica"],
+    indexable: true,
+    status: "live",
+    acknowledgedOverlap: [
+      {
+        with: "import-chronica",
+        reason:
+          "Same competitor, different job — evaluate before switching versus migrate after deciding.",
+      },
+    ],
+  },
+  {
     id: "alternatives-redirect",
     pageKind: "other",
     canonicalPath: "/alternatives",
@@ -199,6 +220,20 @@ export const migrationEntries: DiscoveryEntryInput[] = [
     uniqueValue:
       "Instructions for Thread Weaver Engine exports and which of its record types come across.",
     parentCluster: "migration",
+    indexable: true,
+    status: "live",
+  },
+  {
+    id: "import-chronica",
+    pageKind: "import",
+    canonicalPath: "/import/chronica",
+    primaryIntent: "import a chronica campaign",
+    intentAliases: ["chronica json import"],
+    userJob: "migrate",
+    uniqueValue:
+      "Instructions for Chronica's per-section JSON exports, including how its records map onto entities and what stays behind.",
+    parentCluster: "migration",
+    relatedIntents: ["comparison-chronica"],
     indexable: true,
     status: "live",
   },

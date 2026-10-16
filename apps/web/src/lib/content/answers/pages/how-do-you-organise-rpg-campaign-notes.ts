@@ -140,6 +140,7 @@ export const howDoYouOrganiseRpgCampaignNotes: AnswerConfigInput = {
     },
   ],
   relatedAnswers: [
+    "how-do-i-organise-a-tales-of-the-valiant-campaign",
     "how-do-you-organise-npc-relationships",
     "what-should-an-rpg-settlement-contain",
     "how-do-you-run-a-conspiracy-campaign",
