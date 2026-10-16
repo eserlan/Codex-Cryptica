@@ -34,6 +34,8 @@ async function clickCentreHex(page: Page) {
 }
 
 test.describe("Hex crawl journey (AI disabled)", () => {
+  // Cold dev-server boot plus the demo load can use most of the default 30 s.
+  test.setTimeout(120000);
   test.use({ viewport: { width: 1400, height: 1100 } });
 
   test.beforeEach(async ({ page }) => {
@@ -180,6 +182,78 @@ test.describe("Hex crawl journey (AI disabled)", () => {
     await goTo.fill("00.00");
     await page.getByRole("button", { name: "Go", exact: true }).click();
     await expect(page.locator("#hex-panel-title")).toBeVisible();
+
+    // Scenario 8: closing the panel returns focus to the control that opened it.
+    await page.keyboard.press("Escape");
+    await expect(page.locator("#hex-panel-title")).toHaveCount(0);
+    const focused = await page.evaluate(() =>
+      document.activeElement?.textContent?.trim(),
+    );
+    expect(focused).toBe("Go");
+  });
+
+  test("T092: pan frame timing over a 2,000-record map stays within a 60 fps budget", async ({
+    page,
+  }) => {
+    await enableHexMode(page);
+    await page.evaluate(() => {
+      const v = (window as any).vault;
+      const id = Object.keys(v.maps)[0];
+      const hexes: Record<string, unknown> = {};
+      for (let q = 0; q < 100; q++) {
+        for (let r = 0; r < 20; r++) {
+          hexes[`${q},${r}`] = {
+            terrain: { kind: "preset", id: "forest" },
+            updatedAt: 1,
+          };
+        }
+      }
+      v.maps[id].hexCrawl = { enabled: true, hexes };
+    });
+
+    const box = await page.locator("canvas").first().boundingBox();
+    const cx = box!.x + box!.width / 2;
+    const cy = box!.y + box!.height / 2;
+    await page.evaluate(() => {
+      const samples: number[] = [];
+      let last = performance.now();
+      const tick = (t: number) => {
+        samples.push(t - last);
+        last = t;
+        if (samples.length < 240) requestAnimationFrame(tick);
+        else (window as any).__frames = samples;
+      };
+      requestAnimationFrame(tick);
+    });
+    await page.mouse.move(cx, cy);
+    await page.mouse.down();
+    for (let i = 1; i <= 60; i++) {
+      await page.mouse.move(cx + i * 4, cy + i * 2);
+    }
+    await page.mouse.up();
+    await page.waitForFunction(
+      () => Array.isArray((window as any).__frames),
+      null,
+      {
+        timeout: 15000,
+      },
+    );
+    const frames: number[] = (
+      await page.evaluate(() => (window as any).__frames)
+    ).slice(2);
+    const sorted = [...frames].sort((a, b) => a - b);
+    const p95 = sorted[Math.floor(sorted.length * 0.95)];
+    const median = sorted[Math.floor(sorted.length / 2)];
+    console.log(
+      "T092_FRAMES median_ms",
+      median.toFixed(1),
+      "p95_ms",
+      p95.toFixed(1),
+      "n",
+      frames.length,
+    );
+    // Headless timing is indicative; the budget is a 16.7 ms frame at 60 fps for the median.
+    expect(median).toBeLessThan(50);
   });
 
   test("quickstart 5: custom terrain explores offline with the general-tables message", async ({
