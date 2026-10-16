@@ -1,8 +1,11 @@
 # Codex-Cryptica Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-10-13
+Auto-generated from all feature plans. Last updated: 2026-10-16
 
 ## Active Technologies
+
+- TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + Existing `map-engine` (hex maths; + `parseHexLabel`), `random-source-engine` (offline rolling), `session-journal-engine` (+ `formatHexExplored`), `schema` (`MapSchema` + optional `grid`, `hexCrawl`), `vault-engine` `GuestExporter` (strips `hexCrawl`), `@codex/ai-engine` (`aiClientManager`), `generator-engine` `formatCampaignContextBlock`, the exported `extractJsonObject`, `@codex/events` (`JOURNAL:CAPTURE`), Floating UI, `zod`, Tailwind 4 semantic tokens, Iconify classes. New internal package `packages/hex-crawl-engine`. No new third-party dependency. (178-hex-crawl-mode)
+- Optional additive fields on the existing map records in `.codex/maps.json`: `grid` and `hexCrawl`. They are synced, backed up, exported and restored with maps. One new device-local display preference, `showTerrainIcons`, joins the existing per-map display settings. One device-local "AI notice dismissed" hint key. No IndexedDB, OPFS layout or migration change. (178-hex-crawl-mode)
 
 - TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + Existing `onboarding-journey-engine` (extended), `help-engine` (`QUICK_PROMPT_SETS`, `FEATURE_REGISTRY`, `HelpArea`), `JourneyStore` (read-only outcome), `OnboardingStore` (`chosenGoal`, `goalInvitation`), `helpAssistant` and `cifPopout` (open and ask), `isHelpAssistantAvailable`, `helpStore` (tour), `modalUIStore` (dialogs), Floating UI (already a dependency), Tailwind 4 semantic tokens, Iconify classes. No new third-party dependency. (176-cif-contextual-tips)
 - `localStorage` through the injected `StorageLike`: `codex-cif-tips` (preference, opt-in answer, tip history; device-wide). `sessionStorage`: `codex-cif-tips-session` (a tip was shown this session). No IndexedDB, OPFS or vault schema change, so no migration. (176-cif-contextual-tips)
@@ -74,9 +77,9 @@ TypeScript 6.0.3, Svelte 5 runes, Bun 1.3.14 workspace: Follow standard conventi
 
 ## Recent Changes
 
-- 176-cif-contextual-tips: Added TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + Existing `onboarding-journey-engine` (extended), `help-engine` (`QUICK_PROMPT_SETS`, `FEATURE_REGISTRY`, `HelpArea`), `JourneyStore` (read-only outcome), `OnboardingStore` (`chosenGoal`, `goalInvitation`), `helpAssistant` and `cifPopout` (open and ask), `isHelpAssistantAvailable`, `helpStore` (tour), `modalUIStore` (dialogs), Floating UI (already a dependency), Tailwind 4 semantic tokens, Iconify classes. No new third-party dependency.
+- 178-hex-crawl-mode: Added TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14
 
-- 175-cif-guided-onboarding: Added TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + Existing `help-engine` (guidance action schema, catalogue, `validateAction`, quick prompts; extended with shell controls and `extraAvailable`), `HelpActionRunner` and `HelpHighlightService`, `onboarding-orchestrator` (extended), `OnboardingStore`, `helpStore` tour, `GettingStartedChecklist`, `vaultEventBus`, `@codex/events` app bus (`JOURNAL:CAPTURE`), `categories` store, `zod`. New internal package `packages/onboarding-journey-engine`. No new third-party dependency.
+- 176-cif-contextual-tips: Added TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + Existing `onboarding-journey-engine` (extended), `help-engine` (`QUICK_PROMPT_SETS`, `FEATURE_REGISTRY`, `HelpArea`), `JourneyStore` (read-only outcome), `OnboardingStore` (`chosenGoal`, `goalInvitation`), `helpAssistant` and `cifPopout` (open and ask), `isHelpAssistantAvailable`, `helpStore` (tour), `modalUIStore` (dialogs), Floating UI (already a dependency), Tailwind 4 semantic tokens, Iconify classes. No new third-party dependency.
 
 - 175-cif-guided-onboarding: Added TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + Existing `help-engine` (guidance action schema, catalogue, `validateAction`, quick prompts; extended with shell controls and `extraAvailable`), `HelpActionRunner` and `HelpHighlightService`, `onboarding-orchestrator` (extended), `OnboardingStore`, `helpStore` tour, `GettingStartedChecklist`, `vaultEventBus`, `@codex/events` app bus (`JOURNAL:CAPTURE`), `categories` store, `zod`. New internal package `packages/onboarding-journey-engine`. No new third-party dependency.
 

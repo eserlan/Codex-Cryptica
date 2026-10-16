@@ -22,6 +22,18 @@ describe("VTTSessionSnapshotManager", () => {
     expect(snapshot.chatMessages).not.toBe(harness.state.chatMessages);
   });
 
+  it("never includes hex crawl data in a snapshot sent to players (T009, FR-041)", () => {
+    const harness = createSnapshotManagerHarness();
+    harness.loadFullFixture();
+    const manager = new VTTSessionSnapshotManager(harness.deps);
+
+    // A GM's hex notes and drafts live on the map record, not in session state,
+    // so even with them present in the map they must not reach a snapshot.
+    const serialised = JSON.stringify(manager.createSnapshot());
+    expect(serialised).not.toContain("hexCrawl");
+    expect(serialised).not.toContain("aiNotes");
+  });
+
   it("applies full encounter snapshots into live state", () => {
     const harness = createSnapshotManagerHarness();
     const manager = new VTTSessionSnapshotManager(harness.deps);
