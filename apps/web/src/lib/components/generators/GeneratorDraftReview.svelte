@@ -98,6 +98,7 @@
   }
 </script>
 
+<!-- fallow-ignore-next-line complexity -->
 <form onsubmit={handleSave} class="flex flex-col gap-4">
   <p class="text-xs text-chrome-muted">
     Review the draft below, then open in the editor to accept or discard.

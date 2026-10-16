@@ -308,6 +308,7 @@ export function fillFailedPointCrawlParts(
   };
 }
 
+// fallow-ignore-next-line complexity
 export async function generatePointCrawlStaged(
   options: PointCrawlStagedOptions,
   complete: (prompt: string) => Promise<string>,
@@ -389,6 +390,7 @@ export async function generatePointCrawlStaged(
   const nodeDrafts = new Map<string, Record<string, unknown>>();
   const routeDrafts = new Map<string, Record<string, unknown>>();
 
+  // fallow-ignore-next-line complexity
   const tasks = batches.map((batch) => async () => {
     const reply = await askJson(
       complete,

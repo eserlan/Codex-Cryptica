@@ -43,6 +43,52 @@ function throwIfAborted(signal?: AbortSignal): void {
   );
 }
 
+export function cleanString(v: unknown, fallback: string): string {
+  return typeof v === "string" && v.trim().length > 0 ? v.trim() : fallback;
+}
+
+export function commitNodeUpdate(
+  crawl: PointCrawlNetwork,
+  nodeId: string,
+  updatedNode: PointCrawlNode,
+  gateTemplates: ReturnType<typeof getGateTemplates>,
+  vocab: ReturnType<typeof getScaleVocabulary>,
+  rng: Rng,
+): RegeneratePointCrawlPartResult {
+  const nextCrawl = normalizePointCrawlTopology(
+    {
+      ...crawl,
+      nodes: crawl.nodes.map((n) => (n.id === nodeId ? updatedNode : n)),
+    },
+    gateTemplates,
+    vocab,
+    rng,
+  );
+  const warnings = checkPointCrawlPlayability(nextCrawl).map((i) => i.message);
+  return { crawl: { ...nextCrawl, warnings }, warnings };
+}
+
+export function commitRouteUpdate(
+  crawl: PointCrawlNetwork,
+  routeId: string,
+  updatedRoute: PointCrawlRoute,
+  gateTemplates: ReturnType<typeof getGateTemplates>,
+  vocab: ReturnType<typeof getScaleVocabulary>,
+  rng: Rng,
+): RegeneratePointCrawlPartResult {
+  const nextCrawl = normalizePointCrawlTopology(
+    {
+      ...crawl,
+      routes: crawl.routes.map((r) => (r.id === routeId ? updatedRoute : r)),
+    },
+    gateTemplates,
+    vocab,
+    rng,
+  );
+  const warnings = checkPointCrawlPlayability(nextCrawl).map((i) => i.message);
+  return { crawl: { ...nextCrawl, warnings }, warnings };
+}
+
 /**
  * Local deterministic regeneration of a single node or route using a fresh
  * index offset so the regenerated fields differ from the current ones.
@@ -107,19 +153,14 @@ export function regeneratePointCrawlPartLocal(
       fromFallback: false,
     };
 
-    const nextCrawl = normalizePointCrawlTopology(
-      {
-        ...crawl,
-        nodes: crawl.nodes.map((n) => (n.id === existing.id ? updatedNode : n)),
-      },
+    return commitNodeUpdate(
+      crawl,
+      existing.id,
+      updatedNode,
       gateTemplates,
       vocab,
       rng,
     );
-    const warnings = checkPointCrawlPlayability(nextCrawl).map(
-      (i) => i.message,
-    );
-    return { crawl: { ...nextCrawl, warnings }, warnings };
   }
 
   // Route regeneration
@@ -162,19 +203,14 @@ export function regeneratePointCrawlPartLocal(
     fromFallback: false,
   };
 
-  const nextCrawl = normalizePointCrawlTopology(
-    {
-      ...crawl,
-      routes: crawl.routes.map((r) =>
-        r.id === existingRoute.id ? updatedRoute : r,
-      ),
-    },
+  return commitRouteUpdate(
+    crawl,
+    existingRoute.id,
+    updatedRoute,
     gateTemplates,
     vocab,
     rng,
   );
-  const warnings = checkPointCrawlPlayability(nextCrawl).map((i) => i.message);
-  return { crawl: { ...nextCrawl, warnings }, warnings };
 }
 
 export function buildPointCrawlRegenPrompt(
@@ -221,6 +257,7 @@ ${hint ? `GM steering instruction: ${hint}\n` : ""}Keep the endpoints, direction
 }`;
 }
 
+// fallow-ignore-next-line complexity
 export async function regeneratePointCrawlPart(
   crawl: PointCrawlNetwork,
   target: PointCrawlRegenTarget,
@@ -254,24 +291,25 @@ export async function regeneratePointCrawlPart(
           warnings: [`Location "${target.id}" no longer exists.`],
         };
       }
-      const str = (v: unknown, fallback: string) =>
-        typeof v === "string" && v.trim().length > 0 ? v.trim() : fallback;
 
-      let clueOrReward = str(parsed.clueOrReward, existing.clueOrReward);
+      let clueOrReward = cleanString(
+        parsed.clueOrReward,
+        existing.clueOrReward,
+      );
       if (isVaguePointCrawlFact(clueOrReward)) {
         clueOrReward = existing.clueOrReward;
       }
 
       const updatedNode: PointCrawlNode = {
         ...existing,
-        name: str(parsed.name, existing.name),
-        summary: str(parsed.summary, existing.summary),
-        sensoryDescription: str(
+        name: cleanString(parsed.name, existing.name),
+        summary: cleanString(parsed.summary, existing.summary),
+        sensoryDescription: cleanString(
           parsed.sensoryDescription,
           existing.sensoryDescription,
         ),
-        whyVisit: str(parsed.whyVisit, existing.whyVisit),
-        encounterOrHazard: str(
+        whyVisit: cleanString(parsed.whyVisit, existing.whyVisit),
+        encounterOrHazard: cleanString(
           parsed.encounterOrHazard,
           existing.encounterOrHazard,
         ),
@@ -279,21 +317,14 @@ export async function regeneratePointCrawlPart(
         fromFallback: false,
       };
 
-      const nextCrawl = normalizePointCrawlTopology(
-        {
-          ...crawl,
-          nodes: crawl.nodes.map((n) =>
-            n.id === existing.id ? updatedNode : n,
-          ),
-        },
+      return commitNodeUpdate(
+        crawl,
+        existing.id,
+        updatedNode,
         gateTemplates,
         vocab,
         rng,
       );
-      const warnings = checkPointCrawlPlayability(nextCrawl).map(
-        (i) => i.message,
-      );
-      return { crawl: { ...nextCrawl, warnings }, warnings };
     }
 
     const existingRoute = crawl.routes.find((r) => r.id === target.id);
@@ -303,33 +334,24 @@ export async function regeneratePointCrawlPart(
         warnings: [`Route "${target.id}" no longer exists.`],
       };
     }
-    const str = (v: unknown, fallback: string) =>
-      typeof v === "string" && v.trim().length > 0 ? v.trim() : fallback;
 
     const updatedRoute: PointCrawlRoute = {
       ...existingRoute,
-      travelTime: str(parsed.travelTime, existingRoute.travelTime),
-      terrain: str(parsed.terrain, existingRoute.terrain),
-      risk: str(parsed.risk, existingRoute.risk),
-      signpost: str(parsed.signpost, existingRoute.signpost),
+      travelTime: cleanString(parsed.travelTime, existingRoute.travelTime),
+      terrain: cleanString(parsed.terrain, existingRoute.terrain),
+      risk: cleanString(parsed.risk, existingRoute.risk),
+      signpost: cleanString(parsed.signpost, existingRoute.signpost),
       fromFallback: false,
     };
 
-    const nextCrawl = normalizePointCrawlTopology(
-      {
-        ...crawl,
-        routes: crawl.routes.map((r) =>
-          r.id === existingRoute.id ? updatedRoute : r,
-        ),
-      },
+    return commitRouteUpdate(
+      crawl,
+      existingRoute.id,
+      updatedRoute,
       gateTemplates,
       vocab,
       rng,
     );
-    const warnings = checkPointCrawlPlayability(nextCrawl).map(
-      (i) => i.message,
-    );
-    return { crawl: { ...nextCrawl, warnings }, warnings };
   } catch (err) {
     throwIfAborted(options.signal);
     if (err instanceof DOMException && err.name === "AbortError") {

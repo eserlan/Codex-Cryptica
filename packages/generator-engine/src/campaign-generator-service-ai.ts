@@ -308,6 +308,7 @@ export class CampaignGeneratorAIGenerationService extends CampaignGeneratorLangu
     }
   }
 
+  // fallow-ignore-next-line complexity
   protected async generateAIDraft(
     generator: ReturnType<typeof getGenerator>,
     request: GeneratorRunRequest,

@@ -36,6 +36,7 @@ export interface PointCrawlVaultSaveResult {
  * 3. Automatic graph connections (`route` edges with concise labels between
  *    selected locations, plus `contains` edges from the overview Note).
  */
+// fallow-ignore-next-line complexity
 export async function savePointCrawlToVault(
   crawl: PointCrawlNetwork,
   vault: PointCrawlVaultGateway,

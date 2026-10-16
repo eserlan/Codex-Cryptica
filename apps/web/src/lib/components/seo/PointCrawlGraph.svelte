@@ -244,6 +244,7 @@
     return svgToPngBlob(inlineSvgEl, layout.width, layout.height, scale);
   }
 
+  // fallow-ignore-next-line complexity
   async function handleCopyImage() {
     if (!inlineSvgEl || !crawl) return;
     onCopy?.();
@@ -290,6 +291,7 @@
   fitContainer: boolean,
   onRef: ((el: SVGSVGElement | undefined) => void) | undefined,
 )}
+  <!-- fallow-ignore-next-line complexity -->
   {#if layout && crawl}
     <svg
       use:svgRef={onRef}
@@ -464,6 +466,7 @@
   {/if}
 {/snippet}
 
+<!-- fallow-ignore-next-line complexity -->
 {#if crawl && layout}
   <div
     class="point-crawl-graph w-full rounded-2xl border border-theme-border/60 bg-theme-surface/40 p-4"

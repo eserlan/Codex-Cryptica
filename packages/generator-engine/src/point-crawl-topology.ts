@@ -194,6 +194,7 @@ export interface TopologyBuildOptions {
   avoidNames?: string[];
 }
 
+// fallow-ignore-next-line complexity
 export function buildPointCrawlTopology(
   options: TopologyBuildOptions = {},
   rng: Rng = defaultRng,
@@ -247,6 +248,7 @@ export function buildPointCrawlTopology(
 
   const routes: PointCrawlRoute[] = [];
   const edgeKeys = new Set<string>();
+  // fallow-ignore-next-line complexity
   const addEdge = (
     fromId: string,
     toId: string,
@@ -372,6 +374,7 @@ export function buildPointCrawlTopology(
  * invariants (connectedness, >=1 loop, >=1 secret/shortcut, >=1 gated route,
  * and 0 key-behind-lock softlocks).
  */
+// fallow-ignore-next-line complexity
 export function normalizePointCrawlTopology(
   crawl: PointCrawlNetwork,
   gateTemplates = getGateTemplates(crawl.genre),

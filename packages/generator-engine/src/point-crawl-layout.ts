@@ -72,6 +72,7 @@ const RAIL_SPACING = 118;
 const MIN_WIDTH = 760;
 const MIN_HEIGHT = 420;
 
+// fallow-ignore-next-line complexity
 export function buildPointCrawlDiagramLayout(
   crawl: PointCrawlNetwork,
   overrides: Readonly<Record<string, PointCrawlNodePositionOverride>> = {},

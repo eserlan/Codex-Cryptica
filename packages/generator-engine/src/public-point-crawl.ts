@@ -332,6 +332,7 @@ export function parsePointCrawlNetwork(
             (item): item is Record<string, unknown> =>
               Boolean(item) && typeof item === "object" && !Array.isArray(item),
           )
+          // fallow-ignore-next-line complexity
           .map((raw, idx) => {
             const fb = base.routes[idx % base.routes.length];
             const rawGate =

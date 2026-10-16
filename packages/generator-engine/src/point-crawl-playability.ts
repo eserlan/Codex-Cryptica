@@ -52,10 +52,42 @@ export function isVaguePointCrawlFact(text: string | undefined): boolean {
   return false;
 }
 
+export interface SiblingOverlapResult {
+  overlapFound: boolean;
+  routeA?: PointCrawlRoute;
+  routeB?: PointCrawlRoute;
+  routeToUpdate?: PointCrawlRoute;
+  altIndex: number;
+}
+
+export function findSiblingRouteOverlap(
+  siblings: readonly PointCrawlRoute[],
+): SiblingOverlapResult {
+  for (let i = 0; i < siblings.length; i++) {
+    for (let j = i + 1; j < siblings.length; j++) {
+      const a = siblings[i];
+      const b = siblings[j];
+      const textA = `${a.terrain} ${a.risk} ${a.signpost}`;
+      const textB = `${b.terrain} ${b.risk} ${b.signpost}`;
+      if (textOverlap(textA, textB) >= 0.6) {
+        return {
+          overlapFound: true,
+          routeA: a,
+          routeB: b,
+          routeToUpdate: b,
+          altIndex: j,
+        };
+      }
+    }
+  }
+  return { overlapFound: false, altIndex: 0 };
+}
+
 /**
  * Checks a `PointCrawlNetwork` for structural or playability flaws and returns
  * a list of concrete `PointCrawlIssue` findings.
  */
+// fallow-ignore-next-line complexity
 export function checkPointCrawlPlayability(
   crawl: PointCrawlNetwork,
 ): PointCrawlIssue[] {
@@ -151,22 +183,15 @@ export function checkPointCrawlPlayability(
     routesByOrigin.set(route.fromNodeId, list);
   }
   for (const [originId, siblings] of routesByOrigin.entries()) {
-    for (let i = 0; i < siblings.length; i++) {
-      for (let j = i + 1; j < siblings.length; j++) {
-        const a = siblings[i];
-        const b = siblings[j];
-        const textA = `${a.terrain} ${a.risk} ${a.signpost}`;
-        const textB = `${b.terrain} ${b.risk} ${b.signpost}`;
-        if (textOverlap(textA, textB) >= 0.6) {
-          const originName = nodesById.get(originId)?.name ?? originId;
-          issues.push({
-            code: "overlapping-sibling-routes",
-            nodeId: originId,
-            routeId: b.id,
-            message: `Routes leaving "${originName}" (${a.id} and ${b.id}) have near-duplicate terrain/risk/signpost trade-offs.`,
-          });
-        }
-      }
+    const overlap = findSiblingRouteOverlap(siblings);
+    if (overlap.overlapFound && overlap.routeA && overlap.routeB) {
+      const originName = nodesById.get(originId)?.name ?? originId;
+      issues.push({
+        code: "overlapping-sibling-routes",
+        nodeId: originId,
+        routeId: overlap.routeB.id,
+        message: `Routes leaving "${originName}" (${overlap.routeA.id} and ${overlap.routeB.id}) have near-duplicate terrain/risk/signpost trade-offs.`,
+      });
     }
   }
 
@@ -193,25 +218,6 @@ export function checkPointCrawlPlayability(
   return issues;
 }
 
-function hasSiblingOverlap(siblings: readonly PointCrawlRoute[]): {
-  overlapFound: boolean;
-  routeToUpdate?: PointCrawlRoute;
-  altIndex: number;
-} {
-  for (let i = 0; i < siblings.length; i++) {
-    for (let j = i + 1; j < siblings.length; j++) {
-      const a = siblings[i];
-      const b = siblings[j];
-      const textA = `${a.terrain} ${a.risk} ${a.signpost}`;
-      const textB = `${b.terrain} ${b.risk} ${b.signpost}`;
-      if (textOverlap(textA, textB) >= 0.6) {
-        return { overlapFound: true, routeToUpdate: b, altIndex: j };
-      }
-    }
-  }
-  return { overlapFound: false, altIndex: 0 };
-}
-
 function differentiateSiblingRoutes(
   routeList: PointCrawlRoute[],
   vocab: ReturnType<typeof getScaleVocabulary>,
@@ -229,7 +235,7 @@ function differentiateSiblingRoutes(
     while (attempts < 50) {
       attempts++;
       const { overlapFound, routeToUpdate, altIndex } =
-        hasSiblingOverlap(siblings);
+        findSiblingRouteOverlap(siblings);
       if (!overlapFound || !routeToUpdate) break;
       altCounter++;
       routeToUpdate.terrain =

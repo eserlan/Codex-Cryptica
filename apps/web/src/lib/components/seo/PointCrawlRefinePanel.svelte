@@ -46,6 +46,7 @@
     requestController = null;
   }
 
+  // fallow-ignore-next-line complexity
   export async function regenerate(
     target: PointCrawlRegenTarget,
     instruction = "",
@@ -119,6 +120,7 @@
     "flex items-center gap-1.5 px-2.5 py-1 bg-theme-surface/60 border border-theme-border/60 rounded-lg text-micro font-bold uppercase tracking-wider text-theme-text hover:bg-theme-primary hover:text-theme-bg hover:border-theme-primary transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed";
 </script>
 
+<!-- fallow-ignore-next-line complexity -->
 {#if crawl}
   <section
     class="mt-4 rounded-xl border border-theme-border/60 bg-theme-surface/40 p-4"

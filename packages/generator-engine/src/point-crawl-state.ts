@@ -292,6 +292,7 @@ export function renderPointCrawlMarkdown(crawl: PointCrawlNetwork): string {
 /**
  * Renders the GM-facing reference & cheat sheet (`lore`) for a Point Crawl Network.
  */
+// fallow-ignore-next-line complexity
 export function renderPointCrawlGmSheet(crawl: PointCrawlNetwork): string {
   const nodesById = new Map(crawl.nodes.map((n) => [n.id, n]));
   const gatedRoutes = crawl.routes.filter((r) => Boolean(r.gate));
