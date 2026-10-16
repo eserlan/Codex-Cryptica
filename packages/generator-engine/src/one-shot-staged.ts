@@ -143,23 +143,60 @@ function sceneBriefs(structure: Json): SceneBrief[] {
     const scene = rec(raw);
     const id = String(scene.id ?? `scene-${i + 1}`);
     const npcIds = list(scene.npcIds).map(String);
+    const sceneClues = [];
+    for (const c of clues) {
+      const recC = rec(c);
+      const routes = list(recC.routes);
+      let foundMethod;
+      let routeFound = false;
+      for (const r of routes) {
+        const recR = rec(r);
+        if (recR.sceneId === id) {
+          foundMethod = recR.method;
+          routeFound = true;
+          break;
+        }
+      }
+      if (routeFound) {
+        sceneClues.push({
+          label: recC.label,
+          text: recC.text,
+          foundBy: foundMethod,
+        });
+      }
+    }
+
+    const sceneThreads = [];
+    for (const t of threads) {
+      const recT = rec(t);
+      const sceneIds = list(recT.sceneIds);
+      let found = false;
+      for (const sceneId of sceneIds) {
+        if (String(sceneId) === id) {
+          found = true;
+          break;
+        }
+      }
+      if (found) {
+        sceneThreads.push(recT);
+      }
+    }
+
+    const sceneNpcs = [];
+    for (const n of npcs) {
+      const recN = rec(n);
+      if (npcIds.includes(String(recN.id))) {
+        sceneNpcs.push(recN);
+      }
+    }
+
+    // ⚡ Bolt Optimization: Replace chained .map().filter() with imperative loops
     return {
       scene,
       isOpening: i === 0,
-      clues: clues
-        .map(rec)
-        .filter((c) => list(c.routes).some((r) => rec(r).sceneId === id))
-        .map((c) => ({
-          label: c.label,
-          text: c.text,
-          foundBy: list(c.routes)
-            .map(rec)
-            .find((r) => r.sceneId === id)?.method,
-        })),
-      threads: threads
-        .map(rec)
-        .filter((t) => list(t.sceneIds).map(String).includes(id)),
-      npcs: npcs.map(rec).filter((n) => npcIds.includes(String(n.id))),
+      clues: sceneClues,
+      threads: sceneThreads,
+      npcs: sceneNpcs,
     };
   });
 }
