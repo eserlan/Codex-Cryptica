@@ -69,7 +69,7 @@
       <JourneyPill bind:pillEl={pill} onExpand={expand} {store} />
     {:else}
       <div
-        class="rounded-2xl border border-theme-primary/40 bg-theme-surface/98 p-4 shadow-2xl ring-1 ring-theme-primary/20 backdrop-blur-md"
+        class="rounded-2xl border border-theme-primary/30 bg-gradient-to-b from-theme-surface to-theme-surface/95 p-4 shadow-2xl ring-1 ring-theme-primary/20 backdrop-blur-md"
       >
         <JourneyHeader
           {store}
