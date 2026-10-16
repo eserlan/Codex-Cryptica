@@ -149,6 +149,59 @@ describe("PointCrawlGraph", () => {
     expect(node.getAttribute("transform")).toBe(before);
   });
 
+  it("preserves the grab offset across multiple drag moves", async () => {
+    render(PointCrawlGraph, { props: { crawl } });
+    const svg = screen.getByRole("img", {
+      name: `Interactive point crawl network graph for ${crawl.title}`,
+    });
+    const layout = buildPointCrawlDiagramLayout(crawl);
+    vi.spyOn(svg, "getBoundingClientRect").mockReturnValue({
+      x: 0,
+      y: 0,
+      top: 0,
+      left: 0,
+      right: layout.width,
+      bottom: layout.height,
+      width: layout.width,
+      height: layout.height,
+      toJSON: () => ({}),
+    });
+
+    const layoutNode = layout.nodes.find(
+      (item) => item.id === crawl.nodes[1].id,
+    )!;
+    const node = screen.getByTestId(`point-crawl-node-${layoutNode.id}`);
+    const pointerDown = { x: layoutNode.x + 12, y: layoutNode.y + 8 };
+    const readPosition = () => {
+      const match = node
+        .getAttribute("transform")
+        ?.match(/translate\(([^,]+),\s*([^)]+)\)/);
+      expect(match).not.toBeNull();
+      return { x: Number(match![1]), y: Number(match![2]) };
+    };
+
+    await fireEvent.pointerDown(node, {
+      button: 0,
+      pointerId: 1,
+      clientX: pointerDown.x,
+      clientY: pointerDown.y,
+    });
+    for (const pointer of [
+      { x: pointerDown.x + 8, y: pointerDown.y + 6 },
+      { x: pointerDown.x + 19, y: pointerDown.y + 21 },
+    ]) {
+      await fireEvent.pointerMove(svg, {
+        pointerId: 1,
+        clientX: pointer.x,
+        clientY: pointer.y,
+      });
+      const nodePosition = readPosition();
+      expect(nodePosition.x - pointer.x).toBe(layoutNode.x - pointerDown.x);
+      expect(nodePosition.y - pointer.y).toBe(layoutNode.y - pointerDown.y);
+    }
+    await fireEvent.pointerUp(svg, { pointerId: 1 });
+  });
+
   it("enters the fullscreen dialog, closes on Escape, and restores focus", async () => {
     render(PointCrawlGraph, { props: { crawl } });
     const trigger = screen.getByRole("button", {

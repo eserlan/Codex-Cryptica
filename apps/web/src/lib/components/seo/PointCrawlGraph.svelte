@@ -203,10 +203,10 @@
 
   function handleSvgPointerMove(event: PointerEvent) {
     if (!inlineSvgEl) return;
-    if (!draggingNodeId && pendingDrag) {
+    if (pendingDrag) {
       const deltaX = event.clientX - pendingDrag.clientX;
       const deltaY = event.clientY - pendingDrag.clientY;
-      if (Math.hypot(deltaX, deltaY) < 4) return;
+      if (!draggingNodeId && Math.hypot(deltaX, deltaY) < 4) return;
       const start = clientToSvgCoords(
         inlineSvgEl,
         pendingDrag.clientX,
@@ -228,13 +228,6 @@
       };
       return;
     }
-    if (!draggingNodeId) return;
-    const pt = clientToSvgCoords(inlineSvgEl, event.clientX, event.clientY);
-    if (!pt) return;
-    overrides = {
-      ...overrides,
-      [draggingNodeId]: pt,
-    };
   }
 
   function handleSvgPointerUp() {
