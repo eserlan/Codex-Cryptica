@@ -135,6 +135,58 @@ function sceneRecord(brief: SceneBrief, draft: Json | null) {
   };
 }
 
+function cluesForScene(clues: unknown[], id: string): unknown[] {
+  const sceneClues = [];
+  for (const c of clues) {
+    const recC = rec(c);
+    const routes = list(recC.routes);
+    let foundMethod;
+    let routeFound = false;
+    for (const r of routes) {
+      const recR = rec(r);
+      if (recR.sceneId === id) {
+        foundMethod = recR.method;
+        routeFound = true;
+        break;
+      }
+    }
+    if (routeFound) {
+      sceneClues.push({
+        label: recC.label,
+        text: recC.text,
+        foundBy: foundMethod,
+      });
+    }
+  }
+  return sceneClues;
+}
+
+function threadsForScene(threads: unknown[], id: string): unknown[] {
+  const sceneThreads = [];
+  for (const t of threads) {
+    const recT = rec(t);
+    const sceneIds = list(recT.sceneIds);
+    let found = false;
+    for (const sceneId of sceneIds) {
+      if (String(sceneId) === id) {
+        found = true;
+        break;
+      }
+    }
+    if (found) sceneThreads.push(recT);
+  }
+  return sceneThreads;
+}
+
+function npcsForScene(npcs: unknown[], npcIds: string[]): unknown[] {
+  const sceneNpcs = [];
+  for (const n of npcs) {
+    const recN = rec(n);
+    if (npcIds.includes(String(recN.id))) sceneNpcs.push(recN);
+  }
+  return sceneNpcs;
+}
+
 function sceneBriefs(structure: Json): SceneBrief[] {
   const npcs = list(structure.npcs);
   const clues = list(structure.clues);
@@ -143,60 +195,14 @@ function sceneBriefs(structure: Json): SceneBrief[] {
     const scene = rec(raw);
     const id = String(scene.id ?? `scene-${i + 1}`);
     const npcIds = list(scene.npcIds).map(String);
-    const sceneClues = [];
-    for (const c of clues) {
-      const recC = rec(c);
-      const routes = list(recC.routes);
-      let foundMethod;
-      let routeFound = false;
-      for (const r of routes) {
-        const recR = rec(r);
-        if (recR.sceneId === id) {
-          foundMethod = recR.method;
-          routeFound = true;
-          break;
-        }
-      }
-      if (routeFound) {
-        sceneClues.push({
-          label: recC.label,
-          text: recC.text,
-          foundBy: foundMethod,
-        });
-      }
-    }
-
-    const sceneThreads = [];
-    for (const t of threads) {
-      const recT = rec(t);
-      const sceneIds = list(recT.sceneIds);
-      let found = false;
-      for (const sceneId of sceneIds) {
-        if (String(sceneId) === id) {
-          found = true;
-          break;
-        }
-      }
-      if (found) {
-        sceneThreads.push(recT);
-      }
-    }
-
-    const sceneNpcs = [];
-    for (const n of npcs) {
-      const recN = rec(n);
-      if (npcIds.includes(String(recN.id))) {
-        sceneNpcs.push(recN);
-      }
-    }
 
     // ⚡ Bolt Optimization: Replace chained .map().filter() with imperative loops
     return {
       scene,
       isOpening: i === 0,
-      clues: sceneClues,
-      threads: sceneThreads,
-      npcs: sceneNpcs,
+      clues: cluesForScene(clues, id),
+      threads: threadsForScene(threads, id),
+      npcs: npcsForScene(npcs, npcIds),
     };
   });
 }
