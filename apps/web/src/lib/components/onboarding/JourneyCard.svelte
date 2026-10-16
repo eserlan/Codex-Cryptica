@@ -34,7 +34,7 @@
   const placementClass = $derived(
     placeTop
       ? "top-24"
-      : "bottom-[calc(4.5rem+env(safe-area-inset-bottom,0px))] md:bottom-6",
+      : "bottom-[calc(4.5rem+env(safe-area-inset-bottom,0px))] md:bottom-14",
   );
 
   function collapse() {
@@ -63,13 +63,13 @@
     data-testid="journey-card"
     data-placement={placeTop ? "top" : "bottom"}
     onkeydown={handleKeydown}
-    class="fixed z-[85] inset-x-2 sm:inset-x-auto sm:right-4 sm:w-[22rem] {placementClass}"
+    class="fixed z-[85] inset-x-2 sm:inset-x-auto sm:right-6 sm:w-[22rem] {placementClass}"
   >
     {#if store.collapsed}
       <JourneyPill bind:pillEl={pill} onExpand={expand} {store} />
     {:else}
       <div
-        class="rounded-2xl border border-theme-primary/40 bg-theme-surface/95 p-4 shadow-2xl backdrop-blur-md"
+        class="rounded-2xl border border-theme-primary/40 bg-theme-surface/98 p-4 shadow-2xl ring-1 ring-theme-primary/20 backdrop-blur-md"
       >
         <JourneyHeader
           {store}
