@@ -385,7 +385,8 @@
         {#if session.warnings.length === 0}
           <p class="text-xs text-theme-muted">No warnings.</p>
         {:else}
-          {#each session.warnings as warning (`${warning.code}:${warning.ref ?? warning.message}`)}
+          <!-- A single entity can emit several warnings with identical code/ref (e.g. extra CIF images). -->
+          {#each session.warnings as warning, warningIndex (warningIndex)}
             <div class="text-xs text-theme-text">
               <div class="font-semibold">{warning.code}</div>
               <div class="text-theme-muted break-words">{warning.message}</div>
