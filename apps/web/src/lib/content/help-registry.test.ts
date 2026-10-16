@@ -29,6 +29,17 @@ describe("help registry against the real in-app help articles", () => {
     expect(helpIds.has("session-hub")).toBe(true);
   });
 
+  it("includes the Tales of the Valiant campaign guide article", () => {
+    expect(helpIds.has("tales-of-the-valiant")).toBe(true);
+    const tovArticle = articles.find((a) => a.id === "tales-of-the-valiant");
+    expect(tovArticle).toBeDefined();
+    expect(tovArticle?.title).toBe(
+      "Tales of the Valiant (BFRD) Campaign Guide",
+    );
+    expect(tovArticle?.content).toContain("Luck");
+    expect(tovArticle?.content).toContain("Doom");
+  });
+
   it("would catch a removed article", () => {
     const withoutConnections = new Set(
       [...helpIds].filter((id) => id !== "connections-tab"),

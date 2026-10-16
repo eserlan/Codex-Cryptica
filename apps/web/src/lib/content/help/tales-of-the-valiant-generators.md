@@ -37,6 +37,12 @@ Codex Cryptica supports generating non-player characters, monsters, and magic it
    - Generates authentic BFRD monster stat blocks with creature size, type, Armor Class, Hit Points, speed, ability scores, Doom counters, traits, actions, and reactions. Maps to the monster stat sheet (`builtin-tov-monster`).
 3. **Magic Item / Minor Magic Item Generator**:
    - Generates BFRD item statistics including rarity, category, attunement criteria, activation action economy, charges, and saving throw DCs. When saved, game statistics are appended to the entity under `### Game Statistics (Tales of the Valiant)`.
+4. **Encounter Generator**:
+   - Injects qualitative challenge pacing (Trivial, Moderate, Dangerous, Deadly) and adversary recommendations according to party size and level.
+
+### Complete Campaign Guide
+
+For comprehensive documentation on system profiles, Luck and Doom tracking, and BFRD stat-block imports, see the [Tales of the Valiant Campaign Guide](help:tales-of-the-valiant).
 
 ### Offline & AI Availability
 
