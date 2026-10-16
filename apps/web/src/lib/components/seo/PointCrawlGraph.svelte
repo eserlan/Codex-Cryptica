@@ -1,7 +1,7 @@
 <script lang="ts">
+  import { onDestroy } from "svelte";
   import {
     buildPointCrawlDiagramLayout,
-    formatRouteConnectionLabel,
     type PointCrawlNetwork,
     type PointCrawlNode,
     type PointCrawlRoute,
@@ -9,6 +9,9 @@
   } from "generator-engine";
   import { svgToPngBlob } from "$lib/utils/svg-export";
   import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
+  import { focusTrap } from "$lib/actions/focusTrap";
+  import PointCrawlGraphToolbar from "./PointCrawlGraphToolbar.svelte";
+  import PointCrawlInspector from "./PointCrawlInspector.svelte";
 
   let {
     crawl,
@@ -40,8 +43,6 @@
       overrides = {};
       inspectedNodeId = crawl.startNodeId;
       inspectedRouteId = null;
-      steeringNote = "";
-      showSteeringInput = false;
     }
   });
 
@@ -49,13 +50,24 @@
   let inspectedNodeId = $state<string | null>(null);
   let inspectedRouteId = $state<string | null>(null);
   let draggingNodeId = $state<string | null>(null);
+  let pendingDrag: {
+    nodeId: string;
+    clientX: number;
+    clientY: number;
+    nodeX: number;
+    nodeY: number;
+  } | null = null;
   let inlineSvgEl = $state<SVGSVGElement | undefined>();
   let fitMode = $state<"actual" | "box">("box");
   let showFullscreen = $state(false);
   let copyState = $state<"idle" | "copied" | "downloaded" | "error">("idle");
   let copyTimeout: ReturnType<typeof setTimeout> | undefined;
-  let showSteeringInput = $state(false);
-  let steeringNote = $state("");
+  let isDestroyed = false;
+
+  onDestroy(() => {
+    isDestroyed = true;
+    clearTimeout(copyTimeout);
+  });
 
   const layout = $derived(
     crawl ? buildPointCrawlDiagramLayout(crawl, overrides) : null,
@@ -102,41 +114,22 @@
     return ids;
   });
 
-  function nodeNameById(id: string): string {
-    return crawl?.nodes.find((n) => n.id === id)?.name ?? id;
-  }
-
-  function roleBadgeLabel(role: PointCrawlNode["role"]): string {
-    switch (role) {
-      case "start":
-        return "START";
-      case "goal":
-        return "GOAL";
-      case "hub":
-        return "HUB";
-      case "secret":
-        return "SECRET";
-      case "hazard":
-        return "HAZARD";
-      case "obstacle":
-        return "OBSTACLE";
-      default:
-        return "SIDE";
-    }
+  function roleBadgeLabel(
+    node: Pick<PointCrawlNode, "role" | "structuralRole">,
+  ): string {
+    return (node.structuralRole ?? node.role)
+      .replaceAll("-", " ")
+      .toUpperCase();
   }
 
   function selectNode(nodeId: string) {
     inspectedNodeId = nodeId;
     inspectedRouteId = null;
-    showSteeringInput = false;
-    steeringNote = "";
   }
 
   function selectRoute(routeId: string) {
     inspectedRouteId = routeId;
     inspectedNodeId = null;
-    showSteeringInput = false;
-    steeringNote = "";
   }
 
   function toggleNodeInSave(nodeId: string) {
@@ -193,24 +186,57 @@
 
   function handleNodePointerDown(event: PointerEvent, nodeId: string) {
     if (event.button !== 0) return;
-    draggingNodeId = nodeId;
+    const node = layout?.nodes.find((item) => item.id === nodeId);
+    if (!node) return;
+    pendingDrag = {
+      nodeId,
+      clientX: event.clientX,
+      clientY: event.clientY,
+      nodeX: node.x,
+      nodeY: node.y,
+    };
+    draggingNodeId = null;
     selectNode(nodeId);
     const target = event.currentTarget as Element | null;
     target?.setPointerCapture?.(event.pointerId);
   }
 
   function handleSvgPointerMove(event: PointerEvent) {
-    if (!draggingNodeId || !inlineSvgEl) return;
-    const pt = clientToSvgCoords(inlineSvgEl, event.clientX, event.clientY);
-    if (!pt) return;
-    overrides = {
-      ...overrides,
-      [draggingNodeId]: pt,
-    };
+    if (!inlineSvgEl) return;
+    if (pendingDrag) {
+      const deltaX = event.clientX - pendingDrag.clientX;
+      const deltaY = event.clientY - pendingDrag.clientY;
+      if (!draggingNodeId && Math.hypot(deltaX, deltaY) < 4) return;
+      const start = clientToSvgCoords(
+        inlineSvgEl,
+        pendingDrag.clientX,
+        pendingDrag.clientY,
+      );
+      const current = clientToSvgCoords(
+        inlineSvgEl,
+        event.clientX,
+        event.clientY,
+      );
+      if (!start || !current) return;
+      draggingNodeId = pendingDrag.nodeId;
+      overrides = {
+        ...overrides,
+        [pendingDrag.nodeId]: {
+          x: pendingDrag.nodeX + current.x - start.x,
+          y: pendingDrag.nodeY + current.y - start.y,
+        },
+      };
+      return;
+    }
   }
 
   function handleSvgPointerUp() {
     draggingNodeId = null;
+    pendingDrag = null;
+  }
+
+  function handleFullscreenKeydown(event: KeyboardEvent) {
+    if (showFullscreen && event.key === "Escape") showFullscreen = false;
   }
 
   /** Direct programmatic move helper (also used by tests and keyboard). */
@@ -251,7 +277,7 @@
     clearTimeout(copyTimeout);
     try {
       const blob = await exportPng();
-      if (!blob) return;
+      if (!blob || isDestroyed) return;
       const filename = `${(crawl.title || "point-crawl").toLowerCase().replace(/[^a-z0-9]+/g, "-")}-graph.png`;
       if (
         typeof ClipboardItem !== "undefined" &&
@@ -261,31 +287,24 @@
         await navigator.clipboard.write([
           new ClipboardItem({ "image/png": blob }),
         ]);
+        if (isDestroyed) return;
         copyState = "copied";
       } else {
         downloadBlob(blob, filename);
+        if (isDestroyed) return;
         copyState = "downloaded";
       }
     } catch (error) {
+      if (isDestroyed) return;
       console.error("Copy point-crawl diagram failed", error);
       copyState = "error";
     }
+    if (isDestroyed) return;
     copyTimeout = setTimeout(() => (copyState = "idle"), 2200);
   }
-
-  function submitInspectorRegen(e?: SubmitEvent) {
-    e?.preventDefault();
-    if (!onRegeneratePart) return;
-    const instruction = steeringNote.trim() || undefined;
-    if (inspectedNode) {
-      onRegeneratePart({ kind: "node", id: inspectedNode.id }, instruction);
-    } else if (inspectedRoute) {
-      onRegeneratePart({ kind: "route", id: inspectedRoute.id }, instruction);
-    }
-    showSteeringInput = false;
-    steeringNote = "";
-  }
 </script>
+
+<svelte:window onkeydown={handleFullscreenKeydown} />
 
 {#snippet graphSvg(
   fitContainer: boolean,
@@ -450,7 +469,7 @@
               : 'fill-theme-text'}"
             font-size="8"
           >
-            {roleBadgeLabel(node.role)}
+            {roleBadgeLabel(node)}
           </text>
           <text
             y="34"
@@ -472,97 +491,20 @@
     class="point-crawl-graph w-full rounded-2xl border border-theme-border/60 bg-theme-surface/40 p-4"
     data-testid="point-crawl-graph"
   >
-    <!-- Toolbar -->
-    <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
-      <div class="flex flex-wrap items-center gap-2">
-        <span
-          class="text-micro font-bold uppercase tracking-wider text-theme-text/80"
-        >
-          Point Crawl Network ({crawl.nodes.length} points · {crawl.routes
-            .length} routes)
-        </span>
-        <span
-          class="rounded-full border border-theme-border/60 bg-theme-bg/50 px-2 py-0.5 text-nano font-mono text-theme-muted"
-          data-testid="point-crawl-save-count"
-        >
-          Saving {selectedNodeIds.length} of {crawl.nodes.length} points
-        </span>
-      </div>
-
-      <div class="flex flex-wrap items-center gap-1.5">
-        <button
-          type="button"
-          onclick={selectAllNodes}
-          class="rounded-md border border-theme-border/50 bg-theme-bg/40 px-2 py-1 text-nano font-bold uppercase tracking-wider text-theme-text/75 transition hover:border-theme-primary hover:text-theme-primary"
-          data-testid="point-crawl-select-all"
-        >
-          Select All
-        </button>
-        <button
-          type="button"
-          onclick={selectCoreNodesOnly}
-          class="rounded-md border border-theme-border/50 bg-theme-bg/40 px-2 py-1 text-nano font-bold uppercase tracking-wider text-theme-text/75 transition hover:border-theme-primary hover:text-theme-primary"
-          data-testid="point-crawl-select-core"
-          title="Deselect optional side and secret points from Vault Save"
-        >
-          Core Only
-        </button>
-        {#if hasPositionOverrides}
-          <button
-            type="button"
-            onclick={resetLayout}
-            class="rounded-md border border-theme-border/50 bg-theme-bg/40 px-2 py-1 text-nano font-bold uppercase tracking-wider text-theme-text/75 transition hover:border-theme-primary hover:text-theme-primary"
-            data-testid="point-crawl-reset-layout"
-          >
-            Reset Layout
-          </button>
-        {/if}
-        <button
-          type="button"
-          onclick={handleCopyImage}
-          class="flex h-7 w-7 items-center justify-center rounded-md border border-theme-border/50 bg-theme-bg/40 text-theme-text/70 transition-all hover:border-theme-primary hover:text-theme-primary"
-          title={copyState === "copied"
-            ? "Copied!"
-            : copyState === "downloaded"
-              ? "Downloaded"
-              : "Copy network graph as PNG"}
-          aria-label="Copy diagram as image"
-        >
-          <span
-            class={copyState === "copied"
-              ? "icon-[lucide--check] h-3.5 w-3.5"
-              : "icon-[lucide--copy] h-3.5 w-3.5"}
-            aria-hidden="true"
-          ></span>
-        </button>
-        <button
-          type="button"
-          onclick={() => (fitMode = fitMode === "actual" ? "box" : "actual")}
-          class="flex h-7 w-7 items-center justify-center rounded-md border border-theme-border/50 bg-theme-bg/40 text-theme-text/70 transition-all hover:border-theme-primary hover:text-theme-primary"
-          title={fitMode === "actual"
-            ? "Fit to box"
-            : "Show actual scrollable size"}
-          aria-label={fitMode === "actual" ? "Fit to box" : "Show actual size"}
-        >
-          <span
-            class={fitMode === "actual"
-              ? "icon-[lucide--scan] h-3.5 w-3.5"
-              : "icon-[lucide--move-horizontal] h-3.5 w-3.5"}
-            aria-hidden="true"
-          ></span>
-        </button>
-        <button
-          type="button"
-          onclick={() => (showFullscreen = true)}
-          class="flex h-7 w-7 items-center justify-center rounded-md border border-theme-border/50 bg-theme-bg/40 text-theme-text/70 transition-all hover:border-theme-primary hover:text-theme-primary"
-          title="Fullscreen graph"
-          aria-label="Fit diagram to screen"
-        >
-          <span class="icon-[lucide--maximize] h-3.5 w-3.5" aria-hidden="true"
-          ></span>
-        </button>
-      </div>
-    </div>
+    <PointCrawlGraphToolbar
+      nodeCount={crawl.nodes.length}
+      routeCount={crawl.routes.length}
+      selectedCount={selectedNodeIds.length}
+      {hasPositionOverrides}
+      {copyState}
+      {fitMode}
+      onSelectAll={selectAllNodes}
+      onSelectCore={selectCoreNodesOnly}
+      onResetLayout={resetLayout}
+      onCopyImage={handleCopyImage}
+      onToggleFit={() => (fitMode = fitMode === "actual" ? "box" : "actual")}
+      onFullscreen={() => (showFullscreen = true)}
+    />
 
     <div
       class="rounded-xl border border-theme-border/40 bg-theme-bg/40 p-2 {fitMode ===
@@ -578,246 +520,29 @@
       whether it is included in Vault Save, or drag nodes to rearrange the map.
     </p>
 
-    <!-- Selected Node or Route Inspector -->
-    {#if inspectedNode}
-      <div
-        class="mt-3 rounded-xl border border-theme-border/60 bg-theme-bg/60 p-3.5 text-xs"
-        data-testid="point-crawl-node-inspector"
-      >
-        <div class="flex flex-wrap items-start justify-between gap-2">
-          <div>
-            <div class="flex items-center gap-2">
-              <span
-                class="rounded bg-theme-primary/15 px-1.5 py-0.5 font-mono text-nano font-bold uppercase text-theme-primary"
-              >
-                {inspectedNode.role}
-              </span>
-              <h4 class="font-header text-sm font-bold text-theme-text">
-                {inspectedNode.name}
-              </h4>
-            </div>
-            <p class="mt-1 text-theme-text/85">{inspectedNode.summary}</p>
-          </div>
-
-          <div class="flex flex-wrap items-center gap-2">
-            <label
-              class="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-theme-border/60 bg-theme-surface/50 px-2.5 py-1 text-nano font-bold uppercase tracking-wider text-theme-text"
-            >
-              <input
-                type="checkbox"
-                checked={selectedSet.has(inspectedNode.id)}
-                onchange={() => toggleNodeInSave(inspectedNode.id)}
-                class="accent-theme-primary"
-                data-testid="point-crawl-toggle-save-{inspectedNode.id}"
-              />
-              Include in Vault Save
-            </label>
-            {#if onRegeneratePart}
-              {#if canUseAI}
-                <button
-                  type="button"
-                  disabled={busyId !== null}
-                  onclick={() => (showSteeringInput = !showSteeringInput)}
-                  class="inline-flex items-center gap-1 rounded-md border border-theme-border/60 bg-theme-surface/60 px-2.5 py-1 text-nano font-bold uppercase tracking-wider text-theme-text hover:border-theme-primary hover:text-theme-primary disabled:opacity-50"
-                  data-testid="point-crawl-inspector-revise"
-                >
-                  <span class="icon-[lucide--pencil] h-3 w-3" aria-hidden="true"
-                  ></span>
-                  Steer
-                </button>
-              {/if}
-              <button
-                type="button"
-                disabled={busyId !== null}
-                onclick={() => submitInspectorRegen()}
-                class="inline-flex items-center gap-1 rounded-md border border-theme-border/60 bg-theme-surface/60 px-2.5 py-1 text-nano font-bold uppercase tracking-wider text-theme-text hover:border-theme-primary hover:text-theme-primary disabled:opacity-50"
-                data-testid="point-crawl-inspector-regenerate"
-              >
-                <span
-                  class="icon-[lucide--refresh-cw] h-3 w-3 {busyId ===
-                  inspectedNode.id
-                    ? 'animate-spin'
-                    : ''}"
-                  aria-hidden="true"
-                ></span>
-                Regenerate Node
-              </button>
-            {/if}
-          </div>
-        </div>
-
-        <dl class="mt-2.5 grid grid-cols-1 gap-1.5 sm:grid-cols-2">
-          <div>
-            <dt class="font-bold text-theme-muted">Sensory:</dt>
-            <dd class="text-theme-text/90">
-              {inspectedNode.sensoryDescription}
-            </dd>
-          </div>
-          <div>
-            <dt class="font-bold text-theme-muted">Why Visit:</dt>
-            <dd class="text-theme-text/90">
-              {inspectedNode.whyVisit}
-            </dd>
-          </div>
-          <div>
-            <dt class="font-bold text-theme-muted">Encounter / Hazard:</dt>
-            <dd class="text-theme-text/90">
-              {inspectedNode.encounterOrHazard}
-            </dd>
-          </div>
-          {#if inspectedNode.clueOrReward}
-            <div>
-              <dt class="font-bold text-theme-muted">
-                Clue / Reward / Leverage:
-              </dt>
-              <dd class="text-theme-text/90">
-                {inspectedNode.clueOrReward}
-              </dd>
-            </div>
-          {/if}
-        </dl>
-
-        {#if showSteeringInput && canUseAI}
-          <form
-            class="mt-2.5 flex items-center gap-2"
-            onsubmit={submitInspectorRegen}
-          >
-            <input
-              type="text"
-              bind:value={steeringNote}
-              maxlength="400"
-              placeholder="How should this location change? (e.g. flooded shrine with a rival explorer)"
-              aria-label="Steer location rewrite"
-              class="min-w-0 flex-1 rounded-lg border border-theme-border/60 bg-theme-bg px-2.5 py-1 text-xs text-theme-text focus:border-theme-primary focus:outline-none"
-            />
-            <button
-              type="submit"
-              disabled={!steeringNote.trim() || busyId !== null}
-              class="rounded-md bg-theme-primary px-3 py-1 text-nano font-bold uppercase tracking-wider text-theme-bg disabled:opacity-50"
-            >
-              Apply
-            </button>
-          </form>
-        {/if}
-      </div>
-    {:else if inspectedRoute}
-      <div
-        class="mt-3 rounded-xl border border-theme-border/60 bg-theme-bg/60 p-3.5 text-xs"
-        data-testid="point-crawl-route-inspector"
-      >
-        <div class="flex flex-wrap items-start justify-between gap-2">
-          <div>
-            <div class="flex items-center gap-2">
-              <span
-                class="rounded bg-theme-primary/15 px-1.5 py-0.5 font-mono text-nano font-bold uppercase text-theme-primary"
-              >
-                {inspectedRoute.visibility} · {inspectedRoute.direction}
-              </span>
-              <h4 class="font-header text-sm font-bold text-theme-text">
-                {nodeNameById(inspectedRoute.fromNodeId)} → {nodeNameById(
-                  inspectedRoute.toNodeId,
-                )}
-              </h4>
-            </div>
-            <p class="mt-1 font-mono text-nano text-theme-muted">
-              {formatRouteConnectionLabel(inspectedRoute)}
-            </p>
-          </div>
-
-          {#if onRegeneratePart}
-            <div class="flex items-center gap-2">
-              {#if canUseAI}
-                <button
-                  type="button"
-                  disabled={busyId !== null}
-                  onclick={() => (showSteeringInput = !showSteeringInput)}
-                  class="inline-flex items-center gap-1 rounded-md border border-theme-border/60 bg-theme-surface/60 px-2.5 py-1 text-nano font-bold uppercase tracking-wider text-theme-text hover:border-theme-primary hover:text-theme-primary disabled:opacity-50"
-                  data-testid="point-crawl-inspector-revise"
-                >
-                  <span class="icon-[lucide--pencil] h-3 w-3" aria-hidden="true"
-                  ></span>
-                  Steer
-                </button>
-              {/if}
-              <button
-                type="button"
-                disabled={busyId !== null}
-                onclick={() => submitInspectorRegen()}
-                class="inline-flex items-center gap-1 rounded-md border border-theme-border/60 bg-theme-surface/60 px-2.5 py-1 text-nano font-bold uppercase tracking-wider text-theme-text hover:border-theme-primary hover:text-theme-primary disabled:opacity-50"
-                data-testid="point-crawl-inspector-regenerate"
-              >
-                <span
-                  class="icon-[lucide--refresh-cw] h-3 w-3 {busyId ===
-                  inspectedRoute.id
-                    ? 'animate-spin'
-                    : ''}"
-                  aria-hidden="true"
-                ></span>
-                Regenerate Route
-              </button>
-            </div>
-          {/if}
-        </div>
-
-        <dl class="mt-2.5 grid grid-cols-1 gap-1.5 sm:grid-cols-2">
-          <div>
-            <dt class="font-bold text-theme-muted">Signpost at Origin:</dt>
-            <dd class="text-theme-text/90">{inspectedRoute.signpost}</dd>
-          </div>
-          <div>
-            <dt class="font-bold text-theme-muted">Risk / Toll:</dt>
-            <dd class="text-theme-text/90">{inspectedRoute.risk}</dd>
-          </div>
-          {#if inspectedRoute.gate}
-            <div class="sm:col-span-2">
-              <dt class="font-bold text-theme-accent">
-                Gate ({inspectedRoute.gate.kind}):
-              </dt>
-              <dd class="text-theme-text/90">
-                Requires <strong>{inspectedRoute.gate.requirement}</strong>
-                (found at {nodeNameById(inspectedRoute.gate.unlockedByNodeId)})
-              </dd>
-            </div>
-          {/if}
-        </dl>
-
-        {#if showSteeringInput && canUseAI}
-          <form
-            class="mt-2.5 flex items-center gap-2"
-            onsubmit={submitInspectorRegen}
-          >
-            <input
-              type="text"
-              bind:value={steeringNote}
-              maxlength="400"
-              placeholder="How should this route change? (e.g. collapsed rope bridge over a chasm)"
-              aria-label="Steer route rewrite"
-              class="min-w-0 flex-1 rounded-lg border border-theme-border/60 bg-theme-bg px-2.5 py-1 text-xs text-theme-text focus:border-theme-primary focus:outline-none"
-            />
-            <button
-              type="submit"
-              disabled={!steeringNote.trim() || busyId !== null}
-              class="rounded-md bg-theme-primary px-3 py-1 text-nano font-bold uppercase tracking-wider text-theme-bg disabled:opacity-50"
-            >
-              Apply
-            </button>
-          </form>
-        {/if}
-      </div>
-    {/if}
+    <PointCrawlInspector
+      node={inspectedNode}
+      route={inspectedRoute}
+      nodes={crawl.nodes}
+      included={inspectedNode ? selectedSet.has(inspectedNode.id) : false}
+      {canUseAI}
+      {busyId}
+      onToggleSave={inspectedNode ? toggleNodeInSave : undefined}
+      {onRegeneratePart}
+    />
   </div>
 {/if}
 
 {#if showFullscreen}
+  <!-- svelte-ignore a11y_click_events_have_key_events -->
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
     class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-6"
     role="dialog"
     aria-modal="true"
     aria-label="Point crawl graph, fit to screen"
     tabindex="-1"
-    onkeydown={(e) => {
-      if (e.key === "Escape") showFullscreen = false;
-    }}
+    use:focusTrap
     onclick={(e) => {
       if (e.target === e.currentTarget) showFullscreen = false;
     }}
