@@ -14,6 +14,7 @@ import { localDecisions } from "./one-shot-local-state";
 import { parseFencedJson } from "./llm-response-utils";
 import { parseOneShotAdventure, rec } from "./one-shot-parse";
 import { checkPlayability } from "./one-shot-playability";
+import { sceneOrder } from "./one-shot-state";
 import {
   applyOneShotRepair,
   buildOneShotRepairPrompt,
@@ -30,6 +31,7 @@ import {
 } from "./one-shot-stage-prompts";
 import type {
   OneShotAdventure,
+  OneShotGap,
   OneShotGeneratorOptions,
   ResolvedOneShot,
 } from "./one-shot-types";
@@ -52,8 +54,6 @@ export interface OneShotStageDeps {
   call: (prompt: StagePrompt, signal?: AbortSignal) => Promise<string>;
   signal?: AbortSignal;
   onProgress?: (steps: OneShotProgressStep[]) => void;
-  /** How many scene/NPC calls may run at once. */
-  concurrency?: number;
 }
 
 export interface OneShotStagedResult {
@@ -124,25 +124,15 @@ function throwIfAborted(signal?: AbortSignal): void {
   );
 }
 
-/** Run tasks with at most `limit` in flight, keeping result order. */
-async function pool<T>(
-  tasks: (() => Promise<T>)[],
-  limit: number,
-  signal?: AbortSignal,
-): Promise<T[]> {
-  const results: T[] = new Array(tasks.length);
-  let next = 0;
-  const worker = async () => {
-    while (next < tasks.length) {
-      throwIfAborted(signal);
-      const i = next++;
-      results[i] = await tasks[i]();
-    }
+/** What a written scene settled, for the scenes after it. */
+function sceneRecord(brief: SceneBrief, draft: Json | null) {
+  const scene = brief.scene;
+  return {
+    id: scene.id,
+    title: scene.title,
+    outcomes: draft ? list(draft.outcomes) : [],
+    exit: draft?.exit ?? scene.whereabouts ?? [],
   };
-  await Promise.all(
-    Array.from({ length: Math.min(limit, tasks.length) }, worker),
-  );
-  return results;
 }
 
 function sceneBriefs(structure: Json): SceneBrief[] {
@@ -240,6 +230,7 @@ function assemble(drafts: Drafts): Json {
     antagonistId: "npc-2",
     clues: structure.clues,
     threads: structure.threads,
+    resources: structure.resources,
     theories: structure.theories,
     ...finaleParts(finale, villain),
     clock: structure.clock,
@@ -281,30 +272,42 @@ function fillFailedParts(
   return { adventure: filled, parts };
 }
 
-async function review(
+/** One repair call against the given problems, retried once if unreadable. */
+async function repairOnce(
   deps: OneShotStageDeps,
   adventure: OneShotAdventure,
-): Promise<{ adventure: OneShotAdventure; skipped: boolean }> {
-  const prompt = buildOneShotRepairPrompt(
-    adventure,
-    checkPlayability(adventure),
-  );
+  gaps: OneShotGap[],
+): Promise<OneShotAdventure | null> {
+  const prompt = buildOneShotRepairPrompt(adventure, gaps);
   for (let attempt = 0; attempt < 2; attempt++) {
     throwIfAborted(deps.signal);
     try {
       const text = await deps.call(prompt, deps.signal);
       throwIfAborted(deps.signal);
-      if (isReadableRepair(text)) {
-        return {
-          adventure: applyOneShotRepair(adventure, text),
-          skipped: false,
-        };
-      }
+      if (isReadableRepair(text)) return applyOneShotRepair(adventure, text);
     } catch {
       throwIfAborted(deps.signal);
     }
   }
-  return { adventure, skipped: true };
+  return null;
+}
+
+/**
+ * Review, check again, and repair what is still wrong, so the GM only sees
+ * problems that survived two rounds. A second round that makes things worse
+ * is thrown away.
+ */
+async function review(
+  deps: OneShotStageDeps,
+  adventure: OneShotAdventure,
+): Promise<{ adventure: OneShotAdventure; skipped: boolean }> {
+  const first = await repairOnce(deps, adventure, checkPlayability(adventure));
+  if (!first) return { adventure, skipped: true };
+  const left = checkPlayability(first);
+  if (!left.length) return { adventure: first, skipped: false };
+  const second = await repairOnce(deps, first, left);
+  const better = second && checkPlayability(second).length < left.length;
+  return { adventure: better ? second : first, skipped: false };
 }
 
 async function required(
@@ -335,19 +338,54 @@ async function writeParts(
   let written = 0;
   progress.set("scenes", "active", `0 of ${briefs.length}`);
   if (supporting.length) progress.set("npcs", "active");
-  const sceneTasks = briefs.map((brief) => async () => {
-    const draft = await ask(deps, scenePrompt(resolved, context, brief));
-    written += 1;
-    progress.set("scenes", "active", `${written} of ${briefs.length}`);
-    return draft;
-  });
+  // Keep one history per route so alternatives do not overwrite one another
+  // before they converge on a shared scene.
+  const writeScenes = async () => {
+    const drafts: (Json | null)[] = briefs.map(() => null);
+    const histories = briefs.map(() => [] as unknown[][]);
+    const briefIndex = new Map(
+      briefs.map((brief, i) => [String(brief.scene.id), i]),
+    );
+    const hasPredecessor = new Set(
+      briefs.flatMap((brief) =>
+        list(brief.scene.next)
+          .map((id) => briefIndex.get(String(id)))
+          .filter((index): index is number => index !== undefined),
+      ),
+    );
+    briefs.forEach((_, i) => {
+      if (!hasPredecessor.has(i)) histories[i].push([]);
+    });
+    const order = sceneOrder(
+      briefs,
+      (brief) => String(brief.scene.id),
+      (brief) => list(brief.scene.next).map(String),
+    );
+    for (const i of order) {
+      const brief = briefs[i];
+      throwIfAborted(deps.signal);
+      const draft = await ask(
+        deps,
+        scenePrompt(resolved, context, brief, histories[i]),
+      );
+      drafts[i] = draft;
+      const record = sceneRecord(brief, draft);
+      for (const nextId of list(brief.scene.next).map(String)) {
+        const nextIndex = briefIndex.get(nextId);
+        if (nextIndex !== undefined) {
+          histories[nextIndex].push(
+            ...histories[i].map((route) => [...route, record]),
+          );
+        }
+      }
+      written += 1;
+      progress.set("scenes", "active", `${written} of ${briefs.length}`);
+    }
+    return drafts;
+  };
   const npcTask = async () =>
     supporting.length ? ask(deps, npcsPrompt(context, supporting)) : null;
-  const [profiles, ...scenes] = await pool<Json | null>(
-    [npcTask, ...sceneTasks],
-    deps.concurrency ?? 3,
-    deps.signal,
-  );
+  const [profiles, scenes] = await Promise.all([npcTask(), writeScenes()]);
   const failedScenes = scenes.filter((s) => !s).length;
   progress.set(
     "scenes",

@@ -741,13 +741,14 @@ export const ONE_SHOT_SEEDS: Record<string, OneShotSeed> = {
 
 export function seedKeyForGenre(genre: string): string {
   const g = genre.toLowerCase();
-  if (/(dark fantasy|grimdark)/.test(g)) return "darkfantasy";
+  if (/(dark fantasy|grimdark|vampire)/.test(g)) return "darkfantasy";
   if (/(horror|gothic|vampire|dread|cosmic)/.test(g)) return "horror";
   if (/(cyber|corporate|noir)/.test(g)) return "cyberpunk";
   if (/(sci|space|lancer|exploration|star)/.test(g)) return "scifi";
   if (/(modern|conspiracy|mystery|contemporary|intrigue)/.test(g))
     return "modern";
   if (/(post|apocal|wasteland|fallout)/.test(g)) return "wasteland";
+  if (/(superhero|comic)/.test(g)) return "modern";
   if (/(western|frontier|pirate)/.test(g)) return "frontier";
   return "fantasy";
 }

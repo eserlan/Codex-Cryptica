@@ -124,6 +124,9 @@ adjacency is a judgement call and is never a hard failure.
 routes are built from, so a new `/for` pack or `/answers` page appears in the
 audit the moment it is added.
 
+A new `/for` pack also needs a fan-language review before it ships; see
+[for-pack-fan-language-review.md](./seo/for-pack-fan-language-review.md).
+
 Governed: `/for`, `/answers`, `/solutions`, `/features`, `/vs`, `/import`,
 `/tools`, `/generators` (including theme hubs), the standalone landing pages,
 family index routes, and the named evergreen blog posts.

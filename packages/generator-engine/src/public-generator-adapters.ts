@@ -24,6 +24,7 @@ import type {
   GeneratorRunRequest,
   SuggestedConnection,
 } from "./campaign-generator-types";
+import type { GeneratorMechanicsBundle } from "./tov-mechanics-schema";
 import type { LanguageProfileV1 } from "schema";
 import type { OneShotAdventure } from "./one-shot-types";
 import type { PointCrawlNetwork } from "./point-crawl-state";
@@ -122,6 +123,10 @@ export interface PublicGeneratorOutput {
   pointCrawl?: PointCrawlNetwork;
   /** Structured canonical facts for tomes; prose is derived from these. */
   tomeFacts?: TomeCanonicalFacts;
+  /** Optional rules system id (e.g. "tales-of-the-valiant"). */
+  systemId?: string;
+  /** Structured game mechanics bundle if generated under a specific rules system. */
+  mechanics?: GeneratorMechanicsBundle;
 }
 
 /** First non-blank value, or the last one if all are blank. */

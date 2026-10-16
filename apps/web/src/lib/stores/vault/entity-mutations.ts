@@ -293,13 +293,19 @@ export class EntityMutationService {
     if (sessionModeStore.isDemoMode || this.deps.isGuest()) {
       this.entities = stagedEntities;
       this.deps.onBatchUpdate?.(appliedUpdates);
-      for (const id of Object.keys(appliedUpdates)) {
+
+      // ⚡ Bolt Optimization: Replace Object.keys().map() with imperative loop
+      const entities = [];
+      for (const id in appliedUpdates) {
+        if (!Object.hasOwn(appliedUpdates, id)) continue;
         items.push({ id, status: "success" });
+        entities.push(stagedEntities[id]);
       }
+
       vaultEventBus.emit({
         type: "BATCH_UPDATED",
         vaultId: this.deps.activeVaultId() || "unknown",
-        entities: Object.keys(appliedUpdates).map((id) => stagedEntities[id]),
+        entities,
         patches: appliedUpdates,
       });
     } else {
@@ -333,15 +339,22 @@ export class EntityMutationService {
         }
       }
 
-      if (Object.keys(committedUpdates).length > 0) {
+      // ⚡ Bolt Optimization: Avoid Object.keys array allocation
+      let hasUpdates = false;
+      const updatedEntities: LocalEntity[] = [];
+      for (const id in committedUpdates) {
+        if (!Object.hasOwn(committedUpdates, id)) continue;
+        hasUpdates = true;
+        updatedEntities.push(committedEntities[id]);
+      }
+
+      if (hasUpdates) {
         this.entities = committedEntities;
         this.deps.onBatchUpdate?.(committedUpdates);
         vaultEventBus.emit({
           type: "BATCH_UPDATED",
           vaultId: this.deps.activeVaultId() || "unknown",
-          entities: Object.keys(committedUpdates).map(
-            (id) => committedEntities[id],
-          ),
+          entities: updatedEntities,
           patches: committedUpdates,
         });
       }

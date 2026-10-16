@@ -22,6 +22,7 @@ import {
 import { checkPlayability } from "./one-shot-playability";
 import { antagonistOf } from "./one-shot-integrity";
 import { coreMinutes } from "./one-shot-validate";
+import { renderResources } from "./one-shot-resources";
 
 function hours(minutes: number): string {
   const h = minutes / 60;
@@ -51,6 +52,13 @@ function sceneTitles(adventure: OneShotAdventure, ids: string[]): string {
       .filter(Boolean)
       .join("; ") || "The end"
   );
+}
+
+/** Ids like "npc-5" are for the data; the text a GM reads names the person. */
+function nameIds(adventure: OneShotAdventure, text: string): string {
+  return text.replace(/\bnpc-\d+\b/gi, (id) => {
+    return adventure.npcs.find((n) => n.id === id.toLowerCase())?.name ?? id;
+  });
 }
 
 const clueName = (c: OneShotClue) => c.label ?? c.text;
@@ -154,6 +162,10 @@ function gapsBlock(adventure: OneShotAdventure) {
 
 /** The adventure view: for reading through the scenario. */
 export function renderOneShotMarkdown(adventure: OneShotAdventure): string {
+  return nameIds(adventure, adventureView(adventure));
+}
+
+function adventureView(adventure: OneShotAdventure): string {
   const { briefing } = adventure;
   const scenes = adventure.scenes
     .map((s, i) => sceneBlock(adventure, s, i + 1))
@@ -180,6 +192,7 @@ ${lines(
   briefing.trigger && `**Why now:** ${briefing.trigger}`,
   `**Stakes:** ${briefing.stakes}`,
   `**Prep needed:** ${briefing.prep}`,
+  briefing.environment && `**How this place works:** ${briefing.environment}`,
 )}
 ${gapsBlock(adventure)}
 ## Scenes
@@ -284,6 +297,10 @@ function sheetQuestions(adventure: OneShotAdventure) {
 
 /** The GM running view: everything needed to adjudicate at the table. */
 export function renderGmSheet(adventure: OneShotAdventure): string {
+  return nameIds(adventure, gmSheetView(adventure));
+}
+
+function gmSheetView(adventure: OneShotAdventure): string {
   const vital = adventure.clues.filter((c) => c.essential);
   const optional = adventure.scenes.filter((s) => !s.essential);
   return `# ${adventure.title} — GM Cheat Sheet
@@ -291,6 +308,8 @@ export function renderGmSheet(adventure: OneShotAdventure): string {
 ${lines(
   `**Truth:** ${adventure.briefing.secret}`,
   adventure.briefing.trigger && `**Why now:** ${adventure.briefing.trigger}`,
+  adventure.briefing.environment &&
+    `**The place:** ${adventure.briefing.environment}`,
   `**Stakes:** ${adventure.briefing.stakes}`,
   `**Session:** ${hours(adventure.durationMinutes)}, ${adventure.timeBudget.bufferMinutes} min buffer${optional.length ? `; essential scenes alone run ${coreMinutes(adventure)} min` : ""}`,
 )}
@@ -304,7 +323,7 @@ ${adventure.scenes.map((s, i) => runScene(s, i + 1)).join("\n\n")}
 ${sheetAntagonist(adventure)}
 ## Vital Clues
 ${vital.map((c) => `- ${clueName(c)} — ${c.routes.map((r) => adventure.scenes.find((s) => s.id === r.sceneId)?.title).join(" / ")}`).join("\n")}
-${theoriesBlock(adventure)}${sheetSolution(adventure)}${sheetClock(adventure)}${sheetThreads(adventure)}${sheetQuestions(adventure)}
+${theoriesBlock(adventure)}${sheetSolution(adventure)}${renderResources(adventure)}${sheetClock(adventure)}${sheetThreads(adventure)}${sheetQuestions(adventure)}
 ## Endings
 ${adventure.endings.map((e) => `- **${e.title}:** ${e.condition}${endingWhen(adventure, e)}`).join("\n")}
 

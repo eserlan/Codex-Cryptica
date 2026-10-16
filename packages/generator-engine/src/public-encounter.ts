@@ -22,6 +22,8 @@ import {
 } from "./random-utils";
 import { parseFencedJson } from "./llm-response-utils";
 import { formatCampaignContextBlock } from "./campaign-context";
+import { buildTovEncounterPromptInstructions } from "./tov-mechanics-prompt";
+import { parseTovMechanics } from "./tov-mechanics-parser";
 
 export const encounterConfig = {
   encounterTypes: [
@@ -166,6 +168,9 @@ export interface EncounterGeneratorOptions {
   tone?: string;
   context?: string;
   campaignContext?: string;
+  gameSystem?: string;
+  partySize?: number;
+  partyLevel?: number;
 }
 
 export interface ResolvedEncounter {
@@ -177,6 +182,9 @@ export interface ResolvedEncounter {
   context?: string;
   campaignContext?: string;
   encounterName: string;
+  gameSystem?: string;
+  partySize?: number;
+  partyLevel?: number;
 }
 
 const ROLLABLE_ENCOUNTER_TYPES = encounterConfig.encounterTypes.filter(
@@ -203,6 +211,9 @@ function resolveEncounter(
     tone: options.tone || pickFrom(encounterConfig.tones, rng),
     context: options.context?.trim() || undefined,
     campaignContext: options.campaignContext?.trim() || undefined,
+    gameSystem: options.gameSystem,
+    partySize: options.partySize,
+    partyLevel: options.partyLevel,
     encounterName: `The ${generateName(rng)} ${pickFrom(
       ["Ambush", "Standoff", "Reckoning", "Crossing", "Incident", "Encounter"],
       rng,
@@ -222,6 +233,14 @@ export function buildEncounterPrompt(
   rng: Rng = defaultRng,
 ): EncounterPrompt {
   const resolved = resolveEncounter(options, rng);
+
+  const isTov = resolved.gameSystem === "tales-of-the-valiant";
+  const tovInstructions = isTov
+    ? `\n\n${buildTovEncounterPromptInstructions({
+        partySize: resolved.partySize,
+        partyLevel: resolved.partyLevel,
+      })}`
+    : "";
 
   const userMessage = `Generate a playable RPG encounter in JSON format. The result should feel like a small playable situation the players can interact with -- not just a list of enemies to fight. Results are not limited to combat: include meaningful alternatives such as negotiation, stealth, trickery, retreat, or investigation where appropriate for the encounter type. Be economical: state each fact (the situation, a motive, a stake) once, in the section it belongs to, and do not restate it elsewhere.
 Options:
@@ -246,6 +265,7 @@ You must return a valid JSON object matching the following structure exactly:
   "lore": "GM-only details (markdown formatted). Do not include an '### At a Glance' section -- that is generated separately from the glance fields above and must not be duplicated. Use exactly these sections, in this order, each kept as short as possible without losing the one or two specifics that make this encounter distinct: '### Situation & Stakes' (2-3 sentences: what is actually happening beneath the surface, why, and what happens if nobody intervenes -- do not restate the player-facing description), '### Participants' (a bullet list of the NPCs, creatures, factions, or other actors involved, each a single line naming who they are and what they want), '### Environment' (1 sentence on terrain, hazards, cover, or features that materially affect play, beyond just naming the location), '### Possible Approaches' (a bullet list of 3-5 exploitable opportunities or leverage points drawn specifically from THIS encounter's participants, environment, and complication -- not a generic checklist assembled from stock categories like 'a weak point' or 'a divided loyalty'; vary both the count and the kind of opportunity between encounters; each named as WHAT can be exploited, not a step-by-step method, exact plan, or puzzle solution for exploiting it), '### Complication / Twist' (1 sentence: something that changes or deepens the encounter once the party commits to a course of action), '### Outcomes & Consequences' (a bullet list covering success, failure, avoidance, and escalation, scaled to the selected Threat level -- a Severe/Deadly encounter's failure and escalation should feel as consequential as its type allows, whether that's physical danger, a ruined reputation, a lost opportunity, or a relationship destroyed, not just raised stakes for Combat; the success bullet must be a genuine trade-off or partial win, not a clean resolution -- fold in a concrete, proportionate reward or discovery tied to what the participants were protecting or pursuing, but have the party pay for it in cost, leverage, or something left unresolved, so no separate rewards section is needed).",
   "labels": ["encounter", "encounter-generator", "imported-draft"]
 }
+${tovInstructions}
 ${NAME_BAN_PROMPT}
 ${sessionContext}
 Before returning, run a consistency pass: the threat level must match the collective danger actually described among the listed participants, and must also scale the severity of the Outcomes & Consequences for every encounter type -- not just how dangerous Combat is, but how costly a Social, Exploration, Environmental, or Mixed failure/escalation becomes; the complication must genuinely complicate the stated stakes rather than being cosmetic; each possible approach must be a specific, exploitable feature of this encounter, described as an opportunity rather than a solved puzzle, drawn from this encounter's actual details rather than a repeated formula (not generic filler that would fit any encounter); the success outcome must not resolve every objective cleanly -- it needs a real cost or loose end; the outcomes must correspond to the approaches actually described; the player-facing content must contain zero information that is only revealed in the lore; the glance fields must be short and scannable, not prose duplicates of the lore sections; and no fact may be repeated across two sections.
@@ -306,6 +326,11 @@ export function parseEncounterResponse(
   const lore = data.lore
     ? `${buildAtAGlance(resolved, glance)}\n\n${data.lore}`
     : "";
+  const mechanics =
+    resolved.gameSystem === "tales-of-the-valiant"
+      ? (parseTovMechanics(text) ?? undefined)
+      : undefined;
+
   return {
     type: "event",
     title: data.title || resolved.encounterName,
@@ -319,6 +344,8 @@ export function parseEncounterResponse(
         : ["encounter", "encounter-generator", "imported-draft"],
     ),
     status: "active",
+    systemId: resolved.gameSystem,
+    mechanics,
   };
 }
 

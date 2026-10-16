@@ -499,6 +499,10 @@ export interface GeneratorOutput {
   pointCrawl?: import("generator-engine").PointCrawlNetwork;
   /** Arbitrary generation metadata preserved across flows. */
   metadata?: Record<string, unknown>;
+  /** Structured system mechanics (e.g. Tales of the Valiant BFRD stats). */
+  mechanics?: import("generator-engine").GeneratorMechanicsBundle;
+  /** Associated game system id (e.g. "tales-of-the-valiant"). */
+  systemId?: string;
 }
 
 /**

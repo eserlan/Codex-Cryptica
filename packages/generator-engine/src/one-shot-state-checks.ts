@@ -6,9 +6,10 @@
  */
 
 import { textOverlap } from "./one-shot-dedupe";
-import { isConfined, whereaboutsTimeline } from "./one-shot-state";
+import { isConfined, sceneOrder, whereaboutsTimeline } from "./one-shot-state";
 import type {
   OneShotAdventure,
+  OneShotDecision,
   OneShotEnding,
   OneShotGap,
   OneShotWhereabout,
@@ -37,53 +38,166 @@ function change(prev: OneShotWhereabout, next: OneShotWhereabout): string {
     : `goes from ${prev.state} to ${next.state}`;
 }
 
-export const checkWhereabouts: GapCheck = (adventure) => {
+type Gap = (who: string, message: string) => OneShotGap;
+
+type RouteState = Map<string, OneShotWhereabout>;
+
+function checkSceneRoute(
+  scene: OneShotAdventure["scenes"][number],
+  state: RouteState,
+  gap: Gap,
+): { gaps: OneShotGap[]; state: RouteState } {
+  const current = new Map(state);
+  const gaps = [
+    ...unexplainedChanges(scene, current, gap),
+    ...stillHeld(scene, current, gap),
+  ];
+  for (const whereabouts of scene.exit ?? []) {
+    current.set(whereabouts.who, whereabouts);
+  }
+  return { gaps, state: current };
+}
+
+function routeRoots(
+  scenes: OneShotAdventure["scenes"],
+  sceneIndex: Map<string, number>,
+): number[] {
+  const hasPredecessor = new Set(
+    scenes.flatMap((scene) =>
+      scene.next
+        .map((id) => sceneIndex.get(id))
+        .filter((index): index is number => index !== undefined),
+    ),
+  );
+  return scenes.flatMap((_, index) =>
+    hasPredecessor.has(index) ? [] : [index],
+  );
+}
+
+function addRouteState(
+  incoming: Map<string, RouteState>[],
+  index: number,
+  state: RouteState,
+): void {
+  const key = JSON.stringify(
+    [...state.entries()].sort(([a], [b]) => a.localeCompare(b)),
+  );
+  incoming[index].set(key, state);
+}
+
+function propagateRouteStates(
+  scene: OneShotAdventure["scenes"][number],
+  sceneIndex: Map<string, number>,
+  incoming: Map<string, RouteState>[],
+  states: RouteState[],
+): void {
+  for (const nextId of scene.next) {
+    const nextIndex = sceneIndex.get(nextId);
+    if (nextIndex === undefined) continue;
+    for (const state of states) addRouteState(incoming, nextIndex, state);
+  }
+}
+
+/** Changes against the last known state that the scene never explains. */
+function unexplainedChanges(
+  scene: OneShotAdventure["scenes"][number],
+  current: Map<string, OneShotWhereabout>,
+  gap: Gap,
+): OneShotGap[] {
   const gaps: OneShotGap[] = [];
-  const current = new Map<string, OneShotWhereabout>();
-  const names = new Map(adventure.npcs.map((n) => [n.id, n.name]));
-  for (const scene of adventure.scenes) {
-    const stated = new Map((scene.whereabouts ?? []).map((w) => [w.who, w]));
-    const gap = (who: string, message: string): OneShotGap => ({
-      area: "npc",
-      id: names.has(who) ? who : undefined,
-      message: `${names.get(who) ?? who} ${message}`,
-    });
-    for (const w of stated.values()) {
-      const prev = current.get(w.who);
-      if (prev && needsReason(prev, w) && !w.how) {
-        gaps.push(
-          gap(
-            w.who,
-            `${change(prev, w)} in "${scene.title}" with no explanation. Say how it happened.`,
-          ),
-        );
-      }
-      current.set(w.who, w);
+  for (const w of scene.whereabouts ?? []) {
+    const prev = current.get(w.who);
+    if (prev && needsReason(prev, w) && !w.how) {
+      gaps.push(
+        gap(
+          w.who,
+          `${change(prev, w)} in "${scene.title}" with no explanation. Say how it happened.`,
+        ),
+      );
     }
-    for (const id of scene.npcIds) {
-      const held = current.get(id);
-      if (held && isConfined(held.state) && !stated.has(id)) {
-        gaps.push(
+    current.set(w.who, w);
+  }
+  return gaps;
+}
+
+/** NPCs present in a scene while still held from an earlier one. */
+function stillHeld(
+  scene: OneShotAdventure["scenes"][number],
+  current: Map<string, OneShotWhereabout>,
+  gap: Gap,
+): OneShotGap[] {
+  const stated = new Set((scene.whereabouts ?? []).map((w) => w.who));
+  return scene.npcIds.flatMap((id) => {
+    const held = current.get(id);
+    return held && isConfined(held.state) && !stated.has(id)
+      ? [
           gap(
             id,
             `is in "${scene.title}" but is still ${held.state} from an earlier scene. Say how they got free, or leave them out.`,
           ),
-        );
-      }
-    }
+        ]
+      : [];
+  });
+}
+
+export const checkWhereabouts: GapCheck = (adventure) => {
+  const gaps: OneShotGap[] = [];
+  const names = new Map(adventure.npcs.map((n) => [n.id, n.name]));
+  const gap: Gap = (who, message) => ({
+    area: "npc",
+    id: names.has(who) ? who : undefined,
+    message: `${names.get(who) ?? who} ${message}`,
+  });
+
+  // Keep separate state snapshots for each reachable route. A shared scene
+  // must agree with every way the party can arrive there.
+  const sceneIndex = new Map(adventure.scenes.map((scene, i) => [scene.id, i]));
+  const incoming = adventure.scenes.map(() => new Map<string, RouteState>());
+  for (const root of routeRoots(adventure.scenes, sceneIndex)) {
+    addRouteState(incoming, root, new Map());
   }
-  return gaps;
+
+  const order = sceneOrder(
+    adventure.scenes,
+    (scene) => scene.id,
+    (scene) => scene.next,
+  );
+  for (const i of order) {
+    const scene = adventure.scenes[i];
+    const states = incoming[i].size ? [...incoming[i].values()] : [new Map()];
+    const checked = states.map((state) => checkSceneRoute(scene, state, gap));
+    gaps.push(...checked.flatMap((route) => route.gaps));
+    propagateRouteStates(
+      scene,
+      sceneIndex,
+      incoming,
+      checked.map((route) => route.state),
+    );
+  }
+
+  const seen = new Set<string>();
+  return gaps.filter((item) => {
+    const key = `${item.area}:${item.id ?? ""}:${item.message}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 };
 
 // ── Endings ──────────────────────────────────────────────────────────────
 
-function combinations(ids: string[]): Record<string, boolean>[] {
-  return ids.reduce<Record<string, boolean>[]>(
-    (all, id) =>
-      all.flatMap((c) => [
-        { ...c, [id]: true },
-        { ...c, [id]: false },
-      ]),
+/** Every way the party can answer, skipping decisions that are never asked. */
+function combinations(decisions: OneShotDecision[]): Record<string, boolean>[] {
+  return decisions.reduce<Record<string, boolean>[]>(
+    (all, d) =>
+      all.flatMap((c) =>
+        Object.entries(d.when ?? {}).every(([id, v]) => c[id] === v)
+          ? [
+              { ...c, [d.id]: true },
+              { ...c, [d.id]: false },
+            ]
+          : [c],
+      ),
     [{}],
   );
 }
@@ -115,7 +229,7 @@ export const checkEndingCoverage: GapCheck = (adventure) => {
       `${fallbacks.map((e) => `"${e.title}"`).join(" and ")} depend on no decision, so either could be the result.`,
     );
   }
-  for (const combo of combinations(decisions.map((d) => d.id))) {
+  for (const combo of combinations(decisions)) {
     const hits = specific.filter((e) => matches(e, combo));
     if (hits.length > 1) {
       problems.push(

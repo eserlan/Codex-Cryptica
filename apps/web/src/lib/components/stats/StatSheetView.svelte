@@ -10,7 +10,8 @@
   import { type IdGenerator, systemIdGenerator } from "$lib/utils/runtime-deps";
   import ItemTableNode from "./presentation/nodes/ItemTableNode.svelte";
   import TovLuckControl from "./TovLuckControl.svelte";
-  import { isTovLuckField } from "@codex/stat-sheet-engine";
+  import TovDoomControl from "./TovDoomControl.svelte";
+  import { isTovLuckField, isTovDoomField } from "@codex/stat-sheet-engine";
 
   let {
     entity,
@@ -228,6 +229,13 @@
             {readOnly}
             onChange={(value) => updateFieldValue(field.id, value)}
             testIdPrefix="stat-sheet-tov-luck"
+          />
+        {:else if isTovDoomField(entity.statSheet?.templateId, field)}
+          <TovDoomControl
+            {field}
+            {readOnly}
+            onChange={(value) => updateFieldValue(field.id, value)}
+            testIdPrefix="stat-sheet-tov-doom"
           />
         {:else if field.type === "counter"}
           <div

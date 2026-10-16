@@ -849,3 +849,35 @@ export {
   type ResolvedPointCrawl,
   type PointCrawlPrompt,
 } from "./public-point-crawl";
+
+export { parseTovMechanics } from "./tov-mechanics-parser";
+
+export {
+  buildTovPromptInstructions,
+  buildTovEncounterPromptInstructions,
+  type TovPromptKind,
+  type TovEncounterPromptOptions,
+} from "./tov-mechanics-prompt";
+
+export {
+  TovAbilityScoresSchema,
+  TovQuickNpcMechanicsSchema,
+  TovCharacterAttackSchema,
+  TovCharacterMechanicsSchema,
+  TovCreatureActionSchema,
+  TovCreatureMechanicsSchema,
+  TovMagicItemMechanicsSchema,
+  TovEncounterCreatureSuggestionSchema,
+  TovEncounterMechanicsSchema,
+  GeneratorMechanicsBundleSchema,
+  type GeneratorMechanicsBundle,
+  type TovAbilityScores,
+  type TovQuickNpcMechanics,
+  type TovCharacterMechanics,
+  type TovCharacterAttack,
+  type TovCreatureAction,
+  type TovCreatureMechanics,
+  type TovMagicItemMechanics,
+  type TovEncounterCreatureSuggestion,
+  type TovEncounterMechanics,
+} from "./tov-mechanics-schema";

@@ -4,6 +4,7 @@
   import { getDelveLocationTypeLabel } from "$lib/utils/delve-terminology";
   import DraftBody from "./DraftBody.svelte";
   import PointCrawlGraph from "$lib/components/seo/PointCrawlGraph.svelte";
+  import GeneratorMechanicsPreview from "./GeneratorMechanicsPreview.svelte";
 
   interface Props {
     draft: GeneratedDraft;
@@ -102,19 +103,22 @@
     Review the draft below, then open in the editor to accept or discard.
   </p>
 
-  {#if draft.primaryLanguageTitle}
-    <div
-      class="flex items-center gap-2 rounded border border-chrome-border bg-chrome-bg/30 px-3 py-2 text-xs text-chrome-text"
-      data-testid="primary-language-context"
-    >
-      <span
-        aria-hidden="true"
-        class="icon-[lucide--languages] h-4 w-4 text-chrome-accent"
-      ></span>
-      <span class="text-chrome-muted">Naming language:</span>
-      <strong>{draft.primaryLanguageTitle}</strong>
-    </div>
-  {/if}
+  {#snippet draftContext()}
+    {#if draft.primaryLanguageTitle}
+      <div
+        class="flex items-center gap-2 rounded border border-chrome-border bg-chrome-bg/30 px-3 py-2 text-xs text-chrome-text"
+        data-testid="primary-language-context"
+      >
+        <span
+          aria-hidden="true"
+          class="icon-[lucide--languages] h-4 w-4 text-chrome-accent"
+        ></span>
+        <span class="text-chrome-muted">Naming language:</span>
+        <strong>{draft.primaryLanguageTitle}</strong>
+      </div>
+    {/if}
+  {/snippet}
+  {@render draftContext()}
 
   {#if draft.contextProvenance?.length}
     <div
@@ -203,6 +207,17 @@
   {/if}
 
   <DraftBody {draft} {spoilerShield} />
+
+  {#if draft.mechanics}
+    <div class="flex flex-col gap-1">
+      <span
+        class="text-micro font-bold uppercase tracking-wider text-chrome-muted"
+      >
+        Game Mechanics
+      </span>
+      <GeneratorMechanicsPreview mechanics={draft.mechanics} />
+    </div>
+  {/if}
 
   {#if draft.connections?.length}
     <div class="flex flex-col gap-1">

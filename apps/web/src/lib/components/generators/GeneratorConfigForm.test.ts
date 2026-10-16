@@ -560,4 +560,129 @@ describe("GeneratorConfigForm", { timeout: 20000 }, () => {
       }),
     ).toBeNull();
   });
+
+  it("initializes gameSystem default from systemProfileStore vault profile if set", async () => {
+    const { systemProfileStore } =
+      await import("$lib/stores/system-profile.svelte");
+    systemProfileStore.vaultSystemId = "tales-of-the-valiant";
+
+    const onsubmit = vi.fn();
+    render(GeneratorConfigForm, {
+      props: {
+        generatorId: "npc",
+        onsubmit,
+        aiPolicy: { isEnabled: true, isAvailable: true },
+      },
+    });
+
+    const gameSystemSelect = screen.getByLabelText(
+      "Game System",
+    ) as HTMLSelectElement;
+    expect(gameSystemSelect.value).toBe("tales-of-the-valiant");
+
+    await fireEvent.click(screen.getByRole("button", { name: "Generate" }));
+
+    expect(onsubmit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        generatorId: "npc",
+        options: expect.objectContaining({
+          gameSystem: "tales-of-the-valiant",
+        }),
+      }),
+    );
+
+    // Reset store
+    systemProfileStore.vaultSystemId = null;
+  });
+
+  it("defaults to system-neutral when vault profile is not set", async () => {
+    const { systemProfileStore } =
+      await import("$lib/stores/system-profile.svelte");
+    systemProfileStore.vaultSystemId = null;
+
+    const onsubmit = vi.fn();
+    render(GeneratorConfigForm, {
+      props: {
+        generatorId: "npc",
+        onsubmit,
+        aiPolicy: { isEnabled: true, isAvailable: true },
+      },
+    });
+
+    const gameSystemSelect = screen.getByLabelText(
+      "Game System",
+    ) as HTMLSelectElement;
+    expect(gameSystemSelect.value).toBe("system-neutral");
+  });
+
+  it("displays informational notice when AI generation is disabled and ToV system is selected", async () => {
+    const { systemProfileStore } =
+      await import("$lib/stores/system-profile.svelte");
+    systemProfileStore.vaultSystemId = "tales-of-the-valiant";
+
+    render(GeneratorConfigForm, {
+      props: {
+        generatorId: "npc",
+        onsubmit: vi.fn(),
+        aiPolicy: { isEnabled: false, isAvailable: false },
+      },
+    });
+
+    expect(screen.getByTestId("ai-unavailable-notice")).toBeTruthy();
+    expect(screen.getByTestId("tov-offline-notice")).toBeTruthy();
+    expect(screen.getByTestId("tov-offline-notice").textContent).toContain(
+      "Tales of the Valiant mechanics require AI Lore generation",
+    );
+
+    systemProfileStore.vaultSystemId = null;
+  });
+
+  it("inherits ToV and displays party size and level inputs for encounter generator", async () => {
+    const { systemProfileStore } =
+      await import("$lib/stores/system-profile.svelte");
+    systemProfileStore.vaultSystemId = "tales-of-the-valiant";
+
+    const onsubmit = vi.fn();
+    render(GeneratorConfigForm, {
+      props: {
+        generatorId: "encounter",
+        onsubmit,
+        aiPolicy: { isEnabled: true, isAvailable: true },
+      },
+    });
+
+    const gameSystemSelect = screen.getByLabelText(
+      "Game System",
+    ) as HTMLSelectElement;
+    expect(gameSystemSelect.value).toBe("tales-of-the-valiant");
+
+    const partySizeInput = screen.getByLabelText(
+      /Party Size/i,
+    ) as HTMLInputElement;
+    expect(partySizeInput.min).toBe("1");
+    expect(partySizeInput.max).toBe("8");
+    expect(partySizeInput.step).toBe("1");
+
+    const partyLevelInput = screen.getByLabelText(
+      /Average Party Level/i,
+    ) as HTMLInputElement;
+    expect(partyLevelInput.min).toBe("1");
+    expect(partyLevelInput.max).toBe("20");
+    expect(partyLevelInput.step).toBe("1");
+
+    await fireEvent.click(screen.getByRole("button", { name: "Generate" }));
+
+    expect(onsubmit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        generatorId: "encounter",
+        options: expect.objectContaining({
+          gameSystem: "tales-of-the-valiant",
+          partySize: 4,
+          partyLevel: 3,
+        }),
+      }),
+    );
+
+    systemProfileStore.vaultSystemId = null;
+  });
 });

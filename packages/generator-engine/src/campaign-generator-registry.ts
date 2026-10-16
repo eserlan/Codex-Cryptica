@@ -9,6 +9,8 @@ import {
   SUPPORTED_GENERATOR_IDS,
   UnsupportedGeneratorError,
 } from "./campaign-generator-types";
+import { buildTovPromptInstructions } from "./tov-mechanics-prompt";
+import { mapTovMechanicsToStatSheet } from "@codex/stat-sheet-engine";
 import {
   generateRandomTableLocal,
   parseRandomTableResponse,
@@ -244,6 +246,19 @@ function optionString(
   return typeof value === "string" && value.length > 0 ? value : fallback;
 }
 
+function optionBoundedInteger(
+  request: GeneratorRunRequest,
+  key: string,
+  fallback: number,
+  min: number,
+  max: number,
+): number {
+  const value = Number(request.options[key]);
+  return Number.isInteger(value) && value >= min && value <= max
+    ? value
+    : fallback;
+}
+
 function dungeonOptions(request: GeneratorRunRequest): DungeonGeneratorOptions {
   return {
     themeId: request.themeId || optionString(request, "themeId", "fantasy"),
@@ -269,64 +284,104 @@ function dungeonOptions(request: GeneratorRunRequest): DungeonGeneratorOptions {
 function mapOutputToDraft(
   generatorId: GeneratorId,
 ): CampaignGeneratorDefinition["mapOutputToDraft"] {
-  return (
-    output: GeneratorOutput,
-    request: GeneratorRunRequest,
-  ): GeneratedDraft => {
-    const availableIds = request.vaultContext?.categoryLabels?.map((c) => c.id);
-    const contextProvenance: Array<{ id: string; title: string }> = [];
-    const seenIds = new Set<string>();
-    if (request.vaultContext?.sourceEntity) {
-      seenIds.add(request.vaultContext.sourceEntity.id);
-      contextProvenance.push({
-        id: request.vaultContext.sourceEntity.id,
-        title: request.vaultContext.sourceEntity.title,
-      });
-    }
-    if (request.vaultContext?.neighbors?.length) {
-      for (const n of request.vaultContext.neighbors) {
-        if (!seenIds.has(n.id)) {
-          seenIds.add(n.id);
-          contextProvenance.push({ id: n.id, title: n.title });
-        }
-      }
-    }
+  return (output, request) =>
+    mapGeneratedOutputToDraft(generatorId, output, request);
+}
 
-    return {
-      title: output.title,
-      entityType: resolveEntityType(generatorId, availableIds),
-      summary: output.summary,
-      lore: output.lore,
-      content: output.content,
-      labels: [...output.labels],
-      sourceGeneratorId: generatorId,
-      sourceEntityId: request.sourceEntityId,
-      relationshipLabel: request.relationshipLabel,
-      connections: output.connections ? [...output.connections] : undefined,
-      templateOutline: request.vaultContext?.templateOutline,
-      templateApplied: Boolean(
-        request.vaultContext?.applyTemplate &&
-        request.vaultContext?.templateOutline,
-      ),
-      unmappedDetails: output.unmappedDetails,
-      languageProfile: output.languageProfile,
-      languageProfileVersion: output.languageProfileVersion,
-      primaryLanguageId: request.vaultContext?.selectedLanguage?.id,
-      primaryLanguageTitle: request.vaultContext?.selectedLanguage?.title,
-      bodies: output.bodies ? [...output.bodies] : undefined,
-      starType: output.starType,
-      observances: output.observances ? [...output.observances] : undefined,
-      pattern: output.pattern,
-      interpretations: output.interpretations
-        ? [...output.interpretations]
-        : undefined,
-      nightSky: output.nightSky,
-      pointCrawl: output.pointCrawl,
-      contextProvenance: contextProvenance.length
-        ? contextProvenance
-        : undefined,
-    };
+function mapGeneratedOutputToDraft(
+  generatorId: GeneratorId,
+  output: GeneratorOutput,
+  request: GeneratorRunRequest,
+): GeneratedDraft {
+  const context = request.vaultContext;
+  const mechanics = output.mechanics;
+
+  return {
+    title: output.title,
+    entityType: resolveEntityType(
+      generatorId,
+      context?.categoryLabels?.map((c) => c.id),
+    ),
+    summary: output.summary,
+    lore: output.lore,
+    content: output.content,
+    labels: [...output.labels],
+    sourceGeneratorId: generatorId,
+    sourceEntityId: request.sourceEntityId,
+    relationshipLabel: request.relationshipLabel,
+    ...optionalOutputFields(output),
+    ...optionalContextFields(context),
+    contextProvenance: collectContextProvenance(context),
+    mechanics,
+    systemId: resolveMechanicsSystemId(output, request),
+    statSheet: mechanics
+      ? (mapTovMechanicsToStatSheet(mechanics) ?? undefined)
+      : undefined,
   };
+}
+
+function optionalOutputFields(output: GeneratorOutput) {
+  return {
+    connections: copyIfPresent(output.connections),
+    unmappedDetails: output.unmappedDetails,
+    languageProfile: output.languageProfile,
+    languageProfileVersion: output.languageProfileVersion,
+    bodies: copyIfPresent(output.bodies),
+    starType: output.starType,
+    observances: copyIfPresent(output.observances),
+    pattern: output.pattern,
+    interpretations: copyIfPresent(output.interpretations),
+    nightSky: output.nightSky,
+    pointCrawl: output.pointCrawl,
+  };
+}
+
+function optionalContextFields(context: GeneratorRunRequest["vaultContext"]) {
+  const language = context?.selectedLanguage;
+  return {
+    templateOutline: context?.templateOutline,
+    templateApplied: Boolean(
+      context?.applyTemplate && context?.templateOutline,
+    ),
+    primaryLanguageId: language?.id,
+    primaryLanguageTitle: language?.title,
+  };
+}
+
+function copyIfPresent<T>(values: T[] | undefined): T[] | undefined {
+  return values ? [...values] : undefined;
+}
+
+function collectContextProvenance(
+  context: GeneratorRunRequest["vaultContext"],
+): Array<{ id: string; title: string }> | undefined {
+  if (!context) return undefined;
+  const provenance: Array<{ id: string; title: string }> = [];
+  const seenIds = new Set<string>();
+  const source = context.sourceEntity;
+  if (source) {
+    seenIds.add(source.id);
+    provenance.push({ id: source.id, title: source.title });
+  }
+  for (const neighbor of context.neighbors ?? []) {
+    if (seenIds.has(neighbor.id)) continue;
+    seenIds.add(neighbor.id);
+    provenance.push({ id: neighbor.id, title: neighbor.title });
+  }
+  return provenance.length ? provenance : undefined;
+}
+
+function resolveMechanicsSystemId(
+  output: GeneratorOutput,
+  request: GeneratorRunRequest,
+): string | undefined {
+  const mechanics = output.mechanics;
+  if (output.systemId) return output.systemId;
+  if (mechanics && "systemId" in mechanics) return mechanics.systemId as string;
+  const requestedSystem = request.options?.gameSystem;
+  return requestedSystem && requestedSystem !== "system-neutral"
+    ? (requestedSystem as string)
+    : undefined;
 }
 
 // ---------------------------------------------------------------------------
@@ -638,13 +693,21 @@ function contextChain(request: GeneratorRunRequest): string {
 }
 
 function npcPrompt(request: GeneratorRunRequest): string {
+  const gameSystem = request.options?.gameSystem;
+  let tovInstructions = "";
+  if (gameSystem === "tales-of-the-valiant") {
+    const detail =
+      request.options?.npcDetail === "leveled" ? "npc-leveled" : "npc-quick";
+    tovInstructions = `\n\n${buildTovPromptInstructions(detail)}`;
+  }
+
   return `${contextChain(request)}
 
 Generate a campaign NPC. Return ONLY a JSON object matching this schema:
 ${OUTPUT_SCHEMA}
 ${exemplarBlock(request, "npc")}${groundingNote(request)}
 ${syntheticAdaptationNote(request)}
-${loreGuidance(request, "who they are, what they want, a secret, and a first-scene hook")}`;
+${loreGuidance(request, "who they are, what they want, a secret, and a first-scene hook")}${tovInstructions}`;
 }
 
 function factionPrompt(request: GeneratorRunRequest): string {
@@ -666,12 +729,18 @@ ${loreGuidance(request, "points of interest, power structure, notable rumours, a
 }
 
 function magicItemPrompt(request: GeneratorRunRequest): string {
+  const gameSystem = request.options?.gameSystem;
+  let tovInstructions = "";
+  if (gameSystem === "tales-of-the-valiant") {
+    tovInstructions = `\n\n${buildTovPromptInstructions("magic-item")}`;
+  }
+
   return `${contextChain(request)}
 
 Generate a campaign magic item or artefact. Return ONLY a JSON object matching this schema:
 ${OUTPUT_SCHEMA}
 ${exemplarBlock(request, "magic-item")}${groundingNote(request)}
-${loreGuidance(request, "item history, its power/effect, a side effect or curse, and how it might enter play")}`;
+${loreGuidance(request, "item history, its power/effect, a side effect or curse, and how it might enter play")}${tovInstructions}`;
 }
 
 function eventPrompt(request: GeneratorRunRequest): string {
@@ -1100,6 +1169,9 @@ function encounterOptions(
     threat: optionString(request, "threat", ""),
     tone: optionString(request, "tone", ""),
     context: optionString(request, "context", ""),
+    gameSystem: optionString(request, "gameSystem", "system-neutral"),
+    partySize: optionBoundedInteger(request, "partySize", 4, 1, 8),
+    partyLevel: optionBoundedInteger(request, "partyLevel", 3, 1, 20),
   };
 }
 
@@ -1451,7 +1523,12 @@ function minorMagicItemPrompt(request: GeneratorRunRequest): string {
     minorMagicItemOptions(request),
     contextChain(request),
   );
-  return `${prompt.systemInstruction}\n\n${prompt.userMessage}`;
+  const gameSystem = request.options?.gameSystem;
+  let tovInstructions = "";
+  if (gameSystem === "tales-of-the-valiant") {
+    tovInstructions = `\n\n${buildTovPromptInstructions("magic-item")}`;
+  }
+  return `${prompt.systemInstruction}\n\n${prompt.userMessage}${tovInstructions}`;
 }
 
 function artifactOptions(
@@ -1795,6 +1872,12 @@ function generateCreature(request: GeneratorRunRequest): GeneratorOutput {
 }
 
 function creaturePrompt(request: GeneratorRunRequest): string {
+  const gameSystem = request.options?.gameSystem;
+  let tovInstructions = "";
+  if (gameSystem === "tales-of-the-valiant") {
+    tovInstructions = `\n\n${buildTovPromptInstructions("creature")}`;
+  }
+
   return `${contextChain(request)}
 
 ${buildCreaturePrompt(creatureOptions(request)).userMessage}
@@ -1805,7 +1888,7 @@ ${exemplarBlock(request, "creature")}${groundingNote(request)}
 ${loreGuidance(
   request,
   "the true origin & hidden ecology; hidden abilities & surprises; secret weaknesses; tactical notes & ambush strategies; truth behind rumours; adventure & encounter hooks; and secret motives if sapient",
-)}`;
+)}${tovInstructions}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -2083,8 +2166,37 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
         control: "select",
         choices: NPC_ROLES.map((r) => ({ value: r, label: r })),
       },
+      {
+        id: "gameSystem",
+        label: "Game System",
+        control: "select",
+        choices: [
+          { value: "system-neutral", label: "System Neutral" },
+          { value: "tales-of-the-valiant", label: "Tales of the Valiant" },
+        ],
+        defaultValue: "system-neutral",
+      },
+      {
+        id: "npcDetail",
+        label: "NPC Format",
+        control: "select",
+        choices: [
+          { value: "quick", label: "Quick NPC (CR-based)" },
+          { value: "leveled", label: "Leveled Character (Hero / Companion)" },
+        ],
+        defaultValue: "quick",
+        visibleWhen: {
+          optionId: "gameSystem",
+          values: ["tales-of-the-valiant"],
+        },
+      },
     ],
-    defaults: { race: "", role: "" },
+    defaults: {
+      race: "",
+      role: "",
+      gameSystem: "system-neutral",
+      npcDetail: "quick",
+    },
     generate: generateNpc,
     mapOutputToDraft: mapOutputToDraft("npc"),
     buildPrompt: npcPrompt,
@@ -2198,8 +2310,17 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
         control: "select",
         choices: ITEM_KINDS.map((k) => ({ value: k, label: k })),
       },
+      {
+        id: "gameSystem",
+        label: "Rules System",
+        control: "select",
+        choices: [
+          { value: "system-neutral", label: "System Neutral" },
+          { value: "tales-of-the-valiant", label: "Tales of the Valiant" },
+        ],
+      },
     ],
-    defaults: { rarity: "", kind: "" },
+    defaults: { rarity: "", kind: "", gameSystem: "system-neutral" },
     generate: generateMagicItem,
     mapOutputToDraft: mapOutputToDraft("magic-item"),
     buildPrompt: magicItemPrompt,
@@ -2271,6 +2392,15 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
           })),
         ],
       },
+      {
+        id: "gameSystem",
+        label: "Rules System",
+        control: "select",
+        choices: [
+          { value: "system-neutral", label: "System Neutral" },
+          { value: "tales-of-the-valiant", label: "Tales of the Valiant" },
+        ],
+      },
     ],
     defaults: {
       genre: "",
@@ -2278,6 +2408,7 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
       utility: "",
       activation: "",
       quirkSeverity: "",
+      gameSystem: "system-neutral",
     },
     generate: generateMinorMagicItem,
     mapOutputToDraft: mapOutputToDraft("minor-magic-item"),
@@ -2696,6 +2827,43 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
           "Optional: describe an existing situation, location, or NPC to anchor the encounter.",
         control: "textarea",
       },
+      {
+        id: "gameSystem",
+        label: "Game System",
+        control: "select",
+        choices: [
+          { value: "system-neutral", label: "System Neutral" },
+          { value: "tales-of-the-valiant", label: "Tales of the Valiant" },
+        ],
+      },
+      {
+        id: "partySize",
+        label: "Party Size",
+        description: "Number of active player characters (1–8).",
+        control: "number",
+        defaultValue: 4,
+        min: 1,
+        max: 8,
+        step: 1,
+        visibleWhen: {
+          optionId: "gameSystem",
+          values: ["tales-of-the-valiant"],
+        },
+      },
+      {
+        id: "partyLevel",
+        label: "Average Party Level",
+        description: "Average character level (1–20).",
+        control: "number",
+        defaultValue: 3,
+        min: 1,
+        max: 20,
+        step: 1,
+        visibleWhen: {
+          optionId: "gameSystem",
+          values: ["tales-of-the-valiant"],
+        },
+      },
     ],
     defaults: {
       encounterType: "Random",
@@ -2703,6 +2871,9 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
       threat: "Moderate",
       tone: "",
       context: "",
+      gameSystem: "system-neutral",
+      partySize: 4,
+      partyLevel: 3,
     },
     generate: generateEncounter,
     mapOutputToDraft: mapOutputToDraft("encounter"),
@@ -3825,6 +3996,16 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
           label: value,
         })),
       },
+      {
+        id: "gameSystem",
+        label: "Game System",
+        control: "select",
+        choices: [
+          { value: "system-neutral", label: "System Neutral" },
+          { value: "tales-of-the-valiant", label: "Tales of the Valiant" },
+        ],
+        defaultValue: "system-neutral",
+      },
     ],
     defaults: {
       genre: "Classic Fantasy",
@@ -3834,6 +4015,7 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
       temperament: creatureConfig.temperaments[0],
       habitat: creatureConfig.habitats[0],
       ecologicalRole: creatureConfig.ecologicalRoles[0],
+      gameSystem: "system-neutral",
     },
     generate: generateCreature,
     mapOutputToDraft: mapOutputToDraft("creature"),
@@ -4014,36 +4196,36 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
         id: "pointCount",
         label: "Number of Locations",
         control: "select",
-        choices: pointCrawlConfig.pointCounts.map((c) => ({
-          value: String(c),
-          label: `${c} Locations`,
+        choices: pointCrawlConfig.pointCounts.map((count) => ({
+          value: String(count),
+          label: `${count} Locations`,
         })),
       },
       {
         id: "density",
         label: "Route Interconnection",
         control: "select",
-        choices: pointCrawlConfig.densities.map((d) => ({
-          value: d,
-          label: d,
+        choices: pointCrawlConfig.densities.map((density) => ({
+          value: density,
+          label: density,
         })),
       },
       {
         id: "dangerLevel",
         label: "Danger Level",
         control: "select",
-        choices: pointCrawlConfig.dangerLevels.map((dl) => ({
-          value: dl,
-          label: dl,
+        choices: pointCrawlConfig.dangerLevels.map((level) => ({
+          value: level,
+          label: level,
         })),
       },
       {
         id: "secretFrequency",
         label: "Secret Routes & Shortcuts",
         control: "select",
-        choices: pointCrawlConfig.secretFrequencies.map((sf) => ({
-          value: sf,
-          label: sf,
+        choices: pointCrawlConfig.secretFrequencies.map((frequency) => ({
+          value: frequency,
+          label: frequency,
         })),
       },
     ],

@@ -6,6 +6,7 @@
 
 import { dedupeOneShot } from "./one-shot-dedupe";
 import { list, rec, str, strs } from "./one-shot-json";
+import { parseResources } from "./one-shot-resources";
 import {
   normaliseState,
   parseDecisions,
@@ -100,6 +101,7 @@ function parseScene(raw: unknown, i: number, count: number): OneShotScene {
     shorten: str(r.shorten, "Run it as a single decisive beat, then move on."),
     skip: undefined,
     whereabouts: parseWhereabouts(r.whereabouts),
+    exit: parseWhereabouts(r.exit),
     routes: parseRoutes(r.routes),
   };
 }
@@ -243,6 +245,7 @@ function parseBriefing(raw: unknown): OneShotAdventure["briefing"] {
     stakes: str(b.stakes),
     prep: str(b.prep),
     questions: parseQuestions(b.questions),
+    environment: str(b.environment) || undefined,
   };
 }
 
@@ -314,6 +317,7 @@ export function parseClock(raw: unknown): OneShotClock | undefined {
     ticks,
     slow: str(c.slow),
     deadline: str(c.deadline) || undefined,
+    counts: str(c.counts) || undefined,
   };
 }
 
@@ -379,6 +383,7 @@ export function parseOneShotAdventure(
         antagonistId: findAntagonist(data.antagonistId, npcs),
         threads: parseThreads(data.threads, (id) => sceneIds.get(id)),
         decisions: parseDecisions(data.decisions),
+        resources: parseResources(data.resources, (id) => sceneIds.has(id)),
         theories,
         solution: parseSolution(data.solution, (id) => sceneIds.get(id)),
         clock: parseClock(data.clock),

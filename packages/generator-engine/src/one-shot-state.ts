@@ -39,13 +39,57 @@ const slug = (text: string) =>
 const CONFINED: readonly OneShotState[] = ["trapped", "captive", "missing"];
 export const isConfined = (state: OneShotState) => CONFINED.includes(state);
 
+/** Stable topological order for scenes, retaining source order where possible. */
+export function sceneOrder<T>(
+  scenes: T[],
+  idOf: (scene: T) => string,
+  nextOf: (scene: T) => string[],
+): number[] {
+  const indexes = new Map(scenes.map((scene, index) => [idOf(scene), index]));
+  const indegree = scenes.map(() => 0);
+  const edges = scenes.map((scene) =>
+    nextOf(scene).flatMap((id) => {
+      const index = indexes.get(id);
+      return index === undefined ? [] : [index];
+    }),
+  );
+  for (const next of edges) {
+    for (const index of next) indegree[index] += 1;
+  }
+
+  const ready = indegree.flatMap((count, index) =>
+    count === 0 ? [index] : [],
+  );
+  const ordered: number[] = [];
+  while (ready.length) {
+    const index = ready.shift()!;
+    ordered.push(index);
+    for (const next of edges[index]) {
+      indegree[next] -= 1;
+      if (indegree[next] === 0) ready.push(next);
+    }
+  }
+  // Keep malformed cyclic plans processable; their cycle is handled elsewhere.
+  for (let index = 0; index < scenes.length; index += 1) {
+    if (!ordered.includes(index)) ordered.push(index);
+  }
+  return ordered;
+}
+
 // ── Clock ────────────────────────────────────────────────────────────────
 
 export function parseSchedule(raw: unknown): OneShotClockMoment[] | undefined {
   const moments = list(raw)
     .map((m) => oneOf(ONE_SHOT_CLOCK_MOMENTS, m))
     .filter((m): m is OneShotClockMoment => !!m);
-  return moments.length ? moments : undefined;
+  // Each moment counts once; only fixed story moments may repeat.
+  const once = moments.filter(
+    (m, i) => m === "timed" || moments.indexOf(m) === i,
+  );
+  const unique = once.some((m) => m === "scene-end")
+    ? once.filter((m) => m !== "scene-end-after-opening")
+    : once;
+  return unique.length ? unique : undefined;
 }
 
 export function parseStartsAt(raw: unknown): number | undefined {
@@ -166,17 +210,26 @@ export function parseRoutes(raw: unknown): OneShotRoute[] | undefined {
   return found.length ? found : undefined;
 }
 
+/** Known NPCs and objects only, and the last entry for each. */
+function known(
+  entries: OneShotWhereabout[] | undefined,
+  npcIds: Set<string>,
+): OneShotWhereabout[] {
+  const seen = new Set<string>();
+  return (entries ?? [])
+    .filter((w) => w.kind === "object" || npcIds.has(w.who))
+    .reverse()
+    .filter((w) => !seen.has(w.who) && !!seen.add(w.who))
+    .reverse();
+}
+
 /** Whereabouts of unknown NPCs, repeats and routes not in `next` are dropped. */
 function normaliseScene(
   scene: OneShotScene,
   npcIds: Set<string>,
 ): OneShotScene {
-  const seen = new Set<string>();
-  const whereabouts = (scene.whereabouts ?? [])
-    .filter((w) => w.kind === "object" || npcIds.has(w.who))
-    .reverse()
-    .filter((w) => !seen.has(w.who) && !!seen.add(w.who))
-    .reverse();
+  const whereabouts = known(scene.whereabouts, npcIds);
+  const exit = known(scene.exit, npcIds);
   const routes = (scene.routes ?? []).filter(
     (r, i, all) =>
       scene.next.includes(r.to) && all.findIndex((o) => o.to === r.to) === i,
@@ -184,6 +237,7 @@ function normaliseScene(
   return {
     ...scene,
     whereabouts: whereabouts.length ? whereabouts : undefined,
+    exit: exit.length ? exit : undefined,
     routes: routes.length ? routes : undefined,
   };
 }
@@ -221,6 +275,8 @@ export function whereaboutsTimeline(
       name: names.get(w.who) ?? w.who,
       carried: !stated.has(w.who),
     }));
+    // What the scene leaves behind is where the next one picks up.
+    for (const w of scene.exit ?? []) current.set(w.who, w);
     return { scene, entries };
   });
 }
@@ -235,6 +291,7 @@ export function parseDecisions(raw: unknown): OneShotDecision[] | undefined {
       return {
         id: str(r.id, `decision-${i + 1}`),
         question: str(r.question),
+        when: parseRequires(r.when),
       };
     })
     .filter((d) => {
@@ -243,7 +300,16 @@ export function parseDecisions(raw: unknown): OneShotDecision[] | undefined {
       return true;
     })
     .slice(0, 4);
-  return found.length ? found : undefined;
+  // A decision can only depend on one asked earlier.
+  const earlier = new Set<string>();
+  const ordered = found.map((d) => {
+    const when = Object.fromEntries(
+      Object.entries(d.when ?? {}).filter(([id]) => earlier.has(id)),
+    );
+    earlier.add(d.id);
+    return { ...d, when: Object.keys(when).length ? when : undefined };
+  });
+  return ordered.length ? ordered : undefined;
 }
 
 export function parseRequires(
@@ -321,6 +387,9 @@ export function normaliseState(adventure: OneShotAdventure): OneShotAdventure {
     ...adventure,
     scenes: adventure.scenes.map((s) => normaliseScene(s, npcIds)),
     endings: normaliseEndings(adventure.endings, adventure.decisions),
+    // Supplies are a Survival mechanic; elsewhere they are bookkeeping.
+    resources:
+      adventure.emphasis === "Survival" ? adventure.resources : undefined,
     clock: adventure.clock && normaliseClock(adventure.clock, adventure.scenes),
   };
 }

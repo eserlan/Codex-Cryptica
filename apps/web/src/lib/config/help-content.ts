@@ -21,6 +21,7 @@ export const FEATURE_HELP_ARTICLES = {
   SHARING_ENTITY_TEMPLATES: "sharing-templates",
   HEXCRAWL_MAPS: "hexcrawl-maps",
   POINT_CRAWL_GENERATOR: "point-crawl-generator",
+  TOV_GENERATORS: "tales-of-the-valiant-generators",
 } as const;
 
 export interface FeatureHint {

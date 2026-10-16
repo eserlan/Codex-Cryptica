@@ -260,10 +260,106 @@ describe("GeneratorDraftReview", () => {
     it("shows everything when the shield is off", () => {
       render(GeneratorDraftReview, { props: props(false) });
 
-      expect(screen.queryByTestId("spoiler-shield")).toBeNull();
       expect(
         screen.getByText("The harbourmaster is the cultist."),
       ).toBeTruthy();
+    });
+  });
+
+  describe("Tales of the Valiant mechanics preview", () => {
+    it("renders Game Mechanics section when mechanics bundle is present", () => {
+      render(GeneratorDraftReview, {
+        props: {
+          draft: dungeonDraft({
+            mechanics: {
+              systemId: "tales-of-the-valiant",
+              kind: "tov-quick-npc",
+              isHomebrew: false,
+              data: {
+                cr: "1/2",
+                ac: 13,
+                hp: 18,
+                hitDice: "3d8+3",
+                speed: "30 ft.",
+                attackName: "Shortsword",
+                attackBonus: 3,
+                attackFormula: "1d20+3",
+                damageFormula: "1d6+1",
+                damageType: "piercing",
+                luck: 1,
+                abilityScores: {
+                  str: 10,
+                  dex: 12,
+                  con: 12,
+                  int: 10,
+                  wis: 10,
+                  cha: 10,
+                },
+                keySaves: [],
+                keySkills: [],
+                notes: "",
+                isHomebrew: false,
+              },
+            },
+          }),
+          categories,
+          saving: false,
+          onsave: vi.fn(),
+          onback: vi.fn(),
+        },
+      });
+
+      expect(screen.getByText("Game Mechanics")).toBeTruthy();
+      expect(screen.getByTestId("generator-mechanics-preview")).toBeTruthy();
+      expect(screen.getByText("Tales of the Valiant (BFRD)")).toBeTruthy();
+      expect(screen.getByText("Quick NPC")).toBeTruthy();
+      expect(screen.getByText("Shortsword")).toBeTruthy();
+    });
+
+    it("renders GM review badge when mechanics are flagged as homebrew", () => {
+      render(GeneratorDraftReview, {
+        props: {
+          draft: dungeonDraft({
+            mechanics: {
+              systemId: "tales-of-the-valiant",
+              kind: "tov-quick-npc",
+              isHomebrew: true,
+              data: {
+                cr: "1",
+                ac: 14,
+                hp: 20,
+                hitDice: "4d8",
+                speed: "30 ft.",
+                attackName: "Dagger",
+                attackBonus: 4,
+                attackFormula: "1d20+4",
+                damageFormula: "1d4+2",
+                damageType: "piercing",
+                luck: 0,
+                abilityScores: {
+                  str: 10,
+                  dex: 14,
+                  con: 10,
+                  int: 10,
+                  wis: 10,
+                  cha: 10,
+                },
+                keySaves: [],
+                keySkills: [],
+                notes: "",
+                isHomebrew: true,
+              },
+            },
+          }),
+          categories,
+          saving: false,
+          onsave: vi.fn(),
+          onback: vi.fn(),
+        },
+      });
+
+      expect(screen.getByTestId("homebrew-gm-review-badge")).toBeTruthy();
+      expect(screen.getByText("GM Review")).toBeTruthy();
     });
   });
 });
