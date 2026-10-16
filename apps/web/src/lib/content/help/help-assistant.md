@@ -21,7 +21,7 @@ When the conversation is empty, Cif can show a few questions for the screen you 
 
 ## Being shown where something is
 
-Sometimes Cif offers to show you a control. Choose **Show me** and it opens the right tab and outlines the button with a label. Other offers can open a tool or help article. Cif never edits your vault, and you can clear the outline any time by pressing Escape.
+Sometimes Cif offers to show you a control. Choose **Show me** and it opens the right tab and outlines the button with a label, and Cif flies over from the chat to point at it. The chat stays open so you can keep asking. It only closes on a phone, when the guide opens Settings, the generator or a help article, or when the chat would cover the button. Cif flies back when the outline clears. Cif never edits your vault, and you can clear the outline any time by pressing Escape or clicking elsewhere.
 
 On the map, Cif can open Grid Settings, Encounter Snapshots, the VTT sidebar and the map controls, and point at controls such as the Explore and Combat buttons, Add Token, fog, layers, Player View, tile decks, the initiative list and Share Campaign. It only offers what you can use: a player is never shown a host tool. Cif only opens and points. It never moves a token, reveals terrain, advances initiative, changes who owns a token, starts or stops a live session, or deletes an encounter. Those stay yours to do. If you use Cif in its own window, the guide runs in your main Codex Cryptica window, which is brought forward where your browser allows it. If the control cannot be found, the written answer still tells you where to look.
 
