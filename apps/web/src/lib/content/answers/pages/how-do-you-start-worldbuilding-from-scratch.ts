@@ -154,6 +154,7 @@ export const howDoYouStartWorldbuildingFromScratch: AnswerConfigInput = {
     "how-do-fantasy-cities-defend-against-flying-creatures-and-teleportation",
     "how-should-magic-have-been-discovered-in-my-world",
     "how-do-i-start-a-dnd-campaign",
+    "should-i-share-worldbuilding-notes-with-my-players",
   ],
   discovery: {
     id: "answer-worldbuilding-from-scratch",
