@@ -223,6 +223,14 @@ export const COVERAGE_QUESTIONS = [
   ["app-navigation", "Where is the Generators button on my phone?", "tune"],
   ["app-navigation", "What are the menu items on the left for?", "holdout"],
   ["app-navigation", "Why can I not see the Shelf in the menu?", "holdout"],
+  ["app-navigation", "What are the buttons in the top bar for?", "tune"],
+  ["app-navigation", "What does the Manage vault menu contain?", "tune"],
+  ["app-navigation", "Where did the Save button go in Guided Mode?", "holdout"],
+  [
+    "app-navigation",
+    "What is the cloud icon at the top of the screen?",
+    "holdout",
+  ],
 ] as const;
 
 export const COVERAGE_HELP: Record<string, string[]> = {
