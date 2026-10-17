@@ -99,6 +99,7 @@
   import {
     getHubMountPatch,
     resolveInitialActiveTheme,
+    resolveOneShotGenre,
     resolveSupportedHubGenre,
   } from "./generator-page-hub-state";
   import {
@@ -724,6 +725,15 @@
     }),
   );
   let lastSlug = $state(_initialSlug);
+
+  // The one-shot genre drives its skin (see syncGeneratorTheme), so a hub URL
+  // must seed the genre, otherwise the default genre overrides the hub theme.
+  oneShot.genre = resolveOneShotGenre(
+    _initialSlug,
+    activeTheme,
+    oneShotConfig.genres,
+    oneShot.genre,
+  );
 
   const setActiveTheme = (theme: string) => (activeTheme = theme);
   const handlePersonalityGenreChange = createKnownGenreThemeChangeHandler(
