@@ -70,7 +70,7 @@ describe("HexJourneyControls", () => {
     );
   });
 
-  it("uses the theme background foreground for primary journey actions", () => {
+  it("uses the primary action foreground token for journey actions", () => {
     const store = new HexJourneyStore({
       getIdentity: () => ({
         mapId: "m",
@@ -89,7 +89,7 @@ describe("HexJourneyControls", () => {
     render(HexJourneyControls, { store });
     expect(
       screen.getByRole("button", { name: "Start journey" }).className,
-    ).toContain("text-theme-bg");
+    ).toContain("text-theme-on-primary");
   });
 
   it("clears the route-specific hours input when a new route is previewed", async () => {

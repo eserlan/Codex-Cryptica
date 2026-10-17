@@ -41,7 +41,7 @@
           type="button"
           disabled={store.busy || !store.canRetryArrival}
           onclick={() => void store.retryArrival()}
-          class="mt-2 rounded-lg bg-theme-primary px-3 py-1.5 text-sm text-theme-bg"
+          class="mt-2 rounded-lg bg-theme-primary px-3 py-1.5 text-sm text-theme-on-primary"
           >Retry arrival save</button
         >{/if}
       {#if store.eligibleTokens.length > 1}
@@ -100,7 +100,7 @@
             type="button"
             disabled={!store.canStart}
             onclick={() => void store.start()}
-            class="rounded-lg bg-theme-primary px-3 py-1.5 text-sm text-theme-bg disabled:opacity-50"
+            class="rounded-lg bg-theme-primary px-3 py-1.5 text-sm text-theme-on-primary disabled:opacity-50"
             >Start journey</button
           >
           <button
@@ -116,7 +116,7 @@
           type="button"
           disabled={store.busy}
           onclick={() => void store.step()}
-          class="mt-2 rounded-lg bg-theme-primary px-3 py-1.5 text-sm text-theme-bg"
+          class="mt-2 rounded-lg bg-theme-primary px-3 py-1.5 text-sm text-theme-on-primary"
           >Next hex</button
         >
         <button
@@ -131,7 +131,7 @@
             type="button"
             disabled={store.busy || !store.canRetryArrival}
             onclick={() => void store.retryArrival()}
-            class="mt-2 rounded-lg bg-theme-primary px-3 py-1.5 text-sm text-theme-bg"
+            class="mt-2 rounded-lg bg-theme-primary px-3 py-1.5 text-sm text-theme-on-primary"
             >Retry arrival save</button
           >{/if}
         <button

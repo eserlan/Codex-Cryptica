@@ -19,8 +19,7 @@ export interface HexJourneyToken {
   label?: string;
   hex: HexCoord;
 }
-export type HexJourneyPhase =
-  "preview" | "ready" | "stepping" | "blocked" | "arrived";
+type HexJourneyPhase = "preview" | "ready" | "stepping" | "blocked" | "arrived";
 export interface HexJourneyStoreDeps {
   getIdentity: () => HexJourneyIdentity | null;
   isAllowed: () => boolean;
