@@ -14,7 +14,7 @@ export const howDoIOrganiseATalesOfTheValiantCampaign: AnswerConfigInput = {
       heading: "Start with the campaign, not the session log",
       paragraphs: [
         "After a few sessions, NPCs, faction goals and unfinished quests are hard to find in chronological notes. Make a campaign hub with links to the people, places, factions and quests that matter. Keep the journal as a record of what happened, and keep unused preparation out of established campaign history. If useful, start with this guide to [organising a D&D campaign](/answers/how-do-i-organise-a-dnd-campaign); the same linked-note structure works for ToV.",
-        "ToV adds a few rules details worth recording, but they sit alongside the campaign structure. The BFRD's optional Doom rule gives the GM a Doom resource at the start of an encounter, based on encounter CR. The GM can spend it to give a creature advantage on an attack, give a PC disadvantage on a save, or once per encounter refresh, recharge or gain one more use of a limited-use feature, including Legendary Resistance. Doom can affect creatures in that encounter; a Doom field on one creature's sheet is a tracking choice, not the scope required by the rule. See the [BFRD Doom rule](https://blackflagsrd.opengamingnetwork.com/playing-the-game/monsters/).",
+        "Tales of the Valiant also has rules worth tracking between sessions, particularly character Luck and the optional encounter-level Doom resource. Keep those records alongside the relevant character or encounter notes, rather than burying them in session summaries.",
       ],
     },
     {
@@ -52,7 +52,7 @@ export const howDoIOrganiseATalesOfTheValiantCampaign: AnswerConfigInput = {
         },
         {
           term: "Doom",
-          text: "If you use the BFRD's optional rule, record the encounter's CR-based starting Doom and spends on that encounter's run sheet. Allocate or mark the pool as needed to track which creature benefits. Codex Cryptica currently exposes a counter on a ToV monster stat sheet and its selected token controls; that per-creature UI is an implementation choice and does not change the encounter-level rule. A different pool, trigger or spend is a house rule, so write it down as one.",
+          text: "If you use the BFRD's optional Doom rule, the GM gains a Doom resource at the start of an encounter, based on encounter CR. The GM can spend it to give a creature advantage on an attack roll, give a PC disadvantage on a save, or, once per encounter, refresh, recharge or gain one more use of a limited-use feature, including Legendary Resistance. Doom can affect creatures in that encounter, so record the encounter's CR-based starting Doom and any spends on that encounter's run sheet, and allocate or mark the pool as needed to track which creature benefits. See the [BFRD Doom rule](https://blackflagsrd.opengamingnetwork.com/playing-the-game/monsters/). Codex Cryptica currently exposes a counter on a ToV monster stat sheet and its selected token controls; that per-creature UI is an implementation choice and does not change the encounter-level rule. A different pool, trigger or spend is a house rule, so write it down as one.",
         },
         {
           term: "Conversion decisions",
@@ -68,7 +68,7 @@ export const howDoIOrganiseATalesOfTheValiantCampaign: AnswerConfigInput = {
       kind: "prose",
       heading: "Let character details create campaign links",
       paragraphs: [
-        "For example, take a human with Cloudborn Heritage, a Soldier Background and a motivation to find the squadmate who vanished after their unit abandoned a river-port post. These are character details, not a prescribed ToV plot. Link the character to the missing squadmate, the unit's faction page and the port location. Add the smuggler who saw the squadmate, the guild that controls the docks and the open quest to find them. Each page now gives you a playable lead: the smuggler wants safe passage, the guild can grant it at a price, and the unit will learn who is asking questions. The character's Lineage, Heritage, Background and Adventuring Motivation give you four prompts for relationships and unfinished business, rather than four isolated labels.",
+        "For example, take a human with Cosmopolitan Heritage, a Soldier Background and a motivation to find the squadmate who vanished after their unit abandoned a river-port post. These are character details, not a prescribed ToV plot. Link the character to the missing squadmate, the unit's faction page and the port location. Add the smuggler who saw the squadmate, the guild that controls the docks and the open quest to find them. Each page now gives you a playable lead: the smuggler wants safe passage, the guild can grant it at a price, and the unit will learn who is asking questions. The character's Lineage, Heritage, Background and Adventuring Motivation give you four prompts for relationships and unfinished business, rather than four isolated labels.",
       ],
     },
     {
@@ -91,7 +91,7 @@ export const howDoIOrganiseATalesOfTheValiantCampaign: AnswerConfigInput = {
         },
         {
           term: "At the table",
-          text: "The fighter begins with 2 Luck. On their turn, they miss an attack and gain 1 Luck, bringing the total to 3; that new point cannot affect the missed attack. After a later failed check, they may spend 3 Luck to reroll its d20, but the reroll can still fail. If the GM keeps the invented hex, its save and any Doom cost are written as house rules. The journal captures what actually happened, including whether the necromancer escaped.",
+          text: "The fighter begins with 2 Luck. On their turn, they miss an attack and gain 1 Luck, bringing the total to 3; that new point cannot affect the missed attack. On a later check, immediately after making that check and before the GM declares whether it succeeds or fails, they may spend 3 Luck to reroll its d20, but the reroll can still fail. They cannot wait until later to revisit the roll, and they cannot spend the point just gained from the missed attack on that triggering miss. If the GM keeps the invented hex, its save and any Doom cost are written as house rules. The journal captures what actually happened, including whether the necromancer escaped.",
         },
         {
           term: "After the session",

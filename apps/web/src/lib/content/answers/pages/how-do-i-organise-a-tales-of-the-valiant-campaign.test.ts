@@ -121,6 +121,44 @@ describe("howDoIOrganiseATalesOfTheValiantCampaign answer", () => {
     }
   });
 
+  it("applies the final copy polish from issue 4179", () => {
+    const serialized = JSON.stringify(howDoIOrganiseATalesOfTheValiantCampaign);
+    expect(serialized).toContain("Cosmopolitan Heritage");
+    expect(serialized).not.toContain("Cloudborn");
+
+    const intro = howDoIOrganiseATalesOfTheValiantCampaign.sections[0];
+    expect(intro.kind).toBe("prose");
+    if (intro.kind !== "prose") return;
+    const introText = intro.paragraphs.join(" ");
+    expect(introText).toContain("optional encounter-level Doom resource");
+    expect(introText).not.toContain("Legendary Resistance");
+    expect(introText).not.toContain("blackflagsrd.opengamingnetwork.com");
+
+    const rulesSection = howDoIOrganiseATalesOfTheValiantCampaign.sections.find(
+      (section) =>
+        section.kind === "list" &&
+        section.heading ===
+          "Keep the rules notes that affect your next session",
+    );
+    expect(rulesSection).toBeDefined();
+    if (!rulesSection || rulesSection.kind !== "list") return;
+    const doom = rulesSection.items.find((item) => item.term === "Doom");
+    expect(doom?.text).toContain("based on encounter CR");
+    expect(doom?.text).toContain("Legendary Resistance");
+    expect(doom?.text).toContain(
+      "https://blackflagsrd.opengamingnetwork.com/playing-the-game/monsters/",
+    );
+    expect(doom?.text).toContain("per-creature UI is an implementation choice");
+
+    expect(serialized).toContain(
+      "immediately after making that check and before the GM declares whether it succeeds or fails, they may spend 3 Luck to reroll its d20, but the reroll can still fail",
+    );
+    expect(serialized).toContain(
+      "They cannot wait until later to revisit the roll",
+    );
+    expect(serialized).not.toContain("After a later failed check");
+  });
+
   it("uses British English spellings and avoids American travel conjugations", () => {
     const serialized = JSON.stringify(howDoIOrganiseATalesOfTheValiantCampaign);
     expect(serialized).toContain("organise");
