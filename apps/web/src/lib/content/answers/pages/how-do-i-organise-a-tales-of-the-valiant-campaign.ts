@@ -7,7 +7,7 @@ export const howDoIOrganiseATalesOfTheValiantCampaign: AnswerConfigInput = {
   question: "How do I organise a Tales of the Valiant campaign?",
   kind: "framework",
   shortAnswer:
-    "Organise a Tales of the Valiant campaign by centring notes on what distinguishes Black Flag Roleplaying: separate each hero's Lineage from their cultural Heritage in your cast web, track party Luck according to your campaign's resting variant, manage Doom budgets for major adversary encounters, index martial and magical talent circles in regional hubs, and connect spell circles directly to ritual traditions.",
+    "Organise a Tales of the Valiant campaign by centring notes on what distinguishes Black Flag Roleplaying: separate each hero's Lineage from their cultural Heritage in your cast web, track party Luck according to your campaign's resting variant, manage Doom budgets for major adversary encounters, index martial and magical talent circles in regional hubs, and connect spell sources directly to ritual traditions.",
   sections: [
     {
       kind: "prose",
@@ -39,7 +39,7 @@ export const howDoIOrganiseATalesOfTheValiantCampaign: AnswerConfigInput = {
         ],
         [
           "Boss encounters",
-          "Legendary actions trigger automatically each round with static budgets.",
+          "Legendary Actions can be spent between turns, with uses regained at the start of the creature's turn.",
           "Doom points spent from explicit pools for reactive surges, phase shifts, and terrain breaks.",
         ],
         [
@@ -50,7 +50,7 @@ export const howDoIOrganiseATalesOfTheValiantCampaign: AnswerConfigInput = {
         [
           "Magic and spells",
           "Spells grouped into class-specific spell lists with standard slots.",
-          "Four broad spell circles (Arcane, Divine, Primordial, Wyrd) linked to faction traditions.",
+          "Four broad spell sources (Arcane, Divine, Primordial, Wyrd) linked to faction traditions.",
         ],
       ],
     },
@@ -70,16 +70,16 @@ export const howDoIOrganiseATalesOfTheValiantCampaign: AnswerConfigInput = {
         },
         {
           term: "Talent trees and martial options",
-          text: "Unlike rigid feat lists, ToV categorises talents into Martial, Magic, and Technical disciplines with prerequisite paths. Note which training academies, martial tutors, or arcane circles in your world can guide characters into advanced talent tiers.",
+          text: "Unlike rigid feat lists, ToV categorises talents into Martial, Magic, and Technical disciplines with prerequisite paths. Note which training academies, martial tutors, or arcane guilds in your world can guide characters into advanced talent tiers.",
         },
       ],
     },
     {
       kind: "prose",
-      heading: "Organise spell circles into regional magical traditions",
+      heading: "Organise spell sources into regional magical traditions",
       paragraphs: [
-        "Magic in Tales of the Valiant is organised into four primary spell circles: Arcane, Divine, Primordial, and Wyrd. Rather than maintaining sprawling, unorganised lists of spell scrolls in your loot tables, map these four circles to the religious, occult, and natural orders of your campaign setting.",
-        "Divine spells naturally trace back to temple hierarchies and clerical lineages. Primordial magic ties directly to druidic circles, elemental borderlands, and wilderness spirits. Wyrd magic belongs to hedge witches, fate-spinners, and fey pact-holders, while Arcane spells belong to collegiate guilds and court conjurers. When the party discovers a forgotten library or an arcane ritual, tagging it with its circle immediately clarifies which local tutors can decipher it and which rival factions will hunt for it.",
+        "Magic in Tales of the Valiant is organised into four primary spell sources: Arcane, Divine, Primordial, and Wyrd. Rather than maintaining sprawling, unorganised lists of spell scrolls in your loot tables, map these four sources to the religious, occult, and natural orders of your campaign setting.",
+        "Divine spells naturally trace back to temple hierarchies and clerical lineages. Primordial magic ties directly to druidic circles, elemental borderlands, and wilderness spirits. Wyrd magic belongs to hedge witches, fate-spinners, and fey pact-holders, while Arcane spells belong to collegiate guilds and court conjurers. When the party discovers a forgotten library or an arcane ritual, tagging it with its source immediately clarifies which local tutors can decipher it and which rival factions will hunt for it.",
       ],
     },
     {
@@ -111,7 +111,7 @@ export const howDoIOrganiseATalesOfTheValiantCampaign: AnswerConfigInput = {
         "Split character backstories into separate Lineage contacts and Heritage communities.",
         "After a Long Rest, apply the campaign's resting variant to each Luck pool and update the counter manually.",
         "Assign explicit Doom budgets to solo boss creatures rather than generic minions.",
-        "Review relevant BFRD monster stat blocks, confirming spell circles and save proficiencies.",
+        "Review relevant BFRD monster stat blocks, confirming spell levels and save proficiencies.",
         "Link magic item rewards to specific crafting lineages or forgotten Black Flag factions.",
         "Map regional arcane or martial tutors capable of instructing characters in advanced talent disciplines.",
       ],
