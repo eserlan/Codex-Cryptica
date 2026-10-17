@@ -45,24 +45,24 @@ describe("howDoIOrganiseATalesOfTheValiantCampaign answer", () => {
     if (!comparison || comparison.kind !== "table") return;
 
     expect(comparison.headers).toEqual([
-      "Mechanical area",
-      "Standard 5e tracking",
-      "Tales of the Valiant prep approach",
+      "Campaign layer",
+      "Standard 5e habit",
+      "Tales of the Valiant organisation",
     ]);
     expect(comparison.rows).toContainEqual([
-      "Boss encounters",
-      "Legendary Actions can be spent between turns, with uses regained at the start of the creature's turn.",
-      "Doom points spent from explicit pools for reactive surges, phase shifts, and terrain breaks.",
+      "Between-session party state",
+      "Track hit points, spell slots and exhaustion; Inspiration is binary and rarely persists in notes.",
+      "Record each character's current Luck (0 to 5) at session end, plus the campaign's chosen Long Rest Luck rule so next week's opening encounter starts with accurate pools.",
     ]);
     expect(comparison.rows).toContainEqual([
-      "Magic and spells",
-      "Spells grouped into class-specific spell lists with standard slots.",
-      "Four broad spell sources (Arcane, Divine, Primordial, Wyrd) linked to faction traditions.",
+      "Boss and lieutenant prep",
+      "Copy a stat block with static Legendary Actions and Legendary Resistances.",
+      "Attach a specific Doom pool and two or three named Doom actions to the adversary's card or token, keeping Doom scoped to that creature rather than a shared GM pool.",
     ]);
 
     const serialized = JSON.stringify(howDoIOrganiseATalesOfTheValiantCampaign);
     expect(serialized).toContain(
-      "four primary spell sources: Arcane, Divine, Primordial, and Wyrd",
+      "four primary spell sources (Arcane, Divine, Primordial or Wyrd)",
     );
     expect(serialized).not.toContain("spell circles");
   });
