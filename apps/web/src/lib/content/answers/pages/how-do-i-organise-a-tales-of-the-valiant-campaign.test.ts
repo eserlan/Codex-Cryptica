@@ -36,6 +36,37 @@ describe("howDoIOrganiseATalesOfTheValiantCampaign answer", () => {
     expect(sections.some((s) => s.kind === "checklist")).toBe(true);
   });
 
+  it("covers the comparison table and names ToV spell sources accurately", () => {
+    const comparison = howDoIOrganiseATalesOfTheValiantCampaign.sections.find(
+      (section) => section.kind === "table",
+    );
+
+    expect(comparison).toBeDefined();
+    if (!comparison || comparison.kind !== "table") return;
+
+    expect(comparison.headers).toEqual([
+      "Mechanical area",
+      "Standard 5e tracking",
+      "Tales of the Valiant prep approach",
+    ]);
+    expect(comparison.rows).toContainEqual([
+      "Boss encounters",
+      "Legendary Actions can be spent between turns, with uses regained at the start of the creature's turn.",
+      "Doom points spent from explicit pools for reactive surges, phase shifts, and terrain breaks.",
+    ]);
+    expect(comparison.rows).toContainEqual([
+      "Magic and spells",
+      "Spells grouped into class-specific spell lists with standard slots.",
+      "Four broad spell sources (Arcane, Divine, Primordial, Wyrd) linked to faction traditions.",
+    ]);
+
+    const serialized = JSON.stringify(howDoIOrganiseATalesOfTheValiantCampaign);
+    expect(serialized).toContain(
+      "four primary spell sources: Arcane, Divine, Primordial, and Wyrd",
+    );
+    expect(serialized).not.toContain("spell circles");
+  });
+
   it("qualifies Luck rests and avoids claiming unavailable profile or import flows", () => {
     const serialized = JSON.stringify(howDoIOrganiseATalesOfTheValiantCampaign);
 
