@@ -9,14 +9,14 @@ import { ProposerService } from "@codex/proposer";
 import { getDB, DB_NAME, DB_VERSION } from "../utils/idb";
 import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
 import { notificationStore } from "./ui/notification.svelte";
-import { systemClock } from "$lib/utils/runtime-deps";
+import { systemClock, type Clock } from "$lib/utils/runtime-deps";
 
 class ProposerStore {
   private service: ProposerService | null = null;
   private activeAnalysisCounts = new Map<string, number>();
   private activeAnalysisTotal = 0;
 
-  constructor() {
+  constructor(private clock: Clock = systemClock) {
     vaultEventBus.subscribe((event) => {
       if (event.type === "VAULT_DELETED") {
         void this.clearVault(event.vaultId);
@@ -54,7 +54,7 @@ class ProposerStore {
       reason: "Manually removed by user",
       confidence: 1.0,
       status: "rejected",
-      timestamp: systemClock.now(),
+      timestamp: this.clock.now(),
     };
     const reverseProposal: Proposal = {
       ...forwardProposal,
@@ -276,7 +276,7 @@ class ProposerStore {
     const verifiedProposal = {
       ...proposal,
       status: "verified" as const,
-      timestamp: systemClock.now(),
+      timestamp: this.clock.now(),
     };
     this.allVerifiedProposals = [
       verifiedProposal,
@@ -333,7 +333,7 @@ class ProposerStore {
     const dismissedProposal = {
       ...proposal,
       status: "rejected" as const,
-      timestamp: systemClock.now(),
+      timestamp: this.clock.now(),
     };
     if (!this.history[proposal.sourceId]) this.history[proposal.sourceId] = [];
     this.history[proposal.sourceId] = [
@@ -578,7 +578,7 @@ class ProposerStore {
     const dismissedProposal = {
       ...proposal,
       status: "rejected" as const,
-      timestamp: systemClock.now(),
+      timestamp: this.clock.now(),
     };
     if (!this.history[proposal.sourceId]) this.history[proposal.sourceId] = [];
     this.history[proposal.sourceId] = [

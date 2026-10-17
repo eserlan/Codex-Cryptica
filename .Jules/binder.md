@@ -326,3 +326,8 @@
 **Learning:** Svelte components testing global localStorage can be hard to mock robustly across environments.
 
 **Action:** Inject a custom `StorageLike` map-backed mock into the component during tests instead of spying on or clearing the global `window.localStorage`.
+
+## 2026-10-17 - Injecting Clock into ProposerStore
+
+**Learning:** Hardcoded systemClock usage inside ProposerStore hinders testability by making the current time global and untestable. Injecting a Clock dependency lazily at construction resolves this while keeping the production default.
+**Action:** When creating or refactoring stores that rely on timestamps, inject a `clock: Clock = systemClock` dependency into the constructor.
