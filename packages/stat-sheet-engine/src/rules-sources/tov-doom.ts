@@ -8,10 +8,10 @@ export const TOV_DOOM_FIELD_ID = "doom" as const;
 /** Concise in-context rules reference for Doom Points. */
 export const TOV_DOOM_REFERENCE = {
   summary:
-    "Doom Points are held by select boss monsters and adversaries to fuel villain actions, legendary responses, or lair effects.",
+    "The optional BFRD Doom rule gives the GM a CR-based resource at the start of an encounter. The GM can spend it to give a creature advantage on an attack, give a PC disadvantage on a save, or once per encounter refresh, recharge, or gain one additional use of a limited-use feature.",
   min: 0,
   defaultMax: 10,
-  note: "Doom points are scoped strictly to individual creatures/abilities, not a universal GM pool.",
+  note: "The published rule is encounter-level and can affect creatures in that encounter. Codex Cryptica currently exposes a counter on an individual ToV monster stat sheet as a tracking choice.",
   source: `${BFRD_MANIFEST.shortName} ${BFRD_MANIFEST.version} (${BFRD_MANIFEST.license})`,
 } as const;
 

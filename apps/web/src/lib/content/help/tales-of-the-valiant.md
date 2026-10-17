@@ -1,7 +1,7 @@
 ---
 id: tales-of-the-valiant
 title: Tales of the Valiant (BFRD) Campaign Guide
-description: Complete guide to using Tales of the Valiant stat sheet templates, generators, Luck and Doom tracking in Codex Cryptica.
+description: Guide to Tales of the Valiant stat sheets, generators, Luck and Doom tracking in Codex Cryptica.
 tags:
   [
     tales of the valiant,
@@ -33,28 +33,28 @@ Vault-wide system profile selection is not currently available. To use Tales of 
 Codex Cryptica includes three pre-configured ToV stat sheet templates:
 
 - **Tales of the Valiant Character** (`builtin-tov-character`): A full adventurer sheet featuring Lineage, Heritage, class levels, saving throw proficiencies, weapon actions, spell circles, and an interactive **Luck** resource counter.
-- **Tales of the Valiant Monster** (`builtin-tov-monster`): Complete BFRD creature stat block with challenge rating, armour class, traits, action routines, reactions, and an optional **Doom** counter for solo bosses.
+- **Tales of the Valiant Monster** (`builtin-tov-monster`): BFRD creature stat block with challenge rating, armour class, traits, action routines, reactions, and a **Doom** counter field. The field is available for per-creature tracking in Codex; the BFRD's optional Doom rule instead gives the GM a CR-based resource for the encounter.
 - **Tales of the Valiant Quick NPC** (`builtin-tov-npc`): A lightweight, CR-based block designed for rapid session prep, retaining core combat stats without the overhead of full character tracking.
 
 ---
 
 ### 3. Interactive Luck Tracking
 
-In Tales of the Valiant, characters gain Luck when they fail d20 attack rolls or saving throws, spending accumulated points to improve subsequent d20 rolls.
+In the BFRD, a PC starts with 0 Luck and has a maximum of 5. Once per turn, a failed attack roll or save grants 1 Luck. The GM can also award Luck for clever ideas, roleplay, difficult encounters or story goals. If a PC at 5 Luck would gain more, they immediately roll a d4 and reset their total to that result. Luck can add 1 point per point spent to a check, or 3 Luck can reroll the d20 immediately after a check. Luck gained from a failed roll cannot be spent on that same triggering roll. See the [BFRD Luck rules](https://bfrd.net/rules/playing-the-game).
 
 - **Character Sheets**: Use the minus and plus controls on the Luck counter to spend or gain points.
 - **Virtual Tabletop (VTT)**: When a character token is selected on the combat map, their Luck meter appears in **Token Quick Stats** for instantaneous mid-battle adjustments.
-- **Long Rest**: The campaign's resting variant determines whether unspent Luck is preserved or reset towards the pool maximum. Codex Cryptica does not reset Luck automatically; update the counter manually after the rest according to the rules your campaign uses.
+- **Long Rest**: The BFRD Luck rules do not prescribe a Long Rest reset. Codex Cryptica does not change Luck on a rest, so update the counter only if your table's clearly documented house rule calls for it.
 
 ---
 
 ### 4. Adversary Doom Resource Tracking
 
-Major villains, legendary monsters, and solo encounter bosses can harness **Doom Points** to execute villainous actions, interrupt player turns, or trigger explosive reactions.
+The BFRD's **optional Doom rule** gives the GM an encounter resource based on encounter CR. Doom can affect creatures in that encounter; it is not inherently a per-creature pool. The GM can spend Doom to give a creature advantage on an attack, give a PC disadvantage on a save, or once per encounter refresh, recharge or gain one more use of a limited-use feature, such as Legendary Resistance. These are the published spends in the [BFRD Doom rule](https://blackflagsrd.opengamingnetwork.com/playing-the-game/monsters/).
 
-- **Verified Counter**: Doom controls appear exclusively on creatures with an active Doom counter (e.g. `builtin-tov-monster` with Doom configured).
-- **VTT HUD**: Adjust Doom pools live from token quick stats during combat encounters.
-- **Bounded Pool**: Unlike Luck, Doom points are strictly scoped to the individual adversary token and are never shared as an arbitrary global pool.
+- **Creature stat sheet**: The built-in ToV monster sheet has a Doom counter field, and Doom controls appear for a selected creature with that field.
+- **VTT HUD**: The selected token's quick stats can adjust that creature's counter during play.
+- **Implementation detail**: Codex currently exposes a creature-scoped counter. Use the encounter run sheet to record the BFRD pool and any allocations; the UI counter does not change the optional rule's encounter-level scope. Different pool arrangements or spends are house rules and should be labelled as such.
 
 ---
 

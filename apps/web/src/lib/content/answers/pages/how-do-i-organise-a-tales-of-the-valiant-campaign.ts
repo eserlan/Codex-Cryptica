@@ -7,123 +7,117 @@ export const howDoIOrganiseATalesOfTheValiantCampaign: AnswerConfigInput = {
   question: "How do I organise a Tales of the Valiant campaign?",
   kind: "framework",
   shortAnswer:
-    "Organise a Tales of the Valiant campaign around linked people, places, factions and quests rather than one chronological session doc, and give Black Flag's moving table state its own home: record your resting variant and each character's carried-over Luck at the end of every session, attach explicit Doom pools and triggers to boss stat blocks, and keep 5e-to-Black Flag conversion changes on the adventure pages where you run them.",
+    "Build a campaign hub that links characters, locations, factions and quests; keep events in a session journal, then prepare a one-screen run sheet for the next game. Track ToV rules state alongside that structure: record each character's current Luck, and note whether you use the optional BFRD Doom rule or a house rule. Store conversion choices with the encounters where they apply.",
   sections: [
     {
       kind: "prose",
-      heading: "Where Tales of the Valiant campaign notes break down",
+      heading: "Start with the campaign, not the session log",
       paragraphs: [
-        "Most Tales of the Valiant tables share the same core note-taking problem as any d20 fantasy campaign: after ten sessions, NPCs, faction goals, half-finished quests and dungeon adjustments are buried inside chronological session logs. If you already know [how to organise a D&D campaign](/answers/how-do-i-organise-a-dnd-campaign) around separate pages for people, places and open threads, keep that foundation. Separate what is currently true in the world from what happened in the session journal and what remains disposable prep.",
-        "Where a Black Flag campaign diverges is the mechanical state that carries across sessions and the conversion notes that accumulate when you run 5e material. Party Luck rises and falls on missed rolls and changes on a Long Rest according to the resting variant your table chose. Boss encounters rely on finite Doom pools and specific Doom spenders rather than static legendary resistance. And because many GMs run published 5e adventures alongside the Black Flag Reference Document (BFRD), unwritten monster swaps and save adjustments quickly turn into mid-combat guesswork if they are not stored with the location or encounter.",
+        "After a few sessions, NPCs, faction goals and unfinished quests are hard to find in chronological notes. Make a campaign hub with links to the people, places, factions and quests that matter. Keep the journal as a record of what happened, and keep unused preparation out of established campaign history. If useful, start with this guide to [organising a D&D campaign](/answers/how-do-i-organise-a-dnd-campaign); the same linked-note structure works for ToV.",
+        "ToV adds a few rules details worth recording, but they sit alongside the campaign structure. The BFRD's optional Doom rule gives the GM a Doom resource at the start of an encounter, based on encounter CR. The GM can spend it to give a creature advantage on an attack, give a PC disadvantage on a save, or once per encounter refresh, recharge or gain one more use of a limited-use feature, including Legendary Resistance. Doom can affect creatures in that encounter; a Doom field on one creature's sheet is a tracking choice, not the scope required by the rule. See the [BFRD Doom rule](https://blackflagsrd.opengamingnetwork.com/playing-the-game/monsters/).",
       ],
     },
     {
       kind: "table",
-      heading:
-        "What changes when you organise for Tales of the Valiant vs standard 5e",
-      headers: [
-        "Campaign layer",
-        "Standard 5e habit",
-        "Tales of the Valiant organisation",
-      ],
+      heading: "What to keep in each campaign layer",
+      headers: ["Campaign layer", "What to record"],
       rows: [
         [
-          "Between-session party state",
-          "Track hit points, spell slots and exhaustion; Inspiration is binary and rarely persists in notes.",
-          "Record each character's current Luck (0 to 5) at session end, plus the campaign's chosen Long Rest Luck rule so next week's opening encounter starts with accurate pools.",
+          "Campaign hub",
+          "Current situation, important links, and a short list of open questions. Use it to find the right page, not to repeat every detail.",
         ],
         [
-          "Boss and lieutenant prep",
-          "Copy a stat block with static Legendary Actions and Legendary Resistances.",
-          "Attach a specific Doom pool and two or three named Doom actions to the adversary's card or token, keeping Doom scoped to that creature rather than a shared GM pool.",
+          "Characters, places, factions and quests",
+          "Facts that remain true between sessions, plus relationships and consequences. Link an NPC to the faction they serve and the people or places affected by their choices.",
         ],
         [
-          "Adventure conversion notes",
-          "Run published 5e encounters as written from the module book.",
-          "Keep a short conversion block on each location or encounter page noting BFRD monster replacements, stealth/perception DC equivalents, and Doom swaps.",
+          "Session journal",
+          "What happened, what the players decided, and changes to promote to campaign pages. The journal is the archive; it is not the run sheet.",
         ],
         [
-          "Downtime and character ties",
-          "Handle downtime ad hoc between arcs; patrons and backgrounds stay on character sheets.",
-          "Track active downtime projects, research progress, and Heritage or faction obligations as open threads linked to the NPCs and settlements involved.",
+          "Next-session run sheet",
+          "The party's current position, likely scenes, relevant NPCs, active threads, rulings and encounter references. Keep it to one screen or page.",
         ],
       ],
     },
     {
       kind: "list",
-      heading:
-        "Four Black Flag elements that need a dedicated place in your notes",
+      heading: "Keep the rules notes that affect your next session",
       intro:
-        "Do not duplicate full character sheets in your GM notes. Track only the state that changes how you prepare or adjudicate the next session.",
+        "Record only state or rulings you will need again. Link details to their source instead of copying whole character sheets into GM notes.",
       items: [
         {
-          term: "Party Luck and your campaign's resting variant",
-          text: "Characters gain Luck when they fail attack rolls or saving throws and spend it to push later d20 tests over the line. Because a party entering a boss room with four Luck each plays very differently from a party at zero, record everyone's current Luck when you wrap for the night. Note your campaign's resting variant at the top of your campaign hub so everyone applies the same rule when a Long Rest resets or preserves unspent Luck. Codex Cryptica does not change Luck automatically on a rest, so update each counter manually.",
+          term: "Luck",
+          text: "The BFRD says a PC starts with 0 Luck and can have up to 5. Once per turn, a failed attack roll or failed save grants 1 Luck; the GM can also award Luck for play or story goals. If a PC with 5 Luck would gain more, they immediately roll a d4 and reset their total to that result. Luck can add 1 point per point spent to a check, or 3 Luck can reroll a d20 immediately after a check. Do not use Luck earned from a failed roll on that same triggering roll. Record current totals at the end of a session and update them as they change. The [BFRD Luck rules](https://bfrd.net/rules/playing-the-game) do not prescribe a Long Rest reset.",
         },
         {
-          term: "Scoped Doom budgets on adversary pages",
-          text: "In Black Flag rules, legendary creatures and key lieutenants spend Doom points to recharge abilities, shake off conditions or act out of turn. Write the starting Doom count and the exact triggers on the creature's stat sheet or encounter note before play. During combat, track Doom on that specific boss token rather than treating it as a floating pool across the whole room.",
+          term: "Doom",
+          text: "If you use the BFRD's optional rule, record the encounter's CR-based starting Doom and spends on that encounter's run sheet. Allocate or mark the pool as needed to track which creature benefits. Codex Cryptica currently exposes a counter on a ToV monster stat sheet and its selected token controls; that per-creature UI is an implementation choice and does not change the encounter-level rule. A different pool, trigger or spend is a house rule, so write it down as one.",
         },
         {
-          term: "Module conversion decisions alongside locations",
-          text: "If you are running a 5e campaign book or mixing third-party supplements with BFRD monsters, never trust yourself to remember on-the-fly conversions two weeks later. When you swap a 5e monster for its BFRD counterpart, replace Legendary Resistance with Doom, or assign a spell to one of the four primary spell sources (Arcane, Divine, Primordial or Wyrd), write that change on the room or encounter note where the creature appears.",
+          term: "Conversion decisions",
+          text: "When adapting another game's material, document the choices you make for a particular creature or scene: the stat block used, any changed save or DC, and how you handled spells or limited-use abilities. BFRD does not require a universal conversion algorithm. Keep these notes with the encounter so you can apply the same decision if it returns.",
         },
         {
-          term: "Downtime projects, patrons and training ties",
-          text: "Tales of the Valiant gives structured weight to between-adventure downtime and tiered Martial, Magic and Technical talents. When a player spends downtime researching a ruin, courting a guild or seeking a mentor for an advanced talent tier, log it as an open thread linked to that NPC and settlement. Check those threads before prepping the next town visit so their progress shows up in play.",
+          term: "Downtime and contacts",
+          text: "Track projects, promises and obligations as open threads linked to the people and places involved. A contact becomes useful when their position and the consequences of calling on them are clear.",
         },
       ],
     },
     {
       kind: "prose",
-      heading: "Keep your table run sheet narrow",
+      heading: "Let character details create campaign links",
       paragraphs: [
-        "Your campaign archive holds every town, faction, converted stat block and old session log. Your run sheet for tonight should fit on one screen or page: where the party is standing, each character's starting Luck, the three or four NPCs or rooms likely to come into play, the active open threads, and the stat blocks and Doom triggers for tonight's encounters.",
-        "Treat encounter prep as disposable until it happens at the table. If the party bypasses a converted ambush in the Sunken Watchtower, move that prep back to your archive or adapt it later without writing it into the campaign timeline as settled history.",
+        "For example, take a human with Cloudborn Heritage, a Soldier Background and a motivation to find the squadmate who vanished after their unit abandoned a river-port post. These are character details, not a prescribed ToV plot. Link the character to the missing squadmate, the unit's faction page and the port location. Add the smuggler who saw the squadmate, the guild that controls the docks and the open quest to find them. Each page now gives you a playable lead: the smuggler wants safe passage, the guild can grant it at a price, and the unit will learn who is asking questions. The character's Lineage, Heritage, Background and Adventuring Motivation give you four prompts for relationships and unfinished business, rather than four isolated labels.",
+      ],
+    },
+    {
+      kind: "prose",
+      heading: "Keep tonight's run sheet narrow",
+      paragraphs: [
+        "The archive can hold every town, faction, ruling and old journal entry. Tonight's sheet needs only where the party is, the few scenes and contacts likely to matter, active threads, relevant stat blocks and current rules state. If the party bypasses a prepared ambush in the Sunken Watchtower, leave it as unused prep or adapt it later. It does not become established history until it happens in play.",
       ],
     },
     {
       kind: "example",
-      heading:
-        "Before and after: running a converted 5e dungeon in Tales of the Valiant",
+      heading: "Example: a river-port necromancer",
       paragraphs: [
-        "A GM is six sessions into a campaign, running a published 5e dungeon adapted for four Level 5 Tales of the Valiant characters. Last session ended mid-delve right outside the sanctum of a bone-sculptor necromancer.",
+        "Four level 5 ToV characters are midway through a published 5e dungeon adapted by their GM. The last session ended outside a necromancer's sanctum. Their journal says the party found a bone key and that the fighter has 2 Luck; the necromancer has not yet appeared in play.",
       ],
       items: [
         {
-          term: "Unorganised session notes",
-          text: "The GM kept notes in a single running document and did the 5e-to-ToV conversion in their head during Session 5. Sitting down for Session 6, nobody remembers whether the fighter ended last week with 1 Luck or 4. The GM forgot whether the table agreed that Long Rests reset Luck by rolling 1d4 or clearing unspent points. Mid-fight, the GM runs the necromancer out of the 5e book using static Legendary Resistance, forgetting they had planned to give the boss a Doom pool of 3, and cannot find the note naming which cultists in town owe the necromancer money.",
+          term: "Before the session",
+          text: "The GM's run sheet links the sanctum to the necromancer's stat block, notes the party's current Luck, and lists the decisions made when adapting this encounter. For illustration, the GM chooses to use the optional BFRD Doom rule for the encounter. If its CR puts the encounter in the 5-8 tier, the GM starts with 2 Doom. The Doom is an encounter resource that can help any creature in the encounter; Codex Cryptica's creature counter can be used to mark an allocation, while the run sheet records the encounter total. The necromancer's bone-splinter teleport and reaction hex are invented homebrew abilities, not published BFRD Doom spends. The GM records their triggers and costs as house rules, or removes them.",
         },
         {
-          term: "Organised around entities and Black Flag state",
-          text: "The Sanctum location page links directly to the necromancer's BFRD monster sheet, which carries a verified Doom pool of 3 and two written Doom actions: a bone-splinter teleport and an immediate reaction hex. The top of the session run sheet lists each hero's carried-over Luck from last week's journal entry alongside the campaign's Long Rest rule. The necromancer's page links to two contacts in the river port who supply him with grave goods.",
+          term: "At the table",
+          text: "The fighter begins with 2 Luck. On their turn, they miss an attack and gain 1 Luck, bringing the total to 3; that new point cannot affect the missed attack. After a later failed check, they may spend 3 Luck to reroll its d20, but the reroll can still fail. If the GM keeps the invented hex, its save and any Doom cost are written as house rules. The journal captures what actually happened, including whether the necromancer escaped.",
         },
         {
-          term: "Why it works",
-          text: "Combat starts with each hero's Luck and the necromancer's Doom pool ready, without reconstructing them from last week's notes. When the paladin misses two early strikes, their Luck climbs to 4 and they burn three points to turn a failed save against the necromancer's hex into a success; the necromancer answers by spending 2 Doom to teleport out of the fighter's reach. When the boss falls and the party searches his desk, the GM clicks the linked river-port contacts and immediately knows which merchant goes into hiding before the party returns to town.",
+          term: "After the session",
+          text: "If the party finds the necromancer's ledger, promote the names in it to linked river-port contacts. One merchant supplies grave goods and hides when the party returns; another gives the guild a reason to close the quay. The encounter note now points to consequences the players can follow, while unused rooms remain preparation rather than history.",
         },
       ],
     },
     {
       kind: "checklist",
-      heading: "Weekly Tales of the Valiant campaign maintenance checklist",
-      intro:
-        "Use this between-session checklist to keep your world continuity and Black Flag numbers accurate:",
+      heading: "Weekly campaign maintenance",
+      intro: "After each session, take a few minutes to:",
       items: [
-        "At the end of the session, record each character's current Luck total and any unspent Doom on recurring adversaries who escaped.",
-        "When the party takes a Long Rest, apply your campaign's resting variant to each character's Luck pool and update the counter manually.",
-        "Promote any new NPC, location, faction or item that will matter again to its own linked page; leave one-off colour in the session journal.",
-        "For next week's likely encounters, attach BFRD stat blocks and write explicit Doom pools and Doom spenders on solo bosses or lieutenants.",
-        "If adapting a 5e module, write monster replacements, DC adjustments and spell-source tags directly onto the location note before the session starts.",
-        "Update one line on any active downtime project or faction clock that moved forward while the party was in the field.",
+        "Write the session journal, then promote lasting changes to linked character, location, faction or quest pages.",
+        "Record current Luck totals. Apply the BFRD's gaining and spending rules during play; do not invent a Long Rest reset unless your group adopts a labelled house rule.",
+        "For an encounter using optional Doom, note its CR-based starting pool and how you will track allocations. Label altered triggers or spends as house rules.",
+        "Write any conversion decisions beside the relevant encounter, including changes to stats, saves, DCs or abilities.",
+        "Update open projects and NPC contacts with what changed and what consequence follows.",
+        "Make a one-screen run sheet from the likely scenes, linked pages and rules state for next time.",
       ],
     },
   ],
   codexConnection: {
     heading: "Running a Tales of the Valiant campaign in Codex Cryptica",
     paragraphs: [
-      "Codex Cryptica combines linked campaign notes and a relationship Graph with built-in Tales of the Valiant character, Quick NPC and monster stat sheet templates. You get one-click Luck counters on sheets and combat tokens, scoped Doom counters on boss tokens, and qualitative encounter challenge guidance tailored to your party size and level. Choose Tales of the Valiant manually in a generator's Game System option when available; vault-wide profile selection is not currently available.",
-      "Your campaign pages, session journal and saved stat sheets live in private, local OPFS storage and remain available offline. ToV-specific generator mechanics require the AI Lore Co-Author; when you are offline or AI generation is disabled, generators produce system-neutral lore and notes. Open game content is based on the CC BY 4.0 Black Flag Reference Document.",
+      "Codex Cryptica provides linked campaign pages, a relationship Graph, ToV character, Quick NPC and monster stat sheet templates, and Luck and Doom counters on supported sheets and selected tokens. The Doom counter belongs to the creature sheet in the current UI; you can also record the optional BFRD encounter pool in your run sheet. The Encounter Generator offers qualitative challenge guidance. Choose Tales of the Valiant in a generator's Game System option when available; vault-wide profile selection is not currently available.",
+      "Campaign pages, journals and saved stat sheets use private, local OPFS storage and are available offline. ToV-specific generator mechanics require the AI Lore Co-Author; offline or with AI generation disabled, generators produce system-neutral lore and notes. Open game content is based on the [BFRD](https://bfrd.net/), published by Kobold Press under CC BY 4.0.",
     ],
     linkText: "Explore Codex Cryptica for Tales of the Valiant",
     href: "/for/tales-of-the-valiant",
@@ -132,19 +126,19 @@ export const howDoIOrganiseATalesOfTheValiantCampaign: AnswerConfigInput = {
     {
       title: "Tales of the Valiant campaign guide",
       description:
-        "Track linked campaign notes, interactive Luck pools, boss Doom points, and BFRD stat blocks in one local-first workspace.",
+        "Connect campaign pages and prepare session notes alongside ToV character sheets and rules counters.",
       href: "/for/tales-of-the-valiant",
     },
     {
       title: "Encounter generator",
       description:
-        "Draft combat encounters with party-scaled qualitative challenge ratings and BFRD creature roles.",
+        "Draft encounters with qualitative challenge guidance for your party.",
       href: "/generators/encounter",
     },
     {
       title: "Session Prep Builder",
       description:
-        "Turn tonight's situation into a narrow run sheet with the active NPCs, locations, threads and encounters you need at the table.",
+        "Turn tonight's situation into a run sheet with the NPCs, locations, threads and encounters you need.",
       href: "/tools/session-prep-builder",
     },
   ],
@@ -167,7 +161,7 @@ export const howDoIOrganiseATalesOfTheValiantCampaign: AnswerConfigInput = {
       "black flag roleplaying campaign notes",
     ],
     uniqueValue:
-      "A Tales of the Valiant campaign organisation framework that pairs linked entity-and-relationship notes with Black Flag session state: carried-over Luck and resting variants, scoped boss Doom pools, and inline 5e-to-BFRD conversion notes.",
+      "A practical ToV campaign structure that connects character details and open threads with session journals, run sheets and accurately labelled rules tracking.",
     relatedIntents: [
       "for-tales-of-the-valiant",
       "answer-dnd-campaign-organisation",
@@ -176,10 +170,10 @@ export const howDoIOrganiseATalesOfTheValiantCampaign: AnswerConfigInput = {
   seo: {
     title: "How to organise a Tales of the Valiant campaign | Codex Cryptica",
     description:
-      "Organise a Tales of the Valiant campaign around linked NPCs, factions and locations while tracking session-to-session Luck, boss Doom pools, and 5e-to-BFRD conversion notes.",
+      "Organise a Tales of the Valiant campaign with linked character, location, faction and quest notes, a session journal, a focused run sheet and accurate Luck and Doom tracking.",
     image:
       "https://assets.codexcryptica.com/og/how-do-i-organise-a-tales-of-the-valiant-campaign.jpg",
     imageAlt:
-      "Game master notes and Black Flag character sheets arranged beside dice and campaign maps",
+      "A game master organising Tales of the Valiant campaign notes around linked characters, locations and quests",
   },
 };
