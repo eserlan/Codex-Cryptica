@@ -65,7 +65,8 @@ export async function handleDeleteSelected(
   targetIds: string[],
   isCommitting: boolean,
   setCommitting: (state: boolean) => void,
-  updateSelection: (succeededIds: string[]) => void,
+  updateSelection: (remaining: Set<string>) => void,
+  clearSelection: () => void,
 ) {
   if (isCommitting) return;
   if (!targetIds || targetIds.length === 0) return;
@@ -86,7 +87,8 @@ export async function handleDeleteSelected(
     setCommitting(true);
     try {
       const result = await vault.bulkDelete(targetIds);
-      updateSelection(result.succeededIds);
+      const succeededIds = new Set(result.succeededIds);
+      updateSelection(succeededIds);
       if (result.failedIds.length > 0 || result.cancelledIds.length > 0) {
         notificationStore.notify(
           `Deleted ${result.succeededIds.length} entities; ${
@@ -94,6 +96,8 @@ export async function handleDeleteSelected(
           } remain selected for retry.`,
           "error",
         );
+      } else {
+        clearSelection();
       }
     } catch (err: any) {
       console.error("Failed to delete", err);

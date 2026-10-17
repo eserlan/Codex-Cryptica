@@ -29,10 +29,10 @@
   import {
     handleChangeType,
     handleDeleteSelected,
-    withoutIds,
     openBulkReport,
     openBulkLabels,
     handleManageLabels,
+    withoutIds,
   } from "$lib/components/table/table-bulk-actions";
   import { computeVaultDistribution } from "$lib/components/table/vaultDistribution";
   import type { ViewPreset } from "$lib/stores/view-presets";
@@ -395,8 +395,9 @@
         isCommitting = c;
       },
       (succeededIds) => {
-        selectedIds = withoutIds(selectedIds, new Set(succeededIds));
+        selectedIds = withoutIds(new Set(selectedIds), succeededIds);
       },
+      clearSelection,
     );
   }
 

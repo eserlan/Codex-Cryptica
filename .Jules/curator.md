@@ -96,9 +96,3 @@
 
 **Learning:** Component files like `PresentationTemplateEditor.svelte` can become god-files when they mix complex internal state, editing logic, layout definitions, and massive inline modals or context menus. Extracting an inline block like the field context menu to its own `PresentationFieldContextMenu.svelte` simplifies the parent's markup greatly.
 **Action:** Always consider extracting sizable inline UI elements (e.g. context menus) that merely consume state into dedicated child components via props.
-
-## 2026-10-17 - Extracted Table Bulk Actions
-
-**Learning:** Svelte UI component god-files that combine view orchestration, layout, and heavy stateful bulk mutation logic can be cleanly split by moving the bulk mutation operations (like type changing and deletion) into a dedicated actions file.
-
-**Action:** When a main route component (+page.svelte) grows too large, identify discrete functional groups like bulk actions and extract them into separate pure logic files to improve readability and separation of concerns.

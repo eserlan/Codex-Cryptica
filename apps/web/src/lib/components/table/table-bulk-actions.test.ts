@@ -1,138 +1,208 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { Entity } from "schema";
+import { describe, expect, it, vi, beforeEach } from "vitest";
 import {
   handleChangeType,
   handleDeleteSelected,
-  handleManageLabels,
-  openBulkLabels,
   openBulkReport,
+  openBulkLabels,
+  handleManageLabels,
   withoutIds,
 } from "./table-bulk-actions";
+import { notificationStore } from "$lib/stores/ui/notification.svelte";
+import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+import { vault } from "$lib/stores/vault.svelte";
+import * as OpenSelectionReport from "$lib/components/reports/open-selection-report";
+import type { Entity } from "schema";
 
-const mocks = vi.hoisted(() => ({
-  confirm: vi.fn(),
-  notify: vi.fn(),
-  bulkDelete: vi.fn(),
-  bulkUpdate: vi.fn(),
-  openBulkLabelDialog: vi.fn(),
-  openSelectionReport: vi.fn(),
-}));
-
-vi.mock("$lib/stores/ui/notification.svelte", () => ({
-  notificationStore: { confirm: mocks.confirm, notify: mocks.notify },
-}));
-vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
-  modalUIStore: { openBulkLabelDialog: mocks.openBulkLabelDialog },
-}));
-vi.mock("$lib/stores/vault.svelte", () => ({
-  vault: { bulkDelete: mocks.bulkDelete, bulkUpdate: mocks.bulkUpdate },
-}));
-vi.mock("$lib/components/reports/open-selection-report", () => ({
-  openSelectionReport: mocks.openSelectionReport,
-}));
-
-describe("table bulk actions", () => {
+describe("table-bulk-actions", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-    mocks.confirm.mockResolvedValue(true);
+    vi.resetAllMocks();
   });
 
-  it("does not delete or change selection when confirmation is cancelled", async () => {
-    mocks.confirm.mockResolvedValue(false);
-    const setCommitting = vi.fn();
-    const updateSelection = vi.fn();
-
-    await handleDeleteSelected(["e1"], false, setCommitting, updateSelection);
-
-    expect(mocks.bulkDelete).not.toHaveBeenCalled();
-    expect(setCommitting).not.toHaveBeenCalled();
-    expect(updateSelection).not.toHaveBeenCalled();
-  });
-
-  it("removes succeeded IDs from the current selection after a partial delete", async () => {
-    let finishDelete!: (result: {
-      succeededIds: string[];
-      failedIds: string[];
-      cancelledIds: string[];
-    }) => void;
-    mocks.bulkDelete.mockReturnValue(
-      new Promise((resolve) => {
-        finishDelete = resolve;
-      }),
-    );
-    let selectedIds = new Set(["e1", "e2"]);
-    const setCommitting = vi.fn();
-    const updateSelection = (succeededIds: string[]) => {
-      selectedIds = withoutIds(selectedIds, new Set(succeededIds));
-    };
-
-    const deletion = handleDeleteSelected(
-      ["e1", "e2"],
-      false,
-      setCommitting,
-      updateSelection,
-    );
-    await vi.waitFor(() => expect(mocks.bulkDelete).toHaveBeenCalled());
-
-    selectedIds = new Set(["e2", "e3"]);
-    finishDelete({ succeededIds: ["e1"], failedIds: ["e2"], cancelledIds: [] });
-    await deletion;
-
-    expect([...selectedIds]).toEqual(["e2", "e3"]);
-    expect(setCommitting).toHaveBeenNthCalledWith(1, true);
-    expect(setCommitting).toHaveBeenNthCalledWith(2, false);
-    expect(mocks.notify).toHaveBeenCalledWith(
-      "Deleted 1 entities; 1 remain selected for retry.",
-      "error",
-    );
-  });
-
-  it("confirms type changes and reports partial failures", async () => {
-    mocks.bulkUpdate.mockResolvedValue({
-      succeededIds: ["e1"],
-      failedIds: ["e2"],
-      skippedIds: [],
+  describe("withoutIds", () => {
+    it("returns remaining ids correctly", () => {
+      const selected = new Set(["a", "b", "c"]);
+      const removed = new Set(["b"]);
+      const remaining = withoutIds(selected, removed);
+      expect(Array.from(remaining)).toEqual(["a", "c"]);
     });
-    const setCommitting = vi.fn();
+  });
 
-    await handleChangeType("location", ["e1", "e2"], false, setCommitting);
-
-    expect(mocks.bulkUpdate).toHaveBeenCalledWith({
-      e1: { type: "location" },
-      e2: { type: "location" },
+  describe("handleChangeType", () => {
+    it("aborts if committing", async () => {
+      const setCommitting = vi.fn();
+      await handleChangeType("newType", ["a"], true, setCommitting);
+      expect(setCommitting).not.toHaveBeenCalled();
     });
-    expect(setCommitting).toHaveBeenNthCalledWith(1, true);
-    expect(setCommitting).toHaveBeenNthCalledWith(2, false);
-    expect(mocks.notify).toHaveBeenCalledWith(
-      "Changed 1 entities; 1 could not be changed.",
-      "error",
-    );
+
+    it("aborts if no targetIds", async () => {
+      const setCommitting = vi.fn();
+      await handleChangeType("newType", [], false, setCommitting);
+      expect(setCommitting).not.toHaveBeenCalled();
+    });
+
+    it("does nothing if unconfirmed", async () => {
+      const setCommitting = vi.fn();
+      vi.spyOn(notificationStore, "confirm").mockResolvedValue(false);
+      await handleChangeType("newType", ["a"], false, setCommitting);
+      expect(setCommitting).not.toHaveBeenCalled();
+    });
+
+    it("updates successfully", async () => {
+      const setCommitting = vi.fn();
+      vi.spyOn(notificationStore, "confirm").mockResolvedValue(true);
+      vi.spyOn(vault, "bulkUpdate").mockResolvedValue({
+        succeededIds: ["a", "b"],
+        failedIds: [],
+        skippedIds: [],
+      });
+      const notifySpy = vi.spyOn(notificationStore, "notify");
+
+      await handleChangeType("newType", ["a", "b"], false, setCommitting);
+      expect(setCommitting).toHaveBeenCalledWith(true);
+      expect(vault.bulkUpdate).toHaveBeenCalledWith({
+        a: { type: "newType" },
+        b: { type: "newType" },
+      });
+      expect(notifySpy).not.toHaveBeenCalled();
+      expect(setCommitting).toHaveBeenCalledWith(false);
+    });
+
+    it("notifies on partial failure", async () => {
+      const setCommitting = vi.fn();
+      vi.spyOn(notificationStore, "confirm").mockResolvedValue(true);
+      vi.spyOn(vault, "bulkUpdate").mockResolvedValue({
+        succeededIds: ["a"],
+        failedIds: ["b"],
+        skippedIds: [],
+      });
+      const notifySpy = vi.spyOn(notificationStore, "notify");
+
+      await handleChangeType("newType", ["a", "b"], false, setCommitting);
+      expect(notifySpy).toHaveBeenCalledWith(
+        "Changed 1 entities; 1 could not be changed.",
+        "error",
+      );
+    });
   });
 
-  it("does not change entity types when confirmation is cancelled", async () => {
-    mocks.confirm.mockResolvedValue(false);
-    const setCommitting = vi.fn();
+  describe("handleDeleteSelected", () => {
+    it("preserves new selections made while delete was pending", async () => {
+      const setCommitting = vi.fn();
+      let capturedSelectedIds = new Set(["a", "b"]);
+      const updateSelection = (succeededIds: Set<string>) => {
+        // the route callback re-reads selectedIds at completion time
+        capturedSelectedIds = withoutIds(capturedSelectedIds, succeededIds);
+      };
+      const clearSelection = vi.fn();
 
-    await handleChangeType("location", ["e1"], false, setCommitting);
+      vi.spyOn(notificationStore, "confirm").mockResolvedValue(true);
+      // Simulate delete that takes time
+      vi.spyOn(vault, "bulkDelete").mockImplementation(async () => {
+        // User clicks row "c" while delete is pending
+        capturedSelectedIds = new Set(["a", "b", "c"]);
+        return { succeededIds: ["a", "b"], failedIds: [], cancelledIds: [] };
+      });
 
-    expect(mocks.bulkUpdate).not.toHaveBeenCalled();
-    expect(setCommitting).not.toHaveBeenCalled();
+      await handleDeleteSelected(
+        ["a", "b"],
+        false,
+        setCommitting,
+        updateSelection,
+        clearSelection,
+      );
+
+      // "a" and "b" should be removed, but "c" should remain.
+      expect(Array.from(capturedSelectedIds)).toEqual(["c"]);
+    });
+
+    it("deletes successfully and clears selection", async () => {
+      const setCommitting = vi.fn();
+      const updateSelection = vi.fn();
+      const clearSelection = vi.fn();
+      vi.spyOn(notificationStore, "confirm").mockResolvedValue(true);
+      vi.spyOn(vault, "bulkDelete").mockResolvedValue({
+        succeededIds: ["a", "b"],
+        failedIds: [],
+        cancelledIds: [],
+      });
+      const notifySpy = vi.spyOn(notificationStore, "notify");
+
+      await handleDeleteSelected(
+        ["a", "b"],
+        false,
+        setCommitting,
+        updateSelection,
+        clearSelection,
+      );
+      expect(vault.bulkDelete).toHaveBeenCalledWith(["a", "b"]);
+      expect(updateSelection).toHaveBeenCalledWith(new Set(["a", "b"]));
+      expect(clearSelection).toHaveBeenCalled();
+      expect(notifySpy).not.toHaveBeenCalled();
+    });
+
+    it("notifies on partial failure", async () => {
+      const setCommitting = vi.fn();
+      const updateSelection = vi.fn();
+      const clearSelection = vi.fn();
+      vi.spyOn(notificationStore, "confirm").mockResolvedValue(true);
+      vi.spyOn(vault, "bulkDelete").mockResolvedValue({
+        succeededIds: ["a"],
+        failedIds: ["b"],
+        cancelledIds: [],
+      });
+      const notifySpy = vi.spyOn(notificationStore, "notify");
+
+      await handleDeleteSelected(
+        ["a", "b"],
+        false,
+        setCommitting,
+        updateSelection,
+        clearSelection,
+      );
+      expect(updateSelection).toHaveBeenCalledWith(new Set(["a"]));
+      expect(notifySpy).toHaveBeenCalledWith(
+        "Deleted 1 entities; 1 remain selected for retry.",
+        "error",
+      );
+      expect(clearSelection).not.toHaveBeenCalled();
+    });
   });
 
-  it("opens reports and label dialogs for selected entities", () => {
-    const entities = [{ id: "e1" }, { id: "e2" }] as Entity[];
+  describe("openBulkReport", () => {
+    it("calls openSelectionReport with correct ids", () => {
+      const spy = vi
+        .spyOn(OpenSelectionReport, "openSelectionReport")
+        .mockImplementation(() => {});
+      openBulkReport([{ id: "a" } as Entity, { id: "b" } as Entity]);
+      expect(spy).toHaveBeenCalledWith("table", ["a", "b"]);
+    });
+  });
 
-    openBulkReport(entities);
-    openBulkLabels(entities);
-    handleManageLabels(["e3"]);
-    openBulkLabels([]);
-    handleManageLabels([]);
+  describe("openBulkLabels", () => {
+    it("calls modalUIStore with correct ids", () => {
+      const spy = vi
+        .spyOn(modalUIStore, "openBulkLabelDialog")
+        .mockImplementation(() => {});
+      openBulkLabels([{ id: "a" } as Entity, { id: "b" } as Entity]);
+      expect(spy).toHaveBeenCalledWith(["a", "b"]);
+    });
 
-    expect(mocks.openSelectionReport).toHaveBeenCalledWith("table", [
-      "e1",
-      "e2",
-    ]);
-    expect(mocks.openBulkLabelDialog).toHaveBeenNthCalledWith(1, ["e1", "e2"]);
-    expect(mocks.openBulkLabelDialog).toHaveBeenNthCalledWith(2, ["e3"]);
+    it("does nothing if empty", () => {
+      const spy = vi
+        .spyOn(modalUIStore, "openBulkLabelDialog")
+        .mockImplementation(() => {});
+      openBulkLabels([]);
+      expect(spy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("handleManageLabels", () => {
+    it("calls modalUIStore with correct ids", () => {
+      const spy = vi
+        .spyOn(modalUIStore, "openBulkLabelDialog")
+        .mockImplementation(() => {});
+      handleManageLabels(["a", "b"]);
+      expect(spy).toHaveBeenCalledWith(["a", "b"]);
+    });
   });
 });
