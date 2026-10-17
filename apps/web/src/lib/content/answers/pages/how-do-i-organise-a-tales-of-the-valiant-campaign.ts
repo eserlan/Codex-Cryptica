@@ -100,7 +100,7 @@ export const howDoIOrganiseATalesOfTheValiantCampaign: AnswerConfigInput = {
         },
         {
           term: "Why it works",
-          text: "Combat starts without five minutes of table bookkeeping. When the paladin misses two early strikes, their Luck climbs to 4 and they burn three points to turn a failed save against the necromancer's hex into a success; the necromancer answers by spending 2 Doom to teleport out of the fighter's reach. When the boss falls and the party searches his desk, the GM clicks the linked river-port contacts and immediately knows which merchant goes into hiding before the party returns to town.",
+          text: "Combat starts with each hero's Luck and the necromancer's Doom pool ready, without reconstructing them from last week's notes. When the paladin misses two early strikes, their Luck climbs to 4 and they burn three points to turn a failed save against the necromancer's hex into a success; the necromancer answers by spending 2 Doom to teleport out of the fighter's reach. When the boss falls and the party searches his desk, the GM clicks the linked river-port contacts and immediately knows which merchant goes into hiding before the party returns to town.",
         },
       ],
     },
