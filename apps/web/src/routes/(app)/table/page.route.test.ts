@@ -177,6 +177,59 @@ describe("/table page", () => {
     });
   });
 
+  it("clears a deleted selection anchor before the next shift-click", async () => {
+    mutableVault.allEntities = [
+      entity({ id: "e1", title: "Aldric" }),
+      entity({ id: "e2", title: "Brindlewood" }),
+      entity({ id: "e3", title: "Cinder" }),
+    ];
+    vi.spyOn(notificationStore, "confirm").mockResolvedValue(true);
+
+    let resolveDelete!: (result: {
+      requested: number;
+      items: [];
+      skippedIds: string[];
+      failedIds: string[];
+      cancelledIds: string[];
+      succeededIds: string[];
+    }) => void;
+    mutableVault.bulkDelete.mockReturnValue(
+      new Promise((resolve) => {
+        resolveDelete = resolve;
+      }),
+    );
+
+    render(RoutePage);
+    const rows = screen.getAllByTestId("entity-table-row");
+    await fireEvent.click(rows[0]);
+    await fireEvent.contextMenu(rows[0]);
+    await fireEvent.click(screen.getByTestId("context-menu-delete"));
+
+    await waitFor(() =>
+      expect(mutableVault.bulkDelete).toHaveBeenCalledWith(["e1"]),
+    );
+
+    resolveDelete({
+      requested: 1,
+      items: [],
+      skippedIds: [],
+      failedIds: [],
+      cancelledIds: [],
+      succeededIds: ["e1"],
+    });
+    await waitFor(() =>
+      expect(rows[0].getAttribute("data-selected")).toBe("false"),
+    );
+
+    await fireEvent.click(rows[1], { shiftKey: true });
+
+    expect(rows.map((row) => row.getAttribute("data-selected"))).toEqual([
+      "false",
+      "true",
+      "false",
+    ]);
+  });
+
   it("toggles the mobile filter panel and shows active filter badge", async () => {
     mutableVault.allEntities = [
       entity({ id: "e1", title: "Aldric", type: "character" }),
