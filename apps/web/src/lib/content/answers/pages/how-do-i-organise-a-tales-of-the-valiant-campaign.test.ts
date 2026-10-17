@@ -34,6 +34,41 @@ describe("howDoIOrganiseATalesOfTheValiantCampaign answer", () => {
     expect(sections.length).toBeGreaterThanOrEqual(3);
     expect(sections.some((s) => s.kind === "example")).toBe(true);
     expect(sections.some((s) => s.kind === "checklist")).toBe(true);
+    expect(JSON.stringify(sections)).not.toContain("five minutes");
+    expect(JSON.stringify(sections)).toContain(
+      "Combat starts with each hero's Luck and the necromancer's Doom pool ready",
+    );
+  });
+
+  it("covers the comparison table and names ToV spell sources accurately", () => {
+    const comparison = howDoIOrganiseATalesOfTheValiantCampaign.sections.find(
+      (section) => section.kind === "table",
+    );
+
+    expect(comparison).toBeDefined();
+    if (!comparison || comparison.kind !== "table") return;
+
+    expect(comparison.headers).toEqual([
+      "Campaign layer",
+      "Standard 5e habit",
+      "Tales of the Valiant organisation",
+    ]);
+    expect(comparison.rows).toContainEqual([
+      "Between-session party state",
+      "Track hit points, spell slots and exhaustion; Inspiration is binary and rarely persists in notes.",
+      "Record each character's current Luck (0 to 5) at session end, plus the campaign's chosen Long Rest Luck rule so next week's opening encounter starts with accurate pools.",
+    ]);
+    expect(comparison.rows).toContainEqual([
+      "Boss and lieutenant prep",
+      "Copy a stat block with static Legendary Actions and Legendary Resistances.",
+      "Attach a specific Doom pool and two or three named Doom actions to the adversary's card or token, keeping Doom scoped to that creature rather than a shared GM pool.",
+    ]);
+
+    const serialized = JSON.stringify(howDoIOrganiseATalesOfTheValiantCampaign);
+    expect(serialized).toContain(
+      "four primary spell sources (Arcane, Divine, Primordial or Wyrd)",
+    );
+    expect(serialized).not.toContain("spell circles");
   });
 
   it("qualifies Luck rests and avoids claiming unavailable profile or import flows", () => {
