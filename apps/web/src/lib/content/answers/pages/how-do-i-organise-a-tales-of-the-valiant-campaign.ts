@@ -108,7 +108,7 @@ export const howDoIOrganiseATalesOfTheValiantCampaign: AnswerConfigInput = {
       kind: "checklist",
       heading: "Weekly Tales of the Valiant campaign maintenance checklist",
       intro:
-        "Run this five-minute loop between sessions to keep both your world continuity and Black Flag numbers accurate:",
+        "Use this between-session checklist to keep your world continuity and Black Flag numbers accurate:",
       items: [
         "At the end of the session, record each character's current Luck total and any unspent Doom on recurring adversaries who escaped.",
         "When the party takes a Long Rest, apply your campaign's resting variant to each character's Luck pool and update the counter manually.",

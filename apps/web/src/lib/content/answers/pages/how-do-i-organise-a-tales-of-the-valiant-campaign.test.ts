@@ -34,6 +34,7 @@ describe("howDoIOrganiseATalesOfTheValiantCampaign answer", () => {
     expect(sections.length).toBeGreaterThanOrEqual(3);
     expect(sections.some((s) => s.kind === "example")).toBe(true);
     expect(sections.some((s) => s.kind === "checklist")).toBe(true);
+    expect(JSON.stringify(sections)).not.toContain("five-minute loop");
   });
 
   it("covers the comparison table and names ToV spell sources accurately", () => {
