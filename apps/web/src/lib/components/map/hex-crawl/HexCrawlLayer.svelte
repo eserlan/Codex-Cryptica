@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onDestroy } from "svelte";
   /**
    * Mounts the hex crawl UI over the map: records, the GM panel, Go to hex,
    * the terrain-icon toggle and the solo explore offer. Visible to the GM only.
@@ -23,6 +24,8 @@
   import HexGoTo from "./HexGoTo.svelte";
   import HexCrawlDisplayToggle from "./HexCrawlDisplayToggle.svelte";
   import HexExploreOffer from "./HexExploreOffer.svelte";
+  import HexJourneyControls from "./HexJourneyControls.svelte";
+  import HexJourneyOverlay from "./HexJourneyOverlay.svelte";
   import type { NoticeStorage } from "./hex-discovery-notice";
 
   let {
@@ -94,7 +97,14 @@
     typeof window !== "undefined" ? window.localStorage : null;
 
   const offered = $derived(
-    services.offer.current && services.offer.current.mapId === mapId && visible
+    services.offer.current &&
+      services.offer.current.mapId === mapId &&
+      visible &&
+      !(
+        selected &&
+        selected.hex.q === services.offer.current.hex.q &&
+        selected.hex.r === services.offer.current.hex.r
+      )
       ? services.offer.current
       : null,
   );
@@ -126,6 +136,25 @@
 
   const project = (point: Point) => mapStore.project(point);
   const zoom = $derived(mapStore.viewport.zoom);
+  const journeyVisible = $derived(visible && !isGuest && isGM);
+
+  $effect(() => {
+    if (services.journey.route || services.journey.pendingArrival)
+      services.journey.validateIdentity();
+  });
+  $effect(() => {
+    const currentOffer = services.offer.current;
+    if (
+      currentOffer &&
+      selected &&
+      currentOffer.mapId === selected.mapId &&
+      currentOffer.hex.q === selected.hex.q &&
+      currentOffer.hex.r === selected.hex.r
+    ) {
+      services.offer.current = null;
+    }
+  });
+  onDestroy(() => services.journey.dispose());
 </script>
 
 {#if visible && config}
@@ -140,6 +169,15 @@
     {zoom}
   />
 
+  <HexJourneyOverlay
+    route={services.journey.route}
+    completedSteps={services.journey.committedSteps}
+    gridConfig={config}
+    {project}
+    viewport={viewportSize}
+    visible={journeyVisible}
+  />
+
   <div
     class="pointer-events-auto absolute left-2 top-2 z-20 flex flex-wrap items-center gap-2"
   >
@@ -151,6 +189,12 @@
       {isGuest}
       modeOn={hexMode}
     />
+  </div>
+
+  <div
+    class="pointer-events-auto absolute left-2 top-24 z-40 w-72 max-w-[calc(100%-1rem)]"
+  >
+    <HexJourneyControls store={services.journey} visible={journeyVisible} />
   </div>
 
   {#if offered}
@@ -167,6 +211,7 @@
   {#if selected && mapId}
     <HexCrawlPanel
       store={services.store}
+      journey={services.journey}
       {mapId}
       hex={selected.hex}
       {isGM}

@@ -1,4 +1,9 @@
-import { pointToHex, type HexCoord, type HexGridConfig } from "map-engine";
+import {
+  getTokenCenter,
+  pointToHex,
+  type HexCoord,
+  type HexGridConfig,
+} from "map-engine";
 import type { Token } from "../../../types/vtt";
 import type { HexCrawlStore } from "./hex-crawl.svelte";
 
@@ -54,7 +59,7 @@ function endHexesOf(
   const unique = new Map<string, HexCoord>();
   for (const token of tokens) {
     if (token.isVisionSource !== true) continue;
-    const hex = pointToHex({ x: token.x, y: token.y }, config);
+    const hex = pointToHex(getTokenCenter(token), config);
     unique.set(`${hex.q},${hex.r}`, hex);
   }
   return [...unique.values()];

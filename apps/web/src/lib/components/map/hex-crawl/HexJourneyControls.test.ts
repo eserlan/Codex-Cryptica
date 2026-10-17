@@ -1,0 +1,186 @@
+/** @vitest-environment jsdom */
+/** @vitest-environment jsdom */
+import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
+import { describe, expect, it, vi } from "vitest";
+import HexJourneyControls from "./HexJourneyControls.svelte";
+import { HexJourneyStore } from "$lib/stores/hex-crawl/hex-journey.svelte";
+
+describe("HexJourneyControls", () => {
+  it("offers a labelled estimate field and dismisses a preview", async () => {
+    const store = new HexJourneyStore({
+      getIdentity: () => ({
+        mapId: "m",
+        vaultId: "v",
+        gridDistance: 5,
+        gridUnit: "miles",
+        gridSignature: "g",
+      }),
+      isAllowed: () => true,
+      listEligibleTokens: () => [],
+      onStart: vi.fn(),
+      onStep: vi.fn(),
+    });
+    store.setOrigin({ q: 0, r: 0 });
+    store.preview({ q: 2, r: 0 });
+    render(HexJourneyControls, { store });
+    expect(screen.getByLabelText("Hours per hex")).toBeTruthy();
+    await fireEvent.input(screen.getByLabelText("Hours per hex"), {
+      target: { value: "0" },
+    });
+    expect(screen.getByRole("alert").textContent).toContain(
+      "greater than zero",
+    );
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Dismiss journey preview" }),
+    );
+    expect(store.route).toBeNull();
+  });
+
+  it("allows an explicit token choice before preview and disables a zero-step start", async () => {
+    const store = new HexJourneyStore({
+      getIdentity: () => ({
+        mapId: "m",
+        vaultId: "v",
+        gridDistance: 1,
+        gridUnit: "m",
+        gridSignature: "g",
+      }),
+      isAllowed: () => true,
+      listEligibleTokens: () => [
+        { id: "a", label: "First party", hex: { q: 0, r: 0 } },
+        { id: "b", label: "Second party", hex: { q: 1, r: 0 } },
+      ],
+      onStart: vi.fn(),
+      onStep: vi.fn(),
+    });
+    render(HexJourneyControls, { store });
+    await fireEvent.change(screen.getByLabelText("Party token"), {
+      target: { value: "b" },
+    });
+    expect(store.selectedTokenId).toBe("b");
+    store.preview({ q: 1, r: 0 });
+    await waitFor(() =>
+      expect(
+        (
+          screen.getByRole("button", {
+            name: "Start journey",
+          }) as HTMLButtonElement
+        ).disabled,
+      ).toBe(true),
+    );
+  });
+
+  it("clears the route-specific hours input when a new route is previewed", async () => {
+    const store = new HexJourneyStore({
+      getIdentity: () => ({
+        mapId: "m",
+        vaultId: "v",
+        gridDistance: 1,
+        gridUnit: "m",
+        gridSignature: "g",
+      }),
+      isAllowed: () => true,
+      listEligibleTokens: () => [],
+      onStart: vi.fn(),
+      onStep: vi.fn(),
+    });
+    store.setOrigin({ q: 0, r: 0 });
+    store.preview({ q: 2, r: 0 });
+    render(HexJourneyControls, { store });
+    await fireEvent.input(screen.getByLabelText("Hours per hex"), {
+      target: { value: "2.5" },
+    });
+    expect(store.hoursPerHex).toBe(2.5);
+    store.preview({ q: 3, r: 0 });
+    await waitFor(() =>
+      expect(
+        (screen.getByLabelText("Hours per hex") as HTMLInputElement).value,
+      ).toBe(""),
+    );
+    expect(store.hoursPerHex).toBeNull();
+  });
+  it("does not offer controls to an unauthorised viewer", () => {
+    const store = new HexJourneyStore({
+      getIdentity: () => null,
+      isAllowed: () => false,
+      listEligibleTokens: () => [],
+      onStart: vi.fn(),
+      onStep: vi.fn(),
+    });
+    render(HexJourneyControls, { store, visible: false });
+    expect(screen.queryByRole("region", { name: "Hex journey" })).toBeNull();
+  });
+
+  it("does not render an empty journey surface for a single token", () => {
+    const store = new HexJourneyStore({
+      getIdentity: () => null,
+      isAllowed: () => true,
+      listEligibleTokens: () => [{ id: "party", hex: { q: 0, r: 0 } }],
+      onStart: vi.fn(),
+      onStep: vi.fn(),
+    });
+    render(HexJourneyControls, { store });
+    expect(screen.queryByRole("region", { name: "Hex journey" })).toBeNull();
+  });
+
+  it("lets the GM stop a partial route and dismiss an arrived route", async () => {
+    const store = new HexJourneyStore({
+      getIdentity: () => ({
+        mapId: "m",
+        vaultId: "v",
+        gridDistance: 1,
+        gridUnit: "m",
+        gridSignature: "g",
+      }),
+      isAllowed: () => true,
+      listEligibleTokens: () => [{ id: "party", hex: { q: 0, r: 0 } }],
+      onStart: () => true,
+      onStep: () => true,
+    });
+    store.preview({ q: 2, r: 0 });
+    await store.start();
+    const view = render(HexJourneyControls, { store });
+    await fireEvent.click(screen.getByRole("button", { name: "Stop journey" }));
+    expect(store.route).toBeNull();
+    view.unmount();
+    store.preview({ q: 1, r: 0 });
+    await store.start();
+    await store.step();
+    render(HexJourneyControls, { store });
+    expect(screen.getByText("Arrived")).toBeTruthy();
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Dismiss journey" }),
+    );
+    expect(store.route).toBeNull();
+  });
+
+  it("exposes retry only when an arrival save is pending", async () => {
+    const store = new HexJourneyStore({
+      getIdentity: () => ({
+        mapId: "m",
+        vaultId: "v",
+        gridDistance: 1,
+        gridUnit: "m",
+        gridSignature: "g",
+      }),
+      isAllowed: () => true,
+      listEligibleTokens: () => [{ id: "party", hex: { q: 0, r: 0 } }],
+      onStart: () => true,
+      onStep: async () => ({
+        moved: true,
+        arrivalSaved: false,
+        error: "save failed",
+      }),
+      onRetryArrival: async () => true,
+    });
+    store.preview({ q: 1, r: 0 });
+    await store.start();
+    await store.step();
+    render(HexJourneyControls, { store });
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Retry arrival save" }),
+    );
+    expect(store.pendingArrival).toBeNull();
+    expect(store.phase).toBe("arrived");
+  });
+});

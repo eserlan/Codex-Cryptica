@@ -3,6 +3,7 @@ import { appEventBus } from "@codex/events";
 import type { Clock } from "@codex/runtime";
 import { JOURNAL_EVENTS } from "session-journal-engine";
 import type { Token } from "../../../types/vtt";
+import { hexToPoint } from "map-engine";
 import {
   publishSoloMapMove,
   SoloExplorationRecorder,
@@ -15,12 +16,12 @@ const hex = {
   offsetX: 0,
   offsetY: 0,
 };
-const source = (x: number): Token => ({
+const source = (x: number, y = 0): Token => ({
   id: "party",
   entityId: null,
   name: "Party",
   x,
-  y: 0,
+  y,
   width: 20,
   height: 20,
   rotation: 0,
@@ -90,6 +91,22 @@ function setup(
 }
 
 describe("SoloExplorationRecorder", () => {
+  it("records an explicitly completed journey move from snapshots with solo fog on or off", async () => {
+    const from = hexToPoint({ q: 0, r: 0 }, hex);
+    const to = hexToPoint({ q: 1, r: 0 }, hex);
+    for (const soloOn of [true, false]) {
+      const harness = setup({ soloOn });
+      const before = { ...source(from.x - 10, from.y - 10) };
+      const after = { ...source(to.x - 10, to.y - 10) };
+      await harness.recorder.onVisionChanged([before]);
+      await harness.recorder.completeJourneyMove(before, after);
+      expect(harness.publishCapture).toHaveBeenCalledTimes(1);
+      expect(harness.recorder.lastMove?.hexes).toBe(1);
+      expect(harness.recorder.total.hexes).toBe(1);
+      expect(harness.undo.commit).toHaveBeenCalledTimes(soloOn ? 1 : 0);
+    }
+  });
+
   it("keeps legacy reveal behavior with SOLO off and refuses reveal for guests", async () => {
     const legacy = setup({ soloOn: false });
     await legacy.recorder.onVisionChanged([source(0)]);
@@ -139,8 +156,8 @@ describe("SoloExplorationRecorder", () => {
 
     const sameHex = setup();
     await sameHex.recorder.onVisionChanged([source(0)]);
-    await sameHex.recorder.onVisionChanged([source(10)]);
-    await sameHex.recorder.onMoveSettled([source(10)]);
+    await sameHex.recorder.onVisionChanged([source(2)]);
+    await sameHex.recorder.onMoveSettled([source(2)]);
     expect(sameHex.recorder.lastMove).toBeNull();
     expect(sameHex.undo.commit).not.toHaveBeenCalled();
     expect(sameHex.publishCapture).not.toHaveBeenCalled();
@@ -183,6 +200,18 @@ describe("SoloExplorationRecorder", () => {
       }),
     );
     expect(undo.commit).toHaveBeenCalledTimes(2);
+  });
+
+  it("measures hex travel from the centre of a nonzero-size token", async () => {
+    const { recorder } = setup();
+    const start = source(0);
+    const destination = source(0, 5);
+    await recorder.onVisionChanged([start]);
+    await recorder.onMoveSettled([start]);
+    await recorder.onVisionChanged([destination]);
+    await recorder.onMoveSettled([destination]);
+
+    expect(recorder.lastMove?.hexes).toBe(1);
   });
 
   it("updates an empty travel tally when the map unit changes", async () => {
