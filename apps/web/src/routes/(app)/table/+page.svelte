@@ -4,8 +4,6 @@
   import { page } from "$app/state";
   import { vault } from "$lib/stores/vault.svelte";
   import { categories } from "$lib/stores/categories.svelte";
-  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-  import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
   import { guestVault } from "$lib/stores/guest-vault.svelte";
   import { getIconClass } from "$lib/utils/icon";
@@ -25,20 +23,20 @@
   import TableViewPresets from "$lib/components/table/TableViewPresets.svelte";
   import VaultAuditPanel from "$lib/components/table/VaultAuditPanel.svelte";
   import {
-  computeVaultAuditCounts,
-  type VaultAuditPreset,
-} from "$lib/components/table/vaultAudit";
-import {
-  handleChangeType,
-  handleDeleteSelected,
-  openBulkReport,
-  openBulkLabels,
-  handleManageLabels
-} from "$lib/components/table/table-bulk-actions";
+    computeVaultAuditCounts,
+    type VaultAuditPreset,
+  } from "$lib/components/table/vaultAudit";
+  import {
+    handleChangeType,
+    handleDeleteSelected,
+    withoutIds,
+    openBulkReport,
+    openBulkLabels,
+    handleManageLabels,
+  } from "$lib/components/table/table-bulk-actions";
   import { computeVaultDistribution } from "$lib/components/table/vaultDistribution";
   import type { ViewPreset } from "$lib/stores/view-presets";
   import EmptyState from "$lib/components/ui/EmptyState.svelte";
-  import { openSelectionReport } from "$lib/components/reports/open-selection-report";
   import {
     sortEntities,
     nextSortState,
@@ -383,18 +381,22 @@ import {
 
   function _handleChangeType(type: string) {
     if (!contextMenu) return;
-    handleChangeType(type, contextMenu.targetIds, isCommitting, (c) => { isCommitting = c; });
+    handleChangeType(type, contextMenu.targetIds, isCommitting, (c) => {
+      isCommitting = c;
+    });
   }
 
   function _handleDeleteSelected() {
     if (!contextMenu) return;
     handleDeleteSelected(
       contextMenu.targetIds,
-      selectedIds,
       isCommitting,
-      (c) => { isCommitting = c; },
-      (rem) => { selectedIds = rem; },
-      clearSelection
+      (c) => {
+        isCommitting = c;
+      },
+      (succeededIds) => {
+        selectedIds = withoutIds(selectedIds, new Set(succeededIds));
+      },
     );
   }
 

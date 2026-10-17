@@ -5,7 +5,10 @@ import { openSelectionReport } from "$lib/components/reports/open-selection-repo
 import type { Entity } from "schema";
 
 // Single pass over the selection, no intermediate array.
-export function withoutIds(ids: Set<string>, removed: Set<string>): Set<string> {
+export function withoutIds(
+  ids: Set<string>,
+  removed: Set<string>,
+): Set<string> {
   const remaining = new Set<string>();
   for (const id of ids) {
     if (!removed.has(id)) remaining.add(id);
@@ -17,7 +20,7 @@ export async function handleChangeType(
   type: string,
   targetIds: string[],
   isCommitting: boolean,
-  setCommitting: (state: boolean) => void
+  setCommitting: (state: boolean) => void,
 ) {
   if (isCommitting) return;
   if (!targetIds || targetIds.length === 0) return;
@@ -60,18 +63,15 @@ export async function handleChangeType(
 
 export async function handleDeleteSelected(
   targetIds: string[],
-  selectedIds: Set<string>,
   isCommitting: boolean,
   setCommitting: (state: boolean) => void,
-  updateSelection: (remaining: Set<string>) => void,
-  clearSelection: () => void
+  updateSelection: (succeededIds: string[]) => void,
 ) {
   if (isCommitting) return;
   if (!targetIds || targetIds.length === 0) return;
 
   const confirmed = await notificationStore.confirm({
-    title:
-      targetIds.length > 1 ? "Delete Selected Entities" : "Delete Entity",
+    title: targetIds.length > 1 ? "Delete Selected Entities" : "Delete Entity",
     message: `Are you sure you want to permanently delete ${
       targetIds.length > 1
         ? `these ${targetIds.length} entities`
@@ -86,8 +86,7 @@ export async function handleDeleteSelected(
     setCommitting(true);
     try {
       const result = await vault.bulkDelete(targetIds);
-      const succeededIds = new Set(result.succeededIds);
-      updateSelection(withoutIds(selectedIds, succeededIds));
+      updateSelection(result.succeededIds);
       if (result.failedIds.length > 0 || result.cancelledIds.length > 0) {
         notificationStore.notify(
           `Deleted ${result.succeededIds.length} entities; ${
@@ -95,8 +94,6 @@ export async function handleDeleteSelected(
           } remain selected for retry.`,
           "error",
         );
-      } else {
-        clearSelection();
       }
     } catch (err: any) {
       console.error("Failed to delete", err);
