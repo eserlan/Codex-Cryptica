@@ -105,7 +105,14 @@ describe("table-bulk-actions", () => {
       const clearSelection = vi.fn();
       vi.spyOn(notificationStore, "confirm").mockResolvedValue(false);
       vi.spyOn(vault, "bulkDelete").mockImplementation(() =>
-        Promise.resolve({ succeededIds: [], failedIds: [], cancelledIds: [] }),
+        Promise.resolve({
+          requested: 0,
+          items: [],
+          skippedIds: [],
+          failedIds: [],
+          cancelledIds: [],
+          succeededIds: [] as string[],
+        }),
       );
 
       await handleDeleteSelected(
@@ -136,7 +143,14 @@ describe("table-bulk-actions", () => {
       vi.spyOn(vault, "bulkDelete").mockImplementation(async () => {
         // User clicks row "c" while delete is pending
         capturedSelectedIds = new Set(["a", "b", "c"]);
-        return { succeededIds: ["a", "b"], failedIds: [], cancelledIds: [] };
+        return {
+          requested: 2,
+          items: [],
+          skippedIds: [],
+          failedIds: [] as string[],
+          cancelledIds: [] as string[],
+          succeededIds: ["a", "b"],
+        };
       });
 
       await handleDeleteSelected(
@@ -157,9 +171,12 @@ describe("table-bulk-actions", () => {
       const clearSelection = vi.fn();
       vi.spyOn(notificationStore, "confirm").mockResolvedValue(true);
       vi.spyOn(vault, "bulkDelete").mockResolvedValue({
+        requested: 2,
+        items: [],
+        skippedIds: [],
+        failedIds: [] as string[],
+        cancelledIds: [] as string[],
         succeededIds: ["a", "b"],
-        failedIds: [],
-        cancelledIds: [],
       });
       const notifySpy = vi.spyOn(notificationStore, "notify");
 
@@ -182,9 +199,12 @@ describe("table-bulk-actions", () => {
       const clearSelection = vi.fn();
       vi.spyOn(notificationStore, "confirm").mockResolvedValue(true);
       vi.spyOn(vault, "bulkDelete").mockResolvedValue({
-        succeededIds: ["a"],
+        requested: 2,
+        items: [],
+        skippedIds: [],
         failedIds: ["b"],
-        cancelledIds: [],
+        cancelledIds: [] as string[],
+        succeededIds: ["a"],
       });
       const notifySpy = vi.spyOn(notificationStore, "notify");
 
@@ -230,9 +250,12 @@ describe("table-bulk-actions", () => {
       const clearSelection = vi.fn();
       vi.spyOn(notificationStore, "confirm").mockResolvedValue(true);
       vi.spyOn(vault, "bulkDelete").mockResolvedValue({
-        succeededIds: ["a"],
-        failedIds: [],
+        requested: 2,
+        items: [],
+        skippedIds: [],
+        failedIds: [] as string[],
         cancelledIds: ["b"],
+        succeededIds: ["a"],
       });
       const notifySpy = vi.spyOn(notificationStore, "notify");
 
@@ -256,7 +279,7 @@ describe("table-bulk-actions", () => {
     it("calls openSelectionReport with correct ids", () => {
       const spy = vi
         .spyOn(OpenSelectionReport, "openSelectionReport")
-        .mockImplementation(() => {});
+        .mockImplementation(() => false);
       openBulkReport([{ id: "a" } as Entity, { id: "b" } as Entity]);
       expect(spy).toHaveBeenCalledWith("table", ["a", "b"]);
     });

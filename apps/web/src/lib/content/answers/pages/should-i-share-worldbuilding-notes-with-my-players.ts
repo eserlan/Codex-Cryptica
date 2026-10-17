@@ -187,7 +187,7 @@ export const shouldIShareWorldbuildingNotesWithMyPlayers: AnswerConfigInput = {
   seo: {
     title: "Should I share worldbuilding notes with players? | Codex Cryptica",
     description:
-      "Share what characters plausibly know, including attributed rumours and useful setting details; keep undiscovered truths private. A three-layer guide, festival example, and no required reading.",
+      "Share what characters know, including attributed rumours and setting details; keep undiscovered truths private. A three-layer guide, festival example, and no required reading.",
     image:
       "https://assets.codexcryptica.com/og/should-i-share-worldbuilding-notes-with-my-players.jpg",
     imageAlt:
