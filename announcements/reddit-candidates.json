@@ -1,16 +1,6 @@
 {
-  "updated_at": 1792234782,
+  "updated_at": 1792238944,
   "candidates": [
-    {
-      "id": "reddit-38391363178-five-new-answer-guides-from-first-dm-ner",
-      "title": "Five new Answer guides \u2014 from first DM nerves to squad combat",
-      "body": "Same five questions kept coming up in different words, so I wrote them up properly instead of answering in fragments.\n\nI added five new reference guides in Answers, each with a framework and worked examples you can copy to your own prep.\n\n- pros and cons of becoming a Dungeon Master, for when you are on the fence\n- best classless fantasy RPGs with skill-based progression, with what each does differently\n- which TTRPGs have squad and mass-battle rules, and how they scale\n- how to combine enemies into one squad token without losing threat\n- how to get friends interested in playing D&D when they have never rolled before\n\nThey lean system-neutral where I can, but I left in concrete D&D and fantasy examples when a generic answer would be too vague. That is the tradeoff I will keep tuning.\n\nWhich of those five would actually help your table right now, and what would you add to it?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-38391363178-0.png)",
-      "url": "https://codexcryptica.com/answers/what-are-the-pros-and-cons-of-becoming-a-dungeon-master",
-      "image_url": "https://assets.codexcryptica.com/announcements/release-38391363178-0.png",
-      "source_id": "38391363178",
-      "status": "approved",
-      "created_at": 1791893287
-    },
     {
       "id": "reddit-38605236753-i-kept-handing-out-the-same-forbidden-bo",
       "title": "I kept handing out the same forbidden book with a new name, so I built a tome generator that remembers what is inside",
