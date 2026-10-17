@@ -1,5 +1,5 @@
 {
-  "updated_at": 1792233061,
+  "updated_at": 1792234782,
   "candidates": [
     {
       "id": "reddit-38391363178-five-new-answer-guides-from-first-dm-ner",
@@ -52,14 +52,14 @@
       "created_at": 1792170751
     },
     {
-      "id": "reddit-39024872067-hex-crawl-mode-run-overland-travel-hex-b",
-      "title": "Hex Crawl mode \u2014 run overland travel hex by hex on the map",
-      "body": "Running overland hexes left me with two bad options. In my head and we forgot which hex was forest or had the old tower, or the whole map revealed at once and players could plan around things they had not found yet.\n\nI built a Hex Crawl mode that lives on the hex grid itself so you can record what is in each hex without showing it early.\n\nYou pick a hex and work from the side panel, the map updates underneath. I kept the states intentionally coarse so you are not painting fog per pixel.\n\n- set terrain and GM notes per hex, with Unknown / Seen / Explored you can flip as the party moves\n- attach an existing entity or create one in place so the hex remembers what is there\n- jump with Go to hex by coordinates or centre the view with This hex for the party position\n- toggle terrain icons when a dense crawl gets noisy\n- draft what is in an unexplored hex with AI discovery or offline terrain tables, then keep, regenerate or discard in the review step before it saves\n\nI left the icon toggle manual for now rather than auto clustering. Still not sure what density reads best on a large crawl, so you control it.\n\nHow do you track which hexes your party has actually mapped right now \u2014 fog, paper notes, or memory?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/images/help-blog/map.png)",
-      "url": "",
-      "image_url": "https://assets.codexcryptica.com/images/help-blog/map.png",
+      "id": "reddit-39024872067-should-you-share-your-worldbuilding-note",
+      "title": "Should you share your worldbuilding notes with players?",
+      "body": "I used to hand players my lore doc and hope they read it, then feel let down when they did not remember any of it. Holding everything back was not better either, they played hesitantly because they did not know what their characters would know.\n\nI wrote an answer that splits what to share into a simple framework so a player primer stays short enough to actually get read.\n\nThe core idea is not all notes are for the same audience.\n\n- common knowledge anyone would know vs attributed rumours vs GM-only truths you keep back\n- how to build a one page skimmable primer that still works if no one reads between sessions\n- worked Millbrook festival example showing the same lore cut three ways for each bucket\n\nI kept the primer template to a single page on purpose. Longer handouts look thorough but rarely get read. If your group does read them, you will want to stretch it.\n\nFull write up here: https://codexcryptica.com/answers/should-i-share-worldbuilding-notes-with-my-players\n\nWhat is one bit of lore you shared that helped your players act with confidence, and one you wish you had held back?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-39024872067-0.png)",
+      "url": "https://codexcryptica.com/answers/should-i-share-worldbuilding-notes-with-my-players",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-39024872067-0.png",
       "source_id": "39024872067",
       "status": "approved",
-      "created_at": 1792233061
+      "created_at": 1792234782
     }
   ]
 }
