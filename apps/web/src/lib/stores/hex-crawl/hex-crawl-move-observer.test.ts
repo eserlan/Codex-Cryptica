@@ -19,7 +19,16 @@ const CONFIG: HexGridConfig = {
 
 function token(id: string, q: number, r: number, isVisionSource = true): Token {
   const point = hexToPoint({ q, r }, CONFIG);
-  return { id, x: point.x, y: point.y, isVisionSource } as unknown as Token;
+  const width = 30;
+  const height = 42;
+  return {
+    id,
+    x: point.x - width / 2,
+    y: point.y - height / 2,
+    width,
+    height,
+    isVisionSource,
+  } as unknown as Token;
 }
 
 function setup(

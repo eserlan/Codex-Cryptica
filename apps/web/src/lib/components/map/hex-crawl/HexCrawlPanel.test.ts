@@ -121,6 +121,24 @@ describe("HexCrawlPanel", () => {
   });
 
   describe("contents and state", () => {
+    it("sets a journey origin and previews Travel here through the callback store", async () => {
+      const { store } = makeHarness();
+      const journey = {
+        setOrigin: vi.fn(),
+        preview: vi.fn(() => ({ ok: true, steps: 2 })),
+        error: null,
+      };
+      renderPanel(store, { journey });
+      await fireEvent.click(
+        screen.getByRole("button", { name: "Set as journey start" }),
+      );
+      expect(journey.setOrigin).toHaveBeenCalledWith(HEX);
+      await fireEvent.click(
+        screen.getByRole("button", { name: "Travel here" }),
+      );
+      expect(journey.preview).toHaveBeenCalledWith(HEX);
+    });
+
     it("shows the hex label, state chip, terrain, notes and contents", () => {
       const { store } = makeHarness({
         hexes: {
@@ -354,6 +372,34 @@ describe("HexCrawlPanel", () => {
 
       expect(seen?.aborted).toBe(true);
       expect(map.hexCrawl.hexes["0,0"]?.draft).toBeUndefined();
+    });
+
+    it("aborts discovery when the selected hex changes", async () => {
+      const { store } = makeHarness();
+      let seen: AbortSignal | undefined;
+      const discovery = discoveryStub({
+        explore: vi.fn((signal: AbortSignal) => {
+          seen = signal;
+          return new Promise(() => {});
+        }),
+      });
+      const view = renderPanel(store, { discovery });
+      await fireEvent.click(screen.getByRole("button", { name: "Explore" }));
+      await view.rerender({ hex: { q: 1, r: 0 } });
+      expect(seen?.aborted).toBe(true);
+    });
+
+    it("flushes a pending note to the hex it was entered in", async () => {
+      const { store, map } = makeHarness();
+      const view = renderPanel(store);
+      await fireEvent.input(screen.getByLabelText("Your notes"), {
+        target: { value: "Old hex note" },
+      });
+      await view.rerender({ hex: { q: 1, r: 0 } });
+      await waitFor(() =>
+        expect(map.hexCrawl.hexes["0,0"]?.notes).toBe("Old hex note"),
+      );
+      expect(map.hexCrawl.hexes["1,0"]?.notes).toBeUndefined();
     });
   });
 

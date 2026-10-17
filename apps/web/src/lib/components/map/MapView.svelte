@@ -12,6 +12,9 @@
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { MapViewAssetLoader } from "./map-view-loader";
   import { MapInteractionManager } from "./map-interactions.svelte";
+  import { MapMoveCoordinator } from "./map-move-coordinator";
+  import { HexJourneyMovement } from "./hex-crawl/hex-journey-movement";
+  import { activeHexGridConfig } from "./hex-crawl/hex-crawl-view";
   import MapCanvas from "./MapCanvas.svelte";
   import MapOverlays from "./MapOverlays.svelte";
   import HexCrawlLayer from "./hex-crawl/HexCrawlLayer.svelte";
@@ -74,6 +77,16 @@
   });
   setContext(SOLO_EXPLORATION_CONTEXT, soloRecorder);
 
+  const moveCoordinator = new MapMoveCoordinator({
+    getScope: () =>
+      `${vault.activeVaultId ?? ""}:${mapStore.activeMapId ?? ""}:${mapStore.gridType}:${mapStore.gridSize}:${mapStore.gridOffsetX}:${mapStore.gridOffsetY}:${mapSession.gridDistance}:${mapSession.gridUnit}`,
+    completeObservedMove: async (tokens) => {
+      await soloRecorder.onVisionChanged([...tokens]);
+      await soloRecorder.onMoveSettled([...tokens]);
+      await hexCrawl.observer.onMoveSettled([...tokens]);
+    },
+  });
+
   const interactions = new MapInteractionManager({
     painter,
     getContainer: () => container,
@@ -82,10 +95,7 @@
       const sources = visionSourceTokens.filter((token) =>
         ids.includes(token.id),
       );
-      void soloRecorder
-        .onVisionChanged(sources)
-        .then(() => soloRecorder.onMoveSettled(sources))
-        .then(() => hexCrawl.observer.onMoveSettled(sources));
+      void moveCoordinator.settleObserved(sources);
     },
   });
 
@@ -171,6 +181,46 @@
       mapStore.visionMode,
       mapSession.selection,
     ),
+  );
+
+  const journeyMovement = new HexJourneyMovement({
+    coordinator: moveCoordinator,
+    getToken: (id) => mapSession.allTokens.find((token) => token.id === id),
+    // fallow-ignore-next-line complexity -- Builds a stable identity to invalidate movement after a map or grid change.
+    getRouteIdentity: () => {
+      const activeMapId = mapStore.activeMapId;
+      const activeGrid = activeHexGridConfig(mapStore);
+      if (!activeMapId || !activeGrid || !hexCrawl.store.isEnabled(activeMapId))
+        return null;
+      return `${vault.activeVaultId ?? ""}:${activeMapId}:${activeGrid.orientation}:${activeGrid.size}:${activeGrid.offsetX}:${activeGrid.offsetY}:${mapSession.gridDistance}:${mapSession.gridUnit}`;
+    },
+    getGrid: () => activeHexGridConfig(mapStore),
+    getPermission: (token) =>
+      mapSession.canMoveToken(token.id, mapSession.myPeerId, mapStore.isGMMode),
+    moveToken: (token, x, y) => mapSession.moveToken(token.id, x, y),
+    completeMove: (oldToken, newToken) =>
+      soloRecorder.completeJourneyMove(oldToken, newToken),
+    explore: async (id, hex) => {
+      const result = await hexCrawl.store.setExplored(id, hex, true, "party");
+      return result.newlyExplored ||
+        hexCrawl.store.recordFor(id, hex)?.explored === true
+        ? result
+        : false;
+    },
+    openArrival: (id, hex, newlyExplored) => {
+      hexCrawl.store.openHex(id, hex);
+      if (newlyExplored) hexCrawl.offer.current = { mapId: id, hex };
+    },
+    getMapId: () => mapStore.activeMapId,
+  });
+  hexCrawl.journey.setMovementHandler(async (_route, from, to, tokenId) => {
+    const result = await journeyMovement.step(tokenId, from, to);
+    return result.moved
+      ? { moved: true, arrivalSaved: result.arrivalSaved, error: result.error }
+      : { moved: false, error: result.reason };
+  });
+  hexCrawl.journey.setRetryArrivalHandler((mapId, hex) =>
+    journeyMovement.retryArrival(mapId, hex),
   );
 
   // fallow-ignore-next-line complexity
@@ -447,8 +497,7 @@
     void untrack(() => soloRecorder.onVisionChanged(tokens)).then(
       async (revealed) => {
         if (!interactions.tokenDrag.dragState) {
-          await soloRecorder.onMoveSettled(tokens);
-          await hexCrawl.observer.onMoveSettled(tokens);
+          await moveCoordinator.settleObserved(tokens);
         }
         if (revealed && mapSession.vttEnabled) {
           void broadcastActiveMapFogSync();

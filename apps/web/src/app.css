@@ -10,6 +10,7 @@
   --color-theme-bg: var(--color-bg-primary);
   --color-theme-surface: var(--color-bg-surface);
   --color-theme-primary: var(--color-accent-primary);
+  --color-theme-on-primary: var(--color-bg-primary);
   --color-theme-secondary: var(--color-accent-dim);
   --color-theme-accent: var(--color-accent-secondary);
   --color-theme-danger: var(--color-danger);
@@ -328,6 +329,7 @@
   html[data-app-appearance="neutral-dark"] [data-theme="horror"] {
     --color-text-muted: #9ca3af;
     --color-text-dim: #6b7280;
+    --color-theme-on-primary: #fff;
   }
   [data-theme="horror_light"],
   html[data-app-appearance="neutral-light"] [data-world-theme="horror"] {
