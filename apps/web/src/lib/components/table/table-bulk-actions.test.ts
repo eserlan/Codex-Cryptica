@@ -83,6 +83,19 @@ describe("table-bulk-actions", () => {
         "error",
       );
     });
+
+    it("notifies and resets committing on error", async () => {
+      const setCommitting = vi.fn();
+      vi.spyOn(notificationStore, "confirm").mockResolvedValue(true);
+      vi.spyOn(vault, "bulkUpdate").mockRejectedValue(
+        new Error("Network error"),
+      );
+      const notifySpy = vi.spyOn(notificationStore, "notify");
+
+      await handleChangeType("newType", ["a"], false, setCommitting);
+      expect(notifySpy).toHaveBeenCalledWith("Error: Network error", "error");
+      expect(setCommitting).toHaveBeenCalledWith(false);
+    });
   });
 
   describe("handleDeleteSelected", () => {
@@ -149,6 +162,54 @@ describe("table-bulk-actions", () => {
         succeededIds: ["a"],
         failedIds: ["b"],
         cancelledIds: [],
+      });
+      const notifySpy = vi.spyOn(notificationStore, "notify");
+
+      await handleDeleteSelected(
+        ["a", "b"],
+        false,
+        setCommitting,
+        updateSelection,
+        clearSelection,
+      );
+      expect(updateSelection).toHaveBeenCalledWith(new Set(["a"]));
+      expect(notifySpy).toHaveBeenCalledWith(
+        "Deleted 1 entities; 1 remain selected for retry.",
+        "error",
+      );
+      expect(clearSelection).not.toHaveBeenCalled();
+    });
+
+    it("notifies and resets committing on error", async () => {
+      const setCommitting = vi.fn();
+      const updateSelection = vi.fn();
+      const clearSelection = vi.fn();
+      vi.spyOn(notificationStore, "confirm").mockResolvedValue(true);
+      vi.spyOn(vault, "bulkDelete").mockRejectedValue(
+        new Error("Network error"),
+      );
+      const notifySpy = vi.spyOn(notificationStore, "notify");
+
+      await handleDeleteSelected(
+        ["a", "b"],
+        false,
+        setCommitting,
+        updateSelection,
+        clearSelection,
+      );
+      expect(notifySpy).toHaveBeenCalledWith("Error: Network error", "error");
+      expect(setCommitting).toHaveBeenCalledWith(false);
+    });
+
+    it("notifies on cancelled partial failure", async () => {
+      const setCommitting = vi.fn();
+      const updateSelection = vi.fn();
+      const clearSelection = vi.fn();
+      vi.spyOn(notificationStore, "confirm").mockResolvedValue(true);
+      vi.spyOn(vault, "bulkDelete").mockResolvedValue({
+        succeededIds: ["a"],
+        failedIds: [],
+        cancelledIds: ["b"],
       });
       const notifySpy = vi.spyOn(notificationStore, "notify");
 
