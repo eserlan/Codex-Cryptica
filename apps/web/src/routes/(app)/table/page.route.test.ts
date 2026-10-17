@@ -13,9 +13,14 @@ import { explorerUIStore } from "$lib/stores/ui/explorer-ui.svelte";
 vi.mock("$app/paths", () => ({ base: "" }));
 vi.mock("$app/navigation", () => ({ goto: vi.fn() }));
 
-const { mockPage } = vi.hoisted(() => ({
+const { mockPage, routeMocks } = vi.hoisted(() => ({
   mockPage: {
     url: new URL("http://localhost/table"),
+  },
+  routeMocks: {
+    confirm: vi.fn(),
+    notify: vi.fn(),
+    bulkDelete: vi.fn(),
   },
 }));
 
@@ -34,6 +39,14 @@ vi.mock("$lib/stores/vault.svelte", () => ({
     activeVaultId: null as string | null,
     isInitialized: false,
     allEntities: [] as Entity[],
+    bulkDelete: routeMocks.bulkDelete,
+  },
+}));
+
+vi.mock("$lib/stores/ui/notification.svelte", () => ({
+  notificationStore: {
+    confirm: routeMocks.confirm,
+    notify: routeMocks.notify,
   },
 }));
 
@@ -60,6 +73,8 @@ describe("/table page", () => {
     mutableVault.activeVaultId = "v1";
     mutableVault.isInitialized = true;
     mutableVault.allEntities = [];
+    routeMocks.confirm.mockResolvedValue(true);
+    routeMocks.bulkDelete.mockReset();
     // typeFilters/labelFilters now read from these module-level singletons
     // (shared with the Graph view), not private component state, so they
     // must be reset between tests to avoid cross-test leakage.
@@ -100,6 +115,67 @@ describe("/table page", () => {
   it("shows an empty state when the vault has no entities", () => {
     render(RoutePage);
     expect(screen.getByText("No entities yet")).toBeTruthy();
+  });
+
+  it("preserves selection changes made while a bulk delete is pending", async () => {
+    mutableVault.allEntities = [
+      entity({ id: "e1", title: "Aldric" }),
+      entity({ id: "e2", title: "Brindlewood", type: "location" }),
+      entity({ id: "e3", title: "Cinderfen", type: "location" }),
+    ];
+    let finishDelete!: (result: {
+      succeededIds: string[];
+      failedIds: string[];
+      cancelledIds: string[];
+    }) => void;
+    routeMocks.bulkDelete.mockReturnValue(
+      new Promise((resolve) => {
+        finishDelete = resolve;
+      }),
+    );
+    render(RoutePage);
+
+    await fireEvent.click(
+      screen.getByRole("checkbox", { name: "Select Aldric" }),
+    );
+    await fireEvent.click(
+      screen.getByRole("checkbox", { name: "Select Brindlewood" }),
+    );
+    await fireEvent.contextMenu(screen.getAllByTestId("entity-table-row")[0]);
+    await fireEvent.click(screen.getByTestId("context-menu-delete"));
+
+    await vi.waitFor(() =>
+      expect(routeMocks.bulkDelete).toHaveBeenCalledWith(["e1", "e2"]),
+    );
+
+    await fireEvent.click(
+      screen.getByRole("checkbox", { name: "Select Cinderfen" }),
+    );
+    finishDelete({ succeededIds: ["e1"], failedIds: ["e2"], cancelledIds: [] });
+
+    await vi.waitFor(() => {
+      expect(
+        (
+          screen.getByRole("checkbox", {
+            name: "Select Aldric",
+          }) as HTMLInputElement
+        ).checked,
+      ).toBe(false);
+      expect(
+        (
+          screen.getByRole("checkbox", {
+            name: "Select Brindlewood",
+          }) as HTMLInputElement
+        ).checked,
+      ).toBe(true);
+      expect(
+        (
+          screen.getByRole("checkbox", {
+            name: "Select Cinderfen",
+          }) as HTMLInputElement
+        ).checked,
+      ).toBe(true);
+    });
   });
 
   it("renders the table with a count when entities exist", () => {
