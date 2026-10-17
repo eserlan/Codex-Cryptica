@@ -11,31 +11,7 @@ import { notificationStore } from "$lib/stores/ui/notification.svelte";
 import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 import { vault } from "$lib/stores/vault.svelte";
 import * as OpenSelectionReport from "$lib/components/reports/open-selection-report";
-import type { BulkMutationResult } from "$lib/stores/vault/bulk-results";
 import type { Entity } from "schema";
-
-function createBulkMutationResult(
-  succeededIds: string[],
-  failedIds: string[] = [],
-  skippedIds: string[] = [],
-  cancelledIds: string[] = [],
-): BulkMutationResult {
-  const items: BulkMutationResult["items"] = [
-    ...succeededIds.map((id) => ({ id, status: "success" as const })),
-    ...failedIds.map((id) => ({ id, status: "failed" as const })),
-    ...skippedIds.map((id) => ({ id, status: "skipped" as const })),
-    ...cancelledIds.map((id) => ({ id, status: "cancelled" as const })),
-  ];
-
-  return {
-    requested: items.length,
-    items,
-    succeededIds,
-    failedIds,
-    skippedIds,
-    cancelledIds,
-  };
-}
 
 describe("table-bulk-actions", () => {
   beforeEach(() => {
@@ -74,9 +50,11 @@ describe("table-bulk-actions", () => {
     it("updates successfully", async () => {
       const setCommitting = vi.fn();
       vi.spyOn(notificationStore, "confirm").mockResolvedValue(true);
-      vi.spyOn(vault, "bulkUpdate").mockResolvedValue(
-        createBulkMutationResult(["a", "b"]),
-      );
+      vi.spyOn(vault, "bulkUpdate").mockResolvedValue({
+        succeededIds: ["a", "b"],
+        failedIds: [],
+        skippedIds: [],
+      });
       const notifySpy = vi.spyOn(notificationStore, "notify");
 
       await handleChangeType("newType", ["a", "b"], false, setCommitting);
@@ -92,9 +70,11 @@ describe("table-bulk-actions", () => {
     it("notifies on partial failure", async () => {
       const setCommitting = vi.fn();
       vi.spyOn(notificationStore, "confirm").mockResolvedValue(true);
-      vi.spyOn(vault, "bulkUpdate").mockResolvedValue(
-        createBulkMutationResult(["a"], ["b"]),
-      );
+      vi.spyOn(vault, "bulkUpdate").mockResolvedValue({
+        succeededIds: ["a"],
+        failedIds: ["b"],
+        skippedIds: [],
+      });
       const notifySpy = vi.spyOn(notificationStore, "notify");
 
       await handleChangeType("newType", ["a", "b"], false, setCommitting);
@@ -119,12 +99,14 @@ describe("table-bulk-actions", () => {
   });
 
   describe("handleDeleteSelected", () => {
-    it("does not delete or change selection when confirmation is cancelled", async () => {
+    it("does nothing if unconfirmed", async () => {
       const setCommitting = vi.fn();
       const updateSelection = vi.fn();
       const clearSelection = vi.fn();
-      const bulkDeleteSpy = vi.spyOn(vault, "bulkDelete");
       vi.spyOn(notificationStore, "confirm").mockResolvedValue(false);
+      vi.spyOn(vault, "bulkDelete").mockImplementation(() =>
+        Promise.resolve({ succeededIds: [], failedIds: [], cancelledIds: [] }),
+      );
 
       await handleDeleteSelected(
         ["a", "b"],
@@ -134,10 +116,10 @@ describe("table-bulk-actions", () => {
         clearSelection,
       );
 
-      expect(bulkDeleteSpy).not.toHaveBeenCalled();
+      expect(setCommitting).not.toHaveBeenCalled();
+      expect(vault.bulkDelete).not.toHaveBeenCalled();
       expect(updateSelection).not.toHaveBeenCalled();
       expect(clearSelection).not.toHaveBeenCalled();
-      expect(setCommitting).not.toHaveBeenCalled();
     });
 
     it("preserves new selections made while delete was pending", async () => {
@@ -154,7 +136,7 @@ describe("table-bulk-actions", () => {
       vi.spyOn(vault, "bulkDelete").mockImplementation(async () => {
         // User clicks row "c" while delete is pending
         capturedSelectedIds = new Set(["a", "b", "c"]);
-        return createBulkMutationResult(["a", "b"]);
+        return { succeededIds: ["a", "b"], failedIds: [], cancelledIds: [] };
       });
 
       await handleDeleteSelected(
@@ -174,9 +156,11 @@ describe("table-bulk-actions", () => {
       const updateSelection = vi.fn();
       const clearSelection = vi.fn();
       vi.spyOn(notificationStore, "confirm").mockResolvedValue(true);
-      vi.spyOn(vault, "bulkDelete").mockResolvedValue(
-        createBulkMutationResult(["a", "b"]),
-      );
+      vi.spyOn(vault, "bulkDelete").mockResolvedValue({
+        succeededIds: ["a", "b"],
+        failedIds: [],
+        cancelledIds: [],
+      });
       const notifySpy = vi.spyOn(notificationStore, "notify");
 
       await handleDeleteSelected(
@@ -197,9 +181,11 @@ describe("table-bulk-actions", () => {
       const updateSelection = vi.fn();
       const clearSelection = vi.fn();
       vi.spyOn(notificationStore, "confirm").mockResolvedValue(true);
-      vi.spyOn(vault, "bulkDelete").mockResolvedValue(
-        createBulkMutationResult(["a"], ["b"]),
-      );
+      vi.spyOn(vault, "bulkDelete").mockResolvedValue({
+        succeededIds: ["a"],
+        failedIds: ["b"],
+        cancelledIds: [],
+      });
       const notifySpy = vi.spyOn(notificationStore, "notify");
 
       await handleDeleteSelected(
@@ -243,9 +229,11 @@ describe("table-bulk-actions", () => {
       const updateSelection = vi.fn();
       const clearSelection = vi.fn();
       vi.spyOn(notificationStore, "confirm").mockResolvedValue(true);
-      vi.spyOn(vault, "bulkDelete").mockResolvedValue(
-        createBulkMutationResult(["a"], [], [], ["b"]),
-      );
+      vi.spyOn(vault, "bulkDelete").mockResolvedValue({
+        succeededIds: ["a"],
+        failedIds: [],
+        cancelledIds: ["b"],
+      });
       const notifySpy = vi.spyOn(notificationStore, "notify");
 
       await handleDeleteSelected(
@@ -268,7 +256,7 @@ describe("table-bulk-actions", () => {
     it("calls openSelectionReport with correct ids", () => {
       const spy = vi
         .spyOn(OpenSelectionReport, "openSelectionReport")
-        .mockImplementation(() => true);
+        .mockImplementation(() => {});
       openBulkReport([{ id: "a" } as Entity, { id: "b" } as Entity]);
       expect(spy).toHaveBeenCalledWith("table", ["a", "b"]);
     });
