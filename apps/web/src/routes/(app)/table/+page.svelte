@@ -396,13 +396,8 @@
       },
       (succeededIds) => {
         selectedIds = withoutIds(new Set(selectedIds), succeededIds);
-        if (lastSelectedId && succeededIds.has(lastSelectedId)) {
-          lastSelectedId = null;
-        }
       },
-      () => {
-        if (selectedIds.size === 0) clearSelection();
-      },
+      clearSelection,
     );
   }
 

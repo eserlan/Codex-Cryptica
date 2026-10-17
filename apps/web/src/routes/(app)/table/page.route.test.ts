@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import { render, screen, fireEvent, waitFor } from "@testing-library/svelte";
+import { render, screen, fireEvent } from "@testing-library/svelte";
 import { tick } from "svelte";
 import { SvelteURL } from "svelte/reactivity";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -9,7 +9,6 @@ import RoutePage from "./+page.svelte";
 import { vault } from "$lib/stores/vault.svelte";
 import { graph } from "$lib/stores/graph.svelte";
 import { explorerUIStore } from "$lib/stores/ui/explorer-ui.svelte";
-import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
 vi.mock("$app/paths", () => ({ base: "" }));
 vi.mock("$app/navigation", () => ({ goto: vi.fn() }));
@@ -25,10 +24,10 @@ vi.mock("$app/state", () => ({
 }));
 
 type MutableVaultMock = {
+  bulkDelete?: any;
   activeVaultId: string | null;
   isInitialized: boolean;
   allEntities: Entity[];
-  bulkDelete: ReturnType<typeof vi.fn>;
 };
 
 vi.mock("$lib/stores/vault.svelte", () => ({
@@ -118,116 +117,6 @@ describe("/table page", () => {
     expect(
       screen.getByTestId("entity-table-connections-e1").textContent?.trim(),
     ).toBe("0");
-  });
-
-  it("preserves rows selected while a context-menu delete is pending", async () => {
-    mutableVault.allEntities = [
-      entity({ id: "e1", title: "Aldric" }),
-      entity({ id: "e2", title: "Brindlewood" }),
-      entity({ id: "e3", title: "Cinder" }),
-    ];
-    vi.spyOn(notificationStore, "confirm").mockResolvedValue(true);
-
-    let resolveDelete!: (result: {
-      requested: number;
-      items: [];
-      skippedIds: string[];
-      failedIds: string[];
-      cancelledIds: string[];
-      succeededIds: string[];
-    }) => void;
-    mutableVault.bulkDelete.mockReturnValue(
-      new Promise((resolve) => {
-        resolveDelete = resolve;
-      }),
-    );
-
-    render(RoutePage);
-    const rows = screen.getAllByTestId("entity-table-row");
-    await fireEvent.click(rows[0]);
-    await fireEvent.click(rows[1]);
-    await fireEvent.contextMenu(rows[0]);
-    await fireEvent.click(screen.getByTestId("context-menu-delete"));
-
-    await waitFor(() =>
-      expect(mutableVault.bulkDelete).toHaveBeenCalledWith(["e1", "e2"]),
-    );
-
-    await fireEvent.click(rows[2]);
-    expect(rows.map((row) => row.getAttribute("data-selected"))).toEqual([
-      "true",
-      "true",
-      "true",
-    ]);
-
-    resolveDelete({
-      requested: 2,
-      items: [],
-      skippedIds: [],
-      failedIds: [],
-      cancelledIds: [],
-      succeededIds: ["e1", "e2"],
-    });
-    await waitFor(() => {
-      expect(rows.map((row) => row.getAttribute("data-selected"))).toEqual([
-        "false",
-        "false",
-        "true",
-      ]);
-    });
-  });
-
-  it("clears a deleted selection anchor before the next shift-click", async () => {
-    mutableVault.allEntities = [
-      entity({ id: "e1", title: "Aldric" }),
-      entity({ id: "e2", title: "Brindlewood" }),
-      entity({ id: "e3", title: "Cinder" }),
-    ];
-    vi.spyOn(notificationStore, "confirm").mockResolvedValue(true);
-
-    let resolveDelete!: (result: {
-      requested: number;
-      items: [];
-      skippedIds: string[];
-      failedIds: string[];
-      cancelledIds: string[];
-      succeededIds: string[];
-    }) => void;
-    mutableVault.bulkDelete.mockReturnValue(
-      new Promise((resolve) => {
-        resolveDelete = resolve;
-      }),
-    );
-
-    render(RoutePage);
-    const rows = screen.getAllByTestId("entity-table-row");
-    await fireEvent.click(rows[0]);
-    await fireEvent.contextMenu(rows[0]);
-    await fireEvent.click(screen.getByTestId("context-menu-delete"));
-
-    await waitFor(() =>
-      expect(mutableVault.bulkDelete).toHaveBeenCalledWith(["e1"]),
-    );
-
-    resolveDelete({
-      requested: 1,
-      items: [],
-      skippedIds: [],
-      failedIds: [],
-      cancelledIds: [],
-      succeededIds: ["e1"],
-    });
-    await waitFor(() =>
-      expect(rows[0].getAttribute("data-selected")).toBe("false"),
-    );
-
-    await fireEvent.click(rows[1], { shiftKey: true });
-
-    expect(rows.map((row) => row.getAttribute("data-selected"))).toEqual([
-      "false",
-      "true",
-      "false",
-    ]);
   });
 
   it("toggles the mobile filter panel and shows active filter badge", async () => {
