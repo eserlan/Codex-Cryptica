@@ -134,14 +134,17 @@ export class GuestExporter {
     }
 
     // 3. Filter and sanitize maps
+    // hexCrawl is GM-only working data (FR-041): notes, AI drafts and explored
+    // state never reach guests. Grid geometry is kept, since it is map layout.
     const guestMaps = maps
       .filter((m) => m.playerVisible === true)
       .map((m) => {
         const pins = (m.pins || []).filter(
           (p) => !p.entityId || includedEntityIds.has(p.entityId),
         );
+        const { hexCrawl: _hexCrawl, ...publicMap } = m;
         return {
-          ...m,
+          ...publicMap,
           pins,
         };
       });

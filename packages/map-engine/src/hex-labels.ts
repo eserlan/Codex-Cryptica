@@ -202,3 +202,125 @@ export function formatHexLabel(
 
   return formatAlphanumericHex(hex, config, orientation);
 }
+
+const NUMERIC_LABEL = /^(-?\d+)\.(-?\d+)$/;
+const AXIAL_LABEL = /^\(\s*(-?\d+)\s*,\s*(-?\d+)\s*\)$/;
+
+/**
+ * Parse a typed hex label (the inverse of `formatHexLabel`), e.g. "C04" or
+ * "01.04". Returns null when the text is not a label for this grid.
+ *
+ * Every candidate is checked by formatting it again and comparing, so a label
+ * only parses when it is exactly what `formatHexLabel` would show for that hex.
+ * Case and surrounding spaces are ignored. With labels hidden ("none"/"off")
+ * the default numeric format is accepted.
+ */
+export function parseHexLabel(
+  text: string,
+  config: HexLabelConfig | undefined,
+  orientation: HexOrientation = "pointy",
+): HexCoord | null {
+  const trimmed = text.trim();
+  if (!trimmed) return null;
+
+  const style = config?.style ?? "numeric";
+  const candidate =
+    style === "axial"
+      ? parseAxialCandidate(trimmed)
+      : style === "alphanumeric"
+        ? parseAlphanumericCandidate(trimmed, config, orientation)
+        : parseNumericCandidate(trimmed);
+  if (!candidate) return null;
+
+  const shown = formatHexLabel(
+    candidate,
+    labelConfigFor(style, config),
+    orientation,
+  );
+  const normalise = (value: string) => value.replace(/\s+/g, "").toUpperCase();
+  return normalise(shown) === normalise(trimmed) ? candidate : null;
+}
+
+function labelConfigFor(
+  style: HexLabelStyle,
+  config: HexLabelConfig | undefined,
+): HexLabelConfig {
+  // With labels hidden the typed text uses the default numeric format.
+  return style === "none" || style === "off"
+    ? { style: "numeric" }
+    : (config ?? { style });
+}
+
+function parseNumericCandidate(text: string): HexCoord | null {
+  const match = NUMERIC_LABEL.exec(text);
+  return match ? { q: Number(match[1]), r: Number(match[2]) } : null;
+}
+
+function parseAxialCandidate(text: string): HexCoord | null {
+  const match = AXIAL_LABEL.exec(text);
+  return match ? { q: Number(match[1]), r: Number(match[2]) } : null;
+}
+
+function parseAlphanumericCandidate(
+  text: string,
+  config: HexLabelConfig | undefined,
+  orientation: HexOrientation,
+): HexCoord | null {
+  const match = alphanumericPattern(config).exec(text);
+  if (!match) return null;
+
+  const letterIndex = columnLettersToIndex(match[2]);
+  const finalColIndex = match[1] === "-" ? -(letterIndex + 1) : letterIndex;
+  const finalRowNum = Number(match[3]);
+  if (!Number.isSafeInteger(finalColIndex) || !Number.isFinite(finalRowNum)) {
+    return null;
+  }
+
+  const origin = labelOrigin(config);
+  const colDiff = finalColIndex - origin.startColIndex;
+  const rowDiff = finalRowNum - origin.startRow;
+  const rowDiffRaw = origin.invertRow ? -rowDiff : rowDiff;
+
+  const originOffset = axialToOffset(
+    { q: origin.originQ, r: origin.originR },
+    orientation,
+  );
+  return offsetToAxial(
+    originOffset.col + colDiff,
+    originOffset.row + rowDiffRaw,
+    orientation,
+  );
+}
+
+/** The pattern a label in this grid's alphanumeric style must match. */
+function alphanumericPattern(config: HexLabelConfig | undefined): RegExp {
+  // Use the separator the labels are formatted with, so "-I-05" is column -I, row -05.
+  const requestedSeparator = config?.separator;
+  const separator =
+    typeof requestedSeparator === "string" && requestedSeparator.length <= 1
+      ? requestedSeparator
+      : "";
+  const escaped = separator.replace(/[.*+?^${}()|[\]\\-]/g, "\\$&");
+  return new RegExp(`^(-?)([A-Za-z]{1,3})${escaped}(-?\\d+)$`);
+}
+
+/** Where the grid's alphanumeric labels start, mirroring formatAlphanumericHex. */
+function labelOrigin(config: HexLabelConfig | undefined) {
+  return {
+    startColIndex: startColumnIndex(config),
+    startRow: config?.startRow ?? 1,
+    invertRow: config?.invertRow ?? false,
+    originQ: config?.originQ ?? 0,
+    originR: config?.originR ?? 0,
+  };
+}
+
+/** Column index of the first label column. Invalid letters fall back to "A". */
+function startColumnIndex(config: HexLabelConfig | undefined): number {
+  const requested = config?.startCol ?? config?.startColumn;
+  const letters =
+    typeof requested === "string" && /^[A-Za-z]{1,3}$/.test(requested)
+      ? requested
+      : "A";
+  return columnLettersToIndex(letters);
+}

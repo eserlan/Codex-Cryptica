@@ -28,6 +28,11 @@ describe("GoalInvitation", () => {
     const dialog = screen.getByTestId("goal-invitation");
     expect(dialog.getAttribute("role")).toBe("dialog");
     expect(dialog.getAttribute("aria-modal")).toBe("false");
+    expect(dialog.className).toContain("items-end");
+    expect(dialog.className).toContain("justify-center");
+    expect(dialog.className).toContain("sm:items-center");
+    expect(dialog.className).toContain("sm:p-4");
+    expect(dialog.querySelector(".hidden.sm\\:block")).toBeTruthy();
     const labels = Array.from(dialog.querySelectorAll("button")).map((b) =>
       (b.getAttribute("aria-label") ?? b.textContent)?.trim(),
     );
@@ -110,5 +115,15 @@ describe("GoalInvitation", () => {
       expect(b.className).toContain("min-h-11");
       expect(b.className).toContain("min-w-11");
     }
+  });
+
+  it("uses bottom-sheet alignment on mobile and a centered card on desktop", () => {
+    setup();
+    const dialog = screen.getByTestId("goal-invitation");
+    const card = dialog.querySelector(".pointer-events-auto.relative");
+    expect(card?.className).toContain("w-full");
+    expect(card?.className).toContain("rounded-t-2xl");
+    expect(card?.className).toContain("sm:w-[28rem]");
+    expect(card?.className).toContain("sm:rounded-2xl");
   });
 });

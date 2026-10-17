@@ -1,5 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { MapInteractionManager } from "./map-interactions.svelte";
+import { MapFogPainter } from "./map-fog-painter";
 
 // Mocking stores
 vi.mock("../../stores/map.svelte", () => ({
@@ -31,6 +32,7 @@ vi.mock("../../stores/map-session.svelte", () => ({
     activeLayer: "token",
     canViewToken: vi.fn(() => true),
     canMoveToken: vi.fn(() => true),
+    moveToken: vi.fn(),
     setDraggingTokenId: vi.fn(),
     measurement: { active: false, start: null, end: null, locked: false },
     tileDeckManager: { pendingPlacement: null },
@@ -116,6 +118,110 @@ describe("MapInteractionManager", () => {
     manager.onPointerMove(pointer("pointermove", 214, 225));
 
     expect(mapStore.updateViewport).toHaveBeenCalledWith({ x: 14, y: 25 }, 1);
+  });
+
+  it("does not dispatch a click when the browser cancels a stationary pointer", () => {
+    const pointer = (type: string) =>
+      Object.assign(
+        new MouseEvent(type, { clientX: 300, clientY: 300, button: 0 }),
+        {
+          pointerId: 9,
+        },
+      ) as unknown as PointerEvent;
+    const hexClick = vi.spyOn(manager.hexClickInteractions, "handle");
+    const mapClick = vi.spyOn(manager, "handleMapClick");
+
+    manager.onPointerDown(pointer("pointerdown"));
+    manager.onPointerCancel(pointer("pointercancel"));
+
+    expect(hexClick).not.toHaveBeenCalled();
+    expect(mapClick).not.toHaveBeenCalled();
+    expect(manager.isPanning).toBe(false);
+  });
+
+  it("restores the fog mask when the browser cancels an active pointer stroke", () => {
+    const ctx = {
+      save: vi.fn(),
+      restore: vi.fn(),
+      beginPath: vi.fn(),
+      moveTo: vi.fn(),
+      lineTo: vi.fn(),
+      stroke: vi.fn(),
+      fill: vi.fn(),
+      arc: vi.fn(),
+      clearRect: vi.fn(),
+      drawImage: vi.fn(),
+      globalCompositeOperation: "",
+      fillStyle: "",
+      strokeStyle: "",
+      lineCap: "",
+      lineJoin: "",
+      lineWidth: 0,
+    } as any;
+    const mask = {
+      width: 100,
+      height: 80,
+      getContext: vi.fn(() => ctx),
+    } as unknown as HTMLCanvasElement;
+    const painter = new MapFogPainter({
+      mapStore: {
+        activeMapId: "map-1",
+        brushRadius: 10,
+        unproject: (point) => point,
+        saveMask: vi.fn(async () => undefined),
+      },
+      oracle: { pushUndoAction: vi.fn() },
+      getMaskCanvas: () => mask,
+      getMapImage: () => null,
+      createCanvas: () =>
+        ({
+          width: 100,
+          height: 80,
+          getContext: () => ({ drawImage: vi.fn() }),
+        }) as unknown as HTMLCanvasElement,
+    });
+    manager = new MapInteractionManager({
+      painter,
+      getContainer: () => containerMock,
+    });
+    const pointer = (type: string, clientX: number, clientY: number) =>
+      Object.assign(
+        new MouseEvent(type, { clientX, clientY, button: 0, altKey: true }),
+        { pointerId: 4 },
+      ) as unknown as PointerEvent;
+
+    manager.onPointerDown(pointer("pointerdown", 20, 30));
+    manager.onPointerMove(pointer("pointermove", 35, 45));
+    manager.onPointerCancel(pointer("pointercancel", 35, 45));
+
+    expect(ctx.clearRect).toHaveBeenCalledWith(0, 0, 100, 80);
+    expect(ctx.drawImage).toHaveBeenCalledWith(expect.anything(), 0, 0);
+    expect(painter.isPainting).toBe(false);
+  });
+
+  it("cancels an active token drag without ending or committing it", async () => {
+    const pointer = (type: string, clientX: number, clientY: number) =>
+      Object.assign(new MouseEvent(type, { clientX, clientY, button: 0 }), {
+        pointerId: 1,
+      }) as unknown as PointerEvent;
+    manager.onPointerDown(pointer("pointerdown", 20, 30));
+    manager.tokenDrag.dragState = {
+      tokenId: "token-a",
+      initialPosition: { x: 10, y: 20 },
+      offset: { x: 0, y: 0 },
+      startPoint: { x: 20, y: 30 },
+      hasMoved: true,
+    };
+    const cancel = vi.spyOn(manager.tokenDrag, "cancel");
+    const end = vi.spyOn(manager.tokenDrag, "end");
+
+    manager.onPointerCancel(pointer("pointercancel", 50, 60));
+
+    expect(cancel).toHaveBeenCalledOnce();
+    expect(end).not.toHaveBeenCalled();
+    expect(manager.tokenDrag.dragState).toBeNull();
+    const { mapSession } = await import("../../stores/map-session.svelte");
+    expect(mapSession.moveToken).toHaveBeenCalledWith("token-a", 10, 20);
   });
 
   it("should ignore touch jitter until the drag threshold is crossed", async () => {

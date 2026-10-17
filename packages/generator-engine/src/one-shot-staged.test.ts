@@ -161,6 +161,132 @@ describe("runOneShotStages", () => {
     expect(checkPlayability(out)).toEqual([]);
   });
 
+  it("includes only clues, threads, and NPCs linked to each scene", async () => {
+    const a = local();
+    const stageReplies = replies(a);
+    const [first, second, third] = stageReplies.structure.scenes;
+    first.npcIds = ["npc-3", "npc-unlisted"];
+    second.npcIds = ["npc-4"];
+    Reflect.deleteProperty(third, "npcIds");
+    stageReplies.structure.npcs = [
+      { id: "npc-3", name: "Mara", role: "Bell keeper" },
+      { id: "npc-4", name: "Orren", role: "Archivist" },
+    ];
+    stageReplies.structure.clues = [
+      {
+        id: "clue-first",
+        label: "First clue",
+        text: "A cracked bell",
+        routes: [
+          { sceneId: first.id, method: "search the altar" },
+          { sceneId: third.id, method: "inspect the bell rope" },
+        ],
+      },
+      {
+        id: "clue-second",
+        label: "Second clue",
+        text: "A hidden ledger",
+        routes: [
+          { sceneId: second.id, method: "question the keeper" },
+          { sceneId: third.id, method: "read the ledger" },
+        ],
+      },
+      {
+        id: "clue-third",
+        label: "Third clue",
+        text: "The keeper altered the records",
+        routes: [
+          { sceneId: second.id, method: "compare the entries" },
+          { sceneId: third.id, method: "ask the clerk" },
+        ],
+      },
+      {
+        id: "clue-no-routes",
+        label: "Unplaced clue",
+        text: "No scene offers it",
+        essential: false,
+      },
+    ];
+    stageReplies.structure.threads = [
+      { id: "thread-first", sceneIds: [first.id] },
+      { id: "thread-second", sceneIds: [second.id] },
+      { id: "thread-empty", sceneIds: [] },
+      { id: "thread-unplaced" },
+    ];
+
+    const prompts: StagePrompt[] = [];
+    const stageCall = async (p: StagePrompt) => {
+      prompts.push(p);
+      const stage = stageOf(p);
+      if (stage === "scene")
+        return JSON.stringify(stageReplies.scene(p.userMessage));
+      if (stage === "review") return "{}";
+      return JSON.stringify(stageReplies[stage]);
+    };
+    await runOneShotStages(
+      { ...options, durationHours: 4 },
+      { call: stageCall },
+      "",
+      seeded(),
+    );
+
+    const promptFor = (id: string) =>
+      prompts.find(
+        (p) =>
+          stageOf(p) === "scene" &&
+          p.userMessage.includes(`The scene to write: {"id":"${id}"`),
+      )!.userMessage;
+    const jsonLine = (prompt: string, label: string) =>
+      JSON.parse(prompt.split(`${label}: `)[1].split("\n")[0]) as {
+        id?: string;
+        label?: string;
+        foundBy?: string;
+      }[];
+
+    const firstPrompt = promptFor(first.id);
+    expect(
+      jsonLine(firstPrompt, "Clues it must offer (with how they are found)"),
+    ).toEqual([
+      {
+        label: "First clue",
+        text: "A cracked bell",
+        foundBy: "search the altar",
+      },
+    ]);
+    expect(
+      jsonLine(firstPrompt, "Threads it carries").map((thread) => thread.id),
+    ).toEqual(["thread-first"]);
+    expect(jsonLine(firstPrompt, "NPCs present").map((npc) => npc.id)).toEqual([
+      "npc-3",
+    ]);
+
+    const secondPrompt = promptFor(second.id);
+    expect(
+      jsonLine(secondPrompt, "Clues it must offer (with how they are found)"),
+    ).toEqual([
+      {
+        label: "Second clue",
+        text: "A hidden ledger",
+        foundBy: "question the keeper",
+      },
+      {
+        label: "Third clue",
+        text: "The keeper altered the records",
+        foundBy: "compare the entries",
+      },
+    ]);
+    expect(
+      jsonLine(secondPrompt, "Threads it carries").map((thread) => thread.id),
+    ).toEqual(["thread-second"]);
+    expect(jsonLine(secondPrompt, "NPCs present").map((npc) => npc.id)).toEqual(
+      ["npc-4"],
+    );
+
+    expect(
+      jsonLine(promptFor(third.id), "NPCs present").map((npc) => npc.id),
+    ).toEqual([]);
+  });
+
   it("gives a shared scene separate histories for its reachable routes", async () => {
     const a = generateOneShotLocal(
       { ...options, durationHours: 4, structure: "Five-room adventure" },

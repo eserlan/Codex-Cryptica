@@ -7,6 +7,8 @@
   import MapVTTControlsHUD from "$lib/components/map/MapVTTControlsHUD.svelte";
   import VTTGridColorMenu from "$lib/components/map/VTTGridColorMenu.svelte";
   import VTTGridSettings from "$lib/components/map/VTTGridSettings.svelte";
+  import { createHexCrawlServices } from "$lib/components/map/hex-crawl/hex-crawl-services.svelte";
+  import { provideHexCrawlStore } from "$lib/components/map/hex-crawl/hex-crawl-context";
   import TokenAddDialog from "$lib/components/vtt/TokenAddDialog.svelte";
   import NoteAddDialog from "$lib/components/vtt/NoteAddDialog.svelte";
   import MapVTTSidebar from "$lib/components/vtt/MapVTTSidebar.svelte";
@@ -15,6 +17,10 @@
     type MapPageControllerDependencies,
   } from "$lib/stores/map/map-page-controller.svelte";
   import { mapStore } from "$lib/stores/map.svelte";
+
+  // Hex crawl state for the page: the map view and the grid settings both read it.
+  const hexCrawl = createHexCrawlServices();
+  provideHexCrawlStore(hexCrawl.store);
   import { mapSession } from "$lib/stores/map-session.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
@@ -67,6 +73,7 @@
   <HelpVttMapSurface />
   {#if mapStore.activeMap}
     <MapView
+      {hexCrawl}
       onMapDragOver={(event) => controller.onDragOver(event)}
       onMapDragLeave={(event) => controller.onDragLeave(event)}
       onMapDrop={(event) => controller.onDrop(event)}
@@ -98,7 +105,10 @@
 
     <VTTGridColorMenu />
     {#if !sessionModeStore.isGuestMode && mapSession.showGridSettings}
-      <VTTGridSettings close={() => (mapSession.showGridSettings = false)} />
+      <VTTGridSettings
+        hexCrawlStore={hexCrawl.store}
+        close={() => (mapSession.showGridSettings = false)}
+      />
     {/if}
   {:else if isPublishedVaultReader}
     <div

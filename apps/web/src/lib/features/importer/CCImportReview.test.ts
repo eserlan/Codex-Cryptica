@@ -93,6 +93,42 @@ describe("CCImportReview", () => {
     expect(screen.getByText("No bytes provided")).toBeTruthy();
   });
 
+  it("renders repeated CIF warnings for the same entity without duplicate Svelte keys", () => {
+    const session: CCImportSession = {
+      ...baseSession,
+      sourceSystem: "cif",
+      warnings: [
+        {
+          code: "cif.asset-extra-image-ref",
+          ref: "notes/session-01",
+          message: "Image B was skipped",
+        },
+        {
+          code: "cif.asset-extra-image-ref",
+          ref: "notes/session-01",
+          message: "Image C was skipped",
+        },
+        {
+          code: "cif.asset-extra-image-ref",
+          ref: "notes/session-01",
+          message: "Image C was skipped",
+        },
+      ],
+    };
+
+    render(CCImportReview, {
+      session,
+      onItemDecisionChange: vi.fn(),
+      onMatchDecisionChange: vi.fn(),
+      onItemTypeChange: vi.fn(),
+      onCommit: vi.fn(),
+      onCancel: vi.fn(),
+    });
+
+    expect(screen.getByText("Image B was skipped")).toBeTruthy();
+    expect(screen.getAllByText("Image C was skipped")).toHaveLength(2);
+  });
+
   it("emits include or ignore decisions", async () => {
     const onItemDecisionChange = vi.fn();
 

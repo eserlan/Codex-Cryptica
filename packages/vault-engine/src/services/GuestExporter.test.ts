@@ -99,6 +99,45 @@ describe("GuestExporter", () => {
     expect(bundle.relationships[0].label).toBe("Ally");
   });
 
+  it("never exports hex crawl data to guests, but keeps the grid geometry (T008, FR-041)", () => {
+    const bundle = GuestExporter.export({
+      ...defaultOptions,
+      maps: [
+        {
+          id: "map-hex",
+          name: "Overland",
+          playerVisible: true,
+          pins: [],
+          grid: { type: "hex-pointy", size: 48, offsetX: 0, offsetY: 0 },
+          hexCrawl: {
+            enabled: true,
+            hexes: {
+              "1,2": {
+                notes: "GM secret: the ruin hides a cult",
+                aiNotes: "Hazard: sinkholes",
+                explored: true,
+                updatedAt: 1,
+              },
+            },
+          },
+        } as any,
+        {
+          id: "map-hidden",
+          name: "Hidden",
+          playerVisible: false,
+          pins: [],
+          hexCrawl: { enabled: true, hexes: {} },
+        } as any,
+      ],
+    });
+
+    expect(bundle.maps).toHaveLength(1);
+    expect(bundle.maps[0].grid?.type).toBe("hex-pointy");
+    expect("hexCrawl" in bundle.maps[0]).toBe(false);
+    expect(JSON.stringify(bundle)).not.toContain("cult");
+    expect(JSON.stringify(bundle)).not.toContain("sinkholes");
+  });
+
   it("should sanitize maps and canvases based on player visibility and entity inclusion", () => {
     const options: ExporterOptions = {
       ...defaultOptions,

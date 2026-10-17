@@ -34,6 +34,29 @@ export const MapMaskSchema = z.object({
   maskPath: z.string(), // Local OPFS path to the binary mask file
 });
 
+/** Hex grid geometry, stored with the map so hex records stay aligned on every device (FR-037). */
+export const MapGridGeometrySchema = z.object({
+  type: z.enum(["square", "hex-pointy", "hex-flat"]),
+  size: z.number().finite().positive(),
+  offsetX: z.number().finite(),
+  offsetY: z.number().finite(),
+  labels: z
+    .object({
+      style: z.enum(["none", "off", "numeric", "alphanumeric", "axial"]),
+      startCol: z.string().optional(),
+      startColumn: z.string().optional(),
+      startRow: z.number().optional(),
+      rowPadding: z.number().optional(),
+      separator: z.string().optional(),
+      invertRow: z.boolean().optional(),
+      originQ: z.number().optional(),
+      originR: z.number().optional(),
+    })
+    .optional(),
+});
+
+export type MapGridGeometry = z.infer<typeof MapGridGeometrySchema>;
+
 export const MapSchema = z.object({
   id: z.string().uuid(),
   name: z.string(),
@@ -47,6 +70,15 @@ export const MapSchema = z.object({
   pins: z.array(MapPinSchema),
   fogOfWar: MapMaskSchema.optional(),
   playerVisible: z.boolean().optional(),
+  /** Grid geometry for this map. Absent until adopted from this device (FR-038). */
+  grid: MapGridGeometrySchema.optional(),
+  /** Hex crawl state. Sparse; never exported to guests (FR-041). Records are normalised by hex-crawl-engine. */
+  hexCrawl: z
+    .object({
+      enabled: z.boolean(),
+      hexes: z.record(z.string(), z.unknown()),
+    })
+    .optional(),
 });
 
 export type MapPin = z.infer<typeof MapPinSchema>;

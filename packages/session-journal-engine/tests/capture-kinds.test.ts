@@ -76,3 +76,17 @@ describe("withCaptureChoice", () => {
     expect(journal.captureOff).toEqual(["dice", "party"]);
   });
 });
+
+describe("hex-explored captures (Hex Crawl, FR-019)", () => {
+  it("counts as a map move, so the map-moves switch covers it", () => {
+    expect(captureKindOf("hex-explored")).toBe("map-moves");
+    expect(isCaptured({ captureOff: ["map-moves"] }, "hex-explored")).toBe(
+      false,
+    );
+  });
+
+  it("is still recorded when the map-moves switch is on", () => {
+    expect(isCaptured({}, "hex-explored")).toBe(true);
+    expect(isCaptured({ captureMapMoves: false }, "hex-explored")).toBe(false);
+  });
+});

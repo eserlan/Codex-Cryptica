@@ -178,11 +178,6 @@ export function regeneratePointCrawlPartLocal(
     tCandidates[
       (rIdx + 2 + Math.floor(rng() * tCandidates.length)) % tCandidates.length
     ];
-  const newTime =
-    vocab.travelTimes[
-      (rIdx + 1 + Math.floor(rng() * vocab.travelTimes.length)) %
-        vocab.travelTimes.length
-    ];
   const newRisk =
     vocab.risks[
       (rIdx + 3 + Math.floor(rng() * vocab.risks.length)) % vocab.risks.length
@@ -196,7 +191,8 @@ export function regeneratePointCrawlPartLocal(
 
   const updatedRoute: PointCrawlRoute = {
     ...existingRoute,
-    travelTime: newTime,
+    travelTime: existingRoute.travelTime,
+    duration: existingRoute.duration,
     terrain: newTerrain,
     risk: `${newRisk}${instructionSuffix}`,
     signpost: newSignpost,
@@ -230,6 +226,7 @@ export function buildPointCrawlRegenPrompt(
         : "";
     return `Rewrite ONLY location "${node?.name ?? target.id}" (${target.id}, role: ${node?.role}) in the ${crawl.genre} ${crawl.scale} point crawl "${crawl.title}".
 Premise: ${crawl.premise}
+Shared adventure plan (immutable mechanics): ${JSON.stringify(crawl.adventurePlan)}
 Current node JSON: ${JSON.stringify(node)}
 ${lockNote}
 ${hint ? `GM steering instruction: ${hint}\n` : ""}Return ONLY a JSON object with concrete, table-ready fields:
@@ -248,12 +245,14 @@ ${hint ? `GM steering instruction: ${hint}\n` : ""}Return ONLY a JSON object wit
   const toNode = crawl.nodes.find((n) => n.id === route?.toNodeId);
   return `Rewrite ONLY route "${target.id}" connecting "${fromNode?.name ?? route?.fromNodeId}" to "${toNode?.name ?? route?.toNodeId}" in the ${crawl.genre} ${crawl.scale} point crawl "${crawl.title}".
 Current route JSON: ${JSON.stringify(route)}
-${hint ? `GM steering instruction: ${hint}\n` : ""}Keep the endpoints, direction, visibility, and gate lock structure intact. Return ONLY a JSON object with scale-matched (${crawl.scale}), concrete fields:
+Shared adventure plan (immutable mechanics): ${JSON.stringify(crawl.adventurePlan)}
+${hint ? `GM steering instruction: ${hint}\n` : ""}Keep the duration, endpoints, direction, visibility, gate, and assigned discoveries intact. Return ONLY a JSON object with scale-matched (${crawl.scale}), concrete fields:
 {
-  "travelTime": "e.g. 20 min / 2 hrs / 1 day",
   "terrain": "Concrete passage or terrain type",
   "risk": "Active hazard, patrol, or cost along this route",
-  "signpost": "Observable clue or trailhead sign"
+  "signpost": "Observable clue or trailhead sign",
+  "approachFromSource": "Direction-specific details from origin",
+  "approachFromTarget": "Direction-specific details from destination"
 }`;
 }
 
@@ -337,10 +336,23 @@ export async function regeneratePointCrawlPart(
 
     const updatedRoute: PointCrawlRoute = {
       ...existingRoute,
-      travelTime: cleanString(parsed.travelTime, existingRoute.travelTime),
+      travelTime: existingRoute.travelTime,
+      duration: existingRoute.duration,
       terrain: cleanString(parsed.terrain, existingRoute.terrain),
       risk: cleanString(parsed.risk, existingRoute.risk),
       signpost: cleanString(parsed.signpost, existingRoute.signpost),
+      approachFromSource: cleanString(
+        parsed.approachFromSource,
+        existingRoute.approachFromSource ?? existingRoute.signpost,
+      ),
+      ...(existingRoute.direction === "bidirectional"
+        ? {
+            approachFromTarget: cleanString(
+              parsed.approachFromTarget,
+              existingRoute.approachFromTarget ?? existingRoute.signpost,
+            ),
+          }
+        : {}),
       fromFallback: false,
     };
 

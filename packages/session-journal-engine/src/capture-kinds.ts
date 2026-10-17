@@ -19,6 +19,7 @@ const KIND_BY_ENTRY_TYPE: Record<string, CaptureKind> = {
   "table-result": "tables",
   "card-draw": "decks",
   "map-move": "map-moves",
+  "hex-explored": "map-moves",
   scene: "scenes",
   "oracle-answer": "oracle",
   "random-event": "oracle",

@@ -14,6 +14,13 @@
 
 import { type Rng, defaultRng } from "./random-utils";
 import {
+  fastestPlayableTravelTime,
+  isNodeOptional,
+  parsePointCrawlDuration,
+  pointCrawlStructuralRole,
+  routesIncidentTo,
+} from "./point-crawl-graph-analysis";
+import {
   getGateTemplates,
   getScaleVocabulary,
   type ScaleVocabulary,
@@ -28,6 +35,7 @@ import type {
   PointCrawlScale,
   PointCrawlSecretFrequency,
 } from "./point-crawl-state";
+import { pointCrawlRouteBudget } from "./point-crawl-graph-analysis";
 
 export function clampPointCount(raw: unknown): number {
   const n = Math.round(Number(raw));
@@ -237,41 +245,36 @@ export function buildPointCrawlTopology(
     };
   });
 
-  // Group nodes by layer for structured edge wiring
-  const byLayer = new Map<number, PointCrawlNode[]>();
-  for (const node of nodes) {
-    const list = byLayer.get(node.layer) ?? [];
-    list.push(node);
-    byLayer.set(node.layer, list);
-  }
-  const maxLayer = Math.max(...nodes.map((n) => n.layer));
-
   const routes: PointCrawlRoute[] = [];
   const edgeKeys = new Set<string>();
+  const routeBudget = pointCrawlRouteBudget(nodes.length, density);
   // fallow-ignore-next-line complexity
   const addEdge = (
     fromId: string,
     toId: string,
     overrides: Partial<PointCrawlRoute> = {},
   ): PointCrawlRoute | null => {
-    if (fromId === toId) return null;
+    if (fromId === toId || routes.length >= routeBudget) return null;
     const key = [fromId, toId].sort().join("--");
     if (edgeKeys.has(key)) return null;
     edgeKeys.add(key);
     const idx = routes.length;
+    const travelTime =
+      overrides.travelTime ?? pickDistinct(vocab.travelTimes, idx, rng);
     const route: PointCrawlRoute = {
       id: `route-${idx + 1}`,
       fromNodeId: fromId,
       toNodeId: toId,
       direction: overrides.direction ?? "bidirectional",
       visibility: overrides.visibility ?? "obvious",
-      travelTime:
-        overrides.travelTime ?? pickDistinct(vocab.travelTimes, idx, rng),
+      travelTime,
       terrain: overrides.terrain ?? pickDistinct(vocab.terrains, idx, rng),
       risk: overrides.risk ?? pickDistinct(vocab.risks, idx + 1, rng),
       signpost:
         overrides.signpost ?? pickDistinct(vocab.signposts, idx + 2, rng),
       ...(overrides.gate ? { gate: overrides.gate } : {}),
+      duration: overrides.duration ??
+        parsePointCrawlDuration(travelTime) ?? { value: 1, unit: "hour" },
       ...(overrides.isLoopOrShortcut
         ? { isLoopOrShortcut: overrides.isLoopOrShortcut }
         : {}),
@@ -280,67 +283,50 @@ export function buildPointCrawlTopology(
     return route;
   };
 
-  // 1. Connect Start (layer 0) to all layer 1 nodes (if only 1 in layer 1, also connect to layer 2 so Start branches)
+  // Build a connected, layered backbone before spending the remaining edge budget.
   const startNode = nodes[0];
-  const layer1 = byLayer.get(1) ?? [];
-  for (const target of layer1) {
-    addEdge(startNode.id, target.id);
-  }
-  if (layer1.length < 2 && (byLayer.get(2)?.length ?? 0) > 0) {
-    addEdge(startNode.id, byLayer.get(2)![0].id);
-  }
-
-  // 2. Connect each intermediate layer forward to next layer so every node has an incoming & outgoing path
-  for (let l = 1; l < maxLayer; l++) {
-    const current = byLayer.get(l) ?? [];
-    const next = byLayer.get(l + 1) ?? [];
-    if (next.length === 0) continue;
-    current.forEach((node, i) => {
-      const primaryTarget = next[i % next.length];
-      addEdge(node.id, primaryTarget.id);
-      if (next.length > 1 && (density !== "Linear-leaning" || i === 0)) {
-        const secondaryTarget = next[(i + 1) % next.length];
-        addEdge(node.id, secondaryTarget.id);
-      }
-    });
-    // Ensure every node in `next` has at least one incoming edge from `current`
-    next.forEach((target, j) => {
-      const hasIncoming = routes.some(
-        (r) => r.toNodeId === target.id || r.fromNodeId === target.id,
-      );
-      if (!hasIncoming && current.length > 0) {
-        addEdge(current[j % current.length].id, target.id);
-      }
-    });
-  }
-
-  // 3. Add cross-rail loop edges within layers (or diagonally) to guarantee cycles and match density
-  const targetEdgeMultiplier =
-    density === "Highly interconnected"
-      ? 1.55
-      : density === "Linear-leaning"
-        ? 1.15
-        : 1.35;
-  const minTargetEdges = Math.max(
-    nodes.length + 1,
-    Math.ceil(nodes.length * targetEdgeMultiplier),
+  const ordered = [...nodes].sort(
+    (a, b) => a.layer - b.layer || a.rail - b.rail,
   );
+  for (let index = 0; index < ordered.length - 1; index++) {
+    addEdge(ordered[index].id, ordered[index + 1].id);
+  }
 
-  for (let l = 1; l < maxLayer; l++) {
-    const current = byLayer.get(l) ?? [];
-    for (let i = 0; i + 1 < current.length; i++) {
-      addEdge(current[i].id, current[i + 1].id, { isLoopOrShortcut: true });
+  // Guarantee two real choices and a cycle before adding optional cross-links.
+  addEdge(startNode.id, ordered[2].id, { isLoopOrShortcut: true });
+  addEdge(ordered[1].id, ordered[3].id, { isLoopOrShortcut: true });
+
+  const candidates: Array<[PointCrawlNode, PointCrawlNode]> = [];
+  for (let left = 0; left < ordered.length; left++) {
+    for (let right = left + 2; right < ordered.length; right++) {
+      candidates.push([ordered[left], ordered[right]]);
     }
   }
+  candidates.sort((a, b) => {
+    const layerGapA = a[1].layer - a[0].layer;
+    const layerGapB = b[1].layer - b[0].layer;
+    return layerGapA - layerGapB || a[0].id.localeCompare(b[0].id);
+  });
+  for (const [from, to] of candidates) {
+    if (routes.length >= routeBudget) break;
+    addEdge(from.id, to.id, { isLoopOrShortcut: true });
+  }
 
-  // Add shortcut / bypass edges until minTargetEdges is met
-  for (let i = 1; i < nodes.length - 2 && routes.length < minTargetEdges; i++) {
-    for (
-      let j = i + 2;
-      j < nodes.length && routes.length < minTargetEdges;
-      j++
-    ) {
-      addEdge(nodes[i].id, nodes[j].id, { isLoopOrShortcut: true });
+  if (routes.length > 0) {
+    const secretCount = /frequent/i.test(secretFrequency)
+      ? 3
+      : /rare/i.test(secretFrequency)
+        ? 1
+        : 2;
+    for (const candidate of [...routes].reverse()) {
+      if (
+        routes.filter((r) => r.visibility !== "obvious").length >= secretCount
+      )
+        break;
+      if (candidate.fromNodeId !== startNode.id) {
+        candidate.visibility = "hidden";
+        candidate.isLoopOrShortcut = true;
+      }
     }
   }
 
@@ -362,6 +348,31 @@ export function buildPointCrawlTopology(
     goalNodeIds,
     nodes,
     routes,
+    adventurePlan: {
+      objective: `Reach and resolve the objective at ${nodes[nodes.length - 1].name}.`,
+      travelAssumption:
+        "Travel durations are route estimates under ordinary conditions; route risks may add delay.",
+      discoveries: [],
+      outcomes: [
+        {
+          id: "reach-goal",
+          name: "Resolve the primary objective",
+          requirementDiscoveryIds: [],
+          requirementRouteIds: [],
+        },
+      ],
+      detourPayoffs: nodes
+        .filter((node) =>
+          isNodeOptional(
+            { startNodeId: startNode.id, goalNodeIds, nodes, routes },
+            node.id,
+          ),
+        )
+        .map((node) => ({
+          nodeId: node.id,
+          benefit: `Offers a useful lead or resource before the final approach.`,
+        })),
+    },
     warnings: [],
   };
 
@@ -387,6 +398,7 @@ export function normalizePointCrawlTopology(
   }));
   const routes = crawl.routes.map((r) => ({
     ...r,
+    duration: r.duration ?? parsePointCrawlDuration(r.travelTime) ?? undefined,
     ...(r.gate ? { gate: { ...r.gate } } : {}),
   }));
 
@@ -428,6 +440,10 @@ export function normalizePointCrawlTopology(
         direction: "bidirectional",
         visibility: "obvious",
         travelTime: vocab.travelTimes[idx % vocab.travelTimes.length],
+        duration:
+          parsePointCrawlDuration(
+            vocab.travelTimes[idx % vocab.travelTimes.length],
+          ) ?? undefined,
         terrain: vocab.terrains[idx % vocab.terrains.length],
         risk: vocab.risks[idx % vocab.risks.length],
         signpost: vocab.signposts[idx % vocab.signposts.length],
@@ -458,6 +474,10 @@ export function normalizePointCrawlTopology(
           direction: "bidirectional",
           visibility: "obvious",
           travelTime: vocab.travelTimes[idx % vocab.travelTimes.length],
+          duration:
+            parsePointCrawlDuration(
+              vocab.travelTimes[idx % vocab.travelTimes.length],
+            ) ?? undefined,
           terrain: vocab.terrains[idx % vocab.terrains.length],
           risk: vocab.risks[idx % vocab.risks.length],
           signpost: vocab.signposts[idx % vocab.signposts.length],
@@ -583,12 +603,146 @@ export function normalizePointCrawlTopology(
     }
   }
 
-  return {
+  // Prune only ordinary cross-links. Gates, hidden/rumoured access, and
+  // explicitly marked loops are structural content and remain protected.
+  const routeBudget = pointCrawlRouteBudget(nodes.length, crawl.density);
+  const planRequiredRouteIds = new Set(
+    crawl.adventurePlan?.outcomes.flatMap(
+      (outcome) => outcome.requirementRouteIds,
+    ) ?? [],
+  );
+  for (
+    let index = validRoutes.length - 1;
+    validRoutes.length > routeBudget && index >= 0;
+    index--
+  ) {
+    const candidate = validRoutes[index];
+    if (
+      candidate.gate ||
+      candidate.visibility !== "obvious" ||
+      candidate.isLoopOrShortcut ||
+      planRequiredRouteIds.has(candidate.id)
+    )
+      continue;
+    const trial = validRoutes.filter((_, routeIndex) => routeIndex !== index);
+    if (
+      trial.length < nodes.length ||
+      reachableNodesBfs(startNode.id, trial).size !== nodes.length ||
+      simulateKeyLockReachability(startNode.id, trial).softlockedRouteIds
+        .length > 0 ||
+      nodes.filter((node) => routesIncidentTo(node.id, trial).length >= 2)
+        .length < 2
+    )
+      continue;
+    validRoutes.splice(index, 1);
+  }
+
+  const existingDiscoveries = new Map(
+    crawl.adventurePlan?.discoveries.map((discovery) => [
+      discovery.id,
+      discovery,
+    ]) ?? [],
+  );
+  const gateDiscoveries = validRoutes.flatMap((route) => {
+    if (!route.gate) return [];
+    const holder = nodesById.get(route.gate.unlockedByNodeId);
+    if (!holder) return [];
+    const previous = existingDiscoveries.get(`discovery-${route.id}`);
+    return [
+      {
+        ...previous,
+        id: `discovery-${route.id}`,
+        name: previous?.name ?? route.gate.requirement,
+        nodeId: holder.id,
+        enablesOutcomeIds: previous?.enablesOutcomeIds ?? [],
+      },
+    ];
+  });
+  const gateDiscoveryIds = new Set(gateDiscoveries.map((entry) => entry.id));
+  const discoveries = [
+    ...gateDiscoveries,
+    ...(crawl.adventurePlan?.discoveries ?? []).filter(
+      (entry) => !gateDiscoveryIds.has(entry.id) && nodesById.has(entry.nodeId),
+    ),
+  ];
+  const outcomes = crawl.adventurePlan?.outcomes ?? [
+    {
+      id: "reach-goal",
+      name: "Resolve the primary objective",
+      requirementDiscoveryIds: [],
+      requirementRouteIds: [],
+    },
+  ];
+  const adventurePlan = {
+    objective:
+      crawl.adventurePlan?.objective ??
+      `Reach and resolve the objective at ${nodes[nodes.length - 1].name}.`,
+    travelAssumption:
+      crawl.adventurePlan?.travelAssumption ??
+      "Travel durations are route estimates under ordinary conditions; route risks may add delay.",
+    discoveries: discoveries.map((discovery) => ({
+      ...discovery,
+      enablesOutcomeIds: discovery.enablesOutcomeIds.filter((id) =>
+        outcomes.some((outcome) => outcome.id === id),
+      ),
+    })),
+    outcomes: outcomes.map((outcome) => ({
+      ...outcome,
+      requirementDiscoveryIds: outcome.requirementDiscoveryIds.filter((id) =>
+        discoveries.some((entry) => entry.id === id),
+      ),
+      requirementRouteIds: outcome.requirementRouteIds.filter((id) =>
+        validRoutes.some((route) => route.id === id),
+      ),
+    })),
+    detourPayoffs:
+      crawl.adventurePlan?.detourPayoffs.filter((payoff) =>
+        nodesById.has(payoff.nodeId),
+      ) ?? [],
+    ...(crawl.adventurePlan?.clock ? { clock: crawl.adventurePlan.clock } : {}),
+  };
+  if (adventurePlan.clock) {
+    const trigger =
+      adventurePlan.clock.startsAt === "crawl-start"
+        ? startNode.id
+        : adventurePlan.clock.startsAt.nodeId;
+    const fastest = nodesById.has(trigger)
+      ? fastestPlayableTravelTime(
+          { startNodeId: trigger, goalNodeIds, routes: validRoutes },
+          trigger,
+          adventurePlan.clock.budget.unit,
+        )
+      : null;
+    if (fastest === null || fastest > adventurePlan.clock.budget.value)
+      delete adventurePlan.clock;
+  }
+
+  const normalized: PointCrawlNetwork = {
     ...crawl,
     pointCount: nodes.length,
     startNodeId: startNode.id,
     goalNodeIds,
     nodes,
     routes: validRoutes,
+    adventurePlan,
+  };
+  return {
+    ...normalized,
+    nodes: nodes.map((node) => deriveStructuralNode(node, normalized)),
+  };
+}
+
+// fallow-ignore-next-line complexity -- Role precedence is the canonical graph-derived classification rule.
+function deriveStructuralNode(
+  node: PointCrawlNode,
+  crawl: PointCrawlNetwork,
+): PointCrawlNode {
+  return {
+    ...node,
+    structuralRole: pointCrawlStructuralRole(node, crawl),
+    traits: [
+      ...(node.role === "hazard" ? ["hazard" as const] : []),
+      ...(node.role === "obstacle" ? ["obstacle" as const] : []),
+    ],
   };
 }

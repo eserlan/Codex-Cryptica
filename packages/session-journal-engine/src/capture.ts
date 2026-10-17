@@ -60,6 +60,40 @@ export function formatMapMove(move: MapMoveCapture): JournalCapturePayload {
   };
 }
 
+export interface HexExploredCapture {
+  mapId: string;
+  hex: { q: number; r: number };
+  hexLabel: string;
+  terrainLabel: string | null;
+}
+
+/** Longest terrain label kept in a hex capture (custom terrain is 40 chars). */
+const HEX_TERRAIN_LIMIT = 40;
+
+/**
+ * Builds a name-free capture for a hex the party or GM explored (Hex Crawl,
+ * FR-019). The terrain label is trimmed and capped, never thrown on.
+ */
+export function formatHexExplored(
+  input: HexExploredCapture,
+): JournalCapturePayload {
+  const terrain = input.terrainLabel?.trim() ?? "";
+  const shortTerrain =
+    terrain.length > HEX_TERRAIN_LIMIT
+      ? `${terrain.slice(0, HEX_TERRAIN_LIMIT - 1)}${ELLIPSIS}`
+      : terrain;
+  const suffix = shortTerrain ? ` (${shortTerrain})` : "";
+  return {
+    entryType: "hex-explored",
+    content: `Explored hex ${input.hexLabel}${suffix}`,
+    sourceRef: {
+      kind: "hex",
+      mapId: input.mapId,
+      hex: { q: input.hex.q, r: input.hex.r },
+    },
+  };
+}
+
 /**
  * The fields the engine reads from a recorded result. Structural, so the
  * engine depends on no app or dice-engine type.

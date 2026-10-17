@@ -2,6 +2,7 @@ import type { Point } from "schema";
 import type { Token } from "../../../../types/vtt";
 import { hitTestToken } from "$lib/utils/vtt-helpers";
 import { snapPointToHexCenter, type HexOrientation } from "map-engine";
+import { POINTER_DISPLACEMENT_THRESHOLD } from "./pointer-thresholds";
 
 export interface TokenGridConfig {
   enabled: boolean;
@@ -43,8 +44,6 @@ export interface TokenDragState {
   startPoint: Point;
   hasMoved: boolean;
 }
-
-const TOKEN_DRAG_THRESHOLD = 5;
 
 export class TokenDragHandler {
   dragState: TokenDragState | null = null;
@@ -105,7 +104,7 @@ export class TokenDragHandler {
         viewportPoint.x - this.dragState.startPoint.x,
         viewportPoint.y - this.dragState.startPoint.y,
       );
-      if (displacement < TOKEN_DRAG_THRESHOLD) return true;
+      if (displacement < POINTER_DISPLACEMENT_THRESHOLD) return true;
       this.dragState.hasMoved = true;
     }
 
@@ -189,6 +188,31 @@ export class TokenDragHandler {
         finalToken.y !== this.dragState.initialPosition.y);
     if (this.dragState.hasMoved && positionChanged) {
       this.deps.onMoveSettled?.([this.dragState.tokenId]);
+    }
+    this.deps.setDraggingTokenId(null);
+    this.dragState = null;
+    return true;
+  }
+
+  cancel() {
+    if (!this.dragState) return false;
+    const { tokenId, initialPosition, hasMoved } = this.dragState;
+    if (hasMoved) {
+      if (this.deps.isHostMode()) {
+        this.deps.moveToken(tokenId, initialPosition.x, initialPosition.y);
+      } else {
+        this.deps.requestTokenMove(
+          tokenId,
+          initialPosition.x,
+          initialPosition.y,
+          true,
+        );
+        this.deps.sendTokenMoveRequest(
+          tokenId,
+          initialPosition.x,
+          initialPosition.y,
+        );
+      }
     }
     this.deps.setDraggingTokenId(null);
     this.dragState = null;
