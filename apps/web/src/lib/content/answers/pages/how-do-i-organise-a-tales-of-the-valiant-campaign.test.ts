@@ -36,11 +36,11 @@ describe("howDoIOrganiseATalesOfTheValiantCampaign answer", () => {
     expect(sections.some((s) => s.kind === "checklist")).toBe(true);
     expect(JSON.stringify(sections)).not.toContain("five minutes");
     expect(JSON.stringify(sections)).toContain(
-      "Combat starts with each hero's Luck and the necromancer's Doom pool ready",
+      "The Doom is an encounter resource that can help any creature in the encounter",
     );
   });
 
-  it("covers the comparison table and names ToV spell sources accurately", () => {
+  it("uses an organisation table without caricaturing baseline 5e", () => {
     const comparison = howDoIOrganiseATalesOfTheValiantCampaign.sections.find(
       (section) => section.kind === "table",
     );
@@ -48,46 +48,64 @@ describe("howDoIOrganiseATalesOfTheValiantCampaign answer", () => {
     expect(comparison).toBeDefined();
     if (!comparison || comparison.kind !== "table") return;
 
-    expect(comparison.headers).toEqual([
-      "Campaign layer",
-      "Standard 5e habit",
-      "Tales of the Valiant organisation",
-    ]);
+    expect(comparison.headers).toEqual(["Campaign layer", "What to record"]);
     expect(comparison.rows).toContainEqual([
-      "Between-session party state",
-      "Track hit points, spell slots and exhaustion; Inspiration is binary and rarely persists in notes.",
-      "Record each character's current Luck (0 to 5) at session end, plus the campaign's chosen Long Rest Luck rule so next week's opening encounter starts with accurate pools.",
-    ]);
-    expect(comparison.rows).toContainEqual([
-      "Boss and lieutenant prep",
-      "Copy a stat block with static Legendary Actions and Legendary Resistances.",
-      "Attach a specific Doom pool and two or three named Doom actions to the adversary's card or token, keeping Doom scoped to that creature rather than a shared GM pool.",
+      "Session journal",
+      "What happened, what the players decided, and changes to promote to campaign pages. The journal is the archive; it is not the run sheet.",
     ]);
 
     const serialized = JSON.stringify(howDoIOrganiseATalesOfTheValiantCampaign);
-    expect(serialized).toContain(
-      "four primary spell sources (Arcane, Divine, Primordial or Wyrd)",
+    expect(serialized).toContain("not a prescribed ToV plot");
+    expect(serialized).not.toContain(
+      "tiered Martial, Magic and Technical talents",
     );
-    expect(serialized).not.toContain("spell circles");
   });
 
-  it("qualifies Luck rests and avoids claiming unavailable profile or import flows", () => {
+  it("keeps Luck and Doom claims aligned with the BFRD and current UI", () => {
     const serialized = JSON.stringify(howDoIOrganiseATalesOfTheValiantCampaign);
 
-    expect(serialized).toContain("resting variant");
-    expect(serialized).toContain("update each counter manually");
+    expect(serialized).toContain("starts with 0 Luck");
+    expect(serialized).toContain(
+      "Once per turn, a failed attack roll or failed save grants 1 Luck",
+    );
+    expect(serialized).toContain(
+      "immediately roll a d4 and reset their total to that result",
+    );
+    expect(serialized).toContain(
+      "3 Luck can reroll a d20 immediately after a check",
+    );
+    expect(serialized).toContain("do not prescribe a Long Rest reset");
+    expect(serialized).toContain("based on encounter CR");
+    expect(serialized).toContain("Doom can affect creatures in that encounter");
+    expect(serialized).toContain("house rules");
+    expect(serialized).not.toContain("replace Legendary Resistance with Doom");
+    expect(serialized).not.toContain("Doom points are strictly scoped");
+    expect(serialized).not.toContain("roll 1d4 on a Long Rest");
+    expect(serialized).not.toContain("resting variant");
     expect(serialized).toContain(
       "vault-wide profile selection is not currently available",
     );
     expect(serialized).not.toContain("TovChargen Import");
-    expect(serialized).not.toContain(
-      "Luck resets to a character's starting value",
+  });
+
+  it("connects character identity and motivation to playable campaign threads", () => {
+    const serialized = JSON.stringify(howDoIOrganiseATalesOfTheValiantCampaign);
+    expect(serialized).toContain(
+      "Lineage, Heritage, Background and Adventuring Motivation",
     );
+    expect(serialized).toContain("river-port contacts");
+    expect(serialized).toContain(
+      "The necromancer's bone-splinter teleport and reaction hex are invented homebrew abilities",
+    );
+    expect(serialized).toContain(
+      "that new point cannot affect the missed attack",
+    );
+    expect(serialized).toContain("the reroll can still fail");
   });
 
   it("limits offline claims and has reciprocal related-answer links", () => {
     const serialized = JSON.stringify(howDoIOrganiseATalesOfTheValiantCampaign);
-    expect(serialized).toContain("remain available offline");
+    expect(serialized).toContain("are available offline");
     expect(serialized).toContain("require the AI Lore Co-Author");
     expect(serialized).toContain("produce system-neutral lore and notes");
     expect(serialized).not.toContain("run sessions entirely offline");

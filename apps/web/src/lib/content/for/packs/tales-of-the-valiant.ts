@@ -8,7 +8,7 @@ export const talesOfTheValiant: LandingPageConfig = {
   seo: {
     title: "Codex Cryptica for Tales of the Valiant Campaigns",
     description:
-      "A campaign manager built for Tales of the Valiant and Black Flag Roleplaying. Track lineages, heritages, interactive Luck pools, Doom, and BFRD stat blocks.",
+      "Organise a Tales of the Valiant campaign with linked notes, character details, Luck tracking, BFRD encounter Doom notes, and stat sheets.",
     image: "https://assets.codexcryptica.com/og/tales-of-the-valiant.jpg",
     imageAlt:
       "Adventuring party planning an expedition across a dungeon map with Black Flag character sheets, dice, and faction tokens",
@@ -17,27 +17,27 @@ export const talesOfTheValiant: LandingPageConfig = {
     eyebrow: "Campaign Management for Tales of the Valiant",
     title: "Codex Cryptica for Tales of the Valiant",
     tagline:
-      "Manage lineages, heritages, interactive Luck reserves, adversary Doom points, and BFRD stat blocks without getting bogged down in paper.",
+      "Connect character details, people, places, factions and quests. Keep Luck and optional encounter Doom notes beside the BFRD stat blocks you need for play.",
     problemStatement:
-      "Black Flag campaigns give heroes deeper origins with distinct Lineages and Heritages, volatile Luck economies, and tactical monster actions. Running an adventure path means keeping track of who earned Luck last encounter, which villain holds Doom points, and where every faction patron stands when your players go off-book.",
+      "A campaign hub links characters, places, factions and quests; the session journal records what happened, and a focused run sheet prepares what comes next. Add ToV rules notes where useful: track each character's Luck, record the optional BFRD Doom pool for an encounter, and keep any table-made rulings beside the relevant scene.",
   },
   useCases: [
     {
       title: "Lineage, Heritage & Backstory Connections",
       description:
-        "Separate cultural upbringing from ancestral lineage on your character entities, connecting mentors, clan strongholds, and ancestral relics directly to the campaign map.",
+        "Record Lineage, Heritage and Background on character sheets, then connect mentors, community ties and places that make those details matter in play.",
       icon: "icon-[lucide--users]",
     },
     {
       title: "Interactive Luck Tracking Across Sheets & VTT",
       description:
-        "Track party Luck points with one-click spend and gain controls from character sheets or tokens in the virtual tabletop. Resting variants determine how Luck changes after a Long Rest, and counters are updated manually.",
+        "Use one-click controls to track Luck on character sheets or selected tokens. Codex does not apply a Long Rest reset; the BFRD does not prescribe one.",
       icon: "icon-[lucide--clover]",
     },
     {
-      title: "Adversary Doom Pools & Boss Mechanics",
+      title: "Encounter Doom Notes & Creature Counters",
       description:
-        "Equip legendary monsters and villainous lieutenants with verified Doom counters. Spend Doom on dramatic tactical actions without leaking pools to standard minions.",
+        "Record the BFRD's optional CR-based Doom pool for an encounter. Codex provides a creature-scoped counter field for tracking allocations, while the published rule can affect creatures in the encounter.",
       icon: "icon-[lucide--skull]",
     },
     {
@@ -50,7 +50,7 @@ export const talesOfTheValiant: LandingPageConfig = {
   exampleGraph: {
     title: "Sample Tales of the Valiant Campaign Web",
     description:
-      "See how an adventuring company, their lineage patrons, rival doom-wielders, and ancient labyrinth sites connect in one local campaign graph.",
+      "See how a character's Lineage, Heritage, Background and motivation can connect to people, places, factions and open quests.",
     steps: [
       {
         label: "The Ironbound Free Company",
@@ -59,14 +59,14 @@ export const talesOfTheValiant: LandingPageConfig = {
       },
       {
         label: "Valerius of Stonehaven",
-        sublabel: "Dwarf / Fire Heritage Fighter",
+        sublabel: "Human / Cloudborn / Soldier",
         relation: "Frontline member",
         category: "character",
       },
       {
-        label: "Warden Kaelen",
-        sublabel: "Patron / Circle of Wyrd",
-        relation: "Guided by",
+        label: "Mara Venn",
+        sublabel: "Missing squadmate",
+        relation: "Searching for",
         category: "character",
       },
       {
@@ -76,10 +76,10 @@ export const talesOfTheValiant: LandingPageConfig = {
         category: "location",
       },
       {
-        label: "Azrath the Bonecarver",
-        sublabel: "Doom Pool: 3 / Boss",
-        relation: "Ambushed by",
-        category: "creature",
+        label: "Guild of the Quay",
+        sublabel: "Controls river-port access",
+        relation: "Needs passage from",
+        category: "faction",
       },
     ],
   },
@@ -101,7 +101,7 @@ export const talesOfTheValiant: LandingPageConfig = {
     {
       title: "Monster & Creature Generator",
       description:
-        "Create authentic Black Flag beasts and horrors equipped with native traits and Doom pools.",
+        "Create Black Flag beasts and horrors with native traits and stat blocks.",
       href: "/generators/creature",
       badge: "Generator",
     },
@@ -116,7 +116,7 @@ export const talesOfTheValiant: LandingPageConfig = {
   cta: {
     title: "Organise Your Tales of the Valiant Campaign",
     description:
-      "Keep lineages, heritages, Luck pools, boss Doom points, and adventure notes connected across every session in a fast, private, local-first workspace.",
+      "Keep characters, locations, factions, quests, session journals and run sheets connected, with ToV rules notes alongside them in a private, local-first workspace.",
     buttonText: "Start Campaign Free",
     buttonHref: "/app",
   },
