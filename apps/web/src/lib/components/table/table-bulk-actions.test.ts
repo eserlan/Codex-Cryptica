@@ -51,9 +51,12 @@ describe("table-bulk-actions", () => {
       const setCommitting = vi.fn();
       vi.spyOn(notificationStore, "confirm").mockResolvedValue(true);
       vi.spyOn(vault, "bulkUpdate").mockResolvedValue({
+        requested: 2,
+        items: [],
         succeededIds: ["a", "b"],
         failedIds: [],
         skippedIds: [],
+        cancelledIds: [],
       });
       const notifySpy = vi.spyOn(notificationStore, "notify");
 
@@ -71,9 +74,12 @@ describe("table-bulk-actions", () => {
       const setCommitting = vi.fn();
       vi.spyOn(notificationStore, "confirm").mockResolvedValue(true);
       vi.spyOn(vault, "bulkUpdate").mockResolvedValue({
+        requested: 2,
+        items: [],
         succeededIds: ["a"],
         failedIds: ["b"],
         skippedIds: [],
+        cancelledIds: [],
       });
       const notifySpy = vi.spyOn(notificationStore, "notify");
 
