@@ -1,9 +1,30 @@
 /** @vitest-environment jsdom */
 /** @vitest-environment jsdom */
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import HexJourneyControls from "./HexJourneyControls.svelte";
 import { HexJourneyStore } from "$lib/stores/hex-crawl/hex-journey.svelte";
+
+const APP_CSS = readFileSync(resolve(process.cwd(), "src/app.css"), "utf8");
+
+function cssRuleContaining(selector: string): string {
+  const selectorStart = APP_CSS.indexOf(selector);
+  expect(selectorStart, `CSS selector not found: ${selector}`).toBeGreaterThan(
+    -1,
+  );
+  const openBrace = APP_CSS.indexOf("{", selectorStart);
+  let depth = 0;
+  for (let index = openBrace; index < APP_CSS.length; index += 1) {
+    if (APP_CSS[index] === "{") depth += 1;
+    else if (APP_CSS[index] === "}") {
+      depth -= 1;
+      if (depth === 0) return APP_CSS.slice(selectorStart, index + 1);
+    }
+  }
+  throw new Error(`Unclosed CSS rule for selector: ${selector}`);
+}
 
 describe("HexJourneyControls", () => {
   it("offers a labelled estimate field and dismisses a preview", async () => {
@@ -70,7 +91,20 @@ describe("HexJourneyControls", () => {
     );
   });
 
-  it("uses the primary action foreground token for journey actions", () => {
+  it("maps the primary action foreground for both Horror variants", () => {
+    const horrorDarkRule = cssRuleContaining(
+      '[data-theme="horror"][data-app-appearance="neutral-dark"]',
+    );
+    const horrorLightRule = cssRuleContaining('[data-theme="horror_light"]');
+
+    expect(horrorDarkRule).toContain("--color-theme-on-primary: #fff");
+    expect(APP_CSS).toContain(
+      "--color-theme-on-primary: var(--color-bg-primary)",
+    );
+    expect(horrorLightRule).not.toContain("--color-theme-on-primary:");
+  });
+
+  it("uses the primary action foreground token for journey actions", async () => {
     const store = new HexJourneyStore({
       getIdentity: () => ({
         mapId: "m",
@@ -80,8 +114,8 @@ describe("HexJourneyControls", () => {
         gridSignature: "g",
       }),
       isAllowed: () => true,
-      listEligibleTokens: () => [],
-      onStart: vi.fn(),
+      listEligibleTokens: () => [{ id: "party", hex: { q: 0, r: 0 } }],
+      onStart: () => true,
       onStep: vi.fn(),
     });
     store.setOrigin({ q: 0, r: 0 });
@@ -89,6 +123,12 @@ describe("HexJourneyControls", () => {
     render(HexJourneyControls, { store });
     expect(
       screen.getByRole("button", { name: "Start journey" }).className,
+    ).toContain("text-theme-on-primary");
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Start journey" }),
+    );
+    expect(
+      screen.getByRole("button", { name: "Next hex" }).className,
     ).toContain("text-theme-on-primary");
   });
 
@@ -199,6 +239,9 @@ describe("HexJourneyControls", () => {
     await store.start();
     await store.step();
     render(HexJourneyControls, { store });
+    expect(
+      screen.getByRole("button", { name: "Retry arrival save" }).className,
+    ).toContain("text-theme-on-primary");
     await fireEvent.click(
       screen.getByRole("button", { name: "Retry arrival save" }),
     );
