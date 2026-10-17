@@ -7,7 +7,7 @@ export const howDoIOrganiseATalesOfTheValiantCampaign: AnswerConfigInput = {
   question: "How do I organise a Tales of the Valiant campaign?",
   kind: "framework",
   shortAnswer:
-    "Organise a Tales of the Valiant campaign by centring notes on what distinguishes Black Flag Roleplaying: separate each hero's Lineage from their cultural Heritage in your cast web, track party Luck according to your campaign's resting variant, manage Doom budgets for major adversary encounters, and maintain direct connections between martial talents, patrons, and regional factions.",
+    "Organise a Tales of the Valiant campaign by centring notes on what distinguishes Black Flag Roleplaying: separate each hero's Lineage from their cultural Heritage in your cast web, track party Luck according to your campaign's resting variant, manage Doom budgets for major adversary encounters, index martial and magical talent circles in regional hubs, and connect spell circles directly to ritual traditions.",
   sections: [
     {
       kind: "prose",
@@ -15,6 +15,43 @@ export const howDoIOrganiseATalesOfTheValiantCampaign: AnswerConfigInput = {
       paragraphs: [
         "In standard 5e campaigns, character background and species traits often collapse into a single racial identity. Tales of the Valiant separates physiological traits (Lineage) from cultural upbringing and environment (Heritage). Your campaign notes become far more flexible when you record these elements as distinct relational hooks.",
         "A Syderean hero raised among subterranean Fire Dwarves carries loyalties, debts, and idioms from their dwarven enclave, even while possessing celestial heritage. Recording lineage patrons separately from cultural factions lets you introduce complications that target specific obligations without confusing biological ancestry with community ties.",
+        "When designing NPCs, use this same separation. An elf raised in a bustling human riverport reacts to legal disputes, local trade guilds, and street customs through that port's civic lens, while their elven lineage might only govern sensory acuity or magical resonance. Keeping these two threads distinct on character cards avoids repetitive monoculture tropes and provides ready-made diplomatic friction.",
+      ],
+    },
+    {
+      kind: "table",
+      heading: "Tales of the Valiant campaign prep pillars vs standard 5e",
+      headers: [
+        "Mechanical area",
+        "Standard 5e tracking",
+        "Tales of the Valiant prep approach",
+      ],
+      rows: [
+        [
+          "Character origin",
+          "Single race block with baked-in cultural assumptions.",
+          "Split Lineage (biology) from Heritage (culture, geography, community debts).",
+        ],
+        [
+          "Failure mitigation",
+          "Inspiration is binary and often forgotten by both players and GM.",
+          "Fluid Luck pool (0 to 5) gained on failed d20 rolls; tracked actively per session.",
+        ],
+        [
+          "Boss encounters",
+          "Legendary actions trigger automatically each round with static budgets.",
+          "Doom points spent from explicit pools for reactive surges, phase shifts, and terrain breaks.",
+        ],
+        [
+          "Character progression",
+          "Feats chosen from flat lists at fixed ability score increases.",
+          "Martial, Magic, and Technical talents tied to trainers, guilds, and in-world academies.",
+        ],
+        [
+          "Magic and spells",
+          "Spells grouped into class-specific spell lists with standard slots.",
+          "Four broad spell circles (Arcane, Divine, Primordial, Wyrd) linked to faction traditions.",
+        ],
       ],
     },
     {
@@ -35,6 +72,14 @@ export const howDoIOrganiseATalesOfTheValiantCampaign: AnswerConfigInput = {
           term: "Talent trees and martial options",
           text: "Unlike rigid feat lists, ToV categorises talents into Martial, Magic, and Technical disciplines with prerequisite paths. Note which training academies, martial tutors, or arcane circles in your world can guide characters into advanced talent tiers.",
         },
+      ],
+    },
+    {
+      kind: "prose",
+      heading: "Organise spell circles into regional magical traditions",
+      paragraphs: [
+        "Magic in Tales of the Valiant is organised into four primary spell circles: Arcane, Divine, Primordial, and Wyrd. Rather than maintaining sprawling, unorganised lists of spell scrolls in your loot tables, map these four circles to the religious, occult, and natural orders of your campaign setting.",
+        "Divine spells naturally trace back to temple hierarchies and clerical lineages. Primordial magic ties directly to druidic circles, elemental borderlands, and wilderness spirits. Wyrd magic belongs to hedge witches, fate-spinners, and fey pact-holders, while Arcane spells belong to collegiate guilds and court conjurers. When the party discovers a forgotten library or an arcane ritual, tagging it with its circle immediately clarifies which local tutors can decipher it and which rival factions will hunt for it.",
       ],
     },
     {
@@ -68,6 +113,7 @@ export const howDoIOrganiseATalesOfTheValiantCampaign: AnswerConfigInput = {
         "Assign explicit Doom budgets to solo boss creatures rather than generic minions.",
         "Review relevant BFRD monster stat blocks, confirming spell circles and save proficiencies.",
         "Link magic item rewards to specific crafting lineages or forgotten Black Flag factions.",
+        "Map regional arcane or martial tutors capable of instructing characters in advanced talent disciplines.",
       ],
     },
   ],
