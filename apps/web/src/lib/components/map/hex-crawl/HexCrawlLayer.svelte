@@ -139,8 +139,10 @@
   const journeyVisible = $derived(visible && !isGuest && isGM);
 
   $effect(() => {
-    if (services.journey.route || services.journey.pendingArrival)
+    if (services.journey.route || services.journey.pendingArrival) {
+      void services.journey.busy;
       services.journey.validateIdentity();
+    }
   });
   $effect(() => {
     const currentOffer = services.offer.current;

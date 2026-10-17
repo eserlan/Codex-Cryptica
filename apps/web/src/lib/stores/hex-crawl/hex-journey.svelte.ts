@@ -95,6 +95,20 @@ export class HexJourneyStore {
       .find((candidate) => candidate.id === this.selectedTokenId);
     return Boolean(token && sameHex(token.hex, this.route.origin));
   }
+  get canRetryArrival(): boolean {
+    const current = this.deps.getIdentity();
+    return Boolean(
+      this.pendingArrival &&
+      this.identity &&
+      current &&
+      this.identity.mapId === current.mapId &&
+      this.identity.vaultId === current.vaultId &&
+      this.identity.gridSignature === current.gridSignature &&
+      this.identity.gridDistance === current.gridDistance &&
+      this.identity.gridUnit === current.gridUnit &&
+      this.deps.isAllowed(),
+    );
+  }
   get startBlockedReason(): string | null {
     if (!this.route || this.busy) return null;
     if (this.route.steps === 0) return "This journey has no moves.";
@@ -200,7 +214,21 @@ export class HexJourneyStore {
       this.identity.gridUnit === current.gridUnit &&
       this.deps.isAllowed(),
     );
-    if (!valid && (this.route || this.pendingArrival)) this.clear();
+    if (!valid && this.busy) return false;
+    if (!valid && this.route && this.pendingArrival) {
+      this.operation++;
+      this.route = null;
+      this.phase = null;
+      this.selectedTokenId = null;
+      this.origin = null;
+      this.committedSteps = 0;
+      this.hoursPerHex = null;
+      this.error =
+        "Return to the original map to retry the pending arrival save.";
+      this.busy = false;
+    } else if (!valid && this.route) {
+      this.clear();
+    }
     return valid;
   }
   // fallow-ignore-next-line complexity -- Start handles one async transition with cancellation-safe state ownership.

@@ -159,6 +159,54 @@ describe("HexJourneyStore preview", () => {
     expect(store.phase).toBeNull();
   });
 
+  it("keeps an unsaved arrival until its original map is active for retry", async () => {
+    let mapId = "m1";
+    let finishStep!: (value: {
+      moved: boolean;
+      arrivalSaved: boolean;
+      error: string;
+    }) => void;
+    const onRetryArrival = vi.fn(async () => true);
+    const store = new HexJourneyStore({
+      getIdentity: () => ({
+        mapId,
+        vaultId: "v1",
+        gridDistance: 1,
+        gridUnit: "m",
+        gridSignature: "g",
+      }),
+      isAllowed: () => true,
+      listEligibleTokens: () => [{ id: "party", hex: { q: 0, r: 0 } }],
+      onStart: () => true,
+      onStep: () =>
+        new Promise((resolve) => {
+          finishStep = resolve;
+        }),
+      onRetryArrival,
+    });
+    store.preview({ q: 1, r: 0 });
+    await store.start();
+    const step = store.step();
+    mapId = "m2";
+    expect(store.validateIdentity()).toBe(false);
+    finishStep({
+      moved: true,
+      arrivalSaved: false,
+      error: "save failed",
+    });
+    expect(await step).toBe(false);
+    expect(store.validateIdentity()).toBe(false);
+    expect(store.route).toBeNull();
+    expect(store.pendingArrival).toEqual({ q: 1, r: 0 });
+    expect(store.canRetryArrival).toBe(false);
+
+    mapId = "m1";
+    expect(store.canRetryArrival).toBe(true);
+    expect(await store.retryArrival()).toBe(true);
+    expect(onRetryArrival).toHaveBeenCalledWith("m1", { q: 1, r: 0 });
+    expect(store.pendingArrival).toBeNull();
+  });
+
   it("does not commit an awaited step after Stop", async () => {
     let finish!: (value: boolean) => void;
     const onStep = vi.fn(

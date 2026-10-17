@@ -70,6 +70,28 @@ describe("HexJourneyControls", () => {
     );
   });
 
+  it("uses the theme background foreground for primary journey actions", () => {
+    const store = new HexJourneyStore({
+      getIdentity: () => ({
+        mapId: "m",
+        vaultId: "v",
+        gridDistance: 1,
+        gridUnit: "m",
+        gridSignature: "g",
+      }),
+      isAllowed: () => true,
+      listEligibleTokens: () => [],
+      onStart: vi.fn(),
+      onStep: vi.fn(),
+    });
+    store.setOrigin({ q: 0, r: 0 });
+    store.preview({ q: 1, r: 0 });
+    render(HexJourneyControls, { store });
+    expect(
+      screen.getByRole("button", { name: "Start journey" }).className,
+    ).toContain("text-theme-bg");
+  });
+
   it("clears the route-specific hours input when a new route is previewed", async () => {
     const store = new HexJourneyStore({
       getIdentity: () => ({
