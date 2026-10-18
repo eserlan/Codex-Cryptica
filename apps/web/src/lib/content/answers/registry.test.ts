@@ -145,6 +145,27 @@ describe("answer registry", () => {
     );
   });
 
+  it("keeps the secret-door answer's worked example and actionable checklist", () => {
+    const answer = answers["how-do-i-run-secret-doors-in-dnd"];
+
+    expect(answer.sections).toContainEqual(
+      expect.objectContaining({
+        kind: "example",
+        heading: "Worked example: a DC 15 stone door",
+      }),
+    );
+    expect(answer.sections).toContainEqual(
+      expect.objectContaining({
+        kind: "checklist",
+        heading: "Before you hide a secret door",
+        items: expect.arrayContaining([
+          "Write down the clue in concrete terms: what a character can see, feel, hear or measure, and where it can be noticed from.",
+          "Classify the door as optional or essential. If it is essential, prepare an alternate clue, route or costly recovery before the session, not during the stall.",
+        ]),
+      }),
+    );
+  });
+
   it("keeps an actionable practice checklist in the NPC roleplay answer", () => {
     const answer = answers["how-do-i-roleplay-npcs-if-im-not-good-at-acting"];
 
