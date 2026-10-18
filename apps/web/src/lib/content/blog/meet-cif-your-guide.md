@@ -14,13 +14,13 @@ publishedAt: 2026-10-14T15:00:00Z
 
 # Meet Cif, Your Little Guide to Codex Cryptica
 
-*Lost in a menu? Wondering what a button does? There's a small hooded fellow who can help.*
+_Lost in a menu? Wondering what a button does? There's a small hooded fellow who can help._
 
 ![Cif, looking curious](https://assets.codexcryptica.com/images/blog/meet-cif/cif-curious.svg)
 
 Codex Cryptica has grown quite a bit. There are maps and graphs, generators, timelines, tables, a virtual tabletop, and enough settings to keep a particularly organised wizard occupied for an afternoon.
 
-Which is great, until you find yourself thinking: *Hang on. Where was that thing again?*
+Which is great, until you find yourself thinking: _Hang on. Where was that thing again?_
 
 That's where Cif comes in.
 
