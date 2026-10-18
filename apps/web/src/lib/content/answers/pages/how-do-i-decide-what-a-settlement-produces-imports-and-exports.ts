@@ -200,6 +200,11 @@ export const howDoIDecideWhatASettlementProducesImportsAndExports: AnswerConfigI
           reason:
             "The economy guide designs a coherent world-scale system, while this answer derives one settlement's production, surplus, imports, and exports as a local ledger.",
         },
+        {
+          with: "answer-geographically-realistic-town-village",
+          reason:
+            "This answer derives a settlement's production, surplus, imports, and exports as a local ledger; the geography answer places the land and facilities that make that ledger possible.",
+        },
       ],
     },
     seo: {

@@ -190,6 +190,11 @@ export const howDoTradeRoutesShapeCitiesAndKingdomsInAnRpgWorld: AnswerConfigInp
           reason:
             "This answer maps choke points, collectors, and rival routes onto settlements; the economy answer traces resources, production, exchange, and pressure across a whole region.",
         },
+        {
+          with: "answer-geographically-realistic-town-village",
+          reason:
+            "This answer maps regional routes, valuable nodes, and the power around them; the geography answer lays out movement within one settlement and its immediate hinterland.",
+        },
       ],
     },
     seo: {

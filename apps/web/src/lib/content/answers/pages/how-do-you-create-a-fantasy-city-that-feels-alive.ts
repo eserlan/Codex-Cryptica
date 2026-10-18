@@ -203,6 +203,11 @@ export const howDoYouCreateAFantasyCityThatFeelsAlive: AnswerConfigInput = {
         reason:
           "The rumour answer designs individual claims, sources, and consequences. This answer places rumours among the routines, public spaces, and competing groups that make a whole city feel active.",
       },
+      {
+        with: "answer-geographically-realistic-town-village",
+        reason:
+          "This answer makes a prepared city feel active through routines, groups, pressures, and visible change; the geography answer explains how water, terrain, routes, and growth shape its physical layout.",
+      },
     ],
   },
   seo: {

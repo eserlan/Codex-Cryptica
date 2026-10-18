@@ -200,6 +200,11 @@ export const whatShouldAnRpgSettlementContain: AnswerConfigInput = {
         reason:
           "This answer guides settlement content and prep; the base-building comparison evaluates which game rules support developing a settlement or other home over time.",
       },
+      {
+        with: "answer-geographically-realistic-town-village",
+        reason:
+          "This answer is a prep checklist for a settlement's purpose, places, people, and problem; the geography answer lays those elements out around water, terrain, routes, and growth.",
+      },
     ],
   },
 
