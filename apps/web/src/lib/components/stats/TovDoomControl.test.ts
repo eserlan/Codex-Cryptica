@@ -57,11 +57,16 @@ describe("TovDoomControl", () => {
     );
   });
 
-  it("shows value, cap, and the rules reference", () => {
+  it("shows value, cap, and the rules reference with per-creature allocation guidance", () => {
     render(TovDoomControl, { field: doom(4), onChange: vi.fn() });
     expect(screen.getByTestId("tov-doom-value").textContent).toMatch(
       /4\s*\/\s*10/,
     );
     expect(screen.getByText(/How Doom Points work/i)).toBeTruthy();
+    expect(
+      screen.getByText(
+        /track points allocated to that creature from the encounter's Doom pool/i,
+      ),
+    ).toBeTruthy();
   });
 });
