@@ -6,7 +6,7 @@ _Evaluated on 2026-10-18 against Constitution Principle XIV (Bounded Responsibil
 
 | Metric                               | Value  | Reference                           |
 | :----------------------------------- | :----- | :---------------------------------- |
-| **Evaluated Source Files**           | `2388` | Excluding tests & data catalogues   |
+| **Evaluated Source Files**           | `2389` | Excluding tests & data catalogues   |
 | **Data Catalogues Excluded**         | `98`   | Principle XIV.4 constant registries |
 | **🔴 Critical Files (>= 800 lines)** | `29`   | Immediate refactor candidates       |
 | **🟡 Watch Files (>= 500 lines)**    | `104`  | Principle XIV review trigger        |
@@ -32,10 +32,10 @@ _Evaluated on 2026-10-18 against Constitution Principle XIV (Bounded Responsibil
 | 11   | 🔴 CRITICAL | `apps/web/src/routes/(app)/table/+page.svelte`                                     | 1021        | 926        | 53                  | UI Component     |
 | 12   | 🔴 CRITICAL | `packages/vault-engine/src/asset-manager.ts`                                       | 1014        | 780        | 65                  | Engine Core      |
 | 13   | 🔴 CRITICAL | `apps/web/src/lib/components/settings/StatSheetTemplateSettings.svelte`            | 1008        | 956        | 31                  | UI Component     |
-| 14   | 🔴 CRITICAL | `apps/web/src/lib/components/generators/GeneratorConfigForm.svelte`                | 994         | 932        | 22                  | UI Component     |
-| 15   | 🔴 CRITICAL | `apps/web/src/lib/stores/vault.svelte.ts`                                          | 982         | 870        | 141                 | Store (State)    |
-| 16   | 🔴 CRITICAL | `apps/web/src/lib/stores/vault/entity-mutations.ts`                                | 961         | 854        | 69                  | Store (State)    |
-| 17   | 🔴 CRITICAL | `apps/web/src/lib/app/init/app-init.ts`                                            | 957         | 779        | 45                  | Utility / Module |
+| 14   | 🔴 CRITICAL | `apps/web/src/lib/stores/vault.svelte.ts`                                          | 982         | 870        | 141                 | Store (State)    |
+| 15   | 🔴 CRITICAL | `apps/web/src/lib/stores/vault/entity-mutations.ts`                                | 961         | 854        | 69                  | Store (State)    |
+| 16   | 🔴 CRITICAL | `apps/web/src/lib/app/init/app-init.ts`                                            | 957         | 779        | 45                  | Utility / Module |
+| 17   | 🔴 CRITICAL | `apps/web/src/lib/components/generators/GeneratorConfigForm.svelte`                | 929         | 877        | 20                  | UI Component     |
 | 18   | 🔴 CRITICAL | `packages/cloud-backup-sync/src/cloud-backup-sync.ts`                              | 921         | 682        | 54                  | Utility / Module |
 | 19   | 🔴 CRITICAL | `apps/web/src/lib/stores/graph.svelte.ts`                                          | 916         | 711        | 100                 | Store (State)    |
 | 20   | 🔴 CRITICAL | `apps/web/src/lib/components/generators/CampaignGeneratorModal.svelte`             | 913         | 825        | 48                  | UI Component     |
@@ -49,11 +49,11 @@ _Evaluated on 2026-10-18 against Constitution Principle XIV (Bounded Responsibil
 
 | Layer            | Total Files | Over 500 Lines | Total Lines |
 | :--------------- | :---------- | :------------- | :---------- |
-| UI Component     | 689         | 63             | 130,688     |
+| UI Component     | 689         | 63             | 130,623     |
 | Store (State)    | 157         | 17             | 35,554      |
 | Service          | 141         | 9              | 26,286      |
 | Controller       | 6           | 3              | 3,194       |
 | Worker Router    | 55          | 2              | 12,002      |
 | Engine Core      | 501         | 21             | 76,031      |
-| Utility / Module | 839         | 18             | 126,592     |
+| Utility / Module | 840         | 18             | 126,664     |
 | Data Catalog     | 98          | 51             | 64,535      |
