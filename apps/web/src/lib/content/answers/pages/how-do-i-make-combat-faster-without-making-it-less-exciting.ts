@@ -123,6 +123,7 @@ export const howDoIMakeCombatFasterWithoutMakingItLessExciting: AnswerConfigInpu
       "how-do-i-prepare-a-dnd-session",
       "what-can-i-do-on-my-turn-in-dnd-combat",
       "how-do-i-combine-multiple-enemies-into-one-squad-in-an-rpg",
+      "how-do-i-track-monsters-initiative-and-hit-points-in-dnd-combat",
     ],
     discovery: {
       id: "answer-faster-exciting-combat",
