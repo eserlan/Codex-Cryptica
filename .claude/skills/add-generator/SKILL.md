@@ -24,7 +24,7 @@ They always share _content design_ (pools of options, per-councillor/per-NPC str
 
 1. **Pick a complexity tier**, matching an existing generator of similar shape:
    - **Simple** (npc/faction/event-tier): local fallback + prompt builder live as small inline functions directly in `campaign-generator-registry.ts`, using inline `const FOO_OPTIONS = [...]` arrays. No separate file.
-   - **Rich, reuses a public generator's local/prompt logic** (adventure/dungeon/ship/language/news-sheet/world-tier): the registry imports `generateXLocal`/`buildXPrompt` from the matching `public-x.ts` and wraps the prompt with `contextChain(request)` for vault grounding. Use this tier if the content is genuinely complex (many structured sub-fields per item, e.g. council members) — it keeps the registry file from ballooning.
+   - **Rich, reuses a public generator's local/prompt logic** (adventure/dungeon/ship/language/news-sheet/world-tier): the registry imports `generateXLocal`/`buildXPrompt` from the matching `public-x.ts` and wraps the prompt with `contextChain(request)` for vault grounding. Use this tier if the content is genuinely complex (many structured sub-fields per item, e.g. council members) — it keeps the registry file from ballooning. If its sections depend on each other (history → places → factions), also read Part B.6 on staged generation.
    - Do **not** invent a third, bespoke canvas-node/graph system unless the user explicitly asks for graph/canvas integration — that tier (dungeon/adventure's topology parsing) is a much bigger lift and usually isn't what "add a generator" means.
 
 2. **`campaign-generator-types.ts`**: add the new id to both `GeneratorId` (union type) and `SUPPORTED_GENERATOR_IDS` (array) — keep them in the same order.
@@ -133,6 +133,46 @@ Match is by **exact string** against the generator's actual output `labels` arra
 - If your prompt schema's example `labels` (or your local fallback's `labels`) happens to reuse **another generator's** label string (e.g. copying `"quest-generator"` into a new generator's exemplar because it was a handy template), you'll silently inherit _that_ generator's `railSections` rule against your own, differently-headed lore — sections you expected in the rail move to main (or vice versa) with no error. Grep `LAYOUT_RULES` for your chosen labels before finalizing them.
 - `railSections` matches on the exact markdown heading text your prompt/fallback produces. If the AI phrases a heading slightly differently than the schema asked for, that section falls through to "moves to main" by default (safe default, but check real output).
 - **Judge rail-worthiness by actual generated density, not the section's name.** A section can sound compact ("Council Members") while the model actually writes a full paragraph per entry — that's narrative payoff, not a quick lookup, and belongs in main even though it looked like reference material on paper. Generate a real draft and look at it before finalizing `railSections`; don't decide purely from the prompt schema's description.
+
+---
+
+## Part B.6 — Staged AI generation (complex generators only)
+
+A one-pass prompt asks for every section in one answer, so later sections are written before the model has settled the earlier ones, and a repair pass then has to untangle contradictions. A staged route writes the content in the order it depends on itself, and each stage sees only the validated output of the stages before it.
+
+**Stage only when it pays for itself.** Staging costs 3–5 model calls instead of 1–2, plus the latency. Use it when at least one of these holds:
+
+- Later sections must agree with earlier ones (history → locations → factions, premise → scenes → finale, topology → keyed nodes).
+- The mechanical layer fixes structure the model must honour: ids, counts, stock types, drives, a graph.
+- One-pass output keeps contradicting itself across sections, and the consistency pass or repair keeps catching the same class of error.
+
+Do **not** stage simple generators (NPC, name, tavern, rumour, single-item). A consistency-pass line in the prompt (Part B step 1) is enough there.
+
+**Templates**, most complete first: `packages/generator-engine/src/dungeon-staged.ts` (#4133, #4206), `point-crawl-staged.ts`, `one-shot-staged.ts`. Copy the dungeon one's shape.
+
+### The pattern
+
+1. **Fixed plan from the resolver, never from the model.** Ids, counts, types, assigned drives and the layout/topology come from `resolve<Name>()`. Validators reject output that departs from it, and assembly overwrites anything the model shouldn't own (e.g. `drive`). If something depends on a place, the layout goes into every stage that places it, and the parser must render the _planned_ layout, not re-roll it.
+2. **Stages follow the dependency order.** Each stage gets the earlier stages' validated output labelled "established, do not change", plus a "Stage N of M" marker (tests route on it). Tell each stage what _not_ to write yet.
+3. **Pure, exported validators per stage** returning `{ hard, soft }`. `hard` means unusable (wrong ids, missing fields, banned names). `soft` means usable but doubtful (heuristic grounding). Each stage gets **one** retry that names the problems and includes the previous answer. Keep the best draft without hard problems if the retry is worse.
+4. **Represent the current state.** If occupants (factions, NPCs) are written after the places, have them write back what they changed in each place they hold (dungeon `presence` → "Held by X"). Otherwise the place reads as untouched.
+5. **Assemble through the existing one-pass parser** (`parse<Name>ResponseDetailed`), so rendering, name rules and fallbacks are identical on both routes.
+6. **Coherence:** run the deterministic checks, then one model review of the assembled result (retried once, max ~5 issues). Feed both to one targeted repair. Accept the repair only if it parses and adds no deterministic problems. A missing review never blocks the result.
+7. **Failure and abort.** If a stage stays unusable, return `null`; the caller then runs the one-pass route, which keeps its local fallback. An abort throws (check the signal between calls, rethrow `AbortError`), and nothing partial is returned.
+
+### Wiring
+
+- **Public** (`generator-engine-specialized.ts` / `generator-engine.ts`): staged by default, `staged: false` forces the one-pass baseline, and `signal` is threaded to `runModel`.
+- **In-app** (`campaign-generator-service-ai.ts`): try staged first with `contextChain` as `contextPrefix`. Anything the staged calls cannot carry stays on the one-pass route: a continuity thread (`request.interaction`), streaming previews, prompt metrics.
+- **Progress list:** use `StagedProgress` (`staged-progress.ts`). Add the step ids to `OneShotProgressStep["id"]` in `one-shot-staged.ts`. In `generator-page-generation.ts`, reset with `ctx.onOneShotProgress?.(null)`, pass `onProgress: ctx.onOneShotProgress` and `signal: ctx.oneShotRuns?.start()`. Add the slug to the `progressSteps` condition and the non-streaming list in `GeneratorPageContent.svelte`. Step labels are plain language ("Sectors, hazards and treasures").
+- **Diagnostics:** return stats (`outcome`, `stoppedAt`, `aiCalls`, repaired stages, review findings, remaining issues) via an `onStats` dep. Log them only behind `import.meta.env.DEV` with `console.debug` (public engine, and `CampaignGeneratorModal` through a `CampaignGeneratorServiceDeps` callback). Never send them anywhere.
+
+### Tests
+
+- One test per validator, and a scripted `complete()` that routes replies by the stage marker string.
+- Cover: happy path (call count, fixed plan kept), a retry that fixes a stage, a kept first draft when the retry is junk, `null` plus `stoppedAt` on an unusable stage, abort mid-run, an unreadable review, an accepted repair, and the progress statuses (including fallback/skipped).
+- Any regex over generated prose needs a counterexample table: flagged and not-flagged inputs (see codex-review `patterns.md` → Heuristic Prose Checks). Keep it a soft problem with its limits in the doc comment.
+- For each changed hunk, name the test that fails if it is reverted.
 
 ---
 
