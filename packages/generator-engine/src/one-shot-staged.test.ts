@@ -418,7 +418,8 @@ describe("runOneShotStages", () => {
       "npcs",
       "review",
     ]);
-    expect(first[0].status).toBe("active");
+    expect(first.every((s) => s.status === "pending")).toBe(true);
+    expect(snapshots[1][0].status).toBe("active");
     expect(
       snapshots.some((s) => s[3].detail === `2 of ${a.scenes.length}`),
     ).toBe(true);
@@ -587,6 +588,24 @@ describe("runOneShotStages", () => {
       ),
     ).rejects.toThrow(/core step did not finish/);
     expect(snapshots.at(-1)![0].status).toBe("fallback");
+  });
+
+  it("stops on an AbortError from the model instead of retrying", async () => {
+    let calls = 0;
+    await expect(
+      runOneShotStages(
+        options,
+        {
+          call: async () => {
+            calls += 1;
+            throw new DOMException("The operation was aborted", "AbortError");
+          },
+        },
+        "",
+        seeded(),
+      ),
+    ).rejects.toThrow(/aborted/);
+    expect(calls).toBe(1);
   });
 
   it("retries a failed review once before marking it skipped", async () => {

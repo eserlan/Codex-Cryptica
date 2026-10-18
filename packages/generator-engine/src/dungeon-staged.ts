@@ -25,8 +25,16 @@ import {
   formatCampaignContextBlock,
 } from "./campaign-context";
 import { parseFencedJson } from "./llm-response-utils";
-import type { OneShotProgressStep } from "./one-shot-staged";
-import { StagedProgress } from "./staged-progress";
+import { StagedProgress, type StagedProgressStep } from "./staged-progress";
+import {
+  askChecked,
+  askModel,
+  type CheckedDraft,
+  type DraftCheck,
+  isAbort,
+  readJsonObject,
+  throwIfAborted,
+} from "./staged-runtime";
 import {
   bannedNamesIn,
   buildDungeonCoherencePrompt,
@@ -54,7 +62,7 @@ export interface DungeonStagedDeps {
   /** Caller-supplied context (vault, naming, instructions) placed before every stage. */
   contextPrefix?: string;
   /** Live step list for the page, in the same shape as the one-shot generator's. */
-  onProgress?: (steps: OneShotProgressStep[]) => void;
+  onProgress?: (steps: StagedProgressStep[]) => void;
   /**
    * Called once when a run finishes or gives up (not on abort), so a dev build
    * can log which route ran and what it cost.
@@ -86,12 +94,7 @@ export interface DungeonStagedResult {
 }
 
 type Json = Record<string, unknown>;
-export interface StageCheck {
-  /** Break the shape; the stage's output cannot be used. */
-  hard: string[];
-  /** Coherence doubts; the output is usable but worth another look. */
-  soft: string[];
-}
+export type StageCheck = DraftCheck;
 
 const rec = (v: unknown): Json =>
   v && typeof v === "object" && !Array.isArray(v) ? (v as Json) : {};
@@ -107,20 +110,6 @@ const textList = (v: unknown): string[] =>
   arr(v)
     .map(text)
     .filter((s) => s.length > 0);
-
-function throwIfAborted(signal?: AbortSignal): void {
-  if (!signal?.aborted) return;
-  throw (
-    signal.reason ?? new DOMException("The operation was aborted", "AbortError")
-  );
-}
-
-function isAbort(err: unknown, signal?: AbortSignal): boolean {
-  return (
-    !!signal?.aborted ||
-    (err instanceof DOMException && err.name === "AbortError")
-  );
-}
 
 // ---------------------------------------------------------------------------
 // Validation (pure)
@@ -787,98 +776,38 @@ interface RunState {
   progress: StagedProgress<ProgressId>;
 }
 
-interface StageOutcome {
-  data: Json;
-  soft: string[];
-}
-
-/** One model call, parsed as a JSON object; `null` when it throws or is not one. */
-async function askJson(
-  deps: DungeonStagedDeps,
-  system: string,
-  message: string,
-): Promise<Json | null> {
-  try {
-    const reply = await deps.complete(system, message);
-    throwIfAborted(deps.signal);
-    const parsed = parseFencedJson<unknown>(reply);
-    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
-      ? (parsed as Json)
-      : null;
-  } catch (err) {
-    if (isAbort(err, deps.signal)) throw err;
-    return null;
-  }
-}
-
-const NOT_JSON: StageCheck = {
-  hard: ["the response was not a valid JSON object"],
-  soft: [],
-};
-
-/** One attempt at a stage, counted and shown as active. */
-async function attemptStage(
-  deps: DungeonStagedDeps,
-  { stats, progress }: RunState,
-  id: DungeonStageId,
-  system: string,
-  message: string,
-  retry: boolean,
-): Promise<Json | null> {
-  throwIfAborted(deps.signal);
-  progress.set(id, "active", retry ? FIXING : undefined);
-  stats.aiCalls++;
-  return askJson(deps, system, message);
-}
-
-function finishStage(
-  { stats, progress }: RunState,
-  id: DungeonStageId,
-  outcome: StageOutcome,
-  repaired: boolean,
-): StageOutcome {
-  if (repaired) stats.repairedStages.push(id);
-  progress.set(id, "done");
-  return outcome;
-}
+type StageOutcome = CheckedDraft<Json>;
 
 /**
- * Ask for one stage, with one targeted retry. A draft with no hard problems is
- * kept, so a failing retry falls back to it instead of discarding the stage.
+ * Ask for one stage, with one targeted retry that names the problems. A draft
+ * with no hard problems is kept, so a failing retry falls back to it instead
+ * of discarding the stage.
  */
 async function runStage(
   deps: DungeonStagedDeps,
-  run: RunState,
+  { stats, progress }: RunState,
   id: DungeonStageId,
   system: string,
   message: string,
   check: (data: Json) => StageCheck,
 ): Promise<StageOutcome | null> {
-  let problems: string[] = [];
-  let previous: Json | null = null;
-  let best: StageOutcome | null = null;
-  for (let attempt = 0; attempt < 2; attempt++) {
-    const data = await attemptStage(
-      deps,
-      run,
-      id,
-      system,
-      withProblems(message, problems, previous),
-      attempt > 0,
-    );
-    const result = data ? check(data) : NOT_JSON;
-    if (data && result.hard.length === 0) {
-      best = { data, soft: result.soft };
-      if (result.soft.length === 0) {
-        return finishStage(run, id, best, attempt > 0);
-      }
-    }
-    problems = [...result.hard, ...result.soft];
-    previous = data ?? previous;
+  const outcome = await askChecked(
+    ({ attempt, problems, previous }) => {
+      progress.set(id, "active", attempt > 0 ? FIXING : undefined);
+      stats.aiCalls++;
+      return deps.complete(system, withProblems(message, problems, previous));
+    },
+    readJsonObject,
+    check,
+    { signal: deps.signal },
+  );
+  if (!outcome) {
+    progress.abandon(id, ONE_PASS);
+    return null;
   }
-  if (best) return finishStage(run, id, best, true);
-  run.progress.abandon(id, ONE_PASS);
-  return null;
+  if (outcome.retried) stats.repairedStages.push(id);
+  progress.set(id, "done");
+  return outcome;
 }
 
 function sectorsFrom(
@@ -1009,14 +938,20 @@ async function reviewCoherence(
   resolved: ResolvedDungeon,
 ): Promise<string[]> {
   const message = reviewMessage(d, resolved, deps.contextPrefix);
-  for (let attempt = 0; attempt < 2; attempt++) {
-    throwIfAborted(deps.signal);
-    stats.aiCalls++;
-    const data = await askJson(deps, REVIEW_SYSTEM, message);
-    if (data && Array.isArray(data.issues)) {
-      return textList(data.issues).slice(0, 5);
-    }
-  }
+  const issues = await askModel(
+    () => {
+      stats.aiCalls++;
+      return deps.complete(REVIEW_SYSTEM, message);
+    },
+    (reply) => {
+      const data = readJsonObject(reply);
+      return data && Array.isArray(data.issues)
+        ? textList(data.issues).slice(0, 5)
+        : null;
+    },
+    { signal: deps.signal, attempts: 2 },
+  );
+  if (issues) return issues;
   stats.reviewSkipped = true;
   return [];
 }
