@@ -188,6 +188,27 @@ describe("HexDiscoveryController (T060, FR-021, FR-043)", () => {
     expect(h.store.recordFor(MAP_ID, HEX)?.draft?.source).toBe("ai");
   });
 
+  it("extracts a fenced discovery and does not save an array envelope", async () => {
+    const fenced = setup({
+      modelText: `A short preface.\n\`\`\`json\n${JSON.stringify(VALID_OUTPUT)}\n\`\`\``,
+    });
+    const valid = await fenced.controller.explore(
+      MAP_ID,
+      HEX,
+      new AbortController().signal,
+    );
+    expect(valid.draft?.source).toBe("ai");
+
+    const invalid = setup({ modelText: JSON.stringify([VALID_OUTPUT]) });
+    const rejected = await invalid.controller.explore(
+      MAP_ID,
+      HEX,
+      new AbortController().signal,
+    );
+    expect(rejected.failure).toBe("ai-failed");
+    expect(invalid.store.recordFor(MAP_ID, HEX)?.draft).toBeUndefined();
+  });
+
   it("removes remote Markdown and HTML images from saved AI entity content", async () => {
     const modelOutput = {
       ...VALID_OUTPUT,

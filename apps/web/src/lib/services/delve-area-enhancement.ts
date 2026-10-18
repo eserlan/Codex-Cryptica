@@ -10,6 +10,7 @@ import {
   type DelveRoomNodeData,
 } from "generator-engine";
 import { aiClientManager } from "@codex/ai-engine";
+import { extractJsonObject } from "@codex/runtime";
 import { oracle } from "$lib/stores/oracle.svelte";
 import { vault } from "$lib/stores/vault.svelte";
 import { systemClock, type Clock } from "$lib/utils/runtime-deps";
@@ -97,18 +98,6 @@ export interface AreaPopulationResult {
 interface EnhancedSectorResult {
   rooms: DelveRoomNodeData[];
   passages: Map<string, DelveEdgeData>;
-}
-
-function extractJsonObject(raw: string): string {
-  const trimmed = raw
-    .trim()
-    .replace(/^```json\s*/i, "")
-    .replace(/^```\s*/i, "")
-    .replace(/```\s*$/i, "")
-    .trim();
-  const start = trimmed.indexOf("{");
-  const end = trimmed.lastIndexOf("}");
-  return start >= 0 && end > start ? trimmed.slice(start, end + 1) : trimmed;
 }
 
 function areaUsageContext(room: DelveRoomNodeData): string {

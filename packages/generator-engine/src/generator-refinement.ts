@@ -1,3 +1,5 @@
+import { extractJsonObject } from "@codex/runtime";
+
 /**
  * Framework-free contracts and helpers for refining generated drafts.
  *
@@ -93,16 +95,6 @@ export function applyRefinementProposal(
     ...(lore ? { lore } : {}),
     labels,
   };
-}
-
-function extractJsonObject(raw: string): string {
-  const fenced = raw.match(/```(?:json)?\s*([\s\S]*?)\s*```/i)?.[1];
-  if (fenced) return fenced.trim();
-
-  const start = raw.indexOf("{");
-  const end = raw.lastIndexOf("}");
-  if (start >= 0 && end > start) return raw.slice(start, end + 1);
-  return raw.trim();
 }
 
 /** Parse the strict JSON envelope returned by the refinement model. */

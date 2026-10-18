@@ -1,11 +1,11 @@
 /**
- * Shared seams for ambient runtime dependencies (time, id generation) so
- * services and stores can inject deterministic fakes in tests while
- * production keeps the real globals (Constitution VIII).
+ * Shared runtime seams and pure helpers used across workspace packages.
  *
- * Defaults resolve their global lazily at call time — never captured at
- * construction (the lesson from #1363).
+ * Ambient dependency defaults resolve globals lazily at call time — never
+ * captured at construction (the lesson from #1363).
  */
+export { extractJsonObject } from "./extract-json-object";
+
 export interface Clock {
   now(): number;
 }
