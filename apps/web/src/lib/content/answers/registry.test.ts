@@ -145,6 +145,46 @@ describe("answer registry", () => {
     );
   });
 
+  it("keeps the secret-door answer's worked example and actionable checklist", () => {
+    const answer = answers["how-do-i-run-secret-doors-in-dnd"];
+    const example = answer.sections.find(
+      (section) => section.kind === "example",
+    );
+
+    expect(example?.kind).toBe("example");
+    if (example?.kind !== "example") return;
+
+    expect(example.heading).toBe("Worked example: a DC 15 stone door");
+    expect(example.items).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          term: "Noticing: the passive score meets the DC",
+          text: expect.stringContaining("ranger's passive Perception of 15"),
+        }),
+        expect.objectContaining({
+          term: "Finding: a described search, one roll",
+          text: expect.stringContaining("rogue rolls 9 and 14"),
+        }),
+        expect.objectContaining({
+          term: "Why it works",
+          text: expect.stringContaining(
+            "Each die roll answered a different question",
+          ),
+        }),
+      ]),
+    );
+    expect(answer.sections).toContainEqual(
+      expect.objectContaining({
+        kind: "checklist",
+        heading: "Before you hide a secret door",
+        items: expect.arrayContaining([
+          "Write down the clue in concrete terms: what a character can see, feel, hear or measure, and where it can be noticed from.",
+          "Classify the door as optional or essential. If it is essential, prepare an alternate clue, route or costly recovery before the session, not during the stall.",
+        ]),
+      }),
+    );
+  });
+
   it("keeps an actionable practice checklist in the NPC roleplay answer", () => {
     const answer = answers["how-do-i-roleplay-npcs-if-im-not-good-at-acting"];
 
