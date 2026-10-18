@@ -104,6 +104,14 @@ describe("HexJourneyControls", () => {
     expect(horrorLightRule).not.toContain("--color-theme-on-primary:");
   });
 
+  it("maps the primary action foreground for Space Western Light", () => {
+    const spaceWesternLightRule = cssRuleContaining(
+      '[data-theme="space-western_light"]',
+    );
+
+    expect(spaceWesternLightRule).toContain("--color-theme-on-primary: #fff");
+  });
+
   it("uses the primary action foreground token for journey actions", async () => {
     const store = new HexJourneyStore({
       getIdentity: () => ({

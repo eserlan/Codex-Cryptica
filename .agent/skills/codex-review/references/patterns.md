@@ -354,16 +354,25 @@ const mix = (a, b, t) => ({ r: a.r*t+b.r*(1-t), g: a.g*t+b.g*(1-t), b: a.b*t+b.b
 const themes = new Map([...Object.values(S.THEMES), ...Object.values(S)
   .filter((v) => v && typeof v === "object" && "tokens" in v && /_(dark|light)$/.test(v.id ?? ""))]
   .map((t) => [t.id, t]));
+const onPrimaryOverrides = new Map([
+  ["horror", "#fff"], // app.css: neutral-dark appearance
+  ["space-western_light", "#fff"], // app.css
+]);
 for (const [id, { tokens: k }] of themes) {
   const c = (x) => S.parseColor(x);
   const solid = S.contrastRatio(c(k.background), c(k.primary));                 // text-theme-bg on bg-theme-primary
   const tint = S.contrastRatio(c(k.primary), mix(c(k.primary), c(k.surface), 0.15)); // text-theme-primary on bg-theme-primary/15
-  if (solid < 4.5 || tint < 4.5) console.log(id, solid.toFixed(2), tint.toFixed(2));
+  const onPrimary = S.contrastRatio(c(onPrimaryOverrides.get(id) ?? k.background), c(k.primary));
+  if (solid < 4.5 || tint < 4.5 || onPrimary < 4.5) {
+    console.log(id, solid.toFixed(2), tint.toFixed(2), onPrimary.toFixed(2));
+  }
 }'
 ```
 
-The script reads theme tokens only; per-theme overrides in `app.css` (such as Horror's
-`--color-theme-on-primary: #fff`) must be applied by hand. Any line printed is a failing theme.
+The script applies the listed `--color-theme-on-primary` overrides from `app.css` when checking
+that foreground token; update the map when adding or changing an override. Any line printed is a
+failing theme. The three ratios are `text-theme-bg` on primary, `text-theme-primary` on a 15% tint,
+and `text-theme-on-primary` on primary.
 
 ## Event Bus & Lifecycles
 

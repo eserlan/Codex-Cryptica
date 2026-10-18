@@ -383,6 +383,7 @@
   [data-theme="space-western_light"] {
     --color-text-muted: #b45309;
     --color-text-dim: #78350f;
+    --color-theme-on-primary: #fff;
   }
   [data-theme="superhero"] {
     --color-text-muted: #4b5568;
