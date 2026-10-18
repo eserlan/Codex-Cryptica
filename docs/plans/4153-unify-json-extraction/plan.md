@@ -2,7 +2,7 @@
 
 **Issue**: [#4153](https://github.com/eserlan/Codex-Cryptica/issues/4153)
 **Date**: 2026-10-18
-**Status**: Planned; implementation has not started.
+**Status**: Implemented; [PR #4185](https://github.com/eserlan/Codex-Cryptica/pull/4185) is open.
 **Delivery artifacts**: This plan and [tasks.md](./tasks.md). No separate specification.
 
 ## Outcome and scope

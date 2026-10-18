@@ -1,7 +1,7 @@
 # Tasks: Shared AI JSON extraction (#4153)
 
 **Input**: [plan.md](./plan.md)
-**Status**: Planned; no implementation task has started.
+**Status**: Implemented; [PR #4185](https://github.com/eserlan/Codex-Cryptica/pull/4185) is open.
 **Scope**: One runtime helper, four duplicate implementations removed, five consumer modules updated. No separate spec.
 **Tests**: Follow red-green-refactor. Cover both successful extraction and meaningful rejection/fallback behaviour. Planning documentation does not require application tests.
 
@@ -45,7 +45,7 @@
 - [x] T016 Search definitions and imports again to confirm there is exactly one implementation, four local implementations are removed, and every known consumer uses it. Check for unintended manifest/lockfile changes and keep unrelated AI parsers and historical specs unchanged.
 - [x] T017 Run focused helper/caller suites and `bun run test:changed`; explicitly include the runtime test file if discovery misses it. Run `bun run lint:changed` and affected-workspace type-checks. Confirm helper coverage; record commands/results below. Do not run repository-wide local checks.
 - [x] T018 Run Fallow audit against the implementation base and the canonical `codex-review` specialist review. Resolve actionable findings; document the single responsibilities of the two touched web services over 500 lines and update this plan if implementation decisions changed.
-- [ ] T019 Before any commit or push, run `bunx fallow audit --format json --quiet --explain --gate-marker agent` and follow the repository's verdict/runtime-error policy. After all PR quality gates pass, commit the implementation and open a ready-for-review PR to `staging` with `Closes #4153`, the deliberate contract changes and validation evidence.
+- [x] T019 Before any commit or push, run `bunx fallow audit --format json --quiet --explain --gate-marker agent` and follow the repository's verdict/runtime-error policy. After all PR quality gates pass, commit the implementation and open a ready-for-review PR to `staging` with `Closes #4153`, the deliberate contract changes and validation evidence. Commit `85de3a870`; PR [#4185](https://github.com/eserlan/Codex-Cryptica/pull/4185).
 
 ## Dependencies and execution order
 
@@ -63,6 +63,7 @@
 - The broader generator-engine `tsc --noEmit --project tsconfig.json` reports errors in unchanged test files and `oracle-engine` `.svelte.ts` files; it reports no errors in the changed generator-engine source. The focused changed-source TypeScript check passed.
 - Fallow audit against `origin/staging` passed with zero introduced findings. Its first run flagged scanner complexity; splitting the scanner resolved the finding.
 - General and Codex-Cryptica specialist review found no actionable issues. The removed gateway export had one production consumer, `hex-discovery.ts`, now importing from runtime; the other reference was its relocated unit tests.
+- Commit `85de3a870` was pushed to `codex/4153-unify-json-extraction`; ready-for-review PR [#4185](https://github.com/eserlan/Codex-Cryptica/pull/4185) is open against `staging` and closes #4153.
 - No manifest or lockfile changes. No repository-wide tests, lint or type-check were run.
 
 ## Completion criteria
