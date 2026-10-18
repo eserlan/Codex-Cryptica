@@ -24,6 +24,8 @@ const NON_PUBLISHED_DOOM_SPEND_PATTERN =
 const UNRECOGNIZED_DOOM_SPEND_PATTERN =
   /\b(?:or|and)\s+(?!(?:once[- ]per[- ]encounter\s+)?(?:give|grant|refresh|recharge|gain)\b)(?!(?:a|an|the)\b)[a-z]+\b/i;
 
+const SEQUENCED_DOOM_EFFECT_PATTERN = /\bthen\s+(?:the\s+)?[a-z]+\b/i;
+
 /**
  * Returns true only when `doomNotes` establishes the published encounter-level
  * CR-based Doom pool and at least one published spend. The classifier fails
@@ -52,7 +54,8 @@ export function isPublishedBfrdDoomGuidance(doomNotes: string): boolean {
       DOOM_SPEND_INTENT_PATTERN.test(clause) &&
       (!PUBLISHED_DOOM_SPEND_PATTERN.test(clause) ||
         NON_PUBLISHED_DOOM_SPEND_PATTERN.test(clause) ||
-        UNRECOGNIZED_DOOM_SPEND_PATTERN.test(clause)),
+        UNRECOGNIZED_DOOM_SPEND_PATTERN.test(clause) ||
+        SEQUENCED_DOOM_EFFECT_PATTERN.test(clause)),
   );
 }
 

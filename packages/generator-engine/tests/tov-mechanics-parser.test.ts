@@ -113,6 +113,30 @@ describe("isPublishedBfrdDoomGuidance", () => {
     ).toBe(false);
   });
 
+  it("flags an unrecognised effect sequenced after a published spend", () => {
+    const doomNotes =
+      "Start with a CR-based encounter-level GM Doom pool. Spend Doom to give a creature advantage on an attack, then knock the target prone.";
+
+    expect(isPublishedBfrdDoomGuidance(doomNotes)).toBe(false);
+
+    const parsed = parseTovMechanics({
+      systemId: "tales-of-the-valiant",
+      kind: "tov-encounter",
+      data: {
+        qualitativeDifficulty: "Moderate",
+        recommendedCrRange: "1-2",
+        doomNotes,
+      },
+    });
+
+    expect(parsed?.kind).toBe("tov-encounter");
+    if (parsed?.kind === "tov-encounter") {
+      expect(parsed.isHomebrew).toBe(true);
+      expect(parsed.data.isHomebrew).toBe(true);
+      expect(parsed.data.doomNotes).toContain("[Homebrew]");
+    }
+  });
+
   it("does not treat unrelated healing prose as a Doom spend", () => {
     expect(
       isPublishedBfrdDoomGuidance(
