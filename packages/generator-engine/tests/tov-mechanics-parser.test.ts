@@ -137,6 +137,30 @@ describe("isPublishedBfrdDoomGuidance", () => {
     }
   });
 
+  it("accepts published Doom spends sequenced after another published spend", () => {
+    const doomNotes =
+      "Start the encounter with a CR-based encounter-level GM Doom pool. Spend Doom to give a creature advantage on an attack. Then spend Doom to give a PC disadvantage on a save.";
+
+    expect(isPublishedBfrdDoomGuidance(doomNotes)).toBe(true);
+
+    const parsed = parseTovMechanics({
+      systemId: "tales-of-the-valiant",
+      kind: "tov-encounter",
+      data: {
+        qualitativeDifficulty: "Moderate",
+        recommendedCrRange: "1-2",
+        doomNotes,
+      },
+    });
+
+    expect(parsed?.kind).toBe("tov-encounter");
+    if (parsed?.kind === "tov-encounter") {
+      expect(parsed.isHomebrew).not.toBe(true);
+      expect(parsed.data.isHomebrew).not.toBe(true);
+      expect(parsed.data.doomNotes).not.toContain("[Homebrew]");
+    }
+  });
+
   it("does not treat unrelated healing prose as a Doom spend", () => {
     expect(
       isPublishedBfrdDoomGuidance(

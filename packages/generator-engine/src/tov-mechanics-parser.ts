@@ -24,7 +24,15 @@ const NON_PUBLISHED_DOOM_SPEND_PATTERN =
 const UNRECOGNIZED_DOOM_SPEND_PATTERN =
   /\b(?:or|and)\s+(?!(?:once[- ]per[- ]encounter\s+)?(?:give|grant|refresh|recharge|gain)\b)(?!(?:a|an|the)\b)[a-z]+\b/i;
 
-const SEQUENCED_DOOM_EFFECT_PATTERN = /\bthen\s+(?:the\s+)?[a-z]+\b/i;
+const SEQUENCED_DOOM_EFFECT_PATTERN = /\bthen\s+(.+?)(?=$|[.!?;])/gi;
+
+function hasUnpublishedSequencedDoomEffect(clause: string): boolean {
+  return Array.from(clause.matchAll(SEQUENCED_DOOM_EFFECT_PATTERN)).some(
+    ([, effect]) =>
+      !DOOM_SPEND_INTENT_PATTERN.test(effect) ||
+      !PUBLISHED_DOOM_SPEND_PATTERN.test(effect),
+  );
+}
 
 /**
  * Returns true only when `doomNotes` establishes the published encounter-level
@@ -55,7 +63,7 @@ export function isPublishedBfrdDoomGuidance(doomNotes: string): boolean {
       (!PUBLISHED_DOOM_SPEND_PATTERN.test(clause) ||
         NON_PUBLISHED_DOOM_SPEND_PATTERN.test(clause) ||
         UNRECOGNIZED_DOOM_SPEND_PATTERN.test(clause) ||
-        SEQUENCED_DOOM_EFFECT_PATTERN.test(clause)),
+        hasUnpublishedSequencedDoomEffect(clause)),
   );
 }
 
