@@ -9,7 +9,7 @@
   import { guestChatStore } from "$lib/stores/guest-chat.svelte";
   import { proposerStore } from "$lib/stores/proposer.svelte";
   import { tick } from "svelte";
-  import { systemClock } from "$lib/utils/runtime-deps";
+  import { systemClock, type Clock } from "$lib/utils/runtime-deps";
   import { characterChatExportService } from "$lib/services/character-chat-export";
   import CharacterChat from "./CharacterChat.svelte";
   import GuestChatSettings from "./GuestChatSettings.svelte";
@@ -20,12 +20,14 @@
     editContent = "",
     editLore = $bindable(),
     editGuestChatConfig = $bindable(),
+    clock = systemClock,
   } = $props<{
     entity: Entity;
     isEditing?: boolean;
     editContent?: string;
     editLore?: string;
     editGuestChatConfig?: GuestChatConfig;
+    clock?: Clock;
   }>();
 
   // Host state
@@ -151,7 +153,7 @@
     const msg = transcript.messages.find((m) => m.id === messageId);
     if (msg) {
       msg.content = messageEditContent.trim();
-      transcript.lastUpdated = systemClock.now();
+      transcript.lastUpdated = clock.now();
       await vault.saveTranscript(transcript);
       await loadHostTranscripts();
     }
@@ -166,7 +168,7 @@
       transcript.messages = transcript.messages.filter(
         (m) => m.id !== messageId,
       );
-      transcript.lastUpdated = systemClock.now();
+      transcript.lastUpdated = clock.now();
       await vault.saveTranscript(transcript);
       await loadHostTranscripts();
     }
