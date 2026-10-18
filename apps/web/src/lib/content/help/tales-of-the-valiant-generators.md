@@ -25,7 +25,7 @@ Codex Cryptica supports generating non-player characters, monsters, and magic it
 
 ### Selecting Tales of the Valiant
 
-Vault-wide system profile selection is not currently available. On a campaign generator or public generator page, select **Tales of the Valiant** from the **Game System** option when it is available.
+If your vault's game system is set to Tales of the Valiant (**Settings → Vault → Game System**), campaign generators start with **Tales of the Valiant** in their **Game System** option. Otherwise, or on a public generator page, which has no vault, select **Tales of the Valiant** from the **Game System** option when it is available.
 
 ### Supported Generators
 

@@ -40,35 +40,29 @@ describe("help registry against the real in-app help articles", () => {
     expect(tovArticle?.content).toContain("Doom");
   });
 
-  it("states the current ToV profile, import, and Luck reset limitations", () => {
-    const tovArticle = articles.find((a) => a.id === "tales-of-the-valiant");
-    expect(tovArticle?.content).toContain(
-      "Vault-wide system profile selection is not currently available",
-    );
-    expect(tovArticle?.content).toContain(
-      "does not currently import ToV character JSON",
-    );
-    expect(tovArticle?.content).toContain(
+  const contentOf = (id: string) =>
+    articles.find((a) => a.id === id)?.content ?? "";
+
+  it("documents the vault game system setting and the import and Luck reset limitations", () => {
+    const content = contentOf("tales-of-the-valiant");
+    expect(content).toContain("Settings → Vault → Game System");
+    expect(content).toContain("Nothing already in the vault changes");
+    expect(content).toContain("does not currently import ToV character JSON");
+    expect(content).toContain(
       "BFRD Luck rules do not prescribe a Long Rest reset",
     );
-    expect(tovArticle?.content).not.toContain("RPG System Profile");
-    expect(tovArticle?.content).not.toContain(
+    expect(content).not.toContain("RPG System Profile");
+    expect(content).not.toContain(
       "automatically detects the Black Flag schema",
     );
+  });
 
-    const tovGeneratorArticle = articles.find(
-      (a) => a.id === "tales-of-the-valiant-generators",
-    );
-    expect(tovGeneratorArticle).toBeDefined();
-    expect(tovGeneratorArticle?.content).toContain(
-      "Vault-wide system profile selection is not currently available",
-    );
-    expect(tovGeneratorArticle?.content).not.toContain(
-      "Vault Profile Inheritance",
-    );
-    expect(tovGeneratorArticle?.content).not.toContain(
-      "generators automatically pre-select",
-    );
+  it("explains where the ToV generator default comes from", () => {
+    const content = contentOf("tales-of-the-valiant-generators");
+    expect(content).toContain("Settings → Vault → Game System");
+    expect(content).toContain("public generator page, which has no vault");
+    expect(content).not.toContain("Vault Profile Inheritance");
+    expect(content).not.toContain("generators automatically pre-select");
   });
 
   it("would catch a removed article", () => {

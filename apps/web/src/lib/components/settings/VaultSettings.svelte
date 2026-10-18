@@ -9,6 +9,7 @@
   import CloudDestinationSettings from "./CloudDestinationSettings.svelte";
   import VaultBackupSettings from "./VaultBackupSettings.svelte";
   import CalendarEraSettings from "./CalendarEraSettings.svelte";
+  import GameSystemSettings from "./GameSystemSettings.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
@@ -192,6 +193,18 @@
     <!-- Portable Backup (works in every browser) -->
     <div>
       <VaultBackupSettings />
+    </div>
+  {/if}
+
+  <!-- Game System: vault-wide rules profile (#3943). Demo vaults are transient. -->
+  {#if !sessionModeStore.isDemoMode}
+    <div>
+      <h3
+        class="text-base font-bold text-theme-primary uppercase font-header tracking-widest mb-4"
+      >
+        Game System
+      </h3>
+      <GameSystemSettings />
     </div>
   {/if}
 
