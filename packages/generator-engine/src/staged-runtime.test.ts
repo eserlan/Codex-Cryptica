@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  askChecked,
   askJson,
   askModel,
   isAbort,
@@ -128,6 +129,103 @@ describe("askModel", () => {
       ),
     ).rejects.toThrow();
     expect(calls).toBe(0);
+  });
+});
+
+describe("askChecked", () => {
+  type Draft = { n: number };
+  const check = (d: Draft) => ({
+    hard: d.n < 0 ? ["negative"] : [],
+    soft: d.n % 2 ? ["odd"] : [],
+  });
+  const scripted = (replies: string[]) => {
+    const seen: { attempt: number; problems: string[]; previous: unknown }[] =
+      [];
+    const send = async (f: (typeof seen)[number]) => {
+      seen.push(f);
+      return replies[f.attempt];
+    };
+    return { send, seen };
+  };
+
+  it("returns a clean first draft without retrying", async () => {
+    const { send, seen } = scripted(['{"n": 2}']);
+    const result = await askChecked(send, readJsonObject, (d) =>
+      check(d as Draft),
+    );
+    expect(result).toEqual({ data: { n: 2 }, soft: [], retried: false });
+    expect(seen).toHaveLength(1);
+    expect(seen[0].problems).toEqual([]);
+  });
+
+  it("retries with the problems and the previous draft named", async () => {
+    const { send, seen } = scripted(['{"n": -2}', '{"n": 4}']);
+    const result = await askChecked(send, readJsonObject, (d) =>
+      check(d as Draft),
+    );
+    expect(result).toEqual({ data: { n: 4 }, soft: [], retried: true });
+    expect(seen[1]).toEqual({
+      attempt: 1,
+      problems: ["negative"],
+      previous: { n: -2 },
+    });
+  });
+
+  it("keeps a usable draft when the retry is worse", async () => {
+    const { send } = scripted(['{"n": 3}', "garbage"]);
+    const result = await askChecked(send, readJsonObject, (d) =>
+      check(d as Draft),
+    );
+    expect(result).toEqual({ data: { n: 3 }, soft: ["odd"], retried: true });
+  });
+
+  it("names an unreadable reply and keeps the last readable draft as previous", async () => {
+    const { send, seen } = scripted(['{"n": -2}', "garbage", '{"n": 6}']);
+    const result = await askChecked(
+      send,
+      readJsonObject,
+      (d) => check(d as Draft),
+      { attempts: 3, unreadable: "not JSON" },
+    );
+    expect(result?.data).toEqual({ n: 6 });
+    expect(seen[2]).toEqual({
+      attempt: 2,
+      problems: ["not JSON"],
+      previous: { n: -2 },
+    });
+  });
+
+  it("resolves null when no draft is usable", async () => {
+    const { send } = scripted(['{"n": -1}', "garbage"]);
+    expect(
+      await askChecked(send, readJsonObject, (d) => check(d as Draft)),
+    ).toBeNull();
+  });
+
+  it("treats a failed call as unreadable but propagates cancellation", async () => {
+    let calls = 0;
+    const flaky = await askChecked(
+      async () => {
+        if (calls++ === 0) throw new Error("network");
+        return '{"n": 2}';
+      },
+      readJsonObject,
+      (d) => check(d as Draft),
+    );
+    expect(flaky).toEqual({ data: { n: 2 }, soft: [], retried: true });
+
+    const controller = new AbortController();
+    await expect(
+      askChecked(
+        async () => {
+          controller.abort();
+          return '{"n": 1}';
+        },
+        readJsonObject,
+        (d) => check(d as Draft),
+        { signal: controller.signal },
+      ),
+    ).rejects.toThrow();
   });
 });
 

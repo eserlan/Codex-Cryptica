@@ -27,8 +27,10 @@ import {
 import { parseFencedJson } from "./llm-response-utils";
 import { StagedProgress, type StagedProgressStep } from "./staged-progress";
 import {
-  askJson,
+  askChecked,
   askModel,
+  type CheckedDraft,
+  type DraftCheck,
   isAbort,
   readJsonObject,
   throwIfAborted,
@@ -92,12 +94,7 @@ export interface DungeonStagedResult {
 }
 
 type Json = Record<string, unknown>;
-export interface StageCheck {
-  /** Break the shape; the stage's output cannot be used. */
-  hard: string[];
-  /** Coherence doubts; the output is usable but worth another look. */
-  soft: string[];
-}
+export type StageCheck = DraftCheck;
 
 const rec = (v: unknown): Json =>
   v && typeof v === "object" && !Array.isArray(v) ? (v as Json) : {};
@@ -779,81 +776,38 @@ interface RunState {
   progress: StagedProgress<ProgressId>;
 }
 
-interface StageOutcome {
-  data: Json;
-  soft: string[];
-}
-
-const NOT_JSON: StageCheck = {
-  hard: ["the response was not a valid JSON object"],
-  soft: [],
-};
-
-/** One attempt at a stage, counted and shown as active. */
-async function attemptStage(
-  deps: DungeonStagedDeps,
-  { stats, progress }: RunState,
-  id: DungeonStageId,
-  system: string,
-  message: string,
-  retry: boolean,
-): Promise<Json | null> {
-  throwIfAborted(deps.signal);
-  progress.set(id, "active", retry ? FIXING : undefined);
-  stats.aiCalls++;
-  return askJson(() => deps.complete(system, message), {
-    signal: deps.signal,
-  });
-}
-
-function finishStage(
-  { stats, progress }: RunState,
-  id: DungeonStageId,
-  outcome: StageOutcome,
-  repaired: boolean,
-): StageOutcome {
-  if (repaired) stats.repairedStages.push(id);
-  progress.set(id, "done");
-  return outcome;
-}
+type StageOutcome = CheckedDraft<Json>;
 
 /**
- * Ask for one stage, with one targeted retry. A draft with no hard problems is
- * kept, so a failing retry falls back to it instead of discarding the stage.
+ * Ask for one stage, with one targeted retry that names the problems. A draft
+ * with no hard problems is kept, so a failing retry falls back to it instead
+ * of discarding the stage.
  */
 async function runStage(
   deps: DungeonStagedDeps,
-  run: RunState,
+  { stats, progress }: RunState,
   id: DungeonStageId,
   system: string,
   message: string,
   check: (data: Json) => StageCheck,
 ): Promise<StageOutcome | null> {
-  let problems: string[] = [];
-  let previous: Json | null = null;
-  let best: StageOutcome | null = null;
-  for (let attempt = 0; attempt < 2; attempt++) {
-    const data = await attemptStage(
-      deps,
-      run,
-      id,
-      system,
-      withProblems(message, problems, previous),
-      attempt > 0,
-    );
-    const result = data ? check(data) : NOT_JSON;
-    if (data && result.hard.length === 0) {
-      best = { data, soft: result.soft };
-      if (result.soft.length === 0) {
-        return finishStage(run, id, best, attempt > 0);
-      }
-    }
-    problems = [...result.hard, ...result.soft];
-    previous = data ?? previous;
+  const outcome = await askChecked(
+    ({ attempt, problems, previous }) => {
+      progress.set(id, "active", attempt > 0 ? FIXING : undefined);
+      stats.aiCalls++;
+      return deps.complete(system, withProblems(message, problems, previous));
+    },
+    readJsonObject,
+    check,
+    { signal: deps.signal },
+  );
+  if (!outcome) {
+    progress.abandon(id, ONE_PASS);
+    return null;
   }
-  if (best) return finishStage(run, id, best, true);
-  run.progress.abandon(id, ONE_PASS);
-  return null;
+  if (outcome.retried) stats.repairedStages.push(id);
+  progress.set(id, "done");
+  return outcome;
 }
 
 function sectorsFrom(
