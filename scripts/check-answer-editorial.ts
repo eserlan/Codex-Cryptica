@@ -50,17 +50,6 @@ export const COMPETITOR_DOMAINS: readonly string[] = [
   "obsidianportal.com",
 ];
 
-/**
- * Official product documentation and catalogue entries that can verify a
- * named tool's mechanics. Product homepages, packages and marketing pages
- * remain disallowed. Keep this list to direct reference pages only.
- */
-export const APPROVED_COMPETITOR_REFERENCE_URLS: readonly string[] = [
-  "https://foundryvtt.com/article/combat",
-  "https://foundryvtt.com/article/tokens",
-  "https://extensions.owlbear.rodeo/clash",
-];
-
 export type EditorialRule =
   | "prohibited-dash"
   | "emoji"
@@ -303,21 +292,11 @@ export function competitorOf(url: string): string | undefined {
   );
 }
 
-function isApprovedCompetitorReference(url: string): boolean {
-  try {
-    const parsed = new URL(url.startsWith("//") ? `https:${url}` : url);
-    const normalized = `${parsed.origin}${parsed.pathname.replace(/\/+$/, "")}`;
-    return APPROVED_COMPETITOR_REFERENCE_URLS.includes(normalized);
-  } catch {
-    return false;
-  }
-}
-
 function checkCompetitorLinks(answer: AnswerConfigInput): EditorialFinding[] {
   return collectAllStrings(answer).flatMap(({ field, value }) =>
     Array.from(value.matchAll(URL_IN_TEXT)).flatMap((match) => {
       const competitor = competitorOf(match[1]);
-      if (!competitor || isApprovedCompetitorReference(match[1])) return [];
+      if (!competitor) return [];
       return [
         {
           rule: "competitor-link" as const,

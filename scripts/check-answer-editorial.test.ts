@@ -434,6 +434,33 @@ describe("competitor links", () => {
     ]);
   });
 
+  test("flags the formerly approved Foundry and Owlbear URLs in prose and hrefs", () => {
+    for (const url of [
+      "https://foundryvtt.com/article/tokens/",
+      "https://extensions.owlbear.rodeo/clash",
+    ]) {
+      const proseFindings = competitorFindings(withProse(`See ${url}.`));
+      expect(proseFindings).toHaveLength(1);
+      expect(proseFindings[0]).toMatchObject({
+        rule: "competitor-link",
+        field: "sections[0].paragraphs[0]",
+      });
+
+      const hrefFindings = competitorFindings(
+        cleanAnswer({
+          systemsThatSupportThis: [
+            { system: "Example", rationale: "Example system.", href: url },
+          ],
+        } as Partial<AnswerConfigInput>),
+      );
+      expect(hrefFindings).toHaveLength(1);
+      expect(hrefFindings[0]).toMatchObject({
+        rule: "competitor-link",
+        field: "systemsThatSupportThis[0].href",
+      });
+    }
+  });
+
   test("matches subdomains and ignores case, not look-alike hosts", () => {
     expect(competitorOf("https://app.WorldAnvil.com/x")).toBe("worldanvil.com");
     expect(competitorOf("https://notfoundryvtt.com/x")).toBeUndefined();
@@ -491,21 +518,6 @@ describe("competitor links", () => {
     ).toEqual([]);
   });
 
-  test("allows direct official VTT documentation and catalogue references", () => {
-    expect(
-      competitorFindings(
-        withProse(
-          "See [Foundry token configuration](https://foundryvtt.com/article/tokens/) and the [Clash catalogue entry](https://extensions.owlbear.rodeo/clash).",
-        ),
-      ),
-    ).toEqual([]);
-    expect(
-      competitorFindings(
-        withProse("See [Foundry](https://foundryvtt.com/) for details."),
-      ),
-    ).toHaveLength(1);
-  });
-
   test("covers the virtual tabletops and campaign managers it names", () => {
     for (const domain of COMPETITOR_DOMAINS) {
       expect(competitorOf(`https://${domain}/page`)).toBe(domain);
@@ -513,7 +525,7 @@ describe("competitor links", () => {
     expect(COMPETITOR_DOMAINS).toContain("foundryvtt.com");
   });
 
-  test("no published answer links to a competitor product page", () => {
+  test("no published answer links to a competitor", () => {
     const offenders = Object.values(answers).flatMap((answer) =>
       competitorFindings(answer as AnswerConfigInput).map(
         (finding) => `${finding.slug}: ${finding.field}`,
