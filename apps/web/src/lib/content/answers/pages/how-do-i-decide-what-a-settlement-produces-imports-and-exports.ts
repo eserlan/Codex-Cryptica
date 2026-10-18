@@ -171,6 +171,7 @@ export const howDoIDecideWhatASettlementProducesImportsAndExports: AnswerConfigI
       "how-do-i-give-different-civilisations-distinct-strengths-and-weaknesses",
       "how-do-i-create-interesting-islands-and-ports-for-a-pirate-campaign",
       "how-should-a-fantasy-adventuring-guild-handle-wages-dues-and-shared-expenses",
+      "how-do-i-design-a-geographically-realistic-town-or-village",
     ],
     discovery: {
       id: "answer-settlement-production-imports-exports",

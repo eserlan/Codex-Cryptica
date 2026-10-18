@@ -171,6 +171,7 @@ export const whatShouldAnRpgSettlementContain: AnswerConfigInput = {
     "how-do-i-run-ship-to-ship-combat-without-sidelining-the-party",
     "how-do-i-make-sea-travel-interesting-in-a-ttrpg",
     "how-do-i-run-a-pirate-campaign-focused-on-exploration",
+    "how-do-i-design-a-geographically-realistic-town-or-village",
   ],
   discovery: {
     id: "answer-settlement-contents",
