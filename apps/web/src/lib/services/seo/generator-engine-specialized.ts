@@ -3,6 +3,7 @@ import {
   buildDungeonRetryMessage,
   parseDungeonResponseDetailed,
   generateDungeonLocal,
+  generateDungeonStaged,
   buildAdventurePrompt,
   buildAdventureRetryMessage,
   parseAdventureResponseDetailed,
@@ -94,9 +95,14 @@ function recordTomeHistory(
 export class GeneratorEngineSpecialized extends GeneratorEngineWorldbuilding {
   /** Dungeon & Delve generation delegates to the generator-engine package. */
   async generateDungeon(
-    options: DungeonGeneratorOptions & { useAI?: boolean } = {},
+    options: DungeonGeneratorOptions & {
+      useAI?: boolean;
+      /** Staged generation is the default; `false` forces the one-pass route. */
+      staged?: boolean;
+      signal?: AbortSignal;
+    } = {},
   ): Promise<GeneratorOutput> {
-    const { useAI, ...dungeonOptions } = options;
+    const { useAI, staged = true, signal, ...dungeonOptions } = options;
     return this.runWithAIFallback(
       useAI,
       async () => {
@@ -108,12 +114,28 @@ export class GeneratorEngineSpecialized extends GeneratorEngineWorldbuilding {
           "dungeon",
           summarizeResolvedInputs(resolved),
         );
-        const text = await this.runModel(systemInstruction, userMessage);
+        if (staged) {
+          const result = await generateDungeonStaged(resolved, dungeonOptions, {
+            complete: (instruction, message) =>
+              this.runModel(instruction, message, undefined, true, signal),
+            signal,
+          });
+          if (result) return result.output;
+          // An unusable stage falls through to the one-pass route below.
+        }
+        const text = await this.runModel(
+          systemInstruction,
+          userMessage,
+          undefined,
+          true,
+          signal,
+        );
         return runWithSingleRepair(
           text,
           systemInstruction,
           userMessage,
-          (instruction, message) => this.runModel(instruction, message),
+          (instruction, message) =>
+            this.runModel(instruction, message, undefined, true, signal),
           buildDungeonRetryMessage,
           (response) =>
             parseDungeonResponseDetailed(
