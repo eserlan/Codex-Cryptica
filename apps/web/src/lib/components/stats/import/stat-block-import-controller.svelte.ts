@@ -352,15 +352,19 @@ export class StatBlockImportController {
         labels,
         ...(content !== undefined ? { content } : {}),
       });
-      this.finishTargetWrite(updated);
+      this.finishTargetWrite(updated, target);
       return;
     }
 
     await this.writeNewEntity(result, statSheet, labels, content);
   }
 
-  private finishTargetWrite(updated: unknown): void {
+  private finishTargetWrite(updated: unknown, target: Entity): void {
     if (updated === false) {
+      // Keep this import tied to the entity it started updating. The live
+      // target can disappear while the update is pending; without the pinned
+      // target, a retry could treat the import as a new-entity save.
+      this.targetOverride = target;
       this.step = "review";
       this.error =
         "This entity no longer exists. Close this dialog and reopen the import.";

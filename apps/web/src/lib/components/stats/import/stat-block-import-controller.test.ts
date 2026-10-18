@@ -191,6 +191,28 @@ describe("StatBlockImportController: saving to an existing entity", () => {
     expect(controller.error).toMatch(/entity no longer exists/i);
   });
 
+  it("does not create a new entity when the target disappears during a failed update", async () => {
+    let currentTarget: Entity | null = entity();
+    const deps = makeDeps({
+      targetEntity: () => currentTarget,
+      updateEntity: vi.fn(async () => {
+        currentTarget = null;
+        return false;
+      }),
+    });
+    const controller = await readAndReview(deps);
+
+    await controller.save();
+    expect(controller.step).toBe("review");
+    expect(controller.error).toMatch(/entity no longer exists/i);
+    expect(currentTarget).toBeNull();
+
+    await controller.save();
+
+    expect(deps.updateEntity).toHaveBeenCalledTimes(2);
+    expect(deps.createEntity).not.toHaveBeenCalled();
+  });
+
   it("asks first when existing values would be overwritten, and writes only after confirm", async () => {
     const deps = makeDeps({
       targetEntity: () =>
