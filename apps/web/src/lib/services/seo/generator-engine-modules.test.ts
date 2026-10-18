@@ -208,9 +208,9 @@ describe("generator engine modules", () => {
             description: "d",
             stockDetail: `idol ${i + 1}`,
           })),
-          hazards: ["steam"],
-          treasures: ["signet"],
-          hooks: ["bounty"],
+          hazards: ["steam", "a tilted floor"],
+          treasures: ["signet", "a maker's mark"],
+          hooks: ["bounty", "a missing salvage crew"],
         };
       }
       const faction = (name: string, id: string, goal: string) => ({

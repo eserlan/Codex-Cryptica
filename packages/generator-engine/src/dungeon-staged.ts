@@ -140,6 +140,17 @@ export function checkFoundation(
   return { hard, soft: [] };
 }
 
+function sectorListCountIssues(data: Json): string[] {
+  const issues: string[] = [];
+  for (const key of ["hazards", "treasures", "hooks"] as const) {
+    const count = textList(data[key]).length;
+    if (count < 2 || count > 3) {
+      issues.push(`${key} must contain 2–3 entries, got ${count}`);
+    }
+  }
+  return issues;
+}
+
 export function checkSectors(
   data: Json,
   resolved: ResolvedDungeon,
@@ -176,9 +187,7 @@ export function checkSectors(
       );
     }
   }
-  for (const k of ["hazards", "treasures", "hooks"] as const) {
-    if (textList(data[k]).length === 0) hard.push(`${k} is empty`);
-  }
+  hard.push(...sectorListCountIssues(data));
   return { hard, soft: [] };
 }
 

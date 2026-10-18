@@ -40,9 +40,9 @@ function sectors(resolved: ResolvedDungeon) {
       stockType: "Trap",
       stockDetail: `Unique brass idol number ${i + 1}`,
     })),
-    hazards: ["Scalding steam vents"],
-    treasures: ["A glassblower's signet"],
-    hooks: ["A guild offers a bounty"],
+    hazards: ["Scalding steam vents", "A floor that tilts toward the furnace"],
+    treasures: ["A glassblower's signet", "A map etched into a brass plate"],
+    hooks: ["A guild offers a bounty", "A salvage crew asks for help"],
   };
 }
 
@@ -304,6 +304,32 @@ describe("generateDungeonStaged", () => {
 });
 
 describe("stage checks", () => {
+  it("accepts 2–3 hazards, treasures and hooks", () => {
+    const resolved = setup();
+    const data = sectors(resolved);
+    expect(checkSectors(data, resolved).hard).toEqual([]);
+
+    for (const key of ["hazards", "treasures", "hooks"] as const) {
+      const threeEntries = { ...data, [key]: [...data[key], "A third entry"] };
+      expect(checkSectors(threeEntries, resolved).hard).toEqual([]);
+    }
+  });
+
+  it("rejects fewer than 2 or more than 3 hazards, treasures and hooks", () => {
+    const resolved = setup();
+    const data = sectors(resolved);
+
+    for (const key of ["hazards", "treasures", "hooks"] as const) {
+      for (const count of [1, 4]) {
+        const entries = [...data[key], "Third entry", "Fourth entry"];
+        const invalidCount = { ...data, [key]: entries.slice(0, count) };
+        expect(checkSectors(invalidCount, resolved).hard).toContain(
+          `${key} must contain 2–3 entries, got ${count}`,
+        );
+      }
+    }
+  });
+
   it("flags sector ids that are out of order or invalid", () => {
     const resolved = setup();
     const data = sectors(resolved);
