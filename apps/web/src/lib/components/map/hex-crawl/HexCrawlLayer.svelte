@@ -181,7 +181,7 @@
   />
 
   <div
-    class="pointer-events-auto absolute left-2 top-2 z-20 flex flex-wrap items-center gap-2"
+    class="pointer-events-auto absolute left-4 top-14 z-20 flex flex-wrap items-center gap-2"
   >
     <HexGoTo {labelConfig} {orientation} onGo={goTo} />
     <HexCrawlDisplayToggle
