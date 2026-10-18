@@ -42,6 +42,16 @@ vi.mock("$lib/stores/entity-templates/entity-template-store.svelte", () => ({
   entityTemplateStore: mockEntityTemplateStore,
 }));
 
+const profile = vi.hoisted(() => ({ isTalesOfTheValiant: false }));
+
+vi.mock("$lib/stores/system-profile.svelte", () => ({
+  systemProfileStore: {
+    get isTalesOfTheValiant() {
+      return profile.isTalesOfTheValiant;
+    },
+  },
+}));
+
 vi.mock("$lib/stores/categories.svelte", () => ({
   categories: { list: [{ id: "character", label: "Character" }] },
 }));
@@ -84,6 +94,7 @@ vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
     showVaultSwitcher: false,
     openVaultSwitcher: vi.fn(),
     openGeneratorWorkflow: vi.fn(),
+    openStatBlockImport: vi.fn(),
     openShare: vi.fn(),
   },
 }));
@@ -188,5 +199,26 @@ describe("VaultControls", () => {
       null,
       { templateId: "tmpl-char-operative" },
     );
+  });
+});
+
+describe("VaultControls: stat block import entry point", () => {
+  beforeEach(() => {
+    guidedModeStore.setGuidedMode(false);
+    profile.isTalesOfTheValiant = false;
+  });
+
+  it("offers FROM STAT BLOCK in a ToV vault and opens the import", async () => {
+    profile.isTalesOfTheValiant = true;
+    modalUIStore.pendingCreateEntity = true;
+    render(VaultControls);
+    await fireEvent.click(screen.getByTestId("new-entity-from-stat-block"));
+    expect(modalUIStore.openStatBlockImport).toHaveBeenCalledWith({});
+  });
+
+  it("does not offer FROM STAT BLOCK in other vaults", () => {
+    modalUIStore.pendingCreateEntity = true;
+    render(VaultControls);
+    expect(screen.queryByTestId("new-entity-from-stat-block")).toBeNull();
   });
 });

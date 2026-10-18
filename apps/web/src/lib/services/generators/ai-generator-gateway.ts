@@ -82,10 +82,13 @@ export class ProxyAIGeneratorGateway implements AIGeneratorGateway {
     // lore from truncating, modest temperature keeps output creative but
     // coherent, and JSON mode reduces parse failures. (Passed as a full request
     // object so generationConfig reaches both the proxy and direct-key paths.)
-    const response = await model.generateContent({
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-      generationConfig,
-    });
+    const response = await model.generateContent(
+      {
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        generationConfig,
+      },
+      options?.signal ? { signal: options.signal } : undefined,
+    );
     // Salvage the JSON object even if the model appends trailing garbage (a
     // known degenerate-repetition failure mode) — JSON mode isn't reliably
     // enforced through the proxy.

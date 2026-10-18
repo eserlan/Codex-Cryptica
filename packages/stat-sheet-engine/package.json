@@ -11,9 +11,11 @@
     "lint": "eslint \"src/**/*.ts\""
   },
   "dependencies": {
+    "@codex/runtime": "workspace:*",
+    "dice-engine": "workspace:*",
+    "marked": "^18.0.4",
     "schema": "workspace:*",
-    "zod": "^4.4.3",
-    "marked": "^18.0.4"
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^5.0.0",

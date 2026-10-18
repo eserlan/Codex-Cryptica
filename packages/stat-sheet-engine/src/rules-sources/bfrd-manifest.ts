@@ -30,7 +30,7 @@ export const BFRD_MANIFEST: RulesSourceManifest = {
   contentBoundaries:
     "Only open game mechanics, terms, tables, and reference structures released in the Black Flag Reference Document under CC BY 4.0 are utilized. Proprietary setting lore (such as the Midgard Campaign Setting, Southlands, or Margreve), proprietary campaign books, commercial adventures, and commercial artwork/illustrations are strictly excluded.",
   aiUsageGuardrails:
-    "Oracle references and AI prompt grounding are strictly limited to open BFRD mechanics under CC BY 4.0. No scraping, ingesting, or redistributing of proprietary book text or commercial supplements is allowed. Product-level guidance for Codex Cryptica remains the exclusive domain of Cif.",
+    "Codex Cryptica's own AI prompts, prompt grounding and bundled content are strictly limited to open BFRD mechanics under CC BY 4.0. No scraping, ingesting, or redistributing of proprietary book text or commercial supplements is allowed in those prompts, bundled content or public pages. Stat block import may send text a user pastes into their own vault to the AI for a single read for their own use: that text is not stored by the request, not reused to ground other requests, and not shared or published by Codex Cryptica. Product-level guidance for Codex Cryptica remains the exclusive domain of Cif.",
 };
 
 // Validate at module load to ensure configuration integrity

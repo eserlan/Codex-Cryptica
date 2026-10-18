@@ -216,6 +216,23 @@ describe("ModalUIStore", () => {
     expect(store.showIntentCreateMenu).toBe(false);
   });
 
+  it("reports the open state of overlay and panel dialogs", () => {
+    const store = new ModalUIStore();
+    expect(store.overlayDialogOpen).toBe(false);
+    expect(store.panelDialogOpen).toBe(false);
+
+    store.openSettings();
+    expect(store.overlayDialogOpen).toBe(true);
+    expect(store.panelDialogOpen).toBe(false);
+    store.closeSettings();
+
+    store.openStatBlockImport({});
+    expect(store.overlayDialogOpen).toBe(false);
+    expect(store.panelDialogOpen).toBe(true);
+    store.closeStatBlockImport();
+    expect(store.isAnyModalOpen).toBe(false);
+  });
+
   it("does not open generator entry points while the vault is loading", () => {
     const store = new ModalUIStore();
     vault.status = "loading";
@@ -343,5 +360,67 @@ describe("ModalUIStore", () => {
       vaultId: null,
     });
     expect(store.isAnyModalOpen).toBe(false);
+  });
+});
+
+describe("ModalUIStore: stat block import", () => {
+  it("starts closed and opens for a target entity", () => {
+    const store = new ModalUIStore();
+    expect(store.statBlockImport).toEqual({ open: false, entityId: null });
+    store.openStatBlockImport({ entityId: "goblin-1" });
+    expect(store.statBlockImport).toEqual({ open: true, entityId: "goblin-1" });
+    expect(store.isAnyModalOpen).toBe(true);
+  });
+
+  it("opens for a new entity when no target is given, and closes again", () => {
+    const store = new ModalUIStore();
+    store.openStatBlockImport();
+    expect(store.statBlockImport).toEqual({ open: true, entityId: null });
+    store.closeStatBlockImport();
+    expect(store.statBlockImport.open).toBe(false);
+    expect(store.isAnyModalOpen).toBe(false);
+  });
+});
+
+describe("ModalUIStore: any open modal counts as open", () => {
+  it("reports open for each overlay and panel flag in turn", () => {
+    const flags = [
+      "showMobileCreateSheet",
+      "showSettings",
+      "showZenMode",
+      "showDiceModal",
+      "showCanvasSelector",
+      "showVaultSwitcher",
+      "showShare",
+      "showIntentCreateMenu",
+      "showQuickStartModal",
+      "showZenMode",
+    ] as const;
+    for (const flag of flags) {
+      const store = new ModalUIStore();
+      (store as unknown as Record<string, boolean>)[flag] = true;
+      expect(store.isAnyModalOpen, flag).toBe(true);
+    }
+    const dialogs = [
+      ["mergeDialog", { open: true, sourceIds: [] }],
+      ["bulkLabelDialog", { open: true, entityIds: [] }],
+      ["relatedEntityDialog", { open: true, sourceEntityId: "e" }],
+      ["parentPickerDialog", { open: true }],
+      ["vaultThemePrompt", { open: true }],
+      ["imagePromptReview", { open: true }],
+      ["revisionDialog", { open: true }],
+      ["generatorWorkflow", { open: true }],
+      ["statBlockImport", { open: true, entityId: null }],
+      ["silhouettePickerState", { open: true }],
+    ] as const;
+    for (const [flag, value] of dialogs) {
+      const store = new ModalUIStore();
+      (store as unknown as Record<string, unknown>)[flag] = value;
+      expect(store.isAnyModalOpen, flag).toBe(true);
+    }
+  });
+
+  it("reports closed when nothing is open", () => {
+    expect(new ModalUIStore().isAnyModalOpen).toBe(false);
   });
 });
