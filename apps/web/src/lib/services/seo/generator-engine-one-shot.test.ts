@@ -139,8 +139,15 @@ describe("DefaultGeneratorEngine staged one-shot", () => {
     const onProgress = vi.fn();
     const e = new DefaultGeneratorEngine(stagedModel().client as never);
     await e.generateOneShot({ ...stagedOptions, useAI: true, onProgress });
-    const first = onProgress.mock.calls[0][0];
-    expect(first[0]).toMatchObject({ id: "core", status: "active" });
+    const first = onProgress.mock.calls[0]![0];
+    expect(first).toHaveLength(6);
+    expect(
+      first.every((step: { status: string }) => step.status === "pending"),
+    ).toBe(true);
+    const active = onProgress.mock.calls
+      .map(([steps]) => steps)
+      .find((steps) => steps[0]?.id === "core" && steps[0].status === "active");
+    expect(active?.[0]).toMatchObject({ id: "core", status: "active" });
     const last = onProgress.mock.calls.at(-1)![0];
     expect(last.every((s: { status: string }) => s.status === "done")).toBe(
       true,

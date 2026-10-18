@@ -1,15 +1,39 @@
-import type { OneShotProgressStep, OneShotStepStatus } from "./one-shot-staged";
+export type StagedStepStatus =
+  "pending" | "active" | "done" | "fallback" | "skipped";
+
+/** Every step id a staged generator can report to the page. */
+export type StagedStepId =
+  // One-shot stages (one-shot-staged.ts); point crawl reuses three of them.
+  | "core"
+  | "structure"
+  | "finale"
+  | "scenes"
+  | "npcs"
+  | "review"
+  // Dungeon & Delve stages (dungeon-staged.ts).
+  | "foundation"
+  | "sectors"
+  | "factions"
+  | "coherence";
+
+export interface StagedProgressStep {
+  id: StagedStepId;
+  label: string;
+  status: StagedStepStatus;
+  /** e.g. "3 of 5" while scenes are being written. */
+  detail?: string;
+}
 
 /**
  * The live step list a staged generator reports to the page. Emits a copy of
  * every step on each change, starting with all of them pending.
  */
-export class StagedProgress<Id extends OneShotProgressStep["id"]> {
-  private steps: OneShotProgressStep[];
+export class StagedProgress<Id extends StagedStepId> {
+  private steps: StagedProgressStep[];
 
   constructor(
     steps: ReadonlyArray<{ id: Id; label: string }>,
-    private emit?: (steps: OneShotProgressStep[]) => void,
+    private emit?: (steps: StagedProgressStep[]) => void,
   ) {
     this.steps = steps.map(({ id, label }) => ({
       id,
@@ -19,7 +43,7 @@ export class StagedProgress<Id extends OneShotProgressStep["id"]> {
     this.publish();
   }
 
-  set(id: Id, status: OneShotStepStatus, detail?: string): void {
+  set(id: Id, status: StagedStepStatus, detail?: string): void {
     this.steps = this.steps.map((s) =>
       s.id === id ? { ...s, status, detail } : s,
     );

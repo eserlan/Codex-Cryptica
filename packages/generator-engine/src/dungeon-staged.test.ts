@@ -8,7 +8,7 @@ import {
   generateDungeonStaged,
 } from "./dungeon-staged";
 import { buildDungeonPrompt, type ResolvedDungeon } from "./public-dungeon";
-import type { OneShotProgressStep } from "./one-shot-staged";
+import type { StagedProgressStep } from "./staged-progress";
 
 const OPTIONS = { genre: "Classic Fantasy", scale: "Sprawling" };
 
@@ -311,7 +311,7 @@ describe("generateDungeonStaged", () => {
       sectors: (n) => (n === 0 ? "not json" : sectors(resolved)),
       factions: () => factions(resolved),
     });
-    const updates: OneShotProgressStep[][] = [];
+    const updates: StagedProgressStep[][] = [];
     await generateDungeonStaged(resolved, OPTIONS, {
       complete: s.complete,
       onProgress: (steps) => updates.push(steps),
@@ -335,7 +335,7 @@ describe("generateDungeonStaged", () => {
   it("marks the failed stage and skips the rest when it gives up", async () => {
     const resolved = setup();
     const s = script({ foundation: () => foundation(resolved) });
-    const updates: OneShotProgressStep[][] = [];
+    const updates: StagedProgressStep[][] = [];
     const result = await generateDungeonStaged(resolved, OPTIONS, {
       complete: s.complete,
       onProgress: (steps) => updates.push(steps),
