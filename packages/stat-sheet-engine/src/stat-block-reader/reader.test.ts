@@ -89,15 +89,10 @@ describe("readStatBlockWithAi", () => {
     expect((error as StatBlockReadError).reason).toBe("gateway");
   });
 
-  it("aborts after 30 seconds and reports a timeout", async () => {
+  it("returns a timeout after 30 seconds when the gateway ignores abort", async () => {
     vi.useFakeTimers();
     const gateway: StatBlockReaderGateway = {
-      complete: (_p, _s, options) =>
-        new Promise((_resolve, reject) => {
-          options.signal?.addEventListener("abort", () =>
-            reject(new Error("aborted")),
-          );
-        }),
+      complete: vi.fn(() => new Promise<string>(() => {})),
     };
     const pending = readStatBlockWithAi(
       request("clean-hill-brute"),
@@ -107,6 +102,7 @@ describe("readStatBlockWithAi", () => {
     const error = await pending;
     expect(error).toBeInstanceOf(StatBlockReadError);
     expect((error as StatBlockReadError).reason).toBe("timeout");
+    expect(gateway.complete).toHaveBeenCalledTimes(1);
   });
 
   it("passes the caller's abort signal through to the gateway", async () => {
@@ -125,6 +121,22 @@ describe("readStatBlockWithAi", () => {
     outer.abort();
     const error = await pending;
     expect(error).toBeInstanceOf(StatBlockReadError);
+  });
+
+  it("settles promptly when the caller aborts and the gateway ignores abort", async () => {
+    const outer = new AbortController();
+    const gateway: StatBlockReaderGateway = {
+      complete: vi.fn(() => new Promise<string>(() => {})),
+    };
+    const pending = readStatBlockWithAi(request("clean-hill-brute"), gateway, {
+      signal: outer.signal,
+    }).catch((e: unknown) => e);
+
+    outer.abort();
+
+    const error = await pending;
+    expect(error).toBeInstanceOf(StatBlockReadError);
+    expect(gateway.complete).toHaveBeenCalledTimes(1);
   });
 
   it("keeps a malformed reply as a malformed read error", async () => {

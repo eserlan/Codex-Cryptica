@@ -116,6 +116,21 @@ describe("StatBlockImportController: reading", () => {
     expect(controller.error).toBeTruthy();
   });
 
+  it("stays cancelled when the modal is closed during an AI read", async () => {
+    const deps = makeDeps({
+      gateway: { complete: vi.fn(() => new Promise<string>(() => {})) },
+    });
+    const controller = new StatBlockImportController(deps);
+    controller.setSource(STAT_BLOCK);
+    const pending = controller.read();
+
+    controller.cancel();
+    await pending;
+
+    expect(controller.step).toBe("cancelled");
+    expect(controller.error).toBeNull();
+  });
+
   it("refuses a paste over the limit before calling the gateway", async () => {
     const deps = makeDeps();
     const controller = await readAndReview(deps, "a".repeat(12_001));
@@ -161,6 +176,19 @@ describe("StatBlockImportController: saving to an existing entity", () => {
       .calls[0]!;
     expect(id).toBe("goblin-1");
     expect(updates.statSheet.templateId).toBe(TOV_MONSTER_TEMPLATE_ID);
+  });
+
+  it("keeps the review open and shows an error when the target no longer exists", async () => {
+    const deps = makeDeps({
+      targetEntity: () => entity(),
+      updateEntity: vi.fn(async () => false),
+    });
+    const controller = await readAndReview(deps);
+
+    await controller.save();
+
+    expect(controller.step).toBe("review");
+    expect(controller.error).toMatch(/entity no longer exists/i);
   });
 
   it("asks first when existing values would be overwritten, and writes only after confirm", async () => {

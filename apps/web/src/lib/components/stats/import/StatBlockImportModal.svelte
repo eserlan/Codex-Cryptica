@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onDestroy } from "svelte";
   import { StatBlockImportController } from "./stat-block-import-controller.svelte";
   import { defaultStatBlockImportDeps } from "./stat-block-import-deps";
   import StatBlockReview from "./StatBlockReview.svelte";
@@ -24,6 +25,8 @@
   const controller =
     injected ??
     new StatBlockImportController(defaultStatBlockImportDeps(entityId));
+
+  onDestroy(() => controller.cancel());
 
   const clash = $derived(
     controller.step === "name-clash" ? controller.clashEntity() : null,

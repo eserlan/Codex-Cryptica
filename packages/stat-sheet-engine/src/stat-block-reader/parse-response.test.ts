@@ -142,6 +142,23 @@ describe("parseStatBlockReadResponse: bad values", () => {
 });
 
 describe("parseStatBlockReadResponse: outcomes", () => {
+  it.each([
+    ["missing", { ...AI_RESPONSES["clean-hill-brute"], outcome: undefined }],
+    ["unknown", { ...AI_RESPONSES["clean-hill-brute"], outcome: "maybe" }],
+  ])("rejects %s outcome", (_label, response) => {
+    let thrown: unknown;
+    try {
+      parseStatBlockReadResponse(
+        JSON.stringify(response),
+        copyRequest("clean-hill-brute"),
+      );
+    } catch (error) {
+      thrown = error;
+    }
+    expect(thrown).toBeInstanceOf(StatBlockReadError);
+    expect(thrown).toMatchObject({ reason: "malformed" });
+  });
+
   it("returns no values for a lore paragraph", () => {
     const result = parseStatBlockReadResponse(
       JSON.stringify(AI_RESPONSES["no-stat-block-lore"]),

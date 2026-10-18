@@ -140,7 +140,8 @@ export function parseStatBlockReadResponse(
   }
   if (!isPlainObject(parsed)) throw new StatBlockReadError("malformed");
 
-  const outcome = OUTCOMES.find((o) => o === parsed.outcome) ?? "ok";
+  const outcome = OUTCOMES.find((o) => o === parsed.outcome);
+  if (!outcome) throw new StatBlockReadError("malformed");
   const kind: SheetKind =
     parsed.kind === "npc" || parsed.kind === "creature"
       ? parsed.kind

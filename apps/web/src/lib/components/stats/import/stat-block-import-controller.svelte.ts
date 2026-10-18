@@ -125,6 +125,7 @@ export class StatBlockImportController {
   committing = $state(false);
 
   #deps: StatBlockImportDeps;
+  #readController: AbortController | null = null;
 
   constructor(deps: StatBlockImportDeps) {
     this.#deps = deps;
@@ -179,21 +180,51 @@ export class StatBlockImportController {
   async read(): Promise<void> {
     this.error = null;
     this.canRetry = false;
+    const context = this.beginRead();
+    if (!context) return;
+    const { useAi, readController } = context;
+    try {
+      this.result = await this.runRead(useAi, readController?.signal);
+    } catch (error) {
+      this.handleReadFailure(error, readController, useAi);
+      return;
+    } finally {
+      if (this.#readController === readController) this.#readController = null;
+    }
+    this.finishRead();
+  }
+
+  private beginRead(): {
+    useAi: boolean;
+    readController: AbortController | null;
+  } | null {
     if (this.source.trim() === "") {
       this.error = errorMessage(new StatBlockSourceEmptyError());
-      return;
+      return null;
     }
     const useAi = this.reader === "ai" && this.aiAvailable;
     if (!useAi) this.mode = "copy";
     this.step = "reading";
-    try {
-      this.result = await this.runRead(useAi);
-    } catch (error) {
-      this.fail(error, useAi);
-      return;
-    }
-    if (this.result.outcome !== "ok") {
-      this.error = OUTCOME_MESSAGES[this.result.outcome] ?? null;
+    const readController = useAi ? new AbortController() : null;
+    this.#readController = readController;
+    return { useAi, readController };
+  }
+
+  private handleReadFailure(
+    error: unknown,
+    readController: AbortController | null,
+    useAi: boolean,
+  ): void {
+    if (readController?.signal.aborted || this.wasCancelled()) return;
+    this.fail(error, useAi);
+  }
+
+  private finishRead(): void {
+    if (this.wasCancelled()) return;
+    const result = this.result;
+    if (!result) return;
+    if (result.outcome !== "ok") {
+      this.error = OUTCOME_MESSAGES[result.outcome] ?? null;
       this.result = null;
       this.step = "paste";
       return;
@@ -201,7 +232,10 @@ export class StatBlockImportController {
     this.step = "review";
   }
 
-  private runRead(useAi: boolean): Promise<ReadResult> | ReadResult {
+  private runRead(
+    useAi: boolean,
+    signal?: AbortSignal,
+  ): Promise<ReadResult> | ReadResult {
     const request = {
       source: this.source,
       mode: this.mode,
@@ -209,7 +243,7 @@ export class StatBlockImportController {
       reader: useAi ? ("ai" as const) : ("rules" as const),
     };
     return useAi
-      ? readStatBlockWithAi(request, this.#deps.gateway)
+      ? readStatBlockWithAi(request, this.#deps.gateway, { signal })
       : readStatBlockWithRules(request);
   }
 
@@ -217,6 +251,10 @@ export class StatBlockImportController {
     this.step = "paste";
     this.error = errorMessage(error);
     this.canRetry = error instanceof StatBlockReadError && useAi;
+  }
+
+  private wasCancelled(): boolean {
+    return this.step === "cancelled";
   }
 
   retry(): Promise<void> {
@@ -283,6 +321,7 @@ export class StatBlockImportController {
   }
 
   cancel(): void {
+    this.#readController?.abort();
     this.step = "cancelled";
   }
 
@@ -308,15 +347,33 @@ export class StatBlockImportController {
       : undefined;
 
     if (target) {
-      await this.#deps.updateEntity(target.id, {
+      const updated = await this.#deps.updateEntity(target.id, {
         statSheet,
         labels,
         ...(content !== undefined ? { content } : {}),
       });
-      this.step = "saved";
+      this.finishTargetWrite(updated);
       return;
     }
 
+    await this.writeNewEntity(result, statSheet, labels, content);
+  }
+
+  private finishTargetWrite(updated: unknown): void {
+    if (updated === false) {
+      this.error =
+        "This entity no longer exists. Close this dialog and reopen the import.";
+      return;
+    }
+    this.step = "saved";
+  }
+
+  private async writeNewEntity(
+    result: ReadResult,
+    statSheet: StatSheet,
+    labels: string[],
+    content: string | undefined,
+  ): Promise<void> {
     const title = this.newTitle();
     if (!this.clashResolved && this.#deps.findEntityByTitle(title)) {
       this.step = "name-clash";

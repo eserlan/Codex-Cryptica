@@ -46,16 +46,33 @@ export async function readStatBlockWithAi(
   const timer = setTimeout(() => {
     timedOut = true;
     controller.abort();
+    rejectDeadline(new StatBlockReadError("timeout"));
   }, STAT_BLOCK_READ_TIMEOUT_MS);
   const forwardAbort = () => controller.abort();
   options.signal?.addEventListener("abort", forwardAbort);
 
+  let rejectDeadline!: (reason?: unknown) => void;
+  const deadline = new Promise<never>((_resolve, reject) => {
+    rejectDeadline = reject;
+  });
+  let rejectAbort!: (reason?: unknown) => void;
+  const aborted = new Promise<never>((_resolve, reject) => {
+    rejectAbort = reject;
+  });
+  const rejectOnAbort = () => rejectAbort(new Error("aborted"));
+  controller.signal.addEventListener("abort", rejectOnAbort, { once: true });
+  if (options.signal?.aborted) forwardAbort();
+
   let text: string;
   try {
-    text = await gateway.complete(prompt, systemInstruction, {
-      generationConfig: STAT_BLOCK_GENERATION_CONFIG,
-      signal: controller.signal,
-    });
+    text = await Promise.race([
+      gateway.complete(prompt, systemInstruction, {
+        generationConfig: STAT_BLOCK_GENERATION_CONFIG,
+        signal: controller.signal,
+      }),
+      deadline,
+      aborted,
+    ]);
   } catch (error) {
     if (timedOut) throw new StatBlockReadError("timeout");
     const message = error instanceof Error ? error.message : undefined;
@@ -63,6 +80,7 @@ export async function readStatBlockWithAi(
   } finally {
     clearTimeout(timer);
     options.signal?.removeEventListener("abort", forwardAbort);
+    controller.signal.removeEventListener("abort", rejectOnAbort);
   }
 
   return parseStatBlockReadResponse(text, prepared);
