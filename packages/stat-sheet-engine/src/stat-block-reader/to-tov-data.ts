@@ -41,7 +41,7 @@ function scoresOf(
   return out;
 }
 
-function creatureIdentity(values: CreatureValues) {
+function creatureClassification(values: CreatureValues) {
   const size = SIZE_VALUES.find((s) => s === values.size);
   return {
     // Undefined when the size is not a valid one, so the mapper leaves it empty.
@@ -52,14 +52,26 @@ function creatureIdentity(values: CreatureValues) {
     cr: values.cr as string,
     proficiencyBonus: values.proficiencyBonus ?? 0,
     doom: values.doom ?? 0,
+  };
+}
+
+function creatureDefences(values: CreatureValues) {
+  return {
     ac: values.ac as number,
     acDetails: values.acDetails ?? undefined,
     hp: values.hp as number,
     hitDice: values.hitDice ?? "",
     speed: values.speed ?? "",
-    abilityScores: scoresOf(values.abilityScores),
     senses: values.senses ?? undefined,
     languages: values.languages ?? undefined,
+  };
+}
+
+function creatureIdentity(values: CreatureValues) {
+  return {
+    ...creatureClassification(values),
+    ...creatureDefences(values),
+    abilityScores: scoresOf(values.abilityScores),
   };
 }
 

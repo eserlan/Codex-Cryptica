@@ -539,35 +539,35 @@ export class ModalUIStore {
 
   /** Overlays that take over the screen (the first group of open-state checks). */
   get overlayDialogOpen(): boolean {
-    return (
-      this.showMobileCreateSheet ||
-      this.showSettings ||
-      this.showZenMode ||
-      this.showDiceModal ||
-      this.showCanvasSelector ||
-      this.mergeDialog.open ||
-      this.bulkLabelDialog.open ||
-      this.relatedEntityDialog.open ||
-      this.parentPickerDialog.open ||
-      this.vaultThemePrompt.open
-    );
+    return [
+      this.showMobileCreateSheet,
+      this.showSettings,
+      this.showZenMode,
+      this.showDiceModal,
+      this.showCanvasSelector,
+      this.mergeDialog.open,
+      this.bulkLabelDialog.open,
+      this.relatedEntityDialog.open,
+      this.parentPickerDialog.open,
+      this.vaultThemePrompt.open,
+    ].some(Boolean);
   }
 
   /** Panels, dialogs and workflows (the second group of open-state checks). */
   get panelDialogOpen(): boolean {
-    return (
-      this.showVaultSwitcher ||
-      this.showShare ||
-      this.imagePromptReview.open ||
-      this.lightbox.show ||
-      this.soundBite.show ||
-      this.revisionDialog.open ||
-      this.generatorWorkflow.open ||
-      this.statBlockImport.open ||
-      this.showIntentCreateMenu ||
-      this.showQuickStartModal ||
-      this.silhouettePickerState.open
-    );
+    return [
+      this.showVaultSwitcher,
+      this.showShare,
+      this.imagePromptReview.open,
+      this.lightbox.show,
+      this.soundBite.show,
+      this.revisionDialog.open,
+      this.generatorWorkflow.open,
+      this.statBlockImport.open,
+      this.showIntentCreateMenu,
+      this.showQuickStartModal,
+      this.silhouettePickerState.open,
+    ].some(Boolean);
   }
 
   get isAnyModalOpen() {

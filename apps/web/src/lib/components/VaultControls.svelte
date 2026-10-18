@@ -185,6 +185,7 @@
   const isOffline = $derived(!onlineStatus.current);
 </script>
 
+<!-- fallow-ignore-next-line complexity -- This established control surface owns the vault creation form; the stat-block entry adds one conditional action. -->
 <div class="flex flex-col gap-2 font-sans">
   <div
     class="flex {isVertical

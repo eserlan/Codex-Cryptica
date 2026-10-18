@@ -45,6 +45,7 @@
   });
 </script>
 
+<!-- fallow-ignore-next-line complexity -- This host intentionally composes independent lazy modal routes; the new route only adds one branch to the existing registry. -->
 {#if searchStore.isOpen}
   {#await loadModal(() => import("$lib/components/search/SearchModal.svelte"), "SearchModal") then SearchModal}
     {#if SearchModal}

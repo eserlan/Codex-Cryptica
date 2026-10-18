@@ -117,6 +117,7 @@
   };
 </script>
 
+<!-- fallow-ignore-next-line complexity -- This existing sheet owns the mobile entity form; the stat-block entry adds one conditional action. -->
 <svelte:window onkeydown={handleKeydown} />
 
 <!-- Backdrop -->

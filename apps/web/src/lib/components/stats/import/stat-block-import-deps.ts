@@ -1,5 +1,5 @@
 import { resolveEntityType } from "generator-engine";
-import type { Entity, StatSheet } from "schema";
+import type { Entity } from "schema";
 import type { SheetKind } from "@codex/stat-sheet-engine";
 import { vault } from "$lib/stores/vault.svelte";
 import { categories } from "$lib/stores/categories.svelte";
@@ -42,5 +42,3 @@ export function defaultStatBlockImportDeps(
       ),
   };
 }
-
-export type { StatSheet };

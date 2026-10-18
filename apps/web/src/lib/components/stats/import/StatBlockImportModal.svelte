@@ -61,7 +61,7 @@
     use:focusTrap
     aria-modal="true"
     aria-label="Import stat block"
-    class="flex max-h-[90vh] w-full max-w-2xl flex-col gap-4 overflow-y-auto rounded-lg border border-theme-border bg-theme-surface p-5 text-theme-primary shadow-xl"
+    class="flex max-h-[90vh] w-full max-w-2xl flex-col gap-4 overflow-auto rounded-lg border border-theme-border bg-theme-surface p-5 text-theme-primary shadow-xl"
     data-testid="stat-block-import-modal"
   >
     <header class="flex items-center justify-between">

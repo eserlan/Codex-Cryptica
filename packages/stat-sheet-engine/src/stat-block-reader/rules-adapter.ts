@@ -66,6 +66,10 @@ function numberOrUndefined(value: unknown): number | undefined {
   return undefined;
 }
 
+function nullable<T>(value: T | undefined | null): T | null {
+  return value ?? null;
+}
+
 function toAction(
   action: StatBlockIR["actionsAndAttacks"][number],
 ): ActionValue {
@@ -117,11 +121,11 @@ function sharedValues(ir: StatBlockIR, raw: Plain | null) {
   const hp = ir.vitals.find((v) => v.id === "hp");
   const armor = numberOrUndefined(ir.defences.armorRating);
   return {
-    cr: ir.identity.levelOrCr ?? null,
-    ac: armor ?? null,
-    hp: hp?.max ?? hp?.current ?? null,
-    hitDice: hp?.sublabel ?? null,
-    speed: ir.defences.speed ?? null,
+    cr: nullable(ir.identity.levelOrCr),
+    ac: nullable(armor),
+    hp: nullable(hp?.max ?? hp?.current),
+    hitDice: nullable(hp?.sublabel),
+    speed: nullable(ir.defences.speed),
     abilityScores: scoresFrom(ir, raw),
   };
 }
@@ -138,35 +142,47 @@ function npcValues(ir: StatBlockIR, raw: Plain | null): NpcValues {
   };
 }
 
-function creatureValues(ir: StatBlockIR, raw: Plain | null): CreatureValues {
+function creatureCombatValues(
+  ir: StatBlockIR,
+): Pick<
+  CreatureValues,
+  "actions" | "bonusActions" | "reactions" | "legendaryActions"
+> {
   const actions = ir.actionsAndAttacks;
   const ofType = (type: string) =>
     actions.filter((a) => a.actionType === type).map(toAction);
   return {
-    ...sharedValues(ir, raw),
-    size: ir.identity.size ?? null,
-    creatureType: ir.identity.ancestryOrType ?? null,
-    alignment: ir.identity.alignment ?? null,
-    acDetails: ir.defences.armorDetails ?? null,
-    senses: ir.defences.senses ?? null,
-    languages: ir.defences.languages ?? null,
-    damageVulnerabilities: ir.defences.vulnerabilities ?? null,
-    damageResistances: ir.defences.resistances ?? null,
-    damageImmunities: ir.defences.immunities ?? null,
-    conditionImmunities: ir.defences.conditionImmunities ?? null,
-    doom:
-      numberOrUndefined(ir.vitals.find((v) => v.id === "doom")?.current) ??
-      null,
-    traits: ir.traitsAndFeatures.map((t) => ({
-      name: t.name,
-      description: t.text,
-    })),
     actions: ofType("action"),
     bonusActions: ofType("bonus"),
     reactions: ofType("reaction"),
     legendaryActions: actions
       .filter((a) => a.actionType === "legendary")
       .map((a) => ({ name: a.name, description: a.description ?? null })),
+  };
+}
+
+function creatureValues(ir: StatBlockIR, raw: Plain | null): CreatureValues {
+  const doom = numberOrUndefined(
+    ir.vitals.find((v) => v.id === "doom")?.current,
+  );
+  return {
+    ...sharedValues(ir, raw),
+    size: nullable(ir.identity.size),
+    creatureType: nullable(ir.identity.ancestryOrType),
+    alignment: nullable(ir.identity.alignment),
+    acDetails: nullable(ir.defences.armorDetails),
+    senses: nullable(ir.defences.senses),
+    languages: nullable(ir.defences.languages),
+    damageVulnerabilities: nullable(ir.defences.vulnerabilities),
+    damageResistances: nullable(ir.defences.resistances),
+    damageImmunities: nullable(ir.defences.immunities),
+    conditionImmunities: nullable(ir.defences.conditionImmunities),
+    doom: nullable(doom),
+    traits: ir.traitsAndFeatures.map((t) => ({
+      name: t.name,
+      description: t.text,
+    })),
+    ...creatureCombatValues(ir),
   };
 }
 

@@ -33,6 +33,11 @@ vi.mock("$lib/stores/map-session.svelte", () => ({
 }));
 
 vi.mock("dice-engine", () => ({
+  DiceParser: class {
+    parse(formula: string) {
+      return formula;
+    }
+  },
   diceParser: { parse: vi.fn((formula: string) => formula) },
   diceEngine: { execute: vi.fn(() => ({ total: 17, parts: [] })) },
 }));

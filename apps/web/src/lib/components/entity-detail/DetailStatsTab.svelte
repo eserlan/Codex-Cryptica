@@ -174,6 +174,7 @@
   });
 </script>
 
+<!-- fallow-ignore-next-line complexity -- This tab owns the complete stat-sheet editor; the import control adds one conditional action. -->
 <div class="flex flex-col gap-3 pb-8" data-testid="detail-stats-tab">
   <div class="flex items-center justify-between">
     <span

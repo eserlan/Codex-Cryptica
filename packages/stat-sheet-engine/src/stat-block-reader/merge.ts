@@ -212,6 +212,31 @@ function listHas(list: unknown, key: string): boolean {
   );
 }
 
+function writeNpcNotes(
+  field: StatSheetField,
+  templateId: string,
+  values: Record<string, unknown>,
+): Partial<StatSheetField> | undefined {
+  if (templateId !== TOV_NPC_TEMPLATE_ID || field.id !== "notes") {
+    return undefined;
+  }
+  const anyPart = NPC_NOTES_PARTS.some((key) => isPresent(values, key));
+  return anyPart ? { value: buildNpcNotes(values as NpcValues) } : undefined;
+}
+
+function writeFoundField(
+  field: StatSheetField,
+  templateId: string,
+  values: Record<string, unknown>,
+): Partial<StatSheetField> | undefined {
+  const paths = sourcePathsFor(templateId, field.id);
+  if (!paths || !paths.every((path) => isPresent(values, path)))
+    return undefined;
+  if (!isNamedInText(field.id, values)) return undefined;
+  const after = pickWritable(field);
+  return valueOf(after) === undefined ? undefined : after;
+}
+
 /**
  * The value this import would write to one sheet field, or undefined to leave
  * the field alone. Writes need every source value the field depends on.
@@ -232,17 +257,12 @@ function writeFor(
   ) {
     return undefined;
   }
-  if (templateId === TOV_NPC_TEMPLATE_ID && field.id === "notes") {
-    const anyPart = NPC_NOTES_PARTS.some((key) => isPresent(values, key));
-    return anyPart ? { value: buildNpcNotes(values as NpcValues) } : undefined;
-  }
-  const paths = sourcePathsFor(templateId, field.id);
-  if (!paths || !paths.every((p) => isPresent(values, p))) return undefined;
   // A save or skill is only written when the text names it. An unnamed one
   // would be a modifier the stat block never gave (FR-006).
-  if (!isNamedInText(field.id, values)) return undefined;
-  const after = pickWritable(field);
-  return valueOf(after) === undefined ? undefined : after;
+  if (templateId === TOV_NPC_TEMPLATE_ID && field.id === "notes") {
+    return writeNpcNotes(field, templateId, values);
+  }
+  return writeFoundField(field, templateId, values);
 }
 
 /**

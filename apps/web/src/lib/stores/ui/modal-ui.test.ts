@@ -216,6 +216,23 @@ describe("ModalUIStore", () => {
     expect(store.showIntentCreateMenu).toBe(false);
   });
 
+  it("reports the open state of overlay and panel dialogs", () => {
+    const store = new ModalUIStore();
+    expect(store.overlayDialogOpen).toBe(false);
+    expect(store.panelDialogOpen).toBe(false);
+
+    store.openSettings();
+    expect(store.overlayDialogOpen).toBe(true);
+    expect(store.panelDialogOpen).toBe(false);
+    store.closeSettings();
+
+    store.openStatBlockImport({});
+    expect(store.overlayDialogOpen).toBe(false);
+    expect(store.panelDialogOpen).toBe(true);
+    store.closeStatBlockImport();
+    expect(store.isAnyModalOpen).toBe(false);
+  });
+
   it("does not open generator entry points while the vault is loading", () => {
     const store = new ModalUIStore();
     vault.status = "loading";

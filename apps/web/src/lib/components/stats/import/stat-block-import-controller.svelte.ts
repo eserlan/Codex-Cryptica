@@ -20,7 +20,7 @@ import {
 import type { Entity, StatSheet, StatSheetField } from "schema";
 import { applyDerivedModifiers } from "$lib/utils/stat-sheet-field-actions";
 
-export type ImportStep =
+type ImportStep =
   | "paste"
   | "reading"
   | "review"
