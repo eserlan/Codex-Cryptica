@@ -186,7 +186,7 @@ describe("askChecked", () => {
   });
 
   it("keeps a usable draft when the retry is worse", async () => {
-    const { send } = scripted(['{"n": 3}', "garbage"]);
+    const { send } = scripted(['{"n": 3}', '{"n": -2}']);
     const result = await askChecked(send, readJsonObject, (d) =>
       check(d as Draft),
     );
