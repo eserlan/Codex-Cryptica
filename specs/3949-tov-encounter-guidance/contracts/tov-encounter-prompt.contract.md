@@ -15,9 +15,9 @@ You MUST generate an accompanying mechanical rules block under the `mechanics` k
 Rules constraints:
 1. Provide qualitative GM-facing challenge guidance tailored to the party (party size and level). Use BFRD challenge tiers (Trivial, Moderate, Dangerous, Deadly).
 2. DO NOT invent rigid proprietary mathematical XP budget formulas. Provide qualitative action economy and Challenge Rating (CR) pacing advice instead.
-3. Under `suggestedCreatures`, recommend valid BFRD-aligned adversaries and NPCs (e.g. built-in ToV monsters/NPCs) with their individual CR, suggested count, role, and whether they are standard BFRD or homebrew.
-4. If a boss or high-threat creature is recommended that uses Doom points, describe appropriate Doom expenditure in `doomNotes`. Doom points are scoped strictly to individual creatures/abilities, NOT a universal GM pool.
-5. If you introduce custom actions or creatures not from core BFRD baselines, mark them with `isHomebrew: true`.
+3. Under `suggestedCreatures`, recommend valid BFRD-aligned adversaries and NPCs (e.g. built-in ToV monsters/NPCs) with their individual CR, suggested count, tactical role, and whether they are standard BFRD or homebrew.
+4. If you include optional BFRD Doom guidance in `doomNotes`, describe an encounter-level GM Doom pool based on encounter CR that can affect creatures in that encounter. Published BFRD Doom spends are ONLY: give a creature advantage on an attack, give a PC disadvantage on a save, or once per encounter refresh, recharge, or gain one additional use of a limited-use feature. Do NOT claim Doom is a creature-only pool.
+5. If you introduce custom actions, creatures, creature-specific Doom abilities, or an alternate Doom economy not from core BFRD baselines, explicitly label them as `[Homebrew]` and mark `isHomebrew: true`.
 
 Under `mechanics`, provide an Encounter Guidance block:
 "mechanics": {
@@ -37,7 +37,7 @@ Under `mechanics`, provide an Encounter Guidance block:
       }
     ],
     "tacticalAdvice": "string GM tactical notes",
-    "doomNotes": "string (optional Doom usage notes for boss creatures)",
+    "doomNotes": "string (optional encounter-level BFRD Doom pool and published spend guidance; label any custom creature-specific Doom ability or alternate Doom economy as [Homebrew])",
     "isHomebrew": false
   }
 }

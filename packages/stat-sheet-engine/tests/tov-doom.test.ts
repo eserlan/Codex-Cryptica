@@ -19,6 +19,9 @@ describe("TOV_DOOM_REFERENCE", () => {
     expect(TOV_DOOM_REFERENCE.note).toBe(
       "The published rule is encounter-level and can affect creatures in that encounter. Codex Cryptica currently exposes a counter on an individual ToV monster stat sheet as a tracking choice.",
     );
+    expect(TOV_DOOM_REFERENCE.allocationGuidance).toBe(
+      "Use the per-creature Doom counter on a ToV monster sheet or VTT token to track points allocated to that creature from the encounter's Doom pool; this storage model does not change the encounter-level BFRD rule.",
+    );
   });
 });
 

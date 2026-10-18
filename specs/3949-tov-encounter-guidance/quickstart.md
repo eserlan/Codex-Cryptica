@@ -32,8 +32,8 @@ bunx svelte-check --tsconfig ./tsconfig.json --threshold error
    - Save to vault: verify the generated Note contains `### Game Mechanics & Challenge Guidance (Tales of the Valiant)`.
 2. **Encounter Generator (System Neutral)**:
    - Switch `gameSystem` to "System Neutral": verify party options disappear and generation outputs clean neutral text with zero ToV stats.
-3. **Doom Tracker (VTT & Combat Tokens)**:
-   - Open a VTT map with a token linked to a monster with `doom` points (e.g. `builtin-tov-monster` with Doom > 0).
-   - In `TokenQuickStats` or token detail, verify `TovDoomControl` appears with Doom counter buttons (+ / -).
-   - Click Spend / Gain Doom: verify value increments/decrements cleanly within [0, 10] range.
-   - Select a token without Doom (e.g. neutral creature or player character without Doom): verify no Doom counter is displayed.
+3. **Doom Counter (Monster Sheet & VTT Token Allocation Tracking)**:
+   - Open a VTT map with a token linked to a `builtin-tov-monster` stat sheet.
+   - In `TokenQuickStats` or the monster stat sheet, verify `TovDoomControl` appears with Doom counter buttons (+ / -) and the expandable `How Doom Points work` reference explaining the encounter-level BFRD Doom rule and per-creature allocation tracking.
+   - Click Spend / Gain Doom: verify the allocated value increments/decrements cleanly within [0, 10] range.
+   - Select a token without the ToV Monster Doom field (e.g. neutral creature or player character): verify no Doom counter is displayed.

@@ -26,8 +26,8 @@ Rules constraints:
 2. Provide qualitative GM-facing challenge guidance tailored to the party (${partySize} characters at Level ${partyLevel}). Use BFRD challenge tiers (Trivial, Moderate, Dangerous, Deadly).
 3. DO NOT invent rigid proprietary mathematical XP budget formulas. Provide qualitative action economy and Challenge Rating (CR) distribution advice instead.
 4. Under \`suggestedCreatures\`, recommend valid BFRD-aligned adversaries and NPCs (e.g. built-in ToV monsters/NPCs) with their individual CR, suggested count, tactical role, and whether they are standard BFRD or homebrew.
-5. If a boss or high-threat creature is recommended that uses Doom points, describe appropriate Doom expenditure in \`doomNotes\`. Doom points are scoped strictly to individual creatures/abilities, NOT a universal GM pool.
-6. If you introduce custom actions or creatures not from core BFRD baselines, mark them with \`isHomebrew: true\`.
+5. If you include optional BFRD Doom guidance in \`doomNotes\`, describe an encounter-level GM Doom pool based on encounter CR that can affect creatures in that encounter. Published BFRD Doom spends are ONLY: give a creature advantage on an attack, give a PC disadvantage on a save, or once per encounter refresh, recharge, or gain one additional use of a limited-use feature. Do NOT claim Doom is a creature-only pool.
+6. If you introduce custom actions, creatures, creature-specific Doom abilities, or an alternate Doom economy not from core BFRD baselines, explicitly label them as \`[Homebrew]\` and mark \`isHomebrew: true\`.
 
 Under \`mechanics\`, provide an Encounter Guidance block:
 "mechanics": {
@@ -47,7 +47,7 @@ Under \`mechanics\`, provide an Encounter Guidance block:
       }
     ],
     "tacticalAdvice": "string GM tactical notes",
-    "doomNotes": "string (optional Doom usage notes for boss creatures)",
+    "doomNotes": "string (optional encounter-level BFRD Doom pool and published spend guidance; label any custom creature-specific Doom ability or alternate Doom economy as [Homebrew])",
     "isHomebrew": false
   }
 }`;
@@ -68,9 +68,9 @@ export function buildTovPromptInstructions(
 You MUST generate an accompanying mechanical rules block under the \`mechanics\` key in your JSON response.
 Rules constraints:
 1. All rules content MUST strictly follow the Black Flag Reference Document (BFRD) / Tales of the Valiant standards under CC BY 4.0.
-2. DO NOT use proprietary or trademarked terms from D&D 5e or non-open Kobold Press books. Use BFRD equivalents (e.g. Lineage and Heritage instead of Race, Talents instead of Feats, Luck instead of Inspiration, Doom for creatures).
+2. DO NOT use proprietary or trademarked terms from D&D 5e or non-open Kobold Press books. Use BFRD equivalents (e.g. Lineage and Heritage instead of Race, Talents instead of Feats, Luck instead of Inspiration, and optional Doom mechanics).
 3. All attack and damage rolls MUST be formatted as valid dice expressions (e.g. "1d20+5", "2d6+3", "1d10+2").
-4. If you invent any bespoke ability, action, or trait not found in standard BFRD monster/character baselines, set \`isHomebrew: true\` on that entry.
+4. If you invent any bespoke ability, action, trait, creature-specific Doom ability, or alternate Doom economy not found in standard BFRD monster/character baselines, label it as \`[Homebrew]\` and set \`isHomebrew: true\` on that entry.
 5. Provide realistic ability scores, proficiency bonus, AC, HP with hit dice, and saves appropriate for the Challenge Rating or Level.`;
 
   switch (kind) {

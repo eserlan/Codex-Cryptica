@@ -67,6 +67,20 @@ describe("BFRD Rules Source Manifest & Licensing (#3942)", () => {
     expect(luckDiff?.differenceDescription).toContain(
       "Gained when a d20 roll fails",
     );
+
+    const doomDiff = TOV_5E_DIFFERENCES.find((d) =>
+      d.tovConcept.includes("Doom"),
+    );
+    expect(doomDiff).toBeDefined();
+    expect(doomDiff?.differenceDescription).toContain(
+      "optional BFRD Doom rule gives the GM a CR-based resource pool at the start of an encounter",
+    );
+    expect(doomDiff?.differenceDescription).toContain(
+      "giving a creature advantage on an attack, giving a PC disadvantage on a save, or once per encounter refreshing, recharging, or gaining one additional use of a limited-use feature",
+    );
+    expect(doomDiff?.impactOnCodexCryptica).toContain(
+      "per-creature Doom counter to track allocations from the encounter pool",
+    );
   });
 
   it("defines explicit proprietary content boundaries", () => {

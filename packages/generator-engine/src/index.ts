@@ -882,7 +882,10 @@ export {
   type PointCrawlPrompt,
 } from "./public-point-crawl";
 
-export { parseTovMechanics } from "./tov-mechanics-parser";
+export {
+  parseTovMechanics,
+  isPublishedBfrdDoomGuidance,
+} from "./tov-mechanics-parser";
 
 export {
   buildTovPromptInstructions,
