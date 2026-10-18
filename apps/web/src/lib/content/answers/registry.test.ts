@@ -91,6 +91,38 @@ describe("answer registry", () => {
     }
   });
 
+  it("distinguishes seasonally farmable floodplain from persistently wet ground", () => {
+    const geography =
+      answers["how-do-i-design-a-geographically-realistic-town-or-village"];
+    const floodGuidance = geography.sections.find(
+      (section) =>
+        section.kind === "prose" &&
+        section.heading ===
+          "Start with water, but think beyond a blue line on the map",
+    );
+    const climateTable = geography.sections.find(
+      (section) =>
+        section.kind === "table" &&
+        section.heading === "Let climate and country change the layout",
+    );
+
+    expect(floodGuidance?.kind).toBe("prose");
+    if (floodGuidance?.kind !== "prose") return;
+
+    expect(floodGuidance.paragraphs).toContain(
+      "Treat flood risk as part of the water decision, not an afterthought. Homes, granaries and workshops that must stay dry belong on a raised terrace, a low ridge or the higher bank. Persistently wet ground suits meadow, grazing or fisheries; seasonally flooded land may support crops when drainage, flood timing and crop choice permit. Building directly on the bank buys easy access and pays for it in ruined stores, undermined walls and streets that become channels. A settlement that has lived with a river for generations shows that bargain in its levels: quays and boathouses low, homes and stored food high, and a lane or bank marking where people expect the water to reach.",
+    );
+
+    expect(climateTable?.kind).toBe("table");
+    if (climateTable?.kind !== "table") return;
+
+    expect(climateTable.rows).toContainEqual([
+      "River valley",
+      "Wells and river intakes, with flood levels deciding which bank and terrace can hold homes and stores.",
+      "Homes and granaries on the terrace; seasonally flooded ground may support crops where drainage and flood timing permit, while persistently wet areas suit meadow or fisheries; quay and mill low, one bridge shaping the market and gates.",
+    ]);
+  });
+
   it("keeps an actionable checklist in the modern-city answer", () => {
     const answer =
       answers["how-do-i-portray-a-believable-modern-city-in-an-urban-rpg"];
