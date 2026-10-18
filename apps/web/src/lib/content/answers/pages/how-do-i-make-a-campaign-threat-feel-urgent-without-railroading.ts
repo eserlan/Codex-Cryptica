@@ -303,6 +303,7 @@ export const howDoIMakeACampaignThreatFeelUrgentWithoutRailroading: AnswerConfig
       "how-do-you-keep-track-of-npcs-in-a-long-campaign",
       "how-do-you-run-a-conspiracy-campaign",
       "how-do-i-improvise-npcs-in-dnd",
+      "how-do-i-handle-players-who-keep-trying-to-recruit-defeated-enemies",
     ],
     discovery: {
       id: "answer-campaign-threat-without-railroading",
