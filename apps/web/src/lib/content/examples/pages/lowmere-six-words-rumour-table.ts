@@ -155,6 +155,14 @@ export const lowmereSixWordsRumourTable: ExampleConfigInput = {
       href: "/generators/settlement",
     },
   ],
+  relatedTopics: [
+    {
+      title: "Solo RPGs Topic Hub",
+      description:
+        "Oracles, solo play loops, campaign notes and the generators, such as rumours, that feed them.",
+      href: "/topics/solo-rpg",
+    },
+  ],
   relatedAnswers: [
     {
       title: "How do you generate useful RPG rumours?",

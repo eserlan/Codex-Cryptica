@@ -19,6 +19,7 @@ describe("public label vocabulary (#2762, #2863)", () => {
     expect(CONTENT_CLUSTER_SLUGS).toContain("rumour");
     expect(CONTENT_CLUSTER_SLUGS).toContain("religion");
     expect(CONTENT_CLUSTER_SLUGS).toContain("puzzle");
+    expect(CONTENT_CLUSTER_SLUGS).toContain("solo-rpg");
   });
 
   it("validates content cluster slugs with isContentClusterSlug", () => {

@@ -1,7 +1,7 @@
 import type { Token } from "../../../types/vtt";
 import { punchFogCircle } from "./fog-stroke";
 import { punchHexFogRadius, getActiveHexConfig } from "./hex-fog-stroke";
-import { pointToHex } from "map-engine";
+import { getTokenCenter, pointToHex } from "map-engine";
 import type { GridType } from "$lib/stores/map.svelte";
 
 export interface TokenVisionRevealerDeps {
@@ -54,7 +54,7 @@ export class TokenVisionRevealer {
         Math.max(0, Math.round(radius / (hexConfig.size * 1.5)));
 
       for (const token of tokens) {
-        const hex = pointToHex({ x: token.x, y: token.y }, hexConfig);
+        const hex = pointToHex(getTokenCenter(token), hexConfig);
         punchHexFogRadius(
           ctx,
           maskCanvas,

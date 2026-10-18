@@ -110,6 +110,13 @@ export const EXPLORE_SECTIONS: ExploreSection[] = [
         icon: "icon-[lucide--ship]",
       },
       {
+        href: "/topics/solo-rpg",
+        label: "Solo RPGs",
+        summary:
+          "How to play alone: oracles, keeping play from feeling random, campaign logs, and the generators that feed the loop.",
+        icon: "icon-[lucide--user]",
+      },
+      {
         href: "/topics/dnd",
         label: "Running D&D",
         summary:

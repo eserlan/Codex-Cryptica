@@ -79,6 +79,7 @@ const TOPIC_PATHS = [
   "/topics/heists",
   "/topics/puzzles",
   "/topics/pirates",
+  "/topics/solo-rpg",
   "/topics/dnd",
   "/topics/dnd-beginners",
 ] as const;

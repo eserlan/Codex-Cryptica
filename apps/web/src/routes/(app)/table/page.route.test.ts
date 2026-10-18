@@ -24,6 +24,7 @@ vi.mock("$app/state", () => ({
 }));
 
 type MutableVaultMock = {
+  bulkDelete?: any;
   activeVaultId: string | null;
   isInitialized: boolean;
   allEntities: Entity[];
@@ -34,6 +35,7 @@ vi.mock("$lib/stores/vault.svelte", () => ({
     activeVaultId: null as string | null,
     isInitialized: false,
     allEntities: [] as Entity[],
+    bulkDelete: vi.fn(),
   },
 }));
 

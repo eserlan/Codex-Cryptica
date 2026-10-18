@@ -161,6 +161,14 @@ export const whatRpgSystemIsGoodForSoloPlay: AnswerConfigInput = {
     linkText: "Explore tools for solo worldbuilding",
     href: "/for/solo-worldbuilding",
   },
+  relatedTopics: [
+    {
+      title: "Solo RPG topic hub",
+      description:
+        "Start here for solo play: oracles, avoiding random-feeling sessions, campaign notes and the generators that feed the loop.",
+      href: "/topics/solo-rpg",
+    },
+  ],
   relatedTools: [
     {
       title: "Personality Generator",
@@ -196,6 +204,8 @@ export const whatRpgSystemIsGoodForSoloPlay: AnswerConfigInput = {
     },
   ],
   relatedAnswers: [
+    "how-do-you-play-a-tabletop-rpg-by-yourself",
+    "what-is-a-solo-rpg-oracle",
     "what-rpg-system-should-we-try-instead-of-dnd",
     "what-rpg-should-i-play-for-an-over-the-top-space-opera",
     "what-ttrpg-should-i-use-for-a-fantasy-dungeon-crawl",

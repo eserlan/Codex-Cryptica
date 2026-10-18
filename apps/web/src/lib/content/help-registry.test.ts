@@ -49,7 +49,7 @@ describe("help registry against the real in-app help articles", () => {
       "does not currently import ToV character JSON",
     );
     expect(tovArticle?.content).toContain(
-      "update the counter manually after the rest",
+      "BFRD Luck rules do not prescribe a Long Rest reset",
     );
     expect(tovArticle?.content).not.toContain("RPG System Profile");
     expect(tovArticle?.content).not.toContain(

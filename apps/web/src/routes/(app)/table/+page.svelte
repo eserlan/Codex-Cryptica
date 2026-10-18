@@ -4,8 +4,6 @@
   import { page } from "$app/state";
   import { vault } from "$lib/stores/vault.svelte";
   import { categories } from "$lib/stores/categories.svelte";
-  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-  import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
   import { guestVault } from "$lib/stores/guest-vault.svelte";
   import { getIconClass } from "$lib/utils/icon";
@@ -28,10 +26,17 @@
     computeVaultAuditCounts,
     type VaultAuditPreset,
   } from "$lib/components/table/vaultAudit";
+  import {
+    handleChangeType,
+    handleDeleteSelected,
+    openBulkReport,
+    openBulkLabels,
+    handleManageLabels,
+    withoutIds,
+  } from "$lib/components/table/table-bulk-actions";
   import { computeVaultDistribution } from "$lib/components/table/vaultDistribution";
   import type { ViewPreset } from "$lib/stores/view-presets";
   import EmptyState from "$lib/components/ui/EmptyState.svelte";
-  import { openSelectionReport } from "$lib/components/reports/open-selection-report";
   import {
     sortEntities,
     nextSortState,
@@ -369,114 +374,39 @@
     };
   }
 
-  function handleManageLabels() {
+  function _handleManageLabels() {
     if (!contextMenu) return;
-    modalUIStore.openBulkLabelDialog(contextMenu.targetIds);
+    handleManageLabels(contextMenu.targetIds);
   }
 
-  async function handleChangeType(type: string) {
-    if (isCommitting) return;
-    if (!contextMenu || contextMenu.targetIds.length === 0) return;
-    const targetIds = contextMenu.targetIds;
-
-    const confirmed = await notificationStore.confirm({
-      title: "Change Entity Type",
-      message: `Are you sure you want to change the type of ${
-        targetIds.length > 1 ? `${targetIds.length} entities` : "this entity"
-      } to "${type}"? This may result in some type-specific metadata layout updates.`,
-      confirmLabel: "Change type",
-      cancelLabel: "Cancel",
-      isDangerous: false,
+  function _handleChangeType(type: string) {
+    if (!contextMenu) return;
+    handleChangeType(type, contextMenu.targetIds, isCommitting, (c) => {
+      isCommitting = c;
     });
-
-    if (confirmed) {
-      isCommitting = true;
-      try {
-        // ⚡ Bolt Optimization: Replace Object.fromEntries(array.map(...)) with an imperative loop
-        const updates: Record<string, { type: string }> = Object.create(null);
-        for (let i = 0; i < targetIds.length; i++) {
-          updates[targetIds[i]] = { type };
-        }
-        const result = await vault.bulkUpdate(updates);
-        if (result.failedIds.length > 0 || result.skippedIds.length > 0) {
-          notificationStore.notify(
-            `Changed ${result.succeededIds.length} entities; ${
-              result.failedIds.length + result.skippedIds.length
-            } could not be changed.`,
-            "error",
-          );
-        }
-      } catch (err: any) {
-        console.error("Failed to change type", err);
-        notificationStore.notify(`Error: ${err.message}`, "error");
-      } finally {
-        isCommitting = false;
-      }
-    }
   }
 
-  // Single pass over the selection, no intermediate array.
-  function withoutIds(ids: Set<string>, removed: Set<string>) {
-    const remaining = new Set<string>();
-    for (const id of ids) {
-      if (!removed.has(id)) remaining.add(id);
-    }
-    return remaining;
-  }
-
-  async function handleDeleteSelected() {
-    if (isCommitting) return;
-    if (!contextMenu || contextMenu.targetIds.length === 0) return;
-    const targetIds = contextMenu.targetIds;
-
-    const confirmed = await notificationStore.confirm({
-      title:
-        targetIds.length > 1 ? "Delete Selected Entities" : "Delete Entity",
-      message: `Are you sure you want to permanently delete ${
-        targetIds.length > 1
-          ? `these ${targetIds.length} entities`
-          : "this entity"
-      }? This action cannot be undone.`,
-      confirmLabel: "Delete permanently",
-      cancelLabel: "Cancel",
-      isDangerous: true,
-    });
-
-    if (confirmed) {
-      isCommitting = true;
-      try {
-        const result = await vault.bulkDelete(targetIds);
-        const succeededIds = new Set(result.succeededIds);
-        selectedIds = withoutIds(selectedIds, succeededIds);
-        if (result.failedIds.length > 0 || result.cancelledIds.length > 0) {
-          notificationStore.notify(
-            `Deleted ${result.succeededIds.length} entities; ${
-              result.failedIds.length + result.cancelledIds.length
-            } remain selected for retry.`,
-            "error",
-          );
-        } else {
-          clearSelection();
-        }
-      } catch (err: any) {
-        console.error("Failed to delete", err);
-        notificationStore.notify(`Error: ${err.message}`, "error");
-      } finally {
-        isCommitting = false;
-      }
-    }
-  }
-
-  function openBulkReport() {
-    openSelectionReport(
-      "table",
-      selectedVisible.map((e) => e.id),
+  function _handleDeleteSelected() {
+    if (!contextMenu) return;
+    handleDeleteSelected(
+      contextMenu.targetIds,
+      isCommitting,
+      (c) => {
+        isCommitting = c;
+      },
+      (succeededIds) => {
+        selectedIds = withoutIds(new Set(selectedIds), succeededIds);
+      },
+      clearSelection,
     );
   }
 
-  function openBulkLabels() {
-    if (selectedVisible.length === 0) return;
-    modalUIStore.openBulkLabelDialog(selectedVisible.map((e) => e.id));
+  function _openBulkReport() {
+    openBulkReport(selectedVisible);
+  }
+
+  function _openBulkLabels() {
+    openBulkLabels(selectedVisible);
   }
 
   function handleSort(key: SortKey) {
@@ -1011,7 +941,7 @@
             </span>
             <button
               type="button"
-              onclick={openBulkLabels}
+              onclick={_openBulkLabels}
               data-testid="entity-table-bulk-label"
               class="inline-flex items-center gap-1.5 rounded-md border border-theme-primary/50 bg-theme-surface px-2.5 py-1 text-xs font-medium text-theme-primary transition-colors hover:bg-theme-primary/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent/40"
             >
@@ -1022,7 +952,7 @@
             {#if !vault.isGuest && selectedVisible.length > 1}
               <button
                 type="button"
-                onclick={openBulkReport}
+                onclick={_openBulkReport}
                 data-testid="entity-table-bulk-generate-report"
                 class="inline-flex items-center gap-1.5 rounded-md border border-theme-primary/50 bg-theme-surface px-2.5 py-1 text-xs font-medium text-theme-primary transition-colors hover:bg-theme-primary/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent/40"
               >
@@ -1080,9 +1010,9 @@
     x={contextMenu.x}
     y={contextMenu.y}
     selectedIds={contextMenu.targetIds}
-    onManageLabels={handleManageLabels}
-    onChangeType={handleChangeType}
-    onDelete={handleDeleteSelected}
+    onManageLabels={_handleManageLabels}
+    onChangeType={_handleChangeType}
+    onDelete={_handleDeleteSelected}
     onClose={() => {
       contextMenu = null;
     }}
