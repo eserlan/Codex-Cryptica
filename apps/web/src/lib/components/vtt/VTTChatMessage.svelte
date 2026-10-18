@@ -1,5 +1,6 @@
 <script lang="ts">
   import DiceRollResult from "$lib/components/dice/DiceRollResult.svelte";
+  import VTTChatCard from "$lib/components/vtt/VTTChatCard.svelte";
   import { mapSession } from "$lib/stores/map-session.svelte";
   import type { ChatMessagePayload } from "../../../types/vtt";
 
@@ -11,11 +12,11 @@
 <div class="flex flex-col {isMe ? 'items-end' : 'items-start'} gap-1">
   <div class="flex items-center gap-2 px-1">
     <span
-      class="text-[9px] font-bold uppercase tracking-widest text-theme-muted font-header"
+      class="text-nano font-bold uppercase tracking-widest text-theme-muted font-header"
     >
       {message.sender}
     </span>
-    <span class="text-[8px] opacity-40 font-mono">
+    <span class="text-nano opacity-40 font-mono">
       {new Date(message.timestamp).toLocaleTimeString([], {
         hour: "2-digit",
         minute: "2-digit",
@@ -31,6 +32,8 @@
   >
     {#if message.roll}
       <DiceRollResult result={message.roll} />
+    {:else if message.cards && message.cards.length > 0}
+      <VTTChatCard cards={message.cards} />
     {:else}
       <p class="leading-relaxed whitespace-pre-wrap font-body break-words">
         {message.content}

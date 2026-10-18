@@ -6,8 +6,8 @@ import {
   generateTavernLocal,
   parseSocialHubResponse,
   parseTavernResponse,
-  socialHubConfig,
 } from "./public-social-hub";
+import { socialHubConfig } from "./public-social-hub-config";
 import { NAME_BAN_PROMPT } from "./public-npc";
 
 function seededRng(seed = 1): () => number {
@@ -140,5 +140,28 @@ describe("parse social hub responses", () => {
       "The Unnamed Tavern",
     );
     expect(() => parseSocialHubResponse("nope")).toThrow();
+  });
+});
+
+// Superhero / Comic Book genre content (#3125): socialHubConfig used to have
+// no entry for this genre, so random-idea.ts's themeToHubGenre mapping fell
+// back to "Modern" (#3108). It now has real venue types and clientele of
+// its own.
+describe("Superhero / Comic Book genre (#3125)", () => {
+  it("has its own venue and clientele pools, not the Fantasy fallback", () => {
+    expect(socialHubConfig.genres).toContain("Superhero / Comic Book");
+    expect(
+      socialHubConfig.venueTypesByGenre["Superhero / Comic Book"],
+    ).toContain("Hero-Team HQ Commissary");
+    expect(
+      socialHubConfig.clientelesByGenre["Superhero / Comic Book"],
+    ).toContain("Off-duty heroes and sidekicks");
+
+    const out = generateSocialHubLocal(
+      { genre: "Superhero / Comic Book" },
+      seededRng(9),
+    );
+    expect(out.type).toBe("location");
+    expect(out.content).toBeTruthy();
   });
 });

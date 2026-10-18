@@ -145,6 +145,12 @@ export class SearchService {
       documentRef,
       callbacks: {
         onVaultSwitch: async (vaultId) => {
+          if (this.coordinator.activeVaultId) {
+            this.persistence.cancelPendingSave(this.coordinator.activeVaultId);
+          }
+          if (vaultId) {
+            this.persistence.cancelPendingSave(vaultId);
+          }
           void this.coordinator.cancelIndexing("Vault switched.", false);
           // Set activeVaultId synchronously before any yields (awaits) so that
           // incoming new-vault events (like CACHE_LOADED) are not filtered out by the stale-vault guard.

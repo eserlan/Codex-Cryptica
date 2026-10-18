@@ -207,6 +207,12 @@ export const ORIGINAL_USE_BY_PURPOSE: Record<string, string[]> = {
     "an interrogation annex outside every applicable jurisdiction",
     "a debriefing complex for personnel who were reported missing",
   ],
+  "Villain Lair & Command Center": [
+    "a command bunker built for a scheme that never went public",
+    "a staging ground for an organization that answered to no city",
+    "a headquarters abandoned the night its founder was finally caught",
+    "an operations center run by someone the public never learned to fear by name",
+  ],
 };
 
 /**

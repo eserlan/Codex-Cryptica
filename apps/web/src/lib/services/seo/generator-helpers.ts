@@ -1,4 +1,10 @@
-import type { StarSystemBody } from "generator-engine";
+import type {
+  StarSystemBody,
+  ConstellationPattern,
+  ConstellationInterpretation,
+  NightSkyData,
+  SuggestedConnection,
+} from "generator-engine";
 
 export const nameTable = {
   prefixes: [
@@ -461,10 +467,42 @@ export interface GeneratorOutput {
    * local tables, so the layout can show a friendly notice (#1494).
    */
   aiFallback?: boolean;
+  /** The AI draft is complete but its editorial review didn't finish. */
+  aiReviewSkipped?: boolean;
+  /** Parts written from templates because their AI step didn't finish. */
+  aiPartialFallback?: string[];
   /** Structured major-body list for star systems, driving the mechanical side-view diagram. */
   bodies?: StarSystemBody[];
   /** Primary star's spectral class/type (e.g. "G", "M", "Neutron Star"), for star systems. */
   starType?: string;
+  /** Structured star-pattern data for constellations, for the star-chart diagram. */
+  pattern?: ConstellationPattern;
+  /** Constellation generator's cultural interpretation(s) of `pattern`. */
+  interpretations?: ConstellationInterpretation[];
+  /** Night-sky mode's full set of constellations for one culture. */
+  nightSky?: NightSkyData;
+  observances?: Array<{
+    name: string;
+    type: string;
+    when: string;
+    observers: string;
+    traditions: string;
+    tension: string;
+  }>;
+  /** Dominant conflict domain of a generated BBEG villain (e.g. "Cult Ritual"), tracked for session variety. */
+  conflictDomain?: string;
+  /** Optional connections or relationships to other entities. */
+  connections?: SuggestedConnection[];
+  /** Structured one-shot adventure, so single scenes can be regenerated. */
+  oneShot?: import("generator-engine").OneShotAdventure;
+  /** Structured point-crawl network with topological nodes and routes. */
+  pointCrawl?: import("generator-engine").PointCrawlNetwork;
+  /** Arbitrary generation metadata preserved across flows. */
+  metadata?: Record<string, unknown>;
+  /** Structured system mechanics (e.g. Tales of the Valiant BFRD stats). */
+  mechanics?: import("generator-engine").GeneratorMechanicsBundle;
+  /** Associated game system id (e.g. "tales-of-the-valiant"). */
+  systemId?: string;
 }
 
 /**

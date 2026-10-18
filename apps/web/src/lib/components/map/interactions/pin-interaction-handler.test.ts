@@ -16,6 +16,7 @@ describe("PinInteractionHandler", () => {
   let pins: MapPin[];
   let canEdit = true;
   let updatePinCoordinates: ReturnType<typeof vi.fn>;
+  let snapPinCoordinates: ReturnType<typeof vi.fn>;
   let saveMaps: ReturnType<typeof vi.fn>;
   let selectEntity: ReturnType<typeof vi.fn>;
   let handler: PinInteractionHandler;
@@ -28,6 +29,7 @@ describe("PinInteractionHandler", () => {
       if (target) target.coordinates = point;
     });
     saveMaps = vi.fn().mockResolvedValue(undefined);
+    snapPinCoordinates = vi.fn();
     selectEntity = vi.fn();
     handler = new PinInteractionHandler({
       getPins: () => pins,
@@ -35,6 +37,7 @@ describe("PinInteractionHandler", () => {
       unproject: (point: { x: number; y: number }) => point,
       canEditPins: () => canEdit,
       updatePinCoordinates,
+      snapPinCoordinates,
       saveMaps,
       selectEntity,
     } as any);
@@ -48,6 +51,7 @@ describe("PinInteractionHandler", () => {
     expect(result).toEqual({ type: "selected", pinId: "pin-a" });
     expect(selectEntity).toHaveBeenCalledWith("entity-a", { x: 102, y: 102 });
     expect(saveMaps).not.toHaveBeenCalled();
+    expect(snapPinCoordinates).not.toHaveBeenCalled();
   });
 
   it("selects a pin at a viewport point without starting a drag", () => {
@@ -70,6 +74,7 @@ describe("PinInteractionHandler", () => {
     const result = await handler.end({ x: 100, y: 100 }, { x: 130, y: 135 });
 
     expect(result).toEqual({ type: "dragged", pinId: "pin-a" });
+    expect(snapPinCoordinates).toHaveBeenCalledWith("pin-a");
     expect(saveMaps).toHaveBeenCalled();
   });
 
@@ -84,6 +89,7 @@ describe("PinInteractionHandler", () => {
       y: 100,
     });
     expect(saveMaps).not.toHaveBeenCalled();
+    expect(snapPinCoordinates).not.toHaveBeenCalled();
   });
 
   it("does not mutate or save pins when editing is disabled", async () => {

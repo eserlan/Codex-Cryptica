@@ -34,6 +34,7 @@ vi.mock("$lib/stores/navigation/NavigationHistoryStore.svelte", () => ({
 }));
 
 import { navigationHistoryStore } from "$lib/stores/navigation/NavigationHistoryStore.svelte";
+import { beforeNavigate } from "$app/navigation";
 
 describe("NavigationShortcuts", () => {
   const historyStore = navigationHistoryStore as any;
@@ -47,6 +48,7 @@ describe("NavigationShortcuts", () => {
 
     modalUIStore.showSettings = false;
     modalUIStore.showZenMode = false;
+    vi.mocked(beforeNavigate).mockReset();
   });
 
   it("should ignore shortcuts when an input is focused", async () => {
@@ -128,5 +130,44 @@ describe("NavigationShortcuts", () => {
 
     await fireEvent.keyDown(window, { key: "ArrowRight", shiftKey: true });
     expect(historyStore.forward).toHaveBeenCalled();
+  });
+
+  it("records lastAppPath in modalUIStore when navigating from non-entity route", () => {
+    let navigateCallback: (nav: any) => void = () => {};
+    vi.mocked(beforeNavigate).mockImplementation((cb: any) => {
+      navigateCallback = cb;
+    });
+
+    render(NavigationShortcuts);
+
+    navigateCallback({
+      from: { url: new URL("https://example.com/table?q=Aldric") },
+      to: { url: new URL("https://example.com/vault/v1/entity/e1") },
+      type: "link",
+    });
+
+    expect(modalUIStore.lastAppPath).toBe("/table?q=Aldric");
+  });
+
+  it("does not treat a zero-delta popstate as forward navigation", () => {
+    let navigateCallback: (nav: any) => void = () => {};
+    vi.mocked(beforeNavigate).mockImplementation((cb: any) => {
+      navigateCallback = cb;
+    });
+    const cancel = vi.fn();
+
+    render(NavigationShortcuts);
+
+    navigateCallback({
+      from: null,
+      to: { url: new URL("https://example.com/table") },
+      type: "popstate",
+      delta: 0,
+      cancel,
+    });
+
+    expect(historyStore.back).not.toHaveBeenCalled();
+    expect(historyStore.forward).not.toHaveBeenCalled();
+    expect(cancel).not.toHaveBeenCalled();
   });
 });

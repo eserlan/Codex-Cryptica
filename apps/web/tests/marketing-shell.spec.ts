@@ -6,7 +6,7 @@ import { test, expect, type Page } from "@playwright/test";
  * Before it existed, `(marketing)/+layout.svelte` rendered nothing shared and
  * 10 of 30 public pages had no chrome at all. These tests pin the two things
  * that regress silently: that every public page has exactly one of each
- * landmark, and that the nav is reachable on a phone, which it never was.
+ * landmark, and that onward navigation is reachable on a phone.
  */
 
 const SHELL_PAGES = [
@@ -15,6 +15,10 @@ const SHELL_PAGES = [
   "/tools",
   "/features",
   "/tools/dnd-npc-generator",
+  "/responsible-ai-worldbuilding",
+  "/free-rpg-campaign-manager",
+  "/migrations",
+  "/import/obsidian-vault",
 ];
 
 const landmarkCounts = (page: Page) =>
@@ -48,26 +52,33 @@ test.describe("Public shell", () => {
     });
   }
 
-  test("the nav is reachable on a phone", async ({ page }) => {
+  test("Generators and Explore are directly reachable on a phone and Explore covers Features (#3140)", async ({
+    page,
+  }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/generators");
 
-    // Both previous headers were `hidden md:flex`, so mobile had no navigation
-    // at all, on 55% of real visits.
-    const toggle = page.getByTestId("shell-menu-toggle");
-    await expect(toggle).toBeVisible();
-    await expect(toggle).toHaveAttribute("aria-expanded", "false");
+    const generators = page.getByTestId("shell-generators-link");
+    await expect(generators).toBeVisible();
+    await expect(generators).toHaveAttribute("href", "/generators");
 
-    // The button is server-rendered, so it is clickable before hydration and a
-    // click that lands early is simply dropped.
-    await page.waitForLoadState("networkidle");
-    await toggle.click();
-    await expect(toggle).toHaveAttribute("aria-expanded", "true");
-    const mobileNav = page.getByTestId("shell-mobile-nav");
-    await expect(mobileNav).toBeVisible();
-    await expect(
-      mobileNav.getByRole("link", { name: "Features" }),
-    ).toBeVisible();
+    const explore = page.getByTestId("shell-explore-link");
+    await expect(explore).toBeVisible();
+    await expect(explore).toHaveAttribute("href", "/explore");
+
+    // The old hamburger was another miniature site directory. Mobile now has
+    // two clear onward-navigation actions instead — the strongest direct use
+    // entry point, and the way into everything else.
+    await expect(page.getByTestId("shell-menu-toggle")).toHaveCount(0);
+    await expect(page.getByTestId("shell-mobile-nav")).toHaveCount(0);
+
+    // Anything removed from that mobile directory must remain reachable from
+    // Explore. Features was the one destination missing from the hub.
+    await explore.click();
+    await expect(page).toHaveURL(/\/explore$/);
+    // Not `exact: true`: the link's accessible name includes its summary
+    // text alongside the "Features" heading.
+    await expect(page.getByRole("link", { name: /^Features\b/ })).toBeVisible();
   });
 
   test("the header CTA keeps its campaign attribution", async ({ page }) => {

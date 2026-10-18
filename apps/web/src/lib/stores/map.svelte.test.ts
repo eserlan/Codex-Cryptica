@@ -9,6 +9,7 @@ const vaultMock = vi.hoisted(() => ({
   activeVaultId: "vault-a",
   maps: {},
   saveMaps: vi.fn(),
+  getActiveVaultHandle: vi.fn(),
 }));
 
 function makeMap(id: string, isWorldMap = false) {
@@ -28,6 +29,7 @@ vi.mock("./vault.svelte", () => ({
 }));
 
 import { MapStore } from "./map.svelte";
+type Map = import("schema").Map;
 
 describe("MapStore settings persistence", () => {
   beforeEach(() => {
@@ -100,6 +102,7 @@ describe("MapStore settings persistence", () => {
     store.gridOffsetX = 12;
     store.gridOffsetY = -8;
     store.gridColor = "#fbbf24";
+    store.fogColor = "#223344";
     store.showLabels = true;
 
     await waitFor(() => {
@@ -107,14 +110,163 @@ describe("MapStore settings persistence", () => {
       expect(raw).not.toBeNull();
       expect(JSON.parse(raw!)).toEqual({
         showFog: false,
+        soloFog: false,
         showGrid: true,
+        gridType: "square",
+        showHexCoordinates: false,
+        showTerrainIcons: false,
+        hexLabelConfig: { style: "none" },
         brushRadius: 88,
         gridSize: 120,
         gridOffsetX: 12,
         gridOffsetY: -8,
         gridColor: "#fbbf24",
+        fogColor: "#223344",
         showLabels: true,
+        visionMode: "party",
+        visionRange: 60,
+        layerVisibility: { terrain: true, object: true, token: true },
+        layerLocked: { terrain: false, object: false, token: false },
       });
+    });
+  });
+
+  it("saves and restores solo fog per map, off by default", async () => {
+    const store = new MapStore();
+    store.selectMap("map-solo");
+    expect(store.soloFog).toBe(false);
+
+    store.soloFog = true;
+    await waitFor(() => {
+      const raw = window.localStorage.getItem("codex-map-settings:map-solo");
+      expect(JSON.parse(raw!).soloFog).toBe(true);
+    });
+
+    const restored = new MapStore();
+    restored.selectMap("map-solo");
+    expect(restored.soloFog).toBe(true);
+
+    restored.selectMap("map-other");
+    expect(restored.soloFog).toBe(false);
+  });
+
+  it("draws fog opaque in Player View, and in GM view only with solo fog on", () => {
+    const store = new MapStore();
+    expect(store.fogOpaque).toBe(false);
+
+    store.soloFog = true;
+    expect(store.fogOpaque).toBe(true);
+
+    store.soloFog = false;
+    sessionModeStore.sharedMode = true;
+    expect(store.fogOpaque).toBe(true);
+    sessionModeStore.sharedMode = false;
+  });
+
+  it("persists and restores hex grid settings", async () => {
+    const store = new MapStore();
+    store.selectMap("map-hex");
+
+    store.showGrid = true;
+    store.gridType = "hex-pointy";
+    store.showHexCoordinates = true;
+    store.hexLabelConfig = {
+      style: "alphanumeric",
+      startCol: "A",
+      startRow: 1,
+      rowPadding: 2,
+    };
+
+    await waitFor(() => {
+      const raw = window.localStorage.getItem("codex-map-settings:map-hex");
+      expect(raw).not.toBeNull();
+      const parsed = JSON.parse(raw!);
+      expect(parsed.gridType).toBe("hex-pointy");
+      expect(parsed.showHexCoordinates).toBe(true);
+      expect(parsed.hexLabelConfig.style).toBe("alphanumeric");
+    });
+
+    // Create a new store to verify restoration
+    const store2 = new MapStore();
+    store2.selectMap("map-hex");
+    expect(store2.gridType).toBe("hex-pointy");
+    expect(store2.showHexCoordinates).toBe(true);
+    expect(store2.hexLabelConfig.style).toBe("alphanumeric");
+    expect(store2.formatHex({ q: 1, r: 0 })).toBe("B01");
+  });
+
+  it("hides terrain icons by default and persists the device-local toggle", async () => {
+    const store = new MapStore();
+    store.selectMap("map-terrain-icons");
+    expect(store.showTerrainIcons).toBe(false);
+
+    store.showTerrainIcons = true;
+    await waitFor(() => {
+      const raw = window.localStorage.getItem(
+        "codex-map-settings:map-terrain-icons",
+      );
+      expect(JSON.parse(raw!).showTerrainIcons).toBe(true);
+    });
+
+    const restored = new MapStore();
+    restored.selectMap("map-terrain-icons");
+    expect(restored.showTerrainIcons).toBe(true);
+
+    restored.selectMap("map-terrain-other");
+    expect(restored.showTerrainIcons).toBe(false);
+  });
+
+  it("treats a non-boolean saved terrain icon flag as off", () => {
+    window.localStorage.setItem(
+      "codex-map-settings:map-terrain-bad",
+      JSON.stringify({ showTerrainIcons: "yes" }),
+    );
+
+    const store = new MapStore();
+    store.selectMap("map-terrain-bad");
+
+    expect(store.showTerrainIcons).toBe(false);
+  });
+
+  it("falls back to the legacy numeric style for invalid saved label configs", () => {
+    window.localStorage.setItem(
+      "codex-map-settings:map-invalid-labels",
+      JSON.stringify({
+        showHexCoordinates: true,
+        hexLabelConfig: { style: "unknown" },
+      }),
+    );
+
+    const store = new MapStore();
+    store.selectMap("map-invalid-labels");
+
+    expect(store.hexLabelConfig).toEqual({ style: "numeric" });
+    expect(store.formatHex({ q: 1, r: 4 })).toBe("01.04");
+  });
+
+  it("places and drags pins at hex centers with their axial coordinates", async () => {
+    vaultMock.maps = { "map-hex": makeMap("map-hex") };
+    const store = new MapStore();
+    store.selectMap("map-hex");
+    store.showGrid = true;
+    store.gridType = "hex-pointy";
+    store.gridSize = 50;
+
+    await store.addPin(undefined, { x: 10, y: 10 });
+
+    const pin = (vaultMock.maps as any)["map-hex"].pins[0];
+    expect(pin.coordinates).toEqual({ x: 0, y: 0 });
+    expect(pin.hexCoordinates).toEqual({ q: 0, r: 0 });
+
+    store.updatePinCoordinatesInMemory(pin.id, { x: 10, y: 10 });
+    expect((vaultMock.maps as any)["map-hex"].pins[0].coordinates).toEqual({
+      x: 10,
+      y: 10,
+    });
+    store.snapPinCoordinatesInMemory(pin.id);
+    expect((vaultMock.maps as any)["map-hex"].pins[0]).toMatchObject({
+      coordinates: { x: 0, y: 0 },
+      hexCoordinates: { q: 0, r: 0 },
     });
   });
 
@@ -151,6 +303,18 @@ describe("MapStore settings persistence", () => {
     expect(store.gridSize).toBe(64);
     expect(store.gridColor).toBe("#3b82f6");
     expect(store.showLabels).toBe(true);
+    // Blobs saved before layers existed have neither key — falls back to
+    // "everything visible, nothing locked" rather than undefined.
+    expect(store.layerVisibility).toEqual({
+      terrain: true,
+      object: true,
+      token: true,
+    });
+    expect(store.layerLocked).toEqual({
+      terrain: false,
+      object: false,
+      token: false,
+    });
 
     store.selectMap("map-b");
     expect(store.showFog).toBe(true);
@@ -159,6 +323,73 @@ describe("MapStore settings persistence", () => {
     expect(store.gridSize).toBe(80);
     expect(store.gridColor).toBe(null);
     expect(store.showLabels).toBe(false);
+  });
+
+  it("restores the fog colour per map and falls back to the theme colour", () => {
+    window.localStorage.setItem(
+      "codex-map-settings:map-a",
+      JSON.stringify({ fogColor: "#112233" }),
+    );
+    window.localStorage.setItem(
+      "codex-map-settings:map-b",
+      JSON.stringify({ showFog: true, fogColor: 42 }),
+    );
+
+    const store = new MapStore();
+
+    store.selectMap("map-a");
+    expect(store.fogColor).toBe("#112233");
+    store.selectMap("map-b");
+    expect(store.fogColor).toBeNull();
+  });
+
+  it("persists a layer visibility/lock toggle and restores it later", async () => {
+    const store = new MapStore();
+    store.selectMap("map-a");
+
+    store.layerVisibility.terrain = false;
+    store.layerLocked.object = true;
+
+    await waitFor(() => {
+      const raw = window.localStorage.getItem("codex-map-settings:map-a");
+      expect(raw).not.toBeNull();
+      const parsed = JSON.parse(raw!);
+      expect(parsed.layerVisibility).toEqual({
+        terrain: false,
+        object: true,
+        token: true,
+      });
+      expect(parsed.layerLocked).toEqual({
+        terrain: false,
+        object: true,
+        token: false,
+      });
+    });
+
+    const restored = new MapStore();
+    restored.selectMap("map-a");
+    expect(restored.layerVisibility.terrain).toBe(false);
+    expect(restored.layerLocked.object).toBe(true);
+  });
+
+  it("merges a persisted blob missing a since-added layer over the defaults", async () => {
+    window.localStorage.setItem(
+      "codex-map-settings:map-a",
+      JSON.stringify({
+        showFog: false,
+        showGrid: false,
+        layerVisibility: { terrain: false },
+      }),
+    );
+
+    const store = new MapStore();
+    store.selectMap("map-a");
+
+    expect(store.layerVisibility).toEqual({
+      terrain: false,
+      object: true,
+      token: true,
+    });
   });
 
   it("restores the last selected map and viewport on reload", async () => {
@@ -230,6 +461,41 @@ describe("MapStore settings persistence", () => {
     });
   });
 
+  it("debounces viewport persistence so rapid drag updates don't do synchronous storage I/O per frame", async () => {
+    vi.useFakeTimers();
+    try {
+      vaultMock.maps = { "map-a": makeMap("map-a", true) };
+      const store = new MapStore();
+      await vi.waitFor(() => expect(store.activeMapId).toBe("map-a"));
+
+      // Simulate several pointermove updates in a fast drag.
+      store.updateViewport({ x: 1, y: 1 }, 1);
+      store.updateViewport({ x: 5, y: 5 }, 1);
+      store.updateViewport({ x: 12, y: 12 }, 1);
+
+      // None of those should have hit storage synchronously yet.
+      const midDrag = window.localStorage.getItem(
+        "codex-map-page-state:vault-a",
+      );
+      const midDragViewport = midDrag
+        ? JSON.parse(midDrag).viewports?.["map-a"]
+        : undefined;
+      expect(midDragViewport).not.toEqual({ pan: { x: 12, y: 12 }, zoom: 1 });
+
+      await vi.advanceTimersByTimeAsync(250);
+
+      const settled = JSON.parse(
+        window.localStorage.getItem("codex-map-page-state:vault-a")!,
+      );
+      expect(settled.viewports["map-a"]).toEqual({
+        pan: { x: 12, y: 12 },
+        zoom: 1,
+      });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("uses an injected storage instead of window.localStorage", async () => {
     const mem = new Map<string, string>();
     const storage = {
@@ -294,5 +560,157 @@ describe("MapStore settings persistence", () => {
     expect(mask).toBeTruthy();
     expect(fetch).toHaveBeenCalledWith("blob:mask-url");
     expect(drawImage).toHaveBeenCalled();
+  });
+});
+
+describe("MapStore.createBlankMap", () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+    vaultMock.activeVaultId = "vault-a";
+    vaultMock.maps = {};
+    vaultMock.getActiveVaultHandle.mockReset();
+  });
+
+  it("creates a map with no background image at the fixed blank-map size", async () => {
+    vaultMock.getActiveVaultHandle.mockResolvedValue({ name: "vault-a" });
+    const store = new MapStore(undefined, { uuid: () => "blank-map-id" });
+
+    const id = await store.createBlankMap("New Map");
+
+    expect(id).toBe("blank-map-id");
+    expect(
+      (vaultMock.maps as Record<string, unknown>)["blank-map-id"],
+    ).toMatchObject({
+      name: "New Map",
+      assetPath: "",
+      dimensions: { width: 4000, height: 4000 },
+      fogOfWar: { maskPath: "maps/blank-map-id_mask.png" },
+    });
+    expect(vaultMock.saveMaps).toHaveBeenCalled();
+    expect(store.activeMapId).toBe("blank-map-id");
+  });
+
+  it("fails gracefully with no active vault", async () => {
+    vaultMock.getActiveVaultHandle.mockResolvedValue(undefined);
+    const store = new MapStore(undefined, { uuid: () => "blank-map-id" });
+
+    const id = await store.createBlankMap("New Map");
+
+    expect(id).toBeUndefined();
+    expect(
+      (vaultMock.maps as Record<string, unknown>)["blank-map-id"],
+    ).toBeUndefined();
+  });
+
+  it("records hexCoordinates when adding a pin on a hex grid", async () => {
+    vaultMock.maps = {
+      "map-hex": makeMap("map-hex"),
+    };
+    const store = new MapStore(undefined, { uuid: () => "pin-hex-1" });
+    store.selectMap("map-hex");
+    store.showGrid = true;
+    store.gridType = "hex-pointy";
+    store.gridSize = 50;
+
+    await store.addPin(undefined, { x: 0, y: 0 });
+
+    const pin = (vaultMock.maps as any)["map-hex"].pins.find(
+      (p: any) => p.id === "pin-hex-1",
+    );
+    expect(pin).toBeDefined();
+    expect(pin.hexCoordinates).toEqual({ q: 0, r: 0 });
+  });
+});
+
+describe("MapStore grid geometry travels with the map (T011, FR-037/038/040)", () => {
+  const mapsOf = () => vaultMock.maps as Record<string, Map>;
+  const setMaps = (maps: Record<string, Map>) => {
+    vaultMock.maps = maps as typeof vaultMock.maps;
+  };
+
+  beforeEach(() => {
+    window.localStorage.clear();
+    vaultMock.activeVaultId = "vault-a";
+    setMaps({});
+    vaultMock.saveMaps = vi.fn(async () => true);
+    sessionModeStore.sharedMode = false;
+    sessionModeStore.isGuestMode = false;
+    guestVault.publishId = null;
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("adopts this device's grid into a legacy map once, and saves it", async () => {
+    setMaps({ "map-a": makeMap("map-a") });
+    // This device remembers a hex grid for the map from before this feature.
+    const first = new MapStore();
+    first.selectMap("map-a");
+    first.gridType = "hex-pointy";
+    first.gridSize = 64;
+    await waitFor(() => expect(window.localStorage.length).toBeGreaterThan(0));
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    setMaps({ "map-a": makeMap("map-a") });
+    vaultMock.saveMaps.mockClear();
+
+    const second = new MapStore();
+    second.selectMap("map-a");
+
+    expect(mapsOf()["map-a"].grid).toMatchObject({
+      type: "hex-pointy",
+      size: 64,
+    });
+    expect(vaultMock.saveMaps).toHaveBeenCalledTimes(1);
+    expect(second.gridType).toBe("hex-pointy");
+  });
+
+  it("leaves a map with no grid and no device settings without geometry", () => {
+    setMaps({ "map-a": makeMap("map-a") });
+    const store = new MapStore();
+    store.selectMap("map-a");
+
+    expect(mapsOf()["map-a"].grid).toBeUndefined();
+  });
+
+  it("writes later grid changes through to the map", async () => {
+    setMaps({
+      "map-a": {
+        ...makeMap("map-a"),
+        grid: { type: "square", size: 50, offsetX: 0, offsetY: 0 },
+      },
+    });
+    const store = new MapStore();
+    store.selectMap("map-a");
+
+    store.gridSize = 80;
+
+    await waitFor(() => {
+      expect(mapsOf()["map-a"].grid?.size).toBe(80);
+    });
+  });
+
+  it("keeps display preferences in localStorage, not on the map", async () => {
+    const before = {
+      type: "square" as const,
+      size: 50,
+      offsetX: 0,
+      offsetY: 0,
+    };
+    setMaps({
+      "map-a": {
+        ...makeMap("map-a"),
+        grid: { ...before, type: "square" as const },
+      },
+    });
+    const store = new MapStore();
+    store.selectMap("map-a");
+
+    store.showGrid = true;
+    store.gridColor = "#ff0000";
+    await new Promise((resolve) => setTimeout(resolve, 300));
+
+    expect(mapsOf()["map-a"].grid).toEqual(before);
+    expect(JSON.stringify(mapsOf()["map-a"])).not.toContain("#ff0000");
   });
 });

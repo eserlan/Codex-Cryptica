@@ -3,7 +3,9 @@
   import { vault } from "$lib/stores/vault.svelte";
   import { statSheetTemplates } from "$lib/stores/stat-sheet-templates.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import StatSheetTemplateOptions from "./StatSheetTemplateOptions.svelte";
   import { applyDerivedModifiers } from "$lib/utils/stat-sheet-field-actions";
+  import { systemProfileStore } from "$lib/stores/system-profile.svelte";
 
   let { entity, onClose = () => {} } = $props<{
     entity: Entity;
@@ -157,7 +159,7 @@
         >
           <div class="flex flex-col min-w-0">
             <span
-              class="text-[10px] font-bold uppercase tracking-wider text-theme-primary"
+              class="text-micro font-bold uppercase tracking-wider text-theme-primary"
             >
               Active Stat Sheet
             </span>
@@ -178,25 +180,18 @@
           </button>
         </div>
       {/if}
-      {#each displayedTemplates as template (template.id)}
-        <button
-          type="button"
-          class="flex flex-col items-start gap-0.5 rounded border border-theme-border p-2 text-left hover:border-theme-primary"
-          onclick={() => applyTemplate(template.id)}
-          data-testid="stat-sheet-template-option"
-        >
-          <span class="text-xs font-bold text-theme-text">{template.name}</span>
-          {#if template.description}
-            <span class="text-[10px] text-theme-muted"
-              >{template.description}</span
-            >
-          {/if}
-        </button>
-      {/each}
+      <StatSheetTemplateOptions
+        templates={displayedTemplates}
+        category={entity.type}
+        systemId={systemProfileStore?.resolveSystemId
+          ? systemProfileStore.resolveSystemId(entity)
+          : undefined}
+        onApply={applyTemplate}
+      />
       {#if hasHiddenTemplates}
         <button
           type="button"
-          class="mt-2 text-center text-[10px] font-bold uppercase tracking-wide text-theme-muted hover:text-theme-primary"
+          class="mt-2 text-center text-micro font-bold uppercase tracking-wide text-theme-muted hover:text-theme-primary"
           onclick={() => (showAllTemplates = !showAllTemplates)}
           data-testid="stat-sheet-toggle-show-all"
         >

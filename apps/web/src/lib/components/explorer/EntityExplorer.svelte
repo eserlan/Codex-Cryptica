@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { recordEntryFound } from "$lib/app/onboarding/journey/journey-milestones-runtime";
   import { vault } from "$lib/stores/vault.svelte";
   import EntityList from "./EntityList.svelte";
 
@@ -18,12 +19,14 @@
         layoutUIStore.clearEntityExplorerWorkspaceFocus();
       } else {
         layoutUIStore.openEntityExplorerWorkspace(entity.id);
+        recordEntryFound();
       }
       return;
     }
 
     modalUIStore.openZenMode(entity.id);
-    if (layoutUIStore.isMobile) layoutUIStore.closeSidebar();
+    // Opening an entry from the Explorer counts as finding it again (spec 175).
+    recordEntryFound();
   }
 
   function onDragStart(event: DragEvent, entityId: string) {
@@ -103,11 +106,11 @@
         style:border-color="var(--theme-selected-border)"
         style:color="var(--theme-icon-active)"
       >
-        <span class="icon-[lucide--database] w-4 h-4"></span>
+        <span aria-hidden="true" class="icon-[lucide--database] w-4 h-4"></span>
       </div>
       <div>
         <div
-          class="text-[9px] font-mono text-theme-muted uppercase tracking-[0.2em] leading-none mb-1"
+          class="text-nano font-mono text-theme-muted uppercase tracking-[0.2em] leading-none mb-1"
         >
           Catalog
         </div>
@@ -131,7 +134,7 @@
 
   <div class="flex shrink-0 border-b border-theme-border bg-theme-surface/30">
     <button
-      class="flex-1 py-2 text-[10px] font-bold uppercase tracking-wider transition-all {explorerTab ===
+      class="flex-1 py-2 text-micro font-bold uppercase tracking-wider transition-all {explorerTab ===
       'all'
         ? 'border-b-2 border-theme-primary bg-theme-primary/5 text-theme-primary'
         : 'text-theme-muted hover:bg-theme-surface/50 hover:text-theme-text'}"
@@ -140,7 +143,7 @@
       All Entities
     </button>
     <button
-      class="relative flex-1 py-2 text-[10px] font-bold uppercase tracking-wider transition-all {explorerTab ===
+      class="relative flex-1 py-2 text-micro font-bold uppercase tracking-wider transition-all {explorerTab ===
       'review'
         ? 'border-b-2 border-theme-primary bg-theme-primary/5 text-theme-primary'
         : 'text-theme-muted hover:bg-theme-surface/50 hover:text-theme-text'}"
@@ -149,7 +152,7 @@
       Review
       {#if draftCount > 0}
         <span
-          class="ml-1 rounded-full bg-theme-primary px-1.5 py-0.5 text-[8px] text-theme-bg"
+          class="ml-1 rounded-full bg-theme-primary px-1.5 py-0.5 text-nano text-theme-bg"
           >{draftCount}</span
         >
       {/if}

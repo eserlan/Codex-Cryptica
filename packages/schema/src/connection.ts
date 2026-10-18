@@ -24,6 +24,9 @@ export const ConnectionSchema = z.object({
   type: ConnectionTypeSchema.or(z.string()).default("neutral"), // Allow custom types, default to neutral
   strength: z.number().min(0).max(1).default(1),
   label: z.string().optional(), // Custom text label (e.g. "Brother", "Rival")
+  // Hidden connections stay in the vault and in the entity's connection list,
+  // but are left out of the graph and the Connections diagram.
+  hidden: z.boolean().optional(),
 });
 
 export type Connection = z.infer<typeof ConnectionSchema>;

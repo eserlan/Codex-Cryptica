@@ -1,13 +1,18 @@
 # Codex Review Patterns
 
-This reference documents specific anti-patterns and quality standards for the Codex-Cryptica project.
+This reference documents project-specific regressions and quality standards for Codex-Cryptica.
+Apply a pattern when the changed code enters that boundary; do not turn a narrow historical
+regression into an unrelated style finding. Every reported issue needs a changed-code location,
+a concrete failure mode, and an appropriate focused validation or regression test.
 
 ## Svelte 5 & Reactivity
 
 ### Race Conditions in Async Handlers
 
 - **Issue**: Multiple clicks on a "Commit" or "Save" button triggering multiple async operations.
-- **Pattern**: Always use an `isCommitting` or `isLoading` guard.
+- **Pattern**: Guard re-entry, reset the guard in `finally`, and prevent an older request from
+  overwriting state after a newer request, close, or cancellation. Use an `AbortSignal` or a
+  request/version token when the operation can outlive the component or be superseded.
 - **Example**:
 
 ```svelte
@@ -16,7 +21,11 @@ This reference documents specific anti-patterns and quality standards for the Co
   async function handleCommit() {
     if (isCommitting) return; // REQUIRED
     isCommitting = true;
-    try { ... } finally { isCommitting = false; }
+    try {
+      await commit();
+    } finally {
+      isCommitting = false;
+    }
   }
 </script>
 ```
@@ -34,25 +43,104 @@ This reference documents specific anti-patterns and quality standards for the Co
 ### Svelte 5 Runes in Web Worker Bundles
 
 - **Issue**: Importing files containing Svelte 5 runes (such as `$state`, `$derived`, `$effect`, or `$state.snapshot`) into a Web Worker (e.g., `oracle.worker.ts`). Since the Web Worker environment runs in a separate thread without Svelte's runtime globally registered or compiled, these runes trigger fatal runtime crashes: `ReferenceError: $state is not defined`.
-- **Pattern**: Never reference Svelte runes or compiler instructions inside Web Worker scripts or files transitively imported by them. Use a fully environment-agnostic, standard JS deep clone mechanism (such as standard browser `structuredClone` with fallback) on the main thread before passing parameters to Web Worker boundaries, and verify the output using the static analyzer script `node scripts/check-compiled-runes.js` integrated into the build process.
+- **Pattern**: Never reference Svelte runes or compiler instructions inside Web Worker scripts or
+  files transitively imported by them. Pass cloneable data across the boundary, preserve request
+  correlation/cancellation, and validate the message shape before using it. When a worker bundle
+  changes, run `bun --cwd apps/web run build`; that build executes
+  `apps/web/scripts/check-compiled-runes.js`.
+
+### Component Mount Hierarchy vs Navigation Lifecycles
+
+- **Issue**: Registering view-level contexts, Help Assistant surfaces, or global listeners inside a child component that only renders for one tab in a multi-tab view (e.g. `ZenContent.svelte` mounted only inside the Overview tab of `ZenView.svelte`). When the user switches tabs (to Connections, Map, Family, etc.), the child component unmounts, tearing down the registered context while the view is still active, causing Help to fall back or features to become unreactive.
+- **Pattern**: Register persistent view-level contexts and lifecycles in the root view component (e.g. `ZenView.svelte`) and reactively pass or derive the active tab. Never place view-wide lifecycle bindings in sub-components that unmount during internal tab navigation.
+- **Example**:
+
+```svelte
+<!-- Bad: Help surface unmounts whenever activeTab != 'overview' -->
+<!-- ZenContent.svelte -->
+<script>
+  $effect(() => {
+    helpContextStore.registerSurface({ id: 'zen', name: 'Zen Mode' });
+    return () => helpContextStore.unregisterSurface('zen');
+  });
+</script>
+
+<!-- Good: Registered at the persistent container, reacting to activeTab -->
+<!-- ZenView.svelte -->
+<script>
+  $effect(() => {
+    helpContextStore.registerSurface({
+      id: 'zen',
+      name: `Zen Mode (${activeTab})`,
+      currentTab: activeTab
+    });
+    return () => helpContextStore.unregisterSurface('zen');
+  });
+</script>
+```
 
 ## Oracle & AI Logic
 
 ### Aggressive Regex Parsing
 
 - **Issue**: Commands like `/create "Name"` matching even when extra text is provided, causing AI context loss.
-- **Pattern**: Use strict regex with line endings (`\s*$`) for deterministic commands.
-- **Check**: Does the regex in `oracle-parser.ts` allow for "fall through" to AI when extra description is present?
+- **Pattern**: Match the complete deterministic command (`^...\s*$`) and test the near miss.
+  Text that adds a description or changes the command's shape must fall through to normal AI
+  handling rather than silently discarding user intent.
+- **Check**: Does the parser have tests for the exact command, trailing whitespace, and extra text?
 
 ### Web Worker Proxy Binding
 
 - **Issue**: Calling methods on the `OracleWorker` proxy that aren't exposed in the `OracleWorker` class.
-- **Pattern**: Every AI generation method in `TextGenerationService` must have a corresponding wrapper in `oracle.worker.ts`.
+- **Pattern**: Every AI generation method in `TextGenerationService` must have a corresponding
+  wrapper in `oracle.worker.ts`, with the same input/output contract, error path, and cancellation
+  behaviour. Verify both directions of the RPC boundary, not only the happy path.
 
 ### Batch Processing Heuristics
 
 - **Issue**: Massive batch AI reconciliation slowing down the UI.
-- **Pattern**: Limit synchronous AI reconciliation in loops (e.g., `< 5` entities).
+- **Pattern**: Bound concurrency and work per turn. The appropriate limit depends on model latency,
+  payload size, and the interaction; document it beside the queue/batch and provide cancellation or
+  yielding for work that can outlive the current view. Do not introduce an arbitrary threshold
+  without a user-facing reason or measurement.
+
+### AI Output Is Untrusted Input
+
+- **Issue**: Treating model output as a trusted command, schema, URL, HTML fragment, or persistence
+  payload can create malformed state, unsafe rendering, or unexpected tool actions.
+- **Pattern**: Parse AI output at the boundary with the existing schema (for example, Zod), reject
+  invalid or partial results, and keep tool selection and side effects explicitly controlled by the
+  application. Do not infer permissions or execute model-provided paths, URLs, or identifiers.
+- **Check**: Are malformed, missing-field, oversized, and cancellation/error responses covered by
+  focused tests?
+
+### Domain Grounding & Fact Consistency
+
+- **Issue**: Documentation, Help assistant feature registries, or AI prompts make assertions about product restrictions or workflows that contradict the actual codebase (e.g. claiming Demo vaults are read-only and block entity revisions, when Demo vaults actually operate in in-memory "TRANSIENT MODE" allowing mutations and revisions are only rejected in Guest mode).
+- **Pattern**: Cross-reference documented product capabilities and restrictions with the actual implementation (`isDemo` vs `isGuest`, store mutation guards) before encoding rules into help registries or system prompts. AI grounding must reflect codebase reality.
+
+## Trust, Privacy & Public Boundaries
+
+### Untrusted Markdown, HTML and Remote Tracking (Constitution IV)
+
+- **Issue**: Rendering imported, generated, or remote text through `{@html}` without sanitizing it creates an XSS boundary. Furthermore, default DOMPurify configurations permit `<img>` tags and `https:`, `data:`, and `blob:` URLs. If untrusted AI model output or imported notes contain `![tracking](https://attacker.com/pixel.png)`, the browser automatically issues a remote fetch, leaking the user's IP address, timestamp, and session metadata—violating local-first privacy (Constitution Principle IV).
+- **Pattern**: Use the existing `renderMarkdown` utility with strict configuration, or use an allowlisted structured renderer. For AI-generated content (such as Help responses or Oracle chat), use an explicit allowlist of safe formatting tags (e.g. `p`, `strong`, `em`, `code`, `pre`, `ul`, `ol`, `li`, `blockquote`) that strictly excludes `<img>`, `<audio>`, `<video>`, `@import`, and arbitrary remote asset URLs. Add focused tests proving remote image tags are stripped before DOM injection.
+
+### External Responses and Stored Documents
+
+- **Issue**: Assuming a response, import, or persisted document has the current shape causes crashes
+  and can expose prototype-pollution or invalid-reference paths.
+- **Pattern**: Validate at the boundary with the relevant schema before reading fields. Reject
+  reserved keys and impossible IDs where the domain requires it; make errors user-safe and avoid
+  logging private document content.
+
+### Public Projection Must Be Deliberate
+
+- **Issue**: Reusing an internal vault/entity object for guest, share, support, or public APIs can
+  leak owner tokens, local paths, private notes, identifiers, or assets not intended for sharing.
+- **Pattern**: Construct a dedicated public projection and validate it with the public schema. Treat
+  a new field on an internal type as private until it is explicitly reviewed into that projection.
+- **Check**: Does the changed public response have a negative test proving private fields are absent?
 
 ## UI & Accessibility
 
@@ -112,6 +200,32 @@ This reference documents specific anti-patterns and quality standards for the Co
 - **Issue**: Elements that use Tailwind transition classes (like `opacity-0`, `scale-95`, or `pointer-events-none`) to fade out or animate away are still present in the DOM. Even when fully invisible to sighted users, they remain visible to assistive technologies (screen readers, keyboard focus tabs, etc.), resulting in an inaccessible experience.
 - **Pattern**: Dynamically apply `aria-hidden="true"` or `inert` to transition elements, modal overlays, or backdrops when their visibility state is closed or hidden, or conditionally unmount them entirely if Svelte transitions are used instead.
 
+### Custom Dialog Focus and Keyboard Lifecycle
+
+- **Issue**: A custom modal that only looks like a dialog can leave focus behind the overlay, trap it
+  nowhere, or fail to restore it when closed.
+- **Pattern**: Prefer the existing dialog/modal primitives. If a custom dialog is necessary, provide
+  an accessible name, keep focus inside while open, support Escape when dismissal is allowed, and
+  restore focus to the triggering control. Verify keyboard-only navigation.
+
+### Multi-Theme Optical Contrast on Semi-Transparent Overlays
+
+- **Issue**: Applying opacity utility classes or semi-transparent background colors (e.g. `bg-primary/50 text-theme-primary`) to interactive icons or action buttons. When rendered over graph backgrounds, canvas surfaces, or varied theme palettes (such as Fantasy Dark or Modern Light), the combined opacity reduces optical contrast below the 3:1 WCAG 2.1 AA minimum for actionable user interface controls (e.g. falling to 2.77:1 or 2.35:1), making controls hard to distinguish.
+- **Pattern**: When styling actionable controls, test contrast against the full theme matrix (Fantasy Dark, Modern Light, Cyberpunk). For active or "strong" toggle states, prefer solid, opaque tokens with high-contrast foregrounds (e.g. `bg-theme-primary text-theme-bg`), matching the accessible control pattern across the app.
+- **Example**:
+
+```svelte
+<!-- Bad: 50% opacity primary fill with primary text drops contrast to 2.35:1 in Modern Light -->
+<button class="bg-primary/50 text-theme-primary ...">
+  <span class="icon-[lucide--layers] h-4 w-4"></span>
+</button>
+
+<!-- Good: Solid primary fill with background text maintains > 4.5:1 contrast across all themes -->
+<button class="bg-theme-primary text-theme-bg ...">
+  <span class="icon-[lucide--layers] h-4 w-4"></span>
+</button>
+```
+
 ## Event Bus & Lifecycles
 
 ### Subscription Memory Leaks in Stores & Tests
@@ -137,7 +251,22 @@ class FeatureStore {
 ### Transition Status Gating
 
 - **Issue**: Attempting to catch state changes (such as draft approvals) by checking pre-transition statuses (e.g. `entity.status === 'draft'`) when the event bus payload actually emits the finalized post-transition state.
-- **Pattern**: Check both the updated status field and the patch/event payload to cleanly capture transition states (e.g. `patch.status === 'active' && entity.status === 'active'`).
+- **Pattern**: Read the event contract before adding a condition. Gate on the post-transition value
+  actually emitted by that event, and verify the transition once instead of reacting to both stale
+  state and the patch independently.
+
+### Cancellation and Stale Completion
+
+- **Issue**: An async task can resolve after navigation, replacement, or cancellation and then mutate
+  a destroyed view or newer state.
+- **Pattern**: Thread `AbortSignal` through cancellable work, stop progress/state updates once it is
+  aborted, and dispose listeners, workers, object URLs, and subscriptions during teardown. Test a
+  cancellation between meaningful phases, not only before the task starts.
+
+### Debounce Timers & Async Invalidation Lifecycle
+
+- **Issue**: Introducing async delayed operations or debounce timers (e.g. `setTimeout(..., SHARPEN_DELAY_MS)`) without clearing the timeout on component destroy or when new operations supersede them. Uncancelled timers outlive the component lifecycle, cause memory leaks, or update stale DOM nodes. Furthermore, lack of fake-timer unit tests leaves rapid re-triggering and coarse-to-fine invalidations unverified.
+- **Pattern**: Always store timer IDs and invoke `clearTimeout()` in cleanup functions (`onDestroy` or `$effect` return). Add unit tests using `vi.useFakeTimers()` to verify that rapid successive calls properly debounce, and that timers cancel cleanly when superseded.
 
 ## Data Gating & Optimization
 
@@ -192,6 +321,19 @@ class FeatureStore {
   }
   ```
 
+### Persisted Schema and Migration Compatibility
+
+- **Issue**: Adding a stored field, changing its meaning, or assuming a new record shape can make
+  existing local-first vaults unreadable or silently rewrite user data.
+- **Pattern**: Keep readers compatible with absent/legacy fields, add an explicit migration when a
+  transformation is necessary, and preserve unknown data unless a deliberate migration removes it.
+  Test a legacy document, the new document, and an invalid document before changing persistence.
+
+### Canvas 2D Hot-Path Compositing & 60 FPS Budgets
+
+- **Issue**: In continuous interactive animation, panning, or zooming loops (such as Cytoscape overlay canvas, map renderers, or `requestAnimationFrame` loops), allocating offscreen buffers, performing per-entity full-canvas clears (`ctx.clearRect(0, 0, w, h)`), or repeatedly blitting whole bitmaps (`ctx.drawImage`) exhausts the 16.6ms frame budget (e.g. 24 hulls doing full-canvas clear + drawImage = 48 full-canvas compositing passes _per animation frame_ on high-DPI displays), inducing severe frame drops and jank.
+- **Pattern**: Composite directly onto the target viewport canvas in a single draw pass, or strictly constrain clears and copies to tight local bounding boxes (`dirtyRect`). Never perform full-viewport canvas clearing or intermediate canvas blits inside a loop over individual graph entities.
+
 ## JavaScript & HTML Best Practices
 
 ### Coordinate Check Nullish Coalescing (Falsy 0)
@@ -229,12 +371,67 @@ class FeatureStore {
 ### User-Agent Sniffing vs Environment Flags
 
 - **Issue**: Checking `navigator.userAgent` (e.g., looking for "jsdom") to detect a testing/jsdom environment is fragile and easily breaks in different browser/node runtimes.
-- **Pattern**: Use explicit environment flags like `import.meta.env.MODE === "test"` (Vite/Vitest) or feature checks instead of fragile user-agent parsing.
+- **Pattern**: Use a capability check or the framework's explicit environment helpers (for example
+  `browser` from `$app/environment`) instead of fragile user-agent parsing. Keep test-only behavior
+  injected or explicitly configured rather than inferred from the runtime.
 
 ### Explicit Button Types
 
 - **Issue**: `<button>` tags without a `type` attribute default to `type="submit"` in HTML, which can cause unwanted form submissions or page reloads when clicked.
 - **Pattern**: Always add an explicit `type="button"` attribute to trigger/action buttons.
-  ```html
-  <button type="button" onclick="{openLightbox}">Zoom</button>
+  ```svelte
+  <button type="button" onclick={openLightbox}>Zoom</button>
   ```
+
+## Content Accuracy
+
+### User-Facing Content Must Match Code Reality
+
+- **Issue**: Help guides, answers, `/for` packs, discovery entries and `llms-full.txt` describe a
+  feature, settings path, importer, "automatic" behaviour or offline capability that the app does
+  not expose (PR #4137: ToV profile selection, character JSON import, automatic Luck reset on Long
+  Rest, "entirely offline" while ToV generator mechanics need AI). Each review round then finds the
+  same claim in another file.
+- **Pattern**: For every capability claim in changed content, find the code path that delivers it
+  (UI entry point and a real caller, not just an engine function or test). If none exists, remove
+  or soften the claim to the manual or variant-dependent reality. Then grep the whole repo for the
+  claim's key phrases (including generated copies such as `llms-full.txt`) and fix every
+  occurrence in one pass. Add a regression assertion for each changed article, not only the main one.
+
+### Answer Mesh Reciprocity
+
+- **Issue**: A new answer links to existing answers whose `relatedAnswers` do not link back.
+- **Pattern**: Run `bun run check:answer-mesh` and `bun scripts/discovery-audit.mjs`; both also run
+  from `lint-changed` when content files change. Add the reciprocal slug to each linked answer.
+
+## Review Evidence
+
+### Tests Follow the Failure Mode
+
+- **Issue**: A review accepts an implementation based on a happy-path test even though the changed
+  boundary is cancellation, invalid input, permission, persistence, or cleanup.
+- **Pattern**: Match validation to the risk: add a focused regression test for the bug or boundary,
+  including a meaningful failure, cancellation, or negative path when applicable. Run changed-file
+  lint and tests plus the affected workspace type-check; do not substitute a broad baseline run for
+  understanding the changed behaviour.
+
+### Findings Must Be Actionable
+
+- **Issue**: A broad warning such as "consider accessibility" or "this might race" sends work to the
+  author without proving a defect.
+- **Pattern**: Report only a changed-code defect with its location, reproduction or failure mode,
+  user impact, and a concrete remediation. If the evidence is insufficient, record the uncertainty
+  as a validation gap rather than presenting it as a bug.
+
+### Adversarial Premise Inversion in Optimizations
+
+- **Issue**: A performance optimization or algorithmic simplification relies on a premise that holds in typical or large-scale usage but fails at the boundaries (e.g., "calculating bounding boxes for every label is slow on fit-bounds, and labels aren't visible when zoomed far out anyway, so measure only node extents"—which completely clips labels and curved/self-loop edges in small or sparse graphs of 2–3 nodes where `zoom >= 0.5` and labels _are_ visible).
+- **Pattern**: Actively test the inverse of the author's optimization premise. Ask: "Under what input scale, viewport size, coordinate distribution, or user interaction is this premise false?" Verify edge conditions with focused unit tests.
+
+### Assertion Completeness (Not Just "Tests Pass")
+
+- **Issue**: A PR introduces new configuration keys (e.g. `graphShowCommunities` in persisted settings), environment flags, or async debounce timers (`SHARPEN_DELAY_MS`), and existing test suites pass with hundreds of green tests, but the _newly added_ keys, timers, or error branches are completely unasserted in the test suite. Passing test counts create a false sense of security.
+- **Pattern**: Audit tests specifically for the newly introduced code branches and keys:
+  1. Does every new settings/persisted property have an assertion verifying its load, save, and default fallback values?
+  2. Does every new async timer have fake-timer assertions (`vi.useFakeTimers()`) exercising cancellation, re-triggering, and tick execution?
+  3. Does every error branch or negative condition have an explicit test expecting the error or fallback?

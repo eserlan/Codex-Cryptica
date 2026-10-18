@@ -17,17 +17,19 @@
       class="flex items-center justify-between mb-3 pb-2 border-b border-theme-border/30"
     >
       <div class="flex items-center gap-2">
-        <span class="icon-[lucide--users] w-3.5 h-3.5 text-theme-primary"
+        <span
+          aria-hidden="true"
+          class="icon-[lucide--users] w-3.5 h-3.5 text-theme-primary"
         ></span>
         <span
-          class="text-[10px] font-bold uppercase tracking-[0.2em] font-header text-theme-text"
+          class="text-micro font-bold uppercase tracking-[0.2em] font-header text-theme-text"
           >Joined Players</span
         >
       </div>
       <div
         class="flex h-4 w-4 items-center justify-center rounded-full bg-theme-primary/20"
       >
-        <span class="text-[9px] text-theme-primary font-bold"
+        <span class="text-nano text-theme-primary font-bold"
           >{guests.length}</span
         >
       </div>
@@ -59,13 +61,13 @@
           <div class="shrink-0 text-right">
             {#if guest.status === "viewing" && guest.currentEntityTitle}
               <div
-                class="text-[8px] text-theme-muted italic truncate max-w-[90px] leading-tight"
+                class="text-nano text-theme-muted italic truncate max-w-[90px] leading-tight"
               >
                 {guest.currentEntityTitle}
               </div>
             {:else}
               <span
-                class="text-[8px] text-theme-muted uppercase tracking-wider font-bold opacity-60"
+                class="text-nano text-theme-muted uppercase tracking-wider font-bold opacity-60"
               >
                 {guest.status}
               </span>

@@ -4,7 +4,7 @@ import { render, screen, fireEvent } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import ShipFormFields from "./ShipFormFields.svelte";
 
-vi.mock("$lib/services/seo/generator-engine", () => ({
+vi.mock("$lib/services/seo/generator-config", () => ({
   shipConfig: {
     genres: ["Sci-Fi", "Fantasy"],
     rolesByGenre: {

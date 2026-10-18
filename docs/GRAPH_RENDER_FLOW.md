@@ -250,6 +250,6 @@ Zoom thresholds: `< 0.2` → `lod-low`, `< 0.5` → `lod-medium`, else full deta
 
 ## Related Documents
 
-- [`GRAPH_LAYOUT_TUNING.md`](./GRAPH_LAYOUT_TUNING.md) — FCOSE parameter reference and tuning guide
+- [`230426_GRAPH_LAYOUT_TUNING.md`](./performance/230426_GRAPH_LAYOUT_TUNING.md) — FCOSE parameter reference and tuning guide
 - [`GRAPH_STABILITY.md`](./GRAPH_STABILITY.md) — stable layout mode and position persistence
 - [`VAULT_INIT_FLOW.md`](./VAULT_INIT_FLOW.md) — vault boot sequence that precedes graph initialization

@@ -15,6 +15,50 @@ test.describe("Import Progress Management E2E", () => {
 
     await page.goto("/import");
     await page.waitForFunction(() => (window as any).uiStore !== undefined);
+
+    const handleRoute = async (route: any) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          candidates: [
+            {
+              content: {
+                parts: [
+                  {
+                    text: JSON.stringify([
+                      {
+                        title: "Sample Entity",
+                        type: "Character",
+                        chronicle: "Sample chronicle",
+                        lore: "Sample lore",
+                      },
+                    ]),
+                  },
+                ],
+              },
+            },
+          ],
+          choices: [
+            {
+              message: {
+                content: JSON.stringify([
+                  {
+                    title: "Sample Entity",
+                    type: "Character",
+                    chronicle: "Sample chronicle",
+                    lore: "Sample lore",
+                  },
+                ]),
+              },
+            },
+          ],
+        }),
+      });
+    };
+
+    await page.route("**/models/*:generateContent*", handleRoute);
+    await page.route("**/v1/chat/completions*", handleRoute);
   });
 
   test("should show the import section in vault settings", async ({ page }) => {
@@ -30,7 +74,7 @@ test.describe("Import Progress Management E2E", () => {
     page,
   }) => {
     // 1. Upload an archive file
-    const fileInput = page.locator("#file-input");
+    const fileInput = page.getByTestId("import-dropzone-file-input");
     await fileInput.setInputFiles("tests/fixtures/sample-import.json");
 
     // 4. Verify that import progress indicators appear
@@ -41,7 +85,7 @@ test.describe("Import Progress Management E2E", () => {
 
   test("should resume import progress after page reload", async ({ page }) => {
     // 1. Start an import
-    const fileInput = page.locator("#file-input");
+    const fileInput = page.getByTestId("import-dropzone-file-input");
     await fileInput.setInputFiles("tests/fixtures/sample-import.json");
     await expect(page.getByText(/analyzing/i)).toBeVisible();
 
@@ -53,6 +97,6 @@ test.describe("Import Progress Management E2E", () => {
     await expect(
       page.getByRole("heading", { name: /archive importer/i }),
     ).toBeVisible();
-    await expect(page.locator("#file-input")).toBeAttached();
+    await expect(page.getByTestId("import-dropzone-file-input")).toBeAttached();
   });
 });

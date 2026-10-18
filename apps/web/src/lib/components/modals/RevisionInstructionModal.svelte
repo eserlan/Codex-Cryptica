@@ -90,7 +90,7 @@
       <div class="px-5 py-4">
         <label
           for="revision-instructions"
-          class="mb-2 block text-[10px] font-bold uppercase tracking-wider text-theme-muted"
+          class="mb-2 block text-micro font-bold uppercase tracking-wider text-theme-muted"
         >
           AI Instructions / Corrections (Highest Priority)
         </label>
@@ -102,7 +102,7 @@
           rows="5"
           class="w-full resize-none rounded border border-theme-border bg-theme-bg/50 p-3 text-sm leading-relaxed text-theme-text outline-none transition focus:border-theme-primary focus:ring-1 focus:ring-theme-primary"
         ></textarea>
-        <p class="mt-2 text-[10px] text-theme-muted">
+        <p class="mt-2 text-micro text-theme-muted">
           Press <kbd
             class="px-1 py-0.5 border border-theme-border rounded bg-theme-bg/30 font-mono"
             >Ctrl + Enter</kbd

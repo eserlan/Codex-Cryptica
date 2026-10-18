@@ -6,6 +6,8 @@ export class OracleUiManager {
   _thinkingCount = $state(0);
   visualizingEntityId = $state<string | null>(null);
   visualizingMessageId = $state<string | null>(null);
+  /** A question a solo shortcut has prefilled; the chat takes it once. */
+  pendingPrompt = $state<string | null>(null);
 
   constructor(private store: IOracleStore) {}
 
@@ -40,6 +42,19 @@ export class OracleUiManager {
   close() {
     this.isOpen = false;
     this.isModal = false;
+  }
+
+  /** Prefills the chat input. Empty text clears it. Nothing is sent. */
+  setPendingPrompt(text: string) {
+    const trimmed = text.trim();
+    this.pendingPrompt = trimmed.length > 0 ? trimmed : null;
+  }
+
+  /** Returns the pending prompt and clears it, so the chat takes it once. */
+  takePendingPrompt(): string | null {
+    const prompt = this.pendingPrompt;
+    this.pendingPrompt = null;
+    return prompt;
   }
 
   isVisualizingEntity(entityId: string | null | undefined) {

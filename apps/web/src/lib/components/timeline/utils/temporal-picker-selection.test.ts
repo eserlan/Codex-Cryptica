@@ -20,6 +20,15 @@ const config = {
   revision: 4,
 };
 
+const beforeFall = {
+  id: "bf",
+  name: "Before the Fall",
+  label: "BF",
+  startYear: -1,
+  yearAtStart: 1,
+  direction: "backward" as const,
+};
+
 describe("temporal picker selection helpers", () => {
   it("parses a direct day entry using the configured month id", () => {
     expect(parsePickerDateInput("0502120", config)).toEqual({
@@ -38,6 +47,19 @@ describe("temporal picker selection helpers", () => {
       error:
         "Use a year (such as 45 or -594), DDMMYYYY, DDMM-YYYY, or DD/MM/-YYYY.",
     });
+  });
+
+  it("interprets an unsigned year relative to the selected era", () => {
+    expect(parsePickerDateInput("312", config, beforeFall)).toEqual({
+      selection: {
+        precision: "year",
+        year: -312,
+        calendarRevision: 4,
+      },
+    });
+    expect(
+      parsePickerDateInput("-311", config, beforeFall).selection?.year,
+    ).toBe(-311);
   });
 
   it("adds required defaults when changing to day precision", () => {

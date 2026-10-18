@@ -72,7 +72,7 @@
 >
   <div class="flex items-center justify-between">
     <span
-      class="text-[10px] font-bold text-theme-secondary uppercase tracking-widest font-header"
+      class="text-micro font-bold text-theme-secondary uppercase tracking-widest font-header"
       >New Connection</span
     >
     <button
@@ -95,7 +95,7 @@
   <div class="space-y-1">
     <label
       for="new-connection-target"
-      class="block text-[10px] font-bold text-theme-secondary uppercase tracking-wider"
+      class="block text-micro font-bold text-theme-secondary uppercase tracking-wider"
       >Target Entity</label
     >
     <Autocomplete
@@ -110,7 +110,7 @@
   <div class="space-y-1">
     <label
       for="new-connection-type"
-      class="block text-[10px] font-bold text-theme-secondary uppercase tracking-wider"
+      class="block text-micro font-bold text-theme-secondary uppercase tracking-wider"
       >Relationship Type</label
     >
     <select
@@ -128,7 +128,7 @@
   <div class="space-y-1">
     <label
       for="new-connection-label"
-      class="block text-[10px] font-bold text-theme-secondary uppercase tracking-wider"
+      class="block text-micro font-bold text-theme-secondary uppercase tracking-wider"
       >Custom Label (Optional)</label
     >
     <input
@@ -157,7 +157,7 @@
         addConnectionError = null;
         onCancel();
       }}
-      class="text-[10px] font-bold text-theme-muted hover:text-theme-text tracking-wider uppercase px-3 py-1.5"
+      class="text-micro font-bold text-theme-muted hover:text-theme-text tracking-wider uppercase px-3 py-1.5"
     >
       Cancel
     </button>
@@ -165,7 +165,7 @@
       type="button"
       disabled={isConnecting}
       onclick={handleAddConnection}
-      class="text-[10px] bg-theme-primary text-theme-bg font-bold tracking-wider uppercase px-3 py-1.5 rounded hover:bg-theme-secondary transition disabled:opacity-50 disabled:cursor-not-allowed"
+      class="text-micro bg-theme-primary text-theme-bg font-bold tracking-wider uppercase px-3 py-1.5 rounded hover:bg-theme-secondary transition disabled:opacity-50 disabled:cursor-not-allowed"
     >
       {isConnecting ? "Connecting..." : "Connect"}
     </button>

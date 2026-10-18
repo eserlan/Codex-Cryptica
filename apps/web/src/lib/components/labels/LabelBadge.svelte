@@ -11,7 +11,7 @@
 </script>
 
 <div
-  class="group inline-flex max-w-full min-w-0 items-start gap-1 rounded border border-theme-accent/30 bg-theme-accent/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-theme-accent font-header"
+  class="group inline-flex max-w-full min-w-0 items-start gap-1 rounded border border-theme-accent/30 bg-theme-accent/10 px-2 py-0.5 text-micro font-bold uppercase tracking-wider text-theme-accent font-header"
   data-testid="label-badge"
 >
   <span class="min-w-0 break-words">{label}</span>

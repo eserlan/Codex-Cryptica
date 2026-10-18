@@ -1,6 +1,9 @@
 /// <reference lib="webworker" />
 import * as Comlink from "comlink";
-import { aiClientManager } from "@codex/ai-engine";
+import {
+  aiClientManager,
+  AdventureTurnGenerationService,
+} from "@codex/ai-engine";
 import { DefaultTextGenerationService } from "@codex/ai-engine";
 import { RelayedSessionToken, type CachedToken } from "@codex/ai-engine";
 import { draftingEngine } from "../../../../../packages/oracle-engine/src/drafting-engine";
@@ -18,9 +21,13 @@ class OracleWorker {
   private textGeneration: DefaultTextGenerationService;
   private eventBus: BroadcastChannel;
   private sessionToken: RelayedSessionToken;
+  private adventureGeneration: AdventureTurnGenerationService;
 
   constructor() {
     this.textGeneration = new DefaultTextGenerationService(aiClientManager);
+    this.adventureGeneration = new AdventureTurnGenerationService(
+      aiClientManager,
+    );
     this.eventBus = new BroadcastChannel("codex-oracle-events");
 
     // This worker has its own isolated aiClientManager instance (Workers
@@ -37,8 +44,27 @@ class OracleWorker {
     this.sessionToken.setToken(token);
   }
 
+  /**
+   * Called via Comlink once, right after the worker is created, with a
+   * Comlink-proxied callback into the main thread's real session manager.
+   * Closes the race where this worker is created (or its relayed token
+   * expires) before the next push-based `setSessionToken` call: when there's
+   * nothing valid cached, `RelayedSessionToken.getToken()` calls this
+   * provider to pull a fresh snapshot on demand instead of giving up.
+   */
+  setSessionTokenProvider(
+    provider: (forceRefresh: boolean) => Promise<CachedToken | null>,
+  ): void {
+    this.sessionToken.setPuller(provider);
+  }
+
   private emit(event: OracleWorkerEvent) {
     this.eventBus.postMessage(event);
+  }
+
+  /** Forgets the Interactions API state for a cleared chat (see ChatManager). */
+  resetConversation(conversationId: string): void {
+    this.textGeneration.resetConversation(conversationId);
   }
 
   async expandQuery(
@@ -86,6 +112,8 @@ class OracleWorker {
       instructions?: string;
       priority?: "instructions-first" | "incoming-first" | "preserve-existing";
       themeId?: string;
+      /** Pre-resolved lore template (see TextGenerationService.reviseEntityUpdate). */
+      loreTemplate?: string;
       interactionsEnabled?: boolean;
     },
   ): Promise<any> {
@@ -265,6 +293,17 @@ class OracleWorker {
     } finally {
       this.emit({ type: "ORACLE_THINKING_END", vaultId, requestId });
     }
+  }
+
+  async generateAdventureTurn(
+    request: any,
+    options?: { apiKey?: string; modelName?: string },
+  ): Promise<any> {
+    return this.adventureGeneration.generate(request, options);
+  }
+
+  clearAdventureInteraction(sessionId: string): void {
+    this.adventureGeneration.clearInteraction(sessionId);
   }
 
   async propose(

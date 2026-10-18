@@ -7,6 +7,12 @@ import {
   type LoadPhase,
 } from "./graph-view-controller.svelte";
 import {
+  clearSilhouetteCache,
+  deriveEntityTypeTone,
+  PIRATE_DARK,
+} from "schema";
+import { categories } from "$lib/stores/categories.svelte";
+import {
   syncGraphElements,
   applyLargeGraphRenderHints,
   isLayoutCollinear,
@@ -96,12 +102,20 @@ vi.mock("graph-engine", () => {
   };
 });
 
+// A dark theme is what makes the per-type glyph colours diverge: on a light
+// theme every type clears contrast against the theme primary already.
+vi.mock("$lib/stores/theme.svelte", async () => {
+  const { PIRATE_DARK: theme } = await import("schema");
+  return { themeStore: { activeTheme: theme } };
+});
+
 describe("GraphViewController", () => {
   let deps: any;
   let controller: GraphViewController;
 
   beforeEach(() => {
     deps = {
+      clock: { now: () => 1000 },
       graph: {
         elements: [],
         timelineMode: false,
@@ -112,6 +126,7 @@ describe("GraphViewController", () => {
         stableLayout: true,
         stats: { nodeCount: 0 },
         showImages: true,
+        communityMode: "soft",
         isLargeGraph: false,
         perfStylingActive: false,
         activeLabels: new Set(),
@@ -129,6 +144,7 @@ describe("GraphViewController", () => {
         resolveImageUrl: vi.fn(),
         batchUpdate: vi.fn(),
         graphStructureVersion: 0,
+        entities: {},
       },
       debugStore: {
         log: vi.fn(),
@@ -136,6 +152,7 @@ describe("GraphViewController", () => {
       },
       layoutUIStore: {
         isMobile: false,
+        setLastSelectedNodePosition: vi.fn(),
       },
       connectionModeStore: {
         isConnecting: false,
@@ -269,6 +286,60 @@ describe("GraphViewController", () => {
     });
   });
 
+  it("suppresses mobile tap Zen Mode navigation after a context gesture", async () => {
+    deps.layoutUIStore.isMobile = true;
+    const container = document.createElement("div");
+    await controller.init(container, {});
+
+    const mockCy = controller.cy!;
+    const scratchStore: Record<string, any> = {};
+    mockCy.scratch = vi.fn((key: string, val?: any) => {
+      if (val !== undefined) scratchStore[key] = val;
+      return scratchStore[key];
+    }) as any;
+    mockCy.scratch("_lastCxtTap", 1000);
+
+    const mockNode = {
+      id: () => "node-1",
+      renderedPosition: () => ({ x: 10, y: 10 }),
+      cy: () => mockCy,
+      addClass: vi.fn(),
+      removeClass: vi.fn(),
+    } as any;
+
+    const handlers = vi.mocked(setupGraphEvents).mock.calls.at(-1)?.[1];
+    await handlers?.onNodeTap?.("node-1", mockNode);
+
+    expect(deps.modalUIStore.openZenMode).not.toHaveBeenCalled();
+  });
+
+  it("opens Zen Mode on mobile node tap when cxttap did not recently occur", async () => {
+    deps.layoutUIStore.isMobile = true;
+    const container = document.createElement("div");
+    await controller.init(container, {});
+
+    const mockCy = controller.cy!;
+    const scratchStore: Record<string, any> = {};
+    mockCy.scratch = vi.fn((key: string, val?: any) => {
+      if (val !== undefined) scratchStore[key] = val;
+      return scratchStore[key];
+    }) as any;
+    mockCy.scratch("_lastCxtTap", 0);
+
+    const mockNode = {
+      id: () => "node-1",
+      renderedPosition: () => ({ x: 10, y: 10 }),
+      cy: () => mockCy,
+      addClass: vi.fn(),
+      removeClass: vi.fn(),
+    } as any;
+
+    const handlers = vi.mocked(setupGraphEvents).mock.calls.at(-1)?.[1];
+    await handlers?.onNodeTap?.("node-1", mockNode);
+
+    expect(deps.modalUIStore.openZenMode).toHaveBeenCalledWith("node-1");
+  });
+
   it("should reset to idle when vault starts loading", () => {
     deps.vault.status = "loading";
     deps.vault.allEntities = [];
@@ -375,6 +446,46 @@ describe("GraphViewController", () => {
       });
 
       expect(layoutSpy).not.toHaveBeenCalled();
+    });
+
+    it("preserves active focusDepthSpan when scheduling render-ready measurement and completes it on frame two", () => {
+      deps.graph.focusViewActive = true;
+      controller.loadPhase = "ready";
+
+      const rafCallbacks: FrameRequestCallback[] = [];
+      vi.spyOn(window, "requestAnimationFrame").mockImplementation((cb) => {
+        rafCallbacks.push(cb);
+        return rafCallbacks.length;
+      });
+
+      // Trigger focus depth transition measurement
+      deps.graph.focusDepth = 2;
+      controller.syncElements();
+
+      const focusSpan = (controller as any).focusDepthSpan;
+      const renderReadySpan = (controller as any).renderReadySpan;
+
+      expect(focusSpan).not.toBeNull();
+      expect(renderReadySpan).not.toBeNull();
+
+      const focusCancelSpy = vi.spyOn(focusSpan, "cancel");
+      const focusCompleteSpy = vi.spyOn(focusSpan, "complete");
+      const renderReadyCompleteSpy = vi.spyOn(renderReadySpan, "complete");
+
+      // Verify clearRenderReadyMeasurement(false) called by scheduleRenderReadyMeasurement
+      // does not cancel the active focusDepthSpan
+      expect(focusCancelSpy).not.toHaveBeenCalled();
+
+      // Advance through the two requestAnimationFrame cycles
+      expect(rafCallbacks.length).toBe(1);
+      rafCallbacks[0](16);
+      expect(rafCallbacks.length).toBe(2);
+      rafCallbacks[1](32);
+
+      expect(renderReadyCompleteSpy).toHaveBeenCalled();
+      expect(focusCompleteSpy).toHaveBeenCalled();
+      expect((controller as any).focusDepthSpan).toBeNull();
+      expect((controller as any).renderReadySpan).toBeNull();
     });
   });
 
@@ -580,6 +691,222 @@ describe("GraphViewController", () => {
     });
   });
 
+  describe("saving positions the vault does not have", () => {
+    const at = (x: number, y: number) => ({
+      metadata: { coordinates: { x, y } },
+    });
+
+    /** Runs a layout and returns the positions callback the controller gave it. */
+    async function positionsCallback(request: Record<string, unknown>) {
+      const container = document.createElement("div");
+      await controller.init(container, {});
+      controller.loadPhase = "ready";
+      await controller.applyCurrentLayout(request as any);
+      const calls = (controller.layoutManager as any).apply.mock.calls;
+      return calls[calls.length - 1][1].onPositionsUpdated as (
+        updates: Record<string, unknown>,
+        meta?: { healed?: boolean },
+      ) => void;
+    }
+
+    beforeEach(() => {
+      deps.vault.entities = { placed: at(5, 5), unplaced: { metadata: {} } };
+    });
+
+    it("saves only missing positions from a focus-view solve", async () => {
+      deps.graph.focusViewActive = true;
+      const onPositions = await positionsCallback({
+        reason: "Elements Update",
+      });
+
+      onPositions({ placed: at(100, 100), unplaced: at(40, 40) });
+
+      expect(deps.vault.batchUpdate).toHaveBeenCalledTimes(1);
+      expect(deps.vault.batchUpdate).toHaveBeenCalledWith({
+        unplaced: at(40, 40),
+      });
+    });
+
+    it("saves nothing from focus view when every position is already saved", async () => {
+      deps.graph.focusViewActive = true;
+      const onPositions = await positionsCallback({
+        reason: "Elements Update",
+      });
+
+      onPositions({ placed: at(100, 100) });
+
+      expect(deps.vault.batchUpdate).not.toHaveBeenCalled();
+    });
+
+    it("keeps missing positions from the initial solve in full-graph mode", async () => {
+      const onPositions = await positionsCallback({
+        reason: "Initial Load",
+        isInitial: true,
+      });
+
+      onPositions({ placed: at(100, 100), unplaced: at(40, 40) });
+
+      expect(deps.vault.batchUpdate).toHaveBeenCalledWith({
+        unplaced: at(40, 40),
+      });
+    });
+
+    it("saves nothing while the vault is still loading", async () => {
+      deps.graph.focusViewActive = true;
+      deps.vault.status = "loading";
+      const onPositions = await positionsCallback({
+        reason: "Elements Update",
+      });
+
+      onPositions({ unplaced: at(40, 40) });
+
+      expect(deps.vault.batchUpdate).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("a view's saved layout (#3456)", () => {
+    /** Fake nodes with just what the layout helpers touch. */
+    function fakeNodes(list: Array<{ id: string; x: number; y: number }>) {
+      const state = list.map((n) => ({ ...n }));
+      const nodes = state.map((n) => ({
+        id: () => n.id,
+        position: (p?: { x: number; y: number }) => {
+          if (p) {
+            n.x = p.x;
+            n.y = p.y;
+            return undefined;
+          }
+          return { x: n.x, y: n.y };
+        },
+      }));
+      return {
+        state,
+        collection: { forEach: (cb: (n: any) => void) => nodes.forEach(cb) },
+      };
+    }
+    const at = (x: number, y: number) => ({
+      metadata: { coordinates: { x, y } },
+    });
+
+    async function ready() {
+      await controller.init(document.createElement("div"), {});
+      controller.loadPhase = "ready";
+    }
+
+    it("moves the entities already on the graph to their saved positions when the layout opens", async () => {
+      await ready();
+      const { state, collection } = fakeNodes([
+        { id: "a", x: 0, y: 0 },
+        { id: "b", x: 0, y: 0 },
+      ]);
+      vi.mocked(controller.cy!.nodes).mockReturnValueOnce(collection as any);
+      deps.graph.layoutOverride = { a: { x: 11, y: 22 } };
+
+      controller.syncElements();
+
+      expect(state.find((n) => n.id === "a")).toMatchObject({ x: 11, y: 22 });
+      // Not in the layout: left where it is.
+      expect(state.find((n) => n.id === "b")).toMatchObject({ x: 0, y: 0 });
+    });
+
+    it("puts entities back where the vault keeps them when the layout closes", async () => {
+      await ready();
+      deps.vault.entities = { a: at(5, 6) };
+      const opened = fakeNodes([{ id: "a", x: 0, y: 0 }]);
+      vi.mocked(controller.cy!.nodes).mockReturnValueOnce(
+        opened.collection as any,
+      );
+      deps.graph.layoutOverride = { a: { x: 11, y: 22 } };
+      controller.syncElements();
+
+      const closing = fakeNodes([{ id: "a", x: 11, y: 22 }]);
+      vi.mocked(controller.cy!.nodes).mockReturnValueOnce(
+        closing.collection as any,
+      );
+      deps.graph.layoutOverride = null;
+      controller.syncElements();
+
+      expect(closing.state[0]).toMatchObject({ x: 5, y: 6 });
+    });
+
+    it("restores everyday positions before switching an open layout to timeline mode", async () => {
+      await ready();
+      deps.vault.entities = { a: at(5, 6) };
+      const opening = fakeNodes([{ id: "a", x: 0, y: 0 }]);
+      vi.mocked(controller.cy!.nodes).mockReturnValueOnce(
+        opening.collection as any,
+      );
+      deps.graph.layoutOverride = { a: { x: 11, y: 22 } };
+      controller.syncElements();
+
+      const switching = fakeNodes([{ id: "a", x: 11, y: 22 }]);
+      vi.mocked(controller.cy!.nodes).mockReturnValueOnce(
+        switching.collection as any,
+      );
+      deps.graph.timelineMode = true;
+      deps.graph.layoutOverride = null;
+      controller.syncElements();
+
+      expect(switching.state[0]).toMatchObject({ x: 5, y: 6 });
+    });
+
+    it("does nothing again while the same layout stays open (negative)", async () => {
+      await ready();
+      const override = { a: { x: 1, y: 1 } };
+      deps.graph.layoutOverride = override;
+      vi.mocked(controller.cy!.nodes).mockReturnValueOnce(
+        fakeNodes([{ id: "a", x: 0, y: 0 }]).collection as any,
+      );
+      controller.syncElements();
+      vi.mocked(controller.cy!.nodes).mockClear();
+
+      controller.syncElements();
+
+      expect(controller.cy!.nodes).not.toHaveBeenCalled();
+    });
+
+    it("does not move anything when no layout is open and none was (negative)", async () => {
+      await ready();
+      vi.mocked(controller.cy!.nodes).mockClear();
+
+      controller.syncElements();
+
+      expect(controller.cy!.nodes).not.toHaveBeenCalled();
+    });
+
+    it("never saves positions to the vault while a view's layout is open, and keeps the layout on screen", async () => {
+      await ready();
+      deps.vault.entities = { placed: at(5, 5), unplaced: { metadata: {} } };
+      deps.graph.layoutOverride = { placed: { x: 90, y: 90 } };
+      // Consume the move that happens when the layout first opens.
+      vi.mocked(controller.cy!.nodes).mockReturnValueOnce(
+        fakeNodes([]).collection as any,
+      );
+      controller.syncElements();
+      await controller.applyCurrentLayout({
+        reason: "Initial Load",
+        isInitial: true,
+      } as any);
+      const calls = (controller.layoutManager as any).apply.mock.calls;
+      const onPositions = calls[calls.length - 1][1].onPositionsUpdated as (
+        updates: Record<string, unknown>,
+        meta?: { healed?: boolean },
+      ) => void;
+      const shown = fakeNodes([{ id: "placed", x: 3, y: 3 }]);
+      vi.mocked(controller.cy!.nodes).mockReturnValueOnce(
+        shown.collection as any,
+      );
+
+      onPositions(
+        { placed: at(100, 100), unplaced: at(40, 40) },
+        { healed: true },
+      );
+
+      expect(deps.vault.batchUpdate).not.toHaveBeenCalled();
+      expect(shown.state[0]).toMatchObject({ x: 90, y: 90 });
+    });
+  });
+
   describe("viewport policy", () => {
     // apply is now called as apply(request, options) — viewport lives on request
     const lastPolicy = () => {
@@ -662,6 +989,141 @@ describe("GraphViewController", () => {
         reseed: true,
       });
       expect(lastPolicy()).toBe("fit");
+    });
+  });
+
+  describe("community backgrounds", () => {
+    it("are shown normally and hidden in timeline mode or when turned off", () => {
+      const setEnabled = vi.fn();
+      const setStrong = vi.fn();
+      controller.communityHulls = { setEnabled, setStrong, destroy: vi.fn() };
+
+      controller.syncCommunityHulls();
+      expect(setEnabled).toHaveBeenLastCalledWith(true);
+      expect(setStrong).toHaveBeenLastCalledWith(false);
+
+      deps.graph.communityMode = "strong";
+      controller.syncCommunityHulls();
+      expect(setEnabled).toHaveBeenLastCalledWith(true);
+      expect(setStrong).toHaveBeenLastCalledWith(true);
+      deps.graph.communityMode = "soft";
+
+      deps.graph.timelineMode = true;
+      controller.syncCommunityHulls();
+      expect(setEnabled).toHaveBeenLastCalledWith(false);
+
+      deps.graph.timelineMode = false;
+      deps.graph.communityMode = "off";
+      controller.syncCommunityHulls();
+      expect(setEnabled).toHaveBeenLastCalledWith(false);
+    });
+
+    it("are torn down with the controller (negative: no further drawing)", () => {
+      const destroy = vi.fn();
+      controller.communityHulls = {
+        setEnabled: vi.fn(),
+        setStrong: vi.fn(),
+        destroy,
+      };
+      controller.destroy();
+      expect(destroy).toHaveBeenCalled();
+      expect(controller.communityHulls).toBeUndefined();
+    });
+  });
+
+  describe("silhouette tinting (issue #2680)", () => {
+    const ARTWORK =
+      '<svg width="512" height="512" viewBox="0 0 512 512"><path fill="currentColor" d="M0 0h1v1H0z"/></svg>';
+
+    beforeEach(() => {
+      clearSilhouetteCache();
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async () => new Response(ARTWORK, { status: 200 })),
+      );
+    });
+
+    it("paints no glyph when the artwork cannot be fetched", async () => {
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async () => {
+          throw new TypeError("Failed to fetch");
+        }),
+      );
+      const options = await syncOptions();
+
+      // Null, not a broken data URI: the ImageManager leaves the node
+      // unstamped so a later sync retries once the network is back.
+      await expect(
+        options?.resolveSilhouetteUrl?.(node("location")),
+      ).resolves.toBeNull();
+    });
+
+    const syncOptions = async () => {
+      const container = document.createElement("div");
+      await controller.init(container, {});
+      deps.graph.elements = [
+        { group: "nodes", data: { id: "node-1", type: "location" } },
+      ];
+      controller.syncImages();
+      return vi.mocked(controller.imageManager!.sync).mock.calls.at(-1)?.[0];
+    };
+
+    const node = (type: string) => ({
+      id: () => "node-1",
+      data: () => ({ id: "node-1", type, label: "The Ashen Reach" }),
+    });
+
+    const glyphFor = (type: string) =>
+      deriveEntityTypeTone(categories.getColor(type), PIRATE_DARK.tokens).glyph;
+
+    // Silhouettes reach the graph as object URLs; read the SVG behind one.
+    const blobs = new Map<string, Blob>();
+    const svgOf = async (url: string | null | undefined) => {
+      if (!url) return "";
+      const blob = blobs.get(url);
+      if (!blob) return decodeURIComponent(url);
+      return await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result));
+        reader.readAsText(blob);
+      });
+    };
+
+    it("fills a silhouette with its own type's glyph colour", async () => {
+      let n = 0;
+      const create = vi
+        .spyOn(URL, "createObjectURL")
+        .mockImplementation((blob: Blob | MediaSource) => {
+          const url = `blob:silhouette-${++n}`;
+          blobs.set(url, blob as Blob);
+          return url;
+        });
+      const options = await syncOptions();
+
+      // Artwork comes from R2, so resolving one is a fetch.
+      const location = await options?.resolveSilhouetteUrl?.(node("location"));
+      const character = await options?.resolveSilhouetteUrl?.(
+        node("character"),
+      );
+
+      expect(await svgOf(location)).toContain(glyphFor("location"));
+      expect(await svgOf(character)).toContain(glyphFor("character"));
+      // A moss node needs a lighter glyph than the theme primary to clear 3:1;
+      // the blue character tone does not, so it keeps the theme's own colour.
+      expect(glyphFor("location")).not.toBe(PIRATE_DARK.tokens.primary);
+      expect(glyphFor("character")).toBe(PIRATE_DARK.tokens.primary);
+      expect(location).not.toBe(character);
+      create.mockRestore();
+    });
+
+    it("keys the silhouette on the theme so a theme switch re-tints it", async () => {
+      const options = await syncOptions();
+
+      expect(options?.silhouetteVariant).toContain(PIRATE_DARK.id);
+      expect(options?.silhouetteVariant).toContain(
+        categories.getColor("location"),
+      );
     });
   });
 });

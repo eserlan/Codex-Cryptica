@@ -1,3 +1,4 @@
+import { factionConfig } from "generator-engine";
 // Pure lookup tables and functions for reconciling a hub genre/theme (from
 // the URL or localStorage) with the per-generator theme/genre state used
 // across the SEO generator pages.
@@ -7,8 +8,13 @@ export const GENERATOR_SLUGS_WITH_THEME = new Set([
   "npc",
   "settlement",
   "magic-item",
+  "minor-magic-item",
+  "artifact-generator",
   "faction",
+  "faction-roster",
   "quest",
+  "rumour",
+  "puzzle",
   "council-vote",
   "secret-society",
   "item",
@@ -18,6 +24,7 @@ export const GENERATOR_SLUGS_WITH_THEME = new Set([
   "nation",
   "vampire-clan",
   "nomad-clan",
+  "dark-fantasy-faction",
   "names",
   "fantasy-names",
   "dnd-npc",
@@ -28,10 +35,20 @@ export const GENERATOR_SLUGS_WITH_THEME = new Set([
   "news-sheet-generator",
   "world",
   "star-system",
+  "constellation",
   "dungeon-generator",
   "adventure-generator",
   "adventure-idea-generator",
   "plot-twist-generator",
+  "bbeg-generator",
+  "creature",
+  "encounter",
+  "heist",
+  "holiday",
+  "personality",
+  "tome",
+  "point-crawl",
+  "one-shot-adventure-generator",
 ]);
 
 export function shouldSyncGeneratorTheme(s: string) {
@@ -52,11 +69,14 @@ export const HUB_THEME_TO_GENERATOR_GENRE: Record<string, string> = {
   lancer: "Lancer",
   "space-opera-resistance": "Space Opera Resistance",
   "optimistic-exploration-sci-fi": "Optimistic Exploration Sci-Fi",
+  "space-western": "Space Western",
+  superhero: "Superhero",
 };
 
 // Genres not supported by the settlement generator are mapped to the nearest equivalent.
 export const SETTLEMENT_GENRE_FOR_HUB: Record<string, string> = {
   Lancer: "Sci-Fi",
+  Superhero: "Modern",
 };
 
 export function resolveHubGeneratorGenre(theme: string | null): string | null {
@@ -78,6 +98,8 @@ export const HUB_LABELS: Record<string, string> = {
   lancer: "Lancer Hub",
   "space-opera-resistance": "Space Opera Resistance Hub",
   "optimistic-exploration-sci-fi": "Optimistic Exploration Sci-Fi Hub",
+  "space-western": "Space Western Hub",
+  superhero: "Superhero Hub",
 };
 
 export const SOCIAL_HUB_GENRE_TO_THEME: Record<string, string> = {
@@ -95,6 +117,9 @@ export const SOCIAL_HUB_GENRE_TO_THEME: Record<string, string> = {
   Lancer: "Lancer",
   "Space Opera Resistance": "Space Opera Resistance",
   "Optimistic Exploration Sci-Fi": "Optimistic Exploration Sci-Fi",
+  "Space Western": "Space Western",
+  Superhero: "Superhero / Comic Book",
+  "Superhero / Comic Book": "Superhero / Comic Book",
 };
 
 // Maps hub URL slugs to stored theme IDs (hub slugs differ from theme ids
@@ -113,23 +138,39 @@ export const HUB_SLUG_TO_THEME_ID: Record<string, string> = {
   lancer: "lancer",
   "space-opera-resistance": "space-opera-resistance",
   "optimistic-exploration-sci-fi": "startrek",
+  "space-western": "space-western",
+  superhero: "superhero",
 };
 
 export const SLUGS_USING_STORED_THEME = new Set([
   "alien-race",
   "npc",
   "faction",
+  "faction-roster",
   "quest",
+  "rumour",
+  "puzzle",
   "council-vote",
   "secret-society",
   "settlement",
   "magic-item",
+  "minor-magic-item",
+  "artifact-generator",
   "item",
   "names",
   "dungeon-generator",
   "adventure-generator",
   "adventure-idea-generator",
   "plot-twist-generator",
+  "bbeg-generator",
+  "creature",
+  "encounter",
+  "heist",
+  "holiday",
+  "constellation",
+  "personality",
+  "tome",
+  "point-crawl",
 ]);
 
 // Maps a resolved hub genre to the nearest ship-generator genre (the ship
@@ -142,6 +183,7 @@ export function mapHubGenreToShipGenre(hubGenre: string): string {
   if (hubGenre === "Space Opera Resistance") return "Space Opera Resistance";
   if (hubGenre === "Optimistic Exploration Sci-Fi")
     return "Optimistic Exploration Sci-Fi";
+  if (hubGenre === "Space Western") return "Space Western";
   if (hubGenre === "Space Opera") return "Space Opera";
   if (hubGenre === "Fantasy") return "Fantasy";
   if (hubGenre === "Dark Fantasy") return "Dark Fantasy";
@@ -161,6 +203,7 @@ export function mapShipGenreToTheme(genre: string): string | null {
     Cyberpunk: "Cyberpunk / Corporate",
     "Optimistic Exploration Sci-Fi": "Optimistic Exploration Sci-Fi",
     "Space Opera Resistance": "Space Opera Resistance",
+    "Space Western": "Space Western",
     Lancer: "Lancer",
     "Post-Apocalyptic": "Post-Apocalyptic",
     Fantasy: "Classic Fantasy",
@@ -177,6 +220,7 @@ export function mapWorldGenreToTheme(genre: string): string {
   if (genre === "Space Opera") return "Star Wars";
   if (genre === "Cyberpunk") return "Cyberpunk / Corporate";
   if (genre === "Hopeful Sci-Fi") return "Optimistic Exploration Sci-Fi";
+  if (genre === "Space Western") return "Space Western";
   if (genre === "Lancer") return "Lancer";
   return "Sci-Fi / Space Opera";
 }
@@ -185,6 +229,7 @@ export function mapStarSystemGenreToTheme(genre: string): string {
   if (genre === "Space Opera") return "Star Wars";
   if (genre === "Cyberpunk") return "Cyberpunk / Corporate";
   if (genre === "Post-Apocalyptic") return "Post-Apocalyptic";
+  if (genre === "Space Western") return "Space Western";
   return "Sci-Fi / Space Opera";
 }
 
@@ -194,4 +239,21 @@ export function mapAlienRaceGenreToTheme(genre: string): string {
   if (genre === "Post-Apocalyptic") return "Post-Apocalyptic";
   // Hard Sci-Fi and Space Opera both skin as the general sci-fi theme.
   return "Sci-Fi / Space Opera";
+}
+
+/** Genres the one-shot page used before it shared the canonical theme list. */
+const LEGACY_ONE_SHOT_GENRES: Record<string, string> = {
+  "Dark Fantasy": "Vampire / Gothic Noir",
+  Horror: "Cosmic Horror",
+  Cyberpunk: "Cyberpunk / Corporate",
+  "Modern Mystery": "Modern Conspiracy",
+};
+
+/**
+ * The visual theme for a one-shot genre. One-shot genres are the canonical
+ * themes, so they are their own skin; a custom genre keeps the current one.
+ */
+export function mapOneShotGenreToTheme(genre: string): string | null {
+  if (factionConfig.themes.includes(genre)) return genre;
+  return LEGACY_ONE_SHOT_GENRES[genre] ?? null;
 }

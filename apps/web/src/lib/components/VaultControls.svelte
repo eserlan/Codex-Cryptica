@@ -13,6 +13,7 @@
   import { onlineStatus } from "$lib/stores/online.svelte";
   import VaultActionsMenu from "./layout/VaultActionsMenu.svelte";
   import { entityTemplateService } from "$lib/services/EntityTemplateService.svelte";
+  import { entityTemplateStore } from "$lib/stores/entity-templates/entity-template-store.svelte";
   import { proposerStore } from "$lib/stores/proposer.svelte";
   import { tick } from "svelte";
   import { guidedModeStore } from "$lib/stores/ui/guided-mode.svelte";
@@ -29,6 +30,16 @@
   let createError = $state<string | null>(null);
   let useTemplate = $state(true);
   let draftContent = $state("");
+  let selectedTemplateId = $state<string | null>(null);
+
+  const availableTemplates = $derived(
+    entityTemplateStore.loaded ? entityTemplateStore.templatesFor(newType) : [],
+  );
+
+  $effect(() => {
+    const effectiveDefault = entityTemplateStore.effectiveDefaultFor(newType);
+    selectedTemplateId = effectiveDefault ?? availableTemplates[0]?.id ?? null;
+  });
 
   let prefillStartDate = $state<{
     year: number;
@@ -83,12 +94,6 @@
     `${btnBase} border border-chrome-border text-chrome-muted hover:text-chrome-text hover:border-chrome-accent`,
   );
 
-  const iconOnlyClasses = $derived(
-    isVertical
-      ? "py-3 text-sm justify-start px-4 gap-3"
-      : "px-2 py-1.5 justify-center gap-3",
-  );
-
   // Actions for the "No Vault Open" dropdown (demo / create / open).
   const runNoVaultAction = (action: () => void) => {
     showNoVaultMenu = false;
@@ -97,19 +102,19 @@
   const noVaultMenuItems = $derived([
     {
       icon: "icon-[lucide--sparkles]",
-      label: `Explore Demo ${themeStore.jargon.vault}`,
+      label: "Explore Demo Vault",
       testid: "no-vault-demo",
       action: () => demoService.startDemo("fantasy"),
     },
     {
       icon: "icon-[lucide--plus]",
-      label: `Create New ${themeStore.jargon.vault}`,
+      label: "Create New Vault",
       testid: "no-vault-create",
       action: () => modalUIStore.openVaultSwitcher("create"),
     },
     {
       icon: "icon-[lucide--folder-open]",
-      label: `Open Existing ${themeStore.jargon.vault}`,
+      label: "Open Existing Vault",
       testid: "no-vault-open",
       action: () => modalUIStore.openVaultSwitcher("open"),
     },
@@ -140,6 +145,7 @@
           newType,
           themeStore.worldThemeId,
           customTemplatesDirHandle,
+          { templateId: selectedTemplateId },
         );
         resolvedContent = entityTemplateService.extractSummary(resolvedLore);
       }
@@ -186,27 +192,27 @@
   >
     {#if sessionModeStore.isDemoMode}
       <div
-        class="flex items-center gap-1.5 px-2 py-1 border border-chrome-accent bg-chrome-accent/10 text-chrome-accent rounded text-[9px] font-bold tracking-tighter"
+        class="flex items-center gap-1.5 px-2 py-1 border border-chrome-accent bg-chrome-accent/10 text-chrome-accent rounded text-nano font-bold tracking-tighter"
       >
         DEMO MODE
       </div>
       <button
         class={isVertical
           ? `${btnPrimary} py-3 text-sm justify-center gap-2`
-          : `${btnPrimary} px-3 md:px-4 py-1.5 text-[10px] md:text-xs gap-2`}
+          : `${btnPrimary} px-3 md:px-4 py-1.5 text-micro md:text-xs gap-2`}
         onclick={async () => {
           try {
             await demoService.convertToWorld();
           } catch (error) {
-            console.error(`Failed to save ${themeStore.jargon.vault}:`, error);
+            console.error("Failed to save Vault:", error);
             notificationStore.notify(
-              `Failed to save ${themeStore.jargon.vault}. Please try again.`,
+              "Failed to save Vault. Please try again.",
               "error",
             );
           }
         }}
         data-testid="save-as-campaign-button"
-        aria-label={`Make this my ${themeStore.jargon.vault}`}
+        aria-label="Make this my Vault"
         aria-describedby="save-as-campaign-desc-text"
         title="Keep this world as your own and start building — we'll walk you through the first steps"
       >
@@ -214,13 +220,13 @@
         MAKE THIS MINE
       </button>
       <div class="sr-only" id="save-as-campaign-desc-text">
-        Keep this demo world as your own editable {themeStore.jargon.vault} and start
-        building — a short guide walks you through the first steps.
+        Keep this demo world as your own editable Vault and start building — a
+        short guide walks you through the first steps.
       </div>
       <button
         class={isVertical
           ? `${btnGhost} py-3 text-sm justify-center gap-2`
-          : `${btnGhost} px-3 md:px-4 py-1.5 text-[10px] md:text-xs gap-2`}
+          : `${btnGhost} px-3 md:px-4 py-1.5 text-micro md:text-xs gap-2`}
         onclick={() => demoService.exitDemo()}
         aria-label="Exit Demo"
       >
@@ -231,7 +237,7 @@
 
     {#if isOffline}
       <div
-        class="flex items-center gap-1.5 px-2 py-1 border border-amber-900/50 bg-amber-950/20 text-amber-500 rounded text-[9px] font-bold tracking-tighter cursor-help justify-center"
+        class="flex items-center gap-1.5 px-2 py-1 border border-amber-900/50 bg-amber-950/20 text-amber-500 rounded text-nano font-bold tracking-tighter cursor-help justify-center"
         title="Sovereign data remains accessible. Cloud-backed features and Lore Oracle are suspended while offline."
       >
         <span class="icon-[lucide--wifi-off] w-3.5 h-3.5" aria-hidden="true"
@@ -248,6 +254,7 @@
           : 'px-3 py-2 hover:bg-chrome-bg/50'}"
         onclick={() => modalUIStore.openVaultSwitcher()}
         title="Switch Vault"
+        aria-label={`Switch Vault: ${vault.vaultName}`}
         data-testid="open-vault-button"
         aria-haspopup="dialog"
         aria-expanded={modalUIStore.showVaultSwitcher}
@@ -259,7 +266,7 @@
         <span
           class="font-bold text-xs tracking-wider text-chrome-text group-hover:text-chrome-accent max-w-[240px] truncate font-sans min-w-0"
         >
-          {themeStore.jargon.vault}: {vault.vaultName}
+          {vault.vaultName}
         </span>
         <span
           class="icon-[lucide--chevron-down] w-3 h-3 text-chrome-muted/50 group-hover:text-chrome-accent"
@@ -269,7 +276,7 @@
     {/if}
 
     <div
-      class="text-[10px] md:text-xs text-chrome-muted tracking-wider uppercase {isVertical
+      class="text-micro md:text-xs text-chrome-muted tracking-wider uppercase {isVertical
         ? 'text-center'
         : 'hidden sm:block'}"
       role="status"
@@ -306,7 +313,7 @@
       {:else if vault.status === "error" || vault.failedFiles.length > 0}
         <div class="flex items-center gap-1.5">
           <span
-            class="text-red-400 font-bold text-[10px] bg-red-900/20 px-2 py-1 rounded border border-red-900/50 cursor-help"
+            class="text-red-400 font-bold text-micro bg-red-900/20 px-2 py-1 rounded border border-red-900/50 cursor-help"
             title={vault.failedFiles.length > 0
               ? vault.failedFiles.map((f) => `${f.path}: ${f.error}`).join("\n")
               : vault.errorMessage || "ERROR"}
@@ -315,7 +322,7 @@
           </span>
           {#if vault.failedFiles.length > 0}
             <button
-              class="text-[9px] text-chrome-muted hover:text-chrome-text underline font-sans"
+              class="text-nano text-chrome-muted hover:text-chrome-text underline font-sans"
               onclick={() => (vault.failedFiles = [])}
             >
               CLEAR
@@ -343,7 +350,7 @@
             aria-haspopup="menu"
             aria-expanded={showNoVaultMenu}
           >
-            <span>No {themeStore.jargon.vault} Open</span>
+            <span>No Vault Open</span>
             <span
               class="icon-[lucide--chevron-down] w-3 h-3 transition-transform {showNoVaultMenu
                 ? 'rotate-180'
@@ -375,7 +382,10 @@
                   onclick={() => runNoVaultAction(item.action)}
                   data-testid={item.testid}
                 >
-                  <span class="{item.icon} w-3.5 h-3.5 shrink-0"></span>
+                  <span
+                    class="{item.icon} w-3.5 h-3.5 shrink-0"
+                    aria-hidden="true"
+                  ></span>
                   {item.label}
                 </button>
               {/each}
@@ -390,7 +400,7 @@
         <button
           class={isVertical
             ? `${btnAccent} py-3 text-sm justify-center`
-            : `${btnAccent} px-3 md:px-4 py-1.5 text-[10px] md:text-xs`}
+            : `${btnAccent} px-3 md:px-4 py-1.5 text-micro md:text-xs`}
           onclick={async () => {
             await p2pGuestService.leaveSession();
             sessionModeStore.guestUsername = null;
@@ -422,7 +432,7 @@
             <button
               class="{isVertical
                 ? 'py-3 text-sm justify-center gap-2'
-                : 'px-3 md:px-4 py-1.5 text-[10px] md:text-xs gap-2'} rounded font-bold tracking-widest transition whitespace-nowrap flex items-center border border-amber-500 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20"
+                : 'px-3 md:px-4 py-1.5 text-micro md:text-xs gap-2'} rounded font-bold tracking-widest transition whitespace-nowrap flex items-center border border-amber-500 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20"
               onclick={() => vault.saveToFolder()}
               title="Grant browser permission to access your linked local folder."
               aria-label="GRANT ACCESS"
@@ -436,7 +446,7 @@
             <button
               class="{isVertical
                 ? 'py-3 text-sm justify-center gap-2'
-                : 'px-3 md:px-4 py-1.5 text-[10px] md:text-xs gap-2'} rounded font-bold tracking-widest transition whitespace-nowrap flex items-center border border-green-500 bg-green-500/10 text-green-400 cursor-default"
+                : 'px-3 md:px-4 py-1.5 text-micro md:text-xs gap-2'} rounded font-bold tracking-widest transition whitespace-nowrap flex items-center border border-green-500 bg-green-500/10 text-green-400 cursor-default"
               title="Changes successfully saved to folder."
               aria-label="SAVED"
               disabled
@@ -452,7 +462,7 @@
             <button
               class="{btnAccent} {isVertical
                 ? 'py-3 text-sm justify-center gap-2'
-                : 'px-3 md:px-4 py-1.5 text-[10px] md:text-xs gap-2'} {vault.status ===
+                : 'px-3 md:px-4 py-1.5 text-micro md:text-xs gap-2'} {vault.status ===
               'saving'
                 ? 'opacity-75 cursor-wait'
                 : ''} {vault.hasFolderHandle && !vault.isDirty
@@ -486,22 +496,6 @@
               {/if}
             </button>
           {/if}
-
-          <button
-            class="{btnGhost} {iconOnlyClasses}"
-            onclick={() => modalUIStore.openGeneratorWorkflow()}
-            title="Generate campaign content"
-            aria-label={isVertical
-              ? "GENERATE - Generate campaign content"
-              : "Generate campaign content"}
-            data-testid="open-generator-button"
-          >
-            <span class="icon-[lucide--wand-2] w-3.5 h-3.5" aria-hidden="true"
-            ></span>
-            {#if isVertical}<span class="font-bold tracking-widest"
-                >GENERATE</span
-              >{/if}
-          </button>
         </div>
       {/if}
     {/if}
@@ -541,9 +535,28 @@
         {/each}
       </select>
 
+      {#if useTemplate && availableTemplates.length > 1}
+        <select
+          bind:value={selectedTemplateId}
+          aria-label="Entity Template"
+          data-testid="new-entity-template-select"
+          class="px-2 py-1.5 text-xs bg-chrome-bg border border-chrome-border text-chrome-text rounded focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-chrome-text focus:border-chrome-accent font-sans {isVertical
+            ? 'py-3 text-sm'
+            : ''}"
+        >
+          {#each availableTemplates as t}
+            <option value={t.id}>
+              {t.name}{t.id === entityTemplateStore.effectiveDefaultFor(newType)
+                ? " (Default)"
+                : ""}
+            </option>
+          {/each}
+        </select>
+      {/if}
+
       {#if prefillStartDate}
         <div
-          class="flex items-center gap-1.5 rounded px-2 py-1 text-[10px] bg-chrome-accent/10 border border-chrome-accent/30 text-chrome-accent font-mono tracking-wide"
+          class="flex items-center gap-1.5 rounded px-2 py-1 text-micro bg-chrome-accent/10 border border-chrome-accent/30 text-chrome-accent font-mono tracking-wide"
         >
           <span class="icon-[lucide--calendar] h-3 w-3" aria-hidden="true"
           ></span>
@@ -554,7 +567,7 @@
       {/if}
 
       <label
-        class="flex items-center gap-2 cursor-pointer group select-none text-[10px] md:text-xs text-chrome-muted hover:text-chrome-text {isVertical
+        class="flex items-center gap-2 cursor-pointer group select-none text-micro md:text-xs text-chrome-muted hover:text-chrome-text {isVertical
           ? 'py-1'
           : 'px-1'}"
       >
@@ -612,7 +625,7 @@
       {#if createError}
         <div
           id="create-error"
-          class="text-[10px] text-red-500 w-full text-center font-sans"
+          class="text-micro text-red-500 w-full text-center font-sans"
           role="alert"
         >
           {createError}

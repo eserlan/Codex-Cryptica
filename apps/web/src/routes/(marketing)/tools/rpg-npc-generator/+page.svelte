@@ -20,7 +20,7 @@
     {
       question: "What does the RPG NPC generator create?",
       answer:
-        "It generates a complete NPC with a name, ancestry, role, personality traits, a hidden secret, motivation, faction connection, and a table-ready GM hook — adapted to the genre you choose.",
+        "It generates a complete NPC with a name, ancestry, role, personality traits, a hidden secret, motivation, faction connection, and a table-ready GM hook, adapted to the genre you choose.",
     },
     {
       question: "How is this different from the D&D NPC generator?",
@@ -30,12 +30,12 @@
     {
       question: "Can I use it without an account?",
       answer:
-        "Yes. Generate and copy NPC notes on this page without logging in. Save the draft directly into a browser-local Codex Cryptica vault — no sign-up required.",
+        "Yes. Generate and copy NPC notes on this page without logging in. Save the draft directly into a browser-local Codex Cryptica vault. No sign-up required.",
     },
     {
       question: "Can I aim the NPC at my current campaign?",
       answer:
-        "Yes. Add optional campaign context — a location, faction, active villain, or current problem — and the generator will fit the NPC to your table rather than producing a generic result.",
+        "Yes. Add optional campaign context (a location, faction, active villain, or current problem) and the generator will fit the NPC to your table rather than producing a generic result.",
     },
     {
       question: "How does saving a generated NPC work?",
@@ -52,7 +52,7 @@
     pageTitle:
       "RPG NPC Generator | Fantasy, Cyberpunk, Gothic & Sci-Fi Characters | Codex Cryptica",
     metaDescription:
-      "Generate NPCs across any genre — fantasy, cyberpunk, gothic horror, sci-fi, modern conspiracy, and post-apocalyptic. Each NPC has a secret, faction tie, and table-ready hook.",
+      "Generate NPCs across any genre: fantasy, cyberpunk, gothic horror, sci-fi, modern conspiracy, and post-apocalyptic. Each NPC has a secret, faction tie, and table-ready hook.",
     eyebrow: "RPG NPC Generator",
     introTitle: "RPG NPC Generator",
     introText:

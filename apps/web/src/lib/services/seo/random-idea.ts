@@ -1,7 +1,6 @@
 import type { DefaultGeneratorEngine } from "./generator-engine";
 import { pickFrom, type GeneratorOutput } from "./generator-helpers";
-import { factionConfig } from "generator-engine";
-import { npcThemeConfig } from "generator-engine";
+import { factionConfig, npcConfig, npcThemeConfig } from "generator-engine";
 import { themeToQuestGenre } from "generator-engine";
 
 export interface RandomIdeaCategory {
@@ -10,11 +9,22 @@ export interface RandomIdeaCategory {
     | "nation"
     | "npc"
     | "quest"
+    | "villain"
+    | "comic-book-event"
+    | "minor-magic-item"
+    | "artifact"
     | "council-vote"
+    | "heist"
     | "secret-society"
     | "social-hub"
     | "pantheon"
-    | "deity";
+    | "deity"
+    | "creature"
+    | "encounter"
+    | "origin"
+    | "holiday"
+    | "tome"
+    | "point-crawl";
   label: string;
   generate: (
     engine: DefaultGeneratorEngine,
@@ -39,6 +49,8 @@ export const themeToHubGenre: Record<string, string> = {
   Lancer: "Lancer",
   "Optimistic Exploration Sci-Fi": "Optimistic Exploration Sci-Fi",
   "Space Opera Resistance": "Space Opera Resistance",
+  "Space Western": "Space Western",
+  "Superhero / Comic Book": "Superhero / Comic Book",
 };
 
 export function pickRandomIdeaTheme(
@@ -73,9 +85,11 @@ export const randomIdeaCategories: RandomIdeaCategory[] = [
     generate: (engine, useAI, theme) =>
       engine.generateNPC({
         theme,
-        ancestry: pickFrom(npcThemeConfig.ancestries[theme]),
-        role: pickFrom(npcThemeConfig.roles[theme]),
-        alignment: pickFrom(npcThemeConfig.moralities[theme]).id,
+        ancestry: pickFrom(npcThemeConfig.ancestries[theme] ?? npcConfig.races),
+        role: pickFrom(npcThemeConfig.roles[theme] ?? npcConfig.roles),
+        alignment: npcThemeConfig.moralities[theme]
+          ? pickFrom(npcThemeConfig.moralities[theme]).id
+          : pickFrom(npcConfig.alignments),
         useAI,
       }),
   },
@@ -86,9 +100,38 @@ export const randomIdeaCategories: RandomIdeaCategory[] = [
       engine.generateQuestHook({ genre: themeToQuestGenre[theme], useAI }),
   },
   {
+    key: "villain",
+    label: "BBEG / Campaign Villain",
+    generate: (engine, useAI, theme) =>
+      engine.generateVillain({ genre: theme, useAI }),
+  },
+  {
+    key: "comic-book-event",
+    label: "Comic Book Event",
+    generate: (engine, useAI) => engine.generateComicBookEvent({ useAI }),
+  },
+  {
+    key: "minor-magic-item",
+    label: "Minor Magic Item",
+    generate: (engine, useAI, theme) =>
+      engine.generateMinorMagicItem({ genre: theme, useAI }),
+  },
+  {
+    key: "artifact",
+    label: "Artifact / Relic",
+    generate: (engine, useAI, theme) =>
+      engine.generateArtifact({ genre: theme, useAI }),
+  },
+  {
     key: "council-vote",
     label: "Council Vote",
     generate: (engine, useAI) => engine.generateCouncilVote({ useAI }),
+  },
+  {
+    key: "heist",
+    label: "Heist",
+    generate: (engine, useAI, theme) =>
+      engine.generateHeist({ genre: theme, useAI }),
   },
   {
     key: "secret-society",
@@ -113,6 +156,43 @@ export const randomIdeaCategories: RandomIdeaCategory[] = [
     label: "Deity",
     generate: (engine, useAI, theme) =>
       engine.generatePantheon({ genre: theme, mode: "single", useAI }),
+  },
+  {
+    key: "creature",
+    label: "Creature",
+    generate: (engine, useAI, theme) =>
+      engine.generateCreature({ genre: theme, useAI }),
+  },
+  {
+    key: "encounter",
+    label: "Encounter",
+    generate: (engine, useAI, theme) =>
+      engine.generateEncounter({ genre: theme, useAI }),
+  },
+  {
+    key: "holiday",
+    label: "Holiday & Festival",
+    generate: (engine, useAI, theme) =>
+      engine.generateHoliday({ genre: theme, useAI }),
+  },
+  {
+    // Superhero / Comic Book only, by design (#3111) — ignores the rolled
+    // theme entirely, the same way council-vote does, since this generator
+    // has no genre option.
+    key: "origin",
+    label: "Superhero Origin",
+    generate: (engine, useAI) => engine.generateOrigin({ useAI }),
+  },
+  {
+    key: "tome",
+    label: "Forbidden Tome",
+    generate: (engine, useAI, theme) => engine.generateTome({ theme, useAI }),
+  },
+  {
+    key: "point-crawl",
+    label: "Point Crawl",
+    generate: (engine, useAI, theme) =>
+      engine.generatePointCrawl({ genre: theme, useAI }),
   },
 ];
 

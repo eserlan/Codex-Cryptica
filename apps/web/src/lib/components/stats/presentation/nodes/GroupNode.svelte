@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { GroupNode as GroupNodeType } from "@codex/stat-sheet-engine";
   import type { PresentationRenderContext } from "../types";
+  // fallow-ignore-next-line circular-dependency
   import PresentationRenderer from "../PresentationRenderer.svelte";
 
   let {

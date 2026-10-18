@@ -1,7 +1,30 @@
+import { generatePointCrawlLocal } from "generator-engine";
 import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
 import type { ValidSlug } from "./generator-page-meta";
 
 export const slugDrafts: Partial<Record<ValidSlug, GeneratorOutput>> = {
+  holiday: {
+    type: "note",
+    title: "Lanterns for the Returning Tide",
+    summary:
+      "A harbour remembrance for neighbours who kept the river gate open and those who did not return.",
+    content:
+      "## Lanterns for the Returning Tide\n\n**Type:** Memorial and seasonal observance\n\n**When:** The first calm night after the autumn equinox\n\nAt dusk, families carry covered lanterns to the quay and leave one place empty at supper. The official account credits the governor; dock families remember the rope crews who disobeyed the closure order.\n\n### At the table\nA newly found gate ledger names the official who ordered the rescue route closed. The governor's heir is due to lead this year's procession.",
+    lore: "## GM Notes\nThe ledger is authentic. The rope crews kept the river gate open against orders, but later records credited the governor.",
+    labels: ["holiday-generator", "observance", "memorial"],
+    status: "draft",
+    observances: [
+      {
+        name: "Lanterns for the Returning Tide",
+        type: "Memorial and seasonal observance",
+        when: "The first calm night after the autumn equinox",
+        observers: "Harbour families and river pilots",
+        traditions:
+          "Carry covered lanterns to the quay and leave one place empty at supper",
+        tension: "A newly found gate ledger challenges the official account.",
+      },
+    ],
+  },
   npc: {
     type: "character",
     title: "Zephyrus Gray",
@@ -225,4 +248,25 @@ export const slugDrafts: Partial<Record<ValidSlug, GeneratorOutput>> = {
     labels: ["adventure", "event", "adventure-generator", "imported-draft"],
     status: "draft",
   },
+  tome: {
+    type: "item",
+    title: "The Drowned Liturgy of Saint Jude-in-the-Fens",
+    summary:
+      "A water-damaged 17th-century devotional octavo whose marginal glosses describe rites addressed to entities beneath the salt marsh.",
+    content:
+      "### Description & Physical Form\nBound in damp-stained calfskin with rusted iron clasps. Several quires have been restitched with heavy sailmaker's twine. The Latin text of a standard Anglican prayer book has been systematically overwritten between the lines with an angular, unrecognised vernacular script in dark sepia gall ink.\n\n### Significant Excerpt\n> *'Let no lantern be trimmed when the ditch-water turns brackish; that which enters the lock-gate does so by ancient covenant, needing neither name nor welcome.'*\n\n### Powers & Revelations\nScholars who decipher the interlinear glosses gain insight into hydrological anomalies, pre-flood architecture, and the rites required to placate deep-marsh entities.\n\n### Hazards & Investigation Risks\nProlonged study induces severe sensory disturbance — reader reports auditory hallucinations of distant, rhythmic sluice-gates and compulsive thirst.\n\n### Custodian & Provenance\nRecovered from the flooded undercroft of Saint Jude's vicarage during the fenland drainage of 1842; currently held in the restricted reserve of the provincial antiquarian society.",
+    lore: "## Keeper / GM Notes\nThe marginal annotator was the curate himself, Father Thomas Ewell, who vanished three weeks before the fen inundated the parish church. The final pages contain a rough hydrographic map indicating a submerged masonry vault beneath the salt marsh.",
+    labels: ["tome-generator", "forbidden-book", "occult", "item"],
+    status: "draft",
+  },
+  "point-crawl": generatePointCrawlLocal({
+    genre: "Classic Fantasy",
+    scale: "Wilderness",
+    pointCount: 8,
+    density: "Balanced branching",
+    dangerLevel: "Moderate / Hazardous",
+    secretFrequency: "Standard (1-2 secret routes)",
+    instruction:
+      "A mist-choked pilgrimage trail climbing through flooded watchtowers and basalt ravines toward the Sunken Reliquary.",
+  }) as GeneratorOutput,
 };

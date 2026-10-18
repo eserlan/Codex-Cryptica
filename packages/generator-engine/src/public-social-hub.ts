@@ -2,10 +2,7 @@
  * Public Social Hub + Tavern generators — framework-free port of the SEO
  * social-hub generator (`apps/web/src/lib/services/seo/generators/social-hub.ts`).
  *
- * Per the unification plan (#1351) this stays framework-free: no AI client, no
- * sessionStorage. The web page builds prompts here, runs them through
- * aiClientManager, parses with the parse* helpers, and falls back to the
- * generate*Local helpers on failure. Session context is injected as a string.
+ * Migrated onto the smart deterministic framework (#2534).
  */
 
 import type { PublicGeneratorOutput } from "./public-generator-adapters";
@@ -18,6 +15,35 @@ import {
 } from "./random-utils";
 import { parseFencedJson, asString } from "./llm-response-utils";
 import { formatCampaignContextBlock } from "./campaign-context";
+import {
+  buildSocialHubSchema,
+  buildTavernSchema,
+} from "./public-social-hub-schema";
+import { resolveSmart, type LockedValue } from "./smart";
+import { socialHubConfig } from "./public-social-hub-config";
+
+export {
+  buildSocialHubSchema,
+  buildTavernSchema,
+  TAVERN_NAMING_STYLES,
+} from "./public-social-hub-schema";
+export {
+  SOCIAL_HUB_PRESETS,
+  TAVERN_PRESETS,
+} from "./public-social-hub-presets";
+export {
+  SOCIAL_HUB_TRAIT_VOCABULARY,
+  SOCIAL_HUB_EXTRA_TRAITS,
+  VENUE_TYPE_TRAITS,
+  ATMOSPHERE_TRAITS,
+  WEALTH_LEVEL_TRAITS,
+  CLIENTELE_TRAITS,
+  TROUBLE_TRAITS,
+  SETTLEMENT_TYPE_TRAITS,
+  SOCIAL_HUB_RULES,
+  SOCIAL_HUB_AFFINITIES,
+  type SocialHubTrait,
+} from "./public-social-hub-traits";
 
 const VENUE_ADJECTIVES = [
   "Sullen",
@@ -83,253 +109,6 @@ function buildTavernName(rng: Rng): string {
   return `The ${pickFrom(VENUE_ADJECTIVES, rng)} ${pickFrom(VENUE_NOUNS, rng)}`;
 }
 
-export const socialHubConfig = {
-  genres: [
-    "Fantasy",
-    "Dark Fantasy",
-    "Pirate",
-    "Cyberpunk",
-    "Sci-Fi",
-    "Modern",
-    "Horror",
-    "Cosmic Horror",
-    "Post-Apocalyptic",
-    "Western",
-    "Steampunk",
-    "Lancer",
-    "Space Opera Resistance",
-    "Optimistic Exploration Sci-Fi",
-  ],
-  venueTypesByGenre: {
-    Fantasy: [
-      "Tavern / Inn",
-      "Mead Hall",
-      "Roadside Alehouse",
-      "Adventurer Lodge",
-      "Guildhall",
-    ],
-    "Dark Fantasy": [
-      "Cursed Alehouse",
-      "Witch's Den",
-      "Underground Fighting Pit",
-      "Plague Hospice",
-      "Smuggler's Hollow",
-    ],
-    Pirate: [
-      "Dockside Tavern",
-      "Rum House",
-      "Sailor's Inn",
-      "Gambling Den",
-      "Freeport Alehouse",
-    ],
-    Cyberpunk: [
-      "Noodle Bar",
-      "Dive Bar",
-      "Nightclub",
-      "Hacker Café",
-      "Braindance Lounge",
-    ],
-    "Sci-Fi": [
-      "Spaceport Cantina",
-      "Station Bar",
-      "Mess Hall",
-      "Orbital Lounge",
-      "Asteroid Miner Pub",
-    ],
-    Modern: ["Pub", "Café / Diner", "Hotel Bar", "Nightclub", "Truck Stop"],
-    Horror: [
-      "Goth Club",
-      "Occult Café",
-      "Speakeasy",
-      "Blood Bar",
-      "Private Lounge",
-    ],
-    "Cosmic Horror": [
-      "Expedition Mess Hall",
-      "Restricted Reading Room",
-      "Weather Station Canteen",
-      "Diving Bell Lounge",
-      "Museum Staff Common Room",
-    ],
-    "Post-Apocalyptic": [
-      "Trade Shack",
-      "Bunker Canteen",
-      "Water Bar",
-      "Settlement Mess",
-      "Caravanserai",
-    ],
-    Western: [
-      "Saloon",
-      "Boarding House",
-      "Trading Post",
-      "Roadhouse",
-      "Gambling Parlour",
-    ],
-    Steampunk: [
-      "Aetheric Lounge",
-      "Artificers' Club",
-      "Engine-District Pub",
-      "Sky-Dock Canteen",
-      "Guild Factor's Parlour",
-    ],
-    Lancer: [
-      "Mech Bay Canteen",
-      "Outpost Transit Bar",
-      "Union Admin Mess Hall",
-      "Pilot's Debrief Lounge",
-      "Colonial Settlement Common Room",
-    ],
-    "Space Opera Resistance": [
-      "Smuggler's Cantina",
-      "Underground Resistance Hub",
-      "Imperial Officers' Club",
-      "Scrap-Town Bar",
-      "Spaceport Transit Lounge",
-    ],
-    "Optimistic Exploration Sci-Fi": [
-      "Starship Observation Lounge",
-      "Space Station Promenade",
-      "Embassy Reception Hall",
-      "Planetary Academy Campus",
-      "Frontier Research Outpost Canteen",
-    ],
-  } as Record<string, string[]>,
-  atmospheres: [
-    "Rowdy and welcoming",
-    "Tense and suspicious",
-    "Quiet and melancholic",
-    "Festive and chaotic",
-    "Cold and professional",
-    "Warm but secretive",
-  ],
-  wealthLevels: [
-    "Destitute (dirt floors, watered-down drinks)",
-    "Poor (cheap but honest)",
-    "Modest (reliable, no frills)",
-    "Comfortable (decent food and beds)",
-    "Prosperous (good drink, private rooms)",
-    "Wealthy (exclusive clientele)",
-  ],
-  clientelesByGenre: {
-    Fantasy: [
-      "Adventurers and wanderers",
-      "Merchants and traders",
-      "Soldiers and mercenaries",
-      "Pilgrims and clergy",
-      "Criminals and fence-seekers",
-      "Mixed locals",
-    ],
-    "Dark Fantasy": [
-      "Mercenaries and cultists",
-      "Outlaws and desperate souls",
-      "Corrupt clergy",
-      "Cursed travellers",
-      "Black-market traders",
-    ],
-    Pirate: [
-      "Pirates and privateers",
-      "Sailors and dockworkers",
-      "Smugglers and fences",
-      "Bounty hunters",
-      "Stranded merchants",
-    ],
-    Cyberpunk: [
-      "Hackers and netrunners",
-      "Off-duty security",
-      "Smugglers and fixers",
-      "Street gang members",
-      "Corporate burnouts",
-    ],
-    "Sci-Fi": [
-      "Spacers and pilots",
-      "Colonial marines",
-      "Free traders",
-      "Scientists and researchers",
-      "Station workers",
-    ],
-    Modern: [
-      "Office workers",
-      "Local regulars",
-      "Tourists and travellers",
-      "Journalists and students",
-      "Off-duty police",
-    ],
-    Horror: [
-      "Occultists and hunters",
-      "Lost souls and drifters",
-      "Curious investigators",
-      "Predators in disguise",
-      "Frightened locals",
-    ],
-    "Cosmic Horror": [
-      "Field researchers and survey crews",
-      "Anxious locals with half-told stories",
-      "Archive staff and visiting scholars",
-      "Divers, sailors, and salvage teams",
-      "Investigators following an unsettling lead",
-    ],
-    "Post-Apocalyptic": [
-      "Scavengers and traders",
-      "Wasteland survivors",
-      "Cult members",
-      "Mercenaries",
-      "Settlers and refugees",
-    ],
-    Steampunk: [
-      "Artificers and engine-wrights",
-      "Guild factors and patent brokers",
-      "Sky-dock workers and airship crew",
-      "Off-duty imperial constables",
-      "Underclass agitators in disguise",
-    ],
-    Lancer: [
-      "Off-duty mech pilots and crew chiefs",
-      "Union administrators and logistics staff",
-      "Colonial settlers and outpost workers",
-      "Mercenary contractors between jobs",
-      "NHP handlers on downtime protocols",
-    ],
-    Western: [
-      "Cowboys and drifters",
-      "Miners and prospectors",
-      "Outlaws and bounty hunters",
-      "Townsfolk",
-      "Railroad workers",
-    ],
-    "Space Opera Resistance": [
-      "Rebel spies and informants",
-      "Off-duty imperial officers and stormtroopers",
-      "Smugglers and bounty hunters",
-      "Mystic order exiles in hiding",
-      "Scrap workers and frontier traders",
-    ],
-    "Optimistic Exploration Sci-Fi": [
-      "Off-duty officers",
-      "Visiting alien diplomats",
-      "Research scientists",
-      "Civilian colonists",
-      "Exchange students",
-      "Stellar cartographers",
-    ],
-  } as Record<string, string[]>,
-  troubles: [
-    "The owner owes a dangerous debt that is coming due",
-    "A recent violent incident was quietly buried — the responsible party may still be inside",
-    "A protected criminal is hiding among the staff",
-    "A back room connects to something the owner refuses to discuss",
-    "A faction is using the venue as a dead-drop without the owner's knowledge",
-    "The place is being squeezed out by a rival backed by local power",
-  ],
-  settlementTypes: [
-    "Capital city",
-    "Market town",
-    "Frontier outpost",
-    "Coastal port",
-    "Remote village",
-    "Crossroads hamlet",
-  ],
-};
-
 export interface SocialHubGeneratorOptions {
   genre?: string;
   venueType?: string;
@@ -356,6 +135,8 @@ export interface ResolvedSocialHub {
   clientele: string;
   campaignContext?: string;
   varianceSeed: number;
+  trouble?: string;
+  traits?: readonly string[];
 }
 
 export interface ResolvedTavern {
@@ -367,6 +148,8 @@ export interface ResolvedTavern {
   campaignContext?: string;
   namingDirective: string;
   varianceSeed: number;
+  trouble?: string;
+  traits?: readonly string[];
 }
 
 export interface SocialHubPrompt {
@@ -381,57 +164,82 @@ export interface TavernPrompt {
   resolved: ResolvedTavern;
 }
 
-const TAVERN_NAMING_STYLES = [
-  "Name it after an animal and a worn or unlikely material (e.g. 'The Tin Boar', 'The Pitted Heron').",
-  "Name it after a physical object associated with the owner's past — a weapon, trade tool, or keepsake (e.g. 'The Broken Spoke', 'The Dented Kettle').",
-  "Use a short ironic or sardonic phrase (e.g. 'The Honest Scales', 'The Fair Price', 'The Warm Welcome').",
-  "Name it after an obscure local legend, a minor battle, or a peculiar geographical feature — not a generic landmark.",
-  "Use a two-word compound that evokes the atmosphere — a worn adjective plus a mundane noun (e.g. 'The Sullen Lantern', 'The Leaning Barrel', 'The Scorched Bell').",
-];
-
-function resolveSocialHub(
-  options: SocialHubGeneratorOptions,
-  rng: Rng,
+export function resolveSocialHub(
+  options: SocialHubGeneratorOptions = {},
+  rng: Rng = defaultRng,
 ): ResolvedSocialHub {
   const genre = options.genre || pickFrom(socialHubConfig.genres, rng);
-  const venueTypes =
-    socialHubConfig.venueTypesByGenre[genre] ??
-    socialHubConfig.venueTypesByGenre["Fantasy"];
-  const clienteles =
-    socialHubConfig.clientelesByGenre[genre] ??
-    socialHubConfig.clientelesByGenre["Fantasy"];
+  const locked: Record<string, LockedValue> = {};
+
+  if (options.venueType) {
+    locked.venueType = { value: options.venueType, source: "manual" };
+  }
+  if (options.wealthLevel) {
+    locked.wealthLevel = { value: options.wealthLevel, source: "manual" };
+  }
+  if (options.atmosphere) {
+    locked.atmosphere = { value: options.atmosphere, source: "manual" };
+  }
+  if (options.clientele) {
+    locked.clientele = { value: options.clientele, source: "manual" };
+  }
+
+  const schema = buildSocialHubSchema();
+  const { values, traits } = resolveSmart(schema, { genre, locked }, rng);
 
   return {
     genre,
-    venueType: options.venueType || pickFrom(venueTypes, rng),
-    atmosphere:
-      options.atmosphere || pickFrom(socialHubConfig.atmospheres, rng),
-    wealthLevel: options.wealthLevel || socialHubConfig.wealthLevels[2],
-    clientele: options.clientele || pickFrom(clienteles, rng),
+    venueType: values.venueType,
+    atmosphere: values.atmosphere,
+    wealthLevel: values.wealthLevel,
+    clientele: values.clientele,
     campaignContext: options.campaignContext?.trim() || undefined,
     varianceSeed: Math.floor(rng() * 99991) + 10,
+    trouble: values.trouble,
+    traits,
   };
 }
 
-function resolveTavern(
-  options: TavernGeneratorOptions,
-  rng: Rng,
+export function resolveTavern(
+  options: TavernGeneratorOptions = {},
+  rng: Rng = defaultRng,
 ): ResolvedTavern {
+  const locked: Record<string, LockedValue> = {};
+
+  if (options.settlementType) {
+    locked.settlementType = { value: options.settlementType, source: "manual" };
+  }
+  if (options.type) {
+    locked.tavernType = { value: options.type, source: "manual" };
+  }
+  if (options.wealthLevel) {
+    locked.wealthLevel = { value: options.wealthLevel, source: "manual" };
+  }
+  if (options.atmosphere) {
+    locked.atmosphere = { value: options.atmosphere, source: "manual" };
+  }
+  if (options.clientele) {
+    locked.clientele = { value: options.clientele, source: "manual" };
+  }
+
+  const schema = buildTavernSchema();
+  const { values, traits } = resolveSmart(
+    schema,
+    { genre: "Fantasy", locked },
+    rng,
+  );
+
   return {
-    tavernType:
-      options.type ||
-      pickFrom(socialHubConfig.venueTypesByGenre["Fantasy"], rng),
-    atmosphere:
-      options.atmosphere || pickFrom(socialHubConfig.atmospheres, rng),
-    settlementType:
-      options.settlementType || pickFrom(socialHubConfig.settlementTypes, rng),
-    wealthLevel: options.wealthLevel || socialHubConfig.wealthLevels[2],
-    clientele:
-      options.clientele ||
-      pickFrom(socialHubConfig.clientelesByGenre["Fantasy"], rng),
+    tavernType: values.tavernType,
+    atmosphere: values.atmosphere,
+    settlementType: values.settlementType,
+    wealthLevel: values.wealthLevel,
+    clientele: values.clientele,
     campaignContext: options.campaignContext?.trim() || undefined,
-    namingDirective: pickFrom(TAVERN_NAMING_STYLES, rng),
+    namingDirective: values.namingDirective,
     varianceSeed: Math.floor(rng() * 99991) + 10,
+    trouble: values.trouble,
+    traits,
   };
 }
 
@@ -556,7 +364,7 @@ export function generateSocialHubLocal(
   rng: Rng = defaultRng,
 ): PublicGeneratorOutput {
   const resolved = resolveSocialHub(options, rng);
-  const trouble = pickFrom(socialHubConfig.troubles, rng);
+  const trouble = resolved.trouble || pickFrom(socialHubConfig.troubles, rng);
   const ownerName = generateName(rng);
   const patron1 = generateName(rng);
   const patron2 = generateName(rng);
@@ -649,7 +457,7 @@ export function generateTavernLocal(
   rng: Rng = defaultRng,
 ): PublicGeneratorOutput {
   const resolved = resolveTavern(options, rng);
-  const trouble = pickFrom(socialHubConfig.troubles, rng);
+  const trouble = resolved.trouble || pickFrom(socialHubConfig.troubles, rng);
   const ownerName = generateName(rng);
   const patron1 = generateName(rng);
   const patron2 = generateName(rng);

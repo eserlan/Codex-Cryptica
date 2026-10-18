@@ -9,15 +9,10 @@ import {
   type ListingDraft,
   type PublicListing,
 } from "../../../../packages/schema/src/publishing";
-import { getCorsHeaders, getWriteToken } from "./publish";
+import { getCorsHeaders } from "./publish";
+import { authorizeListingMutation, type DirectoryEnv } from "./auth";
 import { upsertNoticeSidecar } from "./notice";
 import { readSuspensionMarker } from "./suspension";
-
-interface DirectoryEnv {
-  BUCKET?: any; // R2Bucket
-  ALLOWED_ORIGINS?: string;
-  ALLOW_CLOUDFLARE_PAGES_PREVIEW_ORIGINS?: string;
-}
 
 const DIRECTORY_PREFIX = "directory/listings/";
 const DIRECTORY_CACHE_CONTROL = "public, max-age=15";
@@ -79,58 +74,6 @@ async function readPublishedBundle(env: DirectoryEnv, publishId: string) {
   const parsed = GuestBundleSchema.safeParse(raw);
   if (!parsed.success) return null;
   return parsed.data;
-}
-
-export async function authorizeListingMutation(
-  request: Request,
-  env: DirectoryEnv,
-  publishId: string,
-) {
-  const clientToken = getWriteToken(request);
-  if (!clientToken) {
-    return new Response(
-      JSON.stringify({ error: { message: "Unauthorized: Missing token" } }),
-      {
-        status: 401,
-        headers: {
-          ...getCorsHeaders(request.headers, env),
-          "Content-Type": "application/json",
-        },
-      },
-    );
-  }
-
-  const bundleHead = await env.BUCKET?.head(
-    `published/${publishId}/bundle.json`,
-  );
-  if (!bundleHead) {
-    return new Response(
-      JSON.stringify({ error: { message: "Snapshot not found" } }),
-      {
-        status: 404,
-        headers: {
-          ...getCorsHeaders(request.headers, env),
-          "Content-Type": "application/json",
-        },
-      },
-    );
-  }
-
-  const serverToken = bundleHead.customMetadata?.writeToken;
-  if (!serverToken || serverToken !== clientToken) {
-    return new Response(
-      JSON.stringify({ error: { message: "Unauthorized listing mutation" } }),
-      {
-        status: 401,
-        headers: {
-          ...getCorsHeaders(request.headers, env),
-          "Content-Type": "application/json",
-        },
-      },
-    );
-  }
-
-  return null;
 }
 
 async function loadListing(env: DirectoryEnv, publishId: string) {

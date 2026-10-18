@@ -20,7 +20,7 @@ The focused character sits in the middle. Around them you'll see:
 - **Children** below
 - **Siblings** on the same row — worked out automatically from shared parents, and you can also add them directly (handy when the parents aren't recorded)
 
-Each person appears as a card with their portrait, name, lifespan, and whether they are living or deceased. The card also shows how they relate to the focused character — a specific term like "Mother" or "Brother" when one was set, otherwise the general category (Parent, Partner, Sibling, Child). Tag a character with a **Male** or **Female** label and their card shows a small gender icon.
+Each person appears as a card with their portrait, name, lifespan, and whether they are living or deceased. The card also shows how they relate to the focused character — a specific term like "Mother" or "Brother" when one was set, otherwise the general category (Parent, Partner, Sibling, Child). Give a character a **Male** or **Female** label and their card shows a small gender icon.
 
 ## Building a family
 
@@ -42,6 +42,8 @@ If the parent you just added already has a partner on file, you'll be asked whet
 - **Click a relative's card** to re-centre the tree on them and explore outward.
 - **Collapse** the parents or children branch to keep large trees tidy.
 - Use the **open** icon on a card to jump to that character's full detail panel.
+
+In the lineage view, drag to pan, scroll or pinch to zoom, and use **⊞** to expand a branch. Choose **Show all generations** to reveal the whole recorded lineage.
 
 ## One source of truth
 

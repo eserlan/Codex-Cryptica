@@ -3,6 +3,14 @@
   import { oracle } from "$lib/stores/oracle.svelte";
   import { onMount } from "svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { KeyboardInset } from "$lib/services/help-assistant/keyboard-inset.svelte";
+  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
+
+  const keyboard = new KeyboardInset();
+  $effect(() => {
+    if (!layoutUIStore.isMobile) return;
+    return keyboard.start();
+  });
 
   onMount(() => {
     oracle.init();
@@ -18,7 +26,9 @@
 </svelte:head>
 
 <div
-  class="fixed top-0 left-0 w-full h-[100dvh] bg-theme-bg flex flex-col overflow-hidden"
+  class="fixed inset-x-0 top-0 bottom-0 bg-theme-bg flex flex-col overflow-hidden"
+  style={layoutUIStore.isMobile ? keyboard.visibleStyle : undefined}
+  data-testid="standalone-oracle-container"
 >
   <!-- Standalone Header -->
   <div
@@ -31,7 +41,7 @@
           : ''}"
       ></div>
       <span
-        class="text-[10px] font-bold text-oracle-primary tracking-[0.2em] uppercase font-header"
+        class="text-micro font-bold text-oracle-primary tracking-[0.2em] uppercase font-header"
         >Lore Oracle Standalone</span
       >
     </div>
@@ -39,7 +49,7 @@
       {#if oracle.messages.length > 0}
         <button
           type="button"
-          class="px-3 py-1 flex items-center gap-2 text-[10px] font-bold text-oracle-primary hover:text-red-400 border border-oracle-dim/30 hover:border-red-500/50 transition-all uppercase font-header tracking-widest bg-oracle-dark/20"
+          class="px-3 py-1 flex items-center gap-2 text-micro font-bold text-oracle-primary hover:text-red-400 border border-oracle-dim/30 hover:border-red-500/50 transition-all uppercase font-header tracking-widest bg-oracle-dark/20"
           onclick={() => oracle.clearMessages()}
           aria-label="Clear conversation history"
         >
@@ -49,7 +59,7 @@
         </button>
       {/if}
       <div
-        class="text-[9px] font-mono text-oracle-dark/50 uppercase tracking-widest hidden sm:block"
+        class="text-nano font-mono text-oracle-dark/50 uppercase tracking-widest hidden sm:block"
       >
         Multi-Window Sync Active
       </div>

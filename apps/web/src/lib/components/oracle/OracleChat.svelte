@@ -2,16 +2,126 @@
   import { oracle } from "$lib/stores/oracle.svelte";
   import ChatMessage from "./ChatMessage.svelte";
   import CommandMenu from "./CommandMenu.svelte";
+  import EntityMentionPicker from "./EntityMentionPicker.svelte";
+  import EntityMentionDisambiguation, {
+    type MentionCandidate,
+  } from "./EntityMentionDisambiguation.svelte";
+  import { searchService } from "@codex/search-orchestrator";
+  import { OracleMentionController } from "./oracle-mention-controller.svelte";
+  import { createVaultMentionSource } from "$lib/stores/oracle/mention-source";
+  import { takeMentionHint } from "./oracle-mention-hint";
+  import { browserStorage } from "$lib/utils/runtime-deps";
+  import { type Mention, type ResolvedMention } from "entity-mention-engine";
+  import { planMentionSend } from "$lib/stores/oracle/mention-intent";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { chatCommands } from "../../config/chat-commands";
   import { fade } from "svelte/transition";
   import { tick } from "svelte";
   import { isChatNearBottom, scrollChatToBottom } from "./oracle-chat-scroll";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import EmptyState from "$lib/components/ui/EmptyState.svelte";
+  import {
+    ORACLE_CHAT_INPUT_EVENT,
+    getOracleChatDraft,
+    clearOracleChatDraft,
+    takeOraclePrefill,
+  } from "./oracle-chat-input";
 
   let { onOpenSettings } = $props<{ onOpenSettings?: () => void }>();
 
   let input = $state("");
+
+  // `@` mentions (#4052): the controller owns the picker and draft mentions.
+  // Offsets are kept against the untrimmed `input`.
+  const mentionController = new OracleMentionController(
+    () => createVaultMentionSource(oracle.vault as any),
+    (query) =>
+      searchService
+        .search(query, { limit: 8 })
+        .then((results) => results.map((r) => r.id)),
+  );
+  $effect(() => {
+    mentionController.syncVault((oracle.vault as any)?.activeVaultId);
+  });
+  $effect(() => () => mentionController.destroy());
+  let lastInput = "";
+  // The first-use hint is shown once per device (see takeMentionHint).
+  let mentionHint = $state<string | null>(null);
+  let mentionHintShown = false;
+  let ambiguity = $state<{
+    name: string;
+    span: ResolvedMention;
+    candidates: MentionCandidate[];
+  } | null>(null);
+
+  const draftMentionsFor = (raw: string): Mention[] => {
+    const shift = raw.length - raw.trimStart().length;
+    return mentionController.mentions.map((m) => ({
+      ...m,
+      start: m.start - shift,
+      end: m.end - shift,
+    }));
+  };
+
+  const applyText = (text: string, caret: number) => {
+    input = text;
+    lastInput = text;
+    tick().then(() => {
+      textArea?.focus();
+      textArea?.setSelectionRange(caret, caret);
+    });
+  };
+
+  const handleTextInput = (event: Event) => {
+    const el = event.currentTarget as HTMLTextAreaElement;
+    mentionController.handleInput(lastInput, el.value, el.selectionStart);
+    lastInput = el.value;
+    if (mentionController.open && mentionHint === null && !mentionHintShown) {
+      mentionHintShown = true;
+      mentionHint = takeMentionHint(browserStorage);
+    }
+  };
+
+  const selectMention = (index: number) => {
+    mentionController.activeIndex = index;
+    const result = mentionController.handleKey(
+      "Enter",
+      input,
+      textArea?.selectionStart ?? input.length,
+    );
+    if (result.handled) applyText(result.text, result.caret);
+  };
+
+  const chooseCandidate = (entityId: string) => {
+    if (!ambiguity) return;
+    const entity = createVaultMentionSource(oracle.vault as any).getEntity(
+      entityId,
+    );
+    if (!entity) return;
+    const shift = input.length - input.trimStart().length;
+    const { start, end, displayName } = ambiguity.span;
+    const applied = mentionController.choose(
+      input,
+      {
+        start: (start ?? 0) + shift,
+        end: (end ?? 0) + shift,
+        query: displayName,
+      },
+      entity,
+    );
+    ambiguity = null;
+    applyText(applied.text, applied.caret);
+  };
+
+  // A solo shortcut prefills the question here; the player edits and sends it.
+  $effect(() => {
+    if (!oracle.ui.pendingPrompt) return;
+    const prompt = takeOraclePrefill(oracle.ui);
+    if (prompt) {
+      input = prompt;
+      void tick().then(() => textArea?.focus());
+    }
+  });
   let scrollContainer = $state<HTMLDivElement>();
   let textArea = $state<HTMLTextAreaElement>();
   let commandMenu = $state<ReturnType<typeof CommandMenu>>();
@@ -58,39 +168,105 @@
     }
   });
 
-  const handleSubmit = async () => {
-    if (!input || oracle.isLoading) return;
-    const query = input.trim();
-    if (!query) return;
+  const mentionDraftFor = (query: string, raw: string): Mention[] =>
+    query.startsWith("/") ? [] : draftMentionsFor(raw);
 
-    // Add to history if not duplicate of last
-    if (commandHistory[commandHistory.length - 1] !== query) {
-      commandHistory.push(query);
-      if (commandHistory.length > 50) commandHistory.shift();
+  const candidatesFor = (
+    ids: string[] = [],
+    source: ReturnType<typeof createVaultMentionSource>,
+  ) =>
+    ids.flatMap((id) => {
+      const e = source.getEntity(id);
+      return e ? [{ id, title: e.title, type: e.type ?? "" }] : [];
+    });
+
+  /**
+   * Checks `@` mentions before a plain question is sent. Returns true when
+   * the send must wait for the user to choose an entity.
+   */
+  const blockForMentions = (
+    query: string,
+    raw: string,
+    sendAsPlainText: boolean,
+  ): boolean => {
+    if (query.startsWith("/")) return false;
+    const source = createVaultMentionSource(oracle.vault as any);
+    const plan = planMentionSend(query, draftMentionsFor(raw), source);
+    if (plan.unmatched) {
+      notificationStore.notify(
+        `No entity matched @${plan.unmatched.displayName}. Sent as text.`,
+        "info",
+      );
     }
-    historyIndex = -1;
-    temporaryInput = "";
+    ambiguity = null;
+    if (!plan.ambiguous || sendAsPlainText) return false;
+    ambiguity = {
+      name: plan.ambiguous.displayName,
+      span: plan.ambiguous,
+      candidates: candidatesFor(plan.ambiguous.candidates, source),
+    };
+    return true;
+  };
 
+  /** Runs a slash command. Returns false when the text is not a known command. */
+  const runSlashCommand = async (query: string): Promise<boolean> => {
+    if (!query.startsWith("/")) return false;
+    const parts = query.split(" ");
+    const cmd = chatCommands.find((c) => c.name === parts[0]);
+    if (!cmd) return false;
+    await cmd.handler(parts.slice(1).join(" "));
+    return true;
+  };
+
+  const rememberCommand = (query: string) => {
+    if (commandHistory[commandHistory.length - 1] === query) return;
+    commandHistory.push(query);
+    if (commandHistory.length > 50) commandHistory.shift();
+  };
+
+  const clearComposer = () => {
     input = "";
     if (textArea) {
       textArea.style.height = "";
     }
+  };
 
-    // Check if it's a command
-    if (query.startsWith("/")) {
-      const parts = query.split(" ");
-      const cmdName = parts[0];
-      const args = parts.slice(1).join(" ");
-      const cmd = chatCommands.find((c) => c.name === cmdName);
-      if (cmd) {
-        await cmd.handler(args);
-        tick().then(() => textArea?.focus());
-        return;
-      }
+  const handleSubmit = async (sendAsPlainText = false) => {
+    if (!input || oracle.isLoading) return;
+    const query = input.trim();
+    if (!query) return;
+
+    // Captured while `input` still holds the raw text (cleared further down).
+    const draft = mentionDraftFor(query, input);
+    if (blockForMentions(query, input, sendAsPlainText)) return;
+
+    rememberCommand(query);
+    historyIndex = -1;
+    temporaryInput = "";
+    clearComposer();
+
+    if (await runSlashCommand(query)) {
+      tick().then(() => textArea?.focus());
+      return;
     }
 
-    await oracle.ask(query);
+    mentionController.takeMentions();
+    await oracle.ask(query, draft);
     tick().then(() => textArea?.focus());
+  };
+
+  /** Returns true when the open mention picker consumed the key. */
+  const handleMentionKey = (e: KeyboardEvent): boolean => {
+    if (!mentionController.open) return false;
+    const result = mentionController.handleKey(
+      e.key,
+      input,
+      textArea?.selectionStart ?? input.length,
+    );
+    if (!result.handled) return false;
+    e.preventDefault();
+    applyText(result.text, result.caret);
+    return true;
   };
 
   const handleKeyDown = (e: KeyboardEvent) => {
@@ -198,6 +374,34 @@
     if (!scrollContainer) return;
     wasNearBottom = isChatNearBottom(scrollContainer);
   };
+
+  $effect(() => {
+    const draft = getOracleChatDraft();
+    if (draft) {
+      input = input.trim() ? `${input}\n${draft}` : draft;
+      clearOracleChatDraft();
+      tick().then(() => {
+        adjustHeight();
+      });
+    }
+
+    const addResultToInput = (event: Event) => {
+      const text = (event as CustomEvent<string>).detail?.trim();
+      if (!text) return;
+
+      input = input.trim() ? `${input}\n${text}` : text;
+      clearOracleChatDraft();
+      event.preventDefault();
+      tick().then(() => {
+        adjustHeight();
+        textArea?.focus();
+      });
+    };
+
+    window.addEventListener(ORACLE_CHAT_INPUT_EVENT, addResultToInput);
+    return () =>
+      window.removeEventListener(ORACLE_CHAT_INPUT_EVENT, addResultToInput);
+  });
 </script>
 
 {#if !oracle.isEnabled}
@@ -207,7 +411,8 @@
     <div
       class="w-16 h-16 bg-theme-primary/10 rounded-full flex items-center justify-center text-theme-primary mb-2"
     >
-      <span class="icon-[heroicons--sparkles] w-8 h-8"></span>
+      <span aria-hidden="true" class="icon-[heroicons--sparkles] w-8 h-8"
+      ></span>
     </div>
     <h3
       class="text-theme-text font-bold uppercase font-header tracking-widest text-xs"
@@ -220,14 +425,14 @@
       >
       in the Settings panel.
       {#if !import.meta.env.VITE_SHARED_GEMINI_KEY}
-        <br /><span class="text-[10px] opacity-50">
+        <br /><span class="text-micro opacity-50">
           (Shared key not detected on localhost)</span
         >
       {/if}
     </p>
 
     <button
-      class="px-6 py-2 bg-theme-primary hover:bg-theme-secondary text-theme-bg font-bold rounded-full text-[10px] tracking-widest transition-all active:scale-95 shadow-lg shadow-theme-primary/20"
+      class="px-6 py-2 bg-theme-primary hover:bg-theme-secondary text-theme-bg font-bold rounded-full text-micro tracking-widest transition-all active:scale-95 shadow-lg shadow-theme-primary/20"
       onclick={() => {
         if (onOpenSettings) onOpenSettings();
         else modalUIStore.openSettings();
@@ -236,7 +441,7 @@
       OPEN SETTINGS
     </button>
     <div class="flex flex-col gap-2 w-full pt-4">
-      <p class="text-[10px] text-theme-muted font-header">
+      <p class="text-micro text-theme-muted font-header">
         Vault contents never leave this device except for inference via your own
         API key.
       </p>
@@ -312,6 +517,36 @@
         }}
       />
     {/if}
+    {#if mentionController.open}
+      <EntityMentionPicker
+        suggestions={mentionController.suggestions}
+        loading={mentionController.loading}
+        anchorEl={textArea ?? null}
+        activeIndex={mentionController.activeIndex}
+        onSelect={selectMention}
+      />
+    {/if}
+    {#if mentionHint}
+      <p
+        class="mx-2.5 mb-1 flex items-start gap-2 text-xs text-theme-muted sm:mx-4"
+        data-testid="entity-mention-hint"
+      >
+        <span class="flex-1">{mentionHint}</span>
+        <button
+          type="button"
+          class="shrink-0 font-medium text-theme-primary hover:text-theme-secondary"
+          onclick={() => (mentionHint = null)}>Got it</button
+        >
+      </p>
+    {/if}
+    {#if ambiguity}
+      <EntityMentionDisambiguation
+        name={ambiguity.name}
+        candidates={ambiguity.candidates}
+        onChoose={chooseCandidate}
+        onSendAsText={() => void handleSubmit(true)}
+      />
+    {/if}
     <form
       onsubmit={(e) => {
         e.preventDefault();
@@ -325,7 +560,10 @@
         bind:value={input}
         data-testid="oracle-input"
         aria-label="Chat Input"
-        onkeydown={handleKeyDown}
+        onkeydown={(e) => {
+          if (!handleMentionKey(e)) handleKeyDown(e);
+        }}
+        oninput={handleTextInput}
         placeholder="Ask the archives or type &quot;/&quot; for commands..."
         class="flex-1 bg-theme-bg/50 border border-theme-border rounded px-3 sm:px-4 py-2.5 text-base sm:text-sm text-theme-text placeholder-theme-text/40 focus:outline-none focus:border-theme-primary focus:ring-1 focus:ring-theme-primary/20 transition-all font-body resize-none overflow-hidden no-scrollbar shadow-inner"
         disabled={oracle.isLoading}

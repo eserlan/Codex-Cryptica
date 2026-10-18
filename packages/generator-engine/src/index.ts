@@ -1,5 +1,20 @@
 export * from "./campaign-generator-types";
 export {
+  applyRefinementProposal,
+  buildRefinementPrompt,
+  normalizeRefinementDocument,
+  parseRefinementResponse,
+  type RefinableSource,
+  type RefinementDocument,
+  type RefinementProposal,
+} from "./generator-refinement";
+export {
+  runHeistGeneration,
+  streamHeistGeneration,
+  type HeistGenerationTurns,
+  type HeistGenerationResult,
+} from "./heist-generation";
+export {
   getThemeDefaults,
   THEME_GENERATOR_DEFAULTS,
 } from "./campaign-generator-theme";
@@ -17,10 +32,18 @@ export {
   npcRolesForTheme,
   factionTypesForTheme,
   settlementTypesForTheme,
+  adventureArchetypesForTheme,
+  adventureTonesForTheme,
   GENERATOR_ENTITY_TYPE,
   FALLBACK_CATEGORY,
 } from "./campaign-generator-registry";
-export { isTitleBanned, bannedNamesInstruction } from "./naming-policy";
+export {
+  isTitleBanned,
+  bannedNamesInstruction,
+  findOverusedNamePatterns,
+  sampleNameExamples,
+} from "./naming-policy";
+export type { OverusedNamePatterns } from "./naming-policy";
 export {
   adaptNPC,
   adaptFaction,
@@ -29,23 +52,68 @@ export {
   adaptEvent,
   adaptVampire,
   adaptNomadClan,
+  adaptDarkFaction,
   adaptShip,
   adaptLanguage,
   adaptDungeon,
   type PublicGeneratorOutput,
 } from "./public-generator-adapters";
 export {
+  holidayConfig,
+  resolveHoliday,
+  buildHolidayPrompt,
+  parseHolidayResponse,
+  generateHolidayLocal,
+  type HolidayGeneratorOptions,
+  type ResolvedHoliday,
+  type HolidayPrompt,
+} from "./public-holiday";
+export {
+  buildRandomTablePrompt,
+  parseRandomTableResponse,
+  generateRandomTableLocal,
+  type RandomTablePrompt,
+} from "./public-random-table";
+export {
   buildNpcPrompt,
   parseNpcResponse,
   generateNpcLocal,
+  resolveNpc,
   injectDndNpcQuickStats,
   npcConfig,
   npcThemeConfig,
   BANNED_NAMES,
   NAME_BAN_PROMPT,
   type NpcGeneratorOptions,
+  type NpcMode,
   type NpcPrompt,
+  type ResolvedNpc,
 } from "./public-npc";
+export {
+  buildNpcSchema,
+  LOCAL_MANNERISMS,
+  LOCAL_FACTION_STANCES,
+  LOCAL_LEVERAGE_PRICES,
+  LOCAL_CONTRADICTIONS,
+  LOCAL_SENSORY_TAGS,
+  LOCAL_IMMEDIATE_WANTS,
+  LOCAL_RELATIONSHIP_HOOKS,
+} from "./public-npc-schema";
+export {
+  NPC_TRAIT_VOCABULARY,
+  NPC_ANCESTRY_TRAITS,
+  NPC_ROLE_TRAITS,
+  NPC_ALIGNMENT_TRAITS,
+  NPC_MANNERISM_TRAITS,
+  NPC_MOTIVE_TRAITS,
+  NPC_SECRET_TRAITS,
+  NPC_FACTION_STANCE_TRAITS,
+  NPC_LEVERAGE_TRAITS,
+  NPC_RULES,
+  NPC_AFFINITIES,
+  type NpcTrait,
+} from "./public-npc-traits";
+export { NPC_PRESETS } from "./public-npc-presets";
 export {
   buildMagicItemPrompt,
   parseMagicItemResponse,
@@ -55,48 +123,285 @@ export {
   type MagicItemPrompt,
 } from "./public-magic-item";
 export {
+  buildMinorMagicItemPrompt,
+  parseMinorMagicItemResponse,
+  generateMinorMagicItemLocal,
+  resolveMinorMagicItem,
+  minorMagicItemConfig,
+  type MinorMagicItemGeneratorOptions,
+  type MinorMagicItemPrompt,
+  type ResolvedMinorMagicItem,
+} from "./public-minor-magic-item";
+export {
+  buildArtifactPrompt,
+  parseArtifactResponse,
+  generateArtifactLocal,
+  resolveArtifact,
+  artifactConfig,
+  getGenreCausality,
+  type ArtifactGeneratorOptions,
+  type ArtifactPrompt,
+  type ResolvedArtifact,
+  type GenreCausality,
+} from "./public-artifact";
+export {
   buildFactionPrompt,
   parseFactionResponse,
   generateFactionLocal,
+  resolveFaction,
   buildVampirePrompt,
   parseVampireResponse,
   generateVampireLocal,
+  resolveVampire,
   buildNomadClanPrompt,
   parseNomadClanResponse,
   generateNomadClanLocal,
+  resolveNomadClan,
+  buildDarkFactionPrompt,
+  parseDarkFactionResponse,
+  generateDarkFactionLocal,
+  resolveDarkFaction,
   factionConfig,
   themeIdToLabel,
   vampireConfig,
   nomadClanConfig,
+  darkFactionConfig,
   type FactionGeneratorOptions,
   type FactionPrompt,
+  type ResolvedFaction,
   type VampireGeneratorOptions,
   type VampirePrompt,
+  type ResolvedVampire,
   type NomadClanGeneratorOptions,
   type NomadClanPrompt,
+  type ResolvedNomadClan,
+  type DarkFactionGeneratorOptions,
+  type DarkFactionPrompt,
+  type ResolvedDarkFaction,
 } from "./public-faction";
+export {
+  factionRosterConfig,
+  buildFactionRosterPrompt,
+  parseFactionRosterResponse,
+  generateFactionRosterLocal,
+  resolveFactionRoster,
+  extractFactionNotableNpcs,
+  type FactionRosterGeneratorOptions,
+  type FactionRosterPrompt,
+  type ResolvedFactionRoster,
+  type FactionRosterMember,
+  type FactionNotableNpc,
+} from "./public-faction-roster";
+export {
+  factionSchema,
+  buildFactionSchema,
+  nomadClanSchema,
+  buildNomadClanSchema,
+  vampireSchema,
+  buildVampireSchema,
+  darkFactionSchema,
+  buildDarkFactionSchema,
+  selectSmartFactionBase,
+  selectSmartFactionResource,
+} from "./public-faction-schema";
+export {
+  FACTION_TRAIT_VOCABULARY,
+  FACTION_TYPE_TRAITS,
+  FACTION_SCOPE_TRAITS,
+  FACTION_ALIGNMENT_TRAITS,
+  FACTION_GOAL_TRAITS,
+  FACTION_CONFLICT_TRAITS,
+  FACTION_HOOK_TRAITS,
+  FACTION_BASE_TRAITS,
+  FACTION_RESOURCE_TRAITS,
+  NOMAD_ROLE_TRAITS,
+  NOMAD_TONE_TRAITS,
+  NOMAD_TERRITORY_TRAITS,
+  NOMAD_CONFLICT_TRAITS,
+  NOMAD_GOAL_TRAITS,
+  NOMAD_HOOK_TRAITS,
+  VAMPIRE_ARCHETYPE_TRAITS,
+  VAMPIRE_BLOODLINE_TRAITS,
+  VAMPIRE_FEEDING_TRAITS,
+  VAMPIRE_WEAKNESS_TRAITS,
+  VAMPIRE_SCOPE_TRAITS,
+  VAMPIRE_ALIGNMENT_TRAITS,
+  VAMPIRE_GOAL_TRAITS,
+  VAMPIRE_CONFLICT_TRAITS,
+  VAMPIRE_HOOK_TRAITS,
+  type FactionTrait,
+} from "./public-faction-traits";
+export {
+  FACTION_PRESETS,
+  NOMAD_CLAN_PRESETS,
+  VAMPIRE_PRESETS,
+} from "./public-faction-presets";
 export {
   buildSocialHubPrompt,
   parseSocialHubResponse,
   generateSocialHubLocal,
+  resolveSocialHub,
   buildTavernPrompt,
   parseTavernResponse,
   generateTavernLocal,
-  socialHubConfig,
+  resolveTavern,
   type SocialHubGeneratorOptions,
   type SocialHubPrompt,
+  type ResolvedSocialHub,
   type TavernGeneratorOptions,
   type TavernPrompt,
+  type ResolvedTavern,
 } from "./public-social-hub";
+export { socialHubConfig } from "./public-social-hub-config";
+export {
+  buildSocialHubSchema,
+  buildTavernSchema,
+  TAVERN_NAMING_STYLES,
+} from "./public-social-hub-schema";
+export {
+  SOCIAL_HUB_PRESETS,
+  TAVERN_PRESETS,
+} from "./public-social-hub-presets";
+export {
+  SOCIAL_HUB_TRAIT_VOCABULARY,
+  SOCIAL_HUB_EXTRA_TRAITS,
+  VENUE_TYPE_TRAITS,
+  ATMOSPHERE_TRAITS,
+  WEALTH_LEVEL_TRAITS,
+  CLIENTELE_TRAITS,
+  TROUBLE_TRAITS,
+  SETTLEMENT_TYPE_TRAITS,
+  SOCIAL_HUB_RULES,
+  SOCIAL_HUB_AFFINITIES,
+  type SocialHubTrait,
+} from "./public-social-hub-traits";
 export {
   buildQuestPrompt,
   parseQuestResponse,
   generateQuestLocal,
   questConfig,
+  questGenreForTheme,
   themeToQuestGenre,
   type QuestGeneratorOptions,
   type QuestPrompt,
 } from "./public-quest";
+export {
+  oneShotConfig,
+  resolveOneShot,
+  sceneCountFor,
+  buildOneShotAdventure,
+  buildOneShotPrompt,
+  parseOneShotResponse,
+  generateOneShotLocal,
+  oneShotToOutput,
+  regenerateOneShotLocal,
+  buildOneShotRegenPrompt,
+  applyOneShotRegenResponse,
+  renderOneShotMarkdown,
+  renderGmSheet,
+  validateOneShot,
+  checkPlayability,
+  buildOneShotRepairPrompt,
+  applyOneShotRepair,
+  isReadableRepair,
+  normaliseTimeBudget,
+  type OneShotPrompt,
+  type ResolvedOneShot,
+  type OneShotRegenTarget,
+  type OneShotRegenResult,
+} from "./public-one-shot";
+export {
+  runOneShotStages,
+  type OneShotProgressStep,
+  type OneShotStepStatus,
+  type OneShotStageDeps,
+  type OneShotStagedResult,
+} from "./one-shot-staged";
+export type { StagePrompt } from "./one-shot-stage-prompts";
+export type {
+  OneShotAdventure,
+  OneShotGeneratorOptions,
+  OneShotScene,
+  OneShotNpc,
+  OneShotClue,
+  OneShotIssue,
+  OneShotGap,
+  OneShotSolution,
+  OneShotClock,
+  OneShotThread,
+} from "./one-shot-types";
+export {
+  buildRumourPrompt,
+  parseRumourResponse,
+  generateRumourLocal,
+  rumourConfig,
+  type RumourGeneratorOptions,
+  type RumourPrompt,
+  type RumourReality,
+} from "./public-rumour";
+export {
+  buildEncounterPrompt,
+  parseEncounterResponse,
+  generateEncounterLocal,
+  encounterConfig,
+  type EncounterGeneratorOptions,
+  type EncounterPrompt,
+} from "./public-encounter";
+export {
+  buildPuzzlePrompt,
+  parsePuzzleResponse,
+  generatePuzzleLocal,
+  puzzleConfig,
+  type PuzzleGeneratorOptions,
+  type PuzzlePrompt,
+} from "./public-puzzle";
+export {
+  buildVillainPrompt,
+  parseVillainResponse,
+  generateVillainLocal,
+  getVillainThreatScales,
+  villainConfig,
+  type VillainGeneratorOptions,
+  type VillainPrompt,
+} from "./public-villain";
+export {
+  buildComicBookEventPrompt,
+  parseComicBookEventResponse,
+  generateComicBookEventLocal,
+  comicBookEventConfig,
+  type ComicBookEventGeneratorOptions,
+  type ComicBookEventPrompt,
+} from "./public-comic-book-event";
+export {
+  buildOriginPrompt,
+  parseOriginResponse,
+  generateOriginLocal,
+  originConfig,
+  type OriginGeneratorOptions,
+  type OriginPrompt,
+} from "./public-origin";
+export {
+  buildVillainSchemePrompt,
+  parseVillainSchemeResponse,
+  generateVillainSchemeLocal,
+  villainSchemeConfig,
+  type VillainSchemeGeneratorOptions,
+  type VillainSchemePrompt,
+} from "./public-villain-scheme";
+export {
+  SUPERHERO_POWER_SCALES,
+  SUPERHERO_POWER_SCALE_FALLBACKS,
+  SUPERHERO_POWER_SCALE_HINTS,
+  type SuperheroPowerScale,
+} from "./superhero-power-scale";
+export {
+  buildPersonalityPrompt,
+  parsePersonalityResponse,
+  generatePersonalityLocal,
+  personalityConfig,
+  type PersonalityGeneratorOptions,
+  type PersonalityPrompt,
+} from "./public-personality";
 export {
   buildCouncilVoteFoundationPrompt,
   buildCouncilVoteFoundationRepairPrompt,
@@ -113,6 +418,36 @@ export {
   type CouncilVotePathsPrompt,
   type CouncilVotePaths,
 } from "./public-council-vote";
+export {
+  validateHeist,
+  needsRepair,
+  splitHeistSections,
+  heistWordCount,
+  REQUIRED_LORE_SECTIONS,
+  HEIST_WORD_BUDGET,
+  type HeistDraftFields,
+  type HeistFinding,
+  type HeistSection,
+} from "./heist-validation";
+export {
+  buildHeistAuditPrompt,
+  buildHeistPrompt,
+  buildHeistRepairPrompt,
+  parseHeistAuditResponse,
+  parseHeistResponse,
+  generateHeistLocal,
+  heistConfig,
+  type HeistGeneratorOptions,
+  type HeistPrompt,
+  type HeistSemanticAudit,
+  type ResolvedHeist,
+} from "./public-heist";
+export { SETTLEMENT_PRESETS } from "./public-settlement-presets";
+export { SETTLEMENT_LEXICON } from "./public-settlement-lexicon";
+export {
+  buildSettlementSchema,
+  settlementSchema,
+} from "./public-settlement-schema";
 export {
   buildSettlementPrompt,
   parseSettlementResponse,
@@ -271,6 +606,7 @@ export {
 } from "./public-plot-twist";
 export * from "./dungeon";
 export * from "./adventure";
+export * from "./session-prep";
 export * from "./starter-constellation-types";
 export {
   buildWorldPrompt,
@@ -290,6 +626,32 @@ export {
   type StarSystemPrompt,
   type StarSystemBody,
 } from "./public-star-system";
+export {
+  buildConstellationPrompt,
+  generateConstellationLocal,
+  parseConstellationResponse,
+  buildNightSkyPrompt,
+  generateNightSkyLocal,
+  parseNightSkyResponse,
+  constellationConfig,
+  type ConstellationMode,
+  type ConstellationGeneratorOptions,
+  type ConstellationPrompt,
+  type ConstellationStar,
+  type ConstellationPattern,
+  type ConstellationInterpretation,
+  type ConstellationData,
+  type ConstellationSeason,
+  type ConstellationSkyRegion,
+  type NightSkyConstellationEntry,
+  type NightSkyData,
+} from "./public-constellation";
+export {
+  buildConstellationDiagram,
+  type ConstellationDiagramNode,
+  type ConstellationDiagramLine,
+  type ConstellationDiagramLayout,
+} from "./constellation-diagram";
 export {
   buildSecretSocietyPrompt,
   generateSecretSocietyLocal,
@@ -324,3 +686,220 @@ export {
   STARTER_CONSTELLATION_THEME_IDS,
   type StarterConstellationPrompt,
 } from "./starter-constellation";
+export {
+  buildCreaturePrompt,
+  parseCreatureResponse,
+  generateCreatureLocal,
+  resolveCreature,
+  creatureConfig,
+  type CreatureGeneratorOptions,
+  type CreaturePrompt,
+  type ResolvedCreature,
+} from "./public-creature";
+export {
+  tomeConfig,
+  resolveTome,
+  buildTomePrompt,
+  parseTomeResponse,
+  generateTomeLocal,
+  generateTomeLocalFromResolved,
+  ensureGroundTruthInLore,
+  auditTomeConsistency,
+  generateTomeTwoPass,
+  type TomeGeneratorOptions,
+  type ResolvedTome,
+  type TomePrompt,
+  type TomeConsistencyAuditResult,
+  type TomeCanonicalFacts,
+} from "./public-tome";
+export {
+  createIncrementalJsonScanner,
+  extractPartialJsonStringFields,
+  type IncrementalJsonField,
+} from "./streaming/incremental-json";
+export {
+  analyseIntent,
+  applyIntent,
+  applyPreset,
+  intentBias,
+  presetsFor,
+  BASE_LEXICON,
+  mergeLexicons,
+  resolveSmart,
+  selectSmart,
+  validateSchema,
+  evaluate as evaluatePredicate,
+  referencedAxes,
+  type SmartAxis,
+  type SmartGeneratorConfig,
+  type LockedValue,
+  type OptionPool,
+  type SmartPredicate,
+  type Provenance,
+  type Relaxation,
+  type RelaxationKind,
+  type ResolveContext,
+  type ResolvedAxis,
+  type SmartGeneratorSchema,
+  type SmartOption,
+  type SmartResult,
+  type SelectionResult,
+  type SmartPreset,
+  type AppliedIntent,
+  type InferredChoice,
+  type IntentSignal,
+  type Lexicon,
+  type Trait,
+} from "./smart";
+
+export {
+  assessLanguageOutput,
+  type LanguageOutputAssessment,
+} from "./language-output-assessment";
+
+export {
+  POINT_CRAWL_SCALES,
+  POINT_CRAWL_DENSITIES,
+  POINT_CRAWL_DANGER_LEVELS,
+  POINT_CRAWL_SECRET_FREQUENCIES,
+  POINT_CRAWL_NODE_ROLES,
+  POINT_CRAWL_ROUTE_VISIBILITIES,
+  POINT_CRAWL_ROUTE_DIRECTIONS,
+  POINT_CRAWL_GATE_KINDS,
+  ROLE_LABELS,
+  formatRouteConnectionLabel,
+  pointCrawlNodeRoleLabel,
+  STRUCTURAL_ROLE_LABELS,
+  renderPointCrawlRouteSummary,
+  renderPointCrawlMarkdown,
+  renderPointCrawlGmSheet,
+  type PointCrawlScale,
+  type PointCrawlDensity,
+  type PointCrawlDangerLevel,
+  type PointCrawlSecretFrequency,
+  type PointCrawlNodeRole,
+  type PointCrawlStructuralRole,
+  type PointCrawlSiteTrait,
+  type PointCrawlRouteVisibility,
+  type PointCrawlRouteDirection,
+  type PointCrawlGateKind,
+  type PointCrawlGate,
+  type PointCrawlDurationUnit,
+  type PointCrawlDuration,
+  type PointCrawlClock,
+  type PointCrawlDiscovery,
+  type PointCrawlOutcome,
+  type PointCrawlDetourPayoff,
+  type PointCrawlAdventurePlan,
+  type PointCrawlNode,
+  type PointCrawlRoute,
+  type PointCrawlGap,
+  type PointCrawlRegenTarget,
+  type PointCrawlNetwork,
+} from "./point-crawl-state";
+export {
+  SCALE_VOCABULARY,
+  GATE_TEMPLATES_BY_GENRE,
+  getScaleVocabulary,
+  getGateTemplates,
+  type ScaleVocabulary,
+  type GateRequirementTemplate,
+} from "./point-crawl-tables";
+export {
+  clampPointCount,
+  reachableNodesBfs,
+  simulateKeyLockReachability,
+  buildPointCrawlTopology,
+  normalizePointCrawlTopology,
+  type TopologyBuildOptions,
+} from "./point-crawl-topology";
+export {
+  convertDuration,
+  parsePointCrawlDuration,
+  formatPointCrawlDuration,
+  fastestPlayableTravelTime,
+  dominatesAllGoals,
+  isNodeOptional,
+  pointCrawlRouteBudget,
+  routesIncidentTo,
+  usableRouteDegree,
+} from "./point-crawl-graph-analysis";
+export {
+  isVaguePointCrawlFact,
+  checkPointCrawlPlayability,
+  repairPointCrawlPlayability,
+  type PointCrawlIssueCode,
+  type PointCrawlIssue,
+} from "./point-crawl-playability";
+export {
+  buildPointCrawlDiagramLayout,
+  type PointCrawlNodePositionOverride,
+  type PointCrawlDiagramNode,
+  type PointCrawlDiagramEdge,
+  type PointCrawlDiagramLayout,
+} from "./point-crawl-layout";
+export {
+  regeneratePointCrawlPartLocal,
+  buildPointCrawlRegenPrompt,
+  regeneratePointCrawlPart,
+  type RegeneratePointCrawlPartOptions,
+  type RegeneratePointCrawlPartResult,
+  type RegeneratePointCrawlPartResult as PointCrawlRegenResult,
+} from "./point-crawl-repair";
+export {
+  fillFailedPointCrawlParts,
+  generatePointCrawlStaged,
+  type PointCrawlStagedOptions,
+} from "./point-crawl-staged";
+export {
+  buildPointCrawlSaveDrafts,
+  type PointCrawlBatchSaveRelationship,
+  type PointCrawlBatchSaveDraft,
+  type BuildPointCrawlSaveDraftsOptions,
+  type BuildPointCrawlSaveDraftsOptions as PointCrawlSaveOptions,
+} from "./point-crawl-save";
+export {
+  pointCrawlConfig,
+  resolvePointCrawl,
+  pointCrawlToOutput,
+  generatePointCrawlNetworkLocal,
+  generatePointCrawlLocal,
+  buildPointCrawlPrompt,
+  parsePointCrawlNetwork,
+  parsePointCrawlResponse,
+  type PointCrawlGeneratorOptions,
+  type ResolvedPointCrawl,
+  type PointCrawlPrompt,
+} from "./public-point-crawl";
+
+export { parseTovMechanics } from "./tov-mechanics-parser";
+
+export {
+  buildTovPromptInstructions,
+  buildTovEncounterPromptInstructions,
+  type TovPromptKind,
+  type TovEncounterPromptOptions,
+} from "./tov-mechanics-prompt";
+
+export {
+  TovAbilityScoresSchema,
+  TovQuickNpcMechanicsSchema,
+  TovCharacterAttackSchema,
+  TovCharacterMechanicsSchema,
+  TovCreatureActionSchema,
+  TovCreatureMechanicsSchema,
+  TovMagicItemMechanicsSchema,
+  TovEncounterCreatureSuggestionSchema,
+  TovEncounterMechanicsSchema,
+  GeneratorMechanicsBundleSchema,
+  type GeneratorMechanicsBundle,
+  type TovAbilityScores,
+  type TovQuickNpcMechanics,
+  type TovCharacterMechanics,
+  type TovCharacterAttack,
+  type TovCreatureAction,
+  type TovCreatureMechanics,
+  type TovMagicItemMechanics,
+  type TovEncounterCreatureSuggestion,
+  type TovEncounterMechanics,
+} from "./tov-mechanics-schema";

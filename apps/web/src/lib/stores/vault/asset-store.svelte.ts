@@ -36,6 +36,31 @@ export class AssetStore {
     this.deps.assetManager.releaseImageUrl(path);
   }
 
+  /** Graph-sized image; see `AssetManager.resolveThumbnailUrl`. */
+  async resolveThumbnailUrl(path: string) {
+    return this.deps.assetManager.resolveThumbnailUrl(
+      await this.deps.getActiveVaultHandle(),
+      path,
+      this.deps.isGuest()
+        ? (p: string) => p2pGuestService.getFile(p)
+        : undefined,
+      await this.deps.getActiveFolderHandle(),
+    );
+  }
+
+  /** Copies an external image into the vault; see `AssetManager.importExternalImage`. */
+  async importExternalImage(url: string, entityId: string) {
+    return this.deps.assetManager.importExternalImage(
+      await this.deps.getActiveVaultHandle(),
+      url,
+      entityId,
+    );
+  }
+
+  releaseThumbnailUrl(path: string) {
+    this.deps.assetManager.releaseThumbnailUrl(path);
+  }
+
   async saveImageToVault(
     blob: Blob | File,
     entityId: string,

@@ -63,10 +63,15 @@ async function solveInvisibleChallenge(
   retryPhrase: string,
   notConfiguredMessage: string,
 ): Promise<string> {
+  // Production site keys are bound to their allowed hostnames. Running that
+  // challenge on localhost produces an error callback and then Turnstile's
+  // own attempted reset races the widget removal. Local workers accept the
+  // development capability token instead.
+  if (import.meta.env.DEV) {
+    return "dev-turnstile-token";
+  }
+
   if (!VITE_TURNSTILE_SITE_KEY) {
-    if (import.meta.env.DEV) {
-      return "dev-turnstile-token";
-    }
     throw new Error(notConfiguredMessage);
   }
 

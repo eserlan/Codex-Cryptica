@@ -68,18 +68,18 @@
     </div>
     {#if categoryText}
       <div
-        class="truncate text-[10px] font-bold uppercase tracking-wide text-theme-primary/80"
+        class="truncate text-micro font-bold uppercase tracking-wide text-theme-primary/80"
       >
         {categoryText}
       </div>
     {/if}
-    <div class="flex items-center gap-1 text-[10px] text-theme-muted">
+    <div class="flex items-center gap-1 text-micro text-theme-muted">
       {#if member.lifespan}
         <span>{member.lifespan}</span>
       {/if}
       {#if member.deceased}
         <span
-          class="rounded-sm bg-theme-bg px-1 text-[9px] uppercase tracking-wide text-theme-muted"
+          class="rounded-sm bg-theme-bg px-1 text-nano uppercase tracking-wide text-theme-muted"
           >Deceased</span
         >
       {/if}

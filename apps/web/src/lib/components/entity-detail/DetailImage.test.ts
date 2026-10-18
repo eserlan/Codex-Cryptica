@@ -86,7 +86,7 @@ describe("DetailImage Button Labels", () => {
     mockOracle.settings.customImageApiKey = "";
   });
 
-  it("should show GENERATE IMAGE when on default cloudflare provider and apiKey is absent", () => {
+  it("should show GENERATE AI ART when on default cloudflare provider and apiKey is absent", () => {
     const mockEntity = {
       id: "entity-1",
       title: "Test Entity",
@@ -101,7 +101,7 @@ describe("DetailImage Button Labels", () => {
       editImage: "",
     });
 
-    expect(getByText("GENERATE IMAGE")).toBeTruthy();
+    expect(getByText("GENERATE AI ART")).toBeTruthy();
   });
 
   it("should show GENERATE PROMPT when on gemini provider and apiKey is absent", () => {
@@ -125,7 +125,7 @@ describe("DetailImage Button Labels", () => {
     expect(getByText("GENERATE PROMPT")).toBeTruthy();
   });
 
-  it("should show GENERATE IMAGE when on gemini provider and apiKey is present", () => {
+  it("should show GENERATE AI ART when on gemini provider and apiKey is present", () => {
     mockOracle.settings.imageProvider = "gemini";
     mockOracle.apiKey = "gemini-api-key";
 
@@ -143,10 +143,10 @@ describe("DetailImage Button Labels", () => {
       editImage: "",
     });
 
-    expect(getByText("GENERATE IMAGE")).toBeTruthy();
+    expect(getByText("GENERATE AI ART")).toBeTruthy();
   });
 
-  it("should show GENERATE IMAGE when on custom provider and custom apiKey is present", () => {
+  it("should show GENERATE AI ART when on custom provider and custom apiKey is present", () => {
     mockOracle.settings.imageProvider = "custom";
     mockOracle.settings.customImageApiKey = "custom-api-key";
 
@@ -164,7 +164,7 @@ describe("DetailImage Button Labels", () => {
       editImage: "",
     });
 
-    expect(getByText("GENERATE IMAGE")).toBeTruthy();
+    expect(getByText("GENERATE AI ART")).toBeTruthy();
   });
 });
 

@@ -1,4 +1,4 @@
-import { BANNED_NAMES } from "generator-engine";
+import { BANNED_NAMES } from "generator-engine/naming-policy";
 
 export function buildSystemInstruction(
   demoMode: boolean,
@@ -68,6 +68,11 @@ When discussing cultures or factions:
 - naming conventions,
 - traditions,
 - and historical context.
+
+Follow-up questions:
+- pronouns such as "she", "it" or "that city" refer to the subject the conversation is already about,
+- never switch to a different record because its name is similar,
+- if the referent is genuinely unclear, ask a short clarifying question instead of assuming.
 
 When uncertain:
 - infer cautiously,

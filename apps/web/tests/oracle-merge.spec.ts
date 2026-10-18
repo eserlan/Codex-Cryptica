@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { setupVaultPage, openOracle } from "./test-helpers";
 
 async function waitForSearchIndexing(page: any, names: string[]) {
   for (const name of names) {
@@ -21,60 +22,8 @@ async function waitForSearchIndexing(page: any, names: string[]) {
 
 test.describe("Oracle Merge Command E2E", () => {
   test.beforeEach(async ({ page }) => {
-    page.on("console", (msg) => {
-      if (msg.type() === "error") {
-        console.error("PAGE ERROR:", msg.text());
-      } else {
-        console.log("PAGE LOG:", msg.text());
-      }
-    });
-    // Set desktop viewport to avoid mobile UI hiding elements
     await page.setViewportSize({ width: 1280, height: 800 });
-
-    await page.addInitScript(() => {
-      localStorage.setItem("codex_skip_landing", "true");
-      localStorage.setItem(
-        "codex-cryptica-help-state",
-        JSON.stringify({ completedTours: ["initial-onboarding"] }),
-      );
-      (window as any).__SHARED_GEMINI_KEY__ = "fake-key";
-      try {
-        localStorage.setItem("oracle-hint-seen", "true");
-        localStorage.setItem("front-page-hint-seen", "true");
-        localStorage.setItem("vtt-mode-hint-seen", "true");
-        localStorage.setItem("entity-hierarchy-hint-seen", "true");
-      } catch {
-        /* ignore */
-      }
-    });
-
-    await page.goto("/");
-
-    // Wait for vault and oracle initialization
-    await page.waitForFunction(
-      () =>
-        (window as any).vault?.isInitialized === true &&
-        (window as any).vault?.status === "idle" &&
-        (window as any).oracle !== undefined,
-      { timeout: 15000 },
-    );
-
-    // Inject fake API key and mock vault methods
-    await page.evaluate(async () => {
-      const ui = (window as any).codexUI?.onboarding ?? (window as any).uiStore;
-      if (ui) {
-        ui.dismissedLandingPage = true;
-        ui.skipWelcomeScreen = true;
-      }
-
-      const oracle = (window as any).oracle;
-      await oracle.setKey("fake-key");
-    });
-
-    // Final wait for UI to stabilize
-    await expect(page.getByTestId("header-create-button")).toBeVisible({
-      timeout: 15000,
-    });
+    await setupVaultPage(page);
   });
 
   test("should merge two entities using guided sequence", async ({ page }) => {
@@ -95,7 +44,7 @@ test.describe("Oracle Merge Command E2E", () => {
     await waitForSearchIndexing(page, ["Old Hero", "Legendary Hero"]);
 
     // 2. Open Oracle and start merge
-    await page.getByTestId("activity-bar-oracle").click();
+    await openOracle(page);
     const chatInput = page.getByTestId("oracle-input");
     await expect(chatInput).toBeVisible();
 
@@ -171,7 +120,7 @@ test.describe("Oracle Merge Command E2E", () => {
     await waitForSearchIndexing(page, ["Source Node", "Target Node"]);
 
     // 2. Trigger wizard
-    await page.getByTestId("activity-bar-oracle").click();
+    await openOracle(page);
     const chatInput = page.getByTestId("oracle-input");
     await chatInput.fill("/merge oracle");
     await page.keyboard.press("Enter");
@@ -236,7 +185,7 @@ test.describe("Oracle Merge Command E2E", () => {
     await waitForSearchIndexing(page, ["Minion", "Boss"]);
 
     // 2. Direct command
-    await page.getByTestId("activity-bar-oracle").click();
+    await openOracle(page);
     const chatInput = page.getByTestId("oracle-input");
     await chatInput.fill('/merge "Minion" into "Boss"');
     await page.keyboard.press("Enter");
@@ -286,7 +235,7 @@ test.describe("Oracle Merge Command E2E", () => {
     expect(preMergeState.bossId).toBeTruthy();
 
     // 2. Perform the merge via direct oracle command
-    await page.getByTestId("activity-bar-oracle").click();
+    await openOracle(page);
     const chatInput = page.getByTestId("oracle-input");
     await chatInput.fill('/merge "Minion" into "Boss"');
     await page.keyboard.press("Enter");

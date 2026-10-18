@@ -2,6 +2,7 @@ import { z } from "zod";
 import { ConnectionSchema } from "./connection";
 import { LanguageProfileV1Schema } from "./language-profile";
 import { StatSheetSchema } from "./stat-sheet";
+import { IMAGE_FOCUS_VALUES } from "./image-focus";
 
 export const DEFAULT_ICON = "lucide:circle";
 
@@ -122,6 +123,7 @@ export const GuestChatMessageSchema = z.object({
   id: z.string(),
   role: z.enum(["user", "assistant"]),
   content: z.string(),
+  cue: z.string().optional(),
   timestamp: z.number(),
 });
 
@@ -167,11 +169,34 @@ export type ImageArtDirectionRecord = z.infer<
   typeof ImageArtDirectionRecordSchema
 >;
 
+export const ReportProvenanceSchema = z.object({
+  origin: z.enum(["canvas", "graph", "table"]),
+  canvasId: z.string().optional(),
+  selection: z.enum(["entire", "selected"]).optional(),
+  entityIds: z.array(z.string()).optional(),
+  include: z.object({
+    descriptions: z.boolean(),
+    relationships: z.boolean(),
+    factionsAffiliations: z.boolean(),
+    portraits: z.boolean(),
+    notes: z.boolean(),
+    gmOnlySecrets: z.boolean(),
+    // Added later; reports saved before then include both kinds.
+    canvasConnections: z.boolean().optional(),
+    graphConnections: z.boolean().optional(),
+  }),
+  // "detailed" is legacy: still accepted so previously saved reports load.
+  detail: z.enum(["brief", "standard", "detailed"]),
+  generatedAt: z.number(),
+  contentHash: z.string(),
+});
+
+export type ReportProvenance = z.infer<typeof ReportProvenanceSchema>;
+
 export const EntitySchema = z.object({
   id: z.string().min(1),
   type: EntityTypeSchema,
   title: z.string().min(1),
-  tags: z.array(z.string()).default([]),
   labels: z.array(z.string()).default([]),
   aliases: z.array(z.string().trim().min(1)).default([]),
   connections: z.array(ConnectionSchema).default([]),
@@ -180,7 +205,11 @@ export const EntitySchema = z.object({
   lore: z.string().optional(), // Extended lore & rich notes
   artDirection: z.string().optional(),
   image: z.string().optional(),
+  silhouette: z.string().optional(),
   thumbnail: z.string().optional(),
+  /** Which part of `image` to keep in view when it's cropped to a shape
+   * (graph node, VTT token) that doesn't match its aspect ratio. */
+  imageFocus: z.enum(IMAGE_FOCUS_VALUES).optional(),
   /**
    * Art Direction inputs and composed prompts for the current image, kept so a
    * generation can be reproduced or explained. Absent on images generated
@@ -215,6 +244,9 @@ export const EntitySchema = z.object({
   languageProfileVersion: z.literal(1).optional(),
   languageProfile: LanguageProfileV1Schema.optional(),
   statSheet: StatSheetSchema.optional(),
+  report: ReportProvenanceSchema.optional(),
+  member_template: z.string().optional(),
+  systemId: z.string().optional(),
 });
 
 export type Entity = z.infer<typeof EntitySchema>;

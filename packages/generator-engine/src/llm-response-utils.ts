@@ -1,11 +1,52 @@
-/** Parses an LLM response that may be wrapped in a ```json ... ``` fence. */
+/**
+ * Removes trailing commas before a closing `}` or `]`, ignoring anything inside
+ * a string literal. Models occasionally emit `{"a": "b",\n}`, which strict
+ * `JSON.parse` rejects even though the content is intact.
+ */
+function stripTrailingCommas(json: string): string {
+  let out = "";
+  let inString = false;
+  for (let i = 0; i < json.length; i++) {
+    const char = json[i];
+    if (inString) {
+      out += char;
+      if (char === "\\") {
+        out += json[++i] ?? "";
+      } else if (char === '"') {
+        inString = false;
+      }
+      continue;
+    }
+    if (char === '"') {
+      inString = true;
+      out += char;
+    } else if (char === ",") {
+      const next = json.slice(i + 1).match(/^\s*([}\]])/);
+      if (!next) out += char;
+    } else {
+      out += char;
+    }
+  }
+  return out;
+}
+
+/**
+ * Parses an LLM response that may be wrapped in a ```json ... ``` fence, and
+ * tolerates trailing commas. Other malformed JSON still throws.
+ */
 export function parseFencedJson<T = any>(text: string): T {
   const cleanText = text
     .trim()
     .replace(/^```json\s*/i, "")
     .replace(/```$/, "")
     .trim();
-  return JSON.parse(cleanText) as T;
+  try {
+    return JSON.parse(cleanText) as T;
+  } catch (error) {
+    const repaired = stripTrailingCommas(cleanText);
+    if (repaired === cleanText) throw error;
+    return JSON.parse(repaired) as T;
+  }
 }
 
 export function asString(value: unknown): string {

@@ -6,6 +6,7 @@ import type {
 } from "../types";
 import { BaseExecutor } from "./base-executor";
 import { ORACLE_EVENTS } from "../events";
+import { extractCueAndQuery } from "../oracle-parser";
 
 function extractMarkdownSection(markdown: string | undefined, title: string) {
   if (!markdown?.trim()) return "";
@@ -287,7 +288,10 @@ export class GuestChatExecutor
       return;
     }
 
-    const query = intent.query!;
+    const rawQuery = intent.query!;
+    const { query: parsedQuery, cue: parsedCue } = extractCueAndQuery(rawQuery);
+    const query = parsedQuery || rawQuery;
+    const cue = intent.cue || parsedCue;
     const characterId = intent.entityId;
 
     if (!query.trim()) return;
@@ -305,6 +309,7 @@ export class GuestChatExecutor
             id: this.idGenerator.uuid(),
             role: "user",
             content: query,
+            cue,
           });
           await context.chatHistory.addMessage({
             id: this.idGenerator.uuid(),
@@ -331,6 +336,7 @@ export class GuestChatExecutor
             id: this.idGenerator.uuid(),
             role: "user",
             content: query,
+            cue,
           });
         }
 
@@ -374,7 +380,8 @@ export class GuestChatExecutor
           await context.chatHistory.addMessage({
             id: this.idGenerator.uuid(),
             role: "system",
-            content: "❌ This character is no longer available for guest chat.",
+            content:
+              "❌ Character chat requires a 'Personality & Voice' section in GM Lore or custom instructions in Guest Chat settings.",
           });
           await this.emit(context, {
             type: ORACLE_EVENTS.COMMAND_COMPLETED,
@@ -432,6 +439,10 @@ export class GuestChatExecutor
           privateNotes = `[HIDDEN PRIVATE LORE — not for direct quotation. Reveal only what your relationship with the guest justifies:\n${otherPrivateLore}]`;
         }
 
+        const cueBlock = cue
+          ? `\nSCENE DIRECTION / ORACLE OVERRIDE:\nThe player provided the following oracle outcome or scene spark for this response:\n"${cue}"\n\nMANDATORY INSTRUCTION FOR ORACLE CUE:\n- Interpret this oracle outcome or spark within the context of the conversation.\n- Your spoken dialogue MUST actively reflect and execute this outcome, mood, or metaphor.\n- Maintain your character voice, personality, and knowledge boundaries without breaking character or explaining the oracle out-of-character.\n`
+          : "";
+
         const systemInstruction = `
 OUTPUT FORMAT — ABSOLUTE: Your entire response is spoken dialogue only. Begin with the first word ${character.title} says aloud. End with the last word they say. Do not write anything that is not speech — no action text ("I reach for…", "my knuckles whiten"), no internal thoughts, no scene description, no stage directions, no emotes. Paragraph breaks are allowed for readability. If it would not come out of the character's mouth, cut it.
 
@@ -450,7 +461,7 @@ RELATIONSHIP GRAPH (entities within 2 hops of either party — use this to deter
 ${relationshipGraph}
 
 ${privateNotes}
-
+${cueBlock}
 RULES:
 1. Always speak in character.
 2. Always use PERSONALITY & VOICE for tone, rhythm, word choice, and behavior.

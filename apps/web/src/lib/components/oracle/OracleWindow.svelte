@@ -11,6 +11,8 @@
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import AdventureSurface from "./adventure/AdventureSurface.svelte";
+  let adventureMode = $state(false);
 
   const _isPopup = $derived(page.url.pathname === `${base}/oracle`);
 
@@ -80,19 +82,19 @@
             : ''}"
         ></div>
         <span
-          class="text-[11px] sm:text-[10px] font-bold text-theme-text tracking-[0.2em] uppercase font-header"
+          class="text-meta sm:text-micro font-bold text-theme-text tracking-[0.2em] uppercase font-header"
           >Lore Oracle</span
         >
         {#if discoveryPolicyStore.aiDisabled}
           <span
-            class="text-[8px] font-header bg-theme-primary/20 text-theme-primary px-1.5 py-0.5 rounded border border-theme-primary/30"
+            class="text-nano font-header bg-theme-primary/20 text-theme-primary px-1.5 py-0.5 rounded border border-theme-primary/30"
             >AI DISABLED</span
           >
         {/if}
       </div>
       <div class="flex items-center gap-1">
         <!-- Clear Chat -->
-        {#if oracle.messages.length > 0}
+        {#if !adventureMode && oracle.messages.length > 0}
           <button
             type="button"
             class="w-8 h-8 flex items-center justify-center text-theme-muted hover:text-red-400 transition-colors"
@@ -143,19 +145,34 @@
       </div>
     </div>
 
-    <OracleChat
-      onOpenSettings={() => {
-        modalUIStore.openSettings();
-        oracle.toggle();
-      }}
-    />
+    <div class="border-b border-theme-border px-3 py-2">
+      <button
+        type="button"
+        class="rounded-md px-3 py-2 text-xs text-theme-primary {adventureMode
+          ? 'bg-theme-primary/15'
+          : ''}"
+        onclick={() => (adventureMode = !adventureMode)}
+        aria-pressed={adventureMode}>Adventure</button
+      >
+    </div>
+
+    {#if adventureMode}
+      <AdventureSurface />
+    {:else}
+      <OracleChat
+        onOpenSettings={() => {
+          modalUIStore.openSettings();
+          oracle.toggle();
+        }}
+      />
+    {/if}
 
     {#if sessionModeStore.isDemoMode}
       <div
         class="p-4 bg-theme-primary/5 border-t border-theme-border flex flex-col gap-3 rounded-b-xl md:rounded-b-lg"
       >
         <p
-          class="text-[10px] text-theme-muted italic text-center leading-relaxed"
+          class="text-micro text-theme-muted italic text-center leading-relaxed"
         >
           {demoService.marketingPrompt}
         </p>
@@ -179,7 +196,7 @@
               );
             }
           }}
-          class="w-full py-2 bg-theme-primary text-theme-bg text-[10px] font-bold uppercase font-header tracking-widest rounded hover:bg-theme-secondary transition-colors"
+          class="w-full py-2 bg-theme-primary text-theme-bg text-micro font-bold uppercase font-header tracking-widest rounded hover:bg-theme-secondary transition-colors"
           title={`Save this demo exploration as your own persistent ${themeStore.jargon.vault}`}
         >
           Save as {themeStore.jargon.vault}

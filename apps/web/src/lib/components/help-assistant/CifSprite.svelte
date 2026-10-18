@@ -1,0 +1,359 @@
+<script lang="ts">
+  import type { CifMood } from "./cif-mood";
+
+  let {
+    mood,
+    flip = false,
+    class: className = "",
+  }: { mood: CifMood; flip?: boolean; class?: string } = $props();
+</script>
+
+<!--
+  Decorative: the panel text already says what Cif is doing, so the pose is
+  hidden from assistive tech. Colours come from the chrome tokens so the figure
+  stays visible in light and dark chrome: body in the text colour, eyes and
+  trim cut out in the surface colour.
+-->
+<span
+  class="cif-sprite inline-block shrink-0 {className}"
+  class:cif-flip={flip}
+  data-mood={mood}
+  data-testid="cif-sprite"
+  aria-hidden="true"
+>
+  <svg viewBox="0 0 260 285" xmlns="http://www.w3.org/2000/svg">
+    <g class="hover">
+      <g class="body">
+        <path
+          class="silhouette"
+          d="M91 134 C77 140 68 151 57 174 C48 194 42 223 51 239 C58 234 66 226 75 213 C68 241 64 258 82 262 C93 260 102 253 110 247 C136 254 171 264 188 249 C194 244 196 231 192 219 C204 238 215 244 223 236 C217 207 207 164 183 143 L155 131Z"
+        />
+        <path
+          class="trim"
+          d="M85 171 C76 206 70 235 79 253 M173 166 C191 200 194 227 190 245"
+        />
+      </g>
+      <g class="arm-left">
+        <path
+          class="silhouette"
+          d="M89 154 C73 151 61 158 47 165 C36 169 26 180 30 190 C37 202 52 203 66 197 C78 190 90 177 101 165Z"
+        />
+        <path
+          class="silhouette"
+          d="M34 172 C27 163 20 158 16 162 C11 167 19 176 23 182 C14 175 7 173 5 179 C4 184 15 189 24 193 C10 192 7 198 13 203 C23 210 39 201 49 194Z"
+        />
+      </g>
+      <g class="arm-right">
+        <path
+          class="silhouette"
+          d="M168 152 C188 146 198 157 215 169 C224 179 226 192 214 198 C203 204 192 192 179 181 L161 169Z"
+        />
+        <path
+          class="silhouette"
+          d="M211 176 C217 165 225 159 229 164 C233 169 226 177 221 183 C232 175 240 175 242 181 C244 188 234 192 227 196 C241 194 246 199 241 205 C232 212 216 204 205 196Z"
+        />
+      </g>
+      <g class="head">
+        <path
+          class="silhouette"
+          d="M52 129 C48 102 66 66 90 33 C109 6 135 9 154 23 C178 37 192 45 211 56 C230 67 221 83 207 80 C210 73 208 67 192 68 C202 86 210 109 206 126 C193 146 167 151 133 151 C93 153 67 151 52 129Z"
+        />
+        <path
+          class="trim"
+          d="M60 126 C77 91 102 64 129 57 C153 50 170 75 194 110"
+        />
+        <path class="brow brow-left" d="M96 88 Q111 82 127 88" />
+        <path class="brow brow-right" d="M147 86 Q162 80 177 85" />
+        <g class="eye eye-open">
+          <ellipse
+            class="eye-shape"
+            cx="112"
+            cy="112"
+            rx="8"
+            ry="15"
+            transform="rotate(-7 112 112)"
+          />
+          <ellipse
+            class="eye-shape"
+            cx="161"
+            cy="109"
+            rx="8"
+            ry="15"
+            transform="rotate(8 161 109)"
+          />
+        </g>
+        <g class="eye eye-happy">
+          <path class="eye-arc" d="M100 120 Q112 98 125 120" />
+          <path class="eye-arc" d="M148 118 Q161 96 174 117" />
+        </g>
+        <g class="eye eye-think">
+          <path
+            class="eye-shape"
+            d="M102 120 Q113 111 124 116 L125 121 Q113 120 102 124Z"
+          />
+          <path
+            class="eye-shape"
+            d="M149 118 Q160 111 172 116 L171 121 Q159 120 149 123Z"
+          />
+        </g>
+        <g class="eye eye-confused">
+          <ellipse
+            class="eye-shape"
+            cx="110"
+            cy="112"
+            rx="7"
+            ry="15"
+            transform="rotate(-19 110 112)"
+          />
+          <path
+            class="eye-shape"
+            d="M148 116 Q157 107 169 113 L170 120 Q158 117 148 122Z"
+          />
+        </g>
+      </g>
+    </g>
+  </svg>
+</span>
+
+<style>
+  .cif-sprite svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+
+  .silhouette {
+    fill: var(--chrome-text);
+  }
+  .trim {
+    fill: none;
+    stroke: var(--chrome-surface);
+    stroke-width: 6;
+    stroke-linecap: round;
+  }
+  /* Cut out like the trim: the accent gold is under 3:1 on the light body
+     the dark chrome gives Cif, and the eyes carry most of each mood. */
+  .eye-shape {
+    fill: var(--chrome-surface);
+  }
+  .eye-arc,
+  .brow {
+    fill: none;
+    stroke: var(--chrome-surface);
+    stroke-linecap: round;
+  }
+  .eye-arc {
+    stroke-width: 8;
+  }
+  .brow {
+    stroke-width: 6.5;
+  }
+
+  .head,
+  .body,
+  .arm-left,
+  .arm-right,
+  .eye,
+  .brow {
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+  .head {
+    transform-origin: 50% 87%;
+  }
+  .body {
+    transform-origin: 50% 12%;
+  }
+  .arm-left {
+    transform-origin: 86% 25%;
+  }
+  .arm-right {
+    transform-origin: 14% 25%;
+  }
+
+  .eye {
+    opacity: 0;
+  }
+  [data-mood="idle"] .eye-open,
+  [data-mood="curious"] .eye-open,
+  [data-mood="explaining"] .eye-open,
+  [data-mood="pointing"] .eye-open,
+  [data-mood="delighted"] .eye-happy,
+  [data-mood="thinking"] .eye-think,
+  [data-mood="confused"] .eye-confused {
+    opacity: 1;
+  }
+
+  [data-mood="curious"] .head {
+    transform: rotate(-7deg) translate(-2px, -3px);
+  }
+  [data-mood="curious"] .arm-right {
+    transform: rotate(-10deg);
+  }
+  [data-mood="thinking"] .head {
+    transform: rotate(12deg) translateY(6px);
+  }
+  [data-mood="thinking"] .body {
+    transform: scale(0.9, 0.94);
+  }
+  [data-mood="thinking"] .arm-left {
+    transform: rotate(22deg) translateX(6px);
+  }
+  [data-mood="thinking"] .arm-right {
+    transform: rotate(-27deg) translateX(-6px);
+  }
+  [data-mood="explaining"] .head {
+    transform: rotate(-3deg);
+  }
+  [data-mood="explaining"] .arm-left {
+    transform: rotate(24deg);
+  }
+  [data-mood="explaining"] .arm-right {
+    transform: rotate(-31deg) translateY(-4px);
+  }
+  /* Pointing: one arm thrown out sideways toward the control, head turned the
+     same way. The sprite is mirrored (cif-flip) when the control is on the
+     other side. */
+  [data-mood="pointing"] .head {
+    transform: rotate(-9deg) translateX(-3px);
+  }
+  [data-mood="pointing"] .arm-left {
+    transform: rotate(-16deg) translate(-5px, -4px) scale(1.08);
+  }
+  [data-mood="pointing"] .arm-right {
+    transform: rotate(-24deg) translateY(2px);
+  }
+  [data-mood="pointing"] .brow {
+    transform: translateY(-4px);
+  }
+  .cif-flip {
+    transform: scaleX(-1);
+  }
+
+  [data-mood="confused"] .head {
+    transform: rotate(-17deg) translateY(5px);
+  }
+  [data-mood="confused"] .body {
+    transform: scale(0.94, 0.94);
+  }
+  [data-mood="confused"] .arm-left {
+    transform: rotate(22deg);
+  }
+  [data-mood="confused"] .arm-right {
+    transform: rotate(-22deg);
+  }
+
+  /* Brows carry most of the expression at header size. */
+  [data-mood="curious"] .brow-right {
+    transform: translateY(-5px) rotate(-6deg);
+  }
+  [data-mood="curious"] .brow-left {
+    transform: translateY(-2px);
+  }
+  [data-mood="thinking"] .brow-left {
+    transform: translateY(3px) rotate(10deg);
+  }
+  [data-mood="thinking"] .brow-right {
+    transform: translateY(3px) rotate(-10deg);
+  }
+  [data-mood="explaining"] .brow {
+    transform: translateY(-3px);
+  }
+  [data-mood="confused"] .brow-left {
+    transform: translateY(-3px) rotate(-14deg);
+  }
+  [data-mood="confused"] .brow-right {
+    transform: translateY(4px) rotate(10deg);
+  }
+  [data-mood="delighted"] .brow {
+    transform: translateY(-7px);
+  }
+  [data-mood="delighted"] .head {
+    transform: translateY(-6px) rotate(-4deg);
+  }
+  [data-mood="delighted"] .body {
+    transform: scale(1.06, 1.03);
+  }
+  [data-mood="delighted"] .arm-left {
+    transform: rotate(-30deg) translateY(-6px);
+  }
+  [data-mood="delighted"] .arm-right {
+    transform: rotate(30deg) translateY(-6px);
+  }
+
+  /* Pose changes ease in and the figure hovers gently, unless the user asks
+     for reduced motion, in which case poses switch instantly and stay still. */
+  @media (prefers-reduced-motion: no-preference) {
+    .head,
+    .body,
+    .arm-left,
+    .arm-right,
+    .eye,
+    .brow {
+      transition:
+        transform 430ms cubic-bezier(0.22, 0.8, 0.2, 1),
+        opacity 250ms ease;
+    }
+    .hover {
+      animation: cif-float 3.4s ease-in-out infinite;
+    }
+    [data-mood="thinking"] .hover {
+      animation-duration: 4.6s;
+    }
+    /* Blink on a slightly uneven beat. Uses `scale` and `translate` so it
+       never fights the pose `transform`. */
+    .eye {
+      animation: cif-blink 5.8s ease-in-out infinite;
+    }
+    [data-mood="thinking"] .eye-think {
+      animation:
+        cif-blink 5.8s ease-in-out infinite,
+        cif-glance 3.4s ease-in-out infinite;
+    }
+    .body {
+      animation: cif-breathe 4.2s ease-in-out infinite;
+    }
+  }
+
+  @keyframes cif-blink {
+    0%,
+    93%,
+    100% {
+      scale: 1 1;
+    }
+    96% {
+      scale: 1 0.1;
+    }
+  }
+
+  @keyframes cif-glance {
+    0%,
+    100% {
+      translate: 0 0;
+    }
+    35%,
+    65% {
+      translate: -7px -2px;
+    }
+  }
+
+  @keyframes cif-breathe {
+    0%,
+    100% {
+      scale: 1 1;
+    }
+    50% {
+      scale: 1.02 1.025;
+    }
+  }
+
+  @keyframes cif-float {
+    0%,
+    100% {
+      transform: translateY(1px);
+    }
+    50% {
+      transform: translateY(-7px);
+    }
+  }
+</style>

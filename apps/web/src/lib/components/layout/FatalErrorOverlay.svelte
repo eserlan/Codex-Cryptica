@@ -20,7 +20,8 @@
       ></div>
 
       <h2 class="text-2xl font-black mb-4 flex items-center gap-3">
-        <span class="icon-[lucide--alert-triangle] w-8 h-8"></span>
+        <span aria-hidden="true" class="icon-[lucide--alert-triangle] w-8 h-8"
+        ></span>
         SYSTEM FAILURE
       </h2>
       <p class="text-red-400 mb-6 font-bold">
@@ -28,16 +29,18 @@
       </p>
       {#if error.stack}
         <pre
-          class="bg-black/50 p-4 rounded text-[10px] overflow-auto max-h-40 border border-red-900/30 mb-6">{error.stack}</pre>
+          class="bg-black/50 p-4 rounded text-micro overflow-auto max-h-40 border border-red-900/30 mb-6">{error.stack}</pre>
       {/if}
       <div class="flex gap-4">
         <button
+          type="button"
           onclick={() => window.location.reload()}
           class="flex-1 py-3 bg-red-600 hover:bg-red-500 text-black font-bold rounded transition-all active:scale-95 shadow-[0_0_15px_rgba(220,38,38,0.4)]"
         >
           REBOOT SYSTEM
         </button>
         <button
+          type="button"
           onclick={() => notificationStore.clearGlobalError()}
           class="px-6 py-3 border border-red-900 text-red-900 hover:text-red-500 hover:border-red-500 transition-colors"
         >

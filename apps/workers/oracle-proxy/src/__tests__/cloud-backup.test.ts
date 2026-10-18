@@ -1,0 +1,1130 @@
+import { describe, expect, it } from "vitest";
+import {
+  handleEnableCloudBackup,
+  handleCommitCloudBackup,
+  handleCloudBackupAssetUpload,
+  handleGetCloudBackupStatus,
+  handleGetCloudBackupBundle,
+  handleGetCloudBackupIndex,
+  handleCloudBackupDelta,
+  handleGetCloudBackupAsset,
+  handleDeleteCloudBackup,
+  hashOwnerCode,
+  getManifestKey,
+  getBundleKey,
+  getAssetKey,
+  getIndexKey,
+  getShardKey,
+  type CloudBackupEnv,
+} from "../cloud-backup";
+import {
+  handleCloudBackupAdminLookup,
+  handleCloudBackupAdminStats,
+  handleCloudBackupReissueCode,
+  handleCloudBackupAdminDelete,
+} from "../cloud-backup-admin";
+import { Bucket } from "./r2-memory-bucket";
+import {
+  CLOUD_BACKUP_SCHEMA_V2,
+  cloudBackupShardOf,
+  hashCloudBackupEntity,
+} from "../../../../../packages/schema/src/publishing";
+
+const ADMIN_TOKEN = "admin-secret";
+
+function makeEnv(): CloudBackupEnv & { BUCKET: Bucket } {
+  return { BUCKET: new Bucket(), CLOUD_BACKUP_ADMIN_TOKEN: ADMIN_TOKEN };
+}
+
+const post = (body: unknown, auth?: string) =>
+  new Request("https://example.test/api/cloud-backup", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(auth ? { Authorization: `Bearer ${auth}` } : {}),
+    },
+    body: JSON.stringify(body),
+  });
+
+const get = (auth?: string) =>
+  new Request("https://example.test/api/cloud-backup", {
+    headers: auth ? { Authorization: `Bearer ${auth}` } : {},
+  });
+
+/** A commit body: the bundle plus the ids of the assets that belong to it. */
+const commitBody = (
+  title = "The Saltmere Fens",
+  extra: unknown[] = [],
+  assetIds: string[] = ["map.png"],
+) => ({
+  vaultTitle: title,
+  bundle: {
+    schemaVersion: 1,
+    entities: [{ id: "e1", title: "Alder Cass" }, ...extra],
+  },
+  assetIds,
+});
+
+/** PUT one asset as raw bytes, the way the client uploads them. */
+const putAsset = (auth: string, body: Uint8Array | string, size?: number) =>
+  new Request("https://example.test/api/cloud-backup", {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${auth}`,
+      "Content-Type": "image/png",
+      ...(size === undefined ? {} : { "Content-Length": String(size) }),
+    },
+    body,
+  });
+
+async function uploadAsset(
+  env: CloudBackupEnv,
+  backupId: string,
+  ownerCode: string,
+  assetId = "map.png",
+  bytes = new TextEncoder().encode("binary-map-data"),
+) {
+  return handleCloudBackupAssetUpload(
+    putAsset(ownerCode, bytes),
+    env,
+    backupId,
+    assetId,
+  );
+}
+
+/** Opens a backup and uploads its one asset, without committing. */
+async function enable(env: CloudBackupEnv, title?: string) {
+  const res = await handleEnableCloudBackup(
+    post({ vaultTitle: title ?? "The Saltmere Fens" }),
+    env,
+  );
+  const opened = (await res.json()) as {
+    backupId: string;
+    ownerCode: string;
+    manifest: { sizeBytes: number; lastPushedAt: string };
+  };
+  await uploadAsset(env, opened.backupId, opened.ownerCode);
+  return opened;
+}
+
+/** Opens, uploads and commits — a complete backup. */
+async function enableAndCommit(env: CloudBackupEnv, title?: string) {
+  const opened = await enable(env, title);
+  const res = await handleCommitCloudBackup(
+    post(commitBody(title), opened.ownerCode),
+    env,
+    opened.backupId,
+  );
+  const { manifest } = (await res.json()) as {
+    manifest: { sizeBytes: number; lastPushedAt: string };
+  };
+  return { ...opened, manifest };
+}
+
+/* ------------------------------------------------------- foundational -- */
+
+describe("credentials and key layout", () => {
+  it("hashes an ownership code to stable SHA-256 hex", async () => {
+    const hash = await hashOwnerCode("abc");
+    expect(hash).toMatch(/^[a-f0-9]{64}$/);
+    expect(await hashOwnerCode("abc")).toBe(hash);
+    expect(await hashOwnerCode("abd")).not.toBe(hash);
+  });
+
+  it("never writes the raw ownership code to storage", async () => {
+    const env = makeEnv();
+    const { backupId, ownerCode } = await enable(env);
+    const serialised = JSON.stringify([...env.BUCKET.store.entries()]);
+    expect(serialised).not.toContain(ownerCode);
+    expect(
+      env.BUCKET.store.get(getManifestKey(backupId))?.customMetadata,
+    ).toHaveProperty("ownerCodeHash");
+  });
+
+  it("lays keys out under one prefix per backup", () => {
+    expect(getManifestKey("b1")).toBe("cloud-backup/b1/manifest.json");
+    expect(getBundleKey("b1")).toBe("cloud-backup/b1/bundle.json");
+    expect(getAssetKey("b1", "map.png")).toBe("cloud-backup/b1/assets/map.png");
+  });
+
+  it("authorises a correct code and rejects a wrong one", async () => {
+    const env = makeEnv();
+    const { backupId, ownerCode } = await enable(env);
+    expect(
+      (await handleGetCloudBackupStatus(get(ownerCode), env, backupId)).status,
+    ).toBe(200);
+    expect(
+      (await handleGetCloudBackupStatus(get("wrong"), env, backupId)).status,
+    ).toBe(404);
+  });
+
+  it("returns byte-identical responses for a wrong code and a missing backup", async () => {
+    // Otherwise an attacker can probe which backups exist (FR-014).
+    const env = makeEnv();
+    const { backupId } = await enable(env);
+    const wrongCode = await handleGetCloudBackupStatus(
+      get("wrong"),
+      env,
+      backupId,
+    );
+    const missing = await handleGetCloudBackupStatus(
+      get("wrong"),
+      env,
+      "no-such-backup",
+    );
+    expect(wrongCode.status).toBe(missing.status);
+    expect(await wrongCode.text()).toBe(await missing.text());
+  });
+
+  it("rejects a request with no credential at all", async () => {
+    const env = makeEnv();
+    const { backupId } = await enable(env);
+    expect(
+      (await handleGetCloudBackupStatus(get(), env, backupId)).status,
+    ).toBe(404);
+  });
+
+  it("does not let one vault's code reach another vault's backup", async () => {
+    // FR-012: ownership is scoped per backup, not per installation.
+    const env = makeEnv();
+    const a = await enable(env, "Vault A");
+    const b = await enable(env, "Vault B");
+
+    expect(
+      (await handleGetCloudBackupStatus(get(a.ownerCode), env, b.backupId))
+        .status,
+    ).toBe(404);
+    expect(
+      (await handleGetCloudBackupBundle(get(a.ownerCode), env, b.backupId))
+        .status,
+    ).toBe(404);
+    expect(
+      (await handleDeleteCloudBackup(get(a.ownerCode), env, b.backupId)).status,
+    ).toBe(404);
+    expect(
+      (
+        await handleCommitCloudBackup(
+          post(commitBody(), a.ownerCode),
+          env,
+          b.backupId,
+        )
+      ).status,
+    ).toBe(404);
+    expect(
+      (
+        await handleCloudBackupAssetUpload(
+          putAsset(a.ownerCode, new TextEncoder().encode("x")),
+          env,
+          b.backupId,
+          "stolen.png",
+        )
+      ).status,
+    ).toBe(404);
+
+    // B survives A's attempts untouched.
+    expect(
+      (await handleGetCloudBackupStatus(get(b.ownerCode), env, b.backupId))
+        .status,
+    ).toBe(200);
+  });
+});
+
+/* --------------------------------------------------------------- US1 -- */
+
+describe("enable, upload and commit", () => {
+  it("opens a backup and returns the code exactly once", async () => {
+    const env = makeEnv();
+    const res = await handleEnableCloudBackup(
+      post({ vaultTitle: "The Saltmere Fens" }),
+      env,
+    );
+    expect(res.status).toBe(201);
+    const body = (await res.json()) as any;
+    expect(body.backupId).toBeTruthy();
+    expect(body.ownerCode).toMatch(/^[a-f0-9]{64}$/);
+    expect(body.manifest.vaultTitle).toBe("The Saltmere Fens");
+    // Enable writes the manifest and nothing else: content follows.
+    expect(env.BUCKET.store.has(getManifestKey(body.backupId))).toBe(true);
+    expect(env.BUCKET.store.has(getBundleKey(body.backupId))).toBe(false);
+  });
+
+  it("rejects an enable with no title with 400", async () => {
+    const env = makeEnv();
+    expect((await handleEnableCloudBackup(post({}), env)).status).toBe(400);
+    expect(
+      (await handleEnableCloudBackup(post({ vaultTitle: "  " }), env)).status,
+    ).toBe(400);
+  });
+
+  it("rejects a commit with no bundle with 400", async () => {
+    const env = makeEnv();
+    const { backupId, ownerCode } = await enable(env);
+    const res = await handleCommitCloudBackup(
+      post({ vaultTitle: "x" }, ownerCode),
+      env,
+      backupId,
+    );
+    expect(res.status).toBe(400);
+  });
+
+  it("refuses an oversized body before reading it", async () => {
+    // The point of the header check: measuring by parsing is what would
+    // exhaust the Worker's memory, so the limit has to be enforced first.
+    const env = makeEnv();
+    const request = new Request("https://example.test/api/cloud-backup", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Content-Length": String(64 * 1024 * 1024),
+      },
+      body: JSON.stringify({ vaultTitle: "Huge" }),
+    });
+    const res = await handleEnableCloudBackup(request, env);
+    expect(res.status).toBe(413);
+    expect(env.BUCKET.store.size).toBe(0);
+  });
+
+  it("rejects a single asset over the per-file limit", async () => {
+    const env = makeEnv();
+    const { backupId, ownerCode } = await enable(env);
+    const res = await handleCloudBackupAssetUpload(
+      putAsset(ownerCode, new Uint8Array(1), 6 * 1024 * 1024),
+      env,
+      backupId,
+      "big.png",
+    );
+    expect(res.status).toBe(413);
+    expect((await res.json()).error.limitBytes).toBe(5 * 1024 * 1024);
+    expect(env.BUCKET.store.has(getAssetKey(backupId, "big.png"))).toBe(false);
+  });
+
+  it("rejects an asset that pushes the vault over its ceiling", async () => {
+    const env = makeEnv();
+    const { backupId, ownerCode } = await enable(env);
+    // Eleven 5MB files exceed the 50MB vault limit; the last one is refused.
+    let last: Response | undefined;
+    for (let i = 0; i < 11; i += 1) {
+      last = await handleCloudBackupAssetUpload(
+        putAsset(ownerCode, new Uint8Array(5 * 1024 * 1024)),
+        env,
+        backupId,
+        `a${i}.png`,
+      );
+    }
+    expect(last!.status).toBe(413);
+    expect((await last!.json()).error.limitBytes).toBe(50 * 1024 * 1024);
+  });
+
+  it("does not double-count an asset that replaces itself", async () => {
+    const env = makeEnv();
+    const { backupId, ownerCode } = await enable(env);
+    const bytes = new Uint8Array(4 * 1024 * 1024);
+    for (let i = 0; i < 20; i += 1) {
+      const res = await handleCloudBackupAssetUpload(
+        putAsset(ownerCode, bytes),
+        env,
+        backupId,
+        "same.png",
+      );
+      expect(res.status).toBe(200);
+    }
+  });
+
+  it("rejects an asset id containing a path separator", async () => {
+    const env = makeEnv();
+    const { backupId, ownerCode } = await enable(env);
+    const res = await handleCloudBackupAssetUpload(
+      putAsset(ownerCode, new TextEncoder().encode("x")),
+      env,
+      backupId,
+      "../escape",
+    );
+    expect(res.status).toBe(400);
+  });
+
+  it("refuses an asset upload without the ownership code", async () => {
+    const env = makeEnv();
+    const { backupId } = await enable(env);
+    const res = await handleCloudBackupAssetUpload(
+      putAsset("wrong-code", new TextEncoder().encode("x")),
+      env,
+      backupId,
+      "a.png",
+    );
+    expect(res.status).toBe(404);
+    expect(env.BUCKET.store.has(getAssetKey(backupId, "a.png"))).toBe(false);
+  });
+
+  it("prunes stale assets on commit, after the new ones are already stored", async () => {
+    // Deleting first would leave a bundle whose media is gone.
+    const env = makeEnv();
+    const { backupId, ownerCode } = await enable(env);
+    expect(env.BUCKET.store.has(getAssetKey(backupId, "map.png"))).toBe(true);
+
+    await uploadAsset(env, backupId, ownerCode, "new.png");
+    await handleCommitCloudBackup(
+      post(commitBody("The Saltmere Fens", [], ["new.png"]), ownerCode),
+      env,
+      backupId,
+    );
+
+    expect(env.BUCKET.store.has(getAssetKey(backupId, "new.png"))).toBe(true);
+    expect(env.BUCKET.store.has(getAssetKey(backupId, "map.png"))).toBe(false);
+  });
+
+  it("keeps the ownership code valid across a commit", async () => {
+    const env = makeEnv();
+    const { backupId, ownerCode } = await enableAndCommit(env);
+    expect(
+      (await handleGetCloudBackupStatus(get(ownerCode), env, backupId)).status,
+    ).toBe(200);
+  });
+
+  it("replaces the whole snapshot on commit and moves lastPushedAt", async () => {
+    const env = makeEnv();
+    const { backupId, ownerCode, manifest } = await enableAndCommit(env);
+
+    const res = await handleCommitCloudBackup(
+      post(
+        {
+          vaultTitle: "The Saltmere Fens",
+          bundle: { schemaVersion: 1, entities: [{ id: "e2", title: "Nell" }] },
+          assetIds: [],
+        },
+        ownerCode,
+      ),
+      env,
+      backupId,
+    );
+    expect(res.status).toBe(200);
+
+    const { bundle } = (await (
+      await handleGetCloudBackupBundle(get(ownerCode), env, backupId)
+    ).json()) as any;
+    expect(bundle.entities).toHaveLength(1);
+    expect(bundle.entities[0].id).toBe("e2");
+    // A commit listing no assets clears the previous ones, so deletions
+    // propagate to the backup.
+    expect(env.BUCKET.store.has(getAssetKey(backupId, "map.png"))).toBe(false);
+
+    const after = (await res.json()) as any;
+    expect(after.manifest.lastPushedAt >= manifest.lastPushedAt).toBe(true);
+  });
+
+  it("records a size covering the stored assets and the bundle", async () => {
+    const env = makeEnv();
+    const { manifest } = await enableAndCommit(env);
+    expect(manifest.sizeBytes).toBeGreaterThan("binary-map-data".length);
+  });
+});
+
+/* --------------------------------------------------------------- US2 -- */
+
+describe("restore reads", () => {
+  it("returns the manifest and bundle without mutating lastPushedAt", async () => {
+    const env = makeEnv();
+    const { backupId, ownerCode, manifest } = await enableAndCommit(env);
+
+    const res = await handleGetCloudBackupBundle(get(ownerCode), env, backupId);
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as any;
+    expect(body.bundle.entities[0].title).toBe("Alder Cass");
+    expect(body.manifest.lastPushedAt).toBe(manifest.lastPushedAt);
+  });
+
+  it("streams an asset back", async () => {
+    const env = makeEnv();
+    const { backupId, ownerCode } = await enable(env);
+    const res = await handleGetCloudBackupAsset(
+      get(ownerCode),
+      env,
+      backupId,
+      "map.png",
+    );
+    expect(res.status).toBe(200);
+  });
+
+  it("404s an unknown asset without revealing the backup exists", async () => {
+    const env = makeEnv();
+    const { backupId, ownerCode } = await enable(env);
+    const res = await handleGetCloudBackupAsset(
+      get(ownerCode),
+      env,
+      backupId,
+      "nope.png",
+    );
+    expect(res.status).toBe(404);
+  });
+});
+
+/* --------------------------------------------------------------- US3 -- */
+
+describe("status and deletion", () => {
+  it("reports status, last push time and size", async () => {
+    const env = makeEnv();
+    const { backupId, ownerCode } = await enableAndCommit(env);
+    const body = (await (
+      await handleGetCloudBackupStatus(get(ownerCode), env, backupId)
+    ).json()) as any;
+    expect(body.status).toBe("idle");
+    expect(body.lastPushedAt).toBeTruthy();
+    expect(body.sizeBytes).toBeGreaterThan(0);
+  });
+
+  it("deletes manifest, bundle and every asset, after which restore fails", async () => {
+    const env = makeEnv();
+    const { backupId, ownerCode } = await enable(env);
+
+    const res = await handleDeleteCloudBackup(get(ownerCode), env, backupId);
+    expect(res.status).toBe(200);
+    expect((await res.json()) as any).toEqual({ deleted: true });
+
+    const remaining = [...env.BUCKET.store.keys()].filter((key) =>
+      key.startsWith(`cloud-backup/${backupId}/`),
+    );
+    expect(remaining).toEqual([]);
+
+    // SC-004: no longer restorable.
+    expect(
+      (await handleGetCloudBackupBundle(get(ownerCode), env, backupId)).status,
+    ).toBe(404);
+  });
+});
+
+/* --------------------------------------------------------------- US4 -- */
+
+describe("support lookup", () => {
+  it("returns metadata for exactly one title match", async () => {
+    const env = makeEnv();
+    const { backupId } = await enable(env, "Unique Title");
+    const res = await handleCloudBackupAdminLookup(
+      post({ vaultTitle: "Unique Title" }, ADMIN_TOKEN),
+      env,
+    );
+    const body = (await res.json()) as any;
+    expect(body.matched).toBe(true);
+    expect(body.backupId).toBe(backupId);
+    expect(body.vaultTitle).toBe("Unique Title");
+    expect(body.lastPushedAt).toBeTruthy();
+  });
+
+  it("never returns vault content", async () => {
+    const env = makeEnv();
+    await enable(env, "Unique Title");
+    const text = await (
+      await handleCloudBackupAdminLookup(
+        post({ vaultTitle: "Unique Title" }, ADMIN_TOKEN),
+        env,
+      )
+    ).text();
+    expect(text).not.toContain("Alder Cass");
+  });
+
+  it("answers a zero match and an ambiguous match identically", async () => {
+    // The admin must not learn that three vaults share a title (FR-016).
+    const env = makeEnv();
+    await enable(env, "Shared Name");
+    await enable(env, "Shared Name");
+
+    const ambiguous = await handleCloudBackupAdminLookup(
+      post({ vaultTitle: "Shared Name" }, ADMIN_TOKEN),
+      env,
+    );
+    const missing = await handleCloudBackupAdminLookup(
+      post({ vaultTitle: "Nothing Like This" }, ADMIN_TOKEN),
+      env,
+    );
+    // Read each body once: a Response body cannot be consumed twice, so the
+    // text is parsed rather than re-read as JSON.
+    const ambiguousText = await ambiguous.text();
+    expect(ambiguousText).toBe(await missing.text());
+    expect(JSON.parse(ambiguousText)).toEqual({ matched: false });
+  });
+
+  it("returns nothing for an empty query rather than everything", async () => {
+    const env = makeEnv();
+    await enable(env, "Anything");
+    const body = (await (
+      await handleCloudBackupAdminLookup(
+        post({ vaultTitle: "  " }, ADMIN_TOKEN),
+        env,
+      )
+    ).json()) as any;
+    expect(body).toEqual({ matched: false });
+  });
+
+  it("rejects a missing or wrong admin token, and an owner code in its place", async () => {
+    const env = makeEnv();
+    const { ownerCode } = await enable(env, "Unique Title");
+
+    for (const auth of [undefined, "not-the-admin-token", ownerCode]) {
+      const res = await handleCloudBackupAdminLookup(
+        post({ vaultTitle: "Unique Title" }, auth),
+        env,
+      );
+      expect(res.status).toBe(404);
+    }
+  });
+
+  it("stays closed when no admin token is configured", async () => {
+    const env = { BUCKET: new Bucket() } as CloudBackupEnv;
+    const res = await handleCloudBackupAdminLookup(
+      post({ vaultTitle: "x" }, "anything"),
+      env,
+    );
+    expect(res.status).toBe(404);
+  });
+
+  it("re-issues a code, invalidating the previous one", async () => {
+    const env = makeEnv();
+    const { backupId, ownerCode } = await enable(env, "Lost Code Vault");
+
+    const res = await handleCloudBackupReissueCode(
+      post({}, ADMIN_TOKEN),
+      env,
+      backupId,
+    );
+    expect(res.status).toBe(200);
+    const { ownerCode: reissued } = (await res.json()) as any;
+    expect(reissued).not.toBe(ownerCode);
+
+    expect(
+      (await handleGetCloudBackupStatus(get(reissued), env, backupId)).status,
+    ).toBe(200);
+    // Only ever one valid code per backup.
+    expect(
+      (await handleGetCloudBackupStatus(get(ownerCode), env, backupId)).status,
+    ).toBe(404);
+  });
+
+  it("does not expose re-issue to a non-admin", async () => {
+    const env = makeEnv();
+    const { backupId, ownerCode } = await enable(env);
+    expect(
+      (await handleCloudBackupReissueCode(post({}, ownerCode), env, backupId))
+        .status,
+    ).toBe(404);
+  });
+
+  it("preserves the manifest through a re-issue", async () => {
+    const env = makeEnv();
+    const { backupId } = await enable(env, "Kept Title");
+    await handleCloudBackupReissueCode(post({}, ADMIN_TOKEN), env, backupId);
+    const stored = JSON.parse(
+      env.BUCKET.store.get(getManifestKey(backupId))!.body as string,
+    );
+    expect(stored.vaultTitle).toBe("Kept Title");
+  });
+});
+
+describe("admin stats", () => {
+  it("rejects a non-admin request", async () => {
+    const env = makeEnv();
+    await enableAndCommit(env, "One Vault");
+    for (const auth of [undefined, "not-the-admin-token"]) {
+      const res = await handleCloudBackupAdminStats(get(auth), env);
+      expect(res.status).toBe(404);
+    }
+  });
+
+  it("stays closed when no admin token is configured", async () => {
+    const env = { BUCKET: new Bucket() } as CloudBackupEnv;
+    const res = await handleCloudBackupAdminStats(get("anything"), env);
+    expect(res.status).toBe(404);
+  });
+
+  it("reports zero counts for an empty bucket", async () => {
+    const env = makeEnv();
+    const body = (await (
+      await handleCloudBackupAdminStats(get(ADMIN_TOKEN), env)
+    ).json()) as any;
+    expect(body).toEqual({
+      vaultCount: 0,
+      assetCount: 0,
+      totalBytes: 0,
+      complete: true,
+    });
+  });
+
+  it("counts vaults and assets, and sums bytes, across every backup", async () => {
+    const env = makeEnv();
+    await enableAndCommit(env, "First Vault");
+    await enableAndCommit(env, "Second Vault");
+
+    const body = (await (
+      await handleCloudBackupAdminStats(get(ADMIN_TOKEN), env)
+    ).json()) as any;
+    expect(body.vaultCount).toBe(2);
+    expect(body.assetCount).toBe(2);
+    expect(body.totalBytes).toBeGreaterThan(0);
+    expect(body.complete).toBe(true);
+  });
+
+  it("never returns a title, a backup id, or any other per-vault detail", async () => {
+    const env = makeEnv();
+    await enableAndCommit(env, "Should Never Appear");
+
+    const text = await (
+      await handleCloudBackupAdminStats(get(ADMIN_TOKEN), env)
+    ).text();
+    expect(text).not.toContain("Should Never Appear");
+    expect(Object.keys(JSON.parse(text)).sort()).toEqual([
+      "assetCount",
+      "complete",
+      "totalBytes",
+      "vaultCount",
+    ]);
+  });
+});
+
+describe("operator delete", () => {
+  /** DELETE carries no body; the token rides in the Authorization header. */
+  const del = (token?: string) =>
+    new Request("https://proxy.test/api/cloud-backup/admin/x", {
+      method: "DELETE",
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+
+  it("erases a backup the operator can no longer reach by owner code", async () => {
+    const env = makeEnv();
+    const { backupId, ownerCode } = await enable(env);
+
+    const res = await handleCloudBackupAdminDelete(
+      del(ADMIN_TOKEN),
+      env,
+      backupId,
+    );
+    expect(res.status).toBe(200);
+    expect((await res.json()) as any).toEqual({ deleted: true, existed: true });
+
+    const remaining = [...env.BUCKET.store.keys()].filter((key) =>
+      key.startsWith(`cloud-backup/${backupId}/`),
+    );
+    expect(remaining).toEqual([]);
+    expect(
+      (await handleGetCloudBackupBundle(get(ownerCode), env, backupId)).status,
+    ).toBe(404);
+  });
+
+  it("reports existed:false for an id that is already gone", async () => {
+    const env = makeEnv();
+
+    const body = (await (
+      await handleCloudBackupAdminDelete(del(ADMIN_TOKEN), env, "no-such-id")
+    ).json()) as any;
+
+    expect(body).toEqual({ deleted: true, existed: false });
+  });
+
+  it("answers 404 for a wrong or missing token, never 401", async () => {
+    const env = makeEnv();
+    const { backupId } = await enable(env);
+
+    for (const request of [del("wrong-token"), del(undefined)]) {
+      const res = await handleCloudBackupAdminDelete(request, env, backupId);
+      expect(res.status).toBe(404);
+    }
+
+    // The backup is untouched by a refused attempt.
+    expect(
+      [...env.BUCKET.store.keys()].some((key) =>
+        key.startsWith(`cloud-backup/${backupId}/`),
+      ),
+    ).toBe(true);
+  });
+
+  it("is closed by default when no admin token is configured", async () => {
+    const env = makeEnv();
+    delete (env as any).CLOUD_BACKUP_ADMIN_TOKEN;
+    const { backupId } = await enable(env);
+
+    const res = await handleCloudBackupAdminDelete(del(""), env, backupId);
+
+    expect(res.status).toBe(404);
+    expect(
+      [...env.BUCKET.store.keys()].some((key) =>
+        key.startsWith(`cloud-backup/${backupId}/`),
+      ),
+    ).toBe(true);
+  });
+});
+
+/* ------------------------------------------ incremental entity sync -- */
+
+describe("schema v2 storage (#3354)", () => {
+  const bundleOf = async (env: CloudBackupEnv, id: string, code: string) =>
+    (
+      (await (
+        await handleGetCloudBackupBundle(get(code), env, id)
+      ).json()) as any
+    ).bundle;
+
+  it("shards entities on a full commit and restores the same bundle", async () => {
+    const env = makeEnv();
+    const { backupId, ownerCode, manifest } = await enableAndCommit(env);
+
+    expect((manifest as any).schemaVersion).toBe(CLOUD_BACKUP_SCHEMA_V2);
+    expect((manifest as any).entityCount).toBe(1);
+    const stored = JSON.parse(
+      env.BUCKET.store.get(getBundleKey(backupId))!.body as string,
+    );
+    expect(stored.entities).toBeUndefined();
+    expect(
+      env.BUCKET.store.has(getShardKey(backupId, cloudBackupShardOf("e1"))),
+    ).toBe(true);
+
+    const bundle = await bundleOf(env, backupId, ownerCode);
+    expect(bundle.schemaVersion).toBe(1);
+    expect(bundle.entities).toEqual([{ id: "e1", title: "Alder Cass" }]);
+  });
+
+  it("preserves entity ids that are special object property names", async () => {
+    const env = makeEnv();
+    const { backupId, ownerCode } = await enable(env);
+    const commit = await handleCommitCloudBackup(
+      post(
+        {
+          vaultTitle: "The Saltmere Fens",
+          bundle: { entities: [{ id: "__proto__", title: "Prototype" }] },
+          assetIds: [],
+        },
+        ownerCode,
+      ),
+      env,
+      backupId,
+    );
+    const commitBody = (await commit.json()) as any;
+
+    expect(await bundleOf(env, backupId, ownerCode)).toMatchObject({
+      entities: [{ id: "__proto__", title: "Prototype" }],
+    });
+    const index = JSON.parse(
+      env.BUCKET.store.get(getIndexKey(backupId))!.body as string,
+    );
+    expect(index.entityHashes["__proto__"]).toBe(
+      await hashCloudBackupEntity({ id: "__proto__", title: "Prototype" }),
+    );
+
+    const deltaResponse = await handleCloudBackupDelta(
+      post(
+        {
+          vaultTitle: "The Saltmere Fens",
+          baseLastPushedAt: commitBody.manifest.lastPushedAt,
+          upserts: [{ id: "__proto__", title: "Updated prototype" }],
+          deletes: [],
+        },
+        ownerCode,
+      ),
+      env,
+      backupId,
+    );
+    expect(deltaResponse.status).toBe(200);
+    expect(await bundleOf(env, backupId, ownerCode)).toMatchObject({
+      entities: [{ id: "__proto__", title: "Updated prototype" }],
+    });
+  });
+
+  it("adds a special entity id to an existing delta shard", async () => {
+    const env = makeEnv();
+    const { backupId, ownerCode } = await enable(env);
+    const commit = await handleCommitCloudBackup(
+      post(
+        {
+          vaultTitle: "The Saltmere Fens",
+          bundle: { entities: [{ id: "seed-91", title: "Seed" }] },
+          assetIds: [],
+        },
+        ownerCode,
+      ),
+      env,
+      backupId,
+    );
+    const commitBody = (await commit.json()) as any;
+
+    expect(cloudBackupShardOf("seed-91")).toBe(cloudBackupShardOf("__proto__"));
+    const deltaResponse = await handleCloudBackupDelta(
+      post(
+        {
+          vaultTitle: "The Saltmere Fens",
+          baseLastPushedAt: commitBody.manifest.lastPushedAt,
+          upserts: [{ id: "__proto__", title: "Prototype" }],
+          deletes: [],
+        },
+        ownerCode,
+      ),
+      env,
+      backupId,
+    );
+
+    expect(deltaResponse.status).toBe(200);
+    expect(await bundleOf(env, backupId, ownerCode)).toMatchObject({
+      entities: [
+        { id: "seed-91", title: "Seed" },
+        { id: "__proto__", title: "Prototype" },
+      ],
+    });
+  });
+
+  it("drops shards of entities removed by a later full commit", async () => {
+    const env = makeEnv();
+    const { backupId, ownerCode } = await enableAndCommit(env);
+    await handleCommitCloudBackup(
+      post(
+        {
+          vaultTitle: "The Saltmere Fens",
+          bundle: { entities: [{ id: "only", title: "Only" }] },
+          assetIds: [],
+        },
+        ownerCode,
+      ),
+      env,
+      backupId,
+    );
+
+    const bundle = await bundleOf(env, backupId, ownerCode);
+    expect(bundle.entities.map((e: any) => e.id)).toEqual(["only"]);
+    if (cloudBackupShardOf("e1") !== cloudBackupShardOf("only")) {
+      expect(
+        env.BUCKET.store.has(getShardKey(backupId, cloudBackupShardOf("e1"))),
+      ).toBe(false);
+    }
+  });
+
+  it("still restores a v1 backup stored as a single bundle", async () => {
+    const env = makeEnv();
+    const { backupId, ownerCode } = await enableAndCommit(env);
+    // Simulate a backup written before #3354.
+    const raw = JSON.parse(
+      env.BUCKET.store.get(getManifestKey(backupId))!.body as string,
+    );
+    await env.BUCKET.put(
+      getManifestKey(backupId),
+      JSON.stringify({ ...raw, schemaVersion: 1 }),
+      {
+        customMetadata: env.BUCKET.store.get(getManifestKey(backupId))!
+          .customMetadata,
+      },
+    );
+    await env.BUCKET.put(
+      getBundleKey(backupId),
+      JSON.stringify({ entities: [{ id: "legacy", title: "Legacy" }] }),
+    );
+
+    const bundle = await bundleOf(env, backupId, ownerCode);
+    expect(bundle.entities).toEqual([{ id: "legacy", title: "Legacy" }]);
+  });
+
+  it("serves per-entity hashes, never content, from /index", async () => {
+    const env = makeEnv();
+    const { backupId, ownerCode } = await enableAndCommit(env);
+
+    const res = await handleGetCloudBackupIndex(get(ownerCode), env, backupId);
+    const body = (await res.json()) as any;
+    expect(body.entityHashes).toEqual({
+      e1: await hashCloudBackupEntity({ id: "e1", title: "Alder Cass" }),
+    });
+    expect(JSON.stringify(body)).not.toContain("Alder Cass");
+    expect(
+      (await handleGetCloudBackupIndex(get("wrong"), env, backupId)).status,
+    ).toBe(404);
+  });
+});
+
+describe("POST /delta (#3354)", () => {
+  const delta = (base: string, extra: Record<string, unknown> = {}) => ({
+    vaultTitle: "The Saltmere Fens",
+    baseLastPushedAt: base,
+    upserts: [],
+    deletes: [],
+    ...extra,
+  });
+  const bundleOf = async (env: CloudBackupEnv, id: string, code: string) =>
+    (
+      (await (
+        await handleGetCloudBackupBundle(get(code), env, id)
+      ).json()) as any
+    ).bundle;
+
+  it("applies upserts and deletes and moves lastPushedAt", async () => {
+    const env = makeEnv();
+    const { backupId, ownerCode, manifest } = await enableAndCommit(env);
+
+    const res = await handleCloudBackupDelta(
+      post(
+        delta(manifest.lastPushedAt, {
+          upserts: [{ id: "e2", title: "Nell" }],
+          deletes: ["e1"],
+        }),
+        ownerCode,
+      ),
+      env,
+      backupId,
+    );
+    expect(res.status).toBe(200);
+    const after = ((await res.json()) as any).manifest;
+    expect(after.entityCount).toBe(1);
+    expect(after.lastPushedAt >= manifest.lastPushedAt).toBe(true);
+
+    const bundle = await bundleOf(env, backupId, ownerCode);
+    expect(bundle.entities).toEqual([{ id: "e2", title: "Nell" }]);
+    const index = JSON.parse(
+      env.BUCKET.store.get(getIndexKey(backupId))!.body as string,
+    );
+    expect(Object.keys(index.entityHashes)).toEqual(["e2"]);
+  });
+
+  it("rewrites only the shards it touches", async () => {
+    const env = makeEnv();
+    const { backupId, ownerCode } = await enableAndCommit(env);
+    const ids = Array.from({ length: 40 }, (_, i) => `n${i}`);
+    const all = await handleCommitCloudBackup(
+      post(
+        {
+          vaultTitle: "The Saltmere Fens",
+          bundle: { entities: ids.map((id) => ({ id, title: id })) },
+          assetIds: [],
+        },
+        ownerCode,
+      ),
+      env,
+      backupId,
+    );
+    const base = ((await all.json()) as any).manifest.lastPushedAt;
+
+    const writes: string[] = [];
+    const put = env.BUCKET.put.bind(env.BUCKET);
+    env.BUCKET.put = (async (key: string, ...rest: any[]) => {
+      writes.push(key);
+      return (put as any)(key, ...rest);
+    }) as any;
+
+    await handleCloudBackupDelta(
+      post(
+        delta(base, { upserts: [{ id: "n3", title: "Changed" }] }),
+        ownerCode,
+      ),
+      env,
+      backupId,
+    );
+
+    const shardWrites = writes.filter((key) => key.includes("/entities/"));
+    expect(shardWrites).toEqual([
+      getShardKey(backupId, cloudBackupShardOf("n3")),
+    ]);
+    expect(writes).not.toContain(getBundleKey(backupId));
+  });
+
+  it("refuses a diverged base without writing", async () => {
+    const env = makeEnv();
+    const { backupId, ownerCode } = await enableAndCommit(env);
+    const before = new Map(env.BUCKET.store);
+
+    const res = await handleCloudBackupDelta(
+      post(delta("2000-01-01T00:00:00.000Z", { deletes: ["e1"] }), ownerCode),
+      env,
+      backupId,
+    );
+    expect(res.status).toBe(409);
+    expect(((await res.json()) as any).error.code).toBe("diverged");
+    expect(env.BUCKET.store).toEqual(before);
+  });
+
+  it("asks for a full upload when the backup is still v1", async () => {
+    const env = makeEnv();
+    const opened = await enable(env);
+
+    const res = await handleCloudBackupDelta(
+      post(delta(opened.manifest.lastPushedAt), opened.ownerCode),
+      env,
+      opened.backupId,
+    );
+    expect(res.status).toBe(409);
+    expect(((await res.json()) as any).error.code).toBe("full_push_required");
+  });
+
+  it("rejects a malformed delta and a wrong code", async () => {
+    const env = makeEnv();
+    const { backupId, ownerCode, manifest } = await enableAndCommit(env);
+
+    const bad = await handleCloudBackupDelta(
+      post({ vaultTitle: "x", upserts: "nope" }, ownerCode),
+      env,
+      backupId,
+    );
+    expect(bad.status).toBe(400);
+    const wrong = await handleCloudBackupDelta(
+      post(delta(manifest.lastPushedAt), "not-the-code"),
+      env,
+      backupId,
+    );
+    expect(wrong.status).toBe(404);
+  });
+
+  it("replaces maps and canvases when a delta carries them", async () => {
+    const env = makeEnv();
+    const { backupId, ownerCode, manifest } = await enableAndCommit(env);
+
+    await handleCloudBackupDelta(
+      post(
+        delta(manifest.lastPushedAt, { maps: [{ id: "m1" }], canvases: [] }),
+        ownerCode,
+      ),
+      env,
+      backupId,
+    );
+    const bundle = await bundleOf(env, backupId, ownerCode);
+    expect(bundle.maps).toEqual([{ id: "m1" }]);
+    expect(bundle.canvases).toEqual([]);
+    expect(bundle.entities).toEqual([{ id: "e1", title: "Alder Cass" }]);
+  });
+
+  it("prunes assets that are no longer referenced after a delta", async () => {
+    const env = makeEnv();
+    const { backupId, ownerCode, manifest } = await enableAndCommit(env);
+    await env.BUCKET.put(
+      getAssetKey(backupId, "orphan.png"),
+      new Uint8Array([1]),
+    );
+    await env.BUCKET.put(
+      getAssetKey(backupId, "kept.png"),
+      new Uint8Array([2]),
+    );
+
+    const res = await handleCloudBackupDelta(
+      post(delta(manifest.lastPushedAt, { assetIds: ["kept.png"] }), ownerCode),
+      env,
+      backupId,
+    );
+
+    expect(res.status).toBe(200);
+    expect(env.BUCKET.store.has(getAssetKey(backupId, "orphan.png"))).toBe(
+      false,
+    );
+    expect(env.BUCKET.store.has(getAssetKey(backupId, "kept.png"))).toBe(true);
+  });
+
+  it("counts bundle-section growth against the vault size limit", async () => {
+    const env = makeEnv();
+    const { backupId, ownerCode, manifest } = await enableAndCommit(env);
+    // Leave roughly one megabyte below the cap before the delta adds its maps.
+    await env.BUCKET.put(
+      getAssetKey(backupId, "near-limit.bin"),
+      new Uint8Array(49 * 1024 * 1024),
+    );
+    const previousBundle = env.BUCKET.store.get(getBundleKey(backupId))!.body;
+
+    const res = await handleCloudBackupDelta(
+      post(
+        delta(manifest.lastPushedAt, { maps: ["x".repeat(2 * 1024 * 1024)] }),
+        ownerCode,
+      ),
+      env,
+      backupId,
+    );
+
+    expect(res.status).toBe(413);
+    expect(env.BUCKET.store.get(getBundleKey(backupId))!.body).toBe(
+      previousBundle,
+    );
+  });
+});

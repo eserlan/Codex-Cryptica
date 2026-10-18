@@ -153,21 +153,20 @@ test.describe("Timeline Accessibility", () => {
       name: "Horizontal Timeline",
     });
     await expect(horizontalTimeline).toBeVisible({ timeout: 10000 });
+
     await horizontalTimeline.focus();
-
-    // Ensure we are at start
     await horizontalTimeline.evaluate((el) => (el.scrollLeft = 0));
-
     const initialScrollLeft = await horizontalTimeline.evaluate(
       (el) => el.scrollLeft,
     );
-    await page.keyboard.press("ArrowRight");
-    await page.waitForTimeout(500); // Wait for scroll to happen
-    const afterRightScroll = await horizontalTimeline.evaluate(
-      (el) => el.scrollLeft,
-    );
 
-    expect(afterRightScroll).toBeGreaterThan(initialScrollLeft);
+    await expect(async () => {
+      await page.keyboard.press("ArrowRight");
+      const currentScrollLeft = await horizontalTimeline.evaluate(
+        (el) => el.scrollLeft,
+      );
+      expect(currentScrollLeft).toBeGreaterThan(initialScrollLeft);
+    }).toPass({ timeout: 5000 });
 
     // 3. Test Vertical Timeline (switch to vertical)
     await page.evaluate(() => {
@@ -178,17 +177,19 @@ test.describe("Timeline Accessibility", () => {
       name: "Vertical Timeline",
     });
     await expect(verticalTimeline).toBeVisible();
-    await verticalTimeline.focus();
 
+    await verticalTimeline.focus();
     await verticalTimeline.evaluate((el) => (el.scrollTop = 0));
     const initialScrollTop = await verticalTimeline.evaluate(
       (el) => el.scrollTop,
     );
-    await page.keyboard.press("ArrowDown");
-    await page.waitForTimeout(500);
-    const afterDownScroll = await verticalTimeline.evaluate(
-      (el) => el.scrollTop,
-    );
-    expect(afterDownScroll).toBeGreaterThan(initialScrollTop);
+
+    await expect(async () => {
+      await page.keyboard.press("ArrowDown");
+      const currentScrollTop = await verticalTimeline.evaluate(
+        (el) => el.scrollTop,
+      );
+      expect(currentScrollTop).toBeGreaterThan(initialScrollTop);
+    }).toPass({ timeout: 5000 });
   });
 });

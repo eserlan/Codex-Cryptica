@@ -4,6 +4,7 @@
   import { vault } from "$lib/stores/vault.svelte";
   import { resolveIntentContext } from "./contextual-intent-helper";
   import ModalShell from "$lib/components/ui/ModalShell.svelte";
+  import { isVaultReadyForGenerators } from "$lib/stores/vault/readiness";
 
   let initialPrompt = $state("");
 
@@ -25,6 +26,11 @@
   }
 
   function selectIntent(category: IntentCategory) {
+    if (!isVaultReadyForGenerators(vault)) {
+      close();
+      return;
+    }
+
     const selectedId = vault.selectedEntityId;
     const activeEntity = selectedId ? vault.entities[selectedId] : null;
     const context = resolveIntentContext(category, {
@@ -114,7 +120,10 @@
             data-testid={`intent-${intent.category}`}
             class="flex flex-col items-center gap-2 p-4 rounded-xl border border-theme-border bg-theme-bg/40 hover:border-theme-primary hover:bg-theme-primary/10 transition-colors text-theme-text"
           >
-            <span class="{intent.icon} w-6 h-6 text-theme-primary"></span>
+            <span
+              class="{intent.icon} w-6 h-6 text-theme-primary"
+              aria-hidden="true"
+            ></span>
             <span class="text-xs font-bold uppercase tracking-wider"
               >{intent.label}</span
             >

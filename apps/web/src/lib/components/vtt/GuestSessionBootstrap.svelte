@@ -16,6 +16,7 @@
   import { vaultRegistry } from "$lib/stores/vault-registry.svelte";
   import { vaultEventBus } from "$lib/stores/vault/events.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { entityTemplateStore } from "$lib/stores/entity-templates/entity-template-store.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { untrack } from "svelte";
 
@@ -136,6 +137,7 @@
     const peerId = shareId.substring(4);
 
     untrack(() => {
+      entityTemplateStore.clearForGuest();
       sessionModeStore.isGuestMode = true;
       vault.status = "loading";
       vault.selectedEntityId = null;

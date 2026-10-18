@@ -1,54 +1,42 @@
 <script lang="ts">
-  import { base, resolve } from "$app/paths";
-  import { goto } from "$app/navigation";
-  const cleanBase = base === "/" ? "" : base;
-  import { fade } from "svelte/transition";
-  import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
-  import { tick } from "svelte";
   import type { Snippet } from "svelte";
+  import { browser } from "$app/environment";
+  import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
+  import type { OneShotProgressStep } from "generator-engine";
+  import type { MarkdownSectionForCopy } from "$lib/components/seo/markdown-sections";
+  import { splitMarkdownForCopy } from "$lib/components/seo/markdown-sections";
+  import { getGeneratorDocumentLayout } from "$lib/components/seo/generator-document-layout";
+  import { getGeneratorColumnClasses } from "./generator-column-classes";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { onlineStatus } from "$lib/stores/online.svelte";
-  import { browser, dev } from "$app/environment";
-  import { getGeneratorDocumentLayout } from "$lib/components/seo/generator-document-layout";
-  import { splitMarkdownForCopy } from "$lib/components/seo/markdown-sections";
-  import { renderGeneratorLore } from "$lib/components/seo/markdown-renderers";
   import { sessionHubStore } from "$lib/stores/session-hub.svelte";
-  import ProvenanceBadge from "./ProvenanceBadge.svelte";
-  import GeneratorSwitcherMenu from "./GeneratorSwitcherMenu.svelte";
+  import { getContextSelection, type SessionEntity } from "generator-engine";
+  import {
+    clipboardService as defaultClipboardService,
+    type ClipboardService,
+  } from "$lib/services/ClipboardService";
+  import { when } from "$lib/utils/when";
+  import { registerShellCtaHandler } from "./marketing-shell";
+  import {
+    resolveWorldThemeId,
+    resolveGeneratorType,
+    resolveGeneratedNoun,
+    resolveGeneratedSingular,
+  } from "./generator-page-identity";
   import FaqSection from "./FaqSection.svelte";
   import RelatedLinksSection from "./RelatedLinksSection.svelte";
-  import SaveToCodexModal from "./SaveToCodexModal.svelte";
-  import EntityDetailModal from "./EntityDetailModal.svelte";
   import GeneratorOutputCard from "./GeneratorOutputCard.svelte";
-  import StarSystemDiagram from "./StarSystemDiagram.svelte";
-  import { blobToDataUrl } from "$lib/utils/svg-export";
-  import { dungeonDelveService } from "$lib/services/dungeon-delve-service";
-  import { unregisterDevelopmentServiceWorkers } from "$lib/utils/dev-service-worker";
-  import {
-    createPendingDelveTransfer,
-    PENDING_DELVE_CANVAS_KEY,
-  } from "$lib/services/seo/pending-delve-transfer";
-  import {
-    getContextSelection,
-    computeProvenance,
-    generateAdventureGraphTopology,
-    type SessionEntity,
-  } from "generator-engine";
-  import {
-    buildFaqJsonLd,
-    buildSoftwareApplicationJsonLd,
-    buildBreadcrumbJsonLd,
-    buildResultJsonLd,
-  } from "./generator-json-ld";
-  import {
-    trackEvent,
-    trackPublicGeneratorAction,
-  } from "$lib/services/analytics/zaraz-analytics";
-  import {
-    trackSaveToCodex,
-    countRelatedEntities,
-  } from "$lib/services/analytics/generator-save-tracking";
-  import { registerShellCtaHandler } from "./marketing-shell";
+  import SEOGeneratorHead from "./SEOGeneratorHead.svelte";
+  import GeneratorFormPanel from "./layout/GeneratorFormPanel.svelte";
+  import GeneratorDiagrams from "./layout/GeneratorDiagrams.svelte";
+  import GeneratorRail from "./layout/GeneratorRail.svelte";
+  import GeneratorModals from "./layout/GeneratorModals.svelte";
+  import { useGeneratorSession } from "./layout/use-generator-session.svelte";
+  import { useGeneratorClipboard } from "./layout/use-generator-clipboard.svelte";
+  import { useGeneratorSave } from "./layout/use-generator-save.svelte";
+  import { useGeneratorRefinement } from "./layout/use-generator-refinement.svelte";
+  import { useGeneratorSharing } from "./layout/use-generator-sharing.svelte";
+  import { useGeneratorHandoffs } from "./layout/use-generator-handoffs.svelte";
 
   let {
     canonicalPath,
@@ -57,24 +45,50 @@
     eyebrow = "Free RPG Tool",
     introTitle = "RPG Generator",
     introText = "Customize options and instantly generate structured drafts to populate your campaign lore database.",
+    ogImage = "https://assets.codexcryptica.com/screenshots/feature-connect.jpg",
+    ogImageAlt = undefined,
+    keywords = [],
+    labels = [],
     relatedLinks = [],
     faqs = [],
     theme = $bindable("Classic Fantasy"),
     isThemeCustomizable = false,
+    supportsStreaming = false,
     generate,
     formFields,
+    outputExtras = undefined,
+    progressSteps = null,
     worldTheme = "workspace",
     initialDraft = null,
     variant = "default",
     generateLabel = undefined,
+    busyLabel = undefined,
     inputHint = "Set your inputs — your draft updates to the right",
     backHref = undefined,
     backLabel = undefined,
     onGeneratePlotTwist = undefined,
+    onGenerateRoster = undefined,
+    onOpenMemberAsCharacter = undefined,
+    clipboardService = defaultClipboardService,
+    autoGenerateExplicit = false,
+    initialDraftIsUserGenerated = false,
+    explainerText = undefined,
+    showGeneratorSwitcher = true,
+    aiModeRequired = false,
+    aiDataNotice = undefined,
+    offlineMessage = undefined,
+    wideForm = false,
+    singleColumn = false,
+    showSubmitButton = true,
   }: {
     canonicalPath?: string;
     pageTitle?: string;
     metaDescription?: string;
+    ogImage?: string;
+    ogImageAlt?: string;
+    keywords?: string[];
+    /** Public discovery labels (#2762). Chips linking to `/explore?label=X`. */
+    labels?: string[];
     eyebrow?: string;
     introTitle?: string;
     introText?: string;
@@ -82,124 +96,147 @@
     faqs?: { question: string; answer: string }[];
     theme?: string;
     isThemeCustomizable?: boolean;
-    generate: (opts: { useAI: boolean }) => Promise<GeneratorOutput>;
+    supportsStreaming?: boolean;
+    generate: (opts: {
+      useAI: boolean;
+      onPreview?: (preview: GeneratorOutput) => void;
+    }) => Promise<GeneratorOutput>;
     formFields: Snippet<[() => void]>;
+    /** Extra controls under the output card, e.g. per-part regeneration. */
+    outputExtras?: Snippet<
+      [GeneratorOutput, (output: GeneratorOutput) => void, boolean]
+    >;
+    /** Live steps of a staged generation, shown in the output card. */
+    progressSteps?: OneShotProgressStep[] | null;
     worldTheme?: string;
     initialDraft?: GeneratorOutput | null;
     variant?: "default" | "names";
     generateLabel?: string;
+    busyLabel?: string;
     inputHint?: string;
     onLinkToHub?: () => void;
     onGeneratePlotTwist?: (data: GeneratorOutput) => void;
+    onGenerateRoster?: (data: GeneratorOutput) => void;
+    onOpenMemberAsCharacter?: (
+      section: MarkdownSectionForCopy,
+      data: GeneratorOutput,
+    ) => void;
+    clipboardService?: ClipboardService;
+    autoGenerateExplicit?: boolean;
+    /** Enables actions when a public result was explicitly opened as a remix. */
+    initialDraftIsUserGenerated?: boolean;
+    /** Replaces the generator-specific explainer strip for focused public tools. */
+    explainerText?: string;
+    showGeneratorSwitcher?: boolean;
+    /** Hides the local-mode toggle when the workflow cannot operate without AI. */
+    aiModeRequired?: boolean;
+    aiDataNotice?: string;
+    offlineMessage?: string;
+    /** Gives multi-step builders a wider form column; the side panel moves below. */
+    wideForm?: boolean;
+    /** Stacks form, output and table notes in one centred column on desktop. */
+    singleColumn?: boolean;
+    /**
+     * False when the form fields drive the flow themselves (e.g. a wizard) and
+     * call the `submit` they are given. Hides the shared button and AI toggle,
+     * and ignores implicit submits such as Enter in a single-input form.
+     */
+    showSubmitButton?: boolean;
     backHref?: string;
     backLabel?: string;
   } = $props();
 
-  let isGenerating = $state(false);
-  // Separate flag for the on-mount seed draft so it never blocks (or is blocked
-  // by) an explicit user Generate (#1494 review follow-up).
-  let isAutoDrafting = $state(false);
-  // Once the user explicitly generates, the in-flight seed draft must not clobber
-  // their result if it resolves later.
-  let userGenerated = $state(false);
-  // Follow-up actions must only use a result from a completed explicit run,
-  // never the example draft left behind after a failed attempt.
-  let userGenerationSucceeded = $state(false);
-  const isBusy = $derived(isGenerating || isAutoDrafting);
-  let generatedData = $state<GeneratorOutput | null>(null);
-  let isExampleDraft = $state(false);
-
-  $effect(() => {
-    generatedData = initialDraft;
-    isExampleDraft = true;
-  });
-
   let outputCard = $state<HTMLElement | null>(null);
-  let starSystemDiagramRef = $state<ReturnType<
-    typeof StarSystemDiagram
-  > | null>(null);
-  let errorMessage = $state<string | null>(null);
-  let copied = $state(false);
-  let copiedSectionId = $state<string | null>(null);
-  let useAI = $state(true);
-  let showSaveModal = $state(false);
-  let redirectQuery = $state("");
+  let diagrams = $state<ReturnType<typeof GeneratorDiagrams> | null>(null);
+  let selectedHubEntity = $state<SessionEntity | null>(null);
 
   // Offline awareness (#1494): generator pages still work offline using local
   // tables, but AI Lore Co-Author mode requires the network. Network status
   // comes from the shared `onlineStatus` store (seeded at module load, so no
   // post-mount "assumed online" flash).
   const isOnline = $derived(onlineStatus.current);
-  // Dismissal flag for the "AI was unavailable, used local" notice; reset on
-  // each new generation so a later failure shows it again.
-  let aiFallbackDismissed = $state(false);
-
-  const themeMap: Record<string, string> = {
-    "Classic Fantasy": "fantasy",
-    Pirate: "pirate",
-    "Cyberpunk / Corporate": "cyberpunk",
-    "Vampire / Gothic Noir": "horror",
-    "Cosmic Horror": "cosmic_horror",
-    "Sci-Fi / Space Opera": "scifi",
-    "Star Wars": "starwars",
-    "Modern Conspiracy": "modern",
-    "Post-Apocalyptic": "apocalyptic",
-    "Western / Frontier": "western",
-    Steampunk: "steampunk",
-    Lancer: "lancer",
-    "Optimistic Exploration Sci-Fi": "startrek",
-  };
-
-  const activeThemeId = $derived(themeMap[theme] || "workspace");
-
+  const activeThemeId = $derived(resolveWorldThemeId(theme));
   // Stable per-page generator identifier for analytics (#1796) — derived from
   // the page's own canonical path (or the eyebrow label as a fallback) so
   // it's available immediately, before any generation happens, unlike
   // generatedData.type which only exists after a successful generate() call.
-  const generatorType = $derived.by(() => {
-    if (canonicalPath) {
-      const segments = canonicalPath.split("/").filter(Boolean);
-      const last = segments[segments.length - 1];
-      if (last) return last;
-    }
-    const slug = eyebrow
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/(^-|-$)/g, "");
-    return slug || "unknown";
+  const generatorType = $derived(resolveGeneratorType(canonicalPath, eyebrow));
+  const generatedNoun = $derived(resolveGeneratedNoun(eyebrow));
+  const generatedSingular = $derived(resolveGeneratedSingular(eyebrow));
+  const columnClasses = $derived(
+    getGeneratorColumnClasses(singleColumn, wideForm),
+  );
+  const contextSelection = $derived(
+    getContextSelection(sessionHubStore.entities),
+  );
+
+  const session = useGeneratorSession({
+    getCanonicalPath: () => canonicalPath,
+    getInitialDraft: () => initialDraft,
+    getInitialDraftIsUserGenerated: () => initialDraftIsUserGenerated,
+    getAutoGenerateExplicit: () => autoGenerateExplicit,
+    getAiModeRequired: () => aiModeRequired,
+    getSupportsStreaming: () => supportsStreaming,
+    getSingleColumn: () => singleColumn,
+    getGeneratorType: () => generatorType,
+    getDocumentLayout: () => documentLayout,
+    getContextSelection: () => contextSelection,
+    getOutputCard: () => outputCard,
+    generate: (opts) => generate(opts),
   });
 
-  const generatedNoun = $derived(
-    eyebrow.toLowerCase().includes("name")
-      ? "fantasy names"
-      : eyebrow.toLowerCase().includes("rpg npc")
-        ? "RPG NPCs"
-        : eyebrow.toLowerCase().includes("npc")
-          ? "D&D NPCs"
-          : eyebrow.toLowerCase().includes("faction")
-            ? "RPG factions"
-            : eyebrow.toLowerCase().includes("quest")
-              ? "quest hooks"
-              : eyebrow.toLowerCase().includes("settlement")
-                ? "settlements"
-                : eyebrow.toLowerCase().includes("item")
-                  ? "magic items"
-                  : eyebrow.toLowerCase().includes("pantheon")
-                    ? "pantheons"
-                    : eyebrow.toLowerCase().includes("deity") ||
-                        eyebrow.toLowerCase().includes("god")
-                      ? "deities"
-                      : "RPG elements",
+  const documentLayout = $derived(
+    getGeneratorDocumentLayout(session.generatedData),
   );
-
-  const generatedSingular = $derived(
-    eyebrow.replace(/\s*Generator\s*/i, "").trim() || "Draft",
-  );
-
-  const documentLayout = $derived(getGeneratorDocumentLayout(generatedData));
   const documentSections = $derived(
     variant === "names" ? [] : splitMarkdownForCopy(documentLayout.content),
   );
+
+  const clipboard = useGeneratorClipboard({
+    getClipboardService: () => clipboardService,
+    getGeneratorType: () => generatorType,
+    getGeneratedData: () => session.generatedData,
+    getDocumentLayout: () => documentLayout,
+  });
+  const save = useGeneratorSave({
+    getGeneratorType: () => generatorType,
+    getGeneratedData: () => session.generatedData,
+    getDocumentLayout: () => documentLayout,
+    exportDiagramImage: () =>
+      diagrams?.exportDataUrl() ?? Promise.resolve(undefined),
+    getSelectedNodeIds: () => diagrams?.getSelectedPointCrawlNodeIds(),
+    setError: (message) => (session.errorMessage = message),
+  });
+  const handoffs = useGeneratorHandoffs({
+    getGeneratorType: () => generatorType,
+    getDocumentLayout: () => documentLayout,
+    setError: (message) => (session.errorMessage = message),
+  });
+  const sharing = useGeneratorSharing({
+    getGeneratorType: () => generatorType,
+    getTheme: () => theme,
+    getWorldTheme: () => worldTheme,
+    getCanonicalPath: () => canonicalPath,
+    getOgImage: () => ogImage,
+    getGeneratedData: () => session.generatedData,
+    getDocumentLayout: () => documentLayout,
+  });
+  const refinement = useGeneratorRefinement({
+    getGeneratorType: () => generatorType,
+    getGeneratedData: () => session.generatedData,
+    getDocumentLayout: () => documentLayout,
+    getCurrentEntityId: () => session.currentEntityId,
+    getContextSelection: () => contextSelection,
+    canRefineCurrentOutput: () => session.userGenerationSucceeded,
+    applyRefinedOutput: session.applyRefinedOutput,
+    onOpenFromHub: () => (selectedHubEntity = null),
+  });
+
+  const canFollowUp = $derived(session.userGenerationSucceeded);
+
+  export function triggerExplicitAutoGenerate() {
+    session.triggerExplicitAutoGenerate();
+  }
 
   $effect(() => {
     if (isThemeCustomizable && browser) {
@@ -209,447 +246,22 @@
     }
   });
 
-  $effect(() => {
-    if (browser && !generatedData) {
-      void handleGenerateOnMount();
-    }
-  });
-
-  async function handleGenerateOnMount() {
-    if (isAutoDrafting || generatedData) return;
-    isAutoDrafting = true;
-    errorMessage = null;
-    try {
-      const draft = await generate({ useAI: false });
-      // The user may have triggered (or finished) an explicit generation while
-      // this seed draft was in flight; don't overwrite their result.
-      if (!userGenerated) generatedData = draft;
-    } catch (err: any) {
-      console.warn("Failed to generate initial draft:", err);
-    } finally {
-      isAutoDrafting = false;
-    }
-  }
-
-  function confirmSaveRedirect() {
-    trackPublicGeneratorAction("open_codex", {
-      generator_type: generatorType,
-      source: "save_confirmation",
-    });
-
-    showSaveModal = false;
-  }
-
   // The shell renders the header CTA now, so this page registers its tracking
   // rather than binding it to a button it no longer owns.
-  $effect(() => registerShellCtaHandler(handleOpenCodex));
-
-  function handleOpenCodex() {
-    trackPublicGeneratorAction("open_codex", {
-      generator_type: generatorType,
-      source: "header",
-    });
-  }
-
-  const faqJsonLd = $derived(buildFaqJsonLd(faqs));
-
-  const softwareApplicationJsonLd = $derived(
-    buildSoftwareApplicationJsonLd({ canonicalPath, metaDescription, faqs }),
-  );
-
-  const breadcrumbJsonLd = $derived(
-    buildBreadcrumbJsonLd({ canonicalPath, introTitle }),
-  );
-
-  const resultJsonLd = $derived(buildResultJsonLd(generatedData));
-
-  async function handleGenerate() {
-    if (isGenerating) return;
-    userGenerated = true;
-    userGenerationSucceeded = false;
-    isGenerating = true;
-    errorMessage = null;
-    aiFallbackDismissed = false;
-    // #1796: only ever fires for an explicit user Generate click, never the
-    // silent handleGenerateOnMount() seed draft (that path never sets
-    // userGenerated / calls handleGenerate at all).
-    trackEvent("generator_started", { generator_type: generatorType });
-    // Use AI only when the user opted in *and* we're online. Read the live
-    // status at click time so a generation triggered before status settles
-    // still routes correctly (#1494).
-    const useAINow =
-      useAI && (browser ? navigator.onLine : onlineStatus.current);
-    try {
-      generatedData = await generate({ useAI: useAINow });
-      userGenerationSucceeded = true;
-      isExampleDraft = false;
-      // #1796: only on the success path — a caught error below means the
-      // generation did not complete, so it must not count as one.
-      trackEvent("generator_completed", { generator_type: generatorType });
-
-      if (generatedData) {
-        const content = generatedData.summary
-          ? `*${generatedData.summary}*\n\n${documentLayout.content}`
-          : documentLayout.content;
-
-        const currentContext = $state.snapshot(contextSelection);
-
-        currentEntityId = sessionHubStore.addEntity({
-          type: generatedData.type,
-          kind: generatedData.kind,
-          title: generatedData.title,
-          summary: generatedData.summary,
-          content,
-          lore: documentLayout.lore,
-          labels: generatedData.labels,
-          status: generatedData.status,
-          reuseEnabled: true,
-          pinned: false,
-        });
-
-        const record = computeProvenance(
-          currentEntityId,
-          content + "\n" + (documentLayout.lore || ""),
-          currentContext.entities,
-          currentContext.trimmed,
-        );
-        sessionHubStore.addProvenance(record);
-      }
-
-      if (browser && window.innerWidth < 1024 && outputCard) {
-        await tick();
-        outputCard.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
-    } catch (err: any) {
-      errorMessage = "Failed to generate: " + (err.message || err);
-    } finally {
-      isGenerating = false;
-    }
-  }
-
-  let selectedHubEntity = $state<SessionEntity | null>(null);
-  let currentEntityId = $state<string | null>(null);
-  const contextSelection = $derived(
-    getContextSelection(sessionHubStore.entities),
-  );
-
-  function handleSaveHubToCodex(entitiesToSave: SessionEntity[]) {
-    if (entitiesToSave.length === 0) return;
-    trackPublicGeneratorAction("save_to_codex", {
-      generator_type: generatorType,
-      is_hub_batch: true,
-      item_count: entitiesToSave.length,
-    });
-    try {
-      const draftsToSave = entitiesToSave.map((e) => {
-        const prov = sessionHubStore.provenance[e.id];
-        let references: string[] | undefined;
-        if (prov && prov.usedEntityIds.length > 0) {
-          references = prov.usedEntityIds
-            .map(
-              (uid) =>
-                sessionHubStore.entities.find((en) => en.id === uid)?.title,
-            )
-            .filter((title): title is string => !!title);
-        }
-
-        return {
-          type: e.type,
-          kind: e.kind,
-          title: e.title,
-          content: e.content,
-          lore: e.lore,
-          labels: e.labels,
-          status: e.status,
-          references,
-        };
-      });
-      localStorage.setItem(
-        "__codex_pending_import",
-        JSON.stringify(draftsToSave),
-      );
-      // #1796: fires at this outbound-click moment only — see
-      // generator-save-tracking.ts's docstring for why this never observes
-      // what actually happens after the redirect below.
-      trackSaveToCodex({
-        generatorType,
-        isHubBatch: true,
-        itemCount: draftsToSave.length,
-        relatedEntityCount: draftsToSave.reduce(
-          (sum, d) => sum + countRelatedEntities(d.content, d.references),
-          0,
-        ),
-      });
-      redirectQuery = `?utm_source=generator-session-hub&utm_medium=save-all&utm_campaign=seo-funnel`;
-      showSaveModal = true;
-    } catch {
-      errorMessage = "Storage access is blocked. Please copy drafts manually.";
-    }
-  }
-
-  async function handleSaveToCodex() {
-    if (!generatedData) return;
-    trackPublicGeneratorAction("save_to_codex", {
-      generator_type: generatorType,
-      is_hub_batch: false,
-      item_count: 1,
-    });
-
-    try {
-      const isAdventure =
-        generatedData.kind === "adventure" ||
-        generatedData.labels?.includes("adventure");
-
-      const content = isAdventure
-        ? generatedData.summary
-          ? `*${generatedData.summary}*`
-          : ""
-        : generatedData.summary
-          ? `*${generatedData.summary}*\n\n${documentLayout.content}`
-          : documentLayout.content;
-
-      const lore = isAdventure
-        ? [generatedData.content, generatedData.lore]
-            .filter(Boolean)
-            .join("\n\n")
-        : documentLayout.lore;
-
-      // Best-effort: a rasterization failure must never block saving the
-      // draft itself, so this is caught separately from the payload write.
-      let mapImageDataUrl: string | undefined;
-      if (starSystemDiagramRef) {
-        try {
-          const blob = await starSystemDiagramRef.exportPng();
-          if (blob) mapImageDataUrl = await blobToDataUrl(blob);
-        } catch (err) {
-          console.error("Failed to rasterize star system diagram:", err);
-        }
-      }
-
-      const payload = {
-        type: isAdventure ? "note" : generatedData.type,
-        kind: generatedData.kind,
-        title: generatedData.title,
-        content,
-        lore,
-        labels: generatedData.labels,
-        status: generatedData.status,
-        ...(mapImageDataUrl ? { mapImageDataUrl } : {}),
-      };
-
-      localStorage.setItem("__codex_pending_import", JSON.stringify(payload));
-      // #1796: fires at this outbound-click moment only — see
-      // generator-save-tracking.ts's docstring for why this never observes
-      // what actually happens after the redirect below.
-      trackSaveToCodex({
-        generatorType,
-        isHubBatch: false,
-        itemCount: 1,
-        relatedEntityCount: countRelatedEntities(content, undefined),
-      });
-      redirectQuery = `?utm_source=generator-${generatedData.type}&utm_medium=save-to-vault&utm_campaign=seo-funnel`;
-      showSaveModal = true;
-    } catch {
-      errorMessage =
-        "Storage access is blocked. Please copy the Markdown below instead.";
-    }
-  }
-
-  async function handleCopyMarkdown() {
-    if (!generatedData) return;
-    trackPublicGeneratorAction("copy", {
-      generator_type: generatorType,
-      copy_target: "markdown",
-    });
-
-    const markdownText = [
-      `# ${generatedData.title}`,
-      generatedData.summary ? `*${generatedData.summary}*` : "",
-      `Labels: ${generatedData.labels.join(", ")}`,
-      "",
-      documentLayout.content,
-      "",
-      documentLayout.lore,
-    ]
-      .filter((line) => line !== undefined)
-      .join("\n")
-      .trim();
-
-    try {
-      await navigator.clipboard.writeText(markdownText);
-      copied = true;
-      setTimeout(() => {
-        copied = false;
-      }, 2000);
-    } catch (err) {
-      console.error("Failed to copy markdown:", err);
-    }
-  }
-
-  async function handleCopySection(sectionId: string, markdown: string) {
-    trackPublicGeneratorAction("copy", {
-      generator_type: generatorType,
-      copy_target: "section",
-      section_id: sectionId,
-    });
-    try {
-      await navigator.clipboard.writeText(markdown.trim());
-      copiedSectionId = sectionId;
-      setTimeout(() => {
-        if (copiedSectionId === sectionId) copiedSectionId = null;
-      }, 1600);
-    } catch (err) {
-      console.error("Failed to copy section markdown:", err);
-    }
-  }
-
-  function handleContainerKeydown(event: KeyboardEvent) {
-    if (event.key === "Enter" || event.key === " ") {
-      handleContainerClick(event as unknown as MouseEvent);
-    }
-  }
-
-  function handleContainerClick(event: MouseEvent) {
-    const target = event.target as HTMLElement;
-    const copyBtn = target.closest("[data-copy-text]");
-    if (copyBtn) {
-      const textToCopy = copyBtn.getAttribute("data-copy-text");
-      if (textToCopy) {
-        trackPublicGeneratorAction("copy", {
-          generator_type: generatorType,
-          copy_target: "inline",
-        });
-        navigator.clipboard
-          .writeText(textToCopy)
-          .then(() => {
-            const iconEl = copyBtn.querySelector("span");
-            if (iconEl) {
-              iconEl.className =
-                "icon-[lucide--check] w-3.5 h-3.5 text-green-500 animate-pulse";
-              setTimeout(() => {
-                if (iconEl) {
-                  iconEl.className = "icon-[lucide--copy] w-3.5 h-3.5";
-                }
-              }, 1500);
-            }
-          })
-          .catch((err) => {
-            console.error("Failed to copy text:", err);
-          });
-      }
-    }
-  }
-
-  async function handleBuildDelveCanvas(data: GeneratorOutput) {
-    try {
-      const canvasDoc = dungeonDelveService.buildDelveCanvasFromConcept(data);
-      const layout = getGeneratorDocumentLayout(data);
-      const content = data.summary
-        ? `*${data.summary}*\n\n${layout.content}`
-        : layout.content;
-      const transfer = createPendingDelveTransfer(canvasDoc, {
-        type: "location",
-        kind: "dungeon",
-        title: data.title,
-        content,
-        lore: layout.lore,
-        labels: data.labels,
-        status: data.status,
-      });
-      localStorage.setItem(PENDING_DELVE_CANVAS_KEY, JSON.stringify(transfer));
-      await unregisterDevelopmentServiceWorkers(dev);
-      if (dev) {
-        window.location.assign(resolve("/canvas"));
-        return;
-      }
-      await goto(resolve("/canvas"));
-    } catch (err) {
-      console.error("[DelveCanvas] Failed to build delve canvas:", err);
-      errorMessage =
-        "The generated delve could not be opened. Your pending canvas has been preserved so you can retry.";
-    }
-  }
-
-  async function handleBuildAdventureCanvas(data: GeneratorOutput) {
-    try {
-      const canvasDoc = generateAdventureGraphTopology(data);
-      const content = data.summary ? `*${data.summary}*` : "";
-      const lore = [data.content, data.lore].filter(Boolean).join("\n\n");
-      const transfer = createPendingDelveTransfer(canvasDoc as any, {
-        type: "note",
-        kind: "adventure",
-        title: data.title,
-        content,
-        lore,
-        labels: data.labels,
-        status: data.status,
-      });
-      localStorage.setItem(PENDING_DELVE_CANVAS_KEY, JSON.stringify(transfer));
-      await unregisterDevelopmentServiceWorkers(dev);
-      if (dev) {
-        window.location.assign(resolve("/canvas"));
-        return;
-      }
-      await goto(resolve("/canvas"));
-    } catch (err) {
-      console.error("[AdventureCanvas] Failed to build adventure canvas:", err);
-      errorMessage = "Failed to open Adventure Canvas for this scenario.";
-    }
-  }
+  $effect(() => registerShellCtaHandler(save.trackHeaderOpenCodex));
 </script>
 
-<svelte:head>
-  <title>{pageTitle}</title>
-  <meta name="description" content={metaDescription} />
-  <meta name="robots" content="index, follow" />
-  {#if canonicalPath}
-    <link rel="canonical" href="https://codexcryptica.com{canonicalPath}" />
-  {/if}
-  <!-- Open Graph -->
-  <meta property="og:type" content="website" />
-  <meta property="og:site_name" content="Codex Cryptica" />
-  <meta property="og:title" content={pageTitle} />
-  <meta property="og:description" content={metaDescription} />
-  {#if canonicalPath}
-    <meta
-      property="og:url"
-      content="https://codexcryptica.com{canonicalPath}"
-    />
-  {/if}
-  <meta
-    property="og:image"
-    content="https://assets.codexcryptica.com/screenshots/feature-connect.jpg"
-  />
-  <meta property="og:image:width" content="1600" />
-  <meta property="og:image:height" content="1000" />
-  <!-- Twitter Card -->
-  <meta name="twitter:card" content="summary" />
-  <meta name="twitter:title" content={pageTitle} />
-  <meta name="twitter:description" content={metaDescription} />
-  <meta
-    name="twitter:image"
-    content="https://assets.codexcryptica.com/screenshots/feature-connect.jpg"
-  />
-  <link rel="help" href="{cleanBase}/llms.txt" />
-  <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-  {@html `<scr` +
-    `ipt type="application/ld+json">${softwareApplicationJsonLd}</scr` +
-    `ipt>`}
-  <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-  {@html `<scr` +
-    `ipt type="application/ld+json">${breadcrumbJsonLd}</scr` +
-    `ipt>`}
-  {#if faqJsonLd}
-    <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-    {@html `<scr` + `ipt type="application/ld+json">${faqJsonLd}</scr` + `ipt>`}
-  {/if}
-  {#if resultJsonLd}
-    <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-    {@html `<scr` +
-      `ipt type="application/ld+json">${resultJsonLd}</scr` +
-      `ipt>`}
-  {/if}
-</svelte:head>
+<SEOGeneratorHead
+  title={pageTitle}
+  description={metaDescription}
+  {introTitle}
+  {canonicalPath}
+  image={ogImage}
+  imageAlt={ogImageAlt}
+  {keywords}
+  {faqs}
+  generatedData={session.generatedData}
+/>
 
 <div
   class="min-h-screen bg-theme-bg text-theme-text font-body selection:bg-theme-primary selection:text-theme-bg flex flex-col"
@@ -664,7 +276,8 @@
       <p
         class="text-xs font-bold text-theme-text/75 uppercase tracking-widest font-header"
       >
-        Generate campaign-ready {generatedNoun} in seconds — no account required.
+        {explainerText ??
+          `Generate campaign-ready ${generatedNoun} in seconds — no account required.`}
       </p>
       <span
         class="hidden md:inline-flex h-px flex-1 bg-gradient-to-r from-theme-primary/35 via-theme-border/30 to-transparent"
@@ -676,237 +289,113 @@
   <div
     class="max-w-6xl mx-auto px-4 sm:px-6 py-12 w-full flex-grow grid grid-cols-1 lg:grid-cols-12 gap-8"
   >
-    <!-- Output Card Column: controls first on mobile, middle column on desktop -->
+    <!--
+      DOM order matches visual order (Parameters -> Output -> At the Table)
+      via order-1/2/3 below, so SEO/LLM crawlers that read raw markup instead
+      of applying CSS grid order see the H1 and intro copy before the
+      generator's empty-state placeholders (#2320).
+    -->
+    <!-- Parameters Column: positioned on the left on desktop -->
+    <div class="{columnClasses.form} space-y-6 order-1 lg:order-1">
+      <GeneratorFormPanel
+        {canonicalPath}
+        {eyebrow}
+        {showGeneratorSwitcher}
+        {introTitle}
+        {introText}
+        {labels}
+        {inputHint}
+        {backHref}
+        {backLabel}
+        {formFields}
+        onGenerate={() => void session.handleGenerate()}
+        isBusy={session.isBusy}
+        {isOnline}
+        {aiModeRequired}
+        {aiDataNotice}
+        {offlineMessage}
+        {showSubmitButton}
+        {busyLabel}
+        {generateLabel}
+        {generatedSingular}
+        bind:useAI={session.useAI}
+        errorMessage={session.errorMessage}
+        copyError={clipboard.copyError}
+      />
+    </div>
+
+    <!-- Output Card Column: middle column on desktop -->
     <div
-      class="lg:col-span-6 flex flex-col order-2 lg:order-2 scroll-mt-20"
+      class="{columnClasses.output} flex flex-col order-2 lg:order-2 scroll-mt-20"
       bind:this={outputCard}
     >
-      {#if generatedData?.labels?.includes("star-system") && generatedData.bodies?.length}
-        <div class="mb-6">
-          <StarSystemDiagram
-            bind:this={starSystemDiagramRef}
-            bodies={generatedData.bodies}
-            starType={generatedData.starType}
-            title={generatedData.title}
-            onCopy={() =>
-              trackPublicGeneratorAction("copy", {
-                generator_type: generatorType,
-                copy_target: "diagram_image",
-              })}
-          />
-        </div>
-      {/if}
+      <GeneratorDiagrams
+        bind:this={diagrams}
+        generatedData={session.generatedData}
+        useAI={session.useAI}
+        onReplaceOutput={!session.isExampleDraft
+          ? session.replaceOutput
+          : undefined}
+        onCopy={clipboard.trackDiagramCopy}
+      />
       <GeneratorOutputCard
-        {generatedData}
-        {aiFallbackDismissed}
-        {isBusy}
-        {isExampleDraft}
+        generatedData={session.generatedData}
+        aiFallbackDismissed={session.aiFallbackDismissed}
+        isBusy={session.showOutputLoading}
+        isExampleDraft={session.isExampleDraft}
         {generatedSingular}
         {variant}
         worldTheme={theme || worldTheme}
         documentContent={documentLayout.content}
         {documentSections}
-        {copied}
-        {copiedSectionId}
+        copied={clipboard.copied}
+        copiedSectionId={clipboard.copiedSectionId}
         contextTrimmed={contextSelection.trimmed}
-        onDismissAiFallback={() => (aiFallbackDismissed = true)}
-        onSaveToCodex={handleSaveToCodex}
-        onCopyMarkdown={handleCopyMarkdown}
+        onDismissAiFallback={session.dismissAiFallback}
+        onRetryAi={() => void session.handleGenerate({ forceAI: true })}
+        {progressSteps}
+        onSaveToCodex={save.handleSaveToCodex}
+        onRefine={when(canFollowUp, refinement.openForCurrentOutput)}
+        onCopyMarkdown={clipboard.handleCopyMarkdown}
         onCopySection={(sectionId, markdown) =>
-          void handleCopySection(sectionId, markdown)}
-        onContainerClick={handleContainerClick}
-        onContainerKeydown={handleContainerKeydown}
+          void clipboard.handleCopySection(sectionId, markdown)}
+        onPrepareShare={when(canFollowUp, sharing.prepareCurrentOutputShare)}
+        {...sharing.currentOutputTracking}
+        onContainerClick={clipboard.handleContainerClick}
+        onContainerKeydown={clipboard.handleContainerKeydown}
         onSelectHubEntity={(entity) => (selectedHubEntity = entity)}
-        onSaveHubToCodex={handleSaveHubToCodex}
-        onBuildDelveCanvas={handleBuildDelveCanvas}
-        onBuildAdventureCanvas={handleBuildAdventureCanvas}
-        onGeneratePlotTwist={userGenerationSucceeded
-          ? onGeneratePlotTwist
-          : undefined}
+        onSaveHubToCodex={save.handleSaveHubToCodex}
+        onBuildDelveCanvas={handoffs.handleBuildDelveCanvas}
+        onBuildAdventureCanvas={handoffs.handleBuildAdventureCanvas}
+        onGeneratePlotTwist={when(canFollowUp, onGeneratePlotTwist)}
+        onGenerateRoster={when(canFollowUp, onGenerateRoster)}
+        {onOpenMemberAsCharacter}
+        onSendToMonsterLabs={when(
+          canFollowUp,
+          handoffs.handleSendToMonsterLabs,
+        )}
+        isSendingToMonsterLabs={handoffs.monsterLabsFlow.state === "loading"}
       />
+      {#if outputExtras && session.generatedData && !session.isExampleDraft}
+        {@render outputExtras(
+          session.generatedData,
+          session.replaceOutput,
+          session.useAI,
+        )}
+      {/if}
     </div>
 
-    <!-- At the Table Column: rendered third in DOM, positioned on the right on desktop -->
-    <div class="lg:col-span-3 order-3 lg:order-3">
-      <!-- Mobile label — hidden on lg where the sticky card makes the context clear -->
-      <p
-        class="lg:hidden text-[10px] font-bold uppercase tracking-widest font-header text-theme-muted mb-2"
-      >
-        GM Reference
-      </p>
-      <div class="sticky top-24 flex flex-col gap-6">
-        <div
-          class="p-5 bg-theme-surface/50 border border-theme-border/50 rounded-2xl shadow-sm backdrop-blur-sm"
-        >
-          {#if generatedData}
-            <div
-              in:fade={{ duration: 250 }}
-              class="seo-rail seo-md text-sm leading-relaxed text-theme-text/85 {variant ===
-              'names'
-                ? 'max-w-xl mx-auto columns-2 sm:columns-3 gap-8 py-4'
-                : ''}"
-            >
-              {@html renderGeneratorLore(documentLayout.lore, variant)}
-              {#if currentEntityId && sessionHubStore.provenance[currentEntityId]}
-                <ProvenanceBadge
-                  record={sessionHubStore.provenance[currentEntityId]}
-                  onSelect={(e) => (selectedHubEntity = e)}
-                />
-              {/if}
-            </div>
-          {:else}
-            <div
-              class="flex flex-col items-center text-center text-theme-muted/40 py-8"
-            >
-              <span class="icon-[lucide--scroll] w-8 h-8 mb-3"></span>
-              <p class="text-[10px] uppercase tracking-widest font-header">
-                At the Table
-              </p>
-              <p class="text-sm mt-2 leading-relaxed">
-                GM utility details appear here after generation.
-              </p>
-            </div>
-          {/if}
-        </div>
-      </div>
-    </div>
-
-    <!-- Parameters Column: rendered last in DOM, positioned on the left on desktop -->
-    <div class="lg:col-span-3 space-y-6 order-1 lg:order-1">
-      <div
-        class="p-6 bg-theme-surface/40 border border-theme-border/60 rounded-2xl shadow-sm"
-      >
-        <a
-          href="{cleanBase}{backHref ?? '/generators'}"
-          class="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest font-header text-theme-muted hover:text-theme-primary transition-colors mb-3"
-        >
-          <span class="icon-[lucide--arrow-left] w-3 h-3" aria-hidden="true"
-          ></span>
-          {backLabel ?? "All generators"}
-        </a>
-        <GeneratorSwitcherMenu {canonicalPath} {eyebrow} />
-        <h1
-          class="font-header font-bold text-lg uppercase tracking-wider text-theme-primary mb-4"
-          id="generator-title"
-        >
-          {introTitle}
-        </h1>
-        <p class="text-sm text-theme-text/70 leading-relaxed mb-4">
-          {introText}
-        </p>
-        {#if inputHint}
-          <p
-            class="text-[9px] text-theme-text/45 uppercase tracking-widest font-header mb-5 flex items-center gap-1.5"
-          >
-            <span class="icon-[lucide--arrow-right] w-3 h-3"></span>
-            {inputHint}
-          </p>
-        {/if}
-
-        {#if !isOnline}
-          <div
-            transition:fade={{ duration: 150 }}
-            class="mb-5 p-3 border border-theme-primary/30 bg-theme-primary/10 rounded-xl flex gap-2.5"
-            role="status"
-            aria-live="polite"
-          >
-            <span
-              class="icon-[lucide--wifi-off] w-4 h-4 text-theme-primary shrink-0 mt-0.5"
-              aria-hidden="true"
-            ></span>
-            <div class="flex flex-col gap-1">
-              <p
-                class="text-[10px] font-bold uppercase tracking-wider font-header text-theme-primary"
-              >
-                Local Mode
-              </p>
-              <p class="text-[10px] text-theme-text/70 leading-snug">
-                You're offline. Codex will generate from built-in tables and
-                save drafts locally. Reconnect to use AI Lore Co-Author mode
-                again.
-              </p>
-            </div>
-          </div>
-        {/if}
-
-        <form
-          class="space-y-4"
-          action={canonicalPath ? `${cleanBase}${canonicalPath}` : undefined}
-          method={canonicalPath ? "GET" : undefined}
-          onsubmit={(event) => {
-            event.preventDefault();
-            void handleGenerate();
-          }}
-        >
-          {@render formFields(() => void handleGenerate())}
-
-          <button
-            type="submit"
-            disabled={isBusy}
-            aria-busy={isBusy}
-            class="w-full py-3 mt-4 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-widest text-xs rounded-xl shadow-lg hover:brightness-110 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-            id="generate-button"
-            title="Generate a new draft using your current form inputs"
-          >
-            {#if isBusy}
-              <span
-                class="icon-[lucide--loader-2] animate-spin w-4 h-4"
-                aria-hidden="true"
-              ></span>
-              Forging...
-            {:else}
-              {generateLabel ?? `Generate ${generatedSingular}`}
-            {/if}
-          </button>
-
-          <div class="flex flex-col gap-1 pt-1">
-            <div class="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="ai-toggle"
-                bind:checked={useAI}
-                disabled={!isOnline}
-                aria-describedby="ai-toggle-hint"
-                class="w-4 h-4 rounded border-theme-border/60 bg-theme-bg/60 text-theme-primary focus:ring-theme-primary/40 focus:outline-none flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
-              />
-              <label
-                for="ai-toggle"
-                class="text-[10px] font-bold uppercase tracking-wider text-theme-muted flex items-center gap-1 {isOnline
-                  ? 'cursor-pointer'
-                  : 'opacity-50 cursor-not-allowed'}"
-              >
-                <span
-                  class="icon-[lucide--sparkles] text-theme-primary w-3.5 h-3.5"
-                ></span>
-                AI Lore Co-Author Mode
-              </label>
-            </div>
-            <p
-              id="ai-toggle-hint"
-              class="text-[9px] text-theme-muted/70 leading-snug pl-6"
-            >
-              {#if !isOnline}
-                Offline: using fast local tables. Reconnect to enable AI Lore
-                Co-Author mode.
-              {:else if useAI}
-                AI writes unique, rich lore on each generate.
-              {:else}
-                Fast offline mode — local tables only, no AI.
-              {/if}
-            </p>
-          </div>
-        </form>
-
-        {#if errorMessage}
-          <div
-            class="mt-4 p-3 border border-red-500/30 bg-red-500/10 rounded-xl text-red-400 text-xs"
-          >
-            {errorMessage}
-          </div>
-        {/if}
-
-        <!-- Related links moved to bottom discover section -->
-      </div>
+    <!-- At the Table Column: positioned on the right on desktop -->
+    <div class="{columnClasses.table} order-3 lg:order-3">
+      <GeneratorRail
+        generatedData={session.generatedData}
+        lore={documentLayout.lore}
+        {variant}
+        provenance={session.currentEntityId
+          ? sessionHubStore.provenance[session.currentEntityId]
+          : undefined}
+        onSelectEntity={(entity) => (selectedHubEntity = entity)}
+      />
     </div>
   </div>
 
@@ -914,71 +403,13 @@
 
   <RelatedLinksSection {relatedLinks} />
 
-  <SaveToCodexModal
-    open={showSaveModal}
-    {redirectQuery}
-    onConfirm={confirmSaveRedirect}
-    onCancel={() => (showSaveModal = false)}
-  />
-
-  <EntityDetailModal
-    entity={selectedHubEntity}
-    onClose={() => (selectedHubEntity = null)}
+  <GeneratorModals
+    {selectedHubEntity}
+    onCloseHubEntity={() => (selectedHubEntity = null)}
+    {save}
+    {refinement}
+    {handoffs}
+    {clipboard}
+    {sharing}
   />
 </div>
-
-<style>
-  .seo-md :global(h2) {
-    font-family: var(--font-header);
-    font-weight: 700;
-    font-size: 1.125rem;
-    margin: 1.5rem 0 0.75rem;
-    border-bottom: 1px solid
-      color-mix(in srgb, var(--color-border) 40%, transparent);
-    padding-bottom: 0.25rem;
-  }
-  /* Desaturated heading — primary actions keep saturated red (#1272) */
-  .seo-md :global(h3) {
-    font-family: var(--font-header);
-    font-weight: 700;
-    font-size: 1rem;
-    margin: 1rem 0 0.5rem;
-    color: color-mix(in srgb, var(--color-primary) 65%, var(--color-text));
-  }
-  .seo-md :global(ul) {
-    list-style: disc;
-    margin-left: 1rem;
-  }
-  .seo-md :global(p) {
-    margin-bottom: 0.75rem;
-  }
-  .seo-md :global(.seo-label) {
-    text-shadow: 0 0 10px
-      color-mix(in srgb, var(--color-primary) 70%, transparent);
-    filter: brightness(1.2);
-  }
-  /* Rail stat block — compact heading scale, muted palette (#1276) */
-  .seo-rail.seo-md :global(.seo-label) {
-    color: color-mix(in srgb, var(--color-primary) 42%, var(--color-text));
-    text-shadow: none;
-    filter: none;
-  }
-  .seo-rail.seo-md :global(h3) {
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: color-mix(in srgb, var(--color-text) 82%, transparent);
-    margin: 0.875rem 0 0.375rem;
-    border-bottom: none;
-  }
-  .seo-rail.seo-md :global(h2) {
-    font-size: 0.8125rem;
-    border-bottom: 1px solid
-      color-mix(in srgb, var(--color-border) 30%, transparent);
-    margin: 1rem 0 0.5rem;
-    color: color-mix(in srgb, var(--color-text) 88%, transparent);
-  }
-  .seo-rail.seo-md :global(strong) {
-    color: color-mix(in srgb, var(--color-text) 92%, transparent);
-  }
-</style>

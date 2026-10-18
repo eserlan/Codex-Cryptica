@@ -44,6 +44,18 @@ export class OracleBridge {
   }
 
   /**
+   * Registers a Comlink-proxied hook the worker's `RelayedSessionToken` can
+   * call to pull a fresh token snapshot from the main thread's real session
+   * manager on demand — see `session-bootstrap.ts` and
+   * `RelayedSessionToken.setPuller`.
+   */
+  public setTokenProvider(
+    provider: (forceRefresh: boolean) => Promise<CachedToken | null>,
+  ): void {
+    this.api?.setSessionTokenProvider(Comlink.proxy(provider));
+  }
+
+  /**
    * Proxies all TextGenerationService methods to the worker.
    */
   public get textGeneration(): TextGenerationService {
@@ -61,6 +73,19 @@ export class OracleBridge {
       throw new Error("[OracleBridge] Worker not initialized");
     }
     return this.api;
+  }
+
+  public generateAdventureTurn(
+    request: unknown,
+    options?: { apiKey?: string; modelName?: string },
+  ): Promise<unknown> {
+    if (!this.api) throw new Error("[OracleBridge] Worker not initialized");
+    return this.api.generateAdventureTurn(request, options);
+  }
+
+  public clearAdventureInteraction(sessionId: string): Promise<void> {
+    if (!this.api) throw new Error("[OracleBridge] Worker not initialized");
+    return this.api.clearAdventureInteraction(sessionId);
   }
 
   public terminate() {

@@ -5,6 +5,10 @@ import type {
   ChatHistoryMessage,
   ConnectedEntityPromptContext,
 } from "schema";
+import {
+  interactionSessions,
+  type InteractionSessionManager,
+} from "./interaction-session";
 import { TextGenerationQueryService } from "./text-generation-query.service";
 import { TextGenerationChatService } from "./text-generation-chat.service";
 import { TextGenerationRevisionService } from "./text-generation-revision.service";
@@ -17,11 +21,21 @@ export class DefaultTextGenerationService implements TextGenerationService {
   private revisionService: TextGenerationRevisionService;
   private creationService: TextGenerationCreationService;
 
-  constructor(aiClientManager = defaultAiClientManager) {
+  constructor(
+    aiClientManager = defaultAiClientManager,
+    private sessions: Pick<
+      InteractionSessionManager,
+      "resetSession"
+    > = interactionSessions,
+  ) {
     this.queryService = new TextGenerationQueryService(aiClientManager);
     this.chatService = new TextGenerationChatService(aiClientManager);
     this.revisionService = new TextGenerationRevisionService(aiClientManager);
     this.creationService = new TextGenerationCreationService(aiClientManager);
+  }
+
+  resetConversation(conversationId: string): void {
+    this.sessions.resetSession(conversationId);
   }
 
   expandQuery(
@@ -69,6 +83,8 @@ export class DefaultTextGenerationService implements TextGenerationService {
       instructions?: string;
       priority?: "instructions-first" | "incoming-first" | "preserve-existing";
       themeId?: string;
+      /** Pre-resolved lore template (see TextGenerationService.reviseEntityUpdate). */
+      loreTemplate?: string;
       interactionsEnabled?: boolean;
     },
   ): Promise<{ content: string; lore: string; categoryId?: string }> {

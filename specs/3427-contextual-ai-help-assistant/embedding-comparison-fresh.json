@@ -1,0 +1,1073 @@
+{
+  "version": 1,
+  "model": "@cf/baai/bge-small-en-v1.5",
+  "ranking": "lexical-plus-context vs production hybrid algorithm with complete vectors (max lexical/semantic plus context; unchanged floor)",
+  "dataset": "fresh frozen holdout",
+  "corpus": {
+    "chunks": 284,
+    "articles": 45,
+    "features": 19,
+    "lexicalBytes": 232830,
+    "hybridBytes": 1041468,
+    "shippedCachedVectorChunks": 176,
+    "shippedCachedBytes": 733845,
+    "sha256": "f4f856cf92e5e7b4ad54743b1d1bcb76fb449bab190db49c173240509d010f25"
+  },
+  "questionsSha256": "2d9963094df5818820421bdd1bbdc854bb38c61628bb5e12d008a5f6946c3295",
+  "vectorsSha256": "fbdb59dd6d8e23f6da2574f12b187821e32b8d7a05b29c0c414bfe50e5420203",
+  "embeddings": {
+    "reused": 324,
+    "requested": 0,
+    "cachedInputs": 446
+  },
+  "lexical": {
+    "summary": {
+      "inScope": 30,
+      "correctAt3": 26,
+      "recallAt3": 0.8666666666666667,
+      "answeredRate": 0.9666666666666667,
+      "splits": {
+        "tune": {
+          "count": 0,
+          "correctAt3": 0,
+          "recallAt3": null
+        },
+        "holdout": {
+          "count": 30,
+          "correctAt3": 26,
+          "recallAt3": 0.8666666666666667
+        }
+      },
+      "unrelated": {
+        "count": 10,
+        "refused": 10,
+        "noMatchRate": 1
+      },
+      "nearMiss": {
+        "count": 0,
+        "refused": 0,
+        "noMatchRate": null
+      },
+      "allOutOfScopeNoMatchRate": 1,
+      "separation": {
+        "weakestIn": 0.27631149467800525,
+        "strongestUnrelated": 0.17610527542134197,
+        "gap": 0.10020621925666329
+      }
+    },
+    "inScope": [
+      {
+        "question": "I misspelled my character's name. Where can I correct it?",
+        "split": "holdout",
+        "topic": "fresh",
+        "screen": "entityEdit",
+        "hit": false,
+        "noMatch": true,
+        "topRelevance": 0.27631149467800525,
+        "sources": []
+      },
+      {
+        "question": "Can the sparkle button rewrite my character's private notes?",
+        "split": "holdout",
+        "topic": "fresh",
+        "screen": "connections",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.350252851535231,
+        "sources": [
+          "creating-and-editing-entities",
+          "connections-tab",
+          "connection-labels",
+          "connections-tab"
+        ]
+      },
+      {
+        "question": "How do I reject a revised description?",
+        "split": "holdout",
+        "topic": "fresh",
+        "screen": "entityEdit",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.5801356544113648,
+        "sources": [
+          "registry:entity-editing",
+          "creating-and-editing-entities",
+          "oracle-guide",
+          "registry:entity-editing"
+        ]
+      },
+      {
+        "question": "What happens if I close editing without saving?",
+        "split": "holdout",
+        "topic": "fresh",
+        "screen": "entityEdit",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.4594464881152509,
+        "sources": [
+          "registry:entity-editing",
+          "entity-reports",
+          "creating-and-editing-entities",
+          "quicknote"
+        ]
+      },
+      {
+        "question": "Where can I change my starting character note structure?",
+        "split": "holdout",
+        "topic": "fresh",
+        "screen": "settings",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.546251841769917,
+        "sources": [
+          "registry:entity-templates",
+          "default-entity-templates",
+          "vault-metadata",
+          "intro"
+        ]
+      },
+      {
+        "question": "How can I keep an arrangement of graph nodes for next time?",
+        "split": "holdout",
+        "topic": "fresh",
+        "screen": "graph",
+        "hit": false,
+        "noMatch": false,
+        "topRelevance": 0.5349301606474428,
+        "sources": [
+          "registry:graph-view",
+          "graph-basics",
+          "registry:entity-reports",
+          "registry:graph-view"
+        ]
+      },
+      {
+        "question": "Why are some graph nodes inside coloured backgrounds?",
+        "split": "holdout",
+        "topic": "fresh",
+        "screen": "graph",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.6616127307181023,
+        "sources": [
+          "registry:graph-view",
+          "graph-basics",
+          "registry:graph-view",
+          "graph-basics"
+        ]
+      },
+      {
+        "question": "How do I stop the graph from shifting my nodes around?",
+        "split": "holdout",
+        "topic": "fresh",
+        "screen": "graph",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.53901778907793,
+        "sources": [
+          "registry:graph-view",
+          "graph-basics",
+          "registry:graph-view",
+          "registry:graph-view"
+        ]
+      },
+      {
+        "question": "Can I put a picture on a canvas without cropping it?",
+        "split": "holdout",
+        "topic": "fresh",
+        "screen": "canvas",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.3832911172466869,
+        "sources": [
+          "canvas-add-entities",
+          "spatial-canvas",
+          "spatial-canvas",
+          "canvas-add-entities"
+        ]
+      },
+      {
+        "question": "Can I turn the contents of a board into a note?",
+        "split": "holdout",
+        "topic": "fresh",
+        "screen": "canvas",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.5184494744282442,
+        "sources": [
+          "entity-reports",
+          "spatial-canvas",
+          "registry:canvas",
+          "entity-reports"
+        ]
+      },
+      {
+        "question": "How do I freeze a card so I won't accidentally move it?",
+        "split": "holdout",
+        "topic": "fresh",
+        "screen": "canvas",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.3849049029105592,
+        "sources": [
+          "spatial-canvas",
+          "registry:canvas",
+          "spatial-canvas",
+          "spatial-canvas"
+        ]
+      },
+      {
+        "question": "How do I erase a drawing stroke from my board?",
+        "split": "holdout",
+        "topic": "fresh",
+        "screen": "canvas",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.4623890451373126,
+        "sources": [
+          "spatial-canvas",
+          "registry:canvas",
+          "spatial-canvas",
+          "registry:canvas"
+        ]
+      },
+      {
+        "question": "How do I put a town from my notes onto its map?",
+        "split": "holdout",
+        "topic": "fresh",
+        "screen": "map",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.4717545265401665,
+        "sources": ["map-mode", "registry:vtt-map", "map-mode", "vtt-session"]
+      },
+      {
+        "question": "Can players see terrain that I haven't revealed yet?",
+        "split": "holdout",
+        "topic": "fresh",
+        "screen": "map",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.5235194448604766,
+        "sources": ["fog-of-war", "map-mode", "vtt-session", "registry:vtt-map"]
+      },
+      {
+        "question": "Where do I switch on tactical tokens?",
+        "split": "holdout",
+        "topic": "fresh",
+        "screen": "map",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.6633576352480022,
+        "sources": ["vtt-session", "map-mode", "vtt-session", "map-mode"]
+      },
+      {
+        "question": "Can I preserve a backup before merging duplicates?",
+        "split": "holdout",
+        "topic": "fresh",
+        "screen": "settings",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.4285928131695156,
+        "sources": [
+          "export-and-backup",
+          "cloud-backup",
+          "chat-commands",
+          "export-and-backup"
+        ]
+      },
+      {
+        "question": "What do I need to recover a Codex cloud copy on a new computer?",
+        "split": "holdout",
+        "topic": "fresh",
+        "screen": "settings",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.5092720425277254,
+        "sources": [
+          "cloud-backup",
+          "offline-sync",
+          "cloud-backup",
+          "export-and-backup"
+        ]
+      },
+      {
+        "question": "Does a Google Drive copy upload each change automatically?",
+        "split": "holdout",
+        "topic": "fresh",
+        "screen": "settings",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.484219765669237,
+        "sources": [
+          "cloud-backup",
+          "offline-sync",
+          "gdrive-cloud-sync",
+          "gdrive-cloud-sync"
+        ]
+      },
+      {
+        "question": "How can I bring a Thread Weaver JSON into this world?",
+        "split": "holdout",
+        "topic": "fresh",
+        "screen": "import",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.6674580993748923,
+        "sources": [
+          "thread-weaver-import",
+          "registry:archive-import",
+          "thread-weaver-import",
+          "thread-weaver-import"
+        ]
+      },
+      {
+        "question": "Will dropping Markdown files replace matching notes?",
+        "split": "holdout",
+        "topic": "fresh",
+        "screen": "import",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.3751440909408652,
+        "sources": [
+          "importing",
+          "importing",
+          "registry:archive-import",
+          "registry:archive-import"
+        ]
+      },
+      {
+        "question": "Where can I draft an encounter puzzle without an AI key?",
+        "split": "holdout",
+        "topic": "fresh",
+        "screen": "generators",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.7484096441629045,
+        "sources": [
+          "generator:puzzle",
+          "generator:encounter",
+          "in-app-generators",
+          "in-app-generators"
+        ]
+      },
+      {
+        "question": "I want gossip with leads the party can follow",
+        "split": "holdout",
+        "topic": "fresh",
+        "screen": "generators",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.6908373388195619,
+        "sources": [
+          "generator:rumour",
+          "generator:council-vote",
+          "generator:news-sheet",
+          "registry:campaign-generator"
+        ]
+      },
+      {
+        "question": "How do I keep the draft after opening the generator editor?",
+        "split": "holdout",
+        "topic": "fresh",
+        "screen": "generators",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.721938458881761,
+        "sources": [
+          "registry:campaign-generator",
+          "generate-related",
+          "in-app-generators",
+          "registry:related-entity-generation"
+        ]
+      },
+      {
+        "question": "How can I generate seasonal observances for my world?",
+        "split": "holdout",
+        "topic": "fresh",
+        "screen": "generators",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.5481619123747099,
+        "sources": [
+          "generator:world",
+          "generator:constellation",
+          "in-app-generators",
+          "generator:holiday"
+        ]
+      },
+      {
+        "question": "What should I use for geography versus arranging investigation notes?",
+        "split": "holdout",
+        "topic": "fresh",
+        "screen": "map",
+        "hit": false,
+        "noMatch": false,
+        "topRelevance": 0.437047407952901,
+        "sources": ["map-mode", "map-mode", "saved-views", "spatial-canvas"]
+      },
+      {
+        "question": "Does placing an entity on a map also define its relationships?",
+        "split": "holdout",
+        "topic": "fresh",
+        "screen": "map",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.4942420872428126,
+        "sources": [
+          "map-mode",
+          "connections-tab",
+          "vtt-session",
+          "registry:entity-connections"
+        ]
+      },
+      {
+        "question": "Are secret graph entries controlled by the map's fog brush?",
+        "split": "holdout",
+        "topic": "fresh",
+        "screen": "map",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.5123845187393367,
+        "sources": ["fog-of-war", "map-mode", "registry:vtt-map", "map-mode"]
+      },
+      {
+        "question": "Which transfers an existing creature: the Shelf or importing a file?",
+        "split": "holdout",
+        "topic": "fresh",
+        "screen": "graph",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.7718279055082791,
+        "sources": [
+          "entity-shelf",
+          "importing",
+          "generator:creature",
+          "entity-shelf"
+        ]
+      },
+      {
+        "question": "Should I publish a world or export a backup for safekeeping?",
+        "split": "holdout",
+        "topic": "fresh",
+        "screen": "settings",
+        "hit": false,
+        "noMatch": false,
+        "topRelevance": 0.5001435713276973,
+        "sources": [
+          "registry:backup-and-restore",
+          "export-and-backup",
+          "registry:backup-and-restore",
+          "export-and-backup"
+        ]
+      },
+      {
+        "question": "Does switching to a dark interface change my world's genre?",
+        "split": "holdout",
+        "topic": "fresh",
+        "screen": "settings",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.5585669351778422,
+        "sources": [
+          "themes",
+          "registry:guided-mode",
+          "themes",
+          "export-and-backup"
+        ]
+      }
+    ],
+    "outOfScope": [
+      {
+        "question": "How do I replace a bicycle chain?",
+        "split": "holdout",
+        "noMatch": true,
+        "topRelevance": 0.17610527542134197
+      },
+      {
+        "question": "Calculate a mortgage repayment schedule",
+        "split": "holdout",
+        "noMatch": true,
+        "topRelevance": 0.1024204919392882
+      },
+      {
+        "question": "Who won last night's football match?",
+        "split": "holdout",
+        "noMatch": true,
+        "topRelevance": 0.14553593970489126
+      },
+      {
+        "question": "Can you book a dentist appointment?",
+        "split": "holdout",
+        "noMatch": true,
+        "topRelevance": 0.11392625717911159
+      },
+      {
+        "question": "Explain quantum entanglement",
+        "split": "holdout",
+        "noMatch": true,
+        "topRelevance": 0
+      },
+      {
+        "question": "Find the best price for a washing machine",
+        "split": "holdout",
+        "noMatch": true,
+        "topRelevance": 0.08120919103308025
+      },
+      {
+        "question": "How do I learn conversational Spanish?",
+        "split": "holdout",
+        "noMatch": true,
+        "topRelevance": 0.09613011895663476
+      },
+      {
+        "question": "What temperature should I roast potatoes at?",
+        "split": "holdout",
+        "noMatch": true,
+        "topRelevance": 0
+      },
+      {
+        "question": "Please debug my Python web scraper",
+        "split": "holdout",
+        "noMatch": true,
+        "topRelevance": 0.08319600878060421
+      },
+      {
+        "question": "What visa do I need to visit Japan?",
+        "split": "holdout",
+        "noMatch": true,
+        "topRelevance": 0.1098278995523178
+      }
+    ]
+  },
+  "hybrid": {
+    "summary": {
+      "inScope": 30,
+      "correctAt3": 28,
+      "recallAt3": 0.9333333333333333,
+      "answeredRate": 1,
+      "splits": {
+        "tune": {
+          "count": 0,
+          "correctAt3": 0,
+          "recallAt3": null
+        },
+        "holdout": {
+          "count": 30,
+          "correctAt3": 28,
+          "recallAt3": 0.9333333333333333
+        }
+      },
+      "unrelated": {
+        "count": 10,
+        "refused": 8,
+        "noMatchRate": 0.8
+      },
+      "nearMiss": {
+        "count": 0,
+        "refused": 0,
+        "noMatchRate": null
+      },
+      "allOutOfScopeNoMatchRate": 0.8,
+      "separation": {
+        "weakestIn": 0.4942420872428126,
+        "strongestUnrelated": 0.5249866322768557,
+        "gap": -0.030744545034043114
+      }
+    },
+    "inScope": [
+      {
+        "question": "I misspelled my character's name. Where can I correct it?",
+        "split": "holdout",
+        "topic": "fresh",
+        "screen": "entityEdit",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.6816271193361766,
+        "sources": [
+          "registry:entity-editing",
+          "creating-and-editing-entities",
+          "guest-character-chat",
+          "connections-tab"
+        ]
+      },
+      {
+        "question": "Can the sparkle button rewrite my character's private notes?",
+        "split": "holdout",
+        "topic": "fresh",
+        "screen": "connections",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.8468224528447837,
+        "sources": [
+          "creating-and-editing-entities",
+          "registry:entity-editing",
+          "quicknote",
+          "publishing"
+        ]
+      },
+      {
+        "question": "How do I reject a revised description?",
+        "split": "holdout",
+        "topic": "fresh",
+        "screen": "entityEdit",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.7703555683859816,
+        "sources": [
+          "creating-and-editing-entities",
+          "registry:entity-editing",
+          "publishing",
+          "sharing-templates"
+        ]
+      },
+      {
+        "question": "What happens if I close editing without saving?",
+        "split": "holdout",
+        "topic": "fresh",
+        "screen": "entityEdit",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.794507016320208,
+        "sources": [
+          "creating-and-editing-entities",
+          "entity-reports",
+          "quicknote",
+          "registry:entity-editing"
+        ]
+      },
+      {
+        "question": "Where can I change my starting character note structure?",
+        "split": "holdout",
+        "topic": "fresh",
+        "screen": "settings",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.9750333558136239,
+        "sources": [
+          "default-entity-templates",
+          "importing",
+          "offline-sync",
+          "vault-metadata"
+        ]
+      },
+      {
+        "question": "How can I keep an arrangement of graph nodes for next time?",
+        "split": "holdout",
+        "topic": "fresh",
+        "screen": "graph",
+        "hit": false,
+        "noMatch": false,
+        "topRelevance": 0.5349301606474428,
+        "sources": [
+          "registry:graph-view",
+          "graph-basics",
+          "registry:entity-reports",
+          "registry:graph-view"
+        ]
+      },
+      {
+        "question": "Why are some graph nodes inside coloured backgrounds?",
+        "split": "holdout",
+        "topic": "fresh",
+        "screen": "graph",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.6616127307181023,
+        "sources": [
+          "registry:graph-view",
+          "graph-basics",
+          "registry:graph-view",
+          "graph-basics"
+        ]
+      },
+      {
+        "question": "How do I stop the graph from shifting my nodes around?",
+        "split": "holdout",
+        "topic": "fresh",
+        "screen": "graph",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.53901778907793,
+        "sources": [
+          "registry:graph-view",
+          "graph-basics",
+          "registry:graph-view",
+          "registry:graph-view"
+        ]
+      },
+      {
+        "question": "Can I put a picture on a canvas without cropping it?",
+        "split": "holdout",
+        "topic": "fresh",
+        "screen": "canvas",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.8610432223243752,
+        "sources": [
+          "spatial-canvas",
+          "canvas-add-entities",
+          "spatial-canvas",
+          "registry:canvas"
+        ]
+      },
+      {
+        "question": "Can I turn the contents of a board into a note?",
+        "split": "holdout",
+        "topic": "fresh",
+        "screen": "canvas",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.7956620528691773,
+        "sources": [
+          "quicknote",
+          "spatial-canvas",
+          "registry:canvas",
+          "entity-reports"
+        ]
+      },
+      {
+        "question": "How do I freeze a card so I won't accidentally move it?",
+        "split": "holdout",
+        "topic": "fresh",
+        "screen": "canvas",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.8213577610254926,
+        "sources": [
+          "spatial-canvas",
+          "random-tables-decks",
+          "quicknote",
+          "spatial-canvas"
+        ]
+      },
+      {
+        "question": "How do I erase a drawing stroke from my board?",
+        "split": "holdout",
+        "topic": "fresh",
+        "screen": "canvas",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.7700332567200826,
+        "sources": [
+          "spatial-canvas",
+          "quicknote",
+          "registry:canvas",
+          "random-tables-decks"
+        ]
+      },
+      {
+        "question": "How do I put a town from my notes onto its map?",
+        "split": "holdout",
+        "topic": "fresh",
+        "screen": "map",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1.0825433757275198,
+        "sources": [
+          "map-mode",
+          "registry:vtt-map",
+          "stat-sheets",
+          "canvas-add-entities"
+        ]
+      },
+      {
+        "question": "Can players see terrain that I haven't revealed yet?",
+        "split": "holdout",
+        "topic": "fresh",
+        "screen": "map",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1.15,
+        "sources": ["fog-of-war", "map-mode", "intro", "publishing"]
+      },
+      {
+        "question": "Where do I switch on tactical tokens?",
+        "split": "holdout",
+        "topic": "fresh",
+        "screen": "map",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.9971125285388557,
+        "sources": ["vtt-session", "multi-campaign", "intro", "map-mode"]
+      },
+      {
+        "question": "Can I preserve a backup before merging duplicates?",
+        "split": "holdout",
+        "topic": "fresh",
+        "screen": "settings",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1.15,
+        "sources": [
+          "registry:backup-and-restore",
+          "export-and-backup",
+          "gdrive-cloud-sync",
+          "chat-commands"
+        ]
+      },
+      {
+        "question": "What do I need to recover a Codex cloud copy on a new computer?",
+        "split": "holdout",
+        "topic": "fresh",
+        "screen": "settings",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1.15,
+        "sources": [
+          "cloud-backup",
+          "offline-sync",
+          "gdrive-cloud-sync",
+          "vault-metadata"
+        ]
+      },
+      {
+        "question": "Does a Google Drive copy upload each change automatically?",
+        "split": "holdout",
+        "topic": "fresh",
+        "screen": "settings",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1.0689811849523074,
+        "sources": [
+          "cloud-backup",
+          "offline-sync",
+          "gdrive-cloud-sync",
+          "intro"
+        ]
+      },
+      {
+        "question": "How can I bring a Thread Weaver JSON into this world?",
+        "split": "holdout",
+        "topic": "fresh",
+        "screen": "import",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.6674580993748923,
+        "sources": [
+          "thread-weaver-import",
+          "registry:archive-import",
+          "thread-weaver-import",
+          "thread-weaver-import"
+        ]
+      },
+      {
+        "question": "Will dropping Markdown files replace matching notes?",
+        "split": "holdout",
+        "topic": "fresh",
+        "screen": "import",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.9443355987521581,
+        "sources": [
+          "importing",
+          "registry:archive-import",
+          "random-tables-decks",
+          "vault-metadata"
+        ]
+      },
+      {
+        "question": "Where can I draft an encounter puzzle without an AI key?",
+        "split": "holdout",
+        "topic": "fresh",
+        "screen": "generators",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.7484096441629045,
+        "sources": [
+          "generator:puzzle",
+          "generator:encounter",
+          "in-app-generators",
+          "in-app-generators"
+        ]
+      },
+      {
+        "question": "I want gossip with leads the party can follow",
+        "split": "holdout",
+        "topic": "fresh",
+        "screen": "generators",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.6908373388195619,
+        "sources": [
+          "generator:rumour",
+          "generator:council-vote",
+          "generator:news-sheet",
+          "registry:campaign-generator"
+        ]
+      },
+      {
+        "question": "How do I keep the draft after opening the generator editor?",
+        "split": "holdout",
+        "topic": "fresh",
+        "screen": "generators",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1.15,
+        "sources": [
+          "registry:campaign-generator",
+          "registry:session-hub",
+          "in-app-generators",
+          "guided-mode"
+        ]
+      },
+      {
+        "question": "How can I generate seasonal observances for my world?",
+        "split": "holdout",
+        "topic": "fresh",
+        "screen": "generators",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.5481619123747099,
+        "sources": [
+          "generator:world",
+          "generator:constellation",
+          "in-app-generators",
+          "generator:holiday"
+        ]
+      },
+      {
+        "question": "What should I use for geography versus arranging investigation notes?",
+        "split": "holdout",
+        "topic": "fresh",
+        "screen": "map",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.8549733270994346,
+        "sources": ["importing", "spatial-canvas", "map-mode", "session-prep"]
+      },
+      {
+        "question": "Does placing an entity on a map also define its relationships?",
+        "split": "holdout",
+        "topic": "fresh",
+        "screen": "map",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.4942420872428126,
+        "sources": [
+          "map-mode",
+          "connections-tab",
+          "vtt-session",
+          "registry:entity-connections"
+        ]
+      },
+      {
+        "question": "Are secret graph entries controlled by the map's fog brush?",
+        "split": "holdout",
+        "topic": "fresh",
+        "screen": "map",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.5123845187393367,
+        "sources": ["fog-of-war", "map-mode", "registry:vtt-map", "map-mode"]
+      },
+      {
+        "question": "Which transfers an existing creature: the Shelf or importing a file?",
+        "split": "holdout",
+        "topic": "fresh",
+        "screen": "graph",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.7718279055082791,
+        "sources": [
+          "entity-shelf",
+          "importing",
+          "generator:creature",
+          "entity-shelf"
+        ]
+      },
+      {
+        "question": "Should I publish a world or export a backup for safekeeping?",
+        "split": "holdout",
+        "topic": "fresh",
+        "screen": "settings",
+        "hit": false,
+        "noMatch": false,
+        "topRelevance": 0.5001435713276973,
+        "sources": [
+          "registry:backup-and-restore",
+          "export-and-backup",
+          "registry:backup-and-restore",
+          "export-and-backup"
+        ]
+      },
+      {
+        "question": "Does switching to a dark interface change my world's genre?",
+        "split": "holdout",
+        "topic": "fresh",
+        "screen": "settings",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.5585669351778422,
+        "sources": [
+          "themes",
+          "registry:guided-mode",
+          "themes",
+          "export-and-backup"
+        ]
+      }
+    ],
+    "outOfScope": [
+      {
+        "question": "How do I replace a bicycle chain?",
+        "split": "holdout",
+        "noMatch": true,
+        "topRelevance": 0.261339992236868
+      },
+      {
+        "question": "Calculate a mortgage repayment schedule",
+        "split": "holdout",
+        "noMatch": false,
+        "topRelevance": 0.5249866322768557
+      },
+      {
+        "question": "Who won last night's football match?",
+        "split": "holdout",
+        "noMatch": true,
+        "topRelevance": 0.14553593970489126
+      },
+      {
+        "question": "Can you book a dentist appointment?",
+        "split": "holdout",
+        "noMatch": true,
+        "topRelevance": 0.11964989693193218
+      },
+      {
+        "question": "Explain quantum entanglement",
+        "split": "holdout",
+        "noMatch": true,
+        "topRelevance": 0.26597965845644
+      },
+      {
+        "question": "Find the best price for a washing machine",
+        "split": "holdout",
+        "noMatch": true,
+        "topRelevance": 0.08120919103308025
+      },
+      {
+        "question": "How do I learn conversational Spanish?",
+        "split": "holdout",
+        "noMatch": false,
+        "topRelevance": 0.49015102046611925
+      },
+      {
+        "question": "What temperature should I roast potatoes at?",
+        "split": "holdout",
+        "noMatch": true,
+        "topRelevance": 0.012760483216769147
+      },
+      {
+        "question": "Please debug my Python web scraper",
+        "split": "holdout",
+        "noMatch": true,
+        "topRelevance": 0.2691259312828469
+      },
+      {
+        "question": "What visa do I need to visit Japan?",
+        "split": "holdout",
+        "noMatch": true,
+        "topRelevance": 0.1098278995523178
+      }
+    ]
+  }
+}

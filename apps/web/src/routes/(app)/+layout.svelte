@@ -5,6 +5,7 @@
   import { page } from "$app/state";
   import { onMount, onDestroy } from "svelte";
   import { shelf } from "$lib/features/shelf";
+  import { ensureRandomSourcesLoaded } from "$lib/features/random";
   import { preloadCode } from "$app/navigation";
 
   // Stores
@@ -28,9 +29,11 @@
 
   // Components & Providers
   import AppHeader from "$lib/components/layout/AppHeader.svelte";
+  import AppFooter from "$lib/components/layout/AppFooter.svelte";
   import NotificationToast from "$lib/components/layout/NotificationToast.svelte";
   import FatalErrorOverlay from "$lib/components/layout/FatalErrorOverlay.svelte";
   import ActivityBar from "$lib/components/layout/ActivityBar.svelte";
+  import SoloSessionBar from "$lib/components/solo/SoloSessionBar.svelte";
   import SidebarPanelHost from "$lib/components/layout/SidebarPanelHost.svelte";
   import MobileDemoBanner from "$lib/components/layout/MobileDemoBanner.svelte";
   import GlobalModalProvider from "$lib/components/modals/GlobalModalProvider.svelte";
@@ -38,6 +41,7 @@
   import QuickNoteScratchpad from "$lib/components/quicknote/QuickNoteScratchpad.svelte";
   import EntityExplorerWorkspace from "$lib/components/layout/EntityExplorerWorkspace.svelte";
   import NavigationShortcuts from "$lib/components/layout/NavigationShortcuts.svelte";
+  import OnboardingHost from "$lib/components/onboarding/OnboardingHost.svelte";
 
   // Logic & Hooks
   import {
@@ -45,13 +49,14 @@
     initializeGlobalListeners,
     setupWindowGlobals,
     registerServiceWorker,
+    type VaultServiceWorkerSession,
   } from "$lib/app/init/app-init";
+  import { isVaultAppPath } from "$lib/service-worker/lifecycle";
+  import { mapControlsUIStore } from "$lib/stores/ui/map-controls-ui.svelte";
   import { initFullscreenOnFirstInteraction } from "$lib/app/init/fullscreen-on-interaction";
   import { useGlobalShortcuts } from "$lib/hooks/useGlobalShortcuts.svelte";
-  import {
-    decideFirstRunAction,
-    hasUnseenMinorRelease,
-  } from "$lib/app/onboarding/onboarding-orchestrator";
+  import { soloPlayGuard } from "$lib/stores/solo-session-instance";
+  import { shouldConsiderVaultThemePrompt as themePromptGate } from "$lib/app/onboarding/vault-theme-prompt-gate";
   import { initOnboardingFunnel } from "$lib/app/onboarding/onboarding-funnel-init";
   import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
@@ -67,6 +72,8 @@
   import { initAudioEngine } from "@codex/audio-engine";
   import { debugStore } from "$lib/stores/debug.svelte";
   import { oracle } from "$lib/stores/oracle.svelte";
+  import "$lib/stores/proposer.svelte";
+  import "$lib/cloud-bridge/p2p/guest-bootstrap";
   import { oracleBridge } from "$lib/cloud-bridge/oracle-bridge";
   import { aiClientManager } from "@codex/ai-engine";
   import { writeOpfsFile, deleteOpfsEntry } from "$lib/utils/opfs";
@@ -84,13 +91,28 @@
   let mapSession = $state<any>(null);
   let VTTSharedImageLightbox = $state<any>(null);
   let isDocumentVisible = $state(true);
+  let serviceWorkerSession: VaultServiceWorkerSession | undefined;
+
+  const isVaultCacheSessionActive = () => {
+    const pathname =
+      base && page.url.pathname.startsWith(base)
+        ? page.url.pathname.slice(base.length) || "/"
+        : page.url.pathname;
+    return (
+      !!vault.activeVaultId &&
+      !sessionModeStore.isGuestMode &&
+      !sessionModeStore.isDemoMode &&
+      isVaultAppPath(pathname)
+    );
+  };
 
   // Derived
   const isPopup = $derived(
     page.url.pathname === `${base}/oracle` ||
       page.url.pathname === `${base}/help` ||
       page.url.pathname.startsWith(`${base}/help/`) ||
-      page.url.pathname === `${base}/import`,
+      page.url.pathname === `${base}/import` ||
+      page.url.pathname === `${base}/dice`,
   );
   const anyModalOpen = $derived(
     modalUIStore.isAnyModalOpen ||
@@ -102,12 +124,15 @@
   const isZenPopout = $derived(
     /\/vault\/[^/]+\/entity\/[^/]+$/.test(page.url.pathname),
   );
-  const isVttFullscreen = $derived(
-    page.url.pathname.startsWith(`${base}/map`) && !!mapSession?.vttEnabled,
+  // The map goes full-bleed (no header, navigation or footer) while VTT is on,
+  // or when the user has maximized it.
+  const isMapFullscreen = $derived(
+    page.url.pathname.startsWith(`${base}/map`) &&
+      (!!mapSession?.vttEnabled || mapControlsUIStore.maximized),
   );
   const isEntityExplorerWorkspace = $derived(
     !isPopup &&
-      !isVttFullscreen &&
+      !isMapFullscreen &&
       !isZenPopout &&
       layoutUIStore.isEntityExplorerWorkspace,
   );
@@ -131,6 +156,8 @@
   }
 
   onDestroy(() => {
+    serviceWorkerSession?.destroy();
+    serviceWorkerSession = undefined;
     crossTabBroadcaster?.destroy();
     crossTabBroadcaster = null;
     vaultThemePromptStore.stopTracking();
@@ -141,6 +168,28 @@
     if (browser && !globalListenersCleanup) {
       globalListenersCleanup = initializeGlobalListeners();
     }
+  });
+
+  let routeContentEl = $state<HTMLElement>();
+
+  $effect(() => {
+    // When navigating to a new route, if focus is on document.body, focus the
+    // route content container so PageDown, Space, and arrow keys scroll it immediately.
+    const _path = page.url.pathname;
+    if (browser && routeContentEl) {
+      requestAnimationFrame(() => {
+        if (
+          routeContentEl &&
+          (!document.activeElement || document.activeElement === document.body)
+        ) {
+          routeContentEl.focus({ preventScroll: true });
+        }
+      });
+    }
+  });
+
+  $effect(() => {
+    serviceWorkerSession?.setVaultSessionActive(isVaultCacheSessionActive());
   });
 
   onMount(() => {
@@ -225,6 +274,13 @@
     }
   });
 
+  // Tables and decks are needed wherever /table and /deck can be typed, which
+  // is anywhere the Oracle is — not only on their own routes (#2247, FR-039).
+  $effect(() => {
+    void vault.activeVaultId;
+    void ensureRandomSourcesLoaded();
+  });
+
   // Initialization Logic
   $effect(() => {
     // This layout only serves workspace routes — always boot except on landing page
@@ -285,7 +341,8 @@
       preloadCode(`${base}/canvas`).catch(() => {});
       preloadCode(`${base}/map`).catch(() => {});
 
-      registerServiceWorker();
+      serviceWorkerSession = registerServiceWorker();
+      serviceWorkerSession.setVaultSessionActive(isVaultCacheSessionActive());
 
       if (browser) {
         crossTabBroadcaster = new CrossTabBroadcaster(appEventBus);
@@ -320,22 +377,25 @@
     })();
   });
 
-  const shouldConsiderVaultThemePrompt = (
-    activeVaultId: string,
-    hasCompletedInitialGuide: boolean,
-  ) =>
-    browser &&
-    vault.isInitialized &&
-    isDocumentVisible &&
-    !!activeVaultId &&
-    !sessionModeStore.isDemoMode &&
-    !sessionModeStore.isGuestMode &&
-    !onboardingStore.isLandingPageVisible &&
-    onboardingStore.dismissedWorldPage &&
-    !onboardingStore.showChangelog &&
-    hasCompletedInitialGuide &&
-    !helpStore.activeTour &&
-    !modalUIStore.isAnyModalOpen;
+  // A user who answered the goal invitation never takes the tour, so the
+  // prompt asks whether they are onboarded at all (spec 175, FR-003a).
+  const shouldConsiderVaultThemePrompt = (activeVaultId: string) =>
+    themePromptGate({
+      isBrowser: browser,
+      isInitialized: vault.isInitialized,
+      isDocumentVisible,
+      activeVaultId,
+      isDemoMode: sessionModeStore.isDemoMode,
+      isGuestMode: sessionModeStore.isGuestMode,
+      isLandingVisible: onboardingStore.isLandingPageVisible,
+      dismissedWorldPage: onboardingStore.dismissedWorldPage,
+      showChangelog: onboardingStore.showChangelog,
+      hasSeenTour: helpStore.hasSeen("initial-onboarding"),
+      goalInvitationResolved: onboardingStore.goalInvitation !== null,
+      firstRunGuidanceActive: onboardingStore.firstRunGuidanceActive,
+      activeTour: !!helpStore.activeTour,
+      anyModalOpen: modalUIStore.isAnyModalOpen,
+    });
 
   $effect(() => {
     const activeVaultId = vault.activeVaultId;
@@ -404,7 +464,7 @@
   $effect(() => {
     if (!browser) return;
 
-    if (isVttFullscreen || !headerEl) {
+    if (isMapFullscreen || !headerEl) {
       document.documentElement.style.setProperty("--header-height", "0px");
       return;
     }
@@ -439,70 +499,15 @@
     }
   });
 
-  // Unified first-run orchestrator (#1780). One decision function owns what a
-  // first-time user sees first, so the tour, guided empty state, and changelog
-  // never stack or compete. See onboarding-orchestrator.ts.
-  $effect(() => {
-    if (!browser) return;
-
-    const action = decideFirstRunAction({
-      isInitialized: vault.isInitialized,
-      isGuestMode: sessionModeStore.isGuestMode,
-      isDemoMode: sessionModeStore.isDemoMode,
-      isLandingVisible: onboardingStore.isLandingPageVisible,
-      vaultSwitcherOpen: modalUIStore.showVaultSwitcher,
-      hasDemoQueryParam: page.url.searchParams.has("demo"),
-      hasSeenTour: helpStore.hasSeen("initial-onboarding"),
-      entityCount: vault.allEntities.length,
-      activeTour: !!helpStore.activeTour,
-      anyModalOpen: modalUIStore.isAnyModalOpen || modalUIStore.showZenMode,
-      hasUnseenRelease: hasUnseenMinorRelease(
-        onboardingStore.lastSeenVersion,
-        releases.map((r) => r.version),
-      ),
-    });
-
-    switch (action.kind) {
-      case "tour":
-      case "guided-empty":
-        // Both start the short, task-focused tour. In the empty-vault case the
-        // graph's guided empty state teaches the "create your first entity"
-        // step, and we deliberately do NOT auto-load a demo (#1782).
-        helpStore.startTour("initial-onboarding");
-        break;
-      case "changelog": {
-        // Small delay so it never races an overlay that is about to open.
-        const timeout = setTimeout(() => {
-          if (
-            !helpStore.activeTour &&
-            !modalUIStore.showZenMode &&
-            !sessionModeStore.isDemoMode &&
-            !onboardingStore.showChangelog
-          ) {
-            onboardingStore.showChangelog = true;
-          }
-        }, 2000);
-        return () => clearTimeout(timeout);
-      }
-      case "none":
-      default:
-        break;
-    }
-  });
-
   // Theme discovery should happen after the user has some real time in the
   // vault, not immediately after creation or a single first edit.
   $effect(() => {
     const activeVaultId = vault.activeVaultId;
     const entityCount = vault.allEntities.length;
-    const hasCompletedInitialGuide = helpStore.hasSeen("initial-onboarding");
 
     if (
       !activeVaultId ||
-      !shouldConsiderVaultThemePrompt(
-        activeVaultId,
-        hasCompletedInitialGuide,
-      ) ||
+      !shouldConsiderVaultThemePrompt(activeVaultId) ||
       !vaultThemePromptStore.shouldAutoPrompt(activeVaultId, entityCount)
     ) {
       return;
@@ -512,10 +517,7 @@
       if (
         !hasTheme &&
         vault.activeVaultId === activeVaultId &&
-        shouldConsiderVaultThemePrompt(
-          activeVaultId,
-          helpStore.hasSeen("initial-onboarding"),
-        ) &&
+        shouldConsiderVaultThemePrompt(activeVaultId) &&
         vaultThemePromptStore.shouldAutoPrompt(
           activeVaultId,
           vault.allEntities.length,
@@ -640,6 +642,8 @@
     searchStore,
     modalUIStore,
     quickNoteStore,
+    oracle,
+    sharedMode: { toggle: () => soloPlayGuard.toggleSharedMode() },
   });
 </script>
 
@@ -647,6 +651,13 @@
 <svelte:document
   onvisibilitychange={() => (isDocumentVisible = !document.hidden)}
 />
+<svelte:head>
+  <title>Codex Cryptica | AI RPG Campaign Manager</title>
+  <meta
+    name="description"
+    content="AI-assisted, local-first RPG campaign manager. Organize your lore, visualize your world's knowledge graph, and generate content with OpenAI/Luna."
+  />
+</svelte:head>
 <NavigationShortcuts />
 
 <div
@@ -660,17 +671,22 @@
   >
     <NotificationToast />
 
-    {#if !isPopup && !isVttFullscreen && !isZenPopout}
+    {#if !isPopup && !isZenPopout}
+      <OnboardingHost />
+    {/if}
+
+    {#if !isPopup && !isMapFullscreen && !isZenPopout}
       <AppHeader bind:isMobileMenuOpen bind:headerEl />
       {#if sessionModeStore.isDemoMode}
         <MobileDemoBanner />
       {/if}
+      <SoloSessionBar />
     {/if}
 
     <div
       class="flex-1 flex flex-col-reverse md:flex-row min-h-0 relative overflow-hidden"
     >
-      {#if !isPopup && !isVttFullscreen && !isZenPopout && !guidedModeStore.isGuidedMode}
+      {#if !isPopup && !isMapFullscreen && !isZenPopout && !guidedModeStore.isGuidedMode}
         <ActivityBar />
         <SidebarPanelHost />
       {/if}
@@ -678,8 +694,12 @@
       <main
         class="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
       >
+        <!-- Tailwind provides this utility; Fallow cannot resolve generated v4 classes here. -->
+        <!-- fallow-ignore-next-line css-broken-reference -->
         <div
-          class="min-h-0 min-w-0 flex-1 flex flex-col h-full overflow-y-auto"
+          bind:this={routeContentEl}
+          class="min-h-0 min-w-0 flex-1 flex flex-col h-full overflow-y-auto outline-none"
+          tabindex="-1"
           inert={(isEntityExplorerWorkspace &&
             !!layoutUIStore.focusedEntityId) ||
             undefined}
@@ -701,6 +721,10 @@
         {/if}
       </main>
     </div>
+
+    {#if !isPopup && !isMapFullscreen && !isZenPopout}
+      <AppFooter />
+    {/if}
   </div>
 
   <!-- Modals rendered outside the inert wrapper -->

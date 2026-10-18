@@ -1,6 +1,13 @@
 import { describe, it, expect } from "vitest";
 import { getGraphStyle } from "../src/transformer";
-import { THEMES } from "schema";
+import {
+  THEMES,
+  FANTASY_DARK,
+  contrastRatio,
+  deriveEntityTypeTone,
+  parseColor,
+  MIN_GRAPHIC_CONTRAST,
+} from "schema";
 import type { Category } from "schema";
 
 describe("Graph Theme Generation", () => {
@@ -97,5 +104,104 @@ describe("Graph Theme Generation", () => {
         "background-image"
       ],
     ).toBe("url('/themes/blood-270.svg')");
+  });
+
+  describe("silhouette placement", () => {
+    const silhouetteStyle = (theme: (typeof THEMES)["fantasy"]) =>
+      getGraphStyle(theme, mockCategories, true).find(
+        (s) =>
+          s.selector ===
+          "node[isSilhouette][resolvedImage][resolvedImage != 'none']",
+      )?.style;
+
+    it("sizes the glyph itself instead of letting cytoscape refit it", () => {
+      const style = silhouetteStyle(THEMES.scifi);
+      expect(
+        style,
+        "silhouette selector missing from the stylesheet",
+      ).toBeDefined();
+
+      // `contain` re-scales the image to fill the node box, which cancels the
+      // percentage below and spills the glyph outside round/pointed nodes.
+      expect(style["background-fit"]).toBe("none");
+      expect(style["background-width"]).toBe("72%");
+      expect(style["background-height"]).toBe("72%");
+      expect(style["background-position-x"]).toBe("50%");
+      expect(style["background-position-y"]).toBe("50%");
+    });
+
+    it("keeps the glyph inside the fantasy shield, which tapers to a point", () => {
+      const style = silhouetteStyle(THEMES.fantasy);
+      expect(
+        style,
+        "silhouette selector missing from the stylesheet",
+      ).toBeDefined();
+
+      expect(style["background-width"]).toBe("64%");
+      expect(style["background-height"]).toBe("64%");
+      expect(style["background-position-y"]).toBe("44%");
+    });
+  });
+
+  describe("entity type colours (issue #2680)", () => {
+    const mixedGraph: Category[] = [
+      { id: "character", label: "Character", color: "#60a5fa", icon: "user" },
+      { id: "faction", label: "Faction", color: "#fb923c", icon: "users" },
+      { id: "location", label: "Location", color: "#4ade80", icon: "map-pin" },
+    ];
+
+    const categoryStyle = (theme: (typeof THEMES)["fantasy"], id: string) =>
+      getGraphStyle(theme, mixedGraph, false).find(
+        (s) => s.selector === `node[type="${id}"]`,
+      )?.style;
+
+    it("paints nodes with theme-derived tones, not the raw category colour", () => {
+      const location = categoryStyle(FANTASY_DARK, "location");
+
+      expect(location["background-color"]).not.toBe("#4ade80");
+      expect(location["border-color"]).not.toBe("#4ade80");
+      expect(location["background-color"]).toBe(
+        deriveEntityTypeTone("#4ade80", FANTASY_DARK.tokens).fill,
+      );
+      // Fully opaque: the tone is already blended against the theme surface,
+      // so the painted colour is the one the contrast guarantees were run on.
+      expect(location["background-opacity"]).toBe(1);
+    });
+
+    it("re-derives the same type for a different theme", () => {
+      expect(
+        categoryStyle(FANTASY_DARK, "faction")["background-color"],
+      ).not.toBe(categoryStyle(THEMES.scifi, "faction")["background-color"]);
+    });
+
+    it("keeps node rings legible against the canvas in every theme", () => {
+      for (const theme of Object.values(THEMES)) {
+        for (const category of mixedGraph) {
+          const ring = categoryStyle(theme, category.id)["border-color"];
+          expect(
+            contrastRatio(
+              parseColor(ring)!,
+              parseColor(theme.tokens.background)!,
+            ),
+          ).toBeGreaterThanOrEqual(MIN_GRAPHIC_CONTRAST);
+        }
+      }
+    });
+
+    it("falls back to the category colour when the theme cannot be parsed", () => {
+      const brokenTheme = {
+        ...THEMES.scifi,
+        tokens: {
+          ...THEMES.scifi.tokens,
+          background: "var(--nope)",
+          surface: "var(--nope)",
+        },
+      };
+      const style = getGraphStyle(brokenTheme, mixedGraph, false).find(
+        (s) => s.selector === 'node[type="location"]',
+      )?.style;
+
+      expect(style["background-color"]).toBe("#4ade80");
+    });
   });
 });

@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Core } from "cytoscape";
+  import { untrack } from "svelte";
 
   import { isTransparent } from "$lib/utils/color";
 
@@ -289,12 +290,33 @@
     });
   };
 
-  const handleGraphUpdate = () => {
-    if (isSuspended) return;
+  // Cytoscape emits one event per changed element: a graph sync patching 500
+  // nodes fires 500 `data` events, and a layout animation fires `position` for
+  // every node on every frame. Rebuilding the node list (which resolves each
+  // node's style) per event was quadratic — ~2 s of a 500-node re-sync — so
+  // updates are coalesced to one per frame, and skipped while collapsed.
+  let graphUpdateFrame: number | null = null;
+  let graphDirty = true;
+
+  const flushGraphUpdate = () => {
+    graphUpdateFrame = null;
+    if (isSuspended || !isExpanded) return;
+    graphDirty = false;
     syncGraphToMinimap();
     updateProjection();
     requestRedraw();
   };
+
+  const handleGraphUpdate = () => {
+    graphDirty = true;
+    if (isSuspended || !isExpanded || graphUpdateFrame !== null) return;
+    graphUpdateFrame = requestAnimationFrame(flushGraphUpdate);
+  };
+
+  // Catch up on changes that arrived while collapsed.
+  $effect(() => {
+    if (isExpanded && !isSuspended && cy && graphDirty) handleGraphUpdate();
+  });
 
   const handleViewportUpdate = () => {
     if (isSuspended) return;
@@ -319,12 +341,18 @@
       cy.on("layoutstop", handleGraphUpdate);
     }
 
-    // Initial sync
-    handleGraphUpdate();
+    // Initial sync. Untracked so this listener effect does not re-run (and
+    // re-register every Cytoscape listener) when the minimap is expanded or
+    // collapsed; the catch-up effect above handles that.
+    untrack(handleGraphUpdate);
 
     return () => {
       if (animationFrameId !== null) {
         cancelAnimationFrame(animationFrameId);
+      }
+      if (graphUpdateFrame !== null) {
+        cancelAnimationFrame(graphUpdateFrame);
+        graphUpdateFrame = null;
       }
       if (cy) {
         cy.off("add remove position data layoutstop", handleGraphUpdate);

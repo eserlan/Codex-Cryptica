@@ -97,7 +97,9 @@
         id="copyright-report-title"
         class="flex items-center gap-2 font-header text-xl font-bold text-theme-text"
       >
-        <span class="icon-[lucide--shield-alert] h-5 w-5 text-theme-primary"
+        <span
+          aria-hidden="true"
+          class="icon-[lucide--shield-alert] h-5 w-5 text-theme-primary"
         ></span>
         <span>Report Copyright Concern</span>
       </h2>
@@ -114,7 +116,8 @@
         <div
           class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-theme-primary/20 text-theme-primary"
         >
-          <span class="icon-[lucide--check-circle-2] h-6 w-6"></span>
+          <span aria-hidden="true" class="icon-[lucide--check-circle-2] h-6 w-6"
+          ></span>
         </div>
         <h3 class="font-header text-lg font-bold text-theme-text">
           Report Received
@@ -191,7 +194,7 @@
             placeholder="name@example.com"
             class="w-full rounded-md border border-theme-border bg-theme-base px-3 py-2 text-sm text-theme-text placeholder-theme-text/40 focus:border-theme-primary focus:outline-none focus:ring-1 focus:ring-theme-primary"
           />
-          <p class="mt-1 text-[11px] text-theme-text/50">
+          <p class="mt-1 text-meta text-theme-text/50">
             We will never display your email publicly. Used solely for
             verification and follow-up.
           </p>
@@ -265,10 +268,14 @@
             class="inline-flex items-center gap-2 rounded-md bg-theme-primary px-5 py-2 text-sm font-bold text-theme-base hover:bg-theme-primary/90 transition-colors disabled:opacity-50"
           >
             {#if isSubmitting}
-              <span class="icon-[lucide--loader-2] h-4 w-4 animate-spin"></span>
+              <span
+                aria-hidden="true"
+                class="icon-[lucide--loader-2] h-4 w-4 animate-spin"
+              ></span>
               <span>Submitting...</span>
             {:else}
-              <span class="icon-[lucide--send] h-4 w-4"></span>
+              <span aria-hidden="true" class="icon-[lucide--send] h-4 w-4"
+              ></span>
               <span>Submit Report</span>
             {/if}
           </button>

@@ -55,14 +55,6 @@ if (process.env.TITLE_FILE) {
 }
 
 const lines = [];
-lines.push("## 📦 Portable Codex", "");
-lines.push(
-  "Download the `.zip` below for maximum data sovereignty. Extract and serve locally to run Codex Cryptica entirely offline.",
-  "",
-  "---",
-  "",
-);
-
 if (newEntries.length === 0) {
   lines.push(
     "Maintenance release — no new in-app changelog entries since the previous release.",

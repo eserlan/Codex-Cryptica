@@ -3,8 +3,9 @@
   import { mapStore } from "../../stores/map.svelte";
   import { mapSession } from "../../stores/map-session.svelte";
   import { themeStore } from "../../stores/theme.svelte";
-  import { hexToRgb } from "../../utils/color";
+  import { hexToRgb, isFogHex } from "../../utils/color";
   import { renderMap } from "map-engine";
+  import { drawTilePlacementPreview } from "./tile-placement-preview";
   import type { Point } from "schema";
   import type { PingState, Token } from "../../../types/vtt";
   import type { MapInteractionManager } from "./map-interactions.svelte";
@@ -22,6 +23,7 @@
     primarySelected: boolean;
     active: boolean;
     visible: boolean;
+    visionActive: boolean;
   }
 
   interface EnrichedMeasurement {
@@ -55,6 +57,7 @@
     remoteMeasurement,
     vttPings,
     vttDragPreview,
+    tilePlacementPreview,
     interactions,
   }: {
     mapImage: HTMLImageElement | null;
@@ -64,6 +67,15 @@
     remoteMeasurement: RemoteEnrichedMeasurement | null;
     vttPings: PingState[];
     vttDragPreview: EnrichedDragPreview | null;
+    tilePlacementPreview: {
+      x: number;
+      y: number;
+      size: number;
+      height: number;
+      valid: boolean;
+      tile: { name: string };
+      image: HTMLImageElement | null;
+    } | null;
     interactions: MapInteractionManager;
   } = $props();
 
@@ -72,7 +84,7 @@
   const scheduler = new CanvasRedrawScheduler(() => draw());
 
   const fogColor = $derived(
-    `rgba(${hexToRgb(themeStore.activeTheme.tokens.secondary)}, ${mapStore.isGMMode ? 0.6 : 1.0})`,
+    `rgba(${hexToRgb(isFogHex(mapStore.fogColor) ? mapStore.fogColor : themeStore.activeTheme.tokens.secondary)}, ${mapStore.fogOpaque ? 1.0 : 0.6})`,
   );
   const gridColor = $derived.by(() => {
     const baseColor =
@@ -106,6 +118,7 @@
     renderMap({
       canvas: canvas,
       image: mapImage,
+      imageDisplaySize: mapStore.activeMap?.dimensions ?? null,
       transform: mapStore.viewport,
       canvasSize: mapStore.canvasSize,
       pins: mapStore.pins,
@@ -114,13 +127,16 @@
       fogColor,
       accentColor: themeStore.activeTheme.tokens.primary,
       grid: {
-        type: mapStore.showGrid ? "square" : "none",
+        type: mapStore.showGrid ? mapStore.gridType : "none",
         size: mapStore.gridSize,
         color: gridColor,
         opacity: 0.65,
         offsetX: mapStore.gridOffsetX,
         offsetY: mapStore.gridOffsetY,
         fixed: mapSession.gridMoveMode && mapStore.isGMMode,
+        fixedPan: mapSession.gridFixedPan ?? undefined,
+        showCoordinates: mapStore.showHexCoordinates,
+        labelConfig: mapStore.hexLabelConfig,
       },
       tokens: vttTokens,
       measurement: vttMeasurement,
@@ -169,6 +185,33 @@
         ctx.fillStyle = stroke;
         ctx.fillText(vttDragPreview.label, 0, -radius - 8);
         ctx.restore();
+      }
+    }
+
+    if (tilePlacementPreview) {
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        const topLeft = mapStore.project({
+          x: tilePlacementPreview.x,
+          y: tilePlacementPreview.y,
+        });
+        const size = tilePlacementPreview.size * mapStore.viewport.zoom;
+        const height = tilePlacementPreview.height * mapStore.viewport.zoom;
+        const isHex =
+          mapStore.gridType === "hex-pointy" ||
+          mapStore.gridType === "hex-flat";
+        drawTilePlacementPreview(ctx, {
+          topLeft,
+          size,
+          height,
+          isHex,
+          hexShape:
+            mapStore.gridType === "hex-flat" ? "hex-flat" : "hex-pointy",
+          valid: tilePlacementPreview.valid,
+          image: tilePlacementPreview.image,
+          name: tilePlacementPreview.tile.name,
+          accentColor: themeStore.activeTheme.tokens.primary,
+        });
       }
     }
 
@@ -320,13 +363,16 @@
     void mapStore.gridOffsetX;
     void mapStore.gridOffsetY;
     void mapStore.gridColor;
+    void mapStore.fogColor;
     void mapSession.gridMoveMode;
+    void mapSession.gridFixedPan;
     void themeStore.activeTheme;
     void vttTokens;
     void vttMeasurement;
     void remoteMeasurement;
     void vttPings;
     void vttDragPreview;
+    void tilePlacementPreview;
     void fogColor;
     void gridColor;
     void interactions.isAltPressed;

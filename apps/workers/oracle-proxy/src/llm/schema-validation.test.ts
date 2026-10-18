@@ -65,4 +65,50 @@ describe("validateAgainstSchema", () => {
     expect(validateAgainstSchema("medium", schema)).toBe(true);
     expect(validateAgainstSchema("extreme", schema)).toBe(false);
   });
+
+  it("checks string length and anyOf branches", () => {
+    const schema = {
+      anyOf: [{ type: "null" }, { type: "string", minLength: 1 }],
+    };
+    expect(validateAgainstSchema("present", schema)).toBe(true);
+    expect(validateAgainstSchema(null, schema)).toBe(true);
+    expect(validateAgainstSchema("", schema)).toBe(false);
+  });
+
+  it("rejects strings that exceed maxLength", () => {
+    expect(
+      validateAgainstSchema("x".repeat(2_001), {
+        type: "string",
+        maxLength: 2_000,
+      }),
+    ).toBe(false);
+  });
+
+  it("checks string patterns", () => {
+    const schema = { type: "string", pattern: "^\\d+d\\d+$" };
+    expect(validateAgainstSchema("1d20", schema)).toBe(true);
+    expect(validateAgainstSchema("relevantattributeorskill", schema)).toBe(
+      false,
+    );
+  });
+
+  it("validates oneOf branches and rejects values matching none", () => {
+    const schema = {
+      oneOf: [
+        {
+          type: "object",
+          required: ["kind"],
+          properties: { kind: { enum: ["complete"] } },
+        },
+        {
+          type: "object",
+          required: ["kind"],
+          properties: { kind: { enum: ["roll-required"] } },
+        },
+      ],
+    };
+    expect(validateAgainstSchema({ kind: "complete" }, schema)).toBe(true);
+    expect(validateAgainstSchema({ kind: "roll-required" }, schema)).toBe(true);
+    expect(validateAgainstSchema({ requires_input: true }, schema)).toBe(false);
+  });
 });

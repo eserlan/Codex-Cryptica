@@ -1,6 +1,7 @@
 ---
 id: importing
 title: Importing Notes
+description: Turn text, Word, and JSON notes into structured campaign entities and relationships.
 tags: [import, oracle, resume]
 rank: 8
 ---
@@ -24,11 +25,40 @@ If you already have Codex Cryptica files on your computer — from another vault
 - **Review before anything is written**: You'll see exactly what was picked up, how many files will be added, and how many already exist in this vault (those are always skipped — this flow never overwrites, updates, or merges existing entities).
 - **Images come along automatically**: If a dropped file references an image, that image (and its thumbnail) is included automatically whenever it was part of the same drop — for example when you drag in a whole folder. If it wasn't, you'll be prompted to add the image file directly or, in browsers that support it, grant access to the source folder so it can be found there.
 
+## Import Files or the Shelf?
+
+For an existing monster, character or other entity in another vault in this
+browser, the **Shelf** is the direct route: send it to the Shelf, switch vaults,
+and choose **Import into this vault**. Use **Import Files** for Markdown files
+and their assets on your computer. File import skips entries already present;
+Shelf imports keep both entries by renaming incoming title clashes.
+See [The Shelf](/help#help/entity-shelf).
+
 ## Dedicated Importer
 
 For uninterrupted world-building, clicking **IMPORT** in the top menu or the Entity Palette opens a dedicated, distraction-free popout window.
 
 - **Seamless Sync**: Any entities you import or review in this popup are instantly saved and synchronized back to your main graph in real-time. No manual refresh required!
+
+## Import a Kanka Campaign
+
+Kanka's structured campaign export works without an AI key:
+
+1. In Kanka, request a **JSON campaign export** and download the generated ZIP.
+2. Drop the ZIP directly into Codex's importer. Do not unpack or convert it first.
+3. Review the entities, labels, attributes, explicit relations, and linked images before committing them to the current vault.
+
+Codex imports a copy and does not change the campaign in Kanka. Kanka permissions, dashboards, family-tree layouts, plugins, themes, and bookmarks are not part of Kanka's standard export and cannot be recreated by this import.
+
+## Import a Chronica Campaign
+
+Chronica's JSON exports also work without an AI key:
+
+1. In Chronica, export your campaign as JSON. You get one file per section (characters, places, quests and so on).
+2. Drop all the files from that campaign into Codex's importer at once. Files from a different campaign are refused.
+3. Review the entries and their connections before committing them to the current vault.
+
+Characters, places, kinships and encounters become characters, locations, factions and events. Quests, adventure notes and maps come across as notes, and GM secrets go into each entry's private lore. Map images are not included, and stats are kept as metadata rather than stat sheets. Codex imports a copy and does not change your campaign in Chronica.
 
 ## Resilient Imports
 

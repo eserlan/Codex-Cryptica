@@ -296,4 +296,20 @@ describe("World Generator", () => {
   it("rejects malformed AI world responses instead of accepting an unusable draft", () => {
     expect(() => parseWorldResponse("not JSON")).toThrow();
   });
+
+  // Regression test (#3108): worldConfig.genres is its own closed list and
+  // does not include "Superhero / Comic Book". The genre is only used
+  // descriptively (no genre-keyed lookup table), so passing it through
+  // should never crash — confirm that holds.
+  it("does not crash when passed the Superhero theme, even though it isn't in worldConfig.genres", () => {
+    expect(worldConfig.genres).not.toContain("Superhero / Comic Book");
+
+    const output = generateWorldLocal(
+      { genre: "Superhero / Comic Book" },
+      () => 0,
+    );
+
+    expect(output.type).toBe("location");
+    expect(output.content).toContain("superhero / comic book");
+  });
 });

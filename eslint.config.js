@@ -41,6 +41,7 @@ export default tseslint.config(
         {
           argsIgnorePattern: "^_",
           varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
         },
       ],
       "svelte/require-each-key": "off",
@@ -62,6 +63,8 @@ export default tseslint.config(
       "**/coverage/**",
       "**/playwright-report/**",
       "**/test-results/**",
+      "**/android/**",
+      "**/ios/**",
     ],
   },
 );

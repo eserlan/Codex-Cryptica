@@ -143,4 +143,29 @@ describe("DetailTabs Date Display", () => {
 
     expect(queryByText("(1005)")).toBeNull();
   });
+
+  it("renders styled CategoryRadioGroup when editing", () => {
+    const mockEntity = {
+      id: "entity-6",
+      title: "Test NPC",
+      type: "npc",
+    } as any;
+
+    const { getByRole, getAllByRole } = render(DetailTabs, {
+      entity: mockEntity,
+      activeTab: "status",
+      isEditing: true,
+      editType: "npc",
+      idPrefix: "test-prefix",
+    });
+
+    const radioGroup = getByRole("radiogroup", { name: "CATEGORY" });
+    expect(radioGroup).toBeTruthy();
+
+    const radios = getAllByRole("radio");
+    expect(radios.length).toBe(3);
+    expect(radios[0].getAttribute("aria-label")).toBe("Npc");
+    expect(radios[0].getAttribute("aria-checked")).toBe("true");
+    expect(radios[1].getAttribute("aria-checked")).toBe("false");
+  });
 });

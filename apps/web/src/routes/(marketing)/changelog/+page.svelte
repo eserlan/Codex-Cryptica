@@ -44,7 +44,7 @@
           <!-- Version Badge & Date -->
           <div class="flex flex-wrap items-center gap-4 mb-6">
             <div
-              class="px-3 py-1 bg-theme-primary/10 border border-theme-primary/30 rounded text-[10px] font-mono text-theme-primary uppercase tracking-[0.2em]"
+              class="px-3 py-1 bg-theme-primary/10 border border-theme-primary/30 rounded text-micro font-mono text-theme-primary uppercase tracking-[0.2em]"
             >
               v{release.version}
             </div>
@@ -69,7 +69,7 @@
             <span class="hidden md:block flex-1 h-px bg-theme-border/30"></span>
             {#if release.type === "major" || release.type === "minor"}
               <span
-                class="text-[10px] font-mono text-theme-secondary uppercase tracking-widest"
+                class="text-micro font-mono text-theme-secondary uppercase tracking-widest"
               >
                 {release.type} protocol update
               </span>

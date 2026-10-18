@@ -6,7 +6,7 @@ import AlienRaceFormFields from "./AlienRaceFormFields.svelte";
 
 // vi.mock is hoisted above every declaration in this file, so the factory has
 // to inline its literals rather than reference the constants below.
-vi.mock("$lib/services/seo/generator-engine", () => ({
+vi.mock("$lib/services/seo/generator-config", () => ({
   alienRaceConfig: {
     genres: ["Hard Sci-Fi", "Space Opera", "Cyberpunk", "Cosmic Horror"],
     generationModes: ["Grounded / Evolutionary", "Freeform / Fantastic"],

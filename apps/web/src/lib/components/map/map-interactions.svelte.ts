@@ -6,6 +6,7 @@ import {
   getPinchMidpoint,
   getZoomAtPointUpdate,
   getZoomViewportUpdate,
+  describeMoveBlocked,
   isClickGesture,
   shouldIgnoreMapKeyboardEvent,
 } from "./map-view-helpers";
@@ -16,6 +17,7 @@ import {
   type MapInteractionHandlers,
 } from "./interactions/map-interaction-handler-factory";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
 type MapInputEvent = MouseEvent | PointerEvent;
 
@@ -33,6 +35,7 @@ export class MapInteractionManager {
   boxSelection!: MapInteractionHandlers["boxSelection"];
   fogInteractions!: MapInteractionHandlers["fogInteractions"];
   creationInteractions!: MapInteractionHandlers["creationInteractions"];
+  hexClickInteractions!: MapInteractionHandlers["hexClickInteractions"];
 
   isPanning = $state(false);
   lastMousePos = $state({ x: 0, y: 0 });
@@ -44,6 +47,9 @@ export class MapInteractionManager {
   }
   get gridFitEnd() {
     return this.gridInteractions.gridFitEnd;
+  }
+  get gridFitSpan() {
+    return this.gridInteractions.gridFitSpan;
   }
   get boxSelectStart() {
     return this.boxSelection.start;
@@ -68,6 +74,8 @@ export class MapInteractionManager {
   private activePointerId: number | null = null;
   private activeTouches = new Map<number, { x: number; y: number }>();
   private pinchLastDistance: number | null = null;
+  /** Where an empty-map press began, for the hex click handler. */
+  private hexPressStart: { x: number; y: number } | null = null;
   KEYBOARD_PAN_STEP = 50;
   KEYBOARD_ZOOM_STEP = 0.1;
 
@@ -81,7 +89,13 @@ export class MapInteractionManager {
   ) {
     this.painter = opts.painter;
     this.getContainer = opts.getContainer;
-    Object.assign(this, createMapInteractionHandlers(this.painter, opts));
+    Object.assign(
+      this,
+      createMapInteractionHandlers(this.painter, {
+        ...opts,
+        getMapContainer: opts.getContainer,
+      }),
+    );
   }
 
   updateCachedRect() {
@@ -132,6 +146,16 @@ export class MapInteractionManager {
       return;
     }
     if (event.key === "Escape") {
+      if (mapSession.notePlacementArmed) {
+        mapSession.cancelNotePlacement();
+        this.mapAnnouncement = "Note placement cancelled";
+        return;
+      }
+      if (mapSession.tileDeckManager.pendingPlacement) {
+        mapSession.cancelPendingTilePlacement();
+        this.mapAnnouncement = "Tile placement cancelled";
+        return;
+      }
       if (this.gridInteractions.cancelGridMove()) {
         return;
       }
@@ -257,9 +281,45 @@ export class MapInteractionManager {
     this.mouseDownPos = { x: e.clientX, y: e.clientY };
     this.isAltPressed = e.altKey;
 
+    // Placing a note takes priority over selection and panning: while armed,
+    // the click is the GM saying where the note goes, not what to select.
+    if (e.button === 0 && mapSession.notePlacementArmed) {
+      mapSession.pendingNoteCoords = mapStore.unproject(this.lastMousePos);
+      mapSession.cancelNotePlacement();
+      this.mapAnnouncement = "Note position chosen";
+      e.preventDefault();
+      this.isPanning = false;
+      return;
+    }
+
+    if (e.button === 0 && mapSession.tileDeckManager.pendingPlacement) {
+      const point = mapStore.unproject(this.lastMousePos);
+      mapSession.updatePendingTilePlacement(point.x, point.y);
+      const placed = mapSession.placePendingTile();
+      this.mapAnnouncement = placed
+        ? `Placed ${placed.name}`
+        : "Tile cannot overlap another tile";
+      e.preventDefault();
+      this.isPanning = false;
+      return;
+    }
+
+    // Grid-move is an exclusive mode entered deliberately from Grid Settings
+    // ("Drag the map to align. Enter to confirm, Esc to cancel."), so the
+    // drag must pan the map — and only the map. Checked ahead of every
+    // object handler below: on a map covered in tiles (the exact case this
+    // mode exists for) a pointer-down would otherwise land on a tile and
+    // drag that instead, snapped to the grid, so the map never moved.
+    if (this.cachedRect && this.gridInteractions.shouldStartGridMove()) {
+      e.preventDefault();
+      e.stopPropagation();
+      this.isPanning = true;
+      return;
+    }
+
     if (
       e.button === 0 &&
-      mapSession.vttEnabled &&
+      (mapSession.vttEnabled || mapSession.selectedToken?.kind === "note") &&
       this.cachedRect &&
       this.tokenRotation.begin(this.lastMousePos)
     ) {
@@ -274,12 +334,31 @@ export class MapInteractionManager {
       return;
     }
 
-    if (mapSession.vttEnabled && this.cachedRect) {
+    // No vttEnabled gate: hitTestableTokens narrows to notes on its own when
+    // play is off, so this drags a note on a plain map and nothing else.
+    if (this.cachedRect && !mapSession.gridFitMode) {
       const hitToken = this.tokenDrag.begin(this.lastMousePos);
 
       if (hitToken) {
         this.tokenSelection.applyModifierSelection(hitToken.id, e);
         this.isPanning = false;
+        return;
+      }
+
+      // Pressed a piece that can't be moved (locked token, locked layer, or
+      // someone else's). Falling through to a pan here is what makes a drag
+      // on a tile look like it "moves the whole map instead of the tile",
+      // with no hint as to why — so keep the press on the piece and say so.
+      const blocked = this.tokenDrag.blockedToken;
+      if (blocked) {
+        this.tokenSelection.applyModifierSelection(blocked.id, e);
+        this.isPanning = false;
+        this.mapAnnouncement = describeMoveBlocked(
+          blocked,
+          mapStore.layerLocked[blocked.layer ?? "token"] === true,
+          mapStore.isGMMode,
+        );
+        notificationStore.notify(this.mapAnnouncement, "info");
         return;
       }
     }
@@ -291,13 +370,6 @@ export class MapInteractionManager {
         this.isPanning = false;
         return;
       }
-    }
-
-    if (this.cachedRect && this.gridInteractions.shouldStartGridMove()) {
-      e.preventDefault();
-      e.stopPropagation();
-      this.isPanning = true;
-      return;
     }
 
     if (
@@ -319,6 +391,7 @@ export class MapInteractionManager {
       return;
     } else if (e.button === 0) {
       this.isPanning = true;
+      this.hexPressStart = { ...this.lastMousePos };
     }
   };
 
@@ -349,6 +422,13 @@ export class MapInteractionManager {
     const mouseY = e.clientY - this.cachedRect.top;
     this.isAltPressed = e.altKey;
 
+    if (mapSession.tileDeckManager.pendingPlacement) {
+      const point = mapStore.unproject({ x: mouseX, y: mouseY });
+      mapSession.updatePendingTilePlacement(point.x, point.y);
+      this.lastMousePos = { x: mouseX, y: mouseY };
+      return;
+    }
+
     if (this.boxSelectStart) {
       this.boxSelection.update({ x: mouseX, y: mouseY });
       this.lastMousePos = { x: mouseX, y: mouseY };
@@ -362,7 +442,10 @@ export class MapInteractionManager {
     }
 
     if (this.tokenRotation.rotationState) {
-      this.tokenRotation.move({ x: mouseX, y: mouseY });
+      this.tokenRotation.move(
+        { x: mouseX, y: mouseY },
+        e.shiftKey || e.ctrlKey || e.metaKey,
+      );
       this.lastMousePos = { x: mouseX, y: mouseY };
       return;
     }
@@ -484,6 +567,27 @@ export class MapInteractionManager {
         return;
       }
 
+      // Fine-tune ends on release, mirroring commitGridFit above: a real
+      // drag applies the alignment, a stray click just leaves the mode.
+      // Enter/Esc still work mid-drag, but they were previously the *only*
+      // ways out — so clicking away left the mode silently armed, and every
+      // later attempt to drag a tile panned the map instead, since
+      // grid-move takes priority in handlePointerDown.
+      if (mapSession.gridMoveMode) {
+        const dragged = !isClickGesture(
+          { x: this.mouseDownPos.x, y: this.mouseDownPos.y },
+          { x: e.clientX, y: e.clientY },
+        );
+
+        if (dragged) {
+          this.gridInteractions.commitGridMove();
+        } else {
+          this.gridInteractions.cancelGridMove();
+        }
+        this.isPanning = false;
+        return;
+      }
+
       if (this.isPanning) {
         if (
           isClickGesture(
@@ -491,11 +595,13 @@ export class MapInteractionManager {
             { x: e.clientX, y: e.clientY },
           )
         ) {
+          this.handleHexClick(e);
           this.handleMapClick(e);
         }
       }
       this.isPanning = false;
     } finally {
+      this.hexPressStart = null;
       if ("pointerId" in e) {
         this.activePointerId = null;
       }
@@ -503,8 +609,39 @@ export class MapInteractionManager {
   };
 
   onPointerUp = (e: PointerEvent) => this.handlePointerUp(e);
-  onPointerCancel = (e: PointerEvent) => this.handlePointerUp(e);
+  onPointerCancel = (e: PointerEvent) => {
+    if (this.isTouchPointer(e)) {
+      this.activeTouches.delete(e.pointerId);
+      this.pinchLastDistance = null;
+    }
+    if (this.activePointerId !== null && this.activePointerId !== e.pointerId) {
+      return;
+    }
+    this.hexPressStart = null;
+    this.activePointerId = null;
+    this.isPanning = false;
+    this.boxSelection.clear();
+    this.tokenDrag.cancel();
+    this.tokenRotation.cancel();
+    this.pinInteractions.cancel();
+    this.gridInteractions.cancelGridFit();
+    this.gridInteractions.cancelGridMove();
+    this.fogInteractions.cancel();
+  };
   onMouseUp = (e: MouseEvent) => this.handlePointerUp(e);
+
+  private handleHexClick(e: MouseEvent) {
+    if (!this.hexPressStart) return;
+    const rect = this.cachedRect;
+    this.hexClickInteractions.handle({
+      start: this.hexPressStart,
+      end: {
+        x: e.clientX - (rect?.left ?? 0),
+        y: e.clientY - (rect?.top ?? 0),
+      },
+      altKey: e.altKey,
+    });
+  }
 
   handleMapClick = (e: MouseEvent) => {
     const el = this.getContainer();
@@ -513,28 +650,26 @@ export class MapInteractionManager {
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
+    const hitToken = this.tokenSelection.hitTest({ x, y });
+
+    if (hitToken) {
+      this.tokenSelection.selectToken(hitToken.id);
+      this.selectedPinId = null;
+      return;
+    }
+
     if (mapSession.vttEnabled) {
-      const hitToken = this.tokenSelection.hitTest({ x, y });
-
-      if (hitToken) {
-        this.tokenSelection.selectToken(hitToken.id);
-        this.selectedPinId = null;
-        return;
-      }
-
       this.tokenSelection.clearSelection();
       this.healthBarPopoverTokenId = null;
       this.measurementInteractions.handleClick({ x, y });
       return;
     }
 
+    // With play off the only token that could have been hit is a note, so a
+    // miss falls through to the map's own pins.
+    this.tokenSelection.clearSelection();
     const clickedPin = this.pinInteractions.selectAt({ x, y });
-
-    if (clickedPin) {
-      this.selectedPinId = clickedPin.id;
-    } else {
-      this.selectedPinId = null;
-    }
+    this.selectedPinId = clickedPin ? clickedPin.id : null;
   };
 
   onDoubleClick = (e: MouseEvent) => {
@@ -556,13 +691,17 @@ export class MapInteractionManager {
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    if (mapSession.vttEnabled) {
-      const hitToken = this.tokenSelection.hitTest({ x, y });
-      if (hitToken) {
+    const hitToken = this.tokenSelection.hitTest({ x, y });
+    if (hitToken) {
+      if (hitToken.kind === "note") {
+        // A note has no health bar; double-click folds it away instead, and
+        // falling through would drop a pin underneath it.
+        mapSession.toggleNoteCollapsed(hitToken.id);
+      } else if (mapSession.vttEnabled) {
         this.healthBarPopoverTokenId =
           this.healthBarPopoverTokenId === hitToken.id ? null : hitToken.id;
-        return;
       }
+      return;
     }
 
     this.creationInteractions.handleDoubleClick({ x, y });
@@ -575,21 +714,41 @@ export class MapInteractionManager {
     }
 
     const el = this.getContainer();
-    if (!mapSession.vttEnabled || !el) return;
-    e.preventDefault();
+    if (!el) return;
 
     const rect = el.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    this.contextMenuInteractions.open({ x: e.clientX, y: e.clientY }, { x, y });
+    // Only swallow the browser's own menu when ours actually opens — with
+    // play off that is a right-click on a note, and nothing else.
+    if (
+      this.contextMenuInteractions.open(
+        { x: e.clientX, y: e.clientY },
+        { x, y },
+      )
+    ) {
+      e.preventDefault();
+    }
   };
 
   onWheel = (e: WheelEvent) => {
-    const canResize =
-      mapSession.vttEnabled &&
-      mapStore.isGMMode &&
-      !sessionModeStore.isGuestMode;
+    if (this.gridFitStart) {
+      // Zooming mid-drag would re-scale the viewport out from under the
+      // rectangle's already-captured screen coordinates — commitGridFit()
+      // unprojects them with whatever transform is current at commit time,
+      // so a zoom here would silently corrupt the fit. Shift+scroll cycles
+      // the span instead; any other scroll while fitting is a no-op.
+      e.preventDefault();
+      if (e.shiftKey) {
+        this.gridInteractions.cycleGridFitSpan(e.deltaY);
+      }
+      return;
+    }
+
+    // No vttEnabled gate: out of play hitTestableTokens only yields notes, so
+    // shift+scroll resizes a note on a plain map and nothing else.
+    const canResize = mapStore.isGMMode && !sessionModeStore.isGuestMode;
     const el = this.getContainer();
 
     if (e.shiftKey && canResize) {

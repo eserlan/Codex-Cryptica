@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { isTransparent } from "./color";
+import { isFogHex, isTransparent } from "./color";
 
 describe("isTransparent", () => {
   it("should return true for empty or null-ish values", () => {
@@ -31,5 +31,17 @@ describe("isTransparent", () => {
     expect(isTransparent("rgba(0, 0, 0, 1)")).toBe(false);
     expect(isTransparent("rgba(0, 0, 0, 0.5)")).toBe(false);
     expect(isTransparent("green")).toBe(false);
+  });
+});
+
+describe("isFogHex", () => {
+  it("accepts #rrggbb colours", () => {
+    expect(isFogHex("#1a2B3c")).toBe(true);
+  });
+
+  it("rejects anything else a peer might send", () => {
+    for (const bad of ["#fff", "red", "url(x)", "#12345g", "", null, 7]) {
+      expect(isFogHex(bad)).toBe(false);
+    }
   });
 });

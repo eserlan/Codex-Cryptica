@@ -11,7 +11,12 @@ export interface ParseResult {
 
 export function renderMarkdown(
   text: string,
-  options: { query?: string; inline?: boolean } = {},
+  options: {
+    query?: string;
+    inline?: boolean;
+    breaks?: boolean;
+    allowImages?: boolean;
+  } = {},
 ): string {
   if (!text) return "";
 
@@ -26,9 +31,16 @@ export function renderMarkdown(
       );
     }
 
+    // `breaks` turns a single newline into a <br> rather than requiring a
+    // blank line between paragraphs (#3481) — off by default so every other
+    // caller's existing CommonMark rendering is unchanged.
+    const renderer =
+      options.allowImages === false ? new marked.Renderer() : undefined;
+    if (renderer) renderer.image = ({ text: altText }) => altText;
+    const markdownOptions = { breaks: options.breaks, renderer };
     const rawHtml = options.inline
-      ? (marked.parseInline(content) as string)
-      : (marked.parse(content) as string);
+      ? (marked.parseInline(content, markdownOptions) as string)
+      : (marked.parse(content, markdownOptions) as string);
 
     if (!browser) return rawHtml;
 

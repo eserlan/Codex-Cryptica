@@ -24,6 +24,7 @@ If the user wants a specific Speckit step, direct them to the matching command:
 - `/speckit.analyze`
 - `/speckit.checklist`
 - `/speckit.implement`
+- `/speckit.converge` (optional: assess remaining work after implementation)
 - `/speckit.constitution`
 - `/speckit.taskstoissues`
 

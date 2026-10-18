@@ -305,7 +305,7 @@
     class="absolute z-[100] w-64 bg-theme-surface border border-theme-border rounded shadow-2xl overflow-hidden flex flex-col opacity-0 transition-opacity duration-150"
   >
     <div
-      class="px-3 py-2 bg-theme-bg/50 border-b border-theme-border text-[9px] uppercase tracking-widest font-bold font-header text-theme-muted flex justify-between items-center"
+      class="px-3 py-2 bg-theme-bg/50 border-b border-theme-border text-nano uppercase tracking-widest font-bold font-header text-theme-muted flex justify-between items-center"
     >
       <div class="flex gap-1 items-center">
         {#if input.startsWith("/draw") || input.startsWith("/plot")}
@@ -351,12 +351,12 @@
             <div class="flex items-center gap-2">
               <span class="font-mono text-sm font-bold">{item.name}</span>
               {#if item.parameters}
-                <span class="text-[10px] opacity-50 font-mono"
+                <span class="text-micro opacity-50 font-mono"
                   >{item.parameters.join(" ")}</span
                 >
               {/if}
             </div>
-            <div class="text-[10px] opacity-70 leading-tight">
+            <div class="text-micro opacity-70 leading-tight">
               {item.description}
             </div>
           {:else if item.type === "suggestion"}
@@ -384,7 +384,7 @@
                 >
                 {#if item.type}
                   <span
-                    class="text-[8px] uppercase opacity-50 font-bold font-header tracking-widest text-theme-muted"
+                    class="text-nano uppercase opacity-50 font-bold font-header tracking-widest text-theme-muted"
                   >
                     {categories.getCategory(item.type)?.label || item.type}
                   </span>
@@ -397,7 +397,7 @@
     </div>
     {#if activeStep === "LABEL"}
       <div
-        class="px-3 py-1 bg-theme-primary/5 text-[8px] text-theme-muted font-mono border-t border-theme-border/30"
+        class="px-3 py-1 bg-theme-primary/5 text-nano text-theme-muted font-mono border-t border-theme-border/30"
       >
         Type relationship and press TAB to select target
       </div>

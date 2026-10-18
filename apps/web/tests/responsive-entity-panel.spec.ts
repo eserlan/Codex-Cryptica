@@ -56,7 +56,7 @@ test.describe("Responsive Entity Detail Panel", () => {
 
         const panel = page.getByTestId("entity-detail-panel");
         await expect(panel).toBeVisible();
-        await expect(page.getByTestId("import-vault-button")).toBeVisible();
+        await expect(page.getByTestId("open-vault-button")).toBeVisible();
 
         const title = panel.getByRole("heading", { name: fixture.title });
         const label = panel.getByText(fixture.labels.at(-1)!);

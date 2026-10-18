@@ -223,14 +223,14 @@
         id="vault-selector-title"
         class="text-lg font-bold text-theme-primary tracking-wide"
       >
-        VAULT SELECTOR
+        SWITCH VAULT
       </h2>
       <button
         type="button"
         onclick={onClose}
         class="text-theme-muted hover:text-theme-text"
-        title="Close Selector"
-        aria-label="Close Selector"
+        title="Close Switch Vault"
+        aria-label="Close Switch Vault"
       >
         <span aria-hidden="true" class="icon-[lucide--x] w-5 h-5"></span>
       </button>
@@ -290,12 +290,12 @@
                 {v.name}
                 {#if v.id === vaultRegistry.activeVaultId}
                   <span
-                    class="text-[10px] bg-theme-primary text-theme-bg px-1.5 py-0.5 rounded-full font-header"
+                    class="text-micro bg-theme-primary text-theme-bg px-1.5 py-0.5 rounded-full font-header"
                     >ACTIVE</span
                   >
                   {#if (vault.status as string) === "needs-permission"}
                     <span
-                      class="text-[10px] bg-amber-500/20 text-amber-500 border border-amber-500/40 px-1.5 py-0.5 rounded-full font-header flex items-center gap-1"
+                      class="text-micro bg-amber-500/20 text-amber-500 border border-amber-500/40 px-1.5 py-0.5 rounded-full font-header flex items-center gap-1"
                       title="Folder permission required"
                       data-testid="needs-permission-badge"
                     >
@@ -321,6 +321,21 @@
               </div>
 
               {#if v.id === vaultRegistry.activeVaultId}
+                <button
+                  type="button"
+                  class="p-1.5 hover:bg-theme-border rounded text-theme-accent hover:text-theme-primary opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
+                  onclick={() => vault.reloadFromDisk()}
+                  title="Reload from Disk - discards the fast-start cache and re-reads this vault from the internal archive. Use this if the app is showing older content than you expect."
+                  aria-label="Reload from Disk"
+                  disabled={isLoading || !!editingId}
+                  data-testid="reload-from-disk-button"
+                >
+                  <span
+                    aria-hidden="true"
+                    class="icon-[lucide--refresh-cw] w-3.5 h-3.5"
+                  ></span>
+                </button>
+
                 <button
                   type="button"
                   class="p-1.5 hover:bg-theme-border rounded text-theme-accent hover:text-theme-primary opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"

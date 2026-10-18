@@ -34,10 +34,10 @@
 <div class="relative">
   <button
     onclick={toggleDropdown}
-    class="flex items-center gap-2 px-3 py-1.5 bg-theme-surface/80 backdrop-blur border border-theme-border rounded text-[10px] font-mono tracking-widest text-theme-primary shadow-lg uppercase transition-all hover:border-theme-primary"
+    class="flex items-center gap-2 px-3 py-1.5 bg-theme-surface/80 backdrop-blur border border-theme-border rounded text-micro font-mono tracking-widest text-theme-primary shadow-lg uppercase transition-all hover:border-theme-primary"
     title="Filter by Labels"
   >
-    <span class="icon-[lucide--tag] w-3.5 h-3.5"></span>
+    <span aria-hidden="true" class="icon-[lucide--tag] w-3.5 h-3.5"></span>
     <span>Labels ({activeLabels.size})</span>
     <span
       class="icon-[lucide--chevron-down] w-3 h-3 transition-transform {isOpen
@@ -62,7 +62,7 @@
               type="text"
               bind:value={labelQuery}
               placeholder="Search labels..."
-              class="w-full bg-theme-bg border border-theme-border rounded px-7 py-1.5 text-[10px] text-theme-text outline-none focus:border-theme-primary transition-all placeholder-theme-muted/50"
+              class="w-full bg-theme-bg border border-theme-border rounded px-7 py-1.5 text-micro text-theme-text outline-none focus:border-theme-primary transition-all placeholder-theme-muted/50"
             />
             <span
               class="icon-[lucide--search] absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-theme-muted"
@@ -87,12 +87,12 @@
           class="px-2 py-1.5 border-b border-theme-border/50 bg-theme-primary/5 flex items-center justify-between shrink-0"
         >
           <span
-            class="text-[9px] font-bold text-theme-primary uppercase tracking-tighter"
+            class="text-nano font-bold text-theme-primary uppercase tracking-tighter"
             >Logic Mode</span
           >
           <button
             onclick={onToggleMode}
-            class="flex items-center gap-1 bg-theme-surface border border-theme-border rounded px-1.5 py-0.5 text-[9px] font-bold text-theme-text hover:border-theme-primary transition-colors"
+            class="flex items-center gap-1 bg-theme-surface border border-theme-border rounded px-1.5 py-0.5 text-nano font-bold text-theme-text hover:border-theme-primary transition-colors"
           >
             <span
               class={filterMode === "AND"
@@ -114,7 +114,7 @@
           <button
             type="button"
             onclick={() => onToggle(label)}
-            class="w-full flex items-center gap-2 px-2 py-1.5 rounded text-left text-[10px] font-mono uppercase tracking-wider transition-colors {activeLabels.has(
+            class="w-full flex items-center gap-2 px-2 py-1.5 rounded text-left text-micro font-mono uppercase tracking-wider transition-colors {activeLabels.has(
               label,
             )
               ? 'bg-theme-primary/20 text-theme-primary'
@@ -128,20 +128,20 @@
                 : ''}"
             >
               {#if activeLabels.has(label)}
-                <span class="icon-[heroicons--check] w-2.5 h-2.5 text-theme-bg"
+                <span
+                  aria-hidden="true"
+                  class="icon-[heroicons--check] w-2.5 h-2.5 text-theme-bg"
                 ></span>
               {/if}
             </span>
             <span class="truncate flex-1 min-w-0">{label}</span>
             <span
-              class="text-[9px] text-theme-muted/80 font-mono font-bold shrink-0"
+              class="text-nano text-theme-muted/80 font-mono font-bold shrink-0"
               >({vault.labelCounts[label] ?? 0})</span
             >
           </button>
         {:else}
-          <div
-            class="px-2 py-4 text-center text-[10px] text-theme-muted italic"
-          >
+          <div class="px-2 py-4 text-center text-micro text-theme-muted italic">
             {labelQuery ? "No matching labels" : "No labels indexed"}
           </div>
         {/each}
@@ -153,7 +153,7 @@
             onclick={() => {
               onClear();
             }}
-            class="w-full py-1 text-[9px] font-bold text-theme-secondary hover:text-theme-primary uppercase font-header tracking-tighter transition-colors"
+            class="w-full py-1 text-nano font-bold text-theme-secondary hover:text-theme-primary uppercase font-header tracking-tighter transition-colors"
           >
             Clear All
           </button>

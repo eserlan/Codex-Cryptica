@@ -1,7 +1,11 @@
 import { z } from "zod";
+import type { $RefinementCtx } from "zod/v4/core";
 import { EntitySchema } from "./entity";
 import { MapSchema } from "./map";
-import { StatSheetEntityCategorySchema } from "./stat-sheet";
+import {
+  StatSheetEntityCategorySchema,
+  StatSheetFieldKeySchema,
+} from "./stat-sheet";
 
 export const PUBLISH_LIMITS = {
   maxBundleBytes: 10 * 1024 * 1024,
@@ -303,53 +307,131 @@ export const SuspensionMarkerSchema = z
 export type SuspensionMarker = z.infer<typeof SuspensionMarkerSchema>;
 
 const TemplateLabelSchema = z.string().trim().min(1).max(40);
-const TemplateFieldSchema = z
+const TemplateColumnSchema = z
   .object({
     id: z.string().trim().min(1).max(120),
     label: z.string().trim().min(1).max(200),
-    type: z.enum(["counter", "number", "text", "longtext", "heading", "dice"]),
+    type: z.enum(["text", "number", "dice", "counter", "checkbox", "money"]),
+  })
+  .strict();
+const TemplateFieldSchema = z
+  .object({
+    id: z.string().trim().min(1).max(120),
+    // #3180: user-friendly key travels with public packages.
+    key: StatSheetFieldKeySchema.optional(),
+    label: z.string().trim().min(1).max(200),
+    type: z.enum([
+      "counter",
+      "number",
+      "text",
+      "longtext",
+      "heading",
+      "dice",
+      "item-table",
+    ]),
     formula: z.string().trim().max(120).optional(),
     min: z.number().finite().optional(),
     max: z.number().finite().optional(),
     step: z.number().finite().positive().optional(),
+    columns: z.array(TemplateColumnSchema).max(30).optional(),
+    linkVaultItems: z.boolean().optional(),
+    stockLedger: z.boolean().optional(),
+    modifierSource: z.string().trim().max(120).optional(),
   })
   .strict();
+
+const TemplateSchema = z
+  .object({
+    name: z.string().trim().min(1).max(120),
+    description: z.string().trim().min(1).max(500),
+    system: z.string().trim().max(120).optional(),
+    category: StatSheetEntityCategorySchema.optional(),
+    labels: z.array(TemplateLabelSchema).max(8).default([]),
+    fields: z.array(TemplateFieldSchema).min(1).max(200),
+  })
+  .strict();
+
+type Template = z.infer<typeof TemplateSchema>;
+
+const hasEarlierFieldWithKey = (
+  fields: ReadonlyArray<{ key?: string }>,
+  index: number,
+  key: string,
+): boolean =>
+  fields.some((other, otherIndex) => otherIndex < index && other.key === key);
+
+const hasOtherFieldWithId = (
+  fields: ReadonlyArray<{ id: string }>,
+  index: number,
+  key: string,
+): boolean =>
+  fields.some((other, otherIndex) => otherIndex !== index && other.id === key);
+
+const validateTemplateFieldRange = (
+  field: Template["fields"][number],
+  index: number,
+  ctx: $RefinementCtx<Template>,
+): void => {
+  if (
+    field.min !== undefined &&
+    field.max !== undefined &&
+    field.min > field.max
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Field minimum cannot exceed maximum",
+      path: ["fields", index],
+    });
+  }
+};
+
+const validateTemplateFieldKey = (
+  field: Template["fields"][number],
+  index: number,
+  fields: Template["fields"],
+  ctx: $RefinementCtx<Template>,
+): void => {
+  if (!field.key) return;
+
+  if (hasEarlierFieldWithKey(fields, index, field.key)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Field keys must be unique within a template",
+      path: ["fields", index, "key"],
+    });
+  }
+
+  if (hasOtherFieldWithId(fields, index, field.key)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Field key must not reuse another field's stable ID",
+      path: ["fields", index, "key"],
+    });
+  }
+};
+
+const validateTemplate = (
+  template: Template,
+  ctx: $RefinementCtx<Template>,
+): void => {
+  if (!template.system && !template.category) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "A system or entity category is required",
+      path: ["system"],
+    });
+  }
+
+  template.fields.forEach((field, index) => {
+    validateTemplateFieldRange(field, index, ctx);
+    validateTemplateFieldKey(field, index, template.fields, ctx);
+  });
+};
 
 export const PublicTemplatePackageSchema = z
   .object({
     schemaVersion: z.literal(1),
-    template: z
-      .object({
-        name: z.string().trim().min(1).max(120),
-        description: z.string().trim().min(1).max(500),
-        system: z.string().trim().max(120).optional(),
-        category: StatSheetEntityCategorySchema.optional(),
-        labels: z.array(TemplateLabelSchema).max(8).default([]),
-        fields: z.array(TemplateFieldSchema).min(1).max(200),
-      })
-      .strict()
-      .superRefine((template, ctx) => {
-        if (!template.system && !template.category) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "A system or entity category is required",
-            path: ["system"],
-          });
-        }
-        for (const field of template.fields) {
-          if (
-            field.min !== undefined &&
-            field.max !== undefined &&
-            field.min > field.max
-          ) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: "Field minimum cannot exceed maximum",
-              path: ["fields"],
-            });
-          }
-        }
-      }),
+    template: TemplateSchema.superRefine(validateTemplate),
     publishedAt: z.string().datetime().optional(),
   })
   .strict();
@@ -418,3 +500,181 @@ export const TemplateDirectoryPageSchema = z
   .strict();
 
 export type TemplateDirectoryPage = z.infer<typeof TemplateDirectoryPageSchema>;
+
+/* -------------------------------------------------------------------------- */
+/* CC Cloud Backup (spec 162, issue #2593)                                     */
+/* -------------------------------------------------------------------------- */
+
+export const CLOUD_BACKUP_LIMITS = {
+  /**
+   * Whole-vault ceiling: bundle plus every asset. Enforced per upload against
+   * the running total already stored, so the limit is reached and reported
+   * rather than discovered after the fact.
+   */
+  maxVaultBytes: 50 * 1024 * 1024,
+  /**
+   * One asset per request, so no single upload can approach the Worker's
+   * memory ceiling. Matches the publish path's per-asset cap.
+   */
+  maxAssetBytes: 5 * 1024 * 1024,
+  /**
+   * Ceiling on a JSON body (enable and commit). The bundle is text only —
+   * entities, maps and canvases — so this is generous for it while keeping any
+   * single request far below what the Worker can hold in memory.
+   */
+  maxJsonBodyBytes: 8 * 1024 * 1024,
+  maxTitleLength: 200,
+  /**
+   * Manifest keys read in one admin-lookup scan. The lookup never paginates
+   * past this — an unbounded walk is bulk enumeration by another name (FR-016).
+   */
+  maxLookupScanKeys: 1_000,
+} as const;
+
+/**
+ * Server-side record of one vault's backup, stored at
+ * `cloud-backup/{backupId}/manifest.json`. The ownership code itself is never
+ * stored — only its SHA-256 hash, in the R2 object's `customMetadata`.
+ */
+export const CloudBackupManifestSchema = z.object({
+  schemaVersion: z.number().int(),
+  backupId: z.string().min(1),
+  /** Plaintext, because it is the only field the support lookup can match on. */
+  vaultTitle: z.string().min(1).max(CLOUD_BACKUP_LIMITS.maxTitleLength),
+  sizeBytes: z.number().int().nonnegative(),
+  createdAt: z.string(),
+  lastPushedAt: z.string(),
+  entityCount: z.number().int().nonnegative().optional(),
+  /**
+   * Schema v2 only (#3354): entities live in this many shard objects. Stored so
+   * a later change to the default can never misread existing shards.
+   */
+  shardCount: z.number().int().positive().optional(),
+});
+
+export type CloudBackupManifest = z.infer<typeof CloudBackupManifestSchema>;
+
+/**
+ * Storage layouts. v1 keeps every entity inside one `bundle.json`; v2 (#3354)
+ * shards entities so an incremental upload rewrites only what it touched.
+ */
+export const CLOUD_BACKUP_SCHEMA_V1 = 1;
+export const CLOUD_BACKUP_SCHEMA_V2 = 2;
+
+/**
+ * Entity shards per v2 backup. One object per entity would cost one R2 read
+ * per entity on restore, past the Worker's per-request subrequest limit for
+ * large vaults; 64 keeps a restore at a few dozen reads while a small edit
+ * rewrites roughly 1/64 of the vault per touched shard.
+ */
+export const CLOUD_BACKUP_SHARD_COUNT = 64;
+
+/** Stable shard name for an entity id: FNV-1a 32-bit, zero-padded. */
+export function cloudBackupShardOf(
+  entityId: string,
+  shardCount = CLOUD_BACKUP_SHARD_COUNT,
+): string {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < entityId.length; i++) {
+    hash ^= entityId.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  const width = String(shardCount - 1).length;
+  return String((hash >>> 0) % shardCount).padStart(width, "0");
+}
+
+/** JSON with object keys sorted at every depth, so equal values hash equally. */
+export function canonicalJson(value: unknown): string {
+  return JSON.stringify(value, (_key, inner) => {
+    if (!inner || typeof inner !== "object" || Array.isArray(inner)) {
+      return inner;
+    }
+    return Object.fromEntries(
+      Object.keys(inner)
+        .sort()
+        .map((key) => [key, (inner as Record<string, unknown>)[key]]),
+    );
+  });
+}
+
+/**
+ * Content hash of one backed-up entity: SHA-256 hex of its canonical JSON.
+ * Computed identically by the client and the worker, so the idle consistency
+ * check can compare them without transferring bodies.
+ */
+export async function hashCloudBackupEntity(entity: unknown): Promise<string> {
+  const digest = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(canonicalJson(entity)),
+  );
+  return [...new Uint8Array(digest)]
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+const CloudBackupEntitySchema = z
+  .object({ id: z.string().min(1).max(255) })
+  .passthrough();
+
+/**
+ * Body of `POST /api/cloud-backup/{backupId}/delta` (#3354): the entities
+ * changed since `baseLastPushedAt`, plus whole replacements for the small
+ * non-entity sections when they changed.
+ */
+export const CloudBackupDeltaSchema = z.object({
+  vaultTitle: z.string().min(1).max(CLOUD_BACKUP_LIMITS.maxTitleLength),
+  baseLastPushedAt: z.string().min(1),
+  upserts: z.array(CloudBackupEntitySchema),
+  deletes: z.array(z.string().min(1).max(255)),
+  maps: z.array(z.unknown()).optional(),
+  canvases: z.array(z.unknown()).optional(),
+  assetManifest: z.array(z.unknown()).optional(),
+  assetIds: z.array(z.string()).optional(),
+});
+
+export type CloudBackupDelta = z.infer<typeof CloudBackupDeltaSchema>;
+
+/**
+ * Client-side, per-vault record in IndexedDB. Survives reloads so the user is
+ * never re-prompted for consent (FR-020).
+ *
+ * `ownerCode` is the raw credential and the only copy outside the user's own
+ * notes — losing this record without having copied the code elsewhere makes the
+ * backup unreachable except through support lookup.
+ */
+export const LocalCloudBackupRecordSchema = z.object({
+  vaultId: z.string().min(1),
+  backupId: z.string().min(1),
+  ownerCode: z.string().min(1),
+  /** False after disable; the record is kept so re-enabling resumes. */
+  enabled: z.boolean(),
+  status: z.enum(["idle", "syncing", "error"]),
+  lastPushedAt: z.string().nullable(),
+  /** When the consent screen was confirmed (FR-002/FR-003). */
+  consentedAt: z.string(),
+  /**
+   * The vault's title at the last save, so a device can offer its known
+   * backups by name rather than by opaque id. Optional: records written before
+   * this existed must still load.
+   */
+  vaultTitle: z.string().optional(),
+});
+
+export type LocalCloudBackupRecord = z.infer<
+  typeof LocalCloudBackupRecordSchema
+>;
+
+/**
+ * Support lookup response. `matched: false` covers both "no match" and
+ * "several matched" deliberately, so an admin never learns how many vaults
+ * share a title (FR-015, FR-016).
+ */
+export const SupportLookupResultSchema = z.object({
+  matched: z.boolean(),
+  backupId: z.string().optional(),
+  vaultTitle: z.string().optional(),
+  sizeBytes: z.number().int().optional(),
+  lastPushedAt: z.string().optional(),
+});
+
+export type SupportLookupResult = z.infer<typeof SupportLookupResultSchema>;

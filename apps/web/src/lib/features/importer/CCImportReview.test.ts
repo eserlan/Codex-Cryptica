@@ -15,7 +15,7 @@ const baseSession: CCImportSession = {
         sourceId: "hero-1",
         title: "Valeria",
         content: "Content",
-        tags: ["assassin"],
+        labels: ["assassin"],
       },
       resolvedType: "note",
       typeFallback: true,
@@ -30,7 +30,7 @@ const baseSession: CCImportSession = {
         title: "Moon Harbor",
         content: "Harbor",
         sourceType: "place",
-        tags: ["port"],
+        labels: ["port"],
       },
       resolvedType: "location",
       typeFallback: false,
@@ -91,6 +91,42 @@ describe("CCImportReview", () => {
     expect(screen.getByText("1 relationship found.")).toBeTruthy();
     expect(screen.getByText(/Type fallback/)).toBeTruthy();
     expect(screen.getByText("No bytes provided")).toBeTruthy();
+  });
+
+  it("renders repeated CIF warnings for the same entity without duplicate Svelte keys", () => {
+    const session: CCImportSession = {
+      ...baseSession,
+      sourceSystem: "cif",
+      warnings: [
+        {
+          code: "cif.asset-extra-image-ref",
+          ref: "notes/session-01",
+          message: "Image B was skipped",
+        },
+        {
+          code: "cif.asset-extra-image-ref",
+          ref: "notes/session-01",
+          message: "Image C was skipped",
+        },
+        {
+          code: "cif.asset-extra-image-ref",
+          ref: "notes/session-01",
+          message: "Image C was skipped",
+        },
+      ],
+    };
+
+    render(CCImportReview, {
+      session,
+      onItemDecisionChange: vi.fn(),
+      onMatchDecisionChange: vi.fn(),
+      onItemTypeChange: vi.fn(),
+      onCommit: vi.fn(),
+      onCancel: vi.fn(),
+    });
+
+    expect(screen.getByText("Image B was skipped")).toBeTruthy();
+    expect(screen.getAllByText("Image C was skipped")).toHaveLength(2);
   });
 
   it("emits include or ignore decisions", async () => {
@@ -184,7 +220,7 @@ describe("CCImportReview — matched-item field diff (T021/FR-015)", () => {
             sourceId: "hero-1",
             title: "Valeria the Bold",
             content: "New summary",
-            tags: [],
+            labels: [],
           },
           resolvedType: "character",
           typeFallback: false,
@@ -232,7 +268,7 @@ describe("CCImportReview — matched-item field diff (T021/FR-015)", () => {
             sourceId: "hero-1",
             title: "Valeria",
             content: "Same",
-            tags: [],
+            labels: [],
           },
           resolvedType: "character",
           typeFallback: false,

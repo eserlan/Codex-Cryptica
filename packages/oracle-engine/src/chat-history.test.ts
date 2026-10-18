@@ -341,4 +341,57 @@ describe("ChatHistoryService", () => {
       expect(svc.messages[0].id).toBe("wiz-1");
     });
   });
+
+  it("keeps mentions and assistant source ids through save and reload", async () => {
+    await service.init(mockDB, "vault-1");
+    const mention = {
+      entityId: "e-elara",
+      displayName: "Elara Voss",
+      entityType: "character",
+      start: 4,
+      end: 16,
+    };
+    await service.addMessage({
+      id: "u1",
+      role: "user",
+      content: "Who is @Elara Voss?",
+      mentions: [mention],
+    } as any);
+    await service.addMessage({
+      id: "a1",
+      role: "assistant",
+      content: "She leads the Academy.",
+      sourceIds: ["e-elara"],
+    } as any);
+    const saved = mockDB.appSettings.put.mock.calls.at(-1)[0].value;
+
+    const reloaded = new ChatHistoryService();
+    await reloaded.init(
+      {
+        appSettings: {
+          ...mockDB.appSettings,
+          get: vi.fn().mockResolvedValue({ value: saved }),
+        },
+      },
+      "vault-1",
+    );
+
+    expect(reloaded.messages[0].mentions).toEqual([mention]);
+    expect((reloaded.messages[1] as any).sourceIds).toEqual(["e-elara"]);
+  });
+
+  it("loads older messages that have no mentions or source ids", async () => {
+    const legacy = [{ id: "old", role: "user", content: "Plain question" }];
+    await service.init(
+      {
+        appSettings: {
+          ...mockDB.appSettings,
+          get: vi.fn().mockResolvedValue({ value: legacy }),
+        },
+      } as any,
+      "vault-1",
+    );
+    expect(service.messages).toHaveLength(1);
+    expect(service.messages[0].mentions).toBeUndefined();
+  });
 });

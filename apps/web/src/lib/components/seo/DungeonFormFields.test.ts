@@ -4,7 +4,7 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import DungeonFormFields from "./DungeonFormFields.svelte";
 
-vi.mock("$lib/services/seo/generator-engine", () => ({
+vi.mock("$lib/services/seo/generator-config", () => ({
   dungeonConfig: {
     purposes: [
       "Temple & Shrine",

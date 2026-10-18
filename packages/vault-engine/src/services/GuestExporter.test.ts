@@ -8,7 +8,8 @@ describe("GuestExporter", () => {
     type: "note",
     title: "Public Note",
     status: "active",
-    content: "This is a public node with a link to [Secret Node](entity-2) and [Public Node 2](entity-3) and [Google](https://google.com).",
+    content:
+      "This is a public node with a link to [Secret Node](entity-2) and [Public Node 2](entity-3) and [Google](https://google.com).",
     lore: "Top secret GM only note",
     artDirection: "GM visual description",
     connections: [
@@ -63,7 +64,7 @@ describe("GuestExporter", () => {
     expect(bundle.activeTheme).toEqual({ primaryColor: "#ff0000" });
     expect(bundle.publishedAt).toBeDefined();
 
-    const ids = bundle.entities.map(e => e.id);
+    const ids = bundle.entities.map((e) => e.id);
     expect(ids).toContain("entity-1");
     expect(ids).toContain("entity-3");
     expect(ids).not.toContain("entity-2"); // Hidden
@@ -73,7 +74,7 @@ describe("GuestExporter", () => {
   it("should physically delete GM secrets on included entities", () => {
     const bundle = GuestExporter.export(defaultOptions);
 
-    const exportedE1 = bundle.entities.find(e => e.id === "entity-1")!;
+    const exportedE1 = bundle.entities.find((e) => e.id === "entity-1")!;
     expect(exportedE1.lore).toBeUndefined();
     expect(exportedE1.artDirection).toBeUndefined();
     expect((exportedE1 as any)._path).toBeUndefined();
@@ -82,7 +83,7 @@ describe("GuestExporter", () => {
   it("should redact links to private/excluded entities but preserve public and external links", () => {
     const bundle = GuestExporter.export(defaultOptions);
 
-    const exportedE1 = bundle.entities.find(e => e.id === "entity-1")!;
+    const exportedE1 = bundle.entities.find((e) => e.id === "entity-1")!;
     expect(exportedE1.content).toContain("[Redacted]"); // entity-2 link is redacted
     expect(exportedE1.content).toContain("entity-3"); // entity-3 link is preserved
     expect(exportedE1.content).toContain("https://google.com"); // google link is preserved
@@ -96,6 +97,45 @@ describe("GuestExporter", () => {
     expect(bundle.relationships[0].sourceId).toBe("entity-1");
     expect(bundle.relationships[0].targetId).toBe("entity-3");
     expect(bundle.relationships[0].label).toBe("Ally");
+  });
+
+  it("never exports hex crawl data to guests, but keeps the grid geometry (T008, FR-041)", () => {
+    const bundle = GuestExporter.export({
+      ...defaultOptions,
+      maps: [
+        {
+          id: "map-hex",
+          name: "Overland",
+          playerVisible: true,
+          pins: [],
+          grid: { type: "hex-pointy", size: 48, offsetX: 0, offsetY: 0 },
+          hexCrawl: {
+            enabled: true,
+            hexes: {
+              "1,2": {
+                notes: "GM secret: the ruin hides a cult",
+                aiNotes: "Hazard: sinkholes",
+                explored: true,
+                updatedAt: 1,
+              },
+            },
+          },
+        } as any,
+        {
+          id: "map-hidden",
+          name: "Hidden",
+          playerVisible: false,
+          pins: [],
+          hexCrawl: { enabled: true, hexes: {} },
+        } as any,
+      ],
+    });
+
+    expect(bundle.maps).toHaveLength(1);
+    expect(bundle.maps[0].grid?.type).toBe("hex-pointy");
+    expect("hexCrawl" in bundle.maps[0]).toBe(false);
+    expect(JSON.stringify(bundle)).not.toContain("cult");
+    expect(JSON.stringify(bundle)).not.toContain("sinkholes");
   });
 
   it("should sanitize maps and canvases based on player visibility and entity inclusion", () => {
@@ -150,20 +190,188 @@ describe("GuestExporter", () => {
     expect(bundle.maps).toHaveLength(1);
     expect(bundle.maps[0].id).toBe("map-public");
     expect(bundle.maps[0].pins).toHaveLength(2);
-    expect(bundle.maps[0].pins.map(p => p.id)).toContain("pin-1");
-    expect(bundle.maps[0].pins.map(p => p.id)).toContain("pin-3");
-    expect(bundle.maps[0].pins.map(p => p.id)).not.toContain("pin-2");
+    expect(bundle.maps[0].pins.map((p) => p.id)).toContain("pin-1");
+    expect(bundle.maps[0].pins.map((p) => p.id)).toContain("pin-3");
+    expect(bundle.maps[0].pins.map((p) => p.id)).not.toContain("pin-2");
 
     // Verify canvases
     expect(bundle.canvases).toHaveLength(1);
     expect(bundle.canvases[0].id).toBe("canvas-public");
     expect(bundle.canvases[0].nodes).toHaveLength(2);
-    expect(bundle.canvases[0].nodes.map(n => n.id)).toContain("node-1");
-    expect(bundle.canvases[0].nodes.map(n => n.id)).toContain("node-3");
-    expect(bundle.canvases[0].nodes.map(n => n.id)).not.toContain("node-2");
+    expect(bundle.canvases[0].nodes.map((n) => n.id)).toContain("node-1");
+    expect(bundle.canvases[0].nodes.map((n) => n.id)).toContain("node-3");
+    expect(bundle.canvases[0].nodes.map((n) => n.id)).not.toContain("node-2");
 
     expect(bundle.canvases[0].edges).toHaveLength(1);
     expect(bundle.canvases[0].edges[0].id).toBe("edge-1-3");
   });
-});
 
+  describe("report entities", () => {
+    const report: Entity = {
+      id: "report-1",
+      type: "note",
+      title: "Party Report",
+      status: "active",
+      kind: "report",
+      content: "## Overview",
+      connections: [],
+    };
+    const normalNote: Entity = {
+      id: "note-1",
+      type: "note",
+      title: "Party Notes",
+      status: "active",
+      content: "Regular note",
+      connections: [{ target: "report-1", type: "neutral" }],
+    };
+
+    it("excludes reports and connections that target them", () => {
+      const bundle = GuestExporter.export({
+        ...defaultOptions,
+        entities: [normalNote, report],
+      });
+      const ids = bundle.entities.map((e) => e.id);
+      expect(ids).not.toContain("report-1");
+      expect(bundle.relationships.some((r) => r.target === "report-1")).toBe(
+        false,
+      );
+    });
+
+    it("still exports an ordinary note", () => {
+      const bundle = GuestExporter.export({
+        ...defaultOptions,
+        entities: [normalNote, report],
+      });
+      expect(bundle.entities.map((e) => e.id)).toContain("note-1");
+    });
+
+    it("drops canvas nodes that point at a report", () => {
+      const bundle = GuestExporter.export({
+        ...defaultOptions,
+        entities: [normalNote, report],
+        canvases: [
+          {
+            id: "c",
+            name: "C",
+            playerVisible: true,
+            nodes: [
+              { id: "n1", type: "entity", entityId: "report-1" },
+              { id: "n2", type: "entity", entityId: "note-1" },
+            ],
+            edges: [],
+          } as any,
+        ],
+      });
+      const nodes = bundle.canvases?.[0]?.nodes.map((n: any) => n.id);
+      expect(nodes).toEqual(["n2"]);
+    });
+  });
+  describe("stat sheets (#3964)", () => {
+    const CANARY = "CANARY-GM-ONLY";
+    const shop: Entity = {
+      id: "shop-1",
+      type: "location",
+      title: "Tallow's Goods",
+      status: "active",
+      content: "A shop.",
+      connections: [],
+      statSheet: {
+        templateId: "builtin-shop-merchant",
+        fields: [
+          {
+            id: "gm_notes",
+            label: "GM notes",
+            type: "longtext",
+            value: CANARY,
+          },
+          {
+            id: "stock",
+            label: "Stock",
+            type: "item-table",
+            stockLedger: true,
+            rows: [
+              {
+                rowId: "r1",
+                entityId: "entity-2",
+                stock: { quantity: 1, note: CANARY },
+              },
+            ],
+          },
+        ],
+      },
+    } as Entity;
+    const character: Entity = {
+      id: "char-1",
+      type: "character",
+      title: "Mira",
+      status: "active",
+      content: "",
+      connections: [],
+      statSheet: {
+        templateId: null,
+        fields: [{ id: "hp", label: "HP", type: "counter", value: 8 }],
+      },
+    } as Entity;
+    const options = (
+      extra: Partial<ExporterOptions> = {},
+    ): ExporterOptions => ({
+      ...defaultOptions,
+      entities: [shop, character, secretEntity],
+      ...extra,
+    });
+    const sheetOf = (
+      bundle: ReturnType<typeof GuestExporter.export>,
+      id: string,
+    ) => bundle.entities.find((e) => e.id === id)?.statSheet;
+
+    it("withholds a merchant ledger when no sanitiser is given, so it fails closed", () => {
+      const bundle = GuestExporter.export(options());
+      expect(sheetOf(bundle, "shop-1")).toEqual({
+        templateId: null,
+        fields: [],
+      });
+      expect(JSON.stringify(bundle)).not.toContain(CANARY);
+    });
+
+    it("leaves an ordinary sheet unchanged when no sanitiser is given", () => {
+      const bundle = GuestExporter.export(options());
+      expect(sheetOf(bundle, "char-1")).toEqual(character.statSheet);
+    });
+
+    it("hands each sheet to the sanitiser and uses what it returns", () => {
+      const bundle = GuestExporter.export(
+        options({
+          sanitizeStatSheet: (sheet) => ({
+            templateId: sheet.templateId,
+            fields: sheet.fields.filter((f) => f.id !== "gm_notes"),
+          }),
+        }),
+      );
+      const fields = sheetOf(bundle, "shop-1")!.fields.map((f) => f.id);
+      expect(fields).toEqual(["stock"]);
+    });
+
+    it("names a linked Item only when that Item is itself in the export", () => {
+      const asked: Record<string, string | undefined> = {};
+      GuestExporter.export(
+        options({
+          entities: [shop, character, secretEntity, publicEntity2],
+          sanitizeStatSheet: (sheet, { resolveName }) => {
+            asked["entity-2"] = resolveName("entity-2");
+            asked["entity-3"] = resolveName("entity-3");
+            return sheet;
+          },
+        }),
+      );
+      // entity-2 is hidden (fog of war), entity-3 is published.
+      expect(asked["entity-2"]).toBeUndefined();
+      expect(asked["entity-3"]).toBe("Public Note 2");
+    });
+
+    it("does not change the sheet on the GM's entity", () => {
+      const before = JSON.stringify(shop);
+      GuestExporter.export(options());
+      expect(JSON.stringify(shop)).toBe(before);
+    });
+  });
+});

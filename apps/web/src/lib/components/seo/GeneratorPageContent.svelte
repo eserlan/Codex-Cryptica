@@ -1,53 +1,39 @@
 <script lang="ts">
-  import { onMount, untrack } from "svelte";
+  import type { OneShotProgressStep } from "generator-engine";
+  import { onDestroy, onMount, untrack } from "svelte";
   import { browser } from "$app/environment";
-  import { afterNavigate, goto } from "$app/navigation";
-  import { resolve } from "$app/paths";
   import { page } from "$app/state";
   import { hubContext } from "$lib/stores/hub-context.svelte";
   import { sessionHubStore } from "$lib/stores/session-hub.svelte";
-  import { collectSessionNames, collectSessionTraits } from "generator-engine";
+  import { UI_STORAGE_KEYS, UIPersistence } from "$lib/stores/ui/persistence";
   import SEOGeneratorLayout from "./SEOGeneratorLayout.svelte";
-  import RPGNPCFormFields from "$lib/components/seo/RPGNPCFormFields.svelte";
-  import FactionFormFields from "$lib/components/seo/FactionFormFields.svelte";
-  import QuestFormFields from "$lib/components/seo/QuestFormFields.svelte";
-  import CouncilVoteFormFields from "$lib/components/seo/CouncilVoteFormFields.svelte";
-  import SecretSocietyFormFields from "$lib/components/seo/SecretSocietyFormFields.svelte";
-  import SettlementFormFields from "$lib/components/seo/SettlementFormFields.svelte";
-  import MagicItemFormFields from "$lib/components/seo/MagicItemFormFields.svelte";
-  import TavernFormFields from "$lib/components/seo/TavernFormFields.svelte";
-  import SocialHubFormFields from "$lib/components/seo/SocialHubFormFields.svelte";
-  import KingdomFormFields from "$lib/components/seo/KingdomFormFields.svelte";
-  import NationFormFields from "$lib/components/seo/NationFormFields.svelte";
-  import VampireFormFields from "$lib/components/seo/VampireFormFields.svelte";
-  import NomadClanFormFields from "$lib/components/seo/NomadClanFormFields.svelte";
-  import NameFormFields from "$lib/components/seo/NameFormFields.svelte";
-  import NPCFormFields from "$lib/components/seo/NPCFormFields.svelte";
-  import PantheonFormFields from "$lib/components/seo/PantheonFormFields.svelte";
-  import ShipFormFields from "$lib/components/seo/ShipFormFields.svelte";
-  import LanguageFormFields from "$lib/components/seo/LanguageFormFields.svelte";
-  import NewsSheetFormFields from "$lib/components/seo/NewsSheetFormFields.svelte";
-  import DungeonFormFields from "$lib/components/seo/DungeonFormFields.svelte";
-  import AdventureFormFields from "$lib/components/seo/AdventureFormFields.svelte";
-  import PlotTwistFormFields from "$lib/components/seo/PlotTwistFormFields.svelte";
-  import WorldFormFields from "$lib/components/seo/WorldFormFields.svelte";
-  import StarSystemFormFields from "$lib/components/seo/StarSystemFormFields.svelte";
-  import AlienRaceFormFields from "$lib/components/seo/AlienRaceFormFields.svelte";
+  import OneShotRefinePanel from "./OneShotRefinePanel.svelte";
+  import PointCrawlRefinePanel from "./PointCrawlRefinePanel.svelte";
+  import GeneratorPageFormFields from "./GeneratorPageFormFields.svelte";
   import {
-    generatorEngine,
     npcConfig,
     npcThemeConfig,
     settlementConfig,
     magicItemConfig,
+    minorMagicItemConfig,
+    artifactConfig,
     factionConfig,
+    factionRosterConfig,
     questConfig,
+    personalityConfig,
+    rumourConfig,
+    encounterConfig,
+    puzzleConfig,
     councilVoteConfig,
+    heistConfig,
+    holidayConfig,
     secretSocietyConfig,
     socialHubConfig,
     kingdomConfig,
     nationConfig,
     vampireConfig,
     nomadClanConfig,
+    darkFactionConfig,
     nameGeneratorConfig,
     pantheonConfig,
     shipConfig,
@@ -56,13 +42,24 @@
     dungeonConfig,
     adventureConfig,
     plotTwistConfig,
+    villainConfig,
+    comicBookEventConfig,
+    originConfig,
+    villainSchemeConfig,
+    oneShotConfig,
+    pointCrawlConfig,
     worldConfig,
     starSystemConfig,
+    constellationConfig,
     alienRaceConfig,
+    creatureConfig,
+    tomeConfig,
     themeIdToLabel,
     themeToQuestGenre,
-    type GeneratorOutput,
-  } from "$lib/services/seo/generator-engine";
+  } from "$lib/services/seo/generator-config";
+  import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
+
+  import { loadGeneratorRemixDraft } from "./generator-page-remix";
   import {
     type SlugMetaEntry,
     type ValidSlug,
@@ -70,29 +67,52 @@
   } from "./generator-page-meta";
   import { slugDrafts } from "./generator-page-drafts";
   import {
-    buildPlotTwistPremise,
-    resolvePlotTwistPremiseForGeneration,
-  } from "$lib/services/seo/generator-handoffs";
+    createGenerate,
+    createGeneratorHandlers,
+    createOneShotRunControl,
+  } from "./generator-page-generation";
+  import {
+    initializeHandoffState,
+    setupHandoffNavigation,
+    openPlotTwistFromQuest,
+    openRosterFromFaction,
+    openMemberAsCharacter,
+    applyPendingDevelopWorld as applyDevelopWorldHandoff,
+    type GeneratorHandoffState,
+  } from "./generator-page-handoffs";
   import {
     HUB_LABELS,
-    HUB_SLUG_TO_THEME_ID,
     SETTLEMENT_GENRE_FOR_HUB,
-    SLUGS_USING_STORED_THEME,
     SOCIAL_HUB_GENRE_TO_THEME,
+    mapAlienRaceGenreToTheme,
     mapHubGenreToShipGenre,
     mapShipGenreToTheme,
-    mapWorldGenreToTheme,
     mapStarSystemGenreToTheme,
-    mapAlienRaceGenreToTheme,
+    mapWorldGenreToTheme,
+    mapOneShotGenreToTheme,
     resolveHubGeneratorGenre,
     shouldSyncGeneratorTheme,
   } from "./generator-theme-maps";
+  import { worldGenreForHub } from "./generator-page-world-handoff";
+  import { syncGeneratorTheme } from "./generator-theme-sync";
+  import { generatorShareService } from "$lib/services/sharing/GeneratorShareService";
+  import {
+    getHubMountPatch,
+    resolveInitialActiveTheme,
+    resolveOneShotGenre,
+    resolveSupportedHubGenre,
+  } from "./generator-page-hub-state";
+  import {
+    createKnownGenreThemeChangeHandler,
+    createMappedThemeChangeHandler,
+  } from "./generator-page-form-theme";
 
   let {
     slug,
     urlHubTheme = undefined,
     metaOverrides = undefined,
     initialDraftOverride = undefined,
+    persistence = new UIPersistence(),
   }: {
     slug: ValidSlug;
     urlHubTheme?: string;
@@ -112,6 +132,7 @@
      * Used by alternative routes that need a different default draft on first load.
      */
     initialDraftOverride?: GeneratorOutput;
+    persistence?: UIPersistence;
   } = $props();
 
   // When arriving via a themed URL, seed hubContext immediately so derived
@@ -132,24 +153,23 @@
   );
   const initialHubGenre = resolveHubGeneratorGenre(hubContext.theme);
 
-  function worldGenreForHub(hubGenre: string | null): string {
-    if (hubGenre === "Cyberpunk") return "Cyberpunk";
-    if (hubGenre === "Optimistic Exploration Sci-Fi") return "Hopeful Sci-Fi";
-    if (hubGenre === "Space Opera Resistance") return "Space Opera";
-    if (hubGenre === "Lancer") return "Lancer";
-    return "Hard Sci-Fi";
-  }
-
   const initialWorldGenre = worldGenreForHub(initialHubGenre);
 
   const meta = $derived({ ...slugMeta[slug], ...(metaOverrides ?? {}) });
+
+  const _initialHandoff = initializeHandoffState(_initialSlug);
+  let handoffState = $state<GeneratorHandoffState>({
+    ..._initialHandoff,
+    autoGeneratedForFactionContext: undefined,
+  });
 
   let npc = $state({
     theme: factionConfig.themes[0],
     ancestry: npcThemeConfig.ancestries[factionConfig.themes[0]][0],
     role: npcThemeConfig.roles[factionConfig.themes[0]][0],
     alignment: npcThemeConfig.moralities[factionConfig.themes[0]][0].id,
-    campaignContext: "",
+    campaignContext: _initialHandoff.npcContext,
+    mode: "table-card" as "dossier" | "table-card",
   });
 
   const settlementGenre =
@@ -180,6 +200,37 @@
     campaignContext: "",
   });
 
+  let minorMagicItem = $state({
+    genre: factionConfig.themes[0],
+    form: "",
+    usageLimit: minorMagicItemConfig.usageLimits[0],
+    utility: minorMagicItemConfig.utilities[0],
+    activation: minorMagicItemConfig.activations[0],
+    quirkSeverity: minorMagicItemConfig.quirkSeverities[0],
+    campaignContext: "",
+  });
+
+  let artifact = $state({
+    genre: factionConfig.themes[0],
+    form: artifactConfig.forms[0],
+    originEra: artifactConfig.originEras[0],
+    powerTier: artifactConfig.powerTiers[0],
+    currentStatus: artifactConfig.currentStatuses[0],
+    curseCost: artifactConfig.curseCosts[0],
+    campaignContext: "",
+  });
+
+  let tome = $state({
+    theme: factionConfig.themes[0],
+    tomeType: tomeConfig.tomeTypes[0],
+    format: tomeConfig.formats[0],
+    rarity: tomeConfig.rarities[0],
+    custodian: tomeConfig.custodians[0],
+    hazard: tomeConfig.primaryHazards[0],
+    language: tomeConfig.languages[0],
+    campaignContext: "",
+  });
+
   let faction = $state({
     theme: factionConfig.themes[0],
     type: factionConfig.typesByTheme["Classic Fantasy"][0],
@@ -188,6 +239,52 @@
     campaignContext: "",
   });
 
+  let factionRoster = $state({
+    theme: factionConfig.themes[0],
+    size: factionRosterConfig.sizes[1],
+    structure: factionRosterConfig.structures[0],
+    emphasis: factionRosterConfig.emphases[0],
+    factionContext: _initialHandoff.factionContext,
+    campaignContext: "",
+  });
+
+  let seoLayoutRef = $state<ReturnType<typeof SEOGeneratorLayout> | null>(null);
+  let remixDraft = $state<GeneratorOutput | null>(null);
+
+  // Drives the roster's auto-generation explicitly once handoff context
+  // has actually settled, rather than have the child guess how long to wait
+  // after a client-side navigation (SEOGeneratorLayout is reused across slug
+  // navigations, so its own on-mount effects can fire before this page's
+  // afterNavigate handler has set the handed-over context — see that
+  // component's `triggerExplicitAutoGenerate` doc comment).
+  $effect(() => {
+    if (
+      slug === "faction-roster" &&
+      handoffState.factionContext &&
+      handoffState.autoGeneratedForFactionContext !==
+        handoffState.factionContext
+    ) {
+      handoffState.autoGeneratedForFactionContext = handoffState.factionContext;
+      seoLayoutRef?.triggerExplicitAutoGenerate();
+    }
+  });
+
+  let personality = $state({
+    genre: personalityConfig.genres[0],
+    roleHint: personalityConfig.roleHints[0],
+    temperament: personalityConfig.temperaments[0],
+    socialStyle: personalityConfig.socialStyles[0],
+    moralOutlook: personalityConfig.moralOutlooks[0],
+    emotionalOpenness: personalityConfig.emotionalOpenness[0],
+    confidence: personalityConfig.confidenceLevels[0],
+    optimism: personalityConfig.optimismSpectrum[0],
+    expressiveness: personalityConfig.expressiveness[0],
+    cooperationStyle: personalityConfig.cooperationStyles[0],
+    ageOrLifeStage: "",
+    relationshipContext: "",
+    concept: "",
+    campaignContext: "",
+  });
   let quest = $state({
     genre: questConfig.genres[0],
     tone: questConfig.tones[0],
@@ -196,6 +293,38 @@
     threat: questConfig.threats[0],
     twist: questConfig.twists[0],
     reward: questConfig.rewards[0],
+    campaignContext: "",
+  });
+  let rumour = $state({
+    genre: rumourConfig.genres[0],
+    tone: rumourConfig.tones[0],
+    dangerLevel: rumourConfig.dangerLevels[0],
+    subjectFocus: rumourConfig.subjects[0],
+    locationContext: "",
+    campaignContext: "",
+  });
+  let encounter = $state({
+    genre: factionConfig.themes[0],
+    encounterType:
+      encounterConfig.encounterTypes.find((t) => t !== "Random") ??
+      encounterConfig.encounterTypes[0],
+    environment: encounterConfig.environments[0],
+    threat: encounterConfig.threats[0],
+    tone: encounterConfig.tones[0],
+    context: "",
+  });
+  let puzzle = $state({
+    genre: puzzleConfig.genres[0],
+    purpose: puzzleConfig.purposes[0],
+    complexity: puzzleConfig.complexities[0],
+    style: puzzleConfig.styles[0],
+    partyLevel: "",
+    playerCount: "",
+    capabilities: "",
+    participationStyle: puzzleConfig.participationStyles[0],
+    failurePressure: puzzleConfig.failurePressures[0],
+    system: puzzleConfig.systems[0],
+    downstreamConsequence: "",
     campaignContext: "",
   });
 
@@ -209,6 +338,27 @@
     scope: councilVoteConfig.scopes[0],
     tone: councilVoteConfig.tones[0],
     antagonistInfluence: councilVoteConfig.antagonistInfluences[0],
+    campaignContext: "",
+  });
+  let holiday = $state({
+    genre: factionConfig.themes[0],
+    scope: holidayConfig.scopes[0],
+    setSize: holidayConfig.setSizes[0],
+    tone: holidayConfig.tones[0],
+    culture: "",
+    climate: "",
+    religion: "",
+    history: "",
+    importantPeople: "",
+    importantEvents: "",
+    includeControversial: false,
+  });
+  let heist = $state({
+    genre: factionConfig.themes[0],
+    heistType: heistConfig.heistTypes[0],
+    targetScale: heistConfig.targetScales[1],
+    targetType: heistConfig.targetTypesByTheme[factionConfig.themes[0]][0],
+    prize: "",
     campaignContext: "",
   });
   let secretSociety = $state({
@@ -240,30 +390,40 @@
     campaignContext: "",
   });
 
+  const initialNationGenre = resolveSupportedHubGenre(
+    initialHubGenre,
+    nationConfig.genres,
+    nationConfig.genres[0],
+  );
+  const initialNationPolityTypes =
+    nationConfig.polityTypesByGenre[initialNationGenre] ??
+    nationConfig.polityTypesByGenre[nationConfig.genres[0]];
   let nation = $state({
-    genre: initialHubGenre ?? nationConfig.genres[0],
-    polityType:
-      nationConfig.polityTypesByGenre[
-        initialHubGenre ?? nationConfig.genres[0]
-      ][0],
+    genre: initialNationGenre,
+    polityType: initialNationPolityTypes[0],
     governmentStyle: nationConfig.governmentStyles[0],
     scale: nationConfig.scales[2],
     conflictLevel: nationConfig.conflictLevels[0],
     campaignContext: "",
   });
 
+  const initialSocialHubGenre = resolveSupportedHubGenre(
+    initialHubGenre,
+    socialHubConfig.genres,
+    socialHubConfig.genres[0],
+  );
+  const initialSocialHubVenueTypes =
+    socialHubConfig.venueTypesByGenre[initialSocialHubGenre] ??
+    socialHubConfig.venueTypesByGenre[socialHubConfig.genres[0]];
+  const initialSocialHubClienteles =
+    socialHubConfig.clientelesByGenre[initialSocialHubGenre] ??
+    socialHubConfig.clientelesByGenre[socialHubConfig.genres[0]];
   let socialHub = $state({
-    genre: initialHubGenre ?? socialHubConfig.genres[0],
-    venueType:
-      socialHubConfig.venueTypesByGenre[
-        initialHubGenre ?? socialHubConfig.genres[0]
-      ][0],
+    genre: initialSocialHubGenre,
+    venueType: initialSocialHubVenueTypes[0],
     atmosphere: socialHubConfig.atmospheres[0],
     wealthLevel: socialHubConfig.wealthLevels[2],
-    clientele:
-      socialHubConfig.clientelesByGenre[
-        initialHubGenre ?? socialHubConfig.genres[0]
-      ][0],
+    clientele: initialSocialHubClienteles[0],
     campaignContext: "",
   });
 
@@ -283,6 +443,14 @@
     campaignContext: "",
   });
 
+  let darkFaction = $state({
+    mode: darkFactionConfig.modes[0],
+    factionType: darkFactionConfig.types[0],
+    scope: darkFactionConfig.scopes[0],
+    moralPosture: darkFactionConfig.moralPostures[0],
+    campaignContext: "",
+  });
+
   let names = $state({
     culture: nameGeneratorConfig.cultures[0],
     gender: nameGeneratorConfig.genders[0],
@@ -295,6 +463,7 @@
     role: npcConfig.roles[0],
     alignment: npcConfig.alignments[0],
     campaignContext: "",
+    mode: "table-card" as "dossier" | "table-card",
   });
 
   let pantheon = $state({
@@ -370,32 +539,89 @@
     campaignContext: "",
   });
 
-  const initialHandedOffQuestPremise =
-    browser && _initialSlug === "plot-twist-generator"
-      ? (new URLSearchParams(window.location.search).get("questPremise") ?? "")
-      : "";
-  let handedOffQuestPremise = $state(initialHandedOffQuestPremise);
-
   let plotTwist = $state({
     genre: factionConfig.themes[0],
     twistType: plotTwistConfig.twistTypes[0],
     impact: plotTwistConfig.impacts[1],
     timing: plotTwistConfig.timings[4],
     foreshadowing: plotTwistConfig.foreshadowing[0],
-    premise: initialHandedOffQuestPremise,
+    premise: _initialHandoff.questPremise,
     constraints: "",
     campaignContext: "",
   });
 
   // Dynamic generator routes reuse this component during client navigation.
   // Read the URL only in the browser so static prerendering remains valid.
-  afterNavigate(({ to }) => {
-    const premise =
-      slug === "plot-twist-generator"
-        ? (to?.url.searchParams.get("questPremise") ?? "")
-        : "";
-    handedOffQuestPremise = premise;
-    if (premise) plotTwist.premise = premise;
+  setupHandoffNavigation(
+    () => slug,
+    handoffState,
+    (updates) => {
+      Object.assign(handoffState, updates);
+      if (updates.questPremise !== undefined)
+        plotTwist.premise = updates.questPremise;
+      if (updates.factionContext !== undefined)
+        factionRoster.factionContext = updates.factionContext;
+      if (updates.npcContext !== undefined)
+        npc.campaignContext = updates.npcContext;
+    },
+  );
+
+  let villain = $state({
+    genre: factionConfig.themes[0],
+    tone: villainConfig.tones[0],
+    threatScale: villainConfig.threatScales[0],
+    archetype: villainConfig.archetypes[0],
+    sympathy: villainConfig.sympathyLevels[0],
+    worldRelation: villainConfig.worldRelations[0],
+    campaignContext: "",
+  });
+
+  let comicBookEvent = $state({
+    eventType: comicBookEventConfig.eventTypes[0],
+    scale: comicBookEventConfig.scales[0],
+    tone: comicBookEventConfig.tones[0],
+    campaignContext: "",
+  });
+
+  // Superhero / Comic Book only, by design (#3111) — no genre field, no
+  // theme-sync $effect branch below (Part C is deliberately not applicable).
+  let origin = $state({
+    originType: originConfig.originTypes[0],
+    tone: originConfig.tones[0],
+    campaignContext: "",
+  });
+
+  let oneShot = $state({
+    genre: oneShotConfig.genres[0],
+    system: oneShotConfig.systems[0],
+    durationHours: "3",
+    partySize: "4",
+    partyLevel: "",
+    emphasis: oneShotConfig.emphases[0],
+    structure: oneShotConfig.structures[1],
+    tone: "",
+    premise: "",
+    boundaries: "",
+    campaignContext: "",
+  });
+
+  let pointCrawl = $state({
+    genre: pointCrawlConfig.genres[0],
+    scale: "Wilderness",
+    pointCount: "8",
+    density: "Balanced branching",
+    dangerLevel: "Moderate",
+    secretFrequency: "Balanced",
+    premise: "",
+    campaignContext: "",
+  });
+
+  let villainScheme = $state({
+    powerScale: villainSchemeConfig.powerScales[0],
+    tone: villainSchemeConfig.tones[0],
+    schemeType: villainSchemeConfig.schemeTypes[0],
+    villainProfile: villainSchemeConfig.villainProfiles[0],
+    campaignContext: "",
   });
 
   let world = $state({
@@ -431,6 +657,22 @@
     campaignContext: "",
   });
 
+  let constellation = $state<{
+    mode: "single" | "night-sky";
+    genre: string;
+    visualImpression: string;
+    practicalUse: string;
+    culturalMeaning: string;
+    campaignContext: string;
+  }>({
+    mode: "single",
+    genre: constellationConfig.genres[0],
+    visualImpression: constellationConfig.visualImpressions[0],
+    practicalUse: constellationConfig.practicalUses[0],
+    culturalMeaning: constellationConfig.culturalMeanings[0],
+    campaignContext: "",
+  });
+
   let alienRace = $state<{
     genre: string;
     generationMode: string;
@@ -453,24 +695,79 @@
     campaignContext: "",
   });
 
-  // For themed URL: seed from hub slug. For flat URL: read localStorage.
-  const _initStoredThemeId =
-    (_initialUrlHubTheme ? HUB_SLUG_TO_THEME_ID[_initialUrlHubTheme] : null) ??
-    (browser && SLUGS_USING_STORED_THEME.has(_initialSlug)
-      ? localStorage.getItem("codex-cryptica-active-theme")
-      : null);
-  const _worldInitialTheme = _initialUrlHubTheme
-    ? (SOCIAL_HUB_GENRE_TO_THEME[
-        resolveHubGeneratorGenre(_initialUrlHubTheme) ?? ""
-      ] ?? null)
-    : null;
+  let creature = $state<{
+    genre: string;
+    category: string;
+    threatLevel: string;
+    size: string;
+    temperament: string;
+    habitat: string;
+    ecologicalRole: string;
+    campaignContext: string;
+  }>({
+    genre: factionConfig.themes[0],
+    category: creatureConfig.categories[0],
+    threatLevel: creatureConfig.threatLevels[0],
+    size: creatureConfig.sizes[0],
+    temperament: creatureConfig.temperaments[0],
+    habitat: creatureConfig.habitats[0],
+    ecologicalRole: creatureConfig.ecologicalRoles[0],
+    campaignContext: "",
+  });
 
   let activeTheme = $state(
-    _worldInitialTheme ||
-      (_initStoredThemeId && themeIdToLabel[_initStoredThemeId]) ||
-      factionConfig.themes[0],
+    resolveInitialActiveTheme({
+      urlHubTheme: _initialUrlHubTheme,
+      slug: _initialSlug,
+      persistence,
+      browser: Boolean(browser),
+      fallbackTheme: factionConfig.themes[0],
+    }),
   );
   let lastSlug = $state(_initialSlug);
+
+  // The one-shot genre drives its skin (see syncGeneratorTheme), so a hub URL
+  // must seed the genre, otherwise the default genre overrides the hub theme.
+  oneShot.genre = resolveOneShotGenre(
+    _initialSlug,
+    activeTheme,
+    oneShotConfig.genres,
+    oneShot.genre,
+  );
+
+  const setActiveTheme = (theme: string) => (activeTheme = theme);
+  const handlePersonalityGenreChange = createKnownGenreThemeChangeHandler(
+    setActiveTheme,
+    personalityConfig.genres,
+  );
+  const handleRumourGenreChange = createKnownGenreThemeChangeHandler(
+    setActiveTheme,
+    rumourConfig.genres,
+  );
+  const handlePuzzleGenreChange = createKnownGenreThemeChangeHandler(
+    setActiveTheme,
+    puzzleConfig.genres,
+  );
+  const handleShipGenreChange = createMappedThemeChangeHandler(
+    setActiveTheme,
+    mapShipGenreToTheme,
+  );
+  const handleWorldGenreChange = createMappedThemeChangeHandler(
+    setActiveTheme,
+    mapWorldGenreToTheme,
+  );
+  const handleStarSystemGenreChange = createMappedThemeChangeHandler(
+    setActiveTheme,
+    mapStarSystemGenreToTheme,
+  );
+  const handleAlienRaceGenreChange = createMappedThemeChangeHandler(
+    setActiveTheme,
+    mapAlienRaceGenreToTheme,
+  );
+  const handleCreatureGenreChange = createMappedThemeChangeHandler(
+    setActiveTheme,
+    (genre) => genre,
+  );
 
   $effect(() => {
     if (slug !== lastSlug) {
@@ -480,38 +777,49 @@
   });
 
   $effect(() => {
-    if (slug === "npc") npc.theme = activeTheme;
-    else if (slug === "faction") faction.theme = activeTheme;
-    else if (slug === "quest")
-      quest.genre = themeToQuestGenre[activeTheme] ?? "Classic Fantasy";
-    else if (slug === "council-vote") councilVote.genre = activeTheme;
-    else if (slug === "secret-society") secretSociety.theme = activeTheme;
-    else if (slug === "social-hub")
-      activeTheme =
-        SOCIAL_HUB_GENRE_TO_THEME[socialHub.genre] ?? "Classic Fantasy";
-    else if (slug === "nation")
-      activeTheme =
-        SOCIAL_HUB_GENRE_TO_THEME[nation.genre] ?? "Classic Fantasy";
-    else if (slug === "pantheon-generator" || slug === "god-generator")
-      activeTheme = pantheon.genre;
-    // Language genre is a fixed select using the theme labels directly
-    // (Classic Fantasy, …), so it maps straight to activeTheme.
-    else if (slug === "language-generator") activeTheme = language.genre;
-    else if (slug === "news-sheet-generator")
-      activeTheme =
-        SOCIAL_HUB_GENRE_TO_THEME[newsSheet.genre] ?? "Classic Fantasy";
-    else if (slug === "world") activeTheme = mapWorldGenreToTheme(world.genre);
-    else if (slug === "star-system")
-      activeTheme = mapStarSystemGenreToTheme(starSystem.genre);
-    else if (slug === "alien-race")
-      activeTheme = mapAlienRaceGenreToTheme(alienRace.genre);
-    else if (slug === "dungeon-generator") dungeon.genre = activeTheme;
-    else if (
-      slug === "adventure-generator" ||
-      slug === "adventure-idea-generator"
-    )
-      adventure.genre = activeTheme;
-    else if (slug === "plot-twist-generator") plotTwist.genre = activeTheme;
+    syncGeneratorTheme({
+      slug,
+      activeTheme,
+      setActiveTheme: (theme) => (activeTheme = theme),
+      npc,
+      faction,
+      factionRoster,
+      quest,
+      personality,
+      rumour,
+      puzzle,
+      encounter,
+      councilVote,
+      heist,
+      holiday,
+      secretSociety,
+      socialHub,
+      nation,
+      pantheon,
+      language,
+      newsSheet,
+      world,
+      starSystem,
+      constellation,
+      alienRace,
+      dungeon,
+      adventure,
+      plotTwist,
+      villain,
+      minorMagicItem,
+      artifact,
+      creature,
+      tome,
+      pointCrawl,
+      oneShot,
+      mapOneShotGenre: mapOneShotGenreToTheme,
+      themeToQuestGenre,
+      mapSocialHubGenre: (genre) =>
+        SOCIAL_HUB_GENRE_TO_THEME[genre] ?? "Classic Fantasy",
+      mapWorldGenre: mapWorldGenreToTheme,
+      mapStarSystemGenre: mapStarSystemGenreToTheme,
+      mapAlienRaceGenre: mapAlienRaceGenreToTheme,
+    });
   });
 
   // Consumes the "Develop this world" handoff from a generated star system
@@ -519,596 +827,298 @@
   // system context in the query string so the World Generator draft starts
   // pre-populated instead of blank. Cleans the URL after reading it.
   function applyPendingDevelopWorld(): void {
-    const params = page.url.searchParams;
-    const systemTitle = params.get("developSystem");
-    const bodyName = params.get("developBody");
-    if (!systemTitle && !bodyName) return;
-    const bodyType = params.get("developBodyType");
-    const context = params.get("developContext");
-    world.dominantFeature = bodyName
-      ? `${bodyName}${bodyType ? ` (${bodyType})` : ""} — ${context || `part of the ${systemTitle} system.`}`
-      : (context ?? "");
-
-    const cleanUrl = new URL(page.url);
-    for (const key of [
-      "developSystem",
-      "developBody",
-      "developBodyType",
-      "developContext",
-    ]) {
-      cleanUrl.searchParams.delete(key);
+    const handoff = applyDevelopWorldHandoff();
+    if (handoff) {
+      world.dominantFeature = handoff.dominantFeature;
     }
-    goto(cleanUrl, { replaceState: true, noScroll: true, keepFocus: true });
   }
 
   onMount(() => {
-    if (slug === "nation") {
-      const hubGenre = resolveHubGeneratorGenre(hubContext.theme);
-      if (hubGenre) nation.genre = hubGenre;
-      activeTheme =
-        SOCIAL_HUB_GENRE_TO_THEME[nation.genre] ?? "Classic Fantasy";
-      return;
-    }
-    if (slug === "social-hub") {
-      const hubGenre = resolveHubGeneratorGenre(hubContext.theme);
-      if (hubGenre) socialHub.genre = hubGenre;
-      activeTheme =
-        SOCIAL_HUB_GENRE_TO_THEME[socialHub.genre] ?? "Classic Fantasy";
-      return;
-    }
-    if (slug === "settlement") {
-      const rawHubGenre = resolveHubGeneratorGenre(hubContext.theme);
-      const hubGenre = rawHubGenre
-        ? (SETTLEMENT_GENRE_FOR_HUB[rawHubGenre] ?? rawHubGenre)
-        : null;
-      if (hubGenre) {
-        settlement.genre = hubGenre;
-        const sizes =
-          settlementConfig.sizesByGenre[hubGenre] ??
-          settlementConfig.sizesByGenre["Fantasy"];
-        settlement.size = sizes[2].name;
-        settlement.environment = (settlementConfig.environmentsByGenre[
-          hubGenre
-        ] ?? settlementConfig.environmentsByGenre["Fantasy"])[0];
-        settlement.primaryFunction = (settlementConfig.primaryFunctionsByGenre[
-          hubGenre
-        ] ?? settlementConfig.primaryFunctionsByGenre["Fantasy"])[0];
-        settlement.tone = (settlementConfig.tonesByGenre[hubGenre] ??
-          settlementConfig.tonesByGenre["Fantasy"])[0];
-        settlement.mainTension = (settlementConfig.mainTensionsByGenre[
-          hubGenre
-        ] ?? settlementConfig.mainTensionsByGenre["Fantasy"])[0];
-      }
-      // Use raw hub genre (before settlement remapping) so e.g. Lancer hub
-      // keeps Lancer theming even though settlement.genre is mapped to Sci-Fi.
-      activeTheme =
-        (rawHubGenre ? SOCIAL_HUB_GENRE_TO_THEME[rawHubGenre] : "") ||
-        SOCIAL_HUB_GENRE_TO_THEME[settlement.genre] ||
-        "Classic Fantasy";
-      return;
-    }
-    if (slug === "vampire-clan") {
-      activeTheme = "Vampire / Gothic Noir";
-      return;
-    }
-    if (slug === "nomad-clan") {
-      activeTheme = "Cyberpunk / Corporate";
-      return;
-    }
-    if (slug === "pantheon-generator" || slug === "god-generator") {
-      activeTheme = pantheon.genre;
-      return;
-    }
-    if (slug === "dnd-npc" || slug === "fantasy-names" || slug === "tavern") {
-      activeTheme = "Classic Fantasy";
-      return;
-    }
-    if (slug === "ship-generator") {
-      const hubGenre = resolveHubGeneratorGenre(hubContext.theme);
-      if (hubGenre) {
-        const mapped = mapHubGenreToShipGenre(hubGenre);
-        ship.genre = mapped;
-        ship.role = (shipConfig.rolesByGenre[mapped] ??
-          shipConfig.rolesByGenre["Sci-Fi"])[0];
-      }
-      activeTheme =
-        (hubGenre ? SOCIAL_HUB_GENRE_TO_THEME[hubGenre] : "") ||
-        "Sci-Fi / Space Opera";
-      return;
-    }
-    if (slug === "world") {
-      const hubGenre = resolveHubGeneratorGenre(hubContext.theme);
-      world.genre = worldGenreForHub(hubGenre);
-      activeTheme = mapWorldGenreToTheme(world.genre);
-      applyPendingDevelopWorld();
-      return;
-    }
-    if (slug === "star-system") {
-      const hubGenre = resolveHubGeneratorGenre(hubContext.theme);
+    const patch = getHubMountPatch({
+      slug,
+      hubTheme: hubContext.theme,
+      urlHubTheme,
+      persistence,
+      browser: Boolean(browser),
+      currentState: {
+        pantheonGenre: pantheon.genre,
+        newsSheetGenre: newsSheet.genre,
+        starSystemGenre: starSystem.genre,
+        alienRaceGenre: alienRace.genre,
+      },
+    });
+
+    if (patch) {
+      if (patch.settlement) Object.assign(settlement, patch.settlement);
+      if (patch.nation) Object.assign(nation, patch.nation);
+      if (patch.socialHub) Object.assign(socialHub, patch.socialHub);
+      if (patch.ship) Object.assign(ship, patch.ship);
+      if (patch.world) Object.assign(world, patch.world);
+      if (patch.starSystem) Object.assign(starSystem, patch.starSystem);
+      if (patch.alienRace) Object.assign(alienRace, patch.alienRace);
+      if (patch.newsSheet) Object.assign(newsSheet, patch.newsSheet);
+      if (patch.language) Object.assign(language, patch.language);
+      if (patch.activeTheme) activeTheme = patch.activeTheme;
+      // World handoff is hub-patch plus query-param develop handoff.
+      if (slug === "world") applyPendingDevelopWorld();
+      // Language has no activeTheme change in patch when hub genre is
+      // incompatible — fall back to stored theme handling below if needed.
       if (
-        hubGenre &&
-        (starSystemConfig.genres as readonly string[]).includes(hubGenre)
+        slug === "pantheon-generator" ||
+        slug === "god-generator" ||
+        slug === "vampire-clan" ||
+        slug === "nomad-clan" ||
+        slug === "dark-fantasy-faction" ||
+        slug === "dnd-npc" ||
+        slug === "fantasy-names" ||
+        slug === "tavern" ||
+        slug === "settlement" ||
+        slug === "nation" ||
+        slug === "social-hub" ||
+        slug === "ship-generator" ||
+        slug === "world" ||
+        slug === "star-system" ||
+        slug === "alien-race" ||
+        slug === "news-sheet-generator"
       ) {
-        starSystem.genre = hubGenre;
+        return;
       }
-      activeTheme = mapStarSystemGenreToTheme(starSystem.genre);
+    }
+
+    if (slug === "language-generator" && patch?.language) {
       return;
     }
-    if (slug === "alien-race") {
-      const hubGenre = resolveHubGeneratorGenre(hubContext.theme);
-      if (
-        hubGenre &&
-        (alienRaceConfig.genres as readonly string[]).includes(hubGenre)
-      ) {
-        alienRace.genre = hubGenre;
-      }
-      activeTheme = mapAlienRaceGenreToTheme(alienRace.genre);
-      return;
-    }
-    if (slug === "news-sheet-generator") {
-      const hubGenre = resolveHubGeneratorGenre(hubContext.theme);
-      if (hubGenre && newsSheetConfig.genres.includes(hubGenre)) {
-        newsSheet.genre = hubGenre;
-        newsSheet.publicationType = (newsSheetConfig.publicationTypesByGenre[
-          hubGenre
-        ] ?? newsSheetConfig.publicationTypesByGenre["Fantasy"])[0];
-      }
-      activeTheme =
-        SOCIAL_HUB_GENRE_TO_THEME[newsSheet.genre] ?? "Classic Fantasy";
-      return;
-    }
-    if (slug === "language-generator") {
-      const hubGenre = resolveHubGeneratorGenre(hubContext.theme);
-      if (hubGenre) {
-        // Language genres follow the theme labels (Classic Fantasy,
-        // Cyberpunk / Corporate, …); the genre select only offers a fixed
-        // list, so hubs without a matching language genre (e.g. Western,
-        // Steampunk) are left on the default rather than an unselectable value.
-        const mapped = SOCIAL_HUB_GENRE_TO_THEME[hubGenre] ?? hubGenre;
-        if ((languageConfig.genres as string[]).includes(mapped)) {
-          language.genre = mapped;
-        }
-      }
-    }
-    // For quest/npc/faction on flat URL: read localStorage.
-    // On themed URL: urlHubTheme already seeded activeTheme above — skip.
+
+    // Flat URL without a specific hub patch: re-check stored theme for
+    // quest/npc/faction style generators (urlHubTheme already seeded above).
     if (!urlHubTheme) {
-      const stored = localStorage.getItem("codex-cryptica-active-theme");
-      if (stored && themeIdToLabel[stored]) {
-        activeTheme = themeIdToLabel[stored];
+      // patch already applied stored theme for generic slugs; for
+      // language-generator without a valid hub mapping we still honour it.
+      if (!patch?.activeTheme) {
+        const stored = persistence.read(
+          UI_STORAGE_KEYS.ACTIVE_THEME,
+          (v) => v,
+          null,
+        );
+        if (stored && themeIdToLabel[stored]) {
+          activeTheme = themeIdToLabel[stored];
+        }
       }
     }
   });
 
-  const GENERATE_HANDLERS: Record<
-    ValidSlug,
-    (useAI: boolean) => Promise<GeneratorOutput>
-  > = {
-    npc: (useAI) => generatorEngine.generateNPC({ ...npc, useAI }),
-    settlement: (useAI) =>
-      generatorEngine.generateSettlement({ ...settlement, useAI }),
-    "magic-item": (useAI) =>
-      generatorEngine.generateMagicItem({ ...magicItem, useAI }),
-    item: (useAI) => generatorEngine.generateMagicItem({ ...magicItem, useAI }),
-    faction: (useAI) => generatorEngine.generateFaction({ ...faction, useAI }),
-    quest: (useAI) => generatorEngine.generateQuestHook({ ...quest, useAI }),
-    "council-vote": (useAI) =>
-      generatorEngine.generateCouncilVote({ ...councilVote, useAI }),
-    "secret-society": (useAI) =>
-      generatorEngine.generateSecretSociety({ ...secretSociety, useAI }),
-    tavern: (useAI) => generatorEngine.generateTavern({ ...tavern, useAI }),
-    kingdom: (useAI) => generatorEngine.generateKingdom({ ...kingdom, useAI }),
-    nation: (useAI) => generatorEngine.generateNation({ ...nation, useAI }),
-    "social-hub": (useAI) =>
-      generatorEngine.generateSocialHub({ ...socialHub, useAI }),
-    "vampire-clan": (useAI) =>
-      generatorEngine.generateVampireClan({ ...vampireClan, useAI }),
-    "nomad-clan": (useAI) =>
-      generatorEngine.generateNomadClan({ ...nomadClan, useAI }),
-    names: (useAI) =>
-      generatorEngine.generateNames({ ...names, theme: activeTheme, useAI }),
-    "fantasy-names": (useAI) =>
-      generatorEngine.generateNames({
-        ...names,
-        theme: "Classic Fantasy",
-        useAI,
-      }),
-    "dnd-npc": (useAI) =>
-      generatorEngine.generateNPC({
-        ...dndNpc,
-        includeDndQuickStats: true,
-        useAI,
-      }),
-    "pantheon-generator": (useAI) =>
-      generatorEngine.generatePantheon({ ...pantheon, useAI }),
-    "god-generator": (useAI) =>
-      generatorEngine.generatePantheon({ ...pantheon, useAI }),
-    "ship-generator": (useAI) =>
-      generatorEngine.generateShip({ ...ship, useAI }),
-    "language-generator": (useAI) =>
-      generatorEngine.generateLanguage({ ...language, useAI }),
-    "news-sheet-generator": (useAI) =>
-      generatorEngine.generateNewsSheet({ ...newsSheet, useAI }),
-    "dungeon-generator": (useAI) =>
-      generatorEngine.generateDungeon({
-        ...dungeon,
-        useAI,
-        // Names already drafted this session, so the model does not fall back
-        // on the same faction it invented for the last delve.
-        avoidNames: collectSessionNames(sessionHubStore.entities),
-        avoidTraits: collectSessionTraits(sessionHubStore.entities),
-      }),
-    "adventure-generator": (useAI) =>
-      generatorEngine.generateAdventure({
-        ...adventure,
-        themeId: activeTheme,
-        genre: activeTheme,
-        useAI,
-        avoidNames: collectSessionNames(sessionHubStore.entities),
-      }),
-    "adventure-idea-generator": (useAI) =>
-      generatorEngine.generateAdventure({
-        ...adventure,
-        themeId: activeTheme,
-        genre: activeTheme,
-        useAI,
-        avoidNames: collectSessionNames(sessionHubStore.entities),
-      }),
-    "plot-twist-generator": (useAI) =>
-      generatorEngine.generatePlotTwist({
-        ...plotTwist,
-        premise: resolvePlotTwistPremiseForGeneration(
-          plotTwist.premise,
-          handedOffQuestPremise,
-        ),
-        themeId: activeTheme,
-        genre: activeTheme,
-        useAI,
-      }),
-    world: (useAI) =>
-      generatorEngine.generateWorld({
-        ...world,
-        useAI,
-        // Keep world titles and named factions varied within the current session.
-        avoidNames: collectSessionNames(sessionHubStore.entities),
-      }),
-    "star-system": (useAI) =>
-      generatorEngine.generateStarSystem({
-        ...starSystem,
-        useAI,
-        avoidNames: collectSessionNames(sessionHubStore.entities),
-      }),
-    "alien-race": (useAI) =>
-      generatorEngine.generateAlienRace({
-        ...alienRace,
-        useAI,
-        avoidNames: collectSessionNames(sessionHubStore.entities),
-      }),
-  };
+  let remixLoadVersion = 0;
 
-  async function generate({ useAI }: { useAI: boolean }) {
-    const handler = GENERATE_HANDLERS[slug];
-    if (!handler) throw new Error(`No generator implemented for slug: ${slug}`);
-    return handler(useAI);
-  }
+  $effect(() => {
+    const remixId = page.url.searchParams.get("remix");
+    const targetPath = meta.canonicalPath;
+    const loadVersion = ++remixLoadVersion;
+    remixDraft = null;
+    if (!browser || !remixId) return;
+    void loadRemixDraft(remixId, targetPath, loadVersion);
+  });
 
-  function openPlotTwistFromQuest(draft: GeneratorOutput) {
-    const params = new URLSearchParams({
-      questPremise: buildPlotTwistPremise(draft),
+  async function loadRemixDraft(
+    remixId: string,
+    targetPath: string | undefined,
+    loadVersion: number,
+  ) {
+    const result = await loadGeneratorRemixDraft({
+      remixId,
+      targetPath,
+      loadVersion,
+      getCurrentLoadVersion: () => remixLoadVersion,
+      getShared: (id) => generatorShareService.get(id),
     });
-    void goto(resolve(`/generators/plot-twist-generator?${params}`));
+    if (result) {
+      remixDraft = result.draft;
+      if (result.theme) activeTheme = result.theme;
+      window.history.replaceState({}, "", window.location.pathname);
+    }
   }
+
+  /** Live steps while a one-shot is generated in stages. */
+  let oneShotProgress = $state<OneShotProgressStep[] | null>(null);
+  const oneShotRuns = createOneShotRunControl();
+  onDestroy(oneShotRuns.dispose);
+
+  const GENERATE_HANDLERS = createGeneratorHandlers({
+    npc,
+    settlement,
+    magicItem,
+    minorMagicItem,
+    artifact,
+    faction,
+    factionRoster,
+    quest,
+    personality,
+    rumour,
+    encounter,
+    puzzle,
+    councilVote,
+    heist,
+    holiday,
+    secretSociety,
+    tavern,
+    kingdom,
+    nation,
+    socialHub,
+    vampireClan,
+    nomadClan,
+    darkFaction,
+    names,
+    dndNpc,
+    pantheon,
+    ship,
+    language,
+    newsSheet,
+    dungeon,
+    adventure,
+    plotTwist,
+    villain,
+    comicBookEvent,
+    origin,
+    villainScheme,
+    oneShot,
+    pointCrawl,
+    world,
+    starSystem,
+    constellation,
+    alienRace,
+    creature,
+    tome,
+    getActiveTheme: () => activeTheme,
+    getPlotTwistPremise: () => plotTwist.premise,
+    getHandoffQuestPremise: () => handoffState.questPremise,
+    getSessionEntities: () => sessionHubStore.entities,
+    onOneShotProgress: (steps) => (oneShotProgress = steps),
+    oneShotRuns,
+  });
+
+  const generate = createGenerate({
+    getSlug: () => slug,
+    getHandlers: () => GENERATE_HANDLERS,
+  });
 
   const initialDraft = $derived(
-    handedOffQuestPremise && slug === "plot-twist-generator"
-      ? null
-      : (initialDraftOverride ?? slugDrafts[slug] ?? null),
+    remixDraft ??
+      ((handoffState.questPremise && slug === "plot-twist-generator") ||
+      (handoffState.factionContext && slug === "faction-roster") ||
+      (handoffState.npcContext && slug === "npc")
+        ? null
+        : (initialDraftOverride ?? slugDrafts[slug] ?? null)),
   );
 </script>
 
 <SEOGeneratorLayout
+  bind:this={seoLayoutRef}
   pageTitle={meta.pageTitle}
   metaDescription={meta.metaDescription}
   introTitle={meta.introTitle}
   eyebrow={meta.eyebrow}
   introText={meta.introText}
   canonicalPath={meta.canonicalPath}
+  ogImage={meta.ogImage}
+  ogImageAlt={meta.ogImageAlt}
+  keywords={meta.keywords ?? []}
+  labels={meta.labels ?? []}
   faqs={meta.faqs ?? []}
   relatedLinks={meta.relatedLinks ?? []}
   bind:theme={activeTheme}
   isThemeCustomizable={shouldSyncGeneratorTheme(slug)}
+  supportsStreaming={![
+    "council-vote",
+    "dungeon-generator",
+    "adventure-generator",
+    "adventure-idea-generator",
+    "one-shot-adventure-generator",
+    "point-crawl",
+    "language-generator",
+  ].includes(slug)}
   {generate}
+  progressSteps={slug === "one-shot-adventure-generator" ||
+  slug === "point-crawl"
+    ? oneShotProgress
+    : null}
   {initialDraft}
+  initialDraftIsUserGenerated={Boolean(remixDraft)}
   {backHref}
   {backLabel}
   variant={slug === "names" || slug === "fantasy-names" ? "names" : "default"}
-  onGeneratePlotTwist={slug === "quest" ? openPlotTwistFromQuest : undefined}
+  onGeneratePlotTwist={slug === "quest" || slug === "villain-scheme-generator"
+    ? openPlotTwistFromQuest
+    : undefined}
+  onGenerateRoster={slug === "faction" ? openRosterFromFaction : undefined}
+  onOpenMemberAsCharacter={slug === "faction-roster"
+    ? openMemberAsCharacter
+    : undefined}
+  autoGenerateExplicit={slug === "faction-roster"}
 >
-  {#snippet formFields(trigger)}
-    {#if slug === "npc"}
-      <RPGNPCFormFields
-        bind:theme={activeTheme}
-        bind:ancestry={npc.ancestry}
-        bind:role={npc.role}
-        bind:alignment={npc.alignment}
-        bind:campaignContext={npc.campaignContext}
-        onSurprise={trigger}
-      />
-    {:else if slug === "settlement"}
-      <SettlementFormFields
-        genre={settlement.genre}
-        bind:size={settlement.size}
-        bind:environment={settlement.environment}
-        bind:primaryFunction={settlement.primaryFunction}
-        bind:tone={settlement.tone}
-        bind:mainTension={settlement.mainTension}
-        bind:campaignContext={settlement.campaignContext}
-        onSurprise={trigger}
-      />
-    {:else if slug === "magic-item" || slug === "item"}
-      <MagicItemFormFields
-        bind:type={magicItem.type}
-        bind:rarity={magicItem.rarity}
-        bind:campaignContext={magicItem.campaignContext}
-      />
-    {:else if slug === "faction"}
-      <FactionFormFields
-        bind:theme={activeTheme}
-        bind:type={faction.type}
-        bind:scope={faction.scope}
-        bind:alignment={faction.alignment}
-        bind:campaignContext={faction.campaignContext}
-        onSurprise={trigger}
-      />
-    {:else if slug === "quest"}
-      <QuestFormFields
-        bind:theme={activeTheme}
-        bind:tone={quest.tone}
-        bind:scope={quest.scope}
-        bind:locationType={quest.locationType}
-        bind:threat={quest.threat}
-        bind:twist={quest.twist}
-        bind:reward={quest.reward}
-        bind:campaignContext={quest.campaignContext}
-        onSurprise={trigger}
-      />
-    {:else if slug === "council-vote"}
-      <CouncilVoteFormFields
-        bind:theme={activeTheme}
-        bind:proposal={councilVote.proposal}
-        bind:governingBodyType={councilVote.governingBodyType}
-        bind:councilSize={councilVote.councilSize}
-        bind:votingRule={councilVote.votingRule}
-        bind:deadline={councilVote.deadline}
-        bind:scope={councilVote.scope}
-        bind:tone={councilVote.tone}
-        bind:antagonistInfluence={councilVote.antagonistInfluence}
-        bind:campaignContext={councilVote.campaignContext}
-        onSurprise={trigger}
-      />
-    {:else if slug === "secret-society"}
-      <SecretSocietyFormFields
-        bind:theme={activeTheme}
-        bind:tone={secretSociety.tone}
-        bind:scale={secretSociety.scale}
-        bind:publicFace={secretSociety.publicFace}
-        bind:dangerLevel={secretSociety.dangerLevel}
-        bind:truthRelationship={secretSociety.truthRelationship}
-        bind:campaignContext={secretSociety.campaignContext}
-        onSurprise={trigger}
-      />
-    {:else if slug === "kingdom"}
-      <KingdomFormFields
-        bind:polityType={kingdom.polityType}
-        bind:governmentStyle={kingdom.governmentStyle}
-        bind:geography={kingdom.geography}
-        bind:scale={kingdom.scale}
-        bind:conflictLevel={kingdom.conflictLevel}
-        bind:magicLevel={kingdom.magicLevel}
-        bind:campaignContext={kingdom.campaignContext}
-        onSurprise={trigger}
-      />
-    {:else if slug === "nation"}
-      <NationFormFields
-        bind:genre={nation.genre}
-        bind:polityType={nation.polityType}
-        bind:governmentStyle={nation.governmentStyle}
-        bind:scale={nation.scale}
-        bind:conflictLevel={nation.conflictLevel}
-        bind:campaignContext={nation.campaignContext}
-        onSurprise={trigger}
-      />
-    {:else if slug === "social-hub"}
-      <SocialHubFormFields
-        bind:genre={socialHub.genre}
-        bind:venueType={socialHub.venueType}
-        bind:atmosphere={socialHub.atmosphere}
-        bind:wealthLevel={socialHub.wealthLevel}
-        bind:clientele={socialHub.clientele}
-        bind:campaignContext={socialHub.campaignContext}
-        onSurprise={trigger}
-      />
-    {:else if slug === "tavern"}
-      <TavernFormFields
-        bind:type={tavern.type}
-        bind:atmosphere={tavern.atmosphere}
-        bind:settlementType={tavern.settlementType}
-        bind:wealthLevel={tavern.wealthLevel}
-        bind:clientele={tavern.clientele}
-        bind:campaignContext={tavern.campaignContext}
-        onSurprise={trigger}
-      />
-    {:else if slug === "vampire-clan"}
-      <VampireFormFields
-        bind:archetype={vampireClan.archetype}
-        bind:bloodline={vampireClan.bloodline}
-        bind:feedingHabit={vampireClan.feedingHabit}
-        bind:weakness={vampireClan.weakness}
-        bind:campaignContext={vampireClan.campaignContext}
-        onSurprise={trigger}
-      />
-    {:else if slug === "nomad-clan"}
-      <NomadClanFormFields
-        bind:role={nomadClan.role}
-        bind:tone={nomadClan.tone}
-        bind:territory={nomadClan.territory}
-        bind:conflict={nomadClan.conflict}
-        bind:campaignContext={nomadClan.campaignContext}
-        onSurprise={trigger}
-      />
-    {:else if slug === "names"}
-      <NameFormFields
-        bind:theme={activeTheme}
-        showTheme={true}
-        bind:culture={names.culture}
-        bind:gender={names.gender}
-        bind:nameType={names.nameType}
-        bind:context={names.context}
-      />
-    {:else if slug === "fantasy-names"}
-      <NameFormFields
-        bind:culture={names.culture}
-        bind:gender={names.gender}
-        bind:nameType={names.nameType}
-        bind:context={names.context}
-      />
-    {:else if slug === "dnd-npc"}
-      <NPCFormFields
-        bind:race={dndNpc.race}
-        bind:role={dndNpc.role}
-        bind:alignment={dndNpc.alignment}
-        bind:campaignContext={dndNpc.campaignContext}
-        onSurprise={trigger}
-      />
-    {:else if slug === "pantheon-generator" || slug === "god-generator"}
-      <PantheonFormFields
-        bind:mode={pantheon.mode}
-        bind:genre={pantheon.genre}
-        bind:divineType={pantheon.divineType}
-        bind:domain={pantheon.domain}
-        bind:tone={pantheon.tone}
-        bind:worshippers={pantheon.worshippers}
-        bind:conflictTheme={pantheon.conflictTheme}
-        bind:size={pantheon.size}
-        bind:width={pantheon.width}
-        bind:campaignContext={pantheon.campaignContext}
-        onSurprise={trigger}
-      />
-    {:else if slug === "ship-generator"}
-      <ShipFormFields
-        bind:genre={ship.genre}
-        bind:role={ship.role}
-        bind:scale={ship.scale}
-        bind:condition={ship.condition}
-        bind:tone={ship.tone}
-        bind:campaignContext={ship.campaignContext}
-        onGenreChange={(genre) => {
-          const mappedTheme = mapShipGenreToTheme(genre);
-          if (mappedTheme) activeTheme = mappedTheme;
-        }}
-        onSurprise={trigger}
-      />
-    {:else if slug === "language-generator"}
-      <LanguageFormFields
-        bind:genre={language.genre}
-        bind:tone={language.tone}
-        bind:role={language.role}
-        bind:structure={language.structure}
-        bind:campaignContext={language.campaignContext}
-        preserveGenreOnSurprise={Boolean(urlHubTheme)}
-        onSurprise={trigger}
-      />
-    {:else if slug === "news-sheet-generator"}
-      <NewsSheetFormFields
-        bind:genre={newsSheet.genre}
-        bind:publicationType={newsSheet.publicationType}
-        bind:tone={newsSheet.tone}
-        bind:bias={newsSheet.bias}
-        bind:censorLevel={newsSheet.censorLevel}
-        bind:hookDensity={newsSheet.hookDensity}
-        bind:placeName={newsSheet.placeName}
-        bind:headlineEvent={newsSheet.headlineEvent}
-        bind:campaignContext={newsSheet.campaignContext}
-        onSurprise={trigger}
-      />
-    {:else if slug === "dungeon-generator"}
-      <DungeonFormFields
-        bind:theme={activeTheme}
-        bind:purpose={dungeon.purpose}
-        bind:currentState={dungeon.currentState}
-        bind:scale={dungeon.scale}
-        bind:campaignContext={dungeon.campaignContext}
-        onSurprise={trigger}
-      />
-    {:else if slug === "adventure-generator" || slug === "adventure-idea-generator"}
-      <AdventureFormFields
-        bind:theme={activeTheme}
-        bind:archetype={adventure.archetype}
-        bind:scale={adventure.scale}
-        bind:tone={adventure.tone}
-        bind:seed={adventure.seed}
-        bind:campaignContext={adventure.campaignContext}
-        onSurprise={trigger}
-      />
-    {:else if slug === "plot-twist-generator"}
-      <PlotTwistFormFields
-        bind:theme={activeTheme}
-        bind:twistType={plotTwist.twistType}
-        bind:impact={plotTwist.impact}
-        bind:timing={plotTwist.timing}
-        bind:foreshadowing={plotTwist.foreshadowing}
-        bind:premise={plotTwist.premise}
-        bind:constraints={plotTwist.constraints}
-        bind:campaignContext={plotTwist.campaignContext}
-        onSurprise={trigger}
-      />
-    {:else if slug === "world"}
-      <WorldFormFields
-        bind:worldType={world.worldType}
-        bind:habitability={world.habitability}
-        bind:civilisation={world.civilisation}
-        bind:societalModel={world.societalModel}
-        bind:worldTagOne={world.worldTagOne}
-        bind:worldTagTwo={world.worldTagTwo}
-        bind:genre={world.genre}
-        bind:lancerWorldFrame={world.lancerWorldFrame}
-        bind:campaignPressure={world.campaignPressure}
-        bind:dominantFeature={world.dominantFeature}
-        bind:campaignContext={world.campaignContext}
-        onGenreChange={(genre) => {
-          activeTheme = mapWorldGenreToTheme(genre);
-        }}
-        onSurprise={trigger}
-      />
-    {:else if slug === "star-system"}
-      <StarSystemFormFields
-        bind:systemType={starSystem.systemType}
-        bind:genre={starSystem.genre}
-        bind:civilisationLevel={starSystem.civilisationLevel}
-        bind:systemCharacter={starSystem.systemCharacter}
-        bind:scientificRealism={starSystem.scientificRealism}
-        bind:campaignContext={starSystem.campaignContext}
-        onGenreChange={(genre) => {
-          activeTheme = mapStarSystemGenreToTheme(genre);
-        }}
-        onSurprise={trigger}
-      />
-    {:else if slug === "alien-race"}
-      <AlienRaceFormFields
-        bind:genre={alienRace.genre}
-        bind:generationMode={alienRace.generationMode}
-        bind:homeEnvironment={alienRace.homeEnvironment}
-        bind:bodyPlan={alienRace.bodyPlan}
-        bind:psychology={alienRace.psychology}
-        bind:socialOrganisation={alienRace.socialOrganisation}
-        bind:technologyLevel={alienRace.technologyLevel}
-        bind:relationToOutsiders={alienRace.relationToOutsiders}
-        bind:campaignContext={alienRace.campaignContext}
-        onGenreChange={(genre) => {
-          activeTheme = mapAlienRaceGenreToTheme(genre);
-        }}
-        onSurprise={trigger}
-      />
+  {#snippet outputExtras(output, replaceOutput, useAI)}
+    {#if slug === "one-shot-adventure-generator"}
+      <OneShotRefinePanel {output} {useAI} onReplace={replaceOutput} />
+    {:else if slug === "point-crawl"}
+      <PointCrawlRefinePanel {output} {useAI} onReplace={replaceOutput} />
     {/if}
+  {/snippet}
+  {#snippet formFields(trigger)}
+    <GeneratorPageFormFields
+      {slug}
+      bind:activeTheme
+      {urlHubTheme}
+      {trigger}
+      bind:npc
+      bind:settlement
+      bind:magicItem
+      bind:minorMagicItem
+      bind:artifact
+      bind:faction
+      bind:factionRoster
+      bind:quest
+      bind:personality
+      bind:rumour
+      bind:encounter
+      bind:puzzle
+      bind:councilVote
+      bind:heist
+      bind:holiday
+      bind:secretSociety
+      bind:kingdom
+      bind:nation
+      bind:socialHub
+      bind:tavern
+      bind:vampireClan
+      bind:nomadClan
+      bind:darkFaction
+      bind:names
+      bind:dndNpc
+      bind:pantheon
+      bind:ship
+      bind:language
+      bind:newsSheet
+      bind:dungeon
+      bind:adventure
+      bind:plotTwist
+      bind:villain
+      bind:comicBookEvent
+      bind:origin
+      bind:villainScheme
+      bind:oneShot
+      bind:pointCrawl
+      bind:world
+      bind:starSystem
+      bind:constellation
+      bind:alienRace
+      bind:creature
+      bind:tome
+      onPersonalityGenreChange={handlePersonalityGenreChange}
+      onRumourGenreChange={handleRumourGenreChange}
+      onPuzzleGenreChange={handlePuzzleGenreChange}
+      onShipGenreChange={handleShipGenreChange}
+      onWorldGenreChange={handleWorldGenreChange}
+      onStarSystemGenreChange={handleStarSystemGenreChange}
+      onAlienRaceGenreChange={handleAlienRaceGenreChange}
+      onCreatureGenreChange={handleCreatureGenreChange}
+    />
   {/snippet}
 </SEOGeneratorLayout>

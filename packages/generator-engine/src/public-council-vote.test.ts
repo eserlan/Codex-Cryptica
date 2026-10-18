@@ -600,3 +600,22 @@ describe("mergeCouncilVoteOutput", () => {
     expect(out.lore).toBe("### Voting Procedure\nx\n\n### Possible Paths\ny");
   });
 });
+
+// Regression test (#3108): "Superhero / Comic Book" has no dedicated entry
+// in councilVoteConfig.bodyTypesByTheme, so resolveCouncilVote must fall
+// back to the generic bodyTypes pool instead of crashing on an undefined
+// lookup.
+describe("Superhero theme regression (#3108)", () => {
+  it("falls back to the generic governing-body pool", () => {
+    expect(
+      councilVoteConfig.bodyTypesByTheme["Superhero / Comic Book"],
+    ).toBeUndefined();
+
+    const out = generateCouncilVoteLocal(
+      { genre: "Superhero / Comic Book" },
+      seededRng(9),
+    );
+    expect(out.type).toBe("event");
+    expect(out.content).toBeTruthy();
+  });
+});

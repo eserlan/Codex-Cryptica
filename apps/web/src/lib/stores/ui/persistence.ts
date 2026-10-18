@@ -1,3 +1,4 @@
+import { browserStorage } from "$lib/utils/runtime-deps";
 export interface StorageLike {
   getItem(key: string): string | null;
   setItem(key: string, value: string): void;
@@ -33,10 +34,17 @@ export const UI_STORAGE_KEYS = {
   VTT_SIDEBAR_COLLAPSED: "codex_vtt_sidebar_collapsed",
   WORLD_PAGE_DISMISSED_AT: "codex_world_page_dismissed_at",
   MOBILE_GRAPH_COACH_MARKS_SEEN: "codex_mobile_graph_coach_marks_seen",
+  GOAL_INVITATION: "codex_goal_invitation",
+  CHOSEN_GOAL: "codex_chosen_goal",
+  PRESENTATION_COLLAPSED_SECTIONS: "codex_presentation_collapsed_sections",
   GUIDED_MODE_ACTIVE: "codex_guided_mode_active",
   GUIDED_MODE_DISMISSED_RECOMMENDATIONS:
     "codex_guided_mode_dismissed_recommendations",
   AUTO_FULLSCREEN: "codex_auto_fullscreen",
+  FAVOURITE_GENERATOR_IDS: "codex_favourite_generator_ids",
+  TILE_DECK_CATALOG_COLLAPSED: "codex_tile_deck_catalog_collapsed",
+  TILE_DECK_GRID_EXPANDED: "codex_tile_deck_grid_expanded",
+  VTT_SIDEBAR_WIDTH: "codex_vtt_sidebar_width",
 } as const;
 
 export type UIStorageKey =
@@ -46,13 +54,7 @@ export class UIPersistence {
   private storage: StorageLike | null;
 
   constructor(options?: { storage?: StorageLike }) {
-    if (options?.storage) {
-      this.storage = options.storage;
-    } else if (typeof window !== "undefined" && window.localStorage) {
-      this.storage = window.localStorage;
-    } else {
-      this.storage = null;
-    }
+    this.storage = options?.storage ?? browserStorage;
   }
 
   read<T>(key: string, parse: (raw: string) => T, fallback: T): T {

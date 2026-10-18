@@ -108,6 +108,7 @@ test.describe("Bulk Labeling and Selection Actions", () => {
     await expect(page.getByPlaceholder("Add label...")).toBeVisible();
 
     const labelInput = page.getByPlaceholder("Add label...");
+    await labelInput.focus();
     await labelInput.fill("tag1");
     await labelInput.press("Enter");
     await expect(
@@ -175,28 +176,27 @@ test.describe("Bulk Labeling and Selection Actions", () => {
       "fig6",
     ];
     const labelInput = page.getByPlaceholder("Add label...");
+    await labelInput.focus();
     for (const l of labels) {
       await labelInput.fill(l);
+      await page.waitForTimeout(50);
       await labelInput.press("Enter");
-      // Wait for the vault store to index the label before checking the UI.
-      await page.waitForFunction(
-        (label) => {
-          const vault = (window as any).vault;
-          const entity = Object.values(vault?.entities ?? {}).find(
-            (entry: any) => entry.title === "Target",
-          ) as any;
-          return Boolean(
-            entity?.labels?.includes(label) &&
-            vault?.labelIndex?.includes(label),
-          );
-        },
-        l,
-        { timeout: 10000 },
-      );
       // Wait for label to be added to the entity (reactive update)
       await expect(
         page.getByTestId("label-badge").filter({ hasText: l }),
       ).toBeVisible({ timeout: 10000 });
+
+      await expect(labelInput).toHaveValue("");
+
+      // Wait for the vault store to index the label so it appears in the dropdown.
+      await expect(async () => {
+        const isIndexed = await page.evaluate((label) => {
+          const vault = (window as any).vault;
+          return vault?.labelIndex?.includes(label) === true;
+        }, l);
+        expect(isIndexed).toBe(true);
+      }).toPass({ timeout: 10000 });
+
       // Small delay to prevent race conditions in VaultStore when adding many labels rapidly
       await page.waitForTimeout(100);
     }

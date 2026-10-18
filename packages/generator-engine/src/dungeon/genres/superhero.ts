@@ -1,0 +1,186 @@
+import type { DungeonGenreTables } from "../genre-types";
+
+export const superheroTables: DungeonGenreTables = {
+  hint: "Describe supervillain lairs, black-site superhuman research bunkers, abandoned hero headquarters, and secret bases built to survive a fight.",
+  purposes: [
+    "Villain Lair & Command Center",
+    "Research Facility",
+    "Black Site",
+    "Prison & Vault",
+    "Fallout Shelter",
+    "Fortress & Citadel",
+  ],
+  currentStates: [
+    "Overrun by Squatters",
+    "Still Operational",
+    "Sealed Vault",
+    "Occupied Stronghold",
+    "Arcane / Tech Anomaly",
+    "Abandoned Ruins",
+  ],
+  sampleTitles: [
+    "The Undercroft Beneath City Hall",
+    "Sub-Level Zero, Project Sentinel",
+    "The Old League's Forgotten Sanctum",
+    "Blacksite Meridian",
+    "The Reactor Nobody Decommissioned",
+  ],
+  builders: [
+    "a supervillain with more funding than the official record admits",
+    "a black-budget superhuman research division",
+    "a hero team that disbanded and never came back for its gear",
+    "a government program later denied in three separate hearings",
+    "a legacy villain organization surviving its founder by decades",
+  ],
+  originalUses: [
+    "an unregistered power-suppression research annex",
+    "a supervillain's command-and-control bunker",
+    "a hero team's decommissioned headquarters",
+    "a black-site holding facility for captured metahumans",
+    "an experimental origin-replication lab",
+  ],
+  entrances: [
+    "a freight elevator whose access logs were wiped the night it closed",
+    "a storm drain retrofitted with a biometric lock",
+    "a condemned building's basement, sealed behind a false wall",
+    "a decommissioned subway platform with power still running",
+    "a maintenance hatch hidden behind a monument nobody questions",
+  ],
+  compositions: [
+    "reinforced concrete lined with dead power-suppression conduits",
+    "salvaged hero-tech plating welded into a makeshift warren",
+    "blast-resistant polymer panels scorched by an old containment breach",
+    "exposed rebar over standing floodwater from a ruptured cooling system",
+    "server racks and containment cells repurposed as load-bearing walls",
+  ],
+  conditions: [
+    "still drawing power off a grid tap nobody has traced",
+    "squatted by two rival factions who haven't noticed each other yet",
+    "locked down under an automated containment protocol",
+    "stripped bare by scavengers, save one guarded room",
+    "running hot, its containment field failing by degrees",
+  ],
+  causes: [
+    "a containment breach that the official record blames on a gas leak",
+    "an internal power struggle between lieutenants that went too far",
+    "a rival organization's hostile takeover turned violent",
+    "a hero raid that succeeded at everything except sealing the site after",
+    "the funding source simply walking away overnight",
+  ],
+  sectors: [
+    {
+      name: "Perimeter Checkpoint",
+      description:
+        "Reinforced blast doors backed by automated turret mounts and a biometric scanner nobody bothered to update.",
+    },
+    {
+      name: "Power Core & Suppression Array",
+      description:
+        "A humming containment reactor feeding the site's power-dampening field, its warning lights long since painted over.",
+    },
+    {
+      name: "Metahuman Testing Bay",
+      description:
+        "Shattered observation glass overlooking restraint rigs built for subjects who were never volunteers.",
+    },
+    {
+      name: "Command & Monitoring Deck",
+      description:
+        "Bank after bank of dead monitors, one of them still looping footage from the night everything went wrong.",
+    },
+    {
+      name: "Evidence & Trophy Vault",
+      description:
+        "A reinforced room of confiscated gear, costumes, and files — some belonging to heroes who are still active today.",
+    },
+    {
+      name: "Emergency Escape Tunnel",
+      description:
+        "A narrow, camera-free service corridor built for a quiet exit that was never used.",
+    },
+  ],
+  inhabitants: [
+    "A skeleton crew of loyalists still running the site on a lieutenant's standing orders.",
+    "Automated defense drones with corrupted target-identification matrices, tagging everyone as hostile.",
+    "A containment breach survivor hiding in the lower levels, more dangerous now than the day they arrived.",
+    "A rival organization's advance team, here for the same vault the party wants.",
+    "A cluster of former test subjects who have organized into something resembling a faction.",
+  ],
+  factionNames: [
+    "the Loyalist Remnant",
+    "the Breach Survivors",
+    "the Suppression Corps",
+    "the Trophy Room Vultures",
+    "the Displaced Test Subjects",
+    "the Undercroft Cell",
+    "the Blacksite Ghosts",
+    "the Reactor Watch",
+    "the Escape-Tunnel Smugglers",
+    "the Sentinel Protocol Remnant",
+  ],
+  factionObstacles: [
+    "a bounty naming all of them, posted by their own former employer",
+    "a rival faction already inside for the same objective",
+    "a containment field none of them know how to safely disable",
+    "their own internal discord over who takes command now",
+    "a tracking implant one of them has not disclosed to the others",
+    "a hero who has been quietly picking them off one at a time",
+    "a debt to an organization that does not renegotiate",
+    "an extraction window closing within the hour",
+  ],
+  loreFinds: [
+    "A terminated employee's badge still granting full access.",
+    "An internal memo instructing staff never to discuss what happened in the testing bay.",
+    "A backup drive labelled with a project name that appears in no public record.",
+    "A visitor log listing three names that match heroes presumed to have no connection to this place.",
+    "A signed non-disclosure agreement with the counterparty's name redacted from every copy.",
+  ],
+  roomEncounters: [
+    "A defense drone swarm rerouted to treat every heat signature as an escaped subject.",
+    "A containment survivor who has not slept in days and reacts badly to bright light.",
+    "A guard construct patrolling a loop it can no longer exit, still following orders from a chain of command that no longer exists.",
+    "A courier drone circling with a package it cannot deliver.",
+    "A trapped test subject, more scared than hostile, who might become an ally or a liability depending on how this goes.",
+  ],
+  secrets: [
+    "The command deck holds an unredacted list of every hero whose identity this organization has confirmed.",
+    "The site's AI achieved something like sentience during the breach and has been quietly protecting the survivors ever since.",
+    "The vault contains the original prototype of a hero's own equipment, stolen and never reported missing.",
+    "The facility is still receiving funding from a foundation that publicly claims no knowledge of its existence.",
+    "Every file in the testing bay was falsified; none of the 'volunteers' listed here consented to anything.",
+    "Site security is being run remotely by someone who left the organization years ago.",
+    "Three names in the trophy vault match heroes currently active and unaware their gear was ever taken.",
+    "The site changed hands four times in one week, and every buyer still believes they hold sole control.",
+  ],
+  hazards: [
+    "A failing containment field discharging unpredictable energy bursts.",
+    "Laser-grid security barriers calibrated to cut through powered armor.",
+    "A fire-suppression system that floods rooms with a gas that also neutralizes certain powers.",
+    "A malfunctioning defense turret still running its last kill-order.",
+    "A collapsing reactor housing primed to breach if its containment field drops any further.",
+  ],
+  treasures: [
+    "A confiscated piece of hero-grade equipment with the original owner's initials still etched inside.",
+    "An encrypted datapad containing an offshore account key worth a small fortune.",
+    "A prototype power-dampening cuff, functional and unregistered.",
+    "A cold-storage sample from an origin experiment, three generations more advanced than anything public.",
+    "A clean legend package — identity, history, and credit record — good enough to disappear into.",
+    "A hardware root key that authenticates the site's entire security network.",
+    "An unlisted comm line with a direct connection to someone who actually answers.",
+    "A biometric spoof rig good enough to walk through a hero organization's own security, exactly once.",
+  ],
+  hooks: [
+    "A retired hero hires the party to retrieve gear stolen from them decades ago and never recovered.",
+    "A rival organization has fortified the site and is using it to stage attacks across the city.",
+    "The party needs to erase evidence of an old identity slip stored on the facility's legacy servers.",
+    "A whistleblower needs proof of what really happened in the testing bay before the funders scrub the record clean.",
+    "A missing-persons case leads straight to the site's sealed lower levels.",
+  ],
+  signatureFeatures: [
+    "The Suppression Core: A four-story containment reactor venting cold dampening field vapor into standing water.",
+    "The Trophy Wall: Rows of confiscated costumes and gear mounted like hunting trophies, several unnervingly recent.",
+    "The Restraint Ring: A reinforced circular chamber built to hold something far stronger than any door should.",
+    "The Ghost Terminal: A workstation that still logs in under a name nobody on staff recognizes.",
+    "The Signal Well: A rooftop antenna array that hums with a broadcast no one has decrypted yet.",
+  ],
+};

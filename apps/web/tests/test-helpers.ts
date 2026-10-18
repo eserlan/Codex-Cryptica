@@ -1,3 +1,4 @@
+import path from "path";
 import { expect, type Page } from "@playwright/test";
 
 type SeedEntityOptions = {
@@ -22,10 +23,13 @@ type SeedEntityOptions = {
 export function seedOnboardingComplete() {
   try {
     localStorage.setItem("codex_skip_landing", "true");
+    localStorage.setItem("codex_guided_mode_active", "false");
     localStorage.setItem(
       "codex-cryptica-help-state",
       JSON.stringify({ completedTours: ["initial-onboarding"] }),
     );
+    localStorage.setItem("codex_goal_invitation", "dismissed");
+    localStorage.setItem("codex_mobile_graph_coach_marks_seen", "true");
   } catch {
     /* ignore */
   }
@@ -227,4 +231,38 @@ export async function openGraphContextMenuForTitle(page: Page, title: string) {
     const renderedPosition = node.renderedPosition();
     node.trigger("cxttap", { renderedPosition });
   }, title);
+}
+
+/** Opens /map in the fantasy demo and uploads a small test image as a map. */
+export async function openMapWithUpload(page: Page, mapName = "E2E Test Map") {
+  await page.addInitScript(() => {
+    localStorage.setItem("codex_skip_landing", "true");
+    localStorage.setItem(
+      "codex-cryptica-help-state",
+      JSON.stringify({ completedTours: ["initial-onboarding"] }),
+    );
+  });
+  await page.goto("/?demo=fantasy");
+  await page.waitForFunction(
+    () => {
+      const vault = (window as any).vault;
+      return (
+        vault?.isInitialized === true &&
+        (vault.demoVaultName === "Fantasy Demo" ||
+          (vault.allEntities?.length ?? 0) > 0)
+      );
+    },
+    // A cold dev server can take ~25 s to load the demo, so allow more than 30 s.
+    { timeout: 60000 },
+  );
+  await page.goto("/map");
+  await page.click('button:has-text("Upload World Image")');
+  await page.fill('input[id="map-name"]', mapName);
+  const chooser = page.waitForEvent("filechooser");
+  await page.locator('input[type="file"]').click();
+  await (
+    await chooser
+  ).setFiles(path.join(process.cwd(), "static/favicon.png"));
+  await page.getByRole("button", { name: "Upload", exact: true }).click();
+  await expect(page.locator("canvas")).toBeVisible({ timeout: 15000 });
 }

@@ -15,9 +15,26 @@
     ? 'self-end items-end'
     : 'self-start items-start'}"
 >
-  <span class="text-[9px] font-bold uppercase tracking-wider text-theme-muted">
+  <span class="text-nano font-bold uppercase tracking-wider text-theme-muted">
     {isUser ? "You" : characterTitle}
   </span>
+
+  {#if message.cue}
+    <div
+      class="flex items-center gap-1 text-micro font-semibold text-amber-400/90 mb-0.5 {isUser
+        ? 'justify-end'
+        : 'justify-start'}"
+    >
+      <span
+        class="icon-[lucide--sparkles] w-3 h-3 text-amber-400 shrink-0"
+        aria-hidden="true"
+      ></span>
+      <span
+        class="font-mono bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 rounded text-micro"
+        >Cue: {message.cue}</span
+      >
+    </div>
+  {/if}
 
   <div
     class="rounded-2xl px-4 py-2.5 text-sm leading-relaxed border transition-all duration-200
@@ -34,7 +51,7 @@
     {/if}
   </div>
 
-  <span class="text-[8px] text-theme-muted select-none">
+  <span class="text-nano text-theme-muted select-none">
     {new Date(message.timestamp).toLocaleTimeString([], {
       hour: "2-digit",
       minute: "2-digit",

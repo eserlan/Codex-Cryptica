@@ -1,8 +1,38 @@
 # Codex-Cryptica Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-08-11
+Auto-generated from all feature plans. Last updated: 2026-10-16
 
 ## Active Technologies
+
+- TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + Existing `map-engine` (hex maths; + `parseHexLabel`), `random-source-engine` (offline rolling), `session-journal-engine` (+ `formatHexExplored`), `schema` (`MapSchema` + optional `grid`, `hexCrawl`), `vault-engine` `GuestExporter` (strips `hexCrawl`), `@codex/ai-engine` (`aiClientManager`), `generator-engine` `formatCampaignContextBlock`, the exported `extractJsonObject`, `@codex/events` (`JOURNAL:CAPTURE`), Floating UI, `zod`, Tailwind 4 semantic tokens, Iconify classes. New internal package `packages/hex-crawl-engine`. No new third-party dependency. (178-hex-crawl-mode)
+- Optional additive fields on the existing map records in `.codex/maps.json`: `grid` and `hexCrawl`. They are synced, backed up, exported and restored with maps. One new device-local display preference, `showTerrainIcons`, joins the existing per-map display settings. One device-local "AI notice dismissed" hint key. No IndexedDB, OPFS layout or migration change. (178-hex-crawl-mode)
+
+- TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + `packages/generator-engine` (extended with `point-crawl-*` modules), `schema`, `@codex/ai-engine` / `aiGeneratorGateway`, existing `$lib/utils/svg-export.ts`, Tailwind 4 semantic tokens, Lucide Iconify utility classes (`icon-[lucide--*]`). Zero new third-party dependencies. (177-point-crawl-generator)
+- Transient client-side reactive state during generation; `localStorage` (`__codex_pending_import` array of `ImportDraft[]` via existing `SeoImportService`) for public-to-vault handoff; OPFS & IndexedDB (via existing `vault.createEntity` and `vault.addConnection`) when saving `Location` entities and the master overview `Note` entity in-app. Zero database migrations required. (177-point-crawl-generator)
+
+- TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + Existing `search-orchestrator` (`searchService`) and the Explorer's `entity-search-match`; `schema` (`isEntityVisible`, `Entity`); `@codex/ai-engine` (`DefaultContextRetrievalService.retrieveContext`); `@codex/oracle-engine` (`ChatMessage`, `OracleIntent`, `OracleGenerator.retrieveForQuery`); existing `CommandMenu` placement via Floating UI; `categories` store for type icons. New internal package `packages/entity-mention-engine`. No new third-party dependency. (4052-oracle-entity-mentions)
+- Mentions are an optional `mentions` array on the existing persisted `ChatMessage` (chat history already in IndexedDB through `ChatHistoryService`). No new store, OPFS or vault schema change, so no migration. Old messages without the field stay valid. (4052-oracle-entity-mentions)
+
+- TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + Existing `onboarding-journey-engine` (extended), `help-engine` (`QUICK_PROMPT_SETS`, `FEATURE_REGISTRY`, `HelpArea`), `JourneyStore` (read-only outcome), `OnboardingStore` (`chosenGoal`, `goalInvitation`), `helpAssistant` and `cifPopout` (open and ask), `isHelpAssistantAvailable`, `helpStore` (tour), `modalUIStore` (dialogs), Floating UI (already a dependency), Tailwind 4 semantic tokens, Iconify classes. No new third-party dependency. (176-cif-contextual-tips)
+- `localStorage` through the injected `StorageLike`: `codex-cif-tips` (preference, opt-in answer, tip history; device-wide). `sessionStorage`: `codex-cif-tips-session` (a tip was shown this session). No IndexedDB, OPFS or vault schema change, so no migration. (176-cif-contextual-tips)
+
+- TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + Existing `help-engine` (guidance action schema, catalogue, `validateAction`, quick prompts; extended with shell controls and `extraAvailable`), `HelpActionRunner` and `HelpHighlightService`, `onboarding-orchestrator` (extended), `OnboardingStore`, `helpStore` tour, `GettingStartedChecklist`, `vaultEventBus`, `@codex/events` app bus (`JOURNAL:CAPTURE`), `categories` store, `zod`. New internal package `packages/onboarding-journey-engine`. No new third-party dependency. (175-cif-guided-onboarding)
+- `localStorage` through the injected `StorageLike`: `codex-onboarding-journey:<vaultId>` (journey progress), `codex_goal_invitation` and `codex_chosen_goal` (device-wide choice). `sessionStorage`: `codex-onboarding-journey-active` (reload rule). No IndexedDB, OPFS or vault schema change, so no migration. (175-cif-guided-onboarding)
+
+- TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + Existing `map-engine` (hex maths, renderer), `session-journal-engine` (capture, promote), `@codex/events` (`JOURNAL:CAPTURE`), `help-engine`, Tailwind 4 semantic tokens. No new third-party dependency. (171-solo-map-play)
+- Existing per-map settings in `localStorage` (`soloFog`, `visionRange`; unchanged); existing IndexedDB `session_journals` (one optional field, `captureMapMoves`; no migration). Travel tally in memory only. (171-solo-map-play)
+
+- TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + Canvas 2D API, `@codex/spatial-engine`, Tailwind 4 semantic tokens, Lucide Iconify utility classes (170-hex-crawling-maps)
+- Browser-local OPFS (for standard 2D map mask WebP/PNG persistence) and `localStorage` / vault settings (for per-map grid settings). Zero new databases or external schemas required. (170-hex-crawling-maps)
+
+- TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + `packages/chronology-engine` (internal framework-free package), Tailwind 4 semantic tokens, Floating UI, `@codex/events`. No new third-party dependency. (3717-calendar-eras)
+- Browser-local IndexedDB via existing `calendarStore` configuration persistence. No new database store or migration needed. (3717-calendar-eras)
+
+- TypeScript 6.0.3, Bun 1.3.14 + Svelte 5 Runes, SvelteKit 2, `@codex/generator-engine`, `@codex/search-orchestrator`, `random-source-engine`, `@google/generative-ai` (159-ai-world-aware-tables)
+- OPFS (Vault Files) & IndexedDB (via existing vault and random source stores; zero new database stores or schema flags) (159-ai-world-aware-tables)
+
+- TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Svelte 5, Tailwind 4 semantic tokens, Lucide Iconify utility classes, `@codex/search-orchestrator` (1515-table-missing-filters)
+- Transient client-side reactive state (persisted preset views deferred to #1518) (1515-table-missing-filters)
 
 - TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Existing `chronology-engine`, Svelte components/stores, Playwright performance harness, Vitest (2147-timeline-agenda-bounded-rendering)
 - N/A; deterministic benchmark data is synthetic and transient (2147-timeline-agenda-bounded-rendering)
@@ -210,7 +240,7 @@ specs/          # Feature specifications
 
 ## Commands
 
-bun run test; bun run lint
+bun run test:changed; bun run lint:changed
 
 ## Code Style
 
@@ -226,21 +256,29 @@ TypeScript: Follow standard conventions
 - **Style Guide Adherence**: ALWAYS read and adhere to `@docs/STYLE_GUIDE.md`. All UI components MUST use Svelte 5 Runes and Tailwind 4 semantic tokens (e.g., `text-theme-primary`).
 - **Icon Usage**: NEVER use `lucide-svelte` components. ALWAYS use the Iconify utility pattern: `class="icon-[lucide--name] h-4 w-4"`.
 - **Reactive Snapshots**: Use `$state.snapshot(obj)` when passing state to non-reactive logic or async handlers to prevent stale references.
-- **Mandatory Testing**: NEVER consider a feature or bug fix complete without corresponding unit tests. For every new logic branch or service method, you MUST add a test case. If an existing test file exists for the module, append to it; otherwise, create a new one. Verification is only complete when `bun run test` passes with your changes.
+- **Mandatory Testing**: NEVER consider a feature or bug fix complete without corresponding unit tests. For every new logic branch or service method, you MUST add a test case. If an existing test file exists for the module, append to it; otherwise, create a new one. Verification is only complete when `bun run test:changed` passes with your changes.
 - **Prefix Unused Vars**: Always prefix unused callback parameters or variables with an underscore (e.g., `_evt`) to satisfy strict `no-unused-vars` linting rules.
 - **Svelte 5 Reactivity**: Avoid initializing `$state` directly from props (e.g., `let x = $state(prop)`). Use `$derived` for data that should stay in sync, or ensure the intent of a local-only copy is clear to avoid `state_referenced_locally` warnings.
 - **Tailwind 4 Syntax**: Use Tailwind 4's `@reference`, `@theme`, and `@apply` rules correctly in Svelte `<style>` blocks. Ignore standard CSS linter warnings for these specific at-rules.
 - **Package Type Safety**: When modifying or creating packages, ensure `node` types are included in `tsconfig.json` if the code uses Node globals (e.g., `Buffer`, `process`, `fs`).
 - **Dependency Injection**: Always use constructor-based DI with sensible defaults for all services and stores. Export both the class and a default singleton. Avoid tight singleton coupling to facilitate unit testing.
 - **Branching Strategy**: Always create a new branch for code changes, fixes, improvements, or refactoring. Never commit directly to the main branch.
+- **No Baseline Tests / Impacted-Only Validation**: NEVER run repository-wide test suites (`bun run test`), repository-wide linters (`bun run lint`), or repository-wide typechecks (`bun run lint:types`) across the entire repository during development or PR verification. ALWAYS validate only the impacted/changed code via `bun run lint:changed` (`bun scripts/lint-changed.mjs`), `bun run test:changed` (`bun scripts/test-changed.mjs`), and scoped type-checking on affected workspaces.
+- **Run Repo Scripts with Bun**: ALWAYS execute repository scripts using `bun`, NEVER `node` (e.g., `bun scripts/lint-changed.mjs`, `bun scripts/test-changed.mjs`).
+- **Image Asset Storage (R2 / Cloudflare Only)**: NEVER commit generated or uploaded image assets (such as OpenGraph cards, screenshots, blog illustrations, or demo portraits) to the local git repository. All marketing, social share, and content image assets belong exclusively in Cloudflare R2 (`codex-cryptica-statics` bucket served via `https://assets.codexcryptica.com/`). Any local image files created temporarily during generation must be deleted immediately after uploading to R2.
+- **PR Quality Gate**: Never create or open a Pull Request unless:
+  1. Type-checking for affected workspaces passes with 0 errors (e.g., `bunx svelte-check --tsconfig ./tsconfig.json --threshold error` in `apps/web` or affected workspaces via `bun scripts/affected-workspaces.mjs`).
+  2. Changed-file lint passes with 0 errors (`bun run lint:changed` or `bun scripts/lint-changed.mjs`).
+  3. Impacted tests pass with 0 errors (`bun run test:changed` or `bun scripts/test-changed.mjs`).
+  4. The changes pass the `codex-review` specialist review.
 
 ## Recent Changes
 
-- 2147-timeline-agenda-bounded-rendering: Added TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Existing `chronology-engine`, Svelte components/stores, Playwright performance harness, Vitest
+- 178-hex-crawl-mode: Added TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14
 
-- 154-llm-session-ratelimit: Added TypeScript, Svelte 5 Runes, SvelteKit 2, Cloudflare Workers + Cloudflare Turnstile, Web Crypto API
+- 177-point-crawl-generator: Added TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + `packages/generator-engine` (extended with `point-crawl-*` modules), `schema`, `@codex/ai-engine` / `aiGeneratorGateway`, existing `$lib/utils/svg-export.ts`, Tailwind 4 semantic tokens, Lucide Iconify utility classes (`icon-[lucide--*]`). Zero new third-party dependencies.
 
-- 153-llm-model-registry: Added TypeScript, Cloudflare Workers runtime (no Node built-ins) + None new — Workers runtime `fetch`/`crypto` globals only, same as today's Gemini forwarding (`apps/workers/oracle-proxy` has no `package.json` of its own; built via Bun workspaces path resolution)
+- 4052-oracle-entity-mentions: Added TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + Existing `search-orchestrator` (`searchService`) and the Explorer's `entity-search-match`; `schema` (`isEntityVisible`, `Entity`); `@codex/ai-engine` (`DefaultContextRetrievalService.retrieveContext`); `@codex/oracle-engine` (`ChatMessage`, `OracleIntent`, `OracleGenerator.retrieveForQuery`); existing `CommandMenu` placement via Floating UI; `categories` store for type icons. New internal package `packages/entity-mention-engine`. No new third-party dependency.
 
 <!-- MANUAL ADDITIONS START -->
 

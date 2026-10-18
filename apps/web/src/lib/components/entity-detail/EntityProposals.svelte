@@ -6,7 +6,6 @@
   import { searchService } from "@codex/search-orchestrator";
   import { revisionService } from "$lib/services/RevisionService.svelte";
   import { oracle } from "$lib/stores/oracle.svelte";
-  import { ProposerService } from "@codex/proposer";
   import {
     loadIgnoredEntityProposals,
     saveIgnoredEntityProposals,
@@ -80,15 +79,14 @@
         let type = "related_to";
         let label = "Related";
         if (source && oracle.apiKey) {
-          const proposal =
-            await new ProposerService().generateConnectionProposal(
-              oracle.apiKey,
-              "gemini-2.5-flash",
-              `${source.content || ""}\n${source.lore || ""}`,
-              revisionService.pendingDraft.chronicle,
-              source.title,
-              title,
-            );
+          const proposal = await proposerStore.generateConnectionProposal(
+            oracle.apiKey,
+            "gemini-2.5-flash",
+            `${source.content || ""}\n${source.lore || ""}`,
+            revisionService.pendingDraft.chronicle,
+            source.title,
+            title,
+          );
           type = proposal.type;
           label = proposal.label;
         }

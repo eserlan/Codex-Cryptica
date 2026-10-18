@@ -163,7 +163,7 @@ describe("Map Engine Renderer", () => {
     expect(offscreenCtx.lineWidth).toBe(1.5);
   });
 
-  it("should return early for hex grid (not implemented)", () => {
+  it("should draw hex grid using paths without creating rectangular patterns", () => {
     const mockImage = { width: 500, height: 400 } as HTMLImageElement;
     renderMap({
       canvas: mockCanvas,
@@ -182,6 +182,7 @@ describe("Map Engine Renderer", () => {
     });
 
     expect(mockCtx.createPattern).not.toHaveBeenCalled();
+    expect(mockCtx.stroke).toHaveBeenCalled();
   });
 
   it("should use cached pattern if parameters are identical", () => {
@@ -522,7 +523,7 @@ describe("Map Engine Renderer", () => {
     expect(mockCtx.fillText).not.toHaveBeenCalled();
   });
 
-  it("draws a fixed grid without translating the context", () => {
+  it("draws a fixed grid at its own phase, ignoring the live pan", () => {
     renderMap({
       canvas: mockCanvas,
       image: { width: 500, height: 400 } as HTMLImageElement,
@@ -540,7 +541,13 @@ describe("Map Engine Renderer", () => {
       },
     });
 
-    expect(mockCtx.translate).toHaveBeenCalledTimes(1);
+    // Two translates: the background image (at the live pan) and the grid.
+    // With no fixedPan snapshot the grid falls back to pan {0,0}, so its
+    // phase is (canvasSize / 2) % (size * zoom) — free of transform.pan, so
+    // the grid holds still while the map is dragged underneath it.
+    expect(mockCtx.translate).toHaveBeenNthCalledWith(1, 620, 480);
+    expect(mockCtx.translate).toHaveBeenNthCalledWith(2, 500 % 60, 400 % 60);
+    expect(mockCtx.translate).toHaveBeenCalledTimes(2);
     expect(mockCtx.fillRect).toHaveBeenCalledWith(-60, -60, 1120, 920);
   });
 

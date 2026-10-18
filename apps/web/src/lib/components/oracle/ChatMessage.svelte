@@ -19,6 +19,12 @@
     shouldShowCreateAction,
   } from "./chat-message.helpers";
   import { ChatMessageController } from "./chat-message-controller.svelte";
+  import MentionText from "./MentionText.svelte";
+  import {
+    createVaultMentionSource,
+    sourceEntitiesFor,
+  } from "$lib/stores/oracle/mention-source";
+  import { entityLinkClicks, linkEntityTitlesInHtml } from "./link-entity-html";
   import { sanitizeId } from "$lib/utils/markdown";
   import { revisionService } from "$lib/services/RevisionService.svelte";
   import Autocomplete from "../ui/Autocomplete.svelte";
@@ -109,6 +115,16 @@
   const handleUndo = async () => {
     await controller.undo();
   };
+  // Titles the reply was grounded in become links to their entries (#4052).
+  const linkedHtml = $derived(
+    linkEntityTitlesInHtml(
+      controller.htmlCache,
+      sourceEntitiesFor(
+        message.sources ?? [],
+        createVaultMentionSource(vault as any),
+      ),
+    ),
+  );
 </script>
 
 <div
@@ -146,9 +162,11 @@
             message.type === 'roll'
               ? 'mt-4 border-t border-theme-border/30 pt-2'
               : ''}"
+            use:entityLinkClicks={(entityId) =>
+              (vault.selectedEntityId = entityId)}
           >
             {#if controller.htmlCache}
-              {@html controller.htmlCache}
+              {@html linkedHtml}
             {:else}
               <div class="space-y-2 animate-pulse py-1">
                 <div class="bg-theme-border/20 h-3 w-full rounded"></div>
@@ -166,17 +184,18 @@
           >
             <button
               type="button"
-              class="inline-flex items-center gap-1.5 rounded-full border border-theme-primary/20 bg-theme-primary/5 px-2.5 py-1 text-[9px] font-bold uppercase tracking-widest text-theme-primary/80 font-header transition-colors hover:bg-theme-primary/10 hover:text-theme-primary"
+              class="inline-flex items-center gap-1.5 rounded-full border border-theme-primary/20 bg-theme-primary/5 px-2.5 py-1 text-nano font-bold uppercase tracking-widest text-theme-primary/80 font-header transition-colors hover:bg-theme-primary/10 hover:text-theme-primary"
               onclick={() =>
                 (controller.showDiscoveryChips =
                   !controller.showDiscoveryChips)}
               aria-expanded={controller.showDiscoveryChips}
               aria-controls={`found-lore-${message.id}`}
             >
-              <span class="icon-[lucide--sparkles] w-3 h-3"></span>
+              <span aria-hidden="true" class="icon-[lucide--sparkles] w-3 h-3"
+              ></span>
               <span>Found lore</span>
               <span
-                class="rounded-full bg-theme-primary/15 px-1.5 py-0.5 text-[8px] text-theme-primary"
+                class="rounded-full bg-theme-primary/15 px-1.5 py-0.5 text-nano text-theme-primary"
                 >{visibleProposals.length}</span
               >
               <span
@@ -218,7 +237,7 @@
           >
             {#if controller.isCopied}
               <span
-                class="text-[9px] font-bold tracking-tighter uppercase font-header"
+                class="text-nano font-bold tracking-tighter uppercase font-header"
                 >Copied!</span
               >
               <span
@@ -247,7 +266,7 @@
                   />
                   <button
                     onclick={() => (controller.isSelectingEntity = false)}
-                    class="mt-1 text-[9px] text-theme-muted hover:text-theme-primary font-bold uppercase tracking-widest font-header"
+                    class="mt-1 text-nano text-theme-muted hover:text-theme-primary font-bold uppercase tracking-widest font-header"
                   >
                     Cancel
                   </button>
@@ -258,7 +277,7 @@
                 <button
                   onclick={() => oracle.drawMessage(message.id)}
                   disabled={message.isDrawing || oracle.isLoading}
-                  class="flex items-center gap-1.5 px-3 py-1.5 rounded text-[10px] font-bold tracking-widest transition-all bg-theme-accent/10 text-theme-accent border border-theme-accent/30 hover:bg-theme-accent hover:text-black group relative disabled:opacity-50"
+                  class="flex items-center gap-1.5 px-3 py-1.5 rounded text-micro font-bold tracking-widest transition-all bg-theme-accent/10 text-theme-accent border border-theme-accent/30 hover:bg-theme-accent hover:text-black group relative disabled:opacity-50"
                   aria-label="Draw visualization for this message"
                   aria-busy={message.isDrawing}
                 >
@@ -278,7 +297,7 @@
 
                   {#if message.isDrawing && oracle.activeStyleTitle}
                     <div
-                      class="absolute bottom-full right-0 mb-2 w-48 bg-theme-surface border border-theme-border rounded shadow-xl p-2 z-50 text-[9px] font-bold tracking-widest uppercase font-header text-theme-primary animate-pulse"
+                      class="absolute bottom-full right-0 mb-2 w-48 bg-theme-surface border border-theme-border rounded shadow-xl p-2 z-50 text-nano font-bold tracking-widest uppercase font-header text-theme-primary animate-pulse"
                       aria-live="polite"
                     >
                       Style: {oracle.activeStyleTitle}
@@ -292,7 +311,7 @@
                   onclick={createAsNode}
                   disabled={controller.activeAction !== null}
                   aria-busy={controller.activeAction === "create"}
-                  class="flex items-center gap-1.5 px-3 py-1.5 rounded text-[10px] font-bold tracking-widest transition-all bg-theme-primary/10 text-theme-primary border border-theme-primary/30 hover:bg-theme-primary hover:text-black group relative disabled:opacity-50 disabled:cursor-not-allowed"
+                  class="flex items-center gap-1.5 px-3 py-1.5 rounded text-micro font-bold tracking-widest transition-all bg-theme-primary/10 text-theme-primary border border-theme-primary/30 hover:bg-theme-primary hover:text-black group relative disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {#if controller.activeAction === "create"}
                     <span
@@ -326,7 +345,7 @@
               {/if}
 
               <div
-                class="flex items-center rounded text-[10px] font-bold tracking-widest bg-theme-surface border border-theme-border text-theme-muted group/link relative"
+                class="flex items-center rounded text-micro font-bold tracking-widest bg-theme-surface border border-theme-border text-theme-muted group/link relative"
               >
                 <button
                   onclick={() =>
@@ -379,11 +398,13 @@
                   <button
                     onclick={() =>
                       oracle.updateMessageEntity(message.id, activeEntity!.id)}
-                    class="flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold tracking-widest transition-all bg-theme-surface border border-theme-border text-theme-muted hover:bg-theme-primary hover:text-black hover:border-theme-primary max-w-[200px]"
+                    class="flex items-center gap-1.5 px-2 py-1 rounded text-micro font-bold tracking-widest transition-all bg-theme-surface border border-theme-border text-theme-muted hover:bg-theme-primary hover:text-black hover:border-theme-primary max-w-[200px]"
                     title="Change target to your current selection: {activeEntity!
                       .title}"
                   >
-                    <span class="icon-[lucide--refresh-cw] w-3 h-3 shrink-0"
+                    <span
+                      aria-hidden="true"
+                      class="icon-[lucide--refresh-cw] w-3 h-3 shrink-0"
                     ></span>
                     <span class="truncate font-header"
                       >USE: {activeEntity!.title.toUpperCase()}</span
@@ -396,7 +417,7 @@
                     onclick={applySmart}
                     disabled={controller.activeAction !== null}
                     aria-busy={controller.activeAction === "apply"}
-                    class="flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold tracking-widest transition-all bg-theme-primary/10 text-theme-primary border border-theme-primary/30 hover:bg-theme-primary hover:text-black max-w-[280px] group relative disabled:opacity-50 disabled:cursor-not-allowed"
+                    class="flex items-center gap-1.5 px-2 py-1 rounded text-micro font-bold tracking-widest transition-all bg-theme-primary/10 text-theme-primary border border-theme-primary/30 hover:bg-theme-primary hover:text-black max-w-[280px] group relative disabled:opacity-50 disabled:cursor-not-allowed"
                     title="Save to {(targetEntity || activeEntity!).title}"
                   >
                     {#if controller.activeAction === "apply"}
@@ -405,7 +426,9 @@
                         aria-hidden="true"
                       ></span>
                     {:else}
-                      <span class="icon-[lucide--wand-2] w-3 h-3 shrink-0"
+                      <span
+                        aria-hidden="true"
+                        class="icon-[lucide--wand-2] w-3 h-3 shrink-0"
                       ></span>
                     {/if}
                     <span class="truncate font-header"
@@ -423,7 +446,7 @@
                     >
                       <div class="mb-2">
                         <span
-                          class="text-theme-primary font-bold uppercase font-header text-[9px]"
+                          class="text-theme-primary font-bold uppercase font-header text-nano"
                           >Chronicle:</span
                         >
                         <p class="line-clamp-2 text-theme-text/80">
@@ -432,7 +455,7 @@
                       </div>
                       <div>
                         <span
-                          class="text-theme-accent font-bold uppercase font-header text-[9px]"
+                          class="text-theme-accent font-bold uppercase font-header text-nano"
                           >Lore:</span
                         >
                         <p class="line-clamp-2 text-theme-text/80">
@@ -446,7 +469,7 @@
                     onclick={copyToChronicle}
                     disabled={controller.activeAction !== null}
                     aria-busy={controller.activeAction === "chronicle"}
-                    class="flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold tracking-widest transition-all bg-theme-primary/10 text-theme-primary border border-theme-primary/30 hover:bg-theme-primary hover:text-black max-w-[250px] disabled:opacity-50 disabled:cursor-not-allowed"
+                    class="flex items-center gap-1.5 px-2 py-1 rounded text-micro font-bold tracking-widest transition-all bg-theme-primary/10 text-theme-primary border border-theme-primary/30 hover:bg-theme-primary hover:text-black max-w-[250px] disabled:opacity-50 disabled:cursor-not-allowed"
                     title="Save to {(targetEntity || activeEntity!).title}"
                   >
                     {#if controller.activeAction === "chronicle"}
@@ -455,7 +478,9 @@
                         aria-hidden="true"
                       ></span>
                     {:else}
-                      <span class="icon-[lucide--copy-plus] w-3 h-3 shrink-0"
+                      <span
+                        aria-hidden="true"
+                        class="icon-[lucide--copy-plus] w-3 h-3 shrink-0"
                       ></span>
                     {/if}
                     <span class="truncate font-header"
@@ -471,7 +496,7 @@
                     onclick={copyToLore}
                     disabled={controller.activeAction !== null}
                     aria-busy={controller.activeAction === "lore"}
-                    class="flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold tracking-widest transition-all bg-theme-accent/10 text-theme-accent border border-theme-accent/30 hover:bg-theme-accent hover:text-black max-w-[250px] disabled:opacity-50 disabled:cursor-not-allowed"
+                    class="flex items-center gap-1.5 px-2 py-1 rounded text-micro font-bold tracking-widest transition-all bg-theme-accent/10 text-theme-accent border border-theme-accent/30 hover:bg-theme-accent hover:text-black max-w-[250px] disabled:opacity-50 disabled:cursor-not-allowed"
                     title="Save to {(targetEntity || activeEntity!).title}"
                   >
                     {#if controller.activeAction === "lore"}
@@ -480,7 +505,9 @@
                         aria-hidden="true"
                       ></span>
                     {:else}
-                      <span class="icon-[lucide--scroll-text] w-3 h-3 shrink-0"
+                      <span
+                        aria-hidden="true"
+                        class="icon-[lucide--scroll-text] w-3 h-3 shrink-0"
                       ></span>
                     {/if}
                     <span class="truncate font-header"
@@ -504,26 +531,35 @@
             >
               {#if revisionService.pendingDraft?.messageId === message.id}
                 <span
-                  class="text-[10px] text-theme-primary font-bold uppercase font-header tracking-wider flex items-center gap-1"
+                  class="text-micro text-theme-primary font-bold uppercase font-header tracking-wider flex items-center gap-1"
                 >
-                  <span class="icon-[lucide--sparkles] w-3 h-3"></span>
+                  <span
+                    aria-hidden="true"
+                    class="icon-[lucide--sparkles] w-3 h-3"
+                  ></span>
                   DRAFT PROPOSED
                 </span>
               {:else}
                 <span
-                  class="text-[10px] text-green-400 font-bold uppercase font-header tracking-wider flex items-center gap-1"
+                  class="text-micro text-green-400 font-bold uppercase font-header tracking-wider flex items-center gap-1"
                 >
-                  <span class="icon-[lucide--check-circle] w-3 h-3"></span>
+                  <span
+                    aria-hidden="true"
+                    class="icon-[lucide--check-circle] w-3 h-3"
+                  ></span>
                   SAVED
                 </span>
 
                 {#if isLastAction}
                   <button
                     onclick={handleUndo}
-                    class="text-[10px] text-theme-muted hover:text-red-400 font-bold uppercase font-header tracking-wider flex items-center gap-1 transition-colors"
+                    class="text-micro text-theme-muted hover:text-red-400 font-bold uppercase font-header tracking-wider flex items-center gap-1 transition-colors"
                     title="Undo changes (Ctrl+Z)"
                   >
-                    <span class="icon-[lucide--undo-2] w-3 h-3"></span>
+                    <span
+                      aria-hidden="true"
+                      class="icon-[lucide--undo-2] w-3 h-3"
+                    ></span>
                     UNDO
                   </button>
                 {/if}
@@ -533,7 +569,13 @@
         {/if}
       {/if}
     {:else}
-      {message.content}
+      <MentionText
+        text={message.content}
+        mentions={message.mentions ?? []}
+        lookup={(id) =>
+          createVaultMentionSource(vault as any).getEntity(id)?.title}
+        onOpen={(id) => (vault.selectedEntityId = id)}
+      />
     {/if}
   </div>
 </div>

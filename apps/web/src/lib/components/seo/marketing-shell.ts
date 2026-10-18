@@ -12,15 +12,15 @@ export interface MarketingNavItem {
 }
 
 /**
- * The public nav. Four items, deliberately: the shell is a way back into the
- * site from a page someone landed on, not a sitemap. Sentence case per the
- * grammar in docs/design/public-shell-grammar.md.
+ * The public nav. Two items, deliberately (#3140): Generators is the
+ * strongest direct use entry point, Explore is the way into everything
+ * else (Answers, Topics, Examples, Tools, Devlog, ...) — the header is a
+ * way back into the site from a page someone landed on, not a sitemap.
+ * Sentence case per the grammar in docs/design/public-shell-grammar.md.
  */
 export const MARKETING_NAV: MarketingNavItem[] = [
-  { href: "/features", label: "Features" },
   { href: "/generators", label: "Generators" },
-  { href: "/tools", label: "Tools" },
-  { href: "/blog", label: "Devlog" },
+  { href: "/explore", label: "Explore" },
 ];
 
 /**

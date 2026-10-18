@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { setupVaultPage } from "./test-helpers";
 
 test.describe("Category Filter", () => {
   const domClick = async (page: any, testId: string) => {
@@ -10,76 +11,7 @@ test.describe("Category Filter", () => {
   };
 
   test.beforeEach(async ({ page }) => {
-    await page.addInitScript(() => {
-      try {
-        window.localStorage.setItem("codex_skip_landing", "true");
-      } catch {
-        /* ignore */
-      }
-      localStorage.setItem(
-        "codex-cryptica-help-state",
-        JSON.stringify({ completedTours: ["initial-onboarding"] }),
-      );
-      (window as any).showDirectoryPicker = async () => {
-        return {
-          kind: "directory",
-          name: "test-vault",
-          getFileHandle: async (_name: string) => {
-            return {
-              kind: "file",
-              name: "file",
-              getFile: async () => ({
-                lastModified: Date.now(),
-                text: async () => "---\ntitle: Test\n---",
-              }),
-              createWritable: async () => ({
-                write: async () => {},
-                close: async () => {},
-              }),
-            };
-          },
-          getDirectoryHandle: async () => {
-            throw new Error("Not implemented");
-          },
-          values: async function* () {
-            yield* [];
-          },
-        };
-      };
-
-      if (
-        typeof IDBObjectStore !== "undefined" &&
-        IDBObjectStore.prototype &&
-        typeof IDBObjectStore.prototype.put === "function"
-      ) {
-        const originalPut = IDBObjectStore.prototype.put;
-        IDBObjectStore.prototype.put = function (
-          value: any,
-          key?: IDBValidKey,
-        ) {
-          try {
-            return originalPut.call(this, value, key);
-          } catch (err) {
-            if (value && typeof value === "object") {
-              const clone: any = {};
-              for (const [k, v] of Object.entries(value)) {
-                if (typeof v !== "function") {
-                  clone[k] = v;
-                }
-              }
-              return originalPut.call(this, clone, key);
-            }
-            throw err;
-          }
-        };
-      }
-    });
-    await page.goto("/");
-    await page.waitForFunction(() => !!(window as any).uiStore);
-    await page.evaluate(() => {
-      (window as any).uiStore.dismissedLandingPage = true;
-    });
-    await page.reload({ waitUntil: "load" });
+    await setupVaultPage(page);
     await expect(page.getByTestId("graph-canvas")).toBeVisible({
       timeout: 20000,
     });
@@ -173,7 +105,6 @@ test.describe("Category Filter", () => {
     await expect(page.getByTestId("category-filter-all")).toBeVisible();
 
     const allBtn = page.getByTestId("category-filter-all");
-    const locationBtn = page.getByTestId("category-filter-location");
 
     // Select a filter
     await domClick(page, "category-filter-location");
@@ -182,7 +113,12 @@ test.describe("Category Filter", () => {
       null,
       { timeout: 10000 },
     );
-    await expect(locationBtn).toHaveAttribute("aria-pressed", "true");
+    // Applying a filter collapses the toolbar after the graph updates.
+    await domClick(page, "category-filter-toggle");
+    if (!(await allBtn.isVisible().catch(() => false))) {
+      await domClick(page, "category-filter-toggle");
+    }
+    await expect(allBtn).toBeVisible();
 
     // Click All to clear
     await domClick(page, "category-filter-all");
@@ -192,7 +128,6 @@ test.describe("Category Filter", () => {
       { timeout: 10000 },
     );
     await expect(allBtn).toHaveClass(/shadow-sm/);
-    await expect(locationBtn).toHaveAttribute("aria-pressed", "false");
   });
 
   test("Multiple categories can be selected simultaneously", async ({

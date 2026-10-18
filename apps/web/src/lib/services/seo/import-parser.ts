@@ -1,6 +1,13 @@
-import { parseWaExport, cleanHtml, type ParsedEntity } from "./wa-parser";
+import {
+  parseWaExport,
+  type ParsedAsset,
+  type ParsedEntity,
+  type ParsedRelationship,
+} from "./wa-parser";
 import {
   convertThreadWeaverJsonToCif,
+  parseChronicaExports,
+  parseKankaExportZip,
   parseScabardExport,
 } from "@codex/importer";
 
@@ -11,6 +18,8 @@ const KNOWN_ENTITY_TYPES: ParsedEntity["type"][] = [
   "item",
   "event",
   "faction",
+  "quest",
+  "species",
   "note",
 ];
 
@@ -19,6 +28,16 @@ function toKnownType(value: string | undefined): ParsedEntity["type"] {
   return (KNOWN_ENTITY_TYPES as string[]).includes(lower)
     ? (lower as ParsedEntity["type"])
     : "note";
+}
+
+function bytesToDataUrl(bytes: Uint8Array, mimeType: string): string {
+  let binary = "";
+  const chunkSize = 0x8000;
+  for (let offset = 0; offset < bytes.length; offset += chunkSize) {
+    const chunk = bytes.subarray(offset, offset + chunkSize);
+    binary += String.fromCharCode(...chunk);
+  }
+  return `data:${mimeType};base64,${btoa(binary)}`;
 }
 
 // Parses Obsidian vault files (.md)
@@ -93,37 +112,81 @@ export async function parseJsonExport(
   file: File,
   slug: string,
 ): Promise<ParsedEntity[]> {
+  if (slug === "kanka-json") {
+    const pkg = await parseKankaExportZip(file);
+    const titlesByRef = new Map(
+      pkg.entityDrafts.map((draft) => [
+        `kanka:${draft.sourceType ?? "note"}:${draft.sourceId}`,
+        draft.title,
+      ]),
+    );
+    const relationshipsByRef = new Map<string, ParsedRelationship[]>();
+    for (const relationship of pkg.relationshipDrafts) {
+      const targetTitle = titlesByRef.get(relationship.toRef);
+      if (!targetTitle) continue;
+      const relationships = relationshipsByRef.get(relationship.fromRef) ?? [];
+      relationships.push({
+        title: targetTitle,
+        type: relationship.type,
+        ...(relationship.label ? { label: relationship.label } : {}),
+      });
+      relationshipsByRef.set(relationship.fromRef, relationships);
+    }
+
+    const assetsByRef = new Map<string, ParsedAsset[]>();
+    for (const asset of pkg.assetDrafts) {
+      if (!asset.bytes) continue;
+      const bytes =
+        asset.bytes instanceof Blob
+          ? new Uint8Array(await asset.bytes.arrayBuffer())
+          : asset.bytes;
+      const dataUrl = bytesToDataUrl(bytes, asset.mimeType);
+      const assets = assetsByRef.get(asset.placementRef) ?? [];
+      assets.push({
+        originalName: asset.originalName,
+        mimeType: asset.mimeType,
+        dataUrl,
+      });
+      assetsByRef.set(asset.placementRef, assets);
+    }
+
+    const parsed = pkg.entityDrafts.map((draft) => {
+      const discoverySource = `kanka:${draft.sourceType ?? "note"}:${draft.sourceId}`;
+      const relationships = relationshipsByRef.get(discoverySource);
+      const references = relationships?.map(
+        (relationship) => relationship.title,
+      );
+      const parentReference = draft.parentRef
+        ? titlesByRef.get(draft.parentRef)
+        : undefined;
+      const assets = assetsByRef.get(discoverySource);
+      return {
+        type: toKnownType(draft.sourceType),
+        title: draft.title,
+        content: draft.content || draft.lore || "",
+        labels: draft.labels ?? [],
+        discoverySource,
+        metadata: draft.metadata,
+        ...(references && references.length > 0
+          ? { references: [...new Set(references)] }
+          : {}),
+        ...(relationships && relationships.length > 0 ? { relationships } : {}),
+        ...(parentReference ? { parentReference } : {}),
+        ...(assets && assets.length > 0 ? { assets } : {}),
+      };
+    });
+    if (parsed.length === 0) {
+      throw new Error("No importable entries found in the Kanka export ZIP.");
+    }
+    return parsed;
+  }
+
   const text = await file.text();
   const data = JSON.parse(text);
   const parsed: ParsedEntity[] = [];
 
   if (slug === "world-anvil-export") {
     parsed.push(...parseWaExport(data));
-  } else if (slug === "kanka-json") {
-    // Kanka campaign exports
-    const entities =
-      data.entities || (Array.isArray(data) ? data : Object.values(data));
-    for (const item of entities) {
-      if (!item || typeof item !== "object") continue;
-      const title = item.name || "Untitled Entity";
-      const body = cleanHtml(
-        item.entry || item.entry_parsed || item.history || "",
-      );
-      let type: ParsedEntity["type"] = "note";
-      const kankaType = String(item.type || "").toLowerCase();
-      if (kankaType === "character") type = "character";
-      else if (kankaType === "location") type = "location";
-      else if (kankaType === "item") type = "item";
-      else if (kankaType === "organisation" || kankaType === "faction")
-        type = "faction";
-
-      parsed.push({
-        type,
-        title,
-        content: body,
-        labels: ["kanka-import", kankaType].filter(Boolean),
-      });
-    }
   } else if (slug === "legendkeeper-json") {
     // LegendKeeper JSON schema
     const pages =
@@ -174,6 +237,73 @@ export async function parseJsonExport(
     );
   }
   return parsed;
+}
+
+/**
+ * Chronica exports each campaign section (characters, places, quests…) as its
+ * own JSON file, so the whole selection is parsed together as one campaign.
+ */
+export async function parseChronicaFiles(
+  files: File[],
+): Promise<ParsedEntity[]> {
+  const jsonFiles = files.filter((file) =>
+    file.name.toLowerCase().endsWith(".json"),
+  );
+  if (jsonFiles.length === 0) {
+    throw new Error("Please upload the .JSON files from your Chronica export.");
+  }
+
+  const documents = await Promise.all(
+    jsonFiles.map(async (file) => {
+      try {
+        return { fileName: file.name, json: JSON.parse(await file.text()) };
+      } catch {
+        throw new Error(`${file.name} is not valid JSON.`);
+      }
+    }),
+  );
+  const pkg = parseChronicaExports(documents);
+
+  const refFor = (draft: (typeof pkg.entityDrafts)[number]) =>
+    `chronica:${draft.sourceType ?? "note"}:${draft.sourceId}`;
+  const titlesByRef = new Map(
+    pkg.entityDrafts.map((draft) => [refFor(draft), draft.title]),
+  );
+  const relationshipsByRef = new Map<string, ParsedRelationship[]>();
+  for (const relationship of pkg.relationshipDrafts) {
+    const targetTitle = titlesByRef.get(relationship.toRef);
+    if (!targetTitle) continue;
+    const relationships = relationshipsByRef.get(relationship.fromRef) ?? [];
+    relationships.push({ title: targetTitle, type: relationship.type });
+    relationshipsByRef.set(relationship.fromRef, relationships);
+  }
+
+  return pkg.entityDrafts.map((draft) => {
+    const discoverySource = refFor(draft);
+    const relationships = relationshipsByRef.get(discoverySource);
+    const metadata = Object.fromEntries(
+      Object.entries(draft.metadata ?? {}).filter(
+        ([key]) => key !== "gm_secrets",
+      ),
+    );
+    return {
+      type: toKnownType(
+        draft.sourceType === "place" ? "location" : draft.sourceType,
+      ),
+      title: draft.title,
+      content: draft.content ?? "",
+      ...(draft.lore ? { lore: draft.lore } : {}),
+      labels: draft.labels ?? [],
+      discoverySource,
+      metadata,
+      ...(relationships && relationships.length > 0
+        ? {
+            relationships,
+            references: [...new Set(relationships.map((r) => r.title))],
+          }
+        : {}),
+    };
+  });
 }
 
 // Helper to recursively fetch files from entries

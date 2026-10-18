@@ -1,10 +1,17 @@
 import { untrack } from "svelte";
+import { unsavedPositionUpdates } from "./position-persistence";
+import {
+  applyLayoutSnapshot,
+  restoreEverydayPositions,
+  type LayoutPositions,
+} from "./graph-layout-snapshot";
 import type { Core } from "cytoscape";
 import {
   initGraph,
-  isLayoutCollinear,
   LayoutManager,
   GraphImageManager,
+  attachCommunityHulls,
+  type CommunityHullOverlay,
   setupGraphEvents,
   syncGraphElements,
   applyLargeGraphRenderHints,
@@ -21,6 +28,8 @@ import type { debugStore as debugStoreType } from "$lib/stores/debug.svelte";
 import type { layoutUIStore as layoutUIStoreType } from "$lib/stores/ui/layout-ui.svelte";
 import type { connectionModeStore as connectionModeStoreType } from "$lib/stores/ui/connection-mode.svelte";
 import type { modalUIStore as modalUIStoreType } from "$lib/stores/ui/modal-ui.svelte";
+import { themeStore } from "$lib/stores/theme.svelte";
+import { categories } from "$lib/stores/categories.svelte";
 import {
   DEFAULT_SEARCH_ENTITY_ZOOM,
   consumePendingSearchEntityFocus,
@@ -28,7 +37,7 @@ import {
   markSearchEntityFocusHandled,
 } from "../search/search-focus";
 import type { LocalEntity } from "$lib/stores/vault/types";
-import { systemClock } from "$lib/utils/runtime-deps";
+import { systemClock, type Clock } from "$lib/utils/runtime-deps";
 import {
   browserPerformanceCapture,
   browserPerformanceRecorder,
@@ -40,33 +49,17 @@ import {
   type GraphVisibilityReason,
   type GraphVisibilitySnapshot,
 } from "./graph-visibility";
+import {
+  FocusZoomRatchet,
+  FOCUS_ZOOM_STEP_FACTOR,
+  resolveFocusDepth,
+} from "./graph-focus-zoom-ratchet";
+import { hasDegenerateSavedCoordinates } from "./saved-coordinate-health";
+import { syncGraphImages } from "./graph-image-sync";
 
 export type LoadPhase = "idle" | "elements" | "finalized" | "ready";
 
-/** Each `FOCUS_ZOOM_STEP_FACTOR`x zoom in/out changes one focus detail level. */
-export const FOCUS_ZOOM_STEP_FACTOR = 1.8;
-
-/**
- * Pure ratchet that maps a zoom change into a focus-view depth change, relative
- * to the zoom at the last depth change (`zoomMark`). Zooming in past the step
- * factor reveals more detail; zooming out hides detail. Returns the (possibly
- * unchanged) depth and the mark to anchor the next step from. Relative rather
- * than absolute so it composes with whatever zoom an auto-fit lands on.
- */
-export function resolveFocusDepth(
-  currentDepth: number,
-  zoom: number,
-  zoomMark: number,
-  bounds: { min: number; max: number; stepFactor: number },
-): { depth: number; mark: number } {
-  if (zoom >= zoomMark * bounds.stepFactor && currentDepth < bounds.max) {
-    return { depth: currentDepth + 1, mark: zoom };
-  }
-  if (zoom <= zoomMark / bounds.stepFactor && currentDepth > bounds.min) {
-    return { depth: currentDepth - 1, mark: zoom };
-  }
-  return { depth: currentDepth, mark: zoomMark };
-}
+export { FOCUS_ZOOM_STEP_FACTOR, resolveFocusDepth };
 
 /**
  * Pure viewport-policy resolver — no class state, fully unit-testable.
@@ -89,6 +82,7 @@ export function resolveViewport(
 }
 
 export interface GraphViewDependencies {
+  clock?: Clock;
   graph: typeof graphStore;
   vault: typeof vaultStore;
   debugStore: typeof debugStoreType;
@@ -102,6 +96,7 @@ export class GraphViewController {
   cy = $state<Core | undefined>();
   layoutManager = $state<LayoutManager | undefined>();
   imageManager = $state<GraphImageManager | undefined>();
+  communityHulls = $state<CommunityHullOverlay | undefined>();
 
   isLayoutRunning = $state(false);
   graphVisible = $derived(this.cy !== undefined);
@@ -141,22 +136,16 @@ export class GraphViewController {
   private focusDepthStartCounts: { nodes: number; edges: number } | null = null;
   private readonly NODE_SELECT_DELAY_MS = 300;
 
-  // Zoom-driven focus depth: the zoom at the last depth change (ratchet anchor),
-  // a debounce timer so we only act on settled zoom, and a one-shot flag set by
-  // programmatic fits so their zoom re-anchors the ratchet instead of changing
-  // depth. lastSyncedFocusDepth lets syncElements detect depth-driven element
-  // churn and preserve the viewport for it.
-  private focusZoomMark = 0;
-  private focusZoomTimer: number | null = null;
-  private focusRebaselineTimer: number | null = null;
-  private suppressFocusZoom = false;
+  // Zoom-driven focus depth ratchet (debounces zoom into settled samples and
+  // maps them to depth changes; see FocusZoomRatchet). lastSyncedFocusDepth
+  // lets syncElements detect depth-driven element churn and preserve the
+  // viewport for it.
+  private focusZoomRatchet = new FocusZoomRatchet();
   private lastSyncedFocusDepth = MIN_FOCUS_DEPTH;
   private lastSyncedFocusRootId: string | null = null;
   private lastSyncedGraphStructureVersion = 0;
   private lastSyncedFilterSignature = "";
   private elementSyncGeneration = 0;
-  private readonly FOCUS_ZOOM_SETTLE_MS = 150;
-  private readonly FOCUS_REBASELINE_MS = 300;
 
   private resizeTimer: number | null = null;
   private lastOrientation: "landscape" | "portrait" | null = null;
@@ -195,6 +184,7 @@ export class GraphViewController {
   private searchFocusListener: ((event: Event) => void) | null = null;
 
   private deps: GraphViewDependencies;
+  private clock: Clock;
 
   constructor(
     options: { selectedId: string | null },
@@ -202,6 +192,7 @@ export class GraphViewController {
   ) {
     this.selectedId = options.selectedId;
     this.deps = deps;
+    this.clock = deps.clock ?? systemClock;
   }
 
   setVisibilityInputs = (inputs: GraphVisibilityInputs) => {
@@ -234,7 +225,7 @@ export class GraphViewController {
     );
     this.deps.debugStore.log(`[GraphView] Suspended rendering: ${reason}`);
     this.isLayoutRunning = false;
-    this.suppressFocusZoom = false;
+    this.focusZoomRatchet.unsuppress();
     this.layoutManager?.stop();
     this.cy?.stop();
     this.clearRenderReadyMeasurement();
@@ -274,14 +265,7 @@ export class GraphViewController {
   };
 
   private clearVisibilityTimers = () => {
-    if (this.focusZoomTimer) {
-      clearTimeout(this.focusZoomTimer);
-      this.focusZoomTimer = null;
-    }
-    if (this.focusRebaselineTimer) {
-      clearTimeout(this.focusRebaselineTimer);
-      this.focusRebaselineTimer = null;
-    }
+    this.focusZoomRatchet.clearTimers();
     if (this.resizeTimer) {
       clearTimeout(this.resizeTimer);
       this.resizeTimer = null;
@@ -328,6 +312,17 @@ export class GraphViewController {
         (window as any).graphViewController = this;
       }
 
+      const hullCanvas = container.querySelector<HTMLCanvasElement>(
+        "canvas[data-community-hulls]",
+      );
+      this.communityHulls?.destroy();
+      this.communityHulls = hullCanvas
+        ? attachCommunityHulls(instance, hullCanvas, {
+            enabled: untrack(() => this.communityHullsWanted()),
+            strong: untrack(() => this.deps.graph.communityMode === "strong"),
+          })
+        : undefined;
+
       this.cleanupEvents = setupGraphEvents(instance, {
         onNodeMouseOver: (id, renderedPos) => {
           this.hoverPosition = renderedPos;
@@ -338,7 +333,20 @@ export class GraphViewController {
           this.hoverPosition = null;
         },
         onNodeTap: async (id, node) => {
-          const container = this.cy?.container();
+          const cyInstance =
+            typeof node?.cy === "function" ? node.cy() : this.cy;
+          const lastCxtTap =
+            (cyInstance?.scratch?.("_lastCxtTap") as number | undefined) ?? 0;
+          if (this.clock.now() - lastCxtTap < 400) {
+            return;
+          }
+
+          const container =
+            typeof cyInstance?.container === "function"
+              ? cyInstance.container()
+              : typeof this.cy?.container === "function"
+                ? this.cy.container()
+                : null;
           if (container) {
             const rect = container.getBoundingClientRect();
             const renderedPos = node.renderedPosition();
@@ -477,14 +485,7 @@ export class GraphViewController {
       clearTimeout(this.resizeTimer);
       this.resizeTimer = null;
     }
-    if (this.focusZoomTimer) {
-      clearTimeout(this.focusZoomTimer);
-      this.focusZoomTimer = null;
-    }
-    if (this.focusRebaselineTimer) {
-      clearTimeout(this.focusRebaselineTimer);
-      this.focusRebaselineTimer = null;
-    }
+    this.focusZoomRatchet.clearTimers();
     if (this.slashGuardTimer) {
       clearTimeout(this.slashGuardTimer);
       this.slashGuardTimer = null;
@@ -500,6 +501,8 @@ export class GraphViewController {
       this.cleanupEvents();
       this.cleanupEvents = undefined;
     }
+    this.communityHulls?.destroy();
+    this.communityHulls = undefined;
     this.clearNodeSelectTimer();
     this.clearRenderReadyMeasurement();
     if (this.layoutManager) {
@@ -509,7 +512,7 @@ export class GraphViewController {
     if (this.imageManager) {
       this.imageManager.destroy({
         releaseImageUrl: (path: string) =>
-          this.deps.vault.releaseImageUrl(path),
+          this.deps.vault.releaseThumbnailUrl(path),
       } as any);
       this.imageManager = undefined;
     }
@@ -561,7 +564,7 @@ export class GraphViewController {
     // its duration and re-anchor the mark to where the fit lands (in
     // onLayoutStop), so the fit isn't misread as a user-driven reveal.
     const isFit = viewport === "fit";
-    if (isFit) this.suppressFocusZoom = true;
+    if (isFit) this.focusZoomRatchet.suppress();
 
     try {
       await this.layoutManager.apply(
@@ -599,21 +602,11 @@ export class GraphViewController {
             if (isInitial) {
               this.loadPhase = "ready";
             }
-            // Re-enable the ratchet and re-anchor it to the *settled* zoom. A
-            // re-cull can chain fits (cluster → spread) and the slash guard can
-            // re-fit later, so capture the mark on a dedicated timer (which a fast
-            // user zoom can't clear) rather than trusting this stop's transient zoom.
+            // Re-enable the ratchet and re-anchor it to the *settled* zoom.
             if (isFit) {
-              this.suppressFocusZoom = false;
-              if (this.focusRebaselineTimer)
-                clearTimeout(this.focusRebaselineTimer);
-              this.focusRebaselineTimer = window.setTimeout(() => {
-                this.focusRebaselineTimer = null;
-                if (this.cy && !this.cy.destroyed()) {
-                  const z = this.cy.zoom();
-                  if (z > 0) this.focusZoomMark = z;
-                }
-              }, this.FOCUS_REBASELINE_MS);
+              this.focusZoomRatchet.scheduleRebaseline(() =>
+                this.cy && !this.cy.destroyed() ? this.cy.zoom() : null,
+              );
             }
           },
           onPositionsUpdated: (updates, meta) => {
@@ -624,16 +617,35 @@ export class GraphViewController {
               this.needsVisibilityReconcile = true;
               return;
             }
-            // Never bulk-persist positions from a focus-view (culled) solve. The
-            // rendered set is a partial view of the vault, so its solved layout
-            // isn't a meaningful full-graph layout to save — and persisting it is
-            // catastrophically expensive on large vaults: each coordinate save of
-            // a lazily-loaded entity forces a full content load + disk write, so
-            // a 500-node heal/solve serialized hundreds of store mutations and
-            // wedged the main thread for minutes (#1576). Full-graph mode
-            // ("Show full graph") still persists and heals normally.
-            if (this.deps.graph.focusViewActive) return;
+            // A view's own layout is open (#3456): keep it on screen after any
+            // layout pass, and never write it, or positions worked out around
+            // it, into the vault's everyday arrangement.
+            const openLayout = this.deps.graph.layoutOverride;
+            if (openLayout) {
+              applyLayoutSnapshot(this.cy, openLayout);
+              return;
+            }
             const notLoading = this.deps.vault.status !== "loading";
+            // Always keep positions for entities that have none yet, in any
+            // view and on the first solve. Otherwise a vault shown in focus
+            // view never kept its layout and re-solved it on every load. Only
+            // missing positions are filled in, so a partial or randomised
+            // solve never overwrites a saved layout, and coordinate-only saves
+            // no longer load entity content (the #1576 cascade that kept
+            // focus-view solves from saving at all).
+            const unsaved = unsavedPositionUpdates(
+              updates as Record<string, Partial<LocalEntity>>,
+              (id) => this.deps.vault.entities[id],
+            );
+            // Focus view shows a partial set: never rewrite saved positions
+            // from it. Full-graph mode ("Show full graph") persists and heals
+            // as before.
+            if (this.deps.graph.focusViewActive) {
+              if (notLoading && Object.keys(unsaved).length > 0) {
+                this.deps.vault.batchUpdate(unsaved);
+              }
+              return;
+            }
             const isReady = this.loadPhase === "ready" && notLoading;
             // Persist the initial layout when it heals a degenerate vault — either
             // a runtime re-solve (meta.healed) or the first solve of a vault whose
@@ -649,6 +661,8 @@ export class GraphViewController {
               this.deps.vault.batchUpdate(
                 updates as Record<string, Partial<LocalEntity>>,
               );
+            } else if (notLoading && Object.keys(unsaved).length > 0) {
+              this.deps.vault.batchUpdate(unsaved);
             }
           },
         },
@@ -670,7 +684,7 @@ export class GraphViewController {
     renderedNodeCount: this.cy?.nodes().length,
   });
 
-  private clearRenderReadyMeasurement = () => {
+  private clearRenderReadyMeasurement = (clearFocusDepth = true) => {
     if (this.renderReadyFrameOne !== null) {
       cancelAnimationFrame(this.renderReadyFrameOne);
       this.renderReadyFrameOne = null;
@@ -681,9 +695,11 @@ export class GraphViewController {
     }
     this.renderReadySpan?.cancel();
     this.renderReadySpan = null;
-    this.focusDepthSpan?.cancel();
-    this.focusDepthSpan = null;
-    this.focusDepthStartCounts = null;
+    if (clearFocusDepth) {
+      this.focusDepthSpan?.cancel();
+      this.focusDepthSpan = null;
+      this.focusDepthStartCounts = null;
+    }
   };
 
   private startFocusDepthMeasurement = () => {
@@ -712,7 +728,7 @@ export class GraphViewController {
   };
 
   private scheduleRenderReadyMeasurement = () => {
-    this.clearRenderReadyMeasurement();
+    this.clearRenderReadyMeasurement(false);
     this.renderReadySpan = browserPerformanceRecorder.start(
       "graph_sync_render_ready",
     );
@@ -772,6 +788,30 @@ export class GraphViewController {
     this.nodeSelectSpan = null;
   };
 
+  /**
+   * The graph only places an entity when it is first added, so when a view's
+   * saved layout opens or closes, entities already on screen are moved here:
+   * to their saved positions, or back to the vault's everyday ones. Entities
+   * added later are placed from the layout by the elements themselves.
+   * Timeline and orbit arrange entities on their own, so they are left alone.
+   */
+  private lastLayoutOverride: LayoutPositions | null = null;
+  private syncLayoutOverride() {
+    const override = this.deps.graph.layoutOverride ?? null;
+    if (override === this.lastLayoutOverride) return;
+    const previous = this.lastLayoutOverride;
+    this.lastLayoutOverride = override;
+    if (override) {
+      if (this.deps.graph.timelineMode || this.deps.graph.orbitMode) return;
+      applyLayoutSnapshot(this.cy, override);
+    } else if (previous) {
+      restoreEverydayPositions(
+        this.cy,
+        (id) => this.deps.vault.entities[id]?.metadata?.coordinates,
+      );
+    }
+  }
+
   // Sync Logic
   syncElements = () => {
     if (this.isSuspended) {
@@ -812,6 +852,7 @@ export class GraphViewController {
       this.lastSyncedGraphStructureVersion = graphStructureVersion;
       this.lastSyncedFilterSignature = filterSignature;
 
+      this.syncLayoutOverride();
       syncGraphElements(this.cy, {
         elements: this.deps.graph.elements,
         vaultStatus: this.deps.vault.status,
@@ -857,46 +898,29 @@ export class GraphViewController {
 
   private scheduleFocusSettle = () => {
     if (this.isSuspended) return;
-    if (this.focusZoomTimer) clearTimeout(this.focusZoomTimer);
-    this.focusZoomTimer = window.setTimeout(
-      this.settleFocusZoom,
-      this.FOCUS_ZOOM_SETTLE_MS,
-    );
+    this.focusZoomRatchet.scheduleSettle(this.settleFocusZoom);
   };
 
   private settleFocusZoom = () => {
-    this.focusZoomTimer = null;
     if (this.isSuspended) return;
     const cy = this.cy;
     if (!cy || cy.destroyed() || !this.deps.graph.focusViewActive) return;
-    // Ignore zoom while a programmatic fit is in flight.
-    if (this.suppressFocusZoom) return;
 
-    const zoom = cy.zoom();
-    // First observation just anchors the ratchet (fits re-anchor it separately
-    // via the dedicated rebaseline timer in onLayoutStop).
-    if (this.focusZoomMark === 0) {
-      this.focusZoomMark = zoom;
-      return;
-    }
-
-    const { depth, mark } = resolveFocusDepth(
+    const result = this.focusZoomRatchet.resolveSettledZoom(
+      cy.zoom(),
       this.deps.graph.focusDepth,
-      zoom,
-      this.focusZoomMark,
       {
         min: MIN_FOCUS_DEPTH,
         max: MAX_FOCUS_DEPTH,
         stepFactor: FOCUS_ZOOM_STEP_FACTOR,
       },
     );
-    this.focusZoomMark = mark;
-    if (depth !== this.deps.graph.focusDepth) {
+    if (result) {
       this.focusDepthSpan?.cancel();
       this.focusDepthSpan = null;
       this.focusDepthStartCounts = null;
       this.startFocusDepthMeasurement();
-      this.deps.graph.focusDepth = depth;
+      this.deps.graph.focusDepth = result.depth;
     }
   };
 
@@ -917,6 +941,17 @@ export class GraphViewController {
     }
   };
 
+  /** Timeline and orbit arrange nodes by date or distance, not by community. */
+  private communityHullsWanted() {
+    const g = this.deps.graph;
+    return g.communityMode !== "off" && !g.timelineMode && !g.orbitMode;
+  }
+
+  syncCommunityHulls = () => {
+    this.communityHulls?.setEnabled(this.communityHullsWanted());
+    this.communityHulls?.setStrong(this.deps.graph.communityMode === "strong");
+  };
+
   syncImages = () => {
     if (this.isSuspended) {
       this.needsVisibilityReconcile = true;
@@ -924,23 +959,13 @@ export class GraphViewController {
     }
     if (this.cy && this.deps.graph.elements && this.imageManager) {
       untrack(() => {
-        this.imageManager!.sync({
-          showImages:
-            this.deps.graph.showImages && !this.deps.graph.perfStylingActive,
-          resolveImageUrl: (path) => this.deps.vault.resolveImageUrl(path),
-          releaseImageUrl: (path: string) =>
-            this.deps.vault.releaseImageUrl(path),
-          onBatchApplied: (count) => {
-            this.deps.debugStore.log(
-              `[GraphView] Applied ${count} images to graph nodes.`,
-            );
-          },
-          onLog: (msg) => this.deps.debugStore.log(msg),
-          onError: (err) =>
-            this.deps.debugStore.error(
-              "Incremental image resolution failed",
-              err,
-            ),
+        syncGraphImages({
+          imageManager: this.imageManager!,
+          graph: this.deps.graph,
+          vault: this.deps.vault,
+          debugStore: this.deps.debugStore,
+          activeTheme: themeStore.activeTheme,
+          categoryList: categories.list,
         });
       });
     }
@@ -1023,7 +1048,7 @@ export class GraphViewController {
       if (this.imageManager)
         this.imageManager.destroy({
           releaseImageUrl: (path: string) =>
-            this.deps.vault.releaseImageUrl(path),
+            this.deps.vault.releaseThumbnailUrl(path),
         } as any);
       return;
     }
@@ -1056,14 +1081,7 @@ export class GraphViewController {
   };
 
   private areSavedCoordsDegenerate = (): boolean => {
-    const positions: { x: number; y: number }[] = [];
-    for (const entity of this.deps.vault.allEntities) {
-      const c = entity?.metadata?.coordinates;
-      if (c && Number.isFinite(c.x) && Number.isFinite(c.y)) {
-        positions.push({ x: c.x, y: c.y });
-      }
-    }
-    return isLayoutCollinear(positions);
+    return hasDegenerateSavedCoordinates(this.deps.vault.allEntities);
   };
 
   private scheduleSlashGuard = () => {

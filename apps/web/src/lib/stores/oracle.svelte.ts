@@ -16,6 +16,7 @@ import {
   OracleSettingsService,
   UndoRedoService,
   type ChatMessage,
+  type MessageMention,
   type UndoableAction,
   type OracleExecutionContext,
   type DiscoveryProposal,
@@ -41,10 +42,19 @@ import {
 } from "./oracle/types";
 import { OracleUiManager } from "./oracle/ui-manager.svelte";
 import { OracleChatManager } from "./oracle/chat-manager.svelte";
+import {
+  setOracleApiKeyProvider,
+  setOracleTierProvider,
+  setOracleVaultLoader,
+} from "./oracle/hooks";
 import { OracleContextManager } from "./oracle/context-manager.svelte";
 import { OracleActionManager } from "./oracle/action-manager.svelte";
 import { OracleSettingsManager } from "./oracle/settings-manager.svelte";
 import { OracleRevisionManager } from "./oracle/revision-manager.svelte";
+import {
+  AdventureManager,
+  adventureManager as defaultAdventureManager,
+} from "./oracle/adventure-manager.svelte";
 
 export type { ChatMessage, UndoableAction };
 
@@ -56,6 +66,7 @@ export class OracleStore implements IOracleStore {
   actions: OracleActionManager;
   settingsManager: OracleSettingsManager;
   revision: OracleRevisionManager;
+  adventure: AdventureManager;
 
   // Reactive UI state
   get isOpen() {
@@ -204,6 +215,7 @@ export class OracleStore implements IOracleStore {
       actions?: OracleActionManager;
       settingsManager?: OracleSettingsManager;
       revision?: OracleRevisionManager;
+      adventure?: AdventureManager;
     } = {},
   ) {
     this._vault = deps.vault;
@@ -237,6 +249,7 @@ export class OracleStore implements IOracleStore {
     this.settingsManager =
       deps.settingsManager ?? new OracleSettingsManager(this);
     this.revision = deps.revision ?? new OracleRevisionManager(this);
+    this.adventure = deps.adventure ?? defaultAdventureManager;
 
     // Initialize Event Bus for Hybrid Communication
     if (
@@ -266,6 +279,7 @@ export class OracleStore implements IOracleStore {
     this.eventBus?.close();
     this.eventBus = null;
     this.chat.destroy();
+    void this.adventure.destroy();
     if (this.vaultSwitchedHandler && typeof window !== "undefined") {
       window.removeEventListener("vault-switched", this.vaultSwitchedHandler);
       this.vaultSwitchedHandler = null;
@@ -381,8 +395,8 @@ export class OracleStore implements IOracleStore {
   }
 
   /** Alias for sendMessage used by chat commands */
-  async ask(content: string) {
-    await this.chat.ask(content);
+  async ask(content: string, mentions: MessageMention[] = []) {
+    await this.chat.ask(content, mentions);
   }
 
   async drawEntity(entityId: string) {
@@ -549,6 +563,10 @@ const ORACLE_KEY = "__codex_oracle_instance__";
 export const oracle: OracleStore =
   (globalThis as any)[ORACLE_KEY] ??
   ((globalThis as any)[ORACLE_KEY] = new OracleStore());
+
+setOracleApiKeyProvider(() => oracle.effectiveApiKey);
+setOracleTierProvider(() => oracle.tier);
+setOracleVaultLoader((vaultId) => oracle.loadForVault(vaultId));
 
 if (typeof window !== "undefined") {
   (window as any).oracle = oracle;

@@ -1,4 +1,5 @@
 import { guestStore } from "../../stores/guest.svelte";
+import { getGuestStores } from "./guest-stores-registry";
 import type { PeerFactory } from "./peer-factory";
 import { P2PDispatcher } from "./dispatcher/p2p-dispatcher";
 import { GuestChatHandler } from "./handlers/guest-chat-handler";
@@ -39,30 +40,15 @@ export function buildGuestDispatcher(): P2PDispatcher<GuestHandlerContext> {
   return d;
 }
 
-/** Lazily imports per-session stores and assembles the handler context. */
+/** Assembles the handler context from the registered per-session stores. */
 export async function buildGuestContext(args: {
   transport: P2PClientTransport;
   assetCache: MapAssetUrlCache;
   callbacks: GuestSessionCallbacks;
   session: GuestSessionState;
 }): Promise<GuestHandlerContext> {
-  const [v, u, n, ms, m, t, ui] = await Promise.all([
-    import("../../stores/vault.svelte"),
-    import("../../stores/ui/session-mode.svelte"),
-    import("../../stores/ui/notification.svelte"),
-    import("../../stores/map-session.svelte"),
-    import("../../stores/map.svelte"),
-    import("../../stores/theme.svelte"),
-    import("../../stores/ui/modal-ui.svelte"),
-  ]);
   return {
-    vault: v.vault,
-    sessionModeStore: u.sessionModeStore,
-    notificationStore: n.notificationStore,
-    modalUIStore: ui.modalUIStore,
-    mapSession: ms.mapSession,
-    mapStore: m.mapStore,
-    themeStore: t.themeStore,
+    ...getGuestStores(),
     guestStore,
     transport: args.transport,
     assetCache: args.assetCache,

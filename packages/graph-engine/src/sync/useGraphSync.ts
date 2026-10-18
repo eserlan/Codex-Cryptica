@@ -5,6 +5,7 @@ import {
 } from "@codex/performance-observability";
 import type { GraphNode, GraphEdge } from "../transformer";
 import type { LayoutRequest } from "../LayoutManager";
+import { nodeFitBounds } from "../fit-bounds";
 
 export interface SyncOptions {
   elements: (GraphNode | GraphEdge)[];
@@ -52,22 +53,28 @@ const syncRenderedWeights = (
     if (isNodeRendered(node)) visibleNodeIds.add(node.id());
   }
 
-  for (let i = 0; i < graphNodes.length; i++) {
-    const node = graphNodes[i];
-    let nextWeight = 0;
-
-    if (visibleNodeIds.has(node.id())) {
-      const connectedEdges = node.connectedEdges();
-      for (let j = 0; j < connectedEdges.length; j++) {
-        const edge = connectedEdges[j];
-        const sourceId = edge.source().id();
-        const targetId = edge.target().id();
-        if (visibleNodeIds.has(sourceId) && visibleNodeIds.has(targetId)) {
-          nextWeight++;
-        }
+  const weights = new Map<string, number>();
+  for (let i = 0; i < elements.length; i++) {
+    const el = elements[i];
+    if (el.group !== "edges") continue;
+    const sourceId = (el as GraphEdge).data.source;
+    const targetId = (el as GraphEdge).data.target;
+    if (
+      sourceId &&
+      targetId &&
+      visibleNodeIds.has(sourceId) &&
+      visibleNodeIds.has(targetId)
+    ) {
+      weights.set(sourceId, (weights.get(sourceId) ?? 0) + 1);
+      if (targetId !== sourceId) {
+        weights.set(targetId, (weights.get(targetId) ?? 0) + 1);
       }
     }
+  }
 
+  for (let i = 0; i < graphNodes.length; i++) {
+    const node = graphNodes[i];
+    const nextWeight = weights.get(node.id()) ?? 0;
     if (node.data("weight") !== nextWeight) {
       node.data("weight", nextWeight);
     }
@@ -107,6 +114,32 @@ function runInRendererBatch(cy: Core, work: () => void) {
   }
 }
 
+function hasFinitePosition(position?: { x: number; y: number }): boolean {
+  return Number.isFinite(position?.x) && Number.isFinite(position?.y);
+}
+
+function addedElementId(node: any): string | undefined {
+  return typeof node.id === "function"
+    ? node.id()
+    : ((node as any).id ?? (node as any).data?.id);
+}
+
+function registerAddedNode(
+  node: any,
+  sourceNodes: Map<string, GraphNode>,
+  elementMap: Map<string, any>,
+): void {
+  const id = addedElementId(node);
+  if (!id) return;
+
+  elementMap.set(id, node);
+  const source = sourceNodes.get(id);
+  if (!hasFinitePosition(source?.position)) {
+    node.data?.("isPendingLayout", true);
+  }
+  if (source?.position) node.position?.(source.position);
+}
+
 /**
  * Pass 2 — Add elements present in the target set but absent from cy.
  * New nodes are tagged `pending-layout` and seeded with any supplied position;
@@ -135,7 +168,7 @@ function addNewElements(
     if (newNodes.length > 0) {
       // ⚡ Bolt Optimization: Replace O(N^2) nested .forEach + .find with an O(N) Map lookup.
       // This avoids N array iterations when applying initial node positions.
-      const newNodesMap = new Map();
+      const newNodesMap = new Map<string, GraphNode>();
       for (let i = 0; i < newNodes.length; i++) {
         if (!newNodesMap.has(newNodes[i].data.id)) {
           newNodesMap.set(newNodes[i].data.id, newNodes[i]);
@@ -145,22 +178,30 @@ function addNewElements(
       const addedNodes = cy.add(newNodes);
       addedNodes.addClass("pending-layout");
 
-      addedNodes.forEach((n) => {
-        elementMap.set(n.id(), n);
-        const originalNode = newNodesMap.get(n.id());
-        if (originalNode && originalNode.position) {
-          n.position(originalNode.position);
-        }
-      });
+      addedNodes.forEach((node) =>
+        registerAddedNode(node, newNodesMap, elementMap),
+      );
     }
     const validEdges = newEdges.filter((edge) => {
       const sourceId = edge.data.source!;
       const targetId = edge.data.target!;
-      return cy && cy.$id(sourceId).nonempty() && cy.$id(targetId).nonempty();
+      const src = elementMap.get(sourceId);
+      const tgt = elementMap.get(targetId);
+      return (
+        Boolean(src && tgt) &&
+        (typeof src.isNode === "function" ? src.isNode() : true) &&
+        (typeof tgt.isNode === "function" ? tgt.isNode() : true)
+      );
     });
     if (validEdges.length > 0) {
       cy.add(validEdges).forEach((e) => {
-        elementMap.set(e.id(), e);
+        const id =
+          typeof e.id === "function"
+            ? e.id()
+            : ((e as any).id ?? (e as any).data?.id);
+        if (id) {
+          elementMap.set(id, e);
+        }
       });
       addedEdgeCount = validEdges.length;
     }
@@ -175,10 +216,24 @@ function addNewElements(
  * equality for temporal metadata, arrays, coordinates and metadata objects),
  * then strips keys that no longer exist.
  */
+/**
+ * Data keys written after the transform by other graph components. A sync
+ * must neither strip them nor overwrite them: doing so on an unchanged graph
+ * emitted ~1,500 `data` events per re-sync (each dirtying a node's style and
+ * waking every data listener) only for the owner to put the value back.
+ */
+const RUNTIME_OWNED_KEYS = new Set([
+  // ImageManager
+  "resolvedImage",
+  "isSilhouette",
+  "appliedSilhouetteKey",
+]);
+
 function patchElementData(
   node: any,
   el: GraphNode | GraphEdge,
   isTemporalMetadataEqual: (a: any, b: any) => boolean,
+  renderedWeightsManaged: boolean,
 ) {
   const currentData = node.data();
   const newData = el.data as Record<string, any>;
@@ -192,6 +247,9 @@ function patchElementData(
     // This prevents nodes that were already placed by LayoutManager from
     // becoming invisible just because Svelte hasn't saved their coordinates yet.
     if (k === "isPendingLayout") continue;
+    // Rendered weights are recomputed after this pass; the transform's
+    // total-connection weight would only be written and then reverted.
+    if (k === "weight" && renderedWeightsManaged) continue;
 
     const newVal = newData[k];
     const curVal = currentData[k];
@@ -234,8 +292,10 @@ function patchElementData(
   // Remove keys that no longer exist in newData (e.g. isPendingLayout)
   for (const k in currentData) {
     if (k !== "id" && !Object.hasOwn(newData, k)) {
-      // Bugfix: Do not strip internal cytoscape properties managed by other components
-      if (k === "resolvedImage") continue;
+      // Do not strip properties managed by other components.
+      if (RUNTIME_OWNED_KEYS.has(k)) continue;
+      if (k === "isPendingLayout") continue;
+      if (k === "weight" && renderedWeightsManaged) continue;
 
       node.removeData(k);
       // If the source image path is removed, clear the resolved image so ImageManager can clean up
@@ -355,7 +415,12 @@ function syncDataAndFilters(
     const node = elementMap.get(el.data.id);
     if (!node) return;
 
-    patchElementData(node, el, isTemporalMetadataEqual);
+    patchElementData(
+      node,
+      el,
+      isTemporalMetadataEqual,
+      !options.skipRenderedWeightSync,
+    );
     applyFilterClasses(node, el, ctx);
   });
 
@@ -417,6 +482,16 @@ export function resolveLayoutTrigger(
   };
 }
 
+function countRenderedElements(elements: (GraphNode | GraphEdge)[]) {
+  let renderedNodeCount = 0;
+  let renderedEdgeCount = 0;
+  for (let i = 0; i < elements.length; i++) {
+    if (elements[i].group === "nodes") renderedNodeCount++;
+    else if (elements[i].group === "edges") renderedEdgeCount++;
+  }
+  return { renderedNodeCount, renderedEdgeCount };
+}
+
 export function syncGraphElements(cy: Core, options: SyncOptions) {
   const { elements, vaultStatus, initialLoaded } = options;
   const isVaultLoading = vaultStatus === "loading";
@@ -460,14 +535,7 @@ export function syncGraphElements(cy: Core, options: SyncOptions) {
       } else {
         syncDataAndFilters(elements, elementMap, options);
       }
-      patchSpan.complete(() => ({
-        renderedNodeCount: elements.filter(
-          (element) => element.group === "nodes",
-        ).length,
-        renderedEdgeCount: elements.filter(
-          (element) => element.group === "edges",
-        ).length,
-      }));
+      patchSpan.complete(() => countRenderedElements(elements));
     });
 
     const isFirstElements = !initialLoaded && elements.length > 0;
@@ -477,7 +545,7 @@ export function syncGraphElements(cy: Core, options: SyncOptions) {
     if (hasNewNodes || hasDeletions || isFirstElements) {
       if (isFirstElements) {
         options.onFirstElements?.();
-        (cy as any).fit(undefined, 40);
+        (cy as any).fit(nodeFitBounds(cy), 40);
       } else {
         const req = resolveLayoutTrigger(
           isFirstElements,
@@ -490,12 +558,7 @@ export function syncGraphElements(cy: Core, options: SyncOptions) {
         if (req) options.onLayoutUpdate?.(req);
       }
     }
-    reconcileSpan.complete(() => ({
-      renderedNodeCount: elements.filter((element) => element.group === "nodes")
-        .length,
-      renderedEdgeCount: elements.filter((element) => element.group === "edges")
-        .length,
-    }));
+    reconcileSpan.complete(() => countRenderedElements(elements));
   } catch (err) {
     reconcileSpan.fail("unexpected");
     console.error("[GraphSync] Error syncing elements", err);

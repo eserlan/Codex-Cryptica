@@ -1,5 +1,5 @@
 import { vault } from "./vault.svelte";
-import { oracle } from "./oracle.svelte";
+import { getOracleApiKey, setConnectionProposer } from "./oracle/hooks";
 import { proposerBridge } from "../cloud-bridge/proposer-bridge";
 import { debugStore } from "./debug.svelte";
 import { vaultEventBus } from "./vault/events.svelte";
@@ -157,6 +157,32 @@ class ProposerStore {
       this.service = new ProposerService(DB_NAME, DB_VERSION, getDB());
     }
     return this.service;
+  }
+
+  async generateConnectionProposal(
+    apiKey: string,
+    modelName: string,
+    sourceContent: string,
+    targetContent: string,
+    sourceTitle: string,
+    targetTitle: string,
+  ) {
+    return this.getService().generateConnectionProposal(
+      apiKey,
+      modelName,
+      sourceContent,
+      targetContent,
+      sourceTitle,
+      targetTitle,
+    );
+  }
+
+  async parseConnectionIntent(
+    apiKey: string,
+    modelName: string,
+    prompt: string,
+  ) {
+    return this.getService().parseConnectionIntent(apiKey, modelName, prompt);
   }
 
   isEntityAnalyzing(entityId: string) {
@@ -357,7 +383,7 @@ class ProposerStore {
         if (requireSelection && vault.selectedEntityId !== entityId) return;
       }
 
-      const apiKey = oracle.effectiveApiKey || "";
+      const apiKey = getOracleApiKey() || "";
 
       const entity = vault.entities[entityId];
       if (!entity) {
@@ -612,3 +638,4 @@ class ProposerStore {
 }
 
 export const proposerStore = new ProposerStore();
+setConnectionProposer(proposerStore);

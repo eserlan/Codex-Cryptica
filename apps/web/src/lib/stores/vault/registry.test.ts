@@ -6,6 +6,9 @@ import {
   deleteVault,
   getVault,
   updateLastOpened,
+  updateLastInternalChange,
+  onDurableVaultChange,
+  onRegistryRefresh,
 } from "./registry";
 import { getDB } from "../../utils/idb";
 import { systemClock } from "../../utils/runtime-deps";
@@ -176,6 +179,129 @@ describe("Vault Registry", () => {
       mockDB.get.mockResolvedValue(null);
       await updateLastOpened("v1");
       expect(mockDB.put).not.toHaveBeenCalled();
+    });
+  });
+});
+
+describe("onDurableVaultChange (#3189)", () => {
+  it("notifies subscribers after a durable write", async () => {
+    vi.mocked(getDB).mockResolvedValue({
+      get: async () => ({ id: "v1" }),
+      put: async () => {},
+    } as any);
+    const seen: string[] = [];
+    const unsub = onDurableVaultChange((id) => seen.push(id));
+
+    await updateLastInternalChange("v1");
+
+    expect(seen).toEqual(["v1"]);
+    unsub();
+  });
+
+  it("passes along what the write touched (#3354)", async () => {
+    vi.mocked(getDB).mockResolvedValue({
+      get: async () => ({ id: "v1" }),
+      put: async () => {},
+    } as any);
+    const seen: unknown[] = [];
+    const unsub = onDurableVaultChange((id, change) => seen.push([id, change]));
+
+    await updateLastInternalChange("v1", {
+      kind: "entity",
+      ids: ["a"],
+      deleted: true,
+    });
+    await updateLastInternalChange("v1");
+
+    expect(seen).toEqual([
+      ["v1", { kind: "entity", ids: ["a"], deleted: true }],
+      ["v1", undefined],
+    ]);
+    unsub();
+  });
+
+  it("stops notifying after unsubscribe", async () => {
+    vi.mocked(getDB).mockResolvedValue({
+      get: async () => ({ id: "v1" }),
+      put: async () => {},
+    } as any);
+    const seen: string[] = [];
+    const unsub = onDurableVaultChange((id) => seen.push(id));
+    unsub();
+
+    await updateLastInternalChange("v1");
+
+    expect(seen).toEqual([]);
+  });
+
+  it("isolates a throwing listener so persistence still completes", async () => {
+    const put = vi.fn(async () => {});
+    vi.mocked(getDB).mockResolvedValue({
+      get: async () => ({ id: "v1" }),
+      put,
+    } as any);
+    const seen: string[] = [];
+    const noisy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const unsubThrow = onDurableVaultChange(() => {
+      throw new Error("boom");
+    });
+    const unsubOk = onDurableVaultChange((id) => seen.push(id));
+    try {
+      await updateLastInternalChange("v1");
+
+      expect(put).toHaveBeenCalled();
+      expect(seen).toEqual(["v1"]);
+      expect(noisy).toHaveBeenCalled();
+    } finally {
+      noisy.mockRestore();
+      unsubThrow();
+      unsubOk();
+    }
+  });
+
+  it("does not notify when there is no vault record", async () => {
+    vi.mocked(getDB).mockResolvedValue({
+      get: async () => null,
+      put: async () => {},
+    } as any);
+    const seen: string[] = [];
+    const unsub = onDurableVaultChange((id) => seen.push(id));
+    try {
+      await updateLastInternalChange("v1");
+
+      expect(seen).toEqual([]);
+    } finally {
+      unsub();
+    }
+  });
+
+  describe("onRegistryRefresh", () => {
+    it("notifies listeners on debounced refresh and allows unsubscribe", async () => {
+      vi.useFakeTimers();
+      try {
+        vi.mocked(getDB).mockResolvedValue({
+          get: async () => ({ id: "v1" }),
+          put: async () => {},
+        } as any);
+
+        let refreshCount = 0;
+        const unsub = onRegistryRefresh(() => {
+          refreshCount++;
+        });
+
+        await updateLastInternalChange("v1");
+        vi.advanceTimersByTime(150);
+
+        expect(refreshCount).toBe(1);
+
+        unsub();
+        await updateLastInternalChange("v1");
+        vi.advanceTimersByTime(150);
+
+        expect(refreshCount).toBe(1);
+      } finally {
+        vi.useRealTimers();
+      }
     });
   });
 });

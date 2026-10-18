@@ -5,14 +5,25 @@
  * app builds the bounded {@link GeneratorVaultContext} and injects vault
  * persistence dependencies into {@link CampaignGeneratorService}.
  */
-import type { LanguageProfileV1 } from "schema";
+import type { LanguageProfileV1, StatSheet } from "schema";
+import type { GeneratorMechanicsBundle } from "./tov-mechanics-schema";
+import type { OverusedNamePatterns } from "./naming-policy";
 import type { StarSystemBody } from "./public-star-system";
+import type {
+  ConstellationPattern,
+  ConstellationInterpretation,
+  NightSkyData,
+} from "./public-constellation";
+import type { PointCrawlNetwork } from "./point-crawl-state";
 
 export type GeneratorId =
   | "npc"
   | "faction"
+  | "faction-roster"
   | "settlement"
   | "magic-item"
+  | "minor-magic-item"
+  | "artifact"
   | "event"
   | "ship"
   | "language"
@@ -20,18 +31,32 @@ export type GeneratorId =
   | "dungeon"
   | "adventure"
   | "quest"
+  | "rumour"
+  | "puzzle"
   | "plot-twist"
+  | "villain"
   | "world"
   | "council-vote"
   | "secret-society"
   | "star-system"
-  | "alien-race";
+  | "constellation"
+  | "alien-race"
+  | "creature"
+  | "random-table"
+  | "encounter"
+  | "heist"
+  | "holiday"
+  | "tome"
+  | "point-crawl";
 
 export const SUPPORTED_GENERATOR_IDS: readonly GeneratorId[] = [
   "npc",
   "faction",
+  "faction-roster",
   "settlement",
   "magic-item",
+  "minor-magic-item",
+  "artifact",
   "event",
   "ship",
   "language",
@@ -39,12 +64,23 @@ export const SUPPORTED_GENERATOR_IDS: readonly GeneratorId[] = [
   "dungeon",
   "adventure",
   "quest",
+  "rumour",
+  "puzzle",
   "plot-twist",
+  "villain",
   "world",
   "council-vote",
   "secret-society",
   "star-system",
+  "constellation",
   "alien-race",
+  "creature",
+  "random-table",
+  "encounter",
+  "heist",
+  "holiday",
+  "tome",
+  "point-crawl",
 ] as const;
 
 /** A user-configurable field for a generator. */
@@ -54,6 +90,9 @@ export interface GeneratorOptionDefinition {
   description?: string;
   control: "radio" | "select" | "checkbox" | "text" | "textarea" | "number";
   choices?: Array<{ value: string; label: string }>;
+  min?: number;
+  max?: number;
+  step?: number;
   required?: boolean;
   defaultValue?: unknown;
   visibleWhen?: {
@@ -101,6 +140,29 @@ export interface GeneratorOutput {
   bodies?: StarSystemBody[];
   /** Star-system generator's primary star spectral class, e.g. "G", "Neutron Star". */
   starType?: string;
+  observances?: Array<{
+    name: string;
+    type: string;
+    when: string;
+    observers: string;
+    traditions: string;
+    tension: string;
+  }>;
+  /**
+   * Structured star-pattern data for the constellation generator, driving a
+   * future star-chart diagram. Absent for every other generator.
+   */
+  pattern?: ConstellationPattern;
+  /** Constellation generator's cultural interpretation(s) of `pattern`. */
+  interpretations?: ConstellationInterpretation[];
+  /** Night-sky mode's full set of constellations for one culture. */
+  nightSky?: NightSkyData;
+  /** Structured point-crawl network graph and keyed locations. */
+  pointCrawl?: PointCrawlNetwork;
+  /** Structured system mechanics (e.g. Tales of the Valiant BFRD stats). */
+  mechanics?: GeneratorMechanicsBundle;
+  /** Associated game system id (e.g. "tales-of-the-valiant"). */
+  systemId?: string;
 }
 
 /** An excerpt of an existing entity included in {@link GeneratorVaultContext}. */
@@ -137,6 +199,8 @@ export type TemplateSource = "none" | "system" | "vault-custom";
 export interface GeneratorVaultContext {
   themeId?: string;
   themeName?: string;
+  /** The theme's own genre/tone description (e.g. "Space opera, galactic conflict…"). */
+  themeDescription?: string;
   /** Current in-world campaign date/year, when the vault's calendar sets one. */
   currentDate?: string;
   targetEntityType?: string;
@@ -153,6 +217,20 @@ export interface GeneratorVaultContext {
    */
   worldSample: VaultContextEntityExcerpt[];
   existingTitles: string[];
+  /**
+   * Words, openings and endings the vault's names already lean on, computed
+   * over ALL same-type titles (the {@link existingTitles} ban list is capped,
+   * so it would see only a slice of a large vault).
+   */
+  overusedNamePatterns?: OverusedNamePatterns;
+  /** A random sample of the vault's own same-type names, to anchor the naming style by example. */
+  nameExamples?: string[];
+  /**
+   * Naming conventions the vault itself records for the culture this entity
+   * belongs to (e.g. a note saying "Stormber names draw on Magyar"). When set,
+   * {@link nameExamples} are that culture's names too.
+   */
+  cultureNaming?: { culture: string; guidance: string[] };
   bannedNames?: string[];
   labelSuggestions: string[];
   includedContext: IncludedContextCategory[];
@@ -181,6 +259,11 @@ export interface GeneratorRunRequest {
   primaryLanguageId?: string;
   vaultContext?: GeneratorVaultContext;
   interaction?: GeneratorInteractionRequest;
+  /**
+   * A name chosen by the fast name-only pre-pass (see `name-candidates.ts`).
+   * Set by the service just before the main prompt is built; never by callers.
+   */
+  nameSuggestion?: string;
 }
 
 /** A transient, reviewable result produced before save. */
@@ -209,6 +292,33 @@ export interface GeneratedDraft {
   bodies?: StarSystemBody[];
   /** Carried through from {@link GeneratorOutput.starType}. */
   starType?: string;
+  /** Carried through from {@link GeneratorOutput.pattern}. */
+  pattern?: ConstellationPattern;
+  /** Carried through from {@link GeneratorOutput.interpretations}. */
+  interpretations?: ConstellationInterpretation[];
+  /** Carried through from {@link GeneratorOutput.nightSky}. */
+  nightSky?: NightSkyData;
+  observances?: Array<{
+    name: string;
+    type: string;
+    when: string;
+    observers: string;
+    traditions: string;
+    tension: string;
+  }>;
+  /**
+   * Source and direct neighbor entity references supplied from the vault context
+   * that grounded this generation.
+   */
+  contextProvenance?: Array<{ id: string; title: string }>;
+  /** Carried through from {@link GeneratorOutput.pointCrawl}. */
+  pointCrawl?: PointCrawlNetwork;
+  /** Structured system mechanics (e.g. Tales of the Valiant BFRD stats). */
+  mechanics?: GeneratorMechanicsBundle;
+  /** Associated game system id (e.g. "tales-of-the-valiant"). */
+  systemId?: string;
+  /** Bound stat sheet to attach upon vault save. */
+  statSheet?: StatSheet;
 }
 
 /** The user's explicit decision to save a reviewed draft. */
@@ -249,6 +359,40 @@ export interface CampaignGeneratorDefinition {
 }
 
 /**
+ * Provider-neutral streaming event contract (#2423), mirrored by hand from
+ * oracle-proxy's `GenerationEvent` (apps/workers/oracle-proxy/src/llm/types.ts)
+ * and ai-engine's copy (packages/ai-engine/src/client-manager.ts) — no shared
+ * package crosses the Worker/client/generator-engine boundary, so this stays
+ * a structural match kept in sync by hand, same as every other type on this
+ * wire contract (`AIGeneratorCompleteOptions` mirrors oracle-proxy's request
+ * shape the same way). `field` is generator-engine's own addition on top of
+ * the wire contract: a caller-side incremental-JSON-scanner result, not
+ * something the Worker or ai-engine ever produce themselves.
+ */
+export type GenerationEvent =
+  | { type: "started" }
+  | { type: "delta"; text: string }
+  | { type: "field"; key: string; value: unknown }
+  | {
+      type: "complete";
+      text: string;
+      interactionId?: string;
+      usage?: { promptTokens: number; completionTokens: number };
+      /**
+       * True when this result came from replaying the full prompt after the
+       * server-side interaction id expired (see `AIGeneratorCompleteResult`).
+       * Another generator-engine-only addition on top of the wire contract,
+       * same rationale as `field` above — the interaction-degrade branch of
+       * `completeStream` needs to report this so callers (e.g.
+       * `generateDraftStream`) don't have to assume `false`.
+       */
+      replayed?: boolean;
+    }
+  | { type: "error"; error: string }
+  /** A new pass is starting in a multi-pass generator workflow. */
+  | { type: "phase"; label: string };
+
+/**
  * AI generation boundary injected by the web app. The package sends a prompt
  * string and receives a raw JSON string; all AI client details stay in the app.
  */
@@ -272,11 +416,30 @@ export interface AIGeneratorGateway {
    * `aiGateway` being unset (AI path unavailable, fall back to local tables).
    */
   startChat?(systemInstruction: string): Promise<AIGeneratorChatSession>;
+  /**
+   * Streaming counterpart to `complete()` (#2423): re-emits provider text as
+   * it arrives instead of resolving once at the end. Optional — same
+   * fallback contract as `startChat?` above; a caller should treat its
+   * absence as "streaming unavailable, use `complete()`" rather than an
+   * error. Implementations degrade to a single `started`→`complete` pair
+   * (no real `delta`s) for any request they can't actually stream (e.g. an
+   * interaction-backed request in this v1) rather than omitting the method.
+   */
+  completeStream?(
+    prompt: string,
+    systemInstruction: string,
+    options?: AIGeneratorCompleteOptions,
+  ): AsyncGenerator<GenerationEvent>;
 }
 
 export interface AIGeneratorChatSession {
   /** Sends one turn and returns its text, awaiting the full response. */
   send(userMessage: string): Promise<string>;
+  /** Streams one chat turn when the backing provider supports it. */
+  sendStream?(
+    userMessage: string,
+    signal?: AbortSignal,
+  ): AsyncGenerator<GenerationEvent>;
 }
 
 export interface GeneratorInteractionRequest {
@@ -298,6 +461,13 @@ export interface AIGeneratorCompleteOptions {
     maxOutputTokens?: number;
     responseMimeType?: string;
   };
+  /**
+   * Cancels an in-flight `completeStream()` call (#2423) — a user closing
+   * the generator modal or clicking Cancel mid-generation. Only meaningful
+   * for `completeStream`; `complete()` implementations may ignore it, since
+   * a buffered call has no partial UI state worth tearing down early.
+   */
+  signal?: AbortSignal;
 }
 
 export interface AIGeneratorCompleteResult {
@@ -336,4 +506,59 @@ export class UnsupportedGeneratorError extends Error {
     super(`That generator ("${generatorId}") is not available.`);
     this.name = "UnsupportedGeneratorError";
   }
+}
+
+/**
+ * Context provided to the random table generator.
+ */
+export interface RandomTableGenerationContext {
+  /** The theme or topic of the table (e.g. "Docklands Encounters", "Smuggler Rumors") */
+  topic: string;
+  /** Number of entries to generate (2-50, defaults to standard dice sizes like 6, 8, 10, 12, 20) */
+  count?: number;
+  /** Freeform user instructions or campaign notes taking highest priority */
+  campaignContext?: string;
+  /** Names of existing tables and decks available for sub-table reference emission */
+  availableTables?: string[];
+  /** Relevant entities retrieved from the active vault for lore grounding */
+  worldEntities?: Array<{
+    title: string;
+    category?: string;
+    summary?: string;
+  }>;
+  /** The active visual/genre theme for stylistic tone matching */
+  theme?: string;
+}
+
+/**
+ * A generated candidate entry awaiting user review.
+ */
+export interface CandidateTableEntry {
+  /** Unique transient client ID for UI selection & editing tracking */
+  id: string;
+  /** Generated entry text (may contain {table_name} nested references) */
+  text: string;
+  /** Inferred default weight (usually 1) */
+  weight: number;
+  /** Discovered entity names referenced in the text */
+  matchedEntities?: string[];
+  /** Discovered sub-table names referenced in the text */
+  matchedSubTables?: string[];
+  /** Selection status in the review preview (defaults to true) */
+  selected: boolean;
+}
+
+/**
+ * Structured output schema from the AI model.
+ */
+export interface GeneratedTableOutput {
+  /** Suggested table title based on the topic */
+  title: string;
+  /** Suggested short description */
+  description?: string;
+  /** List of generated row texts */
+  entries: Array<{
+    text: string;
+    weight?: number;
+  }>;
 }

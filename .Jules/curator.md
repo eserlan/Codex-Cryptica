@@ -1,3 +1,8 @@
+## 2025-02-15 - Extract Interfaces from God-File Config
+
+**Learning:** When dealing with large configuration files (like `seo-pages.ts`) that mix massive object dictionaries with type definitions, the type interfaces (e.g., `SEOPageData`, `SEOImportPageData`) can be safely extracted to a dedicated `seo-types.ts` sibling file. This isolates the type definitions from the raw data and improves readability without altering runtime behavior. The original file can simply import and re-export the types to preserve backward compatibility across the codebase.
+**Action:** Extract large or central type definitions out of data-heavy configuration files into dedicated sibling `*-types.ts` files, and re-export them from the original location to ensure safety.
+
 ## 2025-02-14 - Extract Pure Transformation Functions
 
 **Learning:** When a large Svelte or component controller file (`import-settings-controller.svelte.ts`) contains pure transformation functions (`mapThemeToGenre`) alongside stateful class/component logic, these functions can safely be extracted to sibling `.ts` files to reduce the god file's size and improve component scanability. Also if there are duplicate implementations of this pure function in test files (`ImportSettings.pack.test.ts`), they can be removed and all places updated to import from the newly created reusable file (`theme-mapper.ts`).
@@ -7,3 +12,87 @@
 
 **Learning:** When a large Svelte component (`PresentationTemplateEditor.svelte`) contains significant inline parsing and AST walking logic (`parseCardsFromSource`) that maps data to a visual builder, this pure parsing logic can be safely extracted to a sibling `.ts` file (`visual-card-parser.ts`) to dramatically reduce the god file's size and improve component scanability. State dependencies (like `schema.fields`) should be refactored into function parameters.
 **Action:** Extract AST walking and parsing functions into sibling `.ts` files, passing any component state as explicit parameters.
+
+## 2025-02-15 - Extract Exemplars from Generator Registry
+
+**Learning:** The `campaign-generator-registry.ts` file contains a massive `EXEMPLARS` constant (large raw JSON string constants) that pollutes the business logic of the registry. This is a clear case for extraction to a dedicated `-constants.ts` file to improve readability of the core registry logic, adhering to the "God-File Config" pattern.
+**Action:** Extract large constants like `EXEMPLARS` from `campaign-generator-registry.ts` to a separate file (e.g., `campaign-generator-exemplars.ts`) and import them.
+
+## 2025-02-22 - Extracting types that are still used in the source file
+
+**Learning:** When extracting types from a file into a separate file, if the original file still uses those types internally, you must explicitly import them (`import type { X } from './types';`) before re-exporting them (`export type { X };`). Using `export type { X } from './types';` alone will cause a TypeScript compilation error because it does not make the types available within the local file's scope.
+
+**Action:** Ensure both an `import` and an `export` are used when extracting and re-exporting types that are still utilized in the original file.
+
+## 2025-03-01 - Extract Visual Card Serializer
+
+**Learning:** When a large Svelte component (`PresentationTemplateEditor.svelte`) contains significant string generation and formatting logic (`syncSourceFromVisualCards`) to serialize internal visual structures into a source string, this serialization logic can be cleanly extracted to a sibling `.ts` file (`visual-card-serializer.ts`). State dependencies (like `schema.fields` and `fieldDisplayOverrides`) should be refactored into function parameters, returning the final string which the component then assigns to its local state. This drastically improves the readability of the component, and also makes the serialization logic fully unit-testable.
+
+**Action:** Extract large serialization or string-formatting functions into sibling `.ts` files, passing any component state as explicit parameters.
+
+## 2025-02-28 - Extract Entity List Empty States
+
+**Learning:** Extracted multiple EmptyState conditionals from `EntityList.svelte` (a massive ~900 line component mixing grouping, tree building, sorting, and UI) into dedicated `EntityEmptyState.svelte` and `EntitySearchEmptyState.svelte` presentational components. This reduces JSX verbosity, especially since the "create" intent handler involves fetching global modal states. It keeps the core explorer list rendering cleaner and makes empty state behavior easier to read at a glance.
+
+**Action:** Look for heavy conditional `EmptyState` blocks inside large list components (like `EntityList` or `SourceWorkspace`), particularly those that handle conditional logic based on permissions (like `vault.isGuest`) or dispatch complex UI intents, and extract them into narrow-purpose subcomponents.
+
+## 2026-09-05 - Extract Canvas Workspace Drawing State
+
+**Learning:** Svelte 5 components with overly complex local view state handling multiple disparate interaction contexts (e.g., node interaction vs freehand drawing vs modal states) can cause god-files that are extremely large.
+
+**Action:** Extract interaction-specific sub-features (like CanvasDrawing pointer state management) into custom `use-*` hooks, delegating access and updates to the `logic` store or exposing handlers which simplifies the parent component significantly without changing runtime behaviour.
+
+## 2026-09-11 - Svelte 5 hook state exposure pattern
+
+**Learning:** When extracting encapsulated `$state` from a Svelte 5 component into a separate module (as in `use-canvas-drawing.svelte.ts`), the returned object must expose that state via property getters (e.g., `get isDrawingMode() { return isDrawingMode; }`) rather than plain destructured values, or reactive read access breaks in the consuming template.
+
+**Action:** Future agents extracting logic from Svelte 5 `.svelte` files into `.svelte.ts` files must follow the pattern of internal `$state` variables combined with a returned object that exposes them via getters.
+
+## 2024-05-24 - Extracted flattened grouped entities logic
+
+**Learning:** Svelte 5 `$derived` macros handle reactive tracking (like proxy arrays, Sets, and Maps) perfectly even when they are passed into and processed by standard, non-reactive `.ts` helper functions, allowing you to extract complex data transformation logic safely out of `.svelte` files without losing reactivity.
+
+**Action:** When a `.svelte` UI component contains complex data flattening or grouping loops inside a `$derived.by` block, it is highly safe and recommended to extract that entire logical block into a separate `.ts` utility function to reduce god-file size.
+
+## 2026-09-23 - Extract Inline Modals
+
+**Learning:** When large Svelte components (like `SourceWorkspace.svelte`) contain inline modal definitions (`{#if contextMenuTarget} <div class="fixed...">...</div> {/if}`), these inline modals heavily inflate the overall file size and increase component nesting, masking the core logic flow. They can be cleanly extracted into independent `<ComponentModal>.svelte` sub-components that manage their own internal styling, while taking data triggers (like `target`, `impact`) and semantic event callbacks (`onConfirm`, `onCancel`) as `$props`.
+**Action:** Extract large or complex inline modal markup blocks into dedicated sub-components. Ensure you manage lifecycle bounds carefully — for example, if an action accesses the object triggering the modal, perform the action _before_ invoking `onClose()` (which typically clears the target object back in the parent component and triggers destruction) to avoid null reference errors.
+
+## YYYY-MM-DD - Extracted distinct sub-algorithm from monolithic helpers file
+
+**Learning:** Large monolithic helper files (like `canvas-workspace-helpers.ts`) can often be reduced by identifying distinct sub-algorithms (like auto-arrangement and layout logic) that can operate independently if given their dependencies, even if they share some types.
+**Action:** Extract these bounded algorithms into their own dedicated files (e.g., `canvas-auto-arrange.ts`) to improve readability and maintainability without changing runtime behavior. Ensure types are properly exported/imported to support the split.
+
+## 2026-09-28 - Extracting Event Handlers and State to Hooks
+
+**Learning:** When extracting event handlers and their corresponding derived state out of a large UI component into a separate `.svelte.ts` hook file to reduce the component's god-file status, the HTML template markup must be carefully updated to point to the properties of the hook's returned object (e.g., `contextMenuLogic.onNodeContextMenu`). Missed references in the template won't always trigger build-time Svelte errors depending on configuration, leading to hidden runtime bugs.
+
+**Action:** Before committing god-file extractions from Svelte components, run a robust search (e.g. `grep`) on the original file for all instances of the extracted functions/state names to ensure the markup bindings have been completely updated to point to the new hook object wrapper.
+
+## 2026-10-01 - Extraction of Holiday Formatting Logic from God File
+
+**Learning:** Found an overloaded god-file `campaign-generator-service.ts` (~1094 lines) which handled orchestration alongside pure formatting/transformation logic for holidays. Extracted pure functions like `normalizeHolidayGenericOutput` and `formatHolidayContent` into `public-holiday.ts`.
+**Action:** Always consider moving pure data formatting logic out of service orchestrator files and closer to the data definitions or adapter layers where they logically belong.
+
+## 2026-10-04 - Manual File Construction over Full-File Duplication
+
+**Learning:** When extracting specific logic (like configurations or re-exports) from a 'god file', manually construct the new file with only the extracted code. Do not copy the entire original file contents as a starting point, as failing to completely remove unrelated monolithic classes or orchestrators will cause massive code duplication and widespread module compilation errors.
+
+**Action:** Formulate the extracted content explicitly and write it to the new file, rather than duplicating the original file and attempting to perform surgical regex removals.
+
+## 2026-10-05 - Extract built-in templates from stat-sheet store
+
+**Learning:** Svelte store files can become god files when they embed large static configurations or initial state arrays (like `BUILT_IN_STAT_SHEET_TEMPLATES`, which alone was 800+ lines). Extracting these static defaults into a separate feature-owned file (e.g., `stores/stat-sheet/built-in-templates.ts`) significantly improves the readability of the store logic itself while keeping the data closely co-located.
+
+**Action:** When inspecting stores for god-file improvements, check if massive static arrays or default configurations are inflating the file size. These are prime, low-risk candidates for extraction into a sibling file or subdirectory (e.g., `stores/domain/constants.ts`).
+
+## 2025-03-09 - Extract Cloud Backup Admin Routes
+
+**Learning:** Extracted the support-only admin routes (`handleCloudBackupAdminDelete`, `handleCloudBackupAdminLookup`, `handleCloudBackupAdminStats`, `handleCloudBackupReissueCode`) and `MAX_STATS_SCAN_OBJECTS` from `apps/workers/oracle-proxy/src/cloud-backup.ts` to a new sibling module `apps/workers/oracle-proxy/src/cloud-backup-admin.ts` to reduce god-file status. Ensure exact imports in the test file are preserved and the index correctly splits the new imports.
+**Action:** When extracting functions from a god file, especially when dealing with routes mapped from `index.ts`, explicitly remove the deleted function imports in `index.ts` to avoid syntax compilation errors, and meticulously track sibling module dependencies.
+
+## 2024-05-30 - Extract inline menus to presentation components
+
+**Learning:** Component files like `PresentationTemplateEditor.svelte` can become god-files when they mix complex internal state, editing logic, layout definitions, and massive inline modals or context menus. Extracting an inline block like the field context menu to its own `PresentationFieldContextMenu.svelte` simplifies the parent's markup greatly.
+**Action:** Always consider extracting sizable inline UI elements (e.g. context menus) that merely consume state into dedicated child components via props.

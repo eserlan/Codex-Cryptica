@@ -187,7 +187,10 @@
                 }}
                 disabled={isLoading}
               >
-                <span class="icon-[lucide--sparkles] w-3.5 h-3.5"></span>
+                <span
+                  aria-hidden="true"
+                  class="icon-[lucide--sparkles] w-3.5 h-3.5"
+                ></span>
                 AI Merge
               </button>
             </div>

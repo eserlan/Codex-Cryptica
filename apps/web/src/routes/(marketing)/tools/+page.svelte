@@ -21,10 +21,29 @@
 
   const toolSections: ToolSection[] = [
     {
-      title: "RPG Generators",
+      title: "RPG Tools",
       description:
-        "Generate campaign-ready drafts, then copy them or save them into a local Codex Cryptica vault.",
+        "Develop an idea you already have, generate new campaign material, then copy it or save it into a local Codex Cryptica vault.",
       groups: [
+        {
+          title: "Develop an existing idea",
+          links: [
+            {
+              href: "/tools/idea-developer",
+              label: "RPG Idea Developer",
+              summary:
+                "Assess, develop, explore alternatives, make playable, or challenge a premise while keeping its recognisable core.",
+              icon: "icon-[lucide--lightbulb]",
+            },
+            {
+              href: "/tools/session-prep-builder",
+              label: "Session Prep Builder",
+              summary:
+                "Turn a hook or campaign situation into pressure, people, places, clues and a one-page run sheet, with AI drafting only what you leave empty.",
+              icon: "icon-[lucide--clipboard-list]",
+            },
+          ],
+        },
         {
           title: "Characters & NPCs",
           links: [
@@ -39,15 +58,29 @@
               href: "/tools/rpg-npc-generator",
               label: "RPG NPC Generator",
               summary:
-                "Generate NPCs across six genres — fantasy, cyberpunk, gothic, sci-fi, modern, and post-apocalyptic.",
+                "Generate NPCs across six genres: fantasy, cyberpunk, gothic, sci-fi, modern, and post-apocalyptic.",
               icon: "icon-[lucide--users]",
             },
             {
               href: "/generators/npc",
               label: "Procedural NPC Generator",
               summary:
-                "Genre-agnostic NPC generator — same six-theme engine via the reusable generator interface.",
+                "Genre-agnostic NPC generator: same six-theme engine via the reusable generator interface.",
               icon: "icon-[lucide--user-round-plus]",
+            },
+            {
+              href: "/generators/personality",
+              label: "Personality Generator",
+              summary:
+                "Generate a coherent, playable personality -- drives, virtue and flaw, a real contradiction, and how they act under pressure -- ready to roleplay.",
+              icon: "icon-[lucide--drama]",
+            },
+            {
+              href: "/generators/origin-generator",
+              label: "Superhero Origin Generator",
+              summary:
+                "Generate a superhero origin story with a concrete origin event, a GM-usable campaign hook, and an ongoing consequence the backstory doesn't resolve.",
+              icon: "icon-[lucide--zap]",
             },
           ],
         },
@@ -75,6 +108,20 @@
                 "Generate character, place, faction, and item names across ten cultural styles.",
               icon: "icon-[lucide--pen-line]",
             },
+            {
+              href: "/generators/dark-fantasy-faction",
+              label: "Dark Fantasy Faction Generator",
+              summary:
+                "Create fallen orders, cursed noble houses, plague cults, witch-hunters, and corpse guilds with morally sharp agendas and hooks.",
+              icon: "icon-[lucide--skull]",
+            },
+            {
+              href: "/generators/faction-roster",
+              label: "Faction Roster Generator",
+              summary:
+                "Turn a faction into 3-6 named members, each with a motive, a stance, and a connection to another member.",
+              icon: "icon-[lucide--users-round]",
+            },
           ],
         },
         {
@@ -100,18 +147,32 @@
           title: "Adventure & Worldbuilding",
           links: [
             {
+              href: "/generators/holiday",
+              label: "Holiday & Festival Generator",
+              summary:
+                "Create culturally grounded holidays, festivals, memorials, and coherent calendars for any setting.",
+              icon: "icon-[lucide--calendar-heart]",
+            },
+            {
               href: "/generators/star-system",
               label: "Star System Generator",
               summary:
-                "Generate a coherent sci-fi star system — star(s), major bodies, factions, resources, travel hazards, and a system-wide conflict or mystery with adventure hooks.",
+                "Generate a coherent sci-fi star system: star(s), major bodies, factions, resources, travel hazards, and a system-wide conflict or mystery with adventure hooks.",
               icon: "icon-[lucide--orbit]",
             },
             {
               href: "/generators/alien-race",
               label: "Alien Race Generator",
               summary:
-                "Generate a coherent alien species — biology, homeworld, senses, culture, technology, and weaknesses that all follow from each other.",
+                "Generate a coherent alien species: biology, homeworld, senses, culture, technology, and weaknesses that all follow from each other.",
               icon: "icon-[lucide--dna]",
+            },
+            {
+              href: "/generators/creature",
+              label: "Creature Generator",
+              summary:
+                "Generate memorable monsters, beasts, alien fauna, and undead with ecology, signs, combat tactics, and adventure hooks.",
+              icon: "icon-[lucide--paw-print]",
             },
             {
               href: "/generators/world",
@@ -128,6 +189,27 @@
               icon: "icon-[lucide--scroll-text]",
             },
             {
+              href: "/generators/rumour",
+              label: "Rumour Generator",
+              summary:
+                "Generate a d6 table of six local rumours with a concrete lead and a source for each, lighter than a full quest hook.",
+              icon: "icon-[lucide--ear]",
+            },
+            {
+              href: "/generators/encounter",
+              label: "Encounter Generator",
+              summary:
+                "Generate a playable combat, social, exploration, environmental, or mixed encounter with participants, environment, and a complication.",
+              icon: "icon-[lucide--swords]",
+            },
+            {
+              href: "/generators/puzzle",
+              label: "Puzzle Generator",
+              summary:
+                "Create table-ready encounter puzzles with clues, alternatives, and fail-forward outcomes.",
+              icon: "icon-[lucide--puzzle]",
+            },
+            {
               href: "/generators/plot-twist-generator",
               label: "Plot Twist & Complication Generator",
               summary:
@@ -135,10 +217,38 @@
               icon: "icon-[lucide--shuffle]",
             },
             {
+              href: "/generators/bbeg-generator",
+              label: "BBEG / Campaign Villain Generator",
+              summary:
+                "Create a campaign-scale antagonist with a concrete goal, methods, lieutenants, and an escalating plan the party can discover and disrupt.",
+              icon: "icon-[lucide--skull]",
+            },
+            {
+              href: "/generators/comic-book-event-generator",
+              label: "Comic Book Event Generator",
+              summary:
+                "Generate a campaign-scale superhero event -- an alien invasion, hero civil war, secret invasion, and more -- with a staged escalation and concrete, lasting consequences.",
+              icon: "icon-[lucide--zap]",
+            },
+            {
+              href: "/generators/villain-scheme-generator",
+              label: "Villain Scheme Generator",
+              summary:
+                "Generate a Superhero / Comic Book villain scheme: objective, motivation, resources, escalating discoverable stages, complications, and consequences if nobody intervenes.",
+              icon: "icon-[lucide--target]",
+            },
+            {
+              href: "/generators/heist",
+              label: "Heist Generator",
+              summary:
+                "Generate a playable score: a prize with a practical catch, three layered security rings, an escalating alarm track, and a getaway whose original plan has already failed.",
+              icon: "icon-[lucide--key-round]",
+            },
+            {
               href: "/generators/council-vote",
               label: "Council Vote Generator",
               summary:
-                "Generate a political vote quest — a named council of voters with distinct agendas that the party must sway before a deadline decision.",
+                "Generate a political vote quest: a named council of voters with distinct agendas that the party must sway before a deadline decision.",
               icon: "icon-[lucide--gavel]",
             },
             {
@@ -170,11 +280,39 @@
               icon: "icon-[lucide--map]",
             },
             {
+              href: "/generators/point-crawl",
+              label: "Point Crawl Generator",
+              summary:
+                "Generate an interconnected point-crawl map of named locations and travel routes with loops, secret paths, locked gates, and SVG/PNG export.",
+              icon: "icon-[lucide--waypoints]",
+            },
+            {
               href: "/generators/magic-item",
               label: "Magic Item Generator",
               summary:
                 "Generate item concepts with rarity, properties, history, and GM-facing lore.",
               icon: "icon-[lucide--sparkles]",
+            },
+            {
+              href: "/generators/minor-magic-item",
+              label: "Minor Magic Item & Trinket Generator",
+              summary:
+                "Create low-impact, consumable charms, potions, talismans, and disposable tools with quirks and limited charges.",
+              icon: "icon-[lucide--sparkles]",
+            },
+            {
+              href: "/generators/artifact-generator",
+              label: "Artifact & Relic Generator",
+              summary:
+                "Generate unique, named major artifacts and ancient relics with multi-tier powers, curses, pursuing factions, and destruction conditions.",
+              icon: "icon-[lucide--gem]",
+            },
+            {
+              href: "/generators/tome",
+              label: "Tome & Forbidden Book Generator",
+              summary:
+                "Generate sinister grimoires, occult field logs, and heretical treatises with binding details, readable excerpts, research hazards, and hooks.",
+              icon: "icon-[lucide--book-marked]",
             },
             {
               href: "/generators/tavern",
@@ -187,7 +325,7 @@
               href: "/generators/social-hub",
               label: "Social Hub Generator",
               summary:
-                "Generate a social gathering venue for any genre — cyberpunk dive bars, western saloons, sci-fi cantinas, and more.",
+                "Generate a social gathering venue for any genre: cyberpunk dive bars, western saloons, sci-fi cantinas, and more.",
               icon: "icon-[lucide--map-pin]",
             },
             {
@@ -201,14 +339,14 @@
               href: "/generators/nation",
               label: "Nation Generator",
               summary:
-                "Generate a political entity for any genre — fantasy empires, cyberpunk megacorp-states, sci-fi federations, and more.",
+                "Generate a political entity for any genre: fantasy empires, cyberpunk megacorp-states, sci-fi federations, and more.",
               icon: "icon-[lucide--globe]",
             },
             {
               href: "/generators/news-sheet-generator",
               label: "News Sheet Generator",
               summary:
-                "Generate an in-world news sheet for any genre — cyberpunk screamsheets, fantasy broadsheets, station newsfeeds — with rumours, classifieds, and GM-only hooks.",
+                "Generate an in-world news sheet for any genre: cyberpunk screamsheets, fantasy broadsheets, station newsfeeds, with rumours, classifieds, and GM-only hooks.",
               icon: "icon-[lucide--newspaper]",
             },
             {
@@ -222,7 +360,7 @@
               href: "/generators/random",
               label: "Surprise Me",
               summary:
-                "Not sure what you need? Spin the idea machine — a random faction, realm, NPC, quest hook, or venue.",
+                "Not sure what you need? Spin the idea machine: a random faction, realm, NPC, quest hook, or venue.",
               icon: "icon-[lucide--dices]",
             },
           ],
@@ -263,6 +401,66 @@
               summary:
                 "Our guiding principles for ethical, optional, local-first AI assistance in worldbuilding.",
               icon: "icon-[lucide--shield-alert]",
+            },
+            {
+              href: "/silhouettes",
+              label: "Vector RPG Silhouettes & Token Art",
+              summary:
+                "Browse the complete library of CC-licensed vector silhouettes for characters, creatures, and places with live theme palette previews and SVG export.",
+              icon: "icon-[lucide--shapes]",
+            },
+          ],
+        },
+      ],
+    },
+    {
+      title: "Answers",
+      description:
+        "Short, practical answers to questions that come up while running and building campaigns. Read first, no login, nothing to install.",
+      groups: [
+        {
+          links: [
+            {
+              href: "/answers",
+              label: "All Answers",
+              summary:
+                "The full answer library: point crawls, factions, pantheons, encounters, notes, and more.",
+              icon: "icon-[lucide--help-circle]",
+            },
+            {
+              href: "/answers/how-do-you-organise-rpg-campaign-notes",
+              label: "How do you organise RPG campaign notes?",
+              summary:
+                "Durable entity pages, dated session logs, disposable prep, and the ten-minute pass that keeps them true.",
+              icon: "icon-[lucide--notebook-pen]",
+            },
+            {
+              href: "/answers/what-is-a-point-crawl",
+              label: "What is a point crawl?",
+              summary:
+                "Mapping an adventure as named locations joined by explicit routes, with a worked fen example.",
+              icon: "icon-[lucide--route]",
+            },
+            {
+              href: "/answers/how-do-you-create-a-fantasy-faction",
+              label: "How do you create a fantasy faction?",
+              summary:
+                "Six questions that turn a faction into something that reacts on its own.",
+              icon: "icon-[lucide--flag]",
+            },
+            {
+              href: "/answers/what-makes-a-good-random-encounter",
+              label: "What makes a good random encounter?",
+              summary:
+                "Four criteria that turn a wandering monster into a situation the party can respond to.",
+              icon: "icon-[lucide--dices]",
+            },
+            {
+              href: "/answers/how-do-you-run-a-conspiracy-campaign",
+              label: "How do you run a conspiracy campaign?",
+              summary:
+                "Decide the truth in full, then design how it leaks, and give every conclusion three routes.",
+              icon: "icon-[lucide--search]",
             },
           ],
         },
@@ -357,14 +555,14 @@
               href: "/migrations",
               label: "Migration Hub",
               summary:
-                "Every supported import source in one place — pick the tool you're migrating from.",
+                "Every supported import source in one place: pick the tool you're migrating from.",
               icon: "icon-[lucide--folder-input]",
             },
             {
               href: "/import/obsidian-vault",
               label: "Obsidian Vault Importer",
               summary:
-                "Seamlessly convert your Obsidian markdown campaign files into Codex Cryptica format.",
+                "Convert your Obsidian markdown campaign files into Codex Cryptica format.",
               icon: "icon-[lucide--folder-open]",
             },
             {
@@ -392,7 +590,7 @@
               href: "/import/scabard",
               label: "Scabard Importer",
               summary:
-                "Convert Scabard campaign JSON exports — pages, categories, and connections — into your vault.",
+                "Convert Scabard campaign JSON exports (pages, categories, and connections) into your vault.",
               icon: "icon-[lucide--shapes]",
             },
             {
@@ -454,7 +652,7 @@
           >
             {section.title}
           </h2>
-          <p class="text-sm text-theme-muted leading-relaxed">
+          <p class="text-base text-theme-muted leading-relaxed">
             {section.description}
           </p>
         </div>
@@ -484,7 +682,7 @@
                         {link.label}
                       </span>
                       <span
-                        class="block text-sm text-theme-muted leading-relaxed"
+                        class="block text-base text-theme-muted leading-relaxed"
                       >
                         {link.summary}
                       </span>

@@ -1,4 +1,8 @@
-import type { ChatMessagePayload, VTTMessage } from "../../../types/vtt";
+import type {
+  ChatCardPayload,
+  ChatMessagePayload,
+  VTTMessage,
+} from "../../../types/vtt";
 import { diceEngine, type RollResult } from "dice-engine";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { systemClock } from "$lib/utils/runtime-deps";
@@ -58,9 +62,7 @@ export class VTTChatManager {
     };
   }
 
-  sendChatMessage(content: string, vttEnabled: boolean) {
-    if (!vttEnabled) return;
-
+  sendChatMessage(content: string, _vttEnabled?: boolean) {
     let roll = undefined;
     const trimmed = content.trim();
     if (trimmed.startsWith("/roll ")) {
@@ -82,10 +84,8 @@ export class VTTChatManager {
   sendResolvedRollMessage(
     formula: string,
     result: Pick<RollResult, "total" | "parts">,
-    vttEnabled: boolean,
+    _vttEnabled?: boolean,
   ) {
-    if (!vttEnabled) return;
-
     const payload = this.buildChatPayload(
       `/roll ${formula}`,
       this.createChatRoll(formula, result),
@@ -95,9 +95,37 @@ export class VTTChatManager {
     this.deps.emit(payload);
   }
 
-  clearChatMessages(vttEnabled: boolean) {
-    if (!vttEnabled) return;
+  sendCardDrawMessage(
+    deckName: string,
+    cards: ChatCardPayload[],
+    _vttEnabled?: boolean,
+  ) {
+    const summary = cards
+      .map(
+        (c) =>
+          `${c.position ? `${c.position}: ` : ""}${c.title}${c.reversed ? " (reversed)" : ""}${c.body ? `: ${c.body}` : ""}`,
+      )
+      .join("\n");
 
+    const sender = sessionModeStore.isGuestMode
+      ? sessionModeStore.guestUsername || "Guest"
+      : "GM";
+    const senderId = this.deps.getMyPeerId() || "host";
+
+    const payload: ChatMessagePayload = {
+      type: "CHAT_MESSAGE",
+      sender,
+      senderId,
+      content: `${deckName}:\n${summary}`,
+      timestamp: systemClock.now(),
+      cards,
+    };
+
+    this.chatMessages = [...this.chatMessages, payload];
+    this.deps.emit(payload);
+  }
+
+  clearChatMessages(_vttEnabled?: boolean) {
     this.chatMessages = [];
     this.deps.emit({
       type: "CHAT_CLEAR",

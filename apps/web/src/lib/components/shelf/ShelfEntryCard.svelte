@@ -46,7 +46,7 @@
     <p class="text-xs text-theme-text-muted mt-0.5">
       {entry.type} · from {entry.sourceVaultName} · {shelvedOn}
     </p>
-    <p class="text-[11px] text-theme-text-muted/70 mt-0.5">
+    <p class="text-meta text-theme-text-muted/70 mt-0.5">
       {formatSize(entry.byteSize)}
     </p>
   </div>

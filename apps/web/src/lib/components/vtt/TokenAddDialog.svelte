@@ -112,7 +112,7 @@
           >
             Add Token
           </h2>
-          <p class="text-[10px] text-theme-muted mt-1">
+          <p class="text-micro text-theme-muted mt-1">
             Place a combat marker at the clicked map position.
           </p>
         </div>
@@ -130,7 +130,7 @@
         <div class="grid gap-3 md:grid-cols-[1fr_1fr]">
           <label class="space-y-2">
             <span
-              class="text-[10px] uppercase font-bold tracking-widest text-theme-muted"
+              class="text-micro uppercase font-bold tracking-widest text-theme-muted"
               >Token Name</span
             >
             <input
@@ -142,7 +142,7 @@
 
           <label class="space-y-2">
             <span
-              class="text-[10px] uppercase font-bold tracking-widest text-theme-muted"
+              class="text-micro uppercase font-bold tracking-widest text-theme-muted"
               >Search Entity</span
             >
             <input
@@ -173,7 +173,7 @@
                   ><span class="sr-only"> (past)</span>{/if}
               </div>
               <div
-                class="text-[10px] uppercase tracking-widest text-theme-muted"
+                class="text-micro uppercase tracking-widest text-theme-muted"
               >
                 {entity.type}
               </div>
@@ -189,20 +189,20 @@
       <div
         class="p-4 border-t border-theme-border flex items-center justify-between gap-3"
       >
-        <div class="text-[10px] text-theme-muted">
+        <div class="text-micro text-theme-muted">
           {#if coords}
             Position: {Math.round(coords.x)}, {Math.round(coords.y)}
           {/if}
         </div>
         <div class="flex items-center gap-2">
           <button
-            class="px-3 py-2 rounded-lg border border-theme-border text-[10px] font-bold uppercase tracking-widest text-theme-muted hover:text-theme-text"
+            class="px-3 py-2 rounded-lg border border-theme-border text-micro font-bold uppercase tracking-widest text-theme-muted hover:text-theme-text"
             onclick={close}
           >
             Cancel
           </button>
           <button
-            class="px-4 py-2 rounded-lg bg-theme-primary text-theme-bg text-[10px] font-bold uppercase tracking-widest"
+            class="px-4 py-2 rounded-lg bg-theme-primary text-theme-bg text-micro font-bold uppercase tracking-widest"
             onclick={createToken}
           >
             Create Token

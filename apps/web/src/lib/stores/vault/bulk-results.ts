@@ -21,29 +21,44 @@ export function summarizeBulkMutation(
   items: BulkMutationItemResult[],
 ): BulkMutationResult {
   const byId = new Map(items.map((item) => [item.id, item]));
-  const normalized = requestedIds.map(
-    (id) =>
-      byId.get(id) ?? {
-        id,
-        status: "skipped" as const,
-      },
-  );
+  // ⚡ Bolt Optimization: Single-pass normalization and status partitioning
+  const normalized: BulkMutationItemResult[] = [];
+  const succeededIds: string[] = [];
+  const failedIds: string[] = [];
+  const skippedIds: string[] = [];
+  const cancelledIds: string[] = [];
+
+  for (let i = 0; i < requestedIds.length; i++) {
+    const id = requestedIds[i];
+    const item = byId.get(id) ?? {
+      id,
+      status: "skipped" as const,
+    };
+    normalized.push(item);
+
+    switch (item.status) {
+      case "success":
+        succeededIds.push(item.id);
+        break;
+      case "failed":
+        failedIds.push(item.id);
+        break;
+      case "skipped":
+        skippedIds.push(item.id);
+        break;
+      case "cancelled":
+        cancelledIds.push(item.id);
+        break;
+    }
+  }
 
   return {
     requested: requestedIds.length,
     items: normalized,
-    succeededIds: normalized
-      .filter((item) => item.status === "success")
-      .map((item) => item.id),
-    failedIds: normalized
-      .filter((item) => item.status === "failed")
-      .map((item) => item.id),
-    skippedIds: normalized
-      .filter((item) => item.status === "skipped")
-      .map((item) => item.id),
-    cancelledIds: normalized
-      .filter((item) => item.status === "cancelled")
-      .map((item) => item.id),
+    succeededIds,
+    failedIds,
+    skippedIds,
+    cancelledIds,
   };
 }
 

@@ -1,40 +1,13 @@
 import { error } from "@sveltejs/kit";
 import type { EntryGenerator, PageLoad } from "./$types";
 import { VALID_HUB_THEMES } from "../../../../../params/theme_hub";
+import { GENERATOR_SLUGS } from "../../../../../params/generator_slug";
 
 export const prerender = true;
 
-const validSlugs = new Set([
-  "npc",
-  "settlement",
-  "magic-item",
-  "faction",
-  "quest",
-  "item",
-  "tavern",
-  "social-hub",
-  "kingdom",
-  "nation",
-  "vampire-clan",
-  "nomad-clan",
-  "names",
-  "fantasy-names",
-  "dnd-npc",
-  "pantheon-generator",
-  "god-generator",
-  "ship-generator",
-  "language-generator",
-  "news-sheet-generator",
-  "dungeon-generator",
-  "adventure-generator",
-  "adventure-idea-generator",
-  "plot-twist-generator",
-  "world",
-  "council-vote",
-  "secret-society",
-  "star-system",
-  "alien-race",
-]);
+const validSlugs = new Set<string>(
+  GENERATOR_SLUGS.filter((slug) => slug !== "random"),
+);
 
 export const load: PageLoad = ({ params }) => {
   if (!VALID_HUB_THEMES.has(params.theme)) {

@@ -10,19 +10,31 @@ description: Perform a meticulous code review for Codex-Cryptica.
 You are a Principal Software Engineer performing a code review. You must combine standard best practices with project-specific rules.
 
 ## Step 1: Initialize Context
-Activate the following skills to load your specialized instructions:
-- `codex-review` (Project-specific anti-patterns, reactivity audit, and strict output guidelines)
+Activate the following skills in order:
+- `code-review` (generic changed-behaviour, trust, data, operations, test, and report standards)
+- `codex-review` (Codex-Cryptica-specific architecture and anti-patterns)
 
 ## Step 2: Retrieve Code
 - If arguments are provided (e.g., a SHA or range), use them.
 - Default: Call `git diff origin/staging...HEAD -U5` to get the changes in the current branch.
 
 ## Step 3: Analysis and Report
-- Deeply audit the changes against the `codex-review` patterns.
+- Run the generic `code-review` pass first, then the project-specific `codex-review` pass.
+- Keep the two sets of findings distinguishable in the report.
 - **Strict Output Guidelines**: Adhere strictly to the `codex-review` SKILL guidelines. Output **ONLY** actionable attention/fixing items and their concrete code proposals. Do not include any filler praise, compliments, or list things that are already correct.
 
 ## User Input
 ```text
 $ARGUMENTS
+```
+
+After the review and any fixes, print this exact machine-readable block:
+
+```text
+DEV_AGENTS_REVIEW_REPORT_BEGIN
+FINDINGS: <short human-readable summary, or none>
+FIXES: <short human-readable summary, or none>
+REPORT_JSON: {"verdict":"clean|findings","findings":[],"categories_checked":[],"validation":[],"fixes":[]}
+DEV_AGENTS_REVIEW_REPORT_END
 ```
 """

@@ -4,10 +4,27 @@ import {
   type GuestBundle,
   type GuestRelationship,
   type Map,
+  type StatSheet,
 } from "schema";
 import { type Clock, systemClock } from "../runtime";
 
+/**
+ * Turns an entity's stat sheet into the version players may see (#3964).
+ * `resolveName` names a linked Item, and only answers for entities that are
+ * themselves part of the export.
+ */
+export type GuestSheetSanitizer = (
+  sheet: StatSheet,
+  context: { resolveName: (entityId: string) => string | undefined },
+) => StatSheet | undefined;
+
 export interface ExporterOptions {
+  /**
+   * How stat sheets are prepared for players. When omitted, a sheet that
+   * holds a merchant stock ledger is withheld entirely rather than copied,
+   * so forgetting to pass this can never publish a shop's private stock.
+   */
+  sanitizeStatSheet?: GuestSheetSanitizer;
   entities: Entity[];
   defaultVisibility: "visible" | "hidden";
   activeTheme?: any;
@@ -26,6 +43,25 @@ export interface ExporterOptions {
 }
 
 export class GuestExporter {
+  /**
+   * The sheet as it is published. Without a sanitiser a merchant ledger is
+   * replaced by an empty sheet (fail closed); other sheets are unchanged.
+   */
+  private static sanitizeSheet(
+    sheet: StatSheet,
+    included: ReadonlyMap<string, Entity>,
+    sanitizer?: GuestSheetSanitizer,
+  ): StatSheet | undefined {
+    if (sanitizer) {
+      return sanitizer(sheet, {
+        resolveName: (entityId) => included.get(entityId)?.title,
+      });
+    }
+    return sheet.fields.some((field) => field.stockLedger === true)
+      ? { templateId: null, fields: [] }
+      : sheet;
+  }
+
   /**
    * Compiles a sanitized guest-safe bundle of a campaign.
    * Excludes drafts and entities hidden by VisibilitySettings (Fog of War).
@@ -47,6 +83,7 @@ export class GuestExporter {
       canvases = [],
       assetManifest = [],
       metadata,
+      sanitizeStatSheet,
     } = options;
 
     const visibilitySettings = {
@@ -61,6 +98,11 @@ export class GuestExporter {
     for (const entity of entities) {
       // Exclude drafts
       if (entity.status === "draft") {
+        continue;
+      }
+
+      // Reports can hold GM-only text and are never published
+      if (entity.kind === "report") {
         continue;
       }
 
@@ -92,14 +134,17 @@ export class GuestExporter {
     }
 
     // 3. Filter and sanitize maps
+    // hexCrawl is GM-only working data (FR-041): notes, AI drafts and explored
+    // state never reach guests. Grid geometry is kept, since it is map layout.
     const guestMaps = maps
       .filter((m) => m.playerVisible === true)
       .map((m) => {
         const pins = (m.pins || []).filter(
           (p) => !p.entityId || includedEntityIds.has(p.entityId),
         );
+        const { hexCrawl: _hexCrawl, ...publicMap } = m;
         return {
-          ...m,
+          ...publicMap,
           pins,
         };
       });
@@ -134,6 +179,15 @@ export class GuestExporter {
 
       // Clean runtime fields
       delete (sanitized as any)._path;
+
+      // Stat sheets reach players only through the sanitiser
+      if (sanitized.statSheet) {
+        sanitized.statSheet = this.sanitizeSheet(
+          sanitized.statSheet,
+          includedEntitiesMap,
+          sanitizeStatSheet,
+        );
+      }
 
       // Redact dangling links in content
       if (sanitized.content) {

@@ -1,0 +1,3186 @@
+{
+  "version": 1,
+  "model": "@cf/baai/bge-small-en-v1.5",
+  "ranking": "lexical-plus-context vs production hybrid algorithm with complete vectors (max lexical/semantic plus context; unchanged floor)",
+  "dataset": "expanded tune and legacy regression",
+  "corpus": {
+    "chunks": 284,
+    "articles": 45,
+    "features": 19,
+    "lexicalBytes": 232830,
+    "hybridBytes": 1041468,
+    "shippedCachedVectorChunks": 176,
+    "shippedCachedBytes": 733845,
+    "sha256": "f4f856cf92e5e7b4ad54743b1d1bcb76fb449bab190db49c173240509d010f25"
+  },
+  "questionsSha256": "25da9d2eb6c67d2c76fbd99271a52917956eef9a6637a26a2864a83f97035c53",
+  "vectorsSha256": "d043728fa217f1a57487776b0150b50bb20e0e13753fca1270fe8f0509620906",
+  "embeddings": {
+    "reused": 406,
+    "requested": 0,
+    "cachedInputs": 446
+  },
+  "lexical": {
+    "summary": {
+      "inScope": 93,
+      "correctAt3": 85,
+      "recallAt3": 0.9139784946236559,
+      "answeredRate": 1,
+      "splits": {
+        "tune": {
+          "count": 65,
+          "correctAt3": 60,
+          "recallAt3": 0.9230769230769231
+        },
+        "holdout": {
+          "count": 28,
+          "correctAt3": 25,
+          "recallAt3": 0.8928571428571429
+        }
+      },
+      "unrelated": {
+        "count": 21,
+        "refused": 21,
+        "noMatchRate": 1
+      },
+      "nearMiss": {
+        "count": 8,
+        "refused": 1,
+        "noMatchRate": 0.125
+      },
+      "allOutOfScopeNoMatchRate": 0.7586206896551724,
+      "separation": {
+        "weakestIn": 0.3202021066815703,
+        "strongestUnrelated": 0.2878014812179248,
+        "gap": 0.03240062546364547
+      }
+    },
+    "inScope": [
+      {
+        "question": "How do I connect the faction I just created?",
+        "split": "tune",
+        "topic": "existing",
+        "screen": "connections",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.8621861012143024,
+        "sources": [
+          "generator:faction",
+          "connections-tab",
+          "registry:entity-connections",
+          "creating-and-editing-entities"
+        ]
+      },
+      {
+        "question": "Where do I add a connection?",
+        "split": "tune",
+        "topic": "existing",
+        "screen": "connections",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.8788730666521207,
+        "sources": [
+          "registry:entity-connections",
+          "connections-tab",
+          "family-tree",
+          "intro"
+        ]
+      },
+      {
+        "question": "What does the Connections tab show?",
+        "split": "tune",
+        "topic": "existing",
+        "screen": "connections",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1.218551885030389,
+        "sources": [
+          "connections-tab",
+          "registry:entity-connections",
+          "chat-commands",
+          "registry:related-entity-generation"
+        ]
+      },
+      {
+        "question": "How do I give a connection a label like rival?",
+        "split": "tune",
+        "topic": "existing",
+        "screen": "connections",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.6605003938171745,
+        "sources": [
+          "connection-labels",
+          "connections-tab",
+          "connections-tab",
+          "registry:entity-connections"
+        ]
+      },
+      {
+        "question": "How do I see everything linked to this entry?",
+        "split": "tune",
+        "topic": "existing",
+        "screen": "connections",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1.1183284775055609,
+        "sources": [
+          "registry:entity-connections",
+          "connections-tab",
+          "creating-and-editing-entities",
+          "fog-of-war"
+        ]
+      },
+      {
+        "question": "How do I link two characters together?",
+        "split": "tune",
+        "topic": "existing",
+        "screen": "none",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.3202021066815703,
+        "sources": [
+          "graph-basics",
+          "entity-shelf",
+          "connections-tab",
+          "chat-commands"
+        ]
+      },
+      {
+        "question": "What is the graph for?",
+        "split": "tune",
+        "topic": "existing",
+        "screen": "graph",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1.2098729200921279,
+        "sources": [
+          "registry:graph-view",
+          "graph-basics",
+          "entity-reports",
+          "registry:entity-reports"
+        ]
+      },
+      {
+        "question": "How do I explore how my entries relate on the graph?",
+        "split": "tune",
+        "topic": "existing",
+        "screen": "graph",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1.1923836533272756,
+        "sources": [
+          "registry:graph-view",
+          "graph-basics",
+          "guided-mode",
+          "registry:entity-connections"
+        ]
+      },
+      {
+        "question": "How do I find an entry in the graph?",
+        "split": "tune",
+        "topic": "existing",
+        "screen": "graph",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.7223823442427739,
+        "sources": [
+          "registry:graph-view",
+          "registry:guided-mode",
+          "graph-basics",
+          "spatial-canvas"
+        ]
+      },
+      {
+        "question": "Can I see my relationships as a picture?",
+        "split": "tune",
+        "topic": "existing",
+        "screen": "none",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.5428992445110042,
+        "sources": [
+          "connections-tab",
+          "registry:entity-connections",
+          "saved-views",
+          "registry:entity-connections"
+        ]
+      },
+      {
+        "question": "What is the Session Hub?",
+        "split": "tune",
+        "topic": "existing",
+        "screen": "none",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1.0567400813000278,
+        "sources": [
+          "session-hub",
+          "registry:session-hub",
+          "session-prep",
+          "intro"
+        ]
+      },
+      {
+        "question": "Where do my generated drafts go?",
+        "split": "tune",
+        "topic": "existing",
+        "screen": "none",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.4369401670884778,
+        "sources": [
+          "registry:related-entity-generation",
+          "registry:session-hub",
+          "registry:campaign-generator",
+          "session-hub"
+        ]
+      },
+      {
+        "question": "How do I save a generated draft to Codex?",
+        "split": "tune",
+        "topic": "existing",
+        "screen": "none",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.6956053896691766,
+        "sources": [
+          "registry:session-hub",
+          "session-hub",
+          "session-prep",
+          "registry:related-entity-generation"
+        ]
+      },
+      {
+        "question": "How do I roll on a random table?",
+        "split": "tune",
+        "topic": "existing",
+        "screen": "tables",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1.2242235752813229,
+        "sources": [
+          "registry:tables",
+          "generator:random-table",
+          "random-tables-decks",
+          "quicknote"
+        ]
+      },
+      {
+        "question": "What is the difference between a table and a deck?",
+        "split": "tune",
+        "topic": "existing",
+        "screen": "tables",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1.015562466319955,
+        "sources": [
+          "random-tables-decks",
+          "registry:tables",
+          "chat-commands",
+          "registry:entity-reports"
+        ]
+      },
+      {
+        "question": "How do I draw a card from a deck?",
+        "split": "tune",
+        "topic": "existing",
+        "screen": "none",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.7006386943731827,
+        "sources": [
+          "random-tables-decks",
+          "registry:tables",
+          "chat-commands",
+          "spatial-canvas"
+        ]
+      },
+      {
+        "question": "How do I generate a faction?",
+        "split": "tune",
+        "topic": "existing",
+        "screen": "generators",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1.1718822873239612,
+        "sources": [
+          "generator:faction",
+          "generator:faction-roster",
+          "in-app-generators",
+          "random-tables-decks"
+        ]
+      },
+      {
+        "question": "Can I generate a city and keep it in my vault?",
+        "split": "tune",
+        "topic": "existing",
+        "screen": "generators",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.4281295922121132,
+        "sources": [
+          "registry:campaign-generator",
+          "registry:session-hub",
+          "generate-related",
+          "in-app-generators"
+        ]
+      },
+      {
+        "question": "How do I generate entries related to this one?",
+        "split": "tune",
+        "topic": "existing",
+        "screen": "connections",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.981322991690202,
+        "sources": [
+          "registry:related-entity-generation",
+          "registry:entity-connections",
+          "generate-related",
+          "connections-tab"
+        ]
+      },
+      {
+        "question": "Where are the generators?",
+        "split": "tune",
+        "topic": "existing",
+        "screen": "none",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.8276569696263044,
+        "sources": [
+          "registry:campaign-generator",
+          "intro",
+          "guided-mode",
+          "in-app-generators"
+        ]
+      },
+      {
+        "question": "Does Codex automatically back up changes to the cloud?",
+        "split": "tune",
+        "topic": "existing",
+        "screen": "none",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.5151589779445181,
+        "sources": [
+          "cloud-backup",
+          "gdrive-cloud-sync",
+          "export-and-backup",
+          "gdrive-cloud-sync"
+        ]
+      },
+      {
+        "question": "What is the Cloud Backup recovery key for?",
+        "split": "tune",
+        "topic": "existing",
+        "screen": "none",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.7782463170634379,
+        "sources": [
+          "cloud-backup",
+          "gdrive-cloud-sync",
+          "offline-sync",
+          "gdrive-cloud-sync"
+        ]
+      },
+      {
+        "question": "Can I restore a cloud backup without replacing the vault I have open?",
+        "split": "tune",
+        "topic": "existing",
+        "screen": "none",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.5956858308668328,
+        "sources": [
+          "cloud-backup",
+          "registry:backup-and-restore",
+          "gdrive-cloud-sync",
+          "gdrive-cloud-sync"
+        ]
+      },
+      {
+        "question": "What is the difference between Google Drive sync and Codex Cloud Backup?",
+        "split": "tune",
+        "topic": "existing",
+        "screen": "none",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.9501899473404611,
+        "sources": [
+          "gdrive-cloud-sync",
+          "cloud-backup",
+          "offline-sync",
+          "vault-metadata"
+        ]
+      },
+      {
+        "question": "How do I put a character on the canvas?",
+        "split": "tune",
+        "topic": "canvas",
+        "screen": "canvas",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.38548557042640763,
+        "sources": [
+          "spatial-canvas",
+          "canvas-add-entities",
+          "registry:entity-reports",
+          "entity-reports"
+        ]
+      },
+      {
+        "question": "Can I draw on the canvas?",
+        "split": "tune",
+        "topic": "canvas",
+        "screen": "canvas",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.8444588773200016,
+        "sources": [
+          "registry:canvas",
+          "spatial-canvas",
+          "entity-reports",
+          "registry:entity-reports"
+        ]
+      },
+      {
+        "question": "How do I name the line between two cards?",
+        "split": "holdout",
+        "topic": "canvas",
+        "screen": "canvas",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.576613055720673,
+        "sources": [
+          "spatial-canvas",
+          "random-tables-decks",
+          "entity-reports",
+          "spatial-canvas"
+        ]
+      },
+      {
+        "question": "What happens if I add the same entity to a canvas twice?",
+        "split": "tune",
+        "topic": "canvas",
+        "screen": "canvas",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.7490423852715384,
+        "sources": [
+          "canvas-add-entities",
+          "registry:canvas",
+          "registry:entity-reports",
+          "entity-reports"
+        ]
+      },
+      {
+        "question": "Can I make more than one canvas?",
+        "split": "tune",
+        "topic": "canvas",
+        "screen": "canvas",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.6861001769400188,
+        "sources": [
+          "spatial-canvas",
+          "canvas-add-entities",
+          "entity-reports",
+          "registry:entity-reports"
+        ]
+      },
+      {
+        "question": "How do I rotate a card?",
+        "split": "holdout",
+        "topic": "canvas",
+        "screen": "canvas",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.6341676873331421,
+        "sources": [
+          "spatial-canvas",
+          "entity-reports",
+          "canvas-add-entities",
+          "entity-reports"
+        ]
+      },
+      {
+        "question": "How do I put a file from my computer on the board?",
+        "split": "tune",
+        "topic": "canvas",
+        "screen": "canvas",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.47258978007000285,
+        "sources": [
+          "canvas-add-entities",
+          "registry:canvas",
+          "canvas-add-entities",
+          "spatial-canvas"
+        ]
+      },
+      {
+        "question": "Is my canvas layout saved?",
+        "split": "holdout",
+        "topic": "canvas",
+        "screen": "canvas",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.8279917599036091,
+        "sources": [
+          "registry:canvas",
+          "entity-reports",
+          "spatial-canvas",
+          "registry:entity-reports"
+        ]
+      },
+      {
+        "question": "What is the canvas for?",
+        "split": "holdout",
+        "topic": "canvas",
+        "screen": "canvas",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1.0188193437393207,
+        "sources": [
+          "spatial-canvas",
+          "canvas-add-entities",
+          "registry:entity-reports",
+          "entity-reports"
+        ]
+      },
+      {
+        "question": "How do I drop a pin on the map?",
+        "split": "tune",
+        "topic": "map",
+        "screen": "map",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.7160571761246843,
+        "sources": ["map-mode", "registry:vtt-map", "connections-tab", "intro"]
+      },
+      {
+        "question": "How do I hide parts of the map from my players?",
+        "split": "tune",
+        "topic": "map",
+        "screen": "map",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.6516874419327784,
+        "sources": ["fog-of-war", "map-mode", "vtt-session", "vtt-session"]
+      },
+      {
+        "question": "Can I start a game session from a map?",
+        "split": "holdout",
+        "topic": "map",
+        "screen": "map",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.6908101055623578,
+        "sources": [
+          "vtt-session",
+          "registry:vtt-map",
+          "session-hub",
+          "vtt-session"
+        ]
+      },
+      {
+        "question": "How do I move a token?",
+        "split": "tune",
+        "topic": "map",
+        "screen": "map",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.5133220826776951,
+        "sources": [
+          "vtt-session",
+          "registry:vtt-map",
+          "sharing-templates",
+          "spatial-canvas"
+        ]
+      },
+      {
+        "question": "How do I measure distance on the map?",
+        "split": "tune",
+        "topic": "map",
+        "screen": "map",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.41966366562327806,
+        "sources": [
+          "map-mode",
+          "vtt-session",
+          "registry:vtt-map",
+          "registry:vtt-map"
+        ]
+      },
+      {
+        "question": "How do I point something out to the players on the map?",
+        "split": "holdout",
+        "topic": "map",
+        "screen": "map",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.46983808256353377,
+        "sources": ["vtt-session", "map-mode", "vtt-session", "fog-of-war"]
+      },
+      {
+        "question": "Can I have a map inside another map?",
+        "split": "tune",
+        "topic": "map",
+        "screen": "map",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.42991499052609783,
+        "sources": [
+          "registry:vtt-map",
+          "map-mode",
+          "registry:vtt-map",
+          "map-mode"
+        ]
+      },
+      {
+        "question": "What is the map page for?",
+        "split": "holdout",
+        "topic": "map",
+        "screen": "map",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1.0691925339562807,
+        "sources": [
+          "registry:vtt-map",
+          "map-mode",
+          "connections-tab",
+          "spatial-canvas"
+        ]
+      },
+      {
+        "question": "How do I track hit points for a monster in a fight?",
+        "split": "tune",
+        "topic": "map",
+        "screen": "map",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.40602994119500835,
+        "sources": [
+          "vtt-session",
+          "registry:stat-sheets",
+          "map-mode",
+          "fog-of-war"
+        ]
+      },
+      {
+        "question": "How do I bring in my old notes?",
+        "split": "tune",
+        "topic": "import",
+        "screen": "import",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.4475939900520075,
+        "sources": [
+          "registry:archive-import",
+          "thread-weaver-import",
+          "chat-commands",
+          "importing"
+        ]
+      },
+      {
+        "question": "What kinds of files can I import?",
+        "split": "tune",
+        "topic": "import",
+        "screen": "import",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.5066600193078422,
+        "sources": [
+          "registry:archive-import",
+          "importing",
+          "entity-shelf",
+          "registry:archive-import"
+        ]
+      },
+      {
+        "question": "Will importing overwrite entries I already have?",
+        "split": "holdout",
+        "topic": "import",
+        "screen": "import",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.6330164970535084,
+        "sources": [
+          "importing",
+          "entity-shelf",
+          "thread-weaver-import",
+          "export-and-backup"
+        ]
+      },
+      {
+        "question": "Can I import a Kanka campaign?",
+        "split": "tune",
+        "topic": "import",
+        "screen": "import",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.9766469796628185,
+        "sources": [
+          "importing",
+          "thread-weaver-import",
+          "thread-weaver-import",
+          "thread-weaver-import"
+        ]
+      },
+      {
+        "question": "What happens if my import gets interrupted?",
+        "split": "tune",
+        "topic": "import",
+        "screen": "import",
+        "hit": false,
+        "noMatch": false,
+        "topRelevance": 0.3642402732389735,
+        "sources": [
+          "thread-weaver-import",
+          "registry:archive-import",
+          "thread-weaver-import",
+          "importing"
+        ]
+      },
+      {
+        "question": "How do I import a Thread Weaver campaign?",
+        "split": "holdout",
+        "topic": "import",
+        "screen": "import",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1.1289160550618424,
+        "sources": [
+          "thread-weaver-import",
+          "importing",
+          "thread-weaver-import",
+          "thread-weaver-import"
+        ]
+      },
+      {
+        "question": "Do images come along when I import files?",
+        "split": "tune",
+        "topic": "import",
+        "screen": "import",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.6911574574717307,
+        "sources": [
+          "importing",
+          "thread-weaver-import",
+          "thread-weaver-import",
+          "registry:archive-import"
+        ]
+      },
+      {
+        "question": "What is the import page for?",
+        "split": "holdout",
+        "topic": "import",
+        "screen": "import",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1.0502859822322845,
+        "sources": [
+          "registry:archive-import",
+          "thread-weaver-import",
+          "entity-shelf",
+          "intro"
+        ]
+      },
+      {
+        "question": "Can I drag in a whole folder?",
+        "split": "tune",
+        "topic": "import",
+        "screen": "import",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.7523166607760692,
+        "sources": [
+          "importing",
+          "registry:archive-import",
+          "importing",
+          "offline-sync"
+        ]
+      },
+      {
+        "question": "How do I download a backup of my vault?",
+        "split": "tune",
+        "topic": "settings",
+        "screen": "graph",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.8544019127974981,
+        "sources": [
+          "registry:backup-and-restore",
+          "export-and-backup",
+          "gdrive-cloud-sync",
+          "entity-shelf"
+        ]
+      },
+      {
+        "question": "How do I restore a backup?",
+        "split": "tune",
+        "topic": "settings",
+        "screen": "settings",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.9973313506084859,
+        "sources": [
+          "registry:backup-and-restore",
+          "cloud-backup",
+          "gdrive-cloud-sync",
+          "sharing-templates"
+        ]
+      },
+      {
+        "question": "Will restoring a backup overwrite my current vault?",
+        "split": "holdout",
+        "topic": "settings",
+        "screen": "settings",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.694619102704002,
+        "sources": [
+          "export-and-backup",
+          "registry:backup-and-restore",
+          "cloud-backup",
+          "cloud-backup"
+        ]
+      },
+      {
+        "question": "Where is the Export Backup button?",
+        "split": "tune",
+        "topic": "settings",
+        "screen": "settings",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.703664197150542,
+        "sources": [
+          "registry:backup-and-restore",
+          "export-and-backup",
+          "thread-weaver-import",
+          "registry:backup-and-restore"
+        ]
+      },
+      {
+        "question": "Does the backup work in Firefox?",
+        "split": "tune",
+        "topic": "settings",
+        "screen": "settings",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.5104250754784434,
+        "sources": [
+          "offline-sync",
+          "export-and-backup",
+          "registry:backup-and-restore",
+          "registry:backup-and-restore"
+        ]
+      },
+      {
+        "question": "How do I keep a copy of my world outside this browser?",
+        "split": "holdout",
+        "topic": "settings",
+        "screen": "graph",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.56574953629883,
+        "sources": [
+          "export-and-backup",
+          "cloud-backup",
+          "generator:world",
+          "guided-mode"
+        ]
+      },
+      {
+        "question": "Can I save my vault to a folder on my computer?",
+        "split": "tune",
+        "topic": "settings",
+        "screen": "settings",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.7125651126774474,
+        "sources": [
+          "export-and-backup",
+          "offline-sync",
+          "importing",
+          "saved-views"
+        ]
+      },
+      {
+        "question": "Which Settings tab has the backup?",
+        "split": "holdout",
+        "topic": "settings",
+        "screen": "settings",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.8674165220360547,
+        "sources": [
+          "registry:backup-and-restore",
+          "export-and-backup",
+          "default-entity-templates",
+          "themes"
+        ]
+      },
+      {
+        "question": "How do I change the theme?",
+        "split": "tune",
+        "topic": "settings",
+        "screen": "settings",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1.0337574834632763,
+        "sources": ["themes", "cloud-backup", "export-and-backup", "importing"]
+      },
+      {
+        "question": "How do I set the default template for a new character?",
+        "split": "holdout",
+        "topic": "settings",
+        "screen": "settings",
+        "hit": false,
+        "noMatch": false,
+        "topRelevance": 0.5866059102235908,
+        "sources": [
+          "stat-sheets",
+          "registry:entity-templates",
+          "offline-sync",
+          "default-entity-templates"
+        ]
+      },
+      {
+        "question": "How do I make a new character?",
+        "split": "tune",
+        "topic": "entity-editing",
+        "screen": "graph",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.7463540993595469,
+        "sources": [
+          "registry:entity-editing",
+          "creating-and-editing-entities",
+          "family-tree",
+          "stat-sheets"
+        ]
+      },
+      {
+        "question": "How do I save my changes?",
+        "split": "tune",
+        "topic": "entity-editing",
+        "screen": "entityEdit",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.8519162148617228,
+        "sources": [
+          "registry:entity-editing",
+          "creating-and-editing-entities",
+          "cloud-backup",
+          "connections-tab"
+        ]
+      },
+      {
+        "question": "How do I cancel what I just typed?",
+        "split": "holdout",
+        "topic": "entity-editing",
+        "screen": "entityEdit",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.4927759570211989,
+        "sources": [
+          "connections-tab",
+          "connection-labels",
+          "creating-and-editing-entities",
+          "sharing-templates"
+        ]
+      },
+      {
+        "question": "How do I delete an entity?",
+        "split": "tune",
+        "topic": "entity-editing",
+        "screen": "connections",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1.01597419633754,
+        "sources": [
+          "creating-and-editing-entities",
+          "sharing-templates",
+          "cloud-backup",
+          "saved-views"
+        ]
+      },
+      {
+        "question": "Can I undo deleting an entry?",
+        "split": "tune",
+        "topic": "entity-editing",
+        "screen": "connections",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.4803627142431538,
+        "sources": [
+          "creating-and-editing-entities",
+          "registry:entity-connections",
+          "registry:entity-connections",
+          "connections-tab"
+        ]
+      },
+      {
+        "question": "Where is the Edit button?",
+        "split": "holdout",
+        "topic": "entity-editing",
+        "screen": "connections",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.6118022936579602,
+        "sources": [
+          "connections-tab",
+          "creating-and-editing-entities",
+          "registry:entity-connections",
+          "help-assistant"
+        ]
+      },
+      {
+        "question": "Does a new entity start blank?",
+        "split": "tune",
+        "topic": "entity-editing",
+        "screen": "graph",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.613411416813549,
+        "sources": [
+          "default-entity-templates",
+          "guided-mode",
+          "registry:entity-templates",
+          "stat-sheets"
+        ]
+      },
+      {
+        "question": "How do I rename an entry?",
+        "split": "holdout",
+        "topic": "entity-editing",
+        "screen": "connections",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.9967222368341796,
+        "sources": [
+          "creating-and-editing-entities",
+          "importing",
+          "entity-shelf",
+          "registry:entity-connections"
+        ]
+      },
+      {
+        "question": "What does Unsaved changes mean?",
+        "split": "tune",
+        "topic": "entity-editing",
+        "screen": "entityEdit",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.6311334641766727,
+        "sources": [
+          "creating-and-editing-entities",
+          "connections-tab",
+          "registry:related-entity-generation",
+          "creating-and-editing-entities"
+        ]
+      },
+      {
+        "question": "How do I make a quest?",
+        "split": "tune",
+        "topic": "generators",
+        "screen": "generators",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1.0057005920005224,
+        "sources": [
+          "generator:quest",
+          "generator:rumour",
+          "help-assistant",
+          "session-prep"
+        ]
+      },
+      {
+        "question": "Is there a generator for dungeons?",
+        "split": "tune",
+        "topic": "generators",
+        "screen": "none",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.5088450524141769,
+        "sources": [
+          "generator:dungeon",
+          "registry:campaign-generator",
+          "intro",
+          "guided-mode"
+        ]
+      },
+      {
+        "question": "I need a heist for my players",
+        "split": "holdout",
+        "topic": "generators",
+        "screen": "generators",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.7661842226290823,
+        "sources": [
+          "generator:heist",
+          "generator:npc",
+          "generator:rumour",
+          "generator:plot-twist"
+        ]
+      },
+      {
+        "question": "Can I generate a ship?",
+        "split": "tune",
+        "topic": "generators",
+        "screen": "none",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1.031842855703749,
+        "sources": [
+          "generator:ship",
+          "stat-sheets",
+          "registry:session-hub",
+          "registry:campaign-generator"
+        ]
+      },
+      {
+        "question": "Can I make up a new language?",
+        "split": "tune",
+        "topic": "generators",
+        "screen": "none",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.888924679455964,
+        "sources": [
+          "generator:language",
+          "registry:entity-editing",
+          "generator:news-sheet",
+          "generator:plot-twist"
+        ]
+      },
+      {
+        "question": "Is there something that makes rumours for a tavern?",
+        "split": "holdout",
+        "topic": "generators",
+        "screen": "none",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.6526023477717391,
+        "sources": [
+          "generator:rumour",
+          "generator:news-sheet",
+          "random-tables-decks",
+          "guest-character-chat"
+        ]
+      },
+      {
+        "question": "I want a villain for my campaign",
+        "split": "holdout",
+        "topic": "generators",
+        "screen": "generators",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.7878762836699414,
+        "sources": [
+          "generator:villain",
+          "registry:campaign-generator",
+          "entity-shelf",
+          "registry:campaign-generator"
+        ]
+      },
+      {
+        "question": "How do I roll up a random magic item?",
+        "split": "tune",
+        "topic": "generators",
+        "screen": "none",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.6642781637989958,
+        "sources": [
+          "generator:magic-item",
+          "generator:minor-magic-item",
+          "registry:tables",
+          "entity-shelf"
+        ]
+      },
+      {
+        "question": "Is there a generator for puzzles?",
+        "split": "holdout",
+        "topic": "generators",
+        "screen": "none",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.7879705173211256,
+        "sources": [
+          "generator:puzzle",
+          "registry:campaign-generator",
+          "intro",
+          "guided-mode"
+        ]
+      },
+      {
+        "question": "Can I generate a festival?",
+        "split": "holdout",
+        "topic": "generators",
+        "screen": "none",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.6407368815268254,
+        "sources": [
+          "generator:holiday",
+          "in-app-generators",
+          "intro",
+          "registry:session-hub"
+        ]
+      },
+      {
+        "question": "Is exporting a backup the same as publishing my world?",
+        "split": "tune",
+        "topic": "confusion",
+        "screen": "settings",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.7454408280537106,
+        "sources": [
+          "registry:backup-and-restore",
+          "export-and-backup",
+          "publishing",
+          "generator:world"
+        ]
+      },
+      {
+        "question": "Should I import my backup file on the Import page?",
+        "split": "holdout",
+        "topic": "confusion",
+        "screen": "import",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.7862712985456184,
+        "sources": [
+          "importing",
+          "registry:archive-import",
+          "registry:backup-and-restore",
+          "export-and-backup"
+        ]
+      },
+      {
+        "question": "What is the difference between the graph and the canvas?",
+        "split": "tune",
+        "topic": "confusion",
+        "screen": "graph",
+        "hit": false,
+        "noMatch": false,
+        "topRelevance": 0.9469522787917544,
+        "sources": [
+          "registry:graph-view",
+          "registry:entity-reports",
+          "entity-reports",
+          "spatial-canvas"
+        ]
+      },
+      {
+        "question": "Is the map the same thing as the canvas?",
+        "split": "holdout",
+        "topic": "confusion",
+        "screen": "map",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.868273459128063,
+        "sources": [
+          "map-mode",
+          "vtt-session",
+          "spatial-canvas",
+          "canvas-add-entities"
+        ]
+      },
+      {
+        "question": "Should I use a generator or the Oracle to make a new NPC?",
+        "split": "tune",
+        "topic": "confusion",
+        "screen": "generators",
+        "hit": false,
+        "noMatch": false,
+        "topRelevance": 0.6572034265271318,
+        "sources": [
+          "generator:npc",
+          "in-app-generators",
+          "generate-related",
+          "creating-and-editing-entities"
+        ]
+      },
+      {
+        "question": "Is importing notes the same as generating entries?",
+        "split": "holdout",
+        "topic": "confusion",
+        "screen": "import",
+        "hit": false,
+        "noMatch": false,
+        "topRelevance": 1.0004475063593077,
+        "sources": [
+          "importing",
+          "registry:archive-import",
+          "entity-shelf",
+          "export-and-backup"
+        ]
+      },
+      {
+        "question": "Is Cloud Backup the same as the backup file?",
+        "split": "tune",
+        "topic": "confusion",
+        "screen": "settings",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.8702619631338534,
+        "sources": [
+          "cloud-backup",
+          "export-and-backup",
+          "vault-metadata",
+          "gdrive-cloud-sync"
+        ]
+      },
+      {
+        "question": "Do I use Import or the Shelf to move a monster to another vault?",
+        "split": "holdout",
+        "topic": "confusion",
+        "screen": "graph",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.8407747430343784,
+        "sources": [
+          "entity-shelf",
+          "importing",
+          "export-and-backup",
+          "entity-shelf"
+        ]
+      },
+      {
+        "question": "Does Google Drive sync replace a portable backup?",
+        "split": "tune",
+        "topic": "confusion",
+        "screen": "settings",
+        "hit": false,
+        "noMatch": false,
+        "topRelevance": 0.6192678545021103,
+        "sources": [
+          "cloud-backup",
+          "offline-sync",
+          "gdrive-cloud-sync",
+          "intro"
+        ]
+      },
+      {
+        "question": "Is a map pin the same as a connection?",
+        "split": "holdout",
+        "topic": "confusion",
+        "screen": "map",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.8694169624201721,
+        "sources": [
+          "connections-tab",
+          "map-mode",
+          "registry:vtt-map",
+          "spatial-canvas"
+        ]
+      },
+      {
+        "question": "Do I create an entity on the canvas or in the explorer?",
+        "split": "tune",
+        "topic": "confusion",
+        "screen": "canvas",
+        "hit": false,
+        "noMatch": false,
+        "topRelevance": 0.8129055389967954,
+        "sources": [
+          "spatial-canvas",
+          "registry:canvas",
+          "entity-reports",
+          "registry:entity-reports"
+        ]
+      },
+      {
+        "question": "Is the fog of war on the map the same as hiding an entry?",
+        "split": "holdout",
+        "topic": "confusion",
+        "screen": "map",
+        "hit": false,
+        "noMatch": false,
+        "topRelevance": 1.0730923792129257,
+        "sources": ["fog-of-war", "registry:vtt-map", "intro", "cloud-backup"]
+      },
+      {
+        "question": "Should I export to share my world with players?",
+        "split": "tune",
+        "topic": "confusion",
+        "screen": "settings",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.5674924610420552,
+        "sources": [
+          "export-and-backup",
+          "publishing",
+          "registry:backup-and-restore",
+          "guest-character-chat"
+        ]
+      }
+    ],
+    "outOfScope": [
+      {
+        "question": "Can I export my vault to Roll20?",
+        "split": "tune",
+        "noMatch": true,
+        "topRelevance": 0.2945320218088215
+      },
+      {
+        "question": "What is the weather in Paris?",
+        "split": "tune",
+        "noMatch": true,
+        "topRelevance": 0.16345056606790645
+      },
+      {
+        "question": "Write me a poem about dragons",
+        "split": "tune",
+        "noMatch": true,
+        "topRelevance": 0.08276188599454604
+      },
+      {
+        "question": "How do I reset my Netflix password?",
+        "split": "tune",
+        "noMatch": true,
+        "topRelevance": 0.2768794069250266
+      },
+      {
+        "question": "Can I print my map on a mug?",
+        "split": "tune",
+        "noMatch": true,
+        "topRelevance": 0.14688808618876295
+      },
+      {
+        "question": "Does Codex Cryptica support voice chat with the dragon?",
+        "split": "tune",
+        "noMatch": true,
+        "topRelevance": 0.2755350661971528
+      },
+      {
+        "question": "How much does a mortgage cost?",
+        "split": "tune",
+        "noMatch": true,
+        "topRelevance": 0.18354827978567703
+      },
+      {
+        "question": "Translate this sentence into French",
+        "split": "tune",
+        "noMatch": true,
+        "topRelevance": 0.15060614942157294
+      },
+      {
+        "question": "How do I install Photoshop?",
+        "split": "tune",
+        "noMatch": true,
+        "topRelevance": 0.27725905663385625
+      },
+      {
+        "question": "Who won the football match yesterday?",
+        "split": "tune",
+        "noMatch": true,
+        "topRelevance": 0.16585616235681702
+      },
+      {
+        "question": "What is a good name for my cat?",
+        "split": "tune",
+        "noMatch": true,
+        "topRelevance": 0.2634064894178758
+      },
+      {
+        "question": "How do I cook pasta?",
+        "split": "tune",
+        "noMatch": true,
+        "topRelevance": 0
+      },
+      {
+        "question": "Can I import from Foundry VTT?",
+        "split": "tune",
+        "noMatch": false,
+        "topRelevance": 0.3154040636233811
+      },
+      {
+        "question": "Does the map support 3D terrain?",
+        "split": "holdout",
+        "noMatch": false,
+        "topRelevance": 0.41191512310823164
+      },
+      {
+        "question": "Can I back up my vault to Dropbox?",
+        "split": "tune",
+        "noMatch": false,
+        "topRelevance": 0.4771925141154949
+      },
+      {
+        "question": "Can I export my canvas as a PDF?",
+        "split": "holdout",
+        "noMatch": false,
+        "topRelevance": 0.33254480963584815
+      },
+      {
+        "question": "Who is the best fantasy author?",
+        "split": "tune",
+        "noMatch": true,
+        "topRelevance": 0.18493029552885804
+      },
+      {
+        "question": "What is the capital of Norway?",
+        "split": "holdout",
+        "noMatch": true,
+        "topRelevance": 0
+      },
+      {
+        "question": "How do I fix my printer?",
+        "split": "tune",
+        "noMatch": true,
+        "topRelevance": 0.20569306306283494
+      },
+      {
+        "question": "Can you recommend a board game?",
+        "split": "holdout",
+        "noMatch": true,
+        "topRelevance": 0.1994079341211746
+      },
+      {
+        "question": "What is the best way to lose weight?",
+        "split": "tune",
+        "noMatch": true,
+        "topRelevance": 0.24644828274454886
+      },
+      {
+        "question": "How do I make a pivot table in Excel?",
+        "split": "holdout",
+        "noMatch": true,
+        "topRelevance": 0.15830063311955467
+      },
+      {
+        "question": "Is Codex Cryptica better than World Anvil?",
+        "split": "tune",
+        "noMatch": true,
+        "topRelevance": 0.28708081436273
+      },
+      {
+        "question": "Can I play Codex Cryptica on a PlayStation?",
+        "split": "holdout",
+        "noMatch": true,
+        "topRelevance": 0.2878014812179248
+      },
+      {
+        "question": "How do I change my password on Google?",
+        "split": "tune",
+        "noMatch": true,
+        "topRelevance": 0.285342074916675
+      },
+      {
+        "question": "Can I pay for more storage?",
+        "split": "holdout",
+        "noMatch": false,
+        "topRelevance": 0.3387045728236151
+      },
+      {
+        "question": "Can I import from Roll20?",
+        "split": "holdout",
+        "noMatch": false,
+        "topRelevance": 0.3795140790107999
+      },
+      {
+        "question": "How tall is Mount Everest?",
+        "split": "holdout",
+        "noMatch": true,
+        "topRelevance": 0.1858747873090141
+      },
+      {
+        "question": "Can the generator write my whole campaign for me?",
+        "split": "tune",
+        "noMatch": false,
+        "topRelevance": 0.7045384925217497
+      }
+    ]
+  },
+  "hybrid": {
+    "summary": {
+      "inScope": 93,
+      "correctAt3": 81,
+      "recallAt3": 0.8709677419354839,
+      "answeredRate": 1,
+      "splits": {
+        "tune": {
+          "count": 65,
+          "correctAt3": 56,
+          "recallAt3": 0.8615384615384616
+        },
+        "holdout": {
+          "count": 28,
+          "correctAt3": 25,
+          "recallAt3": 0.8928571428571429
+        }
+      },
+      "unrelated": {
+        "count": 21,
+        "refused": 11,
+        "noMatchRate": 0.5238095238095238
+      },
+      "nearMiss": {
+        "count": 8,
+        "refused": 0,
+        "noMatchRate": 0
+      },
+      "allOutOfScopeNoMatchRate": 0.3793103448275862,
+      "separation": {
+        "weakestIn": 0.56574953629883,
+        "strongestUnrelated": 1,
+        "gap": -0.43425046370117004
+      }
+    },
+    "inScope": [
+      {
+        "question": "How do I connect the faction I just created?",
+        "split": "tune",
+        "topic": "existing",
+        "screen": "connections",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.8621861012143024,
+        "sources": [
+          "generator:faction",
+          "connections-tab",
+          "registry:entity-connections",
+          "creating-and-editing-entities"
+        ]
+      },
+      {
+        "question": "Where do I add a connection?",
+        "split": "tune",
+        "topic": "existing",
+        "screen": "connections",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1.15,
+        "sources": [
+          "connections-tab",
+          "proposer-guide",
+          "chat-commands",
+          "family-tree"
+        ]
+      },
+      {
+        "question": "What does the Connections tab show?",
+        "split": "tune",
+        "topic": "existing",
+        "screen": "connections",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1.218551885030389,
+        "sources": [
+          "connections-tab",
+          "registry:entity-connections",
+          "chat-commands",
+          "registry:related-entity-generation"
+        ]
+      },
+      {
+        "question": "How do I give a connection a label like rival?",
+        "split": "tune",
+        "topic": "existing",
+        "screen": "connections",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.6605003938171745,
+        "sources": [
+          "connection-labels",
+          "connections-tab",
+          "connections-tab",
+          "registry:entity-connections"
+        ]
+      },
+      {
+        "question": "How do I see everything linked to this entry?",
+        "split": "tune",
+        "topic": "existing",
+        "screen": "connections",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1.1183284775055609,
+        "sources": [
+          "registry:entity-connections",
+          "connections-tab",
+          "creating-and-editing-entities",
+          "fog-of-war"
+        ]
+      },
+      {
+        "question": "How do I link two characters together?",
+        "split": "tune",
+        "topic": "existing",
+        "screen": "none",
+        "hit": false,
+        "noMatch": false,
+        "topRelevance": 0.9609030219878936,
+        "sources": [
+          "intro",
+          "guest-character-chat",
+          "chat-commands",
+          "connections-tab"
+        ]
+      },
+      {
+        "question": "What is the graph for?",
+        "split": "tune",
+        "topic": "existing",
+        "screen": "graph",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1.2098729200921279,
+        "sources": [
+          "registry:graph-view",
+          "graph-basics",
+          "entity-reports",
+          "registry:entity-reports"
+        ]
+      },
+      {
+        "question": "How do I explore how my entries relate on the graph?",
+        "split": "tune",
+        "topic": "existing",
+        "screen": "graph",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1.1923836533272756,
+        "sources": [
+          "registry:graph-view",
+          "graph-basics",
+          "guided-mode",
+          "registry:entity-connections"
+        ]
+      },
+      {
+        "question": "How do I find an entry in the graph?",
+        "split": "tune",
+        "topic": "existing",
+        "screen": "graph",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.7223823442427739,
+        "sources": [
+          "registry:graph-view",
+          "registry:guided-mode",
+          "graph-basics",
+          "spatial-canvas"
+        ]
+      },
+      {
+        "question": "Can I see my relationships as a picture?",
+        "split": "tune",
+        "topic": "existing",
+        "screen": "none",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.8706734278398189,
+        "sources": [
+          "saved-views",
+          "connections-tab",
+          "registry:graph-view",
+          "family-tree"
+        ]
+      },
+      {
+        "question": "What is the Session Hub?",
+        "split": "tune",
+        "topic": "existing",
+        "screen": "none",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1.0567400813000278,
+        "sources": [
+          "session-hub",
+          "registry:session-hub",
+          "session-prep",
+          "intro"
+        ]
+      },
+      {
+        "question": "Where do my generated drafts go?",
+        "split": "tune",
+        "topic": "existing",
+        "screen": "none",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1,
+        "sources": [
+          "guided-mode",
+          "in-app-generators",
+          "intro",
+          "random-tables-decks"
+        ]
+      },
+      {
+        "question": "How do I save a generated draft to Codex?",
+        "split": "tune",
+        "topic": "existing",
+        "screen": "none",
+        "hit": false,
+        "noMatch": false,
+        "topRelevance": 1,
+        "sources": ["cloud-backup", "intro", "quicknote", "random-tables-decks"]
+      },
+      {
+        "question": "How do I roll on a random table?",
+        "split": "tune",
+        "topic": "existing",
+        "screen": "tables",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1.2242235752813229,
+        "sources": [
+          "registry:tables",
+          "generator:random-table",
+          "random-tables-decks",
+          "quicknote"
+        ]
+      },
+      {
+        "question": "What is the difference between a table and a deck?",
+        "split": "tune",
+        "topic": "existing",
+        "screen": "tables",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1.15,
+        "sources": [
+          "random-tables-decks",
+          "registry:tables",
+          "connections-tab",
+          "stat-sheets"
+        ]
+      },
+      {
+        "question": "How do I draw a card from a deck?",
+        "split": "tune",
+        "topic": "existing",
+        "screen": "none",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1,
+        "sources": [
+          "random-tables-decks",
+          "registry:tables",
+          "family-tree",
+          "session-hub"
+        ]
+      },
+      {
+        "question": "How do I generate a faction?",
+        "split": "tune",
+        "topic": "existing",
+        "screen": "generators",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1.1718822873239612,
+        "sources": [
+          "generator:faction",
+          "generator:faction-roster",
+          "in-app-generators",
+          "random-tables-decks"
+        ]
+      },
+      {
+        "question": "Can I generate a city and keep it in my vault?",
+        "split": "tune",
+        "topic": "existing",
+        "screen": "generators",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1.15,
+        "sources": [
+          "registry:campaign-generator",
+          "in-app-generators",
+          "generator:random-table",
+          "creating-and-editing-entities"
+        ]
+      },
+      {
+        "question": "How do I generate entries related to this one?",
+        "split": "tune",
+        "topic": "existing",
+        "screen": "connections",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.981322991690202,
+        "sources": [
+          "registry:related-entity-generation",
+          "registry:entity-connections",
+          "generate-related",
+          "connections-tab"
+        ]
+      },
+      {
+        "question": "Where are the generators?",
+        "split": "tune",
+        "topic": "existing",
+        "screen": "none",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.8908479089883274,
+        "sources": [
+          "intro",
+          "registry:campaign-generator",
+          "session-hub",
+          "guided-mode"
+        ]
+      },
+      {
+        "question": "Does Codex automatically back up changes to the cloud?",
+        "split": "tune",
+        "topic": "existing",
+        "screen": "none",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1,
+        "sources": [
+          "cloud-backup",
+          "gdrive-cloud-sync",
+          "offline-sync",
+          "vault-metadata"
+        ]
+      },
+      {
+        "question": "What is the Cloud Backup recovery key for?",
+        "split": "tune",
+        "topic": "existing",
+        "screen": "none",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1,
+        "sources": [
+          "cloud-backup",
+          "gdrive-cloud-sync",
+          "offline-sync",
+          "entity-shelf"
+        ]
+      },
+      {
+        "question": "Can I restore a cloud backup without replacing the vault I have open?",
+        "split": "tune",
+        "topic": "existing",
+        "screen": "none",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1,
+        "sources": [
+          "cloud-backup",
+          "entity-shelf",
+          "export-and-backup",
+          "gdrive-cloud-sync"
+        ]
+      },
+      {
+        "question": "What is the difference between Google Drive sync and Codex Cloud Backup?",
+        "split": "tune",
+        "topic": "existing",
+        "screen": "none",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.9501899473404611,
+        "sources": [
+          "gdrive-cloud-sync",
+          "cloud-backup",
+          "offline-sync",
+          "vault-metadata"
+        ]
+      },
+      {
+        "question": "How do I put a character on the canvas?",
+        "split": "tune",
+        "topic": "canvas",
+        "screen": "canvas",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1.15,
+        "sources": [
+          "canvas-add-entities",
+          "spatial-canvas",
+          "generator:npc",
+          "guest-character-chat"
+        ]
+      },
+      {
+        "question": "Can I draw on the canvas?",
+        "split": "tune",
+        "topic": "canvas",
+        "screen": "canvas",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1.1292810695891553,
+        "sources": [
+          "spatial-canvas",
+          "registry:canvas",
+          "entity-reports",
+          "connections-tab"
+        ]
+      },
+      {
+        "question": "How do I name the line between two cards?",
+        "split": "holdout",
+        "topic": "canvas",
+        "screen": "canvas",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.9449578082141088,
+        "sources": [
+          "random-tables-decks",
+          "family-tree",
+          "spatial-canvas",
+          "connections-tab"
+        ]
+      },
+      {
+        "question": "What happens if I add the same entity to a canvas twice?",
+        "split": "tune",
+        "topic": "canvas",
+        "screen": "canvas",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.7490423852715384,
+        "sources": [
+          "canvas-add-entities",
+          "registry:canvas",
+          "registry:entity-reports",
+          "entity-reports"
+        ]
+      },
+      {
+        "question": "Can I make more than one canvas?",
+        "split": "tune",
+        "topic": "canvas",
+        "screen": "canvas",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1.15,
+        "sources": [
+          "canvas-add-entities",
+          "spatial-canvas",
+          "entity-reports",
+          "registry:entity-reports"
+        ]
+      },
+      {
+        "question": "How do I rotate a card?",
+        "split": "holdout",
+        "topic": "canvas",
+        "screen": "canvas",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1.063747188527519,
+        "sources": [
+          "spatial-canvas",
+          "random-tables-decks",
+          "family-tree",
+          "session-hub"
+        ]
+      },
+      {
+        "question": "How do I put a file from my computer on the board?",
+        "split": "tune",
+        "topic": "canvas",
+        "screen": "canvas",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.8711506861143284,
+        "sources": [
+          "canvas-add-entities",
+          "session-prep",
+          "spatial-canvas",
+          "offline-sync"
+        ]
+      },
+      {
+        "question": "Is my canvas layout saved?",
+        "split": "holdout",
+        "topic": "canvas",
+        "screen": "canvas",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1.15,
+        "sources": [
+          "spatial-canvas",
+          "registry:canvas",
+          "saved-views",
+          "entity-reports"
+        ]
+      },
+      {
+        "question": "What is the canvas for?",
+        "split": "holdout",
+        "topic": "canvas",
+        "screen": "canvas",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1.1268762740802403,
+        "sources": [
+          "registry:canvas",
+          "spatial-canvas",
+          "registry:entity-reports",
+          "entity-reports"
+        ]
+      },
+      {
+        "question": "How do I drop a pin on the map?",
+        "split": "tune",
+        "topic": "map",
+        "screen": "map",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.8938476961403058,
+        "sources": [
+          "connections-tab",
+          "map-mode",
+          "registry:vtt-map",
+          "publishing"
+        ]
+      },
+      {
+        "question": "How do I hide parts of the map from my players?",
+        "split": "tune",
+        "topic": "map",
+        "screen": "map",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1.15,
+        "sources": ["fog-of-war", "map-mode", "publishing", "intro"]
+      },
+      {
+        "question": "Can I start a game session from a map?",
+        "split": "holdout",
+        "topic": "map",
+        "screen": "map",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1.15,
+        "sources": [
+          "registry:vtt-map",
+          "vtt-session",
+          "adventure-mode",
+          "session-prep"
+        ]
+      },
+      {
+        "question": "How do I move a token?",
+        "split": "tune",
+        "topic": "map",
+        "screen": "map",
+        "hit": false,
+        "noMatch": false,
+        "topRelevance": 0.9501891217534493,
+        "sources": [
+          "sharing-templates",
+          "entity-shelf",
+          "spatial-canvas",
+          "gdrive-cloud-sync"
+        ]
+      },
+      {
+        "question": "How do I measure distance on the map?",
+        "split": "tune",
+        "topic": "map",
+        "screen": "map",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.89688314638708,
+        "sources": ["map-mode", "vtt-session", "chronology", "connections-tab"]
+      },
+      {
+        "question": "How do I point something out to the players on the map?",
+        "split": "holdout",
+        "topic": "map",
+        "screen": "map",
+        "hit": false,
+        "noMatch": false,
+        "topRelevance": 0.957172559108061,
+        "sources": [
+          "registry:vtt-map",
+          "map-mode",
+          "guest-character-chat",
+          "publishing"
+        ]
+      },
+      {
+        "question": "Can I have a map inside another map?",
+        "split": "tune",
+        "topic": "map",
+        "screen": "map",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1.0743004464813934,
+        "sources": [
+          "registry:vtt-map",
+          "map-mode",
+          "entity-shelf",
+          "connections-tab"
+        ]
+      },
+      {
+        "question": "What is the map page for?",
+        "split": "holdout",
+        "topic": "map",
+        "screen": "map",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1.15,
+        "sources": ["map-mode", "registry:vtt-map", "spatial-canvas", "intro"]
+      },
+      {
+        "question": "How do I track hit points for a monster in a fight?",
+        "split": "tune",
+        "topic": "map",
+        "screen": "map",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1,
+        "sources": [
+          "registry:stat-sheets",
+          "stat-sheets",
+          "random-tables-decks",
+          "session-prep"
+        ]
+      },
+      {
+        "question": "How do I bring in my old notes?",
+        "split": "tune",
+        "topic": "import",
+        "screen": "import",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1.146586419511643,
+        "sources": [
+          "registry:archive-import",
+          "importing",
+          "random-tables-decks",
+          "sharing-templates"
+        ]
+      },
+      {
+        "question": "What kinds of files can I import?",
+        "split": "tune",
+        "topic": "import",
+        "screen": "import",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1.15,
+        "sources": [
+          "registry:archive-import",
+          "importing",
+          "registry:backup-and-restore",
+          "entity-shelf"
+        ]
+      },
+      {
+        "question": "Will importing overwrite entries I already have?",
+        "split": "holdout",
+        "topic": "import",
+        "screen": "import",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.9687802694585818,
+        "sources": [
+          "registry:archive-import",
+          "importing",
+          "entity-shelf",
+          "registry:backup-and-restore"
+        ]
+      },
+      {
+        "question": "Can I import a Kanka campaign?",
+        "split": "tune",
+        "topic": "import",
+        "screen": "import",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1.15,
+        "sources": [
+          "importing",
+          "thread-weaver-import",
+          "in-app-generators",
+          "entity-shelf"
+        ]
+      },
+      {
+        "question": "What happens if my import gets interrupted?",
+        "split": "tune",
+        "topic": "import",
+        "screen": "import",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1.0613556878652683,
+        "sources": [
+          "importing",
+          "thread-weaver-import",
+          "entity-shelf",
+          "random-tables-decks"
+        ]
+      },
+      {
+        "question": "How do I import a Thread Weaver campaign?",
+        "split": "holdout",
+        "topic": "import",
+        "screen": "import",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1.1289160550618424,
+        "sources": [
+          "thread-weaver-import",
+          "importing",
+          "thread-weaver-import",
+          "thread-weaver-import"
+        ]
+      },
+      {
+        "question": "Do images come along when I import files?",
+        "split": "tune",
+        "topic": "import",
+        "screen": "import",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1.0617734765649416,
+        "sources": [
+          "importing",
+          "registry:archive-import",
+          "entity-shelf",
+          "random-tables-decks"
+        ]
+      },
+      {
+        "question": "What is the import page for?",
+        "split": "holdout",
+        "topic": "import",
+        "screen": "import",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1.15,
+        "sources": [
+          "importing",
+          "registry:archive-import",
+          "entity-shelf",
+          "random-tables-decks"
+        ]
+      },
+      {
+        "question": "Can I drag in a whole folder?",
+        "split": "tune",
+        "topic": "import",
+        "screen": "import",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.7941915174139539,
+        "sources": [
+          "registry:archive-import",
+          "importing",
+          "registry:backup-and-restore",
+          "offline-sync"
+        ]
+      },
+      {
+        "question": "How do I download a backup of my vault?",
+        "split": "tune",
+        "topic": "settings",
+        "screen": "graph",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1,
+        "sources": [
+          "cloud-backup",
+          "export-and-backup",
+          "gdrive-cloud-sync",
+          "registry:archive-import"
+        ]
+      },
+      {
+        "question": "How do I restore a backup?",
+        "split": "tune",
+        "topic": "settings",
+        "screen": "settings",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1.15,
+        "sources": [
+          "registry:backup-and-restore",
+          "cloud-backup",
+          "gdrive-cloud-sync",
+          "entity-shelf"
+        ]
+      },
+      {
+        "question": "Will restoring a backup overwrite my current vault?",
+        "split": "holdout",
+        "topic": "settings",
+        "screen": "settings",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1.15,
+        "sources": [
+          "cloud-backup",
+          "export-and-backup",
+          "entity-shelf",
+          "gdrive-cloud-sync"
+        ]
+      },
+      {
+        "question": "Where is the Export Backup button?",
+        "split": "tune",
+        "topic": "settings",
+        "screen": "settings",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1.15,
+        "sources": [
+          "registry:backup-and-restore",
+          "export-and-backup",
+          "random-tables-decks",
+          "intro"
+        ]
+      },
+      {
+        "question": "Does the backup work in Firefox?",
+        "split": "tune",
+        "topic": "settings",
+        "screen": "settings",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1.0558536481770673,
+        "sources": [
+          "export-and-backup",
+          "offline-sync",
+          "gdrive-cloud-sync",
+          "entity-shelf"
+        ]
+      },
+      {
+        "question": "How do I keep a copy of my world outside this browser?",
+        "split": "holdout",
+        "topic": "settings",
+        "screen": "graph",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.56574953629883,
+        "sources": [
+          "export-and-backup",
+          "cloud-backup",
+          "generator:world",
+          "guided-mode"
+        ]
+      },
+      {
+        "question": "Can I save my vault to a folder on my computer?",
+        "split": "tune",
+        "topic": "settings",
+        "screen": "settings",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1.15,
+        "sources": [
+          "export-and-backup",
+          "offline-sync",
+          "gdrive-cloud-sync",
+          "registry:archive-import"
+        ]
+      },
+      {
+        "question": "Which Settings tab has the backup?",
+        "split": "holdout",
+        "topic": "settings",
+        "screen": "settings",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1.15,
+        "sources": [
+          "registry:backup-and-restore",
+          "export-and-backup",
+          "gdrive-cloud-sync",
+          "entity-shelf"
+        ]
+      },
+      {
+        "question": "How do I change the theme?",
+        "split": "tune",
+        "topic": "settings",
+        "screen": "settings",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1.0337574834632763,
+        "sources": ["themes", "cloud-backup", "export-and-backup", "importing"]
+      },
+      {
+        "question": "How do I set the default template for a new character?",
+        "split": "holdout",
+        "topic": "settings",
+        "screen": "settings",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1,
+        "sources": [
+          "default-entity-templates",
+          "stat-sheets",
+          "sharing-templates",
+          "registry:entity-templates"
+        ]
+      },
+      {
+        "question": "How do I make a new character?",
+        "split": "tune",
+        "topic": "entity-editing",
+        "screen": "graph",
+        "hit": false,
+        "noMatch": false,
+        "topRelevance": 1,
+        "sources": [
+          "generator:npc",
+          "guest-character-chat",
+          "generator:faction-roster",
+          "registry:entity-editing"
+        ]
+      },
+      {
+        "question": "How do I save my changes?",
+        "split": "tune",
+        "topic": "entity-editing",
+        "screen": "entityEdit",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.9656319623692217,
+        "sources": [
+          "creating-and-editing-entities",
+          "registry:entity-editing",
+          "registry:backup-and-restore",
+          "saved-views"
+        ]
+      },
+      {
+        "question": "How do I cancel what I just typed?",
+        "split": "holdout",
+        "topic": "entity-editing",
+        "screen": "entityEdit",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.7635978125886299,
+        "sources": [
+          "creating-and-editing-entities",
+          "registry:entity-editing",
+          "connections-tab",
+          "quicknote"
+        ]
+      },
+      {
+        "question": "How do I delete an entity?",
+        "split": "tune",
+        "topic": "entity-editing",
+        "screen": "connections",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1.15,
+        "sources": [
+          "creating-and-editing-entities",
+          "registry:entity-editing",
+          "registry:entity-connections",
+          "publishing"
+        ]
+      },
+      {
+        "question": "Can I undo deleting an entry?",
+        "split": "tune",
+        "topic": "entity-editing",
+        "screen": "connections",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.6307260120739036,
+        "sources": [
+          "importing",
+          "creating-and-editing-entities",
+          "connections-tab",
+          "saved-views"
+        ]
+      },
+      {
+        "question": "Where is the Edit button?",
+        "split": "holdout",
+        "topic": "entity-editing",
+        "screen": "connections",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1.0767728972220694,
+        "sources": [
+          "creating-and-editing-entities",
+          "registry:entity-editing",
+          "stat-sheets",
+          "registry:entity-connections"
+        ]
+      },
+      {
+        "question": "Does a new entity start blank?",
+        "split": "tune",
+        "topic": "entity-editing",
+        "screen": "graph",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1,
+        "sources": [
+          "entity-timeline",
+          "default-entity-templates",
+          "entity-reports",
+          "creating-and-editing-entities"
+        ]
+      },
+      {
+        "question": "How do I rename an entry?",
+        "split": "holdout",
+        "topic": "entity-editing",
+        "screen": "connections",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1.15,
+        "sources": [
+          "creating-and-editing-entities",
+          "registry:entity-editing",
+          "multi-campaign",
+          "connections-tab"
+        ]
+      },
+      {
+        "question": "What does Unsaved changes mean?",
+        "split": "tune",
+        "topic": "entity-editing",
+        "screen": "entityEdit",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.6311334641766727,
+        "sources": [
+          "creating-and-editing-entities",
+          "connections-tab",
+          "entity-timeline",
+          "cloud-backup"
+        ]
+      },
+      {
+        "question": "How do I make a quest?",
+        "split": "tune",
+        "topic": "generators",
+        "screen": "generators",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1.019192930142416,
+        "sources": [
+          "generator:quest",
+          "generator:council-vote",
+          "adventure-mode",
+          "map-mode"
+        ]
+      },
+      {
+        "question": "Is there a generator for dungeons?",
+        "split": "tune",
+        "topic": "generators",
+        "screen": "none",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1,
+        "sources": [
+          "generator:dungeon",
+          "intro",
+          "in-app-generators",
+          "random-tables-decks"
+        ]
+      },
+      {
+        "question": "I need a heist for my players",
+        "split": "holdout",
+        "topic": "generators",
+        "screen": "generators",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.7661842226290823,
+        "sources": [
+          "generator:heist",
+          "generator:npc",
+          "generator:rumour",
+          "generator:plot-twist"
+        ]
+      },
+      {
+        "question": "Can I generate a ship?",
+        "split": "tune",
+        "topic": "generators",
+        "screen": "none",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1.031842855703749,
+        "sources": [
+          "generator:ship",
+          "stat-sheets",
+          "registry:session-hub",
+          "registry:campaign-generator"
+        ]
+      },
+      {
+        "question": "Can I make up a new language?",
+        "split": "tune",
+        "topic": "generators",
+        "screen": "none",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.888924679455964,
+        "sources": [
+          "generator:language",
+          "registry:entity-editing",
+          "generator:news-sheet",
+          "generator:plot-twist"
+        ]
+      },
+      {
+        "question": "Is there something that makes rumours for a tavern?",
+        "split": "holdout",
+        "topic": "generators",
+        "screen": "none",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.6526023477717391,
+        "sources": [
+          "generator:rumour",
+          "generator:news-sheet",
+          "random-tables-decks",
+          "guest-character-chat"
+        ]
+      },
+      {
+        "question": "I want a villain for my campaign",
+        "split": "holdout",
+        "topic": "generators",
+        "screen": "generators",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1.0519683943312976,
+        "sources": [
+          "generator:villain",
+          "generator:npc",
+          "in-app-generators",
+          "guest-character-chat"
+        ]
+      },
+      {
+        "question": "How do I roll up a random magic item?",
+        "split": "tune",
+        "topic": "generators",
+        "screen": "none",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.6642781637989958,
+        "sources": [
+          "generator:magic-item",
+          "generator:minor-magic-item",
+          "registry:tables",
+          "entity-shelf"
+        ]
+      },
+      {
+        "question": "Is there a generator for puzzles?",
+        "split": "holdout",
+        "topic": "generators",
+        "screen": "none",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.7879705173211256,
+        "sources": [
+          "generator:puzzle",
+          "registry:campaign-generator",
+          "intro",
+          "guided-mode"
+        ]
+      },
+      {
+        "question": "Can I generate a festival?",
+        "split": "holdout",
+        "topic": "generators",
+        "screen": "none",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1,
+        "sources": [
+          "generator:event",
+          "in-app-generators",
+          "generator:holiday",
+          "intro"
+        ]
+      },
+      {
+        "question": "Is exporting a backup the same as publishing my world?",
+        "split": "tune",
+        "topic": "confusion",
+        "screen": "settings",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.7454408280537106,
+        "sources": [
+          "registry:backup-and-restore",
+          "export-and-backup",
+          "publishing",
+          "generator:world"
+        ]
+      },
+      {
+        "question": "Should I import my backup file on the Import page?",
+        "split": "holdout",
+        "topic": "confusion",
+        "screen": "import",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1.15,
+        "sources": [
+          "registry:archive-import",
+          "registry:backup-and-restore",
+          "importing",
+          "export-and-backup"
+        ]
+      },
+      {
+        "question": "What is the difference between the graph and the canvas?",
+        "split": "tune",
+        "topic": "confusion",
+        "screen": "graph",
+        "hit": false,
+        "noMatch": false,
+        "topRelevance": 0.9469522787917544,
+        "sources": [
+          "registry:graph-view",
+          "registry:entity-reports",
+          "entity-reports",
+          "spatial-canvas"
+        ]
+      },
+      {
+        "question": "Is the map the same thing as the canvas?",
+        "split": "holdout",
+        "topic": "confusion",
+        "screen": "map",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.9385714093719847,
+        "sources": [
+          "map-mode",
+          "spatial-canvas",
+          "vtt-session",
+          "canvas-add-entities"
+        ]
+      },
+      {
+        "question": "Should I use a generator or the Oracle to make a new NPC?",
+        "split": "tune",
+        "topic": "confusion",
+        "screen": "generators",
+        "hit": false,
+        "noMatch": false,
+        "topRelevance": 0.6572034265271318,
+        "sources": [
+          "generator:npc",
+          "in-app-generators",
+          "generate-related",
+          "creating-and-editing-entities"
+        ]
+      },
+      {
+        "question": "Is importing notes the same as generating entries?",
+        "split": "holdout",
+        "topic": "confusion",
+        "screen": "import",
+        "hit": false,
+        "noMatch": false,
+        "topRelevance": 1.0004475063593077,
+        "sources": [
+          "importing",
+          "registry:archive-import",
+          "entity-shelf",
+          "export-and-backup"
+        ]
+      },
+      {
+        "question": "Is Cloud Backup the same as the backup file?",
+        "split": "tune",
+        "topic": "confusion",
+        "screen": "settings",
+        "hit": false,
+        "noMatch": false,
+        "topRelevance": 1.15,
+        "sources": [
+          "cloud-backup",
+          "offline-sync",
+          "gdrive-cloud-sync",
+          "intro"
+        ]
+      },
+      {
+        "question": "Do I use Import or the Shelf to move a monster to another vault?",
+        "split": "holdout",
+        "topic": "confusion",
+        "screen": "graph",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.8407747430343784,
+        "sources": [
+          "entity-shelf",
+          "importing",
+          "export-and-backup",
+          "entity-shelf"
+        ]
+      },
+      {
+        "question": "Does Google Drive sync replace a portable backup?",
+        "split": "tune",
+        "topic": "confusion",
+        "screen": "settings",
+        "hit": false,
+        "noMatch": false,
+        "topRelevance": 1.15,
+        "sources": [
+          "cloud-backup",
+          "offline-sync",
+          "gdrive-cloud-sync",
+          "intro"
+        ]
+      },
+      {
+        "question": "Is a map pin the same as a connection?",
+        "split": "holdout",
+        "topic": "confusion",
+        "screen": "map",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 1,
+        "sources": [
+          "connections-tab",
+          "map-mode",
+          "registry:vtt-map",
+          "proposer-guide"
+        ]
+      },
+      {
+        "question": "Do I create an entity on the canvas or in the explorer?",
+        "split": "tune",
+        "topic": "confusion",
+        "screen": "canvas",
+        "hit": false,
+        "noMatch": false,
+        "topRelevance": 1.15,
+        "sources": [
+          "canvas-add-entities",
+          "registry:canvas",
+          "registry:entity-reports",
+          "entity-reports"
+        ]
+      },
+      {
+        "question": "Is the fog of war on the map the same as hiding an entry?",
+        "split": "holdout",
+        "topic": "confusion",
+        "screen": "map",
+        "hit": false,
+        "noMatch": false,
+        "topRelevance": 1.0730923792129257,
+        "sources": ["fog-of-war", "registry:vtt-map", "intro", "cloud-backup"]
+      },
+      {
+        "question": "Should I export to share my world with players?",
+        "split": "tune",
+        "topic": "confusion",
+        "screen": "settings",
+        "hit": true,
+        "noMatch": false,
+        "topRelevance": 0.5674924610420552,
+        "sources": [
+          "export-and-backup",
+          "publishing",
+          "registry:backup-and-restore",
+          "guest-character-chat"
+        ]
+      }
+    ],
+    "outOfScope": [
+      {
+        "question": "Can I export my vault to Roll20?",
+        "split": "tune",
+        "noMatch": false,
+        "topRelevance": 1
+      },
+      {
+        "question": "What is the weather in Paris?",
+        "split": "tune",
+        "noMatch": true,
+        "topRelevance": 0.16345056606790645
+      },
+      {
+        "question": "Write me a poem about dragons",
+        "split": "tune",
+        "noMatch": false,
+        "topRelevance": 0.4862016159575069
+      },
+      {
+        "question": "How do I reset my Netflix password?",
+        "split": "tune",
+        "noMatch": true,
+        "topRelevance": 0.28237901981588
+      },
+      {
+        "question": "Can I print my map on a mug?",
+        "split": "tune",
+        "noMatch": false,
+        "topRelevance": 0.6170573229667935
+      },
+      {
+        "question": "Does Codex Cryptica support voice chat with the dragon?",
+        "split": "tune",
+        "noMatch": false,
+        "topRelevance": 0.949669269437037
+      },
+      {
+        "question": "How much does a mortgage cost?",
+        "split": "tune",
+        "noMatch": true,
+        "topRelevance": 0.18354827978567703
+      },
+      {
+        "question": "Translate this sentence into French",
+        "split": "tune",
+        "noMatch": false,
+        "topRelevance": 0.4807676812698791
+      },
+      {
+        "question": "How do I install Photoshop?",
+        "split": "tune",
+        "noMatch": false,
+        "topRelevance": 0.48019119204319494
+      },
+      {
+        "question": "Who won the football match yesterday?",
+        "split": "tune",
+        "noMatch": true,
+        "topRelevance": 0.16585616235681702
+      },
+      {
+        "question": "What is a good name for my cat?",
+        "split": "tune",
+        "noMatch": true,
+        "topRelevance": 0.2634064894178758
+      },
+      {
+        "question": "How do I cook pasta?",
+        "split": "tune",
+        "noMatch": true,
+        "topRelevance": 0.260727489733924
+      },
+      {
+        "question": "Can I import from Foundry VTT?",
+        "split": "tune",
+        "noMatch": false,
+        "topRelevance": 0.7737403859142706
+      },
+      {
+        "question": "Does the map support 3D terrain?",
+        "split": "holdout",
+        "noMatch": false,
+        "topRelevance": 1.0640402785395777
+      },
+      {
+        "question": "Can I back up my vault to Dropbox?",
+        "split": "tune",
+        "noMatch": false,
+        "topRelevance": 1.15
+      },
+      {
+        "question": "Can I export my canvas as a PDF?",
+        "split": "holdout",
+        "noMatch": false,
+        "topRelevance": 1.0383176878281495
+      },
+      {
+        "question": "Who is the best fantasy author?",
+        "split": "tune",
+        "noMatch": true,
+        "topRelevance": 0.18493029552885804
+      },
+      {
+        "question": "What is the capital of Norway?",
+        "split": "holdout",
+        "noMatch": true,
+        "topRelevance": 0
+      },
+      {
+        "question": "How do I fix my printer?",
+        "split": "tune",
+        "noMatch": false,
+        "topRelevance": 0.33242993288273204
+      },
+      {
+        "question": "Can you recommend a board game?",
+        "split": "holdout",
+        "noMatch": false,
+        "topRelevance": 0.3118336990556225
+      },
+      {
+        "question": "What is the best way to lose weight?",
+        "split": "tune",
+        "noMatch": true,
+        "topRelevance": 0.24644828274454886
+      },
+      {
+        "question": "How do I make a pivot table in Excel?",
+        "split": "holdout",
+        "noMatch": false,
+        "topRelevance": 0.6307875099136979
+      },
+      {
+        "question": "Is Codex Cryptica better than World Anvil?",
+        "split": "tune",
+        "noMatch": true,
+        "topRelevance": 0.28708081436273
+      },
+      {
+        "question": "Can I play Codex Cryptica on a PlayStation?",
+        "split": "holdout",
+        "noMatch": false,
+        "topRelevance": 1
+      },
+      {
+        "question": "How do I change my password on Google?",
+        "split": "tune",
+        "noMatch": false,
+        "topRelevance": 0.4481984068391147
+      },
+      {
+        "question": "Can I pay for more storage?",
+        "split": "holdout",
+        "noMatch": false,
+        "topRelevance": 0.563618009372488
+      },
+      {
+        "question": "Can I import from Roll20?",
+        "split": "holdout",
+        "noMatch": false,
+        "topRelevance": 0.8287923557696549
+      },
+      {
+        "question": "How tall is Mount Everest?",
+        "split": "holdout",
+        "noMatch": true,
+        "topRelevance": 0.1858747873090141
+      },
+      {
+        "question": "Can the generator write my whole campaign for me?",
+        "split": "tune",
+        "noMatch": false,
+        "topRelevance": 0.7045384925217497
+      }
+    ]
+  }
+}

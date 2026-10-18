@@ -196,7 +196,10 @@ test.describe("Shelf — IndexedDB v22 to v23 upgrade", () => {
 
     const after = await inspectDatabase(page);
 
-    expect(after.version).toBe(23);
+    // DB_VERSION has moved past 23 for unrelated reasons since this test was
+    // written (idb.ts records why); the Shelf upgrade itself still landed as
+    // part of the same in-place chain, which is what this test verifies.
+    expect(after.version).toBe(24);
 
     // The new stores exist, with the index the by-group lookup depends on.
     expect(after.storeNames).toContain("shelf_entries");
@@ -235,7 +238,7 @@ test.describe("Shelf — IndexedDB v22 to v23 upgrade", () => {
 
     const after = await inspectDatabase(page);
 
-    expect(after.version).toBe(23);
+    expect(after.version).toBe(24);
     expect(after.vault?.entityCount).toBe(37);
     expect(
       errors.filter((message) => /IndexedDB|object store/i.test(message)),

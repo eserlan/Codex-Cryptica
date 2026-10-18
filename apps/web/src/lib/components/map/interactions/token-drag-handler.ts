@@ -1,6 +1,16 @@
 import type { Point } from "schema";
 import type { Token } from "../../../../types/vtt";
 import { hitTestToken } from "$lib/utils/vtt-helpers";
+import { snapPointToHexCenter, type HexOrientation } from "map-engine";
+import { POINTER_DISPLACEMENT_THRESHOLD } from "./pointer-thresholds";
+
+export interface TokenGridConfig {
+  enabled: boolean;
+  type: "square" | "hex-pointy" | "hex-flat";
+  size: number;
+  offsetX: number;
+  offsetY: number;
+}
 
 export interface TokenDragDependencies {
   getTokens: () => Token[];
@@ -23,15 +33,27 @@ export interface TokenDragDependencies {
   sendTokenMoveRequest: (tokenId: string, x: number, y: number) => void;
   confirmTokenMove: (tokenId: string) => void;
   setDraggingTokenId: (tokenId: string | null) => void;
+  getGridConfig?: () => TokenGridConfig | null;
+  onMoveSettled?: (tokenIds: string[]) => void;
 }
 
 export interface TokenDragState {
   tokenId: string;
+  initialPosition: Point;
   offset: Point;
+  startPoint: Point;
+  hasMoved: boolean;
 }
 
 export class TokenDragHandler {
   dragState: TokenDragState | null = null;
+  /**
+   * The token a `begin()` landed on but isn't allowed to move. Lets callers
+   * tell "pressed empty map" (fine to pan) apart from "pressed a locked
+   * tile" — panning the map out from under that press reads as the drag
+   * moving the whole map instead of the piece under the cursor.
+   */
+  blockedToken: Token | null = null;
 
   constructor(private deps: TokenDragDependencies) {}
 
@@ -41,26 +63,34 @@ export class TokenDragHandler {
       this.deps.project,
       viewportPoint.x,
       viewportPoint.y,
+      this.deps.getGridConfig?.()?.type,
     );
 
+    this.blockedToken = null;
+
+    if (!hitToken) return null;
+
     if (
-      !hitToken ||
       !this.deps.canMoveToken(
         hitToken.id,
         this.deps.getPeerId(),
         this.deps.isHostMode(),
       )
     ) {
+      this.blockedToken = hitToken;
       return null;
     }
 
     const imgPoint = this.deps.unproject(viewportPoint);
     this.dragState = {
       tokenId: hitToken.id,
+      initialPosition: { x: hitToken.x, y: hitToken.y },
       offset: {
         x: imgPoint.x - hitToken.x,
         y: imgPoint.y - hitToken.y,
       },
+      startPoint: { ...viewportPoint },
+      hasMoved: false,
     };
     this.deps.setDraggingTokenId(hitToken.id);
     return hitToken;
@@ -68,6 +98,15 @@ export class TokenDragHandler {
 
   move(viewportPoint: Point) {
     if (!this.dragState) return false;
+
+    if (!this.dragState.hasMoved) {
+      const displacement = Math.hypot(
+        viewportPoint.x - this.dragState.startPoint.x,
+        viewportPoint.y - this.dragState.startPoint.y,
+      );
+      if (displacement < POINTER_DISPLACEMENT_THRESHOLD) return true;
+      this.dragState.hasMoved = true;
+    }
 
     const imgPoint = this.deps.unproject(viewportPoint);
     const nextX = imgPoint.x - this.dragState.offset.x;
@@ -83,10 +122,97 @@ export class TokenDragHandler {
     return true;
   }
 
+  // fallow-ignore-next-line complexity
   end() {
     if (!this.dragState) return false;
-    if (!this.deps.isHostMode()) {
+
+    const gridConfig = this.deps.getGridConfig?.();
+    if (this.dragState.hasMoved && gridConfig?.enabled && gridConfig.size > 0) {
+      const token = this.deps
+        .getTokens()
+        .find((t) => t.id === this.dragState!.tokenId);
+      if (token) {
+        let snapped: Point;
+        if (
+          gridConfig.type === "hex-pointy" ||
+          gridConfig.type === "hex-flat"
+        ) {
+          const orientation: HexOrientation =
+            gridConfig.type === "hex-flat" ? "flat" : "pointy";
+          // x/y is the token's top-left corner, so snap its centre to the
+          // hex centre and work back to a corner, whatever its size.
+          const centre = snapPointToHexCenter(
+            { x: token.x + token.width / 2, y: token.y + token.height / 2 },
+            {
+              orientation,
+              size: gridConfig.size,
+              offsetX: gridConfig.offsetX,
+              offsetY: gridConfig.offsetY,
+            },
+          );
+          snapped = {
+            x: centre.x - token.width / 2,
+            y: centre.y - token.height / 2,
+          };
+        } else {
+          snapped = {
+            x:
+              Math.round((token.x - gridConfig.offsetX) / gridConfig.size) *
+                gridConfig.size +
+              gridConfig.offsetX,
+            y:
+              Math.round((token.y - gridConfig.offsetY) / gridConfig.size) *
+                gridConfig.size +
+              gridConfig.offsetY,
+          };
+        }
+
+        if (this.deps.isHostMode()) {
+          this.deps.moveToken(token.id, snapped.x, snapped.y);
+        } else {
+          this.deps.requestTokenMove(token.id, snapped.x, snapped.y, true);
+          this.deps.sendTokenMoveRequest(token.id, snapped.x, snapped.y);
+        }
+      }
+    }
+
+    if (this.dragState.hasMoved && !this.deps.isHostMode()) {
       this.deps.confirmTokenMove(this.dragState.tokenId);
+    }
+    const finalToken = this.deps
+      .getTokens()
+      .find((token) => token.id === this.dragState!.tokenId);
+    const positionChanged =
+      finalToken !== undefined &&
+      (finalToken.x !== this.dragState.initialPosition.x ||
+        finalToken.y !== this.dragState.initialPosition.y);
+    if (this.dragState.hasMoved && positionChanged) {
+      this.deps.onMoveSettled?.([this.dragState.tokenId]);
+    }
+    this.deps.setDraggingTokenId(null);
+    this.dragState = null;
+    return true;
+  }
+
+  cancel() {
+    if (!this.dragState) return false;
+    const { tokenId, initialPosition, hasMoved } = this.dragState;
+    if (hasMoved) {
+      if (this.deps.isHostMode()) {
+        this.deps.moveToken(tokenId, initialPosition.x, initialPosition.y);
+      } else {
+        this.deps.requestTokenMove(
+          tokenId,
+          initialPosition.x,
+          initialPosition.y,
+          true,
+        );
+        this.deps.sendTokenMoveRequest(
+          tokenId,
+          initialPosition.x,
+          initialPosition.y,
+        );
+      }
     }
     this.deps.setDraggingTokenId(null);
     this.dragState = null;

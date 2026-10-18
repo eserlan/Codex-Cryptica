@@ -2,7 +2,10 @@
   import { tick } from "svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { categories } from "$lib/stores/categories.svelte";
-  import { groupEntitiesForExplorer } from "./entityListGrouping";
+  import {
+    groupEntitiesForExplorer,
+    flattenGroupedEntities,
+  } from "./entityListGrouping";
   import {
     buildEntityTree,
     flattenVisibleEntityTree,
@@ -25,8 +28,8 @@
   import EntityListItem from "./EntityListItem.svelte";
   import EntityListSearch from "./EntityListSearch.svelte";
   import EntityListFilterBar from "./EntityListFilterBar.svelte";
-  import EmptyState from "$lib/components/ui/EmptyState.svelte";
-  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import EntityEmptyState from "./EntityEmptyState.svelte";
+  import EntitySearchEmptyState from "./EntitySearchEmptyState.svelte";
   import { sortExplorerEntities } from "./entityListSorting";
   import { browserPerformanceRecorder } from "$lib/services/performance/browser-performance-capture";
   import type { PerformanceOperationHandle } from "@codex/performance-observability";
@@ -36,23 +39,6 @@
     getExplorerPageItems,
     paginateExplorerGroups,
   } from "./entityExplorerPagination";
-
-  type GroupEntry =
-    | {
-        kind: "group";
-        id: string;
-        groupType: "label" | "category" | "unlabeled";
-        groupKey: string;
-        title: string;
-        count: number;
-        collapsed: boolean;
-      }
-    | {
-        kind: "entity";
-        id: string;
-        groupKey: string;
-        entity: Entity;
-      };
 
   let {
     onSelect,
@@ -240,79 +226,14 @@
       searchQuery.trim() !== "",
     ),
   );
-  const groupedEntries = $derived.by((): GroupEntry[] => {
-    if (!groupedEntities) return [];
-    const entries: GroupEntry[] = [];
-    if (groupedEntities.type === "label") {
-      for (const label of groupedEntities.sortedKeys) {
-        const items = groupedEntities.groups.get(label) ?? [];
-        const collapsed = collapsedLabelGroups.has(label);
-        entries.push({
-          kind: "group",
-          id: `label:${label}`,
-          groupType: "label",
-          groupKey: label,
-          title: label,
-          count: items.length,
-          collapsed,
-        });
-        if (!collapsed) {
-          for (const entity of items) {
-            entries.push({
-              kind: "entity",
-              id: `${entity.id}:${label}`,
-              groupKey: label,
-              entity,
-            });
-          }
-        }
-      }
-      if (groupedEntities.unlabeled.length > 0) {
-        entries.push({
-          kind: "group",
-          id: "label:unlabeled",
-          groupType: "unlabeled",
-          groupKey: "unlabeled",
-          title: "Unlabeled",
-          count: groupedEntities.unlabeled.length,
-          collapsed: false,
-        });
-        for (const entity of groupedEntities.unlabeled) {
-          entries.push({
-            kind: "entity",
-            id: `${entity.id}:unlabeled`,
-            groupKey: "unlabeled",
-            entity,
-          });
-        }
-      }
-    } else {
-      for (const categoryId of groupedEntities.sortedKeys) {
-        const items = groupedEntities.groups.get(categoryId) ?? [];
-        const collapsed = collapsedCategoryGroups.has(categoryId);
-        entries.push({
-          kind: "group",
-          id: `category:${categoryId}`,
-          groupType: "category",
-          groupKey: categoryId,
-          title: getCategoryLabel(categoryId),
-          count: items.length,
-          collapsed,
-        });
-        if (!collapsed) {
-          for (const entity of items) {
-            entries.push({
-              kind: "entity",
-              id: `${entity.id}:${categoryId}`,
-              groupKey: categoryId,
-              entity,
-            });
-          }
-        }
-      }
-    }
-    return entries;
-  });
+  const groupedEntries = $derived(
+    flattenGroupedEntities(
+      groupedEntities,
+      collapsedLabelGroups,
+      collapsedCategoryGroups,
+      getCategoryLabel,
+    ),
+  );
 
   const pageSize = ENTITY_EXPLORER_PAGE_SIZE;
   let page = $state(1);
@@ -438,7 +359,7 @@
   <div class="p-4 border-b border-theme-border shrink-0 space-y-3">
     <EntityListSearch bind:searchQuery />
     {#if searchStatusMessage}
-      <p class="text-[10px] text-theme-muted" aria-live="polite">
+      <p class="text-micro text-theme-muted" aria-live="polite">
         {searchStatusMessage}
       </p>
     {/if}
@@ -446,7 +367,7 @@
     <div class="flex items-center justify-end gap-1.5">
       <label
         for="entity-explorer-sort"
-        class="text-[9px] font-bold uppercase tracking-wider text-theme-muted"
+        class="text-nano font-bold uppercase tracking-wider text-theme-muted"
       >
         Sort
       </label>
@@ -457,7 +378,7 @@
           explorerUIStore.setExplorerSortKey(
             event.currentTarget.value as "name" | "updated",
           )}
-        class="rounded-lg border border-theme-border/60 bg-theme-surface/40 px-2 py-1 text-[10px] font-mono text-theme-text outline-none transition-colors hover:border-theme-primary/50 focus:border-theme-primary focus:ring-2 focus:ring-theme-primary/20"
+        class="rounded-lg border border-theme-border/60 bg-theme-surface/40 px-2 py-1 text-micro font-mono text-theme-text outline-none transition-colors hover:border-theme-primary/50 focus:border-theme-primary focus:ring-2 focus:ring-theme-primary/20"
       >
         <option value="name">Name</option>
         <option value="updated">Last edited</option>
@@ -483,16 +404,49 @@
     class="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar"
     style="touch-action: pan-y;"
   >
-    {#snippet treeNode(node: TreeNode, depth: number, includeChildren = true)}
+    {#snippet treeNode(
+      node: TreeNode,
+      depth: number,
+      includeChildren = true,
+      isLast = true,
+      ancestorLines: boolean[] = [],
+    )}
       {@const entity = node.entity}
       {@const hasChildren = node.children.length > 0}
       {@const isCollapsed =
         searchQuery.trim() !== "" ? false : collapsedEntities.has(entity.id)}
+      {@const cappedDepth = Math.min(depth, 8)}
+      {@const elbowColumn = depth <= 8 ? cappedDepth - 1 : -1}
 
       <div
-        class="space-y-1"
-        style:margin-left={`${Math.min(depth, 8) * 0.75}rem`}
+        class="space-y-1 relative"
+        style:margin-left={`${cappedDepth * 0.75}rem`}
       >
+        {#if depth > 0}
+          <div
+            class="tree-guides pointer-events-none absolute inset-y-0 flex"
+            style:left={`-${cappedDepth * 0.75}rem`}
+            style:width={`${cappedDepth * 0.75}rem`}
+            data-testid="tree-guides"
+            aria-hidden="true"
+          >
+            {#each Array(cappedDepth) as _, level (level)}
+              {#if level === elbowColumn}
+                <span class="tree-guide-col tree-guide-elbow-col">
+                  <span class="tree-guide-elbow-top"></span>
+                  {#if !isLast}
+                    <span class="tree-guide-elbow-bottom"></span>
+                  {/if}
+                  <span class="tree-guide-elbow-arm"></span>
+                </span>
+              {:else if ancestorLines[level]}
+                <span class="tree-guide-col tree-guide-line"></span>
+              {:else}
+                <span class="tree-guide-col"></span>
+              {/if}
+            {/each}
+          </div>
+        {/if}
         <EntityListItem
           {entity}
           isMatching={node.isMatchingQuery}
@@ -539,13 +493,14 @@
         />
 
         {#if inlineCreationParentId === entity.id}
-          <div
-            class={depth < 8 ? "ml-3 pl-2 border-l border-theme-border/15" : ""}
-          >
+          <div class={depth < 8 ? "tree-guide-bar ml-3 pl-2" : ""}>
             <div
               class="flex items-center gap-2 p-2 border border-theme-border/50 bg-theme-surface/30 rounded-xl"
             >
-              <span class="icon-[lucide--plus] w-3 h-3 text-theme-muted"></span>
+              <span
+                aria-hidden="true"
+                class="icon-[lucide--plus] w-3 h-3 text-theme-muted"
+              ></span>
               <input
                 type="text"
                 bind:value={newChildTitle}
@@ -566,7 +521,7 @@
               />
               <select
                 bind:value={newChildType}
-                class="bg-theme-bg/50 border border-theme-border/50 text-[10px] text-theme-muted uppercase tracking-wider rounded px-1.5 py-0.5 focus:outline-none focus:ring-0"
+                class="bg-theme-bg/50 border border-theme-border/50 text-micro text-theme-muted uppercase tracking-wider rounded px-1.5 py-0.5 focus:outline-none focus:ring-0"
                 aria-label="New entity category"
                 disabled={isCreatingChild}
               >
@@ -603,7 +558,7 @@
               </button>
             </div>
             {#if createChildError}
-              <div class="text-[10px] text-red-500/80 px-2.5 mt-1 font-mono">
+              <div class="text-micro text-red-500/80 px-2.5 mt-1 font-mono">
                 {createChildError}
               </div>
             {/if}
@@ -611,13 +566,15 @@
         {/if}
 
         {#if includeChildren && hasChildren && !isCollapsed}
-          <div
-            class="space-y-1 {depth < 8
-              ? 'border-l border-theme-border/15 ml-3 pl-2'
-              : ''}"
-          >
-            {#each node.children as child (child.entity.id)}
-              {@render treeNode(child, depth + 1)}
+          <div class="space-y-1" data-testid="tree-guide-children">
+            {#each node.children as child, childIndex (child.entity.id)}
+              {@render treeNode(
+                child,
+                depth + 1,
+                true,
+                childIndex === node.children.length - 1,
+                [...ancestorLines, !isLast],
+              )}
             {/each}
           </div>
         {/if}
@@ -681,29 +638,19 @@
         </div>
       {/if}
       {#each pagedTreeRows as row (row.node.entity.id)}
-        {@render treeNode(row.node, row.depth, false)}
+        {@render treeNode(
+          row.node,
+          row.depth,
+          false,
+          row.isLast,
+          row.ancestorLines,
+        )}
       {:else}
-        <div data-testid="no-entities-found">
-          {#if vault.allEntities.length === 0}
-            <EmptyState
-              icon="icon-[lucide--ghost]"
-              headline="No entities yet"
-              body={vault.isGuest
-                ? "Nothing has been shared with you yet."
-                : "Create your first entity to start building your vault."}
-              cta={vault.isGuest ? undefined : "＋ Create"}
-              onCta={vault.isGuest
-                ? undefined
-                : () => modalUIStore.openIntentCreateMenu()}
-            />
-          {:else}
-            <EmptyState
-              icon="icon-[lucide--search-x]"
-              headline="No entities found"
-              body="Try adjusting your search or filters."
-            />
-          {/if}
-        </div>
+        {#if vault.allEntities.length === 0}
+          <EntityEmptyState isGuest={vault.isGuest} />
+        {:else}
+          <EntitySearchEmptyState />
+        {/if}
       {/each}
     {:else if effectiveViewMode === "label" || effectiveViewMode === "category"}
       {#each pagedGroupRows as entry (entry.id)}
@@ -725,7 +672,7 @@
                   : undefined}
             aria-expanded={isToggleable ? !entry.collapsed : undefined}
             disabled={!isToggleable}
-            class="mt-4 first:mt-0 flex w-full items-center justify-between rounded-lg border border-theme-border/30 px-2 py-1.5 text-left text-[10px] font-bold uppercase tracking-[0.2em] text-theme-muted transition-all hover:border-theme-primary/40 hover:bg-theme-primary/5 hover:text-theme-text focus:border-theme-accent focus:outline-none focus:ring-2 focus:ring-theme-accent/20"
+            class="mt-4 first:mt-0 flex w-full items-center justify-between rounded-lg border border-theme-border/30 px-2 py-1.5 text-left text-micro font-bold uppercase tracking-[0.2em] text-theme-muted transition-all hover:border-theme-primary/40 hover:bg-theme-primary/5 hover:text-theme-text focus:border-theme-accent focus:outline-none focus:ring-2 focus:ring-theme-accent/20"
           >
             <span class="flex items-center gap-1.5">
               {#if isToggleable}
@@ -737,20 +684,14 @@
               {/if}
               <span>{entry.title}</span>
             </span>
-            <span class="text-[9px] text-theme-muted/80">{entry.count}</span>
+            <span class="text-nano text-theme-muted/80">{entry.count}</span>
           </button>
         {:else}
           {@render groupedEntityItem(entry.entity, entry.groupKey)}
         {/if}
       {/each}
       {#if sortedEntities.length === 0}
-        <div data-testid="no-entities-found">
-          <EmptyState
-            icon="icon-[lucide--search-x]"
-            headline="No entities found"
-            body="Try adjusting your search or filters."
-          />
-        </div>
+        <EntitySearchEmptyState />
       {/if}
     {/if}
 
@@ -760,7 +701,7 @@
         aria-label="Entity explorer pages"
         data-testid="entity-explorer-pagination"
       >
-        <span class="text-[10px] text-theme-muted" aria-live="polite">
+        <span class="text-micro text-theme-muted" aria-live="polite">
           Showing {firstPageRow}–{lastPageRow} of {totalPageRows} visible rows
         </span>
         <div class="flex items-center gap-1">
@@ -769,10 +710,10 @@
             aria-label="Previous page"
             disabled={page === 1}
             onclick={() => goToPage(page - 1)}
-            class="rounded px-2 py-1 text-[10px] text-theme-muted disabled:opacity-40"
+            class="rounded px-2 py-1 text-micro text-theme-muted disabled:opacity-40"
             >Previous</button
           >
-          <span class="px-1 text-[10px] text-theme-text"
+          <span class="px-1 text-micro text-theme-text"
             >Page {page} of {pageCount}</span
           >
           <button
@@ -780,7 +721,7 @@
             aria-label="Next page"
             disabled={page === pageCount}
             onclick={() => goToPage(page + 1)}
-            class="rounded px-2 py-1 text-[10px] text-theme-muted disabled:opacity-40"
+            class="rounded px-2 py-1 text-micro text-theme-muted disabled:opacity-40"
             >Next</button
           >
         </div>
@@ -796,5 +737,61 @@
   .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
+  }
+
+  /* Tree hierarchy guides (issue #2361): a vertical bar per active ancestor
+     level, with a short horizontal elbow connecting each child row into its
+     parent's line, so parent/child structure reads clearly without relying
+     on indentation alone. Rendered per-row (rather than as a single wrapping
+     border) because rows are flattened for large-vault pagination.
+     --tree-guide-color is defined here (the shared list container) rather
+     than on .tree-guides so that .tree-guide-bar — used for the inline
+     add-child form, which is a sibling of .tree-guides, not a descendant —
+     also inherits it. */
+  .custom-scrollbar {
+    --tree-guide-color: color-mix(
+      in srgb,
+      var(--color-theme-accent),
+      transparent 60%
+    );
+  }
+  .tree-guide-bar {
+    border-left: 1px solid var(--tree-guide-color);
+    box-shadow: var(--theme-text-glow, none);
+  }
+  .tree-guide-col {
+    position: relative;
+    flex: 0 0 0.75rem;
+  }
+  .tree-guide-line::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 50%;
+    width: 1px;
+    background: var(--tree-guide-color);
+    box-shadow: var(--theme-text-glow, none);
+  }
+  .tree-guide-elbow-top,
+  .tree-guide-elbow-bottom {
+    position: absolute;
+    left: 50%;
+    width: 1px;
+    background: var(--tree-guide-color);
+  }
+  .tree-guide-elbow-top {
+    top: 0;
+    height: 50%;
+  }
+  .tree-guide-elbow-bottom {
+    bottom: 0;
+    height: 50%;
+  }
+  .tree-guide-elbow-arm {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 50%;
+    height: 1px;
+    background: var(--tree-guide-color);
   }
 </style>

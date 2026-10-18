@@ -74,6 +74,16 @@ describe("renderGeneratorMarkdown", () => {
     expect(container.querySelector("img")).toBeNull();
     expect(container.querySelector("[onerror]")).toBeNull();
   });
+
+  it("renders untrusted Markdown images as text without loading their URLs", () => {
+    const result = renderGeneratorMarkdown(
+      "![tracking pixel](https://tracker.example/pixel.png)",
+    );
+
+    expect(result).not.toContain("<img");
+    expect(result).not.toContain("https://tracker.example");
+    expect(result).toContain("tracking pixel");
+  });
 });
 
 describe("renderGeneratorLore", () => {

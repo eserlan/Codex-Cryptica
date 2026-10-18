@@ -18,7 +18,7 @@
     : "Full Toolbox mode — click for Guided Mode"}
   data-testid="guided-mode-toggle"
   onclick={toggle}
-  class="inline-flex items-center gap-2 rounded-full border border-theme-border bg-theme-surface px-1 py-1 text-[10px] font-bold uppercase tracking-widest text-theme-muted transition-colors hover:border-theme-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary/60"
+  class="inline-flex items-center gap-2 rounded-full border border-theme-border bg-theme-surface px-1 py-1 text-micro font-bold uppercase tracking-widest text-theme-muted transition-colors hover:border-theme-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary/60"
 >
   <span
     class={[
@@ -28,7 +28,9 @@
         : "text-theme-muted",
     ]}
   >
-    <span class="icon-[lucide--compass] w-3 h-3 mr-1 inline-block align-[-2px]"
+    <span
+      aria-hidden="true"
+      class="icon-[lucide--compass] w-3 h-3 mr-1 inline-block align-[-2px]"
     ></span>Guided
   </span>
   <span
@@ -40,6 +42,7 @@
     ]}
   >
     <span
+      aria-hidden="true"
       class="icon-[lucide--layout-grid] w-3 h-3 mr-1 inline-block align-[-2px]"
     ></span>Full Toolbox
   </span>

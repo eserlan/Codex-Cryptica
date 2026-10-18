@@ -24,7 +24,13 @@ import {
 
 export const starSystemConfig = {
   systemTypes: ["Single Star", "Binary System", "Trinary System", "Exotic"],
-  genres: ["Hard Sci-Fi", "Space Opera", "Cyberpunk", "Post-Apocalyptic"],
+  genres: [
+    "Hard Sci-Fi",
+    "Space Opera",
+    "Cyberpunk",
+    "Post-Apocalyptic",
+    "Space Western",
+  ],
   civilisationLevels: ["Unexplored", "Frontier", "Settled", "Core System"],
   systemCharacters: [
     "Prosperous",

@@ -94,14 +94,46 @@ export async function updateLastOpened(id: string): Promise<void> {
   }
 }
 
+export type RegistryRefreshListener = () => void | Promise<void>;
+
+const refreshListeners = new Set<RegistryRefreshListener>();
+
+export function onRegistryRefresh(
+  listener: RegistryRefreshListener,
+): () => void {
+  refreshListeners.add(listener);
+  return () => {
+    refreshListeners.delete(listener);
+  };
+}
+
 const triggerRefresh = debounce(async () => {
-  const { vaultRegistry } = await import("../vault-registry.svelte");
-  if (vaultRegistry) {
-    await vaultRegistry.refreshVaults();
+  for (const listener of refreshListeners) {
+    try {
+      await listener();
+    } catch (error) {
+      console.error("[vault-registry] Refresh listener failed", error);
+    }
   }
 }, 100);
 
-export async function updateLastInternalChange(id: string): Promise<void> {
+/**
+ * What a durable write touched (#3354), so incremental cloud backup can upload
+ * only that. Maps are persisted as one metadata file, so they carry no ids.
+ */
+export type DurableVaultChange =
+  | { kind: "entity"; ids: string[]; deleted?: boolean }
+  | { kind: "canvas"; ids: string[]; deleted?: boolean }
+  | { kind: "maps" };
+
+/**
+ * Records a durable write. Callers pass `change` describing what they wrote; a
+ * write reported without one is treated by listeners as touching anything.
+ */
+export async function updateLastInternalChange(
+  id: string,
+  change?: DurableVaultChange,
+): Promise<void> {
   const db = await getDB();
   const vault = await db.get("vaults", id);
   if (vault) {
@@ -110,6 +142,44 @@ export async function updateLastInternalChange(id: string): Promise<void> {
 
     // Trigger debounced refresh
     triggerRefresh();
+    notifyDurableChangeListeners(id, change);
+  }
+}
+
+export type DurableVaultChangeListener = (
+  vaultId: string,
+  change?: DurableVaultChange,
+) => void;
+
+const durableChangeListeners = new Set<DurableVaultChangeListener>();
+
+/**
+ * Subscribes to durable vault writes (#3189). Every caller of
+ * `updateLastInternalChange` — entity, map, and canvas persistence — funnels
+ * through here, so this is the single observation point for automatic cloud
+ * sync. Listeners run fire-and-forget after the write completes; a throwing
+ * listener is isolated and can never break persistence. Returns an
+ * unsubscribe function.
+ */
+export function onDurableVaultChange(
+  listener: DurableVaultChangeListener,
+): () => void {
+  durableChangeListeners.add(listener);
+  return () => {
+    durableChangeListeners.delete(listener);
+  };
+}
+
+function notifyDurableChangeListeners(
+  vaultId: string,
+  change?: DurableVaultChange,
+): void {
+  for (const listener of durableChangeListeners) {
+    try {
+      listener(vaultId, change);
+    } catch (error) {
+      console.error("[vault-registry] Durable-change listener failed", error);
+    }
   }
 }
 

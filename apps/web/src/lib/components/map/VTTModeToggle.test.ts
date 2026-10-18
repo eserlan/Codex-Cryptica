@@ -35,6 +35,14 @@ describe("VTTModeToggle", () => {
     });
   });
 
+  it("carries a stable help target", () => {
+    const { container } = render(VTTModeToggle);
+
+    expect(
+      container.querySelector('[data-help-target="vtt-mode-toggle"]'),
+    ).not.toBeNull();
+  });
+
   it("opens a grid color menu on right click and updates the grid color", async () => {
     render(VTTModeToggle);
     render(VTTGridColorMenu);

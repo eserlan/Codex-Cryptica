@@ -5,6 +5,8 @@
   import { revisionService } from "$lib/services/RevisionService.svelte";
   import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
   import { categories } from "$lib/stores/categories.svelte";
+  import { themeStore } from "$lib/stores/theme.svelte";
+  import { deriveEntityTypePalette } from "schema";
   import CanvasPicker from "$lib/components/canvas/CanvasPicker.svelte";
   import type { Core } from "cytoscape";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
@@ -12,6 +14,7 @@
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
   import { GraphContextMenuController } from "./graph-context-menu-controller.svelte";
+  import ImageFocusMenu from "$lib/components/ui/ImageFocusMenu.svelte";
 
   let { cy } = $props<{ cy: Core }>();
 
@@ -29,6 +32,10 @@
   $effect(() => {
     return controller.setupEvents();
   });
+
+  const typePalette = $derived(
+    deriveEntityTypePalette(themeStore.activeTheme, categories.list),
+  );
 
   let menuEl = $state<HTMLDivElement>();
 
@@ -85,6 +92,19 @@
   >
     {#if controller.targetEdge}
       {#if !vault.isGuest}
+        <button
+          type="button"
+          role="menuitem"
+          class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition flex items-center gap-2 whitespace-nowrap"
+          onclick={controller.handleHideEdge}
+          aria-label="Hide Connection"
+        >
+          <span
+            aria-hidden="true"
+            class="icon-[lucide--eye-off] h-3.5 w-3.5 opacity-70"
+          ></span>
+          <span>Hide Connection</span>
+        </button>
         <button
           role="menuitem"
           class="w-full text-left px-4 py-2 text-sm text-theme-danger hover:bg-theme-danger/10 transition flex items-center gap-2 whitespace-nowrap"
@@ -220,7 +240,7 @@
             <div class="flex items-center gap-2">
               {#if controller.hasImage}
                 <span
-                  class="text-[10px] text-theme-muted opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none italic"
+                  class="text-micro text-theme-muted opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none italic"
                 >
                   click to view
                 </span>
@@ -319,9 +339,12 @@
           class="w-full text-left px-3 py-1.5 text-xs text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition flex items-center gap-2 rounded-sm"
           onclick={() => controller.handleSetCategory(cat.id)}
         >
+          <!-- Previews the tone the node will actually take, which is derived
+               from the active theme rather than the raw category colour
+               (issue #2680). -->
           <div
             class="w-2 h-2 rounded-full"
-            style:background-color={cat.color}
+            style:background-color={typePalette[cat.id]?.accent ?? cat.color}
           ></div>
           {cat.label}
         </button>
@@ -347,7 +370,10 @@
           class="w-full text-left px-3 py-1.5 text-xs text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition flex items-center gap-2 rounded-sm"
           onclick={controller.handleGenerateImage}
         >
-          <span class="icon-[lucide--image-plus] h-3.5 w-3.5 opacity-70"></span>
+          <span
+            aria-hidden="true"
+            class="icon-[lucide--image-plus] h-3.5 w-3.5 opacity-70"
+          ></span>
           {controller.imageActionLabel}
         </button>
         <button
@@ -355,9 +381,24 @@
           class="w-full text-left px-3 py-1.5 text-xs text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition flex items-center gap-2 rounded-sm"
           onclick={controller.handleReviseContent}
         >
-          <span class="icon-[lucide--sparkles] h-3.5 w-3.5 opacity-70"></span>
+          <span
+            aria-hidden="true"
+            class="icon-[lucide--sparkles] h-3.5 w-3.5 opacity-70"
+          ></span>
           Revise Content
         </button>
+      {/if}
+      {#if controller.hasImage}
+        <div class="h-px bg-theme-border my-1 mx-1"></div>
+        <div
+          class="px-3 py-1 text-nano font-bold uppercase tracking-widest text-theme-muted"
+        >
+          Image focus
+        </div>
+        <ImageFocusMenu
+          value={controller.currentImageFocus}
+          onSelect={controller.handleSetImageFocus}
+        />
       {/if}
     </div>
   {/if}

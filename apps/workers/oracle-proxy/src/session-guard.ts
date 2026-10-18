@@ -11,19 +11,27 @@ import {
   extractBearerToken,
   mintSessionToken,
   verifySessionToken,
+  verifyAutomationKey,
   type SessionTokenPayload,
 } from "./session";
 
 /** Turnstile action the client widget declares for this handshake. */
 export const SESSION_TURNSTILE_ACTION = "llm_session";
 
+/** Header name for trusted automation credential. */
+export const AUTOMATION_KEY_HEADER = "X-Codex-Automation-Key";
+
 export interface SessionEnv {
   SESSION_TOKEN_SECRET?: string;
   TURNSTILE_SECRET_KEY?: string;
+  CODEX_AUTOMATION_KEY?: string;
   LLM_BURST_RATE_LIMITER?: {
     limit: (options: { key: string }) => Promise<{ success: boolean }>;
   };
   LLM_GENERATION_RATE_LIMITER?: {
+    limit: (options: { key: string }) => Promise<{ success: boolean }>;
+  };
+  LLM_AUTOMATION_RATE_LIMITER?: {
     limit: (options: { key: string }) => Promise<{ success: boolean }>;
   };
 }
@@ -40,8 +48,8 @@ function json(
 }
 
 /**
- * `POST /api/session` — exchange a solved Turnstile challenge for a capability
- * token.
+ * `POST /api/session` — exchange either a solved Turnstile challenge or a
+ * trusted automation key for a signed capability token.
  */
 export async function handleSessionRequest(
   request: Request,
@@ -69,6 +77,56 @@ export async function handleSessionRequest(
     );
   }
 
+  const automationKeyHeader =
+    request.headers.get("X-Codex-Automation-Key") ??
+    request.headers.get("x-codex-automation-key");
+  const ip = request.headers.get("CF-Connecting-IP") || "anonymous";
+
+  if (automationKeyHeader !== null) {
+    if (!env.CODEX_AUTOMATION_KEY?.trim()) {
+      console.error("[Oracle Proxy] CODEX_AUTOMATION_KEY is not configured");
+      return json(
+        {
+          error: {
+            message: "Automation access is not configured",
+            code: "AUTOMATION_NOT_CONFIGURED",
+          },
+        },
+        503,
+        cors,
+      );
+    }
+
+    const isValid = await verifyAutomationKey(
+      automationKeyHeader,
+      env.CODEX_AUTOMATION_KEY,
+    );
+    if (!isValid) {
+      return json(
+        {
+          error: {
+            message: "Invalid automation key",
+            code: "AUTOMATION_KEY_INVALID",
+          },
+        },
+        401,
+        cors,
+      );
+    }
+
+    const { token, expiresAt, scope } = await mintSessionToken(
+      env.SESSION_TOKEN_SECRET,
+      ip,
+      undefined,
+      undefined,
+      "automation",
+    );
+
+    console.log(`[Oracle Proxy] Issued automation session token (ip: ${ip})`);
+
+    return json({ token, expiresAt, scope }, 200, cors);
+  }
+
   const body = (await request.json().catch(() => ({}))) as {
     turnstileToken?: string;
   };
@@ -93,13 +151,15 @@ export async function handleSessionRequest(
     );
   }
 
-  const ip = request.headers.get("CF-Connecting-IP") || "anonymous";
-  const { token, expiresAt } = await mintSessionToken(
+  const { token, expiresAt, scope } = await mintSessionToken(
     env.SESSION_TOKEN_SECRET,
     ip,
+    undefined,
+    undefined,
+    "human",
   );
 
-  return json({ token, expiresAt }, 200, cors);
+  return json({ token, expiresAt, scope }, 200, cors);
 }
 
 /**
@@ -118,8 +178,18 @@ export async function enforceLlmSession(
   request: Request,
   env: SessionEnv,
   cors: Record<string, string>,
+  isAllowedOrigin: boolean = true,
 ): Promise<Response | null> {
-  if (!env.SESSION_TOKEN_SECRET) return null;
+  if (!env.SESSION_TOKEN_SECRET) {
+    if (!isAllowedOrigin) {
+      return json(
+        { error: { message: "Forbidden", code: "FORBIDDEN" } },
+        403,
+        cors,
+      );
+    }
+    return null;
+  }
 
   const token = extractBearerToken(request);
   const result = await verifySessionToken(env.SESSION_TOKEN_SECRET, token);
@@ -140,9 +210,24 @@ export async function enforceLlmSession(
     );
   }
 
+  // Non-automation tokens still require an allowed browser origin.
+  // Automation tokens do not require browser origins.
+  if (result.payload.scope !== "automation" && !isAllowedOrigin) {
+    return json(
+      {
+        error: {
+          message: "Forbidden",
+          code: "FORBIDDEN",
+        },
+      },
+      403,
+      cors,
+    );
+  }
+
   logIpAnomaly(request, result.payload);
 
-  return enforceLlmRateLimit(env, result.payload.jti, cors);
+  return enforceLlmRateLimit(env, result.payload, cors);
 }
 
 /**
@@ -162,7 +247,7 @@ function logIpAnomaly(request: Request, payload: SessionTokenPayload): void {
 }
 
 /**
- * Apply both rate limit bindings, keyed by token id.
+ * Apply rate limit bindings, keyed by token id.
  *
  * Two native windows rather than one long one: Cloudflare's rate limiting
  * binding only supports 10s and 60s periods, and is permissive and eventually
@@ -172,10 +257,58 @@ function logIpAnomaly(request: Request, payload: SessionTokenPayload): void {
  */
 async function enforceLlmRateLimit(
   env: SessionEnv,
-  jti: string,
+  payload: SessionTokenPayload,
   cors: Record<string, string>,
 ): Promise<Response | null> {
-  const key = `session:${jti}`;
+  const isAutomation = payload.scope === "automation";
+
+  if (isAutomation) {
+    if (env.LLM_AUTOMATION_RATE_LIMITER) {
+      const { success } = await env.LLM_AUTOMATION_RATE_LIMITER.limit({
+        key: `automation:${payload.jti}`,
+      });
+      if (!success) {
+        return json(
+          {
+            error: {
+              message:
+                "Too many generation requests for automation session. Please wait a moment and try again.",
+              code: "RATE_LIMITED",
+            },
+          },
+          429,
+          cors,
+        );
+      }
+      return null;
+    }
+
+    const key = `automation:${payload.jti}`;
+    const limiters = [
+      env.LLM_BURST_RATE_LIMITER,
+      env.LLM_GENERATION_RATE_LIMITER,
+    ].filter(Boolean);
+
+    for (const limiter of limiters) {
+      const { success } = await limiter!.limit({ key });
+      if (!success) {
+        return json(
+          {
+            error: {
+              message:
+                "Too many generation requests for automation session. Please wait a moment and try again.",
+              code: "RATE_LIMITED",
+            },
+          },
+          429,
+          cors,
+        );
+      }
+    }
+    return null;
+  }
+
+  const key = `session:${payload.jti}`;
   const limiters = [
     env.LLM_BURST_RATE_LIMITER,
     env.LLM_GENERATION_RATE_LIMITER,

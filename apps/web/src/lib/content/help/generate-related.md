@@ -1,31 +1,25 @@
 ---
 id: generate-related
 title: Generating Related Entities
+description: Expand your campaign with new entities grounded in a selected entity and its nearby connections.
 tags: [oracle, generate, create, entities, connections]
 rank: 8
 ---
 
-## Grounded World Expansion
+## What Generate Related does
 
-The **Generate Related** feature allows you to quickly expand your campaign setting by generating new entities grounded in your existing lore. Instead of generating ideas in a vacuum, this feature compiles context from the current entity and its direct first-degree neighbors in your connection graph.
+In an entity’s detail panel, **Generate Related** opens a generator pre-loaded with that entity and its nearby connections as context. It drafts a new entity that fits your existing lore; use the Family tab separately to view relatives across generations.
 
-### How to Use
+1. Open the source entity’s **Status** tab in the side panel or Zen Mode.
+2. Click **Generate Related** near the top of the tab.
+3. Choose a generator type and adjust its options and instructions.
+4. Click **Generate**, then review the title, type, Chronicle, Lore and labels.
+5. Leave **Link to source entity** on to create a relationship to the source, or turn it off for an unlinked draft.
+6. Click **Open in Editor** to review the draft in the entity view.
+7. Use **Apply Changes** to keep the generated text, or **Discard** to remove the new draft entity.
 
-1. Navigate to any entity page in either standard or **Zen Mode**.
-2. Click the **Generate Related** button at the top-right of the connections section.
-3. In the configuration modal, specify the target type (e.g., Character, Faction, Location) or select **Surprise Me** to let the AI dynamically pick a fitting category from your allowed vault categories.
-4. Choose or define a custom relationship label (e.g., `arch-nemesis`, `signature item`) and provide optional custom instructions.
-5. Click **Generate** to prompt the AI model.
+**Back** returns to configuration without creating an entity. Open in Editor creates a temporary entity record for review; generating the preview alone does not save a new entity.
 
-### Review, Edit, and persist
+The source’s relevant lore is sent to the AI service when AI generation is enabled. With **AI Disabled**, the campaign generators use local templates instead. Generate Related is unavailable in a guest vault.
 
-Once the draft is generated, you will see a preview screen displaying all generated properties. You can edit the entity name, summary, description, and labels to refine the output before committing.
-
-- The system uses the term **Labels** for metadata categories (rather than tags).
-- You can also revise the draft with adjusted guidelines or cancel without making any changes.
-- Clicking **Create Entity** commits the new record to your vault and automatically creates a directed relationship connection from the source entity to your new creation.
-
-### Related Blog Posts
-
-- [Context-Aware Entity Generator](/blog/context-aware-entity-generator) — How OpenAI/Luna uses neighboring graph nodes to generate connected lore.
-- [Worldbuilding AI Needs Your Lore](/blog/worldbuilding-ai-needs-your-lore) — Why context-aware retrieval prevents generic AI slop.
+See [In-App Campaign Generators](/help#help/in-app-generators) for generator configuration and privacy details.

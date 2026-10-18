@@ -1,8 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NodeMergeService } from "./node-merge.service.svelte";
 import { vault } from "../stores/vault.svelte";
-import { oracle } from "../stores/oracle.svelte";
 import { textGenerationService } from "@codex/ai-engine";
+
+let mockApiKey: string | null = "test-key";
+let mockTier: "lite" | "advanced" = "lite";
 
 // Mock the dependencies
 vi.mock("../stores/vault.svelte", () => ({
@@ -16,11 +18,9 @@ vi.mock("../stores/vault.svelte", () => ({
   },
 }));
 
-vi.mock("../stores/oracle.svelte", () => ({
-  oracle: {
-    effectiveApiKey: "test-key",
-    tier: "lite",
-  },
+vi.mock("../stores/oracle/hooks", () => ({
+  getOracleApiKey: () => mockApiKey,
+  getOracleTier: () => mockTier,
 }));
 
 vi.mock("@codex/ai-engine", () => ({
@@ -45,6 +45,9 @@ describe("NodeMergeService", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     service = new NodeMergeService();
+
+    mockApiKey = "test-key";
+    mockTier = "lite";
 
     // Reset vault state
     (vault as any).entities = {};
@@ -143,7 +146,7 @@ describe("NodeMergeService", () => {
     });
 
     it("should allow AI merge even if AI key is missing (fallback to proxy)", async () => {
-      (oracle as any).effectiveApiKey = null;
+      mockApiKey = null;
       vault.entities["t"] = {
         id: "t",
         title: "T",

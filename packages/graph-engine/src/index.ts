@@ -1,9 +1,12 @@
 import type { Core } from "cytoscape";
+import { nodeFitBounds } from "./fit-bounds";
 
 export * from "./transformer";
 export * from "./layouts/timeline";
 export * from "./layouts/orbit";
 export * from "./renderer/overlays";
+export * from "./renderer/community-hulls";
+export * from "./communities";
 export * from "./defaults";
 export * from "./LayoutManager";
 export * from "./GraphStyles";
@@ -16,10 +19,34 @@ export interface GraphOptions {
   elements?: any[];
   style?: any[];
   headless?: boolean;
+  /** Cytoscape layout to run at construction. Defaults to "preset" — callers
+   * that lay out elements themselves (the world graph via LayoutManager) rely
+   * on this; a small, fixed-shape graph can pass e.g. `{ name: "concentric" }`
+   * to skip that step. */
+  layout?: any;
+  /**
+   * Render/interaction knobs tuned by default for a large, panning world
+   * graph (labels hidden while moving, coarse wheel steps, a minZoom that
+   * shrinks with node count). A small, contained graph — a handful of nodes
+   * in a fixed box — wants the opposite: labels always readable, gentler
+   * zoom, and its own fixed bounds. All default to the existing world-graph
+   * behavior, so omitting them changes nothing for existing callers.
+   */
+  hideLabelsOnViewport?: boolean;
+  motionBlur?: boolean;
+  minZoom?: number;
+  maxZoom?: number;
+  wheelSensitivity?: number;
 }
 
-export const LARGE_GRAPH_NODE_THRESHOLD = 700;
-export const LARGE_GRAPH_EDGE_THRESHOLD = 1800;
+/**
+ * Above either limit the graph culls to a focus view and drops images, curved
+ * edges and arrowheads. They were 700 and 1,800 before the graph got faster;
+ * a vault of about 1,600 entities now renders in full. Edges are what cost the
+ * most to draw, so that limit is lower relative to the node one.
+ */
+export const LARGE_GRAPH_NODE_THRESHOLD = 3000;
+export const LARGE_GRAPH_EDGE_THRESHOLD = 6000;
 
 /** Single source of truth for the large-graph perf-mode threshold. */
 export const isLargeGraphSize = (nodeCount: number, edgeCount: number) =>
@@ -68,7 +95,12 @@ export const applyLargeGraphRenderHints = (
 // Cache the imported modules so we don't re-register plugins
 let corePromise: Promise<any> | null = null;
 
-export const initGraph = async (options: GraphOptions) => {
+/**
+ * Starts fetching Cytoscape and its layout plugin without waiting for them.
+ * The graph is otherwise only requested once the vault's data is in, so the
+ * library download and parse would sit behind the vault load on every open.
+ */
+export const preloadGraphCore = (): Promise<any> => {
   if (!corePromise) {
     corePromise = (async () => {
       try {
@@ -88,8 +120,11 @@ export const initGraph = async (options: GraphOptions) => {
       }
     })();
   }
+  return corePromise;
+};
 
-  const cytoscape = await corePromise;
+export const initGraph = async (options: GraphOptions) => {
+  const cytoscape = await preloadGraphCore();
 
   const nodeCount = (options.elements || []).filter(
     (el) => el.group === "nodes" || (!el.group && el.data && !el.data.source),
@@ -99,7 +134,7 @@ export const initGraph = async (options: GraphOptions) => {
   ).length;
   const isLargeGraph = isLargeGraphSize(nodeCount, edgeCount);
 
-  return (cytoscape as unknown as (opt: any) => Core)({
+  const cy = (cytoscape as unknown as (opt: any) => Core)({
     container: options.container,
     headless: options.headless,
     elements: options.elements || [],
@@ -123,14 +158,19 @@ export const initGraph = async (options: GraphOptions) => {
         },
       },
     ],
-    layout: {
+    // Cytoscape's preset layout fits by default, measuring every label and
+    // edge: 0.9 s warm and about 3 s on first load for a 1,625-node vault,
+    // against 70 ms to construct without it. The view is fitted to the nodes'
+    // own extent just below instead.
+    layout: options.layout ?? {
       name: "preset",
+      fit: false,
     },
     // Rendering Optimizations
-    hideLabelsOnViewport: true,
+    hideLabelsOnViewport: options.hideLabelsOnViewport ?? true,
     hideEdgesOnViewport: isLargeGraph,
     textureOnViewport: true,
-    motionBlur: isLargeGraph,
+    motionBlur: options.motionBlur ?? isLargeGraph,
     motionBlurOpacity: 0.08,
     // Cap DPR at 1.5 — on 2× retina "auto" rasterises at 4× pixel area,
     // which dominates GPU cost for large graphs. 1.5 is imperceptible to
@@ -139,8 +179,12 @@ export const initGraph = async (options: GraphOptions) => {
       typeof window !== "undefined"
         ? Math.min(window.devicePixelRatio || 1, 1.5)
         : 1,
-    minZoom: Math.max(0.01, 0.3 - nodeCount * 0.0005),
-    maxZoom: 9.0,
-    wheelSensitivity: 1.0,
+    minZoom: options.minZoom ?? Math.max(0.01, 0.3 - nodeCount * 0.0005),
+    maxZoom: options.maxZoom ?? 9.0,
+    wheelSensitivity: options.wheelSensitivity ?? 1.0,
   });
+  if (!options.layout && !options.headless && cy.nodes().length > 0) {
+    cy.fit(nodeFitBounds(cy), 30);
+  }
+  return cy;
 };

@@ -1,14 +1,17 @@
 import type { StatSheetField } from "schema";
+import { resolveFieldByKeyOrId } from "@codex/stat-sheet-engine";
 import { mapSession } from "$lib/stores/map-session.svelte";
 import { diceHistory } from "$lib/stores/dice-history.svelte";
 import { notificationStore } from "$lib/stores/ui/notification.svelte";
-import { diceEngine, diceParser } from "dice-engine";
+import { diceEngine, diceParser, type RollResult } from "dice-engine";
 
 export interface DiceRollDisplay {
   text: string;
   isError: boolean;
   success?: boolean;
   total?: number;
+  /** The engine's own trace, so the UI can show the dice as rolled. */
+  roll?: RollResult;
 }
 
 export async function rollStatSheetDiceField(
@@ -66,6 +69,7 @@ export async function rollStatSheetDiceField(
         isError: false,
         success: isSuccess,
         total: result.total,
+        roll: result,
       };
     }
 
@@ -80,7 +84,12 @@ export async function rollStatSheetDiceField(
         "success",
       );
     }
-    return { text: `= ${result.total}`, isError: false, total: result.total };
+    return {
+      text: `= ${result.total}`,
+      isError: false,
+      total: result.total,
+      roll: result,
+    };
   } catch (e: any) {
     return { text: e?.message ?? "Invalid formula", isError: true };
   }
@@ -112,10 +121,11 @@ export function abilityModifier(score: number): number {
 export function applyDerivedModifiers(
   fields: StatSheetField[],
 ): StatSheetField[] {
-  const byId = new Map(fields.map((f) => [f.id, f]));
   return fields.map((field) => {
     if (field.type !== "dice" || !field.modifierSource) return field;
-    const source = byId.get(field.modifierSource);
+    // #3180: modifierSource accepts a field key or id; resolution ends at
+    // the canonical field, so key renames never corrupt the derivation.
+    const source = resolveFieldByKeyOrId(fields, field.modifierSource);
     if (!source || typeof source.value !== "number") return field;
 
     const mod = abilityModifier(source.value);

@@ -60,6 +60,7 @@ export type P2PMessage =
       characterId: string;
       guestUsername: string;
       query: string;
+      cue?: string;
       history: { id: string; role: string; content: string }[];
     }
   | { type: "GUEST_CHAR_CHAT_CHUNK"; requestId: string; partial: string }

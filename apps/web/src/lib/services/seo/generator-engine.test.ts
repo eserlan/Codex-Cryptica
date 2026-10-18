@@ -1,12 +1,23 @@
 /** @vitest-environment jsdom */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { DefaultGeneratorEngine } from "./generator-engine";
+import { generateHeistLocal } from "generator-engine";
 import {
   BANNED_NAMES,
   NAME_BAN_PROMPT,
   generateLanguageLocal,
+  tomeConfig,
+  type PublicGeneratorOutput,
 } from "generator-engine";
 import { sessionHubStore } from "$lib/stores/session-hub.svelte";
+import { generationInputHistoryStore } from "./generation-input-history";
+
+function expectPromptToContain(
+  generateContent: { mock: { calls: unknown[][] } },
+  expected: string,
+) {
+  expect(generateContent.mock.calls[0]?.[0]).toContain(expected);
+}
 
 describe("DefaultGeneratorEngine", () => {
   let mockClientManager: any;
@@ -28,6 +39,69 @@ describe("DefaultGeneratorEngine", () => {
   });
 
   describe("generateNPC", () => {
+    it("streams model deltas while returning the parsed final NPC draft", async () => {
+      const chunks = [
+        '{"title":"Tomasa",',
+        '"summary":"A frontier guide","content":"Bio","lore":"Secrets","labels":["npc"]}',
+      ];
+      mockClientManager.getModel.mockResolvedValue({
+        generateContentStream: async function* () {
+          for (const text of chunks) yield { type: "delta", text };
+          yield { type: "complete", text: chunks.join("") };
+        },
+      });
+
+      const previews: string[] = [];
+      const output = await engine.generateWithPreview(
+        () => engine.generateNPC({ useAI: true }),
+        (text) => previews.push(text),
+      );
+
+      expect(previews).toEqual([chunks[0], chunks.join("")]);
+      expect(output).toMatchObject({
+        title: "Tomasa",
+        content: "Bio",
+        lore: "Secrets",
+      });
+    });
+
+    it("keeps accumulated deltas when the terminal frame is only whitespace", async () => {
+      const text = '{"title":"Tomasa","content":"Bio","lore":"Secrets"}';
+      mockClientManager.getModel.mockResolvedValue({
+        generateContentStream: async function* () {
+          yield { type: "delta", text };
+          yield { type: "complete", text: " " };
+        },
+      });
+
+      const output = await engine.generateWithPreview(
+        () => engine.generateNPC({ useAI: true }),
+        () => {},
+      );
+
+      expect(output).toMatchObject({ title: "Tomasa", content: "Bio" });
+    });
+
+    it("falls back to a local NPC draft when streaming reports an error", async () => {
+      mockClientManager.getModel.mockResolvedValue({
+        generateContentStream: async function* () {
+          yield { type: "error", error: "network down" };
+        },
+      });
+
+      const output = await engine.generateWithPreview(
+        () =>
+          engine.generateNPC({
+            race: "Dwarf",
+            role: "Guard",
+            useAI: true,
+          }),
+        () => {},
+      );
+
+      expect(output).toMatchObject({ aiFallback: true });
+    });
+
     it("should generate NPC details using local fallback when useAI is false", async () => {
       const res = await engine.generateNPC({
         race: "Elf",
@@ -50,6 +124,29 @@ describe("DefaultGeneratorEngine", () => {
       expect(res.labels).toContain("imported-draft");
       expect(res.lore).not.toContain("Class / Archetype");
       expect(res.lore).not.toContain("Table Rating");
+    });
+
+    it("should generate 6-element table card when mode is table-card", async () => {
+      const res = await engine.generateNPC({
+        race: "Dwarf",
+        role: "Blacksmith",
+        alignment: "True Neutral",
+        mode: "table-card",
+        useAI: false,
+      });
+
+      expect(res.content).toContain("### The Six Elements");
+      expect(res.content).toContain("- **Immediate Want**:");
+      expect(res.content).toContain("- **Physical Mannerism**:");
+      expect(res.content).toContain("- **Sharp Contradiction**:");
+      expect(res.content).toContain("- **Relationship Hook**:");
+      expect(res.content).toContain("- **Sensory Tag**:");
+      expect(res.content).toContain("- **Knowledge & Secrets**:");
+      expect(res.content).toContain("### Table Delivery");
+      expect(res.lore).toContain("- **Immediate Want**:");
+      expect(res.lore).toContain("- **Contradiction**:");
+      expect(res.lore).toContain("- **Knowledge & Secrets**:");
+      expect(res.labels).toContain("table-card");
     });
 
     it("should include D&D quick stats when requested", async () => {
@@ -109,8 +206,9 @@ describe("DefaultGeneratorEngine", () => {
 
       expect(mockClientManager.getModel).toHaveBeenCalled();
       expect(mockModel.generateContent).toHaveBeenCalled();
-      expect(mockModel.generateContent).toHaveBeenCalledWith(
-        expect.stringContaining("a ruined elven academy"),
+      expectPromptToContain(
+        mockModel.generateContent,
+        "a ruined elven academy",
       );
       expect(res.title).toBe("Aelwen The Wise");
       expect(res.content).toBe("AI Generated Bio");
@@ -174,7 +272,7 @@ describe("DefaultGeneratorEngine", () => {
         "a canal city split by old guild rivalries",
       );
       expect(res.lore).toContain("Internal Conflict");
-      expect(res.lore).toContain("At the Table");
+      expect(res.lore).toContain("At a Glance");
       expect(res.lore).toContain("- **📍 Base**");
       expect(res.lore).toContain("- **👤");
       expect(res.lore).toContain("- **👥");
@@ -207,8 +305,9 @@ describe("DefaultGeneratorEngine", () => {
       });
 
       expect(mockClientManager.getModel).toHaveBeenCalled();
-      expect(mockModel.generateContent).toHaveBeenCalledWith(
-        expect.stringContaining("a kingdom recovering from a succession war"),
+      expectPromptToContain(
+        mockModel.generateContent,
+        "a kingdom recovering from a succession war",
       );
       expect(res.type).toBe("faction");
       expect(res.title).toBe("The Argent Loom");
@@ -241,8 +340,9 @@ describe("DefaultGeneratorEngine", () => {
         useAI: true,
       });
 
-      expect(mockModel.generateContent).toHaveBeenCalledWith(
-        expect.stringContaining("Theme/Genre: Cyberpunk / Corporate"),
+      expectPromptToContain(
+        mockModel.generateContent,
+        "Theme/Genre: Cyberpunk / Corporate",
       );
       expect(res.title).toBe("Cyberdine Corp");
 
@@ -256,7 +356,67 @@ describe("DefaultGeneratorEngine", () => {
       });
       expect(fallbackRes.content).toContain("criminal syndicate");
       expect(fallbackRes.content).toContain("What they control");
-      expect(fallbackRes.lore).toContain("At the Table");
+      expect(fallbackRes.lore).toContain("At a Glance");
+    });
+  });
+
+  describe("generateFactionRoster", () => {
+    it("should generate roster details locally when useAI is false", async () => {
+      const res = await engine.generateFactionRoster({
+        size: "4",
+        factionContext: "The Compact: a merchant guild fixing prices.",
+        useAI: false,
+      });
+
+      expect(res.type).toBe("note");
+      expect(res.title).toBeDefined();
+      const headings = res.content.match(/^### .+$/gm) ?? [];
+      expect(headings).toHaveLength(4);
+      expect(res.labels).toContain("faction-roster");
+      expect(res.labels).toContain("faction-roster-generator");
+      expect(res.labels).toContain("imported-draft");
+      // The local (no-AI) seed draft that fires on page mount for the
+      // Faction -> Roster handoff must reflect the handed-over faction
+      // rather than reading as generic filler (#2808 follow-up).
+      expect(res.title).toContain("The Compact");
+      expect(res.summary).toContain("The Compact");
+    });
+
+    it("should include the faction context in the AI prompt", async () => {
+      const mockModel = {
+        generateContent: vi.fn().mockResolvedValue({
+          response: {
+            text: () =>
+              JSON.stringify({
+                title: "The Compact's Inner Circle",
+                summary: "x",
+                members: [
+                  { name: "Vess Marrow", role: "Quartermaster" },
+                  { name: "Sister Aln", role: "True believer" },
+                  { name: "Old Fritjof", role: "Recent recruit" },
+                ],
+                lore: "### At a Glance",
+                labels: ["rpg-faction", "faction-roster"],
+              }),
+          },
+        }),
+      };
+      mockClientManager.getModel.mockResolvedValue(mockModel);
+
+      const res = await engine.generateFactionRoster({
+        factionContext: "The Compact fixes prices across three ports.",
+        useAI: true,
+      });
+
+      expect(mockClientManager.getModel).toHaveBeenCalled();
+      expectPromptToContain(
+        mockModel.generateContent,
+        "The Compact fixes prices across three ports.",
+      );
+      expect(res.type).toBe("note");
+      expect(res.title).toBe("The Compact's Inner Circle");
+      expect(res.content).toContain("### Vess Marrow — Quartermaster");
+      expect(res.labels).toContain("faction-roster");
     });
   });
 
@@ -319,18 +479,13 @@ describe("DefaultGeneratorEngine", () => {
         "gemini-3.5-flash-lite",
         "You are an assistant that generates detailed RPG campaign elements in JSON format.",
       );
-      expect(mockModel.generateContent).toHaveBeenCalledWith(
-        expect.stringContaining("an ancient cathedral ruin"),
+      expectPromptToContain(
+        mockModel.generateContent,
+        "an ancient cathedral ruin",
       );
-      expect(mockModel.generateContent).toHaveBeenCalledWith(
-        expect.stringContaining("- **👤 Sire Name**"),
-      );
-      expect(mockModel.generateContent).toHaveBeenCalledWith(
-        expect.stringContaining("- **👤 Thrall Name**"),
-      );
-      expect(mockModel.generateContent).toHaveBeenCalledWith(
-        expect.stringContaining("- **👥 Rival Name**"),
-      );
+      expectPromptToContain(mockModel.generateContent, "- **👤 Sire Name**");
+      expectPromptToContain(mockModel.generateContent, "- **👤 Thrall Name**");
+      expectPromptToContain(mockModel.generateContent, "- **👥 Rival Name**");
       expect(res.type).toBe("faction");
       expect(res.title).toBe("House Karnstein");
       expect(res.content).toBe("AI Generated Vampire Clan");
@@ -467,18 +622,19 @@ describe("DefaultGeneratorEngine", () => {
       });
 
       expect(mockClientManager.getModel).toHaveBeenCalled();
-      expect(mockModel.generateContent).toHaveBeenCalledWith(
-        expect.stringContaining("### Points of Interest"),
+      expectPromptToContain(
+        mockModel.generateContent,
+        "### Points of Interest",
       );
-      expect(mockModel.generateContent).toHaveBeenCalledWith(
-        expect.stringContaining("- **📍 Location Name**"),
+      expectPromptToContain(
+        mockModel.generateContent,
+        "- **📍 Location Name**",
       );
-      expect(mockModel.generateContent).toHaveBeenCalledWith(
-        expect.stringContaining("### Controlling Factions"),
+      expectPromptToContain(
+        mockModel.generateContent,
+        "### Controlling / Important Factions",
       );
-      expect(mockModel.generateContent).toHaveBeenCalledWith(
-        expect.stringContaining("- **👥 Faction Name**"),
-      );
+      expectPromptToContain(mockModel.generateContent, "- **👥 Faction Name**");
       expect(res.title).toBe("Stonebridge");
       expect(res.lore).toBe("AI settlement lore");
     });
@@ -497,6 +653,201 @@ describe("DefaultGeneratorEngine", () => {
       expect(res.lore).toContain("Weapon");
       expect(res.lore).toContain("Legendary");
       expect(res.labels).toContain("imported-draft");
+    });
+  });
+
+  describe("generateTome", () => {
+    it("should generate tome details locally when useAI is false", async () => {
+      const res = await engine.generateTome({
+        theme: "Cosmic Horror",
+        format: "Leather-bound Quarto",
+        rarity: "Unique Original Manuscript",
+        useAI: false,
+      });
+
+      expect(res.type).toBe("item");
+      expect(res.title).toBeDefined();
+      expect(res.content).toContain("Physical Description & Format");
+      expect(res.content).toContain("Provenance & Transmission");
+      expect(res.content).toContain("Contents & Revelations");
+      expect(res.lore).toContain("At the Table Reference");
+      expect(res.labels).toContain("tome");
+      expect(res.labels).toContain("item");
+    });
+
+    it("avoids recent mystery text and records the delivered result on local and AI fallback", async () => {
+      const profiles = tomeConfig.deceptionProfilesByTheme["Classic Fantasy"];
+      const allowed = profiles[profiles.length - 1];
+      const recentMysteries = profiles
+        .slice(0, -1)
+        .map((profile) => profile.deception);
+      const recent = vi
+        .spyOn(generationInputHistoryStore, "recent")
+        .mockImplementation((generatorId) =>
+          generatorId === "tome-mysteries" ? recentMysteries : [],
+        );
+      const record = vi.spyOn(generationInputHistoryStore, "record");
+
+      try {
+        for (const useAI of [false, true]) {
+          if (useAI) {
+            mockClientManager.getModel.mockRejectedValueOnce(
+              new Error("AI network error"),
+            );
+          }
+          const result = (await engine.generateTome({
+            genre: "Classic Fantasy",
+            useAI,
+          })) as PublicGeneratorOutput;
+
+          expect(result.tomeFacts?.deception).toBe(allowed.deception);
+          expect(record).toHaveBeenLastCalledWith(
+            "tome-mysteries",
+            result.tomeFacts?.deception,
+          );
+        }
+        expect(recent).toHaveBeenCalledWith("tome-mysteries");
+      } finally {
+        recent.mockRestore();
+        record.mockRestore();
+      }
+    });
+
+    it("should generate tome via AI and fall back gracefully on failure", async () => {
+      mockClientManager.getModel.mockRejectedValue(
+        new Error("AI network error"),
+      );
+      const res = await engine.generateTome({
+        useAI: true,
+      });
+
+      expect(res.type).toBe("item");
+      expect(res.title).toBeDefined();
+      expect(res.content).toBeDefined();
+    });
+
+    it("returns the corrected second-pass tome rather than the first AI draft", async () => {
+      const fullContent = [
+        "### Physical Description & Format",
+        "A parchment manuscript kept in a brass case.",
+        "### Provenance & Transmission",
+        "The temple collected this account of the rite.",
+        "### Contents & Revelations",
+        "The vessel rests until its clay dries in the open air.",
+        "### Risks & Costs of Study",
+        "The false washing rite releases the bound spirit.",
+        "### Adventure Hooks",
+        "1. Recover the sealed vessel before an acolyte performs the rite.",
+      ].join("\n\n");
+      const lore = [
+        "### At the Table Reference",
+        "Inspect the manuscript.",
+        "### Ground Truth for the GM",
+        "- **What the Book Claims**: Wash the vessel.",
+        "- **The Deception / Flaw**: The censor altered the line.",
+        "- **The Objective Truth**: Dry the vessel in air.",
+        "- **Actionable Clue**: A marginal correction.",
+        "### Connected Entities",
+        "- **Author / Compiler**: A temple scribe.",
+        "### Quick Checks & Mechanics",
+        "- **The Failure Condition**: Washing ruptures the vessel.",
+      ].join("\n\n");
+      const correctedDeception =
+        "A censor falsely claimed the clay vessel must be immersed in river water.";
+      const response = (content: string, deception?: string) =>
+        JSON.stringify({
+          title: "The Vessel Manuscript",
+          summary: "An altered spirit-binding rite.",
+          content,
+          lore,
+          canonicalFacts: {
+            centralRule: "Dry the vessel in open air.",
+            productionMethod: "Handwritten vellum.",
+            errorSource: "A censor altered the original line.",
+            ...(deception ? { deception } : {}),
+          },
+          labels: ["tome", "item"],
+          connections: [],
+        });
+      const generateContent = vi
+        .fn()
+        .mockResolvedValueOnce({
+          response: {
+            text: () =>
+              response(
+                fullContent.replace("vessel rests", "soul-forged blade rests"),
+              ),
+          },
+        })
+        .mockResolvedValueOnce({
+          response: {
+            text: () =>
+              response(
+                `${fullContent}\n\n${correctedDeception}`,
+                correctedDeception,
+              ),
+          },
+        });
+      mockClientManager.getModel.mockResolvedValue({ generateContent });
+      const record = vi.spyOn(generationInputHistoryStore, "record");
+
+      try {
+        const result = (await engine.generateTome({
+          theme: "Classic Fantasy",
+          useAI: true,
+        })) as PublicGeneratorOutput;
+
+        expect(generateContent).toHaveBeenCalledTimes(2);
+        expect(result.aiFallback).not.toBe(true);
+        expect(result.content).toContain("The vessel rests");
+        expect(result.content).not.toContain("soul-forged blade");
+        expect(result.tomeFacts?.deception).toBe(correctedDeception);
+        expect(record).toHaveBeenLastCalledWith(
+          "tome-mysteries",
+          correctedDeception,
+        );
+      } finally {
+        record.mockRestore();
+      }
+    });
+
+    it("falls back when AI tome output fails the consistency audit", async () => {
+      mockClientManager.getModel.mockResolvedValue({
+        generateContent: vi.fn().mockResolvedValue({
+          response: {
+            text: () =>
+              JSON.stringify({
+                title: "Incomplete Tome",
+                content: "Only a fragment.",
+                lore: "No required table sections.",
+              }),
+          },
+        }),
+      });
+
+      const result = await engine.generateTome({ useAI: true });
+
+      expect(result.aiFallback).toBe(true);
+      expect(result.content).toContain("### Physical Description & Format");
+      expect(result.content).toContain("### Adventure Hooks");
+      expect(result.lore).toContain("### Ground Truth for the GM");
+    });
+  });
+
+  describe("generateHoliday", () => {
+    it("generates either one observance or a coherent local calendar", async () => {
+      const one = await engine.generateHoliday({
+        setSize: "One observance",
+        useAI: false,
+      });
+      const calendar = await engine.generateHoliday({
+        setSize: "A calendar of 6 observances",
+        useAI: false,
+      });
+      expect(one.type).toBe("note");
+      expect(one.observances).toHaveLength(1);
+      expect(calendar.observances).toHaveLength(6);
+      expect(calendar.content).toContain("Calendar overview");
     });
   });
 
@@ -521,6 +872,233 @@ describe("DefaultGeneratorEngine", () => {
       expect(res.lore).toContain("- **📅 Threat**");
       expect(res.lore).toContain("- **👤");
       expect(res.labels).toContain("imported-draft");
+    });
+  });
+
+  describe("generateHeist", () => {
+    const auditJson = (verdict: "clean" | "repair" = "repair") =>
+      JSON.stringify({
+        verdict,
+        fullScore: "Escape with the objective.",
+        transitions: [
+          {
+            event: "The objective moves",
+            stateBefore: "Objective secured",
+            stateAfter: "Objective with crew",
+            factsChanged: ["objective.location: secured -> with crew"],
+          },
+        ],
+        issues:
+          verdict === "repair"
+            ? [
+                {
+                  id: "state-1",
+                  sections: ["The Getaway"],
+                  problem: "A later fact is stale.",
+                  requiredFact: "The objective is with the crew.",
+                },
+              ]
+            : [],
+      });
+
+    it("reviews a structurally valid heist and keeps semantic-only improvements", async () => {
+      const clean = generateHeistLocal({ heistType: "Theft" });
+      const json = JSON.stringify({
+        title: clean.title,
+        content: clean.content,
+        lore: clean.lore,
+        labels: ["heist", "heist-generator"],
+      });
+      const stream = (text: string) => ({
+        stream: (async function* () {
+          yield { text: () => text };
+        })(),
+      });
+      const generationChat = {
+        sendMessageStream: vi.fn().mockResolvedValueOnce(stream(json)),
+      };
+      const reviewChat = {
+        sendMessageStream: vi
+          .fn()
+          .mockResolvedValueOnce(stream(auditJson()))
+          .mockResolvedValueOnce(
+            stream(
+              JSON.stringify({
+                ...JSON.parse(json),
+                title: "The Reviewed Heist",
+              }),
+            ),
+          ),
+      };
+      mockClientManager.getModel
+        .mockResolvedValueOnce({
+          startChat: vi.fn().mockReturnValue(generationChat),
+        })
+        .mockResolvedValueOnce({
+          startChat: vi.fn().mockReturnValue(reviewChat),
+        });
+
+      const res = await engine.generateHeist({
+        heistType: "Theft",
+        campaignContext: "The crew owes Magistrate Sorn a favour.",
+        useAI: true,
+      });
+
+      expect(generationChat.sendMessageStream).toHaveBeenCalledTimes(1);
+      expect(reviewChat.sendMessageStream).toHaveBeenCalledTimes(2);
+      expect(reviewChat.sendMessageStream.mock.calls[0][0]).toContain(
+        "The crew owes Magistrate Sorn a favour.",
+      );
+      expect(res.title).toBe("The Reviewed Heist");
+      expect(res.lore).toContain("### Alarm Track");
+    });
+
+    it("repairs a heist the deterministic check rejects", async () => {
+      const clean = generateHeistLocal({ heistType: "Theft" });
+      // The objective section under the wrong heading for the type: a break
+      // that code cannot fix on its own, unlike a duplicate.
+      const brokenJson = JSON.stringify({
+        title: clean.title,
+        content: (clean.content ?? "").replace("### The Prize", "### The Loot"),
+        lore: clean.lore,
+        labels: ["heist"],
+      });
+      const fixedJson = JSON.stringify({
+        title: clean.title,
+        content: clean.content,
+        lore: clean.lore,
+        labels: ["heist"],
+      });
+      const stream = (text: string) => ({
+        stream: (async function* () {
+          yield { text: () => text };
+        })(),
+      });
+      const generationChat = {
+        sendMessageStream: vi.fn().mockResolvedValueOnce(stream(brokenJson)),
+      };
+      const reviewChat = {
+        sendMessageStream: vi
+          .fn()
+          .mockResolvedValueOnce(stream(auditJson("clean")))
+          .mockResolvedValueOnce(stream(fixedJson)),
+      };
+      mockClientManager.getModel
+        .mockResolvedValueOnce({
+          startChat: vi.fn().mockReturnValue(generationChat),
+        })
+        .mockResolvedValueOnce({
+          startChat: vi.fn().mockReturnValue(reviewChat),
+        });
+
+      const res = await engine.generateHeist({
+        heistType: "Theft",
+        useAI: true,
+      });
+
+      expect(generationChat.sendMessageStream).toHaveBeenCalledTimes(1);
+      expect(reviewChat.sendMessageStream).toHaveBeenCalledTimes(2);
+      // The audit receives deterministic findings; repair remains surgical.
+      expect(reviewChat.sendMessageStream.mock.calls[0][0]).toContain(
+        'must be headed "The Prize"',
+      );
+      expect(reviewChat.sendMessageStream.mock.calls[1][0]).toContain(
+        "Do not generate a new scenario",
+      );
+      expect(res.content).toContain("### The Prize");
+    });
+
+    it("accepts a repair that fixes the structural break but is still long", async () => {
+      const clean = generateHeistLocal({ heistType: "Theft" });
+      const brokenJson = JSON.stringify({
+        title: clean.title,
+        content: (clean.content ?? "").replace("### The Prize", "### The Loot"),
+        lore: clean.lore,
+        labels: ["heist"],
+      });
+      // Structurally correct now, but padded past the advisory word budget —
+      // a raw finding-count comparison would tie and discard this.
+      const fixedButLongJson = JSON.stringify({
+        title: clean.title,
+        content: clean.content,
+        lore: `${clean.lore}\n\n### Notes\n${"filler ".repeat(1200)}`,
+        labels: ["heist"],
+      });
+      const stream = (text: string) => ({
+        stream: (async function* () {
+          yield { text: () => text };
+        })(),
+      });
+      const generationChat = {
+        sendMessageStream: vi.fn().mockResolvedValueOnce(stream(brokenJson)),
+      };
+      const reviewChat = {
+        sendMessageStream: vi
+          .fn()
+          .mockResolvedValueOnce(stream(auditJson("clean")))
+          .mockResolvedValueOnce(stream(fixedButLongJson)),
+      };
+      mockClientManager.getModel
+        .mockResolvedValueOnce({
+          startChat: vi.fn().mockReturnValue(generationChat),
+        })
+        .mockResolvedValueOnce({
+          startChat: vi.fn().mockReturnValue(reviewChat),
+        });
+
+      const res = await engine.generateHeist({
+        heistType: "Theft",
+        useAI: true,
+      });
+
+      expect(res.content).toContain("### The Prize");
+      expect(res.content).not.toContain("### The Loot");
+    });
+
+    it("keeps the original when the repair turn makes it worse", async () => {
+      const clean = generateHeistLocal({ heistType: "Theft" });
+      const brokenJson = JSON.stringify({
+        title: clean.title,
+        content: (clean.content ?? "").replace("### The Prize", "### The Loot"),
+        lore: clean.lore,
+        labels: ["heist"],
+      });
+      // A "repair" that strips half the document is worse, not better.
+      const worseJson = JSON.stringify({
+        title: clean.title,
+        content: clean.content,
+        lore: "### The Getaway\nGone.",
+        labels: ["heist"],
+      });
+      const stream = (text: string) => ({
+        stream: (async function* () {
+          yield { text: () => text };
+        })(),
+      });
+      const generationChat = {
+        sendMessageStream: vi.fn().mockResolvedValueOnce(stream(brokenJson)),
+      };
+      const reviewChat = {
+        sendMessageStream: vi
+          .fn()
+          .mockResolvedValueOnce(stream(auditJson()))
+          .mockResolvedValueOnce(stream(worseJson)),
+      };
+      mockClientManager.getModel
+        .mockResolvedValueOnce({
+          startChat: vi.fn().mockReturnValue(generationChat),
+        })
+        .mockResolvedValueOnce({
+          startChat: vi.fn().mockReturnValue(reviewChat),
+        });
+
+      const res = await engine.generateHeist({
+        heistType: "Theft",
+        useAI: true,
+      });
+
+      expect(res.lore).toContain("### Alarm Track");
+      expect(res.lore).toContain("### Flashback Opportunities");
     });
   });
 
@@ -688,7 +1266,7 @@ describe("DefaultGeneratorEngine", () => {
                 title: "The Glass Choir",
                 summary: "A choir that hears a signal beneath the city.",
                 content: "### What they believe\\nThe signal is mercy.",
-                lore: "### At the Table\\n- **Leader**: Orra Venn.",
+                lore: "### At a Glance\\n- **Leader**: Orra Venn.",
                 labels: ["cosmic-horror"],
               }),
           },
@@ -809,8 +1387,9 @@ describe("DefaultGeneratorEngine", () => {
       });
 
       expect(mockClientManager.getModel).toHaveBeenCalled();
-      expect(mockModel.generateContent).toHaveBeenCalledWith(
-        expect.stringContaining("a corp-controlled district"),
+      expectPromptToContain(
+        mockModel.generateContent,
+        "a corp-controlled district",
       );
       expect(res.title).toBe("Reyes' Noodle Hole");
       expect(res.labels).toContain("social-hub-generator");
@@ -896,9 +1475,7 @@ describe("DefaultGeneratorEngine", () => {
       });
 
       expect(mockClientManager.getModel).toHaveBeenCalled();
-      expect(mockModel.generateContent).toHaveBeenCalledWith(
-        expect.stringContaining("a port under blockade"),
-      );
+      expectPromptToContain(mockModel.generateContent, "a port under blockade");
       expect(res.title).toBe("The Sullen Lantern");
       expect(res.summary).toBe("A grim dockside alehouse.");
       expect(res.labels).toContain("tavern-generator");
@@ -988,9 +1565,7 @@ describe("DefaultGeneratorEngine", () => {
       });
 
       expect(mockClientManager.getModel).toHaveBeenCalled();
-      expect(mockModel.generateContent).toHaveBeenCalledWith(
-        expect.stringContaining("a succession crisis"),
-      );
+      expectPromptToContain(mockModel.generateContent, "a succession crisis");
       expect(res.title).toBe("The Kingdom of Vaelthorn");
       expect(res.labels).toContain("kingdom-generator");
     });
@@ -1087,8 +1662,9 @@ describe("DefaultGeneratorEngine", () => {
       });
 
       expect(mockClientManager.getModel).toHaveBeenCalled();
-      expect(mockModel.generateContent).toHaveBeenCalledWith(
-        expect.stringContaining("a corp war over water rights"),
+      expectPromptToContain(
+        mockModel.generateContent,
+        "a corp war over water rights",
       );
       expect(res.title).toBe("Axiom Industrial Authority");
       expect(res.labels).toContain("nation-generator");
@@ -1120,6 +1696,10 @@ describe("DefaultGeneratorEngine", () => {
     }> = [
       { label: "NPC", call: (e) => e.generateNPC({ useAI: true }) },
       { label: "faction", call: (e) => e.generateFaction({ useAI: true }) },
+      {
+        label: "faction roster",
+        call: (e) => e.generateFactionRoster({ useAI: true }),
+      },
       {
         label: "vampire clan",
         call: (e) => e.generateVampireClan({ useAI: true }),
@@ -1311,23 +1891,20 @@ describe("DefaultGeneratorEngine", () => {
         useAI: true,
       });
 
-      expect(mockModel.generateContent).toHaveBeenCalledWith(
-        expect.stringContaining("- **👤 Deity Type**"),
+      expectPromptToContain(mockModel.generateContent, "- **👤 Deity Type**");
+      expectPromptToContain(
+        mockModel.generateContent,
+        "- **✨ Primary Domain**",
       );
-      expect(mockModel.generateContent).toHaveBeenCalledWith(
-        expect.stringContaining("- **✨ Primary Domain**"),
+      expectPromptToContain(mockModel.generateContent, "- **👥 Worshippers**");
+      expectPromptToContain(
+        mockModel.generateContent,
+        "- **📍 Sacred Symbol**",
       );
-      expect(mockModel.generateContent).toHaveBeenCalledWith(
-        expect.stringContaining("- **👥 Worshippers**"),
-      );
-      expect(mockModel.generateContent).toHaveBeenCalledWith(
-        expect.stringContaining("- **📍 Sacred Symbol**"),
-      );
-      expect(mockModel.generateContent).toHaveBeenCalledWith(
-        expect.stringContaining("- **📅 Secret**"),
-      );
-      expect(mockModel.generateContent).toHaveBeenCalledWith(
-        expect.stringContaining("- **⚔ Immediate Hook**"),
+      expectPromptToContain(mockModel.generateContent, "- **📅 Secret**");
+      expectPromptToContain(
+        mockModel.generateContent,
+        "- **⚔ Immediate Hook**",
       );
     });
 

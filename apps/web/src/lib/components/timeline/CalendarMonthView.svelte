@@ -173,7 +173,7 @@
   ontouchend={handleTouchEnd}
 >
   <div
-    class="grid grid-cols-7 gap-0 sm:gap-2 text-center text-[10px] font-bold uppercase tracking-[0.22em] text-theme-muted"
+    class="grid grid-cols-7 gap-0 sm:gap-2 text-center text-micro font-bold uppercase tracking-[0.22em] text-theme-muted"
   >
     {#each weekdayLabels as label (label)}
       <div class="px-1 py-1 sm:rounded-full sm:px-2">{label}</div>
@@ -257,9 +257,12 @@
               class="absolute inset-0 flex items-center justify-center rounded-none sm:rounded-2xl pointer-events-none z-10"
             >
               <div
-                class="flex items-center gap-1.5 rounded-full bg-theme-primary px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-theme-bg shadow-lg animate-pulse"
+                class="flex items-center gap-1.5 rounded-full bg-theme-primary px-3 py-1.5 text-micro font-bold uppercase tracking-widest text-theme-bg shadow-lg animate-pulse"
               >
-                <span class="icon-[lucide--calendar-plus] h-3.5 w-3.5"></span>
+                <span
+                  aria-hidden="true"
+                  class="icon-[lucide--calendar-plus] h-3.5 w-3.5"
+                ></span>
                 Set date
               </div>
             </div>
@@ -268,7 +271,7 @@
           <div class="flex items-center justify-between gap-1">
             <span
               class={[
-                "inline-flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold transition-colors sm:h-7 sm:w-7 sm:text-xs",
+                "inline-flex h-5 w-5 items-center justify-center rounded-full text-micro font-bold transition-colors sm:h-7 sm:w-7 sm:text-xs",
                 isToday(day.date.year, day.date.month, day.date.day)
                   ? "bg-theme-primary text-theme-bg ring-2 ring-theme-primary/40"
                   : day.inCurrentMonth
@@ -283,7 +286,7 @@
             </span>
             {#if day.entries.length + day.hiddenEntries.length > 0}
               <span
-                class="hidden text-[9px] uppercase tracking-[0.16em] text-theme-muted sm:inline"
+                class="hidden text-nano uppercase tracking-[0.16em] text-theme-muted sm:inline"
               >
                 {day.entries.length + day.hiddenEntries.length} events
               </span>
@@ -303,12 +306,12 @@
                 onmouseleave={clearHover}
               >
                 <span
-                  class="block truncate text-[9px] font-bold text-theme-text sm:text-[11px]"
+                  class="block truncate text-nano font-bold text-theme-text sm:text-meta"
                 >
                   {entry.title}
                 </span>
                 <span
-                  class="hidden truncate text-[9px] uppercase tracking-[0.16em] text-theme-muted sm:block"
+                  class="hidden truncate text-nano uppercase tracking-[0.16em] text-theme-muted sm:block"
                 >
                   {entry.entityType}
                 </span>

@@ -1,19 +1,19 @@
 # Codex Interchange Format (CIF)
 
-**Status:** Proposal
+**Status:** Implemented
 
-**Version:** 1.0 (draft)
+**Version:** 1.0
 
 **Audience:** tool authors, migration-script authors, and people preparing a world for Codex Cryptica
 
-Codex Interchange Format (CIF) is a proposed, portable format for moving a
-world and its relationships into Codex Cryptica. It is designed to be easy to
-generate, inspect, validate, and migrate from other worldbuilding tools.
+Codex Interchange Format (CIF) is a portable format for moving a world and its
+relationships into Codex Cryptica. It is designed to be easy to generate,
+inspect, validate, and migrate from other worldbuilding tools.
 
-> CIF is not an upload format supported by Codex Cryptica yet. The current
-> importer accepts documents for analysis and uses a separate internal staging
-> model. Treat this document as the contract for a future mechanical importer,
-> not as a promise that a `.cif` file can be uploaded today.
+> CIF import is live: a `.cif.json` or `.cif.zip` package can be uploaded
+> through the importer, no AI key required. Text-only packages shipped in
+> phase 1 (#1735) and ZIP packages with image assets in phase 2 (#1760).
+> Documents in other formats still go through the separate analysis flow.
 
 ## Goals
 

@@ -120,7 +120,7 @@
           >
             <button
               type="button"
-              class="group inline-flex h-8 w-8 items-center justify-center rounded-full border border-theme-border/80 bg-theme-bg/75 text-theme-muted backdrop-blur-sm transition-colors hover:border-theme-primary/50 hover:text-theme-primary"
+              class="touch-target group inline-flex h-8 w-8 items-center justify-center rounded-full border border-theme-border/80 bg-theme-bg/75 text-theme-muted backdrop-blur-sm transition-colors hover:border-theme-primary/50 hover:text-theme-primary"
               onclick={onEdit}
               disabled={isSaving}
               title="Edit briefing"
@@ -131,7 +131,7 @@
             </button>
             <button
               type="button"
-              class="group inline-flex h-8 w-8 items-center justify-center rounded-full border border-theme-primary/30 bg-theme-bg/75 text-theme-primary backdrop-blur-sm transition-colors hover:bg-theme-primary/15 disabled:opacity-50"
+              class="touch-target group inline-flex h-8 w-8 items-center justify-center rounded-full border border-theme-primary/30 bg-theme-bg/75 text-theme-primary backdrop-blur-sm transition-colors hover:bg-theme-primary/15 disabled:opacity-50"
               onclick={onGenerate}
               disabled={isSaving || isRevising}
               title="Generate briefing"
@@ -159,14 +159,14 @@
       class="flex flex-wrap gap-2 border-t border-theme-border/60 px-5 py-4 sm:px-6"
     >
       <button
-        class="rounded-lg bg-theme-primary px-4 py-2 text-[10px] font-bold uppercase tracking-[0.2em] text-theme-bg disabled:opacity-50"
+        class="rounded-lg bg-theme-primary px-4 py-2 text-micro font-bold uppercase tracking-[0.2em] text-theme-bg disabled:opacity-50"
         onclick={onSave}
         disabled={isSaving || !isDraftDirty}
       >
         Save Briefing
       </button>
       <button
-        class="rounded-lg px-4 py-2 text-[10px] font-bold uppercase tracking-[0.2em] text-theme-muted hover:text-theme-text disabled:opacity-50"
+        class="rounded-lg px-4 py-2 text-micro font-bold uppercase tracking-[0.2em] text-theme-muted hover:text-theme-text disabled:opacity-50"
         onclick={onCancel}
         disabled={isSaving}
       >

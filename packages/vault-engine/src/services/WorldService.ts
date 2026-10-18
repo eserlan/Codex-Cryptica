@@ -21,6 +21,7 @@ export interface VaultMetadataRecord {
   tagline?: string;
   description?: string;
   coverImage?: string;
+  systemId?: string;
   lastModified: number;
 }
 
@@ -30,6 +31,7 @@ export interface WorldMetadata {
   tagline?: string;
   description?: string;
   coverImage?: string;
+  systemId?: string;
 }
 
 export interface RecentActivity {
@@ -38,8 +40,8 @@ export interface RecentActivity {
   path: string;
   excerpt: string;
   type?: string;
-  tags: string[];
-  labels?: string[];
+  tags?: string[];
+  labels: string[];
   lastModified: number;
   image?: string;
   thumbnail?: string;
@@ -187,6 +189,7 @@ export class WorldServiceImplementation {
       tagline: record?.tagline,
       description: record?.description,
       coverImage: record?.coverImage,
+      systemId: record?.systemId,
     };
   }
 
@@ -203,6 +206,7 @@ export class WorldServiceImplementation {
       tagline: metadata.tagline ?? existing?.tagline ?? undefined,
       description: metadata.description ?? existing?.description ?? undefined,
       coverImage: metadata.coverImage ?? existing?.coverImage ?? undefined,
+      systemId: metadata.systemId ?? existing?.systemId ?? undefined,
       lastModified: this.getNow(),
     };
 
@@ -289,8 +293,8 @@ export class WorldServiceImplementation {
         path,
         excerpt: getExcerpt(content || ""),
         type: record.type,
-        tags: record.tags || [],
-        labels: record.labels || [],
+        tags: record.tags,
+        labels: record.labels?.length ? record.labels : record.tags || [],
         lastModified: record.lastModified,
         image: record.image,
         thumbnail: record.thumbnail,

@@ -7,5 +7,5 @@ export function templateGuidanceBlock(template: string): string {
 }
 
 export function templateGuidanceInstruction(outputField: string): string {
-  return `Use the template guidance only to understand each section's purpose. Preserve its markdown section headings, but write new, entity-specific prose beneath them. Do not reproduce explanatory text, placeholders, questions, examples, or XML tags from <template_guidance> in the generated ${outputField}.`;
+  return `Use the template guidance only to understand each section's purpose. Preserve its markdown section headings, but write new, entity-specific prose beneath them. Do not reproduce explanatory text, placeholders, questions, examples, or XML tags from <template_guidance> in the generated ${outputField}. If a section's guidance states a length or format, such as "one line" or "a bulleted list", follow it.`;
 }

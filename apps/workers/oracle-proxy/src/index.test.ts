@@ -1,5 +1,5 @@
 import { beforeEach, afterEach, describe, it, expect, vi } from "vitest";
-import { DEFAULT_CF_IMAGE_MODEL } from "../../../../packages/oracle-engine/src/image-defaults";
+import { DEFAULT_CF_IMAGE_MODEL } from "./image-defaults";
 import worker, { isOriginAllowed } from "./index";
 
 describe("Oracle Proxy Worker CORS", () => {
@@ -27,6 +27,45 @@ describe("Oracle Proxy Worker CORS", () => {
       "https://staging.codex-cryptica.com",
     ]) {
       expect(isOriginAllowed(origin, emptyEnv), origin).toBeFalsy();
+    }
+  });
+
+  it("adds CORS headers to starter deck reads", async () => {
+    const response = await worker.fetch(
+      new Request(
+        "https://oracle-proxy.espen-erlandsen.workers.dev/api/starter-tile-decks/kenney-scribble-dungeons",
+        { headers: { Origin: "https://codexcryptica.com" } },
+      ),
+      {
+        ...emptyEnv,
+        BUCKET: {
+          get: async () => ({
+            body: new Blob(["{}"], { type: "application/json" }).stream(),
+            etag: "starter-deck-manifest",
+          }),
+        },
+      },
+      {} as ExecutionContext,
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("Access-Control-Allow-Origin")).toBe(
+      "https://codexcryptica.com",
+    );
+  });
+
+  it("returns not found for malformed percent escapes in starter deck paths", async () => {
+    for (const path of [
+      "/api/starter-tile-decks/%ZZ",
+      "/api/starter-tile-decks/kenney-scribble-dungeons/assets/%ZZ.png",
+    ]) {
+      const response = await worker.fetch(
+        new Request(`https://oracle-proxy.espen-erlandsen.workers.dev${path}`),
+        emptyEnv,
+        {} as ExecutionContext,
+      );
+
+      expect(response.status).toBe(404);
     }
   });
 
@@ -187,6 +226,52 @@ describe("Oracle Proxy Worker directory routing", () => {
   });
 });
 
+describe("Oracle Proxy Worker asset gallery routing", () => {
+  it("caches successful gallery responses by path without caching query variants", async () => {
+    const match = vi
+      .fn()
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(new Response("cached gallery"));
+    const put = vi.fn(async () => undefined);
+    const previousCaches = (globalThis as any).caches;
+    (globalThis as any).caches = { default: { match, put } };
+    const list = vi.fn(async () => ({ objects: [], truncated: false }));
+    const waitUntil = vi.fn();
+    const env = {
+      GEMINI_API_KEY: "test-key",
+      BUCKET: { list },
+    };
+
+    try {
+      const first = await worker.fetch(
+        new Request("https://assets.codexcryptica.com/gallery?refresh=1"),
+        env,
+        { waitUntil } as unknown as ExecutionContext,
+      );
+      const second = await worker.fetch(
+        new Request("https://assets.codexcryptica.com/gallery?refresh=2"),
+        env,
+        { waitUntil } as unknown as ExecutionContext,
+      );
+
+      expect(first.status).toBe(200);
+      expect(await second.text()).toBe("cached gallery");
+      expect(list).toHaveBeenCalledTimes(1);
+      expect(put).toHaveBeenCalledTimes(1);
+      expect(put.mock.calls[0][0].url).toBe(
+        "https://assets.codexcryptica.com/gallery",
+      );
+      expect(waitUntil).toHaveBeenCalledTimes(1);
+    } finally {
+      if (previousCaches === undefined) {
+        delete (globalThis as any).caches;
+      } else {
+        (globalThis as any).caches = previousCaches;
+      }
+    }
+  });
+});
+
 describe("Oracle Proxy Worker image generation", () => {
   beforeEach(() => {
     (globalThis as any).caches = {
@@ -236,6 +321,28 @@ describe("Oracle Proxy Worker image generation", () => {
         }),
       }),
     );
+  });
+
+  it("converts nested binary image outputs to base64", async () => {
+    const outputs = [
+      { image: new Uint8Array([9, 1, 2, 3, 9]).subarray(1, 4) },
+      { image: new Uint8Array([1, 2, 3]).buffer },
+    ];
+
+    for (const output of outputs) {
+      const ai = { run: vi.fn(async () => output) };
+      const response = await worker.fetch(
+        request({ prompt: "castle at sunset" }),
+        { GEMINI_API_KEY: "test-key", AI: ai },
+        {} as ExecutionContext,
+      );
+
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual({
+        success: true,
+        result: { image: "AQID" },
+      });
+    }
   });
 
   it("forwards the requested size and the negative prompt as multipart", async () => {
@@ -667,6 +774,167 @@ describe("Oracle Proxy Worker Interactions API", () => {
       }),
     );
   });
+
+  it("gracefully falls back to Gemini when luna-fast is requested but OPENAI_API_KEY is not configured", async () => {
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            id: "v1_gemini_fallback",
+            steps: [{ content: [{ text: "Gemini fallback response." }] }],
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
+    );
+    globalThis.fetch = fetchMock as typeof fetch;
+
+    const response = await worker.fetch(
+      request({ input: "Begin adventure", model: "luna-fast" }),
+      env,
+      {} as ExecutionContext,
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body).toEqual(
+      expect.objectContaining({
+        id: "v1_gemini_fallback",
+        text: "Gemini fallback response.",
+      }),
+    );
+
+    const [calledUrl, init] = fetchMock.mock.calls[0] as unknown as [
+      string,
+      RequestInit,
+    ];
+    expect(String(calledUrl)).toContain("/v1beta/interactions");
+    const sent = JSON.parse(init.body as string);
+    expect(sent.model).toBe("gemini-3.5-flash-lite");
+  });
+
+  it("continues a Gemini fallback interaction on Gemini for the next OpenAI-model turn", async () => {
+    const fetchMock = vi.fn(
+      async (_url: string | URL | Request) =>
+        new Response(
+          JSON.stringify({
+            id: "v1_gemini_fallback",
+            steps: [{ content: [{ text: "Continued via Gemini." }] }],
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
+    );
+    globalThis.fetch = fetchMock as typeof fetch;
+
+    const response = await worker.fetch(
+      request({
+        input: "Next action",
+        model: "luna-fast",
+        previous_interaction_id: "v1_gemini_fallback",
+      }),
+      { ...env, OPENAI_API_KEY: "test-openai-key" },
+      {} as ExecutionContext,
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      id: "v1_gemini_fallback",
+      text: "Continued via Gemini.",
+    });
+    expect(fetchMock).toHaveBeenCalledOnce();
+    expect(String(fetchMock.mock.calls[0][0])).toContain(
+      "/v1beta/interactions",
+    );
+    const sent = JSON.parse(
+      (fetchMock.mock.calls[0][1] as RequestInit).body as string,
+    );
+    expect(sent.previous_interaction_id).toBe("v1_gemini_fallback");
+  });
+
+  it("gracefully falls back to Gemini when OpenAI returns a non-stale error (e.g. 500)", async () => {
+    let callCount = 0;
+    const fetchMock = vi.fn(async (url: string | URL | Request) => {
+      callCount++;
+      if (String(url).includes("/v1/responses")) {
+        return new Response(
+          JSON.stringify({ error: { message: "OpenAI service error" } }),
+          { status: 500, headers: { "Content-Type": "application/json" } },
+        );
+      }
+      return new Response(
+        JSON.stringify({
+          id: "v1_gemini_recovered",
+          steps: [{ content: [{ text: "Recovered via Gemini." }] }],
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      );
+    });
+    globalThis.fetch = fetchMock as typeof fetch;
+
+    const response = await worker.fetch(
+      request({ input: "Next turn", model: "luna-fast" }),
+      { ...env, OPENAI_API_KEY: "test-openai-key" },
+      {} as ExecutionContext,
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body).toEqual(
+      expect.objectContaining({
+        id: "v1_gemini_recovered",
+        text: "Recovered via Gemini.",
+      }),
+    );
+    expect(callCount).toBe(2);
+  });
+
+  it("does not send an OpenAI continuation id to Gemini after a failed continuation", async () => {
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({ error: { message: "OpenAI service error" } }),
+          { status: 500, headers: { "Content-Type": "application/json" } },
+        ),
+    );
+    globalThis.fetch = fetchMock as typeof fetch;
+
+    const response = await worker.fetch(
+      request({
+        input: "The next action only",
+        model: "luna-fast",
+        previous_interaction_id: "resp_openai_previous",
+      }),
+      { ...env, OPENAI_API_KEY: "test-openai-key" },
+      {} as ExecutionContext,
+    );
+
+    expect(response.status).toBe(500);
+    expect(await response.json()).toEqual({
+      error: { message: "OpenAI service error" },
+    });
+    expect(fetchMock).toHaveBeenCalledOnce();
+    expect(String(fetchMock.mock.calls[0][0])).toContain("/v1/responses");
+  });
+
+  it("does not send an OpenAI continuation id to Gemini when the key is missing", async () => {
+    const fetchMock = vi.fn();
+    globalThis.fetch = fetchMock as typeof fetch;
+
+    const response = await worker.fetch(
+      request({
+        input: "The next action only",
+        model: "luna-fast",
+        previous_interaction_id: "resp_openai_previous",
+      }),
+      env,
+      {} as ExecutionContext,
+    );
+
+    expect(response.status).toBe(500);
+    expect(await response.json()).toEqual({
+      error: { message: "missing-openai-api-key" },
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
 });
 
 describe("Oracle Proxy Worker: operation-field discriminator (US1 regression)", () => {
@@ -801,5 +1069,160 @@ describe("Oracle Proxy Worker: operation-field discriminator (US1 regression)", 
       {} as ExecutionContext,
     );
     expect(invalidResponse.status).toBe(400);
+  });
+});
+
+describe("Oracle Proxy Worker: trusted automation path", () => {
+  const secretKey = "test-session-secret";
+  const automationKey = "test-automation-key-secret";
+  const env = {
+    GEMINI_API_KEY: "test-key",
+    SESSION_TOKEN_SECRET: secretKey,
+    CODEX_AUTOMATION_KEY: automationKey,
+  };
+  const originalFetch = globalThis.fetch;
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+  });
+
+  it("mints an automation session token without requiring an allowed Origin header", async () => {
+    const sessionReq = new Request(
+      "https://oracle-proxy.espen-erlandsen.workers.dev/api/session",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Codex-Automation-Key": automationKey,
+        },
+      },
+    );
+
+    const sessionRes = await worker.fetch(
+      sessionReq,
+      env,
+      {} as ExecutionContext,
+    );
+
+    expect(sessionRes.status).toBe(200);
+    const body = (await sessionRes.json()) as any;
+    expect(body.scope).toBe("automation");
+    expect(body.token).toBeTruthy();
+  });
+
+  it("rejects public /api/session requests with no allowed Origin header", async () => {
+    const sessionReq = new Request(
+      "https://oracle-proxy.espen-erlandsen.workers.dev/api/session",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Origin: "https://unauthorized-domain.com",
+        },
+        body: JSON.stringify({ turnstileToken: "some-token" }),
+      },
+    );
+
+    const sessionRes = await worker.fetch(
+      sessionReq,
+      env,
+      {} as ExecutionContext,
+    );
+
+    expect(sessionRes.status).toBe(403);
+  });
+
+  it("allows generation requests using an automation token without an Origin header", async () => {
+    // 1. Mint automation token
+    const sessionReq = new Request(
+      "https://oracle-proxy.espen-erlandsen.workers.dev/api/session",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Codex-Automation-Key": automationKey,
+        },
+      },
+    );
+    const sessionRes = await worker.fetch(
+      sessionReq,
+      env,
+      {} as ExecutionContext,
+    );
+    const { token } = (await sessionRes.json()) as { token: string };
+
+    // 2. Make generation request with automation token and NO Origin header
+    const generateFetch = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            candidates: [
+              { content: { parts: [{ text: "automation output" }] } },
+            ],
+          }),
+          { status: 200 },
+        ),
+    );
+    globalThis.fetch = generateFetch as typeof fetch;
+
+    const genReq = new Request(
+      "https://oracle-proxy.espen-erlandsen.workers.dev/",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          contents: [{ role: "user", parts: [{ text: "generate content" }] }],
+        }),
+      },
+    );
+
+    const genRes = await worker.fetch(genReq, env, {} as ExecutionContext);
+    expect(genRes.status).toBe(200);
+    expect(await genRes.json()).toEqual({
+      candidates: [{ content: { parts: [{ text: "automation output" }] } }],
+    });
+  });
+
+  it("blocks generation requests using a human token when Origin header is missing or unallowed", async () => {
+    // 1. Mint human token
+    const sessionReq = new Request(
+      "https://oracle-proxy.espen-erlandsen.workers.dev/api/session",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Origin: "https://codexcryptica.com",
+        },
+        body: JSON.stringify({ turnstileToken: "dev-turnstile-token" }),
+      },
+    );
+    const sessionRes = await worker.fetch(
+      sessionReq,
+      env,
+      {} as ExecutionContext,
+    );
+    const { token } = (await sessionRes.json()) as { token: string };
+
+    // 2. Make generation request with human token but without allowed Origin header
+    const genReq = new Request(
+      "https://oracle-proxy.espen-erlandsen.workers.dev/",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          Origin: "https://unauthorized-origin.com",
+        },
+        body: JSON.stringify({
+          contents: [{ role: "user", parts: [{ text: "generate content" }] }],
+        }),
+      },
+    );
+
+    const genRes = await worker.fetch(genReq, env, {} as ExecutionContext);
+    expect(genRes.status).toBe(403);
   });
 });

@@ -26,8 +26,8 @@ existing PR) already exists for the current work.
    - Post to Discord: `scripts/discord-notify.sh "🔍 Starting review-and-fix on PR #<n> (<branch>)"`
 
 3. **Run the review**
-   - Invoke the `codex-review` skill against the branch's changes. This already
-     incorporates the general `code-review:code-review` pass and the constitution
+   - Invoke the `codex-review` skill against the branch's changes. It first
+     incorporates the canonical general `code-review` pass and the constitution
      check — do not duplicate that logic here, just consume its findings.
    - Run it at **low effort, inline, no agent fan-out** (per `codex-review`'s own
      token-budget guidance): read the diff and touched files directly rather than

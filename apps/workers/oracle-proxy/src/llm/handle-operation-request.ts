@@ -6,12 +6,18 @@
  */
 
 import { getModel, getOperationDefaults } from "./registry";
-import { createResolver } from "./resolver";
+import { createProviderResolver } from "./provider-resolver";
 import { validateOperationRequestBody } from "./request-validation";
 import { buildResolutionLogEntry } from "./observability";
-import { callGemini } from "./adaptors/gemini-adaptor";
-import { callOpenAi } from "./adaptors/openai-adaptor";
-import type { LlmOperation, LlmRequest } from "./types";
+import { streamGemini } from "./adaptors/gemini-adaptor";
+import { streamOpenAi } from "./adaptors/openai-adaptor";
+import type {
+  GenerationEvent,
+  LlmModelDefinition,
+  LlmOperation,
+  LlmProvider,
+  LlmRequest,
+} from "./types";
 
 const LLM_OPERATIONS: ReadonlySet<LlmOperation> = new Set([
   "structured-generation",
@@ -37,13 +43,20 @@ interface HandleEnv {
   OPENAI_API_KEY?: string;
 }
 
-export async function handleLlmOperationRequest(
+type JsonResponder = (data: unknown, status: number) => Response;
+
+/**
+ * The part both handlers share: a JSON responder bound to the CORS headers,
+ * request validation, and the provider-neutral request built from the body.
+ * Returns the error response to send, or the prepared pieces.
+ */
+function prepareOperation(
   body: any,
   corsHeaders: Record<string, string>,
-  env: HandleEnv,
-  now: () => number = Date.now,
-): Promise<Response> {
-  const json = (data: unknown, status: number) =>
+):
+  | { response: Response }
+  | { json: JsonResponder; llmRequest: LlmRequest; context: "public" } {
+  const json: JsonResponder = (data, status) =>
     new Response(JSON.stringify(data), {
       status,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -51,7 +64,7 @@ export async function handleLlmOperationRequest(
 
   const validation = validateOperationRequestBody(body);
   if (!validation.valid) {
-    return json({ error: validation.error }, 400);
+    return { response: json({ error: validation.error }, 400) };
   }
 
   const llmRequest: LlmRequest = {
@@ -65,17 +78,22 @@ export async function handleLlmOperationRequest(
 
   // Context is hardcoded to "public" for every request in this slice
   // (FR-003) — no header/token inspection or other caller-identity
-  // detection. Real authenticated-context detection is deferred to #2050.
-  const context = "public" as const;
+  // detection. Real authenticated-context detection is deferred to #2050,
+  // which will change both handlers together.
+  return { json, llmRequest, context: "public" };
+}
 
-  const resolver = createResolver({
-    getModel,
-    getOperationDefaults,
-    adaptors: {
-      gemini: (req, model) => callGemini(req, model, env),
-      openai: (req, model) => callOpenAi(req, model, env),
-    },
-  });
+export async function handleLlmOperationRequest(
+  body: any,
+  corsHeaders: Record<string, string>,
+  env: HandleEnv,
+  now: () => number = Date.now,
+): Promise<Response> {
+  const prepared = prepareOperation(body, corsHeaders);
+  if ("response" in prepared) return prepared.response;
+  const { json, llmRequest, context } = prepared;
+
+  const resolver = createProviderResolver(env);
 
   const start = now();
   const outcome = await resolver.resolve(llmRequest, context);
@@ -126,4 +144,155 @@ export async function handleLlmOperationRequest(
     },
     502,
   );
+}
+
+const STREAMING_ADAPTORS: Partial<
+  Record<
+    LlmProvider,
+    (
+      request: LlmRequest,
+      model: LlmModelDefinition,
+      env: HandleEnv,
+      signal?: AbortSignal,
+    ) => AsyncGenerator<GenerationEvent>
+  >
+> = {
+  gemini: (request, model, env, signal) =>
+    streamGemini(request, model, env, fetch, signal),
+  openai: (request, model, env, signal) =>
+    streamOpenAi(request, model, env, fetch, signal),
+};
+
+/**
+ * True when the body declares a recognized `operation` AND asks to stream
+ * it (`stream: true`). Kept separate from `isLlmOperationRequest` so a
+ * caller that omits `stream` keeps hitting the buffered handler above
+ * completely unchanged (#2423 preserves request/response for short ops).
+ */
+export function isLlmOperationStreamRequest(body: any): boolean {
+  return isLlmOperationRequest(body) && body?.stream === true;
+}
+
+/**
+ * Streaming counterpart to `handleLlmOperationRequest` (#2423). Resolves
+ * only the operation's *primary* model — no retry-then-fallback chain, since
+ * once a `delta` event has gone out the caller has already shown partial
+ * content and a transparent retry on a different model/provider isn't
+ * possible. A caller whose primary model/provider has no streaming adaptor,
+ * or genuinely fails mid-stream, gets a single `error` event (or, before any
+ * bytes are sent, a plain JSON error matching the buffered handler's shape)
+ * and is expected to fall back to the buffered request/response path itself.
+ */
+async function* batchDeltaEvents(
+  source: AsyncGenerator<GenerationEvent>,
+  batchSize: number,
+): AsyncGenerator<GenerationEvent> {
+  let pendingText = "";
+  for await (const event of source) {
+    if (event.type !== "delta") {
+      if (pendingText) yield { type: "delta", text: pendingText };
+      pendingText = "";
+      yield event;
+      if (event.type === "complete" || event.type === "error") return;
+      continue;
+    }
+
+    pendingText += event.text;
+    if (pendingText.length >= batchSize) {
+      yield { type: "delta", text: pendingText };
+      pendingText = "";
+    }
+  }
+  if (pendingText) yield { type: "delta", text: pendingText };
+}
+
+export async function handleLlmOperationStreamRequest(
+  body: any,
+  corsHeaders: Record<string, string>,
+  env: HandleEnv,
+  signal?: AbortSignal,
+): Promise<Response> {
+  const prepared = prepareOperation(body, corsHeaders);
+  if ("response" in prepared) return prepared.response;
+  const { json, llmRequest, context } = prepared;
+  const defaults = getOperationDefaults(llmRequest.operation, context);
+
+  let primaryKey: string | undefined;
+  if (llmRequest.modelKeyOverride && getModel(llmRequest.modelKeyOverride)) {
+    primaryKey = llmRequest.modelKeyOverride;
+  }
+  if (!primaryKey) primaryKey = defaults?.defaultModelKey;
+
+  const model = primaryKey ? getModel(primaryKey) : undefined;
+  if (!model || !model.enabled || !model.availability[context]) {
+    return json(
+      {
+        error: {
+          code: "LLM_NO_MODEL_AVAILABLE",
+          message:
+            "No enabled model satisfies the requested operation/capability in this context.",
+        },
+      },
+      503,
+    );
+  }
+
+  const streamAdaptor = STREAMING_ADAPTORS[model.provider];
+  if (!streamAdaptor) {
+    return json(
+      {
+        error: {
+          code: "LLM_NO_STREAMING_ADAPTOR",
+          message: `No streaming adaptor is available for provider "${model.provider}".`,
+        },
+      },
+      503,
+    );
+  }
+
+  const source = streamAdaptor(llmRequest, model, env, signal);
+  const generator = batchDeltaEvents(source, 512);
+  const encoder = new TextEncoder();
+
+  const stream = new ReadableStream<Uint8Array>({
+    async pull(controller) {
+      try {
+        const next = await generator.next();
+        if (next.done) {
+          controller.close();
+          return;
+        }
+        controller.enqueue(
+          encoder.encode(`data: ${JSON.stringify(next.value)}\n\n`),
+        );
+        if (next.value.type === "complete" || next.value.type === "error") {
+          controller.close();
+        }
+      } catch {
+        controller.enqueue(
+          encoder.encode(
+            `data: ${JSON.stringify({
+              type: "error",
+              error: "stream-handler-error",
+            } satisfies GenerationEvent)}\n\n`,
+          ),
+        );
+        controller.close();
+      }
+    },
+    cancel() {
+      void generator.return?.(undefined);
+      void source.return?.(undefined);
+    },
+  });
+
+  return new Response(stream, {
+    status: 200,
+    headers: {
+      ...corsHeaders,
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      Connection: "keep-alive",
+    },
+  });
 }

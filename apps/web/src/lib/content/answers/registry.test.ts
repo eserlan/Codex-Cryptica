@@ -1,0 +1,1681 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { describe, it, expect } from "vitest";
+import {
+  getAnswer,
+  getAllAnswers,
+  getAllAnswerSlugs,
+  getRelatedAnswers,
+  answerPath,
+} from "./registry";
+import {
+  AnswerConfigSchema,
+  AnswerTableBlockSchema,
+  type AnswerConfig,
+} from "./schema";
+import { answers } from "./pages";
+import { findIntentOwner, getDiscoveryEntries } from "../discovery/registry";
+import { getAllLandingPageSlugs } from "../for/registry";
+import { HEIST_TOPIC_CONFIG } from "../topics/heists";
+import { PUZZLE_TOPIC_CONFIG } from "../topics/puzzles";
+import { PIRATE_TOPIC_CONFIG } from "../topics/pirates";
+import { DND_TOPIC_CONFIG } from "../topics/dnd";
+import { DND_BEGINNERS_TOPIC_CONFIG } from "../topics/dnd-beginners";
+import { solutions } from "$lib/config/seo-pages";
+import { featuresConfig } from "$lib/config/seo-features";
+import { match as isGeneratorSlug } from "../../../params/generator_slug";
+import {
+  buildAnswerFaqJsonLd,
+  buildAnswerBreadcrumbJsonLd,
+  buildAnswerIndexJsonLd,
+} from "./json-ld";
+
+const makeAnswer = (
+  overrides: Partial<AnswerConfig> & Pick<AnswerConfig, "slug">,
+): AnswerConfig =>
+  AnswerConfigSchema.parse({
+    question: "Test question?",
+    kind: "definition",
+    shortAnswer: "A direct answer that stands on its own.",
+    sections: [
+      { kind: "prose", heading: "Why", paragraphs: ["Because of reasons."] },
+    ],
+    relatedAnswers: [],
+    category: "worldbuilding",
+    publishedAt: "2026-01-01",
+    seo: { title: "Test", description: "Test description" },
+    ...overrides,
+  });
+
+const mockRegistry: Record<string, AnswerConfig> = {
+  alpha: makeAnswer({ slug: "alpha", relatedAnswers: ["beta", "missing"] }),
+  beta: makeAnswer({ slug: "beta" }),
+};
+
+describe("answer registry", () => {
+  it("keeps an actionable checklist in the modern-city answer", () => {
+    const answer =
+      answers["how-do-i-portray-a-believable-modern-city-in-an-urban-rpg"];
+    const checklist = answer.sections.find(
+      (section) => section.kind === "checklist",
+    );
+
+    expect(checklist?.kind).toBe("checklist");
+    if (checklist?.kind !== "checklist") return;
+
+    expect(checklist.heading).toBe(
+      "Start with one block and let play expand it",
+    );
+    expect(checklist.items.length).toBeGreaterThanOrEqual(5);
+    expect(checklist.items).toContain(
+      "Choose one neighbourhood and name the block, bus stop, shop, and doorway the coterie will actually use.",
+    );
+    expect(checklist.items).toContain(
+      "After the session, note what the players touched, any change caused by their actions or an established routine, and one question to research before next time.",
+    );
+  });
+
+  it("keeps an actionable practice checklist in the NPC roleplay answer", () => {
+    const answer = answers["how-do-i-roleplay-npcs-if-im-not-good-at-acting"];
+
+    expect(answer.sections).toContainEqual(
+      expect.objectContaining({
+        kind: "checklist",
+        heading: "A small, optional exercise for next session",
+        items: expect.arrayContaining([
+          "Write the NPC's name and role.",
+          "Note what they want in this scene and their starting attitude toward the party.",
+        ]),
+      }),
+    );
+  });
+
+  it("registers story arc planning as its own workflow intent", () => {
+    const answer = answers["how-do-i-plan-story-arcs-for-an-rpg-campaign"];
+    const entry = getDiscoveryEntries().find(
+      (candidate) => candidate.canonicalPath === `/answers/${answer.slug}`,
+    );
+
+    expect(entry).toMatchObject({
+      id: "answer-plan-story-arcs-rpg-campaign",
+      primaryIntent: "how to plan story arcs for an rpg campaign",
+      userJob: "adopt-workflow",
+    });
+  });
+
+  it("prioritises first-game guidance and the character-sheet guide for packing readers", () => {
+    const answer = answers["what-do-i-need-to-bring-to-my-first-dnd-game"];
+
+    expect(answer.relatedAnswers.slice(0, 2)).toEqual([
+      "what-should-a-new-dnd-player-know-before-their-first-game",
+      "how-do-i-read-a-dnd-character-sheet-as-a-beginner",
+    ]);
+    expect(answer.discovery?.relatedIntents).toContain(
+      "answer-new-dnd-player-first-game",
+    );
+    expect(answer.discovery?.relatedIntents).toContain(
+      "answer-read-dnd-character-sheet-beginner",
+    );
+    expect(answer.relatedTools.map((tool) => tool.href)).not.toContain(
+      "/generators/dnd-npc",
+    );
+  });
+
+  it("records the new D&D player's distinct audience from GM startup guides", () => {
+    const overlaps = [
+      [
+        "what-should-a-new-dnd-player-know-before-their-first-game",
+        "answer-start-dnd-campaign",
+      ],
+      ["how-do-i-start-a-dnd-campaign", "answer-new-dnd-player-first-game"],
+      [
+        "what-should-a-new-dnd-player-know-before-their-first-game",
+        "answer-first-time-gm-hub",
+      ],
+      [
+        "how-do-i-start-gming-for-the-first-time",
+        "answer-new-dnd-player-first-game",
+      ],
+    ] as const;
+
+    for (const [slug, relatedIntent] of overlaps) {
+      const answer = answers[slug];
+      expect(answer?.discovery?.acknowledgedOverlap).toContainEqual(
+        expect.objectContaining({
+          with: relatedIntent,
+          reason: expect.any(String),
+        }),
+      );
+    }
+  });
+
+  it("points first-game readers to the character-sheet guide without raw Markdown", () => {
+    const answer =
+      answers["what-should-a-new-dnd-player-know-before-their-first-game"];
+    const sheetIntro = answer.sections.find(
+      (section) =>
+        section.kind === "list" &&
+        section.heading === "You do not need to memorise your character sheet",
+    );
+
+    expect(
+      sheetIntro?.kind === "list" ? sheetIntro.intro : undefined,
+    ).not.toMatch(/\[[^\]]+\]\([^)]+\)/);
+    expect(answer.relatedAnswers).toContain(
+      "how-do-i-read-a-dnd-character-sheet-as-a-beginner",
+    );
+    expect(
+      getAnswer("how-do-i-read-a-dnd-character-sheet-as-a-beginner"),
+    ).toBeDefined();
+  });
+
+  it("links the optional D&D beginner guide through the structured topic links", () => {
+    const answer = answers["how-do-i-get-my-friends-interested-in-playing-dnd"];
+    const homeworkAdvice = answer.sections.find(
+      (section) =>
+        section.kind === "list" &&
+        section.heading === "Eight ways to make the first invitation work",
+    );
+    const beginnerPreview =
+      homeworkAdvice?.kind === "list"
+        ? homeworkAdvice.items.find(
+            (item) => item.term === "Remove required homework",
+          )
+        : undefined;
+
+    expect(beginnerPreview?.text).not.toMatch(/\[[^\]]+\]\([^)]+\)/);
+    expect(answer.relatedTopics).toContainEqual(
+      expect.objectContaining({ href: "/topics/dnd-beginners" }),
+    );
+  });
+
+  it("records the bard answer's distinct scope from adjacent specialist answers", () => {
+    const overlaps = [
+      [
+        "how-do-i-run-a-bard-or-face-without-sidelining-the-party",
+        "answer-run-investigator-without-sidelining-party",
+      ],
+      [
+        "how-do-i-run-a-bard-or-face-without-sidelining-the-party",
+        "answer-fantasy-character-roles",
+      ],
+      [
+        "how-do-i-run-an-investigator-without-sidelining-the-party",
+        "answer-run-bard-face-without-sidelining-party",
+      ],
+      [
+        "how-do-i-run-common-character-roles-in-a-fantasy-rpg",
+        "answer-run-bard-face-without-sidelining-party",
+      ],
+    ] as const;
+
+    for (const [slug, relatedIntent] of overlaps) {
+      const answer = answers[slug];
+      expect(answer?.discovery?.acknowledgedOverlap).toContainEqual(
+        expect.objectContaining({
+          with: relatedIntent,
+          reason: expect.any(String),
+        }),
+      );
+    }
+  });
+
+  it("records the combat-turn answer's distinct scope from the beginner-start answer", () => {
+    const answer = answers["what-can-i-do-on-my-turn-in-dnd-combat"];
+
+    expect(answer?.discovery?.acknowledgedOverlap).toContainEqual(
+      expect.objectContaining({
+        with: "answer-beginner-start",
+        reason: expect.any(String),
+      }),
+    );
+  });
+
+  it("describes Ready and Dodge without overstating their 2024 rules", () => {
+    const answer = answers["what-can-i-do-on-my-turn-in-dnd-combat"];
+    const options = answer.sections.find(
+      (section) =>
+        section.kind === "list" &&
+        section.heading === "You do not have to attack every turn",
+    );
+    const ready =
+      options?.kind === "list"
+        ? options.items.find(
+            (item) => item.term === "Control what the enemies can see or reach",
+          )
+        : undefined;
+    const example = answer.sections.find(
+      (section) =>
+        section.kind === "example" &&
+        section.heading ===
+          "Worked example: the same round, two levels of preparation",
+    );
+    const menuDriven =
+      example?.kind === "example"
+        ? example.items?.find((item) => item.term === "The menu-driven version")
+        : undefined;
+
+    expect(ready?.text).toContain(
+      "you can use your reaction to respond; you can also ignore the trigger",
+    );
+    expect(ready?.text).not.toContain(
+      "spend your reaction to respond or ignore it",
+    );
+    expect(menuDriven?.text).toContain("if the fighter can see the attacker");
+  });
+
+  it("records the character-sheet answer's distinct scope from combat turns", () => {
+    const answer = answers["how-do-i-read-a-dnd-character-sheet-as-a-beginner"];
+
+    expect(answer?.discovery?.acknowledgedOverlap).toContainEqual(
+      expect.objectContaining({
+        with: "answer-what-can-i-do-on-my-turn-in-dnd-combat",
+        reason: expect.any(String),
+      }),
+    );
+  });
+
+  it("cross-links combat engagement and combat pacing answers", () => {
+    const engagement =
+      answers[
+        "how-do-i-keep-players-engaged-during-other-players-turns-in-combat"
+      ];
+    const pacing =
+      answers["how-do-i-make-combat-faster-without-making-it-less-exciting"];
+
+    expect(engagement.relatedAnswers).toContain(pacing.slug);
+    expect(pacing.relatedAnswers).toContain(engagement.slug);
+  });
+
+  it("keeps the large-group combat pacing phrasing with its new answer", () => {
+    expect(
+      findIntentOwner(
+        "how to speed up dnd combat with many players",
+        getDiscoveryEntries(),
+      )?.id,
+    ).toBe("answer-faster-exciting-combat");
+  });
+
+  it("describes the Session Prep Builder as hook-driven rather than vault-integrated", () => {
+    const answer = answers["how-do-i-organise-a-dnd-campaign"];
+    const builder = answer.relatedTools?.find(
+      (tool) => tool.href === "/tools/session-prep-builder",
+    );
+    const connection = answer.codexConnection?.paragraphs.join(" ") ?? "";
+
+    expect(builder?.description).toContain("Turn a hook or campaign situation");
+    expect(builder?.description).not.toMatch(
+      /pull(?:s)? .+ into one run sheet/i,
+    );
+    expect(connection).toContain("starts from your hook or situation");
+    expect(connection).toContain(
+      "does not automatically pull in linked Vault facts",
+    );
+    expect(connection).toContain(
+      "promote new facts back into the pages they belong to",
+    );
+  });
+
+  it("keeps the civilisation capability habits heading aligned with its items", () => {
+    const habits = answers[
+      "how-do-i-give-different-civilisations-distinct-strengths-and-weaknesses"
+    ].sections.find(
+      (section) =>
+        section.kind === "list" &&
+        section.heading?.includes("habits that keep strengths honest"),
+    );
+
+    expect(habits?.kind).toBe("list");
+    if (habits?.kind === "list") {
+      expect(habits.heading).toBe("Eight habits that keep strengths honest");
+      expect(habits.items).toHaveLength(8);
+    }
+  });
+
+  it("links the army-battle answer to Pathfinder's troop rules", () => {
+    const armyBattle =
+      answers[
+        "how-do-i-run-a-large-battle-when-the-player-characters-are-part-of-an-army"
+      ];
+    const pathfinder = armyBattle.systemsThatSupportThis?.find(
+      (system) => system.system === "Pathfinder Second Edition",
+    );
+
+    expect(pathfinder?.href).toBe("https://2e.aonprd.com/Rules.aspx?ID=3365");
+  });
+
+  it("keeps the squad worked example's casualty counts consistent", () => {
+    const squad =
+      answers["how-do-i-combine-multiple-enemies-into-one-squad-in-an-rpg"];
+    const example = squad.sections.find(
+      (section) => section.kind === "example",
+    );
+    if (!example || example.kind !== "example") {
+      throw new Error("Squad worked example is missing");
+    }
+    expect(example.heading).toBe("Worked example: five orcs become one squad");
+    expect(example.items?.some((item) => item.term === "Why it works")).toBe(
+      true,
+    );
+    const checklist = squad.sections.find(
+      (section) => section.kind === "checklist",
+    );
+    expect(checklist?.kind).toBe("checklist");
+    if (checklist?.kind === "checklist") {
+      expect(checklist.heading).toBe("Squad prep checklist");
+      expect(checklist.items.length).toBeGreaterThanOrEqual(2);
+    }
+
+    const roundOne = example.items?.[1]?.text;
+    const roundTwo = example.items?.[2]?.text;
+
+    expect(roundOne).toContain("track from 30 to 24");
+    expect(roundOne).toContain(
+      "track to 12 and removing two more ordinary orcs",
+    );
+    expect(roundOne).toContain("two orcs are left");
+    expect(roundOne).toContain("attack bonus is +5");
+    expect(roundTwo).toContain("track falls from 12 to 6");
+    expect(roundTwo).toContain(
+      "one ordinary orc and removing the sergeant's +1",
+    );
+    expect(roundTwo).toContain("8 + 2 = 10, below DC 12");
+  });
+
+  it("uses rendered related-answer links instead of Markdown in squad copy", () => {
+    const squad =
+      answers["how-do-i-combine-multiple-enemies-into-one-squad-in-an-rpg"];
+    const paragraphs = squad.sections.flatMap((section) =>
+      section.kind === "prose" ? section.paragraphs : [],
+    );
+    const pathfinder = squad.systemsThatSupportThis?.find(
+      (system) => system.system === "Pathfinder 2e",
+    );
+
+    expect(squad.relatedAnswers).toEqual(
+      expect.arrayContaining([
+        "how-do-i-make-combat-faster-without-making-it-less-exciting",
+        "how-do-i-run-a-large-battle-when-the-player-characters-are-part-of-an-army",
+        "which-tabletop-rpgs-have-squad-and-mass-battle-rules",
+      ]),
+    );
+    expect(paragraphs.join(" ")).not.toMatch(/\[[^\]]+\]\(/);
+    expect(pathfinder?.rationale).not.toMatch(/\[[^\]]+\]\(/);
+    expect(pathfinder?.href).toBe("https://2e.aonprd.com/Rules.aspx?ID=3365");
+  });
+
+  it("matches the economic hooks example heading to its brief cases", () => {
+    const example = answers[
+      "how-do-i-turn-economic-pressures-into-rpg-adventure-hooks"
+    ].sections.find((section) => section.kind === "example");
+
+    expect(example?.heading).toBe(
+      "Worked example: the blocked pass and two more in brief",
+    );
+    expect(
+      example?.items?.filter(
+        (item) =>
+          item.term !== "The full situation" && item.term !== "Why it works",
+      ),
+    ).toHaveLength(2);
+  });
+
+  it("keeps the player-owned business complication count aligned with its discovery summary", () => {
+    const business =
+      answers["how-do-i-run-a-campaign-where-the-players-own-a-business"];
+    const complications = business.sections.find(
+      (section) =>
+        section.kind === "list" &&
+        section.heading === "Turn complications into adventure hooks",
+    );
+
+    expect(complications?.kind).toBe("list");
+    if (complications?.kind === "list") {
+      expect(complications.items).toHaveLength(10);
+    }
+    expect(business.discovery?.uniqueValue).toContain(
+      "ten adventure-generating complications",
+    );
+  });
+
+  it("keeps the guild example's contract cut separate from day-job dues", () => {
+    const guild =
+      answers[
+        "how-should-a-fantasy-adventuring-guild-handle-wages-dues-and-shared-expenses"
+      ];
+    const example = guild.sections.find(
+      (section) =>
+        section.kind === "example" &&
+        section.heading?.startsWith("Worked example: the Grey Lanterns"),
+    );
+    const hybrid =
+      example?.kind === "example"
+        ? example.items?.find((item) => item.term === "The clear hybrid")
+        : undefined;
+
+    expect(hybrid?.text).toContain("72 silver goes to the hall");
+    expect(hybrid?.text).toContain("108 silver split four ways");
+    expect(hybrid?.text).toContain(
+      "That bounty is not charged the 30 percent wage contribution a second time",
+    );
+    expect(hybrid?.text).toContain(
+      "steady worker contributes from their actual day-job pay",
+    );
+  });
+
+  describe("getAnswer", () => {
+    it("returns the parsed answer for a known slug", () => {
+      expect(getAnswer("alpha", mockRegistry)?.slug).toBe("alpha");
+    });
+
+    it("returns undefined for an unknown slug", () => {
+      expect(getAnswer("nope", mockRegistry)).toBeUndefined();
+    });
+  });
+
+  describe("getAllAnswers", () => {
+    it("returns every answer in registration order", () => {
+      expect(getAllAnswers(mockRegistry).map((a) => a.slug)).toEqual([
+        "alpha",
+        "beta",
+      ]);
+    });
+  });
+
+  describe("getAllAnswerSlugs", () => {
+    it("returns the slugs used for prerendering and the sitemap", () => {
+      expect(getAllAnswerSlugs(mockRegistry)).toEqual(["alpha", "beta"]);
+    });
+  });
+
+  describe("getRelatedAnswers", () => {
+    it("resolves related slugs to their configs", () => {
+      const related = getRelatedAnswers(mockRegistry.alpha, mockRegistry);
+      expect(related.map((a) => a.slug)).toEqual(["beta"]);
+    });
+
+    it("drops slugs that no longer exist rather than throwing", () => {
+      // "missing" is in alpha's relatedAnswers but not in the registry.
+      expect(() =>
+        getRelatedAnswers(mockRegistry.alpha, mockRegistry),
+      ).not.toThrow();
+      expect(getRelatedAnswers(mockRegistry.beta, mockRegistry)).toEqual([]);
+    });
+  });
+
+  describe("answerPath", () => {
+    it("defaults to /answers/<slug>", () => {
+      expect(answerPath(mockRegistry.alpha)).toBe("/answers/alpha");
+    });
+
+    it("honours an explicit canonical when one is set", () => {
+      const custom = makeAnswer({
+        slug: "gamma",
+        seo: {
+          title: "T",
+          description: "D",
+          canonical: "/answers/other-slug",
+        },
+      });
+      expect(answerPath(custom)).toBe("/answers/other-slug");
+    });
+  });
+});
+
+describe("answer schema", () => {
+  it("rejects a slug that is not kebab-case", () => {
+    expect(() => makeAnswer({ slug: "Not Kebab" })).toThrow();
+  });
+
+  it("rejects an answer with no sections", () => {
+    expect(() => makeAnswer({ slug: "empty", sections: [] })).toThrow();
+  });
+
+  it("rejects an external or relative related link href", () => {
+    expect(() =>
+      makeAnswer({
+        slug: "bad-link",
+        relatedTools: [
+          {
+            title: "Elsewhere",
+            description: "Off site",
+            href: "https://example.com",
+          },
+        ],
+      }),
+    ).toThrow();
+  });
+
+  it("accepts a prose block with an optional cta", () => {
+    const answer = makeAnswer({
+      slug: "with-cta",
+      sections: [
+        {
+          kind: "prose",
+          heading: "CTA Test",
+          paragraphs: ["Paragraph text."],
+          cta: {
+            text: "Click Here",
+            href: "https://example.com",
+            external: true,
+            disclosure: "Partner link",
+          },
+        },
+      ],
+    });
+    expect(answer.sections[0]).toHaveProperty("cta");
+  });
+
+  it("accepts an answer with optional seo image and alt text", () => {
+    const answer = makeAnswer({
+      slug: "with-image",
+      seo: {
+        title: "Test Image Title",
+        description: "Test description with image.",
+        image: "https://assets.codexcryptica.com/og/test-image.jpg",
+        imageAlt: "A scenic road path illustration",
+      },
+    });
+    expect(answer.seo.image).toBe(
+      "https://assets.codexcryptica.com/og/test-image.jpg",
+    );
+    expect(answer.seo.imageAlt).toBe("A scenic road path illustration");
+  });
+
+  it("rejects an seo.image that is not a valid absolute URL", () => {
+    expect(() =>
+      makeAnswer({
+        slug: "bad-image-url",
+        seo: {
+          title: "Test Image Title",
+          description: "Test description with image.",
+          image: "/relative/path/test-image.jpg",
+          imageAlt: "A scenic road path illustration",
+        },
+      }),
+    ).toThrow();
+  });
+
+  it("rejects an seo.imageAlt that is empty or too short to be meaningful", () => {
+    expect(() =>
+      makeAnswer({
+        slug: "bad-image-alt",
+        seo: {
+          title: "Test Image Title",
+          description: "Test description with image.",
+          image: "https://assets.codexcryptica.com/og/test-image.jpg",
+          imageAlt: "",
+        },
+      }),
+    ).toThrow();
+  });
+
+  it("rejects a prose block with an empty cta text or href", () => {
+    expect(() =>
+      makeAnswer({
+        slug: "bad-cta",
+        sections: [
+          {
+            kind: "prose",
+            paragraphs: ["Paragraph text."],
+            cta: {
+              text: "",
+              href: "https://example.com",
+            },
+          },
+        ],
+      }),
+    ).toThrow();
+  });
+
+  it("accepts an answer with a valid publishedAt date", () => {
+    const answer = makeAnswer({
+      slug: "with-date",
+      publishedAt: "2026-09-04",
+    });
+    expect(answer.publishedAt).toBe("2026-09-04");
+  });
+
+  it("rejects an answer with an invalid publishedAt date format", () => {
+    expect(() =>
+      makeAnswer({
+        slug: "bad-date",
+        publishedAt: "04-09-2026",
+      }),
+    ).toThrow();
+    expect(() =>
+      makeAnswer({
+        slug: "bad-date-string",
+        publishedAt: "invalid",
+      }),
+    ).toThrow();
+  });
+
+  describe("systemsThatSupportThis", () => {
+    it("accepts a valid list of system references", () => {
+      const answer = makeAnswer({
+        slug: "with-systems",
+        systemsThatSupportThis: [
+          {
+            system: "Blades in the Dark",
+            rationale: "Clocks give the mechanic a ready-made procedure.",
+            href: "https://bladesinthedark.com/",
+          },
+        ],
+      });
+      expect(answer.systemsThatSupportThis).toHaveLength(1);
+      expect(answer.systemsThatSupportThis?.[0].system).toBe(
+        "Blades in the Dark",
+      );
+    });
+
+    it("rejects an empty systemsThatSupportThis array", () => {
+      expect(() =>
+        makeAnswer({
+          slug: "empty-systems",
+          systemsThatSupportThis: [],
+        }),
+      ).toThrow();
+    });
+
+    it("rejects an entry missing a rationale", () => {
+      expect(() =>
+        makeAnswer({
+          slug: "missing-rationale",
+          systemsThatSupportThis: [
+            {
+              system: "Blades in the Dark",
+              rationale: "",
+              href: "https://bladesinthedark.com/",
+            } as never,
+          ],
+        }),
+      ).toThrow();
+    });
+
+    it("rejects a non-HTTPS href such as HTTP or javascript:", () => {
+      expect(() =>
+        makeAnswer({
+          slug: "insecure-http-href",
+          systemsThatSupportThis: [
+            {
+              system: "Blades in the Dark",
+              rationale: "Clocks give the mechanic a ready-made procedure.",
+              href: "http://bladesinthedark.com/",
+            },
+          ],
+        }),
+      ).toThrow();
+
+      expect(() =>
+        makeAnswer({
+          slug: "unsafe-href",
+          systemsThatSupportThis: [
+            {
+              system: "Blades in the Dark",
+              rationale: "Clocks give the mechanic a ready-made procedure.",
+              href: "javascript:alert(1)",
+            },
+          ],
+        }),
+      ).toThrow();
+    });
+
+    it("rejects a mailto: href", () => {
+      expect(() =>
+        makeAnswer({
+          slug: "mailto-href",
+          systemsThatSupportThis: [
+            {
+              system: "Blades in the Dark",
+              rationale: "Clocks give the mechanic a ready-made procedure.",
+              href: "mailto:test@example.com",
+            },
+          ],
+        }),
+      ).toThrow();
+    });
+  });
+});
+
+describe("published answers", () => {
+  const published = getAllAnswers();
+
+  it("avoids banned synthetic phrasing in the D&D session-prep answer", () => {
+    const answer = answers["how-do-i-prepare-a-dnd-session"];
+
+    expect(JSON.stringify(answer)).not.toMatch(/\b(vital|leverage)\b/i);
+  });
+
+  it("frames ruined-city routes as weighed trade-offs in the checklist", () => {
+    const answer = answers["how-do-i-run-exploration-in-a-huge-ruined-city"];
+    const checklist = answer.sections.find(
+      (section) => section.kind === "checklist",
+    );
+
+    expect(checklist?.kind).toBe("checklist");
+    if (checklist?.kind !== "checklist") return;
+
+    expect(checklist.items[1]).toContain(
+      "offer useful trade-offs where the city supports them",
+    );
+  });
+
+  it("uses the project term Labels in the magical-inequality Codex guidance", () => {
+    const answer =
+      answers["how-does-magic-create-social-classes-and-inequality"];
+
+    expect(answer.codexConnection?.paragraphs.join(" ")).toContain(
+      "Label households and quarters",
+    );
+  });
+
+  it("publishes at least eight distinct answers", () => {
+    // The first content pack's acceptance bar (#2564).
+    expect(published.length).toBeGreaterThanOrEqual(8);
+  });
+
+  it("specifies a valid publishedAt date on every answer", () => {
+    for (const answer of published) {
+      expect(answer.publishedAt).toBeDefined();
+      expect(answer.publishedAt).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    }
+  });
+
+  it("keys every answer by its own slug", () => {
+    for (const [key, answer] of Object.entries(answers)) {
+      expect(key).toBe(answer.slug);
+    }
+  });
+
+  it("gives every answer a unique question and unique metadata", () => {
+    const questions = published.map((a) => a.question.toLowerCase());
+    const titles = published.map((a) => a.seo.title);
+    const descriptions = published.map((a) => a.seo.description);
+    expect(new Set(questions).size).toBe(questions.length);
+    expect(new Set(titles).size).toBe(titles.length);
+    expect(new Set(descriptions).size).toBe(descriptions.length);
+  });
+
+  it("uses a hosted map image for the map-making tool answer", () => {
+    expect(answers["what-rpg-map-making-tool-should-i-use"].seo.image).toBe(
+      "https://assets.codexcryptica.com/og/point-crawl-vs-hex-crawl.jpg",
+    );
+  });
+
+  it("distinguishes ordinary combat from killing surrendered enemies", () => {
+    const answer =
+      answers["what-do-you-do-with-murder-hobos-in-an-rpg-campaign"];
+    const opening = answer.sections[0];
+
+    expect(opening.kind).toBe("prose");
+    if (opening.kind !== "prose") return;
+
+    expect(opening.paragraphs[0]).toContain(
+      "kills bandits during a fight the table chose to have",
+    );
+    expect(opening.paragraphs[0]).not.toContain("captured spy");
+  });
+
+  it("keeps the player-notes recap within the facts in its worked example", () => {
+    const answer = answers["how-do-i-take-useful-rpg-notes-during-play"];
+    const example = answer.sections.find(
+      (section) => section.kind === "example",
+    );
+    expect(example?.kind).toBe("example");
+    if (example?.kind !== "example") return;
+
+    const recap = example.items?.find(
+      (item) =>
+        item.term ===
+        "Four-bullet recap built from those notes after the session",
+    )?.text;
+
+    expect(recap).toContain(
+      "A dockside rumour says the warehouse fire was deliberate; its cause is unknown.",
+    );
+    expect(recap).toContain(
+      "its possible council connection is only a theory and needs checking.",
+    );
+    expect(recap).not.toContain("fire was probably deliberate");
+    expect(recap).toContain(
+      "Kelm, who had been asking about smugglers, is missing.",
+    );
+    expect(recap).not.toContain("Glass Guild may be involved");
+    expect(recap).not.toContain("last seen near Low Quay");
+  });
+
+  it("never links to an answer that does not exist", () => {
+    const slugs = new Set(getAllAnswerSlugs());
+    for (const answer of published) {
+      for (const related of answer.relatedAnswers) {
+        expect(slugs, `${answer.slug} → ${related}`).toContain(related);
+      }
+    }
+  });
+
+  it("gives the correct healing-potion dice example", () => {
+    const answer = answers["which-dice-do-i-roll-in-dnd-and-when"];
+    const diceSection = answer.sections.find(
+      (section) =>
+        section.kind === "list" &&
+        section.heading === "The other dice: damage, healing and amounts",
+    );
+
+    expect(diceSection?.kind).toBe("list");
+    if (diceSection?.kind !== "list") return;
+
+    const diceExamples = diceSection.items.find(
+      (item) => item.term === "d4, d6, d8, d10, d12",
+    )?.text;
+
+    expect(diceExamples).toContain(
+      "common [2024 Potion of Healing](https://www.dndbeyond.com/magic-items/8960641-potion-of-healing) restores 2d4 + 2 hit points",
+    );
+  });
+
+  it("explains the natural 1 and 20 exceptions for attack rolls", () => {
+    const answer = answers["which-dice-do-i-roll-in-dnd-and-when"];
+    const attackRoll = answer.sections
+      .filter((section) => section.kind === "list")
+      .flatMap((section) => section.items)
+      .find((item) => item.term === "Attack rolls");
+
+    expect(attackRoll?.text).toContain(
+      "a natural 20 always hits, and a natural 1 always misses",
+    );
+  });
+
+  it("records the distinct scope of the D&D dice and character-sheet answers", () => {
+    const overlap = answers[
+      "which-dice-do-i-roll-in-dnd-and-when"
+    ].discovery?.acknowledgedOverlap?.find(
+      (entry) => entry.with === "answer-read-dnd-character-sheet-beginner",
+    );
+
+    expect(overlap?.reason).toContain(
+      "choosing dice and resolving common rolls",
+    );
+  });
+
+  it("records the distinct scope of the D&D dice and combat-turn answers", () => {
+    const overlap = answers[
+      "which-dice-do-i-roll-in-dnd-and-when"
+    ].discovery?.acknowledgedOverlap?.find(
+      (entry) => entry.with === "answer-what-can-i-do-on-my-turn-in-dnd-combat",
+    );
+
+    expect(overlap?.reason).toContain(
+      "which dice resolve checks, attacks, saves, and damage",
+    );
+  });
+
+  it("never links an answer to itself", () => {
+    for (const answer of published) {
+      expect(answer.relatedAnswers).not.toContain(answer.slug);
+    }
+  });
+
+  it("does not duplicate the improvised NPC link on the broad NPC answer", () => {
+    const answer =
+      answers[
+        "how-do-i-handle-players-asking-an-npc-to-tell-us-everything-you-know"
+      ];
+
+    expect(answer.relatedAnswers).toContain("how-do-i-improvise-npcs-in-dnd");
+    expect(new Set(answer.relatedAnswers).size).toBe(
+      answer.relatedAnswers.length,
+    );
+  });
+
+  it("cross-links every answer to at least one other answer", () => {
+    for (const answer of published) {
+      expect(
+        answer.relatedAnswers.length,
+        `${answer.slug} has no related answers`,
+      ).toBeGreaterThan(0);
+    }
+  });
+
+  it("points every answer at a live Codex surface", () => {
+    for (const answer of published) {
+      const outbound =
+        answer.relatedTopics.length +
+        answer.relatedTools.length +
+        answer.relatedForPages.length;
+      expect(outbound, `${answer.slug} links nowhere`).toBeGreaterThan(0);
+    }
+  });
+
+  it("keeps topic hubs out of the tool links", () => {
+    const puzzleAnswers = published.filter((answer) =>
+      answer.relatedTopics.some((topic) => topic.href === "/topics/puzzles"),
+    );
+    expect(puzzleAnswers).toHaveLength(2);
+    expect(
+      puzzleAnswers.every((answer) =>
+        answer.relatedTools.every((tool) => tool.href !== "/topics/puzzles"),
+      ),
+    ).toBe(true);
+
+    const pirateAnswers = published.filter((answer) =>
+      answer.relatedTopics.some(
+        (topic) => topic.href === PIRATE_TOPIC_CONFIG.canonicalPath,
+      ),
+    );
+    expect(pirateAnswers).toHaveLength(7);
+    expect(
+      pirateAnswers.every((answer) =>
+        answer.relatedTools.every(
+          (tool) => tool.href !== PIRATE_TOPIC_CONFIG.canonicalPath,
+        ),
+      ),
+    ).toBe(true);
+  });
+
+  it("only links to routes the site actually publishes", () => {
+    // #2564 is explicit that answers must link to live capabilities only. A
+    // hand-written href is the easiest thing on these pages to get wrong, so
+    // it is checked against the same registries the routes are built from.
+    const forSlugs = new Set(getAllLandingPageSlugs());
+    const topicPaths = new Set([
+      HEIST_TOPIC_CONFIG.canonicalPath,
+      PUZZLE_TOPIC_CONFIG.canonicalPath,
+      PIRATE_TOPIC_CONFIG.canonicalPath,
+      DND_TOPIC_CONFIG.canonicalPath,
+      DND_BEGINNERS_TOPIC_CONFIG.canonicalPath,
+    ]);
+    const toolPages = new Set([
+      "cyberpunk-nomad-clan-generator",
+      "dnd-npc-generator",
+      "faction-generator",
+      "fantasy-name-generator",
+      "idea-developer",
+      "quest-hook-generator",
+      "rpg-npc-generator",
+      "session-prep-builder",
+      "vampire-clan-generator",
+    ]);
+
+    const sectionChecks: Record<string, (slug: string) => boolean> = {
+      answers: (slug) => getAllAnswerSlugs().includes(slug),
+      for: (slug) => forSlugs.has(slug),
+      generators: (slug) => isGeneratorSlug(slug),
+      tools: (slug) => toolPages.has(slug),
+      solutions: (slug) => slug in solutions,
+      features: (slug) => slug in featuresConfig,
+      topics: (slug) => topicPaths.has(`/topics/${slug}`),
+    };
+    const sectionIndexes = ["answers", "tools", "generators", "for"];
+
+    const isLive = (href: string): boolean => {
+      const [section, slug, ...rest] = href.replace(/^\//, "").split("/");
+      if (rest.length > 0) return false;
+      if (!slug) return sectionIndexes.includes(section);
+      return Object.hasOwn(sectionChecks, section)
+        ? sectionChecks[section](slug)
+        : false;
+    };
+
+    for (const answer of published) {
+      const hrefs = [
+        ...answer.relatedTopics.map((topic) => topic.href),
+        ...answer.relatedTools.map((t) => t.href),
+        ...answer.relatedForPages.map((p) => p.href),
+        ...(answer.codexConnection ? [answer.codexConnection.href] : []),
+      ];
+      for (const href of hrefs) {
+        expect(isLive(href), `${answer.slug} links to dead route ${href}`).toBe(
+          true,
+        );
+      }
+    }
+  });
+
+  it("gives each answer a substantive body, not a stub", () => {
+    for (const answer of published) {
+      expect(answer.shortAnswer.length, answer.slug).toBeGreaterThan(140);
+      expect(answer.sections.length, answer.slug).toBeGreaterThanOrEqual(3);
+    }
+  });
+
+  it("distinguishes 2014 and 2024 rules in the beginner character-sheet answer", () => {
+    const answer = answers["how-do-i-read-a-dnd-character-sheet-as-a-beginner"];
+    const abilityScores = answer.sections
+      .filter((section) => section.kind === "list")
+      .flatMap((section) => (section.kind === "list" ? section.items : []))
+      .find(
+        (item) => item.term === "Find the score and modifier by their labels",
+      );
+    const spellSlots = answer.sections
+      .filter((section) => section.kind === "list")
+      .flatMap((section) => (section.kind === "list" ? section.items : []))
+      .find((item) => item.term === "Spell slots");
+    const fighterExample = answer.sections.find(
+      (section) => section.kind === "example",
+    );
+    const fighterWalkthrough =
+      fighterExample?.kind === "example"
+        ? fighterExample.items?.[1]?.text
+        : undefined;
+
+    expect(abilityScores?.text).toContain("labelled Strength");
+    expect(abilityScores?.text).toContain("score of 16");
+    expect(abilityScores?.text).toContain("signed modifier of +3");
+    expect(abilityScores?.text).toContain(
+      "the 2024 rules list prepared spells by class level",
+    );
+    expect(spellSlots?.text).toContain(
+      "Warlocks regain all expended Pact Magic slots after a short or long rest",
+    );
+    expect(fighterWalkthrough).toContain(
+      "one use under the 2014 rules or two at 1st level under the 2024 rules",
+    );
+    expect(fighterWalkthrough).toContain("a d20 result of 12 plus 5 gives 17");
+    expect(fighterWalkthrough).toContain("do not add either again");
+    expect(fighterWalkthrough).toContain("Resourceful");
+  });
+
+  it("requires an R2 OG image on every answer published from 2026-09-07 onward", () => {
+    // #2711: seo.image/imageAlt stay optional in the schema so the 17
+    // answers published before this date are not broken retroactively, but
+    // every answer from this date forward must ship a real R2 illustration.
+    const IMAGE_REQUIRED_FROM = "2026-09-07";
+    for (const answer of published) {
+      if (answer.publishedAt < IMAGE_REQUIRED_FROM) continue;
+      expect(answer.seo.image, `${answer.slug} is missing seo.image`).toMatch(
+        /^https:\/\/assets\.codexcryptica\.com\/.+\.jpg$/,
+      );
+      expect(
+        answer.seo.imageAlt?.trim().length ?? 0,
+        `${answer.slug} is missing seo.imageAlt`,
+      ).toBeGreaterThan(0);
+    }
+  });
+
+  it("includes a concrete worked example on every answer", () => {
+    for (const answer of published) {
+      expect(
+        answer.sections.some((section) => section.kind === "example"),
+        `${answer.slug} has no example block`,
+      ).toBe(true);
+    }
+  });
+
+  it("publishes the base-building decision table with consistent columns", () => {
+    const answer = answers["what-ttrpgs-let-you-build-and-upgrade-a-base"];
+    const table = answer.sections.find((section) => section.kind === "table");
+
+    expect(table).toBeDefined();
+    if (!table || table.kind !== "table") return;
+    expect(table.headers).toEqual([
+      "System",
+      "Base model",
+      "How central?",
+      "Upgrade style",
+      "Best fit",
+    ]);
+    expect(table.rows).toHaveLength(5);
+    expect(table.rows.every((row) => row.length === table.headers.length)).toBe(
+      true,
+    );
+  });
+
+  it("rejects comparison table rows that do not match the column count", () => {
+    const result = AnswerTableBlockSchema.safeParse({
+      kind: "table",
+      headers: ["System", "Best fit"],
+      rows: [["Stonetop"]],
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("uses British English spellings, not American ones", () => {
+    // The pack's editorial rule (#2564). A curated list rather than a broad
+    // `\w+ize` pattern, which flags legitimate words like "assize" and "sized".
+    const americanisms =
+      /\b(?:organiz|recogniz|realiz|specializ|characteriz|apologiz|analyz|color|honor|behavior|rumor|favorite|neighbor|center|theater|catalog(?!ue)|gray|traveled|traveling|canceled|defense|offense|armor)\w*\b/i;
+    for (const answer of published) {
+      const { discovery: _discovery, ...readerFacing } = answer;
+      const body = JSON.stringify(readerFacing);
+      expect(body.match(americanisms)?.[0] ?? null, answer.slug).toBeNull();
+    }
+  });
+
+  it("keeps titles and descriptions within a sensible length for search results", () => {
+    for (const answer of published) {
+      expect(answer.seo.title.length, answer.slug).toBeLessThanOrEqual(75);
+      expect(answer.seo.description.length, answer.slug).toBeLessThanOrEqual(
+        185,
+      );
+    }
+  });
+
+  it("publishes the travel answer page with complete framework sections and R2 image", () => {
+    const travelAnswer =
+      answers["how-do-you-make-travel-interesting-in-a-tabletop-rpg"];
+    expect(travelAnswer).toBeDefined();
+    expect(travelAnswer.kind).toBe("framework");
+    expect(travelAnswer.seo.image).toMatch(
+      /^https:\/\/assets\.codexcryptica\.com\/.+\.jpg$/,
+    );
+    expect(travelAnswer.seo.imageAlt?.trim().length ?? 0).toBeGreaterThan(0);
+    expect(travelAnswer.sections.some((s) => s.kind === "example")).toBe(true);
+    expect(travelAnswer.sections.some((s) => s.kind === "checklist")).toBe(
+      true,
+    );
+    expect(travelAnswer.relatedAnswers).toContain(
+      "what-makes-a-good-random-encounter",
+    );
+  });
+
+  it("publishes the memorable NPCs answer page with complete framework sections and R2 image", () => {
+    const npcAnswer =
+      answers["how-do-you-make-npcs-memorable-without-lots-of-prep"];
+    expect(npcAnswer).toBeDefined();
+    expect(npcAnswer.kind).toBe("framework");
+    expect(npcAnswer.seo.image).toMatch(
+      /^https:\/\/assets\.codexcryptica\.com\/.+\.jpg$/,
+    );
+    expect(npcAnswer.seo.imageAlt?.trim().length ?? 0).toBeGreaterThan(0);
+    expect(npcAnswer.sections.some((s) => s.kind === "example")).toBe(true);
+    expect(npcAnswer.sections.some((s) => s.kind === "checklist")).toBe(true);
+    expect(npcAnswer.relatedAnswers).toContain(
+      "how-do-you-organise-npc-relationships",
+    );
+  });
+
+  it("grounds pirate faction moves in fictional time and circumstance", () => {
+    const answer =
+      answers["how-do-i-make-rival-captains-navies-and-pirate-factions-matter"];
+    const activeVersion = answer.sections.find(
+      (section) =>
+        section.kind === "example" &&
+        section.heading ===
+          "Worked example: the same sea, with and without active rivals",
+    );
+    expect(activeVersion?.kind).toBe("example");
+    if (!activeVersion || activeVersion.kind !== "example") return;
+
+    const text = activeVersion.items?.find(
+      (item) => item.term === "The active version",
+    )?.text;
+
+    expect(text).toContain("step 2:");
+    expect(text).toContain("On a week-long voyage");
+    expect(text).toContain("time, ships, and orders");
+    expect(text).toContain("letters of marque authorising licensed privateers");
+    expect(text).toContain("those moves stall or change instead");
+    expect(text).not.toContain(
+      "(step 3: sloops now stop and search every brig)",
+    );
+
+    const clockGuidance = answer.sections
+      .filter((section) => section.kind === "list")
+      .flatMap((section) => section.items ?? [])
+      .find((item) => item.term === "Clock with visible steps")?.text;
+    expect(clockGuidance).toContain("move the clock backwards");
+    expect(clockGuidance).toContain("scattered ships may have to regroup");
+  });
+
+  it("records the reciprocal scope of the sandbox and pirate faction answers", () => {
+    const sandboxFactions =
+      answers["how-do-you-run-factions-in-a-sandbox-campaign"];
+    const pirateFactions =
+      answers["how-do-i-make-rival-captains-navies-and-pirate-factions-matter"];
+
+    expect(sandboxFactions?.discovery?.acknowledgedOverlap).toContainEqual({
+      with: "answer-rival-captains-navies-pirate-factions-matter",
+      reason: expect.any(String),
+    });
+    expect(pirateFactions?.discovery?.acknowledgedOverlap).toContainEqual({
+      with: "answer-run-factions-sandbox",
+      reason: expect.any(String),
+    });
+  });
+
+  it("records the stealth mission overlap in both discovery entries", () => {
+    const stealth = answers["how-do-i-run-a-stealth-mission-in-a-tabletop-rpg"];
+    const relatedSlugs = [
+      [
+        "how-do-you-run-a-heist-in-a-tabletop-rpg",
+        "answer-run-heist-in-tabletop-rpg",
+      ],
+      [
+        "how-do-i-run-spies-and-infiltrators-in-an-rpg",
+        "answer-run-spies-infiltrators-rpg",
+      ],
+      [
+        "how-do-i-run-a-rogue-or-scout-without-splitting-the-party",
+        "answer-run-rogue-scout-without-splitting-party",
+      ],
+    ] as const;
+
+    for (const [slug, intentId] of relatedSlugs) {
+      const related = answers[slug];
+      const stealthAcknowledgement =
+        stealth.discovery?.acknowledgedOverlap?.find(
+          (entry) => entry.with === intentId,
+        );
+      const relatedAcknowledgement =
+        related.discovery?.acknowledgedOverlap?.find(
+          (entry) =>
+            entry.with === "answer-run-stealth-mission-in-tabletop-rpg",
+        );
+
+      expect(stealthAcknowledgement?.reason).toBeTruthy();
+      expect(relatedAcknowledgement?.reason).toBeTruthy();
+    }
+  });
+
+  it("publishes the short-session answer around one playable unit", () => {
+    const shortSessionAnswer =
+      answers["can-you-play-a-tabletop-rpg-in-30-minute-sessions"];
+    expect(shortSessionAnswer).toBeDefined();
+    expect(shortSessionAnswer.kind).toBe("framework");
+    expect(shortSessionAnswer.sections[0].kind).toBe("prose");
+    expect(
+      shortSessionAnswer.sections[0].kind === "prose" &&
+        shortSessionAnswer.sections[0].paragraphs.some((paragraph) =>
+          paragraph.includes("one playable unit instead of several"),
+        ),
+    ).toBe(true);
+    expect(shortSessionAnswer.sections.some((s) => s.kind === "example")).toBe(
+      true,
+    );
+    expect(
+      shortSessionAnswer.sections.some((s) => s.kind === "checklist"),
+    ).toBe(true);
+    expect(shortSessionAnswer.seo.image).toMatch(
+      /^https:\/\/assets\.codexcryptica\.com\/.+\.jpg$/,
+    );
+  });
+
+  it("keeps the one-shot pacing examples within three hours and in discovery indexes", () => {
+    const pacingAnswer = answers["how-do-i-pace-an-rpg-one-shot"];
+    expect(pacingAnswer.shortAnswer).toContain(
+      "final 50 to 70 minutes of usable play",
+    );
+    const budgets = pacingAnswer.sections.find(
+      (section) =>
+        section.kind === "example" &&
+        section.heading ===
+          "Worked table budgets: Three hours of play in a four-hour booking",
+    );
+
+    expect(budgets?.kind).toBe("example");
+    if (!budgets || budgets.kind !== "example") return;
+
+    const schedules = (budgets.items ?? []).filter(
+      (item) => item.term !== "Why it works",
+    );
+    expect(schedules).toHaveLength(3);
+    for (const schedule of schedules) {
+      expect(schedule.text).toContain("1:30 (Checkpoint)");
+      expect(schedule.text).toContain("2:50 to 3:00:");
+    }
+
+    const route = "/answers/how-do-i-pace-an-rpg-one-shot";
+    const staticLlms = readFileSync(
+      resolve(process.cwd(), "static/llms-full.txt"),
+      "utf8",
+    );
+    const rootLlms = readFileSync(
+      resolve(process.cwd(), "../../llms-full.txt"),
+      "utf8",
+    );
+    const sitemap = readFileSync(
+      resolve(process.cwd(), "static/sitemap.xml"),
+      "utf8",
+    );
+    expect(staticLlms).toContain(route);
+    expect(rootLlms).toContain(route);
+    expect(sitemap).toContain(route);
+  });
+
+  it("separates table problems from fictional party-cohesion problems", () => {
+    const partyCohesionAnswer =
+      answers["how-do-i-get-my-rpg-party-to-work-together"];
+    const diagnosis = partyCohesionAnswer.sections[0];
+
+    expect(diagnosis.kind).toBe("prose");
+    if (diagnosis.kind !== "prose") return;
+
+    expect(diagnosis.paragraphs[0]).toContain(
+      "conversation addresses table problems",
+    );
+    expect(diagnosis.paragraphs[0]).toContain(
+      "encounter design addresses a lack of shared stakes in the fiction",
+    );
+  });
+
+  it("publishes the heist answer with the expected system references", () => {
+    const heistAnswer = answers["how-do-you-run-a-heist-in-a-tabletop-rpg"];
+    expect(heistAnswer).toBeDefined();
+    expect(heistAnswer.systemsThatSupportThis?.map((s) => s.system)).toEqual([
+      "Blades in the Dark",
+      "Scum & Villainy",
+      "Leverage: The Roleplaying Game",
+    ]);
+    for (const ref of heistAnswer.systemsThatSupportThis ?? []) {
+      expect(ref.href).toMatch(/^https:\/\//);
+      expect(ref.rationale.length).toBeGreaterThan(0);
+    }
+  });
+
+  it("publishes the conspiracy campaign answer with structural investigation references", () => {
+    const conspiracyAnswer = answers["how-do-you-run-a-conspiracy-campaign"];
+    expect(conspiracyAnswer).toBeDefined();
+    expect(
+      conspiracyAnswer.systemsThatSupportThis?.map(
+        (reference) => reference.system,
+      ),
+    ).toEqual(["Night's Black Agents", "GUMSHOE"]);
+    for (const reference of conspiracyAnswer.systemsThatSupportThis ?? []) {
+      expect(reference.href).toMatch(/^https:\/\//);
+      expect(reference.rationale.length).toBeGreaterThan(0);
+      expect(reference.rationale.match(/[.!?](?:\s|$)/g)).toHaveLength(1);
+    }
+  });
+
+  it("publishes the Rule of Cool answer with the expected system references", () => {
+    const ruleOfCoolAnswer = answers["how-much-rule-of-cool-should-a-dm-allow"];
+    expect(ruleOfCoolAnswer).toBeDefined();
+    expect(
+      ruleOfCoolAnswer.systemsThatSupportThis?.map((s) => s.system),
+    ).toEqual(["Exalted", "Wushu", "Feng Shui 2"]);
+    for (const ref of ruleOfCoolAnswer.systemsThatSupportThis ?? []) {
+      expect(ref.href).toMatch(/^https:\/\//);
+      expect(ref.rationale.length).toBeGreaterThan(0);
+    }
+  });
+
+  it("publishes the point crawl answer with the expected system references", () => {
+    const pointCrawlAnswer =
+      answers["how-do-you-build-a-point-crawl-for-an-rpg"];
+    expect(pointCrawlAnswer).toBeDefined();
+    expect(
+      pointCrawlAnswer.systemsThatSupportThis?.map((s) => s.system),
+    ).toEqual([
+      "The Ultraviolet Grasslands",
+      "Heart: The City Beneath",
+      "Stars Without Number",
+    ]);
+    for (const ref of pointCrawlAnswer.systemsThatSupportThis ?? []) {
+      expect(ref.href).toMatch(/^https:\/\//);
+      expect(ref.rationale.length).toBeGreaterThan(0);
+    }
+  });
+
+  it("publishes the sci-fi star system answer with the expected system references", () => {
+    const starSystemAnswer =
+      answers["how-to-create-a-sci-fi-star-system-for-an-rpg"];
+    expect(starSystemAnswer).toBeDefined();
+    expect(
+      starSystemAnswer.systemsThatSupportThis?.map((s) => s.system),
+    ).toEqual([
+      "Traveller",
+      "Stars Without Number",
+      "Coriolis: The Third Horizon",
+    ]);
+    for (const ref of starSystemAnswer.systemsThatSupportThis ?? []) {
+      expect(ref.href).toMatch(/^https:\/\//);
+      expect(ref.rationale.length).toBeGreaterThan(0);
+    }
+  });
+
+  it("publishes the character-death answer with exact system references", () => {
+    const characterDeathAnswer =
+      answers["how-do-you-handle-character-death-in-a-tabletop-rpg"];
+    expect(characterDeathAnswer).toBeDefined();
+    expect(characterDeathAnswer.systemsThatSupportThis).toEqual([
+      {
+        system: "Dungeon World",
+        rationale:
+          "The Last Breath move turns dying into a negotiation with Death itself: roll with no modifiers, a 10+ cheats death outright, a 7-9 means Death offers a genuine bargain the player can accept or refuse, and a miss seals the character's fate on the GM's timing rather than immediately.",
+        href: "https://www.dungeonworldsrd.com/moves/",
+      },
+      {
+        system: "D&D (2024 rules)",
+        rationale:
+          "Death saving throws begin at the start of a downed character's turn and continue until three successes stabilise them or three failures kill them outright; a natural 20 restores 1 hit point, while a natural 1 counts as two failures, an explicit recovery window this page's protocol assumes rather than replaces.",
+        href: "https://www.dndbeyond.com/srd",
+      },
+      {
+        system: "Mörk Borg",
+        rationale:
+          "There are no death saves: hitting exactly 0 hit points forces a d4 roll with a real chance of instant death, a deliberate structural contrast to the negotiated, ceremonial death this page describes.",
+        href: "https://morkborg.com/",
+      },
+    ]);
+  });
+
+  it("publishes the one-shot adventure answer with verified system references", () => {
+    const oneShotAnswer = answers["how-do-you-write-a-one-shot-adventure"];
+    expect(oneShotAnswer).toBeDefined();
+    expect(oneShotAnswer.systemsThatSupportThis?.map((s) => s.system)).toEqual([
+      "Fiasco",
+      "Ten Candles",
+      "Trophy Dark",
+      "Alice is Missing",
+    ]);
+    for (const ref of oneShotAnswer.systemsThatSupportThis ?? []) {
+      expect(ref.href).toMatch(/^https:\/\//);
+      expect(ref.rationale.length).toBeGreaterThan(0);
+    }
+  });
+
+  it("publishes the faction turn tracking answer with verified system references", () => {
+    const factionAnswer =
+      answers["how-do-you-track-faction-turns-between-rpg-sessions"];
+    expect(factionAnswer).toBeDefined();
+    expect(factionAnswer.systemsThatSupportThis?.map((s) => s.system)).toEqual([
+      "Stars Without Number",
+      "Reign",
+      "Blades in the Dark",
+    ]);
+    for (const ref of factionAnswer.systemsThatSupportThis ?? []) {
+      expect(ref.href).toMatch(/^https:\/\//);
+      expect(ref.rationale.length).toBeGreaterThan(0);
+      expect(ref.rationale.match(/[.!?](?:\s|$)/g)).toHaveLength(1);
+    }
+  });
+
+  it("publishes the one-city campaign answer with verified system references", () => {
+    const cityAnswer = answers["how-do-you-run-an-rpg-campaign-in-one-city"];
+    expect(cityAnswer).toBeDefined();
+    expect(cityAnswer.systemsThatSupportThis?.map((s) => s.system)).toEqual([
+      "Blades in the Dark",
+      "Urban Shadows",
+      "Vampire: The Masquerade",
+    ]);
+    for (const ref of cityAnswer.systemsThatSupportThis ?? []) {
+      expect(ref.href).toMatch(/^https:\/\//);
+      expect(ref.rationale.length).toBeGreaterThan(0);
+      expect(ref.rationale.match(/[.!?](?:\s|$)/g)).toHaveLength(1);
+    }
+  });
+
+  it("publishes the mystery without railroading answer with verified system references", () => {
+    const mysteryAnswer =
+      answers["how-do-you-run-a-mystery-without-railroading"];
+    expect(mysteryAnswer).toBeDefined();
+    expect(mysteryAnswer.systemsThatSupportThis?.map((s) => s.system)).toEqual([
+      "GUMSHOE",
+      "Brindlewood Bay",
+      "Monster of the Week",
+    ]);
+    for (const ref of mysteryAnswer.systemsThatSupportThis ?? []) {
+      expect(ref.href).toMatch(/^https:\/\//);
+      expect(ref.rationale.length).toBeGreaterThan(0);
+      expect(ref.rationale.match(/[.!?](?:\s|$)/g)).toHaveLength(1);
+    }
+  });
+
+  it("publishes the multiple NPCs scene answer with complete framework sections and system references", () => {
+    const answer = answers["how-do-you-run-a-scene-with-multiple-npcs"];
+    expect(answer).toBeDefined();
+    expect(answer.category).toBe("running-the-game");
+    expect(answer.sections.length).toBeGreaterThanOrEqual(3);
+    expect(answer.systemsThatSupportThis?.map((s) => s.system)).toEqual([
+      "Apocalypse World",
+      "A Song of Ice and Fire Roleplaying",
+      "Vampire: The Masquerade",
+    ]);
+    for (const ref of answer.systemsThatSupportThis ?? []) {
+      expect(ref.href).toMatch(/^https?:\/\//);
+      expect(ref.rationale.length).toBeGreaterThan(0);
+      expect(ref.rationale.match(/[.!?](?:\s|$)/g)).toHaveLength(1);
+    }
+  });
+
+  it("keeps the specialist spotlight answer in the checked-in discovery indexes", () => {
+    const route = "/answers/how-do-i-give-specialist-characters-spotlight";
+    const staticLlms = readFileSync(
+      resolve(process.cwd(), "static/llms-full.txt"),
+      "utf8",
+    );
+    const rootLlms = readFileSync(
+      resolve(process.cwd(), "../../llms-full.txt"),
+      "utf8",
+    );
+    const sitemap = readFileSync(
+      resolve(process.cwd(), "static/sitemap.xml"),
+      "utf8",
+    );
+
+    expect(staticLlms).toContain(route);
+    expect(rootLlms).toContain(route);
+    expect(sitemap).toContain(`https://codexcryptica.com${route}`);
+  });
+
+  it("keeps the bard and face answer in the checked-in discovery indexes", () => {
+    const route =
+      "/answers/how-do-i-run-a-bard-or-face-without-sidelining-the-party";
+    const staticLlms = readFileSync(
+      resolve(process.cwd(), "static/llms-full.txt"),
+      "utf8",
+    );
+    const rootLlms = readFileSync(
+      resolve(process.cwd(), "../../llms-full.txt"),
+      "utf8",
+    );
+    const sitemap = readFileSync(
+      resolve(process.cwd(), "static/sitemap.xml"),
+      "utf8",
+    );
+
+    expect(staticLlms).toContain(route);
+    expect(rootLlms).toContain(route);
+    expect(sitemap).toContain(`https://codexcryptica.com${route}`);
+  });
+
+  it("does not repeat the specialist spotlight lead in the article body", () => {
+    const answer = answers["how-do-i-give-specialist-characters-spotlight"];
+    const openingSection = answer.sections[0];
+
+    expect(openingSection.kind).toBe("prose");
+    if (openingSection.kind === "prose") {
+      expect(openingSection.paragraphs).not.toContain(
+        "Spotlight means giving one character a distinctive contribution, not giving them a separate game.",
+      );
+    }
+  });
+
+  it("publishes the solo rpg system answer with complete framework sections, R2 image, and verified system references", () => {
+    const answer = answers["what-rpg-system-is-good-for-solo-play"];
+    expect(answer).toBeDefined();
+    expect(answer.category).toBe("getting-started");
+    expect(answer.kind).toBe("comparison");
+    expect(answer.seo.image).toMatch(
+      /^https:\/\/assets\.codexcryptica\.com\/.+\.jpg$/,
+    );
+    expect(answer.seo.imageAlt?.trim().length ?? 0).toBeGreaterThan(0);
+    expect(answer.sections.length).toBeGreaterThanOrEqual(3);
+    expect(answer.sections.some((s) => s.kind === "example")).toBe(true);
+    expect(answer.sections.some((s) => s.kind === "checklist")).toBe(true);
+    expect(answer.systemsThatSupportThis?.map((s) => s.system)).toEqual([
+      "Ironsworn",
+      "Four Against Darkness",
+      "Scarlet Heroes",
+      "Ker Nethalas: Into the Midnight Throne",
+      "2D6 Dungeon",
+      "Across a Thousand Dead Worlds",
+      "Mythic Game Master Emulator Second Edition",
+    ]);
+    expect(answer.systemsThatSupportThis).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          system: "Ker Nethalas: Into the Midnight Throne",
+          href: "https://kernethalas.com/ker-nethalas-into-the-midnight-throne",
+        }),
+        expect.objectContaining({
+          system: "Across a Thousand Dead Worlds",
+          href: "https://blackoathgames.com/store/p/across-a-thousand-dead-worlds",
+        }),
+      ]),
+    );
+    for (const ref of answer.systemsThatSupportThis ?? []) {
+      expect(ref.href).toMatch(/^https:\/\//);
+      expect(ref.rationale.length).toBeGreaterThan(0);
+      expect(ref.rationale.match(/[.!?](?:\s|$)/g)).toHaveLength(1);
+    }
+  });
+
+  it("uses the current OSE SRD for time and encounter references", () => {
+    expect(
+      answers[
+        "how-do-you-keep-track-of-time-in-a-tabletop-campaign"
+      ].systemsThatSupportThis?.find(
+        (reference) => reference.system === "Old-School Essentials",
+      )?.href,
+    ).toBe("https://osesrd.opengamingnetwork.com/adventuring/");
+    expect(
+      answers[
+        "what-makes-a-good-random-encounter"
+      ].systemsThatSupportThis?.find(
+        (reference) => reference.system === "Old-School Essentials",
+      )?.href,
+    ).toBe("https://osesrd.opengamingnetwork.com/adventuring/");
+  });
+});
+
+describe("answer structured data", () => {
+  const answer = mockRegistry.alpha;
+
+  it("emits a single-question FAQPage carrying the direct answer", () => {
+    const parsed = JSON.parse(buildAnswerFaqJsonLd(answer));
+    expect(parsed["@type"]).toBe("FAQPage");
+    expect(parsed.mainEntity).toHaveLength(1);
+    expect(parsed.mainEntity[0].name).toBe(answer.question);
+    expect(parsed.mainEntity[0].acceptedAnswer.text).toBe(answer.shortAnswer);
+  });
+
+  it("emits a Home → Answers → question breadcrumb with absolute URLs", () => {
+    const parsed = JSON.parse(buildAnswerBreadcrumbJsonLd(answer));
+    expect(parsed["@type"]).toBe("BreadcrumbList");
+    expect(parsed.itemListElement.map((i: { name: string }) => i.name)).toEqual(
+      ["Home", "Answers", answer.question],
+    );
+    for (const item of parsed.itemListElement) {
+      expect(item.item).toMatch(/^https?:\/\//);
+    }
+  });
+
+  it("emits the index as an ItemList in registry order", () => {
+    const parsed = JSON.parse(buildAnswerIndexJsonLd(getAllAnswers()));
+    expect(parsed["@type"]).toBe("ItemList");
+    expect(parsed.itemListElement).toHaveLength(getAllAnswerSlugs().length);
+    expect(parsed.itemListElement[0].position).toBe(1);
+  });
+
+  it("escapes < so JSON-LD cannot break out of its script element", () => {
+    const risky = makeAnswer({
+      slug: "risky",
+      shortAnswer: "Answers may mention </script> without breaking the page.",
+    });
+    expect(buildAnswerFaqJsonLd(risky)).not.toContain("</script>");
+    expect(buildAnswerFaqJsonLd(risky)).toContain("\\u003c");
+  });
+});

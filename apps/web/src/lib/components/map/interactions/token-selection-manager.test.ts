@@ -91,4 +91,31 @@ describe("TokenSelectionManager", () => {
     );
     expect(setMultiSelection).toHaveBeenCalledWith(["token-a", "token-b"]);
   });
+
+  it("hit-tests hex tiles with hexagonal geometry rather than rectangular bounding box", () => {
+    const hexTile = token({
+      id: "hex-tile-1",
+      kind: "tile",
+      baseShape: "hex-flat",
+      x: 50,
+      y: 50,
+      width: 100,
+      height: 86.6,
+    });
+    const hexManager = new TokenSelectionManager({
+      getTokens: () => [hexTile],
+      project: (p: { x: number; y: number }) => p,
+      getSelectedTokens: () => new Set(),
+      setSelection: vi.fn(),
+      addToSelection: vi.fn(),
+      removeFromSelection: vi.fn(),
+      setMultiSelection: vi.fn(),
+      getGridType: () => "hex-flat",
+    });
+
+    // Center of the hex (100, 93.3) is hit
+    expect(hexManager.hitTest({ x: 100, y: 93.3 })?.id).toBe("hex-tile-1");
+    // Top-left corner of the bounding box (52, 52) is outside the flat hex polygon
+    expect(hexManager.hitTest({ x: 52, y: 52 })).toBeNull();
+  });
 });

@@ -25,7 +25,7 @@ Once you've created a project and installed dependencies with `pnpm install`, st
 ```bash
 pnpm run dev
 
-# or start the server and open the app in a new browser tab
+# or start the server and open in a new browser tab
 pnpm run dev -- --open
 ```
 
@@ -65,27 +65,54 @@ Static crawl assets like `robots.txt` and `sitemap.xml` are located in the `stat
 
 ## Help & Documentation
 
-Help articles are managed as Markdown files in `src/lib/content/help/`.
-To add a new article:
+Help articles are Markdown files in `src/lib/content/help/`. The same prose is used by the human Help Center and the contextual AI Help knowledge bundle; do not create a separate AI-only copy.
+
+To add a visible article:
 
 1. Create a `.md` file in that directory.
-2. Add frontmatter:
+2. Add the shared metadata contract:
    ```yaml
    ---
-   id: unique-id
+   id: unique-stable-id
    title: Article Title
-   tags: [tag1, tag2]
+   description: Explain what the user can accomplish with this article in one concise sentence.
+   tags: [user-language, search-terms]
    rank: 10
    ---
    ```
-3. Write content in Markdown.
+3. Write task-oriented Markdown using the same names the UI uses.
+4. Run the Help tests/bundle validation. Missing metadata, duplicate IDs, and broken feature-registry → Help references fail validation.
+
+### Metadata contract
+
+- `id` — required, stable kebab-case identifier. Do not rename it casually; AI Help and feature-registry references depend on it.
+- `title` — required, user-facing title.
+- `description` — required for visible articles, at most 240 characters, and should say what the user can accomplish rather than act as marketing copy.
+- `tags` — required non-empty array of terms a user might actually use when asking for this help.
+- `rank` — optional non-negative integer controlling Help Center ordering. Prefer spaced values so later insertions do not require renumbering.
+- `hidden: true` — excludes an article from the user-facing corpus and contextual Help bundle; hidden articles are not subject to the visible-article metadata contract.
+
+### Feature completion contract
+
+For every major user-facing feature, make two explicit decisions in the pull request:
+
+1. **Human/knowledge Help** — existing article remains sufficient, existing article updated, new article added, or deliberately no Help needed with a reason.
+2. **Contextual AI Help registry** — existing registry coverage remains sufficient, registry support updated/added, or deliberately deferred/not needed with a reason.
+
+These decisions are separate. A feature can be well documented before it has screen-aware AI Help actions, and not every feature needs registry support immediately.
+
+See [Contextual AI Help coverage](../../docs/help-assistant-coverage.md) for the
+current screen/feature decisions, authoritative Help IDs, safe guidance limits
+and Worker-first rollout requirements. Update that table when registry coverage
+changes; a regression test checks that every registered feature is recorded.
 
 ### Article Sorting (Rank)
 
-The `rank` field in the frontmatter determines the order of articles in the help system.
+Articles are sorted by `rank` ascending, then by `title`. If `rank` is omitted, the article appears after ranked articles.
 
-- Articles are sorted by `rank` (ascending), then by `title`.
-- Use spaced values (e.g., 10, 20, 30) to allow for future insertions without renumbering all articles.
-- If `rank` is missing, the article defaults to the end of the list.
+Run validation with:
 
-4. Verify by running `pnpm test`.
+```bash
+bun run --filter help-engine test
+bun run --filter help-engine bundle
+```

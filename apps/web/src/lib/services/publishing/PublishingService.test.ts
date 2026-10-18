@@ -275,6 +275,81 @@ describe("PublishingService", () => {
     );
   });
 
+  describe("merchant catalogues (#3964)", () => {
+    const CANARY = "CANARY-GM-ONLY";
+    const gp = (units: number) => ({ units, currency: "gp", precision: 0 });
+
+    const shop = (published: boolean) => ({
+      id: "shop-1",
+      type: "location",
+      title: "Tallow's Goods",
+      status: "active",
+      content: "A shop.",
+      connections: [],
+      statSheet: {
+        templateId: "builtin-shop-merchant",
+        fields: [
+          {
+            id: "gm_notes",
+            label: "GM notes",
+            type: "longtext",
+            value: CANARY,
+          },
+          {
+            id: "stock",
+            label: "Stock",
+            type: "item-table",
+            stockLedger: true,
+            playerCatalogue: { published, fields: [] },
+            tradeLog: [{ tradeId: CANARY }],
+            rows: [
+              {
+                rowId: "r1",
+                name: "Rope",
+                stock: { quantity: 2, price: gp(1), note: CANARY },
+              },
+              {
+                rowId: "r2",
+                name: CANARY,
+                stock: { quantity: 1, availability: "hidden" },
+              },
+            ],
+          },
+        ],
+      },
+    });
+
+    async function publishedBundle(published: boolean) {
+      deps.vault.allEntities = [shop(published)];
+      const service = new PublishingService(deps);
+      await service.publish("vault-1");
+      const upload = mockFetch.mock.calls.find(([url]: [string]) =>
+        url.includes("/api/publish-vault"),
+      );
+      expect(upload).toBeDefined();
+      return JSON.parse(upload[1].body);
+    }
+
+    it("uploads a shared shop as its catalogue, never the GM's sheet", async () => {
+      const bundle = await publishedBundle(true);
+      expect(JSON.stringify(bundle)).not.toContain(CANARY);
+      const sheet = bundle.entities[0].statSheet;
+      expect(sheet.fields.map((f: any) => f.id)).toEqual(["stock"]);
+      expect(sheet.fields[0].rows).toEqual([
+        { name: "Rope", stock: { quantity: 2, price: gp(1) } },
+      ]);
+    });
+
+    it("uploads nothing of a shop that is not shared", async () => {
+      const bundle = await publishedBundle(false);
+      expect(JSON.stringify(bundle)).not.toContain(CANARY);
+      expect(bundle.entities[0].statSheet).toEqual({
+        templateId: null,
+        fields: [],
+      });
+    });
+  });
+
   describe("loadFromVault", () => {
     const diskRegistry = {
       vaultId: "vault-1",
@@ -322,6 +397,18 @@ describe("PublishingService", () => {
       await service.loadFromVault("vault-1", handle);
 
       expect(service.publishedVaults["vault-1"].publishId).toBe("disk-pub-999");
+    });
+
+    it("hydrates in-memory state when disk reconciliation already updated IDB", async () => {
+      registryStore["vault-1"] = diskRegistry;
+      const service = new PublishingService(deps);
+      const handle = makeMockHandle(diskRegistry);
+
+      await service.loadFromVault("vault-1", handle);
+
+      expect(service.publishedVaults["vault-1"]).toMatchObject({
+        publishId: "disk-pub-999",
+      });
     });
 
     it("keeps IDB registry when it is newer than disk", async () => {

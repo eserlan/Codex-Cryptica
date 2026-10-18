@@ -14,7 +14,7 @@ export interface GraphDeleteShortcutDependencies {
   clearSelectedId: () => void;
 }
 
-const isEditableTarget = (target: EventTarget | null) => {
+export const isEditableTarget = (target: EventTarget | null) => {
   if (!(target instanceof HTMLElement)) return false;
   return (
     target.tagName === "INPUT" ||
@@ -24,11 +24,79 @@ const isEditableTarget = (target: EventTarget | null) => {
   );
 };
 
+export interface GraphActionShortcutDependencies {
+  isGuest: boolean;
+  selectedCount: number;
+  isConnecting: boolean;
+  toggleTimeline: () => void;
+  applyTimelineLayout: () => void;
+  toggleConnectMode: () => void;
+  toggleSelectionConnector: () => void;
+  toggleLabels: () => void;
+  toggleImages: () => void;
+}
+
+export function handleGraphActionShortcut(
+  event: KeyboardEvent,
+  deps: GraphActionShortcutDependencies,
+): boolean {
+  if (!event.key) return false;
+  if (isEditableTarget(document.activeElement)) return false;
+
+  const target = document.activeElement;
+  if (
+    target instanceof HTMLElement &&
+    target.closest(
+      "dialog, [role='dialog'], [role='tabpanel'], aside, [aria-modal='true']",
+    )
+  ) {
+    return false;
+  }
+
+  const key = event.key.toLowerCase();
+  const isPlainKey = !event.ctrlKey && !event.metaKey && !event.altKey;
+
+  if (isPlainKey && key === "t") {
+    deps.toggleTimeline();
+    deps.applyTimelineLayout();
+    return true;
+  }
+
+  if (isPlainKey && key === "c") {
+    if (!deps.isGuest) {
+      if (deps.selectedCount === 2) {
+        deps.toggleSelectionConnector();
+      } else {
+        deps.toggleConnectMode();
+      }
+    }
+    return true;
+  }
+
+  if (isPlainKey && key === "l") {
+    deps.toggleLabels();
+    return true;
+  }
+
+  if (isPlainKey && key === "i") {
+    deps.toggleImages();
+    return true;
+  }
+
+  if (event.key === "Escape" && deps.isConnecting) {
+    deps.toggleConnectMode();
+    return true;
+  }
+
+  return false;
+}
+
 export async function handleGraphDeleteShortcut(
   event: KeyboardEvent,
   deps: GraphDeleteShortcutDependencies,
 ) {
-  if (event.key !== "Delete" && event.key !== "Backspace") return false;
+  if (!event.key || (event.key !== "Delete" && event.key !== "Backspace"))
+    return false;
   if (isEditableTarget(document.activeElement)) return false;
 
   // Prevent accidental deletes when keyboard focus is within a sidebar, modal, or overlay.

@@ -47,6 +47,7 @@ describe("ZenModeModal close (standalone entity route)", () => {
     modalUIStore.showZenMode = true;
     modalUIStore.zenModeEntityId = "entity-1";
     modalUIStore.zenModeActiveTab = "overview";
+    modalUIStore.lastAppPath = null;
   });
 
   it("closes immediately without a confirmation prompt", async () => {
@@ -65,6 +66,18 @@ describe("ZenModeModal close (standalone entity route)", () => {
     // the user is never stranded on the blank standalone entity backdrop.
     await waitFor(() => {
       expect(goto as unknown as ReturnType<typeof vi.fn>).toHaveBeenCalled();
+    });
+  });
+
+  it("navigates to modalUIStore.lastAppPath when tab cannot be closed", async () => {
+    vi.spyOn(window, "close").mockImplementation(() => {});
+    modalUIStore.lastAppPath = "/table?q=hero";
+
+    render(ZenModeModal);
+    await fireEvent.click(screen.getByTestId("zen-close"));
+
+    await waitFor(() => {
+      expect(goto).toHaveBeenCalledWith("/table?q=hero");
     });
   });
 });

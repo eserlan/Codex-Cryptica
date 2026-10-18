@@ -36,7 +36,7 @@
   >
     {#if entity}
       <button
-        class="px-2.5 py-1.5 text-[10px] font-bold text-theme-text hover:text-theme-primary transition-all uppercase tracking-wider whitespace-nowrap border-r border-theme-border mr-1 hover:bg-theme-primary/10 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:ring-offset-1 focus-visible:ring-offset-theme-surface"
+        class="px-2.5 py-1.5 text-micro font-bold text-theme-text hover:text-theme-primary transition-all uppercase tracking-wider whitespace-nowrap border-r border-theme-border mr-1 hover:bg-theme-primary/10 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:ring-offset-1 focus-visible:ring-offset-theme-surface"
         onclick={() => onOpenEntity(entity.id)}
       >
         {entity.title}{#if entity.labels?.some((l: string) => l.toLowerCase() === "past")}<sup

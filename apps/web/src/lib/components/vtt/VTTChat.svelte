@@ -71,10 +71,10 @@
         <span
           class="icon-[lucide--messages-square] w-12 h-12 mb-3 text-theme-primary/50"
         ></span>
-        <p class="text-[10px] uppercase tracking-[0.2em] font-header font-bold">
+        <p class="text-micro uppercase tracking-[0.2em] font-header font-bold">
           Awaiting communication...
         </p>
-        <p class="text-[10px] text-theme-muted mt-1 font-body">
+        <p class="text-micro text-theme-muted mt-1 font-body">
           Type / to open commands
         </p>
       </div>
@@ -105,7 +105,7 @@
       />
     {/if}
 
-    <div class="mb-2 flex items-center gap-2 px-1 text-[10px] text-theme-muted">
+    <div class="mb-2 flex items-center gap-2 px-1 text-micro text-theme-muted">
       <span class="font-body">
         Type <span class="font-mono text-theme-primary">/</span> to open commands
       </span>

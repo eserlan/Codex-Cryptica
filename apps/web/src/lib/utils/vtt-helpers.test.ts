@@ -88,6 +88,78 @@ describe("vtt-helpers", () => {
     expect(found?.id).toBe("top");
   });
 
+  it("hit-tests hex tiles by their hexagonal geometry, ignoring bounding box corners", () => {
+    // Flat-topped hex centered at (100, 100), radius R = 50.
+    // Width = 2 * R = 100 (x: 50 to 150).
+    // Height = sqrt(3) * R ≈ 86.6 (y: 56.7 to 143.3).
+    const sqrt3 = Math.sqrt(3);
+    const hexTile: Token = {
+      id: "hex-tile-a",
+      entityId: null,
+      name: "Hex A",
+      x: 50,
+      y: 100 - (50 * sqrt3) / 2,
+      width: 100,
+      height: 50 * sqrt3,
+      rotation: 0,
+      baseShape: "hex-flat",
+      zIndex: 1,
+      ownerPeerId: null,
+      ownerGuestName: null,
+      visibleTo: "all",
+      color: "#fff",
+      imageUrl: null,
+      statusEffects: [],
+      kind: "tile",
+    };
+
+    // Center click hits
+    expect(hitTestToken([hexTile], (p) => p, 100, 100)?.id).toBe("hex-tile-a");
+
+    // Click near the top-right corner of the bounding box (x=145, y=60)
+    // is outside the flat-topped hex polygon
+    expect(hitTestToken([hexTile], (p) => p, 145, 60)).toBeNull();
+
+    // With gridType: "hex-flat", token with kind: "tile" also uses hex testing
+    const plainTile: Token = { ...hexTile, baseShape: "square" };
+    expect(hitTestToken([plainTile], (p) => p, 145, 60, "hex-flat")).toBeNull();
+    expect(hitTestToken([plainTile], (p) => p, 100, 100, "hex-flat")?.id).toBe(
+      "hex-tile-a",
+    );
+
+    // On square grid, rectangular bounding box is used as before
+    expect(hitTestToken([plainTile], (p) => p, 145, 60, "square")?.id).toBe(
+      "hex-tile-a",
+    );
+  });
+
+  it("hit-tests visible hex edges after token rotation", () => {
+    const pointyHex: Token = {
+      id: "rotated-hex",
+      entityId: null,
+      name: "Rotated Hex",
+      x: 100 - (50 * Math.sqrt(3)) / 2,
+      y: 50,
+      width: 50 * Math.sqrt(3),
+      height: 100,
+      rotation: 90,
+      baseShape: "hex-pointy",
+      zIndex: 1,
+      ownerPeerId: null,
+      ownerGuestName: null,
+      visibleTo: "all",
+      color: "#fff",
+      imageUrl: null,
+      statusEffects: [],
+    };
+
+    // This visible rotated point is 47px from centre, outside the original
+    // 86.6px-wide unrotated bounds but inside the rotated pointy hex.
+    expect(hitTestToken([pointyHex], (point) => point, 147, 100)?.id).toBe(
+      "rotated-hex",
+    );
+  });
+
   it("projects points into the viewport", () => {
     expect(
       toViewportPoint(

@@ -21,7 +21,6 @@ describe("Vault Data Validation", () => {
       id: "valid-1",
       type: "note",
       title: "Valid Note",
-      tags: [],
       labels: [],
       aliases: [],
       connections: [],
@@ -65,10 +64,20 @@ describe("Vault Data Validation", () => {
     const validMarkdown = `---
 type: "note"
 title: "Test"
+labels: ["npc", "important"]
 ---
 Content
 `;
     expect(validateMarkdownFrontmatter(validMarkdown).success).toBe(true);
+
+    const legacyTagsMarkdown = `---
+type: "note"
+title: "Test"
+tags: ["legacy"]
+---
+Content
+`;
+    expect(validateMarkdownFrontmatter(legacyTagsMarkdown).success).toBe(true);
 
     const invalidMarkdown = `---
 type: 123
@@ -85,14 +94,5 @@ type: "note"
 Content
 `;
     expect(validateMarkdownFrontmatter(malformedYaml).success).toBe(false);
-
-    const unsupportedTags = `---
-type: "note"
-title: "Test"
-tags: ["legacy"]
----
-Content
-`;
-    expect(validateMarkdownFrontmatter(unsupportedTags).success).toBe(false);
   });
 });

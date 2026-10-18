@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
 import { render, screen, waitFor } from "@testing-library/svelte";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("./ResizerHandle.svelte", () => ({
   default: function ResizerHandleMock() {
@@ -49,6 +49,50 @@ describe("SidebarPanelHost", () => {
     layoutUIStore.activeSidebarTool = "none";
     layoutUIStore.isMobile = false;
     layoutUIStore.leftSidebarWidth = 280;
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("keeps the mobile Oracle composer above the soft keyboard", async () => {
+    // Chrome on Android can shrink only the visual viewport while fixed
+    // overlays remain sized to the layout viewport.
+    const fullHeight = window.innerHeight;
+    const viewport = Object.assign(new EventTarget(), {
+      height: fullHeight,
+      offsetTop: 0,
+    });
+    vi.stubGlobal("visualViewport", viewport);
+
+    layoutUIStore.isMobile = true;
+    layoutUIStore.leftSidebarOpen = true;
+    layoutUIStore.activeSidebarTool = "oracle";
+    render(SidebarPanelHost);
+
+    const sidebar = screen.getByTestId("sidebar-panel-host");
+    await waitFor(() =>
+      expect(screen.getByTestId("oracle-sidebar-panel")).toBeTruthy(),
+    );
+    expect(sidebar.style.height).toBe("");
+
+    // Pinned to exactly the visible part, including when the visual viewport
+    // has been panned down inside the page.
+    viewport.height = fullHeight - 320;
+    viewport.offsetTop = 40;
+    viewport.dispatchEvent(new Event("resize"));
+    await waitFor(() =>
+      expect(sidebar.style.height).toBe(`${fullHeight - 320}px`),
+    );
+    expect(sidebar.style.top).toBe("40px");
+    expect(sidebar.style.bottom).toBe("auto");
+
+    viewport.height = fullHeight;
+    viewport.offsetTop = 0;
+    viewport.dispatchEvent(new Event("resize"));
+    await waitFor(() => expect(sidebar.style.height).toBe(""));
+    expect(sidebar.style.top).toBe("");
+    expect(sidebar.style.bottom).toBe("");
   });
 
   it("renders the Oracle sidebar panel when the Oracle tool is open", async () => {

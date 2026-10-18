@@ -130,6 +130,67 @@ describe("GraphTransformer", () => {
     expect(node?.data.image).toBe("http://example.com/img.png");
   });
 
+  it("leaves stock placeholder art off the node so it gets a silhouette", () => {
+    const icon = "https://www.scabard.com/images/cross_categories/event.png";
+    const entities: Entity[] = [
+      {
+        id: "n1",
+        type: "event",
+        title: "Placeholder",
+        tags: [],
+        labels: [],
+        connections: [],
+        content: "",
+        image: icon,
+        thumbnail: icon,
+      },
+      {
+        id: "n2",
+        type: "event",
+        title: "Real",
+        tags: [],
+        labels: [],
+        connections: [],
+        content: "",
+        image: "https://www.scabard.com/images/rf_images/event/1.jpg",
+        thumbnail: icon,
+      },
+    ];
+
+    const nodes = GraphTransformer.entitiesToElements(entities).filter(
+      (e): e is GraphNode => e.group === "nodes",
+    );
+    const [placeholder, real] = nodes;
+    expect(placeholder.data.image).toBeUndefined();
+    expect(placeholder.data.thumbnail).toBeUndefined();
+    expect(real.data.image).toBe(
+      "https://www.scabard.com/images/rf_images/event/1.jpg",
+    );
+    expect(real.data.thumbnail).toBeUndefined();
+  });
+
+  it("should transform imageFocus field", () => {
+    const entities: Entity[] = [
+      {
+        id: "n1",
+        type: "npc",
+        title: "Node 1",
+        tags: [],
+        labels: [],
+        connections: [],
+        content: "",
+        image: "http://example.com/img.png",
+        imageFocus: "top",
+      },
+    ];
+
+    const elements = GraphTransformer.entitiesToElements(entities);
+    const node = elements.find(
+      (e): e is GraphNode => e.group === "nodes" && e.data.id === "n1",
+    );
+    expect(node?.data.imageFocus).toBe("top");
+  });
+
   it("should use custom label on edges when provided", () => {
     const entities: Entity[] = [
       {
@@ -291,13 +352,13 @@ describe("GraphTransformer", () => {
     expect(livingNode?.data.isPast).toBeUndefined();
   });
 
-  it("should mark nodes as revealed if tags or labels contain 'revealed' or 'visible'", () => {
+  it("should mark nodes as revealed if labels (or legacy tags) contain 'revealed' or 'visible'", () => {
     const entities: any[] = [
       {
         id: "n1",
         type: "npc",
         title: "Node 1",
-        tags: ["REVEALED"],
+        labels: ["REVEALED"],
         connections: [],
         content: "",
       },
@@ -313,7 +374,15 @@ describe("GraphTransformer", () => {
         id: "n3",
         type: "npc",
         title: "Node 3",
-        tags: ["hidden"],
+        labels: ["hidden"],
+        connections: [],
+        content: "",
+      },
+      {
+        id: "n4",
+        type: "npc",
+        title: "Node 4",
+        tags: ["revealed"],
         connections: [],
         content: "",
       },
@@ -331,13 +400,19 @@ describe("GraphTransformer", () => {
       (e): e is GraphNode => e.group === "nodes" && e.data.id === "n3",
     );
 
+    const node4 = elements.find(
+      (e): e is GraphNode => e.group === "nodes" && e.data.id === "n4",
+    );
+
     expect(node1).toBeDefined();
     expect(node2).toBeDefined();
     expect(node3).toBeDefined();
+    expect(node4).toBeDefined();
 
     expect((node1?.data as any).isRevealed).toBe(true);
     expect((node2?.data as any).isRevealed).toBe(true);
     expect((node3?.data as any).isRevealed).toBeUndefined();
+    expect((node4?.data as any).isRevealed).toBe(true);
   });
 
   it("should format dates correctly", () => {
@@ -470,6 +545,42 @@ describe("GraphTransformer", () => {
     );
     expect(resolvedImageStyle.style["background-image-crossorigin"]).toBe(
       "null",
+    );
+  });
+
+  it("crops a resolved portrait to the node's own imageFocus", () => {
+    const mockTemplate = {
+      tokens: {
+        primary: "#000",
+        background: "#fff",
+        text: "#333",
+        surface: "#eee",
+        fontHeader: "Arial",
+        fontBody: "Arial",
+      },
+      graph: {
+        nodeShape: "ellipse",
+        nodeBorderWidth: 1,
+        edgeWidth: 1,
+        edgeColor: "#ccc",
+        edgeStyle: "solid",
+      },
+    } as any;
+    const style = getGraphStyle(mockTemplate, [], true);
+    const resolvedImageStyle = style.find((s: any) =>
+      s.selector.includes("resolvedImage"),
+    );
+    const focused = { data: (key: string) => ({ imageFocus: "right" })[key] };
+    const unset = { data: (key: string) => ({ imageFocus: undefined })[key] };
+
+    expect(resolvedImageStyle.style["background-position-x"](focused)).toBe(
+      "100%",
+    );
+    expect(resolvedImageStyle.style["background-position-y"](focused)).toBe(
+      "50%",
+    );
+    expect(resolvedImageStyle.style["background-position-x"](unset)).toBe(
+      "50%",
     );
   });
 
@@ -631,5 +742,183 @@ describe("GraphTransformer", () => {
     const revealedStyle = style.find((s) => s.selector === "node[isRevealed]");
     expect(revealedStyle.style["border-width"]).toBe(4);
     expect(revealedStyle.style["background-clip"]).toBe("node");
+  });
+
+  it("marks edges connected to unplaced nodes as pending layout", () => {
+    const entities = [
+      {
+        id: "placed-1",
+        type: "npc",
+        title: "Placed 1",
+        metadata: { coordinates: { x: 100, y: 100 } },
+        connections: [
+          { target: "placed-2", type: "knows" },
+          { target: "unplaced-3", type: "knows" },
+        ],
+      },
+      {
+        id: "placed-2",
+        type: "npc",
+        title: "Placed 2",
+        metadata: { coordinates: { x: 200, y: 200 } },
+        connections: [],
+      },
+      {
+        id: "unplaced-3",
+        type: "npc",
+        title: "Unplaced 3",
+        connections: [],
+      },
+    ] as any;
+
+    const elements = GraphTransformer.entitiesToElements(entities);
+    const edges = elements.filter((e) => e.group === "edges");
+
+    const placedEdge = edges.find((e) => e.data.target === "placed-2");
+    const unplacedEdge = edges.find((e) => e.data.target === "unplaced-3");
+
+    expect((placedEdge?.data as any).isPendingLayout).toBeUndefined();
+    expect(placedEdge?.classes).toBeUndefined();
+
+    expect((unplacedEdge?.data as any).isPendingLayout).toBe(true);
+    expect(unplacedEdge?.classes).toBe("pending-layout");
+  });
+
+  it("includes zero-opacity and events:no rules for pending edges in stylesheet", () => {
+    const mockTemplate = {
+      id: "scifi",
+      tokens: {
+        primary: "#00ffff",
+        background: "#0a0a0a",
+        text: "#ffffff",
+        surface: "#1a1a1a",
+        fontHeader: "Courier",
+        fontBody: "Courier",
+      },
+      graph: {
+        nodeShape: "roundrectangle",
+        nodeBorderWidth: 1,
+        edgeWidth: 1,
+        edgeColor: "#00ffff",
+        edgeStyle: "solid",
+      },
+    } as any;
+
+    const style = getGraphStyle(mockTemplate, [], false);
+    const pendingStyle = style.find(
+      (s) =>
+        s.selector.includes("edge[isPendingLayout]") ||
+        s.selector === ".pending-layout",
+    );
+    expect(pendingStyle).toBeDefined();
+    expect(pendingStyle?.style.opacity).toBe(0);
+    expect(pendingStyle?.style.events).toBe("no");
+  });
+});
+
+describe("GraphTransformer node positions", () => {
+  const entity = (id: string, coordinates?: { x: number; y: number }) =>
+    ({
+      id,
+      type: "npc",
+      title: id,
+      content: "",
+      lore: "",
+      tags: [],
+      labels: [],
+      connections: [],
+      ...(coordinates ? { metadata: { coordinates } } : {}),
+    }) as any;
+
+  it("starts a node at the entity's saved coordinates", () => {
+    const elements = GraphTransformer.entitiesToElements([
+      entity("a", { x: 12, y: -34 }),
+    ]);
+
+    expect((elements[0] as any).position).toEqual({ x: 12, y: -34 });
+  });
+
+  it("gives the node its own position, so moving it never edits the entity's saved coordinates (#3456)", () => {
+    const saved = { x: 12, y: -34 };
+    const source = entity("a", saved);
+
+    const elements = GraphTransformer.entitiesToElements([source]);
+    const position = (elements[0] as any).position;
+
+    // Cytoscape adopts the object it is given as the node's live position, so
+    // sharing the entity's object would let a drag or a view's saved layout
+    // rewrite the vault's everyday arrangement.
+    expect(position).not.toBe(saved);
+    position.x = 999;
+    position.y = 999;
+    expect(source.metadata.coordinates).toEqual({ x: 12, y: -34 });
+    expect(saved).toEqual({ x: 12, y: -34 });
+  });
+
+  it("gives two nodes separate positions even from the same coordinates object (negative)", () => {
+    const shared = { x: 1, y: 2 };
+    const elements = GraphTransformer.entitiesToElements([
+      entity("a", shared),
+      entity("b", shared),
+    ]);
+
+    expect((elements[0] as any).position).not.toBe(
+      (elements[1] as any).position,
+    );
+  });
+
+  describe("hidden connections", () => {
+    const pair = (hidden?: boolean) =>
+      [
+        {
+          id: "a",
+          type: "npc",
+          title: "A",
+          tags: [],
+          labels: [],
+          content: "",
+          connections: [
+            { target: "b", type: "knows", hidden },
+            { target: "b", type: "owns" },
+          ],
+        },
+        {
+          id: "b",
+          type: "npc",
+          title: "B",
+          tags: [],
+          labels: [],
+          content: "",
+          connections: [],
+        },
+      ] as unknown as Entity[];
+
+    const edges = (entities: Entity[]) =>
+      GraphTransformer.entitiesToElements(entities).filter(
+        (e) => e.group === "edges",
+      );
+
+    it("leaves a hidden connection out of the edges but keeps both nodes", () => {
+      const elements = GraphTransformer.entitiesToElements(pair(true));
+
+      expect(elements.filter((e) => e.group === "nodes")).toHaveLength(2);
+      expect(edges(pair(true)).map((e) => (e.data as any).id)).toEqual([
+        "a-b-owns",
+      ]);
+    });
+
+    it("draws every connection when none is hidden (negative)", () => {
+      expect(edges(pair(undefined))).toHaveLength(2);
+      expect(edges(pair(false))).toHaveLength(2);
+    });
+
+    it("does not spend the edge budget on a hidden connection", () => {
+      const elements = GraphTransformer.entitiesToElements(
+        pair(true),
+        undefined,
+        1,
+      );
+      expect(elements.filter((e) => e.group === "edges")).toHaveLength(1);
+    });
   });
 });

@@ -126,4 +126,29 @@ describe("AppHeader", () => {
       screen.getByRole("link", { name: "Explore public worlds" }),
     ).toBeTruthy();
   });
+
+  it.each([true, false])(
+    "marks Create and Search for guided-setup highlights (Guided Mode %s)",
+    (guided) => {
+      guidedModeStore.setGuidedMode(guided);
+      render(AppHeader);
+      expect(
+        screen.getByTestId("header-create-button").dataset.helpTarget,
+      ).toBe("create-entry");
+      expect(screen.getByTestId("search-input").dataset.helpTarget).toBe(
+        "open-search",
+      );
+      expect(
+        screen.getByTestId("mobile-search-button").dataset.helpTarget,
+      ).toBe("open-search");
+    },
+  );
+
+  it("does not mark a Create button for guests", () => {
+    sessionModeStore.isGuestMode = true;
+    const { container } = render(AppHeader);
+    expect(
+      container.querySelector('[data-help-target="create-entry"]'),
+    ).toBeNull();
+  });
 });

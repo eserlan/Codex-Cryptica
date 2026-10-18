@@ -1,5 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import type { StatSheetField } from "schema";
+import { mapTovMechanicsToStatSheet } from "@codex/stat-sheet-engine";
 
 const { addResult, notify, sendResolvedRollMessage, mapSessionState } =
   vi.hoisted(() => ({
@@ -144,6 +145,29 @@ describe("applyDerivedModifiers", () => {
     expect(result.find((f) => f.id === "wis")?.formula).toBe("1d20+0");
   });
 
+  it("resolves a modifierSource key to the canonical field (#3180)", () => {
+    const fields: StatSheetField[] = [
+      {
+        id: "field-abc",
+        key: "strength",
+        label: "STR",
+        type: "number",
+        value: 14,
+      } as StatSheetField,
+      {
+        id: "str",
+        label: "STR Check",
+        type: "dice",
+        formula: "1d20+0",
+        modifierSource: "strength",
+      } as StatSheetField,
+    ];
+
+    const result = applyDerivedModifiers(fields);
+
+    expect(result.find((f) => f.id === "str")?.formula).toBe("1d20+2");
+  });
+
   it("leaves fields without a modifierSource unchanged", () => {
     const fields: StatSheetField[] = [
       {
@@ -155,6 +179,44 @@ describe("applyDerivedModifiers", () => {
     ];
 
     expect(applyDerivedModifiers(fields)).toEqual(fields);
+  });
+
+  it("preserves generated proficiency through later sheet edits", () => {
+    const sheet = mapTovMechanicsToStatSheet({
+      kind: "tov-character",
+      data: {
+        lineage: "Elf",
+        heritage: "Sylvan",
+        background: "Wanderer",
+        className: "Rogue",
+        level: 3,
+        proficiencyBonus: 2,
+        ac: 14,
+        hp: 24,
+        hitDice: "3d8+6",
+        speed: "35 ft.",
+        abilityScores: {
+          str: 10,
+          dex: 14,
+          con: 14,
+          int: 12,
+          wis: 12,
+          cha: 8,
+        },
+        saveProficiencies: ["dex"],
+        skillProficiencies: ["Stealth"],
+      },
+    });
+    expect(sheet).not.toBeNull();
+
+    const editedFields = [...sheet!.fields];
+    editedFields.find((field) => field.id === "level")!.value = 4;
+    const updated = Object.fromEntries(
+      applyDerivedModifiers(editedFields).map((field) => [field.id, field]),
+    );
+
+    expect(updated.dex_save?.formula).toBe("1d20+4");
+    expect(updated.stealth?.formula).toBe("1d20+4");
   });
 });
 
@@ -209,7 +271,12 @@ describe("rollStatSheetDiceField", () => {
   it("returns the roll total, records history, and broadcasts when a VTT session is live", async () => {
     const display = await rollStatSheetDiceField(diceField());
 
-    expect(display).toEqual({ text: "= 17", isError: false, total: 17 });
+    expect(display).toEqual({
+      text: "= 17",
+      isError: false,
+      total: 17,
+      roll: { total: 17, parts: [] },
+    });
     expect(addResult).toHaveBeenCalled();
     expect(addResult).toHaveBeenCalledWith(
       expect.objectContaining({ total: 17 }),

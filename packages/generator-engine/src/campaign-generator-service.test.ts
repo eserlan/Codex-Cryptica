@@ -281,6 +281,81 @@ function languageAiJson(mutate?: (value: Record<string, any>) => void): string {
 }
 
 describe("generateDraft", () => {
+  it("rejects direct tome generation when cancellation reaches the local fallback", async () => {
+    const controller = new AbortController();
+    const complete = vi.fn(async () => {
+      controller.abort();
+      return "invalid JSON";
+    });
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete },
+    });
+
+    await expect(
+      svc.generateDraft(run("tome", { useAI: true }), controller.signal),
+    ).rejects.toMatchObject({ name: "AbortError" });
+    expect(complete).toHaveBeenCalledTimes(1);
+  });
+
+  it("rejects direct tome generation when the editorial pass rejects after cancellation", async () => {
+    const controller = new AbortController();
+    const content = [
+      "### Physical Description & Format",
+      "A clay tablet bound in twine.",
+      "### Provenance & Transmission",
+      "The temple archived the tablet after its scribe vanished.",
+      "### Contents & Revelations",
+      "A river-clay vessel must dry in open air. A later censor substituted water.",
+      "### Risks & Costs of Study",
+      "Adding water to the vessel releases its resident spirit.",
+      "### Adventure Hooks",
+      "1. Retrieve the vessel before the rite begins.",
+    ].join("\n\n");
+    const lore = [
+      "### At the Table Reference",
+      "Use the vessel as an investigation.",
+      "### Ground Truth for the GM",
+      "- **What the Book Claims**: Apply water.",
+      "- **The Deception / Flaw**: The censor changed the method.",
+      "- **The Objective Truth**: The vessel must dry in open air.",
+      "- **Actionable Clue**: A scorch exposes the correction.",
+      "### Connected Entities",
+      "- **Author / Compiler**: A temple scribe.",
+      "### Quick Checks & Mechanics",
+      "- **The Failure Condition**: Water releases the spirit.",
+    ].join("\n\n");
+    const firstDraft = JSON.stringify({
+      title: "The River-Clay Rite",
+      summary: "A forbidden ritual tablet.",
+      canonicalFacts: {
+        centralRule: "Let the river-clay vessel dry in open air.",
+        productionMethod: "Handwritten on a clay tablet.",
+        errorSource: "A temple censor replaced drying with water.",
+      },
+      content,
+      lore,
+      labels: ["tome", "item"],
+      connections: [],
+    });
+    const complete = vi
+      .fn()
+      .mockResolvedValueOnce(firstDraft)
+      .mockImplementationOnce(async () => {
+        controller.abort();
+        throw new DOMException("Cancelled", "AbortError");
+      });
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete },
+    });
+
+    await expect(
+      svc.generateDraft(run("tome", { useAI: true }), controller.signal),
+    ).rejects.toMatchObject({ name: "AbortError" });
+    expect(complete).toHaveBeenCalledTimes(2);
+  });
+
   it("produces a draft for each supported generator with useAI false", async () => {
     const svc = new CampaignGeneratorService();
     for (const id of ["npc", "faction", "settlement", "magic-item"] as const) {
@@ -371,6 +446,35 @@ describe("saveDraft", () => {
     );
   });
 
+  it("persists statSheet and systemId when saving a draft with mechanics", async () => {
+    const vault = gateway();
+    const svc = new CampaignGeneratorService({ vault });
+    const mockStatSheet = {
+      templateId: "builtin-tov-npc",
+      fields: [
+        { id: "hp", label: "Hit Points", type: "counter" as const, value: 20 },
+      ],
+    };
+    await svc.saveDraft({
+      draft: draft({
+        sourceGeneratorId: "npc",
+        entityType: "character",
+        systemId: "tales-of-the-valiant",
+        statSheet: mockStatSheet,
+      }),
+      createRelationship: false,
+    });
+
+    expect(vault.createEntity).toHaveBeenCalledWith(
+      "character",
+      "Kaeldar",
+      expect.objectContaining({
+        systemId: "tales-of-the-valiant",
+        statSheet: mockStatSheet,
+      }),
+    );
+  });
+
   it("stores a dungeon summary as content and combines its document with GM lore", async () => {
     const vault = gateway();
     const svc = new CampaignGeneratorService({ vault });
@@ -393,6 +497,31 @@ describe("saveDraft", () => {
         content: "A contested glass sanctuary.",
         lore: "## History & Original Purpose\nForged by dragonfire.\n\n## Central Secret / Boss Mystery\nA star sleeps below.",
         kind: "dungeon",
+      }),
+    );
+  });
+
+  it("preserves both player-facing and GM-facing heist sections when saving", async () => {
+    const vault = gateway();
+    const svc = new CampaignGeneratorService({ vault });
+    await svc.saveDraft({
+      draft: draft({
+        sourceGeneratorId: "heist",
+        entityType: "event",
+        summary: "Rescue Nessa and leave the payroll office with her.",
+        content: "### The Score\nGet Nessa clear of the payroll office.",
+        lore: "### GM Quick Reference\n- **Objective**: Escape with Nessa.",
+        labels: ["heist", "event"],
+      }),
+      createRelationship: false,
+    });
+
+    expect(vault.createEntity).toHaveBeenCalledWith(
+      "event",
+      "Kaeldar",
+      expect.objectContaining({
+        content: "Rescue Nessa and leave the payroll office with her.",
+        lore: "### The Score\nGet Nessa clear of the payroll office.\n\n### GM Quick Reference\n- **Objective**: Escape with Nessa.",
       }),
     );
   });
@@ -560,6 +689,117 @@ describe("AI policy (US2)", () => {
     expect(aiGateway.complete).toHaveBeenCalledTimes(1);
     expect(d.title).toBe("Zara the Witch");
     expect(d.labels).toContain("Witch");
+  });
+
+  it("preserves valid AI-generated observances in campaign drafts", async () => {
+    const observances = [
+      {
+        name: "Lantern Tide",
+        type: "Memorial",
+        when: "The first calm night after the autumn equinox",
+        observers: "Harbour families",
+        traditions: "Carry covered lanterns to the quay",
+        tension: "A new ledger disputes the official account.",
+      },
+    ];
+    const aiGateway = {
+      complete: vi.fn(async () =>
+        JSON.stringify({
+          title: "Lantern Tide",
+          summary: "A harbour remembrance.",
+          lore: "The rope crews kept the gate open.",
+          labels: ["observance"],
+          observances,
+        }),
+      ),
+    };
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway,
+    });
+
+    const generated = await svc.generateDraft(run("holiday", { useAI: true }));
+
+    expect(generated.observances).toEqual(observances);
+  });
+
+  it("normalizes structured holiday AI output before creating a campaign draft", async () => {
+    const aiGateway = {
+      complete: vi.fn(async () =>
+        JSON.stringify({
+          title: "The First Spill of Neshur",
+          summary: "A spring water-opening festival.",
+          content: {
+            overview: "A festival shaped by shared cisterns and terrace labor.",
+            expandedObservance: {
+              name: "The First Spill",
+              type: "Seasonal civic festival",
+              traditions: [
+                "Open the measured sluice.",
+                "Record repair pledges.",
+              ],
+            },
+          },
+          lore: { setting: "Neshur depends on shared meltwater." },
+          observances: [
+            {
+              name: "The First Spill",
+              type: "Seasonal civic festival",
+              when: "The first reliable thaw",
+              observers: ["Channel crews", "Terrace farmers"],
+              traditions: [
+                "Open the measured sluice.",
+                "Record repair pledges.",
+              ],
+              tension: "A lower channel is leaking.",
+              taboos: ["Do not take water before the measure."],
+            },
+          ],
+        }),
+      ),
+    };
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway,
+    });
+
+    const generated = await svc.generateDraft(run("holiday", { useAI: true }));
+
+    expect(generated.title).toBe("The First Spill of Neshur");
+    expect(generated.content).toContain("shared cisterns and terrace labor");
+    expect(generated.content).toContain("## Calendar overview");
+    expect(generated.content).toContain("### The First Spill");
+    expect(generated.content).toContain("#### Traditions");
+    expect(generated.content).toContain("- Open the measured sluice.");
+    expect(generated.lore).toContain("Neshur depends on shared meltwater.");
+    expect(generated.observances?.[0]?.observers).toBe(
+      "Channel crews; Terrace farmers",
+    );
+    expect(generated.observances?.[0]?.traditions).toContain(
+      "Record repair pledges.",
+    );
+  });
+
+  it("drops malformed AI observances instead of trusting their shape", async () => {
+    const aiGateway = {
+      complete: vi.fn(async () =>
+        JSON.stringify({
+          title: "Lantern Tide",
+          summary: "A harbour remembrance.",
+          lore: "The rope crews kept the gate open.",
+          labels: ["observance"],
+          observances: [{ name: "Incomplete entry", tension: 42 }],
+        }),
+      ),
+    };
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway,
+    });
+
+    const generated = await svc.generateDraft(run("holiday", { useAI: true }));
+
+    expect(generated.observances).toBeUndefined();
   });
 
   it("parses the internal dungeon generator's AI-specific response shape", async () => {
@@ -1603,6 +1843,163 @@ describe("AI policy (US2)", () => {
     expect(d.title).toBe("Aric Dawnward");
   });
 
+  it("does not retry just because a name resembles an overused pattern", async () => {
+    const complete = vi.fn(async () => aiJson("Kaelmoor"));
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete },
+    });
+    const vaultContext = {
+      ...ctx([])!,
+      existingTitles: ["Kaelthorn", "Kaelwyn", "Kaelorin"],
+    };
+    const d = await svc.generateDraft(
+      run("npc", { useAI: true, vaultContext }),
+    );
+    expect(complete).toHaveBeenCalledTimes(1);
+    expect(d.title).toBe("Kaelmoor");
+  });
+
+  describe("name pre-pass", () => {
+    const nameCtx = () => ({
+      ...ctx([])!,
+      targetEntityType: "character",
+      existingTitles: ["Mira", "Tolbert"],
+      nameExamples: ["Mira", "Tolbert", "Zhao Lin", "Okonkwo"],
+    });
+    const isNameCall = (prompt: string) => prompt.includes('{"names"');
+
+    it("asks for names first, then puts the chosen one in the main prompt", async () => {
+      const complete = vi.fn(async (prompt: string) =>
+        isNameCall(prompt)
+          ? JSON.stringify({ names: ["Yusra Odell", "Kellan Voss-Ryn"] })
+          : aiJson("Yusra Odell"),
+      );
+      const svc = new CampaignGeneratorService({
+        aiPolicy: { isEnabled: true, isAvailable: true },
+        aiGateway: { complete },
+      });
+      const d = await svc.generateDraft(
+        run("npc", { useAI: true, vaultContext: nameCtx() }),
+      );
+      expect(complete).toHaveBeenCalledTimes(2);
+      const mainPrompt = complete.mock.calls[1][0];
+      expect(isNameCall(mainPrompt)).toBe(false);
+      expect(mainPrompt).toMatch(
+        /Use "(Yusra Odell|Kellan Voss-Ryn)" as this entity's name/,
+      );
+      expect(d.title).toBe("Yusra Odell");
+    });
+
+    it("carries on with a normal generation when the name call fails", async () => {
+      const complete = vi.fn(async (prompt: string) => {
+        if (isNameCall(prompt)) throw new Error("boom");
+        return aiJson("Aric Dawnward");
+      });
+      const svc = new CampaignGeneratorService({
+        aiPolicy: { isEnabled: true, isAvailable: true },
+        aiGateway: { complete },
+      });
+      const d = await svc.generateDraft(
+        run("npc", { useAI: true, vaultContext: nameCtx() }),
+      );
+      expect(d.title).toBe("Aric Dawnward");
+      expect(complete.mock.calls.at(-1)![0]).not.toContain(
+        "as this entity's name",
+      );
+    });
+
+    it("skips the name call for descriptive generators and thin vaults", async () => {
+      const complete = vi.fn(async () => aiJson("A Rumour"));
+      const svc = new CampaignGeneratorService({
+        aiPolicy: { isEnabled: true, isAvailable: true },
+        aiGateway: { complete },
+      });
+      await svc.generateDraft(
+        run("rumour", { useAI: true, vaultContext: nameCtx() }),
+      );
+      await svc.generateDraft(
+        run("npc", { useAI: true, vaultContext: ctx([]) }),
+      );
+      expect(complete).toHaveBeenCalledTimes(2);
+      for (const call of complete.mock.calls) {
+        expect(call[0]).not.toContain('{"names"');
+      }
+    });
+
+    it("never offers a suggestion that is banned or already in the vault", async () => {
+      const complete = vi.fn(async (prompt: string) =>
+        isNameCall(prompt)
+          ? JSON.stringify({ names: ["Mira", "Vane-Smithe"] })
+          : aiJson("Aric Dawnward"),
+      );
+      const svc = new CampaignGeneratorService({
+        aiPolicy: { isEnabled: true, isAvailable: true },
+        aiGateway: { complete },
+      });
+      await svc.generateDraft(
+        run("npc", {
+          useAI: true,
+          vaultContext: { ...nameCtx(), bannedNames: ["Vane"] },
+        }),
+      );
+      expect(complete.mock.calls.at(-1)![0]).not.toContain(
+        "as this entity's name",
+      );
+    });
+
+    it("does not start the stream when the user cancels during the name call", async () => {
+      const controller = new AbortController();
+      const complete = vi.fn(async () => {
+        controller.abort();
+        return JSON.stringify({ names: ["Yusra Odell"] });
+      });
+      const completeStream = vi.fn(async function* () {
+        yield { type: "complete" as const, text: aiJson("Yusra Odell") };
+      });
+      const svc = new CampaignGeneratorService({
+        aiPolicy: { isEnabled: true, isAvailable: true },
+        aiGateway: { complete, completeStream },
+      });
+      const events: Array<{ type: string }> = [];
+      for await (const e of svc.generateDraftStream(
+        run("npc", { useAI: true, vaultContext: nameCtx() }),
+        controller.signal,
+      )) {
+        events.push(e);
+      }
+      expect(completeStream).not.toHaveBeenCalled();
+      expect(events.some((e) => e.type === "draft")).toBe(false);
+    });
+
+    it("also runs ahead of a streamed generation", async () => {
+      const complete = vi.fn(async () =>
+        JSON.stringify({ names: ["Yusra Odell"] }),
+      );
+      const prompts: string[] = [];
+      const completeStream = vi.fn(async function* (prompt: string) {
+        prompts.push(prompt);
+        yield {
+          type: "complete" as const,
+          text: aiJson("Yusra Odell"),
+        };
+      });
+      const svc = new CampaignGeneratorService({
+        aiPolicy: { isEnabled: true, isAvailable: true },
+        aiGateway: { complete, completeStream },
+      });
+      const events: Array<{ type: string }> = [];
+      for await (const e of svc.generateDraftStream(
+        run("npc", { useAI: true, vaultContext: nameCtx() }),
+      )) {
+        events.push(e);
+      }
+      expect(complete).toHaveBeenCalledTimes(1);
+      expect(prompts[0]).toContain('Use "Yusra Odell" as this entity\'s name');
+      expect(events.some((e) => e.type === "draft")).toBe(true);
+    });
+  });
+
   it("parses and normalises connections from AI output", async () => {
     const complete = vi.fn(async () =>
       JSON.stringify({
@@ -1677,5 +2074,494 @@ describe("AI policy (US2)", () => {
     expect(generated.sourceGeneratorId).toBe("secret-society");
     expect(generated.content).toContain("### What they believe");
     expect(generated.lore).toContain("**Leader**");
+  });
+});
+
+describe("generateDraftStream", () => {
+  /**
+   * Fake `completeStream` that delivers `json` as a handful of deltas plus a
+   * `field` event for `title` — mirroring what the real gateway (which owns
+   * the incremental JSON scanner, see ai-generator-gateway.ts) would emit.
+   * `generateDraftStream` only re-emits whatever its gateway produces; it
+   * doesn't scan JSON itself, so this fake must supply the `field` event
+   * for the pass-through assertion below to mean anything.
+   */
+  function fakeCompleteStream(json: string, title: string) {
+    return vi.fn(async function* () {
+      yield { type: "started" as const };
+      const mid = Math.floor(json.length / 2);
+      yield { type: "delta" as const, text: json.slice(0, mid) };
+      yield { type: "field" as const, key: "title", value: title };
+      yield { type: "delta" as const, text: json.slice(mid) };
+      yield { type: "complete" as const, text: json };
+    });
+  }
+
+  async function collect(
+    gen: AsyncGenerator<{ type: string; [k: string]: unknown }>,
+  ) {
+    const events: Array<{ type: string; [k: string]: unknown }> = [];
+    for await (const event of gen) events.push(event);
+    return events;
+  }
+
+  it("streams only pass two of tome generation and commits its reviewed draft", async () => {
+    const content = [
+      "### Physical Description & Format",
+      "A manuscript in a leather binding.",
+      "### Provenance & Transmission",
+      "Written by an apprentice.",
+      "### Contents & Revelations",
+      "The clay vessel must cure in dry air.",
+      "### Risks & Costs of Study",
+      "Water breaks the containment.",
+      "### Adventure Hooks",
+      "1. Retrieve the broken clay vessel.",
+    ].join("\n\n");
+    const lore = [
+      "### At the Table Reference",
+      "A recoverable ritual.",
+      "### Ground Truth for the GM",
+      "- **What the Book Claims**: Wash the vessel.",
+      "- **The Deception / Flaw**: A copyist altered the rite.",
+      "- **The Objective Truth**: Let the clay cure in dry air.",
+      "- **Actionable Clue**: The dry clay stain.",
+      "### Connected Entities",
+      "- **Author / Compiler**: The apprentice.",
+      "### Quick Checks & Mechanics",
+      "- **The Failure Condition**: Water destroys the ward.",
+    ].join("\n\n");
+    const first = JSON.stringify({
+      title: "First Pass Tome",
+      summary: "The initial manuscript.",
+      content,
+      lore,
+      labels: ["tome", "item"],
+      connections: [],
+    });
+    const final = JSON.stringify({
+      title: "Edited Tome",
+      summary: "A revised manuscript.",
+      content,
+      lore,
+      labels: ["tome", "item"],
+      connections: [],
+    });
+    const complete = vi.fn(async () => first);
+    const completeStream = fakeCompleteStream(final, "Edited Tome");
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete, completeStream },
+    });
+
+    const events = await collect(
+      svc.generateDraftStream(run("tome", { useAI: true })),
+    );
+    expect(complete).toHaveBeenCalledTimes(1);
+    expect(completeStream).toHaveBeenCalledTimes(1);
+    expect(events[0]).toEqual({ type: "started" });
+    expect(events.filter((e) => e.type === "started")).toHaveLength(1);
+    expect(
+      events.some(
+        (e) => e.type === "delta" && String(e.text).includes("Edited Tome"),
+      ),
+    ).toBe(true);
+    expect(
+      events.some((e) => e.type === "field" && e.value === "Edited Tome"),
+    ).toBe(true);
+    const finalEvent = events.at(-1);
+    expect(finalEvent?.type).toBe("draft");
+    expect((finalEvent?.draft as GeneratedDraft).title).toBe("Edited Tome");
+  });
+
+  it("stops the buffered tome editorial pass and suppresses its draft on cancellation", async () => {
+    const controller = new AbortController();
+    const complete = vi.fn(
+      async (
+        _prompt: string,
+        _instruction: string,
+        _options?: { signal?: AbortSignal },
+      ) => {
+        controller.abort();
+        return "invalid JSON";
+      },
+    );
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete },
+    });
+
+    const events = await collect(
+      svc.generateDraftStream(run("tome", { useAI: true }), controller.signal),
+    );
+
+    expect(complete).toHaveBeenCalledTimes(1);
+    expect(complete.mock.calls[0]?.[2]?.signal).toBe(controller.signal);
+    expect(events.some((event) => event.type === "draft")).toBe(false);
+  });
+
+  it("stops forwarding streamed editorial events and suppresses the draft after cancellation", async () => {
+    const controller = new AbortController();
+    const first = JSON.stringify({
+      title: "First Pass Tome",
+      summary: "An initial manuscript.",
+      content: [
+        "### Physical Description & Format",
+        "A manuscript in a leather binding.",
+        "### Provenance & Transmission",
+        "Written by an apprentice.",
+        "### Contents & Revelations",
+        "The clay vessel must cure in dry air.",
+        "### Risks & Costs of Study",
+        "Water breaks the containment.",
+        "### Adventure Hooks",
+        "1. Retrieve the broken clay vessel.",
+      ].join("\n\n"),
+      lore: [
+        "### At the Table Reference",
+        "A recoverable ritual.",
+        "### Ground Truth for the GM",
+        "- **What the Book Claims**: Wash the vessel.",
+        "- **The Deception / Flaw**: A copyist altered the rite.",
+        "- **The Objective Truth**: Let the clay cure in dry air.",
+        "- **Actionable Clue**: The dry clay stain.",
+        "### Connected Entities",
+        "- **Author / Compiler**: The apprentice.",
+        "### Quick Checks & Mechanics",
+        "- **The Failure Condition**: Water destroys the ward.",
+      ].join("\n\n"),
+      labels: ["tome", "item"],
+      connections: [],
+    });
+    const complete = vi.fn(async () => first);
+    let continueEditorial: (() => void) | undefined;
+    const editorialReady = new Promise<void>((resolve) => {
+      continueEditorial = resolve;
+    });
+    let receivedSignal: AbortSignal | undefined;
+    const completeStream = vi.fn(async function* (
+      _message: string,
+      _instruction: string,
+      options?: { signal?: AbortSignal },
+    ) {
+      receivedSignal = options?.signal;
+      yield { type: "started" as const };
+      yield { type: "delta" as const, text: '{"title":"Edited' };
+      await editorialReady;
+      yield { type: "field" as const, key: "title", value: "Too Late" };
+      yield { type: "complete" as const, text: "{}" };
+    });
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete, completeStream },
+    });
+
+    const events: Array<{ type: string; [k: string]: unknown }> = [];
+    const consuming = (async () => {
+      for await (const event of svc.generateDraftStream(
+        run("tome", { useAI: true }),
+        controller.signal,
+      )) {
+        events.push(event);
+        if (event.type === "delta") {
+          controller.abort();
+          continueEditorial?.();
+        }
+      }
+    })();
+    await consuming;
+
+    expect(complete).toHaveBeenCalledTimes(1);
+    expect(completeStream).toHaveBeenCalledTimes(1);
+    expect(receivedSignal).toBe(controller.signal);
+    expect(events.filter((event) => event.type === "delta")).toHaveLength(1);
+    expect(events.some((event) => event.type === "field")).toBe(false);
+    expect(events.some((event) => event.type === "draft")).toBe(false);
+  });
+
+  it("turns structured holiday completion payloads into a final campaign draft", async () => {
+    const json = JSON.stringify({
+      title: "The First Spill of Neshur",
+      summary: "A spring water-opening festival.",
+      content: {
+        overview: "A festival shaped by shared cisterns.",
+        expandedObservance: { traditions: ["Open the measured sluice."] },
+      },
+      lore: { setting: "Neshur depends on shared meltwater." },
+      observances: [
+        {
+          name: "The First Spill",
+          type: "Seasonal civic festival",
+          when: "The first reliable thaw",
+          observers: ["Channel crews", "Terrace farmers"],
+          traditions: ["Open the measured sluice."],
+          tension: "A lower channel is leaking.",
+        },
+      ],
+    });
+    const completeStream = fakeCompleteStream(
+      json,
+      "The First Spill of Neshur",
+    );
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete: vi.fn(), completeStream },
+    });
+
+    const events = await collect(
+      svc.generateDraftStream(run("holiday", { useAI: true })),
+    );
+    const finalDraft = events.find((event) => event.type === "draft")?.draft as
+      | {
+          title: string;
+          content?: string;
+          lore?: string;
+          observances?: Array<{ traditions: string }>;
+        }
+      | undefined;
+
+    expect(finalDraft?.title).toBe("The First Spill of Neshur");
+    expect(finalDraft?.content).toContain("shared cisterns");
+    expect(finalDraft?.lore).toContain("shared meltwater");
+    expect(finalDraft?.observances?.[0]?.traditions).toContain(
+      "Open the measured sluice.",
+    );
+  });
+
+  it("streams delta/field events and yields one final draft event matching generateDraft's output", async () => {
+    const json = aiJson("Aric Dawnward");
+    const completeStream = fakeCompleteStream(json, "Aric Dawnward");
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete: vi.fn(), completeStream },
+    });
+
+    const events = await collect(
+      svc.generateDraftStream(run("npc", { useAI: true })),
+    );
+
+    expect(completeStream).toHaveBeenCalledTimes(1);
+    expect(events[0]).toEqual({ type: "started" });
+    expect(events.some((e) => e.type === "delta")).toBe(true);
+    expect(events.some((e) => e.type === "field" && e.key === "title")).toBe(
+      true,
+    );
+    const finalEvent = events.at(-1) as {
+      type: string;
+      draft: GeneratedDraft;
+    };
+    expect(finalEvent.type).toBe("draft");
+    expect(finalEvent.draft.title).toBe("Aric Dawnward");
+    expect(finalEvent.draft.sourceGeneratorId).toBe("npc");
+  });
+
+  it("retries on a banned title, then accepts a clean one, without falling back to local generation", async () => {
+    const completeStream = vi
+      .fn()
+      .mockImplementationOnce(async function* () {
+        yield { type: "complete" as const, text: aiJson("Vane-Smithe") };
+      })
+      .mockImplementationOnce(async function* () {
+        yield { type: "complete" as const, text: aiJson("Aric Dawnward") };
+      });
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete: vi.fn(), completeStream },
+    });
+
+    const events = await collect(
+      svc.generateDraftStream(
+        run("npc", { useAI: true, vaultContext: ctx(["Vane"]) }),
+      ),
+    );
+
+    expect(completeStream).toHaveBeenCalledTimes(2);
+    const finalEvent = events.at(-1) as {
+      type: string;
+      draft: GeneratedDraft;
+    };
+    expect(finalEvent.draft.title).toBe("Aric Dawnward");
+  });
+
+  it("falls back to local generation when the stream yields invalid JSON", async () => {
+    const completeStream = vi.fn(async function* () {
+      yield { type: "complete" as const, text: "not valid json at all" };
+    });
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete: vi.fn(), completeStream },
+    });
+
+    const events = await collect(
+      svc.generateDraftStream(run("faction", { useAI: true })),
+    );
+
+    const finalEvent = events.at(-1) as {
+      type: string;
+      draft: GeneratedDraft;
+    };
+    expect(finalEvent.type).toBe("draft");
+    expect(finalEvent.draft.sourceGeneratorId).toBe("faction");
+  });
+
+  it("falls back to generateDraft's own buffered complete() call, still yielding started/draft, when completeStream is absent", async () => {
+    const complete = vi.fn(async () => aiJson("Buffered Fallback"));
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete },
+    });
+
+    const events = await collect(
+      svc.generateDraftStream(run("npc", { useAI: true })),
+    );
+
+    expect(complete).toHaveBeenCalledTimes(1);
+    expect(events[0]).toEqual({ type: "started" });
+    const finalEvent = events.at(-1) as {
+      type: string;
+      draft: GeneratedDraft;
+    };
+    expect(finalEvent.type).toBe("draft");
+    expect(finalEvent.draft.title).toBe("Buffered Fallback");
+    expect(finalEvent.draft.sourceGeneratorId).toBe("npc");
+  });
+
+  it("falls back to generateDraft's own dungeon path for a multi-pass generator, not the generic stream branch", async () => {
+    const completeStream = vi.fn();
+    const complete = vi.fn(async () =>
+      JSON.stringify({
+        title: "The Bellfound Depths",
+        summary: "s",
+        throughline: "t",
+        history: "h",
+        currentState: "c",
+        signatureFeature: "f",
+        sectors: [],
+        factionSituation: "fs",
+        factions: [],
+        secret: "sec",
+        hazards: [],
+        treasures: [],
+        hooks: [],
+      }),
+    );
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete, completeStream },
+    });
+
+    await collect(svc.generateDraftStream(run("dungeon", { useAI: true })));
+
+    expect(completeStream).not.toHaveBeenCalled();
+  });
+
+  it("reports the real replayed flag from the stream's complete event, not a hardcoded false (#2423)", async () => {
+    const completeStream = vi.fn(async function* () {
+      yield {
+        type: "complete" as const,
+        text: aiJson("Aric Dawnward"),
+        interactionId: "interaction-2",
+        replayed: true,
+      };
+    });
+    const onInteractionResult = vi.fn();
+    const onPromptMetrics = vi.fn();
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete: vi.fn(), completeStream },
+      onInteractionResult,
+      onPromptMetrics,
+    });
+
+    await collect(
+      svc.generateDraftStream(
+        run("npc", {
+          useAI: true,
+          interaction: {
+            input: "delta request",
+            previousInteractionId: "stale",
+            replayPrompt: "full replay",
+          },
+        }),
+      ),
+    );
+
+    expect(onInteractionResult).toHaveBeenCalledWith(
+      expect.objectContaining({
+        interactionId: "interaction-2",
+        replayed: true,
+      }),
+    );
+    expect(onPromptMetrics).toHaveBeenCalledWith(
+      expect.objectContaining({ replayed: true }),
+    );
+  });
+});
+
+describe("council-vote streamed generation", () => {
+  const foundation = JSON.stringify({
+    title: "The Salt Road Levy",
+    summary: "A five-seat council must approve emergency funding.",
+    lore: "## Voting Procedure\nSimple majority.",
+    labels: ["council-vote"],
+    connections: [],
+  });
+  const paths = JSON.stringify({
+    possiblePaths: "## Possible Paths\nsmallest coalition first",
+    followUpHooks: "## Follow-Up Hooks\nthey remember",
+  });
+
+  it("streams each council-vote pass and assembles the repaired output", async () => {
+    let turn = 0;
+    const sendStream = vi.fn(async function* () {
+      const text = turn++ < 2 ? foundation : paths;
+      yield { type: "started" as const };
+      yield { type: "delta" as const, text };
+      yield { type: "complete" as const, text };
+    });
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: {
+        complete: vi.fn(),
+        startChat: vi.fn(async () => ({ send: vi.fn(), sendStream })),
+      },
+    });
+
+    const events = [] as Array<{ type: string; [key: string]: unknown }>;
+    for await (const event of svc.generateDraftStream(
+      run("council-vote", { useAI: true }),
+    )) {
+      events.push(event);
+    }
+
+    expect(events.filter((event) => event.type === "phase")).toHaveLength(4);
+    expect(sendStream).toHaveBeenCalledTimes(4);
+    expect(events.at(-1)).toMatchObject({
+      type: "draft",
+      draft: {
+        title: "The Salt Road Levy",
+        lore: expect.stringContaining("## Possible Paths"),
+      },
+    });
+  });
+
+  it("falls back without a streamed chat session", async () => {
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete: vi.fn() },
+    });
+
+    const events = [] as Array<{ type: string; [key: string]: unknown }>;
+    for await (const event of svc.generateDraftStream(
+      run("council-vote", { useAI: true }),
+    )) {
+      events.push(event);
+    }
+
+    expect(events[0]).toEqual({ type: "started" });
+    expect(events.at(-1)).toMatchObject({
+      type: "draft",
+      draft: { sourceGeneratorId: "council-vote" },
+    });
   });
 });

@@ -5,12 +5,18 @@ import { canvasRegistry } from "./canvas-registry.svelte";
 import { themeStore } from "./theme.svelte";
 import { debugStore } from "./debug.svelte";
 import type { LocalEntity, BatchCreateInput } from "./vault/types";
+import {
+  linksNewExternalImage,
+  localizeExternalImage,
+} from "./vault/external-image-localizer";
 import type { Entity, GuestChatTranscript } from "schema";
 import type { BulkMutationResult } from "./vault/bulk-results";
 import {
   saveTranscriptToDisk,
   loadTranscriptsForCharacterFromDisk,
+  loadPublishRegistryFromDisk,
 } from "./vault/io";
+import { getPublishRegistry, savePublishRegistry } from "./vault/registry";
 import { getDB } from "../utils/idb";
 import { VaultLifecycleManager } from "./vault/lifecycle";
 import { EntityStore } from "./vault/entity-store.svelte";
@@ -55,6 +61,8 @@ import { guestVault } from "./guest-vault.svelte";
 import { onboardingFunnel } from "$lib/app/onboarding/onboarding-funnel";
 import { statSheetTemplates } from "./stat-sheet-templates.svelte";
 import { presentationTemplates } from "./presentation-templates.svelte";
+import { entityTemplateStore } from "./entity-templates/entity-template-store.svelte";
+import { DeadExternalImagePruner } from "./vault/dead-external-image-pruner";
 import { browserPerformanceRecorder } from "$lib/services/performance/browser-performance-capture";
 
 export class VaultStore {
@@ -74,6 +82,8 @@ export class VaultStore {
   selectedEntityId = $state<string | null>(null);
   demoVaultName = $state<string | null>(null);
   migrationRequired = $state(false);
+  /** Serialises copies of newly linked external images; see updateEntity. */
+  private imageLocalization: Promise<unknown> = Promise.resolve();
   defaultVisibility = $state<"visible" | "hidden">("visible");
 
   // Callbacks
@@ -88,6 +98,7 @@ export class VaultStore {
   public fileStore: FileStore;
   public serviceRegistry: ServiceRegistry;
   public searchStore: SearchStore;
+  public deadImagePruner: DeadExternalImagePruner;
   private lifecycleManager: VaultLifecycleManager;
   private storageManager: VaultStorageManager;
   private messenger: VaultMessenger;
@@ -313,6 +324,19 @@ export class VaultStore {
     return this.serviceRegistry.services;
   }
 
+  #publishRegistryLoaders = new Set<
+    (vId: string, handle: FileSystemDirectoryHandle) => Promise<void>
+  >();
+
+  registerPublishRegistryLoader(
+    loader: (vId: string, handle: FileSystemDirectoryHandle) => Promise<void>,
+  ): () => void {
+    this.#publishRegistryLoaders.add(loader);
+    return () => {
+      this.#publishRegistryLoaders.delete(loader);
+    };
+  }
+
   constructor(
     public repository = new VaultRepository(fileIOAdapter),
     private assetManager = new AssetManager(assetIOAdapter, imageProcessor),
@@ -359,9 +383,30 @@ export class VaultStore {
       loadMaps: (vId) => mapRegistry.loadFromVault(vId),
       loadCanvases: (vId) => canvasRegistry.loadFromVault(vId),
       loadPublishRegistry: async (vId, handle) => {
-        const { publishingService } =
-          await import("../services/publishing/PublishingService.svelte");
-        await publishingService.loadFromVault(vId, handle);
+        try {
+          const diskRegistry = await loadPublishRegistryFromDisk(handle);
+          if (diskRegistry) {
+            const idbRegistry = await getPublishRegistry(vId);
+            if (
+              !idbRegistry ||
+              diskRegistry.publishedAt > (idbRegistry.publishedAt ?? "")
+            ) {
+              await savePublishRegistry(diskRegistry);
+            }
+          }
+        } catch (e) {
+          console.error(
+            "[Vault] Failed to reconcile publish registry from disk:",
+            e,
+          );
+        }
+        for (const loader of this.#publishRegistryLoaders) {
+          try {
+            await loader(vId, handle);
+          } catch (e) {
+            console.error("[Vault] Publish registry loader failed:", e);
+          }
+        }
       },
       updateEntityCount: (vId, count) =>
         vaultRegistry.updateEntityCount(vId, count),
@@ -407,6 +452,21 @@ export class VaultStore {
       mutations,
     );
 
+    this.deadImagePruner = new DeadExternalImagePruner({
+      getEntities: () => this.entityStore.entities,
+      isWritable: () =>
+        !sessionModeStore.isGuestMode &&
+        !sessionModeStore.isDemoMode &&
+        !this.isGuest &&
+        !this.demoVaultName &&
+        !!this.activeVaultId,
+      updateEntities: (updates) => this.entityStore.batchUpdate(updates),
+    });
+
+    this.assetManager.setOnDeadExternalImage((url) => {
+      this.deadImagePruner.add(url);
+    });
+
     this.assetStore = new AssetStore({
       assetManager: this.assetManager,
       getActiveVaultHandle: () => this.getActiveVaultHandle(),
@@ -425,6 +485,7 @@ export class VaultStore {
       repository: this.repository,
       activeVaultId: () => this.activeVaultId,
       getActiveVaultHandle: () => this.getActiveVaultHandle(),
+      getActiveFolderHandle: () => this.getActiveFolderHandle(),
       loadFiles: (skipSync) => this.loadFiles(skipSync),
       flushPendingSaves: () => this.entityStore.flushPendingSaves(),
       ensureServicesInitialized: async () => {
@@ -489,13 +550,16 @@ export class VaultStore {
       }
 
       if (this.activeVaultId) {
-        await themeStore.loadForVault(this.activeVaultId);
-        await statSheetTemplates.loadForVault(this.activeVaultId);
-        await presentationTemplates.loadForVault(this.activeVaultId);
-      }
-
-      if (this.activeVaultId) {
-        await this.loadFiles();
+        const vaultId = this.activeVaultId;
+        // The graph is styled from the theme, so it is loaded first. Templates
+        // are not needed to show the vault and load alongside its files.
+        await themeStore.loadForVault(vaultId);
+        await Promise.all([
+          statSheetTemplates.loadForVault(vaultId),
+          presentationTemplates.loadForVault(vaultId),
+          this.lifecycleManager.loadEntityTemplates(vaultId),
+          this.loadFiles(),
+        ]);
       }
       if (typeof window !== "undefined" && this.activeVaultId) {
         window.dispatchEvent(
@@ -509,6 +573,7 @@ export class VaultStore {
       debugStore.error("[VaultStore] Init failed", err);
       console.warn("[VaultStore] Init failed, falling back to Guest Mode", err);
 
+      entityTemplateStore.clearForGuest();
       sessionModeStore.isGuestMode = true;
       this.status = "idle";
       this.errorMessage =
@@ -547,6 +612,11 @@ export class VaultStore {
     return this.syncStore.loadFromFolder();
   }
 
+  /** Discards the fast-start cache and re-reads the vault from OPFS (#2619). */
+  async reloadFromDisk() {
+    return this.syncStore.reloadFromDisk();
+  }
+
   async saveToFolder() {
     return this.syncStore.saveToFolder();
   }
@@ -566,6 +636,24 @@ export class VaultStore {
       return Promise.resolve();
     }
     return this.entityStore.loadEntityContent(id);
+  }
+
+  /**
+   * Whether an entity's full markdown body is in memory. Callers that persist
+   * or transmit a vault need this: until it is true, `content` may only be the
+   * cached preview.
+   */
+  isContentLoaded(id: string): boolean {
+    if (sessionModeStore.isGuestMode) return true;
+    return this.entityStore.isContentLoaded(id);
+  }
+
+  /**
+   * Reads an entity with its full body without writing it into the store.
+   * For whole-vault snapshots; see `EntityContentLoader.readFullEntity`.
+   */
+  readFullEntity(id: string): Promise<LocalEntity | null> {
+    return this.entityStore.readFullEntity(id);
   }
   createEntity(
     type: Entity["type"],
@@ -588,7 +676,34 @@ export class VaultStore {
     return this.entityStore.createEntity(type, title, initialData);
   }
   updateEntity(id: string, updates: Partial<LocalEntity>) {
-    return this.entityStore.updateEntity(id, updates);
+    const linkedImage = sessionModeStore.isGuestMode
+      ? null
+      : linksNewExternalImage(this.entities[id]?.image, updates);
+    const result = this.entityStore.updateEntity(id, updates);
+    if (linkedImage) {
+      // One at a time: a re-import can relink hundreds of images, and each
+      // copy converts to WebP on the main thread.
+      this.imageLocalization = this.imageLocalization
+        .then(() => result)
+        .then(() =>
+          localizeExternalImage(
+            {
+              getEntity: (entityId) => this.entities[entityId],
+              importExternalImage: (url, entityId) =>
+                this.assetStore.importExternalImage(url, entityId),
+              updateEntity: (entityId, patch) =>
+                this.entityStore.updateEntity(entityId, patch),
+            },
+            id,
+            linkedImage,
+          ),
+        )
+        // A failed save or copy must not stall the images queued after it.
+        .catch((error) =>
+          console.warn("[Vault] Could not copy linked image", error),
+        );
+    }
+    return result;
   }
   batchUpdate(updates: Record<string, Partial<LocalEntity>>) {
     return this.entityStore.batchUpdate(updates);
@@ -655,6 +770,9 @@ export class VaultStore {
     }
     return this.entityStore.addConnection(sId, tId, type, label, strength);
   }
+  setConnectionHidden(sId: string, tId: string, type: string, hidden: boolean) {
+    return this.entityStore.setConnectionHidden(sId, tId, type, hidden);
+  }
   removeConnection(sId: string, tId: string, type: string) {
     return this.entityStore.removeConnection(sId, tId, type);
   }
@@ -692,6 +810,14 @@ export class VaultStore {
   bulkRemoveLabel(ids: string[], label: string) {
     return this.entityStore.bulkRemoveLabel(ids, label);
   }
+  /** Renames a label on every entity that has it; returns how many changed. */
+  renameLabel(from: string, to: string) {
+    return this.entityStore.renameLabel(from, to);
+  }
+  /** Removes a label from every entity that has it; returns how many changed. */
+  deleteLabel(label: string) {
+    return this.entityStore.deleteLabel(label);
+  }
   batchCreateEntities(newEntitiesList: BatchCreateInput[]) {
     return this.entityStore.batchCreateEntities(newEntitiesList);
   }
@@ -715,6 +841,17 @@ export class VaultStore {
   }
   releaseImageUrl(path: string) {
     this.assetStore.releaseImageUrl(path);
+  }
+  /** A small version of an image for dense views such as the graph. */
+  resolveThumbnailUrl(path: string): Promise<string> {
+    if (sessionModeStore.isGuestMode) {
+      return Promise.resolve(guestVault.resolveImageUrl(path) || "");
+    }
+    return this.assetStore.resolveThumbnailUrl(path);
+  }
+  releaseThumbnailUrl(path: string) {
+    if (sessionModeStore.isGuestMode) return;
+    this.assetStore.releaseThumbnailUrl(path);
   }
   saveImageToVault(blob: Blob | File, entityId: string, name?: string) {
     return this.assetStore.saveImageToVault(blob, entityId, name);
@@ -740,6 +877,9 @@ export class VaultStore {
 
   // --- Map & Canvas Delegations ---
   saveMaps() {
+    return mapRegistry.saveMaps().then(() => undefined);
+  }
+  saveMapsWithResult() {
     return mapRegistry.saveMaps();
   }
   deleteMap(id: string) {

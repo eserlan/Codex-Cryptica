@@ -2,6 +2,7 @@ import { OracleGenerator } from "./oracle-generator";
 import type { VisualizationPromptInput } from "./oracle-generator";
 import { DraftingEngine, draftingEngine } from "./drafting-engine";
 import { DiceExecutor } from "./executors/dice-executor";
+import { RandomSourceExecutor } from "./executors/random-source-executor";
 import { MetaExecutor } from "./executors/meta-executor";
 import { CreateExecutor } from "./executors/create-executor";
 import { ConnectExecutor } from "./executors/connect-executor";
@@ -29,6 +30,7 @@ export class OracleActionExecutor {
 
   // Sub-Executors
   private diceExecutor: DiceExecutor;
+  private randomSourceExecutor: RandomSourceExecutor;
   private metaExecutor: MetaExecutor;
   private createExecutor: CreateExecutor;
   private connectExecutor: ConnectExecutor;
@@ -52,6 +54,10 @@ export class OracleActionExecutor {
 
     // Inject dependencies into handlers
     this.diceExecutor = new DiceExecutor(this.clock, this.idGenerator);
+    this.randomSourceExecutor = new RandomSourceExecutor(
+      this.clock,
+      this.idGenerator,
+    );
     this.metaExecutor = new MetaExecutor(this.clock, this.idGenerator);
     this.createExecutor = new CreateExecutor(this.clock, this.idGenerator);
     this.connectExecutor = new ConnectExecutor(this.clock, this.idGenerator);
@@ -101,6 +107,10 @@ export class OracleActionExecutor {
         break;
       case "roll":
         await this.diceExecutor.execute(intent, context);
+        break;
+      case "roll-table":
+      case "draw-deck":
+        await this.randomSourceExecutor.execute(intent, context);
         break;
       case "create":
         await this.createExecutor.execute(intent, context);

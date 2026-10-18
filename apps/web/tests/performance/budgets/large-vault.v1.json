@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "mode": "report-only",
   "fixtureVersion": "large-vault.v1",
-  "fixtureChecksum": "fc7b431e314956fbd4c387d6c0b5be8e3b7272766069585190a077e9ac4e1aa2",
+  "fixtureChecksum": "faf0b0fa2d122d2982a4d23e0337f3baa9f49c545dd7f372eac3c84dd8955b1d",
   "entries": [
     {
       "scenario": "cold-open-index",

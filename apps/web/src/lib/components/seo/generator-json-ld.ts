@@ -22,9 +22,8 @@ export function buildFaqJsonLd(faqs: Faq[]): string {
 export function buildSoftwareApplicationJsonLd(params: {
   canonicalPath?: string;
   metaDescription: string;
-  faqs: Faq[];
 }): string {
-  const { canonicalPath, metaDescription, faqs } = params;
+  const { canonicalPath, metaDescription } = params;
   return safeJsonLd({
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
@@ -35,20 +34,6 @@ export function buildSoftwareApplicationJsonLd(params: {
       ? `https://codexcryptica.com${canonicalPath}`
       : "https://codexcryptica.com/tools",
     description: metaDescription,
-    mainEntity:
-      faqs.length > 0
-        ? {
-            "@type": "FAQPage",
-            mainEntity: faqs.map((faq) => ({
-              "@type": "Question",
-              name: faq.question,
-              acceptedAnswer: {
-                "@type": "Answer",
-                text: faq.answer,
-              },
-            })),
-          }
-        : undefined,
   });
 }
 

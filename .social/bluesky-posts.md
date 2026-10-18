@@ -4,7 +4,210 @@ Tracks concrete posts for `@codexcryptica.bsky.social` — what's been published
 
 The topic backlog, message-format template, and posting rules live in GitHub issue [#2086](https://github.com/eserlan/Codex-Cryptica/issues/2086) — this file is the actual history, not a duplicate of that plan. Cross-reference queue item numbers where relevant.
 
+## Cross-Platform Posting Tracker
+
+Tracks whether each post has been published across current and planned platforms (Bluesky, Discord, Instagram, Patreon).
+
+|    Date    | Topic                                         | Copy / reference                                                                                                                                                                                                    | Bluesky | Discord | Instagram | Patreon |
+| :--------: | :-------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :-----: | :-----: | :-------: | :-----: |
+| 2026-09-13 | Release comms auto-draft (`4e17671`)          | https://bsky.app/profile/codexcryptica.bsky.social/post/3mvffbpruzk23                                                                                                                                               |   [x]   |   [x]   |    [x]    |   [ ]   |
+| 2026-09-12 | Release comms auto-draft (`11872dd`)          | https://bsky.app/profile/codexcryptica.bsky.social/post/3mveayhooru2l                                                                                                                                               |   [x]   |   [x]   |    [x]    |   [ ]   |
+| 2026-09-12 | Release comms auto-draft (`093e40f`)          | https://bsky.app/profile/codexcryptica.bsky.social/post/3mve7tvi55y2t                                                                                                                                               |   [x]   |   [x]   |    [x]    |   [ ]   |
+| 2026-09-12 | Release comms auto-draft (`b002ac8`)          | https://bsky.app/profile/codexcryptica.bsky.social/post/3mvdp23e7bi2i                                                                                                                                               |   [x]   |   [x]   |    [x]    |   [ ]   |
+| 2026-09-12 | Release comms auto-draft (`73c01c1`)          | https://bsky.app/profile/codexcryptica.bsky.social/post/3mvdjevowml2f, https://bsky.app/profile/codexcryptica.bsky.social/post/3mvdjez7mcr23, https://bsky.app/profile/codexcryptica.bsky.social/post/3mvdjf4ftq72u |   [x]   |   [x]   |    [x]    |   [ ]   |
+| 2026-09-11 | Release comms auto-draft (`09231a3`)          | https://bsky.app/profile/codexcryptica.bsky.social/post/3mvah6aamem2t                                                                                                                                               |   [x]   |   [x]   |    [x]    |   [ ]   |
+| 2026-09-11 | Release comms auto-draft (`b345b3a`)          | https://bsky.app/profile/codexcryptica.bsky.social/post/3mva2azfeb22u                                                                                                                                               |   [x]   |   [x]   |    [ ]    |   [ ]   |
+| 2026-09-11 | Release comms auto-draft (`0fcd00e`)          | https://bsky.app/profile/codexcryptica.bsky.social/post/3mv7ksb36lr2u                                                                                                                                               |   [x]   |   [x]   |    [ ]    |   [ ]   |
+| 2026-09-11 | Sci-Fi Star System Guide (`65325c3`)          | GMs building sci-fi star systems needed more than generic advice...                                                                                                                                                 |   [x]   |   [x]   |    [ ]    |   [ ]   |
+| 2026-09-10 | Release comms auto-draft (`65325c3`)          | https://bsky.app/profile/codexcryptica.bsky.social/post/3mv73y66l2r2s                                                                                                                                               |   [x]   |   [ ]   |    [ ]    |   [ ]   |
+| 2026-09-10 | Living Fantasy City Guide (`10440ab`)         | I needed a quick reference for making a fantasy city feel lived-in...                                                                                                                                               |   [ ]   |   [ ]   |    [ ]    |   [ ]   |
+| 2026-09-06 | Heist Generator (ad hoc)                      | I needed heists that didn't fall apart on the first bad roll...                                                                                                                                                     |   [x]   |   [ ]   |    [ ]    |   [ ]   |
+| 2026-09-05 | Nkiru Okafor NPC Table Card example (ad hoc)  | Meet Nkiru Okafor, a ruthless street fixer...                                                                                                                                                                       |   [x]   |   [ ]   |    [ ]    |   [ ]   |
+| 2026-08-26 | Encounter Generator (ad hoc)                  | Rolling a random encounter gave me a monster and a number...                                                                                                                                                        |   [x]   |   [ ]   |    [ ]    |   [ ]   |
+| 2026-08-16 | Vaults (ad hoc)                               | I run a few campaigns, and I never want an NPC from one bleeding...                                                                                                                                                 |   [x]   |   [ ]   |    [ ]    |   [ ]   |
+| 2026-08-15 | Faction Generator (queue #4)                  | I needed factions that gave players something to push against...                                                                                                                                                    |   [x]   |   [ ]   |    [ ]    |   [ ]   |
+| 2026-08-14 | Spatial Canvas (queue #10)                    | I needed a place to lay out a conspiracy before it became a pile...                                                                                                                                                 |   [x]   |   [ ]   |    [ ]    |   [ ]   |
+| 2026-08-14 | The Shelf (ad hoc)                            | I built the Shelf because I kept recreating NPCs and monsters...                                                                                                                                                    |   [x]   |   [ ]   |    [ ]    |   [ ]   |
+| 2026-08-13 | Alien Race Generator prompt (reconciled)      | Do you have an idea about an alien for your #scifi #ttrpg...                                                                                                                                                        |   [x]   |   [ ]   |    [ ]    |   [ ]   |
+| 2026-08-13 | Alien Race Generator release (reconciled)     | The alien race generator is now ready for all to use...                                                                                                                                                             |   [x]   |   [ ]   |    [ ]    |   [ ]   |
+| 2026-08-12 | Plot Twist Generator preview (reconciled)     | Was in such a good flow with the generators, so a plot twist...                                                                                                                                                     |   [x]   |   [ ]   |    [ ]    |   [ ]   |
+| 2026-08-11 | Alien Race Generator preview (reconciled)     | Working on a alien race generator now...                                                                                                                                                                            |   [x]   |   [ ]   |    [ ]    |   [ ]   |
+| 2026-08-10 | Guided micro-settings reply (reconciled)      | This gave me a great idea for making a guided generator...                                                                                                                                                          |   [x]   |   [ ]   |    [ ]    |   [ ]   |
+| 2026-08-10 | Plot Twist Generator idea (reconciled)        | Reading this great article bsky.app/profile/worl...                                                                                                                                                                 |   [x]   |   [ ]   |    [ ]    |   [ ]   |
+| 2026-08-10 | Plot Twist Generator reply (reconciled)       | This gave me a great idea about making a plot twist generator...                                                                                                                                                    |   [x]   |   [ ]   |    [ ]    |   [ ]   |
+| 2026-08-09 | Secret Society Generator release (reconciled) | The Secret Society Generator is now out and available for all...                                                                                                                                                    |   [x]   |   [ ]   |    [ ]    |   [ ]   |
+| 2026-08-09 | Secret Society Generator preview (reconciled) | Instead of the alien race generator, I did the secret society...                                                                                                                                                    |   [x]   |   [ ]   |    [ ]    |   [ ]   |
+| 2026-08-09 | Alien Race Generator idea (reconciled)        | Now that we have a star system generator and a world generator...                                                                                                                                                   |   [x]   |   [ ]   |    [ ]    |   [ ]   |
+| 2026-08-08 | World Generator (queue #3)                    | I wanted a world I could start running tonight...                                                                                                                                                                   |   [x]   |   [ ]   |    [ ]    |   [ ]   |
+| 2026-08-08 | Star System Generator (queue #1)              | I wanted a star system that gives players a reason to go somewhere...                                                                                                                                               |   [x]   |   [ ]   |    [ ]    |   [ ]   |
+| 2026-08-07 | Knowledge Graph (queue #6), redone            | I kept losing track of how NPCs, factions, and locations connected...                                                                                                                                               |   [x]   |   [ ]   |    [ ]    |   [ ]   |
+| 2026-08-07 | Welcome / intro (ad hoc, not from queue)      | Codex Cryptica is a worldbuilding and campaign tool for TTRPGs...                                                                                                                                                   |   [x]   |   [ ]   |    [ ]    |   [ ]   |
+
 ## Posted
+
+### 2026-09-06 — Heist Generator (ad hoc)
+
+- **Text:** I needed heists that didn't fall apart on the first bad roll.
+
+  So I built the Heist Generator in Codex Cryptica. It sets up concentric security rings, rising alarms, and an escape plan where taking the prize changes the rules.
+
+  codexcryptica.com/generators/heist
+
+  #TTRPG #Worldbuilding #heist
+
+- **Image:** `https://assets.codexcryptica.com/screenshots/generator-heist.jpg`
+- **Alt:** The Codex Cryptica Heist Generator showing a generated score titled The Morggar Job with security rings, alarm ladder, and GM quick reference
+- **URL:** https://bsky.app/profile/codexcryptica.bsky.social/post/3muuvoosgdc2i
+- **Note:** Ad hoc launch announcement for the Heist Generator.
+
+### 2026-09-05 — Nkiru Okafor NPC Table Card example (ad hoc)
+
+- **Text:** Meet Nkiru Okafor, a ruthless street fixer who goes pale at blood. She needs a stolen biotech case through a checkpoint in twenty minutes.
+
+  An NPC Table Card example from Codex Cryptica:
+  codexcryptica.com/examples/nkiru-okafor-cyberpunk-npc-table-card
+
+  #TTRPG #Worldbuilding
+
+- **Image:** `https://assets.codexcryptica.com/announcements/character-nkiru-okafor-square-v1.jpg` — centred 768x768 crop of the example page's artwork
+- **Alt:** Nkiru Okafor, a cyberpunk street fixer in dark techwear, stands in a rain-soaked neon alley with glowing orange tape on her hand and a biotech case beside her.
+- **URL:** https://bsky.app/profile/codexcryptica.bsky.social/post/3murztv43ad2q
+- **Note:** User-approved example showcase, following an earlier announcement of the Table Card format. Posted ad hoc, not from the backlog.
+
+### 2026-08-26 — Encounter Generator (ad hoc)
+
+- **Text:** Rolling a random encounter gave me a monster and a number. I still had to invent why it was there.
+
+  So I built the Encounter Generator in Codex Cryptica. The read-aloud text sits up top, the twist stays in the GM notes.
+
+  codexcryptica.com/generators/encounter
+
+  #TTRPG #Worldbuilding
+
+- **Image:** cropped 1600x800 detail from the announcement capture of the live generator page (middle column plus the At a Glance rail)
+- **Alt:** The Codex Cryptica Encounter Generator showing an example encounter titled The Aelrin Reckoning, with a read-aloud What the Players See paragraph beside an At a Glance panel listing type, threat, location, tone, participants, and key stakes
+- **URL:** https://bsky.app/profile/codexcryptica.bsky.social/post/3mty6pioqpu2h
+- **Note:** Posted ad hoc at the user's request, not from the #2086 backlog. Image shows the local-fallback EXAMPLE draft rather than real AI output, and carries a visible EXAMPLE chip with the summary sentence repeated in the read-aloud block. Turnstile rejects automated browsers (headless and headed alike), so no real AI sample could be captured; posted anyway as the image was judged non-critical. Worth replacing with a genuine generation if this feature is shown again.
+
+### 2026-08-16 — Vaults (ad hoc)
+
+- **Text:** I run a few campaigns, and I never want an NPC from one bleeding into another.
+
+  Codex Cryptica keeps each in its own vault. Click the vault name, switch, and you're in a clean, separate world.
+
+  More soon on moving things between vaults on purpose.
+
+  https://codexcryptica.com
+
+  #TTRPG #Worldbuilding
+
+- **Image:** cropped screenshot of the live Vault Selector modal, captured via Playwright against the local dev server (three vaults created live for the shot: Voidreach Frontier, Aetherium Ascendant, Default Vault)
+- **Alt:** The Vault Selector in Codex Cryptica listing three separate campaign vaults, Voidreach Frontier, Aetherium Ascendant, and Default Vault, with options to switch, create, or import a vault
+- **URL:** https://bsky.app/profile/codexcryptica.bsky.social/post/3mt6uy6fkjc22
+- **Note:** Posted ad hoc at the user's request, as a lead-in before a follow-up post about the Shelf (see 2026-08-14 entry below) which explains how entities move between vaults.
+
+### 2026-08-15 — Faction Generator (queue #4)
+
+- **Text:** I needed factions that gave players something to push against, not just a name and a crest.
+
+  So I built the Faction Generator in Codex Cryptica. It gives a group an agenda, conflict, rivals, and people tied to it.
+
+  codexcryptica.com/generators/faction
+
+  #TTRPG #Worldbuilding #RPGDesign
+
+- **Image:** `https://assets.codexcryptica.com/announcements/faction-generator-iron-syndicate-v1.png`
+- **Alt:** Codex Cryptica's RPG Faction Generator showing the example merchant guild The Iron Syndicate, its configurable inputs, and generated operations and secret agenda
+- **URL:** https://bsky.app/profile/codexcryptica.bsky.social/post/3mt4gllsnd22d
+
+### 2026-08-14 — Spatial Canvas (queue #10)
+
+- **Text:** I needed a place to lay out a conspiracy before it became a pile of disconnected notes.
+
+  So I built the Spatial Canvas in Codex Cryptica. Drag in entities, draw links, and keep the layout where your brain put it.
+
+  codexcryptica.com/blog/spatial-intelligence
+
+  #TTRPG #Worldbuilding
+
+- **Image:** `apps/web/static/blog/assets/canvas-announcement.png`, compressed to a 109 KB JPEG for BlueSky's image limit
+- **Alt:** Codex Cryptica Spatial Canvas showing linked campaign notes arranged as a visual planning board
+- **URL:** https://bsky.app/profile/codexcryptica.bsky.social/post/3mt2nmr6qxo2m
+
+### 2026-08-13 — Alien Race Generator prompt (reconciled)
+
+- **Text:** Do you have an idea about an alien for your #scifi #ttrpg or #worldbuilding setting? Flesh it out with the help of the alien race generator in cc codexcryptica.com/generators/a...
+- **Image:** None
+- **URL:** https://bsky.app/profile/codexcryptica.bsky.social/post/3msy5mxzhos2n
+
+### 2026-08-13 — Alien Race Generator release (reconciled)
+
+- **Text:** The alien race generator is now ready for all to use! codexcryptica.com/generators/a... Create (generate) a star system, a world, then a race. All in CC Perfect for #scifi #ttrpg or #worldbuilding
+- **Image:** None
+- **URL:** https://bsky.app/profile/codexcryptica.bsky.social/post/3msxhrrlrms2w
+
+### 2026-08-12 — Plot Twist Generator preview (reconciled)
+
+- **Text:** Was in such a good flow with the generators, so a plot twist generator is in the works too now Will soon be available on. codexcryptica.com/generators If you already have an idea for a quest or adventure, you can use the new generator to propose new twists or complications. Perfect for #ttrpg
+- **Image:** None
+- **URL:** https://bsky.app/profile/codexcryptica.bsky.social/post/3msvfwkv3q225
+
+### 2026-08-11 — Alien Race Generator preview (reconciled)
+
+- **Text:** Working on a alien race generator now. Coming to codexcryptica.com/generators suddenly. Can be used with the star system and world system generators. Most excellent for your #scifi #ttrpg or #worldbuilding needs
+- **Image:** None
+- **URL:** https://bsky.app/profile/codexcryptica.bsky.social/post/3mst2o7rg5c2s
+
+### 2026-08-10 — Guided micro-settings reply (reconciled)
+
+- **Text:** This gave me a great idea for making a guided generator for micro settings 👍
+- **Image:** None
+- **URL:** https://bsky.app/profile/codexcryptica.bsky.social/post/3mspqhfzpok2d
+- **Note:** Reply to another account's post.
+
+### 2026-08-10 — Plot Twist Generator idea (reconciled)
+
+- **Text:** Reading this great article bsky.app/profile/worl... gave me an idea of of having a generator that could assist in coming up with plot twists and complications for your adventures. ​What do you think? Good idea or a dead end? #ttrpg #worldbuilding #generator #plottwist
+- **Image:** None
+- **URL:** https://bsky.app/profile/codexcryptica.bsky.social/post/3mspojhtg5k2u
+
+### 2026-08-10 — Plot Twist Generator reply (reconciled)
+
+- **Text:** This gave me a great idea about making a plot twist generator 😅
+- **Image:** None
+- **URL:** https://bsky.app/profile/codexcryptica.bsky.social/post/3mspo4qgy522u
+- **Note:** Reply to the preceding Plot Twist Generator idea post.
+
+### 2026-08-09 — Secret Society Generator release (reconciled)
+
+- **Text:** The Secret Society Generator is now out and available for all. Need an idea for a cult, hidden order, clandestine cabal or conspiracy? Generate its beliefs, goals, hierarchy, secrets and more. codexcryptica.com/generators/s... #ttrpg #worldbuilding #cult
+- **Image:** None
+- **URL:** https://bsky.app/profile/codexcryptica.bsky.social/post/3mso6l6vigk2v
+
+### 2026-08-09 — Secret Society Generator preview (reconciled)
+
+- **Text:** Instead of the alien race generator, I did the secret society generator instead. Soon available on codexcryptica.com/generators #ttrpg #worldbuilding
+- **Image:** None
+- **URL:** https://bsky.app/profile/codexcryptica.bsky.social/post/3mso3s2ufz223
+
+### 2026-08-09 — Alien Race Generator idea (reconciled)
+
+- **Text:** Now that we have a star system generator and a world generator, an alien race generator is a natural next step. Agree? codexcryptica.com/generators/s... #ttrpg #worldbuilding #scifi
+- **Image:** None
+- **URL:** https://bsky.app/profile/codexcryptica.bsky.social/post/3msnkhzqqq225
+
+### 2026-08-14 — The Shelf (ad hoc)
+
+- **Text:** I built the Shelf because I kept recreating NPCs and monsters that were already good.
+
+  Send an entity from one Codex Cryptica vault to the Shelf, switch campaigns, and import it with its stat sheet, artwork, notes, and links intact. It stays in your browser.
+
+  https://codexcryptica.com/
+
+- **Image:** `https://assets.codexcryptica.com/images/blog/reuse-entities-between-campaigns/shelf-in-context.png`
+- **Alt:** The Shelf open beside a second campaign, holding three entities carried over from another vault
+- **URL:** https://bsky.app/profile/codexcryptica.bsky.social/post/3mt2mnm3ejd2j
+- **Note:** Posted ad hoc at the user's request. The Shelf is intentionally browser-local: it is for carrying entities between vaults on one device, not backup or sharing.
 
 ### 2026-08-08 — World Generator (queue #3)
 
@@ -67,18 +270,58 @@ The topic backlog, message-format template, and posting rules live in GitHub iss
 The remaining topics from #2086, resequenced to satisfy its own cadence rule ("rotate between generation, organization, visualization, and play so consecutive posts don't feel like repetitions of the same pitch") — the issue's numeric order clusters 5+ generator posts in a row before hitting anything else. Generation is spread through in runs of 3, broken up by an organization/visualization/play post every 4th slot; "Generator ecosystem" stays last per its own explicit gating note. Original queue numbers kept for reference.
 
 1. **Related Entity Generation** _(orig #2, generation)_ — Need: NPCs, factions and locations that actually relate to the existing setting. Tags: `#TTRPG #Worldbuilding #RPGDesign`. **Blocked on an image** — no screenshot of this feature exists in `apps/web/static/` or in any announcement discussion. Needs a fresh capture: an entity's connections section plus a generated related entity (dev server + seeded vault + a live AI call). Was skipped on 2026-08-08 for this reason; still next once an asset exists.
-2. **Spatial Canvas / Maps** _(orig #10, visualization)_ — Need: a visual workspace for arranging places, ideas and relationships spatially. Tags: `#TTRPG #Worldbuilding`. Candidate assets: `apps/web/static/images/adventure-canvas.png`, `dungeon-canvas.png`, and `https://assets.codexcryptica.com/blog/assets/canvas-announcement.png` (discussion #2039) — none verified against the post's angle yet.
-3. **Faction Generator** _(orig #4, generation)_ — Need: factions with motives, conflicts and relationships rather than isolated descriptions. Tags: `#TTRPG #Worldbuilding #RPGDesign`
-4. **NPC / Character Generator** _(orig #5, generation)_ — Need: usable characters with hooks and relationships, not just names and appearance. Tags: `#TTRPG #Worldbuilding`
-5. **Settlement Generator** _(orig #7, generation)_ — Need: settlements containing reasons for characters to visit and interact with them. Tags: `#TTRPG #Worldbuilding`
-6. **Timeline** _(orig #11, organization)_ — Need: to understand how events in a setting affect one another over time. Tags: `#TTRPG #Worldbuilding`
-7. **Religion / Pantheon Generation** _(orig #8, generation)_ — Need: religions that influence the world rather than existing as background lore. Tags: `#TTRPG #Worldbuilding #Fantasy`
-8. **Adventure / Scenario Generation** _(orig #9, generation)_ — Need: something playable from the worldbuilding already created. Tags: `#TTRPG #RPGDesign`
+2. **NPC / Character Generator** _(orig #5, generation)_ — Need: usable characters with hooks and relationships, not just names and appearance. Tags: `#TTRPG #Worldbuilding`
+3. **Settlement Generator** _(orig #7, generation)_ — Need: settlements containing reasons for characters to visit and interact with them. Tags: `#TTRPG #Worldbuilding`
+4. **Timeline** _(orig #11, organization)_ — Need: to understand how events in a setting affect one another over time. Tags: `#TTRPG #Worldbuilding`
+5. **Religion / Pantheon Generation** _(orig #8, generation)_ — Need: religions that influence the world rather than existing as background lore. Tags: `#TTRPG #Worldbuilding #Fantasy`
+6. **Random Tables & Interactive Decks** _(spec #157, play/generation)_ — Need: quick random tables and card draws without leaving campaign notes. Tags: `#TTRPG #Worldbuilding #RPGDesign`
+7. **Adventure / Scenario Generation** _(orig #9, generation)_ — Need: something playable from the worldbuilding already created. Tags: `#TTRPG #RPGDesign`
+8. **Custom Stat Sheet Templates** _(spec #152, play/customization)_ — Need: reusable character/monster sheets tailored to any game system with inline rolls. Tags: `#TTRPG #Worldbuilding #RPGDesign`
 9. **Context-aware generation** _(orig #13, generation)_ — Need: generated material that knows about the world already created. Tags: `#TTRPG #Worldbuilding`
 10. **VTT** _(orig #12, play)_ — Need: to move from building the campaign into actually playing it without leaving the same environment. Tags: `#TTRPG #VTT`. Deliberately placed last before the ecosystem post — "now go play it" as the capstone of the individual-feature run.
 11. **Generator ecosystem / breadth** _(orig #14, gated — only after individual generators demonstrated)_ — Show how several generators chain together to build a campaign or setting. Tags: `#TTRPG #Worldbuilding`
 
 ## Drafted (not yet posted)
+
+### Release comms auto-draft, 2026-09-10 (`10440ab`)
+
+- **Text:** I needed a quick reference for making a fantasy city feel lived-in instead of just a market square and a tavern. So I built the Living Fantasy City Guide: districts, economy, power structures, and daily life, ready to use at the table or in prep.
+
+codexcryptica.com/[relevant page]
+
+#TTRPG #Worldbuilding
+
+- **Image:** _TODO — needs a screenshot before this can be posted (see bsky-note SKILL.md Step 2 for sourcing one)._
+- **Alt:** _TODO_
+- **Note:** Auto-queued by the release comms agent from production release `10440ab`; text not yet human-reviewed.
+
+### Random Tables & Interactive Decks (spec #157)
+
+- **Text:** I needed quick random encounter tables and card draws without leaving my campaign notes.
+
+  So I built Random Tables & Decks in Codex Cryptica. Roll weighted loot tables, draw tarot hands, and resolve nested references in your browser.
+
+  codexcryptica.com/tables
+
+  #TTRPG #Worldbuilding #RPGDesign
+
+- **Image:** `https://assets.codexcryptica.com/images/blog/oracle-capabilities/oracle-roll-command.png`
+- **Alt:** Codex Cryptica showing interactive table and deck rolling in the campaign workspace
+- **Note:** Spec #157 implementation. Supports markdown import, weighted entries, and interactive card spreads with zero backend dependencies.
+
+### Custom Stat Sheet Templates (ad hoc)
+
+- **Text:** Every RPG system needs different character and monster sheets, and generic templates never quite fit.
+
+  So I built custom Stat Sheet Templates in Codex Cryptica. Design reusable Markdown templates tailored to your game system with inline dice rolls.
+
+  codexcryptica.com/blog/custom-stat-sheet-templates
+
+  #TTRPG #Worldbuilding #RPGDesign
+
+- **Image:** `https://assets.codexcryptica.com/images/blog/custom-stat-sheet-templates/template-manager.png`
+- **Alt:** Stat Sheet Templates manager in Codex Cryptica showing vault availability and default templates by category
+- **Note:** Sourced from official blog guide. Image is 450 KB PNG on CDN.
 
 ### Genre/theme breadth (ad hoc, not from #2086's numbered queue)
 

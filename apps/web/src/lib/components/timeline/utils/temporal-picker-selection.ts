@@ -1,6 +1,8 @@
 import {
   calendarEngine,
   parseDirectDateInput,
+  resolveYearFromEra,
+  type CalendarEra,
   type DateSelection,
   type WorldCalendar,
 } from "chronology-engine";
@@ -33,10 +35,18 @@ export interface PickerDateInputResult {
 export function parsePickerDateInput(
   input: string,
   config: WorldCalendar,
+  activeEra?: CalendarEra,
 ): PickerDateInputResult {
   if (!input.trim()) return {};
-  const parsed = parseDirectDateInput(input, config);
-  if (!parsed) {
+  const trimmed = input.trim();
+  const yearOnly = trimmed.match(/^(\d+)$/);
+  const parsed =
+    yearOnly && activeEra
+      ? {
+          year: resolveYearFromEra(activeEra, Number.parseInt(yearOnly[1], 10)),
+        }
+      : parseDirectDateInput(trimmed, config);
+  if (!parsed || !calendarEngine.isValid(parsed, config)) {
     return {
       error:
         "Use a year (such as 45 or -594), DDMMYYYY, DDMM-YYYY, or DD/MM/-YYYY.",

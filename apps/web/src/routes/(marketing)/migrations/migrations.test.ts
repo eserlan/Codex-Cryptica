@@ -34,6 +34,16 @@ describe("Migration Hub", () => {
     ).toBeTruthy();
   });
 
+  it("includes the chronica importer", () => {
+    render(Page);
+
+    expect(
+      screen
+        .getByRole("link", { name: /chronica campaign importer/i })
+        .getAttribute("href"),
+    ).toBe("/import/chronica");
+  });
+
   it("injects a breadcrumb JSON-LD schema", () => {
     render(Page);
 
@@ -53,5 +63,12 @@ describe("Migration Hub", () => {
       }
     });
     expect(found).toBe(true);
+  });
+
+  it("renders without an internal navigation header", () => {
+    const { container } = render(Page);
+    expect(container.querySelector("header")).toBeNull();
+    expect(container.querySelector("#logo-link")).toBeNull();
+    expect(container.querySelector("#nav-cta-btn")).toBeNull();
   });
 });

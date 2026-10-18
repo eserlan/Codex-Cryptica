@@ -5,14 +5,31 @@
     computeAdjustedCounterValue,
     rollStatSheetDiceField,
   } from "$lib/utils/stat-sheet-field-actions";
+  import TovLuckControl from "../stats/TovLuckControl.svelte";
+  import TovDoomControl from "../stats/TovDoomControl.svelte";
+  import { isTovLuckField, isTovDoomField } from "@codex/stat-sheet-engine";
 
   let { entity } = $props<{ entity: Entity }>();
 
   const readOnly = $derived(vault.isGuest);
   const fields = $derived(entity.statSheet?.fields ?? []);
+  // ToV Luck and Doom are always shown so the token and the sheet never diverge.
   const favorited = $derived(
-    fields.filter((f: StatSheetField) => f.favorite && f.type !== "heading"),
+    fields.filter(
+      (f: StatSheetField) =>
+        (f.favorite && f.type !== "heading") ||
+        isTovLuckField(entity.statSheet?.templateId, f) ||
+        isTovDoomField(entity.statSheet?.templateId, f),
+    ),
   );
+
+  function setCounterValue(field: StatSheetField, value: number) {
+    persistFields(
+      fields.map((f: StatSheetField) =>
+        f.id === field.id ? { ...f, value } : f,
+      ),
+    );
+  }
 
   function persistFields(nextFields: StatSheetField[]) {
     if (readOnly) return;
@@ -39,6 +56,7 @@
   }
 </script>
 
+<!-- fallow-ignore-next-line complexity -->
 {#if favorited.length > 0}
   <!-- svelte-ignore a11y_click_events_have_key_events -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -49,7 +67,21 @@
     data-testid="token-quick-stats"
   >
     {#each favorited as field (field.id)}
-      {#if field.type === "counter"}
+      {#if isTovLuckField(entity.statSheet?.templateId, field)}
+        <TovLuckControl
+          {field}
+          {readOnly}
+          onChange={(value) => setCounterValue(field, value)}
+          testIdPrefix="token-tov-luck"
+        />
+      {:else if isTovDoomField(entity.statSheet?.templateId, field)}
+        <TovDoomControl
+          {field}
+          {readOnly}
+          onChange={(value) => setCounterValue(field, value)}
+          testIdPrefix="token-tov-doom"
+        />
+      {:else if field.type === "counter"}
         <div
           class="flex items-center justify-between gap-2 text-xs"
           data-testid="token-quick-stats-counter"
@@ -113,7 +145,7 @@
                 );
               }}
             />
-            <span class="text-[10px] text-theme-muted font-mono shrink-0"
+            <span class="text-micro text-theme-muted font-mono shrink-0"
               >- {field.formula || "1d100"}</span
             >
           </div>
@@ -164,7 +196,7 @@
     {/each}
   </div>
 {:else}
-  <p class="text-[10px] text-theme-muted" data-testid="token-quick-stats-empty">
+  <p class="text-micro text-theme-muted" data-testid="token-quick-stats-empty">
     Star HP or a skill on the stat sheet to pin it here.
   </p>
 {/if}

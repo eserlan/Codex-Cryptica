@@ -3,6 +3,7 @@ import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import RoutePage from "./+page.svelte";
 import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
 import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+import { demoService } from "$lib/services/demo";
 
 vi.mock("$app/state", () => ({
   page: { url: new URL("http://localhost/"), params: {} },
@@ -37,7 +38,13 @@ vi.mock("$lib/stores/theme.svelte", () => ({
   },
 }));
 vi.mock("$lib/services/demo", () => ({ demoService: { startDemo: vi.fn() } }));
-vi.mock("$lib/config", () => ({ SCHEMA_ORG: {} }));
+vi.mock("$lib/config", () => ({
+  SCHEMA_ORG: {},
+  DISCORD_URL: "https://discord.gg/5UUMCChF2u",
+  REDDIT_URL: "https://www.reddit.com/r/codexcryptica/",
+  GITHUB_URL: "https://github.com/eserlan/Codex-Cryptica",
+  PATREON_URL: "https://patreon.com/EspenE",
+}));
 
 // Stub out the lazily-imported heavy components so dynamic imports resolve instantly
 vi.mock("../../lib/components/GraphView.svelte", async () => ({
@@ -77,6 +84,7 @@ describe("root +page.svelte — front page overlay keydown", () => {
     modalUIStore.showSettings = false;
     modalUIStore.showDiceModal = false;
     modalUIStore.closeQuickStartModal();
+    vi.mocked(demoService.startDemo).mockClear();
   });
 
   it("presents the root landing page as a private local-first RPG vault", () => {
@@ -119,6 +127,43 @@ describe("root +page.svelte — front page overlay keydown", () => {
     expect(screen.getByText("Local-first vault")).toBeTruthy();
     expect(screen.getByText("Spatial lore graph")).toBeTruthy();
     expect(screen.getByText("Optional AI")).toBeTruthy();
+
+    // Discord/Reddit/GitHub/Features/Changelog links used to be duplicated
+    // directly on the welcome screen; they now live on /explore, and the
+    // welcome page carries no footer of its own: the layout's `AppFooter`
+    // already renders the same Explore/Terms/Privacy links beneath it, so a
+    // second copy in the page was a visible duplicate.
+    expect(screen.queryByRole("contentinfo")).toBeNull();
+    expect(screen.queryByRole("link", { name: /^terms$/i })).toBeNull();
+  });
+
+  it("renders complete Open Graph and Twitter Card tags in head", () => {
+    onboardingStore.skipWelcomeScreen = false;
+    onboardingStore.dismissedLandingPage = false;
+
+    render(RoutePage);
+
+    expect(document.title).toBe(
+      "Codex Cryptica — Local-First RPG Campaign Manager & Worldbuilding Tool",
+    );
+
+    const description = document.querySelector('meta[name="description"]');
+    expect(description?.getAttribute("content")).toContain(
+      "free, local-first RPG campaign manager",
+    );
+
+    const ogTitle = document.querySelector('meta[property="og:title"]');
+    expect(ogTitle?.getAttribute("content")).toBe(
+      "Codex Cryptica — Local-First RPG Campaign Manager & Worldbuilding Tool",
+    );
+
+    const ogImage = document.querySelector('meta[property="og:image"]');
+    expect(ogImage?.getAttribute("content")).toBe(
+      "https://assets.codexcryptica.com/screenshots/living-lore-graph.png",
+    );
+
+    const twitterCard = document.querySelector('meta[name="twitter:card"]');
+    expect(twitterCard?.getAttribute("content")).toBe("summary_large_image");
   });
 
   it("sizes the app route shell to its parent instead of recomputing viewport height", () => {
@@ -198,5 +243,35 @@ describe("root +page.svelte — front page overlay keydown", () => {
 
     expect(modalUIStore.showQuickStartModal).toBe(true);
     expect(onboardingStore.dismissedLandingPage).toBe(true);
+  });
+
+  it("keeps the themed-vault picker collapsed until opened, so its eight chips don't compete with the primary CTAs", async () => {
+    onboardingStore.skipWelcomeScreen = false;
+    onboardingStore.dismissedLandingPage = false;
+
+    render(RoutePage);
+
+    const disclosure = screen
+      .getByText(/or start from a themed vault/i)
+      .closest("details");
+    expect(disclosure).toBeTruthy();
+    expect(disclosure?.hasAttribute("open")).toBe(false);
+
+    await fireEvent.click(screen.getByText(/or start from a themed vault/i));
+
+    expect(disclosure?.hasAttribute("open")).toBe(true);
+    await fireEvent.click(screen.getByRole("button", { name: /^vampire$/i }));
+    expect(demoService.startDemo).toHaveBeenCalledWith("vampire");
+  });
+
+  it("does not start a themed demo just from opening the disclosure, only from picking a theme", async () => {
+    onboardingStore.skipWelcomeScreen = false;
+    onboardingStore.dismissedLandingPage = false;
+
+    render(RoutePage);
+
+    await fireEvent.click(screen.getByText(/or start from a themed vault/i));
+
+    expect(demoService.startDemo).not.toHaveBeenCalled();
   });
 });

@@ -1,4 +1,9 @@
 import type { Core, NodeSingular } from "cytoscape";
+import {
+  applyDetailLevel,
+  detailLevelForZoom,
+  type DetailLevel,
+} from "./zoom-detail";
 
 export interface GraphEventHandlers {
   onNodeMouseOver?: (id: string, renderedPos: { x: number; y: number }) => void;
@@ -37,7 +42,7 @@ export function setupGraphEvents(cy: Core, handlers: GraphEventHandlers) {
     handlers.onPositionChange?.(evt.target.id(), renderedPos);
   });
 
-  let lastLod: "low" | "medium" | "high" | null = null;
+  let lastLod: DetailLevel | null = null;
 
   const applyViewportPerformance = (notifyViewportChange: boolean) => {
     if (notifyViewportChange && handlers.onViewportChange) {
@@ -63,26 +68,23 @@ export function setupGraphEvents(cy: Core, handlers: GraphEventHandlers) {
       (cy as any).options({ wheelSensitivity: dynamicSensitivity });
     }
 
-    let currentLod: typeof lastLod = "high";
-    if (zoom < 0.2) currentLod = "low";
-    else if (zoom < 0.5) currentLod = "medium";
-
+    const currentLod = detailLevelForZoom(zoom, lastLod);
     if (currentLod !== lastLod) {
-      cy.batch(() => {
-        if (currentLod === "low") {
-          cy.elements().addClass("lod-low").removeClass("lod-medium");
-        } else if (currentLod === "medium") {
-          cy.elements().addClass("lod-medium").removeClass("lod-low");
-        } else {
-          cy.elements().removeClass("lod-low lod-medium");
-        }
-      });
+      cy.batch(() => applyDetailLevel(cy.elements(), currentLod));
       lastLod = currentLod;
     }
   };
 
   cy.on("pan zoom", () => applyViewportPerformance(true));
   applyViewportPerformance(false);
+
+  // The vault's elements usually arrive after this runs, and a later sync adds
+  // more; tag them with the current level as they come, or they would render
+  // at full detail until the next threshold crossing.
+  const tagAdded = (evt: any) => {
+    if (lastLod && lastLod !== "high") applyDetailLevel(evt.target, lastLod);
+  };
+  cy.on("add", tagAdded);
 
   cy.on("tap", "node", (evt: any) => {
     handlers.onNodeTap?.(evt.target.id(), evt.target);
@@ -105,5 +107,7 @@ export function setupGraphEvents(cy: Core, handlers: GraphEventHandlers) {
   return () => {
     clearTimeout(hoverTimeout);
     cy.off("mouseover mouseout position pan zoom tap dblclick dbltap");
+    // Only our own handler: the minimap listens to "add" as well.
+    cy.off("add", tagAdded);
   };
 }

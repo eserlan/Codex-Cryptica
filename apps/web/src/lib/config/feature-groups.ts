@@ -13,8 +13,10 @@
  * deliberate: build, connect, run, then AI. Leading with AI on a page whose
  * problem is looking machine-made would be answering the wrong question.
  *
- * `FEATURE_HINTS` itself is untouched. It is keyed by id and consumed in-app by
- * `FeatureHint.svelte`, so this file references ids rather than moving them.
+ * `FEATURE_HINTS` itself is untouched. It is keyed by id. The in-app hint cards
+ * that used to show it are gone (Cif and the Help library replaced them), so it
+ * now feeds this page and the generated llms files, and this file references
+ * ids rather than moving them.
  *
  * Every hint must appear exactly once across `FEATURE_GROUPS` and
  * `HELP_ONLY_HINT_IDS`. The test enforces that, so adding a hint without
@@ -67,11 +69,15 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
       "table-view-filters",
       "search-indexing",
       "quicknote-scratchpad",
+      "session-journal",
       "era-date-picker",
+      "calendar-eras",
       "creature-packs",
       "front-page",
       "vault-switcher",
       "presentation-templates",
+      "entity-templates",
+      "entity-reports",
     ],
   },
   {
@@ -91,6 +97,7 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
       "spatial-canvas",
       "family-tree",
       "lineage-controls",
+      "connections",
       "world-chronology",
       "entity-timeline",
       "node-merging",
@@ -109,11 +116,18 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
       "vtt-mode",
       "map-mode",
       "fog-of-war",
+      "hexcrawl-maps",
+      "hex-crawl-mode",
       "guest-entity-links",
       "vtt-entity-list",
+      "vtt-tile-decks",
+      "vtt-layers",
+      "vtt-notes",
       "dice-rolling",
+      "random-tables-and-decks",
       "voice-chat",
       "guest-character-chat",
+      "adventure",
       "public-world-directory",
     ],
   },
@@ -129,10 +143,13 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
     hintIds: [
       "lore-oracle",
       "in-app-generators",
+      "generator-sharing",
       "secret-society-generator",
+      "holiday-generator",
       "proposer-discovery",
       "draft-review",
       "oracle-connection-modes",
+      "oracle-mentions",
       "oracle-memory",
       "oracle-automation",
       "proactive-discovery",
@@ -142,7 +159,10 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
       "image-stature",
       "adventure-generator",
       "quest-generator",
+      "rumour-generator",
+      "encounter-generator",
       "dungeon-generator",
+      "point-crawl-generator",
       "world-generator",
       "language-generator",
       "news-sheet-generator",
@@ -167,6 +187,9 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
       "cif-importer",
       "vault-save",
       "vault-load",
+      // Opt-in and off by default, so it sits with the ownership story rather
+      // than contradicting it: the local files stay the original.
+      "cloud-backup",
       "import-resume",
       "entity-shelf",
     ],
@@ -199,6 +222,9 @@ export const HELP_ONLY_HINT_IDS = [
   "p2p-connection-manager",
   // Says the same thing as "AI Disabled", which carries it in the privacy group.
   "generator-local-mode",
+  // Explains how one generator form works. Worth promoting once matching
+  // options reach the generators generally rather than settlements alone.
+  "generator-presets",
   // Decoration rather than a job. Distinctive, but it belongs in a gallery, not
   // in a list of what the product does for you.
   "themes",
