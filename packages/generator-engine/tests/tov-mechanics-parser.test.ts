@@ -106,6 +106,11 @@ describe("isPublishedBfrdDoomGuidance", () => {
         "Start with a CR-based encounter-level GM Doom pool. Spend Doom to give a creature advantage on an attack or curse a PC.",
       ),
     ).toBe(false);
+    expect(
+      isPublishedBfrdDoomGuidance(
+        "Start with a CR-based encounter-level GM Doom pool. Spend Doom to give a creature advantage on an attack. Doom can also knock the target prone.",
+      ),
+    ).toBe(false);
   });
 
   it("does not treat unrelated healing prose as a Doom spend", () => {

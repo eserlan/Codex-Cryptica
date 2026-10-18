@@ -15,6 +15,9 @@ const PUBLISHED_DOOM_CR_BASIS_PATTERN =
 const PUBLISHED_DOOM_SPEND_PATTERN =
   /\b(?:advantage on (?:an? |the )?(?:creature'?s? )?attack|disadvantage on (?:an? |the )?(?:pc'?s? )?save|(?:once[- ]per[- ]encounter )?(?:refresh|recharge)|(?:gain|grant) (?:one |an? )?(?:additional |extra )?use of a limited[- ]use feature)\b/i;
 
+const DOOM_SPEND_INTENT_PATTERN =
+  /\b(?:spend(?:ing)?\s+(?:\d+\s+)?doom\b|doom\s+(?:can|may|could|might)\b)/i;
+
 const NON_PUBLISHED_DOOM_SPEND_PATTERN =
   /\b(?:summon|reinforcement|extinguish|snuff|teleport|heal|regain hit points|temporary hit points|lair action|lair hazard|environmental hazard|battlefield hazard|villain action|villainous action|legendary action|as a reaction|initiative count|aoe|area of effect|bonus damage|extra damage|reroll|re-roll)\b/i;
 
@@ -25,7 +28,8 @@ const UNRECOGNIZED_DOOM_SPEND_PATTERN =
  * Returns true only when `doomNotes` establishes the published encounter-level
  * CR-based Doom pool and at least one published spend. The classifier fails
  * closed when the text lacks that evidence or a Doom-related clause names a
- * known custom spend; unrelated sentences are ignored.
+ * known custom spend or an unrecognised Doom spend clause; unrelated sentences
+ * are ignored.
  */
 export function isPublishedBfrdDoomGuidance(doomNotes: string): boolean {
   const trimmed = doomNotes.trim();
@@ -45,8 +49,10 @@ export function isPublishedBfrdDoomGuidance(doomNotes: string): boolean {
 
   return !doomClauses.some(
     (clause) =>
-      NON_PUBLISHED_DOOM_SPEND_PATTERN.test(clause) ||
-      UNRECOGNIZED_DOOM_SPEND_PATTERN.test(clause),
+      DOOM_SPEND_INTENT_PATTERN.test(clause) &&
+      (!PUBLISHED_DOOM_SPEND_PATTERN.test(clause) ||
+        NON_PUBLISHED_DOOM_SPEND_PATTERN.test(clause) ||
+        UNRECOGNIZED_DOOM_SPEND_PATTERN.test(clause)),
   );
 }
 
