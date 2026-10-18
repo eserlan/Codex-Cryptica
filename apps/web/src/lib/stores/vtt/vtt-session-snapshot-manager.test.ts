@@ -32,6 +32,7 @@ describe("VTTSessionSnapshotManager", () => {
     const serialised = JSON.stringify(manager.createSnapshot());
     expect(serialised).not.toContain("hexCrawl");
     expect(serialised).not.toContain("aiNotes");
+    expect(serialised).not.toContain("journey");
   });
 
   it("applies full encounter snapshots into live state", () => {

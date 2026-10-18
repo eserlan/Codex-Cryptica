@@ -1,10 +1,17 @@
-import { formatHexLabel, type HexCoord } from "map-engine";
+import {
+  formatHexLabel,
+  getTokenCenter,
+  pointToHex,
+  type HexCoord,
+} from "map-engine";
 import { HexDiscoveryService } from "hex-crawl-engine";
 import { aiClientManager } from "@codex/ai-engine";
 import { HexCrawlStore } from "$lib/stores/hex-crawl/hex-crawl.svelte";
 import { HexCrawlMoveObserver } from "$lib/stores/hex-crawl/hex-crawl-move-observer";
+import { HexJourneyStore } from "$lib/stores/hex-crawl/hex-journey.svelte";
 import { HexDiscoveryController } from "$lib/services/hex-discovery";
 import { mapStore } from "$lib/stores/map.svelte";
+import { mapSession } from "$lib/stores/map-session.svelte";
 import { vault } from "$lib/stores/vault.svelte";
 import { oracle } from "$lib/stores/oracle.svelte";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
@@ -26,6 +33,7 @@ export interface HexCrawlServices {
   observer: HexCrawlMoveObserver;
   controller: HexDiscoveryController;
   offer: ExploreOfferState;
+  journey: HexJourneyStore;
 }
 
 /** Orientation of the active map's hex grid, for labels. */
@@ -64,6 +72,45 @@ export function createHexCrawlServices(): HexCrawlServices {
 
   const offer = new ExploreOfferState();
 
+  const journey = new HexJourneyStore({
+    getIdentity: () => {
+      const mapId = mapStore.activeMapId;
+      const config = activeHexGridConfig(mapStore);
+      if (!mapId || !config || !store.isEnabled(mapId)) return null;
+      return {
+        mapId,
+        vaultId: vault.activeVaultId ?? "",
+        gridDistance: mapSession.gridDistance,
+        gridUnit: mapSession.gridUnit,
+        gridSignature: `${config.orientation}:${config.size}:${config.offsetX}:${config.offsetY}`,
+      };
+    },
+    isAllowed: () => !sessionModeStore.isGuestMode && mapStore.isGMMode,
+    listEligibleTokens: () => {
+      const config = activeHexGridConfig(mapStore);
+      if (!config) return [];
+      return mapSession.allTokens
+        .filter(
+          (token) =>
+            token.isVisionSource === true &&
+            !token.locked &&
+            mapSession.canMoveToken(
+              token.id,
+              mapSession.myPeerId,
+              mapStore.isGMMode,
+            ),
+        )
+        .map((token) => ({
+          id: token.id,
+          label: token.name,
+          hex: pointToHex(getTokenCenter(token), config),
+        }));
+    },
+    onStart: () => true,
+    // Step movement is connected by the map journey adapter in the next integration slice.
+    onStep: () => false,
+  });
+
   const controller = new HexDiscoveryController({
     service: new HexDiscoveryService({ rng: Math.random, clock: systemClock }),
     aiClient: aiClientManager,
@@ -101,5 +148,5 @@ export function createHexCrawlServices(): HexCrawlServices {
     },
   });
 
-  return { store, observer, controller, offer };
+  return { store, observer, controller, offer, journey };
 }

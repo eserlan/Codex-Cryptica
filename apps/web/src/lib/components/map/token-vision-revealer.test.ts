@@ -4,6 +4,7 @@ import {
   type TokenVisionRevealerDeps,
 } from "./token-vision-revealer";
 import type { Token } from "../../../types/vtt";
+import { getHexCorners, hexToPoint, type HexCoord } from "map-engine";
 
 function createCanvasMock() {
   const ctx = {
@@ -165,6 +166,36 @@ describe("TokenVisionRevealer", () => {
     await hexRevealer.reveal([createToken({ x: 0, y: 0 })], 150, 0);
     expect(mask.ctx.moveTo).toHaveBeenCalledTimes(1);
     expect(mask.ctx.lineTo).toHaveBeenCalledTimes(5);
+  });
+
+  it("centres hex fog reveal on the token centre", async () => {
+    const config = {
+      orientation: "pointy" as const,
+      size: 50,
+      offsetX: 0,
+      offsetY: 0,
+    };
+    const hexRevealer = new TokenVisionRevealer({
+      mapStore: {
+        activeMapId: "map-1",
+        showGrid: true,
+        gridType: "hex-pointy",
+        gridSize: 50,
+        saveMask,
+      },
+      getMaskCanvas: () => mask.canvas,
+      getMapImage: () => mapImage,
+    });
+    const token = createToken({ x: 0, y: 15, width: 50, height: 50 });
+    const hex = { q: 0, r: 1 } satisfies HexCoord;
+    const firstCorner = getHexCorners(hexToPoint(hex, config), 50, "pointy")[0];
+
+    await hexRevealer.reveal([token], 0, 0);
+
+    expect(mask.ctx.moveTo).toHaveBeenCalledWith(
+      firstCorner.x + mask.canvas.width / 2,
+      firstCorner.y + mask.canvas.height / 2,
+    );
   });
 
   it("reveals a circular area on square and gridless maps without adding undo", async () => {

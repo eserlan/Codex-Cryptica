@@ -13,6 +13,7 @@
     type Terrain,
   } from "hex-crawl-engine";
   import type { HexCrawlStore } from "$lib/stores/hex-crawl/hex-crawl.svelte";
+  import type { HexJourneyStore } from "$lib/stores/hex-crawl/hex-journey.svelte";
   import { mapStore } from "$lib/stores/map.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
@@ -40,6 +41,7 @@
 
   let {
     store,
+    journey,
     mapId,
     hex,
     isGM,
@@ -54,6 +56,7 @@
     storage,
   }: {
     store: HexCrawlStore;
+    journey?: HexJourneyStore;
     mapId: string;
     hex: HexCoord;
     isGM: boolean;
@@ -113,6 +116,7 @@
   });
 
   let header: HTMLElement | undefined = $state();
+  let panel: HTMLElement | undefined = $state();
   let hintVisible = $state(untrack(() => !isHexHintSeen(storage)));
   let generating = $state(false);
   let failure = $state<"ai-failed" | null>(null);
@@ -169,6 +173,15 @@
     refresh();
   }
 
+  function setJourneyStart() {
+    journey?.setOrigin(hex);
+  }
+
+  function travelHere() {
+    const result = journey?.preview(hex);
+    if (result && !result.ok) journey!.error = result.reason;
+  }
+
   async function toggleExplored() {
     await store.setExplored(mapId, hex, !explored, "gm");
     refresh();
@@ -192,6 +205,25 @@
   }
 
   const hexKey = $derived(`${mapId}:${hex.q},${hex.r}`);
+
+  function handlePanelKeydown(event: KeyboardEvent) {
+    if (
+      event.key === "Escape" &&
+      event.target instanceof Node &&
+      panel?.contains(event.target)
+    ) {
+      event.stopPropagation();
+      close();
+    }
+  }
+
+  $effect(() => {
+    void hexKey;
+    controller?.abort();
+    controller = null;
+    generating = false;
+    failure = null;
+  });
 </script>
 
 {#snippet AiDisclosure()}
@@ -212,16 +244,13 @@
   {/if}
 {/snippet}
 
+<!-- fallow-ignore-next-line complexity -- This panel keeps selection, discovery, notes, and journey actions for one hex together. -->
+<svelte:window onkeydown={handlePanelKeydown} />
 {#if visible}
   <section
+    bind:this={panel}
     class="fixed inset-x-0 bottom-0 z-40 max-h-[70vh] overflow-y-auto rounded-t-xl border border-theme-border bg-theme-surface/95 p-4 shadow-xl backdrop-blur md:inset-x-auto md:bottom-auto md:right-4 md:top-24 md:w-88 md:max-h-[calc(100vh-7rem)] md:rounded-xl"
     aria-labelledby="hex-panel-title"
-    onkeydown={(event) => {
-      if (event.key === "Escape") {
-        event.stopPropagation();
-        close();
-      }
-    }}
   >
     <header class="flex items-start justify-between gap-3">
       <div class="flex flex-wrap items-center gap-2">
@@ -248,6 +277,29 @@
         <span class="icon-[lucide--x] h-4 w-4" aria-hidden="true"></span>
       </button>
     </header>
+
+    {#if journey && isGM && !isGuest}
+      <div class="mt-3 flex gap-2">
+        <button
+          type="button"
+          onclick={setJourneyStart}
+          class="rounded-lg border border-theme-border px-3 py-1.5 text-micro font-bold text-theme-text"
+          >Set as journey start</button
+        >
+        <button
+          type="button"
+          onclick={travelHere}
+          class="rounded-lg border border-theme-border px-3 py-1.5 text-micro font-bold text-theme-text"
+          >Travel here</button
+        >
+      </div>
+      {#if journey.error}<p
+          role="status"
+          class="mt-1 text-micro text-theme-muted"
+        >
+          {journey.error}
+        </p>{/if}
+    {/if}
 
     {#if hintVisible}
       <div
@@ -305,15 +357,17 @@
       </div>
 
       {#key hexKey}
+        {@const notesMapId = mapId}
+        {@const notesHex = hex}
         <HexNotes
           notes={record?.notes ?? ""}
           aiNotes={record?.aiNotes ?? ""}
           onSaveNotes={async (text) => {
-            await store.setNotes(mapId, hex, text);
+            await store.setNotes(notesMapId, notesHex, text);
             refresh();
           }}
           onSaveAiNotes={async (text) => {
-            await store.setAiNotes(mapId, hex, text);
+            await store.setAiNotes(notesMapId, notesHex, text);
             refresh();
           }}
         />

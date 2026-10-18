@@ -9,6 +9,7 @@ export * from "./discovery/prompts";
 export * from "./discovery/service";
 export * from "./discovery/save";
 export * from "./discovery/parts";
+export * from "./journey";
 export * from "./tables/types";
 export * from "./tables/terrain-tables";
 export * from "./tables/general-tables";

@@ -71,6 +71,18 @@ export function resolveSupportedHubGenre(
     : fallbackGenre;
 }
 
+/** The one-shot genre is its own skin, so a hub theme must seed it. */
+export function resolveOneShotGenre(
+  slug: string,
+  activeTheme: string,
+  genres: readonly string[],
+  currentGenre: string,
+): string {
+  return slug === "one-shot-adventure-generator" && genres.includes(activeTheme)
+    ? activeTheme
+    : currentGenre;
+}
+
 export function getEffectiveStoredThemeId(opts: {
   urlHubTheme?: string | null;
   slug: string;

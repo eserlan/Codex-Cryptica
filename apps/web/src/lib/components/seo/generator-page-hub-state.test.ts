@@ -3,6 +3,7 @@ import { UIPersistence } from "$lib/stores/ui/persistence";
 import {
   getHubMountPatch,
   resolveInitialActiveTheme,
+  resolveOneShotGenre,
   resolveSupportedHubGenre,
 } from "./generator-page-hub-state";
 
@@ -238,5 +239,42 @@ describe("getHubMountPatch", () => {
     });
     expect(patch?.socialHub).toBeUndefined();
     expect(patch?.activeTheme).toBe("Superhero / Comic Book");
+  });
+});
+
+describe("resolveOneShotGenre", () => {
+  const genres = ["Classic Fantasy", "Sci-Fi / Space Opera"];
+
+  it("seeds the genre from the hub theme on the one-shot page", () => {
+    expect(
+      resolveOneShotGenre(
+        "one-shot-adventure-generator",
+        "Sci-Fi / Space Opera",
+        genres,
+        "Classic Fantasy",
+      ),
+    ).toBe("Sci-Fi / Space Opera");
+  });
+
+  it("keeps the current genre for other generators", () => {
+    expect(
+      resolveOneShotGenre(
+        "npc",
+        "Sci-Fi / Space Opera",
+        genres,
+        "Classic Fantasy",
+      ),
+    ).toBe("Classic Fantasy");
+  });
+
+  it("keeps the current genre when the theme is not a one-shot genre", () => {
+    expect(
+      resolveOneShotGenre(
+        "one-shot-adventure-generator",
+        "Unknown",
+        genres,
+        "Classic Fantasy",
+      ),
+    ).toBe("Classic Fantasy");
   });
 });

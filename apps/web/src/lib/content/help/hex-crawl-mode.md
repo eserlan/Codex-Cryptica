@@ -124,6 +124,14 @@ In solo play, with Hex Crawl mode on, the party moving into an unexplored hex of
 
 The offer never starts on its own. **Not now** dismisses it and generates nothing. The hex stays Explored either way.
 
+## Planning and stepping through a journey
+
+As the GM, use **Set as journey start** in a hex panel to choose an origin, then open a destination and choose **Travel here**. If you have one movable party token, its hex can provide the origin; with several tokens, choose the token and starting hex deliberately. A preview can be made without a token, but starting requires an eligible party token already at the origin.
+
+The preview shows the straight route, hex count and distance using the map's measurement unit. **Hours per hex** is optional and only estimates time; it does not advance a calendar or set a deadline. **Start journey** does not move the token. Use **Next hex** once per move. Each arrival uses normal fog reveal and journal capture, marks that hex explored, and opens its panel. Choose **Explore** yourself if you want a discovery draft.
+
+**Stop journey** keeps completed movement and exploration, then clears the remaining route. If saving an arrival fails after the token moved, use **Retry arrival save**; this does not move the token or record the move again. If the party moves externally or the map grid changes, plan a new journey. The route is temporary and is cleared when you leave the map or reload. Journey controls and the route are only visible to the GM; Player View, players and guests cannot use them.
+
 ## Your hex grid travels with the map
 
 The grid is saved with the map: type, size, offsets and label style. Maps that were set up on an older version keep their grid, and it is saved with the map the first time you open it.

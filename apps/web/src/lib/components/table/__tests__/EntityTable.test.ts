@@ -506,5 +506,28 @@ describe("EntityTable", () => {
         }),
       );
     });
+
+    it("fires onToggleRow for selections made while delete was pending", async () => {
+      let toggledId = "";
+      render(EntityTable, {
+        props: {
+          entities: rows,
+          vaultId: "v1",
+          sort: { key: "title", direction: "asc" },
+          connectionCounts,
+          selectedIds: new Set(["e1"]),
+          allSelected: false,
+          someSelected: true,
+          onSort: vi.fn(),
+          onToggleRow: (id) => {
+            toggledId = id;
+          },
+        },
+      });
+
+      const checkboxes = screen.getAllByTestId("entity-table-row-select");
+      await fireEvent.click(checkboxes[1]);
+      expect(toggledId).toBe("e2");
+    });
   });
 });
