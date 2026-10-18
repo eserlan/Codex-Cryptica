@@ -7,8 +7,8 @@
  * object/array values are never partially parsed, only reported once their
  * matching brace/bracket closes.
  *
- * This is deliberately separate from `extractJsonObject` (apps/web's
- * ai-generator-gateway.ts), which operates once on a *complete* string —
+ * This is deliberately separate from the runtime package's `extractJsonObject`,
+ * which operates once on a *complete* string —
  * final validation must still run `extractJsonObject`/`JSON.parse` against
  * the fully accumulated text; fields reported here are UI-only and never
  * substitute for that.
