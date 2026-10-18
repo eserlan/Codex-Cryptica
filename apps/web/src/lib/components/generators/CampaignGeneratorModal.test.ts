@@ -53,6 +53,10 @@ const streamMock = vi.hoisted(() => ({
   waitForRelease: null as Promise<void> | null,
   release: null as (() => void) | null,
 }));
+const campaignServiceMocks = vi.hoisted(() => ({
+  onDungeonStagedStats: null as
+    ((stats: import("generator-engine").DungeonStagedStats) => void) | null,
+}));
 
 vi.mock("$lib/actions/focusTrap", () => ({
   focusTrap: () => ({ destroy: () => {} }),
@@ -119,6 +123,14 @@ vi.mock("generator-engine", async () => {
     templateApplied: false,
   };
   class FakeCampaignGeneratorService extends actual.CampaignGeneratorService {
+    constructor(
+      ...args: ConstructorParameters<typeof actual.CampaignGeneratorService>
+    ) {
+      super(...args);
+      campaignServiceMocks.onDungeonStagedStats =
+        args.at(0)?.onDungeonStagedStats ?? null;
+    }
+
     async *generateDraftStream() {
       for (const event of streamMock.events) yield event;
       if (streamMock.waitForRelease) await streamMock.waitForRelease;
@@ -154,6 +166,7 @@ describe("CampaignGeneratorModal", () => {
     streamMock.events = [];
     streamMock.waitForRelease = null;
     streamMock.release = null;
+    campaignServiceMocks.onDungeonStagedStats = null;
     store._workflow.launchMode = "workspace";
     store._workflow.sourceEntityId = null;
     store._workflow.generatorId = null;
@@ -172,6 +185,36 @@ describe("CampaignGeneratorModal", () => {
     expect(screen.getByRole("dialog")).toBeTruthy();
     expect(screen.getByRole("heading", { name: /generate/i })).toBeTruthy();
     expect(screen.getByLabelText("Close generator")).toBeTruthy();
+  });
+
+  it("logs staged dungeon diagnostics without generated issue text", () => {
+    render(CampaignGeneratorModal);
+    const logger = vi.spyOn(console, "debug").mockImplementation(() => {});
+    const contentSentinel = "PRIVATE_CAMPAIGN_ISSUE_SENTINEL";
+    const stats = {
+      outcome: "staged" as const,
+      aiCalls: 4,
+      repairedStages: ["factions" as const],
+      reviewIssues: [contentSentinel],
+      reviewSkipped: false,
+      coherenceRepaired: true,
+      remainingIssues: [contentSentinel],
+    };
+
+    campaignServiceMocks.onDungeonStagedStats?.(stats);
+
+    expect(logger).toHaveBeenCalledWith(
+      "[Generator] staged dungeon run",
+      expect.objectContaining({
+        outcome: "staged",
+        aiCalls: 4,
+        repairedStageCount: 1,
+        reviewIssueCount: 1,
+        remainingIssueCount: 1,
+      }),
+    );
+    expect(JSON.stringify(logger.mock.calls)).not.toContain(contentSentinel);
+    logger.mockRestore();
   });
 
   // T019: cancel/close leaves campaign data unchanged

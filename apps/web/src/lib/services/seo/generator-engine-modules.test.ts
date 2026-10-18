@@ -265,6 +265,37 @@ describe("generator engine modules", () => {
       ).toEqual(["done", "done", "done", "done"]);
     });
 
+    it("logs staged dungeon counts without generated review text", async () => {
+      const engine = new GeneratorEngineSpecialized(clientManager as never);
+      const contentSentinel = "PRIVATE_REVIEW_ISSUE_SENTINEL";
+      const runModel = spyOnRunModel(engine).mockImplementation(
+        async (_instruction, message) => {
+          if (message.includes("Coherence review")) {
+            return JSON.stringify({ issues: [contentSentinel] });
+          }
+          if (message.includes("Review these coherence issues")) {
+            return "{}";
+          }
+          return JSON.stringify(stageReply(message));
+        },
+      );
+      const logger = vi.spyOn(console, "debug").mockImplementation(() => {});
+
+      await engine.generateDungeon(options);
+
+      expect(runModel).toHaveBeenCalled();
+      expect(logger).toHaveBeenCalledWith(
+        "[Generator] staged dungeon run",
+        expect.objectContaining({
+          outcome: "staged",
+          reviewIssueCount: 1,
+          remainingIssueCount: 1,
+        }),
+      );
+      expect(JSON.stringify(logger.mock.calls)).not.toContain(contentSentinel);
+      logger.mockRestore();
+    });
+
     it("falls back to the one-pass route when a stage cannot be used", async () => {
       const engine = new GeneratorEngineSpecialized(clientManager as never);
       const runModel = spyOnRunModel(engine).mockResolvedValue(
