@@ -147,7 +147,7 @@
     onkeydown={handleKeydown}
     onfocus={() => (showSuggestions = true)}
     onblur={() => setTimeout(() => (showSuggestions = false), 200)}
-    class="w-full bg-theme-bg/50 border border-theme-border rounded px-2 py-1.5 text-xs text-theme-text outline-none focus:border-theme-primary focus:ring-2 focus:ring-theme-primary/20 transition-all font-mono placeholder-theme-muted/50"
+    class="touch-target w-full bg-theme-bg/50 border border-theme-border rounded px-2 py-1.5 text-xs text-theme-text outline-none focus:border-theme-primary focus:ring-2 focus:ring-theme-primary/20 transition-all font-mono placeholder-theme-muted/50"
   />
 
   {#if showSuggestions && suggestions.length > 0}

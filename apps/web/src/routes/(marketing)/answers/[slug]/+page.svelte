@@ -1,0 +1,633 @@
+<script lang="ts">
+  import { browser } from "$app/environment";
+  import { base } from "$app/paths";
+  import SeoHead from "$lib/components/seo/SeoHead.svelte";
+  import { buildAbsoluteUrl } from "$lib/seo/site";
+  import { answerPath } from "$lib/content/answers/registry";
+  import { parseInlineLinks } from "$lib/content/answers/inline-links";
+  import {
+    buildAnswerFaqJsonLd,
+    buildAnswerBreadcrumbJsonLd,
+  } from "$lib/content/answers/json-ld";
+  import {
+    trackDiscoveryPageViewed,
+    classifyDiscoveryTarget,
+    createDiscoveryViewGuard,
+  } from "$lib/services/analytics/discovery-tracking";
+  import { trackDiscoveryClick } from "$lib/actions/trackDiscoveryClick";
+  import {
+    trackAnswerShareClicked,
+    trackAnswerShareCompleted,
+    trackAnswerShareLinkCopied,
+  } from "$lib/services/analytics/answer-share-tracking";
+  import { trackAnswerUsefulVote } from "$lib/services/analytics/answer-feedback-tracking";
+  import PublicLabelChip from "$lib/components/labels/PublicLabelChip.svelte";
+  import ShareButton from "$lib/components/ShareButton.svelte";
+  import UsefulnessFeedback from "$lib/components/UsefulnessFeedback.svelte";
+  import type { PageData } from "./$types";
+
+  let { data }: { data: PageData } = $props();
+
+  // A bare "/" base would make every link protocol-relative ("//answers/...").
+  const cleanBase = base === "/" ? "" : base;
+
+  let answer = $derived(data.answer);
+  let related = $derived(data.related);
+  let canonical = $derived(buildAbsoluteUrl(answerPath(answer)));
+  let hasFurtherReading = $derived(
+    answer.relatedTopics.length +
+      answer.relatedTools.length +
+      answer.relatedForPages.length +
+      related.length >
+      0,
+  );
+
+  const KIND_LABEL = {
+    definition: "Definition",
+    "how-to": "How to",
+    framework: "Framework",
+    comparison: "Comparison",
+  } as const;
+
+  // Answer tables stack into labelled blocks on narrow screens. Two- and
+  // three-column tables fit as a table from md; four or more columns need
+  // lg before every column gets a readable width. Both sets are spelled out
+  // in full so Tailwind can see every class.
+  const TABLE_STACKED_BELOW_MD = {
+    wrapper: "md:overflow-x-auto md:border md:border-theme-border",
+    table: "w-full border-collapse text-left text-base max-md:block md:text-sm",
+    thead: "bg-theme-surface text-theme-text max-md:sr-only",
+    tbody: "max-md:flex max-md:flex-col max-md:gap-4",
+    row: "max-md:block max-md:border max-md:border-theme-border max-md:bg-theme-surface md:border-b md:border-theme-border md:last:border-b-0",
+    rowHeader:
+      "px-3 py-2 align-top font-header font-bold text-theme-text max-md:block max-md:border-b max-md:border-theme-border max-md:px-4 max-md:py-3 md:min-w-[8rem]",
+    cell: "px-3 py-2 align-top text-theme-muted max-md:block max-md:px-4 max-md:before:mb-1 max-md:before:block max-md:before:font-mono max-md:before:text-xs max-md:before:uppercase max-md:before:tracking-[0.14em] max-md:before:text-theme-text max-md:before:content-[attr(data-label)] md:min-w-[10rem]",
+  };
+  const TABLE_STACKED_BELOW_LG = {
+    wrapper: "lg:overflow-x-auto lg:border lg:border-theme-border",
+    table: "w-full border-collapse text-left text-base max-lg:block lg:text-sm",
+    thead: "bg-theme-surface text-theme-text max-lg:sr-only",
+    tbody: "max-lg:flex max-lg:flex-col max-lg:gap-4",
+    row: "max-lg:block max-lg:border max-lg:border-theme-border max-lg:bg-theme-surface lg:border-b lg:border-theme-border lg:last:border-b-0",
+    rowHeader:
+      "px-3 py-2 align-top font-header font-bold text-theme-text max-lg:block max-lg:border-b max-lg:border-theme-border max-lg:px-4 max-lg:py-3 lg:min-w-[8rem]",
+    cell: "px-3 py-2 align-top text-theme-muted max-lg:block max-lg:px-4 max-lg:before:mb-1 max-lg:before:block max-lg:before:font-mono max-lg:before:text-xs max-lg:before:uppercase max-lg:before:tracking-[0.14em] max-lg:before:text-theme-text max-lg:before:content-[attr(data-label)] lg:min-w-[10rem]",
+  };
+
+  function tableClasses(columnCount: number) {
+    return columnCount > 3 ? TABLE_STACKED_BELOW_LG : TABLE_STACKED_BELOW_MD;
+  }
+
+  // See discovery-tracking.ts: this route reuses one component instance
+  // across /answers/a -> /answers/b navigations, so the guard (not just
+  // onMount) is what keeps discovery_page_viewed to one fire per slug.
+  const seenAnswer = createDiscoveryViewGuard();
+  $effect(() => {
+    if (!browser) return;
+    const slug = answer.slug;
+    if (!seenAnswer(slug)) return;
+    trackDiscoveryPageViewed({
+      sourceKind: "answer",
+      sourceId: slug,
+      path: answerPath(answer),
+    });
+  });
+</script>
+
+<!-- Authored copy may cite sources as [label](url); render those as links
+     rather than printing the markdown. -->
+{#snippet inline(text: string)}
+  {#each parseInlineLinks(text) as segment, segmentIndex (segmentIndex)}
+    {#if segment.kind === "link"}
+      <a
+        href={segment.external ? segment.href : `${cleanBase}${segment.href}`}
+        target={segment.external ? "_blank" : undefined}
+        rel={segment.external ? "noopener noreferrer" : undefined}
+        class="text-theme-primary underline decoration-theme-primary/40 underline-offset-2 transition-colors hover:decoration-theme-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-accent"
+        >{segment.text}</a
+      >
+    {:else}{segment.text}{/if}
+  {/each}
+{/snippet}
+
+<SeoHead
+  title={answer.seo.title}
+  description={answer.seo.description}
+  canonicalUrl={canonical}
+  image={answer.seo.image ?? buildAbsoluteUrl("/og-image.png")}
+  imageAlt={answer.seo.imageAlt ?? answer.question}
+  type="article"
+  jsonLd={[buildAnswerFaqJsonLd(answer), buildAnswerBreadcrumbJsonLd(answer)]}
+/>
+
+<div
+  class="bg-theme-bg text-theme-text font-body selection:bg-theme-primary selection:text-theme-bg"
+  style:background-image="var(--bg-texture-overlay)"
+>
+  <article
+    class="mx-auto max-w-2xl break-words px-4 py-12 text-lg leading-relaxed sm:px-6 sm:py-20"
+  >
+    <nav aria-label="Breadcrumb" class="mb-8">
+      <a
+        href="{cleanBase}/answers"
+        class="inline-flex min-h-[24px] items-center gap-2 py-1 font-mono text-xs text-theme-muted transition-colors hover:text-theme-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-accent"
+      >
+        <span class="icon-[lucide--arrow-left] h-3.5 w-3.5" aria-hidden="true"
+        ></span>
+        All answers
+      </a>
+    </nav>
+
+    <header class="mb-8">
+      <p
+        class="mb-3 font-mono text-xs uppercase tracking-[0.18em] text-theme-muted"
+      >
+        {KIND_LABEL[answer.kind]}
+      </p>
+      <h1
+        class="font-header text-3xl font-bold tracking-tight text-theme-text sm:text-5xl"
+      >
+        {answer.question}
+      </h1>
+      {#if answer.labels.length}
+        <div class="mt-4 flex flex-wrap gap-2">
+          {#each answer.labels as label (label)}
+            <PublicLabelChip {label} />
+          {/each}
+        </div>
+      {/if}
+      <div class="mt-4">
+        <ShareButton
+          url={canonical}
+          title={answer.question}
+          text={answer.seo.description}
+          onShareClicked={() =>
+            trackAnswerShareClicked({
+              slug: answer.slug,
+              intent: answer.discovery?.id,
+            })}
+          onShareCompleted={() =>
+            trackAnswerShareCompleted({
+              slug: answer.slug,
+              intent: answer.discovery?.id,
+            })}
+          onLinkCopied={() =>
+            trackAnswerShareLinkCopied({
+              slug: answer.slug,
+              intent: answer.discovery?.id,
+            })}
+        />
+      </div>
+    </header>
+
+    <!-- The direct answer, before anything else on the page. Ruled rather than
+         boxed: the grammar reserves cards for parallel, comparable items. -->
+    <p
+      class="mb-12 border-l-2 border-theme-primary pl-5 text-lg leading-relaxed text-theme-text"
+    >
+      {answer.shortAnswer}
+    </p>
+
+    {#if answer.seo.image}
+      <img
+        src={answer.seo.image}
+        alt={answer.seo.imageAlt ?? answer.question}
+        width="1200"
+        height="675"
+        loading="lazy"
+        decoding="async"
+        class="mb-12 w-full border border-theme-border"
+      />
+    {/if}
+
+    {#each answer.sections as section, sectionIndex (sectionIndex)}
+      <section class="mb-12">
+        {#if section.kind === "prose"}
+          {#if section.heading}
+            <h2
+              class="mb-4 font-header text-xl font-bold text-theme-text sm:text-2xl"
+            >
+              {section.heading}
+            </h2>
+          {/if}
+          {#each section.paragraphs as paragraph}
+            <p class="mb-4 leading-relaxed text-theme-muted last:mb-0">
+              {@render inline(paragraph)}
+            </p>
+          {/each}
+          {#if section.cta}
+            <div class="mt-6 flex flex-col items-start gap-2">
+              <a
+                href={section.cta.href.startsWith("/")
+                  ? `${cleanBase}${section.cta.href}`
+                  : section.cta.href}
+                target={section.cta.external ? "_blank" : undefined}
+                rel={section.cta.external ? "noopener noreferrer" : undefined}
+                class="inline-flex min-h-[24px] items-center gap-2 border border-theme-primary bg-theme-primary/10 px-5 py-2.5 font-header text-sm font-bold text-theme-primary transition-colors hover:bg-theme-primary hover:text-theme-bg active:brightness-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-accent"
+                use:trackDiscoveryClick={{
+                  sourceKind: "answer",
+                  sourceId: answer.slug,
+                  placement: "section_cta",
+                  ...classifyDiscoveryTarget(section.cta.href),
+                }}
+              >
+                <span>{section.cta.text}</span>
+                <span
+                  class={section.cta.external
+                    ? "icon-[lucide--external-link] h-4 w-4"
+                    : "icon-[lucide--arrow-right] h-4 w-4"}
+                  aria-hidden="true"
+                ></span>
+              </a>
+              {#if section.cta.disclosure}
+                <p class="text-xs text-theme-muted">
+                  {section.cta.disclosure}
+                </p>
+              {/if}
+            </div>
+          {/if}
+        {:else if section.kind === "list"}
+          {#if section.heading}
+            <h2
+              class="mb-4 font-header text-xl font-bold text-theme-text sm:text-2xl"
+            >
+              {section.heading}
+            </h2>
+          {/if}
+          {#if section.intro}
+            <p class="mb-4 leading-relaxed text-theme-muted">
+              {@render inline(section.intro)}
+            </p>
+          {/if}
+          <svelte:element
+            this={section.ordered ? "ol" : "ul"}
+            class={section.ordered
+              ? "list-decimal space-y-4 pl-5 marker:font-mono marker:text-sm marker:text-theme-primary sm:space-y-6"
+              : "flex list-none flex-col gap-4 sm:gap-6"}
+          >
+            {#each section.items as item}
+              <li
+                class={section.ordered
+                  ? "pl-2"
+                  : "border-l border-theme-border pl-5"}
+              >
+                {#if item.term}
+                  <strong class="block font-header text-base text-theme-text"
+                    >{item.term}</strong
+                  >
+                {/if}
+                <span class="leading-relaxed text-theme-muted"
+                  >{@render inline(item.text)}</span
+                >
+              </li>
+            {/each}
+          </svelte:element>
+          {#if section.outro}
+            <p class="mt-4 leading-relaxed text-theme-muted">
+              {@render inline(section.outro)}
+            </p>
+          {/if}
+        {:else if section.kind === "example"}
+          <div
+            class="border border-theme-border bg-theme-surface p-6 sm:p-8"
+            style:background-image="var(--bg-texture-overlay)"
+          >
+            <p
+              class="mb-2 font-mono text-xs uppercase tracking-[0.18em] text-theme-primary"
+            >
+              Example
+            </p>
+            <h2 class="mb-4 font-header text-xl font-bold text-theme-text">
+              {section.heading}
+            </h2>
+            {#each section.paragraphs as paragraph}
+              <p class="mb-4 leading-relaxed text-theme-muted">
+                {@render inline(paragraph)}
+              </p>
+            {/each}
+            {#if section.items}
+              <dl class="flex flex-col gap-4">
+                {#each section.items as item}
+                  <div>
+                    {#if item.term}
+                      <dt class="font-header text-base text-theme-text">
+                        {item.term}
+                      </dt>
+                    {/if}
+                    <dd class="leading-relaxed text-theme-muted">
+                      {@render inline(item.text)}
+                    </dd>
+                  </div>
+                {/each}
+              </dl>
+            {/if}
+          </div>
+        {:else if section.kind === "table"}
+          {#if section.heading}
+            <h2
+              class="mb-4 font-header text-xl font-bold text-theme-text sm:text-2xl"
+            >
+              {section.heading}
+            </h2>
+          {/if}
+          <!-- Wide tables break out of the reading column on large screens.
+               Below md every row stacks into a labelled block, so phones never
+               scroll sideways; the explicit roles keep table semantics when
+               the cells are displayed as blocks. -->
+          {@const tc = tableClasses(section.headers.length)}
+          <div
+            class="{tc.wrapper} {section.headers.length > 2
+              ? 'lg:relative lg:left-1/2 lg:w-[min(72rem,calc(100vw-4rem))] lg:-translate-x-1/2'
+              : ''}"
+            data-testid="answer-table"
+          >
+            <!-- svelte-ignore a11y_no_redundant_roles -->
+            <table role="table" class={tc.table}>
+              <!-- svelte-ignore a11y_no_redundant_roles -->
+              <thead role="rowgroup" class={tc.thead}>
+                <!-- svelte-ignore a11y_no_redundant_roles -->
+                <tr role="row">
+                  {#each section.headers as heading}
+                    <th
+                      role="columnheader"
+                      scope="col"
+                      class="border-b border-theme-border px-3 py-2 align-bottom font-header font-bold"
+                    >
+                      {heading}
+                    </th>
+                  {/each}
+                </tr>
+              </thead>
+              <!-- svelte-ignore a11y_no_redundant_roles -->
+              <tbody role="rowgroup" class={tc.tbody}>
+                {#each section.rows as row}
+                  <!-- svelte-ignore a11y_no_redundant_roles -->
+                  <tr role="row" class={tc.row}>
+                    {#each row as cell, cellIndex}
+                      {#if cellIndex === 0}
+                        <th role="rowheader" scope="row" class={tc.rowHeader}>
+                          {@render inline(cell)}
+                        </th>
+                      {:else}
+                        <td
+                          role="cell"
+                          data-label={section.headers[cellIndex]}
+                          class={tc.cell}
+                        >
+                          {@render inline(cell)}
+                        </td>
+                      {/if}
+                    {/each}
+                  </tr>
+                {/each}
+              </tbody>
+            </table>
+          </div>
+        {:else if section.kind === "checklist"}
+          <h2
+            class="mb-4 font-header text-xl font-bold text-theme-text sm:text-2xl"
+          >
+            {section.heading}
+          </h2>
+          {#if section.intro}
+            <p class="mb-4 leading-relaxed text-theme-muted">
+              {@render inline(section.intro)}
+            </p>
+          {/if}
+          <ul class="flex list-none flex-col gap-2">
+            {#each section.items as item}
+              <li
+                class="flex items-start gap-3 leading-relaxed text-theme-muted"
+              >
+                <span
+                  class="icon-[lucide--check] mt-1 h-4 w-4 shrink-0 text-theme-primary"
+                  aria-hidden="true"
+                ></span>
+                <span>{@render inline(item)}</span>
+              </li>
+            {/each}
+          </ul>
+        {/if}
+      </section>
+    {/each}
+
+    <div class="mb-12">
+      <UsefulnessFeedback
+        voteKey={answer.slug}
+        slug={answer.slug}
+        onVote={(value, reason) =>
+          trackAnswerUsefulVote({
+            slug: answer.slug,
+            intent: answer.discovery?.id,
+            value,
+            reason,
+          })}
+      />
+    </div>
+
+    {#if answer.systemsThatSupportThis && answer.systemsThatSupportThis.length > 0}
+      <section class="mb-12 border-t border-theme-border pt-8">
+        <h2
+          class="mb-4 font-header text-xl font-bold text-theme-text sm:text-2xl"
+        >
+          Systems built for this
+        </h2>
+        <ul class="flex list-none flex-col gap-4">
+          {#each answer.systemsThatSupportThis as ref}
+            <li class="border-l border-theme-border pl-5">
+              <a
+                href={ref.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="group inline-flex items-center gap-1.5 font-header text-base font-bold text-theme-text transition-colors hover:text-theme-primary"
+                use:trackDiscoveryClick={{
+                  sourceKind: "answer",
+                  sourceId: answer.slug,
+                  placement: "system_reference",
+                  ...classifyDiscoveryTarget(ref.href),
+                }}
+              >
+                {ref.system}
+                <span
+                  class="icon-[lucide--external-link] h-3.5 w-3.5 shrink-0 text-theme-muted transition-colors group-hover:text-theme-primary"
+                  aria-hidden="true"
+                ></span>
+              </a>
+              <p class="leading-relaxed text-theme-muted">{ref.rationale}</p>
+            </li>
+          {/each}
+        </ul>
+      </section>
+    {/if}
+
+    {#if answer.codexConnection}
+      <section class="mb-12 border-t border-theme-border pt-8">
+        <h2
+          class="mb-4 font-header text-xl font-bold text-theme-text sm:text-2xl"
+        >
+          {answer.codexConnection.heading}
+        </h2>
+        {#each answer.codexConnection.paragraphs as paragraph}
+          <p class="mb-4 leading-relaxed text-theme-muted">{paragraph}</p>
+        {/each}
+        <a
+          href="{cleanBase}{answer.codexConnection.href}"
+          class="inline-flex min-h-[24px] items-center gap-2 bg-theme-primary px-6 py-3 font-header text-sm font-bold text-theme-bg transition-colors hover:bg-theme-primary/90 active:brightness-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-accent"
+          use:trackDiscoveryClick={{
+            sourceKind: "answer",
+            sourceId: answer.slug,
+            placement: "codex_connection",
+            ...classifyDiscoveryTarget(answer.codexConnection.href),
+          }}
+        >
+          {answer.codexConnection.linkText}
+          <span class="icon-[lucide--arrow-right] h-4 w-4" aria-hidden="true"
+          ></span>
+        </a>
+      </section>
+    {/if}
+
+    {#if hasFurtherReading}
+      <section class="border-t border-theme-border pt-8">
+        <h2 class="mb-6 font-header text-xl font-bold text-theme-text">
+          Related
+        </h2>
+
+        {#if answer.relatedTopics.length > 0}
+          <h3
+            class="mb-3 font-mono text-xs uppercase tracking-[0.18em] text-theme-muted"
+          >
+            Topic Hubs
+          </h3>
+          <ul class="mb-8 grid list-none gap-4 sm:grid-cols-2">
+            {#each answer.relatedTopics as topic (topic.href)}
+              <li>
+                <a
+                  href="{cleanBase}{topic.href}"
+                  class="group block h-full border border-theme-border bg-theme-surface p-4 transition-colors hover:border-theme-primary/50"
+                  style:background-image="var(--bg-texture-overlay)"
+                  use:trackDiscoveryClick={{
+                    sourceKind: "answer",
+                    sourceId: answer.slug,
+                    placement: "related_topic",
+                    ...classifyDiscoveryTarget(topic.href),
+                  }}
+                >
+                  <span
+                    class="block font-header text-sm font-bold text-theme-text transition-colors group-hover:text-theme-primary"
+                    >{topic.title}</span
+                  >
+                  <span
+                    class="mt-1 block text-base leading-relaxed text-theme-muted"
+                    >{topic.description}</span
+                  >
+                </a>
+              </li>
+            {/each}
+          </ul>
+        {/if}
+
+        {#if answer.relatedTools.length > 0}
+          <h3
+            class="mb-3 font-mono text-xs uppercase tracking-[0.18em] text-theme-muted"
+          >
+            Tools
+          </h3>
+          <ul class="mb-8 grid list-none gap-4 sm:grid-cols-2">
+            {#each answer.relatedTools as tool (tool.href)}
+              <li>
+                <a
+                  href="{cleanBase}{tool.href}"
+                  class="group block h-full border border-theme-border bg-theme-surface p-4 transition-colors hover:border-theme-primary/50"
+                  style:background-image="var(--bg-texture-overlay)"
+                  use:trackDiscoveryClick={{
+                    sourceKind: "answer",
+                    sourceId: answer.slug,
+                    placement: "related_tool",
+                    ...classifyDiscoveryTarget(tool.href),
+                  }}
+                >
+                  <span
+                    class="block font-header text-sm font-bold text-theme-text transition-colors group-hover:text-theme-primary"
+                    >{tool.title}</span
+                  >
+                  <span
+                    class="mt-1 block text-base leading-relaxed text-theme-muted"
+                    >{tool.description}</span
+                  >
+                </a>
+              </li>
+            {/each}
+          </ul>
+        {/if}
+
+        {#if answer.relatedForPages.length > 0}
+          <h3
+            class="mb-3 font-mono text-xs uppercase tracking-[0.18em] text-theme-muted"
+          >
+            Guides
+          </h3>
+          <ul class="mb-8 grid list-none gap-4 sm:grid-cols-2">
+            {#each answer.relatedForPages as guide (guide.href)}
+              <li>
+                <a
+                  href="{cleanBase}{guide.href}"
+                  class="group block h-full border border-theme-border bg-theme-surface p-4 transition-colors hover:border-theme-primary/50"
+                  style:background-image="var(--bg-texture-overlay)"
+                  use:trackDiscoveryClick={{
+                    sourceKind: "answer",
+                    sourceId: answer.slug,
+                    placement: "related_guide",
+                    ...classifyDiscoveryTarget(guide.href),
+                  }}
+                >
+                  <span
+                    class="block font-header text-sm font-bold text-theme-text transition-colors group-hover:text-theme-primary"
+                    >{guide.title}</span
+                  >
+                  <span
+                    class="mt-1 block text-base leading-relaxed text-theme-muted"
+                    >{guide.description}</span
+                  >
+                </a>
+              </li>
+            {/each}
+          </ul>
+        {/if}
+
+        {#if related.length > 0}
+          <h3
+            class="mb-3 font-mono text-xs uppercase tracking-[0.18em] text-theme-muted"
+          >
+            Other answers
+          </h3>
+          <ul class="flex list-none flex-col gap-3">
+            {#each related as other (other.slug)}
+              <li>
+                <a
+                  href="{cleanBase}/answers/{other.slug}"
+                  class="group flex items-start gap-3 text-theme-text transition-colors hover:text-theme-primary"
+                  use:trackDiscoveryClick={{
+                    sourceKind: "answer",
+                    sourceId: answer.slug,
+                    targetKind: "answer",
+                    targetId: other.slug,
+                    placement: "related_answer",
+                  }}
+                >
+                  <span
+                    class="icon-[lucide--corner-down-right] mt-1 h-4 w-4 shrink-0 text-theme-primary"
+                    aria-hidden="true"
+                  ></span>
+                  <span class="font-header text-sm font-bold"
+                    >{other.question}</span
+                  >
+                </a>
+              </li>
+            {/each}
+          </ul>
+        {/if}
+      </section>
+    {/if}
+  </article>
+</div>

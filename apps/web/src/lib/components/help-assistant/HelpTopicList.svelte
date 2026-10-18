@@ -1,0 +1,25 @@
+<script lang="ts">
+  import type { HelpTopic } from "help-engine";
+
+  let {
+    topics,
+    onOpenArticle,
+  }: {
+    topics: HelpTopic[];
+    onOpenArticle: (helpId: string) => void;
+  } = $props();
+</script>
+
+<ul class="flex flex-col gap-1">
+  {#each topics as topic (topic.helpId)}
+    <li>
+      <button
+        type="button"
+        onclick={() => onOpenArticle(topic.helpId)}
+        class="touch-target text-left text-body-ui text-chrome-accent underline hover:opacity-80 focus-visible:outline-2 focus-visible:outline-chrome-accent"
+      >
+        {topic.title}
+      </button>
+    </li>
+  {/each}
+</ul>

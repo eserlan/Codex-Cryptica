@@ -4,6 +4,8 @@ import { render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import Page from "./+page.svelte";
 import type { ThemeSlug } from "./+page";
+import { HUB_THEME_SLUGS } from "$lib/content/hub-themes";
+import { getLandingPagesForHub } from "$lib/content/for/registry";
 
 vi.mock("$app/environment", () => ({
   browser: true,
@@ -37,9 +39,10 @@ describe("Generator Theme Hub Page", () => {
       },
     });
 
-    expect(
-      screen.getByRole("link", { name: /nomad clan generator/i }),
-    ).toBeTruthy();
+    const link = screen.getByRole("link", {
+      name: /nomad clan generator/i,
+    });
+    expect(link.querySelector("span.font-header")).toBeTruthy();
   });
 
   it("shows the Pirate ship generator on the Pirate hub", () => {
@@ -112,12 +115,31 @@ describe("Generator Theme Hub Page", () => {
     "cosmic-horror",
     "space-opera-resistance",
     "optimistic-exploration-sci-fi",
+    "space-western",
   ])("offers the alien race generator on the %s hub", (theme) => {
     render(Page, { props: { data: { theme: theme as ThemeSlug } } });
 
     expect(
       screen.getByRole("link", { name: /alien race generator/i }),
     ).toBeTruthy();
+  });
+
+  it("renders a space-western hub with ship and frontier outpost generators", () => {
+    render(Page, {
+      props: {
+        data: {
+          theme: "space-western",
+        },
+      },
+    });
+
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toContain(
+      "Space Western RPG Generators",
+    );
+    expect(
+      screen.getByRole("link", { name: /frontier outpost generator/i }),
+    ).toBeTruthy();
+    expect(screen.getByRole("link", { name: /ship generator/i })).toBeTruthy();
   });
 
   it.each(["fantasy", "pirate", "western", "vampire", "steampunk"])(
@@ -145,9 +167,80 @@ describe("Generator Theme Hub Page", () => {
     ).toBe("/for/gothic-horror");
   });
 
-  it("omits the guides section on a hub with no landing pages", () => {
+  // Picked from the real registry rather than named, so the test does not break
+  // each time the hub it happened to name gets a landing page (it broke when
+  // steampunk got one). If every hub ever has a guide, there is nothing left to
+  // check here and the test skips.
+  const hubWithoutLandingPages = HUB_THEME_SLUGS.find(
+    (hub) => getLandingPagesForHub(hub).length === 0,
+  );
+
+  it.skipIf(!hubWithoutLandingPages)(
+    "omits the guides section on a hub with no landing pages",
+    () => {
+      render(Page, { props: { data: { theme: hubWithoutLandingPages! } } });
+
+      expect(
+        screen.queryByText(/Campaign guides for these worlds/i),
+      ).toBeNull();
+    },
+  );
+
+  it("shows the guides section on a hub that has landing pages", () => {
     render(Page, { props: { data: { theme: "steampunk" } } });
 
-    expect(screen.queryByText(/Campaign guides for these worlds/i)).toBeNull();
+    expect(screen.getByText(/Campaign guides for these worlds/i)).toBeTruthy();
+  });
+
+  it("renders a superhero hub with origin, villain scheme, and comic book event generators", () => {
+    render(Page, {
+      props: {
+        data: {
+          theme: "superhero",
+        },
+      },
+    });
+
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toContain(
+      "Superhero RPG Generators",
+    );
+    expect(
+      screen.getByRole("link", { name: /superhero origin generator/i }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("link", { name: /villain scheme generator/i }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("link", { name: /comic book event generator/i }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("link", { name: /daily gazette generator/i }),
+    ).toBeTruthy();
+    expect(
+      screen.queryByRole("link", { name: /vampire clan generator/i }),
+    ).toBeNull();
+  });
+
+  it("uses the themed card URLs in the hub ItemList JSON-LD", () => {
+    render(Page, { props: { data: { theme: "superhero" } } });
+
+    const itemList = Array.from(
+      document.head.querySelectorAll('script[type="application/ld+json"]'),
+    )
+      .map((script) => JSON.parse(script.textContent ?? "{}"))
+      .find((json) => json["@type"] === "ItemList");
+
+    expect(itemList?.itemListElement).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          name: "Superhero Origin Generator",
+          url: "https://codexcryptica.com/generators/superhero/origin-generator",
+        }),
+        expect.objectContaining({
+          name: "Surprise Me",
+          url: "https://codexcryptica.com/generators/random",
+        }),
+      ]),
+    );
   });
 });

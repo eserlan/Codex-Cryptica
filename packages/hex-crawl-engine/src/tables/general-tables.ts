@@ -1,0 +1,55 @@
+import type { TableSet } from "./types";
+
+/** Used for custom terrain and for hexes with no terrain (FR-030). */
+export const GENERAL_TABLES: TableSet = {
+  landmark: [
+    "Standing stones | Nine weathered stones ring a patch of bare earth.",
+    "Ruined watchtower | Its upper floor has fallen in, but the stair still climbs.",
+    "Old well | The rope is rotten, and the water below is cold and still.",
+    "Lone oak | A huge tree, split by lightning, with carvings in its bark.",
+    "Shrine cairn | Travellers have left small offerings on the stacked stones.",
+    "Broken bridge | Half a span of stone crosses a dry channel.",
+    "Abandoned camp | Hearth stones are cold, but the tent pegs are still driven in.",
+    "Hollow hill | A dark door is set into the slope, its lintel cut with marks.",
+  ],
+  encounter: [
+    "Lost pedlar | A pedlar sells odd trinkets and asks after a missing cart.",
+    "Hunting party | Riders track a stag and ask whether you have seen it.",
+    "Wandering hermit | An old hermit offers a warning about the next hex.",
+    "Stray animals | A herd of loose pack beasts grazes without a keeper.",
+    "Fleeing traveller | A frightened traveller runs past, looking back over their shoulder.",
+    "Toll keeper | A guard demands payment to pass a marked stone.",
+    "Storm front | Clouds roll in quickly, and the path turns to mud.",
+    "Strange sounds | Distant singing drifts across the ground and then stops.",
+  ],
+  hazard: [
+    "Unstable ground gives way under heavy loads.",
+    "Biting insects rise in thick clouds at dusk.",
+    "A thin ice crust hides deep water.",
+    "Old traps are still set along the game trails.",
+    "Smoke from a distant fire hangs low and stings the eyes.",
+    "Loose rock falls from the cliffs in the afternoon heat.",
+    "The river runs fast after rain and is hard to cross.",
+    "Wild dogs guard the ground near the carcasses.",
+  ],
+  secret: [
+    "A cache of coins is buried beneath the largest stone.",
+    "The hermit is not who they claim to be.",
+    "A map showing a second route is hidden inside a hollow tree.",
+    "The toll keeper takes bribes to look away from smugglers.",
+    "A spring beneath the rocks runs clean even in drought.",
+    "Someone has been digging here at night.",
+    "A letter sealed with an unknown mark is tucked into a crevice.",
+    "The ruin was a shrine, and its gods still answer quietly.",
+  ],
+  atmosphere: [
+    "The air is still and smells of wet earth.",
+    "Birdsong stops abruptly, then starts again.",
+    "A cold wind carries the sound of distant bells.",
+    "Long shadows make the ground look uneven.",
+    "The light turns a pale gold just before dusk.",
+    "Dust hangs in the air, though nothing has passed.",
+    "A low mist clings to the hollows in the morning.",
+    "Everything feels watched, though nothing moves.",
+  ],
+};

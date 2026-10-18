@@ -84,21 +84,33 @@
     }
   }
 
+  const ENTITY_ROUTE = /\/vault\/[^/]+\/entity\/[^/]+$/;
+
+  function trackOriginPath(fromUrl: URL | null | undefined) {
+    if (fromUrl && !ENTITY_ROUTE.test(fromUrl.pathname)) {
+      modalUIStore.lastAppPath = `${fromUrl.pathname}${fromUrl.search || ""}`;
+    }
+  }
+
+  function handleHistoryPop(delta: number, cancel: () => void) {
+    if (delta === 0) return;
+
+    const newId =
+      delta < 0
+        ? navigationHistoryStore.back(isValidEntity)
+        : navigationHistoryStore.forward(isValidEntity);
+
+    if (newId) {
+      cancel();
+      applyNewEntity(newId);
+    }
+  }
+
   beforeNavigate((navigation) => {
+    trackOriginPath(navigation.from?.url);
+
     if (navigation.type === "popstate" && navigation.delta !== undefined) {
-      if (navigation.delta < 0) {
-        const newId = navigationHistoryStore.back(isValidEntity);
-        if (newId) {
-          navigation.cancel();
-          applyNewEntity(newId);
-        }
-      } else if (navigation.delta > 0) {
-        const newId = navigationHistoryStore.forward(isValidEntity);
-        if (newId) {
-          navigation.cancel();
-          applyNewEntity(newId);
-        }
-      }
+      handleHistoryPop(navigation.delta, () => navigation.cancel());
     }
   });
 </script>

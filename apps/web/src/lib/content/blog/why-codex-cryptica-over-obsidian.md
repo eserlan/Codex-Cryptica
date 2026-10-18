@@ -13,6 +13,8 @@ keywords:
     "World Design",
   ]
 publishedAt: 2026-04-05T12:00:00Z
+image: "https://assets.codexcryptica.com/images/blog/cc-over-obsidian/cc-over-obsidian-hero.jpg"
+imageAlt: "Why Codex Cryptica Takes a Different Approach Than Obsidian"
 ---
 
 ![Why Codex Cryptica](https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/images/blog/cc-over-obsidian/cc-over-obsidian-hero.jpg)
@@ -49,7 +51,7 @@ In Codex Cryptica, the graph is the workspace. It is where you explore, navigate
 
 In a standard note-taking tool, relationships are usually implied through links in text. That works, but it also means the structure of the world is often buried inside prose.
 
-Codex Cryptica treats entities and connections as first-class structure. The point is not just to link information, but to make the world itself easier to navigate.
+Codex Cryptica treats entities and connections as first-class structure, so the point isn't to link information; it's to make the world itself easier to navigate.
 
 ## 5. Growth Should Increase Discovery
 

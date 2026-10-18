@@ -67,6 +67,24 @@ describe("EntityTable", () => {
     expect(link?.getAttribute("href")).toBe("/vault/v1/entity/e1");
   });
 
+  it("colors each row's left border by its entity type, so types stay scannable across the table (#2329)", () => {
+    render(EntityTable, {
+      props: {
+        entities: rows,
+        vaultId: "v1",
+        sort,
+        connectionCounts,
+        onSort: vi.fn(),
+      },
+    });
+
+    const renderedRows = screen.getAllByTestId("entity-table-row");
+    // character -> #60a5fa, location -> #4ade80 (DEFAULT_CATEGORIES).
+    expect(renderedRows[0].style.borderLeftColor).toBe("rgb(96, 165, 250)");
+    expect(renderedRows[1].style.borderLeftColor).toBe("rgb(74, 222, 128)");
+    expect(renderedRows[0].style.borderLeftWidth).toBe("3px");
+  });
+
   it("renders combined inbound and outbound connection counts, including zero", () => {
     render(EntityTable, {
       props: {
@@ -110,7 +128,7 @@ describe("EntityTable", () => {
         },
       });
 
-      await fireEvent.click(screen.getByText("hero"));
+      await fireEvent.click(screen.getByText(/hero/i));
       expect(onFilterLabel).toHaveBeenCalledWith("hero");
 
       await fireEvent.click(
@@ -126,7 +144,7 @@ describe("EntityTable", () => {
         props: { entities: rows, vaultId: "v1", sort, onSort: vi.fn() },
       });
 
-      expect(screen.getByText("hero").closest("button")).toBeNull();
+      expect(screen.getByText(/hero/i).closest("button")).toBeNull();
     });
   });
 
@@ -164,6 +182,51 @@ describe("EntityTable", () => {
       expect(openZenMode).toHaveBeenCalledWith("e2");
       expect(vault.selectedEntityId).toBe("e2");
       expect(goto).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("host mode zen modal in-place (#3204)", () => {
+    it("opens zen mode in place on row double-click and title click in host mode", async () => {
+      sessionModeStore.isGuestMode = false;
+      const openZenMode = vi
+        .spyOn(modalUIStore, "openZenMode")
+        .mockImplementation(() => {});
+      render(EntityTable, {
+        props: { entities: rows, vaultId: "v1", sort, onSort: vi.fn() },
+      });
+
+      // Double-click row background opens Zen Mode
+      await fireEvent.dblClick(screen.getAllByTestId("entity-table-row")[0]);
+      expect(openZenMode).toHaveBeenCalledWith("e1");
+      expect(vault.selectedEntityId).toBe("e1");
+
+      // Clicking title link opens Zen Mode without full-page navigation
+      await fireEvent.click(screen.getByText("Brindlewood"));
+      expect(openZenMode).toHaveBeenCalledWith("e2");
+      expect(vault.selectedEntityId).toBe("e2");
+      expect(goto).not.toHaveBeenCalled();
+    });
+
+    it("preserves default navigation when title link is clicked with modifier keys", async () => {
+      sessionModeStore.isGuestMode = false;
+      const openZenMode = vi
+        .spyOn(modalUIStore, "openZenMode")
+        .mockImplementation(() => {});
+      render(EntityTable, {
+        props: { entities: rows, vaultId: "v1", sort, onSort: vi.fn() },
+      });
+
+      // Ctrl+click or Cmd+click for open in new tab
+      const link = screen.getByText("Aldric");
+      const event = new MouseEvent("click", {
+        bubbles: true,
+        cancelable: true,
+        ctrlKey: true,
+      });
+      link.dispatchEvent(event);
+
+      expect(openZenMode).not.toHaveBeenCalled();
+      expect(event.defaultPrevented).toBe(false);
     });
   });
 
@@ -362,6 +425,109 @@ describe("EntityTable", () => {
     expect(onToggleRow).toHaveBeenCalledWith("e1", {
       shift: false,
       ctrl: true,
+    });
+  });
+
+  describe("missing-data mode & column filtering", () => {
+    it("highlights missing summary and connections when showIncompleteOnly is true", () => {
+      render(EntityTable, {
+        props: {
+          entities: rows,
+          vaultId: "v1",
+          sort,
+          connectionCounts,
+          showIncompleteOnly: true,
+          onSort: vi.fn(),
+        },
+      });
+
+      // e2 is missing summary, labels, and connections
+      expect(screen.getByText("Missing summary")).toBeTruthy();
+      expect(screen.getByText("No labels")).toBeTruthy();
+      expect(screen.getByText("0 connections")).toBeTruthy();
+    });
+
+    it("opens column filter menu on clicking filter trigger", async () => {
+      const onUpdateColumnFilters = vi.fn();
+      render(EntityTable, {
+        props: {
+          entities: rows,
+          vaultId: "v1",
+          sort,
+          connectionCounts,
+          onSort: vi.fn(),
+          onUpdateColumnFilters,
+        },
+      });
+
+      const filterBtn = screen.getByTestId("column-filter-btn-connections");
+      await fireEvent.click(filterBtn);
+
+      expect(screen.getByTestId("column-filter-menu-connections")).toBeTruthy();
+      expect(screen.getByText("Zero connections (0)")).toBeTruthy();
+    });
+
+    it("opens title column filter menu and filters by missing image / portrait", async () => {
+      const onUpdateColumnFilters = vi.fn();
+      render(EntityTable, {
+        props: {
+          entities: rows,
+          vaultId: "v1",
+          columnFilters: { imageMode: "missing_image" },
+          sort,
+          connectionCounts,
+          onSort: vi.fn(),
+          onUpdateColumnFilters,
+        },
+      });
+
+      const titleFilterBtn = screen.getByTestId("column-filter-btn-title");
+      expect(titleFilterBtn).toBeTruthy();
+      await fireEvent.click(titleFilterBtn);
+
+      expect(screen.getByTestId("column-filter-menu-title")).toBeTruthy();
+      expect(
+        screen
+          .getByRole("menuitemradio", { name: "Missing image / portrait" })
+          .getAttribute("aria-checked"),
+      ).toBe("true");
+      expect(
+        screen
+          .getByRole("menuitemradio", { name: "Has image / portrait" })
+          .getAttribute("aria-checked"),
+      ).toBe("false");
+
+      await fireEvent.click(
+        screen.getByRole("menuitemradio", { name: "Missing image / portrait" }),
+      );
+      expect(onUpdateColumnFilters).toHaveBeenCalledWith(
+        expect.objectContaining({
+          imageMode: "missing_image",
+        }),
+      );
+    });
+
+    it("fires onToggleRow for selections made while delete was pending", async () => {
+      let toggledId = "";
+      render(EntityTable, {
+        props: {
+          entities: rows,
+          vaultId: "v1",
+          sort: { key: "title", direction: "asc" },
+          connectionCounts,
+          selectedIds: new Set(["e1"]),
+          allSelected: false,
+          someSelected: true,
+          onSort: vi.fn(),
+          onToggleRow: (id) => {
+            toggledId = id;
+          },
+        },
+      });
+
+      const checkboxes = screen.getAllByTestId("entity-table-row-select");
+      await fireEvent.click(checkboxes[1]);
+      expect(toggledId).toBe("e2");
     });
   });
 });

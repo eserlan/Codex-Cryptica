@@ -17,7 +17,8 @@ vi.mock("mammoth", () => {
 });
 
 describe("DocxParser", () => {
-  const parser = new DocxParser();
+  const mockIdGenerator = { uuid: () => "mock-uuid-2" };
+  const parser = new DocxParser(mockIdGenerator);
 
   it("accepts docx files", () => {
     const file = new File([""], "test.docx", {
@@ -53,7 +54,7 @@ describe("DocxParser", () => {
         read: () => Promise.resolve(Buffer.from("fake-image-data")),
       };
       const handlerResult = await capturedHandler(mockElement);
-      expect(handlerResult.src).toContain("image-");
+      expect(handlerResult.src).toContain("image-mock-uuid-2");
       expect(result.assets).toBeDefined();
     }
   });

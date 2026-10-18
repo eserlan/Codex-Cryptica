@@ -34,6 +34,7 @@
 All items pass. Spec is ready for `/speckit-clarify` or `/speckit-plan`.
 
 Key scope decisions encoded in Assumptions:
+
 - Fantasy calendar systems deferred to future version
 - Multi-day event spanning deferred to v1 follow-on
 - Year/era overview view deferred; v1 = month + agenda

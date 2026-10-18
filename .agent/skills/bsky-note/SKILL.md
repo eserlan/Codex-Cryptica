@@ -39,7 +39,24 @@ The posting script refuses to post without `--image` and `--alt` — there is no
 - Crop aggressively around the thing being demonstrated — the featured capability should be immediately legible on a phone screen.
 - Avoid large empty areas that shrink the actual UI in-feed.
 - Include enough surrounding UI for context, but no more than needed.
-- If the source image is over Bluesky's 1MB limit, compress it first (e.g. `magick <in> -resize 1600x1600\> -quality 85 <out>.jpg`) — don't skip the image because of size.
+- If the source image is over Bluesky's 1MB limit, reduce dimensions or quality using the Cloudflare URL options below for existing R2 images. For local images, use compression (e.g. `magick <in> -resize 1600x1600\> -quality 85 <out>.jpg`).
+
+### Crop existing R2 images via Cloudflare URLs
+
+For an existing `assets.codexcryptica.com` image, prefer Cloudflare image transformations for cropping, resizing, and compression. Pass the transformed URL directly to the posting script's `--image` argument; it fetches the result and uploads it as an inline Bluesky image. This avoids downloading, cropping locally, and uploading a duplicate R2 object.
+
+For example, a centred square crop of the Nkiru artwork:
+
+```text
+https://assets.codexcryptica.com/cdn-cgi/image/width=768,height=768,fit=cover,gravity=center,format=jpeg,quality=90/announcements/character-nkiru-okafor.jpg
+```
+
+- Options go in the `/cdn-cgi/image/<options>/<original-key>` path, not ordinary query parameters. R2 stores the original; Cloudflare's image transformation layer produces the variant.
+- Equal `width` and `height` make a square. `fit=cover` fills those dimensions and crops excess; `gravity=center` centres the crop. Adjust dimensions and framing to the requested composition.
+- Use `format=jpeg` for predictable Bluesky compatibility instead of `format=auto`, which can negotiate a format the posting script does not support. Lower `quality` or dimensions if needed to stay below the script's 1,000,000-byte limit.
+- Verify the URL resolves, inspect the returned image and dimensions, and run the posting script with `--dry-run` to check size and MIME type before publishing. Record the transformed URL in the post log.
+
+See [Cloudflare image transformation options](https://developers.cloudflare.com/images/optimization/features/). Use local processing when URL transformations cannot produce the requested edit or are unavailable.
 
 Video and animated GIFs aren't supported by the posting script yet (Bluesky's video pipeline is a separate, heavier integration) — stick to png/jpg/webp.
 

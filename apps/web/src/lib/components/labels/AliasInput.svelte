@@ -45,7 +45,7 @@
 >
   {#each aliases as alias, i}
     <div
-      class="flex items-center gap-1 px-2 py-0.5 rounded bg-theme-primary/10 border border-theme-primary/20 text-[10px] font-bold text-theme-primary uppercase tracking-wider animate-in fade-in zoom-in duration-200"
+      class="flex items-center gap-1 px-2 py-0.5 rounded bg-theme-primary/10 border border-theme-primary/20 text-micro font-bold text-theme-primary uppercase tracking-wider animate-in fade-in zoom-in duration-200"
     >
       <span>{alias}</span>
       <button

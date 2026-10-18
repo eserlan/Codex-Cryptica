@@ -59,6 +59,40 @@ describe("VaultRepository", () => {
     expect(onProgress).toHaveBeenCalled();
   });
 
+  it("should exclude files under reserved internal directories (#2735)", async () => {
+    const mockHandle = {} as FileSystemDirectoryHandle;
+    const mockFiles = [
+      {
+        path: ["test1.md"],
+        handle: { getFile: vi.fn().mockResolvedValue({ lastModified: 100 }) },
+      },
+      {
+        path: ["_tables", "barrowmaze-random-rumour-table.md"],
+        handle: { getFile: vi.fn().mockResolvedValue({ lastModified: 100 }) },
+      },
+      {
+        path: ["_decks", "some-deck.md"],
+        handle: { getFile: vi.fn().mockResolvedValue({ lastModified: 100 }) },
+      },
+      {
+        path: ["files", "uuid-upload.md"],
+        handle: { getFile: vi.fn().mockResolvedValue({ lastModified: 100 }) },
+      },
+    ];
+
+    mockAdapter.walkDirectory.mockResolvedValue(mockFiles as any);
+    mockAdapter.readFileAsText.mockResolvedValue("mock content");
+    mockAdapter.parseMarkdown.mockReturnValue({
+      id: "e1",
+      title: "Entity 1",
+    } as any);
+
+    const result = await repository.loadFiles("vault-1", mockHandle);
+
+    expect(Object.keys(result)).toEqual(["e1"]);
+    expect(mockAdapter.readFileAsText).toHaveBeenCalledTimes(1);
+  });
+
   it("should use cached entities if lastModified matches", async () => {
     const mockHandle = {} as FileSystemDirectoryHandle;
     const mockFiles = [
@@ -78,6 +112,77 @@ describe("VaultRepository", () => {
 
     expect(mockAdapter.readFileAsText).not.toHaveBeenCalled();
     expect(repository.entities["e1"].title).toBe("Cached Entity");
+  });
+
+  describe("cache hits that match what is already in memory", () => {
+    const file = (name: string, lastModified: number) => ({
+      path: [name],
+      handle: { getFile: vi.fn().mockResolvedValue({ lastModified }) },
+    });
+
+    it("leaves the entity map untouched so nothing downstream re-renders", async () => {
+      const handle = {} as FileSystemDirectoryHandle;
+      mockAdapter.walkDirectory.mockResolvedValue([file("a.md", 100)] as any);
+      mockAdapter.getCachedEntity.mockResolvedValue({
+        lastModified: 100,
+        entity: { id: "e1", type: "note", title: "A", updatedAt: 5 } as any,
+      });
+
+      await repository.loadFiles("vault-1", handle);
+      const seeded = repository.entities;
+      repository.entities["e1"].content = "body loaded later";
+
+      const onProgress = vi.fn();
+      await repository.loadFiles("vault-1", handle, onProgress);
+
+      expect(repository.entities).toBe(seeded);
+      expect(repository.entities["e1"].content).toBe("body loaded later");
+      // Callers are still told about the chunk.
+      expect(onProgress).toHaveBeenCalledTimes(1);
+    });
+
+    it("still applies a cache hit whose entity differs from memory (negative)", async () => {
+      const handle = {} as FileSystemDirectoryHandle;
+      mockAdapter.walkDirectory.mockResolvedValue([file("a.md", 100)] as any);
+      mockAdapter.getCachedEntity.mockResolvedValue({
+        lastModified: 100,
+        entity: { id: "e1", type: "note", title: "A", updatedAt: 5 } as any,
+      });
+      await repository.loadFiles("vault-1", handle);
+
+      mockAdapter.getCachedEntity.mockResolvedValue({
+        lastModified: 100,
+        entity: { id: "e1", type: "note", title: "B", updatedAt: 9 } as any,
+      });
+      await repository.loadFiles("vault-1", handle);
+
+      expect(repository.entities["e1"].title).toBe("B");
+    });
+  });
+
+  it("drops the cache row of an entity that is gone from disk, and survives a cache failure", async () => {
+    const handle = {} as FileSystemDirectoryHandle;
+    const removeCachedEntity = vi.fn().mockResolvedValue(undefined);
+    (mockAdapter as any).removeCachedEntity = removeCachedEntity;
+    repository.entities = {
+      gone: { id: "gone", type: "note", title: "Gone", _path: ["gone.md"] },
+    } as any;
+    mockAdapter.walkDirectory.mockResolvedValue([]);
+
+    await repository.loadFiles("vault-1", handle);
+
+    expect(repository.entities["gone"]).toBeUndefined();
+    expect(removeCachedEntity).toHaveBeenCalledWith("vault-1", "gone.md");
+
+    // A failing cache must not fail the load.
+    removeCachedEntity.mockRejectedValue(new Error("idb down"));
+    repository.entities = {
+      gone2: { id: "gone2", type: "note", title: "Gone", _path: ["g2.md"] },
+    } as any;
+    await expect(
+      repository.loadFiles("vault-1", handle),
+    ).resolves.toBeDefined();
+    expect(repository.entities["gone2"]).toBeUndefined();
   });
 
   it("should save entity to disk", async () => {
@@ -103,7 +208,6 @@ describe("VaultRepository", () => {
   });
 
   it("should queue scheduled saves", async () => {
-    vi.useFakeTimers();
     const mockHandle = {} as FileSystemDirectoryHandle;
     const mockEntity = { id: "e1", title: "Test" } as any;
     const onStatusChange = vi.fn();
@@ -124,7 +228,6 @@ describe("VaultRepository", () => {
     expect(onStatusChange).toHaveBeenCalledWith("saving");
     expect(repository.pendingSaveCount).toBe(1);
 
-    await vi.advanceTimersByTimeAsync(10);
     await savePromise;
 
     expect(onStatusChange).toHaveBeenCalledWith("idle");

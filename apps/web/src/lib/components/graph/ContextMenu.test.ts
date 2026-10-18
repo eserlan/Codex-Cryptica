@@ -5,6 +5,15 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import ContextMenu from "./ContextMenu.svelte";
 import { vault } from "$lib/stores/vault.svelte";
 import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+import { deriveEntityTypeTone, parseColor, FANTASY_DARK } from "schema";
+
+// Pinned rather than read from the real store: the derived tone has to be
+// deterministic, and the singleton theme store resolves against app appearance
+// and localStorage.
+vi.mock("$lib/stores/theme.svelte", async () => {
+  const { FANTASY_DARK: theme } = await import("schema");
+  return { themeStore: { activeTheme: theme } };
+});
 
 vi.mock("$lib/stores/graph.svelte", () => ({
   graph: {
@@ -43,7 +52,14 @@ vi.mock("$lib/stores/canvas-registry.svelte", () => ({
 
 vi.mock("$lib/stores/categories.svelte", () => ({
   categories: {
-    list: [],
+    list: [
+      {
+        id: "location",
+        label: "Location",
+        icon: "lucide:map-pin",
+        color: "#4ade80",
+      },
+    ],
   },
 }));
 
@@ -88,9 +104,9 @@ describe("ContextMenu", () => {
         selectorOrHandler: string | (() => void),
         handler?: () => void,
       ) => {
-        if (event === "cxttap" && selectorOrHandler === "node") {
+        if (event === "cxttap taphold" && selectorOrHandler === "node") {
           cxttapHandler = handler as (event: any) => void;
-        } else if (event === "cxttap" && selectorOrHandler === "edge") {
+        } else if (event === "cxttap taphold" && selectorOrHandler === "edge") {
           edgeCxttapHandler = handler as (event: any) => void;
         }
       },
@@ -141,6 +157,7 @@ describe("ContextMenu", () => {
     (vault as any).isGuest = false;
     (vault as any).entities = {};
     (vault as any).removeConnection = vi.fn().mockResolvedValue(true);
+    (vault as any).setConnectionHidden = vi.fn().mockResolvedValue(true);
   });
 
   it("shows Mark Important for editable graph sessions", async () => {
@@ -206,6 +223,35 @@ describe("ContextMenu", () => {
     );
   });
 
+  it("hides the edge's connection without deleting it when Hide Connection is clicked", async () => {
+    render(ContextMenu, { cy: createCy() as any });
+
+    await openEdgeMenu();
+
+    await fireEvent.click(
+      screen.getByRole("menuitem", { name: "Hide Connection" }),
+    );
+
+    expect(vault.setConnectionHidden).toHaveBeenCalledWith(
+      "node-a",
+      "node-b",
+      "ally",
+      true,
+    );
+    expect(vault.removeConnection).not.toHaveBeenCalled();
+  });
+
+  it("offers no Hide Connection to guests", async () => {
+    (vault as any).isGuest = true;
+    render(ContextMenu, { cy: createCy() as any });
+
+    await openEdgeMenu();
+
+    expect(
+      screen.queryByRole("menuitem", { name: "Hide Connection" }),
+    ).toBeNull();
+  });
+
   it("hides Delete Connection when right-clicking an edge in guest sessions", async () => {
     (vault as any).isGuest = true;
     render(ContextMenu, { cy: createCy() as any });
@@ -215,5 +261,29 @@ describe("ContextMenu", () => {
     expect(
       screen.queryByRole("menuitem", { name: "Delete Connection" }),
     ).toBeNull();
+  });
+
+  it("previews the theme-derived tone in the category picker (issue #2680)", async () => {
+    render(ContextMenu, { cy: createCy() as any });
+
+    await openNodeMenu();
+    await fireEvent.click(
+      screen.getByRole("menuitem", { name: "Change Category" }),
+    );
+    await waitFor(() =>
+      expect(
+        screen.getByRole("menu", { name: "Select category" }),
+      ).toBeTruthy(),
+    );
+
+    const swatch = screen
+      .getByRole("menu", { name: "Select category" })
+      .querySelector("div[style]");
+    const tone = deriveEntityTypeTone("#4ade80", FANTASY_DARK.tokens).accent;
+    const { r, g, b } = parseColor(tone)!;
+
+    // The swatch previews the colour the node will take, so it tracks the
+    // theme rather than showing the raw neon category colour.
+    expect(swatch?.getAttribute("style")).toContain(`rgb(${r}, ${g}, ${b})`);
   });
 });

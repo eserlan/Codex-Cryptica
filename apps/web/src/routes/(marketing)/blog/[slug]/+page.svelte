@@ -5,7 +5,13 @@
   import ResponsibleAISeriesNav from "$lib/components/blog/ResponsibleAISeriesNav.svelte";
   import { RA_SERIES_SLUGS } from "$lib/content/responsible-ai-series";
   import { safeJsonLd } from "$lib/utils/json-ld";
-  import { SITE_AUTHOR } from "$lib/config";
+  import {
+    SITE_AUTHOR,
+    DISCORD_URL,
+    REDDIT_URL,
+    GITHUB_URL,
+  } from "$lib/config";
+  import SeoHead from "$lib/components/seo/SeoHead.svelte";
 
   let { data } = $props();
   const article = $derived(data.article);
@@ -14,6 +20,22 @@
   const isRASeries = $derived(RA_SERIES_SLUGS.has(article.slug));
   const articleContent = $derived(
     article.content.replace(/^#[^\n]+\n/, "").trimStart(),
+  );
+
+  // Every post had a bare link card before this: the root layout declares
+  // twitter:card but no image anywhere, so there was nothing to show. A post
+  // names its own capture in frontmatter; the rest fall back to the product
+  // screenshot. Plain R2 URLs — social crawlers don't negotiate formats, so
+  // these must not go through the cdn-cgi transform.
+  const DEFAULT_CARD_IMAGE =
+    "https://assets.codexcryptica.com/screenshots/feature-connect.jpg";
+  const DEFAULT_CARD_IMAGE_ALT =
+    "A Codex Cryptica campaign vault showing an entity graph beside an open character record";
+  const cardImage = $derived(article.image?.trim() || DEFAULT_CARD_IMAGE);
+  const cardImageAlt = $derived(
+    article.image?.trim()
+      ? (article.imageAlt?.trim() ?? article.title)
+      : DEFAULT_CARD_IMAGE_ALT,
   );
 
   const jsonLdString = $derived(
@@ -50,22 +72,19 @@
   );
 </script>
 
-<svelte:head>
-  <title>{article.title} | Codex Cryptica Blog</title>
-  <meta name="description" content={article.description} />
-  <meta name="keywords" content={article.keywords.join(", ")} />
-  <link rel="canonical" href={data.canonicalUrl} />
-
-  <!-- Open Graph -->
-  <meta property="og:title" content={article.title} />
-  <meta property="og:description" content={article.description} />
-  <meta property="og:type" content="article" />
-  <meta property="article:published_time" content={article.publishedAt} />
-  <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-  {@html `<scr` +
-    `ipt type="application/ld+json">${jsonLdString}</scr` +
-    `ipt>`}
-</svelte:head>
+<SeoHead
+  title="{article.title} | Codex Cryptica Blog"
+  description={article.description}
+  canonicalUrl={data.canonicalUrl}
+  type="article"
+  image={cardImage}
+  imageAlt={cardImageAlt}
+  keywords={article.keywords}
+  publishedTime={article.publishedAt}
+  author={authorName}
+  twitterCard="summary_large_image"
+  jsonLd={jsonLdString}
+/>
 
 <div
   class="min-h-screen bg-theme-bg text-theme-text selection:bg-theme-primary selection:text-theme-bg"
@@ -148,14 +167,14 @@
     <footer class="pt-12 border-t border-theme-border">
       <div>
         <p
-          class="text-[10px] font-mono text-theme-muted uppercase tracking-widest mb-3"
+          class="text-micro font-mono text-theme-muted uppercase tracking-widest mb-3"
         >
           Topics
         </p>
         <div class="flex flex-wrap gap-2">
           {#each article.keywords.slice(0, 6) as keyword}
             <span
-              class="px-3 py-1 bg-theme-surface border border-theme-border rounded-full text-[10px] font-mono text-theme-muted tracking-wider"
+              class="px-3 py-1 bg-theme-surface border border-theme-border rounded-full text-micro font-mono text-theme-muted tracking-wider"
             >
               {keyword
                 .replace(/-/g, " ")
@@ -166,7 +185,62 @@
       </div>
 
       <div
-        class="mt-16 p-8 rounded-lg bg-theme-surface/30 border border-theme-border flex flex-col md:flex-row items-center justify-between gap-8"
+        class="mt-12 p-6 rounded-lg bg-theme-surface/40 border border-theme-border/70 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-header"
+      >
+        <div class="text-center sm:text-left">
+          <span class="font-bold text-theme-text block sm:inline"
+            >Join the discussion:</span
+          >
+          <span class="text-theme-muted ml-0 sm:ml-1"
+            >Share campaign notes, ask questions, or report issues.</span
+          >
+        </div>
+        <div class="flex flex-wrap items-center justify-center gap-4 shrink-0">
+          {#if DISCORD_URL}
+            <a
+              href={DISCORD_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-theme-muted hover:text-theme-primary transition-colors inline-flex items-center gap-1.5"
+            >
+              <span
+                class="icon-[lucide--message-square] w-3.5 h-3.5"
+                aria-hidden="true"
+              ></span>
+              Discord
+            </a>
+          {/if}
+          {#if REDDIT_URL}
+            <a
+              href={REDDIT_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-theme-muted hover:text-theme-primary transition-colors inline-flex items-center gap-1.5"
+            >
+              <span
+                class="icon-[lucide--message-circle] w-3.5 h-3.5"
+                aria-hidden="true"
+              ></span>
+              Reddit
+            </a>
+          {/if}
+          {#if GITHUB_URL}
+            <a
+              href={GITHUB_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-theme-muted hover:text-theme-primary transition-colors inline-flex items-center gap-1.5"
+            >
+              <span class="icon-[lucide--github] w-3.5 h-3.5" aria-hidden="true"
+              ></span>
+              GitHub
+            </a>
+          {/if}
+        </div>
+      </div>
+
+      <div
+        class="mt-8 p-8 rounded-lg bg-theme-surface/30 border border-theme-border flex flex-col md:flex-row items-center justify-between gap-8"
       >
         <div class="text-center md:text-left">
           <h3 class="text-lg font-header font-bold mb-2">

@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { FEATURE_HINTS, HINT_KEYS } from "./help-content";
-import { loadBlogArticles, loadHelpArticles } from "$lib/content/loader";
+import { loadHelpArticles } from "$lib/content/loader";
+import { loadLocalBlogArticles } from "$lib/content/blog-content";
 
 // T061: in-app generators feature hint is registered (US5)
 describe("help-content feature hints", () => {
@@ -24,6 +25,16 @@ describe("help-content feature hints", () => {
   });
 
   // T023 (143-cif-importer): CIF import help entry
+  it("documents the Holiday & Festival generator modes and context", () => {
+    expect(FEATURE_HINTS["holiday-generator"]).toMatchObject({
+      id: "holiday-generator",
+      title: "Holidays & Festivals",
+      content: expect.stringContaining(
+        "connected calendar of 6, 10, or 14 days",
+      ),
+    });
+  });
+
   it("FEATURE_HINTS includes a cif-importer entry mentioning offline import and family links", () => {
     expect(FEATURE_HINTS["cif-importer"]).toBeDefined();
     expect(FEATURE_HINTS["cif-importer"].id).toBe("cif-importer");
@@ -43,8 +54,42 @@ describe("help-content feature hints", () => {
     );
   });
 
+  // Constitution VII: the feature hint alone left /help silent on tables and
+  // decks, and the nav entry now sits behind the menu on a phone — so the
+  // article is the discovery path, not a nicety.
+  it("documents roll tables and card decks as a full help article", () => {
+    const article = loadHelpArticles().find(
+      (a) => a.id === "random-tables-decks",
+    );
+
+    expect(article).toBeDefined();
+    expect(article!.title).toBeTruthy();
+    // The parts a hint has no room for.
+    expect(article!.content).toContain("{creature}");
+    expect(article!.content).toContain("/table");
+    expect(article!.content).toContain("/deck");
+    expect(article!.content).toMatch(/discard pile/i);
+  });
+
+  it("clarifies that a personal API key does not keep Oracle prompts on-device", () => {
+    const article = loadHelpArticles().find((a) => a.id === "gemini-api-key");
+
+    expect(article).toBeDefined();
+    expect(article!.content).toContain(
+      "your prompts and the notes sent as context still leave your browser",
+    );
+    expect(article!.content).not.toContain("fully on your device");
+  });
+
+  it("lists the deterministic roll commands alongside the AI ones", () => {
+    const commands = loadHelpArticles().find((a) => a.id === "chat-commands");
+
+    expect(commands!.content).toContain("`/table [name]`");
+    expect(commands!.content).toContain("`/deck [name] [count]`");
+  });
+
   it("all blog links in help articles correspond to valid blog post slugs", () => {
-    const blogArticles = loadBlogArticles();
+    const blogArticles = loadLocalBlogArticles();
     const validSlugs = new Set(blogArticles.map((b) => b.slug));
     const helpArticles = loadHelpArticles();
 

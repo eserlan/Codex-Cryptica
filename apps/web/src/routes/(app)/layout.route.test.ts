@@ -4,11 +4,14 @@ import { render, screen, waitFor } from "@testing-library/svelte";
 import { tick } from "svelte";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { quickNoteScratchpadMock } = vi.hoisted(() => ({
-  quickNoteScratchpadMock: vi.fn(() => ({
-    $$render: () => "",
-  })),
-}));
+const { quickNoteScratchpadMock, setVaultSessionActiveMock } = vi.hoisted(
+  () => ({
+    quickNoteScratchpadMock: vi.fn(() => ({
+      $$render: () => "",
+    })),
+    setVaultSessionActiveMock: vi.fn(),
+  }),
+);
 
 vi.mock("$app/environment", () => ({ browser: true }));
 vi.mock("$app/paths", () => ({ base: "" }));
@@ -26,9 +29,9 @@ vi.mock("$lib/components/layout/AppHeader.svelte", () => ({
     return { $$render: () => "<div data-testid='app-header'></div>" };
   },
 }));
-vi.mock("$lib/components/layout/AppFooter.svelte", () => ({
-  default: function AppFooterMock() {
-    return { $$render: () => "<div data-testid='app-footer'></div>" };
+vi.mock("$lib/components/onboarding/OnboardingHost.svelte", () => ({
+  default: function OnboardingHostMock() {
+    return { $$render: () => "" };
   },
 }));
 vi.mock("$lib/components/layout/NotificationToast.svelte", () => ({
@@ -46,6 +49,12 @@ vi.mock("$lib/components/layout/ActivityBar.svelte", () => ({
     return { $$render: () => "<div data-testid='activity-bar'></div>" };
   },
 }));
+vi.mock("$lib/stores/solo-session-instance", () => ({
+  soloPlayGuard: { toggleSharedMode: () => true, requestShare: () => true },
+}));
+vi.mock("$lib/components/solo/SoloSessionBar.svelte", () => ({
+  default: function SoloSessionBarStub() {},
+}));
 vi.mock("$lib/components/layout/SidebarPanelHost.svelte", () => ({
   default: function SidebarPanelHostMock() {
     return { $$render: () => "<div data-testid='sidebar-host'></div>" };
@@ -58,7 +67,9 @@ vi.mock("$lib/components/layout/MobileDemoBanner.svelte", () => ({
 }));
 vi.mock("$lib/components/modals/GlobalModalProvider.svelte", () => ({
   default: function GlobalModalProviderMock() {
-    return { $$render: () => "" };
+    return {
+      $$render: () => "<div data-testid='global-modal-provider'></div>",
+    };
   },
 }));
 vi.mock("$lib/components/vtt/GuestSessionBootstrap.svelte", () => ({
@@ -135,24 +146,36 @@ vi.mock("@codex/gdrive-sync", () => ({
   initGDriveSync: vi.fn(),
   configureGDriveSync: vi.fn(),
 }));
+vi.mock("$lib/stores/proposer.svelte", () => ({}));
+vi.mock("$lib/cloud-bridge/p2p/guest-bootstrap", () => ({}));
 vi.mock("$lib/config/help-content", () => ({
   HELP_ARTICLES: [{ id: "family-tree" }],
 }));
 vi.mock("$lib/config", () => ({
   VERSION: "0.0.0",
+  PATREON_URL: "https://patreon.com/codexcryptica",
+  DISCORD_URL: "https://discord.gg/codexcryptica",
 }));
 vi.mock("$lib/content/changelog/releases.json", () => ({
   default: [],
 }));
-vi.mock("schema", () => ({
-  THEMES: {},
-  isEntityVisible: vi.fn(),
-}));
+vi.mock("schema", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("schema")>();
+  return {
+    ...actual,
+    THEMES: {},
+    isEntityVisible: vi.fn(),
+    DEFAULT_ITEM_TABLE_COLUMNS: [],
+  };
+});
 vi.mock("$lib/app/init/app-init", () => ({
   bootSystem: vi.fn(() => true),
   initializeGlobalListeners: vi.fn(() => () => {}),
   setupWindowGlobals: vi.fn(),
-  registerServiceWorker: vi.fn(),
+  registerServiceWorker: vi.fn(() => ({
+    setVaultSessionActive: setVaultSessionActiveMock,
+    destroy: vi.fn(),
+  })),
 }));
 vi.mock("$lib/hooks/useGlobalShortcuts.svelte", () => ({
   useGlobalShortcuts: vi.fn(() => vi.fn()),
@@ -165,6 +188,8 @@ vi.mock("$lib/stores/ui/onboarding.svelte", () => ({
     dismissedWorldPage: true,
     skipWelcomeScreen: true,
     lastSeenVersion: "0.0.0",
+    goalInvitation: null,
+    firstRunGuidanceActive: false,
     markVersionAsSeen: vi.fn(),
   },
 }));
@@ -275,6 +300,8 @@ describe("+layout.svelte", () => {
     (onboardingStore as any).isLandingPageVisible = false;
     onboardingStore.dismissedWorldPage = true;
     onboardingStore.showChangelog = false;
+    onboardingStore.goalInvitation = null;
+    onboardingStore.firstRunGuidanceActive = false;
     sessionModeStore.isGuestMode = false;
     (modalUIStore as any).isAnyModalOpen = false;
     modalUIStore.showVaultSwitcher = false;
@@ -284,6 +311,27 @@ describe("+layout.svelte", () => {
     vi.mocked(vaultThemePromptStore.shouldAutoPrompt).mockClear();
     vi.mocked(vaultThemePromptStore.shouldAutoPrompt).mockReturnValue(false);
     quickNoteScratchpadMock.mockClear();
+    setVaultSessionActiveMock.mockClear();
+  });
+
+  it("activates offline shell caching only for an open local vault route", async () => {
+    render(LayoutTestHost);
+
+    await waitFor(() => {
+      expect(setVaultSessionActiveMock).toHaveBeenCalledWith(true);
+    });
+  });
+
+  it("keeps offline shell caching inactive on non-vault app routes", async () => {
+    page.url = new URL("http://localhost/dice") as typeof page.url;
+
+    render(LayoutTestHost);
+
+    await waitFor(() => {
+      expect(setVaultSessionActiveMock).toHaveBeenCalled();
+    });
+    expect(setVaultSessionActiveMock).not.toHaveBeenCalledWith(true);
+    expect(setVaultSessionActiveMock).toHaveBeenLastCalledWith(false);
   });
 
   it("keeps route content mounted beneath the app shell", () => {
@@ -291,10 +339,21 @@ describe("+layout.svelte", () => {
     expect(screen.getByTestId("layout-children")).toBeTruthy();
   });
 
-  it("does not mount marketing footer chrome in the application shell", () => {
+  it("mounts the application footer in the standard application shell", () => {
     render(LayoutTestHost);
 
+    expect(screen.getByTestId("app-footer")).toBeTruthy();
+  });
+
+  it("keeps the dice pop-out free of the application shell and global overlays", () => {
+    page.url = new URL("http://localhost/dice") as typeof page.url;
+
+    render(LayoutTestHost);
+
+    expect(screen.queryByTestId("app-header")).toBeNull();
     expect(screen.queryByTestId("app-footer")).toBeNull();
+    expect(screen.queryByTestId("global-modal-provider")).toBeNull();
+    expect(quickNoteScratchpadMock).not.toHaveBeenCalled();
   });
 
   it("syncs --app-viewport-height from visualViewport instead of trusting 100dvh alone", () => {
@@ -522,13 +581,38 @@ describe("+layout.svelte", () => {
     expect(modalUIStore.openVaultThemePrompt).not.toHaveBeenCalled();
   });
 
-  it("does not start the welcome tour while the vault selector is open", async () => {
+  it("never starts the welcome tour itself (the goal invitation replaces it)", async () => {
     vi.mocked(helpStore.hasSeen).mockReturnValue(false);
-    modalUIStore.showVaultSwitcher = true;
 
     render(LayoutTestHost);
     await tick();
 
     expect(helpStore.startTour).not.toHaveBeenCalled();
+  });
+
+  it("prompts for the vault theme after the goal invitation, without the tour (FR-003a)", async () => {
+    vi.mocked(helpStore.hasSeen).mockReturnValue(false);
+    onboardingStore.goalInvitation = "explore";
+    (vault as any).allEntities = [{ id: "entity-1", title: "First Entity" }];
+    vi.mocked(vaultThemePromptStore.shouldAutoPrompt).mockReturnValue(true);
+    vi.mocked(themeStore.hasSavedThemeForVault).mockResolvedValue(false);
+
+    render(LayoutTestHost);
+
+    await waitFor(() =>
+      expect(modalUIStore.openVaultThemePrompt).toHaveBeenCalledWith("v1"),
+    );
+  });
+
+  it("holds the vault theme prompt while guided setup is showing", async () => {
+    onboardingStore.firstRunGuidanceActive = true;
+    (vault as any).allEntities = [{ id: "entity-1", title: "First Entity" }];
+    vi.mocked(vaultThemePromptStore.shouldAutoPrompt).mockReturnValue(true);
+    vi.mocked(themeStore.hasSavedThemeForVault).mockResolvedValue(false);
+
+    render(LayoutTestHost);
+    await tick();
+
+    expect(modalUIStore.openVaultThemePrompt).not.toHaveBeenCalled();
   });
 });

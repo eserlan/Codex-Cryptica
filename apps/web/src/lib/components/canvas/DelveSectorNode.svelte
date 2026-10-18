@@ -19,7 +19,7 @@
   >
     <div class="min-w-0">
       <div
-        class="mb-0.5 flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-[0.22em] text-theme-primary"
+        class="mb-0.5 flex items-center gap-1.5 text-nano font-bold uppercase tracking-[0.22em] text-theme-primary"
       >
         <span
           class="icon-[lucide--layers-3] h-3 w-3 shrink-0"
@@ -35,7 +35,7 @@
     </div>
     {#if visibleTheme}
       <span
-        class="max-w-40 truncate rounded-full border border-theme-border bg-theme-bg/60 px-2 py-1 text-[8px] font-mono uppercase tracking-wider text-theme-muted"
+        class="max-w-40 truncate rounded-full border border-theme-border bg-theme-bg/60 px-2 py-1 text-nano font-mono uppercase tracking-wider text-theme-muted"
       >
         {visibleTheme}
       </span>
@@ -44,7 +44,7 @@
 
   {#if data.description}
     <p
-      class="absolute bottom-3 left-4 right-4 line-clamp-2 text-[9px] italic leading-relaxed text-theme-muted/75"
+      class="absolute bottom-3 left-4 right-4 line-clamp-2 text-nano italic leading-relaxed text-theme-muted/75"
     >
       {data.description}
     </p>

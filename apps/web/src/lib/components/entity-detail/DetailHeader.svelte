@@ -31,6 +31,13 @@
   import { openCanvasFromZen } from "$lib/stores/ui/navigation";
   import StructuralSuggestionBanner from "$lib/components/guided/StructuralSuggestionBanner.svelte";
   import { getDelveCanvasLabel } from "$lib/utils/delve-terminology";
+  import SaveStatusIndicator from "$lib/components/ui/SaveStatusIndicator.svelte";
+  import {
+    isMonsterLabsHandoffEligibleType,
+    getMonsterLabsActionLabel,
+  } from "$lib/services/seo/monsterlabs-handoff";
+  import { createMonsterLabsHandoffFlow } from "$lib/services/seo/monsterlabs-handoff-flow.svelte";
+  import MonsterLabsSendingModal from "$lib/components/modals/MonsterLabsSendingModal.svelte";
 
   let {
     entity,
@@ -84,6 +91,24 @@
     if (!ok) return;
     shelvedJustNow = true;
     setTimeout(() => (shelvedJustNow = false), 2000);
+  };
+
+  /**
+   * Hands this entity's content off to MonsterLabs' D&D monster or magic
+   * item generator in a new tab (#2871, #2872). Read-only against this
+   * vault, like Send to Shelf. The user confirms in a modal first; only
+   * after that confirm does the Oracle compression call run (shown as its
+   * own "loading" state), and MonsterLabs opens once the URL is ready.
+   */
+  const monsterLabsFlow = createMonsterLabsHandoffFlow();
+  const handleSendToMonsterLabs = () => {
+    monsterLabsFlow.start({
+      name: entity.title,
+      type: entity.type,
+      description: [entity.content, entity.lore]
+        .filter((part): part is string => Boolean(part?.trim()))
+        .join("\n\n"),
+    });
   };
 
   const handleFindInGraph = () => {
@@ -152,6 +177,9 @@
       vault.selectedEntityId = parentEntity.id;
     }
   };
+
+  // Guests read the hierarchy but never rearrange it.
+  const canEditParent = $derived(!vault.isGuest);
 </script>
 
 {#if isObscured}
@@ -162,7 +190,10 @@
     <div
       class="w-16 h-16 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mb-6 animate-pulse"
     >
-      <span class="icon-[lucide--eye-off] w-8 h-8 text-amber-500"></span>
+      <span
+        aria-hidden="true"
+        class="icon-[lucide--eye-off] w-8 h-8 text-amber-500"
+      ></span>
     </div>
     <h3
       class="text-xl font-bold text-theme-text uppercase font-header tracking-widest mb-2"
@@ -177,7 +208,7 @@
     <button
       type="button"
       onclick={onClose}
-      class="mt-8 px-6 py-2 border border-theme-border text-theme-secondary hover:text-theme-primary hover:border-theme-primary transition-all text-[10px] font-bold tracking-widest uppercase font-header"
+      class="mt-8 px-6 py-2 border border-theme-border text-theme-secondary hover:text-theme-primary hover:border-theme-primary transition-all text-micro font-bold tracking-widest uppercase font-header"
     >
       Return to Overview
     </button>
@@ -225,7 +256,7 @@
       <button
         type="button"
         onclick={handleSendToShelf}
-        class="transition flex items-center justify-center p-1 {shelvedJustNow
+        class="touch-target transition flex items-center justify-center p-1 {shelvedJustNow
           ? 'text-theme-primary'
           : 'text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-icon-active)]'}"
         aria-label="Send to Shelf"
@@ -242,11 +273,32 @@
         ></span>
       </button>
     {/if}
+    {#if isMonsterLabsHandoffEligibleType(entity.type)}
+      <button
+        type="button"
+        onclick={handleSendToMonsterLabs}
+        disabled={monsterLabsFlow.open}
+        aria-busy={monsterLabsFlow.state === "loading"}
+        class="transition flex items-center justify-center p-1 text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-icon-active)] disabled:opacity-50"
+        aria-label={getMonsterLabsActionLabel(entity.type)}
+        title="{getMonsterLabsActionLabel(
+          entity.type,
+        )} — opens monsterlabs.app in a new tab"
+        data-testid="send-to-monsterlabs-button"
+      >
+        <span
+          aria-hidden="true"
+          class="{monsterLabsFlow.state === 'loading'
+            ? 'icon-[lucide--loader-2] animate-spin'
+            : 'icon-[lucide--external-link]'} w-5 h-5"
+        ></span>
+      </button>
+    {/if}
     {#if isGraphView}
       <button
         type="button"
         onclick={handleFindInGraph}
-        class="transition flex items-center justify-center p-1 text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-icon-active)]"
+        class="touch-target transition flex items-center justify-center p-1 text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-icon-active)]"
         aria-label="Find in Graph"
         title="Find in Graph"
         data-testid="find-in-graph-button"
@@ -285,7 +337,7 @@
           if (!alreadyOpen) soundBiteService.loadFromEntity(entity);
           modalUIStore.openSoundBite(entity.id);
         }}
-        class="transition flex items-center justify-center p-1 {entity.soundBite
+        class="touch-target transition flex items-center justify-center p-1 {entity.soundBite
           ? 'text-theme-accent hover:opacity-85'
           : 'text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-icon-active)]'}"
         aria-label="Sound bite"
@@ -316,7 +368,7 @@
     <button
       type="button"
       onclick={() => modalUIStore.openZenMode(entity.id)}
-      class="transition flex items-center justify-center p-1 text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-icon-active)]"
+      class="touch-target transition flex items-center justify-center p-1 text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-icon-active)]"
       aria-label="Enter Zen Mode"
       title="Zen Mode (Full Screen)"
       data-testid="enter-zen-mode-button"
@@ -336,7 +388,7 @@
     <button
       type="button"
       onclick={onClose}
-      class="text-theme-muted hover:text-theme-primary transition p-1 -ml-2 rounded-full shrink-0"
+      class="touch-target flex items-center justify-center text-theme-muted hover:text-theme-primary transition p-1 -ml-2 rounded-full shrink-0"
       aria-label="Back"
     >
       <span aria-hidden="true" class="icon-[lucide--chevron-left] w-7 h-7"
@@ -355,35 +407,43 @@
     >
       {#if isEditing}
         <div class="flex flex-col gap-2 w-full mr-4">
-          <input
-            type="text"
-            bind:value={editTitle}
-            class="bg-theme-bg border border-theme-primary text-theme-text px-2 py-1 focus:outline-none focus:border-theme-primary font-body font-bold text-xl w-full placeholder-theme-muted"
-            placeholder="Entity Title"
-          />
+          <div class="flex items-center gap-2">
+            <input
+              type="text"
+              bind:value={editTitle}
+              class="bg-theme-bg border border-theme-primary text-theme-text px-2 py-1 focus:outline-none focus:border-theme-primary font-body font-bold text-xl w-full placeholder-theme-muted"
+              placeholder="Entity Title"
+            />
+            <SaveStatusIndicator />
+          </div>
           <AliasInput bind:aliases={editAliases} placeholder="Add alias..." />
         </div>
       {:else}
         <div class="flex flex-col gap-0.5 min-w-0 w-full">
-          <h2
-            class="{isFantasyTheme
-              ? 'text-xl md:text-3xl font-header tracking-wider'
-              : 'text-xl md:text-3xl font-body tracking-wide'} w-full break-words whitespace-normal font-bold"
-            style:color={isFantasyTheme ? "var(--theme-title-ink)" : undefined}
-          >
-            {entity.title}{#if entity.labels?.some((l: string) => l.toLowerCase() === "past")}<sup
-                aria-hidden="true">*</sup
-              ><span class="sr-only"> (past)</span>{/if}
-          </h2>
+          <div class="flex items-center gap-2 flex-wrap">
+            <h2
+              class="{isFantasyTheme
+                ? 'text-xl md:text-3xl font-header tracking-wider'
+                : 'text-xl md:text-3xl font-body tracking-wide'} break-words whitespace-normal font-bold"
+              style:color={isFantasyTheme
+                ? "var(--theme-title-ink)"
+                : undefined}
+            >
+              {entity.title}{#if entity.labels?.some((l: string) => l.toLowerCase() === "past")}<sup
+                  aria-hidden="true">*</sup
+                ><span class="sr-only"> (past)</span>{/if}
+            </h2>
+            <SaveStatusIndicator />
+          </div>
           {#if entity.aliases && entity.aliases.length > 0}
             <div class="flex flex-wrap gap-1 md:gap-1.5 mt-0.5">
               <span
-                class="text-[8px] md:text-[9px] font-bold text-theme-muted uppercase tracking-widest self-center mr-0.5 md:mr-1"
+                class="text-nano md:text-nano font-bold text-theme-muted uppercase tracking-widest self-center mr-0.5 md:mr-1"
                 >aka:</span
               >
               {#each entity.aliases as alias}
                 <div
-                  class="px-1.5 py-0.5 rounded bg-theme-primary/5 border border-theme-primary/10 text-[8px] md:text-[9px] font-bold text-theme-secondary uppercase tracking-wider"
+                  class="px-1.5 py-0.5 rounded bg-theme-primary/5 border border-theme-primary/10 text-nano md:text-nano font-bold text-theme-secondary uppercase tracking-wider"
                 >
                   {alias}
                 </div>
@@ -407,6 +467,35 @@
                 {parentEntity.title}{#if parentEntity.labels?.some((l: string) => l.toLowerCase() === "past")}<sup
                     aria-hidden="true">*</sup
                   ><span class="sr-only"> (past)</span>{/if}
+              </button>
+              {#if canEditParent}
+                <button
+                  type="button"
+                  onclick={() => modalUIStore.openParentPicker(entity.id)}
+                  class="p-0.5 text-theme-muted hover:text-theme-primary transition-colors"
+                  aria-label="Change parent"
+                  title="Change parent"
+                  data-testid="change-parent-button"
+                >
+                  <span aria-hidden="true" class="icon-[lucide--pencil] h-3 w-3"
+                  ></span>
+                </button>
+              {/if}
+            </div>
+          {:else if canEditParent}
+            <div class="mt-1.5">
+              <button
+                type="button"
+                onclick={() => modalUIStore.openParentPicker(entity.id)}
+                class="touch-target flex items-center gap-1.5 text-xs text-theme-muted hover:text-theme-primary transition-colors focus:outline-none"
+                title="Nest this under another entity"
+                data-testid="set-parent-button"
+              >
+                <span
+                  aria-hidden="true"
+                  class="icon-[lucide--folder-plus] h-3.5 w-3.5"
+                ></span>
+                <span>Set parent</span>
               </button>
             </div>
           {/if}
@@ -445,7 +534,7 @@
       {/each}
       {#if statureLabel}
         <span
-          class="px-1.5 py-0.5 rounded bg-theme-primary/10 border border-theme-primary/20 text-[8px] md:text-[9px] font-bold text-theme-secondary uppercase tracking-wider self-center"
+          class="px-1.5 py-0.5 rounded bg-theme-primary/10 border border-theme-primary/20 text-nano md:text-nano font-bold text-theme-secondary uppercase tracking-wider self-center"
           title={statureFromLabel
             ? `Images of this entity are drawn at ${statureLabel} stature, from its labels.`
             : `The Oracle read this as ${statureLabel} in your lore, and images are drawn that way.`}
@@ -460,7 +549,7 @@
             disabled={isKeepingStature}
             title="Add {stature} as a label so it stops being re-read, and stays the same across pictures."
             data-testid="entity-stature-keep"
-            class="px-1.5 py-0.5 rounded border border-dashed border-theme-primary/30 text-[8px] md:text-[9px] font-bold text-theme-primary uppercase tracking-wider self-center transition hover:bg-theme-primary/10 disabled:opacity-50"
+            class="px-1.5 py-0.5 rounded border border-dashed border-theme-primary/30 text-nano md:text-nano font-bold text-theme-primary uppercase tracking-wider self-center transition hover:bg-theme-primary/10 disabled:opacity-50"
           >
             Keep
           </button>
@@ -468,7 +557,7 @@
       {/if}
       {#if !entity.labels?.length && vault.isGuest}
         <span
-          class="text-[9px] text-theme-muted italic uppercase tracking-tighter"
+          class="text-nano text-theme-muted italic uppercase tracking-tighter"
         >
           No labels
         </span>
@@ -484,3 +573,13 @@
     <StructuralSuggestionBanner entityId={entity.id} />
   {/if}
 </div>
+
+<MonsterLabsSendingModal
+  open={monsterLabsFlow.open}
+  state={monsterLabsFlow.state}
+  entityLabel={monsterLabsFlow.entityLabel}
+  url={monsterLabsFlow.url}
+  onConfirm={monsterLabsFlow.confirm}
+  onOpen={monsterLabsFlow.close}
+  onClose={monsterLabsFlow.close}
+/>

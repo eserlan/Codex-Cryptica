@@ -4,7 +4,7 @@ import { isVaultEntityFile, parseVaultFileFrontmatter } from "./detect";
 function entityFile(overrides: Record<string, string> = {}): string {
   const type = overrides.type ?? "Character";
   const title = overrides.title ?? "Thistle";
-  return `---\nid: thistle\ntype: ${type}\ntitle: ${title}\ntags: []\n---\n\nSome lore.`;
+  return `---\nid: thistle\ntype: ${type}\ntitle: ${title}\nlabels: []\n---\n\nSome lore.`;
 }
 
 describe("isVaultEntityFile", () => {

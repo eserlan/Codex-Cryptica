@@ -1,5 +1,10 @@
 import type { BlogIndexItem } from "editor-core";
 import { buildAbsoluteUrl } from "./site";
+import {
+  STATIC_SITEMAP_ROUTES,
+  renderSitemapDocument,
+  renderSitemapUrl,
+} from "./sitemap-routes";
 
 export interface SitemapEntry {
   loc: string;
@@ -8,34 +13,11 @@ export interface SitemapEntry {
   lastmod?: string;
 }
 
-const STATIC_ROUTES: Array<
-  Pick<SitemapEntry, "changefreq" | "priority"> & { path: string }
-> = [
-  { path: "/", changefreq: "weekly", priority: "1.0" },
-  { path: "/blog", changefreq: "weekly", priority: "0.9" },
-  { path: "/features", changefreq: "monthly", priority: "0.8" },
-  {
-    path: "/responsible-ai-worldbuilding",
-    changefreq: "monthly",
-    priority: "0.8",
-  },
-  { path: "/terms", changefreq: "yearly", priority: "0.5" },
-  { path: "/privacy", changefreq: "yearly", priority: "0.5" },
-];
-
-const escapeXml = (value: string) =>
-  value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&apos;");
-
 export function buildSitemapEntries(
   articles: BlogIndexItem[],
   origin?: string,
 ): SitemapEntry[] {
-  const staticEntries = STATIC_ROUTES.map((route) => ({
+  const staticEntries = STATIC_SITEMAP_ROUTES.map((route) => ({
     loc: buildAbsoluteUrl(route.path, origin),
     changefreq: route.changefreq,
     priority: route.priority,
@@ -52,25 +34,5 @@ export function buildSitemapEntries(
 }
 
 export function buildSitemapXml(entries: SitemapEntry[]) {
-  const rows = entries
-    .map(
-      (entry) => `  <url>
-    <loc>${escapeXml(entry.loc)}</loc>
-    <changefreq>${entry.changefreq}</changefreq>
-    <priority>${entry.priority}</priority>${
-      entry.lastmod
-        ? `
-    <lastmod>${escapeXml(entry.lastmod)}</lastmod>`
-        : ""
-    }
-  </url>`,
-    )
-    .join("\n");
-
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" href="/sitemap.xsl"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${rows}
-</urlset>
-`;
+  return renderSitemapDocument(entries.map(renderSitemapUrl));
 }

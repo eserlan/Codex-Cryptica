@@ -31,7 +31,9 @@
   <title>Codex Cryptica | {article.title}</title>
 </svelte:head>
 
-<div class="min-h-screen bg-theme-background p-6 lg:p-12 max-w-5xl mx-auto">
+<div
+  class="min-h-full shrink-0 w-full bg-theme-background p-6 lg:p-12 max-w-5xl mx-auto"
+>
   <div class="mb-12 flex justify-between items-end">
     <div>
       <h1
@@ -47,7 +49,8 @@
       href="{base}/help"
       class="text-xs text-theme-muted hover:text-theme-primary transition-colors uppercase font-mono tracking-widest flex items-center gap-2"
     >
-      <span class="icon-[lucide--chevron-left] w-4 h-4"></span>
+      <span aria-hidden="true" class="icon-[lucide--chevron-left] w-4 h-4"
+      ></span>
       All Protocols
     </a>
   </div>

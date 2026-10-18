@@ -9,6 +9,9 @@
   } from "$lib/utils/stat-sheet-field-actions";
   import { type IdGenerator, systemIdGenerator } from "$lib/utils/runtime-deps";
   import ItemTableNode from "./presentation/nodes/ItemTableNode.svelte";
+  import TovLuckControl from "./TovLuckControl.svelte";
+  import TovDoomControl from "./TovDoomControl.svelte";
+  import { isTovLuckField, isTovDoomField } from "@codex/stat-sheet-engine";
 
   let {
     entity,
@@ -169,7 +172,10 @@
     class="flex flex-col items-center gap-3 py-8 text-center"
     data-testid="stat-sheet-empty"
   >
-    <span class="icon-[lucide--list-checks] h-8 w-8 text-theme-muted"></span>
+    <span
+      aria-hidden="true"
+      class="icon-[lucide--list-checks] h-8 w-8 text-theme-muted"
+    ></span>
     <p class="max-w-xs text-xs text-theme-muted">
       No stats added yet. Add fields manually or apply a template to get
       started.
@@ -204,7 +210,7 @@
         {#if field.type === "heading"}
           <button
             type="button"
-            class="mt-2 flex w-full items-center gap-2 border-b border-theme-border pb-1 text-left text-[10px] font-bold uppercase tracking-widest text-theme-muted hover:text-theme-primary"
+            class="mt-2 flex w-full items-center gap-2 border-b border-theme-border pb-1 text-left text-micro font-bold uppercase tracking-widest text-theme-muted hover:text-theme-primary"
             onclick={() => toggleHeading(field)}
             data-testid="stat-sheet-heading"
             aria-expanded={!field.collapsed}
@@ -217,6 +223,20 @@
             ></span>
             {field.label}
           </button>
+        {:else if isTovLuckField(entity.statSheet?.templateId, field)}
+          <TovLuckControl
+            {field}
+            {readOnly}
+            onChange={(value) => updateFieldValue(field.id, value)}
+            testIdPrefix="stat-sheet-tov-luck"
+          />
+        {:else if isTovDoomField(entity.statSheet?.templateId, field)}
+          <TovDoomControl
+            {field}
+            {readOnly}
+            onChange={(value) => updateFieldValue(field.id, value)}
+            testIdPrefix="stat-sheet-tov-doom"
+          />
         {:else if field.type === "counter"}
           <div
             class="flex flex-wrap items-center justify-between gap-2 rounded border border-theme-border px-2 py-1.5"
@@ -473,10 +493,15 @@
         {:else if field.type === "item-table"}
           <ItemTableNode
             {field}
+            catalogue={readOnly && field.stockLedger === true}
             context={{
               fields,
               readOnly,
+              entityId: entity.id,
               mode: "view",
+              sectionKeys: new Map(),
+              isSectionCollapsed: () => false,
+              onToggleSection: () => {},
               onUpdateFieldValue: (fId, val) => updateFieldValue(fId, val),
               onUpdateField: (fId, updates) => updateField(fId, updates),
               onAdjustCounter: () => {},
@@ -488,7 +513,7 @@
     {#if !readOnly}
       <button
         type="button"
-        class="mt-2 self-start text-[10px] font-bold uppercase tracking-wide text-theme-muted hover:text-theme-primary"
+        class="mt-2 self-start text-micro font-bold uppercase tracking-wide text-theme-muted hover:text-theme-primary"
         onclick={onOpenEditor}
         data-testid="stat-sheet-edit-layout"
       >

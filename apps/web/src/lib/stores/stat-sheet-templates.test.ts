@@ -14,10 +14,8 @@ vi.mock("./vault-registry.svelte", () => ({
   },
 }));
 
-import {
-  StatSheetTemplateStore,
-  BUILT_IN_STAT_SHEET_TEMPLATES,
-} from "./stat-sheet-templates.svelte";
+import { StatSheetTemplateStore } from "./stat-sheet-templates.svelte";
+import { BUILT_IN_STAT_SHEET_TEMPLATES } from "./stat-sheet/built-in-templates";
 
 describe("StatSheetTemplateStore", () => {
   let store: StatSheetTemplateStore;
@@ -73,6 +71,7 @@ describe("StatSheetTemplateStore", () => {
       expect.arrayContaining([
         "builtin-dnd-character",
         "builtin-dnd-npc",
+        "builtin-dnd5e-monster",
         "builtin-pathfinder-character",
         "builtin-vampire-character",
         "builtin-cyberpunk-character",
@@ -83,8 +82,33 @@ describe("StatSheetTemplateStore", () => {
         "builtin-item-dnd-magic",
         "builtin-item-cyberpunk-gear",
         "builtin-item-mythras-gear",
+        "builtin-tov-character",
+        "builtin-tov-npc",
+        "builtin-tov-monster",
       ]),
     );
+  });
+
+  it("includes native Tales of the Valiant templates with stable IDs and BFRD mechanics (#3944)", () => {
+    const tovChar = store.allTemplates.find(
+      (t) => t.id === "builtin-tov-character",
+    );
+    expect(tovChar).toBeDefined();
+    expect(tovChar?.systemId).toBe("tales-of-the-valiant");
+    expect(tovChar?.fields.map((f) => f.id)).toContain("lineage");
+    expect(tovChar?.fields.map((f) => f.id)).toContain("heritage");
+    expect(tovChar?.fields.map((f) => f.id)).toContain("luck");
+
+    const tovMonster = store.allTemplates.find(
+      (t) => t.id === "builtin-tov-monster",
+    );
+    expect(tovMonster).toBeDefined();
+    expect(tovMonster?.systemId).toBe("tales-of-the-valiant");
+    expect(tovMonster?.fields.map((f) => f.id)).toContain("doom");
+
+    const tovNpc = store.allTemplates.find((t) => t.id === "builtin-tov-npc");
+    expect(tovNpc).toBeDefined();
+    expect(tovNpc?.systemId).toBe("tales-of-the-valiant");
   });
 
   it("tags item templates with the real 'item' category so they surface as defaults for the Item category", () => {
@@ -188,6 +212,129 @@ describe("StatSheetTemplateStore", () => {
     ).toBe(false);
   });
 
+  describe("builtin-dnd5e-monster (#2873)", () => {
+    const monster = BUILT_IN_STAT_SHEET_TEMPLATES.find(
+      (t) => t.id === "builtin-dnd5e-monster",
+    )!;
+    const fieldById = (id: string) => monster.fields.find((f) => f.id === id);
+
+    it("exists as a distinct template from the lightweight D&D NPC block", () => {
+      expect(monster).toBeDefined();
+      expect(monster.category).toBe("npc");
+      const lightweight = BUILT_IN_STAT_SHEET_TEMPLATES.find(
+        (t) => t.id === "builtin-dnd-npc",
+      )!;
+      expect(lightweight).toBeDefined();
+      expect(lightweight.fields.length).toBeLessThan(monster.fields.length);
+    });
+
+    it("covers identity fields: size, type, subtype, alignment, CR, proficiency bonus", () => {
+      expect(fieldById("size")).toMatchObject({ type: "text" });
+      expect(fieldById("creature_type")).toMatchObject({ type: "text" });
+      expect(fieldById("subtype")).toMatchObject({ type: "text" });
+      expect(fieldById("alignment")).toMatchObject({ type: "text" });
+      // Fractional CRs (1/8, 1/4, 1/2) rule out a numeric field.
+      expect(fieldById("cr")).toMatchObject({ type: "text" });
+      expect(fieldById("proficiency_bonus")).toMatchObject({ type: "number" });
+    });
+
+    it("makes HP a counter usable as an in-play tracker, with max/hit-dice preserved", () => {
+      expect(fieldById("hp")).toMatchObject({ type: "counter", min: 0 });
+      expect(fieldById("hp")!.max).toBeGreaterThan(0);
+      expect(fieldById("hit_dice")).toMatchObject({ type: "text" });
+      expect(fieldById("ac")).toMatchObject({ type: "number" });
+      expect(fieldById("speed")).toMatchObject({ type: "text" });
+      expect(fieldById("speed_modes")).toMatchObject({ type: "text" });
+    });
+
+    it("gives all six ability scores as numbers", () => {
+      for (const score of [
+        "str_score",
+        "dex_score",
+        "con_score",
+        "int_score",
+        "wis_score",
+        "cha_score",
+      ]) {
+        expect(fieldById(score)).toMatchObject({ type: "number" });
+      }
+    });
+
+    it("derives saving throw and skill dice rolls from ability scores via modifierSource", () => {
+      expect(fieldById("str_save")).toMatchObject({
+        type: "dice",
+        modifierSource: "str_score",
+      });
+      expect(fieldById("dex_save")).toMatchObject({
+        type: "dice",
+        modifierSource: "dex_score",
+      });
+      expect(fieldById("perception")).toMatchObject({
+        type: "dice",
+        modifierSource: "wis_score",
+      });
+      expect(fieldById("passive_perception")).toMatchObject({
+        type: "number",
+      });
+    });
+
+    it("covers damage/condition defences, senses, and languages as plain text lists", () => {
+      for (const id of [
+        "damage_vulnerabilities",
+        "damage_resistances",
+        "damage_immunities",
+        "condition_immunities",
+        "senses",
+        "languages",
+      ]) {
+        expect(fieldById(id)).toMatchObject({ type: "text" });
+      }
+    });
+
+    it("preserves traits and spellcasting as editable rules text rather than rigid fields", () => {
+      expect(fieldById("traits")).toMatchObject({ type: "longtext" });
+      expect(fieldById("spellcasting")).toMatchObject({ type: "longtext" });
+      expect(fieldById("lair_actions")).toMatchObject({ type: "longtext" });
+    });
+
+    it("keeps actions, bonus actions, reactions, and legendary actions as separate repeatable entries with rollable attack/damage formulas", () => {
+      for (const id of ["actions", "bonus_actions", "reactions"]) {
+        const field = fieldById(id)!;
+        expect(field.type).toBe("item-table");
+        expect(field.linkVaultItems).toBe(false);
+        const columnIds = field.columns?.map((c) => c.id);
+        expect(columnIds).toEqual(
+          expect.arrayContaining(["name", "attack", "damage", "description"]),
+        );
+        expect(field.columns?.find((c) => c.id === "attack")).toMatchObject({
+          type: "dice",
+        });
+        expect(field.columns?.find((c) => c.id === "damage")).toMatchObject({
+          type: "dice",
+        });
+      }
+
+      const legendary = fieldById("legendary_actions")!;
+      expect(legendary.type).toBe("item-table");
+      expect(legendary.linkVaultItems).toBe(false);
+      expect(legendary.columns?.map((c) => c.id)).toEqual(
+        expect.arrayContaining(["name", "cost", "description"]),
+      );
+
+      expect(fieldById("multiattack")).toMatchObject({ type: "text" });
+      expect(fieldById("legendary_actions_intro")).toMatchObject({
+        type: "text",
+      });
+    });
+
+    it("has no generic notes field, and every longtext field has a specific label", () => {
+      const notesFields = monster.fields.filter(
+        (f) => f.type === "longtext" && f.label === "Notes",
+      );
+      expect(notesFields).toHaveLength(0);
+    });
+  });
+
   it("saves the current fields as a new vault-scoped template", async () => {
     const mockIdGenerator = { uuid: vi.fn(() => "new-id") };
     store = new StatSheetTemplateStore(mockIdGenerator);
@@ -214,6 +361,48 @@ describe("StatSheetTemplateStore", () => {
     const db = await getDB();
     const persisted = await db.get("stat_sheet_templates", "template-new-id");
     expect(persisted?.vaultId).toBe("test-vault");
+  });
+
+  it("keeps a shop's trade history out of a saved template and out of new sheets", async () => {
+    const record = {
+      tradeId: "t1",
+      kind: "purchase" as const,
+      rowId: "rope",
+      itemName: "Rope",
+      quantity: 1,
+      total: { units: 2, currency: "gp", precision: 0 },
+      accounting: "record-only" as const,
+      status: "complete" as const,
+      at: "2026-10-12T12:00:00.000Z",
+    };
+    store = new StatSheetTemplateStore({ uuid: vi.fn(() => "log-id") });
+
+    const saved = await store.saveAsTemplate("Shop copy", [
+      {
+        id: "stock",
+        label: "Stock",
+        type: "item-table",
+        stockLedger: true,
+        tradeLog: [record],
+      },
+    ]);
+    expect(saved?.fields[0]).not.toHaveProperty("tradeLog");
+    expect(saved?.fields[0]).toMatchObject({ stockLedger: true });
+
+    // An older template that already carries a log still starts clean.
+    const cloned = store.cloneTemplateFields({
+      id: "old",
+      name: "Old",
+      fields: [
+        {
+          id: "stock",
+          label: "Stock",
+          type: "item-table",
+          tradeLog: [record],
+        },
+      ],
+    });
+    expect(cloned[0]).not.toHaveProperty("tradeLog");
   });
 
   it("loads previously saved templates scoped to the active vault on init", async () => {
@@ -329,6 +518,28 @@ describe("StatSheetTemplateStore", () => {
     const ok = await store.renameTemplate("missing-id", "New Name");
     expect(ok).toBe(false);
     expect(store.templates).toHaveLength(0);
+  });
+
+  it("refuses to save a template with duplicate field keys (#3180)", async () => {
+    const result = await store.saveAsTemplate("Dupes", [
+      { id: "a", key: "hp", label: "HP", type: "counter" },
+      { id: "b", key: "hp", label: "Hit Points", type: "counter" },
+    ] as any);
+
+    expect(result).toBeNull();
+    expect(store.templates).toHaveLength(0);
+  });
+
+  it("refuses to update template fields with a malformed key (#3180)", async () => {
+    const saved = await store.saveAsTemplate("Temp", []);
+    expect(saved).not.toBeNull();
+
+    const result = await store.updateTemplateFields(saved!.id, [
+      { id: "a", key: "hit-points", label: "Hit Points", type: "counter" },
+    ] as any);
+
+    expect(result).toBe(false);
+    expect(store.templates.find((t) => t.id === saved!.id)?.fields).toEqual([]);
   });
 
   it("returns null and does not throw when saving a template fails (e.g. IDB error)", async () => {

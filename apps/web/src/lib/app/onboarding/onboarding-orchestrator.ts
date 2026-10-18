@@ -11,24 +11,19 @@
  * user gets exactly ONE coherent path, and we make the behaviour unit-testable
  * without a DOM.
  *
- * Key behaviour changes vs. the old effects:
- * - An empty *user* vault is no longer hijacked by an auto-loaded demo
- *   (#1782). It returns `guided-empty`, which starts the short task-focused
- *   tour and lets the graph's guided empty state do the teaching.
+ * Key behaviour:
+ * - A user who is not onboarded gets the goal invitation (spec 175), never an
+ *   auto-started tour, whatever their vault holds. The tour only starts from
+ *   an explicit tap.
  * - The changelog only surfaces for returning users when nothing else is
- *   competing for attention (no active tour, no open modal) (#1780).
+ *   competing for attention (no tour, modal or guided-setup journey) (#1780).
  */
 
 export type FirstRunAction =
   /** Do nothing this tick. */
   | { kind: "none" }
-  /** Start the `initial-onboarding` guided tour. */
-  | { kind: "tour" }
-  /**
-   * Empty, freshly-created *user* vault: run the guided first-entity flow
-   * (short tour + graph empty-state checklist) instead of loading a demo.
-   */
-  | { kind: "guided-empty" }
+  /** Show the goal invitation (Build a world, Write a story, ...). */
+  | { kind: "goal-invitation" }
   /** Returning user has an unseen release — show the changelog. */
   | { kind: "changelog" };
 
@@ -47,14 +42,27 @@ export interface FirstRunState {
   hasDemoQueryParam: boolean;
   /** The user has already completed the initial onboarding tour. */
   hasSeenTour: boolean;
-  /** Number of entities in the active vault. */
-  entityCount: number;
+  /** The goal invitation was answered, explored or closed on this device. */
+  goalInvitationResolved: boolean;
+  /** A guided-setup journey card is showing. */
+  journeyActive: boolean;
   /** A guided tour is already running. */
   activeTour: boolean;
   /** Any modal is currently open. */
   anyModalOpen: boolean;
   /** There is a release the user has not seen yet. */
   hasUnseenRelease: boolean;
+}
+
+/**
+ * "Onboarded" for every first-run prompt: the old tour was completed, or the
+ * goal invitation was answered, explored or closed (FR-003a).
+ */
+export function isOnboarded(s: {
+  hasSeenTour: boolean;
+  goalInvitationResolved: boolean;
+}): boolean {
+  return s.hasSeenTour || s.goalInvitationResolved;
 }
 
 /**
@@ -75,26 +83,17 @@ export function decideFirstRunAction(state: FirstRunState): FirstRunAction {
     return { kind: "none" };
   }
 
-  // Highest priority: a user who has not been onboarded yet.
-  if (!state.hasSeenTour) {
-    // Don't restart a tour that is already running (the caller re-evaluates
-    // when activeTour changes, which would otherwise reset it to step 0), and
-    // don't launch over an open modal — either would contradict the
-    // "never stack or compete" goal. Wait for the next evaluation instead.
-    if (state.activeTour || state.anyModalOpen) {
-      return { kind: "none" };
-    }
-    // An empty vault they created themselves — guide them to a first entity
-    // rather than silently swapping in a demo world (#1782).
-    if (state.entityCount === 0) {
-      return { kind: "guided-empty" };
-    }
-    return { kind: "tour" };
+  const busy = state.activeTour || state.anyModalOpen || state.journeyActive;
+
+  // Highest priority: a user who has not been onboarded yet. Wait rather than
+  // open over a tour, a modal or a journey ("never stack or compete").
+  if (!isOnboarded(state)) {
+    return busy ? { kind: "none" } : { kind: "goal-invitation" };
   }
 
   // Returning, onboarded user: only surface the changelog when nothing else is
   // competing for their attention (#1780).
-  if (state.hasUnseenRelease && !state.activeTour && !state.anyModalOpen) {
+  if (state.hasUnseenRelease && !busy) {
     return { kind: "changelog" };
   }
 

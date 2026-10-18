@@ -3,7 +3,7 @@ import {
   type PublishedNotice,
 } from "../../../../packages/schema/src/publishing";
 import { getCorsHeaders } from "./publish";
-import { authorizeListingMutation } from "./directory";
+import { authorizeListingMutation } from "./auth";
 import { readSuspensionMarker } from "./suspension";
 
 export function getNoticeObjectKey(publishId: string): string {

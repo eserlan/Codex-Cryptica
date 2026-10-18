@@ -89,6 +89,62 @@ describe("SEOGeneratorLayout Theming Sync", () => {
     expect(setThemeSpy).toHaveBeenCalledWith("cyberpunk");
   });
 
+  it("widens the form column only for pages that opt in with wideForm", () => {
+    const generate = vi.fn().mockResolvedValue({});
+    const narrow = render(SEOGeneratorLayout, {
+      props: { generate, formFields: noopSnippet, autoGenerateExplicit: true },
+    });
+    expect(narrow.container.querySelector(".lg\\:col-span-5")).toBeNull();
+    expect(narrow.container.querySelectorAll(".lg\\:col-span-3")).toHaveLength(
+      2,
+    );
+    narrow.unmount();
+
+    const wide = render(SEOGeneratorLayout, {
+      props: {
+        generate,
+        formFields: noopSnippet,
+        autoGenerateExplicit: true,
+        wideForm: true,
+      },
+    });
+    expect(wide.container.querySelector(".lg\\:col-span-5")).not.toBeNull();
+    expect(wide.container.querySelector(".lg\\:col-span-7")).not.toBeNull();
+    expect(wide.container.querySelector(".lg\\:col-span-12")).not.toBeNull();
+  });
+
+  it("stacks form, output and table notes in one column with singleColumn", () => {
+    const { container } = render(SEOGeneratorLayout, {
+      props: {
+        generate: vi.fn().mockResolvedValue({}),
+        formFields: noopSnippet,
+        autoGenerateExplicit: true,
+        singleColumn: true,
+      },
+    });
+    expect(container.querySelectorAll(".lg\\:col-span-12")).toHaveLength(3);
+    expect(container.querySelector(".lg\\:col-span-5")).toBeNull();
+    expect(container.querySelector(".lg\\:col-span-3")).toBeNull();
+  });
+
+  it("leaves submitting to the form fields when showSubmitButton is false", async () => {
+    const generate = vi.fn().mockResolvedValue({});
+    const { container } = render(SEOGeneratorLayout, {
+      props: {
+        generate,
+        formFields: noopSnippet,
+        autoGenerateExplicit: true,
+        showSubmitButton: false,
+      },
+    });
+    expect(container.querySelector("#generate-button")).toBeNull();
+    expect(container.querySelector("#ai-toggle")).toBeNull();
+
+    // An implicit submit (Enter in a lone input) must not start a generation.
+    await fireEvent.submit(container.querySelector("form")!);
+    expect(generate).not.toHaveBeenCalled();
+  });
+
   it("does NOT call themeStore.setTheme when isThemeCustomizable is false", async () => {
     themeStore.currentThemeId = "workspace";
     const setThemeSpy = vi
@@ -124,7 +180,7 @@ describe("SEOGeneratorLayout Theming Sync", () => {
       document.head.innerHTML = "";
     });
 
-    it("generates and injects correct SoftwareApplication and BreadcrumbList schemas", () => {
+    it("generates and injects correct SoftwareApplication, BreadcrumbList, and FAQPage schemas (FAQPage emitted once, not duplicated in SoftwareApplication)", () => {
       const mockGenerate = vi.fn().mockResolvedValue({});
 
       render(SEOGeneratorLayout, {
@@ -143,6 +199,7 @@ describe("SEOGeneratorLayout Theming Sync", () => {
       );
       let softwareAppFound = false;
       let breadcrumbFound = false;
+      let faqPageCount = 0;
 
       scripts.forEach((script) => {
         try {
@@ -150,13 +207,15 @@ describe("SEOGeneratorLayout Theming Sync", () => {
           if (json["@type"] === "SoftwareApplication") {
             softwareAppFound = true;
             expect(json.name).toBe("Codex Cryptica");
-            expect(json.mainEntity["@type"]).toBe("FAQPage");
-            expect(json.mainEntity.mainEntity[0].name).toBe("FAQ Q1?");
+            expect(json.mainEntity).toBeUndefined();
           } else if (json["@type"] === "BreadcrumbList") {
             breadcrumbFound = true;
             expect(json.itemListElement).toHaveLength(3);
             expect(json.itemListElement[1].name).toBe("Generators");
             expect(json.itemListElement[2].name).toBe("RPG NPC Generator");
+          } else if (json["@type"] === "FAQPage") {
+            faqPageCount += 1;
+            expect(json.mainEntity[0].name).toBe("FAQ Q1?");
           }
         } catch {
           // ignore
@@ -165,6 +224,7 @@ describe("SEOGeneratorLayout Theming Sync", () => {
 
       expect(softwareAppFound).toBe(true);
       expect(breadcrumbFound).toBe(true);
+      expect(faqPageCount).toBe(1);
     });
 
     it("generates and injects correct Person/Place schemas when generatedData is set", async () => {
@@ -217,6 +277,198 @@ describe("SEOGeneratorLayout Theming Sync", () => {
       });
 
       expect(personSchemaFound).toBe(true);
+    });
+  });
+
+  describe("Open Graph & Twitter Card Meta Tags", () => {
+    afterEach(() => {
+      document.head.innerHTML = "";
+    });
+
+    it("renders default OG and Twitter meta tags with fallback image and alt", () => {
+      const mockGenerate = vi.fn().mockResolvedValue({});
+
+      render(SEOGeneratorLayout, {
+        props: {
+          pageTitle: "RPG NPC Generator | Codex Cryptica",
+          metaDescription: "Generate awesome characters.",
+          canonicalPath: "/generators/npc",
+          generate: mockGenerate,
+          formFields: noopSnippet,
+        },
+      });
+
+      const ogImage = document.querySelector('meta[property="og:image"]');
+      const ogImageAlt = document.querySelector(
+        'meta[property="og:image:alt"]',
+      );
+      const ogWidth = document.querySelector('meta[property="og:image:width"]');
+      const ogHeight = document.querySelector(
+        'meta[property="og:image:height"]',
+      );
+      const twitterCard = document.querySelector('meta[name="twitter:card"]');
+      const twitterImage = document.querySelector('meta[name="twitter:image"]');
+      const twitterImageAlt = document.querySelector(
+        'meta[name="twitter:image:alt"]',
+      );
+
+      expect(ogImage?.getAttribute("content")).toBe(
+        "https://assets.codexcryptica.com/screenshots/feature-connect.jpg",
+      );
+      expect(ogImageAlt?.getAttribute("content")).toBe(
+        "A Codex Cryptica campaign vault showing an entity graph beside an open character record",
+      );
+      expect(ogWidth?.getAttribute("content")).toBe("1600");
+      expect(ogHeight?.getAttribute("content")).toBe("1000");
+      expect(twitterCard?.getAttribute("content")).toBe("summary_large_image");
+      expect(twitterImage?.getAttribute("content")).toBe(
+        "https://assets.codexcryptica.com/screenshots/feature-connect.jpg",
+      );
+      expect(twitterImageAlt?.getAttribute("content")).toBe(
+        "A Codex Cryptica campaign vault showing an entity graph beside an open character record",
+      );
+    });
+
+    it("renders custom OG and Twitter image and alt text when provided", () => {
+      const mockGenerate = vi.fn().mockResolvedValue({});
+
+      render(SEOGeneratorLayout, {
+        props: {
+          pageTitle: "Alien Race Generator | Codex Cryptica",
+          metaDescription: "Build unique non-human species.",
+          canonicalPath: "/generators/alien-race",
+          ogImage:
+            "https://assets.codexcryptica.com/screenshots/generator-alien-race.jpg",
+          ogImageAlt: "Alien race generator preview",
+          generate: mockGenerate,
+          formFields: noopSnippet,
+        },
+      });
+
+      const ogImage = document.querySelector('meta[property="og:image"]');
+      const ogImageAlt = document.querySelector(
+        'meta[property="og:image:alt"]',
+      );
+      const twitterImage = document.querySelector('meta[name="twitter:image"]');
+      const twitterImageAlt = document.querySelector(
+        'meta[name="twitter:image:alt"]',
+      );
+
+      expect(ogImage?.getAttribute("content")).toBe(
+        "https://assets.codexcryptica.com/screenshots/generator-alien-race.jpg",
+      );
+      expect(ogImageAlt?.getAttribute("content")).toBe(
+        "Alien race generator preview",
+      );
+      expect(twitterImage?.getAttribute("content")).toBe(
+        "https://assets.codexcryptica.com/screenshots/generator-alien-race.jpg",
+      );
+      expect(twitterImageAlt?.getAttribute("content")).toBe(
+        "Alien race generator preview",
+      );
+    });
+
+    it("omits image alt tags when custom ogImage is provided without ogImageAlt to prevent mismatched descriptions", () => {
+      const mockGenerate = vi.fn().mockResolvedValue({});
+
+      render(SEOGeneratorLayout, {
+        props: {
+          pageTitle: "Custom Generator | Codex Cryptica",
+          metaDescription: "Custom description.",
+          canonicalPath: "/generators/custom",
+          ogImage:
+            "https://assets.codexcryptica.com/screenshots/generator-custom.jpg",
+          generate: mockGenerate,
+          formFields: noopSnippet,
+        },
+      });
+
+      const ogImage = document.querySelector('meta[property="og:image"]');
+      const ogImageAlt = document.querySelector(
+        'meta[property="og:image:alt"]',
+      );
+      const twitterImage = document.querySelector('meta[name="twitter:image"]');
+      const twitterImageAlt = document.querySelector(
+        'meta[name="twitter:image:alt"]',
+      );
+
+      expect(ogImage?.getAttribute("content")).toBe(
+        "https://assets.codexcryptica.com/screenshots/generator-custom.jpg",
+      );
+      expect(ogImageAlt).toBeNull();
+      expect(twitterImage?.getAttribute("content")).toBe(
+        "https://assets.codexcryptica.com/screenshots/generator-custom.jpg",
+      );
+      expect(twitterImageAlt).toBeNull();
+    });
+  });
+
+  describe("Smart copy integration", () => {
+    it("passes full and section Markdown through the injected clipboard service", async () => {
+      const copyContent = vi.fn().mockResolvedValue(true);
+      const seedDraft = {
+        type: "character" as const,
+        title: "Seed",
+        summary: "A useful NPC.",
+        content: "### Chronicle\nA useful NPC.",
+        lore: "### Secret\nA hidden truth.",
+        labels: ["ally"],
+        status: "draft" as const,
+      };
+
+      render(SEOGeneratorLayout, {
+        props: {
+          canonicalPath: "/generators/npc",
+          generate: vi.fn().mockResolvedValue(seedDraft),
+          formFields: noopSnippet,
+          initialDraft: seedDraft,
+          clipboardService: { copyContent } as never,
+        },
+      });
+
+      await tick();
+      await fireEvent.click(document.querySelector("#copy-markdown-btn")!);
+      await fireEvent.click(
+        screen.getByRole("button", { name: "Copy Chronicle as Markdown" }),
+      );
+
+      expect(copyContent).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({
+          markdown: expect.stringContaining("# Seed"),
+        }),
+      );
+      expect(copyContent).toHaveBeenNthCalledWith(2, {
+        markdown: "### Chronicle\nA useful NPC.",
+      });
+    });
+
+    it("shows error feedback when the injected service reports total failure", async () => {
+      const copyContent = vi.fn().mockResolvedValue(false);
+      const seedDraft = {
+        type: "character" as const,
+        title: "Seed",
+        content: "A useful NPC.",
+        lore: "",
+        labels: [],
+        status: "draft" as const,
+      };
+
+      render(SEOGeneratorLayout, {
+        props: {
+          canonicalPath: "/generators/npc",
+          generate: vi.fn().mockResolvedValue(seedDraft),
+          formFields: noopSnippet,
+          initialDraft: seedDraft,
+          clipboardService: { copyContent } as never,
+        },
+      });
+
+      await tick();
+      await fireEvent.click(document.querySelector("#copy-markdown-btn")!);
+
+      expect(screen.getByText("Could not copy")).toBeTruthy();
+      expect(screen.queryByText("Copied!")).toBeNull();
     });
   });
 
@@ -407,6 +659,150 @@ describe("SEOGeneratorLayout Theming Sync", () => {
         "generator_completed",
         expect.anything(),
       );
+    });
+
+    it("auto-drafts at most once per canonicalPath even if the component re-renders (regression, #2808 review)", async () => {
+      // A handoff-arrival page (initialDraft resolving to null so the page
+      // seeds itself from handed-over context, e.g. Faction -> Roster) drove
+      // this effect and the generatedData=initialDraft sync effect into a
+      // runaway loop that hung the tab, because SEOGeneratorLayout is reused
+      // across client-side navigations rather than remounted. The guard is
+      // keyed by canonicalPath precisely so it survives spurious re-renders
+      // of the same page without re-arming for a genuinely new one.
+      const mockGenerate = vi.fn().mockResolvedValue({
+        type: "note" as const,
+        title: "Roster",
+        content: "roster",
+        lore: "",
+        labels: [],
+        status: "draft" as const,
+      });
+
+      const { rerender } = render(SEOGeneratorLayout, {
+        props: {
+          canonicalPath: "/generators/faction-roster",
+          generate: mockGenerate,
+          formFields: noopSnippet,
+          initialDraft: null,
+        },
+      });
+
+      await vi.waitFor(() => expect(mockGenerate).toHaveBeenCalledTimes(1));
+
+      await rerender({
+        canonicalPath: "/generators/faction-roster",
+        generate: mockGenerate,
+        formFields: noopSnippet,
+        initialDraft: null,
+      });
+      await tick();
+      await tick();
+
+      expect(mockGenerate).toHaveBeenCalledTimes(1);
+    });
+
+    it("autoGenerateExplicit=true suppresses the passive on-mount example — nothing fires until the parent calls triggerExplicitAutoGenerate()", async () => {
+      // The parent (GeneratorPageContent) owns the handoff-arrival timing —
+      // see triggerExplicitAutoGenerate()'s doc comment for why this can't
+      // safely be decided reactively inside this component alone.
+      const mockGenerate = vi.fn().mockResolvedValue({
+        type: "note" as const,
+        title: "Roster",
+        content: "roster",
+        lore: "",
+        labels: [],
+        status: "draft" as const,
+      });
+
+      render(SEOGeneratorLayout, {
+        props: {
+          canonicalPath: "/generators/faction-roster",
+          generate: mockGenerate,
+          formFields: noopSnippet,
+          initialDraft: null,
+          autoGenerateExplicit: true,
+        },
+      });
+
+      // Give any (incorrect) passive auto-draft a chance to fire before
+      // asserting it didn't.
+      await new Promise((r) => setTimeout(r, 50));
+      expect(mockGenerate).not.toHaveBeenCalled();
+    });
+
+    it("does not request a local seed when the generator requires AI", async () => {
+      const mockGenerate = vi.fn().mockResolvedValue({
+        type: "note" as const,
+        title: "Idea development",
+        content: "content",
+        lore: "",
+        labels: [],
+        status: "draft" as const,
+      });
+
+      render(SEOGeneratorLayout, {
+        props: {
+          canonicalPath: "/tools/idea-developer",
+          generate: mockGenerate,
+          formFields: noopSnippet,
+          aiModeRequired: true,
+        },
+      });
+
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      expect(mockGenerate).not.toHaveBeenCalled();
+    });
+
+    it("triggerExplicitAutoGenerate() fires a real (AI-on-by-default) generation, not a throwaway example", async () => {
+      const mockGenerate = vi.fn().mockResolvedValue({
+        type: "note" as const,
+        title: "Roster",
+        content: "roster",
+        lore: "",
+        labels: [],
+        status: "draft" as const,
+      });
+
+      const { component } = render(SEOGeneratorLayout, {
+        props: {
+          canonicalPath: "/generators/faction-roster",
+          generate: mockGenerate,
+          formFields: noopSnippet,
+          initialDraft: null,
+          autoGenerateExplicit: true,
+        },
+      });
+
+      (
+        component as unknown as { triggerExplicitAutoGenerate: () => void }
+      ).triggerExplicitAutoGenerate();
+
+      await vi.waitFor(() => expect(mockGenerate).toHaveBeenCalledTimes(1));
+      // useAI defaults to true — this goes through the same handleGenerate()
+      // path an explicit click uses, unlike the passive example-seed path,
+      // which is hardcoded to useAI:false.
+      expect(mockGenerate).toHaveBeenCalledWith(
+        expect.objectContaining({ useAI: true }),
+      );
+      // Real generation, not a throwaway example: fires the normal funnel
+      // tracking and unlocks onward handoffs the same way an explicit click does.
+      await vi.waitFor(() => {
+        expect(trackEventMock).toHaveBeenCalledWith(
+          "generator_started",
+          expect.anything(),
+        );
+        expect(trackEventMock).toHaveBeenCalledWith(
+          "generator_completed",
+          expect.anything(),
+        );
+      });
+
+      // Calling it again for the same page must not double-fire.
+      (
+        component as unknown as { triggerExplicitAutoGenerate: () => void }
+      ).triggerExplicitAutoGenerate();
+      await new Promise((r) => setTimeout(r, 50));
+      expect(mockGenerate).toHaveBeenCalledTimes(1);
     });
 
     it("fires generator_started then generator_completed on an explicit Generate click", async () => {

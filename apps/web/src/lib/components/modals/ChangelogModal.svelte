@@ -46,7 +46,7 @@
       >
         {hasUnseenMinorReleases ? "What's New" : "Recent Updates"}
       </h2>
-      <p class="mt-1 text-[10px] text-theme-muted uppercase tracking-[0.2em]">
+      <p class="mt-1 text-micro text-theme-muted uppercase tracking-[0.2em]">
         Codex Cryptica {VERSION}
         {!hasUnseenMinorReleases ? "(Up to Date)" : ""}
       </p>
@@ -74,7 +74,7 @@
             {release.title}
           </h3>
           <span
-            class="shrink-0 text-[10px] font-header uppercase tracking-wider text-theme-muted"
+            class="shrink-0 text-micro font-header uppercase tracking-wider text-theme-muted"
           >
             v{release.version} // {release.date}
           </span>
@@ -108,7 +108,7 @@
       {hasUnseenMinorReleases ? "Acknowledge Updates" : "Done"}
     </button>
     <div
-      class="mt-4 text-[9px] font-header uppercase tracking-[0.3em] text-theme-muted"
+      class="mt-4 text-nano font-header uppercase tracking-[0.3em] text-theme-muted"
     >
       Archive synchronization protocols maintained
     </div>

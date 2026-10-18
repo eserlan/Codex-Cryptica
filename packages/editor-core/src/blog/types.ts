@@ -19,6 +19,14 @@ export interface BlogArticle {
   updatedAt?: string;
   /** Editorial section, e.g. product updates versus GM guidance. */
   topic?: string;
+  /**
+   * Link-preview image for the post, as an absolute URL. Social crawlers do not
+   * negotiate formats, so this points at a plain R2 object rather than through
+   * `cdn-cgi/image`. Absent means the site's default card image.
+   */
+  image?: string;
+  /** Alt text for `image`. Ignored unless `image` is set. */
+  imageAlt?: string;
   content: string; // Raw Markdown
 }
 

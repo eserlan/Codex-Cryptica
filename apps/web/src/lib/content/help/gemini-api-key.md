@@ -1,24 +1,35 @@
 ---
 id: gemini-api-key
-title: Acquiring a OpenAI/Luna API Key
+title: Oracle AI Access and Personal Keys
+description: Set up the AI provider key used by the Lore Oracle in Codex Cryptica.
 tags: [ai, gemini, setup]
 rank: 6
 ---
 
-## How to get your OpenAI/Luna API Key
+## Choose your Oracle connection
 
-Codex Cryptica uses OpenAI/Luna to power the Lore Oracle. Follow these steps to get a free key:
+Open **Settings → Intelligence**. **Connection Mode** shows whether you are using the **System Proxy** or **Direct Connection: Custom Key**.
 
-1. **Visit Google AI Studio**: Go to [aistudio.google.com](https://aistudio.google.com/app/apikey).
-2. **Sign In**: Use your standard Google Account.
-3. **Create API Key**: Click on 'Get API key' in the sidebar, then click 'Create API key in new project'.
-4. **Copy & Paste**: Copy the generated key and paste it into the **Intelligence** tab in Settings.
+- **System Proxy** uses the shared service, subject to its usage limits. You do not need a personal key for this mode.
+- **Personal key** connects directly to the provider. The current personal-key text connection uses Google Gemini, even where the key field is labelled “OpenAI/Luna”. Keys from different providers are not interchangeable.
 
-### Why do I need this?
+### What the System Proxy remembers
 
-Using your own key ensures higher availability, faster response times, and access to the 'Advanced' tier for complex world-building tasks.
+The Oracle remembers your chat and the notes it has already seen, so each new question only sends what changed, and replies come back quicker and use less of your quota. To do this on the free System Proxy, your conversation and the notes it references are briefly stored on the AI provider's servers (up to 55 days) and then expire. Your vault always stays on your computer; only the chat does this. Using your own API key bypasses the System Proxy, but your prompts and the notes sent as context still leave your browser for processing by Google.
 
-### Related Blog Posts
+### Add or remove a personal key
 
-- [Worldbuilding Tool Without Mandatory AI](/blog/worldbuilding-tool-without-ai) — How Codex Cryptica remains fully functional offline and without AI keys.
-- [Why AI Slop is a Context Failure](/blog/ai-slop-is-context-failure) — How structured vault retrieval ensures OpenAI/Luna produces rich, setting-accurate lore.
+1. Open **Settings → Intelligence**.
+2. Use **Get free key from Google AI Studio** beside the key field to reach the provider’s key page.
+3. Paste your Gemini key into the key field and click **Activate Oracle**.
+4. To return to the system proxy, click **Remove Key** and confirm.
+
+The key is saved in this browser. Provider access and usage limits depend on your provider account; adding a key does not guarantee a free allowance or faster replies.
+
+### Image generation is configured separately
+
+In the same settings panel, **Image Generation Provider** offers **Cloudflare Workers AI**, a personal-key provider, and **Custom (OpenAI-Compatible)**. A custom image endpoint has its own URL, model and API-key fields. It does not change the Oracle’s text connection.
+
+### Keep AI off when you want local-only work
+
+Turn on **AI Disabled** in Settings. A personal key still sends requests and relevant context to an external provider. Local generator templates and manual editing do not need a key.

@@ -8,7 +8,11 @@ import {
   npcRolesForTheme,
   factionTypesForTheme,
   settlementTypesForTheme,
+  adventureArchetypesForTheme,
+  adventureTonesForTheme,
 } from "./campaign-generator-registry";
+import { adventureConfig } from "./public-adventure-constants";
+import { themeIdToLabel } from "./public-faction-constants";
 
 describe("theme-to-generator defaults (US3, T039)", () => {
   it("covers all real world-theme ids", () => {
@@ -87,5 +91,28 @@ describe("theme-to-generator defaults (US3, T039)", () => {
         );
       }
     }
+  });
+});
+
+describe("adventure generator theme choices", () => {
+  it("offers only the theme's own types and tones, not every genre's", () => {
+    const fantasyTypes = adventureArchetypesForTheme("fantasy");
+    const all = adventureConfig.archetypes;
+    expect(fantasyTypes.length).toBeGreaterThan(0);
+    expect(fantasyTypes.length).toBeLessThan(all.length);
+    expect(adventureTonesForTheme("fantasy").length).toBeLessThan(
+      adventureConfig.tones.length,
+    );
+    expect(adventureArchetypesForTheme("scifi")).not.toEqual(fantasyTypes);
+  });
+
+  it("every theme has at least one type and tone, and unknown themes fall back", () => {
+    for (const themeId of Object.keys(themeIdToLabel)) {
+      expect(adventureArchetypesForTheme(themeId).length).toBeGreaterThan(0);
+      expect(adventureTonesForTheme(themeId).length).toBeGreaterThan(0);
+    }
+    expect(adventureArchetypesForTheme("no-such-theme")).toEqual(
+      adventureArchetypesForTheme("fantasy"),
+    );
   });
 });

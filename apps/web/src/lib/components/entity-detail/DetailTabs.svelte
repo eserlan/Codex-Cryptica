@@ -1,6 +1,5 @@
 <script lang="ts">
   import type { Entity } from "schema";
-  import { categories } from "$lib/stores/categories.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { calendarEngine } from "chronology-engine";
@@ -12,6 +11,8 @@
     type EntityDetailTab,
     getTemporalLabel,
   } from "./detail-tabs";
+  import CategoryRadioGroup from "$lib/components/labels/CategoryRadioGroup.svelte";
+  import HelpEntityDetailSurface from "$lib/components/help-assistant/HelpEntityDetailSurface.svelte";
 
   let {
     entity,
@@ -119,23 +120,15 @@
 <div class="min-w-0 px-4 pt-2 pb-0 md:px-6 md:pt-4 md:pb-0">
   {#if isEditing}
     <div class="mb-2">
-      <label
-        class="block text-[10px] text-theme-secondary font-bold mb-1"
-        for="entity-type">CATEGORY</label
-      >
-      <select
-        id="entity-type"
+      <CategoryRadioGroup
         bind:value={editType}
-        class="bg-theme-bg border border-theme-border text-theme-text px-2 py-1.5 text-xs focus:outline-none focus:border-theme-primary w-full rounded"
-      >
-        {#each categories.list as cat (cat.id)}
-          <option value={cat.id}>{cat.label}</option>
-        {/each}
-      </select>
+        label="CATEGORY"
+        idPrefix="{idPrefix}-category"
+      />
     </div>
   {:else}
     <div
-      class="text-[10px] font-bold tracking-widest uppercase font-header mb-2"
+      class="text-micro font-bold tracking-widest uppercase font-header mb-2"
       style:color="var(--theme-meta-text)"
     >
       {entity.type}{#if dateText}
@@ -160,11 +153,13 @@
     </div>
   {/if}
 
+  <HelpEntityDetailSurface {entity} bind:activeTab {isEditing} />
+
   <div
     role="tablist"
     aria-label="Entity detail sections"
     tabindex="0"
-    class="flex overflow-x-auto custom-scrollbar gap-x-4 md:gap-x-6 gap-y-2 text-[10px] font-bold tracking-widest text-theme-muted border-b border-theme-border pb-2 font-header"
+    class="flex overflow-x-auto custom-scrollbar gap-x-4 md:gap-x-6 gap-y-2 text-micro font-bold tracking-widest text-theme-muted border-b border-theme-border pb-2 font-header"
     style:border-color={isFantasyTheme
       ? "var(--theme-selected-border)"
       : undefined}
@@ -175,10 +170,13 @@
       type="button"
       role="tab"
       class:shrink-0={true}
+      class:touch-target={true}
+      class:items-center={true}
       aria-selected={activeTab === "status"}
       aria-controls={panelIds.status}
       tabindex={activeTab === "status" ? 0 : -1}
       data-testid="tab-status"
+      data-help-target="status-tab"
       class={activeTab === "status"
         ? isFantasyTheme
           ? "border px-3 py-1.5 rounded-sm text-[color:var(--color-accent-primary)]"
@@ -195,12 +193,42 @@
       onclick={() => (activeTab = "status")}
       >{themeStore.jargon.tab_status.toUpperCase()}</button
     >
+    <button
+      id={tabIds.connections}
+      type="button"
+      role="tab"
+      class:shrink-0={true}
+      class:touch-target={true}
+      class:items-center={true}
+      aria-selected={activeTab === "connections"}
+      aria-controls={panelIds.connections}
+      tabindex={activeTab === "connections" ? 0 : -1}
+      data-testid="tab-connections"
+      data-help-target="connections-tab"
+      class={activeTab === "connections"
+        ? isFantasyTheme
+          ? "border px-3 py-1.5 rounded-sm text-[color:var(--color-accent-primary)]"
+          : "text-theme-primary border-b-2 border-theme-primary pb-2 -mb-2.5"
+        : isFantasyTheme
+          ? "transition text-[color:var(--theme-meta-text)] hover:text-[color:var(--theme-title-ink)]"
+          : "hover:text-theme-text transition"}
+      style:border-color={activeTab === "connections" && isFantasyTheme
+        ? "var(--theme-focus-border)"
+        : undefined}
+      style:background-color={activeTab === "connections" && isFantasyTheme
+        ? "var(--theme-focus-bg)"
+        : undefined}
+      onclick={() => (activeTab = "connections")}>CONNECTIONS</button
+    >
+
     {#if !vault.isGuest || canGuestEdit}
       <button
         id={tabIds.lore}
         type="button"
         role="tab"
         class:shrink-0={true}
+        class:touch-target={true}
+        class:items-center={true}
         aria-selected={activeTab === "lore"}
         aria-controls={panelIds.lore}
         tabindex={activeTab === "lore" ? 0 : -1}
@@ -229,6 +257,8 @@
       type="button"
       role="tab"
       class:shrink-0={true}
+      class:touch-target={true}
+      class:items-center={true}
       aria-selected={activeTab === "map"}
       aria-controls={panelIds.map}
       tabindex={activeTab === "map" ? 0 : -1}
@@ -255,6 +285,8 @@
         type="button"
         role="tab"
         class:shrink-0={true}
+        class:touch-target={true}
+        class:items-center={true}
         aria-selected={activeTab === "chats"}
         aria-controls={panelIds.chats}
         tabindex={activeTab === "chats" ? 0 : -1}
@@ -282,6 +314,8 @@
         type="button"
         role="tab"
         class:shrink-0={true}
+        class:touch-target={true}
+        class:items-center={true}
         aria-selected={activeTab === "family"}
         aria-controls={panelIds.family}
         tabindex={activeTab === "family" ? 0 : -1}
@@ -308,6 +342,8 @@
       type="button"
       role="tab"
       class:shrink-0={true}
+      class:touch-target={true}
+      class:items-center={true}
       aria-selected={activeTab === "stats"}
       aria-controls={panelIds.stats}
       tabindex={activeTab === "stats" ? 0 : -1}
@@ -333,6 +369,8 @@
       type="button"
       role="tab"
       class:shrink-0={true}
+      class:touch-target={true}
+      class:items-center={true}
       aria-selected={activeTab === "timeline"}
       aria-controls={panelIds.timeline}
       tabindex={activeTab === "timeline" ? 0 : -1}

@@ -62,6 +62,36 @@ describe("classifyApiError", () => {
     expect(result.message).toContain("safety policies");
   });
 
+  it("returns verification for a rejected session token, naming the likely cause", () => {
+    vi.stubGlobal("navigator", { onLine: true });
+    const result = classifyApiError(
+      new Error(
+        "[OracleProxy] Request failed: A valid session token is required (code: SESSION_TOKEN_MISSING)",
+      ),
+    );
+    expect(result.type).toBe("verification");
+    expect(result.message).toContain("challenges.cloudflare.com");
+    expect(result.message).toContain("TURNSTILE_BLOCKED");
+  });
+
+  it("returns verification for an invalid or expired session token too", () => {
+    vi.stubGlobal("navigator", { onLine: true });
+    expect(
+      classifyApiError(
+        new Error(
+          "[OracleProxy] Interaction failed: bad (code: SESSION_TOKEN_INVALID)",
+        ),
+      ).type,
+    ).toBe("verification");
+    expect(
+      classifyApiError(
+        new Error(
+          "[OracleProxy] Request failed: expired (code: SESSION_TOKEN_EXPIRED)",
+        ),
+      ).type,
+    ).toBe("verification");
+  });
+
   it("returns unknown for generic errors with a generic message", () => {
     vi.stubGlobal("navigator", { onLine: true });
     const result = classifyApiError(new Error("Internal server error"));

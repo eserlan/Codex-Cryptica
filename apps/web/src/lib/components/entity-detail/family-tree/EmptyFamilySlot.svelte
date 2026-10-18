@@ -154,7 +154,7 @@
     <button
       type="button"
       data-testid="add-{relation}"
-      class="flex items-center gap-1 rounded border border-dashed border-theme-border px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary"
+      class="flex items-center gap-1 rounded border border-dashed border-theme-border px-2 py-1 text-micro font-bold uppercase tracking-wide text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary"
       onclick={() => (open = true)}
     >
       <span class="icon-[lucide--plus] h-3 w-3" aria-hidden="true"></span>
@@ -165,7 +165,7 @@
       data-testid="spouse-suggestions"
       class="flex w-56 flex-col gap-2 rounded border border-theme-border bg-theme-surface p-2"
     >
-      <p class="text-[10px] text-theme-muted">
+      <p class="text-micro text-theme-muted">
         {addedParentName} is partnered with
         {spouseSuggestions.map((s) => s.name).join(", ")} — add as a parent too?
       </p>
@@ -176,7 +176,7 @@
             type="button"
             data-testid="add-suggestion-{spouse.id}"
             disabled={busy}
-            class="shrink-0 rounded bg-theme-primary/20 px-2 py-1 text-[10px] font-bold text-theme-primary disabled:opacity-50"
+            class="shrink-0 rounded bg-theme-primary/20 px-2 py-1 text-micro font-bold text-theme-primary disabled:opacity-50"
             onclick={() => addSuggestedSpouse(spouse.id)}
           >
             Add
@@ -184,14 +184,14 @@
         </div>
       {/each}
       {#if error}
-        <p data-testid="family-slot-error" class="text-[10px] text-red-400">
+        <p data-testid="family-slot-error" class="text-micro text-red-400">
           {error}
         </p>
       {/if}
       <button
         type="button"
         data-testid="dismiss-spouse-suggestions"
-        class="self-start rounded px-2 py-1 text-[10px] text-theme-muted hover:text-theme-text"
+        class="self-start rounded px-2 py-1 text-micro text-theme-muted hover:text-theme-text"
         onclick={reset}
       >
         No thanks
@@ -212,7 +212,7 @@
           bind:value={siblingTerm}
           data-testid="sibling-term"
           aria-label="Sibling relationship"
-          class="rounded border border-theme-border bg-theme-bg px-2 py-1 text-[10px] text-theme-text focus:border-theme-primary focus:outline-none"
+          class="rounded border border-theme-border bg-theme-bg px-2 py-1 text-micro text-theme-text focus:border-theme-primary focus:outline-none"
         >
           <option value="">Sibling</option>
           <option value="Brother">Brother</option>
@@ -220,7 +220,7 @@
         </select>
       {/if}
       {#if error}
-        <p data-testid="family-slot-error" class="text-[10px] text-red-400">
+        <p data-testid="family-slot-error" class="text-micro text-red-400">
           {error}
         </p>
       {/if}
@@ -229,7 +229,7 @@
           type="button"
           data-testid="connect-existing"
           disabled={busy}
-          class="rounded bg-theme-primary/20 px-2 py-1 text-[10px] font-bold text-theme-primary disabled:opacity-50"
+          class="rounded bg-theme-primary/20 px-2 py-1 text-micro font-bold text-theme-primary disabled:opacity-50"
           onclick={connectExisting}
         >
           Connect
@@ -238,14 +238,14 @@
           type="button"
           data-testid="create-new"
           disabled={busy}
-          class="rounded border border-theme-border px-2 py-1 text-[10px] font-bold text-theme-text disabled:opacity-50"
+          class="rounded border border-theme-border px-2 py-1 text-micro font-bold text-theme-text disabled:opacity-50"
           onclick={createNew}
         >
           Create new
         </button>
         <button
           type="button"
-          class="rounded px-2 py-1 text-[10px] text-theme-muted hover:text-theme-text"
+          class="rounded px-2 py-1 text-micro text-theme-muted hover:text-theme-text"
           onclick={reset}
         >
           Cancel

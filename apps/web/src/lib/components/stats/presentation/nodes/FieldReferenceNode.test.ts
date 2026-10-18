@@ -22,6 +22,9 @@ function makeContext(
     fields,
     readOnly: false,
     mode: "view",
+    sectionKeys: new Map(),
+    isSectionCollapsed: () => false,
+    onToggleSection: vi.fn(),
     onUpdateFieldValue: vi.fn(),
     onUpdateField: vi.fn(),
     onAdjustCounter: vi.fn(),
@@ -309,5 +312,40 @@ describe("FieldReferenceNode", () => {
     expect(roll.textContent).toContain("45%");
     expect(roll.textContent).not.toContain("1d100");
     expect(roll.textContent).not.toContain("Target:");
+  });
+
+  it("displays the updated field label when a referenced field has been renamed", () => {
+    const node: FieldReferenceNodeType = {
+      type: "field-reference",
+      fieldId: "str",
+      label: "Old Strength",
+      displayMode: "plain",
+    };
+    const context = makeContext([
+      { id: "str", label: "Might", type: "number", value: 18 },
+    ]);
+
+    render(FieldReferenceNode, { props: { node, context } });
+
+    expect(screen.getByText("Might")).toBeTruthy();
+    expect(screen.queryByText("Old Strength")).toBeNull();
+  });
+
+  it("renders a missing field indicator when a field has been deleted", () => {
+    const node: FieldReferenceNodeType = {
+      type: "field-reference",
+      fieldId: "deleted_skill",
+      label: "Archery",
+    };
+    const context = makeContext([
+      { id: "str", label: "Might", type: "number", value: 18 },
+    ]);
+
+    render(FieldReferenceNode, { props: { node, context } });
+
+    expect(screen.getByTestId("presentation-missing-field")).toBeTruthy();
+    expect(
+      screen.getByTestId("presentation-missing-field").textContent,
+    ).toContain("Archery (missing field)");
   });
 });

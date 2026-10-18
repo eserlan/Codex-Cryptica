@@ -74,7 +74,7 @@
     title="Show all categories"
     aria-label="Show all categories"
     aria-pressed={typeFilters.size === 0}
-    class="flex items-center justify-center p-1.5 {getIconToggleClasses(
+    class="touch-target flex items-center justify-center p-1.5 {getIconToggleClasses(
       typeFilters.size === 0,
     )}"
   >
@@ -91,7 +91,7 @@
         title={cat.label}
         aria-label={`Filter by ${cat.label}`}
         aria-pressed={typeFilters.has(cat.id)}
-        class="relative flex items-center justify-center p-1.5 {getIconToggleClasses(
+        class="touch-target relative flex items-center justify-center p-1.5 {getIconToggleClasses(
           typeFilters.has(cat.id),
         )}"
       >
@@ -101,7 +101,7 @@
         ></span>
         {#if count > 0 && !typeFilters.has(cat.id)}
           <span
-            class="absolute -top-1 -right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-theme-primary/10 text-[7px] font-bold leading-none text-theme-primary"
+            class="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-theme-primary/10 text-nano font-bold leading-none text-theme-primary"
           >
             {count > 9 ? "9+" : count}
           </span>
@@ -118,7 +118,7 @@
     title="List View"
     aria-label="List View"
     aria-pressed={effectiveViewMode === "list"}
-    class="flex items-center justify-center p-1.5 {getIconToggleClasses(
+    class="touch-target flex items-center justify-center p-1.5 {getIconToggleClasses(
       effectiveViewMode === 'list',
     )}"
   >
@@ -131,7 +131,7 @@
     title="Group by Label"
     aria-label="Group by Label"
     aria-pressed={effectiveViewMode === "label"}
-    class="flex items-center justify-center p-1.5 {getIconToggleClasses(
+    class="touch-target flex items-center justify-center p-1.5 {getIconToggleClasses(
       effectiveViewMode === 'label',
     )}"
   >
@@ -147,7 +147,7 @@
     aria-label="Group by Category"
     aria-pressed={effectiveViewMode === "category"}
     disabled={categoryGroupingDisabled}
-    class="flex items-center justify-center p-1.5 {getCategoryGroupToggleClasses(
+    class="touch-target flex items-center justify-center p-1.5 {getCategoryGroupToggleClasses(
       effectiveViewMode === 'category',
       categoryGroupingDisabled,
     )}"
@@ -163,13 +163,13 @@
   >
     {#each Array.from(labelFilters).sort() as label (label)}
       <div
-        class="flex items-center gap-1 px-2 py-0.5 rounded-md bg-theme-primary/10 border border-theme-primary/20 text-[9px] font-bold text-theme-primary uppercase tracking-wider"
+        class="flex items-center gap-1 px-2 py-0.5 rounded-md bg-theme-primary/10 border border-theme-primary/20 text-nano font-bold text-theme-primary uppercase tracking-wider"
       >
         <span>{label}</span>
         <button
           type="button"
           onclick={() => explorerUIStore.removeLabelFilter(label)}
-          class="hover:text-theme-text transition-colors flex items-center justify-center"
+          class="touch-target hover:text-theme-text transition-colors flex items-center justify-center"
           aria-label={`Remove ${label} filter`}
         >
           <span aria-hidden="true" class="icon-[lucide--x] w-2.5 h-2.5"></span>
@@ -179,7 +179,7 @@
     <button
       type="button"
       onclick={() => explorerUIStore.clearLabelFilters()}
-      class="px-2 py-0.5 text-[9px] font-bold text-theme-muted hover:text-theme-primary uppercase tracking-wider transition-colors"
+      class="touch-target px-2 py-0.5 text-nano font-bold text-theme-muted hover:text-theme-primary uppercase tracking-wider transition-colors"
     >
       Clear All
     </button>

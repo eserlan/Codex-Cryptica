@@ -11,7 +11,8 @@ vi.mock("mammoth", () => ({
 }));
 
 describe("DocxParser Image Extraction", () => {
-  const parser = new DocxParser();
+  const mockIdGenerator = { uuid: () => "mock-uuid" };
+  const parser = new DocxParser(mockIdGenerator);
 
   it("extracts images from docx", async () => {
     const file = new File([""], "test.docx", {
@@ -50,6 +51,8 @@ describe("DocxParser Image Extraction", () => {
 
     expect(result.assets.length).toBeGreaterThan(0);
     expect(result.assets[0].mimeType).toBe("image/png");
+    expect(result.assets[0].id).toBe("mock-uuid");
+    expect(result.assets[0].originalName).toContain("image-mock-uuid");
     // The text should contain a reference to the image (optional depending on how turndown handles it,
     // but we care about the asset array here)
   });

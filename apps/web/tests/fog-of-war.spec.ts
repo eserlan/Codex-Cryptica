@@ -1,63 +1,30 @@
 import { test, expect } from "@playwright/test";
+import { setupVaultPage, seedEntities } from "./test-helpers";
 
 test.describe("Fog of War", () => {
   test.beforeEach(async ({ page }) => {
-    await page.addInitScript(() => {
-      localStorage.setItem("codex_skip_landing", "true");
-      localStorage.setItem(
-        "codex-cryptica-help-state",
-        JSON.stringify({ completedTours: ["initial-onboarding"] }),
-      );
-    });
+    await setupVaultPage(page);
 
-    await page.goto("./");
-
-    // Wait for vault to initialize (graph canvas indicates app is loaded)
-    await expect(page.getByTestId("graph-canvas")).toBeVisible({
-      timeout: 15000,
-    });
-
-    // Use the exposed stores to set up state directly, which is more reliable for E2E
-    await page.waitForFunction(
-      () => {
-        return (
-          (window as any).vault &&
-          (window as any).searchStore &&
-          (window as any).uiStore &&
-          (window as any).graph
-        );
+    await seedEntities(page, [
+      {
+        id: "visible-node",
+        title: "Visible Node",
+        type: "character",
+        data: { content: "Visible content", labels: [] },
       },
-      { timeout: 15000 },
-    );
-
-    // Wait for vault to be ready
-    await page.waitForFunction(() => (window as any).vault?.status === "idle");
-
-    // Create entities via vault API to trigger proper reactivity
-    await page.evaluate(async () => {
-      const { vault } = window as any;
-
-      await vault.createEntity("character", "Visible Node", {
-        content: "Visible content",
-        tags: [],
-      });
-      await vault.createEntity("character", "Hidden Node", {
-        content: "Hidden content",
-        tags: ["hidden"],
-      });
-      await vault.createEntity("character", "Revealed Node", {
-        content: "Revealed content",
-        tags: ["revealed"],
-      });
-    });
-
-    // Wait for entities to appear in graph
-    await page.waitForFunction(
-      () =>
-        (window as any).graph.elements.filter((e: any) => e.group === "nodes")
-          .length >= 3,
-      { timeout: 10000 },
-    );
+      {
+        id: "hidden-node",
+        title: "Hidden Node",
+        type: "character",
+        data: { content: "Hidden content", labels: ["hidden"] },
+      },
+      {
+        id: "revealed-node",
+        title: "Revealed Node",
+        type: "character",
+        data: { content: "Revealed content", labels: ["revealed"] },
+      },
+    ]);
   });
 
   test("Selective hiding with 'hidden' tag", async ({ page }) => {
@@ -67,7 +34,9 @@ test.describe("Fog of War", () => {
 
     // 2. Toggle Shared Mode via evaluate to be sure it's set
     await page.evaluate(() => {
-      (window as any).uiStore.sharedMode = true;
+      const w = window as any;
+      if (w.sessionModeStore) w.sessionModeStore.sharedMode = true;
+      if (w.uiStore) w.uiStore.sharedMode = true;
     });
 
     // Wait for graph to reactively update
@@ -86,13 +55,14 @@ test.describe("Fog of War", () => {
 
     // 4. Verify Search also filters
     const filteredSearchIds = await page.evaluate(async () => {
-      const { uiStore, vault, isEntityVisible } = window as any;
+      const { uiStore, sessionModeStore, vault, isEntityVisible } =
+        window as any;
       const results = Object.values(vault.entities).map((e: any) => ({
         id: e.id,
         title: e.title,
       }));
       const settings = {
-        sharedMode: uiStore.sharedMode,
+        sharedMode: sessionModeStore?.sharedMode ?? uiStore?.sharedMode,
         defaultVisibility: vault.defaultVisibility,
       };
       return results
@@ -106,8 +76,10 @@ test.describe("Fog of War", () => {
   test("Global Fog / Hidden by Default", async ({ page }) => {
     // 1. Set Shared Mode and Default Visibility to 'hidden'
     await page.evaluate(() => {
-      (window as any).uiStore.sharedMode = true;
-      (window as any).vault.defaultVisibility = "hidden";
+      const w = window as any;
+      if (w.sessionModeStore) w.sessionModeStore.sharedMode = true;
+      if (w.uiStore) w.uiStore.sharedMode = true;
+      if (w.vault) w.vault.defaultVisibility = "hidden";
     });
 
     // Wait for reactivity
@@ -128,8 +100,10 @@ test.describe("Fog of War", () => {
   test("Real-time revealing of content", async ({ page }) => {
     // 1. Enter Shared Mode and Hidden by Default
     await page.evaluate(() => {
-      (window as any).uiStore.sharedMode = true;
-      (window as any).vault.defaultVisibility = "hidden";
+      const w = window as any;
+      if (w.sessionModeStore) w.sessionModeStore.sharedMode = true;
+      if (w.uiStore) w.uiStore.sharedMode = true;
+      if (w.vault) w.vault.defaultVisibility = "hidden";
     });
 
     // Wait for reactivity
@@ -143,10 +117,10 @@ test.describe("Fog of War", () => {
     });
     expect(visibleIds).not.toContain("visible-node");
 
-    // 3. Update 'visible-node' to have 'revealed' tag
+    // 3. Update 'visible-node' to have 'revealed' label
     await page.evaluate(async () => {
       const { vault } = window as any;
-      await vault.updateEntity("visible-node", { tags: ["revealed"] });
+      await vault.updateEntity("visible-node", { labels: ["revealed"] });
     });
 
     // Wait for reactivity

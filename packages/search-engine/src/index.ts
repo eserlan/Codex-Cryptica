@@ -3,6 +3,23 @@ import type { SearchEntry, SearchResult, SearchOptions } from "schema";
 import * as Comlink from "comlink";
 import { compressSync, decompressSync, strFromU8, strToU8 } from "fflate";
 
+/**
+ * Rebuilds bytes from a JSON-serialised typed array (`{ "0": 12, "1": 34 }`)
+ * without materialising an intermediate `Object.values()` array.
+ */
+export function bytesFromIndexedObject(source: unknown): Uint8Array {
+  if (!source || typeof source !== "object") return new Uint8Array(0);
+  const record = source as Record<string, number>;
+  const bytes = new Uint8Array(Object.keys(record).length);
+  let i = 0;
+  for (const key in record) {
+    if (Object.prototype.hasOwnProperty.call(record, key)) {
+      bytes[i++] = record[key];
+    }
+  }
+  return bytes;
+}
+
 export const SEARCH_INDEX_COMPRESSION_FORMAT = "fflate-json-v1" as const;
 
 export interface CompressedSearchIndex {
@@ -447,14 +464,14 @@ export class SearchEngine {
     }
 
     const decoder = new TextDecoder();
+    const segments: Record<string, string> = {};
+    for (const [key, value] of Object.entries(segmented.segments ?? {})) {
+      segments[key] =
+        typeof value === "string" ? value : decoder.decode(value as any);
+    }
     const serializable = {
       ...segmented,
-      segments: Object.fromEntries(
-        Object.entries(segmented.segments ?? {}).map(([key, value]) => [
-          key,
-          typeof value === "string" ? value : decoder.decode(value as any),
-        ]),
-      ),
+      segments,
     };
     const compressed = compressSync(strToU8(JSON.stringify(serializable)));
     return Comlink.transfer(
@@ -510,7 +527,11 @@ export class SearchEngine {
           const decoder = new TextDecoder();
           let processed = 0;
 
-          for (const [k, value] of Object.entries(data.segments)) {
+          // ⚡ Bolt Optimization: Replace Object.entries() with an imperative loop over keys to avoid allocating an intermediate array of tuples
+          for (const k in data.segments) {
+            if (!Object.prototype.hasOwnProperty.call(data.segments, k))
+              continue;
+            const value = data.segments[k];
             let buffer: any = value;
             let str: string;
             if (typeof buffer === "string") {
@@ -529,8 +550,7 @@ export class SearchEngine {
                 if (Array.isArray(buffer)) {
                   buffer = new Uint8Array(buffer);
                 } else {
-                  const values = Object.values(buffer ?? {});
-                  buffer = new Uint8Array(values as number[]);
+                  buffer = bytesFromIndexedObject(buffer);
                 }
               }
               str = decoder.decode(buffer);
@@ -585,8 +605,7 @@ export class SearchEngine {
               if (Array.isArray(buffer)) {
                 buffer = new Uint8Array(buffer);
               } else {
-                const values = Object.values(buffer ?? {});
-                buffer = new Uint8Array(values as number[]);
+                buffer = bytesFromIndexedObject(buffer);
               }
             }
             decoded = new TextDecoder().decode(buffer);

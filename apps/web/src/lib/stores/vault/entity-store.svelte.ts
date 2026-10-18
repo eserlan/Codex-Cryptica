@@ -40,6 +40,27 @@ export interface EntityStoreDependencies {
   ) => void;
 }
 
+/**
+ * Order-independent identity of an entity's outgoing connections, for telling a
+ * real connection change apart from a record that was merely replaced.
+ */
+function connectionSignature(
+  connections: LocalEntity["connections"] | undefined,
+): string {
+  // Full content with sorted keys: the inbound map keeps the connection
+  // objects themselves, so any field difference must trigger a resync.
+  return (connections ?? [])
+    .map((c) =>
+      JSON.stringify(
+        Object.keys(c)
+          .sort()
+          .map((key) => [key, (c as Record<string, unknown>)[key]]),
+      ),
+    )
+    .sort()
+    .join("\n");
+}
+
 export class EntityStore {
   private repository: VaultRepository;
   public loader: EntityContentLoader;
@@ -217,6 +238,25 @@ export class EntityStore {
     this.rebuildIndexes();
     this.initializeInboundConnections();
 
+    this.loader.registerStoreCallbacks?.({
+      onMetadataRestored: (oldEntity, newEntity) => {
+        // Hydrated connections bypass the mutation service, so keep the
+        // reverse lookup used by focus-view traversal in sync incrementally —
+        // but only when they changed. Re-patching an identical set replaces
+        // every target's inbound list, which rebuilds the graph for nothing.
+        if (
+          connectionSignature(oldEntity.connections) !==
+          connectionSignature(newEntity.connections)
+        ) {
+          this.resyncRestoredConnections(oldEntity, newEntity);
+        }
+        this.handleEntitiesUpdate(
+          { [oldEntity.id]: oldEntity },
+          { [newEntity.id]: newEntity },
+        );
+      },
+    });
+
     if (this._eventBusUnsubscribe) {
       this._eventBusUnsubscribe();
     }
@@ -271,6 +311,10 @@ export class EntityStore {
 
   async internalLoadContent(id: string): Promise<void> {
     return this.loader.internalLoadContent(id);
+  }
+
+  readFullEntity(id: string): Promise<LocalEntity | null> {
+    return this.loader.readFullEntity(id);
   }
 
   isContentLoaded(id: string) {
@@ -354,6 +398,15 @@ export class EntityStore {
     );
   }
 
+  async setConnectionHidden(
+    sourceId: string,
+    targetId: string,
+    type: string,
+    hidden: boolean,
+  ): Promise<boolean> {
+    return this.mutations.setConnectionHidden(sourceId, targetId, type, hidden);
+  }
+
   async removeConnection(
     sourceId: string,
     targetId: string,
@@ -378,6 +431,14 @@ export class EntityStore {
     return this.mutations.bulkRemoveLabel(ids, label);
   }
 
+  async renameLabel(from: string, to: string): Promise<number> {
+    return this.mutations.renameLabel(from, to);
+  }
+
+  async deleteLabel(label: string): Promise<number> {
+    return this.mutations.deleteLabel(label);
+  }
+
   async batchCreateEntities(newEntitiesList: BatchCreateInput[]) {
     return this.mutations.batchCreateEntities(newEntitiesList);
   }
@@ -388,6 +449,23 @@ export class EntityStore {
     this.inboundConnections = vaultRelationships.rebuildInboundMap(
       this.entities,
     );
+  }
+
+  /** Replaces an entity's inbound-map contributions after a disk restore. */
+  private resyncRestoredConnections(
+    oldEntity: LocalEntity,
+    newEntity: LocalEntity,
+  ) {
+    for (const connection of oldEntity.connections ?? []) {
+      this.patchRemoveConnection(
+        oldEntity.id,
+        connection.target,
+        connection.type,
+      );
+    }
+    for (const connection of newEntity.connections ?? []) {
+      this.patchAddConnection(newEntity.id, connection.target, connection);
+    }
   }
 
   patchAddConnection(sourceId: string, targetId: string, connection: any) {

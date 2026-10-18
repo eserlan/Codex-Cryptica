@@ -2,9 +2,16 @@
   import "../app.css";
   import { base } from "$app/paths";
   import { onMount } from "svelte";
-  import { getRobotsDirective } from "$lib/seo/site";
-
   let { children } = $props();
+
+  // Only render a global override when a staging/preview build sets it
+  // explicitly. Rendering the default here unconditionally would duplicate
+  // (and potentially fight) a page-level `<SeoHead robots=... />` — e.g.
+  // `/explore?label=X` needs `noindex` while the un-filtered `/explore`
+  // stays indexable (#2762). With no env override, "no tag" already equals
+  // the default directive, so per-page SeoHead is free to be the one source
+  // of truth.
+  const robotsOverride = import.meta.env.VITE_ROBOTS_DIRECTIVE?.trim();
 
   // Wire the LLM capability-token flow app-wide. No Turnstile challenge is
   // issued here — this only attaches the session manager to the shared AI
@@ -18,26 +25,16 @@
     void import("$lib/services/ai/session-bootstrap").then((m) =>
       m.initAiSession(),
     );
+    void import("$lib/services/mobile/capacitor-bridge").then((m) =>
+      m.capacitorBridge.init(),
+    );
   });
 </script>
 
 <svelte:head>
-  <title>Codex Cryptica | AI RPG Campaign Manager</title>
-  <meta
-    name="description"
-    content="AI-assisted, local-first RPG campaign manager. Organize your lore, visualize your world's knowledge graph, and generate content with OpenAI/Luna."
-  />
-  <meta name="robots" content={getRobotsDirective()} />
-  <meta property="og:type" content="website" />
-  <meta
-    property="og:title"
-    content="Codex Cryptica | AI RPG Campaign Manager"
-  />
-  <meta
-    property="og:description"
-    content="Local-first RPG campaign manager with graph visualization and AI intelligence."
-  />
-  <meta name="twitter:card" content="summary_large_image" />
+  {#if robotsOverride}
+    <meta name="robots" content={robotsOverride} />
+  {/if}
   <link
     rel="sitemap"
     type="application/xml"

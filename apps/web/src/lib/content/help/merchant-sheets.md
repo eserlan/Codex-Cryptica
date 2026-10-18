@@ -1,0 +1,132 @@
+---
+id: merchant-sheets
+title: Shops and Merchants
+description: Turn a Location or Organisation into a shop with a stock table, then switch between a GM stock manager and a read-only catalogue.
+icon: icon-[lucide--store]
+rank: 26
+tags:
+  [
+    "shop",
+    "merchant",
+    "stock",
+    "prices",
+    "catalogue",
+    "stats",
+    "templates",
+    "gameplay",
+  ]
+---
+
+# Shops and Merchants
+
+A shop in Codex Cryptica is an ordinary entity, usually a Location or an Organisation, that uses the **Shop / Merchant** stat sheet. It keeps the owner, reputation, services and a stock table on the entity itself. It works for any game system and needs no AI.
+
+## Set up a shop
+
+1. Open the Location or Organisation and choose **Stats**.
+2. Open **Templates** and choose **Shop / Merchant**. It sits in the suggested list for Locations.
+3. Fill in the owner, speciality, reputation and services. **Purchasing power** is optional.
+
+The template is opt-in. Nothing changes on your other Locations unless you apply it to them.
+
+## Manage the stock
+
+Use the **GM Stock Manager** layout from **Presentations**. Each stock line has:
+
+- **Item**: type a name, or choose **Link Vault Item** to point at an existing Item.
+- **Quantity**: use the **+** and **-** buttons or type a number. Stock stops at 0.
+- **Shop price**: the price in this shop, with its own unit such as `gp` or `cr`. A linked Item keeps its own price, which shows as a hint.
+- **Availability**: Available, Reserved, Sold out or Hidden.
+- **Condition** and **Note**: the Note is for you. The catalogue never shows it.
+
+Choose **Open item** on a linked line to jump to that Item. If a linked Item is later deleted, the line keeps the name you saw and stays editable. Use the arrows on a row, or **Ctrl+Up** and **Ctrl+Down**, to reorder lines. Links survive reordering.
+
+A line can also be a **Service** or a **Commission**, which have no quantity.
+
+## Record a trade
+
+Choose **Trade** on a stock line to record a sale or a purchase. Nothing changes until you press **Confirm trade**. The form shows what will happen first: the total, the stock before and after, and whether any funds move.
+
+1. Choose **Customer buys from the shop** or **Customer sells to the shop**.
+2. Set the quantity. The price starts as the line's shop price, and you can change it for this trade only.
+3. Optionally choose who is trading. Leave it on **No one** to just record the trade.
+4. Check the preview, then press **Confirm trade**, or **Cancel** to change nothing.
+
+A trade is refused, with a reason, if there is not enough stock, the line is sold out, reserved or hidden, the quantity is not a whole number, or there is no price. Services and commissions are traded one at a time, and a shop only buys items. When the last unit sells, the line becomes **Sold out**. When the shop buys goods for a sold-out line, it becomes **Available** again.
+
+### Record only, or update a wallet
+
+By default a trade is **record only**: the shop's stock changes and the trade is logged, but **no funds move** and nothing is added to anyone's inventory. The form says so every time.
+
+To move money as well, choose a character and tick **Also update their wallet**. That option appears only when the character has a **number** field with the key `wallet_gp` for gold pieces, `wallet_cr` for credits, and so on. The unit must match the price, because there is no exchange rate. Wallets use whole numbers, so a price with decimals is record only. A purchase is refused if the character cannot afford it.
+
+The shop's own **Purchasing power** is a text note and is never changed by a trade. Moving items into a character's inventory is not automatic; add them yourself.
+
+### If something goes wrong
+
+If saving fails, the form tells you and nothing is changed. If the wallet cannot be updated, the stock change is undone. In the rare case that a trade is left half finished, the button changes to **Finish trade**. Confirm it again and it completes without doing anything twice. Pressing Confirm twice, or confirming a trade that already went through, records it once.
+
+### Journal
+
+While a Session Journal is running, each completed trade adds one **Trade** entry, such as "Mira bought 2× Rope from Tallow's Goods for 4 gp (record only, no funds moved)." A cancelled or refused trade adds nothing.
+
+## Show the catalogue
+
+Switch to **Browse Catalogue** in **Presentations**. It shows the same stock as a compact, read-only list with prices, availability and services. Hidden lines and your notes are left out. Switching layouts never changes your data.
+
+The catalogue is a preview on your own screen. It is not a way to share the shop with players, and the player view is planned separately. Do not treat Hidden or Note as secret from anyone looking at your screen or your vault.
+
+## Share the catalogue with players
+
+A shop is private until you share it. When you host a shared session or publish your world, a shop's stock, prices and notes are not sent to players unless you switch sharing on.
+
+1. On the shop's **Stats** tab, tick **Share this catalogue with players** above the stock table.
+2. Choose which business details players may also see, such as the speciality or services. Everything you leave unticked stays private.
+3. Choose **Preview as player**. It shows exactly what players receive, and nothing else about the shop is sent.
+
+Players see each line's name, price, quantity, condition and whether it is available, read-only. They cannot buy or change anything. You handle every trade, and a player has no Trade button.
+
+Never shared, whatever you tick: lines marked **Hidden**, your note on each line, **Purchasing power**, **GM notes**, trade history, and links to the Items behind each line. A line with no name of its own shows the title of the Item it links to, so give a line its own name if that Item's title is a spoiler.
+
+Untick the box to stop sharing. In a live session the catalogue disappears from players' screens straight away. A published world only changes the next time you publish it again.
+
+Linked Items and the shop's own page follow the normal rules for what players can see. Sharing a catalogue does not make an Item or the shop's description visible, and hiding an Item from players is separate from the catalogue.
+
+## Suggest stock
+
+A new shop does not have to start empty. On a shop's Stats tab, choose **Suggest stock** to get a first set of goods. It works offline and needs no AI.
+
+- It reads the shop's own text and the places it is connected to, such as a settlement. Goods the place makes or sells are cheaper and plentiful. Goods it is short of are few and cost more.
+- Pick a setting (fantasy, sci-fi or generic), or leave it on **Read from the shop**. **Try another set** gives a different spread.
+- Each line shows why it is there. Untick lines you do not want, and change the quantity or price before you add them.
+- Lines the shop already stocks are marked and left alone. Your existing prices and quantities are never changed, and running it again does not add a line twice.
+- If you already have an Item with the same name, you can choose to link it. Nothing is linked or created for you.
+
+Suggested prices are rough starting points, not official prices. Each added line is marked as a suggestion in your private line note.
+
+## Market pressure (optional)
+
+Most shops never need this. If you want a shop to react to events in your setting, open **Market pressure** on its Stats tab.
+
+- Pick a kind: **Shortage**, **Glut**, **Embargo**, **Festival** or **Restock**. Each fills in starting numbers you can change: a price change in whole percent, a quantity change, and a status such as Sold out.
+- Choose which lines it applies to. Type a word such as "iron" to pick matching lines, and untick any line you want left alone.
+- You see every change before anything happens: the price before and after, the quantity, and the status. Lines that cannot take the change say why.
+- Choose **Apply**. Name the change and say why, for example "Road to the mine is closed". It is recorded with whether you or an outside signal caused it.
+- The shop then shows the usual price next to the asking price for each affected line, with the reason.
+- **Undo** puts back the values the change set. If you have since set a price yourself, or a trade changed a quantity, that value is kept and you are told which.
+
+Prices stay in the shop's own currency and decimal places, and nothing is converted. Nothing changes unless you press Apply, other shops and your Items are never touched, and the history is never shared with players.
+
+## Make your own shop template
+
+Use **Edit Layout** to add fields to your shop, then save the layout from **Templates**. Saved layouts can be shared like any other template. Saved templates keep the field layout, not your stock.
+
+## Which tool should I use?
+
+| You want                                      | Use                                                               |
+| --------------------------------------------- | ----------------------------------------------------------------- |
+| Prices and stock you can edit and browse      | A shop with this sheet                                            |
+| A quick NPC with wants, quirks and secrets    | The **Table Card** character template                             |
+| An invented business with staff and a history | A business generator, which is planned and not part of this sheet |
+
+This sheet only holds what a shop sells and how it looks to a customer. It does not invent the business. You can use more than one tool together: a shopkeeper can be a Table Card NPC who owns a shop with this sheet.

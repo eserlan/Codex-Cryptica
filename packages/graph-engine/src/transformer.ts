@@ -3,6 +3,12 @@ import type {
   TemporalMetadata,
   Category,
   StylingTemplate,
+  ImageFocus,
+} from "schema";
+import {
+  deriveEntityTypePalette,
+  imageFocusBackgroundPosition,
+  isPlaceholderImageUrl,
 } from "schema";
 import { CONNECTION_COLORS } from "./defaults";
 import { isLayoutCollinear } from "./geometry";
@@ -17,6 +23,7 @@ export interface GraphNode {
     status?: "active" | "draft";
     image?: string;
     thumbnail?: string;
+    imageFocus?: ImageFocus;
     labels?: string[];
     isImportant?: boolean;
     isPast?: boolean;
@@ -28,6 +35,7 @@ export interface GraphNode {
     textureVariant?: number;
   };
   position?: { x: number; y: number };
+  classes?: string;
 }
 
 export interface GraphEdge {
@@ -40,6 +48,7 @@ export interface GraphEdge {
     connectionType: string;
     strength?: number;
   };
+  classes?: string;
 }
 
 export type GraphElement = GraphNode | GraphEdge;
@@ -128,7 +137,7 @@ export class GraphTransformer {
       for (let j = 0; j < connections.length; j++) {
         if (weightedEdgeCount >= maxEdges) break;
         const conn = connections[j];
-        if (!validIds.has(conn.target)) continue;
+        if (conn.hidden || !validIds.has(conn.target)) continue;
 
         incrementWeight(weights, entity.id);
         incrementWeight(weights, conn.target);
@@ -152,6 +161,23 @@ export class GraphTransformer {
     }
     const discardSavedCoords = isLayoutCollinear(savedPositions);
 
+    const placedNodeIds = new Set<string>();
+    if (!discardSavedCoords) {
+      for (let i = 0; i < count; i++) {
+        const id = entities[i]?.id;
+        const c = entities[i]?.metadata?.coordinates;
+        if (
+          id &&
+          c?.x != null &&
+          c?.y != null &&
+          Number.isFinite(c.x) &&
+          Number.isFinite(c.y)
+        ) {
+          placedNodeIds.add(id);
+        }
+      }
+    }
+
     // phyllotaxis spiral distribution for unplaced nodes
     const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
     // Initial radius provides a decent base spread even for small graphs
@@ -167,11 +193,11 @@ export class GraphTransformer {
 
       // Visibility markers for Admin visual cues
       let isRevealed = false;
-      const tags = entity.tags;
-      if (tags) {
-        for (let j = 0; j < tags.length; j++) {
-          const t = tags[j].toLowerCase();
-          if (t === "revealed" || t === "visible") {
+      const labels = entity.labels;
+      if (labels) {
+        for (let k = 0; k < labels.length; k++) {
+          const l = labels[k].toLowerCase();
+          if (l === "revealed" || l === "visible") {
             isRevealed = true;
             break;
           }
@@ -179,11 +205,11 @@ export class GraphTransformer {
       }
 
       if (!isRevealed) {
-        const labels = entity.labels;
-        if (labels) {
-          for (let k = 0; k < labels.length; k++) {
-            const l = labels[k].toLowerCase();
-            if (l === "revealed" || l === "visible") {
+        const legacyTags = (entity as { tags?: string[] }).tags;
+        if (legacyTags) {
+          for (let j = 0; j < legacyTags.length; j++) {
+            const t = legacyTags[j].toLowerCase();
+            if (t === "revealed" || t === "visible") {
               isRevealed = true;
               break;
             }
@@ -210,8 +236,20 @@ export class GraphTransformer {
       };
       if (hasPast) nodeData.isPast = true;
       if (hasImportantLabel(entity.labels)) nodeData.isImportant = true;
-      if (entity.image) nodeData.image = entity.image;
-      if (entity.thumbnail) nodeData.thumbnail = entity.thumbnail;
+      // Stock placeholder art is left off so the node gets its silhouette.
+      if (entity.image && !isPlaceholderImageUrl(entity.image))
+        nodeData.image = entity.image;
+      if (entity.thumbnail && !isPlaceholderImageUrl(entity.thumbnail))
+        nodeData.thumbnail = entity.thumbnail;
+      if (entity.imageFocus) nodeData.imageFocus = entity.imageFocus;
+      if (entity.silhouette) (nodeData as any).silhouette = entity.silhouette;
+      (nodeData as any).entity = {
+        id: entity.id,
+        title: entity.title,
+        type: entity.type,
+        labels: entity.labels,
+        silhouette: entity.silhouette,
+      };
       if ((entity as any).guestChatConfig?.isEnabled)
         nodeData.isChatEnabled = true;
       if (isRevealed) (nodeData as any).isRevealed = true;
@@ -232,7 +270,11 @@ export class GraphTransformer {
         elements.push({
           group: "nodes",
           data: nodeData,
-          position: coords,
+          // A copy, not the entity's own object: Cytoscape adopts the position
+          // it is given as the node's live one, so sharing it would let moving
+          // a node (or applying a view's saved layout) rewrite the entity's
+          // saved coordinates in place.
+          position: { x: coords!.x, y: coords!.y },
         });
       } else {
         const angle = i * GOLDEN_ANGLE;
@@ -242,6 +284,7 @@ export class GraphTransformer {
         elements.push({
           group: "nodes",
           data: nodeData,
+          classes: "pending-layout",
           position: {
             x: Math.cos(angle) * distance,
             y: Math.sin(angle) * distance,
@@ -255,22 +298,31 @@ export class GraphTransformer {
         for (let l = 0; l < connections.length; l++) {
           if (renderedEdgeCount >= maxEdges) break;
           const conn = connections[l];
-          // Skip edges to non-existent targets
-          if (!validIds.has(conn.target)) continue;
+          // Skip hidden connections and edges to non-existent targets
+          if (conn.hidden || !validIds.has(conn.target)) continue;
 
           // Construct a unique edge ID: source-target-type
           const edgeId = `${entity.id}-${conn.target}-${conn.type}`;
 
+          const isEdgePending =
+            !placedNodeIds.has(entity.id) || !placedNodeIds.has(conn.target);
+
+          const edgeData: GraphEdge["data"] & { isPendingLayout?: boolean } = {
+            id: edgeId,
+            source: entity.id,
+            target: conn.target,
+            label: conn.label || conn.type || "",
+            connectionType: conn.type,
+            strength: conn.strength,
+          };
+          if (isEdgePending) {
+            edgeData.isPendingLayout = true;
+          }
+
           elements.push({
             group: "edges",
-            data: {
-              id: edgeId,
-              source: entity.id,
-              target: conn.target,
-              label: conn.label || conn.type || "",
-              connectionType: conn.type,
-              strength: conn.strength,
-            },
+            data: edgeData,
+            classes: isEdgePending ? "pending-layout" : undefined,
           });
           renderedEdgeCount++;
         }
@@ -321,6 +373,7 @@ export class GraphTransformer {
       elements.push({
         group: "nodes",
         data: nodeData,
+        classes: "pending-layout",
         position: {
           x: Math.cos(angle) * distance,
           y: Math.sin(angle) * distance,
@@ -499,6 +552,40 @@ export const getGraphStyle = (
         "background-clip": "node",
         "background-image": "data(resolvedImage)",
         "background-image-crossorigin": "null",
+        "background-position-x": (ele: any) =>
+          imageFocusBackgroundPosition(ele.data("imageFocus")).x,
+        "background-position-y": (ele: any) =>
+          imageFocusBackgroundPosition(ele.data("imageFocus")).y,
+        "background-opacity": 1,
+        "border-color": tokens.primary,
+      },
+    });
+
+    baseStyle.push({
+      selector: "node[isSilhouette][resolvedImage][resolvedImage != 'none']",
+      style: {
+        // `none`, not `contain`: cytoscape applies background-width/height
+        // first and then, for `contain`, rescales the image to fill the node
+        // box — which cancelled the 72% and let the glyph spill outside
+        // non-rectangular nodes (the fantasy shield especially), since
+        // background-clip is none. With `none` the 72% stands and
+        // background-position 50% centres what is left.
+        "background-fit": "none",
+        // The fantasy shield is the one non-rectangular node shape: it tapers
+        // to a point, so a glyph sized and centred for the bounding box hangs
+        // over the sides. A smaller box, sat slightly high, lands in the part
+        // of the shield that is actually wide.
+        "background-width": isFantasy ? "64%" : "72%",
+        "background-height": isFantasy ? "64%" : "72%",
+        "background-clip": "none",
+        "background-image": "data(resolvedImage)",
+        "background-image-crossorigin": "null",
+        "background-position-x": "50%",
+        "background-position-y": isFantasy ? "44%" : "50%",
+        // Opaque, not 0.95: the silhouette's fill colour is contrast-checked
+        // against the node tone itself (issue #2680), so the tone has to be
+        // what is actually painted rather than a near-miss blend with the
+        // canvas behind it.
         "background-opacity": 1,
         "border-color": tokens.primary,
       },
@@ -608,18 +695,28 @@ export const getGraphStyle = (
     },
   );
 
-  const categoryStyles = categories.map((cat) => ({
-    selector: `node[type="${cat.id}"]`,
-    style: {
-      "border-color": cat.color,
-      "border-width": isFantasy
-        ? graph.nodeBorderWidth + 1
-        : graph.nodeBorderWidth + 4,
-      // For fantasy, we want the category color to overlay the parchment background
-      "background-color": cat.color,
-      "background-opacity": isFantasy ? 0.58 : 0.55,
-    },
-  }));
+  // Entity types are painted from theme-derived tones rather than the raw
+  // category colour (issue #2680): the seed hue survives, but saturation and
+  // lightness come from the active theme, so a mixed graph reads as one
+  // palette instead of neon blue/orange/green blocks. The tone is already
+  // blended against the theme surface, so it is applied at full opacity —
+  // that is what makes the icon-vs-fill contrast the palette guarantees hold
+  // on canvas.
+  const palette = deriveEntityTypePalette(template, categories);
+  const categoryStyles = categories.map((cat) => {
+    const tone = palette[cat.id];
+    return {
+      selector: `node[type="${cat.id}"]`,
+      style: {
+        "border-color": tone?.border ?? cat.color,
+        "border-width": isFantasy
+          ? graph.nodeBorderWidth + 1
+          : graph.nodeBorderWidth + 4,
+        "background-color": tone?.fill ?? cat.color,
+        "background-opacity": 1,
+      },
+    };
+  });
 
   const importantStyles: any[] = [
     {
@@ -673,7 +770,10 @@ export const getGraphStyle = (
         "background-image": "data(resolvedImage)",
         "background-clip": "node",
         "background-fit": "cover",
-        "background-position-y": "50%",
+        "background-position-x": (ele: any) =>
+          imageFocusBackgroundPosition(ele.data("imageFocus")).x,
+        "background-position-y": (ele: any) =>
+          imageFocusBackgroundPosition(ele.data("imageFocus")).y,
         "border-width": isFantasy
           ? graph.nodeBorderWidth + 2
           : graph.nodeBorderWidth + 10,
@@ -685,7 +785,7 @@ export const getGraphStyle = (
   // (category colors, revealed borders, and focus-mode opacities)
   const selectionStyles: any[] = [
     {
-      selector: "node[isPendingLayout]",
+      selector: "node[isPendingLayout], edge[isPendingLayout]",
       style: {
         opacity: 0,
         events: "no",

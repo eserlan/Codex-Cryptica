@@ -9,9 +9,9 @@ export const importsConfig: Record<string, SEOImportPageData> = {
       "Import your Obsidian TTRPG campaign vault. Convert Markdown files, wiki-links, and YAML frontmatter into a local-first campaign wiki.",
     h1: "Obsidian Vault Importer",
     subheading:
-      "Seamlessly convert your Obsidian markdown campaign files into Codex Cryptica.",
+      "Convert your Obsidian markdown campaign files into Codex Cryptica.",
     introText:
-      "Migrate your Obsidian RPG notes seamlessly. Drop your Markdown files directly to parse frontmatter, resolve wiki links, and construct a live local-first campaign wiki in Codex Cryptica.",
+      "Migrate your Obsidian RPG notes: drop your Markdown files directly to parse frontmatter, resolve wiki links, and build a live local-first campaign wiki in Codex Cryptica.",
     ctaText: "Start Obsidian Migration",
     keywords: [
       "import obsidian vault",
@@ -119,19 +119,19 @@ export const importsConfig: Record<string, SEOImportPageData> = {
     competitorName: "Kanka",
     title: "Import Kanka JSON to Codex Cryptica | TTRPG Campaign Migration",
     description:
-      "Convert your Kanka campaign JSON export into offline Markdown files. Preview characters, locations, and factions instantly.",
-    h1: "Kanka Campaign JSON Importer",
+      "Import your Kanka campaign JSON export ZIP into offline Markdown files. Preview characters, locations, and factions instantly.",
+    h1: "Kanka Campaign ZIP Importer",
     subheading:
-      "Convert your Kanka campaign JSON export into a local-first offline wiki.",
+      "Import your Kanka campaign JSON export ZIP into a local-first offline wiki.",
     introText:
-      "Migrate from Kanka to a local-first RPG wiki. Upload your campaign JSON file to parse nested articles, extract tags, and build a local vault.",
+      "Keep your Kanka campaign where it is. Export it, import a copy into Codex, and see whether local-first works better for you.",
     ctaText: "Start Kanka Migration",
     keywords: ["import kanka json", "kanka campaign export", "kanka migration"],
     features: [
       {
         title: "Relations Extraction",
         description:
-          "Maintains character connections, organization hierarchies, and family trees.",
+          "Preserves explicit character connections and organization hierarchies included in the export.",
         icon: "icon-[lucide--network]",
       },
       {
@@ -143,7 +143,7 @@ export const importsConfig: Record<string, SEOImportPageData> = {
       {
         title: "Metadata Restoration",
         description:
-          "Imports tags, attributes, and private GM notes into corresponding Markdown frontmatter keys.",
+          "Preserves Kanka labels, attributes, source types, and stable source IDs for repeat imports.",
         icon: "icon-[lucide--tags]",
       },
     ],
@@ -151,12 +151,12 @@ export const importsConfig: Record<string, SEOImportPageData> = {
       {
         question: "Where do I find Kanka export options?",
         answer:
-          "Navigate to your Kanka campaign's settings page under utilities, and execute a backup download of the entire campaign in JSON format.",
+          "Open your Kanka campaign settings, request a JSON export, then download the generated ZIP without unpacking it.",
       },
       {
         question: "Are Kanka maps imported?",
         answer:
-          "The importer extracts map coordinates and pin descriptions, letting you map locations inside Codex's spatial canvases.",
+          "Map entries are preserved safely as notes in this first version. Kanka map layouts and family-tree structures are not included as interactive Codex canvases.",
       },
     ],
     relatedLinks: [
@@ -228,12 +228,12 @@ export const importsConfig: Record<string, SEOImportPageData> = {
     title:
       "Import Thread Weaver Campaigns to Codex Cryptica | Free JSON Import",
     description:
-      "Import a Thread Weaver Engine campaign export. Characters, factions, and settlements — plus every relationship between them — converted and previewed entirely offline.",
+      "Import a Thread Weaver Engine campaign export. Characters, factions, and settlements, plus every relationship between them, converted and previewed entirely offline.",
     h1: "Thread Weaver Campaign Importer",
     subheading:
       "Bring a Thread Weaver Engine campaign export straight into Codex Cryptica.",
     introText:
-      "Thread Weaver Engine generates whole campaign networks — characters, factions, and settlements, wired together with relationships. Drop its export file here to preview every entity before it becomes part of your vault, entirely offline.",
+      "Thread Weaver Engine generates whole campaign networks: characters, factions, and settlements, wired together with relationships. Drop its export file here to preview every entity before it becomes part of your vault, entirely offline.",
     ctaText: "Start Thread Weaver Import",
     toolUrl: "https://ambiancearchitect.itch.io/thread-weaver-engine",
     toolLabel: "Thread Weaver Engine",
@@ -285,7 +285,7 @@ export const importsConfig: Record<string, SEOImportPageData> = {
     subheading:
       "Bring your Scabard campaign export straight into Codex Cryptica.",
     introText:
-      "Already building your world in Scabard? Drop its campaign export here to preview every page and connection — converted into characters, factions, locations, and items — before anything is written to your vault, entirely offline.",
+      "Already building your world in Scabard? Drop its campaign export here to preview every page and connection (converted into characters, factions, locations, and items) before anything is written to your vault, entirely offline.",
     ctaText: "Start Scabard Import",
     keywords: [
       "import scabard",
@@ -321,8 +321,67 @@ export const importsConfig: Record<string, SEOImportPageData> = {
       {
         question: "Are secret pages and GM notes imported?",
         answer:
-          "Yes — GM secrets are mapped to each entity's private lore field, kept separate from the public-facing content.",
+          "Yes, GM secrets are mapped to each entity's private lore field, kept separate from the public-facing content.",
       },
+    ],
+  },
+  chronica: {
+    slug: "chronica",
+    competitorName: "Chronica",
+    title: "Import Chronica Campaigns to Codex Cryptica | Free JSON Import",
+    description:
+      "Import your Chronica campaign exports. Characters, places, quests, encounters and kinships become linked entities, with GM secrets kept private. Previewed offline.",
+    h1: "Chronica Campaign Importer",
+    subheading: "Bring a copy of your Chronica campaign into Codex Cryptica.",
+    introText:
+      "Chronica exports each part of a campaign (characters, places, quests and so on) as its own JSON file. Drop all of them here together to preview every entry and connection before anything is written to your vault, entirely offline. Your Chronica campaign is not changed.",
+    ctaText: "Start Chronica Import",
+    keywords: [
+      "import chronica",
+      "chronica export",
+      "chronica campaign json",
+      "move campaign from chronica",
+    ],
+    features: [
+      {
+        title: "Campaign Sections Merged",
+        description:
+          "Drop every export file from one campaign at once. They are merged into a single import, and files from a different campaign are refused.",
+        icon: "icon-[lucide--files]",
+      },
+      {
+        title: "Mapped to Entity Types",
+        description:
+          "Characters, places, kinships and encounters become characters, locations, factions and events. Quests, adventure notes and maps come across as notes.",
+        icon: "icon-[lucide--shapes]",
+      },
+      {
+        title: "Links and GM Secrets",
+        description:
+          "References between records become connections, and GM secrets go into each entry's private lore, separate from the visible description.",
+        icon: "icon-[lucide--link]",
+      },
+    ],
+    faq: [
+      {
+        question: "Where do I get my Chronica export?",
+        answer:
+          "Export your campaign from Chronica as JSON. Chronica produces one file per section of the campaign; keep them together and drop them all in at once.",
+      },
+      {
+        question: "What doesn't come across?",
+        answer:
+          "Map images are not included, only each map's entry. Stats and stat groups are kept as metadata on the import rather than turned into stat sheets. Player accounts and permissions stay in Chronica.",
+      },
+      {
+        question: "Will this change my Chronica campaign?",
+        answer:
+          "No. The import reads a copy of your exported files in your browser. Nothing is sent back to Chronica.",
+      },
+    ],
+    relatedLinks: [
+      { href: "/vs/chronica", label: "Codex vs Chronica" },
+      { href: "/migrations", label: "All import sources" },
     ],
   },
 };

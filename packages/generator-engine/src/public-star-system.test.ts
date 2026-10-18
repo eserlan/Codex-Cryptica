@@ -607,4 +607,20 @@ describe("public-star-system", () => {
       expect(() => parseStarSystemResponse(text)).toThrow();
     });
   });
+
+  // Regression test (#3108): starSystemConfig.genres is its own closed list
+  // and does not include "Superhero / Comic Book". Content here isn't keyed
+  // by genre at all, so passing it through should never crash.
+  describe("Superhero theme regression (#3108)", () => {
+    it("does not crash when passed the Superhero theme", () => {
+      expect(starSystemConfig.genres).not.toContain("Superhero / Comic Book");
+
+      const out = generateStarSystemLocal(
+        { genre: "Superhero / Comic Book" },
+        seededRng(11),
+      );
+      expect(out.title).toBeTruthy();
+      expect(out.content).toContain("superhero / comic book");
+    });
+  });
 });

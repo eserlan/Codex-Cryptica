@@ -18,6 +18,7 @@
     "/generators/pantheon-generator",
     "/generators/god-generator",
     "/generators/tavern",
+    "/generators/dark-fantasy-faction",
   ]);
 
   // Paths specific to the horror/vampire theme
@@ -37,15 +38,30 @@
         { label: "Nomad Clan Generator", path: "/generators/nomad-clan" },
         { label: "RPG Name Generator", path: "/generators/names" },
         { label: "Fantasy Name Generator", path: "/generators/fantasy-names" },
+        {
+          label: "Superhero Origin Generator",
+          path: "/generators/origin-generator",
+        },
       ],
     },
     {
       label: "Worldbuilding",
       items: [
+        { label: "Holiday & Festival Generator", path: "/generators/holiday" },
         { label: "Faction Generator", path: "/generators/faction" },
+        {
+          label: "Faction Roster Generator",
+          path: "/generators/faction-roster",
+        },
+        {
+          label: "Dark Fantasy Faction Generator",
+          path: "/generators/dark-fantasy-faction",
+        },
         { label: "Settlement Generator", path: "/generators/settlement" },
         { label: "Star System Generator", path: "/generators/star-system" },
+        { label: "Constellation Generator", path: "/generators/constellation" },
         { label: "Alien Race Generator", path: "/generators/alien-race" },
+        { label: "Creature Generator", path: "/generators/creature" },
         { label: "Ship Generator", path: "/generators/ship-generator" },
         {
           label: "Language Profile Generator",
@@ -68,17 +84,53 @@
           label: "Adventure Idea Generator",
           path: "/generators/adventure-generator",
         },
+        {
+          label: "One-Shot Adventure Builder",
+          path: "/generators/one-shot-adventure-generator",
+        },
+        {
+          label: "Point Crawl Generator",
+          path: "/generators/point-crawl",
+        },
         { label: "Quest Hook Generator", path: "/generators/quest" },
+        { label: "Rumour Generator", path: "/generators/rumour" },
+        { label: "Encounter Generator", path: "/generators/encounter" },
+        { label: "Puzzle Generator", path: "/generators/puzzle" },
         {
           label: "Plot Twist & Complication Generator",
           path: "/generators/plot-twist-generator",
         },
+        {
+          label: "BBEG / Campaign Villain Generator",
+          path: "/generators/bbeg-generator",
+        },
+        {
+          label: "Comic Book Event Generator",
+          path: "/generators/comic-book-event-generator",
+        },
+        {
+          label: "Villain Scheme Generator",
+          path: "/generators/villain-scheme-generator",
+        },
+        { label: "Heist Generator", path: "/generators/heist" },
         { label: "Council Vote Generator", path: "/generators/council-vote" },
         {
           label: "Secret Society Generator",
           path: "/generators/secret-society",
         },
         { label: "Magic Item Generator", path: "/generators/magic-item" },
+        {
+          label: "Minor Magic Item & Trinket Generator",
+          path: "/generators/minor-magic-item",
+        },
+        {
+          label: "Artifact & Relic Generator",
+          path: "/generators/artifact-generator",
+        },
+        {
+          label: "Tome & Forbidden Book Generator",
+          path: "/generators/tome",
+        },
         { label: "Tavern Generator", path: "/generators/tavern" },
         { label: "Social Hub Generator", path: "/generators/social-hub" },
         {
@@ -159,7 +211,7 @@
     onclick={() => (showGeneratorMenu = !showGeneratorMenu)}
     aria-haspopup="true"
     aria-expanded={showGeneratorMenu}
-    class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-medium bg-theme-primary/10 border border-theme-primary/20 text-theme-primary hover:bg-theme-primary/20 transition-colors"
+    class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-micro font-mono font-medium bg-theme-primary/10 border border-theme-primary/20 text-theme-primary hover:bg-theme-primary/20 transition-colors"
   >
     <span class="icon-[lucide--wand-sparkles] w-3.5 h-3.5" aria-hidden="true"
     ></span>
@@ -183,7 +235,7 @@
       {#each visibleGroups as group (group.label)}
         <div class="px-3 pt-3 pb-1">
           <p
-            class="text-[9px] font-bold uppercase tracking-widest text-theme-muted/70 font-header mb-1.5"
+            class="text-nano font-bold uppercase tracking-widest text-theme-muted/70 font-header mb-1.5"
           >
             {group.label}
           </p>
@@ -195,7 +247,7 @@
               href="{cleanBase}{item.path}"
               role="menuitem"
               onclick={() => (showGeneratorMenu = false)}
-              class="flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] font-medium transition-colors {isCurrent
+              class="flex items-center gap-2 px-2 py-1.5 rounded-lg text-meta font-medium transition-colors {isCurrent
                 ? 'text-theme-primary bg-theme-primary/10'
                 : 'text-theme-text/80 hover:bg-theme-surface/80 hover:text-theme-primary'}"
             >
@@ -217,7 +269,7 @@
           href="{cleanBase}/generators"
           role="menuitem"
           onclick={() => (showGeneratorMenu = false)}
-          class="flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] font-medium text-theme-muted hover:text-theme-primary hover:bg-theme-surface/80 transition-colors"
+          class="flex items-center gap-2 px-2 py-1.5 rounded-lg text-meta font-medium text-theme-muted hover:text-theme-primary hover:bg-theme-surface/80 transition-colors"
         >
           <span
             class="icon-[lucide--layout-grid] w-3 h-3 shrink-0"

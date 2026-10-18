@@ -1,5 +1,13 @@
 <script lang="ts">
   import VTTModeToggle from "$lib/components/map/VTTModeToggle.svelte";
+  import MapControlsFab from "$lib/components/map/MapControlsFab.svelte";
+  import MapMaximizeToggle from "$lib/components/map/MapMaximizeToggle.svelte";
+  import MapCifButton from "$lib/components/map/MapCifButton.svelte";
+  import MapFogToggles from "$lib/components/map/MapFogToggles.svelte";
+  import MapVisionControls from "$lib/components/map/MapVisionControls.svelte";
+  import MapBrushControls from "$lib/components/map/MapBrushControls.svelte";
+  import LayerPanel from "$lib/components/map/LayerPanel.svelte";
+  import { LAYER_OPTIONS } from "$lib/components/ui/LayerMenu.svelte";
   import {
     getMeasurementToolButtonClass,
     getPrimaryButtonStateClass,
@@ -7,12 +15,45 @@
   import { mapStore } from "$lib/stores/map.svelte";
   import { mapSession } from "$lib/stores/map-session.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { soloPlayGuard } from "$lib/stores/solo-session-instance";
+  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
+  import { mapControlsUIStore } from "$lib/stores/ui/map-controls-ui.svelte";
 
   let {
     chatSidebarOffset,
   }: {
     chatSidebarOffset: string;
   } = $props();
+
+  // On phones the bar is hidden behind a button, like the graph controls.
+  const barVisible = $derived(
+    !layoutUIStore.isMobile || mapControlsUIStore.open,
+  );
+
+  // Never leave the app chrome hidden after the map screen is gone. This lives
+  // here, not in the toggle: the toggle unmounts whenever the phone panel
+  // closes, which must not undo maximizing.
+  $effect(() => () => {
+    mapControlsUIStore.maximized = false;
+  });
+
+  let showLayerPanel = $state(false);
+  let layerPanelContainer = $state<HTMLDivElement>();
+  const activeLayerOption = $derived(
+    LAYER_OPTIONS.find((option) => option.value === mapSession.activeLayer) ??
+      LAYER_OPTIONS[0],
+  );
+
+  function handleWindowClick(event: MouseEvent) {
+    if (!showLayerPanel) return;
+    if (
+      event.target instanceof Node &&
+      layerPanelContainer?.contains(event.target)
+    ) {
+      return;
+    }
+    showLayerPanel = false;
+  }
 
   function openGridSettings(event: MouseEvent) {
     event.preventDefault();
@@ -21,10 +62,12 @@
   }
 </script>
 
+<svelte:window onclick={handleWindowClick} />
+
 {#if !sessionModeStore.isGuestMode && mapSession.vttEnabled}
   <div
-    class="absolute z-20 pointer-events-auto"
-    style="bottom: 1rem; left: calc({chatSidebarOffset} + 1rem);"
+    class="absolute bottom-4 left-4 z-20 pointer-events-auto sm:left-[var(--map-hud-left)] max-sm:bottom-auto max-sm:top-16"
+    style="--map-hud-left: calc({chatSidebarOffset} + 1rem);"
   >
     <button
       type="button"
@@ -38,6 +81,7 @@
         ? "Disable measurement tool"
         : "Measure: click on map to set start point, click again to set end point"}
       aria-label="Toggle measurement tool"
+      data-help-target="vtt-ruler-toggle"
     >
       <span
         class={`relative z-10 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border transition-all duration-300 ${
@@ -65,25 +109,44 @@
   </div>
 {/if}
 
+{#if !sessionModeStore.isGuestMode && layoutUIStore.isMobile}
+  <MapControlsFab />
+{/if}
+
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-{#if !sessionModeStore.isGuestMode}
+{#if !sessionModeStore.isGuestMode && barVisible}
   <div
-    class="absolute inset-x-4 bottom-4 z-10 flex justify-center"
+    class="pointer-events-none absolute inset-x-2 bottom-2 z-10 flex justify-center sm:inset-x-4 min-[769px]:bottom-4 max-[769px]:bottom-16"
     role="presentation"
     onmousedown={(e) => e.stopPropagation()}
   >
+    <!-- Wraps on phones; only the bar itself takes touches so the map can
+         still be panned and pinched around it. -->
     <div
-      class="flex gap-1.5 bg-theme-surface/80 backdrop-blur border border-theme-border p-1.5 rounded-lg shadow-lg items-center"
+      id="map-controls-bar"
+      class="pointer-events-auto flex max-w-full flex-wrap items-center justify-center gap-1.5 rounded-lg border border-theme-border bg-theme-surface/80 p-1.5 shadow-lg backdrop-blur"
+      role="presentation"
+      onpointerdown={(e) => e.stopPropagation()}
+      ontouchstart={(e) => e.stopPropagation()}
     >
+      {#if !mapSession.vttEnabled}
+        <MapMaximizeToggle />
+      {/if}
+
+      <MapCifButton />
+
       <button
         type="button"
-        class={`px-2.5 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${getPrimaryButtonStateClass(sessionModeStore.sharedMode)}`}
-        onclick={() =>
-          (sessionModeStore.sharedMode = !sessionModeStore.sharedMode)}
+        class={`touch-target px-2.5 py-1.5 rounded-md text-micro font-bold uppercase tracking-wider transition-all ${getPrimaryButtonStateClass(sessionModeStore.sharedMode)}`}
+        disabled={!sessionModeStore.sharedMode &&
+          !!soloPlayGuard.sharedPlayBlockedReason()}
+        onclick={() => soloPlayGuard.toggleSharedMode()}
         title={sessionModeStore.sharedMode
           ? "Exit Shared Mode (Admin View)"
-          : "Enter Shared Mode (Player Preview)"}
+          : (soloPlayGuard.sharedPlayBlockedReason() ??
+            "Enter Shared Mode (Player Preview)")}
         data-testid="shared-mode-toggle"
+        data-help-target="vtt-player-view-toggle"
         aria-pressed={sessionModeStore.sharedMode}
         aria-label="Toggle player view mode"
       >
@@ -91,17 +154,24 @@
       </button>
 
       {#if mapStore.isGMMode}
-        <button
-          type="button"
-          class={`px-2.5 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${getPrimaryButtonStateClass(mapStore.showFog)}`}
-          onclick={() => (mapStore.showFog = !mapStore.showFog)}
-        >
-          FOG: {mapStore.showFog ? "ON" : "OFF"}
-        </button>
+        <MapFogToggles />
 
         <button
           type="button"
-          class={`px-2.5 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${getPrimaryButtonStateClass(mapStore.showLabels)}`}
+          class={`touch-target px-2.5 py-1.5 rounded-md text-micro font-bold uppercase tracking-wider transition-all ${getPrimaryButtonStateClass(mapStore.visionMode === "selected")}`}
+          onclick={() =>
+            (mapStore.visionMode =
+              mapStore.visionMode === "party" ? "selected" : "party")}
+          title="Party Vision combines all PC tokens' vision. Selected Token Vision shows only the currently selected PC's viewpoint."
+        >
+          VISION: {mapStore.visionMode === "selected" ? "SELECTED" : "PARTY"}
+        </button>
+
+        <MapVisionControls />
+
+        <button
+          type="button"
+          class={`touch-target px-2.5 py-1.5 rounded-md text-micro font-bold uppercase tracking-wider transition-all ${getPrimaryButtonStateClass(mapStore.showLabels)}`}
           onclick={() => (mapStore.showLabels = !mapStore.showLabels)}
           title="Toggle Pin Labels"
         >
@@ -110,41 +180,48 @@
 
         <button
           type="button"
-          class={`px-2.5 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${getPrimaryButtonStateClass(mapStore.showGrid)}`}
+          class={`touch-target px-2.5 py-1.5 rounded-md text-micro font-bold uppercase tracking-wider transition-all ${getPrimaryButtonStateClass(mapStore.showGrid)}`}
           onclick={() => (mapStore.showGrid = !mapStore.showGrid)}
           oncontextmenu={openGridSettings}
           title="Toggle Grid (Right-click for settings)"
+          data-help-target="vtt-grid-button"
         >
           GRID: {mapStore.showGrid ? "ON" : "OFF"}
         </button>
 
+        <div
+          class="relative"
+          bind:this={layerPanelContainer}
+          data-help-target="vtt-layer-control"
+        >
+          <button
+            type="button"
+            class={`touch-target px-2.5 py-1.5 rounded-md transition-all flex items-center ${getPrimaryButtonStateClass(showLayerPanel)}`}
+            onclick={(e) => {
+              e.stopPropagation();
+              showLayerPanel = !showLayerPanel;
+            }}
+            aria-pressed={showLayerPanel}
+            aria-label="Layer: {activeLayerOption.label}"
+            title="Layer: {activeLayerOption.label} — choose which layer you're editing, and toggle layer visibility/lock"
+          >
+            <span
+              class="{activeLayerOption.icon} w-3.5 h-3.5"
+              aria-hidden="true"
+            ></span>
+          </button>
+          {#if showLayerPanel}
+            <div
+              class="absolute bottom-full left-0 mb-2 max-sm:fixed max-sm:inset-x-2 max-sm:bottom-[12rem] max-sm:mb-0 max-sm:flex max-sm:justify-center"
+            >
+              <LayerPanel onClose={() => (showLayerPanel = false)} />
+            </div>
+          {/if}
+        </div>
+
         <VTTModeToggle />
 
-        {#if mapStore.showFog}
-          <div class="flex items-center gap-2 px-2">
-            <span
-              class="text-[9px] text-theme-muted font-bold tracking-tighter uppercase"
-              >Brush Size</span
-            >
-            <input
-              type="range"
-              min="10"
-              max="500"
-              bind:value={mapStore.brushRadius}
-              class="w-24 accent-theme-primary h-1"
-            />
-            <span class="text-[9px] text-theme-primary font-mono w-6"
-              >{mapStore.brushRadius}px</span
-            >
-          </div>
-
-          <div
-            class="flex flex-col justify-center px-2 text-[10px] text-theme-muted/90 font-semibold italic leading-tight"
-          >
-            <span>Alt+Drag to Reveal</span>
-            <span>Alt+Shift+Drag to Hide</span>
-          </div>
-        {/if}
+        <MapBrushControls />
       {/if}
     </div>
   </div>

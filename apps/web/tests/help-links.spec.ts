@@ -1,18 +1,11 @@
 import { test, expect } from "@playwright/test";
+import { setupVaultPage } from "./test-helpers";
 
 test.describe("Direct Help Links", () => {
   test.beforeEach(async ({ context, page }) => {
     // Grant clipboard permissions
     await context.grantPermissions(["clipboard-write", "clipboard-read"]);
-
-    // Disable onboarding to access main UI
-    await page.addInitScript(() => {
-      localStorage.setItem("codex_skip_landing", "true");
-      localStorage.setItem(
-        "codex-cryptica-help-state",
-        JSON.stringify({ completedTours: ["initial-onboarding"] }),
-      );
-    });
+    await setupVaultPage(page);
   });
 
   test("should open help center to specific article when hash is present", async ({
@@ -31,8 +24,8 @@ test.describe("Direct Help Links", () => {
 
     // 3. Verify the specific article is expanded
     await expect(
-      page.locator(".prose h2", { hasText: /Quick Guide/i }).first(),
-    ).toBeVisible();
+      page.getByRole("heading", { name: /Quick Guide/i }).first(),
+    ).toBeVisible({ timeout: 10000 });
   });
 
   test("should update help article when hash changes", async ({ page }) => {

@@ -1,57 +1,30 @@
 # Releasing Codex Cryptica
 
-Codex Cryptica uses an automated versioning and release pipeline. Follow these guidelines to ensure successful deployments and high-signal community updates.
+Codex Cryptica uses an automated versioning and release pipeline. The in-app changelog in `apps/web/src/lib/content/changelog/releases.json` is the source for user-facing GitHub release notes.
 
-## 🚀 The Release Flow
+## Release flow
 
-1.  **Work on a Feature Branch**: Never work directly on `main` or `staging`.
-2.  **Label your Pull Request**: Before merging to `staging`, apply one of the following labels to your PR:
-    - `minor`: (Recommended) Bumps the version to `X.Y.0` and triggers a formal GitHub Release. Use this for new features (e.g., Blog, Maps, Canvas).
-    - `major`: Bumps the version to `X.0.0` and triggers a formal GitHub Release. Use this for breaking changes or massive milestones.
-    - **No Label (Default)**: Automatically bumps the **Patch** version (`X.Y.Z+1`). This **does not** trigger a GitHub Release. Use this for bug fixes and internal chores.
-3.  **Merge the PR to `staging`**: CI runs and a staging deployment is created.
-4.  **Promote to Production**: Trigger the `Promote Staging to Production` workflow. This deploys to prod, then automatically:
-    - Merges `staging` into `main`
-    - Reads the label from the latest merged staging PR to determine bump type
-    - Commits the version bump to `main`
-    - Triggers the `Deploy` and `Release` workflows
+1. Work on a feature branch; do not make feature changes directly on `main` or `staging`.
+2. Before merging to `staging`, label the latest PR with the intended version bump:
+   - `minor`: set the version to `X.Y.0` and create a formal GitHub release.
+   - `major`: set the version to `X.0.0` and create a formal GitHub release.
+   - No bump label: increment the patch version; no formal release is created.
+3. Merge to `staging` and wait for CI and the staging deployment to succeed.
+4. Manually run **Promote Staging to Production**. On success, automation merges `staging` into `main`, bumps the version, syncs `staging`, and triggers the formal release for major/minor versions.
 
-## 📦 What happens during a Release?
+## What a formal release contains
 
-When a `minor` or `major` label is detected:
+- The in-app changelog highlights, formatted as user-facing release notes, plus a full-changelog comparison link.
+- A Discord release announcement linking to the GitHub release.
+- **No packaged application ZIP.** Codex Cryptica does not offer the release ZIP as an installer or supported self-hosting package, so announcements should not describe releases as portable or promise that the app runs entirely offline.
+- GitHub may show automatically generated source-code archives for the public repository tag. These are repository snapshots, not packaged application downloads; the repository's `LICENSE` applies.
 
-- **Version Rollover**: The version is set to `X.Y.0` (patch is reset to zero).
-- **GitHub Release**: A new formal Release is created at [eserlan/Codex-Cryptica/releases](https://github.com/eserlan/Codex-Cryptica/releases).
-- **Portable Codex**: A `.zip` artifact of the production build is automatically attached to the release. This allows GMs to run the app entirely offline.
-- **Categorized Changelog**: Pull requests are automatically grouped into:
-  - ✨ New Features
-  - ⚡ Performance (Bolt)
-  - 🎨 User Experience (Palette)
-  - 🐛 Bug Fixes
-- **Discord Ping**: The `#releases` channel receives an automated announcement with a link to the new version.
+Do not manually bump `apps/web/package.json`, the fallback version, or the service-worker cache version. Promotion automation owns those values.
 
-## ⚠️ Important Reminders
+## Before and after promotion
 
-### 1. Labeling is Key
+- Write the release entry to `releases.json` and sync the historical section in `specs/roadmap.md` before promoting.
+- Ensure the latest merged PR targeting `staging` has the correct `minor` or `major` label for a formal release.
+- After promotion, verify the production site, the GitHub release notes and version, and the Discord announcement. The GitHub release should have no custom application ZIP attached.
 
-The release process is entirely dependent on the **PR Label**. Labels must be applied **before merging to `staging`** — the bump reads the label of the most recently merged staging PR at promotion time. If you forget to add the `minor` label before merging, you will only get a patch bump and no formal release.
-
-### 2. High-Signal PR Titles
-
-The automated changelog uses your **Pull Request Titles**. Ensure they are descriptive and follow the project convention (e.g., `:sparkles: feat(canvas): Interactive Spatial Canvas`). Avoid generic titles like "fixed some stuff."
-
-### 3. Build Secrets
-
-The "Portable Codex" build requires `VITE_GOOGLE_CLIENT_ID` and `VITE_GEMINI_API_KEY` to be correctly set in GitHub Secrets. If these are changed or missing, the offline version will have disabled features.
-
-### 4. Verification
-
-After a release, always verify:
-
-1.  The live site at [codexcryptica.com](https://codexcryptica.com) reflects the new version.
-2.  The GitHub Release exists and has the `codex-cryptica-vX.Y.Z.zip` attached.
-3.  The Discord announcement was sent to the correct channel.
-
----
-
-_Last Updated: April 2026_
+_Last Updated: September 2026_

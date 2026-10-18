@@ -5,6 +5,7 @@
   import StatSheetEditor from "$lib/components/stats/StatSheetEditor.svelte";
   import StatSheetTemplateModal from "$lib/components/stats/StatSheetTemplateModal.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { presentationUIStore } from "$lib/stores/ui/presentation-ui.svelte";
   import { statSheetTemplates } from "$lib/stores/stat-sheet-templates.svelte";
   import { presentationTemplates } from "$lib/stores/presentation-templates.svelte";
   import PresentationRenderer from "$lib/components/stats/presentation/PresentationRenderer.svelte";
@@ -12,6 +13,7 @@
   import PresentationTemplateManager from "$lib/components/stats/presentation/PresentationTemplateManager.svelte";
   import type { PresentationRenderContext } from "$lib/components/stats/presentation/types";
   import {
+    computeSectionKeys,
     isTemplateUsable,
     parseTemplate,
     resolvePresentationTemplate,
@@ -81,6 +83,10 @@
     return validateAst(parsed.ast, schema);
   });
 
+  const sectionKeys = $derived(
+    presentationAst ? computeSectionKeys(presentationAst) : new Map(),
+  );
+
   function persistFields(nextFields: StatSheetField[]) {
     if (readOnly) return;
     vault.updateEntity(entity.id, {
@@ -101,6 +107,13 @@
       return readOnly;
     },
     mode: "view",
+    get sectionKeys() {
+      return sectionKeys;
+    },
+    isSectionCollapsed: (sectionKey) =>
+      presentationUIStore.getCollapsedSections(entity.id).has(sectionKey),
+    onToggleSection: (sectionKey) =>
+      presentationUIStore.toggleSection(entity.id, sectionKey),
     onUpdateFieldValue: (fieldId, value) => {
       persistFields(
         (entity.statSheet?.fields ?? []).map((f: StatSheetField) =>
@@ -140,12 +153,19 @@
     });
     isEditingLayout = false;
   }
+
+  // The same context plus the entity it belongs to, which a shop's stock table
+  // needs to record a trade (#3963). Re-read whenever the sheet changes.
+  const sheetContext: PresentationRenderContext = $derived({
+    ...renderContext,
+    entityId: entity.id,
+  });
 </script>
 
 <div class="flex flex-col gap-3 pb-8" data-testid="detail-stats-tab">
   <div class="flex items-center justify-between">
     <span
-      class="text-[10px] font-bold uppercase tracking-widest text-theme-muted"
+      class="text-micro font-bold uppercase tracking-widest text-theme-muted"
     >
       Stat Sheet
     </span>
@@ -154,7 +174,7 @@
         {#if hasStats}
           <button
             type="button"
-            class="rounded border border-theme-border px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-theme-muted hover:border-red-500 hover:text-red-500"
+            class="rounded border border-theme-border px-2 py-1 text-micro font-bold uppercase tracking-wide text-theme-muted hover:border-red-500 hover:text-red-500"
             onclick={clearStatSheet}
             data-testid="stat-sheet-clear-stats"
           >
@@ -163,7 +183,7 @@
         {/if}
         <button
           type="button"
-          class="rounded border border-theme-border px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary"
+          class="rounded border border-theme-border px-2 py-1 text-micro font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary"
           onclick={() => (showTemplateModal = true)}
           data-testid="stat-sheet-open-templates"
         >
@@ -172,7 +192,7 @@
         {#if schema}
           <button
             type="button"
-            class="rounded border border-theme-border px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary"
+            class="rounded border border-theme-border px-2 py-1 text-micro font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary"
             onclick={() => (showPresentationManager = true)}
             data-testid="stat-sheet-open-presentation-templates"
           >
@@ -181,7 +201,7 @@
         {/if}
         <button
           type="button"
-          class="rounded border border-theme-border px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary"
+          class="rounded border border-theme-border px-2 py-1 text-micro font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary"
           onclick={() => (isEditingLayout = !isEditingLayout)}
           data-testid="stat-sheet-toggle-editor"
         >
@@ -198,7 +218,7 @@
       <PresentationTemplatePicker {entity} {schema} />
     {/if}
     {#if usable && presentationAst}
-      <PresentationRenderer nodes={presentationAst} context={renderContext} />
+      <PresentationRenderer nodes={presentationAst} context={sheetContext} />
     {:else}
       <StatSheetView {entity} onOpenEditor={() => (isEditingLayout = true)} />
     {/if}

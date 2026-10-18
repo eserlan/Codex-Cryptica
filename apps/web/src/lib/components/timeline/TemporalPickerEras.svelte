@@ -34,14 +34,14 @@
           >{era.name}</span
         >
       </div>
-      <div class="text-[9px] text-theme-muted ml-3 font-header">
+      <div class="text-nano text-theme-muted ml-3 font-header">
         Year {era.start_year}
         {era.end_year != null ? `→ ${era.end_year}` : "→ Present"}
       </div>
     </button>
   {:else}
     <div
-      class="py-8 text-center text-theme-muted text-[10px] uppercase tracking-widest"
+      class="py-8 text-center text-theme-muted text-micro uppercase tracking-widest"
     >
       No Eras Defined
     </div>

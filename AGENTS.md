@@ -6,8 +6,11 @@ This file is the Codex-facing instruction layer for this repository.
 
 - The Speckit command definitions in [`.gemini/commands`](./.gemini/commands) are the canonical command source for this repo.
 - [`.codex/commands`](./.codex/commands) is a shared mirror for Codex CLI compatibility.
-- Codex review is available through [`.codex/commands/code-review.md`](./.codex/commands/code-review.md) and [`.codex/skills/codex-review/SKILL.md`](./.codex/skills/codex-review/SKILL.md); the extended canonical review patterns remain in [`.agent/skills/codex-review`](./.agent/skills/codex-review).
+- Codex review is available through [`.codex/commands/code-review.md`](./.codex/commands/code-review.md); the canonical review skill and patterns live in [`.agent/skills/codex-review`](./.agent/skills/codex-review). The `.codex`, `.claude`, and `.agents` entries are compatibility adapters.
+- Staging checkout & pull is available through [`.codex/commands/stg.md`](./.codex/commands/stg.md) and [`.gemini/commands/stg.toml`](./.gemini/commands/stg.toml). Trigger it whenever a request mentions `/stg`, "to stg n pull", or "pull stg" to verify tree cleanliness, switch to `staging`, pull `origin/staging`, and clean up any merged local feature branch.
+- Community announcement drafting is available through [`.codex/skills/cc-announcer/SKILL.md`](./.codex/skills/cc-announcer/SKILL.md). Use it whenever a request concerns a Codex Cryptica Reddit post, devlog, release announcement, or community update.
 - Keep command behavior synchronized in the canonical Speckit files first, then mirror any Codex-specific guidance here.
+- Spec Kit is pinned to 1.1.0 with Gemini as the managed integration; maintenance and compatibility-copy rules are in [docs/speckit-maintenance.md](./docs/speckit-maintenance.md). Preserve the installed `constitution-sync` preset and repository policy overrides when upgrading.
 - If these instructions ever conflict with [`.specify/memory/constitution.md`](./.specify/memory/constitution.md), the constitution wins.
 - **Verify against the Constitution**: Always refer to the project constitution at [`.specify/memory/constitution.md`](./.specify/memory/constitution.md) to guide design/architecture decisions, and verify all implementation plans against it. To manage, update, or synchronize the constitution, refer to the [`.agent/workflows/sdd-constitution.md`](./.agent/workflows/sdd-constitution.md) workflow.
 
@@ -44,6 +47,24 @@ This file is the Codex-facing instruction layer for this repository.
 - Create regular ready-for-review pull requests by default; never create draft PRs unless the user explicitly asks for a draft.
 - Prefer `gh` for CI and Actions debugging, raw check/log inspection, or other terminal-native GitHub workflows.
 - Use `gh` as the fallback when the connector does not expose the needed GitHub action cleanly.
+- **No Baseline Tests / Impacted-Only Validation**: NEVER run repository-wide test suites (`bun run test`), repository-wide linters (`bun run lint`), or repository-wide typechecks (`bun run lint:types`) across the entire repository during development or PR verification. ALWAYS validate only the impacted/changed code:
+  - Lint: `bun run lint:changed` (or `bun scripts/lint-changed.mjs`)
+  - Tests: `bun run test:changed` (or `bun scripts/test-changed.mjs`)
+  - Type-check: Scoped to the affected workspace (e.g. `bunx svelte-check --tsconfig ./tsconfig.json --threshold error` inside `apps/web`) or affected workspaces via `bun scripts/affected-workspaces.mjs`.
+- **Run Repo Scripts with Bun**: ALWAYS execute repository scripts using `bun`, NEVER `node` (e.g., `bun scripts/lint-changed.mjs`, `bun scripts/test-changed.mjs`).
+- **Image Asset Storage (R2 / Cloudflare Only)**: NEVER commit generated or uploaded image assets (such as OpenGraph cards, screenshots, blog illustrations, or demo portraits) to the local git repository. All marketing, social share, and content image assets belong exclusively in Cloudflare R2 (`codex-cryptica-statics` bucket served via `https://assets.codexcryptica.com/`). Any local image files created temporarily during generation must be deleted immediately after uploading to R2.
+- **Discovery Intent Governance** (Constitution XIII): Before adding or materially repositioning any public, indexable discovery page — `/for`, `/answers`, `/examples`, `/solutions`, `/vs`, `/import`, generator or tool landing pages, evergreen reference blog posts — consult the discovery intent registry at `apps/web/src/lib/content/discovery/`:
+  1. Check whether the intent already has an owner (`findIntentOwner`, or read the audit output).
+  2. If it does, extend that page or record the new phrasing as an **alias**. Do not create a second URL for a synonym or word-order variant.
+  3. If it does not, add an entry with a canonical path, primary intent, user job and unique-value rationale **before** building the page.
+  4. Run `bun scripts/discovery-audit.mjs`. Deterministic findings are errors; overlap warnings need a judgement call, recorded via `acknowledgedOverlap` with a reason if the overlap is intentional.
+  - The registry constrains the public surface; it is never a source for generating pages from keywords. See [docs/discovery-intent-registry.md](./docs/discovery-intent-registry.md).
+- **PR Quality Gate**: Never create or open a Pull Request unless:
+  1. Type-checking for affected workspaces passes with 0 errors (e.g., `bunx svelte-check --tsconfig ./tsconfig.json --threshold error` in `apps/web` or affected workspaces via `bun scripts/affected-workspaces.mjs`).
+  2. Changed-file lint passes with 0 errors (`bun run lint:changed` or `bun scripts/lint-changed.mjs`).
+  3. Impacted tests pass with 0 errors (`bun run test:changed` or `bun scripts/test-changed.mjs`).
+  4. The changes pass the `codex-review` specialist review.
+  5. `bun scripts/discovery-audit.mjs` passes, if the PR touches a public discovery page.
 
 ## Maintenance Rule
 
@@ -54,11 +75,47 @@ This file is the Codex-facing instruction layer for this repository.
 <!-- SPECKIT START -->
 
 For additional context about technologies to be used, project structure,
-shell commands, and other important information, read the [current plan](./specs/156-entity-shelf/plan.md).
+shell commands, and other important information, read the [current plan](./specs/178-hex-crawl-mode/plan.md).
 
 <!-- SPECKIT END -->
 
 ## Active Technologies
+
+- TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + Existing `map-engine` (hex maths; + `parseHexLabel`), `random-source-engine` (offline rolling), `session-journal-engine` (+ `formatHexExplored`), `schema` (`MapSchema` + optional `grid`, `hexCrawl`), `vault-engine` `GuestExporter` (strips `hexCrawl`), `@codex/ai-engine` (`aiClientManager`), `generator-engine` `formatCampaignContextBlock`, the exported `extractJsonObject`, `@codex/events` (`JOURNAL:CAPTURE`), Floating UI, `zod`, Tailwind 4 semantic tokens, Iconify classes. New internal package `packages/hex-crawl-engine`. No new third-party dependency. (178-hex-crawl-mode)
+- Optional additive fields on the existing map records in `.codex/maps.json`: `grid` and `hexCrawl`. They are synced, backed up, exported and restored with maps. One new device-local display preference, `showTerrainIcons`, joins the existing per-map display settings. One device-local "AI notice dismissed" hint key. No IndexedDB, OPFS layout or migration change. (178-hex-crawl-mode)
+
+- TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + Existing `onboarding-journey-engine` (extended), `help-engine` (`QUICK_PROMPT_SETS`, `FEATURE_REGISTRY`, `HelpArea`), `JourneyStore` (read-only outcome), `OnboardingStore` (`chosenGoal`, `goalInvitation`), `helpAssistant` and `cifPopout` (open and ask), `isHelpAssistantAvailable`, `helpStore` (tour), `modalUIStore` (dialogs), Floating UI (already a dependency), Tailwind 4 semantic tokens, Iconify classes. No new third-party dependency. (176-cif-contextual-tips)
+- `localStorage` through the injected `StorageLike`: `codex-cif-tips` (preference, opt-in answer, tip history; device-wide). `sessionStorage`: `codex-cif-tips-session` (a tip was shown this session). No IndexedDB, OPFS or vault schema change, so no migration. (176-cif-contextual-tips)
+
+- TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + Existing `help-engine` (guidance action schema, catalogue, `validateAction`, quick prompts; extended with shell controls and `extraAvailable`), `HelpActionRunner` and `HelpHighlightService`, `onboarding-orchestrator` (extended), `OnboardingStore`, `helpStore` tour, `GettingStartedChecklist`, `vaultEventBus`, `@codex/events` app bus (`JOURNAL:CAPTURE`), `categories` store, `zod`. New internal package `packages/onboarding-journey-engine`. No new third-party dependency. (175-cif-guided-onboarding)
+- `localStorage` through the injected `StorageLike`: `codex-onboarding-journey:<vaultId>` (journey progress), `codex_goal_invitation` and `codex_chosen_goal` (device-wide choice). `sessionStorage`: `codex-onboarding-journey-active` (reload rule). No IndexedDB, OPFS or vault schema change, so no migration. (175-cif-guided-onboarding)
+
+- TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + Existing `map-engine` (hex maths, renderer), `session-journal-engine` (capture, promote), `@codex/events` (`JOURNAL:CAPTURE`), `help-engine`, Tailwind 4 semantic tokens. No new third-party dependency. (171-solo-map-play)
+- Existing per-map settings in `localStorage` (`soloFog`, `visionRange`; unchanged); existing IndexedDB `session_journals` (one optional field, `captureMapMoves`; no migration). Travel tally in memory only. (171-solo-map-play)
+
+- TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + Canvas 2D API, `@codex/spatial-engine`, Tailwind 4 semantic tokens, Lucide Iconify utility classes (170-hex-crawling-maps)
+- Browser-local OPFS (for standard 2D map mask WebP/PNG persistence) and `localStorage` / vault settings (for per-map grid settings). Zero new databases or external schemas required. (170-hex-crawling-maps)
+
+- TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + `packages/chronology-engine` (internal framework-free package), Tailwind 4 semantic tokens, Floating UI, `@codex/events`. No new third-party dependency. (3717-calendar-eras)
+- Browser-local IndexedDB via existing `calendarStore` configuration persistence. No new database store or migration needed. (3717-calendar-eras)
+
+- TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Existing `apps/workers/oracle-proxy` LLM pipeline and session guard, `discoveryPolicyStore` (AI Disabled gate), existing help content; new internal workspace package `packages/help-engine` (framework-free); no new third-party dependency (3427-contextual-ai-help-assistant)
+- Product knowledge is a build-time JSON bundle generated from `packages/help-engine` and `apps/web/src/lib/content/help` (not committed); the help conversation is in memory only; no new vault storage (3427-contextual-ai-help-assistant)
+
+- TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Existing `schema` (Zod, `GENERIC_TEMPLATES`), `@codex/ai-engine` (`configureAIEngine`), `writeOpfsFile`/`runtime-deps`; new internal workspace package `packages/entity-template-engine` (framework-free); no new third-party dependency (167-entity-template-management)
+- Vault OPFS files: `.codex/templates/{id}.json` and `.codex/templates/defaults.json`; legacy `.cc/templates/{type}.md` and `.codex/templates/{type}.md` read-only; no new IndexedDB store (167-entity-template-management)
+
+- TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Existing `@codex/vault-engine` (`vault.createEntity`/`updateEntity`), `@codex/canvas-engine` (canvas nodes/edges), `schema` (Zod `Entity` type), existing `ZenView`/`modalUIStore.openZenMode`, existing `ClipboardService` (+ `marked`/`dompurify`, already a dependency per 2815-smart-copy), Cytoscape (Graph view selection, already used by `SelectionConnector.svelte`). **No new third-party dependency.** (166-canvas-entity-reports)
+- Existing browser-local IndexedDB/OPFS vault. A report is an ordinary Note-category entity (`kind: "report"`) with an additive optional `report` provenance field on `EntitySchema` — no new persistence format, no new object store. (166-canvas-entity-reports)
+
+- TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Existing `idb` (via `apps/web/src/lib/utils/idb.ts`), existing `vault-registry.svelte.ts`; new internal workspace package `packages/session-journal-engine` (framework-free); no new third-party dependency (163-session-journal)
+- Browser-local IndexedDB via the shared `CodexDB` schema (new `session_journals` object store, `by-vault` index) — not a new database, not Dexie (163-session-journal)
+
+- TypeScript 6.0.3, Svelte 5.55.9 Runes, SvelteKit 2.60.1, Bun 1.3.14 + Existing browser Clipboard API, `marked` 18.0.4, `dompurify` 3.4.2, existing generator document-layout helpers; no new dependency (2815-smart-copy)
+- N/A — clipboard payloads are transient and browser-local (2815-smart-copy)
+
+- TypeScript 6.0.3, Svelte 5.55.9 Runes, SvelteKit 2, Bun 1.3.14 + Existing `@codex/ai-engine`, `@codex/oracle-engine`, `@codex/vault-engine`, `dice-engine`, `schema`/Zod, `idb`/Dexie, and `@codex/events`; no new third-party dependency (160-solo-adventure-mode)
+- One versioned JSON document per session at `.codex/adventures/<session-id>.json`; transient cross-tab lease in existing IndexedDB `appSettings`; vault records remain canonical Markdown/metadata (160-solo-adventure-mode)
 
 - TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Existing `chronology-engine`, Svelte components/stores, Playwright performance harness, Vitest (2147-timeline-agenda-bounded-rendering)
 - N/A; deterministic benchmark data is synthetic and transient (2147-timeline-agenda-bounded-rendering)
@@ -110,5 +167,41 @@ shell commands, and other important information, read the [current plan](./specs
 
 ## Recent Changes
 
+- 3427-contextual-ai-help-assistant: Added `packages/help-engine` and a flagged (`VITE_HELP_ASSISTANT`) Help panel backed by `POST /api/help/ask`; no new third-party dependency
+- 163-session-journal: Added TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Existing `idb`, `vault-registry.svelte.ts`; new `packages/session-journal-engine`; no new third-party dependency
 - 116-scroll-wheel-date-picker: Added TypeScript 6.0.3, Svelte 5 runes, Bun 1.3.14 workspace + `chronology-engine`, `schema`, Svelte 5, Floating UI, IndexedDB `idb`, existing Tailwind 4 theme tokens
 - 118-graph-important-label: Added TypeScript 6.0.3, Svelte 5 runes, Bun 1.3.14 workspace + Svelte 5, Cytoscape, `graph-engine`, `schema`, existing vault/entity stores, existing Tailwind 4 theme tokens
+
+---
+
+<!-- fallow:setup-hooks:start -->
+
+## Fallow local gate
+
+Before any `git commit` or `git push`, run `bunx fallow audit --format json --quiet --explain --gate-marker agent`. If the verdict is `fail`, fix the reported findings before retrying. Treat JSON runtime errors like `{ "error": true, ... }` as non-blocking. Always invoke Fallow commands through `bunx fallow` (for example, `bunx fallow review --base <ref> --brief`), not the bare `fallow` command.
+
+Audit defaults to `gate=new-only`: only findings introduced by the current changeset affect the verdict. Inherited findings on touched files are reported under `attribution` and annotated with `introduced: false`, but do not block the commit. Set `[audit] gate = "all"` in `fallow.toml` to gate every finding in changed files.
+
+For non-skill agents, treat the task map below as the local onboarding source: run the listed fallow command before destructive edits, before commits, and before pull request handoff.
+
+## Fallow task map
+
+| When the agent is about to...                                     | Run                                                                                                                                                     |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| delete an "unused" export or file                                 | `fallow dead-code --trace <file>:<export>`                                                                                                              |
+| prove a TypeScript symbol's exact consumers before refactoring    | `fallow dead-code --type-aware --symbol-impact <file>:<export-or-class.method>`                                                                         |
+| find how one module reaches another                               | `fallow trace --path <from> <to>` (Reports `reachable: false` instead of failing when no import path exists; type-only hops are reported, not skipped.) |
+| delete an "unused" dependency                                     | `fallow dead-code --trace-dependency <name>`                                                                                                            |
+| commit or open a PR                                               | `fallow audit --base <ref>`                                                                                                                             |
+| read a diff before approving it                                   | `fallow review --base <ref> --brief` (orientation, never gates: deterministic and always exit 0, unlike the audit row)                                  |
+| prioritize refactoring                                            | `fallow health --hotspots --targets`                                                                                                                    |
+| ask who owns code                                                 | `fallow health --ownership`                                                                                                                             |
+| check untested-but-reachable code                                 | `fallow health --coverage-gaps`                                                                                                                         |
+| consolidate duplication                                           | `fallow dupes --trace dup:<fingerprint>`                                                                                                                |
+| find feature flags                                                | `fallow flags`                                                                                                                                          |
+| check which architecture rules apply to a file before changing it | `fallow guard <files>`                                                                                                                                  |
+| surface security candidates                                       | `fallow security`                                                                                                                                       |
+| understand a finding                                              | `fallow explain <issue-type>`                                                                                                                           |
+| scope a monorepo                                                  | `--workspace <glob> / --changed-workspaces <ref>` (global flags, prefix any command)                                                                    |
+
+<!-- fallow:setup-hooks:end -->

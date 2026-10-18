@@ -15,14 +15,14 @@
 >
   <button
     type="button"
-    class="flex-1 py-1.5 text-[10px] font-bold uppercase font-header tracking-widest border border-theme-border text-theme-muted hover:text-theme-text transition-colors rounded"
+    class="flex-1 py-1.5 text-micro font-bold uppercase font-header tracking-widest border border-theme-border text-theme-muted hover:text-theme-text transition-colors rounded"
     onclick={onCancel}
   >
     Cancel
   </button>
   <button
     type="button"
-    class="flex-1 py-1.5 text-[10px] font-bold uppercase font-header tracking-widest bg-theme-primary text-theme-bg hover:bg-theme-secondary transition-colors rounded"
+    class="flex-1 py-1.5 text-micro font-bold uppercase font-header tracking-widest bg-theme-primary text-theme-bg hover:bg-theme-secondary transition-colors rounded"
     data-testid="apply-date-button"
     disabled={isDisabled}
     onclick={() => {

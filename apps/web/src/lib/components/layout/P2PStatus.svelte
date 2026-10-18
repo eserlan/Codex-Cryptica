@@ -61,13 +61,13 @@
 
     {#if activeState?.status === "connected" && activeState.latencyMs >= 0}
       <span
-        class="text-[10px] font-mono font-medium text-chrome-muted group-hover:text-chrome-accent transition-colors"
+        class="text-micro font-mono font-medium text-chrome-muted group-hover:text-chrome-accent transition-colors"
       >
         {getLatencyLabel()}
       </span>
     {:else}
       <span
-        class="text-[10px] font-sans font-medium text-chrome-muted group-hover:text-chrome-accent transition-colors uppercase tracking-wider"
+        class="text-micro font-sans font-medium text-chrome-muted group-hover:text-chrome-accent transition-colors uppercase tracking-wider"
       >
         {activeState?.status || "offline"}
       </span>
@@ -83,7 +83,7 @@
         P2P Session Diagnostics ({isHost ? "Host" : "Guest"})
       </div>
       <div
-        class="grid grid-cols-3 gap-y-1 text-[10px] font-mono text-chrome-muted"
+        class="grid grid-cols-3 gap-y-1 text-micro font-mono text-chrome-muted"
       >
         <div>Status:</div>
         <div class="col-span-2 text-chrome-text font-semibold capitalize">

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { syncGraphElements, resolveLayoutTrigger } from "./useGraphSync";
 import type { Core } from "cytoscape";
+import cytoscape from "cytoscape";
 import type { LayoutRequest } from "../LayoutManager";
 import {
   PerformanceRecorder,
@@ -51,6 +52,7 @@ describe("syncGraphElements", () => {
         }));
         return {
           addClass: vi.fn(),
+          data: vi.fn(),
           forEach: vi.fn((cb) => mapped.forEach(cb)),
         };
       }),
@@ -168,6 +170,40 @@ describe("syncGraphElements", () => {
         JSON.stringify(a) === JSON.stringify(b),
     });
     expect(mockCy.add).toHaveBeenCalled();
+  });
+
+  it("keeps placement data separate from the visibility class on added nodes", () => {
+    const cy = cytoscape({ headless: true });
+    try {
+      syncGraphElements(cy, {
+        elements: [
+          {
+            group: "nodes",
+            data: { id: "saved" },
+            position: { x: 100, y: 200 },
+          },
+          {
+            group: "nodes",
+            data: { id: "unplaced", isPendingLayout: true },
+            position: { x: 500, y: 600 },
+          },
+          { group: "nodes", data: { id: "missing" } },
+        ] as any[],
+        vaultStatus: "idle",
+        initialLoaded: true,
+        isTemporalMetadataEqual: (a, b) => a === b,
+        focusMembershipOnly: true,
+        skipRenderedWeightSync: true,
+      });
+
+      expect(cy.$id("saved").hasClass("pending-layout")).toBe(true);
+      expect(cy.$id("saved").data("isPendingLayout")).toBeUndefined();
+      expect(cy.$id("saved").position()).toEqual({ x: 100, y: 200 });
+      expect(cy.$id("unplaced").data("isPendingLayout")).toBe(true);
+      expect(cy.$id("missing").data("isPendingLayout")).toBe(true);
+    } finally {
+      cy.destroy();
+    }
   });
 
   it("adds only the focus-membership delta without patching retained data", () => {
@@ -660,6 +696,86 @@ describe("syncGraphElements", () => {
 
     expect(mockNode.connectedEdges).not.toHaveBeenCalled();
     expect(mockNode.removeClass).toHaveBeenCalledWith("filtered-out");
+  });
+
+  it("validates edge endpoints against elementMap and discards edges with missing nodes", () => {
+    const nodeA = createMockNode("nodeA");
+    const nodeB = createMockNode("nodeB");
+    mockCy.elements.mockReturnValue([nodeA, nodeB]);
+
+    const addedElements: any[] = [];
+    mockCy.add.mockImplementation((items: any) => {
+      const arr = Array.isArray(items) ? items : [items];
+      addedElements.push(...arr);
+      const wrapped = arr.map((item) => ({
+        ...item,
+        id: vi.fn().mockReturnValue(item.data.id),
+        data: vi.fn().mockReturnValue(item.data),
+        removeClass: vi.fn(),
+        addClass: vi.fn(),
+        hasClass: vi.fn().mockReturnValue(false),
+        position: vi.fn(),
+      }));
+      return {
+        addClass: vi.fn(),
+        forEach: vi.fn((cb) => wrapped.forEach(cb)),
+      };
+    });
+
+    syncGraphElements(mockCy as unknown as Core, {
+      elements: [
+        { group: "nodes", data: { id: "nodeA" } },
+        { group: "nodes", data: { id: "nodeB" } },
+        {
+          group: "edges",
+          data: { id: "validEdge", source: "nodeA", target: "nodeB" },
+        },
+        {
+          group: "edges",
+          data: { id: "invalidEdge", source: "nodeA", target: "missingNode" },
+        },
+      ] as any[],
+      vaultStatus: "idle",
+      initialLoaded: true,
+      isTemporalMetadataEqual: (a, b) => a === b,
+    });
+
+    // Only validEdge should have been added; invalidEdge dropped
+    expect(addedElements).toEqual([
+      {
+        group: "edges",
+        data: { id: "validEdge", source: "nodeA", target: "nodeB" },
+      },
+    ]);
+  });
+
+  it("calculates rendered weights from multiple edges without Cytoscape collection queries", () => {
+    const node1 = createMockNode("n1");
+    const node2 = createMockNode("n2");
+    const node3 = createMockNode("n3");
+    mockCy.elements.mockReturnValue([node1, node2, node3]);
+
+    syncGraphElements(mockCy as unknown as Core, {
+      elements: [
+        { group: "nodes", data: { id: "n1", weight: 0 } },
+        { group: "nodes", data: { id: "n2", weight: 0 } },
+        { group: "nodes", data: { id: "n3", weight: 0 } },
+        { group: "edges", data: { id: "e1", source: "n1", target: "n2" } },
+        { group: "edges", data: { id: "e2", source: "n1", target: "n3" } },
+        { group: "edges", data: { id: "e3", source: "n1", target: "n2" } },
+      ] as any[],
+      vaultStatus: "idle",
+      initialLoaded: true,
+      isTemporalMetadataEqual: (a, b) => a === b,
+    });
+
+    // n1 has 3 edges (e1, e2, e3), n2 has 2 edges (e1, e3), n3 has 1 edge (e2)
+    expect(node1.data).toHaveBeenCalledWith("weight", 3);
+    expect(node2.data).toHaveBeenCalledWith("weight", 2);
+    expect(node3.data).toHaveBeenCalledWith("weight", 1);
+    expect(node1.connectedEdges).not.toHaveBeenCalled();
+    expect(node2.connectedEdges).not.toHaveBeenCalled();
+    expect(node3.connectedEdges).not.toHaveBeenCalled();
   });
 });
 

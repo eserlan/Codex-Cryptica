@@ -5,19 +5,47 @@
  */
 
 import type {
+  GenerationEvent,
   LlmAdaptorResult,
   LlmModelDefinition,
   LlmRequest,
+  LlmUsage,
 } from "../types";
 import {
   validateAgainstSchema,
+  validateStructuredStreamText,
   wantsStructuredOutput,
 } from "../schema-validation";
+import { readSseData } from "../sse";
 
-const PROVIDER_TIMEOUT_MS = 15_000;
+/** See the matching constant in gemini-adaptor.ts. */
+const PROVIDER_TIMEOUT_MS = 120_000;
 const OPENAI_CHAT_COMPLETIONS_URL =
   "https://api.openai.com/v1/chat/completions";
 const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";
+
+function supportsOpenAiJsonSchema(schema: unknown): boolean {
+  return (
+    !!schema &&
+    typeof schema === "object" &&
+    (schema as { type?: unknown }).type === "object" &&
+    !Array.isArray((schema as { oneOf?: unknown }).oneOf)
+  );
+}
+
+function ensureJsonInstruction(
+  messages: Array<{ role: string; content: string }>,
+): void {
+  if (
+    messages.some((message) => message.content.toLowerCase().includes("json"))
+  ) {
+    return;
+  }
+  messages.unshift({
+    role: "system",
+    content: "Respond with valid JSON.",
+  });
+}
 
 interface OpenAiEnv {
   OPENAI_API_KEY?: string;
@@ -26,19 +54,19 @@ interface OpenAiEnv {
 /**
  * Translates an `LlmRequest` into an OpenAI-compatible `chat/completions`
  * call and normalizes the response into `LlmResponse`. Enforces the
- * 15-second provider-call timeout itself (FR-005) — the resolver never
+ * provider-call timeout itself (FR-005) — the resolver never
  * calls `fetch`/a provider directly.
  */
-export async function callOpenAi(
+/**
+ * Builds the `chat/completions` request body shared by `callOpenAi` and its
+ * streaming counterpart `streamOpenAi` — every field below (except `stream`
+ * itself) must apply identically to both, or the two calls would silently
+ * diverge in generated content, not just in how it's delivered.
+ */
+function buildChatCompletionsBody(
   request: LlmRequest,
   model: LlmModelDefinition,
-  env: OpenAiEnv,
-  fetcher: typeof fetch = fetch,
-): Promise<LlmAdaptorResult> {
-  if (!env.OPENAI_API_KEY) {
-    return { ok: false, reason: "missing-openai-api-key" };
-  }
-
+): Record<string, unknown> {
   const messages = request.messages.map((m) => ({
     role: m.role,
     content: m.content,
@@ -74,7 +102,7 @@ export async function callOpenAi(
   }
 
   if (wantsStructuredOutput(request)) {
-    if (request.schema) {
+    if (request.schema && supportsOpenAiJsonSchema(request.schema)) {
       // OpenAI's `strict: true` structured-output mode rejects any schema
       // that doesn't set `additionalProperties: false` on every object level
       // and list every property as `required` — callers of this pipeline
@@ -95,8 +123,24 @@ export async function callOpenAi(
       // prompt mentions JSON when requesting structured-generation without
       // a schema.
       body.response_format = { type: "json_object" };
+      ensureJsonInstruction(messages);
     }
   }
+
+  return body;
+}
+
+export async function callOpenAi(
+  request: LlmRequest,
+  model: LlmModelDefinition,
+  env: OpenAiEnv,
+  fetcher: typeof fetch = fetch,
+): Promise<LlmAdaptorResult> {
+  if (!env.OPENAI_API_KEY) {
+    return { ok: false, reason: "missing-openai-api-key" };
+  }
+
+  const body = buildChatCompletionsBody(request, model);
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), PROVIDER_TIMEOUT_MS);
@@ -174,6 +218,103 @@ export async function callOpenAi(
   return { ok: true, response: { content: text, modelKey: model.key, usage } };
 }
 
+/**
+ * Streaming counterpart to `callOpenAi` (#2423). Same request body via
+ * `buildChatCompletionsBody`, plus `stream: true`, reading the
+ * `chat/completions` SSE stream and re-emitting normalized
+ * `GenerationEvent`s. No retry/fallback/structured-output-validation of its
+ * own — see the `GenerationEvent` doc comment in `types.ts`. A caller that
+ * requested structured output must accumulate `delta` text and parse/
+ * validate the buffer itself once `complete` fires.
+ */
+export async function* streamOpenAi(
+  request: LlmRequest,
+  model: LlmModelDefinition,
+  env: OpenAiEnv,
+  fetcher: typeof fetch = fetch,
+  signal?: AbortSignal,
+): AsyncGenerator<GenerationEvent> {
+  if (!env.OPENAI_API_KEY) {
+    yield { type: "error", error: "missing-openai-api-key" };
+    return;
+  }
+
+  const body = {
+    ...buildChatCompletionsBody(request, model),
+    stream: true,
+    // Only OpenAI's streaming mode supports requesting token usage on the
+    // final chunk — worth taking since usage is otherwise unavailable here.
+    stream_options: { include_usage: true },
+  };
+
+  let response: Response;
+  try {
+    response = await fetcher(OPENAI_CHAT_COMPLETIONS_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${env.OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify(body),
+      signal,
+    });
+  } catch (err) {
+    const isAbort =
+      (err as { name?: string } | undefined)?.name === "AbortError";
+    yield { type: "error", error: isAbort ? "aborted" : "transport-error" };
+    return;
+  }
+
+  if (!response.ok || !response.body) {
+    yield { type: "error", error: `upstream-status-${response.status}` };
+    return;
+  }
+
+  yield { type: "started" };
+
+  const reader = response.body.getReader();
+  let fullText = "";
+  let usage: LlmUsage | undefined;
+
+  try {
+    for await (const dataStr of readSseData(reader)) {
+      if (dataStr === "[DONE]") continue;
+
+      let chunk: any;
+      try {
+        chunk = JSON.parse(dataStr);
+      } catch {
+        continue;
+      }
+
+      const deltaText: string = chunk?.choices?.[0]?.delta?.content ?? "";
+      if (deltaText) {
+        fullText += deltaText;
+        yield { type: "delta", text: deltaText };
+      }
+      if (chunk?.usage) {
+        usage = {
+          promptTokens: chunk.usage.prompt_tokens ?? 0,
+          completionTokens: chunk.usage.completion_tokens ?? 0,
+        };
+      }
+    }
+  } catch (err) {
+    const isAbort =
+      (err as { name?: string } | undefined)?.name === "AbortError";
+    yield { type: "error", error: isAbort ? "aborted" : "stream-read-error" };
+    return;
+  }
+
+  const validation = validateStructuredStreamText(request, fullText);
+  if (!validation.ok) {
+    yield { type: "error", error: validation.reason };
+    return;
+  }
+
+  yield { type: "complete", text: fullText, usage };
+}
+
 export interface OpenAiInteractionResult {
   ok: boolean;
   status: number;
@@ -244,11 +385,13 @@ export async function forwardInteractionToOpenAi(
     const mimeType = genConfig.responseMimeType ?? genConfig.response_mime_type;
     if (mimeType === "application/json") {
       payload.text = { format: { type: "json_object" } };
-      // OpenAI's schema-less json_object mode 400s unless "json" appears
-      // somewhere in the instructions/input (same constraint callOpenAi
-      // documents for chat/completions' json_object mode). Guarantee it here
-      // rather than trusting every Interactions-path caller's system
-      // instruction to happen to mention it.
+      // The Responses API checks the submitted turn input itself for "json";
+      // mentioning it only in `instructions` still produces a 400. Keep the
+      // marker in both places: input satisfies that API constraint, while
+      // instructions keeps the rule explicit across continued turns.
+      if (typeof payload.input === "string") {
+        payload.input = `Respond with valid JSON.\n\n${payload.input}`;
+      }
       payload.instructions = payload.instructions
         ? `${payload.instructions}\n\nRespond with valid JSON.`
         : "Respond with valid JSON.";

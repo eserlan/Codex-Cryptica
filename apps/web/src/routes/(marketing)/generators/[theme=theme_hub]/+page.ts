@@ -17,7 +17,9 @@ export type ThemeSlug =
   | "steampunk"
   | "lancer"
   | "space-opera-resistance"
-  | "optimistic-exploration-sci-fi";
+  | "optimistic-exploration-sci-fi"
+  | "space-western"
+  | "superhero";
 export const load: PageLoad = ({ params }) => {
   if (!VALID_HUB_THEMES.has(params.theme)) {
     throw error(404, "Theme not found");
@@ -39,4 +41,6 @@ export const entries: EntryGenerator = () => [
   { theme: "lancer" },
   { theme: "space-opera-resistance" },
   { theme: "optimistic-exploration-sci-fi" },
+  { theme: "space-western" },
+  { theme: "superhero" },
 ];

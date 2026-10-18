@@ -21,10 +21,11 @@
 
 {#if usedEntities.length > 0}
   <div
-    class="mt-4 p-3 bg-theme-primary/5 border border-theme-primary/20 rounded-xl flex items-start gap-2 text-[10px] text-theme-text/80 animate-in fade-in"
+    class="mt-4 p-3 bg-theme-primary/5 border border-theme-primary/20 rounded-xl flex items-start gap-2 text-micro text-theme-text/80 animate-in fade-in"
   >
     <span
       class="icon-[lucide--zap] w-3.5 h-3.5 text-theme-primary shrink-0 mt-0.5"
+      aria-hidden="true"
     ></span>
     <div class="flex flex-wrap items-center gap-1.5 leading-tight">
       <span

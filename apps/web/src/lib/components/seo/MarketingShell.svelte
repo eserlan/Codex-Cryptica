@@ -13,14 +13,10 @@
    * container, because wrapping thirty pages in a new max-width at once would
    * reflow all of them in a single commit. Widths converge on the grammar's
    * three tokens page by page in phase 3, where each can be looked at.
-   *
-   * The nav is reachable on phones, which it was not: both old headers were
-   * `hidden md:flex`, leaving mobile with no navigation at all, and mobile is
-   * 55% of visits.
    */
   import { base } from "$app/paths";
   import { page } from "$app/state";
-  import { afterNavigate } from "$app/navigation";
+  import { DISCORD_URL, GITHUB_URL } from "$lib/config";
   import MarketingFooter from "./MarketingFooter.svelte";
   import {
     MARKETING_NAV,
@@ -41,30 +37,22 @@
      * the path-derived set, preserving what SEOPageLayout used to pass.
      */
     footerLinks?: { href: string; label: string }[];
-    children: import("svelte").Snippet;
+    children?: import("svelte").Snippet;
   } = $props();
 
   const cleanBase = $derived(base === "/" ? "" : base);
   const logoHref = $derived(shellCtaHref(base, page.url.pathname, "logo"));
   const ctaHref = $derived(shellCtaHref(base, page.url.pathname, "nav"));
 
-  let menuOpen = $state(false);
-
-  // A route change should not leave the menu hanging open over the new page.
-  // `afterNavigate` rather than an effect on `page.url`: reading page state in
-  // an effect that also writes `menuOpen` re-ran on the same tick as the click
-  // and closed the menu again before it ever rendered.
-  afterNavigate(() => {
-    menuOpen = false;
-  });
-
   const isCurrent = (href: string) =>
     page.url.pathname.startsWith(`${cleanBase}${href}`) ? "page" : undefined;
 </script>
 
 <div class="min-h-screen flex flex-col">
+  <!-- chrome-shield: opts this header into the neutral chrome palette so world
+       themes cannot bleed into site navigation. See app.css and #2578. -->
   <header
-    class="w-full border-b border-theme-border/60 bg-theme-surface/40 backdrop-blur-md px-4 sm:px-6 py-4 sticky top-0 z-50"
+    class="chrome-shield w-full border-b border-theme-border/60 bg-theme-surface/40 backdrop-blur-md px-4 sm:px-6 py-4 sticky top-0 z-50"
   >
     <div class="max-w-6xl mx-auto flex items-center justify-between gap-4">
       <a
@@ -100,10 +88,50 @@
         {/each}
       </nav>
 
-      <div class="flex items-center gap-2 shrink-0">
+      <div class="flex items-center gap-1 sm:gap-2 shrink-0">
+        {#if DISCORD_URL}
+          <a
+            href={DISCORD_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="hidden sm:inline-flex items-center justify-center min-w-[24px] min-h-[24px] p-2 rounded-lg text-theme-muted hover:text-theme-primary hover:bg-theme-surface/60 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-accent"
+            aria-label="Discord Community"
+            title="Discord Community"
+            data-testid="shell-discord-link"
+          >
+            <span
+              class="icon-[lucide--message-square] w-4 h-4"
+              aria-hidden="true"
+            ></span>
+          </a>
+        {/if}
+        {#if GITHUB_URL}
+          <a
+            href={GITHUB_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="hidden sm:inline-flex items-center justify-center min-w-[24px] min-h-[24px] p-2 rounded-lg text-theme-muted hover:text-theme-primary hover:bg-theme-surface/60 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-accent"
+            aria-label="GitHub Repository"
+            title="GitHub Repository"
+            data-testid="shell-github-link"
+          >
+            <span class="icon-[lucide--github] w-4 h-4" aria-hidden="true"
+            ></span>
+          </a>
+        {/if}
+        <a
+          href="{cleanBase}/my-stuff"
+          class="inline-flex items-center justify-center min-w-[24px] min-h-[24px] p-2 rounded-lg text-theme-muted hover:text-theme-primary hover:bg-theme-surface/60 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-accent"
+          aria-label="My Stuff"
+          title="My Stuff"
+          data-testid="shell-my-stuff-link"
+        >
+          <span class="icon-[lucide--bookmark] w-4 h-4" aria-hidden="true"
+          ></span>
+        </a>
         <a
           href={ctaHref}
-          class="px-4 sm:px-5 py-2.5 bg-theme-primary text-theme-bg font-bold font-header text-xs rounded-lg hover:brightness-110 shadow-sm transition-all whitespace-nowrap"
+          class="min-h-[24px] px-3 sm:px-5 py-2.5 bg-theme-primary text-theme-bg font-bold font-header text-xs rounded-lg hover:brightness-110 active:brightness-95 shadow-sm transition-all whitespace-nowrap focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-accent"
           id="nav-cta-btn"
           data-testid="shell-cta"
           onclick={() => {
@@ -113,45 +141,37 @@
         >
           Open Codex
         </a>
-        <button
-          type="button"
-          class="md:hidden p-2 rounded-lg text-theme-muted hover:text-theme-primary hover:bg-theme-bg transition-colors"
-          onclick={() => (menuOpen = !menuOpen)}
-          aria-expanded={menuOpen}
-          aria-controls="shell-mobile-nav"
-          aria-label="Site menu"
-          data-testid="shell-menu-toggle"
+        <a
+          href="{cleanBase}/generators"
+          class="md:hidden inline-flex items-center justify-center gap-1.5 min-h-[44px] min-w-[44px] px-2 rounded-lg text-theme-muted hover:text-theme-primary hover:bg-theme-bg transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-accent font-header text-xs"
+          aria-label="Generators"
+          title="Generators"
+          aria-current={isCurrent("/generators")}
+          data-testid="shell-generators-link"
         >
-          <span
-            aria-hidden="true"
-            class="{menuOpen
-              ? 'icon-[lucide--x]'
-              : 'icon-[lucide--menu]'} w-5 h-5 block"
+          <span aria-hidden="true" class="icon-[lucide--sparkles] w-4 h-4 block"
           ></span>
-        </button>
+          <span class="hidden sm:inline">Generators</span>
+        </a>
+        <a
+          href="{cleanBase}/explore"
+          class="md:hidden inline-flex items-center justify-center gap-1.5 min-h-[44px] min-w-[44px] px-2 rounded-lg text-theme-muted hover:text-theme-primary hover:bg-theme-bg transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-accent font-header text-xs"
+          aria-label="Explore Codex Cryptica"
+          title="Explore"
+          data-testid="shell-explore-link"
+        >
+          <span aria-hidden="true" class="icon-[lucide--compass] w-4 h-4 block"
+          ></span>
+          <span class="hidden sm:inline">Explore</span>
+        </a>
       </div>
     </div>
-
-    {#if menuOpen}
-      <nav
-        id="shell-mobile-nav"
-        aria-label="Site menu"
-        class="md:hidden max-w-6xl mx-auto mt-4 flex flex-col gap-1 text-sm font-header"
-        data-testid="shell-mobile-nav"
-      >
-        {#each MARKETING_NAV as item (item.href)}
-          <a
-            href="{cleanBase}{item.href}"
-            class="py-2 text-theme-text hover:text-theme-primary transition-colors"
-            aria-current={isCurrent(item.href)}>{item.label}</a
-          >
-        {/each}
-      </nav>
-    {/if}
   </header>
 
   <main class="flex-grow w-full">
-    {@render children()}
+    {#if children}
+      {@render children()}
+    {/if}
   </main>
 
   <MarketingFooter

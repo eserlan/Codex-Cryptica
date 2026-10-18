@@ -1,4 +1,7 @@
-import type { AspectRatio } from "schema";
+import type { AspectRatio, Entity } from "schema";
+import { sessionModeStore } from "./session-mode.svelte";
+import { vault } from "$lib/stores/vault.svelte";
+import { isVaultReadyForGenerators } from "$lib/stores/vault/readiness";
 
 export type SettingsTab =
   | "vault"
@@ -15,6 +18,10 @@ export type ImagePromptReviewTarget =
   | { kind: "message"; id: string; title: string; entityId?: string };
 
 export class ModalUIStore {
+  private canOpenGenerators() {
+    return !sessionModeStore.isGuestMode && isVaultReadyForGenerators(vault);
+  }
+
   showSettings = $state(false);
   activeSettingsTab = $state<SettingsTab>("vault");
   showCanvasSelector = $state(false);
@@ -53,8 +60,15 @@ export class ModalUIStore {
 
   showZenMode = $state(false);
   zenModeEntityId = $state<string | null>(null);
+  lastAppPath = $state<string | null>(null);
   zenModeActiveTab = $state<
-    "overview" | "map" | "chats" | "family" | "timeline" | "stats"
+    | "overview"
+    | "connections"
+    | "map"
+    | "chats"
+    | "family"
+    | "timeline"
+    | "stats"
   >("overview");
 
   mergeDialog = $state<{
@@ -102,6 +116,14 @@ export class ModalUIStore {
     sourceEntityId: null,
   });
 
+  parentPickerDialog = $state<{
+    open: boolean;
+    entityId: string | null;
+  }>({
+    open: false,
+    entityId: null,
+  });
+
   vaultThemePrompt = $state<{
     open: boolean;
     vaultId: string | null;
@@ -141,6 +163,14 @@ export class ModalUIStore {
     open: false,
     entityId: null,
     instructions: "",
+  });
+
+  silhouettePickerState = $state<{
+    open: boolean;
+    entity: Entity | null;
+  }>({
+    open: false,
+    entity: null,
   });
 
   // Derived properties for backwards compatibility
@@ -208,6 +238,14 @@ export class ModalUIStore {
     this.relatedEntityDialog = { open: false, sourceEntityId: null };
   }
 
+  openParentPicker(entityId: string) {
+    this.parentPickerDialog = { open: true, entityId };
+  }
+
+  closeParentPicker() {
+    this.parentPickerDialog = { open: false, entityId: null };
+  }
+
   openVaultThemePrompt(vaultId: string) {
     this.vaultThemePrompt = { open: true, vaultId };
   }
@@ -240,6 +278,7 @@ export class ModalUIStore {
     generatorId: string | null = null,
     prefillDate: { year: number; month: number; day: number } | null = null,
   ) {
+    if (!this.canOpenGenerators()) return;
     this.generatorWorkflow = {
       open: true,
       launchMode: "workspace",
@@ -256,6 +295,7 @@ export class ModalUIStore {
     sourceEntityId: string,
     generatorId: string | null = null,
   ) {
+    if (!this.canOpenGenerators()) return;
     this.generatorWorkflow = {
       open: true,
       launchMode: "contextual",
@@ -277,6 +317,7 @@ export class ModalUIStore {
     sourceEntityId: string | null = null,
     initialPrompt: string | null = null,
   ) {
+    if (!this.canOpenGenerators()) return;
     this.generatorWorkflow = {
       open: true,
       launchMode: sourceEntityId ? "contextual" : "workspace",
@@ -304,6 +345,7 @@ export class ModalUIStore {
   showIntentCreateMenu = $state(false);
 
   openIntentCreateMenu() {
+    if (!this.canOpenGenerators()) return;
     this.showIntentCreateMenu = true;
   }
 
@@ -437,6 +479,7 @@ export class ModalUIStore {
     entityId: string,
     tab:
       | "overview"
+      | "connections"
       | "map"
       | "chats"
       | "family"
@@ -466,6 +509,20 @@ export class ModalUIStore {
     this.closeZenMode();
   }
 
+  openSilhouettePicker(entity: Entity) {
+    this.silhouettePickerState = {
+      open: true,
+      entity,
+    };
+  }
+
+  closeSilhouettePicker() {
+    this.silhouettePickerState = {
+      open: false,
+      entity: null,
+    };
+  }
+
   get isAnyModalOpen() {
     return (
       this.showMobileCreateSheet ||
@@ -476,6 +533,7 @@ export class ModalUIStore {
       this.mergeDialog.open ||
       this.bulkLabelDialog.open ||
       this.relatedEntityDialog.open ||
+      this.parentPickerDialog.open ||
       this.vaultThemePrompt.open ||
       this.showVaultSwitcher ||
       this.showShare ||
@@ -483,8 +541,10 @@ export class ModalUIStore {
       this.lightbox.show ||
       this.soundBite.show ||
       this.revisionDialog.open ||
+      this.generatorWorkflow.open ||
       this.showIntentCreateMenu ||
-      this.showQuickStartModal
+      this.showQuickStartModal ||
+      this.silhouettePickerState.open
     );
   }
 }
@@ -494,6 +554,6 @@ export class ModalUIStore {
 // cached instance that predates the current class definition — which would
 // cause new properties to be undefined and their reactive assignments to be
 // silently dropped.
-const KEY = "__codex_modal_ui_store__v10__";
+const KEY = "__codex_modal_ui_store__v12__";
 export const modalUIStore: ModalUIStore =
   (globalThis as any)[KEY] ?? ((globalThis as any)[KEY] = new ModalUIStore());

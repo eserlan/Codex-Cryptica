@@ -1,15 +1,14 @@
 <script lang="ts">
   import { base } from "$app/paths";
-  import { DISCORD_URL, PATREON_URL } from "$lib/config";
+  import { PATREON_URL } from "$lib/config";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 </script>
 
 <footer
-  class="px-6 py-4 bg-chrome-surface border-t border-chrome-border flex flex-col md:flex-row justify-between items-center gap-4 hidden md:flex"
+  class="px-6 py-4 bg-chrome-surface border-t border-chrome-border hidden md:flex md:flex-row justify-between items-center gap-4"
+  data-testid="app-footer"
 >
-  <div
-    class="text-[10px] font-sans text-chrome-muted uppercase tracking-widest"
-  >
+  <div class="text-micro font-sans text-chrome-muted uppercase tracking-widest">
     &copy; 2026 Codex Cryptica // Local-First Intelligence
   </div>
   <div class="flex gap-6">
@@ -18,62 +17,42 @@
         href={PATREON_URL}
         target="_blank"
         rel="noopener noreferrer"
-        class="text-[10px] font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest"
-        >Support on Patreon</a
+        class="inline-flex items-center text-chrome-muted hover:text-chrome-text transition-colors"
+        aria-label="Support Codex Cryptica on Patreon"
+        title="Support on Patreon"
       >
-    {/if}
-    {#if DISCORD_URL}
-      <a
-        href={DISCORD_URL}
-        target="_blank"
-        rel="noopener noreferrer"
-        class="text-[10px] font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest"
-        >Discord</a
-      >
+        <span class="icon-[mdi--patreon] h-3.5 w-3.5" aria-hidden="true"></span>
+      </a>
     {/if}
     <a
-      href="{base}/features"
-      class="text-[10px] font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest"
-      >Features</a
+      href="{base}/generators"
+      class="text-micro font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest"
+      >Generators</a
     >
     <a
-      href="{base}/tools"
-      class="text-[10px] font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest"
-      >Tools</a
-    >
-    <a
-      href="{base}/blog"
-      class="text-[10px] font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest"
-      >Blog</a
-    >
-    <a
-      href="{base}/worlds"
-      class="text-[10px] font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest"
-      >Explore Worlds</a
-    >
-    <a
-      href="{base}/responsible-ai-worldbuilding"
-      class="text-[10px] font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest"
-      >Responsible AI</a
+      href="{base}/explore"
+      class="text-micro font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest"
+      >Explore</a
     >
     <button
+      type="button"
       onclick={() => modalUIStore.openSettings("help")}
-      class="text-[10px] font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest cursor-pointer"
+      class="text-micro font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest cursor-pointer"
       >Help</button
     >
     <a
       href="{base}/privacy"
       target="_blank"
       rel="noopener noreferrer"
-      class="text-[10px] font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest"
-      >Privacy Policy</a
+      class="text-micro font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest"
+      >Privacy</a
     >
     <a
       href="{base}/terms"
       target="_blank"
       rel="noopener noreferrer"
-      class="text-[10px] font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest"
-      >Terms of Service</a
+      class="text-micro font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest"
+      >Terms</a
     >
   </div>
 </footer>

@@ -57,7 +57,7 @@
         >
           {#if draft}
             <div
-              class="absolute top-0 right-0 p-2 text-[8px] font-bold text-theme-primary uppercase tracking-[0.2em]"
+              class="absolute top-0 right-0 p-2 text-nano font-bold text-theme-primary uppercase tracking-[0.2em]"
             >
               Proposed
             </div>

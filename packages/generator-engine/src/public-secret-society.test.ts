@@ -109,6 +109,40 @@ describe("Secret Society generator", () => {
     ).toThrow("substantive content and lore");
   });
 
+  it("adds superhero-specific steering for the Superhero / Comic Book theme", () => {
+    const prompt = buildSecretSocietyPrompt(
+      { theme: "Superhero / Comic Book" },
+      "",
+      fixedRng,
+    );
+
+    expect(prompt.userMessage).toContain(
+      "not a generic modern conspiracy with a superhero label",
+    );
+    expect(prompt.userMessage).toContain("superhuman supremacist group");
+    expect(prompt.userMessage).toContain("government black-ops programme");
+    expect(prompt.userMessage).toContain("corporate conspiracy");
+    expect(prompt.userMessage).toContain("occult cabal");
+    expect(prompt.userMessage).toContain(
+      "alien or extradimensional infiltrators",
+    );
+    expect(prompt.userMessage).toContain("anti-super movement");
+    expect(prompt.userMessage).toContain("Do not invent named organizations");
+  });
+
+  it("does not append superhero-specific steering for a non-Superhero genre", () => {
+    const prompt = buildSecretSocietyPrompt(
+      { theme: "Cosmic Horror" },
+      "",
+      fixedRng,
+    );
+
+    expect(prompt.userMessage).not.toContain("superhuman supremacist group");
+    expect(prompt.userMessage).not.toContain(
+      "not a generic modern conspiracy with a superhero label",
+    );
+  });
+
   it("separates session context from the preceding prompt sentence", () => {
     const prompt = buildSecretSocietyPrompt(
       {},

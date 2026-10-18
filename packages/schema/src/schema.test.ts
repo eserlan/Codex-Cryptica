@@ -24,7 +24,7 @@ describe("Entity Schema Validation", () => {
       id: "npc-1",
       type: "npc",
       title: "Valid NPC",
-      tags: ["test"],
+      labels: ["test"],
       connections: [{ target: "loc-1", type: "located_in", strength: 1 }],
       content: "Some content",
     };
@@ -77,6 +77,21 @@ describe("Entity Schema Validation", () => {
     if (result.success) {
       expect(result.data.aliases).toEqual([]);
       expect(result.data.aliases).toHaveLength(0);
+    }
+  });
+
+  it("should validate an entity with member_template", () => {
+    const factionEntity = {
+      id: "faction-1",
+      type: "faction",
+      title: "Iron Hand Syndicate",
+      member_template: "syndicate-operative",
+    };
+
+    const result = EntitySchema.safeParse(factionEntity);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.member_template).toBe("syndicate-operative");
     }
   });
 
@@ -821,5 +836,42 @@ describe("TemporalMetadataSchema Compatibility Validation", () => {
         expect(result.data.entities[0].languageProfileVersion).toBe(1);
       }
     });
+  });
+});
+
+describe("stock ledger schema (#3961)", () => {
+  it("accepts money columns, stock metadata and legacy rows together", async () => {
+    const { StatSheetFieldSchema } = await import("./stat-sheet");
+    const parsed = StatSheetFieldSchema.parse({
+      id: "stock",
+      label: "Stock",
+      type: "item-table",
+      stockLedger: true,
+      columns: [{ id: "cost", label: "Cost", type: "money" }],
+      rows: [
+        { name: "Legacy", hp: { value: 1, max: 2 } },
+        {
+          rowId: "r1",
+          cost: { units: 1250, currency: "cr", precision: 2 },
+          stock: { quantity: 3, price: { units: 5, currency: "gp" } },
+        },
+      ],
+    });
+    expect(parsed.rows?.[0]).toEqual({
+      name: "Legacy",
+      hp: { value: 1, max: 2 },
+    });
+    expect((parsed.rows?.[1].stock as any).price.precision).toBe(0);
+  });
+
+  it("rejects fractional, unsafe or negative stock values", async () => {
+    const { MoneyAmountSchema, StockMetaSchema } = await import("./stat-sheet");
+    expect(
+      MoneyAmountSchema.safeParse({ units: 1.5, currency: "gp" }).success,
+    ).toBe(false);
+    expect(
+      MoneyAmountSchema.safeParse({ units: 2 ** 60, currency: "gp" }).success,
+    ).toBe(false);
+    expect(StockMetaSchema.safeParse({ quantity: -1 }).success).toBe(false);
   });
 });

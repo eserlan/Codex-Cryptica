@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0",
+  "presets": {
+    "constitution-sync": {
+      "version": "1.0.0",
+      "source": "local",
+      "manifest_hash": "sha256:16599780bebfe3470d6a0c24ae6a6a19c91a77efe8d4c10ca25c739098d6656e",
+      "enabled": true,
+      "priority": 10,
+      "registered_commands": {
+        "gemini": [
+          "speckit.constitution"
+        ]
+      },
+      "registered_skills": {},
+      "installed_at": "2026-10-03T14:31:18.622351+00:00"
+    }
+  }
+}

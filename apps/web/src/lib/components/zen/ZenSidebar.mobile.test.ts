@@ -16,6 +16,6 @@ describe("ZenSidebar mobile layout", () => {
 
     expect(classes).toContain("space-y-4");
     expect(classes).not.toContain("hidden");
-    expect(source).toMatch(/>\s*Connections\s*</);
+    expect(source).toMatch(/<ZenConnections|>\s*Connections\s*</);
   });
 });

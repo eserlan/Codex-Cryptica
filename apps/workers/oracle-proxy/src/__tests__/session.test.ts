@@ -3,6 +3,8 @@ import {
   extractBearerToken,
   mintSessionToken,
   verifySessionToken,
+  timingSafeEqualString,
+  verifyAutomationKey,
 } from "../session";
 import { enforceLlmSession, handleSessionRequest } from "../session-guard";
 
@@ -15,12 +17,14 @@ function makeRequest(
     token?: string;
     ip?: string;
     body?: unknown;
+    headers?: Record<string, string>;
   } = {},
 ): Request {
-  const headers = new Headers();
+  const headers = new Headers(init.headers);
   if (init.token) headers.set("Authorization", `Bearer ${init.token}`);
   if (init.ip) headers.set("CF-Connecting-IP", init.ip);
-  headers.set("Content-Type", "application/json");
+  if (!headers.has("Content-Type"))
+    headers.set("Content-Type", "application/json");
   return new Request("https://proxy.example/api/session", {
     method: init.method ?? "POST",
     headers,
@@ -41,7 +45,10 @@ function makeLimiter(failAfter = Infinity) {
 
 describe("session token crypto", () => {
   it("mints a token that verifies against the same secret", async () => {
-    const { token, expiresAt } = await mintSessionToken(SECRET, "1.2.3.4");
+    const { token, expiresAt, scope } = await mintSessionToken(
+      SECRET,
+      "1.2.3.4",
+    );
 
     const result = await verifySessionToken(SECRET, token);
 
@@ -50,6 +57,26 @@ describe("session token crypto", () => {
       expect(result.payload.ip).toBe("1.2.3.4");
       expect(result.payload.exp).toBe(expiresAt);
       expect(result.payload.jti).toBeTruthy();
+      expect(result.payload.scope).toBe("human");
+      expect(scope).toBe("human");
+    }
+  });
+
+  it("mints an automation-scoped token", async () => {
+    const { token, scope } = await mintSessionToken(
+      SECRET,
+      "1.2.3.4",
+      undefined,
+      undefined,
+      "automation",
+    );
+
+    const result = await verifySessionToken(SECRET, token);
+
+    expect(result.valid).toBe(true);
+    if (result.valid) {
+      expect(result.payload.scope).toBe("automation");
+      expect(scope).toBe("automation");
     }
   });
 
@@ -97,7 +124,13 @@ describe("session token crypto", () => {
 
   it("distinguishes expired from invalid so the client knows to refresh", async () => {
     const issuedAt = 1_000_000;
-    const { token } = await mintSessionToken(SECRET, "1.2.3.4", issuedAt, 60);
+    const { token } = await mintSessionToken(
+      SECRET,
+      "1.2.3.4",
+      issuedAt,
+      60,
+      "human",
+    );
 
     const result = await verifySessionToken(SECRET, token, issuedAt + 61);
 
@@ -136,6 +169,42 @@ describe("session token crypto", () => {
   });
 });
 
+describe("timingSafeEqualString and verifyAutomationKey", () => {
+  it("timingSafeEqualString correctly identifies equal and unequal strings", async () => {
+    expect(await timingSafeEqualString("secret-123", "secret-123")).toBe(true);
+    expect(await timingSafeEqualString("secret-123", "secret-124")).toBe(false);
+    expect(await timingSafeEqualString("secret-123", "secret-1234")).toBe(
+      false,
+    );
+    expect(await timingSafeEqualString("", "")).toBe(true);
+    expect(await timingSafeEqualString("", "a")).toBe(false);
+  });
+
+  it("verifyAutomationKey accepts valid key against single secret", async () => {
+    expect(
+      await verifyAutomationKey("agent-key-alpha", "agent-key-alpha"),
+    ).toBe(true);
+    expect(
+      await verifyAutomationKey("agent-key-wrong", "agent-key-alpha"),
+    ).toBe(false);
+  });
+
+  it("verifyAutomationKey supports comma-separated keys for seamless rotation", async () => {
+    const config = "key-v2-active, key-v1-deprecating";
+    expect(await verifyAutomationKey("key-v2-active", config)).toBe(true);
+    expect(await verifyAutomationKey("key-v1-deprecating", config)).toBe(true);
+    expect(await verifyAutomationKey("key-v0-revoked", config)).toBe(false);
+  });
+
+  it("verifyAutomationKey handles empty or missing values safely", async () => {
+    expect(await verifyAutomationKey(null, "some-key")).toBe(false);
+    expect(await verifyAutomationKey("some-key", null)).toBe(false);
+    expect(await verifyAutomationKey("", "some-key")).toBe(false);
+    expect(await verifyAutomationKey("some-key", "")).toBe(false);
+    expect(await verifyAutomationKey("   ", "some-key")).toBe(false);
+  });
+});
+
 describe("POST /api/session", () => {
   it("issues a token when Turnstile verification passes", async () => {
     const request = makeRequest({
@@ -152,6 +221,7 @@ describe("POST /api/session", () => {
     const body = (await response.json()) as {
       token: string;
       expiresAt: number;
+      scope: string;
     };
 
     expect(response.status).toBe(200);
@@ -159,6 +229,75 @@ describe("POST /api/session", () => {
       valid: true,
     });
     expect(body.expiresAt).toBeGreaterThan(Date.now() / 1000);
+    expect(body.scope).toBe("human");
+  });
+
+  it("issues an automation token when a valid X-Codex-Automation-Key is provided", async () => {
+    const request = makeRequest({
+      ip: "9.9.9.9",
+      headers: { "X-Codex-Automation-Key": "my-automation-secret" },
+    });
+
+    const response = await handleSessionRequest(
+      request,
+      {
+        SESSION_TOKEN_SECRET: SECRET,
+        CODEX_AUTOMATION_KEY: "my-automation-secret",
+      },
+      CORS,
+    );
+
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as {
+      token: string;
+      expiresAt: number;
+      scope: string;
+    };
+    expect(body.scope).toBe("automation");
+
+    const verified = await verifySessionToken(SECRET, body.token);
+    expect(verified.valid).toBe(true);
+    if (verified.valid) {
+      expect(verified.payload.scope).toBe("automation");
+      expect(verified.payload.ip).toBe("9.9.9.9");
+    }
+  });
+
+  it("rejects an invalid X-Codex-Automation-Key with 401 AUTOMATION_KEY_INVALID", async () => {
+    const request = makeRequest({
+      headers: { "X-Codex-Automation-Key": "wrong-secret" },
+    });
+
+    const response = await handleSessionRequest(
+      request,
+      {
+        SESSION_TOKEN_SECRET: SECRET,
+        CODEX_AUTOMATION_KEY: "my-automation-secret",
+      },
+      CORS,
+    );
+
+    expect(response.status).toBe(401);
+    expect((await response.json()) as any).toMatchObject({
+      error: { code: "AUTOMATION_KEY_INVALID" },
+    });
+  });
+
+  it("returns 503 when X-Codex-Automation-Key is sent but CODEX_AUTOMATION_KEY is not configured", async () => {
+    const request = makeRequest({
+      headers: { "X-Codex-Automation-Key": "my-automation-secret" },
+    });
+
+    const response = await handleSessionRequest(
+      request,
+      { SESSION_TOKEN_SECRET: SECRET },
+      CORS,
+    );
+
+    expect(response.status).toBe(503);
+    expect((await response.json()) as any).toMatchObject({
+      error: { code: "AUTOMATION_NOT_CONFIGURED" },
+    });
   });
 
   it("binds the issued token to the requesting IP", async () => {
@@ -220,13 +359,61 @@ describe("POST /api/session", () => {
 });
 
 describe("LLM session guard", () => {
-  it("lets a valid token through", async () => {
-    const { token } = await mintSessionToken(SECRET, "1.2.3.4");
+  it("lets a valid human token through when origin is allowed", async () => {
+    const { token } = await mintSessionToken(
+      SECRET,
+      "1.2.3.4",
+      undefined,
+      undefined,
+      "human",
+    );
 
     const response = await enforceLlmSession(
       makeRequest({ token, ip: "1.2.3.4" }),
       { SESSION_TOKEN_SECRET: SECRET },
       CORS,
+      true,
+    );
+
+    expect(response).toBeNull();
+  });
+
+  it("blocks a human token when origin is not allowed", async () => {
+    const { token } = await mintSessionToken(
+      SECRET,
+      "1.2.3.4",
+      undefined,
+      undefined,
+      "human",
+    );
+
+    const response = await enforceLlmSession(
+      makeRequest({ token, ip: "1.2.3.4" }),
+      { SESSION_TOKEN_SECRET: SECRET },
+      CORS,
+      false,
+    );
+
+    expect(response?.status).toBe(403);
+    expect((await response!.json()) as any).toMatchObject({
+      error: { code: "FORBIDDEN" },
+    });
+  });
+
+  it("lets an automation token through EVEN WHEN origin is not allowed", async () => {
+    const { token } = await mintSessionToken(
+      SECRET,
+      "1.2.3.4",
+      undefined,
+      undefined,
+      "automation",
+    );
+
+    const response = await enforceLlmSession(
+      makeRequest({ token, ip: "1.2.3.4" }),
+      { SESSION_TOKEN_SECRET: SECRET },
+      CORS,
+      false,
     );
 
     expect(response).toBeNull();
@@ -237,6 +424,7 @@ describe("LLM session guard", () => {
       makeRequest({}),
       { SESSION_TOKEN_SECRET: SECRET },
       CORS,
+      true,
     );
 
     expect(response?.status).toBe(401);
@@ -253,6 +441,7 @@ describe("LLM session guard", () => {
       makeRequest({ token }),
       { SESSION_TOKEN_SECRET: SECRET },
       CORS,
+      true,
     );
 
     expect(response?.status).toBe(401);
@@ -261,12 +450,16 @@ describe("LLM session guard", () => {
     });
   });
 
-  it("fails open while no signing secret is configured", async () => {
-    // Deploy ordering: the worker ships before the secret is set, and that
-    // window must not take generation down.
-    const response = await enforceLlmSession(makeRequest({}), {}, CORS);
+  it("fails open while no signing secret is configured (if origin is allowed)", async () => {
+    const response = await enforceLlmSession(makeRequest({}), {}, CORS, true);
 
     expect(response).toBeNull();
+  });
+
+  it("blocks unallowed origin when no signing secret is configured", async () => {
+    const response = await enforceLlmSession(makeRequest({}), {}, CORS, false);
+
+    expect(response?.status).toBe(403);
   });
 
   describe("IP anomalies", () => {
@@ -286,6 +479,7 @@ describe("LLM session guard", () => {
         makeRequest({ token, ip: "5.6.7.8" }),
         { SESSION_TOKEN_SECRET: SECRET },
         CORS,
+        true,
       );
 
       expect(response).toBeNull();
@@ -299,6 +493,7 @@ describe("LLM session guard", () => {
         makeRequest({ token, ip: "1.2.3.4" }),
         { SESSION_TOKEN_SECRET: SECRET },
         CORS,
+        true,
       );
 
       expect(logs.some((l) => l.includes("Session IP changed"))).toBe(false);
@@ -311,7 +506,7 @@ describe("LLM session guard", () => {
 });
 
 describe("LLM rate limiting", () => {
-  it("keys the limiters by token id, not by IP", async () => {
+  it("keys the limiters by token id, not by IP, for human tokens", async () => {
     const keys: string[] = [];
     const limiter = {
       limit: async ({ key }: { key: string }) => {
@@ -319,17 +514,96 @@ describe("LLM rate limiting", () => {
         return { success: true };
       },
     };
-    const { token } = await mintSessionToken(SECRET, "1.2.3.4");
+    const { token } = await mintSessionToken(
+      SECRET,
+      "1.2.3.4",
+      undefined,
+      undefined,
+      "human",
+    );
     const jti = await verifySessionToken(SECRET, token);
 
     await enforceLlmSession(
       makeRequest({ token, ip: "1.2.3.4" }),
       { SESSION_TOKEN_SECRET: SECRET, LLM_BURST_RATE_LIMITER: limiter },
       CORS,
+      true,
     );
 
     expect(jti.valid).toBe(true);
     expect(keys).toEqual([`session:${jti.valid && jti.payload.jti}`]);
+  });
+
+  it("keys the limiters with automation prefix and dedicated limiter for automation tokens", async () => {
+    const keys: string[] = [];
+    const autoLimiter = {
+      limit: async ({ key }: { key: string }) => {
+        keys.push(key);
+        return { success: true };
+      },
+    };
+    const { token } = await mintSessionToken(
+      SECRET,
+      "1.2.3.4",
+      undefined,
+      undefined,
+      "automation",
+    );
+    const jti = await verifySessionToken(SECRET, token);
+
+    await enforceLlmSession(
+      makeRequest({ token, ip: "1.2.3.4" }),
+      {
+        SESSION_TOKEN_SECRET: SECRET,
+        LLM_AUTOMATION_RATE_LIMITER: autoLimiter,
+      },
+      CORS,
+      false,
+    );
+
+    expect(jti.valid).toBe(true);
+    expect(keys).toEqual([`automation:${jti.valid && jti.payload.jti}`]);
+  });
+
+  it("throttles automation overage with a typed 429", async () => {
+    const limiter = makeLimiter(2);
+    const { token } = await mintSessionToken(
+      SECRET,
+      "1.2.3.4",
+      undefined,
+      undefined,
+      "automation",
+    );
+    const env = {
+      SESSION_TOKEN_SECRET: SECRET,
+      LLM_AUTOMATION_RATE_LIMITER: limiter,
+    };
+
+    const r1 = await enforceLlmSession(
+      makeRequest({ token }),
+      env,
+      CORS,
+      false,
+    );
+    const r2 = await enforceLlmSession(
+      makeRequest({ token }),
+      env,
+      CORS,
+      false,
+    );
+    const r3 = await enforceLlmSession(
+      makeRequest({ token }),
+      env,
+      CORS,
+      false,
+    );
+
+    expect(r1).toBeNull();
+    expect(r2).toBeNull();
+    expect(r3?.status).toBe(429);
+    expect((await r3!.json()) as any).toMatchObject({
+      error: { code: "RATE_LIMITED" },
+    });
   });
 
   it("does not throttle traffic that stays under the caps", async () => {
@@ -344,7 +618,7 @@ describe("LLM rate limiting", () => {
 
     const responses = await Promise.all(
       Array.from({ length: 4 }, () =>
-        enforceLlmSession(makeRequest({ token }), env, CORS),
+        enforceLlmSession(makeRequest({ token }), env, CORS, true),
       ),
     );
 
@@ -352,16 +626,15 @@ describe("LLM rate limiting", () => {
   });
 
   it("throttles sustained overage with a typed 429", async () => {
-    // Asserting behaviour, not an exact cutoff: the real binding is
-    // permissive and eventually consistent, so "request N+1 is blocked" would
-    // be a flaky claim to make.
     const burst = makeLimiter(3);
     const { token } = await mintSessionToken(SECRET, "1.2.3.4");
     const env = { SESSION_TOKEN_SECRET: SECRET, LLM_BURST_RATE_LIMITER: burst };
 
     const results: (Response | null)[] = [];
     for (let i = 0; i < 10; i++) {
-      results.push(await enforceLlmSession(makeRequest({ token }), env, CORS));
+      results.push(
+        await enforceLlmSession(makeRequest({ token }), env, CORS, true),
+      );
     }
 
     const throttled = results.filter((r) => r?.status === 429);
@@ -384,6 +657,7 @@ describe("LLM rate limiting", () => {
         LLM_GENERATION_RATE_LIMITER: sustained,
       },
       CORS,
+      true,
     );
 
     expect(response?.status).toBe(429);
@@ -396,6 +670,7 @@ describe("LLM rate limiting", () => {
       makeRequest({ token }),
       { SESSION_TOKEN_SECRET: SECRET },
       CORS,
+      true,
     );
 
     expect(response).toBeNull();

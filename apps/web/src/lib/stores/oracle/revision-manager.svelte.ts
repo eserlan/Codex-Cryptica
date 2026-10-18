@@ -3,6 +3,8 @@ import {
   type DiscoveryProposal,
 } from "@codex/oracle-engine";
 import type { Entity } from "schema";
+import { getConnectionProposer } from "./hooks";
+import { withLoreTemplate } from "./lore-template";
 import { interactionSessions } from "@codex/ai-engine";
 import type {
   EntityRevisionRequest,
@@ -69,13 +71,13 @@ export class OracleRevisionManager {
       snapIncoming,
       snapContext,
       snapCategories,
-      {
+      withLoreTemplate(snapExisting?.type, {
         source: options.source,
         instructions: options.instructions,
         priority: options.priority,
         themeId: this.store.themeStore?.activeTheme?.id,
         interactionsEnabled: interactionSessions.enabled,
-      },
+      }),
     );
   }
 
@@ -288,7 +290,7 @@ export class OracleRevisionManager {
     entityId: string,
     options?: { apply?: boolean; analysisText?: string },
   ) {
-    const { proposerStore } = await import("../proposer.svelte");
+    const proposerStore = getConnectionProposer();
     if (options?.apply) {
       return proposerStore.analyzeAndApplyEntityById(
         entityId,

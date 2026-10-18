@@ -1,9 +1,23 @@
 /** @vitest-environment jsdom */
 
-import { render, screen } from "@testing-library/svelte";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/svelte";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import MobileMenu from "./MobileMenu.svelte";
 import { guidedModeStore } from "$lib/stores/ui/guided-mode.svelte";
+import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+import { vault } from "$lib/stores/vault.svelte";
+import { vaultRegistry } from "$lib/stores/vault-registry.svelte";
+import { sessionJournalStore } from "$lib/stores/session-journal.svelte";
+
+// jsdom has no Web Animations API, which Svelte's transitions drive. The
+// drawer's open and close behaviour is the subject here, not its animation.
+vi.mock("svelte/transition", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("svelte/transition")>()),
+  fly: () => ({ duration: 0 }),
+  fade: () => ({ duration: 0 }),
+}));
 
 vi.mock("$app/paths", () => ({
   base: "",
@@ -26,22 +40,116 @@ vi.mock("$lib/components/VaultControls.svelte", () => ({
 }));
 
 describe("MobileMenu", () => {
+  afterEach(() => vi.restoreAllMocks());
+
   beforeEach(() => {
     guidedModeStore.setGuidedMode(true);
+    sessionModeStore.isGuestMode = false;
+    vault.isInitialized = true;
+    vaultRegistry.activeVaultId = "vault-1";
+    vault.status = "idle";
+    layoutUIStore.activeSidebarTool = "none";
+    layoutUIStore.toggleSidebarTool = vi.fn();
   });
 
-  it("hides Explore Worlds in Guided Mode", () => {
-    render(MobileMenu, { isOpen: true });
+  describe("navigation", () => {
+    // The drawer is where the items dropped from the phone Activity Bar are
+    // reached, so it has to carry all of them.
+    it.each([
+      "random",
+      "generators",
+      "shelf",
+      "quicknote",
+      "session-journal",
+      "guest-chat",
+    ])("offers %s, which the phone bar leaves out", (id) => {
+      render(MobileMenu, { isOpen: true });
 
-    expect(screen.queryByRole("link", { name: /explore worlds/i })).toBeNull();
+      expect(screen.getByTestId(`mobile-menu-${id}`)).toBeTruthy();
+    });
+
+    it.each(["open", "resume"] as const)(
+      "shows a journal indicator while a journal is %s",
+      (state) => {
+        vi.spyOn(sessionJournalStore, "controlState", "get").mockReturnValue(
+          state,
+        );
+        render(MobileMenu, { isOpen: true });
+
+        expect(screen.getByTestId("session-journal-indicator")).toBeTruthy();
+      },
+    );
+
+    it("shows no journal indicator when no journal is active (negative)", () => {
+      vi.spyOn(sessionJournalStore, "controlState", "get").mockReturnValue(
+        "start",
+      );
+      render(MobileMenu, { isOpen: true });
+
+      expect(screen.getByTestId("mobile-menu-session-journal")).toBeTruthy();
+      expect(screen.queryByTestId("session-journal-indicator")).toBeNull();
+    });
+
+    it("hides the Generators shortcut when no vault is initialized", () => {
+      vault.isInitialized = false;
+
+      render(MobileMenu, { isOpen: true });
+
+      expect(screen.queryByTestId("mobile-menu-generators")).toBeNull();
+    });
+
+    it("hides the Generators shortcut while the active vault is loading", () => {
+      vault.status = "loading";
+
+      render(MobileMenu, { isOpen: true });
+
+      expect(screen.queryByTestId("mobile-menu-generators")).toBeNull();
+    });
+
+    it("hides the Generators shortcut when there is no active vault", () => {
+      vaultRegistry.activeVaultId = null;
+
+      render(MobileMenu, { isOpen: true });
+
+      expect(screen.queryByTestId("mobile-menu-generators")).toBeNull();
+    });
+
+    // This list was four hardcoded links and had fallen behind the bar.
+    it("lists every view, including the ones added after it was written", () => {
+      render(MobileMenu, { isOpen: true });
+
+      for (const id of ["graph", "map", "canvas", "timeline", "table"]) {
+        expect(screen.getByTestId(`mobile-menu-${id}`)).toBeTruthy();
+      }
+    });
+
+    it("runs a tool and closes the drawer behind it", async () => {
+      render(MobileMenu, { isOpen: true });
+
+      await fireEvent.click(screen.getByTestId("mobile-menu-shelf"));
+
+      expect(layoutUIStore.toggleSidebarTool).toHaveBeenCalledWith("shelf");
+      expect(screen.queryByRole("dialog")).toBeNull();
+    });
+
+    it("runs the generators tool and closes the drawer behind it", async () => {
+      modalUIStore.closeGeneratorWorkflow();
+      render(MobileMenu, { isOpen: true });
+
+      await fireEvent.click(screen.getByTestId("mobile-menu-generators"));
+
+      expect(modalUIStore.generatorWorkflow.open).toBe(true);
+      expect(screen.queryByRole("dialog")).toBeNull();
+    });
   });
 
-  it("restores Explore Worlds in Full Toolbox mode", () => {
-    guidedModeStore.setGuidedMode(false);
-
+  it("uses Explore as the public directory instead of duplicating Examples", () => {
     render(MobileMenu, { isOpen: true });
 
-    expect(screen.getByRole("link", { name: /explore worlds/i })).toBeTruthy();
+    expect(screen.queryByRole("link", { name: "Examples" })).toBeNull();
+    const exploreLink = screen.getByRole("link", { name: "Explore" });
+    expect(exploreLink).toBeTruthy();
+    expect(exploreLink.getAttribute("href")).toBe("/explore");
   });
 
   it("exposes a Guided Mode toggle so mobile users can switch modes", () => {

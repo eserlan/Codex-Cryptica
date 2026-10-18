@@ -159,6 +159,7 @@ export const worldConfig = {
     "Cyberpunk",
     "Hopeful Sci-Fi",
     "Lancer",
+    "Space Western",
   ],
   campaignPressures: [
     "Resource Access and Rationing",

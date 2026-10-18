@@ -8,6 +8,7 @@ import {
   TOKEN_FACING_INDICATOR_HIT_TOLERANCE,
   TOKEN_ROTATION_STEP,
   normalizeTokenRotation,
+  snapTokenRotation,
 } from "map-engine";
 
 export interface TokenRotationDependencies {
@@ -32,7 +33,7 @@ export interface TokenRotationDependencies {
 }
 
 export class TokenRotationHandler {
-  rotationState: { tokenId: string } | null = null;
+  rotationState: { tokenId: string; initialRotation: number } | null = null;
 
   constructor(private deps: TokenRotationDependencies) {}
 
@@ -78,19 +79,20 @@ export class TokenRotationHandler {
       return false;
     }
 
-    this.rotationState = { tokenId: token.id };
+    this.rotationState = { tokenId: token.id, initialRotation: token.rotation };
     return true;
   }
 
-  move(viewportPoint: Point) {
+  move(viewportPoint: Point, freeRotate = false) {
     if (!this.rotationState) return false;
     const token = this.deps.getSelectedToken();
     if (!token || token.id !== this.rotationState.tokenId) return false;
 
-    const rotation = rotationFromPoint(
+    const rawRotation = rotationFromPoint(
       getTokenCenter(token),
       this.deps.unproject(viewportPoint),
     );
+    const rotation = freeRotate ? rawRotation : snapTokenRotation(rawRotation);
     if (this.deps.isHostMode()) {
       this.deps.rotateToken(token.id, rotation);
     } else {
@@ -129,6 +131,19 @@ export class TokenRotationHandler {
     if (!this.rotationState) return false;
     if (!this.deps.isHostMode()) {
       this.deps.confirmTokenRotation(this.rotationState.tokenId);
+    }
+    this.rotationState = null;
+    return true;
+  }
+
+  cancel() {
+    if (!this.rotationState) return false;
+    const { tokenId, initialRotation } = this.rotationState;
+    if (this.deps.isHostMode()) {
+      this.deps.rotateToken(tokenId, initialRotation);
+    } else {
+      this.deps.requestTokenRotation(tokenId, initialRotation, true);
+      this.deps.sendTokenRotation(tokenId, initialRotation);
     }
     this.rotationState = null;
     return true;

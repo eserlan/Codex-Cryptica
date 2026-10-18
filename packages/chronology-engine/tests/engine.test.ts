@@ -609,4 +609,120 @@ describe("CalendarEngine", () => {
       ).toBeNull();
     });
   });
+
+  describe("Calendar Eras Integration", () => {
+    const eraCal: WorldCalendar = {
+      ...DEFAULT_CALENDAR,
+      eras: [
+        {
+          id: "era-bce",
+          name: "Before Common Era",
+          label: "BCE",
+          startYear: -1,
+          yearAtStart: 1,
+          direction: "backward",
+        },
+        {
+          id: "era-ce",
+          name: "Common Era",
+          label: "CE",
+          startYear: 0,
+          yearAtStart: 1,
+          direction: "forward",
+        },
+      ],
+    };
+
+    it("formats year and dates using era when eras are configured", () => {
+      // Legacy TemporalMetadata shape
+      expect(calendarEngine.format({ year: 0 }, eraCal)).toBe("1 CE");
+      expect(calendarEngine.format({ year: -1 }, eraCal)).toBe("1 BCE");
+      expect(
+        calendarEngine.format({ year: -44, month: 3, day: 15 }, eraCal),
+      ).toBe("15 March 44 BCE");
+
+      // DateSelection shape
+      expect(
+        calendarEngine.format(
+          { precision: "year", year: 2026, calendarRevision: 1 },
+          eraCal,
+        ),
+      ).toBe("2027 CE");
+      expect(
+        calendarEngine.format(
+          {
+            precision: "day",
+            year: -44,
+            unitId: "march",
+            day: 15,
+            calendarRevision: 1,
+          },
+          eraCal,
+        ),
+      ).toBe("15 March 44 BCE");
+    });
+
+    it("preserves exact legacy formatting when no eras exist", () => {
+      const legacyCal: WorldCalendar = {
+        ...DEFAULT_CALENDAR,
+        epochLabel: "AF",
+      };
+      expect(calendarEngine.format({ year: 2024 }, legacyCal)).toBe("2024 AF");
+      expect(
+        calendarEngine.format(
+          { precision: "year", year: 2024, calendarRevision: 1 },
+          legacyCal,
+        ),
+      ).toBe("2024 AF");
+    });
+
+    it("parses direct dates containing era names or labels", () => {
+      const res1 = parseDirectDateInput("44 BCE", eraCal);
+      expect(res1).not.toBeNull();
+      expect(res1?.year).toBe(-44);
+
+      const res2 = parseDirectDateInput("15/03/44 BCE", eraCal);
+      expect(res2).not.toBeNull();
+      expect(res2?.day).toBe(15);
+      expect(res2?.month).toBe(3);
+      expect(res2?.year).toBe(-44);
+    });
+
+    it("derives wheel column labels with era formatting", () => {
+      const selection: DateSelection = {
+        precision: "year",
+        year: 0,
+        calendarRevision: 1,
+      };
+      const snapshot: CalendarSnapshot = {
+        config: eraCal,
+        revision: 1,
+      };
+      const cols = calendarEngine.deriveWheelColumns(selection, snapshot);
+      const yearCol = cols.find((c) => c.id === "year");
+      expect(yearCol).toBeDefined();
+
+      const option0 = yearCol?.options.find((o) => o.id === "0");
+      expect(option0?.label).toBe("1 CE");
+
+      const optionMinus1 = yearCol?.options.find((o) => o.id === "-1");
+      expect(optionMinus1?.label).toBe("1 BCE");
+    });
+
+    it("preserves strictly monotonic linear timeline values across era boundary", () => {
+      const date1 = { year: -2 }; // 2 BCE
+      const date2 = { year: -1 }; // 1 BCE
+      const date3 = { year: 0 }; // 1 CE
+      const date4 = { year: 1 }; // 2 CE
+
+      const val1 = calendarEngine.getTimelineValue(date1, eraCal);
+      const val2 = calendarEngine.getTimelineValue(date2, eraCal);
+      const val3 = calendarEngine.getTimelineValue(date3, eraCal);
+      const val4 = calendarEngine.getTimelineValue(date4, eraCal);
+
+      expect(val1).toBeLessThan(val2);
+      expect(val2).toBeLessThan(val3);
+      expect(val3).toBeLessThan(val4);
+    });
+  });
 });

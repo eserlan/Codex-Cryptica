@@ -110,6 +110,11 @@
 **Learning:** Found multiple icon-only buttons in `GraphToolbar.svelte` that relied on outer `aria-label` attributes but didn't hide their inner SVG-based span icons (`aria-hidden="true"`) and lacked explicit `type="button"` attributes. This can cause redundant screen reader announcements and risk accidental form submission if the toolbar is ever wrapped in a form.
 **Action:** Always add `aria-hidden="true"` to inner decorative icons within icon-only buttons, and ensure all toolbar buttons have `type="button"`.
 
+## 2024-07-29 - [Button Spinners and Accessibility]
+
+**Learning:** Found multiple buttons with loading states (like export/import and push/pull to drive) that relied only on text changes or disabled states, lacking visual spinners and proper accessibility attributes like `aria-busy` and `type="button"`.
+**Action:** Always swap static icons to animated spinners (`icon-[lucide--loader-2] animate-spin`) during async operations, add `aria-busy`, ensure `type="button"` is set, add `aria-hidden="true"` to inner icons, and ensure explicit `focus-visible` states are present.
+
 ## 2026-07-21 - ARIA hidden on decorative icons inside components
 
 **Learning:** Found decorative icons (like `icon-[lucide--sparkles]` or category icons) used inside `Autocomplete.svelte` option buttons and `InlinePreviewOverlay.svelte` status indicators that lacked `aria-hidden="true"`. Without this, screen readers might announce these decorative spans redundantly.
@@ -119,3 +124,111 @@
 
 **Learning:** Found multiple icon-only contextual action buttons in chat transcripts (like `startEditMessage` and `deleteHostTranscript`) that lacked both explicit `aria-label` attributes (relying solely on `title` which is insufficient for screen readers) and `aria-hidden="true"` on their inner decorative icons.
 **Action:** Always add explicit `aria-label`s to icon-only action buttons (even if they have `title` tooltips) and add `aria-hidden="true"` to inner icon elements, especially inside complex, repetitive lists like chat transcripts.
+
+## 2026-08-13 - StatSheetTemplateSettings Loading Spinner Indicator
+
+**Learning:** Found the Save copy button in `StatSheetTemplateSettings.svelte` lacked a visual loading spinner during asynchronous saving operations, relying solely on text change while preserving `aria-busy={isSavingVaultCopy}`.
+**Action:** Swapped the static icon for standard animated spinner (`icon-[lucide--loader-2] animate-spin`) during active save states while maintaining `aria-busy` and disabled states on the parent button.
+
+## 2026-08-14 - Dropdown Button Types in Autocomplete
+
+**Learning:** Svelte dropdown items acting as options (like those in Autocomplete) rendered as generic `<button>` elements without explicit `type="button"` can unintentionally trigger forms if their parent component is wrapped inside one, causing disruptive page reloads.
+**Action:** Always add `type="button"` to non-submit buttons, particularly in reusable components that might be embedded anywhere.
+
+## 2025-02-18 - Decorative Icons in Modals
+
+**Learning:** Decorative icons (using the `icon-[lucide--...]` pattern) nested inside functional `<button>` or `<a>` elements within global modals like `SettingsModal.svelte` frequently lack `aria-hidden="true"`, causing screen readers to mistakenly announce structural visual hints rather than relying solely on the text label.
+**Action:** Always scan for unhidden `icon-[...]` spans inside interactive elements and apply `aria-hidden="true"` to them to declutter the accessibility tree.
+
+## 2025-02-18 - Missing Type and ARIA in Dice Components
+
+**Learning:** Decorative icons inside interactive elements like `RollLog.svelte` and `DiceVault.svelte` frequently lack `aria-hidden="true"`, causing screen reader verbosity. Additionally, dynamic buttons (like generated dice buttons and expand/collapse logs) often miss `type="button"`, risking accidental form submissions if wrapped in a parent form.
+**Action:** When creating or reviewing components with dynamically generated buttons or internal decorative spans (especially those derived from helpers like `getDiceIcon`), enforce `type="button"`, `aria-label`, and `aria-hidden="true"` as standard practice.
+
+## 2026-06-12 - Semantic Modal Backdrops\n**Learning:** Found multiple modals (including `EdgeEditorModal`) using `div` elements with `svelte-ignore` comments for backdrops. This anti-pattern prevents keyboard navigation and violates accessibility rules.\n**Action:** Replace the `div` backdrops with semantic `<button type="button">` elements. Ensure they have proper ARIA labels (e.g., `aria-label="Close dialog"`) and focus styling (`focus-visible:ring-2 focus:outline-none focus-visible:ring-inset`) to allow screen readers and keyboard users to correctly navigate and interact with the overlays. Add `onpointerdown={(e) => e.preventDefault()}` to prevent the backdrop from stealing focus when close is aborted. For modals where focus can move away from the trigger input (e.g. into result lists), add `onkeydown` and `tabindex="-1"` to the dialog container so Escape is always caught.
+
+## 2024-11-20 - Ensure type="button" and aria-hidden on decorative generator icons
+
+**Learning:** Found multiple `<button>` elements (like "Surprise Me" buttons in generator form fields) that lacked explicit `type="button"`, posing a risk of unintended form submissions when wrapped inside a form component. In addition, their inner decorative `<span class="icon-[...]">` tags lacked `aria-hidden="true"`, causing screen readers to potentially announce unnecessary structural visual hints.
+**Action:** Always verify `<button>` tags specify `type="button"` unless they act as a submit button. For buttons containing visible descriptive text, explicitly assign `aria-hidden="true"` to any decorative icon elements to avoid screen reader verbosity.
+
+## 2024-11-20 - Add aria-hidden to decorative layout icons
+
+**Learning:** Found multiple layout components like `AppHeader.svelte` and `MobileMenu.svelte` containing buttons with `aria-label`s or descriptive text that had inner decorative `<span class="icon-[...]">` elements without `aria-hidden="true"`. This pattern across global layout components causes unnecessary screen reader verbosity on every page load.
+**Action:** When reviewing or creating global navigation or layout components, ensure all decorative icons nested inside interactive elements explicitly declare `aria-hidden="true"`.
+
+## 2024-05-15 - Decorative Inner Icons
+
+**Learning:** Screen readers might announce confusing CSS class names (like `icon-[lucide--copy]`) for inner decorative spans inside buttons if they lack `aria-hidden="true"`, even when the button contains descriptive text.
+**Action:** Always add `aria-hidden="true"` to decorative inner icon elements (e.g. `<span class="icon-[...]">`) when they accompany visual descriptive text or an `aria-label` inside interactive elements.
+
+## 2026-11-20 - Add type button and aria-hidden to share modal elements
+
+**Learning:** Svelte dropdown items acting as options (like those in Autocomplete or ShareModal) rendered as generic `<button>` elements without explicit `type="button"` can unintentionally trigger forms if their parent component is wrapped inside one, causing disruptive page reloads. Also, decorative icons inside those buttons or headings need `aria-hidden="true"`.
+**Action:** Always add `type="button"` to non-submit buttons, particularly in reusable components that might be embedded anywhere, and ensure all inner decorative `<span class="icon-[...]">` tags have `aria-hidden="true"`.
+
+## 2024-05-18 - Silhouettes App Button Accessibility
+
+**Learning:** Found several buttons in `apps/web/src/routes/(marketing)/silhouettes/+page.svelte` containing decorative icon elements (`<span class="icon-[...]"></span>`) inside buttons that already have `aria-label` or clear text descriptions. These inner icons are missing `aria-hidden="true"`, which causes screen readers to redundantly announce confusing CSS class names.
+**Action:** Always add `aria-hidden="true"` to inner icon spans within interactive elements that are already labeled (via `aria-label` or inner text).
+
+## 2024-05-19 - ARIA hidden on decorative icons inside modal components
+
+**Learning:** Found multiple decorative icons (like `icon-[lucide--database]`, `icon-[lucide--lock]`) inside modals (`MobileCreateEntitySheet.svelte`, `ImagePromptReviewModal.svelte`, `SearchModal.svelte`) that were missing `aria-hidden="true"`. This causes screen readers to redundantly announce confusing CSS class names.
+**Action:** Always verify decorative `<span class="icon-[...]">` tags have `aria-hidden="true"` inside modal and layout components, particularly when accompanying descriptive text or inside buttons.
+
+## 2025-02-14 - Ensure explicit aria-label for icon-only buttons
+
+**Learning:** Even when `title` attributes are present, icon-only buttons might not be consistently announced optimally by all screen readers. Providing an explicit `aria-label` along with `aria-hidden="true"` on the inner icon is the safest and most standard pattern for ensuring maximum accessibility compatibility for icon buttons.
+**Action:** When adding or reviewing icon-only buttons, always ensure an explicit `aria-label` is used on the `<button>` element and the decorative inner `<span>` icon uses `aria-hidden="true"`.
+
+## 2024-05-20 - Incomplete Application of aria-hidden
+
+**Learning:** When adding `aria-hidden="true"` to inner decorative icons within a button, you must ensure that _all_ sibling decorative spans inside that specific button context are targeted, rather than just the first one. Missed sibling icons (like an adjacent list-checks icon next to a chevron) will still be redundantly announced by screen readers.
+**Action:** When inspecting a target element for accessibility attributes, review the entire block (e.g., using `grep -B 5 -A 10`) to identify all inner decorative `<span>` tags, and ensure `aria-hidden="true"` is applied comprehensively to all relevant sibling tags within that button.
+
+## 2025-02-13 - Added missing aria-hidden attributes
+
+**Learning:** Added missing aria-hidden to decorative icons to prevent screen readers from reading confusing CSS class names.
+**Action:** Always add aria-hidden="true" to purely decorative icons (like <span class="icon-[...]">) in Svelte components.
+
+## 2024-05-21 - Silhouettes App Button Accessibility
+
+**Learning:** Found several decorative icon elements (`<span class="icon-[lucide--...]"></span>`) inside context-rich interactive elements and notifications in the Silhouettes gallery page (`apps/web/src/routes/(marketing)/silhouettes/+page.svelte`) that already had clear text descriptions or context but missed `aria-hidden="true"`. This caused screen readers to redundantly announce confusing CSS class names.
+**Action:** Always add `aria-hidden="true"` to inner decorative icon spans within interactive elements that are already labeled (via inner text) or inside visual status indicators like toast notifications.
+
+## 2024-05-22 - Staging File Contamination during Tests
+
+**Learning:** Running `bun run build` can inadvertently modify or generate files like `sitemap.xml`, `llms-full.txt`, and `bun.lock`, which may get staged and pollute the PR scope.
+**Action:** Always verify `git status` and specifically unstage/revert unrelated files (e.g., using `git rm --cached <file>` followed by `git checkout HEAD -- <file>`) before committing to keep the PR focused.
+
+## 2026-09-24 - Add loading spinners and aria-busy to revoke share buttons
+
+**Learning:** Buttons handling asynchronous state (like revoking shared generators in `my-stuff`) need visual loading spinners (rather than just text changes) and `aria-busy` to effectively communicate their loading state to visual and screen reader users.
+**Action:** Always add `aria-busy={isLoading}` and swap static icons to animated spinners (`icon-[lucide--loader-2] animate-spin`) during active states for async actions.
+
+## 2024-11-06 - Decorative Icons should use aria-hidden="true"
+
+**Learning:** For accessibility in Svelte components, whenever a button, link, or visual status indicator contains an inner decorative icon (e.g., `<span class="icon-[...]">`) alongside an `aria-label` or descriptive text, ensure the inner icon element explicitly includes `aria-hidden="true"`. This prevents screen readers from redundantly announcing confusing CSS class names.
+**Action:** Always add `aria-hidden="true"` to pure decorative icons like `<span class="icon-[lucide--globe]"></span>` when fixing accessibility.
+
+## 2024-09-27 - Icon-only buttons lacking aria-hidden and aria-label
+
+**Learning:** I noticed that some icon-only buttons or buttons with decorative icons do not have proper `aria-hidden="true"` attributes on the inner `<span>` element (which contains the icon class) or an `aria-label` on the button itself. This violates accessibility rules, as screen readers might announce confusing CSS class names or not understand the button's purpose. I found some examples in `apps/web/src/routes/(app)/+page.svelte`, `apps/web/src/routes/(app)/timeline/+page.svelte`, and `apps/web/src/routes/(app)/guest/[publishId]/+page.svelte`.
+
+**Action:** When adding icons inside buttons, always ensure that the inner `<span>` containing the icon class has `aria-hidden="true"`. Also, ensure that buttons have a descriptive `aria-label` or clear, readable text.
+
+## 2025-02-18 - Missing ARIA on community template modals
+
+**Learning:** Svelte dropdowns, action buttons, or interactive elements within generic modals (like `TemplateImportModal`, `EntityTemplatePublishModal`, `ReportListingModal`, and `EntityTemplateInstallModal`) can contain decorative icons (`<span class="icon-[lucide--...]">`). Although the elements containing them often have clear text descriptors or descriptive `aria-label` attributes, the decorative inner icons may be missing `aria-hidden="true"`, risking screen readers announcing the CSS icon classes unnecessarily.
+**Action:** Always add `aria-hidden="true"` to purely decorative icons nested inside actionable buttons across generic overlay or modal components.
+
+## 2024-10-09 - Decorative Dynamic Icons
+
+**Learning:** When using dynamic class names for icons inside Svelte components (e.g. `<span class="{item.icon}">`), it's easy to forget `aria-hidden="true"`, which causes screen readers to redundantly announce confusing class names if they aren't explicitly hidden, even when they reside alongside visible descriptive text or within a button with an `aria-label`.
+**Action:** Always include `aria-hidden="true"` on inner decorative icon elements, regardless of whether their classes are static or dynamic.
+
+## 2024-11-20 - Add aria-pressed to toggle buttons
+
+**Learning:** When filter chips or selection cards act as toggle buttons (e.g. Genre chips, Category chips, Palette selectors, and Silhouette cards), adding `aria-pressed={isActive}` correctly communicates the pressed/selected state to screen readers, improving the accessibility of custom interactive elements.
+**Action:** Always add `aria-pressed={isActive}` or `aria-pressed={isSelected}` to toggle-like buttons or selection cards.

@@ -15,6 +15,9 @@
   } from "$lib/services/analytics/zaraz-analytics";
 
   let { children } = $props();
+  let analyticsReady = $state(false);
+  let initialReferrer = "";
+  let initialReferrerConsumed = false;
 
   const schemaOrgString = $derived(safeJsonLd(SCHEMA_ORG));
 
@@ -29,6 +32,7 @@
     if (pathname.startsWith(`${base}/import`)) return "importer";
     if (pathname.startsWith(`${base}/migrations`)) return "importer";
     if (pathname.startsWith(`${base}/tools`)) return "tools";
+    if (pathname.startsWith(`${base}/topics`)) return "topics";
     return "other";
   }
 
@@ -37,6 +41,8 @@
   // docstrings for the hard "nothing inside the app" scope boundary.
   onMount(() => {
     initCodexAnalyticsBridge();
+    initialReferrer = document.referrer;
+    analyticsReady = true;
   });
 
   // Reactive on page.url (not just onMount) so a second attributed URL
@@ -44,9 +50,12 @@
   // — is still captured, not just the very first page load (#1796 review
   // feedback).
   $effect(() => {
-    if (!browser) return;
+    if (!browser || !analyticsReady) return;
+    const referrer = initialReferrerConsumed ? undefined : initialReferrer;
+    initialReferrerConsumed = true;
     const capturedNewAttribution = attributionStore.captureIfAttributed(
       new URL(page.url),
+      referrer,
     );
     if (capturedNewAttribution) {
       trackEvent("seo_entry", {
@@ -67,6 +76,12 @@
 
 <svelte:head>
   <link rel="help" href="{base}/llms.txt" />
+  <link
+    rel="alternate"
+    type="application/atom+xml"
+    title="Codex Cryptica answers and blog"
+    href="{base}/feed.xml"
+  />
   <!-- eslint-disable-next-line svelte/no-at-html-tags -->
   {@html `<scr` +
     `ipt type="application/ld+json">${schemaOrgString}</scr` +

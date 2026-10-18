@@ -39,6 +39,7 @@ import { vault } from "$lib/stores/vault.svelte";
 import { nodeMergeService } from "$lib/services/node-merge.service.svelte";
 import { revisionService, RevisionService } from "./RevisionService.svelte";
 import { notificationStore } from "$lib/stores/ui/notification.svelte";
+import { loreMergeStore } from "$lib/stores/ui/lore-merge.svelte";
 import { generatorSessionManager } from "$lib/services/generators/generator-session-manager";
 
 describe("RevisionService", () => {
@@ -275,5 +276,210 @@ describe("RevisionService", () => {
       ),
       "error",
     );
+  });
+
+  describe("does not erase existing content (#2584)", () => {
+    /**
+     * `updateEntity` treats an explicit empty string as a real write, so any
+     * empty value reaching it overwrites what the user had. These pin the two
+     * places an empty value could get in.
+     */
+
+    it("keeps existing lore when the AI returns an empty string for it", async () => {
+      (vault as any).entities = {
+        e1: {
+          id: "e1",
+          title: "Keep",
+          content: "user chronicle",
+          lore: "user lore",
+        },
+      };
+      (oracle as any).reviseEntity = vi.fn().mockResolvedValue({
+        content: "new chronicle",
+        lore: "",
+      });
+
+      await revisionService.revise({ entityId: "e1" });
+
+      // `??` would have let the empty string through here.
+      expect(revisionService.pendingDraft?.lore).toBe("user lore");
+    });
+
+    it("keeps existing chronicle when the AI returns an empty string for it", async () => {
+      (vault as any).entities = {
+        e1: {
+          id: "e1",
+          title: "Keep",
+          content: "user chronicle",
+          lore: "user lore",
+        },
+      };
+      (oracle as any).reviseEntity = vi.fn().mockResolvedValue({
+        content: "",
+        lore: "new lore",
+      });
+
+      await revisionService.revise({ entityId: "e1" });
+
+      expect(revisionService.pendingDraft?.chronicle).toBe("user chronicle");
+    });
+
+    it("omits an empty lore from the accepted patch rather than writing it", async () => {
+      (vault as any).entities = {
+        e1: {
+          id: "e1",
+          title: "Keep",
+          content: "user chronicle",
+          lore: "user lore",
+        },
+      };
+      (vault.updateEntity as any).mockClear();
+
+      revisionService.pendingDraft = {
+        entityId: "e1",
+        source: "revise",
+        chronicle: "new chronicle",
+        lore: "",
+        timestamp: 0,
+      } as any;
+
+      await revisionService.acceptDraft();
+
+      const patch = (vault.updateEntity as any).mock.calls[0][1];
+      expect(patch.content).toBe("new chronicle");
+      // Absent, not "" — an empty string would overwrite the user's lore.
+      expect("lore" in patch).toBe(false);
+    });
+
+    it("still writes an empty value when the entity had nothing there", async () => {
+      // Not a wipe: there is nothing to lose, and omitting the field would
+      // leave the entity without it entirely.
+      (vault as any).entities = {
+        e2: { id: "e2", title: "Blank", content: "", lore: "" },
+      };
+      (vault.updateEntity as any).mockClear();
+
+      revisionService.pendingDraft = {
+        entityId: "e2",
+        source: "revise",
+        chronicle: "",
+        lore: "",
+        timestamp: 0,
+      } as any;
+
+      await revisionService.acceptDraft();
+
+      const patch = (vault.updateEntity as any).mock.calls[0][1];
+      expect(patch.lore).toBe("");
+      expect(patch.content).toBe("");
+    });
+
+    it("keeps existing lore when a merge proposal carries none", () => {
+      (vault as any).entities = {
+        target: {
+          id: "target",
+          title: "Target",
+          content: "body",
+          lore: "user lore",
+        },
+      };
+
+      revisionService.proposeMergeDraft(
+        {
+          targetId: "target",
+          suggestedBody: "merged chronicle",
+          suggestedFrontmatter: { lore: "" },
+        } as any,
+        ["target", "source"],
+      );
+
+      expect(revisionService.pendingDraft?.lore).toBe("user lore");
+    });
+  });
+
+  describe("lore changes are reviewed section by section (#2588, #2591)", () => {
+    const LORE = [
+      "## Personality & Voice",
+      "",
+      "Gruff, but fair.",
+      "",
+      "## Hooks",
+      "",
+      "- Owes money to the Assize.",
+    ].join("\n");
+
+    const acceptWith = async (proposedLore: string) => {
+      (vault as any).entities = {
+        e1: { id: "e1", title: "Cass", content: "body", lore: LORE },
+      };
+      (vault.updateEntity as any).mockClear();
+      revisionService.pendingDraft = {
+        entityId: "e1",
+        source: "revise",
+        chronicle: "body",
+        lore: proposedLore,
+        timestamp: 0,
+      } as any;
+      await revisionService.acceptDraft();
+      return (vault.updateEntity as any).mock.calls[0]?.[1];
+    };
+
+    it("opens the review dialog when a revision drops a section", async () => {
+      loreMergeStore.request = vi.fn().mockResolvedValue("chosen lore");
+      await acceptWith("## Personality & Voice\n\nWarmer than he lets on.");
+
+      expect(loreMergeStore.request).toHaveBeenCalledWith(
+        expect.objectContaining({ hasRemovals: true }),
+        "Cass",
+      );
+    });
+
+    it("writes exactly what the reader chose", async () => {
+      loreMergeStore.request = vi.fn().mockResolvedValue("chosen lore");
+      const patch = await acceptWith("## Personality & Voice\n\nWarmer.");
+      expect(patch.lore).toBe("chosen lore");
+    });
+
+    it("abandons the apply entirely when the reader cancels", async () => {
+      // Cancelling must not fall through to writing the unreviewed revision.
+      loreMergeStore.request = vi.fn().mockResolvedValue(null);
+      const patch = await acceptWith("## Personality & Voice\n\nWarmer.");
+      expect(patch).toBeUndefined();
+      expect(vault.updateEntity).not.toHaveBeenCalled();
+    });
+
+    it("opens the dialog for a rewrite, so the reader can see what changed", async () => {
+      loreMergeStore.request = vi.fn().mockResolvedValue("chosen lore");
+      await acceptWith(LORE.replace("Gruff, but fair.", "Warmer."));
+      expect(loreMergeStore.request).toHaveBeenCalledWith(
+        expect.objectContaining({ hasChanges: true, hasRemovals: false }),
+        "Cass",
+      );
+    });
+
+    it("applies silently when the revision is identical", async () => {
+      loreMergeStore.request = vi.fn();
+      const patch = await acceptWith(LORE);
+      expect(loreMergeStore.request).not.toHaveBeenCalled();
+      expect(patch.lore).toBe(LORE);
+    });
+
+    it("does not prompt when the entity had no lore to lose", async () => {
+      loreMergeStore.request = vi.fn();
+      (vault as any).entities = {
+        e3: { id: "e3", title: "New", content: "", lore: "" },
+      };
+      (vault.updateEntity as any).mockClear();
+      revisionService.pendingDraft = {
+        entityId: "e3",
+        source: "revise",
+        chronicle: "c",
+        lore: "## Anything\n\nbody",
+        timestamp: 0,
+      } as any;
+
+      await revisionService.acceptDraft();
+      expect(loreMergeStore.request).not.toHaveBeenCalled();
+    });
   });
 });

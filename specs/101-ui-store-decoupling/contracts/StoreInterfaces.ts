@@ -63,12 +63,7 @@ export interface SessionModeStore {
 
 // ----- Modal -----
 export type SettingsTab =
-  | "vault"
-  | "appearance"
-  | "ai"
-  | "import"
-  | "export"
-  | "about";
+  "vault" | "appearance" | "ai" | "import" | "export" | "about";
 
 export interface ModalUIStore {
   showSettings: boolean;

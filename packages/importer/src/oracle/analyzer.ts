@@ -10,14 +10,22 @@ import type {
 } from "../types";
 import { EXTRACTION_PROMPT } from "./prompt-factory";
 import { splitTextIntoChunks, mergeEntities } from "../utils";
+import { type IdGenerator, systemIdGenerator } from "@codex/runtime";
 
 const CHUNK_SIZE = 50000;
 const OVERLAP_SIZE = 2000;
+
+function throwIfAborted(signal?: AbortSignal): void {
+  if (!signal?.aborted) return;
+  console.log("[OracleAnalyzer] Analysis aborted by user.");
+  throw new Error("Analysis Aborted");
+}
 
 export class OracleAnalyzer implements OracleAnalyzerEngine {
   private modelFactory: (
     modelName: string,
   ) => GenerativeModel | Promise<GenerativeModel>;
+  private idGenerator: IdGenerator;
 
   /**
    * @param apiKeyOrFactory Either a Google Gemini API key string, or a factory function that returns a GenerativeModel.
@@ -26,7 +34,9 @@ export class OracleAnalyzer implements OracleAnalyzerEngine {
     apiKeyOrFactory:
       | string
       | ((modelName: string) => GenerativeModel | Promise<GenerativeModel>),
+    idGenerator: IdGenerator = systemIdGenerator,
   ) {
+    this.idGenerator = idGenerator;
     if (typeof apiKeyOrFactory === "string") {
       const genAI = new GoogleGenerativeAI(apiKeyOrFactory);
       this.modelFactory = (modelName: string) =>
@@ -49,10 +59,7 @@ export class OracleAnalyzer implements OracleAnalyzerEngine {
     const completedSet = new Set(options?.completedIndices || []);
 
     for (let i = 0; i < chunks.length; i++) {
-      if (options?.signal?.aborted) {
-        console.log("[OracleAnalyzer] Analysis aborted by user.");
-        throw new Error("Analysis Aborted");
-      }
+      throwIfAborted(options?.signal);
       const chunk = chunks[i];
 
       if (completedSet.has(i)) {
@@ -72,6 +79,8 @@ export class OracleAnalyzer implements OracleAnalyzerEngine {
       if (options?.onChunkActive) {
         options.onChunkActive(i);
       }
+
+      throwIfAborted(options?.signal);
 
       if (options?.onProgress) {
         options.onProgress(i + 1, chunks.length);
@@ -178,7 +187,7 @@ export class OracleAnalyzer implements OracleAnalyzerEngine {
           }
 
           return {
-            id: crypto.randomUUID(),
+            id: this.idGenerator.uuid(),
             suggestedTitle: title,
             suggestedType: item.type,
             chronicle: item.chronicle || item.content || "",

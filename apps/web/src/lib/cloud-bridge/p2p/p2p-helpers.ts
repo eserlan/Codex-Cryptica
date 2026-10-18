@@ -1,4 +1,10 @@
 import type { Entity, Map } from "schema";
+import { redactGmOnlyNote } from "map-engine";
+import {
+  sanitizeSheetForGuests,
+  type CatalogueOptions,
+} from "@codex/stat-sheet-engine";
+import type { EncounterSession, Token, VTTMessage } from "../../../types/vtt";
 import type { SerializedGraph } from "../types";
 import type {
   GuestPresenceStatus,
@@ -8,7 +14,17 @@ import { systemClock } from "$lib/utils/runtime-deps";
 
 type GuestRoster = Record<string, GuestSession>;
 
-export function sanitizeEntityForGuestTransport(entity: Entity): Entity {
+/**
+ * The one way an entity goes to guests. Lore stays with the GM, and the
+ * stat sheet is replaced by what players may see (#3964): a merchant sheet
+ * becomes its published catalogue, or an empty sheet when it is not
+ * published, and no sheet carries trade history. `options.resolveName` lets
+ * an unnamed stock line show the title of the Item it links to.
+ */
+export function sanitizeEntityForGuestTransport(
+  entity: Entity,
+  options: CatalogueOptions = {},
+): Entity {
   const {
     _fsHandle,
     lore: _lore,
@@ -17,7 +33,61 @@ export function sanitizeEntityForGuestTransport(entity: Entity): Entity {
     _fsHandle?: unknown;
     lore?: string;
   };
+  if (safeEntity.statSheet) {
+    safeEntity.statSheet = sanitizeSheetForGuests(
+      safeEntity.statSheet,
+      options,
+    );
+  }
   return safeEntity as Entity;
+}
+
+/**
+ * Removes GM-only note bodies from a VTT message before it goes to guests.
+ * See `redactGmOnlyNote` for why notes are treated differently from other
+ * hidden tokens. `getToken` looks up the host's copy, because a state update
+ * carries only a delta and cannot say on its own what it is updating.
+ */
+export function sanitizeVttMessageForGuestTransport<T extends { type: string }>(
+  message: T,
+  getToken: (tokenId: string) => Token | undefined,
+): T {
+  const vttMessage = message as unknown as VTTMessage;
+
+  if (vttMessage.type === "TOKEN_ADDED") {
+    const token = redactGmOnlyNote(vttMessage.token);
+    return token === vttMessage.token
+      ? message
+      : ({ ...message, token } as unknown as T);
+  }
+
+  if (vttMessage.type === "TOKEN_STATE_UPDATE") {
+    if (vttMessage.delta.noteBody === undefined) return message;
+    const current = getToken(vttMessage.tokenId);
+    // An update that reveals the note carries its body deliberately.
+    const visibleTo = vttMessage.delta.visibleTo ?? current?.visibleTo;
+    if (current?.kind !== "note" || visibleTo !== "gm-only") return message;
+    return {
+      ...message,
+      delta: { ...vttMessage.delta, noteBody: "" },
+    } as unknown as T;
+  }
+
+  return message;
+}
+
+/** The whole-session equivalent of `sanitizeVttMessageForGuestTransport`. */
+export function sanitizeSessionForGuestTransport(
+  session: EncounterSession,
+): EncounterSession {
+  let changed = false;
+  const tokens: Record<string, Token> = {};
+  for (const [id, token] of Object.entries(session.tokens ?? {})) {
+    const safe = redactGmOnlyNote(token);
+    if (safe !== token) changed = true;
+    tokens[id] = safe;
+  }
+  return changed ? { ...session, tokens } : session;
 }
 
 export function normalizeGuestName(name: unknown, fallback: string) {
@@ -83,8 +153,12 @@ export function buildSharedGraphPayload(
   const entities: Record<string, Entity> = {};
   const assets: Record<string, string> = {};
 
+  const resolveName = (entityId: string) => rawEntities[entityId]?.title;
+
   for (const [id, localEntity] of Object.entries(rawEntities)) {
-    const safeEntity = sanitizeEntityForGuestTransport(localEntity);
+    const safeEntity = sanitizeEntityForGuestTransport(localEntity, {
+      resolveName,
+    });
     entities[id] = safeEntity;
 
     if (safeEntity.image && !safeEntity.image.startsWith("http")) {

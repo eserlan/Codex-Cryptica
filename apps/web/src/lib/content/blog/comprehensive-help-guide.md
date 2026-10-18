@@ -15,7 +15,7 @@ keywords:
 publishedAt: 2026-03-05T12:00:00Z
 ---
 
-Welcome to Codex Cryptica. Whether you're a seasoned GM or just starting your first world-building project, this guide will walk you through the core features and advanced techniques to help you manage your lore with ease.
+Welcome to Codex Cryptica. This guide walks through the core features and a few advanced techniques for managing your lore.
 
 ## 1. The Local-First Foundation
 
@@ -32,11 +32,11 @@ While your data is local, you can easily access it across different machines by 
 ### Setting up a Cloud Mirror:
 
 1.  **Install a Cloud Client:** Install a service like **Google Drive for Desktop**, **Dropbox**, or **iCloud** on your computer.
-2.  **Link to a Local Folder:** In Codex, click the **SAVE TO FOLDER** button in the bottom-left sidebar (or the Save icon in the Vault Selector).
+2.  **Link to a Local Folder:** In Codex, click the **SAVE TO FOLDER** button in the bottom-left sidebar (or the Save icon in Switch Vault).
 3.  **Choose your Cloud Directory:** Select a folder inside your Google Drive or Dropbox directory.
 4.  **Automatic Updates:** Codex will now keep your internal archives mirrored to that folder, and your OS will handle the cloud mirroring automatically.
 
-To open your world on a second device, simply use the **Open Folder** button in the Vault Selector and choose that same synced directory.
+To open your world on a second device, use the **Open Folder** button in Switch Vault and choose that same synced directory.
 
 ## 3. Working with the Lore Oracle
 

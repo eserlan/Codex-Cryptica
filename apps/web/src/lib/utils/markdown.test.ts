@@ -8,6 +8,7 @@ import {
   upsertMarkdownSection,
 } from "./markdown";
 import { EntitySchema } from "schema";
+import { validateMarkdownFrontmatter } from "@codex/vault-engine";
 
 describe("markdown.ts utility", () => {
   describe("renderMarkdown", () => {
@@ -42,6 +43,16 @@ describe("markdown.ts utility", () => {
       // marked.parseInline usually returns without <p> tags
       expect(html).toContain("<strong>bold</strong>");
       expect(html).not.toContain("<p>");
+    });
+
+    it("keeps single newlines as separate paragraphs by default (unchanged behaviour)", () => {
+      const html = renderMarkdown("Line one\nLine two");
+      expect(html).not.toContain("<br");
+    });
+
+    it("turns a single newline into a <br> when breaks is requested (#3481)", () => {
+      const html = renderMarkdown("Line one\nLine two", { breaks: true });
+      expect(html).toContain("<br");
     });
 
     it("should handle marked.parse errors and return sanitized fallback", async () => {
@@ -304,18 +315,50 @@ describe("markdown.ts utility", () => {
     });
   });
 
+  describe("hidden connections", () => {
+    const base = {
+      id: "eldrin",
+      type: "character",
+      title: "Eldrin",
+      content: "Body",
+    };
+
+    it("keeps a hidden connection's flag through save and reload", () => {
+      const parsed = parseMarkdown(
+        stringifyEntity({
+          ...base,
+          connections: [
+            { target: "keep", type: "located_in", hidden: true },
+            { target: "tower", type: "owns" },
+          ],
+        } as any),
+      );
+      expect(parsed.metadata.connections).toEqual([
+        { target: "keep", type: "located_in", hidden: true },
+        { target: "tower", type: "owns" },
+      ]);
+    });
+
+    it("writes nothing extra for a connection that was never hidden (negative)", () => {
+      const serialized = stringifyEntity({
+        ...base,
+        connections: [{ target: "tower", type: "owns" }],
+      } as any);
+      expect(serialized).not.toContain("hidden");
+    });
+  });
+
   describe("Vault Round-Trip Integration", () => {
     it("should serialize a fully populated entity and re-parse it with full fidelity", () => {
       const fullEntity = {
         id: "eldrin-shadoweaver",
         type: "character",
         title: "Eldrin Shadoweaver",
-        tags: ["mage", "shadow", "ancient"],
         labels: ["important", "past"],
         aliases: ["The Shadow Mage", "Eldrin"],
         connections: [
           {
-            targetId: "shadow-keep",
+            target: "shadow-keep",
             type: "located_in",
             label: "Home Sanctuary",
           },
@@ -374,7 +417,6 @@ describe("markdown.ts utility", () => {
       expect(parsedResult.metadata.id).toBe(fullEntity.id);
       expect(parsedResult.metadata.type).toBe(fullEntity.type);
       expect(parsedResult.metadata.title).toBe(fullEntity.title);
-      expect(parsedResult.metadata.tags).toEqual(fullEntity.tags);
       expect(parsedResult.metadata.labels).toEqual(fullEntity.labels);
       expect(parsedResult.metadata.aliases).toEqual(fullEntity.aliases);
       expect(parsedResult.metadata.connections).toEqual(fullEntity.connections);
@@ -398,6 +440,10 @@ describe("markdown.ts utility", () => {
 
       // Verify content parses back correctly
       expect(parsedResult.content.trim()).toBe(fullEntity.content.trim());
+
+      // Verify frontmatter passes validateMarkdownFrontmatter without errors
+      const validation = validateMarkdownFrontmatter(serialized);
+      expect(validation.success).toBe(true);
     });
   });
 
@@ -425,6 +471,43 @@ describe("markdown.ts utility", () => {
       expect(result).toBe(
         "Initial content.\n\n## Existing Section\nNew content.\n## Another Section\nOther content.",
       );
+    });
+  });
+
+  describe("report provenance round-trip", () => {
+    it("keeps the report field through stringify and parse", () => {
+      const report = {
+        origin: "canvas" as const,
+        canvasId: "c1",
+        selection: "entire" as const,
+        include: {
+          descriptions: true,
+          relationships: true,
+          factionsAffiliations: true,
+          portraits: true,
+          notes: true,
+          gmOnlySecrets: false,
+        },
+        detail: "standard" as const,
+        generatedAt: 5,
+        contentHash: "abc12345",
+      };
+      const entity = EntitySchema.parse({
+        id: "r",
+        type: "note",
+        title: "R",
+        kind: "report",
+        content: "## Overview",
+        report,
+      });
+      const { metadata } = parseMarkdown(stringifyEntity(entity));
+      expect(metadata.report).toEqual(report);
+    });
+
+    it("does not add a report field to ordinary notes", () => {
+      const entity = EntitySchema.parse({ id: "n", type: "note", title: "N" });
+      const { metadata } = parseMarkdown(stringifyEntity(entity));
+      expect(metadata.report).toBeUndefined();
     });
   });
 });

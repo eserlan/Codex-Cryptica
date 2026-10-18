@@ -7,6 +7,7 @@ import { load } from "./+page";
 
 vi.mock("$app/paths", () => ({
   resolve: (value: string) => value,
+  base: "",
 }));
 
 describe("/worlds route", () => {

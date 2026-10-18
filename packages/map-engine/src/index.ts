@@ -1,4 +1,13 @@
+export * from "./hex";
+export * from "./hex-labels";
+export * from "./hex-travel";
+export * from "./hex-renderer";
+export * from "./layers";
 export * from "./math";
+export * from "./note-markdown";
+export * from "./render-token-overlays";
+export { resolveTokenShape } from "./render-tokens";
 export * from "./renderer";
+export * from "./tile-beneath";
 export * from "./token-geometry";
 export * from "./vtt";

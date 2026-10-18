@@ -82,6 +82,7 @@ function createController(overrides: Record<string, unknown> = {}) {
     activeMap: { id: "map-1" },
     unproject: vi.fn((point) => ({ x: point.x + 1, y: point.y + 2 })),
     uploadMap: vi.fn().mockResolvedValue("map-2"),
+    createBlankMap: vi.fn().mockResolvedValue("map-3"),
     addPin: vi.fn(),
   };
   const mapSession = {
@@ -91,6 +92,9 @@ function createController(overrides: Record<string, unknown> = {}) {
     dragPreview: null,
     clearDragPreview: vi.fn(),
     setDragPreview: vi.fn(),
+    selectTile: vi.fn().mockReturnValue({ id: "tile-1", name: "Corridor" }),
+    updatePendingTilePlacement: vi.fn(),
+    placePendingTile: vi.fn().mockReturnValue({ id: "token-1" }),
     addToken: vi.fn(),
     requestTokenAdd: vi.fn(),
   };
@@ -222,6 +226,28 @@ describe("MapPageController", () => {
     );
   });
 
+  it("places a tile when a tile deck item is dropped onto the map", () => {
+    const { controller, mapSession } = createController();
+
+    controller.onDrop(
+      createDragEvent({
+        dataTransfer: {
+          types: ["application/x-codex-tile"],
+          getData: (type: string) =>
+            type === "application/x-codex-tile"
+              ? JSON.stringify({ deckId: "deck-1", tileId: "tile-1" })
+              : "",
+        } as unknown as DataTransfer,
+        clientX: 60,
+        clientY: 90,
+      }),
+    );
+
+    expect(mapSession.selectTile).toHaveBeenCalledWith("deck-1", "tile-1");
+    expect(mapSession.updatePendingTilePlacement).toHaveBeenCalled();
+    expect(mapSession.placePendingTile).toHaveBeenCalled();
+  });
+
   it("opens the upload session when files are dropped", () => {
     const { controller } = createController();
     const files = createFileList([
@@ -258,6 +284,39 @@ describe("MapPageController", () => {
     expect(controller.files).toBeNull();
   });
 
+  it("creates a blank map and clears upload state", async () => {
+    const { controller, mapStore } = createController();
+    controller.mapName = "Battle Grid";
+    controller.showUpload = true;
+
+    await controller.handleCreateBlank();
+
+    expect(mapStore.createBlankMap).toHaveBeenCalledWith("Battle Grid");
+    expect(controller.showUpload).toBe(false);
+    expect(controller.mapName).toBe("");
+  });
+
+  it("notifies on failure to create a blank map", async () => {
+    const { controller, notificationStore } = createController({
+      mapStore: {
+        activeMap: { id: "map-1" },
+        unproject: vi.fn(),
+        uploadMap: vi.fn(),
+        createBlankMap: vi.fn().mockResolvedValue(undefined),
+        addPin: vi.fn(),
+      },
+    });
+    controller.showUpload = true;
+
+    await controller.handleCreateBlank();
+
+    expect(notificationStore.notify).toHaveBeenCalledWith(
+      expect.stringContaining("Failed to create map"),
+      "error",
+    );
+    expect(controller.showUpload).toBe(true);
+  });
+
   it("cancels pending upload state when the active vault changes", () => {
     const { controller } = createController();
     controller.showUpload = true;
@@ -277,5 +336,56 @@ describe("MapPageController", () => {
     controller.openShareModal();
 
     expect(modalUIStore.openShare).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not open Share during a solo session, and says why", () => {
+    const soloPlayGuard = {
+      sharedPlayBlockedReason: vi.fn(
+        () => "End your solo session to share or preview as a player.",
+      ),
+    };
+    const { controller, modalUIStore, notificationStore } = createController({
+      soloPlayGuard,
+    });
+
+    controller.openShareModal();
+
+    expect(modalUIStore.openShare).not.toHaveBeenCalled();
+    expect(notificationStore.notify).toHaveBeenCalledWith(
+      "End your solo session to share or preview as a player.",
+      "info",
+    );
+  });
+
+  describe("chatSidebarOffset", () => {
+    it("is flush left when VTT is off, because there is no chat sidebar", () => {
+      const { controller } = createController();
+
+      expect(controller.chatSidebarOffset).toBe("0rem");
+    });
+
+    it("makes room for the expanded chat sidebar when VTT is on", () => {
+      const base = createController();
+      base.mapSession.vttEnabled = true;
+      const { controller } = createController({
+        mapStore: base.mapStore,
+        mapSession: base.mapSession,
+      });
+
+      expect(controller.chatSidebarOffset).toBe("20rem");
+    });
+
+    it("only keeps a narrow rail when the VTT chat sidebar is collapsed", () => {
+      const base = createController();
+      base.mapSession.vttEnabled = true;
+      base.layoutUIStore.vttChatSidebarCollapsed = true;
+      const { controller } = createController({
+        mapStore: base.mapStore,
+        mapSession: base.mapSession,
+        layoutUIStore: base.layoutUIStore,
+      });
+
+      expect(controller.chatSidebarOffset).toBe("3rem");
+    });
   });
 });

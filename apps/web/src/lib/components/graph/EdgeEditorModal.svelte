@@ -47,17 +47,23 @@
 <svelte:window onkeydown={handleWindowKeydown} />
 
 {#if editingEdge}
-  <!-- svelte-ignore a11y_click_events_have_key_events -->
-  <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
-    class="fixed inset-0 bg-theme-bg/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4"
+    class="fixed inset-0 z-[60] flex items-center justify-center p-4"
     transition:fade={{ duration: 200 }}
-    onclick={close}
   >
+    <button
+      type="button"
+      class="absolute inset-0 h-full w-full bg-theme-bg/80 backdrop-blur-sm cursor-default focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-theme-primary"
+      aria-label="Close dialog"
+      onclick={close}
+      onpointerdown={(e) => e.preventDefault()}
+    ></button>
     <div
-      class="bg-theme-surface border border-theme-primary p-6 shadow-2xl w-full max-w-md"
+      role="dialog"
+      aria-modal="true"
+      tabindex="-1"
+      class="relative bg-theme-surface border border-theme-primary p-6 shadow-2xl w-full max-w-md"
       transition:fly={{ y: 20, duration: 300 }}
-      onclick={(e) => e.stopPropagation()}
     >
       <h2
         class="text-theme-primary font-header font-bold text-sm uppercase tracking-[0.2em] mb-4"
@@ -69,7 +75,7 @@
         <div>
           <label
             for="edge-label"
-            class="block text-[10px] font-bold text-theme-muted uppercase mb-1"
+            class="block text-micro font-bold text-theme-muted uppercase mb-1"
             >Label</label
           >
           <input
@@ -85,7 +91,7 @@
         <div>
           <label
             for="edge-type"
-            class="block text-[10px] font-bold text-theme-muted uppercase mb-1"
+            class="block text-micro font-bold text-theme-muted uppercase mb-1"
             >Relationship Nature</label
           >
           {#if vault.isGuest}
@@ -122,7 +128,7 @@
                   editingEdge = null;
                 }
               }}
-              class="text-[10px] font-bold text-red-600 hover:text-red-500 uppercase tracking-widest transition-colors"
+              class="text-micro font-bold text-red-600 hover:text-red-500 uppercase tracking-widest transition-colors"
             >
               Sever Connection
             </button>
@@ -133,14 +139,14 @@
           <div class="flex gap-2">
             <button
               onclick={() => (editingEdge = null)}
-              class="px-4 py-2 text-[10px] font-bold text-theme-muted hover:text-theme-text uppercase tracking-widest transition-colors"
+              class="px-4 py-2 text-micro font-bold text-theme-muted hover:text-theme-text uppercase tracking-widest transition-colors"
             >
               Cancel
             </button>
             {#if !vault.isGuest}
               <button
                 onclick={saveEdgeLabel}
-                class="px-6 py-2 bg-theme-primary text-theme-bg text-[10px] font-bold uppercase tracking-widest hover:bg-theme-secondary transition-colors"
+                class="px-6 py-2 bg-theme-primary text-theme-bg text-micro font-bold uppercase tracking-widest hover:bg-theme-secondary transition-colors"
               >
                 Sync Data
               </button>

@@ -27,15 +27,6 @@ export function isEntityVisible(
   // to avoid regex execution overhead on hot paths (~10x faster).
   let explicitlyRevealed = false;
 
-  // Check Tags (fallback)
-  if (entity.tags) {
-    for (let i = 0; i < entity.tags.length; i++) {
-      const tag = entity.tags[i].toLowerCase();
-      if (tag === "hidden") return false; // Early exit: Hidden overrides everything
-      if (tag === "revealed" || tag === "visible") explicitlyRevealed = true;
-    }
-  }
-
   // Check Labels
   if (entity.labels) {
     for (let i = 0; i < entity.labels.length; i++) {
@@ -43,6 +34,16 @@ export function isEntityVisible(
       if (label === "hidden") return false; // Early exit
       if (label === "revealed" || label === "visible")
         explicitlyRevealed = true;
+    }
+  }
+
+  // Check legacy tags (fallback for unmigrated objects)
+  const legacyTags = (entity as { tags?: string[] }).tags;
+  if (legacyTags) {
+    for (let i = 0; i < legacyTags.length; i++) {
+      const tag = legacyTags[i].toLowerCase();
+      if (tag === "hidden") return false; // Early exit
+      if (tag === "revealed" || tag === "visible") explicitlyRevealed = true;
     }
   }
 

@@ -21,6 +21,7 @@ vi.mock("$lib/stores/guest-chat.svelte", () => ({
     saveMessageEdit: vi.fn(),
     deleteMessage: vi.fn(),
     listSessions: vi.fn().mockResolvedValue([]),
+    listSessionsAsSpeaker: vi.fn().mockResolvedValue([]),
     resumeSession: vi.fn(),
     startNewSession: vi.fn(),
   },
@@ -28,6 +29,13 @@ vi.mock("$lib/stores/guest-chat.svelte", () => ({
 
 vi.mock("$lib/stores/proposer.svelte", () => ({
   proposerStore: { promoteToRumor: vi.fn() },
+}));
+
+vi.mock("$lib/services/character-chat-export", () => ({
+  characterChatExportService: {
+    copyConversation: vi.fn().mockResolvedValue(true),
+    sendConversationToJournal: vi.fn().mockResolvedValue("new-note-id"),
+  },
 }));
 
 describe("DetailChatsTab", () => {
@@ -74,6 +82,7 @@ describe("DetailChatsTab", () => {
       id: "t-1",
       guestId: "guest-abc123",
       guestName: "Alice",
+      characterId: character.id,
       lastUpdated: Date.now(),
       messages: [
         { id: "m-1", role: "user", content: "Hello there" },
@@ -130,6 +139,78 @@ describe("DetailChatsTab", () => {
         const icon = btn.querySelector("[aria-hidden]");
         expect(icon?.getAttribute("aria-hidden")).toBe("true");
       }
+    });
+
+    it("host log copy-conversation button triggers copyConversation", async () => {
+      render(DetailChatsTab, { entity: character });
+      await vi.waitFor(() =>
+        screen.getByRole("button", { name: "Copy conversation" }),
+      );
+
+      await fireEvent.click(
+        screen.getByRole("button", { name: "Copy conversation" }),
+      );
+
+      const { characterChatExportService } =
+        await import("$lib/services/character-chat-export");
+      expect(characterChatExportService.copyConversation).toHaveBeenCalledWith(
+        expect.objectContaining({ id: "t-1" }),
+        expect.objectContaining({ speakerName: "Alice" }),
+      );
+    });
+
+    it("host log send-to-journal button triggers sendConversationToJournal", async () => {
+      render(DetailChatsTab, { entity: character });
+      await vi.waitFor(() =>
+        screen.getByRole("button", { name: "Send to Journal" }),
+      );
+
+      await fireEvent.click(
+        screen.getByRole("button", { name: "Send to Journal" }),
+      );
+
+      const { characterChatExportService } =
+        await import("$lib/services/character-chat-export");
+      expect(
+        characterChatExportService.sendConversationToJournal,
+      ).toHaveBeenCalledWith(
+        expect.objectContaining({ id: "t-1" }),
+        expect.objectContaining({ speakerName: "Alice" }),
+      );
+    });
+  });
+
+  describe("guest mode", () => {
+    beforeEach(async () => {
+      const { vault } = await import("$lib/stores/vault.svelte");
+      (vault as any).isGuest = true;
+      guestChatStore.transcripts = {
+        "char-1": {
+          id: "guest-session-1",
+          guestId: "guest-user",
+          guestName: "Adventurer",
+          characterId: "char-1",
+          characterTitle: "Mara the Blacksmith",
+          lastUpdated: Date.now(),
+          messages: [
+            { id: "gm-1", role: "user", content: "Greetings", timestamp: 1 },
+          ],
+        } as any,
+      };
+    });
+
+    it("guest copy button copies active transcript", async () => {
+      render(DetailChatsTab, { entity: character });
+
+      const copyBtn = screen.getByRole("button", { name: "Copy conversation" });
+      await fireEvent.click(copyBtn);
+
+      const { characterChatExportService } =
+        await import("$lib/services/character-chat-export");
+      expect(characterChatExportService.copyConversation).toHaveBeenCalledWith(
+        expect.objectContaining({ id: "guest-session-1" }),
+        expect.objectContaining({ speakerName: "Adventurer" }),
+      );
     });
   });
 });

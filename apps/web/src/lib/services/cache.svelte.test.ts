@@ -134,6 +134,72 @@ describe("CacheService", () => {
     });
   });
 
+  describe("preloadVault reuse", () => {
+    const record = (id: string) => ({
+      vaultId: "v1",
+      filePath: `${id}.md`,
+      id,
+      title: id,
+      lastModified: 100,
+    });
+    const reads = () => vi.mocked(entityDb.graphEntities.toArray);
+
+    beforeEach(() => {
+      reads().mockClear();
+      reads().mockResolvedValue([record("e1")] as any);
+    });
+
+    it("hands back the snapshot it already holds, without reading the table again", async () => {
+      const first = await service.preloadVault("v1");
+      const again = await service.preloadVault("v1", { reuse: true });
+
+      expect(again).toBe(first);
+      expect(reads()).toHaveBeenCalledTimes(1);
+    });
+
+    it("still reads the table again when reuse is not requested (negative)", async () => {
+      await service.preloadVault("v1");
+      await service.preloadVault("v1");
+
+      expect(reads()).toHaveBeenCalledTimes(2);
+    });
+
+    it("does not reuse another vault's snapshot (negative)", async () => {
+      await service.preloadVault("v1");
+      await service.preloadVault("v2", { reuse: true });
+
+      expect(reads()).toHaveBeenCalledTimes(2);
+    });
+
+    it("reads again once the snapshot has been invalidated (negative)", async () => {
+      await service.preloadVault("v1");
+      service.invalidatePreload();
+      await service.preloadVault("v1", { reuse: true });
+
+      expect(reads()).toHaveBeenCalledTimes(2);
+    });
+
+    it("reads when nothing has been preloaded yet", async () => {
+      const map = await service.preloadVault("v1", { reuse: true });
+
+      expect(reads()).toHaveBeenCalledTimes(1);
+      expect(map.size).toBe(1);
+    });
+
+    it("includes a write made after the first preload, as it stays current", async () => {
+      await service.preloadVault("v1");
+      await service.set("v1:e2.md", 200, {
+        id: "e2",
+        title: "Written later",
+      } as any);
+
+      const again = await service.preloadVault("v1", { reuse: true });
+
+      expect(again.get("v1:e2.md")?.entity.title).toBe("Written later");
+      expect(reads()).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe("set", () => {
     it("should update in-memory cache if active", async () => {
       await service.preloadVault("v1");

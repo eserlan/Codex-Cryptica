@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { OracleRevisionManager } from "../revision-manager.svelte";
 import { interactionSessions } from "@codex/ai-engine";
 import type { IOracleStore } from "../types";
+import { entityTemplateStore } from "../../entity-templates/entity-template-store.svelte";
 
 describe("OracleRevisionManager", () => {
   let manager: OracleRevisionManager;
@@ -68,9 +69,28 @@ describe("OracleRevisionManager", () => {
         instructions: "Make the correction.",
         priority: "instructions-first",
         themeId: undefined,
+        loreTemplate: "",
         interactionsEnabled: true,
       },
     );
+  });
+
+  it("passes the vault's template for the entity type down to the worker", async () => {
+    const spy = vi
+      .spyOn(entityTemplateStore, "resolveSync")
+      .mockReturnValue("## The Five Elements\n");
+    mockStore.textGeneration.reviseEntityUpdate.mockResolvedValue({
+      content: "c",
+      lore: "l",
+    });
+
+    await manager.reviseEntity({ source: "revise", entityId: "e1" });
+
+    expect(spy).toHaveBeenCalledWith("npc", undefined);
+    const options =
+      mockStore.textGeneration.reviseEntityUpdate.mock.calls[0][6];
+    expect(options.loreTemplate).toBe("## The Five Elements\n");
+    spy.mockRestore();
   });
 
   it("uses chronicle (content) not lore for related entity thumbnails", async () => {

@@ -110,6 +110,7 @@
     accept=".pdf,.docx,.txt,.md,.json,.zip"
     onchange={handleFileSelect}
     class="hidden-input"
+    data-testid="import-dropzone-file-input"
   />
 
   {#if content.trim()}

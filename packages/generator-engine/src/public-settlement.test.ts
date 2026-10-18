@@ -6,6 +6,8 @@ import {
   settlementConfig,
 } from "./public-settlement";
 import { NAME_BAN_PROMPT } from "./public-npc";
+import { BANNED_NAMES } from "./public-npc-constants";
+import { INHABITANT_NAMES_BY_GENRE } from "./public-settlement-inhabitant-names";
 
 function seededRng(seed = 1): () => number {
   let s = seed >>> 0;
@@ -21,12 +23,15 @@ describe("generateSettlementLocal", () => {
     expect(out.type).toBe("location");
     expect(out.content).toContain("## Core Concept");
     expect(out.content).toContain("## First Impression");
+    expect(out.content).toContain("## Inhabitants");
+    expect(out.content).toContain("## Life Here");
     expect(out.content).toContain("## History");
-    expect(out.lore).toContain("### GM Reference Information");
-    expect(out.lore).toContain("### Points of Interest");
-    expect(out.lore).toContain("### Controlling Factions");
     expect(out.lore).toContain("### Current Tension");
+    expect(out.lore).toContain("### Points of Interest");
+    expect(out.lore).toContain("### Notable Inhabitants");
+    expect(out.lore).toContain("### Controlling / Important Factions");
     expect(out.lore).toContain("### Adventure Hooks");
+    expect(out.lore).toContain("### GM Reference Information");
     expect(out.labels).toContain("rpg-location");
   });
 
@@ -34,7 +39,7 @@ describe("generateSettlementLocal", () => {
     const out = generateSettlementLocal({ size: "Hamlet" }, seededRng(2));
     expect(out.lore).toContain("- **Scale**: Hamlet");
     const poiLines = out.lore.split("\n").filter((l) => l.startsWith("- **📍"));
-    expect(poiLines).toHaveLength(1);
+    expect(poiLines).toHaveLength(3);
   });
 
   it("honours explicit primaryFunction", () => {
@@ -43,7 +48,10 @@ describe("generateSettlementLocal", () => {
       seededRng(3),
     );
     expect(out.lore).toContain("- **Primary Function**: Pilgrimage town");
-    expect(out.content).toContain("pilgrimage town");
+    // The raw primaryFunction is a conceptual role, not mandatory prose, so
+    // the narrative text uses a scale-appropriate phrase for it instead of
+    // repeating the literal option string verbatim (#2536).
+    expect(out.content).toContain("temple town");
   });
 
   it("falls back to economy as primaryFunction for backwards compat", () => {
@@ -114,6 +122,120 @@ describe("settlementConfig", () => {
   });
 });
 
+describe("Superhero / Comic Book genre (#3104)", () => {
+  const GENRE = "Superhero / Comic Book";
+
+  it("is registered as a settlement genre", () => {
+    expect(settlementConfig.genres).toContain(GENRE);
+  });
+
+  it("has reasonably sized, genre-specific option pools rather than a 1-2 item stub", () => {
+    expect(settlementConfig.sizesByGenre[GENRE].length).toBeGreaterThanOrEqual(
+      4,
+    );
+    expect(
+      settlementConfig.environmentsByGenre[GENRE].length,
+    ).toBeGreaterThanOrEqual(5);
+    expect(
+      settlementConfig.primaryFunctionsByGenre[GENRE].length,
+    ).toBeGreaterThanOrEqual(5);
+    expect(settlementConfig.tonesByGenre[GENRE].length).toBeGreaterThanOrEqual(
+      4,
+    );
+    expect(
+      settlementConfig.mainTensionsByGenre[GENRE].length,
+    ).toBeGreaterThanOrEqual(5);
+    expect(
+      settlementConfig.authorityTypesByGenre[GENRE].length,
+    ).toBeGreaterThanOrEqual(4);
+    expect(
+      settlementConfig.notableLocationsByGenre[GENRE].length,
+    ).toBeGreaterThanOrEqual(6);
+    expect(
+      settlementConfig.factionsByGenre[GENRE].length,
+    ).toBeGreaterThanOrEqual(4);
+    expect(
+      settlementConfig.namePrefixesByGenre[GENRE].length,
+    ).toBeGreaterThanOrEqual(4);
+    expect(
+      settlementConfig.nameSuffixesByGenre[GENRE].length,
+    ).toBeGreaterThanOrEqual(4);
+    expect(INHABITANT_NAMES_BY_GENRE[GENRE].length).toBeGreaterThanOrEqual(8);
+  });
+
+  it("does not fall back to the shared Fantasy default (content is genuinely genre-specific)", () => {
+    expect(settlementConfig.sizesByGenre[GENRE]).not.toEqual(
+      settlementConfig.sizesByGenre["Fantasy"],
+    );
+    expect(settlementConfig.environmentsByGenre[GENRE]).not.toEqual(
+      settlementConfig.environmentsByGenre["Fantasy"],
+    );
+    expect(settlementConfig.primaryFunctionsByGenre[GENRE]).not.toEqual(
+      settlementConfig.primaryFunctionsByGenre["Fantasy"],
+    );
+    expect(settlementConfig.factionsByGenre[GENRE]).not.toEqual(
+      settlementConfig.factionsByGenre["Fantasy"],
+    );
+  });
+
+  it("produces output naming supers, superhuman incidents, and public sentiment", () => {
+    const out = generateSettlementLocal({ genre: GENRE }, seededRng(11));
+    expect(out.lore).toContain(GENRE);
+    const combined = `${out.content} ${out.lore}`;
+    // Superhero-specific vocabulary should show up somewhere in the generated
+    // text — either the resolved axes themselves or the derived content that
+    // is built from their traits (occupations, POI blurbs, hooks, etc.).
+    const superheroSignals = [
+      "hero",
+      "villain",
+      "metahuman",
+      "superhuman",
+      "power",
+      "registry",
+      "containment",
+      "vigilante",
+    ];
+    const lowerCombined = combined.toLowerCase();
+    expect(superheroSignals.some((term) => lowerCombined.includes(term))).toBe(
+      true,
+    );
+  });
+
+  it("reads distinctly different from a Fantasy settlement generated with the same seed", () => {
+    const superhero = generateSettlementLocal({ genre: GENRE }, seededRng(3));
+    const fantasy = generateSettlementLocal({ genre: "Fantasy" }, seededRng(3));
+    expect(superhero.content).not.toEqual(fantasy.content);
+    expect(superhero.lore).not.toEqual(fantasy.lore);
+    expect(superhero.lore).toContain(GENRE);
+    expect(fantasy.lore).not.toContain(GENRE);
+  });
+
+  it("has crash-safe fallbacks: an unrecognised genre still resolves via the Fantasy default", () => {
+    expect(() =>
+      generateSettlementLocal({ genre: "Not A Real Genre" }, seededRng(7)),
+    ).not.toThrow();
+  });
+
+  it("has no invented proper nouns colliding with BANNED_NAMES (case-insensitive, whole word)", () => {
+    const haystacks = [
+      ...settlementConfig.notableLocationsByGenre[GENRE],
+      ...settlementConfig.factionsByGenre[GENRE],
+      ...settlementConfig.namePrefixesByGenre[GENRE],
+      ...settlementConfig.nameSuffixesByGenre[GENRE],
+      ...INHABITANT_NAMES_BY_GENRE[GENRE],
+    ];
+    for (const banned of BANNED_NAMES) {
+      const bannedRegex = new RegExp(`\\b${banned}\\b`, "i");
+      for (const text of haystacks) {
+        expect(
+          bannedRegex.test(text),
+          `"${text}" collides with banned name "${banned}"`,
+        ).toBe(false);
+      }
+    }
+  });
+});
+
 describe("buildSettlementPrompt", () => {
   it("embeds scale, genre, function, tension, ban prompt, and session context", () => {
     const { userMessage, resolved } = buildSettlementPrompt(
@@ -135,11 +257,27 @@ describe("buildSettlementPrompt", () => {
     expect(resolved.genre).toBe("Cyberpunk");
   });
 
-  it("includes the three guiding questions", () => {
+  it("includes the four guiding questions", () => {
     const { userMessage } = buildSettlementPrompt({}, "", seededRng(1));
     expect(userMessage).toContain("Why does this place exist");
-    expect(userMessage).toContain("Who really controls it");
-    expect(userMessage).toContain("What is about to go wrong");
+    expect(userMessage).toContain("What is everyday life like here");
+    expect(userMessage).toContain("Who lives here");
+    expect(userMessage).toContain("What is happening here right now");
+  });
+
+  it("includes anti-monoculture guidance against common LLM defaults", () => {
+    const { userMessage } = buildSettlementPrompt({}, "", seededRng(1));
+    expect(userMessage).toContain("hidden ledgers");
+    expect(userMessage).toContain("existed before the PCs arrived");
+  });
+
+  it("includes scale-honesty, causal-chain, and cross-section reuse guidance", () => {
+    const { userMessage } = buildSettlementPrompt({}, "", seededRng(1));
+    expect(userMessage).toContain("conceptual role for the Primary Function");
+    expect(userMessage).toContain("causal chain");
+    expect(userMessage).toContain(
+      "Reuse named people and places across sections",
+    );
   });
 
   it("defaults to Fantasy genre", () => {
@@ -166,5 +304,54 @@ describe("parseSettlementResponse", () => {
 
   it("throws on malformed JSON", () => {
     expect(() => parseSettlementResponse("nope", resolved)).toThrow();
+  });
+});
+
+describe("generateSettlementLocal — scale-aware prose (#2536 refinement)", () => {
+  it("never describes a hamlet with a city-scale word", () => {
+    const rng = seededRng(13);
+    for (let i = 0; i < 60; i++) {
+      const out = generateSettlementLocal(
+        { genre: "Fantasy", size: "Hamlet" },
+        rng,
+      );
+      const prose = out.content.split("## History")[0].toLowerCase();
+      expect(prose).not.toMatch(/\bcity\b/);
+      expect(prose).not.toMatch(/\buniversity district\b/);
+    }
+  });
+
+  it("gives a hamlet-scale academic settlement an institutional-footprint note", () => {
+    const out = generateSettlementLocal(
+      { genre: "Fantasy", size: "Hamlet", primaryFunction: "Academic city" },
+      seededRng(11),
+    );
+    expect(out.content).toContain("At this size, that means");
+  });
+
+  it("names an inhabitant in Current Tension when one exists, and that inhabitant appears in Notable Inhabitants", () => {
+    const rng = seededRng(17);
+    for (let i = 0; i < 30; i++) {
+      const out = generateSettlementLocal({ genre: "Fantasy" }, rng);
+      const tensionParagraph = out.lore.split("### Points of Interest")[0];
+      const notableSection = out.lore.split("### Notable Inhabitants")[1];
+      const nameMatch = tensionParagraph.match(/\b([A-Z][a-z]+),/);
+      if (nameMatch) {
+        expect(notableSection).toContain(`**${nameMatch[1]}**`);
+      }
+    }
+  });
+
+  it("sometimes has Life Here reference an actual point of interest by name", () => {
+    const rng = seededRng(19);
+    let sawReference = false;
+    for (let i = 0; i < 40; i++) {
+      const out = generateSettlementLocal({ genre: "Fantasy" }, rng);
+      if (out.content.includes("Residents gather at")) {
+        sawReference = true;
+        break;
+      }
+    }
+    expect(sawReference).toBe(true);
   });
 });

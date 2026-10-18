@@ -78,10 +78,10 @@ describe("normalizeCifPackage — field mapping (T005)", () => {
     );
   });
 
-  it("keeps tags empty (Constitution XII — no public tags concept)", () => {
+  it("keeps labels as the canonical categorization (Constitution XII — no public tags concept)", () => {
     const { pkg } = normalize(validMinimalManifest());
     for (const draft of pkg.entityDrafts) {
-      expect(draft.tags).toEqual([]);
+      expect(draft.labels).toEqual([]);
     }
   });
 

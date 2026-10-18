@@ -1,39 +1,12 @@
 import { error } from "@sveltejs/kit";
 import type { EntryGenerator, PageLoad } from "./$types";
+import { GENERATOR_SLUGS } from "../../../../params/generator_slug";
 
 export const prerender = true;
 
-const validSlugs = new Set([
-  "npc",
-  "settlement",
-  "magic-item",
-  "faction",
-  "quest",
-  "item",
-  "tavern",
-  "social-hub",
-  "kingdom",
-  "nation",
-  "vampire-clan",
-  "nomad-clan",
-  "names",
-  "fantasy-names",
-  "dnd-npc",
-  "pantheon-generator",
-  "god-generator",
-  "ship-generator",
-  "language-generator",
-  "news-sheet-generator",
-  "dungeon-generator",
-  "adventure-generator",
-  "adventure-idea-generator",
-  "plot-twist-generator",
-  "world",
-  "council-vote",
-  "secret-society",
-  "star-system",
-  "alien-race",
-]);
+const validSlugs = new Set<string>(
+  GENERATOR_SLUGS.filter((slug) => slug !== "random"),
+);
 
 export const load: PageLoad = ({ params }) => {
   if (!validSlugs.has(params.slug)) {
@@ -44,8 +17,13 @@ export const load: PageLoad = ({ params }) => {
       | "npc"
       | "settlement"
       | "magic-item"
+      | "minor-magic-item"
+      | "artifact-generator"
       | "faction"
+      | "faction-roster"
       | "quest"
+      | "rumour"
+      | "puzzle"
       | "item"
       | "tavern"
       | "social-hub"
@@ -53,6 +31,7 @@ export const load: PageLoad = ({ params }) => {
       | "nation"
       | "vampire-clan"
       | "nomad-clan"
+      | "dark-fantasy-faction"
       | "names"
       | "fantasy-names"
       | "dnd-npc"
@@ -65,44 +44,29 @@ export const load: PageLoad = ({ params }) => {
       | "adventure-generator"
       | "adventure-idea-generator"
       | "plot-twist-generator"
+      | "bbeg-generator"
+      | "comic-book-event-generator"
+      | "origin-generator"
+      | "villain-scheme-generator"
+      | "one-shot-adventure-generator"
       | "world"
       | "council-vote"
       | "secret-society"
       | "star-system"
-      | "alien-race",
+      | "constellation"
+      | "alien-race"
+      | "creature"
+      | "encounter"
+      | "heist"
+      | "holiday"
+      | "personality"
+      | "tome"
+      | "point-crawl",
   };
 };
 
 export const entries: EntryGenerator = () => {
-  return [
-    { slug: "npc" },
-    { slug: "settlement" },
-    { slug: "magic-item" },
-    { slug: "faction" },
-    { slug: "quest" },
-    { slug: "item" },
-    { slug: "tavern" },
-    { slug: "social-hub" },
-    { slug: "kingdom" },
-    { slug: "nation" },
-    { slug: "vampire-clan" },
-    { slug: "nomad-clan" },
-    { slug: "names" },
-    { slug: "fantasy-names" },
-    { slug: "dnd-npc" },
-    { slug: "pantheon-generator" },
-    { slug: "god-generator" },
-    { slug: "ship-generator" },
-    { slug: "language-generator" },
-    { slug: "news-sheet-generator" },
-    { slug: "dungeon-generator" },
-    { slug: "adventure-generator" },
-    { slug: "adventure-idea-generator" },
-    { slug: "plot-twist-generator" },
-    { slug: "world" },
-    { slug: "council-vote" },
-    { slug: "secret-society" },
-    { slug: "star-system" },
-    { slug: "alien-race" },
-  ];
+  return GENERATOR_SLUGS.filter((slug) => slug !== "random").map((slug) => ({
+    slug,
+  }));
 };

@@ -13,6 +13,7 @@
   import { TableCell } from "@tiptap/extension-table-cell";
   import { TableHeader } from "@tiptap/extension-table-header";
   import { EmbedExtension } from "./editor/EmbedExtension";
+  import { MarkdownTablePasteExtension } from "./editor/MarkdownTablePasteExtension";
   import { protectVaultImageSource } from "./editor/vault-image";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { openCanvasHref } from "$lib/stores/ui/navigation";
@@ -37,6 +38,9 @@
     currentEntityId = "",
     onEntityClick = () => {},
     label = "Lore editor",
+    compact = false,
+    onSubmitShortcut,
+    testId,
   }: {
     content: string;
     editable?: boolean;
@@ -54,6 +58,16 @@
      * aria-input-field-name).
      */
     label?: string;
+    /**
+     * A small inline variant for short notes (the Session Journal): smaller
+     * type, a short editing area, and a toolbar cut down to inline marks and
+     * lists, with no Zen mode. Same editor, same Markdown round-trip.
+     */
+    compact?: boolean;
+    /** Ctrl/Cmd+Enter, e.g. to submit a composer. */
+    onSubmitShortcut?: () => void;
+    /** Set as `data-testid` on the editing surface. */
+    testId?: string;
   } = $props();
 
   // A default parameter only covers `undefined`, so an explicit "" (or
@@ -137,6 +151,7 @@
         TableRow,
         TableHeader,
         TableCell,
+        MarkdownTablePasteExtension,
         EmbedExtension,
         createEntityAutoLinkExtension(autoLinkOptions),
         Link.configure({
@@ -159,9 +174,23 @@
       ],
       editorProps: {
         attributes: {
-          class:
-            "prose max-w-none focus:outline-none min-h-[100px] font-body text-lg leading-relaxed text-theme-text",
+          class: compact
+            ? "prose prose-sm max-w-none focus:outline-none min-h-[3rem] font-body text-xs leading-relaxed text-theme-text prose-p:my-1 prose-p:text-theme-text prose-strong:text-theme-text prose-em:text-theme-text prose-ul:my-1 prose-li:my-0 prose-li:text-theme-text"
+            : "prose max-w-none focus:outline-none min-h-[100px] font-body text-lg leading-relaxed text-theme-text",
           "aria-label": editorLabel,
+          ...(testId ? { "data-testid": testId } : {}),
+        },
+        handleKeyDown: (_view, event) => {
+          if (
+            onSubmitShortcut &&
+            event.key === "Enter" &&
+            (event.metaKey || event.ctrlKey)
+          ) {
+            event.preventDefault();
+            onSubmitShortcut();
+            return true;
+          }
+          return false;
         },
       },
       content: content,
@@ -252,16 +281,23 @@
 <div
   class="markdown-editor-container flex flex-col relative w-full h-full"
   class:zen-mode={isZenMode}
+  class:compact
 >
   <!-- Fixed Toolbar at the top -->
   {#if editable && editor}
-    <EditorToolbar {editor} {isZenMode} onToggleZenMode={toggleZenMode} />
+    <EditorToolbar
+      {editor}
+      {isZenMode}
+      onToggleZenMode={toggleZenMode}
+      {compact}
+    />
   {/if}
 
   <div
     bind:this={element}
     class="tiptap-editor-wrapper flex-1"
     class:readonly={!editable}
+    class:compact
     onclickcapture={(e) => {
       const target = e.target as HTMLElement;
       const anchor = target?.closest<HTMLAnchorElement>("a[href]");
@@ -336,6 +372,12 @@
     overflow-y: auto;
   }
 
+  .tiptap-editor-wrapper.compact {
+    min-height: 3.5rem;
+    max-height: 10rem;
+    padding: 0.375rem 0.5rem;
+  }
+
   .tiptap-editor-wrapper.readonly {
     border-color: transparent;
     background: transparent;
@@ -387,6 +429,14 @@
     );
     color: var(--color-theme-primary);
     border-color: var(--color-theme-border);
+  }
+
+  /* The `prose` class puts ~1.25em top/bottom margin on every <p>, even the
+     empty placeholder paragraph tiptap keeps in a blank cell. Left alone,
+     that margin makes table rows (especially empty ones) balloon in height. */
+  :global(.ProseMirror td p),
+  :global(.ProseMirror th p) {
+    margin: 0;
   }
 
   :global(.ProseMirror h1),

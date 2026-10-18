@@ -1,4 +1,68 @@
 import type { MapPin, Point, StatSheetField, ViewportTransform } from "schema";
+import {
+  pointToHex,
+  hexDistance,
+  type HexGridConfig,
+  type HexOrientation,
+} from "map-engine";
+import { measureDistance } from "$lib/utils/vtt-helpers";
+import type { GridType } from "$lib/stores/map.svelte";
+
+export function hashToColor(input: string): string {
+  let hash = 0;
+  for (let i = 0; i < input.length; i++) {
+    hash = (hash << 5) - hash + input.charCodeAt(i);
+    hash |= 0;
+  }
+  return `hsl(${Math.abs(hash) % 360} 75% 55%)`;
+}
+
+export function mapAssetSignature(
+  activeMap: {
+    id: string;
+    assetPath: string;
+    dimensions: { width: number; height: number };
+  } | null,
+): string | null {
+  return activeMap
+    ? `${activeMap.id}:${activeMap.assetPath}:${activeMap.dimensions.width}x${activeMap.dimensions.height}`
+    : null;
+}
+
+export function resolveRemoteMeasurement(
+  measurement: {
+    start: Point | null;
+    end: Point | null;
+    peerId: string;
+  } | null,
+  grid: {
+    gridType: GridType;
+    gridSize: number;
+    gridDistance: number;
+    gridUnit: string;
+    gridOffsetX: number;
+    gridOffsetY: number;
+  },
+) {
+  if (!measurement?.start || !measurement.end) return null;
+  return {
+    start: measurement.start,
+    end: measurement.end,
+    label: formatMeasurementLabel(measurement.start, measurement.end, grid),
+    color: hashToColor(measurement.peerId),
+    peerId: measurement.peerId,
+  };
+}
+
+export function visionRevealSignature(
+  tokens: readonly { id: string; x: number; y: number }[],
+  ...context: (string | number | boolean | null)[]
+): string {
+  return [
+    tokens.map((token) => `${token.id}:${token.x}:${token.y}`).join("|"),
+    ...context,
+  ].join(":");
+}
 
 export interface PanZoomUpdate {
   pan: Point;
@@ -15,6 +79,52 @@ export interface ZoomViewportInput {
   zoomSpeed?: number;
   minZoom?: number;
   maxZoom?: number;
+}
+
+// Small pre-drawn map tiles (e.g. geomorph line-art) are often authored at a
+// native resolution that makes each grid square only a handful of pixels
+// once "fit grid to map" divides it up. Below this size (larger dimension,
+// in px) the map is displayed at 2x — the source file is untouched, only
+// its on-canvas draw/grid/pin coordinate space is scaled up.
+export const SMALL_MAP_DISPLAY_SCALE_THRESHOLD = 1000;
+export const SMALL_MAP_DISPLAY_SCALE_FACTOR = 2;
+
+// Computes the image-space size a map should be displayed/interacted with
+// at, given its background image's native pixel size. Called once, when a
+// map's dimensions are first recorded (see MapView.svelte), so the result
+// becomes the single source of truth for grid size, pin coordinates, fog
+// mask sizing, and drag bounds clamping from then on.
+export function getMapDisplayDimensions(
+  nativeWidth: number,
+  nativeHeight: number,
+): { width: number; height: number } {
+  const scale =
+    Math.max(nativeWidth, nativeHeight) < SMALL_MAP_DISPLAY_SCALE_THRESHOLD
+      ? SMALL_MAP_DISPLAY_SCALE_FACTOR
+      : 1;
+  return { width: nativeWidth * scale, height: nativeHeight * scale };
+}
+
+// Explains why a token under the cursor refused to be dragged, so pressing
+// a locked piece says so instead of silently doing nothing (or, worse,
+// panning the map out from under the press).
+export function describeMoveBlocked(
+  token: { name?: string; locked?: boolean; layer?: string | null },
+  isLayerLocked: boolean,
+  isHost: boolean,
+): string {
+  const name = token.name?.trim() || "That piece";
+
+  if (token.locked) {
+    return `${name} is locked — unlock it to move it`;
+  }
+  if (isLayerLocked) {
+    return `The ${token.layer ?? "token"} layer is locked — unlock the layer to move ${name}`;
+  }
+  if (!isHost) {
+    return `${name} belongs to someone else — only its owner or the GM can move it`;
+  }
+  return `${name} can't be moved`;
 }
 
 export function findClickedPin(
@@ -216,4 +326,50 @@ export function getPinchDistance(a: Point, b: Point): number {
 
 export function getPinchMidpoint(a: Point, b: Point): Point {
   return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+}
+
+export interface MeasurementFormatOptions {
+  gridType?: GridType;
+  gridSize?: number;
+  gridDistance?: number;
+  gridUnit?: string;
+  gridOffsetX?: number;
+  gridOffsetY?: number;
+}
+
+export function formatMeasurementLabel(
+  start: Point,
+  end: Point,
+  options: MeasurementFormatOptions,
+): string {
+  const {
+    gridType = "square",
+    gridSize = 50,
+    gridDistance = 5,
+    gridUnit = "ft",
+    gridOffsetX = 0,
+    gridOffsetY = 0,
+  } = options;
+  const effectiveGridSize = gridSize || 50;
+
+  if (gridType === "hex-pointy" || gridType === "hex-flat") {
+    const orientation: HexOrientation =
+      gridType === "hex-flat" ? "flat" : "pointy";
+    const config: HexGridConfig = {
+      orientation,
+      size: effectiveGridSize,
+      offsetX: gridOffsetX,
+      offsetY: gridOffsetY,
+    };
+    const hexA = pointToHex(start, config);
+    const hexB = pointToHex(end, config);
+    const dist = hexDistance(hexA, hexB);
+    const totalDist = dist * gridDistance;
+    const hexWord = dist === 1 ? "hex" : "hexes";
+    return `${dist} ${hexWord} (${totalDist} ${gridUnit})`;
+  }
+
+  const pixelDist = measureDistance(start, end);
+  const units = (pixelDist / effectiveGridSize) * gridDistance;
+  return `${Math.round(units)}${gridUnit}`;
 }

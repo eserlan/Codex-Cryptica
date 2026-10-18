@@ -15,6 +15,7 @@ export const secretSocietyConfig = {
     "Sci-Fi / Space Opera",
     "Post-Apocalyptic",
     "Modern Conspiracy",
+    "Superhero / Comic Book",
   ],
   tones: ["Sinister", "Tragic", "Mythic", "Grotesque", "Grounded", "Silly"],
   scales: [
@@ -50,6 +51,23 @@ export const secretSocietyConfig = {
     "True, but not as they think",
   ],
 } as const;
+
+// Genre-specific steering injected into the prompt for themes that otherwise
+// read as generic modern conspiracies with a label swapped in. Superhero /
+// Comic Book secret societies have no dedicated *ByTheme tables (this
+// generator is LLM-driven), so the fix is a concrete steering block rather
+// than a structured table — see #3105. Deliberately avoids naming any
+// existing comic-book organizations; every example here is original.
+const SUPERHERO_SECRET_SOCIETY_HINT =
+  "This is a Superhero / Comic Book setting. The society must be clearly, specifically superhero-genre — not a generic modern conspiracy with a superhero label attached. Ground it in one of these archetypes (or a genuine hybrid), and make that archetype drive its belief, ritual, and conflict: " +
+  "a villain organization built around a shared scheme, ideology, or signature power source and commanded by a mastermind; " +
+  "a superhuman supremacist group of empowered zealots who believe powers make them destined to rule over the unpowered; " +
+  "a government black-ops programme that studies, weaponizes, or hunts superhumans under deniable, classified authority; " +
+  "a corporate conspiracy monetizing or concealing the true origin of powers, power-suppression technology, or superhuman labor; " +
+  "an occult cabal that treats superpowers as a manifestation of hidden mystic or cosmic forces to be harnessed or unleashed; " +
+  "alien or extradimensional infiltrators posing as ordinary humans while they gather intelligence or prepare an incursion; " +
+  "or an anti-super movement of ordinary people organized by fear or resentment of the empowered, pushing registration, suppression, or vigilante violence against them. " +
+  "Do not invent named organizations, characters, or artifacts that imitate existing comic-book IP; every proper noun must be original.";
 
 export interface SecretSocietyGeneratorOptions {
   theme?: string;
@@ -92,11 +110,15 @@ export function buildSecretSocietyPrompt(
 ) {
   const r = resolve(options, rng);
   const contextBlock = sessionContext ? `\n${sessionContext}` : "";
+  const genreHint =
+    r.theme === "Superhero / Comic Book"
+      ? ` ${SUPERHERO_SECRET_SOCIETY_HINT}`
+      : "";
   return {
     resolved: r,
     systemInstruction:
       "You create campaign-ready secret societies for tabletop RPGs. Faithfully respect the selected theme's genre conventions, era, technology, social institutions, and vocabulary; do not introduce modern terminology, institutions, or technology unless the selected theme explicitly supports them. Every society must have a distinct central conceit. Treat existing campaign entities as optional relationship context, not creative templates: do not reuse their central domain, motifs, names, leader archetypes, or public-face framing unless the user's supplied context explicitly asks for a linked or rival faction. Return only valid JSON.",
-    userMessage: `Create a Secret Society Generator result. Theme: ${r.theme}; tone: ${r.tone}; scale: ${r.scale}; public face: ${r.publicFace}; danger: ${r.dangerLevel}; relationship to truth: ${r.truthRelationship}.${r.campaignContext ? ` Campaign context: ${r.campaignContext}.` : ""}${contextBlock}\nReturn {title,summary,content,lore,labels}. Both content and lore are required, substantive markdown fields: never return a title-and-summary-only result. Content must cover belief, ritual, public face, secret truth, conflict, and adventure hooks. Lore must include leader, taboo, recruitment, hierarchy, sacred object, meeting site, symbols, and follow-up suggestions. Keep every detail internally consistent.`,
+    userMessage: `Create a Secret Society Generator result. Theme: ${r.theme}; tone: ${r.tone}; scale: ${r.scale}; public face: ${r.publicFace}; danger: ${r.dangerLevel}; relationship to truth: ${r.truthRelationship}.${r.campaignContext ? ` Campaign context: ${r.campaignContext}.` : ""}${genreHint}${contextBlock}\nReturn {title,summary,content,lore,labels}. Both content and lore are required, substantive markdown fields: never return a title-and-summary-only result. Content must cover belief, ritual, public face, secret truth, conflict, and adventure hooks. Lore must include leader, taboo, recruitment, hierarchy, sacred object, meeting site, symbols, and follow-up suggestions. Keep every detail internally consistent.`,
   };
 }
 export function parseSecretSocietyResponse(
@@ -158,7 +180,7 @@ export function generateSecretSocietyLocal(
     title: r.title,
     summary: `A ${r.tone.toLowerCase()} ${r.scale.toLowerCase()} society hidden behind a ${r.publicFace.toLowerCase()}.`,
     content: `### What they believe\n${r.title} teaches that a buried truth can remake the world. Their doctrine is ${r.truthRelationship.toLowerCase()}, and that uncertainty drives every member.\n\n### What they do\nTheir signature ritual is ${ritual}. They recruit through quiet favours, then test loyalty with a vow no outsider hears.\n\n### Public face\nThey present themselves as a ${r.publicFace.toLowerCase()}, useful enough that neighbours defend them.\n\n### Secret truth\nWhat they revere is ${r.truthRelationship.toLowerCase()}; the inner circle knows only enough to fear it.\n\n### Current conflict\nTheir ${r.dangerLevel.toLowerCase()} agenda is colliding with a member who has learned too much.\n\n### Adventure hooks\nFind the missing initiate; expose the false miracle; bargain with the rival cell; decide whether the society's secret should survive.`,
-    lore: `### At the Table\n- **Leader**: ${leader}, a calm founder with a private fear of the truth.\n- **Taboo**: Never speak the founding name in daylight.\n- **Recruitment**: A favour, a test, then a shared secret.\n- **Hierarchy**: Listeners, keepers, and an unseen inner circle.\n- **Sacred Object**: ${object}.\n- **Meeting Site**: A back room beneath their public institution.\n- **Signs**: A repeated knot-mark and an impossible coincidence.\n\n### Follow-Up Suggestions\nGenerate their leader, sacred site, rival sect, initiation ritual, rumours, or an adventure hook.`,
+    lore: `### At a Glance\n- **Leader**: ${leader}, a calm founder with a private fear of the truth.\n- **Taboo**: Never speak the founding name in daylight.\n- **Recruitment**: A favour, a test, then a shared secret.\n- **Hierarchy**: Listeners, keepers, and an unseen inner circle.\n- **Sacred Object**: ${object}.\n- **Meeting Site**: A back room beneath their public institution.\n- **Signs**: A repeated knot-mark and an impossible coincidence.\n\n### Follow-Up Suggestions\nGenerate their leader, sacred site, rival sect, initiation ritual, rumours, or an adventure hook.`,
     labels: ["secret-society", "faction-generator", "imported-draft"],
     status: "active",
   };

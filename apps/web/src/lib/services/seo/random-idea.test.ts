@@ -8,6 +8,7 @@ import {
 } from "./random-idea";
 import type { DefaultGeneratorEngine } from "./generator-engine";
 import { factionConfig } from "generator-engine";
+import { npcConfig } from "generator-engine";
 import { npcThemeConfig } from "generator-engine";
 import { socialHubConfig } from "generator-engine";
 import { nationConfig } from "generator-engine";
@@ -15,15 +16,26 @@ import { nationConfig } from "generator-engine";
 describe("randomIdeaCategories", () => {
   it("contains exactly the standalone generator pool", () => {
     expect(randomIdeaCategories.map((c) => c.key).sort()).toEqual([
+      "artifact",
+      "comic-book-event",
       "council-vote",
+      "creature",
       "deity",
+      "encounter",
       "faction",
+      "heist",
+      "holiday",
+      "minor-magic-item",
       "nation",
       "npc",
+      "origin",
       "pantheon",
+      "point-crawl",
       "quest",
       "secret-society",
       "social-hub",
+      "tome",
+      "villain",
     ]);
   });
 
@@ -40,10 +52,25 @@ describe("randomIdeaCategories", () => {
       generateNation: vi.fn().mockResolvedValue("nation-result"),
       generateNPC: vi.fn().mockResolvedValue("npc-result"),
       generateQuestHook: vi.fn().mockResolvedValue("quest-result"),
+      generateVillain: vi.fn().mockResolvedValue("villain-result"),
+      generateComicBookEvent: vi
+        .fn()
+        .mockResolvedValue("comic-book-event-result"),
+      generateMinorMagicItem: vi
+        .fn()
+        .mockResolvedValue("minor-magic-item-result"),
+      generateArtifact: vi.fn().mockResolvedValue("artifact-result"),
       generateCouncilVote: vi.fn().mockResolvedValue("council-vote-result"),
+      generateHeist: vi.fn().mockResolvedValue("heist-result"),
       generateSecretSociety: vi.fn().mockResolvedValue("secret-society-result"),
       generateSocialHub: vi.fn().mockResolvedValue("social-hub-result"),
       generatePantheon: vi.fn().mockResolvedValue("pantheon-result"),
+      generateCreature: vi.fn().mockResolvedValue("creature-result"),
+      generateEncounter: vi.fn().mockResolvedValue("encounter-result"),
+      generateOrigin: vi.fn().mockResolvedValue("origin-result"),
+      generateHoliday: vi.fn().mockResolvedValue("holiday-result"),
+      generateTome: vi.fn().mockResolvedValue("tome-result"),
+      generatePointCrawl: vi.fn().mockResolvedValue("point-crawl-result"),
     } as unknown as DefaultGeneratorEngine;
     const theme = "Cyberpunk / Corporate";
 
@@ -72,8 +99,27 @@ describe("randomIdeaCategories", () => {
       useAI: true,
       genre: "Cyberpunk",
     });
+    expect(engine.generateVillain).toHaveBeenCalledWith({
+      useAI: true,
+      genre: theme,
+    });
+    expect(engine.generateMinorMagicItem).toHaveBeenCalledWith({
+      useAI: true,
+      genre: theme,
+    });
+    expect(engine.generateArtifact).toHaveBeenCalledWith({
+      useAI: true,
+      genre: theme,
+    });
     expect(engine.generateCouncilVote).toHaveBeenCalledWith({
       useAI: true,
+    });
+    expect(engine.generateComicBookEvent).toHaveBeenCalledWith({
+      useAI: true,
+    });
+    expect(engine.generateHeist).toHaveBeenCalledWith({
+      useAI: true,
+      genre: theme,
     });
     expect(engine.generateSecretSociety).toHaveBeenCalledWith({
       useAI: true,
@@ -93,6 +139,29 @@ describe("randomIdeaCategories", () => {
       genre: theme,
       mode: "single",
     });
+    expect(engine.generateCreature).toHaveBeenCalledWith({
+      useAI: true,
+      genre: theme,
+    });
+    expect(engine.generateEncounter).toHaveBeenCalledWith({
+      useAI: true,
+      genre: theme,
+    });
+    expect(engine.generateOrigin).toHaveBeenCalledWith({
+      useAI: true,
+    });
+    expect(engine.generateHoliday).toHaveBeenCalledWith({
+      useAI: true,
+      genre: theme,
+    });
+    expect(engine.generateTome).toHaveBeenCalledWith({
+      useAI: true,
+      theme,
+    });
+    expect(engine.generatePointCrawl).toHaveBeenCalledWith({
+      useAI: true,
+      genre: theme,
+    });
   });
 
   it("rolls NPC inputs from the given theme's tables", async () => {
@@ -111,6 +180,21 @@ describe("randomIdeaCategories", () => {
     expect(npcThemeConfig.moralities[theme].map((m) => m.id)).toContain(
       options.alignment,
     );
+  });
+
+  it("keeps the NPC roll usable for canonical themes without NPC-specific pools", async () => {
+    const engine = {
+      generateNPC: vi.fn().mockResolvedValue("npc-result"),
+    } as unknown as DefaultGeneratorEngine;
+    const npc = randomIdeaCategories.find((c) => c.key === "npc")!;
+
+    await npc.generate(engine, false, "Superhero / Comic Book");
+
+    const options = (engine.generateNPC as ReturnType<typeof vi.fn>).mock
+      .calls[0][0];
+    expect(npcConfig.races).toContain(options.ancestry);
+    expect(npcConfig.roles).toContain(options.role);
+    expect(npcConfig.alignments).toContain(options.alignment);
   });
 
   it("forwards useAI false to the engine", async () => {

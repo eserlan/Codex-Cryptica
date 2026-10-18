@@ -44,7 +44,7 @@
       <button
         type="button"
         onclick={clear}
-        class="text-[10px] text-red-500 hover:text-red-400 uppercase font-mono"
+        class="text-micro text-red-500 hover:text-red-400 uppercase font-mono"
       >
         Clear
       </button>
@@ -83,9 +83,9 @@
     <button
       type="button"
       onclick={() => (showLabelInput = !showLabelInput)}
-      class="text-[10px] text-theme-muted uppercase font-bold font-header text-left hover:text-theme-primary transition-colors flex items-center gap-1"
+      class="text-micro text-theme-muted uppercase font-bold font-header text-left hover:text-theme-primary transition-colors flex items-center gap-1"
     >
-      <span class="text-[8px]">{showLabelInput ? "▼" : "▶"}</span> Display Label (Optional)
+      <span class="text-nano">{showLabelInput ? "▼" : "▶"}</span> Display Label (Optional)
     </button>
     {#if showLabelInput}
       <div transition:slide={{ duration: 200 }}>

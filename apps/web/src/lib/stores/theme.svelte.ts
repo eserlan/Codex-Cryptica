@@ -17,6 +17,7 @@ import {
   LANCER_LIGHT,
   WESTERN_DARK,
   STEAMPUNK_DARK,
+  SUPERHERO_DARK,
 } from "schema";
 import type {
   StylingTemplate,
@@ -28,12 +29,8 @@ import type {
 import { browser } from "$app/environment";
 import { getDB } from "../utils/idb";
 import { hexToRgb } from "../utils/color";
-import {
-  getOpfsRoot,
-  getVaultDir,
-  readFileAsText,
-  writeOpfsFile,
-} from "../utils/opfs";
+import { getOpfsRoot, getVaultDir, readFileAsText } from "../utils/opfs";
+import { updateVaultConfig } from "../utils/vault-config";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
 import { guestVault } from "./guest-vault.svelte";
@@ -89,6 +86,8 @@ export class ThemeStore {
           return WESTERN_DARK;
         case "steampunk":
           return STEAMPUNK_DARK;
+        case "superhero":
+          return SUPERHERO_DARK;
         default:
           return (THEMES as any)[id] || DEFAULT_THEME;
       }
@@ -124,6 +123,8 @@ export class ThemeStore {
           return THEMES.western;
         case "steampunk":
           return THEMES.steampunk;
+        case "superhero":
+          return THEMES.superhero;
         default:
           return DEFAULT_THEME;
       }
@@ -208,24 +209,9 @@ export class ThemeStore {
       },
       async saveToDisk(vaultId, themeId) {
         try {
-          const root = await getOpfsRoot();
-          const vaultDir = await getVaultDir(root, vaultId);
-
-          let config: any = {};
-          try {
-            const json = await readFileAsText(vaultDir, CONFIG_PATH);
-            config = JSON.parse(json);
-          } catch {
-            // New config
-          }
-
-          config.theme = themeId;
-          await writeOpfsFile(
-            CONFIG_PATH,
-            JSON.stringify(config, null, 2),
-            vaultDir,
-            vaultId,
-          );
+          await updateVaultConfig(vaultId, (config) => {
+            config.theme = themeId;
+          });
         } catch (err) {
           console.warn("[ThemeStore] Failed to save theme to disk", err);
         }
@@ -490,8 +476,31 @@ export class ThemeStore {
     root.style.setProperty("--theme-accent-rgb", hexToRgb(tokens.accent));
 
     root.style.setProperty("--color-text-primary", tokens.text);
-    root.style.setProperty("--color-text-muted", tokens.secondary);
-    root.style.setProperty("--color-text-dim", tokens.secondary);
+    root.style.setProperty(
+      "--color-text-muted",
+      tokens.metaText ?? tokens.secondary,
+    );
+    root.style.setProperty(
+      "--color-text-dim",
+      tokens.metaText ?? tokens.secondary,
+    );
+
+    // Semantic tokens for cross-surface contrast compliance
+    root.style.setProperty("--text-primary", tokens.text);
+    root.style.setProperty(
+      "--text-secondary",
+      tokens.sectionTitle ?? tokens.secondary,
+    );
+    root.style.setProperty("--text-muted", tokens.metaText ?? tokens.secondary);
+    root.style.setProperty("--link", tokens.link ?? tokens.primary);
+    root.style.setProperty(
+      "--icon-interactive",
+      tokens.iconActive ?? tokens.primary,
+    );
+    root.style.setProperty(
+      "--border-interactive",
+      tokens.selectedBorder ?? tokens.primary,
+    );
 
     root.style.setProperty("--color-theme-accent", tokens.accent);
     root.style.setProperty("--theme-title-ink", tokens.titleInk ?? tokens.text);
@@ -566,6 +575,10 @@ export class ThemeStore {
 
     root.style.setProperty("--font-header-val", tokens.fontHeader);
     root.style.setProperty("--font-body-val", tokens.fontBody);
+    root.style.setProperty(
+      "--font-display-val",
+      tokens.fontDisplay ?? tokens.fontHeader,
+    );
 
     root.style.setProperty(
       "--theme-border-width",

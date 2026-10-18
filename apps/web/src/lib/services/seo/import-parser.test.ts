@@ -1,6 +1,10 @@
 import { describe, it, expect } from "vitest";
+import { strToU8, zipSync } from "fflate";
+import { GuestExporter } from "@codex/vault-engine";
+import type { Entity } from "schema";
 import {
   parseObsidianFiles,
+  parseChronicaFiles,
   parseJsonExport,
   traverseEntry,
 } from "./import-parser";
@@ -100,6 +104,170 @@ describe("import-parser", () => {
     expect(parsed).toHaveLength(1);
     expect(parsed[0].title).toBe("Hero");
     expect(parsed[0].type).toBe("character");
+  });
+
+  it("routes a raw Kanka JSON export ZIP through the shared adapter", async () => {
+    const bytes = zipSync({
+      "info.md": strToU8("kanka_version: 3.10"),
+      "campaign.json": strToU8(JSON.stringify({ name: "Test Campaign" })),
+      "characters/hero_1.json": strToU8(
+        JSON.stringify({
+          id: 1,
+          name: "Hero",
+          entity: {
+            id: 101,
+            entry: "<p>Campaign prose</p>",
+            image_path: "characters/hero.png",
+            relationships: [{ target_id: 202, relation: "Protects" }],
+          },
+        }),
+      ),
+      "locations/haven_2.json": strToU8(
+        JSON.stringify({
+          id: 2,
+          name: "Haven",
+          entity: { id: 202, entry: "A safe place." },
+        }),
+      ),
+      "characters/hero.png": new Uint8Array([137, 80, 78, 71]),
+    });
+    const file = new File([bytes], "campaign.zip", {
+      type: "application/zip",
+    });
+
+    const parsed = await parseJsonExport(file, "kanka-json");
+
+    expect(parsed).toHaveLength(2);
+    expect(parsed[0]).toMatchObject({
+      type: "character",
+      title: "Hero",
+      content: "Campaign prose",
+      labels: [],
+      discoverySource: "kanka:character:101",
+      references: ["Haven"],
+      relationships: [
+        { title: "Haven", type: "related_to", label: "Protects" },
+      ],
+      assets: [
+        {
+          originalName: "hero.png",
+          mimeType: "image/png",
+          dataUrl: "data:image/png;base64,iVBORw==",
+        },
+      ],
+      metadata: {
+        kankaType: "character",
+        kankaEntityId: 101,
+        kankaModelId: 1,
+      },
+    });
+  });
+});
+
+describe("parseChronicaFiles", () => {
+  const jsonFile = (name: string, value: unknown) =>
+    new File([JSON.stringify(value)], name, { type: "application/json" });
+
+  const charactersExport = {
+    export_created_at: "2026-06-27T20:00:00Z",
+    campaign: {
+      id: "grecia-1",
+      name: "Grecia",
+      characters: [
+        {
+          id: "char-1",
+          name: "Ariadne",
+          description: "<p>Scout of the party.</p>",
+          gm_secrets: "<p>Secret heir.</p>",
+          place_id: "place-1",
+        },
+      ],
+    },
+  };
+  const placesExport = {
+    export_created_at: "2026-06-27T20:00:01Z",
+    campaign: {
+      id: "grecia-1",
+      name: "Grecia",
+      places: [
+        { id: "place-1", name: "Knossos", description: "<p>Labyrinth.</p>" },
+      ],
+    },
+  };
+
+  it("merges one campaign's section files into linked entities", async () => {
+    const parsed = await parseChronicaFiles([
+      jsonFile("characters.json", charactersExport),
+      jsonFile("places.json", placesExport),
+    ]);
+
+    const ariadne = parsed.find((entity) => entity.title === "Ariadne");
+    const knossos = parsed.find((entity) => entity.title === "Knossos");
+    expect(ariadne?.type).toBe("character");
+    expect(knossos?.type).toBe("location");
+    expect(ariadne?.relationships).toEqual([
+      { title: "Knossos", type: "related_to" },
+    ]);
+  });
+
+  it("keeps GM secrets in lore rather than the visible content", async () => {
+    const [ariadne] = await parseChronicaFiles([
+      jsonFile("characters.json", charactersExport),
+    ]);
+
+    expect(ariadne.lore).toContain("Secret heir.");
+    expect(ariadne.content).not.toContain("Secret heir.");
+  });
+
+  it("omits GM secrets from metadata and the guest projection", async () => {
+    const [ariadne] = await parseChronicaFiles([
+      jsonFile("characters.json", charactersExport),
+    ]);
+
+    expect(ariadne.metadata).not.toHaveProperty("gm_secrets");
+    const bundle = GuestExporter.export({
+      entities: [
+        {
+          id: "ariadne",
+          type: "character",
+          title: ariadne.title,
+          status: "active",
+          content: ariadne.content,
+          metadata: ariadne.metadata,
+        } as Entity,
+      ],
+      defaultVisibility: "visible",
+      publishId: "test",
+      vaultTitle: "Test",
+      publisherVersion: "1.0.0",
+    });
+
+    expect(JSON.stringify(bundle.entities)).not.toContain("Secret heir.");
+    expect(bundle.entities[0]).not.toHaveProperty("metadata.gm_secrets");
+  });
+
+  it("rejects files from two different campaigns", async () => {
+    await expect(
+      parseChronicaFiles([
+        jsonFile("characters.json", charactersExport),
+        jsonFile("other.json", {
+          ...placesExport,
+          campaign: { ...placesExport.campaign, id: "other-campaign" },
+        }),
+      ]),
+    ).rejects.toThrow(/multiple campaigns/i);
+  });
+
+  it("rejects a JSON file that is not a Chronica export", async () => {
+    await expect(
+      parseChronicaFiles([jsonFile("notes.json", { pages: [] })]),
+    ).rejects.toThrow(/not a supported Chronica export/i);
+  });
+
+  it("rejects a selection with no JSON files", async () => {
+    await expect(
+      parseChronicaFiles([new File(["# hi"], "notes.md")]),
+    ).rejects.toThrow(/JSON files from your Chronica export/i);
   });
 });
 

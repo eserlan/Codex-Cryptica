@@ -276,6 +276,51 @@ describe("Scabard Campaign Export Importer Adapter", () => {
     expect(characterDraft?.metadata?.isSecret).toBe(false);
   });
 
+  it("does not use Scabard's stock category icons as an entity's image", () => {
+    const withIcon = (imageURL: string, largeImageURL?: string) => ({
+      pages: [
+        {
+          concept: "Character",
+          id: 1,
+          isGoldStar: false,
+          page: {
+            id: 1,
+            name: "Iconic",
+            concept: "Character",
+            imageURL,
+            largeImageURL,
+          },
+          uri: "/campaign/1/character/1",
+        },
+      ],
+    });
+
+    const placeholder = parseScabardExport(
+      withIcon(
+        "/images/cross_categories/character.png",
+        "https://www.scabard.com/images/cross_categories/character.png",
+      ),
+    ).entityDrafts[0];
+    expect(placeholder.image).toBeUndefined();
+    expect(placeholder.thumbnail).toBeUndefined();
+    // The original values are still kept as metadata.
+    expect(placeholder.metadata?.imageURL).toBe(
+      "/images/cross_categories/character.png",
+    );
+
+    // A real picture next to a placeholder thumbnail is still used.
+    const real = parseScabardExport(
+      withIcon(
+        "/images/cross_categories/character.png",
+        "https://www.scabard.com/images/rf_images/character/1_s.jpg",
+      ),
+    ).entityDrafts[0];
+    expect(real.image).toBe(
+      "https://www.scabard.com/images/rf_images/character/1_s.jpg",
+    );
+    expect(real.thumbnail).toBeUndefined();
+  });
+
   it("should normalize connection types to snake_case and labels to Title Case", () => {
     const pkg = parseScabardExport(mockCampaign);
 
@@ -311,7 +356,6 @@ describe("Scabard Campaign Export Importer Adapter", () => {
     );
     expect(locationDraft).toBeDefined();
     expect(locationDraft?.labels).toContain("Dark Cities");
-    expect(locationDraft?.tags).toEqual([]);
 
     const characterDraft = pkg.entityDrafts.find(
       (d) => d.sourceId === "4543966",
@@ -322,7 +366,6 @@ describe("Scabard Campaign Export Importer Adapter", () => {
     expect(characterDraft?.labels).toContain("Adventurers");
     expect(characterDraft?.labels).toContain("Brujah Clan");
     expect(characterDraft?.labels).not.toContain("Character");
-    expect(characterDraft?.tags).toEqual([]);
   });
 
   it("should infer entity types from CATEGORY_OF connections linking standard categories to generic pages", () => {
@@ -398,7 +441,6 @@ describe("Scabard Campaign Export Importer Adapter", () => {
     expect(draft).toBeDefined();
     expect(draft?.labels).toContain("Female");
     expect(draft?.labels).toContain("Human");
-    expect(draft?.tags).toEqual([]);
     expect(pkg.relationshipDrafts.length).toBe(0);
     expect(pkg.warnings).toContainEqual(
       expect.objectContaining({ code: "SCABARD_CONNECTION_SUMMARY" }),

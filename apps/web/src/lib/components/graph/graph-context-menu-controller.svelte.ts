@@ -7,7 +7,9 @@ import type { modalUIStore as modalUIStoreType } from "$lib/stores/ui/modal-ui.s
 import type { connectionModeStore as connectionModeStoreType } from "$lib/stores/ui/connection-mode.svelte";
 import type { notificationStore as notificationStoreType } from "$lib/stores/ui/notification.svelte";
 import type { Core, EventObject, NodeSingular } from "cytoscape";
+import type { ImageFocus } from "schema";
 import { shelf } from "$lib/features/shelf";
+import { systemClock, type Clock } from "$lib/utils/runtime-deps";
 
 export interface GraphContextMenuDependencies {
   graph: typeof graphStoreType;
@@ -18,6 +20,7 @@ export interface GraphContextMenuDependencies {
   modalUIStore: typeof modalUIStoreType;
   connectionModeStore: typeof connectionModeStoreType;
   notificationStore: typeof notificationStoreType;
+  clock?: Clock;
 }
 
 export class GraphContextMenuController {
@@ -48,9 +51,12 @@ export class GraphContextMenuController {
   categoryPickerAnchor = $state<HTMLButtonElement>();
   imagePickerAnchor = $state<HTMLButtonElement>();
 
+  private clock: Clock;
+
   constructor(getCy: () => Core, deps: GraphContextMenuDependencies) {
     this.getCy = getCy;
     this.deps = deps;
+    this.clock = deps.clock ?? systemClock;
   }
 
   hasImage = $derived.by(() => {
@@ -60,6 +66,11 @@ export class GraphContextMenuController {
 
   imageActionLabel = $derived.by(() => {
     return this.hasImage ? "Regen Image" : "Gen Image";
+  });
+
+  currentImageFocus = $derived.by((): ImageFocus | undefined => {
+    if (this.selectedNodes.length !== 1) return undefined;
+    return this.deps.vault.entities[this.selectedNodes[0]]?.imageFocus;
   });
 
   isImportant = $derived.by(() => {
@@ -75,7 +86,30 @@ export class GraphContextMenuController {
   });
 
   setupEvents = () => {
+    const recordCxtTap = () => {
+      this.getCy().scratch?.("_lastCxtTap", this.clock.now());
+    };
+
+    const recordContextGesture = (evt: EventObject) => {
+      recordCxtTap();
+      if (evt.type === "taphold") {
+        this.getCy().scratch?.("_tapHoldActive", true);
+      }
+    };
+
+    const recordTapHoldRelease = () => {
+      if (this.getCy().scratch?.("_tapHoldActive") !== true) return;
+
+      this.getCy().scratch?.("_tapHoldActive", false);
+      recordCxtTap();
+    };
+
+    const resetTapHold = () => {
+      this.getCy().scratch?.("_tapHoldActive", false);
+    };
+
     const openHandler = (evt: EventObject) => {
+      recordContextGesture(evt);
       const node = evt.target;
       this.targetId = node.id();
       this.targetEdge = null;
@@ -92,6 +126,7 @@ export class GraphContextMenuController {
     };
 
     const edgeContextMenuHandler = (evt: EventObject) => {
+      recordContextGesture(evt);
       const edge = evt.target;
       const data = edge.data();
       this.targetId = null;
@@ -107,6 +142,7 @@ export class GraphContextMenuController {
 
     const backgroundContextMenuHandler = (evt: EventObject) => {
       if (evt.target === this.getCy()) {
+        recordContextGesture(evt);
         this.targetId = null;
         this.selectedNodes = [];
         this.targetEdge = null;
@@ -116,6 +152,12 @@ export class GraphContextMenuController {
     };
 
     const closeHandler = () => {
+      const lastCxtTap =
+        (this.getCy().scratch?.("_lastCxtTap") as number | undefined) ?? 0;
+      if (this.clock.now() - lastCxtTap < 400) {
+        return;
+      }
+
       this.clearPickerTimeout();
       this.contextMenuOpen = false;
       this.canvasPickerOpen = false;
@@ -124,16 +166,20 @@ export class GraphContextMenuController {
       this.targetEdge = null;
     };
 
-    this.getCy().on("cxttap", "node", openHandler);
-    this.getCy().on("cxttap", "edge", edgeContextMenuHandler);
-    this.getCy().on("cxttap", backgroundContextMenuHandler);
+    this.getCy().on("cxttap taphold", "node", openHandler);
+    this.getCy().on("cxttap taphold", "edge", edgeContextMenuHandler);
+    this.getCy().on("cxttap taphold", backgroundContextMenuHandler);
+    this.getCy().on("tapstart", resetTapHold);
+    this.getCy().on("tapend", recordTapHoldRelease);
     this.getCy().on("tap", closeHandler);
 
     return () => {
       this.clearPickerTimeout();
-      this.getCy().off("cxttap", "node", openHandler);
-      this.getCy().off("cxttap", "edge", edgeContextMenuHandler);
-      this.getCy().off("cxttap", backgroundContextMenuHandler);
+      this.getCy().off("cxttap taphold", "node", openHandler);
+      this.getCy().off("cxttap taphold", "edge", edgeContextMenuHandler);
+      this.getCy().off("cxttap taphold", backgroundContextMenuHandler);
+      this.getCy().off("tapstart", resetTapHold);
+      this.getCy().off("tapend", recordTapHoldRelease);
       this.getCy().off("tap", closeHandler);
     };
   };
@@ -149,13 +195,31 @@ export class GraphContextMenuController {
     }
   };
 
-  handleDeleteEdge = async () => {
-    if (!this.targetEdge || this.deps.vault.isGuest) return;
-    const { source, target, type } = this.targetEdge;
+  /** Closes the edge menu and hands back the edge it was opened on. */
+  private takeEditableEdge() {
+    const edge = this.targetEdge;
+    if (!edge || this.deps.vault.isGuest) return null;
     this.clearPickerTimeout();
     this.contextMenuOpen = false;
     this.targetEdge = null;
-    await this.deps.vault.removeConnection(source, target, type);
+    return edge;
+  }
+
+  handleHideEdge = async () => {
+    const edge = this.takeEditableEdge();
+    if (!edge) return;
+    await this.deps.vault.setConnectionHidden(
+      edge.source,
+      edge.target,
+      edge.type,
+      true,
+    );
+  };
+
+  handleDeleteEdge = async () => {
+    const edge = this.takeEditableEdge();
+    if (!edge) return;
+    await this.deps.vault.removeConnection(edge.source, edge.target, edge.type);
   };
 
   clearPickerTimeout = () => {
@@ -393,6 +457,35 @@ export class GraphContextMenuController {
       console.error("Failed to update category", err);
       this.deps.notificationStore.notify(
         `Failed to update category: ${err.message}`,
+        "error",
+      );
+    }
+  };
+
+  handleSetImageFocus = async (focus: ImageFocus) => {
+    const nodesToUpdate = $state.snapshot(this.selectedNodes);
+    if (nodesToUpdate.length !== 1) return;
+    this.imagePickerOpen = false;
+    this.contextMenuOpen = false;
+
+    try {
+      await this.deps.vault.updateEntity(nodesToUpdate[0], {
+        imageFocus: focus,
+      });
+      // The crop is a plain-function style mapper (`background-position-*`
+      // reading `data("imageFocus")`), not cytoscape's own `data(field)`
+      // mapper syntax — cytoscape only tracks dependencies for the latter, so
+      // a plain data write alone doesn't invalidate/redraw it. Patch the live
+      // node directly rather than waiting on the reactive vault->elements
+      // sync (whose timing isn't guaranteed relative to this handler), then
+      // force the style recompute the crop needs to actually repaint.
+      const node = this.getCy().getElementById(nodesToUpdate[0]);
+      if (node.length) node.data("imageFocus", focus);
+      this.getCy().style().update();
+    } catch (err: any) {
+      console.error("Failed to update image focus", err);
+      this.deps.notificationStore.notify(
+        `Failed to update image focus: ${err.message}`,
         "error",
       );
     }

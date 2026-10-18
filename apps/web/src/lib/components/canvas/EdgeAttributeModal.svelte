@@ -55,7 +55,9 @@
           id="edge-modal-title"
           class="font-header font-bold text-base text-theme-text flex items-center gap-2"
         >
-          <span class="icon-[lucide--git-commit] w-4 h-4 text-theme-primary"
+          <span
+            aria-hidden="true"
+            class="icon-[lucide--git-commit] w-4 h-4 text-theme-primary"
           ></span>
           Edit Passage Attributes
         </h3>
@@ -63,8 +65,9 @@
           type="button"
           onclick={onClose}
           class="text-theme-muted hover:text-theme-text transition-colors"
+          aria-label="Close modal"
         >
-          <span class="icon-[lucide--x] w-4 h-4"></span>
+          <span class="icon-[lucide--x] w-4 h-4" aria-hidden="true"></span>
         </button>
       </div>
 

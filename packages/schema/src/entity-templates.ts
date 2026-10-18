@@ -7,23 +7,23 @@ export const GENERIC_TEMPLATES: Record<string, string> = {
   character: `## Summary
 A brief overview of who this character is and their place in the world.
 
-## Appearance
-Physical features, style of dress, distinctive markers, or mannerisms.
+## First Impression & Mannerisms
+Physical appearance, clothing, distinctive vocal cadence, and a memorable physical habit or behavioral quirk.
 
-## Personality & Voice
-Key behavioral traits, temperaments, core beliefs, speech rhythm, word choice, and in-character behavior rules.
+## Personality & Stances
+- **Core Drive**: What primary motive drives their daily actions.
+- **Opinions & Biases**: 2–3 sharp, biased stances on local factions, institutions, or rival groups.
+- **The Line**: The moral taboo or boundary they will never cross.
+
+## Leverage & Pressure Points
+- **What Buys Them**: The favor, coin, or guarantee needed to secure their cooperation.
+- **What Breaks Them**: Their deepest fear, vulnerability, or pressure point.
 
 ## Knowledge & Expertise
 What domains, skills, and subjects does this character know well? What are the limits of their knowledge — cultural blind spots, restricted access, or topics they are simply ignorant of?
 
-## Goals
-What do they actively strive to achieve or protect?
-
-## Methods
-How do they go about accomplishing their goals? What resources or skills do they rely on?
-
-## Relationships
-Key links and attitudes toward other characters, factions, or places.
+## Relationships & Allegiances
+Key links, debts owed, and attitudes toward other characters, factions, or places.
 
 ## Secrets
 Hidden motives, buried pasts, or vulnerabilities known only to a few.
@@ -75,6 +75,30 @@ Which organizations or gangs hold sway in this area?
 
 ## Lore & History
 How did this place come to be, and what major events happened here?`,
+
+  ship: `## Ship Profile
+The vessel's name, class, role, condition, and the impression it makes on approach.
+
+## Command, Crew & Passengers
+Who commands the ship, who keeps it running, and the loyalties or tensions aboard.
+
+## Key Zones
+Important decks, cargo spaces, systems, and places where trouble can unfold.
+
+## Cargo, Capability & Constraints
+What the vessel can do, what it carries, and the limits imposed by fuel, repairs, armament, or missing parts.
+
+## Ownership, Debts & Allegiances
+Who owns, claims, finances, or is looking for the ship — including any obligations that shape its next job.
+
+## Complication
+The immediate operational problem threatening the ship or crew.
+
+## Secret
+A hidden history, illicit modification, previous owner, or dangerous cargo.
+
+## Adventure Hooks
+Concrete jobs, disputes, or discoveries that draw the crew into play.`,
 
   item: `## Summary
 A brief overview of what this object is and who possesses it.

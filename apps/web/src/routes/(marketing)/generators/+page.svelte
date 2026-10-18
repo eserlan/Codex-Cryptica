@@ -1,6 +1,7 @@
 <script lang="ts">
   import { base } from "$app/paths";
   import { safeJsonLd } from "$lib/utils/json-ld";
+  import SeoHead from "$lib/components/seo/SeoHead.svelte";
 
   const origin = "https://codexcryptica.com";
 
@@ -19,8 +20,22 @@
           href: "/generators/npc",
           label: "RPG NPC Generator",
           summary:
-            "Generate NPCs across six genres — fantasy, cyberpunk, gothic, sci-fi, modern, and post-apocalyptic.",
+            "Generate NPCs across six genres: fantasy, cyberpunk, gothic, sci-fi, modern, and post-apocalyptic.",
           icon: "icon-[lucide--users]",
+        },
+        {
+          href: "/generators/personality",
+          label: "Personality Generator",
+          summary:
+            "Generate a coherent, playable personality: drives, a connected virtue and flaw, a believable contradiction, and roleplaying cues.",
+          icon: "icon-[lucide--drama]",
+        },
+        {
+          href: "/generators/origin-generator",
+          label: "Superhero Origin Generator",
+          summary:
+            "Generate a superhero origin with a concrete origin event, a GM-usable campaign hook, and an ongoing consequence the backstory doesn't resolve.",
+          icon: "icon-[lucide--zap]",
         },
       ],
     },
@@ -33,6 +48,13 @@
           summary:
             "Build guilds, megacorps, vampire clans, and rebel cells with agendas, conflicts, and NPCs.",
           icon: "icon-[lucide--flag]",
+        },
+        {
+          href: "/generators/faction-roster",
+          label: "Faction Roster Generator",
+          summary:
+            "Turn a faction into 3-6 named members, each with a motive, a stance, and a connection to another member.",
+          icon: "icon-[lucide--users-round]",
         },
         {
           href: "/generators/vampire-clan",
@@ -49,6 +71,13 @@
           icon: "icon-[lucide--truck]",
         },
         {
+          href: "/generators/dark-fantasy-faction",
+          label: "Dark Fantasy Faction Generator",
+          summary:
+            "Create fallen orders, cursed noble houses, plague cults, witch-hunters, and corpse guilds with morally sharp agendas and hooks.",
+          icon: "icon-[lucide--skull]",
+        },
+        {
           href: "/generators/names",
           label: "RPG Name Generator",
           summary:
@@ -59,7 +88,7 @@
           href: "/generators/fantasy-names",
           label: "Fantasy Name Generator",
           summary:
-            "Generate fantasy names across ten cultural styles — elven, dwarven, orcish, Norse, and more.",
+            "Generate fantasy names across ten cultural styles: elven, dwarven, orcish, Norse, and more.",
           icon: "icon-[lucide--feather]",
         },
       ],
@@ -87,11 +116,39 @@
       group: "Adventure & Worldbuilding",
       items: [
         {
+          href: "/generators/holiday",
+          label: "Holiday & Festival Generator",
+          summary:
+            "Create culturally grounded holidays, memorials, festivals, or a coherent calendar shaped by a society's history and beliefs.",
+          icon: "icon-[lucide--calendar-heart]",
+        },
+        {
           href: "/generators/quest",
           label: "Quest Hook Generator",
           summary:
             "Create a GM-ready adventure seed with a complication, key NPC, twist, and reward.",
           icon: "icon-[lucide--scroll-text]",
+        },
+        {
+          href: "/generators/rumour",
+          label: "Rumour Generator",
+          summary:
+            "Generate a d6 table of six local rumours -- each with a concrete lead and a source -- lighter than a full quest hook.",
+          icon: "icon-[lucide--ear]",
+        },
+        {
+          href: "/generators/encounter",
+          label: "Encounter Generator",
+          summary:
+            "Generate a playable combat, social, exploration, environmental, or mixed encounter with participants, environment, a complication, and outcomes.",
+          icon: "icon-[lucide--swords]",
+        },
+        {
+          href: "/generators/puzzle",
+          label: "Puzzle Generator",
+          summary:
+            "Create encounter puzzles with layered clues, multiple approaches, and consequences that keep the adventure moving.",
+          icon: "icon-[lucide--puzzle]",
         },
         {
           href: "/generators/plot-twist-generator",
@@ -101,10 +158,38 @@
           icon: "icon-[lucide--shuffle]",
         },
         {
+          href: "/generators/bbeg-generator",
+          label: "BBEG / Campaign Villain Generator",
+          summary:
+            "Create a campaign-scale antagonist with a concrete goal, methods, lieutenants, and an escalating plan the party can discover and disrupt.",
+          icon: "icon-[lucide--skull]",
+        },
+        {
+          href: "/generators/comic-book-event-generator",
+          label: "Comic Book Event Generator",
+          summary:
+            "Generate a campaign-scale superhero event -- an alien invasion, hero civil war, secret invasion, and more -- with a staged escalation and concrete, lasting consequences.",
+          icon: "icon-[lucide--zap]",
+        },
+        {
+          href: "/generators/villain-scheme-generator",
+          label: "Villain Scheme Generator",
+          summary:
+            "Generate a Superhero / Comic Book villain scheme: objective, motivation, resources, escalating discoverable stages, complications, and consequences if nobody intervenes.",
+          icon: "icon-[lucide--target]",
+        },
+        {
+          href: "/generators/heist",
+          label: "Heist Generator",
+          summary:
+            "Generate a playable score: a prize with a practical catch, three layered security rings, an escalating alarm track, and a getaway whose original plan has already failed.",
+          icon: "icon-[lucide--key-round]",
+        },
+        {
           href: "/generators/council-vote",
           label: "Council Vote Generator",
           summary:
-            "Generate a political vote quest — a named council of voters with distinct agendas that the party must sway before a deadline decision.",
+            "Generate a political vote quest: a named council of voters with distinct agendas that the party must sway before a deadline decision.",
           icon: "icon-[lucide--gavel]",
         },
         {
@@ -125,15 +210,29 @@
           href: "/generators/star-system",
           label: "Star System Generator",
           summary:
-            "Generate a coherent sci-fi star system — star(s), major bodies, factions, resources, hazards, and a system-wide conflict or mystery.",
+            "Generate a coherent sci-fi star system: star(s), major bodies, factions, resources, hazards, and a system-wide conflict or mystery.",
           icon: "icon-[lucide--orbit]",
+        },
+        {
+          href: "/generators/constellation",
+          label: "Constellation Generator",
+          summary:
+            "Generate a culturally meaningful constellation: a star pattern, an origin myth, seasonal visibility, practical use, cultural meaning, and an adventure hook.",
+          icon: "icon-[lucide--stars]",
         },
         {
           href: "/generators/alien-race",
           label: "Alien Race Generator",
           summary:
-            "Generate a coherent alien species — biology, homeworld, senses, culture, technology, and weaknesses that all follow from each other.",
+            "Generate a coherent alien species: biology, homeworld, senses, culture, technology, and weaknesses that all follow from each other.",
           icon: "icon-[lucide--dna]",
+        },
+        {
+          href: "/generators/creature",
+          label: "Creature Generator",
+          summary:
+            "Generate memorable monsters, beasts, alien fauna, and undead with ecology, sensory signs, combat tactics, and adventure hooks.",
+          icon: "icon-[lucide--paw-print]",
         },
         {
           href: "/generators/dungeon-generator",
@@ -150,11 +249,46 @@
           icon: "icon-[lucide--map]",
         },
         {
+          href: "/generators/one-shot-adventure-generator",
+          label: "One-Shot Adventure Builder",
+          summary:
+            "Build a run-ready, timed one-shot: scenes with minute budgets, NPCs, clues with multiple routes, endings and a one-page GM cheat sheet.",
+          icon: "icon-[lucide--hourglass]",
+        },
+        {
+          href: "/generators/point-crawl",
+          label: "Point Crawl Generator",
+          summary:
+            "Build an interconnected network of named locations and travel routes withloops, secret paths, locked gates, and SVG/PNG diagram export.",
+          icon: "icon-[lucide--waypoints]",
+        },
+        {
           href: "/generators/magic-item",
           label: "Magic Item Generator",
           summary:
             "Generate items with rarity, properties, history, and GM-facing lore.",
           icon: "icon-[lucide--sparkles]",
+        },
+        {
+          href: "/generators/minor-magic-item",
+          label: "Minor Magic Item & Trinket Generator",
+          summary:
+            "Create low-impact, consumable charms, potions, talismans, and disposable tools with quirks and limited charges.",
+          icon: "icon-[lucide--sparkles]",
+        },
+        {
+          href: "/generators/artifact-generator",
+          label: "Artifact & Relic Generator",
+          summary:
+            "Generate unique, named major artifacts and ancient relics with multi-tier powers, curses, pursuing factions, and destruction conditions.",
+          icon: "icon-[lucide--gem]",
+        },
+        {
+          href: "/generators/tome",
+          label: "Tome & Forbidden Book Generator",
+          summary:
+            "Generate grimoires, occult field logs, and heretical treatises with binding details, readable excerpts, research hazards, and hooks.",
+          icon: "icon-[lucide--book-marked]",
         },
         {
           href: "/generators/tavern",
@@ -167,7 +301,7 @@
           href: "/generators/social-hub",
           label: "Social Hub Generator",
           summary:
-            "Generate a social venue for any genre — cyberpunk dive bars, western saloons, sci-fi cantinas.",
+            "Generate a social venue for any genre: cyberpunk dive bars, western saloons, sci-fi cantinas.",
           icon: "icon-[lucide--map-pin]",
         },
         {
@@ -181,14 +315,14 @@
           href: "/generators/nation",
           label: "Nation Generator",
           summary:
-            "Generate a political entity for any genre — fantasy empires, cyberpunk megacorp-states, sci-fi federations.",
+            "Generate a political entity for any genre: fantasy empires, cyberpunk megacorp-states, sci-fi federations.",
           icon: "icon-[lucide--globe]",
         },
         {
           href: "/generators/news-sheet-generator",
           label: "News Sheet Generator",
           summary:
-            "Generate an in-world news sheet for any genre — cyberpunk screamsheets, fantasy broadsheets, station newsfeeds — with rumours, classifieds, propaganda, and GM-only hooks.",
+            "Generate an in-world news sheet for any genre: cyberpunk screamsheets, fantasy broadsheets, station newsfeeds, with rumours, classifieds, propaganda, and GM-only hooks.",
           icon: "icon-[lucide--newspaper]",
         },
         {
@@ -202,7 +336,7 @@
           href: "/generators/random",
           label: "Surprise Me",
           summary:
-            "Not sure what you need? Spin the idea machine — a random faction, realm, NPC, quest hook, deity, or venue.",
+            "Not sure what you need? Spin the idea machine: a random faction, realm, NPC, quest hook, deity, or venue.",
           icon: "icon-[lucide--dices]",
         },
       ],
@@ -214,7 +348,7 @@
       href: "/generators/fantasy",
       label: "Fantasy Hub",
       summary:
-        "All fantasy generators in one place — NPCs, factions, kingdoms, magic items, pantheons, and more.",
+        "All fantasy generators in one place: NPCs, factions, kingdoms, magic items, pantheons, and more.",
       icon: "icon-[lucide--wand-sparkles]",
     },
     {
@@ -294,6 +428,20 @@
         "Diplomatic officers, scientific factions, space station hubs, and first-contact quest hooks for optimistic space opera campaigns.",
       icon: "icon-[lucide--rocket]",
     },
+    {
+      href: "/generators/space-western",
+      label: "Space Western Hub",
+      summary:
+        "Frontier scoundrels, asteroid boomtowns, smuggling rings, and rust-bucket freighters for space western campaigns.",
+      icon: "icon-[lucide--orbit]",
+    },
+    {
+      href: "/generators/superhero",
+      label: "Superhero Hub",
+      summary:
+        "Four-colour heroics, villain schemes, crossover events, and metahuman factions for comic book campaigns.",
+      icon: "icon-[lucide--zap]",
+    },
   ];
 
   const allItems = generators.flatMap((s) => s.items);
@@ -303,7 +451,7 @@
     "@type": "ItemList",
     name: "RPG Generators",
     description:
-      "Free RPG generators for tabletop GMs — NPCs, factions, kingdoms, taverns, quest hooks, magic items, and more.",
+      "Free RPG generators for tabletop GMs: NPCs, factions, kingdoms, taverns, quest hooks, magic items, and more.",
     url: `${origin}/generators`,
     numberOfItems: allItems.length,
     itemListElement: allItems.map((gen, i) => ({
@@ -335,24 +483,22 @@
   });
 </script>
 
-<svelte:head>
-  <title
-    >RPG Generators | NPC, Faction, Kingdom, Tavern & More | Codex Cryptica</title
-  >
-  <meta
-    name="description"
-    content="Free RPG generators for tabletop GMs — create NPCs, factions, kingdoms, taverns, quest hooks, magic items, and more. Works without login. Import into your local campaign vault."
-  />
-  <link rel="canonical" href="https://codexcryptica.com/generators" />
-  <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-  {@html `<scr` +
-    `ipt type="application/ld+json">${itemListJsonLd}</scr` +
-    `ipt>`}
-  <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-  {@html `<scr` +
-    `ipt type="application/ld+json">${breadcrumbJsonLd}</scr` +
-    `ipt>`}
-</svelte:head>
+<SeoHead
+  title="RPG Generators | NPC, Faction, Kingdom, Tavern & More | Codex Cryptica"
+  description="Free RPG generators for tabletop GMs: create NPCs, factions, kingdoms, taverns, quest hooks, magic items, and more. Works without login. Import into your local campaign vault."
+  canonicalUrl="https://codexcryptica.com/generators"
+  image="https://assets.codexcryptica.com/screenshots/feature-connect.jpg"
+  imageAlt="Codex Cryptica RPG generator tools overview"
+  keywords={[
+    "rpg generators",
+    "tabletop generators",
+    "npc generator",
+    "faction generator",
+    "dungeon generator",
+    "quest hook generator",
+  ]}
+  jsonLd={[itemListJsonLd, breadcrumbJsonLd]}
+/>
 
 <div
   class="min-h-screen bg-theme-bg text-theme-text font-body selection:bg-theme-primary selection:text-theme-bg"
@@ -367,12 +513,12 @@
           Generator Hub
         </p>
         <h1
-          class="font-header text-4xl md:text-5xl font-extrabold tracking-wide mb-5"
+          class="font-display text-4xl md:text-5xl font-extrabold tracking-wide mb-5"
         >
           RPG Generators
         </h1>
         <p class="text-base md:text-lg text-theme-muted leading-relaxed">
-          Free, table-ready generators for tabletop GMs. No login required —
+          Free, table-ready generators for tabletop GMs. No login required:
           generate a draft, copy it, or save it into your local Codex Cryptica
           campaign vault.
         </p>
@@ -384,7 +530,7 @@
     <section aria-labelledby="theme-hubs-heading">
       <h2
         id="theme-hubs-heading"
-        class="font-header text-sm font-bold text-theme-text mb-4"
+        class="font-header text-xl font-bold text-theme-text mb-4"
       >
         Browse by Theme
       </h2>
@@ -398,7 +544,7 @@
               <span class="{hub.icon} h-5 w-5 text-theme-primary mb-4 block"
               ></span>
               <span
-                class="block font-header text-sm font-bold mb-2 group-hover:text-theme-primary transition-colors"
+                class="block font-header text-base font-bold text-theme-text mb-2 group-hover:text-theme-primary transition-colors"
               >
                 {hub.label}
               </span>
@@ -415,7 +561,7 @@
       <section aria-labelledby={`${section.group}-heading`}>
         <h2
           id={`${section.group}-heading`}
-          class="font-header text-sm font-bold text-theme-text mb-4"
+          class="font-header text-xl font-bold text-theme-text mb-4"
         >
           {section.group}
         </h2>
@@ -429,7 +575,7 @@
                 <span class="{gen.icon} h-5 w-5 text-theme-primary mb-4 block"
                 ></span>
                 <span
-                  class="block font-header text-sm font-bold mb-2 group-hover:text-theme-primary transition-colors"
+                  class="block font-header text-base font-bold text-theme-text mb-2 group-hover:text-theme-primary transition-colors"
                 >
                   {gen.label}
                 </span>

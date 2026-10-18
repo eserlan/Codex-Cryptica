@@ -1,5 +1,5 @@
 export type ApiErrorType =
-  "offline" | "rate-limit" | "quota" | "safety" | "unknown";
+  "offline" | "rate-limit" | "quota" | "safety" | "verification" | "unknown";
 
 export interface ClassifiedError {
   type: ApiErrorType;
@@ -14,6 +14,21 @@ export function classifyApiError(err: unknown): ClassifiedError {
     };
   }
   const msg = err instanceof Error ? err.message : String(err);
+  if (/\(code: SESSION_TOKEN_(MISSING|INVALID|EXPIRED)\)/.test(msg)) {
+    // The proxy never received (or rejected) our anti-abuse capability
+    // token. In practice this almost always means the invisible Turnstile
+    // challenge that mints it never completed — most often because an ad
+    // blocker, privacy extension, or network filter blocks
+    // challenges.cloudflare.com outright, so the client never even reaches
+    // the proxy's /api/session endpoint. Retrying silently (see
+    // DefaultAIClientManager.proxyFetch) already covers the transient case;
+    // this is what's left once that retry also failed.
+    return {
+      type: "verification",
+      message:
+        "Verification blocked — an ad blocker, privacy extension, or network filter may be blocking challenges.cloudflare.com. Allow that domain for this site and try again. (ref: TURNSTILE_BLOCKED)",
+    };
+  }
   const explicitRateLimitMessage = extractExplicitRateLimitMessage(msg);
   if (explicitRateLimitMessage) {
     return {

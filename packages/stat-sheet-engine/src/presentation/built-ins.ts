@@ -1,4 +1,9 @@
 import type { PresentationTemplate } from "schema";
+import {
+  SHOP_MERCHANT_TEMPLATE_ID,
+  getShopPresentationTemplates,
+} from "../merchant";
+import { TOV_CHARACTER_TEMPLATE_ID } from "../rules-sources/tov-templates";
 
 const CREATED_AT = "2026-08-02T00:00:00.000Z";
 
@@ -110,6 +115,73 @@ const DND_CHARACTER_SHEET_SOURCE = `:::row
 :::
 `;
 
+const TOV_CHARACTER_SHEET_SOURCE = `:::row
+:::card
+### Identity & Lineage
+:::stat-group columns=2
+{{stat.lineage display="plain" label="Lineage"}}
+{{stat.heritage display="plain" label="Heritage"}}
+{{stat.background display="plain" label="Background"}}
+{{stat.class display="plain" label="Class"}}
+:::
+:::
+:::card
+### Vitals & Luck
+:::stat-group columns=3
+{{stat.hp display="current-max" label="Hit Points"}}
+{{stat.ac display="prominent" label="Armor Class"}}
+{{stat.luck display="counter" label="Luck Points"}}
+:::
+:::
+:::
+
+### Ability Scores & Checks
+:::stat-group columns=3
+:::card
+{{stat.str_score display="prominent" label="STR"}}
+{{stat.str display="plain" label="Check"}}
+{{stat.str_save display="plain" label="Save"}}
+:::
+:::card
+{{stat.dex_score display="prominent" label="DEX"}}
+{{stat.dex display="plain" label="Check"}}
+{{stat.dex_save display="plain" label="Save"}}
+:::
+:::card
+{{stat.con_score display="prominent" label="CON"}}
+{{stat.con display="plain" label="Check"}}
+{{stat.con_save display="plain" label="Save"}}
+:::
+:::card
+{{stat.int_score display="prominent" label="INT"}}
+{{stat.int display="plain" label="Check"}}
+{{stat.int_save display="plain" label="Save"}}
+:::
+:::card
+{{stat.wis_score display="prominent" label="WIS"}}
+{{stat.wis display="plain" label="Check"}}
+{{stat.wis_save display="plain" label="Save"}}
+:::
+:::card
+{{stat.cha_score display="prominent" label="CHA"}}
+{{stat.cha display="plain" label="Check"}}
+{{stat.cha_save display="plain" label="Save"}}
+:::
+:::
+
+:::row
+:::card
+### Attacks & Combat
+[attacks]
+:::
+:::card
+### Talents & Features
+{{stat.talents display="plain" label="Talents"}}
+{{stat.features display="plain" label="Features"}}
+:::
+:::
+`;
+
 const MYTHRAS_CHARACTER_SHEET_SOURCE = `:::row
 :::card
 ### Pools & Derived Attributes
@@ -186,6 +258,51 @@ const MYTHRAS_CHARACTER_SHEET_SOURCE = `:::row
 export function getBuiltInPresentationTemplates(
   schemaTemplateId: string,
 ): PresentationTemplate[] {
+  // The merchant sheet has no hp/ac, so the generic layouts above would
+  // render nothing but missing-field flags. It gets its own two layouts.
+  if (schemaTemplateId === SHOP_MERCHANT_TEMPLATE_ID) {
+    return getShopPresentationTemplates();
+  }
+  const tovSheet = builtIn(
+    `builtin-presentation-tov-character-sheet-${schemaTemplateId}`,
+    schemaTemplateId,
+    "ToV Character Sheet",
+    "Full Tales of the Valiant layout with Lineage, Heritage, Luck pool, Ability checks, Saves, and structured Attacks.",
+    TOV_CHARACTER_SHEET_SOURCE,
+  );
+  if (schemaTemplateId === TOV_CHARACTER_TEMPLATE_ID) {
+    return [
+      tovSheet,
+      builtIn(
+        `builtin-presentation-standard-form-${schemaTemplateId}`,
+        schemaTemplateId,
+        "Standard Form",
+        "A straightforward, top-to-bottom layout of the sheet's key stats.",
+        STANDARD_FORM_SOURCE,
+      ),
+      builtIn(
+        `builtin-presentation-compact-stat-block-${schemaTemplateId}`,
+        schemaTemplateId,
+        "Compact Stat Block",
+        "A dense single-card summary, suited to NPCs and monsters.",
+        COMPACT_STAT_BLOCK_SOURCE,
+      ),
+      builtIn(
+        `builtin-presentation-dashboard-card-${schemaTemplateId}`,
+        schemaTemplateId,
+        "Dashboard",
+        "Side-by-side cards for an at-a-glance dashboard view.",
+        DASHBOARD_CARD_SOURCE,
+      ),
+      builtIn(
+        `builtin-presentation-mobile-quick-reference-${schemaTemplateId}`,
+        schemaTemplateId,
+        "Mobile Quick Reference",
+        "A minimal single-column layout optimized for quick reference during play.",
+        MOBILE_QUICK_REFERENCE_SOURCE,
+      ),
+    ];
+  }
   return [
     builtIn(
       `builtin-presentation-mythras-character-sheet-${schemaTemplateId}`,

@@ -40,6 +40,17 @@ wrangler secret put TURNSTILE_SECRET_KEY
 wrangler secret put SESSION_TOKEN_SECRET
 # Any high-entropy random string, e.g. `openssl rand -base64 32`.
 # HMAC signing key for LLM session capability tokens.
+
+wrangler secret put CODEX_AUTOMATION_KEY
+# Secret key for trusted automation/agent workflows (can be comma-separated for rotation).
+
+wrangler secret put TEMPLATE_REPORT_HASH_KEY
+# Any high-entropy random string, e.g. `openssl rand -base64 32`.
+# Keys the hash of a reporter's network address for entity template reports
+# (one report per address per listing, plus daily caps). Without it the report
+# endpoint returns 503 and stores nothing, so set it in every environment
+# before opening template publishing. Changing it resets the "already reported"
+# memory, because old hashes no longer match.
 ```
 
 For widget creation, web environment configuration, quotas, and testing, see [Turnstile Publishing Setup](../../../docs/deployment/turnstile-publishing.md).
@@ -59,6 +70,31 @@ Two properties worth knowing before you deploy:
 - **Rotating the secret invalidates every live token at once.** Clients
   recover on their own: they get a 401, re-solve the challenge, and replay.
   Expect a burst of Turnstile solves right after a rotation.
+
+#### About `CODEX_AUTOMATION_KEY`
+
+For trusted server-side scripts and agent workflows, you can obtain generation session
+tokens directly without solving Turnstile:
+
+1. **Mint session token**:
+   ```bash
+   curl -X POST https://oracle-proxy.espen-erlandsen.workers.dev/api/session \
+     -H "X-Codex-Automation-Key: <your-automation-key>"
+   # Returns: { "token": "...", "expiresAt": 1700000000, "scope": "automation" }
+   ```
+2. **Execute generation requests**:
+   ```bash
+   curl -X POST https://oracle-proxy.espen-erlandsen.workers.dev/ \
+     -H "Content-Type: application/json" \
+     -H "Authorization: Bearer <token>" \
+     -d '{
+       "operation": "generate",
+       "prompt": "Describe an ancient crypt",
+       "model": "gemini-3.5-flash-lite"
+     }'
+   ```
+
+Key rotation supports comma-separated keys (`key-v2,key-v1`) in the `CODEX_AUTOMATION_KEY` secret.
 
 Image generation (`/v1/images/generations`) is not covered by this guard — it
 keeps its own per-IP daily limit.

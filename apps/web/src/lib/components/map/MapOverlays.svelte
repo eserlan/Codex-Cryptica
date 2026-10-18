@@ -7,6 +7,8 @@
   import { vault } from "../../stores/vault.svelte";
   import type { MapInteractionManager } from "./map-interactions.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import HexThisHexButton from "$lib/components/map/hex-crawl/HexThisHexButton.svelte";
   import { computeAdjustedCounterValue } from "$lib/utils/stat-sheet-field-actions";
   import type { MapPin } from "schema";
 
@@ -35,6 +37,31 @@
     ) ?? null,
   );
 </script>
+
+{#if mapSession.armedTile}
+  <div
+    class="absolute top-4 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 rounded-full border border-theme-primary/40 bg-theme-surface/95 px-4 py-1.5 shadow-xl backdrop-blur select-none"
+    data-testid="map-armed-tile-banner"
+  >
+    <span
+      class="h-2 w-2 rounded-full bg-theme-primary animate-pulse"
+      aria-hidden="true"
+    ></span>
+    <span class="text-xs font-medium text-theme-text">
+      Click map to place <strong>{mapSession.armedTile.name}</strong>
+    </span>
+    <span class="text-micro text-theme-muted">· [Esc] to cancel</span>
+    <button
+      type="button"
+      onclick={() => mapSession.clearArmedTile()}
+      class="ml-1 rounded-full p-0.5 text-theme-muted hover:text-theme-text transition-colors"
+      aria-label="Cancel tile placement"
+      title="Cancel tile placement (Esc)"
+    >
+      <span class="icon-[lucide--x] h-3.5 w-3.5" aria-hidden="true"></span>
+    </button>
+  </div>
+{/if}
 
 {#if mapStore.pendingPinCoords}
   <PinLinker
@@ -66,6 +93,24 @@
     }}
     onClose={() => (interactions.selectedPinId = null)}
   />
+  <div
+    class="absolute z-40 -translate-x-1/2 pointer-events-auto"
+    style:left={`${pos.x}px`}
+    style:top={`${pos.y + 40}px`}
+  >
+    <HexThisHexButton
+      point={selectedPin.coordinates}
+      mapId={mapStore.activeMapId ?? null}
+      grid={{
+        gridType: mapStore.gridType,
+        gridSize: mapStore.gridSize,
+        gridOffsetX: mapStore.gridOffsetX,
+        gridOffsetY: mapStore.gridOffsetY,
+      }}
+      isGM={mapStore.isGMMode}
+      isGuest={sessionModeStore.isGuestMode}
+    />
+  </div>
 {/if}
 
 {#if healthBarToken && healthBarEntity && healthBarField}
@@ -112,6 +157,20 @@
       style:width={`${Math.abs(interactions.gridFitEnd.x - interactions.gridFitStart.x)}px`}
       style:height={`${Math.abs(interactions.gridFitEnd.y - interactions.gridFitStart.y)}px`}
     ></div>
+    <div
+      class="absolute rounded bg-theme-bg/90 px-2 py-1 text-meta font-bold text-theme-primary shadow"
+      style:left={`${Math.min(interactions.gridFitStart.x, interactions.gridFitEnd.x)}px`}
+      style:top={`${Math.min(interactions.gridFitStart.y, interactions.gridFitEnd.y) - 28}px`}
+    >
+      {#if mapStore.gridType === "square"}
+        {interactions.gridFitSpan}×{interactions.gridFitSpan} squares
+      {:else}
+        {interactions.gridFitSpan}
+        {interactions.gridFitSpan === 1 ? "hex" : "hexes"}
+        {mapStore.gridType === "hex-flat" ? "down a column" : "across a row"}
+      {/if}
+      · Shift+Scroll to change
+    </div>
   </div>
 {/if}
 
@@ -133,7 +192,14 @@
 
 {#each mapStore.pins as pin (pin.id)}
   {@const pos = mapStore.project(pin.coordinates)}
-  {#if pos.x >= -100 && pos.x <= mapStore.canvasSize.width + 100 && pos.y >= -100 && pos.y <= mapStore.canvasSize.height + 100}
+  <!-- Reading the revision makes the label re-check after the fog changes. -->
+  {@const fogRevision = mapStore.fogRevision}
+  {@const hiddenByFog =
+    fogRevision >= 0 &&
+    mapStore.showFog &&
+    mapStore.fogOpaque &&
+    !interactions.painter.isRevealedAt(pin.coordinates)}
+  {#if !hiddenByFog && pos.x >= -100 && pos.x <= mapStore.canvasSize.width + 100 && pos.y >= -100 && pos.y <= mapStore.canvasSize.height + 100}
     {@const entity =
       pin.entityId && vault.entities ? vault.entities[pin.entityId] : null}
     {@const labelText = entity ? entity.title : "Unlinked Pin"}
@@ -151,7 +217,7 @@
         pin.id === interactions.selectedPinId}
     >
       <div
-        class="px-2 py-0.5 bg-theme-surface/90 border border-theme-border/80 rounded-md text-[10px] font-bold text-theme-text shadow-md whitespace-nowrap select-none backdrop-blur-sm flex items-center"
+        class="px-2 py-0.5 bg-theme-surface/90 border border-theme-border/80 rounded-md text-micro font-bold text-theme-text shadow-md whitespace-nowrap select-none backdrop-blur-sm flex items-center"
       >
         {labelText}
       </div>

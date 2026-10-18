@@ -16,7 +16,7 @@ import {
   getConsolidatedContext,
   extractJsonFromModelResponse,
 } from "./text-generation-context";
-import { BANNED_NAMES, isTitleBanned } from "generator-engine";
+import { BANNED_NAMES, isTitleBanned } from "generator-engine/naming-policy";
 
 // Matches campaign-generator-service.ts's MAX_AI_ATTEMPTS: the drafting
 // prompt already tells the model not to use a banned name (entity-creation.ts),

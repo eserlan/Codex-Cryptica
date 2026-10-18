@@ -16,8 +16,16 @@ import { systemClock } from "$lib/utils/runtime-deps";
  * Uses constructor-based Dependency Injection for robust testing.
  */
 export class QuickNoteStore {
+  /** The one section the journal shows, or null for all (Solo Play Loop). */
+  journalSectionFilter = $state<string | null>(null);
   // Reactive states
   isOpen = $state(false);
+  /**
+   * Which tab the scratchpad panel is showing. Lives here (not in the
+   * component) so the global Session Journal control can open the panel on
+   * the Journal tab. Deliberately not reset by close() or a vault switch.
+   */
+  activeTab = $state<"notes" | "journal">("notes");
   activeNotes = $state<QuickNoteRecord[]>([]);
   currentNote = $state<QuickNoteRecord | null>(null);
   filterText = $state("");
@@ -107,6 +115,7 @@ export class QuickNoteStore {
   open(note: QuickNoteRecord | null = null): void {
     this.isOpen = true;
     if (note) {
+      this.activeTab = "notes";
       this.selectNote(note);
     } else if (!this.currentNote && this.activeNotes.length > 0) {
       // Auto-select the most recent note if editing a fresh session
@@ -114,6 +123,24 @@ export class QuickNoteStore {
     } else if (!this.currentNote) {
       this.startNewNote();
     }
+  }
+
+  /**
+   * Opens the scratchpad on the Session Journal tab. Idempotent and never
+   * closes the panel. Sets state directly instead of calling open(), which
+   * auto-selects or creates a Quicknote note as a side effect the journal
+   * must not trigger.
+   */
+  /** Open the journal; with a section, show only that section's entries. */
+  openJournal(options: { sectionId?: string } = {}): void {
+    this.isOpen = true;
+    this.activeTab = "journal";
+    this.journalSectionFilter = options.sectionId ?? null;
+  }
+
+  /** Shows every section again. */
+  showAllJournalSections(): void {
+    this.journalSectionFilter = null;
   }
 
   /**

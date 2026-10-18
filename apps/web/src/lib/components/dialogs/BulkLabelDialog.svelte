@@ -275,7 +275,7 @@
           >
             <p class="text-xs md:text-sm text-theme-muted">
               Type a label name and press <kbd
-                class="px-1 py-0.5 bg-theme-bg border border-theme-border rounded text-[10px] font-mono"
+                class="px-1 py-0.5 bg-theme-bg border border-theme-border rounded text-micro font-mono"
                 >Enter</kbd
               >
               to apply it to all selected {themeStore.resolveJargon(
@@ -304,7 +304,7 @@
                 >
                   {#if !applyInput.trim()}
                     <div
-                      class="px-3 py-2 md:py-1.5 text-[9px] md:text-[10px] font-bold text-theme-primary uppercase tracking-widest border-b border-theme-border/50 bg-theme-primary/5"
+                      class="px-3 py-2 md:py-1.5 text-nano md:text-micro font-bold text-theme-primary uppercase tracking-widest border-b border-theme-border/50 bg-theme-primary/5"
                     >
                       Recent Labels
                     </div>
@@ -382,13 +382,14 @@
                         : 'bg-theme-bg border-theme-border text-theme-muted hover:bg-red-500/20 hover:border-red-500/50 hover:text-red-400'}"
                     >
                       {label}
-                      <span class="icon-[lucide--x] w-3 h-3"></span>
+                      <span aria-hidden="true" class="icon-[lucide--x] w-3 h-3"
+                      ></span>
                     </button>
                   {/each}
                 </div>
                 {#if sharedLabels.length < anyLabels.length}
                   <p
-                    class="text-[10px] md:text-xs text-theme-muted leading-tight"
+                    class="text-micro md:text-xs text-theme-muted leading-tight"
                   >
                     <span class="text-theme-primary font-bold">Highlighted</span
                     >

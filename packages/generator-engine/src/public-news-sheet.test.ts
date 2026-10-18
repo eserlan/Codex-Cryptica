@@ -151,3 +151,21 @@ describe("parseNewsSheetResponse", () => {
     expect(out.labels).toContain("news-sheet-generator");
   });
 });
+
+// Regression test (#3108): "Superhero / Comic Book" has no dedicated entry
+// in newsSheetConfig.publicationTypesByGenre, so the generator must fall
+// back to the Fantasy pool instead of crashing on an undefined lookup.
+describe("Superhero theme regression (#3108)", () => {
+  it("falls back to the Fantasy publication-type pool", () => {
+    expect(
+      newsSheetConfig.publicationTypesByGenre["Superhero / Comic Book"],
+    ).toBeUndefined();
+
+    const out = generateNewsSheetLocal(
+      { genre: "Superhero / Comic Book" },
+      seededRng(9),
+    );
+    expect(out.type).toBe("note");
+    expect(out.content).toBeTruthy();
+  });
+});

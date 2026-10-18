@@ -17,14 +17,14 @@
     <button
       type="button"
       onclick={() => timelineStore.setViewMode(mode.id)}
-      class="px-3 py-1.5 flex items-center gap-2 rounded text-[10px] font-bold tracking-widest transition-all
+      class="px-3 py-1.5 flex items-center gap-2 rounded text-micro font-bold tracking-widest transition-all
       {mode.id === 'horizontal' ? 'hidden md:flex' : ''}
       {timelineStore.viewMode === mode.id
         ? 'bg-theme-primary/20 text-theme-primary'
         : 'text-theme-muted hover:text-theme-text hover:bg-theme-primary/5'}"
       title="Switch to {mode.label} View"
     >
-      <span class="{mode.icon} w-3.5 h-3.5"></span>
+      <span class="{mode.icon} w-3.5 h-3.5" aria-hidden="true"></span>
       <span class="hidden md:inline uppercase">{mode.label}</span>
     </button>
   {/each}

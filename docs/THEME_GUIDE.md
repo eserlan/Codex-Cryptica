@@ -101,6 +101,16 @@ graph: {
 }
 ```
 
+**Entity-type node colours are not yours to pick.** A theme never lists a colour
+per entity type. `packages/schema/src/entity-palette.ts` derives them from the
+tokens above — the category's own colour supplies the hue, while saturation and
+lightness come from `surface`, `background`, `primary`, and `accent`, so a new
+theme gets a muted, coherent set of type tones for free. It also holds node
+rings and node icons at 3:1 (see the
+[accessibility contract](./accessibility-contract.md)). Give the theme a
+`primary` and `accent` you are happy to see on a node icon, and the rest
+follows.
+
 ### 3. Write the jargon
 
 Override only what fits the theme. Anything not specified falls back to `DEFAULT_JARGON`. See [Jargon keys](#jargon-keys) for the full list.

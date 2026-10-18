@@ -2,9 +2,6 @@
 description: Initialize a Git repository with an initial commit
 ---
 
-<!-- Extension: git -->
-<!-- Config: .specify/extensions/git/ -->
-
 # Initialize Git Repository
 
 Initialize a Git repository in the current project directory if one does not already exist.
@@ -42,7 +39,7 @@ Replace the script to add project-specific Git initialization steps:
 
 On success:
 
-- `✓ Git repository initialized`
+- `[OK] Git repository initialized`
 
 ## Graceful Degradation
 

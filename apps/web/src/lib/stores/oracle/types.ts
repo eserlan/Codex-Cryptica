@@ -1,4 +1,5 @@
 import type {
+  MessageMention,
   ChatMessage,
   DiscoveryProposal,
   OracleExecutionContext,
@@ -9,6 +10,7 @@ import type {
   DraftingEngine,
 } from "@codex/oracle-engine";
 import type { TextGenerationService, AspectRatio } from "schema";
+import type { AdventureManager } from "./adventure-manager.svelte";
 
 /** Advanced Art Direction settings a user may apply when revising a prompt. */
 export interface PromptRegenerationOptions {
@@ -118,6 +120,7 @@ export interface IOracleStore {
   readonly actions: any;
   readonly settingsManager: any;
   readonly revision: any;
+  readonly adventure: AdventureManager;
 
   // Lifecycle
   init(): Promise<void>;
@@ -131,7 +134,7 @@ export interface IOracleStore {
   undo(): Promise<void>;
   redo(): Promise<void>;
   sendMessage(content: string): Promise<void>;
-  ask(content: string): Promise<void>;
+  ask(content: string, mentions?: MessageMention[]): Promise<void>;
   drawEntity(entityId: string): Promise<void>;
   drawMessage(messageId: string): Promise<void>;
   generateEntityFromPrompt(

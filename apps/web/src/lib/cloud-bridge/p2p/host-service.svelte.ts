@@ -7,6 +7,10 @@ import { sessionModeStore as defaultSessionModeStore } from "../../stores/ui/ses
 import { notificationStore as defaultNotificationStore } from "../../stores/ui/notification.svelte";
 import { mapSession } from "../../stores/map-session.svelte";
 import { encodeSessionSnapshot, type P2PMessage } from "./p2p-protocol";
+import {
+  sanitizeSessionForGuestTransport,
+  sanitizeVttMessageForGuestTransport,
+} from "./p2p-helpers";
 import type {
   P2PTransport,
   P2PConnection,
@@ -286,21 +290,37 @@ export class P2PHostService {
       return;
     }
 
-    this.transport.broadcast(message, excludePeer);
+    this.transport.broadcast(
+      sanitizeVttMessageForGuestTransport(
+        message,
+        (tokenId) => mapSession.tokens[tokenId],
+      ),
+      excludePeer,
+    );
   }
 
   private async broadcastSessionSnapshot(
     session = mapSession.createSnapshot(),
   ) {
-    const payload = await encodeSessionSnapshot(session);
+    const payload = await encodeSessionSnapshot(
+      sanitizeSessionForGuestTransport(session),
+    );
     this.transport.broadcast(payload);
+  }
+
+  /** Lets a published catalogue name a stock line after the Item it links to. */
+  private catalogueOptions() {
+    return {
+      resolveName: (entityId: string): string | undefined =>
+        this.vault.entities?.[entityId]?.title,
+    };
   }
 
   private async broadcastEntityUpdate(entity: any) {
     const { sanitizeEntityForGuestTransport } = await import("./p2p-helpers");
     this.transport.broadcast({
       type: "ENTITY_UPDATE",
-      payload: sanitizeEntityForGuestTransport(entity),
+      payload: sanitizeEntityForGuestTransport(entity, this.catalogueOptions()),
     });
   }
 
@@ -312,7 +332,10 @@ export class P2PHostService {
     const { sanitizeEntityForGuestTransport } = await import("./p2p-helpers");
     const sanitized: Record<string, any> = {};
     for (const [id, entity] of Object.entries(updates)) {
-      sanitized[id] = sanitizeEntityForGuestTransport(entity);
+      sanitized[id] = sanitizeEntityForGuestTransport(
+        entity,
+        this.catalogueOptions(),
+      );
     }
     this.transport.broadcast({
       type: "ENTITY_BATCH_UPDATE",

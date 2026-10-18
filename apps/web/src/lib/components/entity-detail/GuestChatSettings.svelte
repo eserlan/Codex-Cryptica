@@ -2,6 +2,7 @@
   import type { Entity, GuestChatConfig } from "schema";
   import { vault } from "$lib/stores/vault.svelte";
   import { generatePersonality } from "./generate-personality";
+  import { generatePersonalityProfile } from "./generate-personality-profile";
 
   let {
     entity,
@@ -18,6 +19,7 @@
   }>();
 
   let isGeneratingPersonality = $state(false);
+  let isGeneratingPersonalityProfile = $state(false);
   let personalityError = $state<string | null>(null);
   let isSavingAvailability = $state(false);
   let availabilityError = $state<string | null>(null);
@@ -52,6 +54,24 @@
       },
       setGenerating: (generating: boolean) => {
         isGeneratingPersonality = generating;
+      },
+      setError: (error: string | null) => {
+        personalityError = error;
+      },
+    });
+  }
+
+  async function handleGeneratePersonalityProfile() {
+    if (isGeneratingPersonalityProfile) return false;
+    return generatePersonalityProfile({
+      entity,
+      editContent,
+      getEditLore: () => editLore,
+      setEditLore: (lore: string) => {
+        editLore = lore;
+      },
+      setGenerating: (generating: boolean) => {
+        isGeneratingPersonalityProfile = generating;
       },
       setError: (error: string | null) => {
         personalityError = error;
@@ -236,40 +256,68 @@
               <span
                 class="flex items-center gap-1 text-emerald-500 font-semibold"
               >
-                <span class="icon-[lucide--check-circle] w-3.5 h-3.5"></span>
+                <span
+                  aria-hidden="true"
+                  class="icon-[lucide--check-circle] w-3.5 h-3.5"
+                ></span>
                 Found in character lore
               </span>
             {:else}
-              <div class="flex items-center gap-2">
+              <span
+                class="flex items-center gap-1 text-amber-500 font-semibold"
+              >
                 <span
-                  class="flex items-center gap-1 text-amber-500 font-semibold"
-                >
-                  <span class="icon-[lucide--alert-triangle] w-3.5 h-3.5"
-                  ></span>
-                  Missing from lore
-                </span>
-                <button
-                  type="button"
-                  onclick={handleGeneratePersonality}
-                  disabled={isGeneratingPersonality}
-                  aria-busy={isGeneratingPersonality}
-                  class="text-[10px] font-bold text-theme-primary hover:text-theme-secondary flex items-center gap-1 transition disabled:opacity-50 cursor-pointer"
-                >
-                  <span
-                    class={isGeneratingPersonality
-                      ? "icon-[lucide--loader-2] animate-spin w-3 h-3"
-                      : "icon-[lucide--sparkles] w-3 h-3"}
-                  ></span>
-                  {isGeneratingPersonality ? "Generating..." : "Generate"}
-                </button>
-              </div>
+                  aria-hidden="true"
+                  class="icon-[lucide--alert-triangle] w-3.5 h-3.5"
+                ></span>
+                Missing from lore
+              </span>
             {/if}
+          </div>
+          <div class="flex items-center justify-end gap-3">
+            <button
+              type="button"
+              onclick={handleGeneratePersonality}
+              disabled={isGeneratingPersonality ||
+                isGeneratingPersonalityProfile}
+              aria-busy={isGeneratingPersonality}
+              class="text-micro font-bold text-theme-primary hover:text-theme-secondary flex items-center gap-1 transition disabled:opacity-50 cursor-pointer"
+              title="Write a few quick voice notes into the character's lore"
+            >
+              <span
+                class={isGeneratingPersonality
+                  ? "icon-[lucide--loader-2] animate-spin w-3 h-3"
+                  : "icon-[lucide--sparkles] w-3 h-3"}
+              ></span>
+              {isGeneratingPersonality ? "Generating..." : "Quick Generate"}
+            </button>
+            <button
+              type="button"
+              onclick={handleGeneratePersonalityProfile}
+              disabled={isGeneratingPersonality ||
+                isGeneratingPersonalityProfile}
+              aria-busy={isGeneratingPersonalityProfile}
+              class="text-micro font-bold text-theme-primary hover:text-theme-secondary flex items-center gap-1 transition disabled:opacity-50 cursor-pointer"
+              title="Generate a full structured personality profile (drives, contradiction, pressure response, roleplaying cues) using the Personality Generator"
+            >
+              <span
+                class={isGeneratingPersonalityProfile
+                  ? "icon-[lucide--loader-2] animate-spin w-3 h-3"
+                  : "icon-[lucide--drama] w-3 h-3"}
+              ></span>
+              {isGeneratingPersonalityProfile
+                ? "Generating..."
+                : "Generate Full Profile"}
+            </button>
           </div>
           {#if personalityError}
             <p
-              class="text-[10px] text-theme-danger flex items-center gap-1 font-semibold"
+              class="text-micro text-theme-danger flex items-center gap-1 font-semibold"
             >
-              <span class="icon-[lucide--circle-alert] w-3.5 h-3.5"></span>
+              <span
+                aria-hidden="true"
+                class="icon-[lucide--circle-alert] w-3.5 h-3.5"
+              ></span>
               {personalityError}
             </p>
           {/if}
@@ -332,6 +380,23 @@
             >
           </div>
         </div>
+        {#if !hasPersonalitySection && !entity.guestChatConfig.extraInstructions?.trim()}
+          <div
+            class="mt-3 flex items-center gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 p-2.5 text-xs text-amber-400"
+            role="alert"
+          >
+            <span
+              class="icon-[lucide--alert-triangle] w-4 h-4 shrink-0"
+              aria-hidden="true"
+            ></span>
+            <span>
+              <strong>Missing Voice Guidance:</strong> Add a
+              <code class="rounded bg-black/30 px-1 py-0.5 font-mono text-meta"
+                >## Personality & Voice</code
+              > section in character lore or edit this character to generate one.
+            </span>
+          </div>
+        {/if}
       {:else}
         <p class="text-xs text-theme-muted italic">
           Guest Character Chat is disabled. Use the toggle above to let invited

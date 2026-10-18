@@ -1,6 +1,7 @@
 ---
 id: proposer-guide
 title: Connections Proposer
+description: Review suggested relationships the Oracle finds between entities in your campaign.
 tags: [ai, connections, discovery]
 rank: 13
 ---

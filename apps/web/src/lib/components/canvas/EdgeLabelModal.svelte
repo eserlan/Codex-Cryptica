@@ -54,7 +54,10 @@
     class="p-4 border-b border-theme-border flex items-center justify-between bg-theme-bg/30"
   >
     <div class="flex items-center gap-2">
-      <span class="icon-[lucide--type] w-4 h-4 text-theme-primary"></span>
+      <span
+        aria-hidden="true"
+        class="icon-[lucide--type] w-4 h-4 text-theme-primary"
+      ></span>
       <h3
         id="edge-label-modal-title"
         class="text-xs font-bold text-theme-text font-header uppercase tracking-widest"
@@ -76,7 +79,7 @@
   <div class="p-6">
     <label
       for="edge-label-input"
-      class="block text-[10px] text-theme-muted uppercase tracking-widest mb-2 font-mono"
+      class="block text-micro text-theme-muted uppercase tracking-widest mb-2 font-mono"
     >
       Label Text
     </label>
@@ -89,7 +92,7 @@
       onkeydown={handleInputKeydown}
       class="w-full bg-theme-bg border border-theme-border rounded-lg px-4 py-3 text-sm text-theme-text focus:outline-none focus:border-theme-primary transition-all shadow-inner font-mono"
     />
-    <p class="text-[9px] text-theme-muted/60 mt-2 italic font-mono">
+    <p class="text-nano text-theme-muted/60 mt-2 italic font-mono">
       Clear the text to hide the label entirely.
     </p>
   </div>
@@ -100,17 +103,17 @@
   >
     <button
       onclick={handleCancel}
-      class="px-4 py-2 text-[10px] font-bold text-theme-muted hover:text-theme-text uppercase font-header tracking-widest transition-colors"
+      class="px-4 py-2 text-micro font-bold text-theme-muted hover:text-theme-text uppercase font-header tracking-widest transition-colors"
       type="button"
     >
       Cancel
     </button>
     <button
       onclick={handleSave}
-      class="px-6 py-2 bg-theme-primary text-theme-bg rounded-lg font-bold text-[10px] uppercase font-header tracking-widest hover:brightness-110 transition-all flex items-center gap-2 shadow-lg shadow-theme-primary/10"
+      class="px-6 py-2 bg-theme-primary text-theme-bg rounded-lg font-bold text-micro uppercase font-header tracking-widest hover:brightness-110 transition-all flex items-center gap-2 shadow-lg shadow-theme-primary/10"
       type="button"
     >
-      <span class="icon-[lucide--check] w-3 h-3"></span>
+      <span aria-hidden="true" class="icon-[lucide--check] w-3 h-3"></span>
       Save Label
     </button>
   </div>

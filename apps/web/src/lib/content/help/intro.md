@@ -1,15 +1,14 @@
 ---
 id: intro
 title: Getting Started
+description: Learn how Codex Cryptica stores campaign notes and how to begin building a local, connected world.
 tags: [basics, vault, workflow]
 rank: 1
 ---
 
 ## Welcome to Codex Cryptica
 
-![Codex Cryptica Dashboard](/images/rpg-vault-mockup.png)
-
-**In short:** Codex Cryptica is a place to build and run your tabletop campaign — your characters, places, factions, maps, and notes, all in one workspace. Everything you write stays on your own device. No account is needed, it works offline, and nothing is uploaded unless you choose to share it.
+**In short:** Codex Cryptica is a place to build and run your tabletop campaign — your characters, places, factions, maps, and notes, all in one workspace. Your working vault is saved on your device. No account is needed for local writing, and the core tools work offline after the app has loaded. AI requests send relevant context to a provider; publishing and opted-in cloud backups also upload data.
 
 You'll see a few Codex-specific words as you go — a **Vault** is one world (your whole campaign), a **Chronicle** is an entity's main description, and **Lore** is your private, GM-only notes. Don't worry about memorising them; they're explained in context the first time they matter.
 
@@ -19,14 +18,15 @@ For power users: your worlds are saved as clean local Markdown files (in the bro
 
 ## Quick Start: Your First 5 Minutes
 
-Follow this quick checklist to set up your first vault and see Codex Cryptica's core workflow in action:
+Follow this quick checklist to set up your first vault and see Codex Cryptica's core workflow in action. The same getting-started checklist is in **Settings → Help**, with a button to replay the welcome tour any time:
 
-1.  **Initialize your Space**: Click the folder icon in the top-left toolbar, select **New Vault**, and give it a name.
-2.  **Create your First Cast Member**: Click the `+` icon in the explorer sidebar, select the **Character** category, type `Eldrin` as the title, and hit Save.
-3.  **Write and Link**: Double-click Eldrin in the list to open his profile, click the Chronicle text area to edit, and type:
-    `A legendary mage living in [[Kingdom of Aethel]].`
-4.  **Confirm the Location**: The name `Kingdom of Aethel` will automatically create a draft entity link. Click that link in read mode to create the new Faction/Location record.
-5.  **Open the Knowledge Graph**: Select the Graph tab in the main navigation. You will see Eldrin and the Kingdom of Aethel mapped visually, with a connecting edge automatically drawn!
+1. **Create a vault**: Open the vault switcher, choose **NEW**, and name your world.
+2. **Add an entity**: Use **+ Create** in the header or **+** in the explorer, choose **Character**, and name your character.
+3. **Write**: Open the entity, click **EDIT**, add its Chronicle and any private Lore, then **SAVE CHANGES**.
+4. **Connect**: Create a Location, return to the character’s **Status** tab, and use **+ Add** under Connections to link them.
+5. **Explore**: Open the **Graph** to see both entities and their connection. Use **Groups** for connected group backgrounds, or **Redraw** to rearrange the graph.
+
+For AI revisions, use **AI Revise Description** (sparkles) in the entity side panel or Zen Mode. Review the draft before **Apply Changes**. See [Creating and Editing Entities](/help#help/creating-and-editing-entities).
 
 ---
 
@@ -56,13 +56,13 @@ Every person, place, or thing in your world is represented as an **Entity**.
 CC features a bidirectional link editor (built on **Tiptap**). Connecting your notes is seamless and instantaneous.
 
 - **Entity Auto-Links**: In read mode, any text matching an entity's name or its registered **aliases** is automatically highlighted as a clickable link.
-- **Command Bar (Slash Commands)**: Type a forward slash `/` in the chat input or the editor to trigger commands:
+- **Command Bar (Slash Commands)**: Type a forward slash `/` in the **Lore Oracle chat** to discover chat commands:
   - `/connect`: Initiate high-speed linking.
   - `/merge`: Consolidate duplicate entries.
 - **Efficient Connecting**:
   - _Visual Connector_: Use the **Chain Link** icon in the graph toolbar.
   - _Quick Connect_: Type `/connect "Eldrin" is the mentor of "Kaelen"` to create a relationship.
-  - _Tab Sequence_: Type `/connect` and press **Enter** to open the wizard, then use `Tab` to cycle from **Source** $\rightarrow$ **Label** $\rightarrow$ **Target** with keyboard auto-completion.
+  - _Tab Sequence_: Type `/connect` and press **Enter** to open the wizard, then use `Tab` to cycle from **Source** → **Label** → **Target** with keyboard auto-completion.
 - **Merging Entities**: Consolidate redundant files via `/merge "Old Notes" into "Kingdom of Aethel"`. CC redirects all incoming/outgoing graph connections automatically. Type `/merge oracle` to open the AI Merge Wizard to synthesize the texts into a single cohesive lore chronicle.
 
 ---
@@ -82,8 +82,6 @@ Browse your campaign history through a month-grid calendar, running agenda list,
 
 ## 5. Campaign Views: Graph, Canvas, Map, Calendar, & Table
 
-![Interactive Relational Knowledge Graph](/images/living-lore-graph.png)
-
 Codex Cryptica provides multiple ways to visualize and interact with your lore, allowing you to swap perspectives on the fly:
 
 - **Interactive Knowledge Graph**: The default web showing how character networks, factions, and locations connect. Use `Scroll` to zoom, `Drag` to pan, and click a node to open its details. Swappable layout modes (Redraw, Stable Pin, Orbit, Timeline) help organize your space.
@@ -102,15 +100,13 @@ Codex Cryptica provides multiple ways to visualize and interact with your lore, 
 
 ## 6. The Lore Oracle (AI Assistant)
 
-![The Lore Oracle AI Assistant Chat](/images/oracle-chat-mockup.jpg)
-
 The Lore Oracle is your co-author and worldbuilding assistant, powered by OpenAI/Luna.
 
 - **Context-Aware Chat**: Unlike generic AI chatbots, the Oracle retrieves relevant entities, notes, and local neighbor nodes from your graph to ground its responses in your specific world lore.
-- **Keys**: Configure your private OpenAI/Luna API key in Settings (stored locally in IndexedDB) or use the Shared Key (if configured by the host).
+- **Connection**: See **Settings → Intelligence** for system-proxy access or a personal key. See **Oracle AI Access and Personal Keys** for the provider and privacy details.
 - **Oracle Commands**:
   - `/draw [subject]`: Generate an image for an entity using your world's custom **Art Direction** metadata or theme styles.
-  - `/revise`: Instruct the Oracle to rewrite or polish a selected entity's Chronicle.
+  - `/revise`: Generate suggested Chronicle and Lore text for a selected entity in chat. You can also use **AI Revise Description** in the entity side panel or Zen Mode, then review and apply or discard the draft.
   - `/create [concept]`: Ask the Oracle to draft a new entity.
 - **Guest Character Chat**: Let players chat in-character with Characters. GMs can review transcripts to turn conversational roleplay into official lore.
 

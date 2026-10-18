@@ -440,6 +440,66 @@ const THEME_ARCHETYPES: Record<string, ThemeArchetypeSet> = {
     ],
     flavor: "occupation, quiet rebellion, and the cost of resisting",
   },
+  "space-western": {
+    themeName: "Space Western",
+    regionLabel: "Frontier Sector",
+    regionNames: [
+      "The Cinderbelt",
+      "Far Lantern Reach",
+      "The Prospector's Run",
+    ],
+    settlementLabel: "Frontier Port",
+    settlementNames: ["Redwater Station", "Cinder Dock", "Last Light Outpost"],
+    factionLabel: "Outfit",
+    factionNames: [
+      "The Cinderbelt Salvage Union",
+      "Redwater Freight Combine",
+      "The Last Light Marshal Service",
+    ],
+    characterRoles: [
+      "debt-bound freighter captain",
+      "independent salvage broker",
+      "frontier mechanic with a dangerous favour to call in",
+    ],
+    threatLabel: "Pressure",
+    threatNames: [
+      "a creditor closing in on a missed payment",
+      "a disputed salvage claim drawing armed crews",
+      "a customs blockade strangling the port's supply line",
+    ],
+    flavor:
+      "small crews, precarious jobs, debts, and hard choices at the edge of settled space",
+  },
+  superhero: {
+    themeName: "Superhero / Comic Book",
+    regionLabel: "City",
+    regionNames: ["The Crown District", "Halcyon City", "The Meridian Ward"],
+    settlementLabel: "Headquarters",
+    settlementNames: [
+      "The Sentinel Tower",
+      "The Civic Watchhouse",
+      "Aegis House",
+    ],
+    factionLabel: "Team",
+    factionNames: [
+      "The Vanguard Circle",
+      "The Civic Guardians",
+      "The Night Signal Network",
+    ],
+    characterRoles: [
+      "legacy hero",
+      "masked investigator",
+      "reluctant metahuman",
+    ],
+    threatLabel: "Villain",
+    threatNames: [
+      "a supervillain's public ultimatum",
+      "a power-draining device nearing activation",
+      "a trusted hero exposed as a double agent",
+    ],
+    flavor:
+      "secret identities, public trust, and impossible choices under a city skyline",
+  },
   workspace: {
     themeName: "Neutral Workspace",
     regionLabel: "Region",

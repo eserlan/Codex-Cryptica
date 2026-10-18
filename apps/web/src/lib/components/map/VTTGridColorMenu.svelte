@@ -59,11 +59,11 @@
   >
     <div class="mb-2">
       <div
-        class="text-[9px] font-bold uppercase tracking-widest text-theme-muted"
+        class="text-nano font-bold uppercase tracking-widest text-theme-muted"
       >
         Grid Color
       </div>
-      <div class="text-[10px] text-theme-muted/80 mt-1">
+      <div class="text-micro text-theme-muted/80 mt-1">
         Right-click menu for the VTT toggle.
       </div>
     </div>

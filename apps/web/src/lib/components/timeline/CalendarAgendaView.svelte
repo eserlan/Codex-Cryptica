@@ -101,7 +101,7 @@
               {item.entry.title}
             </span>
             <span
-              class="text-[10px] uppercase tracking-[0.18em] text-theme-muted"
+              class="text-micro uppercase tracking-[0.18em] text-theme-muted"
             >
               {item.entry.entityType}
             </span>

@@ -57,4 +57,33 @@ describe("FogInteractionHandler", () => {
     expect(painter.finish).toHaveBeenCalled();
     expect(broadcastFogSync).toHaveBeenCalled();
   });
+
+  it("paints a single hex and broadcasts when allowed", async () => {
+    painter.paintHex = vi.fn(async () => true);
+
+    expect(await handler.paintHex({ q: 1, r: -1 }, false)).toBe(true);
+
+    expect(painter.paintHex).toHaveBeenCalledWith({ q: 1, r: -1 }, false);
+    expect(broadcastFogSync).toHaveBeenCalled();
+  });
+
+  it("neither paints a hex nor offers a target for a non-host", async () => {
+    painter.paintHex = vi.fn(async () => true);
+    painter.hexAt = vi.fn();
+    canPaint = false;
+
+    expect(await handler.paintHex({ q: 0, r: 0 }, true)).toBe(false);
+    expect(handler.hexTargetAt({ x: 0, y: 0 })).toBeNull();
+
+    expect(painter.paintHex).not.toHaveBeenCalled();
+    expect(painter.hexAt).not.toHaveBeenCalled();
+    expect(broadcastFogSync).not.toHaveBeenCalled();
+  });
+
+  it("does not broadcast when the hex was not painted", async () => {
+    painter.paintHex = vi.fn(async () => false);
+
+    expect(await handler.paintHex({ q: 0, r: 0 }, true)).toBe(false);
+    expect(broadcastFogSync).not.toHaveBeenCalled();
+  });
 });

@@ -48,7 +48,7 @@
     </h3>
     <button
       onclick={() => sessionActivity.clear()}
-      class="text-[10px] text-theme-muted hover:text-theme-text transition-colors uppercase font-header font-bold"
+      class="text-micro text-theme-muted hover:text-theme-text transition-colors uppercase font-header font-bold"
       aria-label="Clear activity log"
     >
       Clear
@@ -60,11 +60,12 @@
       <div
         class="flex flex-col items-center justify-center h-full opacity-30 text-center p-4"
       >
-        <span class="icon-[lucide--activity] w-8 h-8 mb-2"></span>
+        <span aria-hidden="true" class="icon-[lucide--activity] w-8 h-8 mb-2"
+        ></span>
         <p class="text-xs uppercase font-header tracking-tighter">
           No recent activity detected.
         </p>
-        <p class="text-[10px] mt-1">Talk to the Oracle to discover new lore.</p>
+        <p class="text-micro mt-1">Talk to the Oracle to discover new lore.</p>
       </div>
     {:else}
       {#each discoveryPolicyStore.archiveActivityLog as event (event.id)}
@@ -85,7 +86,7 @@
               <div class="flex-1 min-w-0">
                 <div class="flex items-center justify-between gap-2">
                   <span
-                    class="text-[10px] font-bold uppercase truncate font-header tracking-tight"
+                    class="text-micro font-bold uppercase truncate font-header tracking-tight"
                   >
                     {event.type === "discovery"
                       ? "Found"
@@ -93,7 +94,7 @@
                         ? "Archived"
                         : "Updated"}
                   </span>
-                  <span class="text-[9px] text-theme-muted/60 font-mono"
+                  <span class="text-nano text-theme-muted/60 font-mono"
                     >{formatTime(event.timestamp)}</span
                   >
                 </div>
@@ -101,7 +102,7 @@
                   {event.title}
                 </p>
                 <p
-                  class="text-[9px] uppercase opacity-40 font-mono tracking-tighter"
+                  class="text-nano uppercase opacity-40 font-mono tracking-tighter"
                 >
                   {event.entityType}
                 </p>
@@ -122,7 +123,7 @@
               <div class="flex-1 min-w-0">
                 <div class="flex items-center justify-between gap-2">
                   <span
-                    class="text-[10px] font-bold uppercase truncate font-header tracking-tight"
+                    class="text-micro font-bold uppercase truncate font-header tracking-tight"
                   >
                     {event.type === "discovery"
                       ? "Found"
@@ -130,7 +131,7 @@
                         ? "Archived"
                         : "Updated"}
                   </span>
-                  <span class="text-[9px] text-theme-muted/60 font-mono"
+                  <span class="text-nano text-theme-muted/60 font-mono"
                     >{formatTime(event.timestamp)}</span
                   >
                 </div>
@@ -138,7 +139,7 @@
                   {event.title}
                 </p>
                 <p
-                  class="text-[9px] uppercase opacity-40 font-mono tracking-tighter"
+                  class="text-nano uppercase opacity-40 font-mono tracking-tighter"
                 >
                   {event.entityType}
                 </p>

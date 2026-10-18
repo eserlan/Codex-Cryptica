@@ -81,12 +81,22 @@
   });
 </script>
 
+<svelte:head>
+  <title>Spatial Canvas | Codex Cryptica</title>
+  <meta
+    name="description"
+    content="Visual spatial canvas for designing dungeons, relationship webs, and campaign nodes."
+  />
+</svelte:head>
+
 <div
   class="flex items-center justify-center h-screen bg-theme-bg text-theme-muted"
 >
   <div class="flex flex-col items-center gap-4 max-w-md text-center px-6">
     {#if initializationError}
-      <span class="icon-[lucide--alert-circle] w-12 h-12 text-red-500 mb-2"
+      <span
+        aria-hidden="true"
+        class="icon-[lucide--alert-circle] w-12 h-12 text-red-500 mb-2"
       ></span>
       <h2
         class="text-lg font-bold text-theme-text font-mono uppercase font-header tracking-widest"
@@ -112,12 +122,12 @@
         <div
           class="mt-8 p-4 border border-theme-border rounded bg-theme-surface/50 animate-in fade-in slide-in-from-bottom-2"
         >
-          <p class="text-[10px] mb-4 text-theme-text opacity-70">
+          <p class="text-micro mb-4 text-theme-text opacity-70">
             The registry is taking longer than usual to respond.
           </p>
           <button
             onclick={() => canvasRegistry.loadFromVault(vault.activeVaultId!)}
-            class="text-[10px] font-bold text-theme-primary hover:underline uppercase font-header tracking-widest"
+            class="text-micro font-bold text-theme-primary hover:underline uppercase font-header tracking-widest"
           >
             Force Reload Registry
           </button>

@@ -22,7 +22,7 @@
           : 'border-chrome-border text-chrome-muted hover:border-chrome-accent/50 hover:text-chrome-text'}"
         onclick={() => themeStore.setAppAppearance("system")}
       >
-        <span class="icon-[lucide--monitor] w-4 h-4"></span>
+        <span class="icon-[lucide--monitor] w-4 h-4" aria-hidden="true"></span>
         System
       </button>
       <button
@@ -34,7 +34,7 @@
           : 'border-chrome-border text-chrome-muted hover:border-chrome-accent/50 hover:text-chrome-text'}"
         onclick={() => themeStore.setAppAppearance("neutral-light")}
       >
-        <span class="icon-[lucide--sun] w-4 h-4"></span>
+        <span class="icon-[lucide--sun] w-4 h-4" aria-hidden="true"></span>
         Light
       </button>
       <button
@@ -46,7 +46,7 @@
           : 'border-chrome-border text-chrome-muted hover:border-chrome-accent/50 hover:text-chrome-text'}"
         onclick={() => themeStore.setAppAppearance("neutral-dark")}
       >
-        <span class="icon-[lucide--moon] w-4 h-4"></span>
+        <span class="icon-[lucide--moon] w-4 h-4" aria-hidden="true"></span>
         Dark
       </button>
     </div>
@@ -64,7 +64,7 @@
     >
       <div class="space-y-0.5">
         <div class="font-bold">Auto Fullscreen on First Interaction</div>
-        <div class="text-[11px] text-chrome-muted">
+        <div class="text-meta text-chrome-muted">
           Automatically request browser fullscreen mode when clicking or
           pressing keys on load.
         </div>

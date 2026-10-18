@@ -9,7 +9,7 @@ describe("Tools directory", () => {
       "utf8",
     );
 
-    expect(source).toContain('title: "RPG Generators"');
+    expect(source).toContain('title: "RPG Tools"');
     expect(source).toContain('title: "Factions & Organizations"');
     expect(source).toContain('href: "/tools/faction-generator"');
     expect(source).toContain('href: "/tools/vampire-clan-generator"');

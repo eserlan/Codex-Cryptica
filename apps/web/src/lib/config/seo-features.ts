@@ -35,7 +35,7 @@ export const featuresConfig: Record<string, SEOPageData> = {
       {
         title: "No Account Required",
         description:
-          "Launch the app and start writing immediately. Your data remains yours — no sign-up forms, no subscription fees.",
+          "Launch the app and start writing immediately. Your data remains yours: no sign-up forms, no subscription fees.",
         icon: "icon-[lucide--user-x]",
       },
     ],
@@ -85,7 +85,7 @@ export const featuresConfig: Record<string, SEOPageData> = {
       {
         title: "Markdown File Sovereignty",
         description:
-          "Your lore is saved as standard Markdown files with frontmatter. Edit them in any text editor — no vendor lock-in.",
+          "Your lore is saved as standard Markdown files with frontmatter. Edit them in any text editor, no vendor lock-in.",
         icon: "icon-[lucide--file-text]",
       },
       {
@@ -134,7 +134,7 @@ export const featuresConfig: Record<string, SEOPageData> = {
     subheading:
       "Co-author lore, design NPCs, and outline plots with absolute privacy.",
     introText:
-      "Supercharge your worldbuilding using Codex Cryptica's integrated local-first Lore Oracle. Unlike cloud-based TTRPG campaign managers that scrape your creative writing to train proprietary AI models, Codex Cryptica operates on a zero-data-leakage architecture. Your notes, worldbuilding details, and campaign secrets are processed directly using secure API keys on your own terms. We never harvest, log, or sell your intellectual property to cloud scrapers.",
+      "Codex Cryptica's integrated local-first Lore Oracle helps with worldbuilding without the usual trade-off. Unlike cloud-based TTRPG campaign managers that scrape your creative writing to train proprietary AI models, Codex Cryptica operates on a zero-data-leakage architecture. Your notes, worldbuilding details, and campaign secrets are processed directly using secure API keys on your own terms. We never harvest, log, or sell your intellectual property to cloud scrapers.",
     ctaText: "Try AI Assistant Features",
     keywords: [
       "ai gm assistant",
@@ -166,7 +166,7 @@ export const featuresConfig: Record<string, SEOPageData> = {
       {
         question: "How does Codex protect my world from cloud AI scrapers?",
         answer:
-          "Traditional online wikis store your campaign notes in cloud databases where they are vulnerable to automated scraping and model training. Codex Cryptica stores everything locally in your browser's sandboxed filesystem. When you use the Lore Oracle, calls are made directly to the AI provider via your own API key under strict zero-retention developer policies — your creative output is never scraped or logged by us.",
+          "Traditional online wikis store your campaign notes in cloud databases where they are vulnerable to automated scraping and model training. Codex Cryptica stores everything locally in your browser's sandboxed filesystem. When you use the Lore Oracle, calls are made directly to the AI provider via your own API key under strict zero-retention developer policies, so your creative output is never scraped or logged by us.",
       },
       {
         question: "Do I need a paid AI subscription?",

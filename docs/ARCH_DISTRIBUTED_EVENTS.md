@@ -153,9 +153,7 @@ export class AppEventBus {
   // not part of the public API and should not be called directly.
   subscribe(
     filter:
-      | AppEventType
-      | EventWildcard
-      | readonly (AppEventType | EventWildcard)[],
+      AppEventType | EventWildcard | readonly (AppEventType | EventWildcard)[],
     listener: AppEventListener<RegisteredAppEvent>,
     name?: string,
   ): () => void {

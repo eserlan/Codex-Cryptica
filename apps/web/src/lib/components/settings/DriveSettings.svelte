@@ -33,6 +33,9 @@
     const db = await getDB();
     const ms = new CloudSyncMetadataService(new SyncRegistry(db));
     metadata = await ms.getMetadata(vault.activeVaultId);
+    // Mirrored onto the store so the destination picker can tell whether this
+    // vault is on Drive without repeating the lookup.
+    driveStore.metadata = metadata;
     if (metadata) {
       driveStore.status = "connected";
     }
@@ -88,6 +91,7 @@
     if (confirmed) {
       await disconnectVaultFromDrive(vault.activeVaultId);
       metadata = null;
+      driveStore.metadata = null;
       notificationStore.notify("Google Drive disconnected", "info");
     }
   }
@@ -176,7 +180,10 @@
   <div class="flex items-center justify-between">
     <div>
       <h3 class="text-lg font-medium text-theme-text flex items-center gap-2">
-        <span class="icon-[lucide--cloud] h-5 w-5 text-theme-primary"></span>
+        <span
+          class="icon-[lucide--cloud] h-5 w-5 text-theme-primary"
+          aria-hidden="true"
+        ></span>
         Cloud Sync
       </h3>
       <p class="text-sm text-theme-muted">
@@ -192,7 +199,8 @@
       <div
         class="flex items-center gap-2 text-amber-500 text-sm font-bold uppercase tracking-wider"
       >
-        <span class="icon-[lucide--alert-triangle] h-4 w-4"></span>
+        <span class="icon-[lucide--alert-triangle] h-4 w-4" aria-hidden="true"
+        ></span>
         Configuration Missing
       </div>
       <p class="text-xs text-theme-muted leading-relaxed">
@@ -212,7 +220,9 @@
             <div
               class="h-10 w-10 rounded-full bg-green-500/10 flex items-center justify-center"
             >
-              <span class="icon-[lucide--check-circle] h-6 w-6 text-green-500"
+              <span
+                class="icon-[lucide--check-circle] h-6 w-6 text-green-500"
+                aria-hidden="true"
               ></span>
             </div>
             <div>
@@ -247,13 +257,23 @@
 
       <div class="grid grid-cols-2 gap-4">
         <button
+          type="button"
           onclick={handlePush}
           disabled={isPushing || isPulling}
-          class="flex flex-col items-center gap-2 p-4 rounded-lg border border-theme-border bg-theme-surface hover:border-theme-primary/50 transition-all group disabled:opacity-50"
+          aria-busy={isPushing}
+          class="flex flex-col items-center gap-2 p-4 rounded-lg border border-theme-border bg-theme-surface hover:border-theme-primary/50 transition-all group disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary"
         >
-          <span
-            class="icon-[lucide--upload-cloud] h-6 w-6 text-theme-primary group-hover:scale-110 transition-transform"
-          ></span>
+          {#if isPushing}
+            <span
+              class="icon-[lucide--loader-2] h-6 w-6 text-theme-primary animate-spin"
+              aria-hidden="true"
+            ></span>
+          {:else}
+            <span
+              class="icon-[lucide--upload-cloud] h-6 w-6 text-theme-primary group-hover:scale-110 transition-transform"
+              aria-hidden="true"
+            ></span>
+          {/if}
           <span
             class="text-xs font-bold uppercase tracking-widest text-theme-text"
           >
@@ -262,13 +282,23 @@
         </button>
 
         <button
+          type="button"
           onclick={handlePull}
           disabled={isPushing || isPulling}
-          class="flex flex-col items-center gap-2 p-4 rounded-lg border border-theme-border bg-theme-surface hover:border-theme-primary/50 transition-all group disabled:opacity-50"
+          aria-busy={isPulling}
+          class="flex flex-col items-center gap-2 p-4 rounded-lg border border-theme-border bg-theme-surface hover:border-theme-primary/50 transition-all group disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary"
         >
-          <span
-            class="icon-[lucide--download-cloud] h-6 w-6 text-theme-secondary group-hover:scale-110 transition-transform"
-          ></span>
+          {#if isPulling}
+            <span
+              class="icon-[lucide--loader-2] h-6 w-6 text-theme-secondary animate-spin"
+              aria-hidden="true"
+            ></span>
+          {:else}
+            <span
+              class="icon-[lucide--download-cloud] h-6 w-6 text-theme-secondary group-hover:scale-110 transition-transform"
+              aria-hidden="true"
+            ></span>
+          {/if}
           <span
             class="text-xs font-bold uppercase tracking-widest text-theme-text"
           >
@@ -286,10 +316,14 @@
         class="w-full py-3 px-4 flex items-center justify-center gap-2 bg-theme-primary hover:bg-theme-primary/90 text-white rounded-lg font-medium transition-all shadow-sm active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {#if isConnecting}
-          <span class="icon-[lucide--loader-2] h-5 w-5 animate-spin"></span>
+          <span
+            class="icon-[lucide--loader-2] h-5 w-5 animate-spin"
+            aria-hidden="true"
+          ></span>
           Connecting...
         {:else}
-          <span class="icon-[lucide--plus-circle] h-5 w-5"></span>
+          <span class="icon-[lucide--plus-circle] h-5 w-5" aria-hidden="true"
+          ></span>
           Connect Google Drive
         {/if}
       </button>
@@ -320,7 +354,7 @@
             placeholder="Enter Google Drive Folder ID"
             class="w-full px-3 py-2 bg-theme-bg border border-theme-border rounded-md text-sm text-theme-text focus:outline-none focus:ring-2 focus:ring-theme-primary/50 font-mono"
           />
-          <p class="text-[10px] text-theme-muted italic leading-relaxed">
+          <p class="text-micro text-theme-muted italic leading-relaxed">
             Use this to connect to a folder shared by a co-host or from another
             device.
           </p>
@@ -359,7 +393,9 @@
                 class="w-full flex items-center justify-between px-3 py-2 rounded-md border border-theme-border bg-theme-surface hover:border-theme-primary/50 transition-all text-left disabled:opacity-50"
               >
                 <span class="flex items-center gap-2 text-sm text-theme-text">
-                  <span class="icon-[lucide--folder] h-4 w-4 text-theme-primary"
+                  <span
+                    class="icon-[lucide--folder] h-4 w-4 text-theme-primary"
+                    aria-hidden="true"
                   ></span>
                   {v.name}
                 </span>

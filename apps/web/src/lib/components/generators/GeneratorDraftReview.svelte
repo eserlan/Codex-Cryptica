@@ -2,13 +2,19 @@
   import type { GeneratedDraft } from "generator-engine";
   import type { Category } from "schema";
   import { getDelveLocationTypeLabel } from "$lib/utils/delve-terminology";
-  import { renderMarkdown } from "$lib/utils/markdown";
+  import DraftBody from "./DraftBody.svelte";
+  import PointCrawlGraph from "$lib/components/seo/PointCrawlGraph.svelte";
+  import GeneratorMechanicsPreview from "./GeneratorMechanicsPreview.svelte";
 
   interface Props {
     draft: GeneratedDraft;
     categories: Category[];
     saving: boolean;
-    onsave: (draft: GeneratedDraft, createRelationship: boolean) => void;
+    onsave: (
+      draft: GeneratedDraft,
+      createRelationship: boolean,
+      options?: { selectedNodeIds?: string[]; openInGraph?: boolean },
+    ) => void;
     onback: () => void;
     /** When true, show the relationship creation toggle (contextual launch). */
     showRelationshipToggle?: boolean;
@@ -18,6 +24,14 @@
     backLabel?: string;
     /** Open Plot Twist seeded from a quest-hook draft. */
     onGeneratePlotTwist?: () => void;
+    /** Open Boss / Key NPC generator seeded from a delve/dungeon draft (#1827). */
+    onGenerateBoss?: () => void;
+    /**
+     * Solo play: hide the parts of the draft that spell out what happens
+     * (content and GM reference) until the player chooses to reveal them, so
+     * the person who will play the adventure isn't handed its plot.
+     */
+    spoilerShield?: boolean;
   }
 
   let {
@@ -30,6 +44,8 @@
     themeId = "workspace",
     backLabel = "Back",
     onGeneratePlotTwist,
+    onGenerateBoss,
+    spoilerShield = false,
   }: Props = $props();
 
   let createRelationship = $state(false);
@@ -40,49 +56,96 @@
   let title = $state(draft.title);
   let entityType = $state(draft.entityType);
   let labelsRaw = $state(draft.labels?.join(", ") ?? "");
+  let selectedPointCrawlNodeIds = $state<string[]>(
+    draft.pointCrawl ? draft.pointCrawl.nodes.map((n) => n.id) : [],
+  );
+  let pointCrawlGraphRef = $state<ReturnType<typeof PointCrawlGraph> | null>(
+    null,
+  );
+
+  export async function exportPointCrawlPng(): Promise<Blob | null> {
+    if (!pointCrawlGraphRef) return null;
+    return pointCrawlGraphRef.exportPng();
+  }
 
   const disabled = $derived(saving);
 
+  function buildUpdatedDraft(): GeneratedDraft {
+    return {
+      ...draft,
+      title: title.trim(),
+      entityType,
+      labels: labelsRaw
+        .split(",")
+        .map((l) => l.trim())
+        .filter(Boolean),
+    };
+  }
+
   function handleSave(e: SubmitEvent) {
     e.preventDefault();
-    onsave(
-      {
-        ...draft,
-        title: title.trim(),
-        entityType,
-        labels: labelsRaw
-          .split(",")
-          .map((l) => l.trim())
-          .filter(Boolean),
-      },
-      createRelationship,
-    );
+    onsave(buildUpdatedDraft(), createRelationship, {
+      selectedNodeIds: draft.pointCrawl ? selectedPointCrawlNodeIds : undefined,
+      openInGraph: false,
+    });
+  }
+
+  function handleSaveAndOpenGraph() {
+    onsave(buildUpdatedDraft(), createRelationship, {
+      selectedNodeIds: draft.pointCrawl ? selectedPointCrawlNodeIds : undefined,
+      openInGraph: true,
+    });
   }
 </script>
 
+<!-- fallow-ignore-next-line complexity -->
 <form onsubmit={handleSave} class="flex flex-col gap-4">
   <p class="text-xs text-chrome-muted">
     Review the draft below, then open in the editor to accept or discard.
   </p>
 
-  {#if draft.primaryLanguageTitle}
+  {#snippet draftContext()}
+    {#if draft.primaryLanguageTitle}
+      <div
+        class="flex items-center gap-2 rounded border border-chrome-border bg-chrome-bg/30 px-3 py-2 text-xs text-chrome-text"
+        data-testid="primary-language-context"
+      >
+        <span
+          aria-hidden="true"
+          class="icon-[lucide--languages] h-4 w-4 text-chrome-accent"
+        ></span>
+        <span class="text-chrome-muted">Naming language:</span>
+        <strong>{draft.primaryLanguageTitle}</strong>
+      </div>
+    {/if}
+  {/snippet}
+  {@render draftContext()}
+
+  {#if draft.contextProvenance?.length}
     <div
       class="flex items-center gap-2 rounded border border-chrome-border bg-chrome-bg/30 px-3 py-2 text-xs text-chrome-text"
-      data-testid="primary-language-context"
+      data-testid="in-vault-provenance"
     >
       <span
         aria-hidden="true"
-        class="icon-[lucide--languages] h-4 w-4 text-chrome-accent"
+        class="icon-[lucide--zap] h-4 w-4 text-chrome-accent shrink-0"
       ></span>
-      <span class="text-chrome-muted">Naming language:</span>
-      <strong>{draft.primaryLanguageTitle}</strong>
+      <span class="text-chrome-muted">Used context:</span>
+      <div class="flex flex-wrap items-center gap-x-1 gap-y-0.5 font-medium">
+        {#each draft.contextProvenance as item, i (item.id)}
+          <span class="text-chrome-text">{item.title}</span>
+          {#if i < draft.contextProvenance.length - 1}
+            <span class="text-chrome-muted font-normal mr-0.5">,</span>
+          {/if}
+        {/each}
+      </div>
     </div>
   {/if}
 
   <div class="flex flex-col gap-1">
     <label
       for="draft-title"
-      class="text-[10px] font-bold uppercase tracking-wider text-chrome-muted"
+      class="text-micro font-bold uppercase tracking-wider text-chrome-muted"
     >
       Title
     </label>
@@ -99,7 +162,7 @@
   <div class="flex flex-col gap-1">
     <label
       for="draft-type"
-      class="text-[10px] font-bold uppercase tracking-wider text-chrome-muted"
+      class="text-micro font-bold uppercase tracking-wider text-chrome-muted"
     >
       Type
     </label>
@@ -122,7 +185,7 @@
   <div class="flex flex-col gap-1">
     <label
       for="draft-labels"
-      class="text-[10px] font-bold uppercase tracking-wider text-chrome-muted"
+      class="text-micro font-bold uppercase tracking-wider text-chrome-muted"
     >
       Labels
     </label>
@@ -136,71 +199,47 @@
     />
   </div>
 
-  {#if draft.summary}
-    <div class="flex flex-col gap-1">
-      <span
-        class="text-[10px] font-bold uppercase tracking-wider text-chrome-muted"
-      >
-        Summary
-      </span>
-      <div
-        class="draft-preview max-h-32 overflow-y-auto rounded border border-chrome-border bg-chrome-bg/30 px-3 py-2"
-      >
-        <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-        {@html renderMarkdown(draft.summary)}
-      </div>
-    </div>
+  {#if draft.pointCrawl?.nodes?.length}
+    <PointCrawlGraph
+      bind:this={pointCrawlGraphRef}
+      crawl={draft.pointCrawl}
+      bind:selectedNodeIds={selectedPointCrawlNodeIds}
+    />
   {/if}
 
-  {#if draft.content}
-    <div class="flex flex-col gap-1">
-      <span
-        class="text-[10px] font-bold uppercase tracking-wider text-chrome-muted"
-      >
-        Content
-      </span>
-      <div
-        class="draft-preview min-h-48 max-h-80 overflow-y-auto rounded border border-chrome-border bg-chrome-bg/30 px-3 py-2"
-      >
-        <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-        {@html renderMarkdown(draft.content)}
-      </div>
-    </div>
-  {/if}
+  <DraftBody {draft} {spoilerShield} />
 
-  {#if draft.lore}
+  {#if draft.mechanics}
     <div class="flex flex-col gap-1">
       <span
-        class="text-[10px] font-bold uppercase tracking-wider text-chrome-muted"
+        class="text-micro font-bold uppercase tracking-wider text-chrome-muted"
       >
-        GM Reference
+        Game Mechanics
       </span>
-      <div
-        class="draft-preview min-h-48 max-h-64 overflow-y-auto rounded border border-chrome-border bg-chrome-bg/30 px-3 py-2"
-      >
-        <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-        {@html renderMarkdown(draft.lore)}
-      </div>
+      <GeneratorMechanicsPreview mechanics={draft.mechanics} />
     </div>
   {/if}
 
   {#if draft.connections?.length}
     <div class="flex flex-col gap-1">
       <span
-        class="text-[10px] font-bold uppercase tracking-wider text-chrome-muted"
+        class="text-micro font-bold uppercase tracking-wider text-chrome-muted"
       >
         Suggested Connections
       </span>
       <ul class="flex flex-col gap-1">
         {#each draft.connections as conn (conn.targetTitle + conn.relationship)}
           <li class="flex items-center gap-2 text-xs text-chrome-text">
-            <span class="icon-[lucide--link] h-3 w-3 text-chrome-muted"></span>
+            <span
+              aria-hidden="true"
+              class="icon-[lucide--link] h-3 w-3 text-chrome-muted"
+            ></span>
             <span class="text-chrome-muted">{conn.relationship}</span>
             <span class="font-medium">{conn.targetTitle}</span>
           </li>
         {/each}
       </ul>
-      <p class="text-[10px] text-chrome-muted">
+      <p class="text-micro text-chrome-muted">
         Links to entities that already exist will be created on save.
       </p>
     </div>
@@ -243,57 +282,43 @@
           Generate Plot Twist
         </button>
       {/if}
+      {#if onGenerateBoss}
+        <button
+          type="button"
+          onclick={onGenerateBoss}
+          disabled={saving}
+          class="inline-flex items-center gap-2 rounded-lg border border-chrome-accent/60 px-4 py-2 text-xs font-bold uppercase tracking-wider text-chrome-accent transition-colors hover:bg-chrome-accent/10 disabled:pointer-events-none disabled:opacity-50"
+          data-testid="generate-boss-from-dungeon"
+        >
+          <span aria-hidden="true" class="icon-[lucide--crown] h-3.5 w-3.5"
+          ></span>
+          Generate Boss / Key NPC
+        </button>
+      {/if}
+      {#if draft.pointCrawl}
+        <button
+          type="button"
+          onclick={handleSaveAndOpenGraph}
+          disabled={saving}
+          class="inline-flex items-center gap-2 rounded-lg border border-chrome-accent/60 px-4 py-2 text-xs font-bold uppercase tracking-wider text-chrome-accent transition-colors hover:bg-chrome-accent/10 disabled:pointer-events-none disabled:opacity-50"
+          data-testid="save-point-crawl-open-graph"
+        >
+          <span aria-hidden="true" class="icon-[lucide--network] h-3.5 w-3.5"
+          ></span>
+          Save & Open in Graph
+        </button>
+      {/if}
       <button
         type="submit"
         disabled={saving}
         class="rounded-lg bg-chrome-accent px-5 py-2 text-xs font-bold uppercase tracking-wider text-chrome-surface transition-all hover:brightness-110 active:scale-95 disabled:pointer-events-none disabled:opacity-50"
       >
-        {saving ? "Opening…" : "Open in Editor"}
+        {saving
+          ? "Opening…"
+          : draft.pointCrawl
+            ? `Save ${selectedPointCrawlNodeIds.length} Locations + Overview`
+            : "Open in Editor"}
       </button>
     </div>
   </div>
 </form>
-
-<style>
-  .draft-preview :global(h1),
-  .draft-preview :global(h2),
-  .draft-preview :global(h3) {
-    font-size: 0.8rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--color-chrome-accent, #e6b450);
-    margin-top: 0.75rem;
-    margin-bottom: 0.25rem;
-  }
-  .draft-preview :global(h1:first-child),
-  .draft-preview :global(h2:first-child),
-  .draft-preview :global(h3:first-child) {
-    margin-top: 0;
-  }
-  .draft-preview :global(p) {
-    font-size: 0.8125rem;
-    color: var(--color-chrome-text, #e2e8f0);
-    line-height: 1.6;
-    margin-bottom: 0.5rem;
-  }
-  .draft-preview :global(strong) {
-    font-weight: 600;
-    color: var(--color-chrome-text, #e2e8f0);
-  }
-  .draft-preview :global(ul),
-  .draft-preview :global(ol) {
-    padding-left: 1.25rem;
-    margin-bottom: 0.5rem;
-    font-size: 0.8125rem;
-    color: var(--color-chrome-text, #e2e8f0);
-  }
-  .draft-preview :global(li) {
-    margin-bottom: 0.15rem;
-    line-height: 1.5;
-  }
-  .draft-preview :global(em) {
-    font-style: italic;
-    opacity: 0.85;
-  }
-</style>

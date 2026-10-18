@@ -343,17 +343,25 @@ export async function loadTranscriptsForCharacterFromDisk(
       create: true,
     });
 
+    // Match both roles a saved character can hold in a transcript: the
+    // AI-voiced character (encoded in the filename) and the human's speaker
+    // character (only known once the file is parsed) — so a shared
+    // conversation cross-lists under both participants' chat history (#2302).
     const transcripts: GuestChatTranscript[] = [];
     for await (const [name, handle] of transcriptsDir.entries()) {
-      if (handle.kind === "file" && name.endsWith(`_${characterId}.json`)) {
-        try {
-          const file = await (handle as FileSystemFileHandle).getFile();
-          const text = await file.text();
-          const parsed = JSON.parse(text);
+      if (handle.kind !== "file" || !name.endsWith(".json")) continue;
+      try {
+        const file = await (handle as FileSystemFileHandle).getFile();
+        const text = await file.text();
+        const parsed = JSON.parse(text) as GuestChatTranscript;
+        if (
+          parsed.characterId === characterId ||
+          parsed.speakerCharacterId === characterId
+        ) {
           transcripts.push(parsed);
-        } catch (itemErr) {
-          console.error(`[VaultIO] Failed to load transcript ${name}`, itemErr);
         }
+      } catch (itemErr) {
+        console.error(`[VaultIO] Failed to load transcript ${name}`, itemErr);
       }
     }
     transcripts.sort((a, b) => b.lastUpdated - a.lastUpdated);

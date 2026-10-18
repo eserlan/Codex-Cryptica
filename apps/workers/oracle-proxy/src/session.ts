@@ -12,6 +12,8 @@
  * anything confidential in it.
  */
 
+export type SessionScope = "human" | "automation";
+
 export interface SessionTokenPayload {
   /** Expiration, seconds since epoch. */
   exp: number;
@@ -19,6 +21,8 @@ export interface SessionTokenPayload {
   jti: string;
   /** IP the token was issued to. Logged on mismatch, never enforced. */
   ip: string;
+  /** Scope/role under which this token was minted. Defaults to "human". */
+  scope?: SessionScope;
 }
 
 export type SessionTokenErrorCode =
@@ -75,12 +79,14 @@ export async function mintSessionToken(
   ip: string,
   nowSeconds: number = Math.floor(Date.now() / 1000),
   ttlSeconds: number = SESSION_TOKEN_TTL_SECONDS,
-): Promise<{ token: string; expiresAt: number }> {
+  scope: SessionScope = "human",
+): Promise<{ token: string; expiresAt: number; scope: SessionScope }> {
   const expiresAt = nowSeconds + ttlSeconds;
   const payload: SessionTokenPayload = {
     exp: expiresAt,
     jti: crypto.randomUUID(),
     ip,
+    scope,
   };
 
   const encodedPayload = base64UrlEncode(
@@ -95,6 +101,7 @@ export async function mintSessionToken(
   return {
     token: `${encodedPayload}.${base64UrlEncode(new Uint8Array(signature))}`,
     expiresAt,
+    scope,
   };
 }
 
@@ -148,11 +155,24 @@ export async function verifySessionToken(
   if (typeof payload?.exp !== "number" || typeof payload?.jti !== "string") {
     return { valid: false, code: "SESSION_TOKEN_INVALID" };
   }
+  if (
+    payload.scope !== undefined &&
+    payload.scope !== "human" &&
+    payload.scope !== "automation"
+  ) {
+    return { valid: false, code: "SESSION_TOKEN_INVALID" };
+  }
   if (payload.exp <= nowSeconds) {
     return { valid: false, code: "SESSION_TOKEN_EXPIRED" };
   }
 
-  return { valid: true, payload };
+  return {
+    valid: true,
+    payload: {
+      ...payload,
+      scope: payload.scope || "human",
+    },
+  };
 }
 
 /** Pull the bearer token out of an Authorization header. */
@@ -161,4 +181,52 @@ export function extractBearerToken(request: Request): string | null {
   if (!header) return null;
   const match = /^Bearer\s+(.+)$/i.exec(header.trim());
   return match ? match[1] : null;
+}
+
+/**
+ * Compare two strings in constant time by hashing them with SHA-256 first
+ * and checking XOR differences across the fixed-length digests.
+ */
+export async function timingSafeEqualString(
+  a: string,
+  b: string,
+): Promise<boolean> {
+  const encoder = new TextEncoder();
+  const aBuf = await crypto.subtle.digest("SHA-256", encoder.encode(a));
+  const bBuf = await crypto.subtle.digest("SHA-256", encoder.encode(b));
+  const aBytes = new Uint8Array(aBuf);
+  const bBytes = new Uint8Array(bBuf);
+  let diff = 0;
+  for (let i = 0; i < aBytes.length; i++) {
+    diff |= aBytes[i] ^ bBytes[i];
+  }
+  return diff === 0;
+}
+
+/**
+ * Check if a provided automation key matches any configured key in secret string
+ * (supporting comma-separated keys for seamless rotation).
+ */
+export async function verifyAutomationKey(
+  providedKey: string | null | undefined,
+  configuredSecret: string | null | undefined,
+): Promise<boolean> {
+  if (!providedKey || !configuredSecret) return false;
+  const trimmedProvided = providedKey.trim();
+  if (!trimmedProvided) return false;
+
+  const validKeys = configuredSecret
+    .split(",")
+    .map((k) => k.trim())
+    .filter(Boolean);
+
+  if (validKeys.length === 0) return false;
+
+  let matched = false;
+  for (const key of validKeys) {
+    if (await timingSafeEqualString(trimmedProvided, key)) {
+      matched = true;
+    }
+  }
+  return matched;
 }

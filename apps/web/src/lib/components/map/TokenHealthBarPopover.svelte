@@ -35,7 +35,7 @@
     data-testid="token-health-bar-popover"
   >
     <span
-      class="px-1.5 text-[10px] font-bold text-theme-text uppercase tracking-wider whitespace-nowrap"
+      class="px-1.5 text-micro font-bold text-theme-text uppercase tracking-wider whitespace-nowrap"
     >
       {label}
     </span>

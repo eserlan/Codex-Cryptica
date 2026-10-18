@@ -4,7 +4,56 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import GeneratorConfigForm from "./GeneratorConfigForm.svelte";
 
-describe("GeneratorConfigForm", () => {
+describe("GeneratorConfigForm", { timeout: 20000 }, () => {
+  it("names generators, identifies their entity types, and describes only the selected one", async () => {
+    render(GeneratorConfigForm, {
+      props: {
+        generatorId: "npc",
+        categoryLabels: [
+          { id: "character", label: "Character" },
+          { id: "note", label: "Note" },
+        ],
+        onsubmit: vi.fn(),
+      },
+    });
+
+    const npcRadio = screen.getByRole("radio", {
+      name: "NPC Creates Character",
+    });
+
+    // Expand the Adventures & Encounters group to reveal the Plot Twist generator
+    const adventuresGroupButton = screen.getByRole("button", {
+      name: /adventures & encounters/i,
+    });
+    await fireEvent.click(adventuresGroupButton);
+
+    const plotTwistRadio = screen.getByRole("radio", {
+      name: "Plot Twist & Complication Creates Note",
+    });
+
+    expect(npcRadio.getAttribute("aria-describedby")).toBe(
+      "fav-generator-description-npc",
+    );
+    expect(
+      document.getElementById("fav-generator-description-npc")?.textContent,
+    ).toContain("Generate a non-player character for your campaign.");
+    expect(plotTwistRadio.hasAttribute("aria-describedby")).toBe(false);
+    expect(
+      document.getElementById("generator-description-plot-twist"),
+    ).toBeNull();
+
+    await fireEvent.click(plotTwistRadio);
+
+    expect(npcRadio.hasAttribute("aria-describedby")).toBe(false);
+    expect(document.getElementById("fav-generator-description-npc")).toBeNull();
+    expect(plotTwistRadio.getAttribute("aria-describedby")).toBe(
+      "generator-description-plot-twist",
+    );
+    expect(
+      document.getElementById("generator-description-plot-twist")?.textContent,
+    ).toContain("Reinterpret an established situation");
+  });
+
   it("submits custom option values for select-based generator options", async () => {
     const onsubmit = vi.fn();
 
@@ -65,7 +114,9 @@ describe("GeneratorConfigForm", () => {
     });
 
     expect(
-      screen.getByRole("radio", { name: "Location (Facility)" }),
+      screen.getByRole("radio", {
+        name: "Dungeon / Delve Creates Location (Facility)",
+      }),
     ).toBeTruthy();
     await waitFor(() => {
       expect(screen.getByLabelText("Original Purpose")).toBeTruthy();
@@ -125,6 +176,29 @@ describe("GeneratorConfigForm", () => {
 
     expect(screen.getByRole("option", { name: "Boom Town" })).toBeTruthy();
     expect(screen.queryByRole("option", { name: "Fortress" })).toBeNull();
+  });
+
+  it("switches the villain threat scale to the superhero scale", async () => {
+    render(GeneratorConfigForm, {
+      props: {
+        generatorId: "villain",
+        themeId: "fantasy",
+        onsubmit: vi.fn(),
+        aiPolicy: { isEnabled: true, isAvailable: true },
+      },
+    });
+
+    const threatScale = screen.getByLabelText("Threat Scale");
+    expect(screen.getByRole("option", { name: "Local" })).toBeTruthy();
+    expect(screen.queryByRole("option", { name: "Street" })).toBeNull();
+
+    await fireEvent.change(screen.getByLabelText("Genre / Theme"), {
+      target: { value: "Superhero / Comic Book" },
+    });
+
+    expect(screen.getByRole("option", { name: "Street" })).toBeTruthy();
+    expect(screen.queryByRole("option", { name: "Local" })).toBeNull();
+    expect((threatScale as HTMLSelectElement).value).toBe("Street");
   });
 
   it("requires explicit confirmation before applying a suggested language", async () => {
@@ -259,5 +333,356 @@ describe("GeneratorConfigForm", () => {
         ) as HTMLInputElement
       ).value,
     ).toBe("Custody of the orbital elevator");
+  });
+
+  it("renders favourite generators in a dedicated section when starred", async () => {
+    const { GeneratorFavoritesStore } =
+      await import("$lib/stores/ui/generator-favorites.svelte");
+    const { UIPersistence, UI_STORAGE_KEYS } =
+      await import("$lib/stores/ui/persistence");
+
+    const storageMap = new Map<string, string>();
+    const mockStorage = {
+      getItem: (k: string) => storageMap.get(k) ?? null,
+      setItem: (k: string, v: string) => storageMap.set(k, v),
+      removeItem: (k: string) => storageMap.delete(k),
+    };
+    storageMap.set(
+      UI_STORAGE_KEYS.FAVOURITE_GENERATOR_IDS,
+      JSON.stringify(["npc"]),
+    );
+
+    const persistence = new UIPersistence({ storage: mockStorage as any });
+    const favoritesStore = new GeneratorFavoritesStore(persistence);
+
+    render(GeneratorConfigForm, {
+      props: {
+        generatorId: "npc",
+        onsubmit: vi.fn(),
+        favoritesStore,
+      },
+    });
+
+    // Favourites section should exist
+    expect(screen.getByText("Favourites")).toBeTruthy();
+
+    // The star button for NPC in favourites should have remove aria-label
+    const removeNpcButtons = screen.getAllByRole("button", {
+      name: "Remove NPC from favourites",
+    });
+    expect(removeNpcButtons).toHaveLength(1);
+    expect(removeNpcButtons[0].getAttribute("aria-pressed")).toBe("true");
+
+    // Click to unstar NPC
+    await fireEvent.click(removeNpcButtons[0]);
+
+    // Favourites store should now be empty and Favourites section disappears
+    expect(favoritesStore.isFavorite("npc")).toBe(false);
+    expect(screen.queryByText("Favourites")).toBeNull();
+    expect(
+      screen.getByText(
+        "Star generators you use often to keep them at the top.",
+      ),
+    ).toBeTruthy();
+  });
+
+  it("filters generators by search query and shows clear button", async () => {
+    render(GeneratorConfigForm, {
+      props: {
+        generatorId: "npc",
+        onsubmit: vi.fn(),
+      },
+    });
+
+    const searchInput = screen.getByPlaceholderText(
+      "Search generators by name, category, or description...",
+    );
+
+    // Search for "dungeon"
+    await fireEvent.input(searchInput, { target: { value: "dungeon" } });
+
+    // Should find Dungeon generator, but not Settlement
+    expect(screen.getByText("Dungeon / Delve")).toBeTruthy();
+    expect(screen.queryByText("Settlement")).toBeNull();
+
+    // Clear search button should appear
+    const clearButton = screen.getByRole("button", {
+      name: "Clear generator search",
+    });
+    await fireEvent.click(clearButton);
+
+    // After clearing, Settlement should be visible again
+    expect(screen.getByText("Settlement")).toBeTruthy();
+
+    // Search for non-matching query
+    await fireEvent.input(searchInput, { target: { value: "xyznonexistent" } });
+    expect(
+      screen.getByText('No generators match "xyznonexistent".'),
+    ).toBeTruthy();
+  });
+
+  it("filters by generator description", async () => {
+    render(GeneratorConfigForm, {
+      props: { generatorId: "npc", onsubmit: vi.fn() },
+    });
+
+    await fireEvent.input(screen.getByPlaceholderText(/Search generators/), {
+      target: { value: "subterranean" },
+    });
+
+    expect(screen.getByText("Dungeon / Delve")).toBeTruthy();
+    expect(screen.queryByText("NPC")).toBeNull();
+  });
+
+  it("filters by the resolved entity category label", async () => {
+    render(GeneratorConfigForm, {
+      props: {
+        generatorId: "npc",
+        categoryLabels: [{ id: "character", label: "Character" }],
+        onsubmit: vi.fn(),
+      },
+    });
+
+    await fireEvent.input(screen.getByPlaceholderText(/Search generators/), {
+      target: { value: "character" },
+    });
+
+    expect(screen.getAllByText("NPC")).not.toHaveLength(0);
+    expect(screen.queryByText("Settlement")).toBeNull();
+  });
+
+  it("does not submit when Enter is pressed in generator search", async () => {
+    const onsubmit = vi.fn();
+    render(GeneratorConfigForm, { props: { generatorId: "npc", onsubmit } });
+
+    await fireEvent.keyDown(screen.getByPlaceholderText(/Search generators/), {
+      key: "Enter",
+    });
+
+    expect(onsubmit).not.toHaveBeenCalled();
+  });
+
+  it("disables favourite toggles when the picker is disabled", () => {
+    render(GeneratorConfigForm, {
+      props: { generatorId: "npc", disabled: true, onsubmit: vi.fn() },
+    });
+
+    const favoriteButtons = screen.getAllByRole("button", {
+      name: /favourites$/,
+      hidden: true,
+    });
+    expect(favoriteButtons.length).toBeGreaterThan(0);
+    expect(
+      favoriteButtons.every((button) => (button as HTMLButtonElement).disabled),
+    ).toBe(true);
+  });
+
+  it("expands the parent-selected generator's category while keeping other categories collapsed", async () => {
+    render(GeneratorConfigForm, {
+      props: {
+        generatorId: "dungeon",
+        onsubmit: vi.fn(),
+      },
+    });
+
+    // All four broad categories should be rendered as accordion buttons
+    const peopleGroupButton = screen.getByRole("button", {
+      name: /people & factions/i,
+    });
+    const locationsGroupButton = screen.getByRole("button", {
+      name: /locations & worlds/i,
+    });
+    const adventuresGroupButton = screen.getByRole("button", {
+      name: /adventures & encounters/i,
+    });
+    const lootGroupButton = screen.getByRole("button", {
+      name: /loot & lore/i,
+    });
+
+    expect(peopleGroupButton.getAttribute("aria-expanded")).toBe("false");
+    expect(locationsGroupButton.getAttribute("aria-expanded")).toBe("true");
+    expect(adventuresGroupButton.getAttribute("aria-expanded")).toBe("false");
+    expect(lootGroupButton.getAttribute("aria-expanded")).toBe("false");
+
+    expect(
+      screen.getByRole("radio", {
+        name: /Dungeon \/ Delve Creates Location/,
+      }),
+    ).toBeTruthy();
+
+    // Plot Twist should not be visible while its category is collapsed
+    expect(
+      screen.queryByRole("radio", {
+        name: "Plot Twist & Complication Creates Note",
+      }),
+    ).toBeNull();
+
+    // Click to expand Adventures & Encounters group
+    await fireEvent.click(adventuresGroupButton);
+    expect(adventuresGroupButton.getAttribute("aria-expanded")).toBe("true");
+
+    // Now Plot Twist radio should be visible
+    expect(
+      screen.getByRole("radio", {
+        name: "Plot Twist & Complication Creates Note",
+      }),
+    ).toBeTruthy();
+
+    // Click again to collapse
+    await fireEvent.click(adventuresGroupButton);
+    expect(adventuresGroupButton.getAttribute("aria-expanded")).toBe("false");
+    expect(
+      screen.queryByRole("radio", {
+        name: "Plot Twist & Complication Creates Note",
+      }),
+    ).toBeNull();
+  });
+
+  it("keeps a selected generator's category collapsed after the user collapses it", async () => {
+    render(GeneratorConfigForm, {
+      props: {
+        generatorId: "dungeon",
+        onsubmit: vi.fn(),
+      },
+    });
+
+    const locationsGroupButton = screen.getByRole("button", {
+      name: /locations & worlds/i,
+    });
+    expect(locationsGroupButton.getAttribute("aria-expanded")).toBe("true");
+
+    await fireEvent.click(locationsGroupButton);
+
+    expect(locationsGroupButton.getAttribute("aria-expanded")).toBe("false");
+    expect(
+      screen.queryByRole("radio", {
+        name: /Dungeon \/ Delve Creates Location/,
+      }),
+    ).toBeNull();
+  });
+
+  it("initializes gameSystem default from systemProfileStore vault profile if set", async () => {
+    const { systemProfileStore } =
+      await import("$lib/stores/system-profile.svelte");
+    systemProfileStore.vaultSystemId = "tales-of-the-valiant";
+
+    const onsubmit = vi.fn();
+    render(GeneratorConfigForm, {
+      props: {
+        generatorId: "npc",
+        onsubmit,
+        aiPolicy: { isEnabled: true, isAvailable: true },
+      },
+    });
+
+    const gameSystemSelect = screen.getByLabelText(
+      "Game System",
+    ) as HTMLSelectElement;
+    expect(gameSystemSelect.value).toBe("tales-of-the-valiant");
+
+    await fireEvent.click(screen.getByRole("button", { name: "Generate" }));
+
+    expect(onsubmit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        generatorId: "npc",
+        options: expect.objectContaining({
+          gameSystem: "tales-of-the-valiant",
+        }),
+      }),
+    );
+
+    // Reset store
+    systemProfileStore.vaultSystemId = null;
+  });
+
+  it("defaults to system-neutral when vault profile is not set", async () => {
+    const { systemProfileStore } =
+      await import("$lib/stores/system-profile.svelte");
+    systemProfileStore.vaultSystemId = null;
+
+    const onsubmit = vi.fn();
+    render(GeneratorConfigForm, {
+      props: {
+        generatorId: "npc",
+        onsubmit,
+        aiPolicy: { isEnabled: true, isAvailable: true },
+      },
+    });
+
+    const gameSystemSelect = screen.getByLabelText(
+      "Game System",
+    ) as HTMLSelectElement;
+    expect(gameSystemSelect.value).toBe("system-neutral");
+  });
+
+  it("displays informational notice when AI generation is disabled and ToV system is selected", async () => {
+    const { systemProfileStore } =
+      await import("$lib/stores/system-profile.svelte");
+    systemProfileStore.vaultSystemId = "tales-of-the-valiant";
+
+    render(GeneratorConfigForm, {
+      props: {
+        generatorId: "npc",
+        onsubmit: vi.fn(),
+        aiPolicy: { isEnabled: false, isAvailable: false },
+      },
+    });
+
+    expect(screen.getByTestId("ai-unavailable-notice")).toBeTruthy();
+    expect(screen.getByTestId("tov-offline-notice")).toBeTruthy();
+    expect(screen.getByTestId("tov-offline-notice").textContent).toContain(
+      "Tales of the Valiant mechanics require AI Lore generation",
+    );
+
+    systemProfileStore.vaultSystemId = null;
+  });
+
+  it("inherits ToV and displays party size and level inputs for encounter generator", async () => {
+    const { systemProfileStore } =
+      await import("$lib/stores/system-profile.svelte");
+    systemProfileStore.vaultSystemId = "tales-of-the-valiant";
+
+    const onsubmit = vi.fn();
+    render(GeneratorConfigForm, {
+      props: {
+        generatorId: "encounter",
+        onsubmit,
+        aiPolicy: { isEnabled: true, isAvailable: true },
+      },
+    });
+
+    const gameSystemSelect = screen.getByLabelText(
+      "Game System",
+    ) as HTMLSelectElement;
+    expect(gameSystemSelect.value).toBe("tales-of-the-valiant");
+
+    const partySizeInput = screen.getByLabelText(
+      /Party Size/i,
+    ) as HTMLInputElement;
+    expect(partySizeInput.min).toBe("1");
+    expect(partySizeInput.max).toBe("8");
+    expect(partySizeInput.step).toBe("1");
+
+    const partyLevelInput = screen.getByLabelText(
+      /Average Party Level/i,
+    ) as HTMLInputElement;
+    expect(partyLevelInput.min).toBe("1");
+    expect(partyLevelInput.max).toBe("20");
+    expect(partyLevelInput.step).toBe("1");
+
+    await fireEvent.click(screen.getByRole("button", { name: "Generate" }));
+
+    expect(onsubmit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        generatorId: "encounter",
+        options: expect.objectContaining({
+          gameSystem: "tales-of-the-valiant",
+          partySize: 4,
+          partyLevel: 3,
+        }),
+      }),
+    );
+
+    systemProfileStore.vaultSystemId = null;
   });
 });

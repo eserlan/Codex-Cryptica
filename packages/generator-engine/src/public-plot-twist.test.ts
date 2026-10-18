@@ -4,6 +4,7 @@ import {
   generatePlotTwistLocal,
   parsePlotTwistResponse,
   resolvePlotTwist,
+  SUPERHERO_TWIST_ARCHETYPES,
 } from "./public-plot-twist";
 
 describe("resolvePlotTwist", () => {
@@ -64,6 +65,98 @@ describe("buildPlotTwistPrompt", () => {
     );
 
     expect(first.title).not.toBe(second.title);
+  });
+});
+
+describe("Superhero / Comic Book plot twists", () => {
+  it("steers the LLM prompt with genre-specific twist archetypes", () => {
+    const prompt = buildPlotTwistPrompt({
+      premise:
+        "The city's newest hero just stopped a bank robbery live on camera.",
+      genre: "Superhero / Comic Book",
+    });
+
+    expect(prompt.userMessage).toContain("Genre-specific twist archetypes");
+    expect(prompt.userMessage).toContain("Secret identity revelation");
+    expect(prompt.userMessage).toContain("Mentor betrayal");
+    expect(prompt.userMessage).toContain("Legacy revelation");
+    expect(prompt.userMessage).toContain(
+      "The villain was protecting us from something worse",
+    );
+    expect(prompt.userMessage).toContain("Alternate-timeline consequences");
+    for (const archetype of SUPERHERO_TWIST_ARCHETYPES) {
+      expect(prompt.userMessage).toContain(archetype.label);
+    }
+  });
+
+  it("does not append genre-specific twist archetypes for a non-Superhero genre", () => {
+    const prompt = buildPlotTwistPrompt({
+      premise: "The queen's peace treaty is about to fail.",
+      genre: "Classic Fantasy",
+    });
+
+    expect(prompt.userMessage).not.toContain("Genre-specific twist archetypes");
+    expect(prompt.userMessage).not.toContain("Secret identity revelation");
+    expect(prompt.userMessage).not.toContain("Mentor betrayal");
+  });
+
+  it("produces a superhero-specific local reveal (identity) rather than a generic twist", () => {
+    const output = generatePlotTwistLocal(
+      {
+        premise:
+          "A masked hero just saved the mayor from an assassination attempt.",
+        genre: "Superhero / Comic Book",
+        twistType: "Revelation",
+      },
+      () => 0.2,
+    );
+
+    expect(output.content).toContain("civilian identity");
+    expect(output.content).toContain("mask");
+    expect(output.content).not.toContain("the pressure around");
+  });
+
+  it("produces a superhero-specific local reveal (betrayal) tied to a mentor", () => {
+    const output = generatePlotTwistLocal(
+      {
+        premise: "The team's newest recruit uncovered a leak in their base.",
+        genre: "Superhero / Comic Book",
+        twistType: "Betrayal",
+      },
+      () => 0.2,
+    );
+
+    expect(output.content).toContain("mentor");
+  });
+
+  it("produces a superhero-specific local reveal (legacy) for a sympathetic ally twist", () => {
+    const output = generatePlotTwistLocal(
+      {
+        premise:
+          "An unaffiliated vigilante offered to help with the investigation.",
+        genre: "Superhero / Comic Book",
+        twistType: "Ally is helping for the wrong reason",
+      },
+      () => 0.2,
+    );
+
+    expect(output.content).toContain("heir or successor");
+    expect(output.content).toContain("lineage");
+  });
+
+  it("falls back to the generic template for a non-Superhero genre with the same twist type", () => {
+    const output = generatePlotTwistLocal(
+      {
+        premise:
+          "A masked hero just saved the mayor from an assassination attempt.",
+        genre: "Classic Fantasy",
+        twistType: "Revelation",
+      },
+      () => 0.2,
+    );
+
+    expect(output.content).not.toContain("civilian identity");
+    expect(output.content).toContain("the pressure around");
   });
 });
 

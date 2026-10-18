@@ -57,6 +57,13 @@ _paths_output=$(get_feature_paths) || { echo "ERROR: Failed to resolve feature p
 eval "$_paths_output"
 unset _paths_output
 
+# Spec Kit 1.1.0 resolves feature state independently of Git. Retain Git
+# detection locally for this repository's legacy context updater diagnostics.
+HAS_GIT=false
+if git -C "$REPO_ROOT" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    HAS_GIT=true
+fi
+
 NEW_PLAN="$IMPL_PLAN"  # Alias for compatibility with existing code
 AGENT_TYPE="${1:-}"
 

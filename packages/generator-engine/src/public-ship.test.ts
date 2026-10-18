@@ -57,6 +57,30 @@ describe("generateShipLocal", () => {
     expect(result.lore).toContain("**Crew Culture**:");
   });
 
+  it("supports crew-scale Space Western ships without franchise vessel names", () => {
+    const result = generateShipLocal(
+      {
+        genre: "Space Western",
+        role: "Patched Light Freighter",
+        scale: "Small Runner / Courier (2–6 crew)",
+      },
+      seededRng(11),
+    );
+
+    expect(result.lore).toContain("Patched Light Freighter");
+    expect(shipConfig.rolesByGenre["Space Western"]).toContain(
+      "Patched Light Freighter",
+    );
+    expect(shipConfig.nameWordsByGenre["Space Western"]).not.toEqual(
+      expect.arrayContaining([
+        "Enterprise",
+        "Millennium",
+        "Tantive",
+        "Home One",
+      ]),
+    );
+  });
+
   it("generates non-empty content sections", () => {
     const result = generateShipLocal({}, seededRng(99));
     expect(result.content).toContain("## Core Concept");

@@ -5,6 +5,7 @@ import type {
   Token,
   TokenStateUpdateInput,
   VTTMessage,
+  HexLabelConfig,
 } from "../../../types/vtt";
 import type { VTTChatManager } from "./vtt-chat-manager.svelte";
 import type { VTTMediaManager } from "./vtt-media-manager.svelte";
@@ -114,8 +115,12 @@ export class VTTNetworkManager {
 
   handleRemoteGridSettings(payload: {
     gridSize?: number;
+    gridType?: "square" | "hex-pointy" | "hex-flat";
+    showHexCoordinates?: boolean;
+    hexLabelConfig?: HexLabelConfig;
     gridUnit?: string;
     gridDistance?: number;
+    fogColor?: string | null;
   }) {
     this.deps.gridManager.handleRemoteGridSettings(payload);
   }

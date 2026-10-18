@@ -11,8 +11,8 @@ The app shell displays the workspace only when all of the following are true:
 
 ```ts
 layoutUIStore.isWideViewport &&
-layoutUIStore.leftSidebarOpen &&
-layoutUIStore.activeSidebarTool === "explorer"
+  layoutUIStore.leftSidebarOpen &&
+  layoutUIStore.activeSidebarTool === "explorer";
 ```
 
 `isWideViewport` is true at `min-width: 1280px` (`xl`). It is transient and derives
@@ -20,10 +20,10 @@ from the constructor-injected `UIViewport.matchMedia` port.
 
 ## Selection Contract
 
-| Condition | Explorer action | Result |
-| --- | --- | --- |
-| Workspace eligible | Select entity or use its Zen action | Use existing `focusEntity(entity.id)` flow; show that entity through `EmbeddedEntityView`. |
-| Workspace ineligible | Select entity or use its Zen action | Use existing `modalUIStore.openZenMode(entity.id)` flow. |
+| Condition            | Explorer action                     | Result                                                                                     |
+| -------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------ |
+| Workspace eligible   | Select entity or use its Zen action | Use existing `focusEntity(entity.id)` flow; show that entity through `EmbeddedEntityView`. |
+| Workspace ineligible | Select entity or use its Zen action | Use existing `modalUIStore.openZenMode(entity.id)` flow.                                   |
 
 ## Workspace Component Contract
 

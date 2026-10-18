@@ -1,0 +1,226 @@
+import type { DiscoveryEntryInput } from "../schema";
+
+/**
+ * `/tools/*` — the older informational generator landing pages.
+ *
+ * These predate `/generators/*`, and `llms.txt` already describes them as
+ * "informational landing pages" that link into the canonical interactive tools.
+ * That makes them the sharpest cannibalisation risk on the site: several target
+ * a genre-qualified phrasing of an intent a `/generators` page already owns,
+ * with the same `create` job.
+ *
+ * They are recorded here **without** `acknowledgedOverlap` on purpose. The audit
+ * should keep reporting them until someone decides whether to consolidate or to
+ * give each a job the generator does not do — see the audit notes in
+ * `docs/discovery-intent-registry.md`.
+ */
+export const toolEntries: DiscoveryEntryInput[] = [
+  {
+    id: "tools-index",
+    pageKind: "index",
+    canonicalPath: "/tools",
+    primaryIntent: "rpg tools and generators directory",
+    intentAliases: ["codex cryptica tools hub"],
+    userJob: "navigate",
+    uniqueValue:
+      "The one directory covering every public surface — generators, answers, solutions, comparisons and importers — rather than a single family.",
+    indexable: true,
+    status: "live",
+  },
+  {
+    id: "tools-dnd-npc-generator",
+    pageKind: "tool",
+    canonicalPath: "/tools/dnd-npc-generator",
+    primaryIntent: "d&d npc generator landing page",
+    intentAliases: ["dnd 5e npc maker"],
+    userJob: "create",
+    uniqueValue:
+      "Long-standing entry point for D&D-qualified NPC queries, with fuller on-page explanation than the generator route carries.",
+    parentCluster: "npc-creation",
+    relatedIntents: ["generator-dnd-npc"],
+    indexable: true,
+    status: "live",
+  },
+  {
+    id: "tools-rpg-npc-generator",
+    pageKind: "tool",
+    canonicalPath: "/tools/rpg-npc-generator",
+    primaryIntent: "system agnostic npc generator",
+    intentAliases: ["npc generator for any rpg"],
+    userJob: "create",
+    uniqueValue:
+      "Entry point for genre-neutral NPC queries across six themes, with explanatory copy the generator route does not carry.",
+    parentCluster: "npc-creation",
+    relatedIntents: ["generator-npc"],
+    indexable: true,
+    status: "live",
+  },
+  {
+    id: "tools-faction-generator",
+    pageKind: "tool",
+    canonicalPath: "/tools/faction-generator",
+    primaryIntent: "fantasy faction generator",
+    intentAliases: ["fantasy guild generator"],
+    userJob: "create",
+    uniqueValue:
+      "Fantasy-qualified entry point for faction queries, with worked examples of agendas and rivalries on the page.",
+    parentCluster: "faction-creation",
+    relatedIntents: ["generator-faction"],
+    indexable: true,
+    status: "live",
+  },
+  {
+    id: "tools-fantasy-name-generator",
+    pageKind: "tool",
+    canonicalPath: "/tools/fantasy-name-generator",
+    primaryIntent: "fantasy name generator landing page",
+    intentAliases: ["fantasy names for characters and places"],
+    userJob: "create",
+    uniqueValue:
+      "Long-standing entry point for fantasy naming queries, covering ten cultural styles on the page itself.",
+    parentCluster: "naming",
+    relatedIntents: ["generator-fantasy-names"],
+    indexable: true,
+    status: "live",
+  },
+  {
+    id: "tools-quest-hook-generator",
+    pageKind: "tool",
+    canonicalPath: "/tools/quest-hook-generator",
+    primaryIntent: "quest hook generator",
+    intentAliases: ["adventure seed generator"],
+    userJob: "create",
+    uniqueValue:
+      "Entry point for quest-hook and adventure-seed queries specifically, as distinct from full quest structures.",
+    parentCluster: "quest-design",
+    relatedIntents: ["generator-quest"],
+    indexable: true,
+    status: "live",
+  },
+  {
+    id: "tools-vampire-clan-generator",
+    pageKind: "tool",
+    canonicalPath: "/tools/vampire-clan-generator",
+    primaryIntent: "gothic vampire clan generator",
+    intentAliases: ["world of darkness clan generator"],
+    userJob: "create",
+    uniqueValue:
+      "Entry point for World of Darkness-style clan queries, with gothic framing the generic generator route does not use.",
+    parentCluster: "faction-creation",
+    relatedIntents: ["generator-vampire-clan"],
+    indexable: true,
+    status: "live",
+  },
+  {
+    id: "tools-cyberpunk-nomad-clan-generator",
+    pageKind: "tool",
+    canonicalPath: "/tools/cyberpunk-nomad-clan-generator",
+    primaryIntent: "cyberpunk nomad clan landing page",
+    intentAliases: ["nomad convoy generator"],
+    userJob: "create",
+    uniqueValue:
+      "Entry point for cyberpunk nomad queries, with convoy-culture framing on the page.",
+    parentCluster: "faction-creation",
+    relatedIntents: ["generator-nomad-clan"],
+    indexable: true,
+    status: "live",
+  },
+  {
+    id: "tools-idea-developer",
+    pageKind: "tool",
+    canonicalPath: "/tools/idea-developer",
+    primaryIntent: "develop an existing rpg idea",
+    intentAliases: [
+      "make my rpg campaign idea playable",
+      "improve an existing tabletop campaign premise",
+      "develop my rpg idea with ai",
+    ],
+    userJob: "create",
+    uniqueValue:
+      "Develops a premise the user already cares about into a playable situation, with modes to assess, expand, explore alternatives, make playable, or challenge it while keeping its recognisable core intact.",
+    parentCluster: "adventure-design",
+    relatedIntents: [
+      "answer-turn-rpg-idea-into-adventure",
+      "answer-is-my-rpg-campaign-idea-good",
+      "generator-adventure-generator",
+    ],
+    acknowledgedOverlap: [
+      {
+        with: "answer-turn-rpg-idea-into-adventure",
+        reason:
+          "Both help turn an existing premise into play, but this page is an interactive AI tool that works directly on the user's text; the Answer is a system-neutral method the reader can use themselves.",
+      },
+      {
+        with: "answer-is-my-rpg-campaign-idea-good",
+        reason:
+          "The Answer teaches a self-guided diagnostic; this tool applies AI directly to the supplied idea and returns optional development, so the user is choosing between learning a method and using an interactive workspace.",
+      },
+      {
+        with: "generator-adventure-generator",
+        reason:
+          "The generator creates a new adventure from a blank start; this tool develops the user's own existing premise and is designed to preserve its core.",
+      },
+    ],
+    indexable: true,
+    status: "live",
+  },
+  {
+    id: "tools-session-prep-builder",
+    pageKind: "tool",
+    canonicalPath: "/tools/session-prep-builder",
+    primaryIntent: "build a table-ready session run sheet from a hook",
+    intentAliases: [
+      "rpg session prep tool",
+      "gm run sheet builder",
+      "plan my next rpg session with ai",
+      "session prep template tool",
+      "turn a hook into a session plan",
+    ],
+    userJob: "create",
+    uniqueValue:
+      "A guided builder that turns the GM's own hook or current situation into playable prep (pressure, people, places, discoverable information, consequences and reserve material) and a one-page run sheet. AI drafts only the empty steps or suggests options for one step, and flags needed facts that have only one discovery route.",
+    parentCluster: "session-prep",
+    relatedIntents: [
+      "answer-prepare-session-step-by-step",
+      "answer-prep-weekly-session-quickly",
+      "answer-session-prep",
+      "tools-idea-developer",
+    ],
+    acknowledgedOverlap: [
+      {
+        with: "answer-prepare-session-step-by-step",
+        reason:
+          "The Answer teaches the nine-step prep method for the reader to follow themselves; this tool is an interactive workspace that applies the same steps to the GM's own hook and produces a run sheet.",
+      },
+      {
+        with: "tools-idea-developer",
+        reason:
+          "The Idea Developer works on a campaign or adventure premise; this builder prepares the next single session from a hook or current situation and outputs a table-ready run sheet.",
+      },
+      {
+        with: "generator-adventure-generator",
+        reason:
+          "The generator creates a new adventure from a blank start; this builder starts from the GM's existing situation and prepares one session.",
+      },
+    ],
+    indexable: true,
+    status: "live",
+  },
+  {
+    id: "tool-silhouettes",
+    pageKind: "tool",
+    canonicalPath: "/silhouettes",
+    primaryIntent: "vector rpg silhouettes and token art",
+    intentAliases: [
+      "free rpg vector tokens",
+      "ttrpg character silhouettes svg",
+      "tabletop rpg silhouette art",
+    ],
+    userJob: "create",
+    uniqueValue:
+      "Interactive, theme-customizable gallery of 48+ CC-licensed vector silhouettes for RPG entities with live color palette preview, clipboard SVG copy, and SVG asset downloads.",
+    parentCluster: "visual-assets",
+    indexable: true,
+    status: "live",
+  },
+];

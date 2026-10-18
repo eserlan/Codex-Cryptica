@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
 import { render, screen } from "@testing-library/svelte";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("$app/state", () => ({
   page: {
@@ -56,6 +56,7 @@ vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
     bulkLabelDialog: { open: false, entityIds: [] },
     soundBite: { show: false, entityId: null },
     relatedEntityDialog: { open: false, sourceEntityId: null },
+    parentPickerDialog: { open: false, entityId: null },
     showVaultSwitcher: false,
     vaultThemePrompt: { open: false, vaultId: null },
     showShare: false,
@@ -74,18 +75,28 @@ vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
       template: null,
       duplicate: false,
     },
+    silhouettePickerState: {
+      open: false,
+      entity: null,
+    },
     showCanvasSelector: false,
     showMobileCreateSheet: false,
+    showZenMode: false,
     closeMergeDialog: vi.fn(),
     closeBulkLabelDialog: vi.fn(),
     closeRelatedEntityDialog: vi.fn(),
     closeVaultSwitcher: vi.fn(),
     closeShare: vi.fn(),
+    closeSilhouettePicker: vi.fn(),
   },
 }));
 
-vi.mock("./ZenModeModal.svelte", async () => ({
+vi.mock("./SilhouettePickerModal.svelte", async () => ({
   default: (await import("./__tests__/ModalStub.svelte")).default,
+}));
+
+vi.mock("./ZenModeModal.svelte", async () => ({
+  default: (await import("./__tests__/ZenModeModalStub.svelte")).default,
 }));
 
 vi.mock("$lib/components/dice/DiceModal.svelte", async () => ({
@@ -96,39 +107,66 @@ vi.mock("$lib/components/modals/GuestChatModal.svelte", async () => ({
   default: (await import("./__tests__/ModalStub.svelte")).default,
 }));
 
-vi.mock("$lib/components/canvas/CanvasSelectionModal.svelte", async () => ({
-  default: (await import("./__tests__/CanvasSelectionModalStub.svelte"))
-    .default,
-}));
-
 vi.mock("./MobileCreateEntitySheet.svelte", async () => ({
   default: (await import("./__tests__/MobileCreateEntitySheetStub.svelte"))
     .default,
 }));
 
+vi.mock(
+  "$lib/components/help-assistant/HelpAssistantHost.svelte",
+  async () => ({
+    default: (await import("./__tests__/ModalStub.svelte")).default,
+  }),
+);
+
 import GlobalModalProvider from "./GlobalModalProvider.svelte";
 import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
 describe("GlobalModalProvider", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   beforeEach(() => {
     modalUIStore.showCanvasSelector = false;
     modalUIStore.showMobileCreateSheet = false;
+    modalUIStore.showZenMode = false;
   });
 
-  it("renders CanvasSelectionModal from the global provider when the modal state is open", async () => {
+  it("renders ZenModeModal when showZenMode is true", async () => {
+    modalUIStore.showZenMode = true;
+
+    render(GlobalModalProvider);
+
+    expect(await screen.findByTestId("zen-mode-modal-stub")).toBeTruthy();
+  });
+
+  it("does not render ZenModeModal when showZenMode is false", () => {
+    render(GlobalModalProvider);
+
+    expect(screen.queryByTestId("zen-mode-modal-stub")).toBeNull();
+  });
+
+  it("renders Canvas Registry from the global provider when the modal state is open", async () => {
     modalUIStore.showCanvasSelector = true;
 
     render(GlobalModalProvider);
 
     expect(
-      await screen.findByTestId("canvas-selection-modal-stub"),
+      await screen.findByRole(
+        "heading",
+        { name: "Canvas Registry" },
+        { timeout: 3000 },
+      ),
     ).toBeTruthy();
   });
 
-  it("does not render CanvasSelectionModal content when the modal state is closed", () => {
+  it("does not render Canvas Registry content when the modal state is closed", () => {
     render(GlobalModalProvider);
 
-    expect(screen.queryByTestId("canvas-selection-modal-stub")).toBeNull();
+    expect(
+      screen.queryByRole("heading", { name: "Canvas Registry" }),
+    ).toBeNull();
   });
 
   it("renders MobileCreateEntitySheet when showMobileCreateSheet is true", async () => {
@@ -145,5 +183,22 @@ describe("GlobalModalProvider", () => {
     render(GlobalModalProvider);
 
     expect(screen.queryByTestId("mobile-create-entity-sheet-stub")).toBeNull();
+  });
+
+  it("loads the help assistant only when its flag is on", async () => {
+    vi.stubEnv("VITE_HELP_ASSISTANT", "true");
+
+    render(GlobalModalProvider);
+
+    expect(await screen.findByTestId("modal-stub")).toBeTruthy();
+  });
+
+  it("does not load the help assistant when its flag is off", async () => {
+    vi.stubEnv("VITE_HELP_ASSISTANT", "");
+
+    render(GlobalModalProvider);
+    await Promise.resolve();
+
+    expect(screen.queryByTestId("modal-stub")).toBeNull();
   });
 });

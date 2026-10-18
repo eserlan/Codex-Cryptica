@@ -1,6 +1,7 @@
 import { DEFAULT_CALENDAR } from "chronology-engine";
 import type {
   CalendarCurrentDateSource,
+  CalendarEra,
   CalendarSnapshot,
   WorldCalendar,
 } from "chronology-engine";
@@ -59,9 +60,7 @@ export class CalendarStore {
     };
   }
 
-  private hasStructuralChanges(a: WorldCalendar, b: WorldCalendar): boolean {
-    if (a.useGregorian !== b.useGregorian) return true;
-
+  private haveMonthsChanged(a: WorldCalendar, b: WorldCalendar): boolean {
     const aMonths = a.months || [];
     const bMonths = b.months || [];
     if (aMonths.length !== bMonths.length) return true;
@@ -74,7 +73,10 @@ export class CalendarStore {
         return true;
       }
     }
+    return false;
+  }
 
+  private haveAnchorsChanged(a: WorldCalendar, b: WorldCalendar): boolean {
     const aAnchors = a.anchors || [];
     const bAnchors = b.anchors || [];
     if (aAnchors.length !== bAnchors.length) return true;
@@ -88,8 +90,38 @@ export class CalendarStore {
         return true;
       }
     }
-
     return false;
+  }
+
+  private isEraEqual(a: CalendarEra, b: CalendarEra): boolean {
+    return (
+      a.id === b.id &&
+      a.name === b.name &&
+      a.label === b.label &&
+      a.startYear === b.startYear &&
+      a.endYear === b.endYear &&
+      a.yearAtStart === b.yearAtStart &&
+      a.direction === b.direction
+    );
+  }
+
+  private haveErasChanged(a: WorldCalendar, b: WorldCalendar): boolean {
+    const aEras = a.eras || [];
+    const bEras = b.eras || [];
+    if (aEras.length !== bEras.length) return true;
+    for (let i = 0; i < aEras.length; i++) {
+      if (!this.isEraEqual(aEras[i], bEras[i])) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private hasStructuralChanges(a: WorldCalendar, b: WorldCalendar): boolean {
+    if (a.useGregorian !== b.useGregorian) return true;
+    if (this.haveMonthsChanged(a, b)) return true;
+    if (this.haveAnchorsChanged(a, b)) return true;
+    return this.haveErasChanged(a, b);
   }
 
   async setConfig(newConfig: WorldCalendar) {

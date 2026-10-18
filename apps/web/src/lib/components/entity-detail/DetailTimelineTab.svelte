@@ -31,7 +31,7 @@
       <section>
         {#if group.kind === "undated"}
           <h3
-            class="mb-2 text-[10px] font-bold tracking-widest uppercase text-theme-muted font-header"
+            class="mb-2 text-micro font-bold tracking-widest uppercase text-theme-muted font-header"
             data-testid="timeline-undated-heading"
           >
             Undated
@@ -58,15 +58,14 @@
                     >{row.title}</span
                   >
                   {#if row.dateKind !== "missing"}
-                    <span
-                      class="shrink-0 text-[10px] text-theme-muted font-mono"
+                    <span class="shrink-0 text-micro text-theme-muted font-mono"
                       >{row.displayDateLabel}</span
                     >
                   {/if}
                 </div>
                 {#if row.eventCategory}
                   <span
-                    class="mt-1 inline-block text-[10px] font-bold tracking-wider uppercase px-1.5 py-0.5 rounded bg-theme-tag text-theme-tag-text"
+                    class="mt-1 inline-block text-micro font-bold tracking-wider uppercase px-1.5 py-0.5 rounded bg-theme-tag text-theme-tag-text"
                     data-testid="timeline-label">{row.eventCategory}</span
                   >
                 {/if}
@@ -76,7 +75,7 @@
                   </p>
                 {/if}
                 {#if row.participantTitles.length > 0}
-                  <p class="mt-1 text-[10px] text-theme-muted">
+                  <p class="mt-1 text-micro text-theme-muted">
                     {row.participantTitles.join(", ")}
                   </p>
                 {/if}

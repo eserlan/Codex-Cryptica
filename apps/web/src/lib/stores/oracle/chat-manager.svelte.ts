@@ -1,5 +1,12 @@
-import { OracleCommandParser, type ChatMessage } from "@codex/oracle-engine";
+import {
+  OracleCommandParser,
+  oracleConversationId,
+  type ChatMessage,
+  type MessageMention,
+} from "@codex/oracle-engine";
 import type { IOracleStore } from "./types";
+import { createVaultMentionSource, type MentionVault } from "./mention-source";
+import { prepareMentions } from "./mention-intent";
 import {
   systemClock,
   type IdGenerator,
@@ -31,13 +38,34 @@ export class OracleChatManager {
     this.store.chatHistoryService.destroy();
   }
 
-  async sendMessage(content: string) {
+  /**
+   * `mentions` are the composer's picked entities (#4052). They are checked
+   * against the Vault again here, and only plain chat questions carry them.
+   */
+  async sendMessage(content: string, mentions: MessageMention[] = []) {
     if (!content.trim()) return;
 
     const intent = OracleCommandParser.parse(
       content,
       this.store.discoveryPolicyStore.aiDisabled,
     );
+
+    // Image requests (/draw) are detected from the raw text downstream, so they
+    // stay out of pinned retrieval.
+    if (
+      intent.type === "chat" &&
+      !OracleCommandParser.detectImageIntent(content)
+    ) {
+      const prepared = prepareMentions(
+        content,
+        mentions,
+        createVaultMentionSource(this.store.vault as MentionVault),
+      );
+      if (prepared.mentions.length > 0) {
+        intent.mentions = prepared.mentions;
+        intent.pinnedEntityIds = prepared.pinnedEntityIds;
+      }
+    }
 
     // Guests get read-only Q&A only (FR-031/FR-032): block vault-mutating
     // commands and image generation. /draw parses as a chat intent and is
@@ -70,8 +98,8 @@ export class OracleChatManager {
     await this.store.executor.execute(intent, this.store.getExecutionContext());
   }
 
-  async ask(content: string) {
-    return this.sendMessage(content);
+  async ask(content: string, mentions: MessageMention[] = []) {
+    return this.sendMessage(content, mentions);
   }
 
   async clearMessages() {
@@ -86,6 +114,21 @@ export class OracleChatManager {
     ) {
       await this.store.chatHistoryService.clear();
       this.store.sessionActivity.clear();
+      await this.resetModelConversation();
+    }
+  }
+
+  /**
+   * The model keeps its own copy of the chat server-side. Without this, a
+   * cleared conversation would keep steering later answers.
+   */
+  private async resetModelConversation() {
+    try {
+      await this.store.textGeneration.resetConversation?.(
+        oracleConversationId(this.store.vault.activeVaultId),
+      );
+    } catch (err) {
+      console.warn("[OracleChatManager] Could not reset model chat:", err);
     }
   }
 
@@ -100,6 +143,7 @@ export class OracleChatManager {
   async reset() {
     if (this.store.chatHistoryService) {
       await this.store.chatHistoryService.setMessages([]);
+      await this.resetModelConversation();
     }
   }
 

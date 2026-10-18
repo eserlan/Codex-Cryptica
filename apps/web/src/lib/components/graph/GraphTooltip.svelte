@@ -3,12 +3,35 @@
   import { marked } from "marked";
   import DOMPurify from "dompurify";
   import { browser } from "$app/environment";
+  import { deriveEntityTypePalette } from "schema";
   import type { Entity } from "schema";
+  import { categories } from "$lib/stores/categories.svelte";
+  import { themeStore } from "$lib/stores/theme.svelte";
+  import { getIconClass } from "$lib/utils/icon";
 
   let { hoveredEntity, hoverPosition } = $props<{
     hoveredEntity: Entity | null;
     hoverPosition: { x: number; y: number } | null;
   }>();
+
+  // Entity type must not ride on node colour alone (issue #2680): hovering a
+  // node names the type in words, with its icon, next to the title.
+  //
+  // Kept out of the hover-driven derived below so switching nodes is a lookup,
+  // not a re-derivation of the whole palette.
+  const typePalette = $derived(
+    deriveEntityTypePalette(themeStore.activeTheme, categories.list),
+  );
+  const category = $derived(
+    hoveredEntity?.type
+      ? categories.getCategory(hoveredEntity.type)
+      : undefined,
+  );
+  // Only the icon takes the type colour. The label stays in the theme's own
+  // text colour, because 3:1 is the floor for a graphic, not for small text.
+  const typeAccent = $derived(
+    category ? (typePalette[category.id]?.accent ?? category.color) : undefined,
+  );
 
   let tooltipContent = $derived(
     hoveredEntity?.content
@@ -34,6 +57,19 @@
       >
         {hoveredEntity?.title || hoveredEntity?.id}
       </h3>
+      {#if category}
+        <div
+          class="flex items-center gap-1.5 text-xs font-medium tracking-wide -mt-1 text-theme-text"
+          data-testid="graph-tooltip-type"
+        >
+          <span
+            aria-hidden="true"
+            class="{getIconClass(category.icon)} h-3.5 w-3.5 shrink-0"
+            style={typeAccent ? `color: ${typeAccent}` : undefined}
+          ></span>
+          <span>{category.label}</span>
+        </div>
+      {/if}
       <div
         class="prose prose-invert prose-sm text-sm leading-relaxed line-clamp-4"
       >

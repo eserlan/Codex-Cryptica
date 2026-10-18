@@ -1,6 +1,7 @@
 <script lang="ts">
   import { tick } from "svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { soloPlayGuard } from "$lib/stores/solo-session-instance";
   import { openImportWindow } from "$lib/stores/ui/navigation";
 
   let { orientation = "horizontal" } = $props<{
@@ -78,12 +79,12 @@
     aria-haspopup="menu"
     aria-expanded={isOpen}
     aria-controls="vault-actions-menu"
-    title="Vault actions"
+    title="Manage vault"
     data-testid="vault-actions-menu-button"
   >
     <span class="icon-[lucide--folder-cog] h-3.5 w-3.5" aria-hidden="true"
     ></span>
-    Vault
+    Manage vault
     <span class="icon-[lucide--chevron-down] h-3.5 w-3.5" aria-hidden="true"
     ></span>
   </button>
@@ -93,7 +94,7 @@
       bind:this={menuEl}
       id="vault-actions-menu"
       role="menu"
-      aria-label="Vault actions"
+      aria-label="Manage vault"
       tabindex="-1"
       class="absolute z-[90] mt-2 rounded border border-chrome-border bg-chrome-surface p-1 shadow-xl {isVertical
         ? 'left-0 w-full'
@@ -133,7 +134,7 @@
         class="w-full rounded px-3 text-left text-chrome-text hover:bg-chrome-accent/10 hover:text-chrome-accent focus-visible:outline-2 focus-visible:outline-chrome-accent {isVertical
           ? 'py-3 text-sm'
           : 'py-2 text-xs'}"
-        onclick={() => run(() => modalUIStore.openShare())}
+        onclick={() => run(() => soloPlayGuard.requestShare())}
       >
         <span
           class="icon-[lucide--share-2] mr-2 inline-block h-3.5 w-3.5"

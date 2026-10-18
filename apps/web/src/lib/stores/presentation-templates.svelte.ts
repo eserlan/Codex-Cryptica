@@ -1,8 +1,16 @@
+import {
+  systemClock,
+  systemIdGenerator,
+  type Clock,
+  type IdGenerator,
+} from "$lib/utils/runtime-deps";
 import { getDB } from "../utils/idb";
 import type { PresentationTemplate, StatSheetTemplateField } from "schema";
 import { vaultRegistry } from "./vault-registry.svelte";
-import { type IdGenerator, systemIdGenerator } from "$lib/utils/runtime-deps";
-import { getBuiltInPresentationTemplates } from "@codex/stat-sheet-engine";
+import {
+  getBuiltInPresentationTemplates,
+  exportPresentationTemplate,
+} from "@codex/stat-sheet-engine";
 import { statSheetTemplates } from "./stat-sheet-templates.svelte";
 
 const ENTITY_LOCAL_SCHEMA_PREFIX = "entity-local-stat-sheet:";
@@ -74,9 +82,14 @@ export class PresentationTemplateStore {
   templates = $state<PresentationTemplate[]>([]);
   private _initPromise: Promise<void> | null = null;
   private idGenerator: IdGenerator;
+  private clock: Clock;
 
-  constructor(idGenerator: IdGenerator = systemIdGenerator) {
+  constructor(
+    idGenerator: IdGenerator = systemIdGenerator,
+    clock: Clock = systemClock,
+  ) {
     this.idGenerator = idGenerator;
+    this.clock = clock;
     if (typeof window !== "undefined") void this.init();
   }
 
@@ -176,7 +189,7 @@ export class PresentationTemplateStore {
   }): Promise<PresentationTemplate | null> {
     const vaultId = vaultRegistry.activeVaultId;
     if (!vaultId) return null;
-    const now = new Date().toISOString();
+    const now = new Date(this.clock.now()).toISOString();
     const existing = input.id
       ? this.templates.find((t) => t.id === input.id)
       : undefined;
@@ -257,6 +270,47 @@ export class PresentationTemplateStore {
       ...this.templates.filter((t) => t.id !== template.id),
       record,
     ];
+  }
+
+  /** Returns all presentation templates in this vault across all schemas. */
+  getAllVaultTemplates(): PresentationTemplate[] {
+    return this.templates;
+  }
+
+  /**
+   * Clones a template (built-in or vault-saved) into a destination schema.
+   * Auto-suffixes the name if it collides within the target schema.
+   */
+  async copyTemplateToSchema(
+    sourceTemplate: PresentationTemplate,
+    targetSchemaTemplateId: string,
+    newName?: string,
+  ): Promise<PresentationTemplate | null> {
+    const desiredName = newName || sourceTemplate.name;
+    return this.saveTemplate({
+      schemaTemplateId: targetSchemaTemplateId,
+      name: desiredName,
+      description: sourceTemplate.description,
+      source: sourceTemplate.source,
+      formatVersion: sourceTemplate.formatVersion,
+    });
+  }
+
+  /**
+   * Exports a presentation template as a JSON download in browser environment.
+   */
+  exportTemplate(template: PresentationTemplate): void {
+    if (typeof document === "undefined") return;
+    const pkg = exportPresentationTemplate(template);
+    const blob = new Blob([JSON.stringify(pkg, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${template.name.replace(/[^a-z0-9-]+/gi, "-").toLowerCase()}.presentation.json`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 0);
   }
 
   async deleteTemplate(id: string): Promise<boolean> {

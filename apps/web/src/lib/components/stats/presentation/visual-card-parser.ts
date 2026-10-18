@@ -1,4 +1,5 @@
-import { parseTemplate } from "@codex/stat-sheet-engine";
+import { parseTemplate, resolveFieldByKeyOrId } from "@codex/stat-sheet-engine";
+import { systemIdGenerator } from "$lib/utils/runtime-deps";
 import { PRESENTATION_TEMPLATE_FORMAT_VERSION } from "schema";
 import type { StatSheetField } from "schema";
 
@@ -21,7 +22,14 @@ export function getUnusedFields(
   const used = new Set(
     cards.flatMap((card) =>
       card.rows.flatMap((row) =>
-        row.flatMap((cell) => (cell.kind === "field" ? [cell.fieldId] : [])),
+        row.flatMap((cell) =>
+          cell.kind === "field"
+            ? [
+                resolveFieldByKeyOrId(schemaFields, cell.fieldId)?.id ??
+                  cell.fieldId,
+              ]
+            : [],
+        ),
       ),
     ),
   );
@@ -31,16 +39,20 @@ export function getUnusedFields(
 export function parseCardsFromSource(
   src: string,
   schemaFields: StatSheetField[] = [],
+  idGenerator: () => string = systemIdGenerator.uuid,
 ): VisualCard[] {
   const cards: VisualCard[] = [];
   const res = parseTemplate(src, PRESENTATION_TEMPLATE_FORMAT_VERSION);
   if (!res.ok) return cards;
 
+  const canonicalFieldId = (ref: string): string =>
+    resolveFieldByKeyOrId(schemaFields, ref)?.id ?? ref;
+
   function extractFieldIdsFromNode(node: any): string[] {
     const fieldIds: string[] = [];
     if (!node) return fieldIds;
     if (node.type === "field-reference") {
-      fieldIds.push(node.fieldId);
+      fieldIds.push(canonicalFieldId(node.fieldId));
     } else if (node.children && Array.isArray(node.children)) {
       for (const child of node.children) {
         fieldIds.push(...extractFieldIdsFromNode(child));
@@ -49,18 +61,25 @@ export function parseCardsFromSource(
     return fieldIds;
   }
 
+  function extractTextFromNodes(nodes: any[]): string {
+    return (nodes ?? [])
+      .map((n) => {
+        if (n.type === "text") return n.text;
+        if (n.children) return extractTextFromNodes(n.children);
+        return "";
+      })
+      .join("");
+  }
+
   function processBlockNode(node: any, currentHeadingTitle: string): string {
     let activeTitle = currentHeadingTitle;
     if (node.type === "heading") {
-      const textNode = node.children?.find((c: any) => c.type === "text");
-      if (textNode && "text" in textNode) {
-        activeTitle = textNode.text;
-      }
+      activeTitle = extractTextFromNodes(node.children);
     } else if (node.type === "table") {
       const rows: VisualCell[][] = [];
       const headers = (node.header ?? []).map((cellNodes: any[]) => {
-        const t = cellNodes.find((c: any) => c.type === "text");
-        return t && "text" in t ? t.text : "Col";
+        const t = extractTextFromNodes(cellNodes);
+        return t || "Col";
       });
       for (const rowCells of node.rows ?? []) {
         const row: VisualCell[] = [];
@@ -73,7 +92,10 @@ export function parseCardsFromSource(
             .map((cell: any) => cell.text)
             .join("");
           if (field && cellNodes.length === 1) {
-            row.push({ kind: "field", fieldId: field.fieldId });
+            row.push({
+              kind: "field",
+              fieldId: canonicalFieldId(field.fieldId),
+            });
           } else if (text) {
             row.push({ kind: "value", value: text });
           }
@@ -81,8 +103,8 @@ export function parseCardsFromSource(
         if (row.length > 0) rows.push(row);
       }
       cards.push({
-        id: Math.random().toString(36).slice(2, 9),
-        title: activeTitle || `Table ${cards.length + 1}`,
+        id: idGenerator(),
+        title: activeTitle,
         columns: headers.length || 2,
         mode: "table",
         tableHeaders: headers.length > 0 ? headers : ["Field", "Value"],
@@ -98,8 +120,8 @@ export function parseCardsFromSource(
         }
       }
       cards.push({
-        id: Math.random().toString(36).slice(2, 9),
-        title: activeTitle || `Card ${cards.length + 1}`,
+        id: idGenerator(),
+        title: activeTitle,
         columns: 2,
         mode: "grid",
         rows: rows.length > 0 ? rows : [[]],
@@ -117,8 +139,8 @@ export function parseCardsFromSource(
             }
           }
           cards.push({
-            id: Math.random().toString(36).slice(2, 9),
-            title: activeTitle || `Card ${cards.length + 1}`,
+            id: idGenerator(),
+            title: activeTitle,
             columns: cols,
             mode: "grid",
             rows: rows.length > 0 ? rows : [[]],
@@ -128,8 +150,8 @@ export function parseCardsFromSource(
           const fIds = extractFieldIdsFromNode(child);
           if (fIds.length > 0) {
             cards.push({
-              id: Math.random().toString(36).slice(2, 9),
-              title: activeTitle || `Group ${cards.length + 1}`,
+              id: idGenerator(),
+              title: activeTitle,
               columns: cols,
               mode: "grid",
               rows: [fIds.map((fieldId) => ({ kind: "field", fieldId }))],
@@ -138,7 +160,25 @@ export function parseCardsFromSource(
           }
         }
       }
+    } else if (node.type === "paragraph") {
+      const fIds = extractFieldIdsFromNode(node);
+      if (fIds.length > 0) {
+        cards.push({
+          id: idGenerator(),
+          title: activeTitle,
+          columns: 2,
+          mode: "grid",
+          rows: [fIds.map((fieldId) => ({ kind: "field", fieldId }))],
+        });
+        activeTitle = "";
+      }
     } else if (node.type === "section" || node.type === "row") {
+      if (node.type === "section") {
+        activeTitle =
+          node.title ||
+          (node.heading ? extractTextFromNodes(node.heading.children) : "") ||
+          activeTitle;
+      }
       for (const child of node.children ?? []) {
         activeTitle = processBlockNode(child, activeTitle);
       }
@@ -151,7 +191,7 @@ export function parseCardsFromSource(
     titleState = processBlockNode(node, titleState);
   }
 
-  if (cards.length === 0 && schemaFields.length > 0) {
+  if (cards.length === 0 && schemaFields.length > 0 && !src.trim()) {
     let currentCard: VisualCard = {
       id: "c1",
       title: "Overview",
@@ -165,7 +205,7 @@ export function parseCardsFromSource(
           cards.push(currentCard);
         }
         currentCard = {
-          id: Math.random().toString(36).slice(2, 9),
+          id: idGenerator(),
           title: f.label,
           columns: 2,
           mode: "grid",

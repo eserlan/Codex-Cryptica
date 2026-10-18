@@ -4,8 +4,8 @@
   import { guestChatStore } from "$lib/stores/guest-chat.svelte";
   import LabelBadge from "$lib/components/labels/LabelBadge.svelte";
   import LabelInput from "$lib/components/labels/LabelInput.svelte";
-  import ConnectionEditor from "$lib/components/connections/ConnectionEditor.svelte";
-  import ConnectionCreator from "$lib/components/connections/ConnectionCreator.svelte";
+  import ZenConnections from "./ZenConnections.svelte";
+  import SilhouetteAvatar from "$lib/components/ui/SilhouetteAvatar.svelte";
   import { revisionService } from "$lib/services/RevisionService.svelte";
   import { isEntityVisible, composeImagePrompt, type Entity } from "schema";
   import { themeStore } from "$lib/stores/theme.svelte";
@@ -14,11 +14,6 @@
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
   import { debugStore } from "$lib/stores/debug.svelte";
-
-  let editingConnectionTarget = $state<string | null>(null);
-  let isAddingConnection = $state(false);
-  let prefillConnectionTargetId = $state<string | null>(null);
-  let prefillConnectionTargetName = $state("");
 
   let {
     entity,
@@ -154,98 +149,6 @@
     }
   });
 
-  interface ConnectionListItem {
-    id: string;
-    key: string;
-    displayLabel: string;
-    rawLabel?: string;
-    title: string;
-    type: string;
-    isOutbound: boolean;
-    isChild?: boolean;
-    isParent?: boolean;
-    strength?: number;
-  }
-
-  let allConnections = $derived.by(() => {
-    if (!entity) return [] as ConnectionListItem[];
-
-    const checkVisibility = (targetId: string) => {
-      const targetEntity = vault.entities[targetId];
-      if (!targetEntity) return false;
-      if (!vault.isGuest) return true;
-      return isEntityVisible(targetEntity, {
-        sharedMode: vault.isGuest,
-        defaultVisibility: vault.defaultVisibility,
-      });
-    };
-
-    const result: ConnectionListItem[] = [];
-    const connections = entity?.connections || [];
-    const connectionsLength = connections.length;
-    for (let i = 0; i < connectionsLength; i++) {
-      const c = connections[i];
-      if (checkVisibility(c.target)) {
-        result.push({
-          id: c.target,
-          key: `${c.target}-out-${c.type}-${i}`,
-          displayLabel: c.label || c.type,
-          rawLabel: c.label,
-          title: vault.entities[c.target]?.title || c.target,
-          type: c.type,
-          isOutbound: true,
-          strength: c.strength,
-        });
-      }
-    }
-
-    const inboundConnections = vault.inboundConnections[entity?.id || ""] || [];
-    const inboundLength = inboundConnections.length;
-    for (let i = 0; i < inboundLength; i++) {
-      const item = inboundConnections[i];
-      if (checkVisibility(item.sourceId)) {
-        result.push({
-          id: item.sourceId,
-          key: `${item.sourceId}-in-${item.connection.type}-${i}`,
-          displayLabel: item.connection.label || item.connection.type,
-          rawLabel: item.connection.label,
-          title: vault.entities[item.sourceId]?.title || item.sourceId,
-          type: item.connection.type,
-          isOutbound: false,
-          strength: item.connection.strength,
-        });
-      }
-    }
-
-    // Add children if exist
-    const entityId = (entity?.id || "").toLowerCase();
-    // ⚡ Bolt Optimization: Use vault.allEntities and an imperative loop instead of allocating Object.values() or .filter() arrays
-    const allEntities = vault.allEntities || [];
-
-    for (let i = 0; i < allEntities.length; i++) {
-      const child = allEntities[i];
-      if (child.parent && child.parent.toLowerCase() === entityId) {
-        if (checkVisibility(child.id)) {
-          const alreadyConnected = result.some((c) => c.id === child.id);
-          if (!alreadyConnected) {
-            result.push({
-              id: child.id,
-              key: `${child.id}-child-${i}`,
-              displayLabel: "Child",
-              rawLabel: "Child",
-              title: child.title,
-              type: "child",
-              isOutbound: false,
-              isChild: true,
-            });
-          }
-        }
-      }
-    }
-
-    return result;
-  });
-
   // Check if this entity is visible in guest/shared mode
   const isVisible = $derived.by(() => {
     if (!entity) return false;
@@ -273,7 +176,8 @@
         class="w-full text-center py-2.5 bg-theme-primary text-theme-bg font-bold tracking-widest uppercase text-xs rounded-xl hover:bg-theme-secondary transition flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(var(--color-theme-primary-rgb),0.15)] cursor-pointer"
         data-testid="zen-sidebar-guest-chat-button"
       >
-        <span class="icon-[lucide--messages-square] w-4 h-4"></span>
+        <span aria-hidden="true" class="icon-[lucide--messages-square] w-4 h-4"
+        ></span>
         Chat with {entity.title}
       </button>
     </div>
@@ -317,7 +221,7 @@
           <div class="flex flex-wrap gap-1.5">
             {#each entity.aliases as alias}
               <div
-                class="px-2 py-0.5 rounded bg-theme-primary/5 border border-theme-primary/10 text-[10px] font-bold text-theme-secondary uppercase tracking-wider"
+                class="px-2 py-0.5 rounded bg-theme-primary/5 border border-theme-primary/10 text-micro font-bold text-theme-secondary uppercase tracking-wider"
               >
                 {alias}
               </div>
@@ -329,7 +233,7 @@
       <div class="space-y-4">
         <div class="space-y-1">
           <label
-            class="block text-[10px] tracking-widest uppercase font-header text-theme-secondary font-bold"
+            class="block text-micro tracking-widest uppercase font-header text-theme-secondary font-bold"
             for="zen-labels">Labels</label
           >
           <LabelInput entityId={entity?.id || ""} ariaLabel="Labels" />
@@ -359,20 +263,40 @@
         aria-hidden="true"
         tabindex="-1"
       />
-      <button
-        type="button"
-        onclick={() => fileInput?.click()}
-        class="mb-2 w-full rounded border border-theme-border bg-theme-surface px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-theme-text transition hover:border-theme-primary hover:bg-theme-bg/50"
-        aria-describedby={imageUploadError
-          ? "zen-image-upload-error"
-          : undefined}
-      >
-        <span
-          class="icon-[lucide--upload] mr-2 inline-block h-4 w-4 align-middle text-theme-primary"
-          aria-hidden="true"
-        ></span>
-        {entity?.image ? "Replace image" : "Choose image"}
-      </button>
+      <div class="mb-2 flex items-stretch gap-2">
+        <button
+          type="button"
+          onclick={() => fileInput?.click()}
+          class="touch-target flex-1 rounded border border-theme-border bg-theme-surface px-3 py-2 text-micro font-bold uppercase tracking-widest text-theme-text transition hover:border-theme-primary hover:bg-theme-bg/50"
+          aria-describedby={imageUploadError
+            ? "zen-image-upload-error"
+            : undefined}
+        >
+          <span
+            class="icon-[lucide--upload] mr-2 inline-block h-4 w-4 align-middle text-theme-primary"
+            aria-hidden="true"
+          ></span>
+          {entity?.image ? "Replace image" : "Choose image"}
+        </button>
+
+        <!-- Zen is the whole entity view on a phone, so the silhouette picker
+             has to be reachable here too, not only in the desktop detail
+             panel's image block. -->
+        <button
+          type="button"
+          onclick={() => entity && modalUIStore.openSilhouettePicker(entity)}
+          disabled={!entity}
+          class="touch-target flex items-center gap-1.5 rounded border border-theme-border bg-theme-surface px-3 py-2 text-micro font-bold uppercase tracking-widest text-theme-text transition hover:border-theme-primary hover:bg-theme-bg/50 disabled:cursor-not-allowed disabled:opacity-40"
+          title="Customize vector silhouette"
+          data-testid="zen-silhouette-button"
+        >
+          <span
+            class="icon-[lucide--user] inline-block h-4 w-4 text-theme-accent"
+            aria-hidden="true"
+          ></span>
+          Silhouette
+        </button>
+      </div>
       {#if imageUploadError}
         <p
           id="zen-image-upload-error"
@@ -388,7 +312,9 @@
       <div
         class="w-full py-2 md:py-4 md:aspect-square rounded-lg border border-dashed border-theme-border flex flex-col items-center justify-center gap-2 md:gap-4 text-theme-muted bg-theme-primary/5 relative overflow-hidden"
       >
-        <span class="icon-[lucide--lock] w-6 h-6 md:w-8 md:h-8 opacity-30"
+        <span
+          aria-hidden="true"
+          class="icon-[lucide--lock] w-6 h-6 md:w-8 md:h-8 opacity-30"
         ></span>
         <span
           class="text-xs font-bold uppercase font-header tracking-widest opacity-40"
@@ -435,7 +361,7 @@
               class="icon-[lucide--image] w-8 h-8 opacity-30"
             ></span>
             <span
-              class="text-[10px] font-mono uppercase tracking-wider opacity-40"
+              class="text-micro font-mono uppercase tracking-wider opacity-40"
               >Resolving Neural Visual...</span
             >
           </div>
@@ -466,15 +392,32 @@
         <div
           class="w-full py-2 md:py-4 md:aspect-square rounded-lg border border-dashed border-theme-border flex flex-col items-center justify-center gap-2 md:gap-4 text-theme-muted bg-theme-primary/5 relative overflow-hidden"
         >
-          <div class="flex flex-col items-center justify-center gap-1 md:gap-2">
+          <!-- The entity's silhouette is what the graph will paint for it, so
+               the placeholder shows that rather than an empty frame — and
+               doubles as the way into the picker. -->
+          <button
+            type="button"
+            onclick={() => entity && modalUIStore.openSilhouettePicker(entity)}
+            disabled={!entity || vault.isGuest}
+            class="flex flex-col items-center justify-center gap-1 md:gap-2 transition-transform hover:scale-102 disabled:cursor-default disabled:hover:scale-100 group/sil"
+            title="Click to change silhouette"
+            data-testid="zen-silhouette-placeholder"
+          >
+            <SilhouetteAvatar
+              entity={entity ?? undefined}
+              size="3xl"
+              class="border-theme-border/60 shadow-lg group-hover/sil:border-theme-primary transition-colors"
+            />
             <span
-              class="icon-[lucide--image] w-6 h-6 md:w-12 md:h-12 opacity-30 md:opacity-50"
-            ></span>
-            <span
-              class="text-xs font-bold uppercase font-header tracking-widest opacity-40"
-              >No Image</span
+              class="text-nano font-mono uppercase tracking-wider opacity-60 group-hover/sil:text-theme-primary transition-colors flex items-center gap-1"
             >
-          </div>
+              <span
+                class="icon-[lucide--sparkles] h-3 w-3 text-theme-accent"
+                aria-hidden="true"
+              ></span>
+              {entity?.silhouette ? "Custom silhouette" : "No image"}
+            </span>
+          </button>
 
           {#if isVisualizing || revisionService.isRevising}
             <div
@@ -485,7 +428,7 @@
                 aria-hidden="true"
               ></span>
               <div
-                class="text-[9px] md:text-[10px] font-bold uppercase tracking-[0.2em] font-header text-theme-primary text-center px-6"
+                class="text-nano md:text-micro font-bold uppercase tracking-[0.2em] font-header text-theme-primary text-center px-6"
                 aria-live="polite"
               >
                 {#if isVisualizing}
@@ -516,18 +459,19 @@
           <div
             class="absolute top-2 left-2 flex items-center gap-2 opacity-30 text-theme-muted select-none pointer-events-none transition-opacity group-hover:opacity-100"
           >
-            <span class="icon-[lucide--pen-tool] w-4 h-4"></span>
+            <span aria-hidden="true" class="icon-[lucide--pen-tool] w-4 h-4"
+            ></span>
             <span
-              class="text-[8px] font-header uppercase tracking-widest font-bold"
+              class="text-nano font-header uppercase tracking-widest font-bold"
               >Image Prompt</span
             >
           </div>
           <div
             class="absolute top-2 right-2 flex items-center gap-1 opacity-0 text-theme-primary select-none pointer-events-none transition-opacity group-hover:opacity-100 group-focus:opacity-100"
           >
-            <span class="icon-[lucide--copy] w-3 h-3"></span>
+            <span aria-hidden="true" class="icon-[lucide--copy] w-3 h-3"></span>
             <span
-              class="text-[8px] font-header uppercase tracking-widest font-bold"
+              class="text-nano font-header uppercase tracking-widest font-bold"
               >Click to Copy</span
             >
           </div>
@@ -549,7 +493,7 @@
         <button
           onclick={() => oracle.drawEntity(entity.id)}
           disabled={isVisualizing}
-          class="bg-theme-surface/50 hover:bg-theme-surface border border-theme-primary/30 hover:border-theme-primary transition-all flex items-center justify-center gap-2 px-2 py-1 md:px-4 md:py-2 rounded shadow-sm group/btn relative overflow-hidden"
+          class="touch-target bg-theme-surface/50 hover:bg-theme-surface border border-theme-primary/30 hover:border-theme-primary transition-all flex items-center justify-center gap-2 px-2 py-1 md:px-4 md:py-2 rounded shadow-sm group/btn relative overflow-hidden"
           aria-label={oracle.apiKey
             ? `Draw visualization for ${entity.title}`
             : `Generate image prompt for ${entity.title}`}
@@ -561,7 +505,7 @@
               aria-hidden="true"
             ></span>
             <span
-              class="text-[10px] md:text-xs font-bold tracking-widest text-theme-primary text-center font-header uppercase"
+              class="text-micro md:text-xs font-bold tracking-widest text-theme-primary text-center font-header uppercase"
               aria-live="polite"
             >
               {#if oracle.activeStyleTitle}
@@ -579,7 +523,7 @@
               aria-hidden="true"
             ></span>
             <span
-              class="text-[10px] md:text-xs font-bold tracking-widest font-header text-theme-primary relative z-10 uppercase"
+              class="text-micro md:text-xs font-bold tracking-widest font-header text-theme-primary relative z-10 uppercase"
               >{oracle.apiKey ? "DRAW VISUAL" : "GENERATE PROMPT"}</span
             >
           {/if}
@@ -588,7 +532,7 @@
         <button
           type="button"
           onclick={() => modalUIStore.openRevisionDialog(entity.id)}
-          class="bg-theme-surface/50 hover:bg-theme-surface border border-theme-primary/30 hover:border-theme-primary transition-all flex items-center justify-center gap-2 px-2 py-1 md:px-4 md:py-2 rounded shadow-sm group/btn relative overflow-hidden"
+          class="touch-target bg-theme-surface/50 hover:bg-theme-surface border border-theme-primary/30 hover:border-theme-primary transition-all flex items-center justify-center gap-2 px-2 py-1 md:px-4 md:py-2 rounded shadow-sm group/btn relative overflow-hidden"
           aria-label="Revise Chronicle and Lore"
           title="Revise Chronicle and Lore"
         >
@@ -597,7 +541,7 @@
             aria-hidden="true"
           ></span>
           <span
-            class="text-[10px] md:text-xs font-bold tracking-widest font-header text-theme-primary relative z-10 uppercase pointer-events-none"
+            class="text-micro md:text-xs font-bold tracking-widest font-header text-theme-primary relative z-10 uppercase pointer-events-none"
             >REGENERATE</span
           >
         </button>
@@ -607,187 +551,12 @@
 
   <!-- Sidebar Content -->
   <div class="block space-y-4" data-testid="zen-sidebar-content">
-    {#if !(isPopout && vault.isGuest)}
-      <div
-        class="hidden md:block space-y-4 pt-6 border-t border-theme-border md:border-t-0 md:pt-0"
-      >
-        <div
-          class="flex items-center justify-between border-b border-theme-border pb-2"
-        >
-          <h3
-            class="text-xs font-bold text-theme-secondary uppercase font-header tracking-widest"
-          >
-            Connections
-          </h3>
-          {#if !vault.isGuest && !isAddingConnection}
-            <button
-              type="button"
-              onclick={() => (isAddingConnection = true)}
-              class="text-[10px] font-bold text-theme-primary hover:text-theme-secondary flex items-center gap-1 transition"
-              aria-label="Add new connection"
-            >
-              <span aria-hidden="true" class="icon-[lucide--plus] w-3.5 h-3.5"
-              ></span>
-              ADD
-            </button>
-          {/if}
-        </div>
-
-        {#if isAddingConnection}
-          <ConnectionCreator
-            entityId={entity.id}
-            initialTargetId={prefillConnectionTargetId}
-            initialTargetName={prefillConnectionTargetName}
-            onCancel={() => {
-              isAddingConnection = false;
-              prefillConnectionTargetId = null;
-              prefillConnectionTargetName = "";
-            }}
-            onConnectionAdded={() => {
-              isAddingConnection = false;
-              prefillConnectionTargetId = null;
-              prefillConnectionTargetName = "";
-            }}
-          />
-        {/if}
-
-        {#if allConnections.length > 0}
-          <div class="space-y-2">
-            {#each allConnections as conn (conn.key)}
-              {#if editingConnectionTarget === conn.id && conn.isOutbound && !conn.isChild}
-                <div class="p-1">
-                  <ConnectionEditor
-                    sourceId={entity?.id || ""}
-                    connection={{
-                      target: conn.id,
-                      type: conn.type,
-                      strength: conn.strength ?? 1,
-                      label: conn.rawLabel || "",
-                    }}
-                    onSave={() => (editingConnectionTarget = null)}
-                    onCancel={() => (editingConnectionTarget = null)}
-                  />
-                </div>
-              {:else}
-                <div
-                  class="[content-visibility:auto] [contain-intrinsic-size:0_44px] w-full flex items-center gap-3 p-2 rounded border border-transparent hover:border-theme-border hover:bg-theme-primary/10 transition text-left group"
-                >
-                  <button
-                    type="button"
-                    onclick={() => onNavigate(conn.id)}
-                    class="flex-1 min-w-0 flex items-center gap-3 text-left"
-                  >
-                    <span
-                      aria-hidden="true"
-                      class="w-1.5 h-1.5 rounded-full shrink-0 {conn.isChild
-                        ? 'bg-emerald-500'
-                        : conn.isOutbound
-                          ? 'bg-theme-primary'
-                          : 'bg-blue-500'}"
-                    ></span>
-                    <span class="sr-only"
-                      >{conn.isChild
-                        ? "Child of this entity:"
-                        : conn.isOutbound
-                          ? "Outgoing connection:"
-                          : "Incoming connection:"}</span
-                    >
-                    <div class="flex-1 min-w-0">
-                      <div
-                        class="text-xs text-theme-muted uppercase tracking-widest font-header"
-                      >
-                        {conn.displayLabel}
-                      </div>
-                      <div
-                        class="text-sm font-bold text-theme-text group-hover:text-theme-primary truncate transition font-body"
-                      >
-                        {conn.title}
-                      </div>
-                    </div>
-                  </button>
-
-                  {#if !vault.isGuest}
-                    <div class="flex items-center gap-1">
-                      {#if conn.isOutbound && !conn.isChild}
-                        <button
-                          type="button"
-                          onclick={() => (editingConnectionTarget = conn.id)}
-                          class="text-theme-muted hover:text-theme-primary transition p-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 shrink-0"
-                          aria-label="Edit connection to {conn.title}"
-                          title="Edit connection"
-                        >
-                          <span
-                            class="icon-[lucide--pencil] w-3.5 h-3.5"
-                            aria-hidden="true"
-                          ></span>
-                        </button>
-                      {/if}
-                      {#if conn.isChild}
-                        <button
-                          type="button"
-                          onclick={() => {
-                            prefillConnectionTargetId = conn.id;
-                            prefillConnectionTargetName = conn.title;
-                            isAddingConnection = true;
-                          }}
-                          class="text-theme-muted hover:text-theme-primary transition p-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 shrink-0"
-                          aria-label="Establish custom connection to {conn.title}"
-                          title="Establish custom connection"
-                        >
-                          <span
-                            class="icon-[lucide--plus] w-3.5 h-3.5"
-                            aria-hidden="true"
-                          ></span>
-                        </button>
-                      {/if}
-                      <button
-                        type="button"
-                        onclick={() => {
-                          const entityId = entity?.id;
-                          if (!entityId) return;
-                          if (conn.isChild) {
-                            vault.updateEntity(conn.id, { parent: undefined });
-                          } else if (conn.isOutbound) {
-                            vault.removeConnection(
-                              entityId,
-                              conn.id,
-                              conn.type,
-                            );
-                          } else {
-                            vault.removeConnection(
-                              conn.id,
-                              entityId,
-                              conn.type,
-                            );
-                          }
-                        }}
-                        class="text-theme-muted hover:text-theme-danger transition p-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 shrink-0"
-                        aria-label="Delete connection to {conn.title}"
-                        title="Delete connection"
-                      >
-                        <span
-                          class="icon-[lucide--trash-2] w-3.5 h-3.5"
-                          aria-hidden="true"
-                        ></span>
-                      </button>
-                    </div>
-                  {/if}
-
-                  <button
-                    type="button"
-                    onclick={() => onNavigate(conn.id)}
-                    class="icon-[lucide--chevron-right] w-4 h-4 text-theme-muted group-hover:text-theme-primary group-focus-within:text-theme-primary focus-visible:text-theme-primary opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 transition shrink-0"
-                    aria-label="Navigate to {conn.title}"
-                  ></button>
-                </div>
-              {/if}
-            {/each}
-          </div>
-        {:else}
-          <p class="text-xs text-theme-muted italic">No known connections.</p>
-        {/if}
-      </div>
-    {/if}
+    <ZenConnections
+      {entity}
+      {isPopout}
+      {onNavigate}
+      class="hidden md:block md:border-t-0 md:pt-0"
+    />
 
     {#if editState.isEditing && !vault.isGuest}
       <div class="mt-6 pt-6 border-t border-theme-border">
@@ -796,7 +565,8 @@
           onclick={onDelete}
           class="w-full border border-red-900/30 text-red-800 hover:text-red-500 hover:border-red-600 hover:bg-red-950/30 text-xs font-bold px-4 py-2 rounded tracking-widest transition flex items-center justify-center gap-2"
         >
-          <span class="icon-[lucide--trash-2] w-3 h-3"></span>
+          <span aria-hidden="true" class="icon-[lucide--trash-2] w-3 h-3"
+          ></span>
           DELETE ENTITY
         </button>
       </div>

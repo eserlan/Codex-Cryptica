@@ -14,7 +14,7 @@
     type="button"
     onclick={() => isHost && modalUIStore.openRevisionDialog(entityId)}
     disabled={isRevising}
-    class="transition flex items-center justify-center p-1 text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-icon-active)] disabled:opacity-50 disabled:cursor-not-allowed"
+    class="touch-target transition flex items-center justify-center p-1 text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-icon-active)] disabled:opacity-50 disabled:cursor-not-allowed"
     aria-label="AI Revise Description"
     title="AI Revise Description (Chronicle & Lore)"
   >

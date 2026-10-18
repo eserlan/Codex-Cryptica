@@ -4,6 +4,7 @@
   import { fade } from "svelte/transition";
   import { safeJsonLd } from "$lib/utils/json-ld";
   import {
+    parseChronicaFiles,
     parseObsidianFiles,
     parseJsonExport,
     traverseEntry,
@@ -14,6 +15,10 @@
   const pageData = $derived(data.importPage);
 
   let isDragging = $state(false);
+  // Chronica exports one JSON file per campaign section, so it takes several.
+  const acceptsMultipleFiles = $derived(
+    pageData.slug === "obsidian-vault" || pageData.slug === "chronica",
+  );
   const ENTITY_TYPES = [
     "character",
     "creature",
@@ -25,7 +30,26 @@
   ] as const;
 
   let filesParsed = $state<
-    Array<{ type: string; title: string; content: string; labels: string[] }>
+    Array<{
+      type: string;
+      title: string;
+      content: string;
+      labels: string[];
+      references?: string[];
+      relationships?: Array<{
+        title: string;
+        type?: string;
+        label?: string;
+      }>;
+      parentReference?: string;
+      assets?: Array<{
+        originalName: string;
+        mimeType: string;
+        dataUrl: string;
+      }>;
+      discoverySource?: string;
+      metadata?: Record<string, unknown>;
+    }>
   >([]);
   // ⚡ Bolt Optimization: Calculate stats in a single pass to avoid multiple .filter() array allocations.
   let parseStats = $derived.by(() => {
@@ -54,6 +78,7 @@
   });
 
   let errorMessage = $state<string | null>(null);
+  let parseRequest = 0;
 
   // Drag over handler
   function handleDragOver(e: DragEvent) {
@@ -65,8 +90,35 @@
     isDragging = false;
   }
 
+  async function parseSelectedFiles(list: File[]) {
+    if (pageData.slug === "obsidian-vault") {
+      return parseObsidianFiles(list);
+    }
+    if (pageData.slug === "chronica") {
+      return parseChronicaFiles(list);
+    }
+
+    const requiredExtension = pageData.slug === "kanka-json" ? ".zip" : ".json";
+    const exportFile = list.find((file) =>
+      file.name.toLowerCase().endsWith(requiredExtension),
+    );
+    if (!exportFile) {
+      throw new Error(
+        `Please upload a valid ${requiredExtension.toUpperCase()} file for ` +
+          pageData.competitorName +
+          " export.",
+      );
+    }
+    return parseJsonExport(exportFile, pageData.slug);
+  }
+
   // Handle files select/drop
-  async function handleFiles(files: FileList | File[]) {
+  async function handleFiles(
+    files: FileList | File[],
+    request = ++parseRequest,
+  ) {
+    if (request !== parseRequest) return;
+
     errorMessage = null;
     filesParsed = [];
     const list = Array.from(files);
@@ -74,22 +126,12 @@
     if (list.length === 0) return;
 
     try {
-      if (pageData.slug === "obsidian-vault") {
-        filesParsed = await parseObsidianFiles(list);
-      } else {
-        // JSON based imports (World Anvil, Kanka, LegendKeeper)
-        const jsonFile = list.find((f) => f.name.endsWith(".json"));
-        if (!jsonFile) {
-          throw new Error(
-            "Please upload a valid JSON file for " +
-              pageData.competitorName +
-              " export.",
-          );
-        }
-        filesParsed = await parseJsonExport(jsonFile, pageData.slug);
-      }
+      const parsed = await parseSelectedFiles(list);
+      if (request === parseRequest) filesParsed = parsed;
     } catch (err: any) {
-      errorMessage = err.message || "Failed to parse files.";
+      if (request === parseRequest) {
+        errorMessage = err.message || "Failed to parse files.";
+      }
     }
   }
 
@@ -98,6 +140,7 @@
     e.preventDefault();
     isDragging = false;
     if (!e.dataTransfer) return;
+    const request = ++parseRequest;
 
     // Check for directories
     const items = Array.from(e.dataTransfer.items);
@@ -107,9 +150,9 @@
         return entry ? traverseEntry(entry) : Promise.resolve([]);
       });
       const results = await Promise.all(entryPromises);
-      await handleFiles(results.flat());
+      await handleFiles(results.flat(), request);
     } else {
-      await handleFiles(e.dataTransfer.files);
+      await handleFiles(e.dataTransfer.files, request);
     }
   }
 
@@ -229,60 +272,13 @@
   class="min-h-screen bg-theme-bg text-theme-text font-body flex flex-col"
   style:background-image="var(--bg-texture-overlay)"
 >
-  <!-- Marketing Header -->
-  <header
-    class="w-full border-b border-theme-border/60 bg-theme-surface/40 backdrop-blur-md px-6 py-4 sticky top-0 z-50"
-  >
-    <div class="max-w-6xl mx-auto flex items-center justify-between gap-4">
-      <a
-        href="{cleanBase}/?utm_source=importer-logo&utm_medium=nav&utm_campaign=seo-funnel"
-        class="flex items-center gap-2 group min-w-0"
-        id="logo-link"
-      >
-        <span
-          class="icon-[lucide--castle] text-theme-primary w-6 h-6 shrink-0 transition-transform group-hover:rotate-12"
-        ></span>
-        <span
-          class="font-header font-bold text-sm uppercase tracking-[0.2em] text-theme-text group-hover:text-theme-primary transition-colors whitespace-nowrap truncate"
-        >
-          Codex<span class="hidden sm:inline"> Cryptica</span>
-        </span>
-      </a>
-      <nav
-        class="hidden md:flex items-center gap-6 text-xs font-bold font-header text-theme-muted"
-      >
-        <a
-          href="{cleanBase}/features"
-          class="hover:text-theme-primary transition-colors">Features</a
-        >
-        <a
-          href="{cleanBase}/blog"
-          class="hover:text-theme-primary transition-colors">Devlog</a
-        >
-        <a
-          href="{cleanBase}/tools/dnd-npc-generator"
-          class="hover:text-theme-primary transition-colors">Generators</a
-        >
-      </nav>
-      <div class="shrink-0">
-        <a
-          href="{cleanBase}/?utm_source=importer-nav&utm_medium=nav&utm_campaign=seo-funnel"
-          class="px-5 py-2.5 bg-theme-primary text-theme-bg font-bold font-header text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all whitespace-nowrap"
-          id="nav-cta-btn"
-        >
-          Open Codex
-        </a>
-      </div>
-    </div>
-  </header>
-
   <div
     class="max-w-4xl mx-auto px-4 sm:px-6 py-16 flex-grow w-full flex flex-col justify-center"
   >
     <div class="text-center mb-12">
       <a
         href="{cleanBase}/migrations"
-        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-medium bg-theme-primary/10 border border-theme-primary/20 text-theme-primary mb-4 hover:bg-theme-primary/20 transition-colors"
+        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-micro font-mono font-medium bg-theme-primary/10 border border-theme-primary/20 text-theme-primary mb-4 hover:bg-theme-primary/20 transition-colors"
       >
         <span class="icon-[lucide--folder-input] w-3.5 h-3.5" aria-hidden="true"
         ></span>
@@ -305,7 +301,10 @@
           rel="noopener noreferrer"
           class="inline-flex items-center gap-1.5 mt-4 text-xs font-bold text-theme-muted hover:text-theme-primary transition-colors"
         >
-          <span class="icon-[lucide--external-link] w-3.5 h-3.5"></span>
+          <span
+            aria-hidden="true"
+            class="icon-[lucide--external-link] w-3.5 h-3.5"
+          ></span>
           Get {pageData.toolLabel ?? pageData.competitorName}
         </a>
       {/if}
@@ -322,10 +321,10 @@
           >
             <span class="{feat.icon} w-4 h-4"></span>
           </div>
-          <h3 class="font-header font-bold text-xs text-theme-text">
+          <h3 class="font-header font-bold text-sm text-theme-text">
             {feat.title}
           </h3>
-          <p class="text-xs text-theme-muted leading-relaxed">
+          <p class="text-sm text-theme-muted leading-relaxed">
             {feat.description}
           </p>
         </article>
@@ -351,11 +350,13 @@
         <h3 class="font-header font-bold text-sm mb-2">
           Drag & Drop {pageData.slug === "obsidian-vault"
             ? "markdown files or vault folders"
-            : "your export JSON"} here
+            : pageData.slug === "kanka-json"
+              ? "your Kanka export ZIP"
+              : pageData.slug === "chronica"
+                ? "all your Chronica export JSON files"
+                : "your export JSON"} here
         </h3>
-        <p
-          class="text-[11px] text-theme-muted leading-relaxed max-w-md mx-auto"
-        >
+        <p class="text-meta text-theme-muted leading-relaxed max-w-md mx-auto">
           All files are processed client-side in your browser. Your creative
           work never leaves your computer.
         </p>
@@ -364,16 +365,20 @@
       <div class="flex items-center gap-4">
         <label
           for="file-upload"
-          class="px-5 py-2.5 bg-theme-primary text-theme-bg font-bold font-header text-[10px] rounded-lg hover:brightness-110 cursor-pointer shadow-sm transition-all"
+          class="px-5 py-2.5 bg-theme-primary text-theme-bg font-bold font-header text-micro rounded-lg hover:brightness-110 cursor-pointer shadow-sm transition-all"
         >
-          Select File
+          {acceptsMultipleFiles ? "Select Files" : "Select File"}
         </label>
         <input
           type="file"
           id="file-upload"
           class="hidden"
-          multiple={pageData.slug === "obsidian-vault"}
-          accept={pageData.slug === "obsidian-vault" ? ".md" : ".json"}
+          multiple={acceptsMultipleFiles}
+          accept={pageData.slug === "obsidian-vault"
+            ? ".md"
+            : pageData.slug === "kanka-json"
+              ? ".zip"
+              : ".json"}
           onchange={(e) =>
             e.target && handleFiles((e.target as HTMLInputElement).files || [])}
         />
@@ -399,14 +404,14 @@
             <h3 class="font-header font-bold text-base text-theme-primary">
               Parsed Preview
             </h3>
-            <p class="text-[10px] font-mono text-theme-muted mt-1">
+            <p class="text-micro font-mono text-theme-muted mt-1">
               Review extracted campaign data
             </p>
           </div>
           <button
             type="button"
             onclick={executeImport}
-            class="px-5 py-2.5 bg-theme-primary text-theme-bg font-bold font-header text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all"
+            class="px-5 py-2.5 bg-theme-primary text-theme-bg font-bold font-header text-micro rounded-lg hover:brightness-110 shadow-sm transition-all"
           >
             Import {parseStats.total} Entries into Codex
           </button>
@@ -421,7 +426,7 @@
               >{parseStats.total}</span
             >
             <span
-              class="text-[8px] uppercase tracking-widest text-theme-muted font-header"
+              class="text-nano uppercase tracking-widest text-theme-muted font-header"
               >Total</span
             >
           </div>
@@ -432,7 +437,7 @@
               >{parseStats.characters}</span
             >
             <span
-              class="text-[8px] uppercase tracking-widest text-theme-muted font-header"
+              class="text-nano uppercase tracking-widest text-theme-muted font-header"
               >Characters</span
             >
           </div>
@@ -443,7 +448,7 @@
               >{parseStats.locations}</span
             >
             <span
-              class="text-[8px] uppercase tracking-widest text-theme-muted font-header"
+              class="text-nano uppercase tracking-widest text-theme-muted font-header"
               >Locations</span
             >
           </div>
@@ -454,7 +459,7 @@
               >{parseStats.factions}</span
             >
             <span
-              class="text-[8px] uppercase tracking-widest text-theme-muted font-header"
+              class="text-nano uppercase tracking-widest text-theme-muted font-header"
               >Factions</span
             >
           </div>
@@ -465,7 +470,7 @@
               >{parseStats.items}</span
             >
             <span
-              class="text-[8px] uppercase tracking-widest text-theme-muted font-header"
+              class="text-nano uppercase tracking-widest text-theme-muted font-header"
               >Items</span
             >
           </div>
@@ -481,8 +486,8 @@
               aria-hidden="true"
             ></span>
             <span
-              >Complex World Anvil formatting — columns, sidebars, and tooltips
-              — has been simplified to clean Markdown. Review entries below and
+              >Complex World Anvil formatting (columns, sidebars, and tooltips)
+              has been simplified to clean Markdown. Review entries below and
               correct any misdetected types before importing.</span
             >
           </div>
@@ -524,7 +529,7 @@
 
               <!-- Type select -->
               <select
-                class="bg-theme-surface border border-theme-border/40 text-theme-primary text-[10px] font-mono rounded px-1.5 py-1 focus:outline-none focus:ring-1 focus:ring-theme-primary/40 shrink-0"
+                class="bg-theme-surface border border-theme-border/40 text-theme-primary text-micro font-mono rounded px-1.5 py-1 focus:outline-none focus:ring-1 focus:ring-theme-primary/40 shrink-0"
                 bind:value={filesParsed[idx].type}
                 aria-label="Entity type"
               >
@@ -565,7 +570,7 @@
     <!-- Responsible AI Trust Banner -->
     {#if pageData.aiTrustSection}
       <section class="border-t border-theme-border/60 mt-16 pt-10 text-center">
-        <p class="text-sm text-theme-muted leading-relaxed mb-3">
+        <p class="text-base text-theme-muted leading-relaxed mb-3">
           Responsible AI, not replacement authorship. The Lore Oracle is
           optional, vault-aware, and draft-based. Your vault remains the source
           of truth.
@@ -598,7 +603,7 @@
             <h3 class="font-header font-bold text-sm mb-2">
               {faqItem.question}
             </h3>
-            <p class="text-sm text-theme-muted leading-relaxed">
+            <p class="text-base text-theme-muted leading-relaxed">
               {faqItem.answer}
             </p>
           </article>

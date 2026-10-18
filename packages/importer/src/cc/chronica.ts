@@ -543,7 +543,7 @@ export function parseChronicaExports(
     title: record.title,
     content: record.content,
     lore: record.lore,
-    tags: [],
+    labels: [],
     metadata: record.metadata,
   }));
 

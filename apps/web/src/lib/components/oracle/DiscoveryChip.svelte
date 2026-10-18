@@ -137,7 +137,7 @@
 </script>
 
 <div
-  class="flex items-center gap-1.5 p-1 pl-2 pr-2 text-[10px] rounded-full border border-theme-primary/20 bg-theme-primary/5 transition-colors font-body"
+  class="flex items-center gap-1.5 p-1 pl-2 pr-2 text-micro rounded-full border border-theme-primary/20 bg-theme-primary/5 transition-colors font-body"
 >
   <button
     class={chipBodyClass}
@@ -151,7 +151,7 @@
     <span class="truncate font-bold uppercase tracking-wider text-theme-text/90"
       >{proposal.title}</span
     >
-    <span class="shrink-0 text-[8px] uppercase opacity-40 font-mono ml-1"
+    <span class="shrink-0 text-nano uppercase opacity-40 font-mono ml-1"
       >{proposal.type}</span
     >
   </button>

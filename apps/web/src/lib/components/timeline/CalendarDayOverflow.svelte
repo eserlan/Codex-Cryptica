@@ -39,7 +39,7 @@
   <button
     type="button"
     data-overflow
-    class="rounded-full border border-theme-border bg-theme-bg/60 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-theme-muted transition hover:border-theme-primary hover:text-theme-primary"
+    class="rounded-full border border-theme-border bg-theme-bg/60 px-2 py-1 text-micro font-bold uppercase tracking-[0.18em] text-theme-muted transition hover:border-theme-primary hover:text-theme-primary"
     aria-expanded={isOpen}
     aria-label={`Show more events for ${label}`}
     onclick={() => (isOpen = !isOpen)}
@@ -52,7 +52,7 @@
       class="absolute left-0 top-full z-20 mt-2 min-w-52 rounded-2xl border border-theme-border bg-theme-surface p-2 shadow-2xl"
     >
       <div
-        class="mb-2 px-2 text-[10px] font-bold uppercase tracking-[0.18em] text-theme-primary"
+        class="mb-2 px-2 text-micro font-bold uppercase tracking-[0.18em] text-theme-primary"
       >
         {label}
       </div>
@@ -71,7 +71,7 @@
           >
             <span class="block font-bold">{entry.title}</span>
             <span
-              class="block text-[10px] uppercase tracking-[0.16em] text-theme-muted"
+              class="block text-micro uppercase tracking-[0.16em] text-theme-muted"
             >
               {entry.entityType}
             </span>

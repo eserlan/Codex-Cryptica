@@ -64,7 +64,7 @@
 
       <div class="flex flex-1 items-center justify-center">
         <span
-          class="text-[10px] font-black uppercase tracking-[0.4em] text-theme-muted [writing-mode:vertical-rl]"
+          class="text-micro font-black uppercase tracking-[0.4em] text-theme-muted [writing-mode:vertical-rl]"
         >
           Chat
         </span>
@@ -94,7 +94,7 @@
       >
         <div>
           <div
-            class="text-[9px] font-black uppercase tracking-[0.35em] text-theme-primary/70 font-header"
+            class="text-nano font-black uppercase tracking-[0.35em] text-theme-primary/70 font-header"
           >
             VTT Chat
           </div>

@@ -1,0 +1,302 @@
+import { expect, type Page, test } from "@playwright/test";
+import { openMapWithUpload } from "./test-helpers";
+
+test.describe.configure({ mode: "serial" });
+
+// #3740: map controls must fit and stay usable on phone viewports.
+const openMapWithControls = (page: Page) =>
+  openMapWithUpload(page, "Mobile Map");
+
+// On phones the controls start hidden behind a button, like the graph's.
+async function revealControls(page: Page) {
+  const fab = page.getByTestId("map-controls-fab");
+  if ((await fab.count()) === 0) return;
+  if ((await fab.getAttribute("aria-expanded")) !== "true") {
+    await fab.click();
+  }
+  await expect(fab).toHaveAttribute("aria-expanded", "true");
+}
+
+for (const size of [
+  { width: 360, height: 740 },
+  { width: 390, height: 844 },
+  { width: 430, height: 932 },
+  { width: 844, height: 390 },
+]) {
+  test(`map controls fit ${size.width}x${size.height}`, async ({ page }) => {
+    test.setTimeout(90000);
+    await page.setViewportSize(size);
+    await openMapWithControls(page);
+    await revealControls(page);
+    await page.getByRole("button", { name: /^LABELS/ }).waitFor();
+    await page.screenshot({
+      path: `test-results/map-${size.width}x${size.height}.png`,
+    });
+    const report = await page.evaluate(() => {
+      const vw = document.documentElement.clientWidth;
+      const clipped = [
+        ...document.querySelectorAll<HTMLElement>("button, input[type=range]"),
+      ]
+        .filter((el) => el.offsetParent !== null)
+        .map((el) => ({ el, r: el.getBoundingClientRect() }))
+        .filter(({ r }) => r.width > 0 && (r.left < -0.5 || r.right > vw + 0.5))
+        .map(
+          ({ el, r }) =>
+            `${el.textContent?.trim().slice(0, 20) || el.getAttribute("type")} ${Math.round(r.left)}..${Math.round(r.right)}`,
+        );
+      return { overflow: document.documentElement.scrollWidth - vw, clipped };
+    });
+    console.log("MAP", size.width, JSON.stringify(report));
+    expect(report.clipped).toEqual([]);
+    expect(report.overflow).toBeLessThanOrEqual(1);
+  });
+}
+
+test("map controls stay usable with touch at 390x844", async ({ page }) => {
+  test.setTimeout(90000);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await openMapWithControls(page);
+  await revealControls(page);
+  const labels = page.getByRole("button", { name: /^LABELS/ });
+  await labels.waitFor();
+
+  // Every bar control is a comfortable tap target.
+  const small = await page.evaluate(() =>
+    [...document.querySelectorAll<HTMLElement>("button")]
+      .filter(
+        (b) =>
+          b.offsetParent !== null &&
+          /LABELS|FOG|VISION:|PLAYER VIEW|GRID/.test(b.textContent ?? ""),
+      )
+      .map((b) => ({
+        t: b.textContent?.trim(),
+        h: b.getBoundingClientRect().height,
+        w: b.getBoundingClientRect().width,
+      }))
+      .filter((b) => b.h < 44 || b.w < 44),
+  );
+  expect(small).toEqual([]);
+
+  // Toggle labels.
+  const before = (await labels.textContent())?.trim();
+  await labels.click();
+  await expect(labels).not.toHaveText(before ?? "");
+
+  // Drag the vision-range slider.
+  const slider = page.locator('input[type="range"]').first();
+  const startValue = await slider.inputValue();
+  const box = await slider.boundingBox();
+  if (!box) throw new Error("slider not visible");
+  await page.mouse.move(box.x + box.width * 0.2, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width * 0.8, box.y + box.height / 2, {
+    steps: 5,
+  });
+  await page.mouse.up();
+  expect(await slider.inputValue()).not.toBe(startValue);
+
+  // The bar's row wrapper must not swallow touches meant for the map.
+  const hit = await page.evaluate(() => {
+    const bar = document
+      .getElementById("map-controls-bar")!
+      .getBoundingClientRect();
+    // Just above the bar, in the middle of the screen.
+    const el = document.elementFromPoint(195, bar.top - 24);
+    return el?.tagName.toLowerCase();
+  });
+  expect(hit).toBe("canvas");
+
+  // Layer popup stays on screen.
+  // The dev-only Debug Log overlay can sit on top of this button.
+  await page.getByRole("button", { name: /^Layer:/ }).dispatchEvent("click");
+  const popup = await page.evaluate(() => {
+    const vw = document.documentElement.clientWidth;
+    const panels = [...document.querySelectorAll<HTMLElement>("div")].filter(
+      (d) =>
+        /Layer/i.test(d.textContent ?? "") &&
+        d.getBoundingClientRect().height > 40 &&
+        d.getBoundingClientRect().width < vw,
+    );
+    return panels.every(
+      (p) =>
+        p.getBoundingClientRect().left >= -0.5 &&
+        p.getBoundingClientRect().right <= vw + 0.5,
+    );
+  });
+  expect(popup).toBe(true);
+});
+
+test("empty space beside the bar still reaches the map in landscape", async ({
+  page,
+}) => {
+  test.setTimeout(90000);
+  await page.setViewportSize({ width: 844, height: 390 });
+  await openMapWithControls(page);
+  await page.getByRole("button", { name: /^LABELS/ }).waitFor();
+  await page.waitForTimeout(800); // let the upload dialog finish fading out
+  const hit = await page.evaluate(() => {
+    const label = [...document.querySelectorAll<HTMLElement>("button")].find(
+      (b) => /^LABELS/.test(b.textContent?.trim() ?? ""),
+    );
+    const bar = label?.closest("div.rounded-lg")?.getBoundingClientRect();
+    if (!bar) return "no-bar";
+    // Just left of the bar, in the same row: this used to be covered by a
+    // full-width wrapper that swallowed pans and pinches.
+    const x = bar.left - 6;
+    const el = document.elementFromPoint(x, bar.top + bar.height / 2);
+    return `${el?.tagName.toLowerCase()}|bar ${Math.round(bar.left)}..${Math.round(bar.right)}`;
+  });
+  expect(hit).toMatch(/^canvas\|/);
+});
+
+test.describe("reveal / hide on phones", () => {
+  test("controls start hidden and the map switcher stays reachable", async ({
+    page,
+  }) => {
+    test.setTimeout(90000);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await openMapWithControls(page);
+
+    const fab = page.getByTestId("map-controls-fab");
+    await expect(fab).toBeVisible();
+    await expect(fab).toHaveAttribute("aria-expanded", "false");
+    await expect(page.getByRole("button", { name: /^LABELS/ })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: /^DELETE/ })).toHaveCount(0);
+    // Switching maps must never be hidden.
+    await expect(page.getByLabel("Select Map")).toBeVisible();
+  });
+
+  test("the button reveals and hides every control", async ({ page }) => {
+    test.setTimeout(90000);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await openMapWithControls(page);
+    const fab = page.getByTestId("map-controls-fab");
+
+    await fab.click();
+    await expect(fab).toHaveAttribute("aria-expanded", "true");
+    await expect(page.getByRole("button", { name: /^LABELS/ })).toBeVisible();
+    await expect(page.getByRole("button", { name: /^DELETE/ })).toBeVisible();
+    await expect(page.getByRole("button", { name: /^ADD MAP/i })).toBeVisible();
+
+    await fab.click();
+    await expect(fab).toHaveAttribute("aria-expanded", "false");
+    await expect(page.getByRole("button", { name: /^LABELS/ })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: /^DELETE/ })).toHaveCount(0);
+  });
+
+  test("the button sits clear of the controls panel and the map stays visible", async ({
+    page,
+  }) => {
+    test.setTimeout(90000);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await openMapWithControls(page);
+    const fab = page.getByTestId("map-controls-fab");
+    await fab.click();
+
+    const overlap = await page.evaluate(() => {
+      const f = document
+        .querySelector('[data-testid="map-controls-fab"]')!
+        .getBoundingClientRect();
+      const bar = document
+        .getElementById("map-controls-bar")!
+        .getBoundingClientRect();
+      return f.top < bar.bottom && f.bottom > bar.top;
+    });
+    expect(overlap).toBe(false);
+    expect(
+      await fab.evaluate((el) => el.getBoundingClientRect().height),
+    ).toBeGreaterThanOrEqual(44);
+  });
+
+  test("the button stays clear of the controls panel at the 768px mobile boundary", async ({
+    page,
+  }) => {
+    test.setTimeout(90000);
+    await page.setViewportSize({ width: 768, height: 900 });
+    await openMapWithControls(page);
+    const fab = page.getByTestId("map-controls-fab");
+    await expect(fab).toBeVisible();
+    await fab.click();
+
+    const overlap = await page.evaluate(() => {
+      const f = document
+        .querySelector('[data-testid="map-controls-fab"]')!
+        .getBoundingClientRect();
+      const bar = document
+        .getElementById("map-controls-bar")!
+        .getBoundingClientRect();
+      return f.top < bar.bottom && f.bottom > bar.top;
+    });
+    expect(overlap).toBe(false);
+  });
+
+  test("desktop has no button and shows controls straight away", async ({
+    page,
+  }) => {
+    test.setTimeout(90000);
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await openMapWithControls(page);
+
+    await expect(page.getByTestId("map-controls-fab")).toHaveCount(0);
+    await expect(page.getByRole("button", { name: /^LABELS/ })).toBeVisible();
+  });
+});
+
+test.describe("maximize", () => {
+  const header = (page: Page) => page.getByTestId("header-front-page-button");
+
+  test("on a phone the toggle lives in the controls and gives the map the whole screen", async ({
+    page,
+  }) => {
+    test.setTimeout(90000);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await openMapWithControls(page);
+    await expect(header(page)).toBeVisible();
+    const before = await page.locator("canvas").first().boundingBox();
+
+    await revealControls(page);
+    const toggle = page.getByTestId("map-maximize-toggle");
+    await expect(toggle).toHaveText(/MAXIMIZE/);
+    await toggle.click();
+
+    // The header is gone (navigation shares the same condition, but the demo
+    // vault runs guided mode with no bottom bar); the Map Controls button stays.
+    await expect(header(page)).toHaveCount(0);
+    const fab = page.getByTestId("map-controls-fab");
+    await expect(fab).toBeVisible();
+    const after = await page.locator("canvas").first().boundingBox();
+    expect(after!.height).toBeGreaterThan(before!.height + 50);
+
+    // Minimize from the same group of controls.
+    await fab.click();
+    await expect(page.getByTestId("map-maximize-toggle")).toHaveText(
+      /MINIMIZE/,
+    );
+    await page.getByTestId("map-maximize-toggle").click();
+    await expect(header(page)).toBeVisible();
+  });
+
+  test("it also works on desktop", async ({ page }) => {
+    test.setTimeout(90000);
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await openMapWithControls(page);
+
+    await page.getByTestId("map-maximize-toggle").click();
+    await expect(header(page)).toHaveCount(0);
+    await page.getByTestId("map-maximize-toggle").click();
+    await expect(header(page)).toBeVisible();
+  });
+
+  test("leaving the map restores the header", async ({ page }) => {
+    test.setTimeout(90000);
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await openMapWithControls(page);
+    await page.getByTestId("map-maximize-toggle").click();
+    await expect(header(page)).toHaveCount(0);
+
+    await page.goto("/");
+    await expect(header(page)).toBeVisible({ timeout: 15000 });
+    await page.goto("/map");
+    await expect(header(page)).toBeVisible({ timeout: 15000 });
+  });
+});

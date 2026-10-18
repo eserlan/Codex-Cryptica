@@ -4,10 +4,15 @@ import type {
   MeasurementState,
   PingState,
   SessionMode,
+  TileDeck,
   Token,
   VTTMessage,
 } from "../../../types/vtt";
-import { cloneMeasurement, normalizeEncounterSession } from "map-engine";
+import {
+  cloneMeasurement,
+  normalizeEncounterSession,
+  type HexLabelConfig,
+} from "map-engine";
 import { type IdGenerator, systemIdGenerator } from "$lib/utils/runtime-deps";
 
 export interface VTTSessionSnapshotManagerDependencies {
@@ -54,11 +59,21 @@ export interface VTTSessionSnapshotManagerDependencies {
   setChatMessages: (messages: ChatMessagePayload[]) => void;
   getGridSize: () => number;
   setGridSize: (value: number) => void;
+  getGridType: () => "square" | "hex-pointy" | "hex-flat";
+  setGridType: (value: "square" | "hex-pointy" | "hex-flat") => void;
+  getShowHexCoordinates: () => boolean;
+  setShowHexCoordinates: (value: boolean) => void;
+  getHexLabelConfig: () => HexLabelConfig | undefined;
+  setHexLabelConfig: (value: HexLabelConfig) => void;
+  getFogColor: () => string | null;
+  setFogColor: (value: string | null) => void;
   getGridUnit: () => string;
   setGridUnit: (value: string) => void;
   getGridDistance: () => number;
   setGridDistance: (value: number) => void;
   getActiveMapId: () => string | null;
+  getTileDecks: () => TileDeck[];
+  setTileDeckSnapshotData: (decks: TileDeck[]) => void;
   clearPendingSessionSnapshotBroadcast: () => void;
   emit: (message: VTTMessage) => void;
 }
@@ -94,11 +109,20 @@ export class VTTSessionSnapshotManager {
       savedAt: this.deps.getSavedAt(),
       chatMessages: [...this.deps.getChatMessages()],
       gridSize: this.deps.getGridSize(),
+      gridType: this.deps.getGridType(),
+      showHexCoordinates: this.deps.getShowHexCoordinates(),
+      hexLabelConfig: this.deps.getHexLabelConfig(),
+      fogColor: this.deps.getFogColor(),
       gridUnit: this.deps.getGridUnit(),
       gridDistance: this.deps.getGridDistance(),
+      tileDecks: this.deps.getTileDecks().map((deck) => ({
+        ...deck,
+        tiles: deck.tiles.map((tile) => ({ ...tile })),
+      })),
     };
   }
 
+  // fallow-ignore-next-line complexity
   applySnapshot(snapshot: EncounterSession, silent = true) {
     const normalized = normalizeEncounterSession(snapshot);
     this.deps.clearPendingSessionSnapshotBroadcast();
@@ -128,12 +152,37 @@ export class VTTSessionSnapshotManager {
     this.deps.setCreatedAt(normalized.createdAt);
     this.deps.setSavedAt(normalized.savedAt);
     this.deps.setChatMessages(normalized.chatMessages);
+    this.deps.setTileDeckSnapshotData(normalized.tileDecks ?? []);
 
     if (
       normalized.gridSize !== undefined &&
       normalized.mapId === this.deps.getActiveMapId()
     ) {
       this.deps.setGridSize(normalized.gridSize);
+    }
+    if (
+      normalized.gridType &&
+      normalized.mapId === this.deps.getActiveMapId()
+    ) {
+      this.deps.setGridType(normalized.gridType);
+    }
+    if (
+      normalized.showHexCoordinates !== undefined &&
+      normalized.mapId === this.deps.getActiveMapId()
+    ) {
+      this.deps.setShowHexCoordinates(normalized.showHexCoordinates);
+    }
+    if (
+      normalized.hexLabelConfig !== undefined &&
+      normalized.mapId === this.deps.getActiveMapId()
+    ) {
+      this.deps.setHexLabelConfig(normalized.hexLabelConfig);
+    }
+    if (
+      normalized.fogColor !== undefined &&
+      normalized.mapId === this.deps.getActiveMapId()
+    ) {
+      this.deps.setFogColor(normalized.fogColor);
     }
     if (normalized.gridUnit !== undefined) {
       this.deps.setGridUnit(normalized.gridUnit);

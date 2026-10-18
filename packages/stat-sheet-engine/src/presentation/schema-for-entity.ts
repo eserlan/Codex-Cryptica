@@ -21,18 +21,15 @@ function toTemplateField({
  * against — the vocabulary of fields a layout may reference, and which the
  * Presentation editor offers to place.
  *
- * The entity's own fields are always part of that vocabulary. Systems like
- * Mythras, BRP, WFRP and GURPS give each character a different set of skills,
- * so a stat template is only ever the *starting* sheet: one character carries
- * "Shooting (AK47)", the next "Cow Milking". Those per-character fields are
- * appended to the bound template's fields rather than replacing them, so a
- * layout keeps working while the extras become available to place.
+ * The entity's current fields are the source of truth for that vocabulary.
+ * When the entity adds, renames, or deletes fields in its stat sheet, the
+ * schema reflects those changes directly rather than appending onto a stale
+ * copy of the template's starting fields.
  *
- * `boundTemplate.id` is preserved as the schema id on purpose. It is the key
- * that matches presentation templates (`isTemplateUsable` requires
- * `schema.id === template.schemaTemplateId`), so minting an entity-local id
- * for a character that merely added a field would silently drop it back to
- * the standard renderer and lose its layout.
+ * `boundTemplate.id` is preserved as the schema id on purpose when a template
+ * is bound. It is the key that matches presentation templates (`isTemplateUsable`
+ * requires `schema.id === template.schemaTemplateId`), so the layout continues
+ * to resolve.
  *
  * Returns `null` when there is nothing to render a layout against: no fields
  * and no template, or a `templateId` pointing at a template that no longer
@@ -48,15 +45,19 @@ export function resolveStatSheetSchema(
   if (statSheet?.templateId) {
     if (!boundTemplate) return null;
 
-    const templateFieldIds = new Set(boundTemplate.fields.map((f) => f.id));
-    const entityOnly = fields
-      .filter((f) => !templateFieldIds.has(f.id))
-      .map(toTemplateField);
+    // If the entity has defined fields, those are its active vocabulary (including
+    // renames, additions, and deletions). If the entity has no fields yet, fall back
+    // to the starting fields from the bound template.
+    const resolvedFields: StatSheetTemplateField[] =
+      fields.length > 0
+        ? fields.map(toTemplateField)
+        : boundTemplate.fields.map(toTemplateField);
 
-    if (entityOnly.length === 0) return boundTemplate;
+    if (resolvedFields.length === 0) return null;
+
     return {
       ...boundTemplate,
-      fields: [...boundTemplate.fields, ...entityOnly],
+      fields: resolvedFields,
     };
   }
 

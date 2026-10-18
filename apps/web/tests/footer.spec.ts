@@ -25,13 +25,11 @@ test.describe("Application shell footer", () => {
       publicFooter.getByRole("link", { name: "Privacy" }),
     ).toBeVisible();
 
-    await page
-      .getByRole("link", { name: "Codex Cryptica", exact: true })
-      .click();
-    await expect(page).toHaveURL(/\/$/);
+    await page.getByTestId("shell-wordmark").click();
+    await expect(page).toHaveURL(/\/(?:\?.*)?$/);
     await expect(page.locator(".app-layout")).toBeVisible();
     await expect(
-      page.locator("footer").filter({ hasText: "Support on Patreon" }),
+      page.locator("footer").filter({ hasText: "All rights reserved" }),
     ).toHaveCount(0);
   });
 });

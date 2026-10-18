@@ -248,7 +248,7 @@
             </li>
           {/each}
         </ul>
-        <p class="mt-2 text-[11px] text-theme-muted italic">
+        <p class="mt-2 text-meta text-theme-muted italic">
           Names are examples; yours will differ.
         </p>
       </div>
@@ -298,7 +298,7 @@
       </button>
 
       <p
-        class="text-center text-[11px] text-theme-muted"
+        class="text-center text-meta text-theme-muted"
         data-testid="quick-start-ai-note"
       >
         {aiAvailable

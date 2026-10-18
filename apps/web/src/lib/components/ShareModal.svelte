@@ -103,7 +103,7 @@
       id="share-modal-title"
       class="text-xl font-bold text-green-500 mb-4 tracking-wider uppercase font-header flex items-center gap-2"
     >
-      <span class="icon-[lucide--share-2] w-5 h-5"></span>
+      <span class="icon-[lucide--share-2] w-5 h-5" aria-hidden="true"></span>
       Share World
     </h2>
 
@@ -128,7 +128,7 @@
         <div class="space-y-4">
           <div class="space-y-2">
             <label
-              class="text-[10px] uppercase text-cyan-600 font-bold font-header tracking-widest"
+              class="text-micro uppercase text-cyan-600 font-bold font-header tracking-widest"
               for="p2p-link-input">Active Live Session</label
             >
             <div class="flex gap-2">
@@ -164,10 +164,10 @@
             class="flex items-center gap-2 p-2 bg-cyan-900/10 rounded border border-cyan-900/30"
           >
             <span class="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></span>
-            <span class="text-[10px] text-cyan-500 uppercase tracking-widest"
+            <span class="text-micro text-cyan-500 uppercase tracking-widest"
               >Broadcasting Active</span
             >
-            <span class="ml-auto text-[10px] text-gray-500">Keep tab open</span>
+            <span class="ml-auto text-micro text-gray-500">Keep tab open</span>
           </div>
         </div>
       {:else}
@@ -178,6 +178,7 @@
         </div>
 
         <button
+          type="button"
           class="w-full py-3 bg-cyan-700 hover:bg-cyan-600 text-black rounded text-sm font-bold tracking-widest uppercase font-header transition shadow-lg shadow-cyan-900/20 flex items-center justify-center gap-2"
           onclick={handleP2PStart}
           disabled={p2pLoading}
@@ -190,12 +191,13 @@
             ></span>
             STARTING...
           {:else}
-            <span class="icon-[lucide--zap] w-4 h-4"></span>
+            <span class="icon-[lucide--zap] w-4 h-4" aria-hidden="true"></span>
             START LIVE SESSION
           {/if}
         </button>
-        <p class="text-[10px] text-gray-600 mt-3 text-center">
-          Uses P2P WebRTC. Bypass Google API limits.
+        <p class="text-micro text-gray-600 mt-3 text-center">
+          Players connect directly to your browser. Setting up the connection
+          can still use network services.
         </p>
       {/if}
     </div>

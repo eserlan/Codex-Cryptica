@@ -98,6 +98,43 @@ test.describe("Blog", () => {
     );
   });
 
+  test("should navigate to and render the introducing the canvas article", async ({
+    page,
+  }) => {
+    await page.goto("/blog");
+
+    const articleLink = page.getByRole("link", {
+      name: "Introducing the Canvas: Visual Brainstorming Meets Structured Lore",
+    });
+    await articleLink.click();
+
+    // Wait for navigation
+    await expect(page).toHaveURL(/\/blog\/introducing-the-canvas/);
+
+    // Check title and metadata
+    await expect(page).toHaveTitle(
+      /Introducing the Canvas: Visual Brainstorming Meets Structured Lore/,
+    );
+
+    // Check article content
+    const articleContent = page.locator(".blog-content");
+    await expect(articleContent).toBeVisible();
+    await expect(articleContent).toContainText("What is the Canvas?");
+    await expect(articleContent).toContainText(
+      "Five Practical Canvas Workflows",
+    );
+    await expect(articleContent).toContainText(
+      "Building an Investigation Board",
+    );
+
+    // Check CTA button
+    const ctaButton = page.getByRole("link", {
+      name: /Launch Codex Cryptica and Open Canvas/,
+      exact: false,
+    });
+    await expect(ctaButton).toBeVisible();
+  });
+
   test("should show 404 for non-existent article", async ({ page }) => {
     const response = await page.goto("/blog/non-existent-transmission");
     expect(response?.status()).toBeGreaterThanOrEqual(400);
@@ -110,14 +147,18 @@ test.describe("Blog", () => {
     // Sitemap, LLM Docs, Groupfinder). So the test was asserting on chrome
     // that exists nowhere, and had been failing on staging.
     //
-    // The intent still holds, the mechanism moved: the shared shell's nav
-    // carries "Devlog" on every public page.
+    // The intent still holds, the mechanism moved again (#3140): the shared
+    // shell's primary nav trimmed down to just Generators + Explore, so
+    // Devlog is reached via the Explore directory now.
     await page.goto("/tools");
 
     await page
       .getByTestId("shell-nav")
-      .getByRole("link", { name: "Devlog" })
+      .getByRole("link", { name: "Explore" })
       .click();
+    await expect(page).toHaveURL(/\/explore/);
+
+    await page.getByRole("link", { name: "Devlog" }).first().click();
 
     await expect(page).toHaveURL(/\/blog/);
     await expect(
@@ -179,5 +220,24 @@ test.describe("Blog editorial structure", () => {
       })
       .find((j) => j?.["@type"] === "BlogPosting");
     expect(posting.dateModified).toBe(posting.datePublished);
+  });
+
+  test("renders exactly one header on mobile and desktop breakpoints for responsible-ai-worldbuilding", async ({
+    page,
+  }) => {
+    // Desktop check
+    await page.goto("/responsible-ai-worldbuilding");
+    await expect(page.locator("header")).toHaveCount(1);
+    await expect(page.getByTestId("shell-wordmark")).toBeVisible();
+    await expect(page.getByTestId("shell-cta")).toBeVisible();
+
+    // Mobile viewport check
+    await page.setViewportSize({ width: 375, height: 667 });
+    await expect(page.locator("header")).toHaveCount(1);
+    const explore = page.getByTestId("shell-explore-link");
+    await expect(explore).toBeVisible();
+    await expect(explore).toHaveAttribute("href", "/explore");
+    await expect(page.getByTestId("shell-menu-toggle")).toHaveCount(0);
+    await expect(page.getByTestId("shell-mobile-nav")).toHaveCount(0);
   });
 });

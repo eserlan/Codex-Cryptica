@@ -69,10 +69,10 @@
 
 <SEOGeneratorLayout
   pageTitle="Surprise Me — Random RPG Idea Generator | Codex Cryptica"
-  metaDescription="Hit the button and get a random worldbuilding idea — a faction, kingdom, NPC, quest hook, or social hub. No account, no setup, just inspiration."
+  metaDescription="Hit the button and get a random worldbuilding idea: a faction, kingdom, NPC, quest hook, or social hub. No account, no setup, just inspiration."
   introTitle="Surprise Me"
   eyebrow="Random Idea"
-  introText="Not sure what your world needs next? Spin the idea machine — it picks a random generator and rolls every input for you. Pure inspiration, zero decisions."
+  introText="Not sure what your world needs next? Spin the idea machine: it picks a random generator and rolls every input for you. Pure inspiration, zero decisions."
   canonicalPath="/generators/random"
   {generate}
   initialDraft={null}
@@ -106,7 +106,7 @@
 
     {#if lockedTheme}
       <div
-        class="flex items-center justify-between gap-2 px-3 py-2 bg-theme-primary/5 border border-theme-primary/30 rounded-lg text-[10px]"
+        class="flex items-center justify-between gap-2 px-3 py-2 bg-theme-primary/5 border border-theme-primary/30 rounded-lg text-micro"
       >
         <span class="flex items-center gap-1.5 text-theme-text/80 min-w-0">
           <span
@@ -139,7 +139,7 @@
           keepCategory = true;
           trigger();
         }}
-        class="w-full py-2.5 bg-theme-surface border border-theme-primary/40 text-theme-primary font-bold font-header text-[10px] rounded-lg hover:bg-theme-primary/10 transition-all disabled:opacity-50"
+        class="w-full py-2.5 bg-theme-surface border border-theme-primary/40 text-theme-primary font-bold font-header text-micro rounded-lg hover:bg-theme-primary/10 transition-all disabled:opacity-50"
         id="regenerate-category-btn"
         title="Keep this idea type and roll a fresh one"
       >

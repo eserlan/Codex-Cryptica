@@ -31,6 +31,7 @@ vi.mock("./entities", () => ({
   addLabel: vi.fn(),
   bulkAddLabel: vi.fn(),
   bulkRemoveLabel: vi.fn(),
+  renameLabel: vi.fn(),
   removeLabel: vi.fn(),
   batchCreateEntities: vi.fn(),
 }));
@@ -287,6 +288,19 @@ describe("EntityStore", () => {
     expect(store.entities.place.type).toBe("location");
   });
 
+  it("handles null-prototype update dictionaries safely", async () => {
+    const updates: Record<string, Partial<LocalEntity>> = Object.create(null);
+    updates["hero"] = { type: "faction" };
+    updates["__proto__"] = { type: "item" };
+
+    const result = await store.bulkUpdate(updates);
+
+    expect(result.succeededIds).toEqual(["hero"]);
+    expect(result.skippedIds).toEqual(["__proto__"]);
+    expect(store.entities.hero.type).toBe("faction");
+    expect(({} as any).type).toBeUndefined();
+  });
+
   it("deletes an entity", async () => {
     vi.mocked(vaultEntities.deleteEntity).mockResolvedValue({
       entities: { place: repository.entities.place },
@@ -478,9 +492,9 @@ describe("EntityStore", () => {
 
       await storeWithNoHandle.scheduleSave(repository.entities.hero);
 
-      // Status should be set to "saving" first, then reset to "idle"
+      // Status should be set to "saving" first, then transition to "saved"
       expect(setStatus).toHaveBeenCalledWith("saving");
-      expect(setStatus).toHaveBeenCalledWith("idle");
+      expect(setStatus).toHaveBeenCalledWith("saved");
     });
 
     it("should set status to error on save failure", async () => {
@@ -568,8 +582,9 @@ describe("EntityStore", () => {
 
     it("should return early when entity does not exist in repository", async () => {
       const setStatus = vi.fn();
+      const saveToDisk = vi.fn();
       const store = new EntityStore({
-        repository: { ...repository, entities: {} } as any,
+        repository: { ...repository, entities: {}, saveToDisk } as any,
         activeVaultId: () => "vault-1",
         isGuest: () => false,
         setStatus,
@@ -584,7 +599,7 @@ describe("EntityStore", () => {
 
       await store.scheduleSave({ id: "nonexistent" } as LocalEntity);
 
-      expect(setStatus).not.toHaveBeenCalledWith("saving");
+      expect(saveToDisk).not.toHaveBeenCalled();
     });
 
     it("should call onEntityUpdate callback", async () => {
@@ -779,6 +794,53 @@ describe("EntityStore", () => {
 
       expect(invalidateUrlCache).toHaveBeenCalledWith("/img.png");
     });
+
+    it("should keep image URLs cached for patches that do not change the image", async () => {
+      repository.entities.hero.image = "/img.png";
+      const invalidateUrlCache = vi.fn();
+      const storeWithUrl = new EntityStore({
+        repository: repository as any,
+        activeVaultId: () => "vault-1",
+        isGuest: () => false,
+        setStatus: vi.fn(),
+        status: vi.fn().mockReturnValue("idle" as const),
+        setErrorMessage: vi.fn(),
+        getActiveVaultHandle: vi.fn().mockResolvedValue(undefined),
+        getSpecificVaultHandle: vi.fn().mockResolvedValue(undefined),
+        getActiveFolderHandle: vi.fn().mockResolvedValue(undefined),
+        getServices: () => ({}),
+        updateEntityCount: vi.fn().mockResolvedValue(undefined),
+        invalidateUrlCache,
+      });
+
+      await storeWithUrl.batchUpdate({ hero: { labels: ["important"] } });
+
+      expect(invalidateUrlCache).not.toHaveBeenCalled();
+    });
+
+    it("should release image URLs when a batch patch explicitly clears them", async () => {
+      repository.entities.hero.image = "/img.png";
+      const invalidateUrlCache = vi.fn();
+      const storeWithUrl = new EntityStore({
+        repository: repository as any,
+        activeVaultId: () => "vault-1",
+        isGuest: () => false,
+        setStatus: vi.fn(),
+        status: vi.fn().mockReturnValue("idle" as const),
+        setErrorMessage: vi.fn(),
+        getActiveVaultHandle: vi.fn().mockResolvedValue(undefined),
+        getSpecificVaultHandle: vi.fn().mockResolvedValue(undefined),
+        getActiveFolderHandle: vi.fn().mockResolvedValue(undefined),
+        getServices: () => ({}),
+        updateEntityCount: vi.fn().mockResolvedValue(undefined),
+        invalidateUrlCache,
+      });
+
+      await storeWithUrl.batchUpdate({ hero: { image: undefined } });
+
+      expect(invalidateUrlCache).toHaveBeenCalledWith("/img.png");
+      expect(storeWithUrl.entities.hero.image).toBeUndefined();
+    });
   });
 
   describe("deleteEntity", () => {
@@ -962,6 +1024,66 @@ describe("EntityStore", () => {
 
       const count = await store.bulkAddLabel(["hero"], "nonexistent");
       expect(count).toBe(0);
+    });
+
+    it("renames a label vault-wide and saves each changed entity", async () => {
+      const modifiedEntity = { ...repository.entities.hero, labels: ["lead"] };
+      vi.mocked(vaultEntities.renameLabel).mockReturnValue({
+        entities: { ...repository.entities, hero: modifiedEntity },
+        modifiedIds: ["hero"],
+      });
+
+      const count = await store.renameLabel("heroic", "lead");
+
+      expect(vaultEntities.renameLabel).toHaveBeenCalledWith(
+        expect.anything(),
+        "heroic",
+        "lead",
+      );
+      expect(count).toBe(1);
+      expect(repository.saveQueue.enqueue).toHaveBeenCalled();
+    });
+
+    it("does not save anything when a rename changes no entity", async () => {
+      vi.mocked(repository.saveQueue.enqueue).mockClear();
+      vi.mocked(vaultEntities.renameLabel).mockReturnValue({
+        entities: repository.entities,
+        modifiedIds: [],
+      });
+
+      const count = await store.renameLabel("nonexistent", "lead");
+
+      expect(count).toBe(0);
+      expect(repository.saveQueue.enqueue).not.toHaveBeenCalled();
+    });
+
+    it("deletes a label from every entity, not only a chosen few", async () => {
+      const modifiedEntity = { ...repository.entities.hero, labels: [] };
+      vi.mocked(vaultEntities.bulkRemoveLabel).mockReturnValue({
+        entities: { ...repository.entities, hero: modifiedEntity },
+        modifiedIds: ["hero"],
+      });
+
+      const count = await store.deleteLabel("heroic");
+
+      expect(vaultEntities.bulkRemoveLabel).toHaveBeenCalledWith(
+        expect.anything(),
+        Object.keys(repository.entities),
+        "heroic",
+      );
+      expect(count).toBe(1);
+      expect(repository.saveQueue.enqueue).toHaveBeenCalled();
+    });
+
+    it("does not save anything when deleting a label nobody has", async () => {
+      vi.mocked(repository.saveQueue.enqueue).mockClear();
+      vi.mocked(vaultEntities.bulkRemoveLabel).mockReturnValue({
+        entities: repository.entities,
+        modifiedIds: [],
+      });
+
+      expect(await store.deleteLabel("nonexistent")).toBe(0);
+      expect(repository.saveQueue.enqueue).not.toHaveBeenCalled();
     });
 
     it("should return 0 when bulkRemoveLabel has no modified ids", async () => {
@@ -1305,7 +1427,6 @@ describe("EntityStore", () => {
         },
         content: "Hydrated content from disk",
       });
-
       await store.internalLoadContent("hero");
 
       // Verifies content is hydrated, but in-memory parent is preserved!
@@ -1313,6 +1434,132 @@ describe("EntityStore", () => {
         "Hydrated content from disk",
       );
       expect(repository.entities.hero.parent).toBe("parent-node");
+    });
+
+    it("propagates metadata restored from disk to the graph slice", async () => {
+      const markdownUtils = await import("../../utils/markdown");
+      const opfsUtils = await import("../../utils/opfs");
+      vi.mocked(opfsUtils.readFileAsText).mockResolvedValue("file");
+      vi.mocked(markdownUtils.parseMarkdown).mockReturnValue({
+        metadata: { id: "hero", title: "Hero", parent: "place" },
+        content: "Hydrated content from disk",
+      });
+      const previousVersion = store.graphStructureVersion;
+
+      await store.internalLoadContent("hero");
+
+      expect(store.graphStructureVersion).toBeGreaterThan(previousVersion);
+      expect(
+        store.graphEntities.find((entity) => entity.id === "hero")?.parent,
+      ).toBe("place");
+    });
+
+    it("updates inbound connections when connection metadata is restored", async () => {
+      const markdownUtils = await import("../../utils/markdown");
+      const opfsUtils = await import("../../utils/opfs");
+      vi.mocked(opfsUtils.readFileAsText).mockResolvedValue("file");
+      vi.mocked(markdownUtils.parseMarkdown).mockReturnValue({
+        metadata: {
+          id: "hero",
+          title: "Hero",
+          type: "character",
+          connections: [{ target: "place", type: "knows", strength: 1 }],
+        },
+        content: "Hydrated content from disk",
+      });
+      (repository.entities.hero as any).connections = undefined;
+
+      await store.internalLoadContent("hero");
+
+      expect(store.inboundConnections.place).toEqual([
+        {
+          sourceId: "hero",
+          connection: { target: "place", type: "knows", strength: 1 },
+        },
+      ]);
+    });
+
+    it("keeps inbound lists when a restore leaves connections unchanged", async () => {
+      const markdownUtils = await import("../../utils/markdown");
+      const opfsUtils = await import("../../utils/opfs");
+      const connection = { target: "place", type: "knows", strength: 1 };
+      (repository.entities.hero as any).connections = [connection];
+      store.initializeInboundConnections();
+      const placeInbound = store.inboundConnections.place;
+      vi.mocked(opfsUtils.readFileAsText).mockResolvedValue("file");
+      vi.mocked(markdownUtils.parseMarkdown).mockReturnValue({
+        metadata: {
+          id: "hero",
+          title: "Hero",
+          parent: "place",
+          connections: [{ ...connection }],
+        },
+        content: "Hydrated content from disk",
+      });
+
+      await store.internalLoadContent("hero");
+
+      // The restore (parent) is applied, but the reverse lookup is not
+      // rebuilt: replacing it re-derives the whole focus graph.
+      expect(repository.entities.hero.parent).toBe("place");
+      expect(store.inboundConnections.place).toBe(placeInbound);
+    });
+
+    it("leaves indexes untouched when a load only adds content", async () => {
+      const markdownUtils = await import("../../utils/markdown");
+      const opfsUtils = await import("../../utils/opfs");
+      vi.mocked(opfsUtils.readFileAsText).mockResolvedValue("file");
+      vi.mocked(markdownUtils.parseMarkdown).mockReturnValue({
+        metadata: { id: "hero", title: "Hero", type: "character" },
+        content: "Hydrated content from disk",
+      });
+      const previousGraphEntities = store.graphEntities;
+      const previousAllEntities = store.allEntities;
+      const previousVersion = store.graphStructureVersion;
+
+      await store.internalLoadContent("hero");
+
+      expect(repository.entities.hero.content).toBe(
+        "Hydrated content from disk",
+      );
+      expect(store.graphEntities).toBe(previousGraphEntities);
+      expect(store.allEntities).toBe(previousAllEntities);
+      expect(store.graphStructureVersion).toBe(previousVersion);
+    });
+  });
+
+  describe("readFullEntity", () => {
+    it("reads the full body from OPFS without writing to the store", async () => {
+      const markdownUtils = await import("../../utils/markdown");
+      const opfsUtils = await import("../../utils/opfs");
+      vi.mocked(opfsUtils.readFileAsText).mockResolvedValue("file");
+      vi.mocked(markdownUtils.parseMarkdown).mockReturnValue({
+        metadata: { id: "hero", title: "Hero", lore: "Deep lore" },
+        content: "Full chronicle",
+      });
+      const before = repository.entities.hero;
+      const graphVersion = store.graphStructureVersion;
+
+      const full = await store.readFullEntity("hero");
+
+      expect(full?.content).toBe("Full chronicle");
+      expect(full?.lore).toBe("Deep lore");
+      expect(repository.entities.hero).toBe(before);
+      expect(store.isContentLoaded("hero")).toBe(false);
+      expect(store.graphStructureVersion).toBe(graphVersion);
+    });
+
+    it("falls back to the content cache, and returns null with no body", async () => {
+      const opfsUtils = await import("../../utils/opfs");
+      const { cacheService } = await import("../../services/cache.svelte");
+      vi.mocked(opfsUtils.readFileAsText).mockResolvedValue("");
+      vi.mocked(cacheService.getEntityContent)
+        .mockResolvedValueOnce({ content: "Cached body", lore: "" })
+        .mockResolvedValueOnce(null);
+
+      expect((await store.readFullEntity("hero"))?.content).toBe("Cached body");
+      expect(await store.readFullEntity("hero")).toBeNull();
+      expect(await store.readFullEntity("nonexistent")).toBeNull();
     });
   });
 

@@ -1,7 +1,10 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { render, screen } from "@testing-library/svelte";
+import { fireEvent, render, screen } from "@testing-library/svelte";
 import { load, entries } from "./+page";
 import Page from "./+page.svelte";
+import { importsConfig } from "$lib/config/seo-imports";
+import * as importParser from "$lib/services/seo/import-parser";
+import type { ParsedEntity } from "$lib/services/seo/wa-parser";
 
 vi.mock("$app/environment", () => ({
   browser: true,
@@ -27,6 +30,8 @@ if (typeof Element !== "undefined" && !Element.prototype.animate) {
 }
 
 describe("Imports SvelteKit Route", () => {
+  afterEach(() => vi.restoreAllMocks());
+
   describe("load", () => {
     it("should successfully load valid importer pages", () => {
       const res = load({ params: { slug: "obsidian-vault" } } as any) as any;
@@ -52,7 +57,160 @@ describe("Imports SvelteKit Route", () => {
         { slug: "legendkeeper-json" },
         { slug: "thread-weaver" },
         { slug: "scabard" },
+        { slug: "chronica" },
       ]);
+    });
+  });
+
+  describe("Chronica dropzone", () => {
+    it("accepts several JSON files at once for a Chronica export", () => {
+      const { container } = render(Page, {
+        props: { data: { importPage: importsConfig.chronica } },
+      });
+
+      const input = container.querySelector<HTMLInputElement>("#file-upload");
+      expect(input?.multiple).toBe(true);
+      expect(input?.accept).toBe(".json");
+      expect(screen.getByText("Select Files")).toBeTruthy();
+      expect(
+        screen.getByText(/all your Chronica export JSON files/i),
+      ).toBeTruthy();
+    });
+
+    const chronicaFile = (name: string, campaign: Record<string, unknown>) =>
+      new File(
+        [
+          JSON.stringify({
+            export_created_at: "2026-06-27T20:00:00Z",
+            campaign: { id: "grecia-1", name: "Grecia", ...campaign },
+          }),
+        ],
+        name,
+        { type: "application/json" },
+      );
+
+    const selectFiles = async (container: HTMLElement, files: File[]) => {
+      const input = container.querySelector<HTMLInputElement>("#file-upload")!;
+      Object.defineProperty(input, "files", {
+        value: files,
+        configurable: true,
+      });
+      await fireEvent.change(input);
+    };
+
+    it("previews entries merged from every selected Chronica file", async () => {
+      const { container } = render(Page, {
+        props: { data: { importPage: importsConfig.chronica } },
+      });
+
+      await selectFiles(container, [
+        chronicaFile("characters.json", {
+          characters: [{ id: "c1", name: "Ariadne" }],
+        }),
+        chronicaFile("places.json", {
+          places: [{ id: "p1", name: "Knossos" }],
+        }),
+      ]);
+
+      expect(
+        await screen.findByText(/Import 2 Entries into Codex/i),
+      ).toBeTruthy();
+    });
+
+    it("shows the parser error for a file that is not a Chronica export", async () => {
+      const { container } = render(Page, {
+        props: { data: { importPage: importsConfig.chronica } },
+      });
+
+      await selectFiles(container, [
+        new File([JSON.stringify({ pages: [] })], "notes.json", {
+          type: "application/json",
+        }),
+      ]);
+
+      expect(
+        await screen.findByText(/not a supported Chronica export/i),
+      ).toBeTruthy();
+    });
+
+    it("keeps the newest selection when parses finish out of order", async () => {
+      let resolveFirst!: (entities: ParsedEntity[]) => void;
+      let resolveSecond!: (entities: ParsedEntity[]) => void;
+      const firstParse = new Promise<ParsedEntity[]>((resolve) => {
+        resolveFirst = resolve;
+      });
+      const secondParse = new Promise<ParsedEntity[]>((resolve) => {
+        resolveSecond = resolve;
+      });
+      vi.spyOn(importParser, "parseChronicaFiles")
+        .mockReturnValueOnce(firstParse)
+        .mockReturnValueOnce(secondParse);
+      const { container } = render(Page, {
+        props: { data: { importPage: importsConfig.chronica } },
+      });
+
+      await selectFiles(container, [
+        chronicaFile("first.json", { characters: [] }),
+      ]);
+      await selectFiles(container, [
+        chronicaFile("second.json", { characters: [] }),
+      ]);
+
+      resolveSecond([
+        { type: "character", title: "New Selection", content: "", labels: [] },
+      ]);
+      expect(await screen.findByDisplayValue("New Selection")).toBeTruthy();
+
+      resolveFirst([
+        { type: "character", title: "Old Selection", content: "", labels: [] },
+      ]);
+      await Promise.resolve();
+
+      expect(screen.getByDisplayValue("New Selection")).toBeTruthy();
+      expect(screen.queryByDisplayValue("Old Selection")).toBeNull();
+    });
+
+    it("keeps the newest selection when a directory drop finishes late", async () => {
+      let resolveTraversal!: (files: File[]) => void;
+      vi.spyOn(importParser, "traverseEntry").mockReturnValue(
+        new Promise((resolve) => {
+          resolveTraversal = resolve;
+        }),
+      );
+      const { container } = render(Page, {
+        props: { data: { importPage: importsConfig.chronica } },
+      });
+      const dropzone = screen.getByRole("region", {
+        name: "File Upload Dropzone",
+      });
+
+      fireEvent.drop(dropzone, {
+        dataTransfer: {
+          items: [{ webkitGetAsEntry: () => ({ isDirectory: true }) }],
+          files: [],
+        },
+      });
+      await selectFiles(container, [
+        chronicaFile("newer.json", {
+          characters: [{ id: "c2", name: "Newer Selection" }],
+        }),
+      ]);
+      expect(await screen.findByDisplayValue("Newer Selection")).toBeTruthy();
+
+      resolveTraversal([]);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      expect(screen.getByDisplayValue("Newer Selection")).toBeTruthy();
+    });
+
+    it("keeps single-file importers to one file", () => {
+      const { container } = render(Page, {
+        props: { data: { importPage: importsConfig.scabard } },
+      });
+
+      const input = container.querySelector<HTMLInputElement>("#file-upload");
+      expect(input?.multiple).toBe(false);
+      expect(screen.getByText("Select File")).toBeTruthy();
     });
   });
 
@@ -346,6 +504,29 @@ describe("Imports SvelteKit Route", () => {
         "https://ambiancearchitect.itch.io/thread-weaver-engine",
       );
       expect(importsConfig["scabard"].slug).toBe("scabard");
+    });
+
+    it("renders without an internal navigation header", () => {
+      const mockPageData = {
+        slug: "obsidian-vault",
+        competitorName: "Obsidian",
+        title: "T",
+        description: "D",
+        h1: "H",
+        subheading: "S",
+        introText: "I",
+        ctaText: "C",
+        keywords: [],
+        features: [],
+        faq: [],
+      };
+
+      const { container } = render(Page, {
+        props: { data: { importPage: mockPageData } },
+      });
+      expect(container.querySelector("header")).toBeNull();
+      expect(container.querySelector("#logo-link")).toBeNull();
+      expect(container.querySelector("#nav-cta-btn")).toBeNull();
     });
   });
 });

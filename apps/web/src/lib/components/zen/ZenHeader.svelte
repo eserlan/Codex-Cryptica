@@ -4,7 +4,9 @@
   import { vault } from "$lib/stores/vault.svelte";
   import { guestChatStore } from "$lib/stores/guest-chat.svelte";
   import type { Entity } from "schema";
+  import ReportZenButtons from "$lib/components/reports/ReportZenButtons.svelte";
   import AliasInput from "$lib/components/labels/AliasInput.svelte";
+  import CategoryRadioGroup from "$lib/components/labels/CategoryRadioGroup.svelte";
   import {
     dispatchSearchEntityFocus,
     DEFAULT_SEARCH_ENTITY_ZOOM,
@@ -27,6 +29,14 @@
   import { themeStore } from "$lib/stores/theme.svelte";
   import { openCanvasFromZen } from "$lib/stores/ui/navigation";
   import { getDelveCanvasLabel } from "$lib/utils/delve-terminology";
+  import { shelf } from "$lib/features/shelf";
+  import SaveStatusIndicator from "$lib/components/ui/SaveStatusIndicator.svelte";
+  import {
+    isMonsterLabsHandoffEligibleType,
+    getMonsterLabsActionLabel,
+  } from "$lib/services/seo/monsterlabs-handoff";
+  import { createMonsterLabsHandoffFlow } from "$lib/services/seo/monsterlabs-handoff-flow.svelte";
+  import MonsterLabsSendingModal from "$lib/components/modals/MonsterLabsSendingModal.svelte";
 
   let {
     entity,
@@ -61,6 +71,38 @@
   }>();
 
   let linkCopied = $state(false);
+  let shelvedJustNow = $state(false);
+
+  /**
+   * Copies this entity onto the Shelf so it can be brought into another vault.
+   * Read-only against this vault — nothing here is modified.
+   */
+  const handleSendToShelf = async () => {
+    if (!entity) return;
+    const ok = await shelf.shelve([entity.id], vault.vaultName ?? "This vault");
+    if (!ok) return;
+    shelvedJustNow = true;
+    setTimeout(() => (shelvedJustNow = false), 2000);
+  };
+
+  /**
+   * Hands this entity's content off to MonsterLabs' D&D monster or magic
+   * item generator in a new tab (#2871, #2872). Read-only against this
+   * vault, like Send to Shelf. The user confirms in a modal first; only
+   * after that confirm does the Oracle compression call run (shown as its
+   * own "loading" state), and MonsterLabs opens once the URL is ready.
+   */
+  const monsterLabsFlow = createMonsterLabsHandoffFlow();
+  const handleSendToMonsterLabs = () => {
+    if (!entity) return;
+    monsterLabsFlow.start({
+      name: entity.title,
+      type: entity.type,
+      description: [entity.content, entity.lore]
+        .filter((part): part is string => Boolean(part?.trim()))
+        .join("\n\n"),
+    });
+  };
 
   const handleCopyGuestLink = async () => {
     if (!guestVault.publishId || !entity) return;
@@ -100,6 +142,9 @@
     entity?.parent ? vault.entities[entity.parent] : null,
   );
 
+  // Guests read the hierarchy but never rearrange it.
+  const canEditParent = $derived(!vault.isGuest);
+
   const existingCanvas = $derived.by(() => {
     if (!entity) return undefined;
     return canvasRegistry.findCanvasForEntity(entity.id, entity.title);
@@ -119,61 +164,64 @@
     class="flex items-center gap-3 md:gap-4 flex-1 min-w-0 w-full md:w-auto order-2 md:order-1"
   >
     <div class="flex-1 min-w-0">
-      <div class="flex items-center gap-3 mb-0.5 md:mb-1">
-        <span
-          class="{getIconClass(
-            categories.getCategory(
-              editState.isEditing ? editState.type : entity?.type || '',
-            )?.icon,
-          )} text-theme-primary w-4 h-4 md:w-5 md:h-5"
-        ></span>
-        {#if editState.isEditing}
-          <select
+      {#if editState.isEditing}
+        <div class="mb-1.5">
+          <CategoryRadioGroup
             bind:value={editState.type}
-            aria-label="Entity Type"
-            class="bg-theme-bg border border-theme-primary text-theme-primary px-2 py-0.5 text-[10px] md:text-xs font-bold tracking-widest uppercase font-header focus:outline-none rounded ml-1 md:ml-2"
-          >
-            {#each categories.list as cat (cat.id)}
-              <option value={cat.id}>{cat.label || cat.id.toUpperCase()}</option
-              >
-            {/each}
-          </select>
-        {:else}
+            ariaLabel="Entity Type"
+            showLabel={false}
+            compact
+            idPrefix="zen-entity-type"
+          />
+        </div>
+      {:else}
+        <div class="flex items-center gap-2 mb-0.5 md:mb-1">
           <span
-            class="text-[10px] md:text-xs font-bold tracking-widest text-theme-primary uppercase font-header"
+            class="{getIconClass(
+              categories.getCategory(entity?.type || '')?.icon,
+            )} text-theme-primary w-4 h-4 md:w-5 md:h-5"
+          ></span>
+          <span
+            class="text-micro md:text-xs font-bold tracking-widest text-theme-primary uppercase font-header"
             >{entity?.type || ""}</span
           >
-        {/if}
-      </div>
+        </div>
+      {/if}
       {#if editState.isEditing}
         <div class="space-y-2">
-          <input
-            type="text"
-            bind:value={editState.title}
-            aria-label="Entity Title"
-            class="bg-theme-bg border border-theme-primary text-theme-text px-3 py-1 focus:outline-none focus:border-theme-primary font-body font-bold text-xl md:text-3xl w-full placeholder-theme-muted rounded"
-            placeholder="Entity Title"
-          />
+          <div class="flex items-center gap-2">
+            <input
+              type="text"
+              bind:value={editState.title}
+              aria-label="Entity Title"
+              class="bg-theme-bg border border-theme-primary text-theme-text px-3 py-1 focus:outline-none focus:border-theme-primary font-body font-bold text-xl md:text-3xl w-full placeholder-theme-muted rounded"
+              placeholder="Entity Title"
+            />
+            <SaveStatusIndicator />
+          </div>
           <AliasInput bind:aliases={editState.aliases} />
         </div>
       {:else}
         <div class="flex flex-col gap-0.5">
-          <h1
-            id="entity-modal-title"
-            data-testid="entity-title"
-            class="text-xl md:text-4xl font-body font-bold text-theme-text tracking-wide whitespace-normal break-words overflow-visible md:truncate"
-          >
-            {entity?.title || ""}
-          </h1>
+          <div class="flex items-center gap-2 flex-wrap">
+            <h1
+              id="entity-modal-title"
+              data-testid="entity-title"
+              class="text-xl md:text-4xl font-body font-bold text-theme-text tracking-wide whitespace-normal break-words overflow-visible md:truncate"
+            >
+              {entity?.title || ""}
+            </h1>
+            <SaveStatusIndicator />
+          </div>
           {#if entity?.aliases && entity.aliases.length > 0}
             <div class="flex flex-wrap gap-1 md:gap-1.5">
               <span
-                class="text-[8px] md:text-[10px] font-bold text-theme-muted uppercase tracking-widest self-center mr-0.5 md:mr-1"
+                class="text-nano md:text-micro font-bold text-theme-muted uppercase tracking-widest self-center mr-0.5 md:mr-1"
                 >aka:</span
               >
               {#each entity.aliases as alias, index (`${entity.id}-alias-${index}`)}
                 <div
-                  class="px-1.5 md:px-2 py-0.5 rounded bg-theme-primary/5 border border-theme-primary/10 text-[8px] md:text-[10px] font-bold text-theme-secondary uppercase tracking-wider"
+                  class="px-1.5 md:px-2 py-0.5 rounded bg-theme-primary/5 border border-theme-primary/10 text-nano md:text-micro font-bold text-theme-secondary uppercase tracking-wider"
                 >
                   {alias}
                 </div>
@@ -196,6 +244,35 @@
               >
                 {parentEntity.title}
               </button>
+              {#if canEditParent}
+                <button
+                  type="button"
+                  onclick={() => modalUIStore.openParentPicker(entity.id)}
+                  class="p-0.5 text-theme-muted hover:text-theme-primary transition-colors"
+                  aria-label="Change parent"
+                  title="Change parent"
+                  data-testid="zen-change-parent-button"
+                >
+                  <span aria-hidden="true" class="icon-[lucide--pencil] h-3 w-3"
+                  ></span>
+                </button>
+              {/if}
+            </div>
+          {:else if canEditParent}
+            <div class="mt-1.5">
+              <button
+                type="button"
+                onclick={() => modalUIStore.openParentPicker(entity.id)}
+                class="touch-target flex items-center gap-1.5 text-xs text-theme-muted hover:text-theme-primary transition-colors focus:outline-none"
+                title="Nest this under another entity"
+                data-testid="zen-set-parent-button"
+              >
+                <span
+                  aria-hidden="true"
+                  class="icon-[lucide--folder-plus] h-3.5 w-3.5"
+                ></span>
+                <span>Set parent</span>
+              </button>
             </div>
           {/if}
         </div>
@@ -209,7 +286,7 @@
     <button
       type="button"
       onclick={onClose}
-      class="md:hidden text-theme-muted hover:text-theme-primary transition p-1 -ml-2 rounded-full shrink-0"
+      class="touch-target flex items-center justify-center md:hidden text-theme-muted hover:text-theme-primary transition p-1 -ml-2 rounded-full shrink-0"
       aria-label="Back"
     >
       <span aria-hidden="true" class="icon-[lucide--chevron-left] w-7 h-7"
@@ -235,7 +312,7 @@
                 console.error("[DelveCanvas] ZenHeader build failed:", err);
               }
             }}
-            class="px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-1.5 rounded text-[10px] md:text-xs font-bold tracking-widest cursor-pointer"
+            class="touch-target px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-1.5 rounded text-micro md:text-xs font-bold tracking-widest cursor-pointer"
             title={existingCanvas
               ? `Open ${delveCanvasLabel}`
               : `Build ${delveCanvasLabel}`}
@@ -261,12 +338,54 @@
           <button
             type="button"
             onclick={handleFindInGraph}
-            class="px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-[10px] md:text-xs font-bold tracking-widest"
+            class="touch-target px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-micro md:text-xs font-bold tracking-widest"
             title="Find in Graph"
             aria-label="Find in Graph"
             data-testid="zen-find-in-graph-button"
           >
             <span aria-hidden="true" class="icon-[lucide--target] w-4 h-4"
+            ></span>
+          </button>
+        {/if}
+        {#if entity && !vault.isGuest}
+          <button
+            type="button"
+            onclick={handleSendToShelf}
+            class="touch-target px-2 md:px-3 py-1.5 border border-theme-border {shelvedJustNow
+              ? 'text-theme-primary'
+              : 'text-theme-secondary hover:text-theme-primary'} transition flex items-center gap-2 rounded text-micro md:text-xs font-bold tracking-widest"
+            title={shelvedJustNow
+              ? "On the Shelf"
+              : "Send to Shelf — to bring into another vault"}
+            aria-label="Send to Shelf"
+            data-testid="zen-send-to-shelf-button"
+          >
+            <span
+              aria-hidden="true"
+              class="{shelvedJustNow
+                ? 'icon-[lucide--check]'
+                : 'icon-[lucide--library]'} w-4 h-4"
+            ></span>
+          </button>
+        {/if}
+        {#if entity && isMonsterLabsHandoffEligibleType(entity.type)}
+          <button
+            type="button"
+            onclick={handleSendToMonsterLabs}
+            disabled={monsterLabsFlow.open}
+            aria-busy={monsterLabsFlow.state === "loading"}
+            class="touch-target px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-micro md:text-xs font-bold tracking-widest disabled:opacity-50"
+            title="{getMonsterLabsActionLabel(
+              entity.type,
+            )} — opens monsterlabs.app in a new tab"
+            aria-label={getMonsterLabsActionLabel(entity.type)}
+            data-testid="zen-send-to-monsterlabs-button"
+          >
+            <span
+              aria-hidden="true"
+              class="{monsterLabsFlow.state === 'loading'
+                ? 'icon-[lucide--loader-2] animate-spin'
+                : 'icon-[lucide--external-link]'} w-4 h-4"
             ></span>
           </button>
         {/if}
@@ -282,7 +401,7 @@
               if (!alreadyOpen) soundBiteService.loadFromEntity(entity);
               modalUIStore.openSoundBite(entity.id);
             }}
-            class="px-2 md:px-3 py-1.5 border transition flex items-center gap-2 rounded text-[10px] md:text-xs font-bold tracking-widest {entity.soundBite
+            class="touch-target px-2 md:px-3 py-1.5 border transition flex items-center gap-2 rounded text-micro md:text-xs font-bold tracking-widest {entity.soundBite
               ? 'border-theme-accent/30 text-theme-accent hover:border-theme-accent/50 hover:text-theme-accent/80'
               : 'border-theme-border text-theme-secondary hover:text-theme-primary'}"
             title={entity.soundBite ? "Play sound bite" : "Generate sound bite"}
@@ -301,7 +420,7 @@
           <button
             type="button"
             onclick={() => guestChatStore.openChat(entity.id, entity.title)}
-            class="px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-[10px] md:text-xs font-bold tracking-widest"
+            class="touch-target px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-micro md:text-xs font-bold tracking-widest"
             title="Chat with character"
             aria-label="Chat with character"
             data-testid="zen-guest-chat-button"
@@ -316,9 +435,9 @@
           <button
             type="button"
             onclick={handleCopyGuestLink}
-            class="px-2 md:px-3 py-1.5 border border-theme-border {linkCopied
+            class="touch-target px-2 md:px-3 py-1.5 border border-theme-border {linkCopied
               ? 'text-theme-primary'
-              : 'text-theme-secondary hover:text-theme-primary'} transition flex items-center gap-2 rounded text-[10px] md:text-xs font-bold tracking-widest"
+              : 'text-theme-secondary hover:text-theme-primary'} transition flex items-center gap-2 rounded text-micro md:text-xs font-bold tracking-widest"
             title={linkCopied ? "Link copied!" : "Copy link to this entity"}
             aria-label="Copy link to this entity"
             data-testid="zen-copy-guest-link-button"
@@ -334,7 +453,7 @@
         <button
           type="button"
           onclick={onCopy}
-          class="px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-[10px] md:text-xs font-bold tracking-widest"
+          class="touch-target px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-micro md:text-xs font-bold tracking-widest"
           title="Copy Content"
           aria-label="Copy Content"
         >
@@ -349,6 +468,10 @@
         </button>
       {/if}
 
+      {#if !editState.isEditing && entity?.kind === "report" && !vault.isGuest}
+        <ReportZenButtons {entity} />
+      {/if}
+
       {#if !editState.isEditing && entity?.status === "draft" && !vault.isGuest && onApproveDraft && onRejectDraft}
         <button
           type="button"
@@ -356,7 +479,7 @@
           disabled={isDraftActioning}
           title="Approve draft"
           aria-label="Approve draft"
-          class="flex items-center gap-2 rounded border border-theme-primary/40 px-2 py-1.5 text-[10px] font-bold tracking-widest text-theme-primary transition hover:bg-theme-primary/10 disabled:opacity-50 md:px-4 md:text-xs"
+          class="touch-target flex items-center gap-2 rounded border border-theme-primary/40 px-2 py-1.5 text-micro font-bold tracking-widest text-theme-primary transition hover:bg-theme-primary/10 disabled:opacity-50 md:px-4 md:text-xs"
           data-testid="approve-draft-button"
         >
           <span aria-hidden="true" class="icon-[lucide--check] h-3 w-3"></span>
@@ -368,7 +491,7 @@
           disabled={isDraftActioning}
           title="Reject draft"
           aria-label="Reject draft"
-          class="flex items-center gap-2 rounded border border-theme-danger/40 px-2 py-1.5 text-[10px] font-bold tracking-widest text-theme-danger transition hover:bg-theme-danger/10 disabled:opacity-50 md:px-4 md:text-xs"
+          class="touch-target flex items-center gap-2 rounded border border-theme-danger/40 px-2 py-1.5 text-micro font-bold tracking-widest text-theme-danger transition hover:bg-theme-danger/10 disabled:opacity-50 md:px-4 md:text-xs"
           data-testid="reject-draft-button"
         >
           <span aria-hidden="true" class="icon-[lucide--trash-2] h-3 w-3"
@@ -381,7 +504,7 @@
           <button
             type="button"
             onclick={onDelete}
-            class="px-2 md:px-3 py-1.5 border border-theme-danger/40 text-theme-danger hover:bg-theme-danger/10 text-[10px] md:text-xs font-bold rounded tracking-widest transition flex items-center gap-2"
+            class="touch-target px-2 md:px-3 py-1.5 border border-theme-danger/40 text-theme-danger hover:bg-theme-danger/10 text-micro md:text-xs font-bold rounded tracking-widest transition flex items-center gap-2"
             title="Delete entity"
             aria-label="Delete entity"
             data-testid="delete-entity-button"
@@ -392,29 +515,32 @@
         {/if}
         <button
           onclick={onStartEdit}
-          class="px-2 md:px-4 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary text-[10px] md:text-xs font-bold rounded tracking-widest transition flex items-center gap-2"
+          class="touch-target px-2 md:px-4 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary text-micro md:text-xs font-bold rounded tracking-widest transition flex items-center gap-2"
           data-testid="edit-entity-button"
         >
-          <span class="icon-[lucide--edit-2] w-3 h-3"></span>
+          <span aria-hidden="true" class="icon-[lucide--edit-2] w-3 h-3"></span>
           <span class="hidden sm:inline">EDIT</span>
         </button>
       {:else if editState.isEditing}
         <button
           onclick={onCancelEdit}
-          class="px-2 md:px-4 py-1.5 text-theme-muted hover:text-theme-text text-[10px] md:text-xs font-bold rounded tracking-widest transition"
+          class="touch-target px-2 md:px-4 py-1.5 text-theme-muted hover:text-theme-text text-micro md:text-xs font-bold rounded tracking-widest transition"
         >
           CANCEL
         </button>
         <button
           onclick={onSave}
           disabled={isSaving}
-          class="px-2 md:px-4 py-1.5 bg-theme-primary hover:bg-theme-secondary disabled:opacity-50 text-theme-bg text-[10px] md:text-xs font-bold rounded tracking-widest transition flex items-center gap-2"
+          class="touch-target px-2 md:px-4 py-1.5 bg-theme-primary hover:bg-theme-secondary disabled:opacity-50 text-theme-bg text-micro md:text-xs font-bold rounded tracking-widest transition flex items-center gap-2"
         >
           {#if isSaving}
-            <span class="icon-[lucide--loader-2] w-3 h-3 animate-spin"></span>
+            <span
+              aria-hidden="true"
+              class="icon-[lucide--loader-2] w-3 h-3 animate-spin"
+            ></span>
             <span class="hidden sm:inline">SAVING...</span>
           {:else}
-            <span class="icon-[lucide--save] w-3 h-3"></span>
+            <span aria-hidden="true" class="icon-[lucide--save] w-3 h-3"></span>
             <span class="hidden sm:inline">SAVE</span>
           {/if}
         </button>
@@ -424,7 +550,7 @@
         <button
           type="button"
           onclick={onPopOut}
-          class="px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-[10px] md:text-xs font-bold tracking-widest"
+          class="touch-target px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-micro md:text-xs font-bold tracking-widest"
           title="Open in new tab"
           aria-label="Open in new tab"
         >
@@ -450,3 +576,13 @@
     </div>
   </div>
 </header>
+
+<MonsterLabsSendingModal
+  open={monsterLabsFlow.open}
+  state={monsterLabsFlow.state}
+  entityLabel={monsterLabsFlow.entityLabel}
+  url={monsterLabsFlow.url}
+  onConfirm={monsterLabsFlow.confirm}
+  onOpen={monsterLabsFlow.close}
+  onClose={monsterLabsFlow.close}
+/>

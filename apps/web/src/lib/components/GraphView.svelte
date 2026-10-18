@@ -3,18 +3,22 @@
   import { graph } from "$lib/stores/graph.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { categories } from "$lib/stores/categories.svelte";
-  import { getGraphStyles } from "graph-engine";
+  import { getGraphStyles, MAX_TRANSITION_ELEMENTS } from "graph-engine";
+  import { NodeHighlight } from "./graph/node-highlight";
 
   import { themeStore } from "$lib/stores/theme.svelte";
   import OrbitControls from "$lib/components/graph/OrbitControls.svelte";
   import ContextMenu from "$lib/components/graph/ContextMenu.svelte";
   import SelectionConnector from "$lib/components/graph/SelectionConnector.svelte";
-  import FeatureHint from "$lib/components/help/FeatureHint.svelte";
+  import GraphReportAction from "$lib/components/graph/GraphReportAction.svelte";
   import GraphTooltip from "./graph/GraphTooltip.svelte";
   import EdgeEditorModal from "./graph/EdgeEditorModal.svelte";
   import GraphHUD from "./graph/GraphHUD.svelte";
   import GraphToolbar from "./graph/GraphToolbar.svelte";
-  import { handleGraphDeleteShortcut } from "./graph/graph-keyboard";
+  import {
+    handleGraphDeleteShortcut,
+    handleGraphActionShortcut,
+  } from "./graph/graph-keyboard";
   import { DEFAULT_SEARCH_ENTITY_ZOOM } from "./search/search-focus";
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
   import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
@@ -31,7 +35,7 @@
     buildSelectionAnnouncement,
   } from "./graph/graph-a11y";
   import { createHoverContentLoader } from "./graph/hover-content-loader";
-  import EmptyState from "$lib/components/ui/EmptyState.svelte";
+  import GraphEmptyState from "$lib/components/graph/GraphEmptyState.svelte";
   import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
   import { onboardingFunnel } from "$lib/app/onboarding/onboarding-funnel";
   import { helpStore } from "$lib/stores/help.svelte";
@@ -114,8 +118,10 @@
       // these teach touch-specific chrome navigation, a different story from
       // the tour's task-oriented steps. Without this, both could render at
       // once on a touch device (two competing cards), exactly what the
-      // orchestrator (#1780) exists to prevent.
-      !helpStore.activeTour,
+      // orchestrator (#1780) exists to prevent. The goal invitation and a
+      // guided-setup journey hold them back for the same reason (spec 175).
+      !helpStore.activeTour &&
+      !onboardingStore.firstRunGuidanceActive,
   );
 
   let coachMarkTargetRect = $state<DOMRect | null>(null);
@@ -163,6 +169,7 @@
       graph.timelineMode,
       graph.showLabels,
       graph.perfStylingActive,
+      graph.stats.nodeCount + graph.stats.edgeCount <= MAX_TRANSITION_ELEMENTS,
     ),
   );
 
@@ -171,6 +178,9 @@
   });
 
   const handleKeyDown = async (e: KeyboardEvent) => {
+    if (!e.key) return;
+    if (modalUIStore.isAnyModalOpen) return;
+
     const handledDelete = await handleGraphDeleteShortcut(e, {
       cy: controller.cy,
       selectedId: controller.selectedId,
@@ -184,40 +194,25 @@
 
     if (handledDelete) return;
 
-    const target = document.activeElement;
-    if (
-      target?.tagName === "INPUT" ||
-      target?.tagName === "TEXTAREA" ||
-      (target as HTMLElement)?.isContentEditable
-    )
-      return;
-
-    if (e.key.toLowerCase() === "t" && !e.ctrlKey && !e.metaKey && !e.altKey) {
-      graph.toggleTimeline();
-      controller.applyCurrentLayout({
-        reason: "Keyboard Shortcut (T)",
-        isForced: true,
-      });
-    }
-    if (e.key.toLowerCase() === "c" && !e.ctrlKey && !e.metaKey && !e.altKey) {
-      if (!vault.isGuest) {
-        if (controller.selectedCount === 2) {
-          connectionModeStore.showSelectionConnector =
-            !connectionModeStore.showSelectionConnector;
-        } else {
-          connectionModeStore.toggleConnectMode();
-        }
-      }
-    }
-    if (e.key.toLowerCase() === "l" && !e.ctrlKey && !e.metaKey && !e.altKey) {
-      graph.toggleLabels();
-    }
-    if (e.key.toLowerCase() === "i" && !e.ctrlKey && !e.metaKey && !e.altKey) {
-      graph.toggleImages();
-    }
-    if (e.key === "Escape" && connectionModeStore.isConnecting) {
-      connectionModeStore.toggleConnectMode();
-    }
+    handleGraphActionShortcut(e, {
+      isGuest: vault.isGuest,
+      selectedCount: controller.selectedCount,
+      isConnecting: connectionModeStore.isConnecting,
+      toggleTimeline: () => graph.toggleTimeline(),
+      applyTimelineLayout: () => {
+        controller.applyCurrentLayout({
+          reason: "Keyboard Shortcut (T)",
+          isForced: true,
+        });
+      },
+      toggleConnectMode: () => connectionModeStore.toggleConnectMode(),
+      toggleSelectionConnector: () => {
+        connectionModeStore.showSelectionConnector =
+          !connectionModeStore.showSelectionConnector;
+      },
+      toggleLabels: () => graph.toggleLabels(),
+      toggleImages: () => graph.toggleImages(),
+    });
   };
 
   onMount(() => {
@@ -284,6 +279,14 @@
     if (controller.consumeReinitializationRequest() && container) {
       void controller.init(container, graphStyle);
     }
+  });
+
+  $effect(() => {
+    void graph.communityMode;
+    void graph.timelineMode;
+    void graph.orbitMode;
+    void controller.communityHulls;
+    untrack(() => controller.syncCommunityHulls());
   });
 
   // Mode change triggers
@@ -370,6 +373,8 @@
     }
   }
 
+  const nodeHighlight = new NodeHighlight();
+
   // Selection & Search Focus
   $effect(() => {
     // Revalidate the root when graph membership changes, while a regular
@@ -408,9 +413,9 @@
           untrack(() => {
             centerOnNode(node, true, focusZoom);
 
-            // Stop animations and clear custom style bypasses on all nodes to prevent sticky/leaky highlight styles
-            currentCy.nodes().stop();
-            currentCy.nodes().removeStyle();
+            // Clear the previous pulse so highlight styles never stick.
+            nodeHighlight.clear(currentCy);
+            nodeHighlight.mark(currentSelectedId);
 
             // Capture original stylesheet values before running override animations
             const origPadding =
@@ -464,8 +469,7 @@
       } else {
         // No node is selected, clear any active node overrides and animations
         untrack(() => {
-          currentCy.nodes().stop();
-          currentCy.nodes().removeStyle();
+          nodeHighlight.clear(currentCy);
           currentCy.$("node:selected").unselect();
         });
         if (controller.pendingSearchFocus) {
@@ -595,6 +599,11 @@
     void graph.perfStylingActive;
     void controller.cy;
     void controller.isSuspended;
+    // Silhouettes are tinted from the theme's entity-type palette (issue
+    // #2680), so a theme or category-colour change has to re-resolve them —
+    // otherwise already-painted glyphs keep the previous theme's colour.
+    void themeStore.activeTheme?.id;
+    void categories.list;
     untrack(() => controller.syncImages());
   });
 
@@ -713,7 +722,13 @@
     class="w-full h-full {controller.graphVisible
       ? 'opacity-100'
       : 'opacity-0'} transition-opacity duration-1000"
-  ></div>
+  >
+    <!-- Community backgrounds; first child so Cytoscape's layer paints above. -->
+    <canvas
+      data-community-hulls
+      class="absolute inset-0 w-full h-full pointer-events-none"
+    ></canvas>
+  </div>
 
   <GraphTooltip {hoveredEntity} hoverPosition={controller.hoverPosition} />
   <EdgeEditorModal bind:editingEdge={controller.editingEdge} />
@@ -721,42 +736,14 @@
   {#if controller.cy}
     <ContextMenu cy={controller.cy} />
     <SelectionConnector cy={controller.cy} />
+    <GraphReportAction cy={controller.cy} />
   {/if}
   {#if hasNoEntities}
-    <div
-      class="absolute inset-0 flex items-center justify-center pointer-events-none"
-      data-testid="graph-empty-state"
-    >
-      <div class="pointer-events-auto">
-        <EmptyState
-          icon="icon-[lucide--network]"
-          headline="Your graph is empty"
-          body={vault.isGuest
-            ? "Nothing has been shared with you yet."
-            : "Add a character or place to begin. Mention another name in its notes, accept the suggested connection, and it'll appear here."}
-          cta={vault.isGuest ? undefined : "＋ Create"}
-          ctaTestId={vault.isGuest ? undefined : "graph-empty-state-cta"}
-          onCta={vault.isGuest
-            ? undefined
-            : () => modalUIStore.openIntentCreateMenu()}
-          secondaryCta={vault.isGuest ? undefined : "Populate with a pack"}
-          onSecondaryCta={vault.isGuest ? undefined : () => openImportWindow()}
-        />
-      </div>
-    </div>
-    {#if !vault.isGuest}
-      <!-- Durable pointer back to onboarding guidance once the welcome
-           screen is dismissed and forgotten (Finding 9, #1791) — a one-time
-           reminder that Settings → Help has a getting-started checklist and
-           a tour-replay button, for whoever created an empty vault without
-           going through the demo/tour flow at all.
-           top-4 (not bottom-4): the bottom-left is already the mobile
-           GraphToolbar FAB's exact position (`bottom-4`, GraphToolbar.svelte)
-           — a corner we spent considerable effort de-crowding this session. -->
-      <div class="absolute top-4 left-4 z-20 max-w-xs pointer-events-auto">
-        <FeatureHint hintId="getting-started" />
-      </div>
-    {/if}
+    <GraphEmptyState
+      isGuest={vault.isGuest}
+      onCreate={() => modalUIStore.openIntentCreateMenu()}
+      onImport={() => openImportWindow()}
+    />
   {/if}
 
   {#if !vault.isGuest}
@@ -770,6 +757,7 @@
       title="Create"
       aria-label="Create new entity"
       data-testid="graph-fab-create"
+      data-help-target="create-entry"
       class="absolute bottom-6 right-6 z-40 flex lg:hidden items-center justify-center w-14 h-14 rounded-full bg-theme-primary text-theme-bg shadow-[0_4px_20px_rgba(var(--theme-primary-rgb),0.4)] hover:brightness-110 transition-all"
     >
       <span class="icon-[lucide--plus] w-6 h-6" aria-hidden="true"></span>
@@ -811,11 +799,11 @@
           <div
             class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-theme-primary/10 text-theme-primary"
           >
-            <span class="{mark.icon} h-4 w-4"></span>
+            <span class="{mark.icon} h-4 w-4" aria-hidden="true"></span>
           </div>
           <div class="flex-1 min-w-0">
             <p
-              class="text-[10px] font-bold uppercase tracking-[0.2em] text-theme-primary mb-1"
+              class="text-micro font-bold uppercase tracking-[0.2em] text-theme-primary mb-1"
             >
               {mark.title}
             </p>
@@ -837,14 +825,14 @@
           </div>
           <div class="flex gap-2">
             <button
-              class="text-[10px] text-theme-muted hover:text-theme-primary transition-colors"
+              class="touch-target text-micro text-theme-muted hover:text-theme-primary transition-colors"
               onclick={() => onboardingStore.dismissMobileGraphCoachMarks()}
               data-testid="coach-mark-skip"
             >
               Skip
             </button>
             <button
-              class="rounded-lg bg-theme-primary px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.15em] text-theme-bg transition-opacity hover:opacity-90"
+              class="touch-target rounded-lg bg-theme-primary px-3 py-1.5 text-micro font-bold uppercase tracking-[0.15em] text-theme-bg transition-opacity hover:opacity-90"
               onclick={nextCoachMark}
               data-testid="coach-mark-next"
             >
@@ -854,46 +842,6 @@
         </div>
       </div>
     </div>
-  {/if}
-
-  {#if layoutUIStore.prefersTouchCoaching && !layoutUIStore.isMobile}
-    <!-- Touch tablets (769-1279px + coarse pointer) only — phones already get
-         the fuller mobile coach-mark walkthrough (COACH_MARKS, scoped to
-         isMobile), and this would be redundant there. Unlike the mobile
-         coach marks, this hint is genuinely layout-agnostic (no per-device
-         target selector needed): panning/zooming the graph works the same
-         regardless of where the ActivityBar happens to render (#1791 Phase 4). -->
-    <!-- top uses --header-height (set dynamically in +layout.svelte, grows
-         with the staging banner), not a hardcoded offset — `fixed` escapes
-         the graph's own container (which the header sits above, so the
-         empty-workspace hint above is naturally clear of it via `absolute`),
-         so without this it renders underneath/behind the sticky AppHeader. -->
-    <div
-      class="fixed right-4 z-[60]"
-      style="top: calc(var(--header-height, 65px) + 1rem);"
-      data-testid="touch-gestures-hint"
-    >
-      <FeatureHint hintId="touch-graph-gestures" />
-    </div>
-  {/if}
-  {#if controller.selectedCount === 2}
-    <!-- Same --header-height fix as touch-gestures-hint above (was fixed
-         top-20, a hardcoded offset that only happened to clear the header
-         by coincidence, and would clip under it if the header grows — e.g.
-         the staging banner). Stacked below the touch-gestures hint (+5rem
-         instead of +1rem) rather than sharing its exact position, since a
-         touch-tablet user selecting 2 nodes can have both hints on screen
-         at once. -->
-    <div
-      class="fixed right-4 z-[60]"
-      style="top: calc(var(--header-height, 65px) + 5rem);"
-      data-testid="node-merging-hint"
-    >
-      <FeatureHint hintId="node-merging" />
-    </div>
-  {/if}
-  {#if connectionModeStore.isConnecting}
-    <FeatureHint hintId="connect-mode" />
   {/if}
 </div>
 

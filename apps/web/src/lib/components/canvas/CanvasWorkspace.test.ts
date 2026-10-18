@@ -3,7 +3,7 @@
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { canvasLogic, importFileToVault } = vi.hoisted(() => ({
+const { canvasLogic, canvasRegistry, importFileToVault } = vi.hoisted(() => ({
   canvasLogic: {
     handleQuickSpawn: vi.fn(),
     labelModal: { isOpen: false, edgeId: "", currentLabel: "" },
@@ -29,6 +29,10 @@ const { canvasLogic, importFileToVault } = vi.hoisted(() => ({
     screenToFlowPosition: vi.fn((p) => p),
   },
   importFileToVault: vi.fn(),
+  canvasRegistry: {
+    allCanvases: [] as any[],
+    pendingEntities: [],
+  },
 }));
 
 vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
@@ -70,10 +74,7 @@ vi.mock("$lib/stores/vault.svelte", () => ({
 }));
 
 vi.mock("$lib/stores/canvas-registry.svelte", () => ({
-  canvasRegistry: {
-    allCanvases: [],
-    pendingEntities: [],
-  },
+  canvasRegistry,
 }));
 
 vi.mock("$app/state", () => ({
@@ -134,12 +135,6 @@ vi.mock("$lib/components/canvas/EdgeLabelModal.svelte", () => ({
   },
 }));
 
-vi.mock("$lib/components/hints/CanvasHint.svelte", () => ({
-  default: function CanvasHintMock() {
-    return {};
-  },
-}));
-
 vi.mock("$lib/components/canvas/CanvasSelectionModal.svelte", async () => ({
   default: (await import("../modals/__tests__/CanvasSelectionModalStub.svelte"))
     .default,
@@ -166,6 +161,7 @@ describe("CanvasWorkspace", () => {
     vi.clearAllMocks();
     canvasLogic.nodes = [];
     canvasLogic.drawings = [];
+    canvasRegistry.allCanvases = [];
     setGuestMode(false);
     modalUIStore.showCanvasSelector = false;
   });
@@ -183,6 +179,30 @@ describe("CanvasWorkspace", () => {
       screen.getByRole("region", { name: "Canvas Workspace" }),
     ).toBeTruthy();
     expect(screen.queryByTestId("canvas-selection-modal-stub")).toBeNull();
+  });
+
+  it("reads and persists the active canvas image label preference", async () => {
+    const canvas = {
+      id: "canvas-1",
+      slug: "canvas-1",
+      nodes: [],
+      edges: [],
+      metadata: { showImageLabels: false },
+    };
+    canvasRegistry.allCanvases = [canvas];
+    canvasLogic.nodes = [{ id: "entity-1", type: "entity", data: {} }];
+
+    render(CanvasWorkspace, { props: { engine: {} as any } });
+
+    expect(
+      screen.getByRole("button", { name: "Show image labels" }),
+    ).toBeTruthy();
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Show image labels" }),
+    );
+
+    expect(canvas.metadata.showImageLabels).toBe(true);
+    expect(canvasLogic.saveNow).toHaveBeenCalledOnce();
   });
 
   it("disables viewport gestures while drawing mode is active", async () => {

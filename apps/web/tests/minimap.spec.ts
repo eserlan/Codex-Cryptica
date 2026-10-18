@@ -1,45 +1,14 @@
 import { test, expect } from "@playwright/test";
+import { setupVaultPage, seedEntities } from "./test-helpers";
 
 test.describe("Minimap Navigation", () => {
   test.beforeEach(async ({ page }) => {
-    // 1. Mock initialization to ensure a consistent graph state
-    await page.addInitScript(() => {
-      localStorage.setItem("codex_skip_landing", "true");
-      localStorage.setItem(
-        "codex-cryptica-help-state",
-        JSON.stringify({ completedTours: ["initial-onboarding"] }),
-      );
-      const applyMocks = () => {
-        if ((window as any).vault) {
-          (window as any).vault.isAuthorized = true;
-          (window as any).vault.status = "idle";
-          (window as any).vault.rootHandle = { kind: "directory" };
-          // Inject some dummy entities to ensure graph renders
-          (window as any).vault.entities = {
-            "node-1": { id: "node-1", title: "Node 1", connections: [] },
-            "node-2": { id: "node-2", title: "Node 2", connections: [] },
-            "node-3": { id: "node-3", title: "Node 3", connections: [] },
-          };
-        }
-      };
-      applyMocks();
-      setInterval(applyMocks, 100);
-    });
-
-    await page.goto("/");
-    // Wait for app load
-    await expect(page.getByTestId("graph-canvas")).toBeVisible({
-      timeout: 20000,
-    });
-
-    // Force-dismiss front page overlay (intercepts pointer events)
-    await page.evaluate(() => {
-      const ui = (window as any).uiStore;
-      if (ui) {
-        ui.dismissedWorldPage = true;
-        ui.dismissedLandingPage = true;
-      }
-    });
+    await setupVaultPage(page);
+    await seedEntities(page, [
+      { id: "node-1", title: "Node 1", content: "" },
+      { id: "node-2", title: "Node 2", content: "" },
+      { id: "node-3", title: "Node 3", content: "" },
+    ]);
   });
 
   test("should toggle minimap using the dedicated button", async ({ page }) => {

@@ -1,3 +1,4 @@
+import { soloPlayGuard as defaultSoloPlayGuard } from "$lib/stores/solo-session-instance";
 import { mapStore as defaultMapStore } from "$lib/stores/map.svelte";
 import { mapSession as defaultMapSession } from "$lib/stores/map-session.svelte";
 import { vault as defaultVault } from "$lib/stores/vault.svelte";
@@ -5,17 +6,22 @@ import { modalUIStore as defaultModalUIStore } from "$lib/stores/ui/modal-ui.sve
 import { notificationStore as defaultNotificationStore } from "$lib/stores/ui/notification.svelte";
 import { sessionModeStore as defaultSessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { layoutUIStore as defaultLayoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
-import { shouldShowInitiativePanel } from "$lib/components/map/vtt-ui";
+import {
+  shouldShowInitiativePanel,
+  VTT_ENTITY_TYPES,
+  ENTITY_TRANSFER_TYPE,
+  TILE_TRANSFER_TYPE,
+} from "$lib/components/map/vtt-ui";
 import type { SessionMode } from "../../../types/vtt";
 import type { Entity, Point } from "schema";
 
-export const VTT_ENTITY_TYPES = ["character", "creature", "item"];
-const ENTITY_TRANSFER_TYPE = "application/codex-entity";
+export { VTT_ENTITY_TYPES, ENTITY_TRANSFER_TYPE, TILE_TRANSFER_TYPE };
 
 type MapPageMapStore = {
   activeMap: unknown;
   unproject(point: Point): Point;
   uploadMap(file: File, name: string): Promise<string | undefined>;
+  createBlankMap(name: string): Promise<string | undefined>;
   addPin(entityId: string | undefined, coordinates: Point): unknown;
 };
 
@@ -26,6 +32,9 @@ type MapPageSession = {
   dragPreview?: { entityId: string } | null;
   clearDragPreview(): void;
   setDragPreview(preview: { entityId: string; x: number; y: number }): void;
+  selectTile(deckId: string, tileId: string, size?: number): unknown;
+  updatePendingTilePlacement(x: number, y: number): void;
+  placePendingTile(): unknown;
   addToken(input: {
     name: string;
     entityId: string;
@@ -73,6 +82,12 @@ export interface MapPageControllerDependencies {
   notificationStore?: MapPageNotificationStore;
   sessionModeStore?: MapPageSessionModeStore;
   layoutUIStore?: MapPageLayoutStore;
+  soloPlayGuard?: MapPageSoloPlayGuard;
+}
+
+/** Decides whether Share may open (a solo session blocks it). */
+export interface MapPageSoloPlayGuard {
+  sharedPlayBlockedReason(): string | null;
 }
 
 export class MapPageController {
@@ -84,6 +99,7 @@ export class MapPageController {
     defaultNotificationStore;
   private sessionModeStore: MapPageSessionModeStore = defaultSessionModeStore;
   private layoutUIStore: MapPageLayoutStore = defaultLayoutUIStore;
+  private soloPlayGuard: MapPageSoloPlayGuard = defaultSoloPlayGuard;
   private activeVaultId: string | null | undefined;
 
   isDragging = $state(false);
@@ -91,8 +107,13 @@ export class MapPageController {
   mapName = $state("");
   files = $state<FileList | null>(null);
 
+  // The VTT chat sidebar only exists while VTT is on; otherwise HUDs sit flush left.
   chatSidebarOffset = $derived(
-    this.layoutUIStore.vttChatSidebarCollapsed ? "3rem" : "20rem",
+    !this.mapSession.vttEnabled
+      ? "0rem"
+      : this.layoutUIStore.vttChatSidebarCollapsed
+        ? "3rem"
+        : "20rem",
   );
   showInitiativePanel = $derived(
     shouldShowInitiativePanel(this.mapSession.vttEnabled, this.mapSession.mode),
@@ -118,6 +139,7 @@ export class MapPageController {
     this.notificationStore = deps.notificationStore ?? defaultNotificationStore;
     this.sessionModeStore = deps.sessionModeStore ?? defaultSessionModeStore;
     this.layoutUIStore = deps.layoutUIStore ?? defaultLayoutUIStore;
+    this.soloPlayGuard = deps.soloPlayGuard ?? defaultSoloPlayGuard;
     this.activeVaultId = this.vault.activeVaultId;
   }
 
@@ -132,6 +154,11 @@ export class MapPageController {
   }
 
   openShareModal() {
+    const reason = this.soloPlayGuard.sharedPlayBlockedReason();
+    if (reason) {
+      this.notificationStore.notify(reason, "info");
+      return;
+    }
     this.modalUIStore.openShare();
   }
 
@@ -199,6 +226,11 @@ export class MapPageController {
       return;
     }
 
+    if (this.isTileDrag(dataTransfer)) {
+      this.dropTile(event, dataTransfer);
+      return;
+    }
+
     if (dataTransfer.files?.length > 0) {
       this.files = dataTransfer.files;
       this.showUpload = true;
@@ -226,6 +258,28 @@ export class MapPageController {
       console.error("[MapPageController] Error during handleUpload:", err);
       this.notificationStore.notify(
         "An unexpected error occurred during upload.",
+        "error",
+      );
+    }
+  }
+
+  async handleCreateBlank() {
+    try {
+      const result = await this.mapStore.createBlankMap(
+        this.mapName || "New Map",
+      );
+      if (result === undefined) {
+        this.notificationStore.notify(
+          "Failed to create map. Please ensure your vault is active.",
+          "error",
+        );
+        return;
+      }
+      this.cancelUpload();
+    } catch (err) {
+      console.error("[MapPageController] Error during handleCreateBlank:", err);
+      this.notificationStore.notify(
+        "An unexpected error occurred while creating the map.",
         "error",
       );
     }
@@ -279,5 +333,30 @@ export class MapPageController {
   private isEntityDrag(dataTransfer: DataTransfer | null) {
     if (!dataTransfer) return false;
     return Array.from(dataTransfer.types).includes(ENTITY_TRANSFER_TYPE);
+  }
+
+  private isTileDrag(dataTransfer: DataTransfer | null) {
+    if (!dataTransfer) return false;
+    return Array.from(dataTransfer.types).includes(TILE_TRANSFER_TYPE);
+  }
+
+  private dropTile(event: DragEvent, dataTransfer: DataTransfer) {
+    if (this.sessionModeStore.isGuestMode) return;
+    const raw = dataTransfer.getData(TILE_TRANSFER_TYPE);
+    if (!raw) return;
+    try {
+      const { deckId, tileId } = JSON.parse(raw) as {
+        deckId?: string;
+        tileId?: string;
+      };
+      if (!deckId || !tileId) return;
+      const mapCoords = this.eventToMapCoords(event);
+      const tile = this.mapSession.selectTile(deckId, tileId);
+      if (!tile) return;
+      this.mapSession.updatePendingTilePlacement(mapCoords.x, mapCoords.y);
+      this.mapSession.placePendingTile();
+    } catch (err) {
+      console.error("[MapPageController] Error dropping tile:", err);
+    }
   }
 }
