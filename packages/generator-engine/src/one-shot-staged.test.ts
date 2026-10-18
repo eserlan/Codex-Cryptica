@@ -418,7 +418,8 @@ describe("runOneShotStages", () => {
       "npcs",
       "review",
     ]);
-    expect(first[0].status).toBe("active");
+    expect(first.every((s) => s.status === "pending")).toBe(true);
+    expect(snapshots[1][0].status).toBe("active");
     expect(
       snapshots.some((s) => s[3].detail === `2 of ${a.scenes.length}`),
     ).toBe(true);

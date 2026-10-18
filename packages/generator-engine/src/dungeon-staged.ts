@@ -25,8 +25,14 @@ import {
   formatCampaignContextBlock,
 } from "./campaign-context";
 import { parseFencedJson } from "./llm-response-utils";
-import type { OneShotProgressStep } from "./one-shot-staged";
-import { StagedProgress } from "./staged-progress";
+import { StagedProgress, type StagedProgressStep } from "./staged-progress";
+import {
+  askJson,
+  askModel,
+  isAbort,
+  readJsonObject,
+  throwIfAborted,
+} from "./staged-runtime";
 import {
   bannedNamesIn,
   buildDungeonCoherencePrompt,
@@ -54,7 +60,7 @@ export interface DungeonStagedDeps {
   /** Caller-supplied context (vault, naming, instructions) placed before every stage. */
   contextPrefix?: string;
   /** Live step list for the page, in the same shape as the one-shot generator's. */
-  onProgress?: (steps: OneShotProgressStep[]) => void;
+  onProgress?: (steps: StagedProgressStep[]) => void;
   /**
    * Called once when a run finishes or gives up (not on abort), so a dev build
    * can log which route ran and what it cost.
@@ -107,20 +113,6 @@ const textList = (v: unknown): string[] =>
   arr(v)
     .map(text)
     .filter((s) => s.length > 0);
-
-function throwIfAborted(signal?: AbortSignal): void {
-  if (!signal?.aborted) return;
-  throw (
-    signal.reason ?? new DOMException("The operation was aborted", "AbortError")
-  );
-}
-
-function isAbort(err: unknown, signal?: AbortSignal): boolean {
-  return (
-    !!signal?.aborted ||
-    (err instanceof DOMException && err.name === "AbortError")
-  );
-}
 
 // ---------------------------------------------------------------------------
 // Validation (pure)
@@ -792,25 +784,6 @@ interface StageOutcome {
   soft: string[];
 }
 
-/** One model call, parsed as a JSON object; `null` when it throws or is not one. */
-async function askJson(
-  deps: DungeonStagedDeps,
-  system: string,
-  message: string,
-): Promise<Json | null> {
-  try {
-    const reply = await deps.complete(system, message);
-    throwIfAborted(deps.signal);
-    const parsed = parseFencedJson<unknown>(reply);
-    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
-      ? (parsed as Json)
-      : null;
-  } catch (err) {
-    if (isAbort(err, deps.signal)) throw err;
-    return null;
-  }
-}
-
 const NOT_JSON: StageCheck = {
   hard: ["the response was not a valid JSON object"],
   soft: [],
@@ -828,7 +801,9 @@ async function attemptStage(
   throwIfAborted(deps.signal);
   progress.set(id, "active", retry ? FIXING : undefined);
   stats.aiCalls++;
-  return askJson(deps, system, message);
+  return askJson(() => deps.complete(system, message), {
+    signal: deps.signal,
+  });
 }
 
 function finishStage(
@@ -1009,14 +984,20 @@ async function reviewCoherence(
   resolved: ResolvedDungeon,
 ): Promise<string[]> {
   const message = reviewMessage(d, resolved, deps.contextPrefix);
-  for (let attempt = 0; attempt < 2; attempt++) {
-    throwIfAborted(deps.signal);
-    stats.aiCalls++;
-    const data = await askJson(deps, REVIEW_SYSTEM, message);
-    if (data && Array.isArray(data.issues)) {
-      return textList(data.issues).slice(0, 5);
-    }
-  }
+  const issues = await askModel(
+    () => {
+      stats.aiCalls++;
+      return deps.complete(REVIEW_SYSTEM, message);
+    },
+    (reply) => {
+      const data = readJsonObject(reply);
+      return data && Array.isArray(data.issues)
+        ? textList(data.issues).slice(0, 5)
+        : null;
+    },
+    { signal: deps.signal, attempts: 2 },
+  );
+  if (issues) return issues;
   stats.reviewSkipped = true;
   return [];
 }

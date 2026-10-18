@@ -22,6 +22,7 @@ import type {
   PointCrawlRoute,
 } from "./point-crawl-state";
 import { type Rng, defaultRng } from "./random-utils";
+import { isAbort, throwIfAborted } from "./staged-runtime";
 
 export interface RegeneratePointCrawlPartOptions {
   useAI?: boolean;
@@ -34,13 +35,6 @@ export interface RegeneratePointCrawlPartOptions {
 export interface RegeneratePointCrawlPartResult {
   crawl: PointCrawlNetwork;
   warnings: string[];
-}
-
-function throwIfAborted(signal?: AbortSignal): void {
-  if (!signal?.aborted) return;
-  throw (
-    signal.reason ?? new DOMException("The operation was aborted", "AbortError")
-  );
 }
 
 export function cleanString(v: unknown, fallback: string): string {
@@ -366,9 +360,7 @@ export async function regeneratePointCrawlPart(
     );
   } catch (err) {
     throwIfAborted(options.signal);
-    if (err instanceof DOMException && err.name === "AbortError") {
-      throw err;
-    }
+    if (isAbort(err)) throw err;
     return regeneratePointCrawlPartLocal(crawl, target, instruction, rng);
   }
 }

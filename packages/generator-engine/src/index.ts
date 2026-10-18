@@ -317,6 +317,11 @@ export {
   type OneShotStageDeps,
   type OneShotStagedResult,
 } from "./one-shot-staged";
+export type {
+  StagedProgressStep,
+  StagedStepId,
+  StagedStepStatus,
+} from "./staged-progress";
 export type { StagePrompt } from "./one-shot-stage-prompts";
 export type {
   OneShotAdventure,
