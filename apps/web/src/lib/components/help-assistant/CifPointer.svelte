@@ -1,53 +1,73 @@
 <script lang="ts">
+  import { untrack } from "svelte";
+  import type { CifFlightPhase } from "$lib/services/help-assistant/cif-flight.svelte";
   import type { HighlightRect } from "$lib/services/help-assistant/help-highlight.svelte";
   import { CIF_POINTER_SIZE, placeCifPointer } from "./cif-pointer-placement";
   import CifSprite from "./CifSprite.svelte";
 
-  let { rect }: { rect: HighlightRect } = $props();
-
-  /** The flight takes this long; after it Cif just tracks the control. */
-  const FLIGHT_MS = 650;
+  let {
+    rect,
+    phase,
+    from = null,
+    home = null,
+  }: {
+    /** The highlighted control. */
+    rect: HighlightRect;
+    phase: Exclude<CifFlightPhase, "idle">;
+    /** Where the outbound flight starts; the corner when null. */
+    from?: HighlightRect | null;
+    /** Where the return flight ends. */
+    home?: HighlightRect | null;
+  } = $props();
 
   const readViewport = () =>
     typeof window === "undefined"
       ? { width: 1024, height: 768 }
       : { width: window.innerWidth, height: window.innerHeight };
 
-  // Reduced motion: no flight at all. Cif is placed beside the control on his
-  // first frame and only fades in, rather than moving across the screen.
-  const reducedMotion =
-    typeof window !== "undefined" &&
-    (window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ?? false);
-
   let viewport = $state(readViewport());
-  let launched = $state(reducedMotion);
-  let landed = $state(reducedMotion);
+  // The first frame draws Cif at home; the next one sets off, so the move is
+  // a transition rather than a jump.
+  let launched = $state(false);
+  // Leaving the header he is already visible there, so there is nothing to
+  // fade in. From the corner, or appearing in place, he fades in. Decided
+  // once: adding the class later would replay the fade mid-flight.
+  const appear = untrack(() => phase !== "outbound" || !from);
+
+  /** Cif centred on a home spot (his header slot is the same size). */
+  const centredOn = (spot: HighlightRect) => ({
+    left: spot.left + spot.width / 2 - CIF_POINTER_SIZE.width / 2,
+    top: spot.top + spot.height / 2 - CIF_POINTER_SIZE.height / 2,
+  });
+  // Without a home on screen he sets off from the bottom-right corner.
+  const corner = $derived({
+    left: viewport.width - CIF_POINTER_SIZE.width - 16,
+    top: viewport.height - CIF_POINTER_SIZE.height - 16,
+  });
 
   const target = $derived(placeCifPointer(rect, viewport));
-  // Before take-off Cif waits in the bottom-right corner, where the chat
-  // buttons live, so the first move is a flight rather than a pop-in.
-  const position = $derived(
-    launched
-      ? target
-      : {
-          left: viewport.width - CIF_POINTER_SIZE.width - 16,
-          top: viewport.height - CIF_POINTER_SIZE.height - 16,
-          flip: false,
-        },
+  const homeSpot = $derived(home ? centredOn(home) : null);
+  const position = $derived.by(() => {
+    if (phase === "returning") return homeSpot ?? target;
+    if (phase === "outbound" && !launched)
+      return from ? centredOn(from) : corner;
+    return target;
+  });
+  const moving = $derived(phase === "outbound" || phase === "returning");
+  // He faces the control once he sets off, and faces home on the way back.
+  const flip = $derived(
+    phase === "returning"
+      ? (homeSpot?.left ?? 0) > target.left
+      : (launched || phase === "perched") && target.flip,
   );
 
   $effect(() => {
     const onResize = () => (viewport = readViewport());
     window.addEventListener("resize", onResize);
-    if (reducedMotion) {
-      return () => window.removeEventListener("resize", onResize);
-    }
     const start = requestAnimationFrame(() => (launched = true));
-    const land = setTimeout(() => (landed = true), FLIGHT_MS);
     return () => {
       window.removeEventListener("resize", onResize);
       cancelAnimationFrame(start);
-      clearTimeout(land);
     };
   });
 </script>
@@ -59,17 +79,24 @@
 -->
 <div
   class="cif-pointer pointer-events-none fixed top-0 left-0 z-[97]"
-  class:landed
+  class:appear
+  class:moving
+  class:landed={phase === "perched"}
   style:transform="translate({position.left}px, {position.top}px)"
   data-testid="cif-pointer"
   data-side={target.side}
+  data-phase={phase}
   aria-hidden="true"
 >
-  <CifSprite mood="pointing" flip={launched && target.flip} class="h-12 w-11" />
+  <CifSprite
+    mood={phase === "returning" ? "idle" : "pointing"}
+    {flip}
+    class="h-12 w-11"
+  />
 </div>
 
 <style>
-  .cif-pointer {
+  .cif-pointer.appear {
     animation: cif-pointer-appear 180ms ease-out;
   }
   @keyframes cif-pointer-appear {
@@ -78,10 +105,11 @@
     }
   }
 
-  /* Reduced motion: no flight. He simply appears beside the control (the
-     fade above is an opacity change, not movement). */
+  /* Reduced motion never reaches a moving phase, and this guard keeps a
+     transition out even if it did. Once perched he tracks the control on
+     scroll without lag. */
   @media (prefers-reduced-motion: no-preference) {
-    .cif-pointer:not(.landed) {
+    .cif-pointer.moving {
       transition: transform 650ms cubic-bezier(0.22, 0.8, 0.2, 1);
     }
   }

@@ -35,3 +35,5 @@ Start a [Session Journal](/help#help/quicknote) to record completed party moves 
 Travel totals are temporary and stay in this browser tab. The journal is saved with your local vault. Solo play does not send or measure your map activity.
 
 Start a whole solo session from [Play](/help#help/solo-session), which turns SOLO on for the map you choose and keeps your dice and journal close at hand.
+
+On a hex map with Hex Crawl mode enabled, the GM can preview a journey and move the party one hex at a time. Each step reveals fog and records travel in the journal when those existing features are enabled. The arrival hex is marked explored; the GM chooses **Explore** explicitly to request a discovery. Stopping keeps completed travel, and a failed arrival save can be retried without moving or recording the step again. Journey routes are temporary and do not return after reload.

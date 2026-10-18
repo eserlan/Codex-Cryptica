@@ -85,6 +85,17 @@ describe("remaining coverage retrieval evaluation", () => {
       "entity-explorer",
     ],
     ["How do I roll with advantage?", "entity-explorer", "dice-roller"],
+    [
+      "What are the different options in the left sidebar?",
+      "entity-shelf",
+      "app-navigation",
+    ],
+    [
+      "What do the buttons in the Activity Bar do?",
+      "dice-roller",
+      "app-navigation",
+    ],
+    ["How do I send an entry to the Shelf?", "app-navigation", "entity-shelf"],
   ])(
     "keeps explicit intent for %s despite the %s screen",
     (question, screen, expected) => {

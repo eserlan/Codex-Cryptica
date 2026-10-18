@@ -10,6 +10,10 @@ import { buildFallback } from "$lib/services/help-assistant/help-fallback";
 import { generatorsAvailable } from "$lib/services/help-assistant/generator-availability";
 import { helpClient } from "$lib/services/help-assistant/help-client";
 import { helpHighlight } from "$lib/services/help-assistant/help-highlight.svelte";
+import {
+  CifFlight,
+  locateCifHome,
+} from "$lib/services/help-assistant/cif-flight.svelte";
 import { helpStore } from "$lib/stores/help.svelte";
 import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
 import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
@@ -93,6 +97,18 @@ export const helpActionRunner = new HelpActionRunner({
   openGenerator: (generatorId) =>
     modalUIStore.openGeneratorWorkflow(generatorId ?? null),
   waitFor,
+});
+
+/** Cif flying from the chat header to the control a guide points at, and back. */
+export const cifFlight = new CifFlight({
+  findHome: () =>
+    locateCifHome(
+      typeof document === "undefined" ? undefined : document,
+      helpAssistant.isOpen,
+    ),
+  reducedMotion: () =>
+    typeof window !== "undefined" &&
+    (window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ?? false),
 });
 
 /**

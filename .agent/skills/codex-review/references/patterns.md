@@ -383,6 +383,27 @@ class FeatureStore {
   <button type="button" onclick={openLightbox}>Zoom</button>
   ```
 
+## Content Accuracy
+
+### User-Facing Content Must Match Code Reality
+
+- **Issue**: Help guides, answers, `/for` packs, discovery entries and `llms-full.txt` describe a
+  feature, settings path, importer, "automatic" behaviour or offline capability that the app does
+  not expose (PR #4137: ToV profile selection, character JSON import, automatic Luck reset on Long
+  Rest, "entirely offline" while ToV generator mechanics need AI). Each review round then finds the
+  same claim in another file.
+- **Pattern**: For every capability claim in changed content, find the code path that delivers it
+  (UI entry point and a real caller, not just an engine function or test). If none exists, remove
+  or soften the claim to the manual or variant-dependent reality. Then grep the whole repo for the
+  claim's key phrases (including generated copies such as `llms-full.txt`) and fix every
+  occurrence in one pass. Add a regression assertion for each changed article, not only the main one.
+
+### Answer Mesh Reciprocity
+
+- **Issue**: A new answer links to existing answers whose `relatedAnswers` do not link back.
+- **Pattern**: Run `bun run check:answer-mesh` and `bun scripts/discovery-audit.mjs`; both also run
+  from `lint-changed` when content files change. Add the reciprocal slug to each linked answer.
+
 ## Review Evidence
 
 ### Tests Follow the Failure Mode

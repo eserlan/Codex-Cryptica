@@ -17,6 +17,7 @@ import { soloAdventure } from "./solo-adventure";
 import { soloSession } from "./solo-session";
 import { entityExplorer } from "./entity-explorer";
 import { entityShelf } from "./entity-shelf";
+import { appNavigation } from "./app-navigation";
 import type { FeatureEntry } from "../schema";
 import { archiveImport } from "./archive-import";
 import { backupAndRestore } from "./backup-and-restore";
@@ -62,4 +63,5 @@ export const FEATURE_REGISTRY: readonly FeatureEntry[] = [
   soloSession,
   entityExplorer,
   entityShelf,
+  appNavigation,
 ];

@@ -11,6 +11,12 @@
  */
 
 import { textOverlap } from "./one-shot-dedupe";
+import {
+  fastestPlayableTravelTime,
+  pointCrawlRouteBudget,
+  pointCrawlStructuralRole,
+  routesIncidentTo,
+} from "./point-crawl-graph-analysis";
 import { isVague } from "./one-shot-playability";
 import { getGateTemplates, getScaleVocabulary } from "./point-crawl-tables";
 import {
@@ -29,7 +35,10 @@ export type PointCrawlIssueCode =
   | "missing-gate"
   | "key-behind-lock"
   | "overlapping-sibling-routes"
-  | "vague-gate-or-clue";
+  | "vague-gate-or-clue"
+  | "invalid-adventure-plan"
+  | "density-exceeded"
+  | "structural-role-mismatch";
 
 export interface PointCrawlIssue {
   code: PointCrawlIssueCode;
@@ -67,9 +76,12 @@ export function findSiblingRouteOverlap(
     for (let j = i + 1; j < siblings.length; j++) {
       const a = siblings[i];
       const b = siblings[j];
-      const textA = `${a.terrain} ${a.risk} ${a.signpost}`;
-      const textB = `${b.terrain} ${b.risk} ${b.signpost}`;
-      if (textOverlap(textA, textB) >= 0.6) {
+      const sharedTradeOffCount = [
+        textOverlap(a.terrain, b.terrain),
+        textOverlap(a.risk, b.risk),
+        textOverlap(a.signpost, b.signpost),
+      ].filter((score) => score >= 0.6).length;
+      if (sharedTradeOffCount >= 2) {
         return {
           overlapFound: true,
           routeA: a,
@@ -108,6 +120,25 @@ export function checkPointCrawlPlayability(
     issues.push({
       code: "missing-goal",
       message: "Point crawl must have at least one Goal / Destination node.",
+    });
+  }
+
+  for (const node of crawl.nodes) {
+    const expected = pointCrawlStructuralRole(node, crawl);
+    if (node.structuralRole !== expected) {
+      issues.push({
+        code: "structural-role-mismatch",
+        nodeId: node.id,
+        message: `Location "${node.name}" is labelled ${node.structuralRole ?? "without a structural role"}, but its graph role is ${expected}.`,
+      });
+    }
+  }
+
+  const routeBudget = pointCrawlRouteBudget(crawl.nodes.length, crawl.density);
+  if (crawl.routes.length > routeBudget) {
+    issues.push({
+      code: "density-exceeded",
+      message: `Point crawl has ${crawl.routes.length} routes, exceeding the ${crawl.density} route budget of ${routeBudget}.`,
     });
   }
 
@@ -176,13 +207,9 @@ export function checkPointCrawlPlayability(
   }
 
   // 5. Distinct Route Trade-offs (sibling routes leaving the same node)
-  const routesByOrigin = new Map<string, PointCrawlRoute[]>();
-  for (const route of crawl.routes) {
-    const list = routesByOrigin.get(route.fromNodeId) ?? [];
-    list.push(route);
-    routesByOrigin.set(route.fromNodeId, list);
-  }
-  for (const [originId, siblings] of routesByOrigin.entries()) {
+  for (const node of crawl.nodes) {
+    const originId = node.id;
+    const siblings = routesIncidentTo(originId, crawl.routes);
     const overlap = findSiblingRouteOverlap(siblings);
     if (overlap.overlapFound && overlap.routeA && overlap.routeB) {
       const originName = nodesById.get(originId)?.name ?? originId;
@@ -192,6 +219,61 @@ export function checkPointCrawlPlayability(
         routeId: overlap.routeB.id,
         message: `Routes leaving "${originName}" (${overlap.routeA.id} and ${overlap.routeB.id}) have near-duplicate terrain/risk/signpost trade-offs.`,
       });
+    }
+  }
+
+  // Validate structured narrative references and any deadline against route time.
+  const plan = crawl.adventurePlan;
+  if (plan) {
+    const nodeIds = new Set(crawl.nodes.map((node) => node.id));
+    const routeIds = new Set(crawl.routes.map((route) => route.id));
+    const discoveryIds = new Set(plan.discoveries.map((entry) => entry.id));
+    const outcomeIds = new Set(plan.outcomes.map((entry) => entry.id));
+    for (const discovery of plan.discoveries) {
+      if (
+        !nodeIds.has(discovery.nodeId) ||
+        discovery.enablesOutcomeIds.some((id) => !outcomeIds.has(id))
+      ) {
+        issues.push({
+          code: "invalid-adventure-plan",
+          nodeId: discovery.nodeId,
+          message: `Discovery "${discovery.id}" refers to a missing node or outcome.`,
+        });
+      }
+    }
+    for (const outcome of plan.outcomes) {
+      if (
+        outcome.requirementDiscoveryIds.some((id) => !discoveryIds.has(id)) ||
+        outcome.requirementRouteIds.some((id) => !routeIds.has(id))
+      ) {
+        issues.push({
+          code: "invalid-adventure-plan",
+          message: `Outcome "${outcome.id}" refers to a missing discovery or route.`,
+        });
+      }
+    }
+    for (const payoff of plan.detourPayoffs) {
+      if (!nodeIds.has(payoff.nodeId))
+        issues.push({
+          code: "invalid-adventure-plan",
+          nodeId: payoff.nodeId,
+          message: `Detour payoff refers to missing node "${payoff.nodeId}".`,
+        });
+    }
+    if (plan.clock) {
+      const trigger =
+        plan.clock.startsAt === "crawl-start"
+          ? crawl.startNodeId
+          : plan.clock.startsAt.nodeId;
+      const fastest = nodeIds.has(trigger)
+        ? fastestPlayableTravelTime(crawl, trigger, plan.clock.budget.unit)
+        : null;
+      if (fastest === null || fastest > plan.clock.budget.value) {
+        issues.push({
+          code: "invalid-adventure-plan",
+          message: `Clock "${plan.clock.label}" cannot be met from its trigger using the route durations.`,
+        });
+      }
     }
   }
 
@@ -218,37 +300,89 @@ export function checkPointCrawlPlayability(
   return issues;
 }
 
+function routeTradeOffOverlapCount(
+  first: PointCrawlRoute,
+  second: PointCrawlRoute,
+): number {
+  return [
+    textOverlap(first.terrain, second.terrain),
+    textOverlap(first.risk, second.risk),
+    textOverlap(first.signpost, second.signpost),
+  ].filter((score) => score >= 0.6).length;
+}
+
+function bestDistinctTradeOff(
+  prior: PointCrawlRoute[],
+  vocab: ReturnType<typeof getScaleVocabulary>,
+): Pick<PointCrawlRoute, "terrain" | "risk" | "signpost"> | undefined {
+  let best:
+    | { terrain: string; risk: string; signpost: string; score: number }
+    | undefined;
+  for (const terrain of vocab.terrains) {
+    for (const risk of vocab.risks) {
+      for (const signpost of vocab.signposts) {
+        const candidate = { terrain, risk, signpost };
+        const score = Math.max(
+          ...prior.map((sibling) =>
+            routeTradeOffOverlapCount({ ...sibling, ...candidate }, sibling),
+          ),
+        );
+        if (!best || score < best.score)
+          best = { terrain, risk, signpost, score };
+      }
+    }
+  }
+  return best;
+}
+
+function buildSiblingRouteAdjacency(
+  routes: PointCrawlRoute[],
+): Map<string, Set<string>> {
+  const neighbours = new Map<string, Set<string>>();
+  const nodeIds = new Set(
+    routes.flatMap((route) => [route.fromNodeId, route.toNodeId]),
+  );
+  for (const nodeId of nodeIds) {
+    const siblings = routesIncidentTo(nodeId, routes);
+    for (const route of siblings) {
+      const adjacent = neighbours.get(route.id) ?? new Set<string>();
+      for (const sibling of siblings) {
+        if (route.id !== sibling.id) adjacent.add(sibling.id);
+      }
+      neighbours.set(route.id, adjacent);
+    }
+  }
+  return neighbours;
+}
+
+function overlapsPriorTradeOffs(
+  route: PointCrawlRoute,
+  prior: PointCrawlRoute[],
+): boolean {
+  return prior.some(
+    (sibling) => routeTradeOffOverlapCount(route, sibling) >= 2,
+  );
+}
+
 function differentiateSiblingRoutes(
   routeList: PointCrawlRoute[],
   vocab: ReturnType<typeof getScaleVocabulary>,
 ): void {
-  const routesByOrigin = new Map<string, PointCrawlRoute[]>();
+  const neighbours = buildSiblingRouteAdjacency(routeList);
+  const assigned = new Map<string, PointCrawlRoute>();
   for (const route of routeList) {
-    const list = routesByOrigin.get(route.fromNodeId) ?? [];
-    list.push(route);
-    routesByOrigin.set(route.fromNodeId, list);
-  }
-  let altCounter = 0;
-  for (const siblings of routesByOrigin.values()) {
-    if (siblings.length <= 1) continue;
-    let attempts = 0;
-    while (attempts < 50) {
-      attempts++;
-      const { overlapFound, routeToUpdate, altIndex } =
-        findSiblingRouteOverlap(siblings);
-      if (!overlapFound || !routeToUpdate) break;
-      altCounter++;
-      routeToUpdate.terrain =
-        vocab.terrains[(altIndex + altCounter + 2) % vocab.terrains.length];
-      routeToUpdate.travelTime =
-        vocab.travelTimes[
-          (altIndex + altCounter + 1) % vocab.travelTimes.length
-        ];
-      routeToUpdate.risk =
-        vocab.risks[(altIndex + altCounter + 3) % vocab.risks.length];
-      routeToUpdate.signpost =
-        vocab.signposts[(altIndex + altCounter + 4) % vocab.signposts.length];
+    const prior = [...(neighbours.get(route.id) ?? [])]
+      .map((id) => assigned.get(id))
+      .filter((sibling): sibling is PointCrawlRoute => Boolean(sibling));
+    if (overlapsPriorTradeOffs(route, prior)) {
+      const best = bestDistinctTradeOff(prior, vocab);
+      if (best) {
+        route.terrain = best.terrain;
+        route.risk = best.risk;
+        route.signpost = best.signpost;
+      }
     }
+    assigned.set(route.id, route);
   }
 }
 

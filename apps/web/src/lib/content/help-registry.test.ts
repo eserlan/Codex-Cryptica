@@ -49,7 +49,7 @@ describe("help registry against the real in-app help articles", () => {
       "does not currently import ToV character JSON",
     );
     expect(tovArticle?.content).toContain(
-      "update the counter manually after the rest",
+      "BFRD Luck rules do not prescribe a Long Rest reset",
     );
     expect(tovArticle?.content).not.toContain("RPG System Profile");
     expect(tovArticle?.content).not.toContain(
@@ -141,5 +141,77 @@ describe("retrieval over the real help articles", () => {
         graphScreen,
       ).screenFeatures.map((f) => f.id),
     ).toEqual(["graph-view", "entity-reports", "guided-mode", "guided-setup"]);
+  });
+});
+
+describe("Hex Crawl mode help article (T085, FR-044)", () => {
+  const hexArticle = articles.find((a) => a.id === "hex-crawl-mode");
+
+  /** FR-044 topics, each with the wording the article must contain. */
+  const REQUIRED_TOPICS: Record<string, RegExp> = {
+    "turning Hex Crawl mode on": /Turning on Hex Crawl mode/,
+    "the hex panel": /The hex panel/,
+    "the three states": /Unknown[\s\S]*Seen[\s\S]*Explored/,
+    "attaching and creating entities": /Attach entity[\s\S]*Create entity here/,
+    Explore: /\*\*Explore\*\*/,
+    "what is sent to the AI service":
+      /sends this hex's terrain, notes and nearby lore to the AI service/,
+    "the offline fallback": /terrain tables/,
+    "players never see hex notes":
+      /Players and guests never see hex notes, terrain, drafts or explored markers\./,
+  };
+
+  function missingTopics(content: string): string[] {
+    return Object.entries(REQUIRED_TOPICS)
+      .filter(([, pattern]) => !pattern.test(content))
+      .map(([topic]) => topic);
+  }
+
+  it("is registered as an article with a title and body", () => {
+    expect(hexArticle).toBeDefined();
+    expect(hexArticle?.title).toBe("Hex Crawl Mode");
+    expect(hexArticle?.content).toContain("Hex Crawl mode");
+  });
+
+  it("covers every required topic", () => {
+    expect(missingTopics(hexArticle?.content ?? "")).toEqual([]);
+  });
+
+  it("reports every topic as missing when the content is empty (negative case)", () => {
+    expect(missingTopics("")).toHaveLength(Object.keys(REQUIRED_TOPICS).length);
+  });
+
+  it("uses the same AI disclosure wording as the other AI help articles", () => {
+    const generate = articles.find((a) => a.id === "generate-related");
+    const generators = articles.find((a) => a.id === "in-app-generators");
+    expect(generate?.content).toMatch(/sent to the AI service/);
+    expect(generators?.content).toMatch(/full vault is never sent/i);
+    expect(hexArticle?.content).toMatch(/your full vault is never sent/i);
+    expect(hexArticle?.content).toMatch(/AI Disabled/);
+  });
+
+  it("is linked from the hexcrawl-maps article", () => {
+    const hexcrawl = articles.find((a) => a.id === "hexcrawl-maps");
+    expect(hexcrawl?.content).toContain("/help#help/hex-crawl-mode");
+  });
+
+  it("is found by a search for 'hex crawl'", () => {
+    const bundle = buildBundle({
+      features: FEATURE_REGISTRY,
+      articles,
+      commit: "test",
+      builtAt: "test",
+      channel: "production",
+    });
+    const context = sanitizeHelpContext({
+      routeTemplate: "/(app)",
+      area: "graph",
+      mode: "view",
+    });
+    const result = retrieve("hex crawl", bundle, context);
+    expect(result.noMatch).toBe(false);
+    expect(result.chunks.map((c) => c.chunk.sourceId)).toContain(
+      "hex-crawl-mode",
+    );
   });
 });

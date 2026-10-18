@@ -2,9 +2,11 @@
   import { afterNavigate } from "$app/navigation";
   import type { GuidanceAction } from "help-engine";
   import { helpHighlight } from "$lib/services/help-assistant/help-highlight.svelte";
+  import { shouldStepAside } from "$lib/services/help-assistant/cif-step-aside";
   import { isHelpAssistantAvailable } from "$lib/services/help-assistant/help-availability";
   import { helpStore } from "$lib/stores/help.svelte";
   import {
+    cifFlight,
     cifPopout,
     helpActionRunner,
     helpAssistant,
@@ -44,6 +46,12 @@
 
   afterNavigate(() => helpHighlight.clear());
 
+  // Closing the chat mid-flight sends a homeward Cif to the Cif button instead,
+  // or ends the flight when there is none.
+  $effect(() => {
+    if (!helpAssistant.isOpen) cifFlight.homeLost();
+  });
+
   // Keep an open pop-out window in step with the conversation.
   $effect(() => {
     if (!available) return;
@@ -67,8 +75,28 @@
   async function accept(action: GuidanceAction) {
     helpAssistant.dismissOffer();
     const ran = await helpActionRunner.run(action);
-    // Step out of the way so the control being pointed at is visible.
-    if (ran) helpAssistant.close();
+    if (!ran) return;
+    // Stay open so the user can keep asking while Cif points, unless the
+    // panel would be in the way of what the guide just showed.
+    const panel = document
+      .querySelector('[data-testid="help-assistant-panel"]')
+      ?.getBoundingClientRect();
+    const stepAside = shouldStepAside({
+      isMobile: layoutUIStore.isMobile,
+      action,
+      highlight: helpHighlight.current?.rect ?? null,
+      panel: panel ?? null,
+    });
+    if (stepAside) {
+      helpAssistant.close();
+      return;
+    }
+    // The "Show me" button is gone with the offer. Leave focus in the chat,
+    // on the question box, unless something else already holds it.
+    const active = document.activeElement;
+    if (!active || active === document.body || !active.isConnected) {
+      document.getElementById("help-assistant-input")?.focus();
+    }
   }
 </script>
 
@@ -80,6 +108,7 @@
     onOpenLibrary={() => helpStore.openHelpWindow()}
     onClose={close}
     onPopOut={canPopOut ? popOut : undefined}
+    avatarAway={cifFlight.away}
   />
-  <HelpHighlightLayer highlight={helpHighlight} />
+  <HelpHighlightLayer highlight={helpHighlight} flight={cifFlight} />
 {/if}

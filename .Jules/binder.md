@@ -320,3 +320,14 @@
 **Learning:** When tests for simple preference utilities rely on `@vitest-environment jsdom` and global `localStorage` mocks, they become brittle and slow. In components like `zen-sidebar-preference`, direct `localStorage` usage hid the storage dependency.
 
 **Action:** Inject `StorageLike` (defaulting to `browserStorage`) into preference read/write functions. This allows tests to pass an isolated in-memory `Map`-backed fake, removing the need for jsdom and global prototype mocking.
+
+## 2026-10-16 - Inject StorageLike into Svelte components
+
+**Learning:** Svelte components testing global localStorage can be hard to mock robustly across environments.
+
+**Action:** Inject a custom `StorageLike` map-backed mock into the component during tests instead of spying on or clearing the global `window.localStorage`.
+
+## 2026-10-17 - Injecting Clock into ProposerStore
+
+**Learning:** Hardcoded systemClock usage inside ProposerStore hinders testability by making the current time global and untestable. Injecting a Clock dependency lazily at construction resolves this while keeping the production default.
+**Action:** When creating or refactoring stores that rely on timestamps, inject a `clock: Clock = systemClock` dependency into the constructor.

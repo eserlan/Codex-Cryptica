@@ -38,7 +38,7 @@
     },
     "apps/web": {
       "name": "web",
-      "version": "0.35.18",
+      "version": "0.35.21",
       "dependencies": {
         "@capacitor/app": "^8.1.1",
         "@capacitor/core": "^8.5.0",
@@ -101,6 +101,7 @@
         "generator-engine": "workspace:*",
         "graph-engine": "workspace:*",
         "help-engine": "workspace:*",
+        "hex-crawl-engine": "workspace:*",
         "html-to-image": "^1.11.13",
         "idb": "^8.0.3",
         "js-yaml": "^5.2.1",
@@ -422,6 +423,21 @@
       "version": "0.0.0",
       "dependencies": {
         "js-yaml": "^5.2.1",
+        "zod": "^4.4.3",
+      },
+      "devDependencies": {
+        "@vitest/coverage-v8": "^5.0.0",
+        "typescript": "^6.0.3",
+        "vitest": "^5.0.0",
+      },
+    },
+    "packages/hex-crawl-engine": {
+      "name": "hex-crawl-engine",
+      "version": "0.0.0",
+      "dependencies": {
+        "dice-engine": "workspace:*",
+        "map-engine": "workspace:*",
+        "random-source-engine": "workspace:*",
         "zod": "^4.4.3",
       },
       "devDependencies": {
@@ -1848,6 +1864,8 @@
     "hashery": ["hashery@1.5.1", "", { "dependencies": { "hookified": "^1.15.0" } }, "sha512-iZyKG96/JwPz1N55vj2Ie2vXbhu440zfUfJvSwEqEbeLluk7NnapfGqa7LH0mOsnDxTF85Mx8/dyR6HfqcbmbQ=="],
 
     "help-engine": ["help-engine@workspace:packages/help-engine"],
+
+    "hex-crawl-engine": ["hex-crawl-engine@workspace:packages/hex-crawl-engine"],
 
     "hookified": ["hookified@1.15.1", "", {}, "sha512-MvG/clsADq1GPM2KGo2nyfaWVyn9naPiXrqIe4jYjXNZQt238kWyOGrsyc/DmRAQ+Re6yeo6yX/yoNCG5KAEVg=="],
 

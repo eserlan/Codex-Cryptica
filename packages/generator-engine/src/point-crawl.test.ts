@@ -14,15 +14,18 @@ import {
   isVaguePointCrawlFact,
   normalizePointCrawlTopology,
   parsePointCrawlResponse,
+  parsePointCrawlNetwork,
   pointCrawlConfig,
   reachableNodesBfs,
   regeneratePointCrawlPart,
   regeneratePointCrawlPartLocal,
   renderPointCrawlGmSheet,
   renderPointCrawlMarkdown,
+  renderPointCrawlRouteSummary,
   repairPointCrawlPlayability,
   resolvePointCrawl,
   simulateKeyLockReachability,
+  pointCrawlRouteBudget,
   type OneShotProgressStep,
   type PointCrawlNetwork,
 } from "./index";
@@ -49,6 +52,16 @@ describe("Point Crawl Topology & Playability (T004, T010)", () => {
         });
 
         expect(crawl.nodes).toHaveLength(count);
+        expect(crawl.routes).toHaveLength(
+          pointCrawlRouteBudget(count, density),
+        );
+        expect(
+          crawl.nodes.find((node) => node.id === crawl.startNodeId)
+            ?.structuralRole,
+        ).toBe("start");
+        expect(
+          crawl.nodes.filter((node) => node.structuralRole === "goal"),
+        ).toHaveLength(crawl.goalNodeIds.length);
         expect(crawl.routes.length).toBeGreaterThanOrEqual(count); // >= 1 loop
         expect(
           crawl.routes.some(
@@ -68,6 +81,76 @@ describe("Point Crawl Topology & Playability (T004, T010)", () => {
         expect(issues).toEqual([]);
       }
     }
+  });
+
+  it("prunes only safe excess routes and reports when protected edges exceed the budget", () => {
+    const base = buildPointCrawlTopology({
+      pointCount: 6,
+      density: "Highly interconnected",
+    });
+    const usedPairs = new Set(
+      base.routes.map((route) =>
+        [route.fromNodeId, route.toNodeId].sort().join("--"),
+      ),
+    );
+    const pair = base.nodes
+      .flatMap((from, index) =>
+        base.nodes.slice(index + 1).map((to) => [from, to] as const),
+      )
+      .find(
+        ([from, to]) => !usedPairs.has([from.id, to.id].sort().join("--")),
+      )!;
+    const extra = {
+      ...base.routes[0],
+      id: "excess-route",
+      fromNodeId: pair[0].id,
+      toNodeId: pair[1].id,
+      gate: undefined,
+      visibility: "obvious" as const,
+      isLoopOrShortcut: false,
+    };
+    const repaired = normalizePointCrawlTopology({
+      ...base,
+      routes: [...base.routes, extra],
+    });
+    expect(repaired.routes).toHaveLength(base.routes.length);
+    expect(
+      checkPointCrawlPlayability(repaired).some(
+        (issue) => issue.code === "density-exceeded",
+      ),
+    ).toBe(false);
+
+    const protectedNetwork = {
+      ...base,
+      routes: [
+        ...base.routes.map((route) => ({ ...route, isLoopOrShortcut: true })),
+        { ...extra, visibility: "hidden" as const, isLoopOrShortcut: true },
+      ],
+    };
+    const unrepaired = normalizePointCrawlTopology(protectedNetwork);
+    expect(
+      checkPointCrawlPlayability(unrepaired).some(
+        (issue) => issue.code === "density-exceeded",
+      ),
+    ).toBe(true);
+
+    const planProtected = normalizePointCrawlTopology({
+      ...base,
+      routes: [
+        ...base.routes.map((route) => ({ ...route, isLoopOrShortcut: true })),
+        extra,
+      ],
+      adventurePlan: {
+        ...base.adventurePlan!,
+        outcomes: base.adventurePlan!.outcomes.map((outcome) => ({
+          ...outcome,
+          requirementRouteIds: [extra.id],
+        })),
+      },
+    });
+    expect(planProtected.routes.some((route) => route.id === extra.id)).toBe(
+      true,
+    );
   });
 
   it("matches travel time and terrain vocabulary to each scale (Dungeon, Settlement, City, Wilderness, Region, Planet / System)", () => {
@@ -159,6 +242,89 @@ describe("Point Crawl Topology & Playability (T004, T010)", () => {
     expect(node1?.y).toBe(210);
   });
 
+  it("does not label a bypassable obstacle as a chokepoint", () => {
+    const crawl = buildPointCrawlTopology({
+      pointCount: 6,
+      density: "Highly interconnected",
+    });
+    const obstacle = crawl.nodes.find((node) => node.role === "obstacle");
+    if (obstacle) expect(obstacle.structuralRole).not.toBe("chokepoint");
+  });
+
+  it("detects and repairs structural labels that no longer match the graph", () => {
+    const crawl = buildPointCrawlTopology({ pointCount: 6 });
+    const target = crawl.nodes.find(
+      (node) =>
+        node.structuralRole !== "start" && node.structuralRole !== "goal",
+    )!;
+    const stale = {
+      ...crawl,
+      nodes: crawl.nodes.map((node) =>
+        node.id === target.id
+          ? { ...node, structuralRole: "chokepoint" as const }
+          : node,
+      ),
+    };
+    expect(
+      checkPointCrawlPlayability(stale).some(
+        (issue) =>
+          issue.code === "structural-role-mismatch" &&
+          issue.nodeId === target.id,
+      ),
+    ).toBe(true);
+    expect(
+      repairPointCrawlPlayability(stale).nodes.find(
+        (node) => node.id === target.id,
+      )?.structuralRole,
+    ).toBe(target.structuralRole);
+  });
+
+  it("preserves named plan discoveries through normalization and repair", () => {
+    const crawl = buildPointCrawlTopology({ pointCount: 6 });
+    const gate = crawl.routes.find((route) => route.gate)!;
+    const discoveryId = `discovery-${gate.id}`;
+    const named = {
+      ...crawl,
+      adventurePlan: {
+        ...crawl.adventurePlan!,
+        discoveries: crawl.adventurePlan!.discoveries.map((discovery) =>
+          discovery.id === discoveryId
+            ? { ...discovery, name: "The Warden's True Name" }
+            : discovery,
+        ),
+      },
+    };
+    expect(
+      repairPointCrawlPlayability(named).adventurePlan?.discoveries.find(
+        (entry) => entry.id === discoveryId,
+      )?.name,
+    ).toBe("The Warden's True Name");
+  });
+
+  it("rejects and repairs a deadline that cannot fit the route timeline", () => {
+    const crawl = generatePointCrawlNetworkLocal({ pointCount: 6 });
+    const impossible = {
+      ...crawl,
+      adventurePlan: {
+        ...crawl.adventurePlan!,
+        clock: {
+          label: "The gates align",
+          startsAt: "crawl-start" as const,
+          budget: { value: 1, unit: "minute" as const },
+          expiry: "The final gate seals.",
+        },
+      },
+    };
+    expect(
+      checkPointCrawlPlayability(impossible).some(
+        (issue) => issue.code === "invalid-adventure-plan",
+      ),
+    ).toBe(true);
+    expect(
+      repairPointCrawlPlayability(impossible).adventurePlan?.clock,
+    ).toBeUndefined();
+  });
+
   it("renders markdown and GM sheets that deterministically reflect structured nodes and routes", () => {
     const crawl = generatePointCrawlNetworkLocal({
       genre: "Cosmic Horror",
@@ -170,19 +336,26 @@ describe("Point Crawl Topology & Playability (T004, T010)", () => {
 
     for (const node of crawl.nodes) {
       expect(md).toContain(node.name);
-      expect(gm).toContain(node.name);
     }
+    expect(gm).toContain("Locks, Gates & Where Keys Are Found");
     const gated = crawl.routes.find((r) => Boolean(r.gate));
     expect(gated).toBeDefined();
     expect(formatRouteConnectionLabel(gated!)).toContain(
       `Locked: ${gated!.gate!.requirement}`,
     );
+    const routeSection = md.split("## Route Network & Trade-Offs")[1] ?? "";
+    const nodesById = new Map(crawl.nodes.map((node) => [node.id, node]));
+    for (const route of crawl.routes) {
+      const summary = renderPointCrawlRouteSummary(route, nodesById);
+      expect(routeSection.split(summary)).toHaveLength(2);
+    }
   });
 });
 
 describe("Staged AI Point Crawl Generation & Fallbacks (T020)", () => {
   it("runs all 3 stages with live progress callbacks and repairs AI output", async () => {
     const progressHistory: OneShotProgressStep[][] = [];
+    const detailPrompts: string[] = [];
     const crawl = await generatePointCrawlStaged(
       {
         genre: "Sci-Fi / Space Opera",
@@ -206,6 +379,7 @@ describe("Staged AI Point Crawl Generation & Fallbacks (T020)", () => {
             ],
           });
         }
+        detailPrompts.push(prompt);
         return JSON.stringify({
           nodes: [
             {
@@ -239,6 +413,17 @@ describe("Staged AI Point Crawl Generation & Fallbacks (T020)", () => {
       finalSteps.every((s) => s.status === "done" || s.status === "fallback"),
     ).toBe(true);
     expect(checkPointCrawlPlayability(crawl)).toEqual([]);
+    expect(detailPrompts.length).toBeGreaterThan(1);
+    const plans = detailPrompts.map(
+      (prompt) =>
+        prompt.match(
+          /Shared adventure plan \(use as immutable context; do not invent new mandatory dependencies\):\n([\s\S]*?)\nLocations to detail:/,
+        )?.[1],
+    );
+    expect(new Set(plans).size).toBe(1);
+    expect(
+      crawl.routes.find((route) => route.id === "route-1")?.travelTime,
+    ).not.toBe("6 hrs");
   });
 
   it("handles partial batch failure via fillFailedPointCrawlParts without losing completed batches", async () => {
@@ -362,6 +547,7 @@ describe("Surgical Single-Node & Single-Route Regeneration (T020)", () => {
     )!;
     expect(updatedAiNode.name).toBe("The Clockwork Foundry");
     expect(updatedAiNode.unlocksRouteIds).toEqual(originalUnlocks);
+    expect(aiResult.crawl.adventurePlan).toEqual(crawl.adventurePlan);
     expect(checkPointCrawlPlayability(aiResult.crawl)).toEqual([]);
   });
 
@@ -392,6 +578,11 @@ describe("Surgical Single-Node & Single-Route Regeneration (T020)", () => {
     const updated = result.crawl.routes.find((r) => r.id === targetRoute.id)!;
     expect(updated.fromNodeId).toBe(targetRoute.fromNodeId);
     expect(updated.toNodeId).toBe(targetRoute.toNodeId);
+    expect(updated.direction).toBe(targetRoute.direction);
+    expect(updated.visibility).toBe(targetRoute.visibility);
+    expect(updated.gate).toEqual(targetRoute.gate);
+    expect(updated.travelTime).toBe(targetRoute.travelTime);
+    expect(updated.duration).toEqual(targetRoute.duration);
     expect(updated.terrain).toBe("Shattered ice-moon ring");
     expect(updated.risk).toContain("Red Jackal");
   });
@@ -476,5 +667,106 @@ describe("Multi-Entity Vault Save Draft Builder (T024)", () => {
     expect(
       reachableNodesBfs(normalized.startNodeId, normalized.routes).size,
     ).toBe(6);
+  });
+
+  it("keeps the public one-shot parser bound to its mechanical skeleton", () => {
+    const resolved = resolvePointCrawl({
+      pointCount: 6,
+      density: "Balanced branching",
+      scale: "Wilderness",
+    });
+    const rng = () => 0.37;
+    const base = generatePointCrawlNetworkLocal(resolved, rng);
+    const changed = parsePointCrawlNetwork(
+      JSON.stringify({
+        nodes: base.nodes.map((node) => ({
+          ...node,
+          layer: 99,
+          rail: 99,
+          unlocksRouteIds: ["invented-route"],
+        })),
+        routes: base.routes.map((route) => ({
+          ...route,
+          fromNodeId: route.toNodeId,
+          toNodeId: route.fromNodeId,
+          direction: "one-way",
+          visibility: "obvious",
+          travelTime: "99 days",
+          gate: {
+            kind: "seal",
+            unlockedByNodeId: "node-99",
+            requirement: "invented key",
+          },
+          isLoopOrShortcut: false,
+          terrain: "rewritten terrain",
+        })),
+      }),
+      resolved,
+      rng,
+    );
+
+    expect(
+      changed.nodes.map(({ id, layer, rail, unlocksRouteIds }) => ({
+        id,
+        layer,
+        rail,
+        unlocksRouteIds,
+      })),
+    ).toEqual(
+      base.nodes.map(({ id, layer, rail, unlocksRouteIds }) => ({
+        id,
+        layer,
+        rail,
+        unlocksRouteIds,
+      })),
+    );
+    expect(
+      changed.routes.map(
+        ({
+          id,
+          fromNodeId,
+          toNodeId,
+          direction,
+          visibility,
+          travelTime,
+          gate,
+          isLoopOrShortcut,
+        }) => ({
+          id,
+          fromNodeId,
+          toNodeId,
+          direction,
+          visibility,
+          travelTime,
+          gate,
+          isLoopOrShortcut,
+        }),
+      ),
+    ).toEqual(
+      base.routes.map(
+        ({
+          id,
+          fromNodeId,
+          toNodeId,
+          direction,
+          visibility,
+          travelTime,
+          gate,
+          isLoopOrShortcut,
+        }) => ({
+          id,
+          fromNodeId,
+          toNodeId,
+          direction,
+          visibility,
+          travelTime,
+          gate,
+          isLoopOrShortcut,
+        }),
+      ),
+    );
+    expect(
+      changed.routes.every((route) => route.terrain === "rewritten terrain"),
+    ).toBe(true);
   });
 });

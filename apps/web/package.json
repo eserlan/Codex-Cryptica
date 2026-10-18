@@ -1,7 +1,7 @@
 {
   "name": "web",
   "private": true,
-  "version": "0.35.19",
+  "version": "0.35.22",
   "type": "module",
   "scripts": {
     "dev": "vite dev",
@@ -101,6 +101,7 @@
     "schema": "workspace:*",
     "session-journal-engine": "workspace:*",
     "entity-mention-engine": "workspace:*",
+    "hex-crawl-engine": "workspace:*",
     "solo-session-engine": "workspace:*",
     "svelte-tiptap": "^3.0.1",
     "tiptap-markdown": "^0.9.0",

@@ -7,6 +7,8 @@
   import { vault } from "../../stores/vault.svelte";
   import type { MapInteractionManager } from "./map-interactions.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import HexThisHexButton from "$lib/components/map/hex-crawl/HexThisHexButton.svelte";
   import { computeAdjustedCounterValue } from "$lib/utils/stat-sheet-field-actions";
   import type { MapPin } from "schema";
 
@@ -91,6 +93,24 @@
     }}
     onClose={() => (interactions.selectedPinId = null)}
   />
+  <div
+    class="absolute z-40 -translate-x-1/2 pointer-events-auto"
+    style:left={`${pos.x}px`}
+    style:top={`${pos.y + 40}px`}
+  >
+    <HexThisHexButton
+      point={selectedPin.coordinates}
+      mapId={mapStore.activeMapId ?? null}
+      grid={{
+        gridType: mapStore.gridType,
+        gridSize: mapStore.gridSize,
+        gridOffsetX: mapStore.gridOffsetX,
+        gridOffsetY: mapStore.gridOffsetY,
+      }}
+      isGM={mapStore.isGMMode}
+      isGuest={sessionModeStore.isGuestMode}
+    />
+  </div>
 {/if}
 
 {#if healthBarToken && healthBarEntity && healthBarField}

@@ -33,6 +33,7 @@ describe("IndexNow Route Mapping (#3164)", () => {
       "apps/web/src/lib/content/examples/pages/the-breakwater-vault-space-western-heist.ts",
       "apps/web/src/lib/content/topics/heists.ts",
       "apps/web/src/lib/content/topics/pirates.ts",
+      "apps/web/src/lib/content/topics/solo-rpg.ts",
       "apps/web/src/lib/content/topics/dnd.ts",
     ]);
 
@@ -41,6 +42,7 @@ describe("IndexNow Route Mapping (#3164)", () => {
     );
     expect(result.candidateRoutes).toContain("/topics/heists");
     expect(result.candidateRoutes).toContain("/topics/pirates");
+    expect(result.candidateRoutes).toContain("/topics/solo-rpg");
     expect(result.candidateRoutes).toContain("/topics/dnd");
     expect(result.catalogueChanged).toBe(true);
   });

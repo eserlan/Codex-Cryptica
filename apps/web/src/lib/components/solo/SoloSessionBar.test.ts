@@ -75,8 +75,20 @@ import SoloSessionBar from "./SoloSessionBar.svelte";
 
 const MIN_KEY = "codex-solo-bar-minimised";
 
+const createMockStorage = () => {
+  const store = new Map<string, string>();
+  return {
+    getItem: (k: string) => store.get(k) || null,
+    setItem: (k: string, v: string) => store.set(k, v),
+    removeItem: (k: string) => store.delete(k),
+    clear: () => store.clear(),
+  } as any;
+};
+
+let mockStorage = createMockStorage();
+
 beforeEach(() => {
-  localStorage.clear();
+  mockStorage = createMockStorage();
   env.store.isActive = true;
   env.store.journalRunning = false;
   env.store.session = { mapId: "m1", sceneName: "", lastRoll: null };
@@ -97,18 +109,18 @@ beforeEach(() => {
 describe("SoloSessionBar visibility", () => {
   it("is not rendered when no solo session is active", () => {
     env.store.isActive = false;
-    render(SoloSessionBar);
+    render(SoloSessionBar, { props: { storage: mockStorage } });
     expect(screen.queryByTestId("solo-bar")).toBeNull();
   });
 
   it("is not rendered in guest mode", () => {
     env.mode.isGuestMode = true;
-    render(SoloSessionBar);
+    render(SoloSessionBar, { props: { storage: mockStorage } });
     expect(screen.queryByTestId("solo-bar")).toBeNull();
   });
 
   it("is a labelled region showing the map name when a session is active", () => {
-    render(SoloSessionBar);
+    render(SoloSessionBar, { props: { storage: mockStorage } });
     const bar = screen.getByTestId("solo-bar");
     expect(bar.getAttribute("role")).toBe("region");
     expect(bar.getAttribute("aria-label")).toBe("Solo session");
@@ -118,13 +130,13 @@ describe("SoloSessionBar visibility", () => {
 
 describe("SoloSessionBar actions", () => {
   it("More dice opens the full dice window", async () => {
-    render(SoloSessionBar);
+    render(SoloSessionBar, { props: { storage: mockStorage } });
     await fireEvent.click(screen.getByTestId("solo-more-dice"));
     expect(env.modal.showDiceModal).toBe(true);
   });
 
   it("Ask Oracle opens the Oracle when AI is on", async () => {
-    render(SoloSessionBar);
+    render(SoloSessionBar, { props: { storage: mockStorage } });
     await fireEvent.click(screen.getByTestId("solo-oracle-menu"));
     await fireEvent.click(screen.getByTestId("solo-oracle-open"));
     expect(env.layout.activeSidebarTool).toBe("oracle");
@@ -132,13 +144,13 @@ describe("SoloSessionBar actions", () => {
 
   it("hides Ask Oracle when AI is disabled", () => {
     env.discovery.aiDisabled = true;
-    render(SoloSessionBar);
+    render(SoloSessionBar, { props: { storage: mockStorage } });
     expect(screen.queryByTestId("solo-oracle-menu")).toBeNull();
   });
 
   it("Journal opens the running journal, resuming it first when needed", async () => {
     env.journal.controlState = "resume";
-    render(SoloSessionBar);
+    render(SoloSessionBar, { props: { storage: mockStorage } });
     await fireEvent.click(screen.getByTestId("solo-journal"));
     expect(env.journal.open).toHaveBeenCalledTimes(1);
     expect(env.quickNote.openJournal).toHaveBeenCalledTimes(1);
@@ -146,21 +158,21 @@ describe("SoloSessionBar actions", () => {
 
   it("Journal does not resume an already open journal", async () => {
     env.journal.controlState = "open";
-    render(SoloSessionBar);
+    render(SoloSessionBar, { props: { storage: mockStorage } });
     await fireEvent.click(screen.getByTestId("solo-journal"));
     expect(env.journal.open).not.toHaveBeenCalled();
     expect(env.quickNote.openJournal).toHaveBeenCalledTimes(1);
   });
 
   it("Map returns to the session's map", async () => {
-    render(SoloSessionBar);
+    render(SoloSessionBar, { props: { storage: mockStorage } });
     await fireEvent.click(screen.getByTestId("solo-map"));
     expect(env.store.resume).toHaveBeenCalledTimes(1);
   });
 
   it("Map offers Choose map when there is no map, and picks one", async () => {
     env.store.session = { mapId: null, sceneName: "", lastRoll: null };
-    render(SoloSessionBar);
+    render(SoloSessionBar, { props: { storage: mockStorage } });
     const choose = screen.getByTestId("solo-map");
     expect(choose.textContent).toMatch(/Choose map/);
     await fireEvent.click(choose);
@@ -172,18 +184,18 @@ describe("SoloSessionBar actions", () => {
 
   it("Choose map also applies when the session's map was deleted", () => {
     env.store.session = { mapId: "gone", sceneName: "", lastRoll: null };
-    render(SoloSessionBar);
+    render(SoloSessionBar, { props: { storage: mockStorage } });
     expect(screen.getByTestId("solo-map").textContent).toMatch(/Choose map/);
   });
 
   it("Add note opens a quick note", async () => {
-    render(SoloSessionBar);
+    render(SoloSessionBar, { props: { storage: mockStorage } });
     await fireEvent.click(screen.getByTestId("solo-add-note"));
     expect(env.quickNote.open).toHaveBeenCalledTimes(1);
   });
 
   it("gives every control an accessible name", () => {
-    render(SoloSessionBar);
+    render(SoloSessionBar, { props: { storage: mockStorage } });
     const buttons = screen.getAllByRole("button");
     expect(buttons.length).toBeGreaterThan(0);
     for (const button of buttons) {
@@ -199,44 +211,41 @@ describe("SoloSessionBar actions", () => {
 
 describe("SoloSessionBar minimise", () => {
   it("collapses to one control and stores the preference on this device", async () => {
-    render(SoloSessionBar);
+    render(SoloSessionBar, { props: { storage: mockStorage } });
     await fireEvent.click(screen.getByTestId("solo-bar-minimise"));
     expect(screen.queryByTestId("solo-quick-roll-input")).toBeNull();
     expect(screen.getByTestId("solo-bar-expand")).toBeTruthy();
-    expect(localStorage.getItem(MIN_KEY)).toBe("1");
+    expect(mockStorage.getItem(MIN_KEY)).toBe("1");
   });
 
   it("expands again", async () => {
-    localStorage.setItem(MIN_KEY, "1");
-    render(SoloSessionBar);
+    mockStorage.setItem(MIN_KEY, "1");
+    render(SoloSessionBar, { props: { storage: mockStorage } });
     await fireEvent.click(screen.getByTestId("solo-bar-expand"));
     expect(screen.getByTestId("solo-quick-roll-input")).toBeTruthy();
-    expect(localStorage.getItem(MIN_KEY)).toBeNull();
+    expect(mockStorage.getItem(MIN_KEY)).toBeNull();
   });
 
   it("keeps the minimised state after a remount", () => {
-    localStorage.setItem(MIN_KEY, "1");
-    render(SoloSessionBar);
+    mockStorage.setItem(MIN_KEY, "1");
+    render(SoloSessionBar, { props: { storage: mockStorage } });
     expect(screen.getByTestId("solo-bar-expand")).toBeTruthy();
     expect(screen.queryByTestId("solo-quick-roll-input")).toBeNull();
   });
 
   it("treats an unreadable preference as expanded", () => {
-    const spy = vi
-      .spyOn(Storage.prototype, "getItem")
-      .mockImplementation(() => {
-        throw new Error("denied");
-      });
-    render(SoloSessionBar);
+    mockStorage.getItem = () => {
+      throw new Error("denied");
+    };
+    render(SoloSessionBar, { props: { storage: mockStorage } });
     expect(screen.getByTestId("solo-quick-roll-input")).toBeTruthy();
-    spy.mockRestore();
   });
 });
 
 describe("SoloSessionBar on phones", () => {
   it("shows one trigger rather than the bar, and the sheet holds the same actions", async () => {
     env.layout.isMobile = true;
-    render(SoloSessionBar);
+    render(SoloSessionBar, { props: { storage: mockStorage } });
     expect(screen.queryByTestId("solo-quick-roll-input")).toBeNull();
     await fireEvent.click(screen.getByTestId("solo-bar-mobile-trigger"));
     const sheet = screen.getByTestId("solo-sheet");
@@ -247,7 +256,7 @@ describe("SoloSessionBar on phones", () => {
 
   it("closes the sheet with Escape", async () => {
     env.layout.isMobile = true;
-    render(SoloSessionBar);
+    render(SoloSessionBar, { props: { storage: mockStorage } });
     await fireEvent.click(screen.getByTestId("solo-bar-mobile-trigger"));
     await waitFor(() =>
       expect(document.activeElement).toBe(screen.getByTestId("solo-sheet")),
@@ -259,7 +268,7 @@ describe("SoloSessionBar on phones", () => {
   it("keeps the sheet open when Escape closes its modal dialog", async () => {
     env.store.journalRunning = true;
     env.layout.isMobile = true;
-    render(SoloSessionBar);
+    render(SoloSessionBar, { props: { storage: mockStorage } });
     await fireEvent.click(screen.getByTestId("solo-bar-mobile-trigger"));
     await fireEvent.click(screen.getByTestId("solo-end"));
 

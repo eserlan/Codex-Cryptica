@@ -53,6 +53,7 @@ This file is the Codex-facing instruction layer for this repository.
   - Type-check: Scoped to the affected workspace (e.g. `bunx svelte-check --tsconfig ./tsconfig.json --threshold error` inside `apps/web`) or affected workspaces via `bun scripts/affected-workspaces.mjs`.
 - **Run Repo Scripts with Bun**: ALWAYS execute repository scripts using `bun`, NEVER `node` (e.g., `bun scripts/lint-changed.mjs`, `bun scripts/test-changed.mjs`).
 - **Image Asset Storage (R2 / Cloudflare Only)**: NEVER commit generated or uploaded image assets (such as OpenGraph cards, screenshots, blog illustrations, or demo portraits) to the local git repository. All marketing, social share, and content image assets belong exclusively in Cloudflare R2 (`codex-cryptica-statics` bucket served via `https://assets.codexcryptica.com/`). Any local image files created temporarily during generation must be deleted immediately after uploading to R2.
+- **Blog Posts**: Blog posts ship through the `blog` branch, never `staging`. Branch from `origin/blog`, add only the post under `apps/web/src/lib/content/blog/`, and open the PR with base `blog`; merging deploys production from `main`. Use the [`add-blog-post`](./.agent/skills/add-blog-post/SKILL.md) skill and [docs/BLOG_DEPLOYMENT.md](./docs/BLOG_DEPLOYMENT.md).
 - **Discovery Intent Governance** (Constitution XIII): Before adding or materially repositioning any public, indexable discovery page — `/for`, `/answers`, `/examples`, `/solutions`, `/vs`, `/import`, generator or tool landing pages, evergreen reference blog posts — consult the discovery intent registry at `apps/web/src/lib/content/discovery/`:
   1. Check whether the intent already has an owner (`findIntentOwner`, or read the audit output).
   2. If it does, extend that page or record the new phrasing as an **alias**. Do not create a second URL for a synonym or word-order variant.
@@ -75,11 +76,14 @@ This file is the Codex-facing instruction layer for this repository.
 <!-- SPECKIT START -->
 
 For additional context about technologies to be used, project structure,
-shell commands, and other important information, read the [current plan](./specs/176-cif-contextual-tips/plan.md).
+shell commands, and other important information, read the [current plan](./specs/178-hex-crawl-mode/plan.md).
 
 <!-- SPECKIT END -->
 
 ## Active Technologies
+
+- TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + Existing `map-engine` (hex maths; + `parseHexLabel`), `random-source-engine` (offline rolling), `session-journal-engine` (+ `formatHexExplored`), `schema` (`MapSchema` + optional `grid`, `hexCrawl`), `vault-engine` `GuestExporter` (strips `hexCrawl`), `@codex/ai-engine` (`aiClientManager`), `generator-engine` `formatCampaignContextBlock`, the exported `extractJsonObject`, `@codex/events` (`JOURNAL:CAPTURE`), Floating UI, `zod`, Tailwind 4 semantic tokens, Iconify classes. New internal package `packages/hex-crawl-engine`. No new third-party dependency. (178-hex-crawl-mode)
+- Optional additive fields on the existing map records in `.codex/maps.json`: `grid` and `hexCrawl`. They are synced, backed up, exported and restored with maps. One new device-local display preference, `showTerrainIcons`, joins the existing per-map display settings. One device-local "AI notice dismissed" hint key. No IndexedDB, OPFS layout or migration change. (178-hex-crawl-mode)
 
 - TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + Existing `onboarding-journey-engine` (extended), `help-engine` (`QUICK_PROMPT_SETS`, `FEATURE_REGISTRY`, `HelpArea`), `JourneyStore` (read-only outcome), `OnboardingStore` (`chosenGoal`, `goalInvitation`), `helpAssistant` and `cifPopout` (open and ask), `isHelpAssistantAvailable`, `helpStore` (tour), `modalUIStore` (dialogs), Floating UI (already a dependency), Tailwind 4 semantic tokens, Iconify classes. No new third-party dependency. (176-cif-contextual-tips)
 - `localStorage` through the injected `StorageLike`: `codex-cif-tips` (preference, opt-in answer, tip history; device-wide). `sessionStorage`: `codex-cif-tips-session` (a tip was shown this session). No IndexedDB, OPFS or vault schema change, so no migration. (176-cif-contextual-tips)

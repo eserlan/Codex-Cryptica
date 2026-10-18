@@ -53,3 +53,7 @@ Use the measurement ruler (the ruler switch at the bottom left of the map) on a 
 
 - Dragging between two locations calculates the discrete hex distance using axial cube mathematics.
 - The measurement label displays both the total hex count and converted travel distance (for example, `4 hexes (24 mi)`).
+
+### Hex Crawl mode
+
+For hex crawls with terrain, notes, explored hexes and what lies in each hex, turn on Hex Crawl mode in Grid Settings. See [Hex Crawl Mode](/help#help/hex-crawl-mode) for the hex panel, Explore and the privacy rules. Players and guests never see hex notes, terrain, drafts or explored markers.

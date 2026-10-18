@@ -190,6 +190,7 @@ export const howDoYouGenerateUsefulRpgRumours: AnswerConfigInput = {
     "how-do-i-create-interesting-islands-and-ports-for-a-pirate-campaign",
     "how-do-i-run-a-pirate-campaign-focused-on-exploration",
     "how-do-i-plan-story-arcs-for-an-rpg-campaign",
+    "what-is-a-solo-rpg-oracle",
   ],
   labels: ["fantasy", "rumour"],
   discovery: {

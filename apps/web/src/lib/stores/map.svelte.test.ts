@@ -29,6 +29,7 @@ vi.mock("./vault.svelte", () => ({
 }));
 
 import { MapStore } from "./map.svelte";
+type Map = import("schema").Map;
 
 describe("MapStore settings persistence", () => {
   beforeEach(() => {
@@ -113,6 +114,7 @@ describe("MapStore settings persistence", () => {
         showGrid: true,
         gridType: "square",
         showHexCoordinates: false,
+        showTerrainIcons: false,
         hexLabelConfig: { style: "none" },
         brushRadius: 88,
         gridSize: 120,
@@ -191,6 +193,39 @@ describe("MapStore settings persistence", () => {
     expect(store2.showHexCoordinates).toBe(true);
     expect(store2.hexLabelConfig.style).toBe("alphanumeric");
     expect(store2.formatHex({ q: 1, r: 0 })).toBe("B01");
+  });
+
+  it("hides terrain icons by default and persists the device-local toggle", async () => {
+    const store = new MapStore();
+    store.selectMap("map-terrain-icons");
+    expect(store.showTerrainIcons).toBe(false);
+
+    store.showTerrainIcons = true;
+    await waitFor(() => {
+      const raw = window.localStorage.getItem(
+        "codex-map-settings:map-terrain-icons",
+      );
+      expect(JSON.parse(raw!).showTerrainIcons).toBe(true);
+    });
+
+    const restored = new MapStore();
+    restored.selectMap("map-terrain-icons");
+    expect(restored.showTerrainIcons).toBe(true);
+
+    restored.selectMap("map-terrain-other");
+    expect(restored.showTerrainIcons).toBe(false);
+  });
+
+  it("treats a non-boolean saved terrain icon flag as off", () => {
+    window.localStorage.setItem(
+      "codex-map-settings:map-terrain-bad",
+      JSON.stringify({ showTerrainIcons: "yes" }),
+    );
+
+    const store = new MapStore();
+    store.selectMap("map-terrain-bad");
+
+    expect(store.showTerrainIcons).toBe(false);
   });
 
   it("falls back to the legacy numeric style for invalid saved label configs", () => {
@@ -584,5 +619,98 @@ describe("MapStore.createBlankMap", () => {
     );
     expect(pin).toBeDefined();
     expect(pin.hexCoordinates).toEqual({ q: 0, r: 0 });
+  });
+});
+
+describe("MapStore grid geometry travels with the map (T011, FR-037/038/040)", () => {
+  const mapsOf = () => vaultMock.maps as Record<string, Map>;
+  const setMaps = (maps: Record<string, Map>) => {
+    vaultMock.maps = maps as typeof vaultMock.maps;
+  };
+
+  beforeEach(() => {
+    window.localStorage.clear();
+    vaultMock.activeVaultId = "vault-a";
+    setMaps({});
+    vaultMock.saveMaps = vi.fn(async () => true);
+    sessionModeStore.sharedMode = false;
+    sessionModeStore.isGuestMode = false;
+    guestVault.publishId = null;
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("adopts this device's grid into a legacy map once, and saves it", async () => {
+    setMaps({ "map-a": makeMap("map-a") });
+    // This device remembers a hex grid for the map from before this feature.
+    const first = new MapStore();
+    first.selectMap("map-a");
+    first.gridType = "hex-pointy";
+    first.gridSize = 64;
+    await waitFor(() => expect(window.localStorage.length).toBeGreaterThan(0));
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    setMaps({ "map-a": makeMap("map-a") });
+    vaultMock.saveMaps.mockClear();
+
+    const second = new MapStore();
+    second.selectMap("map-a");
+
+    expect(mapsOf()["map-a"].grid).toMatchObject({
+      type: "hex-pointy",
+      size: 64,
+    });
+    expect(vaultMock.saveMaps).toHaveBeenCalledTimes(1);
+    expect(second.gridType).toBe("hex-pointy");
+  });
+
+  it("leaves a map with no grid and no device settings without geometry", () => {
+    setMaps({ "map-a": makeMap("map-a") });
+    const store = new MapStore();
+    store.selectMap("map-a");
+
+    expect(mapsOf()["map-a"].grid).toBeUndefined();
+  });
+
+  it("writes later grid changes through to the map", async () => {
+    setMaps({
+      "map-a": {
+        ...makeMap("map-a"),
+        grid: { type: "square", size: 50, offsetX: 0, offsetY: 0 },
+      },
+    });
+    const store = new MapStore();
+    store.selectMap("map-a");
+
+    store.gridSize = 80;
+
+    await waitFor(() => {
+      expect(mapsOf()["map-a"].grid?.size).toBe(80);
+    });
+  });
+
+  it("keeps display preferences in localStorage, not on the map", async () => {
+    const before = {
+      type: "square" as const,
+      size: 50,
+      offsetX: 0,
+      offsetY: 0,
+    };
+    setMaps({
+      "map-a": {
+        ...makeMap("map-a"),
+        grid: { ...before, type: "square" as const },
+      },
+    });
+    const store = new MapStore();
+    store.selectMap("map-a");
+
+    store.showGrid = true;
+    store.gridColor = "#ff0000";
+    await new Promise((resolve) => setTimeout(resolve, 300));
+
+    expect(mapsOf()["map-a"].grid).toEqual(before);
+    expect(JSON.stringify(mapsOf()["map-a"])).not.toContain("#ff0000");
   });
 });

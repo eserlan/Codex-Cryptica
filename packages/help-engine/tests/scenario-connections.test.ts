@@ -193,6 +193,11 @@ const bundle = buildBundle({
       "entity-shelf",
       "## entity-shelf\nAbout entity-shelf.",
     ),
+    article(
+      "finding-your-way-around",
+      "finding-your-way-around",
+      "## finding-your-way-around\nAbout finding-your-way-around.",
+    ),
     article("importing", "importing", "## importing\nAbout importing."),
     article(
       "thread-weaver-import",

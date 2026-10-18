@@ -87,10 +87,17 @@
   aria-modal="false"
   aria-labelledby="goal-invitation-heading"
   data-testid="goal-invitation"
-  class="fixed inset-x-0 bottom-0 z-[85] sm:inset-x-auto sm:bottom-6 sm:left-1/2 sm:w-[26rem] sm:-translate-x-1/2"
+  class="fixed inset-0 z-[85] flex items-end justify-center pointer-events-none sm:items-center sm:p-4"
 >
+  <!-- Subtle desktop-only backdrop to separate the choice card from graph nodes behind it -->
   <div
-    class="rounded-t-2xl border border-theme-primary/40 bg-theme-surface/95 p-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] shadow-2xl backdrop-blur-md sm:rounded-2xl sm:pb-4"
+    class="hidden sm:block absolute inset-0 bg-theme-bg/40 backdrop-blur-xs transition-opacity pointer-events-auto"
+    onclick={close}
+    aria-hidden="true"
+  ></div>
+
+  <div
+    class="pointer-events-auto relative w-full sm:w-[28rem] rounded-t-2xl sm:rounded-2xl border border-theme-primary/40 bg-theme-surface/98 p-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] shadow-2xl backdrop-blur-md sm:p-5 sm:pb-5"
   >
     <div class="flex items-start justify-between gap-3">
       <h2

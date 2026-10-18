@@ -13,24 +13,15 @@ import { repairPointCrawlPlayability } from "./point-crawl-playability";
 import {
   POINT_CRAWL_DANGER_LEVELS,
   POINT_CRAWL_DENSITIES,
-  POINT_CRAWL_GATE_KINDS,
-  POINT_CRAWL_NODE_ROLES,
-  POINT_CRAWL_ROUTE_DIRECTIONS,
-  POINT_CRAWL_ROUTE_VISIBILITIES,
   POINT_CRAWL_SCALES,
   POINT_CRAWL_SECRET_FREQUENCIES,
   renderPointCrawlGmSheet,
   renderPointCrawlMarkdown,
   type PointCrawlDangerLevel,
   type PointCrawlDensity,
-  type PointCrawlGate,
-  type PointCrawlGateKind,
   type PointCrawlNetwork,
   type PointCrawlNode,
-  type PointCrawlNodeRole,
   type PointCrawlRoute,
-  type PointCrawlRouteDirection,
-  type PointCrawlRouteVisibility,
   type PointCrawlScale,
   type PointCrawlSecretFrequency,
 } from "./point-crawl-state";
@@ -182,7 +173,7 @@ Topological Skeleton (keep these node IDs, layers, roles, and route endpoints so
 
 Rules:
 1. Every node needs a concrete "name", 1-sentence "summary", "sensoryDescription", "whyVisit", "encounterOrHazard", and "clueOrReward".
-2. Every route needs scale-matched (${resolved.scale}) "travelTime" and "terrain", plus distinct "risk" and "signpost" trade-offs.
+2. Route duration, endpoints, direction, visibility, and gates are mechanical and MUST remain exactly as supplied. Enrich terrain, risk, signpost, and directional approach prose only.
 3. For any route with a "gate", state the concrete key, passphrase, tool, or clearance in "gate.requirement" AND explicitly mention that item/clue in the "clueOrReward" of the node at "gate.unlockedByNodeId". Never use vague placeholders like "the secret key".
 
 Return ONLY a JSON object with this exact shape:
@@ -211,7 +202,6 @@ Return ONLY a JSON object with this exact shape:
       "toNodeId": "node-2",
       "direction": "bidirectional",
       "visibility": "obvious",
-      "travelTime": "...",
       "terrain": "...",
       "risk": "...",
       "signpost": "...",
@@ -226,43 +216,6 @@ Return ONLY a JSON object with this exact shape:
     userMessage,
     resolved,
   };
-}
-
-function asRole(v: unknown, fallback: PointCrawlNodeRole): PointCrawlNodeRole {
-  return typeof v === "string" &&
-    (POINT_CRAWL_NODE_ROLES as readonly string[]).includes(v)
-    ? (v as PointCrawlNodeRole)
-    : fallback;
-}
-
-function asDirection(
-  v: unknown,
-  fallback: PointCrawlRouteDirection,
-): PointCrawlRouteDirection {
-  return typeof v === "string" &&
-    (POINT_CRAWL_ROUTE_DIRECTIONS as readonly string[]).includes(v)
-    ? (v as PointCrawlRouteDirection)
-    : fallback;
-}
-
-function asVisibility(
-  v: unknown,
-  fallback: PointCrawlRouteVisibility,
-): PointCrawlRouteVisibility {
-  return typeof v === "string" &&
-    (POINT_CRAWL_ROUTE_VISIBILITIES as readonly string[]).includes(v)
-    ? (v as PointCrawlRouteVisibility)
-    : fallback;
-}
-
-function asGateKind(
-  v: unknown,
-  fallback: PointCrawlGateKind,
-): PointCrawlGateKind {
-  return typeof v === "string" &&
-    (POINT_CRAWL_GATE_KINDS as readonly string[]).includes(v)
-    ? (v as PointCrawlGateKind)
-    : fallback;
 }
 
 export function parsePointCrawlNetwork(
@@ -299,15 +252,12 @@ export function parsePointCrawlNetwork(
     return {
       id: fallbackNode.id,
       name: str(raw.name, fallbackNode.name),
-      role: asRole(raw.role, fallbackNode.role),
-      layer:
-        typeof raw.layer === "number" && Number.isFinite(raw.layer)
-          ? raw.layer
-          : fallbackNode.layer,
-      rail:
-        typeof raw.rail === "number" && Number.isFinite(raw.rail)
-          ? raw.rail
-          : fallbackNode.rail,
+      // Node roles are fixed by the mechanical topology; AI only enriches prose.
+      role: fallbackNode.role,
+      structuralRole: fallbackNode.structuralRole,
+      traits: fallbackNode.traits,
+      layer: fallbackNode.layer,
+      rail: fallbackNode.rail,
       summary: str(raw.summary, fallbackNode.summary),
       sensoryDescription: str(
         raw.sensoryDescription,
@@ -319,61 +269,40 @@ export function parsePointCrawlNetwork(
         fallbackNode.encounterOrHazard,
       ),
       clueOrReward: str(raw.clueOrReward, fallbackNode.clueOrReward),
-      unlocksRouteIds: Array.isArray(raw.unlocksRouteIds)
-        ? raw.unlocksRouteIds.map(String)
-        : fallbackNode.unlocksRouteIds,
+      unlocksRouteIds: fallbackNode.unlocksRouteIds,
     };
   });
 
-  const routes: PointCrawlRoute[] =
-    rawRoutes.length >= nodes.length - 1
-      ? rawRoutes
-          .filter(
-            (item): item is Record<string, unknown> =>
-              Boolean(item) && typeof item === "object" && !Array.isArray(item),
-          )
-          // fallow-ignore-next-line complexity
-          .map((raw, idx) => {
-            const fb = base.routes[idx % base.routes.length];
-            const rawGate =
-              raw.gate &&
-              typeof raw.gate === "object" &&
-              !Array.isArray(raw.gate)
-                ? (raw.gate as Record<string, unknown>)
-                : undefined;
-            const gate: PointCrawlGate | undefined = rawGate
-              ? {
-                  kind: asGateKind(rawGate.kind, fb.gate?.kind ?? "key"),
-                  unlockedByNodeId: str(
-                    rawGate.unlockedByNodeId,
-                    fb.gate?.unlockedByNodeId ?? base.startNodeId,
-                  ),
-                  requirement: str(
-                    rawGate.requirement,
-                    fb.gate?.requirement ?? "Iron Sluice Key",
-                  ),
-                }
-              : fb.gate;
-
-            return {
-              id: str(raw.id, `route-${idx + 1}`),
-              fromNodeId: str(raw.fromNodeId, fb.fromNodeId),
-              toNodeId: str(raw.toNodeId, fb.toNodeId),
-              direction: asDirection(raw.direction, fb.direction),
-              visibility: asVisibility(raw.visibility, fb.visibility),
-              travelTime: str(raw.travelTime, fb.travelTime),
-              terrain: str(raw.terrain, fb.terrain),
-              risk: str(raw.risk, fb.risk),
-              signpost: str(raw.signpost, fb.signpost),
-              ...(gate ? { gate } : {}),
-              ...(typeof raw.isLoopOrShortcut === "boolean"
-                ? { isLoopOrShortcut: raw.isLoopOrShortcut }
-                : fb.isLoopOrShortcut
-                  ? { isLoopOrShortcut: true }
-                  : {}),
-            };
-          })
-      : base.routes;
+  const routes: PointCrawlRoute[] = base.routes.map((fb, idx) => {
+    const raw =
+      rawRoutes.find(
+        (item) =>
+          item &&
+          typeof item === "object" &&
+          !Array.isArray(item) &&
+          (item as Record<string, unknown>).id === fb.id,
+      ) ?? rawRoutes[idx];
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return fb;
+    const details = raw as Record<string, unknown>;
+    return {
+      ...fb,
+      terrain: str(details.terrain, fb.terrain),
+      risk: str(details.risk, fb.risk),
+      signpost: str(details.signpost, fb.signpost),
+      approachFromSource: str(
+        details.approachFromSource,
+        fb.approachFromSource ?? fb.signpost,
+      ),
+      ...(fb.direction === "bidirectional"
+        ? {
+            approachFromTarget: str(
+              details.approachFromTarget,
+              fb.approachFromTarget ?? fb.signpost,
+            ),
+          }
+        : {}),
+    };
+  });
 
   const candidate: PointCrawlNetwork = {
     ...base,

@@ -28,7 +28,7 @@ describe("talesOfTheValiant landing page config", () => {
     ).toBe(true);
   });
 
-  it("describes manual Luck updates and the available templates and generators", () => {
+  it("describes Luck tracking and the available templates and generators", () => {
     const luck = talesOfTheValiant.useCases.find((u) =>
       u.title.includes("Luck"),
     );
@@ -36,8 +36,10 @@ describe("talesOfTheValiant landing page config", () => {
       u.title.includes("Stat Sheets"),
     );
 
-    expect(luck?.description).toContain("updated manually");
-    expect(luck?.description).not.toContain("automatic Long Rest resets");
+    expect(luck?.description).toContain(
+      "Codex does not apply a Long Rest reset",
+    );
+    expect(luck?.description).toContain("BFRD does not prescribe one");
     expect(sheets?.title).toContain("Generators");
     expect(sheets?.title).not.toContain("Import");
   });
@@ -46,6 +48,14 @@ describe("talesOfTheValiant landing page config", () => {
     expect(talesOfTheValiant.exampleGraph?.steps.length).toBeGreaterThanOrEqual(
       4,
     );
+    expect(talesOfTheValiant.exampleGraph?.description).toContain(
+      "Lineage, Heritage, Background and motivation",
+    );
+    const doom = talesOfTheValiant.useCases.find((u) =>
+      u.title.includes("Doom"),
+    );
+    expect(doom?.description).toContain("optional CR-based Doom pool");
+    expect(doom?.description).toContain("creatures in the encounter");
   });
 
   it("links the NPC recommendation to the published NPC generator route", () => {

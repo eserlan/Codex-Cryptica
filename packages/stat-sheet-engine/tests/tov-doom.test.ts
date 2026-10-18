@@ -11,6 +11,17 @@ import {
   TOV_CHARACTER_TEMPLATE_ID,
 } from "../src/rules-sources/tov-templates";
 
+describe("TOV_DOOM_REFERENCE", () => {
+  it("describes Doom as an encounter-level resource and clarifies the sheet counter", () => {
+    expect(TOV_DOOM_REFERENCE.summary).toBe(
+      "The optional BFRD Doom rule gives the GM a CR-based resource at the start of an encounter. The GM can spend it to give a creature advantage on an attack, give a PC disadvantage on a save, or once per encounter refresh, recharge, or gain one additional use of a limited-use feature.",
+    );
+    expect(TOV_DOOM_REFERENCE.note).toBe(
+      "The published rule is encounter-level and can affect creatures in that encounter. Codex Cryptica currently exposes a counter on an individual ToV monster stat sheet as a tracking choice.",
+    );
+  });
+});
+
 describe("isTovDoomField", () => {
   it("matches only counter fields named doom on the ToV Monster template", () => {
     expect(

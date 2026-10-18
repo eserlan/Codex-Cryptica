@@ -5,6 +5,7 @@ import {
   formatHexLabel,
   indexToColumnLetters,
   offsetToAxial,
+  parseHexLabel,
   type HexLabelConfig,
 } from "./hex-labels";
 
@@ -219,6 +220,111 @@ describe("hex-labels", () => {
       expect(
         formatHexLabel({ q: 0, r: 0 }, { style: "invalid" as never }),
       ).toBe("");
+    });
+  });
+
+  describe("parseHexLabel (T019, FR-003a)", () => {
+    const cases: Array<[string, HexLabelConfig, "pointy" | "flat"]> = [
+      ["numeric", { style: "numeric" }, "pointy"],
+      ["numeric", { style: "numeric" }, "flat"],
+      ["alphanumeric", { style: "alphanumeric" }, "pointy"],
+      ["alphanumeric", { style: "alphanumeric" }, "flat"],
+      [
+        "alphanumeric offset",
+        {
+          style: "alphanumeric",
+          startCol: "C",
+          startRow: 4,
+          rowPadding: 1,
+          separator: "-",
+          originQ: 2,
+          originR: 3,
+        },
+        "pointy",
+      ],
+      [
+        "alphanumeric inverted",
+        { style: "alphanumeric", invertRow: true, startRow: 9 },
+        "flat",
+      ],
+      ["axial", { style: "axial" }, "pointy"],
+    ];
+
+    for (const [name, config, orientation] of cases) {
+      it(`round-trips ${name} (${orientation}) for a grid of hexes`, () => {
+        for (let q = -6; q <= 6; q++) {
+          for (let r = -6; r <= 6; r++) {
+            const label = formatHexLabel({ q, r }, config, orientation);
+            expect(label, `${name} ${q},${r}`).not.toBe("");
+            expect(parseHexLabel(label, config, orientation)).toEqual({ q, r });
+          }
+        }
+      });
+    }
+
+    it("ignores case and surrounding spaces for alphanumeric labels", () => {
+      const config: HexLabelConfig = { style: "alphanumeric" };
+      const label = formatHexLabel({ q: 1, r: 2 }, config, "pointy");
+      expect(
+        parseHexLabel(`  ${label.toLowerCase()} `, config, "pointy"),
+      ).toEqual({ q: 1, r: 2 });
+    });
+
+    it("accepts the default numeric format when labels are hidden", () => {
+      expect(parseHexLabel("01.04", { style: "none" }, "pointy")).toEqual({
+        q: 1,
+        r: 4,
+      });
+      expect(parseHexLabel("01.04", undefined, "pointy")).toEqual({
+        q: 1,
+        r: 4,
+      });
+    });
+
+    it("returns null for empty, unknown or incomplete labels", () => {
+      const config: HexLabelConfig = { style: "alphanumeric" };
+      expect(parseHexLabel("", config, "pointy")).toBeNull();
+      expect(parseHexLabel("   ", config, "pointy")).toBeNull();
+      expect(parseHexLabel("A", config, "pointy")).toBeNull();
+      expect(parseHexLabel("12", config, "pointy")).toBeNull();
+      expect(parseHexLabel("01.zz", { style: "numeric" }, "pointy")).toBeNull();
+      expect(parseHexLabel("(1 2)", { style: "axial" }, "pointy")).toBeNull();
+    });
+
+    it("falls back to column A when the start column is not letters", () => {
+      // "B01" with an invalid start column ("A1") must behave like the default "A".
+      const invalid: HexLabelConfig = { style: "alphanumeric", startCol: "A1" };
+      const label = formatHexLabel({ q: 1, r: 0 }, invalid, "pointy");
+      expect(parseHexLabel(label, invalid, "pointy")).toEqual({ q: 1, r: 0 });
+      expect(parseHexLabel(label, { style: "alphanumeric" }, "pointy")).toEqual(
+        {
+          q: 1,
+          r: 0,
+        },
+      );
+    });
+
+    it("uses the configured start row, origin and rows counted from it", () => {
+      const config: HexLabelConfig = {
+        style: "alphanumeric",
+        startRow: 10,
+        originQ: 3,
+        originR: -2,
+      };
+      for (const hex of [
+        { q: 3, r: -2 },
+        { q: 4, r: -1 },
+        { q: 1, r: 0 },
+      ]) {
+        const label = formatHexLabel(hex, config, "flat");
+        expect(parseHexLabel(label, config, "flat")).toEqual(hex);
+      }
+    });
+
+    it("returns null for a label that formats to a different hex", () => {
+      // "A99" is a valid shape but its inverse would not re-format to the same text
+      // under a numeric style, so the round-trip check must reject it.
+      expect(parseHexLabel("A99", { style: "numeric" }, "pointy")).toBeNull();
     });
   });
 });

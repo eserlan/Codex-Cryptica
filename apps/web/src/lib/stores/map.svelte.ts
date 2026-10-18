@@ -1,5 +1,11 @@
 import { vault } from "./vault.svelte";
-import type { Map, MapPin, Point, ViewportTransform } from "schema";
+import type {
+  Map,
+  MapGridGeometry,
+  MapPin,
+  Point,
+  ViewportTransform,
+} from "schema";
 import {
   imageToViewport,
   viewportToImage,
@@ -12,6 +18,13 @@ import {
   type MapLayer,
 } from "map-engine";
 import { convertToWebP } from "../utils/image-processing";
+import {
+  adoptGridGeometry,
+  deviceGridFrom,
+  geometryFromDevice,
+  resolveGridGeometry,
+  writeGridGeometry,
+} from "./map-grid-geometry";
 import { deleteOpfsEntry, writeOpfsFile } from "../utils/opfs";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { guestVault } from "./guest-vault.svelte";
@@ -37,6 +50,8 @@ type PersistedMapSettings = {
   showGrid: boolean;
   gridType: GridType;
   showHexCoordinates: boolean;
+  /** GM display preference: terrain icons on hex crawl hexes (device-local). */
+  showTerrainIcons: boolean;
   hexLabelConfig?: HexLabelConfig;
   brushRadius: number;
   gridSize: number;
@@ -93,6 +108,7 @@ const DEFAULT_MAP_SETTINGS: PersistedMapSettings = {
   showGrid: false,
   gridType: "square",
   showHexCoordinates: false,
+  showTerrainIcons: false,
   hexLabelConfig: { style: "none" },
   brushRadius: 50,
   gridSize: 50,
@@ -111,6 +127,42 @@ const DEFAULT_VIEWPORT: ViewportTransform = {
   pan: { x: 0, y: 0 },
   zoom: 1,
 };
+
+/**
+ * The grid fields to show: the map's stored geometry where it has one, else this
+ * device's persisted settings, else the defaults (FR-037).
+ */
+function gridFieldsFor(
+  geometry: MapGridGeometry | null,
+  next: PersistedMapSettings,
+) {
+  if (!geometry) return deviceGridFields(next);
+  return {
+    gridType: geometry.type,
+    gridSize: geometry.size,
+    gridOffsetX: geometry.offsetX,
+    gridOffsetY: geometry.offsetY,
+    hexLabelConfig: geometry.labels ?? deviceLabels(next),
+  };
+}
+
+function deviceGridFields(next: PersistedMapSettings) {
+  return {
+    gridType: next.gridType,
+    gridSize: next.gridSize,
+    gridOffsetX: next.gridOffsetX ?? 0,
+    gridOffsetY: next.gridOffsetY ?? 0,
+    hexLabelConfig: deviceLabels(next),
+  };
+}
+
+function deviceLabels(next: PersistedMapSettings): HexLabelConfig {
+  return (
+    next.hexLabelConfig ?? {
+      style: next.showHexCoordinates ? "numeric" : "none",
+    }
+  );
+}
 
 export class MapStore {
   activeMapId = $state<string | null>(null);
@@ -140,6 +192,7 @@ export class MapStore {
   showGrid = $state(false);
   gridType = $state<GridType>("square");
   showHexCoordinates = $state(false);
+  showTerrainIcons = $state(false);
   hexLabelConfig = $state<HexLabelConfig>({ style: "none" });
   gridSize = $state(50);
   gridOffsetX = $state(0);
@@ -198,6 +251,7 @@ export class MapStore {
             this.showGrid,
             this.gridType,
             this.showHexCoordinates,
+            this.showTerrainIcons,
             this.hexLabelConfig,
             this.brushRadius,
             this.gridSize,
@@ -300,6 +354,10 @@ export class MapStore {
           typeof parsed.showHexCoordinates === "boolean"
             ? parsed.showHexCoordinates
             : DEFAULT_MAP_SETTINGS.showHexCoordinates,
+        showTerrainIcons:
+          typeof parsed.showTerrainIcons === "boolean"
+            ? parsed.showTerrainIcons
+            : DEFAULT_MAP_SETTINGS.showTerrainIcons,
         hexLabelConfig: isPersistedHexLabelConfig(parsed.hexLabelConfig)
           ? parsed.hexLabelConfig
           : {
@@ -388,6 +446,7 @@ export class MapStore {
       showGrid: this.showGrid,
       gridType: this.gridType,
       showHexCoordinates: this.showHexCoordinates,
+      showTerrainIcons: this.showTerrainIcons,
       hexLabelConfig: this.hexLabelConfig,
       brushRadius: this.brushRadius,
       gridSize: this.gridSize,
@@ -410,6 +469,27 @@ export class MapStore {
     } catch (err) {
       console.warn("[MapStore] Failed to persist map settings", err);
     }
+
+    // Grid geometry is also stored with the map, so it follows the map to other
+    // devices. Display preferences above stay device-local (FR-040).
+    const geometry = geometryFromDevice({
+      gridType: this.gridType,
+      gridSize: this.gridSize,
+      gridOffsetX: this.gridOffsetX,
+      gridOffsetY: this.gridOffsetY,
+      hexLabelConfig: this.hexLabelConfig,
+    });
+    void writeGridGeometry(
+      {
+        maps: vault.maps,
+        saveMaps: async () => {
+          await vault.saveMaps();
+          return true;
+        },
+      },
+      this.activeMapId,
+      geometry,
+    );
   }
 
   private getPageStateStorageKey(vaultId = vault.activeVaultId ?? "default") {
@@ -505,24 +585,35 @@ export class MapStore {
     }
   }
 
+  /**
+   * The grid geometry this map should show. A map with no geometry adopts this
+   * device's, once (FR-038). A stored geometry wins over the device (FR-037).
+   */
+  private geometryForMap(
+    mapId: string | null,
+    persisted: PersistedMapSettings | null,
+  ): MapGridGeometry | null {
+    const map = mapId ? vault.maps?.[mapId] : undefined;
+    if (!map || !mapId) return null;
+    const device = persisted ? deviceGridFrom(persisted) : null;
+    if (adoptGridGeometry(vault.maps, mapId, device)) void vault.saveMaps();
+    return resolveGridGeometry(map, device);
+  }
+
   private applySettings(mapId: string | null) {
     const persisted = mapId ? this.readPersistedSettings(mapId) : null;
     const next = persisted ?? DEFAULT_MAP_SETTINGS;
+    const geometry = this.geometryForMap(mapId, persisted);
 
     this.isRestoringSettings = true;
     try {
       this.showFog = next.showFog;
       this.soloFog = next.soloFog;
       this.showGrid = next.showGrid;
-      this.gridType = next.gridType;
       this.showHexCoordinates = next.showHexCoordinates;
-      this.hexLabelConfig = next.hexLabelConfig ?? {
-        style: next.showHexCoordinates ? "numeric" : "none",
-      };
+      this.showTerrainIcons = next.showTerrainIcons;
       this.brushRadius = next.brushRadius;
-      this.gridSize = next.gridSize;
-      this.gridOffsetX = next.gridOffsetX ?? 0;
-      this.gridOffsetY = next.gridOffsetY ?? 0;
+      Object.assign(this, gridFieldsFor(geometry, next));
       this.gridColor = next.gridColor;
       this.fogColor = next.fogColor ?? null;
       this.showLabels = next.showLabels;
@@ -965,6 +1056,18 @@ export class MapStore {
       map.pins = map.pins.filter((p: MapPin) => p.id !== pinId);
       await vault.saveMaps();
     }
+  }
+
+  /** Removes pins for a just-created entity from any map after a failed save. */
+  async removePinsForEntity(entityId: string) {
+    let changed = false;
+    for (const map of Object.values(vault.maps ?? {})) {
+      const pins = map.pins.filter((pin: MapPin) => pin.entityId !== entityId);
+      if (pins.length === map.pins.length) continue;
+      map.pins = pins;
+      changed = true;
+    }
+    if (changed) await vault.saveMaps();
   }
 
   jumpToPin(pinId: string) {

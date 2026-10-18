@@ -8,6 +8,7 @@
     onStartOver,
     onPopOut,
     onClose,
+    avatarAway = false,
   }: {
     mood: CifMood;
     canStartOver: boolean;
@@ -15,6 +16,8 @@
     /** Shown only where a pop-out window is possible. */
     onPopOut?: () => void;
     onClose: () => void;
+    /** Cif has flown off to point at something; his spot stays empty. */
+    avatarAway?: boolean;
   } = $props();
 </script>
 
@@ -22,7 +25,14 @@
   class="flex items-center justify-between gap-2 border-b border-chrome-border px-3 py-2"
 >
   <div class="flex items-center gap-2">
-    <CifSprite {mood} class="-my-2 h-12 w-11" />
+    <!-- His home: the flying pointer leaves from and returns to this spot. -->
+    <span
+      data-cif-avatar
+      class="-my-2 inline-flex h-12 w-11 shrink-0"
+      class:invisible={avatarAway}
+    >
+      <CifSprite {mood} class="h-12 w-11" />
+    </span>
     <div class="flex items-baseline gap-2">
       <h2 class="text-sm font-bold text-chrome-text">Cif</h2>
       <span class="text-meta uppercase tracking-wider text-chrome-muted"

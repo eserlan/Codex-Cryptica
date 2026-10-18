@@ -92,6 +92,11 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/topics/solo-rpg</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/topics/dnd</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
@@ -198,6 +203,11 @@
   </url>
   <url>
     <loc>https://codexcryptica.com/vs/kanka-alternative</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/vs/chronica</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -462,6 +472,11 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/for/tales-of-the-valiant</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/for/pathfinder-2e</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
@@ -718,6 +733,11 @@
   </url>
   <url>
     <loc>https://codexcryptica.com/answers/how-do-i-organise-a-dnd-campaign</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/how-do-i-organise-a-tales-of-the-valiant-campaign</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -987,6 +1007,16 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/answers/how-do-you-keep-a-solo-rpg-from-feeling-random</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/how-do-you-keep-notes-for-a-solo-rpg-campaign</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/answers/how-do-you-keep-track-of-npcs-in-a-long-campaign</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
@@ -1033,6 +1063,11 @@
   </url>
   <url>
     <loc>https://codexcryptica.com/answers/how-do-you-organise-rpg-campaign-notes</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/how-do-you-play-a-tabletop-rpg-by-yourself</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -1212,6 +1247,11 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/answers/should-i-share-worldbuilding-notes-with-my-players</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/answers/what-are-the-best-classless-fantasy-rpgs-with-skill-based-progression</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
@@ -1243,6 +1283,11 @@
   </url>
   <url>
     <loc>https://codexcryptica.com/answers/what-is-a-point-crawl</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/what-is-a-solo-rpg-oracle</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>

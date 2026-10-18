@@ -57,9 +57,28 @@ const created = (category: string) =>
 describe("JourneyCard", () => {
   it("shows the journey, its position and the instruction", () => {
     const { store } = setup();
-    render(JourneyCard, { store });
+    const { container } = render(JourneyCard, { store });
     expect(screen.getByRole("heading", { name: "Build a world" })).toBeTruthy();
     expect(screen.getByText(/Step 1 of 4/)).toBeTruthy();
+    const badge = screen.getByText("Cif · Guide");
+    expect(badge?.className).toContain("text-theme-text");
+    expect(badge?.className).toContain("bg-theme-primary/15");
+    expect(badge?.querySelector(".icon-\\[lucide--sparkles\\]")).toBeTruthy();
+    const dots = container.querySelector(
+      '[aria-hidden="true"].flex.items-center',
+    );
+    expect(dots?.children).toHaveLength(4);
+    expect(dots?.firstElementChild?.className).toContain("bg-theme-primary");
+    expect(
+      screen
+        .getByTestId("journey-collapse")
+        .querySelector(".icon-\\[lucide--minus\\]"),
+    ).toBeTruthy();
+    expect(
+      screen
+        .getByTestId("journey-show-me")
+        .querySelector(".icon-\\[lucide--sparkles\\]"),
+    ).toBeTruthy();
     expect(screen.getByTestId("journey-step-instruction").textContent).toMatch(
       /Add a place/,
     );
@@ -90,6 +109,11 @@ describe("JourneyCard", () => {
     expect(screen.queryByTestId("journey-ask-cif")).toBeNull();
     apply(created("location"));
     apply(created("character"));
+    expect(
+      screen
+        .getByTestId("journey-ask-cif")
+        .querySelector(".icon-\\[lucide--message-square\\]"),
+    ).toBeTruthy();
     await fireEvent.click(screen.getByTestId("journey-ask-cif"));
     expect(deps.askCif).toHaveBeenCalledWith("Where do I add a connection?");
 
@@ -109,7 +133,11 @@ describe("JourneyCard", () => {
     await fireEvent.click(screen.getByTestId("journey-back"));
     expect(screen.getByText(/Step 1 of 4/)).toBeTruthy();
     expect(screen.queryByTestId("journey-skip")).toBeNull();
-    await fireEvent.click(screen.getByTestId("journey-return-current"));
+    const returnToCurrent = screen.getByTestId("journey-return-current");
+    expect(
+      returnToCurrent.querySelector(".icon-\\[lucide--arrow-right\\]"),
+    ).toBeTruthy();
+    await fireEvent.click(returnToCurrent);
     expect(screen.getByText(/Step 2 of 4/)).toBeTruthy();
     await fireEvent.click(screen.getByTestId("journey-skip"));
     expect(screen.getByText(/Step 3 of 4/)).toBeTruthy();
@@ -118,7 +146,11 @@ describe("JourneyCard", () => {
   it("Exit stops guidance", async () => {
     const { store } = setup();
     const { container } = render(JourneyCard, { store });
-    await fireEvent.click(screen.getByTestId("journey-exit"));
+    const exitButton = screen.getByTestId("journey-exit");
+    expect(exitButton.className).toContain("hover:text-theme-danger");
+    expect(exitButton.className).toContain("hover:bg-theme-danger/10");
+    expect(exitButton.className).not.toContain("theme-error");
+    await fireEvent.click(exitButton);
     expect(store.active).toBe(false);
     expect(store.progress?.outcome).toBe("exited");
     expect(container.querySelector('[data-testid="journey-card"]')).toBeNull();
@@ -189,6 +221,20 @@ describe("JourneyCard", () => {
       viewportHeight: () => 800,
     });
     expect(screen.getByTestId("journey-card").dataset.placement).toBe("bottom");
+  });
+
+  it("keeps the journey card inset on mobile and anchored to the desktop right edge", () => {
+    const { store } = setup();
+    render(JourneyCard, { store });
+    const card = screen.getByTestId("journey-card");
+    expect(card.className).toContain("inset-x-2");
+    expect(card.className).toContain("sm:inset-x-auto");
+    expect(card.className).toContain("sm:right-6");
+    expect(card.className).toContain("sm:w-[22rem]");
+    expect(card.className).toContain(
+      "bottom-[calc(4.5rem+env(safe-area-inset-bottom,0px))]",
+    );
+    expect(card.className).toContain("md:bottom-14");
   });
 
   it("uses 44px targets and no backdrop", () => {

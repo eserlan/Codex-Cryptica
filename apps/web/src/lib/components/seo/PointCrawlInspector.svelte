@@ -1,0 +1,167 @@
+<script lang="ts">
+  import {
+    formatRouteConnectionLabel,
+    pointCrawlNodeRoleLabel,
+    type PointCrawlNode,
+    type PointCrawlRegenTarget,
+    type PointCrawlRoute,
+  } from "generator-engine";
+  import PointCrawlInspectorActions from "./PointCrawlInspectorActions.svelte";
+
+  let {
+    node,
+    route,
+    nodes,
+    included = false,
+    canUseAI = false,
+    busyId = null,
+    onToggleSave,
+    onRegeneratePart,
+  }: {
+    node?: PointCrawlNode;
+    route?: PointCrawlRoute;
+    nodes: PointCrawlNode[];
+    included?: boolean;
+    canUseAI?: boolean;
+    busyId?: string | null;
+    onToggleSave?: (nodeId: string) => void;
+    onRegeneratePart?: (
+      target: PointCrawlRegenTarget,
+      instruction?: string,
+    ) => void;
+  } = $props();
+
+  function nodeNameById(id: string): string {
+    return nodes.find((entry) => entry.id === id)?.name ?? id;
+  }
+</script>
+
+<!-- fallow-ignore-next-line complexity -- one inspector switches between the two mutually exclusive selection types. -->
+{#if node}
+  <section
+    class="mt-3 rounded-xl border border-theme-border/60 bg-theme-bg/60 p-3.5 text-xs"
+    data-testid="point-crawl-node-inspector"
+    aria-label={`Location details: ${node.name}`}
+  >
+    <div class="flex flex-wrap items-start justify-between gap-2">
+      <div>
+        <div class="flex items-center gap-2">
+          <span
+            class="rounded bg-theme-primary/15 px-1.5 py-0.5 font-mono text-nano font-bold uppercase text-theme-primary"
+            >{pointCrawlNodeRoleLabel(node)}{#if node.traits?.length}
+              · {node.traits.join(", ")}{/if}</span
+          >
+          <h4 class="font-header text-sm font-bold text-theme-text">
+            {node.name}
+          </h4>
+        </div>
+        <p class="mt-1 text-theme-text/85">{node.summary}</p>
+      </div>
+      <div class="flex flex-wrap items-center gap-2">
+        {#if onToggleSave}
+          <label
+            class="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-theme-border/60 bg-theme-surface/50 px-2.5 py-1 text-nano font-bold uppercase tracking-wider text-theme-text"
+          >
+            <input
+              type="checkbox"
+              checked={included}
+              onchange={() => onToggleSave?.(node.id)}
+              class="accent-theme-primary"
+              data-testid="point-crawl-toggle-save-{node.id}"
+            />
+            Include in Vault Save
+          </label>
+        {/if}
+        {#if onRegeneratePart}
+          <PointCrawlInspectorActions
+            target={{ kind: "node", id: node.id }}
+            {canUseAI}
+            busy={busyId === node.id}
+            disabled={busyId !== null}
+            label="Regenerate Node"
+            {onRegeneratePart}
+          />
+        {/if}
+      </div>
+    </div>
+    <dl class="mt-2.5 grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+      <div>
+        <dt class="font-bold text-theme-muted">Sensory:</dt>
+        <dd class="text-theme-text/90">{node.sensoryDescription}</dd>
+      </div>
+      <div>
+        <dt class="font-bold text-theme-muted">Why Visit:</dt>
+        <dd class="text-theme-text/90">{node.whyVisit}</dd>
+      </div>
+      <div>
+        <dt class="font-bold text-theme-muted">Encounter / Hazard:</dt>
+        <dd class="text-theme-text/90">{node.encounterOrHazard}</dd>
+      </div>
+      {#if node.clueOrReward}<div>
+          <dt class="font-bold text-theme-muted">Clue / Reward / Leverage:</dt>
+          <dd class="text-theme-text/90">{node.clueOrReward}</dd>
+        </div>{/if}
+    </dl>
+  </section>
+{:else if route}
+  <section
+    class="mt-3 rounded-xl border border-theme-border/60 bg-theme-bg/60 p-3.5 text-xs"
+    data-testid="point-crawl-route-inspector"
+    aria-label="Route details"
+  >
+    <div class="flex flex-wrap items-start justify-between gap-2">
+      <div>
+        <div class="flex items-center gap-2">
+          <span
+            class="rounded bg-theme-primary/15 px-1.5 py-0.5 font-mono text-nano font-bold uppercase text-theme-primary"
+            >{route.visibility} · {route.direction}</span
+          >
+          <h4 class="font-header text-sm font-bold text-theme-text">
+            {nodeNameById(route.fromNodeId)} → {nodeNameById(route.toNodeId)}
+          </h4>
+        </div>
+        <p class="mt-1 font-mono text-nano text-theme-muted">
+          {formatRouteConnectionLabel(route)}
+        </p>
+      </div>
+      {#if onRegeneratePart}
+        <PointCrawlInspectorActions
+          target={{ kind: "route", id: route.id }}
+          {canUseAI}
+          busy={busyId === route.id}
+          disabled={busyId !== null}
+          label="Regenerate Route"
+          {onRegeneratePart}
+        />
+      {/if}
+    </div>
+    <dl class="mt-2.5 grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+      <div>
+        <dt class="font-bold text-theme-muted">Signpost at Origin:</dt>
+        <dd class="text-theme-text/90">
+          {route.approachFromSource ?? route.signpost}
+        </dd>
+      </div>
+      {#if route.direction === "bidirectional"}<div>
+          <dt class="font-bold text-theme-muted">
+            Approach from {nodeNameById(route.toNodeId)}:
+          </dt>
+          <dd class="text-theme-text/90">
+            {route.approachFromTarget ?? route.signpost}
+          </dd>
+        </div>{/if}
+      <div>
+        <dt class="font-bold text-theme-muted">Risk / Toll:</dt>
+        <dd class="text-theme-text/90">{route.risk}</dd>
+      </div>
+      {#if route.gate}<div class="sm:col-span-2">
+          <dt class="font-bold text-theme-accent">Gate ({route.gate.kind}):</dt>
+          <dd class="text-theme-text/90">
+            Requires <strong>{route.gate.requirement}</strong> (found at {nodeNameById(
+              route.gate.unlockedByNodeId,
+            )})
+          </dd>
+        </div>{/if}
+    </dl>
+  </section>
+{/if}

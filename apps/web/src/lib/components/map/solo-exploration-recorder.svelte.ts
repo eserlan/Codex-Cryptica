@@ -3,6 +3,7 @@ import type { Point } from "schema";
 import {
   hexToPoint,
   hexTravel,
+  getTokenCenter,
   newlyRevealedHexes,
   visionRangeInHexes,
 } from "map-engine";
@@ -187,6 +188,32 @@ export class SoloExplorationRecorder {
     this.clearPendingReveal();
   }
 
+  /** Complete one explicitly owned journey move from immutable token snapshots. */
+  async completeJourneyMove(before: Token, after: Token): Promise<void> {
+    const state = this.deps.getState();
+    this.syncMapAndTravelUnit(state);
+    if (!state.canReveal || !state.mapId) return;
+    await this.onVisionChanged([after]);
+    const travel = this.measureTokenTravel(
+      getTokenCenter(before),
+      getTokenCenter(after),
+      state,
+    );
+    if (travel.distance <= 0) return;
+    this.recordCompletedMove(
+      {
+        travel: {
+          hexes: state.hex ? travel.hexes : null,
+          distance: travel.distance,
+          unit: state.gridUnit,
+        },
+        destination: travel.destination,
+      },
+      state,
+    );
+    this.clearPendingReveal();
+  }
+
   reset(): void {
     const unit = this.deps.getState().gridUnit;
     this.lastMove = null;
@@ -198,7 +225,7 @@ export class SoloExplorationRecorder {
   private collectMovedSources(sources: Token[]): Token[] {
     const moved: Token[] = [];
     for (const token of sources) {
-      const point = { x: token.x, y: token.y };
+      const point = getTokenCenter(token);
       const previous = this.lastPointByToken.get(token.id);
       if (previous && (previous.x !== point.x || previous.y !== point.y)) {
         moved.push(token);
@@ -224,13 +251,14 @@ export class SoloExplorationRecorder {
   ): boolean {
     const movedOrAdded = sources.some((token) => {
       const previous = this.lastVisionPositions.get(token.id);
-      return !previous || previous.x !== token.x || previous.y !== token.y;
+      const center = getTokenCenter(token);
+      return !previous || previous.x !== center.x || previous.y !== center.y;
     });
     const enteredSolo = state.soloOn && this.lastSoloOn !== true;
     const assetsBecameReady = state.assetsReady && !this.lastAssetsReady;
 
     this.lastVisionPositions = new Map(
-      sources.map((token) => [token.id, { x: token.x, y: token.y }]),
+      sources.map((token) => [token.id, getTokenCenter(token)]),
     );
     this.lastSoloOn = state.soloOn;
     this.lastAssetsReady = state.assetsReady;
@@ -239,7 +267,7 @@ export class SoloExplorationRecorder {
 
   private rememberCurrentPositions(tokens: Token[]): void {
     for (const token of tokens) {
-      this.lastPointByToken.set(token.id, { x: token.x, y: token.y });
+      this.lastPointByToken.set(token.id, getTokenCenter(token));
       this.startPointByToken.delete(token.id);
     }
   }
@@ -362,7 +390,7 @@ export class SoloExplorationRecorder {
     token: Token,
     state: SoloExplorationState,
   ): TokenTravel | null {
-    const point = { x: token.x, y: token.y };
+    const point = getTokenCenter(token);
     const from =
       this.startPointByToken.get(token.id) ??
       this.lastPointByToken.get(token.id);

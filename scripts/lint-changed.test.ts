@@ -4,6 +4,7 @@ import {
   filterFormattableFiles,
   filterLintableFiles,
   isIgnoredPath,
+  touchesDiscoveryContent,
 } from "./lint-changed.mjs";
 
 describe("lint-changed", () => {
@@ -18,6 +19,27 @@ describe("lint-changed", () => {
         "apps/web/src/lib/content/blog/front-page.md",
       ]),
     ).toEqual([page]);
+  });
+
+  test("detects changes to discovery content that need mesh and intent checks", () => {
+    expect(
+      touchesDiscoveryContent([
+        "apps/web/src/lib/content/help/tales-of-the-valiant.md",
+      ]),
+    ).toBe(true);
+    expect(
+      touchesDiscoveryContent(["apps/web/src/lib/content/for/packs/index.ts"]),
+    ).toBe(true);
+  });
+
+  test("ignores changes outside discovery content", () => {
+    expect(
+      touchesDiscoveryContent([
+        "apps/web/src/lib/content/blog/front-page.md",
+        "apps/web/src/routes/+page.svelte",
+      ]),
+    ).toBe(false);
+    expect(touchesDiscoveryContent([])).toBe(false);
   });
 
   test("identifies ignored directory paths", () => {

@@ -81,6 +81,21 @@ export function filterAnswerPageFiles(files, root = process.cwd()) {
   });
 }
 
+const CONTENT_PREFIXES = [
+  "apps/web/src/lib/content/answers/",
+  "apps/web/src/lib/content/for/",
+  "apps/web/src/lib/content/help/",
+  "apps/web/src/lib/content/discovery/",
+];
+
+/** True when the change touches public discovery content that has deterministic mesh/intent checks. */
+export function touchesDiscoveryContent(files) {
+  return files.some((file) => {
+    const normalized = file.replace(/\\/g, "/");
+    return CONTENT_PREFIXES.some((prefix) => normalized.startsWith(prefix));
+  });
+}
+
 export function resolveGitBase(cwd = process.cwd()) {
   const candidates = [
     () =>
@@ -252,6 +267,24 @@ export function runLintChanged({
       success = false;
       console.error("❌ Answer editorial check failed.");
     }
+  }
+
+  if (touchesDiscoveryContent(changedFiles)) {
+    for (const [label, script] of [
+      ["Answer mesh (reciprocal links)", "scripts/check-answer-mesh.ts"],
+      ["Discovery intent audit", "scripts/discovery-audit.mjs"],
+    ]) {
+      try {
+        console.log(`\n🕸️  Checking ${label}...`);
+        execFileSync("bun", [script], { cwd, stdio: "inherit" });
+      } catch {
+        success = false;
+        console.error(`❌ ${label} check failed.`);
+      }
+    }
+    console.log(
+      "\n💡 Content changed: run /codex-review and verify every feature, UI path or 'automatically does X' claim against code before pushing.",
+    );
   }
 
   return success;

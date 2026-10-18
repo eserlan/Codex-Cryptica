@@ -149,8 +149,8 @@ describe("savePointCrawlToVault", () => {
     expect(masterNote.content).toContain(
       "A sunken marshland hiding drowned barrows.",
     );
-    expect(masterNote.lore).toContain("Stilt Village");
-    expect(masterNote.lore).toContain("Sunken Barrow");
+    expect(masterNote.lore).toContain("Locks, Gates & Where Keys Are Found");
+    expect(masterNote.lore).toContain("Secret & Rumoured Shortcuts");
     expect(masterNote.lore).not.toContain("Rotwood Copse"); // node-3 was not selected
   });
 
