@@ -19,6 +19,7 @@ import { getAllLandingPageSlugs } from "../for/registry";
 import { HEIST_TOPIC_CONFIG } from "../topics/heists";
 import { PUZZLE_TOPIC_CONFIG } from "../topics/puzzles";
 import { PIRATE_TOPIC_CONFIG } from "../topics/pirates";
+import { SOLO_RPG_TOPIC_CONFIG } from "../topics/solo-rpg";
 import { DND_TOPIC_CONFIG } from "../topics/dnd";
 import { DND_BEGINNERS_TOPIC_CONFIG } from "../topics/dnd-beginners";
 import { solutions } from "$lib/config/seo-pages";
@@ -971,6 +972,20 @@ describe("published answers", () => {
         ),
       ),
     ).toBe(true);
+
+    const soloAnswers = published.filter((answer) =>
+      answer.relatedTopics.some(
+        (topic) => topic.href === SOLO_RPG_TOPIC_CONFIG.canonicalPath,
+      ),
+    );
+    expect(soloAnswers).toHaveLength(5);
+    expect(
+      soloAnswers.every((answer) =>
+        answer.relatedTools.every(
+          (tool) => tool.href !== SOLO_RPG_TOPIC_CONFIG.canonicalPath,
+        ),
+      ),
+    ).toBe(true);
   });
 
   it("only links to routes the site actually publishes", () => {
@@ -984,6 +999,7 @@ describe("published answers", () => {
       PIRATE_TOPIC_CONFIG.canonicalPath,
       DND_TOPIC_CONFIG.canonicalPath,
       DND_BEGINNERS_TOPIC_CONFIG.canonicalPath,
+      SOLO_RPG_TOPIC_CONFIG.canonicalPath,
     ]);
     const toolPages = new Set([
       "cyberpunk-nomad-clan-generator",

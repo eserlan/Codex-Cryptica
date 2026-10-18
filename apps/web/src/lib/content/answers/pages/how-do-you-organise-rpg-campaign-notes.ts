@@ -163,6 +163,8 @@ export const howDoYouOrganiseRpgCampaignNotes: AnswerConfigInput = {
     "how-do-i-organise-a-dnd-campaign",
     "how-do-i-start-a-dnd-campaign",
     "should-i-share-worldbuilding-notes-with-my-players",
+    "how-do-you-keep-notes-for-a-solo-rpg-campaign",
+    "how-do-you-play-a-tabletop-rpg-by-yourself",
   ],
   discovery: {
     id: "answer-campaign-notes",

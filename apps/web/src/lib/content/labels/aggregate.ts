@@ -37,6 +37,13 @@ const TOPIC_HUBS: Record<string, PublicLabelResult> = {
       "The central cluster hub for tabletop RPG puzzles: stall-proof design, hint ladders, worked examples with alternate solutions, and the puzzle generator.",
     href: "/topics/puzzles",
   },
+  "solo-rpg": {
+    kind: "topic",
+    title: "Solo RPGs: Tools, Oracles, Generators & Guides for Playing Alone",
+    summary:
+      "The central hub for solo tabletop play: how to start, how oracles work, how to avoid random-feeling play, how to keep a campaign log, and the generators that feed the loop.",
+    href: "/topics/solo-rpg",
+  },
   pirate: {
     kind: "topic",
     title: "Planning a Pirate or High-Seas Campaign",

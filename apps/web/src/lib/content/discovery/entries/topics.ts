@@ -59,6 +59,32 @@ export const topicEntries: DiscoveryEntryInput[] = [
     status: "live",
   },
   {
+    id: "topic-solo-rpg",
+    pageKind: "hub",
+    canonicalPath: "/topics/solo-rpg",
+    primaryIntent: "solo rpg play hub and resources",
+    intentAliases: [
+      "solo rpg topic hub",
+      "playing rpgs alone resources",
+      "solo ttrpg guides and generators",
+      "solo roleplaying tools and oracles",
+      "solo rpg tools oracles generators and guides",
+    ],
+    audience: "Players who want to run tabletop RPGs without a game master",
+    userJob: "navigate",
+    uniqueValue:
+      "Curates the solo play cluster in one crawlable hub with a beginner path from starting out, through oracles and generated uncertainty, to consequences and a campaign log. It is a navigator that sits alongside established solo systems rather than replacing them, distinct from the system comparison in the solo system-selection answer and the notes focus of /for/solo-worldbuilding.",
+    parentCluster: "solo-rpg",
+    clusters: ["solo-rpg"],
+    relatedIntents: [
+      "answer-solo-rpg-system-selection",
+      "for-solo-worldbuilding",
+      "generator-rumour",
+    ],
+    indexable: true,
+    status: "live",
+  },
+  {
     id: "topic-pirates-high-seas",
     pageKind: "hub",
     canonicalPath: "/topics/pirates",

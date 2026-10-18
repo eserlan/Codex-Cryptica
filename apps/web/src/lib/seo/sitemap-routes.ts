@@ -44,6 +44,7 @@ export const STATIC_SITEMAP_ROUTES: SitemapRoute[] = [
   { path: "/topics/heists", changefreq: "weekly", priority: "0.8" },
   { path: "/topics/puzzles", changefreq: "weekly", priority: "0.8" },
   { path: "/topics/pirates", changefreq: "weekly", priority: "0.8" },
+  { path: "/topics/solo-rpg", changefreq: "weekly", priority: "0.8" },
   { path: "/topics/dnd", changefreq: "weekly", priority: "0.8" },
   { path: "/topics/dnd-beginners", changefreq: "weekly", priority: "0.8" },
   // /tools/dnd-npc-generator and /tools/faction-generator are 301 stubs to
