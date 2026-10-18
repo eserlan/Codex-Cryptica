@@ -361,6 +361,7 @@ export class StatBlockImportController {
 
   private finishTargetWrite(updated: unknown): void {
     if (updated === false) {
+      this.step = "review";
       this.error =
         "This entity no longer exists. Close this dialog and reopen the import.";
       return;

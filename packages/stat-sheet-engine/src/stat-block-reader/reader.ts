@@ -36,6 +36,10 @@ export async function readStatBlockWithAi(
   gateway: StatBlockReaderGateway,
   options: { signal?: AbortSignal } = {},
 ): Promise<ReadResult> {
+  if (options.signal?.aborted) {
+    throw new StatBlockReadError("gateway", "The AI request was cancelled.");
+  }
+
   const source = prepareStatBlockSource(request.source);
   assertSourceLength(source);
   const prepared: ImportRequest = { ...request, source };

@@ -123,6 +123,19 @@ describe("readStatBlockWithAi", () => {
     expect(error).toBeInstanceOf(StatBlockReadError);
   });
 
+  it("does not call the gateway when the caller signal is already aborted", async () => {
+    const outer = new AbortController();
+    outer.abort();
+    const gateway = gatewayReturning("{}");
+
+    await expect(
+      readStatBlockWithAi(request("clean-hill-brute"), gateway, {
+        signal: outer.signal,
+      }),
+    ).rejects.toBeInstanceOf(StatBlockReadError);
+    expect(gateway.complete).not.toHaveBeenCalled();
+  });
+
   it("settles promptly when the caller aborts and the gateway ignores abort", async () => {
     const outer = new AbortController();
     const gateway: StatBlockReaderGateway = {

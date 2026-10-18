@@ -210,6 +210,27 @@ describe("StatBlockImportController: saving to an existing entity", () => {
     expect(deps.updateEntity).toHaveBeenCalledTimes(1);
   });
 
+  it("returns to review and shows an error when a confirmed overwrite fails", async () => {
+    const deps = makeDeps({
+      targetEntity: () =>
+        entity({
+          statSheet: {
+            templateId: TOV_MONSTER_TEMPLATE_ID,
+            fields: [{ id: "ac", label: "AC", type: "number", value: 10 }],
+          } as Entity["statSheet"],
+        }),
+      updateEntity: vi.fn(async () => false),
+    });
+    const controller = await readAndReview(deps);
+    await controller.save();
+    expect(controller.step).toBe("confirm");
+
+    await controller.commit();
+
+    expect(controller.step).toBe("review");
+    expect(controller.error).toMatch(/entity no longer exists/i);
+  });
+
   it("goes back to review from the confirmation without writing", async () => {
     const deps = makeDeps({
       targetEntity: () =>
