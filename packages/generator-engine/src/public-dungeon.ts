@@ -63,7 +63,7 @@ import {
   formatCampaignContextBlock,
 } from "./campaign-context";
 
-export { dungeonConfig, forGenre };
+export { bannedNamesIn, dungeonConfig, forGenre };
 
 export interface DungeonGeneratorOptions {
   themeId?: string;
@@ -343,7 +343,7 @@ function narrativeText(value: unknown): string {
  * to a goal clause, since callers either render it standalone (capitalized)
  * or embed it after their own lead-in ("want to X").
  */
-function sanitizeGoal(s: string): string {
+export function sanitizeGoal(s: string): string {
   return s
     .replace(/^\s*(to|seeks?( to)?|they want to|wants? to)\s+/i, "")
     .trim()
@@ -803,7 +803,7 @@ export function collectSessionTraits(
  * faithfully. The seeds below are starting points to interpret; the structure
  * is the part that must not move.
  */
-function formatDungeonSeeds(
+export function formatDungeonSeeds(
   dungeon: ResolvedDungeon,
   avoidNames: string[] = [],
   avoidTraits: string[] = [],
@@ -1096,7 +1096,7 @@ function formatDungeonJsonSchema(dungeon: ResolvedDungeon): string {
  * "Faction A", "The First Faction", "Unnamed Faction", or similar literally
  * lifted from the prompt's placeholder labels rather than naming the faction.
  */
-const PLACEHOLDER_FACTION_NAME =
+export const PLACEHOLDER_FACTION_NAME =
   /^(the\s+)?(first|second|1st|2nd)\s+faction$|faction\s*[ab12]\b|^((an?|the)\s+)?unnamed\s+faction$/i;
 
 /**

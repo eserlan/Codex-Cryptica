@@ -4,47 +4,27 @@ import {
   INTERACTION_MODEL_KEY,
   GENERATOR_INTERACTION_MODEL_KEY,
 } from "@codex/ai-engine";
-import {
-  ProxyAIGeneratorGateway,
-  extractJsonObject,
-} from "./ai-generator-gateway";
-
-describe("extractJsonObject", () => {
-  it("returns a clean object unchanged", () => {
-    const s = '{"title":"A","lore":"b"}';
-    expect(JSON.parse(extractJsonObject(s))).toEqual({ title: "A", lore: "b" });
-  });
-
-  it("salvages an object with a degenerate trailing run of braces", () => {
-    const s = '{"title":"A","lore":"b"}\n}\n}\n}\n}\n}';
-    expect(JSON.parse(extractJsonObject(s))).toEqual({ title: "A", lore: "b" });
-  });
-
-  it("strips code fences", () => {
-    const s = '```json\n{"title":"A"}\n```';
-    expect(JSON.parse(extractJsonObject(s))).toEqual({ title: "A" });
-  });
-
-  it("ignores leading prose before the object", () => {
-    const s = 'Here is your JSON:\n{"title":"A"}';
-    expect(JSON.parse(extractJsonObject(s))).toEqual({ title: "A" });
-  });
-
-  it("does not get confused by braces inside string values", () => {
-    const s = '{"lore":"a } b { c","title":"X"} trailing }}}';
-    expect(JSON.parse(extractJsonObject(s))).toEqual({
-      lore: "a } b { c",
-      title: "X",
-    });
-  });
-
-  it("handles escaped quotes inside strings", () => {
-    const s = '{"lore":"she said \\"hi\\""}}}}';
-    expect(JSON.parse(extractJsonObject(s))).toEqual({ lore: 'she said "hi"' });
-  });
-});
+import { ProxyAIGeneratorGateway } from "./ai-generator-gateway";
 
 describe("ProxyAIGeneratorGateway", () => {
+  it("preserves an array envelope for downstream shape validation", async () => {
+    const gateway = new ProxyAIGeneratorGateway({
+      sendInteraction: async () => ({
+        id: "interaction-array",
+        text: '[{"title":"A"}]',
+      }),
+      getModel: async () => {
+        throw new Error("stateless path should not be used");
+      },
+    } as never);
+
+    await expect(
+      gateway.complete("prompt", "system", {
+        interaction: { input: "request" },
+      }),
+    ).resolves.toMatchObject({ text: '[{"title":"A"}]' });
+  });
+
   it("routes generator interactions through the Luna conversation model", () => {
     expect(GENERATOR_INTERACTION_MODEL_KEY).toBe(INTERACTION_MODEL_KEY);
     expect(INTERACTION_MODEL_KEY).toBe("luna-fast");
@@ -65,7 +45,10 @@ describe("ProxyAIGeneratorGateway", () => {
             }),
           }),
         );
-        return { id: "interaction-2", text: '{"title":"A"} trailing' };
+        return {
+          id: "interaction-2",
+          text: 'Example: {"title":"Wrong"}\n```json\n{"title":"A"}\n```',
+        };
       },
       getModel: async () => {
         throw new Error("stateless path should not be used");

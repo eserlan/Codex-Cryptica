@@ -5,6 +5,7 @@ import type {
   GenerationEvent,
 } from "generator-engine";
 import { createIncrementalJsonScanner } from "generator-engine";
+import { extractJsonObject } from "@codex/runtime";
 import {
   aiClientManager,
   InteractionExpiredError,
@@ -22,40 +23,6 @@ const GENERATOR_GENERATION_CONFIG = {
   maxOutputTokens: 4096,
   responseMimeType: "application/json",
 };
-
-/**
- * Extract the first balanced JSON object from a model response, tolerating code
- * fences, leading prose, and trailing garbage (e.g. a degenerate run of "}").
- * Walks the string tracking string literals/escapes so braces inside strings
- * don't throw off the depth count.
- */
-export function extractJsonObject(raw: string): string {
-  const t = raw
-    .trim()
-    .replace(/^```json\s*/i, "")
-    .replace(/^```\s*/i, "")
-    .replace(/```\s*$/i, "")
-    .trim();
-  const start = t.indexOf("{");
-  if (start === -1) return t;
-  let depth = 0;
-  let inStr = false;
-  let esc = false;
-  for (let i = start; i < t.length; i++) {
-    const ch = t[i];
-    if (inStr) {
-      if (esc) esc = false;
-      else if (ch === "\\") esc = true;
-      else if (ch === '"') inStr = false;
-    } else if (ch === '"') inStr = true;
-    else if (ch === "{") depth++;
-    else if (ch === "}") {
-      depth--;
-      if (depth === 0) return t.slice(start, i + 1);
-    }
-  }
-  return t.slice(start);
-}
 
 export class ProxyAIGeneratorGateway implements AIGeneratorGateway {
   constructor(private readonly clientManager: DefaultAIClientManager) {}
