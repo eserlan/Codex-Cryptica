@@ -184,6 +184,7 @@ export const howDoIImproviseNpcsInDnd: AnswerConfigInput = {
     "which-dice-do-i-roll-in-dnd-and-when",
     "how-do-i-roleplay-npcs-if-im-not-good-at-acting",
     "how-do-i-run-a-stealth-mission-in-a-tabletop-rpg",
+    "how-do-i-handle-players-who-keep-trying-to-recruit-defeated-enemies",
   ],
   discovery: {
     id: "answer-improvise-npcs-in-dnd",

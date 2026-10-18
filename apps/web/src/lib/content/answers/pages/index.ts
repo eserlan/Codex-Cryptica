@@ -19,6 +19,7 @@ import { howDoIGiveDifferentCivilisationsDistinctStrengthsAndWeaknesses } from "
 import { howDoIGiveSpecialistCharactersSpotlight } from "./how-do-i-give-specialist-characters-spotlight";
 import { howDoIHandleDivinationMagicWithoutLettingOneCharacterSolveEveryMystery } from "./how-do-i-handle-divination-magic-without-letting-one-character-solve-every-mystery";
 import { howDoIHandlePlayersAskingAnNpcToTellUsEverythingYouKnow } from "./how-do-i-handle-players-asking-an-npc-to-tell-us-everything-you-know";
+import { howDoIHandlePlayersWhoKeepTryingToRecruitDefeatedEnemies } from "./how-do-i-handle-players-who-keep-trying-to-recruit-defeated-enemies";
 import { howDoIImproviseNpcsInDnd } from "./how-do-i-improvise-npcs-in-dnd";
 import { howDoIKeepPlayersEngagedDuringOtherPlayersTurnsInCombat } from "./how-do-i-keep-players-engaged-during-other-players-turns-in-combat";
 import { howDoIMakeACampaignThreatFeelUrgentWithoutRailroading } from "./how-do-i-make-a-campaign-threat-feel-urgent-without-railroading";
@@ -196,6 +197,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIGiveSpecialistCharactersSpotlight,
     howDoIHandleDivinationMagicWithoutLettingOneCharacterSolveEveryMystery,
     howDoIHandlePlayersAskingAnNpcToTellUsEverythingYouKnow,
+    howDoIHandlePlayersWhoKeepTryingToRecruitDefeatedEnemies,
     howDoIImproviseNpcsInDnd,
     howDoIKeepPlayersEngagedDuringOtherPlayersTurnsInCombat,
     howDoIMakeACampaignThreatFeelUrgentWithoutRailroading,

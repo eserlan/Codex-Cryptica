@@ -91,6 +91,24 @@ describe("answer registry", () => {
     );
   });
 
+  it("keeps the captive recruitment answer's practical prep checklist", () => {
+    const answer =
+      answers[
+        "how-do-i-handle-players-who-keep-trying-to-recruit-defeated-enemies"
+      ];
+
+    expect(answer.sections).toContainEqual(
+      expect.objectContaining({
+        kind: "checklist",
+        heading: "Before you bring a captive into the next big scene",
+        items: expect.arrayContaining([
+          "Write the seven-line decision card for each captive the party is keeping: wants, fears, loyalty owed, what pressure produces, the line they will not cross, what could earn trust, and their likely move when an opening appears.",
+          "Before any social check, state the narrow deal on the table and the line that is not being rolled for. Roll only where the outcome is genuinely open.",
+        ]),
+      }),
+    );
+  });
+
   it("registers story arc planning as its own workflow intent", () => {
     const answer = answers["how-do-i-plan-story-arcs-for-an-rpg-campaign"];
     const entry = getDiscoveryEntries().find(

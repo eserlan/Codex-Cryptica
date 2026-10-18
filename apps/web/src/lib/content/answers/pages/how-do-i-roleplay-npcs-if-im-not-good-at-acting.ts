@@ -166,6 +166,7 @@ export const howDoIRoleplayNpcsIfImNotGoodAtActing: AnswerConfigInput = {
     "how-do-you-make-npcs-memorable-without-lots-of-prep",
     "how-do-i-handle-players-asking-an-npc-to-tell-us-everything-you-know",
     "how-do-i-make-interviewing-npcs-interesting-in-an-investigation",
+    "how-do-i-handle-players-who-keep-trying-to-recruit-defeated-enemies",
   ],
   discovery: {
     id: "answer-roleplay-npcs-without-acting",
