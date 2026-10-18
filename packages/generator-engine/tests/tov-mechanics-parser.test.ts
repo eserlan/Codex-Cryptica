@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { parseTovMechanics } from "../src/tov-mechanics-parser";
+import {
+  parseTovMechanics,
+  isPublishedBfrdDoomGuidance,
+} from "../src/tov-mechanics-parser";
 
 describe("parseTovMechanics", () => {
   it("parses valid TovQuickNpc mechanics direct bundle", () => {
@@ -80,5 +83,34 @@ describe("parseTovMechanics", () => {
     expect(
       parseTovMechanics({ systemId: "other-system", kind: "tov-quick-npc" }),
     ).toBeUndefined();
+  });
+});
+
+describe("isPublishedBfrdDoomGuidance", () => {
+  it("accepts encounter-level pool and published BFRD spends", () => {
+    expect(
+      isPublishedBfrdDoomGuidance(
+        "Start the encounter with a CR-based Doom pool of 3 points. Spend Doom to give a creature advantage on an attack, give a PC disadvantage on a save, or once per encounter refresh, recharge, or gain one additional use of a limited-use feature.",
+      ),
+    ).toBe(true);
+  });
+
+  it("rejects empty, homebrew-labelled, creature-only, or invented Doom spend guidance", () => {
+    expect(isPublishedBfrdDoomGuidance("   ")).toBe(false);
+    expect(
+      isPublishedBfrdDoomGuidance(
+        "[Homebrew] Spend 1 Doom to give a creature advantage on an attack.",
+      ),
+    ).toBe(false);
+    expect(
+      isPublishedBfrdDoomGuidance(
+        "Doom points are scoped strictly to individual creatures, not an encounter-level GM pool.",
+      ),
+    ).toBe(false);
+    expect(
+      isPublishedBfrdDoomGuidance(
+        "Spend 2 Doom to summon reinforcements or trigger a lair hazard.",
+      ),
+    ).toBe(false);
   });
 });

@@ -25,7 +25,7 @@
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete.
 
 - [x] T006 Extend `EncounterGeneratorOptions` with optional `gameSystem`, `partySize`, and `partyLevel` in `packages/generator-engine/src/public-encounter.ts`
-- [x] T007 Implement `buildTovEncounterPromptInstructions` in `packages/generator-engine/src/tov-mechanics-prompt.ts` with qualitative challenge assessment, BFRD CR distribution, adversary participant recommendations, and creature-scoped Doom guidance
+- [x] T007 Implement `buildTovEncounterPromptInstructions` in `packages/generator-engine/src/tov-mechanics-prompt.ts` with qualitative challenge assessment, BFRD CR distribution, adversary participant recommendations, and encounter-level BFRD Doom guidance (labelling custom creature-specific Doom abilities or alternate Doom economies as `[Homebrew]`)
 - [x] T008 Update `parseEncounterResponse` in `packages/generator-engine/src/public-encounter.ts` to extract and validate `mechanics` via `parseTovMechanics`
 - [x] T009 Register `gameSystem`, `partySize` (range 1–8, default 4), and `partyLevel` (range 1–20, default 3) options with `visibleWhen` in `packages/generator-engine/src/campaign-generator-registry.ts` under `REGISTRY.encounter`
 
@@ -72,11 +72,11 @@
 
 ---
 
-## Phase 5: User Story 3 - Verified Optional Doom Resource Tracker in Encounter & VTT Play (Priority: P2)
+## Phase 5: User Story 3 - Verified Optional Doom Resource Guidance & Per-Creature Allocation Counter (Priority: P2)
 
-**Goal**: Implement an interactive Doom Points tracker strictly scoped to creatures/tokens with supported Doom stats (e.g. `builtin-tov-monster` with `doom > 0`), allowing incrementing/decrementing Doom points and displaying Doom actions without exposing Doom to neutral creatures or universal pools.
+**Goal**: Implement an interactive Doom Points counter on `builtin-tov-monster` stat sheets and VTT token controls to represent per-creature allocations from the optional BFRD encounter-level Doom pool, paired with inline rules reference copy clarifying that the per-creature counter does not alter the encounter-level BFRD rule.
 
-**Independent Test**: Load a token with `builtin-tov-monster` and `doom` = 3 in `TokenQuickStats.svelte`; verify `TovDoomControl` appears with current points and spend/gain controls. Verify tokens without Doom show no Doom control.
+**Independent Test**: Load a token with `builtin-tov-monster` and `doom` = 3 in `TokenQuickStats.svelte`; verify `TovDoomControl` appears with current points, spend/gain controls, and expandable reference copy explaining the encounter-level BFRD Doom rule and per-creature allocation tracking. Verify non-ToV / non-monster tokens show no Doom control.
 
 ### Tests for User Story 3 (REQUIRED for changed behaviour) ⚠️
 

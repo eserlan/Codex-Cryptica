@@ -11,7 +11,7 @@
 
 Augment the existing system-neutral Encounter Generator and VTT play aids with optional Tales of the Valiant (BFRD) mechanical guidance without turning the generator into a 5e-only combat encounter builder.
 
-The feature preserves today's system-neutral encounter generator behaviour (including non-combat, social, and exploration encounters) while providing qualitative GM-facing combat balance advice, valid BFRD creature participant suggestions with rollable stat blocks, entity/token linkage, and an optional verified Doom resource tracker strictly tied to supported use cases (boss creatures/abilities).
+The feature preserves today's system-neutral encounter generator behaviour (including non-combat, social, and exploration encounters) while providing qualitative GM-facing combat balance advice, valid BFRD creature participant suggestions with rollable stat blocks, entity/token linkage, encounter-level BFRD Doom guidance (with homebrew labelling for custom creature-specific Doom abilities or alternate Doom economies), and a per-creature UI Doom counter on ToV monster sheets and token controls for tracking allocations from the encounter's Doom pool.
 
 ---
 
@@ -53,21 +53,21 @@ So that I can immediately inspect their defences, rollable attacks, and add them
 
 ---
 
-### User Story 3 - Verified Optional Doom Resource Tracker in Encounter & VTT Play (Priority: P2)
+### User Story 3 - Verified Optional Doom Resource Guidance & Per-Creature Allocation Counter (Priority: P2)
 
-As a GM running a high-stakes combat encounter featuring a ToV boss creature with Doom abilities,  
-I want an optional, verified Doom resource tracker available in the VTT / encounter aid,  
-So that I can track and spend Doom points according to official BFRD rules without imposing a universal GM pool on encounters that do not feature Doom creatures.
+As a GM running a Tales of the Valiant encounter using the optional BFRD Doom rule,  
+I want generated encounter guidance to reflect the BFRD encounter-level Doom pool and published spends, and an interactive Doom counter on ToV monster sheets and token controls to track points allocated from that encounter pool,  
+So that I can manage Doom during play without misrepresenting the BFRD rule as creature-only or presenting custom Doom abilities as core BFRD rules.
 
-**Why this priority**: Issue #3949 explicitly mandates: "Investigate Doom in the verified BFRD and implement an appropriate, optional resource tracker only for supported use cases (creatures/abilities/encounter as specified by the actual rules); do not assume it is a universal GM-wide pool."
+**Why this priority**: The optional BFRD Doom rule gives the GM a CR-based resource pool at the start of an encounter that can affect creatures in that encounter. Published spends are: give a creature advantage on an attack, give a PC disadvantage on a save, or once per encounter refresh, recharge, or gain one additional use of a limited-use feature. Codex Cryptica exposes a per-creature UI counter on `builtin-tov-monster` stat sheets and VTT token controls as a tracking choice for allocations from that encounter pool.
 
-**Independent Test**: Load a combat encounter featuring a creature with Doom points (e.g. Doom > 0 in stat sheet). Verify an optional Doom tracker widget appears for that creature in the VTT active combat panel, allowing incrementing/decrementing Doom points (0–10) and displaying its specific Doom actions. For creatures/encounters with no Doom abilities, verify the tracker remains hidden.
+**Independent Test**: Load a token with a `builtin-tov-monster` stat sheet. Verify the `TovDoomControl` counter appears in VTT `TokenQuickStats` and on the monster sheet, allowing incrementing/decrementing allocated Doom points (0–10) and displaying in-context reference copy that explains the encounter-level BFRD rule and per-creature allocation tracking. For non-ToV or non-monster templates, verify the tracker remains hidden.
 
 **Acceptance Scenarios**:
 
-1. **Given** an active encounter token with a ToV creature stat sheet containing `doom` > 0 or Doom actions, **When** viewing the combat tracker or token inspector, **Then** an interactive Doom Points tracker is displayed with increment/decrement buttons and a list of available Doom-fueled actions.
-2. **Given** standard creatures or neutral encounters without Doom abilities, **When** viewing the VTT combat tracker, **Then** no Doom tracker is shown.
-3. **Given** a creature spending Doom points during combat, **When** a point is spent, **Then** the value updates reactively and persists within the session snapshot.
+1. **Given** an active encounter token with a `builtin-tov-monster` stat sheet containing the `doom` counter field, **When** viewing the stat sheet or token quick stats, **Then** an interactive Doom Points counter is displayed with increment/decrement buttons and expandable reference guidance explaining the optional encounter-level BFRD Doom pool, published spends, and per-creature allocation tracking.
+2. **Given** non-ToV creatures, neutral encounters, or non-monster templates without the ToV Doom counter field, **When** viewing VTT token quick stats, **Then** no Doom tracker is shown.
+3. **Given** generated encounter Doom guidance (`doomNotes`), **When** the guidance uses only the encounter-level pool and published BFRD spends, **Then** it is presented as standard BFRD guidance; **When** it adds custom creature-specific Doom abilities or an alternate Doom economy, **Then** it is explicitly labelled as `[Homebrew]` / `Homebrew`.
 
 ---
 
@@ -96,16 +96,17 @@ So that party inputs and ToV mechanical options are pre-selected while remaining
   - Qualitative encounter challenge rating (Trivial, Moderate, Dangerous, Deadly) relative to the party.
   - Recommended CR distribution for adversary groups (e.g. single boss vs minions/mobs).
   - Explicit instruction not to invent rigid mathematical XP budgets not defined in the open BFRD; provide qualitative GM pacing advice instead.
-  - Distinction between source-backed rules and GM homebrew.
+  - Optional BFRD Doom guidance aligned with the encounter-level CR-based GM pool and published spends (give a creature advantage on an attack, give a PC disadvantage on a save, or once per encounter refresh, recharge, or gain one additional use of a limited-use feature).
+  - Distinction between source-backed BFRD rules and GM homebrew, requiring `[Homebrew]` labels and `isHomebrew: true` whenever custom creature-specific Doom abilities or alternate Doom economies are introduced.
 - **FR-003**: Extend `GeneratorOutput` and `GeneratedDraft` encounter outputs with optional `encounterMechanics` bundle containing:
   - `systemId`: `"tales-of-the-valiant"`.
   - `qualitativeDifficulty`: string description.
   - `recommendedCr`: string or range.
   - `suggestedCreatures`: list of participant creatures with name, CR, count, role, and optional ToV template id.
   - `tacticalAdvice`: string or bullet points.
-  - `doomNotes`: optional Doom usage guidance if high-threat or boss adversaries are present.
-- **FR-004**: Format ToV encounter mechanics into note markdown under `### Game Mechanics & Challenge Guidance (Tales of the Valiant)` on save, keeping narrative situation intact.
-- **FR-005**: Provide interactive Doom tracking in VTT combat aids scoped strictly to combatants with `doom` points in their stat sheet (`builtin-tov-monster` or custom).
+  - `doomNotes`: optional encounter-level BFRD Doom pool and spend guidance (with any custom creature-specific Doom abilities or alternate Doom economy explicitly labelled as homebrew).
+- **FR-004**: Format ToV encounter mechanics into note markdown under `### Game Mechanics & Challenge Guidance (Tales of the Valiant)` on save, keeping narrative situation intact and labelling homebrew Doom guidance with `*(Homebrew)*`.
+- **FR-005**: Provide an interactive Doom counter in `builtin-tov-monster` stat sheets and VTT token quick stats to represent per-creature allocations tracked from an encounter's Doom pool, paired with `TOV_DOOM_REFERENCE` guidance clarifying that this storage model does not alter the encounter-level BFRD rule.
 - **FR-006**: Ensure full backwards compatibility for neutral encounters: zero changes to neutral prompt outputs, zero schema migrations.
 
 ---
@@ -122,5 +123,5 @@ So that party inputs and ToV mechanical options are pre-selected while remaining
 ## Out of Scope
 
 - Inventing proprietary Kobold Press or D&D 5e encounter balance algorithms (such as proprietary budget multipliers or non-BFRD formulas).
-- Implementing Doom as a universal or campaign-wide resource pool; Doom is scoped strictly to supported creatures/abilities per official BFRD rules.
+- Presenting Doom as a campaign-wide pool across sessions or claiming that the published BFRD rule is creature-only; BFRD Doom is an optional encounter-level GM resource pool, while the monster sheet counter is a per-creature UI allocation tracker.
 - Automated tactical AI battle simulators.

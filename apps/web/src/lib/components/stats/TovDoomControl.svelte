@@ -73,6 +73,7 @@
     >
     <p>{TOV_DOOM_REFERENCE.summary}</p>
     <p>{TOV_DOOM_REFERENCE.note}</p>
+    <p>{TOV_DOOM_REFERENCE.allocationGuidance}</p>
     <p>Source: {TOV_DOOM_REFERENCE.source}</p>
   </details>
 </div>

@@ -361,5 +361,92 @@ describe("GeneratorDraftReview", () => {
       expect(screen.getByTestId("homebrew-gm-review-badge")).toBeTruthy();
       expect(screen.getByText("GM Review")).toBeTruthy();
     });
+
+    it("renders published BFRD encounter Doom guidance without homebrew badges", () => {
+      render(GeneratorDraftReview, {
+        props: {
+          draft: dungeonDraft({
+            sourceGeneratorId: "encounter",
+            mechanics: {
+              systemId: "tales-of-the-valiant",
+              kind: "tov-encounter",
+              isHomebrew: false,
+              data: {
+                qualitativeDifficulty: "Moderate for 4 Level 3 characters",
+                recommendedCrRange: "CR 1–2 minions with a CR 3 leader",
+                suggestedCreatures: [
+                  {
+                    name: "Shadow Hound",
+                    cr: "1",
+                    count: 2,
+                    role: "Skirmisher",
+                    isHomebrew: false,
+                  },
+                ],
+                tacticalAdvice: "Flank in low light.",
+                doomNotes:
+                  "Start the encounter with a CR-based GM Doom pool of 2 points. Spend Doom to give a creature advantage on an attack, give a PC disadvantage on a save, or once per encounter recharge or gain one additional use of a limited-use feature.",
+                isHomebrew: false,
+              },
+            },
+          }),
+          categories,
+          saving: false,
+          onsave: vi.fn(),
+          onback: vi.fn(),
+        },
+      });
+
+      expect(
+        screen.getByText("Encounter Doom Guidance (Optional BFRD Rule)"),
+      ).toBeTruthy();
+      expect(
+        screen.queryByText("Doom Actions & Usage (Boss / High Threat)"),
+      ).toBeNull();
+      expect(screen.queryByTestId("encounter-doom-homebrew-badge")).toBeNull();
+      expect(screen.queryByTestId("homebrew-gm-review-badge")).toBeNull();
+    });
+
+    it("renders Homebrew and GM Review badges when encounter Doom guidance includes custom creature spends", () => {
+      render(GeneratorDraftReview, {
+        props: {
+          draft: dungeonDraft({
+            sourceGeneratorId: "encounter",
+            mechanics: {
+              systemId: "tales-of-the-valiant",
+              kind: "tov-encounter",
+              isHomebrew: false,
+              data: {
+                qualitativeDifficulty: "Dangerous for 4 Level 3 characters",
+                recommendedCrRange: "Single CR 4 boss",
+                suggestedCreatures: [
+                  {
+                    name: "Gloom Caller",
+                    cr: "4",
+                    count: 1,
+                    role: "Boss",
+                    isHomebrew: false,
+                  },
+                ],
+                tacticalAdvice: "Hold the altar.",
+                doomNotes:
+                  "[Homebrew] Spend 2 Doom to summon a Shadow Minion at initiative count 20.",
+                isHomebrew: false,
+              },
+            },
+          }),
+          categories,
+          saving: false,
+          onsave: vi.fn(),
+          onback: vi.fn(),
+        },
+      });
+
+      expect(
+        screen.getByText("Encounter Doom Guidance (Optional BFRD Rule)"),
+      ).toBeTruthy();
+      expect(screen.getByTestId("encounter-doom-homebrew-badge")).toBeTruthy();
+      expect(screen.getByTestId("homebrew-gm-review-badge")).toBeTruthy();
+    });
   });
 });

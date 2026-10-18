@@ -1,9 +1,10 @@
 import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
-import type { ProvenanceRecord, SessionEntity } from "generator-engine";
-
-import type {
-  TovMagicItemMechanics,
-  TovEncounterMechanics,
+import {
+  isPublishedBfrdDoomGuidance,
+  type ProvenanceRecord,
+  type SessionEntity,
+  type TovMagicItemMechanics,
+  type TovEncounterMechanics,
 } from "generator-engine";
 
 export interface GeneratorSaveLayout {
@@ -56,6 +57,15 @@ function formatTovMagicItemMarkdown(item: TovMagicItemMechanics): string {
   return parts.join("\n");
 }
 
+function formatEncounterDoomLine(encounter: TovEncounterMechanics): string {
+  const doomText = stripMarkdownImages(encounter.doomNotes ?? "");
+  const isHomebrewDoom =
+    encounter.isHomebrew || !isPublishedBfrdDoomGuidance(doomText);
+  const homebrewTag =
+    isHomebrewDoom && !/\bhomebrew\b/i.test(doomText) ? " *(Homebrew)*" : "";
+  return `- **Doom Guidance:** ${doomText}${homebrewTag}`;
+}
+
 function formatTovEncounterMarkdown(encounter: TovEncounterMechanics): string {
   const parts: string[] = [
     "### Game Mechanics & Challenge Guidance (Tales of the Valiant)",
@@ -81,9 +91,7 @@ function formatTovEncounterMarkdown(encounter: TovEncounterMechanics): string {
     );
   }
   if (encounter.doomNotes) {
-    parts.push(
-      `- **Doom Guidance:** ${stripMarkdownImages(encounter.doomNotes)}`,
-    );
+    parts.push(formatEncounterDoomLine(encounter));
   }
   return parts.join("\n");
 }
