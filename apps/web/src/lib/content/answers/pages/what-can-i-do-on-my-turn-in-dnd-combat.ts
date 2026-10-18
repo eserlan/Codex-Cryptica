@@ -181,6 +181,7 @@ export const whatCanIDoOnMyTurnInDndCombat: AnswerConfigInput = {
     "how-do-i-keep-players-engaged-during-other-players-turns-in-combat",
     "how-do-i-make-combat-faster-without-making-it-less-exciting",
     "which-dice-do-i-roll-in-dnd-and-when",
+    "how-do-i-track-monsters-initiative-and-hit-points-in-dnd-combat",
   ],
   discovery: {
     id: "answer-what-can-i-do-on-my-turn-in-dnd-combat",
