@@ -24,7 +24,7 @@ Codex Cryptica provides native support for **Tales of the Valiant (ToV)** and th
 
 ### 1. Using Tales of the Valiant templates
 
-Vault-wide system profile selection is not currently available. To use Tales of the Valiant in a generator, choose it from the **Game System** option when available. The built-in ToV sheets listed below can be applied to individual entities.
+To make Tales of the Valiant the default for a whole vault, open **Settings → Vault → Game System** and choose **Tales of the Valiant**. Campaign generators in that vault then start with their **Game System** option set to Tales of the Valiant, and the ToV sheets listed below are suggested first when you apply a stat sheet. You can still change the Game System for a single generator run. Existing entities keep the sheets they have, and other vaults are not affected. Choose **System Neutral** to switch back.
 
 ---
 
