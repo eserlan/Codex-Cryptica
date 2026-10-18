@@ -102,8 +102,10 @@ describe("answer registry", () => {
         kind: "checklist",
         heading: "Before you bring a captive into the next big scene",
         items: expect.arrayContaining([
-          "Write the seven-line decision card for each captive the party is keeping: wants, fears, loyalty owed, what pressure produces, the line they will not cross, what could earn trust, and their likely move when an opening appears.",
+          "What does the card suggest, and what has changed since you wrote it?",
+          "Are captivity and cooperation both present? Have loyalty or convictions changed independently?",
           "Before any social check, state the narrow deal on the table and the line that is not being rolled for. Roll only where the outcome is genuinely open.",
+          "What options are physically possible from their location, restraints, and the party's actions?",
         ]),
       }),
     );
@@ -1283,6 +1285,10 @@ describe("published answers", () => {
       [
         "how-do-i-run-a-rogue-or-scout-without-splitting-the-party",
         "answer-run-rogue-scout-without-splitting-party",
+      ],
+      [
+        "how-do-i-handle-players-who-keep-trying-to-recruit-defeated-enemies",
+        "answer-recruit-defeated-enemies",
       ],
     ] as const;
 

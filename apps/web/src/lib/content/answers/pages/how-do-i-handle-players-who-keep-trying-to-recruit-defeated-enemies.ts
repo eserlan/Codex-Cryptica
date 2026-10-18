@@ -9,7 +9,7 @@ export const howDoIHandlePlayersWhoKeepTryingToRecruitDefeatedEnemies: AnswerCon
       "How do I handle players who keep trying to recruit defeated enemies?",
     kind: "framework",
     shortAnswer:
-      "Surrender is not allegiance. A captive who stops fighting has chosen survival, not loyalty, and Persuasion or Intimidation can change what they will do under pressure without rewriting what they believe, owe, or fear. Having a captive act on those established motives is not unfair when you have shown the warning signs in play, given the party a real chance to earn trust or strike a bargain they can honour, and let different captives respond in different ways.",
+      "Surrender is not allegiance. A captive who stops fighting has chosen survival, not loyalty, and a social check does not automatically rewrite their convictions or establish loyalty. Having a captive act on established motives is fair when you have shown the warning signs, given the party a real chance to earn trust or strike a bargain, and let different captives respond in different ways.",
     sections: [
       {
         kind: "prose",
@@ -21,9 +21,9 @@ export const howDoIHandlePlayersWhoKeepTryingToRecruitDefeatedEnemies: AnswerCon
       },
       {
         kind: "list",
-        heading: "Four states that are easy to collapse into one",
+        heading: "Separate captivity, cooperation, and commitment",
         intro:
-          "Before you decide what a captive does next, name which state they are actually in. The four states below need different handling, and moving between them takes time, evidence, or a changed situation:",
+          "These describe different parts of a captive's situation, not exclusive stages. Someone can remain captive while cooperating; loyalty and changed convictions can develop independently.",
         items: [
           {
             term: "Captured or surrendered",
@@ -31,7 +31,7 @@ export const howDoIHandlePlayersWhoKeepTryingToRecruitDefeatedEnemies: AnswerCon
           },
           {
             term: "Temporarily cooperating",
-            text: "The NPC will do a limited thing for a limited reason: answer questions to avoid harm, guide the party past one checkpoint for safe release, or keep quiet while the party deals with a common enemy. Cooperation has terms, even when nobody wrote them down. When the terms run out, so does the help.",
+            text: "The NPC may do a limited thing for a limited reason while still captive: answer questions to avoid harm, guide the party past one checkpoint for safe release, or keep quiet while the party deals with a common enemy. Cooperation has terms; when they run out, so may the help.",
           },
           {
             term: "Genuinely loyal",
@@ -39,21 +39,21 @@ export const howDoIHandlePlayersWhoKeepTryingToRecruitDefeatedEnemies: AnswerCon
           },
           {
             term: "Morally changed",
-            text: "The NPC's beliefs or commitments have shifted: they no longer support their old cause, no longer accept an old contract as binding, or no longer want the life they had. That change needs experiences that challenge the old belief, not just pressure to say new words. A captive can cooperate for months without ever reaching this state, and that is a coherent outcome, not a failed roll.",
+            text: "The NPC's convictions have changed after experiences that challenged them, not merely pressure to say new words. A changed view of a contract is a change in commitment; it is not, by itself, moral reform. A captive can cooperate for months without either change.",
           },
         ],
         outro:
-          "Most trouble starts when the table logs a captive in the first state and plays them as if they were in the third. Naming the state out loud, even briefly, realigns what everyone expects the next scene to prove.",
+          "Use these as separate questions, and update your read as motives, circumstances, and player choices change.",
       },
       {
         kind: "list",
         heading: "What a social check can and cannot change",
         intro:
-          "Use the rules of the game you are running. In D&D, a Charisma check influences a creature that can hear and understand the approach; it does not compel belief. Apply that limit plainly:",
+          "Use the procedure for the game and edition you are running. A check does not automatically rewrite convictions or establish loyalty:",
         items: [
           {
             term: "A high roll improves the offer, not the person",
-            text: "A strong Persuasion roll can make a request sound reasonable, lower the price of a limited favour, or convince a wary captive that the party will keep a stated promise. It cannot make an artificer stop believing her contract binds her, or make a captive forget that the party threatened to kill her an hour ago.",
+            text: "A strong Persuasion roll can make a request sound reasonable, lower the price of a limited favour, or convince a wary captive that the party will keep a stated promise. It does not automatically rewrite an artificer's convictions about her contract or erase a captive's memory of threats.",
           },
           {
             term: "Intimidation buys compliance with an expiry date",
@@ -61,7 +61,7 @@ export const howDoIHandlePlayersWhoKeepTryingToRecruitDefeatedEnemies: AnswerCon
           },
           {
             term: "Repeated rolls are not repeated chances to wear someone down",
-            text: "If the circumstances have not changed, another Persuasion roll is the same request with different dice. Ask what is new: a better offer, new information, proof that a promise was kept, time spent treating the captive fairly, or a change in who holds power. Let the new fact, not the reroll, open the next check.",
+            text: "Follow your game's procedure for another attempt. When it allows one, ask what has changed: a better offer, new information, proof that a promise was kept, or a shift in who holds power.",
           },
           {
             term: "Set the boundary before the roll",
@@ -73,7 +73,7 @@ export const howDoIHandlePlayersWhoKeepTryingToRecruitDefeatedEnemies: AnswerCon
         kind: "list",
         heading: "A short NPC decision card",
         intro:
-          "For any captive the party wants to keep, note these seven lines before the next session. Short phrases are enough. The card is what you consult when an opportunity appears, so the decision comes from the fiction rather than from a script you wrote to punish or reward the party:",
+          "For any captive the party keeps, jot down these seven prompts. Treat the likely move as a provisional read: when an opening appears, reassess it against current motives, circumstances, and what the players have done. The card guides play; it does not script it.",
         items: [
           {
             term: "Wants",
@@ -92,8 +92,8 @@ export const howDoIHandlePlayersWhoKeepTryingToRecruitDefeatedEnemies: AnswerCon
             text: "The limited help fear or payment can reliably produce. March without resisting, answer direct questions, stay silent, carry supplies, point out one danger.",
           },
           {
-            term: "Will never do without a genuine change",
-            text: "The line pressure alone will not cross. Attack their employer, betray a named person, break a sworn contract, lead the party to their own kin. Write the line before the party tests it.",
+            term: "Line pressure alone is unlikely to cross",
+            text: "An action they are unlikely to take without a genuine change: attack their employer, betray a named person, break a sworn contract, lead the party to their own kin.",
           },
           {
             term: "What could earn trust",
@@ -101,7 +101,7 @@ export const howDoIHandlePlayersWhoKeepTryingToRecruitDefeatedEnemies: AnswerCon
           },
           {
             term: "Likely move when an opportunity appears",
-            text: "What they will probably do when nobody is watching. Run, hide, bargain with the other side, warn a friend, stay neutral, help once and leave. Decide this from the lines above, not in the moment.",
+            text: "What they might do when an opening appears. Reassess as the situation changes; unexpected player choices can change the likely move.",
           },
         ],
       },
@@ -141,24 +141,20 @@ export const howDoIHandlePlayersWhoKeepTryingToRecruitDefeatedEnemies: AnswerCon
         kind: "example",
         heading: "At the dragon's lair: three signposted outcomes",
         paragraphs: [
-          "The party approaches a dragon's lair with two captives in tow. The goblin wizard fled an earlier fight, was tracked, captured, and has marched with the party under threat of death. The lawful evil artificer serves the dragon under a contract she has described, more than once, as binding. She has refused to discuss breaking it. Both have asked to be released. Neither has been offered freedom, payment, or a deal they asked for. The players expect help in the fight. Run each captive from her decision card, not from a single rule about evil NPCs.",
+          "The party approaches a dragon's lair with two captives. The goblin wizard was captured after fleeing and has marched under threat; the artificer serves the dragon under a binding contract. Both asked for release, and neither agreed to fight. The artificer's contract forbids attacking the dragon but permits neutral guidance to the entrance. No bargain has been offered yet, though the players expect help in the fight. Resolve each captive from her motives and the actual terms, not alignment alone.",
         ],
         items: [
           {
             term: "The artificer holds her contract",
-            text: "She will not help attack the dragon, and she has already said so in plainer terms: she asked to be left outside the lair, she corrected a player who called her an ally, and she kept her tools packed when the party handed out fight roles. If the party drags her inside and the dragon offers her a chance to prove loyalty, she takes the dragon's side or steps away from the party at the moment it matters. The clues were the refusals, the contract talk, and the request to leave. Her behaviour is consistent, not spiteful. She might still honour a narrower deal, for example staying neutral outside if the party releases her afterwards, because that deal does not require her to break the contract.",
+            text: "She has asked to be left outside, corrected a player who called her an ally, and kept her tools packed when fight roles were assigned. If left outside, she refuses to fight and keeps to herself. If the party forces her inside, she may step away or take the dragon's side only if she has a real chance to do so. Her refusals and contract made the risk clear. A bargain to guide the party to the entrance, stay out of the fight, and leave free with payment fits the contract she described.",
           },
           {
             term: "The goblin looks for the exit",
-            text: "She never agreed to fight a dragon. She agreed, under threat, not to run while the party was watching. Her card reads simply: wants freedom and safety, fears the dragon and the party in roughly equal measure, will march and stay quiet under pressure, will never volunteer for a dragon fight. At the lair she tries to slip away in the confusion, hides rather than casting for either side, or freezes until the danger passes. That is not a betrayal scene. It is a frightened prisoner acting on the only goal she has shown the party since capture.",
+            text: "She never agreed to fight a dragon. If she is unbound and a distracted guard or nearby exit gives her a chance, she slips away; if still restrained or watched, she hides or freezes rather than acting for either side. A bargain for safe release and payment may keep her neutral, but healing alone does not make her risk a spell for the party.",
           },
           {
             term: "What changes if the party earned it",
-            text: "Suppose that earlier the party healed the goblin without demanding service in return, returned the artificer's tools as a sign of good faith, and negotiated a written, limited deal: guide us to the lair entrance, stay out of the fight, and leave free with payment, whatever happens inside. Now the outcomes shift for reasons the players can point to. The goblin might stay neutral as agreed, warn the party about one trap she recognises, or even loose one spell against a common enemy before leaving. The artificer might keep the narrow bargain exactly because it lets her honour both the contract and the deal. Neither has become loyal. Both are responding to treatment and terms the party actually established.",
-          },
-          {
-            term: "Why it works",
-            text: "Each outcome was decided from wants, fears, loyalties, and stated lines, and each was visible before the fight. The players saw the artificer's refusals and the goblin's attempts to leave, and they saw what happened when a fair deal was offered instead. Nothing turns on alignment alone, and nothing requires the GM to plan a double-cross in advance. When an opportunity appears, you read the card and play the move that follows from it. The party can argue with that reading, and the argument itself shows the signals landed.",
+            text: "Suppose the party heals the goblin without asking for service, returns the artificer's tools, and offers both the same written deal: guide them to the entrance, stay out of the fight, then leave free with payment. The contract explicitly allows the artificer's neutral guidance, so she can honour both commitments. The goblin accepts for safety and payment and stays neutral; the healing may improve trust, but neither captive has become loyal. If the party later changes the terms or circumstances, reassess what each can and will do.",
           },
         ],
       },
@@ -170,19 +166,19 @@ export const howDoIHandlePlayersWhoKeepTryingToRecruitDefeatedEnemies: AnswerCon
         items: [
           {
             term: "Let the motive decide the move",
-            text: "When the moment comes, ask what this NPC wants most and what this opening lets them do about it. Fleeing suits a captive who wants freedom. Warning the dragon suits one whose loyalty or fear points that way. Staying quiet suits one who wants to survive whoever wins. If you cannot answer from the card, you are improvising a twist, so pause and check the card first.",
+            text: "Use the card to predict what this opening makes possible, then update that prediction for the current situation and the party's choices. A decision that follows established motives can still surprise you.",
           },
           {
             term: "Telegraph before the decisive scene",
-            text: "Use the scenes you already have. A captive who will not fight says so at camp. One who fears an employer flinches at their name or asks what happens if they are seen helping. One who plans to run tests the rope, studies the road, or asks to be left behind. The party may ignore the signs, and that is their choice, but the signs have to be there to ignore.",
+            text: "Use camp scenes to show a refusal, a flinch at the employer's name, a question about consequences, a tested rope, or attention to the road. These signals help the party judge risk; their choices can still change what follows.",
           },
           {
             term: "Do not make every captive betray the party",
-            text: "A table where every prisoner stabs the party in the back teaches players to kill captives, which helps nobody. Pragmatic survivors keep bargains that protect them. A mercenary may serve honourably until the contract ends and then leave without malice. An enemy who hates the party's foe more than the party may help once, for their own reasons, and depart. Variety is what makes any single betrayal readable when it does happen.",
+            text: "Captives may flee, keep a useful bargain, stay neutral, or help against a shared threat if doing so serves them. Betrayal is one possible response, not the default.",
           },
           {
             term: "Different captives answer differently",
-            text: "The artificer treats her contract as a fact about who she is; pressure does not dissolve it, and she may respect a party that recognises the line even while refusing their larger request. The goblin treats the party as weather: dangerous, temporary, to be survived and then avoided. Running both from the same evil NPC script erases the distinction the players spent scenes discovering. Keep the answers separate, and let the party learn that reading the person works better than reading the alignment line. Alignment describes tendencies. It does not settle what a given person will do on a given night, and it does not make change impossible for anyone, only uneven and rarely instant.",
+            text: "The artificer treats her contract as binding; the goblin wants to survive and get away. Alignment may suggest tendencies, but it does not decide either person's action.",
           },
         ],
       },
@@ -198,14 +194,14 @@ export const howDoIHandlePlayersWhoKeepTryingToRecruitDefeatedEnemies: AnswerCon
         kind: "checklist",
         heading: "Before you bring a captive into the next big scene",
         intro:
-          "Run through this while the party is still travelling, not once initiative is rolled:",
+          "Before the next big scene, check the card and the current fiction:",
         items: [
-          "Write the seven-line decision card for each captive the party is keeping: wants, fears, loyalty owed, what pressure produces, the line they will not cross, what could earn trust, and their likely move when an opening appears.",
-          "Name each captive's current state out loud to yourself: captured, temporarily cooperating, genuinely loyal, or morally changed. Play the state they are in.",
+          "What does the card suggest, and what has changed since you wrote it?",
+          "Are captivity and cooperation both present? Have loyalty or convictions changed independently?",
           "Check what the party has actually offered or done: a kept promise, fair treatment, payment, release, or only threats. Let the captive's trust reflect that record.",
           "Before any social check, state the narrow deal on the table and the line that is not being rolled for. Roll only where the outcome is genuinely open.",
           "Plant or replay one clear signal of risk before the decisive scene: a refusal, a request to leave, contract talk, camp behaviour, or a tested rope.",
-          "Decide each captive's likely move from the card now, including the neutral and helpful options, so nobody betrays or rescues the party by default.",
+          "What options are physically possible from their location, restraints, and the party's actions?",
           "If interrogations are eating the session, agree with the players how repeated attempts without new facts will be resolved, and what captivity content stays off screen.",
         ],
       },
@@ -214,7 +210,7 @@ export const howDoIHandlePlayersWhoKeepTryingToRecruitDefeatedEnemies: AnswerCon
       heading: "Keep each captive's motives where you can find them",
       paragraphs: [
         "The decision card only helps if you can find it when the lair door opens. In Codex Cryptica, keep the card on the NPC's record and link the captive to the party, to the employer or dragon they serve, and to the location where they were captured. The links make divided loyalty visible at a glance: one glance shows who this person owes, who is pressuring them, and which promises the party has actually made.",
-        "After the session, update the state field in your notes from cooperating to loyal, gone, or still hostile, and note the promise or slight that caused the change. The next captive conversation then starts from the record, not from memory.",
+        "After the session, update the card with any changed terms, commitments, or circumstances. The next captive conversation then starts from the record, not from memory.",
       ],
       linkText: "Generate an NPC",
       href: "/generators/npc",
@@ -270,7 +266,7 @@ export const howDoIHandlePlayersWhoKeepTryingToRecruitDefeatedEnemies: AnswerCon
       ],
       userJob: "adopt-workflow",
       uniqueValue:
-        "A four-state model for captives (surrendered, cooperating, loyal, morally changed), a seven-line NPC decision card, and a signposted dragon lair example showing how contract-bound and freedom-seeking captives act differently without a scripted betrayal.",
+        "A provisional NPC decision card and a signposted dragon-lair example show how captivity, cooperation, loyalty, and changed convictions can overlap while contract-bound and freedom-seeking captives respond to feasible choices and explicit bargains.",
       relatedIntents: [
         "answer-improvise-npcs-in-dnd",
         "answer-make-roleplay-more-engaging",
@@ -288,13 +284,18 @@ export const howDoIHandlePlayersWhoKeepTryingToRecruitDefeatedEnemies: AnswerCon
           reason:
             "That answer covers structuring social scenes around a meaningful choice; this answer applies motive and boundary work specifically to captives the party wants to recruit, including contracts, coercion, and telegraphed betrayal risk.",
         },
+        {
+          with: "answer-run-stealth-mission-in-tabletop-rpg",
+          reason:
+            "The stealth-mission answer guides covert movement and detection; this answer covers captive motives, bargains, and how an NPC may respond when the party approaches danger.",
+        },
       ],
     },
     seo: {
       title:
         "How do I handle players recruiting defeated enemies? | Codex Cryptica",
       description:
-        "Surrender is not allegiance. Handle captive recruitment fairly: track motives, telegraph risk, and let Persuasion change behaviour, not belief.",
+        "Surrender is not allegiance. Handle captive recruitment fairly: track motives, signal risk, and remember a check does not automatically rewrite convictions or establish loyalty.",
       image:
         "https://assets.codexcryptica.com/og/how-do-i-handle-players-who-keep-trying-to-recruit-defeated-enemies.jpg",
       imageAlt:

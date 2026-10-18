@@ -309,6 +309,11 @@ export const howDoIRunAStealthMissionInATabletopRpg: AnswerConfigInput = {
         reason:
           "The rogue and scout answer handles brief reconnaissance that returns information to the group; this answer handles a sustained stealth mission where every character needs a role and detection is gradual.",
       },
+      {
+        with: "answer-recruit-defeated-enemies",
+        reason:
+          "This answer covers covert movement, detection, and escalating mission risk; the captive-recruitment answer covers an NPC's motives, bargains, and feasible choices when the party approaches danger.",
+      },
     ],
   },
   seo: {
