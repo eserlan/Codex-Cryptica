@@ -63,7 +63,7 @@ export const howDoITrackMonstersInitiativeAndHitPointsInDndCombat: AnswerConfigI
           },
           {
             term: "Codex Cryptica's battlemap, tokens and initiative list",
-            text: "In Codex Cryptica's Map view, one creature entity holds the shared reference while each placed or cloned token on the battlemap stands for an individual combatant. Double-click a token with VTT enabled to open its own health bar control and raise or lower that creature's HP independently, or right-click to mark statuses such as Dead, Stunned, Prone, Poisoned or Invisible. Select a token and choose Add to Initiative to track the turn order and rounds in the Combat sidebar, pop the initiative list into a separate window for a second screen, open the linked creature entity from the token details or initiative row when you need a save or attack, and save an Encounter Snapshot if play pauses mid-fight.",
+            text: "In Codex Cryptica's Map view, place numbered tokens on the battlemap and link them to creature entities. Tokens linked to the same entity share its HP, so use a separate linked entity for each creature that needs its own HP, or track HP on paper or a spreadsheet. With VTT enabled, double-click a token to open its health bar and change the linked entity's HP; right-click to mark statuses such as Dead, Stunned, Prone, Poisoned or Invisible. Select a token and choose Add to Initiative to track the turn order and rounds in the Combat sidebar, pop the initiative list into a separate window for a second screen, open the linked creature entity from the token details or initiative row when you need a save or attack, and save an Encounter Snapshot if play pauses mid-fight.",
           },
         ],
       },
