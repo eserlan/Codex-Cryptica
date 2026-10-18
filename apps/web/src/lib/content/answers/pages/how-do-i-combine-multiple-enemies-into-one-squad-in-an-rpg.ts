@@ -236,6 +236,7 @@ export const howDoICombineMultipleEnemiesIntoOneSquadInAnRpg: AnswerConfigInput 
       "how-do-i-keep-players-engaged-during-other-players-turns-in-combat",
       "what-rpg-should-i-use-for-tactical-combat",
       "how-do-you-run-dnd-for-a-large-group-of-players",
+      "how-do-i-track-monsters-initiative-and-hit-points-in-dnd-combat",
     ],
     discovery: {
       id: "answer-combine-enemies-into-squad",

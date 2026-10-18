@@ -185,6 +185,7 @@ export const howDoIKeepPlayersEngagedDuringOtherPlayersTurnsInCombat: AnswerConf
       "what-can-i-do-on-my-turn-in-dnd-combat",
       "how-do-i-read-a-dnd-character-sheet-as-a-beginner",
       "how-do-i-combine-multiple-enemies-into-one-squad-in-an-rpg",
+      "how-do-i-track-monsters-initiative-and-hit-points-in-dnd-combat",
     ],
     discovery: {
       id: "answer-player-engagement-combat-turns",

@@ -239,6 +239,7 @@ export const howDoIPrepareADndSession: AnswerConfigInput = {
     "what-should-a-new-dnd-player-know-before-their-first-game",
     "how-do-i-plan-story-arcs-for-an-rpg-campaign",
     "what-are-the-pros-and-cons-of-becoming-a-dungeon-master",
+    "how-do-i-track-monsters-initiative-and-hit-points-in-dnd-combat",
   ],
   discovery: {
     id: "answer-prepare-dnd-session",
