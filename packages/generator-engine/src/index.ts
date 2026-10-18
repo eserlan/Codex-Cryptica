@@ -537,6 +537,16 @@ export {
   type NewsSheetPrompt,
 } from "./public-news-sheet";
 export {
+  generateDungeonStaged,
+  checkFoundation as checkDungeonFoundation,
+  checkSectors as checkDungeonSectors,
+  checkFactions as checkDungeonFactions,
+  checkFactionGrounding as checkDungeonFactionGrounding,
+  type DungeonStagedDeps,
+  type DungeonStagedResult,
+  type DungeonStagedStats,
+} from "./dungeon-staged";
+export {
   buildDungeonPrompt,
   buildDungeonRetryMessage,
   collectSessionNames,

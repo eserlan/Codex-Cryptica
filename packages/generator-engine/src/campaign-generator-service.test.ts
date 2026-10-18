@@ -915,6 +915,7 @@ describe("AI policy (US2)", () => {
           purpose: "Forge for a Great Weapon",
           currentState: "Active Monster Lair",
           scale: "Small Lair (2 Sectors)",
+          staged: false,
         },
       }),
     );
@@ -1178,7 +1179,7 @@ describe("AI policy (US2)", () => {
       run("dungeon", {
         useAI: true,
         themeId: "fantasy",
-        options: { scale: "Small Lair (2 Sectors)" },
+        options: { scale: "Small Lair (2 Sectors)", staged: false },
         interaction: {
           input: "Generate the next delve.",
           previousInteractionId: "interaction-previous",
@@ -1292,7 +1293,7 @@ describe("AI policy (US2)", () => {
       run("dungeon", {
         useAI: true,
         themeId: "fantasy",
-        options: { scale: "Small Lair (2 Sectors)" },
+        options: { scale: "Small Lair (2 Sectors)", staged: false },
       }),
     );
 
@@ -2563,5 +2564,126 @@ describe("council-vote streamed generation", () => {
       type: "draft",
       draft: { sourceGeneratorId: "council-vote" },
     });
+  });
+});
+
+describe("staged dungeon generation", () => {
+  const stageReply = (message: string) => {
+    const ids = [...message.matchAll(/sector-\d+/g)].map((m) => m[0]);
+    const plan = [...new Set(ids)];
+    if (message.includes("Stage 1 of 3")) {
+      return {
+        title: "The Bellfound Depths",
+        summary: "s",
+        throughline: "t",
+        history: "h",
+        currentState: "c",
+        signatureFeature: "sf",
+        secret: "x",
+        sectorBriefs: plan.map((id) => ({ id, brief: "b" })),
+      };
+    }
+    if (message.includes("Stage 2 of 3")) {
+      return {
+        sectors: plan.map((id, i) => ({
+          id,
+          name: `Hollow ${i + 1}`,
+          description: "d",
+          stockDetail: `idol ${i + 1}`,
+        })),
+        hazards: ["steam"],
+        treasures: ["signet"],
+        hooks: ["bounty"],
+      };
+    }
+    const f = (name: string, id: string, goal: string) => ({
+      name,
+      identity: "i",
+      virtue: "Patient",
+      vice: "Greedy",
+      goal,
+      drive: "x",
+      obstacle: "steam blocks the way",
+      origin: "o",
+      belief: "b",
+      territorySectorIds: [id],
+      strength: "gear",
+      leader: { name: `${name} Lead`, description: "d" },
+      notable: { name: `${name} Second`, description: "d" },
+      relationship: "stalls",
+    });
+    return {
+      factionSituation: "Both want it.",
+      factions: [
+        f("Lantern Wrights", plan[0], "Cap the steam"),
+        f("Weir Wardens", plan[1], "Seal the signet away"),
+      ],
+    };
+  };
+
+  it("builds the delve in three calls and carries the request context", async () => {
+    const complete = vi.fn<AIGeneratorGateway["complete"]>(async (message) =>
+      JSON.stringify(stageReply(message)),
+    );
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete },
+    });
+    const generated = await svc.generateDraft(
+      run("dungeon", {
+        useAI: true,
+        themeId: "fantasy",
+        instructions: "Keep it damp.",
+        options: { scale: "Small Lair (2 Sectors)" },
+      }),
+    );
+    expect(complete).toHaveBeenCalledTimes(3);
+    expect(complete.mock.calls[0][0]).toContain("Keep it damp.");
+    expect(generated.title).toBe("The Bellfound Depths");
+    expect(generated.content).toContain("Hollow 1");
+  });
+
+  it("falls back to the one-pass route when a stage is unusable", async () => {
+    const complete = vi.fn<AIGeneratorGateway["complete"]>(async () => "nope");
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete },
+    });
+    const generated = await svc.generateDraft(
+      run("dungeon", {
+        useAI: true,
+        themeId: "fantasy",
+        options: { scale: "Small Lair (2 Sectors)" },
+      }),
+    );
+    // Stage 1 (2 attempts) fails, then the one-pass route runs and local output ships.
+    expect(complete.mock.calls.length).toBeGreaterThan(2);
+    expect(generated.title).toBeTruthy();
+  });
+
+  it("keeps a continuity thread on the one-pass route", async () => {
+    const complete = vi.fn<AIGeneratorGateway["complete"]>(async () => "nope");
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete },
+    });
+    await svc.generateDraft(
+      run("dungeon", {
+        useAI: true,
+        themeId: "fantasy",
+        options: { scale: "Small Lair (2 Sectors)" },
+        interaction: {
+          input: "Generate the next delve.",
+          previousInteractionId: "interaction-previous",
+          store: true,
+        },
+      }),
+    );
+    expect(complete.mock.calls[0][1]).not.toContain(
+      "this is the foundation stage",
+    );
+    expect(complete.mock.calls[0][2]?.interaction?.previousInteractionId).toBe(
+      "interaction-previous",
+    );
   });
 });

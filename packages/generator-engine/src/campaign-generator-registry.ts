@@ -1094,10 +1094,13 @@ function generateDungeon(request: GeneratorRunRequest): GeneratorOutput {
 export function buildCampaignDungeonPrompt(request: GeneratorRunRequest) {
   const options = dungeonOptions(request);
   const prompt = buildDungeonPrompt(options);
+  const contextPrefix = contextChain(request);
   return {
     ...prompt,
     options,
-    userMessage: `${contextChain(request)}
+    /** The vault/naming/instructions chain, for staged stages to carry too. */
+    contextPrefix,
+    userMessage: `${contextPrefix}
 
 ${prompt.userMessage}`,
   };

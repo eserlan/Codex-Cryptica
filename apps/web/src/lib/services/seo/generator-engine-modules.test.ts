@@ -125,6 +125,8 @@ describe("generator engine modules", () => {
           themeId: "fantasy",
           scale: "Small Lair (1-2 Sectors)",
           useAI: true,
+          // These cases cover the one-pass baseline route.
+          staged: false,
         }),
       clean: dungeonResponse("The Quiet Archive"),
       incomplete: dungeonResponse("The First Archive", true),
@@ -181,4 +183,104 @@ describe("generator engine modules", () => {
       });
     },
   );
+  describe("staged dungeon generation", () => {
+    function stageReply(message: string) {
+      const plan = [
+        ...new Set([...message.matchAll(/sector-\d+/g)].map((m) => m[0])),
+      ];
+      if (message.includes("Stage 1 of 3")) {
+        return {
+          title: "The Bellfound Depths",
+          summary: "s",
+          throughline: "t",
+          history: "h",
+          currentState: "c",
+          signatureFeature: "sf",
+          secret: "x",
+          sectorBriefs: plan.map((id) => ({ id, brief: "b" })),
+        };
+      }
+      if (message.includes("Stage 2 of 3")) {
+        return {
+          sectors: plan.map((id, i) => ({
+            id,
+            name: `Hollow ${i + 1}`,
+            description: "d",
+            stockDetail: `idol ${i + 1}`,
+          })),
+          hazards: ["steam"],
+          treasures: ["signet"],
+          hooks: ["bounty"],
+        };
+      }
+      const faction = (name: string, id: string, goal: string) => ({
+        name,
+        identity: "i",
+        virtue: "Patient",
+        vice: "Greedy",
+        goal,
+        drive: "x",
+        obstacle: "steam blocks the way",
+        origin: "o",
+        belief: "b",
+        territorySectorIds: [id],
+        strength: "gear",
+        leader: { name: `${name} Lead`, description: "d" },
+        notable: { name: `${name} Second`, description: "d" },
+        relationship: "stalls",
+      });
+      return {
+        factionSituation: "Both want it.",
+        factions: [
+          faction("Lantern Wrights", plan[0], "Cap the steam"),
+          faction("Weir Wardens", plan[1], "Seal the signet away"),
+        ],
+      };
+    }
+
+    const options = {
+      themeId: "fantasy",
+      scale: "Small Lair (1-2 Sectors)",
+      useAI: true,
+    };
+
+    it("builds the delve in three calls by default", async () => {
+      const engine = new GeneratorEngineSpecialized(clientManager as never);
+      const runModel = spyOnRunModel(engine).mockImplementation(
+        async (_instruction, message) => JSON.stringify(stageReply(message)),
+      );
+
+      const output = await engine.generateDungeon(options);
+
+      expect(runModel).toHaveBeenCalledTimes(3);
+      expect(output.title).toBe("The Bellfound Depths");
+    });
+
+    it("falls back to the one-pass route when a stage cannot be used", async () => {
+      const engine = new GeneratorEngineSpecialized(clientManager as never);
+      const runModel = spyOnRunModel(engine).mockResolvedValue(
+        dungeonResponse("The Quiet Archive"),
+      );
+
+      const output = await engine.generateDungeon(options);
+
+      // Two failed foundation attempts, then the clean one-pass response.
+      expect(runModel).toHaveBeenCalledTimes(3);
+      expect(output.title).toBe("The Quiet Archive");
+    });
+
+    it("stops without output when aborted", async () => {
+      const engine = new GeneratorEngineSpecialized(clientManager as never);
+      const controller = new AbortController();
+      const runModel = spyOnRunModel(engine).mockImplementation(async () => {
+        controller.abort();
+        return "{}";
+      });
+
+      await expect(
+        engine.generateDungeon({ ...options, signal: controller.signal }),
+      ).rejects.toMatchObject({ name: "AbortError" });
+      expect(runModel).toHaveBeenCalledTimes(1);
+    });
+  });
 });

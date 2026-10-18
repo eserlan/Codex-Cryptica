@@ -25,6 +25,7 @@ import {
   buildDungeonRetryMessage,
   parseDungeonResponseDetailed,
 } from "./public-dungeon";
+import { generateDungeonStaged } from "./dungeon-staged";
 import { generateTomeTwoPass } from "./public-tome";
 import { generateCampaignHeist } from "./campaign-heist-generation";
 import { generateCouncilVoteWithAI } from "./campaign-council-vote-generation";
@@ -101,6 +102,14 @@ export class CampaignGeneratorAIGenerationService extends CampaignGeneratorLangu
   ): Promise<GeneratedDraft | null> {
     if (!this.aiGateway) return null;
     const prompt = buildCampaignDungeonPrompt(request);
+    // `options.staged === false` forces the one-pass route (baseline, tests).
+    // A continuity thread stays on the one-pass route: staged calls cannot
+    // carry it, so they would drop the thread and its follow-ups.
+    const staged =
+      request.options?.staged === false || request.interaction
+        ? null
+        : await this.generateDungeonStaged(generator, request, prompt);
+    if (staged) return staged;
     const interaction = this.buildDungeonInteraction(
       request,
       prompt.userMessage,
@@ -130,6 +139,37 @@ export class CampaignGeneratorAIGenerationService extends CampaignGeneratorLangu
         normalizeDungeonOutput(resolved.output),
         request,
       );
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Staged route (foundation, sectors, factions, coherence). Resolves `null`
+   * when a stage is unusable so the one-pass route can run; staged calls do
+   * not use the interaction thread or report prompt metrics.
+   */
+  private async generateDungeonStaged(
+    generator: CampaignGeneratorDefinition,
+    request: GeneratorRunRequest,
+    prompt: ReturnType<typeof buildCampaignDungeonPrompt>,
+  ): Promise<GeneratedDraft | null> {
+    try {
+      const result = await generateDungeonStaged(
+        prompt.resolved,
+        prompt.options,
+        {
+          contextPrefix: prompt.contextPrefix,
+          complete: async (instruction, message) =>
+            completeText(await this.aiGateway!.complete(message, instruction)),
+        },
+      );
+      return result
+        ? generator.mapOutputToDraft(
+            normalizeDungeonOutput(result.output),
+            request,
+          )
+        : null;
     } catch {
       return null;
     }
