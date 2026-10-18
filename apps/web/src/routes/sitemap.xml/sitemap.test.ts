@@ -89,6 +89,7 @@ describe("Sitemap.xml API Endpoint", () => {
     );
     expect(xml).toContain("https://codexcryptica.com/topics/puzzles");
     expect(xml).toContain("https://codexcryptica.com/topics/pirates");
+    expect(xml).toContain("https://codexcryptica.com/topics/solo-rpg");
     expect(xml).toContain("https://codexcryptica.com/topics/dnd");
   });
 });

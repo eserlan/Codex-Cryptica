@@ -91,6 +91,7 @@ describe("/explore route", () => {
       "/topics/heists",
       "/topics/puzzles",
       "/topics/pirates",
+      "/topics/solo-rpg",
       "/topics/dnd",
       "/topics/dnd-beginners",
     ]);
@@ -98,6 +99,7 @@ describe("/explore route", () => {
       "/topics/heists",
       "/topics/puzzles",
       "/topics/pirates",
+      "/topics/solo-rpg",
       "/topics/dnd",
       "/topics/dnd-beginners",
     ]) {
@@ -111,6 +113,7 @@ describe("/explore route", () => {
       "Heists",
       "Puzzles",
       "Pirates & High Seas",
+      "Solo RPGs",
       "Running D&D",
       "D&D for Beginners",
     ]);

@@ -83,6 +83,8 @@ import { howDoYouHandleCharacterDeathInATabletopRpg } from "./how-do-you-handle-
 import { howDoYouHandlePlayersGoingOffScriptAsAGm } from "./how-do-you-handle-players-going-off-script-as-a-gm";
 import { howDoYouHelpPlayersRememberWhatHappenedInATtrpgCampaign } from "./how-do-you-help-players-remember-what-happened-in-a-ttrpg-campaign";
 import { howDoYouImproviseNpcsOnTheSpot } from "./how-do-you-improvise-npcs-on-the-spot";
+import { howDoYouKeepASoloRpgFromFeelingRandom } from "./how-do-you-keep-a-solo-rpg-from-feeling-random";
+import { howDoYouKeepNotesForASoloRpgCampaign } from "./how-do-you-keep-notes-for-a-solo-rpg-campaign";
 import { howDoYouKeepTrackOfNpcsInALongCampaign } from "./how-do-you-keep-track-of-npcs-in-a-long-campaign";
 import { howDoYouKeepTrackOfTimeInATabletopCampaign } from "./how-do-you-keep-track-of-time-in-a-tabletop-campaign";
 import { howDoYouMakeABossFightMemorableInATabletopRpg } from "./how-do-you-make-a-boss-fight-memorable-in-a-tabletop-rpg";
@@ -93,6 +95,7 @@ import { howDoYouMakeTravelInterestingInATabletopRpg } from "./how-do-you-make-t
 import { howDoYouManageACampaignTimelineInAnRpg } from "./how-do-you-manage-a-campaign-timeline-in-an-rpg";
 import { howDoYouOrganiseNpcRelationships } from "./how-do-you-organise-npc-relationships";
 import { howDoYouOrganiseRpgCampaignNotes } from "./how-do-you-organise-rpg-campaign-notes";
+import { howDoYouPlayATabletopRpgByYourself } from "./how-do-you-play-a-tabletop-rpg-by-yourself";
 import { howDoYouPrepAWeeklyRpgSessionQuickly } from "./how-do-you-prep-a-weekly-rpg-session-quickly";
 import { howDoYouPrepareASandboxRpgCampaign } from "./how-do-you-prepare-a-sandbox-rpg-campaign";
 import { howDoYouRecapATtrpgSession } from "./how-do-you-recap-a-ttrpg-session";
@@ -136,6 +139,7 @@ import { whatCanPlayersActuallyBuyAndSellInAFantasySettlement } from "./what-can
 import { whatDoINeedToBringToMyFirstDndGame } from "./what-do-i-need-to-bring-to-my-first-dnd-game";
 import { whatDoYouDoWithMurderHobosInAnRpgCampaign } from "./what-do-you-do-with-murder-hobos-in-an-rpg-campaign";
 import { whatIsAPointCrawl } from "./what-is-a-point-crawl";
+import { whatIsASoloRpgOracle } from "./what-is-a-solo-rpg-oracle";
 import { whatIsTheDifferenceBetweenGodsAndDemonLordsInAFantasyWorld } from "./what-is-the-difference-between-gods-and-demon-lords-in-a-fantasy-world";
 import { whatKindOfShipShouldAPirateCrewStartWith } from "./what-kind-of-ship-should-a-pirate-crew-start-with";
 import { whatKindOfShipShouldASciFiRpgPartyStartWith } from "./what-kind-of-ship-should-a-sci-fi-rpg-party-start-with";
@@ -254,6 +258,8 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoYouHandlePlayersGoingOffScriptAsAGm,
     howDoYouHelpPlayersRememberWhatHappenedInATtrpgCampaign,
     howDoYouImproviseNpcsOnTheSpot,
+    howDoYouKeepASoloRpgFromFeelingRandom,
+    howDoYouKeepNotesForASoloRpgCampaign,
     howDoYouKeepTrackOfNpcsInALongCampaign,
     howDoYouKeepTrackOfTimeInATabletopCampaign,
     howDoYouMakeABossFightMemorableInATabletopRpg,
@@ -264,6 +270,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoYouManageACampaignTimelineInAnRpg,
     howDoYouOrganiseNpcRelationships,
     howDoYouOrganiseRpgCampaignNotes,
+    howDoYouPlayATabletopRpgByYourself,
     howDoYouPrepAWeeklyRpgSessionQuickly,
     howDoYouPrepareASandboxRpgCampaign,
     howDoYouRecapATtrpgSession,
@@ -307,6 +314,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     whatDoINeedToBringToMyFirstDndGame,
     whatDoYouDoWithMurderHobosInAnRpgCampaign,
     whatIsAPointCrawl,
+    whatIsASoloRpgOracle,
     whatIsTheDifferenceBetweenGodsAndDemonLordsInAFantasyWorld,
     whatKindOfShipShouldAPirateCrewStartWith,
     whatKindOfShipShouldASciFiRpgPartyStartWith,

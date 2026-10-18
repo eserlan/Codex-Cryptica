@@ -289,6 +289,9 @@ Change how a Stat Sheet looks without touching its data. Click Presentations to 
 ### Hexcrawl & Hex Grids
 Run overland exploration with point-to-point hex grids. Choose pointy-topped or flat-topped orientation, toggle in-cell coordinates, snap tokens and pins to hex centers, and reveal or hide fog of war by hex. Rulers measure travel distance directly in hexes.
 
+### Hex Crawl mode
+Click a hex with no pin or token to open its panel. Track its terrain, your notes and whether the party has explored it. Only you see this: players and guests never see hex notes, terrain, drafts or explored markers.
+
 ### Point Crawl Generator
 Design interconnected adventure maps with named locations, explicit travel routes, terrain hazards, and secrets. Preview the interactive map, drag nodes to customize layout, and export clean SVG or PNG diagrams. Saving creates Location entities with route lore and a master Point Crawl overview Note.
 
@@ -978,6 +981,10 @@ Use the measurement ruler (the ruler switch at the bottom left of the map) on a 
 - Dragging between two locations calculates the discrete hex distance using axial cube mathematics.
 - The measurement label displays both the total hex count and converted travel distance (for example, `4 hexes (24 mi)`).
 
+### Hex Crawl mode
+
+For hex crawls with terrain, notes, explored hexes and what lies in each hex, turn on Hex Crawl mode in Grid Settings. See [Hex Crawl Mode](/help#help/hex-crawl-mode) for the hex panel, Explore and the privacy rules. Players and guests never see hex notes, terrain, drafts or explored markers.
+
 ---
 
 ### SOLO MAP PLAY
@@ -1497,6 +1504,124 @@ Use the **ruler switch** at the bottom left of the map. Click the map to set the
 ## Pings
 
 To point something out, right-click and choose **Ping Here**, or choose **Ping Token** on a token. Everyone connected sees the ping.
+
+---
+
+### HEX CRAWL MODE
+
+**Hex Crawl mode** adds a notebook to every hex on a hex grid. You can record terrain, write notes, mark hexes as explored, and draft what lies in a hex. Turn it on per map, in the grid settings. It only works on maps with a hex grid.
+
+Only the Game Master sees any of it. Players and guests never see hex notes, terrain, drafts or explored markers.
+
+## Turning on Hex Crawl mode
+
+1. Open the map and open **Grid Settings**. You can do this with the VTT open or closed, so you can prepare a map before a session.
+2. Choose **Hex (Pointy)** or **Hex (Flat)** as the grid type. The Hex Crawl mode switch only appears for hex grids.
+3. Turn on **Hex Crawl mode**.
+
+Turning Hex Crawl mode off keeps your hex data. Turning it back on brings it all back. Hex data is saved with the map, so it travels with the campaign, sync, backup, restore and export.
+
+To show terrain icons on the map, turn on **Terrain icons** in the map display options. They are off by default, and the setting is remembered on this device only.
+
+## The hex panel
+
+Click a hex on the map where there is no pin or token, and the hex panel opens for that hex. Clicking a pin or token still does what it did before.
+
+The panel shows, from top to bottom:
+
+- **The hex label**, in your map's label style, with its state (Unknown, Seen or Explored).
+- **Explore**, the main action. Use **Review discovery** if a draft is waiting.
+- **Terrain**, a picker with nine presets and a custom option.
+- **Your notes**, a text box for your own notes.
+- **AI-drafted**, a separate section for AI text, shown only when there is some.
+- **In this hex**, the entities pinned here, with **Attach entity** and **Create entity here**.
+- **Mark explored** or **Mark unexplored**, at the bottom.
+
+On a desktop the panel floats beside the map. On a phone it slides up from the bottom. Press **Escape** to close it. Focus goes back to whatever opened it.
+
+## Terrain and notes
+
+Pick a terrain for the hex: plains, forest, hills, mountains, swamp, desert, water, coast or tundra. For anything else, choose **Custom…** and type a name of up to 40 characters. **Clear** removes the terrain.
+
+Notes are free text. Write what you like about the hex: a ford that floods, a ruin with a cult in it, a good view. A hex keeps its record only while it has something in it. Clearing the terrain, the notes and the other details removes the record again.
+
+## Attaching and creating entities
+
+Entities pinned to a hex are listed under **In this hex**. Entities pinned before Hex Crawl mode was turned on also appear here. Choose one to open it.
+
+- **Attach entity** searches your vault. Choose an entity to pin it at the centre of the hex.
+- **Create entity here** asks for a type and a title, then creates the entity, pins it at the hex centre and opens it.
+
+## Go to hex and This hex
+
+**Go to hex** is in the map controls. Type a hex coordinate in your map's label style, such as `B03` or `01.04`, and press **Go**. The map centres on that hex and its panel opens. If the coordinate is not on the map, you see a short message and nothing opens.
+
+**This hex** is in the token and pin menus. Select a token or pin, then choose **This hex** to open the panel for the hex it stands in.
+
+## Unknown, Seen and Explored
+
+Every hex is in one of three states:
+
+- **Unknown** means the hex is hidden by fog of war and has not been explored.
+- **Seen** means the hex is showing through the fog, but nobody has been there.
+- **Explored** means the party has been there, or you marked it explored by hand.
+
+A hex counts as Seen when its centre is uncovered by fog. With fog off, every hex counts as Seen. Explored hexes stay explored when you fog them again.
+
+When a party token ends a move in a hex, that hex becomes Explored and the time is kept. Only the hex where the move ends counts, so a path across the map does not explore every hex it crosses. You can also mark any hex explored or unexplored by hand in the panel.
+
+Explored hexes show a small marker on the map, for you only. Each time a hex becomes Explored, the session journal records it with the hex label and terrain, using your usual journal settings.
+
+## Exploring a hex
+
+**Explore** drafts what is in a hex. The draft has six parts:
+
+- **Landmark**: a place or feature worth finding.
+- **Encounter**: something that happens or waits there.
+- **Hazard**: a danger in the hex.
+- **Secret**: something hidden.
+- **Faction presence**: which faction holds sway here.
+- **Atmosphere**: how the hex feels.
+
+Each part has a source badge, **AI-drafted** or **Rolled**. For each part you can:
+
+- **Keep** it, or **Save** it. A landmark is saved as a location and an encounter as an event by default, or as a note if you choose. Saved entities are AI-drafted and pinned at the hex centre.
+- **Regenerate** it. The other parts stay as they are.
+- **Discard** it.
+
+A landmark or encounter saves with a proposed link to the nearest location within two hexes. The link is ticked by default and is only created if it is still ticked when you save.
+
+Faction presence links to the faction whose name matches exactly, ignoring capitals. If there is no such faction, you can create one. Hazard, secret and atmosphere are added to **AI-drafted** notes. They never change **Your notes**.
+
+A draft stays on its hex, saved with the map, until every part is saved or discarded. Reopen the hex and you see the draft again. **Discard draft** removes all of it. **Cancel** stops a discovery in progress, and nothing is saved.
+
+### What is sent to the AI service
+
+Exploring sends this hex's terrain, notes and nearby lore to the AI service. Your full vault is never sent. Nearby lore means the hexes within two steps, the nearest locations and factions, the map's region, the entities already in the hex, and the campaign's basic context, all kept to a small size.
+
+Explore only sends anything when you ask for it, with AI enabled. The first time you explore with AI on, a short notice tells you this. Dismissing it is remembered on this device.
+
+### AI Disabled and terrain tables
+
+With **AI Disabled** turned on in Settings, Explore rolls on built-in terrain tables instead. You get the same six parts and can review and save them the same way. Custom terrain has no tables of its own, so general tables are used, and the panel tells you so. If an AI draft fails, you see a plain message with **Try again** and **Roll on terrain tables**.
+
+Explore is not available in a guest vault.
+
+## Hex crawling solo
+
+In solo play, with Hex Crawl mode on, the party moving into an unexplored hex offers Explore. The offer appears near the travel readout with **Explore** and **Not now**.
+
+The offer never starts on its own. **Not now** dismisses it and generates nothing. The hex stays Explored either way.
+
+## Your hex grid travels with the map
+
+The grid is saved with the map: type, size, offsets and label style. Maps that were set up on an older version keep their grid, and it is saved with the map the first time you open it.
+
+Hex records are placed on the grid. If you change the grid type or size, or move the map or refit the grid while there are hex records, the app asks first. The question says how many hex records would no longer line up with their hexes. **Cancel** leaves the grid as it was. **Change grid** applies the change. The app asks once for each session of changing the grid.
+
+## Players and guests never see hex notes
+
+Players and guests never see hex notes, terrain, drafts or explored markers. Connected players see the map and fog as they always have, and guest vaults and published bundles leave hex data out.
 
 ---
 
@@ -3106,10 +3231,11 @@ The **Point Crawl Generator** designs interconnected adventure maps made of name
 
 Every generated point crawl consists of:
 
-- **Locations**: Start locations, landmarks, settlements, crossroad hubs, hazard zones, discovery sites, and final destinations with environmental tags, encounters, and interactive discoveries.
+- **Locations**: 6–15 starts, landmarks, junctions, hazards, discovery sites, and destinations. Structural labels such as hub, chokepoint, secret, and optional describe the generated graph; hazards and obstacles appear as separate site traits.
 - **Routes & Exits**: Explicit paths between locations with travel times, terrain types, travel hazards, encounter chances, and optional passage requirements (such as climbing gear, tidal timing, or magical keys).
 - **Network Topology**: Verified navigable structure ensuring no orphaned branches, guaranteed path to the goal, and tactical navigation choices (loops, alternate branches, and optional secrets).
-- **Interactive Visual Preview**: Drag and rearrange nodes to adjust layout, inspect locations and route details, and export the diagram as standalone **SVG** or high-resolution **PNG**.
+- **Interactive Visual Preview**: Drag and rearrange nodes, inspect locations and route details from either direction, and copy or download the diagram as a high-resolution **PNG**.
+- **Adventure logic**: The overview records its objective, discoveries, outcomes, detour benefits, and any feasible countdown clock. Travel durations are structured and checked against a clock that starts at the crawl or a named location.
 
 ### Generating In-App
 
@@ -3117,7 +3243,7 @@ To create a point crawl directly inside your campaign vault:
 
 1. Open **Campaign Generators** (click the wand icon in the vault toolbar or select **Point Crawl Generator**).
 2. Choose a **Setting & Genre** (Fantasy, Grimdark, Sci-Fi, Cyberpunk, Post-Apocalyptic, etc.) or provide custom steering notes.
-3. Select your network scale: **Micro (5-7 nodes)** for quick delves or local fens, **Standard (8-12 nodes)** for regional adventures, or **Sprawling (13-18 nodes)** for large expeditions.
+3. Select a network size from 6 to 15 locations and choose a density: **Linear-leaning** targets N + 1 routes, **Balanced branching** targets about 1.35 routes per location, and **Highly interconnected** targets about 1.75 routes per location (capped at 24).
 4. Pick an **Environment / Topology** (Fen / Marshland, Mountain Pass, Underdark / Caverns, Derelict Space Hulk, Neon Megacity, Sunken Coast, etc.).
 5. Click **Generate Point Crawl**.
 
@@ -3125,10 +3251,10 @@ To create a point crawl directly inside your campaign vault:
 
 Once generated:
 
-- **Inspect Nodes**: Click any location on the map diagram to open its full dossier, encounters, clues, and outgoing paths.
+- **Inspect Nodes and Routes**: Click any location or route on the map to inspect its structural role, traits, encounters, clues, and direction-specific approach details.
 - **Rearrange & Tidy**: Drag nodes on the canvas to customize visual placement for your notes, or click **Reset Layout** to re-apply the auto-layout algorithm.
 - **Surgical Refinement**: Select any location or route and request AI refinements (e.g., _"Make the bridge guarded by troll mercenaries"_ or _"Add a hidden flooded tunnel"_).
-- **Export**: Click **Export SVG** or **Export PNG** in the diagram toolbar to download the visual map for player handouts or VTT display.
+- **Export**: Use the diagram toolbar to copy or download a PNG for player handouts or VTT display.
 
 ### Saving to Your Vault
 
@@ -3137,6 +3263,7 @@ Click **Save to Vault** to convert the point crawl into your local campaign work
 - Creates a dedicated **Location entity** for each selected node, complete with sensory descriptions, hazards, and a markdown `## Routes & Exits` section.
 - Automatically establishes bidirectional connections between connected locations with route summaries as connection labels.
 - Creates an overarching **Note entity** (`kind: "point-crawl"`) summarizing the crawl's premise, navigation rules, and links to all generated locations.
+- Use the graph's selection controls to save all locations, or only the core and selected locations. The overview filters out routes and plan references that point to locations outside the selection.
 
 ---
 
@@ -4175,6 +4302,14 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** Improvise an NPC on the spot by fixing five things in the order the table will notice them: role, immediate want, attitude toward the party, one distinguishing behaviour you can repeat every time they speak, and one connection to something already in the campaign. Say the role out loud first so the scene has a name to react to, then let the rest surface through dialogue instead of description.
 
+### [How do you keep a solo RPG from feeling random?](https://codexcryptica.com/answers/how-do-you-keep-a-solo-rpg-from-feeling-random)
+
+**Direct answer:** Solo play feels random when oracle and table results arrive with nothing to attach to. Anchor every roll to something already true: a goal your character wants, an open thread, or a fact you have recorded. Interpret each result using that material first, keep a short list of unresolved threads to draw on, and let earlier outcomes return as consequences. The dice supply the surprise, and your existing notes supply the meaning.
+
+### [How do you keep notes for a solo RPG campaign?](https://codexcryptica.com/answers/how-do-you-keep-notes-for-a-solo-rpg-campaign)
+
+**Direct answer:** Keep two kinds of notes for a solo campaign: a chronological session log of what happened, and a set of reference entries for the people, places, factions and open threads that the log produces. Record each new fact the moment an oracle or table creates it, note who it affects, and revisit the open-thread list at the start of every session. The log tells you the story, and the reference entries stop you contradicting it.
+
 ### [How do you keep track of NPCs in a long campaign?](https://codexcryptica.com/answers/how-do-you-keep-track-of-npcs-in-a-long-campaign)
 
 **Direct answer:** Give every NPC who might return a short, standing record: name and role, what they want, where and when the party last saw them, their current status, and one open thread with them. Update it the moment something changes rather than reconstructing it later, and most minor NPCs never need more than that one line. The record's job is to answer 'who is this again?' in five seconds mid-session, not to be a biography.
@@ -4214,6 +4349,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 ### [How do you organise RPG campaign notes?](https://codexcryptica.com/answers/how-do-you-organise-rpg-campaign-notes)
 
 **Direct answer:** Separate your notes by how long they stay true, not by session. Keep one durable page per thing that exists in the world (a person, a place, a faction, an item) and let session logs be a dated stream that points at those pages. Everything a campaign needs to recall later is an answer to "what do I know about X?", and a per-session diary is the one structure that cannot answer it.
+
+### [How do you play a tabletop RPG by yourself?](https://codexcryptica.com/answers/how-do-you-play-a-tabletop-rpg-by-yourself)
+
+**Direct answer:** To play a tabletop RPG alone, you replace the game master's surprise with a repeatable loop: set a scene, ask a yes-or-no question, roll on an oracle or random table to get an answer, interpret the result in context, write down what is now true, and let the consequences shape the next scene. You need a character, a place to start, one set of rules (or none), dice, and somewhere to keep notes. No game master, group or prepared adventure is required.
 
 ### [How do you prep a weekly RPG session quickly?](https://codexcryptica.com/answers/how-do-you-prep-a-weekly-rpg-session-quickly)
 
@@ -4355,6 +4494,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** Use a point crawl when play is about choosing between known or rumoured destinations and routes, with each journey carrying a clear cost. Use a hex crawl when finding the landscape is itself the game: the party chooses a direction, exposes unknown ground, and manages time and supplies across a broad region. Neither is more open by default; they make different parts of exploration visible at the table.
 
+### [Should I share worldbuilding notes and lore with my players?](https://codexcryptica.com/answers/should-i-share-worldbuilding-notes-with-my-players)
+
+**Direct answer:** Yes, selectively: share what the characters plausibly know, including attributed rumours and useful details about places and people, in a short primer they can skim. Keep unrevealed truths private, and treat the notes as an invitation to play rather than required reading. Anything the party needs to make a decision should also come up at the table, so play works for someone who never opened the document.
+
 ### [What are the best classless fantasy RPGs with skill-based progression?](https://codexcryptica.com/answers/what-are-the-best-classless-fantasy-rpgs-with-skill-based-progression)
 
 **Direct answer:** For a group leaving Warhammer Fantasy Roleplay 4e, Mythras and GURPS are conditional candidates; neither is a verified winner. Mythras offers classless skill improvement and session-refreshing Luck that can downgrade a Major Wound, but its injury rules can still maim or kill. GURPS offers classless point-buy and a limited reroll, while injury, resurrection, and campaign pace depend on the chosen rules package. Verify those trade-offs against your group's own requirements before choosing. Dragonbane is a lighter, profession-framed option whose push rerolls cost a condition but do not protect a character from death. Savage Worlds has no fixed classes, but its Rank-based Advances gate Edges. Against the Darkmaster is a vocation-and-level mismatch.
@@ -4382,6 +4525,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 ### [What is a point crawl?](https://codexcryptica.com/answers/what-is-a-point-crawl)
 
 **Direct answer:** A point crawl is a way of mapping an adventure area as a set of named locations joined by explicit routes, rather than as a grid of hexes or squares. Players choose which link to travel along instead of which direction to walk, so the map is a small network of nodes and edges: this village connects to that ford, the ford connects to the ruined watchtower. It keeps overland and dungeon travel meaningful without asking anyone to track movement rates across empty terrain.
+
+### [What is a solo RPG oracle, and how do you ask it good questions?](https://codexcryptica.com/answers/what-is-a-solo-rpg-oracle)
+
+**Direct answer:** A solo RPG oracle is a random method, usually a die roll or a table, that answers questions the game master would normally answer: is the guard awake, who is behind the door, what goes wrong next. Good oracle questions are specific, can be answered yes or no, and are asked about something you genuinely do not know. You set the odds for the answer first, roll, and then interpret the result to fit the scene.
 
 ### [What’s the difference between gods and demon lords in a fantasy world?](https://codexcryptica.com/answers/what-is-the-difference-between-gods-and-demon-lords-in-a-fantasy-world)
 
