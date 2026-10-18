@@ -8,37 +8,36 @@ export const howDoIRunSecretDoorsInDnd: AnswerConfigInput = {
     "How do I run secret doors in D&D without endless Perception checks?",
   kind: "how-to",
   shortAnswer:
-    "Split every secret door into three separate decisions: noticing a clue, finding the door, and opening it. Let a strong passive Perception score reveal one concrete clue such as a cold draught or scrape marks, not the whole door. Ask for an active check only when the players describe a plausible search and the outcome is still uncertain, and let failure change the situation through time, noise or a new risk instead of inviting the same roll again. Once the door is found, let it open without another roll unless the mechanism itself is a distinct and interesting problem.",
+    "Use passive Perception to determine whether a character notices a secret door without searching; meeting its DC locates the door, though its catch can remain unknown. If passive detection fails but the party has a reason to search, call for one active check only when a plausible approach could still fail and failure has a cost. Once found, the door opens without another roll unless its mechanism is a distinct problem.",
   sections: [
     {
       kind: "prose",
       heading: "One door, three different decisions",
       paragraphs: [
-        "Most secret door stalls happen because one DC is made to do three jobs at once. The party walks past a wall, someone rolls Perception, the roll fails, and nobody knows whether they missed a hint, missed the door itself, or found the door but cannot work it. Each stage then gets retried in turn, and exploration becomes a queue of identical checks.",
-        "Run the stages separately. Noticing gives the players a clue they can act on. Finding confirms where the door is and what kind of thing it is. Opening is a third problem only when the mechanism earns that status. A secret door should reward curiosity and exploration, not punish a single failed die roll, so each stage needs its own answer to the question: what happens if this does not work?",
+        "Keep detection and opening separate. A successful passive or active detection locates the door; the clue can leave its catch unexplained. Opening is a further problem only when the mechanism earns that status, and a missed optional door can stay hidden.",
       ],
     },
     {
       kind: "list",
-      heading: "Noticing: hand over a clue, not the door",
+      heading: "Noticing: a passive success locates the door",
       intro:
-        "In the 2014 fifth edition rules, the Dungeon Master's Guide section on secret doors uses passive Wisdom (Perception) to decide whether a character notices a secret door without actively searching, and an active Wisdom (Perception) check for a deliberate search. A passive score is 10 plus the character's Perception bonus, adjusted for advantage or disadvantage where it applies. Treat a passive success as noticing something worth investigating, described in concrete terms:",
+        "In the 2014 fifth edition rules, the Dungeon Master's Guide uses passive Wisdom (Perception) to decide whether a character notices a secret door without actively searching, and an active check for a deliberate search. A passive score is 10 plus the character's Perception bonus, adjusted for advantage or disadvantage where it applies. When the score meets the door's detection DC, locate it for the players with a concrete sensory description. The catch can remain unknown:",
       items: [
         {
           term: "A draught where there should be none",
-          text: "Cold air moves across ankles or bends a candle flame along one short stretch of wall. The clue points at a gap; it does not outline a door or explain a catch.",
+          text: "Cold air moves across ankles or bends a candle flame at the carved panel. The players know which part of the wall hides the door; the draught does not explain its catch.",
         },
         {
           term: "Wear that does not match the room",
-          text: "Scrape marks arc across flagstones, mortar sits slightly proud or recessed in one rectangle, or dust is thinner where hands keep touching stone. These reward a second look at a specific place.",
+          text: "Scrape marks arc around one panel, its mortar sits slightly proud or recessed, or dust is thin where hands keep touching stone. The wear locates the door without giving away how it opens.",
         },
         {
           term: "Sound and measure",
-          text: "One section sounds hollow when tapped, or the room is shorter inside than the corridor outside suggests it should be. Measuring, tapping and listening are player actions you can reward directly.",
+          text: "A panel sounds hollow when tapped, or measuring shows the room is shorter inside than the corridor outside suggests. These clues locate the door; tapping and measuring can also reveal it outright when the action settles the question.",
         },
         {
           term: "Check the senses before you award the clue",
-          text: "Ask whether this character could plausibly notice it from here: light or darkvision, distance from the wall, noise and distraction, and whether they are hurrying or keeping watch for threats. A high score held by a character at the back of the party in pitch darkness has not automatically perceived a hairline crack.",
+          text: "Ask whether this character could plausibly notice it from here: light or darkvision, distance from the wall, noise and distraction, and whether they are hurrying or keeping watch for threats. A high score held by a character at the back of the party in pitch darkness has not automatically perceived the hidden door.",
         },
         {
           term: "A missed clue is not a locked scene",
@@ -48,9 +47,9 @@ export const howDoIRunSecretDoorsInDnd: AnswerConfigInput = {
     },
     {
       kind: "list",
-      heading: "Finding: roll only when a described search could still fail",
+      heading: "Searching: roll only if the door remains undetected",
       intro:
-        "Once players have a clue, or a reason of their own to suspect a wall, let them investigate it through described actions first. Call for an active check only when all three are true: the approach could plausibly work, the result is genuinely uncertain, and failure would cost something.",
+        "Do not ask for another detection check after a passive success has located the door. If passive detection failed, or the players have a reason of their own to suspect a wall, hear their approach first. Call for an active check only when it could plausibly fail, the result is uncertain, and failure would cost something.",
       items: [
         {
           term: "No roll when the action settles it",
@@ -58,7 +57,7 @@ export const howDoIRunSecretDoorsInDnd: AnswerConfigInput = {
         },
         {
           term: "One lead search, with real help",
-          text: "Let the best-placed character make the active check. A second character can give that check advantage through the Help action in the 2014 rules when they are doing something that genuinely assists, such as holding light steady, listening at the other end, or testing each stone in turn. In the 2024 revision, the same table habit still works: one character searches, another's concrete assistance is what earns advantage, not their presence in the room.",
+          text: "Let the best-placed character lead. In 2014, another character can help when they could attempt the task alone and their cooperation is productive, such as holding light steady or listening at the other end. In 2024, the helper must choose one of their own skill or tool proficiencies, and the check uses that proficiency; practical assistance alone does not qualify.",
         },
         {
           term: "Distinct jobs are not a dogpile",
@@ -70,7 +69,7 @@ export const howDoIRunSecretDoorsInDnd: AnswerConfigInput = {
         },
         {
           term: "Failure moves the scene",
-          text: "A failed search leaves the clue in place and changes something else: ten minutes of light and rations pass, a patrol gets closer, rain starts erasing tracks outside, or the search itself makes noise. If time is unlimited, nobody is watching, and nothing punishes a slow search, consider skipping the roll and letting a thorough search succeed, because a check with no cost for failure only decides how long success takes.",
+          text: "A thorough search takes time whether it succeeds or fails. Let that time advance circumstances already in motion: the patrol on its regular round moves closer, for example. If time is unlimited, nobody is watching, and nothing changes during a slow search, consider letting a thorough search succeed without a roll; a check with no cost for failure only decides how long success takes.",
         },
         {
           term: "The ten-minute search is a house rule",
@@ -84,9 +83,9 @@ export const howDoIRunSecretDoorsInDnd: AnswerConfigInput = {
       headers: ["Situation", "What to do", "What happens next"],
       rows: [
         [
-          "Clue spotted: a passive score meets the DC",
-          "Describe one concrete clue, such as a draught or scrape marks",
-          "Players choose how to investigate; the mechanism is still unknown",
+          "Door noticed: passive score meets detection DC",
+          "Locate it with a concrete clue, such as a draught at the panel",
+          "The door is found; its catch can remain unknown",
         ],
         [
           "Clue missed and nobody searches",
@@ -94,13 +93,13 @@ export const howDoIRunSecretDoorsInDnd: AnswerConfigInput = {
           "An optional door stays hidden; an essential door needs another route, not prompted rerolls",
         ],
         [
-          "Active search succeeds",
-          "Confirm the seam, outline or hollow section",
+          "Search succeeds after passive detection failed",
+          "Locate it with a concrete clue, such as a seam or hollow panel",
           "The door is found; decide separately whether opening is a problem",
         ],
         [
-          "Active search fails",
-          "Keep the clue, spend time or add pressure, and say what changed",
+          "Search fails while the door remains undetected",
+          "Keep any existing clue and advance circumstances already in motion",
           "Players can try a materially different method or accept a cost",
         ],
         [
@@ -110,7 +109,7 @@ export const howDoIRunSecretDoorsInDnd: AnswerConfigInput = {
         ],
         [
           "Several characters search together",
-          "Use one lead check with Help, or split the work into distinct jobs",
+          "Use one lead check with eligible Help, or split distinct jobs",
           "Cooperation helps once; it does not become four free attempts",
         ],
         [
@@ -146,28 +145,24 @@ export const howDoIRunSecretDoorsInDnd: AnswerConfigInput = {
       kind: "example",
       heading: "Worked example: a DC 15 stone door",
       paragraphs: [
-        "A party explores a flooded crypt. Behind a carved stone panel in the north wall is a passage to the flooded vault. The GM has set DC 15 to detect the door, using the 2014 secret door procedure: passive Perception to notice without searching, an active Perception check to search deliberately, and an Investigation check afterwards only if the opening mechanism is not obvious. The ranger has Perception +5, so a passive score of 15. The rogue has Perception +7. The wizard has Investigation +6.",
+        "A party explores a flooded crypt. Behind a carved stone panel in the north wall is a passage to the flooded vault, and a patrol already follows a regular route through the passage. The GM sets DC 15 to detect the door: passive Perception determines whether a character notices it without searching; an active Perception check can find it if they search deliberately. The ranger has Perception +5, so a passive score of 15, or 10 if a circumstance imposes disadvantage. The rogue has Perception +7. The wizard has Investigation +6.",
       ],
       items: [
         {
-          term: "Noticing: the passive score meets the DC",
-          text: "The ranger's passive Perception of 15 meets DC 15 as the party crosses the room with a lantern lit. The GM does not announce a secret door. She says the lantern flame keeps bending toward the north wall and the ranger's ankles feel cold air where the rest of the room is still. That is the clue: specific, located, and worth acting on. Had the highest passive score been 12, nobody would have noticed anything on the way through, and the GM would have described an ordinary wall.",
+          term: "Noticing: passive success locates the door",
+          text: "The ranger's passive Perception of 15 meets DC 15 as the party crosses with a lantern lit. The GM describes the flame bending toward the carved panel and cold air at the ranger's ankles. The players know that panel is a secret door; its catch is still unknown. No active check is needed to detect it again.",
         },
         {
-          term: "Finding: a described search, one roll",
-          text: "The players hold the lantern along the carving, feel for the draught stone by stone, and tap the panel while the fighter listens. That is a plausible search of the right place, but the seam is fine enough that the result is still uncertain, so the GM asks the rogue for one active Perception check, with advantage because the ranger is holding the light steady and calling out where the flame moves. The rogue rolls 9 and 14, takes the 14, and adds +7 for a total of 21 against DC 15. The seam is found, along with one stone that sits a fraction proud of its neighbours.",
+          term: "Alternative: passive detection fails, then they search",
+          text: "If disadvantage reduces the ranger's passive score to 10, she notices nothing while crossing. But as the party maps the crypt, they realise the room is shorter inside than the corridor outside suggests, giving them an independent reason to search the north wall. They hold the lantern along the carving and tap while the fighter listens. The rogue makes one active Perception check with advantage because the ranger steadies the light and the fighter listens at the other end: rolls of 9 and 14 take the 14, plus +7, for 21 against DC 15. They locate the panel and its seam.",
         },
         {
-          term: "Finding, on a failure instead",
-          text: "On a total below 15, the GM would not invite the wizard and fighter to roll the same search in turn. The draught is still there, so the clue remains true, but the tapping has taken time: the lantern has burned lower, and the GM marks that the things in the flooded passage have had ten quiet minutes to notice the light under their own door. The party can now change method, perhaps by puffing flour at the wall to show where air escapes, which the GM can simply let work, or by accepting more noise and prising at the carving with a crowbar. A new roll, if one is needed, follows the new approach rather than repeating the old one.",
+          term: "Active search, on a failure instead",
+          text: "On a total below 15, the GM does not invite the wizard and fighter to repeat the same search. That careful search has taken time, and the patrol already on its route has moved closer to the crypt room. The party can change method: puffing flour at the suspected panel reveals the airflow and locates the door, while prising at the carving with a crowbar risks noise. Any new roll follows a genuinely different approach.",
         },
         {
           term: "Opening: obvious catch, no second roll",
-          text: "The proud stone is worn smooth where thumbs have pressed it for years. Pressing it clicks and the panel swings inward on a counterweight. Because the catch is obvious once found, the GM asks for no Investigation roll; the party found this door fairly and it opens. In a variant where the panel is held by three studs that must be pressed in the order carved on a tomb across the crypt, understanding the mechanism is a genuine second problem. There the wizard's Investigation check is warranted, the tomb carving is the clue to study, and failure could jam a stud and make noise rather than relock a door the party has already earned.",
-        },
-        {
-          term: "Why it works",
-          text: "Each die roll answered a different question, and each result, success or failure, told the party what to do next. The passive score produced a clue instead of a reveal, one assisted search settled the finding, failure would have cost time and safety instead of inviting a queue of rerolls, and opening took a second roll only in the version where the mechanism itself was interesting.",
+          text: "The proud stone is worn smooth where thumbs have pressed it for years. Pressing it clicks and the panel swings inward on a counterweight, so no Investigation roll is needed. If three studs must be pressed in the order carved on a tomb across the crypt, the wizard can study that carving to work out the sequence. A failed reading does not jam a stud; only physically pressing or forcing the mechanism could trigger a consequence the GM has established.",
         },
       ],
     },
@@ -176,10 +171,10 @@ export const howDoIRunSecretDoorsInDnd: AnswerConfigInput = {
       heading: "Before you hide a secret door",
       items: [
         "Write down the clue in concrete terms: what a character can see, feel, hear or measure, and where it can be noticed from.",
-        "Note the passive score that notices the clue, and decide what a character with that score learns: a suspicion, not the mechanism.",
-        "Decide what a deliberate search looks like and which described actions simply work without a roll.",
-        "Set the active check DC only if a plausible search could still fail, and note what failure costs in time, noise, resources or danger.",
-        "Rule on help before the roll: who leads, what real assistance earns advantage, and which separate jobs deserve separate consequences.",
+        "Note the passive detection DC: a successful score locates the door; the catch can remain unknown.",
+        "If passive detection fails, decide what might give the party an independent reason to search, and which described actions simply work without a roll.",
+        "Set an active check DC only if that search could still fail, and note how its time advances existing circumstances or creates a concrete cost.",
+        "Rule on help before the roll: who leads, whether the helper could attempt the task alone (2014), and which skill or tool proficiency they choose (2024).",
         "Decide whether opening is automatic once found or a distinct problem, and only choose the second if the mechanism, key, seal or trap makes it interesting.",
         "Classify the door as optional or essential. If it is essential, prepare an alternate clue, route or costly recovery before the session, not during the stall.",
         "If you use a timed thorough search that always succeeds, label it as a house rule at your table and track what the spent time changes.",
@@ -238,7 +233,7 @@ export const howDoIRunSecretDoorsInDnd: AnswerConfigInput = {
       "how to stop perception check dogpiles",
     ],
     uniqueValue:
-      "Splits secret doors into noticing, finding and opening, gives each stage its own rule for when to roll, and works a DC 15 stone door through passive notice, an assisted search, a failure that changes the scene, and an opening that needs no second roll.",
+      "Shows how passive Perception locates a secret door, when an independently motivated active search can still fail, and how to handle its opening without redundant checks.",
     userJob: "adopt-workflow",
     relatedIntents: [
       "answer-run-mystery-without-railroading",
@@ -264,7 +259,7 @@ export const howDoIRunSecretDoorsInDnd: AnswerConfigInput = {
   seo: {
     title: "Run Secret Doors in D&D Without Endless Checks | Codex Cryptica",
     description:
-      "Notice, find and open secret doors without a queue of Perception rolls. Passive clues, assisted searches, failed checks that move the scene, and a DC 15 worked example.",
+      "Run secret doors without redundant checks: passive detection, active searches after a missed door, and a DC 15 worked example.",
     image:
       "https://assets.codexcryptica.com/og/how-do-i-run-secret-doors-in-dnd.jpg",
     imageAlt:
