@@ -171,6 +171,7 @@ export const whatShouldAnRpgSettlementContain: AnswerConfigInput = {
     "how-do-i-run-ship-to-ship-combat-without-sidelining-the-party",
     "how-do-i-make-sea-travel-interesting-in-a-ttrpg",
     "how-do-i-run-a-pirate-campaign-focused-on-exploration",
+    "how-do-i-design-a-geographically-realistic-town-or-village",
   ],
   discovery: {
     id: "answer-settlement-contents",
@@ -198,6 +199,11 @@ export const whatShouldAnRpgSettlementContain: AnswerConfigInput = {
         with: "answer-base-building-system-selection",
         reason:
           "This answer guides settlement content and prep; the base-building comparison evaluates which game rules support developing a settlement or other home over time.",
+      },
+      {
+        with: "answer-geographically-realistic-town-village",
+        reason:
+          "This answer is a prep checklist for a settlement's purpose, places, people, and problem; the geography answer lays those elements out around water, terrain, routes, and growth.",
       },
     ],
   },

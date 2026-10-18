@@ -171,6 +171,7 @@ export const howDoIDecideWhatASettlementProducesImportsAndExports: AnswerConfigI
       "how-do-i-give-different-civilisations-distinct-strengths-and-weaknesses",
       "how-do-i-create-interesting-islands-and-ports-for-a-pirate-campaign",
       "how-should-a-fantasy-adventuring-guild-handle-wages-dues-and-shared-expenses",
+      "how-do-i-design-a-geographically-realistic-town-or-village",
     ],
     discovery: {
       id: "answer-settlement-production-imports-exports",
@@ -198,6 +199,11 @@ export const howDoIDecideWhatASettlementProducesImportsAndExports: AnswerConfigI
           with: "answer-believable-fantasy-economy",
           reason:
             "The economy guide designs a coherent world-scale system, while this answer derives one settlement's production, surplus, imports, and exports as a local ledger.",
+        },
+        {
+          with: "answer-geographically-realistic-town-village",
+          reason:
+            "This answer derives a settlement's production, surplus, imports, and exports as a local ledger; the geography answer places the land and facilities that make that ledger possible.",
         },
       ],
     },

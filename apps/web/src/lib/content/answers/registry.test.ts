@@ -54,6 +54,43 @@ const mockRegistry: Record<string, AnswerConfig> = {
 };
 
 describe("answer registry", () => {
+  it("keeps settlement geography overlap acknowledgements reciprocal", () => {
+    const geography =
+      answers["how-do-i-design-a-geographically-realistic-town-or-village"];
+    const overlaps = [
+      ["what-should-an-rpg-settlement-contain", "answer-settlement-contents"],
+      [
+        "how-do-i-decide-what-a-settlement-produces-imports-and-exports",
+        "answer-settlement-production-imports-exports",
+      ],
+      [
+        "how-do-trade-routes-shape-cities-and-kingdoms-in-an-rpg-world",
+        "answer-trade-routes-shape-cities-kingdoms",
+      ],
+      [
+        "how-do-you-create-a-fantasy-city-that-feels-alive",
+        "answer-living-fantasy-city",
+      ],
+    ] as const;
+
+    for (const [slug, intentId] of overlaps) {
+      const relatedAnswer = answers[slug];
+
+      expect(geography.discovery?.acknowledgedOverlap).toContainEqual(
+        expect.objectContaining({
+          with: intentId,
+          reason: expect.any(String),
+        }),
+      );
+      expect(relatedAnswer.discovery?.acknowledgedOverlap).toContainEqual(
+        expect.objectContaining({
+          with: geography.discovery?.id,
+          reason: expect.any(String),
+        }),
+      );
+    }
+  });
+
   it("keeps an actionable checklist in the modern-city answer", () => {
     const answer =
       answers["how-do-i-portray-a-believable-modern-city-in-an-urban-rpg"];

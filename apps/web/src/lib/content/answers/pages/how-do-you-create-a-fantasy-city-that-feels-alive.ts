@@ -162,6 +162,7 @@ export const howDoYouCreateAFantasyCityThatFeelsAlive: AnswerConfigInput = {
     "how-do-i-create-interesting-islands-and-ports-for-a-pirate-campaign",
     "how-do-i-make-sea-travel-interesting-in-a-ttrpg",
     "how-do-i-portray-a-believable-modern-city-in-an-urban-rpg",
+    "how-do-i-design-a-geographically-realistic-town-or-village",
   ],
   labels: ["fantasy", "rumour"],
   discovery: {
@@ -201,6 +202,11 @@ export const howDoYouCreateAFantasyCityThatFeelsAlive: AnswerConfigInput = {
         with: "answer-create-fantasy-town-rumours",
         reason:
           "The rumour answer designs individual claims, sources, and consequences. This answer places rumours among the routines, public spaces, and competing groups that make a whole city feel active.",
+      },
+      {
+        with: "answer-geographically-realistic-town-village",
+        reason:
+          "This answer makes a prepared city feel active through routines, groups, pressures, and visible change; the geography answer explains how water, terrain, routes, and growth shape its physical layout.",
       },
     ],
   },
