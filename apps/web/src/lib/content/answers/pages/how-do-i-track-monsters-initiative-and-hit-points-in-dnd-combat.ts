@@ -58,12 +58,12 @@ export const howDoITrackMonstersInitiativeAndHitPointsInDndCombat: AnswerConfigI
             text: "One row per combatant with columns for initiative, name, current HP, AC and conditions. Keep a bookmark, tab or printed page for each monster type in the encounter, not one copy per creature. This costs nothing, works offline, and is easy to correct with a pencil. It asks you to do the arithmetic yourself, so keep the rows few and the handwriting large enough to read at speed.",
           },
           {
-            term: "Owlbear Rodeo for the map, plus a tracker you trust",
-            text: "Owlbear Rodeo is strongest as a light map and token tool. Put numbered tokens on the map so G1 to G4 match your tracker, then handle initiative and HP either on paper beside you or with an extension such as [Clash](https://extensions.owlbear.rodeo/clash), which lists health, AC, initiative, movement speed and ongoing effects. Test an extension with dummy tokens before a session rather than learning it mid-fight. If no extension suits you, the map in Owlbear Rodeo and a paper tracker is a complete setup, not a compromise.",
+            term: "A light shared map, plus a tracker beside you",
+            text: "If your group uses a simple shared map only to show where everyone stands, put numbered tokens on the map so G1 to G4 match your rows, then handle initiative, HP and conditions on your own paper or spreadsheet tracker beside the screen. Keeping position on the map and arithmetic on a separate sheet is a complete setup, not a compromise, and it avoids learning extra tracker extensions mid-fight.",
           },
           {
-            term: "Foundry VTT with actors and its combat tracker",
-            text: "In Foundry VTT, a monster type is usually prepared as an actor, tokens placed on the scene stand for individual creatures, and the [combat tracker](https://foundryvtt.com/article/combat/) holds initiative. For duplicate enemies to have independent HP, turn off Actor Link in their token configuration: [linked tokens share resource changes](https://foundryvtt.com/article/tokens/), while unlinked tokens keep separate resources. Update each creature through its placed token's sheet or resource controls. The D&D system you install supplies the sheet behaviour, so exact controls vary by system and version.",
+            term: "Codex Cryptica's battlemap, tokens and initiative list",
+            text: "In Codex Cryptica's Map view, one creature entity holds the shared reference while each placed or cloned token on the battlemap stands for an individual combatant. Double-click a token with VTT enabled to open its own health bar control and raise or lower that creature's HP independently, or right-click to mark statuses such as Dead, Stunned, Prone, Poisoned or Invisible. Select a token and choose Add to Initiative to track the turn order and rounds in the Combat sidebar, pop the initiative list into a separate window for a second screen, open the linked creature entity from the token details or initiative row when you need a save or attack, and save an Encounter Snapshot if play pauses mid-fight.",
           },
         ],
       },
@@ -179,9 +179,9 @@ export const howDoITrackMonstersInitiativeAndHitPointsInDndCombat: AnswerConfigI
       },
     ],
     codexConnection: {
-      heading: "Prepare the encounter before the tracker opens",
+      heading: "Prep the encounter and run the tracker in Codex Cryptica",
       paragraphs: [
-        "Codex Cryptica can help with the work before initiative: sketching who is in the encounter, what they want, and what might end the fight early. That prep does not replace your tracker, your virtual tabletop or the stat blocks for your system. Use it to arrive with a clear set of opponents and a reason for them to be there, then track HP, initiative and conditions with whichever setup above suits your table.",
+        "Codex Cryptica supports both sides of the workflow: use the Encounter Generator before play to sketch who is in the fight, what they want, and what might end the clash early, then move into Map view to place numbered tokens linked to your creature notes, track individual token health bars and status markers, run the Initiative list in the Combat sidebar (or popped out to a second window), and save Encounter Snapshots between sessions.",
       ],
       linkText: "Try the encounter generator",
       href: "/generators/encounter",
@@ -223,7 +223,7 @@ export const howDoITrackMonstersInitiativeAndHitPointsInDndCombat: AnswerConfigI
       ],
       userJob: "adopt-workflow",
       uniqueValue:
-        "Teaches a first-time Dungeon Master to separate changing encounter state from fixed stat block reference, with a copyable tracker, a worked four goblin and boss encounter, and paper, Owlbear Rodeo and Foundry VTT setups described without requiring a tool switch.",
+        "Teaches a first-time Dungeon Master to separate changing encounter state from fixed stat block reference, with a copyable tracker, a worked four goblin and boss encounter, and paper, light shared map and Codex Cryptica battlemap setups.",
       relatedIntents: [
         "answer-faster-exciting-combat",
         "answer-prepare-dnd-session",
@@ -245,7 +245,7 @@ export const howDoITrackMonstersInitiativeAndHitPointsInDndCombat: AnswerConfigI
     seo: {
       title: "Track Monsters, Initiative and HP in D&D Combat | Codex Cryptica",
       description:
-        "Track D&D monsters with one short tracker for initiative, HP, AC and conditions. Worked goblin example plus paper, Owlbear Rodeo and Foundry setups.",
+        "Track D&D monsters with one short tracker for initiative, HP, AC and conditions. Worked goblin example plus paper, shared map and Codex Cryptica setups.",
       image:
         "https://assets.codexcryptica.com/og/how-do-i-track-monsters-initiative-and-hit-points-in-dnd-combat.jpg",
       imageAlt:
