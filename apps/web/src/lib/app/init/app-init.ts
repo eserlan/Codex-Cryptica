@@ -191,7 +191,22 @@ export function initializeGlobalListeners(_calendarStore?: any) {
     );
   };
 
+  // The vault's game-system profile (#3943) sets generator and sheet defaults.
+  const initSystemProfile = async () => {
+    try {
+      const { systemProfileStore } =
+        await import("$lib/stores/system-profile.svelte");
+      await systemProfileStore.init(vault.activeVaultId);
+    } catch (err) {
+      console.error(
+        "[AppInit] Failed to load the vault's game system profile:",
+        err,
+      );
+    }
+  };
+
   const handleVaultSwitched = async () => {
+    void initSystemProfile();
     try {
       const { calendarStore } = await import("$lib/stores/calendar.svelte");
       const { timelineStore } = await import("$lib/stores/timeline.svelte");

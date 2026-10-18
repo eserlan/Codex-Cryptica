@@ -83,7 +83,10 @@ describe("howDoIOrganiseATalesOfTheValiantCampaign answer", () => {
     expect(serialized).not.toContain("roll 1d4 on a Long Rest");
     expect(serialized).not.toContain("resting variant");
     expect(serialized).toContain(
-      "vault-wide profile selection is not currently available",
+      "Set the vault's game system to Tales of the Valiant in Settings",
+    );
+    expect(serialized).not.toContain(
+      "profile selection is not currently available",
     );
     expect(serialized).not.toContain("TovChargen Import");
   });
