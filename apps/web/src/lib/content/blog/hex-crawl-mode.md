@@ -93,4 +93,4 @@ Hex notes, terrain, drafts and explored markers are GM-only. Connected players s
 
 ## Where to go next
 
-The full reference is in the Help panel under **Hex Crawl Mode**. If you are weighing hexes against a point crawl for your next campaign, our answer on point crawls versus hex crawls is a good companion read.
+The full reference is in the Help panel under **Hex Crawl Mode**. If you are weighing hexes against a point crawl for your next campaign, our answer on [point crawls versus hex crawls](/answers/point-crawl-vs-hex-crawl) is a good companion read.
