@@ -161,6 +161,30 @@ describe("isPublishedBfrdDoomGuidance", () => {
     }
   });
 
+  it("flags an unrecognised effect after an ellipsis following then", () => {
+    const doomNotes =
+      "Start the encounter with a CR-based encounter-level GM Doom pool. Spend Doom to give a creature advantage on an attack, then… knock the target prone.";
+
+    expect(isPublishedBfrdDoomGuidance(doomNotes)).toBe(false);
+
+    const parsed = parseTovMechanics({
+      systemId: "tales-of-the-valiant",
+      kind: "tov-encounter",
+      data: {
+        qualitativeDifficulty: "Moderate",
+        recommendedCrRange: "1-2",
+        doomNotes,
+      },
+    });
+
+    expect(parsed?.kind).toBe("tov-encounter");
+    if (parsed?.kind === "tov-encounter") {
+      expect(parsed.isHomebrew).toBe(true);
+      expect(parsed.data.isHomebrew).toBe(true);
+      expect(parsed.data.doomNotes).toContain("[Homebrew]");
+    }
+  });
+
   it("accepts published Doom spends sequenced after another published spend", () => {
     const doomNotes =
       "Start the encounter with a CR-based encounter-level GM Doom pool. Spend Doom to give a creature advantage on an attack. Then spend Doom to give a PC disadvantage on a save.";

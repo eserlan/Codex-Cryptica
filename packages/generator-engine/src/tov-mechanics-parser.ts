@@ -24,7 +24,8 @@ const NON_PUBLISHED_DOOM_SPEND_PATTERN =
 const UNRECOGNIZED_DOOM_SPEND_PATTERN =
   /\b(?:or|and)\s+(?!(?:once[- ]per[- ]encounter\s+)?(?:give|grant|refresh|recharge|gain)\b)(?!(?:a|an|the)\b)[a-z]+\b/i;
 
-const SEQUENCED_DOOM_EFFECT_PATTERN = /\bthen\b[\s,;:—–-]+(.+?)(?=$|[.!?;])/gi;
+const SEQUENCED_DOOM_EFFECT_PATTERN =
+  /\bthen\b[\s,;:—–.…-]+(.+?)(?=$|[.!?;])/gi;
 
 function hasUnpublishedSequencedDoomEffect(clause: string): boolean {
   return Array.from(clause.matchAll(SEQUENCED_DOOM_EFFECT_PATTERN)).some(
