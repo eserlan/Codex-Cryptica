@@ -1145,10 +1145,13 @@ function generateAdventure(request: GeneratorRunRequest): GeneratorOutput {
 export function buildCampaignAdventurePrompt(request: GeneratorRunRequest) {
   const options = adventureOptions(request);
   const prompt = buildAdventurePrompt(options);
+  const contextPrefix = contextChain(request);
   return {
     ...prompt,
     options,
-    userMessage: `${contextChain(request)}
+    /** The vault/naming/instructions chain, for staged stages to carry too. */
+    contextPrefix,
+    userMessage: `${contextPrefix}
 
 ${prompt.userMessage}`,
   };

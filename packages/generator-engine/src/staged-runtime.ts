@@ -7,6 +7,12 @@
  */
 
 import { parseFencedJson } from "./llm-response-utils";
+import {
+  FIXING_DETAIL,
+  ONE_PASS_DETAIL,
+  type StagedProgress,
+  type StagedStepId,
+} from "./staged-progress";
 
 export type JsonObject = Record<string, unknown>;
 
@@ -103,6 +109,24 @@ export interface CheckedDraft<T> {
   retried: boolean;
 }
 
+/**
+ * The stage message for a retry: the original request, the problems found in
+ * the last answer and that answer, so the model fixes only what is listed.
+ */
+export function withRetryFeedback(
+  message: string,
+  problems: string[],
+  previous: unknown,
+): string {
+  if (problems.length === 0) return message;
+  return `${message}
+
+Your previous answer for this stage was not usable:
+${problems.map((p) => `- ${p}`).join("\n")}
+${previous ? `\nPrevious answer:\n${JSON.stringify(previous, null, 2)}\n` : ""}
+Return the corrected JSON for this stage only. Keep whatever was already good; change only what the list requires.`;
+}
+
 export interface AskCheckedOptions extends AskOptions {
   /** The problem reported when a reply cannot be read or the call fails. */
   unreadable?: string;
@@ -144,6 +168,50 @@ export async function askChecked<T>(
     previous = data ?? previous;
   }
   return best ? { ...best, retried: attempts > 1 } : null;
+}
+
+/** What a staged run records about its stages. */
+export interface StageRunState<Id extends StagedStepId> {
+  progress: StagedProgress<Id>;
+  stats: { aiCalls: number; repairedStages: Id[] };
+}
+
+export interface StageRequest<Id extends StagedStepId> {
+  id: Id;
+  system: string;
+  message: string;
+  check: (data: JsonObject) => DraftCheck;
+}
+
+/**
+ * One stage of a staged generator: {@link askChecked} with the step list kept
+ * current ("fixing problems" on a retry, done, or fallen back with the later
+ * steps skipped) and each call and repaired stage counted. Resolves `null`
+ * when the stage is unusable, so the caller can fall back.
+ */
+export async function runCheckedStage<Id extends StagedStepId>(
+  complete: (systemInstruction: string, userMessage: string) => Promise<string>,
+  { progress, stats }: StageRunState<Id>,
+  { id, system, message, check }: StageRequest<Id>,
+  signal?: AbortSignal,
+): Promise<CheckedDraft<JsonObject> | null> {
+  const outcome = await askChecked(
+    ({ attempt, problems, previous }) => {
+      progress.set(id, "active", attempt > 0 ? FIXING_DETAIL : undefined);
+      stats.aiCalls++;
+      return complete(system, withRetryFeedback(message, problems, previous));
+    },
+    readJsonObject,
+    check,
+    { signal },
+  );
+  if (!outcome) {
+    progress.abandon(id, ONE_PASS_DETAIL);
+    return null;
+  }
+  if (outcome.retried) stats.repairedStages.push(id);
+  progress.set(id, "done");
+  return outcome;
 }
 
 /**

@@ -10,6 +10,7 @@ import {
   MAX_AI_ATTEMPTS,
 } from "./campaign-generator-service-core";
 import {
+  buildCampaignAdventurePrompt,
   buildCampaignDungeonPrompt,
   buildCampaignTomePrompt,
   getGenerator,
@@ -26,6 +27,7 @@ import {
   parseDungeonResponseDetailed,
 } from "./public-dungeon";
 import { generateDungeonStaged } from "./dungeon-staged";
+import { generateAdventureStaged } from "./adventure-staged";
 import { generateTomeTwoPass } from "./public-tome";
 import { generateCampaignHeist } from "./campaign-heist-generation";
 import { generateCouncilVoteWithAI } from "./campaign-council-vote-generation";
@@ -172,6 +174,63 @@ export class CampaignGeneratorAIGenerationService extends CampaignGeneratorLangu
           )
         : null;
     } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Staged route (situation, places and people, consequences), then the
+   * generic route if a stage is unusable. `options.staged === false` forces
+   * the generic route, and a continuity thread stays on it, since staged
+   * calls cannot carry the thread.
+   */
+  protected async generateAdventureWithAI(
+    generator: CampaignGeneratorDefinition,
+    request: GeneratorRunRequest,
+    bannedNames: Set<string>,
+    signal?: AbortSignal,
+  ): Promise<GeneratedDraft | null> {
+    if (request.options?.staged !== false && !request.interaction) {
+      const staged = await this.generateAdventureStaged(
+        generator,
+        request,
+        signal,
+      );
+      if (staged) return staged;
+    }
+    return this.generateGenericWithAI(generator, request, bannedNames);
+  }
+
+  private async generateAdventureStaged(
+    generator: CampaignGeneratorDefinition,
+    request: GeneratorRunRequest,
+    signal?: AbortSignal,
+  ): Promise<GeneratedDraft | null> {
+    const prompt = buildCampaignAdventurePrompt(request);
+    try {
+      const result = await generateAdventureStaged(prompt, prompt.options, {
+        contextPrefix: prompt.contextPrefix,
+        signal,
+        onStats: this._deps.onAdventureStagedStats,
+        complete: async (instruction, message) =>
+          completeText(
+            await this.aiGateway!.complete(message, instruction, { signal }),
+          ),
+      });
+      if (!result) return null;
+      const { output } = result;
+      return generator.mapOutputToDraft(
+        {
+          title: output.title,
+          summary: output.summary ?? "",
+          content: output.content,
+          lore: output.lore,
+          labels: output.labels,
+        },
+        request,
+      );
+    } catch (error) {
+      if (signal?.aborted) throw error;
       return null;
     }
   }
@@ -374,6 +433,13 @@ export class CampaignGeneratorAIGenerationService extends CampaignGeneratorLangu
         }
       case "dungeon":
         return this.generateDungeonWithAI(generator, request);
+      case "adventure":
+        return this.generateAdventureWithAI(
+          generator,
+          request,
+          bannedNames,
+          signal,
+        );
       case "language":
         return this.generateLanguageWithAI(generator, request, bannedNames);
       case "council-vote":

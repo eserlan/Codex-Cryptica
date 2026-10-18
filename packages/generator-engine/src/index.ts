@@ -607,6 +607,13 @@ export {
   type ResolvedAdventure,
 } from "./public-adventure";
 export {
+  adventureStatsLog,
+  generateAdventureStaged,
+  type AdventureStagedDeps,
+  type AdventureStagedResult,
+  type AdventureStagedStats,
+} from "./adventure-staged";
+export {
   buildPlotTwistPrompt,
   generatePlotTwistLocal,
   parsePlotTwistResponse,

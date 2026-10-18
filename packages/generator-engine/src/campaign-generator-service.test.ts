@@ -2704,3 +2704,169 @@ describe("staged dungeon generation", () => {
     );
   });
 });
+
+describe("staged adventure generation", () => {
+  const location = (name: string) => ({
+    name,
+    description: "Lamplit stone.",
+    role: "r",
+    relation: "rel",
+    leverage: "l",
+    dilemma: "Speed or stealth.",
+  });
+  const npc = (name: string) => ({
+    name,
+    role: "Fence",
+    relation: "rel",
+    goal: "Get paid",
+    secret: "s",
+    leverage: "l",
+    dilemma: "Trust or betray.",
+  });
+  const item = (title: string) => ({
+    title,
+    text: `${title} before sunset.`,
+    involves: ["Mara Venn"],
+  });
+  const stageReply = (message: string) => {
+    if (message.includes("STAGE 1 OF 3")) {
+      return {
+        title: "The Copper Ledger",
+        summary: "A courier carries a ledger.",
+        throughline: "A fence hid the ledger before sunset.",
+        initialSituation: "The ledger is at the Copper Market.",
+        primaryObjective: "Recover the ledger before sunset.",
+        assets: [
+          { name: "Ledger", status: "essential", place: "Copper Market" },
+        ],
+      };
+    }
+    if (message.includes("STAGE 2 OF 3")) {
+      return {
+        keyLocations: [location("Copper Market"), location("Salt Stair")],
+        npcs: [npc("Mara Venn"), npc("Iko Brand")],
+      };
+    }
+    return {
+      threats: [item("Rival Crew")],
+      discoveries: [
+        { ...item("Coded Note"), opens: "Copper Market" },
+        { ...item("Torn Map"), opens: "Salt Stair" },
+      ],
+      complications: [item("Closing Bell"), item("Watch Patrol")],
+      rewards: [{ title: "Favour", text: "The magistrate owes you." }],
+      outcomes: [item("Ledger Exposed"), item("Ledger Burned")],
+      hooks: [
+        { title: "Plea", text: "Mara begs." },
+        { title: "Bounty", text: "A reward is posted." },
+      ],
+    };
+  };
+  const adventureRun = (overrides: Partial<GeneratorRunRequest> = {}) =>
+    run("adventure", { useAI: true, themeId: "fantasy", ...overrides });
+
+  it("builds the adventure in stages and carries the request context", async () => {
+    const complete = vi.fn<AIGeneratorGateway["complete"]>(async (message) =>
+      JSON.stringify(stageReply(message)),
+    );
+    const onAdventureStagedStats = vi.fn();
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete },
+      onAdventureStagedStats,
+    });
+    const generated = await svc.generateDraft(
+      adventureRun({ instructions: "Keep it rainy." }),
+    );
+    expect(complete).toHaveBeenCalledTimes(3);
+    expect(
+      complete.mock.calls.every(([message]) =>
+        message.includes("Keep it rainy."),
+      ),
+    ).toBe(true);
+    expect(onAdventureStagedStats).toHaveBeenCalledWith(
+      expect.objectContaining({ outcome: "staged", aiCalls: 3 }),
+    );
+    expect(generated.title).toBe("The Copper Ledger");
+    expect(generated.content).toContain("Copper Market");
+  });
+
+  it("falls back to the generic route when a stage is unusable", async () => {
+    const complete = vi.fn<AIGeneratorGateway["complete"]>(async () => "nope");
+    const onAdventureStagedStats = vi.fn();
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete },
+      onAdventureStagedStats,
+    });
+    const generated = await svc.generateDraft(adventureRun());
+    // Two failed situation attempts, then one generic call, then local output.
+    expect(complete).toHaveBeenCalledTimes(3);
+    expect(complete.mock.calls[2][0]).not.toContain("STAGE 1 OF 3");
+    expect(generated.title).toBeTruthy();
+    expect(onAdventureStagedStats).toHaveBeenCalledWith(
+      expect.objectContaining({ outcome: "fell-back", stoppedAt: "situation" }),
+    );
+  });
+
+  it.each([
+    ["staged: false", { options: { staged: false } }],
+    [
+      "a continuity thread",
+      {
+        interaction: {
+          input: "Generate the next adventure.",
+          previousInteractionId: "interaction-previous",
+          store: true,
+        },
+      },
+    ],
+  ])("keeps %s on the generic route", async (_label, overrides) => {
+    const complete = vi.fn<AIGeneratorGateway["complete"]>(async () => "nope");
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete },
+    });
+    await svc.generateDraft(adventureRun(overrides));
+    expect(complete).toHaveBeenCalledTimes(1);
+    expect(complete.mock.calls[0][0]).not.toContain("STAGE 1 OF 3");
+  });
+
+  it("stops on cancellation without running the generic route", async () => {
+    const controller = new AbortController();
+    const complete = vi.fn<AIGeneratorGateway["complete"]>(async () => {
+      controller.abort();
+      return JSON.stringify(stageReply("STAGE 1 OF 3"));
+    });
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete },
+    });
+    await expect(
+      svc.generateDraft(adventureRun(), controller.signal),
+    ).rejects.toThrow();
+    expect(complete).toHaveBeenCalledTimes(1);
+  });
+
+  it("runs the staged route from the streaming entry point too", async () => {
+    const complete = vi.fn<AIGeneratorGateway["complete"]>(async (message) =>
+      JSON.stringify(stageReply(message)),
+    );
+    const completeStream = vi.fn(async function* () {
+      yield { type: "complete" as const, text: "{}" };
+    });
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete, completeStream },
+    });
+    const events: Array<{ type: string; draft?: GeneratedDraft }> = [];
+    for await (const e of svc.generateDraftStream(adventureRun())) {
+      events.push(e as never);
+    }
+    expect(completeStream).not.toHaveBeenCalled();
+    expect(complete).toHaveBeenCalledTimes(3);
+    expect(events.find((e) => e.type === "draft")?.draft?.title).toBe(
+      "The Copper Ledger",
+    );
+  });
+});

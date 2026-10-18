@@ -1,0 +1,21 @@
+# Tasks — #4135
+
+- [x] T1 `public-adventure.ts`: expose `briefing` on `AdventurePrompt`, keeping the one-pass message byte-identical; export `seedFidelityProblems`, `bannedNamesIn` and `userSuppliedText`
+- [x] T2 Share the retry wording (`withRetryFeedback`) and progress details (`FIXING_DETAIL`, `ONE_PASS_DETAIL`) with Dungeon
+- [x] T3 `adventure-staged.ts`: stage prompts, pure checks, runner `generateAdventureStaged`
+- [x] T4 Tests `adventure-staged.test.ts`, covering:
+  - the happy path and output shape
+  - Adventure Canvas compatibility
+  - handoff between stages
+  - a locked objective
+  - split assets, a missing target location, and an outcome with an unintroduced NPC
+  - given-situation names and deadline, and clock integration
+  - keeping the earlier draft when the retry is worse
+  - an unreadable stage, cancellation, and the context prefix
+  - the `sameName` counterexample table and each check function
+- [x] T5 Export from `index.ts`
+- [x] T6 Wire the web `generateAdventure` and the page handlers and step list (+ tests)
+- [x] T7 Wire the in-app `generateAdventureWithAI` and its dev stats (+ tests, including the streaming entry point and cancellation)
+- [x] T8 `scripts/adventure-ab.ts` ten-case A/B harness (+ tests)
+- [x] T9 Validate: lint:changed, test:changed, svelte-check in apps/web, fallow audit
+- [ ] T10 Run the A/B harness against a real model and record the comparison on #4135. Needs provider keys; not run here.

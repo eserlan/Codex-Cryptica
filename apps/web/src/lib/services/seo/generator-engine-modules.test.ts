@@ -136,7 +136,8 @@ describe("generator engine modules", () => {
     {
       name: "adventure",
       generate: (engine: GeneratorEngineSpecialized) =>
-        engine.generateAdventure({ useAI: true }),
+        // These cases cover the one-pass baseline route.
+        engine.generateAdventure({ useAI: true, staged: false }),
       clean: adventureResponse("The Missing Courier"),
       incomplete: adventureResponse("The First Courier").replace(
         '"throughline":"Find the courier before the factions do.",',
@@ -319,6 +320,131 @@ describe("generator engine modules", () => {
 
       await expect(
         engine.generateDungeon({ ...options, signal: controller.signal }),
+      ).rejects.toMatchObject({ name: "AbortError" });
+      expect(runModel).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("staged adventure generation", () => {
+    const location = (name: string) => ({
+      name,
+      description: "Lamplit stone.",
+      role: "r",
+      relation: "rel",
+      leverage: "l",
+      dilemma: "Speed or stealth.",
+    });
+    const npc = (name: string) => ({
+      name,
+      role: "Fence",
+      relation: "rel",
+      goal: "Get paid",
+      secret: "s",
+      leverage: "l",
+      dilemma: "Trust or betray.",
+    });
+    const item = (title: string) => ({
+      title,
+      text: `${title} before sunset.`,
+      involves: ["Mara Venn"],
+    });
+
+    function stageReply(message: string) {
+      if (message.includes("STAGE 1 OF 3")) {
+        return {
+          title: "The Copper Ledger",
+          summary: "A courier carries a ledger.",
+          throughline: "A fence hid the ledger before sunset.",
+          initialSituation: "The ledger is at the Copper Market.",
+          primaryObjective: "Recover the ledger before sunset.",
+          assets: [
+            { name: "Ledger", status: "essential", place: "Copper Market" },
+          ],
+        };
+      }
+      if (message.includes("STAGE 2 OF 3")) {
+        return {
+          keyLocations: [location("Copper Market"), location("Salt Stair")],
+          npcs: [npc("Mara Venn"), npc("Iko Brand")],
+        };
+      }
+      return {
+        threats: [item("Rival Crew")],
+        discoveries: [
+          { ...item("Coded Note"), opens: "Copper Market" },
+          { ...item("Torn Map"), opens: "Salt Stair" },
+        ],
+        complications: [item("Closing Bell"), item("Watch Patrol")],
+        rewards: [{ title: "Favour", text: "The magistrate owes you." }],
+        outcomes: [item("Ledger Exposed"), item("Ledger Burned")],
+        hooks: [
+          { title: "Plea", text: "Mara begs." },
+          { title: "Bounty", text: "A reward is posted." },
+        ],
+      };
+    }
+
+    it("builds the adventure in three stages by default and reports each step", async () => {
+      const engine = new GeneratorEngineSpecialized(clientManager as never);
+      const runModel = spyOnRunModel(engine).mockImplementation(
+        async (_instruction, message) => JSON.stringify(stageReply(message)),
+      );
+      const onProgress = vi.fn();
+
+      const output = await engine.generateAdventure({
+        useAI: true,
+        onProgress,
+      });
+
+      expect(runModel).toHaveBeenCalledTimes(3);
+      expect(output.title).toBe("The Copper Ledger");
+      expect(
+        onProgress.mock.calls
+          .at(-1)?.[0]
+          .map((s: { status: string }) => s.status),
+      ).toEqual(["done", "done", "done"]);
+    });
+
+    it("logs staged adventure counts without generated text", async () => {
+      const engine = new GeneratorEngineSpecialized(clientManager as never);
+      spyOnRunModel(engine).mockImplementation(async (_instruction, message) =>
+        JSON.stringify(stageReply(message)),
+      );
+      const logger = vi.spyOn(console, "debug").mockImplementation(() => {});
+
+      await engine.generateAdventure({ useAI: true });
+
+      expect(logger).toHaveBeenCalledWith(
+        "[Generator] staged adventure run",
+        expect.objectContaining({ outcome: "staged", aiCalls: 3 }),
+      );
+      expect(JSON.stringify(logger.mock.calls)).not.toContain("Copper");
+      logger.mockRestore();
+    });
+
+    it("falls back to the one-pass route when a stage cannot be used", async () => {
+      const engine = new GeneratorEngineSpecialized(clientManager as never);
+      const runModel = spyOnRunModel(engine).mockResolvedValue(
+        adventureResponse("The Missing Courier"),
+      );
+
+      const output = await engine.generateAdventure({ useAI: true });
+
+      // Stage 1 passes, stage 2 fails twice (one NPC), then the one-pass call.
+      expect(runModel).toHaveBeenCalledTimes(4);
+      expect(output.title).toBe("The Missing Courier");
+    });
+
+    it("stops without output when aborted", async () => {
+      const engine = new GeneratorEngineSpecialized(clientManager as never);
+      const controller = new AbortController();
+      const runModel = spyOnRunModel(engine).mockImplementation(async () => {
+        controller.abort();
+        return "{}";
+      });
+
+      await expect(
+        engine.generateAdventure({ useAI: true, signal: controller.signal }),
       ).rejects.toMatchObject({ name: "AbortError" });
       expect(runModel).toHaveBeenCalledTimes(1);
     });

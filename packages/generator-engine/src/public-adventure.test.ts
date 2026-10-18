@@ -171,6 +171,17 @@ describe("generateAdventureLocal", () => {
 // ---------------------------------------------------------------------------
 
 describe("buildAdventurePrompt", () => {
+  it("exposes the briefing, the user message without its schema", () => {
+    const prompt = buildAdventurePrompt({
+      themeId: "fantasy",
+      seed: "Abbess Corvina must reach Saltmere before the solstice.",
+    });
+    expect(prompt.briefing).toContain("GIVEN SITUATION");
+    expect(prompt.briefing).not.toContain("Required JSON schema");
+    expect(prompt.userMessage.startsWith(`${prompt.briefing}\n\n`)).toBe(true);
+    expect(prompt.userMessage).toContain("Required JSON schema");
+  });
+
   it("returns systemInstruction, userMessage and resolved fields", () => {
     const prompt = buildAdventurePrompt({ themeId: "fantasy" });
     expect(prompt.systemInstruction).toBeTruthy();
