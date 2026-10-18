@@ -160,6 +160,7 @@ export class CampaignGeneratorAIGenerationService extends CampaignGeneratorLangu
         prompt.options,
         {
           contextPrefix: prompt.contextPrefix,
+          onStats: this._deps.onDungeonStagedStats,
           complete: async (instruction, message) =>
             completeText(await this.aiGateway!.complete(message, instruction)),
         },

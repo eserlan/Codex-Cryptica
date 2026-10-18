@@ -1037,7 +1037,8 @@
   ].includes(slug)}
   {generate}
   progressSteps={slug === "one-shot-adventure-generator" ||
-  slug === "point-crawl"
+  slug === "point-crawl" ||
+  slug === "dungeon-generator"
     ? oneShotProgress
     : null}
   {initialDraft}

@@ -560,6 +560,7 @@ export {
   type DungeonGeneratorOptions,
   type DungeonPrompt,
   type DungeonSector,
+  type DungeonSectorPresence,
   type ResolvedDungeon,
 } from "./public-dungeon";
 export {

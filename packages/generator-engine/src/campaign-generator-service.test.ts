@@ -2571,6 +2571,7 @@ describe("staged dungeon generation", () => {
   const stageReply = (message: string) => {
     const ids = [...message.matchAll(/sector-\d+/g)].map((m) => m[0]);
     const plan = [...new Set(ids)];
+    if (message.includes("Coherence review")) return { issues: [] };
     if (message.includes("Stage 1 of 3")) {
       return {
         title: "The Bellfound Depths",
@@ -2607,6 +2608,7 @@ describe("staged dungeon generation", () => {
       origin: "o",
       belief: "b",
       territorySectorIds: [id],
+      presence: [{ sectorId: id, detail: `${name} camp here` }],
       strength: "gear",
       leader: { name: `${name} Lead`, description: "d" },
       notable: { name: `${name} Second`, description: "d" },
@@ -2621,13 +2623,15 @@ describe("staged dungeon generation", () => {
     };
   };
 
-  it("builds the delve in three calls and carries the request context", async () => {
+  it("builds the delve in stages and carries the request context", async () => {
     const complete = vi.fn<AIGeneratorGateway["complete"]>(async (message) =>
       JSON.stringify(stageReply(message)),
     );
+    const onDungeonStagedStats = vi.fn();
     const svc = new CampaignGeneratorService({
       aiPolicy: { isEnabled: true, isAvailable: true },
       aiGateway: { complete },
+      onDungeonStagedStats,
     });
     const generated = await svc.generateDraft(
       run("dungeon", {
@@ -2637,7 +2641,12 @@ describe("staged dungeon generation", () => {
         options: { scale: "Small Lair (2 Sectors)" },
       }),
     );
-    expect(complete).toHaveBeenCalledTimes(3);
+    // Three stages plus the coherence review.
+    expect(complete).toHaveBeenCalledTimes(4);
+    expect(onDungeonStagedStats).toHaveBeenCalledWith(
+      expect.objectContaining({ outcome: "staged", aiCalls: 4 }),
+    );
+    expect(generated.content).toContain("**Held by Lantern Wrights:**");
     expect(complete.mock.calls[0][0]).toContain("Keep it damp.");
     expect(generated.title).toBe("The Bellfound Depths");
     expect(generated.content).toContain("Hollow 1");
@@ -2645,9 +2654,11 @@ describe("staged dungeon generation", () => {
 
   it("falls back to the one-pass route when a stage is unusable", async () => {
     const complete = vi.fn<AIGeneratorGateway["complete"]>(async () => "nope");
+    const onDungeonStagedStats = vi.fn();
     const svc = new CampaignGeneratorService({
       aiPolicy: { isEnabled: true, isAvailable: true },
       aiGateway: { complete },
+      onDungeonStagedStats,
     });
     const generated = await svc.generateDraft(
       run("dungeon", {
@@ -2659,6 +2670,12 @@ describe("staged dungeon generation", () => {
     // Stage 1 (2 attempts) fails, then the one-pass route runs and local output ships.
     expect(complete.mock.calls.length).toBeGreaterThan(2);
     expect(generated.title).toBeTruthy();
+    expect(onDungeonStagedStats).toHaveBeenCalledWith(
+      expect.objectContaining({
+        outcome: "fell-back",
+        stoppedAt: "foundation",
+      }),
+    );
   });
 
   it("keeps a continuity thread on the one-pass route", async () => {
