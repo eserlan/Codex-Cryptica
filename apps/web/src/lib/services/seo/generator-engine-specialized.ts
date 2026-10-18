@@ -99,10 +99,17 @@ export class GeneratorEngineSpecialized extends GeneratorEngineWorldbuilding {
       useAI?: boolean;
       /** Staged generation is the default; `false` forces the one-pass route. */
       staged?: boolean;
+      onProgress?: (steps: OneShotProgressStep[]) => void;
       signal?: AbortSignal;
     } = {},
   ): Promise<GeneratorOutput> {
-    const { useAI, staged = true, signal, ...dungeonOptions } = options;
+    const {
+      useAI,
+      staged = true,
+      onProgress,
+      signal,
+      ...dungeonOptions
+    } = options;
     return this.runWithAIFallback(
       useAI,
       async () => {
@@ -119,6 +126,12 @@ export class GeneratorEngineSpecialized extends GeneratorEngineWorldbuilding {
             complete: (instruction, message) =>
               this.runModel(instruction, message, undefined, true, signal),
             signal,
+            onProgress,
+            onStats: (stats) => {
+              if (import.meta.env.DEV) {
+                console.debug("[Generator] staged dungeon run", stats);
+              }
+            },
           });
           if (result) return result.output;
           // An unusable stage falls through to the one-pass route below.

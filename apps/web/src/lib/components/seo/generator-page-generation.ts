@@ -252,13 +252,17 @@ export function createGeneratorHandlers(
         ...(ctx.newsSheet as object),
         useAI,
       } as never),
-    "dungeon-generator": (useAI) =>
-      engine.generateDungeon({
+    "dungeon-generator": (useAI) => {
+      ctx.onOneShotProgress?.(null);
+      return engine.generateDungeon({
         ...(ctx.dungeon as object),
         useAI,
         avoidNames: collectSessionNames(ctx.getSessionEntities() as never[]),
         avoidTraits: collectSessionTraits(ctx.getSessionEntities() as never[]),
-      } as never),
+        onProgress: ctx.onOneShotProgress,
+        signal: ctx.oneShotRuns?.start(),
+      } as never);
+    },
     "adventure-generator": (useAI) =>
       engine.generateAdventure({
         ...(ctx.adventure as object),

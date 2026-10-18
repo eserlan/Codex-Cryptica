@@ -188,6 +188,7 @@ describe("generator engine modules", () => {
       const plan = [
         ...new Set([...message.matchAll(/sector-\d+/g)].map((m) => m[0])),
       ];
+      if (message.includes("Coherence review")) return { issues: [] };
       if (message.includes("Stage 1 of 3")) {
         return {
           title: "The Bellfound Depths",
@@ -224,6 +225,7 @@ describe("generator engine modules", () => {
         origin: "o",
         belief: "b",
         territorySectorIds: [id],
+        presence: [{ sectorId: id, detail: `${name} camp here` }],
         strength: "gear",
         leader: { name: `${name} Lead`, description: "d" },
         notable: { name: `${name} Second`, description: "d" },
@@ -244,16 +246,23 @@ describe("generator engine modules", () => {
       useAI: true,
     };
 
-    it("builds the delve in three calls by default", async () => {
+    it("builds the delve in stages by default and reports each step", async () => {
       const engine = new GeneratorEngineSpecialized(clientManager as never);
       const runModel = spyOnRunModel(engine).mockImplementation(
         async (_instruction, message) => JSON.stringify(stageReply(message)),
       );
+      const onProgress = vi.fn();
 
-      const output = await engine.generateDungeon(options);
+      const output = await engine.generateDungeon({ ...options, onProgress });
 
-      expect(runModel).toHaveBeenCalledTimes(3);
+      // Three stages plus the coherence review.
+      expect(runModel).toHaveBeenCalledTimes(4);
       expect(output.title).toBe("The Bellfound Depths");
+      expect(
+        onProgress.mock.calls
+          .at(-1)?.[0]
+          .map((s: { status: string }) => s.status),
+      ).toEqual(["done", "done", "done", "done"]);
     });
 
     it("falls back to the one-pass route when a stage cannot be used", async () => {

@@ -27,6 +27,7 @@
   } from "generator-engine";
   import type {
     AIGeneratorCompleteResult,
+    DungeonStagedStats,
     GeneratorPromptMetrics,
   } from "generator-engine";
   import { aiGeneratorGateway } from "$lib/services/generators/ai-generator-gateway";
@@ -191,6 +192,11 @@
     },
     onPromptMetrics(metrics: GeneratorPromptMetrics) {
       generatorSessionManager.recordPromptMetrics(metrics);
+    },
+    onDungeonStagedStats(stats: DungeonStagedStats) {
+      if (import.meta.env.DEV) {
+        console.debug("[Generator] staged dungeon run", stats);
+      }
     },
     get aiPolicy() {
       return aiPolicy;

@@ -14,6 +14,7 @@ import type {
 import { generateTomeTwoPass } from "./public-tome";
 import type { TomePrompt } from "./public-tome";
 import type { PublicGeneratorOutput } from "./public-generator-adapters";
+import type { DungeonStagedStats } from "./dungeon-staged";
 import type { LanguageGenerationResultV1, StatSheet } from "schema";
 
 export function completeText(
@@ -353,6 +354,8 @@ export interface CampaignGeneratorServiceDeps {
   onInteractionResult?: (result: AIGeneratorCompleteResult) => void;
   /** Called after successful AI generation so callers can compare prompt size. */
   onPromptMetrics?: (metrics: GeneratorPromptMetrics) => void;
+  /** Called when staged dungeon generation finishes or falls back. */
+  onDungeonStagedStats?: (stats: DungeonStagedStats) => void;
 }
 
 /** Max AI generation attempts when the model keeps returning a banned name. */

@@ -3,9 +3,12 @@ import {
   checkFactionGrounding,
   checkFactions,
   checkSectors,
+  checkTerritoryAccess,
+  DUNGEON_REVIEW_MARKER,
   generateDungeonStaged,
 } from "./dungeon-staged";
 import { buildDungeonPrompt, type ResolvedDungeon } from "./public-dungeon";
+import type { OneShotProgressStep } from "./one-shot-staged";
 
 const OPTIONS = { genre: "Classic Fantasy", scale: "Sprawling" };
 
@@ -62,6 +65,10 @@ function faction(
     origin: "Came for the glass after the tide.",
     belief: "The furnace can be tamed.",
     territorySectorIds: territory,
+    presence: territory.map((id) => ({
+      sectorId: id,
+      detail: `${name} camp in ${id}.`,
+    })),
     strength: "Heat-proof gear.",
     leader: { name: `${name} Lead`, description: "Runs the crew." },
     notable: { name: `${name} Second`, description: "Keeps the books." },
@@ -92,10 +99,17 @@ function script(replies: {
   foundation?: Reply;
   sectors?: Reply;
   factions?: Reply;
+  review?: Reply;
   repair?: Reply;
 }) {
   const calls: string[] = [];
-  const counts = { foundation: 0, sectors: 0, factions: 0, repair: 0 };
+  const counts = {
+    foundation: 0,
+    sectors: 0,
+    factions: 0,
+    review: 0,
+    repair: 0,
+  };
   const complete = async (_sys: string, message: string) => {
     calls.push(message);
     const stage = message.includes("Stage 1 of 3")
@@ -104,7 +118,9 @@ function script(replies: {
         ? "sectors"
         : message.includes("Stage 3 of 3")
           ? "factions"
-          : "repair";
+          : message.includes(DUNGEON_REVIEW_MARKER)
+            ? "review"
+            : "repair";
     const reply = replies[stage]?.(counts[stage]++, message);
     if (reply === undefined) throw new Error("no reply");
     return typeof reply === "string" ? reply : JSON.stringify(reply);
@@ -119,12 +135,16 @@ describe("generateDungeonStaged", () => {
       foundation: () => foundation(resolved),
       sectors: () => sectors(resolved),
       factions: () => factions(resolved),
+      review: () => ({ issues: [] }),
     });
     const result = await generateDungeonStaged(resolved, OPTIONS, {
       complete: s.complete,
     });
     expect(result).not.toBeNull();
-    expect(result!.stats.aiCalls).toBe(3);
+    expect(result!.stats.aiCalls).toBe(4);
+    expect(result!.stats.outcome).toBe("staged");
+    expect(result!.stats.reviewSkipped).toBe(false);
+    expect(result!.stats.coherenceRepaired).toBe(false);
     expect(result!.structured.sectors.map((x) => x.id)).toEqual(
       resolved.sectors.map((x) => x.id),
     );
@@ -284,6 +304,219 @@ describe("generateDungeonStaged", () => {
     expect(s.calls).toHaveLength(2);
   });
 
+  it("reports each stage as it runs, including a retry", async () => {
+    const resolved = setup();
+    const s = script({
+      foundation: () => foundation(resolved),
+      sectors: (n) => (n === 0 ? "not json" : sectors(resolved)),
+      factions: () => factions(resolved),
+    });
+    const updates: OneShotProgressStep[][] = [];
+    await generateDungeonStaged(resolved, OPTIONS, {
+      complete: s.complete,
+      onProgress: (steps) => updates.push(steps),
+    });
+    const ids = ["foundation", "sectors", "factions", "coherence"];
+    expect(updates[0].map((x) => [x.id, x.status])).toEqual(
+      ids.map((id) => [id, "pending"]),
+    );
+    expect(updates).toContainEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "sectors",
+          status: "active",
+          detail: "fixing problems",
+        }),
+      ]),
+    );
+    expect(updates.at(-1)!.map((x) => x.status)).toEqual(ids.map(() => "done"));
+  });
+
+  it("marks the failed stage and skips the rest when it gives up", async () => {
+    const resolved = setup();
+    const s = script({ foundation: () => foundation(resolved) });
+    const updates: OneShotProgressStep[][] = [];
+    const result = await generateDungeonStaged(resolved, OPTIONS, {
+      complete: s.complete,
+      onProgress: (steps) => updates.push(steps),
+    });
+    expect(result).toBeNull();
+    expect(updates.at(-1)!.map((x) => [x.id, x.status])).toEqual([
+      ["foundation", "done"],
+      ["sectors", "fallback"],
+      ["factions", "skipped"],
+      ["coherence", "skipped"],
+    ]);
+  });
+
+  it("passes the fixed layout to the sector and faction stages", async () => {
+    const resolved = setup();
+    const s = script({
+      foundation: () => foundation(resolved),
+      sectors: () => sectors(resolved),
+      factions: () => factions(resolved),
+    });
+    await generateDungeonStaged(resolved, OPTIONS, { complete: s.complete });
+    const edge = resolved.sectorEdges[0];
+    expect(s.calls[1]).toContain(
+      `sector-${edge.from + 1} ↔ sector-${edge.to + 1}`,
+    );
+    expect(s.calls[2]).toContain("sector-1 (Hollow 1) ↔ sector-2 (Hollow 2)");
+  });
+
+  it("writes each faction's presence into the sectors it holds", async () => {
+    const resolved = setup();
+    const s = script({
+      foundation: () => foundation(resolved),
+      sectors: () => sectors(resolved),
+      factions: () => factions(resolved),
+      review: () => ({ issues: [] }),
+    });
+    const result = await generateDungeonStaged(resolved, OPTIONS, {
+      complete: s.complete,
+    });
+    expect(result!.structured.sectors[0].presence).toEqual([
+      {
+        faction: "Lantern Wrights",
+        detail: "Lantern Wrights camp in sector-1.",
+      },
+    ]);
+    expect(result!.structured.sectors[2].presence).toBeUndefined();
+    expect(result!.output.content).toContain(
+      "**Held by Lantern Wrights:** Lantern Wrights camp in sector-1.",
+    );
+    // The rendered layout is the planned one, not a re-roll.
+    const shortcut = resolved.sectorEdges.find((e) => e.to !== e.from + 1);
+    if (shortcut) expect(result!.output.lore).toContain(shortcut.via);
+  });
+
+  it("asks again when a faction says nothing about a sector it holds", async () => {
+    const resolved = setup();
+    const s = script({
+      foundation: () => foundation(resolved),
+      sectors: () => sectors(resolved),
+      factions: (n) => {
+        const f = factions(resolved);
+        if (n === 0) f.factions[1].presence = [];
+        return f;
+      },
+    });
+    const result = await generateDungeonStaged(resolved, OPTIONS, {
+      complete: s.complete,
+    });
+    expect(result!.stats.repairedStages).toEqual(["factions"]);
+    expect(s.calls[3]).toContain(
+      "Weir Wardens holds sector-2 but its presence says nothing",
+    );
+  });
+
+  it("repairs what the review finds and records it", async () => {
+    const resolved = setup();
+    const s = script({
+      foundation: () => foundation(resolved),
+      sectors: () => sectors(resolved),
+      factions: () => factions(resolved),
+      review: () => ({
+        issues: ["history never says how the tide broke the descent"],
+      }),
+      repair: () => {
+        const fixed = factions(resolved);
+        fixed.factions.forEach(
+          (f, i) => (f.drive = resolved.factions[i].drive),
+        );
+        return {
+          ...foundation(resolved),
+          history: "A tide-gate failed during the first firing and flooded it.",
+          ...sectors(resolved),
+          ...fixed,
+        };
+      },
+    });
+    const result = await generateDungeonStaged(resolved, OPTIONS, {
+      complete: s.complete,
+    });
+    expect(result!.stats.reviewIssues).toEqual([
+      "history never says how the tide broke the descent",
+    ]);
+    expect(result!.stats.coherenceRepaired).toBe(true);
+    expect(s.calls.at(-1)).toContain("history never says how the tide");
+    expect(result!.structured.history).toContain("tide-gate");
+    // The repair answer omitted presence; it is carried over.
+    expect(result!.structured.sectors[0].presence?.[0].faction).toBe(
+      "Lantern Wrights",
+    );
+  });
+
+  it("uses the review's retry when the first answer is unreadable", async () => {
+    const resolved = setup();
+    const s = script({
+      foundation: () => foundation(resolved),
+      sectors: () => sectors(resolved),
+      factions: () => factions(resolved),
+      review: (n) => (n === 0 ? "no idea" : { issues: [] }),
+    });
+    const result = await generateDungeonStaged(resolved, OPTIONS, {
+      complete: s.complete,
+    });
+    expect(result!.stats.reviewSkipped).toBe(false);
+    expect(result!.stats.aiCalls).toBe(5);
+  });
+
+  it("keeps one presence per sector and drops sectors the faction does not hold", async () => {
+    const resolved = setup();
+    const s = script({
+      foundation: () => foundation(resolved),
+      sectors: () => sectors(resolved),
+      factions: () => {
+        const f = factions(resolved);
+        f.factions[0].presence = [
+          { sectorId: "sector-1", detail: "First camp." },
+          { sectorId: "sector-1", detail: "Second camp." },
+          { sectorId: "sector-3", detail: "Not theirs." },
+        ];
+        return f;
+      },
+      review: () => ({ issues: [] }),
+    });
+    const result = await generateDungeonStaged(resolved, OPTIONS, {
+      complete: s.complete,
+    });
+    expect(result!.structured.sectors[0].presence).toEqual([
+      { faction: "Lantern Wrights", detail: "First camp." },
+    ]);
+    expect(result!.structured.sectors[2].presence).toBeUndefined();
+  });
+
+  it("keeps the assembled delve when the review cannot be read", async () => {
+    const resolved = setup();
+    const s = script({
+      foundation: () => foundation(resolved),
+      sectors: () => sectors(resolved),
+      factions: () => factions(resolved),
+      review: () => "no idea",
+    });
+    const result = await generateDungeonStaged(resolved, OPTIONS, {
+      complete: s.complete,
+    });
+    expect(result!.stats.reviewSkipped).toBe(true);
+    expect(result!.stats.coherenceRepaired).toBe(false);
+    // The review is retried once, like every stage.
+    expect(s.calls).toHaveLength(5);
+  });
+
+  it("reports stats for a run that falls back, naming where it stopped", async () => {
+    const resolved = setup();
+    const s = script({ foundation: () => foundation(resolved) });
+    const seen: unknown[] = [];
+    await generateDungeonStaged(resolved, OPTIONS, {
+      complete: s.complete,
+      onStats: (stats) => seen.push(stats),
+    });
+    expect(seen).toEqual([
+      expect.objectContaining({ outcome: "fell-back", stoppedAt: "sectors" }),
+    ]);
+  });
+
   it("throws on abort and returns nothing", async () => {
     const resolved = setup();
     const ctl = new AbortController();
@@ -300,6 +533,97 @@ describe("generateDungeonStaged", () => {
       }),
     ).rejects.toBeDefined();
     expect(s.calls).toHaveLength(1);
+  });
+});
+
+describe("checkTerritoryAccess", () => {
+  const SECTORS = ["A", "B", "C", "D"].map((name, i) => ({
+    id: `sector-${i + 1}`,
+    name: `${name} Hall`,
+  }));
+  const CHAIN = [0, 1, 2].map((i) => ({
+    from: i,
+    to: i + 1,
+    via: "the main passage",
+  }));
+  const holder = (territory: string[], text = "Strong walls.") => ({
+    name: "Custodians",
+    goal: "Keep the records.",
+    obstacle: "Few hands.",
+    relationship: "Wary.",
+    strength: text,
+    origin: "",
+    belief: "",
+    territorySectorIds: territory,
+  });
+
+  it("flags territory split by a sector it does not hold", () => {
+    const issues = checkTerritoryAccess(
+      [holder(["sector-1", "sector-3"])],
+      SECTORS,
+      CHAIN,
+    );
+    expect(issues).toHaveLength(1);
+    expect(issues[0]).toContain("only connect through B Hall;");
+    expect(issues[0]).not.toContain("D Hall");
+  });
+
+  it.each([
+    ["Tunnel-fighting veterans."],
+    ["Supplies run low and morale is cut off from hope."],
+    ["They plan to cross swords with the Choir."],
+    ["They pass the time cataloguing bones."],
+  ])(
+    "still flags a split territory when the text only seems to explain it: %s",
+    (strength) => {
+      expect(
+        checkTerritoryAccess(
+          [holder(["sector-1", "sector-3"], strength)],
+          SECTORS,
+          CHAIN,
+        ),
+      ).toHaveLength(1);
+    },
+  );
+
+  it.each([
+    ["A truce lets them pass the B Hall."],
+    ["They smuggle supplies past the Choir: by night, in sacks."],
+    ["The archive is an isolated enclave behind Choir lines."],
+    ["They bribe the guards of b hall for each crossing."],
+    ["Runners use a secret passage under the floor."],
+  ])("accepts a split territory whose text says how: %s", (strength) => {
+    expect(
+      checkTerritoryAccess(
+        [holder(["sector-1", "sector-3"], strength)],
+        SECTORS,
+        CHAIN,
+      ),
+    ).toEqual([]);
+  });
+
+  it("accepts connected territory, a shortcut, or text that says how it crosses", () => {
+    expect(
+      checkTerritoryAccess([holder(["sector-1", "sector-2"])], SECTORS, CHAIN),
+    ).toEqual([]);
+    expect(
+      checkTerritoryAccess([holder(["sector-1", "sector-4"])], SECTORS, [
+        ...CHAIN,
+        { from: 0, to: 3, via: "a collapsed shaft" },
+      ]),
+    ).toEqual([]);
+    expect(
+      checkTerritoryAccess(
+        [
+          holder(
+            ["sector-1", "sector-3"],
+            "A truce lets them pass the B Hall.",
+          ),
+        ],
+        SECTORS,
+        CHAIN,
+      ),
+    ).toEqual([]);
   });
 });
 
@@ -359,6 +683,7 @@ describe("stage checks", () => {
             "Secure the unique brass idol number 1",
           ),
           territorySectorIds: [secs[0].id],
+          presence: undefined,
         },
       ],
       "Lantern Wrights wants it.",
@@ -373,6 +698,7 @@ describe("stage checks", () => {
             [secs[0].id],
             "Recover the unique brass idol number 1 from its sealed cradle",
           ),
+          presence: undefined,
         },
       ],
       "x",

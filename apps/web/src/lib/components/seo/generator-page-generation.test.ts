@@ -448,6 +448,27 @@ describe("generator-page-generation", () => {
       expect(callArg).toHaveProperty("avoidTraits");
     });
 
+    it("passes dungeon progress and a fresh signal, cancelling the last run", async () => {
+      const engine = makeFakeEngine();
+      const onOneShotProgress = vi.fn();
+      const oneShotRuns = createOneShotRunControl();
+      const handlers = createGeneratorHandlers(
+        makeCtx({ engine, onOneShotProgress, oneShotRuns }),
+      );
+      const generateDungeon = engine.generateDungeon as unknown as ReturnType<
+        typeof vi.fn
+      >;
+
+      await handlers["dungeon-generator"](true);
+      await handlers["dungeon-generator"](true);
+
+      expect(onOneShotProgress).toHaveBeenCalledWith(null);
+      const [first, second] = generateDungeon.mock.calls.map((c) => c[0]);
+      expect(second.onProgress).toBe(onOneShotProgress);
+      expect(first.signal.aborted).toBe(true);
+      expect(second.signal.aborted).toBe(false);
+    });
+
     it("resolves plot twist premise via handoff when handoff is present", async () => {
       const engine = makeFakeEngine();
       const ctx = makeCtx({

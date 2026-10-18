@@ -1007,6 +1007,61 @@ describe("parseDungeonResponse", () => {
     expect(out.content).not.toContain("halls..");
   });
 
+  it("renders the planned layout and each sector's presence", () => {
+    const { resolved } = buildDungeonPrompt({
+      themeId: "fantasy",
+      scale: "Medium Complex (3-4 Sectors)",
+    });
+    const last = resolved.sectors.length - 1;
+    const foundation = {
+      ...resolved,
+      sectorEdges: [
+        ...resolved.sectorEdges.filter((e) => e.to === e.from + 1),
+        { from: 0, to: last, via: "a planned test shaft" },
+      ],
+    };
+    const response = JSON.stringify({
+      title: "The Planned Delve",
+      summary: "S",
+      throughline: "Built, broken, now held.",
+      ...NARRATIVE,
+      sectors: resolved.sectors.map((sec, i) => ({
+        name: `Room ${i + 1}`,
+        description: "d",
+        stockType: sec.stockType,
+        stockDetail: `detail ${i + 1}`,
+        presence:
+          i === 0
+            ? [{ faction: "Bone Wardens", detail: "Barricades of femurs" }]
+            : undefined,
+      })),
+      factions: ["Bone Wardens", "Ashen Choir"].map((name, i) => ({
+        ...FACTION_FIELDS,
+        name,
+        virtue: "Loyal",
+        vice: "Proud",
+        goal: `goal ${i + 1}`,
+        drive: resolved.factions[i].drive,
+        obstacle: "ob",
+        territorySectorIds: [resolved.sectors[i].id],
+      })),
+    });
+    // Different rng each time: the layout must still be the planned one.
+    for (const seed of [1, 2, 3]) {
+      const result = parseDungeonResponseDetailed(
+        response,
+        {},
+        seededRng(seed),
+        foundation,
+      );
+      expect(result.problems).toEqual([]);
+      expect(result.output.lore).toContain("via a planned test shaft");
+      expect(result.output.content).toContain(
+        "**Held by Bone Wardens:** Barricades of femurs.",
+      );
+    }
+  });
+
   it("rejects a response with the wrong sector count and ships the foundation", () => {
     const prompt = buildDungeonPrompt({
       themeId: "lancer",
