@@ -158,17 +158,21 @@ describe("answer registry", () => {
     expect(example.items).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          term: "Noticing: the passive score meets the DC",
-          text: expect.stringContaining("ranger's passive Perception of 15"),
-        }),
-        expect.objectContaining({
-          term: "Finding: a described search, one roll",
-          text: expect.stringContaining("rogue rolls 9 and 14"),
-        }),
-        expect.objectContaining({
-          term: "Why it works",
+          term: "Noticing: passive success locates the door",
           text: expect.stringContaining(
-            "Each die roll answered a different question",
+            "No active check is needed to detect it again.",
+          ),
+        }),
+        expect.objectContaining({
+          term: "Alternative: passive detection fails, then they search",
+          text: expect.stringContaining(
+            "one active Perception check with advantage",
+          ),
+        }),
+        expect.objectContaining({
+          term: "Active search, on a failure instead",
+          text: expect.stringContaining(
+            "Any new roll follows a genuinely different approach.",
           ),
         }),
       ]),
