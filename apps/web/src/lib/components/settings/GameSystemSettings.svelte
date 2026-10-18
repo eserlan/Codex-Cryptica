@@ -47,19 +47,19 @@
 </script>
 
 <div
-  class="bg-theme-bg/50 border border-theme-border p-4 rounded-lg space-y-3"
+  class="bg-chrome-bg/50 border border-chrome-border p-4 rounded-lg space-y-3"
   data-testid="game-system-settings"
 >
   <div class="flex items-start justify-between gap-4">
     <div class="flex-1">
       <label
         for="vault-game-system"
-        class="block text-sm font-bold text-theme-text mb-1 uppercase font-header"
+        class="block text-sm font-bold text-chrome-text mb-1 uppercase font-header"
         >Default Game System</label
       >
       <p
         id="vault-game-system-help"
-        class="text-meta text-theme-muted leading-relaxed"
+        class="text-meta text-chrome-muted leading-relaxed"
       >
         Generators default to this system, and its stat sheets are suggested
         first. Existing entities keep their sheets.
@@ -71,7 +71,7 @@
       onchange={handleChange}
       disabled={isSaving || store.isLoading}
       aria-describedby="vault-game-system-help"
-      class="bg-theme-surface border border-theme-border text-theme-text px-3 py-1.5 text-sm font-mono focus:outline-none focus:border-theme-primary rounded disabled:opacity-60"
+      class="bg-chrome-surface border border-chrome-border text-chrome-text px-3 py-1.5 text-sm font-mono focus:outline-none focus:border-chrome-accent rounded disabled:opacity-60"
     >
       {#each profiles as profile (profile.id)}
         <option value={profile.id}>{profile.label}</option>
@@ -80,13 +80,13 @@
   </div>
 
   {#if selected.description}
-    <p class="text-meta text-theme-muted leading-relaxed">
+    <p class="text-meta text-chrome-muted leading-relaxed">
       {selected.description}
     </p>
   {/if}
   {#if selected.provenance}
     <p
-      class="text-meta text-theme-muted leading-relaxed border-t border-theme-border/30 pt-3"
+      class="text-meta text-chrome-muted leading-relaxed border-t border-chrome-border/30 pt-3"
       data-testid="game-system-attribution"
     >
       {selected.provenance.attribution ??
@@ -95,7 +95,7 @@
         href={selected.provenance.source}
         target="_blank"
         rel="noopener noreferrer"
-        class="text-theme-link underline">Source</a
+        class="text-chrome-accent underline">Source</a
       >
     </p>
   {/if}

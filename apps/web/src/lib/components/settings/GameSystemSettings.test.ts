@@ -93,4 +93,31 @@ describe("GameSystemSettings (#3943)", () => {
     finish(true);
     await waitFor(() => expect(select.disabled).toBe(false));
   });
+
+  it("is disabled while the profile is loading and enabled afterwards", async () => {
+    let finishLoading!: (value: string | null) => void;
+    const registry = new GameSystemRegistry();
+    const store = new SystemProfileStore(
+      registry,
+      storage({
+        loadFromCache: vi.fn(
+          () =>
+            new Promise<string | null>((resolve) => (finishLoading = resolve)),
+        ),
+      }),
+    );
+    const initialization = store.init("vault-1");
+    expect(store.isLoading).toBe(true);
+
+    render(GameSystemSettings, { props: { store, registry } });
+    const select = screen.getByRole("combobox", {
+      name: /Default Game System/,
+    }) as HTMLSelectElement;
+    expect(select.disabled).toBe(true);
+
+    finishLoading(null);
+    await waitFor(() => expect(store.isLoading).toBe(false));
+    expect(select.disabled).toBe(false);
+    await initialization;
+  });
 });
