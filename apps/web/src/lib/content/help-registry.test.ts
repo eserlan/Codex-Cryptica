@@ -46,7 +46,7 @@ describe("help registry against the real in-app help articles", () => {
   it("documents the vault game system setting and the import and Luck reset limitations", () => {
     const content = contentOf("tales-of-the-valiant");
     expect(content).toContain("Settings → Vault → Game System");
-    expect(content).toContain("Existing entities keep the sheets they have");
+    expect(content).toContain("Nothing already in the vault changes");
     expect(content).toContain("does not currently import ToV character JSON");
     expect(content).toContain(
       "BFRD Luck rules do not prescribe a Long Rest reset",
