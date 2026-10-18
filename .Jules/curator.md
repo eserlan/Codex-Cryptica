@@ -96,3 +96,9 @@
 
 **Learning:** Component files like `PresentationTemplateEditor.svelte` can become god-files when they mix complex internal state, editing logic, layout definitions, and massive inline modals or context menus. Extracting an inline block like the field context menu to its own `PresentationFieldContextMenu.svelte` simplifies the parent's markup greatly.
 **Action:** Always consider extracting sizable inline UI elements (e.g. context menus) that merely consume state into dedicated child components via props.
+
+## $(date -u +'%Y-%m-%d') - Extract generator category definitions from GeneratorConfigForm
+
+**Learning:** Large component files containing configuration data and constant mapping functions alongside UI are candidates for structural extraction. Generator mapping definitions have clear ownership and can live alongside the component.
+
+**Action:** When a UI component file includes large static configuration blocks (like category mapping or lookups), extract these constants and pure functions into a companion `.ts` file (e.g. `[component-name]-categories.ts`) within the same feature folder to keep the component script block focused.
