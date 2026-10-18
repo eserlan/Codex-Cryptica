@@ -16,7 +16,7 @@ export const howDoIDesignAGeographicallyRealisticTownOrVillage: AnswerConfigInpu
         paragraphs: [
           "A river on the map does not guarantee that anyone can drink from it. Ask where clean water comes from in the driest month and the coldest month, who can reach it, and what happens when it fails. A spring at the foot of a slope, a shallow well field, or a stream that runs all year will support a settlement. A wide river that floods each spring, turns brackish near the sea, or drops between steep banks may be useful for transport and mills while daily water still comes from wells and cisterns behind the houses.",
           "Work through the source before you draw a single street. Surface water suits settlements that can protect an intake upstream of latrines, tanneries and livestock crossings. Groundwater suits places with diggable wells, but wells need spacing, lining and a plan for when the water table falls. Dry settlements store water instead: roof runoff into cisterns, seasonal pools lined with clay, or channels that bring water from distant springs. Coastal settlements face a sharper version of the same problem, because a harbour full of ships can sit beside very little fresh water. Name the source, the backup source and the failure mode. If you cannot answer for winter and for drought, the site is not settled yet.",
-          "Treat flood risk as part of the water decision, not an afterthought. Homes, granaries and workshops that must stay dry belong on a raised terrace, a low ridge or the higher bank, with the floodplain left to meadow, grazing, fisheries and gardens that tolerate wet ground. Building directly on the bank buys easy access and pays for it in ruined stores, undermined walls and streets that become channels. A settlement that has lived with a river for generations shows that bargain in its levels: quays and boathouses low, homes and stored food high, and a lane or bank marking where people expect the water to reach.",
+          "Treat flood risk as part of the water decision, not an afterthought. Homes, granaries and workshops that must stay dry belong on a raised terrace, a low ridge or the higher bank. Persistently wet ground suits meadow, grazing or fisheries; seasonally flooded land may support crops when drainage, flood timing and crop choice permit. Building directly on the bank buys easy access and pays for it in ruined stores, undermined walls and streets that become channels. A settlement that has lived with a river for generations shows that bargain in its levels: quays and boathouses low, homes and stored food high, and a lane or bank marking where people expect the water to reach.",
         ],
       },
       {
@@ -102,7 +102,7 @@ export const howDoIDesignAGeographicallyRealisticTownOrVillage: AnswerConfigInpu
           [
             "River valley",
             "Wells and river intakes, with flood levels deciding which bank and terrace can hold homes and stores.",
-            "Homes and granaries on the terrace, meadow and fisheries on the floodplain, quay and mill low, one bridge shaping the market and gates.",
+            "Homes and granaries on the terrace; seasonally flooded ground may support crops where drainage and flood timing permit, while persistently wet areas suit meadow or fisheries; quay and mill low, one bridge shaping the market and gates.",
           ],
           [
             "Drylands or oasis",
