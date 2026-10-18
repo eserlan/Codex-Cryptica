@@ -145,6 +145,29 @@ describe("ProxyAIGeneratorGateway", () => {
     ).resolves.toBe('{"title":"Stable"}');
   });
 
+  it("forwards an abort signal to stateless generation", async () => {
+    const controller = new AbortController();
+    let requestSignal: AbortSignal | undefined;
+    const client = {
+      getModel: async () => ({
+        generateContent: async (
+          _request: unknown,
+          options?: { signal?: AbortSignal },
+        ) => {
+          requestSignal = options?.signal;
+          return { response: { text: () => '{"title":"Stable"}' } };
+        },
+      }),
+    };
+    const gateway = new ProxyAIGeneratorGateway(client as never);
+
+    await gateway.complete("full prompt", "system", {
+      signal: controller.signal,
+    });
+
+    expect(requestSignal).toBe(controller.signal);
+  });
+
   describe("completeStream", () => {
     async function collect(
       gen: AsyncGenerator<import("generator-engine").GenerationEvent>,

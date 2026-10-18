@@ -52,6 +52,7 @@ vi.mock("$lib/stores/ui/notification.svelte", () => ({
 vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
   modalUIStore: {
     showSettings: false,
+    statBlockImport: { open: false, entityId: null },
     mergeDialog: { open: false, sourceIds: [] },
     bulkLabelDialog: { open: false, entityIds: [] },
     soundBite: { show: false, entityId: null },

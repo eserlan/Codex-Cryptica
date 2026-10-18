@@ -28,6 +28,12 @@ vi.mock("$lib/stores/ui/notification.svelte", () => ({
 }));
 
 vi.mock("dice-engine", () => ({
+  DiceParser: class {
+    parse(formula: string) {
+      if (formula.includes("invalid")) throw new Error("Invalid formula");
+      return formula;
+    }
+  },
   diceParser: {
     parse: vi.fn((formula: string) => {
       if (formula.includes("invalid")) throw new Error("Invalid formula");

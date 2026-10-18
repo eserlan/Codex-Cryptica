@@ -183,6 +183,13 @@ export const COACH_MARKS: CoachMark[] = [
 ];
 
 export const FEATURE_HINTS: Record<string, FeatureHint> = {
+  "stat-block-import": {
+    id: "stat-block-import",
+    title: "Import a stat block",
+    content:
+      "Paste a Tales of the Valiant creature or quick NPC from any source. Check the review screen before saving: “check this” and “not found” values need your attention.",
+    icon: "icon-[lucide--file-input]",
+  },
   "oracle-mentions": {
     id: "oracle-mentions",
     title: "Mention an entity",

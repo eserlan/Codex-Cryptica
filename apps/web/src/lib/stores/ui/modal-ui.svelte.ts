@@ -290,6 +290,20 @@ export class ModalUIStore {
     };
   }
 
+  /** Stat block import (ToV). Opens for a target entity, or for a new entity when none is given. */
+  statBlockImport = $state<{ open: boolean; entityId: string | null }>({
+    open: false,
+    entityId: null,
+  });
+
+  openStatBlockImport(options: { entityId?: string } = {}) {
+    this.statBlockImport = { open: true, entityId: options.entityId ?? null };
+  }
+
+  closeStatBlockImport() {
+    this.statBlockImport = { open: false, entityId: null };
+  }
+
   /** Open the unified generator workflow seeded from a source entity. */
   openGeneratorWorkflowForEntity(
     sourceEntityId: string,
@@ -523,29 +537,41 @@ export class ModalUIStore {
     };
   }
 
+  /** Overlays that take over the screen (the first group of open-state checks). */
+  get overlayDialogOpen(): boolean {
+    return [
+      this.showMobileCreateSheet,
+      this.showSettings,
+      this.showZenMode,
+      this.showDiceModal,
+      this.showCanvasSelector,
+      this.mergeDialog.open,
+      this.bulkLabelDialog.open,
+      this.relatedEntityDialog.open,
+      this.parentPickerDialog.open,
+      this.vaultThemePrompt.open,
+    ].some(Boolean);
+  }
+
+  /** Panels, dialogs and workflows (the second group of open-state checks). */
+  get panelDialogOpen(): boolean {
+    return [
+      this.showVaultSwitcher,
+      this.showShare,
+      this.imagePromptReview.open,
+      this.lightbox.show,
+      this.soundBite.show,
+      this.revisionDialog.open,
+      this.generatorWorkflow.open,
+      this.statBlockImport.open,
+      this.showIntentCreateMenu,
+      this.showQuickStartModal,
+      this.silhouettePickerState.open,
+    ].some(Boolean);
+  }
+
   get isAnyModalOpen() {
-    return (
-      this.showMobileCreateSheet ||
-      this.showSettings ||
-      this.showZenMode ||
-      this.showDiceModal ||
-      this.showCanvasSelector ||
-      this.mergeDialog.open ||
-      this.bulkLabelDialog.open ||
-      this.relatedEntityDialog.open ||
-      this.parentPickerDialog.open ||
-      this.vaultThemePrompt.open ||
-      this.showVaultSwitcher ||
-      this.showShare ||
-      this.imagePromptReview.open ||
-      this.lightbox.show ||
-      this.soundBite.show ||
-      this.revisionDialog.open ||
-      this.generatorWorkflow.open ||
-      this.showIntentCreateMenu ||
-      this.showQuickStartModal ||
-      this.silhouettePickerState.open
-    );
+    return this.overlayDialogOpen || this.panelDialogOpen;
   }
 }
 
@@ -554,6 +580,6 @@ export class ModalUIStore {
 // cached instance that predates the current class definition — which would
 // cause new properties to be undefined and their reactive assignments to be
 // silently dropped.
-const KEY = "__codex_modal_ui_store__v12__";
+const KEY = "__codex_modal_ui_store__v13__";
 export const modalUIStore: ModalUIStore =
   (globalThis as any)[KEY] ?? ((globalThis as any)[KEY] = new ModalUIStore());
