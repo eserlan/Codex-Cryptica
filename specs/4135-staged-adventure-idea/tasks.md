@@ -18,4 +18,4 @@
 - [x] T7 Wire the in-app `generateAdventureWithAI` and its dev stats (+ tests, including the streaming entry point and cancellation)
 - [x] T8 `scripts/adventure-ab.ts` ten-case A/B harness (+ tests)
 - [x] T9 Validate: lint:changed, test:changed, svelte-check in apps/web, fallow audit
-- [ ] T10 Run the A/B harness against a real model and record the comparison on #4135. Needs provider keys; not run here.
+- T10 Running the A/B harness against a real model is optional, tracked in #4214.

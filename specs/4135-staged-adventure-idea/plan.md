@@ -56,7 +56,7 @@ An unusable stage, or a rejected assembly, resolves `null`, and the caller runs 
 - whether a given situation's names survived
 - title variety
 
-It needs a real model behind the local proxy. Coherence, specificity and usefulness are read from `--json`, not scored.
+It needs a real model behind the local proxy. Coherence, specificity and usefulness are read from `--json`, not scored. Running it is optional and tracked in #4214.
 
 ## Out of scope / caveats
 
