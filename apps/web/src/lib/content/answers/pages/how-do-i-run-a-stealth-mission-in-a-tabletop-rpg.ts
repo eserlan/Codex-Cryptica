@@ -271,6 +271,7 @@ export const howDoIRunAStealthMissionInATabletopRpg: AnswerConfigInput = {
     "how-do-you-run-a-chase-in-a-tabletop-rpg",
     "how-do-i-give-specialist-characters-spotlight",
     "how-do-i-improvise-npcs-in-dnd",
+    "how-do-i-run-secret-doors-in-dnd",
   ],
   discovery: {
     id: "answer-run-stealth-mission-in-tabletop-rpg",
