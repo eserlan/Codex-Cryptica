@@ -62,7 +62,9 @@ export async function askModel<T>(
       const result = read(reply);
       if (result !== null) return result;
     } catch (err) {
-      if (isAbort(err, signal)) throw err;
+      // Surface the signal's reason, not whatever the cancelled call threw.
+      throwIfAborted(signal);
+      if (isAbort(err)) throw err;
     }
   }
   return null;

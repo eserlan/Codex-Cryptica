@@ -102,6 +102,20 @@ describe("askModel", () => {
     expect(calls).toBe(1);
   });
 
+  it("reports the signal's reason when a cancelled call fails some other way", async () => {
+    const controller = new AbortController();
+    const reason = new Error("user cancelled");
+    await expect(
+      askJson(
+        async () => {
+          controller.abort(reason);
+          throw new Error("network");
+        },
+        { signal: controller.signal, attempts: 2 },
+      ),
+    ).rejects.toBe(reason);
+  });
+
   it("discards a reply that arrives after cancellation", async () => {
     const controller = new AbortController();
     await expect(
@@ -242,6 +256,11 @@ describe("pool", () => {
     });
     expect(await pool(tasks, 2)).toEqual([0, 1, 2, 3, 4]);
     expect(peak).toBe(2);
+  });
+
+  it("still runs every task when the limit is below one", async () => {
+    const tasks = [1, 2, 3].map((n) => async () => n);
+    expect(await pool(tasks, 0)).toEqual([1, 2, 3]);
   });
 
   it("handles an empty task list", async () => {
