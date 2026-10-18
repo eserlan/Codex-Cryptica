@@ -56,6 +56,8 @@ const streamMock = vi.hoisted(() => ({
 const campaignServiceMocks = vi.hoisted(() => ({
   onDungeonStagedStats: null as
     ((stats: import("generator-engine").DungeonStagedStats) => void) | null,
+  onAdventureStagedStats: null as
+    ((stats: import("generator-engine").AdventureStagedStats) => void) | null,
 }));
 
 vi.mock("$lib/actions/focusTrap", () => ({
@@ -129,6 +131,8 @@ vi.mock("generator-engine", async () => {
       super(...args);
       campaignServiceMocks.onDungeonStagedStats =
         args.at(0)?.onDungeonStagedStats ?? null;
+      campaignServiceMocks.onAdventureStagedStats =
+        args.at(0)?.onAdventureStagedStats ?? null;
     }
 
     async *generateDraftStream() {
@@ -167,6 +171,7 @@ describe("CampaignGeneratorModal", () => {
     streamMock.waitForRelease = null;
     streamMock.release = null;
     campaignServiceMocks.onDungeonStagedStats = null;
+    campaignServiceMocks.onAdventureStagedStats = null;
     store._workflow.launchMode = "workspace";
     store._workflow.sourceEntityId = null;
     store._workflow.generatorId = null;
@@ -210,6 +215,35 @@ describe("CampaignGeneratorModal", () => {
         aiCalls: 4,
         repairedStageCount: 1,
         reviewIssueCount: 1,
+        remainingIssueCount: 1,
+      }),
+    );
+    expect(JSON.stringify(logger.mock.calls)).not.toContain(contentSentinel);
+    logger.mockRestore();
+  });
+
+  it("logs staged adventure diagnostics without generated issue text", () => {
+    render(CampaignGeneratorModal);
+    const logger = vi.spyOn(console, "debug").mockImplementation(() => {});
+    const contentSentinel = "PRIVATE_ADVENTURE_ISSUE_SENTINEL";
+
+    campaignServiceMocks.onAdventureStagedStats?.({
+      outcome: "fell-back",
+      stoppedAt: "cast",
+      aiCalls: 3,
+      elapsedMs: 1200,
+      repairedStages: ["situation"],
+      remainingIssues: [contentSentinel],
+    });
+
+    expect(logger).toHaveBeenCalledWith(
+      "[Generator] staged adventure run",
+      expect.objectContaining({
+        outcome: "fell-back",
+        stoppedAt: "cast",
+        aiCalls: 3,
+        elapsedMs: 1200,
+        repairedStageCount: 1,
         remainingIssueCount: 1,
       }),
     );

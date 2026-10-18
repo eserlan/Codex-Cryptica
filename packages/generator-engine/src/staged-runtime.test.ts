@@ -6,8 +6,10 @@ import {
   isAbort,
   pool,
   readJsonObject,
+  runCheckedStage,
   throwIfAborted,
 } from "./staged-runtime";
+import { StagedProgress, type StagedProgressStep } from "./staged-progress";
 
 const abortError = () =>
   new DOMException("The operation was aborted", "AbortError");
@@ -240,6 +242,67 @@ describe("askChecked", () => {
         { signal: controller.signal },
       ),
     ).rejects.toThrow();
+  });
+});
+
+describe("runCheckedStage", () => {
+  const setup = () => {
+    const snapshots: StagedProgressStep[][] = [];
+    const run = {
+      progress: new StagedProgress(
+        [
+          { id: "situation" as const, label: "One" },
+          { id: "cast" as const, label: "Two" },
+        ],
+        (s) => snapshots.push(s),
+      ),
+      stats: { aiCalls: 0, repairedStages: [] as ("situation" | "cast")[] },
+    };
+    return { run, snapshots };
+  };
+  const check = (d: Record<string, unknown>) => ({
+    hard: d.ok ? [] : ["not ok"],
+    soft: [],
+  });
+
+  it("marks a retry as fixing, counts calls and records the repair", async () => {
+    const { run, snapshots } = setup();
+    const replies = ['{"ok": false}', '{"ok": true}'];
+    const messages: string[] = [];
+    const outcome = await runCheckedStage(
+      async (_system, message) => {
+        messages.push(message);
+        return replies[messages.length - 1];
+      },
+      run,
+      { id: "situation", system: "s", message: "Write it.", check },
+    );
+    expect(outcome?.data).toEqual({ ok: true });
+    expect(run.stats).toEqual({ aiCalls: 2, repairedStages: ["situation"] });
+    expect(messages[1]).toContain("- not ok");
+    expect(snapshots.map((s) => s[0].detail)).toContain("fixing problems");
+    expect(snapshots.at(-1)!.map((s) => s.status)).toEqual(["done", "pending"]);
+  });
+
+  it("falls back and skips the later steps when no draft is usable", async () => {
+    const { run, snapshots } = setup();
+    const outcome = await runCheckedStage(async () => "nope", run, {
+      id: "situation",
+      system: "s",
+      message: "m",
+      check,
+    });
+    expect(outcome).toBeNull();
+    expect(run.stats).toEqual({ aiCalls: 2, repairedStages: [] });
+    expect(snapshots.at(-1)).toEqual([
+      {
+        id: "situation",
+        label: "One",
+        status: "fallback",
+        detail: "writing it in one pass instead",
+      },
+      { id: "cast", label: "Two", status: "skipped", detail: undefined },
+    ]);
   });
 });
 

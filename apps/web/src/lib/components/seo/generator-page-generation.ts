@@ -23,6 +23,19 @@ export function isStreamableSlug(slug: ValidSlug): boolean {
   return !(NON_STREAMABLE_SLUGS as readonly string[]).includes(slug);
 }
 
+/** Generators that run in stages and show the live step list. */
+const STAGED_SLUGS: readonly ValidSlug[] = [
+  "one-shot-adventure-generator",
+  "point-crawl",
+  "dungeon-generator",
+  "adventure-generator",
+  "adventure-idea-generator",
+] as const;
+
+export function showsStagedProgress(slug: ValidSlug): boolean {
+  return (STAGED_SLUGS as readonly string[]).includes(slug);
+}
+
 export function buildPreviewOutput(raw: string): GeneratorOutput {
   const fields = extractPartialJsonStringFields(raw);
   return {
@@ -121,6 +134,19 @@ export function createGeneratorHandlers(
   ctx: GenerationContext,
 ): GeneratorHandlers {
   const engine = ctx.engine ?? generatorEngine;
+  // Both adventure slugs run the staged route with the live step list.
+  const generateAdventure = (useAI: boolean) => {
+    ctx.onOneShotProgress?.(null);
+    return engine.generateAdventure({
+      ...(ctx.adventure as object),
+      themeId: ctx.getActiveTheme(),
+      genre: ctx.getActiveTheme(),
+      useAI,
+      avoidNames: collectSessionNames(ctx.getSessionEntities() as never[]),
+      onProgress: ctx.onOneShotProgress,
+      signal: ctx.oneShotRuns?.start(),
+    } as never);
+  };
   return {
     npc: (useAI) =>
       engine.generateNPC({ ...(ctx.npc as object), useAI } as never),
@@ -263,22 +289,8 @@ export function createGeneratorHandlers(
         signal: ctx.oneShotRuns?.start(),
       } as never);
     },
-    "adventure-generator": (useAI) =>
-      engine.generateAdventure({
-        ...(ctx.adventure as object),
-        themeId: ctx.getActiveTheme(),
-        genre: ctx.getActiveTheme(),
-        useAI,
-        avoidNames: collectSessionNames(ctx.getSessionEntities() as never[]),
-      } as never),
-    "adventure-idea-generator": (useAI) =>
-      engine.generateAdventure({
-        ...(ctx.adventure as object),
-        themeId: ctx.getActiveTheme(),
-        genre: ctx.getActiveTheme(),
-        useAI,
-        avoidNames: collectSessionNames(ctx.getSessionEntities() as never[]),
-      } as never),
+    "adventure-generator": (useAI) => generateAdventure(useAI),
+    "adventure-idea-generator": (useAI) => generateAdventure(useAI),
     "plot-twist-generator": (useAI) =>
       engine.generatePlotTwist({
         ...(ctx.plotTwist as object),

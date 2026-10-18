@@ -14,7 +14,11 @@ export type StagedStepId =
   | "foundation"
   | "sectors"
   | "factions"
-  | "coherence";
+  | "coherence"
+  // Adventure Idea stages (adventure-staged.ts).
+  | "situation"
+  | "cast"
+  | "consequences";
 
 export interface StagedProgressStep {
   id: StagedStepId;
@@ -23,6 +27,11 @@ export interface StagedProgressStep {
   /** e.g. "3 of 5" while scenes are being written. */
   detail?: string;
 }
+
+/** Detail shown while a step retries with its problems named. */
+export const FIXING_DETAIL = "fixing problems";
+/** Detail shown when a step gives up and the caller writes it in one pass. */
+export const ONE_PASS_DETAIL = "writing it in one pass instead";
 
 /**
  * The live step list a staged generator reports to the page. Emits a copy of

@@ -19,6 +19,7 @@
     getDefaultInstruction,
     isSupportedGenerator,
     resolveEntityType,
+    adventureStatsLog,
     extractPartialJsonStringFields,
     type GeneratedDraft,
     type GeneratorId,
@@ -26,6 +27,7 @@
     type GeneratorVaultGateway,
   } from "generator-engine";
   import type {
+    AdventureStagedStats,
     AIGeneratorCompleteResult,
     DungeonStagedStats,
     GeneratorPromptMetrics,
@@ -205,6 +207,14 @@
           coherenceRepaired: stats.coherenceRepaired,
           remainingIssueCount: stats.remainingIssues.length,
         });
+      }
+    },
+    onAdventureStagedStats(stats: AdventureStagedStats) {
+      if (import.meta.env.DEV) {
+        console.debug(
+          "[Generator] staged adventure run",
+          adventureStatsLog(stats),
+        );
       }
     },
     get aiPolicy() {

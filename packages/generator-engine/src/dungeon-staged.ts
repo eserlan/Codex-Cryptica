@@ -25,14 +25,19 @@ import {
   formatCampaignContextBlock,
 } from "./campaign-context";
 import { parseFencedJson } from "./llm-response-utils";
-import { StagedProgress, type StagedProgressStep } from "./staged-progress";
 import {
-  askChecked,
+  FIXING_DETAIL,
+  ONE_PASS_DETAIL,
+  StagedProgress,
+  type StagedProgressStep,
+} from "./staged-progress";
+import {
   askModel,
   type CheckedDraft,
   type DraftCheck,
   isAbort,
   readJsonObject,
+  runCheckedStage,
   throwIfAborted,
 } from "./staged-runtime";
 import {
@@ -611,20 +616,6 @@ ${formatCampaignContextBlock(options.campaignContext)}
 ${options.instruction ? `- Special Instructions: ${options.instruction}` : ""}`;
 }
 
-function withProblems(
-  message: string,
-  problems: string[],
-  previous: Json | null,
-) {
-  if (problems.length === 0) return message;
-  return `${message}
-
-Your previous answer for this stage was not usable:
-${problems.map((p) => `- ${p}`).join("\n")}
-${previous ? `\nPrevious answer:\n${JSON.stringify(previous, null, 2)}\n` : ""}
-Return the corrected JSON for this stage only. Keep whatever was already good; change only what the list requires.`;
-}
-
 /** The fixed sector connections, labelled with names once sectors have them. */
 function layoutBlock(
   resolved: ResolvedDungeon,
@@ -767,10 +758,6 @@ const PROGRESS_STEPS: ReadonlyArray<{ id: ProgressId; label: string }> = [
   { id: "coherence", label: "Checking it all fits together" },
 ];
 
-const FIXING = "fixing problems";
-/** A stage gave up: the caller writes the delve in one pass instead. */
-const ONE_PASS = "writing it in one pass instead";
-
 interface RunState {
   stats: DungeonStagedStats;
   progress: StagedProgress<ProgressId>;
@@ -783,31 +770,20 @@ type StageOutcome = CheckedDraft<Json>;
  * with no hard problems is kept, so a failing retry falls back to it instead
  * of discarding the stage.
  */
-async function runStage(
+function runStage(
   deps: DungeonStagedDeps,
-  { stats, progress }: RunState,
+  run: RunState,
   id: DungeonStageId,
   system: string,
   message: string,
   check: (data: Json) => StageCheck,
 ): Promise<StageOutcome | null> {
-  const outcome = await askChecked(
-    ({ attempt, problems, previous }) => {
-      progress.set(id, "active", attempt > 0 ? FIXING : undefined);
-      stats.aiCalls++;
-      return deps.complete(system, withProblems(message, problems, previous));
-    },
-    readJsonObject,
-    check,
-    { signal: deps.signal },
+  return runCheckedStage(
+    deps.complete,
+    run,
+    { id, system, message, check },
+    deps.signal,
   );
-  if (!outcome) {
-    progress.abandon(id, ONE_PASS);
-    return null;
-  }
-  if (outcome.retried) stats.repairedStages.push(id);
-  progress.set(id, "done");
-  return outcome;
 }
 
 function sectorsFrom(
@@ -998,7 +974,7 @@ async function repairCoherence(
     issues: [...found.checks, ...found.review],
   };
   throwIfAborted(deps.signal);
-  progress.set("coherence", "active", FIXING);
+  progress.set("coherence", "active", FIXING_DETAIL);
   const repair = buildDungeonCoherencePrompt(
     current.structured!,
     context.resolved,
@@ -1148,7 +1124,7 @@ async function runStaged(
     resolved,
   );
   if (final.rejected || !final.structured) {
-    run.progress.abandon("coherence", ONE_PASS);
+    run.progress.abandon("coherence", ONE_PASS_DETAIL);
     return stop("assembly");
   }
 

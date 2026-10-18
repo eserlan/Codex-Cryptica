@@ -6,6 +6,7 @@ import {
   createGeneratorHandlers,
   createGenerate,
   createOneShotRunControl,
+  showsStagedProgress,
 } from "./generator-page-generation";
 import type { ValidSlug } from "./generator-page-meta";
 
@@ -239,6 +240,25 @@ describe("generator-page-generation", () => {
         ].sort(),
       );
     });
+  });
+
+  describe("showsStagedProgress", () => {
+    it.each([
+      "adventure-generator",
+      "adventure-idea-generator",
+      "dungeon-generator",
+      "one-shot-adventure-generator",
+      "point-crawl",
+    ] as ValidSlug[])("shows the step list for %s", (slug) => {
+      expect(showsStagedProgress(slug)).toBe(true);
+    });
+
+    it.each(["npc", "council-vote", "language-generator"] as ValidSlug[])(
+      "hides it for %s, which is not staged",
+      (slug) => {
+        expect(showsStagedProgress(slug)).toBe(false);
+      },
+    );
   });
 
   describe("buildPreviewOutput", () => {
@@ -507,6 +527,27 @@ describe("generator-page-generation", () => {
       ).mock.calls[0][0];
       expect(arg.premise).toBe("local premise");
     });
+
+    it.each(["adventure-generator", "adventure-idea-generator"] as const)(
+      "runs %s with the step list and its own cancellable signal",
+      async (slug) => {
+        const engine = makeFakeEngine();
+        const onOneShotProgress = vi.fn();
+        const oneShotRuns = createOneShotRunControl();
+        const handlers = createGeneratorHandlers(
+          makeCtx({ engine, onOneShotProgress, oneShotRuns }),
+        );
+
+        await handlers[slug](true);
+
+        expect(onOneShotProgress).toHaveBeenCalledWith(null);
+        const arg = engine.generateAdventure.mock.calls[0][0];
+        expect(arg.onProgress).toBe(onOneShotProgress);
+        expect(arg.signal.aborted).toBe(false);
+        oneShotRuns.dispose();
+        expect(arg.signal.aborted).toBe(true);
+      },
+    );
 
     it("passes themeId and genre from activeTheme for adventure generators", async () => {
       const ctx = makeCtx({ activeTheme: "Star Wars" });

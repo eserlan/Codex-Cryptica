@@ -98,6 +98,37 @@ export const NAME_BAN_PROMPT =
 // reject a draft that joins the pattern. Pure and local: no extra AI call.
 // ---------------------------------------------------------------------------
 
+/**
+ * Banned names appearing in a field that carries an actual name.
+ *
+ * The ban list has only ever been a request in the prompt — every call site in
+ * the codebase injects it into a string and nothing checks the response. That
+ * was tolerable while names came from local tables; now that the model names
+ * the delve, its sectors, and both factions, the list is worth enforcing.
+ * Shared by the dungeon and adventure generators.
+ *
+ * Checked against name fields only. Descriptions legitimately contain words
+ * like "stone" and "ash", and flagging those would reject good responses.
+ */
+export function bannedNamesIn(
+  values: string[],
+  extra: string[] = [],
+): string[] {
+  const found = new Set<string>();
+  // Multi-word session names are matched whole; single words get a word
+  // boundary so "Spine" does not match "Spineless".
+  const forbidden = [...BANNED_NAMES, ...extra].filter((n) => n.trim());
+  for (const value of values) {
+    for (const banned of forbidden) {
+      const escaped = banned.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      if (new RegExp(`\\b${escaped}\\b`, "i").test(value)) {
+        found.add(banned.trim());
+      }
+    }
+  }
+  return [...found];
+}
+
 export interface OverusedNamePatterns {
   words: string[];
   prefixes: string[];
