@@ -102,7 +102,7 @@ export const howDoYouKeepNotesForASoloRpgCampaign: AnswerConfigInput = {
   codexConnection: {
     heading: "Reference entries that link themselves together",
     paragraphs: [
-      "A notebook handles the log well and the reference entries badly, because a person or place is mentioned across many pages. Codex Cryptica stores each as an entry with links to the others, so the ferryman, the boat and the debt can be seen together, and the graph shows which threads are still open. A session journal captures the log alongside them.",
+      "A notebook handles the log well and the reference entries badly, because a person or place is mentioned across many pages. Codex Cryptica stores each as an entry with links to the others, so the ferryman, the boat and the debt can be seen together. A solo session keeps the log in your Session Journal and the open leads in its Threads list, linked to the entries they involve.",
     ],
     linkText: "See Codex Cryptica for solo worldbuilding",
     href: "/for/solo-worldbuilding",
