@@ -49,9 +49,12 @@ describe("GameSystemSettings (#3943)", () => {
 
     await waitFor(() => expect(store.vaultSystemId).toBe(TOV_SYSTEM_ID));
     expect(disk.saveToDisk).toHaveBeenCalledWith("vault-1", TOV_SYSTEM_ID);
+    const attribution = await screen.findByTestId("game-system-attribution");
+    expect(attribution.textContent).toContain("Black Flag Reference Document");
     expect(
-      (await screen.findByTestId("game-system-attribution")).textContent,
-    ).toContain("Black Flag Reference Document");
+      attribution.querySelector("a")?.classList.contains("text-chrome-text"),
+    ).toBe(true);
+    expect(select.classList.contains("focus:border-chrome-text")).toBe(true);
     expect(notify).not.toHaveBeenCalled();
   });
 

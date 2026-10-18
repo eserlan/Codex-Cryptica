@@ -71,7 +71,7 @@
       onchange={handleChange}
       disabled={isSaving || store.isLoading}
       aria-describedby="vault-game-system-help"
-      class="bg-chrome-surface border border-chrome-border text-chrome-text px-3 py-1.5 text-sm font-mono focus:outline-none focus:border-chrome-accent rounded disabled:opacity-60"
+      class="bg-chrome-surface border border-chrome-border text-chrome-text px-3 py-1.5 text-sm font-mono focus:outline-none focus:border-chrome-text rounded disabled:opacity-60"
     >
       {#each profiles as profile (profile.id)}
         <option value={profile.id}>{profile.label}</option>
@@ -95,7 +95,7 @@
         href={selected.provenance.source}
         target="_blank"
         rel="noopener noreferrer"
-        class="text-chrome-accent underline">Source</a
+        class="text-chrome-text underline">Source</a
       >
     </p>
   {/if}
