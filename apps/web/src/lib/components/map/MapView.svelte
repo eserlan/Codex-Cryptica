@@ -437,11 +437,19 @@
 
   $effect(() => {
     void retryNonce;
-    if (activeMapSignature === lastMapSignature) {
+    const nextSig = activeMapSignature;
+    if (nextSig === lastMapSignature) {
       return;
     }
-    lastMapSignature = activeMapSignature;
-    return mapAssets.sync(mapStore.activeMap);
+    lastMapSignature = nextSig;
+    const currentMap = untrack(() => mapStore.activeMap);
+    mapAssets.sync(currentMap);
+    return () => {
+      if (activeMapSignature !== nextSig) {
+        lastMapSignature = null;
+        mapAssets.sync(null);
+      }
+    };
   });
 
   $effect(() => {
