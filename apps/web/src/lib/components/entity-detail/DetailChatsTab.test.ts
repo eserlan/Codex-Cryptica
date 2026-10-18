@@ -272,6 +272,36 @@ describe("DetailChatsTab", () => {
       vi.restoreAllMocks();
     });
 
+
+    it("does not consume the clock or save when message deletion is cancelled", async () => {
+      const transcriptWithMessages = {
+        id: "t-1",
+        guestId: "host",
+        guestName: "Host",
+        characterId: character.id,
+        lastUpdated: 0,
+        messages: [{ id: "m-1", role: "user", content: "Hello there" }],
+      };
+
+      const { vault } = await import("$lib/stores/vault.svelte");
+      vi.mocked(vault.loadTranscriptsForCharacter).mockResolvedValue([transcriptWithMessages] as any);
+
+      const clockSpy = vi.fn().mockReturnValue(1111);
+
+      render(DetailChatsTab, { entity: character, clock: { now: clockSpy } });
+      await vi.waitFor(() => screen.getByRole("button", { name: "Delete message" }));
+
+      // Mock confirm to auto-reject
+      vi.stubGlobal('confirm', () => false);
+
+      await fireEvent.click(screen.getByRole("button", { name: "Delete message" }));
+
+      expect(vault.saveTranscript).not.toHaveBeenCalled();
+      expect(clockSpy).not.toHaveBeenCalled();
+
+      vi.unstubAllGlobals();
+    });
+
     describe("guest mode", () => {
     beforeEach(async () => {
       const { vault } = await import("$lib/stores/vault.svelte");
