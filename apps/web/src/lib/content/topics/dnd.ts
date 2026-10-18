@@ -200,6 +200,14 @@ export const DND_TOPIC_CONFIG = {
           badge: "Answer",
         },
         {
+          title:
+            "How do I track monsters, initiative, and hit points during D&D combat?",
+          href: "/answers/how-do-i-track-monsters-initiative-and-hit-points-in-dnd-combat",
+          description:
+            "Keep initiative, individual HP and conditions moving during a fight.",
+          badge: "Answer",
+        },
+        {
           title: "How do I give specialist characters spotlight?",
           href: "/answers/how-do-i-give-specialist-characters-spotlight",
           description:

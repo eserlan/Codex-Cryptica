@@ -491,6 +491,21 @@ describe("competitor links", () => {
     ).toEqual([]);
   });
 
+  test("allows direct official VTT documentation and catalogue references", () => {
+    expect(
+      competitorFindings(
+        withProse(
+          "See [Foundry token configuration](https://foundryvtt.com/article/tokens/) and the [Clash catalogue entry](https://extensions.owlbear.rodeo/clash).",
+        ),
+      ),
+    ).toEqual([]);
+    expect(
+      competitorFindings(
+        withProse("See [Foundry](https://foundryvtt.com/) for details."),
+      ),
+    ).toHaveLength(1);
+  });
+
   test("covers the virtual tabletops and campaign managers it names", () => {
     for (const domain of COMPETITOR_DOMAINS) {
       expect(competitorOf(`https://${domain}/page`)).toBe(domain);
@@ -498,7 +513,7 @@ describe("competitor links", () => {
     expect(COMPETITOR_DOMAINS).toContain("foundryvtt.com");
   });
 
-  test("no published answer links to a competitor", () => {
+  test("no published answer links to a competitor product page", () => {
     const offenders = Object.values(answers).flatMap((answer) =>
       competitorFindings(answer as AnswerConfigInput).map(
         (finding) => `${finding.slug}: ${finding.field}`,

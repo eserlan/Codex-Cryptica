@@ -16,7 +16,7 @@ export const howDoITrackMonstersInitiativeAndHitPointsInDndCombat: AnswerConfigI
         heading: "Track what changes, reference what stays fixed",
         paragraphs: [
           "Three terms cover most of the bookkeeping. Initiative is the turn order for the encounter. Hit points, usually shortened to HP, are how much damage a creature can take before it falls. Armour Class, usually shortened to AC, is the number an attack roll must meet or beat to hit. Initiative and current HP change during the fight. AC, attack bonuses and saving throw modifiers mostly stay fixed for a given monster, so they belong in a reference you can glance at rather than in rows you rewrite each round.",
-          "A saving throw works the same way. The modifier lives in the stat block. The roll only happens when a spell, trap or ability calls for it, using the difficulty set by the effect. You do not need a column of saving throws prepared in advance. You need to be able to find the right modifier in a few seconds when someone says a creature must make a Dexterity save.",
+          "When an effect calls for a save, use the ability it names and the DC (Difficulty Class) it gives. In a 2024 monster stat block, use that ability's Save modifier. In a 2014 block, use the printed bonus if the ability appears under Saving Throws; that total already includes proficiency, so do not add it again. If the entry is absent or does not list that ability, use the ability modifier shown with the score instead. See the [2014 monster rules](https://www.dndbeyond.com/sources/dnd/basic-rules-2014/monsters) and [2024 saving throw rules](https://www.dndbeyond.com/sources/dnd/br-2024/playing-the-game).",
           "That split is the whole method. One short tracker holds the changing state of this encounter. The books, handouts or digital stat blocks you already have hold everything else. If you copy a full stat block onto the tracker for every goblin in the room, the tracker stops being quick to read at the exact moment you need it most.",
         ],
       },
@@ -59,11 +59,11 @@ export const howDoITrackMonstersInitiativeAndHitPointsInDndCombat: AnswerConfigI
           },
           {
             term: "Owlbear Rodeo for the map, plus a tracker you trust",
-            text: "Owlbear Rodeo is strongest as a light map and token tool. Put numbered tokens on the map so G1 to G4 match your tracker, then handle initiative and HP either on paper beside you or through a combat tracking extension from its extension catalogue. Extension names and features change over time, so check the current catalogue entry and test it with dummy tokens before a session rather than learning it mid-fight. If no extension suits you, the map in Owlbear Rodeo and a paper tracker is a complete setup, not a compromise.",
+            text: "Owlbear Rodeo is strongest as a light map and token tool. Put numbered tokens on the map so G1 to G4 match your tracker, then handle initiative and HP either on paper beside you or with an extension such as [Clash](https://extensions.owlbear.rodeo/clash), which lists health, AC, initiative, movement speed and ongoing effects. Test an extension with dummy tokens before a session rather than learning it mid-fight. If no extension suits you, the map in Owlbear Rodeo and a paper tracker is a complete setup, not a compromise.",
           },
           {
             term: "Foundry VTT with actors and its combat tracker",
-            text: "In Foundry VTT, a monster type is usually prepared as an actor, tokens placed on the scene stand for the individual creatures, and the built-in combat tracker holds the initiative order while each token carries its own HP. The D&D system you install supplies the character and monster sheet behaviour, so exact buttons and automation vary by system and version. Optional modules can add condition markers, grouped handling or extra automation. Treat those as extras to add one at a time, and check whether a feature is built in or module-based before you rely on it. Moving to Foundry is one option, not a requirement for running combat well.",
+            text: "In Foundry VTT, a monster type is usually prepared as an actor, tokens placed on the scene stand for individual creatures, and the [combat tracker](https://foundryvtt.com/article/combat/) holds initiative. For duplicate enemies to have independent HP, turn off Actor Link in their token configuration: [linked tokens share resource changes](https://foundryvtt.com/article/tokens/), while unlinked tokens keep separate resources. Update each creature through its placed token's sheet or resource controls. The D&D system you install supplies the sheet behaviour, so exact controls vary by system and version.",
           },
         ],
       },
@@ -106,7 +106,7 @@ export const howDoITrackMonstersInitiativeAndHitPointsInDndCombat: AnswerConfigI
         items: [
           {
             term: "The tracker at the start of round one",
-            text: "Initiative 18: G2, HP 11, AC 13, no condition. Initiative 16: fighter, HP as the player reports. Initiative 14: G1, G3 and G4 sharing one initiative result, HP 11, 9 and 11, AC 13. Initiative 12: Boss, HP 24, AC 14, concentrating on a spell. Initiative 9: cleric, HP as the player reports. Sharing initiative is optional and depends on your system and table; roll separately if you prefer. Either way, HP stays individual per creature, even when several creatures act together.",
+            text: "Initiative 18: G2, HP 11, AC 13, no condition. Initiative 16: fighter, HP as the player reports. Initiative 14: G1, G3 and G4 sharing one initiative result, HP 11, 9 and 11, AC 13. Initiative 12: Boss, HP 24, AC 14, concentrating on a spell. Initiative 9: cleric, HP as the player reports. Under the [2014](https://www.dndbeyond.com/sources/dnd/basic-rules-2014/combat) and [2024](https://www.dndbeyond.com/sources/dnd/br-2024/playing-the-game) fifth-edition rules, identical creatures share one initiative roll by default; separate rolls are a table variation. Either way, HP stays individual per creature.",
           },
           {
             term: "G2 takes a hit",
@@ -118,7 +118,7 @@ export const howDoITrackMonstersInitiativeAndHitPointsInDndCombat: AnswerConfigI
           },
           {
             term: "The boss acts and a save comes up",
-            text: "On the boss turn, check the stat block for its action rather than relying on memory. Later, the cleric casts a spell with a saving throw difficulty of 13. Find the boss Dexterity saving throw modifier in the stat block reference. For this illustration that modifier is +2. You roll 9, add 2 for a total of 11, which is below 13, so the boss fails and takes the effect as the spell describes. The modifier came from the block, the roll happened only when needed, and the tracker only records the resulting HP or condition change.",
+            text: "On the boss turn, check the stat block for its action rather than relying on memory. Later, the cleric casts a spell whose effect calls for a Dexterity save against DC 13. DC means Difficulty Class: the roll must meet or beat it to succeed. For this invented, non-damaging illustration, suppose a failed save restrains the target until the end of its next turn. The boss's Dexterity save modifier is +2, so roll a d20: 9 + 2 = 11 < 13. The boss fails; leave its HP at 24 and add Restrained to its tracker row until the end of its next turn. Its concentration note stays unchanged because this example deals no damage. The save modifier came from the stat block, and the roll happened only when the effect called for it.",
           },
           {
             term: "Why it works",
@@ -158,9 +158,9 @@ export const howDoITrackMonstersInitiativeAndHitPointsInDndCombat: AnswerConfigI
         kind: "prose",
         heading: "Common traps for a first combat",
         paragraphs: [
-          "Copying everything is the most common trap. A tracker with ability scores, skills, senses and full attack text for twelve creatures is harder to scan than the stat block it copied. Keep the tracker to the changing state and one or two lookup numbers. If you find yourself searching the tracker, it has grown too wide.",
+          "Keep the tracker to changing state and one or two lookup numbers. If you find yourself searching it, it has grown too wide.",
           "A virtual tabletop can become a second job if you add extensions, modules and automation faster than you learn them. Add one aid at a time, test it away from the table, and keep the paper method in reserve for the night a tool updates or a browser tab fails. Switching tools mid-campaign does not by itself fix slow combat; the tracker habit transfers, the software does not do the thinking for you.",
-          "Conditions and concentration are easy to drop because they often have no number attached. Writing the condition in the row, and a short note of when it ends if the effect gives a timing, prevents the two questions that stall a round: is that one still prone, and was it still concentrating? The easiest setup is the one you can operate without stopping the conversation. For some Dungeon Masters that is a pencil index card beside an Owlbear Rodeo map. For others it is Foundry VTT handling HP on tokens they have practised with. Both are running the same method.",
+          "Conditions and concentration are easy to drop because they often have no number attached. Writing the condition in the row, and a short note of when it ends if the effect gives a timing, prevents the two questions that stall a round: is that one still prone, and was it still concentrating?",
         ],
       },
       {
