@@ -20,7 +20,8 @@
 
 import { formatCampaignContextBlock } from "./campaign-context";
 import { parseFencedJson } from "./llm-response-utils";
-import type { OneShotProgressStep, OneShotStepStatus } from "./one-shot-staged";
+import type { OneShotProgressStep } from "./one-shot-staged";
+import { StagedProgress } from "./staged-progress";
 import {
   checkPointCrawlPlayability,
   isVaguePointCrawlFact,
@@ -67,29 +68,6 @@ const STAGE_STEPS: ReadonlyArray<{
   { id: "scenes", label: "Keyed locations & route trade-offs" },
   { id: "review", label: "Playability & reachability verification" },
 ];
-
-class PointCrawlProgress {
-  private steps: OneShotProgressStep[] = STAGE_STEPS.map((s) => ({
-    id: s.id,
-    label: s.label,
-    status: "pending" as OneShotStepStatus,
-  }));
-
-  constructor(private emit?: (steps: OneShotProgressStep[]) => void) {
-    this.emit?.(this.steps.map((s) => ({ ...s })));
-  }
-
-  set(
-    id: OneShotProgressStep["id"],
-    status: OneShotStepStatus,
-    detail?: string,
-  ): void {
-    this.steps = this.steps.map((s) =>
-      s.id === id ? { ...s, status, detail } : s,
-    );
-    this.emit?.(this.steps.map((s) => ({ ...s })));
-  }
-}
 
 function throwIfAborted(signal?: AbortSignal): void {
   if (!signal?.aborted) return;
@@ -473,7 +451,7 @@ export async function generatePointCrawlStaged(
   rng: Rng = defaultRng,
 ): Promise<PointCrawlNetwork> {
   throwIfAborted(signal);
-  const progress = new PointCrawlProgress(onProgress);
+  const progress = new StagedProgress(STAGE_STEPS, onProgress);
   const count = clampPointCount(options.pointCount);
 
   // Build deterministic valid skeleton first so topology invariants are locked

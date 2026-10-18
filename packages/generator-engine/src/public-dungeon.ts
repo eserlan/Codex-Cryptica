@@ -118,6 +118,17 @@ export interface DungeonSector {
   /** Cairn-style room-stocking bucket: Monster / Lore / Special / Trap. */
   stockType?: DungeonStockType;
   stockDetail?: string;
+  /**
+   * What a faction holding this sector has done to it (a camp, a barricade,
+   * ritual preparations), so the sector reads as occupied rather than as it
+   * was before the factions arrived. Staged generation only.
+   */
+  presence?: DungeonSectorPresence[];
+}
+
+export interface DungeonSectorPresence {
+  faction: string;
+  detail: string;
 }
 
 function sectorId(index: number): string {
@@ -902,7 +913,24 @@ function formatSector(s: DungeonSector, idx: number): string {
     s.stockType && s.stockDetail
       ? `\n\n*${s.stockType} — ${endSentence(s.stockDetail)}*`
       : "";
-  return `### Sector ${idx + 1}: ${s.name}\n${s.description}${stockLine}`;
+  const presence = (s.presence ?? [])
+    .map((p) => `\n\n**Held by ${p.faction}:** ${endSentence(p.detail)}`)
+    .join("");
+  return `### Sector ${idx + 1}: ${s.name}\n${s.description}${stockLine}${presence}`;
+}
+
+function parsePresence(v: unknown): DungeonSectorPresence[] | undefined {
+  if (!Array.isArray(v)) return undefined;
+  const entries = v
+    .map(
+      (p) => (p && typeof p === "object" ? p : {}) as Record<string, unknown>,
+    )
+    .map((p) => ({
+      faction: narrativeText(p.faction),
+      detail: narrativeText(p.detail),
+    }))
+    .filter((p) => p.faction && p.detail);
+  return entries.length > 0 ? entries : undefined;
 }
 
 /**
@@ -1474,6 +1502,7 @@ export function parseDungeonResponseDetailed(
         stockType: isStockType(s?.stockType) ? s.stockType : undefined,
         stockDetail:
           typeof s?.stockDetail === "string" ? s.stockDetail.trim() : undefined,
+        presence: parsePresence(s?.presence),
       }),
     );
 
@@ -1634,7 +1663,12 @@ export function parseDungeonResponseDetailed(
     const treasures = list(parsed.treasures, foundation?.treasures ?? []);
     const hooks = list(parsed.hooks, foundation?.hooks ?? []);
 
-    const sectorEdges = buildSectorEdges(sectors.length, rng);
+    // The layout the prompt described, so a shortcut a faction relies on is
+    // the one that renders. Re-rolled only if the sector count changed.
+    const sectorEdges =
+      foundation?.sectors.length === sectors.length
+        ? foundation.sectorEdges
+        : buildSectorEdges(sectors.length, rng);
     const map = renderDungeonMap(
       sectors.map((s) => s.name),
       sectorEdges,

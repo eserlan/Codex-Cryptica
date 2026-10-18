@@ -42,7 +42,18 @@ export type OneShotStepStatus =
   "pending" | "active" | "done" | "fallback" | "skipped";
 
 export interface OneShotProgressStep {
-  id: "core" | "structure" | "finale" | "scenes" | "npcs" | "review";
+  id:
+    | "core"
+    | "structure"
+    | "finale"
+    | "scenes"
+    | "npcs"
+    | "review"
+    // Dungeon & Delve stages (dungeon-staged.ts).
+    | "foundation"
+    | "sectors"
+    | "factions"
+    | "coherence";
   label: string;
   status: OneShotStepStatus;
   /** e.g. "3 of 5" while scenes are being written. */
@@ -68,7 +79,12 @@ export interface OneShotStagedResult {
 type Json = Record<string, unknown>;
 const list = (v: unknown): unknown[] => (Array.isArray(v) ? v : []);
 
-const STEP_LABELS: Record<OneShotProgressStep["id"], string> = {
+type OneShotStepId = Exclude<
+  OneShotProgressStep["id"],
+  "foundation" | "sectors" | "factions" | "coherence"
+>;
+
+const STEP_LABELS: Record<OneShotStepId, string> = {
   core: "Premise, villain and stakes",
   structure: "Scenes, clues and the clock",
   finale: "How the finale works",
@@ -79,16 +95,12 @@ const STEP_LABELS: Record<OneShotProgressStep["id"], string> = {
 
 class Progress {
   private steps: OneShotProgressStep[] = (
-    Object.keys(STEP_LABELS) as OneShotProgressStep["id"][]
+    Object.keys(STEP_LABELS) as OneShotStepId[]
   ).map((id) => ({ id, label: STEP_LABELS[id], status: "pending" }));
 
   constructor(private emit?: (steps: OneShotProgressStep[]) => void) {}
 
-  set(
-    id: OneShotProgressStep["id"],
-    status: OneShotStepStatus,
-    detail?: string,
-  ) {
+  set(id: OneShotStepId, status: OneShotStepStatus, detail?: string) {
     this.steps = this.steps.map((s) =>
       s.id === id ? { ...s, status, detail } : s,
     );
