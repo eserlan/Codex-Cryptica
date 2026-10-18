@@ -15,6 +15,12 @@ describe("extractJsonObject", () => {
     ).toBe('{"title":"final"}');
   });
 
+  it("prefers a fenced JSON object over a leading object", () => {
+    expect(
+      extractJsonObject('{"title":"example"}\n```json\n{"title":"final"}\n```'),
+    ).toBe('{"title":"final"}');
+  });
+
   it("extracts an unlabelled fenced object", () => {
     expect(extractJsonObject('```\n{"title":"A"}\n```')).toBe('{"title":"A"}');
   });

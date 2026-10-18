@@ -14,10 +14,13 @@ export function extractJsonObject(raw: string): string {
 }
 
 function selectCandidate(trimmed: string): string {
+  const fenced = findSupportedFence(trimmed);
+  if (fenced !== undefined) return fenced;
+
   if (trimmed.startsWith("{") || isArrayOrStringEnvelope(trimmed)) {
     return trimmed;
   }
-  return findSupportedFence(trimmed) ?? stripSurroundingJsonFence(trimmed);
+  return stripSurroundingJsonFence(trimmed);
 }
 
 function isArrayOrStringEnvelope(value: string): boolean {
