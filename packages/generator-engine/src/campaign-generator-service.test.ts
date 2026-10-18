@@ -2754,11 +2754,21 @@ describe("staged adventure generation", () => {
         { ...item("Torn Map"), opens: "Salt Stair" },
       ],
       complications: [item("Closing Bell"), item("Watch Patrol")],
-      rewards: [{ title: "Favour", text: "The magistrate owes you." }],
+      rewards: [
+        {
+          title: "Favour",
+          text: "The magistrate owes you.",
+          involves: ["Mara Venn"],
+        },
+      ],
       outcomes: [item("Ledger Exposed"), item("Ledger Burned")],
       hooks: [
-        { title: "Plea", text: "Mara begs." },
-        { title: "Bounty", text: "A reward is posted." },
+        { title: "Plea", text: "Mara begs.", involves: ["Mara Venn"] },
+        {
+          title: "Bounty",
+          text: "A reward is posted.",
+          involves: ["Iko Brand"],
+        },
       ],
     };
   };

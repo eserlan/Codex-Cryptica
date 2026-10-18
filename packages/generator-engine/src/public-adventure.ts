@@ -637,12 +637,12 @@ export function seedFidelityProblems(
   const problems: string[] = [];
   const seedNouns = extractProperNouns(seedText);
   const output = wholeOutput.toLowerCase();
-  if (
-    seedNouns.length > 0 &&
-    !seedNouns.some((noun) => output.includes(noun.toLowerCase()))
-  ) {
+  const missingSeedNouns = seedNouns.filter(
+    (noun) => !output.includes(noun.toLowerCase()),
+  );
+  if (missingSeedNouns.length > 0) {
     problems.push(
-      `drops every name from the given situation (${seedNouns.join(", ")}) — these are fixed and must appear in the adventure as written.`,
+      `drops these names from the given situation: ${missingSeedNouns.join(", ")} — these are fixed and must appear in the adventure as written.`,
     );
   }
   if (statesDeadline(seedText)) {

@@ -79,11 +79,25 @@ const CONSEQUENCES: Json = {
     { ...entry("Clerk's Ink"), opens: "Lantern Toll-House records" },
   ],
   complications: [entry("Rising Water"), entry("Ferry Strike")],
-  rewards: [{ title: "Toll Share", text: "A cut of the ford toll." }],
+  rewards: [
+    {
+      title: "Toll Share",
+      text: "A cut of the ford toll.",
+      involves: ["Weir Mill"],
+    },
+  ],
   outcomes: [entry("Guild Broken"), entry("Guild Triumphant")],
   hooks: [
-    { title: "Ferry Plea", text: "The ferry folk beg for help." },
-    { title: "Bounty", text: "The magistrate pays for the proof." },
+    {
+      title: "Ferry Plea",
+      text: "The ferry folk beg for help.",
+      involves: ["Oren Pell"],
+    },
+    {
+      title: "Bounty",
+      text: "The magistrate pays for the proof.",
+      involves: ["Lantern Toll-House"],
+    },
   ],
 };
 
@@ -273,7 +287,7 @@ describe("generateAdventureStaged", () => {
     expect(result).toBeNull();
     expect(stats!.stoppedAt).toBe("situation");
     expect(sent[1].message).toContain(
-      "drops every name from the given situation",
+      "drops these names from the given situation",
     );
     expect(sent[1].message).toContain("carries no pressure");
   });
@@ -297,10 +311,20 @@ describe("generateAdventureStaged", () => {
   it("asks for a clock in the threats when the objective has one", async () => {
     const noClock = {
       ...CONSEQUENCES,
-      threats: [{ title: "Guild Bravos", text: "Thugs.", involves: [] }],
+      threats: [
+        { title: "Guild Bravos", text: "Thugs.", involves: ["Oren Pell"] },
+      ],
       complications: [
-        { title: "Rising Water", text: "The ford floods.", involves: [] },
-        { title: "Ferry Strike", text: "No boats.", involves: [] },
+        {
+          title: "Rising Water",
+          text: "The ford floods.",
+          involves: ["Weir Mill"],
+        },
+        {
+          title: "Ferry Strike",
+          text: "No boats.",
+          involves: ["Lantern Toll-House"],
+        },
       ],
     };
     const { stats, sent } = await run(fakeModel({ 3: [noClock] }));
@@ -311,15 +335,30 @@ describe("generateAdventureStaged", () => {
   });
 
   it("keeps a usable draft when the retry comes back unreadable", async () => {
-    const looseComplication = {
+    const noClock = {
       ...CONSEQUENCES,
+      threats: [
+        {
+          title: "Guild Bravos",
+          text: "They block the bridge.",
+          involves: ["Oren Pell"],
+        },
+      ],
       complications: [
-        entry("Rising Water"),
-        entry("Ferry Strike", ["Ferry Guild"]),
+        {
+          title: "Rising Water",
+          text: "The ford floods.",
+          involves: ["Weir Mill"],
+        },
+        {
+          title: "Ferry Strike",
+          text: "No boats are working.",
+          involves: ["Lantern Toll-House"],
+        },
       ],
     };
     const { result, stats, sent } = await run(
-      fakeModel({ 3: [looseComplication, "not json"] }),
+      fakeModel({ 3: [noClock, "not json"] }),
     );
     expect(sent.map((s) => s.stage)).toEqual([1, 2, 3, 3]);
     expect(result).not.toBeNull();
@@ -473,10 +512,10 @@ describe("stage checks", () => {
 
   const established = ["Weir Mill", "Lantern Toll-House", "Oren Pell"];
 
-  it("lets the party and established names through", () => {
+  it("lets established names through", () => {
     const d = {
       ...CONSEQUENCES,
-      threats: [entry("Bravos", ["the party", "the Weir Mill"])],
+      threats: [entry("Bravos", ["the Weir Mill"])],
     };
     expect(checkConsequences(d, established, () => [])).toEqual({
       hard: [],
@@ -484,27 +523,47 @@ describe("stage checks", () => {
     });
   });
 
-  it("asks threats and outcomes to say what they involve", () => {
+  it.each([
+    "threats",
+    "discoveries",
+    "complications",
+    "rewards",
+    "outcomes",
+    "hooks",
+  ] as const)("requires %s to say what it involves", (list) => {
     const d = {
       ...CONSEQUENCES,
-      threats: [{ title: "Bravos", text: "Thugs." }],
+      [list]: [{ title: "Bravos", text: "Thugs." }],
     };
-    expect(checkConsequences(d, established, () => [])).toEqual({
-      hard: [],
-      soft: [
-        'threats[0] should list in "involves" the established names it depends on',
-      ],
-    });
+    expect(checkConsequences(d, established, () => []).hard).toContain(
+      `${list}[0] should list in "involves" the established names it depends on`,
+    );
   });
 
-  it("treats an unknown name in a complication as soft", () => {
+  it.each([
+    "threats",
+    "discoveries",
+    "complications",
+    "rewards",
+    "outcomes",
+    "hooks",
+  ] as const)("rejects unknown names in %s", (list) => {
+    const d = {
+      ...CONSEQUENCES,
+      [list]: [entry("Bravos", ["Ferry Guild"])],
+    };
+    expect(checkConsequences(d, established, () => []).hard).toContain(
+      `${list}[0] involves "Ferry Guild", which earlier stages never established; use only established places, people and assets`,
+    );
+  });
+
+  it("rejects an unknown name in a complication", () => {
     const d = {
       ...CONSEQUENCES,
       complications: [entry("Rising Water"), entry("Strike", ["Ferry Guild"])],
     };
     const result = checkConsequences(d, established, () => []);
-    expect(result.hard).toEqual([]);
-    expect(result.soft).toHaveLength(1);
+    expect(result.hard).toHaveLength(1);
   });
 
   it("requires each discovery to open something", () => {

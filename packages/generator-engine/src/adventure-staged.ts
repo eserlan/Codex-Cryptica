@@ -130,9 +130,6 @@ export function sameName(a: string, b: string): boolean {
 const isKnown = (name: string, known: readonly string[]) =>
   known.some((k) => sameName(name, k));
 
-/** "The party" and friends are always allowed in `involves`. */
-const PARTY = /^(the\s+)?(party|players?|pcs?|player characters?|heroes)$/i;
-
 function nameProblems(names: string[], avoid: string[]): string[] {
   const problems: string[] = [];
   const banned = bannedNamesIn(names);
@@ -310,14 +307,14 @@ export function checkCast(
   return { hard, soft };
 }
 
-/** Each consequence list: its range and whether entries must be grounded. */
+/** Each consequence list and its allowed range. Every entry must be grounded. */
 const CONSEQUENCE_LISTS = {
-  threats: { min: 1, max: 2, grounded: true },
-  discoveries: { min: 2, max: 3, grounded: false },
-  complications: { min: 2, max: 3, grounded: false },
-  rewards: { min: 1, max: 3, grounded: false },
-  outcomes: { min: 2, max: 3, grounded: true },
-  hooks: { min: 2, max: 3, grounded: false },
+  threats: { min: 1, max: 2 },
+  discoveries: { min: 2, max: 3 },
+  complications: { min: 2, max: 3 },
+  rewards: { min: 1, max: 3 },
+  outcomes: { min: 2, max: 3 },
+  hooks: { min: 2, max: 3 },
 } as const;
 
 type ConsequenceList = keyof typeof CONSEQUENCE_LISTS;
@@ -350,16 +347,14 @@ export function checkConsequences(
         hard.push(`${list}[${i}] needs a "title" and a "text"`);
       }
       const involves = texts(entry.involves);
-      if (rule.grounded && involves.length === 0) {
-        soft.push(
+      if (involves.length === 0) {
+        hard.push(
           `${list}[${i}] should list in "involves" the established names it depends on`,
         );
       }
-      const unknown = involves.filter(
-        (n) => !PARTY.test(n) && !isKnown(n, established),
-      );
+      const unknown = involves.filter((n) => !isKnown(n, established));
       if (unknown.length > 0) {
-        (rule.grounded ? hard : soft).push(
+        hard.push(
           `${list}[${i}] involves ${unknown.map((n) => `"${n}"`).join(", ")}, which earlier stages never established; use only established places, people and assets`,
         );
       }
@@ -493,9 +488,9 @@ function consequencesMessage(
   "threats": [{ "title": "", "text": "1-2 sentences: who or what opposes the party", "involves": [""] }],
   "discoveries": [{ "title": "", "text": "1-2 sentences: an actionable revelation", "opens": "", "involves": [""] }],
   "complications": [{ "title": "", "text": "1-2 sentences", "involves": [""] }],
-  "rewards": [{ "title": "", "text": "1 sentence, proportionate to the stakes" }],
+  "rewards": [{ "title": "", "text": "1 sentence, proportionate to the stakes", "involves": [""] }],
   "outcomes": [{ "title": "", "text": "2-3 sentences: a different world end-state", "involves": [""] }],
-  "hooks": [{ "title": "", "text": "1-2 sentences: why a particular party would engage" }]
+  "hooks": [{ "title": "", "text": "1-2 sentences: why a particular party would engage", "involves": [""] }]
 }`,
   );
 }
