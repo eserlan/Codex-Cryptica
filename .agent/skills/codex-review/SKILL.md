@@ -18,9 +18,43 @@ project-specific findings below.
 3. **Verify AI Grounding, Parser Strictness & Untrusted Markdown Sanitization**: In `oracle-parser.ts`, ensure regex patterns for deterministic commands use `\s*$` to prevent matching when additional user descriptions are provided. **Untrusted Markdown & Privacy (Constitution IV)**: Model output, external imports, and guest data rendered via Markdown (`renderMarkdown`, DOMPurify) MUST explicitly forbid remote resource fetches (`<img>`, `<video>`, `<audio>`, `@import`, or arbitrary `https:`, `data:`, `blob:` image URLs) to prevent tracking pixels, SSRF, or IP leakage in this local-first application. Cross-check help guides and prompt instructions to ensure documented capabilities do not contradict code reality (e.g. claiming Demo mode is read-only).
 4. **Audit Worker Proxies**: If a new AI method is added to `TextGenerationService`, verify it is correctly exposed in `oracle.worker.ts` and bound in `OracleStore`.
 5. **Enforce Performance Heuristics, Frame Budgets & Premise Inversion**: Ensure synchronous AI processing in loops (like auto-archive) is bounded, and check that simple selection/click gestures do not trigger unconditional disk/database writes. **Canvas 2D / 60 FPS Render Budgets**: On hot paths (`requestAnimationFrame`, canvas panning/zooming, hull overlays), avoid `O(N)` full-canvas `clearRect` and `drawImage` passes. Composite directly onto the target canvas in a single pass. **Adversarial Premise Inversion**: When a change optimizes calculations under an assumption (e.g. "fit-bounds doesn't need labels because it's zoomed out"), test the inverse condition (sparse graphs with 2–3 nodes where zoom is high, e.g. `zoom >= 0.5`). Ensure labels and curved edges are not clipped.
-6. **Check Accessibility & Multi-Theme Optical Contrast**: Ensure `Autocomplete` components have `ariaLabel`, action buttons have explicit `type="button"`, and icons follow the Iconify class pattern (`class="icon-[lucide--name] ..."`). Decorative icons must have `aria-hidden="true"`. Transition elements that fade out or hide must dynamically receive `aria-hidden` or `inert`. **Multi-Theme Contrast**: Interactive icons or text combining opacity modifiers (e.g., `bg-primary/50 text-theme-primary`) must be evaluated across all active themes (Fantasy Dark, Modern Light, Cyberpunk). Optical contrast must never fall below the WCAG 3:1 minimum for actionable controls; use solid fills (`bg-theme-primary text-theme-bg`) when necessary.
+6. **Check Accessibility & Multi-Theme Optical Contrast**: Ensure `Autocomplete` components have `ariaLabel`, action buttons have explicit `type="button"`, and icons follow the Iconify class pattern (`class="icon-[lucide--name] ..."`). Decorative icons must have `aria-hidden="true"`. Transition elements that fade out or hide must dynamically receive `aria-hidden` or `inert`. **Theme Tokens**: every new `theme-*` utility must exist as `--color-theme-*` in `apps/web/src/app.css` (there is no `theme-error`; use `theme-danger`). **Multi-Theme Contrast**: compute, do not estimate. Run the contrast check in [patterns.md](references/patterns.md#multi-theme-text-and-control-contrast) over every theme and light/dark variant: 4.5:1 for normal-size text (badges and `text-sm` button labels included), 3:1 for icons, control boundaries and large text. `bg-theme-primary text-theme-bg` fails in Horror; use `text-theme-on-primary`. Focus: dialogs move focus in and restore it for **every** opener path; reduced motion skips the movement, not only the transition.
 7. **Verify HTML, Numeric Semantics & Pointer Displacement**: Ensure coordinate/number fallbacks use nullish coalescing (`??`) rather than logical OR to prevent falsy `0` bugs, avoid user-agent sniffing, and ensure highly-interactive canvas or map dragging interfaces use pointer displacement gates (e.g. 5px threshold) when a click could mutate coordinates.
 8. **Run Constitution, Privacy, Test Completeness & Delivery Checks**: Audit the branch against `.specify/memory/constitution.md` and `docs/STYLE_GUIDE.md`. Check privacy and security boundaries, including credentials, owner tokens, entity values, vault identifiers, asset paths, validation, authorization, and public response projections. **Assertion Completeness (Not Just "Tests Pass")**: Verify that every newly added configuration key (e.g. in `localStorage` or IndexedDB), feature flag, or debounce timer has dedicated unit test assertions exercising its loading, saving, default fallback, and invalidation. Passing test counts do not prove new code paths are tested. Cover meaningful failure, cancellation, and negative paths, and keep documentation and spec artifacts synchronised.
+
+## Sweeps Before Handoff
+
+The PR reviewer (dev-agents "Luna") repeatedly finds the defects below after this review passes.
+Run these sweeps on every review; they are where most second and third review rounds come from.
+
+1. **Revert check (tests)**: For each changed hunk, name the test that fails if the hunk is
+   reverted. No name means a missing or non-discriminating test. See
+   [The Revert Check](references/patterns.md#the-revert-check-would-any-test-fail) for the recurring
+   ways a green suite proves nothing.
+2. **Sibling sweep**: When a defect or a fix applies to one instance, enumerate the siblings and
+   check each: every button with the same contrast pair, every model field interpolated into the
+   same Markdown, every AI entry point (retry, regenerate) behind the disclosure, every opener path
+   that needs focus restore, every article repeating the same claim, every field holding a merged id.
+3. **Model-output guards**: Check each parse/validation guard in the diff against
+   [Model-Output Shape Guards](references/patterns.md#model-output-shape-guards-that-let-junk-through)
+   (`null`/array/`{}`, `NaN`, unescaped `RegExp`, duplicate ids, missing maximum, graph
+   reachability, silent truncation).
+4. **Heuristic checks**: Any regex over generated prose needs a counterexample table in its test
+   (flagged and not-flagged, with unrelated clauses, lists and punctuation). See
+   [Heuristic Prose Checks](references/patterns.md#heuristic-prose-checks-regex-validators).
+5. **Async and persistence**: For each await, ask what the user can change meanwhile (captured
+   state written back, superseded request, double-click on a per-item button, map switch), what
+   the real persistence adapter returns on failure (it may resolve `false`), and what earlier
+   steps are left if a later step fails. For abortable work, follow the `AbortSignal` all the way
+   to `fetch`, and check that `pointercancel` cancels rather than completes a gesture.
+6. **Worst-case budgets**: Compute per-frame work from the supported extremes (minimum zoom,
+   minimum cell size, large viewport), not a typical map; caps must not silently drop items.
+7. **Claims**: Every capability, rule, number and privacy claim in changed content, help copy, or
+   the PR description has a code path or a cited source. Evergreen blog posts go through the
+   discovery registry. The PR description matches `git diff origin/staging...HEAD --stat`.
+8. **Re-review the fix**: A fix is new code. Re-run the relevant sweep over the fix itself, and
+   for heuristics, re-run the whole counterexample table. Most second-round findings are defects
+   in the first round's fix.
 
 ## Review Output Guidelines
 
