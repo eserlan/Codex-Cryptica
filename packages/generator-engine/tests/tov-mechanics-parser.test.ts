@@ -90,9 +90,48 @@ describe("isPublishedBfrdDoomGuidance", () => {
   it("accepts encounter-level pool and published BFRD spends", () => {
     expect(
       isPublishedBfrdDoomGuidance(
-        "Start the encounter with a CR-based Doom pool of 3 points. Spend Doom to give a creature advantage on an attack, give a PC disadvantage on a save, or once per encounter refresh, recharge, or gain one additional use of a limited-use feature.",
+        "Start the encounter with a CR-based encounter-level GM Doom pool of 3 points. Spend Doom to give a creature advantage on an attack, give a PC disadvantage on a save, or once per encounter refresh, recharge, or gain one additional use of a limited-use feature.",
       ),
     ).toBe(true);
+  });
+
+  it("rejects an unrecognised spend added to a published spend", () => {
+    expect(
+      isPublishedBfrdDoomGuidance(
+        "Start with a CR-based encounter-level GM Doom pool. Spend Doom to give a creature advantage on an attack or force a reroll.",
+      ),
+    ).toBe(false);
+    expect(
+      isPublishedBfrdDoomGuidance(
+        "Start with a CR-based encounter-level GM Doom pool. Spend Doom to give a creature advantage on an attack or curse a PC.",
+      ),
+    ).toBe(false);
+  });
+
+  it("does not treat unrelated healing prose as a Doom spend", () => {
+    expect(
+      isPublishedBfrdDoomGuidance(
+        "Use a CR-based encounter-level GM Doom pool. Spend Doom to give a creature advantage on an attack; after the fight, heal the party.",
+      ),
+    ).toBe(true);
+  });
+
+  it("requires explicit encounter-pool scope and a recognised published spend", () => {
+    expect(
+      isPublishedBfrdDoomGuidance(
+        "Start a CR-based creature pool. Spend Doom to give a creature advantage on an attack.",
+      ),
+    ).toBe(false);
+    expect(
+      isPublishedBfrdDoomGuidance(
+        "Use a CR-based encounter-level GM Doom pool, scoped strictly to individual creatures. Spend Doom to give a creature advantage on an attack.",
+      ),
+    ).toBe(false);
+    expect(
+      isPublishedBfrdDoomGuidance(
+        "Start with a CR-based encounter-level GM Doom pool. Spend Doom to grant a reroll.",
+      ),
+    ).toBe(false);
   });
 
   it("rejects empty, homebrew-labelled, creature-only, or invented Doom spend guidance", () => {

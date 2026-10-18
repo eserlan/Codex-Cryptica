@@ -501,7 +501,7 @@
         </span>
         {#if hasHomebrewDoom}
           <span
-            class="rounded bg-amber-500/10 px-1.5 py-0.5 text-micro font-semibold text-amber-300"
+            class="rounded bg-chrome-bg px-1.5 py-0.5 text-micro font-semibold text-chrome-text"
             data-testid="encounter-doom-homebrew-badge"
           >
             Homebrew

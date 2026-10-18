@@ -3,29 +3,51 @@ import {
   type GeneratorMechanicsBundle,
 } from "./tov-mechanics-schema";
 
-const HOMEBREW_DOOM_CLAIM_PATTERN =
+const PUBLISHED_DOOM_POOL_SCOPE_PATTERN =
+  /\b(?:encounter(?:[- ]level|[- ]wide)?\s+(?:gm\s+)?doom\s+(?:resource\s+)?pool|doom\s+pool for (?:the )?encounter|start(?:ing)? (?:the )?encounter with (?:a )?(?:cr[- ]based )?(?:gm )?doom pool)\b/i;
+
+const HOMEBREW_DOOM_SCOPE_PATTERN =
   /\b(creature-only|boss-only|not an? (universal |encounter[- ]level )?gm pool|scoped strictly to individual creatures)\b/i;
 
-const INVENTED_DOOM_SPEND_PATTERN =
-  /\b(summon|reinforcement|extinguish|snuff|teleport|heal|regain hit points|temporary hit points|lair action|lair hazard|environmental hazard|battlefield hazard|villain action|villainous action|legendary action|as a reaction|initiative count|aoe|area of effect|bonus damage|extra damage)\b/i;
+const PUBLISHED_DOOM_CR_BASIS_PATTERN =
+  /\b(?:cr[- ]based|based on (?:the )?(?:encounter )?cr)\b/i;
 
-const PUBLISHED_DOOM_CONCEPT_PATTERN =
-  /\b(advantage|disadvantage|refresh|recharge|additional use|extra use|limited-use|encounter pool|encounter-level|cr-based)\b/i;
+const PUBLISHED_DOOM_SPEND_PATTERN =
+  /\b(?:advantage on (?:an? |the )?(?:creature'?s? )?attack|disadvantage on (?:an? |the )?(?:pc'?s? )?save|(?:once[- ]per[- ]encounter )?(?:refresh|recharge)|(?:gain|grant) (?:one |an? )?(?:additional |extra )?use of a limited[- ]use feature)\b/i;
+
+const NON_PUBLISHED_DOOM_SPEND_PATTERN =
+  /\b(?:summon|reinforcement|extinguish|snuff|teleport|heal|regain hit points|temporary hit points|lair action|lair hazard|environmental hazard|battlefield hazard|villain action|villainous action|legendary action|as a reaction|initiative count|aoe|area of effect|bonus damage|extra damage|reroll|re-roll)\b/i;
+
+const UNRECOGNIZED_DOOM_SPEND_PATTERN =
+  /\b(?:or|and)\s+(?!(?:once[- ]per[- ]encounter\s+)?(?:give|grant|refresh|recharge|gain)\b)(?!(?:a|an|the)\b)[a-z]+\b/i;
 
 /**
- * Returns true only when `doomNotes` aligns with the published BFRD optional
- * encounter-level Doom rule and its published spends (advantage on a creature's
- * attack, disadvantage on a PC's save, or once-per-encounter refresh, recharge,
- * or one additional use of a limited-use feature), without invented creature
- * spends or creature-only scope claims.
+ * Returns true only when `doomNotes` establishes the published encounter-level
+ * CR-based Doom pool and at least one published spend. The classifier fails
+ * closed when the text lacks that evidence or a Doom-related clause names a
+ * known custom spend; unrelated sentences are ignored.
  */
 export function isPublishedBfrdDoomGuidance(doomNotes: string): boolean {
   const trimmed = doomNotes.trim();
   if (!trimmed) return false;
   if (/\bhomebrew\b/i.test(trimmed)) return false;
-  if (HOMEBREW_DOOM_CLAIM_PATTERN.test(trimmed)) return false;
-  if (INVENTED_DOOM_SPEND_PATTERN.test(trimmed)) return false;
-  return PUBLISHED_DOOM_CONCEPT_PATTERN.test(trimmed);
+  const clauses = trimmed.split(/(?<=[.!?;])\s+|\n+/);
+  const doomClauses = clauses.filter((clause) => /\bdoom\b/i.test(clause));
+  if (
+    !doomClauses.length ||
+    HOMEBREW_DOOM_SCOPE_PATTERN.test(trimmed) ||
+    !PUBLISHED_DOOM_POOL_SCOPE_PATTERN.test(trimmed) ||
+    !PUBLISHED_DOOM_CR_BASIS_PATTERN.test(trimmed) ||
+    !PUBLISHED_DOOM_SPEND_PATTERN.test(trimmed)
+  ) {
+    return false;
+  }
+
+  return !doomClauses.some(
+    (clause) =>
+      NON_PUBLISHED_DOOM_SPEND_PATTERN.test(clause) ||
+      UNRECOGNIZED_DOOM_SPEND_PATTERN.test(clause),
+  );
 }
 
 function normalizeTovMechanicsBundle(
