@@ -9,7 +9,7 @@ Blog posts are dated, narrative guides (feature walkthroughs, announcements, ess
 
 ## The route (read this first)
 
-Blog posts do **not** ship through `staging`. The `blog` branch is a permanent branch off `main` that carries only blog content. Merging a PR into `blog` runs `.github/workflows/deploy-blog-content.yml`, which publishes to the `blog-content` branch and then deploys production from `main` with the posts overlaid. There is no release step and no promotion. Full details: [docs/BLOG_DEPLOYMENT.md](../../../docs/BLOG_DEPLOYMENT.md).
+Blog posts do **not** ship through `staging`. The `blog` branch is a permanent branch off `main` that carries only blog content. Merging a PR into `blog` runs `.github/workflows/deploy-blog-content.yml`, which publishes to the `blog-content` branch and then deploys production from `main` with the posts overlaid. There is no staging release and no promotion. Full details: [docs/BLOG_DEPLOYMENT.md](../../../docs/BLOG_DEPLOYMENT.md).
 
 1. Branch from `origin/blog`, never `staging` (`git worktree add -b docs/<slug>-blog <dir> origin/blog`).
 2. Add `apps/web/src/lib/content/blog/<slug>.md`. Touch nothing else.
@@ -39,7 +39,7 @@ imageAlt: "Describes what the image shows"
 ---
 ```
 
-`id` equals `slug`. `updatedAt` is only for later edits.
+`id` equals `slug`. `updatedAt` is only for later edits. `id`, `slug`, `title`, `description` and `publishedAt` are required: `scripts/publish-blog-content.mjs` throws on a post missing any of them, and the CDN publish fails. Commented-out YAML lines (the image placeholders) are fine.
 
 ## Style rules
 
@@ -76,16 +76,48 @@ Run in the worktree (symlink `node_modules` from the main checkout if needed, an
 
 `test:changed` reports no affected tests for a markdown-only change, so run the blog tests directly.
 
-## After merge
+## Releasing (what merging does)
 
-- Watch the **Deploy Blog Content** run (`gh run list --workflow "Deploy Blog Content"`). Both `publish-cdn` and `deploy-production` must succeed.
-- Open `https://codexcryptica.com/blog/<slug>` and confirm it renders, with no broken images.
-- Optional promotion: `bsky-note` for a short post, `cc-announcer` for Reddit or a devlog.
-- Back-merge `blog` into `main` and `staging` when convenient, so the branches stay in sync.
+Merging into `blog` triggers **Deploy Blog Content**, which runs two independent jobs:
+
+- **`publish-cdn`**: runs `scripts/publish-blog-content.mjs`, which wipes and regenerates `blog/` (every post plus `index.json`) and force-pushes it to the `blog-content` branch for the in-app viewer. Because it regenerates from source, deleting a post file removes it from the CDN too.
+- **`deploy-production`**: checks out `main`, overlays `apps/web/src/lib/content/blog/` (and `apps/web/static/images/`, unused because images live in R2) from `origin/blog`, runs `bun run build`, and deploys `apps/web/build` to Cloudflare Pages on branch `main`. Posts are prerendered to static HTML from the overlay, and `/sitemap.xml` is generated at build from the blog directory, so a new post needs no manual sitemap step.
+
+Only blog files are overlaid. Anything else the post links to (answers, `/for` pages, generators, app features) must already be on `main`, or the live link or claim is wrong.
+
+### Verify
+
+1. `gh run list --repo eserlan/Codex-Cryptica --workflow "Deploy Blog Content" --limit 3`, then `gh run watch <id>`. Both jobs must be green. They run in parallel and failing one does not stop the other.
+2. Open `https://codexcryptica.com/blog/<slug>`: renders, no broken images, internal links resolve. Check `https://codexcryptica.com/blog` lists it.
+3. If the runs are green but the post is missing, it usually means the PR merged into the wrong base, or the file is not in `apps/web/src/lib/content/blog/`.
+
+### Previewing
+
+There is no preview of an unmerged PR. The manual run (`gh workflow run "Deploy Blog Content" -f target_branch=blog-preview`, default `blog-preview`) builds `main` with whatever is currently on `origin/blog` and deploys it to a Cloudflare preview branch instead of production. It skips `publish-cdn`. Use it to test the pipeline or a change to the workflow itself, not a draft post. Check a draft locally instead: run the dev server and open `/blog/<slug>` (the dev server needs the post in the working tree).
+
+### Tell search engines (manual)
+
+IndexNow is not triggered by the blog deploy. After the post is live, run **Notify Search Indexes (IndexNow)** with the post URL:
+
+```sh
+gh workflow run "Notify Search Indexes (IndexNow)" --repo eserlan/Codex-Cryptica \
+  -f cluster="" -f urls="https://codexcryptica.com/blog/<slug>" -f dry_run=true
+```
+
+Set `cluster` empty: its default is `heist`, which would also submit the heist routes. Do a `dry_run=true` run first, confirm the summary lists only your URL, then repeat with `dry_run=false` (needs the user's go-ahead, since it sends the URL to external services).
+
+### Roll back
+
+Revert the merge with a PR whose base is `blog` (or delete the post file in a new PR). Merging it reruns the same workflow, and the regenerated `blog-content` and rebuilt site drop the post. There is no other undo, and a bad deploy stays live until the revert finishes, so keep the first merge small.
+
+### Afterwards
+
+- Optional promotion: `bsky-note` for a short post, `cc-announcer` for Reddit or a devlog. Both need the live URL.
+- Back-merge `blog` into `main` and `staging` when convenient, per `docs/BLOG_DEPLOYMENT.md`, so the branches stay in sync.
 
 ## Do not
 
 - Target `staging` or `main` with a blog PR.
 - Commit image files or link R2 URLs that do not exist.
 - Add a changelog entry or touch app code in the same PR.
-- Merge or publish without the user's approval.
+- Merge, run IndexNow for real, or otherwise publish without the user's approval.
