@@ -271,6 +271,18 @@
       {/await}
     {/if}
 
+    {#if modalUIStore.statBlockImport.open}
+      {#await loadModal(() => import("$lib/components/stats/import/StatBlockImportModal.svelte"), "StatBlockImportModal") then StatBlockImportModal}
+        {#if StatBlockImportModal}
+          <StatBlockImportModal
+            entityId={modalUIStore.statBlockImport.entityId}
+            onClose={() => modalUIStore.closeStatBlockImport()}
+            onOpenExisting={(id: string) => modalUIStore.openZenMode(id)}
+          />
+        {/if}
+      {/await}
+    {/if}
+
     {#if modalUIStore.showIntentCreateMenu}
       {#await loadModal(() => import("$lib/components/guided/IntentCreateModal.svelte"), "IntentCreateModal") then IntentCreateModal}
         {#if IntentCreateModal}

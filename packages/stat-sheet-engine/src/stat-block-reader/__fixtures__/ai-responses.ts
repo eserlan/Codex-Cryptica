@@ -1,0 +1,445 @@
+/**
+ * Recorded AI replies, one per fixture in stat-blocks.ts, plus a few
+ * deliberately bad replies. Tests run against these, so CI never calls a model.
+ */
+export const AI_RESPONSES: Record<string, unknown> = {
+  "clean-hill-brute": {
+    outcome: "ok",
+    looksLike: "tov",
+    kind: "creature",
+    name: "Hill Brute",
+    values: {
+      size: "Large",
+      creatureType: "giant",
+      alignment: "chaotic evil",
+      cr: "3",
+      doom: 2,
+      ac: 13,
+      acDetails: "hide armor",
+      hp: 45,
+      hitDice: "6d10+12",
+      speed: "30 ft.",
+      abilityScores: { str: 18, dex: 8, con: 14, int: 6, wis: 9, cha: 7 },
+      saveProficiencies: ["str", "con"],
+      skillProficiencies: ["athletics"],
+      senses: "passive Perception 9",
+      languages: "Giant",
+      traits: [
+        {
+          name: "Brute Rage",
+          description: "Once per rest, the brute can fly into a rage.",
+        },
+      ],
+      actions: [
+        {
+          name: "Greatclub",
+          attackFormula: "1d20+6",
+          damageFormula: "1d10+4",
+          description: "Melee Attack. Bludgeoning damage.",
+        },
+      ],
+    },
+    notes: [],
+    leftovers: [],
+  },
+  "clean-frost-wolf": {
+    outcome: "ok",
+    looksLike: "tov",
+    kind: "creature",
+    name: "Frost Wolf",
+    values: {
+      size: "Medium",
+      creatureType: "beast",
+      alignment: "unaligned",
+      cr: "2",
+      ac: 13,
+      acDetails: "natural armor",
+      hp: 37,
+      hitDice: "5d8+15",
+      speed: "40 ft.",
+      abilityScores: { str: 14, dex: 15, con: 16, int: 3, wis: 12, cha: 6 },
+      skillProficiencies: ["perception", "stealth"],
+      senses: "passive Perception 13",
+      languages: "—",
+      traits: [
+        {
+          name: "Pack Tactics",
+          description:
+            "The wolf has advantage on attack rolls when an ally is within 5 feet of the target.",
+        },
+      ],
+      actions: [
+        {
+          name: "Icy Bite",
+          attackFormula: "1d20+4",
+          damageFormula: "2d6+2",
+          description: "Melee Attack. Cold damage.",
+        },
+      ],
+    },
+    notes: [],
+    leftovers: [],
+  },
+  "clean-bog-horror": {
+    outcome: "ok",
+    looksLike: "tov",
+    kind: "creature",
+    name: "Bog Horror",
+    values: {
+      size: "Huge",
+      creatureType: "aberration",
+      alignment: "neutral",
+      cr: "5",
+      doom: 3,
+      ac: 15,
+      acDetails: "thick hide",
+      hp: 84,
+      hitDice: "8d12+24",
+      speed: "20 ft., swim 30 ft.",
+      abilityScores: { str: 20, dex: 9, con: 17, int: 2, wis: 10, cha: 5 },
+      saveProficiencies: ["con"],
+      damageResistances: ["acid"],
+      damageImmunities: ["poison"],
+      conditionImmunities: ["poisoned"],
+      senses: "darkvision 60 ft., passive Perception 10",
+      languages: "—",
+      actions: [
+        {
+          name: "Crushing Grasp",
+          attackFormula: "1d20+8",
+          damageFormula: "2d8+5",
+          description: "Melee Attack. Bludgeoning damage.",
+        },
+      ],
+    },
+    notes: [],
+    leftovers: [],
+  },
+  "clean-cave-warden": {
+    outcome: "ok",
+    looksLike: "tov",
+    kind: "creature",
+    name: "Cave Warden",
+    values: {
+      size: "Large",
+      creatureType: "construct",
+      alignment: "lawful neutral",
+      cr: "7",
+      doom: 4,
+      ac: 17,
+      acDetails: "stone plating",
+      hp: 110,
+      hitDice: "13d10+39",
+      speed: "30 ft.",
+      abilityScores: { str: 19, dex: 8, con: 16, int: 7, wis: 11, cha: 3 },
+      saveProficiencies: ["str", "wis"],
+      damageImmunities: ["poison", "psychic"],
+      senses: "blindsight 30 ft., passive Perception 10",
+      languages: "understands Common but cannot speak",
+      actions: [
+        {
+          name: "Stone Fist",
+          attackFormula: "1d20+7",
+          damageFormula: "2d10+4",
+          description: "Melee Attack. Bludgeoning damage.",
+        },
+      ],
+      legendaryActions: [
+        {
+          name: "Stomp",
+          cost: 1,
+          description:
+            "The warden moves up to half its speed without provoking opportunity attacks.",
+        },
+      ],
+    },
+    notes: [],
+    leftovers: [],
+  },
+  "clean-cave-imp": {
+    outcome: "ok",
+    looksLike: "tov",
+    kind: "creature",
+    name: "Cave Imp",
+    values: {
+      size: "Tiny",
+      creatureType: "fiend",
+      alignment: "lawful evil",
+      cr: "1/2",
+      ac: 14,
+      hp: 13,
+      hitDice: "3d4+6",
+      speed: "20 ft., fly 40 ft.",
+      abilityScores: { str: 6, dex: 17, con: 14, int: 11, wis: 12, cha: 14 },
+      skillProficiencies: ["stealth"],
+      senses: "darkvision 120 ft., passive Perception 11",
+      languages: "Infernal",
+      actions: [
+        {
+          name: "Claw",
+          attackFormula: "1d20+5",
+          damageFormula: "1d4+3",
+          description: "Melee Attack. Slashing damage.",
+        },
+      ],
+    },
+    notes: [],
+    leftovers: [],
+  },
+  "clean-bandit-captain": {
+    outcome: "ok",
+    looksLike: "tov",
+    kind: "npc",
+    name: "Bandit Captain",
+    values: {
+      cr: "2",
+      ac: 15,
+      hp: 65,
+      hitDice: "10d8+20",
+      speed: "30 ft.",
+      attackName: "Scimitar",
+      attackBonus: 5,
+      attackFormula: "1d20+5",
+      damageFormula: "1d8+3",
+      damageType: "slashing",
+      abilityScores: { str: 15, dex: 16, con: 14, int: 14, wis: 11, cha: 14 },
+      keySaves: ["DEX", "WIS"],
+      keySkills: ["Athletics", "Intimidation"],
+    },
+    notes: [],
+    leftovers: [],
+  },
+  "clean-cult-priest": {
+    outcome: "ok",
+    looksLike: "tov",
+    kind: "npc",
+    name: "Cult Priest",
+    values: {
+      cr: "1",
+      ac: 13,
+      hp: 27,
+      hitDice: "6d8",
+      speed: "30 ft.",
+      attackName: "Mace",
+      attackBonus: 2,
+      attackFormula: "1d20+2",
+      damageFormula: "1d6",
+      damageType: "bludgeoning",
+      abilityScores: { str: 10, dex: 11, con: 12, int: 13, wis: 16, cha: 11 },
+      keySaves: ["WIS"],
+      keySkills: ["Religion"],
+    },
+    notes: [],
+    leftovers: [],
+  },
+  "pdf-dire-stalker": {
+    outcome: "ok",
+    looksLike: "tov",
+    kind: "creature",
+    name: "Dire Stalker",
+    values: {
+      size: "Large",
+      creatureType: "beast",
+      alignment: "unaligned",
+      cr: "4",
+      ac: 14,
+      acDetails: "natural armor",
+      hp: 52,
+      hitDice: "7d10+14",
+      speed: "50 ft.",
+      abilityScores: { str: 16, dex: 14, con: 14, int: 3, wis: 12, cha: 8 },
+      skillProficiencies: ["perception"],
+      senses: "passive Perception 13",
+      languages: "—",
+      traits: [
+        {
+          name: "Fierce Pursuit",
+          description:
+            "The stalker has advantage on attack rolls against a creature that is hurt.",
+        },
+      ],
+      actions: [
+        {
+          name: "Bite",
+          attackFormula: "1d20+5",
+          damageFormula: "2d6+3",
+          description: "Melee Attack. Piercing damage.",
+        },
+      ],
+    },
+    notes: [],
+    leftovers: [],
+  },
+  "pdf-smuggler-boss": {
+    outcome: "ok",
+    looksLike: "tov",
+    kind: "npc",
+    name: "Smuggler Boss",
+    values: {
+      cr: "1",
+      ac: 14,
+      hp: 39,
+      hitDice: "6d8+12",
+      speed: "30 ft.",
+      attackName: "Dagger",
+      attackBonus: 4,
+      attackFormula: "1d20+4",
+      damageFormula: "1d4+2",
+      damageType: "piercing",
+      abilityScores: { str: 13, dex: 15, con: 14, int: 10, wis: 9, cha: 12 },
+      keySaves: ["DEX"],
+    },
+    notes: [],
+    leftovers: [],
+  },
+  "foundry-hill-brute": {
+    outcome: "ok",
+    looksLike: "tov",
+    kind: "creature",
+    name: "Hill Brute",
+    values: {
+      cr: "3",
+      ac: 13,
+      hp: 45,
+      hitDice: "6d10+12",
+      alignment: "chaotic evil",
+      creatureType: "giant",
+      abilityScores: { str: 18, dex: 8, con: 14, int: 6, wis: 9, cha: 7 },
+    },
+    notes: [],
+    leftovers: [],
+  },
+  "no-stat-block-lore": {
+    outcome: "no-stat-block",
+    looksLike: "unknown",
+    notes: [],
+    leftovers: [],
+  },
+  "several-goblins": {
+    outcome: "several",
+    candidates: [
+      { name: "Goblin Scout", index: 0 },
+      { name: "Goblin Chief", index: 1 },
+    ],
+    looksLike: "5e",
+    notes: [],
+    leftovers: [],
+  },
+  "character-sheet-fighter": {
+    outcome: "character",
+    looksLike: "tov",
+    notes: [],
+    leftovers: [],
+  },
+  "5e-goblin-boss": {
+    outcome: "ok",
+    looksLike: "5e",
+    kind: "creature",
+    name: "Goblin Boss",
+    values: {
+      size: "Small",
+      creatureType: "humanoid (goblinoid)",
+      alignment: "neutral evil",
+      cr: "1",
+      ac: 17,
+      acDetails: "chain shirt, shield",
+      hp: 21,
+      hitDice: "6d6",
+      speed: "30 ft.",
+      abilityScores: { str: 10, dex: 15, con: 10, int: 10, wis: 8, cha: 10 },
+      skillProficiencies: ["stealth"],
+      senses: "darkvision 60 ft., passive Perception 9",
+      languages: "Common, Goblin",
+      traits: [
+        {
+          name: "Nimble Escape",
+          description:
+            "The goblin can take the Disengage or Hide action as a bonus action on each of its turns.",
+        },
+      ],
+      actions: [
+        {
+          name: "Scimitar",
+          attackFormula: "1d20+4",
+          damageFormula: "1d6+2",
+          description: "Melee Attack. Slashing damage.",
+        },
+      ],
+    },
+    notes: [],
+    leftovers: [],
+  },
+};
+
+/** Convert-mode reply for 5e-goblin-boss: every change carries a note. */
+export const CONVERT_GOBLIN_BOSS_RESPONSE = {
+  outcome: "ok",
+  looksLike: "5e",
+  kind: "creature",
+  name: "Goblin Boss",
+  values: {
+    ...(AI_RESPONSES["5e-goblin-boss"] as { values: object }).values,
+    doom: 1,
+    traits: [
+      {
+        name: "Nimble Escape",
+        description:
+          "The goblin can take the Disengage or Hide action as a bonus action on each of its turns.",
+      },
+    ],
+  },
+  notes: [
+    {
+      path: "doom",
+      state: "converted",
+      reason: "converted",
+      original: null,
+    },
+    {
+      path: "traits.0.description",
+      state: "converted",
+      reason: "converted",
+      original:
+        "The goblin can take the Disengage or Hide action as a bonus action on each of its turns.",
+    },
+  ],
+  leftovers: [],
+};
+
+/** Bad replies the parser must cope with. */
+export const BAD_RESPONSES = {
+  /** A reply with prose after the JSON object. */
+  trailingGarbage: `${JSON.stringify(AI_RESPONSES["clean-hill-brute"])}\n\nI hope this helps! Let me know if you need anything else.`,
+  /** AC 15 is not in the source, which says 13. */
+  inventedAc: {
+    ...(AI_RESPONSES["clean-hill-brute"] as object),
+    values: {
+      ...(AI_RESPONSES["clean-hill-brute"] as { values: object }).values,
+      ac: 15,
+    },
+  },
+  /** A damage formula the dice parser rejects. */
+  malformedDamage: {
+    ...(AI_RESPONSES["clean-hill-brute"] as object),
+    values: {
+      ...(AI_RESPONSES["clean-hill-brute"] as { values: object }).values,
+      actions: [
+        {
+          name: "Greatclub",
+          attackFormula: "1d20+6",
+          damageFormula: "1d10 bludgeoning",
+          description: "Melee Attack.",
+        },
+      ],
+    },
+  },
+  /** Invents a language the stat block does not mention. */
+  inventedLanguage: {
+    ...(AI_RESPONSES["clean-hill-brute"] as object),
+    values: {
+      ...(AI_RESPONSES["clean-hill-brute"] as { values: object }).values,
+      languages: "Draconic",
+    },
+  },
+  noJson: "I could not find a stat block in that text.",
+};

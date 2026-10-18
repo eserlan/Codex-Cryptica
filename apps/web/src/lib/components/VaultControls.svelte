@@ -1,6 +1,7 @@
 <script lang="ts">
   import { vault } from "$lib/stores/vault.svelte";
   import { categories } from "$lib/stores/categories.svelte";
+  import { systemProfileStore } from "$lib/stores/system-profile.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { demoService } from "$lib/services/demo";
   import { p2pGuestService } from "$lib/cloud-bridge/p2p/guest-service";
@@ -586,6 +587,21 @@
         <span>Start from default format</span>
       </label>
 
+      {#if systemProfileStore.isTalesOfTheValiant}
+        <button
+          type="button"
+          class="{btnPrimary} {isVertical
+            ? 'py-3 text-sm justify-center'
+            : 'px-4 py-1.5 text-xs'}"
+          onclick={() => {
+            showForm = false;
+            modalUIStore.openStatBlockImport({});
+          }}
+          data-testid="new-entity-from-stat-block"
+        >
+          FROM STAT BLOCK
+        </button>
+      {/if}
       <button
         type="submit"
         class="{btnPrimary} {isVertical

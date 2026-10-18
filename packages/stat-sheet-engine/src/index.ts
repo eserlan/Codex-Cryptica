@@ -20,3 +20,4 @@ export * from "./entity-sheet";
 export * from "./stock-suggestions";
 export * from "./market-pressure";
 export * from "./rules-sources";
+export * from "./stat-block-reader";

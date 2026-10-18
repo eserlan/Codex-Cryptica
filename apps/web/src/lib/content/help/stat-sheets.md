@@ -92,6 +92,29 @@ Presentation Templates change how a compatible Stat Sheet is arranged without ch
 
 Write your own layout in Markdown with field references such as `{{stat.hp}}` and layout sections for groups, cards and rows. Repeatable Table fields (used for Weapons and Items by default) keep rows of data together: add rows, edit their cells, adjust counters and roll dice from the table. In the template editor you can customise a Repeatable Table's column headings and cell types (text, number, dice, counter or checkbox), so the same table type can hold skills, spells or any other list.
 
+## Import a stat block
+
+For Tales of the Valiant vaults, you can turn a monster or quick NPC you already have into a stat sheet. Open the entity's **Stats** tab and choose **Import**, or use **FROM STAT BLOCK** in the new-entity form. Paste the stat block from a PDF, a web page, a Foundry VTT export or your own notes, then choose **Read stat block**.
+
+The review screen shows each value with a label:
+
+- **Found**: the value is in the text you pasted.
+- **Check this**: the value looks uncertain, is malformed, or isn't in your text. The original text is shown beside it. Correct it before you save.
+- **Not found**: the text didn't include this value. It stays empty, and the sheet keeps whatever it already had.
+- **Worked out from CR**: proficiency bonus, calculated from the Challenge Rating.
+
+Armour Class, Hit Points and Challenge Rating are needed before you can save. Anything else can stay empty.
+
+**Copy as written** (the default) only keeps what your text says. **Convert from 5e** turns a 5e monster into Tales of the Valiant. It marks every value it added or changed, with the 5e original beside it, and labels the entity **Converted from 5e**. Check those values, because they are a judgement call.
+
+When you save into a sheet that already has values, only the values the import found are replaced. You are asked to confirm first. Custom fields you added are never changed.
+
+Your pasted text is sent to the AI to be read. It isn't kept, and it isn't used for anything else. Tick **Keep the original text in notes** to save it in the entity's notes. Notes are included when you share or publish the vault, so only tick it if that's fine.
+
+**Limits**: the import works on one creature or quick NPC at a time, and on text or Foundry JSON only. Character sheets aren't supported yet. Pastes over 12,000 characters are refused, so paste just the stat block.
+
+**Without AI**: when AI is turned off, the import uses a simpler built-in reader. It only fills in what it can read reliably, so expect to fill in more by hand. Convert from 5e isn't available then.
+
 ## Related reading
 
 - [The Complete Guide to Custom Character Sheets](/blog/custom-stat-sheet-templates) — Build a reusable Stat Template, fill it in per entity, present it your way, and share it.
