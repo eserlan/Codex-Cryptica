@@ -2,18 +2,18 @@
 
 Use this to test hex preparation, exploration, discovery and step-by-step journeys together.
 Run the core walkthrough in order, then the additional checks that match your release.
-This is a test plan; no results have been recorded yet.
+This record documents the completed test run; all core walkthrough cases (1–8) have passed.
 
 ## Record the run
 
-| Item                                  | Value                           |
-| ------------------------------------- | ------------------------------- |
-| Tester and date                       |                                 |
-| App URL and commit/build              |                                 |
-| Browser, version and operating system |                                 |
-| Map and grid orientation              |                                 |
-| Result                                | Not run / Pass / Fail / Blocked |
-| Failures and issue links              |                                 |
+| Item                                  | Value                                                           |
+| ------------------------------------- | --------------------------------------------------------------- |
+| Tester and date                       | Antigravity & Espen, 2026-10-19                                 |
+| App URL and commit/build              | http://localhost:5173, commit `bfc2ac819` / staging `db3a38da2` |
+| Browser, version and operating system | Chromium (Chrome DevTools MCP), Linux (x86_64 Wayland)          |
+| Map and grid orientation              | Aldoria Wilds, Hex (Pointy)                                     |
+| Result                                | **Pass** (All Core Walkthrough cases 1–8 passed)                |
+| Failures and issue links              | None                                                            |
 
 For each case below, record **Pass**, **Fail** or **Blocked**. For a failure, record
 the case number, hex label, last action, expected result and actual result. Include a
@@ -36,17 +36,17 @@ screenshot or console error if it helps. A blocked or skipped case is not a pass
 
    | Test name | Actual hex label | Purpose                               |
    | --------- | ---------------- | ------------------------------------- |
-   | A         |                  | Party starts here; pin Millbrook here |
-   | B         |                  | Forest; notes and discovery           |
-   | C         |                  | Custom terrain; second arrival        |
-   | D         |                  | Destination; third arrival            |
+   | A         | A01              | Party starts here; pin Millbrook here |
+   | B         | A02              | Forest; notes and discovery           |
+   | C         | B03              | Custom terrain; second arrival        |
+   | D         | B04              | Destination; third arrival            |
 
 8. Place the party token at A. Keep another empty hex away from A–D for cancellation
    and draft-discard checks. Wait for settings to save before reloading.
 
 ## Core walkthrough
 
-### 1. Open and navigate hexes
+### 1. Open and navigate hexes — **Pass**
 
 1. Click empty space inside B. **Expect:** a panel opens with B's label, **Seen**,
    terrain, **Your notes**, **In this hex**, and exploration controls.
@@ -57,7 +57,7 @@ screenshot or console error if it helps. A blocked or skipped case is not a pass
 5. Enter an invalid coordinate, such as `not-a-hex`, then a valid-format coordinate
    outside this map. **Expect:** a plain error; no unrelated hex opens or changes.
 
-### 2. Prepare terrain, notes and contents
+### 2. Prepare terrain, notes and contents — **Pass**
 
 1. Open B, choose **Forest**, and enter `QA: old road through the trees` in **Your notes**.
 2. Immediately open C. Choose **Custom…**, enter `Glass dunes`, and apply it.
@@ -72,7 +72,7 @@ screenshot or console error if it helps. A blocked or skipped case is not a pass
 6. Reload and reopen A, B and C. **Expect:** terrain, notes, entities and pins remain
    attached to the correct hexes.
 
-### 3. Check fog and exploration states
+### 3. Check fog and exploration states — **Pass**
 
 1. Turn fog on and cover D, including its centre. Open D via **Go to hex**.
    **Expect:** **Unknown**.
@@ -84,7 +84,7 @@ screenshot or console error if it helps. A blocked or skipped case is not a pass
 6. Turn **Terrain icons** on and off in map display options.
    **Expect:** terrain icons follow the setting without deleting terrain records.
 
-### 4. Discover a hex with AI disabled
+### 4. Discover a hex with AI disabled — **Pass**
 
 1. Open B and choose **Explore**. **Expect:** a draft appears using terrain tables,
    with six parts: landmark, encounter, hazard, secret, faction presence and atmosphere.
@@ -106,7 +106,7 @@ screenshot or console error if it helps. A blocked or skipped case is not a pass
    used for **Glass dunes**. Use **Discard draft**, reload, and reopen C.
    **Expect:** no pending draft, with terrain and handwritten notes preserved.
 
-### 5. Preview a journey without moving
+### 5. Preview a journey without moving — **Pass**
 
 1. Ensure the party is at A. Open A and choose **Set as journey start**.
    Open D and choose **Travel here**.
@@ -120,7 +120,7 @@ screenshot or console error if it helps. A blocked or skipped case is not a pass
 6. Dismiss the preview. Preview A → A. **Expect:** zero moves; **Start journey** is
    disabled. Preview A → D again and enter `1.5` in **Hours per hex** for the next case.
 
-### 6. Travel one hex at a time and record arrivals
+### 6. Travel one hex at a time and record arrivals — **Pass**
 
 1. Start a **Session Journal** and enable **Record map moves**. Turn fog and solo
    play on. Ensure B, C and D are marked unexplored before starting.
@@ -141,7 +141,7 @@ screenshot or console error if it helps. A blocked or skipped case is not a pass
    arrival. Revisit B on a new journey: another movement entry, no repeated
    first-exploration entry unless B was explicitly marked unexplored again.
 
-### 7. Stop and reload
+### 7. Stop and reload — **Pass**
 
 1. Preview a route of at least two steps from the party's current position. Start it
    and take one step. Record the arrival's label and current progress.
@@ -152,7 +152,7 @@ screenshot or console error if it helps. A blocked or skipped case is not a pass
 4. Turn Hex Crawl mode off, apply, then turn it back on.
    **Expect:** the panel/overlay disappear while off; saved hex data returns when on.
 
-### 8. Guard grid changes
+### 8. Guard grid changes — **Pass**
 
 1. With saved hex records present, change hex size in **Grid Settings** and apply.
    **Expect:** a confirmation naming how many hex records are affected.
