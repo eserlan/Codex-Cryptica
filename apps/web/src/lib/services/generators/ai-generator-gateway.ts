@@ -227,10 +227,24 @@ export class ProxyAIGeneratorGateway implements AIGeneratorGateway {
       ): Promise<{ stream: AsyncGenerator<{ text: () => string }> }>;
     };
     return {
-      async send(userMessage: string): Promise<string> {
-        const result = await chat.sendMessageStream(userMessage);
+      async send(userMessage: string, signal?: AbortSignal): Promise<string> {
+        if (signal?.aborted) {
+          throw (
+            signal.reason ??
+            new DOMException("The operation was aborted", "AbortError")
+          );
+        }
+        const result = signal
+          ? await chatWithSignal.sendMessageStream(userMessage, signal)
+          : await chat.sendMessageStream(userMessage);
         let text = "";
         for await (const chunk of result.stream) {
+          if (signal?.aborted) {
+            throw (
+              signal.reason ??
+              new DOMException("The operation was aborted", "AbortError")
+            );
+          }
           text += chunk.text();
         }
         return extractJsonObject(text.trim());

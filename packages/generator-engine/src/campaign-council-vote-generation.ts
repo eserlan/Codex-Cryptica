@@ -115,7 +115,8 @@ export async function generateCouncilVoteWithAI(
     throwIfAborted(signal);
     const chat = await aiGateway.startChat(SYSTEM_INSTRUCTION);
     const stages = await runCouncilVoteFourTurn({
-      send: (message) => chat.send(message),
+      send: (message) =>
+        signal ? chat.send(message, signal) : chat.send(message),
       foundationPrompt: councilVoteFoundationPrompt(request),
       foundationRepairPrompt: councilVoteFoundationRepairPrompt(),
       pathsPrompt: councilVotePathsPrompt(),
@@ -146,7 +147,9 @@ async function* sendCouncilVoteStreamTurn(
   yield { type: "phase", label };
   if (!chat.sendStream) {
     yield { type: "started" };
-    const text = await chat.send(message);
+    const text = signal
+      ? await chat.send(message, signal)
+      : await chat.send(message);
     yield { type: "complete", text };
     return text;
   }

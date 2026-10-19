@@ -166,5 +166,6 @@ describe("generateCouncilVoteWithAI", () => {
       }),
     ).rejects.toThrow();
     expect(send).toHaveBeenCalledTimes(1);
+    expect(send).toHaveBeenCalledWith(expect.any(String), controller.signal);
   });
 });

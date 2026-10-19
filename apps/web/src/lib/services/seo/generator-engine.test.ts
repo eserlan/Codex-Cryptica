@@ -1290,6 +1290,10 @@ describe("DefaultGeneratorEngine", () => {
       ).rejects.toMatchObject({ name: "AbortError" });
       expect(progressCalls.length).toBeGreaterThan(0);
       expect(mockChat.sendMessageStream).toHaveBeenCalledTimes(1);
+      expect(mockChat.sendMessageStream).toHaveBeenCalledWith(
+        expect.any(String),
+        controller.signal,
+      );
     });
   });
 
