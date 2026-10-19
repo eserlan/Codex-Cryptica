@@ -2729,6 +2729,16 @@ describe("staged adventure generation", () => {
     involves: ["Mara Venn"],
   });
   const stageReply = (message: string) => {
+    if (message.includes("FINAL CHECK: adventure consistency")) {
+      return {
+        checks: Object.fromEntries(
+          ["antagonist", "causality", "resolution", "timeline", "agency"].map(
+            (id) => [id, { ok: true, problem: "" }],
+          ),
+        ),
+        revisions: [],
+      };
+    }
     if (message.includes("STAGE 1 OF 3")) {
       return {
         title: "The Copper Ledger",
@@ -2788,14 +2798,14 @@ describe("staged adventure generation", () => {
     const generated = await svc.generateDraft(
       adventureRun({ instructions: "Keep it rainy." }),
     );
-    expect(complete).toHaveBeenCalledTimes(3);
+    expect(complete).toHaveBeenCalledTimes(4);
     expect(
       complete.mock.calls.every(([message]) =>
         message.includes("Keep it rainy."),
       ),
     ).toBe(true);
     expect(onAdventureStagedStats).toHaveBeenCalledWith(
-      expect.objectContaining({ outcome: "staged", aiCalls: 3 }),
+      expect.objectContaining({ outcome: "staged", aiCalls: 4 }),
     );
     expect(generated.title).toBe("The Copper Ledger");
     expect(generated.content).toContain("Copper Market");
@@ -2874,7 +2884,7 @@ describe("staged adventure generation", () => {
       events.push(e as never);
     }
     expect(completeStream).not.toHaveBeenCalled();
-    expect(complete).toHaveBeenCalledTimes(3);
+    expect(complete).toHaveBeenCalledTimes(4);
     expect(events.find((e) => e.type === "draft")?.draft?.title).toBe(
       "The Copper Ledger",
     );

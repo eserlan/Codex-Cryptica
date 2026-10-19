@@ -10,6 +10,10 @@
  *    the situation. Every asset's place and holder must get its own card.
  * 3. Consequences: threats, discoveries, complications, rewards, outcomes and
  *    hooks, built only from what stages 1 and 2 established.
+ * 4. Consistency check: the whole adventure is read back against antagonist
+ *    logic, causality, resolution, timeline and player agency, and only text
+ *    with an identified contradiction is revised (adventure-consistency.ts).
+ *    It never fails the run: an unusable check keeps the adventure as written.
  *
  * Earlier stages are locked by construction: later stages return only their
  * own fields, so a retry cannot rename the objective or the cast. The result
@@ -33,6 +37,15 @@ import {
   userSuppliedText,
 } from "./public-adventure";
 import { asArray, asRecord, asString } from "./llm-response-utils";
+import {
+  type AdventureParts,
+  adventureVocabulary,
+  applyConsistencyRevisions,
+  consistencyTask,
+  isConsistencyReviewReply,
+  readConsistencyReview,
+} from "./adventure-consistency";
+import { normName, sameName } from "./adventure-name";
 import { bannedNamesIn } from "./naming-policy";
 import type { PublicGeneratorOutput } from "./public-generator-adapters";
 import { type Rng, defaultRng } from "./random-utils";
@@ -40,11 +53,15 @@ import { StagedProgress, type StagedProgressStep } from "./staged-progress";
 import {
   type CheckedDraft,
   type DraftCheck,
+  askModel,
+  readJsonObject,
   runCheckedStage,
   throwIfAborted,
 } from "./staged-runtime";
 
-export type AdventureStageId = "situation" | "cast" | "consequences";
+export { sameName } from "./adventure-name";
+
+export type AdventureStageId = "situation" | "cast" | "consequences" | "review";
 
 export interface AdventureStagedDeps {
   complete: (systemInstruction: string, userMessage: string) => Promise<string>;
@@ -73,6 +90,20 @@ export interface AdventureStagedStats {
   repairedStages: AdventureStageId[];
   /** Problems the final document still has, from the one-pass checks. */
   remainingIssues: string[];
+  /** What the final consistency check did; absent when it never ran. */
+  consistency?: AdventureConsistencyStats;
+}
+
+export interface AdventureConsistencyStats {
+  /**
+   * "revised": fixes were applied. "unchanged": nothing needed fixing, or no
+   * fix was valid. "kept-original": the fixes added a problem the
+   * one-pass checks had not reported, so the original was kept. "unavailable": the check gave no usable reply.
+   */
+  result: "revised" | "unchanged" | "kept-original" | "unavailable";
+  flaggedChecks: number;
+  appliedRevisions: number;
+  droppedRevisions: number;
 }
 
 /** The counts a dev build logs for a run, never any generated text. */
@@ -84,6 +115,7 @@ export function adventureStatsLog(stats: AdventureStagedStats) {
     elapsedMs: stats.elapsedMs,
     repairedStageCount: stats.repairedStages.length,
     remainingIssueCount: stats.remainingIssues.length,
+    consistency: stats.consistency,
   };
 }
 
@@ -103,29 +135,6 @@ const texts = (v: unknown): string[] =>
 // ---------------------------------------------------------------------------
 // Names
 // ---------------------------------------------------------------------------
-
-function normName(name: string): string {
-  return name
-    .toLowerCase()
-    .replace(/^the\s+/, "")
-    .replace(/[^a-z0-9]+/g, " ")
-    .trim();
-}
-
-/**
- * Whether two names refer to the same thing: equal once case, "the" and
- * punctuation are ignored, or one contains the other ("Assay Office" and
- * "the Old Assay Office"). Containment needs at least 4 characters so a
- * short word cannot match everything.
- */
-export function sameName(a: string, b: string): boolean {
-  const x = normName(a);
-  const y = normName(b);
-  if (!x || !y) return false;
-  if (x === y) return true;
-  const [short, long] = x.length <= y.length ? [x, y] : [y, x];
-  return short.length >= 4 && ` ${long} `.includes(` ${short} `);
-}
 
 const isKnown = (name: string, known: readonly string[]) =>
   known.some((k) => sameName(name, k));
@@ -560,11 +569,14 @@ const PROGRESS_STEPS: ReadonlyArray<{ id: AdventureStageId; label: string }> = [
   { id: "situation", label: "Situation, objective and stakes" },
   { id: "cast", label: "Places, people and factions" },
   { id: "consequences", label: "Threats, clues and outcomes" },
+  { id: "review", label: "Consistency check" },
 ];
 
 interface RunState {
   stats: AdventureStagedStats;
   progress: StagedProgress<AdventureStageId>;
+  /** The system instruction every call uses. */
+  system: string;
 }
 
 function runStage(
@@ -622,6 +634,7 @@ async function runStaged(
   const run: RunState = {
     stats,
     progress: new StagedProgress(PROGRESS_STEPS, deps.onProgress),
+    system: prompt.systemInstruction,
   };
   const avoid = avoidNamesExcludingContext(
     options.avoidNames ?? [],
@@ -700,13 +713,127 @@ async function runStaged(
   );
   if (!consequences) return stop("consequences");
 
-  const final = parseAdventureResponseDetailed(
-    JSON.stringify(assembleAdventure(contract, cast.data, consequences.data)),
-    options,
-    rng,
-    resolved,
+  return finishAdventure(
+    deps,
+    run,
+    {
+      situation: contract,
+      cast: cast.data,
+      consequences: consequences.data,
+    },
+    (parts) =>
+      parseAdventureResponseDetailed(
+        JSON.stringify(
+          assembleAdventure(parts.situation, parts.cast, parts.consequences),
+        ),
+        options,
+        rng,
+        resolved,
+      ),
+    `${prefix}${prompt.briefing}`,
+    established,
   );
-  if (final.rejected) return stop("assembly");
-  stats.remainingIssues = final.problems;
+}
+
+/**
+ * Assemble the three stages, run the consistency check over the result and
+ * keep its fixes only when they add no new problem to the adventure.
+ */
+async function finishAdventure(
+  deps: AdventureStagedDeps,
+  run: RunState,
+  parts: AdventureParts,
+  assemble: (
+    parts: AdventureParts,
+  ) => ReturnType<typeof parseAdventureResponseDetailed>,
+  briefing: string,
+  established: string[],
+): Promise<PublicGeneratorOutput | null> {
+  let final = assemble(parts);
+  if (final.rejected) {
+    run.progress.set("review", "skipped");
+    run.stats.stoppedAt = "assembly";
+    return null;
+  }
+  const revised = await checkConsistency(
+    deps,
+    run,
+    `${briefing}\n\n${consistencyTask(parts)}`,
+    parts,
+    established,
+  );
+  if (revised) {
+    const candidate = assemble(revised);
+    // A fix that adds any problem the one-pass checks did not already
+    // report (a dropped seed deadline, a banned name) is not a fix.
+    if (
+      !candidate.rejected &&
+      candidate.problems.every((p) => final.problems.includes(p))
+    ) {
+      final = candidate;
+    } else {
+      if (run.stats.consistency) run.stats.consistency.result = "kept-original";
+      run.progress.set("review", "done", "kept as written");
+    }
+  }
+  run.stats.remainingIssues = final.problems;
   return final.output;
+}
+
+/**
+ * The final consistency check: one call over the whole adventure. Resolves
+ * the revised parts, or `null` when nothing changes. Never fails the run; an
+ * unusable reply keeps the adventure as written. Cancellation propagates.
+ */
+async function checkConsistency(
+  deps: AdventureStagedDeps,
+  run: RunState,
+  message: string,
+  parts: AdventureParts,
+  established: string[],
+): Promise<AdventureParts | null> {
+  run.progress.set("review", "active");
+  const reply = await askModel(
+    () => {
+      run.stats.aiCalls++;
+      return deps.complete(run.system, message);
+    },
+    (raw) => {
+      const parsed = readJsonObject(raw);
+      return parsed && isConsistencyReviewReply(parsed) ? parsed : null;
+    },
+    // Retry once, like the writing stages, so one transient failure does
+    // not skip the check.
+    { signal: deps.signal, attempts: 2 },
+  );
+  if (!reply) {
+    run.stats.consistency = {
+      result: "unavailable",
+      flaggedChecks: 0,
+      appliedRevisions: 0,
+      droppedRevisions: 0,
+    };
+    run.progress.set("review", "skipped", "kept as written");
+    return null;
+  }
+  const review = readConsistencyReview(
+    reply,
+    parts,
+    adventureVocabulary(parts, established),
+  );
+  const applied = review.revisions.length;
+  run.stats.consistency = {
+    result: applied > 0 ? "revised" : "unchanged",
+    flaggedChecks: review.flagged.length,
+    appliedRevisions: applied,
+    droppedRevisions: review.dropped.length,
+  };
+  run.progress.set(
+    "review",
+    "done",
+    applied > 0 ? `${applied} fix${applied === 1 ? "" : "es"}` : undefined,
+  );
+  return applied > 0
+    ? applyConsistencyRevisions(parts, review.revisions)
+    : null;
 }
