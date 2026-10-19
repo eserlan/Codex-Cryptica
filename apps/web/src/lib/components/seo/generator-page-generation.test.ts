@@ -155,7 +155,7 @@ function makeBaseCtx(overrides: any) {
     encounter: { genre: "Fantasy" },
     puzzle: { genre: "Fantasy" },
     councilVote: { genre: "Fantasy" },
-    heist: { genre: "Fantasy" },
+    heist: (overrides.heist as object) ?? { genre: "Fantasy" },
     secretSociety: { theme: "Fantasy" },
     tavern: { type: "Tavern" },
     kingdom: { polityType: "Kingdom" },
@@ -226,14 +226,15 @@ describe("generator-page-generation", () => {
       expect(isStreamableSlug("settlement" as ValidSlug)).toBe(true);
     });
 
-    it("exposes exactly seven non-streamable slugs", () => {
-      expect(NON_STREAMABLE_SLUGS).toHaveLength(7);
+    it("exposes exactly eight non-streamable slugs", () => {
+      expect(NON_STREAMABLE_SLUGS).toHaveLength(8);
       expect([...NON_STREAMABLE_SLUGS].sort()).toEqual(
         [
           "adventure-generator",
           "adventure-idea-generator",
           "council-vote",
           "dungeon-generator",
+          "heist",
           "language-generator",
           "one-shot-adventure-generator",
           "point-crawl",
@@ -248,6 +249,7 @@ describe("generator-page-generation", () => {
       "adventure-idea-generator",
       "council-vote",
       "dungeon-generator",
+      "heist",
       "one-shot-adventure-generator",
       "point-crawl",
     ] as ValidSlug[])("shows the step list for %s", (slug) => {
@@ -365,6 +367,30 @@ describe("generator-page-generation", () => {
           useAI: true,
           durationHours: 4,
           partySize: 5,
+          onProgress: onOneShotProgress,
+        }),
+      );
+    });
+
+    it("passes heist progress through and resets it at the start", async () => {
+      const engine = makeFakeEngine();
+      engine.generateHeist = vi.fn().mockResolvedValue({ title: "x" });
+      const onOneShotProgress = vi.fn();
+      const handlers = createGeneratorHandlers(
+        makeCtx({
+          engine,
+          onOneShotProgress,
+          heist: { heistType: "Theft" },
+        }),
+      );
+
+      await handlers["heist"](true);
+
+      expect(onOneShotProgress).toHaveBeenCalledWith(null);
+      expect(engine.generateHeist).toHaveBeenCalledWith(
+        expect.objectContaining({
+          useAI: true,
+          heistType: "Theft",
           onProgress: onOneShotProgress,
         }),
       );
