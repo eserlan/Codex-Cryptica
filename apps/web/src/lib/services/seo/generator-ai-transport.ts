@@ -216,10 +216,23 @@ export class GeneratorAITransport {
   async sendChatMessage(
     chat: Awaited<ReturnType<GeneratorAITransport["startChat"]>>,
     userMessage: string,
+    signal?: AbortSignal,
   ): Promise<string> {
+    if (signal?.aborted) {
+      throw (
+        signal.reason ??
+        new DOMException("The operation was aborted", "AbortError")
+      );
+    }
     const result = await chat.sendMessageStream(userMessage);
     let text = "";
     for await (const chunk of result.stream) {
+      if (signal?.aborted) {
+        throw (
+          signal.reason ??
+          new DOMException("The operation was aborted", "AbortError")
+        );
+      }
       text += chunk.text();
     }
     return text.trim();

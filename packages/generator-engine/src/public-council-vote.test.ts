@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   buildCouncilVoteFoundationPrompt,
   buildCouncilVoteFoundationRepairPrompt,
@@ -9,7 +9,11 @@ import {
   mergeCouncilVoteOutput,
   parseCouncilVoteFoundation,
   parseCouncilVotePathsResponse,
+  readCouncilVoteFoundation,
+  readCouncilVotePaths,
+  runCouncilVoteStaged,
 } from "./public-council-vote";
+import type { StagedProgressStep } from "./staged-progress";
 import { NAME_BAN_PROMPT } from "./public-npc";
 
 function seededRng(seed = 1): () => number {
@@ -617,5 +621,154 @@ describe("Superhero theme regression (#3108)", () => {
     );
     expect(out.type).toBe("event");
     expect(out.content).toBeTruthy();
+  });
+});
+
+describe("readCouncilVoteFoundation & readCouncilVotePaths", () => {
+  const { resolved } = buildCouncilVoteFoundationPrompt({}, "", seededRng(3));
+
+  it("rejects empty or non-JSON replies instead of returning blank strings", () => {
+    expect(readCouncilVoteFoundation("not json", resolved)).toBeNull();
+    expect(readCouncilVoteFoundation("{}", resolved)).toBeNull();
+    expect(
+      readCouncilVoteFoundation(
+        JSON.stringify({ content: "has content", lore: "   " }),
+        resolved,
+      ),
+    ).toBeNull();
+    expect(readCouncilVotePaths("not json")).toBeNull();
+    expect(readCouncilVotePaths("{}")).toBeNull();
+    expect(
+      readCouncilVotePaths(
+        JSON.stringify({ possiblePaths: "### Paths", followUpHooks: "" }),
+      ),
+    ).toBeNull();
+  });
+});
+
+describe("runCouncilVoteStaged", () => {
+  const prompt = buildCouncilVoteFoundationPrompt(
+    { councilSize: "5" },
+    "",
+    seededRng(3),
+  );
+  const foundationJson = (suffix = "") =>
+    JSON.stringify({
+      title: "The Salt Road Levy",
+      content: `### The Proposal\nContent${suffix}`,
+      lore: `### Voting Procedure\nSimple majority${suffix}.`,
+      labels: ["council-vote", "political-intrigue"],
+    });
+  const pathsJson = (suffix = "") =>
+    JSON.stringify({
+      possiblePaths: `### Possible Paths\nSmallest coalition${suffix}`,
+      followUpHooks: `### Follow-Up Hooks\nHooks${suffix}`,
+    });
+
+  it("runs 4 turns, reports staged progress, and merges repaired outputs", async () => {
+    const snapshots: StagedProgressStep[][] = [];
+    const send = vi
+      .fn()
+      .mockResolvedValueOnce(foundationJson(" (unrepaired)"))
+      .mockResolvedValueOnce(foundationJson(" (repaired)"))
+      .mockResolvedValueOnce(pathsJson(" (unrepaired)"))
+      .mockResolvedValueOnce(pathsJson(" (repaired)"));
+
+    const out = await runCouncilVoteStaged(prompt, {
+      send,
+      onProgress: (steps) => snapshots.push(steps),
+    });
+
+    expect(send).toHaveBeenCalledTimes(4);
+    expect(out?.content).toBe("### The Proposal\nContent (repaired)");
+    expect(out?.lore).toBe(
+      "### Voting Procedure\nSimple majority (repaired).\n\n### Possible Paths\nSmallest coalition (repaired)\n\n### Follow-Up Hooks\nHooks (repaired)",
+    );
+    expect(snapshots[0]).toEqual([
+      {
+        id: "foundation",
+        label: "Council roster, procedure and initial tally",
+        status: "pending",
+      },
+      {
+        id: "paths",
+        label: "Persuasion paths and follow-up hooks",
+        status: "pending",
+      },
+    ]);
+    expect(snapshots.at(-1)).toEqual([
+      {
+        id: "foundation",
+        label: "Council roster, procedure and initial tally",
+        status: "done",
+      },
+      {
+        id: "paths",
+        label: "Persuasion paths and follow-up hooks",
+        status: "done",
+      },
+    ]);
+  });
+
+  it("keeps unrepaired drafts when repair turns fail or return empty JSON", async () => {
+    const send = vi
+      .fn()
+      .mockResolvedValueOnce(foundationJson())
+      .mockRejectedValueOnce(new Error("repair failed"))
+      .mockResolvedValueOnce(pathsJson())
+      .mockResolvedValueOnce("{}");
+
+    const out = await runCouncilVoteStaged(prompt, { send });
+
+    expect(send).toHaveBeenCalledTimes(4);
+    expect(out?.content).toBe("### The Proposal\nContent");
+    expect(out?.lore).toBe(
+      "### Voting Procedure\nSimple majority.\n\n### Possible Paths\nSmallest coalition\n\n### Follow-Up Hooks\nHooks",
+    );
+  });
+
+  it("abandons progress and returns null when initial foundation or paths is unusable", async () => {
+    const foundationSnapshots: StagedProgressStep[][] = [];
+    const sendBadFoundation = vi.fn().mockResolvedValueOnce("{}");
+    const out1 = await runCouncilVoteStaged(prompt, {
+      send: sendBadFoundation,
+      onProgress: (s) => foundationSnapshots.push(s),
+    });
+    expect(out1).toBeNull();
+    expect(sendBadFoundation).toHaveBeenCalledTimes(1);
+    expect(foundationSnapshots.at(-1)).toEqual([
+      expect.objectContaining({ id: "foundation", status: "fallback" }),
+      expect.objectContaining({ id: "paths", status: "skipped" }),
+    ]);
+
+    const pathsSnapshots: StagedProgressStep[][] = [];
+    const sendBadPaths = vi
+      .fn()
+      .mockResolvedValueOnce(foundationJson())
+      .mockResolvedValueOnce(foundationJson())
+      .mockResolvedValueOnce("{}");
+    const out2 = await runCouncilVoteStaged(prompt, {
+      send: sendBadPaths,
+      onProgress: (s) => pathsSnapshots.push(s),
+    });
+    expect(out2).toBeNull();
+    expect(sendBadPaths).toHaveBeenCalledTimes(3);
+    expect(pathsSnapshots.at(-1)).toEqual([
+      expect.objectContaining({ id: "foundation", status: "done" }),
+      expect.objectContaining({ id: "paths", status: "fallback" }),
+    ]);
+  });
+
+  it("propagates cancellation via AbortSignal without running later turns", async () => {
+    const controller = new AbortController();
+    const send = vi.fn(async () => {
+      controller.abort();
+      return foundationJson();
+    });
+
+    await expect(
+      runCouncilVoteStaged(prompt, { send, signal: controller.signal }),
+    ).rejects.toThrow();
+    expect(send).toHaveBeenCalledTimes(1);
   });
 });

@@ -246,6 +246,7 @@ describe("generator-page-generation", () => {
     it.each([
       "adventure-generator",
       "adventure-idea-generator",
+      "council-vote",
       "dungeon-generator",
       "one-shot-adventure-generator",
       "point-crawl",
@@ -253,7 +254,7 @@ describe("generator-page-generation", () => {
       expect(showsStagedProgress(slug)).toBe(true);
     });
 
-    it.each(["npc", "council-vote", "language-generator"] as ValidSlug[])(
+    it.each(["npc", "language-generator"] as ValidSlug[])(
       "hides it for %s, which is not staged",
       (slug) => {
         expect(showsStagedProgress(slug)).toBe(false);
@@ -484,6 +485,26 @@ describe("generator-page-generation", () => {
 
       expect(onOneShotProgress).toHaveBeenCalledWith(null);
       const [first, second] = generateDungeon.mock.calls.map((c) => c[0]);
+      expect(second.onProgress).toBe(onOneShotProgress);
+      expect(first.signal.aborted).toBe(true);
+      expect(second.signal.aborted).toBe(false);
+    });
+
+    it("passes council-vote progress and a fresh signal, cancelling the last run", async () => {
+      const engine = makeFakeEngine();
+      const onOneShotProgress = vi.fn();
+      const oneShotRuns = createOneShotRunControl();
+      const handlers = createGeneratorHandlers(
+        makeCtx({ engine, onOneShotProgress, oneShotRuns }),
+      );
+      const generateCouncilVote =
+        engine.generateCouncilVote as unknown as ReturnType<typeof vi.fn>;
+
+      await handlers["council-vote"](true);
+      await handlers["council-vote"](true);
+
+      expect(onOneShotProgress).toHaveBeenCalledWith(null);
+      const [first, second] = generateCouncilVote.mock.calls.map((c) => c[0]);
       expect(second.onProgress).toBe(onOneShotProgress);
       expect(first.signal.aborted).toBe(true);
       expect(second.signal.aborted).toBe(false);

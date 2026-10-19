@@ -125,4 +125,46 @@ describe("generateCouncilVoteWithAI", () => {
     expect(send).toHaveBeenCalledTimes(1);
     expect(draft).toBeNull();
   });
+
+  it("parses fenced JSON replies and returns null when the initial paths turn is unusable", async () => {
+    const send = vi
+      .fn()
+      .mockResolvedValueOnce(
+        '```json\n{"title":"The Salt Road Levy","summary":"Emergency funding.","lore":"### Voting Procedure\\nSimple majority."}\n```',
+      )
+      .mockResolvedValueOnce("{}")
+      .mockResolvedValueOnce("{}");
+    const startChat = vi.fn(async () => ({ send }));
+    const aiGateway = { complete: vi.fn(), startChat };
+
+    const draft = await generateCouncilVoteWithAI(
+      aiGateway,
+      generator,
+      request,
+    );
+
+    expect(send).toHaveBeenCalledTimes(3);
+    expect(draft).toBeNull();
+  });
+
+  it("propagates cancellation when the signal is aborted mid-run", async () => {
+    const controller = new AbortController();
+    const send = vi.fn(async () => {
+      controller.abort();
+      return JSON.stringify({
+        title: "The Salt Road Levy",
+        summary: "Emergency funding.",
+        lore: "### Voting Procedure\nSimple majority.",
+      });
+    });
+    const startChat = vi.fn(async () => ({ send }));
+    const aiGateway = { complete: vi.fn(), startChat };
+
+    await expect(
+      generateCouncilVoteWithAI(aiGateway, generator, request, {
+        signal: controller.signal,
+      }),
+    ).rejects.toThrow();
+    expect(send).toHaveBeenCalledTimes(1);
+  });
 });

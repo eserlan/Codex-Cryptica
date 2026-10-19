@@ -18,7 +18,9 @@ export type StagedStepId =
   // Adventure Idea stages (adventure-staged.ts).
   | "situation"
   | "cast"
-  | "consequences";
+  | "consequences"
+  // Council Vote stages (public-council-vote.ts); reuses "foundation".
+  | "paths";
 
 export interface StagedProgressStep {
   id: StagedStepId;

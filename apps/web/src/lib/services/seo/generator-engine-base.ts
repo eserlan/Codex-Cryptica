@@ -81,7 +81,8 @@ export class GeneratorEngineBase {
   protected sendChatMessage(
     chat: Awaited<ReturnType<GeneratorAITransport["startChat"]>>,
     userMessage: string,
+    signal?: AbortSignal,
   ): Promise<string> {
-    return this.transport.sendChatMessage(chat, userMessage);
+    return this.transport.sendChatMessage(chat, userMessage, signal);
   }
 }

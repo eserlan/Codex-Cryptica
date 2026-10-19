@@ -8,6 +8,9 @@ import {
 } from "./campaign-generator-registry";
 import { getThemeDefaults } from "./campaign-generator-theme";
 import { parseConnections } from "./campaign-connections";
+import { runCouncilVoteFourTurn } from "./public-council-vote";
+import type { StagedProgressStep } from "./staged-progress";
+import { isAbort, readJsonObject, throwIfAborted } from "./staged-runtime";
 import type {
   AIGeneratorChatSession,
   AIGeneratorGateway,
@@ -27,20 +30,39 @@ type CouncilVoteFoundation = Partial<GeneratorOutput> & {
 type CouncilVotePaths = { possiblePaths?: unknown; followUpHooks?: unknown };
 
 function isUsableCouncilVoteFoundation(
-  value: Partial<GeneratorOutput>,
+  value: Partial<GeneratorOutput> | null,
 ): value is CouncilVoteFoundation {
   return (
+    !!value &&
     typeof value.title === "string" &&
+    Boolean(value.title.trim()) &&
     typeof value.summary === "string" &&
-    typeof value.lore === "string"
+    Boolean(value.summary.trim()) &&
+    typeof value.lore === "string" &&
+    Boolean(value.lore.trim())
   );
 }
 
-function isUsableCouncilVotePaths(value: CouncilVotePaths): boolean {
+function isUsableCouncilVotePaths(value: CouncilVotePaths | null): boolean {
   return (
+    !!value &&
     typeof value.possiblePaths === "string" &&
-    typeof value.followUpHooks === "string"
+    Boolean(value.possiblePaths.trim()) &&
+    typeof value.followUpHooks === "string" &&
+    Boolean(value.followUpHooks.trim())
   );
+}
+
+function readInAppCouncilVoteFoundation(
+  reply: string,
+): CouncilVoteFoundation | null {
+  const parsed = readJsonObject(reply) as Partial<GeneratorOutput> | null;
+  return isUsableCouncilVoteFoundation(parsed) ? parsed : null;
+}
+
+function readInAppCouncilVotePaths(reply: string): CouncilVotePaths | null {
+  const parsed = readJsonObject(reply) as CouncilVotePaths | null;
+  return isUsableCouncilVotePaths(parsed) ? parsed : null;
 }
 
 /** Merge the foundation and paths passes into the final council-vote output. */
@@ -81,51 +103,92 @@ export async function generateCouncilVoteWithAI(
   aiGateway: AIGeneratorGateway | undefined,
   generator: CampaignGeneratorDefinition,
   request: GeneratorRunRequest,
+  options?: {
+    onProgress?: (steps: StagedProgressStep[]) => void;
+    signal?: AbortSignal;
+  },
 ): Promise<GeneratedDraft | null> {
   if (!aiGateway?.startChat) return null;
+  const { onProgress, signal } = options ?? {};
 
   try {
+    throwIfAborted(signal);
     const chat = await aiGateway.startChat(SYSTEM_INSTRUCTION);
-
-    const foundationRaw = await chat.send(councilVoteFoundationPrompt(request));
-    const foundationParsed = JSON.parse(
-      foundationRaw,
-    ) as Partial<GeneratorOutput>;
-    if (!isUsableCouncilVoteFoundation(foundationParsed)) return null;
-    let foundation = foundationParsed;
-
-    // Proofread/repair before the paths pass ever sees the foundation —
-    // fixing it after would let paths inherit whatever the repair fixed.
-    // A malformed repair reply keeps the original, unrepaired foundation
-    // rather than failing the whole generation over a cleanup step.
-    try {
-      const repairedRaw = await chat.send(councilVoteFoundationRepairPrompt());
-      const repaired = JSON.parse(repairedRaw) as Partial<GeneratorOutput>;
-      if (isUsableCouncilVoteFoundation(repaired)) foundation = repaired;
-    } catch {
-      // Keep the unrepaired foundation.
-    }
-
-    const pathsRaw = await chat.send(councilVotePathsPrompt());
-    let paths = JSON.parse(pathsRaw) as CouncilVotePaths;
-
-    // Same rationale as the foundation repair above, one pass later: fix
-    // the paths before they're used, and keep the unrepaired paths if the
-    // repair reply itself is unusable.
-    try {
-      const pathsRepairedRaw = await chat.send(councilVotePathsRepairPrompt());
-      const pathsRepaired = JSON.parse(pathsRepairedRaw) as CouncilVotePaths;
-      if (isUsableCouncilVotePaths(pathsRepaired)) paths = pathsRepaired;
-    } catch {
-      // Keep the unrepaired paths.
-    }
+    const stages = await runCouncilVoteFourTurn({
+      send: (message) => chat.send(message),
+      foundationPrompt: councilVoteFoundationPrompt(request),
+      foundationRepairPrompt: councilVoteFoundationRepairPrompt(),
+      pathsPrompt: councilVotePathsPrompt(),
+      pathsRepairPrompt: councilVotePathsRepairPrompt(),
+      readFoundation: readInAppCouncilVoteFoundation,
+      readPaths: readInAppCouncilVotePaths,
+      onProgress,
+      signal,
+    });
+    if (!stages) return null;
 
     return generator.mapOutputToDraft(
-      buildCouncilVoteOutput(foundation, paths),
+      buildCouncilVoteOutput(stages.foundation, stages.paths),
       request,
     );
-  } catch {
+  } catch (err) {
+    if (isAbort(err, signal)) throw err;
     return null;
+  }
+}
+
+async function* sendCouncilVoteStreamTurn(
+  chat: AIGeneratorChatSession,
+  label: string,
+  message: string,
+  signal?: AbortSignal,
+): AsyncGenerator<GenerationEvent, string> {
+  yield { type: "phase", label };
+  if (!chat.sendStream) {
+    yield { type: "started" };
+    const text = await chat.send(message);
+    yield { type: "complete", text };
+    return text;
+  }
+  let text = "";
+  for await (const event of chat.sendStream(message, signal)) {
+    if (event.type === "complete") text = event.text;
+    yield event;
+  }
+  return text;
+}
+
+async function* runCouncilVoteStreamStage<T>(
+  chat: AIGeneratorChatSession,
+  initialLabel: string,
+  initialPrompt: string,
+  repairLabel: string,
+  repairPrompt: string,
+  read: (reply: string) => T | null,
+  signal?: AbortSignal,
+): AsyncGenerator<GenerationEvent, T | null> {
+  const initialRaw = yield* sendCouncilVoteStreamTurn(
+    chat,
+    initialLabel,
+    initialPrompt,
+    signal,
+  );
+  if (signal?.aborted) return null;
+  const initial = read(initialRaw);
+  if (!initial) return null;
+
+  try {
+    const repairedRaw = yield* sendCouncilVoteStreamTurn(
+      chat,
+      repairLabel,
+      repairPrompt,
+      signal,
+    );
+    if (signal?.aborted) return null;
+    return read(repairedRaw) ?? initial;
+  } catch (err) {
+    if (isAbort(err, signal)) throw err;
+    return initial;
   }
 }
 
@@ -159,74 +222,37 @@ export async function* generateCouncilVoteWithAIStream(
     return;
   }
 
-  async function* sendTurn(
-    chat: AIGeneratorChatSession,
-    label: string,
-    message: string,
-  ): AsyncGenerator<GenerationEvent, string> {
-    yield { type: "phase", label };
-    if (!chat.sendStream) {
-      yield { type: "started" };
-      const text = await chat.send(message);
-      yield { type: "complete", text };
-      return text;
-    }
-    let text = "";
-    for await (const event of chat.sendStream(message, signal)) {
-      if (event.type === "complete") text = event.text;
-      yield event;
-    }
-    return text;
-  }
-
   try {
+    throwIfAborted(signal);
     const chat = await deps.aiGateway!.startChat!(SYSTEM_INSTRUCTION);
-    const foundationRaw = yield* sendTurn(
+    const foundation = yield* runCouncilVoteStreamStage(
       chat,
       "Drafting the council's founding stance…",
       councilVoteFoundationPrompt(mergedRequest),
+      "Checking the council's stance for consistency…",
+      councilVoteFoundationRepairPrompt(),
+      readInAppCouncilVoteFoundation,
+      signal,
     );
     if (signal?.aborted) return;
-    const parsedFoundation = JSON.parse(
-      foundationRaw,
-    ) as Partial<GeneratorOutput>;
-    if (!isUsableCouncilVoteFoundation(parsedFoundation)) {
+    if (!foundation) {
       yield { type: "draft", draft: await deps.generateDraft(request) };
       return;
     }
-    let foundation = parsedFoundation;
 
-    try {
-      const repairedRaw = yield* sendTurn(
-        chat,
-        "Checking the council's stance for consistency…",
-        councilVoteFoundationRepairPrompt(),
-      );
-      if (signal?.aborted) return;
-      const repaired = JSON.parse(repairedRaw) as Partial<GeneratorOutput>;
-      if (isUsableCouncilVoteFoundation(repaired)) foundation = repaired;
-    } catch {
-      // A repair failure retains the usable foundation from the prior turn.
-    }
-
-    const pathsRaw = yield* sendTurn(
+    const paths = yield* runCouncilVoteStreamStage(
       chat,
       "Charting possible paths…",
       councilVotePathsPrompt(),
+      "Refining the possible paths…",
+      councilVotePathsRepairPrompt(),
+      readInAppCouncilVotePaths,
+      signal,
     );
     if (signal?.aborted) return;
-    let paths = JSON.parse(pathsRaw) as CouncilVotePaths;
-    try {
-      const repairedRaw = yield* sendTurn(
-        chat,
-        "Refining the possible paths…",
-        councilVotePathsRepairPrompt(),
-      );
-      if (signal?.aborted) return;
-      const repaired = JSON.parse(repairedRaw) as CouncilVotePaths;
-      if (isUsableCouncilVotePaths(repaired)) paths = repaired;
-    } catch {
-      // A repair failure retains the usable paths from the prior turn.
+    if (!paths) {
+      yield { type: "draft", draft: await deps.generateDraft(request) };
+      return;
     }
 
     yield {
@@ -236,8 +262,8 @@ export async function* generateCouncilVoteWithAIStream(
         mergedRequest,
       ),
     };
-  } catch {
-    if (!signal?.aborted) {
+  } catch (err) {
+    if (!isAbort(err, signal)) {
       yield { type: "draft", draft: await deps.generateDraft(request) };
     }
   }

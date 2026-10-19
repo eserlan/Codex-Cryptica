@@ -30,6 +30,7 @@ const STAGED_SLUGS: readonly ValidSlug[] = [
   "dungeon-generator",
   "adventure-generator",
   "adventure-idea-generator",
+  "council-vote",
 ] as const;
 
 export function showsStagedProgress(slug: ValidSlug): boolean {
@@ -202,11 +203,15 @@ export function createGeneratorHandlers(
       } as never),
     puzzle: (useAI) =>
       engine.generatePuzzle({ ...(ctx.puzzle as object), useAI } as never),
-    "council-vote": (useAI) =>
-      engine.generateCouncilVote({
+    "council-vote": (useAI) => {
+      ctx.onOneShotProgress?.(null);
+      return engine.generateCouncilVote({
         ...(ctx.councilVote as object),
         useAI,
-      } as never),
+        onProgress: ctx.onOneShotProgress,
+        signal: ctx.oneShotRuns?.start(),
+      } as never);
+    },
     heist: (useAI) =>
       engine.generateHeist({ ...(ctx.heist as object), useAI } as never),
     holiday: (useAI) =>
