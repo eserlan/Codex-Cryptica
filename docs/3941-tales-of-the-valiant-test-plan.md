@@ -124,15 +124,16 @@ if useful. Unrun, unavailable and deferred work is never a pass.
 
 ### 4. Spend and gain Luck deliberately
 
-1. Set Luck to 3. Use **Spend 1 Luck Points** once, then **Gain 1 Luck Points** twice.
+1. Set Luck to 3. Use **Spend 1 Luck** once, then **Gain 1 Luck** twice.
    **Expect:** values 2, 3, 4, persisted on the character.
 2. Spend down to 0. **Expect:** another spend is unavailable; no negative value.
 3. Gain up to 5. **Expect:** the UI counter does not exceed its configured maximum.
    The current widget disables Gain at the cap; it does not automate the published
    overflow reset. Check the rules explanation separately in case 14.
 4. Restore Luck to 3, reload and reopen QA Aric. **Expect:** 3, not a new random pool.
-5. Open **How Luck works**. **Expect:** it identifies the source and says changes are
-   manual. Reopening, rolling or a rest must not silently reset the counter.
+5. Open **How Luck works**. **Expect:** it identifies the source, says changes are
+   manual, and explains earning, spending and the d4 reset when gaining at 5.
+   Reopening, rolling or a rest must not silently reset the counter.
 
 ### 5. Use the same character from the VTT
 
@@ -285,8 +286,9 @@ if useful. Unrun, unavailable and deferred work is never a pass.
    checks are not the automatic gain condition. Do not substitute D&D Inspiration.
 3. **Expect:** rules text distinguishes manual tracking from automation and does not
    invent a mandatory Long Rest reset. Record a rules-content failure even if the
-   plus/minus counter works. In particular, inspect `TOV_LUCK_REFERENCE` and
-   `tov-luck.fixture.ts`: their broader failed-d20/rest wording needs source comparison.
+   plus/minus counter works. In particular, confirm `TOV_LUCK_REFERENCE` and
+   `tov-luck.fixture.ts` still match the source: they were corrected on 2026-10-19 to
+   drop the ability-check gain, the `1d4 + 1` starting pool and the Long Rest reset.
 4. Check Doom references, lineage/heritage separation, talents and spell circles
    against their actual sections. **Expect:** source-backed claims and clearly identified
    homebrew; no claim that CC's per-monster counter is the published encounter pool.

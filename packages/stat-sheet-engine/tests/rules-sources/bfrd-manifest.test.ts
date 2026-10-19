@@ -88,7 +88,7 @@ describe("BFRD Rules Source Manifest & Licensing (#3942)", () => {
       "Proprietary setting lore (Midgard, Southlands, Margreve, Scarlet Citadel)",
     );
     expect(CONTENT_BOUNDARIES.licensedUnderBFRD).toContain(
-      "Luck pool, earn mechanics, spend rules, and long rest reset",
+      "Luck pool, earn mechanics, spend rules, and the d4 overflow reset",
     );
   });
 });

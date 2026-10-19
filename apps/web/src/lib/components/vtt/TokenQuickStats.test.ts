@@ -255,7 +255,7 @@ describe("TokenQuickStats", () => {
     expect(screen.getByTestId("token-tov-luck-value").textContent).toMatch(
       /2\s*\/\s*5/,
     );
-    await fireEvent.click(screen.getByLabelText("Gain 1 Luck Points"));
+    await fireEvent.click(screen.getByLabelText("Gain 1 Luck"));
     expect(updateEntity).toHaveBeenCalledWith("goblin-1", {
       statSheet: {
         templateId: "builtin-tov-character",
@@ -296,7 +296,7 @@ describe("TokenQuickStats", () => {
     expect(screen.getByTestId("token-tov-doom-value").textContent).toMatch(
       /3\s*\/\s*10/,
     );
-    await fireEvent.click(screen.getByLabelText("Spend 1 Doom Points"));
+    await fireEvent.click(screen.getByLabelText("Spend 1 Doom"));
     expect(updateEntity).toHaveBeenCalledWith("goblin-1", {
       statSheet: {
         templateId: "builtin-tov-monster",

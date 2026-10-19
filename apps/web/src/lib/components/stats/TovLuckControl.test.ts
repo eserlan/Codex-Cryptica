@@ -18,9 +18,9 @@ describe("TovLuckControl", () => {
   it("gains and spends one point per press", async () => {
     const onChange = vi.fn();
     render(TovLuckControl, { field: luck(2), onChange });
-    await fireEvent.click(screen.getByLabelText("Gain 1 Luck Points"));
+    await fireEvent.click(screen.getByLabelText("Gain 1 Luck"));
     expect(onChange).toHaveBeenLastCalledWith(3);
-    await fireEvent.click(screen.getByLabelText("Spend 1 Luck Points"));
+    await fireEvent.click(screen.getByLabelText("Spend 1 Luck"));
     expect(onChange).toHaveBeenLastCalledWith(1);
   });
 
@@ -29,13 +29,13 @@ describe("TovLuckControl", () => {
       field: luck(0),
       onChange: vi.fn(),
     });
-    expect(screen.getByLabelText("Spend 1 Luck Points")).toHaveProperty(
+    expect(screen.getByLabelText("Spend 1 Luck")).toHaveProperty(
       "disabled",
       true,
     );
     unmount();
     render(TovLuckControl, { field: luck(5), onChange: vi.fn() });
-    expect(screen.getByLabelText("Gain 1 Luck Points")).toHaveProperty(
+    expect(screen.getByLabelText("Gain 1 Luck")).toHaveProperty(
       "disabled",
       true,
     );
@@ -47,11 +47,11 @@ describe("TovLuckControl", () => {
       readOnly: true,
       onChange: vi.fn(),
     });
-    expect(screen.getByLabelText("Gain 1 Luck Points")).toHaveProperty(
+    expect(screen.getByLabelText("Gain 1 Luck")).toHaveProperty(
       "disabled",
       true,
     );
-    expect(screen.getByLabelText("Spend 1 Luck Points")).toHaveProperty(
+    expect(screen.getByLabelText("Spend 1 Luck")).toHaveProperty(
       "disabled",
       true,
     );
@@ -63,8 +63,11 @@ describe("TovLuckControl", () => {
       /3\s*\/\s*5/,
     );
     expect(
-      screen.getByText(/provided they did not spend Luck on that roll/),
+      screen.getByText(/miss with an attack roll or fail a save/),
     ).toBeTruthy();
+    expect(screen.getByText(/spend 3 Luck .* to reroll its d20/)).toBeTruthy();
+    expect(screen.getByText(/roll a d4 and reset your Luck/)).toBeTruthy();
+    expect(screen.queryByText(/ability check/i)).toBeNull();
     expect(screen.getByText(/Source: BFRD/)).toBeTruthy();
   });
 });
@@ -81,7 +84,7 @@ describe("TovLuckControl without a stored cap", () => {
     expect(screen.getByTestId("tov-luck-value").textContent).toMatch(
       /5\s*\/\s*5/,
     );
-    expect(screen.getByLabelText("Gain 1 Luck Points")).toHaveProperty(
+    expect(screen.getByLabelText("Gain 1 Luck")).toHaveProperty(
       "disabled",
       true,
     );
