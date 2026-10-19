@@ -29,9 +29,7 @@ import {
   dungeonConfig,
   type DungeonGeneratorOptions,
 } from "./public-dungeon";
-import { forGenre } from "./public-dungeon-constants";
-import { themeIdToLabel, factionConfig } from "./public-faction-constants";
-import { npcThemeConfig } from "./public-npc-constants";
+import { themeIdToLabel } from "./public-faction-constants";
 import {
   isTitleBanned,
   bannedNamesInstruction,
@@ -41,12 +39,10 @@ import {
   cultureNamingInstruction,
   type OverusedNamePatterns,
 } from "./naming-policy";
-import { settlementConfig } from "./public-settlement-constants";
 import {
   buildAdventurePrompt,
   generateAdventureLocal,
   adventureConfig,
-  forAdventureGenre,
   type AdventureGeneratorOptions,
 } from "./public-adventure";
 import {
@@ -127,7 +123,6 @@ import {
   type AlienRaceGeneratorOptions,
 } from "./public-alien-race";
 import { templateGuidanceBlock, templateGuidanceInstruction } from "schema";
-import { councilVoteConfig } from "./public-council-vote-constants";
 import {
   buildFactionRosterPrompt,
   generateFactionRosterLocal,
@@ -812,131 +807,43 @@ ${loreGuidance(request, "a numbered list of distinct thematic entries with detai
  * (`npcThemeConfig`) so the two tools agree — a Western game shouldn't
  * offer "Elf" here any more than it does there.
  */
-export function npcRacesForTheme(themeId: string): string[] {
-  const genre = themeIdToLabel[themeId] ?? "Classic Fantasy";
-  return forGenre(npcThemeConfig.ancestries, genre);
-}
-export function npcRolesForTheme(themeId: string): string[] {
-  const genre = themeIdToLabel[themeId] ?? "Classic Fantasy";
-  return forGenre(npcThemeConfig.roles, genre);
-}
-/**
- * Adventure Type and Tone choices for the vault's theme, from the same
- * genre-keyed tables the Adventure Idea Generator rolls against, so a fantasy
- * vault isn't offered "Heist in a Corporate Tower" or a sci-fi tone.
- */
-export function adventureArchetypesForTheme(themeId: string): string[] {
-  const genre = themeIdToLabel[themeId] ?? "Classic Fantasy";
-  return forAdventureGenre(adventureConfig.archetypesByGenre, genre);
-}
-export function adventureTonesForTheme(themeId: string): string[] {
-  const genre = themeIdToLabel[themeId] ?? "Classic Fantasy";
-  return forAdventureGenre(adventureConfig.tonesByGenre, genre);
-}
-const NPC_RACES = npcRacesForTheme("workspace");
-const NPC_ROLES = npcRolesForTheme("workspace");
-const NPC_TRAITS = [
-  "speaks in measured, deliberate sentences",
-  "never removes their worn leather gloves",
-  "collects small carved trinkets from every town visited",
-  "laughs a beat too late at every joke",
-];
+import {
+  npcRacesForTheme,
+  npcRolesForTheme,
+  adventureArchetypesForTheme,
+  adventureTonesForTheme,
+  NPC_RACES,
+  NPC_ROLES,
+  NPC_TRAITS,
+  factionTypesForTheme,
+  FACTION_TYPES,
+  FACTION_GOALS,
+  settlementTypesForTheme,
+  SETTLEMENT_TYPES,
+  SETTLEMENT_FEATURES,
+  ITEM_RARITIES,
+  ITEM_KINDS,
+  ITEM_EFFECTS,
+  EVENT_TYPES,
+  EVENT_OUTCOMES,
+  COUNCIL_VOTE_BODY_TYPES,
+  COUNCIL_VOTE_SIZES,
+  COUNCIL_VOTE_RULES,
+  COUNCIL_VOTE_SCOPES,
+  COUNCIL_VOTE_TONES,
+  COUNCIL_VOTE_ANTAGONIST_INFLUENCE,
+  COUNCIL_VOTE_ARCHETYPES,
+  COUNCIL_VOTE_STANCES,
+} from "./campaign-generator-local-constants";
 
-/**
- * Faction type choices, reusing `factionConfig.typesByTheme` — the same
- * genre-keyed table the public Faction Generator already uses — so a
- * Western vault offers "Outlaw Gang" instead of "Guild".
- */
-export function factionTypesForTheme(themeId: string): string[] {
-  const genre = themeIdToLabel[themeId] ?? "Classic Fantasy";
-  return forGenre(factionConfig.typesByTheme, genre);
-}
-const FACTION_TYPES = factionTypesForTheme("workspace");
-
-const FACTION_GOALS = [
-  "control the regional trade routes",
-  "uncover a buried pre-cataclysm secret",
-  "install a sympathetic ruler",
-  "purge a rival faction from the city",
-];
-
-/**
- * `settlementConfig.sizesByGenre` (public Settlement Generator) uses a
- * shorter genre vocabulary than `themeIdToLabel` ("Western", not
- * "Western / Frontier"; "Horror", not "Vampire / Gothic Noir") — alias
- * the mismatched ones so `forGenre`'s own fallback logic doesn't miss an
- * exact match that actually exists under a different spelling.
- */
-const SETTLEMENT_GENRE_ALIASES: Record<string, string> = {
-  "Vampire / Gothic Noir": "Horror",
-  "Modern Conspiracy": "Modern",
-  "Cyberpunk / Corporate": "Cyberpunk",
-  "Sci-Fi / Space Opera": "Sci-Fi",
-  "Western / Frontier": "Western",
+export {
+  npcRacesForTheme,
+  npcRolesForTheme,
+  adventureArchetypesForTheme,
+  adventureTonesForTheme,
+  factionTypesForTheme,
+  settlementTypesForTheme,
 };
-
-/**
- * Settlement type ("size") choices, reusing `settlementConfig.sizesByGenre`
- * so a Sci-Fi vault offers "Station"/"Colony" instead of "Hamlet"/"Fortress".
- */
-export function settlementTypesForTheme(themeId: string): string[] {
-  const genre = themeIdToLabel[themeId] ?? "Classic Fantasy";
-  const settlementGenre = SETTLEMENT_GENRE_ALIASES[genre] ?? genre;
-  return forGenre(settlementConfig.sizesByGenre, settlementGenre).map(
-    (tier) => tier.name,
-  );
-}
-const SETTLEMENT_TYPES = settlementTypesForTheme("workspace");
-
-const SETTLEMENT_FEATURES = [
-  "a crumbling aqueduct still feeding the central well",
-  "a market square that never fully closes",
-  "a shrine locals leave offerings at each dawn",
-  "a harbor choked with half-sunk wrecks",
-];
-
-const ITEM_RARITIES = ["Common", "Uncommon", "Rare", "Very Rare", "Legendary"];
-const ITEM_KINDS = ["Blade", "Amulet", "Ring", "Staff", "Tome", "Cloak"];
-const ITEM_EFFECTS = [
-  "hums faintly when an untruth is spoken nearby",
-  "grows warm in the presence of the undead",
-  "lets the bearer recall one forgotten memory each night",
-  "turns aside the first blow of any duel",
-];
-
-const EVENT_TYPES = [
-  "Battle",
-  "Festival",
-  "Disaster",
-  "Discovery",
-  "Ritual",
-  "Treaty",
-  "Uprising",
-  "Betrayal",
-];
-const EVENT_OUTCOMES = [
-  "reshaped the balance of power across the region",
-  "left a wound the locals have never forgotten",
-  "forged an uneasy alliance between former enemies",
-  "uncovered a secret that should have stayed buried",
-];
-
-const COUNCIL_VOTE_BODY_TYPES = councilVoteConfig.bodyTypes;
-
-const COUNCIL_VOTE_SIZES = councilVoteConfig.sizes;
-
-const COUNCIL_VOTE_RULES = councilVoteConfig.votingRules;
-
-const COUNCIL_VOTE_SCOPES = councilVoteConfig.scopes;
-
-const COUNCIL_VOTE_TONES = councilVoteConfig.tones;
-
-const COUNCIL_VOTE_ANTAGONIST_INFLUENCE =
-  councilVoteConfig.antagonistInfluences;
-
-const COUNCIL_VOTE_ARCHETYPES = councilVoteConfig.archetypes;
-
-const COUNCIL_VOTE_STANCES = councilVoteConfig.stances;
 
 function generateName(): string {
   const prefixes = [
