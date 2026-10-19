@@ -331,3 +331,9 @@
 
 **Learning:** Hardcoded systemClock usage inside ProposerStore hinders testability by making the current time global and untestable. Injecting a Clock dependency lazily at construction resolves this while keeping the production default.
 **Action:** When creating or refactoring stores that rely on timestamps, inject a `clock: Clock = systemClock` dependency into the constructor.
+
+## 2026-10-18 - Injecting Clock into DetailChatsTab.svelte
+
+**Learning:** Svelte components that mutate transcript or metadata timestamps (like `DetailChatsTab`) shouldn't hardcode `systemClock.now()`. Injecting an optional `clock: Clock` prop allows deterministic tests without global mocking.
+
+**Action:** Use `$props()` to inject `clock` and default to `systemClock` from `$lib/utils/runtime-deps`.
