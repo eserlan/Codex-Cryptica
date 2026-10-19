@@ -33,46 +33,6 @@ function run(
   };
 }
 
-const councilNames = ["A", "B", "C", "D", "E", "F", "G"];
-
-function councilFoundationLore(suffix = ""): string {
-  return `### Voting Procedure
-Simple majority, 7 seats${suffix}.
-
-### Council Members
-${councilNames
-  .map(
-    (name, index) =>
-      `- **Councillor ${name}** (Member) — Initial stance: ${index < 4 ? "Support" : "Oppose"}. Would genuinely persuade them: a verified lasting settlement.`,
-  )
-  .join("\n")}`;
-}
-
-function councilPaths(suffix = ""): string {
-  const baseline = councilNames
-    .map(
-      (name, index) =>
-        `- **Councillor ${name}** — ${index < 4 ? "Support" : "Oppose"} — Reason: ${index < 4 ? "keeps the original position" : "carries over unchanged"}.`,
-    )
-    .join("\n");
-  const best = councilNames
-    .map(
-      (name) =>
-        `- **Councillor ${name}** — Support — Reason: accepts the lasting settlement.`,
-    )
-    .join("\n");
-  return `### Possible Paths
-#### 1. Smallest Viable Coalition
-${baseline}
-Tally: Support 4, Oppose 3, Abstain 0, Undecided 0.
-#### 2. Broader Alternative
-${baseline}
-Tally: Support 4, Oppose 3, Abstain 0, Undecided 0.
-#### 3. Costly Best Solution
-${best}
-Tally: Support 7, Oppose 0, Abstain 0, Undecided 0.${suffix}`;
-}
-
 function draft(overrides: Partial<GeneratedDraft> = {}): GeneratedDraft {
   return {
     title: "Kaeldar",
