@@ -2,15 +2,18 @@
 
 dev-agents picks one of these bullets per generated release image (see
 `docs/release-comms.md` in dev-agents). Add, remove, or reword freely; each
-`- ` line is one style. Keep them describing look and medium, not subject.
+`- ` line is one style. Keep them describing look and medium, not subject. Every
+style must follow `docs/ART_DIRECTION_EDITORIAL_IMAGES.md`: grounded cinematic
+realism, painterly digital art, full-bleed 16:9 composition, and no text, frames,
+or borders.
 
-- Hand-inked fantasy map illustration on aged parchment, sepia and faded ink washes
-- Moody oil painting with dramatic candlelight and deep shadows, Dutch Golden Age feel
-- Isometric miniature diorama, tilt-shift look, warm tabletop lighting
-- Bold woodcut print, two or three flat colors, strong black linework
-- Loose watercolor sketch with ink outlines and soft bleeding colors
-- Illuminated manuscript page style with gold leaf accents and ornate borders, no lettering
-- Clean flat vector illustration, limited muted palette, geometric shapes
-- Retro 1980s fantasy paperback cover painting, saturated airbrushed colors
-- Pencil and charcoal sketchbook study, rough hatching, a single accent color
-- Stained glass window design, jewel-toned panels with lead lines
+- Painterly digital realism with motivated hearth light, deep shadows, and tactile surfaces
+- Cinematic concept art with dawn mist, cool natural light, and atmospheric depth
+- Grounded historical fantasy realism with late-afternoon light and richly textured materials
+- Painterly realism with stormy chiaroscuro, rising smoke, and a mature cinematic tone
+- Cinematic digital painting with twilight lantern glow, dust motes, and natural depth of field
+- Grounded speculative-fiction concept art with warm golden-hour light and tactile detail
+- Painterly digital realism with overcast light, atmospheric haze, and restrained colours
+- Cinematic realism with dramatic firelight, embossed leather, and weathered metal textures
+- High-end tabletop publication concept art with sea mist, soft daylight, and rich material detail
+- Painterly cinematic realism with moonlit atmosphere, subtle smoke, and natural contrast
