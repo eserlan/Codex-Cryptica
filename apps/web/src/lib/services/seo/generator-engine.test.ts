@@ -1240,6 +1240,88 @@ describe("DefaultGeneratorEngine", () => {
         "### Voting Procedure\nSimple majority.\n\n### Possible Paths\nsmallest coalition first\n\n### Follow-Up Hooks\nthey remember",
       );
     });
+
+    it("falls back to local tables when the initial foundation or paths turn is empty", async () => {
+      const stream = (text: string) => ({
+        stream: (async function* () {
+          yield { text: () => text };
+        })(),
+      });
+      const mockChat = {
+        sendMessageStream: vi.fn().mockResolvedValueOnce(stream("{}")),
+      };
+      const mockModel = { startChat: vi.fn().mockReturnValue(mockChat) };
+      mockClientManager.getModel.mockResolvedValue(mockModel);
+
+      const res = await engine.generateCouncilVote({
+        councilSize: "3",
+        useAI: true,
+      });
+
+      expect(mockChat.sendMessageStream).toHaveBeenCalledTimes(1);
+      expect(res.aiFallback).toBe(true);
+      expect(res.lore).toContain("### Council Members");
+    });
+
+    it("reports staged progress and propagates AbortError on cancellation", async () => {
+      const controller = new AbortController();
+      const progressCalls: unknown[] = [];
+      const mockChat = {
+        sendMessageStream: vi.fn(async () => {
+          controller.abort();
+          return {
+            stream: (async function* () {
+              yield { text: () => "{}" };
+            })(),
+          };
+        }),
+      };
+      mockClientManager.getModel.mockResolvedValue({
+        startChat: vi.fn().mockReturnValue(mockChat),
+      });
+
+      await expect(
+        engine.generateCouncilVote({
+          councilSize: "5",
+          useAI: true,
+          onProgress: (steps) => progressCalls.push(steps),
+          signal: controller.signal,
+        }),
+      ).rejects.toMatchObject({ name: "AbortError" });
+      expect(progressCalls.length).toBeGreaterThan(0);
+      expect(mockChat.sendMessageStream).toHaveBeenCalledTimes(1);
+      expect(mockChat.sendMessageStream).toHaveBeenCalledWith(
+        expect.any(String),
+        { signal: controller.signal },
+      );
+    });
+
+    it("propagates cancellation when the signal has a non-AbortError reason", async () => {
+      const controller = new AbortController();
+      const cancellation = new Error("cancelled");
+      const mockChat = {
+        sendMessageStream: vi.fn(async () => {
+          controller.abort(cancellation);
+          return {
+            stream: (async function* () {
+              yield { text: () => "{}" };
+            })(),
+          };
+        }),
+      };
+      mockClientManager.getModel.mockResolvedValue({
+        startChat: vi.fn().mockReturnValue(mockChat),
+      });
+
+      await expect(
+        engine.generateCouncilVote({
+          councilSize: "5",
+          useAI: true,
+          signal: controller.signal,
+        }),
+      ).rejects.toBe(cancellation);
+      expect(mockChat.sendMessageStream).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe("generateSecretSociety", () => {

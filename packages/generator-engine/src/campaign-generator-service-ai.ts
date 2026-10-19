@@ -443,7 +443,9 @@ export class CampaignGeneratorAIGenerationService extends CampaignGeneratorLangu
       case "language":
         return this.generateLanguageWithAI(generator, request, bannedNames);
       case "council-vote":
-        return generateCouncilVoteWithAI(gateway, generator, request);
+        return generateCouncilVoteWithAI(gateway, generator, request, {
+          signal,
+        });
       case "point-crawl":
         try {
           const network = await generatePointCrawlStaged(

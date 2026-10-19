@@ -32,8 +32,25 @@ import {
 } from "./random-utils";
 import { parseFencedJson } from "./llm-response-utils";
 import { formatCampaignContextBlock } from "./campaign-context";
+import {
+  FIXING_DETAIL,
+  ONE_PASS_DETAIL,
+  StagedProgress,
+  type StagedProgressStep,
+} from "./staged-progress";
+import { askModel, readJsonObject, type JsonObject } from "./staged-runtime";
 import { councilVoteConfig } from "./public-council-vote-constants";
 export { councilVoteConfig };
+
+export type CouncilVoteStageId = "foundation" | "paths";
+
+export const COUNCIL_VOTE_PROGRESS_STEPS: ReadonlyArray<{
+  id: CouncilVoteStageId;
+  label: string;
+}> = [
+  { id: "foundation", label: "Council roster, procedure and initial tally" },
+  { id: "paths", label: "Persuasion paths and follow-up hooks" },
+];
 
 export interface CouncilVoteGeneratorOptions {
   genre?: string;
@@ -251,11 +268,10 @@ export interface CouncilVoteFoundation {
   labels: string[];
 }
 
-export function parseCouncilVoteFoundation(
-  text: string,
+function councilVoteFoundationFromRecord(
+  data: JsonObject,
   resolved: ResolvedCouncilVote,
 ): CouncilVoteFoundation {
-  const data = parseFencedJson(text);
   const rawLabels = Array.isArray(data.labels) ? data.labels : [];
   const labels = rawLabels.filter(
     (label: unknown): label is string =>
@@ -264,15 +280,35 @@ export function parseCouncilVoteFoundation(
   if (!labels.includes("council-vote")) labels.unshift("council-vote");
   if (!labels.includes(resolved.genre)) labels.push(resolved.genre);
   const lore = fixContradictoryAntagonistSection(
-    data.lore || "",
+    typeof data.lore === "string" ? data.lore : "",
     resolved.antagonistInfluence,
   );
   return {
-    title: data.title || resolved.title,
-    content: data.content || "",
+    title:
+      typeof data.title === "string" && data.title.trim()
+        ? data.title
+        : resolved.title,
+    content: typeof data.content === "string" ? data.content : "",
     lore,
     labels,
   };
+}
+
+export function parseCouncilVoteFoundation(
+  text: string,
+  resolved: ResolvedCouncilVote,
+): CouncilVoteFoundation {
+  return councilVoteFoundationFromRecord(parseFencedJson(text), resolved);
+}
+
+export function readCouncilVoteFoundation(
+  reply: string,
+  resolved: ResolvedCouncilVote,
+): CouncilVoteFoundation | null {
+  const data = readJsonObject(reply);
+  if (!data) return null;
+  const parsed = councilVoteFoundationFromRecord(data, resolved);
+  return parsed.content.trim() && parsed.lore.trim() ? parsed : null;
 }
 
 // ---------------------------------------------------------------------------
@@ -341,12 +377,126 @@ export interface CouncilVotePaths {
   followUpHooks: string;
 }
 
-export function parseCouncilVotePathsResponse(text: string): CouncilVotePaths {
-  const data = parseFencedJson(text);
+function councilVotePathsFromRecord(data: JsonObject): CouncilVotePaths {
   return {
-    possiblePaths: data.possiblePaths || "",
-    followUpHooks: data.followUpHooks || "",
+    possiblePaths:
+      typeof data.possiblePaths === "string" ? data.possiblePaths : "",
+    followUpHooks:
+      typeof data.followUpHooks === "string" ? data.followUpHooks : "",
   };
+}
+
+export function parseCouncilVotePathsResponse(text: string): CouncilVotePaths {
+  return councilVotePathsFromRecord(parseFencedJson(text));
+}
+
+export function readCouncilVotePaths(reply: string): CouncilVotePaths | null {
+  const data = readJsonObject(reply);
+  if (!data) return null;
+  const parsed = councilVotePathsFromRecord(data);
+  return parsed.possiblePaths.trim() && parsed.followUpHooks.trim()
+    ? parsed
+    : null;
+}
+
+export interface CouncilVoteFourTurnArgs<TFoundation, TPaths> {
+  send: (userMessage: string) => Promise<string>;
+  foundationPrompt: string;
+  foundationRepairPrompt: string;
+  pathsPrompt: string;
+  pathsRepairPrompt: string;
+  readFoundation: (reply: string) => TFoundation | null;
+  readPaths: (reply: string) => TPaths | null;
+  onProgress?: (steps: StagedProgressStep[]) => void;
+  signal?: AbortSignal;
+}
+
+/**
+ * Shared 4-turn Council Vote runner (foundation → foundation repair → paths →
+ * paths repair) on a single chat session. Keeps the unrepaired draft of either
+ * stage when its repair turn fails or returns an unusable payload, and returns
+ * `null` when either initial stage draft is unusable. Cancellation via `signal`
+ * propagates immediately.
+ */
+export async function runCouncilVoteFourTurn<TFoundation, TPaths>(
+  args: CouncilVoteFourTurnArgs<TFoundation, TPaths>,
+): Promise<{ foundation: TFoundation; paths: TPaths } | null> {
+  const progress = new StagedProgress(
+    COUNCIL_VOTE_PROGRESS_STEPS,
+    args.onProgress,
+  );
+  const { signal } = args;
+
+  progress.set("foundation", "active");
+  const initialFoundation = await askModel(
+    () => args.send(args.foundationPrompt),
+    args.readFoundation,
+    { signal },
+  );
+  if (!initialFoundation) {
+    progress.abandon("foundation", ONE_PASS_DETAIL);
+    return null;
+  }
+
+  progress.set("foundation", "active", FIXING_DETAIL);
+  const repairedFoundation = await askModel(
+    () => args.send(args.foundationRepairPrompt),
+    args.readFoundation,
+    { signal },
+  );
+  const foundation = repairedFoundation ?? initialFoundation;
+  progress.set("foundation", "done");
+
+  progress.set("paths", "active");
+  const initialPaths = await askModel(
+    () => args.send(args.pathsPrompt),
+    args.readPaths,
+    { signal },
+  );
+  if (!initialPaths) {
+    progress.abandon("paths", ONE_PASS_DETAIL);
+    return null;
+  }
+
+  progress.set("paths", "active", FIXING_DETAIL);
+  const repairedPaths = await askModel(
+    () => args.send(args.pathsRepairPrompt),
+    args.readPaths,
+    { signal },
+  );
+  const paths = repairedPaths ?? initialPaths;
+  progress.set("paths", "done");
+
+  return { foundation, paths };
+}
+
+export interface CouncilVoteStagedDeps {
+  send: (userMessage: string) => Promise<string>;
+  onProgress?: (steps: StagedProgressStep[]) => void;
+  signal?: AbortSignal;
+}
+
+export async function runCouncilVoteStaged(
+  prompt: CouncilVoteFoundationPrompt,
+  deps: CouncilVoteStagedDeps,
+): Promise<PublicGeneratorOutput | null> {
+  const stages = await runCouncilVoteFourTurn({
+    send: deps.send,
+    foundationPrompt: prompt.userMessage,
+    foundationRepairPrompt: buildCouncilVoteFoundationRepairPrompt(
+      prompt.resolved.genre,
+    ),
+    pathsPrompt: buildCouncilVotePathsPrompt().userMessage,
+    pathsRepairPrompt: buildCouncilVotePathsRepairPrompt(),
+    readFoundation: (reply) =>
+      readCouncilVoteFoundation(reply, prompt.resolved),
+    readPaths: readCouncilVotePaths,
+    onProgress: deps.onProgress,
+    signal: deps.signal,
+  });
+  return stages
+    ? mergeCouncilVoteOutput(stages.foundation, stages.paths)
+    : null;
 }
 
 /** Combines both passes into the shape every other public generator returns. */

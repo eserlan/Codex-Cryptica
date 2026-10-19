@@ -432,9 +432,9 @@ describe("ProxyAIGeneratorGateway", () => {
         const calls: unknown[] = [];
         const sendMessageStream = async (
           _query: string,
-          signal?: AbortSignal,
+          options?: { signal?: AbortSignal },
         ) => {
-          calls.push(signal);
+          calls.push(options);
           return { stream: (async function* () {})() };
         };
         const client = {
@@ -446,8 +446,33 @@ describe("ProxyAIGeneratorGateway", () => {
         const chat = await gateway.startChat("system instruction");
         await collect(chat.sendStream!("turn one", controller.signal));
 
-        expect(calls).toEqual([controller.signal]);
+        expect(calls).toEqual([{ signal: controller.signal }]);
       });
+    });
+
+    it("forwards { signal } into sendMessageStream on chat.send", async () => {
+      const calls: unknown[] = [];
+      const sendMessageStream = async (
+        _query: string,
+        options?: { signal?: AbortSignal },
+      ) => {
+        calls.push(options);
+        return {
+          stream: (async function* () {
+            yield { text: () => '{"title":"Foundation"}' };
+          })(),
+        };
+      };
+      const client = {
+        getModel: async () => ({ startChat: () => ({ sendMessageStream }) }),
+      };
+      const gateway = new ProxyAIGeneratorGateway(client as never);
+      const controller = new AbortController();
+
+      const chat = await gateway.startChat("system instruction");
+      await chat.send("turn one", controller.signal);
+
+      expect(calls).toEqual([{ signal: controller.signal }]);
     });
   });
 });

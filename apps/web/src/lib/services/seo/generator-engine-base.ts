@@ -54,8 +54,9 @@ export class GeneratorEngineBase {
     useAI: boolean | undefined,
     aiAttempt: () => Promise<PublicGeneratorOutput>,
     local: () => PublicGeneratorOutput,
+    signal?: AbortSignal,
   ): Promise<GeneratorOutput> {
-    return this.transport.runWithAIFallback(useAI, aiAttempt, local);
+    return this.transport.runWithAIFallback(useAI, aiAttempt, local, signal);
   }
 
   protected runModel(
@@ -81,7 +82,8 @@ export class GeneratorEngineBase {
   protected sendChatMessage(
     chat: Awaited<ReturnType<GeneratorAITransport["startChat"]>>,
     userMessage: string,
+    signal?: AbortSignal,
   ): Promise<string> {
-    return this.transport.sendChatMessage(chat, userMessage);
+    return this.transport.sendChatMessage(chat, userMessage, signal);
   }
 }

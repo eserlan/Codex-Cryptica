@@ -194,6 +194,23 @@ describe("GeneratorAITransport", () => {
       expect(local).not.toHaveBeenCalled();
     });
 
+    it("propagates the signal reason when cancellation uses a regular Error", async () => {
+      const controller = new AbortController();
+      const cancellation = new Error("cancelled");
+      const local = vi.fn(
+        () => ({ type: "npc", title: "Local Result" }) as any,
+      );
+      const aiAttempt = async () => {
+        controller.abort(cancellation);
+        throw cancellation;
+      };
+
+      await expect(
+        transport.runWithAIFallback(true, aiAttempt, local, controller.signal),
+      ).rejects.toBe(cancellation);
+      expect(local).not.toHaveBeenCalled();
+    });
+
     it("skips the AI attempt entirely when useAI is false", async () => {
       const aiAttempt = vi.fn();
       const result = await transport.runWithAIFallback(

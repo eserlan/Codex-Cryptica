@@ -220,17 +220,25 @@ export class ProxyAIGeneratorGateway implements AIGeneratorGateway {
       systemInstruction,
     );
     const chat = model.startChat({ history: [] });
-    const chatWithSignal = chat as unknown as {
-      sendMessageStream(
-        query: string,
-        signal?: AbortSignal,
-      ): Promise<{ stream: AsyncGenerator<{ text: () => string }> }>;
-    };
     return {
-      async send(userMessage: string): Promise<string> {
-        const result = await chat.sendMessageStream(userMessage);
+      async send(userMessage: string, signal?: AbortSignal): Promise<string> {
+        if (signal?.aborted) {
+          throw (
+            signal.reason ??
+            new DOMException("The operation was aborted", "AbortError")
+          );
+        }
+        const result = signal
+          ? await chat.sendMessageStream(userMessage, { signal })
+          : await chat.sendMessageStream(userMessage);
         let text = "";
         for await (const chunk of result.stream) {
+          if (signal?.aborted) {
+            throw (
+              signal.reason ??
+              new DOMException("The operation was aborted", "AbortError")
+            );
+          }
           text += chunk.text();
         }
         return extractJsonObject(text.trim());
@@ -243,9 +251,9 @@ export class ProxyAIGeneratorGateway implements AIGeneratorGateway {
         const scan = createIncrementalJsonScanner();
         let buffer = "";
         try {
-          const result = await chatWithSignal.sendMessageStream(
+          const result = await chat.sendMessageStream(
             userMessage,
-            signal,
+            signal ? { signal } : undefined,
           );
           for await (const chunk of result.stream) {
             const text = chunk.text();
