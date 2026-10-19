@@ -13,8 +13,7 @@ export const howDoIRunMyFirstOnlineTabletopRpgSession: AnswerConfigInput = {
       kind: "prose",
       heading: "You already know the hard part",
       paragraphs: [
-        "Running a session online does not ask you to learn a second way to game master. Pacing a scene, playing a non-player character (NPC), calling for a roll and knowing when to move on all transfer from the physical table. What changes is narrower: players cannot see your hands, read the room at a glance, or lean over to point at the map. Your first online setup only has to replace hearing each other, seeing anything that must be shared, and knowing whose turn it is to speak.",
-        "That is why the smallest workable setup is smaller than most tool lists suggest. If voice works, sheets are reachable and any map you actually need is visible, you can run a full session. Video, dice bots, music, automation and a library of prepared maps can wait until a real gap appears in play.",
+        "Running a session online does not ask you to learn a second way to game master. Pacing a scene, playing a non-player character (NPC), calling for a roll and knowing when to move on all transfer from the physical table. What changes is narrower: players cannot see your hands, read the room at a glance, or lean over to point at the map. Your first online setup only has to replace hearing each other, seeing anything that must be shared, and knowing whose turn it is to speak. If this online group is also a new group, [How do I find a tabletop RPG group to play with?](/answers/how-do-i-find-a-tabletop-rpg-group-to-play-with) covers recruiting and trial sessions.",
       ],
     },
     {
@@ -39,7 +38,7 @@ export const howDoIRunMyFirstOnlineTabletopRpgSession: AnswerConfigInput = {
         ],
         [
           "Handouts and images",
-          "Images or PDFs posted in one agreed channel or folder",
+          "Images or PDFs shared in one agreed channel, private message or folder",
           "Only the items this session uses",
         ],
         [
@@ -132,7 +131,7 @@ export const howDoIRunMyFirstOnlineTabletopRpgSession: AnswerConfigInput = {
       heading: "Do online players get distracted more?",
       paragraphs: [
         "There is no good reason to assume so. At home a player has a phone, a second screen and a kitchen, and at a physical table a player has a phone, a rulebook and a conversation beside yours. What online play does remove is your ability to notice drifting attention early, because you cannot see someone stop following. Treat distraction as a pacing and clarity problem before treating it as a respect problem.",
-        "Shorter descriptions help online, not because attention is shorter but because a listener cannot skim back over what you said. Describe in a few clear sentences, name what the characters can act on, then ask a specific player what they do. Check in at scene changes with a direct question rather than a general are you all still there. If someone has been quiet for a while, give their character a reason to be addressed and accept a short answer; some players follow closely while saying little, in person and online alike.",
+        "Shorter description chunks help in any game because listeners cannot skim spoken words. Online, you also have fewer feedback cues, especially without video. Describe in a few clear sentences, name what the characters can act on, then ask a specific player what they do. Check in at scene changes with a direct question rather than a general are you all still there. If someone has been quiet for a while, give their character a reason to be addressed and accept a short answer; some players follow closely while saying little, in person and online alike.",
       ],
     },
     {
@@ -152,7 +151,7 @@ export const howDoIRunMyFirstOnlineTabletopRpgSession: AnswerConfigInput = {
       items: [
         {
           term: "Before anyone arrives",
-          text: "The game master posts one message with the voice invite, the map link, and the fallback text channel. The map holds one tactical scene, a mill yard, with four player tokens placed at the gate. A handout image of a miller's notice is saved ready to post, with its text typed underneath for small screens.",
+          text: "The game master posts one message with the voice invite, the map link, and the fallback text channel. The map holds one tactical scene, a mill yard, with four player tokens placed at the gate. A handout image of a miller's notice is saved ready to send with its text alternative for small screens.",
         },
         {
           term: "Opening, on voice only",
@@ -160,7 +159,7 @@ export const howDoIRunMyFirstOnlineTabletopRpgSession: AnswerConfigInput = {
         },
         {
           term: "Exploration, still on voice",
-          text: "The party questions the miller and searches the yard, described entirely in words. When a player searches the office, the game master posts the notice image in the text channel at that moment and reads its key line aloud. That player decides whether her character shares the warning in it, which produces the same beat as handing her the physical note.",
+          text: "The party questions the miller and searches the yard, described entirely in words. When a player searches the office, the game master privately sends her the notice image and its text alternative. The game master does not read the warning aloud; the player decides whether her character shares it with the group, preserving the choice of a physical hand-off.",
         },
         {
           term: "The fight, map open",
@@ -168,7 +167,7 @@ export const howDoIRunMyFirstOnlineTabletopRpgSession: AnswerConfigInput = {
         },
         {
           term: "Close, map closed again",
-          text: "After the fight the map closes, the recap happens on voice, and the game master confirms the next date and where the notice image lives for anyone who wants to reread it. Total new habits learned by the players: join this call, open this link when asked, say pass.",
+          text: "After the fight the map closes and the recap happens on voice. If the finder chose to share the warning, the notice and its text alternative stay in the group channel for anyone to reread; otherwise they remain private. The game master confirms the next date and one thing that worked technically. Total new habits learned by the players: join this call, open this link when asked, say pass.",
         },
         {
           term: "Why it works",
@@ -194,25 +193,17 @@ export const howDoIRunMyFirstOnlineTabletopRpgSession: AnswerConfigInput = {
     },
     {
       kind: "prose",
-      heading: "A short opening routine for session one",
-      paragraphs: [
-        "Open the call early enough for arrivals to settle and treat them as the rehearsal: greet people by name, fix any audio problems, and let small talk do the settling that it does around a physical table. Then restate the session shape briefly: cameras optional, mute when away, say pass or raise the agreed signal, break at a stated time, and this is where we go if the call drops.",
-        "Start play with a scene that needs voices only, such as a conversation, a journey decision or an arrival, so the first success of the night does not depend on the map. Bring the shared map in at the first scene where position changes a choice. End by confirming the next date, where handouts live, and one thing that worked technically, so the second session starts from a routine rather than another first time. If this online group is also a new group, [How do I find a tabletop RPG group to play with?](/answers/how-do-i-find-a-tabletop-rpg-group-to-play-with) covers the recruiting and trial session side.",
-      ],
-    },
-    {
-      kind: "prose",
       heading: "What not to overbuild",
       paragraphs: [
-        "Skip the automation spree before session one. Dozens of macros, automated effects, music bots, dynamic lighting on every map and a wiki the players must read first are all ways of rebuilding the physical table feature by feature, and each one is another thing that can fail in front of an audience. Demanding cameras on, banning physical dice without a reason, or requiring every player to learn your notes system adds friction in the same way.",
-        "Add one tool at a time, after a session shows you the gap it fills. If tracking conditions was genuinely hard, look at markers next week. If nobody could find old handouts, agree a folder then. A setup that survived a whole session unchanged is worth more than a larger one nobody has finished learning, and the [session engagement answer](/answers/how-do-you-make-a-tabletop-rpg-session-more-engaging) is a better next step than more software once the basics hold.",
+        "Skip the automation spree before session one. Macros, automated effects, music bots, dynamic lighting on every map and a wiki players must read all add things to learn and fail in front of an audience. Do not require cameras, digital dice or a new notes system without a reason.",
+        "Wait for a specific gap before adding a tool: try markers if tracking conditions was hard, or agree a folder if players could not find old handouts. The [session engagement answer](/answers/how-do-you-make-a-tabletop-rpg-session-more-engaging) is a better next step than more software once the basics hold.",
       ],
     },
   ],
   codexConnection: {
-    heading: "Where Codex Cryptica fits, and where it does not",
+    heading: "Where Codex Cryptica fits",
     paragraphs: [
-      "Codex Cryptica does not replace your voice call or your shared map, and this setup does not need it to. What it can hold is the campaign material around the session: NPCs, places and factions as linked notes you can open while describing a scene, your session prep in one place, and a recap written afterwards so the next online session starts from what actually happened. Keep the call and the map doing their two jobs, and let the campaign notes live where you can find a name or a promise quickly.",
+      "For this first session, keep your chosen voice and map tools; Codex Cryptica can hold the linked campaign notes beside them. Keep NPCs, places and factions connected, open your prep while describing a scene, and add the recap afterwards so the next session starts from what happened.",
     ],
     linkText: "See the campaign manager",
     href: "/solutions/campaign-manager",
