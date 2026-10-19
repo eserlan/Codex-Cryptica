@@ -391,7 +391,12 @@ const TIER_PATTERNS: Record<CouncilVotePathTier, RegExp> = {
   best: /\b(?:costly\s+best|best\s+solution)\b/i,
 };
 
-function councilVoteTiers(text: string): Map<CouncilVotePathTier, string> {
+interface ParsedCouncilVoteTiers {
+  tiers: Map<CouncilVotePathTier, string>;
+  order: CouncilVotePathTier[];
+}
+
+function councilVoteTiers(text: string): ParsedCouncilVoteTiers {
   const matches = (
     Object.entries(TIER_PATTERNS) as [CouncilVotePathTier, RegExp][]
   )
@@ -410,7 +415,7 @@ function councilVoteTiers(text: string): Map<CouncilVotePathTier, string> {
     const end = matches[index + 1]?.index ?? text.length;
     tiers.set(current.tier, text.slice(current.index, end));
   }
-  return tiers;
+  return { tiers, order: matches.map((match) => match.tier) };
 }
 
 function normalizedPosition(
@@ -835,28 +840,15 @@ function approvalThreshold(procedure: string, seats: number): number | null {
   return null;
 }
 
-/**
- * Programmatic consistency audit for generated council-vote paths: checks
- * proposal immutability, ballot secrecy, all three coalition tiers, and—when
- * foundation lore is supplied—seat-by-seat tallies, approval thresholds, and
- * dependency cascade accounting.
- */
-export function auditCouncilVotePaths(
-  paths: CouncilVotePaths,
+function auditProposalAndSecrecy(
+  text: string,
   context: {
     votingRule?: string;
     fixedProposal?: boolean;
     foundationLore?: string;
-  } = {},
-): CouncilVotePathsAuditResult {
-  const issues: string[] = [];
-  const text = paths.possiblePaths || "";
-
-  if (!text.trim()) {
-    issues.push("Possible paths content is empty.");
-    return { valid: false, issues };
-  }
-
+  },
+  issues: string[],
+): void {
   if (context.fixedProposal !== false) {
     const amendmentMatch = text.match(
       /\b(amendment|rider|sunset clause|substitute proposal|exempt(?:ion)?)\b/i,
@@ -880,9 +872,51 @@ export function auditCouncilVotePaths(
       'Paths treat projected votes as "locked in" under a secret ballot procedure.',
     );
   }
+}
 
-  const tiers = councilVoteTiers(text);
-  for (const tier of Object.keys(TIER_PATTERNS) as CouncilVotePathTier[]) {
+const REQUIRED_TIER_ORDER: CouncilVotePathTier[] = [
+  "smallest",
+  "alternative",
+  "best",
+];
+
+function auditTierOrder(order: CouncilVotePathTier[], issues: string[]): void {
+  if (
+    order.length === REQUIRED_TIER_ORDER.length &&
+    order.some((tier, idx) => tier !== REQUIRED_TIER_ORDER[idx])
+  ) {
+    issues.push(
+      "Paths must be ordered smallest viable coalition, then broader alternative, then costly best solution.",
+    );
+  }
+}
+
+/**
+ * Programmatic consistency audit for generated council-vote paths: checks
+ * proposal immutability, ballot secrecy, all three coalition tiers, and—when
+ * foundation lore is supplied—seat-by-seat tallies, approval thresholds, and
+ * dependency cascade accounting.
+ */
+export function auditCouncilVotePaths(
+  paths: CouncilVotePaths,
+  context: {
+    votingRule?: string;
+    fixedProposal?: boolean;
+    foundationLore?: string;
+  } = {},
+): CouncilVotePathsAuditResult {
+  const issues: string[] = [];
+  const text = paths.possiblePaths || "";
+
+  if (!text.trim()) {
+    issues.push("Possible paths content is empty.");
+    return { valid: false, issues };
+  }
+
+  auditProposalAndSecrecy(text, context, issues);
+
+  const { tiers, order } = councilVoteTiers(text);
+  for (const tier of REQUIRED_TIER_ORDER) {
     if (!tiers.has(tier)) {
       issues.push(`Paths are missing the ${tier} coalition tier.`);
       continue;
@@ -891,6 +925,8 @@ export function auditCouncilVotePaths(
       auditPathBallot(tier, tiers.get(tier)!, context.foundationLore, issues);
     }
   }
+
+  auditTierOrder(order, issues);
 
   return {
     valid: issues.length === 0,

@@ -689,6 +689,30 @@ Tally: Support 3, Oppose 0, Abstain 0, Undecided 0.`,
     );
   });
 
+  it("rejects paths when the coalition tiers appear in the wrong order", () => {
+    const permutedPaths = validPaths.possiblePaths
+      .replace(
+        "#### 1. Smallest Viable Coalition (Transactional)",
+        "__TEMP_HEADING__",
+      )
+      .replace(
+        "#### 3. Costly Best Solution (Structural Resolution)",
+        "#### 1. Smallest Viable Coalition (Transactional)",
+      )
+      .replace(
+        "__TEMP_HEADING__",
+        "#### 3. Costly Best Solution (Structural Resolution)",
+      );
+    const result = auditCouncilVotePaths(
+      { ...validPaths, possiblePaths: permutedPaths },
+      { foundationLore },
+    );
+    expect(result.valid).toBe(false);
+    expect(result.issues).toContain(
+      "Paths must be ordered smallest viable coalition, then broader alternative, then costly best solution.",
+    );
+  });
+
   it("rejects a tally that does not equal the seat-by-seat vote breakdown", () => {
     const result = auditCouncilVotePaths(
       {
