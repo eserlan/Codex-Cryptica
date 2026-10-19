@@ -8,6 +8,7 @@
 import { handleStarterTileDecksRoute } from "./starter-tile-decks";
 import { handleListPublicListings } from "./directory";
 import { handleCopyrightReport } from "./reports";
+import { handleFeedbackReport } from "./feedback-reports";
 import { forwardToGemini } from "./llm/adaptors/gemini-adaptor";
 import {
   isLlmOperationRequest,
@@ -228,6 +229,10 @@ export default {
       pathname,
     );
     if (templateDirectoryResponse) return templateDirectoryResponse;
+
+    if (pathname === "/api/feedback/reports") {
+      return handleFeedbackReport(request, env);
+    }
 
     if (pathname === "/api/reports/copyright") {
       const origin = request.headers.get("Origin") || "";

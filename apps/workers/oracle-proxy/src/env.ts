@@ -37,6 +37,15 @@ export interface Env extends CorsEnv {
   ANSWER_FEEDBACK_RATE_LIMITER?: {
     limit: (options: { key: string }) => Promise<{ success: boolean }>;
   };
+  /** Private GitHub repository that receives in-app reports (owner/name). */
+  FEEDBACK_GITHUB_REPO?: string;
+  /** Fine-grained token: Issues read and write on that one repository only. */
+  FEEDBACK_GITHUB_TOKEN?: string;
+  /** HMAC key for the source and submission hashes; reports are off without it. */
+  FEEDBACK_HASH_KEY?: string;
+  FEEDBACK_RATE_LIMITER?: {
+    limit: (options: { key: string }) => Promise<{ success: boolean }>;
+  };
   SHARE_CREATE_RATE_LIMITER?: {
     limit: (options: { key: string }) => Promise<{ success: boolean }>;
   };

@@ -96,6 +96,7 @@
         "entity-mention-engine": "workspace:*",
         "entity-report-engine": "workspace:*",
         "entity-template-engine": "workspace:*",
+        "feedback-engine": "workspace:*",
         "fflate": "^0.8.3",
         "flexsearch": "^0.8.212",
         "generator-engine": "workspace:*",
@@ -156,6 +157,9 @@
     "apps/workers/oracle-proxy": {
       "name": "@codex/oracle-proxy",
       "version": "0.0.0",
+      "dependencies": {
+        "feedback-engine": "workspace:*",
+      },
       "devDependencies": {
         "@vitest/coverage-v8": "^5.0.0",
         "typescript": "^6.0.3",
@@ -360,6 +364,18 @@
       "version": "0.0.0",
       "dependencies": {
         "schema": "workspace:*",
+      },
+      "devDependencies": {
+        "@vitest/coverage-v8": "^5.0.0",
+        "typescript": "^6.0.3",
+        "vitest": "^5.0.0",
+      },
+    },
+    "packages/feedback-engine": {
+      "name": "feedback-engine",
+      "version": "0.0.0",
+      "dependencies": {
+        "zod": "^4.4.3",
       },
       "devDependencies": {
         "@vitest/coverage-v8": "^5.0.0",
@@ -1796,6 +1812,8 @@
     "fd-slicer": ["fd-slicer@1.1.0", "", { "dependencies": { "pend": "~1.2.0" } }, "sha512-cE1qsB/VwyQozZ+q1dGxR8LBYNZeofhEdUNGSMbQD3Gw2lAzX9Zb3uIU6Ebc/Fmyjo9AWWfnn0AUCHqtevs/8g=="],
 
     "fdir": ["fdir@6.5.0", "", { "optionalDependencies": { "picomatch": "4.0.4" } }, "sha512-tIbYtZbucOs0BRGqPJkshJUYdL+SDH7dVM8gjy+ERp3WAUjLEFJE+02kanyHtwjWOnwrKYBiwAmM0p4kLJAnXg=="],
+
+    "feedback-engine": ["feedback-engine@workspace:packages/feedback-engine"],
 
     "fetch-blob": ["fetch-blob@3.2.0", "", { "dependencies": { "node-domexception": "1.0.0", "web-streams-polyfill": "3.3.3" } }, "sha512-7yAQpD2UMJzLi1Dqv7qFYnPbaPx7ZfFK6PiIxQ4PfkGPyNyl2Ugx+a/umUonmKqjhM4DnfbMvdX6otXq83soQQ=="],
 

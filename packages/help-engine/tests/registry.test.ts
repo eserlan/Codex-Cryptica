@@ -59,6 +59,7 @@ describe("proof-of-concept registry", () => {
         "entity-editing",
         "graph-view",
         "related-entity-generation",
+        "report-a-problem",
         "session-hub",
         "tables",
         "vtt-map",
