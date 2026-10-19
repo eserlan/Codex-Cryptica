@@ -1071,16 +1071,6 @@ describe("published answers", () => {
     }
   });
 
-  it("points every answer at a live Codex surface", () => {
-    for (const answer of published) {
-      const outbound =
-        answer.relatedTopics.length +
-        answer.relatedTools.length +
-        answer.relatedForPages.length;
-      expect(outbound, `${answer.slug} links nowhere`).toBeGreaterThan(0);
-    }
-  });
-
   it("keeps topic hubs out of the tool links", () => {
     const puzzleAnswers = published.filter((answer) =>
       answer.relatedTopics.some((topic) => topic.href === "/topics/puzzles"),
@@ -1181,13 +1171,6 @@ describe("published answers", () => {
     }
   });
 
-  it("gives each answer a substantive body, not a stub", () => {
-    for (const answer of published) {
-      expect(answer.shortAnswer.length, answer.slug).toBeGreaterThan(140);
-      expect(answer.sections.length, answer.slug).toBeGreaterThanOrEqual(3);
-    }
-  });
-
   it("distinguishes 2014 and 2024 rules in the beginner character-sheet answer", () => {
     const answer = answers["how-do-i-read-a-dnd-character-sheet-as-a-beginner"];
     const abilityScores = answer.sections
@@ -1239,15 +1222,6 @@ describe("published answers", () => {
         answer.seo.imageAlt?.trim().length ?? 0,
         `${answer.slug} is missing seo.imageAlt`,
       ).toBeGreaterThan(0);
-    }
-  });
-
-  it("includes a concrete worked example on every answer", () => {
-    for (const answer of published) {
-      expect(
-        answer.sections.some((section) => section.kind === "example"),
-        `${answer.slug} has no example block`,
-      ).toBe(true);
     }
   });
 

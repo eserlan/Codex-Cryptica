@@ -208,6 +208,7 @@ export const howDoITrackMonstersInitiativeAndHitPointsInDndCombat: AnswerConfigI
       "how-do-i-balance-rpg-combat-encounters-without-a-tpk",
       "how-do-i-combine-multiple-enemies-into-one-squad-in-an-rpg",
       "what-can-i-do-on-my-turn-in-dnd-combat",
+      "how-do-i-run-my-first-online-tabletop-rpg-session",
     ],
     discovery: {
       id: "answer-track-monsters-initiative-hit-points-dnd-combat",
