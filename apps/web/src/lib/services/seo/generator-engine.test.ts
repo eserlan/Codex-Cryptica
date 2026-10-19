@@ -12,6 +12,41 @@ import {
 import { sessionHubStore } from "$lib/stores/session-hub.svelte";
 import { generationInputHistoryStore } from "./generation-input-history";
 
+const councilNames = ["A", "B", "C", "D", "E"];
+
+function councilFoundationLore(suffix = ""): string {
+  return `### Voting Procedure
+Simple majority, 5 seats${suffix}.
+
+### Council Members
+${councilNames
+  .map(
+    (name, index) =>
+      `- **Councillor ${name}** (Member) — Initial stance: ${index < 3 ? "Support" : "Oppose"}. Would genuinely persuade them: a verified lasting settlement.`,
+  )
+  .join("\n")}`;
+}
+
+function councilPaths(suffix = ""): string {
+  const ballot = (supporting: string[]) =>
+    councilNames
+      .map((name) => {
+        const supports = supporting.includes(name);
+        return `- **Councillor ${name}** — ${supports ? "Support" : "Oppose"} — Reason: ${supports ? "accepts the lasting settlement" : "remains opposed"}.`;
+      })
+      .join("\n");
+  return `### Possible Paths
+#### 1. Smallest Viable Coalition
+${ballot(["A", "B", "C"])}
+Tally: Support 3, Oppose 2, Abstain 0, Undecided 0.
+#### 2. Broader Alternative
+${ballot(["A", "B", "C", "D"])}
+Tally: Support 4, Oppose 1, Abstain 0, Undecided 0.
+#### 3. Costly Best Solution
+${ballot(councilNames)}
+Tally: Support 5, Oppose 0, Abstain 0, Undecided 0.${suffix}`;
+}
+
 function expectPromptToContain(
   generateContent: { mock: { calls: unknown[][] } },
   expected: string,
@@ -1119,22 +1154,21 @@ describe("DefaultGeneratorEngine", () => {
       const foundationJson = JSON.stringify({
         title: "The Salt Road Levy",
         content: "### The Proposal\nfoundation content (unrepaired)",
-        lore: "### Voting Procedure\nSimple majority.",
+        lore: councilFoundationLore(" (unrepaired)"),
         labels: ["council-vote", "political-intrigue"],
       });
       const repairedJson = JSON.stringify({
         title: "The Salt Road Levy",
         content: "### The Proposal\nfoundation content",
-        lore: "### Voting Procedure\nSimple majority.",
+        lore: councilFoundationLore(),
         labels: ["council-vote", "political-intrigue"],
       });
       const pathsJson = JSON.stringify({
-        possiblePaths:
-          "### Possible Paths\nsmallest coalition first (unrepaired)",
+        possiblePaths: councilPaths(" (unrepaired)"),
         followUpHooks: "### Follow-Up Hooks\nthey remember (unrepaired)",
       });
       const pathsRepairedJson = JSON.stringify({
-        possiblePaths: "### Possible Paths\nsmallest coalition first",
+        possiblePaths: councilPaths(),
         followUpHooks: "### Follow-Up Hooks\nthey remember",
       });
 
@@ -1178,7 +1212,7 @@ describe("DefaultGeneratorEngine", () => {
       expect(res.title).toBe("The Salt Road Levy");
       expect(res.content).toBe("### The Proposal\nfoundation content");
       expect(res.lore).toBe(
-        "### Voting Procedure\nSimple majority.\n\n### Possible Paths\nsmallest coalition first\n\n### Follow-Up Hooks\nthey remember",
+        `${councilFoundationLore()}\n\n${councilPaths()}\n\n### Follow-Up Hooks\nthey remember`,
       );
       expect(res.labels).toContain("council-vote");
       expect(res.aiFallback).toBeUndefined();
@@ -1200,11 +1234,11 @@ describe("DefaultGeneratorEngine", () => {
       const foundationJson = JSON.stringify({
         title: "The Salt Road Levy",
         content: "### The Proposal\nfoundation content",
-        lore: "### Voting Procedure\nSimple majority.",
+        lore: councilFoundationLore(),
         labels: ["council-vote", "political-intrigue"],
       });
       const pathsJson = JSON.stringify({
-        possiblePaths: "### Possible Paths\nsmallest coalition first",
+        possiblePaths: councilPaths(),
         followUpHooks: "### Follow-Up Hooks\nthey remember",
       });
       // Valid JSON, but empty of content — parseCouncilVoteFoundation and
@@ -1237,7 +1271,7 @@ describe("DefaultGeneratorEngine", () => {
       expect(res.title).toBe("The Salt Road Levy");
       expect(res.content).toBe("### The Proposal\nfoundation content");
       expect(res.lore).toBe(
-        "### Voting Procedure\nSimple majority.\n\n### Possible Paths\nsmallest coalition first\n\n### Follow-Up Hooks\nthey remember",
+        `${councilFoundationLore()}\n\n${councilPaths()}\n\n### Follow-Up Hooks\nthey remember`,
       );
     });
 
