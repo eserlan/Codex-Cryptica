@@ -1295,6 +1295,33 @@ describe("DefaultGeneratorEngine", () => {
         { signal: controller.signal },
       );
     });
+
+    it("propagates cancellation when the signal has a non-AbortError reason", async () => {
+      const controller = new AbortController();
+      const cancellation = new Error("cancelled");
+      const mockChat = {
+        sendMessageStream: vi.fn(async () => {
+          controller.abort(cancellation);
+          return {
+            stream: (async function* () {
+              yield { text: () => "{}" };
+            })(),
+          };
+        }),
+      };
+      mockClientManager.getModel.mockResolvedValue({
+        startChat: vi.fn().mockReturnValue(mockChat),
+      });
+
+      await expect(
+        engine.generateCouncilVote({
+          councilSize: "5",
+          useAI: true,
+          signal: controller.signal,
+        }),
+      ).rejects.toBe(cancellation);
+      expect(mockChat.sendMessageStream).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe("generateSecretSociety", () => {

@@ -2,9 +2,13 @@ import { describe, expect, it, vi } from "vitest";
 import {
   buildCouncilVoteOutput,
   generateCouncilVoteWithAI,
+  generateCouncilVoteWithAIStream,
 } from "./campaign-council-vote-generation";
 import { getGenerator } from "./campaign-generator-registry";
-import type { GeneratorRunRequest } from "./campaign-generator-types";
+import type {
+  GeneratedDraft,
+  GeneratorRunRequest,
+} from "./campaign-generator-types";
 
 const request: GeneratorRunRequest = {
   generatorId: "council-vote",
@@ -167,5 +171,106 @@ describe("generateCouncilVoteWithAI", () => {
     ).rejects.toThrow();
     expect(send).toHaveBeenCalledTimes(1);
     expect(send).toHaveBeenCalledWith(expect.any(String), controller.signal);
+  });
+});
+
+describe("generateCouncilVoteWithAIStream", () => {
+  const localDraft: GeneratedDraft = {
+    title: "Local council",
+    entityType: "event",
+    summary: "A local draft.",
+    lore: "Local lore.",
+    labels: ["council-vote"],
+    sourceGeneratorId: "council-vote",
+    templateApplied: false,
+  };
+  const foundation = JSON.stringify({
+    title: "The Salt Road Levy",
+    summary: "Emergency funding.",
+    content: "The council debates a levy.",
+    lore: "### Voting Procedure\nSimple majority.",
+    labels: ["council-vote"],
+  });
+  function streamReply(text: string) {
+    return async function* () {
+      yield { type: "complete" as const, text };
+    };
+  }
+
+  it("does not emit a draft or start another turn after cancellation between turns", async () => {
+    const controller = new AbortController();
+    const cancellation = new Error("cancelled");
+    const sendStream = vi.fn(async function* () {
+      yield { type: "complete" as const, text: foundation };
+      controller.abort(cancellation);
+    });
+    const generateDraft = vi.fn(async () => localDraft);
+    const events = [];
+
+    for await (const event of generateCouncilVoteWithAIStream(
+      request,
+      {
+        aiPolicy: { isEnabled: true, isAvailable: true },
+        aiGateway: {
+          complete: vi.fn(),
+          startChat: vi.fn(async () => ({ send: vi.fn(), sendStream })),
+        },
+        generateDraft,
+      },
+      controller.signal,
+    )) {
+      events.push(event);
+    }
+
+    expect(sendStream).toHaveBeenCalledTimes(1);
+    expect(events.filter((event) => event.type === "draft")).toEqual([]);
+    expect(events.filter((event) => event.type === "phase")).toHaveLength(1);
+    expect(generateDraft).not.toHaveBeenCalled();
+  });
+
+  it("uses the local draft when the initial foundation reply is unusable", async () => {
+    const sendStream = vi.fn(streamReply("{}"));
+    const generateDraft = vi.fn(async () => localDraft);
+    const events = [];
+
+    for await (const event of generateCouncilVoteWithAIStream(request, {
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: {
+        complete: vi.fn(),
+        startChat: vi.fn(async () => ({ send: vi.fn(), sendStream })),
+      },
+      generateDraft,
+    })) {
+      events.push(event);
+    }
+
+    expect(sendStream).toHaveBeenCalledTimes(1);
+    expect(generateDraft).toHaveBeenCalledOnce();
+    expect(events.at(-1)).toEqual({ type: "draft", draft: localDraft });
+  });
+
+  it("uses the local draft when the initial paths reply is unusable", async () => {
+    const sendStream = vi
+      .fn()
+      .mockImplementationOnce(streamReply(foundation))
+      .mockImplementationOnce(streamReply(foundation))
+      .mockImplementationOnce(streamReply("{}"));
+    const generateDraft = vi.fn(async () => localDraft);
+    const events = [];
+
+    for await (const event of generateCouncilVoteWithAIStream(request, {
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: {
+        complete: vi.fn(),
+        startChat: vi.fn(async () => ({ send: vi.fn(), sendStream })),
+      },
+      generateDraft,
+    })) {
+      events.push(event);
+    }
+
+    expect(sendStream).toHaveBeenCalledTimes(3);
+    expect(generateDraft).toHaveBeenCalledOnce();
+    expect(events.at(-1)).toEqual({ type: "draft", draft: localDraft });
   });
 });

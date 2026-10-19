@@ -55,6 +55,16 @@ type StreamingModel = {
   >;
 };
 
+function isAborted(err: unknown, signal?: AbortSignal): boolean {
+  return (
+    signal?.aborted === true ||
+    (err !== null &&
+      typeof err === "object" &&
+      "name" in err &&
+      err.name === "AbortError")
+  );
+}
+
 async function streamModelPreview(
   model: StreamingModel,
   request: unknown,
@@ -115,19 +125,13 @@ export class GeneratorAITransport {
     useAI: boolean | undefined,
     aiAttempt: () => Promise<PublicGeneratorOutput>,
     local: () => PublicGeneratorOutput,
+    signal?: AbortSignal,
   ): Promise<GeneratorOutput> {
     if (useAI !== false) {
       try {
         return toSeoOutput(await aiAttempt());
       } catch (err) {
-        if (
-          err &&
-          typeof err === "object" &&
-          "name" in err &&
-          err.name === "AbortError"
-        ) {
-          throw err;
-        }
+        if (isAborted(err, signal)) throw err;
         // Distinguish routine, user-facing failure classes (offline, rate
         // limits, quota, safety) from a genuine AI-pipeline defect (e.g. an
         // unparseable response). Both fall back to local tables, but an

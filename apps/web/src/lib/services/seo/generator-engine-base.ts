@@ -54,8 +54,9 @@ export class GeneratorEngineBase {
     useAI: boolean | undefined,
     aiAttempt: () => Promise<PublicGeneratorOutput>,
     local: () => PublicGeneratorOutput,
+    signal?: AbortSignal,
   ): Promise<GeneratorOutput> {
-    return this.transport.runWithAIFallback(useAI, aiAttempt, local);
+    return this.transport.runWithAIFallback(useAI, aiAttempt, local, signal);
   }
 
   protected runModel(

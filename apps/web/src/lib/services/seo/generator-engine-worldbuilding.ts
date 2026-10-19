@@ -133,6 +133,7 @@ export class GeneratorEngineWorldbuilding extends GeneratorEngineCore {
         return output;
       },
       () => generateCouncilVoteLocal(councilVoteOptions),
+      signal,
     );
   }
 
