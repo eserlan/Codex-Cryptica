@@ -7,12 +7,21 @@ import type {
   VTTMessage,
 } from "../../../types/vtt";
 import type { Point } from "schema";
-import { normalizeToken, nextZIndexInLayer, type MapLayer } from "map-engine";
+import { normalizeToken, type MapLayer } from "map-engine";
 import { VTTTokenDefaults } from "./vtt-token-defaults";
 import { noteCollapseUpdate } from "./vtt-token-notes";
 export { NOTE_DEFAULT_COLOR } from "./vtt-token-notes";
-import { VTTTokenGeometry, isHexShaped } from "./vtt-token-geometry";
+import { VTTTokenGeometry } from "./vtt-token-geometry";
+import {
+  hydrateTokenRecords,
+  cloneTokenRecord,
+  removeTokenRecord,
+  childTokenNotes,
+  layerEdgeZIndex,
+} from "./vtt-token-records";
 import { updatedToken, moveLinkedTokens } from "./vtt-token-updates";
+import { VTTTokenOwnership } from "./vtt-token-ownership";
+import { VTTTokenSelection } from "./vtt-token-selection";
 import { VTTTokenSync } from "./vtt-token-sync";
 import { type IdGenerator, systemIdGenerator } from "$lib/utils/runtime-deps";
 
@@ -56,6 +65,8 @@ export class VTTTokenManager {
   private geometry: VTTTokenGeometry;
   private defaults: VTTTokenDefaults;
   private sync: VTTTokenSync;
+  private ownership: VTTTokenOwnership;
+  private tokenSelection: VTTTokenSelection;
 
   constructor(
     private deps: VTTTokenManagerDependencies,
@@ -68,6 +79,10 @@ export class VTTTokenManager {
     );
     this.geometry = new VTTTokenGeometry(() => this.deps.getMapStore());
     this.sync = new VTTTokenSync(this.deps, this);
+    this.ownership = new VTTTokenOwnership(this.deps, this);
+    this.tokenSelection = new VTTTokenSelection(this, (message) =>
+      this.deps.emit(message),
+    );
   }
 
   reset() {
@@ -87,87 +102,42 @@ export class VTTTokenManager {
     selection: string | null,
     selectedTokens: Set<string>,
   ) {
-    const vault = this.deps.getVault?.();
-    const hydratedTokens: Record<string, Token> = {};
-    for (const id in tokens) {
-      const token = tokens[id];
-      if (token.entityId && vault?.entities?.[token.entityId]) {
-        const entity = vault.entities[token.entityId];
-        hydratedTokens[id] = {
-          ...token,
-          name: entity.title || token.name,
-          noteBody:
-            token.kind === "note" && entity.content !== undefined
-              ? entity.content
-              : token.noteBody,
-        };
-      } else {
-        hydratedTokens[id] = token;
-      }
-    }
-    this.tokens = hydratedTokens;
+    this.tokens = hydrateTokenRecords(tokens, this.deps.getVault?.());
     this.selection = selection;
     this.selectedTokens = selectedTokens;
   }
 
   setSelection(tokenId: string | null) {
-    if (tokenId && !this.tokens[tokenId]) return;
-    this.selection = tokenId;
-    this.selectedTokens = new Set(tokenId ? [tokenId] : []);
-    this.deps.emit({ type: "TOKEN_SELECT", tokenId });
+    this.tokenSelection.setSelection(tokenId);
   }
 
   setMultiSelection(tokenIds: string[]) {
-    this.selectedTokens = new Set(tokenIds);
-    // Also set primary selection to first token
-    this.selection = tokenIds.length > 0 ? tokenIds[0] : null;
-    if (this.selection) {
-      this.deps.emit({ type: "TOKEN_SELECT", tokenId: this.selection });
-    }
+    this.tokenSelection.setMultiSelection(tokenIds);
   }
 
   addToSelection(tokenId: string) {
-    if (!this.tokens[tokenId]) return;
-    const next = new Set(this.selectedTokens);
-    next.add(tokenId);
-    this.selectedTokens = next;
-    if (!this.selection) this.selection = tokenId;
+    this.tokenSelection.addToSelection(tokenId);
   }
 
   removeFromSelection(tokenId: string) {
-    const next = new Set(this.selectedTokens);
-    next.delete(tokenId);
-    this.selectedTokens = next;
-    if (this.selection === tokenId) {
-      this.selection = next.values().next().value ?? null;
-    }
+    this.tokenSelection.removeFromSelection(tokenId);
   }
 
   clearSelection() {
-    this.selection = null;
-    this.selectedTokens = new Set();
-    this.deps.emit({ type: "TOKEN_SELECT", tokenId: null });
+    this.tokenSelection.clearSelection();
   }
 
   toggleTokenVisibility(tokenId: string) {
-    const token = this.tokens[tokenId];
-    if (!token) return;
-    const next = token.visibleTo === "all" ? "gm-only" : "all";
-    // Guests were sent an empty body while the note was GM-only (see
-    // redactGmOnlyNote), so revealing it has to carry the text along.
-    if (next === "all" && token.kind === "note") {
-      return this.updateToken(tokenId, {
-        visibleTo: next,
-        noteBody: token.noteBody ?? "",
-      });
-    }
-    return this.updateToken(tokenId, { visibleTo: next });
+    return this.ownership.toggleTokenVisibility(tokenId);
   }
 
   toggleNoteCollapsed(tokenId: string) {
     const token = this.tokens[tokenId];
     if (!token || token.kind !== "note") return null;
-    const updates = noteCollapseUpdate(token, this.deps.getMapStore().gridSize);
+    const updates = noteCollapseUpdate(
+      token,
+      () => this.deps.getMapStore().gridSize,
+    );
     return updates ? this.updateToken(tokenId, updates) : null;
   }
 
@@ -182,10 +152,7 @@ export class VTTTokenManager {
     peerId: string | null,
     isHost: boolean,
   ): boolean {
-    const token = this.tokens[tokenId];
-    if (!token) return false;
-    if (isHost) return true;
-    return token.visibleTo !== "gm-only";
+    return this.ownership.isTokenVisible(tokenId, peerId, isHost);
   }
 
   getTokenDefaults(input: TokenCreationInput): Token {
@@ -213,29 +180,9 @@ export class VTTTokenManager {
   }
 
   addToken(input: TokenCreationInput, silent = false) {
-    const token = this.getTokenDefaults(input);
-    const snapped =
-      (token.kind === "tile"
-        ? this.snapTileToHexCell(
-            { x: token.x, y: token.y },
-            { width: token.width, height: token.height },
-          )
-        : null) ??
-      this.clampAndSnapPosition(
-        { x: token.x, y: token.y },
-        { width: token.width, height: token.height },
-        {
-          snapToTheGrid: token.kind !== "note",
-          hexShaped: isHexShaped(token.baseShape),
-        },
-      );
-    const positioned = {
-      ...token,
-      x: snapped.x,
-      y: snapped.y,
-      width: snapped.width,
-      height: snapped.height,
-    };
+    const positioned = this.geometry.positionToken(
+      this.getTokenDefaults(input),
+    );
     this.tokens = {
       ...this.tokens,
       [positioned.id]: positioned,
@@ -247,11 +194,7 @@ export class VTTTokenManager {
     if (positioned.kind !== "tile" && positioned.kind !== "note") {
       this.deps.addTokenToInitiativeState?.(positioned.id);
     }
-    if (!silent) {
-      this.deps.emit({ type: "TOKEN_ADDED", token: positioned });
-    } else {
-      this.deps.persistDraft();
-    }
+    this.sync.publish({ type: "TOKEN_ADDED", token: positioned }, silent);
     return positioned;
   }
 
@@ -308,27 +251,17 @@ export class VTTTokenManager {
   bringTokenToFront(tokenId: string) {
     const token = this.tokens[tokenId];
     if (!token) return null;
-    // "Front" is scoped to the token's own layer. Scan directly so this hot
-    // interaction does not allocate a filtered array on every invocation.
-    let maxZ = -1;
-    for (const item of Object.values(this.tokens)) {
-      if (item.layer === token.layer && Number.isFinite(item.zIndex)) {
-        maxZ = Math.max(maxZ, item.zIndex);
-      }
-    }
-    return this.updateToken(tokenId, { zIndex: maxZ + 1 });
+    return this.updateToken(tokenId, {
+      zIndex: layerEdgeZIndex(this.allTokens, token.layer, true),
+    });
   }
 
   sendTokenToBack(tokenId: string) {
     const token = this.tokens[tokenId];
     if (!token) return null;
-    let minZ = 0;
-    for (const item of Object.values(this.tokens)) {
-      if (item.layer === token.layer && Number.isFinite(item.zIndex)) {
-        minZ = Math.min(minZ, item.zIndex);
-      }
-    }
-    return this.updateToken(tokenId, { zIndex: minZ - 1 });
+    return this.updateToken(tokenId, {
+      zIndex: layerEdgeZIndex(this.allTokens, token.layer, false),
+    });
   }
 
   requestTokenMove(tokenId: string, x: number, y: number, persistent = false) {
@@ -350,38 +283,18 @@ export class VTTTokenManager {
   removeToken(tokenId: string, silent = false) {
     if (!this.tokens[tokenId]) return false;
     this.sync.confirm("move", tokenId);
-    const nextTokens = { ...this.tokens };
-    delete nextTokens[tokenId];
-    for (const key in nextTokens) {
-      if (nextTokens[key].parentTokenId === tokenId) {
-        nextTokens[key] = {
-          ...nextTokens[key],
-          parentTokenId: undefined,
-        };
-      }
-    }
-    this.tokens = nextTokens;
+    this.tokens = removeTokenRecord(this.tokens, tokenId);
     this.deps.removeTokenFromInitiativeState?.(tokenId);
     if (this.selection === tokenId) {
       this.selection = null;
     }
 
-    if (!silent) {
-      this.deps.emit({ type: "TOKEN_REMOVED", tokenId });
-    } else {
-      this.deps.persistDraft();
-    }
+    this.sync.publish({ type: "TOKEN_REMOVED", tokenId }, silent);
     return true;
   }
 
   getChildNotes(parentTokenId: string): Token[] {
-    const result: Token[] = [];
-    for (const key in this.tokens) {
-      if (this.tokens[key].parentTokenId === parentTokenId) {
-        result.push(this.tokens[key]);
-      }
-    }
-    return result;
+    return childTokenNotes(this.tokens, parentTokenId);
   }
 
   linkTokens(childTokenId: string, parentTokenId: string) {
@@ -394,44 +307,16 @@ export class VTTTokenManager {
     return this.updateToken(childTokenId, { parentTokenId: undefined });
   }
 
-  private getClonedTokenName(sourceName: string) {
-    const trimmed = sourceName.trim() || "Token";
-    const baseName = trimmed.replace(/\s+#\d+$/, "");
-    const pattern = new RegExp(
-      `^${baseName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?:\\s+#(\\d+))?$`,
-    );
-    let highest = 1;
-
-    for (const token of this.allTokens) {
-      const match = token.name.trim().match(pattern);
-      if (!match) continue;
-      const suffix = match[1] ? Number(match[1]) : 1;
-      if (suffix > highest) {
-        highest = suffix;
-      }
-    }
-
-    return `${baseName} #${highest + 1}`;
-  }
-
   cloneToken(tokenId: string, silent = false) {
     const source = this.tokens[tokenId];
     if (!source) return null;
 
-    const mapStore = this.deps.getMapStore();
-    const offset = mapStore.gridSize || 50;
-    const sameLayer = this.allTokens.filter(
-      (token) => token.layer === source.layer,
+    const clone = cloneTokenRecord(
+      source,
+      this.allTokens,
+      this.deps.getMapStore().gridSize,
+      this.idGenerator,
     );
-
-    const clone: Token = {
-      ...source,
-      id: this.idGenerator.uuid(),
-      name: this.getClonedTokenName(source.name),
-      x: source.x + offset,
-      y: source.y + offset,
-      zIndex: nextZIndexInLayer(sameLayer),
-    };
 
     this.tokens = {
       ...this.tokens,
@@ -443,11 +328,7 @@ export class VTTTokenManager {
     }
     this.selection = clone.id;
 
-    if (!silent) {
-      this.deps.emit({ type: "TOKEN_ADDED", token: clone });
-    } else {
-      this.deps.persistDraft();
-    }
+    this.sync.publish({ type: "TOKEN_ADDED", token: clone }, silent);
 
     return clone;
   }
@@ -457,72 +338,19 @@ export class VTTTokenManager {
     ownerPeerId: string | null,
     ownerGuestName: string | null = null,
   ) {
-    const token = this.tokens[tokenId];
-    if (!token) return null;
-    return this.updateToken(tokenId, {
-      ownerPeerId,
-      ownerGuestName,
-      visibleTo: token.visibleTo === "gm-only" ? "gm-only" : "all",
-    });
+    return this.ownership.setTokenOwner(tokenId, ownerPeerId, ownerGuestName);
   }
 
   rebindGuestOwnership(peerId: string, guestName: string) {
-    let changed = false;
-    // ⚡ Bolt Optimization: Replace Object.fromEntries(Object.entries().map()) with imperative loop
-    const nextTokens: Record<string, Token> = {};
-
-    for (const tokenId in this.tokens) {
-      if (!Object.hasOwn(this.tokens, tokenId)) continue;
-      const token = this.tokens[tokenId];
-      if (token.ownerGuestName === guestName && token.ownerPeerId !== peerId) {
-        changed = true;
-        nextTokens[tokenId] = {
-          ...token,
-          ownerPeerId: peerId,
-        };
-      } else {
-        nextTokens[tokenId] = token;
-      }
-    }
-
-    if (!changed) return false;
-    this.tokens = nextTokens;
-    this.deps.broadcastSessionSnapshotNow();
-    return true;
+    return this.ownership.rebindGuestOwnership(peerId, guestName);
   }
 
   clearGuestOwnership(peerId: string) {
-    let changed = false;
-    // ⚡ Bolt Optimization: Replace Object.fromEntries(Object.entries().map()) with imperative loop
-    const nextTokens: Record<string, Token> = {};
-
-    for (const tokenId in this.tokens) {
-      if (!Object.hasOwn(this.tokens, tokenId)) continue;
-      const token = this.tokens[tokenId];
-      if (token.ownerPeerId === peerId) {
-        changed = true;
-        nextTokens[tokenId] = {
-          ...token,
-          ownerPeerId: null,
-        };
-      } else {
-        nextTokens[tokenId] = token;
-      }
-    }
-
-    if (!changed) return false;
-    this.tokens = nextTokens;
-    this.deps.broadcastSessionSnapshotNow();
-    return true;
+    return this.ownership.clearGuestOwnership(peerId);
   }
 
   canMoveToken(tokenId: string, peerId: string | null, isHost = false) {
-    const token = this.tokens[tokenId];
-    if (!token) return false;
-    if (token.locked) return false;
-    if (token.layer && this.deps.isLayerLocked(token.layer)) return false;
-    if (isHost) return true;
-    return token.ownerPeerId !== null && token.ownerPeerId === peerId;
+    return this.ownership.canMoveToken(tokenId, peerId, isHost);
   }
 
   canViewToken(tokenId: string, peerId: string | null, isHost = false) {

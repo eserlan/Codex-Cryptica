@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { normalizeTokenVisibility } from "map-engine";
 import type { TokenStateUpdateInput } from "../../../types/vtt";
 import { createFullEncounterSessionFixture } from "./map-session-test-fixtures";
 import { VTTTokenSync } from "./vtt-token-sync";
@@ -16,7 +17,13 @@ function setup() {
       (id: string, updates: TokenStateUpdateInput, _silent: boolean) => {
         const current = session.tokens[id];
         if (!current) return null;
-        const next = { ...current, ...updates };
+        const next = {
+          ...current,
+          ...updates,
+          visibleTo: normalizeTokenVisibility(
+            updates.visibleTo ?? current.visibleTo,
+          ),
+        };
         session.tokens = { ...session.tokens, [id]: next };
         return next;
       },
@@ -28,6 +35,16 @@ function setup() {
 afterEach(() => vi.useRealTimers());
 
 describe("token sync publication", () => {
+  it("publishes local lifecycle changes or persists them when silent", () => {
+    const { sync, deps } = setup();
+    const message = { type: "TOKEN_REMOVED" as const, tokenId: "token-1" };
+    sync.publish(message, false);
+    expect(deps.emit).toHaveBeenCalledWith(message);
+    sync.publish(message, true);
+    expect(deps.emit).toHaveBeenCalledOnce();
+    expect(deps.persistDraft).toHaveBeenCalledOnce();
+  });
+
   it("persists silent changes without emitting", () => {
     const { sync, deps } = setup();
     sync.publishUpdate("token-1", { x: 20 }, true);

@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { Token } from "../../../types/vtt";
 import {
   collapsedNoteSize,
@@ -34,21 +34,33 @@ describe("token notes", () => {
   });
 
   it("folds and unfolds using the original dimensions", () => {
-    const update = noteCollapseUpdate(note, 50)!;
+    const update = noteCollapseUpdate(note, () => 50)!;
     expect(update).toEqual({
       width: 25,
       height: 25,
       noteCollapsedFrom: { width: 90, height: 120 },
     });
-    expect(noteCollapseUpdate({ ...note, ...update }, 50)).toEqual({
+    expect(noteCollapseUpdate({ ...note, ...update }, () => 50)).toEqual({
       width: 90,
       height: 120,
       noteCollapsedFrom: undefined,
     });
   });
 
+  it("restores a collapsed note without consulting the map", () => {
+    const getGridSize = vi.fn(() => {
+      throw new Error("map unavailable");
+    });
+    const token = { ...note, noteCollapsedFrom: { width: 90, height: 120 } };
+    expect(noteCollapseUpdate(token, getGridSize)).toMatchObject({
+      width: 90,
+      height: 120,
+    });
+    expect(getGridSize).not.toHaveBeenCalled();
+  });
+
   it("rejects missing records and non-note tokens", () => {
-    expect(noteCollapseUpdate(undefined, 50)).toBeNull();
-    expect(noteCollapseUpdate({ ...note, kind: "token" }, 50)).toBeNull();
+    expect(noteCollapseUpdate(undefined, () => 50)).toBeNull();
+    expect(noteCollapseUpdate({ ...note, kind: "token" }, () => 50)).toBeNull();
   });
 });

@@ -1,3 +1,4 @@
+import type { Token } from "../../../types/vtt";
 import type { Point } from "schema";
 import {
   getHexRange,
@@ -83,6 +84,18 @@ function findBoundedHexPosition(
 /** Grid alignment, map bounds and viewport coordinates for tokens. */
 export class VTTTokenGeometry {
   constructor(private getMapStore: () => any) {}
+
+  positionToken(token: Token): Token {
+    const point = { x: token.x, y: token.y };
+    const size = { width: token.width, height: token.height };
+    const snapped =
+      (token.kind === "tile" ? this.snapTileToHexCell(point, size) : null) ??
+      this.clampAndSnapPosition(point, size, {
+        snapToTheGrid: token.kind !== "note",
+        hexShaped: isHexShaped(token.baseShape),
+      });
+    return { ...token, ...snapped };
+  }
 
   /**
    * The visible hex grid, or null on a square/hidden grid. Tiles on a hex grid

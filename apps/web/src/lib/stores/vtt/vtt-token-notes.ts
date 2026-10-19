@@ -1,8 +1,4 @@
-import type {
-  Token,
-  TokenCreationInput,
-  TokenStateUpdateInput,
-} from "../../../types/vtt";
+import type { Token, TokenCreationInput } from "../../../types/vtt";
 import { isNoteCollapsed, NOTE_COLLAPSED_SCALE } from "map-engine";
 
 /** Sticky-note amber distinguishes GM annotations from character tokens. */
@@ -31,8 +27,8 @@ export function noteDefaults(input: TokenCreationInput, gridSize: number) {
 
 export function noteCollapseUpdate(
   token: Token | undefined,
-  gridSize: number,
-): TokenStateUpdateInput | null {
+  getGridSize: () => number,
+): Pick<Token, "width" | "height" | "noteCollapsedFrom"> | null {
   if (!token || token.kind !== "note") return null;
   if (isNoteCollapsed(token)) {
     const restored = token.noteCollapsedFrom!;
@@ -42,7 +38,7 @@ export function noteCollapseUpdate(
       noteCollapsedFrom: undefined,
     };
   }
-  const size = collapsedNoteSize(gridSize);
+  const size = collapsedNoteSize(getGridSize());
   return {
     width: size,
     height: size,

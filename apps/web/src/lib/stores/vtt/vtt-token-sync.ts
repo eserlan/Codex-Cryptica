@@ -45,6 +45,11 @@ export class VTTTokenSync {
     private session: TokenSyncSession,
   ) {}
 
+  publish(message: VTTMessage, silent: boolean) {
+    if (silent) this.deps.persistDraft();
+    else this.deps.emit(message);
+  }
+
   publishUpdate(
     tokenId: string,
     updates: TokenStateUpdateInput,

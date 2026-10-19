@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { VTTTokenDefaults } from "./vtt-token-defaults";
 import { hexToPoint, pointToHex } from "map-engine";
 import {
   VTTTokenGeometry,
@@ -19,6 +20,32 @@ function geometry(overrides = {}) {
 }
 
 describe("token geometry", () => {
+  it("positions creatures on cells while keeping annotations off-grid", () => {
+    const defaults = new VTTTokenDefaults(
+      { getMapStore: () => ({}), getActiveLayer: () => "token" },
+      () => 0,
+    );
+    const creature = defaults.getTokenDefaults({ name: "Hero", x: 37, y: 61 });
+    expect(geometry().positionToken(creature)).toMatchObject({
+      x: 50,
+      y: 50,
+      width: 50,
+      height: 50,
+    });
+    const note = defaults.getTokenDefaults({
+      name: "Note",
+      x: 37,
+      y: 61,
+      kind: "note",
+    });
+    expect(geometry().positionToken(note)).toMatchObject({
+      x: 37,
+      y: 61,
+      width: 25,
+      height: 25,
+    });
+  });
+
   it("aligns square cells, retaining supported fractional sizes", () => {
     expect(
       geometry().clampAndSnapPosition(
