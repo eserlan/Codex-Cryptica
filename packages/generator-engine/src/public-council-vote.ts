@@ -340,6 +340,7 @@ Follow these rules when writing the paths:
 7. Coalition diversity: The three paths must construct genuinely distinct valid coalitions representing different political approaches: the smallest viable coalition via direct transactional logrolling or targeted favours; the broader/riskier alternative via procedural mechanisms, recusal rules, committee bylaws, or exposing secrets/kompromat; and the costly best solution via durable moral or structural resolution of the core dilemma. Account for both councillor dependencies and persuasion conditions to target different voting blocs rather than minor tweaks to the same core bloc.
 8. Concise operational narrative: Keep full motivations, personal histories, and worldviews with the councillors in the foundation pass. Do not re-narrate a councillor's biography or emotional justification in the paths section. Make the coalition paths concise, highlighting only their distinct political strategy, the specific action/leverage applied per targeted councillor, any triggered dependency cascade, immediate operational risks, lasting consequences, and the resulting vote tally.
 9. Write every section as scene-appropriate prose. Do not restate the wording of these rules verbatim in the output, and never include prompt instructions, placeholder-name mapping notes, or any other meta-commentary about how the piece was generated.
+10. For each of the three paths, include a machine-checkable final ballot after the prose: one line for every councillor in the exact format "- **Name** — Support — Reason: ..." (use Oppose, Abstain, or Undecided as appropriate). Include every seat exactly once, carrying untargeted stances forward. End each ballot with "Tally: Support N, Oppose N, Abstain N, Undecided N". These are the projected outcomes under the stated procedure, not guaranteed ballots under a secret ballot. Do not omit the seat-by-seat outcome or tally.
 Before returning, simulate the vote from start to finish and check every path against the rules above: list the final vote of every councillor per path, seat by seat, including councillors the path did not target — an untargeted councillor's vote carries over unchanged from their established stance unless the path explains why it moved — then recalculate the tally against the established threshold and double-check the arithmetic; confirm no path relies on an unexplained vote change, ignores an opposing or abstaining councillor, endangers an already-secured vote, violates ballot secrecy in any path, or invents or uses a procedural mechanism not established above; confirm every dependency used is one that was actually established above, in the direction it was defined, with an effect no larger than what it describes; confirm the smallest viable coalition targets only councillors whose support is actually needed to clear the threshold, and that any extra vote is clearly marked as insurance, not required; confirm no path — including the costly best solution — alters the proposal itself if the objective requires it to pass unchanged; confirm the costly best solution persuades each targeted councillor only through their exact established condition and that its cost is a lasting consequence, not merely time or resources spent; confirm "Possible Paths" is ordered smallest viable coalition, then broader/riskier alternative, then the costly best solution, each using a distinct political approach; confirm the narrative stays concise without repeating councillor biographies; confirm "Antagonist Influence" is not contradicted by anything described in these new sections; and confirm the output contains no prompt instructions, placeholder-name notes, or generation commentary. Fix any mismatch before responding.
 Return only the JSON object. Do not include markdown code block formatting like \`\`\`json.`;
 
@@ -380,14 +381,359 @@ export interface CouncilVotePathsAuditResult {
   issues: string[];
 }
 
+type CouncilVotePathTier = "smallest" | "alternative" | "best";
+type CouncilVotePosition = "Support" | "Oppose" | "Abstain" | "Undecided";
+type CouncilVoteInitialPosition = CouncilVotePosition | "Leaning" | "Unknown";
+
+const TIER_PATTERNS: Record<CouncilVotePathTier, RegExp> = {
+  smallest: /\b(?:smallest|minimal|minimum)\s+(?:viable\s+)?coalition\b/i,
+  alternative: /\b(?:broader|alternative|riskier)\b/i,
+  best: /\b(?:costly\s+best|best\s+solution)\b/i,
+};
+
+function councilVoteTiers(text: string): Map<CouncilVotePathTier, string> {
+  const matches = (
+    Object.entries(TIER_PATTERNS) as [CouncilVotePathTier, RegExp][]
+  )
+    .flatMap(([tier, pattern]) => {
+      const headingPattern = new RegExp(
+        `^#{1,6}[^\\n]*${pattern.source}`,
+        "im",
+      );
+      const match = headingPattern.exec(text);
+      return match ? [{ tier, index: match.index }] : [];
+    })
+    .sort((a, b) => a.index - b.index);
+  const tiers = new Map<CouncilVotePathTier, string>();
+  for (let index = 0; index < matches.length; index += 1) {
+    const current = matches[index];
+    const end = matches[index + 1]?.index ?? text.length;
+    tiers.set(current.tier, text.slice(current.index, end));
+  }
+  return tiers;
+}
+
+function normalizedPosition(
+  position: CouncilVoteInitialPosition,
+): CouncilVotePosition {
+  return position === "Leaning" || position === "Unknown"
+    ? "Undecided"
+    : position;
+}
+
+interface CouncilVoteBallotRow {
+  name: string;
+  position: CouncilVotePosition;
+  reason: string;
+}
+
+interface CouncilVoteMemberPosition {
+  name: string;
+  position: CouncilVotePosition;
+}
+
+function readCouncilVoteMemberPositions(foundationLore: string): {
+  section: string;
+  members: CouncilVoteMemberPosition[];
+} {
+  const section =
+    foundationLore.match(
+      /###\s*Council Members\s*\n([\s\S]*?)(?=\n###\s|$)/i,
+    )?.[1] ?? "";
+  const members = [
+    ...section.matchAll(
+      /^\s*-\s*\*\*(.+?)\*\*[^\n]*?Initial stance:\s*(Support|Oppose|Abstain|Undecided|Leaning|Unknown)\b[^\n]*$/gim,
+    ),
+  ].map((match) => ({
+    name: match[1].trim(),
+    position: normalizedPosition(match[2] as CouncilVoteInitialPosition),
+  }));
+  return { section, members };
+}
+
+function readCouncilVoteBallotRows(text: string): CouncilVoteBallotRow[] {
+  return [
+    ...text.matchAll(
+      /^\s*-\s*\*\*(.+?)\*\*\s*[—:-]\s*(Support|Oppose|Abstain|Undecided)\s*[—:-]\s*Reason:\s*([^\n]+)$/gim,
+    ),
+  ].map((match) => ({
+    name: match[1].trim(),
+    position: match[2] as CouncilVotePosition,
+    reason: match[3].trim(),
+  }));
+}
+
+function auditBallotRoster(
+  tier: CouncilVotePathTier,
+  members: CouncilVoteMemberPosition[],
+  rows: CouncilVoteBallotRow[],
+  issues: string[],
+): Map<string, CouncilVoteBallotRow> {
+  const byName = new Map(
+    rows.map((row) => [row.name.toLocaleLowerCase(), row]),
+  );
+  const startingPositions = new Map(
+    members.map((member) => [member.name.toLowerCase(), member.position]),
+  );
+  auditMissingBallotMembers(tier, members, byName, issues);
+  auditUnknownBallotMembers(tier, members, rows, issues);
+  auditMisdescribedCarryovers(tier, startingPositions, rows, issues);
+  if (rows.length !== members.length || byName.size !== members.length) {
+    issues.push(
+      `${tier} coalition ballot must list each councillor exactly once.`,
+    );
+  }
+  return byName;
+}
+
+function auditMissingBallotMembers(
+  tier: CouncilVotePathTier,
+  members: CouncilVoteMemberPosition[],
+  byName: Map<string, CouncilVoteBallotRow>,
+  issues: string[],
+): void {
+  for (const member of members) {
+    if (!byName.has(member.name.toLocaleLowerCase())) {
+      issues.push(
+        `${tier} coalition ballot is missing ${member.name}'s final vote and reason.`,
+      );
+    }
+  }
+}
+
+function auditUnknownBallotMembers(
+  tier: CouncilVotePathTier,
+  members: CouncilVoteMemberPosition[],
+  rows: CouncilVoteBallotRow[],
+  issues: string[],
+): void {
+  const knownNames = new Set(
+    members.map((member) => member.name.toLowerCase()),
+  );
+  for (const row of rows) {
+    if (!knownNames.has(row.name.toLowerCase())) {
+      issues.push(
+        `${tier} coalition ballot includes unknown councillor ${row.name}.`,
+      );
+    }
+  }
+}
+
+function auditMisdescribedCarryovers(
+  tier: CouncilVotePathTier,
+  startingPositions: Map<string, CouncilVotePosition>,
+  rows: CouncilVoteBallotRow[],
+  issues: string[],
+): void {
+  for (const row of rows) {
+    const initialPosition = startingPositions.get(row.name.toLowerCase());
+    if (
+      initialPosition &&
+      /\b(?:carry\s+over|carries\s+over|carrying\s+over|unchanged|remains?\s+(?:as|at)|keeps?\s+(?:their\s+)?(?:initial|original)\s+(?:vote|position))\b/i.test(
+        row.reason,
+      ) &&
+      row.position !== initialPosition
+    ) {
+      issues.push(
+        `${tier} coalition changes ${row.name}'s vote while describing it as carried over unchanged.`,
+      );
+    }
+  }
+}
+
+function countBallotPositions(rows: CouncilVoteBallotRow[]) {
+  return rows.reduce(
+    (counts, row) => {
+      counts[row.position] += 1;
+      return counts;
+    },
+    { Support: 0, Oppose: 0, Abstain: 0, Undecided: 0 },
+  );
+}
+
+function auditBallotTally(
+  tier: CouncilVotePathTier,
+  text: string,
+  rows: CouncilVoteBallotRow[],
+  issues: string[],
+) {
+  const match = text.match(
+    /\bTally:\s*Support\s+(\d+)\s*,\s*Oppose\s+(\d+)\s*,\s*Abstain\s+(\d+)\s*,\s*Undecided\s+(\d+)/i,
+  );
+  if (!match) {
+    issues.push(`${tier} coalition ballot is missing its structured tally.`);
+    return null;
+  }
+  const expected = countBallotPositions(rows);
+  const stated = match.slice(1).map(Number);
+  const actual = [
+    expected.Support,
+    expected.Oppose,
+    expected.Abstain,
+    expected.Undecided,
+  ];
+  if (stated.some((count, index) => count !== actual[index])) {
+    issues.push(
+      `${tier} coalition tally does not match its seat-by-seat ballot.`,
+    );
+  }
+  return expected;
+}
+
+function auditBallotThreshold(
+  tier: CouncilVotePathTier,
+  foundationLore: string,
+  seatCount: number,
+  supportVotes: number,
+  issues: string[],
+): void {
+  const procedure =
+    foundationLore.match(
+      /###\s*Voting Procedure\s*\n([\s\S]*?)(?=\n###\s|$)/i,
+    )?.[1] ?? "";
+  const threshold = approvalThreshold(procedure, seatCount);
+  if (threshold === null) {
+    issues.push(
+      "Foundation voting procedure does not state a parseable approval threshold.",
+    );
+  } else if (supportVotes < threshold) {
+    issues.push(
+      `${tier} coalition ballot projects ${supportVotes} support votes, below the ${threshold}-vote approval threshold.`,
+    );
+  }
+}
+
+function auditDependencyResponses(
+  tier: CouncilVotePathTier,
+  foundationSection: string,
+  members: CouncilVoteMemberPosition[],
+  ballot: Map<string, CouncilVoteBallotRow>,
+  issues: string[],
+): void {
+  const memberLines = foundationSection.split(/\n(?=\s*-\s*\*\*)/);
+  for (const line of memberLines) {
+    auditDependencyResponseLine(tier, line, members, ballot, issues);
+  }
+}
+
+function auditDependencyResponseLine(
+  tier: CouncilVotePathTier,
+  line: string,
+  members: CouncilVoteMemberPosition[],
+  ballot: Map<string, CouncilVoteBallotRow>,
+  issues: string[],
+): void {
+  const sourceMatch = line.match(/^\s*-\s*\*\*(.+?)\*\*/);
+  const dependencyMatch = line.match(
+    /\bdepends?\s+on\s+(?:the\s+vote\s+of\s+)?(?:\*{1,2})?([^*.,;]+?)(?:\*{1,2})?(?:[.,;]|$)/i,
+  );
+  if (!sourceMatch || !dependencyMatch) return;
+  const dependent = members.find(
+    (member) =>
+      member.name.toLowerCase() === sourceMatch[1].trim().toLowerCase(),
+  );
+  const target = members.find(
+    (member) =>
+      member.name.toLowerCase() === dependencyMatch[1].trim().toLowerCase(),
+  );
+  if (!dependent || !target) {
+    issues.push(
+      `${tier} coalition cannot validate a dependency with an unknown councillor.`,
+    );
+    return;
+  }
+  const targetRow = ballot.get(target.name.toLowerCase());
+  const dependentRow = ballot.get(dependent.name.toLowerCase());
+  if (targetRow && dependentRow) {
+    auditChangedDependencyTarget(
+      tier,
+      target,
+      dependent,
+      targetRow,
+      dependentRow,
+      issues,
+    );
+  }
+}
+
+function auditChangedDependencyTarget(
+  tier: CouncilVotePathTier,
+  target: CouncilVoteMemberPosition,
+  dependent: CouncilVoteMemberPosition,
+  targetRow: CouncilVoteBallotRow,
+  dependentRow: CouncilVoteBallotRow,
+  issues: string[],
+): void {
+  if (
+    targetRow.position !== target.position &&
+    !/\b(cascade|dependenc|after|because|when)\b/i.test(dependentRow.reason)
+  ) {
+    issues.push(
+      `${tier} coalition changes ${target.name}'s vote without resolving dependent ${dependent.name}'s response.`,
+    );
+  }
+}
+
+function auditPathBallot(
+  tier: CouncilVotePathTier,
+  text: string,
+  foundationLore: string,
+  issues: string[],
+): void {
+  const { section, members } = readCouncilVoteMemberPositions(foundationLore);
+  if (members.length === 0) {
+    issues.push(
+      "Foundation does not expose parseable councillor names and initial stances.",
+    );
+    return;
+  }
+  const rows = readCouncilVoteBallotRows(text);
+  const ballot = auditBallotRoster(tier, members, rows, issues);
+  const tally = auditBallotTally(tier, text, rows, issues);
+  if (
+    rows.length !== members.length ||
+    ballot.size !== members.length ||
+    !tally
+  )
+    return;
+  auditBallotThreshold(
+    tier,
+    foundationLore,
+    members.length,
+    tally.Support,
+    issues,
+  );
+  auditDependencyResponses(tier, section, members, ballot, issues);
+}
+
+function approvalThreshold(procedure: string, seats: number): number | null {
+  const explicit = procedure.match(
+    /(?:approval\s+)?threshold\s*(?:is|of|:)\s*(\d+)\s+(?:of\s+\d+\s+)?(?:votes?|seats?)/i,
+  );
+  if (explicit) return Number(explicit[1]);
+  if (/\b(?:two[\s-]thirds|2\s*\/\s*3)\b/i.test(procedure))
+    return Math.ceil((seats * 2) / 3);
+  if (/\b(?:three[\s-]fifths|3\s*\/\s*5)\b/i.test(procedure))
+    return Math.ceil((seats * 3) / 5);
+  if (/\bunanimous\b/i.test(procedure)) return seats;
+  if (/\bsimple\s+majority\b/i.test(procedure))
+    return Math.floor(seats / 2) + 1;
+  return null;
+}
+
 /**
  * Programmatic consistency audit for generated council-vote paths: checks
- * proposal immutability (no amendment terms), secret ballot discipline, and
- * presence of the expected coalition tiers.
+ * proposal immutability, ballot secrecy, all three coalition tiers, and—when
+ * foundation lore is supplied—seat-by-seat tallies, approval thresholds, and
+ * dependency cascade accounting.
  */
 export function auditCouncilVotePaths(
   paths: CouncilVotePaths,
-  context: { votingRule?: string; fixedProposal?: boolean } = {},
+  context: {
+    votingRule?: string;
+    fixedProposal?: boolean;
+    foundationLore?: string;
+  } = {},
 ): CouncilVotePathsAuditResult {
   const issues: string[] = [];
   const text = paths.possiblePaths || "";
@@ -408,22 +754,28 @@ export function auditCouncilVotePaths(
     }
   }
 
-  const isSecret = /\bsecret\b/i.test(context.votingRule || "");
+  const foundationVotingRule =
+    context.foundationLore?.match(
+      /###\s*Voting Procedure\s*\n([\s\S]*?)(?=\n###\s|$)/i,
+    )?.[1] ?? "";
+  const isSecret = /\bsecret\b/i.test(
+    context.votingRule ?? foundationVotingRule,
+  );
   if (isSecret && /\blocked in\b/i.test(text)) {
     issues.push(
       'Paths treat projected votes as "locked in" under a secret ballot procedure.',
     );
   }
 
-  const hasSmallest =
-    /(smallest|minimal|minimum)\s+(viable\s+)?coalition/i.test(text);
-  const hasAlternative = /(broader|alternative|riskier)/i.test(text);
-  const hasCostly = /(costly\s+best|best\s+solution)/i.test(text);
-
-  if (!hasSmallest && !hasAlternative && !hasCostly) {
-    issues.push(
-      "Paths do not delineate the three expected distinct coalition tiers.",
-    );
+  const tiers = councilVoteTiers(text);
+  for (const tier of Object.keys(TIER_PATTERNS) as CouncilVotePathTier[]) {
+    if (!tiers.has(tier)) {
+      issues.push(`Paths are missing the ${tier} coalition tier.`);
+      continue;
+    }
+    if (context.foundationLore) {
+      auditPathBallot(tier, tiers.get(tier)!, context.foundationLore, issues);
+    }
   }
 
   return {
@@ -467,6 +819,7 @@ export interface CouncilVoteFourTurnArgs<TFoundation, TPaths> {
   pathsRepairPrompt: string;
   readFoundation: (reply: string) => TFoundation | null;
   readPaths: (reply: string) => TPaths | null;
+  validatePaths?: (foundation: TFoundation, paths: TPaths) => boolean;
   onProgress?: (steps: StagedProgressStep[]) => void;
   signal?: AbortSignal;
 }
@@ -525,6 +878,10 @@ export async function runCouncilVoteFourTurn<TFoundation, TPaths>(
     { signal },
   );
   const paths = repairedPaths ?? initialPaths;
+  if (args.validatePaths && !args.validatePaths(foundation, paths)) {
+    progress.abandon("paths", "The generated paths failed consistency checks.");
+    return null;
+  }
   progress.set("paths", "done");
 
   return { foundation, paths };
@@ -551,6 +908,12 @@ export async function runCouncilVoteStaged(
     readFoundation: (reply) =>
       readCouncilVoteFoundation(reply, prompt.resolved),
     readPaths: readCouncilVotePaths,
+    validatePaths: (foundation, paths) =>
+      auditCouncilVotePaths(paths, {
+        votingRule: prompt.resolved.votingRule,
+        fixedProposal: true,
+        foundationLore: foundation.lore,
+      }).valid,
     onProgress: deps.onProgress,
     signal: deps.signal,
   });
