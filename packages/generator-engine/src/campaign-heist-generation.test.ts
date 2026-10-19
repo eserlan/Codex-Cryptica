@@ -8,7 +8,7 @@ import type { GeneratorRunRequest } from "./campaign-generator-types";
 
 const request: GeneratorRunRequest = {
   generatorId: "heist",
-  options: { heistType: "Rescue" },
+  options: { heistType: "Rescue", staged: false },
   themeId: "fantasy",
   useAI: true,
   instructions: "Rescue Nessa from the payroll office.",
