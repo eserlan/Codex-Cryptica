@@ -448,6 +448,7 @@ export {
   buildHeistAuditPrompt,
   buildHeistPrompt,
   buildHeistRepairPrompt,
+  canonicalOptionLabels,
   parseHeistAuditResponse,
   parseHeistResponse,
   generateHeistLocal,
@@ -457,6 +458,18 @@ export {
   type HeistSemanticAudit,
   type ResolvedHeist,
 } from "./public-heist";
+export {
+  generateHeistStaged,
+  checkHeistObjectiveStage,
+  checkHeistSecurityStage,
+  checkHeistResponseStage,
+  assembleHeist,
+  heistStatsLog,
+  type HeistStageId,
+  type HeistStagedDeps,
+  type HeistStagedStats,
+  type HeistStagedResult,
+} from "./heist-staged";
 export { SETTLEMENT_PRESETS } from "./public-settlement-presets";
 export { SETTLEMENT_LEXICON } from "./public-settlement-lexicon";
 export {

@@ -1035,6 +1035,7 @@
     "one-shot-adventure-generator",
     "point-crawl",
     "language-generator",
+    "heist",
   ].includes(slug)}
   {generate}
   progressSteps={showsStagedProgress(slug) ? oneShotProgress : null}
