@@ -19,10 +19,10 @@ const TOV_TEMPLATE_IDS: ReadonlySet<string> = new Set([
 /** Concise in-context rules reference, with the pinned source recorded. */
 export const TOV_LUCK_REFERENCE = {
   summary:
-    "Luck is a pool of points. Gain 1 when a d20 roll fails; spend any number to add 1 per point to a d20 roll.",
+    "Luck is a pool of up to 5 points, starting at 0. Gain 1 when you miss an attack or fail a save; spend it 1-for-1 on a check, or 3 to reroll the d20.",
   earn: TOV_LUCK_FIXTURE.earnCondition,
   spend: TOV_LUCK_FIXTURE.spendCondition,
-  reset: TOV_LUCK_FIXTURE.resetCondition,
+  overflow: TOV_LUCK_FIXTURE.overflowCondition,
   note: "Codex Cryptica never changes Luck for you. Adjust it yourself after each roll.",
   source: `${BFRD_MANIFEST.shortName} ${BFRD_MANIFEST.version} (${BFRD_MANIFEST.license})`,
 } as const;
@@ -76,7 +76,7 @@ export function adjustTovLuck(
     return {
       value: Math.max(current, max),
       clamped: true,
-      reason: `Luck cannot go above ${max}.`,
+      reason: `Luck cannot go above ${max}. Roll ${TOV_LUCK_FIXTURE.overflowResetFormula} and set Luck to the result.`,
     };
   }
   if (requested < min) {

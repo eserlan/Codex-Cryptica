@@ -24,6 +24,14 @@ describe("getPublicContentByLabel", () => {
     });
   });
 
+  it("leads the solo-rpg label with its topic hub", () => {
+    const results = getPublicContentByLabel("solo-rpg");
+    expect(results[0]).toMatchObject({
+      kind: "topic",
+      href: "/topics/solo-rpg",
+    });
+  });
+
   it("adds no topic hub for other public labels", () => {
     const results = getPublicContentByLabel("cyberpunk");
     expect(results.some((r) => r.kind === "topic")).toBe(false);

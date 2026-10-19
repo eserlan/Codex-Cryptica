@@ -77,6 +77,7 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
       "vault-switcher",
       "presentation-templates",
       "entity-templates",
+      "stat-block-import",
       "entity-reports",
     ],
   },

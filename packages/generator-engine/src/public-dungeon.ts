@@ -13,7 +13,8 @@
  */
 
 import type { PublicGeneratorOutput } from "./public-generator-adapters";
-import { BANNED_NAMES, NAME_BAN_PROMPT } from "./public-npc";
+import { NAME_BAN_PROMPT } from "./public-npc";
+import { bannedNamesIn } from "./naming-policy";
 import {
   type Rng,
   defaultRng,
@@ -63,7 +64,7 @@ import {
   formatCampaignContextBlock,
 } from "./campaign-context";
 
-export { dungeonConfig, forGenre };
+export { bannedNamesIn, dungeonConfig, forGenre };
 
 export interface DungeonGeneratorOptions {
   themeId?: string;
@@ -118,6 +119,17 @@ export interface DungeonSector {
   /** Cairn-style room-stocking bucket: Monster / Lore / Special / Trap. */
   stockType?: DungeonStockType;
   stockDetail?: string;
+  /**
+   * What a faction holding this sector has done to it (a camp, a barricade,
+   * ritual preparations), so the sector reads as occupied rather than as it
+   * was before the factions arrived. Staged generation only.
+   */
+  presence?: DungeonSectorPresence[];
+}
+
+export interface DungeonSectorPresence {
+  faction: string;
+  detail: string;
 }
 
 function sectorId(index: number): string {
@@ -343,7 +355,7 @@ function narrativeText(value: unknown): string {
  * to a goal clause, since callers either render it standalone (capitalized)
  * or embed it after their own lead-in ("want to X").
  */
-function sanitizeGoal(s: string): string {
+export function sanitizeGoal(s: string): string {
   return s
     .replace(/^\s*(to|seeks?( to)?|they want to|wants? to)\s+/i, "")
     .trim()
@@ -803,7 +815,7 @@ export function collectSessionTraits(
  * faithfully. The seeds below are starting points to interpret; the structure
  * is the part that must not move.
  */
-function formatDungeonSeeds(
+export function formatDungeonSeeds(
   dungeon: ResolvedDungeon,
   avoidNames: string[] = [],
   avoidTraits: string[] = [],
@@ -902,7 +914,24 @@ function formatSector(s: DungeonSector, idx: number): string {
     s.stockType && s.stockDetail
       ? `\n\n*${s.stockType} — ${endSentence(s.stockDetail)}*`
       : "";
-  return `### Sector ${idx + 1}: ${s.name}\n${s.description}${stockLine}`;
+  const presence = (s.presence ?? [])
+    .map((p) => `\n\n**Held by ${p.faction}:** ${endSentence(p.detail)}`)
+    .join("");
+  return `### Sector ${idx + 1}: ${s.name}\n${s.description}${stockLine}${presence}`;
+}
+
+function parsePresence(v: unknown): DungeonSectorPresence[] | undefined {
+  if (!Array.isArray(v)) return undefined;
+  const entries = v
+    .map(
+      (p) => (p && typeof p === "object" ? p : {}) as Record<string, unknown>,
+    )
+    .map((p) => ({
+      faction: narrativeText(p.faction),
+      detail: narrativeText(p.detail),
+    }))
+    .filter((p) => p.faction && p.detail);
+  return entries.length > 0 ? entries : undefined;
 }
 
 /**
@@ -1096,35 +1125,8 @@ function formatDungeonJsonSchema(dungeon: ResolvedDungeon): string {
  * "Faction A", "The First Faction", "Unnamed Faction", or similar literally
  * lifted from the prompt's placeholder labels rather than naming the faction.
  */
-const PLACEHOLDER_FACTION_NAME =
+export const PLACEHOLDER_FACTION_NAME =
   /^(the\s+)?(first|second|1st|2nd)\s+faction$|faction\s*[ab12]\b|^((an?|the)\s+)?unnamed\s+faction$/i;
-
-/**
- * Banned names appearing in a field that carries an actual name.
- *
- * The ban list has only ever been a request in the prompt — every call site in
- * the codebase injects it into a string and nothing checks the response. That
- * was tolerable while names came from local tables; now that the model names
- * the delve, its sectors, and both factions, the list is worth enforcing.
- *
- * Checked against name fields only. Descriptions legitimately contain words
- * like "stone" and "ash", and flagging those would reject good responses.
- */
-function bannedNamesIn(values: string[], extra: string[] = []): string[] {
-  const found = new Set<string>();
-  // Multi-word session names are matched whole; single words get a word
-  // boundary so "Spine" does not match "Spineless".
-  const forbidden = [...BANNED_NAMES, ...extra].filter((n) => n.trim());
-  for (const value of values) {
-    for (const banned of forbidden) {
-      const escaped = banned.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      if (new RegExp(`\\b${escaped}\\b`, "i").test(value)) {
-        found.add(banned.trim());
-      }
-    }
-  }
-  return [...found];
-}
 
 /**
  * Check the structural invariants the mechanical layer owns.
@@ -1474,6 +1476,7 @@ export function parseDungeonResponseDetailed(
         stockType: isStockType(s?.stockType) ? s.stockType : undefined,
         stockDetail:
           typeof s?.stockDetail === "string" ? s.stockDetail.trim() : undefined,
+        presence: parsePresence(s?.presence),
       }),
     );
 
@@ -1634,7 +1637,12 @@ export function parseDungeonResponseDetailed(
     const treasures = list(parsed.treasures, foundation?.treasures ?? []);
     const hooks = list(parsed.hooks, foundation?.hooks ?? []);
 
-    const sectorEdges = buildSectorEdges(sectors.length, rng);
+    // The layout the prompt described, so a shortcut a faction relies on is
+    // the one that renders. Re-rolled only if the sector count changed.
+    const sectorEdges =
+      foundation?.sectors.length === sectors.length
+        ? foundation.sectorEdges
+        : buildSectorEdges(sectors.length, rng);
     const map = renderDungeonMap(
       sectors.map((s) => s.name),
       sectorEdges,

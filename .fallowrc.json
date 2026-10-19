@@ -19,7 +19,8 @@
     "apps/web/src/lib/components/help/*.svelte",
     "apps/web/src/lib/components/oracle/OracleWindow.svelte",
     "apps/web/src/lib/components/entity-detail/DetailSoundBite.svelte",
-    "apps/web/src/lib/components/timeline/EraEditor.svelte"
+    "apps/web/src/lib/components/timeline/EraEditor.svelte",
+    "apps/web/src/lib/components/stats/import/StatBlockImportModal.svelte"
   ],
   "ignoreDependencies": [
     "@capacitor/android",

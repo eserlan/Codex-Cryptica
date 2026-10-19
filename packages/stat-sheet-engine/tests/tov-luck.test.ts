@@ -18,8 +18,28 @@ describe("ToV Luck rules", () => {
     }
   });
 
+  it("states the BFRD rules: start at 0, gain on a miss or failed save, d4 overflow", () => {
+    expect(TOV_LUCK_FIXTURE.startingLuck).toBe(0);
+    expect(TOV_LUCK_REFERENCE.earn).toContain(
+      "miss with an attack roll or fail a save",
+    );
+    expect(TOV_LUCK_REFERENCE.spend).toContain("spend 3 Luck");
+    expect(TOV_LUCK_REFERENCE.overflow).toContain("roll a d4");
+  });
+
+  it("does not claim ability checks earn Luck or that a Long Rest resets it", () => {
+    const text = Object.values(TOV_LUCK_REFERENCE).join(" ");
+    expect(text).not.toMatch(/ability check/i);
+    expect(text).not.toMatch(/completing a long rest/i);
+    expect(TOV_LUCK_REFERENCE.overflow).toContain("no Long Rest reset");
+  });
+
   it("reports cap and floor instead of hiding them", () => {
-    expect(adjustTovLuck(5, 1)).toMatchObject({ value: 5, clamped: true });
+    expect(adjustTovLuck(5, 1)).toMatchObject({
+      value: 5,
+      clamped: true,
+      reason: "Luck cannot go above 5. Roll 1d4 and set Luck to the result.",
+    });
     expect(adjustTovLuck(1, -3)).toMatchObject({ value: 0, clamped: true });
   });
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { StatBlockIRSchema } from "./types";
-import { getVitalValue, mapHpField } from "./mapper-shared";
+import { derivedRollFormula, getVitalValue, mapHpField } from "./mapper-shared";
 import { mapToDndCharacter } from "./mapper-d20";
 import { mapToMythrasCharacter } from "./mapper-mythras";
 import { mapToVampireCharacter } from "./mapper-vampire";
@@ -73,5 +73,28 @@ describe("stat block mapper modules", () => {
     expect(mapTovSaveFields(tov).map((field) => field.id)).toContain(
       "str_save",
     );
+  });
+});
+
+describe("derivedRollFormula", () => {
+  it("writes a bonus equal to the ability modifier as one term", () => {
+    expect(derivedRollFormula(3, 16)).toBe("1d20+3");
+    expect(derivedRollFormula(-1, 8)).toBe("1d20-1");
+  });
+
+  it("keeps a proficiency bonus in front of the derived modifier", () => {
+    expect(derivedRollFormula(5, 16)).toBe("1d20+2+3");
+    expect(derivedRollFormula(1, 8)).toBe("1d20+2-1");
+  });
+
+  it("keeps a bonus below the modifier as a negative term", () => {
+    expect(derivedRollFormula(1, 16)).toBe("1d20-2+3");
+  });
+
+  it("leaves the bonus whole when there is no numeric score to derive from", () => {
+    expect(derivedRollFormula(5, undefined)).toBe("1d20+5");
+    expect(derivedRollFormula(5, null)).toBe("1d20+5");
+    expect(derivedRollFormula(5, "")).toBe("1d20+5");
+    expect(derivedRollFormula(-2, "unknown")).toBe("1d20-2");
   });
 });

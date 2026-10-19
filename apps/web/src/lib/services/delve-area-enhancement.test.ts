@@ -234,7 +234,7 @@ describe("DelveAreaEnhancementService", () => {
     const generateContent = vi.fn().mockResolvedValue({
       response: {
         text: () =>
-          JSON.stringify({
+          `Example: {"areas":[]}\n\`\`\`json\n${JSON.stringify({
             areas: sectorRooms.map((area) => ({
               id: area.id,
               name: "The Cinder Ledger",
@@ -268,7 +268,7 @@ describe("DelveAreaEnhancementService", () => {
                     }
                   : undefined,
             })),
-          }),
+          })}\n\`\`\``,
       },
     });
     const getModel = vi.fn().mockResolvedValue({ generateContent });
@@ -346,6 +346,44 @@ describe("DelveAreaEnhancementService", () => {
     expect(onProgress).toHaveBeenCalledWith(
       expect.objectContaining({ completed: 3, total: 3 }),
     );
+  });
+
+  it("counts an array-wrapped sector response as failed and keeps its source data", async () => {
+    const sectorCanvas = {
+      ...canvas,
+      nodes: [
+        {
+          id: room.id,
+          type: "delveRoom" as const,
+          position: { x: 0, y: 0 },
+          data: room,
+        },
+      ],
+    } as Canvas;
+    const validSector = {
+      areas: [
+        {
+          id: room.id,
+          name: "The Cinder Ledger",
+          description: "The chamber records each ration.",
+          stocking: { atmosphere: "Brass dust and banked coals" },
+        },
+      ],
+      passages: [],
+    };
+    const generateContent = vi.fn().mockResolvedValue({
+      response: { text: () => JSON.stringify([validSector]) },
+    });
+    const service = new DelveAreaEnhancementService(
+      { entities: {}, loadEntityContent: vi.fn().mockResolvedValue(undefined) },
+      { getModel: vi.fn().mockResolvedValue({ generateContent }) },
+      { effectiveApiKey: null, modelName: "test-model" },
+    );
+
+    const result = await service.populateAllAreas(sectorCanvas);
+
+    expect(result).toMatchObject({ completed: 0, total: 1, failed: 1 });
+    expect(result.nodes[0].data).toMatchObject(room);
   });
 
   it("recognizes generated Area placeholders without replacing real names", () => {

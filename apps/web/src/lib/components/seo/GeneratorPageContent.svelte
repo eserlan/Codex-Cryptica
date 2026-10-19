@@ -70,6 +70,7 @@
     createGenerate,
     createGeneratorHandlers,
     createOneShotRunControl,
+    showsStagedProgress,
   } from "./generator-page-generation";
   import {
     initializeHandoffState,
@@ -1036,10 +1037,7 @@
     "language-generator",
   ].includes(slug)}
   {generate}
-  progressSteps={slug === "one-shot-adventure-generator" ||
-  slug === "point-crawl"
-    ? oneShotProgress
-    : null}
+  progressSteps={showsStagedProgress(slug) ? oneShotProgress : null}
   {initialDraft}
   initialDraftIsUserGenerated={Boolean(remixDraft)}
   {backHref}

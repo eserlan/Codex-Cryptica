@@ -2,7 +2,7 @@
  * Staged AI generation pipeline for the Point Crawl Generator
  * (#2479, 177-point-crawl-generator).
  *
- * Builds a PointCrawlNetwork in 3 distinct stages with live `OneShotProgressStep[]`
+ * Builds a PointCrawlNetwork in 3 distinct stages with live `StagedProgressStep[]`
  * callbacks, bounded concurrency (`limit = 3`), `AbortSignal` support, and
  * granular per-part template fallback (`fromFallback: true` + `gaps[]`) so a
  * slow or malformed AI sub-call never discards the rest of the crawl:
@@ -19,8 +19,8 @@
  */
 
 import { formatCampaignContextBlock } from "./campaign-context";
-import { parseFencedJson } from "./llm-response-utils";
-import type { OneShotProgressStep, OneShotStepStatus } from "./one-shot-staged";
+import { StagedProgress, type StagedProgressStep } from "./staged-progress";
+import { askJson, pool, throwIfAborted } from "./staged-runtime";
 import {
   checkPointCrawlPlayability,
   isVaguePointCrawlFact,
@@ -60,87 +60,13 @@ export interface PointCrawlStagedOptions {
 }
 
 const STAGE_STEPS: ReadonlyArray<{
-  id: OneShotProgressStep["id"];
+  id: StagedProgressStep["id"];
   label: string;
 }> = [
   { id: "structure", label: "Graph topology & key-lock skeleton" },
   { id: "scenes", label: "Keyed locations & route trade-offs" },
   { id: "review", label: "Playability & reachability verification" },
 ];
-
-class PointCrawlProgress {
-  private steps: OneShotProgressStep[] = STAGE_STEPS.map((s) => ({
-    id: s.id,
-    label: s.label,
-    status: "pending" as OneShotStepStatus,
-  }));
-
-  constructor(private emit?: (steps: OneShotProgressStep[]) => void) {
-    this.emit?.(this.steps.map((s) => ({ ...s })));
-  }
-
-  set(
-    id: OneShotProgressStep["id"],
-    status: OneShotStepStatus,
-    detail?: string,
-  ): void {
-    this.steps = this.steps.map((s) =>
-      s.id === id ? { ...s, status, detail } : s,
-    );
-    this.emit?.(this.steps.map((s) => ({ ...s })));
-  }
-}
-
-function throwIfAborted(signal?: AbortSignal): void {
-  if (!signal?.aborted) return;
-  throw (
-    signal.reason ?? new DOMException("The operation was aborted", "AbortError")
-  );
-}
-
-async function pool<T>(
-  tasks: Array<() => Promise<T>>,
-  limit: number,
-  signal?: AbortSignal,
-): Promise<T[]> {
-  const results: T[] = new Array(tasks.length);
-  let next = 0;
-  const worker = async () => {
-    while (next < tasks.length) {
-      throwIfAborted(signal);
-      const i = next++;
-      results[i] = await tasks[i]();
-    }
-  };
-  await Promise.all(
-    Array.from({ length: Math.min(limit, tasks.length) }, worker),
-  );
-  return results;
-}
-
-async function askJson(
-  complete: (prompt: string) => Promise<string>,
-  prompt: string,
-  signal?: AbortSignal,
-): Promise<Record<string, unknown> | null> {
-  for (let attempt = 0; attempt < 2; attempt++) {
-    throwIfAborted(signal);
-    try {
-      const text = await complete(prompt);
-      throwIfAborted(signal);
-      const parsed = parseFencedJson(text);
-      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-        return parsed as Record<string, unknown>;
-      }
-    } catch (err) {
-      throwIfAborted(signal);
-      if (err instanceof DOMException && err.name === "AbortError") {
-        throw err;
-      }
-    }
-  }
-  return null;
-}
 
 function buildTopologyStagePrompt(
   base: PointCrawlNetwork,
@@ -468,12 +394,12 @@ export function fillFailedPointCrawlParts(
 export async function generatePointCrawlStaged(
   options: PointCrawlStagedOptions,
   complete: (prompt: string) => Promise<string>,
-  onProgress?: (steps: OneShotProgressStep[]) => void,
+  onProgress?: (steps: StagedProgressStep[]) => void,
   signal?: AbortSignal,
   rng: Rng = defaultRng,
 ): Promise<PointCrawlNetwork> {
   throwIfAborted(signal);
-  const progress = new PointCrawlProgress(onProgress);
+  const progress = new StagedProgress(STAGE_STEPS, onProgress);
   const count = clampPointCount(options.pointCount);
 
   // Build deterministic valid skeleton first so topology invariants are locked
@@ -492,11 +418,15 @@ export async function generatePointCrawlStaged(
 
   // Stage 1: Topology naming & premise
   progress.set("structure", "active");
-  const topoReply = await askJson(
-    complete,
-    buildTopologyStagePrompt(base, options.campaignContext, options.avoidNames),
-    signal,
+  const topoPrompt = buildTopologyStagePrompt(
+    base,
+    options.campaignContext,
+    options.avoidNames,
   );
+  const topoReply = await askJson(() => complete(topoPrompt), {
+    signal,
+    attempts: 2,
+  });
   if (topoReply) {
     const str = (v: unknown, fallback: string) =>
       typeof v === "string" && v.trim().length > 0 ? v.trim() : fallback;
@@ -549,16 +479,16 @@ export async function generatePointCrawlStaged(
 
   // fallow-ignore-next-line complexity
   const tasks = batches.map((batch) => async () => {
-    const reply = await askJson(
-      complete,
-      buildBatchDetailPrompt(
-        base,
-        batch.nodes,
-        batch.routes,
-        options.campaignContext,
-      ),
-      signal,
+    const prompt = buildBatchDetailPrompt(
+      base,
+      batch.nodes,
+      batch.routes,
+      options.campaignContext,
     );
+    const reply = await askJson(() => complete(prompt), {
+      signal,
+      attempts: 2,
+    });
     if (reply) {
       const rNodes = Array.isArray(reply.nodes) ? reply.nodes : [];
       for (const item of rNodes) {

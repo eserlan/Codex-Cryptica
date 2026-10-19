@@ -434,6 +434,33 @@ describe("competitor links", () => {
     ]);
   });
 
+  test("flags the formerly approved Foundry and Owlbear URLs in prose and hrefs", () => {
+    for (const url of [
+      "https://foundryvtt.com/article/tokens/",
+      "https://extensions.owlbear.rodeo/clash",
+    ]) {
+      const proseFindings = competitorFindings(withProse(`See ${url}.`));
+      expect(proseFindings).toHaveLength(1);
+      expect(proseFindings[0]).toMatchObject({
+        rule: "competitor-link",
+        field: "sections[0].paragraphs[0]",
+      });
+
+      const hrefFindings = competitorFindings(
+        cleanAnswer({
+          systemsThatSupportThis: [
+            { system: "Example", rationale: "Example system.", href: url },
+          ],
+        } as Partial<AnswerConfigInput>),
+      );
+      expect(hrefFindings).toHaveLength(1);
+      expect(hrefFindings[0]).toMatchObject({
+        rule: "competitor-link",
+        field: "systemsThatSupportThis[0].href",
+      });
+    }
+  });
+
   test("matches subdomains and ignores case, not look-alike hosts", () => {
     expect(competitorOf("https://app.WorldAnvil.com/x")).toBe("worldanvil.com");
     expect(competitorOf("https://notfoundryvtt.com/x")).toBeUndefined();

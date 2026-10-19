@@ -430,6 +430,17 @@ describe("VaultLifecycleManager", () => {
       expect(deps.clearStorageCache).toHaveBeenCalled();
       expect(result).toBe("v-folder");
     });
+
+    it("starts the registry without an extra Default Vault", async () => {
+      deps.vaultRegistry.isInitialized = false;
+      deps.vaultRegistry.createVault.mockResolvedValue("v-folder");
+
+      await manager.importFromFolder({ name: "my-dir" } as any);
+
+      expect(deps.vaultRegistry.init).toHaveBeenCalledWith({
+        createDefault: false,
+      });
+    });
   });
 
   describe("loadDemoData", () => {
@@ -582,6 +593,39 @@ describe("VaultLifecycleManager", () => {
       expect(deps.vaultRegistry.setActiveVault).toHaveBeenCalledWith(
         "new-vault-id",
       );
+    });
+
+    it("starts the vault registry first when the landing page has not", async () => {
+      deps.vaultRegistry.isInitialized = false;
+      deps.vaultRegistry.createVault.mockResolvedValue("new-vault-id");
+
+      await manager.createVault("New Vault");
+
+      expect(deps.vaultRegistry.init).toHaveBeenCalledTimes(1);
+      // The user is creating their own vault; no extra "Default Vault".
+      expect(deps.vaultRegistry.init).toHaveBeenCalledWith({
+        createDefault: false,
+      });
+      expect(deps.vaultRegistry.init.mock.invocationCallOrder[0]).toBeLessThan(
+        deps.vaultRegistry.createVault.mock.invocationCallOrder[0],
+      );
+    });
+
+    it("does not restart a registry that is already running", async () => {
+      deps.vaultRegistry.isInitialized = true;
+      deps.vaultRegistry.createVault.mockResolvedValue("new-vault-id");
+
+      await manager.createVault("New Vault");
+
+      expect(deps.vaultRegistry.init).not.toHaveBeenCalled();
+    });
+
+    it("creates nothing when the registry cannot start", async () => {
+      deps.vaultRegistry.isInitialized = false;
+      deps.vaultRegistry.init.mockRejectedValueOnce(new Error("no OPFS"));
+
+      await expect(manager.createVault("New Vault")).rejects.toThrow("no OPFS");
+      expect(deps.vaultRegistry.createVault).not.toHaveBeenCalled();
     });
   });
 });

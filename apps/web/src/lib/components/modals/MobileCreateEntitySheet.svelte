@@ -5,6 +5,7 @@
   import { categories } from "$lib/stores/categories.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { systemProfileStore } from "$lib/stores/system-profile.svelte";
   import { focusTrap } from "$lib/actions/focusTrap";
   import { entityTemplateService } from "$lib/services/EntityTemplateService.svelte";
   import { entityTemplateStore } from "$lib/stores/entity-templates/entity-template-store.svelte";
@@ -116,6 +117,7 @@
   };
 </script>
 
+<!-- fallow-ignore-next-line complexity -- This existing sheet owns the mobile entity form; the stat-block entry adds one conditional action. -->
 <svelte:window onkeydown={handleKeydown} />
 
 <!-- Backdrop -->
@@ -325,7 +327,22 @@
       </div>
     </form>
 
-    <div class="px-5 pb-6 border-t border-chrome-border pt-4">
+    <div
+      class="px-5 pb-6 border-t border-chrome-border pt-4 flex flex-col gap-2"
+    >
+      {#if systemProfileStore.isTalesOfTheValiant}
+        <button
+          type="button"
+          class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded border border-chrome-border text-chrome-muted text-sm font-bold tracking-wider hover:border-chrome-accent hover:text-chrome-text transition-colors"
+          onclick={() => {
+            close();
+            modalUIStore.openStatBlockImport({});
+          }}
+          data-testid="mobile-new-from-stat-block"
+        >
+          FROM STAT BLOCK
+        </button>
+      {/if}
       <button
         type="button"
         class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded border border-chrome-border text-chrome-muted text-sm font-bold tracking-wider hover:border-chrome-accent hover:text-chrome-text transition-colors"

@@ -6,6 +6,7 @@ import {
   appendHpSublabelField,
   formatFeaturesAsProse,
   D20_ABILITY_KEYS,
+  derivedRollFormula,
 } from "./mapper-shared";
 export function mapScoresAndChecks(
   ir: StatBlockIR,
@@ -44,7 +45,7 @@ export function mapAbilityCheckFields(
           id: key,
           label: `${attr.label} Check`,
           type: "dice" as const,
-          formula: `1d20${modifier >= 0 ? `+${modifier}` : modifier}`,
+          formula: derivedRollFormula(modifier, attr.value),
           modifierSource: `${key}_score`,
         },
       ];
@@ -207,21 +208,21 @@ export function buildPfSaves(ir: StatBlockIR): StatSheetField[] {
       id: "fort",
       label: "Fortitude",
       type: "dice",
-      formula: `1d20+${Number(fortBonus)}`,
+      formula: derivedRollFormula(Number(fortBonus), ir.attributes.con?.value),
       modifierSource: "con_score",
     },
     {
       id: "reflex",
       label: "Reflex",
       type: "dice",
-      formula: `1d20+${Number(refBonus)}`,
+      formula: derivedRollFormula(Number(refBonus), ir.attributes.dex?.value),
       modifierSource: "dex_score",
     },
     {
       id: "will",
       label: "Will",
       type: "dice",
-      formula: `1d20+${Number(willBonus)}`,
+      formula: derivedRollFormula(Number(willBonus), ir.attributes.wis?.value),
       modifierSource: "wis_score",
     },
   ];
@@ -252,7 +253,7 @@ export function mapToPathfinderCharacter(ir: StatBlockIR): StatSheetField[] {
     id: "perception",
     label: "Perception",
     type: "dice",
-    formula: `1d20+${percVal}`,
+    formula: derivedRollFormula(percVal, ir.attributes.wis?.value),
     modifierSource: "wis_score",
   });
 

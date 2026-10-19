@@ -4,47 +4,27 @@ import {
   INTERACTION_MODEL_KEY,
   GENERATOR_INTERACTION_MODEL_KEY,
 } from "@codex/ai-engine";
-import {
-  ProxyAIGeneratorGateway,
-  extractJsonObject,
-} from "./ai-generator-gateway";
-
-describe("extractJsonObject", () => {
-  it("returns a clean object unchanged", () => {
-    const s = '{"title":"A","lore":"b"}';
-    expect(JSON.parse(extractJsonObject(s))).toEqual({ title: "A", lore: "b" });
-  });
-
-  it("salvages an object with a degenerate trailing run of braces", () => {
-    const s = '{"title":"A","lore":"b"}\n}\n}\n}\n}\n}';
-    expect(JSON.parse(extractJsonObject(s))).toEqual({ title: "A", lore: "b" });
-  });
-
-  it("strips code fences", () => {
-    const s = '```json\n{"title":"A"}\n```';
-    expect(JSON.parse(extractJsonObject(s))).toEqual({ title: "A" });
-  });
-
-  it("ignores leading prose before the object", () => {
-    const s = 'Here is your JSON:\n{"title":"A"}';
-    expect(JSON.parse(extractJsonObject(s))).toEqual({ title: "A" });
-  });
-
-  it("does not get confused by braces inside string values", () => {
-    const s = '{"lore":"a } b { c","title":"X"} trailing }}}';
-    expect(JSON.parse(extractJsonObject(s))).toEqual({
-      lore: "a } b { c",
-      title: "X",
-    });
-  });
-
-  it("handles escaped quotes inside strings", () => {
-    const s = '{"lore":"she said \\"hi\\""}}}}';
-    expect(JSON.parse(extractJsonObject(s))).toEqual({ lore: 'she said "hi"' });
-  });
-});
+import { ProxyAIGeneratorGateway } from "./ai-generator-gateway";
 
 describe("ProxyAIGeneratorGateway", () => {
+  it("preserves an array envelope for downstream shape validation", async () => {
+    const gateway = new ProxyAIGeneratorGateway({
+      sendInteraction: async () => ({
+        id: "interaction-array",
+        text: '[{"title":"A"}]',
+      }),
+      getModel: async () => {
+        throw new Error("stateless path should not be used");
+      },
+    } as never);
+
+    await expect(
+      gateway.complete("prompt", "system", {
+        interaction: { input: "request" },
+      }),
+    ).resolves.toMatchObject({ text: '[{"title":"A"}]' });
+  });
+
   it("routes generator interactions through the Luna conversation model", () => {
     expect(GENERATOR_INTERACTION_MODEL_KEY).toBe(INTERACTION_MODEL_KEY);
     expect(INTERACTION_MODEL_KEY).toBe("luna-fast");
@@ -65,7 +45,10 @@ describe("ProxyAIGeneratorGateway", () => {
             }),
           }),
         );
-        return { id: "interaction-2", text: '{"title":"A"} trailing' };
+        return {
+          id: "interaction-2",
+          text: 'Example: {"title":"Wrong"}\n```json\n{"title":"A"}\n```',
+        };
       },
       getModel: async () => {
         throw new Error("stateless path should not be used");
@@ -160,6 +143,29 @@ describe("ProxyAIGeneratorGateway", () => {
         },
       }),
     ).resolves.toBe('{"title":"Stable"}');
+  });
+
+  it("forwards an abort signal to stateless generation", async () => {
+    const controller = new AbortController();
+    let requestSignal: AbortSignal | undefined;
+    const client = {
+      getModel: async () => ({
+        generateContent: async (
+          _request: unknown,
+          options?: { signal?: AbortSignal },
+        ) => {
+          requestSignal = options?.signal;
+          return { response: { text: () => '{"title":"Stable"}' } };
+        },
+      }),
+    };
+    const gateway = new ProxyAIGeneratorGateway(client as never);
+
+    await gateway.complete("full prompt", "system", {
+      signal: controller.signal,
+    });
+
+    expect(requestSignal).toBe(controller.signal);
   });
 
   describe("completeStream", () => {
@@ -426,9 +432,9 @@ describe("ProxyAIGeneratorGateway", () => {
         const calls: unknown[] = [];
         const sendMessageStream = async (
           _query: string,
-          signal?: AbortSignal,
+          options?: { signal?: AbortSignal },
         ) => {
-          calls.push(signal);
+          calls.push(options);
           return { stream: (async function* () {})() };
         };
         const client = {
@@ -440,8 +446,33 @@ describe("ProxyAIGeneratorGateway", () => {
         const chat = await gateway.startChat("system instruction");
         await collect(chat.sendStream!("turn one", controller.signal));
 
-        expect(calls).toEqual([controller.signal]);
+        expect(calls).toEqual([{ signal: controller.signal }]);
       });
+    });
+
+    it("forwards { signal } into sendMessageStream on chat.send", async () => {
+      const calls: unknown[] = [];
+      const sendMessageStream = async (
+        _query: string,
+        options?: { signal?: AbortSignal },
+      ) => {
+        calls.push(options);
+        return {
+          stream: (async function* () {
+            yield { text: () => '{"title":"Foundation"}' };
+          })(),
+        };
+      };
+      const client = {
+        getModel: async () => ({ startChat: () => ({ sendMessageStream }) }),
+      };
+      const gateway = new ProxyAIGeneratorGateway(client as never);
+      const controller = new AbortController();
+
+      const chat = await gateway.startChat("system instruction");
+      await chat.send("turn one", controller.signal);
+
+      expect(calls).toEqual([{ signal: controller.signal }]);
     });
   });
 });

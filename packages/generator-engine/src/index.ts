@@ -317,6 +317,11 @@ export {
   type OneShotStageDeps,
   type OneShotStagedResult,
 } from "./one-shot-staged";
+export type {
+  StagedProgressStep,
+  StagedStepId,
+  StagedStepStatus,
+} from "./staged-progress";
 export type { StagePrompt } from "./one-shot-stage-prompts";
 export type {
   OneShotAdventure,
@@ -406,17 +411,27 @@ export {
   buildCouncilVoteFoundationPrompt,
   buildCouncilVoteFoundationRepairPrompt,
   parseCouncilVoteFoundation,
+  readCouncilVoteFoundation,
   buildCouncilVotePathsPrompt,
   buildCouncilVotePathsRepairPrompt,
   parseCouncilVotePathsResponse,
+  readCouncilVotePaths,
+  auditCouncilVotePaths,
+  runCouncilVoteFourTurn,
+  runCouncilVoteStaged,
   mergeCouncilVoteOutput,
   generateCouncilVoteLocal,
   councilVoteConfig,
+  COUNCIL_VOTE_PROGRESS_STEPS,
+  type CouncilVoteStageId,
   type CouncilVoteGeneratorOptions,
   type CouncilVoteFoundationPrompt,
   type CouncilVoteFoundation,
   type CouncilVotePathsPrompt,
   type CouncilVotePaths,
+  type CouncilVotePathsAuditResult,
+  type CouncilVoteFourTurnArgs,
+  type CouncilVoteStagedDeps,
 } from "./public-council-vote";
 export {
   validateHeist,
@@ -537,6 +552,16 @@ export {
   type NewsSheetPrompt,
 } from "./public-news-sheet";
 export {
+  generateDungeonStaged,
+  checkFoundation as checkDungeonFoundation,
+  checkSectors as checkDungeonSectors,
+  checkFactions as checkDungeonFactions,
+  checkFactionGrounding as checkDungeonFactionGrounding,
+  type DungeonStagedDeps,
+  type DungeonStagedResult,
+  type DungeonStagedStats,
+} from "./dungeon-staged";
+export {
   buildDungeonPrompt,
   buildDungeonRetryMessage,
   collectSessionNames,
@@ -550,6 +575,7 @@ export {
   type DungeonGeneratorOptions,
   type DungeonPrompt,
   type DungeonSector,
+  type DungeonSectorPresence,
   type ResolvedDungeon,
 } from "./public-dungeon";
 export {
@@ -590,6 +616,13 @@ export {
   type AdventurePrompt,
   type ResolvedAdventure,
 } from "./public-adventure";
+export {
+  adventureStatsLog,
+  generateAdventureStaged,
+  type AdventureStagedDeps,
+  type AdventureStagedResult,
+  type AdventureStagedStats,
+} from "./adventure-staged";
 export {
   buildPlotTwistPrompt,
   generatePlotTwistLocal,
@@ -872,7 +905,10 @@ export {
   type PointCrawlPrompt,
 } from "./public-point-crawl";
 
-export { parseTovMechanics } from "./tov-mechanics-parser";
+export {
+  parseTovMechanics,
+  isPublishedBfrdDoomGuidance,
+} from "./tov-mechanics-parser";
 
 export {
   buildTovPromptInstructions,

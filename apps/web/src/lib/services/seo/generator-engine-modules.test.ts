@@ -125,6 +125,8 @@ describe("generator engine modules", () => {
           themeId: "fantasy",
           scale: "Small Lair (1-2 Sectors)",
           useAI: true,
+          // These cases cover the one-pass baseline route.
+          staged: false,
         }),
       clean: dungeonResponse("The Quiet Archive"),
       incomplete: dungeonResponse("The First Archive", true),
@@ -134,7 +136,8 @@ describe("generator engine modules", () => {
     {
       name: "adventure",
       generate: (engine: GeneratorEngineSpecialized) =>
-        engine.generateAdventure({ useAI: true }),
+        // These cases cover the one-pass baseline route.
+        engine.generateAdventure({ useAI: true, staged: false }),
       clean: adventureResponse("The Missing Courier"),
       incomplete: adventureResponse("The First Courier").replace(
         '"throughline":"Find the courier before the factions do.",',
@@ -181,4 +184,289 @@ describe("generator engine modules", () => {
       });
     },
   );
+  describe("staged dungeon generation", () => {
+    function stageReply(message: string) {
+      const plan = [
+        ...new Set([...message.matchAll(/sector-\d+/g)].map((m) => m[0])),
+      ];
+      if (message.includes("Coherence review")) return { issues: [] };
+      if (message.includes("Stage 1 of 3")) {
+        return {
+          title: "The Bellfound Depths",
+          summary: "s",
+          throughline: "t",
+          history: "h",
+          currentState: "c",
+          signatureFeature: "sf",
+          secret: "x",
+          sectorBriefs: plan.map((id) => ({ id, brief: "b" })),
+        };
+      }
+      if (message.includes("Stage 2 of 3")) {
+        return {
+          sectors: plan.map((id, i) => ({
+            id,
+            name: `Hollow ${i + 1}`,
+            description: "d",
+            stockDetail: `idol ${i + 1}`,
+          })),
+          hazards: ["steam", "a tilted floor"],
+          treasures: ["signet", "a maker's mark"],
+          hooks: ["bounty", "a missing salvage crew"],
+        };
+      }
+      const faction = (name: string, id: string, goal: string) => ({
+        name,
+        identity: "i",
+        virtue: "Patient",
+        vice: "Greedy",
+        goal,
+        drive: "x",
+        obstacle: "steam blocks the way",
+        origin: "o",
+        belief: "b",
+        territorySectorIds: [id],
+        presence: [{ sectorId: id, detail: `${name} camp here` }],
+        strength: "gear",
+        leader: { name: `${name} Lead`, description: "d" },
+        notable: { name: `${name} Second`, description: "d" },
+        relationship: "stalls",
+      });
+      return {
+        factionSituation: "Both want it.",
+        factions: [
+          faction("Lantern Wrights", plan[0], "Cap the steam"),
+          faction("Weir Wardens", plan[1], "Seal the signet away"),
+        ],
+      };
+    }
+
+    const options = {
+      themeId: "fantasy",
+      scale: "Small Lair (1-2 Sectors)",
+      useAI: true,
+    };
+
+    it("builds the delve in stages by default and reports each step", async () => {
+      const engine = new GeneratorEngineSpecialized(clientManager as never);
+      const runModel = spyOnRunModel(engine).mockImplementation(
+        async (_instruction, message) => JSON.stringify(stageReply(message)),
+      );
+      const onProgress = vi.fn();
+
+      const output = await engine.generateDungeon({ ...options, onProgress });
+
+      // Three stages plus the coherence review.
+      expect(runModel).toHaveBeenCalledTimes(4);
+      expect(output.title).toBe("The Bellfound Depths");
+      expect(
+        onProgress.mock.calls
+          .at(-1)?.[0]
+          .map((s: { status: string }) => s.status),
+      ).toEqual(["done", "done", "done", "done"]);
+    });
+
+    it("logs staged dungeon counts without generated review text", async () => {
+      const engine = new GeneratorEngineSpecialized(clientManager as never);
+      const contentSentinel = "PRIVATE_REVIEW_ISSUE_SENTINEL";
+      const runModel = spyOnRunModel(engine).mockImplementation(
+        async (_instruction, message) => {
+          if (message.includes("Coherence review")) {
+            return JSON.stringify({ issues: [contentSentinel] });
+          }
+          if (message.includes("Review these coherence issues")) {
+            return "{}";
+          }
+          return JSON.stringify(stageReply(message));
+        },
+      );
+      const logger = vi.spyOn(console, "debug").mockImplementation(() => {});
+
+      await engine.generateDungeon(options);
+
+      expect(runModel).toHaveBeenCalled();
+      expect(logger).toHaveBeenCalledWith(
+        "[Generator] staged dungeon run",
+        expect.objectContaining({
+          outcome: "staged",
+          reviewIssueCount: 1,
+          remainingIssueCount: 1,
+        }),
+      );
+      expect(JSON.stringify(logger.mock.calls)).not.toContain(contentSentinel);
+      logger.mockRestore();
+    });
+
+    it("falls back to the one-pass route when a stage cannot be used", async () => {
+      const engine = new GeneratorEngineSpecialized(clientManager as never);
+      const runModel = spyOnRunModel(engine).mockResolvedValue(
+        dungeonResponse("The Quiet Archive"),
+      );
+
+      const output = await engine.generateDungeon(options);
+
+      // Two failed foundation attempts, then the clean one-pass response.
+      expect(runModel).toHaveBeenCalledTimes(3);
+      expect(output.title).toBe("The Quiet Archive");
+    });
+
+    it("stops without output when aborted", async () => {
+      const engine = new GeneratorEngineSpecialized(clientManager as never);
+      const controller = new AbortController();
+      const runModel = spyOnRunModel(engine).mockImplementation(async () => {
+        controller.abort();
+        return "{}";
+      });
+
+      await expect(
+        engine.generateDungeon({ ...options, signal: controller.signal }),
+      ).rejects.toMatchObject({ name: "AbortError" });
+      expect(runModel).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("staged adventure generation", () => {
+    const location = (name: string) => ({
+      name,
+      description: "Lamplit stone.",
+      role: "r",
+      relation: "rel",
+      leverage: "l",
+      dilemma: "Speed or stealth.",
+    });
+    const npc = (name: string) => ({
+      name,
+      role: "Fence",
+      relation: "rel",
+      goal: "Get paid",
+      secret: "s",
+      leverage: "l",
+      dilemma: "Trust or betray.",
+    });
+    const item = (title: string) => ({
+      title,
+      text: `${title} before sunset.`,
+      involves: ["Mara Venn"],
+    });
+
+    function stageReply(message: string) {
+      if (message.includes("FINAL CHECK: adventure consistency")) {
+        return {
+          checks: Object.fromEntries(
+            ["antagonist", "causality", "resolution", "timeline", "agency"].map(
+              (id) => [id, { ok: true, problem: "" }],
+            ),
+          ),
+          revisions: [],
+        };
+      }
+      if (message.includes("STAGE 1 OF 3")) {
+        return {
+          title: "The Copper Ledger",
+          summary: "A courier carries a ledger.",
+          throughline: "A fence hid the ledger before sunset.",
+          initialSituation: "The ledger is at the Copper Market.",
+          primaryObjective: "Recover the ledger before sunset.",
+          assets: [
+            { name: "Ledger", status: "essential", place: "Copper Market" },
+          ],
+        };
+      }
+      if (message.includes("STAGE 2 OF 3")) {
+        return {
+          keyLocations: [location("Copper Market"), location("Salt Stair")],
+          npcs: [npc("Mara Venn"), npc("Iko Brand")],
+        };
+      }
+      return {
+        threats: [item("Rival Crew")],
+        discoveries: [
+          { ...item("Coded Note"), opens: "Copper Market" },
+          { ...item("Torn Map"), opens: "Salt Stair" },
+        ],
+        complications: [item("Closing Bell"), item("Watch Patrol")],
+        rewards: [
+          {
+            title: "Favour",
+            text: "The magistrate owes you.",
+            involves: ["Mara Venn"],
+          },
+        ],
+        outcomes: [item("Ledger Exposed"), item("Ledger Burned")],
+        hooks: [
+          { title: "Plea", text: "Mara begs.", involves: ["Mara Venn"] },
+          {
+            title: "Bounty",
+            text: "A reward is posted.",
+            involves: ["Iko Brand"],
+          },
+        ],
+      };
+    }
+
+    it("builds the adventure in three stages by default and reports each step", async () => {
+      const engine = new GeneratorEngineSpecialized(clientManager as never);
+      const runModel = spyOnRunModel(engine).mockImplementation(
+        async (_instruction, message) => JSON.stringify(stageReply(message)),
+      );
+      const onProgress = vi.fn();
+
+      const output = await engine.generateAdventure({
+        useAI: true,
+        onProgress,
+      });
+
+      expect(runModel).toHaveBeenCalledTimes(4);
+      expect(output.title).toBe("The Copper Ledger");
+      expect(
+        onProgress.mock.calls
+          .at(-1)?.[0]
+          .map((s: { status: string }) => s.status),
+      ).toEqual(["done", "done", "done", "done"]);
+    });
+
+    it("logs staged adventure counts without generated text", async () => {
+      const engine = new GeneratorEngineSpecialized(clientManager as never);
+      spyOnRunModel(engine).mockImplementation(async (_instruction, message) =>
+        JSON.stringify(stageReply(message)),
+      );
+      const logger = vi.spyOn(console, "debug").mockImplementation(() => {});
+
+      await engine.generateAdventure({ useAI: true });
+
+      expect(logger).toHaveBeenCalledWith(
+        "[Generator] staged adventure run",
+        expect.objectContaining({ outcome: "staged", aiCalls: 4 }),
+      );
+      expect(JSON.stringify(logger.mock.calls)).not.toContain("Copper");
+      logger.mockRestore();
+    });
+
+    it("falls back to the one-pass route when a stage cannot be used", async () => {
+      const engine = new GeneratorEngineSpecialized(clientManager as never);
+      const runModel = spyOnRunModel(engine).mockResolvedValue(
+        adventureResponse("The Missing Courier"),
+      );
+
+      const output = await engine.generateAdventure({ useAI: true });
+
+      // Stage 1 passes, stage 2 fails twice (one NPC), then the one-pass call.
+      expect(runModel).toHaveBeenCalledTimes(4);
+      expect(output.title).toBe("The Missing Courier");
+    });
+
+    it("stops without output when aborted", async () => {
+      const engine = new GeneratorEngineSpecialized(clientManager as never);
+      const controller = new AbortController();
+      const runModel = spyOnRunModel(engine).mockImplementation(async () => {
+        controller.abort();
+        return "{}";
+      });
+
+      await expect(
+        engine.generateAdventure({ useAI: true, signal: controller.signal }),
+      ).rejects.toMatchObject({ name: "AbortError" });
+      expect(runModel).toHaveBeenCalledTimes(1);
+    });
+  });
 });

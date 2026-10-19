@@ -271,6 +271,7 @@ export const howDoIRunAStealthMissionInATabletopRpg: AnswerConfigInput = {
     "how-do-you-run-a-chase-in-a-tabletop-rpg",
     "how-do-i-give-specialist-characters-spotlight",
     "how-do-i-improvise-npcs-in-dnd",
+    "how-do-i-run-secret-doors-in-dnd",
   ],
   discovery: {
     id: "answer-run-stealth-mission-in-tabletop-rpg",
@@ -308,6 +309,11 @@ export const howDoIRunAStealthMissionInATabletopRpg: AnswerConfigInput = {
         with: "answer-run-rogue-scout-without-splitting-party",
         reason:
           "The rogue and scout answer handles brief reconnaissance that returns information to the group; this answer handles a sustained stealth mission where every character needs a role and detection is gradual.",
+      },
+      {
+        with: "answer-recruit-defeated-enemies",
+        reason:
+          "This answer covers covert movement, detection, and escalating mission risk; the captive-recruitment answer covers an NPC's motives, bargains, and feasible choices when the party approaches danger.",
       },
     ],
   },

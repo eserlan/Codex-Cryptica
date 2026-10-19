@@ -7,7 +7,7 @@
 
 ## Summary
 
-Extend Codex Cryptica's Encounter Generator with optional Tales of the Valiant (BFRD) challenge guidance without compromising system neutrality or converting the tool into a rigid 5e combat calculator. When ToV mode is active, the generator accepts party composition (party size and level) to provide qualitative challenge pacing, recommended CR distributions, creature participant suggestions, tactical advice, and optional Doom usage caveats. Additionally, implement an optional verified Doom resource tracker strictly scoped to creatures/tokens with supported Doom stats in VTT play.
+Extend Codex Cryptica's Encounter Generator with optional Tales of the Valiant (BFRD) challenge guidance without compromising system neutrality or converting the tool into a rigid 5e combat calculator. When ToV mode is active, the generator accepts party composition (party size and level) to provide qualitative challenge pacing, recommended CR distributions, creature participant suggestions, tactical advice, and optional encounter-level BFRD Doom guidance (labelling any custom creature-specific Doom abilities or alternate Doom economies as homebrew). Additionally, implement an optional Doom counter on `builtin-tov-monster` stat sheets and VTT token controls as a per-creature UI tracker for points allocated from the encounter's Doom pool.
 
 ---
 
@@ -20,7 +20,7 @@ Extend Codex Cryptica's Encounter Generator with optional Tales of the Valiant (
 **Target Platform**: Browser (desktop & mobile)  
 **Project Type**: Monorepo packages (`generator-engine`, `stat-sheet-engine`) + SvelteKit web client (`apps/web`)  
 **Performance Goals**: <5ms client transformation and template mapping time; zero frame drops during streaming generation  
-**Constraints**: 100% backward compatibility for System Neutral mode; strict adherence to CC BY 4.0 BFRD licensing baseline; no duplicate generator forks; Doom tracked per-creature/token only.  
+**Constraints**: 100% backward compatibility for System Neutral mode; strict adherence to CC BY 4.0 BFRD licensing baseline; no duplicate generator forks; BFRD Doom described as an optional encounter-level GM pool with published spends, while the UI counter on ToV monster sheets/tokens tracks per-creature allocations from that pool.  
 **Scale/Scope**: 1 generator extended (`encounter`), 2 internal engine packages extended, 1 new Svelte 5 control (`TovDoomControl.svelte`) + VTT token integration.
 
 ---
@@ -58,7 +58,7 @@ _GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 
 ### User Help Check
 
-- [x] Ensure in-app help and tooltips clarify that ToV encounter guidance is qualitative and that Doom tracking is creature-specific per BFRD rules.
+- [x] Ensure in-app help and inline reference copy clarify that ToV encounter guidance is qualitative, that the BFRD optional Doom rule is an encounter-level GM resource pool with published spends, and that the per-creature Doom counter on monster sheets/tokens tracks allocations from that encounter pool.
 
 ---
 

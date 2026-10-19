@@ -7,6 +7,9 @@
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { presentationUIStore } from "$lib/stores/ui/presentation-ui.svelte";
   import { statSheetTemplates } from "$lib/stores/stat-sheet-templates.svelte";
+  import { systemProfileStore } from "$lib/stores/system-profile.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { FEATURE_HINTS } from "$lib/config/help-content";
   import { presentationTemplates } from "$lib/stores/presentation-templates.svelte";
   import PresentationRenderer from "$lib/components/stats/presentation/PresentationRenderer.svelte";
   import PresentationTemplatePicker from "$lib/components/stats/presentation/PresentationTemplatePicker.svelte";
@@ -14,6 +17,8 @@
   import type { PresentationRenderContext } from "$lib/components/stats/presentation/types";
   import {
     computeSectionKeys,
+    TOV_MONSTER_TEMPLATE_ID,
+    TOV_NPC_TEMPLATE_ID,
     isTemplateUsable,
     parseTemplate,
     resolvePresentationTemplate,
@@ -32,6 +37,13 @@
   let showPresentationManager = $state(false);
 
   const readOnly = $derived(vault.isGuest);
+  // Stat block import fills monster and quick NPC sheets only (spec FR-001, FR-002a).
+  const canImportStatBlock = $derived(
+    !readOnly &&
+      (systemProfileStore.isTalesOfTheValiant ||
+        entity.statSheet?.templateId === TOV_MONSTER_TEMPLATE_ID ||
+        entity.statSheet?.templateId === TOV_NPC_TEMPLATE_ID),
+  );
   const hasStats = $derived(
     (entity.statSheet?.fields?.length ?? 0) > 0 ||
       !!entity.statSheet?.templateId,
@@ -162,6 +174,7 @@
   });
 </script>
 
+<!-- fallow-ignore-next-line complexity -- This tab owns the complete stat-sheet editor; the import control adds one conditional action. -->
 <div class="flex flex-col gap-3 pb-8" data-testid="detail-stats-tab">
   <div class="flex items-center justify-between">
     <span
@@ -171,6 +184,18 @@
     </span>
     {#if !readOnly}
       <div class="flex items-center gap-2">
+        {#if canImportStatBlock}
+          <button
+            type="button"
+            class="rounded border border-theme-border px-2 py-1 text-micro font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary"
+            onclick={() =>
+              modalUIStore.openStatBlockImport({ entityId: entity.id })}
+            title={FEATURE_HINTS["stat-block-import"]?.content}
+            data-testid="stat-sheet-import"
+          >
+            Import
+          </button>
+        {/if}
         {#if hasStats}
           <button
             type="button"

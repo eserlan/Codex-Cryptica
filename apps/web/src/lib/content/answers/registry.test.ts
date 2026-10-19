@@ -19,6 +19,7 @@ import { getAllLandingPageSlugs } from "../for/registry";
 import { HEIST_TOPIC_CONFIG } from "../topics/heists";
 import { PUZZLE_TOPIC_CONFIG } from "../topics/puzzles";
 import { PIRATE_TOPIC_CONFIG } from "../topics/pirates";
+import { SOLO_RPG_TOPIC_CONFIG } from "../topics/solo-rpg";
 import { DND_TOPIC_CONFIG } from "../topics/dnd";
 import { DND_BEGINNERS_TOPIC_CONFIG } from "../topics/dnd-beginners";
 import { solutions } from "$lib/config/seo-pages";
@@ -53,6 +54,75 @@ const mockRegistry: Record<string, AnswerConfig> = {
 };
 
 describe("answer registry", () => {
+  it("keeps settlement geography overlap acknowledgements reciprocal", () => {
+    const geography =
+      answers["how-do-i-design-a-geographically-realistic-town-or-village"];
+    const overlaps = [
+      ["what-should-an-rpg-settlement-contain", "answer-settlement-contents"],
+      [
+        "how-do-i-decide-what-a-settlement-produces-imports-and-exports",
+        "answer-settlement-production-imports-exports",
+      ],
+      [
+        "how-do-trade-routes-shape-cities-and-kingdoms-in-an-rpg-world",
+        "answer-trade-routes-shape-cities-kingdoms",
+      ],
+      [
+        "how-do-you-create-a-fantasy-city-that-feels-alive",
+        "answer-living-fantasy-city",
+      ],
+    ] as const;
+
+    for (const [slug, intentId] of overlaps) {
+      const relatedAnswer = answers[slug];
+
+      expect(geography.discovery?.acknowledgedOverlap).toContainEqual(
+        expect.objectContaining({
+          with: intentId,
+          reason: expect.any(String),
+        }),
+      );
+      expect(relatedAnswer.discovery?.acknowledgedOverlap).toContainEqual(
+        expect.objectContaining({
+          with: geography.discovery?.id,
+          reason: expect.any(String),
+        }),
+      );
+    }
+  });
+
+  it("distinguishes seasonally farmable floodplain from persistently wet ground", () => {
+    const geography =
+      answers["how-do-i-design-a-geographically-realistic-town-or-village"];
+    const floodGuidance = geography.sections.find(
+      (section) =>
+        section.kind === "prose" &&
+        section.heading ===
+          "Start with water, but think beyond a blue line on the map",
+    );
+    const climateTable = geography.sections.find(
+      (section) =>
+        section.kind === "table" &&
+        section.heading === "Let climate and country change the layout",
+    );
+
+    expect(floodGuidance?.kind).toBe("prose");
+    if (floodGuidance?.kind !== "prose") return;
+
+    expect(floodGuidance.paragraphs).toContain(
+      "Treat flood risk as part of the water decision, not an afterthought. Homes, granaries and workshops that must stay dry belong on a raised terrace, a low ridge or the higher bank. Persistently wet ground suits meadow, grazing or fisheries; seasonally flooded land may support crops when drainage, flood timing and crop choice permit. Building directly on the bank buys easy access and pays for it in ruined stores, undermined walls and streets that become channels. A settlement that has lived with a river for generations shows that bargain in its levels: quays and boathouses low, homes and stored food high, and a lane or bank marking where people expect the water to reach.",
+    );
+
+    expect(climateTable?.kind).toBe("table");
+    if (climateTable?.kind !== "table") return;
+
+    expect(climateTable.rows).toContainEqual([
+      "River valley",
+      "Wells and river intakes, with flood levels deciding which bank and terrace can hold homes and stores.",
+      "Homes and granaries on the terrace; seasonally flooded ground may support crops where drainage and flood timing permit, while persistently wet areas suit meadow or fisheries; quay and mill low, one bridge shaping the market and gates.",
+    ]);
+  });
+
   it("keeps an actionable checklist in the modern-city answer", () => {
     const answer =
       answers["how-do-i-portray-a-believable-modern-city-in-an-urban-rpg"];
@@ -75,6 +145,50 @@ describe("answer registry", () => {
     );
   });
 
+  it("keeps the secret-door answer's worked example and actionable checklist", () => {
+    const answer = answers["how-do-i-run-secret-doors-in-dnd"];
+    const example = answer.sections.find(
+      (section) => section.kind === "example",
+    );
+
+    expect(example?.kind).toBe("example");
+    if (example?.kind !== "example") return;
+
+    expect(example.heading).toBe("Worked example: a DC 15 stone door");
+    expect(example.items).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          term: "Noticing: passive success locates the door",
+          text: expect.stringContaining(
+            "No active check is needed to detect it again.",
+          ),
+        }),
+        expect.objectContaining({
+          term: "Alternative: passive detection fails, then they search",
+          text: expect.stringContaining(
+            "one active Perception check with advantage",
+          ),
+        }),
+        expect.objectContaining({
+          term: "Active search, on a failure instead",
+          text: expect.stringContaining(
+            "Any new roll follows a genuinely different approach.",
+          ),
+        }),
+      ]),
+    );
+    expect(answer.sections).toContainEqual(
+      expect.objectContaining({
+        kind: "checklist",
+        heading: "Before you hide a secret door",
+        items: expect.arrayContaining([
+          "Write down the clue in concrete terms: what a character can see, feel, hear or measure, and where it can be noticed from.",
+          "Classify the door as optional or essential. If it is essential, prepare an alternate clue, route or costly recovery before the session, not during the stall.",
+        ]),
+      }),
+    );
+  });
+
   it("keeps an actionable practice checklist in the NPC roleplay answer", () => {
     const answer = answers["how-do-i-roleplay-npcs-if-im-not-good-at-acting"];
 
@@ -85,6 +199,26 @@ describe("answer registry", () => {
         items: expect.arrayContaining([
           "Write the NPC's name and role.",
           "Note what they want in this scene and their starting attitude toward the party.",
+        ]),
+      }),
+    );
+  });
+
+  it("keeps the captive recruitment answer's practical prep checklist", () => {
+    const answer =
+      answers[
+        "how-do-i-handle-players-who-keep-trying-to-recruit-defeated-enemies"
+      ];
+
+    expect(answer.sections).toContainEqual(
+      expect.objectContaining({
+        kind: "checklist",
+        heading: "Before you bring a captive into the next big scene",
+        items: expect.arrayContaining([
+          "What does the card suggest, and what has changed since you wrote it?",
+          "Are captivity and cooperation both present? Have loyalty or convictions changed independently?",
+          "Before any social check, state the narrow deal on the table and the line that is not being rolled for. Roll only where the outcome is genuinely open.",
+          "What options are physically possible from their location, restraints, and the party's actions?",
         ]),
       }),
     );
@@ -971,6 +1105,20 @@ describe("published answers", () => {
         ),
       ),
     ).toBe(true);
+
+    const soloAnswers = published.filter((answer) =>
+      answer.relatedTopics.some(
+        (topic) => topic.href === SOLO_RPG_TOPIC_CONFIG.canonicalPath,
+      ),
+    );
+    expect(soloAnswers).toHaveLength(5);
+    expect(
+      soloAnswers.every((answer) =>
+        answer.relatedTools.every(
+          (tool) => tool.href !== SOLO_RPG_TOPIC_CONFIG.canonicalPath,
+        ),
+      ),
+    ).toBe(true);
   });
 
   it("only links to routes the site actually publishes", () => {
@@ -984,6 +1132,7 @@ describe("published answers", () => {
       PIRATE_TOPIC_CONFIG.canonicalPath,
       DND_TOPIC_CONFIG.canonicalPath,
       DND_BEGINNERS_TOPIC_CONFIG.canonicalPath,
+      SOLO_RPG_TOPIC_CONFIG.canonicalPath,
     ]);
     const toolPages = new Set([
       "cyberpunk-nomad-clan-generator",
@@ -1249,6 +1398,10 @@ describe("published answers", () => {
       [
         "how-do-i-run-a-rogue-or-scout-without-splitting-the-party",
         "answer-run-rogue-scout-without-splitting-party",
+      ],
+      [
+        "how-do-i-handle-players-who-keep-trying-to-recruit-defeated-enemies",
+        "answer-recruit-defeated-enemies",
       ],
     ] as const;
 

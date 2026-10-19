@@ -338,6 +338,7 @@
               {/if}
               <input
                 type="number"
+                aria-label={field.label}
                 class="w-20 rounded border border-theme-border bg-theme-bg px-1.5 py-0.5 text-right text-xs text-theme-text disabled:opacity-40"
                 value={typeof field.value === "number" ? field.value : ""}
                 disabled={readOnly}
@@ -377,6 +378,7 @@
               {/if}
               <input
                 type="text"
+                aria-label={field.label}
                 class="w-40 rounded border border-theme-border bg-theme-bg px-1.5 py-0.5 text-right text-xs text-theme-text disabled:opacity-40"
                 value={typeof field.value === "string" ? field.value : ""}
                 disabled={readOnly}
@@ -416,6 +418,7 @@
               {/if}
             </div>
             <textarea
+              aria-label={field.label}
               class="w-full resize-y rounded border border-theme-border bg-theme-bg px-1.5 py-1 text-xs text-theme-text disabled:opacity-40"
               rows="3"
               disabled={readOnly}

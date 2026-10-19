@@ -434,7 +434,7 @@ export interface AIGeneratorGateway {
 
 export interface AIGeneratorChatSession {
   /** Sends one turn and returns its text, awaiting the full response. */
-  send(userMessage: string): Promise<string>;
+  send(userMessage: string, signal?: AbortSignal): Promise<string>;
   /** Streams one chat turn when the backing provider supports it. */
   sendStream?(
     userMessage: string,

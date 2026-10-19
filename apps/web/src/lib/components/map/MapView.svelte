@@ -20,6 +20,7 @@
   import HexCrawlLayer from "./hex-crawl/HexCrawlLayer.svelte";
   import type { HexCrawlServices } from "./hex-crawl/hex-crawl-services.svelte";
   import MapContextMenu from "./MapContextMenu.svelte";
+  import { syncMapAssets } from "./map-asset-sync.svelte";
   import { clampPointToBounds } from "$lib/utils/vtt-helpers";
   import { mapSession } from "../../stores/map-session.svelte";
   import {
@@ -54,7 +55,6 @@
   let mapImage = $state<HTMLImageElement | null>(null);
   // Marks an unreadable map image so the loading overlay can offer a retry.
   let imageLoadFailed = $state(false);
-  let retryNonce = $state(0);
   let maskCanvas = $state<HTMLCanvasElement | null>(null);
 
   const painter = new MapFogPainter({
@@ -137,7 +137,6 @@
   });
 
   const activeMapSignature = $derived(mapAssetSignature(mapStore.activeMap));
-  let lastMapSignature: string | null = null;
   let loadedMaskPath = $state<string | null>(null);
 
   const vttMeasurement = $derived.by(() => {
@@ -429,20 +428,15 @@
     if (file) void replaceActiveMapImage(file);
   }
 
-  function retryImageLoad() {
-    // Forget the last synced signature so the effect below reloads the asset.
-    lastMapSignature = null;
-    retryNonce += 1;
-  }
-
-  $effect(() => {
-    void retryNonce;
-    if (activeMapSignature === lastMapSignature) {
-      return;
-    }
-    lastMapSignature = activeMapSignature;
-    return mapAssets.sync(mapStore.activeMap);
+  const assetSync = syncMapAssets({
+    signature: () => activeMapSignature,
+    activeMap: () => mapStore.activeMap,
+    sync: (map) => mapAssets.sync(map),
   });
+
+  function retryImageLoad() {
+    assetSync.retry();
+  }
 
   $effect(() => {
     const activeMap = mapStore.activeMap;

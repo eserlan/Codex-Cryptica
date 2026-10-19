@@ -170,6 +170,7 @@
           <span class="text-theme-text">{field.label}</span>
           <input
             type="number"
+            aria-label={field.label}
             class="w-16 rounded border border-theme-border bg-theme-bg px-1 py-0.5 text-right font-mono text-xs text-theme-text disabled:opacity-40"
             value={typeof field.value === "number" ? field.value : 0}
             disabled={readOnly}

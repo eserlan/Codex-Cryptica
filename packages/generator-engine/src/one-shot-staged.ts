@@ -11,7 +11,6 @@
  */
 
 import { localDecisions } from "./one-shot-local-state";
-import { parseFencedJson } from "./llm-response-utils";
 import { parseOneShotAdventure, rec } from "./one-shot-parse";
 import { checkPlayability } from "./one-shot-playability";
 import { sceneOrder } from "./one-shot-state";
@@ -37,17 +36,17 @@ import type {
 } from "./one-shot-types";
 import { regenerateOneShotLocal, resolveOneShot } from "./public-one-shot";
 import { type Rng, defaultRng } from "./random-utils";
+import {
+  StagedProgress,
+  type StagedProgressStep,
+  type StagedStepId,
+  type StagedStepStatus,
+} from "./staged-progress";
+import { askJson, askModel, throwIfAborted } from "./staged-runtime";
 
-export type OneShotStepStatus =
-  "pending" | "active" | "done" | "fallback" | "skipped";
-
-export interface OneShotProgressStep {
-  id: "core" | "structure" | "finale" | "scenes" | "npcs" | "review";
-  label: string;
-  status: OneShotStepStatus;
-  /** e.g. "3 of 5" while scenes are being written. */
-  detail?: string;
-}
+/** The page's step list; the one-shot names predate the shared types. */
+export type OneShotStepStatus = StagedStepStatus;
+export type OneShotProgressStep = StagedProgressStep;
 
 export interface OneShotStageDeps {
   /** Run one prompt and return the model's text. */
@@ -68,60 +67,31 @@ export interface OneShotStagedResult {
 type Json = Record<string, unknown>;
 const list = (v: unknown): unknown[] => (Array.isArray(v) ? v : []);
 
-const STEP_LABELS: Record<OneShotProgressStep["id"], string> = {
-  core: "Premise, villain and stakes",
-  structure: "Scenes, clues and the clock",
-  finale: "How the finale works",
-  scenes: "Writing the scenes",
-  npcs: "Supporting characters",
-  review: "Checking it runs from the page",
-};
+type OneShotStepId = Extract<
+  StagedStepId,
+  "core" | "structure" | "finale" | "scenes" | "npcs" | "review"
+>;
 
-class Progress {
-  private steps: OneShotProgressStep[] = (
-    Object.keys(STEP_LABELS) as OneShotProgressStep["id"][]
-  ).map((id) => ({ id, label: STEP_LABELS[id], status: "pending" }));
+const STEPS: ReadonlyArray<{ id: OneShotStepId; label: string }> = [
+  { id: "core", label: "Premise, villain and stakes" },
+  { id: "structure", label: "Scenes, clues and the clock" },
+  { id: "finale", label: "How the finale works" },
+  { id: "scenes", label: "Writing the scenes" },
+  { id: "npcs", label: "Supporting characters" },
+  { id: "review", label: "Checking it runs from the page" },
+];
 
-  constructor(private emit?: (steps: OneShotProgressStep[]) => void) {}
-
-  set(
-    id: OneShotProgressStep["id"],
-    status: OneShotStepStatus,
-    detail?: string,
-  ) {
-    this.steps = this.steps.map((s) =>
-      s.id === id ? { ...s, status, detail } : s,
-    );
-    this.emit?.(this.steps.map((s) => ({ ...s })));
-  }
-}
+type Progress = StagedProgress<OneShotStepId>;
 
 /** One call, retried once; resolves to parsed JSON or null if both fail. */
-async function ask(
+function ask(
   deps: OneShotStageDeps,
   prompt: StagePrompt,
 ): Promise<Json | null> {
-  for (let attempt = 0; attempt < 2; attempt++) {
-    throwIfAborted(deps.signal);
-    try {
-      const data = parseFencedJson(await deps.call(prompt, deps.signal));
-      throwIfAborted(deps.signal);
-      if (data && typeof data === "object" && !Array.isArray(data)) {
-        return data as Json;
-      }
-    } catch {
-      throwIfAborted(deps.signal);
-      // try again, then give up
-    }
-  }
-  return null;
-}
-
-function throwIfAborted(signal?: AbortSignal): void {
-  if (!signal?.aborted) return;
-  throw (
-    signal.reason ?? new DOMException("The operation was aborted", "AbortError")
-  );
+  return askJson(() => deps.call(prompt, deps.signal), {
+    signal: deps.signal,
+    attempts: 2,
+  });
 }
 
 /** What a written scene settled, for the scenes after it. */
@@ -322,17 +292,12 @@ async function repairOnce(
   gaps: OneShotGap[],
 ): Promise<OneShotAdventure | null> {
   const prompt = buildOneShotRepairPrompt(adventure, gaps);
-  for (let attempt = 0; attempt < 2; attempt++) {
-    throwIfAborted(deps.signal);
-    try {
-      const text = await deps.call(prompt, deps.signal);
-      throwIfAborted(deps.signal);
-      if (isReadableRepair(text)) return applyOneShotRepair(adventure, text);
-    } catch {
-      throwIfAborted(deps.signal);
-    }
-  }
-  return null;
+  return askModel(
+    () => deps.call(prompt, deps.signal),
+    (text) =>
+      isReadableRepair(text) ? applyOneShotRepair(adventure, text) : null,
+    { signal: deps.signal, attempts: 2 },
+  );
 }
 
 /**
@@ -453,7 +418,7 @@ export async function runOneShotStages(
   rng: Rng = defaultRng,
 ): Promise<OneShotStagedResult> {
   throwIfAborted(deps.signal);
-  const progress = new Progress(deps.onProgress);
+  const progress = new StagedProgress(STEPS, deps.onProgress);
   const resolved = resolveOneShot(options, rng);
   const core = await required(
     deps,

@@ -142,7 +142,7 @@ describe("generator save payloads", () => {
     });
   });
 
-  it("appends sanitized Tales of the Valiant encounter mechanics and metadata on save", () => {
+  it("appends sanitized Tales of the Valiant encounter mechanics and published BFRD Doom guidance on save", () => {
     const tovEncounter: GeneratorOutput = {
       ...baseOutput,
       type: "event",
@@ -172,7 +172,8 @@ describe("generator save payloads", () => {
             },
           ],
           tacticalAdvice: "The caller blinds foes while hounds attack flanks.",
-          doomNotes: "Spend 2 Doom to summon a Shadow Minion.",
+          doomNotes:
+            "Start the encounter with a CR-based GM Doom pool of 3 points. Spend Doom to give a creature advantage on an attack, give a PC disadvantage on a save, or once per encounter recharge or gain one additional use of a limited-use feature.",
           isHomebrew: false,
         },
       },
@@ -201,11 +202,51 @@ describe("generator save payloads", () => {
       "- **Tactical Guidance:** The caller blinds foes while hounds attack flanks.",
     );
     expect(payload.lore).toContain(
-      "- **Doom Guidance:** Spend 2 Doom to summon a Shadow Minion.",
+      "- **Doom Guidance:** Start the encounter with a CR-based GM Doom pool of 3 points. Spend Doom to give a creature advantage on an attack, give a PC disadvantage on a save, or once per encounter recharge or gain one additional use of a limited-use feature.",
     );
+    expect(payload.lore).not.toMatch(/\*\*Doom Guidance:\*\*.*\(Homebrew\)/);
     expect(payload.systemId).toBe("tales-of-the-valiant");
     expect(payload.metadata).toEqual({
       tovMechanics: tovEncounter.mechanics?.data,
     });
+  });
+
+  it("labels custom creature-specific Doom spends as homebrew when saving ToV encounter mechanics", () => {
+    const homebrewEncounter: GeneratorOutput = {
+      ...baseOutput,
+      type: "event",
+      kind: "encounter",
+      systemId: "tales-of-the-valiant",
+      mechanics: {
+        systemId: "tales-of-the-valiant",
+        kind: "tov-encounter",
+        isHomebrew: true,
+        data: {
+          qualitativeDifficulty: "Dangerous for 4 Level 3 characters",
+          recommendedCrRange: "Single CR 4 boss",
+          suggestedCreatures: [
+            {
+              name: "Gloom Caller",
+              cr: "4",
+              count: 1,
+              role: "Controller / Boss",
+              isHomebrew: true,
+            },
+          ],
+          tacticalAdvice: "Uses gloom to isolate the party.",
+          doomNotes: "Spend 2 Doom to summon a Shadow Minion.",
+          isHomebrew: true,
+        },
+      },
+    };
+
+    const payload = buildGeneratorSavePayload(homebrewEncounter, {
+      content: "### What the Players See\nGloom gathers in the corridor.",
+      lore: "### Situation & Stakes\nThe pack hunts here.",
+    });
+
+    expect(payload.lore).toContain(
+      "- **Doom Guidance:** Spend 2 Doom to summon a Shadow Minion. *(Homebrew)*",
+    );
   });
 });

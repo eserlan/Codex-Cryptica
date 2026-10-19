@@ -73,10 +73,13 @@ export const TOV_DOOM_FIELD_ID = "doom" as const;
 
 export const TOV_DOOM_REFERENCE = {
   summary:
-    "Doom Points are held by select boss monsters and adversaries to fuel villain actions, legendary responses, or lair effects.",
+    "The optional BFRD Doom rule gives the GM a CR-based resource at the start of an encounter. The GM can spend it to give a creature advantage on an attack, give a PC disadvantage on a save, or once per encounter refresh, recharge, or gain one additional use of a limited-use feature.",
   min: 0,
   defaultMax: 10,
-  source: "Black Flag Reference Document (BFRD) / Tales of the Valiant",
+  note: "The published rule is encounter-level and can affect creatures in that encounter. Codex Cryptica currently exposes a counter on an individual ToV monster stat sheet as a tracking choice.",
+  allocationGuidance:
+    "Use the per-creature Doom counter on a ToV monster sheet or VTT token to track points allocated to that creature from the encounter's Doom pool; this storage model does not change the encounter-level BFRD rule.",
+  source: `${BFRD_MANIFEST.shortName} ${BFRD_MANIFEST.version} (${BFRD_MANIFEST.license})`,
 } as const;
 
 export function isTovDoomField(
@@ -93,14 +96,29 @@ export function isTovDoomField(
 
 export function adjustTovDoom(
   current: number,
-  delta: 1 | -1,
-  max: number = 10,
+  delta: number,
+  max: number = TOV_DOOM_REFERENCE.defaultMax,
 ): { value: number; clamped: boolean; reason?: string } {
+  if (!Number.isFinite(current)) {
+    return {
+      value: 0,
+      clamped: true,
+      reason: "Current Doom value is not a valid number; reset to 0.",
+    };
+  }
   const next = current + delta;
   if (next < 0)
-    return { value: 0, clamped: true, reason: "Doom cannot be less than 0." };
+    return {
+      value: 0,
+      clamped: true,
+      reason: "Doom Points cannot fall below 0.",
+    };
   if (next > max)
-    return { value: max, clamped: true, reason: `Doom cannot exceed ${max}.` };
+    return {
+      value: max,
+      clamped: true,
+      reason: `Doom Points cannot exceed ${max}.`,
+    };
   return { value: next, clamped: false };
 }
 ```
@@ -119,6 +137,6 @@ Under the generated Note's `lore` section when saving with ToV mechanics:
 - **Suggested Participants:**
   - 3x Shadow Hound (CR 1, Skirmisher)
   - 1x Gloom Caller (CR 4, Controller / Boss)
-- **Tactical Advice:** Use the terrain to bottle-neck players; the Gloom Caller stays behind the hounds and uses darkness to obscure approach.
-- **Doom Guidance:** The Gloom Caller has 3 Doom Points. Spend 1 Doom to snuff a light source within 60 ft as a reaction, or 2 Doom to summon a Shadow Minion at initiative count 20.
+- **Tactical Guidance:** Use the terrain to bottle-neck players; the Gloom Caller stays behind the hounds and uses darkness to obscure approach.
+- **Doom Guidance:** Start the encounter with a CR-based GM Doom pool of 3 points. Spend Doom to give the Gloom Caller or a Shadow Hound advantage on an attack, give a PC disadvantage on a save, or once per encounter recharge or gain one additional use of a limited-use feature.
 ```

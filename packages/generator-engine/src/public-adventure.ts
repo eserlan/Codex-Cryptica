@@ -18,7 +18,8 @@
  */
 
 import type { PublicGeneratorOutput } from "./public-generator-adapters";
-import { BANNED_NAMES, NAME_BAN_PROMPT } from "./public-npc";
+import { NAME_BAN_PROMPT } from "./public-npc";
+import { bannedNamesIn } from "./naming-policy";
 import {
   type Rng,
   defaultRng,
@@ -97,6 +98,11 @@ export interface ResolvedAdventure {
 export interface AdventurePrompt {
   systemInstruction: string;
   userMessage: string;
+  /**
+   * The setting, given situation and seeds: `userMessage` without the JSON
+   * schema. The staged route reuses it in every stage.
+   */
+  briefing: string;
   resolved: ResolvedAdventure;
 }
 
@@ -391,7 +397,7 @@ const PRESSURE_SIGNAL_TERMS = [
  * session avoid-list — otherwise the prompt says "keep this name" and
  * "pick a different name" about the same word.
  */
-function userSuppliedText(options: AdventureGeneratorOptions): string {
+export function userSuppliedText(options: AdventureGeneratorOptions): string {
   return [options.seed, options.campaignContext]
     .filter((text): text is string => Boolean(text?.trim()))
     .join("\n");
@@ -542,7 +548,7 @@ Critical Structural Guidelines for Playability & Global Causal Coherence:
 
 Return ONLY a single valid JSON object matching the requested schema. ${NAME_BAN_PROMPT}`;
 
-  const userMessage = `Write an original ${adventure.genre} adventure concept.
+  const briefing = `Write an original ${adventure.genre} adventure concept.
 
 Setting Context:
 - Active Theme / Genre: ${adventure.genre} (${genreHint})
@@ -560,7 +566,9 @@ ${formatAdventureSeeds(
     userSuppliedText(options),
   ),
   Boolean(options.seed?.trim() && statesDeadline(options.seed)),
-)}
+)}`;
+
+  const userMessage = `${briefing}
 
 Required JSON schema:
 {
@@ -601,6 +609,7 @@ Required JSON schema:
   return {
     systemInstruction,
     userMessage,
+    briefing,
     resolved: adventure,
   };
 }
@@ -609,19 +618,42 @@ Required JSON schema:
 // AI response parsing
 // ---------------------------------------------------------------------------
 
-/** Why a name field is checked but not description fields. */
-function bannedNamesIn(values: string[], extra: string[] = []): string[] {
-  const found = new Set<string>();
-  const forbidden = [...BANNED_NAMES, ...extra].filter((n) => n.trim());
-  for (const value of values) {
-    for (const banned of forbidden) {
-      const escaped = banned.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      if (new RegExp(`\\b${escaped}\\b`, "i").test(value)) {
-        found.add(banned.trim());
-      }
+/**
+ * Whether a user-supplied seed survived: the model must keep its names and
+ * adopt its stated deadline rather than paraphrasing both away. Both checks
+ * are deliberately lenient. They fire only when the seed was clearly
+ * discarded, since each failure costs a retry.
+ *
+ * @param wholeOutput every field the model wrote, as text
+ * @param objectiveText where the adopted deadline should show up
+ */
+export function seedFidelityProblems(
+  seed: string | undefined,
+  wholeOutput: string,
+  objectiveText: string,
+): string[] {
+  const seedText = seed?.trim();
+  if (!seedText) return [];
+  const problems: string[] = [];
+  const seedNouns = extractProperNouns(seedText);
+  const output = wholeOutput.toLowerCase();
+  const missingSeedNouns = seedNouns.filter(
+    (noun) => !output.includes(noun.toLowerCase()),
+  );
+  if (missingSeedNouns.length > 0) {
+    problems.push(
+      `drops these names from the given situation: ${missingSeedNouns.join(", ")} — these are fixed and must appear in the adventure as written.`,
+    );
+  }
+  if (statesDeadline(seedText)) {
+    const objective = objectiveText.toLowerCase();
+    if (!PRESSURE_SIGNAL_TERMS.some((term) => objective.includes(term))) {
+      problems.push(
+        "the given situation states its own deadline, but primaryObjective carries no pressure — adopt that deadline as the adventure's clock.",
+      );
     }
   }
-  return [...found];
+  return problems;
 }
 
 export interface AdventureParseResult {
@@ -750,37 +782,14 @@ export function parseAdventureResponseDetailed(
       );
     }
 
-    // 0. Seed fidelity. A user-supplied seed is binding: the model must keep
-    // its names and adopt its stated deadline rather than paraphrasing both
-    // away. Both checks are deliberately lenient — they fire only when the
-    // seed was clearly discarded, since each failure costs a retry.
-    const seedText = options.seed?.trim();
-    if (seedText) {
-      const wholeOutput = JSON.stringify(parsed);
-      const seedNouns = extractProperNouns(seedText);
-      if (
-        seedNouns.length > 0 &&
-        !seedNouns.some((noun) =>
-          wholeOutput.toLowerCase().includes(noun.toLowerCase()),
-        )
-      ) {
-        problems.push(
-          `drops every name from the given situation (${seedNouns.join(", ")}) — these are fixed and must appear in the adventure as written.`,
-        );
-      }
-      if (statesDeadline(seedText)) {
-        const objectiveWithSummary =
-          `${parsed.summary ?? ""} ${parsed.primaryObjective ?? ""}`.toLowerCase();
-        const keepsPressure = PRESSURE_SIGNAL_TERMS.some((term) =>
-          objectiveWithSummary.includes(term),
-        );
-        if (!keepsPressure) {
-          problems.push(
-            "the given situation states its own deadline, but primaryObjective carries no pressure — adopt that deadline as the adventure's clock.",
-          );
-        }
-      }
-    }
+    // 0. Seed fidelity: a user-supplied seed is binding.
+    problems.push(
+      ...seedFidelityProblems(
+        options.seed,
+        JSON.stringify(parsed),
+        `${parsed.summary ?? ""} ${parsed.primaryObjective ?? ""}`,
+      ),
+    );
 
     // 1. Programmatic Title vs. Environment Coherence Validation (Multi-Domain)
     const titleLower = title.toLowerCase();

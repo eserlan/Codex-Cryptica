@@ -17,6 +17,16 @@ vi.mock("$lib/stores/vault.svelte", () => ({
   },
 }));
 
+const profile = vi.hoisted(() => ({ isTalesOfTheValiant: false }));
+
+vi.mock("$lib/stores/system-profile.svelte", () => ({
+  systemProfileStore: {
+    get isTalesOfTheValiant() {
+      return profile.isTalesOfTheValiant;
+    },
+  },
+}));
+
 vi.mock("$lib/stores/categories.svelte", () => ({
   categories: {
     list: [
@@ -187,5 +197,23 @@ describe("MobileCreateEntitySheet", () => {
       null,
       { templateId: "tmpl-character-archetype" },
     );
+  });
+});
+
+describe("MobileCreateEntitySheet: stat block import entry point", () => {
+  it("offers FROM STAT BLOCK in a ToV vault", () => {
+    profile.isTalesOfTheValiant = true;
+    modalUIStore.showMobileCreateSheet = true;
+    modalUIStore.pendingCreateDate = { year: 2026, month: 6, day: 18 };
+    render(MobileCreateEntitySheet);
+    expect(screen.getByTestId("mobile-new-from-stat-block")).toBeTruthy();
+  });
+
+  it("does not offer it in other vaults", () => {
+    profile.isTalesOfTheValiant = false;
+    modalUIStore.showMobileCreateSheet = true;
+    modalUIStore.pendingCreateDate = { year: 2026, month: 6, day: 18 };
+    render(MobileCreateEntitySheet);
+    expect(screen.queryByTestId("mobile-new-from-stat-block")).toBeNull();
   });
 });

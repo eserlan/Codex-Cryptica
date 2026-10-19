@@ -105,6 +105,30 @@ The following high-impact candidate specifications target performance, scaling, 
 
 ## 🏛️ Historical Roadmap & Release Timeline
 
+### v0.36.0 — The Adventure Crafting & Play Update (2026-10-19)
+
+- **Highlights**: A staged One-Shot Adventure Builder with playability checks and repairs; dungeon, point crawl, tome, and staged Adventure Idea generators; solo hexcrawl exploration with journal capture and expanded solo-play tools; Tales of the Valiant character sheets, text stat block import, and encounter guidance; reusable entity sheets and a Shop/Merchant sheet with stock, player catalogue, and confirmed trades; Cif-guided onboarding and contextual tips; and expanded RPG guidance for GMs and solo players.
+- **Associated Specifications**:
+  - [171-solo-map-play](./171-solo-map-play/spec.md) (Solo map exploration and journal capture)
+  - [172-solo-session-entry](./172-solo-session-entry/spec.md) (Solo session entry points)
+  - [173-solo-play-loop](./173-solo-play-loop/spec.md) (Solo play loop)
+  - [174-solo-oracle-threads](./174-solo-oracle-threads/spec.md) (Oracle threads and journal controls)
+  - [175-cif-guided-onboarding](./175-cif-guided-onboarding/spec.md) (Cif-guided onboarding)
+  - [176-cif-contextual-tips](./176-cif-contextual-tips/spec.md) (Cif contextual tips)
+  - [177-point-crawl-generator](./177-point-crawl-generator/spec.md) (Point crawl generator)
+  - [178-hex-crawl-mode](./178-hex-crawl-mode/spec.md) (Hex crawl mode)
+  - [145-dungeon-structural-builder](./145-dungeon-structural-builder/spec.md) (Dungeon structure and delve)
+  - [146-adventure-idea-generator](./146-adventure-idea-generator/spec.md) (Adventure Idea generator)
+  - [1825-dungeon-idea-generator](./1825-dungeon-idea-generator/spec.md) (Dungeon and Delve generator)
+  - [4133-staged-dungeon-generation](./4133-staged-dungeon-generation/plan.md) (Staged dungeon generation)
+  - [4135-staged-adventure-idea](./4135-staged-adventure-idea/plan.md) (Staged Adventure Idea generation)
+  - [3948-tov-generator-mechanics](./3948-tov-generator-mechanics/spec.md) (Tales of the Valiant generator mechanics)
+  - [3949-tov-encounter-guidance](./3949-tov-encounter-guidance/spec.md) (Tales of the Valiant encounter guidance)
+  - [3951-tov-discovery-and-help](./3951-tov-discovery-and-help/spec.md) (Tales of the Valiant onboarding and help)
+  - [4192-tov-statblock-import](./4192-tov-statblock-import/spec.md) (Tales of the Valiant stat block import)
+  - [149-reusable-stat-sheets](./149-reusable-stat-sheets/spec.md) (Reusable entity sheets)
+  - [160-solo-adventure-mode](./160-solo-adventure-mode/spec.md) (Solo adventure mode)
+
 ### v0.35.0 — The Hexcrawl & Cif Update (2026-10-06)
 
 - **Highlights**: Overland hexcrawl maps with token snapping and hex fog of war; the Cif help assistant with screen-aware retrieval, quick prompts and full Help registry coverage; multiple calendar eras with epoch year numbering; community-aware graph layout with group backgrounds and per-connection hiding; culture-aware AI names and theme-to-genre mapping for generators; community template directory links; mobile touch-target and typography pass; map image error recovery and vault-wide Campaign Label rename/delete.

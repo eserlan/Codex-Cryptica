@@ -40,6 +40,10 @@ vi.mock("$lib/stores/calendar.svelte", () => ({
   },
 }));
 
+vi.mock("$lib/stores/system-profile.svelte", () => ({
+  systemProfileStore: { init: vi.fn().mockResolvedValue(undefined) },
+}));
+
 vi.mock("$lib/stores/timeline.svelte", () => ({
   timelineStore: {
     resetVaultGuard: vi.fn(),
@@ -57,6 +61,8 @@ import {
 import { notificationStore } from "$lib/stores/ui/notification.svelte";
 import { calendarStore } from "$lib/stores/calendar.svelte";
 import { timelineStore } from "$lib/stores/timeline.svelte";
+import { systemProfileStore } from "$lib/stores/system-profile.svelte";
+import { vault } from "$lib/stores/vault.svelte";
 import { resolveAITemplate } from "@codex/ai-engine";
 import { entityTemplateStore } from "$lib/stores/entity-templates/entity-template-store.svelte";
 import { GENERIC_TEMPLATES } from "schema";
@@ -265,6 +271,39 @@ describe("app-init", () => {
       expect(timelineStore.resetVaultGuard).toHaveBeenCalled();
       expect(timelineStore.init).toHaveBeenCalled();
       expect(mockCalendarStore.init).not.toHaveBeenCalled();
+    });
+
+    it("loads the switched-to vault's game system profile (#3943)", async () => {
+      const spy = vi
+        .spyOn(vault, "activeVaultId", "get")
+        .mockReturnValue("vault-7");
+      listenersCleanup.push(initializeGlobalListeners({ init: vi.fn() }));
+
+      window.dispatchEvent(new CustomEvent("vault-switched"));
+      await vi.waitFor(() => {
+        expect(systemProfileStore.init).toHaveBeenCalledWith("vault-7");
+      });
+      spy.mockRestore();
+    });
+
+    it("still loads the calendar when the game system profile fails (negative)", async () => {
+      const consoleSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+      vi.mocked(systemProfileStore.init).mockRejectedValueOnce(
+        new Error("profile read failed"),
+      );
+      listenersCleanup.push(initializeGlobalListeners({ init: vi.fn() }));
+
+      window.dispatchEvent(new CustomEvent("vault-switched"));
+      await vi.waitFor(() => {
+        expect(consoleSpy).toHaveBeenCalledWith(
+          "[AppInit] Failed to load the vault's game system profile:",
+          expect.any(Error),
+        );
+      });
+      expect(calendarStore.init).toHaveBeenCalled();
+      consoleSpy.mockRestore();
     });
 
     it("should remove event listeners on cleanup", () => {

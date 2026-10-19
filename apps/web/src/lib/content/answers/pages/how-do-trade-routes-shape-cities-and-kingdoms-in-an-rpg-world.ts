@@ -160,6 +160,7 @@ export const howDoTradeRoutesShapeCitiesAndKingdomsInAnRpgWorld: AnswerConfigInp
       "how-do-i-make-sea-travel-interesting-in-a-ttrpg",
       "how-do-i-run-a-pirate-campaign-focused-on-exploration",
       "how-should-a-fantasy-adventuring-guild-handle-wages-dues-and-shared-expenses",
+      "how-do-i-design-a-geographically-realistic-town-or-village",
     ],
     discovery: {
       id: "answer-trade-routes-shape-cities-kingdoms",
@@ -188,6 +189,11 @@ export const howDoTradeRoutesShapeCitiesAndKingdomsInAnRpgWorld: AnswerConfigInp
           with: "answer-believable-fantasy-economy",
           reason:
             "This answer maps choke points, collectors, and rival routes onto settlements; the economy answer traces resources, production, exchange, and pressure across a whole region.",
+        },
+        {
+          with: "answer-geographically-realistic-town-village",
+          reason:
+            "This answer maps regional routes, valuable nodes, and the power around them; the geography answer lays out movement within one settlement and its immediate hinterland.",
         },
       ],
     },

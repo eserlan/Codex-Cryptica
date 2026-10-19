@@ -29,9 +29,7 @@ import {
   dungeonConfig,
   type DungeonGeneratorOptions,
 } from "./public-dungeon";
-import { forGenre } from "./public-dungeon-constants";
-import { themeIdToLabel, factionConfig } from "./public-faction-constants";
-import { npcThemeConfig } from "./public-npc-constants";
+import { themeIdToLabel } from "./public-faction-constants";
 import {
   isTitleBanned,
   bannedNamesInstruction,
@@ -41,12 +39,10 @@ import {
   cultureNamingInstruction,
   type OverusedNamePatterns,
 } from "./naming-policy";
-import { settlementConfig } from "./public-settlement-constants";
 import {
   buildAdventurePrompt,
   generateAdventureLocal,
   adventureConfig,
-  forAdventureGenre,
   type AdventureGeneratorOptions,
 } from "./public-adventure";
 import {
@@ -127,7 +123,6 @@ import {
   type AlienRaceGeneratorOptions,
 } from "./public-alien-race";
 import { templateGuidanceBlock, templateGuidanceInstruction } from "schema";
-import { councilVoteConfig } from "./public-council-vote-constants";
 import {
   buildFactionRosterPrompt,
   generateFactionRosterLocal,
@@ -812,131 +807,43 @@ ${loreGuidance(request, "a numbered list of distinct thematic entries with detai
  * (`npcThemeConfig`) so the two tools agree — a Western game shouldn't
  * offer "Elf" here any more than it does there.
  */
-export function npcRacesForTheme(themeId: string): string[] {
-  const genre = themeIdToLabel[themeId] ?? "Classic Fantasy";
-  return forGenre(npcThemeConfig.ancestries, genre);
-}
-export function npcRolesForTheme(themeId: string): string[] {
-  const genre = themeIdToLabel[themeId] ?? "Classic Fantasy";
-  return forGenre(npcThemeConfig.roles, genre);
-}
-/**
- * Adventure Type and Tone choices for the vault's theme, from the same
- * genre-keyed tables the Adventure Idea Generator rolls against, so a fantasy
- * vault isn't offered "Heist in a Corporate Tower" or a sci-fi tone.
- */
-export function adventureArchetypesForTheme(themeId: string): string[] {
-  const genre = themeIdToLabel[themeId] ?? "Classic Fantasy";
-  return forAdventureGenre(adventureConfig.archetypesByGenre, genre);
-}
-export function adventureTonesForTheme(themeId: string): string[] {
-  const genre = themeIdToLabel[themeId] ?? "Classic Fantasy";
-  return forAdventureGenre(adventureConfig.tonesByGenre, genre);
-}
-const NPC_RACES = npcRacesForTheme("workspace");
-const NPC_ROLES = npcRolesForTheme("workspace");
-const NPC_TRAITS = [
-  "speaks in measured, deliberate sentences",
-  "never removes their worn leather gloves",
-  "collects small carved trinkets from every town visited",
-  "laughs a beat too late at every joke",
-];
+import {
+  npcRacesForTheme,
+  npcRolesForTheme,
+  adventureArchetypesForTheme,
+  adventureTonesForTheme,
+  NPC_RACES,
+  NPC_ROLES,
+  NPC_TRAITS,
+  factionTypesForTheme,
+  FACTION_TYPES,
+  FACTION_GOALS,
+  settlementTypesForTheme,
+  SETTLEMENT_TYPES,
+  SETTLEMENT_FEATURES,
+  ITEM_RARITIES,
+  ITEM_KINDS,
+  ITEM_EFFECTS,
+  EVENT_TYPES,
+  EVENT_OUTCOMES,
+  COUNCIL_VOTE_BODY_TYPES,
+  COUNCIL_VOTE_SIZES,
+  COUNCIL_VOTE_RULES,
+  COUNCIL_VOTE_SCOPES,
+  COUNCIL_VOTE_TONES,
+  COUNCIL_VOTE_ANTAGONIST_INFLUENCE,
+  COUNCIL_VOTE_ARCHETYPES,
+  COUNCIL_VOTE_STANCES,
+} from "./campaign-generator-local-constants";
 
-/**
- * Faction type choices, reusing `factionConfig.typesByTheme` — the same
- * genre-keyed table the public Faction Generator already uses — so a
- * Western vault offers "Outlaw Gang" instead of "Guild".
- */
-export function factionTypesForTheme(themeId: string): string[] {
-  const genre = themeIdToLabel[themeId] ?? "Classic Fantasy";
-  return forGenre(factionConfig.typesByTheme, genre);
-}
-const FACTION_TYPES = factionTypesForTheme("workspace");
-
-const FACTION_GOALS = [
-  "control the regional trade routes",
-  "uncover a buried pre-cataclysm secret",
-  "install a sympathetic ruler",
-  "purge a rival faction from the city",
-];
-
-/**
- * `settlementConfig.sizesByGenre` (public Settlement Generator) uses a
- * shorter genre vocabulary than `themeIdToLabel` ("Western", not
- * "Western / Frontier"; "Horror", not "Vampire / Gothic Noir") — alias
- * the mismatched ones so `forGenre`'s own fallback logic doesn't miss an
- * exact match that actually exists under a different spelling.
- */
-const SETTLEMENT_GENRE_ALIASES: Record<string, string> = {
-  "Vampire / Gothic Noir": "Horror",
-  "Modern Conspiracy": "Modern",
-  "Cyberpunk / Corporate": "Cyberpunk",
-  "Sci-Fi / Space Opera": "Sci-Fi",
-  "Western / Frontier": "Western",
+export {
+  npcRacesForTheme,
+  npcRolesForTheme,
+  adventureArchetypesForTheme,
+  adventureTonesForTheme,
+  factionTypesForTheme,
+  settlementTypesForTheme,
 };
-
-/**
- * Settlement type ("size") choices, reusing `settlementConfig.sizesByGenre`
- * so a Sci-Fi vault offers "Station"/"Colony" instead of "Hamlet"/"Fortress".
- */
-export function settlementTypesForTheme(themeId: string): string[] {
-  const genre = themeIdToLabel[themeId] ?? "Classic Fantasy";
-  const settlementGenre = SETTLEMENT_GENRE_ALIASES[genre] ?? genre;
-  return forGenre(settlementConfig.sizesByGenre, settlementGenre).map(
-    (tier) => tier.name,
-  );
-}
-const SETTLEMENT_TYPES = settlementTypesForTheme("workspace");
-
-const SETTLEMENT_FEATURES = [
-  "a crumbling aqueduct still feeding the central well",
-  "a market square that never fully closes",
-  "a shrine locals leave offerings at each dawn",
-  "a harbor choked with half-sunk wrecks",
-];
-
-const ITEM_RARITIES = ["Common", "Uncommon", "Rare", "Very Rare", "Legendary"];
-const ITEM_KINDS = ["Blade", "Amulet", "Ring", "Staff", "Tome", "Cloak"];
-const ITEM_EFFECTS = [
-  "hums faintly when an untruth is spoken nearby",
-  "grows warm in the presence of the undead",
-  "lets the bearer recall one forgotten memory each night",
-  "turns aside the first blow of any duel",
-];
-
-const EVENT_TYPES = [
-  "Battle",
-  "Festival",
-  "Disaster",
-  "Discovery",
-  "Ritual",
-  "Treaty",
-  "Uprising",
-  "Betrayal",
-];
-const EVENT_OUTCOMES = [
-  "reshaped the balance of power across the region",
-  "left a wound the locals have never forgotten",
-  "forged an uneasy alliance between former enemies",
-  "uncovered a secret that should have stayed buried",
-];
-
-const COUNCIL_VOTE_BODY_TYPES = councilVoteConfig.bodyTypes;
-
-const COUNCIL_VOTE_SIZES = councilVoteConfig.sizes;
-
-const COUNCIL_VOTE_RULES = councilVoteConfig.votingRules;
-
-const COUNCIL_VOTE_SCOPES = councilVoteConfig.scopes;
-
-const COUNCIL_VOTE_TONES = councilVoteConfig.tones;
-
-const COUNCIL_VOTE_ANTAGONIST_INFLUENCE =
-  councilVoteConfig.antagonistInfluences;
-
-const COUNCIL_VOTE_ARCHETYPES = councilVoteConfig.archetypes;
-
-const COUNCIL_VOTE_STANCES = councilVoteConfig.stances;
 
 function generateName(): string {
   const prefixes = [
@@ -1094,10 +1001,13 @@ function generateDungeon(request: GeneratorRunRequest): GeneratorOutput {
 export function buildCampaignDungeonPrompt(request: GeneratorRunRequest) {
   const options = dungeonOptions(request);
   const prompt = buildDungeonPrompt(options);
+  const contextPrefix = contextChain(request);
   return {
     ...prompt,
     options,
-    userMessage: `${contextChain(request)}
+    /** The vault/naming/instructions chain, for staged stages to carry too. */
+    contextPrefix,
+    userMessage: `${contextPrefix}
 
 ${prompt.userMessage}`,
   };
@@ -1142,10 +1052,13 @@ function generateAdventure(request: GeneratorRunRequest): GeneratorOutput {
 export function buildCampaignAdventurePrompt(request: GeneratorRunRequest) {
   const options = adventureOptions(request);
   const prompt = buildAdventurePrompt(options);
+  const contextPrefix = contextChain(request);
   return {
     ...prompt,
     options,
-    userMessage: `${contextChain(request)}
+    /** The vault/naming/instructions chain, for staged stages to carry too. */
+    contextPrefix,
+    userMessage: `${contextPrefix}
 
 ${prompt.userMessage}`,
   };
@@ -2035,21 +1948,24 @@ Follow these rules when writing the paths:
 4. If the established objective requires the proposal to pass unchanged, no path — including the costly best solution — may introduce an amendment, sunset clause, substitute proposal, rider, exemption, or altered implementation term, even one framed as a separate programme that functionally changes how the proposal applies. Any councillor whose demand requires such a change stays unavailable for genuine persuasion in every path.
 5. Only use dependencies exactly as established above — never invent a dependency link between councillors that wasn't stated, never reverse the direction of one that was, and never let its effect exceed exactly what it describes (a dependency that says a councillor's price or stance "shifts" is not license to assume they copy another councillor's vote outright). If a path changes the vote of a councillor another one depends on, it must state what that dependent councillor does as a result — none left dangling. If any investigation lead described in a path could plausibly trigger a procedural rule from the established voting procedure (such as a delay or a point of order), account for that risk explicitly.
 6. The costly best solution is the least harmful viable route that fully resolves the central dilemma — not simply the largest coalition or the most votes. It must persuade each targeted councillor only through the exact condition already established for them (never a substitute condition or unrelated evidence), and its cost must be a genuine, lasting political, moral, financial, or strategic consequence required to fully resolve the dilemma — not a manufactured one and not merely time or resources spent investigating. Do not sacrifice an uninvolved party's interests, force unanimity, or endanger an already-secured vote beyond what the objective actually requires.
-7. Write every section as scene-appropriate prose. Do not restate the wording of these rules verbatim in the output, and never include prompt instructions, placeholder-name mapping notes, or any other meta-commentary about how the piece was generated.
-Before returning, simulate the vote from start to finish and check every path against the rules above: list the final vote of every councillor per path, seat by seat, including councillors the path did not target — an untargeted councillor's vote carries over unchanged from their established stance unless the path explains why it moved — then recalculate the tally against the established threshold and double-check the arithmetic; confirm no path relies on an unexplained vote change, ignores an opposing or abstaining councillor, endangers an already-secured vote, violates ballot secrecy in any path, or invents or uses a procedural mechanism not established above; confirm every dependency used is one that was actually established above, in the direction it was defined, with an effect no larger than what it describes; confirm the smallest viable coalition targets only councillors whose support is actually needed to clear the threshold, and that any extra vote is clearly marked as insurance, not required; confirm no path — including the costly best solution — alters the proposal itself if the objective requires it to pass unchanged; confirm the costly best solution persuades each targeted councillor only through their exact established condition and that its cost is a lasting consequence, not merely time or resources spent; confirm "Possible Paths" is ordered smallest viable coalition, then broader/riskier alternative, then the costly best solution; confirm "Antagonist Influence" is not contradicted by anything described in these new sections; and confirm the output contains no prompt instructions, placeholder-name notes, or generation commentary. Fix any mismatch before responding.`;
+7. Coalition diversity: The three paths must construct genuinely distinct valid coalitions representing different political approaches: the smallest viable coalition via direct transactional logrolling or targeted favours; the broader/riskier alternative via procedural mechanisms, recusal rules, committee bylaws, or exposing secrets/kompromat; and the costly best solution via durable moral or structural resolution of the core dilemma. Account for both councillor dependencies and persuasion conditions to target different voting blocs rather than minor tweaks to the same core bloc.
+8. Concise operational narrative: Keep full motivations, personal histories, and worldviews with the councillors in the foundation pass. Do not re-narrate a councillor's biography or emotional justification in the paths section. Make the coalition paths concise, highlighting only their distinct political strategy, the specific action/leverage applied per targeted councillor, any triggered dependency cascade, immediate operational risks, lasting consequences, and the resulting vote tally.
+9. Write every section as scene-appropriate prose. Do not restate the wording of these rules verbatim in the output, and never include prompt instructions, placeholder-name mapping notes, or any other meta-commentary about how the piece was generated.
+Before returning, simulate the vote from start to finish and check every path against the rules above: list the final vote of every councillor per path, seat by seat, including councillors the path did not target — an untargeted councillor's vote carries over unchanged from their established stance unless the path explains why it moved — then recalculate the tally against the established threshold and double-check the arithmetic; confirm no path relies on an unexplained vote change, ignores an opposing or abstaining councillor, endangers an already-secured vote, violates ballot secrecy in any path, or invents or uses a procedural mechanism not established above; confirm every dependency used is one that was actually established above, in the direction it was defined, with an effect no larger than what it describes; confirm the smallest viable coalition targets only councillors whose support is actually needed to clear the threshold, and that any extra vote is clearly marked as insurance, not required; confirm no path — including the costly best solution — alters the proposal itself if the objective requires it to pass unchanged; confirm the costly best solution persuades each targeted councillor only through their exact established condition and that its cost is a lasting consequence, not merely time or resources spent; confirm "Possible Paths" is ordered smallest viable coalition, then broader/riskier alternative, then the costly best solution, each using a distinct political approach; confirm the narrative stays concise without repeating councillor biographies; confirm "Antagonist Influence" is not contradicted by anything described in these new sections; and confirm the output contains no prompt instructions, placeholder-name notes, or generation commentary. Fix any mismatch before responding.`;
 }
 
 export function councilVotePathsRepairPrompt(): string {
   return `Before continuing, proofread and repair the "Possible Paths" and "Follow-Up Hooks" you just wrote above — do not write new paths, only fix what's broken, and return the complete corrected JSON object in the exact same schema, with every field present, not just the parts you changed.
-Check specifically:
-1. Every dependency used across the paths is one that was actually established in the scenario above, used in the direction it was defined, with an effect no larger than what it describes. If any path invented a dependency link that was never stated, or reversed one that was, remove or correct it — including removing any vote change that only happened because of the invented dependency. If a councillor has their own specific persuasion condition stated in the scenario above, a path must use that condition directly to flip their vote rather than defaulting to a looser dependency-based trigger — a dependency may substitute for a councillor's own condition only if the path explains why their own condition is unavailable or impractical in that path.
+Check specifically across these core invariants and style requirements:
+1. Every dependency used across the paths is one that was actually established in the scenario above, used in the direction it was defined, with an effect no larger than what it describes. If any path invented a dependency link that was never stated, or reversed one that was, remove or correct it — including removing any vote change that only happened because of the invented dependency. If a councillor has their own specific persuasion condition stated in the scenario above, a path must use that condition directly to flip their vote rather than defaulting to a looser dependency-based trigger — a dependency may substitute for a councillor's own condition only if the path explains why their own condition is unavailable or impractical in that path. If a path changes the vote of a councillor whom another councillor depends upon, verify that the dependent councillor's reaction is resolved consistently and not left contradictory or dangling.
 2. No path uses a recusal, abstention, verification, amendment, threshold, removal, arrest, or absence mechanism that the established voting procedure does not itself explicitly define — including a hedge like "or abstains" presented as a live possibility.
 3. Each targeted councillor is persuaded only through their exact established condition or their established secret/leverage — never a substitute condition or unrelated evidence.
-4. No path — including the costly best solution — alters the proposal itself if the objective established above requires it to pass unchanged.
+4. No path — including the costly best solution — alters the proposal itself if the objective established above requires it to pass unchanged. No path may introduce an amendment, sunset clause, substitute proposal, rider, exemption, or altered implementation term, even one framed as a separate programme.
 5. Recount exactly how many additional votes are needed beyond the current baseline to clear the threshold (threshold minus the votes already secured on the required side of the estimate). The smallest viable coalition must target exactly that many councillors — no more. Delete any additional target beyond that count, and delete all insurance votes from the smallest viable coalition entirely; an insurance/backup vote belongs only in the broader alternative, never the smallest coalition.
 6. The costly best solution must pursue the least coercive coalition sufficient to fully resolve the dilemma, not the largest, most coercive, or most unanimous one available — it may not seek unanimity unless unanimity itself produces a concrete benefit unavailable from a simple majority (state that benefit explicitly if unanimity is used). It may not target more councillors than the recounted minimum from rule 5 without a stated reason specific to fully resolving the dilemma (not just "extra margin," which belongs in the broader alternative instead) — and it specifically may not target a councillor whose vote is already secured just to manufacture the appearance of a cost; padding an otherwise-identical coalition with a needless action on an already-secured councillor is exactly the "manufactured" cost this rule already forbids. If removing such padding would leave this path identical to another path in targets and outcome, delete the padding rather than keep it as filler, and see rule 8. If the proposal itself causes an unavoidable harm even when it passes exactly as written, the best solution must mitigate that harm through a separate, lawful action described in the path — not by implying the vote itself resolves it.
 7. Every path's stated tally summary (however many are Support/Oppose/Abstain/etc.) must exactly equal the literal sum of that same path's own seat-by-seat breakdown — recount the breakdown digit by digit and correct the summary line if it doesn't match, even if the mismatch is just a stale total left over from a different path. Separately, no path may count an "Unknown" or otherwise unconfirmed councillor toward the required total, even if a dependency nudges their disposition — a dependency altering someone's mood is not the same as securing their vote. If a path's own recounted breakdown doesn't actually clear the threshold, either add a direct action that secures the additional vote or rewrite the path's conclusion to match what the breakdown actually shows.
-8. The three paths must be materially different from each other in their targeted councillors or their methodology. If the costly best solution (or any other path) targets the identical councillors through identical actions as another path, with only a cost paragraph appended, rewrite it with a genuinely distinct approach or targets — or, if the same targets truly are the least coercive option available, make the cost and methodology description reflect something the smallest coalition's own narration doesn't already say.
+8. The three paths must be materially different from each other in their targeted councillors or their methodology. If the costly best solution (or any other path) targets the identical councillors through identical actions as another path, with only a cost paragraph appended, rewrite it with a genuinely distinct approach or targets — or, if the same targets truly are the least coercive option available, make the cost and methodology description reflect something the smallest coalition's own narration doesn't already say. Ensure the paths explore different political methodologies (such as direct logrolling, procedural leverage, or structural resolution).
+9. Keep full councillor motivations and backstories in the foundation pass. Prune repetitive biographical summaries or re-explanations of a councillor's worldview from the paths; keep each path concise, operational, and focused on strategy, leverage, cascade, and tally.
 If nothing needs fixing, return the paths exactly as they were.
 Return ONLY the JSON object.`;
 }

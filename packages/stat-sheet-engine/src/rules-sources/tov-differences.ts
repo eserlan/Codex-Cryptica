@@ -44,9 +44,9 @@ export const TOV_5E_DIFFERENCES: MechanicDifference[] = [
     tovConcept: "Doom Points",
     dnd5eEquivalent: "Legendary Actions / Lair Actions",
     differenceDescription:
-      "GMs and certain boss creatures can accumulate and spend Doom points to fuel villain actions, summon reinforcements, or trigger battlefield environmental hazards.",
+      "The optional BFRD Doom rule gives the GM a CR-based resource pool at the start of an encounter that can affect creatures in that encounter. Published spends are giving a creature advantage on an attack, giving a PC disadvantage on a save, or once per encounter refreshing, recharging, or gaining one additional use of a limited-use feature.",
     impactOnCodexCryptica:
-      "Creature templates and encounter trackers can support an optional Doom counter for ToV monsters without injecting it into neutral creatures.",
+      "Encounter guidance aligns with the optional encounter-level Doom pool and published spends, labelling any custom creature-specific Doom abilities or alternate Doom economies as homebrew. ToV monster sheets and VTT token controls expose a per-creature Doom counter to track allocations from the encounter pool without implying the BFRD rule is creature-only.",
   },
   {
     category: "Magic System",
@@ -73,7 +73,7 @@ export const CONTENT_BOUNDARIES = {
     "Core mechanics, ability scores, modifiers, proficiency, saves, and skills",
     "Lineage and Heritage structural definitions",
     "Talents, categories (Martial, Magic, Technical), and open prerequisite structures",
-    "Luck pool, earn mechanics, spend rules, and long rest reset",
+    "Luck pool, earn mechanics, spend rules, and the d4 overflow reset",
     "Spell circle framework and open BFRD spell statistics",
     "Creature stat-block structures, vital statistics, attack actions, and Doom mechanics",
   ],

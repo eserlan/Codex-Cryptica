@@ -14,6 +14,7 @@
   import { vault } from "$lib/stores/vault.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { type IdGenerator, systemIdGenerator } from "$lib/utils/runtime-deps";
+  import { applyTypedFormula } from "$lib/utils/stat-sheet-field-actions";
 
   let {
     entity,
@@ -117,6 +118,18 @@
 
   function updateField(id: string, updates: Partial<StatSheetField>) {
     persist(fields.map((f) => (f.id === id ? { ...f, ...updates } : f)));
+  }
+
+  // Once a new minimum or maximum is committed, a current value outside it
+  // moves inside, so the sheet never shows "100 / 12". Not per keystroke:
+  // typing "12" passes through "1".
+  function clampCounterToBounds(id: string) {
+    const field = fields.find((f) => f.id === id);
+    if (!field || typeof field.value !== "number") return;
+    let value = field.value;
+    if (field.max !== undefined) value = Math.min(field.max, value);
+    if (field.min !== undefined) value = Math.max(field.min, value);
+    if (value !== field.value) updateField(id, { value });
   }
 
   function changeFieldType(field: StatSheetField, newType: StatSheetFieldType) {
@@ -448,6 +461,7 @@
                       ? undefined
                       : Number((e.target as HTMLInputElement).value),
                 })}
+              onchange={() => clampCounterToBounds(field.id)}
             />
           </label>
           <label class="flex items-center gap-1">
@@ -463,6 +477,7 @@
                       ? undefined
                       : Number((e.target as HTMLInputElement).value),
                 })}
+              onchange={() => clampCounterToBounds(field.id)}
             />
           </label>
           <label class="flex items-center gap-1">
@@ -507,6 +522,7 @@
                 updateField(field.id, {
                   formula: (e.target as HTMLInputElement).value,
                 })}
+              onchange={() => persist(applyTypedFormula(fields, field.id))}
             />
           </label>
         </div>

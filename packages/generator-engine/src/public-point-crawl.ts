@@ -7,7 +7,7 @@
 
 import { formatCampaignContextBlock } from "./campaign-context";
 import { parseFencedJson } from "./llm-response-utils";
-import type { OneShotProgressStep } from "./one-shot-staged";
+import type { StagedProgressStep } from "./staged-progress";
 import type { PublicGeneratorOutput } from "./public-generator-adapters";
 import { repairPointCrawlPlayability } from "./point-crawl-playability";
 import {
@@ -60,7 +60,7 @@ export interface PointCrawlGeneratorOptions {
   instruction?: string;
   useAI?: boolean;
   avoidNames?: string[];
-  onProgress?: (steps: OneShotProgressStep[]) => void;
+  onProgress?: (steps: StagedProgressStep[]) => void;
   signal?: AbortSignal;
 }
 

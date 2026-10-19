@@ -3,10 +3,13 @@ import {
   buildDungeonRetryMessage,
   parseDungeonResponseDetailed,
   generateDungeonLocal,
+  generateDungeonStaged,
   buildAdventurePrompt,
   buildAdventureRetryMessage,
   parseAdventureResponseDetailed,
   generateAdventureLocal,
+  generateAdventureStaged,
+  adventureStatsLog,
   buildPlotTwistPrompt,
   parsePlotTwistResponse,
   generatePlotTwistLocal,
@@ -94,9 +97,21 @@ function recordTomeHistory(
 export class GeneratorEngineSpecialized extends GeneratorEngineWorldbuilding {
   /** Dungeon & Delve generation delegates to the generator-engine package. */
   async generateDungeon(
-    options: DungeonGeneratorOptions & { useAI?: boolean } = {},
+    options: DungeonGeneratorOptions & {
+      useAI?: boolean;
+      /** Staged generation is the default; `false` forces the one-pass route. */
+      staged?: boolean;
+      onProgress?: (steps: OneShotProgressStep[]) => void;
+      signal?: AbortSignal;
+    } = {},
   ): Promise<GeneratorOutput> {
-    const { useAI, ...dungeonOptions } = options;
+    const {
+      useAI,
+      staged = true,
+      onProgress,
+      signal,
+      ...dungeonOptions
+    } = options;
     return this.runWithAIFallback(
       useAI,
       async () => {
@@ -108,12 +123,43 @@ export class GeneratorEngineSpecialized extends GeneratorEngineWorldbuilding {
           "dungeon",
           summarizeResolvedInputs(resolved),
         );
-        const text = await this.runModel(systemInstruction, userMessage);
+        if (staged) {
+          const result = await generateDungeonStaged(resolved, dungeonOptions, {
+            complete: (instruction, message) =>
+              this.runModel(instruction, message, undefined, true, signal),
+            signal,
+            onProgress,
+            onStats: (stats) => {
+              if (import.meta.env.DEV) {
+                console.debug("[Generator] staged dungeon run", {
+                  outcome: stats.outcome,
+                  stoppedAt: stats.stoppedAt,
+                  aiCalls: stats.aiCalls,
+                  repairedStageCount: stats.repairedStages.length,
+                  reviewIssueCount: stats.reviewIssues.length,
+                  reviewSkipped: stats.reviewSkipped,
+                  coherenceRepaired: stats.coherenceRepaired,
+                  remainingIssueCount: stats.remainingIssues.length,
+                });
+              }
+            },
+          });
+          if (result) return result.output;
+          // An unusable stage falls through to the one-pass route below.
+        }
+        const text = await this.runModel(
+          systemInstruction,
+          userMessage,
+          undefined,
+          true,
+          signal,
+        );
         return runWithSingleRepair(
           text,
           systemInstruction,
           userMessage,
-          (instruction, message) => this.runModel(instruction, message),
+          (instruction, message) =>
+            this.runModel(instruction, message, undefined, true, signal),
           buildDungeonRetryMessage,
           (response) =>
             parseDungeonResponseDetailed(
@@ -130,26 +176,61 @@ export class GeneratorEngineSpecialized extends GeneratorEngineWorldbuilding {
 
   /** Adventure Idea generation delegates to the generator-engine package. */
   async generateAdventure(
-    options: AdventureGeneratorOptions & { useAI?: boolean } = {},
+    options: AdventureGeneratorOptions & {
+      useAI?: boolean;
+      /** Staged generation is the default; `false` forces the one-pass route. */
+      staged?: boolean;
+      onProgress?: (steps: OneShotProgressStep[]) => void;
+      signal?: AbortSignal;
+    } = {},
   ): Promise<GeneratorOutput> {
-    const { useAI, ...adventureOptions } = options;
+    const {
+      useAI,
+      staged = true,
+      onProgress,
+      signal,
+      ...adventureOptions
+    } = options;
+    const complete = (instruction: string, message: string) =>
+      this.runModel(instruction, message, undefined, true, signal);
     return this.runWithAIFallback(
       useAI,
       async () => {
         // buildAdventurePrompt has no sessionContext param, so this is
         // track-only (no variety feedback into the prompt).
-        const { systemInstruction, userMessage, resolved } =
-          buildAdventurePrompt(adventureOptions);
+        const prompt = buildAdventurePrompt(adventureOptions);
+        const { systemInstruction, userMessage, resolved } = prompt;
         generationInputHistoryStore.record(
           "adventure",
           summarizeResolvedInputs(resolved),
         );
-        const text = await this.runModel(systemInstruction, userMessage);
+        if (staged) {
+          const result = await generateAdventureStaged(
+            prompt,
+            adventureOptions,
+            {
+              complete,
+              signal,
+              onProgress,
+              onStats: (stats) => {
+                if (import.meta.env.DEV) {
+                  console.debug(
+                    "[Generator] staged adventure run",
+                    adventureStatsLog(stats),
+                  );
+                }
+              },
+            },
+          );
+          if (result) return result.output;
+          // An unusable stage falls through to the one-pass route below.
+        }
+        const text = await complete(systemInstruction, userMessage);
         return runWithSingleRepair(
           text,
           systemInstruction,
           userMessage,
-          (instruction, message) => this.runModel(instruction, message),
+          complete,
           buildAdventureRetryMessage,
           (response) =>
             parseAdventureResponseDetailed(

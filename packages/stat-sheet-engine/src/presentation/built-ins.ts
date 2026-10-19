@@ -180,6 +180,17 @@ const TOV_CHARACTER_SHEET_SOURCE = `:::row
 {{stat.features display="plain" label="Features"}}
 :::
 :::
+
+:::card
+### Spellcasting
+:::stat-group columns=3
+{{stat.spellcasting_ability display="plain" label="Ability"}}
+{{stat.spell_save_dc display="prominent" label="Spell Save DC"}}
+{{stat.spell_attack display="plain" label="Spell Attack"}}
+:::
+{{stat.spell_slots display="plain" label="Slots by Circle"}}
+{{stat.spells display="plain" label="Spells by Circle"}}
+:::
 `;
 
 const MYTHRAS_CHARACTER_SHEET_SOURCE = `:::row

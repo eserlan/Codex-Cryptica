@@ -71,6 +71,21 @@ describe("generator refinement core", () => {
     );
   });
 
+  it("prefers the fenced proposal and rejects non-object envelopes", () => {
+    expect(
+      parseRefinementResponse(
+        'Example: {"content":"wrong"}\n```json\n{"content":"right"}\n```',
+      ),
+    ).toEqual({ content: "right" });
+
+    expect(() => parseRefinementResponse('[{"content":"Updated"}]')).toThrow(
+      /invalid shape/,
+    );
+    expect(() =>
+      parseRefinementResponse('"{\\"content\\":\\"Updated\\"}"'),
+    ).toThrow(/invalid shape/);
+  });
+
   it("builds an instruction-first prompt from the source", () => {
     const prompt = buildRefinementPrompt(
       source,

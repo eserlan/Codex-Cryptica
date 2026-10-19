@@ -151,6 +151,8 @@ export const howDoYouTrackUnresolvedPlotHooksInAnRpgCampaign: AnswerConfigInput 
       "what-rpg-system-is-good-for-solo-play",
       "how-do-i-take-useful-rpg-notes-during-play",
       "how-do-i-organise-a-dnd-campaign",
+      "how-do-you-keep-a-solo-rpg-from-feeling-random",
+      "how-do-you-keep-notes-for-a-solo-rpg-campaign",
     ],
     discovery: {
       id: "answer-unresolved-plot-hooks",

@@ -673,20 +673,25 @@ Disciplines: Presence 4, Celerity 3, Auspex 2
       expect(fieldMap.get("hp")).toMatchObject({ value: 24 });
       expect(fieldMap.get("ac")).toMatchObject({ value: 17 });
       expect(fieldMap.get("str_score")).toMatchObject({ value: 18 });
+      // Fortitude +8 with CON 16: the +3 tracks the score, the +5 stays.
       expect(fieldMap.get("fort")).toMatchObject({
         type: "dice",
-        formula: "1d20+8",
+        formula: "1d20+5+3",
         modifierSource: "con_score",
       });
       expect(fieldMap.get("reflex")).toMatchObject({
-        formula: "1d20+5",
+        formula: "1d20+3+2",
         modifierSource: "dex_score",
       });
       expect(fieldMap.get("will")).toMatchObject({
-        formula: "1d20+4",
+        formula: "1d20+3+1",
         modifierSource: "wis_score",
       });
       expect(fieldMap.get("atk")).toMatchObject({ formula: "1d20+9" });
+      expect(fieldMap.get("perception")).toMatchObject({
+        formula: "1d20+5+1",
+        modifierSource: "wis_score",
+      });
     });
 
     it("maps Mythras character IR to builtin-mythras-character", () => {
@@ -848,9 +853,14 @@ Broadsword. 3d6<=14. 2d+1 cut damage.
       expect(fieldMap.get("wis_score")?.value).toBe(12);
       expect(fieldMap.get("cha_score")?.value).toBe(8);
 
-      // Saves with modifierSource
-      expect(fieldMap.get("str_save")?.formula).toBe("1d20+5");
+      // Saves with modifierSource. A proficient save keeps its bonus as its
+      // own term, so the sheet's derived STR modifier cannot overwrite it.
+      expect(fieldMap.get("str_save")?.formula).toBe("1d20+2+3");
       expect(fieldMap.get("str_save")?.modifierSource).toBe("str_score");
+      // A proficient skill keeps its bonus the same way; a plain check is
+      // just the derived modifier.
+      expect(fieldMap.get("athletics")?.formula).toBe("1d20+2+3");
+      expect(fieldMap.get("str")?.formula).toBe("1d20+3");
       expect(fieldMap.get("dex_save")?.formula).toBe("1d20+2");
 
       // Attacks item table

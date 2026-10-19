@@ -18,9 +18,9 @@ describe("TovDoomControl", () => {
   it("gains and spends one point per press", async () => {
     const onChange = vi.fn();
     render(TovDoomControl, { field: doom(3), onChange });
-    await fireEvent.click(screen.getByLabelText("Gain 1 Doom Points"));
+    await fireEvent.click(screen.getByLabelText("Gain 1 Doom"));
     expect(onChange).toHaveBeenLastCalledWith(4);
-    await fireEvent.click(screen.getByLabelText("Spend 1 Doom Points"));
+    await fireEvent.click(screen.getByLabelText("Spend 1 Doom"));
     expect(onChange).toHaveBeenLastCalledWith(2);
   });
 
@@ -29,13 +29,13 @@ describe("TovDoomControl", () => {
       field: doom(0),
       onChange: vi.fn(),
     });
-    expect(screen.getByLabelText("Spend 1 Doom Points")).toHaveProperty(
+    expect(screen.getByLabelText("Spend 1 Doom")).toHaveProperty(
       "disabled",
       true,
     );
     unmount();
     render(TovDoomControl, { field: doom(10), onChange: vi.fn() });
-    expect(screen.getByLabelText("Gain 1 Doom Points")).toHaveProperty(
+    expect(screen.getByLabelText("Gain 1 Doom")).toHaveProperty(
       "disabled",
       true,
     );
@@ -47,21 +47,26 @@ describe("TovDoomControl", () => {
       readOnly: true,
       onChange: vi.fn(),
     });
-    expect(screen.getByLabelText("Gain 1 Doom Points")).toHaveProperty(
+    expect(screen.getByLabelText("Gain 1 Doom")).toHaveProperty(
       "disabled",
       true,
     );
-    expect(screen.getByLabelText("Spend 1 Doom Points")).toHaveProperty(
+    expect(screen.getByLabelText("Spend 1 Doom")).toHaveProperty(
       "disabled",
       true,
     );
   });
 
-  it("shows value, cap, and the rules reference", () => {
+  it("shows value, cap, and the rules reference with per-creature allocation guidance", () => {
     render(TovDoomControl, { field: doom(4), onChange: vi.fn() });
     expect(screen.getByTestId("tov-doom-value").textContent).toMatch(
       /4\s*\/\s*10/,
     );
     expect(screen.getByText(/How Doom Points work/i)).toBeTruthy();
+    expect(
+      screen.getByText(
+        /track points allocated to that creature from the encounter's Doom pool/i,
+      ),
+    ).toBeTruthy();
   });
 });

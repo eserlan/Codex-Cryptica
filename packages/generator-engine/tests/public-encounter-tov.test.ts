@@ -81,6 +81,16 @@ describe("Tales of the Valiant Encounter Generation (US1 & US2)", () => {
     expect(prompt).toContain("recommendedCrRange");
     expect(prompt).toContain("suggestedCreatures");
     expect(prompt).toContain("doomNotes");
+    expect(prompt).toContain(
+      "encounter-level GM Doom pool based on encounter CR",
+    );
+    expect(prompt).toContain(
+      "give a creature advantage on an attack, give a PC disadvantage on a save, or once per encounter refresh, recharge, or gain one additional use of a limited-use feature",
+    );
+    expect(prompt).toContain("Do NOT claim Doom is a creature-only pool");
+    expect(prompt).not.toContain(
+      "scoped strictly to individual creatures/abilities",
+    );
   });
 
   it.each([
@@ -122,7 +132,7 @@ describe("Tales of the Valiant Encounter Generation (US1 & US2)", () => {
     );
   });
 
-  it("parses valid TovEncounterMechanics block correctly", () => {
+  it("parses valid published BFRD TovEncounterMechanics block without flagging as homebrew", () => {
     const mockJson = JSON.stringify({
       title: "Gloom Ambuscade",
       summary: "A dangerous combat encounter unfolds in an ancient dungeon.",
@@ -160,7 +170,7 @@ describe("Tales of the Valiant Encounter Generation (US1 & US2)", () => {
           tacticalAdvice:
             "The caller stays back and blinds the vanguard with magical gloom while the hounds flank.",
           doomNotes:
-            "The Gloom Caller holds 2 Doom Points. Spend 1 Doom as a reaction to extinguish a nonmagical light.",
+            "Start the encounter with a CR-based GM Doom pool of 3 points. Spend Doom to give the Gloom Caller or a Shadow Hound advantage on an attack, give a PC disadvantage on a save, or once per encounter recharge or gain one additional use of a limited-use feature.",
           isHomebrew: false,
         },
       },
@@ -182,8 +192,10 @@ describe("Tales of the Valiant Encounter Generation (US1 & US2)", () => {
     expect(output.systemId).toBe("tales-of-the-valiant");
     expect(output.mechanics).toBeDefined();
     expect(output.mechanics?.kind).toBe("tov-encounter");
+    expect(output.mechanics?.isHomebrew).toBe(false);
 
     if (output.mechanics && output.mechanics.kind === "tov-encounter") {
+      expect(output.mechanics.data.isHomebrew).toBe(false);
       expect(output.mechanics.data.qualitativeDifficulty).toContain(
         "Dangerous for 4 Level 3 characters",
       );
@@ -192,11 +204,14 @@ describe("Tales of the Valiant Encounter Generation (US1 & US2)", () => {
         "Shadow Hound",
       );
       expect(output.mechanics.data.suggestedCreatures[0].count).toBe(3);
-      expect(output.mechanics.data.doomNotes).toContain("2 Doom Points");
+      expect(output.mechanics.data.doomNotes).toContain(
+        "CR-based GM Doom pool of 3 points",
+      );
+      expect(output.mechanics.data.doomNotes).not.toContain("[Homebrew]");
     }
   });
 
-  it("handles homebrew markings on suggested creatures and encounter advice", () => {
+  it("handles homebrew markings on suggested creatures and explicitly labelled homebrew Doom guidance", () => {
     const mockJson = JSON.stringify({
       title: "Clockwork Gatekeeper",
       summary: "A moderate combat encounter.",
@@ -226,6 +241,8 @@ describe("Tales of the Valiant Encounter Generation (US1 & US2)", () => {
           ],
           tacticalAdvice:
             "Attacks nearest foe, retreats if damaged below 25% HP.",
+          doomNotes:
+            "[Homebrew] Spend 2 Doom to trigger an steam-vent environmental hazard across the chamber.",
           isHomebrew: true,
         },
       },
@@ -245,6 +262,59 @@ describe("Tales of the Valiant Encounter Generation (US1 & US2)", () => {
     if (output.mechanics?.kind === "tov-encounter") {
       expect(output.mechanics.data.isHomebrew).toBe(true);
       expect(output.mechanics.data.suggestedCreatures[0].isHomebrew).toBe(true);
+      expect(output.mechanics.data.doomNotes).toContain("[Homebrew]");
+    }
+  });
+
+  it("flags and labels unlabelled custom creature-specific Doom spends or creature-only Doom claims as homebrew", () => {
+    const mockJson = JSON.stringify({
+      title: "Shadow Sanctum",
+      summary: "A dangerous combat encounter.",
+      content: "### What the Players See\nDarkness pools around the altar.",
+      glance: {
+        participants: "A gloom caller",
+        immediateSituation: "The caller chants beside the brazier.",
+        stakes: "Control of the sanctum.",
+      },
+      lore: "### Situation & Stakes\nRitual in progress.",
+      mechanics: {
+        systemId: "tales-of-the-valiant",
+        kind: "tov-encounter",
+        isHomebrew: false,
+        data: {
+          qualitativeDifficulty: "Dangerous for 4 Level 3 characters",
+          recommendedCrRange: "Single CR 4 boss",
+          suggestedCreatures: [
+            {
+              name: "Gloom Caller",
+              cr: "4",
+              count: 1,
+              role: "Boss",
+              isHomebrew: false,
+            },
+          ],
+          tacticalAdvice: "Uses darkness to block line of sight.",
+          doomNotes:
+            "The Gloom Caller holds 2 Doom Points. Spend 1 Doom as a reaction to extinguish a nonmagical light or 2 Doom to summon a Shadow Minion.",
+          isHomebrew: false,
+        },
+      },
+    });
+
+    const output = parseEncounterResponse(mockJson, {
+      genre: "Classic Fantasy",
+      encounterType: "Combat",
+      environment: "Dungeon",
+      threat: "Dangerous",
+      tone: "Tense",
+      encounterName: "Shadow Sanctum",
+      gameSystem: "tales-of-the-valiant",
+    });
+
+    expect(output.mechanics?.isHomebrew).toBe(true);
+    if (output.mechanics?.kind === "tov-encounter") {
+      expect(output.mechanics.data.isHomebrew).toBe(true);
+      expect(output.mechanics.data.doomNotes).toMatch(/\[Homebrew\]$/);
     }
   });
 

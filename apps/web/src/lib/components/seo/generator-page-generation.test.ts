@@ -6,6 +6,7 @@ import {
   createGeneratorHandlers,
   createGenerate,
   createOneShotRunControl,
+  showsStagedProgress,
 } from "./generator-page-generation";
 import type { ValidSlug } from "./generator-page-meta";
 
@@ -241,6 +242,26 @@ describe("generator-page-generation", () => {
     });
   });
 
+  describe("showsStagedProgress", () => {
+    it.each([
+      "adventure-generator",
+      "adventure-idea-generator",
+      "council-vote",
+      "dungeon-generator",
+      "one-shot-adventure-generator",
+      "point-crawl",
+    ] as ValidSlug[])("shows the step list for %s", (slug) => {
+      expect(showsStagedProgress(slug)).toBe(true);
+    });
+
+    it.each(["npc", "language-generator"] as ValidSlug[])(
+      "hides it for %s, which is not staged",
+      (slug) => {
+        expect(showsStagedProgress(slug)).toBe(false);
+      },
+    );
+  });
+
   describe("buildPreviewOutput", () => {
     it("builds a draft preview from partial JSON fields", () => {
       const raw =
@@ -448,6 +469,47 @@ describe("generator-page-generation", () => {
       expect(callArg).toHaveProperty("avoidTraits");
     });
 
+    it("passes dungeon progress and a fresh signal, cancelling the last run", async () => {
+      const engine = makeFakeEngine();
+      const onOneShotProgress = vi.fn();
+      const oneShotRuns = createOneShotRunControl();
+      const handlers = createGeneratorHandlers(
+        makeCtx({ engine, onOneShotProgress, oneShotRuns }),
+      );
+      const generateDungeon = engine.generateDungeon as unknown as ReturnType<
+        typeof vi.fn
+      >;
+
+      await handlers["dungeon-generator"](true);
+      await handlers["dungeon-generator"](true);
+
+      expect(onOneShotProgress).toHaveBeenCalledWith(null);
+      const [first, second] = generateDungeon.mock.calls.map((c) => c[0]);
+      expect(second.onProgress).toBe(onOneShotProgress);
+      expect(first.signal.aborted).toBe(true);
+      expect(second.signal.aborted).toBe(false);
+    });
+
+    it("passes council-vote progress and a fresh signal, cancelling the last run", async () => {
+      const engine = makeFakeEngine();
+      const onOneShotProgress = vi.fn();
+      const oneShotRuns = createOneShotRunControl();
+      const handlers = createGeneratorHandlers(
+        makeCtx({ engine, onOneShotProgress, oneShotRuns }),
+      );
+      const generateCouncilVote =
+        engine.generateCouncilVote as unknown as ReturnType<typeof vi.fn>;
+
+      await handlers["council-vote"](true);
+      await handlers["council-vote"](true);
+
+      expect(onOneShotProgress).toHaveBeenCalledWith(null);
+      const [first, second] = generateCouncilVote.mock.calls.map((c) => c[0]);
+      expect(second.onProgress).toBe(onOneShotProgress);
+      expect(first.signal.aborted).toBe(true);
+      expect(second.signal.aborted).toBe(false);
+    });
+
     it("resolves plot twist premise via handoff when handoff is present", async () => {
       const engine = makeFakeEngine();
       const ctx = makeCtx({
@@ -486,6 +548,27 @@ describe("generator-page-generation", () => {
       ).mock.calls[0][0];
       expect(arg.premise).toBe("local premise");
     });
+
+    it.each(["adventure-generator", "adventure-idea-generator"] as const)(
+      "runs %s with the step list and its own cancellable signal",
+      async (slug) => {
+        const engine = makeFakeEngine();
+        const onOneShotProgress = vi.fn();
+        const oneShotRuns = createOneShotRunControl();
+        const handlers = createGeneratorHandlers(
+          makeCtx({ engine, onOneShotProgress, oneShotRuns }),
+        );
+
+        await handlers[slug](true);
+
+        expect(onOneShotProgress).toHaveBeenCalledWith(null);
+        const arg = engine.generateAdventure.mock.calls[0][0];
+        expect(arg.onProgress).toBe(onOneShotProgress);
+        expect(arg.signal.aborted).toBe(false);
+        oneShotRuns.dispose();
+        expect(arg.signal.aborted).toBe(true);
+      },
+    );
 
     it("passes themeId and genre from activeTheme for adventure generators", async () => {
       const ctx = makeCtx({ activeTheme: "Star Wars" });

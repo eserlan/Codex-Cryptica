@@ -134,6 +134,7 @@ export const howDoYouKeepTrackOfNpcsInALongCampaign: AnswerConfigInput = {
     "how-do-i-make-a-campaign-threat-feel-urgent-without-railroading",
     "how-do-i-organise-a-dnd-campaign",
     "how-do-i-plan-story-arcs-for-an-rpg-campaign",
+    "how-do-you-keep-notes-for-a-solo-rpg-campaign",
   ],
   discovery: {
     id: "answer-track-npcs-long-campaign",

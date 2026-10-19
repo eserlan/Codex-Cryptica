@@ -139,6 +139,7 @@ export const whereDoIStartIfIHaveNeverPlayedATabletopRpg: AnswerConfigInput = {
     "what-should-a-new-dnd-player-know-before-their-first-game",
     "how-do-i-read-a-dnd-character-sheet-as-a-beginner",
     "how-do-i-get-my-friends-interested-in-playing-dnd",
+    "how-do-you-play-a-tabletop-rpg-by-yourself",
   ],
   discovery: {
     id: "answer-beginner-start",

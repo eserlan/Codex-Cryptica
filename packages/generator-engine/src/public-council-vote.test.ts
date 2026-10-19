@@ -1,5 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
+  auditCouncilVotePaths,
   buildCouncilVoteFoundationPrompt,
   buildCouncilVoteFoundationRepairPrompt,
   buildCouncilVotePathsPrompt,
@@ -9,7 +10,11 @@ import {
   mergeCouncilVoteOutput,
   parseCouncilVoteFoundation,
   parseCouncilVotePathsResponse,
+  readCouncilVoteFoundation,
+  readCouncilVotePaths,
+  runCouncilVoteStaged,
 } from "./public-council-vote";
+import type { StagedProgressStep } from "./staged-progress";
 import { NAME_BAN_PROMPT } from "./public-npc";
 
 function seededRng(seed = 1): () => number {
@@ -346,6 +351,23 @@ describe("buildCouncilVotePathsRepairPrompt", () => {
       "a dependency altering someone's mood is not the same as securing their vote",
     );
   });
+
+  it("checks dependency cascade consistency and forbids leaving dependent reactions dangling", () => {
+    const prompt = buildCouncilVotePathsRepairPrompt();
+    expect(prompt).toContain(
+      "If a path changes the vote of a councillor whom another councillor depends upon, verify that the dependent councillor's reaction is resolved consistently and not left contradictory or dangling.",
+    );
+  });
+
+  it("prunes repetitive biographical summaries from paths to keep them concise and operational", () => {
+    const prompt = buildCouncilVotePathsRepairPrompt();
+    expect(prompt).toContain(
+      "Keep full councillor motivations and backstories in the foundation pass.",
+    );
+    expect(prompt).toContain(
+      "Prune repetitive biographical summaries or re-explanations of a councillor's worldview from the paths; keep each path concise, operational, and focused on strategy, leverage, cascade, and tally.",
+    );
+  });
 });
 
 describe("parseCouncilVoteFoundation", () => {
@@ -544,6 +566,246 @@ describe("buildCouncilVotePathsPrompt", () => {
       "confirm the output contains no prompt instructions, placeholder-name notes, or generation commentary",
     );
   });
+
+  it("mandates coalition diversity across the three paths with distinct political methodologies", () => {
+    const { userMessage } = buildCouncilVotePathsPrompt();
+    expect(userMessage).toContain(
+      "Coalition diversity: The three paths must construct genuinely distinct valid coalitions representing different political approaches",
+    );
+    expect(userMessage).toContain(
+      "smallest viable coalition via direct transactional logrolling or targeted favours",
+    );
+    expect(userMessage).toContain(
+      "broader/riskier alternative via procedural mechanisms, recusal rules, committee bylaws, or exposing secrets/kompromat",
+    );
+    expect(userMessage).toContain(
+      "costly best solution via durable moral or structural resolution of the core dilemma",
+    );
+  });
+
+  it("mandates concise operational narrative without re-narrating councillor biographies", () => {
+    const { userMessage } = buildCouncilVotePathsPrompt();
+    expect(userMessage).toContain(
+      "Concise operational narrative: Keep full motivations, personal histories, and worldviews with the councillors in the foundation pass.",
+    );
+    expect(userMessage).toContain(
+      "Do not re-narrate a councillor's biography or emotional justification in the paths section.",
+    );
+  });
+});
+
+describe("auditCouncilVotePaths", () => {
+  const foundationLore = `### Voting Procedure
+Simple majority, 3 seats.
+
+### Council Members
+- **Councillor A** (Merchant) — Initial stance: Oppose. Would genuinely persuade them: a trade protecting the guild's river tolls. Secret leverage: the guild's river toll ledger. Depends on Councillor B.
+- **Councillor B** (Clerk) — Initial stance: Support. Would genuinely persuade them: verified evidence from the sealed archive.
+- **Councillor C** (Captain) — Initial stance: Oppose. Would genuinely persuade them: evidence that the settlement protects the harbour.`;
+  const validPaths = {
+    possiblePaths: `### Possible Paths
+#### 1. Smallest Viable Coalition (Transactional)
+- **Councillor A** — Support — Reason: accepts the trade protecting river tolls.
+- **Councillor B** — Support — Reason: keeps the original position.
+- **Councillor C** — Oppose — Reason: remains opposed.
+Tally: Support 2, Oppose 1, Abstain 0, Undecided 0.
+
+#### 2. Broader Alternative (Procedural & Leverage)
+- **Councillor A** — Oppose — Reason: remains opposed.
+- **Councillor B** — Support — Reason: keeps the original position.
+- **Councillor C** — Support — Reason: harbour evidence persuades them.
+Tally: Support 2, Oppose 1, Abstain 0, Undecided 0.
+
+#### 3. Costly Best Solution (Structural Resolution)
+- **Councillor A** — Support — Reason: accepts the durable trade settlement protecting river tolls.
+- **Councillor B** — Support — Reason: keeps the original position.
+- **Councillor C** — Support — Reason: accepts the harbour-protecting structural resolution supported by evidence.
+Tally: Support 3, Oppose 0, Abstain 0, Undecided 0.`,
+    followUpHooks: "### Follow-Up Hooks\nThe guild remembers the concession.",
+  };
+
+  it("passes when all three coalition tiers are present and no amendment terms are introduced", () => {
+    const result = auditCouncilVotePaths(validPaths, {
+      votingRule: "Simple majority",
+      fixedProposal: true,
+      foundationLore,
+    });
+    expect(result.valid).toBe(true);
+    expect(result.issues).toEqual([]);
+  });
+
+  it("flags empty possible paths content", () => {
+    const result = auditCouncilVotePaths({
+      possiblePaths: "",
+      followUpHooks: "Hooks",
+    });
+    expect(result.valid).toBe(false);
+    expect(result.issues).toContain("Possible paths content is empty.");
+  });
+
+  it("flags amendment and rider terms when the proposal is fixed", () => {
+    const amendedPaths = {
+      ...validPaths,
+      possiblePaths: `${validPaths.possiblePaths}\nOffer a sunset clause amendment to exempt timber taxes.`,
+    };
+    const result = auditCouncilVotePaths(amendedPaths, {
+      fixedProposal: true,
+    });
+    expect(result.valid).toBe(false);
+    expect(result.issues[0]).toMatch(
+      /Paths introduce potential amendment or exemption term/,
+    );
+  });
+
+  it("flags locked-in claims under a secret ballot procedure", () => {
+    const secretPaths = {
+      ...validPaths,
+      possiblePaths: `${validPaths.possiblePaths}\nWith Councillor A's vote locked in, the outcome is guaranteed.`,
+    };
+    const result = auditCouncilVotePaths(secretPaths, {
+      votingRule: "Secret ballot by sealed token",
+    });
+    expect(result.valid).toBe(false);
+    expect(result.issues).toContain(
+      'Paths treat projected votes as "locked in" under a secret ballot procedure.',
+    );
+  });
+
+  it.each([
+    ["smallest", "Smallest Viable Coalition"],
+    ["alternative", "Broader Alternative"],
+    ["best", "Costly Best Solution"],
+  ])("requires the %s coalition tier independently", (tier, heading) => {
+    const result = auditCouncilVotePaths({
+      ...validPaths,
+      possiblePaths: validPaths.possiblePaths.replace(
+        heading,
+        "Political approach",
+      ),
+    });
+    expect(result.valid).toBe(false);
+    expect(result.issues).toContain(
+      `Paths are missing the ${tier} coalition tier.`,
+    );
+  });
+
+  it("rejects paths when the coalition tiers appear in the wrong order", () => {
+    const permutedPaths = validPaths.possiblePaths
+      .replace(
+        "#### 1. Smallest Viable Coalition (Transactional)",
+        "__TEMP_HEADING__",
+      )
+      .replace(
+        "#### 3. Costly Best Solution (Structural Resolution)",
+        "#### 1. Smallest Viable Coalition (Transactional)",
+      )
+      .replace(
+        "__TEMP_HEADING__",
+        "#### 3. Costly Best Solution (Structural Resolution)",
+      );
+    const result = auditCouncilVotePaths(
+      { ...validPaths, possiblePaths: permutedPaths },
+      { foundationLore },
+    );
+    expect(result.valid).toBe(false);
+    expect(result.issues).toContain(
+      "Paths must be ordered smallest viable coalition, then broader alternative, then costly best solution.",
+    );
+  });
+
+  it("rejects a tally that does not equal the seat-by-seat vote breakdown", () => {
+    const result = auditCouncilVotePaths(
+      {
+        ...validPaths,
+        possiblePaths: validPaths.possiblePaths.replace(
+          "Tally: Support 2, Oppose 1",
+          "Tally: Support 3, Oppose 0",
+        ),
+      },
+      { foundationLore },
+    );
+    expect(result.valid).toBe(false);
+    expect(result.issues).toContain(
+      "smallest coalition tally does not match its seat-by-seat ballot.",
+    );
+  });
+
+  it("requires a dependent councillor's reaction when a dependency target changes vote", () => {
+    const changedTarget = validPaths.possiblePaths.replace(
+      "**Councillor B** — Support — Reason: keeps the original position.",
+      "**Councillor B** — Oppose — Reason: changes after new evidence.",
+    );
+    const result = auditCouncilVotePaths(
+      { ...validPaths, possiblePaths: changedTarget },
+      { foundationLore },
+    );
+    expect(result.valid).toBe(false);
+    expect(result.issues).toContain(
+      "smallest coalition changes Councillor B's vote without resolving dependent Councillor A's response.",
+    );
+  });
+
+  it("accepts a recorded cascade response and rejects carried-over votes that changed", () => {
+    const resolvedCascade = validPaths.possiblePaths
+      .replace(
+        "**Councillor A** — Support — Reason: accepts the trade protecting river tolls.",
+        "**Councillor A** — Support — Reason: Cascade response follows the new terms protecting river tolls.",
+      )
+      .replace(
+        "**Councillor B** — Support — Reason: keeps the original position.",
+        "**Councillor B** — Oppose — Reason: accepts a rival offer using verified archive evidence.",
+      )
+      .replace(
+        "**Councillor C** — Oppose — Reason: remains opposed.",
+        "**Councillor C** — Support — Reason: accepts harbour evidence.",
+      );
+    const validResult = auditCouncilVotePaths(
+      {
+        ...validPaths,
+        possiblePaths: resolvedCascade,
+      },
+      { foundationLore },
+    );
+    expect(validResult.issues).not.toContain(
+      "smallest coalition changes Councillor B's vote without resolving dependent Councillor A's response.",
+    );
+
+    const carriedOverButChanged = validPaths.possiblePaths.replace(
+      "**Councillor A** — Support — Reason: accepts the trade protecting river tolls.",
+      "**Councillor A** — Support — Reason: carries over unchanged.",
+    );
+    const invalidResult = auditCouncilVotePaths(
+      { ...validPaths, possiblePaths: carriedOverButChanged },
+      { foundationLore },
+    );
+    expect(invalidResult.issues).toContain(
+      "smallest coalition changes Councillor A's vote while describing it as carried over unchanged.",
+    );
+  });
+
+  it("rejects an unknown councillor in a ballot and an unresolved dependency target", () => {
+    const extraSeat = validPaths.possiblePaths.replace(
+      "**Councillor C** — Oppose — Reason: remains opposed.",
+      "**Unknown Councillor** — Oppose — Reason: remains opposed.",
+    );
+    const unknownMemberResult = auditCouncilVotePaths(
+      { ...validPaths, possiblePaths: extraSeat },
+      { foundationLore },
+    );
+    expect(unknownMemberResult.issues).toContain(
+      "smallest coalition ballot includes unknown councillor Unknown Councillor.",
+    );
+
+    const unknownDependencyResult = auditCouncilVotePaths(validPaths, {
+      foundationLore: foundationLore.replace(
+        "Depends on Councillor B.",
+        "Depends on Councillor Missing.",
+      ),
+    });
+    expect(unknownDependencyResult.issues).toContain(
+      "smallest coalition cannot validate a dependency with an unknown councillor.",
+    );
+  });
 });
 
 describe("parseCouncilVotePathsResponse", () => {
@@ -617,5 +879,182 @@ describe("Superhero theme regression (#3108)", () => {
     );
     expect(out.type).toBe("event");
     expect(out.content).toBeTruthy();
+  });
+});
+
+describe("readCouncilVoteFoundation & readCouncilVotePaths", () => {
+  const { resolved } = buildCouncilVoteFoundationPrompt({}, "", seededRng(3));
+
+  it("rejects empty or non-JSON replies instead of returning blank strings", () => {
+    expect(readCouncilVoteFoundation("not json", resolved)).toBeNull();
+    expect(readCouncilVoteFoundation("{}", resolved)).toBeNull();
+    expect(
+      readCouncilVoteFoundation(
+        JSON.stringify({ content: "has content", lore: "   " }),
+        resolved,
+      ),
+    ).toBeNull();
+    expect(readCouncilVotePaths("not json")).toBeNull();
+    expect(readCouncilVotePaths("{}")).toBeNull();
+    expect(
+      readCouncilVotePaths(
+        JSON.stringify({ possiblePaths: "### Paths", followUpHooks: "" }),
+      ),
+    ).toBeNull();
+  });
+});
+
+describe("runCouncilVoteStaged", () => {
+  const prompt = buildCouncilVoteFoundationPrompt(
+    { councilSize: "5" },
+    "",
+    seededRng(3),
+  );
+  const foundationJson = (suffix = "") =>
+    JSON.stringify({
+      title: "The Salt Road Levy",
+      content: `### The Proposal\nContent${suffix}`,
+      lore: `### Voting Procedure\nSimple majority, 5 seats${suffix}.\n\n### Council Members\n${["A", "B", "C", "D", "E"].map((name, index) => `- **Councillor ${name}** (Member) — Initial stance: ${index < 3 ? "Support" : "Oppose"}. Would genuinely persuade them: verified settlement terms.`).join("\n")}`,
+      labels: ["council-vote", "political-intrigue"],
+    });
+  const pathsJson = (suffix = "") =>
+    JSON.stringify({
+      possiblePaths: `### Possible Paths
+#### 1. Smallest Viable Coalition
+${["A", "B", "C", "D", "E"].map((name, index) => `- **Councillor ${name}** — ${index < 3 ? "Support" : "Oppose"} — Reason: ${index < 3 ? "persuaded" : "carries over"}.`).join("\n")}
+Tally: Support 3, Oppose 2, Abstain 0, Undecided 0.
+#### 2. Broader Alternative
+${["A", "B", "C", "D", "E"].map((name, index) => `- **Councillor ${name}** — ${index < 3 ? "Support" : "Oppose"} — Reason: ${index < 3 ? "persuaded" : "carries over"}.`).join("\n")}
+Tally: Support 3, Oppose 2, Abstain 0, Undecided 0.
+#### 3. Costly Best Solution
+${["A", "B", "C", "D", "E"].map((name) => `- **Councillor ${name}** — Support — Reason: accepts the verified settlement.`).join("\n")}
+Tally: Support 5, Oppose 0, Abstain 0, Undecided 0.${suffix}`,
+      followUpHooks: `### Follow-Up Hooks\nHooks${suffix}`,
+    });
+
+  it("runs 4 turns, reports staged progress, and merges repaired outputs", async () => {
+    const snapshots: StagedProgressStep[][] = [];
+    const send = vi
+      .fn()
+      .mockResolvedValueOnce(foundationJson(" (unrepaired)"))
+      .mockResolvedValueOnce(foundationJson(" (repaired)"))
+      .mockResolvedValueOnce(pathsJson(" (unrepaired)"))
+      .mockResolvedValueOnce(pathsJson(" (repaired)"));
+
+    const out = await runCouncilVoteStaged(prompt, {
+      send,
+      onProgress: (steps) => snapshots.push(steps),
+    });
+
+    expect(send).toHaveBeenCalledTimes(4);
+    expect(out?.content).toBe("### The Proposal\nContent (repaired)");
+    expect(out?.lore).toContain(
+      "### Voting Procedure\nSimple majority, 5 seats (repaired).",
+    );
+    expect(out?.lore).toContain("#### 3. Costly Best Solution");
+    expect(snapshots[0]).toEqual([
+      {
+        id: "foundation",
+        label: "Council roster, procedure and initial tally",
+        status: "pending",
+      },
+      {
+        id: "paths",
+        label: "Persuasion paths and follow-up hooks",
+        status: "pending",
+      },
+    ]);
+    expect(snapshots.at(-1)).toEqual([
+      {
+        id: "foundation",
+        label: "Council roster, procedure and initial tally",
+        status: "done",
+      },
+      {
+        id: "paths",
+        label: "Persuasion paths and follow-up hooks",
+        status: "done",
+      },
+    ]);
+  });
+
+  it("keeps unrepaired drafts when repair turns fail or return empty JSON", async () => {
+    const send = vi
+      .fn()
+      .mockResolvedValueOnce(foundationJson())
+      .mockRejectedValueOnce(new Error("repair failed"))
+      .mockResolvedValueOnce(pathsJson())
+      .mockResolvedValueOnce("{}");
+
+    const out = await runCouncilVoteStaged(prompt, { send });
+
+    expect(send).toHaveBeenCalledTimes(4);
+    expect(out?.content).toBe("### The Proposal\nContent");
+    expect(out?.lore).toContain(
+      "### Voting Procedure\nSimple majority, 5 seats.",
+    );
+    expect(out?.lore).toContain("#### 1. Smallest Viable Coalition");
+  });
+
+  it("rejects a paths result that still fails the consistency audit after repair", async () => {
+    const invalidPaths = JSON.stringify({
+      possiblePaths:
+        "#### 1. Smallest Viable Coalition\nOnly this tier exists.",
+      followUpHooks: "### Follow-Up Hooks\nHooks",
+    });
+    const send = vi
+      .fn()
+      .mockResolvedValueOnce(foundationJson())
+      .mockResolvedValueOnce(foundationJson())
+      .mockResolvedValueOnce(invalidPaths)
+      .mockResolvedValueOnce(invalidPaths);
+
+    expect(await runCouncilVoteStaged(prompt, { send })).toBeNull();
+    expect(send).toHaveBeenCalledTimes(4);
+  });
+
+  it("abandons progress and returns null when initial foundation or paths is unusable", async () => {
+    const foundationSnapshots: StagedProgressStep[][] = [];
+    const sendBadFoundation = vi.fn().mockResolvedValueOnce("{}");
+    const out1 = await runCouncilVoteStaged(prompt, {
+      send: sendBadFoundation,
+      onProgress: (s) => foundationSnapshots.push(s),
+    });
+    expect(out1).toBeNull();
+    expect(sendBadFoundation).toHaveBeenCalledTimes(1);
+    expect(foundationSnapshots.at(-1)).toEqual([
+      expect.objectContaining({ id: "foundation", status: "fallback" }),
+      expect.objectContaining({ id: "paths", status: "skipped" }),
+    ]);
+
+    const pathsSnapshots: StagedProgressStep[][] = [];
+    const sendBadPaths = vi
+      .fn()
+      .mockResolvedValueOnce(foundationJson())
+      .mockResolvedValueOnce(foundationJson())
+      .mockResolvedValueOnce("{}");
+    const out2 = await runCouncilVoteStaged(prompt, {
+      send: sendBadPaths,
+      onProgress: (s) => pathsSnapshots.push(s),
+    });
+    expect(out2).toBeNull();
+    expect(sendBadPaths).toHaveBeenCalledTimes(3);
+    expect(pathsSnapshots.at(-1)).toEqual([
+      expect.objectContaining({ id: "foundation", status: "done" }),
+      expect.objectContaining({ id: "paths", status: "fallback" }),
+    ]);
+  });
+
+  it("propagates cancellation via AbortSignal without running later turns", async () => {
+    const controller = new AbortController();
+    const send = vi.fn(async () => {
+      controller.abort();
+      return foundationJson();
+    });
+
+    await expect(
+      runCouncilVoteStaged(prompt, { send, signal: controller.signal }),
+    ).rejects.toThrow();
+    expect(send).toHaveBeenCalledTimes(1);
   });
 });

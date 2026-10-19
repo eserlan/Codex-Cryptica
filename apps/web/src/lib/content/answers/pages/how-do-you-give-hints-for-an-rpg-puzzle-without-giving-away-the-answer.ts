@@ -145,6 +145,7 @@ export const howDoYouGiveHintsForAnRpgPuzzleWithoutGivingAwayTheAnswer: AnswerCo
     relatedAnswers: [
       "how-do-you-design-rpg-puzzles-that-do-not-stall-the-game",
       "how-do-you-prep-a-weekly-rpg-session-quickly",
+      "how-do-i-run-secret-doors-in-dnd",
     ],
     discovery: {
       id: "answer-rpg-puzzle-hints",

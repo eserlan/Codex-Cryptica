@@ -1,30 +1,34 @@
 export interface TovLuckRulesSpec {
   min: number;
   defaultMax: number;
-  initialRollFormula: string;
+  /** Luck a new character starts with. */
+  startingLuck: number;
+  /** Rolled to reset Luck when a character at the maximum gains more. */
+  overflowResetFormula: string;
   earnCondition: string;
   spendCondition: string;
-  resetCondition: string;
+  overflowCondition: string;
   scenarios: Array<{
     name: string;
     startingLuck: number;
-    action:
-      "earn_on_failure" | "spend_on_roll" | "reset_long_rest" | "cap_overflow";
+    action: "earn_on_failure" | "spend_on_roll" | "cap_overflow";
     amount: number;
     expectedLuck: number;
   }>;
 }
 
+/** Checked against the BFRD PDF (May 2024), Playing the Game, "Luck", pp. 120–121. */
 export const TOV_LUCK_FIXTURE: TovLuckRulesSpec = {
   min: 0,
   defaultMax: 5,
-  initialRollFormula: "1d4 + 1",
+  startingLuck: 0,
+  overflowResetFormula: "1d4",
   earnCondition:
-    "When a character makes a d20 roll (attack roll, ability check, or saving throw) and fails, they gain 1 Luck point up to their Luck maximum, provided they did not spend Luck on that roll.",
+    "Once per turn, gain 1 Luck when you miss with an attack roll or fail a save. The GM can also award Luck for a clever idea, good roleplaying, surviving a difficult encounter or reaching a story goal.",
   spendCondition:
-    "A character can spend any number of Luck points (up to their current total) to add 1 point per Luck spent to the final total of their d20 roll.",
-  resetCondition:
-    "On completing a long rest, a character's Luck pool is evaluated. Depending on campaign resting variants, unspent Luck is preserved or reset up to the maximum pool.",
+    "Spend Luck to add 1 to a check for each point spent, or spend 3 Luck immediately after a check to reroll its d20. Luck cannot stop a critical miss on a 1 or create a critical hit, and Luck gained from a failed roll cannot be spent on that same roll.",
+  overflowCondition:
+    "You can have at most 5 Luck. If you have 5 and gain more, roll a d4 and reset your Luck to the number rolled. There is no Long Rest reset.",
   scenarios: [
     {
       name: "Earn Luck on failed attack roll",
@@ -34,7 +38,8 @@ export const TOV_LUCK_FIXTURE: TovLuckRulesSpec = {
       expectedLuck: 3,
     },
     {
-      name: "Earn Luck when already at cap does not exceed maximum",
+      // The counter stops at the cap; the player rolls the d4 reset.
+      name: "Gaining Luck at the cap leaves the counter at the maximum",
       startingLuck: 5,
       action: "cap_overflow",
       amount: 1,

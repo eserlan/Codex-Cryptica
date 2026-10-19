@@ -9,6 +9,7 @@ import { howDoIBuildABelievableEconomyForAFantasyWorld } from "./how-do-i-build-
 import { howDoICombineMultipleEnemiesIntoOneSquadInAnRpg } from "./how-do-i-combine-multiple-enemies-into-one-squad-in-an-rpg";
 import { howDoICreateInterestingIslandsAndPortsForAPirateCampaign } from "./how-do-i-create-interesting-islands-and-ports-for-a-pirate-campaign";
 import { howDoIDecideWhatASettlementProducesImportsAndExports } from "./how-do-i-decide-what-a-settlement-produces-imports-and-exports";
+import { howDoIDesignAGeographicallyRealisticTownOrVillage } from "./how-do-i-design-a-geographically-realistic-town-or-village";
 import { howDoIExpandASimpleRpgCampaignIdea } from "./how-do-i-expand-a-simple-rpg-campaign-idea";
 import { howDoIFindATabletopRpgGroupToPlayWith } from "./how-do-i-find-a-tabletop-rpg-group-to-play-with";
 import { howDoIGetMyFriendsInterestedInPlayingDnd } from "./how-do-i-get-my-friends-interested-in-playing-dnd";
@@ -18,6 +19,7 @@ import { howDoIGiveDifferentCivilisationsDistinctStrengthsAndWeaknesses } from "
 import { howDoIGiveSpecialistCharactersSpotlight } from "./how-do-i-give-specialist-characters-spotlight";
 import { howDoIHandleDivinationMagicWithoutLettingOneCharacterSolveEveryMystery } from "./how-do-i-handle-divination-magic-without-letting-one-character-solve-every-mystery";
 import { howDoIHandlePlayersAskingAnNpcToTellUsEverythingYouKnow } from "./how-do-i-handle-players-asking-an-npc-to-tell-us-everything-you-know";
+import { howDoIHandlePlayersWhoKeepTryingToRecruitDefeatedEnemies } from "./how-do-i-handle-players-who-keep-trying-to-recruit-defeated-enemies";
 import { howDoIImproviseNpcsInDnd } from "./how-do-i-improvise-npcs-in-dnd";
 import { howDoIKeepPlayersEngagedDuringOtherPlayersTurnsInCombat } from "./how-do-i-keep-players-engaged-during-other-players-turns-in-combat";
 import { howDoIMakeACampaignThreatFeelUrgentWithoutRailroading } from "./how-do-i-make-a-campaign-threat-feel-urgent-without-railroading";
@@ -55,12 +57,14 @@ import { howDoIRunCommonCharacterRolesInASciFiOrSpaceOperaRpg } from "./how-do-i
 import { howDoIRunExplorationInAHugeRuinedCity } from "./how-do-i-run-exploration-in-a-huge-ruined-city";
 import { howDoIRunHackersOrNetrunnersWithoutSplittingTheParty } from "./how-do-i-run-hackers-or-netrunners-without-splitting-the-party";
 import { howDoIRunPoliticalIntrigueAndFactionPlay } from "./how-do-i-run-political-intrigue-and-faction-play";
+import { howDoIRunSecretDoorsInDnd } from "./how-do-i-run-secret-doors-in-dnd";
 import { howDoIRunShipToShipCombatWithoutSideliningTheParty } from "./how-do-i-run-ship-to-ship-combat-without-sidelining-the-party";
 import { howDoIRunSpiesAndInfiltratorsInAnRpg } from "./how-do-i-run-spies-and-infiltrators-in-an-rpg";
 import { howDoIStartADndCampaign } from "./how-do-i-start-a-dnd-campaign";
 import { howDoIStartGmingForTheFirstTime } from "./how-do-i-start-gming-for-the-first-time";
 import { howDoIStartWorldbuildingForANovelOrShortStory } from "./how-do-i-start-worldbuilding-for-a-novel-or-short-story";
 import { howDoITakeUsefulRpgNotesDuringPlay } from "./how-do-i-take-useful-rpg-notes-during-play";
+import { howDoITrackMonstersInitiativeAndHitPointsInDndCombat } from "./how-do-i-track-monsters-initiative-and-hit-points-in-dnd-combat";
 import { howDoITurnAnRpgIdeaIntoAnAdventure } from "./how-do-i-turn-an-rpg-idea-into-an-adventure";
 import { howDoITurnEconomicPressuresIntoRpgAdventureHooks } from "./how-do-i-turn-economic-pressures-into-rpg-adventure-hooks";
 import { howDoIUpgradeAPlayerCharactersWeaponWithoutReplacingIt } from "./how-do-i-upgrade-a-player-characters-weapon-without-replacing-it";
@@ -83,6 +87,8 @@ import { howDoYouHandleCharacterDeathInATabletopRpg } from "./how-do-you-handle-
 import { howDoYouHandlePlayersGoingOffScriptAsAGm } from "./how-do-you-handle-players-going-off-script-as-a-gm";
 import { howDoYouHelpPlayersRememberWhatHappenedInATtrpgCampaign } from "./how-do-you-help-players-remember-what-happened-in-a-ttrpg-campaign";
 import { howDoYouImproviseNpcsOnTheSpot } from "./how-do-you-improvise-npcs-on-the-spot";
+import { howDoYouKeepASoloRpgFromFeelingRandom } from "./how-do-you-keep-a-solo-rpg-from-feeling-random";
+import { howDoYouKeepNotesForASoloRpgCampaign } from "./how-do-you-keep-notes-for-a-solo-rpg-campaign";
 import { howDoYouKeepTrackOfNpcsInALongCampaign } from "./how-do-you-keep-track-of-npcs-in-a-long-campaign";
 import { howDoYouKeepTrackOfTimeInATabletopCampaign } from "./how-do-you-keep-track-of-time-in-a-tabletop-campaign";
 import { howDoYouMakeABossFightMemorableInATabletopRpg } from "./how-do-you-make-a-boss-fight-memorable-in-a-tabletop-rpg";
@@ -93,6 +99,7 @@ import { howDoYouMakeTravelInterestingInATabletopRpg } from "./how-do-you-make-t
 import { howDoYouManageACampaignTimelineInAnRpg } from "./how-do-you-manage-a-campaign-timeline-in-an-rpg";
 import { howDoYouOrganiseNpcRelationships } from "./how-do-you-organise-npc-relationships";
 import { howDoYouOrganiseRpgCampaignNotes } from "./how-do-you-organise-rpg-campaign-notes";
+import { howDoYouPlayATabletopRpgByYourself } from "./how-do-you-play-a-tabletop-rpg-by-yourself";
 import { howDoYouPrepAWeeklyRpgSessionQuickly } from "./how-do-you-prep-a-weekly-rpg-session-quickly";
 import { howDoYouPrepareASandboxRpgCampaign } from "./how-do-you-prepare-a-sandbox-rpg-campaign";
 import { howDoYouRecapATtrpgSession } from "./how-do-you-recap-a-ttrpg-session";
@@ -136,6 +143,7 @@ import { whatCanPlayersActuallyBuyAndSellInAFantasySettlement } from "./what-can
 import { whatDoINeedToBringToMyFirstDndGame } from "./what-do-i-need-to-bring-to-my-first-dnd-game";
 import { whatDoYouDoWithMurderHobosInAnRpgCampaign } from "./what-do-you-do-with-murder-hobos-in-an-rpg-campaign";
 import { whatIsAPointCrawl } from "./what-is-a-point-crawl";
+import { whatIsASoloRpgOracle } from "./what-is-a-solo-rpg-oracle";
 import { whatIsTheDifferenceBetweenGodsAndDemonLordsInAFantasyWorld } from "./what-is-the-difference-between-gods-and-demon-lords-in-a-fantasy-world";
 import { whatKindOfShipShouldAPirateCrewStartWith } from "./what-kind-of-ship-should-a-pirate-crew-start-with";
 import { whatKindOfShipShouldASciFiRpgPartyStartWith } from "./what-kind-of-ship-should-a-sci-fi-rpg-party-start-with";
@@ -180,6 +188,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoICombineMultipleEnemiesIntoOneSquadInAnRpg,
     howDoICreateInterestingIslandsAndPortsForAPirateCampaign,
     howDoIDecideWhatASettlementProducesImportsAndExports,
+    howDoIDesignAGeographicallyRealisticTownOrVillage,
     howDoIExpandASimpleRpgCampaignIdea,
     howDoIFindATabletopRpgGroupToPlayWith,
     howDoIGetMyFriendsInterestedInPlayingDnd,
@@ -189,6 +198,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIGiveSpecialistCharactersSpotlight,
     howDoIHandleDivinationMagicWithoutLettingOneCharacterSolveEveryMystery,
     howDoIHandlePlayersAskingAnNpcToTellUsEverythingYouKnow,
+    howDoIHandlePlayersWhoKeepTryingToRecruitDefeatedEnemies,
     howDoIImproviseNpcsInDnd,
     howDoIKeepPlayersEngagedDuringOtherPlayersTurnsInCombat,
     howDoIMakeACampaignThreatFeelUrgentWithoutRailroading,
@@ -226,12 +236,14 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIRunExplorationInAHugeRuinedCity,
     howDoIRunHackersOrNetrunnersWithoutSplittingTheParty,
     howDoIRunPoliticalIntrigueAndFactionPlay,
+    howDoIRunSecretDoorsInDnd,
     howDoIRunShipToShipCombatWithoutSideliningTheParty,
     howDoIRunSpiesAndInfiltratorsInAnRpg,
     howDoIStartADndCampaign,
     howDoIStartGmingForTheFirstTime,
     howDoIStartWorldbuildingForANovelOrShortStory,
     howDoITakeUsefulRpgNotesDuringPlay,
+    howDoITrackMonstersInitiativeAndHitPointsInDndCombat,
     howDoITurnAnRpgIdeaIntoAnAdventure,
     howDoITurnEconomicPressuresIntoRpgAdventureHooks,
     howDoIUpgradeAPlayerCharactersWeaponWithoutReplacingIt,
@@ -254,6 +266,8 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoYouHandlePlayersGoingOffScriptAsAGm,
     howDoYouHelpPlayersRememberWhatHappenedInATtrpgCampaign,
     howDoYouImproviseNpcsOnTheSpot,
+    howDoYouKeepASoloRpgFromFeelingRandom,
+    howDoYouKeepNotesForASoloRpgCampaign,
     howDoYouKeepTrackOfNpcsInALongCampaign,
     howDoYouKeepTrackOfTimeInATabletopCampaign,
     howDoYouMakeABossFightMemorableInATabletopRpg,
@@ -264,6 +278,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoYouManageACampaignTimelineInAnRpg,
     howDoYouOrganiseNpcRelationships,
     howDoYouOrganiseRpgCampaignNotes,
+    howDoYouPlayATabletopRpgByYourself,
     howDoYouPrepAWeeklyRpgSessionQuickly,
     howDoYouPrepareASandboxRpgCampaign,
     howDoYouRecapATtrpgSession,
@@ -307,6 +322,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     whatDoINeedToBringToMyFirstDndGame,
     whatDoYouDoWithMurderHobosInAnRpgCampaign,
     whatIsAPointCrawl,
+    whatIsASoloRpgOracle,
     whatIsTheDifferenceBetweenGodsAndDemonLordsInAFantasyWorld,
     whatKindOfShipShouldAPirateCrewStartWith,
     whatKindOfShipShouldASciFiRpgPartyStartWith,

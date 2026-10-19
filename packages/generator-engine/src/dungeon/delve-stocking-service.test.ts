@@ -91,6 +91,59 @@ describe("DelveStockingService", () => {
     expect(updated.stocking.secrets).toBeUndefined();
   });
 
+  it("prefers a fenced Area response and rejects array envelopes", async () => {
+    const modelRunner = vi.fn().mockResolvedValue(
+      'Example: {"name":"Wrong","description":"Wrong","stocking":{}}\n```json\n' +
+        JSON.stringify({
+          name: "The Drowned Tithe",
+          description: "Black water laps against votive pillars.",
+          stocking: { hazards: ["A sluice gate opens on the third pillar"] },
+        }) +
+        "\n```",
+    );
+    const updated = await new DelveStockingService().regenerateSingleRoom({
+      room: sampleRoom,
+      conceptLore: "An ancient flooded crypt built by Drowned Cultists.",
+      modelRunner,
+      fallbackOnFailure: false,
+    });
+
+    expect(updated.name).toBe("The Drowned Tithe");
+    expect(updated.description).toContain("Black water");
+
+    const invalidRunner = vi.fn().mockResolvedValue(
+      JSON.stringify([
+        {
+          name: "The Drowned Tithe",
+          description: "Black water laps against votive pillars.",
+          stocking: { hazards: ["A sluice gate opens on the third pillar"] },
+        },
+      ]),
+    );
+    await expect(
+      new DelveStockingService().regenerateSingleRoom({
+        room: sampleRoom,
+        conceptLore: "An ancient flooded crypt built by Drowned Cultists.",
+        modelRunner: invalidRunner,
+        fallbackOnFailure: false,
+      }),
+    ).rejects.toThrow();
+    expect(sampleRoom.description).toBe(
+      "Old stone arches crumbling into black water.",
+    );
+  });
+
+  it("uses deterministic stocking fallback for an array response when enabled", async () => {
+    const updated = await new DelveStockingService().regenerateSingleRoom({
+      room: sampleRoom,
+      conceptLore: "An ancient flooded crypt built by Drowned Cultists.",
+      modelRunner: vi.fn().mockResolvedValue('[{"description":"wrong shape"}]'),
+    });
+
+    expect(updated).toMatchObject({ id: sampleRoom.id, role: sampleRoom.role });
+    expect(updated.stocking.hazards?.length).toBeGreaterThan(0);
+  });
+
   it("keeps faction intent and reaction in faction Areas", async () => {
     const factionRoom: DelveRoomNodeData = {
       ...sampleRoom,

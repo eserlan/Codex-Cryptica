@@ -11,6 +11,7 @@ export const CONTENT_CLUSTER_SLUGS = [
   "rumour",
   "religion",
   "puzzle",
+  "solo-rpg",
 ] as const;
 
 export type ContentClusterSlug = (typeof CONTENT_CLUSTER_SLUGS)[number];

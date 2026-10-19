@@ -9,12 +9,7 @@ import {
   parseOriginResponse,
   generateOriginLocal,
   buildCouncilVoteFoundationPrompt,
-  buildCouncilVoteFoundationRepairPrompt,
-  parseCouncilVoteFoundation,
-  buildCouncilVotePathsPrompt,
-  buildCouncilVotePathsRepairPrompt,
-  parseCouncilVotePathsResponse,
-  mergeCouncilVoteOutput,
+  runCouncilVoteStaged,
   generateCouncilVoteLocal,
   buildHeistPrompt,
   generateHeistLocal,
@@ -54,6 +49,7 @@ import {
   type ShipGeneratorOptions,
   type LanguageGeneratorOptions,
   type NewsSheetGeneratorOptions,
+  type OneShotProgressStep,
   languageConfig,
 } from "generator-engine";
 import { getSessionContext } from "./session-context";
@@ -98,74 +94,46 @@ export class GeneratorEngineWorldbuilding extends GeneratorEngineCore {
   }
 
   async generateCouncilVote(
-    options: CouncilVoteGeneratorOptions & { useAI?: boolean } = {},
+    options: CouncilVoteGeneratorOptions & {
+      useAI?: boolean;
+      onProgress?: (steps: OneShotProgressStep[]) => void;
+      signal?: AbortSignal;
+    } = {},
   ): Promise<GeneratorOutput> {
-    const { useAI, ...councilVoteOptions } = options;
+    const { useAI, onProgress, signal, ...councilVoteOptions } = options;
     const recentInputs = generationInputHistoryStore.recent("council-vote");
     return this.runWithAIFallback(
       useAI,
       async () => {
-        const {
-          systemInstruction,
-          userMessage: foundationMessage,
-          resolved,
-        } = buildCouncilVoteFoundationPrompt(
+        const prompt = buildCouncilVoteFoundationPrompt(
           councilVoteOptions,
           getSessionContext() + formatRecentInputsNote(recentInputs),
         );
         generationInputHistoryStore.record(
           "council-vote",
-          summarizeResolvedInputs(resolved),
+          summarizeResolvedInputs(prompt.resolved),
         );
-        const chat = await this.startChat(systemInstruction);
-
-        const foundationText = await this.sendChatMessage(
-          chat,
-          foundationMessage,
-        );
-        // A malformed repair reply keeps the pre-repair foundation/paths
-        // rather than discarding an otherwise-good generation over a
-        // cleanup step (mirrors the in-app service's same fallback).
-        // parseCouncilVoteFoundation/parseCouncilVotePathsResponse default
-        // missing fields to "" instead of throwing, so a syntactically valid
-        // but empty repair reply must be rejected explicitly here — the
-        // try/catch alone only catches genuinely unparseable JSON.
-        let foundation = parseCouncilVoteFoundation(foundationText, resolved);
-        try {
-          const repairText = await this.sendChatMessage(
-            chat,
-            buildCouncilVoteFoundationRepairPrompt(resolved.genre),
+        if (signal?.aborted) {
+          throw (
+            signal.reason ??
+            new DOMException("The operation was aborted", "AbortError")
           );
-          const repaired = parseCouncilVoteFoundation(repairText, resolved);
-          if (repaired.content.trim() && repaired.lore.trim()) {
-            foundation = repaired;
-          }
-        } catch {
-          // Keep the unrepaired foundation.
         }
-
-        const { userMessage: pathsMessage } = buildCouncilVotePathsPrompt();
-        const pathsText = await this.sendChatMessage(chat, pathsMessage);
-        let paths = parseCouncilVotePathsResponse(pathsText);
-        try {
-          const pathsRepairText = await this.sendChatMessage(
-            chat,
-            buildCouncilVotePathsRepairPrompt(),
+        const chat = await this.startChat(prompt.systemInstruction);
+        const output = await runCouncilVoteStaged(prompt, {
+          send: (message) => this.sendChatMessage(chat, message, signal),
+          onProgress,
+          signal,
+        });
+        if (!output) {
+          throw new Error(
+            "Council Vote staged generation returned no usable draft.",
           );
-          const pathsRepaired = parseCouncilVotePathsResponse(pathsRepairText);
-          if (
-            pathsRepaired.possiblePaths.trim() &&
-            pathsRepaired.followUpHooks.trim()
-          ) {
-            paths = pathsRepaired;
-          }
-        } catch {
-          // Keep the unrepaired paths.
         }
-
-        return mergeCouncilVoteOutput(foundation, paths);
+        return output;
       },
       () => generateCouncilVoteLocal(councilVoteOptions),
+      signal,
     );
   }
 

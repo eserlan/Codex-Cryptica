@@ -231,6 +231,31 @@ describe("FieldReferenceNode", () => {
     expect(row.className).not.toContain("justify-between");
   });
 
+  it("names notes and hidden-label inputs after their field", () => {
+    const context = makeContext([
+      { id: "str", label: "STR", type: "number", value: 13 },
+      { id: "speed", label: "Speed", type: "text", value: "30 ft" },
+      { id: "notes", label: "Notes", type: "longtext", value: "" },
+    ]);
+    for (const fieldId of ["str", "speed"]) {
+      render(FieldReferenceNode, {
+        props: {
+          node: { type: "field-reference", fieldId, hideLabel: true },
+          context,
+        },
+      });
+    }
+    render(FieldReferenceNode, {
+      props: { node: { type: "field-reference", fieldId: "notes" }, context },
+    });
+
+    expect(screen.getByRole("spinbutton", { name: "STR" })).toBeTruthy();
+    expect(screen.getByRole("textbox", { name: "Speed" })).toBeTruthy();
+    expect(screen.getByRole("textbox", { name: "Notes" }).tagName).toBe(
+      "TEXTAREA",
+    );
+  });
+
   it("stretches a labelled counter to match the plain rows beside it in a column", () => {
     const node: FieldReferenceNodeType = {
       type: "field-reference",

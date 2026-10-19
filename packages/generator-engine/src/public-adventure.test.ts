@@ -171,6 +171,17 @@ describe("generateAdventureLocal", () => {
 // ---------------------------------------------------------------------------
 
 describe("buildAdventurePrompt", () => {
+  it("exposes the briefing, the user message without its schema", () => {
+    const prompt = buildAdventurePrompt({
+      themeId: "fantasy",
+      seed: "Abbess Corvina must reach Saltmere before the solstice.",
+    });
+    expect(prompt.briefing).toContain("GIVEN SITUATION");
+    expect(prompt.briefing).not.toContain("Required JSON schema");
+    expect(prompt.userMessage.startsWith(`${prompt.briefing}\n\n`)).toBe(true);
+    expect(prompt.userMessage).toContain("Required JSON schema");
+  });
+
   it("returns systemInstruction, userMessage and resolved fields", () => {
     const prompt = buildAdventurePrompt({ themeId: "fantasy" });
     expect(prompt.systemInstruction).toBeTruthy();
@@ -594,7 +605,7 @@ describe("buildAdventurePrompt with a user seed", () => {
 });
 
 describe("parseAdventureResponseDetailed seed fidelity", () => {
-  it("reports a response that drops every name from the seed", () => {
+  it("reports a response that drops the seed names", () => {
     const result = parseAdventureResponseDetailed(VALID_AI_RESPONSE, {
       genre: "Hard Sci-Fi",
       seed: AURELIA_HOOK,
@@ -602,11 +613,11 @@ describe("parseAdventureResponseDetailed seed fidelity", () => {
     // A soft problem: it feeds buildAdventureRetryMessage rather than
     // discarding the model's work for the local foundation, which only
     // happens for banned/reused names.
-    expect(result.problems.join(" ")).toContain("drops every name");
+    expect(result.problems.join(" ")).toContain("drops these names");
     expect(result.rejected).toBe(false);
   });
 
-  it("accepts a response that keeps at least one seed name", () => {
+  it("reports seed names that are dropped when another seed name survives", () => {
     const kept = VALID_AI_RESPONSE.replace(
       "The Magistrate's Court",
       "Phobos-Zero Court",
@@ -615,14 +626,16 @@ describe("parseAdventureResponseDetailed seed fidelity", () => {
       genre: "Hard Sci-Fi",
       seed: AURELIA_HOOK,
     });
-    expect(result.problems.join(" ")).not.toContain("drops every name");
+    expect(result.problems.join(" ")).toContain(
+      "drops these names from the given situation: Amalthea",
+    );
   });
 
   it("does not flag seed fidelity when no seed was given", () => {
     const result = parseAdventureResponseDetailed(VALID_AI_RESPONSE, {
       genre: "Fantasy",
     });
-    expect(result.problems.join(" ")).not.toContain("drops every name");
+    expect(result.problems.join(" ")).not.toContain("drops these names");
     expect(result.problems.join(" ")).not.toContain("states its own deadline");
   });
 

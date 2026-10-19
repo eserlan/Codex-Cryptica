@@ -5,6 +5,7 @@ import type {
   GenerationEvent,
 } from "generator-engine";
 import { createIncrementalJsonScanner } from "generator-engine";
+import { extractJsonObject } from "@codex/runtime";
 import {
   aiClientManager,
   InteractionExpiredError,
@@ -22,40 +23,6 @@ const GENERATOR_GENERATION_CONFIG = {
   maxOutputTokens: 4096,
   responseMimeType: "application/json",
 };
-
-/**
- * Extract the first balanced JSON object from a model response, tolerating code
- * fences, leading prose, and trailing garbage (e.g. a degenerate run of "}").
- * Walks the string tracking string literals/escapes so braces inside strings
- * don't throw off the depth count.
- */
-export function extractJsonObject(raw: string): string {
-  const t = raw
-    .trim()
-    .replace(/^```json\s*/i, "")
-    .replace(/^```\s*/i, "")
-    .replace(/```\s*$/i, "")
-    .trim();
-  const start = t.indexOf("{");
-  if (start === -1) return t;
-  let depth = 0;
-  let inStr = false;
-  let esc = false;
-  for (let i = start; i < t.length; i++) {
-    const ch = t[i];
-    if (inStr) {
-      if (esc) esc = false;
-      else if (ch === "\\") esc = true;
-      else if (ch === '"') inStr = false;
-    } else if (ch === '"') inStr = true;
-    else if (ch === "{") depth++;
-    else if (ch === "}") {
-      depth--;
-      if (depth === 0) return t.slice(start, i + 1);
-    }
-  }
-  return t.slice(start);
-}
 
 export class ProxyAIGeneratorGateway implements AIGeneratorGateway {
   constructor(private readonly clientManager: DefaultAIClientManager) {}
@@ -115,10 +82,13 @@ export class ProxyAIGeneratorGateway implements AIGeneratorGateway {
     // lore from truncating, modest temperature keeps output creative but
     // coherent, and JSON mode reduces parse failures. (Passed as a full request
     // object so generationConfig reaches both the proxy and direct-key paths.)
-    const response = await model.generateContent({
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-      generationConfig,
-    });
+    const response = await model.generateContent(
+      {
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        generationConfig,
+      },
+      options?.signal ? { signal: options.signal } : undefined,
+    );
     // Salvage the JSON object even if the model appends trailing garbage (a
     // known degenerate-repetition failure mode) — JSON mode isn't reliably
     // enforced through the proxy.
@@ -250,17 +220,25 @@ export class ProxyAIGeneratorGateway implements AIGeneratorGateway {
       systemInstruction,
     );
     const chat = model.startChat({ history: [] });
-    const chatWithSignal = chat as unknown as {
-      sendMessageStream(
-        query: string,
-        signal?: AbortSignal,
-      ): Promise<{ stream: AsyncGenerator<{ text: () => string }> }>;
-    };
     return {
-      async send(userMessage: string): Promise<string> {
-        const result = await chat.sendMessageStream(userMessage);
+      async send(userMessage: string, signal?: AbortSignal): Promise<string> {
+        if (signal?.aborted) {
+          throw (
+            signal.reason ??
+            new DOMException("The operation was aborted", "AbortError")
+          );
+        }
+        const result = signal
+          ? await chat.sendMessageStream(userMessage, { signal })
+          : await chat.sendMessageStream(userMessage);
         let text = "";
         for await (const chunk of result.stream) {
+          if (signal?.aborted) {
+            throw (
+              signal.reason ??
+              new DOMException("The operation was aborted", "AbortError")
+            );
+          }
           text += chunk.text();
         }
         return extractJsonObject(text.trim());
@@ -273,9 +251,9 @@ export class ProxyAIGeneratorGateway implements AIGeneratorGateway {
         const scan = createIncrementalJsonScanner();
         let buffer = "";
         try {
-          const result = await chatWithSignal.sendMessageStream(
+          const result = await chat.sendMessageStream(
             userMessage,
-            signal,
+            signal ? { signal } : undefined,
           );
           for await (const chunk of result.stream) {
             const text = chunk.text();
