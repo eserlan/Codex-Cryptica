@@ -17,6 +17,46 @@ const request: GeneratorRunRequest = {
   useAI: true,
 };
 
+const councilNames = ["A", "B", "C", "D", "E", "F", "G"];
+
+function councilFoundationLore(suffix = "") {
+  return `### Voting Procedure
+Simple majority, 7 seats${suffix}.
+
+### Council Members
+${councilNames
+  .map(
+    (name, index) =>
+      `- **Councillor ${name}** (Member) — Initial stance: ${index < 4 ? "Support" : "Oppose"}.`,
+  )
+  .join("\n")}`;
+}
+
+function councilPaths(suffix = "") {
+  const baseline = councilNames
+    .map(
+      (name, index) =>
+        `- **Councillor ${name}** — ${index < 4 ? "Support" : "Oppose"} — Reason: ${index < 4 ? "keeps the original position" : "carries over unchanged"}.`,
+    )
+    .join("\n");
+  const best = councilNames
+    .map(
+      (name) =>
+        `- **Councillor ${name}** — Support — Reason: accepts the lasting settlement.`,
+    )
+    .join("\n");
+  return `### Possible Paths
+#### 1. Smallest Viable Coalition
+${baseline}
+Tally: Support 4, Oppose 3, Abstain 0, Undecided 0.
+#### 2. Broader Alternative
+${baseline}
+Tally: Support 4, Oppose 3, Abstain 0, Undecided 0.
+#### 3. Costly Best Solution
+${best}
+Tally: Support 7, Oppose 0, Abstain 0, Undecided 0.${suffix}`;
+}
+
 describe("buildCouncilVoteOutput", () => {
   it("joins the foundation lore with both path sections in order", () => {
     const output = buildCouncilVoteOutput(
@@ -64,7 +104,7 @@ describe("generateCouncilVoteWithAI", () => {
         JSON.stringify({
           title: "The Salt Road Levy",
           summary: "A council must approve emergency funding.",
-          lore: "unrepaired",
+          lore: councilFoundationLore(" (unrepaired)"),
           labels: ["council-vote"],
         }),
       )
@@ -72,19 +112,19 @@ describe("generateCouncilVoteWithAI", () => {
         JSON.stringify({
           title: "The Salt Road Levy",
           summary: "A council must approve emergency funding.",
-          lore: "repaired",
+          lore: councilFoundationLore(" (repaired)"),
           labels: ["council-vote"],
         }),
       )
       .mockResolvedValueOnce(
         JSON.stringify({
-          possiblePaths: "paths-unrepaired",
+          possiblePaths: councilPaths(" (unrepaired)"),
           followUpHooks: "hooks-unrepaired",
         }),
       )
       .mockResolvedValueOnce(
         JSON.stringify({
-          possiblePaths: "paths-repaired",
+          possiblePaths: councilPaths(" (repaired)"),
           followUpHooks: "hooks-repaired",
         }),
       );
@@ -99,7 +139,9 @@ describe("generateCouncilVoteWithAI", () => {
 
     expect(send).toHaveBeenCalledTimes(4);
     expect(draft?.title).toBe("The Salt Road Levy");
-    expect(draft?.lore).toBe("repaired\n\npaths-repaired\n\nhooks-repaired");
+    expect(draft?.lore).toBe(
+      `${councilFoundationLore(" (repaired)")}\n\n${councilPaths(" (repaired)")}\n\nhooks-repaired`,
+    );
   });
 
   it("returns null when the gateway has no startChat", async () => {
