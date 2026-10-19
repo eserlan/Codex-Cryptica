@@ -50,7 +50,7 @@ export class VaultLifecycleManager {
     try {
       // Ensure vaultRegistry is initialized before creating a vault
       if (!this.deps.vaultRegistry.isInitialized) {
-        await this.deps.vaultRegistry.init();
+        await this.deps.vaultRegistry.init({ createDefault: false });
       }
 
       const db = await getDB();
@@ -104,6 +104,12 @@ export class VaultLifecycleManager {
   }
 
   async createVault(name: string) {
+    // The landing page does not boot the vault store, but its header still
+    // offers "Create New Vault"; without this a fresh browser gets "Storage
+    // not initialized". No "Default Vault": the user is creating their own.
+    if (!this.deps.vaultRegistry.isInitialized) {
+      await this.deps.vaultRegistry.init({ createDefault: false });
+    }
     const newId = await this.deps.vaultRegistry.createVault(name);
     await this.switchVault(newId);
     return newId;

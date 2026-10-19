@@ -39,7 +39,7 @@
         class="flex h-8 min-w-8 items-center justify-center gap-1 rounded border border-theme-border px-1.5 text-xs text-theme-muted hover:border-theme-primary hover:text-theme-primary disabled:opacity-40"
         onclick={() => change(-1)}
         disabled={readOnly || current <= (field.min ?? 0)}
-        aria-label={`Spend 1 ${field.label}`}
+        aria-label="Spend 1 Doom"
         data-testid="{testIdPrefix}-spend"
       >
         <span class="icon-[lucide--minus] h-3.5 w-3.5" aria-hidden="true"
@@ -57,7 +57,7 @@
         class="flex h-8 min-w-8 items-center justify-center gap-1 rounded border border-theme-border px-1.5 text-xs text-theme-muted hover:border-theme-primary hover:text-theme-primary disabled:opacity-40"
         onclick={() => change(1)}
         disabled={readOnly || current >= max}
-        aria-label={`Gain 1 ${field.label}`}
+        aria-label="Gain 1 Doom"
         data-testid="{testIdPrefix}-gain"
       >
         <span class="icon-[lucide--plus] h-3.5 w-3.5" aria-hidden="true"></span>

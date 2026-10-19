@@ -35,6 +35,39 @@ describe("template package", () => {
     ).toThrow("system or entity category");
   });
 
+  it("carries a counter's start value through project → validate → import", async () => {
+    const { importTemplatePackage } = await import("./import");
+    const projected = projectTemplatePackage(
+      {
+        id: "local",
+        name: "Local",
+        fields: [
+          {
+            id: "luck",
+            label: "Luck",
+            type: "counter",
+            min: 0,
+            max: 5,
+            startValue: 0,
+          },
+          { id: "hp", label: "HP", type: "counter", max: 10 },
+        ],
+      },
+      { system: "Tales of the Valiant" },
+    );
+    const validated = validateTemplatePackage(
+      JSON.parse(JSON.stringify(projected)),
+    );
+    const imported = importTemplatePackage(validated, {
+      id: "imported",
+      name: "Imported",
+    });
+    expect(imported.fields.find((f) => f.id === "luck")?.startValue).toBe(0);
+    expect(imported.fields.find((f) => f.id === "hp")).not.toHaveProperty(
+      "startValue",
+    );
+  });
+
   it("carries field keys through project → validate → import (#3180)", async () => {
     const { importTemplatePackage } = await import("./import");
     const projected = projectTemplatePackage(

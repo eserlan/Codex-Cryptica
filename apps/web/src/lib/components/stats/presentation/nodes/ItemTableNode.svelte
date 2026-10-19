@@ -389,11 +389,13 @@
   ) {
     const key = `${rowIndex}-${colId}`;
     rollStateMap[key] = { rolling: true };
+    // Named after the column, so an attack roll is not logged as damage.
+    const columnLabel = columns.find((c) => c.id === colId)?.label ?? "Roll";
 
     try {
       const res = await rollStatSheetDiceField({
         id: `${field.id}_${rowIndex}_${colId}`,
-        label: `${rows[rowIndex]?.name || field.label} Damage`,
+        label: `${rows[rowIndex]?.name || field.label} ${columnLabel}`,
         type: "dice",
         formula,
       });
@@ -648,6 +650,26 @@
                       {@const key = `${rIdx}-${col.id}`}
                       {@const rollState = rollStateMap[key]}
                       {#if context.mode === "view"}
+                        {#if !context.readOnly}
+                          <!-- Each row has its own formula (a longsword and a
+                               crossbow differ); the column's is the default. -->
+                          <input
+                            type="text"
+                            data-col-id={col.id}
+                            data-action="formula"
+                            aria-label={`${col.label} formula for ${row.name || `item ${rIdx + 1}`}`}
+                            class="mb-0.5 w-full max-w-[5.5rem] rounded border border-theme-border/60 bg-theme-bg/80 px-1 py-0.5 text-center font-mono text-xs text-theme-text transition-colors focus:border-theme-primary focus:bg-theme-bg focus:outline-none"
+                            value={formula}
+                            onchange={(e) =>
+                              handleCellChange(
+                                rIdx,
+                                col.id,
+                                // Cleared: store nothing, so the row follows
+                                // the column default rather than a copy of it.
+                                (e.target as HTMLInputElement).value.trim(),
+                              )}
+                          />
+                        {/if}
                         <button
                           type="button"
                           data-col-id={col.id}

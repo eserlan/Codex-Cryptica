@@ -3,6 +3,10 @@ import {
   type StatSheetField,
   TOV_SYSTEM_ID,
 } from "schema";
+import { TOV_LUCK_FIXTURE } from "./fixtures/tov-luck.fixture";
+
+/** BFRD: a character starts with 0 Luck, not a full pool. */
+const TOV_LUCK_START = TOV_LUCK_FIXTURE.startingLuck;
 
 export const TOV_CHARACTER_TEMPLATE_ID = "builtin-tov-character" as const;
 export const TOV_NPC_TEMPLATE_ID = "builtin-tov-npc" as const;
@@ -41,13 +45,14 @@ const TOV_LEGENDARY_ACTION_COLUMNS: NonNullable<StatSheetField["columns"]> = [
 /**
  * Full Tales of the Valiant hero character sheet.
  * Models BFRD Lineage, Heritage, Background, Class/Subclass, Level, Talents,
- * Luck Points (1-5 pool), ability checks, saves, skills, and structured attacks.
+ * Luck Points (0-5 pool), ability checks, saves, skills, structured attacks,
+ * and spellcasting (spell save DC, spell attack, slots and spells by circle).
  */
 export const TOV_CHARACTER_TEMPLATE: StatSheetTemplate = {
   id: TOV_CHARACTER_TEMPLATE_ID,
   name: "ToV Character",
   description:
-    "Tales of the Valiant hero sheet — Lineage, Heritage, Talents, Luck pool, ability scores, saves, skills, and structured attacks.",
+    "Tales of the Valiant hero sheet — Lineage, Heritage, Talents, Luck pool, ability scores, saves, skills, structured attacks, and spellcasting.",
   category: "character",
   systemId: TOV_SYSTEM_ID,
   isBuiltIn: true,
@@ -65,7 +70,14 @@ export const TOV_CHARACTER_TEMPLATE: StatSheetTemplate = {
     { id: "ac", label: "Armor Class", type: "number" },
     { id: "speed", label: "Speed", type: "text" },
     { id: "hit_dice", label: "Hit Dice", type: "text" },
-    { id: "luck", label: "Luck Points", type: "counter", min: 0, max: 5 },
+    {
+      id: "luck",
+      label: "Luck Points",
+      type: "counter",
+      min: 0,
+      max: 5,
+      startValue: TOV_LUCK_START,
+    },
 
     { id: "sec_scores", label: "Ability Scores", type: "heading" },
     { id: "str_score", label: "STR", type: "number" },
@@ -314,6 +326,22 @@ export const TOV_CHARACTER_TEMPLATE: StatSheetTemplate = {
       label: "Lineage & Heritage Traits",
       type: "longtext",
     },
+
+    { id: "sec_spellcasting", label: "Spellcasting", type: "heading" },
+    {
+      id: "spellcasting_ability",
+      label: "Spellcasting Ability",
+      type: "text",
+    },
+    { id: "spell_save_dc", label: "Spell Save DC", type: "number" },
+    {
+      id: "spell_attack",
+      label: "Spell Attack",
+      type: "dice",
+      formula: "1d20+0",
+    },
+    { id: "spell_slots", label: "Spell Slots by Circle", type: "text" },
+    { id: "spells", label: "Spells Known by Circle", type: "longtext" },
   ],
 };
 
@@ -331,7 +359,14 @@ export const TOV_NPC_TEMPLATE: StatSheetTemplate = {
   fields: [
     { id: "hp", label: "Hit Points", type: "counter", min: 0, max: 100 },
     { id: "ac", label: "Armor Class", type: "number" },
-    { id: "luck", label: "Luck Points", type: "counter", min: 0, max: 5 },
+    {
+      id: "luck",
+      label: "Luck Points",
+      type: "counter",
+      min: 0,
+      max: 5,
+      startValue: TOV_LUCK_START,
+    },
     { id: "atk", label: "Attack Roll", type: "dice", formula: "1d20+3" },
     { id: "damage", label: "Damage Roll", type: "dice", formula: "1d6+2" },
     { id: "notes", label: "Quick Stats & Traits", type: "longtext" },

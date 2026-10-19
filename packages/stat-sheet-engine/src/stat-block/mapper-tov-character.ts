@@ -8,6 +8,7 @@ import {
   appendHpSublabelField,
   formatFeaturesAsProse,
   D20_ABILITY_KEYS,
+  derivedRollFormula,
 } from "./mapper-shared";
 
 export const TOV_SKILL_DEFINITIONS: Array<[string, string, string]> = [
@@ -155,12 +156,11 @@ export function mapToTovCharacter(ir: StatBlockIR): StatSheetField[] {
     } else {
       bonus = ir.attributes[abilityKey]?.modifier ?? 0;
     }
-    const bonusStr = bonus >= 0 ? `+${bonus}` : `${bonus}`;
     fields.push({
       id: skillId,
       label: skillLabel,
       type: "dice",
-      formula: `1d20${bonusStr}`,
+      formula: derivedRollFormula(bonus, ir.attributes[abilityKey]?.value),
       modifierSource: `${abilityKey}_score`,
     });
   }

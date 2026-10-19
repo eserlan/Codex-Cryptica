@@ -73,7 +73,7 @@ export const CONTENT_BOUNDARIES = {
     "Core mechanics, ability scores, modifiers, proficiency, saves, and skills",
     "Lineage and Heritage structural definitions",
     "Talents, categories (Martial, Magic, Technical), and open prerequisite structures",
-    "Luck pool, earn mechanics, spend rules, and long rest reset",
+    "Luck pool, earn mechanics, spend rules, and the d4 overflow reset",
     "Spell circle framework and open BFRD spell statistics",
     "Creature stat-block structures, vital statistics, attack actions, and Doom mechanics",
   ],

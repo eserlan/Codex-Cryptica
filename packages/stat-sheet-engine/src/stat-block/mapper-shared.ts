@@ -1,6 +1,33 @@
 import type { StatSheetField } from "schema";
 import type { StatBlockIR } from "./types";
 export const D20_ABILITY_KEYS = ["str", "dex", "con", "int", "wis", "cha"];
+
+const signed = (n: number) => (n >= 0 ? `+${n}` : `${n}`);
+
+/**
+ * A d20 roll whose flat bonus tracks an ability score through
+ * `modifierSource`. The sheet rewrites only the last term from the score, so
+ * any part of `bonus` beyond the score's modifier (a proficiency bonus, say)
+ * goes in its own term in front of it: bonus 5 with STR 16 is "1d20+2+3".
+ * A score that is not a number leaves the bonus as one term, as the sheet
+ * then derives nothing.
+ */
+export function derivedRollFormula(bonus: number, score: unknown): string {
+  const value = Number(score);
+  if (
+    score == null ||
+    typeof score === "boolean" ||
+    score === "" ||
+    !Number.isFinite(value)
+  ) {
+    return `1d20${signed(bonus)}`;
+  }
+  const mod = Math.floor((value - 10) / 2);
+  const extra = bonus - mod;
+  return extra === 0
+    ? `1d20${signed(mod)}`
+    : `1d20${signed(extra)}${signed(mod)}`;
+}
 export const MYTHRAS_CHAR_KEYS = [
   "str",
   "con",

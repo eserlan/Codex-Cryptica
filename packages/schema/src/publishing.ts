@@ -333,6 +333,8 @@ const TemplateFieldSchema = z
     min: z.number().finite().optional(),
     max: z.number().finite().optional(),
     step: z.number().finite().positive().optional(),
+    // Counter start, e.g. 0 for Tales of the Valiant Luck (absent: full).
+    startValue: z.number().finite().optional(),
     columns: z.array(TemplateColumnSchema).max(30).optional(),
     linkVaultItems: z.boolean().optional(),
     stockLedger: z.boolean().optional(),

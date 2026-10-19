@@ -74,3 +74,43 @@ describe("VaultRegistryStore.init — lastOpened (#2619)", () => {
     expect(registry.updateLastOpened).not.toHaveBeenCalled();
   });
 });
+
+describe("VaultRegistryStore.init — default vault", () => {
+  let db: any;
+
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    db = {
+      get: vi.fn().mockResolvedValue(undefined),
+      put: vi.fn().mockResolvedValue(undefined),
+      getAll: vi.fn().mockResolvedValue([]),
+    };
+    vi.mocked(getDB).mockResolvedValue(db);
+    vi.mocked(registry.getVault).mockResolvedValue(undefined as any);
+    const { getOpfsRoot } = await import("../utils/opfs");
+    vi.mocked(getOpfsRoot).mockResolvedValue({} as any);
+    (vaultRegistry as any).isInitialized = false;
+    (vaultRegistry as any).activeVaultId = null;
+  });
+
+  it("creates and opens a Default Vault when nothing is active", async () => {
+    await vaultRegistry.init();
+
+    expect(db.put).toHaveBeenCalledWith(
+      "vaults",
+      expect.objectContaining({ id: "default", name: "Default Vault" }),
+    );
+    expect(vaultRegistry.activeVaultId).toBe("default");
+  });
+
+  it("creates no Default Vault for a caller about to create its own", async () => {
+    const { createVaultDir } = await import("../utils/opfs");
+
+    await vaultRegistry.init({ createDefault: false });
+
+    expect(createVaultDir).not.toHaveBeenCalled();
+    expect(db.put).not.toHaveBeenCalledWith("vaults", expect.anything());
+    expect(vaultRegistry.activeVaultId).toBeNull();
+    expect(vaultRegistry.isInitialized).toBe(true);
+  });
+});

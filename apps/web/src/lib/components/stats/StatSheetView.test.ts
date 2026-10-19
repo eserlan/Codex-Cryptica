@@ -230,6 +230,34 @@ describe("StatSheetView", () => {
     });
   });
 
+  it("names every value input after its field for screen readers", () => {
+    const entity = buildEntity({
+      statSheet: {
+        fields: [
+          { id: "lineage", label: "Lineage", type: "text", value: "Human" },
+          { id: "ac", label: "Armor Class", type: "number", value: 16 },
+          { id: "talents", label: "Talents", type: "longtext", value: "" },
+        ],
+      },
+    });
+    render(StatSheetView, { entity });
+
+    expect(
+      (screen.getByRole("textbox", { name: "Lineage" }) as HTMLInputElement)
+        .value,
+    ).toBe("Human");
+    expect(
+      (
+        screen.getByRole("spinbutton", {
+          name: "Armor Class",
+        }) as HTMLInputElement
+      ).value,
+    ).toBe("16");
+    expect(screen.getByRole("textbox", { name: "Talents" }).tagName).toBe(
+      "TEXTAREA",
+    );
+  });
+
   it("rolls a dice field and broadcasts the result to the VTT session", async () => {
     const entity = buildEntity({
       statSheet: {

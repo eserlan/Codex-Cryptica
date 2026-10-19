@@ -123,6 +123,10 @@ describe("TokenQuickStats", () => {
     expect(screen.getByTestId("token-quick-stats-number")).toBeTruthy();
     expect(screen.getByTestId("token-quick-stats-text")).toBeTruthy();
     expect(screen.getByText("Armor Class")).toBeTruthy();
+    // The number input is named after its field for screen readers.
+    expect(
+      screen.getByRole("spinbutton", { name: "Armor Class" }),
+    ).toBeTruthy();
     expect(screen.getByText("Alignment")).toBeTruthy();
     expect(screen.getByText("Chaotic Evil")).toBeTruthy();
     expect(screen.queryByText("Unfavored")).toBeNull();
@@ -255,7 +259,7 @@ describe("TokenQuickStats", () => {
     expect(screen.getByTestId("token-tov-luck-value").textContent).toMatch(
       /2\s*\/\s*5/,
     );
-    await fireEvent.click(screen.getByLabelText("Gain 1 Luck Points"));
+    await fireEvent.click(screen.getByLabelText("Gain 1 Luck"));
     expect(updateEntity).toHaveBeenCalledWith("goblin-1", {
       statSheet: {
         templateId: "builtin-tov-character",
@@ -296,7 +300,7 @@ describe("TokenQuickStats", () => {
     expect(screen.getByTestId("token-tov-doom-value").textContent).toMatch(
       /3\s*\/\s*10/,
     );
-    await fireEvent.click(screen.getByLabelText("Spend 1 Doom Points"));
+    await fireEvent.click(screen.getByLabelText("Spend 1 Doom"));
     expect(updateEntity).toHaveBeenCalledWith("goblin-1", {
       statSheet: {
         templateId: "builtin-tov-monster",

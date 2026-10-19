@@ -30,7 +30,12 @@ class VaultRegistryStore {
     return this.#opfsRoot;
   }
 
-  async init() {
+  /**
+   * Load the registry. With no active vault, a "Default Vault" is created and
+   * opened, unless `createDefault` is false: a caller about to create and open
+   * a named vault does not want an empty extra one.
+   */
+  async init({ createDefault = true }: { createDefault?: boolean } = {}) {
     if (this.isInitialized) return;
     this.isLoading = true;
 
@@ -40,7 +45,7 @@ class VaultRegistryStore {
 
       this.activeVaultId = (await db.get("settings", "activeVaultId")) || null;
 
-      if (!this.activeVaultId && this.#opfsRoot) {
+      if (!this.activeVaultId && this.#opfsRoot && createDefault) {
         // Initialize default vault if none active
         const existing = await registry.getVault("default");
         if (!existing) {

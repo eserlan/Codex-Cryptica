@@ -165,6 +165,7 @@ export function projectTemplatePackage(
         min,
         max,
         step,
+        startValue,
         columns,
         linkVaultItems,
         stockLedger,
@@ -180,6 +181,7 @@ export function projectTemplatePackage(
         ...(min !== undefined ? { min } : {}),
         ...(max !== undefined ? { max } : {}),
         ...(step !== undefined ? { step } : {}),
+        ...(startValue !== undefined ? { startValue } : {}),
         ...(columns && columns.length > 0
           ? {
               columns: columns.map((col) => ({
