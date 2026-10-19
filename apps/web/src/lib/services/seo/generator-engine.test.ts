@@ -1292,7 +1292,7 @@ describe("DefaultGeneratorEngine", () => {
       expect(mockChat.sendMessageStream).toHaveBeenCalledTimes(1);
       expect(mockChat.sendMessageStream).toHaveBeenCalledWith(
         expect.any(String),
-        controller.signal,
+        { signal: controller.signal },
       );
     });
   });

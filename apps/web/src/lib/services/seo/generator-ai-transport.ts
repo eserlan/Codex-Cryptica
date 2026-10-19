@@ -224,14 +224,8 @@ export class GeneratorAITransport {
         new DOMException("The operation was aborted", "AbortError")
       );
     }
-    const chatWithSignal = chat as unknown as {
-      sendMessageStream(
-        query: string,
-        signal?: AbortSignal,
-      ): ReturnType<typeof chat.sendMessageStream>;
-    };
     const result = signal
-      ? await chatWithSignal.sendMessageStream(userMessage, signal)
+      ? await chat.sendMessageStream(userMessage, { signal })
       : await chat.sendMessageStream(userMessage);
     let text = "";
     for await (const chunk of result.stream) {

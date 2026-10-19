@@ -432,9 +432,9 @@ describe("ProxyAIGeneratorGateway", () => {
         const calls: unknown[] = [];
         const sendMessageStream = async (
           _query: string,
-          signal?: AbortSignal,
+          options?: { signal?: AbortSignal },
         ) => {
-          calls.push(signal);
+          calls.push(options);
           return { stream: (async function* () {})() };
         };
         const client = {
@@ -446,7 +446,7 @@ describe("ProxyAIGeneratorGateway", () => {
         const chat = await gateway.startChat("system instruction");
         await collect(chat.sendStream!("turn one", controller.signal));
 
-        expect(calls).toEqual([controller.signal]);
+        expect(calls).toEqual([{ signal: controller.signal }]);
       });
     });
   });
