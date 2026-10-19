@@ -147,6 +147,7 @@ export const shouldIShareWorldbuildingNotesWithMyPlayers: AnswerConfigInput = {
     "how-do-you-organise-rpg-campaign-notes",
     "how-do-you-recap-a-ttrpg-session",
     "how-do-i-give-players-immersive-handouts-in-an-online-rpg",
+    "how-do-i-run-my-first-online-tabletop-rpg-session",
   ],
   discovery: {
     id: "answer-share-worldbuilding-notes",
