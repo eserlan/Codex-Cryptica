@@ -2,7 +2,6 @@ import type {
   DragPreview,
   SessionMode,
   Token,
-  TokenBaseShape,
   TokenCreationInput,
   TokenStateUpdateInput,
   VTTMessage,
@@ -13,11 +12,11 @@ import {
   normalizeTokenRotation,
   normalizeTokenVisibility,
   nextZIndexInLayer,
-  isNoteCollapsed,
-  NOTE_COLLAPSED_SCALE,
   type MapLayer,
 } from "map-engine";
-import { hashToColor } from "$lib/utils/vtt-helpers";
+import { VTTTokenDefaults } from "./vtt-token-defaults";
+import { noteCollapseUpdate } from "./vtt-token-notes";
+export { NOTE_DEFAULT_COLOR } from "./vtt-token-notes";
 import {
   VTTTokenGeometry,
   isHexShaped,
@@ -26,16 +25,6 @@ import {
 import { snapToNeighborTiles } from "@codex/spatial-engine";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { type IdGenerator, systemIdGenerator } from "$lib/utils/runtime-deps";
-
-/** Smallest a freshly-placed character token defaults to, regardless of how fine the map's grid is. */
-const MIN_DEFAULT_TOKEN_SIZE = 30;
-/** Sticky-note amber. Notes are GM furniture, so they get one recognisable
- * colour rather than a name-hashed one. */
-export const NOTE_DEFAULT_COLOR = "#f5b942";
-/** Notes hold prose, not a portrait — give them more room than a token. */
-const NOTE_SIZE_MULTIPLIER = 1.5;
-/** A collapsed note still has to be big enough to click on a fine grid. */
-const MIN_COLLAPSED_NOTE_SIZE = 16;
 
 export { normalizeToken } from "map-engine";
 
@@ -84,11 +73,17 @@ export class VTTTokenManager {
   });
 
   private geometry: VTTTokenGeometry;
+  private defaults: VTTTokenDefaults;
 
   constructor(
     private deps: VTTTokenManagerDependencies,
     private idGenerator: IdGenerator = systemIdGenerator,
   ) {
+    this.defaults = new VTTTokenDefaults(
+      this.deps,
+      () => Object.keys(this.tokens).length,
+      this.idGenerator,
+    );
     this.geometry = new VTTTokenGeometry(() => this.deps.getMapStore());
   }
 
@@ -193,39 +188,11 @@ export class VTTTokenManager {
     return this.updateToken(tokenId, { visibleTo: next });
   }
 
-  /**
-   * Folds a note down to a marker, or springs it back to the size it had.
-   * A collapsed note keeps its body — it is only taking up less of the map,
-   * the way a pin does, so a stocked dungeon does not bury its own art.
-   */
   toggleNoteCollapsed(tokenId: string) {
     const token = this.tokens[tokenId];
     if (!token || token.kind !== "note") return null;
-
-    if (isNoteCollapsed(token)) {
-      const restored = token.noteCollapsedFrom!;
-      return this.updateToken(tokenId, {
-        width: restored.width,
-        height: restored.height,
-        noteCollapsedFrom: undefined,
-      });
-    }
-
-    const collapsed = this.collapsedNoteSize();
-    return this.updateToken(tokenId, {
-      width: collapsed,
-      height: collapsed,
-      noteCollapsedFrom: { width: token.width, height: token.height },
-    });
-  }
-
-  /** The side length a note takes when it is folded down to a marker. */
-  private collapsedNoteSize() {
-    const mapStore = this.deps.getMapStore();
-    return Math.max(
-      MIN_COLLAPSED_NOTE_SIZE,
-      Math.round((mapStore.gridSize || 50) * NOTE_COLLAPSED_SCALE),
-    );
+    const updates = noteCollapseUpdate(token, this.deps.getMapStore().gridSize);
+    return updates ? this.updateToken(tokenId, updates) : null;
   }
 
   setVisionSource(tokenId: string, isVisionSource: boolean) {
@@ -246,70 +213,7 @@ export class VTTTokenManager {
   }
 
   getTokenDefaults(input: TokenCreationInput): Token {
-    const mapStore = this.deps.getMapStore();
-    const kind = input.kind ?? "token";
-    const isNote = kind === "note";
-    const isTile = kind === "tile";
-    // gridSize can legitimately be very small — it's fit to a tile's native
-    // pixel grid (e.g. ~15px for some geomorph packs), which is correct for
-    // alignment/snapping but useless as a default character-token size: a
-    // 15px circle is effectively invisible. Floor the default independently
-    // of how fine the underlying grid happens to be.
-    const mapGrid = Math.max(MIN_DEFAULT_TOKEN_SIZE, mapStore.gridSize || 50);
-    const noteExpandedSize = Math.round(mapGrid * NOTE_SIZE_MULTIPLIER);
-    const defaultSize = isNote ? noteExpandedSize : mapGrid;
-    // A note lands folded down to a marker, so a stocked dungeon reads as a
-    // field of pins rather than a wall of paper laid over the map art. It
-    // springs back to `noteCollapsedFrom` when the GM opens it. A caller that
-    // asks for an explicit size wants the note at that size, so it lands open.
-    const landsCollapsed = isNote && input.width === undefined;
-    const size = landsCollapsed ? this.collapsedNoteSize() : defaultSize;
-    const defaultShape: TokenBaseShape = isNote
-      ? "square"
-      : isTile
-        ? mapStore.gridType === "hex-flat"
-          ? "hex-flat"
-          : mapStore.gridType === "hex-pointy"
-            ? "hex-pointy"
-            : "square"
-        : "circle";
-    return {
-      id: this.idGenerator.uuid(),
-      entityId: input.entityId ?? null,
-      name: input.name.trim(),
-      x: input.x,
-      y: input.y,
-      width: input.width ?? size,
-      height: input.height ?? size,
-      rotation: input.rotation ?? 0,
-      baseShape: input.baseShape ?? defaultShape,
-      facingIndicator: input.facingIndicator ?? !isNote,
-      zIndex: input.zIndex ?? Object.keys(this.tokens).length,
-      ownerPeerId: input.ownerPeerId ?? null,
-      ownerGuestName: input.ownerGuestName ?? null,
-      // A note is the GM's own annotation: it stays hidden until they
-      // deliberately reveal it, where a character token defaults to visible.
-      visibleTo: normalizeTokenVisibility(
-        input.visibleTo ?? (isNote ? "gm-only" : "all"),
-      ),
-      color:
-        input.color || (isNote ? NOTE_DEFAULT_COLOR : hashToColor(input.name)),
-      imageUrl: input.imageUrl ?? null,
-      statusEffects: [],
-      locked: input.locked === true,
-      isVisionSource: input.isVisionSource === true,
-      kind,
-      tileDeckId: input.tileDeckId ?? null,
-      tileDetails: input.tileDetails,
-      noteBody: isNote ? (input.noteBody ?? "") : undefined,
-      noteCollapsedFrom: isNote
-        ? (input.noteCollapsedFrom ??
-          (landsCollapsed
-            ? { width: noteExpandedSize, height: noteExpandedSize }
-            : undefined))
-        : undefined,
-      layer: input.layer ?? this.deps.getActiveLayer(),
-    };
+    return this.defaults.getTokenDefaults(input);
   }
 
   snapTileToHexCell(
