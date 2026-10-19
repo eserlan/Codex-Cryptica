@@ -16,5 +16,5 @@ line per style; edit freely.
 - Fog-choked desaturated night, single lantern source, oppressive framing — suits: horror, undead, dark fantasy
 - Hard-lit sci-fi concept art, cool neon rim light, industrial scale — suits: sci-fi, space, technology, cyberpunk
 - Sunlit ancient ruins, overgrown stone, epic scale — suits: history, lore, dungeons, archaeology
-- Intimate close-up, shallow depth of field, tactile textures — suits: items, characters, NPCs, details
+- Medium-wide composition with a clear, detailed focal subject, natural depth of field, tactile textures — suits: items, characters, NPCs, details
 - High-angle overview of a busy scene, readable focal hierarchy — suits: maps, factions, worldbuilding systems, relationships
