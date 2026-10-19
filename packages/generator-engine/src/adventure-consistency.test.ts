@@ -181,6 +181,12 @@ describe("readConsistencyReview", () => {
     ["a new name in quotes", 'The clerk mutters "Black Barge" and runs.', true],
     ["known names only", "Oren Pell holds the Weir Mill until dawn.", false],
     [
+      "a known name as a possessive",
+      "The guild seizes Oren Pell's debts.",
+      false,
+    ],
+    ["a new name as a possessive", "The guild seizes Saint Ivo's debts.", true],
+    [
       "a sentence-start common word",
       "Meanwhile the guild waits. Nobody comes.",
       false,

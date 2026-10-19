@@ -154,8 +154,9 @@ function inventedNames(revised: string, vocabulary: readonly string[]) {
 const SENTENCE_OPENERS =
   /^(?:after|as|because|before|if|meanwhile|once|when|while) /;
 
+/** Exact-match form of a name: no leading opener, no possessive ("Oren Pell's"). */
 function normalizeProperNoun(name: string): string {
-  return normName(name).replace(SENTENCE_OPENERS, "");
+  return normName(name).replace(SENTENCE_OPENERS, "").replace(/ s$/, "");
 }
 
 /** Whether a parsed model reply has the complete consistency-review shape. */
