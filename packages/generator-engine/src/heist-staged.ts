@@ -686,6 +686,22 @@ export function checkHeistResponseStage(
   // Hard: missing alarm track, complications, getaway, or flashbacks
   if (!alarmTrackText) hard.push("missing required alarm track");
   if (!complicationsText) hard.push("missing required complications");
+  const defaultComplicationCount = Array.isArray(complicationsRaw)
+    ? complicationsRaw.filter((item) =>
+        typeof item === "string"
+          ? item.includes("(default)")
+          : String(rec(item).label || "").includes("(default)"),
+      ).length
+    : 0;
+  if (
+    !Array.isArray(complicationsRaw) ||
+    complicationsRaw.length !== 3 ||
+    defaultComplicationCount !== 1
+  ) {
+    hard.push(
+      "Complications must contain exactly three entries: one default and two alternatives.",
+    );
+  }
   if (!getawayText) hard.push("missing required getaway section");
   if (!flashbacksText) hard.push("missing required flashback opportunities");
 

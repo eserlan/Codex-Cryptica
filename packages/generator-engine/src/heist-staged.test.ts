@@ -348,6 +348,45 @@ describe("checkHeistResponseStage", () => {
     expect(check.hard).toContain("missing required flashback opportunities");
   });
 
+  it("requires exactly one default and two alternative complications", () => {
+    const check = checkHeistResponseStage(
+      {
+        ...VALID_STAGE_3,
+        complications: [
+          { label: "Early Bells (default)", detail: "The bells ring early." },
+          { label: "Rival Syndicate", detail: "Rivals arrive." },
+          { label: "Holy Oil Spill", detail: "Oil catches fire." },
+          { label: "Guard Rotation", detail: "A patrol changes course." },
+        ],
+      },
+      { ...VALID_STAGE_1, ...VALID_STAGE_2 },
+      RESOLVED_THEFT,
+    );
+
+    expect(check.hard).toContain(
+      "Complications must contain exactly three entries: one default and two alternatives.",
+    );
+  });
+
+  it("rejects complication arrays without exactly one default marker", () => {
+    const check = checkHeistResponseStage(
+      {
+        ...VALID_STAGE_3,
+        complications: [
+          { label: "Early Bells", detail: "The bells ring early." },
+          { label: "Rival Syndicate", detail: "Rivals arrive." },
+          { label: "Holy Oil Spill", detail: "Oil catches fire." },
+        ],
+      },
+      { ...VALID_STAGE_1, ...VALID_STAGE_2 },
+      RESOLVED_THEFT,
+    );
+
+    expect(check.hard).toContain(
+      "Complications must contain exactly three entries: one default and two alternatives.",
+    );
+  });
+
   it("flags incomplete alarm tracks with fewer than 5 escalating levels", () => {
     const incompleteAlarm = {
       ...VALID_STAGE_3,
