@@ -7,23 +7,13 @@ import type {
   VTTMessage,
 } from "../../../types/vtt";
 import type { Point } from "schema";
-import {
-  normalizeToken,
-  normalizeTokenRotation,
-  normalizeTokenVisibility,
-  nextZIndexInLayer,
-  type MapLayer,
-} from "map-engine";
+import { normalizeToken, nextZIndexInLayer, type MapLayer } from "map-engine";
 import { VTTTokenDefaults } from "./vtt-token-defaults";
 import { noteCollapseUpdate } from "./vtt-token-notes";
 export { NOTE_DEFAULT_COLOR } from "./vtt-token-notes";
-import {
-  VTTTokenGeometry,
-  isHexShaped,
-  roundTokenCoordinate,
-} from "./vtt-token-geometry";
-import { snapToNeighborTiles } from "@codex/spatial-engine";
-import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { VTTTokenGeometry, isHexShaped } from "./vtt-token-geometry";
+import { updatedToken, moveLinkedTokens } from "./vtt-token-updates";
+import { VTTTokenSync } from "./vtt-token-sync";
 import { type IdGenerator, systemIdGenerator } from "$lib/utils/runtime-deps";
 
 export { normalizeToken } from "map-engine";
@@ -57,15 +47,6 @@ export class VTTTokenManager {
   draggingTokenId = $state<string | null>(null);
   dragPreview = $state<DragPreview | null>(null);
 
-  private pendingTokenMoves = new Map<
-    string,
-    { previous: Token; timeoutId: number }
-  >();
-  private pendingTokenRotations = new Map<
-    string,
-    { previous: Token; timeoutId: number }
-  >();
-
   allTokens = $derived.by(() => Object.values(this.tokens));
   selectedToken = $derived.by(() => {
     if (!this.selection) return null;
@@ -74,6 +55,7 @@ export class VTTTokenManager {
 
   private geometry: VTTTokenGeometry;
   private defaults: VTTTokenDefaults;
+  private sync: VTTTokenSync;
 
   constructor(
     private deps: VTTTokenManagerDependencies,
@@ -85,6 +67,7 @@ export class VTTTokenManager {
       this.idGenerator,
     );
     this.geometry = new VTTTokenGeometry(() => this.deps.getMapStore());
+    this.sync = new VTTTokenSync(this.deps, this);
   }
 
   reset() {
@@ -96,14 +79,7 @@ export class VTTTokenManager {
     this.notePlacementArmed = false;
     this.draggingTokenId = null;
     this.dragPreview = null;
-    for (const pending of this.pendingTokenMoves.values()) {
-      clearTimeout(pending.timeoutId);
-    }
-    this.pendingTokenMoves.clear();
-    for (const pending of this.pendingTokenRotations.values()) {
-      clearTimeout(pending.timeoutId);
-    }
-    this.pendingTokenRotations.clear();
+    this.clearPendingMoves();
   }
 
   setSnapshotData(
@@ -302,157 +278,17 @@ export class VTTTokenManager {
     const current = this.tokens[tokenId];
     if (!current) return null;
 
-    const sizeChanged =
-      updates.width !== undefined || updates.height !== undefined;
-    const posChanged = updates.x !== undefined || updates.y !== undefined;
-    const permissionChanged =
-      updates.ownerPeerId !== undefined ||
-      updates.ownerGuestName !== undefined ||
-      updates.visibleTo !== undefined;
-    const statusChanged = updates.statusEffects !== undefined;
-    const visionSourceChanged = updates.isVisionSource !== undefined;
-    const shouldDebounceBroadcast = posChanged || sizeChanged;
+    const next = updatedToken(
+      tokenId,
+      current,
+      updates,
+      this.tokens,
+      this.geometry,
+    );
+    this.tokens = { ...this.tokens, [tokenId]: next };
+    moveLinkedTokens(this.tokens, tokenId, current, next, updates);
 
-    const movedPoint = {
-      x: updates.x !== undefined ? roundTokenCoordinate(updates.x) : current.x,
-      y: updates.y !== undefined ? roundTokenCoordinate(updates.y) : current.y,
-    };
-    const movedSize = {
-      width: updates.width ?? current.width,
-      height: updates.height ?? current.height,
-    };
-    const hexSnapped =
-      current.kind === "tile" && (posChanged || sizeChanged)
-        ? this.snapTileToHexCell(movedPoint, movedSize)
-        : null;
-    const snapped =
-      posChanged || sizeChanged
-        ? (hexSnapped ??
-          this.clampAndSnapPosition(
-            {
-              x:
-                updates.x !== undefined
-                  ? roundTokenCoordinate(updates.x)
-                  : current.x,
-              y:
-                updates.y !== undefined
-                  ? roundTokenCoordinate(updates.y)
-                  : current.y,
-            },
-            {
-              width: updates.width ?? current.width,
-              height: updates.height ?? current.height,
-            },
-            {
-              snapToTheGrid: current.kind !== "note",
-              hexShaped: isHexShaped(current.baseShape),
-            },
-          ))
-        : {
-            x: current.x,
-            y: current.y,
-            width: current.width,
-            height: current.height,
-          };
-
-    // Repositioning a placed tile magnetically aligns it to nearby tiles'
-    // edges too, same as initial placement — otherwise dragging a tile to
-    // nudge it into alignment with its neighbors would only grid-snap.
-    if (current.kind === "tile" && !hexSnapped && (posChanged || sizeChanged)) {
-      // ⚡ Bolt Optimization: Avoid intermediate array allocations during token movement hot path
-      const neighbors: Token[] = [];
-      for (const key in this.tokens) {
-        if (Object.prototype.hasOwnProperty.call(this.tokens, key)) {
-          const token = this.tokens[key];
-          if (token.kind === "tile" && token.id !== tokenId) {
-            neighbors.push(token);
-          }
-        }
-      }
-      const snapThreshold = Math.max(12, snapped.width * 0.12);
-      const tileSnapped = snapToNeighborTiles(
-        snapped,
-        neighbors,
-        snapThreshold,
-      );
-      snapped.x = tileSnapped.x;
-      snapped.y = tileSnapped.y;
-    }
-
-    const next = {
-      ...current,
-      ...updates,
-      visibleTo:
-        updates.visibleTo !== undefined
-          ? normalizeTokenVisibility(updates.visibleTo)
-          : current.visibleTo,
-      x: snapped.x,
-      y: snapped.y,
-      rotation:
-        updates.rotation !== undefined
-          ? normalizeTokenRotation(updates.rotation)
-          : current.rotation,
-    };
-
-    // Apply snapped size (always, not just when sizeChanged)
-    next.width = snapped.width;
-    next.height = snapped.height;
-
-    this.tokens = {
-      ...this.tokens,
-      [tokenId]: next,
-    };
-
-    if (posChanged && (snapped.x !== current.x || snapped.y !== current.y)) {
-      const dx = snapped.x - current.x;
-      const dy = snapped.y - current.y;
-      for (const childId in this.tokens) {
-        const child = this.tokens[childId];
-        if (child && child.parentTokenId === tokenId) {
-          this.tokens[childId] = {
-            ...child,
-            x: roundTokenCoordinate(child.x + dx),
-            y: roundTokenCoordinate(child.y + dy),
-          };
-        }
-      }
-    }
-
-    if (!silent) {
-      if (shouldDebounceBroadcast) {
-        this.deps.queueSessionSnapshotBroadcast();
-        return next;
-      }
-
-      if (sessionModeStore.isGuestMode && (posChanged || sizeChanged)) {
-        this.deps.emit({
-          type: "TOKEN_MOVE",
-          tokenId,
-          x: snapped.x,
-          y: snapped.y,
-        });
-      } else {
-        this.deps.emit({
-          type: "TOKEN_STATE_UPDATE",
-          tokenId,
-          delta: {
-            ...updates,
-            x: posChanged || sizeChanged ? snapped.x : undefined,
-            y: posChanged || sizeChanged ? snapped.y : undefined,
-          },
-        });
-      }
-
-      // Ownership/visibility and status changes are sensitive to client-side
-      // drift. Follow the delta with a canonical snapshot so guests heal from
-      // any stale local state immediately.
-      if (permissionChanged || statusChanged || visionSourceChanged) {
-        this.deps.broadcastSessionSnapshotNow();
-      }
-    } else {
-      this.deps.persistDraft();
-    }
-
+    this.sync.publishUpdate(tokenId, updates, silent);
     return next;
   }
 
@@ -496,85 +332,24 @@ export class VTTTokenManager {
   }
 
   requestTokenMove(tokenId: string, x: number, y: number, persistent = false) {
-    const previous = this.tokens[tokenId];
-    if (!previous) return null;
-    const updated = this.updateToken(tokenId, { x, y }, true);
-    if (updated && !persistent) {
-      this.scheduleMoveRevert(tokenId, previous);
-    }
-    return updated;
-  }
-
-  private clearPendingMove(tokenId: string) {
-    const pending = this.pendingTokenMoves.get(tokenId);
-    if (!pending) return;
-    clearTimeout(pending.timeoutId);
-    this.pendingTokenMoves.delete(tokenId);
-  }
-
-  private clearPendingRotation(tokenId: string) {
-    const pending = this.pendingTokenRotations.get(tokenId);
-    if (!pending) return;
-    clearTimeout(pending.timeoutId);
-    this.pendingTokenRotations.delete(tokenId);
-  }
-
-  private scheduleMoveRevert(tokenId: string, previous: Token) {
-    this.clearPendingMove(tokenId);
-    const timeoutId = window.setTimeout(() => {
-      const current = this.tokens[tokenId];
-      if (current) {
-        this.tokens = {
-          ...this.tokens,
-          [tokenId]: { ...previous },
-        };
-        this.deps.persistDraft();
-      }
-      this.pendingTokenMoves.delete(tokenId);
-    }, 500);
-
-    this.pendingTokenMoves.set(tokenId, {
-      previous: { ...previous },
-      timeoutId,
-    });
+    return this.sync.request("move", tokenId, { x, y }, persistent);
   }
 
   confirmTokenMove(tokenId: string) {
-    this.clearPendingMove(tokenId);
+    this.sync.confirm("move", tokenId);
   }
 
   requestTokenRotation(tokenId: string, rotation: number, persistent = false) {
-    const previous = this.tokens[tokenId];
-    if (!previous) return null;
-    const updated = this.updateToken(tokenId, { rotation }, true);
-    if (updated && !persistent) {
-      this.clearPendingRotation(tokenId);
-      const timeoutId = window.setTimeout(() => {
-        const current = this.tokens[tokenId];
-        if (current) {
-          this.tokens = {
-            ...this.tokens,
-            [tokenId]: { ...previous },
-          };
-          this.deps.persistDraft();
-        }
-        this.pendingTokenRotations.delete(tokenId);
-      }, 500);
-      this.pendingTokenRotations.set(tokenId, {
-        previous: { ...previous },
-        timeoutId,
-      });
-    }
-    return updated;
+    return this.sync.request("rotation", tokenId, { rotation }, persistent);
   }
 
   confirmTokenRotation(tokenId: string) {
-    this.clearPendingRotation(tokenId);
+    this.sync.confirm("rotation", tokenId);
   }
 
   removeToken(tokenId: string, silent = false) {
     if (!this.tokens[tokenId]) return false;
-    this.clearPendingMove(tokenId);
+    this.sync.confirm("move", tokenId);
     const nextTokens = { ...this.tokens };
     delete nextTokens[tokenId];
     for (const key in nextTokens) {
@@ -770,26 +545,19 @@ export class VTTTokenManager {
       return;
     }
 
-    this.clearPendingMove(tokenId);
+    this.sync.confirm("move", tokenId);
     if (delta.rotation !== undefined) {
-      this.clearPendingRotation(tokenId);
+      this.sync.confirm("rotation", tokenId);
     }
     this.updateToken(tokenId, delta, true);
   }
 
   handleRemoteTokenRemoved(tokenId: string) {
-    this.clearPendingMove(tokenId);
+    this.sync.confirm("move", tokenId);
     this.removeToken(tokenId, true);
   }
 
   clearPendingMoves() {
-    for (const pending of this.pendingTokenMoves.values()) {
-      clearTimeout(pending.timeoutId);
-    }
-    this.pendingTokenMoves.clear();
-    for (const pending of this.pendingTokenRotations.values()) {
-      clearTimeout(pending.timeoutId);
-    }
-    this.pendingTokenRotations.clear();
+    this.sync.clear();
   }
 }
