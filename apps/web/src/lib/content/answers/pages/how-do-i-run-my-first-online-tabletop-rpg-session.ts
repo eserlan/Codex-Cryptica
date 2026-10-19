@@ -95,7 +95,7 @@ export const howDoIRunMyFirstOnlineTabletopRpgSession: AnswerConfigInput = {
       heading: "Replace physical props with timing, not with more files",
       paragraphs: [
         "At a physical table you can slide a letter across, hold up a picture, or place a key in front of the player who found it. Online, the equivalent is control of when something appears. Post the image at the moment the character finds it, send one clue privately to the player whose character noticed it and let that player choose whether to share it, and reveal a map area only when the party can see it. The pause before the reveal does the work the physical hand-off used to do.",
-        "Keep each handout to the smallest readable form: a single image or short PDF for a letter or item card, plain text pasted under the image for anyone on a small screen or using a screen reader, and one agreed place to find it again later. Name files for what the characters see, not for what they hide, so a filename does not give away a twist. For deciding what lore belongs in player hands at all, see [Should I share worldbuilding notes and lore with my players?](/answers/should-i-share-worldbuilding-notes-with-my-players)",
+        "Keep each handout to the smallest readable form: a single image or short PDF for a letter or item card, plain text pasted under the image for anyone on a small screen or using a screen reader, and one agreed place to find it again later. Name files for what the characters see, not for what they hide, so a filename does not give away a twist. For deciding what lore belongs in player hands at all, see [Should I share worldbuilding notes and lore with my players?](/answers/should-i-share-worldbuilding-notes-with-my-players). For a full online handout workflow, see [How do I give players immersive handouts and props in an online RPG?](/answers/how-do-i-give-players-immersive-handouts-in-an-online-rpg).",
       ],
     },
     {
@@ -223,6 +223,7 @@ export const howDoIRunMyFirstOnlineTabletopRpgSession: AnswerConfigInput = {
     },
   ],
   relatedAnswers: [
+    "how-do-i-give-players-immersive-handouts-in-an-online-rpg",
     "how-do-i-run-a-successful-session-0",
     "how-do-i-prepare-an-rpg-session-step-by-step",
     "should-i-share-worldbuilding-notes-with-my-players",
@@ -246,6 +247,7 @@ export const howDoIRunMyFirstOnlineTabletopRpgSession: AnswerConfigInput = {
     uniqueValue:
       "A transition guide for experienced in person game masters: the smallest workable online setup by job, a direct answer on using one voice program plus one map program, a short technical rehearsal, online speaking norms, pacing changes, and a timed preflight with a worked four player session.",
     relatedIntents: [
+      "answer-immersive-handouts-online-rpg",
       "answer-session-zero",
       "answer-prepare-session-step-by-step",
       "answer-share-worldbuilding-notes",
