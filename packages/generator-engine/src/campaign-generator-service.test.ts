@@ -33,6 +33,39 @@ function run(
   };
 }
 
+// A council-vote foundation and paths that pass `auditCouncilVotePaths`, so
+// the staged run keeps the AI draft. `note` marks which turn a reply came from.
+function councilLore(note = ""): string {
+  return `### Voting Procedure
+Simple majority, 3 seats.${note}
+
+### Council Members
+- **Councillor A** (Merchant) — Initial stance: Oppose. Would genuinely persuade them: a trade protecting the guild's river tolls.
+- **Councillor B** (Clerk) — Initial stance: Support. Would genuinely persuade them: verified evidence from the sealed archive.
+- **Councillor C** (Captain) — Initial stance: Oppose. Would genuinely persuade them: evidence that the settlement protects the harbour.`;
+}
+
+function councilPaths(note = ""): string {
+  return `### Possible Paths${note}
+#### 1. Smallest Viable Coalition
+- **Councillor A** — Support — Reason: accepts the trade protecting river tolls.
+- **Councillor B** — Support — Reason: keeps the original position.
+- **Councillor C** — Oppose — Reason: remains opposed.
+Tally: Support 2, Oppose 1, Abstain 0, Undecided 0.
+
+#### 2. Broader Alternative
+- **Councillor A** — Oppose — Reason: remains opposed.
+- **Councillor B** — Support — Reason: keeps the original position.
+- **Councillor C** — Support — Reason: harbour evidence persuades them.
+Tally: Support 2, Oppose 1, Abstain 0, Undecided 0.
+
+#### 3. Costly Best Solution
+- **Councillor A** — Support — Reason: accepts the durable trade settlement protecting river tolls.
+- **Councillor B** — Support — Reason: keeps the original position.
+- **Councillor C** — Support — Reason: accepts the harbour-protecting settlement supported by evidence.
+Tally: Support 3, Oppose 0, Abstain 0, Undecided 0.`;
+}
+
 function draft(overrides: Partial<GeneratedDraft> = {}): GeneratedDraft {
   return {
     title: "Kaeldar",
@@ -938,23 +971,23 @@ describe("AI policy (US2)", () => {
     const foundationJson = JSON.stringify({
       title: "The Salt Road Levy",
       summary: "A five-seat council must approve emergency funding.",
-      lore: "## Voting Procedure\nSimple majority (unrepaired).",
+      lore: councilLore(" (unrepaired)"),
       labels: ["council-vote", "political-intrigue"],
       connections: [],
     });
     const repairedJson = JSON.stringify({
       title: "The Salt Road Levy",
       summary: "A five-seat council must approve emergency funding.",
-      lore: "## Voting Procedure\nSimple majority.",
+      lore: councilLore(),
       labels: ["council-vote", "political-intrigue"],
       connections: [],
     });
     const pathsJson = JSON.stringify({
-      possiblePaths: "## Possible Paths\nsmallest coalition first (unrepaired)",
+      possiblePaths: councilPaths(" (unrepaired)"),
       followUpHooks: "## Follow-Up Hooks\nthey remember (unrepaired)",
     });
     const pathsRepairedJson = JSON.stringify({
-      possiblePaths: "## Possible Paths\nsmallest coalition first",
+      possiblePaths: councilPaths(),
       followUpHooks: "## Follow-Up Hooks\nthey remember",
     });
 
@@ -996,7 +1029,7 @@ describe("AI policy (US2)", () => {
     // Uses the REPAIRED foundation lore and REPAIRED paths, not the
     // unrepaired first-pass versions.
     expect(generated.lore).toBe(
-      "## Voting Procedure\nSimple majority.\n\n## Possible Paths\nsmallest coalition first\n\n## Follow-Up Hooks\nthey remember",
+      `${councilLore()}\n\n${councilPaths()}\n\n## Follow-Up Hooks\nthey remember`,
     );
     expect(generated.labels).toContain("council-vote");
   });
@@ -1005,12 +1038,12 @@ describe("AI policy (US2)", () => {
     const foundationJson = JSON.stringify({
       title: "The Salt Road Levy",
       summary: "A five-seat council must approve emergency funding.",
-      lore: "## Voting Procedure\nSimple majority.",
+      lore: councilLore(),
       labels: ["council-vote"],
       connections: [],
     });
     const pathsJson = JSON.stringify({
-      possiblePaths: "## Possible Paths\nx",
+      possiblePaths: councilPaths(" x"),
       followUpHooks: "## Follow-Up Hooks\ny",
     });
 
@@ -1034,27 +1067,27 @@ describe("AI policy (US2)", () => {
 
     expect(send).toHaveBeenCalledTimes(4);
     expect(generated.title).toBe("The Salt Road Levy");
-    expect(generated.lore).toContain("## Voting Procedure\nSimple majority.");
-    expect(generated.lore).toContain("## Possible Paths\nx");
+    expect(generated.lore).toContain(councilLore());
+    expect(generated.lore).toContain("### Possible Paths x");
   });
 
   it("keeps the unrepaired paths when the paths-repair reply is missing one required field", async () => {
     const foundationJson = JSON.stringify({
       title: "The Salt Road Levy",
       summary: "A five-seat council must approve emergency funding.",
-      lore: "## Voting Procedure\nSimple majority.",
+      lore: councilLore(),
       labels: ["council-vote"],
       connections: [],
     });
     const pathsJson = JSON.stringify({
-      possiblePaths: "## Possible Paths\nx",
+      possiblePaths: councilPaths(" x"),
       followUpHooks: "## Follow-Up Hooks\ny",
     });
     // Only possiblePaths present — a real defect this catches: an isUsable
     // check using || instead of && would accept this and silently drop the
     // original followUpHooks.
     const partialPathsRepair = JSON.stringify({
-      possiblePaths: "## Possible Paths\nz",
+      possiblePaths: councilPaths(" z"),
     });
 
     const send = vi
@@ -1077,9 +1110,9 @@ describe("AI policy (US2)", () => {
 
     // The partial repair must be rejected wholesale, keeping BOTH original
     // fields — not just possiblePaths with followUpHooks blanked out.
-    expect(generated.lore).toContain("## Possible Paths\nx");
+    expect(generated.lore).toContain("### Possible Paths x");
     expect(generated.lore).toContain("## Follow-Up Hooks\ny");
-    expect(generated.lore).not.toContain("## Possible Paths\nz");
+    expect(generated.lore).not.toContain("### Possible Paths z");
   });
 
   it("falls back to local council-vote generation when the gateway has no startChat", async () => {
@@ -2503,12 +2536,12 @@ describe("council-vote streamed generation", () => {
   const foundation = JSON.stringify({
     title: "The Salt Road Levy",
     summary: "A five-seat council must approve emergency funding.",
-    lore: "## Voting Procedure\nSimple majority.",
+    lore: councilLore(),
     labels: ["council-vote"],
     connections: [],
   });
   const paths = JSON.stringify({
-    possiblePaths: "## Possible Paths\nsmallest coalition first",
+    possiblePaths: councilPaths(),
     followUpHooks: "## Follow-Up Hooks\nthey remember",
   });
 
