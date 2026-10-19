@@ -12,7 +12,7 @@ A one-pass prompt asks for every section in one answer, so later sections are wr
 
 Do **not** stage simple generators (NPC, name, tavern, rumour, single-item). A consistency-pass line in the prompt (`SKILL.md` Part B step 1) is enough there.
 
-**Templates**, most complete first: `packages/generator-engine/src/dungeon-staged.ts` (#4133, #4206), `adventure-staged.ts` (#4135), `point-crawl-staged.ts`, `one-shot-staged.ts`, `public-council-vote.ts` (#4136, 4-turn chat session via `runCouncilVoteFourTurn`). Shared helpers live in `staged-runtime.ts` (#4134) and `staged-progress.ts`. Copy the dungeon or adventure shape.
+**Templates**, most complete first: `packages/generator-engine/src/dungeon-staged.ts` (#4133, #4206), `adventure-staged.ts` (#4135), `point-crawl-staged.ts`, `one-shot-staged.ts`, `public-council-vote.ts` (#4136, #4225, 4-turn chat session via `runCouncilVoteFourTurn`, coalition diversity and concise operational narrative). Council Vote requires one seat-by-seat projected ballot and a structured tally for each tier; its production paths reject results that fail the checks against the foundation. Shared helpers live in `staged-runtime.ts` (#4134) and `staged-progress.ts`. Copy the dungeon or adventure shape.
 
 ## The pattern
 

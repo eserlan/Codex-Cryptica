@@ -416,6 +416,7 @@ export {
   buildCouncilVotePathsRepairPrompt,
   parseCouncilVotePathsResponse,
   readCouncilVotePaths,
+  auditCouncilVotePaths,
   runCouncilVoteFourTurn,
   runCouncilVoteStaged,
   mergeCouncilVoteOutput,
@@ -428,6 +429,7 @@ export {
   type CouncilVoteFoundation,
   type CouncilVotePathsPrompt,
   type CouncilVotePaths,
+  type CouncilVotePathsAuditResult,
   type CouncilVoteFourTurnArgs,
   type CouncilVoteStagedDeps,
 } from "./public-council-vote";

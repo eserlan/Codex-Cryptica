@@ -8,7 +8,10 @@ import {
 } from "./campaign-generator-registry";
 import { getThemeDefaults } from "./campaign-generator-theme";
 import { parseConnections } from "./campaign-connections";
-import { runCouncilVoteFourTurn } from "./public-council-vote";
+import {
+  auditCouncilVotePaths,
+  runCouncilVoteFourTurn,
+} from "./public-council-vote";
 import type { StagedProgressStep } from "./staged-progress";
 import { isAbort, readJsonObject, throwIfAborted } from "./staged-runtime";
 import type {
@@ -123,6 +126,14 @@ export async function generateCouncilVoteWithAI(
       pathsRepairPrompt: councilVotePathsRepairPrompt(),
       readFoundation: readInAppCouncilVoteFoundation,
       readPaths: readInAppCouncilVotePaths,
+      validatePaths: (foundation, paths) =>
+        auditCouncilVotePaths(
+          {
+            possiblePaths: String(paths.possiblePaths ?? ""),
+            followUpHooks: String(paths.followUpHooks ?? ""),
+          },
+          { foundationLore: foundation.lore, fixedProposal: true },
+        ).valid,
       onProgress,
       signal,
     });
@@ -161,6 +172,13 @@ async function* sendCouncilVoteStreamTurn(
   return text;
 }
 
+function acceptValidated<T>(
+  candidate: T,
+  validate?: (value: T) => boolean,
+): T | null {
+  return validate && !validate(candidate) ? null : candidate;
+}
+
 async function* runCouncilVoteStreamStage<T>(
   chat: AIGeneratorChatSession,
   initialLabel: string,
@@ -169,6 +187,7 @@ async function* runCouncilVoteStreamStage<T>(
   repairPrompt: string,
   read: (reply: string) => T | null,
   signal?: AbortSignal,
+  validate?: (value: T) => boolean,
 ): AsyncGenerator<GenerationEvent, T | null> {
   const initialRaw = yield* sendCouncilVoteStreamTurn(
     chat,
@@ -188,10 +207,10 @@ async function* runCouncilVoteStreamStage<T>(
       signal,
     );
     if (signal?.aborted) return null;
-    return read(repairedRaw) ?? initial;
+    return acceptValidated(read(repairedRaw) ?? initial, validate);
   } catch (err) {
     if (isAbort(err, signal)) throw err;
-    return initial;
+    return acceptValidated(initial, validate);
   }
 }
 
@@ -251,6 +270,14 @@ export async function* generateCouncilVoteWithAIStream(
       councilVotePathsRepairPrompt(),
       readInAppCouncilVotePaths,
       signal,
+      (paths) =>
+        auditCouncilVotePaths(
+          {
+            possiblePaths: String(paths.possiblePaths ?? ""),
+            followUpHooks: String(paths.followUpHooks ?? ""),
+          },
+          { foundationLore: foundation.lore, fixedProposal: true },
+        ).valid,
     );
     if (signal?.aborted) return;
     if (!paths) {
