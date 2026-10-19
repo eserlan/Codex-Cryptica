@@ -75,7 +75,7 @@ export const howDoIRunMyFirstOnlineTabletopRpgSession: AnswerConfigInput = {
         },
         {
           term: "Audio first",
-          text: "Ask everyone to use headphones or earbuds, which removes most echo and feedback. Do a two minute voice test where each person speaks, rolls a die out loud and says their character name. Quiet players need their input level raised now, not during the opening scene.",
+          text: "Ask everyone to use headphones or earbuds, which removes most echo and feedback. Do a brief voice test where each person speaks, rolls a die out loud and says their character name. Quiet players need their input level raised now, not during the opening scene.",
         },
         {
           term: "A backup channel",
@@ -119,7 +119,7 @@ export const howDoIRunMyFirstOnlineTabletopRpgSession: AnswerConfigInput = {
         },
         {
           term: "Breaks and side talk",
-          text: "Schedule a short break roughly each hour, because nobody can catch your eye to ask for one. Keep table chat and jokes in the voice channel where everyone shares them, and treat private messages during play as the online version of passing a note: fine in most groups, worth one sentence of agreement with a new group.",
+          text: "Schedule a short break at a point that suits your session, because nobody can catch your eye to ask for one. Keep table chat and jokes in the voice channel where everyone shares them, and treat private messages during play as the online version of passing a note: fine in most groups, worth one sentence of agreement with a new group.",
         },
         {
           term: "Attendance and lateness",
@@ -178,7 +178,7 @@ export const howDoIRunMyFirstOnlineTabletopRpgSession: AnswerConfigInput = {
     },
     {
       kind: "checklist",
-      heading: "The 10 to 15 minute preflight",
+      heading: "An example preflight, adjusted to your setup",
       intro:
         "Run this before the first online session, and repeat the first four items before each session after:",
       items: [
@@ -196,7 +196,7 @@ export const howDoIRunMyFirstOnlineTabletopRpgSession: AnswerConfigInput = {
       kind: "prose",
       heading: "A short opening routine for session one",
       paragraphs: [
-        "Open the call fifteen minutes early and treat arrivals as the rehearsal: greet people by name, fix the one audio problem that always appears, and let small talk do the settling that it does around a physical table. Then restate the session shape in under a minute: cameras optional, mute when away, say pass or raise the agreed signal, break at a stated time, and this is where we go if the call drops.",
+        "Open the call early enough for arrivals to settle and treat them as the rehearsal: greet people by name, fix any audio problems, and let small talk do the settling that it does around a physical table. Then restate the session shape briefly: cameras optional, mute when away, say pass or raise the agreed signal, break at a stated time, and this is where we go if the call drops.",
         "Start play with a scene that needs voices only, such as a conversation, a journey decision or an arrival, so the first success of the night does not depend on the map. Bring the shared map in at the first scene where position changes a choice. End by confirming the next date, where handouts live, and one thing that worked technically, so the second session starts from a routine rather than another first time. If this online group is also a new group, [How do I find a tabletop RPG group to play with?](/answers/how-do-i-find-a-tabletop-rpg-group-to-play-with) covers the recruiting and trial session side.",
       ],
     },
