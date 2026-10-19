@@ -104,6 +104,12 @@ export class VaultLifecycleManager {
   }
 
   async createVault(name: string) {
+    // The landing page does not boot the vault store, but its header still
+    // offers "Create New Vault"; without this a fresh browser gets "Storage
+    // not initialized".
+    if (!this.deps.vaultRegistry.isInitialized) {
+      await this.deps.vaultRegistry.init();
+    }
     const newId = await this.deps.vaultRegistry.createVault(name);
     await this.switchVault(newId);
     return newId;
