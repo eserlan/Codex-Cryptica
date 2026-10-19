@@ -8,6 +8,7 @@ import {
   sameName,
   type AdventureStagedStats,
 } from "./adventure-staged";
+import { CONSISTENCY_CHECKS } from "./adventure-consistency";
 import { generateAdventureGraphTopology } from "./adventure/adventure-graph-generator";
 import {
   buildAdventurePrompt,
@@ -105,24 +106,38 @@ const CONSEQUENCES: Json = {
  * A model that answers each stage from `replies[stage][attempt]`, falling
  * back to the clean reply, and records every message it was sent.
  */
+/** A consistency check (stage 4) reply in which every check passes. */
+const ALL_CONSISTENT: Json = {
+  checks: Object.fromEntries(
+    CONSISTENCY_CHECKS.map((id) => [id, { ok: true, problem: "" }]),
+  ),
+  revisions: [],
+};
+
 function fakeModel(
-  replies: Partial<Record<1 | 2 | 3, (string | Json)[]>> = {},
+  replies: Partial<Record<1 | 2 | 3 | 4, (string | Json)[]>> = {},
 ) {
   const sent: { stage: number; message: string }[] = [];
   const clean: Record<number, Json> = {
     1: SITUATION,
     2: CAST,
     3: CONSEQUENCES,
+    4: ALL_CONSISTENT,
   };
   const complete = async (_system: string, message: string) => {
-    const stage = Number(message.match(/STAGE (\d) OF 3/)?.[1]);
+    const stage = message.includes("FINAL CHECK: adventure consistency")
+      ? 4
+      : Number(message.match(/STAGE (\d) OF 3/)?.[1]);
     const attempt = sent.filter((s) => s.stage === stage).length;
     sent.push({ stage, message });
-    const reply = replies[stage as 1 | 2 | 3]?.[attempt] ?? clean[stage];
+    const reply = replies[stage as 1 | 2 | 3 | 4]?.[attempt] ?? clean[stage];
     return typeof reply === "string" ? reply : JSON.stringify(reply);
   };
   return { complete, sent };
 }
+
+const lastOf = (sent: { stage: number; message: string }[], stage: number) =>
+  sent.filter((s) => s.stage === stage).at(-1)!;
 
 const OPTIONS: AdventureGeneratorOptions = {
   themeId: "fantasy",
@@ -154,7 +169,7 @@ async function run(
 }
 
 describe("generateAdventureStaged", () => {
-  it("writes the adventure in three calls, in the one-pass shape", async () => {
+  it("writes the adventure in three stages and a check, in the one-pass shape", async () => {
     const { result, stats, progress } = await run();
     expect(result).not.toBeNull();
     const output = result!.output;
@@ -174,11 +189,18 @@ describe("generateAdventureStaged", () => {
     expect(output.content).toContain("**Guild Bravos**: Guild Bravos happens");
     expect(stats).toMatchObject({
       outcome: "staged",
-      aiCalls: 3,
+      aiCalls: 4,
       repairedStages: [],
       elapsedMs: 250,
+      consistency: {
+        result: "unchanged",
+        flaggedChecks: 0,
+        appliedRevisions: 0,
+        droppedRevisions: 0,
+      },
     });
     expect(progress[0].map((s) => s.status)).toEqual([
+      "pending",
       "pending",
       "pending",
       "pending",
@@ -198,7 +220,7 @@ describe("generateAdventureStaged", () => {
 
   it("passes each stage's validated output to the stages after it", async () => {
     const { sent } = await run();
-    expect(sent.map((s) => s.stage)).toEqual([1, 2, 3]);
+    expect(sent.map((s) => s.stage)).toEqual([1, 2, 3, 4]);
     expect(sent[0].message).not.toContain("Established in earlier stages");
     expect(sent[1].message).toContain('"place": "Weir Mill"');
     expect(sent[2].message).toContain('"name": "Mira Tallow"');
@@ -251,6 +273,7 @@ describe("generateAdventureStaged", () => {
       "done",
       "fallback",
       "skipped",
+      "skipped",
     ]);
   });
 
@@ -262,7 +285,7 @@ describe("generateAdventureStaged", () => {
     const { result, stats, sent } = await run(fakeModel({ 3: [stranger] }));
     expect(result).not.toBeNull();
     expect(stats!.repairedStages).toEqual(["consequences"]);
-    expect(sent.at(-1)!.message).toContain(
+    expect(lastOf(sent, 3).message).toContain(
       'outcomes[1] involves "Saint Ivo", which earlier stages never established',
     );
     expect(result!.output.lore).not.toContain("Saint's Return");
@@ -329,7 +352,7 @@ describe("generateAdventureStaged", () => {
     };
     const { stats, sent } = await run(fakeModel({ 3: [noClock] }));
     expect(stats!.repairedStages).toEqual(["consequences"]);
-    expect(sent.at(-1)!.message).toContain(
+    expect(lastOf(sent, 3).message).toContain(
       "Primary objective deadline/clock must be integrated",
     );
   });
@@ -360,7 +383,7 @@ describe("generateAdventureStaged", () => {
     const { result, stats, sent } = await run(
       fakeModel({ 3: [noClock, "not json"] }),
     );
-    expect(sent.map((s) => s.stage)).toEqual([1, 2, 3, 3]);
+    expect(sent.map((s) => s.stage)).toEqual([1, 2, 3, 3, 4]);
     expect(result).not.toBeNull();
     expect(result!.output.lore).toContain("Ferry Strike");
     expect(stats!.repairedStages).toEqual(["consequences"]);
@@ -606,5 +629,191 @@ describe("assembleAdventure", () => {
     });
     expect(doc.threats).toEqual(["**Bravos**: Thugs.", "Bare text."]);
     expect(doc.discoveries).toEqual([]);
+  });
+});
+
+describe("final consistency check", () => {
+  const failing = (...ids: string[]) =>
+    Object.fromEntries(
+      CONSISTENCY_CHECKS.map((id) => [
+        id,
+        ids.includes(id)
+          ? { ok: false, problem: "contradiction" }
+          : { ok: true, problem: "" },
+      ]),
+    );
+
+  it("sends the assembled adventure and all five checks", async () => {
+    const { sent } = await run();
+    const check = lastOf(sent, 4).message;
+    expect(check).toContain("Recover both halves of the assay");
+    expect(check).toContain('"name": "Mira Tallow"');
+    expect(check).toContain("Guild Bravos happens before dawn.");
+    for (const id of CONSISTENCY_CHECKS) expect(check).toContain(`"${id}"`);
+  });
+
+  it("applies a fix for a failed check and nothing else", async () => {
+    const { result, stats, progress } = await run(
+      fakeModel({
+        4: [
+          {
+            checks: failing("resolution"),
+            revisions: [
+              {
+                fixes: "resolution",
+                target: "outcomes[1]",
+                text: "Oren Pell keeps the toll by burning the Weir Mill's ledger before dawn.",
+              },
+              {
+                fixes: "agency",
+                target: "summary",
+                text: "A rewrite of a section that passed.",
+              },
+            ],
+          },
+        ],
+      }),
+    );
+    expect(result!.output.lore).toContain(
+      "**Guild Triumphant**: Oren Pell keeps the toll by burning",
+    );
+    expect(result!.output.lore).not.toContain("Guild Triumphant happens");
+    expect(result!.output.content).not.toContain("A rewrite of a section");
+    expect(result!.output.title).toBe("The Tithe of Lantern Ford");
+    expect(stats!.consistency).toEqual({
+      result: "revised",
+      flaggedChecks: 1,
+      appliedRevisions: 1,
+      droppedRevisions: 1,
+    });
+    expect(progress.at(-1)!.at(-1)).toMatchObject({
+      id: "review",
+      status: "done",
+      detail: "1 fix",
+    });
+  });
+
+  it("drops a fix that invents new lore", async () => {
+    const { result, stats } = await run(
+      fakeModel({
+        4: [
+          {
+            checks: failing("causality"),
+            revisions: [
+              {
+                fixes: "causality",
+                target: "throughline",
+                text: "Saint Ivo cursed the ford a century ago.",
+              },
+            ],
+          },
+        ],
+      }),
+    );
+    expect(result!.output.content).not.toContain("Saint Ivo");
+    expect(stats!.consistency).toMatchObject({
+      result: "unchanged",
+      appliedRevisions: 0,
+      droppedRevisions: 1,
+    });
+  });
+
+  it("keeps the adventure as written when the check is unreadable", async () => {
+    const plain = await run();
+    const { result, stats, progress } = await run(
+      fakeModel({ 4: ["not json"] }),
+    );
+    expect(result!.output.content).toBe(plain.result!.output.content);
+    expect(stats).toMatchObject({
+      outcome: "staged",
+      aiCalls: 4,
+      consistency: { result: "unavailable" },
+    });
+    expect(progress.at(-1)!.at(-1)).toMatchObject({
+      id: "review",
+      status: "skipped",
+      detail: "kept as written",
+    });
+  });
+
+  it("keeps the original when the fixes make the adventure check worse", async () => {
+    const calm = (target: string) => ({
+      fixes: "timeline",
+      target,
+      text: "The guild's people watch the Weir Mill.",
+    });
+    const { result, stats, progress } = await run(
+      fakeModel({
+        4: [
+          {
+            checks: failing("timeline"),
+            revisions: [
+              calm("threats[0]"),
+              calm("complications[0]"),
+              calm("complications[1]"),
+            ],
+          },
+        ],
+      }),
+    );
+    expect(result!.output.content).toContain(
+      "Guild Bravos happens before dawn.",
+    );
+    expect(stats!.consistency!.result).toBe("kept-original");
+    expect(progress.at(-1)!.at(-1)).toMatchObject({
+      status: "done",
+      detail: "kept as written",
+    });
+  });
+
+  it("keeps the original when a fix drops the given situation's deadline", async () => {
+    const options = {
+      ...OPTIONS,
+      seed: "Captain Hale must reach Greywater before the flood crest in three days.",
+    };
+    const honoured = {
+      ...SITUATION,
+      initialSituation: `${SITUATION.initialSituation} Captain Hale needs it in Greywater.`,
+      primaryObjective:
+        "Get both halves to Captain Hale in Greywater before the flood crest.",
+    };
+    const { result, stats } = await run(
+      fakeModel({
+        1: [honoured],
+        4: [
+          {
+            checks: failing("timeline"),
+            revisions: [
+              {
+                fixes: "timeline",
+                target: "primaryObjective",
+                text: "Get both halves to Captain Hale in Greywater.",
+              },
+            ],
+          },
+        ],
+      }),
+      options,
+    );
+    expect(result!.output.content).toContain("before the flood crest");
+    expect(stats!.consistency!.result).toBe("kept-original");
+  });
+
+  it("stops on cancellation during the check", async () => {
+    const controller = new AbortController();
+    const model = fakeModel();
+    const complete = async (system: string, message: string) => {
+      if (message.includes("FINAL CHECK")) controller.abort();
+      return model.complete(system, message);
+    };
+    let stats: AdventureStagedStats | undefined;
+    await expect(
+      generateAdventureStaged(buildAdventurePrompt(OPTIONS), OPTIONS, {
+        complete,
+        signal: controller.signal,
+        onStats: (s) => (stats = s),
+      }),
+    ).rejects.toThrow();
+    expect(stats).toBeUndefined();
   });
 });
