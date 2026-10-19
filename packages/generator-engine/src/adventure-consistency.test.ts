@@ -6,6 +6,7 @@ import {
   adventureVocabulary,
   applyConsistencyRevisions,
   consistencyTask,
+  isConsistencyReviewReply,
   readConsistencyReview,
 } from "./adventure-consistency";
 
@@ -54,7 +55,16 @@ const PARTS: AdventureParts = {
 const VOCAB = adventureVocabulary(PARTS);
 
 const failing = (...ids: string[]) =>
-  Object.fromEntries(ids.map((id) => [id, { ok: false, problem: "broken" }]));
+  Object.fromEntries(
+    ["antagonist", "causality", "resolution", "timeline", "agency"].map(
+      (id) => [
+        id,
+        ids.includes(id)
+          ? { ok: false, problem: "broken" }
+          : { ok: true, problem: "" },
+      ],
+    ),
+  );
 
 const review = (
   revisions: unknown[],
@@ -90,10 +100,7 @@ describe("readConsistencyReview", () => {
   });
 
   it("finds nothing to do when every check passes", () => {
-    const r = review([], {
-      antagonist: { ok: true },
-      timeline: { ok: true },
-    });
+    const r = review([], failing());
     expect(r.flagged).toEqual([]);
     expect(r.revisions).toEqual([]);
   });
@@ -132,6 +139,18 @@ describe("readConsistencyReview", () => {
     ]);
     expect(r.revisions).toEqual([]);
     expect(r.dropped[0]).toContain("introduces new names: Saint Ivo");
+  });
+
+  it("does not accept a token from a longer established name", () => {
+    const r = review([
+      {
+        fixes: "resolution",
+        target: "outcomes[0]",
+        text: "The mayor hires Ford.",
+      },
+    ]);
+    expect(r.revisions).toEqual([]);
+    expect(r.dropped[0]).toContain("introduces new names: Ford");
   });
 
   it("allows names the adventure already uses", () => {
@@ -242,9 +261,20 @@ describe("readConsistencyReview", () => {
     expect(r.dropped.at(-1)).toContain("revision limit");
   });
 
-  it("ignores a reply with no checks or revisions", () => {
-    const r = readConsistencyReview({}, PARTS, VOCAB);
-    expect(r).toEqual({ flagged: [], revisions: [], dropped: [] });
+  it("requires all five boolean checks and a revisions array", () => {
+    expect(isConsistencyReviewReply({ checks: failing(), revisions: [] })).toBe(
+      true,
+    );
+    expect(isConsistencyReviewReply({})).toBe(false);
+    expect(
+      isConsistencyReviewReply({
+        checks: { ...failing(), agency: { problem: "missing ok" } },
+        revisions: [],
+      }),
+    ).toBe(false);
+    expect(isConsistencyReviewReply({ checks: failing(), revisions: {} })).toBe(
+      false,
+    );
   });
 });
 

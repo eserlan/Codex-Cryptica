@@ -42,6 +42,7 @@ import {
   adventureVocabulary,
   applyConsistencyRevisions,
   consistencyTask,
+  isConsistencyReviewReply,
   readConsistencyReview,
 } from "./adventure-consistency";
 import { normName, sameName } from "./adventure-name";
@@ -52,7 +53,8 @@ import { StagedProgress, type StagedProgressStep } from "./staged-progress";
 import {
   type CheckedDraft,
   type DraftCheck,
-  askJson,
+  askModel,
+  readJsonObject,
   runCheckedStage,
   throwIfAborted,
 } from "./staged-runtime";
@@ -791,10 +793,14 @@ async function checkConsistency(
   established: string[],
 ): Promise<AdventureParts | null> {
   run.progress.set("review", "active");
-  const reply = await askJson(
+  const reply = await askModel(
     () => {
       run.stats.aiCalls++;
       return deps.complete(run.system, message);
+    },
+    (raw) => {
+      const parsed = readJsonObject(raw);
+      return parsed && isConsistencyReviewReply(parsed) ? parsed : null;
     },
     // Retry once, like the writing stages, so one transient failure does
     // not skip the check.

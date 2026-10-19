@@ -21,7 +21,7 @@
 
 import { extractProperNouns } from "./campaign-context";
 import { asArray, asRecord, asString } from "./llm-response-utils";
-import { sameName } from "./adventure-name";
+import { normName } from "./adventure-name";
 
 type Json = Record<string, unknown>;
 
@@ -144,7 +144,29 @@ export function adventureVocabulary(
 
 function inventedNames(revised: string, vocabulary: readonly string[]) {
   return extractProperNouns(revised).filter(
-    (name) => !vocabulary.some((known) => sameName(name, known)),
+    (name) =>
+      !vocabulary.some(
+        (known) => normalizeProperNoun(name) === normalizeProperNoun(known),
+      ),
+  );
+}
+
+const SENTENCE_OPENERS =
+  /^(?:after|as|because|before|if|meanwhile|once|when|while) /;
+
+function normalizeProperNoun(name: string): string {
+  return normName(name).replace(SENTENCE_OPENERS, "");
+}
+
+/** Whether a parsed model reply has the complete consistency-review shape. */
+export function isConsistencyReviewReply(reply: Json): boolean {
+  const checks = asRecord(reply.checks);
+  return (
+    CONSISTENCY_CHECKS.every(
+      (id) =>
+        Object.hasOwn(checks, id) &&
+        typeof asRecord(checks[id]).ok === "boolean",
+    ) && Array.isArray(reply.revisions)
   );
 }
 

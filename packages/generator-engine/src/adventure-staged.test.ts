@@ -762,6 +762,34 @@ describe("final consistency check", () => {
     });
   });
 
+  it("retries the check once after a structurally incomplete reply", async () => {
+    const { stats, progress, sent } = await run(
+      fakeModel({ 4: [{}, ALL_CONSISTENT] }),
+    );
+    expect(sent.filter((call) => call.stage === 4)).toHaveLength(2);
+    expect(stats).toMatchObject({
+      aiCalls: 5,
+      consistency: { result: "unchanged", flaggedChecks: 0 },
+    });
+    expect(progress.at(-1)!.at(-1)).toMatchObject({
+      id: "review",
+      status: "done",
+    });
+  });
+
+  it("reports unavailable after two structurally incomplete replies", async () => {
+    const { stats, progress } = await run(fakeModel({ 4: [{}, {}] }));
+    expect(stats).toMatchObject({
+      aiCalls: 5,
+      consistency: { result: "unavailable" },
+    });
+    expect(progress.at(-1)!.at(-1)).toMatchObject({
+      id: "review",
+      status: "skipped",
+      detail: "kept as written",
+    });
+  });
+
   it("logs the check as counts only", async () => {
     const { stats } = await run(
       fakeModel({

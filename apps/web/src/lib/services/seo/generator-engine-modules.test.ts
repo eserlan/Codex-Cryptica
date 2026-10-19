@@ -350,6 +350,16 @@ describe("generator engine modules", () => {
     });
 
     function stageReply(message: string) {
+      if (message.includes("FINAL CHECK: adventure consistency")) {
+        return {
+          checks: Object.fromEntries(
+            ["antagonist", "causality", "resolution", "timeline", "agency"].map(
+              (id) => [id, { ok: true, problem: "" }],
+            ),
+          ),
+          revisions: [],
+        };
+      }
       if (message.includes("STAGE 1 OF 3")) {
         return {
           title: "The Copper Ledger",
@@ -406,13 +416,13 @@ describe("generator engine modules", () => {
         onProgress,
       });
 
-      expect(runModel).toHaveBeenCalledTimes(3);
+      expect(runModel).toHaveBeenCalledTimes(4);
       expect(output.title).toBe("The Copper Ledger");
       expect(
         onProgress.mock.calls
           .at(-1)?.[0]
           .map((s: { status: string }) => s.status),
-      ).toEqual(["done", "done", "done"]);
+      ).toEqual(["done", "done", "done", "done"]);
     });
 
     it("logs staged adventure counts without generated text", async () => {
@@ -426,7 +436,7 @@ describe("generator engine modules", () => {
 
       expect(logger).toHaveBeenCalledWith(
         "[Generator] staged adventure run",
-        expect.objectContaining({ outcome: "staged", aiCalls: 3 }),
+        expect.objectContaining({ outcome: "staged", aiCalls: 4 }),
       );
       expect(JSON.stringify(logger.mock.calls)).not.toContain("Copper");
       logger.mockRestore();
