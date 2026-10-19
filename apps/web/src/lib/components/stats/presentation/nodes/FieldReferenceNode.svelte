@@ -188,6 +188,7 @@
   <div class="flex flex-col gap-1" data-testid="presentation-field-notes">
     <span class="text-xs font-bold text-theme-text">{label}</span>
     <textarea
+      aria-label={label || field.label}
       class="w-full resize-y rounded border border-theme-border bg-theme-bg px-1.5 py-1 text-xs text-theme-text disabled:opacity-40"
       rows="3"
       disabled={controlsDisabled}
@@ -208,6 +209,7 @@
     {/if}
     <input
       type="number"
+      aria-label={label ? undefined : field.label}
       class={isProminent
         ? "w-16 shrink-0 rounded border border-theme-border bg-theme-bg px-1.5 py-0.5 text-center text-sm font-bold text-theme-primary disabled:opacity-40"
         : "w-16 shrink-0 rounded border border-theme-border bg-theme-bg px-1.5 py-0.5 text-center text-xs text-theme-text disabled:opacity-40"}
@@ -229,6 +231,7 @@
     {/if}
     <input
       type="text"
+      aria-label={label ? undefined : field.label}
       class="w-36 shrink-0 rounded border border-theme-border bg-theme-bg px-1.5 py-0.5 text-xs text-theme-text disabled:opacity-40"
       value={typeof field.value === "string" ? field.value : ""}
       disabled={controlsDisabled}

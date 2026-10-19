@@ -123,6 +123,10 @@ describe("TokenQuickStats", () => {
     expect(screen.getByTestId("token-quick-stats-number")).toBeTruthy();
     expect(screen.getByTestId("token-quick-stats-text")).toBeTruthy();
     expect(screen.getByText("Armor Class")).toBeTruthy();
+    // The number input is named after its field for screen readers.
+    expect(
+      screen.getByRole("spinbutton", { name: "Armor Class" }),
+    ).toBeTruthy();
     expect(screen.getByText("Alignment")).toBeTruthy();
     expect(screen.getByText("Chaotic Evil")).toBeTruthy();
     expect(screen.queryByText("Unfavored")).toBeNull();

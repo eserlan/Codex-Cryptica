@@ -297,6 +297,82 @@ describe("ItemTableNode", () => {
     expect(
       screen.queryByRole("button", { name: "Move War Hammer down" }),
     ).toBeNull();
+    expect(
+      screen.queryByRole("textbox", { name: "Damage formula for War Hammer" }),
+    ).toBeNull();
+  });
+
+  it("names a roll after its column, so an attack is not logged as damage", async () => {
+    rollStatSheetDiceField.mockClear();
+    rollStatSheetDiceField.mockResolvedValue({ text: "= 12", isError: false });
+    const field: StatSheetField = {
+      id: "attacks",
+      label: "Attacks & Weapons",
+      type: "item-table",
+      columns: [
+        { id: "name", label: "Name", type: "text" },
+        { id: "attack", label: "Attack", type: "dice", formula: "1d20+0" },
+        { id: "damage", label: "Damage", type: "dice", formula: "1d6+0" },
+      ],
+      rows: [{ name: "Longsword", attack: "1d20+5", damage: "1d8+3" }],
+    };
+    render(ItemTableNode, { props: { field, context: makeContext([field]) } });
+
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Roll 1d20+5 for Longsword" }),
+    );
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Roll 1d8+3 for Longsword" }),
+    );
+
+    expect(rollStatSheetDiceField).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({ label: "Longsword Attack", formula: "1d20+5" }),
+    );
+    expect(rollStatSheetDiceField).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ label: "Longsword Damage", formula: "1d8+3" }),
+    );
+  });
+
+  it("lets each row keep its own dice formula", async () => {
+    const context = makeContext([itemTableField]);
+    render(ItemTableNode, { props: { field: itemTableField, context } });
+
+    await fireEvent.change(
+      screen.getByRole("textbox", { name: "Damage formula for War Hammer" }),
+      { target: { value: "1d8+3" } },
+    );
+
+    expect(context.onUpdateField).toHaveBeenCalledWith(
+      "weapons_table",
+      expect.objectContaining({
+        rows: [expect.objectContaining({ damage: "1d8+3" })],
+      }),
+    );
+  });
+
+  it("falls back to the column formula when a row formula is cleared", async () => {
+    const field: StatSheetField = {
+      ...itemTableField,
+      columns: itemTableField.columns!.map((c) =>
+        c.id === "damage" ? { ...c, formula: "1d6" } : c,
+      ),
+    };
+    const context = makeContext([field]);
+    render(ItemTableNode, { props: { field, context } });
+
+    await fireEvent.change(
+      screen.getByRole("textbox", { name: "Damage formula for War Hammer" }),
+      { target: { value: "  " } },
+    );
+
+    expect(context.onUpdateField).toHaveBeenCalledWith(
+      "weapons_table",
+      expect.objectContaining({
+        rows: [expect.objectContaining({ damage: "1d6" })],
+      }),
+    );
   });
 
   it("renders dice roll errors without a success colour", async () => {

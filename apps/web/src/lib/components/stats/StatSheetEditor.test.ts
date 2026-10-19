@@ -607,6 +607,101 @@ describe("StatSheetEditor field keys (#3180)", () => {
     updateEntity.mockClear();
   });
 
+  it("keeps a typed proficiency bonus when the formula is committed", async () => {
+    render(StatSheetEditor, {
+      entity: buildEntity({
+        statSheet: {
+          fields: [
+            { id: "str_score", label: "STR", type: "number", value: 16 },
+            {
+              id: "str_save",
+              label: "STR Save",
+              type: "dice",
+              formula: "1d20+3",
+              modifierSource: "str_score",
+            },
+          ],
+        },
+      }),
+    });
+
+    const formula = screen.getByLabelText("Formula") as HTMLInputElement;
+    await fireEvent.input(formula, { target: { value: "1d20+5" } });
+    await fireEvent.change(formula);
+
+    expect(updateEntity).toHaveBeenLastCalledWith(
+      "goblin-1",
+      expect.objectContaining({
+        statSheet: expect.objectContaining({
+          fields: expect.arrayContaining([
+            expect.objectContaining({ id: "str_save", formula: "1d20+2+3" }),
+          ]),
+        }),
+      }),
+    );
+  });
+
+  it("lowers a counter's value to a committed lower maximum", async () => {
+    render(StatSheetEditor, {
+      entity: buildEntity({
+        statSheet: {
+          fields: [
+            { id: "hp", label: "HP", type: "counter", max: 100, value: 100 },
+          ],
+        },
+      }),
+    });
+
+    const max = screen.getByLabelText("Max") as HTMLInputElement;
+    // Typing "12" passes through "1"; the value must not drop to 1.
+    await fireEvent.input(max, { target: { value: "1" } });
+    await fireEvent.input(max, { target: { value: "12" } });
+    expect(updateEntity).not.toHaveBeenCalledWith(
+      "goblin-1",
+      expect.objectContaining({
+        statSheet: expect.objectContaining({
+          fields: [expect.objectContaining({ value: 1 })],
+        }),
+      }),
+    );
+
+    await fireEvent.change(max);
+
+    expect(updateEntity).toHaveBeenLastCalledWith(
+      "goblin-1",
+      expect.objectContaining({
+        statSheet: expect.objectContaining({
+          fields: [expect.objectContaining({ max: 12, value: 12 })],
+        }),
+      }),
+    );
+  });
+
+  it("leaves a counter value at or below a raised maximum alone", async () => {
+    render(StatSheetEditor, {
+      entity: buildEntity({
+        statSheet: {
+          fields: [
+            { id: "hp", label: "HP", type: "counter", max: 10, value: 7 },
+          ],
+        },
+      }),
+    });
+
+    const max = screen.getByLabelText("Max") as HTMLInputElement;
+    await fireEvent.input(max, { target: { value: "20" } });
+    await fireEvent.change(max);
+
+    expect(updateEntity).toHaveBeenLastCalledWith(
+      "goblin-1",
+      expect.objectContaining({
+        statSheet: expect.objectContaining({
+          fields: [expect.objectContaining({ max: 20, value: 7 })],
+        }),
+      }),
+    );
+  });
+
   it("assigns a readable unique key to a new field", async () => {
     render(StatSheetEditor, { entity: buildEntity() });
 

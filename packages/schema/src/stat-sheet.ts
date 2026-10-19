@@ -165,6 +165,10 @@ export const StatSheetFieldSchema = z.object({
   min: z.number().optional(),
   max: z.number().optional(),
   step: z.number().optional(),
+  // "counter" fields on a template: the value a newly applied sheet starts
+  // at. Absent means "start full" (`max`), right for HP; Tales of the
+  // Valiant Luck starts at 0.
+  startValue: z.number().optional(),
   collapsed: z.boolean().optional(),
   favorite: z.boolean().optional(),
   barField: z.boolean().optional(),

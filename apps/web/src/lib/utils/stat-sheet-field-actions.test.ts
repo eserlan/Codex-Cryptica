@@ -48,9 +48,11 @@ vi.mock("dice-engine", () => ({
 import {
   abilityModifier,
   applyDerivedModifiers,
+  applyTypedFormula,
   computeAdjustedCounterValue,
   rollStatSheetDiceField,
 } from "./stat-sheet-field-actions";
+import { diceEngine } from "dice-engine";
 
 function diceField(overrides: Partial<StatSheetField> = {}): StatSheetField {
   return {
@@ -226,6 +228,74 @@ describe("applyDerivedModifiers", () => {
   });
 });
 
+describe("applyTypedFormula", () => {
+  function sheet(formula: string, score: number | null = 16) {
+    return [
+      {
+        id: "str_score",
+        label: "STR",
+        type: "number",
+        value: score ?? undefined,
+      },
+      {
+        id: "str_save",
+        label: "STR Save",
+        type: "dice",
+        formula,
+        modifierSource: "str_score",
+      },
+    ] as StatSheetField[];
+  }
+  const formulaOf = (fields: StatSheetField[]) =>
+    fields.find((f) => f.id === "str_save")?.formula;
+
+  it("keeps a typed proficiency bonus through the next derived save", () => {
+    const typed = applyTypedFormula(sheet("1d20+5"), "str_save");
+    expect(formulaOf(typed)).toBe("1d20+2+3");
+
+    // Any later save re-derives only the last term, and the total holds.
+    expect(formulaOf(applyDerivedModifiers(typed))).toBe("1d20+2+3");
+
+    // The derived part still follows the score.
+    const stronger = typed.map((f) =>
+      f.id === "str_score" ? { ...f, value: 18 } : f,
+    );
+    expect(formulaOf(applyDerivedModifiers(stronger))).toBe("1d20+2+4");
+  });
+
+  it("folds the bonus into an existing flat term", () => {
+    expect(formulaOf(applyTypedFormula(sheet("1d20+2+4"), "str_save"))).toBe(
+      "1d20+3+3",
+    );
+    expect(formulaOf(applyTypedFormula(sheet("1d20-2+5"), "str_save"))).toBe(
+      "1d20+3",
+    );
+  });
+
+  it("leaves a formula that already ends in the derived modifier alone", () => {
+    expect(formulaOf(applyTypedFormula(sheet("1d20+3"), "str_save"))).toBe(
+      "1d20+3",
+    );
+    expect(formulaOf(applyTypedFormula(sheet("1d20+2+3"), "str_save"))).toBe(
+      "1d20+2+3",
+    );
+  });
+
+  it("does nothing without a score or a flat last term", () => {
+    expect(
+      formulaOf(applyTypedFormula(sheet("1d20+5", null), "str_save")),
+    ).toBe("1d20+5");
+    expect(formulaOf(applyTypedFormula(sheet("1d20+1d4"), "str_save"))).toBe(
+      "1d20+1d4",
+    );
+  });
+
+  it("only touches the named field", () => {
+    const fields = sheet("1d20+5");
+    expect(applyTypedFormula(fields, "other")).toEqual(fields);
+  });
+});
+
 describe("computeAdjustedCounterValue", () => {
   it("increments by the field's step", () => {
     const field = { id: "hp", label: "HP", type: "counter", value: 10 } as any;
@@ -308,6 +378,26 @@ describe("rollStatSheetDiceField", () => {
     );
     expect(sendResolvedRollMessage).not.toHaveBeenCalled();
     expect(notify).toHaveBeenCalledWith("Attack: 1d20+5 = 17", "success");
+  });
+
+  it("shows the dice as rolled in the toast", async () => {
+    mapSessionState.vttEnabled = false;
+    vi.mocked(diceEngine.execute).mockReturnValueOnce({
+      total: 17,
+      formula: "1d20+3",
+      timestamp: 0,
+      parts: [
+        { type: "dice", sides: 20, rolls: [14], value: 14 },
+        { type: "modifier", value: 3 },
+      ],
+    } as never);
+
+    await rollStatSheetDiceField(diceField({ formula: "1d20+3" }));
+
+    expect(notify).toHaveBeenCalledWith(
+      "Attack: 1d20+3 = 17 ([14] +3)",
+      "success",
+    );
   });
 
   it("returns an error display for an invalid formula without throwing", async () => {

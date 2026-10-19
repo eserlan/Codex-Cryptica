@@ -98,23 +98,30 @@ if useful. Unrun, unavailable and deferred work is never a pass.
 1. Open QA Aric → **Stats → Templates**. Choose **ToV Character**
    (`builtin-tov-character`), rather than a D&D 5e template.
    **Expect:** distinct Lineage, Heritage, Background, Class, talents/features,
-   ability scores, saves, skills, attacks, spell fields and Luck.
+   ability scores, saves, skills, attacks, a Spellcasting section and Luck.
+   **Expect:** Luck starts at 0/5, not a full pool.
 2. Enter the prepared values using the sheet's editable controls and **Edit Layout**
-   where necessary. Set current/maximum HP and Luck separately. Finish editing.
+   where necessary. Set current/maximum HP and Luck separately, and each attack's
+   attack and damage formula in its own row. Finish editing.
    **Expect:** the displayed values match the table; Lineage and Heritage remain separate.
+   Lowering HP's maximum below its current value also lowers the current value.
 3. Add a sample talent/feature, spell-circle information and a custom field
    `QA house-rule note`. Save and reopen the entity.
    **Expect:** those fields and the CC-only note, Label and relationship all survive.
-4. Check the proficient save/skill and attack formulas explicitly. If the UI cannot
+4. Check the proficient save/skill and attack formulas explicitly. In **Edit Layout**,
+   type the proficient total (`1d20+5`); on leaving the field it is kept as
+   `1d20+2+3`, the bonus and the STR modifier, so later edits do not drop it. If the UI cannot
    represent the prepared values, record that failure rather than substituting an
    unproficient roll or silently editing vault files to make the case pass.
 
 ### 3. Roll checks, skills, saves and attacks locally
 
 1. Roll STR Check, the configured STR Save, and Athletics once each.
-   **Expect:** one result per action, with formulas `1d20+3`, `1d20+5`, `1d20+5`.
+   **Expect:** one result per action, totalling `1d20+3`, `1d20+5`, `1d20+5`
+   (shown as `1d20+2+3` for the proficient rolls).
 2. Roll Longsword attack and damage, then Heavy Crossbow attack and damage.
-   **Expect:** the configured formulas are used; the two attack rows do not share values.
+   **Expect:** the configured formulas are used; the two attack rows do not share values,
+   and each result is named after its column ("Longsword Attack", "Longsword Damage").
 3. Inspect the rolled dice and modifier, not a particular random total.
    **Expect:** arithmetic is correct and the proficiency bonus is included exactly once.
 4. Record Luck, roll again, and declare an attack failed at the table.

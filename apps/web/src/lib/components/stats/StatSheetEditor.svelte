@@ -14,6 +14,7 @@
   import { vault } from "$lib/stores/vault.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { type IdGenerator, systemIdGenerator } from "$lib/utils/runtime-deps";
+  import { applyTypedFormula } from "$lib/utils/stat-sheet-field-actions";
 
   let {
     entity,
@@ -117,6 +118,20 @@
 
   function updateField(id: string, updates: Partial<StatSheetField>) {
     persist(fields.map((f) => (f.id === id ? { ...f, ...updates } : f)));
+  }
+
+  // Once a lower maximum is committed, a current value above it comes down
+  // too, so the sheet never shows "100 / 12". Not per keystroke: typing "12"
+  // passes through "1".
+  function clampCounterToMax(id: string) {
+    const field = fields.find((f) => f.id === id);
+    if (
+      field?.max !== undefined &&
+      typeof field.value === "number" &&
+      field.value > field.max
+    ) {
+      updateField(id, { value: field.max });
+    }
   }
 
   function changeFieldType(field: StatSheetField, newType: StatSheetFieldType) {
@@ -463,6 +478,7 @@
                       ? undefined
                       : Number((e.target as HTMLInputElement).value),
                 })}
+              onchange={() => clampCounterToMax(field.id)}
             />
           </label>
           <label class="flex items-center gap-1">
@@ -507,6 +523,7 @@
                 updateField(field.id, {
                   formula: (e.target as HTMLInputElement).value,
                 })}
+              onchange={() => persist(applyTypedFormula(fields, field.id))}
             />
           </label>
         </div>

@@ -462,6 +462,32 @@ describe("StatSheetTemplateStore", () => {
     expect(cloned.find((f) => f.label === "Misc")?.value).toBeUndefined();
   });
 
+  it("starts a counter at the template's start value instead of full", () => {
+    const template: StatSheetTemplate = {
+      id: "t1",
+      name: "Test",
+      fields: [
+        {
+          id: "luck",
+          label: "Luck",
+          type: "counter",
+          min: 0,
+          max: 5,
+          startValue: 0,
+        },
+        { id: "hp", label: "HP", type: "counter", min: 0, max: 12 },
+        // A start value with no max still applies.
+        { id: "doom", label: "Doom", type: "counter", startValue: 2 },
+      ],
+    };
+
+    const cloned = store.cloneTemplateFields(template);
+
+    expect(cloned.find((f) => f.id === "luck")?.value).toBe(0);
+    expect(cloned.find((f) => f.id === "hp")?.value).toBe(12);
+    expect(cloned.find((f) => f.id === "doom")?.value).toBe(2);
+  });
+
   it("preserves the template's own field ids when cloning — so presentation templates referencing e.g. 'hp'/'ac' keep resolving after the template is applied", () => {
     const dnd = BUILT_IN_STAT_SHEET_TEMPLATES.find(
       (t) => t.id === "builtin-dnd-character",

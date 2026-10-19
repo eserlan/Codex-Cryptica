@@ -355,8 +355,9 @@ export class StatSheetTemplateStore {
         id,
         // Counters (HP, MP, AP, etc.) start full rather than at the implicit
         // zero default — a freshly-applied template shouldn't read as "dead".
-        ...(f.type === "counter" && f.max !== undefined
-          ? { value: f.max }
+        // A template can name another start, as ToV Luck does (0).
+        ...(f.type === "counter" && (f.startValue ?? f.max) !== undefined
+          ? { value: f.startValue ?? f.max }
           : null),
       };
     });

@@ -14,6 +14,22 @@ export interface DiceRollDisplay {
   roll?: RollResult;
 }
 
+/**
+ * The dice as rolled, for the toast: " ([14] +3)". Empty when the engine
+ * reports no individual dice, so the toast falls back to the total alone.
+ */
+function describeDice(result: RollResult): string {
+  const parts = (result.parts ?? []).flatMap((part) => {
+    if (part.type === "dice") {
+      return part.rolls?.length ? [`[${part.rolls.join(", ")}]`] : [];
+    }
+    return part.value === 0
+      ? []
+      : [`${part.value > 0 ? "+" : "-"}${Math.abs(part.value)}`];
+  });
+  return parts.some((p) => p.startsWith("[")) ? ` (${parts.join(" ")})` : "";
+}
+
 export async function rollStatSheetDiceField(
   field: StatSheetField,
 ): Promise<DiceRollDisplay> {
@@ -59,7 +75,7 @@ export async function rollStatSheetDiceField(
         );
       } else {
         notificationStore.notify(
-          `${field.label}: ${field.formula} = ${result.total}`,
+          `${field.label}: ${field.formula} = ${result.total}${describeDice(result)}`,
           "info",
         );
       }
@@ -80,7 +96,7 @@ export async function rollStatSheetDiceField(
       );
     } else {
       notificationStore.notify(
-        `${field.label}: ${field.formula} = ${result.total}`,
+        `${field.label}: ${field.formula} = ${result.total}${describeDice(result)}`,
         "success",
       );
     }
@@ -122,23 +138,80 @@ export function applyDerivedModifiers(
   fields: StatSheetField[],
 ): StatSheetField[] {
   return fields.map((field) => {
-    if (field.type !== "dice" || !field.modifierSource) return field;
-    // #3180: modifierSource accepts a field key or id; resolution ends at
-    // the canonical field, so key renames never corrupt the derivation.
-    const source = resolveFieldByKeyOrId(fields, field.modifierSource);
-    if (!source || typeof source.value !== "number") return field;
-
-    const mod = abilityModifier(source.value);
-    const formula = field.formula ?? "1d20";
-    const lastOpIndex = Math.max(
-      formula.lastIndexOf("+"),
-      formula.lastIndexOf("-"),
-    );
-    const base = lastOpIndex > 0 ? formula.slice(0, lastOpIndex) : formula;
-    const nextFormula = `${base}${mod >= 0 ? "+" : "-"}${Math.abs(mod)}`;
-
+    const mod = derivedModifier(fields, field);
+    if (mod === null) return field;
+    const nextFormula = withTrailingModifier(field.formula ?? "1d20", mod);
     return nextFormula === field.formula
       ? field
       : { ...field, formula: nextFormula };
   });
+}
+
+/**
+ * Commit a formula the user typed on a derived dice field. Its last term is
+ * the total they want, so the part that is not the derived modifier is kept
+ * as its own term: "1d20+5" with STR 16 becomes "1d20+2+3". Without this the
+ * next save rewrites it to "1d20+3" and a proficiency bonus is lost.
+ */
+export function applyTypedFormula(
+  fields: StatSheetField[],
+  fieldId: string,
+): StatSheetField[] {
+  return fields.map((field) => {
+    if (field.id !== fieldId) return field;
+    const mod = derivedModifier(fields, field);
+    if (mod === null || !field.formula) return field;
+    const nextFormula = keepTypedBonus(field.formula, mod);
+    return nextFormula === field.formula
+      ? field
+      : { ...field, formula: nextFormula };
+  });
+}
+
+/** The modifier a dice field derives from its source score, if any. */
+function derivedModifier(
+  fields: StatSheetField[],
+  field: StatSheetField,
+): number | null {
+  if (field.type !== "dice" || !field.modifierSource) return null;
+  // #3180: modifierSource accepts a field key or id; resolution ends at
+  // the canonical field, so key renames never corrupt the derivation.
+  const source = resolveFieldByKeyOrId(fields, field.modifierSource);
+  if (!source || typeof source.value !== "number") return null;
+  return abilityModifier(source.value);
+}
+
+const signed = (n: number) => `${n >= 0 ? "+" : "-"}${Math.abs(n)}`;
+
+function splitTrailing(formula: string): { base: string; tail: string } {
+  const lastOpIndex = Math.max(
+    formula.lastIndexOf("+"),
+    formula.lastIndexOf("-"),
+  );
+  return lastOpIndex > 0
+    ? { base: formula.slice(0, lastOpIndex), tail: formula.slice(lastOpIndex) }
+    : { base: formula, tail: "" };
+}
+
+function withTrailingModifier(formula: string, mod: number): string {
+  return `${splitTrailing(formula).base}${signed(mod)}`;
+}
+
+/**
+ * A typed formula ends in the total the user wants; insert the part that is
+ * not the derived modifier as its own term in front of it.
+ */
+function keepTypedBonus(formula: string, mod: number): string {
+  const { base, tail } = splitTrailing(formula);
+  if (!/^[+-]\d+$/.test(tail)) return formula;
+  const extra = Number(tail) - mod;
+  if (extra === 0) return formula;
+  // Fold into an existing flat term ("1d20+2" + 1 → "1d20+3") when there is one.
+  const inner = splitTrailing(base);
+  if (/^[+-]\d+$/.test(inner.tail)) {
+    const folded = Number(inner.tail) + extra;
+    const head = folded === 0 ? inner.base : `${inner.base}${signed(folded)}`;
+    return `${head}${signed(mod)}`;
+  }
+  return `${base}${signed(extra)}${signed(mod)}`;
 }

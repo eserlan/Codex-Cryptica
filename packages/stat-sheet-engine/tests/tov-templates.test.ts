@@ -69,6 +69,8 @@ describe("Tales of the Valiant Stat-Sheet Templates (#3944)", () => {
     expect(luck?.type).toBe("counter");
     expect(luck?.min).toBe(0);
     expect(luck?.max).toBe(5);
+    // BFRD: a new character starts with 0 Luck, not a full pool.
+    expect(luck?.startValue).toBe(0);
 
     // Ability scores & modifier sources
     for (const stat of ["str", "dex", "con", "int", "wis", "cha"]) {
@@ -93,6 +95,25 @@ describe("Tales of the Valiant Stat-Sheet Templates (#3944)", () => {
     expect(fieldMap.get("talents")?.type).toBe("longtext");
     expect(fieldMap.get("features")?.type).toBe("longtext");
     expect(fieldMap.get("lineage_traits")?.type).toBe("longtext");
+
+    // Spellcasting by circle
+    expect(fieldMap.get("sec_spellcasting")?.type).toBe("heading");
+    expect(fieldMap.get("spellcasting_ability")?.type).toBe("text");
+    expect(fieldMap.get("spell_save_dc")?.type).toBe("number");
+    expect(fieldMap.get("spell_attack")).toMatchObject({
+      type: "dice",
+      formula: "1d20+0",
+    });
+    expect(fieldMap.get("spell_slots")?.type).toBe("text");
+    expect(fieldMap.get("spells")?.type).toBe("longtext");
+  });
+
+  it("starts only Luck at 0; HP still starts full", () => {
+    for (const template of [TOV_CHARACTER_TEMPLATE, TOV_NPC_TEMPLATE]) {
+      const fields = new Map(template.fields.map((f) => [f.id, f]));
+      expect(fields.get("luck")?.startValue, template.id).toBe(0);
+      expect(fields.get("hp")?.startValue, template.id).toBeUndefined();
+    }
   });
 
   it("ToV Monster template models CR, Doom points, saves, senses, traits, and structured actions", () => {
@@ -187,6 +208,8 @@ describe("Tales of the Valiant Stat-Sheet Templates (#3944)", () => {
       expect(presentations[0]?.name).toBe("ToV Character Sheet");
       expect(presentations[0]?.source).toContain("Luck Points");
       expect(presentations[0]?.source).toContain("Lineage");
+      expect(presentations[0]?.source).toContain("{{stat.spell_save_dc");
+      expect(presentations[0]?.source).toContain("{{stat.spells ");
     });
   });
 });

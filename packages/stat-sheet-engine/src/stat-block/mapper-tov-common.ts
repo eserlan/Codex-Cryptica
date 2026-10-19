@@ -1,7 +1,7 @@
 import type { StatSheetField } from "schema";
 import type { StatBlockIR } from "./types";
 import { TOV_LUCK_FIXTURE } from "../rules-sources/fixtures/tov-luck.fixture";
-import { D20_ABILITY_KEYS } from "./mapper-shared";
+import { D20_ABILITY_KEYS, derivedRollFormula } from "./mapper-shared";
 
 export function mapTovLuckField(ir: StatBlockIR): StatSheetField {
   const vital = ir.vitals.find((v) => v.id === "luck");
@@ -29,7 +29,7 @@ export function mapTovSaveFields(ir: StatBlockIR): StatSheetField[] {
         id: `${key}_save`,
         label: `${attr.label} Save`,
         type: "dice" as const,
-        formula: `1d20${bonus >= 0 ? `+${bonus}` : bonus}`,
+        formula: derivedRollFormula(bonus, attr.value),
         modifierSource: `${key}_score`,
       },
     ];
