@@ -671,6 +671,22 @@ describe("DefaultAIClientManager", () => {
         content: "Second message",
       });
     });
+
+    it("should forward requestOptions.signal from sendMessageStream to fetch", async () => {
+      (fetch as any).mockResolvedValue({
+        ok: true,
+        json: vi.fn().mockResolvedValue({ content: "Reply" }),
+      });
+
+      const model = await manager.getModel("", "gemini-1.5-pro");
+      const chat = (model as any).startChat({ history: [] });
+      const controller = new AbortController();
+
+      await chat.sendMessageStream("Hello", { signal: controller.signal });
+
+      const callArgs = (fetch as any).mock.calls[0][1] as RequestInit;
+      expect(callArgs.signal).toBe(controller.signal);
+    });
   });
 });
 

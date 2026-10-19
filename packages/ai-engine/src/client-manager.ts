@@ -668,15 +668,19 @@ export class DefaultAIClientManager {
         const model = this.createProxyModel(modelName, systemInstruction);
 
         return {
-          sendMessageStream: async (query: string) => {
+          sendMessageStream: async (
+            query: string,
+            requestOptions?: { signal?: AbortSignal },
+          ) => {
             const contents = [
               ...history,
               { role: "user", parts: [{ text: query }] },
             ];
 
-            const result = await (model as any).generateContent({
-              contents,
-            });
+            const result = await (model as any).generateContent(
+              { contents },
+              requestOptions,
+            );
 
             const responseText = result.response.text();
             history.push(
