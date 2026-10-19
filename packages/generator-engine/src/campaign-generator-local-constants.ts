@@ -1,4 +1,3 @@
-
 import { forGenre } from "./public-dungeon-constants";
 import { themeIdToLabel, factionConfig } from "./public-faction-constants";
 import { npcThemeConfig } from "./public-npc-constants";
@@ -68,7 +67,13 @@ export const SETTLEMENT_FEATURES = [
   "a harbor choked with half-sunk wrecks",
 ];
 
-export const ITEM_RARITIES = ["Common", "Uncommon", "Rare", "Very Rare", "Legendary"];
+export const ITEM_RARITIES = [
+  "Common",
+  "Uncommon",
+  "Rare",
+  "Very Rare",
+  "Legendary",
+];
 export const ITEM_KINDS = ["Blade", "Amulet", "Ring", "Staff", "Tome", "Cloak"];
 export const ITEM_EFFECTS = [
   "hums faintly when an untruth is spoken nearby",

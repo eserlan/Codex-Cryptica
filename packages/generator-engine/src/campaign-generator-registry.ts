@@ -833,7 +833,7 @@ import {
   COUNCIL_VOTE_TONES,
   COUNCIL_VOTE_ANTAGONIST_INFLUENCE,
   COUNCIL_VOTE_ARCHETYPES,
-  COUNCIL_VOTE_STANCES
+  COUNCIL_VOTE_STANCES,
 } from "./campaign-generator-local-constants";
 
 export {
@@ -842,7 +842,7 @@ export {
   adventureArchetypesForTheme,
   adventureTonesForTheme,
   factionTypesForTheme,
-  settlementTypesForTheme
+  settlementTypesForTheme,
 };
 
 function generateName(): string {

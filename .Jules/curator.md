@@ -96,6 +96,7 @@
 
 **Learning:** Component files like `PresentationTemplateEditor.svelte` can become god-files when they mix complex internal state, editing logic, layout definitions, and massive inline modals or context menus. Extracting an inline block like the field context menu to its own `PresentationFieldContextMenu.svelte` simplifies the parent's markup greatly.
 **Action:** Always consider extracting sizable inline UI elements (e.g. context menus) that merely consume state into dedicated child components via props.
+
 ## 2024-05-14 - Extract Fallback Generation Constants from Campaign Registry
 
 **Learning:** In the generator-engine, the main campaign orchestration god file often mixes prompt compilation, output mapping, and local fallback data arrays (e.g. \`NPC_RACES\`, \`FACTION_GOALS\`, \`ITEM_EFFECTS\`). Extracting these static options lists and minor configuration mappers into dedicated \`campaign-generator-local-constants.ts\` significantly cuts down line count while retaining their cohesion as feature-specific fallbacks.
