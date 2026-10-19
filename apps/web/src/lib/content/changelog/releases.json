@@ -1,5 +1,21 @@
 [
   {
+    "version": "0.36.0",
+    "title": "The Adventure Crafting & Play Update",
+    "date": "2026-10-19",
+    "type": "minor",
+    "highlights": [
+      "Build a One-Shot Adventure: Create a playable adventure with connected scenes, clues, routes and endings, then review and refine the result as it takes shape.",
+      "Plan Dungeons, Tomes and Point Crawls: Generate dungeon layouts with factions and a clear progress path, create a book of forbidden knowledge, or link memorable locations into an explorable route.",
+      "Shape Adventure Ideas in Stages: Turn a premise into a developed adventure through guided steps, with consistency checks to help catch gaps before you use it.",
+      "Play Your Own Maps: Explore a hexcrawl map in solo play, reveal terrain as you travel and capture discoveries in your session journal.",
+      "Bring Tales of the Valiant to Your Table: Create and manage native character sheets, import a stat block from text, and use system-aware guidance for creatures and encounters.",
+      "Run a Living Shop: Track stock, suggest items from a shop or settlement, and let players browse a safe catalogue and complete confirmed trades.",
+      "Take Your Solo Adventure Further: Start play more easily, work with Oracle threads, capture journal notes and protect surprises with a spoiler shield.",
+      "Get More Help for Your Game: Cif can guide you to controls and offer contextual tips, alongside new practical advice for GMs and solo players."
+    ]
+  },
+  {
     "version": "0.35.0",
     "title": "The Hexcrawl & Cif Update",
     "date": "2026-10-06",
