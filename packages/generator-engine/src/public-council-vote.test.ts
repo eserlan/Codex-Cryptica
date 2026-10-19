@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import {
+  auditCouncilVotePaths,
   buildCouncilVoteFoundationPrompt,
   buildCouncilVoteFoundationRepairPrompt,
   buildCouncilVotePathsPrompt,
@@ -350,6 +351,23 @@ describe("buildCouncilVotePathsRepairPrompt", () => {
       "a dependency altering someone's mood is not the same as securing their vote",
     );
   });
+
+  it("checks dependency cascade consistency and forbids leaving dependent reactions dangling", () => {
+    const prompt = buildCouncilVotePathsRepairPrompt();
+    expect(prompt).toContain(
+      "If a path changes the vote of a councillor whom another councillor depends upon, verify that the dependent councillor's reaction is resolved consistently and not left contradictory or dangling.",
+    );
+  });
+
+  it("prunes repetitive biographical summaries from paths to keep them concise and operational", () => {
+    const prompt = buildCouncilVotePathsRepairPrompt();
+    expect(prompt).toContain(
+      "Keep full councillor motivations and backstories in the foundation pass.",
+    );
+    expect(prompt).toContain(
+      "Prune repetitive biographical summaries or re-explanations of a councillor's worldview from the paths; keep each path concise, operational, and focused on strategy, leverage, cascade, and tally.",
+    );
+  });
 });
 
 describe("parseCouncilVoteFoundation", () => {
@@ -546,6 +564,105 @@ describe("buildCouncilVotePathsPrompt", () => {
     );
     expect(userMessage).toContain(
       "confirm the output contains no prompt instructions, placeholder-name notes, or generation commentary",
+    );
+  });
+
+  it("mandates coalition diversity across the three paths with distinct political methodologies", () => {
+    const { userMessage } = buildCouncilVotePathsPrompt();
+    expect(userMessage).toContain(
+      "Coalition diversity: The three paths must construct genuinely distinct valid coalitions representing different political approaches",
+    );
+    expect(userMessage).toContain(
+      "smallest viable coalition via direct transactional logrolling or targeted favours",
+    );
+    expect(userMessage).toContain(
+      "broader/riskier alternative via procedural mechanisms, recusal rules, committee bylaws, or exposing secrets/kompromat",
+    );
+    expect(userMessage).toContain(
+      "costly best solution via durable moral or structural resolution of the core dilemma",
+    );
+  });
+
+  it("mandates concise operational narrative without re-narrating councillor biographies", () => {
+    const { userMessage } = buildCouncilVotePathsPrompt();
+    expect(userMessage).toContain(
+      "Concise operational narrative: Keep full motivations, personal histories, and worldviews with the councillors in the foundation pass.",
+    );
+    expect(userMessage).toContain(
+      "Do not re-narrate a councillor's biography or emotional justification in the paths section.",
+    );
+  });
+});
+
+describe("auditCouncilVotePaths", () => {
+  const validPaths = {
+    possiblePaths: `### Possible Paths
+#### 1. Smallest Viable Coalition (Transactional)
+Target Councillor A with trade guarantees. Tally: 3/5 Support.
+
+#### 2. Broader Alternative (Procedural & Leverage)
+Invoke recusal bylaws on Councillor B. Tally: 3/4 Support.
+
+#### 3. Costly Best Solution (Structural Resolution)
+Concede port jurisdiction permanently. Tally: 4/5 Support.`,
+    followUpHooks: "### Follow-Up Hooks\nThe guild remembers the concession.",
+  };
+
+  it("passes when all three coalition tiers are present and no amendment terms are introduced", () => {
+    const result = auditCouncilVotePaths(validPaths, {
+      votingRule: "Simple majority",
+      fixedProposal: true,
+    });
+    expect(result.valid).toBe(true);
+    expect(result.issues).toEqual([]);
+  });
+
+  it("flags empty possible paths content", () => {
+    const result = auditCouncilVotePaths({
+      possiblePaths: "",
+      followUpHooks: "Hooks",
+    });
+    expect(result.valid).toBe(false);
+    expect(result.issues).toContain("Possible paths content is empty.");
+  });
+
+  it("flags amendment and rider terms when the proposal is fixed", () => {
+    const amendedPaths = {
+      ...validPaths,
+      possiblePaths: `${validPaths.possiblePaths}\nOffer a sunset clause amendment to exempt timber taxes.`,
+    };
+    const result = auditCouncilVotePaths(amendedPaths, {
+      fixedProposal: true,
+    });
+    expect(result.valid).toBe(false);
+    expect(result.issues[0]).toMatch(
+      /Paths introduce potential amendment or exemption term/,
+    );
+  });
+
+  it("flags locked-in claims under a secret ballot procedure", () => {
+    const secretPaths = {
+      ...validPaths,
+      possiblePaths: `${validPaths.possiblePaths}\nWith Councillor A's vote locked in, the outcome is guaranteed.`,
+    };
+    const result = auditCouncilVotePaths(secretPaths, {
+      votingRule: "Secret ballot by sealed token",
+    });
+    expect(result.valid).toBe(false);
+    expect(result.issues).toContain(
+      'Paths treat projected votes as "locked in" under a secret ballot procedure.',
+    );
+  });
+
+  it("flags paths missing the expected coalition tiers", () => {
+    const unstructuredPaths = {
+      possiblePaths: "### Some Random Notes\nJust persuade everyone.",
+      followUpHooks: "Hooks",
+    };
+    const result = auditCouncilVotePaths(unstructuredPaths);
+    expect(result.valid).toBe(false);
+    expect(result.issues).toContain(
+      "Paths do not delineate the three expected distinct coalition tiers.",
     );
   });
 });
