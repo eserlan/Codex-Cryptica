@@ -183,6 +183,11 @@ export const shouldIShareWorldbuildingNotesWithMyPlayers: AnswerConfigInput = {
         reason:
           "The campaign memory hub covers techniques for helping players retain what happened in play. This answer covers making setting lore available up front as a primer or wiki, with a spoiler boundary between public, discoverable, and GM-only information.",
       },
+      {
+        with: "answer-immersive-handouts-online-rpg",
+        reason:
+          "That answer covers how to present and deliver a prop during a remote session, including private reveals and a lasting party record. This answer covers which setting information belongs in a player-facing reference and what should remain GM-only.",
+      },
     ],
   },
   seo: {
