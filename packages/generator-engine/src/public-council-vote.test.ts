@@ -721,6 +721,21 @@ Tally: Support 3, Oppose 0, Abstain 0, Undecided 0.`,
     );
   });
 
+  it("rejects a changed vote whose reason mentions an established term but explicitly rejects it", () => {
+    const rejectedConditionChange = validPaths.possiblePaths.replace(
+      "**Councillor A** — Support — Reason: accepts the trade protecting river tolls.",
+      "**Councillor A** — Support — Reason: The trade protecting river tolls was rejected, but unrelated pressure secured their Support vote.",
+    );
+    const result = auditCouncilVotePaths(
+      { ...validPaths, possiblePaths: rejectedConditionChange },
+      { foundationLore },
+    );
+    expect(result.valid).toBe(false);
+    expect(result.issues).toContain(
+      "smallest coalition changes Councillor A's vote without citing their established persuasion condition or leverage.",
+    );
+  });
+
   it("requires a dependent councillor's reaction when a dependency target changes vote", () => {
     const changedTarget = validPaths.possiblePaths.replace(
       "**Councillor B** — Support — Reason: keeps the original position.",

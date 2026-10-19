@@ -566,6 +566,78 @@ function auditUnknownBallotMembers(
   }
 }
 
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function hasUnrelatedOrSubstituteClaim(reason: string): boolean {
+  return /\b(?:unrelated\s+(?:pressure|evidence|favour|favor|bribe|demand|offer|leverage|condition)|substitute\s+(?:condition|evidence|offer|deal|measure))\b/i.test(
+    reason,
+  );
+}
+
+function hasGeneralRejection(reason: string): boolean {
+  return /\b(?:(?:was|were|is|are)\s+(?:rejected|refused|denied|dismissed|abandoned)|(?:rejects?|rejected|rejecting|refuses?|refused|refusing|denies?|denied|denying|dismissed|abandoned)\s+(?:the|their|all|any)?)\b/i.test(
+    reason,
+  );
+}
+
+function hasTermRejection(reason: string, terms: Set<string>): boolean {
+  for (const term of terms) {
+    const escaped = escapeRegExp(term);
+    const pattern = new RegExp(
+      `\\b(?:(?:rejected|refused|denied|dismissed)\\s+(?:the|their|all|any)?\\s*(?:[a-z'-]+\\s+)*${escaped}|${escaped}\\s+(?:was|were|is|are)\\s+(?:rejected|refused|denied|dismissed))\\b`,
+      "i",
+    );
+    if (pattern.test(reason)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function isConditionRejected(reason: string, terms: Set<string>): boolean {
+  return (
+    hasUnrelatedOrSubstituteClaim(reason) ||
+    hasGeneralRejection(reason) ||
+    hasTermRejection(reason, terms)
+  );
+}
+
+function auditBallotRowChange(
+  tier: CouncilVotePathTier,
+  member: CouncilVoteMemberPosition,
+  row: CouncilVoteBallotRow,
+  issues: string[],
+): void {
+  if (row.position !== member.position) {
+    const reasonTerms = new Set(
+      row.reason.toLocaleLowerCase().match(/[a-z][a-z'-]{3,}/g) ?? [],
+    );
+    const sharesEstablishedTerm = [...member.persuasionTerms].some((term) =>
+      reasonTerms.has(term),
+    );
+    const rejected = isConditionRejected(row.reason, member.persuasionTerms);
+
+    if (!sharesEstablishedTerm || rejected) {
+      issues.push(
+        `${tier} coalition changes ${row.name}'s vote without citing their established persuasion condition or leverage.`,
+      );
+    }
+  }
+
+  if (
+    /\b(?:carry\s+over|carries\s+over|carrying\s+over|unchanged|remains?\s+(?:as|at)|keeps?\s+(?:their\s+)?(?:initial|original)\s+(?:vote|position))\b/i.test(
+      row.reason,
+    ) &&
+    row.position !== member.position
+  ) {
+    issues.push(
+      `${tier} coalition changes ${row.name}'s vote while describing it as carried over unchanged.`,
+    );
+  }
+}
+
 function auditChangedBallots(
   tier: CouncilVotePathTier,
   members: CouncilVoteMemberPosition[],
@@ -577,29 +649,8 @@ function auditChangedBallots(
   );
   for (const row of rows) {
     const member = membersByName.get(row.name.toLocaleLowerCase());
-    if (!member) continue;
-    if (row.position !== member.position) {
-      const reasonTerms = new Set(
-        row.reason.toLocaleLowerCase().match(/[a-z][a-z'-]{3,}/g) ?? [],
-      );
-      const citesEstablishedCondition = [...member.persuasionTerms].some(
-        (term) => reasonTerms.has(term),
-      );
-      if (!citesEstablishedCondition) {
-        issues.push(
-          `${tier} coalition changes ${row.name}'s vote without citing their established persuasion condition or leverage.`,
-        );
-      }
-    }
-    if (
-      /\b(?:carry\s+over|carries\s+over|carrying\s+over|unchanged|remains?\s+(?:as|at)|keeps?\s+(?:their\s+)?(?:initial|original)\s+(?:vote|position))\b/i.test(
-        row.reason,
-      ) &&
-      row.position !== member.position
-    ) {
-      issues.push(
-        `${tier} coalition changes ${row.name}'s vote while describing it as carried over unchanged.`,
-      );
+    if (member) {
+      auditBallotRowChange(tier, member, row, issues);
     }
   }
 }
