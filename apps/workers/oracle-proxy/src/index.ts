@@ -89,6 +89,29 @@ async function handleCachedAggregateRead(
   }
 }
 
+async function handleCopyrightReportRoute(
+  request: Request,
+  env: Env,
+  pathname: string,
+): Promise<Response | undefined> {
+  if (pathname !== "/api/reports/copyright") return undefined;
+
+  const origin = request.headers.get("Origin") || "";
+  if (origin && !isOriginAllowed(origin, env)) {
+    return new Response("Forbidden", {
+      status: 403,
+      headers: getCorsHeaders(request.headers, env),
+    });
+  }
+  if (request.method === "POST") {
+    return handleCopyrightReport(request, env);
+  }
+  return new Response("Method not allowed", {
+    status: 405,
+    headers: getCorsHeaders(request.headers, env),
+  });
+}
+
 export default {
   async fetch(
     request: Request,
@@ -234,22 +257,12 @@ export default {
       return handleFeedbackReport(request, env);
     }
 
-    if (pathname === "/api/reports/copyright") {
-      const origin = request.headers.get("Origin") || "";
-      if (origin && !isOriginAllowed(origin, env)) {
-        return new Response("Forbidden", {
-          status: 403,
-          headers: getCorsHeaders(request.headers, env),
-        });
-      }
-      if (request.method === "POST") {
-        return handleCopyrightReport(request, env);
-      }
-      return new Response("Method not allowed", {
-        status: 405,
-        headers: getCorsHeaders(request.headers, env),
-      });
-    }
+    const copyrightReportResponse = await handleCopyrightReportRoute(
+      request,
+      env,
+      pathname,
+    );
+    if (copyrightReportResponse) return copyrightReportResponse;
 
     const publishedResponse = await handlePublishedRoutes(
       request,

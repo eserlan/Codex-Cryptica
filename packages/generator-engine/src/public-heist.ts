@@ -805,7 +805,7 @@ const CANONICAL_TARGETS = [
   ...heistConfig.targetTypes,
 ];
 
-function canonicalOptionLabels(resolved: ResolvedHeist): string[] {
+export function canonicalOptionLabels(resolved: ResolvedHeist): string[] {
   const labels: string[] = [];
   if (heistConfig.heistTypes.includes(resolved.heistType)) {
     labels.push(resolved.heistType);

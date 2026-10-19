@@ -16,10 +16,10 @@ import {
   type FeedbackFailureCode,
 } from "../../services/feedback/FeedbackReportService";
 
-export type FeedbackStatus = "editing" | "sending" | "sent" | "failed";
+type FeedbackStatus = "editing" | "sending" | "sent" | "failed";
 
 /** What the user has written. Held in memory only, never persisted. */
-export interface FeedbackDraft {
+interface FeedbackDraft {
   submissionId: string;
   kind: FeedbackKind;
   description: string;

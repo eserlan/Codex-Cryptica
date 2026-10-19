@@ -22,8 +22,8 @@ import { releaseQuota, reserveQuota } from "./r2-quota";
 import { readJson } from "./template-directory-shared";
 
 /** Reports one source may send per hour and per day (FR-016). */
-export const HOURLY_REPORT_LIMIT = 5;
-export const DAILY_REPORT_LIMIT = 20;
+const HOURLY_REPORT_LIMIT = 5;
+const DAILY_REPORT_LIMIT = 20;
 /** A pending submission older than this is treated as abandoned (R5). */
 const PENDING_STALE_MS = 2 * 60 * 1000;
 const GITHUB_REPO = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
@@ -48,7 +48,7 @@ export interface FeedbackDeps {
   timeoutMs: number;
 }
 
-export const defaultFeedbackDeps: FeedbackDeps = {
+const defaultFeedbackDeps: FeedbackDeps = {
   fetch: (...args) => fetch(...args),
   now: () => Date.now(),
   random: (length) => crypto.getRandomValues(new Uint8Array(length)),
