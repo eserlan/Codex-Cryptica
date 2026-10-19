@@ -664,9 +664,9 @@
                               handleCellChange(
                                 rIdx,
                                 col.id,
-                                (e.target as HTMLInputElement).value.trim() ||
-                                  col.formula ||
-                                  "1d6",
+                                // Cleared: store nothing, so the row follows
+                                // the column default rather than a copy of it.
+                                (e.target as HTMLInputElement).value.trim(),
                               )}
                           />
                         {/if}

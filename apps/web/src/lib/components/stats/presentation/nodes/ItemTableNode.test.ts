@@ -353,6 +353,8 @@ describe("ItemTableNode", () => {
   });
 
   it("falls back to the column formula when a row formula is cleared", async () => {
+    rollStatSheetDiceField.mockClear();
+    rollStatSheetDiceField.mockResolvedValue({ text: "= 4", isError: false });
     const field: StatSheetField = {
       ...itemTableField,
       columns: itemTableField.columns!.map((c) =>
@@ -360,18 +362,32 @@ describe("ItemTableNode", () => {
       ),
     };
     const context = makeContext([field]);
-    render(ItemTableNode, { props: { field, context } });
+    const { unmount } = render(ItemTableNode, { props: { field, context } });
 
     await fireEvent.change(
       screen.getByRole("textbox", { name: "Damage formula for War Hammer" }),
       { target: { value: "  " } },
     );
 
+    // Nothing is pinned into the row, so a later column change still applies.
     expect(context.onUpdateField).toHaveBeenCalledWith(
       "weapons_table",
       expect.objectContaining({
-        rows: [expect.objectContaining({ damage: "1d6" })],
+        rows: [expect.objectContaining({ damage: "" })],
       }),
+    );
+
+    unmount();
+    const cleared = {
+      ...field,
+      rows: [{ ...field.rows![0], damage: "" }],
+    };
+    render(ItemTableNode, { props: { field: cleared, context } });
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Roll 1d6 for War Hammer" }),
+    );
+    expect(rollStatSheetDiceField).toHaveBeenCalledWith(
+      expect.objectContaining({ formula: "1d6" }),
     );
   });
 

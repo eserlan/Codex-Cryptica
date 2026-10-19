@@ -430,6 +430,17 @@ describe("VaultLifecycleManager", () => {
       expect(deps.clearStorageCache).toHaveBeenCalled();
       expect(result).toBe("v-folder");
     });
+
+    it("starts the registry without an extra Default Vault", async () => {
+      deps.vaultRegistry.isInitialized = false;
+      deps.vaultRegistry.createVault.mockResolvedValue("v-folder");
+
+      await manager.importFromFolder({ name: "my-dir" } as any);
+
+      expect(deps.vaultRegistry.init).toHaveBeenCalledWith({
+        createDefault: false,
+      });
+    });
   });
 
   describe("loadDemoData", () => {
@@ -591,6 +602,10 @@ describe("VaultLifecycleManager", () => {
       await manager.createVault("New Vault");
 
       expect(deps.vaultRegistry.init).toHaveBeenCalledTimes(1);
+      // The user is creating their own vault; no extra "Default Vault".
+      expect(deps.vaultRegistry.init).toHaveBeenCalledWith({
+        createDefault: false,
+      });
       expect(deps.vaultRegistry.init.mock.invocationCallOrder[0]).toBeLessThan(
         deps.vaultRegistry.createVault.mock.invocationCallOrder[0],
       );

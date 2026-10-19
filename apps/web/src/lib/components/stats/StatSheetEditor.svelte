@@ -120,18 +120,16 @@
     persist(fields.map((f) => (f.id === id ? { ...f, ...updates } : f)));
   }
 
-  // Once a lower maximum is committed, a current value above it comes down
-  // too, so the sheet never shows "100 / 12". Not per keystroke: typing "12"
-  // passes through "1".
-  function clampCounterToMax(id: string) {
+  // Once a new minimum or maximum is committed, a current value outside it
+  // moves inside, so the sheet never shows "100 / 12". Not per keystroke:
+  // typing "12" passes through "1".
+  function clampCounterToBounds(id: string) {
     const field = fields.find((f) => f.id === id);
-    if (
-      field?.max !== undefined &&
-      typeof field.value === "number" &&
-      field.value > field.max
-    ) {
-      updateField(id, { value: field.max });
-    }
+    if (!field || typeof field.value !== "number") return;
+    let value = field.value;
+    if (field.max !== undefined) value = Math.min(field.max, value);
+    if (field.min !== undefined) value = Math.max(field.min, value);
+    if (value !== field.value) updateField(id, { value });
   }
 
   function changeFieldType(field: StatSheetField, newType: StatSheetFieldType) {
@@ -463,6 +461,7 @@
                       ? undefined
                       : Number((e.target as HTMLInputElement).value),
                 })}
+              onchange={() => clampCounterToBounds(field.id)}
             />
           </label>
           <label class="flex items-center gap-1">
@@ -478,7 +477,7 @@
                       ? undefined
                       : Number((e.target as HTMLInputElement).value),
                 })}
-              onchange={() => clampCounterToMax(field.id)}
+              onchange={() => clampCounterToBounds(field.id)}
             />
           </label>
           <label class="flex items-center gap-1">

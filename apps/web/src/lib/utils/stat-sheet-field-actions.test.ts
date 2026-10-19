@@ -272,6 +272,12 @@ describe("applyTypedFormula", () => {
     );
   });
 
+  it("reads a total typed with spaces, as the dice parser accepts it", () => {
+    const typed = applyTypedFormula(sheet("1d20 + 5"), "str_save");
+    expect(formulaOf(typed)).toBe("1d20+2+3");
+    expect(formulaOf(applyDerivedModifiers(typed))).toBe("1d20+2+3");
+  });
+
   it("leaves a formula that already ends in the derived modifier alone", () => {
     expect(formulaOf(applyTypedFormula(sheet("1d20+3"), "str_save"))).toBe(
       "1d20+3",

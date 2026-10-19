@@ -677,6 +677,38 @@ describe("StatSheetEditor field keys (#3180)", () => {
     );
   });
 
+  it("raises a counter's value to a committed higher minimum", async () => {
+    render(StatSheetEditor, {
+      entity: buildEntity({
+        statSheet: {
+          fields: [
+            {
+              id: "hp",
+              label: "HP",
+              type: "counter",
+              min: 0,
+              max: 10,
+              value: 2,
+            },
+          ],
+        },
+      }),
+    });
+
+    const min = screen.getByLabelText("Min") as HTMLInputElement;
+    await fireEvent.input(min, { target: { value: "5" } });
+    await fireEvent.change(min);
+
+    expect(updateEntity).toHaveBeenLastCalledWith(
+      "goblin-1",
+      expect.objectContaining({
+        statSheet: expect.objectContaining({
+          fields: [expect.objectContaining({ min: 5, value: 5 })],
+        }),
+      }),
+    );
+  });
+
   it("leaves a counter value at or below a raised maximum alone", async () => {
     render(StatSheetEditor, {
       entity: buildEntity({

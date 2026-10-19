@@ -201,11 +201,13 @@ function withTrailingModifier(formula: string, mod: number): string {
  * A typed formula ends in the total the user wants; insert the part that is
  * not the derived modifier as its own term in front of it.
  */
-function keepTypedBonus(formula: string, mod: number): string {
+function keepTypedBonus(typed: string, mod: number): string {
+  // The dice parser accepts "1d20 + 5"; compare and rebuild without spaces.
+  const formula = typed.replace(/\s+/g, "");
   const { base, tail } = splitTrailing(formula);
-  if (!/^[+-]\d+$/.test(tail)) return formula;
+  if (!/^[+-]\d+$/.test(tail)) return typed;
   const extra = Number(tail) - mod;
-  if (extra === 0) return formula;
+  if (extra === 0) return typed;
   // Fold into an existing flat term ("1d20+2" + 1 → "1d20+3") when there is one.
   const inner = splitTrailing(base);
   if (/^[+-]\d+$/.test(inner.tail)) {
