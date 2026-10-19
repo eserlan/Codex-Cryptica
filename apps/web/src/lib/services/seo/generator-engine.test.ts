@@ -1103,6 +1103,33 @@ describe("DefaultGeneratorEngine", () => {
   });
 
   describe("generateCouncilVote", () => {
+    // A foundation roster and paths that pass `auditCouncilVotePaths`, so the
+    // staged run keeps the AI draft instead of falling back to local tables.
+    const councilLore = `### Voting Procedure
+Simple majority, 3 seats.
+
+### Council Members
+- **Councillor A** (Merchant) — Initial stance: Oppose. Would genuinely persuade them: a trade protecting the guild's river tolls.
+- **Councillor B** (Clerk) — Initial stance: Support. Would genuinely persuade them: verified evidence from the sealed archive.
+- **Councillor C** (Captain) — Initial stance: Oppose. Would genuinely persuade them: evidence that the settlement protects the harbour.`;
+    const councilPaths = (note = "") => `### Possible Paths${note}
+#### 1. Smallest Viable Coalition
+- **Councillor A** — Support — Reason: accepts the trade protecting river tolls.
+- **Councillor B** — Support — Reason: keeps the original position.
+- **Councillor C** — Oppose — Reason: remains opposed.
+Tally: Support 2, Oppose 1, Abstain 0, Undecided 0.
+
+#### 2. Broader Alternative
+- **Councillor A** — Oppose — Reason: remains opposed.
+- **Councillor B** — Support — Reason: keeps the original position.
+- **Councillor C** — Support — Reason: harbour evidence persuades them.
+Tally: Support 2, Oppose 1, Abstain 0, Undecided 0.
+
+#### 3. Costly Best Solution
+- **Councillor A** — Support — Reason: accepts the durable trade settlement protecting river tolls.
+- **Councillor B** — Support — Reason: keeps the original position.
+- **Councillor C** — Support — Reason: accepts the harbour-protecting settlement supported by evidence.
+Tally: Support 3, Oppose 0, Abstain 0, Undecided 0.`;
     it("should generate council vote details locally when useAI is false", async () => {
       const res = await engine.generateCouncilVote({
         councilSize: "3",
@@ -1119,22 +1146,21 @@ describe("DefaultGeneratorEngine", () => {
       const foundationJson = JSON.stringify({
         title: "The Salt Road Levy",
         content: "### The Proposal\nfoundation content (unrepaired)",
-        lore: "### Voting Procedure\nSimple majority.",
+        lore: councilLore,
         labels: ["council-vote", "political-intrigue"],
       });
       const repairedJson = JSON.stringify({
         title: "The Salt Road Levy",
         content: "### The Proposal\nfoundation content",
-        lore: "### Voting Procedure\nSimple majority.",
+        lore: councilLore,
         labels: ["council-vote", "political-intrigue"],
       });
       const pathsJson = JSON.stringify({
-        possiblePaths:
-          "### Possible Paths\nsmallest coalition first (unrepaired)",
+        possiblePaths: councilPaths(" (unrepaired)"),
         followUpHooks: "### Follow-Up Hooks\nthey remember (unrepaired)",
       });
       const pathsRepairedJson = JSON.stringify({
-        possiblePaths: "### Possible Paths\nsmallest coalition first",
+        possiblePaths: councilPaths(),
         followUpHooks: "### Follow-Up Hooks\nthey remember",
       });
 
@@ -1178,7 +1204,7 @@ describe("DefaultGeneratorEngine", () => {
       expect(res.title).toBe("The Salt Road Levy");
       expect(res.content).toBe("### The Proposal\nfoundation content");
       expect(res.lore).toBe(
-        "### Voting Procedure\nSimple majority.\n\n### Possible Paths\nsmallest coalition first\n\n### Follow-Up Hooks\nthey remember",
+        `${councilLore}\n\n${councilPaths()}\n\n### Follow-Up Hooks\nthey remember`,
       );
       expect(res.labels).toContain("council-vote");
       expect(res.aiFallback).toBeUndefined();
@@ -1200,11 +1226,11 @@ describe("DefaultGeneratorEngine", () => {
       const foundationJson = JSON.stringify({
         title: "The Salt Road Levy",
         content: "### The Proposal\nfoundation content",
-        lore: "### Voting Procedure\nSimple majority.",
+        lore: councilLore,
         labels: ["council-vote", "political-intrigue"],
       });
       const pathsJson = JSON.stringify({
-        possiblePaths: "### Possible Paths\nsmallest coalition first",
+        possiblePaths: councilPaths(),
         followUpHooks: "### Follow-Up Hooks\nthey remember",
       });
       // Valid JSON, but empty of content — parseCouncilVoteFoundation and
@@ -1237,7 +1263,7 @@ describe("DefaultGeneratorEngine", () => {
       expect(res.title).toBe("The Salt Road Levy");
       expect(res.content).toBe("### The Proposal\nfoundation content");
       expect(res.lore).toBe(
-        "### Voting Procedure\nSimple majority.\n\n### Possible Paths\nsmallest coalition first\n\n### Follow-Up Hooks\nthey remember",
+        `${councilLore}\n\n${councilPaths()}\n\n### Follow-Up Hooks\nthey remember`,
       );
     });
 
