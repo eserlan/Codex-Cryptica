@@ -430,6 +430,55 @@ interface CouncilVoteBallotRow {
 interface CouncilVoteMemberPosition {
   name: string;
   position: CouncilVotePosition;
+  persuasionTerms: Set<string>;
+}
+
+const PERSUASION_STOP_WORDS = new Set([
+  "about",
+  "after",
+  "against",
+  "also",
+  "because",
+  "before",
+  "being",
+  "could",
+  "does",
+  "from",
+  "have",
+  "into",
+  "more",
+  "only",
+  "over",
+  "that",
+  "their",
+  "them",
+  "there",
+  "these",
+  "they",
+  "this",
+  "those",
+  "through",
+  "under",
+  "until",
+  "when",
+  "which",
+  "while",
+  "with",
+  "would",
+]);
+
+function readPersuasionTerms(memberLine: string): Set<string> {
+  const relevantDetails = [
+    ...memberLine.matchAll(
+      /(?:genuinely\s+)?persuad(?:e|es|ed|ing)|leverage|secret/gi,
+    ),
+  ].map((match) => memberLine.slice(match.index ?? 0));
+  const terms =
+    relevantDetails
+      .join(" ")
+      .toLocaleLowerCase()
+      .match(/[a-z][a-z'-]{3,}/g) ?? [];
+  return new Set(terms.filter((term) => !PERSUASION_STOP_WORDS.has(term)));
 }
 
 function readCouncilVoteMemberPositions(foundationLore: string): {
@@ -447,6 +496,7 @@ function readCouncilVoteMemberPositions(foundationLore: string): {
   ].map((match) => ({
     name: match[1].trim(),
     position: normalizedPosition(match[2] as CouncilVoteInitialPosition),
+    persuasionTerms: readPersuasionTerms(match[0]),
   }));
   return { section, members };
 }
@@ -472,12 +522,9 @@ function auditBallotRoster(
   const byName = new Map(
     rows.map((row) => [row.name.toLocaleLowerCase(), row]),
   );
-  const startingPositions = new Map(
-    members.map((member) => [member.name.toLowerCase(), member.position]),
-  );
   auditMissingBallotMembers(tier, members, byName, issues);
   auditUnknownBallotMembers(tier, members, rows, issues);
-  auditMisdescribedCarryovers(tier, startingPositions, rows, issues);
+  auditChangedBallots(tier, members, rows, issues);
   if (rows.length !== members.length || byName.size !== members.length) {
     issues.push(
       `${tier} coalition ballot must list each councillor exactly once.`,
@@ -519,20 +566,36 @@ function auditUnknownBallotMembers(
   }
 }
 
-function auditMisdescribedCarryovers(
+function auditChangedBallots(
   tier: CouncilVotePathTier,
-  startingPositions: Map<string, CouncilVotePosition>,
+  members: CouncilVoteMemberPosition[],
   rows: CouncilVoteBallotRow[],
   issues: string[],
 ): void {
+  const membersByName = new Map(
+    members.map((member) => [member.name.toLocaleLowerCase(), member]),
+  );
   for (const row of rows) {
-    const initialPosition = startingPositions.get(row.name.toLowerCase());
+    const member = membersByName.get(row.name.toLocaleLowerCase());
+    if (!member) continue;
+    if (row.position !== member.position) {
+      const reasonTerms = new Set(
+        row.reason.toLocaleLowerCase().match(/[a-z][a-z'-]{3,}/g) ?? [],
+      );
+      const citesEstablishedCondition = [...member.persuasionTerms].some(
+        (term) => reasonTerms.has(term),
+      );
+      if (!citesEstablishedCondition) {
+        issues.push(
+          `${tier} coalition changes ${row.name}'s vote without citing their established persuasion condition or leverage.`,
+        );
+      }
+    }
     if (
-      initialPosition &&
       /\b(?:carry\s+over|carries\s+over|carrying\s+over|unchanged|remains?\s+(?:as|at)|keeps?\s+(?:their\s+)?(?:initial|original)\s+(?:vote|position))\b/i.test(
         row.reason,
       ) &&
-      row.position !== initialPosition
+      row.position !== member.position
     ) {
       issues.push(
         `${tier} coalition changes ${row.name}'s vote while describing it as carried over unchanged.`,

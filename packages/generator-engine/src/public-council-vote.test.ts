@@ -599,13 +599,13 @@ describe("auditCouncilVotePaths", () => {
 Simple majority, 3 seats.
 
 ### Council Members
-- **Councillor A** (Merchant) — Initial stance: Oppose. Depends on Councillor B.
-- **Councillor B** (Clerk) — Initial stance: Support.
-- **Councillor C** (Captain) — Initial stance: Oppose.`;
+- **Councillor A** (Merchant) — Initial stance: Oppose. Would genuinely persuade them: a trade protecting the guild's river tolls. Secret leverage: the guild's river toll ledger. Depends on Councillor B.
+- **Councillor B** (Clerk) — Initial stance: Support. Would genuinely persuade them: verified evidence from the sealed archive.
+- **Councillor C** (Captain) — Initial stance: Oppose. Would genuinely persuade them: evidence that the settlement protects the harbour.`;
   const validPaths = {
     possiblePaths: `### Possible Paths
 #### 1. Smallest Viable Coalition (Transactional)
-- **Councillor A** — Support — Reason: accepts the trade.
+- **Councillor A** — Support — Reason: accepts the trade protecting river tolls.
 - **Councillor B** — Support — Reason: keeps the original position.
 - **Councillor C** — Oppose — Reason: remains opposed.
 Tally: Support 2, Oppose 1, Abstain 0, Undecided 0.
@@ -613,13 +613,13 @@ Tally: Support 2, Oppose 1, Abstain 0, Undecided 0.
 #### 2. Broader Alternative (Procedural & Leverage)
 - **Councillor A** — Oppose — Reason: remains opposed.
 - **Councillor B** — Support — Reason: keeps the original position.
-- **Councillor C** — Support — Reason: the evidence persuades them.
+- **Councillor C** — Support — Reason: harbour evidence persuades them.
 Tally: Support 2, Oppose 1, Abstain 0, Undecided 0.
 
 #### 3. Costly Best Solution (Structural Resolution)
-- **Councillor A** — Support — Reason: accepts the durable settlement.
+- **Councillor A** — Support — Reason: accepts the durable trade settlement protecting river tolls.
 - **Councillor B** — Support — Reason: keeps the original position.
-- **Councillor C** — Support — Reason: accepts the structural resolution.
+- **Councillor C** — Support — Reason: accepts the harbour-protecting structural resolution supported by evidence.
 Tally: Support 3, Oppose 0, Abstain 0, Undecided 0.`,
     followUpHooks: "### Follow-Up Hooks\nThe guild remembers the concession.",
   };
@@ -706,6 +706,21 @@ Tally: Support 3, Oppose 0, Abstain 0, Undecided 0.`,
     );
   });
 
+  it("rejects a changed vote with a generic persuasion reason", () => {
+    const unsupportedChange = validPaths.possiblePaths.replace(
+      "**Councillor A** — Support — Reason: accepts the trade protecting river tolls.",
+      "**Councillor A** — Support — Reason: was persuaded.",
+    );
+    const result = auditCouncilVotePaths(
+      { ...validPaths, possiblePaths: unsupportedChange },
+      { foundationLore },
+    );
+    expect(result.valid).toBe(false);
+    expect(result.issues).toContain(
+      "smallest coalition changes Councillor A's vote without citing their established persuasion condition or leverage.",
+    );
+  });
+
   it("requires a dependent councillor's reaction when a dependency target changes vote", () => {
     const changedTarget = validPaths.possiblePaths.replace(
       "**Councillor B** — Support — Reason: keeps the original position.",
@@ -724,16 +739,16 @@ Tally: Support 3, Oppose 0, Abstain 0, Undecided 0.`,
   it("accepts a recorded cascade response and rejects carried-over votes that changed", () => {
     const resolvedCascade = validPaths.possiblePaths
       .replace(
-        "**Councillor A** — Support — Reason: accepts the trade.",
-        "**Councillor A** — Support — Reason: Cascade response follows the new terms.",
+        "**Councillor A** — Support — Reason: accepts the trade protecting river tolls.",
+        "**Councillor A** — Support — Reason: Cascade response follows the new terms protecting river tolls.",
       )
       .replace(
         "**Councillor B** — Support — Reason: keeps the original position.",
-        "**Councillor B** — Oppose — Reason: accepts a rival offer.",
+        "**Councillor B** — Oppose — Reason: accepts a rival offer using verified archive evidence.",
       )
       .replace(
         "**Councillor C** — Oppose — Reason: remains opposed.",
-        "**Councillor C** — Support — Reason: accepts the evidence.",
+        "**Councillor C** — Support — Reason: accepts harbour evidence.",
       );
     const validResult = auditCouncilVotePaths(
       {
@@ -747,7 +762,7 @@ Tally: Support 3, Oppose 0, Abstain 0, Undecided 0.`,
     );
 
     const carriedOverButChanged = validPaths.possiblePaths.replace(
-      "**Councillor A** — Support — Reason: accepts the trade.",
+      "**Councillor A** — Support — Reason: accepts the trade protecting river tolls.",
       "**Councillor A** — Support — Reason: carries over unchanged.",
     );
     const invalidResult = auditCouncilVotePaths(
@@ -890,7 +905,7 @@ describe("runCouncilVoteStaged", () => {
     JSON.stringify({
       title: "The Salt Road Levy",
       content: `### The Proposal\nContent${suffix}`,
-      lore: `### Voting Procedure\nSimple majority, 5 seats${suffix}.\n\n### Council Members\n${["A", "B", "C", "D", "E"].map((name, index) => `- **Councillor ${name}** (Member) — Initial stance: ${index < 3 ? "Support" : "Oppose"}.`).join("\n")}`,
+      lore: `### Voting Procedure\nSimple majority, 5 seats${suffix}.\n\n### Council Members\n${["A", "B", "C", "D", "E"].map((name, index) => `- **Councillor ${name}** (Member) — Initial stance: ${index < 3 ? "Support" : "Oppose"}. Would genuinely persuade them: verified settlement terms.`).join("\n")}`,
       labels: ["council-vote", "political-intrigue"],
     });
   const pathsJson = (suffix = "") =>
@@ -903,7 +918,7 @@ Tally: Support 3, Oppose 2, Abstain 0, Undecided 0.
 ${["A", "B", "C", "D", "E"].map((name, index) => `- **Councillor ${name}** — ${index < 3 ? "Support" : "Oppose"} — Reason: ${index < 3 ? "persuaded" : "carries over"}.`).join("\n")}
 Tally: Support 3, Oppose 2, Abstain 0, Undecided 0.
 #### 3. Costly Best Solution
-${["A", "B", "C", "D", "E"].map((name) => `- **Councillor ${name}** — Support — Reason: accepts the settlement.`).join("\n")}
+${["A", "B", "C", "D", "E"].map((name) => `- **Councillor ${name}** — Support — Reason: accepts the verified settlement.`).join("\n")}
 Tally: Support 5, Oppose 0, Abstain 0, Undecided 0.${suffix}`,
       followUpHooks: `### Follow-Up Hooks\nHooks${suffix}`,
     });

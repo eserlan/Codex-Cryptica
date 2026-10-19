@@ -27,7 +27,7 @@ Simple majority, 7 seats${suffix}.
 ${councilNames
   .map(
     (name, index) =>
-      `- **Councillor ${name}** (Member) — Initial stance: ${index < 4 ? "Support" : "Oppose"}.`,
+      `- **Councillor ${name}** (Member) — Initial stance: ${index < 4 ? "Support" : "Oppose"}. Would genuinely persuade them: a verified lasting settlement.`,
   )
   .join("\n")}`;
 }
