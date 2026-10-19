@@ -796,7 +796,9 @@ async function checkConsistency(
       run.stats.aiCalls++;
       return deps.complete(run.system, message);
     },
-    { signal: deps.signal },
+    // Retry once, like the writing stages, so one transient failure does
+    // not skip the check.
+    { signal: deps.signal, attempts: 2 },
   );
   if (!reply) {
     run.stats.consistency = {

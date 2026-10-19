@@ -9,7 +9,10 @@
  * - it targets an existing text field: titles, names, `involves` and the
  *   list lengths stay locked, so nothing new is added;
  * - it may not introduce a proper noun the adventure has not already used,
- *   so the fix cannot invent lore;
+ *   so the fix cannot invent lore. This is a capitalisation heuristic: it
+ *   errs towards dropping a good fix (a common word capitalised mid-sentence
+ *   reads as a name), and it cannot see new lore written in lower case ("a
+ *   hidden tunnel"). The prompt forbids both; this check is the backstop;
  * - only a few revisions are kept, each of bounded length.
  *
  * Invalid revisions are dropped one by one, not the whole reply. The check is

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  adventureStatsLog,
   assembleAdventure,
   checkCast,
   checkConsequences,
@@ -721,12 +722,12 @@ describe("final consistency check", () => {
   it("keeps the adventure as written when the check is unreadable", async () => {
     const plain = await run();
     const { result, stats, progress } = await run(
-      fakeModel({ 4: ["not json"] }),
+      fakeModel({ 4: ["not json", "still not json"] }),
     );
     expect(result!.output.content).toBe(plain.result!.output.content);
     expect(stats).toMatchObject({
       outcome: "staged",
-      aiCalls: 4,
+      aiCalls: 5,
       consistency: { result: "unavailable" },
     });
     expect(progress.at(-1)!.at(-1)).toMatchObject({
@@ -734,6 +735,58 @@ describe("final consistency check", () => {
       status: "skipped",
       detail: "kept as written",
     });
+  });
+
+  it("retries the check once after an unreadable reply", async () => {
+    const { result, stats } = await run(
+      fakeModel({
+        4: [
+          "not json",
+          {
+            checks: failing("resolution"),
+            revisions: [
+              {
+                fixes: "resolution",
+                target: "outcomes[1]",
+                text: "Oren Pell keeps the toll by burning the Weir Mill's ledger before dawn.",
+              },
+            ],
+          },
+        ],
+      }),
+    );
+    expect(result!.output.lore).toContain("burning the Weir Mill's ledger");
+    expect(stats).toMatchObject({
+      aiCalls: 5,
+      consistency: { result: "revised", appliedRevisions: 1 },
+    });
+  });
+
+  it("logs the check as counts only", async () => {
+    const { stats } = await run(
+      fakeModel({
+        4: [
+          {
+            checks: failing("causality"),
+            revisions: [
+              {
+                fixes: "causality",
+                target: "throughline",
+                text: "Saint Ivo cursed the ford a century ago.",
+              },
+            ],
+          },
+        ],
+      }),
+    );
+    const log = adventureStatsLog(stats!);
+    expect(log.consistency).toEqual({
+      result: "unchanged",
+      flaggedChecks: 1,
+      appliedRevisions: 0,
+      droppedRevisions: 1,
+    });
+    expect(JSON.stringify(log)).not.toContain("Saint Ivo");
   });
 
   it("keeps the original when the fixes make the adventure check worse", async () => {

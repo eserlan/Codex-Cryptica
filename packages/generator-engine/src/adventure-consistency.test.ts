@@ -145,6 +145,52 @@ describe("readConsistencyReview", () => {
     expect(r.revisions).toHaveLength(1);
   });
 
+  // Counterexample table for the name heuristic (see patterns.md, Heuristic
+  // Prose Checks). Re-run the whole table after any change to it.
+  it.each([
+    [
+      "a new person mid-sentence",
+      "The guild hires Saint Ivo to break it.",
+      true,
+    ],
+    [
+      "a new place in a list",
+      "Thugs wait at the Weir Mill, Old Chapel and the ford.",
+      true,
+    ],
+    ["a new name after a colon", "One witness remains: Captain Morrow.", true],
+    ["a new name in quotes", 'The clerk mutters "Black Barge" and runs.', true],
+    ["known names only", "Oren Pell holds the Weir Mill until dawn.", false],
+    [
+      "a sentence-start common word",
+      "Meanwhile the guild waits. Nobody comes.",
+      false,
+    ],
+    [
+      "a known name after a sentence-start word",
+      "When Oren Pell falls, the guild breaks.",
+      false,
+    ],
+    ["a known name with 'the'", "The Weir Mill floods; the toll stays.", false],
+  ])("%s: flagged=%s", (_label, revised, flagged) => {
+    const r = review([
+      { fixes: "resolution", target: "outcomes[0]", text: revised },
+    ]);
+    expect(r.revisions.length === 0).toBe(flagged);
+    if (flagged) expect(r.dropped[0]).toContain("introduces new names");
+  });
+
+  it("cannot see new lore written in lower case (known limit)", () => {
+    const r = review([
+      {
+        fixes: "resolution",
+        target: "outcomes[0]",
+        text: "A hidden tunnel under the ford lets the guild escape.",
+      },
+    ]);
+    expect(r.revisions).toHaveLength(1);
+  });
+
   it("drops empty, unchanged, repeated and overlong revisions", () => {
     const r = review([
       { fixes: "timeline", target: "summary", text: "" },
