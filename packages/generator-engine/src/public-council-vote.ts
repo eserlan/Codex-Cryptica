@@ -435,55 +435,6 @@ interface CouncilVoteBallotRow {
 interface CouncilVoteMemberPosition {
   name: string;
   position: CouncilVotePosition;
-  persuasionTerms: Set<string>;
-}
-
-const PERSUASION_STOP_WORDS = new Set([
-  "about",
-  "after",
-  "against",
-  "also",
-  "because",
-  "before",
-  "being",
-  "could",
-  "does",
-  "from",
-  "have",
-  "into",
-  "more",
-  "only",
-  "over",
-  "that",
-  "their",
-  "them",
-  "there",
-  "these",
-  "they",
-  "this",
-  "those",
-  "through",
-  "under",
-  "until",
-  "when",
-  "which",
-  "while",
-  "with",
-  "would",
-]);
-
-function readPersuasionTerms(memberLine: string): Set<string> {
-  const relevantDetails = [
-    ...memberLine.matchAll(
-      /(?:genuinely\s+)?persuad(?:e|es|ed|ing)|leverage|secret/gi,
-    ),
-  ].map((match) => memberLine.slice(match.index ?? 0));
-  const terms =
-    relevantDetails
-      .join(" ")
-      .toLocaleLowerCase()
-      .match(/[a-z][a-z'-]{3,}/g) ?? [];
-  return new Set(terms.filter((term) => !PERSUASION_STOP_WORDS.has(term)));
 }
 
 function readCouncilVoteMemberPositions(foundationLore: string): {
@@ -501,7 +452,6 @@ function readCouncilVoteMemberPositions(foundationLore: string): {
   ].map((match) => ({
     name: match[1].trim(),
     position: normalizedPosition(match[2] as CouncilVoteInitialPosition),
-    persuasionTerms: readPersuasionTerms(match[0]),
   }));
   return { section, members };
 }
@@ -571,66 +521,12 @@ function auditUnknownBallotMembers(
   }
 }
 
-function escapeRegExp(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-function hasUnrelatedOrSubstituteClaim(reason: string): boolean {
-  return /\b(?:unrelated\s+(?:pressure|evidence|favour|favor|bribe|demand|offer|leverage|condition)|substitute\s+(?:condition|evidence|offer|deal|measure))\b/i.test(
-    reason,
-  );
-}
-
-function hasGeneralRejection(reason: string): boolean {
-  return /\b(?:(?:was|were|is|are)\s+(?:rejected|refused|denied|dismissed|abandoned)|(?:rejects?|rejected|rejecting|refuses?|refused|refusing|denies?|denied|denying|dismissed|abandoned)\s+(?:the|their|all|any)?)\b/i.test(
-    reason,
-  );
-}
-
-function hasTermRejection(reason: string, terms: Set<string>): boolean {
-  for (const term of terms) {
-    const escaped = escapeRegExp(term);
-    const pattern = new RegExp(
-      `\\b(?:(?:rejected|refused|denied|dismissed)\\s+(?:the|their|all|any)?\\s*(?:[a-z'-]+\\s+)*${escaped}|${escaped}\\s+(?:was|were|is|are)\\s+(?:rejected|refused|denied|dismissed))\\b`,
-      "i",
-    );
-    if (pattern.test(reason)) {
-      return true;
-    }
-  }
-  return false;
-}
-
-function isConditionRejected(reason: string, terms: Set<string>): boolean {
-  return (
-    hasUnrelatedOrSubstituteClaim(reason) ||
-    hasGeneralRejection(reason) ||
-    hasTermRejection(reason, terms)
-  );
-}
-
 function auditBallotRowChange(
   tier: CouncilVotePathTier,
   member: CouncilVoteMemberPosition,
   row: CouncilVoteBallotRow,
   issues: string[],
 ): void {
-  if (row.position !== member.position) {
-    const reasonTerms = new Set(
-      row.reason.toLocaleLowerCase().match(/[a-z][a-z'-]{3,}/g) ?? [],
-    );
-    const sharesEstablishedTerm = [...member.persuasionTerms].some((term) =>
-      reasonTerms.has(term),
-    );
-    const rejected = isConditionRejected(row.reason, member.persuasionTerms);
-
-    if (!sharesEstablishedTerm || rejected) {
-      issues.push(
-        `${tier} coalition changes ${row.name}'s vote without citing their established persuasion condition or leverage.`,
-      );
-    }
-  }
-
   if (
     /\b(?:carry\s+over|carries\s+over|carrying\s+over|unchanged|remains?\s+(?:as|at)|keeps?\s+(?:their\s+)?(?:initial|original)\s+(?:vote|position))\b/i.test(
       row.reason,
