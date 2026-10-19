@@ -129,6 +129,38 @@ function limited(ctx: Ctx, kind: FeedbackKind, retryAfter: string) {
   return failure(ctx, "rate_limited", { "Retry-After": retryAfter });
 }
 
+/** Reads no more than the configured body limit, including chunked requests. */
+async function readBoundedBody(request: Request): Promise<string | null> {
+  if (!request.body) return null;
+  const reader = request.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let totalBytes = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      totalBytes += value.byteLength;
+      if (totalBytes > FEEDBACK_MAX_BODY_BYTES) {
+        await reader.cancel();
+        return null;
+      }
+      chunks.push(value);
+    }
+  } catch {
+    return null;
+  } finally {
+    reader.releaseLock();
+  }
+  const bytes = new Uint8Array(totalBytes);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  const raw = new TextDecoder().decode(bytes);
+  return raw;
+}
+
 /** Reads the body. Returns null for any request that is not a valid, bounded v1 report. */
 async function readInput(
   request: Request,
@@ -143,9 +175,8 @@ async function readInput(
   const declared = Number(request.headers.get("Content-Length"));
   if (Number.isFinite(declared) && declared > FEEDBACK_MAX_BODY_BYTES)
     return null;
-  const raw = await request.text();
-  if (new TextEncoder().encode(raw).byteLength > FEEDBACK_MAX_BODY_BYTES)
-    return null;
+  const raw = await readBoundedBody(request);
+  if (raw === null) return null;
   let json: unknown;
   try {
     json = JSON.parse(raw);

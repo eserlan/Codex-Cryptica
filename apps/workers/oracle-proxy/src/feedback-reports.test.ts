@@ -483,6 +483,41 @@ describe("oversized declared body", () => {
   });
 });
 
+describe("oversized streamed body without a declared length", () => {
+  it("stops reading and cancels the stream as soon as the byte cap is crossed", async () => {
+    let pulls = 0;
+    let canceled = false;
+    const stream = new ReadableStream<Uint8Array>(
+      {
+        pull(controller) {
+          pulls += 1;
+          controller.enqueue(new Uint8Array(10_000));
+        },
+        cancel() {
+          canceled = true;
+        },
+      },
+      { highWaterMark: 0 },
+    );
+    const request = {
+      method: "POST",
+      headers: new Headers({
+        Origin: ORIGIN,
+        "Content-Type": "application/json",
+        "CF-Connecting-IP": IP,
+      }),
+      body: stream,
+    } as unknown as Request;
+    const gh = githubFake();
+    const { d } = deps(gh);
+
+    expect((await run(request, makeEnv(), d)).status).toBe(400);
+    expect(pulls).toBe(2);
+    expect(canceled).toBe(true);
+    expect(gh.calls).toHaveLength(0);
+  });
+});
+
 describe("marker write after delivery", () => {
   it("still returns the reference when the delivered marker cannot be written", async () => {
     const env = makeEnv();

@@ -31,9 +31,8 @@ jobs:
       - name: Find and delete reports older than 180 days
         run: |
           cutoff=$(date -u -d '180 days ago' +%Y-%m-%dT%H:%M:%SZ)
-          gh issue list --repo "$GITHUB_REPOSITORY" --state all --limit 1000 \
-            --json id,number,title,createdAt \
-            --jq ".[] | select(.createdAt < \"$cutoff\") | select(.title | test(\"^\\\\[(Problem|Idea|Other)\\\\] CC-\")) | \"\(.id) \(.number) \(.title)\"" \
+          gh api --paginate "repos/$GITHUB_REPOSITORY/issues?state=all&per_page=100" \
+            --jq ".[] | select(.pull_request == null) | select(.created_at < \"$cutoff\") | select(.title | test(\"^\\\\[(Problem|Idea|Other)\\\\] CC-\")) | \"\(.id) \(.number) \(.title)\"" \
           | while read -r id number title; do
               if [ "$DRY_RUN" = "true" ]; then
                 echo "Would delete #$number: $title"
