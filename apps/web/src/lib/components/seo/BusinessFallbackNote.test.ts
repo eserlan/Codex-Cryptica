@@ -27,4 +27,22 @@ describe("BusinessFallbackNote", () => {
     expect(note.textContent).toMatch(/adventure hooks/);
     expect(note.textContent?.match(/key staff/g)?.length).toBe(1);
   });
+
+  it("lists names that appear without an introduction", () => {
+    render(BusinessFallbackNote, {
+      props: { fallbackSections: [], warnings: ["Edran Pell", "Nima Quill"] },
+    });
+    const note = screen.getByRole("status");
+    expect(note.textContent).toMatch(/Edran Pell, Nima Quill/);
+    expect(note.textContent).toMatch(/without being introduced/);
+  });
+
+  it("shows both notices when a part fell back and names are unintroduced", () => {
+    render(BusinessFallbackNote, {
+      props: { fallbackSections: ["pressure"], warnings: ["Edran Pell"] },
+    });
+    const note = screen.getByRole("status");
+    expect(note.textContent).toMatch(/current pressure/);
+    expect(note.textContent).toMatch(/Edran Pell/);
+  });
 });

@@ -12,6 +12,8 @@ import {
 import { businessToOutput } from "./business-state";
 import {
   type BusinessDocument,
+  type BusinessRelationshipLabel,
+  BUSINESS_ALLOWED_LABELS,
   BUSINESS_DEPENDENCY_KINDS,
   BUSINESS_LEGITIMACY,
   BUSINESS_RELATIONSHIP_KINDS,
@@ -76,17 +78,43 @@ const STAGE_INSTRUCTIONS: Record<
   (opts: ResolvedBusinessOptions) => string
 > = {
   identity: () =>
-    `Return JSON: {"identity":{"name","type","description","reputationLine","distinctive"},"operations":{"provides","payers","whyHere","mainIncome"},"leadership":{"name","goal","style","trait","pressure"},"staff":[{"name","role","goal","trait"}],"clientele":{"typical","valuable","undesirable","excluded"}}. Staff count must fit the scale.`,
+    `Return JSON: {"identity":{"name","type","description","reputationLine","distinctive"},"operations":{"provides","payers","whyHere","mainIncome","model","size","position"},"leadership":{"name","goal","style","trait","pressure"},"staff":[{"name","role","goal","trait"}],"clientele":{"typical","valuable","undesirable","excluded"}}. Staff count must fit the scale. Make the operations specific to this kind of business: "provides" names the main goods or services in concrete terms, "model" says how it earns and whether it owns what it handles or only carries or arranges it for others (for example a trading house is a commission broker, a wholesaler or a carrier; a tavern earns from rooms and covers; a moneylender from loans and exposure), "size" gives premises, people, vehicles or stock in plain words, and "position" says how it is doing financially right now. Do not use generic filler.`,
   connections: () =>
-    `Return JSON: {"dependencies":[{"input","kind","ifItFails"}],"relationships":[{"name","kind","partyKind","reason"}],"reputation":{"perception","consequence"}}. kind for dependencies is one of materials, labour, transport, licence, magic, data, protection, finance. kind for relationships is one of competitor, supplier, patron, regulator, criminal, neighbour, faction. partyKind is organisation or individual.`,
+    `Return JSON: {"dependencies":[{"input","kind","ifItFails"}],"relationships":[{"name","kind","partyKind","label","reason"}],"reputation":{"perception","consequence"}}. kind for dependencies is one of materials, labour, transport, licence, magic, data, protection, finance. kind for relationships is one of competitor, supplier, patron, regulator, criminal, neighbour, faction. partyKind is organisation or individual. label must truly describe the party and be one of: competitor: "competes with"; supplier: "supplied by"; patron: "contracted by", "protected by" or "owes"; regulator: "regulated by"; criminal: "owes", "protected by", "supplied by" or "serves"; neighbour: "competes with", "serves", "supplied by" or "contracted by"; faction: "protected by", "contracted by", "regulated by", "owes" or "serves". Only describe a party as protecting the business if it really does.`,
   trouble: (opts) =>
-    `Return JSON: {"pressure","asset","secret","opportunity","complication","hooks":["2 or 3 hooks, each naming a person, party or dependency above"]${opts.playersOwn ? `,"management":{"strengths":[2 to 3 items],"liabilities":[2 to 3 items],"upgrades":[1 or more],"obligations":[1 or more, named only, never costed],"successAttracts":[1 or more]}` : ""}}. ${opts.legitimacy === "legitimate" ? "The secret must not reveal criminal activity." : "The secret may be criminal."}`,
+    `Use only the people and parties listed under Established facts; do not invent new named people. Return JSON: {"pressure","asset","secret","opportunity","complication","hooks":["2 or 3 hooks, each naming a person, party or dependency above"]${opts.playersOwn ? `,"management":{"strengths":[2 to 3 items],"liabilities":[2 to 3 items],"upgrades":[1 or more],"obligations":[1 or more, named only, never costed],"successAttracts":[1 or more]}` : ""}}. ${opts.legitimacy === "legitimate" ? "The secret must not reveal criminal activity." : "The secret may be criminal."}`,
 };
+
+/**
+ * The facts every later stage must keep: the business, its people and, once
+ * known, its parties. Built from the document as it stands, so a stage that fell
+ * back to the tables is described by what is actually in the document.
+ */
+export function establishedFacts(doc: BusinessDocument): string {
+  const staff = doc.staff.length
+    ? doc.staff.map((p) => `${p.name} (${p.role})`).join("; ")
+    : "none";
+  const lines = [
+    `Business: ${doc.identity.name}, a ${doc.identity.type}${doc.options.location ? ` in ${doc.options.location}` : ""}.`,
+    `${doc.leadership.role === "manager" ? "Manager" : "Owner"}: ${doc.leadership.name}. Goal: ${doc.leadership.goal}`,
+    `Staff: ${staff}.`,
+    `What it does: ${doc.operations.provides} ${doc.operations.model}`,
+  ];
+  return lines.join("\n");
+}
+
+/** The parties a business has, once the connections stage has set them. */
+function establishedParties(doc: BusinessDocument): string {
+  return doc.relationships.length
+    ? `Parties: ${doc.relationships.map((r) => `${r.name} (${r.kind}, ${r.label})`).join("; ")}.`
+    : "";
+}
 
 /** The user message for one stage of a staged business run. */
 export function businessStageMessage(
   stage: BusinessStage,
   opts: ResolvedBusinessOptions,
+  established?: BusinessDocument,
 ): string {
   const step =
     stage === "identity"
@@ -94,7 +122,10 @@ export function businessStageMessage(
       : stage === "connections"
         ? "step two"
         : "step three";
-  return `${header(opts)}\n\nThis is ${step} of three. ${STAGE_INSTRUCTIONS[stage](opts)}`;
+  const facts = established
+    ? `\n\nEstablished facts (fixed: do not rename, replace or contradict them):\n${establishedFacts(established)}${stage === "trouble" ? `\n${establishedParties(established)}` : ""}`
+    : "";
+  return `${header(opts)}${facts}\n\nThis is ${step} of three. ${STAGE_INSTRUCTIONS[stage](opts)}`;
 }
 
 function str(o: JsonObject | null | undefined, key: string): string {
@@ -161,7 +192,15 @@ export function parseBusinessIdentity(
     "reputationLine",
     "distinctive",
   ] as const;
-  const opFields = ["provides", "payers", "whyHere", "mainIncome"] as const;
+  const opFields = [
+    "provides",
+    "payers",
+    "whyHere",
+    "mainIncome",
+    "model",
+    "size",
+    "position",
+  ] as const;
   if (idFields.some((k) => !str(identity, k))) return null;
   if (opFields.some((k) => !str(operations, k))) return null;
   const leadership = person(
@@ -206,7 +245,49 @@ export interface BusinessConnectionsStage {
   reputation: { perception: string; consequence: string };
 }
 
-/** Reads step two. Returns null for an unknown kind or any missing field. */
+function readDependencies(raw: JsonObject[]): BusinessDependency[] | null {
+  const out: BusinessDependency[] = [];
+  for (const [i, d] of raw.entries()) {
+    const input = str(d, "input");
+    const kind = str(d, "kind") as BusinessDependencyKind;
+    const ifItFails = str(d, "ifItFails");
+    if (!input || !ifItFails || !BUSINESS_DEPENDENCY_KINDS.includes(kind)) {
+      return null;
+    }
+    out.push({ id: `dep-${i + 1}`, input, kind, ifItFails });
+  }
+  return out;
+}
+
+/** A stated label must truly describe the party; an unstated one takes the kind's default. */
+function readRelationshipLabel(
+  raw: JsonObject,
+  kind: BusinessRelationshipKind,
+): BusinessRelationshipLabel | null {
+  const stated = str(raw, "label") as BusinessRelationshipLabel;
+  if (!stated) return BUSINESS_LABEL_FOR_KIND[kind];
+  return BUSINESS_ALLOWED_LABELS[kind].includes(stated) ? stated : null;
+}
+
+function readRelationships(raw: JsonObject[]): BusinessRelationship[] | null {
+  const out: BusinessRelationship[] = [];
+  for (const [i, r] of raw.entries()) {
+    const name = str(r, "name");
+    const kind = str(r, "kind") as BusinessRelationshipKind;
+    const partyKind = str(r, "partyKind");
+    const reason = str(r, "reason");
+    if (!name || !reason || !BUSINESS_RELATIONSHIP_KINDS.includes(kind)) {
+      return null;
+    }
+    if (partyKind !== "organisation" && partyKind !== "individual") return null;
+    const label = readRelationshipLabel(r, kind);
+    if (!label) return null;
+    out.push({ id: `rel-${i + 1}`, name, kind, label, reason, partyKind });
+  }
+  return out;
+}
+
+/** Reads step two. Returns null for an unknown kind, a label that does not fit, or any missing field. */
 export function parseBusinessConnections(
   reply: string,
 ): BusinessConnectionsStage | null {
@@ -218,33 +299,9 @@ export function parseBusinessConnections(
   const perception = str(rep, "perception");
   const consequence = str(rep, "consequence");
   if (!perception || !consequence) return null;
-  const dependencies: BusinessDependency[] = [];
-  for (const [i, d] of deps.entries()) {
-    const input = str(d, "input");
-    const kind = str(d, "kind") as BusinessDependencyKind;
-    const ifItFails = str(d, "ifItFails");
-    if (!input || !ifItFails || !BUSINESS_DEPENDENCY_KINDS.includes(kind))
-      return null;
-    dependencies.push({ id: `dep-${i + 1}`, input, kind, ifItFails });
-  }
-  const relationships: BusinessRelationship[] = [];
-  for (const [i, r] of rels.entries()) {
-    const name = str(r, "name");
-    const kind = str(r, "kind") as BusinessRelationshipKind;
-    const partyKind = str(r, "partyKind");
-    const reason = str(r, "reason");
-    if (!name || !reason || !BUSINESS_RELATIONSHIP_KINDS.includes(kind))
-      return null;
-    if (partyKind !== "organisation" && partyKind !== "individual") return null;
-    relationships.push({
-      id: `rel-${i + 1}`,
-      name,
-      kind,
-      label: BUSINESS_LABEL_FOR_KIND[kind],
-      reason,
-      partyKind,
-    });
-  }
+  const dependencies = readDependencies(deps);
+  const relationships = readRelationships(rels);
+  if (!dependencies || !relationships) return null;
   return {
     dependencies,
     relationships,

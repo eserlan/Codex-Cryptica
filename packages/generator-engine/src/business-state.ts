@@ -121,6 +121,23 @@ export const BUSINESS_RELATIONSHIP_KINDS = [
 export type BusinessRelationshipKind =
   (typeof BUSINESS_RELATIONSHIP_KINDS)[number];
 
+/**
+ * The graph labels that honestly describe each kind of party (FR-011). A label
+ * outside this list for its kind is a mismatch and is rejected.
+ */
+export const BUSINESS_ALLOWED_LABELS: Record<
+  BusinessRelationshipKind,
+  readonly BusinessRelationshipLabel[]
+> = {
+  competitor: ["competes with"],
+  supplier: ["supplied by"],
+  patron: ["contracted by", "protected by", "owes"],
+  regulator: ["regulated by"],
+  criminal: ["owes", "protected by", "supplied by", "serves"],
+  neighbour: ["competes with", "serves", "supplied by", "contracted by"],
+  faction: ["protected by", "contracted by", "regulated by", "owes", "serves"],
+};
+
 export interface BusinessRelationship {
   id: string;
   name: string;
@@ -170,6 +187,12 @@ export interface BusinessDocument {
     payers: string;
     whyHere: string;
     mainIncome: string;
+    /** How this kind of business actually earns, and what it owns versus carries for others. */
+    model: string;
+    /** How big it is in plain words: premises, people, vehicles or stock. */
+    size: string;
+    /** How it is doing right now, financially. */
+    position: string;
   };
   leadership: BusinessPerson;
   staff: BusinessPerson[];
@@ -190,6 +213,8 @@ export interface BusinessDocument {
   hooks: string[];
   management?: BusinessManagement;
   fallbackSections: BusinessSectionId[];
+  /** Names that appear in the text without being introduced as a person or party. */
+  warnings?: string[];
 }
 
 /** Lowercase names of sections, for user-facing notes. */
@@ -230,6 +255,9 @@ export function renderBusinessContent(doc: BusinessDocument): string {
     `Who pays: ${operations.payers}`,
     `Why here: ${operations.whyHere}`,
     `Main income: ${operations.mainIncome}`,
+    `How it earns: ${operations.model}`,
+    `Size: ${operations.size}`,
+    `Right now: ${operations.position}`,
     "",
     "## Leadership",
     `**${leadership.name}** (${leadership.role}) — ${leadership.goal}`,

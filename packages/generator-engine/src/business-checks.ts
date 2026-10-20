@@ -8,11 +8,13 @@ import type { Rng } from "./random-utils";
 import { defaultRng } from "./random-utils";
 import { CRIMINAL_WORDS, PRICE_PATTERN } from "./business-tables";
 import {
+  BUSINESS_LABEL_FOR_KIND,
   BUSINESS_STAFF_RANGE,
   localSectionFor,
   pickUnique,
 } from "./business-local";
 import {
+  BUSINESS_ALLOWED_LABELS,
   businessSectionLabel,
   type BusinessDocument,
   type BusinessSectionId,
@@ -24,7 +26,8 @@ export type BusinessIssueCode =
   | "legit-secret-criminal"
   | "staff-count"
   | "inventory-list"
-  | "management-mismatch";
+  | "management-mismatch"
+  | "relationship-label";
 
 export interface BusinessIssue {
   section: BusinessSectionId;
@@ -79,6 +82,9 @@ function operationsIssues(doc: BusinessDocument): BusinessIssue[] {
     ...missing("operations", "Who pays", doc.operations.payers),
     ...missing("operations", "Why it is here", doc.operations.whyHere),
     ...missing("operations", "Main income", doc.operations.mainIncome),
+    ...missing("operations", "How it earns", doc.operations.model),
+    ...missing("operations", "Size", doc.operations.size),
+    ...missing("operations", "Current position", doc.operations.position),
   ];
 }
 
@@ -281,9 +287,21 @@ function checkManagement(doc: BusinessDocument): BusinessIssue[] {
   return issues;
 }
 
+/** A graph label must honestly describe its kind of party (FR-011). */
+function checkRelationshipLabels(doc: BusinessDocument): BusinessIssue[] {
+  return doc.relationships
+    .filter((r) => !BUSINESS_ALLOWED_LABELS[r.kind].includes(r.label))
+    .map((r) => ({
+      section: "relationships" as const,
+      code: "relationship-label" as const,
+      detail: `"${r.label}" does not describe a ${r.kind} (${r.name}); use ${BUSINESS_ALLOWED_LABELS[r.kind].join(" or ")}.`,
+    }));
+}
+
 /** Every failing check, across the whole document. Empty when the document is usable. */
 export function checkBusiness(doc: BusinessDocument): BusinessIssue[] {
   return [
+    ...checkRelationshipLabels(doc),
     ...checkRequiredFields(doc),
     ...checkStaffCount(doc),
     ...checkSecret(doc),
@@ -347,11 +365,25 @@ function fitStaffToScale(doc: BusinessDocument, rng: Rng): BusinessDocument {
  */
 export function repairBusiness(
   doc: BusinessDocument,
-  issues: BusinessIssue[],
+  allIssues: BusinessIssue[],
   rng: Rng = defaultRng,
 ): BusinessDocument {
+  let issues = allIssues;
   if (issues.length === 0) return doc;
   let next = doc;
+  // A wrong label only needs its label fixed; keep the party the text names.
+  if (issues.some((i) => i.code === "relationship-label")) {
+    next = {
+      ...next,
+      relationships: next.relationships.map((r) =>
+        BUSINESS_ALLOWED_LABELS[r.kind].includes(r.label)
+          ? r
+          : { ...r, label: BUSINESS_LABEL_FOR_KIND[r.kind] },
+      ),
+    };
+    issues = issues.filter((i) => i.code !== "relationship-label");
+    if (issues.length === 0) return next;
+  }
   const failing = new Set<string>(issues.map((i) => i.section));
   const changed = new Set<string>();
 
@@ -386,3 +418,161 @@ export function repairBusiness(
 }
 
 export { businessSectionLabel };
+
+// --- Names that appear without being introduced -----------------------------
+
+/** Words that start a sentence, or an instruction, without being part of a name. */
+const SENTENCE_STARTERS = new Set(
+  (
+    "The A An If When Without Because Before After While Unless Although But And Or So Yet This That These Those " +
+    "Its Their His Her Our Your One Two Three Every Each Some Any Many Most All Both Either Neither Once Then " +
+    "There Here What Who Which How Why Where In On At By For From With Of To As Not No Nothing Someone Anyone " +
+    "Everyone Find Warn Trace Recover Negotiate Discover Learn Persuade Convince Help Stop Prove Expose Protect " +
+    "Steal Deliver Escort Investigate Retrieve Uncover Secure Broker Track Identify Rescue Confront Intercept " +
+    "Bargain Win Take Make Get Keep Hunt Follow Break Save Raid Sabotage Infiltrate Audit Settle Whoever Whatever"
+  ).split(" "),
+);
+
+const CAPITALISED = /^\p{Lu}[\p{L}'’-]*$/u;
+/** "GM" or "NPC": an abbreviation, never a name. */
+const ABBREVIATION = /^\p{Lu}{2,}$/u;
+
+function words(text: string): string[] {
+  return text
+    .split(/[^\p{L}'’-]+/u)
+    .map((w) => w.replace(/['’]s$/, ""))
+    .filter((w) => w.length >= 2);
+}
+
+/** Every name the document has introduced, as written. */
+function introducedNames(doc: BusinessDocument): string[] {
+  return [
+    doc.identity.name,
+    doc.leadership.name,
+    ...doc.staff.map((p) => p.name),
+    ...doc.relationships.map((r) => r.name),
+    ...doc.dependencies.map((d) => d.input),
+    doc.options.location,
+    doc.options.businessType,
+    doc.options.genre,
+  ];
+}
+
+interface KnownNames {
+  words: ReadonlySet<string>;
+  full: readonly string[];
+}
+
+function knownNames(doc: BusinessDocument): KnownNames {
+  const names = introducedNames(doc);
+  return {
+    words: new Set(names.flatMap(words).map((w) => w.toLowerCase())),
+    full: names.map((n) => words(n).join(" ").toLowerCase()),
+  };
+}
+
+/**
+ * A lone word is known when it is part of an introduced name. A longer run is
+ * known only when it sits inside an introduced name, or extends one with a
+ * title: "Corwin Venn" is not "Iska Venn" plus "Corwin Doran".
+ */
+function isKnownRun(run: readonly string[], known: KnownNames): boolean {
+  if (run.length === 1) return known.words.has(run[0].toLowerCase());
+  const joined = run.join(" ").toLowerCase();
+  return known.full.some(
+    (name) =>
+      name.includes(joined) || (name.includes(" ") && joined.includes(name)),
+  );
+}
+
+/** Prose that may name people or parties. */
+function proseOf(doc: BusinessDocument): string[] {
+  return [
+    ...Object.values(doc.identity),
+    ...Object.values(doc.operations),
+    doc.leadership.goal,
+    doc.leadership.trait,
+    doc.leadership.pressure ?? "",
+    ...doc.staff.flatMap((p) => [p.goal, p.trait]),
+    ...Object.values(doc.clientele),
+    ...doc.dependencies.map((d) => d.ifItFails),
+    ...doc.relationships.map((r) => r.reason),
+    ...Object.values(doc.reputation),
+    doc.pressure,
+    doc.asset,
+    doc.secret,
+    doc.opportunity,
+    doc.complication,
+    ...doc.hooks,
+    ...(doc.management ? Object.values(doc.management).flat() : []),
+  ].filter((t): t is string => typeof t === "string" && t.trim() !== "");
+}
+
+/**
+ * Runs of capitalised words in one sentence. A lone capitalised word at the
+ * start of a sentence is grammar, not a name, so it is dropped; a longer run
+ * keeps its words except a leading sentence-starter such as "The" or "Find".
+ */
+function nameRuns(sentence: string): string[][] {
+  const tokens = sentence
+    .split(/\s+/)
+    .map((t) => t.replace(/^[("“]+|[,;:.)"”!?]+$/g, ""));
+  const runs: Array<{ words: string[]; atStart: boolean }> = [];
+  let current: { words: string[]; atStart: boolean } | null = null;
+  tokens.forEach((token, i) => {
+    const bare = token.replace(/['’]s$/, "");
+    if (CAPITALISED.test(bare) && !ABBREVIATION.test(bare)) {
+      current ??= { words: [], atStart: i === 0 };
+      current.words.push(bare);
+    } else if (current) {
+      runs.push(current);
+      current = null;
+    }
+  });
+  if (current) runs.push(current);
+  return runs
+    .filter((r) => !(r.atStart && r.words.length === 1))
+    .map((r) =>
+      r.words.filter((w, i) => !(i === 0 && SENTENCE_STARTERS.has(w))),
+    )
+    .filter((words) => words.length > 0);
+}
+
+/** Every run of capitalised words across the given prose, one sentence at a time. */
+function allNameRuns(texts: readonly string[]): string[][] {
+  return texts.flatMap((text) =>
+    text.split(/(?<=[.!?])\s+/).flatMap((sentence) => nameRuns(sentence)),
+  );
+}
+
+/** Names found in the given prose that the document has not introduced. */
+function scanForNames(
+  texts: readonly string[],
+  known: KnownNames,
+): { multis: Set<string>; singles: Map<string, number> } {
+  const singles = new Map<string, number>();
+  const multis = new Set<string>();
+  const unknownRuns = allNameRuns(texts).filter(
+    (run) => !isKnownRun(run, known),
+  );
+  for (const run of unknownRuns) {
+    if (run.length >= 2) multis.add(run.join(" "));
+    else singles.set(run[0], (singles.get(run[0]) ?? 0) + 1);
+  }
+  return { multis, singles };
+}
+
+/**
+ * Names that appear in the text without being introduced as the business, a
+ * person or a party. A multi-word name counts once; a single capitalised word
+ * counts only when it recurs, so a stray sentence start is not a name. Pass
+ * `texts` to judge only the prose one stage wrote.
+ */
+export function findUnintroducedNames(
+  doc: BusinessDocument,
+  texts: readonly string[] = proseOf(doc),
+): string[] {
+  const { multis, singles } = scanForNames(texts, knownNames(doc));
+  const repeated = [...singles].filter(([, n]) => n >= 2).map(([w]) => w);
+  return [...multis, ...repeated];
+}

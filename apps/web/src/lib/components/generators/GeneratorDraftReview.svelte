@@ -248,6 +248,7 @@
     <div class="flex flex-col gap-3" data-testid="business-review">
       <BusinessFallbackNote
         fallbackSections={draft.business.fallbackSections}
+        warnings={draft.business.warnings}
       />
       <BusinessRefinePanel
         business={draft.business}

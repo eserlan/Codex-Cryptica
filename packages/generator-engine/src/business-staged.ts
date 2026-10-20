@@ -12,7 +12,11 @@ import {
   resolveBusinessOptions,
   BUSINESS_STAFF_RANGE,
 } from "./business-local";
-import { checkBusiness, repairBusiness } from "./business-checks";
+import {
+  checkBusiness,
+  findUnintroducedNames,
+  repairBusiness,
+} from "./business-checks";
 import {
   businessStageMessage,
   parseBusinessConnections,
@@ -135,6 +139,19 @@ async function identityStage(
   };
 }
 
+/** A soft problem (one retry) when the text names someone the document never introduced. */
+function unintroducedNameProblems(
+  candidate: BusinessDocument,
+  texts: readonly string[],
+): string[] {
+  const names = findUnintroducedNames(candidate, texts);
+  return names.length
+    ? [
+        `These names are used without being introduced: ${names.join(", ")}. Refer only to the people and parties in the established facts (a place name is fine; name it as a place).`,
+      ]
+    : [];
+}
+
 /** Stage 2: dependencies, relationships and reputation. */
 async function connectionsStage(
   doc: BusinessDocument,
@@ -147,7 +164,15 @@ async function connectionsStage(
   const result = await askChecked(
     turn,
     parseBusinessConnections,
-    () => ({ hard: [], soft: [] }),
+    (data) => ({
+      hard: [],
+      soft: unintroducedNameProblems({ ...doc, ...data }, [
+        ...data.dependencies.map((d) => d.ifItFails),
+        ...data.relationships.map((r) => r.reason),
+        data.reputation.perception,
+        data.reputation.consequence,
+      ]),
+    }),
     {
       signal,
       unreadable: "the reply was not a usable connections stage",
@@ -194,7 +219,15 @@ async function troubleStage(
     (reply) => parseBusinessTrouble(reply, opts.playersOwn),
     (data) => ({
       hard: secretProblems(data.secret, opts.legitimacy),
-      soft: [],
+      soft: unintroducedNameProblems({ ...doc, ...data }, [
+        data.pressure,
+        data.asset,
+        data.secret,
+        data.opportunity,
+        data.complication,
+        ...data.hooks,
+        ...Object.values(data.management ?? {}).flat(),
+      ]),
     }),
     { signal, unreadable: "the reply was not a usable trouble stage" },
   );
@@ -249,7 +282,12 @@ function finalise(
       ],
     };
   }
-  return { ...next, fallbackSections: [...new Set(failed)] };
+  const warnings = findUnintroducedNames(next);
+  return {
+    ...next,
+    fallbackSections: [...new Set(failed)],
+    ...(warnings.length ? { warnings } : {}),
+  };
 }
 
 export async function generateBusinessStaged(
@@ -282,12 +320,12 @@ export async function generateBusinessStaged(
   );
   doc = await connectionsStage(
     doc,
-    turnFor(businessStageMessage("connections", opts)),
+    turnFor(businessStageMessage("connections", opts, doc)),
     ctx,
   );
   doc = await troubleStage(
     doc,
-    turnFor(businessStageMessage("trouble", opts)),
+    turnFor(businessStageMessage("trouble", opts, doc)),
     ctx,
   );
   throwIfAborted(signal);
