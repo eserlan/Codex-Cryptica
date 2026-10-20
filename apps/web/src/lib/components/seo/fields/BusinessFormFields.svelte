@@ -15,6 +15,7 @@
     campaignContext = $bindable(""),
     playersOwn = $bindable(false),
     onSurprise = undefined,
+    onGenreChange = undefined,
   }: {
     genre: string;
     businessType: string;
@@ -27,6 +28,7 @@
     campaignContext: string;
     playersOwn: boolean;
     onSurprise?: () => void;
+    onGenreChange?: (genre: string) => void;
   } = $props();
 
   const selectClass =
@@ -67,6 +69,7 @@
   id="business-genre-select"
   label="Genre / Setting"
   bind:value={genre}
+  onvaluechange={onGenreChange}
   choices={businessConfig.genres.map((g: string) => ({ value: g, label: g }))}
   className="flex flex-col gap-1.5"
   {labelClass}
