@@ -36,6 +36,7 @@ export interface GeneratorThemeSyncContext {
   artifact: ThemeState;
   creature: ThemeState;
   tome?: ThemeState;
+  business?: ThemeState;
   pointCrawl?: ThemeState;
   oneShot?: ThemeState;
   mapOneShotGenre?: (genre: string) => string | null;
@@ -80,6 +81,7 @@ export function syncGeneratorTheme({
   artifact,
   creature,
   tome,
+  business,
   pointCrawl,
   oneShot,
   mapOneShotGenre,
@@ -130,6 +132,7 @@ export function syncGeneratorTheme({
   else if (slug === "creature") creature.genre = activeTheme;
   else if (slug === "personality") personality.genre = activeTheme;
   else if (slug === "tome" && tome) tome.theme = activeTheme;
+  else if (slug === "business" && business) business.genre = activeTheme;
   else if (slug === "point-crawl" && pointCrawl) pointCrawl.genre = activeTheme;
   else if (slug === "one-shot-adventure-generator" && oneShot) {
     // Genre drives the skin: the one-shot genre list has no 1:1 theme labels.

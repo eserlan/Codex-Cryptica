@@ -166,6 +166,13 @@ import {
   pointCrawlConfig,
   type PointCrawlGeneratorOptions,
 } from "./public-point-crawl";
+import { businessConfig, businessStageMessage } from "./public-business";
+import {
+  generateBusinessLocal,
+  resolveBusinessOptions,
+} from "./business-local";
+import { businessGeneratorOutput } from "./business-output";
+import { businessOptionsFromRequest } from "./campaign-business-generation";
 
 /**
  * Generator id -> default vault category id.
@@ -174,6 +181,7 @@ import {
  * `faction` matches by name; the rest map to distinct categories.
  */
 export const GENERATOR_ENTITY_TYPE: Record<GeneratorId, string> = {
+  business: "faction",
   npc: "character",
   faction: "faction",
   "faction-roster": "note",
@@ -328,6 +336,7 @@ function optionalOutputFields(output: GeneratorOutput) {
     interpretations: copyIfPresent(output.interpretations),
     nightSky: output.nightSky,
     pointCrawl: output.pointCrawl,
+    business: output.business,
   };
 }
 
@@ -2067,6 +2076,78 @@ function pointCrawlPrompt(request: GeneratorRunRequest): string {
 }
 
 const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
+  business: {
+    id: "business",
+    label: "Business",
+    description:
+      "Generate one commercial organisation with its people, dependencies, rivals, pressure and adventure hooks.",
+    entityType: GENERATOR_ENTITY_TYPE.business,
+    defaultInstruction:
+      "One business as a living organisation: who runs it, who works there, who depends on it, who it competes with, its current pressure and the hooks that bring the party in.",
+    icon: "lucide:store",
+    options: [
+      {
+        id: "genre",
+        label: "Genre",
+        control: "select",
+        choices: businessConfig.genres.map((g) => ({ value: g, label: g })),
+      },
+      {
+        id: "businessType",
+        label: "Business type",
+        description: "Leave blank to pick a type that fits the genre.",
+        control: "text",
+      },
+      {
+        id: "scale",
+        label: "Scale",
+        control: "select",
+        choices: businessConfig.scales.map((s) => ({ value: s, label: s })),
+      },
+      {
+        id: "legitimacy",
+        label: "Legitimacy",
+        control: "select",
+        choices: businessConfig.legitimacies.map((l) => ({
+          value: l,
+          label: l,
+        })),
+      },
+      {
+        id: "wealth",
+        label: "Wealth",
+        control: "select",
+        choices: businessConfig.wealth.map((w) => ({ value: w, label: w })),
+      },
+      {
+        id: "tone",
+        label: "Tone",
+        control: "select",
+        choices: businessConfig.tones.map((t) => ({ value: t, label: t })),
+      },
+      { id: "location", label: "Location", control: "text" },
+      { id: "clientele", label: "Clientele", control: "text" },
+      {
+        id: "playersOwn",
+        label: "Players own this business",
+        control: "checkbox",
+      },
+    ],
+    defaults: {
+      genre: "Classic Fantasy",
+      scale: "small",
+      legitimacy: "legitimate",
+      wealth: "modest",
+      tone: "grounded",
+      playersOwn: false,
+    },
+    generate: generateBusinessCampaign,
+    mapOutputToDraft: (output, request) => ({
+      ...mapOutputToDraft("business")(output, request),
+      lore: output.lore,
+    }),
+    buildPrompt: businessPrompt,
+  },
   npc: {
     id: "npc",
     label: "NPC",
@@ -4166,6 +4247,21 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
     buildPrompt: pointCrawlPrompt,
   },
 };
+
+function generateBusinessCampaign(
+  request: GeneratorRunRequest,
+): GeneratorOutput {
+  return businessGeneratorOutput(
+    generateBusinessLocal(businessOptionsFromRequest(request)),
+  );
+}
+
+function businessPrompt(request: GeneratorRunRequest): string {
+  return businessStageMessage(
+    "identity",
+    resolveBusinessOptions(businessOptionsFromRequest(request)),
+  );
+}
 
 /** Look up a generator definition, throwing for unknown ids. */
 export function getGenerator(id: string): CampaignGeneratorDefinition {

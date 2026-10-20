@@ -1986,6 +1986,71 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       },
     ],
   },
+  business: {
+    pageTitle:
+      "Business Generator | Shops, Guilds & Enterprises for RPGs | Codex Cryptica",
+    metaDescription:
+      "Generate one commercial organisation for your tabletop campaign: its owner, staff, suppliers, rivals, reputation, pressure, secret and adventure hooks, with an option for the players to own it.",
+    introTitle: "Business Generator",
+    eyebrow: "Business Generator",
+    introText:
+      "Create one specific business the party can visit, work for, compete with, investigate or own. Get its people, what it depends on, who it competes with, the pressure it is under and the hooks that bring the party in. Save it to your vault, with its people and its rivals linked on the graph.",
+    canonicalPath: "/generators/business",
+    ogImage:
+      "https://assets.codexcryptica.com/screenshots/generator-business.png",
+    ogImageAlt:
+      "Codex Cryptica Business Generator showing the input form and a generated blacksmith with its identity and operations",
+    labels: ["business", "economy", "settlement", "npc"],
+    keywords: [
+      "business generator",
+      "rpg business generator",
+      "shop generator",
+      "rpg shop generator",
+      "enterprise generator",
+      "company generator",
+    ],
+    faqs: [
+      {
+        question: "What does the Business Generator create?",
+        answer:
+          "One organisation with a name, what it does, who runs it, its key staff, its clients, the suppliers it depends on, its rivals and other relationships, its reputation, a current pressure, an unusual asset, a secret, an opportunity, a complication and two or three adventure hooks.",
+      },
+      {
+        question:
+          "How is it different from the Tavern or Social Hub generator?",
+        answer:
+          "The tavern and social hub generators make a place where people gather. This one makes a business: a specific organisation with its own money, people, rivals and problems. Use it for a courier company, a ripper clinic or a shipyard.",
+      },
+      {
+        question: "Can the players own the business?",
+        answer:
+          "Yes. Turn on Players own this business and the leader becomes a manager the party employs. You also get starting strengths, liabilities, upgrade paths, recurring obligations and what success attracts. Obligations are named, never priced.",
+      },
+      {
+        question: "Does it work without AI?",
+        answer:
+          "Yes. Every business can be generated from the built-in tables with AI off. With AI on, the business is written in three stages, and any stage that fails falls back to the tables.",
+      },
+    ],
+    relatedLinks: [
+      {
+        href: "/generators/tavern",
+        label: "Tavern Generator",
+      },
+      {
+        href: "/generators/social-hub",
+        label: "Social Hub Generator",
+      },
+      {
+        href: "/answers/how-do-i-run-a-campaign-where-the-players-own-a-business",
+        label: "Running a campaign where the players own a business",
+      },
+      {
+        href: "/answers/how-do-i-turn-economic-pressures-into-rpg-adventure-hooks",
+        label: "Turning economic pressure into adventure hooks",
+      },
+    ],
+  },
   "point-crawl": {
     pageTitle:
       "Point Crawl Generator | Interactive RPG Map & Route Network Builder | Codex Cryptica",

@@ -970,3 +970,81 @@ export {
   type TovEncounterCreatureSuggestion,
   type TovEncounterMechanics,
 } from "./tov-mechanics-schema";
+
+// Business / Enterprise Generator (#3627, spec 180)
+export {
+  BUSINESS_SCALES,
+  BUSINESS_LEGITIMACY,
+  BUSINESS_WEALTH,
+  BUSINESS_TONES,
+  businessToOutput,
+  businessSectionLabel,
+  renderBusinessContent,
+  type BusinessDocument,
+  type BusinessGeneratorOptions,
+  type BusinessPerson,
+  type BusinessDependency,
+  type BusinessRelationship,
+  type BusinessRelationshipLabel,
+  type BusinessManagement,
+  type BusinessSectionId,
+  type BusinessScale,
+  type BusinessLegitimacy,
+  type BusinessWealth,
+  type BusinessTone,
+  type ResolvedBusinessOptions,
+} from "./business-state";
+export {
+  BUSINESS_TYPES,
+  BUSINESS_POOLS,
+  GENERIC_POOLS,
+  genreGroup,
+  type BusinessGenreGroup,
+} from "./business-tables";
+export {
+  BUSINESS_STAFF_RANGE,
+  BUSINESS_LABEL_FOR_KIND,
+  generateBusinessLocal,
+  resolveBusinessOptions,
+  localSectionFor,
+} from "./business-local";
+export {
+  checkBusiness,
+  repairBusiness,
+  hookAnchors,
+  type BusinessIssue,
+  type BusinessIssueCode,
+} from "./business-checks";
+export {
+  generateBusinessStaged,
+  BUSINESS_STEPS,
+  type BusinessStagedDeps,
+  type BusinessStepId,
+} from "./business-staged";
+export {
+  regenerateBusinessSection,
+  propagateRename,
+  type RegenerateBusinessSectionOptions,
+  type RegenerateBusinessSectionResult,
+} from "./business-regenerate";
+export {
+  buildBusinessSavePlan,
+  buildBusinessImportDrafts,
+  type BusinessSavePlan,
+  type BusinessEntityDraft,
+  type BusinessPartyChoice,
+  type BuildBusinessSavePlanOptions,
+} from "./business-save";
+export {
+  businessConfig,
+  businessStageMessage,
+  parseBusinessIdentity,
+  parseBusinessConnections,
+  parseBusinessTrouble,
+  type BusinessStage,
+} from "./public-business";
+export {
+  businessOptionsFromRequest,
+  generateBusinessWithAI,
+} from "./campaign-business-generation";
+export { businessGeneratorOutput } from "./business-output";

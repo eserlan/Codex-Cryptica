@@ -10,9 +10,11 @@ import {
   sumMoney,
 } from "./stock";
 
-const ids = () => {
+import type { IdGenerator } from "@codex/runtime";
+
+const ids = (): IdGenerator => {
   let n = 0;
-  return () => `id-${++n}`;
+  return { uuid: () => `id-${++n}` };
 };
 
 describe("ensureRowIds", () => {
@@ -21,7 +23,7 @@ describe("ensureRowIds", () => {
     const out = ensureRowIds(rows, ids());
     expect(out.map((r) => r.name)).toEqual(["Sword", "Axe"]);
     expect(out[1].entityId).toBe("axe");
-    expect(out.map((r) => r.rowId)).toEqual(["id-1", "id-2"]);
+    expect(out.map((r) => r.rowId)).toEqual(["row-id-1", "row-id-2"]);
   });
 
   it("keeps existing ids and returns the same array when nothing changes", () => {

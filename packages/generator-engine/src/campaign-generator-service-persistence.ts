@@ -52,7 +52,8 @@ export class CampaignGeneratorPersistenceService extends CampaignGeneratorStream
       kind:
         draft.sourceGeneratorId === "language" ||
         draft.sourceGeneratorId === "dungeon" ||
-        draft.sourceGeneratorId === "point-crawl"
+        draft.sourceGeneratorId === "point-crawl" ||
+        draft.sourceGeneratorId === "business"
           ? draft.sourceGeneratorId
           : undefined,
       languageProfile: draft.languageProfile,

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { slugMeta, type ValidSlug } from "./generator-page-meta";
 
 const allExpectedSlugs: ValidSlug[] = [
+  "business",
   "npc",
   "one-shot-adventure-generator",
   "settlement",
@@ -58,6 +59,13 @@ describe("generator-page-meta completeness and social preview tags", () => {
       "https://assets.codexcryptica.com/screenshots/generator-puzzle.png",
     );
     expect(slugMeta.puzzle.ogImage).not.toContain("generator-quest");
+  });
+
+  it("uses Business's own rendered social screenshot", () => {
+    expect(slugMeta.business.ogImage).toBe(
+      "https://assets.codexcryptica.com/screenshots/generator-business.png",
+    );
+    expect(slugMeta.business.ogImageAlt).toMatch(/Business Generator/);
   });
 
   it("describes the Holiday generator's calendar mode and social preview", () => {

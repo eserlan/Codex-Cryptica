@@ -28,7 +28,11 @@ export type StagedStepId =
   // Tome stages (tome-staged.ts).
   | "provenance"
   | "revelations"
-  | "hooks";
+  | "hooks"
+  // Business stages (business-staged.ts).
+  | "identity"
+  | "connections"
+  | "trouble";
 
 export interface StagedProgressStep {
   id: StagedStepId;

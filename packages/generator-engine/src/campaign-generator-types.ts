@@ -15,6 +15,7 @@ import type {
   NightSkyData,
 } from "./public-constellation";
 import type { PointCrawlNetwork } from "./point-crawl-state";
+import type { BusinessDocument } from "./business-state";
 
 export type GeneratorId =
   | "npc"
@@ -47,7 +48,8 @@ export type GeneratorId =
   | "heist"
   | "holiday"
   | "tome"
-  | "point-crawl";
+  | "point-crawl"
+  | "business";
 
 export const SUPPORTED_GENERATOR_IDS: readonly GeneratorId[] = [
   "npc",
@@ -81,6 +83,7 @@ export const SUPPORTED_GENERATOR_IDS: readonly GeneratorId[] = [
   "holiday",
   "tome",
   "point-crawl",
+  "business",
 ] as const;
 
 /** A user-configurable field for a generator. */
@@ -159,6 +162,8 @@ export interface GeneratorOutput {
   nightSky?: NightSkyData;
   /** Structured point-crawl network graph and keyed locations. */
   pointCrawl?: PointCrawlNetwork;
+  /** Structured business document (14 sections plus optional management). */
+  business?: BusinessDocument;
   /** Structured system mechanics (e.g. Tales of the Valiant BFRD stats). */
   mechanics?: GeneratorMechanicsBundle;
   /** Associated game system id (e.g. "tales-of-the-valiant"). */
@@ -313,6 +318,8 @@ export interface GeneratedDraft {
   contextProvenance?: Array<{ id: string; title: string }>;
   /** Carried through from {@link GeneratorOutput.pointCrawl}. */
   pointCrawl?: PointCrawlNetwork;
+  /** Carried through from {@link GeneratorOutput.business}. */
+  business?: BusinessDocument;
   /** Structured system mechanics (e.g. Tales of the Valiant BFRD stats). */
   mechanics?: GeneratorMechanicsBundle;
   /** Associated game system id (e.g. "tales-of-the-valiant"). */

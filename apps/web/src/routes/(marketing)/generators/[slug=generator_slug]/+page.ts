@@ -61,7 +61,8 @@ export const load: PageLoad = ({ params }) => {
       | "holiday"
       | "personality"
       | "tome"
-      | "point-crawl",
+      | "point-crawl"
+      | "business",
   };
 };
 

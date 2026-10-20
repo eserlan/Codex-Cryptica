@@ -1,6 +1,6 @@
 # Codex-Cryptica Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-10-19
+Auto-generated from all feature plans. Last updated: 2026-10-20
 
 ## Active Technologies
 
@@ -79,11 +79,11 @@ TypeScript 6.0.3, Svelte 5 runes, Bun 1.3.14 workspace: Follow standard conventi
 
 ## Recent Changes
 
+- 180-business-enterprise-generator: Added TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14
+
 - 179-in-app-feedback: Added TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14; Cloudflare Workers runtime for `apps/workers/oracle-proxy`
 
 - 178-hex-crawl-mode: Added TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14
-
-- 176-cif-contextual-tips: Added TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + Existing `onboarding-journey-engine` (extended), `help-engine` (`QUICK_PROMPT_SETS`, `FEATURE_REGISTRY`, `HelpArea`), `JourneyStore` (read-only outcome), `OnboardingStore` (`chosenGoal`, `goalInvitation`), `helpAssistant` and `cifPopout` (open and ask), `isHelpAssistantAvailable`, `helpStore` (tour), `modalUIStore` (dialogs), Floating UI (already a dependency), Tailwind 4 semantic tokens, Iconify classes. No new third-party dependency.
 
 <!-- MANUAL ADDITIONS START -->
 <!-- MANUAL ADDITIONS END -->

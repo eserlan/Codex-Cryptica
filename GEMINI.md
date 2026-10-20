@@ -1,6 +1,6 @@
 # Codex-Cryptica Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-10-19
+Auto-generated from all feature plans. Last updated: 2026-10-20
 
 ## Active Technologies
 
@@ -276,11 +276,11 @@ TypeScript: Follow standard conventions
 
 ## Recent Changes
 
+- 180-business-enterprise-generator: Added TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14
+
 - 179-in-app-feedback: Added TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14; Cloudflare Workers runtime for `apps/workers/oracle-proxy`
 
 - 178-hex-crawl-mode: Added TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14
-
-- 177-point-crawl-generator: Added TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + `packages/generator-engine` (extended with `point-crawl-*` modules), `schema`, `@codex/ai-engine` / `aiGeneratorGateway`, existing `$lib/utils/svg-export.ts`, Tailwind 4 semantic tokens, Lucide Iconify utility classes (`icon-[lucide--*]`). Zero new third-party dependencies.
 
 <!-- MANUAL ADDITIONS START -->
 

@@ -795,6 +795,7 @@ describe("DefaultGeneratorEngine", () => {
         const result = (await engine.generateTome({
           theme: "Classic Fantasy",
           useAI: true,
+          staged: false,
         })) as PublicGeneratorOutput;
 
         expect(generateContent).toHaveBeenCalledTimes(2);

@@ -1,5 +1,6 @@
 import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
 import {
+  buildBusinessImportDrafts,
   buildPointCrawlSaveDrafts,
   type ProvenanceRecord,
   type SessionEntity,
@@ -40,6 +41,20 @@ export async function saveGeneratorOutput(
       // Map export is best effort; saving the generated draft remains available.
       console.error("Failed to rasterize generator diagram:", error);
     }
+  }
+
+  if (data.business) {
+    // The public page hands over the business and its people; outside parties
+    // stay in the text (no vault here to match them against).
+    const drafts = buildBusinessImportDrafts(data.business);
+    dependencies.store(PENDING_IMPORT_KEY, JSON.stringify(drafts));
+    dependencies.track({
+      generatorType,
+      isHubBatch: true,
+      itemCount: drafts.length,
+      relatedEntityCount: 0,
+    });
+    return `?utm_source=generator-business&utm_medium=save-to-vault&utm_campaign=seo-funnel`;
   }
 
   const pointCrawl = data.pointCrawl ?? (data.metadata?.pointCrawlState as any);

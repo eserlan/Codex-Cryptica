@@ -20,6 +20,7 @@ import {
   SYSTEM_INSTRUCTION,
 } from "./campaign-generator-registry";
 import { generatePointCrawlStaged } from "./point-crawl-staged";
+import { generateBusinessWithAI } from "./campaign-business-generation";
 import { pointCrawlToOutput } from "./public-point-crawl";
 import { suggestName } from "./name-candidates";
 import {
@@ -557,6 +558,8 @@ export class CampaignGeneratorAIGenerationService extends CampaignGeneratorLangu
         return generateCouncilVoteWithAI(gateway, generator, request, {
           signal,
         });
+      case "business":
+        return generateBusinessWithAI(gateway, generator, request, { signal });
       case "point-crawl":
         try {
           const network = await generatePointCrawlStaged(
