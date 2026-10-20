@@ -1,16 +1,6 @@
 {
-  "updated_at": 1792499232,
+  "updated_at": 1792516467,
   "candidates": [
-    {
-      "id": "reddit-38926756319-cif-now-flies-to-what-he-points-at",
-      "title": "Cif now flies to what he points at",
-      "body": "New folks kept losing what Cif was pointing at because the chat panel sat on top of the button he was talking about, and there was no single place that explained every sidebar and top bar control.\n\nI changed how Cif points: he flies from the chat to the highlighted control and the chat stays open alongside the highlight, plus there is a new Finding your way around guide that walks each button.\n\nIt is a small motion change, not a new UI. Cif can now explain any sidebar or top-bar control in place.\n\n- flight from chat to target so the highlight is not hidden behind the panel\n- panel stays open while pointing, you can read and click the target at the same time\n- guide covers every sidebar and top-bar button in order, no guessing what an icon does\n- Cif explains each control where it lives, rather than in a separate help window\n\nThe flight is deliberately subtle so it does not yank focus if you were already looking at the target.\n\nWhich button or panel in Codex took you the longest to figure out the first time you opened the app?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-38926756319-3.png)",
-      "url": "https://codexcryptica.com/help/finding-your-way-around",
-      "image_url": "https://assets.codexcryptica.com/announcements/release-38926756319-3.png",
-      "source_id": "38926756319",
-      "status": "approved",
-      "created_at": 1792170751
-    },
     {
       "id": "reddit-39024872067-should-you-share-your-worldbuilding-note",
       "title": "Should you share your worldbuilding notes with players?",
