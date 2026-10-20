@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { arr, rec, text } from "./heist-staged-values";
+import { arr, detailText, rec, text } from "./heist-staged-values";
 
 describe("stage value normalisation", () => {
   it("trims strings and joins only string array entries", () => {
@@ -19,5 +19,12 @@ describe("stage value normalisation", () => {
     for (const value of [undefined, null, 4, "title", []]) {
       expect(rec(value)).toEqual({});
     }
+  });
+
+  it("normalises detail fields with the authored text fallback", () => {
+    expect(detailText({ detail: " Detail ", text: "Fallback" })).toBe("Detail");
+    expect(detailText({ detail: "", text: " Fallback " })).toBe("Fallback");
+    expect(detailText({ detail: 42 })).toBe("42");
+    expect(detailText({})).toBe("");
   });
 });

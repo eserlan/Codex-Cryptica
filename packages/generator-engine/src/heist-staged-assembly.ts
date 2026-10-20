@@ -1,6 +1,6 @@
 import type { JsonObject } from "./staged-runtime";
 import { canonicalOptionLabels, type ResolvedHeist } from "./public-heist";
-import { text } from "./heist-staged-values";
+import { text, detailText } from "./heist-staged-values";
 import {
   formatCasing,
   formatSecurityRings,
@@ -10,25 +10,14 @@ import {
   formatFlashbacks,
 } from "./heist-staged-formatters";
 
-// fallow-ignore-next-line complexity
 function extractDefaultComplication(complicationsRaw: unknown): string {
   if (typeof complicationsRaw === "string") {
-    const match = complicationsRaw.match(/\(default\)\*\*:\s*([^\n]+)/i);
-    if (match) return match[1].trim();
+    return defaultComplicationText(complicationsRaw);
   }
   if (Array.isArray(complicationsRaw)) {
     for (const c of complicationsRaw) {
-      if (typeof c === "string" && c.includes("(default)")) {
-        const match = c.match(/\(default\)\*\*:\s*([^\n]+)/i);
-        if (match) return match[1].trim();
-        return c.replace(/^[-\s*]+/, "").trim();
-      }
-      if (c && typeof c === "object") {
-        const r = c as Record<string, unknown>;
-        if (String(r.label || "").includes("(default)")) {
-          return String(r.detail || r.text || "").trim();
-        }
-      }
+      const detail = defaultComplicationItem(c);
+      if (detail !== null) return detail;
     }
   }
   return "";
@@ -94,4 +83,23 @@ export function assembleHeist(
     lore,
     labels: ["heist", "heist-generator", ...canonicalOptionLabels(resolved)],
   };
+}
+
+function defaultComplicationText(value: string): string {
+  const match = value.match(/\(default\)\*\*:\s*([^\n]+)/i);
+  return match ? match[1].trim() : "";
+}
+
+function defaultComplicationItem(c: unknown): string | null {
+  if (typeof c === "string" && c.includes("(default)")) {
+    const match = c.match(/\(default\)\*\*:\s*([^\n]+)/i);
+    return match ? match[1].trim() : c.replace(/^[-\s*]+/, "").trim();
+  }
+  if (c && typeof c === "object") {
+    const r = c as Record<string, unknown>;
+    if (String(r.label || "").includes("(default)")) {
+      return detailText(r);
+    }
+  }
+  return null;
 }

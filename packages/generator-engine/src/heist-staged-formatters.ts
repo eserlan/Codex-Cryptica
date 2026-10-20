@@ -1,6 +1,6 @@
 import type { JsonObject } from "./staged-runtime";
 import type { ResolvedHeist } from "./public-heist";
-import { text, arr, rec } from "./heist-staged-values";
+import { text, arr, rec, detailText } from "./heist-staged-values";
 
 export function formatCasing(casingRaw: unknown): string {
   if (!casingRaw) return "";
@@ -11,16 +11,14 @@ export function formatCasing(casingRaw: unknown): string {
     return casingRaw
       .map((item) => {
         if (typeof item === "string") {
-          return item.trim().startsWith("- ")
-            ? item.trim()
-            : `- ${item.trim()}`;
+          return formatBullet(item);
         }
         if (item && typeof item === "object") {
           const r = item as Record<string, unknown>;
           const label = String(r.label || r.title || "Detail")
             .replace(/\*\*/g, "")
             .trim();
-          const detail = String(r.detail || r.text || "").trim();
+          const detail = detailText(r);
           return `- **${label}**: ${detail}`;
         }
         return "";
@@ -31,7 +29,6 @@ export function formatCasing(casingRaw: unknown): string {
   return "";
 }
 
-// fallow-ignore-next-line complexity
 export function getRingText(
   data: JsonObject,
   key: "perimeter" | "access" | "inner",
@@ -54,15 +51,14 @@ export function getRingText(
       return text(directInner);
     }
   }
-  // Try extracting from a combined securityRings string
-  const combined = text(data.securityRings);
+  const label = { perimeter: "Perimeter", access: "Access", inner: innerLabel }[
+    key
+  ];
+  return extractCombinedRing(text(data.securityRings), label);
+}
+
+function extractCombinedRing(combined: string, searchLabel: string): string {
   if (combined) {
-    const searchLabel =
-      key === "perimeter"
-        ? "Perimeter"
-        : key === "access"
-          ? "Access"
-          : innerLabel;
     const match = combined.match(
       new RegExp(
         `-\\s*\\*\\*${searchLabel}\\*\\*:\\s*([^\\n]+(?:\\n(?!-\\s*\\*\\*)[^\\n]+)*)`,
@@ -106,16 +102,14 @@ export function formatAlarmTrack(alarmTrackRaw: unknown): string {
     return alarmTrackRaw
       .map((item, index) => {
         if (typeof item === "string") {
-          return item.trim().startsWith("- ")
-            ? item.trim()
-            : `- ${item.trim()}`;
+          return formatBullet(item);
         }
         const r = rec(item);
         const level = r.level !== undefined ? Number(r.level) : index;
         const label = String(
           r.label || defaultLabels[level] || `Level ${level}`,
         );
-        const detail = String(r.detail || r.text || "").trim();
+        const detail = detailText(r);
         return `- **${level} — ${label}**: ${detail}`;
       })
       .filter(Boolean)
@@ -124,19 +118,13 @@ export function formatAlarmTrack(alarmTrackRaw: unknown): string {
   return "";
 }
 
-// fallow-ignore-next-line complexity
 function formatComplicationItem(
   item: unknown,
   index: number,
   state: { hasDefault: boolean },
 ): string {
   if (typeof item === "string") {
-    let line = item.trim().startsWith("- ") ? item.trim() : `- ${item.trim()}`;
-    if (!state.hasDefault && index === 0) {
-      line = line.replace(/-\s*\*\*([^*]+)\*\*:/, "- **$1 (default)**:");
-      state.hasDefault = true;
-    }
-    return line;
+    return formatStringComplication(item, index, state);
   }
   const r = rec(item);
   let label = String(
@@ -146,7 +134,7 @@ function formatComplicationItem(
     label = `${label} (default)`;
     state.hasDefault = true;
   }
-  const detail = String(r.detail || r.text || "").trim();
+  const detail = detailText(r);
   return `- **${label}**: ${detail}`;
 }
 
@@ -210,10 +198,28 @@ export function formatFlashbacks(flashbacksRaw: unknown): string {
     const lines = flashbacksRaw
       .map((item) => {
         const s = typeof item === "string" ? item.trim() : String(item).trim();
-        return s.startsWith("- ") ? s : `- ${s}`;
+        return formatBullet(s);
       })
       .filter(Boolean);
     return `Offer these; never assume the players used them.\n${lines.join("\n")}`;
   }
   return "";
+}
+
+function formatBullet(value: string): string {
+  const trimmed = value.trim();
+  return trimmed.startsWith("- ") ? trimmed : `- ${trimmed}`;
+}
+
+function formatStringComplication(
+  item: string,
+  index: number,
+  state: { hasDefault: boolean },
+): string {
+  let line = formatBullet(item);
+  if (!state.hasDefault && index === 0) {
+    line = line.replace(/-\s*\*\*([^*]+)\*\*:/, "- **$1 (default)**:");
+    state.hasDefault = true;
+  }
+  return line;
 }
