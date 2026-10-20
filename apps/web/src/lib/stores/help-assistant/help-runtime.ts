@@ -17,6 +17,7 @@ import {
 import { helpStore } from "$lib/stores/help.svelte";
 import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
 import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+import { feedbackDialog } from "$lib/stores/ui/feedback-dialog.svelte";
 import { vault } from "$lib/stores/vault.svelte";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { waitFor } from "./help-wait-for";
@@ -96,6 +97,8 @@ export const helpActionRunner = new HelpActionRunner({
   openJournal: () => quickNoteStore.openJournal(),
   openGenerator: (generatorId) =>
     modalUIStore.openGeneratorWorkflow(generatorId ?? null),
+  // Same area as the Cif panel's own link; no conversation text is passed.
+  openFeedback: (kind) => feedbackDialog.open({ kind, area: "help" }),
   waitFor,
 });
 

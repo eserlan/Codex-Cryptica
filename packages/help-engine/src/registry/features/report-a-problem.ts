@@ -19,12 +19,32 @@ export const reportAProblem: FeatureEntry = {
         "Pick Something isn't working, I have an idea or Something else, then describe it.",
         "Check the list of what is sent, then press Send report and keep the reference you are given.",
       ],
-      actionIds: ["report-a-problem.help"],
+      actionIds: [
+        "report-a-problem.open",
+        "report-a-problem.idea",
+        "report-a-problem.help",
+      ],
     },
   ],
   helpIds: ["report-a-problem"],
   related: ["lore-oracle"],
   actions: [
+    {
+      id: "report-a-problem.open",
+      action: {
+        type: "openFeedback",
+        kind: "problem",
+        label: "Report a problem",
+      },
+    },
+    {
+      id: "report-a-problem.idea",
+      action: {
+        type: "openFeedback",
+        kind: "idea",
+        label: "Send an idea",
+      },
+    },
     {
       id: "report-a-problem.help",
       action: {

@@ -8,6 +8,7 @@ const LABEL_ROOM = 32;
 const opensDialog = (step: GuidanceStep): boolean =>
   step.type === "openHelp" ||
   step.type === "openGenerator" ||
+  step.type === "openFeedback" ||
   (step.type === "openPanel" && step.panel.startsWith("settings-"));
 
 const overlaps = (a: HighlightRect, b: HighlightRect): boolean =>
@@ -21,7 +22,8 @@ const overlaps = (a: HighlightRect, b: HighlightRect): boolean =>
  * the user can keep asking while Cif points, and only steps aside when it
  * would be in the way:
  * - on a phone, where the panel takes most of the screen;
- * - when the guide opened a dialog (a help article, the generator, Settings),
+ * - when the guide opened a dialog (a help article, the generator, Settings,
+ *   the report form),
  *   which takes over the screen and its focus;
  * - when the highlighted control, with its label, sits under the panel.
  */
