@@ -1,8 +1,8 @@
 /**
  * Business / Enterprise Generator (#3627, spec 180) — in-app vault save.
  * Applies the user's ticks to the save plan, then creates the ticked entities
- * and their connections. On any failure, everything this save created is
- * removed again, so no half-saved business is left (User Story 4).
+ * and their connections. On failure it removes everything this save created
+ * and reports when the vault could not complete that rollback (User Story 4).
  */
 
 import type {
@@ -28,7 +28,10 @@ export interface BusinessVaultGateway {
     type: string,
     label?: string,
   ): Promise<unknown>;
-  bulkDelete(ids: string[]): Promise<unknown>;
+  bulkDelete(ids: string[]): Promise<{
+    failedIds: string[];
+    cancelledIds: string[];
+  }>;
 }
 
 /** The user's choices from the save step. Anything left out keeps the plan's default. */
@@ -45,6 +48,13 @@ export interface BusinessVaultSaveResult {
   businessId: string;
   personIds: Record<string, string>;
   partyIds: Record<string, string>;
+}
+
+function incompleteRollback(cause: unknown): Error {
+  return new Error(
+    "Business save failed and rollback was incomplete; one or more created records may remain in the vault.",
+    { cause },
+  );
 }
 
 /** Returns a copy of the plan with the user's ticks, renames and source label applied. */
@@ -195,14 +205,21 @@ export async function saveBusinessToVault(
     return { businessId, personIds: state.personIds, partyIds: state.partyIds };
   } catch (err) {
     if (created.length > 0) {
-      await vault
-        .bulkDelete(created)
-        .catch((cleanupErr) =>
-          console.error(
-            "Could not remove a partial business save:",
-            cleanupErr,
-          ),
+      let cleanup: Awaited<ReturnType<BusinessVaultGateway["bulkDelete"]>>;
+      try {
+        cleanup = await vault.bulkDelete(created);
+      } catch (cleanupErr) {
+        console.error("Could not remove a partial business save:", cleanupErr);
+        throw incompleteRollback(err);
+      }
+      const remainingIds = [...cleanup.failedIds, ...cleanup.cancelledIds];
+      if (remainingIds.length > 0) {
+        console.error(
+          "Could not remove all entities from a partial business save:",
+          remainingIds,
         );
+        throw incompleteRollback(err);
+      }
     }
     throw err;
   }

@@ -24,7 +24,7 @@ function gateway(overrides: Partial<BusinessVaultGateway> = {}) {
       async (_type: string, title: string) => `ent-${++n}-${title}`,
     ),
     addConnection: vi.fn(async () => true),
-    bulkDelete: vi.fn(async () => ({ ok: true })),
+    bulkDelete: vi.fn(async () => ({ failedIds: [], cancelledIds: [] })),
     ...overrides,
   } as unknown as BusinessVaultGateway & {
     createEntity: ReturnType<typeof vi.fn>;
@@ -218,6 +218,28 @@ describe("applyBusinessChoices renames", () => {
 });
 
 describe("saveBusinessToVault rollback", () => {
+  it("reports incomplete rollback when bulkDelete resolves with failed or cancelled ids", async () => {
+    const vault = gateway({
+      addConnection: vi.fn(async () => {
+        throw new Error("write failed");
+      }),
+      bulkDelete: vi.fn(async (ids: string[]) => ({
+        failedIds: [ids[0]],
+        cancelledIds: [ids[1]],
+      })),
+    });
+    const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    await expect(saveBusinessToVault(plan(59), vault)).rejects.toThrow(
+      "rollback was incomplete",
+    );
+    expect(logged).toHaveBeenCalledWith(
+      "Could not remove all entities from a partial business save:",
+      expect.any(Array),
+    );
+    logged.mockRestore();
+  });
+
   it("rethrows the original write error even when the cleanup also fails", async () => {
     const vault = gateway({
       addConnection: vi.fn(async () => {
@@ -229,7 +251,7 @@ describe("saveBusinessToVault rollback", () => {
     });
     const logged = vi.spyOn(console, "error").mockImplementation(() => {});
     await expect(saveBusinessToVault(plan(60), vault)).rejects.toThrow(
-      "write failed",
+      "rollback was incomplete",
     );
     expect(logged).toHaveBeenCalled();
     logged.mockRestore();

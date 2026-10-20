@@ -150,6 +150,26 @@ describe("renderBusinessContent", () => {
     );
     expect(text).toContain("Excluded: Thieves.");
   });
+
+  it("strips Markdown and HTML images from every saved business field", () => {
+    const text = renderBusinessContent(
+      doc({
+        operations: {
+          ...doc().operations,
+          provides: "Repairs. ![tracking](https://example.invalid/pixel.png)",
+        },
+        leadership: {
+          ...doc().leadership,
+          trait: 'Patient. <img src="https://example.invalid/pixel.png">',
+        },
+      }),
+    );
+
+    expect(text).toContain("Repairs. tracking");
+    expect(text).toContain("Patient. ");
+    expect(text).not.toMatch(/!\[|<img\b/i);
+    expect(text).not.toContain("https://example.invalid/pixel.png");
+  });
 });
 
 describe("businessToOutput", () => {

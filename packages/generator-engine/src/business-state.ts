@@ -300,7 +300,9 @@ export function renderBusinessContent(doc: BusinessDocument): string {
   return lines
     .filter((line, i, all) => !(line === "" && all[i - 1] === ""))
     .join("\n")
-    .trim();
+    .trim()
+    .replace(/!\[([^\]]*)\](?:\([^)]*\)|\[[^\]]*\])?/g, "$1")
+    .replace(/<img\b[^>]*>/gi, "");
 }
 
 /** The public / campaign output shape for a business document. */
