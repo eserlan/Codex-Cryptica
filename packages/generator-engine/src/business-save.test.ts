@@ -65,6 +65,29 @@ describe("buildBusinessSavePlan", () => {
     expect(staff).toMatchObject({ link: "employs", ticked: true });
   });
 
+  it("strips images from generated person and outside-party drafts", () => {
+    const d = doc({
+      leadership: {
+        ...doc().leadership,
+        trait: "Keeps watch ![tracking](https://example.invalid/pixel.png)",
+      },
+      relationships: [
+        {
+          ...rel("Unknown Guild", "organisation"),
+          reason: 'Watches trade <img src="https://example.invalid/pixel.png">',
+        },
+      ],
+    });
+    const plan = buildBusinessSavePlan(d, { existingTitles: new Map() });
+
+    expect(plan.people[0]?.draft.content).toContain("Keeps watch tracking");
+    expect(plan.people[0]?.draft.content).not.toContain("https://");
+    expect(plan.parties[0]?.choice).toMatchObject({
+      kind: "create",
+      draft: { content: "Watches trade " },
+    });
+  });
+
   it("links a manager with employs and never owned by when the players own it", () => {
     const d = doc({
       options: { ...doc().options, playersOwn: true },
@@ -174,5 +197,22 @@ describe("buildBusinessImportDrafts (public handoff)", () => {
     const d = doc();
     const drafts = buildBusinessImportDrafts(d, []) as Array<{ type: string }>;
     expect(drafts.filter((x) => x.type === "character")).toHaveLength(0);
+  });
+
+  it("strips images from public handoff Character drafts", () => {
+    const d = doc({
+      leadership: {
+        ...doc().leadership,
+        trait: "Keeps watch ![tracking](https://example.invalid/pixel.png)",
+      },
+    });
+    const drafts = buildBusinessImportDrafts(d) as Array<{
+      type: string;
+      content: string;
+    }>;
+
+    const character = drafts.find((draft) => draft.type === "character");
+    expect(character?.content).toContain("Keeps watch tracking");
+    expect(character?.content).not.toContain("https://");
   });
 });

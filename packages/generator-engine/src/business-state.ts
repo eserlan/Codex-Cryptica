@@ -192,6 +192,13 @@ export interface BusinessDocument {
   fallbackSections: BusinessSectionId[];
 }
 
+/** Removes image syntax from untrusted text before it is stored as Markdown. */
+export function stripBusinessMarkdownImages(text: string): string {
+  return text
+    .replace(/!\[([^\]]*)\](?:\([^)]*\)|\[[^\]]*\])?/g, "$1")
+    .replace(/<img\b[^>]*>/gi, "");
+}
+
 /** Lowercase names of sections, for user-facing notes. */
 export const BUSINESS_SECTION_LABELS: Record<string, string> = {
   identity: "identity",
@@ -297,12 +304,12 @@ export function renderBusinessContent(doc: BusinessDocument): string {
       ...m.successAttracts.map((x) => `- ${x}`),
     );
   }
-  return lines
-    .filter((line, i, all) => !(line === "" && all[i - 1] === ""))
-    .join("\n")
-    .trim()
-    .replace(/!\[([^\]]*)\](?:\([^)]*\)|\[[^\]]*\])?/g, "$1")
-    .replace(/<img\b[^>]*>/gi, "");
+  return stripBusinessMarkdownImages(
+    lines
+      .filter((line, i, all) => !(line === "" && all[i - 1] === ""))
+      .join("\n")
+      .trim(),
+  );
 }
 
 /** The public / campaign output shape for a business document. */

@@ -6,6 +6,7 @@
 
 import {
   renderBusinessContent,
+  stripBusinessMarkdownImages,
   type BusinessDocument,
   type BusinessRelationship,
   type BusinessRelationshipLabel,
@@ -115,7 +116,9 @@ export function buildBusinessSavePlan(
     draft: {
       type: "character" as const,
       title: person.name,
-      content: `${person.role}. ${person.goal} ${person.trait}`.trim(),
+      content: stripBusinessMarkdownImages(
+        `${person.role}. ${person.goal} ${person.trait}`.trim(),
+      ),
       labels: ["business-person"],
       collision: collisionOf(person.name, existingTitles),
     },
@@ -135,7 +138,7 @@ export function buildBusinessSavePlan(
           draft: {
             type: partyEntityType(rel),
             title: rel.name,
-            content: rel.reason,
+            content: stripBusinessMarkdownImages(rel.reason),
             labels: ["business-party"],
           },
           ticked: false,
@@ -186,7 +189,9 @@ export function buildBusinessImportDrafts(
     ...people.map((p) => ({
       type: "character",
       title: p.name,
-      content: `${p.role}. ${p.goal} ${p.trait}`.trim(),
+      content: stripBusinessMarkdownImages(
+        `${p.role}. ${p.goal} ${p.trait}`.trim(),
+      ),
       labels: ["business-person"],
       status: "active",
     })),
