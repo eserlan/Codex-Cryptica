@@ -191,6 +191,11 @@ export const whatShouldANewDndPlayerLearnFirst: AnswerConfigInput = {
         reason:
           "Both help someone enter tabletop RPGs, but the existing page covers the minimum needed to start any RPG while this page focuses on the D&D player's first rules, character choices, and questions for the DM.",
       },
+      {
+        with: "answer-introduce-children-to-dnd",
+        reason:
+          "This answer prepares a new player to learn their own D&D rules and character choices; the children-focused answer helps an adult teach those rules gradually and run a first session for children aged 8 to 12.",
+      },
     ],
   },
   seo: {

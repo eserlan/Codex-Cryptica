@@ -245,6 +245,11 @@ export const canYouPlayATabletopRpgIn30MinuteSessions: AnswerConfigInput = {
         reason:
           "This page designs a complete episode for a constrained 30-minute slot; the session-length answer compares general booked lengths across play contexts.",
       },
+      {
+        with: "answer-introduce-children-to-dnd",
+        reason:
+          "This answer designs short episodes for any table with limited time; the children-focused answer uses a short adventure to suit a first D&D session for ages 8 to 12 and includes teaching and mixed-age table guidance.",
+      },
     ],
   },
   seo: {

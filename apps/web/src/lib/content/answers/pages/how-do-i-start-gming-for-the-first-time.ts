@@ -188,6 +188,11 @@ export const howDoIStartGmingForTheFirstTime: AnswerConfigInput = {
         reason:
           "This answer is for someone taking on the GM role and preparing a first session in any system; the new-player page is for a player joining a D&D game and learning how to participate during play.",
       },
+      {
+        with: "answer-introduce-children-to-dnd",
+        reason:
+          "This hub gives a general first-session path for a new GM; the children-focused answer is for an adult running D&D specifically for children aged 8 to 12, with staged rules teaching and a ready-to-run short adventure.",
+      },
     ],
   },
   seo: {

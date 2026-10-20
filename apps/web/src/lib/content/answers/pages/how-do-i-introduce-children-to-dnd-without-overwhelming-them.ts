@@ -35,7 +35,7 @@ export const howDoIIntroduceChildrenToDndWithoutOverwhelmingThem: AnswerConfigIn
           },
           {
             term: "Stage 3: the attack roll, only if a fight happens",
-            text: "An attack roll also uses a d20, but it is compared with the target's Armour Class (AC), not a DC you set for a task. If a giant fire beetle (AC 12) lunges at the party and a child swings a shortsword with a +4 attack bonus, a d20 roll of 9 gives 13, which hits. Only then roll damage: 1d6 plus 2, so a four on the six-sided die deals 6 damage. A miss deals no damage and the turn passes. Do not teach this sequence before the first fight, and do not require a d20 roll before every damage or healing effect: a spell or item does exactly what its description says.",
+            text: "An attack roll also uses a d20, but it is compared with the target's Armour Class (AC), not a DC you set for a task. If a giant fire beetle (AC 12) lunges at the party and a child swings a shortsword with a +4 attack bonus, a d20 roll of 9 gives 13, which hits. Only then roll damage: 1d6 plus 2, so a four on the six-sided die deals 6 damage. A miss deals no damage; the character can use any remaining movement or available actions before their turn ends. Do not teach this sequence before the first fight, and do not require a d20 roll before every damage or healing effect: a spell or item does exactly what its description says.",
           },
           {
             term: "Stage 4: the saving throw, when something happens to them",
@@ -78,7 +78,7 @@ export const howDoIIntroduceChildrenToDndWithoutOverwhelmingThem: AnswerConfigIn
           },
           {
             term: "Optional gentle combat, only if the children ask for a fight",
-            text: "If the group wants action, two giant fire beetles (Armour Class 12, 4 hit points each) crawl towards the lantern's glow while the children are under the bridge. The beetles want the warmth, not a battle to the death. Each child takes a turn in an order you set by asking who acts first, rather than teaching full initiative. A child can attack (shortsword +4 to hit, 1d6 plus 2 damage, as worked above), shoo a beetle with a waved cloak (Animal Handling or Intimidation check, DC 11), block its path, or feed it Mina's bread crusts to lead it away. A beetle that takes any damage or is shooed successfully scuttles off. Nobody's character is in serious danger: if a beetle hits, it deals 1d4 plus 1 damage as a nip on the boot, and you can declare the beetles frightened off after two rounds regardless of the dice.",
+            text: "If the group wants action, use these custom, simplified giant fire beetle statistics: Armour Class 12 and 4 hit points each. The beetles crawl towards the lantern's glow while the children are under the bridge. They want the warmth, not a battle to the death. Each child takes a turn in an order you set by asking who acts first, rather than teaching full initiative. A child can attack (shortsword +4 to hit, 1d6 plus 2 damage, as worked above), shoo a beetle with a waved cloak (Animal Handling or Intimidation check, DC 11), block its path, or feed it Mina's bread crusts to lead it away. A beetle that takes any damage or is shooed successfully scuttles off. Nobody's character is in serious danger: if a beetle hits, it deals 1d4 plus 1 damage as a nip on the boot, and you can declare the beetles frightened off after two rounds regardless of the dice.",
           },
         ],
       },
