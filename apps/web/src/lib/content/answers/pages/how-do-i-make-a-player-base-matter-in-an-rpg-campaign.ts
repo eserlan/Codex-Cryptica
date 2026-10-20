@@ -317,6 +317,7 @@ export const howDoIMakeAPlayerBaseMatterInAnRpgCampaign: AnswerConfigInput = {
     "what-should-players-be-able-to-upgrade-in-an-rpg-base",
     "how-do-i-upgrade-a-player-characters-weapon-without-replacing-it",
     "how-do-i-run-a-campaign-where-the-players-own-a-business",
+    "how-do-i-encourage-party-bonding-during-downtime",
   ],
   discovery: {
     id: "answer-make-player-base-matter",
