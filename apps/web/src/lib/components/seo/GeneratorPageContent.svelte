@@ -1053,6 +1053,7 @@
     "adventure-idea-generator",
     "one-shot-adventure-generator",
     "point-crawl",
+    "business",
     "language-generator",
     "heist",
     "tome",

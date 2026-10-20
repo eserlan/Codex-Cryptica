@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { businessConfig } from "$lib/services/seo/generator-config";
+  import { businessConfig, pickFrom } from "$lib/services/seo/generator-config";
   import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
   import { businessTypeAfterGenreChange } from "./business-form";
 
@@ -14,6 +14,7 @@
     clientele = $bindable(""),
     campaignContext = $bindable(""),
     playersOwn = $bindable(false),
+    onSurprise = undefined,
   }: {
     genre: string;
     businessType: string;
@@ -25,6 +26,7 @@
     clientele: string;
     campaignContext: string;
     playersOwn: boolean;
+    onSurprise?: () => void;
   } = $props();
 
   const selectClass =
@@ -37,6 +39,16 @@
   const typeChoices = $derived(
     businessConfig.typesFor(genre).map((t) => ({ value: t, label: t })),
   );
+
+  /** Randomise everything except the genre, location, clientele, context and ownership, then generate. */
+  function surprise() {
+    businessType = pickFrom(businessConfig.typesFor(genre) as string[]);
+    scale = pickFrom(businessConfig.scales);
+    legitimacy = pickFrom(businessConfig.legitimacies);
+    wealth = pickFrom(businessConfig.wealth);
+    tone = pickFrom(businessConfig.tones);
+    if (onSurprise) onSurprise();
+  }
 
   let lastGenre = genre;
   $effect(() => {
@@ -153,3 +165,15 @@
   <input type="checkbox" bind:checked={playersOwn} />
   Players own this business
 </label>
+
+<div class="pt-2 flex justify-end">
+  <button
+    type="button"
+    onclick={surprise}
+    class="flex items-center gap-1.5 px-3 py-1.5 bg-theme-surface/60 border border-theme-border/60 rounded-lg text-micro font-bold uppercase tracking-wider text-theme-text hover:bg-theme-primary hover:text-theme-on-primary hover:border-theme-primary transition-all cursor-pointer"
+    title="Randomise the business type, scale, legitimacy, wealth and tone while keeping your genre, then generate"
+  >
+    <span class="icon-[lucide--dices] w-3.5 h-3.5" aria-hidden="true"></span>
+    Surprise Me
+  </button>
+</div>
