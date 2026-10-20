@@ -190,7 +190,7 @@ function checkStaffCount(doc: BusinessDocument): BusinessIssue[] {
   if (count >= min && count <= max) return [];
   return [
     {
-      section: doc.staff[0] ? `staff:${doc.staff[0].id}` : "identity",
+      section: `staff:${doc.staff[0]?.id ?? "staff-1"}`,
       code: "staff-count",
       detail: `${count} staff does not fit a ${doc.options.scale} business (${min} to ${max}).`,
     },
@@ -445,7 +445,10 @@ export function repairBusiness(
   const { fixed: next0, rest: issues } = fixSingleLines(doc, allIssues, rng);
   if (issues.length === 0) return next0;
   let next = next0;
-  const failing = new Set<string>(issues.map((i) => i.section));
+  // A staff-count issue is fixed by fitting the roster, never by rebuilding a section.
+  const failing = new Set<string>(
+    issues.filter((i) => i.code !== "staff-count").map((i) => i.section),
+  );
   const changed = new Set<string>();
 
   for (const section of REPAIR_ORDER) {
@@ -636,4 +639,81 @@ export function findUnintroducedNames(
   const { multis, singles } = scanForNames(texts, knownNames(doc));
   const repeated = [...singles].filter(([, n]) => n >= 2).map(([w]) => w);
   return [...multis, ...repeated];
+}
+
+// --- Quality checks on AI text (soft: one retry, then accepted) --------------
+
+/** Words too common in a description to show that a feature was developed. */
+const COMMON_WORDS = new Set(
+  "their there which where while about every other these those would could should shop's owner's business keeps makes under inside outside through around before after".split(
+    " ",
+  ),
+);
+
+/** Lower-cased words of five letters or more, cut to a five-letter stem. */
+function stems(text: string): Set<string> {
+  return new Set(
+    words(text)
+      .map((w) => w.toLowerCase())
+      .filter((w) => w.length >= 5 && !COMMON_WORDS.has(w))
+      .map((w) => w.slice(0, 5)),
+  );
+}
+
+/**
+ * The unusual asset must develop the business's distinctive feature rather than
+ * invent an unrelated one. Judged by shared word stems, so it is a heuristic.
+ */
+export function distinctiveProblem(
+  distinctive: string,
+  asset: string,
+): string | null {
+  const wanted = stems(distinctive);
+  if (wanted.size === 0) return null;
+  const used = stems(asset);
+  if ([...wanted].some((s) => used.has(s))) return null;
+  return `The unusual asset does not develop the distinctive feature ("${distinctive}"). Build the asset on it (why it works, who made it, who knows), and add a second asset only as well.`;
+}
+
+/** Words that address the player characters, in any genre. */
+const ADDRESSES_PLAYERS =
+  /\b(the (player )?characters|the party|the adventurers|the heroes|the players|the pcs?|the group|the team|the investigators|the runners|the crew|your (party|characters|group|crew)|you)\b|\bPCs?\b/i;
+
+/** Every hook must offer something to the player characters. */
+export function hookAudienceProblems(hooks: readonly string[]): string[] {
+  const missing = hooks
+    .map((h, i) => [h, i + 1] as const)
+    .filter(([h]) => !ADDRESSES_PLAYERS.test(h))
+    .map(([, n]) => n);
+  return missing.length
+    ? [
+        `Hook${missing.length > 1 ? "s" : ""} ${missing.join(", ")} must be written for the player characters (the characters, the party, the crew): who approaches or hires them, what they must do, what stands in the way.`,
+      ]
+    : [];
+}
+
+const KIN_WORDS =
+  /\b(sister|brother|sibling|cousin|related|family|son|daughter|uncle|aunt|nephew|niece|father|mother|parent|married|wife|husband|spouse|kin|twin)\b/i;
+
+/** Two people sharing a surname must be said to be related. */
+export function sharedSurnameProblems(
+  people: ReadonlyArray<{ name: string; goal: string; trait: string }>,
+): string[] {
+  const bySurname = new Map<string, typeof people>();
+  for (const p of people) {
+    const parts = words(p.name);
+    if (parts.length < 2) continue;
+    const surname = parts[parts.length - 1].toLowerCase();
+    bySurname.set(surname, [...(bySurname.get(surname) ?? []), p]);
+  }
+  return [...bySurname.values()]
+    .filter(
+      (group) =>
+        group.length > 1 &&
+        !group.some((p) => KIN_WORDS.test(`${p.goal} ${p.trait}`)),
+    )
+    .map(
+      (group) =>
+        `${group.map((p) => p.name).join(" and ")} share a surname. Say in a trait that they are related, or give them different surnames.`,
+    );
 }

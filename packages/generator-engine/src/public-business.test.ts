@@ -360,7 +360,7 @@ describe("established facts in later stages", () => {
   it("asks the last stage to use the distinctive feature and keep the complication distinct", () => {
     const message = businessStageMessage("trouble", doc.options, doc);
     expect(message).toContain(`Distinctive: ${doc.identity.distinctive}`);
-    expect(message).toMatch(/distinctive feature matter/i);
+    expect(message).toMatch(/develop the distinctive feature/i);
     expect(message).toMatch(/complication a different problem/i);
   });
 

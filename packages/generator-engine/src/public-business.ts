@@ -78,11 +78,11 @@ const STAGE_INSTRUCTIONS: Record<
   (opts: ResolvedBusinessOptions) => string
 > = {
   identity: () =>
-    `Return JSON: {"identity":{"name","type","description","reputationLine","distinctive"},"operations":{"provides","payers","whyHere","mainIncome","model","size","position"},"leadership":{"name","goal","style","trait","pressure"},"staff":[{"name","role","goal","trait"}],"clientele":{"typical","valuable","undesirable","excluded"}}. Staff count must fit the scale. Make the operations specific to this kind of business: "provides" names the main goods or services in concrete terms, "model" says how it earns and whether it owns what it handles or only carries or arranges it for others (for example a trading house is a commission broker, a wholesaler or a carrier; a tavern earns from rooms and covers; a moneylender from loans and exposure), "size" gives premises, people, vehicles or stock in plain words and must agree with the staff you list (if you list no staff, say the owner works alone or with casual labour), and "position" says how it is doing financially right now. Do not use generic filler.`,
+    `Return JSON: {"identity":{"name","type","description","reputationLine","distinctive"},"operations":{"provides","payers","whyHere","mainIncome","model","size","position"},"leadership":{"name","goal","style","trait","pressure"},"staff":[{"name","role","goal","trait"}],"clientele":{"typical","valuable","undesirable","excluded"}}. Staff count must fit the scale. Make the operations specific to this kind of business: "provides" names the main goods or services in concrete terms, "model" says how it earns and whether it owns what it handles or only carries or arranges it for others (for example a trading house is a commission broker, a wholesaler or a carrier; a tavern earns from rooms and covers; a moneylender from loans and exposure), "size" gives premises, people, vehicles or stock in plain words and must agree with the staff you list (if you list no staff, say the owner works alone or with casual labour), and "position" says how it is doing financially right now. Write every field for this genre and business type: do not fall back on village-shop or merchant-house wording (families who come every season, the bigger houses) unless it fits. A staff trait must fit the person's role and must not contradict itself. Staff share a surname only if they are related, and then a trait says so. Do not use generic filler.`,
   connections: () =>
     `Return JSON: {"dependencies":[{"input","kind","ifItFails"}],"relationships":[{"name","kind","partyKind","label","reason"}],"reputation":{"perception","consequence"}}. kind for dependencies is one of materials, labour, transport, licence, magic, data, protection, finance. kind for relationships is one of competitor, supplier, patron, regulator, criminal, neighbour, faction. partyKind is organisation or individual. label must truly describe the party and be one of: competitor: "competes with"; supplier: "supplied by"; patron: "contracted by", "protected by" or "owes"; regulator: "regulated by"; criminal: "owes", "protected by", "supplied by" or "serves"; neighbour: "competes with", "serves", "supplied by" or "contracted by"; faction: "protected by", "contracted by", "regulated by", "owes" or "serves". Only describe a party as protecting the business if it really does.`,
   trouble: (opts) =>
-    `Use only the people and parties listed under Established facts; do not invent new named people. Make the business's distinctive feature matter in at least one of the pressure, asset, opportunity, complication or hooks. Keep the complication a different problem from the pressure, not another version of it. Return JSON: {"pressure","asset","secret","opportunity","complication","hooks":["2 or 3 hooks, each naming a person, party or dependency above"]${opts.playersOwn ? `,"management":{"strengths":[2 to 3 items],"liabilities":[2 to 3 items],"upgrades":[1 or more],"obligations":[1 or more, named only, never costed],"successAttracts":[1 or more]}` : ""}}. ${opts.legitimacy === "legitimate" ? "The secret must not reveal criminal activity." : "The secret may be criminal."}`,
+    `Use only the people and parties listed under Established facts; do not invent new named people. The unusual asset must develop the distinctive feature in the Established facts (why it works, who made or installed it, who knows about it); a second asset may be added, but never replace it. Write each hook for the player characters, not for the business's own people: say who approaches or hires them, what they must do, what stands in their way and, if possible, a deadline. Keep the complication a different problem from the pressure. Do not default to debt, a rival and an inspection: choose the trouble that fits the business's wealth and legitimacy, which may be the problems of success, growth, reputation or succession. Return JSON: {"pressure","asset","secret","opportunity","complication","hooks":["2 or 3 hooks, each naming a person, party or dependency above"]${opts.playersOwn ? `,"management":{"strengths":[2 to 3 items],"liabilities":[2 to 3 items],"upgrades":[1 or more],"obligations":[1 or more, named only, never costed],"successAttracts":[1 or more]}` : ""}}. ${opts.legitimacy === "legitimate" ? "The secret must not reveal criminal activity." : "The secret may be criminal."}`,
 };
 
 /**
@@ -176,68 +176,103 @@ export type BusinessIdentityStage = Pick<
   "identity" | "operations" | "leadership" | "staff" | "clientele"
 >;
 
+const ID_FIELDS = [
+  "name",
+  "type",
+  "description",
+  "reputationLine",
+  "distinctive",
+] as const;
+const OP_FIELDS = [
+  "provides",
+  "payers",
+  "whyHere",
+  "mainIncome",
+  "model",
+  "size",
+  "position",
+] as const;
+const CLIENTELE_FIELDS = ["typical", "valuable", "undesirable"] as const;
+
+/**
+ * Reads each field from the reply. A field the reply lacks comes from `base`
+ * (and `filled` is set); without a base, a missing field fails the read.
+ */
+function readFields<K extends string>(
+  src: JsonObject | null,
+  keys: readonly K[],
+  base?: Record<K, string>,
+): { values: Record<K, string>; filled: boolean } | null {
+  const values = {} as Record<K, string>;
+  let filled = false;
+  for (const k of keys) {
+    const v = str(src, k);
+    if (v) values[k] = v;
+    else if (base?.[k]) {
+      values[k] = base[k];
+      filled = true;
+    } else return null;
+  }
+  return { values, filled };
+}
+
+/** Which parts of step one were filled from the base because the reply lacked them. */
+export type IdentityFilled = Array<"identity" | "operations" | "clientele">;
+
+/**
+ * Reads step one. With a `base` (the local document), a reply that has the
+ * business, its leader and a description keeps everything it wrote and takes only
+ * the missing fields from the base; without one, every field is required.
+ */
+export function parseBusinessIdentityFilled(
+  reply: string,
+  base?: BusinessIdentityStage,
+): { stage: BusinessIdentityStage; filled: IdentityFilled } | null {
+  const data = readJsonObject(reply);
+  const identity = obj(data, "identity");
+  const leader = obj(data, "leadership");
+  if (!identity || !leader) return null;
+  if (base && (!str(identity, "name") || !str(identity, "description")))
+    return null;
+  const id = readFields(identity, ID_FIELDS, base?.identity);
+  const ops = readFields(obj(data, "operations"), OP_FIELDS, base?.operations);
+  const cl = readFields(
+    obj(data, "clientele"),
+    CLIENTELE_FIELDS,
+    base?.clientele,
+  );
+  const leadership = person(
+    {
+      ...leader,
+      role: str(leader, "role") || "owner",
+    },
+    "lead",
+  );
+  if (!id || !ops || !cl || !leadership) return null;
+  const excluded = str(obj(data, "clientele"), "excluded");
+  const filled: IdentityFilled = [];
+  if (id.filled) filled.push("identity");
+  if (ops.filled) filled.push("operations");
+  if (cl.filled) filled.push("clientele");
+  return {
+    stage: {
+      identity: id.values as BusinessIdentityStage["identity"],
+      operations: ops.values as BusinessIdentityStage["operations"],
+      leadership,
+      staff: arr(data, "staff")
+        .map((p, i) => person(p, `staff-${i + 1}`))
+        .filter((p): p is BusinessPerson => p !== null),
+      clientele: { ...cl.values, ...(excluded ? { excluded } : {}) },
+    },
+    filled,
+  };
+}
+
 /** Reads step one. Returns null unless every required field is present. */
 export function parseBusinessIdentity(
   reply: string,
 ): BusinessIdentityStage | null {
-  const data = readJsonObject(reply);
-  const identity = obj(data, "identity");
-  const operations = obj(data, "operations");
-  const leader = obj(data, "leadership");
-  const clientele = obj(data, "clientele");
-  if (!identity || !operations || !leader || !clientele) return null;
-  const idFields = [
-    "name",
-    "type",
-    "description",
-    "reputationLine",
-    "distinctive",
-  ] as const;
-  const opFields = [
-    "provides",
-    "payers",
-    "whyHere",
-    "mainIncome",
-    "model",
-    "size",
-    "position",
-  ] as const;
-  if (idFields.some((k) => !str(identity, k))) return null;
-  if (opFields.some((k) => !str(operations, k))) return null;
-  const leadership = person(
-    {
-      ...leader,
-      role: leader && str(leader, "role") ? str(leader, "role") : "owner",
-    },
-    "lead",
-  );
-  if (!leadership) return null;
-  const excluded = str(clientele, "excluded");
-  const parsed = {
-    identity: Object.fromEntries(
-      idFields.map((k) => [k, str(identity, k)]),
-    ) as BusinessIdentityStage["identity"],
-    operations: Object.fromEntries(
-      opFields.map((k) => [k, str(operations, k)]),
-    ) as BusinessIdentityStage["operations"],
-    leadership,
-    staff: arr(data, "staff")
-      .map((p, i) => person(p, `staff-${i + 1}`))
-      .filter((p): p is BusinessPerson => p !== null),
-    clientele: {
-      typical: str(clientele, "typical"),
-      valuable: str(clientele, "valuable"),
-      undesirable: str(clientele, "undesirable"),
-      ...(excluded ? { excluded } : {}),
-    },
-  };
-  if (
-    !parsed.clientele.typical ||
-    !parsed.clientele.valuable ||
-    !parsed.clientele.undesirable
-  )
-    return null;
-  return parsed;
+  return parseBusinessIdentityFilled(reply)?.stage ?? null;
 }
 
 export interface BusinessConnectionsStage {

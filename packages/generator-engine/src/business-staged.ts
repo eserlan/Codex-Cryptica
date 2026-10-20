@@ -14,14 +14,17 @@ import {
 } from "./business-local";
 import {
   checkBusiness,
+  sharedSurnameProblems,
   sizeStaffProblem,
+  distinctiveProblem,
+  hookAudienceProblems,
   findUnintroducedNames,
   repairBusiness,
 } from "./business-checks";
 import {
   businessStageMessage,
   parseBusinessConnections,
-  parseBusinessIdentity,
+  parseBusinessIdentityFilled,
   parseBusinessTrouble,
 } from "./public-business";
 import {
@@ -106,15 +109,25 @@ async function identityStage(
   progress.set("identity", "active");
   const result = await askChecked(
     turn,
-    parseBusinessIdentity,
+    (reply) =>
+      parseBusinessIdentityFilled(reply, {
+        identity: doc.identity,
+        operations: doc.operations,
+        leadership: doc.leadership,
+        staff: doc.staff,
+        clientele: doc.clientele,
+      }),
     (data) => ({
-      hard: [
-        ...staffProblems(data.staff.length, opts),
-        ...[sizeStaffProblem(data.operations.size, data.staff.length)].filter(
-          (p): p is string => p !== null,
-        ),
+      hard: [],
+      // Mismatches are asked about once, then repaired in place by the final
+      // check, so a wrong count never throws away the whole stage.
+      soft: [
+        ...staffProblems(data.stage.staff.length, opts),
+        ...[
+          sizeStaffProblem(data.stage.operations.size, data.stage.staff.length),
+        ].filter((p): p is string => p !== null),
+        ...sharedSurnameProblems([data.stage.leadership, ...data.stage.staff]),
       ],
-      soft: [],
     }),
     {
       signal,
@@ -132,7 +145,8 @@ async function identityStage(
     progress.set("identity", "fallback", ONE_PASS_DETAIL);
     return doc;
   }
-  const d = result.data;
+  const d = result.data.stage;
+  failed.push(...result.data.filled);
   progress.set("identity", "done", result.retried ? FIXING_DETAIL : undefined);
   return {
     ...doc,
@@ -228,15 +242,21 @@ async function troubleStage(
     (reply) => parseBusinessTrouble(reply, opts.playersOwn),
     (data) => ({
       hard: secretProblems(data.secret, opts.legitimacy),
-      soft: unintroducedNameProblems({ ...doc, ...data }, [
-        data.pressure,
-        data.asset,
-        data.secret,
-        data.opportunity,
-        data.complication,
-        ...data.hooks,
-        ...Object.values(data.management ?? {}).flat(),
-      ]),
+      soft: [
+        ...unintroducedNameProblems({ ...doc, ...data }, [
+          data.pressure,
+          data.asset,
+          data.secret,
+          data.opportunity,
+          data.complication,
+          ...data.hooks,
+          ...Object.values(data.management ?? {}).flat(),
+        ]),
+        ...[distinctiveProblem(doc.identity.distinctive, data.asset)].filter(
+          (p): p is string => p !== null,
+        ),
+        ...hookAudienceProblems(data.hooks),
+      ],
     }),
     { signal, unreadable: "the reply was not a usable trouble stage" },
   );

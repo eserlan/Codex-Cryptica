@@ -4,6 +4,9 @@ import {
   findUnintroducedNames,
   repairBusiness,
   sizeStaffProblem,
+  distinctiveProblem,
+  hookAudienceProblems,
+  sharedSurnameProblems,
 } from "./business-checks";
 import { generateBusinessLocal } from "./business-local";
 import type { BusinessDocument } from "./business-state";
@@ -457,4 +460,112 @@ describe("findUnintroducedNames", () => {
       expect(findUnintroducedNames(doc), `seed ${seed}`).toEqual([]);
     }
   });
+});
+
+describe("the unusual asset develops the distinctive feature", () => {
+  const jammer = "A signal jammer keeps the shop off the city's sensors.";
+  it.each([
+    [
+      "an unrelated asset",
+      "The business has a network of minor customers.",
+      true,
+    ],
+    [
+      "an asset built on the feature",
+      "The jammer was fitted by a defector, and the Civic Standards Office does not know the blind spot it leaves is itself detectable.",
+      false,
+    ],
+    [
+      "an asset that mentions the signal",
+      "Its signal blackout is the reason the shelter uses the premises.",
+      false,
+    ],
+  ])("%s", (_label, asset, flagged) => {
+    expect(distinctiveProblem(jammer, asset) !== null).toBe(flagged);
+  });
+
+  it("says nothing when the feature has no distinctive words to look for", () => {
+    expect(distinctiveProblem("A big old one.", "Anything at all.")).toBeNull();
+  });
+});
+
+describe("hooks are written for the player characters", () => {
+  it("flags hooks between the business's own people (the review's examples)", () => {
+    const problems = hookAudienceProblems([
+      "Dace Ashcombe asks Lumen Okafor to recover evidence from a safe house.",
+      "Mara Vey offers Halle Marrow a large recovery job.",
+    ]);
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain("1, 2");
+  });
+
+  it.each([
+    "Dace hires the characters to retrieve evidence before the inspection in two days.",
+    "The party is offered a share if they can clear the shelter's name.",
+    "A courier slips a note to the crew: the inspector is on the take.",
+    "You are asked to carry a sealed ledger across the district.",
+  ])("accepts a hook that addresses the players: %s", (hook) => {
+    expect(hookAudienceProblems([hook])).toEqual([]);
+  });
+});
+
+describe("a shared surname needs a stated relationship", () => {
+  const person = (name: string, trait = "Quiet.") => ({
+    name,
+    goal: "Get paid.",
+    trait,
+  });
+  it("flags two people sharing a surname with no stated tie", () => {
+    expect(
+      sharedSurnameProblems([person("Halle Marrow"), person("Brin Marrow")]),
+    ).toHaveLength(1);
+  });
+  it("accepts a stated relationship", () => {
+    expect(
+      sharedSurnameProblems([
+        person("Halle Marrow"),
+        person("Brin Marrow", "Halle's younger brother, and it shows."),
+      ]),
+    ).toEqual([]);
+  });
+  it("accepts different surnames", () => {
+    expect(
+      sharedSurnameProblems([person("Halle Marrow"), person("Brin Okafor")]),
+    ).toEqual([]);
+  });
+});
+
+describe("the regression matrix of businesses (offline consistency)", () => {
+  const matrix: Array<[string, string]> = [
+    ["Tavern", "Classic Fantasy"],
+    ["Blacksmith", "Classic Fantasy"],
+    ["Moneylender", "Classic Fantasy"],
+    ["Fixer front", "Cyberpunk / Corporate"],
+    ["Bioengineering clinic", "Cyberpunk / Corporate"],
+    ["Starship repair yard", "Sci-Fi / Space Opera"],
+    ["Newspaper", "Steampunk"],
+    ["Temple hospice", "Vampire / Gothic Noir"],
+  ];
+  it.each(matrix)(
+    "%s (%s) is consistent at every scale",
+    (businessType, genre) => {
+      for (const scale of [
+        "tiny",
+        "small",
+        "established",
+        "regional",
+        "major",
+      ] as const) {
+        for (let seed = 1; seed <= 10; seed++) {
+          const doc = generateBusinessLocal(
+            { genre, businessType, scale },
+            seeded(seed),
+          );
+          const label = `${businessType} ${scale} ${seed}`;
+          expect(checkBusiness(doc), label).toEqual([]);
+          expect(findUnintroducedNames(doc), label).toEqual([]);
+        }
+      }
+    },
+  );
 });

@@ -74,14 +74,15 @@ const connectionsReply = JSON.stringify({
 
 const troubleReply = JSON.stringify({
   pressure: "The grid keeps failing.",
-  asset: "A generator nobody else can afford.",
+  asset:
+    "A clean surgical kit that nobody else in the district can afford, kept sterile by a rota only the staff know.",
   secret: "A back door for patients the city has lost track of.",
   opportunity: "A corporate medic wants a discreet partner.",
   complication: "A drone followed a courier home.",
   hooks: [
-    "Nadia Vale needs a courier to the blackout block tonight.",
-    "Helix Medical Corp is buying up the clinic's regulars.",
-    "Black-clinic parts are running out before the next shift.",
+    "Nadia Vale hires the party to get a courier to the blackout block tonight.",
+    "Helix Medical Corp offers the characters a quiet payment to steer the clinic's regulars its way.",
+    "The crew must find Black-clinic parts before the next shift runs dry.",
   ],
 });
 
@@ -129,6 +130,107 @@ describe("generateBusinessStaged", () => {
     expect(calls[1]).toContain("not usable");
     expect(doc.identity.name).toBe("Chrome Lily");
     expect(doc.fallbackSections).toEqual([]);
+  });
+
+  it("keeps the AI identity when it lists too many staff, and trims the roster", async () => {
+    const reply = JSON.parse(identityReply);
+    reply.staff = ["Ann Ash", "Bo Birch", "Cy Cole", "Di Dale"].map((name) => ({
+      name,
+      role: "Technician",
+      goal: "Save for a flat.",
+      trait: "Quick hands.",
+    }));
+    const tooMany = JSON.stringify(reply);
+    const { send, calls } = queue(
+      tooMany,
+      tooMany,
+      connectionsReply,
+      troubleReply,
+    );
+    const doc = await generateBusinessStaged(OPTS, { send, rng: seeded(12) });
+    expect(calls[1]).toContain("between 1 and 2 key staff");
+    expect(doc.identity.name).toBe("Chrome Lily");
+    expect(doc.staff.length).toBeLessThanOrEqual(2);
+    expect(doc.fallbackSections).not.toContain("identity");
+  });
+
+  it("keeps the AI identity when it lists no staff, and tops the roster up", async () => {
+    const none = JSON.stringify({ ...JSON.parse(identityReply), staff: [] });
+    const { send } = queue(none, none, connectionsReply, troubleReply);
+    const doc = await generateBusinessStaged(OPTS, { send, rng: seeded(12) });
+    expect(doc.identity.name).toBe("Chrome Lily");
+    expect(doc.staff.length).toBeGreaterThanOrEqual(1);
+    expect(doc.fallbackSections).not.toContain("identity");
+    expect(checkBusiness(doc)).toEqual([]);
+  });
+
+  it("fills only the operations fields the reply left out, and says so", async () => {
+    const reply = JSON.parse(identityReply);
+    delete reply.operations.model;
+    delete reply.operations.size;
+    delete reply.operations.position;
+    const { send, calls } = queue(
+      JSON.stringify(reply),
+      connectionsReply,
+      troubleReply,
+    );
+    const doc = await generateBusinessStaged(OPTS, { send, rng: seeded(12) });
+    expect(calls).toHaveLength(3);
+    expect(doc.identity.name).toBe("Chrome Lily");
+    expect(doc.operations.provides).toBe("Implant repair.");
+    expect(doc.operations.size).not.toBe("");
+    expect(doc.fallbackSections).toContain("operations");
+  });
+
+  it("retries once when two staff share a surname with no stated tie, then keeps the reply", async () => {
+    const reply = JSON.parse(identityReply);
+    reply.leadership.name = "Nadia Vale";
+    reply.staff[0].name = "Tomo Vale";
+    const shared = JSON.stringify(reply);
+    const { send, calls } = queue(
+      shared,
+      shared,
+      connectionsReply,
+      troubleReply,
+    );
+    const doc = await generateBusinessStaged(OPTS, { send, rng: seeded(12) });
+    expect(calls[1]).toContain("share a surname");
+    expect(doc.staff[0].name).toBe("Tomo Vale");
+    expect(doc.fallbackSections).not.toContain("identity");
+  });
+
+  it("retries when the asset ignores the distinctive feature or the hooks ignore the players", async () => {
+    const reply = JSON.parse(troubleReply);
+    reply.asset = "A network of minor customers.";
+    reply.hooks = [
+      "Nadia Vale asks Tomo Ruiz to recover a package.",
+      "Helix Medical Corp is buying up the clinic's regulars.",
+    ];
+    const weak = JSON.stringify(reply);
+    const { send, calls } = queue(
+      identityReply,
+      connectionsReply,
+      weak,
+      troubleReply,
+    );
+    const doc = await generateBusinessStaged(OPTS, { send, rng: seeded(12) });
+    const retry = calls[3];
+    expect(retry).toContain("does not develop the distinctive feature");
+    expect(retry).toContain("written for the player characters");
+    expect(doc.asset).toContain("surgical kit");
+  });
+
+  it("keeps a trouble reply that still ignores the players after the retry", async () => {
+    const reply = JSON.parse(troubleReply);
+    reply.hooks = [
+      "Nadia Vale asks Tomo Ruiz to recover a package.",
+      "Helix Medical Corp is buying up the clinic's regulars.",
+    ];
+    const weak = JSON.stringify(reply);
+    const { send } = queue(identityReply, connectionsReply, weak, weak);
+    const doc = await generateBusinessStaged(OPTS, { send, rng: seeded(12) });
+    expect(doc.hooks[0]).toContain("Nadia Vale asks");
+    expect(doc.fallbackSections).not.toContain("hooks");
   });
 
   it("retries when the size claims regular staff but none are listed", async () => {

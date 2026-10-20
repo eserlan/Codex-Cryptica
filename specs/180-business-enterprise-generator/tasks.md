@@ -228,6 +228,7 @@ description: "Task list for the Business / Enterprise Generator"
 - [ ] T052 Run the `codex-review` specialist review on the branch, and address verified findings.
 - [x] T054 Review follow-up (FR-016 to FR-018): operations `model`/`size`/`position`; established-facts block for later stages; unintroduced-name check with one retry and `warnings`; relationship labels validated against `BUSINESS_ALLOWED_LABELS`; warnings recomputed after a section rewrite.
 - [x] T055 Review follow-up 2 (FR-019, FR-020): size-versus-staff check with retry and targeted repair; size wording by scale; distinctive feature in the facts and trouble prompt.
+- [x] T056 Review follow-up 3 (FR-021 to FR-023): tolerant identity stage, distinctive-feature and player-facing-hook checks, shared-surname check, cross-genre matrix test.
 - [ ] T053 Run the browser walkthrough in `quickstart.md` sections 3 and 4. Check SC-004: with default inputs, opening the generator to a saved business on the graph takes under 1 minute and 4 clicks.
 
 ---
