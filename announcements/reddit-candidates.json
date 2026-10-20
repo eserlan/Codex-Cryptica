@@ -1,5 +1,5 @@
 {
-  "updated_at": 1792492804,
+  "updated_at": 1792494414,
   "candidates": [
     {
       "id": "reddit-38926756319-cif-now-flies-to-what-he-points-at",
@@ -32,14 +32,14 @@
       "created_at": 1792425463
     },
     {
-      "id": "reddit-39407138621-my-heists-kept-contradicting-themselves-",
-      "title": "My heists kept contradicting themselves once the alarm started moving",
-      "body": "I kept prepping heists where the score, the patrol timing and the alarm track did not line up. Halfway through the table I was patching holes instead of running the job.\n\nI built a staged Heist generator that checks each step as you go, so placement, route timing and outcome stay consistent.\n\nYou can try it here: https://codexcryptica.com/generators/heist\n\nIt builds:\n- a concrete score, what is taken and the practical catch that makes it awkward to move\n- three security rings, each with more than one way through\n- a five-state alarm track that escalates on failure rather than ending the scene\n- a compromised getaway whose original route has already failed\n- casing notes that carry forward instead of resetting between stages\n\nThe audit keeps the structure sound but it does not play the NPCs for you. Improvised player plans will still need a ruling at the table.\n\nWhat part of a heist usually unravels first for you, the layout, the timing, or the getaway?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/screenshots/generator-heist.jpg)",
-      "url": "https://codexcryptica.com/generators/heist",
-      "image_url": "https://assets.codexcryptica.com/screenshots/generator-heist.jpg",
+      "id": "reddit-39407138621-i-wanted-a-forbidden-book-that-still-mad",
+      "title": "I wanted a forbidden book that still made sense on page three",
+      "body": "My haunted books read well in the first paragraph then fell apart when players asked a second question. The lore said one thing, the supposed facts said another, and the excerpt text felt like it came from a different book.\n\nI built a staged Tome generator that drafts a forbidden book in steps and keeps lore, ground truth and sample text aligned so you can drop it straight into a campaign.\n\nIt is in the app under Generators as Tome / Forbidden Book, staged so you can refine as you go.\n\nIt gives you:\n- a ground-truth history, what the book really is and who made it\n- a cover story and rumours, what most people believe it is\n- genre-faithful excerpt text you can hand to players as is\n- physical details and handling, how it looks and why it is hard to keep\n- hooks for where it has been and who wants it back\n\nIt leans toward usable prop text over purple prose. If you want a fully invented language fragment inside the excerpt, you will still need to add it yourself.\n\nHow do you handle books at your table, as a handout, a summary, or something players can actually read?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-39407138621-0.png)",
+      "url": "https://codexcryptica.com/generators/tome",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-39407138621-0.png",
       "source_id": "39407138621",
       "status": "approved",
-      "created_at": 1792492804
+      "created_at": 1792494414
     }
   ]
 }
