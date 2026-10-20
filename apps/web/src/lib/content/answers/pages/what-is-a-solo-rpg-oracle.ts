@@ -173,6 +173,7 @@ export const whatIsASoloRpgOracle: AnswerConfigInput = {
     "what-rpg-system-is-good-for-solo-play",
     "how-do-you-generate-useful-rpg-rumours",
     "how-do-you-keep-a-solo-rpg-from-feeling-random",
+    "how-can-i-practise-being-a-dungeon-master-without-a-group",
   ],
   discovery: {
     parentCluster: "solo-rpg",

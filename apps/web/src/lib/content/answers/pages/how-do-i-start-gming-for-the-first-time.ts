@@ -150,6 +150,7 @@ export const howDoIStartGmingForTheFirstTime: AnswerConfigInput = {
     "how-do-i-get-my-friends-interested-in-playing-dnd",
     "how-do-i-roleplay-npcs-if-im-not-good-at-acting",
     "how-do-i-introduce-children-to-dnd-without-overwhelming-them",
+    "how-can-i-practise-being-a-dungeon-master-without-a-group",
   ],
   discovery: {
     id: "answer-first-time-gm-hub",
@@ -192,6 +193,11 @@ export const howDoIStartGmingForTheFirstTime: AnswerConfigInput = {
         with: "answer-introduce-children-to-dnd",
         reason:
           "This hub gives a general first-session path for a new GM; the children-focused answer is for an adult running D&D specifically for children aged 8 to 12, with staged rules teaching and a ready-to-run short adventure.",
+      },
+      {
+        with: "answer-practise-dm-without-a-group",
+        reason:
+          "This hub guides a new GM through preparing a first session for a group that exists; the linked answer helps an aspiring GM rehearse DM mechanics and session flow alone before assembling a group.",
       },
     ],
   },

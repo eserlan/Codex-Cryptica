@@ -241,6 +241,7 @@ export const howDoIPrepareADndSession: AnswerConfigInput = {
     "what-are-the-pros-and-cons-of-becoming-a-dungeon-master",
     "how-do-i-track-monsters-initiative-and-hit-points-in-dnd-combat",
     "how-do-i-run-secret-doors-in-dnd",
+    "how-can-i-practise-being-a-dungeon-master-without-a-group",
   ],
   discovery: {
     id: "answer-prepare-dnd-session",
