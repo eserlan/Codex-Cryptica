@@ -473,6 +473,7 @@ export const generatorEntries: DiscoveryEntryInput[] = [
       "dnd point crawl generator",
       "random point crawl",
       "point crawl map generator",
+      "point crawl maker",
     ],
     userJob: "create",
     uniqueValue:
@@ -720,7 +721,11 @@ export const generatorEntries: DiscoveryEntryInput[] = [
     pageKind: "generator",
     canonicalPath: "/generators/fantasy-names",
     primaryIntent: "fantasy name generator",
-    intentAliases: ["fantasy character name generator"],
+    intentAliases: [
+      "fantasy character name generator",
+      "random fantasy name generator",
+      "fantasy names generator",
+    ],
     userJob: "create",
     uniqueValue:
       "Fantasy-specific naming with cultural styles, for readers whose query is genre-qualified.",
@@ -790,6 +795,7 @@ export const generatorEntries: DiscoveryEntryInput[] = [
       "rpg night sky generator",
       "star lore generator",
       "fantasy constellation names",
+      "fantasy constellation generator",
     ],
     userJob: "create",
     uniqueValue:
