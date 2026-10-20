@@ -188,6 +188,11 @@ export const howDoIStartGmingForTheFirstTime: AnswerConfigInput = {
         reason:
           "This answer is for someone taking on the GM role and preparing a first session in any system; the new-player page is for a player joining a D&D game and learning how to participate during play.",
       },
+      {
+        with: "answer-practise-dm-without-a-group",
+        reason:
+          "This hub guides a new GM through preparing a first session for a group that exists; the linked answer helps an aspiring GM rehearse DM mechanics and session flow alone before assembling a group.",
+      },
     ],
   },
   seo: {
