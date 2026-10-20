@@ -72,7 +72,7 @@ export const howDoIGivePlayersImmersiveHandoutsInAnOnlineRpg: AnswerConfigInput 
           },
           {
             term: "The handout or image tool in your virtual tabletop, if you use one",
-            text: "Showing an image to the table from inside the tool you already run the game in keeps eyes in one window. Learn only the show to players control for this; ignore journals, permissions systems and automation until a real need appears. Groups that play by voice and chat can skip this entirely.",
+            text: "Showing an image to the table from inside the tool you already run the game in keeps eyes in one window. Learn the show to players control and check its audience before revealing an image; leave advanced journal organisation and automation until needed. Groups that play by voice and chat can skip this entirely.",
           },
           {
             term: "A view-only document or folder link",
@@ -114,24 +114,20 @@ export const howDoIGivePlayersImmersiveHandoutsInAnOnlineRpg: AnswerConfigInput 
         kind: "example",
         heading: "Worked example: a mysterious key, revealed in two parts",
         paragraphs: [
-          "The party searches a drowned toll house. The rogue's character finds a brass key in an oilcloth wrap. You want the table to feel the find, and the key carries an inscription that only makes sense to that character's old guild. Here are two ways to run the next two minutes.",
+          "The rogue's character finds a brass key in a drowned toll house. At that moment, post the same readable description in either version: 'A heavy brass key, green at the edges, warm from the flooded room.' Its guild inscription reads: 'For the keeper of the low gate. Do not knock.'",
         ],
         items: [
           {
-            term: "The flat version",
-            text: "You upload a three page PDF to the shared channel containing a drawing of the key, its full history, the inscription and the name of the door it opens. Everyone reads at different speeds, someone on a phone cannot open page two, and the rogue's player has nothing to do with the discovery because the whole table already knows the secret. The moment passes as administration.",
+            term: "Public translation",
+            text: "Post the inscription in the shared channel at once. Everyone knows it immediately, so the finder cannot choose when or whether to share it.",
           },
           {
-            term: "The two part reveal",
-            text: "In the shared channel you post one image, brass-key.png, with a short line: a heavy brass key, green at the edges, warm from the flooded room. Then you send the rogue's player a private message: on the bow of the key, in guild cut: 'For the keeper of the low gate. Do not knock.' You say nothing more. The player reads it, sits on it for a moment, then tells the table the key is guild marked and refuses, for now, to say what it says.",
+            term: "Private translation",
+            text: "Send the same inscription privately to the rogue's player at the same moment. They may share it immediately, paraphrase it or withhold it; any of these is a valid response.",
           },
           {
-            term: "What happens next",
-            text: "At the end of the session you add the image and the typed description to your handout channel or folder as the party's record, without the inscription. If the rogue later shares it, that player posts the inscription themselves, in character or out, and you add it to the record then. The object now has an owner, a secret and a history at the table.",
-          },
-          {
-            term: "Why it works",
-            text: "The public image gave everyone the same moment of discovery. The private message gave one player information their character alone had, and a real choice about sharing it, which produced roleplay instead of a reading exercise. The record filed afterwards means the key is findable next month, while the secret stayed secret until its owner spent it.",
+            term: "Public record",
+            text: "File the description where the party can return to it. Add the inscription only in the form the finder has shared it; leave it out while it remains private.",
           },
         ],
       },
@@ -181,6 +177,7 @@ export const howDoIGivePlayersImmersiveHandoutsInAnOnlineRpg: AnswerConfigInput 
       },
     ],
     relatedAnswers: [
+      "how-do-i-run-my-first-online-tabletop-rpg-session",
       "should-i-share-worldbuilding-notes-with-my-players",
       "how-to-write-an-in-world-newspaper-for-an-rpg",
       "how-do-i-run-a-successful-session-0",
@@ -206,6 +203,7 @@ export const howDoIGivePlayersImmersiveHandoutsInAnOnlineRpg: AnswerConfigInput 
       uniqueValue:
         "A delivery workflow for online handouts that splits each prop into a public reveal, a private part for its finder and a lasting party record, with format choices by prop type, spoiler checks for filenames and previews, and a worked key reveal where the finder chooses whether to share the inscription.",
       relatedIntents: [
+        "answer-first-online-tabletop-rpg-session",
         "answer-in-world-newspaper",
         "answer-share-worldbuilding-notes",
         "answer-session-zero",
