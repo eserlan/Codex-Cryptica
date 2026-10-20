@@ -56,6 +56,12 @@ describe("help documentation workflow retrieval", () => {
     ["How do I report a bug?", "report-a-problem"],
     ["Something is broken, how do I tell you?", "report-a-problem"],
     ["Where can I send feedback?", "report-a-problem"],
+    ["Can I report an error", "report-a-problem"],
+    ["I got an error", "report-a-problem"],
+    ["The app crashed", "report-a-problem"],
+    ["Something went wrong", "report-a-problem"],
+    // A template listing report still belongs to Sharing Templates.
+    ["How do I report a template listing?", "sharing-templates"],
     ["I have an idea for a feature", "report-a-problem"],
     ["How do I roll with advantage?", "dice-roller"],
     ["How do I roll a d20 with a modifier?", "dice-roller"],
@@ -83,6 +89,17 @@ describe("help documentation workflow retrieval", () => {
     const result = retrieve(question, bundle, context);
     expect(result.noMatch).toBe(false);
     expect(result.chunks.map(({ chunk }) => chunk.helpId)).toContain(helpId);
+  });
+
+  it.each([
+    "Can I report an error",
+    "Can I report a bug",
+    "I got an error",
+    "The app crashed",
+  ])("ranks the report form first for %s", (question) => {
+    // "report" alone also matches template listings and entity reports.
+    const result = retrieve(question, bundle, context);
+    expect(result.chunks[0]?.chunk.helpId).toBe("report-a-problem");
   });
 
   it("does not invent instructions for an unrelated task", () => {
