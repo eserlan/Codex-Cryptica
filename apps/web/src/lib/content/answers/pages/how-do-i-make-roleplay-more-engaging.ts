@@ -244,6 +244,7 @@ export const howDoIMakeRoleplayMoreEngaging: AnswerConfigInput = {
     "how-do-you-organise-npc-relationships",
     "how-do-i-roleplay-npcs-if-im-not-good-at-acting",
     "how-do-i-handle-players-who-keep-trying-to-recruit-defeated-enemies",
+    "how-do-i-encourage-party-bonding-during-downtime",
   ],
   discovery: {
     id: "answer-make-roleplay-more-engaging",
