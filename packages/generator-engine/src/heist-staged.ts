@@ -45,7 +45,6 @@ import {
 import {
   buildHeistAuditPrompt,
   buildHeistRepairPrompt,
-  canonicalOptionLabels,
   parseHeistAuditResponse,
   parseHeistResponse,
   type HeistGeneratorOptions,
@@ -58,6 +57,28 @@ import { NAME_BAN_PROMPT } from "./public-npc";
 import { bannedNamesIn } from "./naming-policy";
 import type { PublicGeneratorOutput } from "./public-generator-adapters";
 import { type Rng } from "./random-utils";
+
+import { text, rec } from "./heist-staged-values";
+import {
+  formatCasing,
+  formatSecurityRings,
+  getRingText,
+  formatAlarmTrack,
+  formatComplications,
+  formatGetaway,
+  formatFlashbacks,
+} from "./heist-staged-formatters";
+import { assembleHeist } from "./heist-staged-assembly";
+export {
+  formatCasing,
+  getRingText,
+  formatSecurityRings,
+  formatAlarmTrack,
+  formatComplications,
+  formatGetaway,
+  formatFlashbacks,
+} from "./heist-staged-formatters";
+export { assembleHeist, formatQuickReference } from "./heist-staged-assembly";
 
 export type HeistStageId = "objective" | "security" | "response" | "coherence";
 
@@ -102,295 +123,6 @@ export function heistStatsLog(stats: HeistStagedStats) {
     reviewIssueCount: stats.reviewIssues.length,
     remainingIssueCount: stats.remainingIssues.length,
   };
-}
-
-const text = (v: unknown): string => {
-  if (typeof v === "string") return v.trim();
-  if (Array.isArray(v)) {
-    return v
-      .filter((x): x is string => typeof x === "string")
-      .join(" ")
-      .trim();
-  }
-  return "";
-};
-
-const arr = (v: unknown): unknown[] => (Array.isArray(v) ? v : []);
-const rec = (v: unknown): JsonObject =>
-  v && typeof v === "object" && !Array.isArray(v) ? (v as JsonObject) : {};
-
-// ---------------------------------------------------------------------------
-// Formatters & Normalizers
-// ---------------------------------------------------------------------------
-
-export function formatCasing(casingRaw: unknown): string {
-  if (!casingRaw) return "";
-  if (typeof casingRaw === "string") {
-    return casingRaw.trim();
-  }
-  if (Array.isArray(casingRaw)) {
-    return casingRaw
-      .map((item) => {
-        if (typeof item === "string") {
-          return item.trim().startsWith("- ")
-            ? item.trim()
-            : `- ${item.trim()}`;
-        }
-        if (item && typeof item === "object") {
-          const r = item as Record<string, unknown>;
-          const label = String(r.label || r.title || "Detail")
-            .replace(/\*\*/g, "")
-            .trim();
-          const detail = String(r.detail || r.text || "").trim();
-          return `- **${label}**: ${detail}`;
-        }
-        return "";
-      })
-      .filter(Boolean)
-      .join("\n");
-  }
-  return "";
-}
-
-// fallow-ignore-next-line complexity
-export function getRingText(
-  data: JsonObject,
-  key: "perimeter" | "access" | "inner",
-  innerLabel = "Inner",
-): string {
-  const rings = rec(data.rings);
-  if (typeof rings[key] === "string" && text(rings[key])) {
-    return text(rings[key]);
-  }
-  if (typeof data[key] === "string" && text(data[key])) {
-    return text(data[key]);
-  }
-  if (key === "inner") {
-    const directInner =
-      rings[innerLabel] ??
-      rings[innerLabel.toLowerCase()] ??
-      data[innerLabel] ??
-      data[innerLabel.toLowerCase()];
-    if (typeof directInner === "string" && text(directInner)) {
-      return text(directInner);
-    }
-  }
-  // Try extracting from a combined securityRings string
-  const combined = text(data.securityRings);
-  if (combined) {
-    const searchLabel =
-      key === "perimeter"
-        ? "Perimeter"
-        : key === "access"
-          ? "Access"
-          : innerLabel;
-    const match = combined.match(
-      new RegExp(
-        `-\\s*\\*\\*${searchLabel}\\*\\*:\\s*([^\\n]+(?:\\n(?!-\\s*\\*\\*)[^\\n]+)*)`,
-        "i",
-      ),
-    );
-    if (match) return match[1].trim();
-  }
-  return "";
-}
-
-export function formatSecurityRings(
-  stage2: JsonObject,
-  resolved: ResolvedHeist,
-): string {
-  if (typeof stage2.securityRings === "string" && text(stage2.securityRings)) {
-    return text(stage2.securityRings);
-  }
-  const perimeter = getRingText(stage2, "perimeter");
-  const access = getRingText(stage2, "access");
-  const inner = getRingText(stage2, "inner", resolved.innerRingLabel);
-
-  return [
-    `- **Perimeter**: ${perimeter}`,
-    `- **Access**: ${access}`,
-    `- **${resolved.innerRingLabel}**: ${inner}`,
-  ].join("\n");
-}
-
-export function formatAlarmTrack(alarmTrackRaw: unknown): string {
-  if (!alarmTrackRaw) return "";
-  if (typeof alarmTrackRaw === "string") return alarmTrackRaw.trim();
-  if (Array.isArray(alarmTrackRaw)) {
-    const defaultLabels = [
-      "Quiet",
-      "Suspicion",
-      "Alert",
-      "Lockdown",
-      "Lethal Response",
-    ];
-    return alarmTrackRaw
-      .map((item, index) => {
-        if (typeof item === "string") {
-          return item.trim().startsWith("- ")
-            ? item.trim()
-            : `- ${item.trim()}`;
-        }
-        const r = rec(item);
-        const level = r.level !== undefined ? Number(r.level) : index;
-        const label = String(
-          r.label || defaultLabels[level] || `Level ${level}`,
-        );
-        const detail = String(r.detail || r.text || "").trim();
-        return `- **${level} — ${label}**: ${detail}`;
-      })
-      .filter(Boolean)
-      .join("\n");
-  }
-  return "";
-}
-
-// fallow-ignore-next-line complexity
-function formatComplicationItem(
-  item: unknown,
-  index: number,
-  state: { hasDefault: boolean },
-): string {
-  if (typeof item === "string") {
-    let line = item.trim().startsWith("- ") ? item.trim() : `- ${item.trim()}`;
-    if (!state.hasDefault && index === 0) {
-      line = line.replace(/-\s*\*\*([^*]+)\*\*:/, "- **$1 (default)**:");
-      state.hasDefault = true;
-    }
-    return line;
-  }
-  const r = rec(item);
-  let label = String(
-    r.label || r.title || (index === 0 ? "Likely (default)" : "Alternative"),
-  );
-  if (!state.hasDefault && index === 0 && !label.includes("(default)")) {
-    label = `${label} (default)`;
-    state.hasDefault = true;
-  }
-  const detail = String(r.detail || r.text || "").trim();
-  return `- **${label}**: ${detail}`;
-}
-
-export function formatComplications(complicationsRaw: unknown): string {
-  if (!complicationsRaw) return "";
-  if (typeof complicationsRaw === "string") {
-    let raw = complicationsRaw.trim();
-    if (!raw.includes("(default)")) {
-      raw = raw.replace(/-\s*\*\*([^*]+)\*\*:/, "- **$1 (default)**:");
-    }
-    return raw;
-  }
-  if (Array.isArray(complicationsRaw)) {
-    const state = {
-      hasDefault: complicationsRaw.some((item) =>
-        typeof item === "string"
-          ? item.includes("(default)")
-          : String((item as Record<string, unknown>).label || "").includes(
-              "(default)",
-            ),
-      ),
-    };
-    return complicationsRaw
-      .map((item, index) => formatComplicationItem(item, index, state))
-      .filter(Boolean)
-      .join("\n");
-  }
-  return "";
-}
-
-export function formatGetaway(getawayRaw: unknown): string {
-  if (!getawayRaw) return "";
-  if (typeof getawayRaw === "string") return getawayRaw.trim();
-  if (typeof getawayRaw === "object" && !Array.isArray(getawayRaw)) {
-    const r = getawayRaw as Record<string, unknown>;
-    const lead = text(r.lead ?? r.status ?? "");
-    const options = arr(r.options ?? r.routes)
-      .map((opt) => {
-        if (typeof opt === "string")
-          return opt.startsWith("- ") ? opt : `- ${opt}`;
-        const ro = rec(opt);
-        return `- **${ro.label || "Route"}**: ${ro.detail || ro.text || ""}`;
-      })
-      .join("\n");
-    const pursuit = text(r.pursuit) ? `**Pursuit**: ${text(r.pursuit)}` : "";
-    return [lead, options, pursuit].filter(Boolean).join("\n");
-  }
-  return "";
-}
-
-export function formatFlashbacks(flashbacksRaw: unknown): string {
-  if (!flashbacksRaw) return "";
-  if (typeof flashbacksRaw === "string") {
-    let trimmed = flashbacksRaw.trim();
-    if (!trimmed.startsWith("Offer these;")) {
-      trimmed = `Offer these; never assume the players used them.\n${trimmed}`;
-    }
-    return trimmed;
-  }
-  if (Array.isArray(flashbacksRaw)) {
-    const lines = flashbacksRaw
-      .map((item) => {
-        const s = typeof item === "string" ? item.trim() : String(item).trim();
-        return s.startsWith("- ") ? s : `- ${s}`;
-      })
-      .filter(Boolean);
-    return `Offer these; never assume the players used them.\n${lines.join("\n")}`;
-  }
-  return "";
-}
-
-// fallow-ignore-next-line complexity
-function extractDefaultComplication(complicationsRaw: unknown): string {
-  if (typeof complicationsRaw === "string") {
-    const match = complicationsRaw.match(/\(default\)\*\*:\s*([^\n]+)/i);
-    if (match) return match[1].trim();
-  }
-  if (Array.isArray(complicationsRaw)) {
-    for (const c of complicationsRaw) {
-      if (typeof c === "string" && c.includes("(default)")) {
-        const match = c.match(/\(default\)\*\*:\s*([^\n]+)/i);
-        if (match) return match[1].trim();
-        return c.replace(/^[-\s*]+/, "").trim();
-      }
-      if (c && typeof c === "object") {
-        const r = c as Record<string, unknown>;
-        if (String(r.label || "").includes("(default)")) {
-          return String(r.detail || r.text || "").trim();
-        }
-      }
-    }
-  }
-  return "";
-}
-
-export function formatQuickReference(
-  stage3: JsonObject,
-  stage1: JsonObject,
-  stage2: JsonObject,
-  resolved: ResolvedHeist,
-): string {
-  if (
-    typeof stage3.quickReference === "string" &&
-    text(stage3.quickReference)
-  ) {
-    return text(stage3.quickReference)
-      .replace(/\s*\(default\)/gi, "")
-      .trim();
-  }
-  const defaultComp =
-    extractDefaultComplication(stage3.complications).replace(
-      /\s*\(default\)/gi,
-      "",
-    ) || "Reinforcements seal off primary escape routes.";
-  return [
-    `- **Objective**: ${text(stage1.summary) || resolved.title}.`,
-    `- **Primary obstacle**: Three security layers protecting ${resolved.objectiveProtects}.`,
-    `- **Hidden factor**: ${text(stage2.hiddenFactor) || "Intel discrepancy inside the secured perimeter."}`,
-    `- **Point of no return**: ${resolved.objectiveCompletion} begins the getaway phase.`,
-    `- **Pressure**: ${resolved.pressureSummary}`,
-    `- **Default complication**: ${defaultComp}`,
-    `- **Escape problem**: The primary route becomes compromised once the alarm triggers.`,
-  ].join("\n");
 }
 
 // ---------------------------------------------------------------------------
@@ -821,38 +553,6 @@ export function checkHeistResponseStage(
 // ---------------------------------------------------------------------------
 // Assembly
 // ---------------------------------------------------------------------------
-
-export function assembleHeist(
-  stage1: JsonObject,
-  stage2: JsonObject,
-  stage3: JsonObject,
-  resolved: ResolvedHeist,
-): JsonObject {
-  const score = text(stage1.score);
-  const objective = text(stage1.objective);
-  const casing = formatCasing(stage1.casing);
-
-  const content = `### The Score\n${score}\n\n### ${resolved.objectiveHeading}\n${objective}\n\n### Casing the Target\n${casing}`;
-
-  const quickRef = formatQuickReference(stage3, stage1, stage2, resolved);
-  const hiddenFactor = text(stage2.hiddenFactor);
-  const securityRings = formatSecurityRings(stage2, resolved);
-  const alarmTrack = formatAlarmTrack(stage3.alarmTrack);
-  const complications = formatComplications(stage3.complications);
-  const moment = text(stage3.moment);
-  const getaway = formatGetaway(stage3.getaway);
-  const flashbacks = formatFlashbacks(stage3.flashbacks);
-
-  const lore = `### GM Quick Reference\n${quickRef}\n\n### The Hidden Factor\n${hiddenFactor}\n\n### Security Rings\n${securityRings}\n\n### Alarm Track\n${alarmTrack}\n\n### Complications\n${complications}\n\n### ${resolved.momentHeading}\n${moment}\n\n### The Getaway\n${getaway}\n\n### Flashback Opportunities\n${flashbacks}`;
-
-  return {
-    title: text(stage1.title) || resolved.title,
-    summary: text(stage1.summary) || resolved.title,
-    content,
-    lore,
-    labels: ["heist", "heist-generator", ...canonicalOptionLabels(resolved)],
-  };
-}
 
 // ---------------------------------------------------------------------------
 // Prompt Builders
