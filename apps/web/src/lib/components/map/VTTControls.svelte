@@ -5,6 +5,7 @@
   import { getPrimaryButtonStateClass } from "./vtt-ui";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
   import PinNoteButton from "./PinNoteButton.svelte";
+  import ReportProblemButton from "$lib/components/feedback/ReportProblemButton.svelte";
   import { mapControlsUIStore } from "$lib/stores/ui/map-controls-ui.svelte";
 
   let canManageVtt = $derived(!sessionModeStore.isGuestMode);
@@ -82,6 +83,10 @@
         ></span>
       </button>
     {/if}
+  </div>
+
+  <div class="px-1.5">
+    <ReportProblemButton area="tabletop" />
   </div>
 </div>
 

@@ -1,8 +1,10 @@
 # Codex-Cryptica Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-10-16
+Auto-generated from all feature plans. Last updated: 2026-10-19
 
 ## Active Technologies
+
+- TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14; Cloudflare Workers runtime for `apps/workers/oracle-proxy` (179-in-app-feedback)
 
 - TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + Existing `map-engine` (hex maths; + `parseHexLabel`), `random-source-engine` (offline rolling), `session-journal-engine` (+ `formatHexExplored`), `schema` (`MapSchema` + optional `grid`, `hexCrawl`), `vault-engine` `GuestExporter` (strips `hexCrawl`), `@codex/ai-engine` (`aiClientManager`), `generator-engine` `formatCampaignContextBlock`, the exported `extractJsonObject`, `@codex/events` (`JOURNAL:CAPTURE`), Floating UI, `zod`, Tailwind 4 semantic tokens, Iconify classes. New internal package `packages/hex-crawl-engine`. No new third-party dependency. (178-hex-crawl-mode)
 - Optional additive fields on the existing map records in `.codex/maps.json`: `grid` and `hexCrawl`. They are synced, backed up, exported and restored with maps. One new device-local display preference, `showTerrainIcons`, joins the existing per-map display settings. One device-local "AI notice dismissed" hint key. No IndexedDB, OPFS layout or migration change. (178-hex-crawl-mode)
@@ -274,11 +276,11 @@ TypeScript: Follow standard conventions
 
 ## Recent Changes
 
+- 179-in-app-feedback: Added TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14; Cloudflare Workers runtime for `apps/workers/oracle-proxy`
+
 - 178-hex-crawl-mode: Added TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14
 
 - 177-point-crawl-generator: Added TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + `packages/generator-engine` (extended with `point-crawl-*` modules), `schema`, `@codex/ai-engine` / `aiGeneratorGateway`, existing `$lib/utils/svg-export.ts`, Tailwind 4 semantic tokens, Lucide Iconify utility classes (`icon-[lucide--*]`). Zero new third-party dependencies.
-
-- 4052-oracle-entity-mentions: Added TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + Existing `search-orchestrator` (`searchService`) and the Explorer's `entity-search-match`; `schema` (`isEntityVisible`, `Entity`); `@codex/ai-engine` (`DefaultContextRetrievalService.retrieveContext`); `@codex/oracle-engine` (`ChatMessage`, `OracleIntent`, `OracleGenerator.retrieveForQuery`); existing `CommandMenu` placement via Floating UI; `categories` store for type icons. New internal package `packages/entity-mention-engine`. No new third-party dependency.
 
 <!-- MANUAL ADDITIONS START -->
 

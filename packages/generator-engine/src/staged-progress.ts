@@ -20,7 +20,15 @@ export type StagedStepId =
   | "cast"
   | "consequences"
   // Council Vote stages (public-council-vote.ts); reuses "foundation".
-  | "paths";
+  | "paths"
+  // Heist stages (heist-staged.ts); reuses "coherence".
+  | "objective"
+  | "security"
+  | "response"
+  // Tome stages (tome-staged.ts).
+  | "provenance"
+  | "revelations"
+  | "hooks";
 
 export interface StagedProgressStep {
   id: StagedStepId;

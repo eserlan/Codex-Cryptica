@@ -12,6 +12,7 @@ import {
 import {
   buildCampaignAdventurePrompt,
   buildCampaignDungeonPrompt,
+  buildCampaignHeistPrompt,
   buildCampaignTomePrompt,
   getGenerator,
   isTitleBanned,
@@ -28,6 +29,8 @@ import {
 } from "./public-dungeon";
 import { generateDungeonStaged } from "./dungeon-staged";
 import { generateAdventureStaged } from "./adventure-staged";
+import { generateHeistStaged } from "./heist-staged";
+import { generateTomeStaged } from "./tome-staged";
 import { generateTomeTwoPass } from "./public-tome";
 import { generateCampaignHeist } from "./campaign-heist-generation";
 import { generateCouncilVoteWithAI } from "./campaign-council-vote-generation";
@@ -235,6 +238,72 @@ export class CampaignGeneratorAIGenerationService extends CampaignGeneratorLangu
     }
   }
 
+  /**
+   * Staged route (objective, security rings, response), then the existing
+   * one-pass route if a stage is unusable. `options.staged === false` forces
+   * the one-pass route, and a continuity thread stays on it.
+   */
+  // fallow-ignore-next-line code-duplication
+  protected async generateHeistWithAI(
+    generator: CampaignGeneratorDefinition,
+    request: GeneratorRunRequest,
+    bannedNames: Set<string>,
+    signal?: AbortSignal,
+  ): Promise<GeneratedDraft | null> {
+    if (request.options?.staged !== false && !request.interaction) {
+      const staged = await this.generateHeistStaged(generator, request, signal);
+      if (staged) return staged;
+    }
+    try {
+      const output = await generateCampaignHeist(
+        request,
+        this.aiGateway!,
+        signal,
+      );
+      return generator.mapOutputToDraft(
+        { ...output, summary: output.summary ?? "" },
+        request,
+      );
+    } catch {
+      return null;
+    }
+  }
+
+  private async generateHeistStaged(
+    generator: CampaignGeneratorDefinition,
+    request: GeneratorRunRequest,
+    signal?: AbortSignal,
+  ): Promise<GeneratedDraft | null> {
+    const prompt = buildCampaignHeistPrompt(request);
+    try {
+      const result = await generateHeistStaged(prompt, prompt.options, {
+        contextPrefix: prompt.contextPrefix,
+        signal,
+        onStats: this._deps.onHeistStagedStats,
+        // fallow-ignore-next-line code-duplication
+        complete: async (instruction, message) =>
+          completeText(
+            await this.aiGateway!.complete(message, instruction, { signal }),
+          ),
+      });
+      if (!result) return null;
+      const { output } = result;
+      return generator.mapOutputToDraft(
+        {
+          title: output.title,
+          summary: output.summary ?? "",
+          content: output.content,
+          lore: output.lore,
+          labels: output.labels,
+        },
+        request,
+      );
+    } catch (error) {
+      if (signal?.aborted) throw error;
+      return null;
+    }
+  }
+
   private buildDungeonInteraction(
     request: GeneratorRunRequest,
     prompt: string,
@@ -367,12 +436,22 @@ export class CampaignGeneratorAIGenerationService extends CampaignGeneratorLangu
     return nameSuggestion ? { ...request, nameSuggestion } : request;
   }
 
+  /**
+   * Staged route (provenance, revelations, hooks), then the existing
+   * two-pass route if a stage is unusable. `options.staged === false` forces
+   * the two-pass route, and a continuity thread stays on it.
+   */
+  // fallow-ignore-next-line complexity
   protected async generateTomeWithAI(
     generator: ReturnType<typeof getGenerator>,
     request: GeneratorRunRequest,
     bannedNames: Set<string>,
     signal?: AbortSignal,
   ): Promise<GeneratedDraft | null> {
+    if (request.options?.staged !== false && !request.interaction) {
+      const staged = await this.generateTomeStaged(generator, request, signal);
+      if (staged && !isTitleBanned(staged.title, bannedNames)) return staged;
+    }
     const gateway = this.aiGateway;
     if (!gateway) return null;
     try {
@@ -408,6 +487,41 @@ export class CampaignGeneratorAIGenerationService extends CampaignGeneratorLangu
     }
   }
 
+  private async generateTomeStaged(
+    generator: ReturnType<typeof getGenerator>,
+    request: GeneratorRunRequest,
+    signal?: AbortSignal,
+  ): Promise<GeneratedDraft | null> {
+    const prompt = buildCampaignTomePrompt(request);
+    try {
+      const result = await generateTomeStaged(prompt, prompt.options, {
+        contextPrefix: prompt.contextPrefix,
+        signal,
+        onStats: this._deps.onTomeStagedStats,
+        // fallow-ignore-next-line code-duplication
+        complete: async (instruction, message) =>
+          completeText(
+            await this.aiGateway!.complete(message, instruction, { signal }),
+          ),
+      });
+      if (!result) return null;
+      const { output } = result;
+      return generator.mapOutputToDraft(
+        {
+          title: output.title,
+          summary: output.summary ?? "",
+          content: output.content,
+          lore: output.lore,
+          labels: output.labels,
+        },
+        request,
+      );
+    } catch (error) {
+      if (signal?.aborted) throw error;
+      return null;
+    }
+  }
+
   // fallow-ignore-next-line complexity
   protected async generateAIDraft(
     generator: ReturnType<typeof getGenerator>,
@@ -422,15 +536,12 @@ export class CampaignGeneratorAIGenerationService extends CampaignGeneratorLangu
       case "tome":
         return this.generateTomeWithAI(generator, request, bannedNames, signal);
       case "heist":
-        try {
-          const output = await generateCampaignHeist(request, gateway);
-          return generator.mapOutputToDraft(
-            { ...output, summary: output.summary ?? "" },
-            request,
-          );
-        } catch {
-          return null;
-        }
+        return this.generateHeistWithAI(
+          generator,
+          request,
+          bannedNames,
+          signal,
+        );
       case "dungeon":
         return this.generateDungeonWithAI(generator, request);
       case "adventure":

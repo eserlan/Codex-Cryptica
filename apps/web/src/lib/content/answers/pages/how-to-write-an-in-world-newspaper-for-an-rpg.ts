@@ -22,6 +22,11 @@ export const howToWriteAnInWorldNewspaperForAnRpg: AnswerConfigInput = {
     relatedIntents: ["generator-news-sheet-generator"],
     acknowledgedOverlap: [
       {
+        with: "answer-immersive-handouts-online-rpg",
+        reason:
+          "That answer covers when and how to deliver any handout during a remote session, including private reveals and a lasting party record. This answer covers how to write one specific handout, a newspaper, with public facts, editorial bias and sourced rumours.",
+      },
+      {
         with: "generator-news-sheet-generator",
         reason:
           "The answer explains how to edit a playable handout around campaign truth; the generator drafts a news sheet as a starting artefact.",
@@ -168,6 +173,7 @@ export const howToWriteAnInWorldNewspaperForAnRpg: AnswerConfigInput = {
     "how-do-you-generate-useful-rpg-rumours",
     "how-do-you-run-character-roles-in-a-cyberpunk-rpg",
     "how-do-i-run-a-journalist-or-media-character-in-an-rpg",
+    "how-do-i-give-players-immersive-handouts-in-an-online-rpg",
   ],
   seo: {
     title:
