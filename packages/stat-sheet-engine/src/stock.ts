@@ -1,4 +1,5 @@
 import type { MoneyAmount, StockMeta } from "schema";
+import { systemIdGenerator } from "@codex/runtime";
 
 /**
  * Merchant stock ledger helpers (#3961). Pure and framework-free: stable row
@@ -9,9 +10,9 @@ import type { MoneyAmount, StockMeta } from "schema";
 export type StockRow = Record<string, unknown>;
 
 export const ROW_ID_KEY = "rowId";
-export const STOCK_KEY = "stock";
+import type { IdGenerator } from "@codex/runtime";
 
-const defaultIdFactory = (): string => `row-${globalThis.crypto.randomUUID()}`;
+export const STOCK_KEY = "stock";
 
 /**
  * Non-destructive normalisation: rows keep every existing key and order; a
@@ -21,7 +22,7 @@ const defaultIdFactory = (): string => `row-${globalThis.crypto.randomUUID()}`;
  */
 export function ensureRowIds<T extends StockRow>(
   rows: readonly T[],
-  idFactory: () => string = defaultIdFactory,
+  idGenerator: IdGenerator = systemIdGenerator,
 ): T[] {
   const seen = new Set<string>();
   let changed = false;
@@ -31,8 +32,8 @@ export function ensureRowIds<T extends StockRow>(
       seen.add(current);
       return row;
     }
-    let id = idFactory();
-    while (seen.has(id)) id = idFactory();
+    let id = `row-${idGenerator.uuid()}`;
+    while (seen.has(id)) id = `row-${idGenerator.uuid()}`;
     seen.add(id);
     changed = true;
     return { ...row, [ROW_ID_KEY]: id };
