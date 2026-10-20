@@ -18,6 +18,7 @@ export const NON_STREAMABLE_SLUGS: readonly ValidSlug[] = [
   "point-crawl",
   "language-generator",
   "heist",
+  "tome",
 ] as const;
 
 export function isStreamableSlug(slug: ValidSlug): boolean {
@@ -33,6 +34,7 @@ const STAGED_SLUGS: readonly ValidSlug[] = [
   "adventure-idea-generator",
   "council-vote",
   "heist",
+  "tome",
 ] as const;
 
 export function showsStagedProgress(slug: ValidSlug): boolean {
@@ -375,12 +377,16 @@ export function createGeneratorHandlers(
         useAI,
         avoidNames: collectSessionNames(ctx.getSessionEntities() as never[]),
       } as never),
-    tome: (useAI) =>
-      engine.generateTome({
+    tome: (useAI) => {
+      ctx.onOneShotProgress?.(null);
+      return engine.generateTome({
         ...(ctx.tome as object),
         primaryHazard: (ctx.tome as Record<string, unknown>).hazard,
         useAI,
-      } as never),
+        onProgress: ctx.onOneShotProgress,
+        signal: ctx.oneShotRuns?.start(),
+      } as never);
+    },
     "point-crawl": (useAI: boolean) => {
       ctx.onOneShotProgress?.(null);
       const pc = (ctx.pointCrawl ?? {}) as Record<string, unknown>;

@@ -3107,4 +3107,171 @@ describe("staged heist generation", () => {
     expect(complete).toHaveBeenCalledTimes(1);
     expect(complete.mock.calls[0][0]).not.toContain("STAGE 1 OF 3");
   });
+
+  describe("staged tome generation", () => {
+    const tomeStage1 = {
+      title: "The Cinnabar Liturgy",
+      summary:
+        "An illuminated fourteenth-century ritual codex from the scriptorium of Saint Jude.",
+      canonicalFacts: {
+        centralRule:
+          "The reader must invert the second purification chant before lighting the brazier.",
+        productionMethod: "Handwritten vellum codex with vermilion ink",
+        errorSource:
+          "Brother Cyprian omitted the conditional qualifier during transcription.",
+        bookClaim: "The rite grants communion with the primordial fire.",
+        deception: "The rite consumes the celebrant in unquenchable ash.",
+        objectiveTruth: "The rite awakens an imprisoned cinder-elemental.",
+        actionableClue:
+          "Scraped parchment under ultraviolet reveals the expunged negative particle.",
+      },
+      physicalDescription:
+        "Bound in cracked calfskin over oak boards with iron clasps. Heavy vellum leaves, ruled in faint lead. Seven leaves are excised from the third quire, leaving ragged stubs.",
+      provenance:
+        "Composed circa 1340 by an anonymous heresy in the Marches. Copied by Brother Cyprian at Saint Jude, where an inquisitorial visit suppressed it. Passed through private antiquarian sales to the current vault archive.",
+      groundTruth: {
+        bookClaims: "The rite grants communion with the primordial fire.",
+        deception: "The rite consumes the celebrant in unquenchable ash.",
+        objectiveTruth: "The rite awakens an imprisoned cinder-elemental.",
+        actionableClue:
+          "Scraped parchment under ultraviolet reveals the expunged negative particle.",
+      },
+      connectedEntities: {
+        author: "Anonymous Marcher heretic",
+        custodian: "The Dunwich Archive",
+        interestedFaction: "The Cinder-Order",
+        associatedLocation: "The Sunken Scriptorium",
+      },
+      labels: ["tome", "forbidden-book", "grimoire", "item"],
+      connections: [
+        {
+          targetTitle: "The Dunwich Archive",
+          relationship: "Current custodian",
+        },
+      ],
+    };
+
+    const tomeStage2 = {
+      contents: `The text outlines the ninefold descent through ash and smoke to the subterranean fire-well.
+> "Let the supplicant turn their face from the east, pouring the salt into the dying ember while chanting the nine names backwards."
+A careful reader who compares the marginal gloss with the erased rubric discovers that the expunged negative particle changes an invitation into an unbinding rite that awakens an imprisoned cinder-elemental.`,
+      risks:
+        "Handling the leaves transfers a bitter, sulfurous residue causing chemical burns and persistent fever. Prolonged meditation prompts vivid hallucinations of burning spires.",
+      quickChecks: {
+        deciphering:
+          "Requires two days of study and a DC 14 Classical Latin or Occult comprehension check.",
+        failureCondition:
+          "Failing to invert the second purification chant causes the brazier flame to detonate outward, inflicting severe concussive and burn trauma.",
+        safeHandling:
+          "Handle only with oiled calfskin gloves in a well-ventilated chamber.",
+      },
+    };
+
+    const tomeStage3 = {
+      adventureHooks: [
+        "1. The Ragged Stubs: An antiquarian hires the party to track down the seven excised leaves taken during the 1842 library heist.",
+        "2. The Cinder-Order Demand: A secretive occult cell attempts to burgle the Dunwich Archive to secure the codex before solstice.",
+        "3. Echoes from the Scriptorium: Smoke rises from the Sunken Scriptorium, where a desperate novice is reciting the uncorrected litany.",
+      ],
+    };
+
+    const tomeStageReply = (message: string) => {
+      if (/stage 1 of 3/i.test(message)) return tomeStage1;
+      if (/stage 2 of 3/i.test(message)) return tomeStage2;
+      if (/stage 3 of 3/i.test(message)) return tomeStage3;
+      if (message.includes("Audit this generated tabletop RPG tome")) {
+        return { verdict: "clean", issues: [] };
+      }
+      throw new Error(`Unexpected message: ${message.slice(0, 80)}`);
+    };
+
+    const tomeRun = (overrides: Partial<GeneratorRunRequest> = {}) =>
+      run("tome", {
+        useAI: true,
+        themeId: "fantasy",
+        options: {
+          focus: "Ritual Magic",
+          bookState: "Damaged",
+        },
+        ...overrides,
+      });
+
+    it("builds the tome in stages and carries the request context", async () => {
+      const complete = vi.fn<AIGeneratorGateway["complete"]>(async (message) =>
+        JSON.stringify(tomeStageReply(message)),
+      );
+      const onTomeStagedStats = vi.fn();
+      const svc = new CampaignGeneratorService({
+        aiPolicy: { isEnabled: true, isAvailable: true },
+        aiGateway: { complete },
+        onTomeStagedStats,
+      });
+      const generated = await svc.generateDraft(
+        tomeRun({ instructions: "Keep it ominous and esoteric." }),
+      );
+      expect(complete).toHaveBeenCalledTimes(3);
+      expect(
+        complete.mock.calls.every(([message]) =>
+          message.includes("Keep it ominous and esoteric."),
+        ),
+      ).toBe(true);
+      expect(onTomeStagedStats).toHaveBeenCalledWith(
+        expect.objectContaining({ outcome: "staged", aiCalls: 3 }),
+      );
+      expect(generated.title).toBe("The Cinnabar Liturgy");
+      expect(generated.content).toContain("Physical Description & Format");
+      expect(generated.lore).toContain("Ground Truth for the GM");
+      expect(generated.lore).toContain("Quick Checks & Mechanics");
+    });
+
+    it("falls back to the two-pass / generic route when a stage is unusable", async () => {
+      const complete = vi.fn<AIGeneratorGateway["complete"]>(
+        async () => "nope",
+      );
+      const onTomeStagedStats = vi.fn();
+      const svc = new CampaignGeneratorService({
+        aiPolicy: { isEnabled: true, isAvailable: true },
+        aiGateway: { complete },
+        onTomeStagedStats,
+      });
+      const generated = await svc.generateDraft(tomeRun());
+      // Two failed stage 1 attempts, then two-pass fallback (which fails and falls back to local).
+      expect(complete.mock.calls.length).toBeGreaterThanOrEqual(3);
+      expect(generated.title).toBeTruthy();
+      expect(onTomeStagedStats).toHaveBeenCalledWith(
+        expect.objectContaining({
+          outcome: "fell-back",
+          stoppedAt: "provenance",
+        }),
+      );
+    });
+
+    it.each([
+      ["staged: false", { options: { staged: false } }],
+      [
+        "a continuity thread",
+        {
+          interaction: {
+            input: "Describe another chapter.",
+            previousInteractionId: "interaction-previous",
+            store: true,
+          },
+        },
+      ],
+    ])(
+      "keeps %s on the generic / two-pass route",
+      async (_label, overrides) => {
+        const complete = vi.fn<AIGeneratorGateway["complete"]>(
+          async () => "nope",
+        );
+        const svc = new CampaignGeneratorService({
+          aiPolicy: { isEnabled: true, isAvailable: true },
+          aiGateway: { complete },
+        });
+        await svc.generateDraft(tomeRun(overrides));
+        // First call won't be staged Stage 1 of 3
+        expect(/stage 1 of 3/i.test(complete.mock.calls[0][0])).toBe(false);
+      },
+    );
+  });
 });
