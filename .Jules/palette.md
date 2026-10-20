@@ -232,6 +232,7 @@
 
 **Learning:** When filter chips or selection cards act as toggle buttons (e.g. Genre chips, Category chips, Palette selectors, and Silhouette cards), adding `aria-pressed={isActive}` correctly communicates the pressed/selected state to screen readers, improving the accessibility of custom interactive elements.
 **Action:** Always add `aria-pressed={isActive}` or `aria-pressed={isSelected}` to toggle-like buttons or selection cards.
+
 ## 2024-11-20 - Add type button to layout components
 
 **Learning:** Found multiple layout components like `AppHeader.svelte` and `ActivityBar.svelte` containing buttons without `type="button"`. This causes unintended form submissions if these global components end up nested within a form.
