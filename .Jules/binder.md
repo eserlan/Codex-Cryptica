@@ -337,3 +337,9 @@
 **Learning:** Svelte components that mutate transcript or metadata timestamps (like `DetailChatsTab`) shouldn't hardcode `systemClock.now()`. Injecting an optional `clock: Clock` prop allows deterministic tests without global mocking.
 
 **Action:** Use `$props()` to inject `clock` and default to `systemClock` from `$lib/utils/runtime-deps`.
+
+## 2024-10-20 - Safe ID generation
+
+**Learning:** The `@codex/runtime` package exposes `systemIdGenerator` as a safe fallback when `crypto.randomUUID` is unavailable (e.g. in some SSR/worker contexts or older browsers). Using this ensures callers don't crash purely from a missing id function.
+
+**Action:** When a stable row ID is needed and `crypto.randomUUID` was directly used, replace it with `systemIdGenerator.uuid()` from `@codex/runtime` to safely handle unsupported environments.
