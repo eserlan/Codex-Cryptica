@@ -149,6 +149,7 @@ export const howDoIStartGmingForTheFirstTime: AnswerConfigInput = {
     "what-are-the-pros-and-cons-of-becoming-a-dungeon-master",
     "how-do-i-get-my-friends-interested-in-playing-dnd",
     "how-do-i-roleplay-npcs-if-im-not-good-at-acting",
+    "how-can-i-practise-being-a-dungeon-master-without-a-group",
   ],
   discovery: {
     id: "answer-first-time-gm-hub",
@@ -186,6 +187,11 @@ export const howDoIStartGmingForTheFirstTime: AnswerConfigInput = {
         with: "answer-new-dnd-player-first-game",
         reason:
           "This answer is for someone taking on the GM role and preparing a first session in any system; the new-player page is for a player joining a D&D game and learning how to participate during play.",
+      },
+      {
+        with: "answer-practise-dm-without-a-group",
+        reason:
+          "This hub guides a new GM through preparing a first session for a group that exists; the linked answer helps an aspiring GM rehearse DM mechanics and session flow alone before assembling a group.",
       },
     ],
   },
