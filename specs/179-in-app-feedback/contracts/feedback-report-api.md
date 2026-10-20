@@ -100,7 +100,7 @@ gm@example.com
 
 The Contact section is omitted when no email was given. The fence length is chosen per block (R2).
 
-The worker treats any non-2xx response from GitHub as a definite refusal: it gives the quota back and clears the marker. A network error or a timeout of more than 8 seconds is an unknown outcome: it returns `unavailable`, keeps the marker and the quota slot, so a quick retry gets `in_progress` rather than a second issue. It logs only the outcome metric, never GitHub's response body.
+The worker treats any non-2xx response from GitHub as a definite refusal: it gives the quota back and clears the marker. A network error or a timeout of more than 8 seconds is an unknown outcome: it returns `unavailable`, keeps the marker and the quota slot, so a retry while the marker exists gets `in_progress` rather than risking a second issue. Pending markers are not reclaimed by age. The `feedback/` lifecycle rule expires them after two days, so this protection lasts for that window. It logs only the outcome metric, never GitHub's response body.
 
 ## Worker configuration
 

@@ -55,7 +55,7 @@ Do this by hand. Never paste a raw report into a public tracker.
 2. Open the public issue in `eserlan/Codex-Cryptica` with that summary.
 3. Link the public issue from the private report, so the context is kept.
 
-Two kinds of failure: GitHub refusing a report is definite, so nothing was created and a retry starts clean. A timeout or dropped connection is not: the issue may exist. If a user reports "unavailable" and then sees a second issue with a different reference, delete the duplicate with section 6 and note it on the first.
+Two kinds of failure: GitHub refusing a report is definite, so nothing was created and a retry starts clean. A timeout or dropped connection is not: the issue may exist, so the worker keeps the submission marker and rejects retries as in progress while that marker exists. The marker expires after two days; a later retry can be treated as a new submission.
 
 ## 6. Delete a report on request
 

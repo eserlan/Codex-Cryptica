@@ -64,10 +64,9 @@ Transitions:
 - absent → `pending`, claimed with `etagDoesNotMatch: "*"`.
 - `pending` → `delivered` when GitHub succeeds.
 - `pending` → deleted when GitHub definitively refuses the report, or when the request is refused before delivery (quota refusal, 429).
-- `pending` → kept, with its quota slots, when the outcome is unknown: a timeout or dropped connection. The marker then guards retries until it goes stale after 2 minutes (see R5).
-- A `pending` marker more than 2 minutes old → re-claimed by etag compare-and-set.
+- `pending` → kept, with its quota slots, when the outcome is unknown: a timeout or dropped connection. It continues to guard retries while the marker exists.
 
-All markers are removed by the 2-day lifecycle rule on `feedback/`.
+All markers are removed by the 2-day lifecycle rule on `feedback/`. Therefore the idempotency record is bounded to that retention window; a retry after marker expiry can be treated as a new submission.
 
 ## QuotaCounter (worker R2)
 

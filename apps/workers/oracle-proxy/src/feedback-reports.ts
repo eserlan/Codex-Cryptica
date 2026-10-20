@@ -24,8 +24,6 @@ import { readJson } from "./template-directory-shared";
 /** Reports one source may send per hour and per day (FR-016). */
 const HOURLY_REPORT_LIMIT = 5;
 const DAILY_REPORT_LIMIT = 20;
-/** A pending submission older than this is treated as abandoned (R5). */
-const PENDING_STALE_MS = 2 * 60 * 1000;
 const GITHUB_REPO = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
 
 export interface RateLimiterLike {
@@ -255,10 +253,10 @@ async function claimSubmission(
   if (stored.state === "delivered" && typeof stored.reference === "string") {
     return { state: "delivered", reference: stored.reference };
   }
-  if (
-    stored.state === "pending" &&
-    Number(stored.at) > now - PENDING_STALE_MS
-  ) {
+  // A timed-out GitHub request may already have created its issue. Keep every
+  // pending marker until the R2 lifecycle removes it rather than risking a
+  // second issue when an ambiguous request is retried later.
+  if (stored.state === "pending") {
     return { state: "in_progress" };
   }
   const reclaimed = await bucket.put(key, pending, {
@@ -333,16 +331,28 @@ async function reserveQuotas(
   kind: FeedbackKind,
 ): Promise<Response | null> {
   const { bucket } = config;
-  if ((await reserveQuota(bucket, keys.hour, HOURLY_REPORT_LIMIT)) === "full") {
+  let hourReserved = false;
+  try {
+    if (
+      (await reserveQuota(bucket, keys.hour, HOURLY_REPORT_LIMIT)) === "full"
+    ) {
+      await deleteMarker(bucket, markerKey);
+      return limited(ctx, kind, "3600");
+    }
+    hourReserved = true;
+    if ((await reserveQuota(bucket, keys.day, DAILY_REPORT_LIMIT)) === "full") {
+      await releaseQuota(bucket, keys.hour);
+      hourReserved = false;
+      await deleteMarker(bucket, markerKey);
+      return limited(ctx, kind, "3600");
+    }
+    return null;
+  } catch {
+    if (hourReserved) await releaseQuota(bucket, keys.hour).catch(() => false);
     await deleteMarker(bucket, markerKey);
-    return limited(ctx, kind, "3600");
+    report(ctx, "unavailable", kind);
+    return failure(ctx, "unavailable");
   }
-  if ((await reserveQuota(bucket, keys.day, DAILY_REPORT_LIMIT)) === "full") {
-    await releaseQuota(bucket, keys.hour);
-    await deleteMarker(bucket, markerKey);
-    return limited(ctx, kind, "3600");
-  }
-  return null;
 }
 
 async function createIssue(
@@ -406,9 +416,9 @@ async function deliver(
     await createIssue(ctx, config, renderTriageIssue(record));
   } catch (error) {
     // A definite refusal gives back the quota and clears the marker, so the user
-    // can retry at once. An ambiguous outcome keeps both: the marker stays pending
-    // for the stale window, so a quick retry gets "in progress" rather than a
-    // second issue. See docs/feedback-triage.md.
+    // can retry at once. An ambiguous outcome keeps both: the pending marker
+    // stays until its R2 lifecycle expiry, so a retry cannot create a second
+    // issue after an arbitrary two-minute window. See docs/feedback-triage.md.
     if (error instanceof Refused) {
       await releaseQuota(config.bucket, keys.day);
       await releaseQuota(config.bucket, keys.hour);

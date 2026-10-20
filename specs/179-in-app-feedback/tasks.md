@@ -216,7 +216,7 @@ Fallow: verdict pass. Svelte-check: 0 errors. Impacted tests: all four workspace
   - **Hourly and daily caps**: the 6th report in an hour and the 21st in a day return 429. Concurrent requests never exceed the caps.
   - **Delivery failure**: GitHub returns 500, a network error or a timeout over 8 s, which gives 503 `unavailable`. The quota slots are released and the submission marker is deleted, so a retry is accepted.
   - **Configuration missing**: no token, repository or hash key gives 503 `misconfigured` with no GitHub call and no quota use.
-  - **Duplicates**: the same `submissionId` after delivery returns 200 with the same reference and no second issue. While delivery is pending it returns 409 `in_progress`. A pending marker older than 2 minutes is re-claimed.
+  - **Duplicates**: the same `submissionId` after delivery returns 200 with the same reference and no second issue. While delivery is pending it returns 409 `in_progress`, including after two minutes, so an ambiguous GitHub timeout cannot create a second issue during the marker's two-day retention window.
   - **Marker cleanup**: after a quota refusal or a delivery failure, the marker is gone, so a retry with the same `submissionId` is processed normally.
   - **Hashing**: the hash key is required, and the source hash in R2 keys is not the raw IP.
 - [x] T041 [P] [US4] Extend `apps/web/src/lib/stores/ui/feedback-dialog.svelte.test.ts` with:

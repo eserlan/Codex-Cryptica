@@ -425,6 +425,41 @@ describe("delivery failure", () => {
       (await run(req(body({ submissionId: SUBMISSION })), env, laterD)).status,
     ).toBe(201);
   });
+
+  it("releases the claimed marker and hourly slot when daily reservation throws", async () => {
+    const env = makeEnv();
+    const bucket = env.BUCKET as {
+      get: (key: string) => Promise<unknown>;
+      store: Map<string, { text: string; etag: string }>;
+    };
+    const get = bucket.get.bind(bucket);
+    bucket.get = async (key) => {
+      if (key.includes("/quota/day/")) throw new Error("temporary R2 error");
+      return get(key);
+    };
+    const gh = githubFake();
+    const { d } = deps(gh);
+
+    const failed = await run(req(body()), env, d);
+    expect(failed.status).toBe(503);
+    expect(
+      ((await failed.json()) as { error: { code: string } }).error.code,
+    ).toBe("unavailable");
+    expect(
+      [...bucket.store.entries()]
+        .filter(([key]) => key.includes("/quota/hour/"))
+        .map(([, value]) => JSON.parse(value.text).count),
+    ).toEqual([0]);
+    expect(
+      [...bucket.store.keys()].some((key) =>
+        key.startsWith("feedback/submission/"),
+      ),
+    ).toBe(false);
+    expect(gh.calls).toHaveLength(0);
+
+    bucket.get = get;
+    expect((await run(req(body()), env, d)).status).toBe(201);
+  });
 });
 
 describe("ambiguous delivery", () => {
@@ -572,7 +607,7 @@ describe("duplicates", () => {
     expect(gh.calls).toHaveLength(0);
   });
 
-  it("re-claims a pending submission that is more than two minutes old", async () => {
+  it("keeps an old pending submission in progress to prevent a duplicate issue", async () => {
     const env = makeEnv();
     const bucket = env.BUCKET as {
       store: Map<string, { text: string; etag: string }>;
@@ -583,9 +618,10 @@ describe("duplicates", () => {
       text: JSON.stringify({ state: "pending", at: START - 3 * 60 * 1000 }),
       etag: "p1",
     });
-    const { d } = deps(gh);
-    expect((await run(req(body()), env, d)).status).toBe(201);
-    expect(gh.calls).toHaveLength(1);
+    const { d } = deps(gh, { now: () => START + 3 * 60 * 1000 });
+    const res = await run(req(body()), env, d);
+    expect(res.status).toBe(409);
+    expect(gh.calls).toHaveLength(0);
   });
 
   it("sends a report exactly once when the same submission arrives twice at once", async () => {

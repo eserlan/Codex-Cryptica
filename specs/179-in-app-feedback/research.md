@@ -53,8 +53,8 @@ Phase 0 decisions for [spec.md](./spec.md). Each entry records the decision, why
   - The form gives each draft a `submissionId` (a UUID v4). It keeps that ID across retries and replaces it after a success, or when the user starts a new report.
   - The worker claims a marker at `feedback/submission/<hmac(submissionId)>` with `onlyIf: { etagDoesNotMatch: "*" }`. The marker records `{ state: "pending", at }`, and after delivery `{ state: "delivered", reference }`.
   - A repeat request whose marker is `delivered` gets the same reference with HTTP 200. One whose marker is `pending` gets `409 in_progress`, and the form retries after a short delay.
-  - A `pending` marker older than 2 minutes counts as abandoned and can be re-claimed by compare-and-set on its etag.
-  - The marker is deleted when the request is definitely refused: a quota refusal, or a non-2xx answer from GitHub. A timeout or dropped connection is an unknown outcome, so the marker and quota slot are kept; the marker goes stale after 2 minutes and a later retry is then processed. Markers contain no report text and expire with the 2-day lifecycle rule.
+  - A `pending` marker continues to block retries while it exists. It is not re-claimed based on age because a timed-out request may already have created its GitHub issue.
+  - The marker is deleted when the request is definitely refused: a quota refusal, or a non-2xx answer from GitHub. A timeout or dropped connection is an unknown outcome, so the marker and quota slot are kept. Markers contain no report text and expire with the 2-day lifecycle rule, which bounds this idempotency protection to two days.
 - **Rationale**: A double click or a retry after a timeout must not create two issues. Searching GitHub for the reference before creating an issue would be slow, rate-limited and racy. A marker holding no content keeps the "no copy of the report" decision from clarification.
 - **Alternatives**: Client-side guards only, which can't handle a timeout where the first request actually succeeded. The `Idempotency-Key` header semantics, which amount to the same thing with more ceremony.
 
