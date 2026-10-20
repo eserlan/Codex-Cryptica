@@ -245,8 +245,12 @@ export function renderBusinessContent(doc: BusinessDocument): string {
   const { identity, operations, leadership, staff, clientele } = doc;
   const lines: string[] = [
     "## Identity",
-    `**${identity.name}** — ${identity.type}`,
-    identity.description,
+    // The local description already opens with the type; do not say it twice.
+    ...(identity.description
+      .toLowerCase()
+      .startsWith(identity.type.toLowerCase())
+      ? [`**${identity.name}** — ${identity.description}`]
+      : [`**${identity.name}** — ${identity.type}`, identity.description]),
     `Reputation: ${identity.reputationLine}`,
     `What makes it distinctive: ${identity.distinctive}`,
     "",

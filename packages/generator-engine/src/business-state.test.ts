@@ -115,6 +115,16 @@ describe("renderBusinessContent", () => {
     }
   });
 
+  it("states the type once when the description already opens with it", () => {
+    const d = doc();
+    d.identity.type = "Blacksmith";
+    d.identity.description = "Blacksmith on the river road, modest and steady.";
+    const text = renderBusinessContent(d);
+    expect(text.match(/Blacksmith/g)).toHaveLength(1);
+    // A description that does not open with the type keeps both.
+    expect(renderBusinessContent(doc())).toContain("— Blacksmith");
+  });
+
   it("omits the management section when the players do not own the business", () => {
     expect(renderBusinessContent(doc())).not.toContain("## Management");
   });

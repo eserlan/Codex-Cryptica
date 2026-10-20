@@ -1996,6 +1996,10 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introText:
       "Create one specific business the party can visit, work for, compete with, investigate or own. Get its people, what it depends on, who it competes with, the pressure it is under and the hooks that bring the party in. Save it to your vault, with its people and its rivals linked on the graph.",
     canonicalPath: "/generators/business",
+    ogImage:
+      "https://assets.codexcryptica.com/screenshots/generator-business.png",
+    ogImageAlt:
+      "Codex Cryptica Business Generator showing the input form and a generated blacksmith with its identity and operations",
     labels: ["business", "economy", "settlement", "npc"],
     keywords: [
       "business generator",

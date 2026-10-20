@@ -61,6 +61,13 @@ describe("generator-page-meta completeness and social preview tags", () => {
     expect(slugMeta.puzzle.ogImage).not.toContain("generator-quest");
   });
 
+  it("uses Business's own rendered social screenshot", () => {
+    expect(slugMeta.business.ogImage).toBe(
+      "https://assets.codexcryptica.com/screenshots/generator-business.png",
+    );
+    expect(slugMeta.business.ogImageAlt).toMatch(/Business Generator/);
+  });
+
   it("describes the Holiday generator's calendar mode and social preview", () => {
     expect(slugMeta.holiday.faqs).toContainEqual(
       expect.objectContaining({ question: "Can I generate a full calendar?" }),
