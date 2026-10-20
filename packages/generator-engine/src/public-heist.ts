@@ -1004,7 +1004,12 @@ Verify that "The Score", "${resolved.momentHeading}", "The Getaway", "GM Quick R
 
 Carry the prize's catch through to the end. The established catch — ${resolved.prizeComplication} — must still be true in "The Getaway", the flashbacks, and the pursuit, not only inside the security rings. Repair any route, tool, or pursuer that ignores it, such as a roof escape or a hand-carried tool for something huge or fragile.
 
-Keep this pass narrowly focused on the scenario state machine. Report only material contradictions in timing, possession, location, detection, tracking, route availability, bypass persistence, NPC allegiance, or phase-versus-full-Score completion. Do not turn prose preferences, optional embellishments, or general writing advice into issues. Consolidate every shared root cause into one issue listing all affected sections; return at most six issues.
+Check three cross-section details that independently written sections often get wrong:
+- Exact placement: the prize, evidence, device, or captive must sit in one named place with one container or position everywhere. "Inside", "beneath", and "tied to" the same item are different places unless one section says they are the same.
+- Route and timeline continuity: every escape or cover route must be usable at the moment the sequence reaches it. A convoy, shift change, crowd, or window that the crew uses to get in cannot also be the thing they rejoin on the way out if it has already left, unless a section says when it returns.
+- Outcome logic: completion and success conditions must respect established flaws, traces, complications, and failure conditions. If a section says a forgery, disguise, or bypass can be detected, no section may guarantee it is believed; separate placing or finishing the action from it being accepted or going unnoticed.
+
+Keep this pass narrowly focused on the scenario state machine. Report only material contradictions in timing, possession, location, exact placement, route continuity, outcome logic, detection, tracking, route availability, bypass persistence, NPC allegiance, or phase-versus-full-Score completion. Do not turn prose preferences, optional embellishments, or general writing advice into issues. Consolidate every shared root cause into one issue listing all affected sections; return at most six issues.
 
 Automated findings that must appear as audit issues unless the document already resolves them:
 ${detected}
@@ -1101,7 +1106,7 @@ ${issues}
 Automated findings to resolve:
 ${detected}
 
-Make the smallest edits that resolve every listed issue. Propagate each corrected fact through all later sections named by the audit. Preserve established successful bypasses and remove consequences that belong only to an earlier state. Keep the distinction between completing one phase and completing the full Score. Do not fix unlisted prose weaknesses or add new scenario material.
+Make the smallest edits that resolve every listed issue. Propagate each corrected fact through all later sections named by the audit. Preserve established successful bypasses and remove consequences that belong only to an earlier state. Keep the distinction between completing one phase and completing the full Score. Where a listed issue concerns placement, route timing, or outcome logic, pick the version the earliest or most detailed section establishes and make every other section match it; where an outcome was guaranteed but flaws were established, state both what is achieved and what still depends on the crew's preparation or traces left behind. Do not fix unlisted prose weaknesses or add new scenario material.
 
 Replace or delete sentences instead of expanding sections. The complete response must contain no more words than the original heist and at most ${HEIST_WORD_BUDGET} words; silently cut it to that limit before answering. Keep the ${resolved.heistType} objective, ${resolved.genre} setting, existing names, locations, and usable approaches unless an issue specifically requires changing one.
 
