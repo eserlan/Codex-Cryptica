@@ -99,12 +99,21 @@ export function findUnmatchedImages(
   images: File[],
   assignments: ImageAssignment[],
 ) {
-  const used = new Set(
-    assignments.filter(Boolean).map((assignment) => assignment.fileIndex),
-  );
-  return images.flatMap((file, index) =>
-    used.has(index) ? [] : [{ file, index }],
-  );
+  // ⚡ Bolt Optimization: Replaced chained .filter().map() and .flatMap() with imperative loops
+  const used = new Set<number>();
+  for (const assignment of assignments) {
+    if (assignment) {
+      used.add(assignment.fileIndex);
+    }
+  }
+
+  const result: { file: File; index: number }[] = [];
+  for (let index = 0; index < images.length; index++) {
+    if (!used.has(index)) {
+      result.push({ file: images[index], index });
+    }
+  }
+  return result;
 }
 
 export function highestRangeValue(entries: TableEntry[]): number {
