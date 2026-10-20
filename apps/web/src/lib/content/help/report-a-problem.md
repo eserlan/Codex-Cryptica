@@ -6,7 +6,7 @@ tags: [support, feedback, bug, report, idea]
 rank: 50
 ---
 
-If you found a bug, something in Codex Cryptica is broken or isn't working, or you have an idea for a feature, you can send it straight to the maintainer from the app. You don't need a GitHub or Discord account, and you don't need to talk to Cif. You can also ask Cif to open the form for you.
+If you found a bug, got an error, the app crashed, something is broken, went wrong or isn't working, or you have an idea for a feature, you can send it straight to the maintainer from the app. You don't need a GitHub or Discord account, and you don't need to talk to Cif. You can also ask Cif to open the form for you.
 
 ## How to open the form
 
