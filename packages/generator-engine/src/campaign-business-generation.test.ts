@@ -30,7 +30,15 @@ const identityReply = JSON.stringify({
     reputationLine: "r",
     distinctive: "x",
   },
-  operations: { provides: "p", payers: "y", whyHere: "w", mainIncome: "m" },
+  operations: {
+    provides: "p",
+    payers: "y",
+    whyHere: "w",
+    mainIncome: "m",
+    model: "It earns a fee for the work it does.",
+    size: "A small shop with a few staff.",
+    position: "Steady, with little to spare.",
+  },
   leadership: {
     name: "Nadia Vale",
     goal: "g",

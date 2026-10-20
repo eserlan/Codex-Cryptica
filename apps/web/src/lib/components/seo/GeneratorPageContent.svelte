@@ -1082,6 +1082,7 @@
     {:else if slug === "business" && output.business}
       <BusinessFallbackNote
         fallbackSections={output.business.fallbackSections}
+        warnings={output.business.warnings}
       />
       <BusinessRefinePanel
         business={output.business}

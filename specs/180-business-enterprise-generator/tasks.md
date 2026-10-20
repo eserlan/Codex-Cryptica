@@ -226,6 +226,7 @@ description: "Task list for the Business / Enterprise Generator"
   - `bunx fallow audit --format json --quiet --explain --gate-marker agent` (verdict `pass`)
   - coverage of `GE/business-*.ts` over 80% (`bun test --coverage src/business-` in `packages/generator-engine`), per Constitution X
 - [ ] T052 Run the `codex-review` specialist review on the branch, and address verified findings.
+- [x] T054 Review follow-up (FR-016 to FR-018): operations `model`/`size`/`position`; established-facts block for later stages; unintroduced-name check with one retry and `warnings`; relationship labels validated against `BUSINESS_ALLOWED_LABELS`; warnings recomputed after a section rewrite.
 - [ ] T053 Run the browser walkthrough in `quickstart.md` sections 3 and 4. Check SC-004: with default inputs, opening the generator to a saved business on the graph takes under 1 minute and 4 clicks.
 
 ---

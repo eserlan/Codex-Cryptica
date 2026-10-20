@@ -139,6 +139,9 @@ export interface BusinessDocument {
     payers: string;
     whyHere: string;
     mainIncome: string;
+    model: string; // how it earns, specific to the business type
+    size: string; // premises, headcount, throughput
+    position: string; // where it stands right now
   };
   leadership: BusinessPerson;
   staff: BusinessPerson[];
@@ -159,7 +162,28 @@ export interface BusinessDocument {
   hooks: string[];
   management?: BusinessManagement;
   fallbackSections: BusinessSectionId[];
+  // Names used in the text without being introduced (FR-017); shown to the GM.
+  warnings?: string[];
 }
+
+// Labels a relationship kind may carry (FR-018). A label outside its set is
+// rejected by the parser and reported by checkBusiness as `relationship-label`.
+export declare const BUSINESS_ALLOWED_LABELS: Record<
+  BusinessRelationship["kind"],
+  readonly BusinessRelationshipLabel[]
+>;
+
+// The "Established facts" block later stages receive (FR-016): the business,
+// its type, leader, staff and, once known, its parties.
+export declare function establishedFacts(doc: BusinessDocument): string;
+// businessStageMessage(stage, options, established?) appends that block.
+
+// Names in `texts` (default: all prose) that the document never introduced.
+// A heuristic: capitalised runs, sentence starters and abbreviations ignored.
+export declare function findUnintroducedNames(
+  doc: BusinessDocument,
+  texts?: readonly string[],
+): string[];
 
 // --- Generation ------------------------------------------------------------
 

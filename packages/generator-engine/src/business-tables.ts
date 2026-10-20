@@ -7,6 +7,7 @@
 import type {
   BusinessDependencyKind,
   BusinessRelationshipKind,
+  BusinessRelationshipLabel,
 } from "./business-state";
 
 export type BusinessGenreGroup =
@@ -200,6 +201,8 @@ export const BUSINESS_POOLS: Record<
       kind: BusinessRelationshipKind;
       partyKind: "organisation" | "individual";
       reason: string;
+      /** The graph label, when the kind's default would misdescribe this party. */
+      label?: BusinessRelationshipLabel;
     }>;
     legitSecrets: readonly string[];
     criminalSecrets: readonly string[];
@@ -296,6 +299,7 @@ export const BUSINESS_POOLS: Record<
         kind: "criminal",
         partyKind: "organisation",
         reason: "Collects a quiet fee for keeping the carts moving.",
+        label: "protected by",
       },
       {
         name: "Hob Grennick",
@@ -405,6 +409,7 @@ export const BUSINESS_POOLS: Record<
         partyKind: "organisation",
         reason:
           "Takes a share of anything that passes through the outer lanes.",
+        label: "owes",
       },
       {
         name: "Kessa Dran",
@@ -513,6 +518,7 @@ export const BUSINESS_POOLS: Record<
         kind: "criminal",
         partyKind: "organisation",
         reason: "Runs the streets and expects a cut of every sale.",
+        label: "owes",
       },
       {
         name: "Dev Tanaka",
@@ -621,6 +627,7 @@ export const BUSINESS_POOLS: Record<
         kind: "criminal",
         partyKind: "organisation",
         reason: "Chases debts on behalf of a lender the owner once used.",
+        label: "owes",
       },
       {
         name: "Sam Okoro",
@@ -732,6 +739,7 @@ export const BUSINESS_POOLS: Record<
         partyKind: "organisation",
         reason:
           "Sells bodies to the anatomists and expects the house to look away.",
+        label: "owes",
       },
       {
         name: "Father Anselm Crook",
@@ -840,6 +848,7 @@ export const BUSINESS_POOLS: Record<
         kind: "criminal",
         partyKind: "organisation",
         reason: "Hold the pass and charge a toll on every wagon.",
+        label: "owes",
       },
       {
         name: "Lena Whitcomb",
@@ -949,6 +958,7 @@ export const BUSINESS_POOLS: Record<
         partyKind: "organisation",
         reason:
           "Runs contraband through the back channel and wants a quiet berth.",
+        label: "serves",
       },
       {
         name: "Nell Harrow",
@@ -1044,6 +1054,30 @@ export const GENERIC_POOLS = {
     "Gambling debts have tempted the owner toward a bad deal.",
     "A rival from the old days is back in town asking questions.",
     "Drinks more than anyone knows, and is starting to slip.",
+  ],
+  modelTemplates: [
+    "It earns on a steady margin from regular work, and owns what it sells.",
+    "It earns a fee for arranging and carrying other people's goods, and owns none of them.",
+    "It buys in, adds its own work or markup, and sells on to regular customers.",
+    "It works to order for a few large clients and bills when the job is done.",
+    "It earns a little from many small customers and a lot from one or two large ones.",
+    "It rents out what it owns and takes a fee for looking after it.",
+  ],
+  sizeTemplates: [
+    "One building, a handful of regular staff, and a few part-timers in busy seasons.",
+    "A single premises with a yard or store, a small permanent crew, and some contracted help.",
+    "A modest operation: one main site, a few vehicles or tools, and a loyal core of workers.",
+    "A well-known name in its district, with two sites and more work than hands.",
+    "A small outfit: the owner, a few staff, and borrowed space for the overflow.",
+    "A mid-sized concern with several crews, its own store, and a reputation beyond the district.",
+  ],
+  positionTemplates: [
+    "Profitable in ordinary seasons, but short of ready cash right now.",
+    "Comfortable on paper, though one bad month would change that.",
+    "Barely breaking even, and hiding it from customers.",
+    "Doing well, and starting to attract the wrong kind of attention.",
+    "Solvent, but carrying a debt that grows every quarter.",
+    "Recovering from a bad year, with its best customers still loyal.",
   ],
   leaderGoals: [
     "Keep the business in the family and pass it on intact.",

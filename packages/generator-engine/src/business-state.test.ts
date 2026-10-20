@@ -32,6 +32,9 @@ function doc(overrides: Partial<BusinessDocument> = {}): BusinessDocument {
       payers: "Farmers and carters.",
       whyHere: "Where the river road meets the mill.",
       mainIncome: "Repairs.",
+      model: "It earns a fee for the work it does.",
+      size: "A small shop with a few staff.",
+      position: "Steady, with little to spare.",
     },
     leadership: {
       id: "lead",

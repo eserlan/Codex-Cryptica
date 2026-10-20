@@ -128,7 +128,7 @@ A GM searching for a business, shop or enterprise generator for their RPG lands 
   - Optional toggle: **Players own this business**
 - **FR-003**: Every generated business MUST include these sections:
   1. **Name and identity**: name, type, short description and reputation, what makes it distinctive.
-  2. **What it actually does**: what it sells, makes or provides; who pays; why it exists here; its main source of income.
+  2. **What it actually does**: what it sells, makes or provides; who pays; why it exists here; its main source of income; how it earns and whether it owns what it handles or only carries or arranges it for others; how big it is in plain words; and how it is doing financially right now.
   3. **Owner / leadership**: name, goal, management style, and one personal pressure or vulnerability. When the players own the business, this is a manager or steward the party employs instead (see FR-004).
   4. **Key staff**: a small set sized by scale (tiny 0 to 1, small 1 to 2, established 2 to 3, regional and major 3 to 4), each with a role and one trait that matters in play.
   5. **Clientele**: typical, valuable, and undesirable or dangerous customers, plus anyone excluded.
@@ -165,6 +165,9 @@ A GM searching for a business, shop or enterprise generator for their RPG lands 
   - If there is no match, the save step offers to create it as a new Faction (organisations) or Character (individuals) with that link. The new entity is unticked by default.
   - Unticked parties stay in the business's text only. Nothing is written to an existing entity except the new connection.
   - The public page has no vault to match against. Its save hands the business and the ticked people to the app, and outside parties stay in the business's text.
+- **FR-016**: Every stage after the first MUST be given the business so far as fixed facts: its name, type, leader, staff and, once known, its parties. A stage that fell back to the tables is described by what is actually in the document. Later stages MUST NOT rename the business or introduce named people who are not in those facts.
+- **FR-017**: A name that appears in the text without being introduced as the business, a person or a party MUST cause one retry of the stage that wrote it. If it survives, the result MUST list it as a warning shown to the GM.
+- **FR-018**: A relationship's graph label MUST truly describe its kind of party: a rival competes with the business, a supplier supplies it, a regulator regulates it, a criminal group owes, protects, supplies or is served by it, and a neighbour is never described as the place the business is located in. A label that does not fit MUST be rejected and replaced by the kind's default.
 
 ### Key Entities
 

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { generateBusinessStaged } from "./business-staged";
 import { checkBusiness } from "./business-checks";
+import { generateBusinessLocal } from "./business-local";
 import { seeded } from "./business-test-helpers";
 
 const OPTS = {
@@ -23,6 +24,9 @@ const identityReply = JSON.stringify({
     payers: "Couriers and dockworkers.",
     whyHere: "Near the tram stop.",
     mainIncome: "Repeat repairs.",
+    model: "It earns a fee for the work it does.",
+    size: "A small shop with a few staff.",
+    position: "Steady, with little to spare.",
   },
   leadership: {
     name: "Nadia Vale",
@@ -206,5 +210,98 @@ describe("generateBusinessStaged", () => {
         rng: seeded(17),
       }),
     ).rejects.toThrow();
+  });
+});
+
+describe("established facts and name continuity", () => {
+  it("tells the later stages the business and its people", async () => {
+    const { send, calls } = queue(
+      identityReply,
+      connectionsReply,
+      troubleReply,
+    );
+    await generateBusinessStaged(OPTS, { send, rng: seeded(21) });
+    expect(calls[0]).not.toContain("Established facts");
+    for (const later of [calls[1], calls[2]]) {
+      expect(later).toContain("Established facts");
+      expect(later).toContain("Chrome Lily");
+      expect(later).toContain("Nadia Vale");
+      expect(later).toContain("Tomo Ruiz");
+    }
+    // The parties are only known once the connections stage has set them.
+    expect(calls[1]).not.toContain("Helix Medical Corp (competitor");
+    expect(calls[2]).toContain("Helix Medical Corp (competitor");
+  });
+
+  it("describes the local business to the later stages when the identity stage falls back", async () => {
+    // The sample in the review: stage one failed, later stages invented their own cast.
+    const local = generateBusinessLocal(OPTS, seeded(22));
+    const { send, calls } = queue(
+      "nope",
+      "still nope",
+      connectionsReply,
+      troubleReply,
+    );
+    const doc = await generateBusinessStaged(OPTS, { send, rng: seeded(22) });
+    expect(doc.identity.name).toBe(local.identity.name);
+    const connectionsMessage = calls[2];
+    expect(connectionsMessage).toContain("Established facts");
+    expect(connectionsMessage).toContain(local.identity.name);
+    expect(connectionsMessage).toContain(local.leadership.name);
+  });
+
+  it("retries a stage that introduces someone nobody defined", async () => {
+    const stranger = JSON.parse(troubleReply);
+    stranger.hooks = [
+      "Edran Pell wants the ledgers before Nima Quill finds them.",
+      "Helix Medical Corp is buying up the clinic's regulars.",
+    ];
+    const { send, calls } = queue(
+      identityReply,
+      connectionsReply,
+      JSON.stringify(stranger),
+      troubleReply,
+    );
+    const doc = await generateBusinessStaged(OPTS, { send, rng: seeded(23) });
+    expect(calls).toHaveLength(4);
+    expect(calls[3]).toContain("Edran Pell");
+    expect(doc.hooks.join(" ")).not.toContain("Edran Pell");
+    expect(doc.warnings).toBeUndefined();
+  });
+
+  it("records a warning when a stranger survives the retry", async () => {
+    const stranger = JSON.parse(troubleReply);
+    stranger.hooks = [
+      "Nadia Vale wants the ledgers before Edran Pell finds them.",
+      "Helix Medical Corp is courting Nima Quill.",
+    ];
+    const bad = JSON.stringify(stranger);
+    const { send } = queue(identityReply, connectionsReply, bad, bad);
+    const doc = await generateBusinessStaged(OPTS, { send, rng: seeded(24) });
+    expect(doc.warnings).toEqual(
+      expect.arrayContaining(["Edran Pell", "Nima Quill"]),
+    );
+  });
+
+  it("rejects a connections reply whose label does not fit the party", async () => {
+    const mislabelled = JSON.parse(connectionsReply);
+    mislabelled.relationships = [
+      {
+        name: "The Reedknife Circle",
+        kind: "criminal",
+        partyKind: "organisation",
+        label: "located in",
+        reason: "A smuggling network testing the clinic.",
+      },
+    ];
+    const { send, calls } = queue(
+      identityReply,
+      JSON.stringify(mislabelled),
+      connectionsReply,
+      troubleReply,
+    );
+    const doc = await generateBusinessStaged(OPTS, { send, rng: seeded(25) });
+    expect(calls).toHaveLength(4);
+    expect(doc.relationships.every((r) => r.label !== "located in")).toBe(true);
   });
 });

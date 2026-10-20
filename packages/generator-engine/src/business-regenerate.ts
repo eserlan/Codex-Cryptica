@@ -5,8 +5,9 @@
 
 import { defaultRng, type Rng } from "./random-utils";
 import { localSectionFor } from "./business-local";
-import { checkBusiness } from "./business-checks";
+import { checkBusiness, findUnintroducedNames } from "./business-checks";
 import {
+  establishedFacts,
   parseBusinessConnections,
   parseBusinessTrouble,
 } from "./public-business";
@@ -53,7 +54,7 @@ function sectionMessage(
   const steer = instruction.trim()
     ? `\nThe GM asks: ${instruction.trim()}`
     : "";
-  return `Rewrite only the ${businessSectionLabel(section)} of ${doc.identity.name}, a ${doc.options.businessType} in ${doc.options.genre}. Keep everything else as it is. Return JSON: ${sectionShape(section)}.${steer}`;
+  return `Rewrite only the ${businessSectionLabel(section)} of ${doc.identity.name}, a ${doc.options.businessType} in ${doc.options.genre}. Keep everything else as it is, and refer only to the people and parties already established.\nEstablished facts:\n${establishedFacts(doc)}\nReturn JSON: ${sectionShape(section)}.${steer}`;
 }
 
 type Applier = (
@@ -303,5 +304,8 @@ export async function regenerateBusinessSection(
     next = propagateRename(next, before, after, section);
     renamed = { from: before, to: after };
   }
+  // The unintroduced-names notice describes the document as it now stands.
+  const unintroduced = findUnintroducedNames(next);
+  next = { ...next, warnings: unintroduced.length ? unintroduced : undefined };
   return { document: next, renamed, warnings };
 }
