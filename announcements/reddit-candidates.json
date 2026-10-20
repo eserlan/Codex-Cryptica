@@ -1,5 +1,5 @@
 {
-  "updated_at": 1792495895,
+  "updated_at": 1792497481,
   "candidates": [
     {
       "id": "reddit-38926756319-cif-now-flies-to-what-he-points-at",
@@ -32,14 +32,14 @@
       "created_at": 1792425463
     },
     {
-      "id": "reddit-39407138621-reporting-a-bug-meant-leaving-the-app-so",
-      "title": "Reporting a bug meant leaving the app, so I added it inside",
-      "body": "When something broke I had no quick way to tell you without you opening email or GitHub. That meant fewer reports and slower fixes.\n\nI added Report a Problem inside the app, from Help and from the header, so you can file a report without leaving your vault.\n\nMore detail here: https://codexcryptica.com/help/report-a-problem\n\nIt does:\n- sends privately for triage, not as a public post\n- captures the area of the app and basic client context so I can reproduce it\n- keeps you in the app, no tab switching to file\n- groups duplicates on my side so fixes stay focused\n\nI read every report myself. I cannot reply to each one directly, but triage is now a lot faster on my side.\n\nWhat has stopped you reporting a small bug in the past, finding the button or not knowing if anyone would read it?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-39407138621-1.png)",
-      "url": "https://codexcryptica.com/help/report-a-problem",
-      "image_url": "https://assets.codexcryptica.com/announcements/release-39407138621-1.png",
+      "id": "reddit-39407138621-my-online-handouts-looked-flat-until-i-t",
+      "title": "My online handouts looked flat until I treated them like props",
+      "body": "Sharing a map or letter over video call used to kill momentum. A bare image in chat did not feel like something found in the world.\n\nI wrote a guide on making maps, letters and in-world newspapers feel immersive online, with shareable props and low-prep workflows.\n\nYou can read it here: https://codexcryptica.com/answers/how-do-i-give-players-immersive-handouts-in-an-online-rpg\n\nIt covers:\n- when a handout helps and when a short description is better\n- simple layouts for letters, maps and newspaper pages that still read on a small screen\n- how to prep one reusable template instead of art for every session\n- sharing that works in a VTT or plain video call without extra logins\n- keeping text readable and printable without hours of design\n\nThe examples lean practical over fancy. You will not get a full inDesign workflow here.\n\nWhat handout has actually landed at your online table, and what fell flat?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-39407138621-2.png)",
+      "url": "https://codexcryptica.com/answers/how-do-i-give-players-immersive-handouts-in-an-online-rpg",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-39407138621-2.png",
       "source_id": "39407138621",
       "status": "approved",
-      "created_at": 1792495895
+      "created_at": 1792497481
     }
   ]
 }
