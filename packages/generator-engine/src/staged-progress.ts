@@ -24,7 +24,11 @@ export type StagedStepId =
   // Heist stages (heist-staged.ts); reuses "coherence".
   | "objective"
   | "security"
-  | "response";
+  | "response"
+  // Business stages (business-staged.ts).
+  | "identity"
+  | "connections"
+  | "trouble";
 
 export interface StagedProgressStep {
   id: StagedStepId;

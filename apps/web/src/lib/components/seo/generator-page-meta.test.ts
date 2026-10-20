@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { slugMeta, type ValidSlug } from "./generator-page-meta";
 
 const allExpectedSlugs: ValidSlug[] = [
+  "business",
   "npc",
   "one-shot-adventure-generator",
   "settlement",

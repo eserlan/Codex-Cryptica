@@ -183,6 +183,12 @@ export const GENERATORS = [
     description:
       "Generate an interconnected point-of-interest network with branching routes, loops, secret shortcuts, and key-before-lock gates.",
   },
+  {
+    id: "business",
+    label: "Business",
+    description:
+      "Generate one commercial organisation with its people, dependencies, rivals, pressure and adventure hooks.",
+  },
 ] as const;
 
 export type GeneratorId = (typeof GENERATORS)[number]["id"];

@@ -4,6 +4,7 @@
   import type { OneShotRegenTarget } from "generator-engine";
   import { generatorEngine } from "$lib/services/seo/generator-engine";
   import OneShotPartRow from "./OneShotPartRow.svelte";
+  import RefineNotice from "./RefineNotice.svelte";
   import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
 
   let {
@@ -135,17 +136,6 @@
       {/each}
     </ul>
 
-    <div aria-live="polite">
-      {#if notice}
-        <p class="mt-3 text-micro text-theme-muted">{notice}</p>
-      {/if}
-      {#if warnings.length}
-        <ul class="mt-2 list-disc pl-4 text-micro text-theme-accent">
-          {#each warnings as warning (warning)}
-            <li>{warning}</li>
-          {/each}
-        </ul>
-      {/if}
-    </div>
+    <RefineNotice {notice} {warnings} />
   </section>
 {/if}

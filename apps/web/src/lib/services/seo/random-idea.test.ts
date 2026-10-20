@@ -17,6 +17,7 @@ describe("randomIdeaCategories", () => {
   it("contains exactly the standalone generator pool", () => {
     expect(randomIdeaCategories.map((c) => c.key).sort()).toEqual([
       "artifact",
+      "business",
       "comic-book-event",
       "council-vote",
       "creature",
@@ -71,6 +72,7 @@ describe("randomIdeaCategories", () => {
       generateHoliday: vi.fn().mockResolvedValue("holiday-result"),
       generateTome: vi.fn().mockResolvedValue("tome-result"),
       generatePointCrawl: vi.fn().mockResolvedValue("point-crawl-result"),
+      generateBusiness: vi.fn().mockResolvedValue("business-result"),
     } as unknown as DefaultGeneratorEngine;
     const theme = "Cyberpunk / Corporate";
 
@@ -159,6 +161,10 @@ describe("randomIdeaCategories", () => {
       theme,
     });
     expect(engine.generatePointCrawl).toHaveBeenCalledWith({
+      useAI: true,
+      genre: theme,
+    });
+    expect(engine.generateBusiness).toHaveBeenCalledWith({
       useAI: true,
       genre: theme,
     });

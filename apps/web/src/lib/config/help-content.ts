@@ -839,6 +839,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "Design interconnected adventure maps with named locations, explicit travel routes, terrain hazards, and secrets. Preview the interactive map, drag nodes to customize layout, and export clean SVG or PNG diagrams. Saving creates Location entities with route lore and a master Point Crawl overview Note.",
     icon: "icon-[lucide--waypoints]",
   },
+  "business-generator": {
+    id: "business-generator",
+    title: "Business Generator",
+    content:
+      "Create one commercial organisation with its owner, staff, suppliers, rivals, pressure, secret and adventure hooks. Turn on Players own this business to make the leader a manager you employ. Saving creates a Faction, its people as Characters, and links to any rivals already in your vault.",
+    icon: "icon-[lucide--store]",
+  },
 };
 
 let _cachedHelpArticles: HelpArticle[] | null = null;

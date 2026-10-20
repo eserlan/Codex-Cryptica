@@ -450,3 +450,76 @@ describe("GeneratorDraftReview", () => {
     });
   });
 });
+
+describe("GeneratorDraftReview business drafts", () => {
+  async function businessDraft() {
+    const { generateBusinessLocal, businessGeneratorOutput } =
+      await import("generator-engine");
+    const doc = generateBusinessLocal({
+      genre: "Classic Fantasy",
+      businessType: "Blacksmith",
+      scale: "established",
+    });
+    const out = businessGeneratorOutput(doc);
+    return {
+      doc,
+      draft: dungeonDraft({
+        title: out.title,
+        content: out.content,
+        lore: "",
+        labels: out.labels,
+        sourceGeneratorId: "business",
+        business: doc,
+      }),
+    };
+  }
+
+  it("shows the refine panel and the save step, and hides the generic submit", async () => {
+    const { draft } = await businessDraft();
+    render(GeneratorDraftReview, {
+      props: {
+        draft,
+        categories,
+        saving: false,
+        onsave: vi.fn(),
+        onback: vi.fn(),
+      },
+    });
+    expect(screen.getByTestId("business-review")).toBeTruthy();
+    expect(screen.getByRole("button", { name: /^Save$/ })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /Open in Editor/ })).toBeNull();
+  });
+
+  it("saves the business with its save choices", async () => {
+    const { draft } = await businessDraft();
+    const onsave = vi.fn();
+    render(GeneratorDraftReview, {
+      props: { draft, categories, saving: false, onsave, onback: vi.fn() },
+    });
+    await fireEvent.click(screen.getByRole("button", { name: /^Save$/ }));
+    expect(onsave).toHaveBeenCalledTimes(1);
+    expect(onsave.mock.calls[0][2].businessChoices).toMatchObject({
+      sourceTicked: false,
+    });
+  });
+
+  it("uses the business name as the title to save, even after the name changed", async () => {
+    const { doc, draft } = await businessDraft();
+    const renamed = {
+      ...doc,
+      identity: { ...doc.identity, name: "The Renamed Anvil" },
+    };
+    const onsave = vi.fn();
+    render(GeneratorDraftReview, {
+      props: {
+        draft: { ...draft, business: renamed },
+        categories,
+        saving: false,
+        onsave,
+        onback: vi.fn(),
+      },
+    });
+    await fireEvent.click(screen.getByRole("button", { name: /^Save$/ }));
+    expect(onsave.mock.calls[0][0].title).toBe("The Renamed Anvil");
+  });
+});

@@ -1,5 +1,8 @@
 <script lang="ts">
-  import type { OneShotProgressStep } from "generator-engine";
+  import {
+    businessGeneratorOutput,
+    type OneShotProgressStep,
+  } from "generator-engine";
   import { onDestroy, onMount, untrack } from "svelte";
   import { browser } from "$app/environment";
   import { page } from "$app/state";
@@ -9,6 +12,8 @@
   import SEOGeneratorLayout from "./SEOGeneratorLayout.svelte";
   import OneShotRefinePanel from "./OneShotRefinePanel.svelte";
   import PointCrawlRefinePanel from "./PointCrawlRefinePanel.svelte";
+  import BusinessRefinePanel from "./BusinessRefinePanel.svelte";
+  import BusinessFallbackNote from "./BusinessFallbackNote.svelte";
   import GeneratorPageFormFields from "./GeneratorPageFormFields.svelte";
   import {
     npcConfig,
@@ -48,6 +53,7 @@
     villainSchemeConfig,
     oneShotConfig,
     pointCrawlConfig,
+    businessConfig,
     worldConfig,
     starSystemConfig,
     constellationConfig,
@@ -606,6 +612,18 @@
     campaignContext: "",
   });
 
+  let business = $state({
+    genre: businessConfig.genres[0],
+    businessType: "",
+    scale: "small",
+    legitimacy: "legitimate",
+    wealth: "modest",
+    tone: "grounded",
+    location: "",
+    clientele: "",
+    campaignContext: "",
+    playersOwn: false,
+  });
   let pointCrawl = $state({
     genre: pointCrawlConfig.genres[0],
     scale: "Wilderness",
@@ -982,6 +1000,7 @@
     villainScheme,
     oneShot,
     pointCrawl,
+    business,
     world,
     starSystem,
     constellation,
@@ -1058,6 +1077,16 @@
       <OneShotRefinePanel {output} {useAI} onReplace={replaceOutput} />
     {:else if slug === "point-crawl"}
       <PointCrawlRefinePanel {output} {useAI} onReplace={replaceOutput} />
+    {:else if slug === "business" && output.business}
+      <BusinessFallbackNote
+        fallbackSections={output.business.fallbackSections}
+      />
+      <BusinessRefinePanel
+        business={output.business}
+        {useAI}
+        onReplace={(doc) =>
+          replaceOutput(businessGeneratorOutput(doc) as never)}
+      />
     {/if}
   {/snippet}
   {#snippet formFields(trigger)}
@@ -1104,6 +1133,7 @@
       bind:villainScheme
       bind:oneShot
       bind:pointCrawl
+      bind:business
       bind:world
       bind:starSystem
       bind:constellation

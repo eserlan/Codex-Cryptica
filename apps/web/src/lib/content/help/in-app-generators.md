@@ -20,7 +20,7 @@ rank: 7
 
 ## Generate Campaign Entities From Inside Your Vault
 
-The **Campaign Generators** let you create NPCs, factions, settlements, point crawl travel maps, magic items, and more directly inside your active campaign vault. The **Holiday & Festival** generator creates one observance or a connected calendar. Every result is previewed before you choose to open it as an entity draft.
+The **Campaign Generators** let you create NPCs, factions, settlements, point crawl travel maps, businesses (with their people and rivals), magic items, and more directly inside your active campaign vault. The **Holiday & Festival** generator creates one observance or a connected calendar. Every result is previewed before you choose to open it as an entity draft.
 
 ### Use generators with AI turned off
 

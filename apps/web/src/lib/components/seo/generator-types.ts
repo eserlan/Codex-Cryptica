@@ -46,7 +46,8 @@ export type ValidSlug =
   | "holiday"
   | "personality"
   | "tome"
-  | "point-crawl";
+  | "point-crawl"
+  | "business";
 
 export type SlugMetaEntry = {
   pageTitle: string;

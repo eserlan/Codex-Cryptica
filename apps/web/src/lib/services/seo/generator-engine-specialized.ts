@@ -38,6 +38,15 @@ import {
   type PointCrawlRegenTarget,
   type PointCrawlRegenResult,
   type OneShotProgressStep,
+  generateBusinessStaged,
+  generateBusinessLocal,
+  businessToOutput,
+  businessGeneratorOutput,
+  regenerateBusinessSection as regenerateBusinessSectionPart,
+  type BusinessDocument,
+  type BusinessGeneratorOptions,
+  type BusinessSectionId,
+  type RegenerateBusinessSectionResult,
 } from "generator-engine";
 import { getSessionContext } from "./session-context";
 import {
@@ -48,6 +57,9 @@ import {
 
 import type { GeneratorOutput } from "./generator-helpers";
 import { ONE_SHOT_GENERATION_CONFIG } from "./generator-ai-transport";
+
+const BUSINESS_SYSTEM =
+  "You are an expert TTRPG worldbuilder writing one commercial organisation as a living business. Return valid JSON only, with no prices.";
 
 import { GeneratorEngineWorldbuilding } from "./generator-engine-worldbuilding";
 
@@ -450,5 +462,81 @@ export class GeneratorEngineSpecialized extends GeneratorEngineWorldbuilding {
       }
       return regeneratePointCrawlPartLocal(crawl, target);
     }
+  }
+  /**
+   * Business generation: three staged turns when AI is on, with each turn
+   * carrying the earlier turns in its prompt, falling back to local tables.
+   */
+  async generateBusiness(
+    options: BusinessGeneratorOptions & {
+      useAI?: boolean;
+      onProgress?: (steps: OneShotProgressStep[]) => void;
+      signal?: AbortSignal;
+    } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, onProgress, signal, ...bizOptions } = options;
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const transcript: string[] = [];
+        const send = async (message: string, turnSignal?: AbortSignal) => {
+          const prompt = [...transcript, message].join("\n\n---\n\n");
+          const reply = await this.runModel(
+            BUSINESS_SYSTEM,
+            prompt,
+            ONE_SHOT_GENERATION_CONFIG,
+            true,
+            turnSignal ?? signal,
+          );
+          transcript.push(message, reply);
+          return reply;
+        };
+        const doc = await generateBusinessStaged(bizOptions, {
+          send,
+          onProgress: onProgress as never,
+          signal,
+        });
+        return businessGeneratorOutput(doc) as unknown as GeneratorOutput;
+      },
+      () =>
+        businessToOutput(
+          generateBusinessLocal(bizOptions),
+        ) as unknown as GeneratorOutput,
+    );
+  }
+
+  /**
+   * Rewrite one business section with an optional steer. A failed model call
+   * is treated as an unusable reply, so the section is rebuilt from the tables.
+   */
+  async regenerateBusinessSection(
+    doc: BusinessDocument,
+    section: BusinessSectionId,
+    options: {
+      useAI?: boolean;
+      instruction?: string;
+      signal?: AbortSignal;
+    } = {},
+  ): Promise<RegenerateBusinessSectionResult> {
+    const send = async (message: string, turnSignal?: AbortSignal) => {
+      try {
+        return await this.runModel(
+          BUSINESS_SYSTEM,
+          message,
+          ONE_SHOT_GENERATION_CONFIG,
+          true,
+          turnSignal ?? options.signal,
+        );
+      } catch (err) {
+        if (options.signal?.aborted) throw err;
+        return "";
+      }
+    };
+    return regenerateBusinessSectionPart(doc, section, {
+      useAI: options.useAI === true,
+      instruction: options.instruction,
+      send: options.useAI ? send : undefined,
+      signal: options.signal,
+    });
   }
 }

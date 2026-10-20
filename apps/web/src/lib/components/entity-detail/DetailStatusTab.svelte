@@ -9,6 +9,7 @@
   import ConnectionCreator from "$lib/components/connections/ConnectionCreator.svelte";
   import DetailProposals from "./proposals/DetailProposals.svelte";
   import GenerateRelatedButton from "./GenerateRelatedButton.svelte";
+  import GenerateBusinessButton from "./GenerateBusinessButton.svelte";
   import EntityProposals from "./EntityProposals.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { revisionService } from "$lib/services/RevisionService.svelte";
@@ -129,6 +130,7 @@
     {#if !vault.isGuest}
       <div class="flex justify-end">
         <GenerateRelatedButton entityId={entity.id} />
+        <GenerateBusinessButton entityId={entity.id} entityType={entity.type} />
       </div>
     {/if}
   {/if}

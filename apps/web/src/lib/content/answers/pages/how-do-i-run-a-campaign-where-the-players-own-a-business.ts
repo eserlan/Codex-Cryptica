@@ -252,6 +252,12 @@ export const howDoIRunACampaignWhereThePlayersOwnABusiness: AnswerConfigInput =
     },
     relatedTools: [
       {
+        title: "Business Generator",
+        description:
+          "One commercial organisation with its people, dependencies, rivals, pressure and hooks.",
+        href: "/generators/business",
+      },
+      {
         title: "NPC Generator",
         description:
           "Staff, suppliers, rivals and inspectors with motives the party can engage.",

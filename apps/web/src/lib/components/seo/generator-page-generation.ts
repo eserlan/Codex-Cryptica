@@ -16,6 +16,7 @@ export const NON_STREAMABLE_SLUGS: readonly ValidSlug[] = [
   "adventure-idea-generator",
   "one-shot-adventure-generator",
   "point-crawl",
+  "business",
   "language-generator",
   "heist",
 ] as const;
@@ -28,6 +29,7 @@ export function isStreamableSlug(slug: ValidSlug): boolean {
 const STAGED_SLUGS: readonly ValidSlug[] = [
   "one-shot-adventure-generator",
   "point-crawl",
+  "business",
   "dungeon-generator",
   "adventure-generator",
   "adventure-idea-generator",
@@ -91,6 +93,7 @@ export interface GenerationContext {
   villainScheme: Record<string, unknown>;
   oneShot: Record<string, unknown>;
   pointCrawl?: Record<string, unknown>;
+  business?: Record<string, unknown>;
   world: Record<string, unknown>;
   starSystem: Record<string, unknown>;
   constellation: Record<string, unknown>;
@@ -381,6 +384,17 @@ export function createGeneratorHandlers(
         primaryHazard: (ctx.tome as Record<string, unknown>).hazard,
         useAI,
       } as never),
+    business: (useAI: boolean) => {
+      ctx.onOneShotProgress?.(null);
+      const b = (ctx.business ?? {}) as Record<string, unknown>;
+      return engine.generateBusiness({
+        ...b,
+        genre: (b.genre as string) || ctx.getActiveTheme(),
+        useAI,
+        onProgress: ctx.onOneShotProgress,
+        signal: ctx.oneShotRuns?.start(),
+      } as never);
+    },
     "point-crawl": (useAI: boolean) => {
       ctx.onOneShotProgress?.(null);
       const pc = (ctx.pointCrawl ?? {}) as Record<string, unknown>;
