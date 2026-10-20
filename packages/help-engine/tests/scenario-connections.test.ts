@@ -16,6 +16,11 @@ const bundle = buildBundle({
   features: FEATURE_REGISTRY,
   articles: [
     article(
+      "report-a-problem",
+      "Report a Problem or Send Feedback",
+      "Send a problem, idea or other feedback from the app. The form lists what is sent.",
+    ),
+    article(
       "connections-tab",
       "Connections Tab",
       "## Where the links come from\nThe Connections tab is a read-only picture. Nothing here is stored twice: it is built from the connections you manage in the Status tab, so adding, editing, or removing a connection there changes what you see here.",

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { helpStore } from "$lib/stores/help.svelte";
+  import ReportProblemButton from "$lib/components/feedback/ReportProblemButton.svelte";
 
   let { isStandalone = false } = $props();
 </script>
@@ -22,6 +23,7 @@
   </div>
 
   <div class="flex items-center gap-2">
+    <ReportProblemButton area="help" />
     {#if !isStandalone}
       <button
         onclick={() => helpStore.openHelpWindow()}

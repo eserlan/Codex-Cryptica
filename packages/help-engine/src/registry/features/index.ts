@@ -1,5 +1,6 @@
 import { sessionJournal } from "./session-journal";
 import { entityReports } from "./entity-reports";
+import { reportAProblem } from "./report-a-problem";
 import { statSheets } from "./stat-sheets";
 import { entityTemplates } from "./entity-templates";
 import { chronology } from "./chronology";
@@ -46,6 +47,7 @@ export const FEATURE_REGISTRY: readonly FeatureEntry[] = [
   archiveImport,
   sessionJournal,
   entityReports,
+  reportAProblem,
   statSheets,
   entityTemplates,
   chronology,

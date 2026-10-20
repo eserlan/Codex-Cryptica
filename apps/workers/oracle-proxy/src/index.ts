@@ -8,6 +8,7 @@
 import { handleStarterTileDecksRoute } from "./starter-tile-decks";
 import { handleListPublicListings } from "./directory";
 import { handleCopyrightReport } from "./reports";
+import { handleFeedbackReport } from "./feedback-reports";
 import { forwardToGemini } from "./llm/adaptors/gemini-adaptor";
 import {
   isLlmOperationRequest,
@@ -86,6 +87,29 @@ async function handleCachedAggregateRead(
   } catch {
     return handler(request, env);
   }
+}
+
+async function handleCopyrightReportRoute(
+  request: Request,
+  env: Env,
+  pathname: string,
+): Promise<Response | undefined> {
+  if (pathname !== "/api/reports/copyright") return undefined;
+
+  const origin = request.headers.get("Origin") || "";
+  if (origin && !isOriginAllowed(origin, env)) {
+    return new Response("Forbidden", {
+      status: 403,
+      headers: getCorsHeaders(request.headers, env),
+    });
+  }
+  if (request.method === "POST") {
+    return handleCopyrightReport(request, env);
+  }
+  return new Response("Method not allowed", {
+    status: 405,
+    headers: getCorsHeaders(request.headers, env),
+  });
 }
 
 export default {
@@ -229,22 +253,16 @@ export default {
     );
     if (templateDirectoryResponse) return templateDirectoryResponse;
 
-    if (pathname === "/api/reports/copyright") {
-      const origin = request.headers.get("Origin") || "";
-      if (origin && !isOriginAllowed(origin, env)) {
-        return new Response("Forbidden", {
-          status: 403,
-          headers: getCorsHeaders(request.headers, env),
-        });
-      }
-      if (request.method === "POST") {
-        return handleCopyrightReport(request, env);
-      }
-      return new Response("Method not allowed", {
-        status: 405,
-        headers: getCorsHeaders(request.headers, env),
-      });
+    if (pathname === "/api/feedback/reports") {
+      return handleFeedbackReport(request, env);
     }
+
+    const copyrightReportResponse = await handleCopyrightReportRoute(
+      request,
+      env,
+      pathname,
+    );
+    if (copyrightReportResponse) return copyrightReportResponse;
 
     const publishedResponse = await handlePublishedRoutes(
       request,
