@@ -65,6 +65,25 @@ describe("BusinessFormFields", () => {
     expect(onSurprise).toHaveBeenCalledTimes(1);
   });
 
+  it("reports a genre pick so the page skin can follow it", async () => {
+    const onGenreChange = vi.fn();
+    render(BusinessFormFields, { props: props({ onGenreChange }) });
+    const select = screen.getByRole("combobox", {
+      name: /Genre/i,
+    }) as HTMLSelectElement;
+    await fireEvent.change(select, { target: { value: "Pirate" } });
+    expect(onGenreChange).toHaveBeenCalledWith("Pirate");
+  });
+
+  it("does not report a genre change when Surprise Me is clicked", async () => {
+    const onGenreChange = vi.fn();
+    render(BusinessFormFields, {
+      props: props({ onGenreChange, onSurprise: vi.fn() }),
+    });
+    await fireEvent.click(screen.getByRole("button", { name: /Surprise Me/i }));
+    expect(onGenreChange).not.toHaveBeenCalled();
+  });
+
   it("keeps the genre and picks a type from that genre when surprising", async () => {
     const onSurprise = vi.fn();
     render(BusinessFormFields, {

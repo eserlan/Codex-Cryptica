@@ -759,6 +759,10 @@
     setActiveTheme,
     personalityConfig.genres,
   );
+  const handleBusinessGenreChange = createKnownGenreThemeChangeHandler(
+    setActiveTheme,
+    businessConfig.genres,
+  );
   const handleRumourGenreChange = createKnownGenreThemeChangeHandler(
     setActiveTheme,
     rumourConfig.genres,
@@ -829,6 +833,7 @@
       artifact,
       creature,
       tome,
+      business,
       pointCrawl,
       oneShot,
       mapOneShotGenre: mapOneShotGenreToTheme,
@@ -1144,6 +1149,7 @@
       bind:creature
       bind:tome
       onPersonalityGenreChange={handlePersonalityGenreChange}
+      onBusinessGenreChange={handleBusinessGenreChange}
       onRumourGenreChange={handleRumourGenreChange}
       onPuzzleGenreChange={handlePuzzleGenreChange}
       onShipGenreChange={handleShipGenreChange}

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { factionConfig } from "./public-faction-constants";
 import { BUSINESS_TYPES, genreGroup } from "./business-tables";
 import {
   generateBusinessLocal,
@@ -18,14 +19,14 @@ function seeded(seed: number): () => number {
   };
 }
 
+// Every canonical theme, plus free-text genres a user might type.
 const GENRE_SAMPLES = [
-  "Classic Fantasy",
-  "Sci-Fi / Space Opera",
-  "Cyberpunk / Corporate",
-  "Modern Urban",
-  "Cosmic Horror",
-  "Weird West / Frontier",
-  "Swashbuckling / Nautical",
+  ...new Set([
+    ...factionConfig.themes,
+    "Modern Urban",
+    "Weird West / Frontier",
+    "Swashbuckling / Nautical",
+  ]),
 ];
 
 describe("resolveBusinessOptions", () => {

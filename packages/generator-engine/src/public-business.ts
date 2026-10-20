@@ -5,6 +5,7 @@
 
 import { readJsonObject, type JsonObject } from "./staged-runtime";
 import { BUSINESS_TYPES, genreGroup } from "./business-tables";
+import { factionConfig } from "./public-faction-constants";
 import {
   BUSINESS_LABEL_FOR_KIND,
   generateBusinessLocal,
@@ -31,17 +32,8 @@ import {
 import type { Rng } from "./random-utils";
 
 export const businessConfig = {
-  genres: [
-    "Classic Fantasy",
-    "Dark Fantasy",
-    "Sci-Fi / Space Opera",
-    "Cosmic Horror",
-    "Cyberpunk / Corporate",
-    "Post-Apocalyptic",
-    "Weird West / Frontier",
-    "Swashbuckling / Nautical",
-    "Modern Urban",
-  ],
+  // The canonical theme list, so a genre pick and the page skin stay one choice.
+  genres: [...factionConfig.themes],
   scales: [...BUSINESS_SCALES],
   legitimacies: [...BUSINESS_LEGITIMACY],
   wealth: [...BUSINESS_WEALTH],

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { factionConfig } from "./public-faction-constants";
 import {
   businessConfig,
   businessStageMessage,
@@ -202,6 +203,15 @@ describe("parseBusinessTrouble", () => {
 });
 
 describe("businessConfig", () => {
+  it("offers only the canonical theme list, so no genre is coined", () => {
+    expect(businessConfig.genres).toEqual([...factionConfig.themes]);
+    for (const g of businessConfig.genres) {
+      expect(() =>
+        generateBusinessLocal({ genre: g }, seeded(1)),
+      ).not.toThrow();
+    }
+  });
+
   it("lists the canonical genres and every scale, legitimacy and tone", () => {
     expect(businessConfig.genres).toContain("Classic Fantasy");
     expect(businessConfig.genres).toContain("Cyberpunk / Corporate");
