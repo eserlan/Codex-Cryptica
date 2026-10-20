@@ -40,7 +40,7 @@ export const howCanIPractiseBeingADungeonMasterWithoutAGroup: AnswerConfigInput 
           ],
           [
             "Narrate failure without a dead end",
-            "Practise turning a missed roll into a changed situation: lost time, noise, a higher price, a new arrival or a worse position.",
+            "Resolve the attempt honestly, apply consequences supported by the fiction or rules, then return a meaningful decision. The objective can remain unmet; the character might try another approach or withdraw.",
             "A player's disappointment or excitement, and judging how much consequence feels fair.",
           ],
           [
@@ -81,11 +81,11 @@ export const howCanIPractiseBeingADungeonMasterWithoutAGroup: AnswerConfigInput 
           },
           {
             term: "The roll",
-            text: "The d20 shows 6. Bryn's total is 6 + 5 = 11, which misses DC 12. The attempt fails. Your practice task now is to refuse the dead end: a failed check should change the situation, not simply repeat it.",
+            text: "The d20 shows 6. Bryn's total is 6 + 5 = 11, which misses DC 12. The attempt fails. One optional ruling is partial progress with a cost; the next line shows it. A failed check does not require progress or a new complication.",
           },
           {
             term: "You narrate the changed situation",
-            text: '"The wheel turns a quarter circle before the chain slips off the wet wood and clangs against the post. The gate lifts a hand\'s width. Water starts to move, but slowly, and two empty grain crates bump against the far bank. The shouting behind the mill stops." Bryn has made progress, made noise and used time. Draw the next player card or move to the NPC beat: the miller has heard her.',
+            text: 'For that optional ruling, say aloud: "The wheel turns a quarter circle before the chain slips off the wet wood and clangs against the post. The gate lifts a hand\'s width. Water starts to move, but slowly, and two empty grain crates bump against the far bank. The shouting behind the mill stops." If you ruled that the gate stays closed, say that time passed and the water rose instead. Then draw the next player card or ask whether Bryn tries another approach or withdraws. You can move to the NPC beat when Tam arrives with his stated concern.',
           },
           {
             term: "You end the beat with a decision",
@@ -117,11 +117,11 @@ export const howCanIPractiseBeingADungeonMasterWithoutAGroup: AnswerConfigInput 
           },
           {
             term: "Minutes 13 to 17: run one combat round",
-            text: "A goblin (AC 15, 7 HP) rushes Bryn to drive her off the track. Roll initiative for both, write the order down, then take each turn aloud. If Bryn attacks, roll a d20 and add her +5 attack bonus once to see whether the total meets or beats AC 15; only on a hit, roll 1d8 + 3 damage and subtract it from the goblin's 7 HP. Say what changes at the end of the round and stop after one full round. The drill is initiative order and HP bookkeeping at speaking pace, not a whole fight.",
+            text: "This drill uses 2014 D&D 5e rules: the [2014 goblin stat block](https://www.dndbeyond.com/monsters/16907-goblin) gives AC 15, 7 HP, Dexterity +2 and a scimitar at +4 to hit for 1d6 + 2 damage. Give Bryn an example initiative modifier of +2. Each rolls d20 plus initiative modifier; the higher total goes first. Take turns aloud in that order. If Bryn attacks, d20 + 5 hits AC 15 on a total of 15 or more; roll 1d8 + 3 damage and subtract it from the goblin's HP. For example, 12 + 5 = 17 hits, and 1 + 3 damage leaves the goblin with 3 HP. The goblin's scimitar hits Bryn's AC 16 on d20 + 4 = 16 or more; roll 1d6 + 2 damage and subtract it from her 12 HP. For example, 14 + 4 = 18 hits, and 4 + 2 damage leaves Bryn with 6 HP. See the [2014 combat rules](https://www.dndbeyond.com/sources/dnd/basic-rules-2014/combat) for the procedure. If either combatant falls, stop; otherwise, finish one round and say what changed. With revised rules, use the character and monster references your table agreed on. This drills pacing and HP bookkeeping, not a whole fight.",
           },
           {
             term: "Minutes 17 to 20: review in three lines",
-            text: "Write where you hesitated, whether you called for a roll that the fiction did not need, and whether failure changed the situation or stalled it. Add the one rule question you noted to a lookup list for after the session. Change one thing before the next run, such as a bookmark, a shorter opening description or a clearer NPC boundary, rather than rewriting the whole scene.",
+            text: "Write where you hesitated, whether you called for a roll that the fiction did not need, and whether you applied a fair consequence and returned a meaningful decision after a failed attempt, even if the objective stayed unmet. Add the one rule question you noted to a lookup list for after the session. Change one thing before the next run, such as a bookmark, a shorter opening description or a clearer NPC boundary, rather than rewriting the whole scene.",
           },
         ],
       },
@@ -173,7 +173,7 @@ export const howCanIPractiseBeingADungeonMasterWithoutAGroup: AnswerConfigInput 
           "I have written three player cards before describing the scene, including one action I did not plan for.",
           "I can say aloud, before rolling, whether an attempt needs an ability check, an attack roll, a saving throw or no roll.",
           "I have a 90-second rule for lookups: temporary ruling, note the question, look it up afterwards.",
-          "I have practised one failure that changes the situation instead of repeating the attempt.",
+          "I have practised a failed attempt with its objective unmet, then offered another approach or withdrawal.",
           "I have run one combat round aloud with initiative order and HP written down.",
           "I know who I will invite for a 60 to 90 minute first session once two or three solo runs feel steady.",
         ],
