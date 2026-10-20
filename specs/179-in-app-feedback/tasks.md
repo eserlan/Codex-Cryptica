@@ -19,7 +19,7 @@ Done and checked: setup, the shared engine, the worker endpoint, the web service
 
 Not done, or partly done:
 
-- **T029**: Tabletop entry point not placed: HelpVttMapSurface is logic-only, so the tabletop button needs the VTT chrome; the Help header button covers the tabletop help today.
+- **T029**: Done in #4229 follow-up: the tabletop button sits under the VTT controls (`VTTControls.svelte`).
 - **T057**: Not run in a browser yet (quickstart manual pass).
 - **T058**: Focus return is tested; contrast in all themes is not yet checked.
 - **T059**: Bundle impact not measured.
@@ -140,7 +140,7 @@ Fallow: verdict pass. Svelte-check: 0 errors. Impacted tests: all four workspace
 
 - [x] T027 [US1] Implement `apps/web/src/lib/components/feedback/FeedbackHost.svelte`, which dynamically imports `FeedbackDialog.svelte` the first time `feedbackDialog` opens, and mount it once in `apps/web/src/routes/+layout.svelte`. (Depends on T026.)
 - [x] T028 [P] [US1] Implement `apps/web/src/lib/components/feedback/ReportProblemButton.svelte`, a link-styled `type="button"` with an `area` prop and an optional label. (Depends on T019 and T025.)
-- [ ] T029 [US1] Add the MVP entry points: `<ReportProblemButton area="tabletop" />` in `apps/web/src/lib/components/help-assistant/HelpVttMapSurface.svelte`, and the one-line `<ReportProblemButton area="generators" />` in the footer of `apps/web/src/lib/components/generators/CampaignGeneratorModal.svelte`. Extend their existing tests to assert that the button renders. (Depends on T028.)
+- [x] T029 [US1] Add the MVP entry points: `<ReportProblemButton area="tabletop" />` in `apps/web/src/lib/components/help-assistant/HelpVttMapSurface.svelte`, and the one-line `<ReportProblemButton area="generators" />` in the footer of `apps/web/src/lib/components/generators/CampaignGeneratorModal.svelte`. Extend their existing tests to assert that the button renders. (Depends on T028.)
 
 **Checkpoint**: The MVP works end to end. A problem can be filed from the tabletop and from the in-app generator, and the reference is real.
 
