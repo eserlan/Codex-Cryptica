@@ -39,7 +39,7 @@
     },
     ...business.staff.map((p) => ({
       id: `staff:${p.id}` as BusinessSectionId,
-      label: p.name,
+      label: p.name === business.leadership.name ? `${p.name} (staff)` : p.name,
     })),
     { id: "clientele", label: "Clientele" },
     { id: "dependencies", label: "Dependencies" },

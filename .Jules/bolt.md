@@ -67,3 +67,8 @@
 
 **Learning:** In \`sceneBriefs\`, the nested use of `.map().filter()` inside an outer \`list(structure.scenes).map(...)\` causes a geometric explosion of intermediate array allocations, significantly increasing garbage collection pressure.
 **Action:** Replace nested chained operations like `.map().filter()` with a single imperative `for...of` loop when extracting relationships between collections, pushing the results directly to an array.
+
+## 2026-10-20 - Replace chained array operations and flatMap with imperative loops for finding unmatched items
+
+**Learning:** When filtering and mapping arrays (e.g. `assignments.filter().map()`) to create a Set, and then using `images.flatMap()` to filter based on that Set, it creates unnecessary intermediate arrays that increase garbage collection pressure.
+**Action:** Replace these chained declarative array methods with imperative `for...of` loops and pre-allocated arrays (e.g., pushing directly into a result array after a `Set.has` check) to prevent intermediate allocation overhead.
