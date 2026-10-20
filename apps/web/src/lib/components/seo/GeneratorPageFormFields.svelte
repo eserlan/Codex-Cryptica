@@ -241,6 +241,7 @@
     "adventure-idea-generator",
     "one-shot-adventure-generator",
     "point-crawl",
+    "business",
     "plot-twist-generator",
     "bbeg-generator",
     "comic-book-event-generator",
@@ -705,6 +706,7 @@
       bind:clientele={business.clientele}
       bind:campaignContext={business.campaignContext}
       bind:playersOwn={business.playersOwn}
+      onSurprise={trigger}
     />
   {:else if slug === "villain-scheme-generator"}
     <VillainSchemeFormFields

@@ -15,7 +15,7 @@ The **Business Generator** creates one specific organisation the party can visit
 Every business has these parts:
 
 - **Identity**: name, type, a short description, its reputation and what makes it distinctive.
-- **What it does**: what it provides, who pays, why it is here and its main income.
+- **What it does**: what it provides, who pays, why it is here, its main income, how it earns and whether it owns what it handles, how big it is, and how it is doing right now.
 - **Leadership and key staff**: the owner (or a manager, see below), a few staff with roles and traits.
 - **Clientele**: typical, valuable and undesirable customers, and anyone who is turned away.
 - **Dependencies**: what it needs to keep going, and what happens if one fails.
@@ -30,6 +30,10 @@ Pick a genre first. The business types on offer change with the genre, so a cybe
 ### Players own this business
 
 Turn on **Players own this business** if the party bought, inherited or founded it. The leader becomes a manager the party employs, and you also get starting strengths, liabilities, upgrade paths, recurring obligations and what success attracts. Obligations are named (payroll, rent, guild dues) and never priced.
+
+### Keeping names straight
+
+Later steps are told who the business, its owner and its staff are, so they should not rename the business or bring in unexplained people. If a name still turns up without an introduction, the page lists it so you can check it before you save. A rival or other party is only described by a graph link that fits it (a rival "competes with" the business, a supplier "supplies" it).
 
 ### Refining one part
 

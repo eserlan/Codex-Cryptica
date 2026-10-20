@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
-import { render, screen } from "@testing-library/svelte";
-import { describe, expect, it } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/svelte";
+import { describe, expect, it, vi } from "vitest";
 import BusinessFormFields from "./BusinessFormFields.svelte";
 
 function props(overrides: Record<string, unknown> = {}) {
@@ -56,5 +56,29 @@ describe("BusinessFormFields", () => {
     ]) {
       expect(screen.getByLabelText(label)).toBeTruthy();
     }
+  });
+
+  it("offers Surprise Me, which generates through the page's trigger", async () => {
+    const onSurprise = vi.fn();
+    render(BusinessFormFields, { props: props({ onSurprise }) });
+    await fireEvent.click(screen.getByRole("button", { name: /Surprise Me/i }));
+    expect(onSurprise).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps the genre and picks a type from that genre when surprising", async () => {
+    const onSurprise = vi.fn();
+    render(BusinessFormFields, {
+      props: props({
+        onSurprise,
+        genre: "Cyberpunk / Corporate",
+        businessType: "",
+      }),
+    });
+    await fireEvent.click(screen.getByRole("button", { name: /Surprise Me/i }));
+    const select = screen.getByRole("combobox", {
+      name: /Business type/i,
+    }) as HTMLSelectElement;
+    expect(select.value).not.toBe("Blacksmith");
+    expect(select.value).not.toBe("");
   });
 });

@@ -13,6 +13,7 @@ import {
   type BusinessGenreGroup,
 } from "./business-tables";
 import {
+  BUSINESS_ALLOWED_LABELS,
   BUSINESS_LEGITIMACY,
   BUSINESS_SCALES,
   BUSINESS_TONES,
@@ -42,19 +43,15 @@ export const BUSINESS_STAFF_RANGE: Record<
 
 const CONTEXT_LIMIT = 1200;
 
-/** How a relationship kind reads on the graph (FR-011). */
+/** The default graph label for each kind: the first label its kind allows (FR-011). */
 export const BUSINESS_LABEL_FOR_KIND: Record<
   BusinessRelationshipKind,
   BusinessRelationshipLabel
-> = {
-  competitor: "competes with",
-  supplier: "supplied by",
-  patron: "contracted by",
-  regulator: "regulated by",
-  criminal: "protected by",
-  neighbour: "located in",
-  faction: "protected by",
-};
+> = Object.fromEntries(
+  (Object.keys(BUSINESS_ALLOWED_LABELS) as BusinessRelationshipKind[]).map(
+    (kind) => [kind, BUSINESS_ALLOWED_LABELS[kind][0]],
+  ),
+) as Record<BusinessRelationshipKind, BusinessRelationshipLabel>;
 
 const WEALTH_PHRASE: Record<string, string> = {
   struggling: "scraping by",
@@ -155,6 +152,9 @@ function makeOperations({
       opts.location || "the district",
     ),
     mainIncome: pickFrom(GENERIC_POOLS.mainIncomeTemplates, rng),
+    model: pickFrom(GENERIC_POOLS.modelTemplates, rng),
+    size: pickFrom(GENERIC_POOLS.sizeTemplates, rng),
+    position: pickFrom(GENERIC_POOLS.positionTemplates, rng),
   };
 }
 
@@ -226,7 +226,7 @@ function makeRelationships({ group, rng }: Ctx): BusinessRelationship[] {
     id: `rel-${i + 1}`,
     name: p.name,
     kind: p.kind,
-    label: BUSINESS_LABEL_FOR_KIND[p.kind],
+    label: p.label ?? BUSINESS_LABEL_FOR_KIND[p.kind],
     reason: p.reason,
     partyKind: p.partyKind,
   }));

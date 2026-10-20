@@ -2,11 +2,15 @@ import { describe, expect, it } from "vitest";
 import {
   businessConfig,
   businessStageMessage,
+  establishedFacts,
   parseBusinessConnections,
   parseBusinessIdentity,
   parseBusinessTrouble,
 } from "./public-business";
-import { resolveBusinessOptions } from "./business-local";
+import {
+  generateBusinessLocal,
+  resolveBusinessOptions,
+} from "./business-local";
 import { seeded } from "./business-test-helpers";
 
 const opts = resolveBusinessOptions(
@@ -55,7 +59,15 @@ describe("parseBusinessIdentity", () => {
       reputationLine: "r",
       distinctive: "x",
     },
-    operations: { provides: "p", payers: "y", whyHere: "w", mainIncome: "m" },
+    operations: {
+      provides: "p",
+      payers: "y",
+      whyHere: "w",
+      mainIncome: "m",
+      model: "It earns a fee for the work it does.",
+      size: "A small shop with a few staff.",
+      position: "Steady, with little to spare.",
+    },
     leadership: {
       name: "Nadia Vale",
       goal: "g",
@@ -202,5 +214,154 @@ describe("businessConfig", () => {
     ]);
     expect(businessConfig.legitimacies).toContain("front");
     expect(businessConfig.tones).toContain("grounded");
+  });
+});
+
+describe("operations profile in the identity stage", () => {
+  const withOps = (ops: Record<string, string>) =>
+    JSON.stringify({
+      identity: {
+        name: "Chrome Lily",
+        type: "Ripper clinic",
+        description: "d",
+        reputationLine: "r",
+        distinctive: "x",
+      },
+      operations: {
+        provides: "p",
+        payers: "y",
+        whyHere: "w",
+        mainIncome: "m",
+        ...ops,
+      },
+      leadership: {
+        name: "Nadia Vale",
+        goal: "g",
+        style: "s",
+        trait: "t",
+        pressure: "p",
+      },
+      staff: [],
+      clientele: { typical: "a", valuable: "b", undesirable: "c" },
+    });
+
+  it("reads how the business earns, its size and its position", () => {
+    const parsed = parseBusinessIdentity(
+      withOps({
+        model: "Commission broker",
+        size: "Three wagons",
+        position: "Short of cash",
+      }),
+    );
+    expect(parsed?.operations).toMatchObject({
+      model: "Commission broker",
+      size: "Three wagons",
+      position: "Short of cash",
+    });
+  });
+
+  it.each(["model", "size", "position"])(
+    "rejects a reply without %s",
+    (field) => {
+      const ops: Record<string, string> = {
+        model: "m",
+        size: "s",
+        position: "p",
+      };
+      delete ops[field];
+      expect(parseBusinessIdentity(withOps(ops))).toBeNull();
+    },
+  );
+
+  it("asks for a model specific to the kind of business, not generic filler", () => {
+    const msg = businessStageMessage("identity", opts);
+    expect(msg).toContain('"model"');
+    expect(msg).toMatch(/commission broker/i);
+    expect(msg).toMatch(/generic filler/i);
+  });
+});
+
+describe("relationship labels in the connections stage", () => {
+  const reply = (label?: string, kind = "criminal") =>
+    JSON.stringify({
+      dependencies: [
+        { input: "Parts", kind: "materials", ifItFails: "Stops." },
+      ],
+      relationships: [
+        {
+          name: "The Reedknife Circle",
+          kind,
+          partyKind: "organisation",
+          reason: "r",
+          ...(label ? { label } : {}),
+        },
+      ],
+      reputation: { perception: "p", consequence: "c" },
+    });
+
+  it("accepts a label that describes the party", () => {
+    expect(
+      parseBusinessConnections(reply("owes"))?.relationships[0].label,
+    ).toBe("owes");
+  });
+
+  it("rejects a label that does not describe the party", () => {
+    expect(parseBusinessConnections(reply("located in"))).toBeNull();
+  });
+
+  it("uses a safe default when no label is given", () => {
+    expect(
+      parseBusinessConnections(reply(undefined, "neighbour"))?.relationships[0]
+        .label,
+    ).toBe("competes with");
+  });
+
+  it("tells the model which labels fit", () => {
+    expect(businessStageMessage("connections", opts)).toContain(
+      "label must truly describe the party",
+    );
+  });
+});
+
+describe("established facts in later stages", () => {
+  const doc = generateBusinessLocal(
+    { genre: "Classic Fantasy", businessType: "Trading house" },
+    seeded(31),
+  );
+
+  it("is added to a stage only when the document so far is supplied", () => {
+    expect(businessStageMessage("connections", opts)).not.toContain(
+      "Established facts",
+    );
+    expect(businessStageMessage("connections", opts, doc)).toContain(
+      "Established facts",
+    );
+  });
+
+  it("gives the last stage the business, its people and its parties", () => {
+    const trouble = businessStageMessage("trouble", doc.options, doc);
+    expect(trouble).toContain(doc.identity.name);
+    expect(trouble).toContain(doc.leadership.name);
+    expect(trouble).toContain(doc.relationships[0].name);
+  });
+
+  it("does not list parties before the connections stage has set them", () => {
+    expect(businessStageMessage("connections", doc.options, doc)).not.toContain(
+      "Parties:",
+    );
+  });
+
+  it("tells the model not to invent new named people in the last stage", () => {
+    expect(businessStageMessage("trouble", doc.options, doc)).toMatch(
+      /do not invent new named people/i,
+    );
+  });
+
+  it("describes the manager as a manager when the players own the business", () => {
+    const own = generateBusinessLocal(
+      { genre: "Classic Fantasy", playersOwn: true },
+      seeded(32),
+    );
+    expect(establishedFacts(own)).toContain(`Manager: ${own.leadership.name}`);
   });
 });

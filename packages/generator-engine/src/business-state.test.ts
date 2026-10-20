@@ -32,6 +32,9 @@ function doc(overrides: Partial<BusinessDocument> = {}): BusinessDocument {
       payers: "Farmers and carters.",
       whyHere: "Where the river road meets the mill.",
       mainIncome: "Repairs.",
+      model: "It earns a fee for the work it does.",
+      size: "A small shop with a few staff.",
+      position: "Steady, with little to spare.",
     },
     leadership: {
       id: "lead",
@@ -110,6 +113,16 @@ describe("renderBusinessContent", () => {
       expect(at, heading).toBeGreaterThan(last);
       last = at;
     }
+  });
+
+  it("states the type once when the description already opens with it", () => {
+    const d = doc();
+    d.identity.type = "Blacksmith";
+    d.identity.description = "Blacksmith on the river road, modest and steady.";
+    const text = renderBusinessContent(d);
+    expect(text.match(/Blacksmith/g)).toHaveLength(1);
+    // A description that does not open with the type keeps both.
+    expect(renderBusinessContent(doc())).toContain("— Blacksmith");
   });
 
   it("omits the management section when the players do not own the business", () => {
