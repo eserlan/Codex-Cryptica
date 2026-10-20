@@ -81,8 +81,7 @@
   <!-- Sidecar Tools -->
   {#each tools as tool}
     {@const active = isToolActive(tool)}
-    <button
-      onclick={tool.action}
+    <button type="button" onclick={tool.action}
       class="{shellClass(tool)} {stateClass(active)}"
       aria-label={tool.label}
       title={tool.title ?? tool.label}
