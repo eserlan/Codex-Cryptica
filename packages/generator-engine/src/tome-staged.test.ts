@@ -326,6 +326,40 @@ describe("Tome staged validation", () => {
       ).toBe(true);
     });
 
+    it("rejects three blank hooks", () => {
+      const invalidHooks: JsonObject = {
+        adventureHooks: ["", " ", "\n"],
+      };
+      const check = checkTomeHooksStage(
+        invalidHooks,
+        VALID_STAGE_1,
+        VALID_STAGE_2,
+        prompt.resolved,
+      );
+      expect(check.hard).toContain(
+        "Adventure hooks must contain only non-empty strings",
+      );
+      expect(check.hard).toContain("Fewer than 3 adventure hooks found (0)");
+    });
+
+    it("rejects malformed hook entries even when three valid hooks exist", () => {
+      const invalidHooks: JsonObject = {
+        adventureHooks: [
+          ...(VALID_STAGE_3.adventureHooks as string[]),
+          { title: "Malformed" },
+        ],
+      };
+      const check = checkTomeHooksStage(
+        invalidHooks,
+        VALID_STAGE_1,
+        VALID_STAGE_2,
+        prompt.resolved,
+      );
+      expect(check.hard).toContain(
+        "Adventure hooks must contain only non-empty strings",
+      );
+    });
+
     it("flags unit contradiction in hooks as hard", () => {
       const resolvedLeaves = {
         ...prompt.resolved,

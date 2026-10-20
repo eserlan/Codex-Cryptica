@@ -296,7 +296,12 @@ export function checkTomeRevelationsStage(
 }
 
 export function countAdventureHooks(hooksRaw: unknown): number {
-  if (Array.isArray(hooksRaw)) return hooksRaw.length;
+  if (Array.isArray(hooksRaw)) {
+    return hooksRaw.filter(
+      (hook): hook is string =>
+        typeof hook === "string" && hook.trim().length > 0,
+    ).length;
+  }
   if (typeof hooksRaw === "string") {
     const matches = hooksRaw.match(
       /(?:^|\n)\s*(?:[1-9]\.|\*\*[1-9]\*\*|-|\*)\s+\S+/g,
@@ -316,6 +321,15 @@ export function checkTomeHooksStage(
 ): DraftCheck {
   const hard: string[] = [];
   const soft: string[] = [];
+
+  if (
+    Array.isArray(draft.adventureHooks) &&
+    draft.adventureHooks.some(
+      (hook) => typeof hook !== "string" || hook.trim().length === 0,
+    )
+  ) {
+    hard.push("Adventure hooks must contain only non-empty strings");
+  }
 
   const hookCount = countAdventureHooks(draft.adventureHooks);
   if (hookCount < 3) {
