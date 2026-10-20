@@ -14,6 +14,7 @@ import {
 } from "./business-local";
 import {
   checkBusiness,
+  sizeStaffProblem,
   findUnintroducedNames,
   repairBusiness,
 } from "./business-checks";
@@ -106,7 +107,15 @@ async function identityStage(
   const result = await askChecked(
     turn,
     parseBusinessIdentity,
-    (data) => ({ hard: staffProblems(data.staff.length, opts), soft: [] }),
+    (data) => ({
+      hard: [
+        ...staffProblems(data.staff.length, opts),
+        ...[sizeStaffProblem(data.operations.size, data.staff.length)].filter(
+          (p): p is string => p !== null,
+        ),
+      ],
+      soft: [],
+    }),
     {
       signal,
       unreadable: "the reply was not a usable identity stage",

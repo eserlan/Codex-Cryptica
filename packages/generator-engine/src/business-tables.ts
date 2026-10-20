@@ -1063,14 +1063,38 @@ export const GENERIC_POOLS = {
     "It earns a little from many small customers and a lot from one or two large ones.",
     "It rents out what it owns and takes a fee for looking after it.",
   ],
-  sizeTemplates: [
-    "One building, a handful of regular staff, and a few part-timers in busy seasons.",
-    "A single premises with a yard or store, a small permanent crew, and some contracted help.",
-    "A modest operation: one main site, a few vehicles or tools, and a loyal core of workers.",
-    "A well-known name in its district, with two sites and more work than hands.",
-    "A small outfit: the owner, a few staff, and borrowed space for the overflow.",
-    "A mid-sized concern with several crews, its own store, and a reputation beyond the district.",
-  ],
+  // By scale, so the wording never contradicts the staff roster (0 to 1 key
+  // staff for tiny, 1 to 2 small, 2 to 3 established, 3 to 4 regional/major).
+  sizeTemplates: {
+    tiny: [
+      "One cramped premises, the owner, and casual help when work comes in.",
+      "A stall or back room, with the owner doing most of the work and friends lending a hand.",
+      "A single room and a cart, run by the owner with day labour as needed.",
+    ],
+    small: [
+      "A single premises with a yard or store, the owner, and a small permanent crew.",
+      "One building, a couple of regular staff, and a few part-timers in busy seasons.",
+      "A small outfit: the owner, a few staff, and borrowed space for the overflow.",
+    ],
+    established: [
+      "A modest operation: one main site, a few vehicles or tools, and a loyal core of workers.",
+      "A well-known name in its district, with two sites and more work than hands.",
+      "A steady concern with its own premises, a dependable crew and a waiting list of customers.",
+    ],
+    regional: [
+      "A mid-sized concern with several crews, its own store, and a reputation beyond the district.",
+      "Several sites across the region, a sizeable crew and its own transport.",
+      "A busy enterprise with a head office, working yards and agents in neighbouring towns.",
+    ],
+    major: [
+      "A large enterprise with many sites, its own fleet and a payroll the district depends on.",
+      "A household name across the region, with crews, warehouses and a board that argues about all of it.",
+      "A sprawling concern whose offices, yards and agents reach well beyond the home district.",
+    ],
+  } as Record<
+    "tiny" | "small" | "established" | "regional" | "major",
+    string[]
+  >,
   positionTemplates: [
     "Profitable in ordinary seasons, but short of ready cash right now.",
     "Comfortable on paper, though one bad month would change that.",

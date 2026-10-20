@@ -5,8 +5,12 @@
  */
 
 import type { Rng } from "./random-utils";
-import { defaultRng } from "./random-utils";
-import { CRIMINAL_WORDS, PRICE_PATTERN } from "./business-tables";
+import { defaultRng, pickFrom } from "./random-utils";
+import {
+  CRIMINAL_WORDS,
+  GENERIC_POOLS,
+  PRICE_PATTERN,
+} from "./business-tables";
 import {
   BUSINESS_LABEL_FOR_KIND,
   BUSINESS_STAFF_RANGE,
@@ -27,7 +31,8 @@ export type BusinessIssueCode =
   | "staff-count"
   | "inventory-list"
   | "management-mismatch"
-  | "relationship-label";
+  | "relationship-label"
+  | "size-staff";
 
 export interface BusinessIssue {
   section: BusinessSectionId;
@@ -192,6 +197,40 @@ function checkStaffCount(doc: BusinessDocument): BusinessIssue[] {
   ];
 }
 
+/** "A handful of regular staff": a claim that the business has a workforce. */
+const CLAIMS_STAFF =
+  /\b(handful|small|permanent|regular|loyal|core|dependable|several|two|three|few|many)\b[^.]*\b(staff|crews?|workers|employees|hands|apprentices|clerks)\b/i;
+/** "No regular staff", "just the owner": a claim that the owner works alone. */
+const CLAIMS_NO_STAFF =
+  /\b(no (regular |permanent |hired |full-time )?(staff|employees|workers|crew)|without (any )?(regular |permanent )?(staff|employees)|sole (proprietor|trader|operator)|just the owner|owner alone|one-person|one person)\b/i;
+
+/**
+ * The size line must agree with the staff roster. A business with no key staff
+ * must not claim a regular workforce, and one with staff must not claim to have
+ * none. Casual labour and part-timers are fine either way.
+ */
+export function sizeStaffProblem(
+  size: string,
+  staffCount: number,
+): string | null {
+  if (
+    staffCount === 0 &&
+    CLAIMS_STAFF.test(size) &&
+    !CLAIMS_NO_STAFF.test(size)
+  )
+    return `The size says "${size}" but no key staff are listed. List the staff, or say the owner works with casual labour.`;
+  if (staffCount > 0 && CLAIMS_NO_STAFF.test(size))
+    return `The size says "${size}" but ${staffCount} key staff are listed. Say the business has regular staff.`;
+  return null;
+}
+
+function checkSizeStaff(doc: BusinessDocument): BusinessIssue[] {
+  const detail = sizeStaffProblem(doc.operations.size, doc.staff.length);
+  return detail
+    ? [{ section: "operations", code: "size-staff" as const, detail }]
+    : [];
+}
+
 function checkSecret(doc: BusinessDocument): BusinessIssue[] {
   if (doc.options.legitimacy !== "legitimate") return [];
   const lower = doc.secret.toLowerCase();
@@ -304,6 +343,7 @@ export function checkBusiness(doc: BusinessDocument): BusinessIssue[] {
     ...checkRelationshipLabels(doc),
     ...checkRequiredFields(doc),
     ...checkStaffCount(doc),
+    ...checkSizeStaff(doc),
     ...checkSecret(doc),
     ...checkHooks(doc),
     ...checkInventory(doc),
@@ -359,6 +399,38 @@ function fitStaffToScale(doc: BusinessDocument, rng: Rng): BusinessDocument {
   return { ...doc, staff };
 }
 
+/** Fixes the issues that touch one line: a relationship label and the size line. */
+function fixSingleLines(
+  doc: BusinessDocument,
+  issues: BusinessIssue[],
+  rng: Rng,
+): { fixed: BusinessDocument; rest: BusinessIssue[] } {
+  let fixed = doc;
+  if (issues.some((i) => i.code === "relationship-label")) {
+    fixed = {
+      ...fixed,
+      relationships: fixed.relationships.map((r) =>
+        BUSINESS_ALLOWED_LABELS[r.kind].includes(r.label)
+          ? r
+          : { ...r, label: BUSINESS_LABEL_FOR_KIND[r.kind] },
+      ),
+    };
+  }
+  if (issues.some((i) => i.code === "size-staff")) {
+    fixed = {
+      ...fixed,
+      operations: {
+        ...fixed.operations,
+        size: pickFrom(GENERIC_POOLS.sizeTemplates[fixed.options.scale], rng),
+      },
+    };
+  }
+  const rest = issues.filter(
+    (i) => i.code !== "relationship-label" && i.code !== "size-staff",
+  );
+  return { fixed, rest };
+}
+
 /**
  * Rebuilds only the sections that failed. Hooks are rebuilt last, and only when
  * they failed or one of the sections they name changed.
@@ -368,22 +440,11 @@ export function repairBusiness(
   allIssues: BusinessIssue[],
   rng: Rng = defaultRng,
 ): BusinessDocument {
-  let issues = allIssues;
-  if (issues.length === 0) return doc;
-  let next = doc;
-  // A wrong label only needs its label fixed; keep the party the text names.
-  if (issues.some((i) => i.code === "relationship-label")) {
-    next = {
-      ...next,
-      relationships: next.relationships.map((r) =>
-        BUSINESS_ALLOWED_LABELS[r.kind].includes(r.label)
-          ? r
-          : { ...r, label: BUSINESS_LABEL_FOR_KIND[r.kind] },
-      ),
-    };
-    issues = issues.filter((i) => i.code !== "relationship-label");
-    if (issues.length === 0) return next;
-  }
+  if (allIssues.length === 0) return doc;
+  // A wrong label or size line needs only that line fixed, not the section rebuilt.
+  const { fixed: next0, rest: issues } = fixSingleLines(doc, allIssues, rng);
+  if (issues.length === 0) return next0;
+  let next = next0;
   const failing = new Set<string>(issues.map((i) => i.section));
   const changed = new Set<string>();
 

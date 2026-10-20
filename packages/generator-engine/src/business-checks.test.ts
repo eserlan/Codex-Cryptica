@@ -3,6 +3,7 @@ import {
   checkBusiness,
   findUnintroducedNames,
   repairBusiness,
+  sizeStaffProblem,
 } from "./business-checks";
 import { generateBusinessLocal } from "./business-local";
 import type { BusinessDocument } from "./business-state";
@@ -111,6 +112,101 @@ describe("checkBusiness", () => {
         code: "management-mismatch",
       }),
     );
+  });
+});
+
+describe("size and staff agree", () => {
+  it.each([
+    [
+      "claims regular staff with none listed",
+      "One building, a handful of regular staff, and a few part-timers in busy seasons.",
+      0,
+      true,
+    ],
+    [
+      "claims a permanent crew with none listed",
+      "A single premises, the owner, and a small permanent crew.",
+      0,
+      true,
+    ],
+    [
+      "casual labour with none listed",
+      "One cramped premises, the owner, and casual help when work comes in.",
+      0,
+      false,
+    ],
+    [
+      "part-timers only with none listed",
+      "The owner and a few part-timers.",
+      0,
+      false,
+    ],
+    [
+      "regular staff with staff listed",
+      "One building, a couple of regular staff.",
+      2,
+      false,
+    ],
+    [
+      "says no staff but staff are listed",
+      "A sole proprietor with no regular staff.",
+      2,
+      true,
+    ],
+    [
+      "says no staff with none listed",
+      "A sole proprietor with no regular staff.",
+      0,
+      false,
+    ],
+  ])("%s", (_label, size, count, flagged) => {
+    expect(sizeStaffProblem(size, count) !== null).toBe(flagged);
+  });
+
+  it("reports a contradictory document and repairs only the size line", () => {
+    const doc = base();
+    doc.options.scale = "tiny";
+    doc.staff = [];
+    doc.operations.size =
+      "One building, a handful of regular staff, and a few part-timers in busy seasons.";
+    const issues = checkBusiness(doc);
+    expect(issues).toContainEqual(
+      expect.objectContaining({ section: "operations", code: "size-staff" }),
+    );
+    const repaired = repairBusiness(doc, issues, seeded(4));
+    expect(checkBusiness(repaired)).toEqual([]);
+    expect(repaired.operations.provides).toBe(doc.operations.provides);
+    expect(repaired.operations.size).not.toBe(doc.operations.size);
+  });
+
+  it("never produces a size that contradicts the staff, across industries, scales and seeds", () => {
+    const types = [
+      "Tavern",
+      "Blacksmith",
+      "Moneylender",
+      "Smuggling operation",
+      "Temple-run hospice",
+    ];
+    for (const businessType of types) {
+      for (const scale of [
+        "tiny",
+        "small",
+        "established",
+        "regional",
+        "major",
+      ] as const) {
+        for (let seed = 1; seed <= 20; seed++) {
+          const doc = generateBusinessLocal(
+            { genre: "Classic Fantasy", businessType, scale },
+            seeded(seed),
+          );
+          expect(
+            checkBusiness(doc),
+            `${businessType} ${scale} ${seed}`,
+          ).toEqual([]);
+        }
+      }
+    }
   });
 });
 

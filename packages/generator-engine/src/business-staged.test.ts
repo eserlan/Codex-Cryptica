@@ -131,6 +131,29 @@ describe("generateBusinessStaged", () => {
     expect(doc.fallbackSections).toEqual([]);
   });
 
+  it("retries when the size claims regular staff but none are listed", async () => {
+    const contradictory = JSON.stringify({
+      ...JSON.parse(identityReply),
+      operations: {
+        ...JSON.parse(identityReply).operations,
+        size: "One building, a handful of regular staff, and a few part-timers.",
+      },
+      staff: [],
+    });
+    const { send, calls } = queue(
+      contradictory,
+      identityReply,
+      connectionsReply,
+      troubleReply,
+    );
+    const doc = await generateBusinessStaged(
+      { ...OPTS, scale: "tiny" as const },
+      { send, rng: seeded(12) },
+    );
+    expect(calls[1]).toContain("no key staff are listed");
+    expect(doc.staff).toHaveLength(1);
+  });
+
   it("falls back to local tables for only the stage that keeps failing", async () => {
     const { send } = queue(
       "nope",

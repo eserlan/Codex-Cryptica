@@ -85,7 +85,24 @@ describe("business tables", () => {
 
   it("gives every generic pool at least 6 entries", () => {
     for (const [name, pool] of Object.entries(GENERIC_POOLS)) {
+      // The size wording is kept per scale, so it is checked per scale below.
+      if (!Array.isArray(pool)) continue;
       expect(pool.length, name).toBeGreaterThanOrEqual(6);
+    }
+  });
+
+  it("has size wording for every scale", () => {
+    for (const scale of [
+      "tiny",
+      "small",
+      "established",
+      "regional",
+      "major",
+    ] as const) {
+      expect(
+        GENERIC_POOLS.sizeTemplates[scale].length,
+        scale,
+      ).toBeGreaterThanOrEqual(3);
     }
   });
 
