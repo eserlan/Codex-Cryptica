@@ -7,7 +7,6 @@
  */
 
 import { parseFencedJson } from "./llm-response-utils";
-import { bannedNamesIn } from "./naming-policy";
 import {
   FIXING_DETAIL,
   ONE_PASS_DETAIL,
@@ -237,15 +236,4 @@ export async function pool<T>(
     Array.from({ length: Math.min(Math.max(limit, 1), tasks.length) }, worker),
   );
   return results;
-}
-
-export function addBannedNameFindings(
-  names: string[],
-  avoidNames: string[],
-  hard: string[],
-): void {
-  const banned = bannedNamesIn(names, avoidNames);
-  if (banned.length > 0) {
-    hard.push(`banned placeholder name: ${banned.join(", ")}`);
-  }
 }

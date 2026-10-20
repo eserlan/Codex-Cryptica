@@ -184,8 +184,6 @@ export const howDoIRunASuccessfulSessionZero: AnswerConfigInput = {
     "what-are-the-pros-and-cons-of-becoming-a-dungeon-master",
     "how-do-i-get-my-friends-interested-in-playing-dnd",
     "should-i-share-worldbuilding-notes-with-my-players",
-    "how-do-i-give-players-immersive-handouts-in-an-online-rpg",
-    "how-do-i-run-my-first-online-tabletop-rpg-session",
   ],
   discovery: {
     id: "answer-session-zero",

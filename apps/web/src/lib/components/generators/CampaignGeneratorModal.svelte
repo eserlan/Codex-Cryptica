@@ -1,6 +1,5 @@
 <script lang="ts">
   import ModalShell from "$lib/components/ui/ModalShell.svelte";
-  import ReportProblemButton from "$lib/components/feedback/ReportProblemButton.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { categories } from "$lib/stores/categories.svelte";
@@ -21,8 +20,6 @@
     isSupportedGenerator,
     resolveEntityType,
     adventureStatsLog,
-    heistStatsLog,
-    tomeStatsLog,
     extractPartialJsonStringFields,
     type GeneratedDraft,
     type GeneratorId,
@@ -33,8 +30,6 @@
     AdventureStagedStats,
     AIGeneratorCompleteResult,
     DungeonStagedStats,
-    HeistStagedStats,
-    TomeStagedStats,
     GeneratorPromptMetrics,
   } from "generator-engine";
   import { aiGeneratorGateway } from "$lib/services/generators/ai-generator-gateway";
@@ -220,16 +215,6 @@
           "[Generator] staged adventure run",
           adventureStatsLog(stats),
         );
-      }
-    },
-    onHeistStagedStats(stats: HeistStagedStats) {
-      if (import.meta.env.DEV) {
-        console.debug("[Generator] staged heist run", heistStatsLog(stats));
-      }
-    },
-    onTomeStagedStats(stats: TomeStagedStats) {
-      if (import.meta.env.DEV) {
-        console.debug("[Generator] staged tome run", tomeStatsLog(stats));
       }
     },
     get aiPolicy() {
@@ -761,9 +746,6 @@
       >
         {title}
       </h2>
-      <div class="mt-1">
-        <ReportProblemButton area="generators" />
-      </div>
       {#if workflow.launchMode === "contextual" && workflow.sourceEntityId}
         <p class="mt-1 text-xs text-chrome-muted" data-testid="contextual-hint">
           Generating related content for
@@ -784,7 +766,6 @@
   </div>
 
   <!-- Body -->
-  <!-- fallow-ignore-next-line css-broken-reference -->
   <div class="px-5 py-4 overflow-y-auto max-h-[70vh] md:max-h-[85vh]">
     {#if stage === "configure"}
       {#if singleQuestHook && generatorId !== "plot-twist"}
@@ -857,7 +838,6 @@
               </p>
             {/if}
             {#if streamedFields.lore && !shouldShieldSpoilers(generatorId)}
-              <!-- fallow-ignore-next-line css-broken-reference -->
               <p
                 class="max-h-40 overflow-y-auto whitespace-pre-wrap text-xs text-chrome-muted"
               >

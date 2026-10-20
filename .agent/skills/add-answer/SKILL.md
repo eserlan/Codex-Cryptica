@@ -1,6 +1,6 @@
 ---
 name: add-answer
-description: Add a new Codex Cryptica reference answer page (/answers/[slug]) covering an authentic TTRPG or worldbuilding question. Enforces British English, direct snippet-first answers, intent-fit teaching formats, actionable worked examples, Discovery Intent Governance (Constitution XIII), live route validation, R2-only images, and category registration.
+description: Add a new Codex Cryptica reference answer page (/answers/[slug]) covering an authentic TTRPG or worldbuilding question. Enforces British English, direct snippet-first answers, table frameworks, worked before/after examples, Discovery Intent Governance (Constitution XIII), live route validation, R2-only images, and category registration.
 ---
 
 # Add an Answer Page
@@ -18,7 +18,7 @@ One page owns one genuine user intent (Constitution XIII). The substantive answe
    - Use British spellings (`colour`, `honour`, `behaviour`, `rumour`, `favourite`, `neighbour`, `centre`, `theatre`, `catalogue`, `grey`, `cancelled`, `defence`, `offence`).
    - **Never use American travel conjugations**: Use `travelled`, `travelling`, `traveller`, `travellers` (the test suite rejects `traveled` and `traveling`).
 2. **Direct Answer First (`shortAnswer`)**:
-   - Must be a single self-contained paragraph that directly answers the question before any body prose. Use the space needed to preserve the important distinction; there is no character floor.
+   - Must be a single self-contained paragraph of $\ge 140$ characters that directly answers the question before any body prose.
    - Forms the structured FAQPage JSON-LD snippet; it must make total sense when read in search engine results out of context.
 3. **Strict Ban on Obvious AI Writing Tells (Zero Tolerance)**:
    Prose must read as authentic, authoritative tabletop literature written by an experienced Game Master. Obvious LLM signatures degrade credibility immediately:
@@ -35,13 +35,13 @@ One page owns one genuine user intent (Constitution XIII). The substantive answe
    - **Break the Uniform AI Cadence**: Avoid uniform 3-sentence paragraphs or lists where every bullet has the exact same grammatical shape (e.g. bold verb-noun phrase followed by 12 words of generic explanation). Vary sentence lengths and paragraph depths to match genuine human technical writing.
 4. **Editorial Quality Beyond Compliance (Mandatory)**:
    Apply this as a final editorial pass. These checks concern the answer's usefulness and judgement, while the AI-writing-tells section above concerns detectable patterns.
-   - **Give the answer one editorial spine**: Before drafting sections, write the one sentence the whole answer is teaching. For example: "A faction turn should answer one question: what changed in the world while the players were busy elsewhere?" Choose sections that develop that idea for the declared reader; omit blocks that add no useful explanation or action.
-   - **Use realistic failure cases**: When a comparison helps, its weak or default approach should describe a competent GM's genuine friction, not an absurd straw man. Show how increasing complexity makes actions, changes, and visible consequences harder to track.
+   - **Give the answer one editorial spine**: Before drafting sections, write the one sentence the whole answer is teaching. For example: "A faction turn should answer one question: what changed in the world while the players were busy elsewhere?" Make the framework, examples, checklist, and Codex connection reinforce that idea.
+   - **Use realistic failure cases**: The weak or default approach in a worked example should describe a competent GM's genuine friction, not an absurd straw man. Show how increasing complexity makes actions, changes, and visible consequences harder to track.
    - **Avoid unsupported precision and theatrical certainty**: Do not invent timelines, percentages, time costs, frequencies, or universal outcomes. Use specific numbers only when sourced or clearly labelled as an example.
    - **Separate strong advice from universal rules**: State a useful heuristic confidently, but qualify it when circumstances change. Reserve absolute language for procedures that genuinely require it.
    - **Prefer ordinary tabletop language**: Use the simplest terms that preserve meaning. Prefer "factions that currently matter to the party" over "organisations within the party's operational area", and "NPC, place, or rival" over "target entity" where appropriate.
-   - **Optimise for economy**: After drafting, remove repeated thesis statements, setup that merely restates a heading, and explanations the worked example already demonstrates. Read the shortAnswer, opening, headings, example, checklist and ending together, including optional blocks only when present. Remove repeated reassurances, redundant introductions and takeaways that merely restate the lesson. Fix micro-copy such as "memorise every die from memory". Judge cuts by retained meaning and reader progress, not a percentage or word-count target; preserve rules distinctions and useful practical detail.
-   - **Make examples prove the advice through play**: For narrative or game-prep guidance, show a consequence the players can encounter, such as a blocked road, missing contact, price increase, changed patrol, new rumour, burned district, or political demand. An example that only paraphrases the framework is not enough.
+   - **Optimise for economy**: After drafting, remove repeated thesis statements, setup that merely restates a heading, and explanations the worked example already demonstrates. Aim for roughly 10 to 15 percent trimming when it improves pace without losing substance.
+   - **Make examples prove the advice through play**: Show a consequence the players can encounter, such as a blocked road, missing contact, price increase, changed patrol, new rumour, burned district, or political demand. An example that only paraphrases the framework is not enough.
    - **Vary authority and cadence naturally**: Mix direct procedure, conditional advice, concrete examples, and brief reasoning. Authoritative writing can contain uncertainty where the table's circumstances genuinely matter.
 
    Keep these examples concise and use them as editorial checks:
@@ -53,26 +53,12 @@ One page owns one genuine user intent (Constitution XIII). The substantive answe
    - **Universal rule**: "If the players ignore the faction, it succeeds automatically next turn."
      **Better**: "If nobody meaningfully opposes the move, consider resolving it without a roll. If another faction or obstacle still resists it, use the normal resolution procedure."
 
-5. **Choose Structure by Reader Intent**:
-   Before drafting, state the intended reader level, the question they need answered, and what they should be able to do afterwards. Keep this drafting note outside the published data. Select the teaching format from that job, not from a fixed article recipe:
-
-   | Reader job                           | Useful teaching format                                                                                                                    | Evidence of success                                                      |
-   | ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-   | Learn beginner rules                 | Define notation and abbreviations; walk through realistic inputs, rolls, modifiers, results and the next action; address likely mistakes. | The newcomer can perform the procedure without guessing a missing step.  |
-   | Apply a GM technique or prepare play | Show a concrete situation, an intervention and a changed outcome at the table. Use before/after only when it illuminates the change.      | The reader can prepare or run a choice with player-visible consequences. |
-   | Compare options                      | Show trade-offs, decision criteria and when each option fits.                                                                             | The reader can choose for their circumstances and explain the cost.      |
-   | Understand a definition or reference | Give the direct definition, boundaries and clarifying examples where useful.                                                              | The reader can recognise an instance and distinguish a nearby concept.   |
-
-   Use any supported combination of `prose`, `list`, `example`, `checklist` and `table`. There is no universal section count and no required example, checklist, before/after pair or "Why it works" paragraph. A short definition can be complete without a prep checklist. A useful standalone example may still deserve the distinct `example` block; do not hide demonstrations merely to avoid the old formula.
-
-   **Demonstrate mechanical guidance**: include explicit inputs and a real result. For the dice question (#3895), a stated attack bonus of +5, target Armour Class (AC) 15 and twenty-sided die (d20) result of 12 gives 12 + 5 = 17, a hit. With listed damage 1d8 + 3 and a stated eight-sided die result of 6, report 6 + 3 = 9 damage to the Dungeon Master (DM). Use the listed bonus once; do not add its included ability or proficiency modifiers again. The numbers are illustrative, not requirements for every article. Explain what a miss would change when useful. Never generalise this attack-then-damage sequence into a rule that all healing or damage begins with a d20.
-
-   **Ground the explanation for its audience**: define abbreviations before relying on them. Validate concrete mechanics against authoritative rules or publisher material and link the relevant source. Identify the edition, and label significant 2014/2024 D&D differences instead of combining their rules. Recheck version-sensitive claims rather than copying a familiar example. Separate a chosen example, a useful heuristic and an actual rule; avoid invented prerequisites, misleading modifiers and overconfident absolutes.
-
-6. **Relevant Links and Honest Product Connection**:
-   - Choose links for the reader's next job. Prefer the cornerstone and directly relevant neighbouring Answers. When discovery overlap is recorded, consider whether the neighbouring page also deserves a visible reader link; registry metadata alone does not render one.
-   - `relatedTools`, topic/hub recommendations and `codexConnection` are optional. Zero related tools is better than a weakly related recommendation: an NPC/name generator does not help someone who only needs to understand dice. Retain meaningful related-Answer links and their reciprocity; do not add product links to meet a quota.
-   - Include `codexConnection` only when a verified, currently available capability helps this specific workflow. Check the product code or current help material and the destination route. Keep it restrained and after the question has been fully answered. Omit it when there is no useful connection; never invent a feature or ask the reader to start onboarding before they have an answer.
+5. **Substantive Framework & Structure**:
+   - At least 3 body sections (`sections.length >= 3`).
+   - **At least one worked `example` block** (`kind: "example"`): Concrete tabletop comparison (e.g. weak/strong or before/after) with a "Why it works" takeaway.
+   - **At least one actionable checklist block** (`kind: "checklist"`): Specific, practical prep items the reader can take straight to their table.
+6. **Honest Product Connection**:
+   - `codexConnection` belongs at the end of the article, after the substantive answer is already complete. It must explain how Codex tools/graphs assist the specific workflow, not read as a mid-article sales pitch.
    - **Never link to a competing product.** Answers are our own reference content, so they do not send readers to a competitor. Do not link to virtual tabletops or campaign and world managers (Foundry VTT, Roll20, Fantasy Grounds, Owlbear Rodeo, World Anvil, Kanka, LegendKeeper, Obsidian Portal), in prose, tables, `systemsThatSupportThis` or any other field. If a reader's question names one, say in plain text what they need to know (for example that an official system exists) and link to the publisher or rules source instead. Do not build a page around a competitor's compatibility, package versions or listings, and do not target a competitor's name in `discovery` intents. The `competitor-link` check enforces the links; the list lives in `COMPETITOR_DOMAINS` in `scripts/check-answer-editorial.ts`.
 7. **Clean List Item Titles (No Redundant Numbering)**:
    - When items in a `list` block use bold lead-in terms (`term: "..."`), do not set `ordered: true` and do not prefix the term with digits (e.g. use `term: "Review hooks"` rather than `term: "1. Review hooks"`). The template renders clean terms without duplicate numbers.
@@ -159,7 +145,7 @@ Every public answer page is governed by the Discovery Intent Registry:
 
 ### 3. Create the Answer Page File
 
-Create `apps/web/src/lib/content/answers/pages/<slug>.ts`. Start from the minimal shape below and choose body blocks for the reader job above. This is an authoring scaffold, not a prescribed section sequence. `publishedAt` is the actual shipping date.
+Create `apps/web/src/lib/content/answers/pages/<slug>.ts`:
 
 ```ts
 import type { AnswerConfigInput } from "../schema";
@@ -167,19 +153,99 @@ import type { AnswerConfigInput } from "../schema";
 export const <camelCaseName>: AnswerConfigInput = {
   slug: "<kebab-case-slug>",
   category: "session-prep", // "getting-started" | "session-prep" | "adventure-design" | "running-the-game" | "worldbuilding" | "campaign-notes"
-  publishedAt: "<YYYY-MM-DD>",
   question: "<Verbatim Question Ending in ?>",
-  kind: "definition", // "definition" | "how-to" | "framework" | "comparison"
-  shortAnswer: "<Self-contained direct answer with no introductory filler.>",
+  kind: "framework", // "definition" | "how-to" | "framework" | "comparison"
+  shortAnswer:
+    "<Self-contained direct answer >140 characters with zero introductory filler.>",
   sections: [
     {
       kind: "prose",
-      heading: "<Heading that helps the reader find the explanation>",
-      paragraphs: ["<Explanation that adds to, rather than repeats, the direct answer.>"],
+      heading: "<Why the problem exists / common pitfalls>",
+      paragraphs: [
+        "<Explanatory paragraph 1...>",
+        "<Explanatory paragraph 2...>",
+      ],
     },
-    // Add, replace or omit blocks according to the actual question.
+    {
+      kind: "list",
+      heading: "<The Core Framework / Criteria>",
+      intro: "<Brief framing sentence:>",
+      items: [
+        {
+          term: "<Pillar 1>",
+          text: "<Actionable explanation...>",
+        },
+        {
+          term: "<Pillar 2>",
+          text: "<Actionable explanation...>",
+        },
+      ],
+    },
+    {
+      kind: "example",
+      heading: "<Worked Example Scenario: Before and After>",
+      paragraphs: [
+        "<Context for the scenario...>",
+      ],
+      items: [
+        {
+          term: "<The weak / default approach>",
+          text: "<How tables typically fumble this...>",
+        },
+        {
+          term: "<The strong framework approach>",
+          text: "<How the proposed framework transforms the scene...>",
+        },
+        {
+          term: "Why it works",
+          text: "<The mechanical and narrative reason this succeeded.>",
+        },
+      ],
+    },
+    {
+      kind: "checklist",
+      heading: "<Before You Run / Prep Checklist>",
+      intro: "<Practical check before sitting at the table:>",
+      items: [
+        "<Actionable item 1>",
+        "<Actionable item 2>",
+        "<Actionable item 3>",
+      ],
+    },
   ],
-  relatedAnswers: ["<directly-relevant-existing-answer-slug>"],
+  systemsThatSupportThis: [ // Optional. Only if a system has real mechanical support for this topic (#2769).
+    {
+      system: "<System Name>",
+      rationale: "<One sentence naming the specific mechanic that supports this topic.>",
+      href: "<https://external-system-site.example>",
+    },
+  ],
+  codexConnection: {
+    heading: "<Connecting X to your broader campaign world>",
+    paragraphs: [
+      "<How Codex Cryptica's generator, graph, or canvas supports this workflow.>",
+    ],
+    linkText: "<Try the relevant generator / tool>",
+    href: "/generators/<slug>", // Must be a verified live route
+  },
+  relatedTools: [
+    {
+      title: "<Tool Title>",
+      description: "<Short description of utility.>",
+      href: "/generators/<live-slug>",
+    },
+  ],
+  relatedForPages: [
+    {
+      title: "<Hub Title>",
+      description: "<Short description of relevant genre or system.>",
+      href: "/for/<live-slug>",
+    },
+  ],
+  relatedAnswers: [
+    "<existing-answer-slug-1>",
+    "<existing-answer-slug-2>",
+  ],
   discovery: {
     parentCluster: "<cluster-id, e.g. adventure-mapping, session-prep, worldbuilding>",
     intentAliases: ["<alias 1>", "<alias 2>"],
@@ -195,32 +261,6 @@ export const <camelCaseName>: AnswerConfigInput = {
   },
 };
 ```
-
-Use these optional block patterns only when they teach something the prose has not already established:
-
-```ts
-// A walkthrough can show a sequence without a contrived weak/strong pair.
-{
-  kind: "example",
-  heading: "<Specific situation or procedure>",
-  paragraphs: ["<Starting information the reader will use.>"],
-  items: [
-    { term: "<Step or decision>", text: "<Input, calculation/action and result.>" },
-    { term: "<Next action>", text: "<What the reader or players do with that result.>" },
-  ],
-}
-
-// For a comparison, show the criteria that change the reader's choice.
-{
-  kind: "table",
-  headers: ["<Option>", "<Fits when>", "<Cost or limitation>"],
-  rows: [["<Option name>", "<Relevant circumstance>", "<Concrete trade-off>"]],
-}
-```
-
-A `checklist`, if useful, needs at least two actionable items; it need not recap every section. `systemsThatSupportThis` is optional and follows rule 8 above. Omit `relatedTools`, `relatedTopics`, `relatedForPages` and `codexConnection` when they have no relevant purpose; link arrays default to empty. When adding a product connection, use its schema fields (`heading`, `paragraphs`, `linkText`, `href`) and a verified live destination.
-
-For the original/corrected dice comparison and contrasting definition/worldbuilding demonstrations, read [the editorial benchmark](../../../docs/answer-editorial-benchmark-3918.md). Assess what the reader can now calculate, recognise, decide or prepare. Structural compliance does not establish editorial completeness. Independent factual and editorial verification, including the existing post-merge review and `copy-fix` loop, still matters; reducing valid review reports is not a quality target.
 
 ---
 
@@ -286,8 +326,7 @@ Run all targeted tests and static analyses before committing:
    _Audits outbound links, ensures no broken links, and verifies reciprocal cross-links._
 2. **Answer Unit Tests**:
    ```sh
-   (cd apps/web && bunx vitest run src/lib/content/answers/)
-   bun test ./scripts/check-answer-mesh.test.ts
+   bun test apps/web/src/lib/content/answers/ scripts/check-answer-mesh.test.ts
    ```
    _Verifies schema validation, British English spelling check, slug uniqueness, link liveness, structured data, and category coverage._
 3. **Answer Editorial Check**:
@@ -302,10 +341,8 @@ Run all targeted tests and static analyses before committing:
    _Ensures 0 overlap errors and verifies canonical registration._
 5. **Type & Lint Check**:
    ```sh
-   bun run lint:changed
-   bun run test:changed
-   # Type-check only the affected web workspace:
-   (cd apps/web && bunx svelte-check --tsconfig ./tsconfig.json --threshold error)
+   bun run lint:types
+   bun run lint:affected
    ```
 6. **Rendered Deployment Smoke Check (#4013)**:
    Once a Cloudflare Pages preview or staging build is available, verify the exact rendered artifact:

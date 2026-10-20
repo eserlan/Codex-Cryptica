@@ -84,9 +84,6 @@ function stepIsValid(
       return (
         ctx.surface === "vault" && ctx.flags.includes(GENERATOR_REQUIRED_FLAG)
       );
-    case "openFeedback":
-      // The report form works everywhere, guests and public pages included.
-      return true;
   }
 }
 

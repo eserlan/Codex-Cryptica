@@ -44,7 +44,6 @@ function setup(over: Partial<HelpActionRunnerDeps> = {}, context = screen()) {
     destinationPath: (d) => `/${d}`,
     openHelp: vi.fn(),
     openGenerator: vi.fn(),
-    openFeedback: vi.fn(),
     openSettings: vi.fn(),
     openJournal: vi.fn(),
     waitFor: async (check) => check(),
@@ -201,33 +200,6 @@ describe("HelpActionRunner", () => {
     expect(deps.openGenerator).toHaveBeenCalledWith("npc");
     await runner.run({ type: "openGenerator", label: "Open the generators" });
     expect(deps.openGenerator).toHaveBeenLastCalledWith(undefined);
-  });
-
-  it("opens the empty report form with only the kind the guide names", async () => {
-    const { runner, deps } = setup();
-    expect(
-      await runner.run({
-        type: "openFeedback",
-        kind: "problem",
-        label: "Report a problem",
-      }),
-    ).toBe(true);
-    expect(deps.openFeedback).toHaveBeenCalledWith("problem");
-    await runner.run({ type: "openFeedback", label: "Report" });
-    expect(deps.openFeedback).toHaveBeenLastCalledWith(undefined);
-  });
-
-  it("never opens the report form for an action that carries text", async () => {
-    const { runner, deps } = setup();
-    expect(
-      await runner.run({
-        type: "openFeedback",
-        kind: "problem",
-        description: "chat text",
-        label: "Report",
-      } as unknown as GuidanceAction),
-    ).toBe(false);
-    expect(deps.openFeedback).not.toHaveBeenCalled();
   });
 
   it("opens the Vault tab of Settings when a guide asks for it", async () => {

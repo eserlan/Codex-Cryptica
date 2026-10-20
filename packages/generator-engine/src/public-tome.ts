@@ -891,15 +891,12 @@ function checkGroundTruthElements(lore: string, issues: string[]): void {
   }
 }
 
-export function checkUnitContradictions(
-  combined: string,
-  issues: string[],
-): void {
+function checkUnitContradictions(combined: string, issues: string[]): void {
   const leafMatch = combined.match(
-    /(\w+|\d+)\s+leaves\s+(?:are\s+)?(?:missing|excised|removed|cut)|(?:missing|excised|removed|cut)\s+(\w+|\d+)\s+leaves|(\w+|\d+)\s+(?:missing|excised|removed|cut)\s+leaves/i,
+    /(\w+|\d+)\s+leaves\s+(?:are\s+)?(?:missing|excised|removed|cut)/i,
   );
   const gatheringMatch = combined.match(
-    /(\w+|\d+)\s+(?:gatherings|quires)\s+(?:are\s+)?(?:missing|excised|removed|passed into)|(?:missing|excised|removed|passed into)\s+(\w+|\d+)\s+(?:gatherings|quires)|(\w+|\d+)\s+(?:missing|excised|removed|passed into)\s+(?:gatherings|quires)/i,
+    /(\w+|\d+)\s+(?:gatherings|quires)\s+(?:are\s+)?(?:missing|excised|removed|passed into)/i,
   );
   if (leafMatch && gatheringMatch) {
     if (
@@ -914,7 +911,7 @@ export function checkUnitContradictions(
   }
 }
 
-export function checkParagraphRedundancy(
+function checkParagraphRedundancy(
   content: string,
   lore: string,
   issues: string[],
@@ -942,10 +939,10 @@ export function checkParagraphRedundancy(
   }
 }
 
-export const REAL_WORLD_TERMS =
+const REAL_WORLD_TERMS =
   /\b(?:in|of|anno|year|c\.)\s+(?:1[5-9]\d{2}|20\d{2})\b|\b(?:thessaloniki|constantinople|byzantine|london|paris|vienna|athens|rome|oxford|cambridge)\b|\b(?:university|customs (?:office|authorit\w+)|machine-made paper|antiquities law)\b/i;
 
-export function checkGenreFidelity(
+function checkGenreFidelity(
   combined: string,
   genre: string | undefined,
   issues: string[],
@@ -1052,7 +1049,7 @@ function isAcceptedTomeRevision(
 }
 
 /** Flags near-verbatim restatement of one sentence in several sections. */
-export function checkSentenceRepetition(
+function checkSentenceRepetition(
   content: string,
   lore: string,
   issues: string[],
@@ -1082,7 +1079,7 @@ export function checkSentenceRepetition(
   });
 }
 
-export function checkFactsEchoed(
+function checkFactsEchoed(
   facts: TomeCanonicalFacts | undefined,
   combined: string,
   issues: string[],

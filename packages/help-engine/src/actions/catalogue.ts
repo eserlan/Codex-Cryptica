@@ -18,16 +18,8 @@ export const ACTION_TYPES = [
   "openPanel",
   "highlight",
   "openGenerator",
-  "openFeedback",
 ] as const;
 export type ActionType = (typeof ACTION_TYPES)[number];
-
-/**
- * The report kinds `openFeedback` may preselect. They mirror the feedback
- * form's kinds; the form itself is the only thing that ever sends a report.
- */
-export const FEEDBACK_KIND_IDS = ["problem", "idea", "other"] as const;
-export type FeedbackKindId = (typeof FEEDBACK_KIND_IDS)[number];
 
 /** Places `navigate` may go (mapped to real routes by the web app). */
 export const DESTINATION_IDS = [

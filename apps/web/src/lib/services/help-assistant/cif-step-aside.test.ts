@@ -70,7 +70,6 @@ describe("shouldStepAside", () => {
   it.each([
     { type: "openHelp", helpId: "maps", label: "Read about maps" },
     { type: "openGenerator", label: "Open the generator" },
-    { type: "openFeedback", kind: "problem", label: "Report a problem" },
     {
       type: "openPanel",
       panel: "settings-intelligence",

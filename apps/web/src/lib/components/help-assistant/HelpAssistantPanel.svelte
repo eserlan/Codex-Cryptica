@@ -5,7 +5,6 @@
   import type { GuidanceAction } from "help-engine";
   import { KeyboardInset } from "$lib/services/help-assistant/keyboard-inset.svelte";
   import type { HelpAssistantView } from "$lib/services/help-assistant/cif-popout-protocol";
-  import ReportProblemButton from "$lib/components/feedback/ReportProblemButton.svelte";
   import HelpActionOffer from "./HelpActionOffer.svelte";
   import HelpAssistantHeader from "./HelpAssistantHeader.svelte";
   import { cifMood, DELIGHT_MS } from "./cif-mood";
@@ -204,8 +203,5 @@
         return started && assistant.status !== "idle";
       }}
     />
-    <div class="flex justify-end px-3 pb-2">
-      <ReportProblemButton area="help" label="Report a problem" />
-    </div>
   </div>
 {/if}

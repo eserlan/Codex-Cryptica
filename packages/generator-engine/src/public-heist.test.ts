@@ -776,27 +776,6 @@ describe("heist semantic audit and repair prompts", () => {
     expect(prompt).toContain("Carry the prize's catch through to the end");
   });
 
-  it("audits exact placement, route timing and outcome logic across sections", () => {
-    const { resolved, draft } = setup("Plant Evidence");
-    const prompt = buildHeistAuditPrompt(draft, [], resolved);
-    expect(prompt).toContain("Exact placement:");
-    expect(prompt).toContain(
-      '"Inside", "beneath", and "tied to" the same item',
-    );
-    expect(prompt).toContain("Route and timeline continuity:");
-    expect(prompt).toContain(
-      "cannot also be the thing they rejoin on the way out",
-    );
-    expect(prompt).toContain("Outcome logic:");
-    expect(prompt).toContain("no section may guarantee it is believed");
-    expect(prompt).toContain(
-      "exact placement, route continuity, outcome logic",
-    );
-    // The audit stays a contradiction check, not a rewrite or style pass.
-    expect(prompt).toContain("Do not rewrite it yet");
-    expect(prompt).toContain("Do not turn prose preferences");
-  });
-
   it("requests conclusions rather than hidden reasoning or a rewritten heist", () => {
     const { resolved, draft } = setup();
     const prompt = buildHeistAuditPrompt(
@@ -900,8 +879,6 @@ describe("heist semantic audit and repair prompts", () => {
     expect(prompt).toContain("1. Alarm level 3 is missing.");
     expect(prompt).toContain("Make the smallest edits");
     expect(prompt).toContain("no more words than the original heist");
-    expect(prompt).toContain("make every other section match it");
-    expect(prompt).toContain("Do not fix unlisted prose weaknesses");
     expect(prompt).toContain("Return the complete corrected heist");
     expect(prompt).toContain('"content" must remain non-empty');
     expect(prompt).toContain('"lore" must remain non-empty');

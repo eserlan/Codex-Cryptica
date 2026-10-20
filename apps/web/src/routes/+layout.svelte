@@ -2,7 +2,6 @@
   import "../app.css";
   import { base } from "$app/paths";
   import { onMount } from "svelte";
-  import FeedbackHost from "$lib/components/feedback/FeedbackHost.svelte";
   let { children } = $props();
 
   // Only render a global override when a staging/preview build sets it
@@ -45,5 +44,3 @@
 </svelte:head>
 
 {@render children()}
-
-<FeedbackHost />

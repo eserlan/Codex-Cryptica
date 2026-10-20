@@ -18,8 +18,6 @@
   import { page } from "$app/state";
   import { DISCORD_URL, GITHUB_URL } from "$lib/config";
   import MarketingFooter from "./MarketingFooter.svelte";
-  import ReportProblemButton from "$lib/components/feedback/ReportProblemButton.svelte";
-  import { feedbackAreaFor } from "feedback-engine";
   import {
     MARKETING_NAV,
     shellCtaHref,
@@ -179,9 +177,4 @@
   <MarketingFooter
     extraLinks={footerLinks ?? shellFooterLinks(page.url.pathname)}
   />
-  <div class="flex justify-center px-4 pb-6">
-    <ReportProblemButton
-      area={feedbackAreaFor({ pathname: page.url.pathname, surface: "public" })}
-    />
-  </div>
 </div>

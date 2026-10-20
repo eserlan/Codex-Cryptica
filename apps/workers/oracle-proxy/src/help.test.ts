@@ -40,12 +40,6 @@ const written = [
     content: "## Related\nGenerate related entries.",
   },
   {
-    id: "report-a-problem",
-    title: "Report a Problem or Send Feedback",
-    content:
-      "## Report a problem\nIf you found a bug or something isn't working, use Report a problem to send a report to the maintainer.",
-  },
-  {
     id: "random-tables-decks",
     title: "Random Tables",
     content: "## Tables\nRoll on tables and draw from decks.",
@@ -355,53 +349,6 @@ describe("POST /api/help/ask — answers", () => {
       }),
     });
     expect((await (await ask(valid())).json()).outcome).toBe("answered");
-  });
-});
-
-describe("POST /api/help/ask — opening the report form", () => {
-  const reportModel = {
-    answer:
-      "Use Report a problem, say what you were trying to do and what happened, then press Send report.",
-    sourceIds: ["report-a-problem#0"],
-    actionId: "report-a-problem.open",
-    confidence: "high",
-  };
-
-  it("offers the empty report form when asked how to report a problem", async () => {
-    const generate = vi.fn(async (_req: unknown) => ({
-      ok: true as const,
-      content: reportModel,
-    }));
-    const { ask } = harness({ generate });
-    const body = await (
-      await ask(valid({ question: "How do I report a bug?" }))
-    ).json();
-
-    expect(body.outcome).toBe("answered");
-    expect(body.action).toEqual({
-      type: "openFeedback",
-      kind: "problem",
-      label: "Report a problem",
-    });
-    const request = generate.mock.calls[0][0] as {
-      messages: { content: string }[];
-    };
-    expect(request.messages[1].content).toContain("report-a-problem.open");
-  });
-
-  it("does not offer the report form for an unrelated question", async () => {
-    const generate = vi.fn(async (_req: unknown) => ({
-      ok: true as const,
-      content: { ...goodModel, actionId: "report-a-problem.open" },
-    }));
-    const { ask } = harness({ generate });
-    const body = await (await ask(valid())).json();
-
-    const request = generate.mock.calls[0][0] as {
-      messages: { content: string }[];
-    };
-    expect(request.messages[1].content).not.toContain("report-a-problem.open");
-    expect(body.action).toBeNull();
   });
 });
 

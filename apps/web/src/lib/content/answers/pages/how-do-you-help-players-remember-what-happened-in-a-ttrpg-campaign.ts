@@ -115,7 +115,6 @@ export const howDoYouHelpPlayersRememberWhatHappenedInATtrpgCampaign: AnswerConf
       "how-long-should-a-ttrpg-session-be",
       "how-do-i-organise-a-dnd-campaign",
       "should-i-share-worldbuilding-notes-with-my-players",
-      "how-do-i-give-players-immersive-handouts-in-an-online-rpg",
     ],
     discovery: {
       id: "answer-campaign-memory-hub",

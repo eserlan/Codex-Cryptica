@@ -119,7 +119,6 @@ export const howDoIGetPlayersToEngageWithMyCampaignWorld: AnswerConfigInput = {
     "how-do-i-make-roleplay-more-engaging",
     "how-do-i-get-my-friends-interested-in-playing-dnd",
     "should-i-share-worldbuilding-notes-with-my-players",
-    "how-do-i-give-players-immersive-handouts-in-an-online-rpg",
   ],
   discovery: {
     id: "answer-player-engagement",

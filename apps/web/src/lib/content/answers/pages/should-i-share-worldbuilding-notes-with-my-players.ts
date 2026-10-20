@@ -146,8 +146,6 @@ export const shouldIShareWorldbuildingNotesWithMyPlayers: AnswerConfigInput = {
     "how-do-you-start-worldbuilding-from-scratch",
     "how-do-you-organise-rpg-campaign-notes",
     "how-do-you-recap-a-ttrpg-session",
-    "how-do-i-give-players-immersive-handouts-in-an-online-rpg",
-    "how-do-i-run-my-first-online-tabletop-rpg-session",
   ],
   discovery: {
     id: "answer-share-worldbuilding-notes",
@@ -183,11 +181,6 @@ export const shouldIShareWorldbuildingNotesWithMyPlayers: AnswerConfigInput = {
         with: "answer-campaign-memory-hub",
         reason:
           "The campaign memory hub covers techniques for helping players retain what happened in play. This answer covers making setting lore available up front as a primer or wiki, with a spoiler boundary between public, discoverable, and GM-only information.",
-      },
-      {
-        with: "answer-immersive-handouts-online-rpg",
-        reason:
-          "That answer covers how to present and deliver a prop during a remote session, including private reveals and a lasting party record. This answer covers which setting information belongs in a player-facing reference and what should remain GM-only.",
       },
     ],
   },

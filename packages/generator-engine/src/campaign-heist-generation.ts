@@ -89,9 +89,8 @@ export async function* streamCampaignHeist(
 export async function generateCampaignHeist(
   request: GeneratorRunRequest,
   gateway: AIGeneratorGateway,
-  signal?: AbortSignal,
 ) {
-  const stream = streamCampaignHeist(request, gateway, signal);
+  const stream = streamCampaignHeist(request, gateway);
   let next = await stream.next();
   while (!next.done) next = await stream.next();
   return next.value;

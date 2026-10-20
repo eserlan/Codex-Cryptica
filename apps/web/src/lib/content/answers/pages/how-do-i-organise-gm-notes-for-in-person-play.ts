@@ -197,11 +197,6 @@ export const howDoIOrganiseGmNotesForInPersonPlay: AnswerConfigInput = {
         reason:
           "That answer organises the whole campaign archive over years; this one covers the session-facing subset brought to one table and the hardware it is presented on. Different scope, and it explicitly says the table interface need not be the archive.",
       },
-      {
-        with: "answer-first-online-tabletop-rpg-session",
-        reason:
-          "That answer covers joining, tools and speaking norms for remote play. This one covers organising notes and references for a physical table, including the paper and device choices that work there.",
-      },
     ],
   },
   seo: {

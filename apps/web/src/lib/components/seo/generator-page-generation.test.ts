@@ -155,7 +155,7 @@ function makeBaseCtx(overrides: any) {
     encounter: { genre: "Fantasy" },
     puzzle: { genre: "Fantasy" },
     councilVote: { genre: "Fantasy" },
-    heist: (overrides.heist as object) ?? { genre: "Fantasy" },
+    heist: { genre: "Fantasy" },
     secretSociety: { theme: "Fantasy" },
     tavern: { type: "Tavern" },
     kingdom: { polityType: "Kingdom" },
@@ -226,19 +226,17 @@ describe("generator-page-generation", () => {
       expect(isStreamableSlug("settlement" as ValidSlug)).toBe(true);
     });
 
-    it("exposes exactly nine non-streamable slugs", () => {
-      expect(NON_STREAMABLE_SLUGS).toHaveLength(9);
+    it("exposes exactly seven non-streamable slugs", () => {
+      expect(NON_STREAMABLE_SLUGS).toHaveLength(7);
       expect([...NON_STREAMABLE_SLUGS].sort()).toEqual(
         [
           "adventure-generator",
           "adventure-idea-generator",
           "council-vote",
           "dungeon-generator",
-          "heist",
           "language-generator",
           "one-shot-adventure-generator",
           "point-crawl",
-          "tome",
         ].sort(),
       );
     });
@@ -250,10 +248,8 @@ describe("generator-page-generation", () => {
       "adventure-idea-generator",
       "council-vote",
       "dungeon-generator",
-      "heist",
       "one-shot-adventure-generator",
       "point-crawl",
-      "tome",
     ] as ValidSlug[])("shows the step list for %s", (slug) => {
       expect(showsStagedProgress(slug)).toBe(true);
     });
@@ -374,30 +370,6 @@ describe("generator-page-generation", () => {
       );
     });
 
-    it("passes heist progress through and resets it at the start", async () => {
-      const engine = makeFakeEngine();
-      engine.generateHeist = vi.fn().mockResolvedValue({ title: "x" });
-      const onOneShotProgress = vi.fn();
-      const handlers = createGeneratorHandlers(
-        makeCtx({
-          engine,
-          onOneShotProgress,
-          heist: { heistType: "Theft" },
-        }),
-      );
-
-      await handlers["heist"](true);
-
-      expect(onOneShotProgress).toHaveBeenCalledWith(null);
-      expect(engine.generateHeist).toHaveBeenCalledWith(
-        expect.objectContaining({
-          useAI: true,
-          heistType: "Theft",
-          onProgress: onOneShotProgress,
-        }),
-      );
-    });
-
     it("gives each one-shot run its own signal and cancels it when the page goes away", async () => {
       const engine = makeFakeEngine();
       const requested: string[] = [];
@@ -454,29 +426,6 @@ describe("generator-page-generation", () => {
           theme: "Cyberpunk / Corporate",
           primaryHazard: "Social / Investigation Risk",
           useAI: false,
-        }),
-      );
-    });
-
-    it("passes tome progress through and resets it at the start", async () => {
-      const engine = makeFakeEngine();
-      engine.generateTome = vi.fn().mockResolvedValue({ title: "x" });
-      const onOneShotProgress = vi.fn();
-      const handlers = createGeneratorHandlers(
-        makeCtx({
-          engine,
-          onOneShotProgress,
-          tome: { theme: "Gothic Horror", hazard: "Sanity" },
-        }),
-      );
-
-      await handlers.tome(true);
-
-      expect(onOneShotProgress).toHaveBeenCalledWith(null);
-      expect(engine.generateTome).toHaveBeenCalledWith(
-        expect.objectContaining({
-          useAI: true,
-          onProgress: onOneShotProgress,
         }),
       );
     });

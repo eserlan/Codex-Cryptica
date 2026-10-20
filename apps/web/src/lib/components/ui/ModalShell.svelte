@@ -71,7 +71,7 @@
       aria-describedby={describedBy}
       tabindex="-1"
       use:focusTrap
-      class="relative w-full max-h-[calc(100dvh-2rem)] {maxWidthClass} overflow-x-hidden overflow-y-auto overscroll-contain shadow-2xl {dialogClass}"
+      class="relative w-full {maxWidthClass} overflow-hidden shadow-2xl {dialogClass}"
       transition:scale={{ duration: scaleDuration, start: scaleStart }}
       onclick={(e) => e.stopPropagation()}
       {...dialogAttrs}

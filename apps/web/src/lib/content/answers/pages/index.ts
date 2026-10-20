@@ -16,7 +16,6 @@ import { howDoIGetMyFriendsInterestedInPlayingDnd } from "./how-do-i-get-my-frie
 import { howDoIGetMyRpgPartyToWorkTogether } from "./how-do-i-get-my-rpg-party-to-work-together";
 import { howDoIGetPlayersToEngageWithMyCampaignWorld } from "./how-do-i-get-players-to-engage-with-my-campaign-world";
 import { howDoIGiveDifferentCivilisationsDistinctStrengthsAndWeaknesses } from "./how-do-i-give-different-civilisations-distinct-strengths-and-weaknesses";
-import { howDoIGivePlayersImmersiveHandoutsInAnOnlineRpg } from "./how-do-i-give-players-immersive-handouts-in-an-online-rpg";
 import { howDoIGiveSpecialistCharactersSpotlight } from "./how-do-i-give-specialist-characters-spotlight";
 import { howDoIHandleDivinationMagicWithoutLettingOneCharacterSolveEveryMystery } from "./how-do-i-handle-divination-magic-without-letting-one-character-solve-every-mystery";
 import { howDoIHandlePlayersAskingAnNpcToTellUsEverythingYouKnow } from "./how-do-i-handle-players-asking-an-npc-to-tell-us-everything-you-know";
@@ -57,7 +56,6 @@ import { howDoIRunCommonCharacterRolesInAFantasyRpg } from "./how-do-i-run-commo
 import { howDoIRunCommonCharacterRolesInASciFiOrSpaceOperaRpg } from "./how-do-i-run-common-character-roles-in-a-sci-fi-or-space-opera-rpg";
 import { howDoIRunExplorationInAHugeRuinedCity } from "./how-do-i-run-exploration-in-a-huge-ruined-city";
 import { howDoIRunHackersOrNetrunnersWithoutSplittingTheParty } from "./how-do-i-run-hackers-or-netrunners-without-splitting-the-party";
-import { howDoIRunMyFirstOnlineTabletopRpgSession } from "./how-do-i-run-my-first-online-tabletop-rpg-session";
 import { howDoIRunPoliticalIntrigueAndFactionPlay } from "./how-do-i-run-political-intrigue-and-faction-play";
 import { howDoIRunSecretDoorsInDnd } from "./how-do-i-run-secret-doors-in-dnd";
 import { howDoIRunShipToShipCombatWithoutSideliningTheParty } from "./how-do-i-run-ship-to-ship-combat-without-sidelining-the-party";
@@ -197,7 +195,6 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIGetMyRpgPartyToWorkTogether,
     howDoIGetPlayersToEngageWithMyCampaignWorld,
     howDoIGiveDifferentCivilisationsDistinctStrengthsAndWeaknesses,
-    howDoIGivePlayersImmersiveHandoutsInAnOnlineRpg,
     howDoIGiveSpecialistCharactersSpotlight,
     howDoIHandleDivinationMagicWithoutLettingOneCharacterSolveEveryMystery,
     howDoIHandlePlayersAskingAnNpcToTellUsEverythingYouKnow,
@@ -238,7 +235,6 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIRunCommonCharacterRolesInASciFiOrSpaceOperaRpg,
     howDoIRunExplorationInAHugeRuinedCity,
     howDoIRunHackersOrNetrunnersWithoutSplittingTheParty,
-    howDoIRunMyFirstOnlineTabletopRpgSession,
     howDoIRunPoliticalIntrigueAndFactionPlay,
     howDoIRunSecretDoorsInDnd,
     howDoIRunShipToShipCombatWithoutSideliningTheParty,

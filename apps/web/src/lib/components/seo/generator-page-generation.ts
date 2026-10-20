@@ -17,8 +17,6 @@ export const NON_STREAMABLE_SLUGS: readonly ValidSlug[] = [
   "one-shot-adventure-generator",
   "point-crawl",
   "language-generator",
-  "heist",
-  "tome",
 ] as const;
 
 export function isStreamableSlug(slug: ValidSlug): boolean {
@@ -33,8 +31,6 @@ const STAGED_SLUGS: readonly ValidSlug[] = [
   "adventure-generator",
   "adventure-idea-generator",
   "council-vote",
-  "heist",
-  "tome",
 ] as const;
 
 export function showsStagedProgress(slug: ValidSlug): boolean {
@@ -216,15 +212,8 @@ export function createGeneratorHandlers(
         signal: ctx.oneShotRuns?.start(),
       } as never);
     },
-    heist: (useAI) => {
-      ctx.onOneShotProgress?.(null);
-      return engine.generateHeist({
-        ...(ctx.heist as object),
-        useAI,
-        onProgress: ctx.onOneShotProgress,
-        signal: ctx.oneShotRuns?.start(),
-      } as never);
-    },
+    heist: (useAI) =>
+      engine.generateHeist({ ...(ctx.heist as object), useAI } as never),
     holiday: (useAI) =>
       engine.generateHoliday({
         ...(ctx.holiday as object),
@@ -377,16 +366,12 @@ export function createGeneratorHandlers(
         useAI,
         avoidNames: collectSessionNames(ctx.getSessionEntities() as never[]),
       } as never),
-    tome: (useAI) => {
-      ctx.onOneShotProgress?.(null);
-      return engine.generateTome({
+    tome: (useAI) =>
+      engine.generateTome({
         ...(ctx.tome as object),
         primaryHazard: (ctx.tome as Record<string, unknown>).hazard,
         useAI,
-        onProgress: ctx.onOneShotProgress,
-        signal: ctx.oneShotRuns?.start(),
-      } as never);
-    },
+      } as never),
     "point-crawl": (useAI: boolean) => {
       ctx.onOneShotProgress?.(null);
       const pc = (ctx.pointCrawl ?? {}) as Record<string, unknown>;

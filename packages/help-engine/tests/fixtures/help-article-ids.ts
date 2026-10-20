@@ -4,7 +4,6 @@
  * at a new article is added here once.
  */
 export const KNOWN_HELP_IDS = [
-  "report-a-problem",
   "connections-tab",
   "connection-labels",
   "proposer-guide",
