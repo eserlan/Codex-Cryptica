@@ -8,7 +8,7 @@ import {
   type GuidanceStep,
   type HelpContext,
 } from "help-engine";
-import type { DestinationId } from "help-engine";
+import type { DestinationId, FeedbackKindId } from "help-engine";
 import type { HelpSurfaceRegistry } from "$lib/stores/help-assistant/help-surface.svelte";
 import type { SettingsTab } from "$lib/stores/ui/modal-ui.svelte";
 import type { HelpHighlightService } from "./help-highlight.svelte";
@@ -23,6 +23,8 @@ export interface HelpActionRunnerDeps {
   openHelp: (helpId: string) => void;
   /** Opens the generator workflow, on the chosen generator when one is given. */
   openGenerator: (generatorId?: string) => void;
+  /** Opens the empty report form, with its kind chosen when one is given. */
+  openFeedback: (kind?: FeedbackKindId) => void;
   /** Opens the Settings dialog on one tab. */
   openSettings: (tab: SettingsTab) => void;
   /** Opens the journal tab only; starting a journal is a separate user action. */
@@ -40,7 +42,7 @@ const TARGET_WAIT_MS = 1000;
 /**
  * Runs a guide the user has accepted. It only ever moves the user around and
  * points at things: go somewhere, open help, open a tab, open the generator,
- * highlight a control. None of those touch vault content, and this module has
+ * open the empty report form, highlight a control. None of those touch vault content, and this module has
  * no dependency that could. It checks the guide against the current screen
  * again before starting, because the screen may have changed since the offer.
  */
@@ -101,6 +103,9 @@ export class HelpActionRunner {
         return true;
       case "openGenerator":
         this.deps.openGenerator(step.generatorId);
+        return true;
+      case "openFeedback":
+        this.deps.openFeedback(step.kind);
         return true;
       case "openPanel":
         return this.openPanel(step.panel);

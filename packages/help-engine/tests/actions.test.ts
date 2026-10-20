@@ -36,11 +36,12 @@ const guide = {
 } as const;
 
 describe("action allow-list", () => {
-  it("has exactly the five safe types and nothing that can change vault content", () => {
+  it("has exactly the six safe types and nothing that can change vault content", () => {
     expect([...ACTION_TYPES].sort()).toEqual(
       [
         "highlight",
         "navigate",
+        "openFeedback",
         "openGenerator",
         "openHelp",
         "openPanel",
@@ -122,6 +123,35 @@ describe("validateAction", () => {
       flags: ["generators", "connections-editable"],
     });
     expect(validateAction(open, withFlag, deps)).toEqual(open);
+  });
+
+  it("opens the report form on any screen, public pages included", () => {
+    const open = { type: "openFeedback", kind: "problem", label: "Report" };
+    expect(validateAction(open, connectionsScreen, deps)).toEqual(open);
+    const publicPage = sanitizeHelpContext({
+      ...connectionsScreen,
+      surface: "public",
+      flags: [],
+    });
+    expect(validateAction(open, publicPage, deps)).toEqual(open);
+    const noKind = { type: "openFeedback", label: "Report" };
+    expect(validateAction(noKind, publicPage, deps)).toEqual(noKind);
+  });
+
+  it("refuses a report action that carries text or an unknown kind", () => {
+    // The action can never prefill the form from the conversation.
+    for (const bad of [
+      {
+        type: "openFeedback",
+        kind: "problem",
+        description: "The user said the map broke",
+        label: "Report",
+      },
+      { type: "openFeedback", kind: "bug", label: "Report" },
+      { type: "openFeedback", kind: "problem", label: "" },
+    ]) {
+      expect(validateAction(bad, connectionsScreen, deps)).toBeNull();
+    }
   });
 
   it("discards openHelp for an article that does not exist", () => {

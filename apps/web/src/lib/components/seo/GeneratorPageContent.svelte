@@ -1055,6 +1055,7 @@
     "point-crawl",
     "language-generator",
     "heist",
+    "tome",
   ].includes(slug)}
   {generate}
   progressSteps={showsStagedProgress(slug) ? oneShotProgress : null}

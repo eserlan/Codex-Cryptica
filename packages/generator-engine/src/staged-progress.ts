@@ -25,6 +25,10 @@ export type StagedStepId =
   | "objective"
   | "security"
   | "response"
+  // Tome stages (tome-staged.ts).
+  | "provenance"
+  | "revelations"
+  | "hooks"
   // Business stages (business-staged.ts).
   | "identity"
   | "connections"
