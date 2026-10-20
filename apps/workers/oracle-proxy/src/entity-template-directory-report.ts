@@ -3,6 +3,8 @@ import {
   EntityTemplateReportRecordSchema,
 } from "../../../../packages/schema/src/entity-template-listing";
 import { readEntityListing } from "./entity-template-directory";
+import { hmacHex } from "./hmac";
+import { reserveQuota, type QuotaReservation } from "./r2-quota";
 import { readSuspensionMarker } from "./suspension";
 import {
   bucketMissing,
@@ -28,26 +30,8 @@ export const DAILY_REPORT_LIMIT = 20;
 const REPORTS = "moderation/template-reports/";
 const DEDUPE = "moderation/template-report-index/";
 const QUOTA = "moderation/template-report-quota/";
-const MAX_QUOTA_ATTEMPTS = 25;
 
-async function hashAddress(key: string, address: string): Promise<string> {
-  const cryptoKey = await crypto.subtle.importKey(
-    "raw",
-    new TextEncoder().encode(key),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"],
-  );
-  const signature = await crypto.subtle.sign(
-    "HMAC",
-    cryptoKey,
-    new TextEncoder().encode(address),
-  );
-  return [...new Uint8Array(signature)]
-    .slice(0, 16)
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-}
+const hashAddress = hmacHex;
 
 const rateLimited = (request: Request) =>
   fail(
@@ -59,46 +43,6 @@ const rateLimited = (request: Request) =>
 
 const alreadyReported = (request: Request) =>
   fail(request, "You've already reported this.", 409, "already_reported");
-
-type QuotaReservation = "reserved" | "full";
-
-/**
- * Reserves one of the address's daily report slots with an R2 compare-and-set.
- * A read followed by an unconditional write loses increments when separate
- * listing reports arrive together, which would let concurrent requests evade
- * the daily cap.
- */
-async function reserveDailyQuota(
-  env: ReportEnv,
-  quotaKey: string,
-): Promise<QuotaReservation> {
-  for (let attempt = 0; attempt < MAX_QUOTA_ATTEMPTS; attempt++) {
-    const object = await env.BUCKET.get(quotaKey);
-    let count = 0;
-    if (object) {
-      try {
-        const stored = (await readJson(object)) as { count?: unknown };
-        count = Number(stored.count) || 0;
-      } catch {
-        // An unreadable counter retains the existing fail-open recovery path.
-      }
-    }
-    if (count >= DAILY_REPORT_LIMIT) return "full";
-
-    const written = await env.BUCKET.put(
-      quotaKey,
-      JSON.stringify({ count: count + 1 }),
-      {
-        httpMetadata: { contentType: "application/json" },
-        onlyIf: object?.etag
-          ? { etagMatches: object.etag }
-          : { etagDoesNotMatch: "*" },
-      },
-    );
-    if (written !== null) return "reserved";
-  }
-  throw new Error("Could not reserve a template report quota slot.");
-}
 
 /** Stores the report, its de-duplication marker and the day's count. */
 async function recordReport(
@@ -115,7 +59,11 @@ async function recordReport(
 
   let quotaReservation: QuotaReservation;
   try {
-    quotaReservation = await reserveDailyQuota(env, keys.quota);
+    quotaReservation = await reserveQuota(
+      env.BUCKET,
+      keys.quota,
+      DAILY_REPORT_LIMIT,
+    );
   } catch (error) {
     await env.BUCKET.delete(keys.dedupe).catch(() => undefined);
     throw error;

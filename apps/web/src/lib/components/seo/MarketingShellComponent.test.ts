@@ -18,6 +18,7 @@ vi.mock("$lib/config", () => ({
   DISCORD_URL: "https://discord.gg/5UUMCChF2u",
   GITHUB_URL: "https://github.com/eserlan/Codex-Cryptica",
   PATREON_URL: "https://patreon.com/EspenE",
+  VERSION: "0.36.0",
 }));
 
 describe("MarketingShell component", () => {

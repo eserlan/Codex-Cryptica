@@ -176,6 +176,7 @@ export const howDoYouMakeATabletopRpgSessionMoreEngaging: AnswerConfigInput = {
     "how-do-i-keep-players-engaged-during-other-players-turns-in-combat",
     "how-do-i-start-a-dnd-campaign",
     "how-do-i-get-my-friends-interested-in-playing-dnd",
+    "how-do-i-run-my-first-online-tabletop-rpg-session",
   ],
   discovery: {
     id: "answer-session-engagement",

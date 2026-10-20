@@ -70,6 +70,31 @@ function ctx(bannedNames: string[]): GeneratorRunRequest["vaultContext"] {
   };
 }
 
+const testCouncilNames = ["A", "B", "C", "D", "E", "F", "G"];
+function testCouncilFoundationLore(suffix = "") {
+  return `### Voting Procedure\nSimple majority, 7 seats${suffix}.\n\n### Council Members\n${testCouncilNames
+    .map(
+      (name, index) =>
+        `- **Councillor ${name}** (Member) — Initial stance: ${index < 4 ? "Support" : "Oppose"}. Would genuinely persuade them: a verified lasting settlement.`,
+    )
+    .join("\n")}`;
+}
+function testCouncilPaths(suffix = "") {
+  const baseline = testCouncilNames
+    .map(
+      (name, index) =>
+        `- **Councillor ${name}** — ${index < 4 ? "Support" : "Oppose"} — Reason: ${index < 4 ? "keeps the original position" : "carries over unchanged"}.`,
+    )
+    .join("\n");
+  const best = testCouncilNames
+    .map(
+      (name) =>
+        `- **Councillor ${name}** — Support — Reason: accepts the lasting settlement.`,
+    )
+    .join("\n");
+  return `### Possible Paths\n#### 1. Smallest Viable Coalition\n${baseline}\nTally: Support 4, Oppose 3, Abstain 0, Undecided 0.\n#### 2. Broader Alternative\n${baseline}\nTally: Support 4, Oppose 3, Abstain 0, Undecided 0.\n#### 3. Costly Best Solution\n${best}\nTally: Support 7, Oppose 0, Abstain 0, Undecided 0.${suffix}`;
+}
+
 function richCtx(): GeneratorRunRequest["vaultContext"] {
   return {
     themeId: "fantasy",
@@ -938,23 +963,23 @@ describe("AI policy (US2)", () => {
     const foundationJson = JSON.stringify({
       title: "The Salt Road Levy",
       summary: "A five-seat council must approve emergency funding.",
-      lore: "## Voting Procedure\nSimple majority (unrepaired).",
+      lore: testCouncilFoundationLore(" (unrepaired)"),
       labels: ["council-vote", "political-intrigue"],
       connections: [],
     });
     const repairedJson = JSON.stringify({
       title: "The Salt Road Levy",
       summary: "A five-seat council must approve emergency funding.",
-      lore: "## Voting Procedure\nSimple majority.",
+      lore: testCouncilFoundationLore(),
       labels: ["council-vote", "political-intrigue"],
       connections: [],
     });
     const pathsJson = JSON.stringify({
-      possiblePaths: "## Possible Paths\nsmallest coalition first (unrepaired)",
+      possiblePaths: testCouncilPaths(" (unrepaired)"),
       followUpHooks: "## Follow-Up Hooks\nthey remember (unrepaired)",
     });
     const pathsRepairedJson = JSON.stringify({
-      possiblePaths: "## Possible Paths\nsmallest coalition first",
+      possiblePaths: testCouncilPaths(),
       followUpHooks: "## Follow-Up Hooks\nthey remember",
     });
 
@@ -996,7 +1021,7 @@ describe("AI policy (US2)", () => {
     // Uses the REPAIRED foundation lore and REPAIRED paths, not the
     // unrepaired first-pass versions.
     expect(generated.lore).toBe(
-      "## Voting Procedure\nSimple majority.\n\n## Possible Paths\nsmallest coalition first\n\n## Follow-Up Hooks\nthey remember",
+      `${testCouncilFoundationLore()}\n\n${testCouncilPaths()}\n\n## Follow-Up Hooks\nthey remember`,
     );
     expect(generated.labels).toContain("council-vote");
   });
@@ -1005,12 +1030,12 @@ describe("AI policy (US2)", () => {
     const foundationJson = JSON.stringify({
       title: "The Salt Road Levy",
       summary: "A five-seat council must approve emergency funding.",
-      lore: "## Voting Procedure\nSimple majority.",
+      lore: testCouncilFoundationLore(),
       labels: ["council-vote"],
       connections: [],
     });
     const pathsJson = JSON.stringify({
-      possiblePaths: "## Possible Paths\nx",
+      possiblePaths: testCouncilPaths(),
       followUpHooks: "## Follow-Up Hooks\ny",
     });
 
@@ -1034,20 +1059,20 @@ describe("AI policy (US2)", () => {
 
     expect(send).toHaveBeenCalledTimes(4);
     expect(generated.title).toBe("The Salt Road Levy");
-    expect(generated.lore).toContain("## Voting Procedure\nSimple majority.");
-    expect(generated.lore).toContain("## Possible Paths\nx");
+    expect(generated.lore).toContain("### Voting Procedure");
+    expect(generated.lore).toContain("## Follow-Up Hooks\ny");
   });
 
   it("keeps the unrepaired paths when the paths-repair reply is missing one required field", async () => {
     const foundationJson = JSON.stringify({
       title: "The Salt Road Levy",
       summary: "A five-seat council must approve emergency funding.",
-      lore: "## Voting Procedure\nSimple majority.",
+      lore: testCouncilFoundationLore(),
       labels: ["council-vote"],
       connections: [],
     });
     const pathsJson = JSON.stringify({
-      possiblePaths: "## Possible Paths\nx",
+      possiblePaths: testCouncilPaths(),
       followUpHooks: "## Follow-Up Hooks\ny",
     });
     // Only possiblePaths present — a real defect this catches: an isUsable
@@ -1077,7 +1102,6 @@ describe("AI policy (US2)", () => {
 
     // The partial repair must be rejected wholesale, keeping BOTH original
     // fields — not just possiblePaths with followUpHooks blanked out.
-    expect(generated.lore).toContain("## Possible Paths\nx");
     expect(generated.lore).toContain("## Follow-Up Hooks\ny");
     expect(generated.lore).not.toContain("## Possible Paths\nz");
   });
@@ -2503,12 +2527,12 @@ describe("council-vote streamed generation", () => {
   const foundation = JSON.stringify({
     title: "The Salt Road Levy",
     summary: "A five-seat council must approve emergency funding.",
-    lore: "## Voting Procedure\nSimple majority.",
+    lore: testCouncilFoundationLore(),
     labels: ["council-vote"],
     connections: [],
   });
   const paths = JSON.stringify({
-    possiblePaths: "## Possible Paths\nsmallest coalition first",
+    possiblePaths: testCouncilPaths(),
     followUpHooks: "## Follow-Up Hooks\nthey remember",
   });
 
@@ -2530,7 +2554,7 @@ describe("council-vote streamed generation", () => {
 
     const events = [] as Array<{ type: string; [key: string]: unknown }>;
     for await (const event of svc.generateDraftStream(
-      run("council-vote", { useAI: true }),
+      run("council-vote", { useAI: true, options: { councilSize: "7" } }),
     )) {
       events.push(event);
     }
@@ -2541,7 +2565,7 @@ describe("council-vote streamed generation", () => {
       type: "draft",
       draft: {
         title: "The Salt Road Levy",
-        lore: expect.stringContaining("## Possible Paths"),
+        lore: expect.stringContaining("### Possible Paths"),
       },
     });
   });
@@ -2887,6 +2911,367 @@ describe("staged adventure generation", () => {
     expect(complete).toHaveBeenCalledTimes(4);
     expect(events.find((e) => e.type === "draft")?.draft?.title).toBe(
       "The Copper Ledger",
+    );
+  });
+});
+
+describe("staged heist generation", () => {
+  const stage1 = {
+    title: "The Sunstone Chalice Lift",
+    summary:
+      "Infiltrate the Temple Reliquary and retrieve the Sunstone Chalice before dawn prayer.",
+    score:
+      "Steal the Sunstone Chalice from beneath the Temple Reliquary before the bells toll dawn. Keep it shadowy.",
+    objective:
+      "The Sunstone Chalice sits inside a consecrated alcove on the high altar floor.\n- **The catch**: Fragile — three hard impacts will crack the sacred crystal.\n- **Pressure**: Each impact advances a damage clock.",
+    casing: [
+      {
+        label: "Entry vector",
+        detail:
+          "A service tunnel under the south cloister is unlocked during the midnight candle replacement shift.",
+      },
+      {
+        label: "Known obstacle",
+        detail:
+          "The inner cloister gates are locked and guarded by two veteran Templars.",
+      },
+      {
+        label: "The objective",
+        detail:
+          "The Sunstone Chalice rests upon an elevated dais, illuminated by eternal sacred oil lamps.",
+      },
+    ],
+  };
+  const stage2 = {
+    hiddenFactor:
+      "The midnight candle attendant is actually an undercover inquisitor watching for thieves.",
+    rings: {
+      perimeter:
+        "Templar sentries patrol the cloister courtyard. Pass by timing their lantern sweep, by wearing pilgrim vestments, or by scaling the shadowed buttress wall.",
+      access:
+        "A locked oak portcullis bars access to the high altar hall. Pass by picking the lever lock, by presenting stolen deacon keys, or by crawling through the service heating ducts.",
+      inner:
+        "The inner reliquary sanctum guards the Sunstone Chalice behind an altar cage. Pass by using the deacon's prayer phrase, by quietly lifting the brass hinges, or by dispelling the glass seal with alchemical acid.",
+    },
+  };
+  const stage3 = {
+    quickReference:
+      "- **Objective**: Steal the Sunstone Chalice.\n- **Primary obstacle**: Patrols and locked gates.\n- **Hidden factor**: Undercover inquisitor.\n- **Point of no return**: Lifting the chalice.\n- **Pressure**: Three strikes crack it.\n- **Default complication**: Early bells.\n- **Escape problem**: Service tunnel seals.",
+    alarmTrack: [
+      {
+        level: 0,
+        label: "Quiet",
+        detail: "Routine prayers and silent patrols.",
+      },
+      {
+        level: 1,
+        label: "Suspicion",
+        detail: "A templar notices an unlatched gate and doubles back.",
+      },
+      {
+        level: 2,
+        label: "Alert",
+        detail: "Bells begin tolling and cloister gates are barred.",
+      },
+      {
+        level: 3,
+        label: "Lockdown",
+        detail: "Heavy iron grates drop over courtyard arches.",
+      },
+      {
+        level: 4,
+        label: "Lethal Response",
+        detail:
+          "The Grand Inquisitor mobilises the elite templar strike squads to hunt the intruders.",
+      },
+    ],
+    complications: [
+      {
+        label: "Early Bells (default)",
+        detail:
+          "The dawn prayer starts fifteen minutes earlier than scheduled.",
+      },
+      {
+        label: "Rival Syndicate",
+        detail: "A rival thief team is already working on the south gate.",
+      },
+      {
+        label: "Holy Oil Spill",
+        detail: "An overturned lantern sets the vestry curtains ablaze.",
+      },
+    ],
+    moment:
+      "Once the chalice is lifted from the altar dais, the ward dispels. A deacon checks the altar twenty minutes later.",
+    getaway:
+      "The south cloister tunnel remains open until the alarm bells toll. Otherwise, escape via the west bell tower ropes.\n**Pursuit**: Templar horsemen follow along the river road.",
+    flashbacks: [
+      "A bribed monk who left a side window unfastened.",
+      "Forged deacon robes tailored for the heist.",
+      "A sleep draught slipped into the kennel master's wine.",
+      "A copy of the templar patrol schedule acquired last week.",
+    ],
+  };
+
+  const stageReply = (message: string) => {
+    if (message.includes("STAGE 1 OF 3")) {
+      return stage1;
+    }
+    if (message.includes("STAGE 2 OF 3")) {
+      return stage2;
+    }
+    if (message.includes("STAGE 3 OF 3")) {
+      return stage3;
+    }
+    if (message.includes("Audit this generated tabletop RPG heist")) {
+      return { verdict: "clean", issues: [] };
+    }
+    throw new Error(`Unexpected message: ${message.slice(0, 80)}`);
+  };
+
+  const heistRun = (overrides: Partial<GeneratorRunRequest> = {}) =>
+    run("heist", {
+      useAI: true,
+      themeId: "fantasy",
+      options: {
+        heistType: "Theft",
+        targetType: "Temple Reliquary",
+        prize: "Sunstone Chalice",
+      },
+      ...overrides,
+    });
+
+  it("builds the heist in stages and carries the request context", async () => {
+    const complete = vi.fn<AIGeneratorGateway["complete"]>(async (message) =>
+      JSON.stringify(stageReply(message)),
+    );
+    const onHeistStagedStats = vi.fn();
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete },
+      onHeistStagedStats,
+    });
+    const generated = await svc.generateDraft(
+      heistRun({ instructions: "Keep it shadowy." }),
+    );
+    expect(complete).toHaveBeenCalledTimes(4);
+    expect(
+      complete.mock.calls.every(([message]) =>
+        message.includes("Keep it shadowy."),
+      ),
+    ).toBe(true);
+    expect(onHeistStagedStats).toHaveBeenCalledWith(
+      expect.objectContaining({ outcome: "staged", aiCalls: 4 }),
+    );
+    expect(generated.title).toBe("The Sunstone Chalice Lift");
+    expect(generated.lore).toContain("### Security Rings");
+    expect(generated.lore).toContain("### Alarm Track");
+  });
+
+  it("falls back to the generic route when a stage is unusable", async () => {
+    const complete = vi.fn<AIGeneratorGateway["complete"]>(async () => "nope");
+    const onHeistStagedStats = vi.fn();
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete },
+      onHeistStagedStats,
+    });
+    const generated = await svc.generateDraft(heistRun());
+    // Two failed stage 1 attempts, then one generic call, then local output.
+    expect(complete).toHaveBeenCalledTimes(3);
+    expect(complete.mock.calls[2][0]).not.toContain("STAGE 1 OF 3");
+    expect(generated.title).toBeTruthy();
+    expect(onHeistStagedStats).toHaveBeenCalledWith(
+      expect.objectContaining({ outcome: "fell-back", stoppedAt: "objective" }),
+    );
+  });
+
+  it.each([
+    ["staged: false", { options: { staged: false } }],
+    [
+      "a continuity thread",
+      {
+        interaction: {
+          input: "Plan another heist.",
+          previousInteractionId: "interaction-previous",
+          store: true,
+        },
+      },
+    ],
+  ])("keeps %s on the generic route", async (_label, overrides) => {
+    const complete = vi.fn<AIGeneratorGateway["complete"]>(async () => "nope");
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete },
+    });
+    await svc.generateDraft(heistRun(overrides));
+    expect(complete).toHaveBeenCalledTimes(1);
+    expect(complete.mock.calls[0][0]).not.toContain("STAGE 1 OF 3");
+  });
+
+  describe("staged tome generation", () => {
+    const tomeStage1 = {
+      title: "The Cinnabar Liturgy",
+      summary:
+        "An illuminated fourteenth-century ritual codex from the scriptorium of Saint Jude.",
+      canonicalFacts: {
+        centralRule:
+          "The reader must invert the second purification chant before lighting the brazier.",
+        productionMethod: "Handwritten vellum codex with vermilion ink",
+        errorSource:
+          "Brother Cyprian omitted the conditional qualifier during transcription.",
+        bookClaim: "The rite grants communion with the primordial fire.",
+        deception: "The rite consumes the celebrant in unquenchable ash.",
+        objectiveTruth: "The rite awakens an imprisoned cinder-elemental.",
+        actionableClue:
+          "Scraped parchment under ultraviolet reveals the expunged negative particle.",
+      },
+      physicalDescription:
+        "Bound in cracked calfskin over oak boards with iron clasps. Heavy vellum leaves, ruled in faint lead. Seven leaves are excised from the third quire, leaving ragged stubs.",
+      provenance:
+        "Composed circa 1340 by an anonymous heresy in the Marches. Copied by Brother Cyprian at Saint Jude, where an inquisitorial visit suppressed it. Passed through private antiquarian sales to the current vault archive.",
+      groundTruth: {
+        bookClaims: "The rite grants communion with the primordial fire.",
+        deception: "The rite consumes the celebrant in unquenchable ash.",
+        objectiveTruth: "The rite awakens an imprisoned cinder-elemental.",
+        actionableClue:
+          "Scraped parchment under ultraviolet reveals the expunged negative particle.",
+      },
+      connectedEntities: {
+        author: "Anonymous Marcher heretic",
+        custodian: "The Dunwich Archive",
+        interestedFaction: "The Cinder-Order",
+        associatedLocation: "The Sunken Scriptorium",
+      },
+      labels: ["tome", "forbidden-book", "grimoire", "item"],
+      connections: [
+        {
+          targetTitle: "The Dunwich Archive",
+          relationship: "Current custodian",
+        },
+      ],
+    };
+
+    const tomeStage2 = {
+      contents: `The text outlines the ninefold descent through ash and smoke to the subterranean fire-well.
+> "Let the supplicant turn their face from the east, pouring the salt into the dying ember while chanting the nine names backwards."
+A careful reader who compares the marginal gloss with the erased rubric discovers that the expunged negative particle changes an invitation into an unbinding rite that awakens an imprisoned cinder-elemental.`,
+      risks:
+        "Handling the leaves transfers a bitter, sulfurous residue causing chemical burns and persistent fever. Prolonged meditation prompts vivid hallucinations of burning spires.",
+      quickChecks: {
+        deciphering:
+          "Requires two days of study and a DC 14 Classical Latin or Occult comprehension check.",
+        failureCondition:
+          "Failing to invert the second purification chant causes the brazier flame to detonate outward, inflicting severe concussive and burn trauma.",
+        safeHandling:
+          "Handle only with oiled calfskin gloves in a well-ventilated chamber.",
+      },
+    };
+
+    const tomeStage3 = {
+      adventureHooks: [
+        "1. The Ragged Stubs: An antiquarian hires the party to track down the seven excised leaves taken during the 1842 library heist.",
+        "2. The Cinder-Order Demand: A secretive occult cell attempts to burgle the Dunwich Archive to secure the codex before solstice.",
+        "3. Echoes from the Scriptorium: Smoke rises from the Sunken Scriptorium, where a desperate novice is reciting the uncorrected litany.",
+      ],
+    };
+
+    const tomeStageReply = (message: string) => {
+      if (/stage 1 of 3/i.test(message)) return tomeStage1;
+      if (/stage 2 of 3/i.test(message)) return tomeStage2;
+      if (/stage 3 of 3/i.test(message)) return tomeStage3;
+      if (message.includes("Audit this generated tabletop RPG tome")) {
+        return { verdict: "clean", issues: [] };
+      }
+      throw new Error(`Unexpected message: ${message.slice(0, 80)}`);
+    };
+
+    const tomeRun = (overrides: Partial<GeneratorRunRequest> = {}) =>
+      run("tome", {
+        useAI: true,
+        themeId: "fantasy",
+        options: {
+          focus: "Ritual Magic",
+          bookState: "Damaged",
+        },
+        ...overrides,
+      });
+
+    it("builds the tome in stages and carries the request context", async () => {
+      const complete = vi.fn<AIGeneratorGateway["complete"]>(async (message) =>
+        JSON.stringify(tomeStageReply(message)),
+      );
+      const onTomeStagedStats = vi.fn();
+      const svc = new CampaignGeneratorService({
+        aiPolicy: { isEnabled: true, isAvailable: true },
+        aiGateway: { complete },
+        onTomeStagedStats,
+      });
+      const generated = await svc.generateDraft(
+        tomeRun({ instructions: "Keep it ominous and esoteric." }),
+      );
+      expect(complete).toHaveBeenCalledTimes(3);
+      expect(
+        complete.mock.calls.every(([message]) =>
+          message.includes("Keep it ominous and esoteric."),
+        ),
+      ).toBe(true);
+      expect(onTomeStagedStats).toHaveBeenCalledWith(
+        expect.objectContaining({ outcome: "staged", aiCalls: 3 }),
+      );
+      expect(generated.title).toBe("The Cinnabar Liturgy");
+      expect(generated.content).toContain("Physical Description & Format");
+      expect(generated.lore).toContain("Ground Truth for the GM");
+      expect(generated.lore).toContain("Quick Checks & Mechanics");
+    });
+
+    it("falls back to the two-pass / generic route when a stage is unusable", async () => {
+      const complete = vi.fn<AIGeneratorGateway["complete"]>(
+        async () => "nope",
+      );
+      const onTomeStagedStats = vi.fn();
+      const svc = new CampaignGeneratorService({
+        aiPolicy: { isEnabled: true, isAvailable: true },
+        aiGateway: { complete },
+        onTomeStagedStats,
+      });
+      const generated = await svc.generateDraft(tomeRun());
+      // Two failed stage 1 attempts, then two-pass fallback (which fails and falls back to local).
+      expect(complete.mock.calls.length).toBeGreaterThanOrEqual(3);
+      expect(generated.title).toBeTruthy();
+      expect(onTomeStagedStats).toHaveBeenCalledWith(
+        expect.objectContaining({
+          outcome: "fell-back",
+          stoppedAt: "provenance",
+        }),
+      );
+    });
+
+    it.each([
+      ["staged: false", { options: { staged: false } }],
+      [
+        "a continuity thread",
+        {
+          interaction: {
+            input: "Describe another chapter.",
+            previousInteractionId: "interaction-previous",
+            store: true,
+          },
+        },
+      ],
+    ])(
+      "keeps %s on the generic / two-pass route",
+      async (_label, overrides) => {
+        const complete = vi.fn<AIGeneratorGateway["complete"]>(
+          async () => "nope",
+        );
+        const svc = new CampaignGeneratorService({
+          aiPolicy: { isEnabled: true, isAvailable: true },
+          aiGateway: { complete },
+        });
+        await svc.generateDraft(tomeRun(overrides));
+        // First call won't be staged Stage 1 of 3
+        expect(/stage 1 of 3/i.test(complete.mock.calls[0][0])).toBe(false);
+      },
     );
   });
 });

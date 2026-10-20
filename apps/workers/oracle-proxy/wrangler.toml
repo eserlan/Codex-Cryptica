@@ -28,6 +28,11 @@ routes = [
 # Leave empty to use defaults (codex-cryptica.com, staging, pages.dev)
 # CI/CD should override this per environment via deploy-worker.yml.
 ALLOWED_ORIGINS = ""
+
+# Private GitHub repository (owner/name) that receives in-app reports. Empty
+# means reports are refused with "misconfigured" until it is set. See
+# docs/feedback-triage.md.
+FEEDBACK_GITHUB_REPO = "eserlan/codex-cryptica-feedback"
 # Set to "true" in CI/CD environments that should accept branch preview URLs
 # like https://feature.codex-cryptica.pages.dev.
 ALLOW_CLOUDFLARE_PAGES_PREVIEW_ORIGINS = "false"
@@ -137,6 +142,16 @@ namespace_id = "1358"
 # address (hashed) so one client cannot flood the operator's report queue. The
 # binding only supports 10 or 60 second periods; the worker also enforces a
 # daily per-address quota itself.
+# In-app problem reports: a burst cap per hashed source. The platform allows
+# only 10 or 60 second periods, so the hourly and daily caps are R2 counters.
+[[ratelimits]]
+name = "FEEDBACK_RATE_LIMITER"
+namespace_id = "1362"
+
+  [ratelimits.simple]
+  limit = 5
+  period = 60
+
 [[ratelimits]]
 name = "TEMPLATE_REPORT_RATE_LIMITER"
 namespace_id = "1360"

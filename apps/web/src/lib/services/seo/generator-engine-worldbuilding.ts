@@ -13,6 +13,8 @@ import {
   generateCouncilVoteLocal,
   buildHeistPrompt,
   generateHeistLocal,
+  generateHeistStaged,
+  heistStatsLog,
   buildSecretSocietyPrompt,
   parseSecretSocietyResponse,
   generateSecretSocietyLocal,
@@ -67,12 +69,24 @@ import { GeneratorEngineCore } from "./generator-engine-core";
 
 export class GeneratorEngineWorldbuilding extends GeneratorEngineCore {
   async generateHeist(
-    options: HeistGeneratorOptions & { useAI?: boolean } = {},
+    options: HeistGeneratorOptions & {
+      useAI?: boolean;
+      onProgress?: (steps: OneShotProgressStep[]) => void;
+      signal?: AbortSignal;
+      staged?: boolean;
+    } = {},
   ): Promise<GeneratorOutput> {
-    const { useAI, ...heistOptions } = options;
+    const {
+      useAI,
+      onProgress,
+      signal,
+      staged = true,
+      ...heistOptions
+    } = options;
     const recentInputs = generationInputHistoryStore.recent("heist");
     return this.runWithAIFallback(
       useAI,
+      // fallow-ignore-next-line complexity
       async () => {
         const prompt = buildHeistPrompt(
           heistOptions,
@@ -83,6 +97,54 @@ export class GeneratorEngineWorldbuilding extends GeneratorEngineCore {
           "heist",
           summarizeResolvedInputs(resolved),
         );
+        if (signal?.aborted) {
+          throw (
+            signal.reason ??
+            new DOMException("The operation was aborted", "AbortError")
+          );
+        }
+        if (staged !== false) {
+          try {
+            const stagedResult = await generateHeistStaged(
+              prompt,
+              heistOptions,
+              {
+                signal,
+                onProgress,
+                onStats: (stats) => {
+                  if (import.meta.env.DEV) {
+                    console.debug("[HeistStagedStats]", heistStatsLog(stats));
+                  }
+                },
+                complete: async (instruction, message) => {
+                  if (signal?.aborted) {
+                    throw (
+                      signal.reason ??
+                      new DOMException(
+                        "The operation was aborted",
+                        "AbortError",
+                      )
+                    );
+                  }
+                  return this.runModel(
+                    instruction,
+                    message,
+                    undefined,
+                    true,
+                    signal,
+                  );
+                },
+              },
+            );
+            if (stagedResult) return stagedResult.output;
+          } catch (err) {
+            if (signal?.aborted) throw err;
+            if (err instanceof DOMException && err.name === "AbortError") {
+              throw err;
+            }
+            // Unexpected errors fall through to the one-pass route
+          }
+        }
         return runSeoHeistGeneration(
           prompt,
           this.startChat.bind(this),
@@ -90,6 +152,7 @@ export class GeneratorEngineWorldbuilding extends GeneratorEngineCore {
         );
       },
       () => generateHeistLocal(heistOptions),
+      signal,
     );
   }
 
