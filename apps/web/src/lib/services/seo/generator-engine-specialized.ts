@@ -26,7 +26,10 @@ import {
   generateTomeLocalFromResolved,
   resolveTome,
   generateTomeTwoPass,
+  generateTomeStaged,
+  tomeStatsLog,
   type TomeGeneratorOptions,
+  type StagedProgressStep,
   generatePointCrawlLocal,
   generatePointCrawlStaged,
   regeneratePointCrawlPart,
@@ -305,9 +308,20 @@ export class GeneratorEngineSpecialized extends GeneratorEngineWorldbuilding {
 
   /** Tome and forbidden book generation delegates to the generator-engine package. */
   async generateTome(
-    options: TomeGeneratorOptions & { useAI?: boolean } = {},
+    options: TomeGeneratorOptions & {
+      useAI?: boolean;
+      onProgress?: (steps: StagedProgressStep[]) => void;
+      signal?: AbortSignal;
+      staged?: boolean;
+    } = {},
   ): Promise<GeneratorOutput> {
-    const { useAI, ...tomeOptions } = options;
+    const {
+      useAI,
+      onProgress,
+      signal,
+      staged = true,
+      ...tomeOptions
+    } = options;
     const recentInputs = generationInputHistoryStore.recent("tome");
     const recentMysteries =
       generationInputHistoryStore.recent("tome-mysteries");
@@ -334,20 +348,62 @@ export class GeneratorEngineSpecialized extends GeneratorEngineWorldbuilding {
     };
     const output = await this.runWithAIFallback(
       useAI,
+      // fallow-ignore-next-line complexity
       async () => {
-        const { systemInstruction, userMessage, resolved } = buildTomePrompt(
+        const prompt = buildTomePrompt(
           variedOptions,
           getSessionContext() + formatRecentInputsNote(recentInputs),
         );
+        const { systemInstruction, userMessage, resolved } = prompt;
         inputSummary = summarizeResolvedInputs({
           ...resolved,
           deceptionKey: "",
         });
+        if (signal?.aborted) {
+          throw (
+            signal.reason ??
+            new DOMException("The operation was aborted", "AbortError")
+          );
+        }
+        if (staged !== false) {
+          try {
+            const stagedResult = await generateTomeStaged(
+              prompt,
+              variedOptions,
+              {
+                signal,
+                onProgress,
+                onStats: (stats) => {
+                  if (import.meta.env.DEV) {
+                    console.debug("[TomeStagedStats]", tomeStatsLog(stats));
+                  }
+                },
+                complete: (instruction, message) =>
+                  this.runModel(instruction, message, undefined, true, signal),
+              },
+            );
+            if (stagedResult) return stagedResult.output as GeneratorOutput;
+          } catch (err) {
+            if (
+              signal?.aborted ||
+              (err instanceof Error && err.name === "AbortError")
+            ) {
+              throw err;
+            }
+          }
+        }
         let pass = 0;
         const reviewed = await generateTomeTwoPass(
           { systemInstruction, userMessage, resolved },
           (instruction, message) =>
-            this.runModel(instruction, message, undefined, ++pass === 2),
+            this.runModel(
+              instruction,
+              message,
+              undefined,
+              ++pass === 2,
+              signal,
+            ),
+          signal,
         );
         return reviewed
           ? (reviewed as GeneratorOutput)

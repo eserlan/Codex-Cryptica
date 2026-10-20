@@ -30,6 +30,7 @@ import {
 import { generateDungeonStaged } from "./dungeon-staged";
 import { generateAdventureStaged } from "./adventure-staged";
 import { generateHeistStaged } from "./heist-staged";
+import { generateTomeStaged } from "./tome-staged";
 import { generateTomeTwoPass } from "./public-tome";
 import { generateCampaignHeist } from "./campaign-heist-generation";
 import { generateCouncilVoteWithAI } from "./campaign-council-vote-generation";
@@ -435,12 +436,22 @@ export class CampaignGeneratorAIGenerationService extends CampaignGeneratorLangu
     return nameSuggestion ? { ...request, nameSuggestion } : request;
   }
 
+  /**
+   * Staged route (provenance, revelations, hooks), then the existing
+   * two-pass route if a stage is unusable. `options.staged === false` forces
+   * the two-pass route, and a continuity thread stays on it.
+   */
+  // fallow-ignore-next-line complexity
   protected async generateTomeWithAI(
     generator: ReturnType<typeof getGenerator>,
     request: GeneratorRunRequest,
     bannedNames: Set<string>,
     signal?: AbortSignal,
   ): Promise<GeneratedDraft | null> {
+    if (request.options?.staged !== false && !request.interaction) {
+      const staged = await this.generateTomeStaged(generator, request, signal);
+      if (staged && !isTitleBanned(staged.title, bannedNames)) return staged;
+    }
     const gateway = this.aiGateway;
     if (!gateway) return null;
     try {
@@ -472,6 +483,41 @@ export class CampaignGeneratorAIGenerationService extends CampaignGeneratorLangu
       );
     } catch {
       // An invalid first or second pass falls back to local generation.
+      return null;
+    }
+  }
+
+  private async generateTomeStaged(
+    generator: ReturnType<typeof getGenerator>,
+    request: GeneratorRunRequest,
+    signal?: AbortSignal,
+  ): Promise<GeneratedDraft | null> {
+    const prompt = buildCampaignTomePrompt(request);
+    try {
+      const result = await generateTomeStaged(prompt, prompt.options, {
+        contextPrefix: prompt.contextPrefix,
+        signal,
+        onStats: this._deps.onTomeStagedStats,
+        // fallow-ignore-next-line code-duplication
+        complete: async (instruction, message) =>
+          completeText(
+            await this.aiGateway!.complete(message, instruction, { signal }),
+          ),
+      });
+      if (!result) return null;
+      const { output } = result;
+      return generator.mapOutputToDraft(
+        {
+          title: output.title,
+          summary: output.summary ?? "",
+          content: output.content,
+          lore: output.lore,
+          labels: output.labels,
+        },
+        request,
+      );
+    } catch (error) {
+      if (signal?.aborted) throw error;
       return null;
     }
   }

@@ -226,8 +226,8 @@ describe("generator-page-generation", () => {
       expect(isStreamableSlug("settlement" as ValidSlug)).toBe(true);
     });
 
-    it("exposes exactly eight non-streamable slugs", () => {
-      expect(NON_STREAMABLE_SLUGS).toHaveLength(8);
+    it("exposes exactly nine non-streamable slugs", () => {
+      expect(NON_STREAMABLE_SLUGS).toHaveLength(9);
       expect([...NON_STREAMABLE_SLUGS].sort()).toEqual(
         [
           "adventure-generator",
@@ -238,6 +238,7 @@ describe("generator-page-generation", () => {
           "language-generator",
           "one-shot-adventure-generator",
           "point-crawl",
+          "tome",
         ].sort(),
       );
     });
@@ -252,6 +253,7 @@ describe("generator-page-generation", () => {
       "heist",
       "one-shot-adventure-generator",
       "point-crawl",
+      "tome",
     ] as ValidSlug[])("shows the step list for %s", (slug) => {
       expect(showsStagedProgress(slug)).toBe(true);
     });
@@ -452,6 +454,29 @@ describe("generator-page-generation", () => {
           theme: "Cyberpunk / Corporate",
           primaryHazard: "Social / Investigation Risk",
           useAI: false,
+        }),
+      );
+    });
+
+    it("passes tome progress through and resets it at the start", async () => {
+      const engine = makeFakeEngine();
+      engine.generateTome = vi.fn().mockResolvedValue({ title: "x" });
+      const onOneShotProgress = vi.fn();
+      const handlers = createGeneratorHandlers(
+        makeCtx({
+          engine,
+          onOneShotProgress,
+          tome: { theme: "Gothic Horror", hazard: "Sanity" },
+        }),
+      );
+
+      await handlers.tome(true);
+
+      expect(onOneShotProgress).toHaveBeenCalledWith(null);
+      expect(engine.generateTome).toHaveBeenCalledWith(
+        expect.objectContaining({
+          useAI: true,
+          onProgress: onOneShotProgress,
         }),
       );
     });

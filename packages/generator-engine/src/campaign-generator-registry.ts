@@ -1244,10 +1244,13 @@ function generateTome(request: GeneratorRunRequest): GeneratorOutput {
 }
 
 export function buildCampaignTomePrompt(request: GeneratorRunRequest) {
-  const prompt = buildTomePrompt(tomeOptions(request));
+  const options = tomeOptions(request);
+  const prompt = buildTomePrompt(options);
   const context = contextChain(request);
   return {
     ...prompt,
+    options,
+    contextPrefix: context,
     userMessage: `${context}\n\n${prompt.userMessage}`,
     reviewContext: context,
   };

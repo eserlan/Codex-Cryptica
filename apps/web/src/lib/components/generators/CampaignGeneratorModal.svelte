@@ -22,6 +22,7 @@
     resolveEntityType,
     adventureStatsLog,
     heistStatsLog,
+    tomeStatsLog,
     extractPartialJsonStringFields,
     type GeneratedDraft,
     type GeneratorId,
@@ -33,6 +34,7 @@
     AIGeneratorCompleteResult,
     DungeonStagedStats,
     HeistStagedStats,
+    TomeStagedStats,
     GeneratorPromptMetrics,
   } from "generator-engine";
   import { aiGeneratorGateway } from "$lib/services/generators/ai-generator-gateway";
@@ -223,6 +225,11 @@
     onHeistStagedStats(stats: HeistStagedStats) {
       if (import.meta.env.DEV) {
         console.debug("[Generator] staged heist run", heistStatsLog(stats));
+      }
+    },
+    onTomeStagedStats(stats: TomeStagedStats) {
+      if (import.meta.env.DEV) {
+        console.debug("[Generator] staged tome run", tomeStatsLog(stats));
       }
     },
     get aiPolicy() {
