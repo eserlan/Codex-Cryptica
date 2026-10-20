@@ -1,5 +1,5 @@
 {
-  "updated_at": 1792494414,
+  "updated_at": 1792495895,
   "candidates": [
     {
       "id": "reddit-38926756319-cif-now-flies-to-what-he-points-at",
@@ -32,14 +32,14 @@
       "created_at": 1792425463
     },
     {
-      "id": "reddit-39407138621-i-wanted-a-forbidden-book-that-still-mad",
-      "title": "I wanted a forbidden book that still made sense on page three",
-      "body": "My haunted books read well in the first paragraph then fell apart when players asked a second question. The lore said one thing, the supposed facts said another, and the excerpt text felt like it came from a different book.\n\nI built a staged Tome generator that drafts a forbidden book in steps and keeps lore, ground truth and sample text aligned so you can drop it straight into a campaign.\n\nIt is in the app under Generators as Tome / Forbidden Book, staged so you can refine as you go.\n\nIt gives you:\n- a ground-truth history, what the book really is and who made it\n- a cover story and rumours, what most people believe it is\n- genre-faithful excerpt text you can hand to players as is\n- physical details and handling, how it looks and why it is hard to keep\n- hooks for where it has been and who wants it back\n\nIt leans toward usable prop text over purple prose. If you want a fully invented language fragment inside the excerpt, you will still need to add it yourself.\n\nHow do you handle books at your table, as a handout, a summary, or something players can actually read?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-39407138621-0.png)",
-      "url": "https://codexcryptica.com/generators/tome",
-      "image_url": "https://assets.codexcryptica.com/announcements/release-39407138621-0.png",
+      "id": "reddit-39407138621-reporting-a-bug-meant-leaving-the-app-so",
+      "title": "Reporting a bug meant leaving the app, so I added it inside",
+      "body": "When something broke I had no quick way to tell you without you opening email or GitHub. That meant fewer reports and slower fixes.\n\nI added Report a Problem inside the app, from Help and from the header, so you can file a report without leaving your vault.\n\nMore detail here: https://codexcryptica.com/help/report-a-problem\n\nIt does:\n- sends privately for triage, not as a public post\n- captures the area of the app and basic client context so I can reproduce it\n- keeps you in the app, no tab switching to file\n- groups duplicates on my side so fixes stay focused\n\nI read every report myself. I cannot reply to each one directly, but triage is now a lot faster on my side.\n\nWhat has stopped you reporting a small bug in the past, finding the button or not knowing if anyone would read it?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-39407138621-1.png)",
+      "url": "https://codexcryptica.com/help/report-a-problem",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-39407138621-1.png",
       "source_id": "39407138621",
       "status": "approved",
-      "created_at": 1792494414
+      "created_at": 1792495895
     }
   ]
 }
