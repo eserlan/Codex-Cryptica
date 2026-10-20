@@ -5,8 +5,12 @@
  */
 
 import type { Rng } from "./random-utils";
-import { defaultRng } from "./random-utils";
-import { CRIMINAL_WORDS, PRICE_PATTERN } from "./business-tables";
+import { defaultRng, pickFrom } from "./random-utils";
+import {
+  CRIMINAL_WORDS,
+  GENERIC_POOLS,
+  PRICE_PATTERN,
+} from "./business-tables";
 import {
   BUSINESS_LABEL_FOR_KIND,
   BUSINESS_STAFF_RANGE,
@@ -27,7 +31,8 @@ export type BusinessIssueCode =
   | "staff-count"
   | "inventory-list"
   | "management-mismatch"
-  | "relationship-label";
+  | "relationship-label"
+  | "size-staff";
 
 export interface BusinessIssue {
   section: BusinessSectionId;
@@ -185,11 +190,45 @@ function checkStaffCount(doc: BusinessDocument): BusinessIssue[] {
   if (count >= min && count <= max) return [];
   return [
     {
-      section: doc.staff[0] ? `staff:${doc.staff[0].id}` : "identity",
+      section: `staff:${doc.staff[0]?.id ?? "staff-1"}`,
       code: "staff-count",
       detail: `${count} staff does not fit a ${doc.options.scale} business (${min} to ${max}).`,
     },
   ];
+}
+
+/** "A handful of regular staff": a claim that the business has a workforce. */
+const CLAIMS_STAFF =
+  /\b(handful|small|permanent|regular|loyal|core|dependable|several|two|three|few|many)\b[^.]*\b(staff|crews?|workers|employees|hands|apprentices|clerks)\b/i;
+/** "No regular staff", "just the owner": a claim that the owner works alone. */
+const CLAIMS_NO_STAFF =
+  /\b(no (regular |permanent |hired |full-time )?(staff|employees|workers|crew)|without (any )?(regular |permanent )?(staff|employees)|sole (proprietor|trader|operator)|just the owner|owner alone|one-person|one person)\b/i;
+
+/**
+ * The size line must agree with the staff roster. A business with no key staff
+ * must not claim a regular workforce, and one with staff must not claim to have
+ * none. Casual labour and part-timers are fine either way.
+ */
+export function sizeStaffProblem(
+  size: string,
+  staffCount: number,
+): string | null {
+  if (
+    staffCount === 0 &&
+    CLAIMS_STAFF.test(size) &&
+    !CLAIMS_NO_STAFF.test(size)
+  )
+    return `The size says "${size}" but no key staff are listed. List the staff, or say the owner works with casual labour.`;
+  if (staffCount > 0 && CLAIMS_NO_STAFF.test(size))
+    return `The size says "${size}" but ${staffCount} key staff are listed. Say the business has regular staff.`;
+  return null;
+}
+
+function checkSizeStaff(doc: BusinessDocument): BusinessIssue[] {
+  const detail = sizeStaffProblem(doc.operations.size, doc.staff.length);
+  return detail
+    ? [{ section: "operations", code: "size-staff" as const, detail }]
+    : [];
 }
 
 function checkSecret(doc: BusinessDocument): BusinessIssue[] {
@@ -304,6 +343,7 @@ export function checkBusiness(doc: BusinessDocument): BusinessIssue[] {
     ...checkRelationshipLabels(doc),
     ...checkRequiredFields(doc),
     ...checkStaffCount(doc),
+    ...checkSizeStaff(doc),
     ...checkSecret(doc),
     ...checkHooks(doc),
     ...checkInventory(doc),
@@ -359,6 +399,38 @@ function fitStaffToScale(doc: BusinessDocument, rng: Rng): BusinessDocument {
   return { ...doc, staff };
 }
 
+/** Fixes the issues that touch one line: a relationship label and the size line. */
+function fixSingleLines(
+  doc: BusinessDocument,
+  issues: BusinessIssue[],
+  rng: Rng,
+): { fixed: BusinessDocument; rest: BusinessIssue[] } {
+  let fixed = doc;
+  if (issues.some((i) => i.code === "relationship-label")) {
+    fixed = {
+      ...fixed,
+      relationships: fixed.relationships.map((r) =>
+        BUSINESS_ALLOWED_LABELS[r.kind].includes(r.label)
+          ? r
+          : { ...r, label: BUSINESS_LABEL_FOR_KIND[r.kind] },
+      ),
+    };
+  }
+  if (issues.some((i) => i.code === "size-staff")) {
+    fixed = {
+      ...fixed,
+      operations: {
+        ...fixed.operations,
+        size: pickFrom(GENERIC_POOLS.sizeTemplates[fixed.options.scale], rng),
+      },
+    };
+  }
+  const rest = issues.filter(
+    (i) => i.code !== "relationship-label" && i.code !== "size-staff",
+  );
+  return { fixed, rest };
+}
+
 /**
  * Rebuilds only the sections that failed. Hooks are rebuilt last, and only when
  * they failed or one of the sections they name changed.
@@ -368,23 +440,15 @@ export function repairBusiness(
   allIssues: BusinessIssue[],
   rng: Rng = defaultRng,
 ): BusinessDocument {
-  let issues = allIssues;
-  if (issues.length === 0) return doc;
-  let next = doc;
-  // A wrong label only needs its label fixed; keep the party the text names.
-  if (issues.some((i) => i.code === "relationship-label")) {
-    next = {
-      ...next,
-      relationships: next.relationships.map((r) =>
-        BUSINESS_ALLOWED_LABELS[r.kind].includes(r.label)
-          ? r
-          : { ...r, label: BUSINESS_LABEL_FOR_KIND[r.kind] },
-      ),
-    };
-    issues = issues.filter((i) => i.code !== "relationship-label");
-    if (issues.length === 0) return next;
-  }
-  const failing = new Set<string>(issues.map((i) => i.section));
+  if (allIssues.length === 0) return doc;
+  // A wrong label or size line needs only that line fixed, not the section rebuilt.
+  const { fixed: next0, rest: issues } = fixSingleLines(doc, allIssues, rng);
+  if (issues.length === 0) return next0;
+  let next = next0;
+  // A staff-count issue is fixed by fitting the roster, never by rebuilding a section.
+  const failing = new Set<string>(
+    issues.filter((i) => i.code !== "staff-count").map((i) => i.section),
+  );
   const changed = new Set<string>();
 
   for (const section of REPAIR_ORDER) {
@@ -575,4 +639,81 @@ export function findUnintroducedNames(
   const { multis, singles } = scanForNames(texts, knownNames(doc));
   const repeated = [...singles].filter(([, n]) => n >= 2).map(([w]) => w);
   return [...multis, ...repeated];
+}
+
+// --- Quality checks on AI text (soft: one retry, then accepted) --------------
+
+/** Words too common in a description to show that a feature was developed. */
+const COMMON_WORDS = new Set(
+  "their there which where while about every other these those would could should shop's owner's business keeps makes under inside outside through around before after never always again still being might whose until since often rarely nobody anyone anything something everything nothing that this with from have been were they them than then when what will your into over only also some such each most more much many very just like ones main city shop town work part kind runs lets keep gets goes does done made make take back down away once even ever here both".split(
+    " ",
+  ),
+);
+
+/** Lower-cased words of four letters or more, cut to a five-letter stem. */
+function stems(text: string): Set<string> {
+  return new Set(
+    words(text)
+      .map((w) => w.toLowerCase())
+      .filter((w) => w.length >= 4 && !COMMON_WORDS.has(w))
+      .map((w) => w.slice(0, 5)),
+  );
+}
+
+/**
+ * The unusual asset must develop the business's distinctive feature rather than
+ * invent an unrelated one. Judged by shared word stems, so it is a heuristic.
+ */
+export function distinctiveProblem(
+  distinctive: string,
+  asset: string,
+): string | null {
+  const wanted = stems(distinctive);
+  if (wanted.size === 0) return null;
+  const used = stems(asset);
+  if ([...wanted].some((s) => used.has(s))) return null;
+  return `The unusual asset does not develop the distinctive feature ("${distinctive}"). Build the asset on it (why it works, who made it, who knows), and add a second asset only as well.`;
+}
+
+/** Words that address the player characters, in any genre. */
+const ADDRESSES_PLAYERS =
+  /\b(the (player )?characters|the party(?! (at|of|in|for) )|the adventurers|the heroes|the players|the pcs?|the group|the team|the investigators|the runners|the crew|adventurers|outsiders|newcomers|strangers|travell?ers|mercenaries|freelancers|anyone (brave|willing|bold|desperate)|your (party|characters|group|crew)|you)\b|\bPCs?\b/i;
+
+/** Every hook must offer something to the player characters. */
+export function hookAudienceProblems(hooks: readonly string[]): string[] {
+  const missing = hooks
+    .map((h, i) => [h, i + 1] as const)
+    .filter(([h]) => !ADDRESSES_PLAYERS.test(h))
+    .map(([, n]) => n);
+  return missing.length
+    ? [
+        `Hook${missing.length > 1 ? "s" : ""} ${missing.join(", ")} must be written for the player characters (the characters, the party, the crew): who approaches or hires them, what they must do, what stands in the way.`,
+      ]
+    : [];
+}
+
+const KIN_WORDS =
+  /\b(sister|brother|sibling|cousin|related|family (of|to|with)|son|daughter|uncle|aunt|nephew|niece|father|mother|parent|married|wife|husband|spouse|kin|twin)\b/i;
+
+/** Two people sharing a surname must be said to be related. */
+export function sharedSurnameProblems(
+  people: ReadonlyArray<{ name: string; goal: string; trait: string }>,
+): string[] {
+  const bySurname = new Map<string, typeof people>();
+  for (const p of people) {
+    const parts = words(p.name);
+    if (parts.length < 2) continue;
+    const surname = parts[parts.length - 1].toLowerCase();
+    bySurname.set(surname, [...(bySurname.get(surname) ?? []), p]);
+  }
+  return [...bySurname.values()]
+    .filter(
+      (group) =>
+        group.length > 1 &&
+        !group.some((p) => KIN_WORDS.test(`${p.goal} ${p.trait}`)),
+    )
+    .map(
+      (group) =>
+        `${group.map((p) => p.name).join(" and ")} share a surname. Say in a trait that they are related, or give them different surnames.`,
+    );
 }

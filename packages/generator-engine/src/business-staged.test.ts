@@ -74,14 +74,15 @@ const connectionsReply = JSON.stringify({
 
 const troubleReply = JSON.stringify({
   pressure: "The grid keeps failing.",
-  asset: "A generator nobody else can afford.",
+  asset:
+    "A clean surgical kit that nobody else in the district can afford, kept sterile by a rota only the staff know.",
   secret: "A back door for patients the city has lost track of.",
   opportunity: "A corporate medic wants a discreet partner.",
   complication: "A drone followed a courier home.",
   hooks: [
-    "Nadia Vale needs a courier to the blackout block tonight.",
-    "Helix Medical Corp is buying up the clinic's regulars.",
-    "Black-clinic parts are running out before the next shift.",
+    "Nadia Vale hires the party to get a courier to the blackout block tonight.",
+    "Helix Medical Corp offers the characters a quiet payment to steer the clinic's regulars its way.",
+    "The crew must find Black-clinic parts before the next shift runs dry.",
   ],
 });
 
@@ -129,6 +130,179 @@ describe("generateBusinessStaged", () => {
     expect(calls[1]).toContain("not usable");
     expect(doc.identity.name).toBe("Chrome Lily");
     expect(doc.fallbackSections).toEqual([]);
+  });
+
+  it("keeps the AI identity when it lists too many staff, and trims the roster", async () => {
+    const reply = JSON.parse(identityReply);
+    reply.staff = ["Ann Ash", "Bo Birch", "Cy Cole", "Di Dale"].map((name) => ({
+      name,
+      role: "Technician",
+      goal: "Save for a flat.",
+      trait: "Quick hands.",
+    }));
+    const tooMany = JSON.stringify(reply);
+    const { send, calls } = queue(
+      tooMany,
+      tooMany,
+      connectionsReply,
+      troubleReply,
+    );
+    const doc = await generateBusinessStaged(OPTS, { send, rng: seeded(12) });
+    expect(calls[1]).toContain("between 1 and 2 key staff");
+    expect(doc.identity.name).toBe("Chrome Lily");
+    expect(doc.staff.length).toBeLessThanOrEqual(2);
+    expect(doc.fallbackSections).not.toContain("identity");
+  });
+
+  it("fits the roster before later stages, so a hook naming a kept person survives", async () => {
+    const reply = JSON.parse(identityReply);
+    reply.staff = ["Ann Ash", "Bo Birch", "Cy Cole", "Di Dale"].map((name) => ({
+      name,
+      role: "Technician",
+      goal: "Save for a flat.",
+      trait: "Quick hands.",
+    }));
+    const four = JSON.stringify(reply);
+    const trouble = JSON.parse(troubleReply);
+    trouble.hooks = [
+      "Bo Birch hires the party to guard the clinic's surgical kit tonight.",
+      "Helix Medical Corp offers the characters a quiet payment.",
+    ];
+    const { send, calls } = queue(
+      four,
+      four,
+      connectionsReply,
+      JSON.stringify(trouble),
+    );
+    const doc = await generateBusinessStaged(OPTS, { send, rng: seeded(12) });
+    const facts = calls.find((c) => c.includes("step three")) ?? "";
+    expect(facts).toContain("Bo Birch");
+    expect(facts).not.toContain("Di Dale");
+    expect(doc.hooks[0]).toContain("Bo Birch");
+    expect(doc.fallbackSections).not.toContain("hooks");
+  });
+
+  it("tops a short roster up with the tables' named people, never placeholders", async () => {
+    const none = JSON.stringify({ ...JSON.parse(identityReply), staff: [] });
+    const { send } = queue(none, none, connectionsReply, troubleReply);
+    const doc = await generateBusinessStaged(OPTS, { send, rng: seeded(12) });
+    expect(doc.staff.length).toBeGreaterThanOrEqual(1);
+    for (const p of doc.staff) expect(p.name).not.toMatch(/\s\d$/);
+    expect(doc.fallbackSections).toContain("staff:staff-1");
+  });
+
+  it("reports hooks as fallback when repairing another section rebuilt them", async () => {
+    const trouble = JSON.parse(troubleReply);
+    // A price in the asset fails the final check; repairing it rebuilds the hooks.
+    trouble.asset =
+      "A clean surgical kit worth 500 gp that nobody else in the district owns.";
+    const reply = JSON.stringify(trouble);
+    const { send } = queue(identityReply, connectionsReply, reply);
+    const doc = await generateBusinessStaged(OPTS, { send, rng: seeded(12) });
+    expect(doc.fallbackSections).toContain("asset");
+    expect(doc.fallbackSections).toContain("hooks");
+  });
+
+  it("keeps the AI identity when it lists no staff, and tops the roster up", async () => {
+    const none = JSON.stringify({ ...JSON.parse(identityReply), staff: [] });
+    const { send } = queue(none, none, connectionsReply, troubleReply);
+    const doc = await generateBusinessStaged(OPTS, { send, rng: seeded(12) });
+    expect(doc.identity.name).toBe("Chrome Lily");
+    expect(doc.staff.length).toBeGreaterThanOrEqual(1);
+    expect(doc.fallbackSections).not.toContain("identity");
+    expect(checkBusiness(doc)).toEqual([]);
+  });
+
+  it("fills only the operations fields the reply left out, and says so", async () => {
+    const reply = JSON.parse(identityReply);
+    delete reply.operations.model;
+    delete reply.operations.size;
+    delete reply.operations.position;
+    const { send, calls } = queue(
+      JSON.stringify(reply),
+      connectionsReply,
+      troubleReply,
+    );
+    const doc = await generateBusinessStaged(OPTS, { send, rng: seeded(12) });
+    expect(calls).toHaveLength(3);
+    expect(doc.identity.name).toBe("Chrome Lily");
+    expect(doc.operations.provides).toBe("Implant repair.");
+    expect(doc.operations.size).not.toBe("");
+    expect(doc.fallbackSections).toContain("operations");
+  });
+
+  it("retries once when two staff share a surname with no stated tie, then keeps the reply", async () => {
+    const reply = JSON.parse(identityReply);
+    reply.leadership.name = "Nadia Vale";
+    reply.staff[0].name = "Tomo Vale";
+    const shared = JSON.stringify(reply);
+    const { send, calls } = queue(
+      shared,
+      shared,
+      connectionsReply,
+      troubleReply,
+    );
+    const doc = await generateBusinessStaged(OPTS, { send, rng: seeded(12) });
+    expect(calls[1]).toContain("share a surname");
+    expect(doc.staff[0].name).toBe("Tomo Vale");
+    expect(doc.fallbackSections).not.toContain("identity");
+  });
+
+  it("retries when the asset ignores the distinctive feature or the hooks ignore the players", async () => {
+    const reply = JSON.parse(troubleReply);
+    reply.asset = "A network of minor customers.";
+    reply.hooks = [
+      "Nadia Vale asks Tomo Ruiz to recover a package.",
+      "Helix Medical Corp is buying up the clinic's regulars.",
+    ];
+    const weak = JSON.stringify(reply);
+    const { send, calls } = queue(
+      identityReply,
+      connectionsReply,
+      weak,
+      troubleReply,
+    );
+    const doc = await generateBusinessStaged(OPTS, { send, rng: seeded(12) });
+    const retry = calls[3];
+    expect(retry).toContain("does not develop the distinctive feature");
+    expect(retry).toContain("written for the player characters");
+    expect(doc.asset).toContain("surgical kit");
+  });
+
+  it("keeps a trouble reply that still ignores the players after the retry", async () => {
+    const reply = JSON.parse(troubleReply);
+    reply.hooks = [
+      "Nadia Vale asks Tomo Ruiz to recover a package.",
+      "Helix Medical Corp is buying up the clinic's regulars.",
+    ];
+    const weak = JSON.stringify(reply);
+    const { send } = queue(identityReply, connectionsReply, weak, weak);
+    const doc = await generateBusinessStaged(OPTS, { send, rng: seeded(12) });
+    expect(doc.hooks[0]).toContain("Nadia Vale asks");
+    expect(doc.fallbackSections).not.toContain("hooks");
+  });
+
+  it("retries when the size claims regular staff but none are listed", async () => {
+    const contradictory = JSON.stringify({
+      ...JSON.parse(identityReply),
+      operations: {
+        ...JSON.parse(identityReply).operations,
+        size: "One building, a handful of regular staff, and a few part-timers.",
+      },
+      staff: [],
+    });
+    const { send, calls } = queue(
+      contradictory,
+      identityReply,
+      connectionsReply,
+      troubleReply,
+    );
+    const doc = await generateBusinessStaged(
+      { ...OPTS, scale: "tiny" as const },
+      { send, rng: seeded(12) },
+    );
+    expect(calls[1]).toContain("no key staff are listed");
+    expect(doc.staff).toHaveLength(1);
   });
 
   it("falls back to local tables for only the stage that keeps failing", async () => {

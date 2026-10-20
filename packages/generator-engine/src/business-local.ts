@@ -153,7 +153,7 @@ function makeOperations({
     ),
     mainIncome: pickFrom(GENERIC_POOLS.mainIncomeTemplates, rng),
     model: pickFrom(GENERIC_POOLS.modelTemplates, rng),
-    size: pickFrom(GENERIC_POOLS.sizeTemplates, rng),
+    size: pickFrom(GENERIC_POOLS.sizeTemplates[opts.scale], rng),
     position: pickFrom(GENERIC_POOLS.positionTemplates, rng),
   };
 }

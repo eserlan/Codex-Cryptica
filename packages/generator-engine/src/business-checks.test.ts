@@ -3,6 +3,10 @@ import {
   checkBusiness,
   findUnintroducedNames,
   repairBusiness,
+  sizeStaffProblem,
+  distinctiveProblem,
+  hookAudienceProblems,
+  sharedSurnameProblems,
 } from "./business-checks";
 import { generateBusinessLocal } from "./business-local";
 import type { BusinessDocument } from "./business-state";
@@ -111,6 +115,101 @@ describe("checkBusiness", () => {
         code: "management-mismatch",
       }),
     );
+  });
+});
+
+describe("size and staff agree", () => {
+  it.each([
+    [
+      "claims regular staff with none listed",
+      "One building, a handful of regular staff, and a few part-timers in busy seasons.",
+      0,
+      true,
+    ],
+    [
+      "claims a permanent crew with none listed",
+      "A single premises, the owner, and a small permanent crew.",
+      0,
+      true,
+    ],
+    [
+      "casual labour with none listed",
+      "One cramped premises, the owner, and casual help when work comes in.",
+      0,
+      false,
+    ],
+    [
+      "part-timers only with none listed",
+      "The owner and a few part-timers.",
+      0,
+      false,
+    ],
+    [
+      "regular staff with staff listed",
+      "One building, a couple of regular staff.",
+      2,
+      false,
+    ],
+    [
+      "says no staff but staff are listed",
+      "A sole proprietor with no regular staff.",
+      2,
+      true,
+    ],
+    [
+      "says no staff with none listed",
+      "A sole proprietor with no regular staff.",
+      0,
+      false,
+    ],
+  ])("%s", (_label, size, count, flagged) => {
+    expect(sizeStaffProblem(size, count) !== null).toBe(flagged);
+  });
+
+  it("reports a contradictory document and repairs only the size line", () => {
+    const doc = base();
+    doc.options.scale = "tiny";
+    doc.staff = [];
+    doc.operations.size =
+      "One building, a handful of regular staff, and a few part-timers in busy seasons.";
+    const issues = checkBusiness(doc);
+    expect(issues).toContainEqual(
+      expect.objectContaining({ section: "operations", code: "size-staff" }),
+    );
+    const repaired = repairBusiness(doc, issues, seeded(4));
+    expect(checkBusiness(repaired)).toEqual([]);
+    expect(repaired.operations.provides).toBe(doc.operations.provides);
+    expect(repaired.operations.size).not.toBe(doc.operations.size);
+  });
+
+  it("never produces a size that contradicts the staff, across industries, scales and seeds", () => {
+    const types = [
+      "Tavern",
+      "Blacksmith",
+      "Moneylender",
+      "Smuggling operation",
+      "Temple-run hospice",
+    ];
+    for (const businessType of types) {
+      for (const scale of [
+        "tiny",
+        "small",
+        "established",
+        "regional",
+        "major",
+      ] as const) {
+        for (let seed = 1; seed <= 20; seed++) {
+          const doc = generateBusinessLocal(
+            { genre: "Classic Fantasy", businessType, scale },
+            seeded(seed),
+          );
+          expect(
+            checkBusiness(doc),
+            `${businessType} ${scale} ${seed}`,
+          ).toEqual([]);
+        }
+      }
+    }
   });
 });
 
@@ -361,4 +460,146 @@ describe("findUnintroducedNames", () => {
       expect(findUnintroducedNames(doc), `seed ${seed}`).toEqual([]);
     }
   });
+});
+
+describe("the unusual asset develops the distinctive feature", () => {
+  const jammer = "A signal jammer keeps the shop off the city's sensors.";
+  it.each([
+    [
+      "an unrelated asset",
+      "The business has a network of minor customers.",
+      true,
+    ],
+    [
+      "an asset built on the feature",
+      "The jammer was fitted by a defector, and the Civic Standards Office does not know the blind spot it leaves is itself detectable.",
+      false,
+    ],
+    [
+      "an asset that mentions the signal",
+      "Its signal blackout is the reason the shelter uses the premises.",
+      false,
+    ],
+  ])("%s", (_label, asset, flagged) => {
+    expect(distinctiveProblem(jammer, asset) !== null).toBe(flagged);
+  });
+
+  it("is not satisfied by an unrelated asset that shares only a common word", () => {
+    expect(
+      distinctiveProblem(
+        "A private well that never runs dry.",
+        "The owner never lets anyone see the books.",
+      ),
+    ).not.toBeNull();
+    expect(
+      distinctiveProblem(
+        "A private well that never runs dry.",
+        "Neighbours queue at the well in a drought, and the owner sells the water.",
+      ),
+    ).toBeNull();
+  });
+
+  it("says nothing when the feature has no distinctive words to look for", () => {
+    expect(distinctiveProblem("A big old one.", "Anything at all.")).toBeNull();
+  });
+});
+
+describe("hooks are written for the player characters", () => {
+  it("flags hooks between the business's own people (the review's examples)", () => {
+    const problems = hookAudienceProblems([
+      "Dace Ashcombe asks Lumen Okafor to recover evidence from a safe house.",
+      "Mara Vey offers Halle Marrow a large recovery job.",
+    ]);
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain("1, 2");
+  });
+
+  it.each([
+    "Dace hires the characters to retrieve evidence before the inspection in two days.",
+    "The party is offered a share if they can clear the shelter's name.",
+    "A courier slips a note to the crew: the inspector is on the take.",
+    "You are asked to carry a sealed ledger across the district.",
+    "A band of adventurers is asked to guard the well.",
+    "Anyone brave enough is offered a share of the salvage.",
+    "Outsiders are hired to find the missing ledger.",
+    "Mercenaries are wanted for a night job at the yard.",
+    "Travellers passing through are asked to carry a letter.",
+  ])("accepts a hook that addresses the players: %s", (hook) => {
+    expect(hookAudienceProblems([hook])).toEqual([]);
+  });
+
+  it("does not take 'the party' at a feast for the player characters", () => {
+    expect(
+      hookAudienceProblems(["The party at the embassy goes wrong for Nadia."]),
+    ).toHaveLength(1);
+  });
+});
+
+describe("a shared surname needs a stated relationship", () => {
+  const person = (name: string, trait = "Quiet.") => ({
+    name,
+    goal: "Get paid.",
+    trait,
+  });
+  it("flags two people sharing a surname with no stated tie", () => {
+    expect(
+      sharedSurnameProblems([person("Halle Marrow"), person("Brin Marrow")]),
+    ).toHaveLength(1);
+  });
+  it("does not take 'the family tavern' as a stated relationship", () => {
+    expect(
+      sharedSurnameProblems([
+        person("Halle Marrow", "Runs the family tavern."),
+        person("Brin Marrow"),
+      ]),
+    ).toHaveLength(1);
+  });
+  it("accepts a stated relationship", () => {
+    expect(
+      sharedSurnameProblems([
+        person("Halle Marrow"),
+        person("Brin Marrow", "Halle's younger brother, and it shows."),
+      ]),
+    ).toEqual([]);
+  });
+  it("accepts different surnames", () => {
+    expect(
+      sharedSurnameProblems([person("Halle Marrow"), person("Brin Okafor")]),
+    ).toEqual([]);
+  });
+});
+
+describe("the regression matrix of businesses (offline consistency)", () => {
+  const matrix: Array<[string, string]> = [
+    ["Tavern", "Classic Fantasy"],
+    ["Blacksmith", "Classic Fantasy"],
+    ["Moneylender", "Classic Fantasy"],
+    ["Fixer front", "Cyberpunk / Corporate"],
+    ["Bioengineering clinic", "Cyberpunk / Corporate"],
+    ["Starship repair yard", "Sci-Fi / Space Opera"],
+    ["Newspaper", "Steampunk"],
+    ["Temple hospice", "Vampire / Gothic Noir"],
+  ];
+  it.each(matrix)(
+    "%s (%s) is consistent at every scale",
+    (businessType, genre) => {
+      for (const scale of [
+        "tiny",
+        "small",
+        "established",
+        "regional",
+        "major",
+      ] as const) {
+        for (let seed = 1; seed <= 10; seed++) {
+          const doc = generateBusinessLocal(
+            { genre, businessType, scale },
+            seeded(seed),
+          );
+          const label = `${businessType} ${scale} ${seed}`;
+          expect(checkBusiness(doc), label).toEqual([]);
+          expect(findUnintroducedNames(doc), label).toEqual([]);
+        }
+      }
+    },
+  );
 });

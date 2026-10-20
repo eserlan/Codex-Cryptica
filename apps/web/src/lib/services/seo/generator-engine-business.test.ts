@@ -55,9 +55,9 @@ const troubleReply = JSON.stringify({
   opportunity: "A new contract.",
   complication: "A drone.",
   hooks: [
-    "Nadia Vale needs a courier tonight.",
-    "Helix Medical Corp is buying the regulars.",
-    "Black-clinic parts run out before the next shift.",
+    "Nadia Vale hires the party to run a courier tonight.",
+    "Helix Medical Corp offers the characters a deal for the regulars.",
+    "The crew must find black-clinic parts before the next shift.",
   ],
 });
 

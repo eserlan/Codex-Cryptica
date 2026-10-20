@@ -82,15 +82,16 @@ Obligations are named only. They never contain currency or numeric prices.
 
 `checkBusiness(doc): BusinessIssue[]`, where each issue is `{ section, code, detail }`:
 
-| Code                    | Rule                                                                                                                                                                 |
-| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `missing`               | A required field above is empty                                                                                                                                      |
-| `hook-unanchored`       | The hook contains none of these, case-insensitive: a person's name, a relationship's name, a dependency's `input`, or a keyword from `asset`, `pressure` or `secret` |
-| `legit-secret-criminal` | `legitimacy` is `legitimate` and `secret` matches the criminal-front word list                                                                                       |
-| `staff-count`           | Staff count is outside the scale's range                                                                                                                             |
-| `inventory-list`        | A section has more than 6 list items, or matches a price pattern (currency symbol or "N gp/cr/eddies")                                                               |
-| `management-mismatch`   | `management` is present when `playersOwn` is off, or missing when it is on                                                                                           |
-| `relationship-label`    | A relationship's label is not in `BUSINESS_ALLOWED_LABELS` for its kind (for example a `neighbour` labelled "located in")                                            |
+| Code                    | Rule                                                                                                                                                                    |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `missing`               | A required field above is empty                                                                                                                                         |
+| `hook-unanchored`       | The hook contains none of these, case-insensitive: a person's name, a relationship's name, a dependency's `input`, or a keyword from `asset`, `pressure` or `secret`    |
+| `legit-secret-criminal` | `legitimacy` is `legitimate` and `secret` matches the criminal-front word list                                                                                          |
+| `staff-count`           | Staff count is outside the scale's range                                                                                                                                |
+| `inventory-list`        | A section has more than 6 list items, or matches a price pattern (currency symbol or "N gp/cr/eddies")                                                                  |
+| `management-mismatch`   | `management` is present when `playersOwn` is off, or missing when it is on                                                                                              |
+| `relationship-label`    | A relationship's label is not in `BUSINESS_ALLOWED_LABELS` for its kind (for example a `neighbour` labelled "located in")                                               |
+| `size-staff`            | The operations size claims a regular workforce with no key staff listed, or says "no staff" while staff are listed. Repair rewrites only the size line, chosen by scale |
 
 Names that appear in the text without being introduced are not an issue but a **warning** (`warnings` on the document): the check is a heuristic, so it asks the stage that wrote them to retry once, then shows the names to the GM instead of rewriting their text. Local output passes every check by construction, and tests assert this across every genre and type.
 

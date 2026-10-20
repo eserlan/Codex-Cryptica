@@ -14,18 +14,23 @@ import {
 } from "./business-local";
 import {
   checkBusiness,
+  sharedSurnameProblems,
+  sizeStaffProblem,
+  distinctiveProblem,
+  hookAudienceProblems,
   findUnintroducedNames,
   repairBusiness,
 } from "./business-checks";
 import {
   businessStageMessage,
   parseBusinessConnections,
-  parseBusinessIdentity,
+  parseBusinessIdentityFilled,
   parseBusinessTrouble,
 } from "./public-business";
 import {
   type BusinessDocument,
   type BusinessGeneratorOptions,
+  type BusinessPerson,
   type BusinessSectionId,
   type ResolvedBusinessOptions,
 } from "./business-state";
@@ -105,8 +110,26 @@ async function identityStage(
   progress.set("identity", "active");
   const result = await askChecked(
     turn,
-    parseBusinessIdentity,
-    (data) => ({ hard: staffProblems(data.staff.length, opts), soft: [] }),
+    (reply) =>
+      parseBusinessIdentityFilled(reply, {
+        identity: doc.identity,
+        operations: doc.operations,
+        leadership: doc.leadership,
+        staff: doc.staff,
+        clientele: doc.clientele,
+      }),
+    (data) => ({
+      hard: [],
+      // Mismatches are asked about once, then repaired in place by the final
+      // check, so a wrong count never throws away the whole stage.
+      soft: [
+        ...staffProblems(data.stage.staff.length, opts),
+        ...[
+          sizeStaffProblem(data.stage.operations.size, data.stage.staff.length),
+        ].filter((p): p is string => p !== null),
+        ...sharedSurnameProblems([data.stage.leadership, ...data.stage.staff]),
+      ],
+    }),
     {
       signal,
       unreadable: "the reply was not a usable identity stage",
@@ -123,7 +146,11 @@ async function identityStage(
     progress.set("identity", "fallback", ONE_PASS_DETAIL);
     return doc;
   }
-  const d = result.data;
+  const d = result.data.stage;
+  failed.push(...result.data.filled);
+  // Fit the roster now, so later stages are told the staff the business ends with.
+  const { staff, topped } = fitRoster(d.staff, doc.staff, opts.scale);
+  failed.push(...topped.map((p) => `staff:${p.id}` as BusinessSectionId));
   progress.set("identity", "done", result.retried ? FIXING_DETAIL : undefined);
   return {
     ...doc,
@@ -134,9 +161,26 @@ async function identityStage(
       id: "lead",
       role: opts.playersOwn ? "manager" : "owner",
     },
-    staff: d.staff,
+    staff,
     clientele: d.clientele,
   };
+}
+
+/**
+ * The AI's staff cut to the scale's maximum, and topped up to its minimum with
+ * the local base's people (never placeholder names). `topped` lists those added.
+ */
+function fitRoster(
+  ai: BusinessPerson[],
+  local: BusinessPerson[],
+  scale: ResolvedBusinessOptions["scale"],
+): { staff: BusinessPerson[]; topped: BusinessPerson[] } {
+  const [min, max] = BUSINESS_STAFF_RANGE[scale];
+  const kept = ai.slice(0, max);
+  const topped = local
+    .slice(0, Math.max(0, min - kept.length))
+    .map((p, i) => ({ ...p, id: `staff-${kept.length + i + 1}` }));
+  return { staff: [...kept, ...topped], topped };
 }
 
 /** A soft problem (one retry) when the text names someone the document never introduced. */
@@ -219,15 +263,21 @@ async function troubleStage(
     (reply) => parseBusinessTrouble(reply, opts.playersOwn),
     (data) => ({
       hard: secretProblems(data.secret, opts.legitimacy),
-      soft: unintroducedNameProblems({ ...doc, ...data }, [
-        data.pressure,
-        data.asset,
-        data.secret,
-        data.opportunity,
-        data.complication,
-        ...data.hooks,
-        ...Object.values(data.management ?? {}).flat(),
-      ]),
+      soft: [
+        ...unintroducedNameProblems({ ...doc, ...data }, [
+          data.pressure,
+          data.asset,
+          data.secret,
+          data.opportunity,
+          data.complication,
+          ...data.hooks,
+          ...Object.values(data.management ?? {}).flat(),
+        ]),
+        ...[distinctiveProblem(doc.identity.distinctive, data.asset)].filter(
+          (p): p is string => p !== null,
+        ),
+        ...hookAudienceProblems(data.hooks),
+      ],
     }),
     { signal, unreadable: "the reply was not a usable trouble stage" },
   );
@@ -269,7 +319,10 @@ function finalise(
   const issues = checkBusiness(next);
   if (issues.length > 0) {
     failed.push(...issues.map((i) => i.section));
+    const hooksBefore = next.hooks;
     next = repairBusiness(next, issues, rng);
+    // Hooks are rebuilt when a section they name changes, without being an issue.
+    if (next.hooks !== hooksBefore) failed.push("hooks");
   }
   if (checkBusiness(next).length > 0) {
     // Last resort: a full local document, which always passes.

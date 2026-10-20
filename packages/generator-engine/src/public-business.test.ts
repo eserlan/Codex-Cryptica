@@ -367,6 +367,19 @@ describe("established facts in later stages", () => {
     );
   });
 
+  it("asks the last stage to use the distinctive feature and keep the complication distinct", () => {
+    const message = businessStageMessage("trouble", doc.options, doc);
+    expect(message).toContain(`Distinctive: ${doc.identity.distinctive}`);
+    expect(message).toMatch(/develop the distinctive feature/i);
+    expect(message).toMatch(/complication a different problem/i);
+  });
+
+  it("asks the first stage to make the size agree with the staff", () => {
+    expect(businessStageMessage("identity", doc.options)).toMatch(
+      /agree with the staff you list/i,
+    );
+  });
+
   it("describes the manager as a manager when the players own the business", () => {
     const own = generateBusinessLocal(
       { genre: "Classic Fantasy", playersOwn: true },

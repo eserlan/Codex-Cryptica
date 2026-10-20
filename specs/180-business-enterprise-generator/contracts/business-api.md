@@ -178,6 +178,26 @@ export declare const BUSINESS_ALLOWED_LABELS: Record<
 export declare function establishedFacts(doc: BusinessDocument): string;
 // businessStageMessage(stage, options, established?) appends that block.
 
+// Reads step one. With a `base` (the local identity), a reply that has a business
+// name, a description and a leader keeps what it wrote and takes only the missing
+// fields from the base; `filled` lists those parts (FR-021). Without a base,
+// every field is required.
+export declare function parseBusinessIdentityFilled(
+  reply: string,
+  base?: BusinessIdentityStage,
+): {
+  stage: BusinessIdentityStage;
+  filled: Array<"identity" | "operations" | "clientele">;
+} | null;
+
+// Soft checks on AI text (FR-019, FR-022): one retry, then accepted. All are heuristics.
+export declare function sizeStaffProblem(size: string, staffCount: number): string | null;
+export declare function distinctiveProblem(distinctive: string, asset: string): string | null;
+export declare function hookAudienceProblems(hooks: readonly string[]): string[];
+export declare function sharedSurnameProblems(
+  people: ReadonlyArray<{ name: string; goal: string; trait: string }>,
+): string[];
+
 // Names in `texts` (default: all prose) that the document never introduced.
 // A heuristic: capitalised runs, sentence starters and abbreviations ignored.
 export declare function findUnintroducedNames(
