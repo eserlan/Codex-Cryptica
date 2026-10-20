@@ -172,6 +172,7 @@ export const howDoYouPlayATabletopRpgByYourself: AnswerConfigInput = {
     "how-do-you-keep-a-solo-rpg-from-feeling-random",
     "how-do-you-keep-notes-for-a-solo-rpg-campaign",
     "what-is-a-solo-rpg-oracle",
+    "how-can-i-practise-being-a-dungeon-master-without-a-group",
   ],
   discovery: {
     parentCluster: "solo-rpg",
