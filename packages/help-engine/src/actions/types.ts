@@ -2,6 +2,7 @@ import { z } from "zod";
 import {
   CONTROL_IDS,
   DESTINATION_IDS,
+  FEEDBACK_KIND_IDS,
   GENERATOR_IDS,
   PANEL_IDS,
 } from "./catalogue";
@@ -37,12 +38,23 @@ const openGenerator = z
   })
   .strict();
 
+// Opens the empty report form, at most with its kind chosen. It carries no
+// text, so nothing from the conversation can reach the form this way.
+const openFeedback = z
+  .object({
+    type: z.literal("openFeedback"),
+    kind: z.enum(FEEDBACK_KIND_IDS).optional(),
+    label,
+  })
+  .strict();
+
 export const GuidanceStepSchema = z.discriminatedUnion("type", [
   navigate,
   openHelp,
   openPanel,
   highlight,
   openGenerator,
+  openFeedback,
 ]);
 
 export type GuidanceStep = z.infer<typeof GuidanceStepSchema>;
@@ -60,6 +72,7 @@ export const GuidanceActionSchema = z.discriminatedUnion("type", [
   openPanel.extend(thenField).strict(),
   highlight.extend(thenField).strict(),
   openGenerator.extend(thenField).strict(),
+  openFeedback.extend(thenField).strict(),
 ]);
 
 export type GuidanceAction = z.infer<typeof GuidanceActionSchema>;
