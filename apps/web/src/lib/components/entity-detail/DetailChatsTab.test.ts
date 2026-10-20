@@ -181,147 +181,128 @@ describe("DetailChatsTab", () => {
     });
   });
 
-  it("deleting a host message uses the injected clock for the transcript's lastUpdated timestamp", async () => {
-    const transcriptWithMessages = {
-      id: "t-1",
-      guestId: "host",
-      guestName: "Host",
-      characterId: character.id,
-      lastUpdated: 0,
-      messages: [{ id: "m-1", role: "user", content: "Hello there" }],
-    };
 
-    const { vault } = await import("$lib/stores/vault.svelte");
-    vi.mocked(vault.loadTranscriptsForCharacter).mockResolvedValue([
-      transcriptWithMessages,
-    ] as any);
+    it("deleting a host message uses the injected clock for the transcript's lastUpdated timestamp", async () => {
+      const transcriptWithMessages = {
+        id: "t-1",
+        guestId: "host",
+        guestName: "Host",
+        characterId: character.id,
+        lastUpdated: 0,
+        messages: [{ id: "m-1", role: "user", content: "Hello there" }],
+      };
 
-    render(DetailChatsTab, { entity: character, clock: { now: () => 9999 } });
-    await vi.waitFor(() =>
-      screen.getByRole("button", { name: "Delete message" }),
-    );
+      const { vault } = await import("$lib/stores/vault.svelte");
+      vi.mocked(vault.loadTranscriptsForCharacter).mockResolvedValue([transcriptWithMessages] as any);
 
-    // Mock confirm to auto-accept
-    vi.stubGlobal("confirm", () => true);
+      render(DetailChatsTab, { entity: character, clock: { now: () => 9999 } });
+      await vi.waitFor(() => screen.getByRole("button", { name: "Delete message" }));
 
-    await fireEvent.click(
-      screen.getByRole("button", { name: "Delete message" }),
-    );
+      // Mock confirm to auto-accept
+      vi.stubGlobal('confirm', () => true);
 
-    expect(vault.saveTranscript).toHaveBeenCalledWith(
-      expect.objectContaining({ id: "t-1", lastUpdated: 9999 }),
-    );
-    vi.unstubAllGlobals();
-  });
+      await fireEvent.click(screen.getByRole("button", { name: "Delete message" }));
 
-  it("editing a host message uses the injected clock for the transcript's lastUpdated timestamp", async () => {
-    const transcriptWithMessages = {
-      id: "t-1",
-      guestId: "host",
-      guestName: "Host",
-      characterId: character.id,
-      lastUpdated: 0,
-      messages: [{ id: "m-1", role: "user", content: "Hello there" }],
-    };
+      expect(vault.saveTranscript).toHaveBeenCalledWith(
+        expect.objectContaining({ id: "t-1", lastUpdated: 9999 })
+      );
+      vi.unstubAllGlobals();
+    });
 
-    const { vault } = await import("$lib/stores/vault.svelte");
-    vi.mocked(vault.loadTranscriptsForCharacter).mockResolvedValue([
-      transcriptWithMessages,
-    ] as any);
 
-    render(DetailChatsTab, { entity: character, clock: { now: () => 8888 } });
+    it("editing a host message uses the injected clock for the transcript's lastUpdated timestamp", async () => {
+      const transcriptWithMessages = {
+        id: "t-1",
+        guestId: "host",
+        guestName: "Host",
+        characterId: character.id,
+        lastUpdated: 0,
+        messages: [{ id: "m-1", role: "user", content: "Hello there" }],
+      };
 
-    // Wait for edit button and click it
-    await vi.waitFor(() =>
-      screen.getByRole("button", { name: "Edit message" }),
-    );
-    await fireEvent.click(screen.getByRole("button", { name: "Edit message" }));
+      const { vault } = await import("$lib/stores/vault.svelte");
+      vi.mocked(vault.loadTranscriptsForCharacter).mockResolvedValue([transcriptWithMessages] as any);
 
-    // Wait for save button and click it
-    await vi.waitFor(() => screen.getByRole("button", { name: "Save" }));
-    await fireEvent.click(screen.getByRole("button", { name: "Save" }));
+      render(DetailChatsTab, { entity: character, clock: { now: () => 8888 } });
 
-    expect(vault.saveTranscript).toHaveBeenCalledWith(
-      expect.objectContaining({ id: "t-1", lastUpdated: 8888 }),
-    );
-  });
+      // Wait for edit button and click it
+      await vi.waitFor(() => screen.getByRole("button", { name: "Edit message" }));
+      await fireEvent.click(screen.getByRole("button", { name: "Edit message" }));
 
-  it("uses the systemClock default when no clock is provided", async () => {
-    const transcriptWithMessages = {
-      id: "t-1",
-      guestId: "host",
-      guestName: "Host",
-      characterId: character.id,
-      lastUpdated: 0,
-      messages: [{ id: "m-1", role: "user", content: "Hello there" }],
-    };
+      // Wait for save button and click it
+      await vi.waitFor(() => screen.getByRole("button", { name: "Save" }));
+      await fireEvent.click(screen.getByRole("button", { name: "Save" }));
 
-    const { vault } = await import("$lib/stores/vault.svelte");
-    vi.mocked(vault.loadTranscriptsForCharacter).mockResolvedValue([
-      transcriptWithMessages,
-    ] as any);
+      expect(vault.saveTranscript).toHaveBeenCalledWith(
+        expect.objectContaining({ id: "t-1", lastUpdated: 8888 })
+      );
+    });
 
-    // Mock systemClock globally
-    const { systemClock } = await import("$lib/utils/runtime-deps");
-    vi.spyOn(systemClock, "now").mockReturnValue(7777);
+    it("uses the systemClock default when no clock is provided", async () => {
+      const transcriptWithMessages = {
+        id: "t-1",
+        guestId: "host",
+        guestName: "Host",
+        characterId: character.id,
+        lastUpdated: 0,
+        messages: [{ id: "m-1", role: "user", content: "Hello there" }],
+      };
 
-    render(DetailChatsTab, { entity: character }); // No clock prop
+      const { vault } = await import("$lib/stores/vault.svelte");
+      vi.mocked(vault.loadTranscriptsForCharacter).mockResolvedValue([transcriptWithMessages] as any);
 
-    await vi.waitFor(() =>
-      screen.getByRole("button", { name: "Delete message" }),
-    );
+      // Mock systemClock globally
+      const { systemClock } = await import("$lib/utils/runtime-deps");
+      vi.spyOn(systemClock, 'now').mockReturnValue(7777);
 
-    // Mock confirm to auto-accept
-    vi.stubGlobal("confirm", () => true);
+      render(DetailChatsTab, { entity: character }); // No clock prop
 
-    await fireEvent.click(
-      screen.getByRole("button", { name: "Delete message" }),
-    );
+      await vi.waitFor(() => screen.getByRole("button", { name: "Delete message" }));
 
-    expect(vault.saveTranscript).toHaveBeenCalledWith(
-      expect.objectContaining({ id: "t-1", lastUpdated: 7777 }),
-    );
+      // Mock confirm to auto-accept
+      vi.stubGlobal('confirm', () => true);
 
-    vi.unstubAllGlobals();
-    vi.restoreAllMocks();
-  });
+      await fireEvent.click(screen.getByRole("button", { name: "Delete message" }));
 
-  it("does not consume the clock or save when message deletion is cancelled", async () => {
-    const transcriptWithMessages = {
-      id: "t-1",
-      guestId: "host",
-      guestName: "Host",
-      characterId: character.id,
-      lastUpdated: 0,
-      messages: [{ id: "m-1", role: "user", content: "Hello there" }],
-    };
+      expect(vault.saveTranscript).toHaveBeenCalledWith(
+        expect.objectContaining({ id: "t-1", lastUpdated: 7777 })
+      );
 
-    const { vault } = await import("$lib/stores/vault.svelte");
-    vi.mocked(vault.loadTranscriptsForCharacter).mockResolvedValue([
-      transcriptWithMessages,
-    ] as any);
+      vi.unstubAllGlobals();
+      vi.restoreAllMocks();
+    });
 
-    const clockSpy = vi.fn().mockReturnValue(1111);
 
-    render(DetailChatsTab, { entity: character, clock: { now: clockSpy } });
-    await vi.waitFor(() =>
-      screen.getByRole("button", { name: "Delete message" }),
-    );
+    it("does not consume the clock or save when message deletion is cancelled", async () => {
+      const transcriptWithMessages = {
+        id: "t-1",
+        guestId: "host",
+        guestName: "Host",
+        characterId: character.id,
+        lastUpdated: 0,
+        messages: [{ id: "m-1", role: "user", content: "Hello there" }],
+      };
 
-    // Mock confirm to auto-reject
-    vi.stubGlobal("confirm", () => false);
+      const { vault } = await import("$lib/stores/vault.svelte");
+      vi.mocked(vault.loadTranscriptsForCharacter).mockResolvedValue([transcriptWithMessages] as any);
 
-    await fireEvent.click(
-      screen.getByRole("button", { name: "Delete message" }),
-    );
+      const clockSpy = vi.fn().mockReturnValue(1111);
 
-    expect(vault.saveTranscript).not.toHaveBeenCalled();
-    expect(clockSpy).not.toHaveBeenCalled();
+      render(DetailChatsTab, { entity: character, clock: { now: clockSpy } });
+      await vi.waitFor(() => screen.getByRole("button", { name: "Delete message" }));
 
-    vi.unstubAllGlobals();
-  });
+      // Mock confirm to auto-reject
+      vi.stubGlobal('confirm', () => false);
 
-  describe("guest mode", () => {
+      await fireEvent.click(screen.getByRole("button", { name: "Delete message" }));
+
+      expect(vault.saveTranscript).not.toHaveBeenCalled();
+      expect(clockSpy).not.toHaveBeenCalled();
+
+      vi.unstubAllGlobals();
+    });
+
+    describe("guest mode", () => {
     beforeEach(async () => {
       const { vault } = await import("$lib/stores/vault.svelte");
       (vault as any).isGuest = true;
