@@ -497,6 +497,8 @@ export interface GeneratorOutput {
   oneShot?: import("generator-engine").OneShotAdventure;
   /** Structured point-crawl network with topological nodes and routes. */
   pointCrawl?: import("generator-engine").PointCrawlNetwork;
+  /** Structured business document (#3627). */
+  business?: import("generator-engine").BusinessDocument;
   /** Arbitrary generation metadata preserved across flows. */
   metadata?: Record<string, unknown>;
   /** Structured system mechanics (e.g. Tales of the Valiant BFRD stats). */

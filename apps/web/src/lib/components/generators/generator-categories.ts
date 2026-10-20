@@ -31,6 +31,7 @@ export const GENERATOR_SECTION_MAP: Record<GeneratorId, GeneratorSectionId> = {
   // Adventures & Encounters
   adventure: "adventures-encounters",
   "point-crawl": "adventures-encounters",
+  business: "people-factions",
   quest: "adventures-encounters",
   encounter: "adventures-encounters",
   heist: "adventures-encounters",

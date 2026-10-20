@@ -43,7 +43,20 @@
   import CreatureFormFields from "$lib/components/seo/CreatureFormFields.svelte";
   import TomeFormFields from "$lib/components/seo/TomeFormFields.svelte";
   import PointCrawlFormFields from "$lib/components/seo/PointCrawlFormFields.svelte";
+  import BusinessFormFields from "./fields/BusinessFormFields.svelte";
   type StringState = Record<string, string>;
+  type BusinessFormState = {
+    genre: string;
+    businessType: string;
+    scale: string;
+    legitimacy: string;
+    wealth: string;
+    tone: string;
+    location: string;
+    clientele: string;
+    campaignContext: string;
+    playersOwn: boolean;
+  };
   type PantheonState = StringState & {
     mode: "single" | "pantheon";
     size: "small" | "medium" | "large";
@@ -108,6 +121,7 @@
     villainScheme = $bindable(),
     oneShot = $bindable(),
     pointCrawl = $bindable(),
+    business = $bindable(),
     world = $bindable(),
     starSystem = $bindable(),
     constellation = $bindable(),
@@ -165,6 +179,7 @@
     villainScheme: StringState;
     oneShot: StringState;
     pointCrawl?: StringState;
+    business?: BusinessFormState;
     world: StringState;
     starSystem: StringState;
     constellation: ConstellationState;
@@ -677,6 +692,19 @@
       bind:premise={pointCrawl.premise}
       bind:campaignContext={pointCrawl.campaignContext}
       onSurprise={trigger}
+    />
+  {:else if slug === "business" && business}
+    <BusinessFormFields
+      bind:genre={business.genre}
+      bind:businessType={business.businessType}
+      bind:scale={business.scale}
+      bind:legitimacy={business.legitimacy}
+      bind:wealth={business.wealth}
+      bind:tone={business.tone}
+      bind:location={business.location}
+      bind:clientele={business.clientele}
+      bind:campaignContext={business.campaignContext}
+      bind:playersOwn={business.playersOwn}
     />
   {:else if slug === "villain-scheme-generator"}
     <VillainSchemeFormFields

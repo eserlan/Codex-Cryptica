@@ -92,6 +92,7 @@
           label: "Point Crawl Generator",
           path: "/generators/point-crawl",
         },
+        { label: "Business Generator", path: "/generators/business" },
         { label: "Quest Hook Generator", path: "/generators/quest" },
         { label: "Rumour Generator", path: "/generators/rumour" },
         { label: "Encounter Generator", path: "/generators/encounter" },

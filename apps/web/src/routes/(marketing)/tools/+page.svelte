@@ -280,6 +280,13 @@
               icon: "icon-[lucide--map]",
             },
             {
+              href: "/generators/business",
+              label: "Business Generator",
+              summary:
+                "Create a commercial organisation with its people, rivals, pressure and hooks.",
+              icon: "icon-[lucide--store]",
+            },
+            {
               href: "/generators/point-crawl",
               label: "Point Crawl Generator",
               summary:

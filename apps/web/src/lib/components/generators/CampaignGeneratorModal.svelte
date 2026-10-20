@@ -40,7 +40,14 @@
   import { aiGeneratorGateway } from "$lib/services/generators/ai-generator-gateway";
   import { generatorSessionManager } from "$lib/services/generators/generator-session-manager";
   import { interactionSessions } from "@codex/ai-engine";
-  import { getThemeLoadingMessages } from "generator-engine";
+  import {
+    buildBusinessSavePlan,
+    getThemeLoadingMessages,
+  } from "generator-engine";
+  import {
+    saveBusinessToVault,
+    type BusinessSaveChoices,
+  } from "$lib/services/generators/business-vault-save";
   import { entityTemplateService } from "$lib/services/EntityTemplateService.svelte";
   import StarSystemDiagram from "$lib/components/seo/StarSystemDiagram.svelte";
   import ConstellationChart from "$lib/components/seo/ConstellationChart.svelte";
@@ -180,6 +187,27 @@
     createEntity: (type, title, data) => vault.createEntity(type, title, data),
     addConnection: (src, tgt, rel) => vault.addConnection(src, tgt, rel),
   };
+
+  /** Vault titles → entity id, for matching a business's parties and people. */
+  const businessExistingTitles = $derived(
+    new Map(
+      Object.entries(vault.entities).map(
+        ([id, e]) => [e.title.trim().toLowerCase(), id] as const,
+      ),
+    ),
+  );
+  /** The entity a business was generated from, when it was launched from one. */
+  const businessSource = $derived.by(() => {
+    const id = workflow.sourceEntityId;
+    const type = id ? vault.entities[id]?.type : undefined;
+    if (
+      !id ||
+      (type !== "location" && type !== "character" && type !== "faction")
+    ) {
+      return undefined;
+    }
+    return { entityId: id, entityType: type } as const;
+  });
 
   const aiPolicy = $derived({
     isEnabled: oracle.isEnabled,
@@ -533,12 +561,56 @@
   async function onSave(
     reviewed: GeneratedDraft,
     createRelationship: boolean,
-    saveOptions?: { selectedNodeIds?: string[]; openInGraph?: boolean },
+    saveOptions?: {
+      selectedNodeIds?: string[];
+      openInGraph?: boolean;
+      businessChoices?: BusinessSaveChoices;
+    },
   ) {
     if (stage === "saving") return;
     stage = "saving";
     errorMsg = null;
     try {
+      if (reviewed.business) {
+        const plan = buildBusinessSavePlan(reviewed.business, {
+          existingTitles: businessExistingTitles,
+          source: businessSource,
+        });
+        const result = await saveBusinessToVault(
+          plan,
+          {
+            createEntity: (type, title, data) =>
+              vault.createEntity(type, title, data),
+            addConnection: (src, tgt, rel, label) =>
+              vault.addConnection(src, tgt, rel, label),
+            bulkDelete: (ids) => vault.bulkDelete(ids),
+          },
+          saveOptions?.businessChoices,
+        );
+        try {
+          publishGeneratedSaved(
+            { title: reviewed.title, category: reviewed.entityType },
+            { clock: systemClock },
+          );
+        } catch (err) {
+          console.error("Could not record the save:", err);
+        }
+        vault.selectedEntityId = result.businessId;
+        if (saveOptions?.openInGraph) {
+          layoutUIStore.mainViewMode = "visualization";
+        } else {
+          openSavedEntityInEditor(result.businessId, reviewed.title, {
+            isFocusMode:
+              layoutUIStore.mainViewMode === "focus" || layoutUIStore.isMobile,
+            selectEntity: (id) => {
+              vault.selectedEntityId = id;
+            },
+          });
+        }
+        close({ preserveSession: true });
+        return;
+      }
+
       if (reviewed.pointCrawl) {
         const result = await savePointCrawlToVault(
           reviewed.pointCrawl,
@@ -916,6 +988,9 @@
       {/if}
       <GeneratorDraftReview
         bind:this={draftReviewRef}
+        {businessExistingTitles}
+        {businessSource}
+        businessUseAI={aiPolicy.isEnabled && aiPolicy.isAvailable}
         bind:draft
         categories={categories.list}
         saving={stage === "saving"}

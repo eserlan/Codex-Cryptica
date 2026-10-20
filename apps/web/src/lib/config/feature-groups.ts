@@ -164,6 +164,7 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
       "encounter-generator",
       "dungeon-generator",
       "point-crawl-generator",
+      "business-generator",
       "world-generator",
       "language-generator",
       "news-sheet-generator",

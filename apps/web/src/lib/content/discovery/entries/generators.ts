@@ -124,6 +124,38 @@ export const generatorEntries: DiscoveryEntryInput[] = [
     status: "live",
   },
   {
+    id: "generator-business",
+    pageKind: "generator",
+    canonicalPath: "/generators/business",
+    primaryIntent: "business generator",
+    intentAliases: [
+      "rpg business generator",
+      "shop generator",
+      "rpg shop generator",
+      "enterprise generator",
+      "company generator",
+    ],
+    userJob: "create",
+    uniqueValue:
+      "One commercial organisation as a living business: its people, dependencies, rivals, pressure and hooks, with an option for the players to own it. Not a shop inventory and not a gathering place.",
+    parentCluster: "settlement-creation",
+    relatedIntents: [
+      "generator-tavern",
+      "generator-social-hub",
+      "generator-settlement",
+      "generator-faction",
+    ],
+    acknowledgedOverlap: [
+      {
+        with: "generator-tavern",
+        reason:
+          "A tavern is a venue where people gather (create a place); this generator creates one organisation and its commercial life (create a business). Different subjects, different outputs.",
+      },
+    ],
+    indexable: true,
+    status: "live",
+  },
+  {
     id: "generator-social-hub",
     pageKind: "generator",
     canonicalPath: "/generators/social-hub",

@@ -1,5 +1,14 @@
 <script lang="ts">
-  import type { GeneratedDraft } from "generator-engine";
+  import {
+    buildBusinessSavePlan,
+    renderBusinessContent,
+    type BusinessDocument,
+    type GeneratedDraft,
+  } from "generator-engine";
+  import type { BusinessSaveChoices } from "$lib/services/generators/business-vault-save";
+  import BusinessFallbackNote from "$lib/components/seo/BusinessFallbackNote.svelte";
+  import BusinessRefinePanel from "$lib/components/seo/BusinessRefinePanel.svelte";
+  import BusinessSaveStep from "./BusinessSaveStep.svelte";
   import type { Category } from "schema";
   import { getDelveLocationTypeLabel } from "$lib/utils/delve-terminology";
   import DraftBody from "./DraftBody.svelte";
@@ -13,7 +22,11 @@
     onsave: (
       draft: GeneratedDraft,
       createRelationship: boolean,
-      options?: { selectedNodeIds?: string[]; openInGraph?: boolean },
+      options?: {
+        selectedNodeIds?: string[];
+        openInGraph?: boolean;
+        businessChoices?: BusinessSaveChoices;
+      },
     ) => void;
     onback: () => void;
     /** When true, show the relationship creation toggle (contextual launch). */
@@ -32,6 +45,15 @@
      * the person who will play the adventure isn't handed its plot.
      */
     spoilerShield?: boolean;
+    /** Existing vault titles → entity id, for matching a business's parties and people. */
+    businessExistingTitles?: ReadonlyMap<string, string>;
+    /** The entity the generator was opened from, if any. */
+    businessSource?: {
+      entityId: string;
+      entityType: "location" | "character" | "faction";
+    };
+    /** Whether the refine panel may use AI (AI Disabled turns it off). */
+    businessUseAI?: boolean;
   }
 
   let {
@@ -46,7 +68,30 @@
     onGeneratePlotTwist,
     onGenerateBoss,
     spoilerShield = false,
+    businessExistingTitles = new Map(),
+    businessSource = undefined,
+    businessUseAI = false,
   }: Props = $props();
+
+  const businessPlan = $derived(
+    draft.business
+      ? buildBusinessSavePlan(draft.business, {
+          existingTitles: businessExistingTitles,
+          source: businessSource,
+        })
+      : undefined,
+  );
+
+  function onBusinessReplace(next: BusinessDocument) {
+    draft = { ...draft, business: next, content: renderBusinessContent(next) };
+  }
+
+  function handleBusinessSave(choices: BusinessSaveChoices) {
+    onsave(buildUpdatedDraft(), createRelationship, {
+      openInGraph: false,
+      businessChoices: choices,
+    });
+  }
 
   let createRelationship = $state(false);
   $effect(() => {
@@ -73,7 +118,7 @@
   function buildUpdatedDraft(): GeneratedDraft {
     return {
       ...draft,
-      title: title.trim(),
+      title: (draft.business ? draft.business.identity.name : title).trim(),
       entityType,
       labels: labelsRaw
         .split(",")
@@ -199,6 +244,27 @@
     />
   </div>
 
+  {#if draft.business}
+    <div class="flex flex-col gap-3" data-testid="business-review">
+      <BusinessFallbackNote
+        fallbackSections={draft.business.fallbackSections}
+      />
+      <BusinessRefinePanel
+        business={draft.business}
+        useAI={businessUseAI}
+        onReplace={onBusinessReplace}
+      />
+      {#if businessPlan}
+        <BusinessSaveStep
+          plan={businessPlan}
+          busy={saving}
+          onSave={handleBusinessSave}
+          onCancel={onback}
+        />
+      {/if}
+    </div>
+  {/if}
+
   {#if draft.pointCrawl?.nodes?.length}
     <PointCrawlGraph
       bind:this={pointCrawlGraphRef}
@@ -308,17 +374,19 @@
           Save & Open in Graph
         </button>
       {/if}
-      <button
-        type="submit"
-        disabled={saving}
-        class="rounded-lg bg-chrome-accent px-5 py-2 text-xs font-bold uppercase tracking-wider text-chrome-surface transition-all hover:brightness-110 active:scale-95 disabled:pointer-events-none disabled:opacity-50"
-      >
-        {saving
-          ? "Opening…"
-          : draft.pointCrawl
-            ? `Save ${selectedPointCrawlNodeIds.length} Locations + Overview`
-            : "Open in Editor"}
-      </button>
+      {#if !draft.business}
+        <button
+          type="submit"
+          disabled={saving}
+          class="rounded-lg bg-chrome-accent px-5 py-2 text-xs font-bold uppercase tracking-wider text-chrome-surface transition-all hover:brightness-110 active:scale-95 disabled:pointer-events-none disabled:opacity-50"
+        >
+          {saving
+            ? "Opening…"
+            : draft.pointCrawl
+              ? `Save ${selectedPointCrawlNodeIds.length} Locations + Overview`
+              : "Open in Editor"}
+        </button>
+      {/if}
     </div>
   </div>
 </form>

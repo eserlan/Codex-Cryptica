@@ -263,6 +263,13 @@
           icon: "icon-[lucide--waypoints]",
         },
         {
+          href: "/generators/business",
+          label: "Business Generator",
+          summary:
+            "Create one commercial organisation with its people, dependencies, rivals, pressure and adventure hooks.",
+          icon: "icon-[lucide--store]",
+        },
+        {
           href: "/generators/magic-item",
           label: "Magic Item Generator",
           summary:

@@ -48,6 +48,7 @@ export const GENERATOR_SLUGS_WITH_THEME = new Set([
   "personality",
   "tome",
   "point-crawl",
+  "business",
   "one-shot-adventure-generator",
 ]);
 
@@ -171,6 +172,7 @@ export const SLUGS_USING_STORED_THEME = new Set([
   "personality",
   "tome",
   "point-crawl",
+  "business",
 ]);
 
 // Maps a resolved hub genre to the nearest ship-generator genre (the ship

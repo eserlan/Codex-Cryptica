@@ -106,6 +106,12 @@ export const howDoITurnEconomicPressuresIntoRpgAdventureHooks: AnswerConfigInput
     },
     relatedTools: [
       {
+        title: "Business Generator",
+        description:
+          "One commercial organisation with its people, dependencies, rivals, pressure and hooks.",
+        href: "/generators/business",
+      },
+      {
         title: "Faction generator",
         description:
           "Draft each side of the conflict with wants, means, and someone worth meeting.",

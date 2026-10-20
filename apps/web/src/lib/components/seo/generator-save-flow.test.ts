@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
+import {
+  businessGeneratorOutput as businessGeneratorOutputFor,
+  generateBusinessLocal,
+} from "generator-engine";
 import type { SessionEntity } from "generator-engine";
 import {
   saveGeneratorOutput,
@@ -113,6 +117,32 @@ describe("generator save flows", () => {
       itemCount: 1,
       relatedEntityCount: 2,
     });
+  });
+
+  it("hands a business to the import as the organisation and its ticked people", async () => {
+    const deps = dependencies();
+    const doc = generateBusinessLocal({
+      genre: "Classic Fantasy",
+      businessType: "Blacksmith",
+      scale: "established",
+    });
+    const output = { ...businessGeneratorOutputFor(doc) } as GeneratorOutput;
+    const query = await saveGeneratorOutput(
+      output,
+      { kind: "adventure" } as never,
+      "business",
+      deps,
+    );
+    const stored = JSON.parse(
+      (deps.store as ReturnType<typeof vi.fn>).mock.calls[0][1],
+    ) as Array<{ type: string; title: string }>;
+    expect(stored[0].type).toBe("faction");
+    expect(
+      stored.some(
+        (d) => d.type === "character" && d.title === doc.leadership.name,
+      ),
+    ).toBe(true);
+    expect(query).toContain("utm_source=");
   });
 
   it("handles point-crawl batch save with location entities and master note", async () => {
