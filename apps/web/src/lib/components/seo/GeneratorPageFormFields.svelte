@@ -129,6 +129,7 @@
     creature = $bindable(),
     tome = $bindable(),
     onPersonalityGenreChange,
+    onBusinessGenreChange,
     onRumourGenreChange,
     onPuzzleGenreChange,
     onShipGenreChange,
@@ -187,6 +188,7 @@
     creature: StringState;
     tome?: StringState;
     onPersonalityGenreChange: (genre: string) => void;
+    onBusinessGenreChange: (genre: string) => void;
     onRumourGenreChange: (genre: string) => void;
     onPuzzleGenreChange: (genre: string) => void;
     onShipGenreChange: (genre: string) => void;
@@ -706,6 +708,7 @@
       bind:clientele={business.clientele}
       bind:campaignContext={business.campaignContext}
       bind:playersOwn={business.playersOwn}
+      onGenreChange={onBusinessGenreChange}
       onSurprise={trigger}
     />
   {:else if slug === "villain-scheme-generator"}

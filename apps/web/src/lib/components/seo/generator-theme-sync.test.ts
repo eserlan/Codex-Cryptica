@@ -54,6 +54,13 @@ describe("syncGeneratorTheme", () => {
     expect(state.setActiveTheme).not.toHaveBeenCalled();
   });
 
+  it("follows the visible theme for the business generator", () => {
+    const state = context("business");
+    state.business = { genre: "Classic Fantasy" };
+    syncGeneratorTheme(state);
+    expect(state.business.genre).toBe("Blood Noir");
+  });
+
   it("syncs holiday form theme with the visible theme", () => {
     const state = context("holiday");
     syncGeneratorTheme(state);

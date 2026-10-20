@@ -44,11 +44,11 @@ export const CRIMINAL_WORDS = [
 export function genreGroup(genre: string): BusinessGenreGroup {
   const g = genre.toLowerCase();
   if (/cyber|corporate/.test(g)) return "cyberpunk";
-  if (/sci|space|starport|star/.test(g)) return "scifi";
+  if (/sci|space|starport|star|lancer/.test(g)) return "scifi";
   if (/horror|cosmic|gothic/.test(g)) return "horror";
   if (/west|frontier/.test(g)) return "western";
   if (/pirate|nautical|swash|sea/.test(g)) return "pirate";
-  if (/modern|urban|contemporary/.test(g)) return "modern";
+  if (/modern|urban|contemporary|superhero|comic/.test(g)) return "modern";
   return "fantasy";
 }
 
