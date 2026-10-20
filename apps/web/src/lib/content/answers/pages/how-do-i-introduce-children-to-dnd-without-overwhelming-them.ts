@@ -8,15 +8,16 @@ export const howDoIIntroduceChildrenToDndWithoutOverwhelmingThem: AnswerConfigIn
     question: "How do I introduce children to D&D without overwhelming them?",
     kind: "how-to",
     shortAnswer:
-      "Start playing before you teach the whole ruleset. Give each child a readable pregenerated character with two or three clear abilities, open on a choice they can act on straight away, and introduce a rule only when a decision needs it: you describe the situation, the child says what their character tries, and you ask for a d20 roll plus the relevant modifier only if the outcome is uncertain. Run one short adventure of 30 to 45 minutes with a clear ending, allow talking or helping as an alternative to fighting, and add attacks, saving throws, spells and initiative in later scenes or sessions as the children ask for them.",
+      "Start playing before you teach the whole ruleset. Give each child a readable pregenerated character with two or three clear abilities, open on a choice they can act on straight away, and introduce a rule only when a decision needs it: you describe the situation, the child says what their character tries, and you ask for a d20 roll plus the relevant modifier only if the outcome is uncertain. Plan a short adventure with a clear ending, allow talking or helping as an alternative to fighting, and add attacks, saving throws, spells and initiative in later scenes or sessions as the children ask for them.",
     sections: [
       {
         kind: "prose",
         heading: "Start playing before you teach the rules",
         paragraphs: [
+          "The rules examples here use the 2024 [D&D Free Rules](https://www.dndbeyond.com/sources/dnd/br-2024). If your table uses the 2014 rules, use the [2014 Basic Rules](https://www.dndbeyond.com/sources/dnd/basic-rules-2014) as your reference instead; some terms and character features differ. The DCs and creature statistics below are examples for this adventure, and the optional simplified turn order is a teaching choice rather than the standard combat procedure.",
           "A first session for children aged roughly 8 to 12 fails most often before play begins, when character creation, dice notation and a long explanation of actions take the whole sitting. Children learn D&D the same way they learn a playground game: by taking a turn, seeing what happens, and taking a better turn next time. Your job in session one is to protect that loop and keep every child making decisions.",
           'Open in the middle of a small problem, not at the start of a campaign. Say where the characters are, what has just gone wrong, and what they can see. Then ask one child: what does your character do? Accept answers in ordinary language. A child who says "I hide behind the barrel and watch the bridge" has understood the game, even if they have never heard the words Hide action or Stealth check.',
-          "Keep the first explanation under two minutes. Name the twenty-sided die (the d20), point to the big modifier numbers on the character sheet, and explain that you will tell them when to roll. Everything else can wait until it matters at the table.",
+          "Keep the first explanation brief. Name the twenty-sided die (the d20), point to the big modifier numbers on the character sheet, and explain that you will tell them when to roll. Everything else can wait until it matters at the table.",
         ],
       },
       {
@@ -60,20 +61,20 @@ export const howDoIIntroduceChildrenToDndWithoutOverwhelmingThem: AnswerConfigIn
         kind: "example",
         heading: "A ready-to-run first adventure: the lantern under the bridge",
         paragraphs: [
-          "This adventure runs in 30 to 45 minutes for two to four children and needs no combat. Read the boxed narration aloud or put it in your own words. Timings are a guide for pacing, not a promise: if the children are enjoying a conversation, let it breathe and shorten the return journey instead.",
+          "This is one example of a short adventure for two to four children, and it needs no combat. The beat timings below are illustrative pacing options, not expectations. Read the boxed narration aloud or put it in your own words. If the children are enjoying a conversation, let it breathe and shorten the return journey instead.",
           "Premise in three sentences: Tonight is Lantern Night in the village of Brambleford, when families hang paper lanterns along the river. The big golden lantern that leads the procession has gone missing from the market square. Small wet footprints and a trail of gold glitter lead from the empty hook towards the old stone bridge.",
         ],
         items: [
           {
-            term: "Beat 1, the hook and first choice (about 5 minutes)",
+            term: "Beat 1, the hook and first choice (illustrative: about 5 minutes)",
             text: 'Read: "The market square smells of warm bread. Every stall has its lantern lit except the tall pole in the middle, where the big golden lantern should hang. Under the pole, glitter sparkles in a line of small wet footprints heading for the river. What do you do?" Likely actions include following the footprints, asking a stallholder what happened, or examining the pole. All three work. A stallholder, Mina the baker, saw a small figure hurry away hugging something glowing and is worried rather than angry. Following the footprints leads straight to Beat 2. Let each child contribute one observation or question before you move on.',
           },
           {
-            term: "Beat 2, exploration and a person to talk to (about 15 minutes)",
+            term: "Beat 2, exploration and a person to talk to (illustrative: about 15 minutes)",
             text: "Read: \"The footprints end at flat stones under the bridge. The river runs fast and the stones shine with green moss. From the shadows comes a small sniffling sound.\" Crossing the stones is the check described above (Dexterity (Acrobatics), DC 11) for any child who wants to cross; a child may also hold a rope, throw a plank across, or call out instead. Under the bridge sits Bram, a young goblin lantern keeper's apprentice, hugging the golden lantern. Bram took it because he is frightened of the dark walk home and thought one night's borrowing would not be missed. He is sorry, expects to be shouted at, and will hand the lantern back at once if the children are kind. If they accuse him, he cries and hides behind the lantern, which slows the conversation but does not block it: any apology, question about his walk home, or offer to walk with him reopens the talk.",
           },
           {
-            term: "Beat 3, resolution and a clear ending (about 10 to 15 minutes)",
+            term: "Beat 3, resolution and a clear ending (illustrative: about 10 to 15 minutes)",
             text: 'The children decide what should happen. They might escort Bram home and then carry the lantern back together, persuade Mina to lend Bram a small lantern of his own, or ask Bram to carry the big lantern at the front of the procession and be thanked publicly. Any kind solution works and should be honoured at the table. End at the procession: read "Mina hangs the golden lantern back on its pole, Bram walks beside you carrying a small lantern of his own, and the whole square lights up as the procession sets off." Then stop. A definite ending while the children are still pleased is better than stretching the session to fill an hour.',
           },
           {
@@ -92,7 +93,7 @@ export const howDoIIntroduceChildrenToDndWithoutOverwhelmingThem: AnswerConfigIn
           },
           {
             term: "Plan for shorter attention, not lower ability",
-            text: "Keep scenes moving, change the kind of problem every ten minutes or so, and end on the planned closing beat even if you skip a middle detail. A child who wanders should be offered a small job on return, such as holding the map or rolling for the group, rather than a recap lecture.",
+            text: "If attention wanders, try changing the kind of problem or offering a small job, such as holding the map or rolling for the group, rather than giving a recap lecture. End on the planned closing beat even if you skip a middle detail.",
           },
           {
             term: "Use visual aids as props, not requirements",
@@ -129,7 +130,7 @@ export const howDoIIntroduceChildrenToDndWithoutOverwhelmingThem: AnswerConfigIn
         kind: "checklist",
         heading: "Minimum preparation checklist",
         intro:
-          "You are ready to run when you can tick these off. The whole list should take under 20 minutes:",
+          "Use this as a minimum preparation list. Add detail only where your group needs it:",
         items: [
           "A three-sentence premise you can read aloud: what has gone wrong, where the trail leads, and who is involved. The lantern premise above is ready to use as written.",
           "One simple map or sketch: a market square, a river and a bridge on one sheet of paper is enough.",
@@ -137,7 +138,7 @@ export const howDoIIntroduceChildrenToDndWithoutOverwhelmingThem: AnswerConfigIn
           "Pregenerated characters, one per child plus a spare, each with a main attack or trick and one helpful item written in plain language.",
           "A handful of rolls decided in advance: the slippery stones (Dexterity (Acrobatics), DC 11), Bram's reaction to kindness or accusation, and beetle statistics if you use the optional fight (Armour Class 12, 4 hit points).",
           "One d20 per child if you have them, a spare six-sided die for damage, and pencils. Shared dice are fine.",
-          "A clear ending you can reach in 30 to 45 minutes, and a sentence that closes the session when you get there.",
+          "A clear ending and a sentence that closes the session when you get there.",
           "A pause rule the children have heard before play starts, and your decision that no character will be killed in this first session.",
         ],
       },
@@ -173,7 +174,7 @@ export const howDoIIntroduceChildrenToDndWithoutOverwhelmingThem: AnswerConfigIn
         "dnd with kids without too many rules",
       ],
       uniqueValue:
-        "A family-specific first-session guide for children aged 8 to 12: staged introduction of checks, attacks and saving throws, readable pregenerated characters, a complete 30 to 45 minute no-combat adventure with an optional gentle fight, and mixed-age table and comfort guidance.",
+        "A family-specific first-session guide for children aged 8 to 12: staged introduction of checks, attacks and saving throws, readable pregenerated characters, a short no-combat adventure with an optional gentle fight, and mixed-age table and comfort guidance.",
       relatedIntents: [
         "answer-first-time-gm-hub",
         "answer-new-dnd-player-learn-first",
