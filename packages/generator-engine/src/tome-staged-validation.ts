@@ -358,7 +358,7 @@ export function checkTomeHooksStage(
   }
 
   const repIssues: string[] = [];
-  checkSentenceRepetition(hooksText, repIssues);
+  checkSentenceRepetition(hooksText, "", repIssues);
   for (const issue of repIssues) {
     soft.push(issue);
   }
