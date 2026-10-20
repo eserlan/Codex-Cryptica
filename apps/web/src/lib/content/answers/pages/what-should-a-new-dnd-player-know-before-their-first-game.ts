@@ -240,6 +240,7 @@ export const whatShouldANewDndPlayerKnowBeforeTheirFirstGame: AnswerConfigInput 
       "which-dice-do-i-roll-in-dnd-and-when",
       "what-are-the-pros-and-cons-of-becoming-a-dungeon-master",
       "how-do-i-get-my-friends-interested-in-playing-dnd",
+      "how-do-i-introduce-children-to-dnd-without-overwhelming-them",
     ],
     discovery: {
       id: "answer-new-dnd-player-first-game",

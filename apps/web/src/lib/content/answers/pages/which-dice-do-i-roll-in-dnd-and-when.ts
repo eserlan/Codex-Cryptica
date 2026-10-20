@@ -158,6 +158,7 @@ export const whichDiceDoIRollInDndAndWhen: AnswerConfigInput = {
     "how-do-i-improvise-npcs-in-dnd",
     "how-do-i-run-a-successful-session-0",
     "where-do-i-start-if-i-have-never-played-a-tabletop-rpg",
+    "how-do-i-introduce-children-to-dnd-without-overwhelming-them",
   ],
   discovery: {
     id: "answer-which-dice-to-roll-in-dnd",

@@ -149,6 +149,7 @@ export const howDoIStartGmingForTheFirstTime: AnswerConfigInput = {
     "what-are-the-pros-and-cons-of-becoming-a-dungeon-master",
     "how-do-i-get-my-friends-interested-in-playing-dnd",
     "how-do-i-roleplay-npcs-if-im-not-good-at-acting",
+    "how-do-i-introduce-children-to-dnd-without-overwhelming-them",
   ],
   discovery: {
     id: "answer-first-time-gm-hub",

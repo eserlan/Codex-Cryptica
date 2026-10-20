@@ -204,6 +204,7 @@ export const canYouPlayATabletopRpgIn30MinuteSessions: AnswerConfigInput = {
     "what-rpg-system-is-good-for-solo-play",
     "how-long-should-a-ttrpg-session-be",
     "what-are-the-pros-and-cons-of-becoming-a-dungeon-master",
+    "how-do-i-introduce-children-to-dnd-without-overwhelming-them",
   ],
   discovery: {
     id: "answer-short-session",
