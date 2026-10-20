@@ -645,17 +645,17 @@ export function findUnintroducedNames(
 
 /** Words too common in a description to show that a feature was developed. */
 const COMMON_WORDS = new Set(
-  "their there which where while about every other these those would could should shop's owner's business keeps makes under inside outside through around before after".split(
+  "their there which where while about every other these those would could should shop's owner's business keeps makes under inside outside through around before after never always again still being might whose until since often rarely nobody anyone anything something everything nothing that this with from have been were they them than then when what will your into over only also some such each most more much many very just like ones main city shop town work part kind runs lets keep gets goes does done made make take back down away once even ever here both".split(
     " ",
   ),
 );
 
-/** Lower-cased words of five letters or more, cut to a five-letter stem. */
+/** Lower-cased words of four letters or more, cut to a five-letter stem. */
 function stems(text: string): Set<string> {
   return new Set(
     words(text)
       .map((w) => w.toLowerCase())
-      .filter((w) => w.length >= 5 && !COMMON_WORDS.has(w))
+      .filter((w) => w.length >= 4 && !COMMON_WORDS.has(w))
       .map((w) => w.slice(0, 5)),
   );
 }
@@ -677,7 +677,7 @@ export function distinctiveProblem(
 
 /** Words that address the player characters, in any genre. */
 const ADDRESSES_PLAYERS =
-  /\b(the (player )?characters|the party|the adventurers|the heroes|the players|the pcs?|the group|the team|the investigators|the runners|the crew|your (party|characters|group|crew)|you)\b|\bPCs?\b/i;
+  /\b(the (player )?characters|the party(?! (at|of|in|for) )|the adventurers|the heroes|the players|the pcs?|the group|the team|the investigators|the runners|the crew|adventurers|outsiders|newcomers|strangers|travell?ers|mercenaries|freelancers|anyone (brave|willing|bold|desperate)|your (party|characters|group|crew)|you)\b|\bPCs?\b/i;
 
 /** Every hook must offer something to the player characters. */
 export function hookAudienceProblems(hooks: readonly string[]): string[] {
@@ -693,7 +693,7 @@ export function hookAudienceProblems(hooks: readonly string[]): string[] {
 }
 
 const KIN_WORDS =
-  /\b(sister|brother|sibling|cousin|related|family|son|daughter|uncle|aunt|nephew|niece|father|mother|parent|married|wife|husband|spouse|kin|twin)\b/i;
+  /\b(sister|brother|sibling|cousin|related|family (of|to|with)|son|daughter|uncle|aunt|nephew|niece|father|mother|parent|married|wife|husband|spouse|kin|twin)\b/i;
 
 /** Two people sharing a surname must be said to be related. */
 export function sharedSurnameProblems(

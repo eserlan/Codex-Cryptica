@@ -484,6 +484,21 @@ describe("the unusual asset develops the distinctive feature", () => {
     expect(distinctiveProblem(jammer, asset) !== null).toBe(flagged);
   });
 
+  it("is not satisfied by an unrelated asset that shares only a common word", () => {
+    expect(
+      distinctiveProblem(
+        "A private well that never runs dry.",
+        "The owner never lets anyone see the books.",
+      ),
+    ).not.toBeNull();
+    expect(
+      distinctiveProblem(
+        "A private well that never runs dry.",
+        "Neighbours queue at the well in a drought, and the owner sells the water.",
+      ),
+    ).toBeNull();
+  });
+
   it("says nothing when the feature has no distinctive words to look for", () => {
     expect(distinctiveProblem("A big old one.", "Anything at all.")).toBeNull();
   });
@@ -504,8 +519,19 @@ describe("hooks are written for the player characters", () => {
     "The party is offered a share if they can clear the shelter's name.",
     "A courier slips a note to the crew: the inspector is on the take.",
     "You are asked to carry a sealed ledger across the district.",
+    "A band of adventurers is asked to guard the well.",
+    "Anyone brave enough is offered a share of the salvage.",
+    "Outsiders are hired to find the missing ledger.",
+    "Mercenaries are wanted for a night job at the yard.",
+    "Travellers passing through are asked to carry a letter.",
   ])("accepts a hook that addresses the players: %s", (hook) => {
     expect(hookAudienceProblems([hook])).toEqual([]);
+  });
+
+  it("does not take 'the party' at a feast for the player characters", () => {
+    expect(
+      hookAudienceProblems(["The party at the embassy goes wrong for Nadia."]),
+    ).toHaveLength(1);
   });
 });
 
@@ -518,6 +544,14 @@ describe("a shared surname needs a stated relationship", () => {
   it("flags two people sharing a surname with no stated tie", () => {
     expect(
       sharedSurnameProblems([person("Halle Marrow"), person("Brin Marrow")]),
+    ).toHaveLength(1);
+  });
+  it("does not take 'the family tavern' as a stated relationship", () => {
+    expect(
+      sharedSurnameProblems([
+        person("Halle Marrow", "Runs the family tavern."),
+        person("Brin Marrow"),
+      ]),
     ).toHaveLength(1);
   });
   it("accepts a stated relationship", () => {

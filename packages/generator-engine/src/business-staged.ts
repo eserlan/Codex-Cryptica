@@ -30,6 +30,7 @@ import {
 import {
   type BusinessDocument,
   type BusinessGeneratorOptions,
+  type BusinessPerson,
   type BusinessSectionId,
   type ResolvedBusinessOptions,
 } from "./business-state";
@@ -147,6 +148,9 @@ async function identityStage(
   }
   const d = result.data.stage;
   failed.push(...result.data.filled);
+  // Fit the roster now, so later stages are told the staff the business ends with.
+  const { staff, topped } = fitRoster(d.staff, doc.staff, opts.scale);
+  failed.push(...topped.map((p) => `staff:${p.id}` as BusinessSectionId));
   progress.set("identity", "done", result.retried ? FIXING_DETAIL : undefined);
   return {
     ...doc,
@@ -157,9 +161,26 @@ async function identityStage(
       id: "lead",
       role: opts.playersOwn ? "manager" : "owner",
     },
-    staff: d.staff,
+    staff,
     clientele: d.clientele,
   };
+}
+
+/**
+ * The AI's staff cut to the scale's maximum, and topped up to its minimum with
+ * the local base's people (never placeholder names). `topped` lists those added.
+ */
+function fitRoster(
+  ai: BusinessPerson[],
+  local: BusinessPerson[],
+  scale: ResolvedBusinessOptions["scale"],
+): { staff: BusinessPerson[]; topped: BusinessPerson[] } {
+  const [min, max] = BUSINESS_STAFF_RANGE[scale];
+  const kept = ai.slice(0, max);
+  const topped = local
+    .slice(0, Math.max(0, min - kept.length))
+    .map((p, i) => ({ ...p, id: `staff-${kept.length + i + 1}` }));
+  return { staff: [...kept, ...topped], topped };
 }
 
 /** A soft problem (one retry) when the text names someone the document never introduced. */
@@ -298,7 +319,10 @@ function finalise(
   const issues = checkBusiness(next);
   if (issues.length > 0) {
     failed.push(...issues.map((i) => i.section));
+    const hooksBefore = next.hooks;
     next = repairBusiness(next, issues, rng);
+    // Hooks are rebuilt when a section they name changes, without being an issue.
+    if (next.hooks !== hooksBefore) failed.push("hooks");
   }
   if (checkBusiness(next).length > 0) {
     // Last resort: a full local document, which always passes.

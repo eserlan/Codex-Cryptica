@@ -27,6 +27,8 @@ All decisions below come from reading the existing generators. No open questions
 
   Later stages are also given the business so far as an "Established facts" block (name, type, leader, staff and, once known, parties), built from the document as it actually stands, so a stage that fell back is described by its local values. A stage whose text names someone the document never introduced is retried once; names that survive are listed in `warnings` (FR-016, FR-017). The name check is a heuristic over capitalised runs; places read as names, so the notice says some may be places.
 
+  The identity stage is tolerant: a reply with a name, description and leader is kept. A missing operations or clientele field comes from the tables (listed as fallback), and a wrong staff count or size line is asked about once, then repaired in place. The roster is fitted to the scale straight away, topped up from the tables' named people, so later stages are told the staff the business ends with. In the last stage the asset must develop the distinctive feature and every hook must address the player characters; both are soft checks (FR-021, FR-022).
+
 - **Rationale**:
   - Later stages need earlier ones in context. Hooks must reference the pressure, people and relationships, and one chat session gives the model that history without re-injecting it.
   - Three stages is enough for live progress without paying for a repair turn on every section.

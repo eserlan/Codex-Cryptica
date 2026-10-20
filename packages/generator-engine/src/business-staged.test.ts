@@ -154,6 +154,55 @@ describe("generateBusinessStaged", () => {
     expect(doc.fallbackSections).not.toContain("identity");
   });
 
+  it("fits the roster before later stages, so a hook naming a kept person survives", async () => {
+    const reply = JSON.parse(identityReply);
+    reply.staff = ["Ann Ash", "Bo Birch", "Cy Cole", "Di Dale"].map((name) => ({
+      name,
+      role: "Technician",
+      goal: "Save for a flat.",
+      trait: "Quick hands.",
+    }));
+    const four = JSON.stringify(reply);
+    const trouble = JSON.parse(troubleReply);
+    trouble.hooks = [
+      "Bo Birch hires the party to guard the clinic's surgical kit tonight.",
+      "Helix Medical Corp offers the characters a quiet payment.",
+    ];
+    const { send, calls } = queue(
+      four,
+      four,
+      connectionsReply,
+      JSON.stringify(trouble),
+    );
+    const doc = await generateBusinessStaged(OPTS, { send, rng: seeded(12) });
+    const facts = calls.find((c) => c.includes("step three")) ?? "";
+    expect(facts).toContain("Bo Birch");
+    expect(facts).not.toContain("Di Dale");
+    expect(doc.hooks[0]).toContain("Bo Birch");
+    expect(doc.fallbackSections).not.toContain("hooks");
+  });
+
+  it("tops a short roster up with the tables' named people, never placeholders", async () => {
+    const none = JSON.stringify({ ...JSON.parse(identityReply), staff: [] });
+    const { send } = queue(none, none, connectionsReply, troubleReply);
+    const doc = await generateBusinessStaged(OPTS, { send, rng: seeded(12) });
+    expect(doc.staff.length).toBeGreaterThanOrEqual(1);
+    for (const p of doc.staff) expect(p.name).not.toMatch(/\s\d$/);
+    expect(doc.fallbackSections).toContain("staff:staff-1");
+  });
+
+  it("reports hooks as fallback when repairing another section rebuilt them", async () => {
+    const trouble = JSON.parse(troubleReply);
+    // A price in the asset fails the final check; repairing it rebuilds the hooks.
+    trouble.asset =
+      "A clean surgical kit worth 500 gp that nobody else in the district owns.";
+    const reply = JSON.stringify(trouble);
+    const { send } = queue(identityReply, connectionsReply, reply);
+    const doc = await generateBusinessStaged(OPTS, { send, rng: seeded(12) });
+    expect(doc.fallbackSections).toContain("asset");
+    expect(doc.fallbackSections).toContain("hooks");
+  });
+
   it("keeps the AI identity when it lists no staff, and tops the roster up", async () => {
     const none = JSON.stringify({ ...JSON.parse(identityReply), staff: [] });
     const { send } = queue(none, none, connectionsReply, troubleReply);
