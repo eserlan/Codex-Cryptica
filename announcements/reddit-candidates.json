@@ -1,16 +1,6 @@
 {
-  "updated_at": 1792425463,
+  "updated_at": 1792482776,
   "candidates": [
-    {
-      "id": "reddit-38865885868-my-tales-of-the-valiant-encounters-had-c",
-      "title": "My Tales of the Valiant encounters had CR numbers but no real guidance",
-      "body": "I had a CR number for an encounter but no sense what it meant for four level 3 characters versus six level 5 ones. And Doom was on a separate note I kept forgetting to use, so it never mattered at the right moment.\n\nI built tailored encounter guidance and verified Doom tracking in Codex Cryptica, my own local-first campaign tool, so the advice fits your actual party and the Doom counter lives where you run the fight.\n\nYou can try it here: https://codexcryptica.com/generators/encounter\n\nWhat changed:\n\n- qualitative difficulty plus a CR range tuned to your party size and level, not a fixed number for everyone\n- suggested creatures that fit the range and environment instead of a generic list\n- tactical advice tied to that encounter, with notes on when to spend or hold Doom\n- monster sheets and VTT token quick stats with a verified +/- Doom counter that stays between 0 and 10 and cannot go invalid\n\nI capped Doom at 0 to 10 with guardrails, so you cannot accidentally set it to 12 or -1 mid fight even on a fast click. If your table house rules beyond 10, you will need to track that part in your notes for now.\n\nWhen you run Doom at your table, do you spend it early to pressure the party or hold it for the boss turn?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-38865885868-1.png)",
-      "url": "https://codexcryptica.com/generators/encounter",
-      "image_url": "https://assets.codexcryptica.com/announcements/release-38865885868-1.png",
-      "source_id": "38865885868",
-      "status": "approved",
-      "created_at": 1792137167
-    },
     {
       "id": "reddit-38926756319-cif-now-flies-to-what-he-points-at",
       "title": "Cif now flies to what he points at",
