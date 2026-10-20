@@ -35,7 +35,9 @@ describe("BusinessRefinePanel", () => {
     for (const person of d.staff) {
       expect(
         screen.getByRole("button", {
-          name: new RegExp(`Rewrite ${person.name}`),
+          name: new RegExp(
+            `Rewrite ${person.name === d.leadership.name ? `${person.name} \\(staff\\)` : person.name}`,
+          ),
         }),
       ).toBeTruthy();
     }
