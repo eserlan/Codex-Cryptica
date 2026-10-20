@@ -114,6 +114,29 @@ describe("VTTControls", () => {
     expect(sw.querySelectorAll("button")).toHaveLength(2);
   });
 
+  it("offers Report a problem for the tabletop, to guests as well as the GM", async () => {
+    for (const isGuestMode of [false, true]) {
+      sessionModeStore.isGuestMode = isGuestMode;
+      const { unmount } = render(VTTControls);
+      expect(
+        screen.getByRole("button", { name: "Report a problem" }),
+      ).not.toBeNull();
+      unmount();
+    }
+  });
+
+  it("opens the feedback dialog from the tabletop with its area only", async () => {
+    const { feedbackDialog } =
+      await import("$lib/stores/ui/feedback-dialog.svelte");
+    const open = vi.spyOn(feedbackDialog, "open").mockImplementation(() => {});
+    render(VTTControls);
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Report a problem" }),
+    );
+    expect(open).toHaveBeenCalledWith({ area: "tabletop" });
+    open.mockRestore();
+  });
+
   it("opens Encounter Snapshots from the shared store the help assistant uses", async () => {
     render(VTTControls);
     const button = screen.getByRole("button", { name: "Encounters" });
