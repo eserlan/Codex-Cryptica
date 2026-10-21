@@ -1,15 +1,15 @@
 ---
 id: biome-explorer
-title: Biome Explorer
+title: Biomes
 description: Browse real-world environments with credited pictures, see why each one looks the way it does, and learn what its limits are.
 tags:
   [biome, environment, terrain, climate, worldbuilding, reference, inspiration]
 rank: 5
 ---
 
-## What the Biome Explorer is
+## What Biomes is
 
-The **Biome Explorer** is a reference library of real-world environments, such as temperate woodland, boreal forest, grassland, hot desert, tundra, wetland, tropical rainforest, coastline, savanna and alpine mountains. Use it to picture a setting and to check that your version of it hangs together.
+**Biomes** is a reference library of real-world environments, such as temperate woodland, boreal forest, grassland, hot desert, tundra, wetland, tropical rainforest, coastline, savanna and alpine mountains. Use it to picture a setting and to check that your version of it hangs together.
 
 Each biome answers two questions: what does it look like, and why does it look that way and what can live there.
 
@@ -48,7 +48,7 @@ Give the biome a name, then choose **Save biome**. A name is required.
 
 Saved biomes are stored in your vault as notes, so they sync and back up with everything else. You will find them under **My biomes**, where you can open one, make a copy to try a variation, copy it as Markdown, or delete it.
 
-- **Edit biomes in the Explorer.** If you change the note text by hand, the Explorer replaces it with a fresh version the next time you save.
+- **Edit biomes in the Biomes tool.** If you change the note text by hand, Biomes replaces it with a fresh version the next time you save.
 - **Copy as Markdown** and **Download Markdown** give you a readable document with the reference, your changes and the sources under separate headings. If your browser blocks copying, the text is shown so you can copy it yourself.
 - A saved biome follows your vault's normal sharing rules. Reference links you add are never included when a vault is shared or published.
 - You need an open vault that you can edit to save. Without one you can still browse, make a draft and copy it as Markdown.
@@ -73,6 +73,6 @@ If AI is switched on, **Suggest effects** offers up to three knock-on effects fo
 
 ## Illustration prompt, your picture and your links
 
-In the editor, the **Illustration prompt** box gives you a ready-made description that starts with "fantasy, illustration of" and includes your own wording and any fictional changes. Choose **Copy prompt** and paste it into the image tool you like. The Explorer does not make pictures for you. **Keep prompt with this biome** stores it with the biome so it appears in the Markdown too.
+In the editor, the **Illustration prompt** box gives you a ready-made description that starts with "fantasy, illustration of" and includes your own wording and any fictional changes. Choose **Copy prompt** and paste it into the image tool you like. Biomes does not make pictures for you. **Keep prompt with this biome** stores it with the biome so it appears in the Markdown too.
 
 Once a biome is saved you can **add a picture** of your own. It is stored in your vault with the biome and is shown separately from the library's pictures. You can also add up to ten web links (they must start with https://) to references you want to keep. Links stay private: they are left out when a vault is shared or published.
