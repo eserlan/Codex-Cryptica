@@ -57,6 +57,7 @@
     });
   });
 
+  const productProof = $derived(data.productProof);
   const comparisonData = $derived(
     type === "comparison" ? (data as SEOComparisonPageData) : null,
   );
@@ -407,7 +408,7 @@
     </div>
   </section>
 
-  {#if comparisonData?.productProof}
+  {#if productProof}
     <section class="border-t border-theme-border/30 py-12 sm:py-16">
       <div
         class="max-w-6xl mx-auto px-4 sm:px-6 grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-center"
@@ -416,15 +417,15 @@
           <p
             class="font-mono text-xs font-bold uppercase tracking-[0.24em] text-theme-primary mb-3"
           >
-            {comparisonData.productProof.eyebrow}
+            {productProof.eyebrow}
           </p>
           <h2
             class="font-header text-2xl sm:text-3xl font-bold text-theme-text mb-4"
           >
-            {comparisonData.productProof.title}
+            {productProof.title}
           </h2>
           <p class="font-body font-light text-theme-muted leading-relaxed">
-            {comparisonData.productProof.description}
+            {productProof.description}
           </p>
         </div>
         <figure
@@ -432,10 +433,12 @@
           style:background-image="var(--bg-texture-overlay)"
         >
           <img
-            src="{cleanBase}{comparisonData.productProof.imageSrc}"
-            alt={comparisonData.productProof.imageAlt}
-            width={comparisonData.productProof.imageWidth}
-            height={comparisonData.productProof.imageHeight}
+            src={productProof.imageSrc.startsWith("https://")
+              ? productProof.imageSrc
+              : `${cleanBase}${productProof.imageSrc}`}
+            alt={productProof.imageAlt}
+            width={productProof.imageWidth}
+            height={productProof.imageHeight}
             loading="lazy"
             decoding="async"
             class="block h-auto w-full"
@@ -443,7 +446,7 @@
           <figcaption
             class="border-t border-theme-border/60 px-4 py-3 text-xs leading-relaxed text-theme-muted"
           >
-            {comparisonData.productProof.caption}
+            {productProof.caption}
           </figcaption>
         </figure>
       </div>
