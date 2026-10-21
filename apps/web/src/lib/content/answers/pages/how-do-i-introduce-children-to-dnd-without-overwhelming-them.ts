@@ -75,11 +75,11 @@ export const howDoIIntroduceChildrenToDndWithoutOverwhelmingThem: AnswerConfigIn
           },
           {
             term: "Beat 3, resolution and a clear ending (illustrative: about 10 to 15 minutes)",
-            text: 'The children decide what should happen. They might escort Bram home and then carry the lantern back together, persuade Mina to lend Bram a small lantern of his own, or ask Bram to carry the big lantern at the front of the procession and be thanked publicly. Any kind solution works and should be honoured at the table. End at the procession: read "Mina hangs the golden lantern back on its pole, Bram walks beside you carrying a small lantern of his own, and the whole square lights up as the procession sets off." Then stop. A definite ending while the children are still pleased is better than stretching the session to fill an hour.',
+            text: "The children decide what should happen. They might escort Bram home and then carry the lantern back together, persuade Mina to lend Bram a small lantern of his own, or ask Bram to carry the big lantern at the front of the procession and be thanked publicly. Any kind solution works and should be honoured at the table. End where their choice leaves them, and keep track of where Bram and the golden lantern are: if they escorted him home, end at his door, with the lantern still with the children to return to Mina if that was their plan; if they chose the procession, describe the golden lantern at the front, carried by Bram if that was their plan. Mention a small lantern only if Mina actually lent it to him. Then stop. A definite ending while the children are still pleased is better than stretching the session to fill an hour.",
           },
           {
             term: "Optional gentle combat, only if the children ask for a fight",
-            text: "If the group wants action, use these custom, simplified giant fire beetle statistics: Armour Class 12 and 4 hit points each. The beetles crawl towards the lantern's glow while the children are under the bridge. They want the warmth, not a battle to the death. Each child takes a turn in an order you set by asking who acts first, rather than teaching full initiative. A child can attack (shortsword +4 to hit, 1d6 plus 2 damage, as worked above), shoo a beetle with a waved cloak (Animal Handling or Intimidation check, DC 11), block its path, or feed it Mina's bread crusts to lead it away. A beetle that takes any damage or is shooed successfully scuttles off. Nobody's character is in serious danger: if a beetle hits, it deals 1d4 plus 1 damage as a nip on the boot, and you can declare the beetles frightened off after two rounds regardless of the dice.",
+            text: "If the group wants action, use two beetles with these custom, simplified statistics (not an official monster block): Armour Class 12, 4 hit points each, and a +2 attack bonus. The beetles crawl towards the lantern's glow because they want its warmth, not a battle to the death. Each child takes a turn in an order you set by asking who acts first. Then each beetle takes one turn: the first attacks and the second noses towards the lantern; switch roles next round. The attacking beetle targets the character nearest to it, rolls a d20 and adds +2 against that character's AC; on a hit, it deals 1d4 plus 1 damage, which you subtract from the character's hit points. A miss deals no damage. A child can attack (shortsword +4 to hit, 1d6 plus 2 damage, as worked above), shoo a beetle with a waved cloak (Animal Handling or Intimidation check, DC 11), or, if Bram agrees to hand it over, carry the lantern away so the beetles follow its warmth and leave Bram's path clear. A successful shoo sends that beetle scuttling into a dark crevice. A beetle reduced to 0 hit points retreats to the crevice rather than being killed. These visible reactions let the children end the scene through their choices. The AC, hit points, attack bonus and simplified turns are custom teaching choices, not standard 2024 D&D statistics or procedure.",
           },
         ],
       },
@@ -136,7 +136,7 @@ export const howDoIIntroduceChildrenToDndWithoutOverwhelmingThem: AnswerConfigIn
           "One simple map or sketch: a market square, a river and a bridge on one sheet of paper is enough.",
           "Two or three NPC details each: Mina the baker is worried and kind and saw a small figure at dusk; Bram is frightened of the dark, sorry, and will cooperate if treated kindly.",
           "Pregenerated characters, one per child plus a spare, each with a main attack or trick and one helpful item written in plain language.",
-          "A handful of rolls decided in advance: the slippery stones (Dexterity (Acrobatics), DC 11), Bram's reaction to kindness or accusation, and beetle statistics if you use the optional fight (Armour Class 12, 4 hit points).",
+          "The slippery-stones check (Dexterity (Acrobatics), DC 11) and, if you use the optional fight, the two beetles' custom statistics (Armour Class 12, 4 hit points each, +2 to hit, 1d4 plus 1 damage). Only one beetle attacks each round. Bram cooperates when treated kindly; no roll is needed for that response.",
           "One d20 per child if you have them, a spare six-sided die for damage, and pencils. Shared dice are fine.",
           "A clear ending and a sentence that closes the session when you get there.",
           "A pause rule the children have heard before play starts, and your decision that no character will be killed in this first session.",
@@ -158,6 +158,7 @@ export const howDoIIntroduceChildrenToDndWithoutOverwhelmingThem: AnswerConfigIn
       "can-you-play-a-tabletop-rpg-in-30-minute-sessions",
       "how-do-i-read-a-dnd-character-sheet-as-a-beginner",
       "which-dice-do-i-roll-in-dnd-and-when",
+      "how-can-i-practise-being-a-dungeon-master-without-a-group",
     ],
     discovery: {
       id: "answer-introduce-children-to-dnd",

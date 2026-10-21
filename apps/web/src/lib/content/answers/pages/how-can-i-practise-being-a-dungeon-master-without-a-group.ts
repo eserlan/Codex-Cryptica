@@ -204,6 +204,7 @@ export const howCanIPractiseBeingADungeonMasterWithoutAGroup: AnswerConfigInput 
       "how-do-i-track-monsters-initiative-and-hit-points-in-dnd-combat",
       "what-is-a-solo-rpg-oracle",
       "how-do-you-play-a-tabletop-rpg-by-yourself",
+      "how-do-i-introduce-children-to-dnd-without-overwhelming-them",
     ],
     discovery: {
       id: "answer-practise-dm-without-a-group",
