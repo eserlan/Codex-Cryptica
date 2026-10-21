@@ -338,6 +338,7 @@ export const howDoIMakeInterviewingNpcsInterestingInAnInvestigation: AnswerConfi
       "how-do-i-improvise-npcs-in-dnd",
       "how-do-i-make-roleplay-more-engaging",
       "how-do-i-roleplay-npcs-if-im-not-good-at-acting",
+      "how-do-you-handle-players-reaching-the-wrong-conclusion-in-an-rpg-mystery",
     ],
     discovery: {
       id: "answer-interviewing-npcs-investigation",

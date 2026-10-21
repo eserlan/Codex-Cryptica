@@ -187,6 +187,7 @@ export const howDoIRunAnInvestigatorWithoutSideliningTheParty: AnswerConfigInput
       "how-do-i-make-interviewing-npcs-interesting-in-an-investigation",
       "how-do-i-handle-players-asking-an-npc-to-tell-us-everything-you-know",
       "how-do-i-handle-divination-magic-without-letting-one-character-solve-every-mystery",
+      "how-do-you-handle-players-reaching-the-wrong-conclusion-in-an-rpg-mystery",
     ],
     discovery: {
       id: "answer-run-investigator-without-sidelining-party",
