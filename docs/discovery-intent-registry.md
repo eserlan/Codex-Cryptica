@@ -144,13 +144,13 @@ smuggle into the PR that adds the registry.
 
 Several pairs target the same intent with the same `create` job:
 
-| `/tools` page                           | `/generators` page          |
-| --------------------------------------- | --------------------------- |
-| `/tools/faction-generator`              | `/generators/faction`       |
-| `/tools/vampire-clan-generator`         | `/generators/vampire-clan`  |
-| `/tools/cyberpunk-nomad-clan-generator` | `/generators/nomad-clan`    |
-| `/tools/dnd-npc-generator`              | `/generators/dnd-npc`       |
-| `/tools/quest-hook-generator`           | `/generators/quest`         |
+| `/tools` page                           | `/generators` page         |
+| --------------------------------------- | -------------------------- |
+| `/tools/faction-generator`              | `/generators/faction`      |
+| `/tools/vampire-clan-generator`         | `/generators/vampire-clan` |
+| `/tools/cyberpunk-nomad-clan-generator` | `/generators/nomad-clan`   |
+| `/tools/dnd-npc-generator`              | `/generators/dnd-npc`      |
+| `/tools/quest-hook-generator`           | `/generators/quest`        |
 
 The fantasy-name pair has been resolved in #4304: the legacy `/tools/fantasy-name-generator` route remains interactive but declares `/generators/fantasy-names` as its canonical, is excluded from sitemaps, and is marked non-indexable in the intent registry. `/generators/names` is a separate cross-genre tool targeting broader RPG naming intent.
 
