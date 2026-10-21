@@ -49,16 +49,10 @@ const ENGINE_PREFIXES = [
 ];
 
 function filesUnder(directory) {
-  const results = [];
-  if (!existsSync(directory)) return results;
-  for (const item of readdirSync(directory, { withFileTypes: true })) {
-    const path = join(directory, item.name);
-    if (item.isDirectory()) results.push(...filesUnder(path));
-    else if (item.isFile() && /\.(?:svelte|ts|md)$/.test(item.name)) {
-      results.push(path);
-    }
-  }
-  return results;
+  if (!existsSync(directory)) return [];
+  return readdirSync(directory, { withFileTypes: true, recursive: true })
+    .filter((item) => item.isFile() && /\.(?:svelte|ts|md)$/.test(item.name))
+    .map((item) => join(item.parentPath, item.name));
 }
 
 let changed = [];
@@ -73,28 +67,35 @@ try {
       .filter(Boolean)
       .map((file) => file.replaceAll("\\", "/"));
   }
-} catch (err) {
+} catch {
   console.log("Generator copy review: cannot read git diff; review manually.");
   process.exit(0);
 }
 
-const touched = GENERATORS.filter((item) =>
-  showAll ||
-  changed.some(
-    (file) =>
-      ENGINE_PREFIXES.some((prefix) => file.startsWith(prefix)) &&
-      item.changed.test(file),
-  ),
+const touched = GENERATORS.filter(
+  (item) =>
+    showAll ||
+    changed.some(
+      (file) =>
+        ENGINE_PREFIXES.some((prefix) => file.startsWith(prefix)) &&
+        item.changed.test(file),
+    ),
 );
 if (touched.length === 0) {
-  console.log("Generator copy review: no mapped public-generator changes detected.");
+  console.log(
+    "Generator copy review: no mapped public-generator changes detected.",
+  );
   process.exit(0);
 }
 
 const contentFiles = CONTENT_DIRS.flatMap((dir) => filesUnder(join(ROOT, dir)));
 console.log("## Generator → public content review (advisory)");
-console.log("Review these candidates when output fields, capabilities or limitations change.");
-console.log("Mark reviewed/no change needed in the PR; no automatic edits are made.\n");
+console.log(
+  "Review these candidates when output fields, capabilities or limitations change.",
+);
+console.log(
+  "Mark reviewed/no change needed in the PR; no automatic edits are made.\n",
+);
 
 for (const item of touched) {
   const linked = contentFiles
