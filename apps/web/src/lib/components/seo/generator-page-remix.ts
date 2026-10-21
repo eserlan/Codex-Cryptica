@@ -58,3 +58,25 @@ export async function loadGeneratorRemixDraft(
     return null;
   }
 }
+
+/** Coordinate successive route loads without allowing an older request to win. */
+export function createGeneratorRemixLoader(dependencies: {
+  getShared: GeneratorRemixLoaderOptions["getShared"];
+  onReset: () => void;
+  onLoaded: (result: GeneratorRemixResult) => void;
+}) {
+  let loadVersion = 0;
+  return async (remixId: string | null, targetPath: string | undefined) => {
+    const version = ++loadVersion;
+    dependencies.onReset();
+    if (!remixId) return;
+    const result = await loadGeneratorRemixDraft({
+      remixId,
+      targetPath,
+      loadVersion: version,
+      getCurrentLoadVersion: () => loadVersion,
+      getShared: dependencies.getShared,
+    });
+    if (result) dependencies.onLoaded(result);
+  };
+}

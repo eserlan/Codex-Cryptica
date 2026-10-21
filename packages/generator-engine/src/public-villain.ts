@@ -192,11 +192,11 @@ export interface VillainPrompt {
   resolved: ResolvedVillain;
 }
 
-const MOTIF_VARIETY_GUARDRAIL = `Avoid repeatedly expressing the villain's theme through the same symbolic object, image, or vocabulary across sections (e.g. reusing one motif for Signature/Calling Card, Territory/Lair, Methods, and Weakness alike). Once a motif is established in one field, subsequent fields must reveal a different dimension of the villain rather than restating the same image in new words.`;
+export const MOTIF_VARIETY_GUARDRAIL = `Avoid repeatedly expressing the villain's theme through the same symbolic object, image, or vocabulary across sections (e.g. reusing one motif for Signature/Calling Card, Territory/Lair, Methods, and Weakness alike). Once a motif is established in one field, subsequent fields must reveal a different dimension of the villain rather than restating the same image in new words.`;
 
 const CONSISTENCY_PASS = `Before returning, run a consistency pass: no single symbolic motif, object, or turn of phrase should be reused verbatim or near-verbatim across more than one of Signature/Calling Card, Territory/Lair, Methods, Resources, and Weakness/Vulnerability — each of these must add new information rather than re-describing the same image; the multi-stage plan must escalate logically stage-to-stage and remain usable even if a stage is disrupted early (state how disruption changes later stages); the stated weakness must connect coherently to the fatal flaw, methods, or organisation rather than being an unrelated add-on; every lieutenant's stated loyalty and motivation must not contradict the organisation/power structure described elsewhere; and the selected threat scale must be reflected consistently across resources, methods, and the plan's scope — do not describe cosmic-scale resources for a Local-scale villain or vice versa.`;
 
-const OVERUSED_DOMAINS = [
+export const OVERUSED_DOMAINS = [
   "logistics",
   "supply chains",
   "corporate consolidation",
@@ -209,13 +209,24 @@ const OVERUSED_DOMAINS = [
  * *recent* generation history, so the instruction is enforced against real
  * session state rather than only asked for in the abstract (#2325 follow-up).
  */
-function domainVarietyGuardrail(recentDomains: readonly string[]): string {
+export function domainVarietyGuardrail(
+  recentDomains: readonly string[],
+): string {
   const avoidList = OVERUSED_DOMAINS.join(", ");
   const recentNote =
     recentDomains.length > 0
       ? ` Domains used in this session's recent villains, most recent first: ${recentDomains.join(", ")} — vary away from these unless the campaign context specifically calls for a repeat.`
       : "";
   return `Before expanding the villain, identify the dominant conflict domain driving their plan and record it in the "conflictDomain" field (a short 2-5 word label, e.g. "Political Corruption", "Cult Ritual", "Military Conquest", "Personal Vendetta", "Cosmic Incursion", "Criminal Empire", "Ideological Revolution", "Forbidden Magic"). Avoid using ${avoidList} as that dominant domain unless the campaign context explicitly selects one of them, or unless none of these have appeared in recent generations.${recentNote}`;
+}
+
+/** The scale hint for a Superhero villain; other genres get none. */
+export function villainPowerScaleHint(
+  resolved: ResolvedVillain,
+): string | undefined {
+  return resolved.genre === "Superhero / Comic Book"
+    ? SUPERHERO_POWER_SCALE_HINTS[resolved.threatScale as SuperheroPowerScale]
+    : undefined;
 }
 
 export function buildVillainPrompt(
@@ -225,14 +236,7 @@ export function buildVillainPrompt(
   recentDomains: readonly string[] = [],
 ): VillainPrompt {
   const resolved = resolveVillain(options, rng);
-  // Only attach the hint when the genre itself is Superhero — the scale
-  // words (e.g. "City") aren't exclusive to this genre, and a non-superhero
-  // villain that happens to share one as a custom threat scale should not
-  // get superhero-flavoured guidance attached to it.
-  const powerScaleHint =
-    resolved.genre === "Superhero / Comic Book"
-      ? SUPERHERO_POWER_SCALE_HINTS[resolved.threatScale as SuperheroPowerScale]
-      : undefined;
+  const powerScaleHint = villainPowerScaleHint(resolved);
 
   const userMessage = `Generate a campaign-scale BBEG / campaign villain in JSON format. The villain must function as a campaign engine — a clear goal, methods, resources, lieutenants, weaknesses, an escalating plan, discoverable clues, and consequences — not just biography, appearance, and generic villain flavour. British English. System-neutral (no game-system mechanics or stat blocks).
 Options:

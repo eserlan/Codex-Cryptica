@@ -162,6 +162,7 @@ export const whatShouldANewDndPlayerLearnFirst: AnswerConfigInput = {
     "what-should-a-new-dnd-player-know-before-their-first-game",
     "how-do-i-read-a-dnd-character-sheet-as-a-beginner",
     "how-do-i-get-my-friends-interested-in-playing-dnd",
+    "how-do-i-introduce-children-to-dnd-without-overwhelming-them",
   ],
   discovery: {
     id: "answer-new-dnd-player-learn-first",
@@ -189,6 +190,11 @@ export const whatShouldANewDndPlayerLearnFirst: AnswerConfigInput = {
         with: "answer-beginner-start",
         reason:
           "Both help someone enter tabletop RPGs, but the existing page covers the minimum needed to start any RPG while this page focuses on the D&D player's first rules, character choices, and questions for the DM.",
+      },
+      {
+        with: "answer-introduce-children-to-dnd",
+        reason:
+          "This answer prepares a new player to learn their own D&D rules and character choices; the children-focused answer helps an adult teach those rules gradually and run a first session for children aged 8 to 12.",
       },
     ],
   },

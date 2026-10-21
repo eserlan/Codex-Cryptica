@@ -366,9 +366,19 @@ export {
   generateVillainLocal,
   getVillainThreatScales,
   villainConfig,
+  type ResolvedVillain,
   type VillainGeneratorOptions,
   type VillainPrompt,
 } from "./public-villain";
+export {
+  generateVillainStaged,
+  villainStatsLog,
+  VILLAIN_STEPS,
+  type VillainStageId,
+  type VillainStagedDeps,
+  type VillainStagedResult,
+  type VillainStagedStats,
+} from "./villain-staged";
 export {
   buildComicBookEventPrompt,
   parseComicBookEventResponse,

@@ -175,6 +175,7 @@ export const howDoIGetMyRpgPartyToWorkTogether: AnswerConfigInput = {
     "how-do-i-start-a-dnd-campaign",
     "how-do-i-run-a-bard-or-face-without-sidelining-the-party",
     "how-do-i-get-my-friends-interested-in-playing-dnd",
+    "how-do-i-encourage-party-bonding-during-downtime",
   ],
   discovery: {
     id: "answer-party-cohesion",

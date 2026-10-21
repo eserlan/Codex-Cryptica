@@ -20,6 +20,7 @@ export const NON_STREAMABLE_SLUGS: readonly ValidSlug[] = [
   "language-generator",
   "heist",
   "tome",
+  "bbeg-generator",
 ] as const;
 
 export function isStreamableSlug(slug: ValidSlug): boolean {
@@ -37,6 +38,7 @@ const STAGED_SLUGS: readonly ValidSlug[] = [
   "council-vote",
   "heist",
   "tome",
+  "bbeg-generator",
 ] as const;
 
 export function showsStagedProgress(slug: ValidSlug): boolean {
@@ -321,12 +323,16 @@ export function createGeneratorHandlers(
         genre: ctx.getActiveTheme(),
         useAI,
       } as never),
-    "bbeg-generator": (useAI) =>
-      engine.generateVillain({
+    "bbeg-generator": (useAI) => {
+      ctx.onOneShotProgress?.(null);
+      return engine.generateVillain({
         ...(ctx.villain as object),
         genre: ctx.getActiveTheme(),
         useAI,
-      } as never),
+        onProgress: ctx.onOneShotProgress,
+        signal: ctx.oneShotRuns?.start(),
+      } as never);
+    },
     "comic-book-event-generator": (useAI) =>
       engine.generateComicBookEvent({
         ...(ctx.comicBookEvent as object),

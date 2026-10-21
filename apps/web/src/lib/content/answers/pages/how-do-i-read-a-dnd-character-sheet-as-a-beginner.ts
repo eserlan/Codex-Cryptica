@@ -209,6 +209,7 @@ export const howDoIReadADndCharacterSheetAsABeginner: AnswerConfigInput = {
     "what-should-a-new-dnd-player-know-before-their-first-game",
     "which-dice-do-i-roll-in-dnd-and-when",
     "how-do-i-get-my-friends-interested-in-playing-dnd",
+    "how-do-i-introduce-children-to-dnd-without-overwhelming-them",
   ],
   discovery: {
     id: "answer-read-dnd-character-sheet-beginner",

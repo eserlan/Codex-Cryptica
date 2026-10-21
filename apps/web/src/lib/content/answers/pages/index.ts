@@ -1,6 +1,7 @@
 import { AnswerConfigSchema, type AnswerConfig } from "../schema";
 import { canMultipleGodsShareADomain } from "./can-multiple-gods-share-a-domain";
 import { canYouPlayATabletopRpgIn30MinuteSessions } from "./can-you-play-a-tabletop-rpg-in-30-minute-sessions";
+import { howCanIPractiseBeingADungeonMasterWithoutAGroup } from "./how-can-i-practise-being-a-dungeon-master-without-a-group";
 import { howCommonShouldMagicBeInAFantasyWorld } from "./how-common-should-magic-be-in-a-fantasy-world";
 import { howDoFantasyCitiesDefendAgainstFlyingCreaturesAndTeleportation } from "./how-do-fantasy-cities-defend-against-flying-creatures-and-teleportation";
 import { howDoIBalanceRpgCombatEncountersWithoutATpk } from "./how-do-i-balance-rpg-combat-encounters-without-a-tpk";
@@ -10,6 +11,7 @@ import { howDoICombineMultipleEnemiesIntoOneSquadInAnRpg } from "./how-do-i-comb
 import { howDoICreateInterestingIslandsAndPortsForAPirateCampaign } from "./how-do-i-create-interesting-islands-and-ports-for-a-pirate-campaign";
 import { howDoIDecideWhatASettlementProducesImportsAndExports } from "./how-do-i-decide-what-a-settlement-produces-imports-and-exports";
 import { howDoIDesignAGeographicallyRealisticTownOrVillage } from "./how-do-i-design-a-geographically-realistic-town-or-village";
+import { howDoIEncouragePartyBondingDuringDowntime } from "./how-do-i-encourage-party-bonding-during-downtime";
 import { howDoIExpandASimpleRpgCampaignIdea } from "./how-do-i-expand-a-simple-rpg-campaign-idea";
 import { howDoIFindATabletopRpgGroupToPlayWith } from "./how-do-i-find-a-tabletop-rpg-group-to-play-with";
 import { howDoIGetMyFriendsInterestedInPlayingDnd } from "./how-do-i-get-my-friends-interested-in-playing-dnd";
@@ -22,6 +24,7 @@ import { howDoIHandleDivinationMagicWithoutLettingOneCharacterSolveEveryMystery 
 import { howDoIHandlePlayersAskingAnNpcToTellUsEverythingYouKnow } from "./how-do-i-handle-players-asking-an-npc-to-tell-us-everything-you-know";
 import { howDoIHandlePlayersWhoKeepTryingToRecruitDefeatedEnemies } from "./how-do-i-handle-players-who-keep-trying-to-recruit-defeated-enemies";
 import { howDoIImproviseNpcsInDnd } from "./how-do-i-improvise-npcs-in-dnd";
+import { howDoIIntroduceChildrenToDndWithoutOverwhelmingThem } from "./how-do-i-introduce-children-to-dnd-without-overwhelming-them";
 import { howDoIKeepPlayersEngagedDuringOtherPlayersTurnsInCombat } from "./how-do-i-keep-players-engaged-during-other-players-turns-in-combat";
 import { howDoIMakeACampaignThreatFeelUrgentWithoutRailroading } from "./how-do-i-make-a-campaign-threat-feel-urgent-without-railroading";
 import { howDoIMakeAPlayerBaseMatterInAnRpgCampaign } from "./how-do-i-make-a-player-base-matter-in-an-rpg-campaign";
@@ -182,6 +185,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
   [
     canMultipleGodsShareADomain,
     canYouPlayATabletopRpgIn30MinuteSessions,
+    howCanIPractiseBeingADungeonMasterWithoutAGroup,
     howCommonShouldMagicBeInAFantasyWorld,
     howDoFantasyCitiesDefendAgainstFlyingCreaturesAndTeleportation,
     howDoIBalanceRpgCombatEncountersWithoutATpk,
@@ -191,6 +195,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoICreateInterestingIslandsAndPortsForAPirateCampaign,
     howDoIDecideWhatASettlementProducesImportsAndExports,
     howDoIDesignAGeographicallyRealisticTownOrVillage,
+    howDoIEncouragePartyBondingDuringDowntime,
     howDoIExpandASimpleRpgCampaignIdea,
     howDoIFindATabletopRpgGroupToPlayWith,
     howDoIGetMyFriendsInterestedInPlayingDnd,
@@ -203,6 +208,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIHandlePlayersAskingAnNpcToTellUsEverythingYouKnow,
     howDoIHandlePlayersWhoKeepTryingToRecruitDefeatedEnemies,
     howDoIImproviseNpcsInDnd,
+    howDoIIntroduceChildrenToDndWithoutOverwhelmingThem,
     howDoIKeepPlayersEngagedDuringOtherPlayersTurnsInCombat,
     howDoIMakeACampaignThreatFeelUrgentWithoutRailroading,
     howDoIMakeAPlayerBaseMatterInAnRpgCampaign,

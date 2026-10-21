@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   loadGeneratorRemixDraft,
+  createGeneratorRemixLoader,
   type GeneratorRemixLoaderOptions,
 } from "./generator-page-remix";
 
@@ -86,5 +87,85 @@ describe("loadGeneratorRemixDraft", () => {
     for (const loaderOptions of cases) {
       await expect(loadGeneratorRemixDraft(loaderOptions)).resolves.toBeNull();
     }
+  });
+});
+
+describe("successive remix route loads", () => {
+  function loader(getShared = vi.fn().mockResolvedValue(makeShare())) {
+    const onReset = vi.fn();
+    const onLoaded = vi.fn();
+    return {
+      getShared,
+      onReset,
+      onLoaded,
+      load: createGeneratorRemixLoader({ getShared, onReset, onLoaded }),
+    };
+  }
+
+  it("clears the previous draft and publishes a matching result", async () => {
+    const state = loader();
+    await state.load("share-1", "/generators/npc");
+    expect(state.onReset).toHaveBeenCalledOnce();
+    expect(state.onLoaded).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({
+        theme: "Classic Fantasy",
+        draft: expect.objectContaining({ title: "Shared result" }),
+      }),
+    );
+    expect(state.onReset.mock.invocationCallOrder[0]).toBeLessThan(
+      state.onLoaded.mock.invocationCallOrder[0]!,
+    );
+  });
+
+  it("drops an older result after a newer route loads", async () => {
+    let finish!: (value: ShareFixture) => void;
+    const getShared = vi
+      .fn()
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            finish = resolve;
+          }),
+      )
+      .mockResolvedValueOnce(makeShare({ title: "New result" }));
+    const state = loader(getShared);
+    const old = state.load("old", "/generators/npc");
+    await state.load("new", "/generators/npc");
+    finish(makeShare());
+    await old;
+    expect(state.onLoaded).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({
+        draft: expect.objectContaining({ title: "New result" }),
+      }),
+    );
+    expect(state.onReset).toHaveBeenCalledTimes(2);
+  });
+
+  it("invalidates a pending share when navigating to a route without a remix", async () => {
+    let finish!: (value: ShareFixture) => void;
+    const state = loader(
+      vi.fn(
+        () =>
+          new Promise((resolve) => {
+            finish = resolve;
+          }),
+      ),
+    );
+    const pending = state.load("old", "/generators/npc");
+    await state.load(null, "/generators/quest");
+    finish(makeShare());
+    await pending;
+    expect(state.getShared).toHaveBeenCalledOnce();
+    expect(state.onLoaded).not.toHaveBeenCalled();
+    expect(state.onReset).toHaveBeenCalledTimes(2);
+  });
+
+  it("leaves the normal page usable after a share fails", async () => {
+    const state = loader(vi.fn().mockRejectedValue(new Error("offline")));
+    await expect(
+      state.load("missing", "/generators/npc"),
+    ).resolves.toBeUndefined();
+    expect(state.onReset).toHaveBeenCalledOnce();
+    expect(state.onLoaded).not.toHaveBeenCalled();
   });
 });

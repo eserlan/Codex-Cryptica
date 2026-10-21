@@ -1,3 +1,16 @@
+import {
+  personalityConfig,
+  businessConfig,
+  rumourConfig,
+  puzzleConfig,
+} from "$lib/services/seo/generator-config";
+import {
+  mapShipGenreToTheme,
+  mapWorldGenreToTheme,
+  mapStarSystemGenreToTheme,
+  mapAlienRaceGenreToTheme,
+} from "./generator-theme-maps";
+
 export type SetActiveTheme = (theme: string) => void;
 
 export function createKnownGenreThemeChangeHandler(
@@ -20,5 +33,38 @@ export function createMappedThemeChangeHandler(
     if (theme) {
       setActiveTheme(theme);
     }
+  };
+}
+
+/** Genre-change callbacks shared by the public page's form bindings. */
+export function createPageGenreChangeHandlers(setActiveTheme: SetActiveTheme) {
+  return {
+    personality: createKnownGenreThemeChangeHandler(
+      setActiveTheme,
+      personalityConfig.genres,
+    ),
+    business: createKnownGenreThemeChangeHandler(
+      setActiveTheme,
+      businessConfig.genres,
+    ),
+    rumour: createKnownGenreThemeChangeHandler(
+      setActiveTheme,
+      rumourConfig.genres,
+    ),
+    puzzle: createKnownGenreThemeChangeHandler(
+      setActiveTheme,
+      puzzleConfig.genres,
+    ),
+    ship: createMappedThemeChangeHandler(setActiveTheme, mapShipGenreToTheme),
+    world: createMappedThemeChangeHandler(setActiveTheme, mapWorldGenreToTheme),
+    starSystem: createMappedThemeChangeHandler(
+      setActiveTheme,
+      mapStarSystemGenreToTheme,
+    ),
+    alienRace: createMappedThemeChangeHandler(
+      setActiveTheme,
+      mapAlienRaceGenreToTheme,
+    ),
+    creature: createMappedThemeChangeHandler(setActiveTheme, (genre) => genre),
   };
 }
