@@ -205,6 +205,7 @@ export const howDoIHandlePlayersAskingAnNpcToTellUsEverythingYouKnow: AnswerConf
       "how-do-i-prepare-a-dnd-session",
       "how-do-i-roleplay-npcs-if-im-not-good-at-acting",
       "how-do-i-handle-players-who-keep-trying-to-recruit-defeated-enemies",
+      "how-do-you-handle-players-reaching-the-wrong-conclusion-in-an-rpg-mystery",
     ],
     discovery: {
       id: "answer-npc-tell-us-everything",
