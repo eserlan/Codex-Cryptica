@@ -1535,6 +1535,30 @@ describe("published answers", () => {
     }
   });
 
+  it("publishes the point crawl answer with its copyable worked example", () => {
+    const pointCrawlAnswer =
+      answers["how-do-you-build-a-point-crawl-for-an-rpg"];
+    const example = pointCrawlAnswer.sections.find(
+      (section) => section.kind === "example",
+    )!;
+    expect(example.items!.map((item) => item.term)).toEqual([
+      "Nodes",
+      "Routes",
+      "Consequences to track",
+    ]);
+
+    const [nodes, routes, consequences] = example.items!;
+    expect(nodes!.text).toMatch(
+      /Oakhaven \(start and rumour board\); Toll Bridge \(watched crossing\); Reed Causeway \(muddy but unwatched\); Old Watchtower \(high ground and a clear view\); Hermit's Cairn \(a guide knows a hidden track\); Morzan's Crypt \(the goal\)/,
+    );
+    expect(routes!.text).toMatch(
+      /Oakhaven to Toll Bridge[\s\S]*Oakhaven to Reed Causeway[\s\S]*Watchtower to Crypt[\s\S]*Hermit's Cairn to Crypt[\s\S]*Watchtower to Toll Bridge/,
+    );
+    expect(consequences!.text).toMatch(
+      /The rival reaches the crypt first[\s\S]*arrives unseen/,
+    );
+  });
+
   it("publishes the sci-fi star system answer with the expected system references", () => {
     const starSystemAnswer =
       answers["how-to-create-a-sci-fi-star-system-for-an-rpg"];
