@@ -1,5 +1,5 @@
 {
-  "updated_at": 1792616273,
+  "updated_at": 1792617634,
   "candidates": [
     {
       "id": "reddit-39280708572-hex-journey-mode-plan-a-route-and-walk-i",
@@ -32,14 +32,14 @@
       "created_at": 1792537395
     },
     {
-      "id": "reddit-39665758623-i-wanted-to-practise-dming-without-booki",
-      "title": "I wanted to practise DMing without booking a group to watch me learn",
-      "body": "I kept waiting until game night to find out if I could frame a scene, run an NPC conversation or track a round cleanly, and the table paid for the hesitation.\n\nI wrote a guide for practising being a Dungeon Master without a group. It is a set of short solo drills you can run at home before facing players.\n\nRead it here: https://codexcryptica.com/answers/how-can-i-practise-being-a-dungeon-master-without-a-group\n\nYou can rehearse:\n- a repeatable loop: describe situation, ask what the character does, call for a roll only when failure would change things\n- pacing and rulings by timing rule lookups and noting where you hesitated\n- NPC roleplay from one want and one boundary with three unscripted answers\n- encounter prep and a single combat round against the clock without losing track\n\nA drill cannot replace real players surprising you, and that is the point \u2014 I treat this as preparation for a tiny first session, not as a replacement for one.\n\nWhich part still feels shakiest when you rehearse alone \u2014 keeping the scene moving, finding the rule, or keeping the NPC consistent?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-39665758623-1.png)",
-      "url": "https://codexcryptica.com/answers/how-can-i-practise-being-a-dungeon-master-without-a-group",
-      "image_url": "https://assets.codexcryptica.com/announcements/release-39665758623-1.png",
+      "id": "reddit-39665758623-my-party-kept-going-to-separate-houses-a",
+      "title": "My party kept going to separate houses after a mission, so I stopped forcing a shared house",
+      "body": "After every mission the characters went home and the table had no natural place to talk. Pushing them into one house or asking for feelings on command just made it awkward.\n\nI wrote a guide for encouraging party bonding during downtime without forcing roleplay. It treats it as a preference question first, then offers low-pressure options.\n\nRead it here: https://codexcryptica.com/answers/how-do-i-encourage-party-bonding-during-downtime\n\nIt covers:\n- asking the table what kind of downtime they want, mission by mission, with no penalty for skipping\n- shared reasons to meet that already exist: debriefs, loot to divide, a common contact to check on\n- optional places that are not shared housing \u2014 a tavern table, guild room, market evening or rooftop spot\n- debriefs, shared meals and montages where anyone can pass or summarise in third person and it still counts\n\nThe tradeoff is real: recurring invitations feel natural but take a session or two to catch on. A one-off summons gets attendance but reads as a plot requirement.\n\nWhat low-pressure moment actually got your party to linger \u2014 a meal, a debrief, or just a place you left in town for them to choose?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-39665758623-2.png)",
+      "url": "https://codexcryptica.com/answers/how-do-i-encourage-party-bonding-during-downtime",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-39665758623-2.png",
       "source_id": "39665758623",
       "status": "approved",
-      "created_at": 1792616273
+      "created_at": 1792617634
     }
   ]
 }
