@@ -203,7 +203,12 @@ function createStageRunner(deps: VillainStagedDeps, run: VillainRunState) {
   ) => {
     let lastHard: string[] = [];
     const result = await runCheckedStage(
-      deps.complete,
+      async (systemInstruction, userMessage) => {
+        // A retry may be unreadable and skip the check, so clear the prior
+        // attempt's findings before asking the model again.
+        lastHard = [];
+        return deps.complete(systemInstruction, userMessage);
+      },
       run,
       {
         id,

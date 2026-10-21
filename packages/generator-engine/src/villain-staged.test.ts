@@ -42,6 +42,7 @@ const resolved: ResolvedVillain = buildVillainPrompt(
 ).resolved;
 
 interface Script {
+  rawReplies?: Record<string, string[]>;
   concept?: JsonObject[];
   organisation?: JsonObject[];
   plan?: JsonObject[];
@@ -87,6 +88,8 @@ function scriptedModel(script: Script = {}) {
     script.onCall?.(marker);
     const reply = replies[marker];
     if (!reply) throw new Error(`unexpected message: ${message.slice(0, 60)}`);
+    const rawReplies = script.rawReplies?.[marker];
+    if (rawReplies) return pick(`raw:${marker}`, rawReplies);
     return reply();
   });
   return { complete, messages };
@@ -291,6 +294,22 @@ describe("generateVillainStaged", () => {
     const model = scriptedModel();
     model.complete.mockImplementation(async () => "not json at all");
     await run(model, { onStats });
+    expect(
+      (onStats.mock.calls[0][0] as VillainStagedStats).stoppedProblems,
+    ).toEqual(["the reply was not a usable JSON object"]);
+  });
+
+  it("reports an unreadable retry instead of the previous hard failure", async () => {
+    const { title: _title, ...noTitle } = VALID_CONCEPT;
+    const model = scriptedModel({
+      rawReplies: {
+        "STAGE 1 OF 4": [JSON.stringify(noTitle), "not json at all"],
+      },
+    });
+    const onStats = vi.fn();
+
+    await run(model, { onStats });
+
     expect(
       (onStats.mock.calls[0][0] as VillainStagedStats).stoppedProblems,
     ).toEqual(["the reply was not a usable JSON object"]);
