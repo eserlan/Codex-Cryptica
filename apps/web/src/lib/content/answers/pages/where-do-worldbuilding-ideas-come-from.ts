@@ -99,9 +99,9 @@ export const whereDoWorldbuildingIdeasComeFrom: AnswerConfigInput = {
     },
     {
       kind: "checklist",
-      heading: "A five-minute exercise for a first idea",
+      heading: "An exercise for a first idea",
       intro:
-        "Set a timer and keep each step to a sentence or two. Rough answers are the point:",
+        "Work through each step at your own pace, keeping each to a sentence or two. Rough answers are the point:",
       items: [
         "Pick one spark from your notebook, your surroundings or a story you remember: a place, a job, a custom or an event.",
         "Change one thing about it and write the change as a single plain sentence.",
@@ -165,7 +165,7 @@ export const whereDoWorldbuildingIdeasComeFrom: AnswerConfigInput = {
   seo: {
     title: "Where Do Worldbuilding Ideas Come From? | Codex Cryptica",
     description:
-      "Worldbuilding ideas come from noticed details, changed rules and followed consequences. Four techniques, a worked river delta example and a five-minute beginner exercise.",
+      "Worldbuilding ideas come from noticed details, changed rules and followed consequences. Four techniques, a worked river delta example and a beginner exercise.",
     image:
       "https://assets.codexcryptica.com/og/where-do-worldbuilding-ideas-come-from.jpg",
     imageAlt:

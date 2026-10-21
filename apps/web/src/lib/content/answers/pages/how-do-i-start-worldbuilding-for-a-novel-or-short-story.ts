@@ -207,6 +207,11 @@ export const howDoIStartWorldbuildingForANovelOrShortStory: AnswerConfigInput =
           reason:
             "The existing answer provides a GM-focused local sandbox for tabletop play, whereas this answer provides a fiction-writer method that starts from premise and viewpoint and expands through drafting.",
         },
+        {
+          with: "answer-worldbuilding-ideas-inspiration",
+          reason:
+            "This answer builds the setting needed for a story from an existing premise and viewpoint, whereas the ideas answer helps writers find and test a spark before choosing a story to develop.",
+        },
       ],
       relatedIntents: [
         "answer-worldbuilding-from-scratch",
