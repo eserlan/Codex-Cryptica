@@ -583,15 +583,15 @@ export function sharesTerm(a: string, b: string): boolean {
   return false;
 }
 
-/** The chain must have one short step per plan stage. */
+/** The chain must have one short step per required plan stage. */
 export function dependencyChainProblems(
   chain: readonly string[],
-  stageCount: number,
+  requiredCount: number,
 ): string[] {
   const problems: string[] = [];
-  if (chain.length !== stageCount) {
+  if (chain.length !== requiredCount) {
     problems.push(
-      `dependencyChain has ${chain.length} steps but the plan has ${stageCount} stages. Give one short step per stage, in order.`,
+      `dependencyChain has ${chain.length} steps but the plan has ${requiredCount} required stages. Give one short step per required stage, in order, and leave conditional stages out.`,
     );
   }
   if (new Set(chain.map((s) => s.trim().toLowerCase())).size < chain.length) {

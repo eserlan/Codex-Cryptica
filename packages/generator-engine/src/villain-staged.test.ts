@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   checkVillainConcept,
   checkVillainOrganisation,
+  checkVillainEnding,
   checkVillainPlan,
   generateVillainStaged,
   villainCoherenceFindings,
@@ -13,6 +14,7 @@ import { buildVillainPrompt, type ResolvedVillain } from "./public-villain";
 import type { JsonObject } from "./staged-runtime";
 import type { StagedProgressStep } from "./staged-progress";
 import { planVillainAxes } from "./villain-diversity";
+import { stagePlanProblems } from "./villain-staged-checks";
 import {
   VALID_CONCEPT,
   VALID_ENDING,
@@ -127,7 +129,24 @@ describe("generateVillainStaged", () => {
     ]) {
       expect(lore).toContain(heading);
     }
-    expect(lore).toContain("Dependency chain: raise tolls → withdraw licences");
+    expect(lore).toContain(
+      "Dependency chain (required stages): raise tolls → withdraw licences",
+    );
+    expect(lore).toContain(
+      "Timeline: Twenty-one days to the midsummer charter",
+    );
+    expect(lore).toContain(
+      "### Villain at a Glance\n- Wants every harbour toll",
+    );
+    // A conditional diversion says so, and what sets it off.
+    expect(lore).toContain(
+      "**Stage 5: Chase the fled clerk** — Conditional diversion, only if the clerk who forged the notices is found. Timing: Any time after Day 9.",
+    );
+    expect(lore).toContain(
+      "**Stage 1: Raise the tolls** — Required. Timing: Days 1-5.",
+    );
+    // A disruption names the later stage it changes.
+    expect(lore).toContain("Effect on Stage 6: The charter hearing opens");
   });
 
   it("fixes the assigned structure before any prose and states it from the plan", async () => {
@@ -138,7 +157,7 @@ describe("generateVillainStaged", () => {
     const orgLabel = /- Organisation: ([^—]+) —/.exec(stage1)![1].trim();
     // Later stages see the same assigned choice, and the output labels it.
     expect(model.messages[1]).toContain(`- Organisation: ${orgLabel}`);
-    expect(result!.output.lore).toContain(`**${orgLabel}.**`);
+    expect(result!.output.lore).not.toContain(orgLabel);
   });
 
   it("keeps the awareness of each lieutenant from the plan, not the model", async () => {
@@ -593,10 +612,131 @@ describe("stage checks", () => {
       checkVillainPlan({ ...VALID_PLAN, stages: [null, ...stages.slice(1)] })
         .hard.length,
     ).toBeGreaterThan(0);
-    const eight = [...stages, ...stages.slice(0, 3)];
+    const eight = [...stages, ...stages.slice(0, 2)];
     expect(checkVillainPlan({ ...VALID_PLAN, stages: eight }).hard).toContain(
       "give 5 to 7 plan stages (you gave 8)",
     );
+  });
+});
+
+describe("stagePlanProblems", () => {
+  const stages = VALID_PLAN.stages as JsonObject[];
+  const patch = (i: number, change: JsonObject) =>
+    stages.map((s, j) => (j === i ? { ...s, ...change } : s));
+
+  it("accepts a plan with a conditional diversion and downstream effects", () => {
+    expect(stagePlanProblems(stages)).toEqual([]);
+  });
+
+  it.each([
+    ["no kind", patch(0, { kind: undefined }), "stage 1 needs a kind"],
+    ["an unknown kind", patch(0, { kind: "optional" }), "stage 1 needs a kind"],
+    ["no timing", patch(1, { timing: "" }), 'stage 2 has no "timing"'],
+    [
+      "a conditional stage with no trigger",
+      patch(4, { trigger: "" }),
+      'stage 5 is conditional but has no "trigger"',
+    ],
+    [
+      "no effect on a required stage",
+      patch(0, { disruptionEffect: undefined }),
+      'required stage 1 needs a "disruptionEffect"',
+    ],
+    [
+      "an effect that points backwards",
+      patch(2, { disruptionEffect: { stage: 2, change: "Worse." } }),
+      "stage 3's disruptionEffect must name a later stage",
+    ],
+    [
+      "an effect that points past the plan",
+      patch(0, { disruptionEffect: { stage: 9, change: "Worse." } }),
+      "stage 1's disruptionEffect must name a later stage",
+    ],
+    [
+      "a last stage that is conditional",
+      patch(5, { kind: "conditional", trigger: "t" }),
+      "the last stage must be required",
+    ],
+  ])("flags %s", (_label, changed, expected) => {
+    expect(stagePlanProblems(changed).join(" | ")).toContain(expected);
+  });
+
+  it("flags a plan with fewer than four required stages", () => {
+    const mostlyConditional = stages.map((s, i) =>
+      i > 0 && i < 4 ? { ...s, kind: "conditional", trigger: "t" } : s,
+    );
+    expect(stagePlanProblems(mostlyConditional).join(" ")).toContain(
+      "at least four stages must be required",
+    );
+  });
+
+  it("does not ask the last required stage for an effect, nor a conditional one", () => {
+    const problems = stagePlanProblems(stages).join(" ");
+    expect(problems).not.toContain("required stage 6");
+    expect(problems).not.toContain("required stage 5");
+  });
+
+  it("asks for a dependency chain with one step per required stage, not per stage", () => {
+    const soft = checkVillainPlan({
+      ...VALID_PLAN,
+      dependencyChain: ["a", "b", "c", "d", "e", "f"],
+    }).soft;
+    expect(soft.join(" ")).toContain("5 required stages");
+    expect(checkVillainPlan(VALID_PLAN).soft).toEqual([]);
+  });
+
+  it("asks for a timeline", () => {
+    expect(checkVillainPlan({ ...VALID_PLAN, timeline: "" }).soft).toEqual([
+      '"timeline" is missing or empty',
+    ]);
+  });
+});
+
+describe("copy", () => {
+  const lieutenants = VALID_ORGANISATION.lieutenants as JsonObject[];
+  const withLieutenant = (change: JsonObject) => ({
+    ...VALID_ORGANISATION,
+    lieutenants: lieutenants.map((l, i) => (i === 0 ? { ...l, ...change } : l)),
+  });
+
+  it("never doubles a full stop, whichever way the model ended each field", async () => {
+    const model = scriptedModel({
+      organisation: [
+        withLieutenant({
+          role: "Spokesman who reads the tolls aloud.",
+          relationship: "A rival who wants the chair.",
+          motivation: "Wants the chair!",
+          loyalty: "Conditional",
+          secret: "Courts the guilds?",
+        }),
+      ],
+    });
+    const { output } = (await run(model))!;
+    expect(output.lore).not.toContain("..");
+    expect(output.lore).toContain(
+      "**Tobias Arlen** — Spokesman who reads the tolls aloud. Relationship: A rival who wants the chair. Motivation: Wants the chair! Loyalty: Conditional. Secret or agenda: Courts the guilds? Awareness:",
+    );
+  });
+
+  it("does not print the assigned kinds as headings", async () => {
+    const model = scriptedModel();
+    const stage1 = (await run(model))!;
+    const assigned = [
+      ...model.messages[0].matchAll(
+        /- (?:Organisation|Fatal flaw|Weak point|Price of defeating them): ([^—]+) —/g,
+      ),
+    ].map((m) => m[1].trim());
+    expect(assigned).toHaveLength(4);
+    for (const label of assigned) {
+      expect(stage1.output.lore).not.toContain(`**${label}.**`);
+    }
+  });
+
+  it("leaves out the glance section when the ending has none", async () => {
+    const { atAGlance: _glance, ...noGlance } = VALID_ENDING;
+    const result = await run(scriptedModel({ ending: [noGlance, noGlance] }));
+    expect(result!.output.lore).not.toContain("Villain at a Glance");
+    expect(checkVillainEnding(noGlance).soft.join(" ")).toContain("atAGlance");
   });
 });
 

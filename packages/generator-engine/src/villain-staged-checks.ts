@@ -189,7 +189,78 @@ export function checkVillainPlan(data: JsonObject): DraftCheck {
     hard.push(`"personalConnections" needs 2 to ${MAX_LISTED} hooks`);
   }
   const chain = list(data.dependencyChain).map(str).filter(Boolean);
-  return { hard, soft: dependencyChainProblems(chain, stages.length) };
+  const required = stages.filter((s) => stageKind(s) === "required").length;
+  return {
+    hard,
+    soft: [
+      ...dependencyChainProblems(chain, required),
+      ...stagePlanProblems(stages),
+      ...(str(data.timeline) ? [] : ['"timeline" is missing or empty']),
+    ],
+  };
+}
+
+/** A stage with no kind counts as required, so a model that omits it still gets a plan. */
+function stageKind(stage: JsonObject): "required" | "conditional" {
+  return str(stage.kind).toLowerCase() === "conditional"
+    ? "conditional"
+    : "required";
+}
+
+/**
+ * Problems with how the stages relate, all soft: a model that leaves these out
+ * has still written a plan. Looks at structure the model returned as fields
+ * (kind, trigger, timing, disruptionEffect), not at prose.
+ */
+export function stagePlanProblems(stages: readonly JsonObject[]): string[] {
+  const problems = stages.flatMap((s, i) =>
+    singleStageProblems(s, i + 1, stages.length),
+  );
+  const last = stages[stages.length - 1];
+  if (last && stageKind(last) !== "required") {
+    problems.push("the last stage must be required");
+  }
+  if (stages.filter((s) => stageKind(s) === "required").length < 4) {
+    problems.push("at least four stages must be required");
+  }
+  return problems;
+}
+
+/** What one stage still needs: its kind, timing, trigger and downstream effect. */
+function singleStageProblems(
+  stage: JsonObject,
+  n: number,
+  count: number,
+): string[] {
+  const problems: string[] = [];
+  const kind = str(stage.kind).toLowerCase();
+  if (kind !== "required" && kind !== "conditional") {
+    problems.push(`stage ${n} needs a kind of "required" or "conditional"`);
+  }
+  if (!str(stage.timing)) problems.push(`stage ${n} has no "timing"`);
+  if (stageKind(stage) === "conditional" && !str(stage.trigger)) {
+    problems.push(`stage ${n} is conditional but has no "trigger"`);
+  }
+  if (stageKind(stage) === "required" && n < count) {
+    const effect = effectProblem(rec(stage.disruptionEffect), n, count);
+    if (effect) problems.push(effect);
+  }
+  return problems;
+}
+
+/** A required stage that is not the last must say how a later stage changes. */
+function effectProblem(
+  effect: JsonObject,
+  n: number,
+  count: number,
+): string | null {
+  if (!str(effect.change)) {
+    return `required stage ${n} needs a "disruptionEffect" naming how a later stage changes`;
+  }
+  const target = Number(effect.stage);
+  return Number.isInteger(target) && target > n && target <= count
+    ? null
+    : `stage ${n}'s disruptionEffect must name a later stage number (2 to ${count})`;
 }
 
 /** Stage 4: weakness, moral complication and finale. */
@@ -200,9 +271,13 @@ export function checkVillainEnding(data: JsonObject): DraftCheck {
     "finalConfrontation",
     "ifDefeated",
   ]);
+  const glance = list(data.atAGlance).map(str).filter(Boolean).length;
   const soft = [
     masterObjectProblem(str(data.weakness)),
     powerVacuumProblem(str(data.moralComplication)),
+    glance < 4 || glance > 8
+      ? '"atAGlance" needs 5 to 7 one-line bullets'
+      : null,
   ].filter((p): p is string => p !== null);
   return { hard, soft };
 }
@@ -275,26 +350,45 @@ export function isRepairableField(field: string): field is RepairableField {
   return Object.hasOwn(REPAIRABLE_FIELDS, field);
 }
 
-const tag = (label: string, text: string): string => `**${label}.** ${text}`;
+/** Text without its closing punctuation, so a joiner can add its own. */
+const bare = (text: unknown): string => str(text).replace(/[.!?\s]+$/, "");
+
+/** Text ending in one full stop, however the model ended it. */
+const sentence = (text: unknown): string => {
+  const t = str(text);
+  return /[.!?]$/.test(t) ? t : `${t}.`;
+};
 
 function lieutenantLine(
   l: JsonObject,
   slot?: VillainAxes["lieutenants"][number],
 ): string {
   const awareness = slot ? ` Awareness: ${slot.awareness}.` : "";
-  return `- **${str(l.name)}** — ${str(l.role)}. Relationship: ${str(l.relationship)} Motivation: ${str(l.motivation)} Loyalty: ${str(l.loyalty)} Secret or agenda: ${str(l.secret)}${awareness}`;
+  return `- **${str(l.name)}** — ${bare(l.role)}. Relationship: ${sentence(l.relationship)} Motivation: ${sentence(l.motivation)} Loyalty: ${sentence(l.loyalty)} Secret or agenda: ${sentence(l.secret)}${awareness}`;
+}
+
+function stageBlock(s: JsonObject, i: number): string {
+  const conditional = stageKind(s) === "conditional";
+  const kind = conditional
+    ? `Conditional diversion, only if ${bare(s.trigger) || "the situation arises"}`
+    : "Required";
+  const effect = rec(s.disruptionEffect);
+  const target = Number(effect.stage);
+  const downstream =
+    str(effect.change) && Number.isInteger(target)
+      ? `\nEffect on Stage ${target}: ${sentence(effect.change)}`
+      : "";
+  return `**Stage ${i + 1}: ${str(s.name)}** — ${kind}${str(s.timing) ? `. Timing: ${bare(s.timing)}` : ""}.\nObjective: ${str(s.objective)}\nActions: ${str(s.actions)}\nClues: ${str(s.clues)}\nIf it succeeds: ${str(s.consequences)}\nPlayer interference: ${str(s.interference)}\nIf disrupted: ${str(s.disruption)}${downstream}`;
 }
 
 function planBlock(plan: JsonObject): string {
-  const stages = list(plan.stages)
-    .map(rec)
-    .map(
-      (s, i) =>
-        `**Stage ${i + 1}: ${str(s.name)}**\nObjective: ${str(s.objective)}\nActions: ${str(s.actions)}\nClues: ${str(s.clues)}\nIf it succeeds: ${str(s.consequences)}\nPlayer interference: ${str(s.interference)}\nIf disrupted: ${str(s.disruption)}`,
-    );
+  const stages = list(plan.stages).map(rec).map(stageBlock);
   const chain = list(plan.dependencyChain).map(str).filter(Boolean);
   return [
-    chain.length ? `Dependency chain: ${chain.join(" → ")}` : "",
+    str(plan.timeline) ? `Timeline: ${str(plan.timeline)}` : "",
+    chain.length
+      ? `Dependency chain (required stages): ${chain.join(" → ")}`
+      : "",
     ...stages,
   ]
     .filter(Boolean)
@@ -321,24 +415,28 @@ export function assembleVillain(
     `### Signature / Calling Card\n${str(concept.signature)}`,
     `### First Signs\n${signs.map((s) => `- ${s}`).join("\n")}`,
   ].join("\n\n");
+  const glance = list(ending.atAGlance).map(str).filter(Boolean);
   const lore = [
+    ...(glance.length
+      ? [`### Villain at a Glance\n${glance.map((g) => `- ${g}`).join("\n")}`]
+      : []),
     `### Core Concept\n${str(concept.coreConcept)}`,
     `### True Nature\n${str(concept.trueNature)}`,
     `### Ultimate Goal\n${str(concept.ultimateGoal)}`,
     `### Why Now\n${str(concept.whyNow)}`,
     `### Motivation\n${str(concept.motivation)}`,
-    `### Fatal Flaw\n${tag(axes.flaw.label, str(concept.fatalFlaw))}`,
+    `### Fatal Flaw\n${str(concept.fatalFlaw)}`,
     `### Methods\n${str(concept.methods)}`,
     `### Resources\n${str(concept.resources)}`,
     `### Lieutenants & Inner Circle\n${lieutenants.map((l, i) => lieutenantLine(l, axes.lieutenants[i])).join("\n")}`,
-    `### Organisation & Power Structure\n${tag(axes.organisation.label, str(organisation.organisation))}`,
+    `### Organisation & Power Structure\n${str(organisation.organisation)}`,
     `### Territory / Lair\n${str(organisation.territory)}`,
     `### The Villain's Plan\n${planBlock(plan)}`,
     `### Escalation If Ignored\n${str(plan.escalation)}`,
     `### Discovery Layers\n**What the World Knows**: ${str(discovery.world)}\n**What Their Servants Know**: ${str(discovery.servants)}\n**GM-Only Truth**: ${str(discovery.gmOnly)}`,
     `### Personal Connections\n${connections.map((c) => `- ${c}`).join("\n")}`,
-    `### Weakness / Vulnerability\n${tag(axes.vulnerability.label, str(ending.weakness))}`,
-    `### Moral Complication\n${tag(axes.complication.label, str(ending.moralComplication))}`,
+    `### Weakness / Vulnerability\n${str(ending.weakness)}`,
+    `### Moral Complication\n${str(ending.moralComplication)}`,
     `### Final Confrontation\n${str(ending.finalConfrontation)}`,
     `### If Defeated\n${str(ending.ifDefeated)}`,
   ].join("\n\n");

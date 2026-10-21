@@ -85,7 +85,7 @@ ${settingBlock(resolved, plan, ctx)}
 Write what the villain is, wants and gets wrong. British English, system-neutral. Their working title is "${resolved.villainName}"; keep it or improve on it.
 - conflictDomain: a 2-5 word label for the dominant conflict domain. ${domainVarietyGuardrail(ctx.recentDomains ?? [])}
 - ultimateGoal: a concrete end state, never "gain power" or "conquer the world". Say what the world looks like when they have won.
-- whyNow: what changed recently so that the campaign begins at this moment. It must give a real deadline or trigger.
+- whyNow: what changed recently so that the campaign begins at this moment. It must give a real deadline or trigger. State the deadline here once and do not repeat it in ultimateGoal. State the deadline here once; do not repeat it in the goal.
 - fatalFlaw: a flaw of the assigned kind that follows from this villain's worldview and history and changes what they do.
 ${MOTIF_VARIETY_GUARDRAIL}
 ${NAME_BAN_PROMPT}
@@ -162,9 +162,16 @@ ${established("Stage 1", drafts.concept)}
 ${established("Stage 2", drafts.organisation)}
 
 Write the plan that carries the villain from where they are to the ultimate goal.
-- stages: 5-7 escalating stages. Each stage must make the next one possible or urgent, use the organisation and inner circle above, and end where the ultimate goal begins. Every stage has a name, an objective, what the villain and their agents do, clues the players can find, what happens if it succeeds, how the players can interfere and how disruption changes later stages.
-- dependencyChain: one short phrase (at most eight words) per stage, in order, naming what that stage secures, e.g. ["acquire the deeds", "erase competing claims", "connect the infrastructure"]. It must have exactly as many entries as stages.
-- escalation: how things develop if the party never intervenes. Keep collateral damage within what the established methods can cause.
+- timeline: one sentence giving the whole clock: how long until the deadline and how long any consolidation afterwards takes.
+- stages: 5-7 stages. Stages may overlap in time. Each is either "required" (the plan cannot succeed without it, and it makes a later required stage possible or urgent) or "conditional" (a diversion the villain's flaw, an opportunity, a setback or the players' actions can trigger, which strains the plan instead of advancing it). At least four stages are required, and the last stage is required and ends where the ultimate goal begins. Do not write a stage the villain does not need as a required one just because it is dramatic: if the villain could skip it and still win, it is conditional. Use the organisation and inner circle above. Every stage has:
+  - name, objective, actions (what the villain and their agents do), clues the players can find, consequences (what happens if it succeeds), interference (how the players can interfere);
+  - kind: "required" or "conditional";
+  - timing: when it runs, as a window inside the timeline (for example "Days 4-9"); for a conditional stage, when it could start once triggered;
+  - trigger: for a conditional stage only, what sets it off;
+  - disruption: how disrupting it changes the villain's position;
+  - disruptionEffect: { "stage": the number of a LATER stage, "change": how that later stage now plays differently if this one is disrupted, in one or two sentences, for example from voluntary petitions to compulsory requisitions }. Give one for every required stage except the last.
+- dependencyChain: one short phrase (at most eight words) per REQUIRED stage, in order, naming what that stage secures, e.g. ["acquire the deeds", "erase competing claims", "connect the infrastructure"]. Leave conditional stages out. It must have exactly as many entries as required stages.
+- escalation: only what happens beyond the stages if the party never intervenes; do not retell them. Keep collateral damage within what the established methods can cause.
 - discovery: what the world, the villain's servants and only the GM know.
 - personalConnections: two to four optional hooks tying the villain to player characters without assuming a backstory.
 
@@ -173,8 +180,10 @@ Do not write the weakness, moral complication or finale yet.
 ${NO_PREAMBLE}
 {
   "stages": [
-    { "name": "...", "objective": "...", "actions": "...", "clues": "...", "consequences": "...", "interference": "...", "disruption": "..." }
+    { "name": "...", "objective": "...", "actions": "...", "clues": "...", "consequences": "...", "interference": "...", "kind": "required", "timing": "Days 1-5", "disruption": "...", "disruptionEffect": { "stage": 2, "change": "..." } },
+    { "name": "...", "kind": "conditional", "trigger": "...", "timing": "...", "...": "the same fields as above" }
   ],
+  "timeline": "...",
   "dependencyChain": ["..."],
   "escalation": "...",
   "discovery": { "world": "...", "servants": "...", "gmOnly": "..." },
@@ -199,13 +208,15 @@ ${established("Stage 2", drafts.organisation)}
 ${established("Stage 3", drafts.plan)}
 
 Write how the villain can be beaten and what beating them costs.
-- weakness: at least one weak point of the assigned kind (${plan.axes.vulnerability.label}) that follows from the villain's nature and that the players can find and use. Do not make it one master object whose loss ends everything.
+- weakness: at least one weak point of the assigned kind (${plan.axes.vulnerability.label}) that follows from the villain's nature and that the players can find and use. Do not make it one master object whose loss ends everything, and do not restate dependencies the plan already describes: point to the one that matters.
 - moralComplication: the assigned kind (${plan.axes.complication.label}), specific to this villain and plan. Do not default to a power vacuum or a gang war. Leave room for a hard third option where it fits.
-- finalConfrontation: the circumstances and stakes, at a place and moment the plan and territory above have established. No combat statistics.
+- finalConfrontation: the circumstances and stakes, at a place and moment the plan and territory above have established. Give the setting, who is present and the decision; do not retell the last stage. No combat statistics.
 - ifDefeated: the consequences of removing them, appropriate to the threat scale.
+- atAGlance: five to seven one-line bullets (at most 20 words each) for a GM in a hurry: what they want, the deadline, how they get there, who stands by them, what stops them and what stopping them costs. Do not copy sentences from the sections above.
 
 ${NO_PREAMBLE}
 {
+  "atAGlance": ["..."],
   "weakness": "...",
   "moralComplication": "...",
   "finalConfrontation": "...",
@@ -230,7 +241,8 @@ Review this ${resolved.threatScale}-scale ${resolved.archetype} villain for plac
 Check that:
 - the ultimate goal and the plan's last stage lead to the same end state;
 - whyNow explains the deadline and is relevant to the plan;
-- each stage makes the next one possible or urgent;
+- each required stage makes the next required stage possible or urgent, and a conditional stage is one the villain could skip and still win;
+- the stage timings fit the timeline, and no stage's outcome needs more time than the timeline allows;
 - the escalation does not exceed what the established methods and resources can cause;
 - the weakness follows from the villain's nature and organisation;
 - the moral complication follows from the goal and plan;
