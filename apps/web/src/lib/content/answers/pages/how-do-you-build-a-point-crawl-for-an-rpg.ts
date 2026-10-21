@@ -80,12 +80,12 @@ export const howDoYouBuildAPointCrawlForAnRpg: AnswerConfigInput = {
     },
   ],
   codexConnection: {
-    heading: "Keep the map easy to update",
+    heading: "Build a point crawl in Codex Cryptica",
     paragraphs: [
-      "A point crawl can live in a notebook, a sketch, or a digital map. Keep the node names and route notes together so you can update a hazard, newly learned shortcut, or faction presence after the party acts.",
+      "The Point Crawl Generator can create a network with named locations, branching routes, hidden passages and an interactive map that you can adjust or export. Saving the result makes Location entities and an overview note in your local vault; keep the travel times, dangers and decisions in the route lore so you can update them between sessions.",
     ],
-    linkText: "See the RPG knowledge graph",
-    href: "/solutions/rpg-knowledge-graph",
+    linkText: "Try the Point Crawl Generator",
+    href: "/generators/point-crawl",
   },
   systemsThatSupportThis: [
     {
@@ -111,7 +111,7 @@ export const howDoYouBuildAPointCrawlForAnRpg: AnswerConfigInput = {
     {
       title: "Try the Point Crawl Generator",
       description:
-        "Make a starting network after you have decided what places and route choices your adventure needs.",
+        "Create a connected region with branching paths, hidden routes and a visual map you can export or save.",
       href: "/generators/point-crawl",
     },
     {
@@ -178,7 +178,7 @@ export const howDoYouBuildAPointCrawlForAnRpg: AnswerConfigInput = {
       "how to make a point crawl",
     ],
     uniqueValue:
-      "A five-step point crawl construction guide with a copyable six-node example, route costs, alternate approaches, and consequences to track during play.",
+      "A five-step construction guide and copyable six-node example with route costs, alternate approaches, and consequences to track during play.",
     relatedIntents: [
       "answer-point-crawl",
       "answer-travel-interesting",
@@ -198,9 +198,10 @@ export const howDoYouBuildAPointCrawlForAnRpg: AnswerConfigInput = {
     ],
   },
   seo: {
-    title: "How do you build a point crawl for an RPG? | Codex Cryptica",
+    title:
+      "How to Build a Point Crawl for an RPG (Worked Example) | Codex Cryptica",
     description:
-      "Build exciting wilderness point crawls in 5 practical steps: landmark nodes, route differentiation, travel loops, and telegraphed hazards without empty hexes.",
+      "Build a playable RPG point crawl in five steps. Copy a six-location route map with travel times, hazards, alternate approaches and consequences.",
     image:
       "https://assets.codexcryptica.com/og/how-do-you-build-a-point-crawl-for-an-rpg.jpg",
     imageAlt:
