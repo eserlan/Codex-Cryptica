@@ -89,6 +89,10 @@ import type { GeneratorOutput } from "./generator-helpers";
 import { ONE_SHOT_GENERATION_CONFIG } from "./generator-ai-transport";
 
 import { GeneratorEngineBase } from "./generator-engine-base";
+import { IS_STAGING } from "../../config";
+
+/** Staged-generation diagnostics are for people testing the app, not visitors. */
+const SHOW_STAGED_DIAGNOSTICS = import.meta.env.DEV || IS_STAGING;
 
 export class GeneratorEngineCore extends GeneratorEngineBase {
   generateName(): string {
@@ -469,8 +473,10 @@ export class GeneratorEngineCore extends GeneratorEngineBase {
         sessionContext: run.sessionContext,
         recentDomains: run.recentDomains,
         onProgress: run.onProgress,
+        // Why a stage gave up: shown on dev and staging, hidden in production.
+        showReasons: SHOW_STAGED_DIAGNOSTICS,
         onStats: (stats) => {
-          if (import.meta.env.DEV) {
+          if (SHOW_STAGED_DIAGNOSTICS) {
             console.debug("[VillainStagedStats]", villainStatsLog(stats));
           }
         },

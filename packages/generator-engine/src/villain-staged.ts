@@ -223,6 +223,13 @@ function createStageRunner(deps: VillainStagedDeps, run: VillainRunState) {
       run.stats.stoppedProblems = lastHard.length
         ? [...new Set(lastHard.map(problemKind))]
         : ["the reply was not a usable JSON object"];
+      if (deps.showReasons) {
+        run.progress.set(
+          id,
+          "fallback",
+          `${ONE_PASS_DETAIL} (${run.stats.stoppedProblems.join("; ")})`,
+        );
+      }
       return null;
     }
     throwIfAborted(deps.signal);

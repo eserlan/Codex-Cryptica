@@ -19,6 +19,12 @@ export interface VillainStagedDeps {
   sessionContext?: string;
   /** Conflict domains recent villains used, most recent first. */
   recentDomains?: readonly string[];
+  /**
+   * Add why a stage gave up to its step in the list. The reasons are only the
+   * kinds of rule broken, never generated text, but they are noise for most
+   * visitors, so the caller turns this on for dev and staging builds.
+   */
+  showReasons?: boolean;
   /** Live step list for the page. */
   onProgress?: (steps: StagedProgressStep[]) => void;
   /** Called once when a run finishes or gives up (not on abort). */

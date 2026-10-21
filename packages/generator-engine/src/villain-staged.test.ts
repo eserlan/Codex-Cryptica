@@ -268,6 +268,24 @@ describe("generateVillainStaged", () => {
     expect(JSON.stringify(villainStatsLog(stats))).not.toContain("Maren");
   });
 
+  it("adds the reasons to the failed step only when asked, and never the text", async () => {
+    const named = { ...VALID_CONCEPT, title: "Maren Holt, the Quiet Toll" };
+    const detail = async (showReasons?: boolean) => {
+      const progress: StagedProgressStep[][] = [];
+      await run(scriptedModel({ concept: [named] }), {
+        showReasons,
+        onProgress: (s: StagedProgressStep[]) => progress.push(s),
+      });
+      return progress[progress.length - 1][0].detail;
+    };
+    expect(await detail(true)).toBe(
+      "writing it in one pass instead (banned placeholder name)",
+    );
+    expect(await detail(true)).not.toContain("Maren");
+    expect(await detail(false)).toBe("writing it in one pass instead");
+    expect(await detail()).toBe("writing it in one pass instead");
+  });
+
   it("reports an unreadable reply as the reason", async () => {
     const onStats = vi.fn();
     const model = scriptedModel();
