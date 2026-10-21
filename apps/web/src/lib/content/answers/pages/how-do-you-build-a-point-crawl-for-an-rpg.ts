@@ -24,28 +24,23 @@ export const howDoYouBuildAPointCrawlForAnRpg: AnswerConfigInput = {
       items: [
         {
           term: "Step 1: Place landmark nodes",
-          text:
-            "Pick roughly six destinations for a first draft. Give each one a reason to visit, something the players can interact with, and one change that could happen while they are away. Start with a home base and a goal, then add the places between them.",
+          text: "Pick roughly six destinations for a first draft. Give each one a reason to visit, something the players can interact with, and one change that could happen while they are away. Start with a home base and a goal, then add the places between them.",
         },
         {
           term: "Step 2: Differentiate connecting paths",
-          text:
-            "For each connection, note travel time, resource or equipment cost, and a distinctive complication. Routes need not all be dangerous, but two ways to the same goal should offer a meaningful trade-off.",
+          text: "For each connection, note travel time, resource or equipment cost, and a distinctive complication. Routes need not all be dangerous, but two ways to the same goal should offer a meaningful trade-off.",
         },
         {
           term: "Step 3: Build in loops and branch points",
-          text:
-            "Give the network a branch and at least one loop or alternative connection so players can reroute when conditions change. A dead-end ruin can be a perfectly good destination; the important part is that not every journey is a forced straight line.",
+          text: "Give the network a branch and at least one loop or alternative connection so players can reroute when conditions change. A dead-end ruin can be a perfectly good destination; the important part is that not every journey is a forced straight line.",
         },
         {
           term: "Step 4: Seed transitional road discoveries",
-          text:
-            "Give two or three routes a discovery en route: an overturned wagon, a border marker, a shrine or a washed-out bridge. Keep these as events on a route unless they offer enough decisions to become destinations in their own right.",
+          text: "Give two or three routes a discovery en route: an overturned wagon, a border marker, a shrine or a washed-out bridge. Keep these as events on a route unless they offer enough decisions to become destinations in their own right.",
         },
         {
           term: "Step 5: Telegraph route conditions in advance",
-          text:
-            "Give the party information before they choose: a guide knows the toll, a scout spots storm clouds above the pass, or a map marks the marsh as impassable after rain. Keep at least one rumour uncertain so exploration still matters.",
+          text: "Give the party information before they choose: a guide knows the toll, a scout spots storm clouds above the pass, or a map marks the marsh as impassable after rain. Keep at least one rumour uncertain so exploration still matters.",
         },
       ],
     },
@@ -57,33 +52,27 @@ export const howDoYouBuildAPointCrawlForAnRpg: AnswerConfigInput = {
       items: [
         {
           term: "Oakhaven",
-          text:
-            "A town and starting hub. A ferryman knows about a forgotten path through the reeds.",
+          text: "A town and starting hub. A ferryman knows about a forgotten path through the reeds.",
         },
         {
           term: "Old Mill",
-          text:
-            "An abandoned waypoint on the main road. A missing courier's bag lies under the wheel.",
+          text: "An abandoned waypoint on the main road. A missing courier's bag lies under the wheel.",
         },
         {
           term: "Troll Bridge",
-          text:
-            "A guarded river crossing. The keeper demands 15 gp, a favour, or a way past the watch.",
+          text: "A guarded river crossing. The keeper demands 15 gp, a favour, or a way past the watch.",
         },
         {
           term: "Whispering Mire",
-          text:
-            "A wetland crossing. Raised stones keep travellers dry if they can find them.",
+          text: "A wetland crossing. Raised stones keep travellers dry if they can find them.",
         },
         {
           term: "Windy Notch",
-          text:
-            "A high pass. A shepherd offers a shortcut in exchange for help finding a lost goat.",
+          text: "A high pass. A shepherd offers a shortcut in exchange for help finding a lost goat.",
         },
         {
           term: "Sunken Crypt",
-          text:
-            "The goal. The rival expedition arrives on day three unless delayed.",
+          text: "The goal. The rival expedition arrives on day three unless delayed.",
         },
       ],
     },
@@ -143,23 +132,19 @@ export const howDoYouBuildAPointCrawlForAnRpg: AnswerConfigInput = {
       items: [
         {
           term: "The road (1½ days)",
-          text:
-            "Oakhaven → Old Mill → Troll Bridge → Sunken Crypt. The fastest route, but the bridge keeper costs the party coin, a favour or time.",
+          text: "Oakhaven → Old Mill → Troll Bridge → Sunken Crypt. The fastest route, but the bridge keeper costs the party coin, a favour or time.",
         },
         {
           term: "The mire (3 days)",
-          text:
-            "Oakhaven → Whispering Mire → Sunken Crypt. The party avoids the toll but risks wet provisions and a longer journey. The rivals may arrive first.",
+          text: "Oakhaven → Whispering Mire → Sunken Crypt. The party avoids the toll but risks wet provisions and a longer journey. The rivals may arrive first.",
         },
         {
           term: "The high pass (2 days)",
-          text:
-            "Oakhaven → Windy Notch → Sunken Crypt. The route avoids the toll, but exposed terrain and the shepherd's request create different problems.",
+          text: "Oakhaven → Windy Notch → Sunken Crypt. The route avoids the toll, but exposed terrain and the shepherd's request create different problems.",
         },
         {
           term: "A discovered detour",
-          text:
-            "If the road closes, someone who befriended the ferryman can travel from Old Mill through the hidden reed-cutters' track to the mire. That shortcut turns an earlier social choice into a new route.",
+          text: "If the road closes, someone who befriended the ferryman can travel from Old Mill through the hidden reed-cutters' track to the mire. That shortcut turns an earlier social choice into a new route.",
         },
       ],
     },
