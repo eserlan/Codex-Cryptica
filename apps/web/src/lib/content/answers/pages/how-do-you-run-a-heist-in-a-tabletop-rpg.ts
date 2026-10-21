@@ -209,7 +209,7 @@ export const howDoYouRunAHeistInATabletopRpg: AnswerConfigInput = {
     ],
     userJob: "adopt-workflow",
     uniqueValue:
-      "Provides an actionable four-phase tabletop heist framework using retroactive flashback tokens and visible alarm tracks to eliminate planning paralysis.",
+      "Provides a four-beat heist running framework using optional flashback opportunities, layered security, a five-state alarm track, and a pressured getaway, with guidance for different rulesets.",
     relatedIntents: [
       "answer-rpg-puzzles",
       "answer-prep-weekly-session-quickly",
@@ -231,7 +231,7 @@ export const howDoYouRunAHeistInATabletopRpg: AnswerConfigInput = {
   seo: {
     title: "How to Run a Heist in a Tabletop RPG | Codex Cryptica",
     description:
-      "A complete Game Master framework for running tabletop RPG heists. Eliminate planning paralysis with flashback tokens, alarm tracks, and high-tempo getaways.",
+      "Run RPG heists with useful casing intel, security rings, optional flashbacks, a five-state alarm track and a getaway that forces new choices.",
     image:
       "https://assets.codexcryptica.com/og/how-do-you-run-a-heist-in-a-tabletop-rpg.jpg",
     imageAlt:
