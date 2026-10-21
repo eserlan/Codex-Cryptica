@@ -298,9 +298,12 @@ describe("SEOPageLayout comparison details", () => {
 });
 
 describe("SEOPageLayout standalone worldbuilding proof", () => {
-  it("renders the worldbuilding screenshot and a working secondary generator CTA", () => {
+  it("shows the worldbuilding screenshot and generator link", () => {
     const { container } = render(SEOPageLayout, {
-      props: { data: worldbuildingToolRoot, canonicalUrl: "/worldbuilding-tool" },
+      props: {
+        data: worldbuildingToolRoot,
+        canonicalUrl: "/worldbuilding-tool",
+      },
     });
     expect(
       document.querySelector('link[rel="canonical"]')?.getAttribute("href"),
