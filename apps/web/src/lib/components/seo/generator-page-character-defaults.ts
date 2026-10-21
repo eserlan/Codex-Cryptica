@@ -123,6 +123,7 @@ export function createCharacterDefaults(
       tone: comicBookEventConfig.tones[0],
       campaignContext: "",
     },
+    // Superhero / Comic Book only (#3111): no genre or theme synchronisation.
     origin: {
       originType: originConfig.originTypes[0],
       tone: originConfig.tones[0],
