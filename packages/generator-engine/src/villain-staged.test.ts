@@ -160,7 +160,9 @@ describe("generateVillainStaged", () => {
     const orgLabel = /- Organisation: ([^—]+) —/.exec(stage1)![1].trim();
     // Later stages see the same assigned choice, and the output labels it.
     expect(model.messages[1]).toContain(`- Organisation: ${orgLabel}`);
-    expect(result!.output.lore).not.toContain(orgLabel);
+    expect(result!.output.lore).toContain(
+      `### Organisation & Power Structure\n**${orgLabel}.** `,
+    );
   });
 
   it("keeps the awareness of each lieutenant from the plan, not the model", async () => {
@@ -737,7 +739,7 @@ describe("copy", () => {
     );
   });
 
-  it("does not print the assigned kinds as headings", async () => {
+  it("prints assigned kinds inline in their sections, not as headings", async () => {
     const model = scriptedModel();
     const stage1 = (await run(model))!;
     const assigned = [
@@ -746,8 +748,20 @@ describe("copy", () => {
       ),
     ].map((m) => m[1].trim());
     expect(assigned).toHaveLength(4);
+    expect(stage1.output.lore).toContain(
+      `### Organisation & Power Structure\n**${assigned[0]}.** `,
+    );
+    expect(stage1.output.lore).toContain(
+      `### Fatal Flaw\n**${assigned[1]}.** `,
+    );
+    expect(stage1.output.lore).toContain(
+      `### Weakness / Vulnerability\n**${assigned[2]}.** `,
+    );
+    expect(stage1.output.lore).toContain(
+      `### Moral Complication\n**${assigned[3]}.** `,
+    );
     for (const label of assigned) {
-      expect(stage1.output.lore).not.toContain(`**${label}.**`);
+      expect(stage1.output.lore).not.toContain(`### ${label}`);
     }
   });
 
