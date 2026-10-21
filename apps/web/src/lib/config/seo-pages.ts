@@ -563,70 +563,91 @@ export { importsConfig } from "./seo-imports";
 
 export const worldbuildingToolRoot: SEOPageData = {
   slug: "worldbuilding-tool",
-  eyebrow: "Free TTRPG Worldbuilding Hub",
-  title: "Free Worldbuilding Tool & Lore Database | Codex Cryptica",
+  eyebrow: "Free worldbuilding for GMs and writers",
+  title: "Free Worldbuilding Tool for RPGs & Fiction | Codex Cryptica",
   description:
-    "Create, link, and organize world maps, history, and factions. Codex Cryptica is a free, local-first worldbuilding tool running 100% in your browser.",
-  h1: "Free Worldbuilding Tool & Lore Database",
+    "Build characters, places, factions and timelines in a free, browser-based worldbuilding tool. Link your lore visually; no account or AI required.",
+  h1: "Free Worldbuilding Tool for RPGs and Fiction",
   subheading:
-    "Map your fantasy worlds visually with local-first bidirectional linking.",
+    "Create a place, give it people and a history, then see how your world fits together.",
   introText:
-    "Codex Cryptica is a free worldbuilding tool and private lore database designed to keep your creative assets safe and organized on your own device. Plan characters, locations, factions, and items with standard Markdown files that load instantly. See the connections between your notes using our built-in relationship maps and chronological timelines, all running 100% in your browser.",
-  ctaText: "Start Worldbuilding",
+    "Codex Cryptica gives your setting one home. Build characters, locations, factions, events and items as connected notes, then explore their relationships through a visual graph, maps and timelines. It's made for campaign worlds and fiction settings alike.\n\nStart small: create a settlement, add the people who live there and link the faction that holds power. You can keep expanding without turning your lore into a maze of unrelated documents. Core worldbuilding works in your browser without an account or an AI prompt; AI help is optional.",
+  ctaText: "Start a Free World",
+  secondaryCtaText: "Try the World Generator",
+  secondaryCtaHref: "/generators/world",
   keywords: [
     "free worldbuilding tool",
     "worldbuilding software",
-    "fantasy worldbuilder",
-    "lore database",
+    "fantasy worldbuilding",
+    "worldbuilding for writers",
   ],
   features: [
     {
-      title: "Interactive Canvas & Graph",
+      title: "Connected Lore",
       description:
-        "Visualize relationships and draw map pins dynamically across factions, NPCs, and events.",
+        "Link characters, places and factions as you write. Follow those relationships in the interactive graph instead of hunting through folders.",
       icon: "icon-[lucide--network]",
     },
     {
-      title: "Fantasy Timelines",
+      title: "Maps and Timelines",
       description:
-        "Map campaign history and character journals using chronological eras and custom calendars.",
+        "Put places on maps and track important events on a timeline, including calendars and eras for fictional worlds.",
       icon: "icon-[lucide--calendar-days]",
     },
     {
-      title: "Local-First Privacy",
+      title: "Local-First, AI-Optional",
       description:
-        "Your files never leave your device. Stored securely in your browser's private filesystem.",
+        "Keep your working vault on your device. Organise and edit lore without relying on AI; use the Oracle only when you want a hand.",
       icon: "icon-[lucide--shield-check]",
     },
   ],
+  productProof: {
+    eyebrow: "Inside Codex Cryptica",
+    title: "See the people and places behind your stories",
+    description:
+      "The relationship graph makes connections visible as your setting grows. Select an entity to see how it fits into the wider world.",
+    imageSrc:
+      "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/screenshots/feature-connect.jpg",
+    imageAlt:
+      "Codex Cryptica showing a graph of linked entities with a selected character's relationships highlighted.",
+    imageWidth: 1600,
+    imageHeight: 1000,
+    caption:
+      "Actual relationship graph from the Codex Cryptica worldbuilding workspace.",
+  },
   faq: [
     {
-      question: "Is Codex Cryptica completely free?",
+      question: "Do I need an account or AI to start worldbuilding?",
       answer:
-        "Yes. Codex Cryptica is a client-side local-first campaign wiki. All databases and files are run on your machine with no subscriptions required.",
+        "No. Open Codex Cryptica in your browser and start a local vault without signing up. The editor, templates, links, maps and timeline work without AI. The Oracle is optional.",
     },
     {
-      question: "Can I use Codex Cryptica offline?",
+      question: "How do I start building a world in Codex Cryptica?",
       answer:
-        "Absolutely. Once the initial web app is loaded, Codex Cryptica's editor, interactive relationship graph, and timeline system run fully offline without requiring network access.",
+        "Start with one place, one important character and one faction or conflict. Give each its own entry, link them, and add details as the setting grows. You can also use the World Generator for an initial draft.",
     },
     {
-      question: "Can I import existing wiki files into Codex Cryptica?",
+      question: "Can I use it for writing novels as well as RPG campaigns?",
       answer:
-        "Yes, Codex Cryptica supports importing Markdown folders from Obsidian or importing export packages from World Anvil and LegendKeeper directly.",
+        "Yes. Keep a story bible of characters, locations, histories and established rules for a novel or short story. You do not need to run an RPG campaign to use the worldbuilding workspace.",
+    },
+    {
+      question: "Can I work offline and keep my files?",
+      answer:
+        "Core vault editing and browsing are local-first. After the app is loaded, you can keep working with locally stored files offline; optional connected features, including AI, need a network connection.",
+    },
+    {
+      question: "Can I bring existing worldbuilding notes?",
+      answer:
+        "Codex Cryptica supports Markdown-based workflows and import tools for supported formats. Check the import options before migrating a large existing world.",
     },
   ],
   relatedLinks: [
-    { href: "/", label: "worldbuilding tool" },
-    {
-      href: "/solutions/worldbuilding-tool",
-      label: "Structured worldbuilding tool",
-    },
-    { href: "/solutions/ai-worldbuilding-tool", label: "AI worldbuilding" },
-    {
-      href: "/solutions/local-first-worldbuilding-tool",
-      label: "Local-first worldbuilding",
-    },
-    { href: "/solutions/rpg-knowledge-graph", label: "RPG knowledge graph" },
+    { href: "/", label: "Worldbuilding tool home" },
+    { href: "/generators/world", label: "Generate a world" },
+    { href: "/answers/how-do-i-start-worldbuilding-for-a-novel-or-short-story", label: "Worldbuilding for fiction" },
+    { href: "/solutions/worldbuilding-tool", label: "Structured worldbuilding" },
+    { href: "/solutions/local-first-worldbuilding-tool", label: "Local-first worldbuilding" },
+    { href: "/solutions/rpg-knowledge-graph", label: "Relationship graph" },
   ],
 };
