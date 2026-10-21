@@ -90,6 +90,7 @@ import { howDoYouGenerateUsefulRpgRumours } from "./how-do-you-generate-useful-r
 import { howDoYouGiveHintsForAnRpgPuzzleWithoutGivingAwayTheAnswer } from "./how-do-you-give-hints-for-an-rpg-puzzle-without-giving-away-the-answer";
 import { howDoYouHandleCharacterDeathInATabletopRpg } from "./how-do-you-handle-character-death-in-a-tabletop-rpg";
 import { howDoYouHandlePlayersGoingOffScriptAsAGm } from "./how-do-you-handle-players-going-off-script-as-a-gm";
+import { howDoYouHandlePlayersReachingTheWrongConclusionInAnRpgMystery } from "./how-do-you-handle-players-reaching-the-wrong-conclusion-in-an-rpg-mystery";
 import { howDoYouHelpPlayersRememberWhatHappenedInATtrpgCampaign } from "./how-do-you-help-players-remember-what-happened-in-a-ttrpg-campaign";
 import { howDoYouImproviseNpcsOnTheSpot } from "./how-do-you-improvise-npcs-on-the-spot";
 import { howDoYouKeepASoloRpgFromFeelingRandom } from "./how-do-you-keep-a-solo-rpg-from-feeling-random";
@@ -275,6 +276,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoYouGiveHintsForAnRpgPuzzleWithoutGivingAwayTheAnswer,
     howDoYouHandleCharacterDeathInATabletopRpg,
     howDoYouHandlePlayersGoingOffScriptAsAGm,
+    howDoYouHandlePlayersReachingTheWrongConclusionInAnRpgMystery,
     howDoYouHelpPlayersRememberWhatHappenedInATtrpgCampaign,
     howDoYouImproviseNpcsOnTheSpot,
     howDoYouKeepASoloRpgFromFeelingRandom,
