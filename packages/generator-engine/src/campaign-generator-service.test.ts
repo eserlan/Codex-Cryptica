@@ -3347,6 +3347,39 @@ describe("staged villain generation", () => {
     );
   });
 
+  it("passes cancellation through to an in-flight generic fallback", async () => {
+    const controller = new AbortController();
+    let startGeneric: (() => void) | undefined;
+    const genericStarted = new Promise<void>((resolve) => {
+      startGeneric = resolve;
+    });
+    const complete = vi.fn<AIGeneratorGateway["complete"]>(
+      async (message, _instruction, options) => {
+        if (message.includes("STAGE 1 OF 4")) return "nope";
+        startGeneric?.();
+        return await new Promise<string>((_resolve, reject) => {
+          options?.signal?.addEventListener(
+            "abort",
+            () => reject(new DOMException("Aborted", "AbortError")),
+            { once: true },
+          );
+        });
+      },
+    );
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete },
+    });
+
+    const generation = svc.generateDraft(villainRun(), controller.signal);
+    await genericStarted;
+    expect(complete.mock.calls.at(-1)?.[2]?.signal).toBe(controller.signal);
+    controller.abort();
+
+    await expect(generation).rejects.toMatchObject({ name: "AbortError" });
+    expect(complete).toHaveBeenCalledTimes(3);
+  });
+
   it("keeps the villain off names the vault already uses", async () => {
     const complete = vi.fn<AIGeneratorGateway["complete"]>(async (message) =>
       JSON.stringify(stageReply(message)),

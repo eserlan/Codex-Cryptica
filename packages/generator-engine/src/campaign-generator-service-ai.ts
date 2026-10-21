@@ -546,7 +546,8 @@ export class CampaignGeneratorAIGenerationService extends CampaignGeneratorLangu
       );
       if (staged) return staged;
     }
-    return this.generateGenericWithAI(generator, request, bannedNames);
+    signal?.throwIfAborted();
+    return this.generateGenericWithAI(generator, request, bannedNames, signal);
   }
 
   private async generateVillainStaged(
@@ -713,13 +714,16 @@ export class CampaignGeneratorAIGenerationService extends CampaignGeneratorLangu
     generator: ReturnType<typeof getGenerator>,
     request: GeneratorRunRequest,
     bannedNames: Set<string>,
+    signal?: AbortSignal,
   ): Promise<GeneratedDraft | null> {
+    signal?.throwIfAborted();
     const gateway = this.aiGateway;
     if (!gateway) return null;
     const { fullPrompt, interaction } = buildGenericGeneratorPrompt(
       generator,
       await this.withNameSuggestion(request),
     );
+    signal?.throwIfAborted();
     return this.retryGenericAttempts(
       gateway,
       generator,
@@ -727,6 +731,7 @@ export class CampaignGeneratorAIGenerationService extends CampaignGeneratorLangu
       bannedNames,
       fullPrompt,
       interaction,
+      signal,
     );
   }
 
@@ -737,8 +742,10 @@ export class CampaignGeneratorAIGenerationService extends CampaignGeneratorLangu
     bannedNames: Set<string>,
     fullPrompt: string,
     interaction: ReturnType<typeof buildGenericGeneratorPrompt>["interaction"],
+    signal?: AbortSignal,
   ): Promise<GeneratedDraft | null> {
     for (let attempt = 0; attempt < MAX_AI_ATTEMPTS; attempt++) {
+      signal?.throwIfAborted();
       const result = await this.runGenericAttempt(
         gateway,
         generator,
@@ -746,6 +753,7 @@ export class CampaignGeneratorAIGenerationService extends CampaignGeneratorLangu
         bannedNames,
         fullPrompt,
         interaction,
+        signal,
       );
       if (result.kind === "draft") return result.draft;
       if (result.kind === "stop") return null;
@@ -760,6 +768,7 @@ export class CampaignGeneratorAIGenerationService extends CampaignGeneratorLangu
     bannedNames: Set<string>,
     fullPrompt: string,
     interaction: ReturnType<typeof buildGenericGeneratorPrompt>["interaction"],
+    signal?: AbortSignal,
   ): Promise<
     | { kind: "draft"; draft: GeneratedDraft }
     | { kind: "retry" }
@@ -768,6 +777,7 @@ export class CampaignGeneratorAIGenerationService extends CampaignGeneratorLangu
     try {
       const result = await gateway.complete(fullPrompt, SYSTEM_INSTRUCTION, {
         interaction,
+        signal,
       });
       const output = parseGenericGeneratorOutput(
         completeText(result),

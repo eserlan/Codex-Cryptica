@@ -455,12 +455,23 @@ describe("stage checks", () => {
 
   it.each([
     ["one clue", ["Only one."]],
+    ["five clues", Array.from({ length: 5 }, (_, i) => `Clue ${i}`)],
     ["seven clues", Array.from({ length: 7 }, (_, i) => `Clue ${i}`)],
     ["null", null],
     ["a string", "Strange orders"],
   ])("rejects firstSigns that are %s", (_label, firstSigns) => {
     const check = checkVillainConcept({ ...VALID_CONCEPT, firstSigns }, []);
     expect(check.hard.join(" ")).toContain("firstSigns");
+  });
+
+  it("rejects more than four personal connections", () => {
+    const personalConnections = Array.from(
+      { length: 5 },
+      (_, i) => `Connection ${i}`,
+    );
+    expect(
+      checkVillainPlan({ ...VALID_PLAN, personalConnections }).hard.join(" "),
+    ).toContain('"personalConnections" needs 2 to 4 hooks');
   });
 
   it("rejects a lieutenant with a missing field or a repeated name", () => {

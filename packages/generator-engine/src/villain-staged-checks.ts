@@ -29,8 +29,8 @@ import {
 } from "./villain-staged-prompts";
 import type { VillainDrafts } from "./villain-staged-contracts";
 
-/** Most items a model-written list may have before the stage is rejected. */
-const MAX_LISTED = 6;
+/** Both model-written lists are capped at four by their stage prompts. */
+const MAX_LISTED = 4;
 
 export const str = (value: unknown): string =>
   typeof value === "string" ? value.trim() : "";
