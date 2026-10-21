@@ -182,11 +182,11 @@ describe("generateVillainStaged", () => {
   });
 
   it("returns null and names the stage when one stays unusable", async () => {
-    const two = {
+    const one = {
       ...VALID_ORGANISATION,
-      lieutenants: (VALID_ORGANISATION.lieutenants as JsonObject[]).slice(0, 2),
+      lieutenants: (VALID_ORGANISATION.lieutenants as JsonObject[]).slice(0, 1),
     };
-    const model = scriptedModel({ organisation: [two] });
+    const model = scriptedModel({ organisation: [one] });
     const onStats = vi.fn();
     const progress: StagedProgressStep[][] = [];
     const result = await run(model, {
@@ -198,6 +198,7 @@ describe("generateVillainStaged", () => {
     expect(stats).toMatchObject({
       outcome: "fell-back",
       stoppedAt: "organisation",
+      stoppedProblems: ["give N to N lieutenants, one per assigned slot"],
     });
     const last = progress[progress.length - 1];
     expect(last.map((s) => s.status)).toEqual([
@@ -209,6 +210,72 @@ describe("generateVillainStaged", () => {
     ]);
     // Stage 1, then stage 2 twice. Nothing after the failing stage runs.
     expect(model.complete).toHaveBeenCalledTimes(3);
+  });
+
+  it("accepts one lieutenant more than the slots, without an assigned awareness", async () => {
+    const extra = {
+      name: "Hesper Quill",
+      role: "Courier of the harbour office",
+      relationship: "A cousin placed there for safety",
+      motivation: "Wants the harbour kept as it is.",
+      loyalty: "Family.",
+      secret: "Reads the sealed notices.",
+    };
+    const four = {
+      ...VALID_ORGANISATION,
+      lieutenants: [...(VALID_ORGANISATION.lieutenants as JsonObject[]), extra],
+    };
+    const result = await run(scriptedModel({ organisation: [four] }));
+    expect(result).not.toBeNull();
+    const lines = result!.output.lore
+      .split("\n")
+      .filter((l) => l.startsWith("- **") && l.includes("Relationship:"));
+    expect(lines).toHaveLength(4);
+    expect(lines.filter((l) => l.includes("Awareness:"))).toHaveLength(3);
+    expect(lines[3]).toContain("Hesper Quill");
+  });
+
+  it("accepts one lieutenant fewer than the slots", async () => {
+    const two = {
+      ...VALID_ORGANISATION,
+      lieutenants: (VALID_ORGANISATION.lieutenants as JsonObject[]).slice(0, 2),
+    };
+    const result = await run(scriptedModel({ organisation: [two] }));
+    expect(result).not.toBeNull();
+  });
+
+  it("rejects two lieutenants more than the slots", async () => {
+    const [a, b, c] = VALID_ORGANISATION.lieutenants as JsonObject[];
+    const five = {
+      ...VALID_ORGANISATION,
+      lieutenants: [
+        a,
+        b,
+        c,
+        { ...a, name: "Una Pell" },
+        { ...b, name: "Rho Dane" },
+      ],
+    };
+    expect(await run(scriptedModel({ organisation: [five] }))).toBeNull();
+  });
+
+  it("says why a stage stopped without repeating generated text", async () => {
+    const named = { ...VALID_CONCEPT, title: "Maren Holt, the Quiet Toll" };
+    const onStats = vi.fn();
+    await run(scriptedModel({ concept: [named] }), { onStats });
+    const stats = onStats.mock.calls[0][0] as VillainStagedStats;
+    expect(stats.stoppedProblems).toEqual(["banned placeholder name"]);
+    expect(JSON.stringify(villainStatsLog(stats))).not.toContain("Maren");
+  });
+
+  it("reports an unreadable reply as the reason", async () => {
+    const onStats = vi.fn();
+    const model = scriptedModel();
+    model.complete.mockImplementation(async () => "not json at all");
+    await run(model, { onStats });
+    expect(
+      (onStats.mock.calls[0][0] as VillainStagedStats).stoppedProblems,
+    ).toEqual(["the reply was not a usable JSON object"]);
   });
 
   it("rejects a villain named with a banned placeholder name", async () => {

@@ -50,6 +50,7 @@ import {
   checkVillainOrganisation,
   checkVillainPlan,
   isRepairableField,
+  problemKind,
   str,
   villainCoherenceFindings,
 } from "./villain-staged-checks";
@@ -200,14 +201,28 @@ function createStageRunner(deps: VillainStagedDeps, run: VillainRunState) {
     message: string,
     check: (data: JsonObject) => DraftCheck,
   ) => {
+    let lastHard: string[] = [];
     const result = await runCheckedStage(
       deps.complete,
       run,
-      { id, system: run.system, message, check },
+      {
+        id,
+        system: run.system,
+        message,
+        check: (data) => {
+          const found = check(data);
+          lastHard = found.hard;
+          return found;
+        },
+      },
       deps.signal,
     );
     if (!result) {
       run.stats.stoppedAt = id;
+      // An unreadable reply never reaches the check, so say so.
+      run.stats.stoppedProblems = lastHard.length
+        ? [...new Set(lastHard.map(problemKind))]
+        : ["the reply was not a usable JSON object"];
       return null;
     }
     throwIfAborted(deps.signal);

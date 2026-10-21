@@ -29,6 +29,8 @@ export interface VillainStagedDeps {
 export interface VillainStagedStats {
   outcome: "staged" | "fell-back";
   stoppedAt?: VillainStageId | "assembly";
+  /** The kinds of rule the stopping stage's last attempt broke, never the text. */
+  stoppedProblems?: string[];
   aiCalls: number;
   elapsedMs: number;
   repairedStages: VillainStageId[];
@@ -48,6 +50,7 @@ export function villainStatsLog(stats: VillainStagedStats) {
   return {
     outcome: stats.outcome,
     stoppedAt: stats.stoppedAt,
+    stoppedProblems: stats.stoppedProblems,
     aiCalls: stats.aiCalls,
     elapsedMs: stats.elapsedMs,
     repairedStageCount: stats.repairedStages.length,

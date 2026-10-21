@@ -32,6 +32,20 @@ import type { VillainDrafts } from "./villain-staged-contracts";
 /** Both model-written lists are capped at four by their stage prompts. */
 const MAX_LISTED = 4;
 
+/**
+ * A problem with the generated text taken out of it: quoted names, counts and
+ * anything after a colon (a banned name) go, so what is left is only the kind
+ * of rule that failed and is safe to log.
+ */
+export function problemKind(problem: string): string {
+  return problem
+    .replace(/\(you gave \d+\)/g, "")
+    .replace(/"[^"]*"/g, '"…"')
+    .replace(/:.*$/s, "")
+    .replace(/\d+/g, "N")
+    .trim();
+}
+
 export const str = (value: unknown): string =>
   typeof value === "string" ? value.trim() : "";
 
@@ -107,10 +121,14 @@ export function checkVillainOrganisation(
 ): DraftCheck {
   const hard = missing(data, ["organisation", "territory"]);
   const lieutenants = list(data.lieutenants).map(rec);
-  const expected = axes.lieutenants.length;
-  if (lieutenants.length !== expected) {
+  // The slots are asked for exactly, but a model that writes one more (or one
+  // fewer) has still given a usable inner circle. Only the extras lose their
+  // assigned awareness.
+  const min = Math.max(axes.lieutenants.length - 1, 2);
+  const max = axes.lieutenants.length + 1;
+  if (lieutenants.length < min || lieutenants.length > max) {
     hard.push(
-      `give exactly ${expected} lieutenants, one per assigned slot (you gave ${lieutenants.length})`,
+      `give ${min} to ${max} lieutenants, one per assigned slot (you gave ${lieutenants.length})`,
     );
   }
   lieutenants.forEach((l, i) => {
@@ -261,9 +279,10 @@ const tag = (label: string, text: string): string => `**${label}.** ${text}`;
 
 function lieutenantLine(
   l: JsonObject,
-  slot: VillainAxes["lieutenants"][number],
+  slot?: VillainAxes["lieutenants"][number],
 ): string {
-  return `- **${str(l.name)}** — ${str(l.role)}. Relationship: ${str(l.relationship)} Motivation: ${str(l.motivation)} Loyalty: ${str(l.loyalty)} Secret or agenda: ${str(l.secret)} Awareness: ${slot.awareness}.`;
+  const awareness = slot ? ` Awareness: ${slot.awareness}.` : "";
+  return `- **${str(l.name)}** — ${str(l.role)}. Relationship: ${str(l.relationship)} Motivation: ${str(l.motivation)} Loyalty: ${str(l.loyalty)} Secret or agenda: ${str(l.secret)}${awareness}`;
 }
 
 function planBlock(plan: JsonObject): string {
@@ -311,7 +330,7 @@ export function assembleVillain(
     `### Fatal Flaw\n${tag(axes.flaw.label, str(concept.fatalFlaw))}`,
     `### Methods\n${str(concept.methods)}`,
     `### Resources\n${str(concept.resources)}`,
-    `### Lieutenants & Inner Circle\n${lieutenants.map((l, i) => lieutenantLine(l, axes.lieutenants[i] ?? axes.lieutenants[0])).join("\n")}`,
+    `### Lieutenants & Inner Circle\n${lieutenants.map((l, i) => lieutenantLine(l, axes.lieutenants[i])).join("\n")}`,
     `### Organisation & Power Structure\n${tag(axes.organisation.label, str(organisation.organisation))}`,
     `### Territory / Lair\n${str(organisation.territory)}`,
     `### The Villain's Plan\n${planBlock(plan)}`,
