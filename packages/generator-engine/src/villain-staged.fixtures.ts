@@ -55,23 +55,52 @@ export const VALID_ORGANISATION: JsonObject = {
   ],
 };
 
-const STAGE_NAMES = [
-  "Raise the tolls",
-  "Withdraw the licences",
-  "Foreclose on the warehouses",
-  "Silence the guild masters",
-  "Renew the harbour charter",
+const STAGES: ReadonlyArray<{
+  name: string;
+  kind: "required" | "conditional";
+  timing: string;
+  trigger?: string;
+}> = [
+  { name: "Raise the tolls", kind: "required", timing: "Days 1-5" },
+  { name: "Withdraw the licences", kind: "required", timing: "Days 4-9" },
+  {
+    name: "Foreclose on the warehouses",
+    kind: "required",
+    timing: "Days 8-14",
+  },
+  { name: "Silence the guild masters", kind: "required", timing: "Days 13-20" },
+  {
+    name: "Chase the fled clerk",
+    kind: "conditional",
+    timing: "Any time after Day 9",
+    trigger: "the clerk who forged the notices is found",
+  },
+  { name: "Renew the harbour charter", kind: "required", timing: "Day 21" },
 ];
 
 export const VALID_PLAN: JsonObject = {
-  stages: STAGE_NAMES.map((name, i) => ({
-    name,
-    objective: `${name} so that the harbour tolls and warehouse licences move closer to the creditor.`,
+  timeline:
+    "Twenty-one days to the midsummer charter, then nine days to bring the outlying landings in.",
+  stages: STAGES.map((stage, i) => ({
+    name: stage.name,
+    kind: stage.kind,
+    timing: stage.timing,
+    ...(stage.trigger ? { trigger: stage.trigger } : {}),
+    objective: `${stage.name} so that the harbour tolls and warehouse licences move closer to the creditor.`,
     actions: "The clerks act on forged notices.",
     clues: "Notices that differ from the posted copies.",
     consequences: "The harbour pays more and the creditor holds more.",
     interference: "Compare the notices with the posted copies.",
-    disruption: `Stage ${i + 2} must be rushed and leaves a paper trail.`,
+    disruption: `The reeve's hold on the harbour loosens (stage ${i + 1} disrupted).`,
+    ...(stage.kind === "required" && i < STAGES.length - 1
+      ? {
+          disruptionEffect: {
+            stage: STAGES.length,
+            change:
+              "The charter hearing opens with the notices already in doubt, so the reeve must win it in open court.",
+          },
+        }
+      : {}),
   })),
   dependencyChain: [
     "raise tolls",
@@ -94,6 +123,14 @@ export const VALID_PLAN: JsonObject = {
 };
 
 export const VALID_ENDING: JsonObject = {
+  atAGlance: [
+    "Wants every harbour toll and licence to pay into her creditor.",
+    "Deadline: the midsummer charter, twenty-one days away.",
+    "Method: forged notices, withdrawn licences and foreclosures.",
+    "Backed by a rival spokesman, a believer and a restless apprentice.",
+    "Stopped by turning the guild masters, whose pensions she must keep paying.",
+    "Beating her leaves the dredging crews unpaid.",
+  ],
   weakness:
     "The guild masters only follow the reeve while she keeps paying their pensions, and the creditor has not agreed to that cost.",
   moralComplication:

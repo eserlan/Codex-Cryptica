@@ -3326,7 +3326,8 @@ describe("staged villain generation", () => {
     );
     expect(generated.title).toBe("Ottoline Brack, the Quiet Toll");
     expect(generated.lore).toContain("### Lieutenants & Inner Circle");
-    expect(generated.lore).toContain("Dependency chain:");
+    expect(generated.lore).toContain("Dependency chain (required stages):");
+    expect(generated.lore).toContain("### Villain at a Glance");
   });
 
   it("falls back to the generic route when a stage is unusable", async () => {
