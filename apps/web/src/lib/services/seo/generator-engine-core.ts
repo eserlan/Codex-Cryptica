@@ -26,6 +26,8 @@ import {
   buildVillainPrompt,
   parseVillainResponse,
   generateVillainLocal,
+  generateVillainStaged,
+  villainStatsLog,
   buildComicBookEventPrompt,
   parseComicBookEventResponse,
   generateComicBookEventLocal,
@@ -66,11 +68,13 @@ import {
   type RumourGeneratorOptions,
   type EncounterGeneratorOptions,
   type PuzzleGeneratorOptions,
+  type ResolvedVillain,
   type VillainGeneratorOptions,
   type ComicBookEventGeneratorOptions,
   type VillainSchemeGeneratorOptions,
   type PersonalityGeneratorOptions,
   type SettlementGeneratorOptions,
+  type PublicGeneratorOutput,
 } from "generator-engine";
 import { getSessionContext } from "./session-context";
 import { villainDomainHistoryStore } from "./villain-domain-history";
@@ -391,17 +395,31 @@ export class GeneratorEngineCore extends GeneratorEngineBase {
   }
 
   async generateVillain(
-    options: VillainGeneratorOptions & { useAI?: boolean } = {},
+    options: VillainGeneratorOptions & {
+      useAI?: boolean;
+      onProgress?: (steps: OneShotProgressStep[]) => void;
+      signal?: AbortSignal;
+      /** `false` forces the one-pass route (baseline, tests). */
+      staged?: boolean;
+    } = {},
   ): Promise<GeneratorOutput> {
-    const { useAI, ...villainOptions } = options;
+    const {
+      useAI,
+      onProgress,
+      signal,
+      staged = true,
+      ...villainOptions
+    } = options;
     const recentDomains = villainDomainHistoryStore.recent();
     const recentInputs = generationInputHistoryStore.recent("villain");
     const result = await this.runWithAIFallback(
       useAI,
       async () => {
+        const sessionContext =
+          getSessionContext() + formatRecentInputsNote(recentInputs);
         const { systemInstruction, userMessage, resolved } = buildVillainPrompt(
           villainOptions,
-          getSessionContext() + formatRecentInputsNote(recentInputs),
+          sessionContext,
           undefined,
           recentDomains,
         );
@@ -409,13 +427,62 @@ export class GeneratorEngineCore extends GeneratorEngineBase {
           "villain",
           summarizeResolvedInputs(resolved),
         );
-        const text = await this.runModel(systemInstruction, userMessage);
+        if (staged) {
+          const stagedResult = await this.tryStagedVillain(resolved, {
+            sessionContext,
+            recentDomains,
+            onProgress,
+            signal,
+          });
+          if (stagedResult) return stagedResult;
+        }
+        const text = await this.runModel(
+          systemInstruction,
+          userMessage,
+          undefined,
+          true,
+          signal,
+        );
         return parseVillainResponse(text, resolved);
       },
       () => generateVillainLocal(villainOptions),
+      signal,
     );
     villainDomainHistoryStore.record(result.conflictDomain);
     return result;
+  }
+
+  /** The staged route, or null when a stage is unusable so the one-pass route runs. */
+  private async tryStagedVillain(
+    resolved: ResolvedVillain,
+    run: {
+      sessionContext: string;
+      recentDomains: readonly string[];
+      onProgress?: (steps: OneShotProgressStep[]) => void;
+      signal?: AbortSignal;
+    },
+  ): Promise<PublicGeneratorOutput | null> {
+    const { signal } = run;
+    try {
+      const result = await generateVillainStaged(resolved, {
+        signal,
+        sessionContext: run.sessionContext,
+        recentDomains: run.recentDomains,
+        onProgress: run.onProgress,
+        onStats: (stats) => {
+          if (import.meta.env.DEV) {
+            console.debug("[VillainStagedStats]", villainStatsLog(stats));
+          }
+        },
+        complete: (instruction, message) =>
+          this.runModel(instruction, message, undefined, true, signal),
+      });
+      return result?.output ?? null;
+    } catch (err) {
+      if (signal?.aborted) throw err;
+      if (err instanceof DOMException && err.name === "AbortError") throw err;
+      return null;
+    }
   }
 
   async generateComicBookEvent(

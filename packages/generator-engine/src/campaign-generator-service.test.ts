@@ -19,6 +19,12 @@ import {
   draftToAcceptedEntity,
 } from "./generator-session";
 import { generateLanguageLocal } from "./public-language";
+import {
+  VALID_CONCEPT,
+  VALID_ENDING,
+  VALID_ORGANISATION,
+  VALID_PLAN,
+} from "./villain-staged.fixtures";
 
 function run(
   generatorId: GeneratorRunRequest["generatorId"],
@@ -3273,5 +3279,123 @@ A careful reader who compares the marginal gloss with the erased rubric discover
         expect(/stage 1 of 3/i.test(complete.mock.calls[0][0])).toBe(false);
       },
     );
+  });
+});
+
+describe("staged villain generation", () => {
+  const stageReply = (message: string) => {
+    if (message.includes("STAGE 1 OF 4")) return VALID_CONCEPT;
+    if (message.includes("STAGE 2 OF 4")) return VALID_ORGANISATION;
+    if (message.includes("STAGE 3 OF 4")) return VALID_PLAN;
+    if (message.includes("STAGE 4 OF 4")) return VALID_ENDING;
+    if (message.includes("Coherence review of a finished villain.")) {
+      return { verdict: "clean", issues: [] };
+    }
+    throw new Error(`Unexpected message: ${message.slice(0, 80)}`);
+  };
+
+  const villainRun = (overrides: Partial<GeneratorRunRequest> = {}) =>
+    run("villain", {
+      useAI: true,
+      themeId: "fantasy",
+      options: { archetype: "Corrupt Ruler", worldRelation: "Predator" },
+      ...overrides,
+    });
+
+  it("builds the villain in stages and carries the request context", async () => {
+    const complete = vi.fn<AIGeneratorGateway["complete"]>(async (message) =>
+      JSON.stringify(stageReply(message)),
+    );
+    const onVillainStagedStats = vi.fn();
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete },
+      onVillainStagedStats,
+    });
+    const generated = await svc.generateDraft(
+      villainRun({ instructions: "Keep it about the harbour." }),
+    );
+    expect(complete).toHaveBeenCalledTimes(5);
+    expect(
+      complete.mock.calls.every(([message]) =>
+        message.includes("Keep it about the harbour."),
+      ),
+    ).toBe(true);
+    expect(onVillainStagedStats).toHaveBeenCalledWith(
+      expect.objectContaining({ outcome: "staged", aiCalls: 5 }),
+    );
+    expect(generated.title).toBe("Ottoline Brack, the Quiet Toll");
+    expect(generated.lore).toContain("### Lieutenants & Inner Circle");
+    expect(generated.lore).toContain("Dependency chain:");
+  });
+
+  it("falls back to the generic route when a stage is unusable", async () => {
+    const complete = vi.fn<AIGeneratorGateway["complete"]>(async () => "nope");
+    const onVillainStagedStats = vi.fn();
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete },
+      onVillainStagedStats,
+    });
+    const generated = await svc.generateDraft(villainRun());
+    // Two failed stage 1 attempts, then one generic call, then local output.
+    expect(complete).toHaveBeenCalledTimes(3);
+    expect(complete.mock.calls[2][0]).not.toContain("STAGE 1 OF 4");
+    expect(generated.title).toBeTruthy();
+    expect(onVillainStagedStats).toHaveBeenCalledWith(
+      expect.objectContaining({ outcome: "fell-back", stoppedAt: "concept" }),
+    );
+  });
+
+  it("keeps the villain off names the vault already uses", async () => {
+    const complete = vi.fn<AIGeneratorGateway["complete"]>(async (message) =>
+      JSON.stringify(stageReply(message)),
+    );
+    const onVillainStagedStats = vi.fn();
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete },
+      onVillainStagedStats,
+    });
+    const request = villainRun();
+    await svc.generateDraft({
+      ...request,
+      vaultContext: {
+        ...({} as NonNullable<GeneratorRunRequest["vaultContext"]>),
+        existingTitles: ["Ottoline Brack"],
+        bannedNames: [],
+        categoryLabels: [],
+        applyTemplate: false,
+        neighbors: [],
+        worldSample: [],
+      },
+    });
+    expect(complete.mock.calls[0][0]).toContain("Ottoline Brack");
+    expect(onVillainStagedStats).toHaveBeenCalledWith(
+      expect.objectContaining({ outcome: "fell-back", stoppedAt: "concept" }),
+    );
+  });
+
+  it.each([
+    ["staged: false", { options: { staged: false } }],
+    [
+      "a continuity thread",
+      {
+        interaction: {
+          input: "Write another villain.",
+          previousInteractionId: "interaction-previous",
+          store: true,
+        },
+      },
+    ],
+  ])("keeps %s on the generic route", async (_label, overrides) => {
+    const complete = vi.fn<AIGeneratorGateway["complete"]>(async () => "nope");
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete },
+    });
+    await svc.generateDraft(villainRun(overrides));
+    expect(complete).toHaveBeenCalledTimes(1);
+    expect(complete.mock.calls[0][0]).not.toContain("STAGE 1 OF 4");
   });
 });

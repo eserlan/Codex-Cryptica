@@ -13,6 +13,7 @@ import {
   buildCampaignAdventurePrompt,
   buildCampaignDungeonPrompt,
   buildCampaignHeistPrompt,
+  buildCampaignVillainPrompt,
   buildCampaignTomePrompt,
   getGenerator,
   isTitleBanned,
@@ -31,6 +32,7 @@ import {
 import { generateDungeonStaged } from "./dungeon-staged";
 import { generateAdventureStaged } from "./adventure-staged";
 import { generateHeistStaged } from "./heist-staged";
+import { generateVillainStaged } from "./villain-staged";
 import { generateTomeStaged } from "./tome-staged";
 import { generateTomeTwoPass } from "./public-tome";
 import { generateCampaignHeist } from "./campaign-heist-generation";
@@ -523,6 +525,68 @@ export class CampaignGeneratorAIGenerationService extends CampaignGeneratorLangu
     }
   }
 
+  /**
+   * Staged route (concept, organisation, plan, ending), then the generic
+   * one-pass route if a stage is unusable. `options.staged === false` forces
+   * the one-pass route, and a continuity thread stays on it.
+   */
+  // fallow-ignore-next-line code-duplication
+  protected async generateVillainWithAI(
+    generator: CampaignGeneratorDefinition,
+    request: GeneratorRunRequest,
+    bannedNames: Set<string>,
+    signal?: AbortSignal,
+  ): Promise<GeneratedDraft | null> {
+    if (request.options?.staged !== false && !request.interaction) {
+      const staged = await this.generateVillainStaged(
+        generator,
+        request,
+        bannedNames,
+        signal,
+      );
+      if (staged) return staged;
+    }
+    return this.generateGenericWithAI(generator, request, bannedNames);
+  }
+
+  private async generateVillainStaged(
+    generator: CampaignGeneratorDefinition,
+    request: GeneratorRunRequest,
+    bannedNames: Set<string>,
+    signal?: AbortSignal,
+  ): Promise<GeneratedDraft | null> {
+    const prompt = buildCampaignVillainPrompt(request);
+    try {
+      const result = await generateVillainStaged(prompt.resolved, {
+        // The context chain already carries the request's instructions.
+        contextPrefix: prompt.contextPrefix,
+        avoidNames: [...bannedNames],
+        signal,
+        onStats: this._deps.onVillainStagedStats,
+        // fallow-ignore-next-line code-duplication
+        complete: async (instruction, message) =>
+          completeText(
+            await this.aiGateway!.complete(message, instruction, { signal }),
+          ),
+      });
+      if (!result) return null;
+      const { output } = result;
+      return generator.mapOutputToDraft(
+        {
+          title: output.title,
+          summary: output.summary ?? "",
+          content: output.content,
+          lore: output.lore,
+          labels: output.labels,
+        },
+        request,
+      );
+    } catch (error) {
+      if (signal?.aborted) throw error;
+      return null;
+    }
+  }
+
   // fallow-ignore-next-line complexity
   protected async generateAIDraft(
     generator: ReturnType<typeof getGenerator>,
@@ -538,6 +602,13 @@ export class CampaignGeneratorAIGenerationService extends CampaignGeneratorLangu
         return this.generateTomeWithAI(generator, request, bannedNames, signal);
       case "heist":
         return this.generateHeistWithAI(
+          generator,
+          request,
+          bannedNames,
+          signal,
+        );
+      case "villain":
+        return this.generateVillainWithAI(
           generator,
           request,
           bannedNames,

@@ -17,6 +17,7 @@ import type { PublicGeneratorOutput } from "./public-generator-adapters";
 import type { AdventureStagedStats } from "./adventure-staged";
 import type { DungeonStagedStats } from "./dungeon-staged";
 import type { HeistStagedStats } from "./heist-staged";
+import type { VillainStagedStats } from "./villain-staged";
 import type { TomeStagedStats } from "./tome-staged";
 import type { LanguageGenerationResultV1, StatSheet } from "schema";
 
@@ -365,6 +366,8 @@ export interface CampaignGeneratorServiceDeps {
   onHeistStagedStats?: (stats: HeistStagedStats) => void;
   /** Called when staged tome generation finishes or falls back. */
   onTomeStagedStats?: (stats: TomeStagedStats) => void;
+  /** Called when staged villain generation finishes or falls back. */
+  onVillainStagedStats?: (stats: VillainStagedStats) => void;
 }
 
 /** Max AI generation attempts when the model keeps returning a banned name. */

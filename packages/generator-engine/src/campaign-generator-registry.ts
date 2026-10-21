@@ -1405,6 +1405,18 @@ function generateVillain(request: GeneratorRunRequest): GeneratorOutput {
   };
 }
 
+/**
+ * The villain prompt with its options resolved once, so a staged run and a
+ * fall back to the one-pass route use the same villain.
+ */
+export function buildCampaignVillainPrompt(request: GeneratorRunRequest) {
+  const context = contextChain(request);
+  return {
+    ...buildVillainPrompt(villainOptions(request), context),
+    contextPrefix: context,
+  };
+}
+
 function villainPrompt(request: GeneratorRunRequest): string {
   const prompt = buildVillainPrompt(
     villainOptions(request),
