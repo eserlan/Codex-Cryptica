@@ -24,7 +24,7 @@ const GENERATORS = [
   {
     id: "heist",
     path: "/generators/heist",
-    changed: /(?:^|\/)(?:public-heist|.*heist.*|generator-engine-worldbuilding)\.[cm]?[jt]s$/,
+    changed: /(?:^|\/)(?:public-heist|.*heist.*)\.[cm]?[jt]s$/,
     hints: ["heist", "/generators/heist", "Heist Generator"],
   },
   {
