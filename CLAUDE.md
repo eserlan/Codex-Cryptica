@@ -6,6 +6,9 @@
 
 ## Active Technologies
 
+- TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + Existing `schema` (one optional `biome` field on `EntitySchema`), the existing `vault` store (`createEntity`/`updateEntity`), `ClipboardService`, the entity `image` path, `@codex/ai-engine` (`aiClientManager`) for one optional AI action, Floating UI, `zod`, Tailwind 4 semantic tokens, Iconify classes. New internal package `packages/biome-engine`. No new third-party dependency. (180-biome-explorer)
+- Profiles are Note entities (`kind: "biome"`) carrying an optional structured `biome` field plus generated Markdown `content`; the catalogue is bundled data and images are hosted on R2. Device-local: `codex-biome-explorer-view` and one AI-notice hint key. No IndexedDB, OPFS layout or migration change. (180-biome-explorer)
+
 - TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14; Cloudflare Workers runtime for `apps/workers/oracle-proxy` (179-in-app-feedback)
 
 - TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + Existing `map-engine` (hex maths; + `parseHexLabel`), `random-source-engine` (offline rolling), `session-journal-engine` (+ `formatHexExplored`), `schema` (`MapSchema` + optional `grid`, `hexCrawl`), `vault-engine` `GuestExporter` (strips `hexCrawl`), `@codex/ai-engine` (`aiClientManager`), `generator-engine` `formatCampaignContextBlock`, the exported `extractJsonObject`, `@codex/events` (`JOURNAL:CAPTURE`), Floating UI, `zod`, Tailwind 4 semantic tokens, Iconify classes. New internal package `packages/hex-crawl-engine`. No new third-party dependency. (178-hex-crawl-mode)

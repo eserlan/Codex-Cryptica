@@ -39,7 +39,7 @@
     },
     "apps/web": {
       "name": "web",
-      "version": "0.36.0",
+      "version": "0.36.5",
       "dependencies": {
         "@capacitor/app": "^8.1.1",
         "@capacitor/core": "^8.5.0",
@@ -85,6 +85,7 @@
         "@types/gapi.auth2": "^0.0.61",
         "@types/gapi.client.drive": "^3.0.15",
         "@xyflow/svelte": "^1.5.2",
+        "biome-engine": "workspace:*",
         "chronology-engine": "workspace:*",
         "comlink": "^4.4.2",
         "compromise": "^14.15.0",
@@ -218,6 +219,19 @@
         "svelte": "^5.55.9",
         "typescript": "^6.0.3",
         "vite": "^8.0.14",
+        "vitest": "^5.0.0",
+      },
+    },
+    "packages/biome-engine": {
+      "name": "biome-engine",
+      "version": "0.0.0",
+      "dependencies": {
+        "schema": "workspace:*",
+        "zod": "^4.4.3",
+      },
+      "devDependencies": {
+        "@vitest/coverage-v8": "^5.0.0",
+        "typescript": "^6.0.3",
         "vitest": "^5.0.0",
       },
     },
@@ -1527,6 +1541,8 @@
     "bidi-js": ["bidi-js@1.0.3", "", { "dependencies": { "require-from-string": "^2.0.2" } }, "sha512-RKshQI1R3YQ+n9YJz2QQ147P66ELpa1FQEg20Dk8oW9t2KgLbpDLLp9aGZ7y8WHSshDknG0bknqGw5/tyCs5tw=="],
 
     "big-integer": ["big-integer@1.6.52", "", {}, "sha512-QxD8cf2eVqJOOz63z6JIN9BzvVs/dlySa5HGSBH5xtR8dPteIRQnBxxKqkNTiT6jbDTF6jAfrd4oMcND9RGbQg=="],
+
+    "biome-engine": ["biome-engine@workspace:packages/biome-engine"],
 
     "bl": ["bl@4.1.0", "", { "dependencies": { "buffer": "5.7.1", "inherits": "2.0.4", "readable-stream": "3.6.2" } }, "sha512-1W07cM9gS6DcLperZfFSj+bWLtaPGSOHWhPiGzXmvVJbRLdG82sH/Kn8EtW1VqWVA54AKf2h5k5BbnIbwF3h6w=="],
 

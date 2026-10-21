@@ -189,6 +189,11 @@ export class GuestExporter {
         );
       }
 
+      // A biome profile's reference links are the owner's private research
+      if (sanitized.biome) {
+        sanitized.biome = { ...sanitized.biome, referenceLinks: [] };
+      }
+
       // Redact dangling links in content
       if (sanitized.content) {
         sanitized.content = this.redactDanglingLinks(

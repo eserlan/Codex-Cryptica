@@ -374,4 +374,75 @@ describe("GuestExporter", () => {
       expect(JSON.stringify(shop)).toBe(before);
     });
   });
+
+  describe("biome entities", () => {
+    const biome = {
+      version: 1 as const,
+      reference: null,
+      own: {
+        climate: {},
+        terrain: "Black glass flats",
+        vegetation: "",
+        water: "",
+        pressures: "",
+        notes: "",
+      },
+      alterations: [],
+      referenceLinks: [
+        { url: "https://example.com/my-research", label: "Mine" },
+      ],
+    };
+    const biomeEntity: Entity = {
+      id: "biome-1",
+      type: "note",
+      title: "Ashen Flats",
+      status: "active",
+      kind: "biome",
+      content: "# Ashen Flats",
+      connections: [],
+      biome,
+    };
+
+    it("exports a visible biome profile without its reference links", () => {
+      const bundle = GuestExporter.export({
+        ...defaultOptions,
+        entities: [biomeEntity],
+      });
+      const exported = bundle.entities.find((e) => e.id === "biome-1");
+      expect(exported?.biome?.own.terrain).toBe("Black glass flats");
+      expect(exported?.biome?.referenceLinks).toEqual([]);
+    });
+
+    it("does not change the original entity", () => {
+      GuestExporter.export({ ...defaultOptions, entities: [biomeEntity] });
+      expect(biomeEntity.biome?.referenceLinks).toHaveLength(1);
+    });
+
+    it("leaves an entity without a biome field unchanged", () => {
+      const note: Entity = {
+        id: "n",
+        type: "note",
+        title: "N",
+        status: "active",
+        content: "x",
+        connections: [],
+      };
+      const bundle = GuestExporter.export({
+        ...defaultOptions,
+        entities: [note],
+      });
+      expect(bundle.entities[0].biome).toBeUndefined();
+    });
+
+    it("excludes a hidden or draft biome profile", () => {
+      const bundle = GuestExporter.export({
+        ...defaultOptions,
+        entities: [
+          { ...biomeEntity, id: "hidden-biome", labels: ["hidden"] },
+          { ...biomeEntity, id: "draft-biome", status: "draft" },
+        ],
+      });
+      expect(bundle.entities.map((e) => e.id)).toEqual([]);
+    });
+  });
 });
