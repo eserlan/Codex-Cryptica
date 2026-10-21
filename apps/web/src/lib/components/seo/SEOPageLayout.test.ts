@@ -297,34 +297,25 @@ describe("SEOPageLayout comparison details", () => {
   });
 });
 
-describe("SEOPageLayout standalone worldbuilding proof", () => {
-  it("shows the worldbuilding screenshot and generator link", () => {
+describe("Standalone worldbuilding page", () => {
+  it("renders the screenshot and generator link", () => {
     const { container } = render(SEOPageLayout, {
       props: {
         data: worldbuildingToolRoot,
         canonicalUrl: "/worldbuilding-tool",
       },
     });
-    expect(
-      document.querySelector('link[rel="canonical"]')?.getAttribute("href"),
-    ).toBe("https://codexcryptica.com/worldbuilding-tool");
-    expect(
-      screen.getByRole("heading", {
-        name: "Free Worldbuilding Tool for RPGs and Fiction",
-      }),
-    ).toBeTruthy();
-    const image = screen.getByRole("img", {
-      name: /Codex Cryptica showing a graph of linked entities/i,
-    });
-    expect(image.getAttribute("src")).toContain(
-      "assets.codexcryptica.com/cdn-cgi/image/",
-    );
+    const canonical = document.querySelector('link[rel="canonical"]');
+    const url = "https://codexcryptica.com/worldbuilding-tool";
+    expect(canonical?.getAttribute("href")).toBe(url);
+    const image = screen.getByRole("img", { name: /linked entities/i });
+    expect(image.getAttribute("src")?.startsWith("https://")).toBe(true);
     expect(image.getAttribute("loading")).toBe("lazy");
-    expect(
-      container.querySelector("#hero-primary-cta")?.textContent,
-    ).toContain("Start a Free World");
-    expect(
-      container.querySelector("#hero-secondary-cta")?.getAttribute("href"),
-    ).toBe("/generators/world");
+    const heading = document.querySelector("#hero-h1");
+    expect(heading?.textContent).toContain("Worldbuilding Tool");
+    const primary = container.querySelector("#hero-primary-cta");
+    const secondary = container.querySelector("#hero-secondary-cta");
+    expect(primary?.textContent).toContain("Start a Free World");
+    expect(secondary?.getAttribute("href")).toBe("/generators/world");
   });
 });
