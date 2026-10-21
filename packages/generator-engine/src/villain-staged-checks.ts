@@ -275,7 +275,7 @@ export function checkVillainEnding(data: JsonObject): DraftCheck {
   const soft = [
     masterObjectProblem(str(data.weakness)),
     powerVacuumProblem(str(data.moralComplication)),
-    glance < 4 || glance > 8
+    glance < 5 || glance > 7
       ? '"atAGlance" needs 5 to 7 one-line bullets'
       : null,
   ].filter((p): p is string => p !== null);

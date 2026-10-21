@@ -771,6 +771,23 @@ describe("copy", () => {
     expect(result!.output.lore).not.toContain("Villain at a Glance");
     expect(checkVillainEnding(noGlance).soft.join(" ")).toContain("atAGlance");
   });
+
+  it("requires five to seven at-a-glance bullets", () => {
+    const bullets = VALID_ENDING.atAGlance as string[];
+    const hasCountProblem = (count: number) =>
+      checkVillainEnding({
+        ...VALID_ENDING,
+        atAGlance: Array.from(
+          { length: count },
+          (_, i) => bullets[i % bullets.length],
+        ),
+      }).soft.some((problem) => problem.includes('"atAGlance" needs 5 to 7'));
+
+    expect(hasCountProblem(4)).toBe(true);
+    expect(hasCountProblem(5)).toBe(false);
+    expect(hasCountProblem(7)).toBe(false);
+    expect(hasCountProblem(8)).toBe(true);
+  });
 });
 
 describe("campaign names", () => {
