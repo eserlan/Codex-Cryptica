@@ -175,7 +175,7 @@ function makeBaseCtx(overrides: any) {
     plotTwist: {
       premise: (overrides.plotPremise as string) ?? "local premise",
     },
-    villain: { genre: "Fantasy" },
+    villain: (overrides.villain as object) ?? { genre: "Fantasy" },
     comicBookEvent: { eventType: "Alien Invasion" },
     origin: { originType: "Mutation" },
     world: { genre: "Fantasy" },
@@ -226,12 +226,13 @@ describe("generator-page-generation", () => {
       expect(isStreamableSlug("settlement" as ValidSlug)).toBe(true);
     });
 
-    it("exposes exactly ten non-streamable slugs", () => {
-      expect(NON_STREAMABLE_SLUGS).toHaveLength(10);
+    it("exposes exactly eleven non-streamable slugs", () => {
+      expect(NON_STREAMABLE_SLUGS).toHaveLength(11);
       expect([...NON_STREAMABLE_SLUGS].sort()).toEqual(
         [
           "adventure-generator",
           "adventure-idea-generator",
+          "bbeg-generator",
           "business",
           "council-vote",
           "dungeon-generator",
@@ -249,6 +250,7 @@ describe("generator-page-generation", () => {
     it.each([
       "adventure-generator",
       "adventure-idea-generator",
+      "bbeg-generator",
       "council-vote",
       "dungeon-generator",
       "heist",
@@ -395,6 +397,32 @@ describe("generator-page-generation", () => {
           useAI: true,
           heistType: "Theft",
           onProgress: onOneShotProgress,
+        }),
+      );
+    });
+
+    it("passes villain progress and a signal through and resets progress at the start", async () => {
+      const engine = makeFakeEngine();
+      engine.generateVillain = vi.fn().mockResolvedValue({ title: "x" });
+      const onOneShotProgress = vi.fn();
+      const handlers = createGeneratorHandlers(
+        makeCtx({
+          engine,
+          onOneShotProgress,
+          oneShotRuns: createOneShotRunControl(),
+          villain: { archetype: "Mastermind" },
+        }),
+      );
+
+      await handlers["bbeg-generator"](true);
+
+      expect(onOneShotProgress).toHaveBeenCalledWith(null);
+      expect(engine.generateVillain).toHaveBeenCalledWith(
+        expect.objectContaining({
+          useAI: true,
+          archetype: "Mastermind",
+          onProgress: onOneShotProgress,
+          signal: expect.any(AbortSignal),
         }),
       );
     });

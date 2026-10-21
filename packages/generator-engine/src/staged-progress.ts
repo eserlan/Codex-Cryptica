@@ -32,7 +32,12 @@ export type StagedStepId =
   // Business stages (business-staged.ts).
   | "identity"
   | "connections"
-  | "trouble";
+  | "trouble"
+  // Villain stages (villain-staged.ts); reuses "coherence".
+  | "concept"
+  | "organisation"
+  | "plan"
+  | "ending";
 
 export interface StagedProgressStep {
   id: StagedStepId;

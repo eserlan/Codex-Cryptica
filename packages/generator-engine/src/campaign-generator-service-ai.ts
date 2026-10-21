@@ -13,6 +13,7 @@ import {
   buildCampaignAdventurePrompt,
   buildCampaignDungeonPrompt,
   buildCampaignHeistPrompt,
+  buildCampaignVillainPrompt,
   buildCampaignTomePrompt,
   getGenerator,
   isTitleBanned,
@@ -31,6 +32,7 @@ import {
 import { generateDungeonStaged } from "./dungeon-staged";
 import { generateAdventureStaged } from "./adventure-staged";
 import { generateHeistStaged } from "./heist-staged";
+import { generateVillainStaged } from "./villain-staged";
 import { generateTomeStaged } from "./tome-staged";
 import { generateTomeTwoPass } from "./public-tome";
 import { generateCampaignHeist } from "./campaign-heist-generation";
@@ -523,6 +525,69 @@ export class CampaignGeneratorAIGenerationService extends CampaignGeneratorLangu
     }
   }
 
+  /**
+   * Staged route (concept, organisation, plan, ending), then the generic
+   * one-pass route if a stage is unusable. `options.staged === false` forces
+   * the one-pass route, and a continuity thread stays on it.
+   */
+  // fallow-ignore-next-line code-duplication
+  protected async generateVillainWithAI(
+    generator: CampaignGeneratorDefinition,
+    request: GeneratorRunRequest,
+    bannedNames: Set<string>,
+    signal?: AbortSignal,
+  ): Promise<GeneratedDraft | null> {
+    if (request.options?.staged !== false && !request.interaction) {
+      const staged = await this.generateVillainStaged(
+        generator,
+        request,
+        bannedNames,
+        signal,
+      );
+      if (staged) return staged;
+    }
+    signal?.throwIfAborted();
+    return this.generateGenericWithAI(generator, request, bannedNames, signal);
+  }
+
+  private async generateVillainStaged(
+    generator: CampaignGeneratorDefinition,
+    request: GeneratorRunRequest,
+    bannedNames: Set<string>,
+    signal?: AbortSignal,
+  ): Promise<GeneratedDraft | null> {
+    const prompt = buildCampaignVillainPrompt(request);
+    try {
+      const result = await generateVillainStaged(prompt.resolved, {
+        // The context chain already carries the request's instructions.
+        contextPrefix: prompt.contextPrefix,
+        avoidNames: [...bannedNames],
+        signal,
+        onStats: this._deps.onVillainStagedStats,
+        // fallow-ignore-next-line code-duplication
+        complete: async (instruction, message) =>
+          completeText(
+            await this.aiGateway!.complete(message, instruction, { signal }),
+          ),
+      });
+      if (!result) return null;
+      const { output } = result;
+      return generator.mapOutputToDraft(
+        {
+          title: output.title,
+          summary: output.summary ?? "",
+          content: output.content,
+          lore: output.lore,
+          labels: output.labels,
+        },
+        request,
+      );
+    } catch (error) {
+      if (signal?.aborted) throw error;
+      return null;
+    }
+  }
+
   // fallow-ignore-next-line complexity
   protected async generateAIDraft(
     generator: ReturnType<typeof getGenerator>,
@@ -538,6 +603,13 @@ export class CampaignGeneratorAIGenerationService extends CampaignGeneratorLangu
         return this.generateTomeWithAI(generator, request, bannedNames, signal);
       case "heist":
         return this.generateHeistWithAI(
+          generator,
+          request,
+          bannedNames,
+          signal,
+        );
+      case "villain":
+        return this.generateVillainWithAI(
           generator,
           request,
           bannedNames,
@@ -642,13 +714,16 @@ export class CampaignGeneratorAIGenerationService extends CampaignGeneratorLangu
     generator: ReturnType<typeof getGenerator>,
     request: GeneratorRunRequest,
     bannedNames: Set<string>,
+    signal?: AbortSignal,
   ): Promise<GeneratedDraft | null> {
+    signal?.throwIfAborted();
     const gateway = this.aiGateway;
     if (!gateway) return null;
     const { fullPrompt, interaction } = buildGenericGeneratorPrompt(
       generator,
       await this.withNameSuggestion(request),
     );
+    signal?.throwIfAborted();
     return this.retryGenericAttempts(
       gateway,
       generator,
@@ -656,6 +731,7 @@ export class CampaignGeneratorAIGenerationService extends CampaignGeneratorLangu
       bannedNames,
       fullPrompt,
       interaction,
+      signal,
     );
   }
 
@@ -666,8 +742,10 @@ export class CampaignGeneratorAIGenerationService extends CampaignGeneratorLangu
     bannedNames: Set<string>,
     fullPrompt: string,
     interaction: ReturnType<typeof buildGenericGeneratorPrompt>["interaction"],
+    signal?: AbortSignal,
   ): Promise<GeneratedDraft | null> {
     for (let attempt = 0; attempt < MAX_AI_ATTEMPTS; attempt++) {
+      signal?.throwIfAborted();
       const result = await this.runGenericAttempt(
         gateway,
         generator,
@@ -675,6 +753,7 @@ export class CampaignGeneratorAIGenerationService extends CampaignGeneratorLangu
         bannedNames,
         fullPrompt,
         interaction,
+        signal,
       );
       if (result.kind === "draft") return result.draft;
       if (result.kind === "stop") return null;
@@ -689,6 +768,7 @@ export class CampaignGeneratorAIGenerationService extends CampaignGeneratorLangu
     bannedNames: Set<string>,
     fullPrompt: string,
     interaction: ReturnType<typeof buildGenericGeneratorPrompt>["interaction"],
+    signal?: AbortSignal,
   ): Promise<
     | { kind: "draft"; draft: GeneratedDraft }
     | { kind: "retry" }
@@ -697,6 +777,7 @@ export class CampaignGeneratorAIGenerationService extends CampaignGeneratorLangu
     try {
       const result = await gateway.complete(fullPrompt, SYSTEM_INSTRUCTION, {
         interaction,
+        signal,
       });
       const output = parseGenericGeneratorOutput(
         completeText(result),
