@@ -645,9 +645,15 @@ export const worldbuildingToolRoot: SEOPageData = {
   relatedLinks: [
     { href: "/", label: "Worldbuilding tool home" },
     { href: "/generators/world", label: "Generate a world" },
-    { href: "/answers/how-do-i-start-worldbuilding-for-a-novel-or-short-story", label: "Worldbuilding for fiction" },
+    {
+      href: "/answers/how-do-i-start-worldbuilding-for-a-novel-or-short-story",
+      label: "Worldbuilding for fiction",
+    },
     { href: "/solutions/worldbuilding-tool", label: "Structured worldbuilding" },
-    { href: "/solutions/local-first-worldbuilding-tool", label: "Local-first worldbuilding" },
+    {
+      href: "/solutions/local-first-worldbuilding-tool",
+      label: "Local-first worldbuilding",
+    },
     { href: "/solutions/rpg-knowledge-graph", label: "Relationship graph" },
   ],
 };
