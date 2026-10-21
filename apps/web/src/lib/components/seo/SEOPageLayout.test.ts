@@ -305,15 +305,23 @@ describe("SEOPageLayout standalone worldbuilding proof", () => {
     expect(
       document.querySelector('link[rel="canonical"]')?.getAttribute("href"),
     ).toBe("https://codexcryptica.com/worldbuilding-tool");
-    expect(screen.getByRole("heading", {
-      name: "Free Worldbuilding Tool for RPGs and Fiction",
-    })).toBeTruthy();
+    expect(
+      screen.getByRole("heading", {
+        name: "Free Worldbuilding Tool for RPGs and Fiction",
+      }),
+    ).toBeTruthy();
     const image = screen.getByRole("img", {
       name: /Codex Cryptica showing a graph of linked entities/i,
     });
-    expect(image.getAttribute("src")).toContain("assets.codexcryptica.com/cdn-cgi/image/");
+    expect(image.getAttribute("src")).toContain(
+      "assets.codexcryptica.com/cdn-cgi/image/",
+    );
     expect(image.getAttribute("loading")).toBe("lazy");
-    expect(container.querySelector("#hero-primary-cta")?.textContent).toContain("Start a Free World");
-    expect(container.querySelector("#hero-secondary-cta")?.getAttribute("href")).toBe("/generators/world");
+    expect(
+      container.querySelector("#hero-primary-cta")?.textContent,
+    ).toContain("Start a Free World");
+    expect(
+      container.querySelector("#hero-secondary-cta")?.getAttribute("href"),
+    ).toBe("/generators/world");
   });
 });
