@@ -359,6 +359,8 @@ const sentence = (text: unknown): string => {
   return /[.!?]$/.test(t) ? t : `${t}.`;
 };
 
+const tag = (label: string, text: string): string => `**${label}.** ${text}`;
+
 function lieutenantLine(
   l: JsonObject,
   slot?: VillainAxes["lieutenants"][number],
@@ -425,18 +427,18 @@ export function assembleVillain(
     `### Ultimate Goal\n${str(concept.ultimateGoal)}`,
     `### Why Now\n${str(concept.whyNow)}`,
     `### Motivation\n${str(concept.motivation)}`,
-    `### Fatal Flaw\n${str(concept.fatalFlaw)}`,
+    `### Fatal Flaw\n${tag(axes.flaw.label, str(concept.fatalFlaw))}`,
     `### Methods\n${str(concept.methods)}`,
     `### Resources\n${str(concept.resources)}`,
     `### Lieutenants & Inner Circle\n${lieutenants.map((l, i) => lieutenantLine(l, axes.lieutenants[i])).join("\n")}`,
-    `### Organisation & Power Structure\n${str(organisation.organisation)}`,
+    `### Organisation & Power Structure\n${tag(axes.organisation.label, str(organisation.organisation))}`,
     `### Territory / Lair\n${str(organisation.territory)}`,
     `### The Villain's Plan\n${planBlock(plan)}`,
     `### Escalation If Ignored\n${str(plan.escalation)}`,
     `### Discovery Layers\n**What the World Knows**: ${str(discovery.world)}\n**What Their Servants Know**: ${str(discovery.servants)}\n**GM-Only Truth**: ${str(discovery.gmOnly)}`,
     `### Personal Connections\n${connections.map((c) => `- ${c}`).join("\n")}`,
-    `### Weakness / Vulnerability\n${str(ending.weakness)}`,
-    `### Moral Complication\n${str(ending.moralComplication)}`,
+    `### Weakness / Vulnerability\n${tag(axes.vulnerability.label, str(ending.weakness))}`,
+    `### Moral Complication\n${tag(axes.complication.label, str(ending.moralComplication))}`,
     `### Final Confrontation\n${str(ending.finalConfrontation)}`,
     `### If Defeated\n${str(ending.ifDefeated)}`,
   ].join("\n\n");
