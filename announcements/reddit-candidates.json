@@ -1,5 +1,5 @@
 {
-  "updated_at": 1792613140,
+  "updated_at": 1792614893,
   "candidates": [
     {
       "id": "reddit-39280708572-hex-journey-mode-plan-a-route-and-walk-i",
@@ -32,14 +32,14 @@
       "created_at": 1792537395
     },
     {
-      "id": "reddit-39665758623-my-campaign-villains-kept-flatlining-aft",
-      "title": "My campaign villains kept flatlining after two sessions, so I rebuilt the generator around a staged plan",
-      "body": "Every villain I drafted in one pass looked good in the doc and then fell apart at the table. The goal did not match the methods, the lieutenants all felt the same, and the plan was one block of text that broke the moment players disrupted step one.\n\nI built a staged BBEG / Campaign Villain generator that drafts a campaign-scale antagonist in four checked stages \u2014 concept, organisation, escalating plan, and finale \u2014 with a repair step that keeps the pieces coherent. If a stage fails it falls back to one-pass, so you still get a usable draft.\n\nTry it here: https://codexcryptica.com/generators/bbeg-generator\n\nIt now generates:\n- a concrete goal, fatal flaw and discoverable weak point on fixed axes so they reinforce each other instead of drifting\n- 2\u20134 lieutenants with distinct roles, loyalties and secrets that make them usable as linked characters\n- an escalating plan with required stages and diversion stages, plus how disruption reshapes later stages\n- a visible progress list with coherent repair when you tweak a stage, not a full reroll\n\nTradeoff I am still watching: the extra checks make generation a few seconds slower than the old one-shot. I kept the fallback because a slow, perfect villain that fails to return is worse than a usable one.\n\nWhat kind of villain structure has actually survived contact with your players \u2014 a tight clock, a loose conspiracy, or something you had to improvise around?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/villain-lady-vivienne-morvath.jpg)",
-      "url": "https://codexcryptica.com/generators/bbeg-generator",
-      "image_url": "https://assets.codexcryptica.com/announcements/villain-lady-vivienne-morvath.jpg",
+      "id": "reddit-39665758623-i-was-explaining-d-d-to-kids-before-they",
+      "title": "I was explaining D&D to kids before they had rolled a die \u2014 this guide starts play first",
+      "body": "My first session for 8 to 12 year olds stalled before we played. Character creation and a lecture on actions ate the whole slot and nobody had made a decision yet.\n\nI wrote a start-playing-first guide for introducing children to D&D without overwhelming them. It keeps the first teach under two minutes and adds rules only when a choice needs them.\n\nRead it here: https://codexcryptica.com/answers/how-do-i-introduce-children-to-dnd-without-overwhelming-them\n\nIt covers:\n- readable pregens with two or three clear abilities so every child can act immediately\n- teach-a-rule-when-needed stages from basic conversation through checks, attacks and saving throws\n- a short 30 to 45 minute lantern adventure with a clear ending you can stop on\n- non-combat options for talking and helping so every child keeps deciding even if they avoid a fight\n\nI left full initiative, spell slots and levelling out of session one. That is deliberate as a teaching choice, but it means you will need a simple way to add them back when the group asks for more.\n\nWhat actually hooked the youngest player at your table \u2014 the first d20 roll, the choice of what to try, or something you did not expect?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-39665758623-0.png)",
+      "url": "https://codexcryptica.com/answers/how-do-i-introduce-children-to-dnd-without-overwhelming-them",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-39665758623-0.png",
       "source_id": "39665758623",
       "status": "approved",
-      "created_at": 1792613140
+      "created_at": 1792614893
     }
   ]
 }
