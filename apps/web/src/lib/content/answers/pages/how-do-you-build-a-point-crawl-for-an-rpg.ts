@@ -198,7 +198,8 @@ export const howDoYouBuildAPointCrawlForAnRpg: AnswerConfigInput = {
     ],
   },
   seo: {
-    title: "How to Build a Point Crawl for an RPG (Worked Example) | Codex Cryptica",
+    title:
+      "How to Build a Point Crawl for an RPG (Worked Example) | Codex Cryptica",
     description:
       "Build a playable RPG point crawl in five steps. Copy a six-location route map with travel times, hazards, alternate approaches and consequences.",
     image:
