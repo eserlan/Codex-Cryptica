@@ -179,6 +179,7 @@ export const howDoYouCreateAFantasyFaction: AnswerConfigInput = {
     "can-multiple-gods-share-a-domain",
     "how-do-i-make-a-campaign-threat-feel-urgent-without-railroading",
     "how-should-a-fantasy-adventuring-guild-handle-wages-dues-and-shared-expenses",
+    "where-do-worldbuilding-ideas-come-from",
   ],
   discovery: {
     id: "answer-fantasy-faction",

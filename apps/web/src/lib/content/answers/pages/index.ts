@@ -171,6 +171,7 @@ import { whatTtrpgShouldIPlayForAPirateCampaign } from "./what-ttrpg-should-i-pl
 import { whatTtrpgShouldIUseForAFantasyDungeonCrawl } from "./what-ttrpg-should-i-use-for-a-fantasy-dungeon-crawl";
 import { whatTtrpgsLetYouBuildAndUpgradeABase } from "./what-ttrpgs-let-you-build-and-upgrade-a-base";
 import { whereDoIStartIfIHaveNeverPlayedATabletopRpg } from "./where-do-i-start-if-i-have-never-played-a-tabletop-rpg";
+import { whereDoWorldbuildingIdeasComeFrom } from "./where-do-worldbuilding-ideas-come-from";
 import { whichDiceDoIRollInDndAndWhen } from "./which-dice-do-i-roll-in-dnd-and-when";
 import { whichTabletopRpgsHaveSquadAndMassBattleRules } from "./which-tabletop-rpgs-have-squad-and-mass-battle-rules";
 import { xpLevelingVsMilestoneLeveling } from "./xp-leveling-vs-milestone-leveling";
@@ -355,6 +356,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     whatTtrpgShouldIUseForAFantasyDungeonCrawl,
     whatTtrpgsLetYouBuildAndUpgradeABase,
     whereDoIStartIfIHaveNeverPlayedATabletopRpg,
+    whereDoWorldbuildingIdeasComeFrom,
     whichDiceDoIRollInDndAndWhen,
     whichTabletopRpgsHaveSquadAndMassBattleRules,
     xpLevelingVsMilestoneLeveling,
