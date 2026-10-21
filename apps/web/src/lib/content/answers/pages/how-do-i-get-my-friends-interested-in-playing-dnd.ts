@@ -208,6 +208,11 @@ export const howDoIGetMyFriendsInterestedInPlayingDnd: AnswerConfigInput = {
           "That answer is for the new player learning what to do at their own first game; this answer is for the friend inviting them, covering how to frame the invitation, remove homework, and make a short try-out feel safe to accept.",
       },
       {
+        with: "answer-introduce-children-to-dnd",
+        reason:
+          "This answer helps a DM invite curious friends to try D&D; the children-focused answer assumes children are ready to play and helps an adult teach and run their first session without overwhelming them.",
+      },
+      {
         with: "answer-pros-cons-becoming-dungeon-master",
         reason:
           "That answer weighs whether to take on the DM role at all; this answer assumes the reader has already chosen to try DMing and focuses on the specific social step of inviting curious friends to a first session.",

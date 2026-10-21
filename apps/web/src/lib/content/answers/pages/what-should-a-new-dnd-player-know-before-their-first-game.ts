@@ -240,6 +240,7 @@ export const whatShouldANewDndPlayerKnowBeforeTheirFirstGame: AnswerConfigInput 
       "which-dice-do-i-roll-in-dnd-and-when",
       "what-are-the-pros-and-cons-of-becoming-a-dungeon-master",
       "how-do-i-get-my-friends-interested-in-playing-dnd",
+      "how-do-i-introduce-children-to-dnd-without-overwhelming-them",
     ],
     discovery: {
       id: "answer-new-dnd-player-first-game",
@@ -296,6 +297,11 @@ export const whatShouldANewDndPlayerKnowBeforeTheirFirstGame: AnswerConfigInput 
           with: "answer-first-time-gm-hub",
           reason:
             "The first-time GM answer helps someone run a game in any system; this answer helps a player join a D&D game and understand its live-play loop, dice, character sheet, and table conversation.",
+        },
+        {
+          with: "answer-introduce-children-to-dnd",
+          reason:
+            "This answer prepares a new player to join an existing D&D game; the children-focused answer prepares an adult to run a first game for children aged 8 to 12, with staged teaching and a complete short adventure.",
         },
       ],
     },
