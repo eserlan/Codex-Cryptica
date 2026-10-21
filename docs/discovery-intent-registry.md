@@ -142,7 +142,7 @@ smuggle into the PR that adds the registry.
 
 ### `/tools/*` duplicates `/generators/*`
 
-Six pairs target the same intent with the same `create` job:
+Several pairs target the same intent with the same `create` job:
 
 | `/tools` page                           | `/generators` page          |
 | --------------------------------------- | --------------------------- |
@@ -150,10 +150,11 @@ Six pairs target the same intent with the same `create` job:
 | `/tools/vampire-clan-generator`         | `/generators/vampire-clan`  |
 | `/tools/cyberpunk-nomad-clan-generator` | `/generators/nomad-clan`    |
 | `/tools/dnd-npc-generator`              | `/generators/dnd-npc`       |
-| `/tools/fantasy-name-generator`         | `/generators/fantasy-names` |
 | `/tools/quest-hook-generator`           | `/generators/quest`         |
 
-`llms.txt` already describes the `/tools` pages as informational landing pages
+The fantasy-name pair has been resolved in #4304: the legacy `/tools/fantasy-name-generator` route remains interactive but declares `/generators/fantasy-names` as its canonical, is excluded from sitemaps, and is marked non-indexable in the intent registry. `/generators/names` is a separate cross-genre tool targeting broader RPG naming intent.
+
+`llms.txt` already describes the other `/tools` pages as informational landing pages
 that link into the canonical interactive tools, which is an accurate description
 of a duplicate rather than a justification for one. Left unacknowledged on
 purpose, so the audit keeps raising them.
