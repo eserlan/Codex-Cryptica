@@ -4,6 +4,7 @@ import { render, screen } from "@testing-library/svelte";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { SEOComparisonPageData } from "$lib/config/seo-comparisons";
 import SEOPageLayout from "./SEOPageLayout.svelte";
+import { worldbuildingToolRoot } from "$lib/config/seo-pages";
 
 vi.mock("$app/paths", () => ({ base: "" }));
 
@@ -293,5 +294,26 @@ describe("SEOPageLayout comparison details", () => {
     ).toBeNull();
     expect(screen.queryByText("See it in action")).toBeNull();
     expect(screen.queryByText("Choose Test Tool if…")).toBeNull();
+  });
+});
+
+describe("SEOPageLayout standalone worldbuilding proof", () => {
+  it("renders the worldbuilding screenshot and a working secondary generator CTA", () => {
+    const { container } = render(SEOPageLayout, {
+      props: { data: worldbuildingToolRoot, canonicalUrl: "/worldbuilding-tool" },
+    });
+    expect(
+      document.querySelector('link[rel="canonical"]')?.getAttribute("href"),
+    ).toBe("https://codexcryptica.com/worldbuilding-tool");
+    expect(screen.getByRole("heading", {
+      name: "Free Worldbuilding Tool for RPGs and Fiction",
+    })).toBeTruthy();
+    const image = screen.getByRole("img", {
+      name: /Codex Cryptica showing a graph of linked entities/i,
+    });
+    expect(image.getAttribute("src")).toContain("assets.codexcryptica.com/cdn-cgi/image/");
+    expect(image.getAttribute("loading")).toBe("lazy");
+    expect(container.querySelector("#hero-primary-cta")?.textContent).toContain("Start a Free World");
+    expect(container.querySelector("#hero-secondary-cta")?.getAttribute("href")).toBe("/generators/world");
   });
 });
