@@ -649,7 +649,10 @@ export const worldbuildingToolRoot: SEOPageData = {
       href: "/answers/how-do-i-start-worldbuilding-for-a-novel-or-short-story",
       label: "Worldbuilding for fiction",
     },
-    { href: "/solutions/worldbuilding-tool", label: "Structured worldbuilding" },
+    {
+      href: "/solutions/worldbuilding-tool",
+      label: "Structured worldbuilding",
+    },
     {
       href: "/solutions/local-first-worldbuilding-tool",
       label: "Local-first worldbuilding",
