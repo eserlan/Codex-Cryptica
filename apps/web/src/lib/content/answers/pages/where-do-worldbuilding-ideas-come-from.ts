@@ -35,7 +35,7 @@ export const whereDoWorldbuildingIdeasComeFrom: AnswerConfigInput = {
       items: [
         {
           term: "Ask a specific what if",
-          text: "Change one rule and state it plainly enough to test: mountains migrate a few fields each winter, or practising magic without a licence is a criminal offence. A narrow change gives you consequences to trace. A vague one such as what if everything were magical gives you nothing to work with, because nothing in daily life has been forced to adapt.",
+          text: "Change one rule and state it plainly enough to test: mountains migrate a few fields each winter, or practising magic without a licence is a criminal offence. A narrow change gives you consequences to trace. A broad question such as what if everything were magical needs narrowing before its consequences are easy to trace; decide which part of daily life changes first.",
         },
         {
           term: "Follow the consequences",
@@ -72,11 +72,11 @@ export const whereDoWorldbuildingIdeasComeFrom: AnswerConfigInput = {
         },
         {
           term: "Politics and belief",
-          text: "Power sits with the surveyors who walk the delta after each flood, certify which channels are navigable and mark where new banks have formed. Their certificate decides whose fields can be reached and whose harvest rots, so a bribed or careless surveyor can ruin a village. Some delta families leave an offering at the first new channel each year, partly in thanks and partly in the hope that the river will be gentle near their moorings. A dispute over a falsified survey gives you a conflict that needs no villain from outside the setting.",
+          text: "Power sits with the surveyors who walk the delta after each flood, certify which channels are navigable and mark where new banks have formed. Their maps determine which claims the authorities recognise and where families may moor or plant; a bribed or careless surveyor can leave a village without access to its fields. Some delta families leave an offering at the first new channel each year, partly in thanks and partly in the hope that the river will be gentle near their moorings. A dispute over a falsified survey gives you a conflict that needs no villain from outside the setting.",
         },
         {
           term: "The person",
-          text: "Toma, an apprentice surveyor in her second season, wants her full licence before her family's raft loses its mooring rights. Checking an old reach, she finds the water returning to a channel abandoned a generation ago, where her grandmother's village stood before it was evacuated. Certifying the old channel would restore her family's claim but flood the new fields another family has planted on the silt, and her examiner expects her to report the reach as unsafe. Her choice forces the setting's questions about land, memory and who the survey serves into one decision she has to make this week.",
+          text: "Toma, an apprentice surveyor in her second season, wants her full licence before her family's current mooring permit expires. Checking an old reach, she finds water naturally returning to a channel abandoned a generation ago, where her grandmother's village stood before it was evacuated. Her family still holds an inherited claim to moor there; recording the channel as navigable would make that claim official again. The returning water may flood newer fields another family has planted on the silt, and her examiner, whose survey approved those fields, wants Toma to mark the reach unsafe so the claim stays off the map. Her choice forces the setting's questions about land, memory and who the survey serves into one decision she has to make this week.",
         },
         {
           term: "What was deliberately left undecided",
@@ -93,7 +93,7 @@ export const whereDoWorldbuildingIdeasComeFrom: AnswerConfigInput = {
         "Generators and prompt lists can supply a spark when your notebook is empty, and a random settlement or name can be a useful starting point. Treat the output as raw material for the steps above: change a rule, follow consequences, attach a person. The choices you make in that work are where the setting becomes yours, so keep hold of them.",
       ],
       cta: {
-        text: "Once you have a spark: start worldbuilding from scratch",
+        text: "For a campaign, once you have a spark: start worldbuilding from scratch",
         href: "/answers/how-do-you-start-worldbuilding-from-scratch",
       },
     },
@@ -114,7 +114,7 @@ export const whereDoWorldbuildingIdeasComeFrom: AnswerConfigInput = {
       kind: "prose",
       heading: "Where to go next with a developed idea",
       paragraphs: [
-        "An idea you have tested this way is ready for the ordinary work of building a setting. Writers can shape it around a viewpoint character and an opening scene. If the idea is for a game or interactive setting, a small local area with people who want conflicting things will carry early play. Cultures, geography and politics each reward a closer look once your consequences raise questions about them, and the linked answers below cover those in depth.",
+        "An idea you have tested this way is ready for the ordinary work of building a setting. Writers can shape it around a viewpoint character and an opening scene; [the fiction-writing guide](/answers/how-do-i-start-worldbuilding-for-a-novel-or-short-story) takes that next step. If the idea is for a game or interactive setting, a small local area with people who want conflicting things will carry early play. Cultures, geography and politics each reward a closer look once your consequences raise questions about them, and the linked answers below cover those in depth.",
       ],
     },
   ],
