@@ -76,7 +76,7 @@ export class SeoImportService {
    * Returns the ID of the created entity, or null if no import occurred.
    */
   async checkAndHandlePendingImport(): Promise<string | null> {
-    if (!this.win || typeof localStorage === "undefined") {
+    if (!this.win || !this.storage) {
       return null;
     }
 
