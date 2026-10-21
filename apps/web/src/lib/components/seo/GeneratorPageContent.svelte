@@ -3,10 +3,8 @@
   import { createCharacterDefaults } from "./generator-page-character-defaults";
   import { createSettingDefaults } from "./generator-page-setting-defaults";
   import { createAdventureDefaults } from "./generator-page-adventure-defaults";
-  import {
-    businessGeneratorOutput,
-    type OneShotProgressStep,
-  } from "generator-engine";
+  import type { OneShotProgressStep } from "generator-engine";
+  import GeneratorPageOutputExtras from "./GeneratorPageOutputExtras.svelte";
   import { onDestroy, onMount, untrack } from "svelte";
   import { browser } from "$app/environment";
   import { page } from "$app/state";
@@ -14,10 +12,6 @@
   import { sessionHubStore } from "$lib/stores/session-hub.svelte";
   import { UIPersistence } from "$lib/stores/ui/persistence";
   import SEOGeneratorLayout from "./SEOGeneratorLayout.svelte";
-  import OneShotRefinePanel from "./OneShotRefinePanel.svelte";
-  import PointCrawlRefinePanel from "./PointCrawlRefinePanel.svelte";
-  import BusinessRefinePanel from "./BusinessRefinePanel.svelte";
-  import BusinessFallbackNote from "./BusinessFallbackNote.svelte";
   import GeneratorPageFormFields from "./GeneratorPageFormFields.svelte";
   import {
     factionConfig,
@@ -26,7 +20,7 @@
   } from "$lib/services/seo/generator-config";
   import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
 
-  import { loadGeneratorRemixDraft } from "./generator-page-remix";
+  import { createGeneratorRemixLoader } from "./generator-page-remix";
   import {
     type SlugMetaEntry,
     type ValidSlug,
@@ -235,35 +229,20 @@
     }),
   );
 
-  let remixLoadVersion = 0;
-
-  $effect(() => {
-    const remixId = page.url.searchParams.get("remix");
-    const targetPath = meta.canonicalPath;
-    const loadVersion = ++remixLoadVersion;
-    remixDraft = null;
-    if (!browser || !remixId) return;
-    void loadRemixDraft(remixId, targetPath, loadVersion);
-  });
-
-  async function loadRemixDraft(
-    remixId: string,
-    targetPath: string | undefined,
-    loadVersion: number,
-  ) {
-    const result = await loadGeneratorRemixDraft({
-      remixId,
-      targetPath,
-      loadVersion,
-      getCurrentLoadVersion: () => remixLoadVersion,
-      getShared: (id) => generatorShareService.get(id),
-    });
-    if (result) {
+  const loadRemixDraft = createGeneratorRemixLoader({
+    getShared: (id) => generatorShareService.get(id),
+    onReset: () => (remixDraft = null),
+    onLoaded: (result) => {
       remixDraft = result.draft;
       if (result.theme) activeTheme = result.theme;
       window.history.replaceState({}, "", window.location.pathname);
-    }
-  }
+    },
+  });
+
+  $effect(() => {
+    const remixId = page.url.searchParams.get("remix");
+    void loadRemixDraft(browser ? remixId : null, meta.canonicalPath);
+  });
 
   /** Live steps while a one-shot is generated in stages. */
   let oneShotProgress = $state<OneShotProgressStep[] | null>(null);
@@ -329,22 +308,12 @@
   autoGenerateExplicit={slug === "faction-roster"}
 >
   {#snippet outputExtras(output, replaceOutput, useAI)}
-    {#if slug === "one-shot-adventure-generator"}
-      <OneShotRefinePanel {output} {useAI} onReplace={replaceOutput} />
-    {:else if slug === "point-crawl"}
-      <PointCrawlRefinePanel {output} {useAI} onReplace={replaceOutput} />
-    {:else if slug === "business" && output.business}
-      <BusinessFallbackNote
-        fallbackSections={output.business.fallbackSections}
-        warnings={output.business.warnings}
-      />
-      <BusinessRefinePanel
-        business={output.business}
-        {useAI}
-        onReplace={(doc) =>
-          replaceOutput(businessGeneratorOutput(doc) as never)}
-      />
-    {/if}
+    <GeneratorPageOutputExtras
+      {slug}
+      {output}
+      {useAI}
+      onReplace={replaceOutput}
+    />
   {/snippet}
   {#snippet formFields(trigger)}
     <GeneratorPageFormFields
