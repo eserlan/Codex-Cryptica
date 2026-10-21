@@ -129,6 +129,25 @@ export interface HubMountPatch {
   _fallbackStoredTheme?: string | null;
 }
 
+/** Shared settlement choices used on first render and during hub reconciliation. */
+export function createSettlementFields(genre: string) {
+  const sizes =
+    settlementConfig.sizesByGenre[genre] ??
+    settlementConfig.sizesByGenre["Fantasy"];
+  return {
+    genre: genre,
+    size: sizes[2].name,
+    environment: (settlementConfig.environmentsByGenre[genre] ??
+      settlementConfig.environmentsByGenre["Fantasy"])[0],
+    primaryFunction: (settlementConfig.primaryFunctionsByGenre[genre] ??
+      settlementConfig.primaryFunctionsByGenre["Fantasy"])[0],
+    tone: (settlementConfig.tonesByGenre[genre] ??
+      settlementConfig.tonesByGenre["Fantasy"])[0],
+    mainTension: (settlementConfig.mainTensionsByGenre[genre] ??
+      settlementConfig.mainTensionsByGenre["Fantasy"])[0],
+  };
+}
+
 export function getHubMountPatch(opts: {
   slug: string;
   hubTheme: string | null;
@@ -181,22 +200,7 @@ export function getHubMountPatch(opts: {
   if (slug === "settlement") {
     if (hubGenre) {
       const settlementGenre = SETTLEMENT_GENRE_FOR_HUB[hubGenre] ?? hubGenre;
-      const sizes =
-        settlementConfig.sizesByGenre[settlementGenre] ??
-        settlementConfig.sizesByGenre["Fantasy"];
-      const settlement = {
-        genre: settlementGenre,
-        size: sizes[2].name,
-        environment: (settlementConfig.environmentsByGenre[settlementGenre] ??
-          settlementConfig.environmentsByGenre["Fantasy"])[0],
-        primaryFunction: (settlementConfig.primaryFunctionsByGenre[
-          settlementGenre
-        ] ?? settlementConfig.primaryFunctionsByGenre["Fantasy"])[0],
-        tone: (settlementConfig.tonesByGenre[settlementGenre] ??
-          settlementConfig.tonesByGenre["Fantasy"])[0],
-        mainTension: (settlementConfig.mainTensionsByGenre[settlementGenre] ??
-          settlementConfig.mainTensionsByGenre["Fantasy"])[0],
-      };
+      const settlement = createSettlementFields(settlementGenre);
       const activeTheme =
         (rawHubGenre ? SOCIAL_HUB_GENRE_TO_THEME[rawHubGenre] : "") ||
         SOCIAL_HUB_GENRE_TO_THEME[settlementGenre] ||
