@@ -214,7 +214,7 @@ export const howDoIIntroduceChildrenToDndWithoutOverwhelmingThem: AnswerConfigIn
       title:
         "Introducing Children to D&D Without Overwhelming Them | Codex Cryptica",
       description:
-        "A 30 to 45 minute first D&D session for children aged 8 to 12: staged rules, readable pregenerated characters, a ready-to-run lantern adventure and a minimal prep checklist.",
+        "A first D&D session for children aged 8 to 12: staged rules, readable pregenerated characters, a ready-to-run lantern adventure and a minimal prep checklist.",
       image:
         "https://assets.codexcryptica.com/og/how-do-i-introduce-children-to-dnd-without-overwhelming-them.jpg",
       imageAlt:
