@@ -7,61 +7,61 @@ export const howDoYouBuildAPointCrawlForAnRpg: AnswerConfigInput = {
   question: "How do you build a point crawl for an RPG?",
   kind: "how-to",
   shortAnswer:
-    "A point crawl is a network of six to ten landmark nodes connected by differentiated travel paths, rather than a grid of terrain to cross. Define each node as a destination with a clear hazard, resource, or encounter, then connect them with routes that carry real trade-offs in travel time, terrain, and risk. Build in enough loops and alternative paths that the map isn't a single linear road.",
+    "To build a point crawl, name five to seven places the party could visit, connect them with routes, and note each route's travel time, cost, and known risk. Give the party at least two meaningful ways to reach an important destination, then decide what changes if they take longer or accept a hazard.",
   sections: [
     {
       kind: "prose",
-      heading: "The cartographer's trap: why terrain hexes stall travel prep",
+      heading: "Start with the places that matter",
       paragraphs: [
-        "Traditional wilderness exploration prep often bogs down in cartographic busywork. Game Masters spend dozens of hours drawing uniform hexagonal grids across wilderness maps, filling thirty adjacent hexes with identical pine trees, and drafting separate random encounter tables for light forest versus dense forest. At the table, this produces slow, procedural grid-crawling where players roll survival checks, ask if the next hex looks different from the last, and spend three hours wandering through empty space with zero meaningful tactical decisions.",
-        "A point crawl replaces the uniform grid with a network graph. Instead of simulating every square kilometre of unremarkable dirt, you identify the six to ten landmark locations players actually care about (ruined watchtowers, sunken bridges, monster lairs, and hermit shrines) and connect them with defined paths. Wilderness travel shifts from an exercise in navigation bookkeeping to a series of high-stakes route choices: do the players take the fast river trail where goblin toll-collectors lurk, or the slow mountain pass that requires three extra days of rations?",
+        "Point crawls work well when the adventure centres on a handful of known or rumoured destinations and the choices between them: a city district, a heist, a dangerous crossing, or a compact wilderness region. Keep the locations distinct, then make routes matter through time, supplies, information, hazards, or who notices the party.",
+        "Use a hex crawl when exploring the terrain itself is part of the fun. The structures can also sit at different scales: a hex crawl can lead the party to a region, with a point crawl handling the routes through a ruin or settlement. For help choosing, see [point crawl vs hex crawl](/answers/point-crawl-vs-hex-crawl).",
       ],
     },
     {
       kind: "list",
       heading: "Five steps to build one",
-      intro: "A regional point crawl in about an hour:",
+      intro: "A compact network can be ready with these steps:",
       items: [
         {
           term: "Step 1: Place landmark nodes",
-          text: "Pick six to ten distinct destinations across your region. Give each one a strong sensory identity, a reason to visit (a treasure, an allied NPC, a defensive redoubt, or an alchemical ingredient), and an immediate obstacle or inhabitant.",
+          text: "Choose five to seven destinations. Give each a reason to visit and one useful detail: a person, resource, clue, danger, or change the party can cause.",
         },
         {
           term: "Step 2: Differentiate connecting paths",
-          text: "Never draw two routes with identical properties. For every path between nodes, set three variables: travel time (half a day vs two days, say), resource costs (rations, torchlight, or climbing gear), and the hazard specific to that trail.",
+          text: "For each route, note an estimated travel time and any cost or known risk. Similar routes are fine if their choices still differ, such as one being safer and the other avoiding a watched checkpoint.",
         },
         {
           term: "Step 3: Build in loops and branch points",
-          text: "Every major node should connect to at least two others, forming loops and circuits. A straight tree with dead ends leaves players no real choice but to push forward or retreat. Loops let the party detour around known monster territory or plan circular patrol routes.",
+          text: "Give important destinations alternate approaches and add a loop where it makes sense. A branch can be a real choice too, especially when returning by the same route has a cost.",
         },
         {
           term: "Step 4: Seed transitional road discoveries",
-          text: "Place intermediate discoveries along the trails between nodes: a washed-out stone bridge, an overturned merchant wagon, a mysterious roadside shrine, or an ancient territorial boundary stone. These reward observant scouts without requiring a full dungeon crawl.",
+          text: "Add a discovery or obstacle to a route if it changes a decision: a ford that reveals tracks, a wreck with spare supplies, or a bridge that is out after heavy rain.",
         },
         {
           term: "Step 5: Telegraph route conditions in advance",
-          text: "Players can't make informed decisions if all paths look identical on paper. Give them scouts, barkeeps, or local guides in the hub who warn travellers about route conditions: 'The ridge trail is fast but exposed to wyverns; the low fen is quiet, but the mud will exhaust your pack mules.'",
+          text: "Let players learn some route conditions through rumours, signs, scouts, or past experience. Keep a few details uncertain if discovery is part of the adventure.",
         },
       ],
     },
     {
       kind: "example",
-      heading: "A worked example: before and after",
+      heading: "Copyable example: the road to Morzan's Crypt",
       paragraphs: [
-        "Contrast how wilderness travel operates when preparing an expedition to the Sunken Crypt of Morzan:",
+        "Copy these six nodes and routes, then change the names and costs to fit your game. Travel times assume a party moving at an ordinary pace; adjust them for your rules, weather, or group.",
       ],
       items: [
         {
-          term: "The generic hex-crawl approach",
-          text: "The GM maps a 40-hex wilderness expanse. The party enters Hex 0408, rolls a navigation check, succeeds, moves into Hex 0409, rolls for a wandering monster (no encounter), and sets up camp. After ninety minutes of rolling d20s against random weather tables, the players arrive at the crypt exhausted by administrative dice-rolling rather than tense decision-making.",
+          term: "Nodes",
+          text: "Oakhaven (start and rumour board); Toll Bridge (watched crossing); Reed Causeway (muddy but unwatched); Old Watchtower (high ground and a clear view); Hermit's Cairn (a guide knows a hidden track); Morzan's Crypt (the goal).",
         },
         {
-          term: "The structured point crawl approach",
-          text: "The GM connects Oakhaven Hub to the Crypt via three branching vectors: Path A runs 1 day along the Old Imperial Road through the Troll Bridge (fast travel, but requires paying a heavy 15-gp toll or risking open combat). Path B circles through the Whispering Mire for 3 days (slow and damp, requiring extra rations and risking marsh fever, but completely avoiding the troll). Path C climbs the Windy Notch for 2 days (requires mountaineering kits and cold-weather cloaks, but bypasses both tolls and diseases).",
+          term: "Routes",
+          text: "Oakhaven to Toll Bridge: half a day; pay 2 silver per traveller or arrive watched. Toll Bridge to Watchtower: half a day; the keeper will warn the bridge guard if threatened. Oakhaven to Reed Causeway: one day; spend an extra ration per traveller or forage, risking a delay. Causeway to Watchtower: half a day; tracks here reveal whether the rival party passed first. Causeway to Hermit's Cairn: half a day; the hermit shares the hidden track if the party brings news from Oakhaven. Watchtower to Crypt: one day over exposed ground; anyone seen here alerts the crypt's sentries. Hermit's Cairn to Crypt: half a day on the hidden track; the party arrives unseen. Watchtower to Toll Bridge: half a day, making a loop back to the road.",
         },
         {
-          term: "Why it works",
-          text: "The wilderness journey becomes a genuine tactical dilemma tailored to the party's current strengths, inventory, and timeline. The choice of route reveals what the party values most: coin, time, or physical safety.",
+          term: "Consequences to track",
+          text: "The rival reaches the crypt first if the party spends two full days travelling or resting on the road. If the sentries are alerted, they prepare an ambush; if the party arrives unseen, they can choose where and when to enter. Taking the bridge costs coin and risks being followed; the causeway costs supplies and time but can lead to the hidden approach.",
         },
       ],
     },
@@ -71,18 +71,18 @@ export const howDoYouBuildAPointCrawlForAnRpg: AnswerConfigInput = {
       intro:
         "Before you put the regional map in front of your players, check it against these:",
       items: [
-        "Placed six to ten memorable landmark nodes with distinct environmental landmarks and interactable entities.",
-        "Connected every major destination to at least two distinct paths, so there's room for circular detours and real choice.",
-        "Assigned explicit travel duration in hours or days, ration consumption, and specific hazards to each connecting route.",
-        "Seeded transitional discoveries or minor obstacles along paths to break up linear transit.",
-        "Telegraphed route hazards through local NPCs or visible landmarks so players make informed tactical choices.",
+        "Each node has a name, a reason to visit, and a detail that can affect play.",
+        "Every important destination has a choice of approach, or a clear cost for returning the way the party came.",
+        "Each route has an estimated travel time and any supply cost, hazard, clue, or uncertainty that matters.",
+        "At least one route choice changes what happens next, such as who arrives first, who is alerted, or what resources remain.",
+        "Players can discover enough about routes to make a choice, while any hidden information has a way to be found.",
       ],
     },
   ],
   codexConnection: {
-    heading: "Mapping point crawls as interactive spatial graphs",
+    heading: "Keep the map easy to update",
     paragraphs: [
-      "Point crawls are natural network graphs, making them ideal for visual campaign mapping. In Codex Cryptica, you can lay out wilderness nodes on the spatial canvas as rich entity cards, connect them with directed relationship lines tagged with travel times and hazard ratings, and pin regional encounter tables directly to routes. As factions claim territories or paths wash out during seasonal storms, your campaign map stays reactive and up to date.",
+      "A point crawl can live in a notebook, a sketch, or a digital map. Keep the node names and route notes together so you can update a hazard, newly learned shortcut, or faction presence after the party acts.",
     ],
     linkText: "See the RPG knowledge graph",
     href: "/solutions/rpg-knowledge-graph",
@@ -108,6 +108,12 @@ export const howDoYouBuildAPointCrawlForAnRpg: AnswerConfigInput = {
     },
   ],
   relatedTools: [
+    {
+      title: "Try the Point Crawl Generator",
+      description:
+        "Make a starting network after you have decided what places and route choices your adventure needs.",
+      href: "/generators/point-crawl",
+    },
     {
       title: "Quest Hook Generator",
       description:
@@ -172,7 +178,7 @@ export const howDoYouBuildAPointCrawlForAnRpg: AnswerConfigInput = {
       "how to make a point crawl",
     ],
     uniqueValue:
-      "A five-step point crawl construction procedure detailing node placement, route trade-offs, loop engineering, and telegraphing hazards to replace empty hex travel.",
+      "A five-step point crawl construction guide with a copyable six-node example, route costs, alternate approaches, and consequences to track during play.",
     relatedIntents: [
       "answer-point-crawl",
       "answer-travel-interesting",
