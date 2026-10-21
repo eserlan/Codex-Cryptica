@@ -184,6 +184,7 @@ export const howDoIStartWorldbuildingForANovelOrShortStory: AnswerConfigInput =
       "how-do-you-create-a-fantasy-city-that-feels-alive",
       "how-do-you-create-a-believable-fictional-religion",
       "how-do-you-create-a-fantasy-faction",
+      "where-do-worldbuilding-ideas-come-from",
     ],
     discovery: {
       id: "answer-worldbuilding-for-fiction-writers",
