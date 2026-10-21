@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { GeneratorEngineCore } from "./generator-engine-core";
 import {
   VALID_CONCEPT,
@@ -123,5 +123,54 @@ describe("staged villain generation", () => {
     );
     expect(JSON.stringify(logger.mock.calls)).not.toContain("Brack");
     logger.mockRestore();
+  });
+});
+
+describe("staged villain diagnostics", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.doUnmock("../../config");
+    vi.resetModules();
+  });
+
+  /** Runs a villain whose first stage is unusable and returns its step detail and debug logs. */
+  async function failedFirstStage(env: { dev: boolean; staging: boolean }) {
+    vi.resetModules();
+    vi.stubEnv("DEV", env.dev);
+    vi.doMock("../../config", () => ({ IS_STAGING: env.staging }));
+    const { GeneratorEngineCore: Engine } =
+      await import("./generator-engine-core");
+    const engine = new Engine(clientManager as never);
+    vi.spyOn(engine as unknown as RunModel, "runModel").mockImplementation(
+      async (_i, message) =>
+        message.includes("STAGE 1 OF 4") ? "nope" : onePass,
+    );
+    const logger = vi.spyOn(console, "debug").mockImplementation(() => {});
+    const onProgress = vi.fn();
+    await engine.generateVillain({ useAI: true, onProgress });
+    const steps = onProgress.mock.calls.at(-1)?.[0] as { detail?: string }[];
+    const logs = logger.mock.calls.length;
+    logger.mockRestore();
+    return { detail: steps[0].detail, logs };
+  }
+
+  it.each([
+    ["staging", { dev: false, staging: true }],
+    ["a dev build", { dev: true, staging: false }],
+  ])("shows why a stage gave up on %s", async (_label, env) => {
+    const { detail, logs } = await failedFirstStage(env);
+    expect(detail).toBe(
+      "writing it in one pass instead (the reply was not a usable JSON object)",
+    );
+    expect(logs).toBeGreaterThan(0);
+  });
+
+  it("hides the reason and the debug log in production", async () => {
+    const { detail, logs } = await failedFirstStage({
+      dev: false,
+      staging: false,
+    });
+    expect(detail).toBe("writing it in one pass instead");
+    expect(logs).toBe(0);
   });
 });

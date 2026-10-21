@@ -19,6 +19,12 @@ export interface VillainStagedDeps {
   sessionContext?: string;
   /** Conflict domains recent villains used, most recent first. */
   recentDomains?: readonly string[];
+  /**
+   * Add why a stage gave up to its step in the list. The reasons are only the
+   * kinds of rule broken, never generated text, but they are noise for most
+   * visitors, so the caller turns this on for dev and staging builds.
+   */
+  showReasons?: boolean;
   /** Live step list for the page. */
   onProgress?: (steps: StagedProgressStep[]) => void;
   /** Called once when a run finishes or gives up (not on abort). */
@@ -29,6 +35,8 @@ export interface VillainStagedDeps {
 export interface VillainStagedStats {
   outcome: "staged" | "fell-back";
   stoppedAt?: VillainStageId | "assembly";
+  /** The kinds of rule the stopping stage's last attempt broke, never the text. */
+  stoppedProblems?: string[];
   aiCalls: number;
   elapsedMs: number;
   repairedStages: VillainStageId[];
@@ -48,6 +56,7 @@ export function villainStatsLog(stats: VillainStagedStats) {
   return {
     outcome: stats.outcome,
     stoppedAt: stats.stoppedAt,
+    stoppedProblems: stats.stoppedProblems,
     aiCalls: stats.aiCalls,
     elapsedMs: stats.elapsedMs,
     repairedStageCount: stats.repairedStages.length,
