@@ -66,6 +66,52 @@ describe("MysteryClueGraph", () => {
     expect(place.getAttribute("aria-pressed")).toBe("true");
   });
 
+  it("zooms in and out with the buttons and resets to the whole graph", async () => {
+    const { container } = render(MysteryClueGraph, { graph });
+    const svg = () => container.querySelector("svg")!;
+    const whole = svg().getAttribute("viewBox");
+
+    expect(
+      (screen.getByLabelText("Zoom out") as HTMLButtonElement).disabled,
+    ).toBe(true);
+    await fireEvent.click(screen.getByLabelText("Zoom in"));
+    expect(svg().getAttribute("viewBox")).not.toBe(whole);
+
+    await fireEvent.click(screen.getByLabelText("Show the whole graph"));
+    expect(svg().getAttribute("viewBox")).toBe(whole);
+  });
+
+  it("pans when dragged while zoomed, without selecting the node under the pointer", async () => {
+    const { container } = render(MysteryClueGraph, { graph });
+    await fireEvent.click(screen.getByLabelText("Zoom in"));
+    const canvas = screen.getByTestId("mystery-clue-graph-canvas");
+    canvas.getBoundingClientRect = () =>
+      ({ left: 0, top: 0, width: 600, height: 300 }) as DOMRect;
+    const before = container.querySelector("svg")!.getAttribute("viewBox");
+
+    await fireEvent.pointerDown(canvas, { clientX: 300, clientY: 150 });
+    await fireEvent.pointerMove(canvas, { clientX: 340, clientY: 170 });
+    await fireEvent.pointerUp(canvas);
+    const node = container.querySelector('[data-node-id="clue-1"]')!;
+    await fireEvent.click(node);
+
+    expect(container.querySelector("svg")!.getAttribute("viewBox")).not.toBe(
+      before,
+    );
+    expect(node.getAttribute("aria-pressed")).toBe("false");
+  });
+
+  it("opens an enlarged view and closes it with Escape", async () => {
+    render(MysteryClueGraph, { graph });
+
+    await fireEvent.click(screen.getByLabelText("Enlarge the graph"));
+    const dialog = screen.getByRole("dialog", { name: "Clue graph, enlarged" });
+    expect(dialog.querySelector("svg")).toBeTruthy();
+
+    await fireEvent.keyDown(dialog, { key: "Escape" });
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
   it("renders nothing for an empty graph", () => {
     const { container } = render(MysteryClueGraph, {
       graph: { nodes: [], edges: [] },
