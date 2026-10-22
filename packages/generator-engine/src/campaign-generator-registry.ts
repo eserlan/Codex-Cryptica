@@ -697,10 +697,33 @@ export { SYSTEM_INSTRUCTION };
 // ---------------------------------------------------------------------------
 
 /**
- * Story generators whose context carries a rolled concept. The mystery adds
+ * Scenario generators whose context carries a rolled concept. The mystery adds
  * its own in `mystery-staged.ts` and `public-mystery.ts`, so it is left out.
+ * Generators that make a thing or a person (NPC, item, creature) are left out
+ * too: the dimensions describe a situation, so they would not fit.
  */
-const CONCEPT_GENERATORS = new Set<GeneratorId>(["adventure", "heist", "tome"]);
+const CONCEPT_GENERATORS = new Set<GeneratorId>([
+  "adventure",
+  "heist",
+  "tome",
+  "quest",
+  "plot-twist",
+  "event",
+  "encounter",
+  "secret-society",
+  "faction",
+  "puzzle",
+  "rumour",
+  "news-sheet",
+]);
+
+/**
+ * Generators that write several separate items. One concept for the whole run
+ * would make every item about the same thing, so the model is asked to spread it.
+ */
+const MULTI_ITEM_GENERATORS = new Set<GeneratorId>(["rumour", "news-sheet"]);
+const SPREAD_NOTE =
+  "This output has several separate items. Spread these choices across them instead of building every item around all of them.";
 
 /** One concept per request, so every part of a run sees the same choices. */
 const conceptByRequest = new WeakMap<GeneratorRunRequest, string>();
@@ -724,7 +747,11 @@ function conceptInputs(request: GeneratorRunRequest): {
 function rollConceptBlock(request: GeneratorRunRequest): string {
   const { genre, tone } = conceptInputs(request);
   const block = formatConceptBlock(rollConcept(genre, tone));
-  return block ? `\n${block}\n` : "";
+  if (!block) return "";
+  const spread = MULTI_ITEM_GENERATORS.has(request.generatorId)
+    ? `\n${SPREAD_NOTE}`
+    : "";
+  return `\n${block}${spread}\n`;
 }
 
 function conceptBlock(request: GeneratorRunRequest): string {

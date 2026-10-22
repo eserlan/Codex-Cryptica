@@ -1921,8 +1921,21 @@ describe("point-crawl generator", () => {
 });
 
 describe("story generator concept block", () => {
-  it("adds a concept to the adventure, heist and tome prompts", () => {
-    for (const id of ["adventure", "heist", "tome"] as const) {
+  it("adds a concept to every scenario generator's prompt", () => {
+    for (const id of [
+      "adventure",
+      "heist",
+      "tome",
+      "quest",
+      "plot-twist",
+      "event",
+      "encounter",
+      "secret-society",
+      "faction",
+      "puzzle",
+      "rumour",
+      "news-sheet",
+    ] as const) {
       const prompt = getGenerator(id).buildPrompt(
         run(id, { options: { genre: "Pirate", tone: "Tense" } }),
       );
@@ -1942,9 +1955,28 @@ describe("story generator concept block", () => {
     }
   });
 
-  it("leaves other generators without a concept", () => {
-    const prompt = getGenerator("npc").buildPrompt(run("npc"));
-    expect(prompt).not.toContain("Concept constraints for this case");
+  it("leaves generators that make a thing or a person without a concept", () => {
+    for (const id of [
+      "npc",
+      "magic-item",
+      "creature",
+      "ship",
+      "dungeon",
+    ] as const) {
+      const prompt = getGenerator(id).buildPrompt(run(id));
+      expect(prompt, id).not.toContain("Concept constraints for this case");
+    }
+  });
+
+  it("asks multi-item generators to spread the concept, and only those", () => {
+    for (const id of ["rumour", "news-sheet"] as const) {
+      expect(getGenerator(id).buildPrompt(run(id)), id).toContain(
+        "Spread these choices across them",
+      );
+    }
+    expect(getGenerator("quest").buildPrompt(run("quest"))).not.toContain(
+      "Spread these choices across them",
+    );
   });
 
   it("returns the same concept for repeated calls on one request", () => {
