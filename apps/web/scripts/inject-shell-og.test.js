@@ -34,6 +34,17 @@ describe("buildOgBlock", () => {
     expect(block).not.toContain('content="Codex & Co "quoted"" />');
   });
 
+  it("declares the apex homepage as canonical, matching og:url", () => {
+    const block = buildOgBlock();
+    expect(block).toContain(
+      '<link rel="canonical" href="https://codexcryptica.com/" data-shell-canonical />',
+    );
+    expect(block).toContain(
+      '<meta property="og:url" content="https://codexcryptica.com/" />',
+    );
+    expect(block.match(/rel="canonical"/g)).toHaveLength(1);
+  });
+
   it("emits both og: and twitter: tags", () => {
     const block = buildOgBlock();
     expect(block).toContain('property="og:image"');
