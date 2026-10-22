@@ -383,6 +383,11 @@ describe("generateMysteryStaged", () => {
     expect(audit).toContain("can the players deduce the truth");
     expect(audit).toContain("can the players execute the solution");
     expect(audit).toContain("does the world behave consistently");
+    const finalAudit = prompts.find((p) => p.startsWith("STAGE 7")) ?? "";
+    expect(finalAudit).toContain("can the players deduce the truth");
+    expect(finalAudit).toContain("can the players execute the solution");
+    expect(finalAudit).toContain("does the world behave consistently");
+    expect(finalAudit).toContain("Recheck route sufficiency, test safety");
     expect(prompts.find((p) => p.startsWith("STAGE 4"))).toContain(
       "that test must itself be safe",
     );
