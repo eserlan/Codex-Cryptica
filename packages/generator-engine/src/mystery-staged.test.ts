@@ -158,13 +158,39 @@ describe("generateMysteryStaged", () => {
     ).toBe(true);
   });
 
-  it("rejects an adjacency path that does not support its revelation", async () => {
+  it("replaces a route that does not support its revelation with one derived from the clues", async () => {
     const [foundation, cast, validClues, pressure] = validStages();
     const clues = {
       ...validClues,
       independentPaths: validClues.independentPaths.map((path, index) =>
         index === 0 ? { ...path, clueIds: ["clue-2"] } : path,
       ),
+    };
+    const replies = [
+      foundation,
+      cast,
+      clues,
+      pressure,
+      { status: "consistent", issues: [] },
+      { status: "consistent", issues: [] },
+    ];
+    const result = await generateMysteryStaged(resolveMystery(), {
+      complete: async () => JSON.stringify(replies.shift()),
+    });
+
+    expect(result?.stats.aiCalls).toBe(6);
+    expect(result?.output.lore).toContain("**record:** clue-1");
+  });
+
+  it("stops at the clues when no two sources support a revelation", async () => {
+    const [foundation, cast, validClues, pressure] = validStages();
+    const clues = {
+      clues: validClues.clues.map((clue) => ({
+        ...clue,
+        sourceId: "place-1",
+        supports: ["record"],
+      })),
+      independentPaths: [],
     };
     const replies = [foundation, cast, clues, clues, pressure];
     let stoppedAt: string | undefined;
@@ -175,6 +201,136 @@ describe("generateMysteryStaged", () => {
 
     expect(result).toBeNull();
     expect(stoppedAt).toBe("clues");
+  });
+
+  it("accepts the field names and shapes models commonly return", async () => {
+    const [foundation, cast, clues, pressure] = validStages();
+    const { summary, ...rest } = foundation;
+    const variantFoundation = {
+      ...rest,
+      playerSafeSummary: summary,
+      truth: { ...foundation.truth, constraints: ["Stay on watch", "No key"] },
+      timeline: foundation.timeline.map((event) => ({ event })),
+      revelations: foundation.revelations.map(({ id, fact }) => ({
+        revelationId: id,
+        fact,
+      })),
+    };
+    const variantCast = {
+      ...cast,
+      suspects: cast.suspects.map((suspect, index) =>
+        index === 0 ? { ...suspect, name: "Mara" } : suspect,
+      ),
+    };
+    const replies = [
+      variantFoundation,
+      variantCast,
+      clues,
+      pressure,
+      { status: "consistent", issues: [] },
+      { status: "consistent", issues: [] },
+    ];
+    const result = await generateMysteryStaged(resolveMystery(), {
+      complete: async () => JSON.stringify(replies.shift()),
+    });
+
+    expect(result?.stats.repairedStages).toEqual([]);
+    expect(result?.output.summary).toBe(foundation.summary);
+    expect(result?.output.lore).toContain("Stay on watch; No key");
+    // The perpetrator's name stays the one locked by the foundation.
+    expect(result?.output.lore).toContain("**Mara Quill (person-1):**");
+  });
+
+  it("moves places listed among the suspects into the locations", async () => {
+    const [foundation, cast, clues, pressure] = validStages();
+    const mixed = {
+      suspects: [
+        ...cast.suspects,
+        {
+          id: "place-3",
+          name: "Cellar",
+          activity: "Storage",
+          evidence: "Damp tracks",
+        },
+      ],
+      locations: cast.locations.slice(0, 2),
+    };
+    const replies = [
+      foundation,
+      mixed,
+      clues,
+      pressure,
+      { status: "consistent", issues: [] },
+      { status: "consistent", issues: [] },
+    ];
+    const result = await generateMysteryStaged(resolveMystery(), {
+      complete: async () => JSON.stringify(replies.shift()),
+    });
+
+    expect(result?.stats.repairedStages).toEqual([]);
+    expect(result?.output.content).toContain("**Cellar:**");
+  });
+
+  it("keeps a playable case when the final check still lists doubts", async () => {
+    const [foundation, cast, clues, pressure] = validStages();
+    const replies = [
+      foundation,
+      cast,
+      clues,
+      pressure,
+      { status: "inconsistent", issues: ["a wording doubt"] },
+      { cast, clues, pressure },
+      { status: "needs-repair", issues: ["the doubt remains"] },
+    ];
+    const result = await generateMysteryStaged(resolveMystery(), {
+      complete: async () => JSON.stringify(replies.shift()),
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.stats.aiCalls).toBe(7);
+  });
+
+  it("renders the timeline and keeps clue ids out of the player-facing leads", async () => {
+    const [foundation, cast, baseClues, pressure] = validStages();
+    const clues = {
+      ...baseClues,
+      clues: baseClues.clues.map((clue, index) =>
+        index === 0 ? { ...clue, leadsTo: ["clue-2"] } : clue,
+      ),
+    };
+    const replies = [
+      foundation,
+      cast,
+      clues,
+      pressure,
+      { status: "consistent", issues: [] },
+      { status: "consistent", issues: [] },
+    ];
+    const result = await generateMysteryStaged(resolveMystery(), {
+      complete: async () => JSON.stringify(replies.shift()),
+    });
+
+    expect(result?.output.lore).toContain("1. The record was copied");
+    expect(result?.output.lore).toContain("3. The keeper disappeared");
+    expect(result?.output.content).toMatch(/Follow up: [^\n]*Lead \d/);
+    expect(result?.output.content).not.toMatch(/clue-\d/);
+  });
+
+  it("states the expected JSON keys and the banned names in the prompts", async () => {
+    const [foundation, cast, clues, pressure] = validStages();
+    const replies = [foundation, cast, clues, pressure];
+    const seen: Array<[string, string]> = [];
+    await generateMysteryStaged(resolveMystery({ avoidNames: ["Ilyra"] }), {
+      complete: async (system, message) => {
+        seen.push([system, message]);
+        return JSON.stringify(replies.shift() ?? {});
+      },
+    });
+
+    expect(seen[0][0]).toContain("Vale");
+    expect(seen[0][0]).toContain("Ilyra");
+    expect(seen[0][1]).toContain('"summary":');
+    expect(seen[1][1]).toContain("locked perpetratorName Mara Quill");
   });
 
   it("runs a targeted repair before the final audit when the audit flags issues", async () => {

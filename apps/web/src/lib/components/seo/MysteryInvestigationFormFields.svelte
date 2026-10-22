@@ -36,7 +36,6 @@
     values.map((value) => ({ value, label: value }));
 
   function surprise(): void {
-    genre = pickFrom(factionConfig.themes);
     tone = pickFrom(mysteryConfig.tones);
     mysteryType = pickFrom(mysteryConfig.types);
     scope = pickFrom(mysteryConfig.scopes);
