@@ -80,6 +80,7 @@ const SUSPECT_FIELDS = [
   "name",
   "role",
   "publicFace",
+  "startLocationId",
   "motive",
   "secret",
   "alibi",
@@ -119,6 +120,18 @@ function normalizeCast(data: Obj, culpritName = ""): Obj {
       "activity",
       "evidence",
     ]),
+  );
+  // A person's starting place may be given as a location name or a differently-cased id.
+  next.suspects = mapList(next.suspects, (item) =>
+    isRecord(item)
+      ? {
+          ...item,
+          startLocationId: placeId(
+            item.startLocationId ?? item.locationId ?? item.location,
+            next.locations,
+          ),
+        }
+      : item,
   );
   next.keyItemLocationId = placeId(
     next.keyItemLocationId ?? next.keyItemLocation,

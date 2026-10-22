@@ -12,6 +12,11 @@ import {
   type DraftCheck,
   type JsonObject,
 } from "./staged-runtime";
+import {
+  findBrokenReferences,
+  findCircularItemRoutes,
+  findPlacementIssues,
+} from "./mystery-consistency";
 import { buildMysteryGraph } from "./mystery-graph";
 import { list, record, text } from "./mystery-obj";
 import { normalizeMysteryStage } from "./mystery-staged-normalize";
@@ -189,6 +194,7 @@ function checkCast(
     }),
   );
   hard.push(...checkLocations(data));
+  hard.push(...findPlacementIssues(data));
   if (
     hasCrossGroupIdCollision(
       uniqueIds(list(foundation.revelations)),
@@ -216,6 +222,78 @@ function independentPair(routes: { clues: string[]; source: string }[]) {
           a.source !== b.source && !a.clues.some((id) => b.clues.includes(id)),
       ),
   );
+}
+
+/** Every id the case defines so far, for spotting prose that points at nothing. */
+const knownIds = (
+  foundation: Obj,
+  cast: Obj,
+  clueIds: readonly string[] = [],
+): string[] => [
+  ...uniqueIds(list(foundation.revelations)),
+  ...uniqueIds(list(cast.suspects)),
+  ...uniqueIds(list(cast.locations)),
+  ...clueIds,
+];
+
+/** Each revelation needs two independent routes, and the item's must be reachable. */
+function checkRoutes(
+  data: Obj,
+  clues: Obj[],
+  foundation: Obj,
+  cast: Obj,
+): string[] {
+  const hard: string[] = [];
+  const clueIds = uniqueIds(clues);
+  const revelationIds = new Set(uniqueIds(list(foundation.revelations)));
+  const paths = list(data.independentPaths).map(record);
+  const itemRevelations = list(foundation.revelations)
+    .map(record)
+    .filter((rev) => text(rev.kind) === "item")
+    .map((rev) => text(rev.id));
+  for (const revelationId of revelationIds) {
+    const matching = paths.filter(
+      (path) => text(path.revelationId) === revelationId,
+    );
+    const routes = matching
+      .map((path) => {
+        const pathClues = list(path.clueIds).map(text);
+        const pathItems = pathClues.map((id) =>
+          record(clues.find((clue) => text(clue.id) === id)),
+        );
+        if (
+          !pathClues.length ||
+          new Set(pathClues).size !== pathClues.length ||
+          !pathClues.every((id) => clueIds.includes(id)) ||
+          !pathItems.some((clue) =>
+            list(clue.supports).map(text).includes(revelationId),
+          ) ||
+          pathItems.some(
+            (clue, index) =>
+              index < pathItems.length - 1 &&
+              !list(clue.leadsTo)
+                .map(text)
+                .includes(pathClues[index + 1]),
+          )
+        ) {
+          return null;
+        }
+        return { clues: pathClues, source: text(pathItems[0].sourceId) };
+      })
+      .filter((route) => route !== null);
+    if (!independentPair(routes))
+      hard.push(
+        `${revelationId} needs two independent evidence paths from distinct sources that share no clue`,
+      );
+    else if (itemRevelations.includes(revelationId))
+      hard.push(
+        ...findCircularItemRoutes(
+          routes.map((route) => route.source),
+          text(cast.keyItemLocationId),
+        ).map((issue) => `${revelationId}: ${issue}`),
+      );
+  }
+  return hard;
 }
 
 function checkClues(data: Obj, foundation: Obj, cast: Obj): DraftCheck {
@@ -264,50 +342,30 @@ function checkClues(data: Obj, foundation: Obj, cast: Obj): DraftCheck {
         `clue ${index + 1} must point to a different, known person, place or clue`,
       );
   });
-  const paths = list(data.independentPaths).map(record);
   hard.push(
-    ...paths
+    ...findBrokenReferences(
+      [
+        ...clues.flatMap((clue) => [
+          text(clue.observation),
+          text(clue.doesNotProve),
+        ]),
+        ...list(data.independentPaths).map((path) =>
+          text(record(path).reasoning),
+        ),
+      ],
+      knownIds(foundation, cast, clueIds),
+    ),
+  );
+  hard.push(
+    ...list(data.independentPaths)
+      .map(record)
       .filter((path) => !hasText(path.reasoning))
       .map(
         () =>
           "every route needs reasoning explaining how its clues establish the conclusion",
       ),
   );
-  for (const revelationId of revelationIds) {
-    const matching = paths.filter(
-      (path) => text(path.revelationId) === revelationId,
-    );
-    const routes = matching
-      .map((path) => {
-        const pathClues = list(path.clueIds).map(text);
-        const pathItems = pathClues.map((id) =>
-          record(clues.find((clue) => text(clue.id) === id)),
-        );
-        if (
-          !pathClues.length ||
-          new Set(pathClues).size !== pathClues.length ||
-          !pathClues.every((id) => clueIds.includes(id)) ||
-          !pathItems.some((clue) =>
-            list(clue.supports).map(text).includes(revelationId),
-          ) ||
-          pathItems.some(
-            (clue, index) =>
-              index < pathItems.length - 1 &&
-              !list(clue.leadsTo)
-                .map(text)
-                .includes(pathClues[index + 1]),
-          )
-        ) {
-          return null;
-        }
-        return { clues: pathClues, source: text(pathItems[0].sourceId) };
-      })
-      .filter((route) => route !== null);
-    if (!independentPair(routes))
-      hard.push(
-        `${revelationId} needs two independent evidence paths from distinct sources that share no clue`,
-      );
-  }
+  hard.push(...checkRoutes(data, clues, foundation, cast));
   const itemPlace = text(cast.keyItemLocationId);
   if (
     itemPlace &&
@@ -333,8 +391,41 @@ function missingSolutionSpace(data: Obj): string[] {
   return hard;
 }
 
-function checkPressure(data: Obj, cast: Obj): DraftCheck {
+function checkPressure(
+  data: Obj,
+  cast: Obj,
+  foundation: Obj,
+  clues: Obj,
+): DraftCheck {
   const hard = missing(data, ["escalation"]);
+  hard.push(
+    ...findBrokenReferences(
+      [
+        text(data.escalation),
+        text(data.objective),
+        ...list(data.approaches).map(text),
+        ...list(data.pressureClock).flatMap((step) => [
+          text(record(step).trigger),
+          text(record(step).consequence),
+        ]),
+        ...list(data.npcResponses).flatMap((response) => [
+          text(record(response).trigger),
+          text(record(response).response),
+        ]),
+        ...["correct", "partial", "mistaken", "failed", "unsolved"].flatMap(
+          (key) => {
+            const outcome = record(record(data.outcomes)[key]);
+            return [
+              text(outcome.condition),
+              text(outcome.consequence),
+              text(outcome.continuation),
+            ];
+          },
+        ),
+      ],
+      knownIds(foundation, cast, uniqueIds(list(clues.clues))),
+    ),
+  );
   const clock = list(data.pressureClock).map(record);
   if (clock.length < 3) hard.push("pressureClock needs at least three steps");
   clock.forEach((step, index) =>
@@ -520,7 +611,7 @@ function assembleOutput(
       items(
         people,
         (person) =>
-          `- **${text(person.name)}:** Motive: ${text(person.motive)} Secret: ${text(person.secret)} Alibi: ${text(person.alibi)} Knows: ${text(person.knows)} Believes: ${text(person.believes)} Approach: ${text(person.approach)}`,
+          `- **${text(person.name)}:** starts at ${placeNames.get(text(person.startLocationId)) ?? "an unknown place"}. Motive: ${text(person.motive)} Secret: ${text(person.secret)} Alibi: ${text(person.alibi)} Knows: ${text(person.knows)} Believes: ${text(person.believes)} Approach: ${text(person.approach)}`,
       ),
     ),
     section(
@@ -652,7 +743,7 @@ export async function generateMysteryStaged(
   if (!foundation) return stopped(stats, "foundation");
   const cast = await run(
     "mystery-cast",
-    `STAGE 2 OF 7: Suspects and locations. Treat this accepted foundation as locked; do not change its facts, names, IDs, or timeline.\nFOUNDATION: ${JSON.stringify(foundation.data)}\nReturn exactly ${resolved.suspectCount} suspects in "suspects" (people only; never put places there) and the places in "locations". Return exactly ${resolved.suspectCount} suspects with ids person-1 through person-${resolved.suspectCount}; person-1's name must be exactly the locked perpetratorName ${text(record(foundation.data.truth).perpetratorName)}. Each suspect has name, role, publicFace, motive, secret, alibi, knows, believes, approach. Distinguish actual knowledge from belief, lie or omission; no unexplained knowledge or impossible alibis. Return at least three locations with unique stable ids, name, activity and evidence. One location must be where the key item is now (the foundation's keyItemLocation); return its id as keyItemLocationId. Do not write clues or change the truth.\nReturn JSON of exactly this shape: {"keyItemLocationId":"place-1","suspects":[{"id":"person-1","name":"","role":"","publicFace":"","motive":"","secret":"","alibi":"","knows":"","believes":"","approach":""}],"locations":[{"id":"place-1","name":"","activity":"","evidence":""}]}. All values are plain strings.`,
+    `STAGE 2 OF 7: Suspects and locations. Treat this accepted foundation as locked; do not change its facts, names, IDs, or timeline.\nFOUNDATION: ${JSON.stringify(foundation.data)}\nReturn exactly ${resolved.suspectCount} suspects in "suspects" (people only; never put places there) and the places in "locations". Return exactly ${resolved.suspectCount} suspects with ids person-1 through person-${resolved.suspectCount}; person-1's name must be exactly the locked perpetratorName ${text(record(foundation.data.truth).perpetratorName)}. Each suspect has name, role, publicFace, startLocationId (the id of the one location they are at when play begins; it must not contradict their alibi, and anyone held captive stays where they are held), motive, secret, alibi, knows, believes, approach. Distinguish actual knowledge from belief, lie or omission; no unexplained knowledge or impossible alibis. Return at least three locations with unique stable ids, name, activity and evidence. One location must be where the key item is now (the foundation's keyItemLocation); return its id as keyItemLocationId. Do not write clues or change the truth.\nReturn JSON of exactly this shape: {"keyItemLocationId":"place-1","suspects":[{"id":"person-1","name":"","role":"","publicFace":"","startLocationId":"place-1","motive":"","secret":"","alibi":"","knows":"","believes":"","approach":""}],"locations":[{"id":"place-1","name":"","activity":"","evidence":""}]}. All values are plain strings.`,
     (data) => checkCast(data, foundation.data, resolved),
     (data) =>
       normalizeMysteryStage.cast(
@@ -663,7 +754,7 @@ export async function generateMysteryStaged(
   if (!cast) return stopped(stats, "cast");
   const clues = await run(
     "mystery-clues",
-    `STAGE 3 OF 7: Clue and lead network. FOUNDATION (locked): ${JSON.stringify(foundation.data)}\nCAST AND LOCATIONS (locked): ${JSON.stringify(cast.data)}\nReturn at least six concrete clues, each with id, observation, sourceId, supports (known revelation ids), doesNotProve and leadsTo (known person/place/clue ids). Return independentPaths with at least two paths to EACH revelation; each path must use existing clue ids, connect consecutive clues through leadsTo, contain a clue that supports the revelation, and begin at a distinct clue source. Every revelation must be supported by clues from at least two different sources; the simplest valid independent path is a single clue that supports the revelation, with two such paths from different sources. Include at least two useful investigation routes. The two paths for a revelation must share no clue and begin at different sources. At least one clue must lead to the key item's location (keyItemLocationId in the cast) so the party can actually recover it, and the clues must let players deduce the culprit, the motive and where the item is, without a GM declaration. Each route must by itself give enough information to establish its revelation (a clue that only shows something was prepared does not prove a motive), and a revelation must not hinge on one person agreeing to talk: give a route the party can find without that person's help. Red herrings are true observations with testable alternative readings, never fabricated evidence.\nReturn JSON of exactly this shape: {"clues":[{"id":"clue-1","observation":"","sourceId":"person-or-place id","supports":["revelation id"],"doesNotProve":"","leadsTo":["person, place or clue id"]}],"independentPaths":[{"revelationId":"","clueIds":["clue-1","clue-2"],"reasoning":"how these clues together establish the conclusion"}]}. A route must collectively contain enough evidence for its conclusion: a single-clue route is valid only when that clue alone establishes it, and a route to the culprit must point to that specific person, not merely show tampering. Write each path's reasoning.`,
+    `STAGE 3 OF 7: Clue and lead network. FOUNDATION (locked): ${JSON.stringify(foundation.data)}\nCAST AND LOCATIONS (locked): ${JSON.stringify(cast.data)}\nReturn at least six concrete clues, each with id, observation, sourceId, supports (known revelation ids), doesNotProve and leadsTo (known person/place/clue ids). Return independentPaths with at least two paths to EACH revelation; each path must use existing clue ids, connect consecutive clues through leadsTo, contain a clue that supports the revelation, and begin at a distinct clue source. Every revelation must be supported by clues from at least two different sources; the simplest valid independent path is a single clue that supports the revelation, with two such paths from different sources. Include at least two useful investigation routes. The two paths for a revelation must share no clue and begin at different sources. At least one clue must lead to the key item's location (keyItemLocationId in the cast) so the party can actually recover it, and the clues must let players deduce the culprit, the motive and where the item is, without a GM declaration. Each route must by itself give enough information to establish its revelation (a clue that only shows something was prepared does not prove a motive), and a revelation must not hinge on one person agreeing to talk: give a route the party can find without that person's help. Keep every person where the cast places them (startLocationId) and refer only to ids that exist. Red herrings are true observations with testable alternative readings, never fabricated evidence.\nReturn JSON of exactly this shape: {"clues":[{"id":"clue-1","observation":"","sourceId":"person-or-place id","supports":["revelation id"],"doesNotProve":"","leadsTo":["person, place or clue id"]}],"independentPaths":[{"revelationId":"","clueIds":["clue-1","clue-2"],"reasoning":"how these clues together establish the conclusion"}]}. A route must collectively contain enough evidence for its conclusion: a single-clue route is valid only when that clue alone establishes it, and a route to the culprit must point to that specific person, not merely show tampering. Write each path's reasoning.`,
     (data) => checkClues(data, foundation.data, cast.data),
     (data) =>
       normalizeMysteryStage.clues(
@@ -675,7 +766,7 @@ export async function generateMysteryStaged(
   const pressure = await run(
     "mystery-pressure",
     `STAGE 4 OF 7: Pressure and outcomes. FOUNDATION, CAST and CLUE NETWORK are locked; preserve every name, event, ID and connection.\nFOUNDATION: ${JSON.stringify(foundation.data)}\nCAST: ${JSON.stringify(cast.data)}\nCLUES: ${JSON.stringify(clues.data)}\nReturn an escalation description, a pressureClock with at least three trigger/consequence steps that form a real clock: time-ordered beats that advance whether or not the party acts, all strictly after the moment play begins (the foundation's atStart) and never restating an event already in the timeline (each trigger names a moment or deadline, each consequence makes the situation worse than the step before; never restate a conditional reaction there, those belong in npcResponses), npcResponses keyed to known person ids, and outcomes keyed correct, partial, mistaken, failed and unsolved. Every outcome has condition and consequence; unsolved also has a continuation hook and means the theft or crime stays unresolved because the trail went cold; if the historical truth itself is lost, say so in the consequence, and keep any later discovery in the continuation hook rather than contradicting the lost evidence. A plausible wrong conclusion must be testable before irreversible action, and that test must itself be safe: never offer experimentation as a safe option when a wrong attempt is catastrophic; provide a safe way to check first. Describe a solvable situation, not a walkthrough: return an objective (what must be achieved, and by when), and at least three different approaches the party could take (for example intercept, confront, infiltrate, negotiate or interrupt). State hard constraints and what happens to people present, but never prescribe one mandatory sequence of player actions, and never make a step the objective requires (such as opening a container) count as failure. Outcomes describe what results from success or failure, whichever approach is used. Describe a procedure fully once in the truth or the evidence and refer to it by name elsewhere instead of repeating its steps.\nReturn JSON of exactly this shape: {"escalation":"","pressureClock":[{"trigger":"","consequence":""}],"npcResponses":[{"personId":"person-1","trigger":"","response":""}],"outcomes":{"correct":{"condition":"","consequence":""},"partial":{"condition":"","consequence":""},"mistaken":{"condition":"","consequence":""},"failed":{"condition":"","consequence":""},"unsolved":{"condition":"","consequence":"","continuation":""}},"objective":"","approaches":["", "", ""]}. All values are plain strings.`,
-    (data) => checkPressure(data, cast.data),
+    (data) => checkPressure(data, cast.data, foundation.data, clues.data),
     normalizeMysteryStage.pressure,
   );
   if (!pressure) return stopped(stats, "pressure");
@@ -699,7 +790,12 @@ export async function generateMysteryStaged(
         const nextPressure = record(data.pressure);
         const castCheck = checkCast(nextCast, foundation.data, resolved);
         const clueCheck = checkClues(nextClues, foundation.data, nextCast);
-        const pressureCheck = checkPressure(nextPressure, nextCast);
+        const pressureCheck = checkPressure(
+          nextPressure,
+          nextCast,
+          foundation.data,
+          nextClues,
+        );
         return {
           hard: [
             ...castCheck.hard.map((issue) => `cast: ${issue}`),

@@ -45,6 +45,7 @@ function validStages() {
         name,
         role: "clerk",
         publicFace: "A trusted local",
+        startLocationId: `place-${(index % 3) + 1}`,
         motive: "Protect a secret",
         secret: "Knows a detail",
         alibi: "An account to test",
@@ -309,7 +310,9 @@ describe("generateMysteryStaged", () => {
     expect(result?.output.summary).toBe(foundation.summary);
     expect(result?.output.lore).toContain("Stay on watch; No key");
     // The perpetrator's name stays the one locked by the foundation.
-    expect(result?.output.content).toContain("**Mara Quill:**");
+    expect(result?.output.content).toContain(
+      "**Mara Quill:** starts at Archive.",
+    );
   });
 
   it("moves places listed among the suspects into the locations", async () => {
@@ -556,6 +559,151 @@ describe("generateMysteryStaged", () => {
     expect(stopped).toBe("clues");
   });
 
+  it("retries the cast when a person has no starting location", async () => {
+    const [foundation, cast, clues, pressure] = validStages();
+    const unplaced = {
+      ...cast,
+      suspects: cast.suspects.map(({ startLocationId: _, ...rest }) => rest),
+    };
+    const replies = [
+      foundation,
+      unplaced,
+      cast,
+      clues,
+      pressure,
+      { status: "consistent", issues: [] },
+      { status: "consistent", issues: [] },
+    ];
+    const result = await generateMysteryStaged(resolveMystery(), {
+      complete: async () => JSON.stringify(replies.shift()),
+    });
+
+    expect(result?.stats.repairedStages).toContain("mystery-cast");
+    expect(result?.output.content).toContain("starts at Archive");
+  });
+
+  it("accepts a starting location given by name", async () => {
+    const [foundation, cast, clues, pressure] = validStages();
+    const named = {
+      ...cast,
+      suspects: cast.suspects.map((suspect) => ({
+        ...suspect,
+        startLocationId: "bell tower",
+      })),
+    };
+    const replies = [
+      foundation,
+      named,
+      clues,
+      pressure,
+      { status: "consistent", issues: [] },
+      { status: "consistent", issues: [] },
+    ];
+    const result = await generateMysteryStaged(resolveMystery(), {
+      complete: async () => JSON.stringify(replies.shift()),
+    });
+
+    expect(result?.output.content).toContain("starts at Bell tower");
+  });
+
+  it("retries clues whose text points at a clue that does not exist", async () => {
+    const [foundation, cast, clues, pressure] = validStages();
+    const dangling = structuredClone(clues);
+    dangling.clues[0].observation = "Matches the mark described in clue-42";
+    const replies = [
+      foundation,
+      cast,
+      dangling,
+      clues,
+      pressure,
+      { status: "consistent", issues: [] },
+      { status: "consistent", issues: [] },
+    ];
+    const result = await generateMysteryStaged(resolveMystery(), {
+      complete: async () => JSON.stringify(replies.shift()),
+    });
+
+    expect(result?.stats.repairedStages).toContain("mystery-clues");
+    expect(result?.output.content).not.toContain("clue-42");
+  });
+
+  it("retries clue routes whose reasoning points at an unknown person", async () => {
+    const [foundation, cast, clues, pressure] = validStages();
+    const dangling = structuredClone(clues);
+    dangling.independentPaths[0].reasoning =
+      "This conclusion depends on what person-9 witnessed.";
+    const replies = [
+      foundation,
+      cast,
+      dangling,
+      clues,
+      pressure,
+      { status: "consistent", issues: [] },
+      { status: "consistent", issues: [] },
+    ];
+    const result = await generateMysteryStaged(resolveMystery(), {
+      complete: async () => JSON.stringify(replies.shift()),
+    });
+
+    expect(result?.stats.repairedStages).toContain("mystery-clues");
+    expect(result?.output.content).not.toContain("person-9");
+  });
+
+  it("stops at the pressure stage when the text keeps pointing at a missing person", async () => {
+    const [foundation, cast, clues, pressure] = validStages();
+    pressure.npcResponses[0].response = "Oren blames person-9";
+    let stopped: string | undefined;
+    const replies = [foundation, cast, clues, pressure, pressure, pressure];
+    const result = await generateMysteryStaged(resolveMystery(), {
+      complete: async () => JSON.stringify(replies.shift()),
+      onStats: (stats) => (stopped = stats.stoppedAt),
+    });
+
+    expect(result).toBeNull();
+    expect(stopped).toBe("pressure");
+  });
+
+  it("retries pressure prose with unknown IDs in all rendered fields", async () => {
+    const [foundation, cast, clues, pressure] = validStages();
+    const dangling = structuredClone(pressure);
+    dangling.objective += " before person-9 arrives";
+    dangling.approaches[0] += " with clue-42";
+    dangling.outcomes.correct.condition += " near person-9";
+    dangling.outcomes.partial.consequence += " because clue-42 is missing";
+    dangling.outcomes.unsolved.continuation += " before person-9 returns";
+    const replies = [
+      foundation,
+      cast,
+      clues,
+      dangling,
+      pressure,
+      { status: "consistent", issues: [] },
+      { status: "consistent", issues: [] },
+    ];
+    const result = await generateMysteryStaged(resolveMystery(), {
+      complete: async () => JSON.stringify(replies.shift()),
+    });
+
+    expect(result?.stats.repairedStages).toContain("mystery-pressure");
+    expect(result?.output.content).not.toMatch(/(?:person|clue)-(?:9|42)\b/);
+  });
+
+  it("stops at the clues when every route to the item starts at the item's location", async () => {
+    const [foundation, cast, clues] = validStages();
+    // place-1 holds the item; make every clue that supports it start there.
+    clues.clues[2].sourceId = "place-1";
+    clues.clues[5].sourceId = "place-1";
+    let stopped: string | undefined;
+    const replies = [foundation, cast, clues, clues, clues];
+    const result = await generateMysteryStaged(resolveMystery(), {
+      complete: async () => JSON.stringify(replies.shift()),
+      onStats: (stats) => (stopped = stats.stoppedAt),
+    });
+
+    expect(result).toBeNull();
+    expect(stopped).toBe("clues");
+  });
+
   it("drops overlapping routes and retries for independent explanations", async () => {
     const [foundation, cast, clues, pressure] = validStages();
     clues.clues[0].leadsTo = ["clue-2"];
@@ -730,8 +878,8 @@ describe("generateMysteryStaged", () => {
 
   it("replaces unknown internal ids in model prose with readable fallbacks", async () => {
     const [foundation, cast, clues, pressure] = validStages();
-    foundation.truth.motive = "The lost note names place-99 and rev-99.";
-    pressure.escalation = "If clue-99 appears, person-99 escapes.";
+    foundation.truth.motive =
+      "The lost note names place-99, rev-99, clue-99 and person-99.";
     const replies = [
       foundation,
       cast,
