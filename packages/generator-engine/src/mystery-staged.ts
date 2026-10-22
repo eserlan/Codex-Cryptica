@@ -279,11 +279,7 @@ function checkClues(data: Obj, foundation: Obj, cast: Obj): DraftCheck {
   const itemPlace = text(cast.keyItemLocationId);
   if (
     itemPlace &&
-    !clues.some(
-      (clue) =>
-        text(clue.sourceId) === itemPlace ||
-        list(clue.leadsTo).map(text).includes(itemPlace),
-    )
+    !clues.some((clue) => list(clue.leadsTo).map(text).includes(itemPlace))
   )
     hard.push(
       `at least one clue must lead to the key item's location (${itemPlace}) so the party can recover it`,

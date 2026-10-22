@@ -444,7 +444,7 @@ describe("generateMysteryStaged", () => {
     expect(stopped).toBe("cast");
   });
 
-  it("stops at the clues when none leads to the key item's location", async () => {
+  it("requires a lead to the key item's location even when a clue is found there", async () => {
     const [foundation, cast, clues] = validStages();
     const withHiddenItem = {
       ...cast,
@@ -454,6 +454,7 @@ describe("generateMysteryStaged", () => {
         { id: "place-4", name: "Vault", activity: "Sealed", evidence: "Dust" },
       ],
     };
+    clues.clues[0].sourceId = "place-4";
     let stopped: string | undefined;
     const replies = [foundation, withHiddenItem, clues, clues];
     const result = await generateMysteryStaged(resolveMystery(), {
