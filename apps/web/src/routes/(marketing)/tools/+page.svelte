@@ -423,6 +423,13 @@
                 "Browse the complete library of CC-licensed vector silhouettes for characters, creatures, and places with live theme palette previews and SVG export.",
               icon: "icon-[lucide--shapes]",
             },
+            {
+              href: "/biomes",
+              label: "Biome Explorer",
+              summary:
+                "Browse curated real-world environments, compare biomes side by side, and customize climates with Markdown export.",
+              icon: "icon-[lucide--mountain-snow]",
+            },
           ],
         },
       ],

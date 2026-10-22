@@ -64,11 +64,11 @@ describe("BiomeProfileEditor", () => {
     });
   });
 
-  it("shows an error and writes nothing when saved without a name", async () => {
-    const { vault } = setup();
-    await fireEvent.click(screen.getByRole("button", { name: "Save biome" }));
-    expect((await screen.findByRole("alert")).textContent).toMatch(/name/i);
-    expect(vault.records.size).toBe(0);
+  it("offers download Markdown", async () => {
+    setup();
+    expect(
+      screen.getByRole("button", { name: "Download Markdown" }),
+    ).toBeTruthy();
   });
 
   it("asks before discarding unsaved changes and keeps them when declined", async () => {
@@ -108,28 +108,6 @@ describe("BiomeProfileEditor", () => {
     await waitFor(() => expect(copied).toHaveLength(1));
     expect(copied[0]).toContain("## Reference");
     expect(copied[0]).toContain("## My changes");
-  });
-
-  it("offers Make a copy only for a saved profile, and starts an unsaved copy", async () => {
-    const { store } = setup();
-    expect(screen.queryByRole("button", { name: "Make a copy" })).toBeNull();
-    store.setTitle("Ashen Flats");
-    await store.save();
-    const copy = await screen.findByRole("button", { name: "Make a copy" });
-    await fireEvent.click(copy);
-    await waitFor(() => expect(store.draft?.entityId).toBeUndefined());
-    expect(store.draft?.title).toBe("Ashen Flats (copy)");
-  });
-
-  it("explains a failed save and keeps what was typed", async () => {
-    const { store, vault } = setup();
-    store.setTitle("Ashen Flats");
-    vault.failWrites = true;
-    await fireEvent.click(screen.getByRole("button", { name: "Save biome" }));
-    expect((await screen.findByRole("alert")).textContent).toMatch(
-      /still here/,
-    );
-    expect(store.draft?.title).toBe("Ashen Flats");
   });
 
   it("moves focus into the discard dialog, closes it on Escape and returns focus", async () => {

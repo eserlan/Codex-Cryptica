@@ -23,26 +23,14 @@
 
 <div class="flex flex-wrap gap-3">
   <button
-    type="submit"
-    disabled={store.saveState === "saving"}
-    class="rounded-lg bg-theme-primary px-4 py-2 text-theme-on-primary disabled:opacity-60"
-    >Save biome</button
-  >
-  <button type="button" class={secondary} onclick={() => store.discardDraft()}
-    >Discard</button
-  >
-  <button type="button" class={secondary} onclick={() => store.copyMarkdown()}
-    >Copy as Markdown</button
+    type="button"
+    class="rounded-lg bg-theme-primary px-4 py-2 text-theme-on-primary"
+    onclick={() => store.copyMarkdown()}>Copy as Markdown</button
   >
   <button type="button" class={secondary} onclick={downloadMarkdown}
     >Download Markdown</button
   >
-  {#if store.draft?.entityId}
-    {@const id = store.draft.entityId}
-    <button
-      type="button"
-      class={secondary}
-      onclick={() => store.duplicateProfile(id)}>Make a copy</button
-    >
-  {/if}
+  <button type="button" class={secondary} onclick={() => store.discardDraft()}
+    >Discard</button
+  >
 </div>

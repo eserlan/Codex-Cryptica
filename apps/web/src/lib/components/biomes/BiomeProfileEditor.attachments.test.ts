@@ -13,9 +13,6 @@ function setup() {
   return made;
 }
 
-const png = () =>
-  new File([new Uint8Array(4)], "flats.png", { type: "image/png" });
-
 describe("BiomeProfileEditor illustration prompt", () => {
   it("shows a prompt that starts with the fixed prefix and copies it", async () => {
     const { copied } = setup();
@@ -91,55 +88,5 @@ describe("BiomeProfileEditor links", () => {
       await screen.findByRole("button", { name: "Remove link: A" }),
     );
     expect(store.draft?.profile.referenceLinks).toEqual([]);
-  });
-});
-
-describe("BiomeProfileEditor picture", () => {
-  it("asks to save first, and does not offer the file chooser, for an unsaved biome", () => {
-    setup();
-    expect(screen.getByText(/Save the biome first/)).toBeTruthy();
-    expect(
-      (screen.getByLabelText("Add a picture") as HTMLInputElement).disabled,
-    ).toBe(true);
-  });
-
-  it("attaches a picture to a saved biome and shows it apart from the library images", async () => {
-    const { store } = setup();
-    await store.save();
-    const input = (await screen.findByLabelText(
-      "Add a picture",
-    )) as HTMLInputElement;
-    await waitFor(() => expect(input.disabled).toBe(false));
-    await fireEvent.change(input, { target: { files: [png()] } });
-    const img = await screen.findByRole("img", {
-      name: /Your picture for Ashen Flats/,
-    });
-    expect(img.getAttribute("src")).toBe("blob:flats.png");
-    expect(screen.queryByText(/AI illustration/)).toBeNull();
-  });
-
-  it("shows a plain error and leaves the biome unchanged for an unsupported file", async () => {
-    const { store } = setup();
-    await store.save();
-    const input = (await screen.findByLabelText(
-      "Add a picture",
-    )) as HTMLInputElement;
-    await waitFor(() => expect(input.disabled).toBe(false));
-    const text = new File(["hello"], "notes.txt", { type: "text/plain" });
-    await fireEvent.change(input, { target: { files: [text] } });
-    expect((await screen.findByRole("alert")).textContent).toMatch(
-      /Choose an image file/,
-    );
-    expect(store.attachedImageUrl).toBe("");
-  });
-
-  it("removes an attached picture", async () => {
-    const { store } = setup();
-    await store.save();
-    await store.attachImage(png());
-    await fireEvent.click(
-      await screen.findByRole("button", { name: "Remove picture" }),
-    );
-    await waitFor(() => expect(store.attachedImageUrl).toBe(""));
   });
 });

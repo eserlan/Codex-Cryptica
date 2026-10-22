@@ -840,7 +840,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "biome-explorer",
     title: "Biome Explorer",
     content:
-      "Browse real-world environments with credited pictures, see why each one looks the way it does, and find it under Biomes in the navigation drawer. Everything works without AI and the text works offline.",
+      "Browse real-world environments with credited pictures, see why each one looks the way it does, and explore it under /biomes or Tools. Everything works without AI and the text works offline.",
     icon: "icon-[lucide--mountain-snow]",
   },
   "point-crawl-generator": {
