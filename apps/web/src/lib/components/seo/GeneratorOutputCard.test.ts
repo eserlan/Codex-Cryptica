@@ -87,6 +87,64 @@ describe("GeneratorOutputCard", () => {
     expect(seoMdContainer?.classList.contains("[&_pre]:max-w-full")).toBe(true);
   });
 
+  it("offers separate GM case-file and spoiler-safe player-handout copies", async () => {
+    const mysteryData: GeneratorOutput = {
+      ...sampleData,
+      type: "note",
+      title: "The Quiet Bell",
+      summary: "A keeper vanished.",
+      content: "## Evidence\nA witness heard the bell.",
+      lore: "## GM-Only Truth\nMara moved the ledger.",
+      labels: ["mystery-generator"],
+    };
+    const onCopyMarkdown = vi.fn();
+    const onCopySection = vi.fn();
+    render(GeneratorOutputCard, {
+      props: {
+        generatedData: mysteryData,
+        aiFallbackDismissed: false,
+        isBusy: false,
+        isExampleDraft: false,
+        generatedSingular: "Mystery",
+        variant: "default",
+        worldTheme: "Classic Fantasy",
+        documentContent: mysteryData.content,
+        documentSections: sampleSections,
+        copied: false,
+        copiedSectionId: null,
+        contextTrimmed: false,
+        onDismissAiFallback: vi.fn(),
+        onSaveToCodex: vi.fn(),
+        onCopyMarkdown,
+        onCopySection,
+        onContainerClick: vi.fn(),
+        onContainerKeydown: vi.fn(),
+        onSelectHubEntity: vi.fn(),
+        onSaveHubToCodex: vi.fn(),
+      },
+    });
+
+    expect(
+      screen.getByRole("button", { name: "Copy GM Case File" }),
+    ).toBeTruthy();
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Copy GM Case File" }),
+    );
+    expect(onCopyMarkdown).toHaveBeenCalledTimes(1);
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Copy Player Handout" }),
+    );
+
+    expect(onCopySection).toHaveBeenCalledTimes(1);
+    expect(onCopySection).toHaveBeenCalledWith(
+      "player-handout",
+      expect.stringContaining("A witness heard the bell."),
+    );
+    expect(onCopySection.mock.calls[0][1]).not.toContain(
+      "Mara moved the ledger",
+    );
+  });
+
   it("keeps fenced code blocks from overflowing the card on mobile", () => {
     const { container } = render(GeneratorOutputCard, {
       props: {

@@ -3,6 +3,7 @@
   import { base } from "$app/paths";
   import { onMount } from "svelte";
   import FeedbackHost from "$lib/components/feedback/FeedbackHost.svelte";
+  import { watchShellCanonical } from "$lib/seo/shell-canonical";
   let { children } = $props();
 
   // Only render a global override when a staging/preview build sets it
@@ -23,12 +24,14 @@
   // Imported dynamically to keep @codex/ai-engine out of the initial bundle
   // for pages that never generate (blog, privacy, landing).
   onMount(() => {
+    const stopShellCanonical = watchShellCanonical(document);
     void import("$lib/services/ai/session-bootstrap").then((m) =>
       m.initAiSession(),
     );
     void import("$lib/services/mobile/capacitor-bridge").then((m) =>
       m.capacitorBridge.init(),
     );
+    return stopShellCanonical;
   });
 </script>
 

@@ -2117,4 +2117,58 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       },
     ],
   },
+  "mystery-investigation": {
+    pageTitle:
+      "Mystery & Investigation Generator | Build Fair RPG Cases | Codex Cryptica",
+    metaDescription:
+      "Create a playable, system-neutral RPG mystery with a fixed GM-only truth, distinct suspects, testable clues, multiple independent leads, escalating pressure, and fair outcomes.",
+    introTitle: "Mystery & Investigation Generator",
+    eyebrow: "Mystery & Investigation Generator",
+    introText:
+      "Build a case the players can investigate: lock in what really happened, then create suspects, locations, evidence, independent leads and outcomes that agree with that truth. The first version uses a fixed solution and keeps GM-only details separate from player-facing material.",
+    canonicalPath: "/generators/mystery-investigation",
+    ogImage:
+      "https://assets.codexcryptica.com/screenshots/generator-mystery-investigation.png",
+    ogImageAlt:
+      "Mystery & Investigation Generator showing a fixed-truth case with player-facing clues and a separate GM-only truth panel.",
+    labels: ["mystery", "investigation", "adventure"],
+    keywords: [
+      "rpg mystery generator",
+      "mystery investigation generator",
+      "ttrpg case generator",
+      "rpg clue generator",
+    ],
+    faqs: [
+      {
+        question: "Does the generator choose a fixed culprit?",
+        answer:
+          "Yes. This version creates one fixed truth and keeps it in a separate GM-only section so the clues and witness accounts can be checked against it.",
+      },
+      {
+        question: "Can the players solve the case without one required roll?",
+        answer:
+          "The generator is designed to provide multiple independent routes to essential revelations, with clues that state what they support and what they do not prove.",
+      },
+      {
+        question: "Can I use the case in any role-playing game?",
+        answer:
+          "Yes. The generator is system-neutral and supports fantasy, noir, investigative horror, modern and science-fiction settings.",
+      },
+    ],
+    relatedLinks: [
+      {
+        href: "/generators/one-shot-adventure-generator",
+        label: "One-Shot Adventure Generator",
+      },
+      { href: "/generators/quest", label: "Quest Generator" },
+      {
+        href: "/answers/how-do-you-run-a-mystery-without-railroading",
+        label: "Run a mystery without railroading",
+      },
+      {
+        href: "/answers/how-do-you-handle-players-reaching-the-wrong-conclusion-in-an-rpg-mystery",
+        label: "Handle a plausible but wrong conclusion",
+      },
+    ],
+  },
 };

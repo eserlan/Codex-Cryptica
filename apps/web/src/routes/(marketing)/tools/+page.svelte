@@ -294,6 +294,13 @@
               icon: "icon-[lucide--waypoints]",
             },
             {
+              href: "/generators/mystery-investigation",
+              label: "Mystery & Investigation Generator",
+              summary:
+                "Build a playable case with a fixed GM solution, suspects, independently reachable clues, escalating pressure, and fair outcomes.",
+              icon: "icon-[lucide--search]",
+            },
+            {
               href: "/generators/magic-item",
               label: "Magic Item Generator",
               summary:

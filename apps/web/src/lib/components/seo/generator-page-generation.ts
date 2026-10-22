@@ -21,6 +21,7 @@ export const NON_STREAMABLE_SLUGS: readonly ValidSlug[] = [
   "heist",
   "tome",
   "bbeg-generator",
+  "mystery-investigation",
 ] as const;
 
 export function isStreamableSlug(slug: ValidSlug): boolean {
@@ -39,6 +40,7 @@ const STAGED_SLUGS: readonly ValidSlug[] = [
   "heist",
   "tome",
   "bbeg-generator",
+  "mystery-investigation",
 ] as const;
 
 export function showsStagedProgress(slug: ValidSlug): boolean {
@@ -98,6 +100,7 @@ export interface GenerationContext {
   oneShot: Record<string, unknown>;
   pointCrawl?: Record<string, unknown>;
   business?: Record<string, unknown>;
+  mysteryInvestigation?: Record<string, unknown>;
   world: Record<string, unknown>;
   starSystem: Record<string, unknown>;
   constellation: Record<string, unknown>;
@@ -403,6 +406,18 @@ export function createGeneratorHandlers(
         ...b,
         genre: (b.genre as string) || ctx.getActiveTheme(),
         useAI,
+        onProgress: ctx.onOneShotProgress,
+        signal: ctx.oneShotRuns?.start(),
+      } as never);
+    },
+    "mystery-investigation": (useAI: boolean) => {
+      ctx.onOneShotProgress?.(null);
+      const mystery = ctx.mysteryInvestigation ?? {};
+      return engine.generateMysteryInvestigation({
+        ...mystery,
+        genre: (mystery.genre as string) || ctx.getActiveTheme(),
+        useAI,
+        avoidNames: collectSessionNames(ctx.getSessionEntities() as never[]),
         onProgress: ctx.onOneShotProgress,
         signal: ctx.oneShotRuns?.start(),
       } as never);

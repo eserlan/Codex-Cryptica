@@ -27,6 +27,7 @@ describe("randomIdeaCategories", () => {
       "heist",
       "holiday",
       "minor-magic-item",
+      "mystery-investigation",
       "nation",
       "npc",
       "origin",
@@ -73,6 +74,7 @@ describe("randomIdeaCategories", () => {
       generateTome: vi.fn().mockResolvedValue("tome-result"),
       generatePointCrawl: vi.fn().mockResolvedValue("point-crawl-result"),
       generateBusiness: vi.fn().mockResolvedValue("business-result"),
+      generateMysteryInvestigation: vi.fn().mockResolvedValue("mystery-result"),
     } as unknown as DefaultGeneratorEngine;
     const theme = "Cyberpunk / Corporate";
 
@@ -83,6 +85,10 @@ describe("randomIdeaCategories", () => {
     expect(engine.generateFaction).toHaveBeenCalledWith({
       useAI: true,
       theme,
+    });
+    expect(engine.generateMysteryInvestigation).toHaveBeenCalledWith({
+      useAI: true,
+      genre: theme,
     });
     expect(engine.generateNation).toHaveBeenCalledWith({
       useAI: true,

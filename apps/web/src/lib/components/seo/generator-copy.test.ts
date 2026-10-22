@@ -1,12 +1,25 @@
 import { describe, expect, it } from "vitest";
 import {
   buildGeneratorMarkdown,
+  buildMysteryPlayerHandout,
   buildSectionMarkdown,
   buildSessionEntityMarkdown,
   parseGeneratorShareMarkdown,
 } from "./generator-copy";
 
 describe("generator copy formatting", () => {
+  it("exports a spoiler-safe mystery handout without GM lore", () => {
+    expect(
+      buildMysteryPlayerHandout({
+        title: "The Quiet Bell",
+        summary: "A keeper vanished before the winter bell.",
+        content: "## People to Question\nA clerk saw the ferry leave.",
+      }),
+    ).toBe(
+      "# The Quiet Bell\n\n*A keeper vanished before the winter bell.*\n\n## People to Question\nA clerk saw the ferry leave.",
+    );
+  });
+
   it("builds the canonical full-result order", () => {
     expect(
       buildGeneratorMarkdown({
