@@ -77,6 +77,12 @@ function validStages() {
   };
   const pressure = {
     escalation: "The watch will seal the archive at dawn.",
+    objective: "Recover the bell record before the archive is sealed",
+    approaches: [
+      "Search the archive vault",
+      "Confront Mara with the copied key",
+      "Bargain with Oren for the log",
+    ],
     pressureClock: [1, 2, 3].map((n) => ({
       trigger: `At step ${n}`,
       consequence: `A witness ${n} leaves`,
@@ -121,7 +127,7 @@ describe("generateMysteryStaged", () => {
     expect(result?.output.content).toContain("People to Question");
     expect(result?.output.content).not.toContain("Responsible party");
     expect(result?.output.lore).toContain("Responsible party:** Mara Quill");
-    expect(result?.output.content).toContain("Lead Graph (Adjacency List)");
+    expect(result?.output.content).toContain("Routes to Each Conclusion");
     expect(result?.stats.aiCalls).toBe(6);
     expect(result?.stats.outcome).toBe("staged");
   });
@@ -234,7 +240,7 @@ describe("generateMysteryStaged", () => {
     });
 
     expect(result?.stats.aiCalls).toBe(6);
-    expect(result?.output.content).toContain("**record:** clue-1");
+    expect(result?.output.content).toContain("**Culprit:** Lead 1");
   });
 
   it("stops at the clues when no two sources support a revelation", async () => {
@@ -296,7 +302,7 @@ describe("generateMysteryStaged", () => {
     expect(result?.output.summary).toBe(foundation.summary);
     expect(result?.output.lore).toContain("Stay on watch; No key");
     // The perpetrator's name stays the one locked by the foundation.
-    expect(result?.output.content).toContain("**Mara Quill (person-1):**");
+    expect(result?.output.content).toContain("**Mara Quill:**");
   });
 
   it("moves places listed among the suspects into the locations", async () => {
@@ -405,7 +411,7 @@ describe("generateMysteryStaged", () => {
     expect(content).not.toMatch(/\.\.(?!\.)|\.,|If If/);
   });
 
-  it("asks the audit whether the players can deduce and execute the solution", async () => {
+  it("asks both audits for causal consistency, evidence sufficiency and solution flexibility", async () => {
     const prompts: string[] = [];
     const [foundation, cast, clues, pressure] = validStages();
     const replies = [
@@ -424,14 +430,14 @@ describe("generateMysteryStaged", () => {
     });
 
     const audit = prompts.find((p) => p.startsWith("STAGE 5")) ?? "";
-    expect(audit).toContain("can the players deduce the truth");
-    expect(audit).toContain("can the players execute the solution");
-    expect(audit).toContain("does the world behave consistently");
+    expect(audit).toContain("evidence sufficiency");
+    expect(audit).toContain("solution flexibility");
+    expect(audit).toContain("causal consistency");
     const finalAudit = prompts.find((p) => p.startsWith("STAGE 7")) ?? "";
-    expect(finalAudit).toContain("can the players deduce the truth");
-    expect(finalAudit).toContain("can the players execute the solution");
-    expect(finalAudit).toContain("does the world behave consistently");
-    expect(finalAudit).toContain("Recheck route sufficiency, test safety");
+    expect(finalAudit).toContain("evidence sufficiency");
+    expect(finalAudit).toContain("solution flexibility");
+    expect(finalAudit).toContain("causal consistency");
+    expect(finalAudit).toContain("no mandatory sequence");
     expect(prompts.find((p) => p.startsWith("STAGE 4"))).toContain(
       "that test must itself be safe",
     );
@@ -482,9 +488,7 @@ describe("generateMysteryStaged", () => {
     expect(result?.output.lore).toContain("a copied key was needed");
     expect(result?.output.lore).toContain("north pasture");
     expect(result?.output.content).toContain("## Revelations");
-    expect(result?.output.content).toContain(
-      "**record (culprit):** record was altered",
-    );
+    expect(result?.output.content).toContain("**Culprit:** record was altered");
   });
 
   it.each([
@@ -610,6 +614,101 @@ describe("generateMysteryStaged", () => {
     );
     expect(graph?.edges.some((e) => e.kind === "supports")).toBe(true);
     expect(result?.output.content).not.toContain("mysteryGraph");
+  });
+
+  it("asks for an objective and open approaches instead of a walkthrough", async () => {
+    const prompts: string[] = [];
+    const [foundation, cast, clues, pressure] = validStages();
+    const replies = [
+      foundation,
+      cast,
+      clues,
+      pressure,
+      { status: "consistent", issues: [] },
+      { status: "consistent", issues: [] },
+    ];
+    const result = await generateMysteryStaged(resolveMystery(), {
+      complete: async (_system, message) => {
+        prompts.push(message);
+        return JSON.stringify(replies.shift());
+      },
+    });
+
+    const stage4 = prompts.find((p) => p.startsWith("STAGE 4")) ?? "";
+    expect(stage4).toContain("never prescribe one mandatory sequence");
+    expect(stage4).toContain("strictly after the moment play begins");
+    expect(result?.output.content).toContain(
+      "**Objective:** Recover the bell record before the archive is sealed.",
+    );
+    expect(result?.output.content).toContain(
+      "- Bargain with Oren for the log.",
+    );
+  });
+
+  it("stops at pressure when it gives fewer than three approaches", async () => {
+    const [foundation, cast, clues, pressure] = validStages();
+    const scripted = { ...pressure, approaches: ["Follow the protocol"] };
+    let stopped: string | undefined;
+    const replies = [foundation, cast, clues, scripted, scripted];
+    const result = await generateMysteryStaged(resolveMystery(), {
+      complete: async () => JSON.stringify(replies.shift()),
+      onStats: (stats) => (stopped = stats.stoppedAt),
+    });
+
+    expect(result).toBeNull();
+    expect(stopped).toBe("pressure");
+  });
+
+  it("replaces internal ids in model prose with names and labels", async () => {
+    const [foundation, cast, clues, pressure] = validStages();
+    foundation.truth.motive = "person-1 wanted what clue-2 hints at";
+    pressure.escalation = "If place-2 burns, person-3 flees.";
+    const replies = [
+      foundation,
+      cast,
+      clues,
+      pressure,
+      { status: "consistent", issues: [] },
+      { status: "consistent", issues: [] },
+    ];
+    const result = await generateMysteryStaged(resolveMystery(), {
+      complete: async () => JSON.stringify(replies.shift()),
+    });
+
+    const all = `${result?.output.content}\n${result?.output.lore}`;
+    expect(all).not.toMatch(/\b(?:person|place|clue|rev)-\d+\b/);
+    expect(result?.output.lore).toContain(
+      "Mara Quill wanted what Lead 2 hints at",
+    );
+    expect(result?.output.content).toContain(
+      "If Bell tower burns, Sella Reed flees.",
+    );
+  });
+
+  it("shows where things stand when play starts and why each route works", async () => {
+    const [foundation, cast, clues, pressure] = validStages();
+    (foundation.truth as Record<string, string>).atStart =
+      "The record is still in the archive vault";
+    (clues.independentPaths[0] as Record<string, unknown>).reasoning =
+      "the scratch matches Mara's key";
+    const replies = [
+      foundation,
+      cast,
+      clues,
+      pressure,
+      { status: "consistent", issues: [] },
+      { status: "consistent", issues: [] },
+    ];
+    const result = await generateMysteryStaged(resolveMystery(), {
+      complete: async () => JSON.stringify(replies.shift()),
+    });
+
+    expect(result?.output.lore).toContain(
+      "**When play starts:** The record is still in the archive vault",
+    );
+    expect(result?.output.content).toContain(
+      "**Culprit:** Lead 1. The scratch matches Mara's key.",
+    );
   });
 
   it("states the expected JSON keys and the banned names in the prompts", async () => {

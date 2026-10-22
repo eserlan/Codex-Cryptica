@@ -61,6 +61,8 @@ const MYSTERY_GM_HEADINGS = new Set([
   "clue index",
   "lead graph (adjacency list)",
   "independent routes",
+  "routes to each conclusion",
+  "objective and approaches",
   "pressure clock",
   "npc responses",
   "possible outcomes",

@@ -61,6 +61,7 @@ function normalizeFoundation(data: Obj): Obj {
       "methodReason",
       "disputedFact",
       "victimStatus",
+      "atStart",
     ]);
   next.timeline = mapList(next.timeline, flattenText);
   next.revelations = mapList(next.revelations, (item) => {
@@ -162,6 +163,7 @@ function normalizeClues(data: Obj, revelationIds: readonly string[] = []): Obj {
           ...item,
           revelationId: flattenText(item.revelationId ?? item.revelation),
           clueIds: toIdList(item.clueIds ?? item.clues ?? item.path),
+          ...withReasoning(item.reasoning ?? item.why),
         }
       : item,
   );
@@ -293,6 +295,29 @@ function onlyKnown(ids: unknown, known: readonly string[]): unknown {
     : ids;
 }
 
+/** A route's explanation, only when the model gave one. */
+function withReasoning(value: unknown): Obj {
+  const reasoning = flattenText(value).trim();
+  return reasoning ? { reasoning } : {};
+}
+
+/** A list of plain strings from a list, a delimited string or a list of objects. */
+function toTextList(value: unknown): string[] {
+  const items =
+    typeof value === "string"
+      ? value.split(/\n|;/)
+      : Array.isArray(value)
+        ? value
+        : [];
+  return items
+    .map((item) =>
+      flattenText(item)
+        .replace(/^\s*[-*\d.)]+\s*/, "")
+        .trim(),
+    )
+    .filter(Boolean);
+}
+
 function toIdList(value: unknown): unknown {
   if (typeof value === "string")
     return value
@@ -303,7 +328,12 @@ function toIdList(value: unknown): unknown {
 }
 
 function normalizePressure(data: Obj): Obj {
-  const next: Obj = { ...data, escalation: flattenText(data.escalation) };
+  const next: Obj = {
+    ...data,
+    escalation: flattenText(data.escalation),
+    objective: flattenText(data.objective ?? data.goal),
+    approaches: toTextList(data.approaches ?? data.possibleApproaches),
+  };
   next.pressureClock = mapList(next.pressureClock, (item) =>
     flattenFields(item, ["trigger", "consequence"]),
   );
