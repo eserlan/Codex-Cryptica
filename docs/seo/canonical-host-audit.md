@@ -24,10 +24,12 @@ The read-only script checks representative home, Answer, generator, tools and
 `/for` routes, including nested paths. It verifies:
 
 - Non-`www` responses are HTTP 200, and canonical/OG URLs use the apex domain.
-- HTTP and HTTPS-`www` visits redirect permanently (301 or 308) and retain
-  the original path and query string.
+- HTTP visits to both the apex and `www` hosts, plus HTTPS-`www` visits,
+  redirect permanently (301 or 308) and retain the original path and query
+  string. HTTPS apex pages return directly as HTTP 200.
 - `sitemap.xml` and `robots.txt` consistently advertise the apex host.
-- Public pages do not return `X-Robots-Tag: noindex`.
+- Public pages do not return `noindex` in either a `<meta name="robots">` tag
+  or the `X-Robots-Tag` header.
 
 If it fails because of DNS or a Cloudflare challenge, **report that separately**
 from a confirmed redirect defect. Run with a browser/curl as a second check;

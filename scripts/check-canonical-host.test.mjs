@@ -2,8 +2,10 @@ import { describe, expect, it } from "bun:test";
 import {
   canonicalProblem,
   openGraphProblem,
+  redirectProbeUrls,
   redirectStep,
   redirectTargetProblem,
+  robotsMetaProblem,
 } from "./check-canonical-host.mjs";
 
 describe("canonical-host response checks", () => {
@@ -95,5 +97,22 @@ describe("canonical-host response checks", () => {
         '<meta property="og:url" content="https://www.codexcryptica.com/answers/example">',
       ),
     ).toContain("not on preferred host");
+  });
+
+  it("checks all noncanonical HTTP and www origin combinations", () => {
+    expect(redirectProbeUrls("/lore")).toEqual([
+      "https://www.codexcryptica.com/lore?cc_host_probe=1",
+      "http://codexcryptica.com/lore?cc_host_probe=1",
+      "http://www.codexcryptica.com/lore?cc_host_probe=1",
+    ]);
+  });
+
+  it("rejects noindex in a robots meta tag", () => {
+    expect(
+      robotsMetaProblem('<meta name="robots" content="index, noindex">'),
+    ).toContain('<meta name="robots"');
+    expect(
+      robotsMetaProblem('<meta name="robots" content="index, follow">'),
+    ).toBeNull();
   });
 });

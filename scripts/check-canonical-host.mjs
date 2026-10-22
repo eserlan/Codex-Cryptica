@@ -182,11 +182,32 @@ export function openGraphProblem(html) {
   return null;
 }
 
+export function robotsMetaProblem(html) {
+  const tags = html.match(/<meta\b[^>]*>/gi) ?? [];
+  const hasNoindex = tags.some(
+    (tag) =>
+      htmlAttribute(tag, "name")?.toLowerCase() === "robots" &&
+      /\bnoindex\b/i.test(htmlAttribute(tag, "content") ?? ""),
+  );
+  return hasNoindex
+    ? 'public page sent <meta name="robots" content="noindex">'
+    : null;
+}
+
 function checkRobotsHeader(path, response) {
   const robotsHeader = response.headers.get("x-robots-tag") ?? "";
   if (/noindex/i.test(robotsHeader)) {
     fail(path, "public page sent X-Robots-Tag: noindex");
   }
+}
+
+export function redirectProbeUrls(path) {
+  const query = "?cc_host_probe=1";
+  return [
+    `https://www.${HOST}${path}${query}`,
+    `http://${HOST}${path}${query}`,
+    `http://www.${HOST}${path}${query}`,
+  ];
 }
 
 async function checkPage(path) {
@@ -197,6 +218,7 @@ async function checkPage(path) {
   for (const problem of [
     canonicalProblem(path, html),
     openGraphProblem(html),
+    robotsMetaProblem(html),
   ]) {
     if (problem) fail(path, problem);
   }
@@ -236,9 +258,7 @@ async function checkDiscoveryFiles() {
 async function checkPageAndRedirects(path) {
   try {
     await checkPage(path);
-    for (const prefix of ["https://www.", "http://"]) {
-      await checkRedirect(`${prefix}${HOST}${path}?cc_host_probe=1`);
-    }
+    for (const url of redirectProbeUrls(path)) await checkRedirect(url);
   } catch (err) {
     fail(path, err instanceof Error ? err.message : String(err));
   }
