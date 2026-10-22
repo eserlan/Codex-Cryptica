@@ -117,8 +117,8 @@ describe("BiomeExplorerStore library state", () => {
     expect(() => broken.store.setView("compare")).not.toThrow();
   });
 
-  it("reads a remembered view back, and falls back to the library for an unknown one", () => {
-    for (const view of ["library", "compare", "mine"] as const) {
+  it("reads a supported remembered view and falls back for unsupported values", () => {
+    for (const view of ["library", "compare"] as const) {
       const { store } = makeStore({
         storage: {
           getItem: () => view,
@@ -128,7 +128,7 @@ describe("BiomeExplorerStore library state", () => {
       });
       expect(store.view).toBe(view);
     }
-    for (const junk of ["editor", "nonsense", ""]) {
+    for (const junk of ["editor", "mine", "nonsense", ""]) {
       const { store } = makeStore({
         storage: { getItem: () => junk, setItem() {}, removeItem() {} },
       });
