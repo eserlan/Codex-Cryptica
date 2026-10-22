@@ -49,13 +49,13 @@ describe("Mystery & Investigation generator", () => {
   it("creates a deterministic local draft and keeps GM truth in Lore", () => {
     const options = {
       genre: "Detective / Noir",
-      campaignContext: "The city council is divided",
+      campaignContext: "GM secret: Mara is responsible",
     };
     const first = generateMysteryLocal(options, () => 0);
     const second = generateMysteryLocal(options, () => 0);
     expect(first).toEqual(second);
     expect(first.type).toBe("note");
-    expect(first.content).toContain("The city council is divided");
+    expect(first.content).not.toContain("GM secret");
     expect(first.content).toContain("Evidence");
     expect(first.lore).toContain("GM-Only Fixed Truth");
     expect(first.lore).not.toBe(first.content);
@@ -63,6 +63,12 @@ describe("Mystery & Investigation generator", () => {
       (match) => match[1],
     );
     expect(new Set(names).size).toBe(names.length);
+  });
+
+  it("fails after bounded name selection when every fallback is banned", () => {
+    expect(() =>
+      generateMysteryLocal({ avoidNames: ["Case Witness"] }, () => 0),
+    ).toThrow("Could not generate a mystery name");
   });
 
   it("rejects malformed or incomplete one-pass model output for fallback", () => {
@@ -86,5 +92,18 @@ describe("Mystery & Investigation generator", () => {
       lore: "GM truth",
       status: "draft",
     });
+  });
+
+  it("strips remote Markdown and HTML images from one-pass model output", () => {
+    const result = parseMysteryResponse(
+      JSON.stringify({
+        title: "Complete",
+        summary: "Summary",
+        playerContent: "Clue ![x](https://tracker.example/pixel)",
+        gmTruth: 'Truth <img src="https://tracker.example/pixel">',
+      }),
+    );
+    expect(result?.content).toBe("Clue x");
+    expect(result?.lore).toBe("Truth ");
   });
 });

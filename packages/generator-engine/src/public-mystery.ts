@@ -127,6 +127,14 @@ All IDs must be stable and cross-references valid. Every essential revelation ne
 function string(value: unknown, fallback = ""): string {
   return typeof value === "string" ? value.trim() : fallback;
 }
+
+/** Remove remote image requests from untrusted generated Markdown before saving. */
+export function stripMysteryMarkdownImages(text: string): string {
+  return text
+    .replace(/!\[([^\]]*)\](?:\([^)]*\)|\[[^\]]*\])?/g, "$1")
+    .replace(/<img\b[^>]*>/gi, "");
+}
+
 function object(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value)
     ? (value as Record<string, unknown>)
@@ -152,8 +160,8 @@ export function parseMysteryResponse(
     type: "note",
     title,
     summary,
-    content: playerContent,
-    lore: gmTruth,
+    content: stripMysteryMarkdownImages(playerContent),
+    lore: stripMysteryMarkdownImages(gmTruth),
     labels: ["mystery", "investigation", "mystery-generator"],
     status: "draft",
   };
@@ -177,7 +185,7 @@ export function generateMysteryLocal(
       }
     }
     let fallbackIndex = index + 1;
-    while (true) {
+    for (let attempt = 0; attempt < 32; attempt++) {
       const fallback = `Case Witness ${fallbackIndex++}`;
       if (
         !usedNames.has(fallback.toLocaleLowerCase()) &&
@@ -187,6 +195,9 @@ export function generateMysteryLocal(
         return fallback;
       }
     }
+    throw new Error(
+      "Could not generate a mystery name that avoids existing names.",
+    );
   };
   const culprit = name(0);
   const suspects = Array.from(
@@ -224,8 +235,7 @@ export function generateMysteryLocal(
     "The courier route was changed that evening, supporting an opportunity window, but not proving a meeting occurred; ask who authorised the change.",
     "A damp footprint ends at a dry threshold, supporting a staged trail, but not proving who staged it; compare the tread with the storehouse floor.",
   ];
-  const context = resolved.campaignContext.trim();
-  const playerContent = `## Opening Hook\n${resolved.mysteryType} at ${pickFrom(locations, rng)} has left a question the authorities cannot answer. The party is asked to establish what happened before the next public deadline.${context ? `\n\nCampaign context: ${context}` : ""}\n\n## Central Question\nWhat happened, and which account survives the evidence?\n\n## People to Question\n${suspects.map((person) => `- **${person.name} — ${person.role}:** ${person.motive} Their account can be tested: ${person.alibi}`).join("\n")}\n\n## Places to Investigate\n${locations.map((location) => `- **${location}:** Search for activity records, overlooked traces, and people whose accounts can be checked.`).join("\n")}\n\n## Evidence\n${clueLines.map((clue, index) => `- **Lead ${index + 1}:** ${clue}`).join("\n")}\n\n## Pressure and Outcomes\nEach delay changes who controls the evidence and who is willing to speak. The case can end with a supported accusation, a partial account, a mistaken conclusion the party can test, or a legitimately unsolved mystery with lasting consequences.`;
+  const playerContent = `## Opening Hook\n${resolved.mysteryType} at ${pickFrom(locations, rng)} has left a question the authorities cannot answer. The party is asked to establish what happened before the next public deadline.\n\n## Central Question\nWhat happened, and which account survives the evidence?\n\n## People to Question\n${suspects.map((person) => `- **${person.name} — ${person.role}:** ${person.motive} Their account can be tested: ${person.alibi}`).join("\n")}\n\n## Places to Investigate\n${locations.map((location) => `- **${location}:** Search for activity records, overlooked traces, and people whose accounts can be checked.`).join("\n")}\n\n## Evidence\n${clueLines.map((clue, index) => `- **Lead ${index + 1}:** ${clue}`).join("\n")}\n\n## Pressure and Outcomes\nEach delay changes who controls the evidence and who is willing to speak. The case can end with a supported accusation, a partial account, a mistaken conclusion the party can test, or a legitimately unsolved mystery with lasting consequences.`;
   const lore = `## GM-Only Fixed Truth\n${culprit} is responsible. Their motive is to conceal an earlier act that would expose their role in the ${resolved.mysteryType.toLowerCase()}. They used routine access and a manipulated timeline; the physical traces above are genuine and independently testable.\n\n## Timeline\n1. The evidence was moved before the public account was given.\n2. The culprit created a plausible access window.\n3. The party discovers conflicting but testable accounts.\n\n## Running the Case\nKeep the truth fixed. Do not make a clue false to force suspense. If the party loses a critical lead, use the unsolved outcome and its consequences rather than adding an unearned rescue.`;
   return {
     type: "note",

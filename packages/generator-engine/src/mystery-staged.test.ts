@@ -115,6 +115,32 @@ describe("generateMysteryStaged", () => {
     expect(result?.stats.outcome).toBe("staged");
   });
 
+  it("strips remote images from model controlled player and GM text before saving", async () => {
+    const [foundation, cast, clues, pressure] = validStages();
+    foundation.openingHook =
+      "A clue appears ![tracker](https://tracker.example/pixel)";
+    clues.clues[0].observation =
+      'A mark <img src="https://tracker.example/pixel">';
+    foundation.truth.motive =
+      "Conceal a truth ![tracker](https://tracker.example/pixel)";
+    const replies = [
+      foundation,
+      cast,
+      clues,
+      pressure,
+      { status: "consistent", issues: [] },
+      { status: "consistent", issues: [] },
+    ];
+    const result = await generateMysteryStaged(resolveMystery(), {
+      complete: async () => JSON.stringify(replies.shift()),
+    });
+
+    expect(result?.output.content).not.toContain("https://tracker.example");
+    expect(result?.output.content).not.toContain("<img");
+    expect(result?.output.lore).not.toContain("https://tracker.example");
+    expect(result?.output.lore).not.toContain("<img");
+  });
+
   it("falls back when a required stage cannot pass validation", async () => {
     const progress: string[][] = [];
     const result = await generateMysteryStaged(resolveMystery(), {

@@ -27,7 +27,7 @@
   const selectClass =
     "w-full bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-base md:text-xs text-theme-text focus:outline-none focus:border-theme-primary/60";
   const labelClass =
-    "text-meta font-bold uppercase tracking-wider text-theme-text/80";
+    "text-meta font-bold uppercase tracking-wider text-theme-text";
   const choices = (values: readonly string[]) =>
     values.map((value) => ({ value, label: value }));
 

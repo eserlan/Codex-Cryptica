@@ -1,6 +1,9 @@
 /** Fixed-truth mystery stages. Each accepted JSON artifact is locked for later stages. */
 import type { PublicGeneratorOutput } from "./public-generator-adapters";
-import type { ResolvedMysteryOptions } from "./public-mystery";
+import {
+  stripMysteryMarkdownImages,
+  type ResolvedMysteryOptions,
+} from "./public-mystery";
 import {
   addBannedNameFindings,
   runCheckedStage,
@@ -412,8 +415,8 @@ function assembleOutput(
     type: "note",
     title: text(foundation.title),
     summary: text(foundation.summary),
-    content: playerContent,
-    lore: gmTruth,
+    content: stripMysteryMarkdownImages(playerContent),
+    lore: stripMysteryMarkdownImages(gmTruth),
     labels: ["mystery", "investigation", "mystery-generator"],
     status: "draft",
   };
