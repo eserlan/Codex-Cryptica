@@ -161,7 +161,12 @@ export async function hydrateEntityContent(
     while (cursor < pending.length && !signal?.aborted) {
       const { entity, index } = pending[cursor++];
       try {
-        hydrated[index] = (await hydrator.readFullEntity(entity.id)) ?? entity;
+        const full = await hydrator.readFullEntity(entity.id);
+        if (full) {
+          hydrated[index] = full;
+        } else {
+          skippedEntities.push(entity.id);
+        }
       } catch {
         skippedEntities.push(entity.id);
       }
@@ -389,7 +394,8 @@ async function readFullOrNull(
 ): Promise<LocalEntity | null> {
   if (hydrator.isContentLoaded(id)) return current;
   try {
-    return (await hydrator.readFullEntity(id)) ?? current;
+    const full = await hydrator.readFullEntity(id);
+    return full ?? null;
   } catch {
     return null;
   }

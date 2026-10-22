@@ -420,6 +420,22 @@ describe("hydrateEntityContent", () => {
     expect(result.entities).toHaveLength(2);
   });
 
+  it("reports an entity returning null as skipped", async () => {
+    const vault = makeVault({ a: "full a", b: "full b" });
+    vault.hydrator.readFullEntity = async (id: string) => {
+      if (id === "b") return null;
+      return { ...vault.records[id], content: "full a" };
+    };
+
+    const result = await hydrateEntityContent(
+      Object.values(vault.records) as never,
+      vault.hydrator,
+    );
+
+    expect(result.skippedEntities).toEqual(["b"]);
+    expect((result.entities[0] as any).content).toBe("full a");
+  });
+
   it("stops reading once the build is aborted", async () => {
     const bodies: Record<string, string> = {};
     for (let i = 0; i < 20; i++) bodies[`e${i}`] = `body ${i}`;
@@ -519,6 +535,7 @@ describe("buildCloudBackupDelta (#3354)", () => {
           readFullEntity: async (id: string) => {
             reads.push(id);
             if (id === "unreadable") throw new Error("gone");
+            if (id === "missing") return null;
             return { ...records[id], content: `full ${id}` };
           },
         },
@@ -619,6 +636,7 @@ describe("buildCloudBackupDelta (#3354)", () => {
       pictured: { id: "pictured", title: "P", image: "new.png" },
       known: { id: "known", title: "K", image: "known.png" },
       unreadable: { id: "unreadable", title: "U" },
+      missing: { id: "missing", title: "M" },
     });
     const deps = vault.deps as never;
     const many = Object.keys(vault.records)
@@ -638,6 +656,9 @@ describe("buildCloudBackupDelta (#3354)", () => {
     ).toBeNull();
     expect(
       await buildCloudBackupDelta("Vault", [change("unreadable")], deps),
+    ).toBeNull();
+    expect(
+      await buildCloudBackupDelta("Vault", [change("missing")], deps),
     ).toBeNull();
     // An image the backup already holds does not force a full upload.
     expect(

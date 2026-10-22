@@ -641,6 +641,44 @@ describe("EntityStore", () => {
       expect(result).toBe(false);
     });
 
+    it("does not mark content loaded when updating title or labels only", async () => {
+      repository.entities.hero = {
+        ...repository.entities.hero,
+        content: "preview",
+        contentLoaded: false,
+      };
+      vi.mocked(vaultEntities.updateEntity).mockReturnValue({
+        entities: {
+          ...repository.entities,
+          hero: { ...repository.entities.hero, title: "Updated Title" },
+        },
+        updated: { ...repository.entities.hero, title: "Updated Title" },
+      });
+
+      await store.updateEntity("hero", { title: "Updated Title" });
+
+      expect(store.isContentLoaded("hero")).toBe(false);
+    });
+
+    it("marks content loaded when updating content or lore", async () => {
+      repository.entities.hero = {
+        ...repository.entities.hero,
+        content: "old",
+        contentLoaded: false,
+      };
+      vi.mocked(vaultEntities.updateEntity).mockReturnValue({
+        entities: {
+          ...repository.entities,
+          hero: { ...repository.entities.hero, content: "new markdown" },
+        },
+        updated: { ...repository.entities.hero, content: "new markdown" },
+      });
+
+      await store.updateEntity("hero", { content: "new markdown" });
+
+      expect(store.isContentLoaded("hero")).toBe(true);
+    });
+
     it("should clear AI cache for style-related titles", async () => {
       const clearStyleCache = vi.fn();
       const storeWithAI = new EntityStore({
@@ -1192,6 +1230,41 @@ describe("EntityStore", () => {
       });
 
       expect(store.isContentLoaded("hero")).toBe(false);
+    });
+
+    it("does not mark content as loaded in SYNC_CHUNK_READY when contentLoaded is false (preview)", () => {
+      const subscribeMock = vi
+        .mocked(vaultEventBus.subscribe)
+        .mock.calls.find((c) => c[1] === "entity-store-content-tracker")?.[0];
+      expect(subscribeMock).toBeDefined();
+
+      subscribeMock!({
+        type: "SYNC_CHUNK_READY",
+        vaultId: "vault-1",
+        entities: {
+          hero: {
+            ...repository.entities.hero,
+            content: "preview text",
+            contentLoaded: false,
+          },
+        },
+        newOrChangedIds: ["hero"],
+      });
+
+      expect(store.isContentLoaded("hero")).toBe(false);
+      expect(store.isContentVerified("hero")).toBe(false);
+    });
+
+    it("returns false from isContentLoaded and isContentVerified when entity has contentLoaded: false", () => {
+      repository.entities.hero = {
+        ...repository.entities.hero,
+        content: "preview text",
+        contentLoaded: false,
+      };
+      store.markContentLoaded("hero");
+
+      expect(store.isContentLoaded("hero")).toBe(false);
+      expect(store.isContentVerified("hero")).toBe(false);
     });
   });
 

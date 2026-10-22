@@ -109,6 +109,7 @@ export const fileIOAdapter: IFileIOAdapter = {
       lore: parsed.metadata.lore || "",
       parent,
       _path: path,
+      contentLoaded: true,
     };
     delete (entity as { tags?: unknown }).tags;
 

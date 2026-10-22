@@ -68,7 +68,13 @@ function mergeLoadedContent(
     normalizeDiskMetadata(diskMetadata),
   );
   return {
-    entity: { ...base, ...restored, content, lore } as LocalEntity,
+    entity: {
+      ...base,
+      ...restored,
+      content,
+      lore,
+      contentLoaded: true,
+    } as LocalEntity,
     metadataRestored: Object.keys(restored).length > 0,
   };
 }
@@ -101,7 +107,7 @@ export class EntityContentLoader {
       if (event.type === "SYNC_CHUNK_READY") {
         for (const id of event.newOrChangedIds) {
           const entity = event.entities[id];
-          if (entity?.content) {
+          if (entity && entity.contentLoaded !== false && entity.content) {
             this._contentLoadedIds.add(id);
             this._contentVerifiedIds.add(id);
           }
@@ -129,15 +135,19 @@ export class EntityContentLoader {
     this._onMetadataRestored = callbacks.onMetadataRestored;
   }
 
-  get entities() {
-    return this.deps.repository.entities;
+  get entities(): Record<string, LocalEntity> {
+    return this.deps.repository.entities as Record<string, LocalEntity>;
   }
 
-  isContentLoaded(id: string) {
-    return this._contentLoadedIds.has(id);
+  isContentLoaded(id: string): boolean {
+    const entity = this.entities[id];
+    if (entity?.contentLoaded === false) return false;
+    return this._contentLoadedIds.has(id) || entity?.contentLoaded === true;
   }
 
-  isContentVerified(id: string) {
+  isContentVerified(id: string): boolean {
+    const entity = this.entities[id];
+    if (entity?.contentLoaded === false) return false;
     return this._contentVerifiedIds.has(id);
   }
 
@@ -376,7 +386,12 @@ export class EntityContentLoader {
       ? await cacheService.getEntityContent(vaultId, id)
       : null;
     return cached
-      ? { ...entity, content: cached.content, lore: cached.lore }
+      ? {
+          ...entity,
+          content: cached.content,
+          lore: cached.lore,
+          contentLoaded: true,
+        }
       : null;
   }
 
