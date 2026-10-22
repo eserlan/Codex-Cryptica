@@ -19,7 +19,12 @@
   let query = $state("");
   let filters = $state<FilterFacet[]>([]);
 
-  const biomeParam = $derived(page.url.searchParams.get("biome"));
+  // Read query parameters after hydration so the static prerender can render
+  // the public library without accessing searchParams during prerendering.
+  let biomeParam = $state<string | null>(null);
+  $effect(() => {
+    biomeParam = page.url.searchParams.get("biome");
+  });
   const selected = $derived(biomeParam ? getBiome(biomeParam) : undefined);
 
   // A biome named in the address belongs to the Library.
