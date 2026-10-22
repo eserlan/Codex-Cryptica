@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { focusTrap } from "$lib/actions/focusTrap";
   import {
     buildMysteryGraphDiagram,
     type MysteryGraph,
@@ -149,6 +150,11 @@
     drag = null;
   }
 
+  function cancelDrag() {
+    drag = null;
+    suppressClick = false;
+  }
+
   function select(id: string) {
     if (suppressClick) {
       suppressClick = false;
@@ -173,10 +179,6 @@
     };
     node.addEventListener("wheel", onWheel, { passive: false });
     return { destroy: () => node.removeEventListener("wheel", onWheel) };
-  }
-
-  function focusOnMount(node: HTMLElement) {
-    node.focus();
   }
 
   const TOOL_BUTTON =
@@ -262,7 +264,7 @@
     onpointerdown={startDrag}
     onpointermove={moveDrag}
     onpointerup={endDrag}
-    onpointercancel={endDrag}
+    onpointercancel={cancelDrag}
     use:wheelZoom
   >
     <svg
@@ -376,7 +378,7 @@
     aria-modal="true"
     aria-label="Clue graph, enlarged"
     tabindex="-1"
-    use:focusOnMount
+    use:focusTrap
     onkeydown={(event) => {
       if (event.key === "Escape") setExpanded(false);
     }}

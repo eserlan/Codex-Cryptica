@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import { fireEvent, render, screen } from "@testing-library/svelte";
+import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { describe, expect, it } from "vitest";
 import type { MysteryGraph } from "generator-engine";
 import MysteryClueGraph from "./MysteryClueGraph.svelte";
@@ -101,15 +101,48 @@ describe("MysteryClueGraph", () => {
     expect(node.getAttribute("aria-pressed")).toBe("false");
   });
 
+  it("does not suppress a deliberate node click after a cancelled pan", async () => {
+    const { container } = render(MysteryClueGraph, { graph });
+    await fireEvent.click(screen.getByLabelText("Zoom in"));
+    const canvas = screen.getByTestId("mystery-clue-graph-canvas");
+    canvas.getBoundingClientRect = () =>
+      ({ left: 0, top: 0, width: 600, height: 300 }) as DOMRect;
+
+    await fireEvent.pointerDown(canvas, { clientX: 300, clientY: 150 });
+    await fireEvent.pointerMove(canvas, { clientX: 340, clientY: 170 });
+    await fireEvent.pointerCancel(canvas);
+
+    const node = container.querySelector('[data-node-id="clue-1"]')!;
+    await fireEvent.click(node);
+    expect(node.getAttribute("aria-pressed")).toBe("true");
+  });
+
   it("opens an enlarged view and closes it with Escape", async () => {
     render(MysteryClueGraph, { graph });
 
-    await fireEvent.click(screen.getByLabelText("Enlarge the graph"));
+    const opener = screen.getByLabelText("Enlarge the graph");
+    opener.focus();
+    await fireEvent.click(opener);
     const dialog = screen.getByRole("dialog", { name: "Clue graph, enlarged" });
     expect(dialog.querySelector("svg")).toBeTruthy();
 
+    const focusable = [
+      ...dialog.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      ),
+    ];
+    await waitFor(() =>
+      expect(dialog.contains(document.activeElement)).toBe(true),
+    );
+    focusable.at(-1)!.focus();
+    await fireEvent.keyDown(focusable.at(-1)!, { key: "Tab" });
+    expect(document.activeElement).toBe(focusable[0]);
+    await fireEvent.keyDown(focusable[0], { key: "Tab", shiftKey: true });
+    expect(document.activeElement).toBe(focusable.at(-1));
+
     await fireEvent.keyDown(dialog, { key: "Escape" });
     expect(screen.queryByRole("dialog")).toBeNull();
+    expect(document.activeElement).toBe(opener);
   });
 
   it("renders nothing for an empty graph", () => {
