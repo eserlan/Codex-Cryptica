@@ -24,11 +24,12 @@ describe("generator copy formatting", () => {
     const handout = buildMysteryPlayerHandout({
       title: "The Quiet Bell",
       content:
-        "## Opening Hook\nA keeper vanished.\n\n## Evidence and Leads\n- Lead 1\n\n## Actual Timeline\n1. The clerk did it.\n\n## Possible Outcomes\n- correct: yes",
+        "## Opening Hook\nA keeper vanished.\n\n## Evidence and Leads\n- Lead 1\n\n## Revelations\n- rev-1 (culprit): the clerk did it.\n\n## Actual Timeline\n1. The clerk did it.\n\n## Possible Outcomes\n- correct: yes",
     });
     expect(handout).toContain("## Opening Hook");
     expect(handout).toContain("## Evidence and Leads");
     expect(handout).not.toContain("Actual Timeline");
+    expect(handout).not.toContain("Revelations");
     expect(handout).not.toContain("clerk did it");
     expect(handout).not.toContain("Possible Outcomes");
   });

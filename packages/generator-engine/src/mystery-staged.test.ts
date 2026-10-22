@@ -15,18 +15,27 @@ function validStages() {
       means: "Changed the bell record",
       opportunity: "Held the archive key",
       constraints: "Could not leave the watch post",
+      keyItem: "The bell record",
+      keyItemLocation: "Archive",
+      keyItemFate: "Burn it at the next full moon",
+      recovery: "Search the archive vault or catch Mara carrying it",
+      methodReason:
+        "The archive is locked after hours, so a copied key was needed",
+      disputedFact: "Whether the north pasture was common land",
     },
     timeline: [
       "The record was copied",
       "The bell was rung",
       "The keeper disappeared",
     ],
-    revelations: ["record", "bell", "key"].map((id) => ({
-      id,
-      fact: `${id} was altered`,
-    })),
+    revelations: [
+      ["record", "culprit"],
+      ["bell", "motive"],
+      ["key", "item"],
+    ].map(([id, kind]) => ({ id, kind, fact: `${id} was altered` })),
   };
   const cast = {
+    keyItemLocationId: "place-1",
     suspects: ["Mara Quill", "Oren Pike", "Sella Reed", "Tovin Elm"].map(
       (name, index) => ({
         id: `person-${index + 1}`,
@@ -211,13 +220,16 @@ describe("generateMysteryStaged", () => {
       playerSafeSummary: summary,
       truth: { ...foundation.truth, constraints: ["Stay on watch", "No key"] },
       timeline: foundation.timeline.map((event) => ({ event })),
-      revelations: foundation.revelations.map(({ id, fact }) => ({
+      revelations: foundation.revelations.map(({ id, fact, kind }) => ({
         revelationId: id,
         fact,
+        kind: ` ${kind.toUpperCase()}`,
       })),
     };
     const variantCast = {
       ...cast,
+      keyItemLocationId: undefined,
+      keyItemLocation: "archive",
       suspects: cast.suspects.map((suspect, index) =>
         index === 0 ? { ...suspect, name: "Mara" } : suspect,
       ),
@@ -244,6 +256,7 @@ describe("generateMysteryStaged", () => {
   it("moves places listed among the suspects into the locations", async () => {
     const [foundation, cast, clues, pressure] = validStages();
     const mixed = {
+      keyItemLocationId: "place-1",
       suspects: [
         ...cast.suspects,
         {
@@ -367,6 +380,133 @@ describe("generateMysteryStaged", () => {
     const stage4 = prompts.find((p) => p.startsWith("STAGE 4")) ?? "";
     expect(stage4).toContain("advance whether or not the party acts");
     expect(stage4).toContain("historical truth itself is lost");
+  });
+
+  it("renders the key item, method reason and revelations for the GM", async () => {
+    const [foundation, cast, clues, pressure] = validStages();
+    const replies = [
+      foundation,
+      cast,
+      clues,
+      pressure,
+      { status: "consistent", issues: [] },
+      { status: "consistent", issues: [] },
+    ];
+    const result = await generateMysteryStaged(resolveMystery(), {
+      complete: async () => JSON.stringify(replies.shift()),
+    });
+
+    expect(result?.output.lore).toContain(
+      "**The bell record:** now at Archive",
+    );
+    expect(result?.output.lore).toContain("Burn it at the next full moon");
+    expect(result?.output.lore).toContain("a copied key was needed");
+    expect(result?.output.lore).toContain("north pasture");
+    expect(result?.output.content).toContain("## Revelations");
+    expect(result?.output.content).toContain(
+      "**record (culprit):** record was altered",
+    );
+  });
+
+  it.each([
+    ["the key item's location", (f: any) => delete f.truth.keyItemLocation],
+    ["why the method was needed", (f: any) => delete f.truth.methodReason],
+    [
+      "a culprit revelation",
+      (f: any) => {
+        f.revelations[0].kind = "history";
+      },
+    ],
+  ])("stops at the foundation when it lacks %s", async (_name, break_) => {
+    const [foundation] = validStages();
+    break_(foundation);
+    const result = await generateMysteryStaged(resolveMystery(), {
+      complete: async () => JSON.stringify(foundation),
+    });
+
+    expect(result).toBeNull();
+  });
+
+  it("stops at the cast when the key item's location is not one of the locations", async () => {
+    const [foundation, cast] = validStages();
+    const replies = (): unknown =>
+      replies.count++ === 0
+        ? foundation
+        : { ...cast, keyItemLocationId: "place-9" };
+    replies.count = 0;
+    let stopped: string | undefined;
+    const result = await generateMysteryStaged(resolveMystery(), {
+      complete: async () => JSON.stringify(replies()),
+      onStats: (stats) => (stopped = stats.stoppedAt),
+    });
+
+    expect(result).toBeNull();
+    expect(stopped).toBe("cast");
+  });
+
+  it("stops at the clues when none leads to the key item's location", async () => {
+    const [foundation, cast, clues] = validStages();
+    const withHiddenItem = {
+      ...cast,
+      keyItemLocationId: "place-4",
+      locations: [
+        ...cast.locations,
+        { id: "place-4", name: "Vault", activity: "Sealed", evidence: "Dust" },
+      ],
+    };
+    let stopped: string | undefined;
+    const replies = [foundation, withHiddenItem, clues, clues];
+    const result = await generateMysteryStaged(resolveMystery(), {
+      complete: async () => JSON.stringify(replies.shift()),
+      onStats: (stats) => (stopped = stats.stoppedAt),
+    });
+
+    expect(result).toBeNull();
+    expect(stopped).toBe("clues");
+  });
+
+  it("drops overlapping routes and derives independent ones from the clues", async () => {
+    const [foundation, cast, clues, pressure] = validStages();
+    clues.clues[0].leadsTo = ["clue-2"];
+    clues.clues[3].leadsTo = ["clue-2"];
+    clues.independentPaths = [
+      { revelationId: "record", clueIds: ["clue-1", "clue-2"] },
+      { revelationId: "record", clueIds: ["clue-4", "clue-2"] },
+    ];
+    const replies = [
+      foundation,
+      cast,
+      clues,
+      pressure,
+      { status: "consistent", issues: [] },
+      { status: "consistent", issues: [] },
+    ];
+    const result = await generateMysteryStaged(resolveMystery(), {
+      complete: async () => JSON.stringify(replies.shift()),
+    });
+
+    expect(result?.stats.outcome).toBe("staged");
+    expect(result?.stats.repairedStages).toEqual([]);
+  });
+
+  it("keeps the checked case when the repair reply is unusable", async () => {
+    const [foundation, cast, clues, pressure] = validStages();
+    const replies: unknown[] = [
+      foundation,
+      cast,
+      clues,
+      pressure,
+      { status: "needs-repair", issues: ["Tighten the alibi"] },
+      { cast: {}, clues: {}, pressure: {} },
+      { cast: {}, clues: {}, pressure: {} },
+      { status: "consistent", issues: [] },
+    ];
+    const result = await generateMysteryStaged(resolveMystery(), {
+      complete: async () => JSON.stringify(replies.shift()),
+    });
+
+    expect(result?.stats.outcome).toBe("staged");
+    expect(result?.output.content).toContain("**Mara Quill — clerk:**");
   });
 
   it("states the expected JSON keys and the banned names in the prompts", async () => {

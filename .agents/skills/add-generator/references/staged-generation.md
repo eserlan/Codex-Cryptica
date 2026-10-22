@@ -51,3 +51,7 @@ Unit tests with scripted replies will not catch these; they only show up against
 - Cover: happy path (call count, fixed plan kept), a retry that fixes a stage, a kept first draft when the retry is junk, `null` plus `stoppedAt` on an unusable stage, abort mid-run, an unreadable review, an accepted repair, and the progress statuses (including fallback/skipped).
 - Any regex over generated prose needs a counterexample table: flagged and not-flagged inputs (see codex-review `patterns.md` → Heuristic Prose Checks). Keep it a soft problem with its limits in the doc comment.
 - For each changed hunk, name the test that fails if it is reverted.
+
+### Causal integrity for mystery-style generators
+
+Valid shape is not the same as solvable. Require, in the locked foundation, where the central object is now, who holds it, its intended fate and how it is recovered, plus why the chosen method was needed. Give every revelation a `kind` and make sure the culprit, motive and object are each covered. Check that at least one clue leads to the object's location, and that the two routes to a revelation share no clue and start at different sources. Make the audit prompt list these invariants explicitly. If a repair reply is unusable, keep the case that already passed its checks instead of falling back.

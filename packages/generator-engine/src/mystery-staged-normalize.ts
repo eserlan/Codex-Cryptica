@@ -54,11 +54,23 @@ function normalizeFoundation(data: Obj): Obj {
       "means",
       "opportunity",
       "constraints",
+      "keyItem",
+      "keyItemLocation",
+      "keyItemFate",
+      "recovery",
+      "methodReason",
+      "disputedFact",
     ]);
   next.timeline = mapList(next.timeline, flattenText);
-  next.revelations = mapList(next.revelations, (item) =>
-    flattenFields(withId(item, ["revelationId", "key"]), ["fact"]),
-  );
+  next.revelations = mapList(next.revelations, (item) => {
+    const rev = flattenFields(withId(item, ["revelationId", "key"]), [
+      "fact",
+      "kind",
+    ]);
+    return isRecord(rev) && typeof rev.kind === "string"
+      ? { ...rev, kind: rev.kind.trim().toLowerCase() }
+      : rev;
+  });
   return next;
 }
 
@@ -106,7 +118,23 @@ function normalizeCast(data: Obj, culpritName = ""): Obj {
       "evidence",
     ]),
   );
+  next.keyItemLocationId = placeId(
+    next.keyItemLocationId ?? next.keyItemLocation,
+    next.locations,
+  );
   return next;
+}
+
+/** A location id, accepting the location's name or a differently-cased id. */
+function placeId(value: unknown, locations: unknown): string {
+  const wanted = flattenText(value).trim().toLowerCase();
+  const places = Array.isArray(locations) ? locations.filter(isRecord) : [];
+  const match = places.find(
+    (place) =>
+      flattenText(place.id).toLowerCase() === wanted ||
+      flattenText(place.name).trim().toLowerCase() === wanted,
+  );
+  return match ? flattenText(match.id) : flattenText(value);
 }
 
 function normalizeClues(data: Obj, revelationIds: readonly string[] = []): Obj {
@@ -210,15 +238,43 @@ function derivedRoutes(
  * Top up each revelation to two single-clue routes from distinct sources,
  * using clues that already support it. A route the model gave is kept.
  */
+/**
+ * Keep a route only when it shares no clue and no starting source with a route
+ * already kept for the same revelation, so every pair left can be followed
+ * independently.
+ */
+function independentRoutes(routes: Obj[], byId: Map<string, Obj>): Obj[] {
+  const kept: Obj[] = [];
+  const startOf = (route: Obj) =>
+    flattenText(byId.get(flattenText(toIds(route.clueIds)[0]))?.sourceId);
+  for (const route of routes) {
+    const ids = toIds(route.clueIds).map(flattenText);
+    const clash = kept.some(
+      (other) =>
+        other.revelationId === route.revelationId &&
+        (startOf(other) === startOf(route) ||
+          toIds(other.clueIds).some((id) => ids.includes(flattenText(id)))),
+    );
+    if (!clash) kept.push(route);
+  }
+  return kept;
+}
+
+const toIds = (value: unknown): unknown[] =>
+  Array.isArray(value) ? value : [];
+
 function withDerivedPaths(
   paths: unknown,
   clues: unknown,
   revelationIds: readonly string[],
 ): unknown {
   if (!revelationIds.length || !Array.isArray(clues)) return paths;
-  const given = Array.isArray(paths) ? paths.filter(isRecord) : [];
   const clueList = clues.filter(isRecord);
   const byId = new Map(clueList.map((clue) => [flattenText(clue.id), clue]));
+  const given = independentRoutes(
+    Array.isArray(paths) ? paths.filter(isRecord) : [],
+    byId,
+  );
   const derived = revelationIds.flatMap((revelationId) =>
     derivedRoutes(
       clueList,
