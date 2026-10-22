@@ -67,6 +67,13 @@ export const EXPLORE_SECTIONS: ExploreSection[] = [
           "Curated, theme-reactive vector RPG silhouettes and token art for characters, creatures, and locations.",
         icon: "icon-[lucide--shapes]",
       },
+      {
+        href: "/biomes",
+        label: "Biome Explorer",
+        summary:
+          "Browse curated real-world environments, compare biomes side by side, and build your own.",
+        icon: "icon-[lucide--mountain-snow]",
+      },
     ],
   },
   {
