@@ -204,6 +204,7 @@ export const howDoIHandleDivinationMagicWithoutLettingOneCharacterSolveEveryMyst
       "how-do-you-run-factions-in-a-sandbox-campaign",
       "how-do-i-handle-players-asking-an-npc-to-tell-us-everything-you-know",
       "how-do-i-make-interviewing-npcs-interesting-in-an-investigation",
+      "how-do-you-handle-players-reaching-the-wrong-conclusion-in-an-rpg-mystery",
     ],
     discovery: {
       id: "answer-handle-divination-magic-without-solving-every-mystery",

@@ -77,10 +77,10 @@ export const toolEntries: DiscoveryEntryInput[] = [
     intentAliases: ["fantasy names for characters and places"],
     userJob: "create",
     uniqueValue:
-      "Long-standing entry point for fantasy naming queries, covering ten cultural styles on the page itself.",
+      "Legacy entry point that keeps existing links and its on-page generator functional, but points search engines to the primary /generators/fantasy-names URL.",
     parentCluster: "naming",
     relatedIntents: ["generator-fantasy-names"],
-    indexable: true,
+    indexable: false,
     status: "live",
   },
   {
