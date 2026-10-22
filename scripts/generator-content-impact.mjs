@@ -13,6 +13,7 @@
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
+import { isMappedGeneratorChange } from "./generator-content-impact-match.mjs";
 
 const ROOT = resolve(import.meta.dirname, "..");
 const args = process.argv.slice(2);
@@ -75,10 +76,8 @@ try {
 const touched = GENERATORS.filter(
   (item) =>
     showAll ||
-    changed.some(
-      (file) =>
-        ENGINE_PREFIXES.some((prefix) => file.startsWith(prefix)) &&
-        item.changed.test(file),
+    changed.some((file) =>
+      isMappedGeneratorChange(item, file, ENGINE_PREFIXES),
     ),
 );
 if (touched.length === 0) {
