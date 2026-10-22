@@ -66,12 +66,10 @@ describe("normalizeMysteryStage.clues", () => {
       },
       ["rev-1"],
     );
-    expect(out.independentPaths).toEqual([
-      { revelationId: "rev-1", clueIds: ["clue-1"] },
-    ]);
+    expect(out.independentPaths).toEqual([]);
   });
 
-  it("keeps a given route and adds only the missing source", () => {
+  it("keeps a given route without inventing a second route", () => {
     const given = { revelationId: "rev-1", clueIds: ["clue-1"] };
     const out = normalizeMysteryStage.clues(
       {
@@ -84,13 +82,10 @@ describe("normalizeMysteryStage.clues", () => {
       },
       ["rev-1"],
     );
-    expect(out.independentPaths).toEqual([
-      given,
-      { revelationId: "rev-1", clueIds: ["clue-2"] },
-    ]);
+    expect(out.independentPaths).toEqual([given]);
   });
 
-  it("does not count a malformed route when topping up distinct sources", () => {
+  it("leaves malformed routes for the validator to reject", () => {
     const malformed = { revelationId: "rev-1", clueIds: ["clue-1", "clue-1"] };
     const out = normalizeMysteryStage.clues(
       {
@@ -104,11 +99,7 @@ describe("normalizeMysteryStage.clues", () => {
       ["rev-1"],
     );
 
-    expect(out.independentPaths).toEqual([
-      malformed,
-      { revelationId: "rev-1", clueIds: ["clue-1"] },
-      { revelationId: "rev-1", clueIds: ["clue-3"] },
-    ]);
+    expect(out.independentPaths).toEqual([malformed]);
   });
 });
 
