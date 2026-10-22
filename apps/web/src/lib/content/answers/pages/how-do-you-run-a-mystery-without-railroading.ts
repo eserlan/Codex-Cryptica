@@ -143,6 +143,7 @@ export const howDoYouRunAMysteryWithoutRailroading: AnswerConfigInput = {
     "how-do-i-handle-divination-magic-without-letting-one-character-solve-every-mystery",
     "how-do-i-prepare-a-dnd-session",
     "how-do-i-run-secret-doors-in-dnd",
+    "how-do-you-handle-players-reaching-the-wrong-conclusion-in-an-rpg-mystery",
   ],
   discovery: {
     id: "answer-run-mystery-without-railroading",

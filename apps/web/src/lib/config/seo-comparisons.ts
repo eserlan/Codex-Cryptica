@@ -21,17 +21,6 @@ export interface SEOComparisonPageData extends SEOPageData {
       values: [string, string, string];
     }>;
   };
-  /** Optional product screenshot and supporting copy. */
-  productProof?: {
-    eyebrow: string;
-    title: string;
-    description: string;
-    imageSrc: string;
-    imageAlt: string;
-    imageWidth: number;
-    imageHeight: number;
-    caption: string;
-  };
   /** Optional fair-fit guidance for choosing between the compared products. */
   decisionGuidance?: Array<{
     title: string;

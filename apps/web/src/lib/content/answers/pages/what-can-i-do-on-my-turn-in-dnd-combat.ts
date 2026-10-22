@@ -10,6 +10,29 @@ export const whatCanIDoOnMyTurnInDndCombat: AnswerConfigInput = {
     "On your turn in D&D combat you can usually move up to your speed and take one action, and you sometimes have a bonus action if a class feature, spell, or piece of equipment gives you one. You can also interact briefly with something nearby and speak a few words. A reaction responds to a specific trigger, often on another creature's turn but sometimes on yours; after you use one, you cannot take another until the start of your next turn. Your class and features decide the interesting options inside those buckets, so describe what you want to accomplish and let the Dungeon Master tell you which action fits.",
   sections: [
     {
+      kind: "table",
+      heading: "Combat turn: quick reference",
+      headers: ["Part", "What you can do"],
+      rows: [
+        [
+          "Movement",
+          "Move up to your speed. Where the rules allow, split it before and after your action. Conditions and terrain can limit it.",
+        ],
+        [
+          "Action",
+          "Take one action, such as Attack, Cast a Spell, Dodge, or Help.",
+        ],
+        [
+          "Bonus action",
+          "Take at most one, and only when a feature, spell, or other rule gives you one.",
+        ],
+        [
+          "Reaction",
+          "Respond to a trigger named by a feature, spell, or situation. It can happen on your turn or another creature's; after you take one, you cannot take another until the start of your next turn. The trigger and any other requirements still apply.",
+        ],
+      ],
+    },
+    {
       kind: "prose",
       heading: "Think of your turn as a short menu",
       paragraphs: [

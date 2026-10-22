@@ -5,14 +5,18 @@ import { test, expect } from "@playwright/test";
  *
  * They now render the same `GeneratorPageContent` the `/generators/[slug]`
  * route uses, passing only their own copy, FAQs and canonical. These tests pin
- * the two things that refactor could break silently: that each page still
- * claims its own URL rather than inheriting the slug's, and that the generator
+ * the two things that refactor could break silently: that each page declares
+ * its intended canonical (including deliberate consolidation) and the generator
  * on it still works.
  */
 
 const LIVE_PAGES = [
   { path: "/tools/rpg-npc-generator", title: /RPG NPC Generator/ },
-  { path: "/tools/fantasy-name-generator", title: /Fantasy Name Generator/ },
+  {
+    path: "/tools/fantasy-name-generator",
+    title: /Fantasy Name Generator/,
+    canonical: "/generators/fantasy-names",
+  },
   { path: "/tools/quest-hook-generator", title: /Quest Hook Generator/ },
   { path: "/tools/vampire-clan-generator", title: /Vampire Clan Generator/ },
   {
@@ -22,8 +26,8 @@ const LIVE_PAGES = [
 ];
 
 test.describe("Tools generator pages", () => {
-  for (const { path, title } of LIVE_PAGES) {
-    test(`${path} keeps its own canonical and copy`, async ({ page }) => {
+  for (const { path, title, canonical: preferred } of LIVE_PAGES) {
+    test(`${path} keeps its intended canonical and copy`, async ({ page }) => {
       await page.goto(path);
 
       // The whole point of metaOverrides: sharing the slug's wiring must not
@@ -32,7 +36,7 @@ test.describe("Tools generator pages", () => {
       const canonical = await page
         .locator('link[rel="canonical"]')
         .getAttribute("href");
-      expect(canonical).toBe(`https://codexcryptica.com${path}`);
+      expect(canonical).toBe(`https://codexcryptica.com${preferred ?? path}`);
 
       await expect(page.locator("#generate-button")).toBeVisible();
     });

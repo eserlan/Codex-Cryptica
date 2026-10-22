@@ -19,6 +19,8 @@ describe("sitemap routes", () => {
     const paths = STATIC_SITEMAP_ROUTES.map((route) => route.path);
     expect(paths).not.toContain("/tools/dnd-npc-generator");
     expect(paths).not.toContain("/tools/faction-generator");
+    // The old alias still renders, but /generators/fantasy-names owns search intent.
+    expect(paths).not.toContain("/tools/fantasy-name-generator");
   });
 
   it("builds generated pages as monthly, priority 0.8", () => {

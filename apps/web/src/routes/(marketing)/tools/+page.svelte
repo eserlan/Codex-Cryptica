@@ -102,7 +102,7 @@
               icon: "icon-[lucide--moon]",
             },
             {
-              href: "/tools/fantasy-name-generator",
+              href: "/generators/fantasy-names",
               label: "Fantasy Name Generator",
               summary:
                 "Generate character, place, faction, and item names across ten cultural styles.",
