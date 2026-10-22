@@ -447,6 +447,11 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/generators/business</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/generators/random</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
@@ -592,6 +597,11 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/answers/how-can-i-practise-being-a-dungeon-master-without-a-group</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/answers/how-common-should-magic-be-in-a-fantasy-world</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
@@ -632,6 +642,16 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/answers/how-do-i-design-a-geographically-realistic-town-or-village</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/how-do-i-encourage-party-bonding-during-downtime</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/answers/how-do-i-expand-a-simple-rpg-campaign-idea</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
@@ -662,6 +682,11 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/answers/how-do-i-give-players-immersive-handouts-in-an-online-rpg</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/answers/how-do-i-give-specialist-characters-spotlight</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
@@ -677,7 +702,17 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/answers/how-do-i-handle-players-who-keep-trying-to-recruit-defeated-enemies</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/answers/how-do-i-improvise-npcs-in-dnd</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/how-do-i-introduce-children-to-dnd-without-overwhelming-them</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -857,7 +892,17 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/answers/how-do-i-run-my-first-online-tabletop-rpg-session</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/answers/how-do-i-run-political-intrigue-and-faction-play</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/how-do-i-run-secret-doors-in-dnd</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -888,6 +933,11 @@
   </url>
   <url>
     <loc>https://codexcryptica.com/answers/how-do-i-take-useful-rpg-notes-during-play</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/how-do-i-track-monsters-initiative-and-hit-points-in-dnd-combat</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -988,6 +1038,11 @@
   </url>
   <url>
     <loc>https://codexcryptica.com/answers/how-do-you-handle-players-going-off-script-as-a-gm</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/how-do-you-handle-players-reaching-the-wrong-conclusion-in-an-rpg-mystery</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -1393,6 +1448,11 @@
   </url>
   <url>
     <loc>https://codexcryptica.com/answers/where-do-i-start-if-i-have-never-played-a-tabletop-rpg</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/where-do-worldbuilding-ideas-come-from</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>

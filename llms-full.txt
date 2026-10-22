@@ -19,6 +19,9 @@ It is especially relevant to users searching for:
 
 ## Core Features
 
+### Import a stat block
+Paste a Tales of the Valiant creature or quick NPC from any source. Check the review screen before saving: “check this” and “not found” values need your attention.
+
 ### Mention an entity
 Type @ and a name to pick an entity. The Oracle answers from that exact entry, even when two entities share a name. Hidden entities are never offered.
 
@@ -292,8 +295,14 @@ Run overland exploration with point-to-point hex grids. Choose pointy-topped or 
 ### Hex Crawl mode
 Click a hex with no pin or token to open its panel. Track its terrain, your notes and whether the party has explored it. Only you see this: players and guests never see hex notes, terrain, drafts or explored markers.
 
+### Biome Explorer
+Browse real-world environments with credited pictures, see why each one looks the way it does, and explore it under /biomes or Tools. Everything works without AI and the text works offline.
+
 ### Point Crawl Generator
 Design interconnected adventure maps with named locations, explicit travel routes, terrain hazards, and secrets. Preview the interactive map, drag nodes to customize layout, and export clean SVG or PNG diagrams. Saving creates Location entities with route lore and a master Point Crawl overview Note.
+
+### Business Generator
+Create one commercial organisation with its owner, staff, suppliers, rivals, pressure, secret and adventure hooks. Turn on Players own this business to make the leader a manager you employ. Saving creates a Faction, its people as Characters, and links to any rivals already in your vault.
 
 
 ## Help Documentation
@@ -1406,6 +1415,74 @@ If the canvas you need isn't in the "Recents" list, select **Choose Canvas...** 
 
 ---
 
+### BIOMES
+
+**Biomes** is a reference library of real-world environments, such as temperate woodland, boreal forest, grassland, hot desert, tundra, wetland, tropical rainforest, coastline, savanna and alpine mountains. Use it to picture a setting and to check that your version of it hangs together.
+
+Each biome answers two questions: what does it look like, and why does it look that way and what can live there.
+
+## Finding it
+
+Find the Biome Explorer at [/biomes](/biomes) or from the [Explore](/explore) and [Tools](/tools) directories. It works completely in the browser without an account, without a vault open, and without AI.
+
+## Browsing and searching
+
+- Type in the search box to find biomes by name or by what they contain, such as "moss" or "monsoon".
+- Use the **Filters** buttons, such as Cold or Dry, to narrow the list. Choosing several filters shows only biomes that match all of them.
+- Open a card to see a larger picture and details on climate, landscape, plants, wildlife, resources and hazards. Each section opens and closes on its own.
+
+## How to read the pictures
+
+Most pictures are **AI illustrations** made by the Codex Cryptica team and checked by a person against the biome's description. They are labelled "AI illustration", and the tool and date are shown beside them. Where a good photograph under an open licence exists, it appears as well, with the photographer, licence and original source.
+
+An illustration is a good guide to the mood and the typical plants and landforms, but it is not a photograph, and details can occasionally be wrong. Treat the written description and its sources as the reference.
+
+## Limits to keep in mind
+
+- This is a simplified reference, not a scientific classification or a climate simulator. Real places mix and overlap.
+- Conditions are given as ranges, and each statement is marked as a **common pattern**, a **simplification** or an **exception**.
+- Wetland and coastline describe a kind of place rather than a climate, so some climate rows do not apply to them.
+
+## Making your own biome
+
+Open a biome and choose **Make my own**, or choose **Start from blank** in the Library. You then see two columns for climate, terrain, plants, water, pressures and notes:
+
+- **Reference** on the left shows the real-world values. It never changes.
+- **My version** on the right is yours. Leave a box empty to keep the reference. A "Changed from reference" note appears next to anything you edit.
+
+Give the biome a name, then customize its attributes or add fictional changes.
+
+## Copying and exporting
+
+- **Copy as Markdown** and **Download Markdown** give you a readable document with the reference, your changes and the sources under separate headings. If your browser blocks copying, the text is shown so you can copy it yourself.
+- Reference links and illustration prompts you add are included in the exported Markdown.
+
+## Comparing biomes
+
+Choose **Compare** on any biome card, or **Add to compare** on a biome's page, to pick up to three biomes. The **Compare** tab then lines them up attribute by attribute: temperature, seasons, rainfall, height above sea level, water, landscape, plants, wildlife, resources and hazards. Where an attribute doesn't apply to a biome, such as temperature for a wetland, it says "Doesn't apply" instead of leaving a blank. On a phone, the same information is stacked by attribute so you don't have to scroll sideways.
+
+## Fictional changes
+
+If part of your environment isn't true to the real world, such as ash rain or a desert kept green by a magic spring, add it as a **fictional change** instead of editing the real-world boxes. Each change has:
+
+- what is different,
+- why it happens (we remind you if this is empty, but you can still save), and
+- what follows from it.
+
+Fictional changes are kept apart from the reference and from your other edits, both in the editor and in the Markdown you copy, so the real and the invented never blur together.
+
+### The optional AI helper
+
+If AI is switched on, **Suggest effects** offers up to three knock-on effects for a fictional change. It sends only that change and a short summary of your biome to the AI service you have set up. Nothing is added until you choose **Add** on a suggestion, and anything you add is yours to edit. With AI off, everything else works the same and the button is replaced by a note.
+
+## Illustration prompt and links
+
+In the editor, the **Illustration prompt** box gives you a ready-made description that starts with "fantasy, illustration of" and includes your own wording and any fictional changes. Choose **Copy prompt** and paste it into the image tool you like. Biomes does not make pictures for you. **Keep prompt with this biome** stores it with the biome so it appears in the Markdown too.
+
+You can also add up to ten web links (they must start with https://) to references you want to keep. They are included in the exported Markdown.
+
+---
+
 ### ENTITY REPORTS
 
 Entity Reports collect information about chosen entities into a document preview. Start from any of these places:
@@ -2134,7 +2211,7 @@ Image generation uses Art Direction from your world before falling back to shipp
 
 ### IN-APP CAMPAIGN GENERATORS
 
-The **Campaign Generators** let you create NPCs, factions, settlements, point crawl travel maps, magic items, and more directly inside your active campaign vault. The **Holiday & Festival** generator creates one observance or a connected calendar. Every result is previewed before you choose to open it as an entity draft.
+The **Campaign Generators** let you create NPCs, factions, settlements, point crawl travel maps, businesses (with their people and rivals), magic items, and more directly inside your active campaign vault. The **Holiday & Festival** generator creates one observance or a connected calendar. Every result is previewed before you choose to open it as an entity draft.
 
 ### Use generators with AI turned off
 
@@ -3368,6 +3445,57 @@ The front page is the first thing you see when a vault opens. It gives you a wor
 
 ---
 
+### BUSINESS GENERATOR
+
+The **Business Generator** creates one specific organisation the party can visit, work for, compete with, investigate, protect or own. It answers: what does this business do, who runs it, who depends on it, what pressures is it under, and how does it create play?
+
+### What you get
+
+Every business has these parts:
+
+- **Identity**: name, type, a short description, its reputation and what makes it distinctive.
+- **What it does**: what it provides, who pays, why it is here, its main income, how it earns and whether it owns what it handles, how big it is, and how it is doing right now.
+- **Leadership and key staff**: the owner (or a manager, see below), a few staff with roles and traits.
+- **Clientele**: typical, valuable and undesirable customers, and anyone who is turned away.
+- **Dependencies**: what it needs to keep going, and what happens if one fails.
+- **Relationships**: rivals, suppliers, patrons, regulators and other parties, each with a reason it matters.
+- **Pressure, asset, secret, opportunity and complication**: the trouble it is in and the chances it has.
+- **Adventure hooks**: two or three hooks built from the business's own people and problems.
+
+### Choosing a business type
+
+Pick a genre first. The business types on offer change with the genre, so a cyberpunk business is a ripper clinic or a fixer front, not a blacksmith. You can also type your own.
+
+### Players own this business
+
+Turn on **Players own this business** if the party bought, inherited or founded it. The leader becomes a manager the party employs, and you also get starting strengths, liabilities, upgrade paths, recurring obligations and what success attracts. Obligations are named (payroll, rent, guild dues) and never priced.
+
+### Keeping names straight
+
+Later steps are told who the business, its owner and its staff are, so they should not rename the business or bring in unexplained people. If a name still turns up without an introduction, the page lists it so you can check it before you save. A rival or other party is only described by a graph link that fits it (a rival "competes with" the business, a supplier "supplies" it).
+
+### Refining one part
+
+Use **Refine one part** to rewrite a single section, such as the current pressure or a staff member. Everything else stays as it is. If you rename a person, the new name replaces the old one in the hooks and the other sections. With AI on, you can add a short steer, such as "make it about the harbour".
+
+### AI and offline use
+
+With AI on, the business is written in three steps, and each step builds on the last. If a step fails, only that part is written from the built-in tables, and the page lists which parts those are. With AI Disabled, every business and every rewrite is made from the tables.
+
+### Saving to your vault
+
+In your vault, saving creates:
+
+- a **Faction** for the business, holding its full text;
+- a **Character** for the owner or manager and each key staff member you leave ticked;
+- links from the business to each of them (_owned by_ for the owner, _employs_ for staff).
+
+Rivals and other parties that already exist in your vault are linked to it. Any party that is not there yet is offered as a new entry, which you can untick. Nothing you already have is changed, except for the new links. If you opened the generator from a Location, Character or Faction, you can also link the business to it.
+
+On the public page, saving hands the business and its people to the app. Rivals stay in the business's text there, and you can link them later.
+
+---
+
 ### SHARING TEMPLATES
 
 You can share your own entity templates with other Codex Cryptica users, and install ones they have made. Open **Community templates** and switch to **Entity templates** to browse.
@@ -3568,6 +3696,29 @@ Stat Sheet data lives directly in the entity's note (its `statSheet` frontmatter
 Presentation Templates change how a compatible Stat Sheet is arranged without changing its fields or values. Open an entity's **Stats** tab and choose **Presentations** to switch layouts, set a schema default, or build a new one with the visual card editor (a Markdown source tab is also available for direct editing). Templates are limited to the Stat Sheet schema they were made for, so fields always stay compatible.
 
 Write your own layout in Markdown with field references such as `{{stat.hp}}` and layout sections for groups, cards and rows. Repeatable Table fields (used for Weapons and Items by default) keep rows of data together: add rows, edit their cells, adjust counters and roll dice from the table. In the template editor you can customise a Repeatable Table's column headings and cell types (text, number, dice, counter or checkbox), so the same table type can hold skills, spells or any other list.
+
+## Import a stat block
+
+For Tales of the Valiant vaults, you can turn a monster or quick NPC you already have into a stat sheet. Open the entity's **Stats** tab and choose **Import**, or use **FROM STAT BLOCK** in the new-entity form. Paste the stat block from a PDF, a web page, a Foundry VTT export or your own notes, then choose **Read stat block**.
+
+The review screen shows each value with a label:
+
+- **Found**: the value is in the text you pasted.
+- **Check this**: the value looks uncertain, is malformed, or isn't in your text. The original text is shown beside it. Correct it before you save.
+- **Not found**: the text didn't include this value. It stays empty, and the sheet keeps whatever it already had.
+- **Worked out from CR**: proficiency bonus, calculated from the Challenge Rating.
+
+Armour Class, Hit Points and Challenge Rating are needed before you can save. Anything else can stay empty.
+
+**Copy as written** (the default) only keeps what your text says. **Convert from 5e** turns a 5e monster into Tales of the Valiant. It marks every value it added or changed, with the 5e original beside it, and labels the entity **Converted from 5e**. Check those values, because they are a judgement call.
+
+When you save into a sheet that already has values, only the values the import found are replaced. You are asked to confirm first. Custom fields you added are never changed.
+
+Your pasted text is sent to the AI to be read. It isn't kept, and it isn't used for anything else. Tick **Keep the original text in notes** to save it in the entity's notes. Notes are included when you share or publish the vault, so only tick it if that's fine.
+
+**Limits**: the import works on one creature or quick NPC at a time, and on text or Foundry JSON only. Character sheets aren't supported yet. Pastes over 12,000 characters are refused, so paste just the stat block.
+
+**Without AI**: when AI is turned off, the import uses a simpler built-in reader. It only fills in what it can read reliably, so expect to fill in more by hand. Convert from 5e isn't available then.
 
 ## Related reading
 
@@ -3926,6 +4077,60 @@ Tables and decks are plain files in your vault. You can read them, edit them by 
 
 ---
 
+### REPORT A PROBLEM OR SEND FEEDBACK
+
+If you found a bug, got an error, the app crashed, something is broken, went wrong or isn't working, or you have an idea for a feature, you can send it straight to the maintainer from the app. You don't need a GitHub or Discord account, and you don't need to talk to Cif. You can also ask Cif to open the form for you.
+
+## How to open the form
+
+Use **Report a problem** in any of these places:
+
+- the header of the Help window
+- the Help tab in Settings
+- the footer of the Cif help panel
+- the header of the campaign generator
+- the footer of the public website, including the public generator and tool pages
+
+## What you can send
+
+Choose one of three kinds:
+
+- **Something isn't working**: say what you were trying to do and what happened.
+- **I have an idea**: describe what would help.
+- **Something else**: anything that isn't one of the above.
+
+The description can be up to 4,000 characters. You can also add an email address if you want a reply. It's optional.
+
+## What is sent
+
+Before you press **Send report**, the form lists exactly what will be sent:
+
+- the app version
+- the part of the app you were in, such as the tabletop, the generators or the help window
+- your browser (for example Firefox or Safari), and whether your screen is narrow or wide
+
+Nothing from your campaign is sent. That includes your entities, notes, lore, chat, AI responses, images and file names. Recognisable access keys in your text are removed before the report is stored.
+
+## Who can read it
+
+Each report is stored as a private issue on GitHub. Only the maintainer and people they explicitly grant access to can read it. Reports are never published. If the maintainer turns a report into a public issue, they write a short summary by hand.
+
+If you give an email address, it is stored with your report and used only to reply to it.
+
+## How long it's kept
+
+Reports are deleted after 180 days. If you want one deleted sooner, quote its reference to the maintainer and it will be removed.
+
+## When it doesn't send
+
+- **Offline**: the form says so. Your text is kept, so you can send it once you're back online.
+- **Too many reports**: you can send up to 5 reports an hour and 20 a day. The form tells you when to try again.
+- **Service problem**: your text is kept. You can try again, or report on Discord or GitHub instead.
+
+Every report gets a reference such as `CC-7F3K-9Q2M` when it's received. Keep it if you want to ask about the report later.
+
+---
+
 ### THE ARCHIVE (BLOG)
 
 Explore the official **Codex Cryptica Blog**, also known as **The Archive**.
@@ -3984,6 +4189,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** Yes, but a 30-minute session has to be designed as a short episode rather than a compressed version of a normal three to four hour session. Prepare one meaningful scene, problem, decision, or encounter that can produce a real change in about half an hour, start at the interesting moment instead of narrating the approach to it, and move levelling, shopping, and long rules discussion outside the slot when the group is willing. Combat can work if it's scoped for the window: fewer, more meaningful enemies, a clear objective, and a willingness to let a fight run into next time rather than forcing it to finish. Stop the session once something has genuinely changed.
 
+### [How can I practise being a Dungeon Master without a group?](https://codexcryptica.com/answers/how-can-i-practise-being-a-dungeon-master-without-a-group)
+
+**Direct answer:** Practise the Dungeon Master's side of the table in short solo drills built around one repeatable loop: describe a situation, ask what a player character does, call for a roll only when the outcome is uncertain and failure would change something, then narrate the consequence and hand the next decision back. Write two or three plausible player choices in advance, run one obstacle, one short non-player character conversation and one combat round against the clock, and finish by noting where you hesitated. That rehearses scene framing, rulings, rule lookups and bookkeeping. It cannot reproduce real players surprising you or the social work of a live table, so treat it as preparation for a tiny first session rather than a replacement for one.
+
 ### [How common should magic be in a fantasy world?](https://codexcryptica.com/answers/how-common-should-magic-be-in-a-fantasy-world)
 
 **Direct answer:** Decide what an ordinary person should expect from magic, then work backwards through aptitude, practical training access, legal permission, competence, service capacity and everyday exposure. Set those dials for the kinds of magic that matter to play; cost, risk, visibility and place shape the result.
@@ -4016,6 +4225,14 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** Derive a settlement's trade from its surroundings and capabilities rather than picking goods at will: note local resources, what its people and institutions can do, what it controls or connects, and the routes that carry goods and visitors. Production can use imported inputs or provide services; surplus is what remains after local demand, while imports may feed local needs or make exports possible. Goods made, processed, or passed onward, and services sold to travellers or neighbours, all give a settlement ways to earn.
 
+### [How do I design a geographically realistic town or village?](https://codexcryptica.com/answers/how-do-i-design-a-geographically-realistic-town-or-village)
+
+**Direct answer:** Start with reliable clean water that people can reach in every season, then place homes on safe, buildable ground above flood risk, surround the settlement with the fields, grazing, woodland and fisheries that feed it, and let roads to the crossing, market and fields shape the streets. Add facilities where the work happens, such as the mill on the stream and warehouses by the quay, and let later growth explain bent streets, old walls and districts outside the gates. There is no single correct medieval layout: water, terrain, climate, technology, government and history change the answer each time.
+
+### [How do I encourage party bonding during downtime without forcing roleplay?](https://codexcryptica.com/answers/how-do-i-encourage-party-bonding-during-downtime)
+
+**Direct answer:** Ask the players whether they want more character-to-character time, then offer short, optional ways to meet after a mission: a debrief, a shared meal, a montage, or a quick skip to the next job. Keep separate homes, use a shared place and a prompt tied to recent play, and let anyone pass, summarise in third person, or head home without a penalty.
+
 ### [How do I expand a simple RPG campaign idea?](https://codexcryptica.com/answers/how-do-i-expand-a-simple-rpg-campaign-idea)
 
 **Direct answer:** Expand outward from the original idea through relationships and consequences, and skip the encyclopaedia. Ask what tension sits at the centre, who gains from it, who is hurt by it, what everyone believes that may be wrong, what changed recently, and what happens if nobody acts. Then choose three people, places or things that make the idea tangible at the table, and leave the deeper answers as questions for play to settle.
@@ -4040,6 +4257,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** Give each polity, region, institution, or network distinct capabilities by tracing why they developed, what they depend on, and what the players can see when conditions change. A maritime trading confederation may coordinate convoys and negotiate port access because its merchant houses need open sea lanes; a blockade or storm season strains those arrangements. Give each capability a scope, conditions, and dependencies so plausible failure modes emerge without requiring every strength to have an equal weakness. Describe what institutions and networks can do, not what ‘the people’ are inherently like.
 
+### [How do I give players immersive handouts and props in an online RPG?](https://codexcryptica.com/answers/how-do-i-give-players-immersive-handouts-in-an-online-rpg)
+
+**Direct answer:** Recreate a physical prop online by splitting it into a reveal and a record: show one clear image or short text at the moment the characters find it, give any secret part privately to the player whose character found it, and file a readable text version where the whole party can find it later. Use the chat, private messages or handout tools you already have, keep filenames and previews free of spoilers, and let the finder decide what to share.
+
 ### [How do I give specialist characters spotlight without sidelining the party?](https://codexcryptica.com/answers/how-do-i-give-specialist-characters-spotlight)
 
 **Direct answer:** Spotlight means giving one character a distinctive contribution, not a separate game. Let the specialist use their expertise to change the situation, then give the whole party a meaningful response to that change. Build scenes with shared stakes, intersecting ways to contribute, and decisions that need more than one character's judgement. A brief solo moment can work when it has a clear purpose and returns useful information or a consequential choice to the group.
@@ -4052,9 +4273,17 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** Treat 'tell us everything you know' as a request for the witness's best relevant summary, not an exhaustive transcript of memory. Resolve the scope first—everything about the burglary, the victim, or last night—then give the account, including what the witness recalls, believes, and remains unsure about. Follow the game's clue procedure, but keep investigation moving through a reliable route that does not depend on one exact phrase or fragile check. Targeted questions can clarify prepared or fictionally supported details, uncertainty, and sources without creating new evidence through repetition.
 
+### [How do I handle players who keep trying to recruit defeated enemies?](https://codexcryptica.com/answers/how-do-i-handle-players-who-keep-trying-to-recruit-defeated-enemies)
+
+**Direct answer:** Surrender is not allegiance. A captive who stops fighting has chosen survival, not loyalty, and a social check does not automatically rewrite their convictions or establish loyalty. Having a captive act on established motives is fair when you have shown the warning signs, given the party a real chance to earn trust or strike a bargain, and let different captives respond in different ways.
+
 ### [How do I improvise NPCs in D&D?](https://codexcryptica.com/answers/how-do-i-improvise-npcs-in-dnd)
 
 **Direct answer:** Use a tiny six-part sketch you can produce in seconds: role, want, attitude, one memorable detail, useful knowledge, and a boundary or secret they will not give away cheaply. Most improvised NPCs need motives and information more than a stat block, and Charisma checks should influence how far cooperation goes rather than function as mind control. Connect the NPC to an existing faction or location so the improvisation feels intentional, and only expand them into campaign canon if the party returns.
+
+### [How do I introduce children to D&D without overwhelming them?](https://codexcryptica.com/answers/how-do-i-introduce-children-to-dnd-without-overwhelming-them)
+
+**Direct answer:** Start playing before you teach the whole ruleset. Give each child a readable pregenerated character with two or three clear abilities, open on a choice they can act on straight away, and introduce a rule only when a decision needs it: you describe the situation, the child says what their character tries, and you ask for a d20 roll plus the relevant modifier only if the outcome is uncertain. Plan a short adventure with a clear ending, allow talking or helping as an alternative to fighting, and add attacks, saving throws, spells and initiative in later scenes or sessions as the children ask for them.
 
 ### [How do I keep players engaged during other players' turns in combat?](https://codexcryptica.com/answers/how-do-i-keep-players-engaged-during-other-players-turns-in-combat)
 
@@ -4196,9 +4425,17 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** Run hacking as one thread of the same scene. Give the intrusion a physical objective, a visible source of pressure, and a consequence the crew can see; let the hacker make specialist choices while the others change access, security, or time. Cut between them when the situation changes, then return a solo hack to the group as a decision rather than a private result.
 
+### [How do I run my first online tabletop RPG session?](https://codexcryptica.com/answers/how-do-i-run-my-first-online-tabletop-rpg-session)
+
+**Direct answer:** Start with voice chat everyone can hear clearly, character sheets in whatever tool your players already use, and a shared map or virtual tabletop (VTT) only for scenes that need one. Two programs with separate jobs, such as one for voice and one for maps, is a normal setup, not too much. Run a short technical rehearsal before the first session, agree how people will signal, take turns and take breaks, and keep every other tool out until play shows you need it.
+
 ### [How do I run political intrigue and faction play in an RPG?](https://codexcryptica.com/answers/how-do-i-run-political-intrigue-and-faction-play)
 
 **Direct answer:** Start with three to five factions that want incompatible things. Give each one a goal, a pressure forcing it to act now, something it can offer, something it fears, and a next move it will make if nobody interferes. Put the player characters where those interests overlap, let factions keep acting when the party does nothing, and treat information, obligations and leverage as seriously as combat power.
+
+### [How do I run secret doors in D&D without endless Perception checks?](https://codexcryptica.com/answers/how-do-i-run-secret-doors-in-dnd)
+
+**Direct answer:** Use passive Perception to determine whether a character notices a secret door without searching; meeting its DC locates the door, though its catch can remain unknown. If passive detection fails but the party has a reason to search, call for one active check only when a plausible approach could still fail and failure has a cost. Once found, the door opens without another roll unless its mechanism is a distinct problem.
 
 ### [How do I run ship-to-ship combat without sidelining half the party?](https://codexcryptica.com/answers/how-do-i-run-ship-to-ship-combat-without-sidelining-the-party)
 
@@ -4223,6 +4460,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 ### [How do I take useful RPG notes during play without missing the session?](https://codexcryptica.com/answers/how-do-i-take-useful-rpg-notes-during-play)
 
 **Direct answer:** Do not try to transcribe the session. During play, capture what your future self may need to make decisions, or what your character would care about remembering: names, places, clues, promises and debts, party decisions, unresolved questions and what changed. Use short fragments and a few symbols to keep your eyes on the table, use placeholders when you miss a name, skip detailed notes during combat, then spend around two to five minutes after the session turning those fragments into a compact recap and a handful of lasting entries.
+
+### [How do I track monsters, initiative, and hit points during D&D combat?](https://codexcryptica.com/answers/how-do-i-track-monsters-initiative-and-hit-points-in-dnd-combat)
+
+**Direct answer:** Keep the full monster stat blocks open for reference and track only what changes in the fight: each combatant in initiative order, current hit points (HP), conditions, and the Armour Class (AC), attack and save numbers you will look up most often. Number duplicate monsters, update HP and conditions on one tracker, and roll saving throws from the stat block only when an effect asks for one.
 
 ### [How do I turn an RPG idea into an adventure?](https://codexcryptica.com/answers/how-do-i-turn-an-rpg-idea-into-an-adventure)
 
@@ -4250,7 +4491,7 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 ### [How do you build a point crawl for an RPG?](https://codexcryptica.com/answers/how-do-you-build-a-point-crawl-for-an-rpg)
 
-**Direct answer:** A point crawl is a network of six to ten landmark nodes connected by differentiated travel paths, rather than a grid of terrain to cross. Define each node as a destination with a clear hazard, resource, or encounter, then connect them with routes that carry real trade-offs in travel time, terrain, and risk. Build in enough loops and alternative paths that the map isn't a single linear road.
+**Direct answer:** To build a point crawl, name five to seven places the party could visit, connect them with routes, and note each route's travel time, cost, and known risk. Give the party at least two meaningful ways to reach an important destination, then decide what changes if they take longer or accept a hazard.
 
 ### [How do you create a believable fictional religion?](https://codexcryptica.com/answers/how-do-you-create-a-believable-fictional-religion)
 
@@ -4303,6 +4544,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 ### [How do you handle players going off script as a GM?](https://codexcryptica.com/answers/how-do-you-handle-players-going-off-script-as-a-gm)
 
 **Direct answer:** Handle players going off script by treating your prep as a toolbox rather than a route. Identify what the nearest NPC, faction, or site actually wants, reuse that motivation to improvise the new direction, and let the fiction absorb the consequences instead of steering the party back by force. Reserve a hard pause, calling for a short break to think, for the rare moment a rule, a safety concern, or a genuine plot dead end requires it, not for every deviation from your notes.
+
+### [How do you handle players reaching the wrong conclusion in an RPG mystery?](https://codexcryptica.com/answers/how-do-you-handle-players-reaching-the-wrong-conclusion-in-an-rpg-mystery)
+
+**Direct answer:** When players reach a reasonable but incorrect conclusion, do not automatically correct them or rewrite the truth. First check whether the clues you actually gave fairly support their reading. Let them test the theory, let the world respond honestly, and make the stakes of acting on it clear enough that the choice is informed. If they still act, consequences can stand, even if the original mystery becomes unsolvable. Change the underlying answer only where your table has agreed to a mystery style in which the players' theory helps establish what is true.
 
 ### [How do you help players remember what happened in a TTRPG campaign?](https://codexcryptica.com/answers/how-do-you-help-players-remember-what-happened-in-a-ttrpg-campaign)
 
@@ -4390,7 +4635,7 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 ### [How do you run a heist in a tabletop RPG?](https://codexcryptica.com/answers/how-do-you-run-a-heist-in-a-tabletop-rpg)
 
-**Direct answer:** Structure the score into four phases: casing the target, engagement with flashback tokens, an active alarm track, and a chaotic getaway. That way players react in the moment instead of planning for every hypothetical complication up front. Give the party flashback points to retroactively reveal preparations when obstacles emerge during the infiltration, and pair it with a visible heat counter that climbs on failed checks, so infiltration becomes a tense back-and-forth rather than a stalled planning session.
+**Direct answer:** Start with a score that gives the crew a target, casing intel, layered security, an escalating alarm track, complications, and a pressured getaway. Use those details to frame choices during play, and let players establish plausible preparations with flashbacks when obstacles arise instead of planning for every possibility in advance.
 
 ### [How do you run a mystery without railroading?](https://codexcryptica.com/answers/how-do-you-run-a-mystery-without-railroading)
 
@@ -4628,6 +4873,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** You need less than it looks like: a game or beginner ruleset, a small group (or a solo-friendly option), some way to resolve uncertainty (usually dice), and one short scenario to try. You don't need to read a large rulebook cover to cover first, own special gear, or already know the jargon. You can start as a player in someone else's game, or as the GM running a short beginner adventure for others; both are completely valid entry points, and neither requires the other to happen first.
 
+### [Where do worldbuilding ideas come from, and how do I find inspiration?](https://codexcryptica.com/answers/where-do-worldbuilding-ideas-come-from)
+
+**Direct answer:** Worldbuilding ideas usually come from noticing something ordinary and changing it: a job, a landscape, a custom, a historical event or a scene from a story, followed by the question of what would happen if one part worked differently. People think of all this in the first place by borrowing a spark from observation, history, geography, science, mythology or media, combining it with something unrelated, then following the consequences for settlements, trade, politics, belief and one affected person until the result stops resembling its source.
+
 ### [Which dice do I roll in D&D, and when?](https://codexcryptica.com/answers/which-dice-do-i-roll-in-dnd-and-when)
 
 **Direct answer:** If you are trying something uncertain in D&D, you very often start with a twenty-sided die (d20) and add a modifier the Dungeon Master or your character sheet names. For an attack that requires an attack roll, the d20 decides whether it hits and you roll its listed damage on a hit. Other effects name their dice directly, so you do not need to memorise every one.
@@ -4782,6 +5031,8 @@ The canonical, no-login-required tools that actually generate and let you save a
 
 - [Tavern Generator](https://codexcryptica.com/generators/tavern): Create a campaign-ready tavern with atmosphere, owner, notable patrons, rumours, and a hidden problem. Works without login, then imports into your local vault.
 
+- [Business Generator](https://codexcryptica.com/generators/business): Create one specific business the party can visit, work for, compete with, investigate or own. Get its people, what it depends on, who it competes with, the pressure it is under and the hooks that bring the party in. Save it to your vault, with its people and its rivals linked on the graph.
+
 - [Social Hub Generator](https://codexcryptica.com/generators/social-hub): Create a campaign-ready social venue for any genre. Pick your setting, venue type, and atmosphere — get a named location with regulars, rumours, and a hidden problem.
 
 - [Kingdom Generator](https://codexcryptica.com/generators/kingdom): Create a campaign-ready fantasy realm with a ruler, major factions, internal tensions, and adventure hooks. Works without login, then imports into your local vault.
@@ -4850,7 +5101,7 @@ The canonical, no-login-required tools that actually generate and let you save a
 
 - [RPG Name Generator](https://codexcryptica.com/generators/names): Generate names for characters, places, factions, and items in any genre. Pick a vibe and culture, steer with optional context, and copy your favourites.
 
-- [Fantasy Name Generator](https://codexcryptica.com/generators/fantasy-names): Generate fantasy names for characters, places, factions, and items across ten cultural styles. Works without login — copy your favourites for your campaign.
+- [Fantasy Name Generator](https://codexcryptica.com/generators/fantasy-names): Name your characters, settlements, factions and items across ten cultural styles. Add your campaign context to guide the result, then copy names or save them to your local vault. No account required.
 
 - [RPG Fictional Language Generator](https://codexcryptica.com/generators/language-generator): Create a campaign-ready language profile for your world, culture, or species. Choose fantasy, cyberpunk, gothic noir, space opera, modern conspiracy, post-apocalyptic, or pirate foundations, then customize the result.
 

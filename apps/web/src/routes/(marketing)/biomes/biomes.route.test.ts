@@ -14,6 +14,7 @@ const nav = vi.hoisted(() => ({
 }));
 
 vi.mock("$app/state", () => state);
+vi.mock("$app/environment", () => ({ browser: true, building: false }));
 vi.mock("$app/navigation", () => ({
   goto: nav.goto,
   beforeNavigate: (cb: typeof nav.guard) => {

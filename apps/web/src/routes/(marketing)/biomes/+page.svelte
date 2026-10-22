@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { browser, building } from "$app/environment";
   import { beforeNavigate, goto } from "$app/navigation";
   import { base } from "$app/paths";
   import { page } from "$app/state";
@@ -19,12 +20,11 @@
   let query = $state("");
   let filters = $state<FilterFacet[]>([]);
 
-  // Read query parameters after hydration so the static prerender can render
-  // the public library without accessing searchParams during prerendering.
-  let biomeParam = $state<string | null>(null);
-  $effect(() => {
-    biomeParam = page.url.searchParams.get("biome");
-  });
+  // Read query parameters in browser after prerender to avoid accessing searchParams
+  // during static prerendering, while resolving synchronously on the client.
+  const biomeParam = $derived(
+    browser && !building ? page.url.searchParams.get("biome") : null,
+  );
   const selected = $derived(biomeParam ? getBiome(biomeParam) : undefined);
 
   // A biome named in the address belongs to the Library.
