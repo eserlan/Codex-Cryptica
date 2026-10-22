@@ -9,8 +9,9 @@ export { GeneratorEngineBase } from "./generator-engine-base";
 export { GeneratorEngineCore } from "./generator-engine-core";
 export { GeneratorEngineWorldbuilding } from "./generator-engine-worldbuilding";
 import { aiClientManager } from "@codex/ai-engine";
-import { GeneratorEngineSpecialized } from "./generator-engine-specialized";
-export class DefaultGeneratorEngine extends GeneratorEngineSpecialized {
+import { GeneratorEngineMystery } from "./generator-engine-mystery";
+export { GeneratorEngineMystery } from "./generator-engine-mystery";
+export class DefaultGeneratorEngine extends GeneratorEngineMystery {
   constructor(clientManager = aiClientManager) {
     super(clientManager);
   }

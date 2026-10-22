@@ -75,6 +75,7 @@ describe("registry lookup", () => {
       "tome",
       "point-crawl",
       "business",
+      "mystery-investigation",
     ]);
   });
 
@@ -1783,6 +1784,7 @@ describe("isTitleBanned", () => {
 describe("generator id -> vault category mapping (FR-041)", () => {
   it("maps each generator to its distinct vault category", () => {
     expect(GENERATOR_ENTITY_TYPE).toEqual({
+      "mystery-investigation": "note",
       business: "faction",
       npc: "character",
       faction: "faction",

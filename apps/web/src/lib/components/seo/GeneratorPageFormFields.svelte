@@ -44,6 +44,7 @@
   import TomeFormFields from "$lib/components/seo/TomeFormFields.svelte";
   import PointCrawlFormFields from "$lib/components/seo/PointCrawlFormFields.svelte";
   import BusinessFormFields from "./fields/BusinessFormFields.svelte";
+  import MysteryInvestigationFormFields from "./MysteryInvestigationFormFields.svelte";
   type StringState = Record<string, string>;
   type BusinessFormState = {
     genre: string;
@@ -76,6 +77,16 @@
     importantPeople: string;
     importantEvents: string;
     includeControversial: boolean;
+  };
+  type MysteryInvestigationState = {
+    genre: string;
+    tone: string;
+    mysteryType: string;
+    scope: string;
+    complexity: string;
+    clueDensity: string;
+    pressure: string;
+    campaignContext: string;
   };
 
   let {
@@ -122,6 +133,7 @@
     oneShot = $bindable(),
     pointCrawl = $bindable(),
     business = $bindable(),
+    mysteryInvestigation = $bindable(),
     world = $bindable(),
     starSystem = $bindable(),
     constellation = $bindable(),
@@ -181,6 +193,7 @@
     oneShot: StringState;
     pointCrawl?: StringState;
     business?: BusinessFormState;
+    mysteryInvestigation: MysteryInvestigationState;
     world: StringState;
     starSystem: StringState;
     constellation: ConstellationState;
@@ -249,6 +262,7 @@
     "comic-book-event-generator",
     "origin-generator",
     "villain-scheme-generator",
+    "mystery-investigation",
   ]);
   const worldSlugs = new Set([
     "world",
@@ -718,6 +732,18 @@
       bind:schemeType={villainScheme.schemeType}
       bind:villainProfile={villainScheme.villainProfile}
       bind:campaignContext={villainScheme.campaignContext}
+      onSurprise={trigger}
+    />
+  {:else if slug === "mystery-investigation"}
+    <MysteryInvestigationFormFields
+      bind:genre={mysteryInvestigation.genre}
+      bind:tone={mysteryInvestigation.tone}
+      bind:mysteryType={mysteryInvestigation.mysteryType}
+      bind:scope={mysteryInvestigation.scope}
+      bind:complexity={mysteryInvestigation.complexity}
+      bind:clueDensity={mysteryInvestigation.clueDensity}
+      bind:pressure={mysteryInvestigation.pressure}
+      bind:campaignContext={mysteryInvestigation.campaignContext}
       onSurprise={trigger}
     />
   {/if}

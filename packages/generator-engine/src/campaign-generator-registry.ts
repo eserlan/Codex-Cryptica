@@ -173,6 +173,12 @@ import {
 } from "./business-local";
 import { businessGeneratorOutput } from "./business-output";
 import { businessOptionsFromRequest } from "./campaign-business-generation";
+import {
+  buildMysteryPrompt,
+  generateMysteryLocal,
+  mysteryConfig,
+  type MysteryGeneratorOptions,
+} from "./public-mystery";
 
 /**
  * Generator id -> default vault category id.
@@ -181,6 +187,7 @@ import { businessOptionsFromRequest } from "./campaign-business-generation";
  * `faction` matches by name; the rest map to distinct categories.
  */
 export const GENERATOR_ENTITY_TYPE: Record<GeneratorId, string> = {
+  "mystery-investigation": "note",
   business: "faction",
   npc: "character",
   faction: "faction",
@@ -688,7 +695,7 @@ export { SYSTEM_INSTRUCTION };
 // ---------------------------------------------------------------------------
 
 /** Shared prompt context chain (everything before the task instruction). */
-function contextChain(request: GeneratorRunRequest): string {
+export function contextChain(request: GeneratorRunRequest): string {
   // Preferences (the form's explicit dropdown selections, e.g. race/role) are
   // direct user choices like the free-text instructions above them — surface
   // them right after, ahead of the generic world context, rather than buried
@@ -2087,6 +2094,48 @@ function pointCrawlPrompt(request: GeneratorRunRequest): string {
   return `${systemInstruction}\n\n${userMessage}`;
 }
 
+function mysteryOptions(request: GeneratorRunRequest): MysteryGeneratorOptions {
+  return {
+    genre: optionString(
+      request,
+      "genre",
+      request.vaultContext?.themeName || "Fantasy",
+    ),
+    tone: optionString(request, "tone", "Eerie"),
+    mysteryType: optionString(request, "mysteryType", "Disappearance"),
+    scope: optionString(request, "scope", "One-shot case"),
+    complexity: optionString(request, "complexity", "Standard (4 suspects)"),
+    clueDensity: optionString(request, "clueDensity", "Balanced"),
+    pressure: optionString(request, "pressure", "Moderate"),
+    campaignContext: request.instructions,
+    avoidNames: [
+      ...(request.vaultContext?.bannedNames ?? []),
+      ...(request.vaultContext?.existingTitles ?? []),
+    ],
+  };
+}
+
+function generateMysteryCampaign(
+  request: GeneratorRunRequest,
+): GeneratorOutput {
+  const output = generateMysteryLocal(mysteryOptions(request));
+  return {
+    title: output.title,
+    summary: output.summary ?? "",
+    content: output.content,
+    lore: output.lore,
+    labels: output.labels,
+  };
+}
+
+function mysteryPrompt(request: GeneratorRunRequest): string {
+  const { systemInstruction, userMessage } = buildMysteryPrompt(
+    mysteryOptions(request),
+    contextChain(request),
+  );
+  return `${systemInstruction}\n\n${userMessage}`;
+}
+
 const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
   business: {
     id: "business",
@@ -2159,6 +2208,88 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
       lore: output.lore,
     }),
     buildPrompt: businessPrompt,
+  },
+  "mystery-investigation": {
+    id: "mystery-investigation",
+    label: "Mystery & Investigation",
+    description:
+      "Build a fair, fixed-truth case with suspects, locations, a linked clue network, pressure, and multiple outcomes.",
+    entityType: GENERATOR_ENTITY_TYPE["mystery-investigation"],
+    defaultInstruction:
+      "Create a coherent system-neutral investigation with a stable GM-only truth, distinct suspects, testable clues, multiple independent routes to essential revelations, and fair outcomes.",
+    icon: "lucide:search",
+    options: [
+      {
+        id: "genre",
+        label: "Genre / setting",
+        control: "select",
+        choices: mysteryConfig.genres.map((value) => ({ value, label: value })),
+        defaultValue: "Fantasy",
+      },
+      {
+        id: "tone",
+        label: "Tone",
+        control: "select",
+        choices: mysteryConfig.tones.map((value) => ({ value, label: value })),
+        defaultValue: "Eerie",
+      },
+      {
+        id: "mysteryType",
+        label: "Mystery type",
+        control: "select",
+        choices: mysteryConfig.types.map((value) => ({ value, label: value })),
+        defaultValue: "Disappearance",
+      },
+      {
+        id: "scope",
+        label: "Scope",
+        control: "select",
+        choices: mysteryConfig.scopes.map((value) => ({ value, label: value })),
+        defaultValue: "One-shot case",
+      },
+      {
+        id: "complexity",
+        label: "Complexity",
+        control: "select",
+        choices: mysteryConfig.complexities.map((value) => ({
+          value,
+          label: value,
+        })),
+        defaultValue: "Standard (4 suspects)",
+      },
+      {
+        id: "clueDensity",
+        label: "Clue density",
+        control: "select",
+        choices: mysteryConfig.clueDensities.map((value) => ({
+          value,
+          label: value,
+        })),
+        defaultValue: "Balanced",
+      },
+      {
+        id: "pressure",
+        label: "Danger / pressure",
+        control: "select",
+        choices: mysteryConfig.pressures.map((value) => ({
+          value,
+          label: value,
+        })),
+        defaultValue: "Moderate",
+      },
+    ],
+    defaults: {
+      genre: "Fantasy",
+      tone: "Eerie",
+      mysteryType: "Disappearance",
+      scope: "One-shot case",
+      complexity: "Standard (4 suspects)",
+      clueDensity: "Balanced",
+      pressure: "Moderate",
+    },
+    generate: generateMysteryCampaign,
+    mapOutputToDraft: mapOutputToDraft("mystery-investigation"),
+    buildPrompt: mysteryPrompt,
   },
   npc: {
     id: "npc",

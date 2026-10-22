@@ -17,6 +17,7 @@
     isMonsterLabsItemEligibleType,
   } from "$lib/services/seo/monsterlabs-handoff";
   import ShareButton from "$lib/components/ShareButton.svelte";
+  import { buildMysteryPlayerHandout } from "./generator-copy";
 
   const HIDDEN_TAGS = new Set([
     "imported-draft",
@@ -121,6 +122,9 @@
 
   let loadingIndex = $state(0);
   let activeMessages = $derived(getThemeLoadingMessages(worldTheme));
+  let isMysteryDraft = $derived(
+    generatedData?.labels?.includes("mystery-generator") ?? false,
+  );
 
   $effect(() => {
     if (!isBusy) {
@@ -342,12 +346,37 @@
                 onclick={onCopyMarkdown}
                 class="px-4 py-2 border-l border-theme-primary/25 bg-theme-surface/35 text-theme-text/85 font-bold uppercase font-header tracking-wider text-micro hover:bg-theme-surface/70 hover:text-theme-primary transition-all flex items-center gap-1.5"
                 id="copy-markdown-btn"
-                title="Copy this draft as markdown to your clipboard"
+                title={isMysteryDraft
+                  ? "Copy the complete GM case file as markdown"
+                  : "Copy this draft as markdown to your clipboard"}
               >
                 <span class="icon-[lucide--copy] w-3.5 h-3.5" aria-hidden="true"
                 ></span>
-                {copied ? "Copied!" : "Copy"}
+                {copied
+                  ? "Copied!"
+                  : isMysteryDraft
+                    ? "Copy GM Case File"
+                    : "Copy"}
               </button>
+              {#if isMysteryDraft && generatedData}
+                <button
+                  type="button"
+                  onclick={() =>
+                    onCopySection(
+                      "player-handout",
+                      buildMysteryPlayerHandout({
+                        title: generatedData!.title,
+                        summary: generatedData!.summary,
+                        content: generatedData!.content ?? "",
+                      }),
+                    )}
+                  class="px-4 py-2 border-l border-theme-primary/25 bg-theme-surface/35 text-theme-text/85 font-bold uppercase font-header tracking-wider text-micro hover:bg-theme-surface/70 hover:text-theme-primary transition-all"
+                  id="copy-player-handout-btn"
+                  title="Copy only the spoiler-safe player-facing handout"
+                >
+                  Copy Player Handout
+                </button>
+              {/if}
               {#if onPrepareShare}
                 <ShareButton
                   url="https://codexcryptica.com/generators"

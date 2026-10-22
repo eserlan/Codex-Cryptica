@@ -79,6 +79,13 @@
       icon: "icon-[lucide--scroll]",
     },
     {
+      slug: "mystery-investigation",
+      label: "Mystery & Investigation Generator",
+      summary:
+        "Create a fixed-truth case with testable clues, multiple independent leads, and fair outcomes.",
+      icon: "icon-[lucide--search]",
+    },
+    {
       slug: "rumour",
       label: "Rumour Generator",
       summary:

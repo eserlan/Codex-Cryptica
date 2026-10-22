@@ -37,6 +37,7 @@ import { generateTomeStaged } from "./tome-staged";
 import { generateTomeTwoPass } from "./public-tome";
 import { generateCampaignHeist } from "./campaign-heist-generation";
 import { generateCouncilVoteWithAI } from "./campaign-council-vote-generation";
+import { generateCampaignMysteryWithAI } from "./campaign-mystery-generation";
 import {
   assertValidLanguageFallback,
   LanguageGenerationError,
@@ -599,6 +600,14 @@ export class CampaignGeneratorAIGenerationService extends CampaignGeneratorLangu
     if (!gateway) return null;
 
     switch (request.generatorId) {
+      case "mystery-investigation":
+        return generateCampaignMysteryWithAI(
+          gateway,
+          generator,
+          request,
+          bannedNames,
+          signal,
+        );
       case "tome":
         return this.generateTomeWithAI(generator, request, bannedNames, signal);
       case "heist":

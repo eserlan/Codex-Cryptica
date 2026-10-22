@@ -256,6 +256,13 @@
           icon: "icon-[lucide--hourglass]",
         },
         {
+          href: "/generators/mystery-investigation",
+          label: "Mystery & Investigation Generator",
+          summary:
+            "Build a fair case with a fixed GM truth, distinct suspects, testable clues, multiple independent leads, pressure, and several outcomes.",
+          icon: "icon-[lucide--search]",
+        },
+        {
           href: "/generators/point-crawl",
           label: "Point Crawl Generator",
           summary:

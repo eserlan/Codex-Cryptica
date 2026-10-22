@@ -71,6 +71,22 @@ describe("help-content feature hints", () => {
     expect(article!.content).toMatch(/discard pile/i);
   });
 
+  it("explains fixed truth, clue routes and player/GM content separation", () => {
+    const article = loadHelpArticles().find(
+      (a) => a.id === "mystery-investigation-generator",
+    );
+
+    expect(article).toBeDefined();
+    expect(article!.content).toContain("Fixed Truth");
+    expect(article!.content).toContain("two evidence routes");
+    expect(article!.content).toContain(
+      "player-facing case material in **Content**",
+    );
+    expect(article!.content).toContain("keep Lore in your GM notes");
+    expect(article!.content).toContain("Copy Player Handout");
+    expect(article!.content).toContain("Copy GM Case File");
+  });
+
   it("clarifies that a personal API key does not keep Oracle prompts on-device", () => {
     const article = loadHelpArticles().find((a) => a.id === "gemini-api-key");
 

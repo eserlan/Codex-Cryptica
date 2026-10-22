@@ -62,7 +62,8 @@ export const load: PageLoad = ({ params }) => {
       | "personality"
       | "tome"
       | "point-crawl"
-      | "business",
+      | "business"
+      | "mystery-investigation",
   };
 };
 

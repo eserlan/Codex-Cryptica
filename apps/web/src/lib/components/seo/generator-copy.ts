@@ -53,6 +53,20 @@ export function buildSectionMarkdown(markdown: string): string {
   return markdown.trim();
 }
 
+/** A spoiler-safe export containing only the case's player-facing content. */
+export function buildMysteryPlayerHandout(
+  document: Pick<GeneratorCopyDocument, "title" | "summary" | "content">,
+): string {
+  return [
+    `# ${document.title}`,
+    document.summary ? `*${document.summary}*` : "",
+    document.content,
+  ]
+    .filter(Boolean)
+    .join("\n\n")
+    .trim();
+}
+
 export function buildSessionEntityMarkdown(entity: SessionEntity): string {
   const summaryIncludedInContent = Boolean(
     entity.summary &&

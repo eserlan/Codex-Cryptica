@@ -189,6 +189,12 @@ export const GENERATORS = [
     description:
       "Generate one commercial organisation with its people, dependencies, rivals, pressure and adventure hooks.",
   },
+  {
+    id: "mystery-investigation",
+    label: "Mystery & Investigation",
+    description:
+      "Build a fair, fixed-truth case with suspects, locations, a linked clue network, pressure, and multiple outcomes.",
+  },
 ] as const;
 
 export type GeneratorId = (typeof GENERATORS)[number]["id"];
