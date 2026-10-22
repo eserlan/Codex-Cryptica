@@ -41,6 +41,15 @@ const missing = (value: Obj, keys: readonly string[]): string[] =>
     .map((key) => `"${key}" is missing`);
 const uniqueIds = (items: unknown[]): string[] =>
   items.map((item) => text(record(item).id));
+const hasCrossGroupIdCollision = (...groups: string[][]): boolean => {
+  const seen = new Set<string>();
+  for (const id of groups.flat()) {
+    if (!id) continue;
+    if (seen.has(id)) return true;
+    seen.add(id);
+  }
+  return false;
+};
 
 /** What the GM needs to know about the case's central object, beyond who took it. */
 const KEY_ITEM_FIELDS = [
@@ -179,6 +188,14 @@ function checkCast(
     }),
   );
   hard.push(...checkLocations(data));
+  if (
+    hasCrossGroupIdCollision(
+      uniqueIds(list(foundation.revelations)),
+      uniqueIds(suspects),
+      uniqueIds(list(data.locations)),
+    )
+  )
+    hard.push("person, place and revelation ids must be unique across groups");
   const names = suspects.map((suspect) => text(suspect.name));
   if (
     new Set(names.map((name) => name.toLocaleLowerCase())).size !== names.length
@@ -208,6 +225,17 @@ function checkClues(data: Obj, foundation: Obj, cast: Obj): DraftCheck {
   const clueIds = uniqueIds(clues);
   if (clueIds.some((id) => !id) || new Set(clueIds).size !== clueIds.length)
     hard.push("clue ids must be present and unique");
+  if (
+    hasCrossGroupIdCollision(
+      uniqueIds(list(foundation.revelations)),
+      uniqueIds(list(cast.suspects)),
+      uniqueIds(list(cast.locations)),
+      clueIds,
+    )
+  )
+    hard.push(
+      "person, place, clue and revelation ids must be unique across groups",
+    );
   const allowedSources = new Set([
     ...uniqueIds(list(cast.suspects)),
     ...uniqueIds(list(cast.locations)),

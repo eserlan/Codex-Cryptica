@@ -169,6 +169,50 @@ describe("generateMysteryStaged", () => {
     ).toBe(true);
   });
 
+  it("rejects a revelation id that collides with a locked person id", async () => {
+    const [foundation, cast] = validStages();
+    foundation.revelations[0].id = "person-1";
+    const replies = [foundation, cast, cast];
+    let stoppedAt: string | undefined;
+    const result = await generateMysteryStaged(resolveMystery(), {
+      complete: async () => JSON.stringify(replies.shift()),
+      onStats: (value) => (stoppedAt = value.stoppedAt),
+    });
+
+    expect(result).toBeNull();
+    expect(stoppedAt).toBe("cast");
+  });
+
+  it("retries clue data whose ids collide with locked cast ids", async () => {
+    const [foundation, cast, clues, pressure] = validStages();
+    const collidingClues = {
+      ...clues,
+      clues: clues.clues.map((clue) =>
+        clue.id === "clue-6" ? { ...clue, id: "person-4" } : clue,
+      ),
+      independentPaths: clues.independentPaths.map((path) => ({
+        ...path,
+        clueIds: path.clueIds.map((id) => (id === "clue-6" ? "person-4" : id)),
+      })),
+    };
+    const replies = [
+      foundation,
+      cast,
+      collidingClues,
+      clues,
+      pressure,
+      { status: "consistent", issues: [] },
+      { status: "consistent", issues: [] },
+    ];
+    const result = await generateMysteryStaged(resolveMystery(), {
+      complete: async () => JSON.stringify(replies.shift()),
+    });
+
+    expect(result?.stats.repairedStages).toContain("mystery-clues");
+    const nodeIds = result?.output.mysteryGraph?.nodes.map((node) => node.id);
+    expect(nodeIds?.length).toBe(new Set(nodeIds).size);
+  });
+
   it("replaces a route that does not support its revelation with one derived from the clues", async () => {
     const [foundation, cast, validClues, pressure] = validStages();
     const clues = {
