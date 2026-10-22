@@ -50,6 +50,7 @@ export const GENERATOR_SLUGS_WITH_THEME = new Set([
   "point-crawl",
   "business",
   "one-shot-adventure-generator",
+  "mystery-investigation",
 ]);
 
 export function shouldSyncGeneratorTheme(s: string) {
@@ -163,6 +164,7 @@ export const SLUGS_USING_STORED_THEME = new Set([
   "adventure-generator",
   "adventure-idea-generator",
   "plot-twist-generator",
+  "mystery-investigation",
   "bbeg-generator",
   "creature",
   "encounter",

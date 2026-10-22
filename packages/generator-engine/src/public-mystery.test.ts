@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { factionConfig } from "./public-faction-constants";
 import {
   buildMysteryPrompt,
   generateMysteryLocal,
@@ -8,6 +9,10 @@ import {
 } from "./public-mystery";
 
 describe("Mystery & Investigation generator", () => {
+  it("offers the complete shared theme catalogue as mystery genres", () => {
+    expect(mysteryConfig.genres).toEqual(factionConfig.themes);
+  });
+
   it("resolves suspect counts from the selected complexity", () => {
     expect(
       resolveMystery({ complexity: mysteryConfig.complexities[0] })

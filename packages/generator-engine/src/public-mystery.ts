@@ -13,16 +13,10 @@ import {
   formatCampaignContextBlock,
 } from "./campaign-context";
 import { bannedNamesIn } from "./naming-policy";
+import { factionConfig } from "./public-faction-constants";
 
 export const mysteryConfig = {
-  genres: [
-    "Fantasy",
-    "Detective / Noir",
-    "Investigative Horror",
-    "Modern",
-    "Science Fiction",
-    "Other",
-  ],
+  genres: factionConfig.themes,
   tones: ["Grounded", "Eerie", "Tense", "Pulpy", "Bleak", "Hopeful"],
   types: [
     "Disappearance",
