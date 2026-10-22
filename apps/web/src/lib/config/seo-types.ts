@@ -25,6 +25,17 @@ export interface SEOPageData {
   secondaryCtaHref?: string;
   /** Links shown in a "Related pages" section above the FAQ. */
   relatedLinks?: Array<{ href: string; label: string }>;
+  /** Product proof block available on any SEO landing page. */
+  productProof?: {
+    eyebrow: string;
+    title: string;
+    description: string;
+    imageSrc: string;
+    imageAlt: string;
+    imageWidth: number;
+    imageHeight: number;
+    caption: string;
+  };
   /** Show the Responsible AI trust banner before the FAQ section. */
   aiTrustSection?: boolean;
 }

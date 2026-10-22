@@ -8,17 +8,17 @@ export const howDoYouRunAHeistInATabletopRpg: AnswerConfigInput = {
   question: "How do you run a heist in a tabletop RPG?",
   kind: "framework",
   shortAnswer:
-    "Structure the score into four phases: casing the target, engagement with flashback tokens, an active alarm track, and a chaotic getaway. That way players react in the moment instead of planning for every hypothetical complication up front. Give the party flashback points to retroactively reveal preparations when obstacles emerge during the infiltration, and pair it with a visible heat counter that climbs on failed checks, so infiltration becomes a tense back-and-forth rather than a stalled planning session.",
+    "Start with a score that gives the crew a target, casing intel, layered security, an escalating alarm track, complications, and a pressured getaway. Use those details to frame choices during play, and let players establish plausible preparations with flashbacks when obstacles arise instead of planning for every possibility in advance.",
   sections: [
     {
       kind: "prose",
-      heading: "The fatal planning paralysis trap",
+      heading: "Start with a score, not a fixed plan",
       paragraphs: [
-        "Traditional tabletop heists frequently stall because players spend two to three real-world hours arguing over theoretical contingencies. They debate guard shift rotations, buy fifty feet of silk rope, and plan escape routes for scenarios that will never happen. The moment the first stealth roll fails in room two, that exhaustive plan collapses, leaving players frustrated and the Game Master scrambling.",
-        "Borrowing the flashback structure from narrative systems like Blades in the Dark cuts most of that debate out. By assuming the characters are competent scoundrels who planned off-screen, you can drop the party straight onto the rooftop or into the ventilation duct, and deal with obstacles as they come up instead of arguing about them in advance.",
+        "A heist score needs enough detail to make choices matter, but a fixed route can make one failed roll collapse the whole plan. Start with a target, useful casing intel, layered security, and a reason the crew cannot take its time. The Heist Generator can draft that situation, including multiple approaches to each security ring, complications, a five-state alarm track, getaway routes, and flashback opportunities.",
+        "Flashbacks let players establish plausible preparations when an obstacle becomes relevant. In games with a flashback cost or procedure, use that rule; in other systems, agree how the table will handle a preparation that changes the situation.",
       ],
       cta: {
-        text: "Generate a heist",
+        text: "Generate a score to run with this guide",
         href: "/generators/heist",
       },
     },
@@ -42,7 +42,7 @@ export const howDoYouRunAHeistInATabletopRpg: AnswerConfigInput = {
         },
         {
           term: "A bolt-on for traditional fantasy systems",
-          text: "You do not need to change systems. Add one flashback resource per character, one clock for detection, and a consequence table for failed checks. Charge the resource when a preparation is especially unlikely, expensive, or powerful, so the mechanic creates decisions rather than free solutions.",
+          text: "You do not need to change systems. Use the score's alarm track to show how security responds, and agree what a flashback costs when a player establishes a preparation. A failed check should change the situation in a way that fits the system; it need not advance the alarm unless the score's trigger or the fiction warrants it.",
         },
       ],
       outro:
@@ -50,25 +50,25 @@ export const howDoYouRunAHeistInATabletopRpg: AnswerConfigInput = {
     },
     {
       kind: "list",
-      heading: "The four-phase heist structure",
+      heading: "Run the score in four beats",
       intro:
-        "Organise your heist session around these four distinct operational beats:",
+        "Use the generated score as a situation, then let the crew decide how to approach it:",
       items: [
         {
           term: "Casing the target",
-          text: "Give players three concrete pieces of intelligence: an entry vector, a security obstacle, and the exact physical vault location. Allow two quick reconnaissance checks, then cut directly to the infiltration.",
+          text: "Share the casing intel that gives the crew useful choices, such as an entry vector, a known obstacle, a security routine, or where the objective is kept. Generated scores include at least three actionable details; reveal them through a briefing or reconnaissance that fits your system.",
         },
         {
-          term: "Engagement with flashback tokens",
-          text: "Grant each player two flashback tokens. When a locked reinforced door or unexpected patrol appears, a player spends a token to declare how their character prepared for this obstacle hours earlier.",
+          term: "Infiltration and flashback opportunities",
+          text: "Each security ring offers more than one approach. The score also lists possible flashbacks, such as a bribed guard or cached equipment. They are options for the players to establish, not preparations that have already happened or a fixed number of tokens; use your game's flashback rules or agree a cost that suits your system.",
         },
         {
           term: "The escalating alarm track",
-          text: "Track discovery with a five-state alarm track visible on the table: Quiet, Suspicion, Alert, Lockdown, and Lethal Response. Failed skill checks or loud spells tick the counter forward, triggering reinforcements, lockdown gates, or ward dispels.",
+          text: "Use the generated five-state track: 0: Quiet, 1: Suspicion, 2: Alert, 3: Lockdown, and 4: Lethal Response. Follow the events and consequences written for each score. A failed check can add pressure, but advance the track when the fiction or the score's trigger calls for it, not automatically after every failure.",
         },
         {
           term: "The compromised getaway",
-          text: "Once the prize is secured, shift the tempo into high gear. The original entry route should be sealed or crawling with guards, forcing an improvised chase scene through rooftops, sewers, or canal barges.",
+          text: "When the score's stated point of no return arrives, use its getaway problem and alternate routes. The original route may already be compromised; let the crew choose how to respond and run a chase only if the situation and your rules call for one.",
         },
       ],
       outro:
@@ -76,22 +76,22 @@ export const howDoYouRunAHeistInATabletopRpg: AnswerConfigInput = {
     },
     {
       kind: "example",
-      heading: "Worked example: Infiltrating the High Vault of House Vane",
+      heading: "Worked example: The Breakwater Vault",
       paragraphs: [
-        "Observe how replacing three hours of upfront planning with retroactive flashback mechanics transforms a typical vault infiltration scene.",
+        "The Breakwater Vault is a generated Space Western Theft score. Its details show how to turn a prepared situation into choices at the table.",
       ],
       items: [
         {
-          term: "The rigid upfront planning approach",
-          text: "The table spends ninety minutes debating whether to pose as wine merchants or scale the laundry chute. When they finally pick the laundry chute, the rogue rolls poorly on an agility check, falls into the courtyard, and the entire infiltration devolves into an unplanned frontal melee.",
+          term: "Casing and security",
+          text: "The crew learns about the crane rail's sensor gap, the shift-change window, the pneumatic locks, and the magnetic cradle holding the prize. Three rings offer distinct options: time the outer sensor sweep, use cloned credentials at the access ring, or lift a key or cut through the inner vault hatch.",
         },
         {
-          term: "The flashback and alarm track approach",
-          text: "The Game Master opens the session with the team already perched above the courtyard skylight. When the party encounters an arcane glyph lock on the treasury door, the wizard spends a flashback token: Yesterday afternoon, I bribed the head archivist apprentice to trace the glyph sequence onto parchment. The wizard rolls to decipher the ward, but rolls a partial success. The GM ticks the alarm track from green to amber as bells toll in the guardhouse, immediately escalating table tension.",
+          term: "Alarm and complications",
+          text: "The score gives five numbered alarm states, three complications (one default and two alternatives), and the event that changes the situation. When the crew lifts the canisters, a pressure differential seals the clerical corridor and raises the alarm to 2 — Alert. The escape has begun, and the crew must choose among the listed routes with the main gantry walkway due to seal in five minutes.",
         },
         {
-          term: "Why it works",
-          text: "The competence of the characters is preserved through the flashback, while the mechanical failure still produces real, escalating stakes without derailing the score into a total restart.",
+          term: "Flashbacks and escape",
+          text: "Five flashback opportunities suggest preparations the players could establish, from a forged requisition to a cached tether; the GM does not treat them as events that already happened. The getaway offers three routes plus a pursuit, so the crew still chooses how to escape after the planned route fails.",
         },
       ],
     },
@@ -99,7 +99,7 @@ export const howDoYouRunAHeistInATabletopRpg: AnswerConfigInput = {
       kind: "prose",
       heading: "See a table-ready score in action",
       paragraphs: [
-        "A finished score shows how concentric security rings, escalating alarm states, and compromised getaways connect during play without endless pre-planning.",
+        "Read the full generated score before play: it includes the casing intel, all three security rings, each numbered alarm state, complications, flashbacks, and the getaway options used above.",
       ],
       cta: {
         text: "Read the Breakwater Vault heist example",
@@ -108,15 +108,15 @@ export const howDoYouRunAHeistInATabletopRpg: AnswerConfigInput = {
     },
     {
       kind: "checklist",
-      heading: "The table-ready heist prep checklist",
+      heading: "Check the score before play",
       intro:
-        "Before your players roll initiative on the score, confirm you have these structural elements written down:",
+        "The generator supplies the framework. Review the draft and decide how its pressure and options fit your rules:",
       items: [
-        "A clear target prize with a tangible physical weight, size, or volatile magical aura.",
-        "Three distinct security rings: perimeter patrol, access barrier, and inner vault lock.",
-        "A visual alarm track with five states: Quiet, Suspicion, Alert, Lockdown, and Lethal Response.",
-        "Two flashback tokens allocated to each player character.",
-        "One unexpected wildcard complication that triggers automatically when the prize is lifted.",
+        "Confirm the objective, prize, practical catch, and at least three useful casing details.",
+        "Read the three security rings and their multiple approaches; decide what information the crew can learn before choosing.",
+        "Keep the alarm labels in order: 0: Quiet, 1: Suspicion, 2: Alert, 3: Lockdown, 4: Lethal Response. Check each state's trigger and consequence.",
+        "Choose the default complication or one of its alternatives, and note the generated point of no return and its trigger.",
+        "Treat getaway routes as choices and flashbacks as opportunities the players may establish, not as a mandatory chase or a set token allowance.",
       ],
     },
   ],
@@ -143,8 +143,7 @@ export const howDoYouRunAHeistInATabletopRpg: AnswerConfigInput = {
   codexConnection: {
     heading: "Tracking heist contacts in Codex Cryptica",
     paragraphs: [
-      "The generator doesn't build any of this for you automatically, but once you have named guards, fences, and rival crews, Codex Cryptica lets you save them as entities and link them with typed relationships — which corrupt guard owes a debt to which underworld contact, held once and shown on both sides.",
-      "That means a flashback token can spend an existing campaign relationship instead of an ad hoc contact invented on the spot, because the connection is already on record from a previous session.",
+      "The generator drafts the score, its people, and its complications. Save the draft to your local vault, then record any recurring guards, fences, or rivals as campaign entities and link the relationships you want to track. Those established connections can give a later flashback a contact or debt the players already know about.",
     ],
     linkText: "Explore the RPG knowledge graph",
     href: "/solutions/rpg-knowledge-graph",
@@ -159,7 +158,7 @@ export const howDoYouRunAHeistInATabletopRpg: AnswerConfigInput = {
     {
       title: "Heist generator",
       description:
-        "Turn this framework into a score: prize, casing intel, three security rings, alarm track, complications, and a compromised getaway.",
+        "Generate a score with casing intel, three security rings, a five-state alarm track, complications, flashback opportunities, and alternate getaway routes, then save it to your vault.",
       href: "/generators/heist",
     },
     {
@@ -210,7 +209,7 @@ export const howDoYouRunAHeistInATabletopRpg: AnswerConfigInput = {
     ],
     userJob: "adopt-workflow",
     uniqueValue:
-      "Provides an actionable four-phase tabletop heist framework using retroactive flashback tokens and visible alarm tracks to eliminate planning paralysis.",
+      "Provides a four-beat heist running framework using optional flashback opportunities, layered security, a five-state alarm track, and a pressured getaway, with guidance for different rulesets.",
     relatedIntents: [
       "answer-rpg-puzzles",
       "answer-prep-weekly-session-quickly",
@@ -232,7 +231,7 @@ export const howDoYouRunAHeistInATabletopRpg: AnswerConfigInput = {
   seo: {
     title: "How to Run a Heist in a Tabletop RPG | Codex Cryptica",
     description:
-      "A complete Game Master framework for running tabletop RPG heists. Eliminate planning paralysis with flashback tokens, alarm tracks, and high-tempo getaways.",
+      "Run RPG heists with useful casing intel, security rings, optional flashbacks, a five-state alarm track and a getaway that forces new choices.",
     image:
       "https://assets.codexcryptica.com/og/how-do-you-run-a-heist-in-a-tabletop-rpg.jpg",
     imageAlt:

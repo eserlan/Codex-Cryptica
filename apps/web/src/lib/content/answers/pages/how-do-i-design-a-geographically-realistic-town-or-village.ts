@@ -215,6 +215,7 @@ export const howDoIDesignAGeographicallyRealisticTownOrVillage: AnswerConfigInpu
       "how-do-trade-routes-shape-cities-and-kingdoms-in-an-rpg-world",
       "how-do-i-decide-what-a-settlement-produces-imports-and-exports",
       "how-do-you-create-a-fantasy-city-that-feels-alive",
+      "where-do-worldbuilding-ideas-come-from",
     ],
     labels: ["fantasy"],
     discovery: {

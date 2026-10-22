@@ -413,6 +413,7 @@ export const howDoIMakeDifferentCulturesFeelDistinctWithoutRelyingOnStereotypes:
       "how-do-i-turn-economic-pressures-into-rpg-adventure-hooks",
       "how-do-fantasy-cities-defend-against-flying-creatures-and-teleportation",
       "can-multiple-gods-share-a-domain",
+      "where-do-worldbuilding-ideas-come-from",
     ],
     discovery: {
       id: "answer-cultures-without-stereotypes",

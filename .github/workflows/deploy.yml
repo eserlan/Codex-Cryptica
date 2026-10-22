@@ -84,6 +84,22 @@ jobs:
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Suggest public-copy reviews for changed generators
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          {
+            echo "## Generator public-copy review (advisory)"
+            echo
+            echo '01. Review only if shipped generator behaviour changed.'
+            echo '02. Note "reviewed / no copy changes needed" when appropriate.'
+            echo
+            echo '~~~text'
+            node scripts/generator-content-impact.mjs --base "$BASE_SHA" || true
+            echo '~~~'
+          } >> "$GITHUB_STEP_SUMMARY"
+
   type-check:
     # Skipped on push: this is the staging merge gate re-running the same
     # check the PR already ran on the same diff (#2952). PRs into

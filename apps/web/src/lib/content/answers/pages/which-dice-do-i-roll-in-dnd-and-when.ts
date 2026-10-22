@@ -10,6 +10,33 @@ export const whichDiceDoIRollInDndAndWhen: AnswerConfigInput = {
     "If you are trying something uncertain in D&D, you very often start with a twenty-sided die (d20) and add a modifier the Dungeon Master or your character sheet names. For an attack that requires an attack roll, the d20 decides whether it hits and you roll its listed damage on a hit. Other effects name their dice directly, so you do not need to memorise every one.",
   sections: [
     {
+      kind: "table",
+      heading: "D&D dice: quick reference",
+      headers: ["If the DM or rule asks for…", "Roll…", "What it means"],
+      rows: [
+        [
+          "An ability check, attack roll, or saving throw",
+          "A d20 plus the relevant modifier",
+          "The d20 result plus your modifier is compared with a target number. Attacks usually compare with Armour Class (AC); checks and saves compare with a Difficulty Class (DC).",
+        ],
+        [
+          "Damage or healing",
+          "The dice named by the attack, spell, or feature",
+          "For example, 1d8 + 3 means roll one eight-sided die and add 3. Roll attack damage after a hit; other effects tell you when to roll.",
+        ],
+        [
+          "Dice notation such as 2d6 + 3",
+          "The number before d, using a die with the number of sides after d, then the listed modifier",
+          "Roll two six-sided dice, add them together, then add 3.",
+        ],
+        [
+          "A percentile roll (d100), if a rule asks for one",
+          "Two d10s: one for tens and one for ones",
+          "Read the digits together; 00 and 0 means 100. This comes up less often than d20 tests or effect dice.",
+        ],
+      ],
+    },
+    {
       kind: "prose",
       heading: "The simplest useful rule",
       paragraphs: [
@@ -102,7 +129,7 @@ export const whichDiceDoIRollInDndAndWhen: AnswerConfigInput = {
         },
         {
           term: "Following the sheet and the DM",
-          text: "The DM says make an attack roll. The player finds longsword on the sheet, sees it lists +5 to hit and 1d8 + 3 slashing, rolls a d20 and uses that listed +5 once to learn whether the total hits. The DM then says roll damage. The player rolls a d8, adds 3, and the DM describes the result. Later, when a spell forces a saving throw, the DM names the ability and the player rolls a d20 with the saving throw modifier shown on the sheet. Advantage on the next attack simply means rolling two d20s and keeping the higher result.",
+          text: "The DM says make an attack roll against AC 15. The player finds longsword on the sheet, sees +5 to hit and 1d8 + 3 slashing, rolls 12 on a d20, and adds the listed +5 once for a total of 17: the attack hits. The DM asks for damage, so the player rolls 4 on a d8 and adds 3, dealing 7 slashing damage. Later, when a spell forces a saving throw, the DM names the ability and the player rolls a d20 with the saving throw modifier shown on the sheet. Advantage on the next attack means rolling two d20s and keeping the higher result.",
         },
         {
           term: "Why it works",

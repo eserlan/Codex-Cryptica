@@ -32,3 +32,4 @@ export * from "./template-guidance";
 export * from "./silhouettes";
 export * from "./entity-palette";
 export * from "./game-system";
+export * from "./biome";

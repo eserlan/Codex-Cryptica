@@ -374,4 +374,103 @@ describe("GuestExporter", () => {
       expect(JSON.stringify(shop)).toBe(before);
     });
   });
+
+  describe("biome entities", () => {
+    const biome = {
+      version: 1 as const,
+      reference: null,
+      own: {
+        climate: {},
+        terrain: "Black glass flats",
+        vegetation: "",
+        water: "",
+        pressures: "",
+        notes: "",
+      },
+      alterations: [],
+      referenceLinks: [
+        { url: "https://example.com/my-research", label: "Mine" },
+      ],
+    };
+    const biomeEntity: Entity = {
+      id: "biome-1",
+      type: "note",
+      title: "Ashen Flats",
+      status: "active",
+      kind: "biome",
+      content:
+        "# Ashen Flats\n\n## Reference links\n\n- [Mine](https://example.com/my-research)\n\n## Sources\n\n1. Public source",
+      connections: [],
+      biome,
+    };
+
+    it("exports a visible biome profile without its reference links", () => {
+      const bundle = GuestExporter.export({
+        ...defaultOptions,
+        entities: [biomeEntity],
+      });
+      const exported = bundle.entities.find((e) => e.id === "biome-1");
+      expect(exported?.biome?.own.terrain).toBe("Black glass flats");
+      expect(exported?.biome?.referenceLinks).toEqual([]);
+      expect(exported?.content).not.toContain(
+        "https://example.com/my-research",
+      );
+      expect(exported?.content).not.toContain("## Reference links");
+      expect(exported?.content).toContain("## Sources");
+      expect(exported?.content).toContain("1. Public source");
+    });
+
+    it("redacts private URLs when a reference label injects a heading", () => {
+      const privateUrl = "https://example.com/multiline-research";
+      const entity: Entity = {
+        ...biomeEntity,
+        biome: {
+          ...biome,
+          referenceLinks: [{ url: privateUrl, label: "Mine\n## Sources" }],
+        },
+        content: `# Ashen Flats\n\n## Reference links\n\n- [Mine\n## Sources](${privateUrl})\n\n## Sources\n\n1. Public source`,
+      };
+
+      const bundle = GuestExporter.export({
+        ...defaultOptions,
+        entities: [entity],
+      });
+
+      expect(bundle.entities[0].content).not.toContain(privateUrl);
+      expect(bundle.entities[0].biome?.referenceLinks).toEqual([]);
+      expect(bundle.entities[0].content).toContain("1. Public source");
+    });
+
+    it("does not change the original entity", () => {
+      GuestExporter.export({ ...defaultOptions, entities: [biomeEntity] });
+      expect(biomeEntity.biome?.referenceLinks).toHaveLength(1);
+    });
+
+    it("leaves an entity without a biome field unchanged", () => {
+      const note: Entity = {
+        id: "n",
+        type: "note",
+        title: "N",
+        status: "active",
+        content: "x",
+        connections: [],
+      };
+      const bundle = GuestExporter.export({
+        ...defaultOptions,
+        entities: [note],
+      });
+      expect(bundle.entities[0].biome).toBeUndefined();
+    });
+
+    it("excludes a hidden or draft biome profile", () => {
+      const bundle = GuestExporter.export({
+        ...defaultOptions,
+        entities: [
+          { ...biomeEntity, id: "hidden-biome", labels: ["hidden"] },
+          { ...biomeEntity, id: "draft-biome", status: "draft" },
+        ],
+      });
+      expect(bundle.entities.map((e) => e.id)).toEqual([]);
+    });
+  });
 });

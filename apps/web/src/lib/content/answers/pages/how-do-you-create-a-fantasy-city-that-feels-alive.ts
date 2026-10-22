@@ -163,6 +163,7 @@ export const howDoYouCreateAFantasyCityThatFeelsAlive: AnswerConfigInput = {
     "how-do-i-make-sea-travel-interesting-in-a-ttrpg",
     "how-do-i-portray-a-believable-modern-city-in-an-urban-rpg",
     "how-do-i-design-a-geographically-realistic-town-or-village",
+    "where-do-worldbuilding-ideas-come-from",
   ],
   labels: ["fantasy", "rumour"],
   discovery: {

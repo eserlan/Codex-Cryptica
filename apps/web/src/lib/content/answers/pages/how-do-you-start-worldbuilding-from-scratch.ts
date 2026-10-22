@@ -155,6 +155,7 @@ export const howDoYouStartWorldbuildingFromScratch: AnswerConfigInput = {
     "how-should-magic-have-been-discovered-in-my-world",
     "how-do-i-start-a-dnd-campaign",
     "should-i-share-worldbuilding-notes-with-my-players",
+    "where-do-worldbuilding-ideas-come-from",
   ],
   discovery: {
     id: "answer-worldbuilding-from-scratch",
@@ -180,6 +181,11 @@ export const howDoYouStartWorldbuildingFromScratch: AnswerConfigInput = {
         with: "answer-worldbuilding-for-fiction-writers",
         reason:
           "This answer provides a GM-focused local sandbox for tabletop campaigns, whereas the companion fiction answer provides a story-first method for novel and short story writers.",
+      },
+      {
+        with: "answer-worldbuilding-ideas-inspiration",
+        reason:
+          "This answer develops a premise into a playable local sandbox for a GM, whereas the ideas answer helps creators find and test a spark before they have a premise to build.",
       },
     ],
     relatedIntents: [

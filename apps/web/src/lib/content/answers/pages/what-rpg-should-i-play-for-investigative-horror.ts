@@ -194,6 +194,7 @@ export const whatRpgShouldIPlayForInvestigativeHorror: AnswerConfigInput = {
     "how-do-i-write-a-good-call-of-cthulhu-one-shot",
     "how-do-i-run-character-roles-in-an-investigative-horror-rpg",
     "how-do-i-make-interviewing-npcs-interesting-in-an-investigation",
+    "how-do-you-handle-players-reaching-the-wrong-conclusion-in-an-rpg-mystery",
   ],
   discovery: {
     id: "answer-investigative-horror-system-selection",

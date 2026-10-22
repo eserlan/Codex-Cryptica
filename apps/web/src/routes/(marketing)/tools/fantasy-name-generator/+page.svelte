@@ -1,12 +1,12 @@
 <script lang="ts">
   /**
    * Renders the shared generator page for the `fantasy-names` slug, with this route's
-   * own copy, FAQs and canonical.
+   * own copy and FAQs while consolidating search to the primary generator.
    *
    * This page used to hand-wire its own state, generate call and form bindings
    * to produce exactly what GeneratorPageContent already produces for this
    * slug. The wiring lived in two places and could drift in one; only the
-   * copy and the URL were ever really this page's own.
+   * copy and the URL were ever really this page's own. The preferred search URL is now /generators/fantasy-names.
    */
   import GeneratorPageContent from "$lib/components/seo/GeneratorPageContent.svelte";
   import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
@@ -23,6 +23,7 @@
   };
 
   const relatedLinks = [
+    { href: "/generators/fantasy-names", label: "Main fantasy name generator" },
     { href: "/worldbuilding-tool", label: "Worldbuilding tool" },
     { href: "/free-rpg-campaign-manager", label: "Free RPG campaign manager" },
     { href: "/tools/dnd-npc-generator", label: "D&D NPC generator" },
@@ -56,7 +57,7 @@
   slug="fantasy-names"
   {initialDraftOverride}
   metaOverrides={{
-    canonicalPath: "/tools/fantasy-name-generator",
+    canonicalPath: "/generators/fantasy-names",
     pageTitle:
       "Fantasy Name Generator | Free RPG & Worldbuilding Name Tool | Codex Cryptica",
     metaDescription:

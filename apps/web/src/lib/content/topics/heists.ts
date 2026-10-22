@@ -72,7 +72,7 @@ export const HEIST_TOPIC_CONFIG = {
     {
       title: "Eliminate planning paralysis with flashbacks",
       summary:
-        "Traditional heists stall when players spend hours debating theoretical contingencies that evaporate on the first failed check. Giving the crew retroactive flashback tokens and an active alarm track turns infiltration into an escalating back-and-forth rather than a spreadsheet exercise.",
+        "Traditional heists stall when players spend hours debating theoretical contingencies that evaporate on the first failed check. Giving the crew opportunities to establish plausible preparations through flashbacks, while advancing an alarm track when triggered, keeps the situation moving without dictating a universal token rule.",
     },
     {
       title: "Prizes that generate their own complications",
@@ -91,7 +91,7 @@ export const HEIST_TOPIC_CONFIG = {
       title: "How to Run a Heist in a Tabletop RPG",
       href: "/answers/how-do-you-run-a-heist-in-a-tabletop-rpg",
       description:
-        "The complete four-phase GM framework: casing the target, engagement with flashback tokens, an active alarm track, and a chaotic getaway. Covers mechanics to borrow from Blades in the Dark, Leverage, and The Sprawl.",
+        "A four-beat GM framework: casing the target, choosing an approach, advancing pressure when triggered, and navigating a compromised getaway. Covers optional flashbacks and mechanics to borrow from Blades in the Dark, Leverage, and The Sprawl.",
       focus: "Operational Framework & Flow",
     },
     {
@@ -211,7 +211,7 @@ export const HEIST_TOPIC_CONFIG = {
       step: 1,
       title: "Adopt the Operational Framework",
       description:
-        "Review the four-phase heist structure. Grant each character flashback points to handle unexpected complications retrospectively, eliminating multi-hour pre-planning debates.",
+        "Review the four-phase heist structure. Agree how flashbacks work in your system, then offer plausible preparations when obstacles arise instead of requiring exhaustive upfront planning.",
       recommendedResource: {
         title: "How to Run a Heist in a Tabletop RPG",
         href: "/answers/how-do-you-run-a-heist-in-a-tabletop-rpg",
@@ -231,7 +231,7 @@ export const HEIST_TOPIC_CONFIG = {
       step: 3,
       title: "Generate the Score & Alarm Track",
       description:
-        "Roll the concentric security rings, casing vectors, and a 5-tier alarm counter using the Heist Generator so failed checks escalate tension rather than ending the run.",
+        "Generate the concentric security rings, casing intel and five-state alarm track; advance the track when a stated trigger or the fiction warrants it, not after every failed check.",
       recommendedResource: {
         title: "Heist Generator",
         href: "/generators/heist",

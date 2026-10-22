@@ -802,13 +802,13 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
   },
   "fantasy-names": {
     pageTitle:
-      "Fantasy Name Generator | Free RPG & Worldbuilding Name Tool | Codex Cryptica",
+      "Fantasy Name Generator for Characters & Places | Codex Cryptica",
     metaDescription:
-      "Generate fantasy names for characters, places, factions, and items across ten cultural styles. Free for D&D, Pathfinder, worldbuilding, and any tabletop RPG.",
+      "Create fantasy character, place, faction and item names. Choose from ten cultural styles, add campaign context, then copy or save your favourites.",
     introTitle: "Fantasy Name Generator",
     eyebrow: "Fantasy Name Generator",
     introText:
-      "Generate fantasy names for characters, places, factions, and items across ten cultural styles. Works without login — copy your favourites for your campaign.",
+      "Name your characters, settlements, factions and items across ten cultural styles. Add your campaign context to guide the result, then copy names or save them to your local vault. No account required.",
     canonicalPath: "/generators/fantasy-names",
     labels: ["fantasy"],
     ogImage:

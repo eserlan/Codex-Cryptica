@@ -51,6 +51,28 @@ describe("nav items", () => {
     });
   });
 
+  describe("biomes", () => {
+    it("is a view item in the overflow placement that links to /biomes", () => {
+      const biomes = byId("biomes")!;
+      expect(biomes.group).toBe("view");
+      expect(biomes.placement).toBe("overflow");
+      expect(biomes.label).toBe("Biomes");
+      expect(biomes.href?.endsWith("/biomes")).toBe(true);
+    });
+
+    it("lights up on the biomes route but not on a sibling", () => {
+      const biomes = byId("biomes")!;
+      expect(isViewActive(biomes, "/biomes")).toBe(true);
+      expect(isViewActive(biomes, "/biomes/anything")).toBe(true);
+      expect(isViewActive(biomes, "/biomes-other")).toBe(false);
+    });
+
+    it("is still offered in guest mode, like the other reference views", () => {
+      sessionModeStore.isGuestMode = true;
+      expect(navItems().map((i) => i.id)).toContain("biomes");
+    });
+  });
+
   describe("placement", () => {
     it("demotes the items that lose least from a second tap", () => {
       const overflow = navItems()
@@ -60,6 +82,7 @@ describe("nav items", () => {
       expect(overflow).toEqual([
         "adventure",
         "random",
+        "biomes",
         "generators",
         "shelf",
         "quicknote",
