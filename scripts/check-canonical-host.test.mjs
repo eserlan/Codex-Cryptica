@@ -112,7 +112,13 @@ describe("canonical-host response checks", () => {
       robotsMetaProblem('<meta name="robots" content="index, noindex">'),
     ).toContain('<meta name="robots"');
     expect(
+      robotsMetaProblem("<meta name=robots content=index,noindex>"),
+    ).toContain('<meta name="robots"');
+    expect(
       robotsMetaProblem('<meta name="robots" content="index, follow">'),
+    ).toBeNull();
+    expect(
+      robotsMetaProblem("<meta name=robots content=index,follow>"),
     ).toBeNull();
   });
 });

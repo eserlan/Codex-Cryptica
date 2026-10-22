@@ -104,8 +104,12 @@ async function checkRedirect(startUrl) {
 }
 
 function htmlAttribute(tag, attr) {
-  const rx = new RegExp(`\\b${attr}\\s*=\\s*["']([^"']+)["']`, "i");
-  return tag.match(rx)?.[1] ?? null;
+  const rx = new RegExp(
+    `(?:^|\\s)${attr}\\s*=\\s*("[^"]*"|'[^']*'|[^\\s"'\x60=<>]+)`,
+    "i",
+  );
+  const value = tag.match(rx)?.[1];
+  return value?.replace(/^(['"])([\s\S]*)\1$/, "$2") ?? null;
 }
 
 function headValue(
