@@ -29,561 +29,56 @@ import {
   FIXING_DETAIL,
   ONE_PASS_DETAIL,
   StagedProgress,
-  type StagedProgressStep,
 } from "./staged-progress";
 import {
   askModel,
   type CheckedDraft,
-  type DraftCheck,
   isAbort,
   readJsonObject,
   runCheckedStage,
   throwIfAborted,
 } from "./staged-runtime";
 import {
-  bannedNamesIn,
   buildDungeonCoherencePrompt,
   formatDungeonSeeds,
   parseDungeonResponseDetailed,
   type DungeonParseResult,
-  PLACEHOLDER_FACTION_NAME,
-  sanitizeGoal,
   type DungeonGeneratorOptions,
   type DungeonJson,
-  type DungeonSectorEdge,
   type ResolvedDungeon,
 } from "./public-dungeon";
 import { GENRE_HINTS } from "./public-dungeon-constants";
-import type { PublicGeneratorOutput } from "./public-generator-adapters";
 import { NAME_BAN_PROMPT } from "./public-npc";
 import { type Rng, defaultRng } from "./random-utils";
 
-export type DungeonStageId = "foundation" | "sectors" | "factions";
+import { asArray as arr, asRecord as rec } from "./llm-response-utils";
+import { text, textList, presenceOf } from "./dungeon-stage-data";
+import { checkFoundation, checkSectors } from "./dungeon-stage-checks";
+import { checkFactions } from "./dungeon-faction-checks";
+import { checkFactionGrounding } from "./dungeon-faction-grounding";
+import { checkTerritoryAccess } from "./dungeon-territory-access";
+import type { JsonObject as Json } from "./staged-runtime";
+import type {
+  DungeonStagedDeps,
+  DungeonStagedStats,
+  DungeonStagedResult,
+  DungeonStageId,
+  StageCheck,
+  ProgressId,
+  RunState,
+} from "./dungeon-staged-types";
 
-export interface DungeonStagedDeps {
-  complete: (systemInstruction: string, userMessage: string) => Promise<string>;
-  signal?: AbortSignal;
-  rng?: Rng;
-  /** Caller-supplied context (vault, naming, instructions) placed before every stage. */
-  contextPrefix?: string;
-  /** Live step list for the page, in the same shape as the one-shot generator's. */
-  onProgress?: (steps: StagedProgressStep[]) => void;
-  /**
-   * Called once when a run finishes or gives up (not on abort), so a dev build
-   * can log which route ran and what it cost.
-   */
-  onStats?: (stats: DungeonStagedStats) => void;
-}
-
-/** What a run cost and where it needed help, for comparing against the one-pass route. */
-export interface DungeonStagedStats {
-  /** "fell-back" means the caller ran the one-pass route instead. */
-  outcome: "staged" | "fell-back";
-  /** The step that gave up, when `outcome` is "fell-back". */
-  stoppedAt?: DungeonStageId | "assembly";
-  aiCalls: number;
-  repairedStages: DungeonStageId[];
-  /** What the model review found in the assembled delve, before any repair. */
-  reviewIssues: string[];
-  /** The model review did not answer or could not be read. */
-  reviewSkipped: boolean;
-  coherenceRepaired: boolean;
-  /** Problems the final document still has after every repair. */
-  remainingIssues: string[];
-}
-
-export interface DungeonStagedResult {
-  output: PublicGeneratorOutput;
-  structured: DungeonJson;
-  stats: DungeonStagedStats;
-}
-
-type Json = Record<string, unknown>;
-export type StageCheck = DraftCheck;
-
-const rec = (v: unknown): Json =>
-  v && typeof v === "object" && !Array.isArray(v) ? (v as Json) : {};
-const arr = (v: unknown): unknown[] => (Array.isArray(v) ? v : []);
-const text = (v: unknown): string =>
-  typeof v === "string"
-    ? v.trim()
-    : arr(v)
-        .filter((x): x is string => typeof x === "string")
-        .join(" ")
-        .trim();
-const textList = (v: unknown): string[] =>
-  arr(v)
-    .map(text)
-    .filter((s) => s.length > 0);
-
-// ---------------------------------------------------------------------------
-// Validation (pure)
-// ---------------------------------------------------------------------------
-
-const FOUNDATION_FIELDS = [
-  "title",
-  "summary",
-  "throughline",
-  "history",
-  "currentState",
-  "signatureFeature",
-  "secret",
-] as const;
-
-export function checkFoundation(
-  data: Json,
-  resolved: ResolvedDungeon,
-): StageCheck {
-  const hard: string[] = [];
-  const missing = FOUNDATION_FIELDS.filter((k) => !text(data[k]));
-  if (missing.length > 0) {
-    hard.push(`missing required fields: ${missing.join(", ")}`);
-  }
-  const ids = arr(data.sectorBriefs).map((b) => text(rec(b).id));
-  const plan = resolved.sectors.map((s) => s.id);
-  if (ids.join("|") !== plan.join("|")) {
-    hard.push(
-      `sectorBriefs must be exactly ${plan.join(", ")} in that order, got ${ids.join(", ") || "none"}`,
-    );
-  } else if (arr(data.sectorBriefs).some((b) => !text(rec(b).brief))) {
-    hard.push("a sector brief is empty");
-  }
-  const banned = bannedNamesIn([text(data.title)]);
-  if (banned.length > 0)
-    hard.push(`title uses banned names: ${banned.join(", ")}`);
-  return { hard, soft: [] };
-}
-
-function sectorListCountIssues(data: Json): string[] {
-  const issues: string[] = [];
-  for (const key of ["hazards", "treasures", "hooks"] as const) {
-    const count = textList(data[key]).length;
-    if (count < 2 || count > 3) {
-      issues.push(`${key} must contain 2–3 entries, got ${count}`);
-    }
-  }
-  return issues;
-}
-
-export function checkSectors(
-  data: Json,
-  resolved: ResolvedDungeon,
-  avoidNames: string[] = [],
-): StageCheck {
-  const hard: string[] = [];
-  const plan = resolved.sectors;
-  const sectors = arr(data.sectors).map(rec);
-  const ids = sectors.map((s) => text(s.id));
-  if (ids.join("|") !== plan.map((s) => s.id).join("|")) {
-    hard.push(
-      `sectors must be exactly ${plan.map((s) => s.id).join(", ")} in that order, got ${ids.join(", ") || "none"}`,
-    );
-  } else {
-    if (sectors.some((s) => !text(s.name) || !text(s.description))) {
-      hard.push("a sector is missing its name or description");
-    }
-    const details = sectors.map((s) => text(s.stockDetail).toLowerCase());
-    if (details.some((d) => !d)) hard.push("a sector has no stockDetail");
-    else if (new Set(details).size !== details.length) {
-      hard.push("two sectors share the same stocked content");
-    }
-    const names = sectors.map((s) => text(s.name).toLowerCase());
-    if (new Set(names).size !== names.length) {
-      hard.push("two sectors share the same name");
-    }
-    const banned = bannedNamesIn(
-      sectors.map((s) => text(s.name)),
-      avoidNames,
-    );
-    if (banned.length > 0) {
-      hard.push(
-        `sector names use banned or already-used names: ${banned.join(", ")}`,
-      );
-    }
-  }
-  hard.push(...sectorListCountIssues(data));
-  return { hard, soft: [] };
-}
-
-const PLACE_WORDS =
-  "Vault|Archive|Archives|Chamber|Hall|Stairwell|Gallery|Crypt|Tunnel|Passage|Annex|Sanctum|Cistern|Armoury|Armory|Library|Shaft|Bridge|Gate|Cellar|Lift|Elevator|Corridor|Laboratory|Reactor|Bunker";
-const PLACE_PHRASE = new RegExp(
-  `\\b((?:[A-Z][\\w'’-]+\\s+){1,3}(?:${PLACE_WORDS})s?)\\b`,
-  "g",
-);
-
-const STOPWORDS = new Set(
-  "that with from this their they have been into over under about which where when while hold held keep kept still near inside around those these there other than then them what will would could should must".split(
-    " ",
-  ),
-);
-const significant = (s: string): string[] =>
-  s
-    .toLowerCase()
-    .split(/[^a-z']+/)
-    .filter((w) => w.length > 3 && !STOPWORDS.has(w));
-
-const ACQUIRE =
-  /\b(secure|seize|recover|retrieve|obtain|claim|steal|acquire|take|find|loot|reclaim|collect|capture|locate)\b/i;
-const OUT_OF_REACH =
-  /\b(sealed|locked|cannot|can't|unable|out of reach|beyond (their )?reach|inaccessible|jammed|barred|guarded|trapped)\b/i;
-
-type Inventory = Pick<
-  DungeonJson,
-  | "title"
-  | "history"
-  | "currentState"
-  | "signatureFeature"
-  | "secret"
-  | "hazards"
-  | "treasures"
-  | "sectors"
->;
-
-/** Everything the dungeon has established, lower-cased, for "does this exist?" lookups. */
-function inventoryCorpus(d: Inventory, factionNames: string[] = []): string {
-  return [
-    d.title,
-    d.history,
-    d.currentState,
-    d.signatureFeature,
-    d.secret,
-    ...d.hazards,
-    ...d.treasures,
-    ...d.sectors.flatMap((s) => [s.name, s.description, s.stockDetail ?? ""]),
-    ...factionNames,
-  ]
-    .join("\n")
-    .toLowerCase();
-}
-
-interface FactionLike {
-  name: string;
-  goal: string;
-  obstacle: string;
-  relationship: string;
-  strength: string;
-  origin: string;
-  belief: string;
-  territorySectorIds: string[];
-  /** What it has done to the sectors it holds, if written. */
-  presence?: string[];
-}
-
-/**
- * Wording that says how a faction gets across ground it does not hold, or
- * that it holds out cut off. A keyword guess, so a split territory is only
- * ever a soft problem fed to a retry, never a rejection. Known limits: any
- * mention of the sector in between counts as an explanation, and a truce
- * mentioned for another reason ("a truce-breaker") also counts.
- */
-const CROSSING =
-  /\b(cross(es|ing)? (the|through)|pass(es|ing)? (through|past)|smuggl\w*|truce|toll|safe[- ]conduct|escort(s|ed)? through|secret (route|passage|tunnel)|isolated|enclave|besieged|stranded)\b/i;
-
-/**
- * Territory a faction cannot walk between without crossing ground it does not
- * hold, and whose text never says how it manages that. Uses the fixed layout,
- * not anything the model wrote about routes.
- */
-/**
- * The sectors on the shortest walk from the connected part of a territory to
- * the nearest held sector it cannot reach: the ground it has to cross.
- */
-function gapBetween(
-  next: readonly number[][],
-  linked: ReadonlySet<number>,
-  held: ReadonlySet<number>,
-): number[] {
-  const from = new Map<number, number>();
-  const queue = [...linked];
-  const seen = new Set(linked);
-  for (let i = queue.shift(); i !== undefined; i = queue.shift()) {
-    for (const n of next[i] ?? []) {
-      if (seen.has(n)) continue;
-      seen.add(n);
-      from.set(n, i);
-      if (held.has(n)) {
-        const path: number[] = [];
-        for (
-          let p = from.get(n);
-          p !== undefined && !linked.has(p);
-          p = from.get(p)
-        ) {
-          path.unshift(p);
-        }
-        return path;
-      }
-      queue.push(n);
-    }
-  }
-  return [];
-}
-
-export function checkTerritoryAccess(
-  factions: readonly FactionLike[],
-  sectors: ReadonlyArray<{ id: string; name: string }>,
-  edges: readonly DungeonSectorEdge[],
-): string[] {
-  const index = new Map(sectors.map((s, i) => [s.id, i]));
-  const next = sectors.map(() => [] as number[]);
-  for (const e of edges) {
-    next[e.from]?.push(e.to);
-    next[e.to]?.push(e.from);
-  }
-  const reach = (start: number, allowed: (i: number) => boolean) => {
-    const seen = new Set([start]);
-    const queue = [start];
-    for (let i = queue.shift(); i !== undefined; i = queue.shift()) {
-      for (const n of next[i] ?? []) {
-        if (!seen.has(n) && allowed(n)) {
-          seen.add(n);
-          queue.push(n);
-        }
-      }
-    }
-    return seen;
-  };
-  const issues: string[] = [];
-  for (const f of factions) {
-    const own = f.territorySectorIds
-      .map((id) => index.get(id))
-      .filter((i): i is number => i !== undefined);
-    if (own.length < 2) continue;
-    const held = new Set(own);
-    const linked = reach(own[0], (i) => held.has(i));
-    if (own.every((i) => linked.has(i))) continue;
-    const between = gapBetween(next, linked, held).map((i) => sectors[i]);
-    const said = [
-      f.strength,
-      f.obstacle,
-      f.relationship,
-      f.goal,
-      ...(f.presence ?? []),
-    ]
-      .join(" ")
-      .toLowerCase();
-    const explained =
-      CROSSING.test(said) ||
-      between.some(
-        (s) => said.includes(s.id) || said.includes(s.name.toLowerCase()),
-      );
-    if (explained) continue;
-    const names = own.map((i) => sectors[i].name).join(" and ");
-    issues.push(
-      `${f.name} holds ${names}, which only connect through ${between.map((s) => s.name).join(" or ")}; say how ${f.name} moves between them or holds ground across the gap, or give it connected territory`,
-    );
-  }
-  return issues;
-}
-
-/** Sector ids and named places a piece of faction text relies on but the delve never established. */
-function unestablishedReferences(
-  label: string,
-  value: string,
-  ids: ReadonlySet<string>,
-  corpus: string,
-): string[] {
-  const issues: string[] = [];
-  for (const m of value.matchAll(/\bsector-\d+\b/gi)) {
-    if (!ids.has(m[0].toLowerCase())) {
-      issues.push(`${label} refers to ${m[0]}, which does not exist`);
-    }
-  }
-  for (const m of value.matchAll(PLACE_PHRASE)) {
-    const phrase = m[1].replace(/^(the|a|an)\s+/i, "").toLowerCase();
-    if (phrase && !corpus.includes(phrase)) {
-      issues.push(
-        `${label} names "${m[1]}", a place that is not established in the sectors or contents`,
-      );
-    }
-  }
-  return issues;
-}
-
-/** A goal to acquire something the faction's own territory already holds. */
-function ownedGoalIssues(
-  f: FactionLike,
-  sectors: Inventory["sectors"],
-): string[] {
-  const goal = sanitizeGoal(f.goal);
-  if (!ACQUIRE.test(goal) || OUT_OF_REACH.test(f.goal)) return [];
-  const goalWords = new Set(significant(goal));
-  return sectors
-    .filter((s) => f.territorySectorIds.includes(s.id))
-    .filter((s) => {
-      const detail = significant(s.stockDetail ?? "");
-      const shared = detail.filter((w) => goalWords.has(w));
-      return detail.length > 0 && shared.length >= Math.min(2, detail.length);
-    })
-    .map(
-      (s) =>
-        `${f.name} goal is to get "${s.stockDetail}", which is already in its own territory (${s.name}) with no reason it is out of reach`,
-    );
-}
-
-/**
- * Coherence doubts that need the established inventory: invented places and
- * goals to acquire what a faction already holds. Heuristic, so reported as
- * soft problems rather than rejecting a whole dungeon.
- */
-export function checkFactionGrounding(
-  factions: readonly FactionLike[],
-  factionSituation: string,
-  dungeon: Inventory,
-): string[] {
-  const corpus = inventoryCorpus(
-    dungeon,
-    factions.map((f) => f.name),
-  );
-  const ids = new Set(dungeon.sectors.map((s) => s.id));
-  const issues = factions.flatMap((f) => [
-    ...(
-      [
-        "goal",
-        "obstacle",
-        "relationship",
-        "strength",
-        "origin",
-        "belief",
-      ] as const
-    ).flatMap((field) =>
-      unestablishedReferences(`${f.name} ${field}`, f[field], ids, corpus),
-    ),
-    ...ownedGoalIssues(f, dungeon.sectors),
-  ]);
-  issues.push(
-    ...unestablishedReferences(
-      "factionSituation",
-      factionSituation,
-      ids,
-      corpus,
-    ),
-  );
-  return [...new Set(issues)];
-}
-
-const FACTION_FIELDS = [
-  "identity",
-  "goal",
-  "obstacle",
-  "origin",
-  "belief",
-  "strength",
-  "relationship",
-] as const;
-
-function territoryProblems(
-  label: string,
-  f: Json,
-  validSectorIds: ReadonlySet<string>,
-): string[] {
-  const territory = arr(f.territorySectorIds).map(String);
-  if (territory.length === 0) return [`${label} has no territorySectorIds`];
-  if (territory.every((id) => validSectorIds.has(id))) return [];
-  return [
-    `${label} territorySectorIds must be among ${[...validSectorIds].join(", ")}, got ${territory.join(", ")}`,
-  ];
-}
-
-function checkFactionEntry(
-  f: Json,
-  index: number,
-  validSectorIds: ReadonlySet<string>,
-): string[] {
-  const problems: string[] = [];
-  const label = text(f.name) || `faction ${index + 1}`;
-  const missing: string[] = FACTION_FIELDS.filter((k) => !text(f[k]));
-  for (const n of ["leader", "notable"] as const) {
-    if (!text(rec(f[n]).name) || !text(rec(f[n]).description)) missing.push(n);
-  }
-  if (missing.length > 0)
-    problems.push(`${label} is missing: ${missing.join(", ")}`);
-  problems.push(...territoryProblems(label, f, validSectorIds));
-  if (!text(f.name)) problems.push(`faction ${index + 1} has no name`);
-  else if (PLACEHOLDER_FACTION_NAME.test(text(f.name))) {
-    problems.push(`${label} uses a placeholder name`);
-  }
-  return problems;
-}
-
-/** One entry per sector: a repeated sector id keeps its first detail. */
-function presenceOf(f: Json): { sectorId: string; detail: string }[] {
-  const seen = new Set<string>();
-  return arr(f.presence)
-    .map(rec)
-    .map((p) => ({ sectorId: text(p.sectorId), detail: text(p.detail) }))
-    .filter((p) => {
-      if (!p.sectorId || !p.detail || seen.has(p.sectorId)) return false;
-      seen.add(p.sectorId);
-      return true;
-    });
-}
-
-/** Held sectors with no word on what the faction has done there. */
-function missingPresence(raw: Json[]): string[] {
-  return raw.flatMap((f) => {
-    const written = new Set(presenceOf(f).map((p) => p.sectorId));
-    const missing = arr(f.territorySectorIds)
-      .map(String)
-      .filter((id) => !written.has(id));
-    return missing.length > 0
-      ? [
-          `${text(f.name)} holds ${missing.join(", ")} but its presence says nothing about what it has done there`,
-        ]
-      : [];
-  });
-}
-
-export function checkFactions(
-  data: Json,
-  resolved: ResolvedDungeon,
-  sectors: DungeonJson["sectors"],
-  inventory: Omit<Inventory, "sectors">,
-  avoidNames: string[] = [],
-): StageCheck {
-  const hard: string[] = [];
-  if (!text(data.factionSituation)) hard.push("factionSituation is missing");
-  const raw = arr(data.factions).map(rec);
-  if (raw.length !== 2) {
-    hard.push(`expected 2 factions, got ${raw.length}`);
-    return { hard, soft: [] };
-  }
-  const valid = new Set(sectors.map((s) => s.id));
-  raw.forEach((f, i) => hard.push(...checkFactionEntry(f, i, valid)));
-  const names = raw.map((f) => text(f.name).toLowerCase());
-  if (names[0] && names[0] === names[1])
-    hard.push("both factions have the same name");
-  const banned = bannedNamesIn(
-    raw.map((f) => text(f.name)),
-    avoidNames,
-  );
-  if (banned.length > 0)
-    hard.push(
-      `faction names use banned or already-used names: ${banned.join(", ")}`,
-    );
-  if (hard.length > 0) return { hard, soft: [] };
-
-  const factions: FactionLike[] = raw.map((f) => ({
-    name: text(f.name),
-    goal: text(f.goal),
-    obstacle: text(f.obstacle),
-    relationship: text(f.relationship),
-    strength: text(f.strength),
-    origin: text(f.origin),
-    belief: text(f.belief),
-    territorySectorIds: arr(f.territorySectorIds).map(String),
-    presence: presenceOf(f).map((p) => p.detail),
-  }));
-  const soft = [
-    ...checkFactionGrounding(factions, text(data.factionSituation), {
-      ...inventory,
-      sectors,
-    }),
-    ...missingPresence(raw),
-    ...checkTerritoryAccess(factions, sectors, resolved.sectorEdges),
-  ];
-  return { hard, soft };
-}
+export type {
+  DungeonStageId,
+  DungeonStagedDeps,
+  DungeonStagedStats,
+  DungeonStagedResult,
+  StageCheck,
+} from "./dungeon-staged-types";
+export { checkFoundation, checkSectors } from "./dungeon-stage-checks";
+export { checkFactions } from "./dungeon-faction-checks";
+export { checkFactionGrounding } from "./dungeon-faction-grounding";
+export { checkTerritoryAccess } from "./dungeon-territory-access";
 
 // ---------------------------------------------------------------------------
 // Prompts
@@ -749,19 +244,12 @@ Required JSON schema:
 // Runner
 // ---------------------------------------------------------------------------
 
-type ProgressId = DungeonStageId | "coherence";
-
 const PROGRESS_STEPS: ReadonlyArray<{ id: ProgressId; label: string }> = [
   { id: "foundation", label: "History, secret and layout" },
   { id: "sectors", label: "Sectors, hazards and treasures" },
   { id: "factions", label: "Factions and what they want" },
   { id: "coherence", label: "Checking it all fits together" },
 ];
-
-interface RunState {
-  stats: DungeonStagedStats;
-  progress: StagedProgress<ProgressId>;
-}
 
 type StageOutcome = CheckedDraft<Json>;
 
