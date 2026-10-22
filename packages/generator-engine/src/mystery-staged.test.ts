@@ -510,6 +510,29 @@ describe("generateMysteryStaged", () => {
     expect(result?.output.content).toContain("**Mara Quill — clerk:**");
   });
 
+  it("carries the clue network for the GM graph", async () => {
+    const [foundation, cast, clues, pressure] = validStages();
+    const replies = [
+      foundation,
+      cast,
+      clues,
+      pressure,
+      { status: "consistent", issues: [] },
+      { status: "consistent", issues: [] },
+    ];
+    const result = await generateMysteryStaged(resolveMystery(), {
+      complete: async () => JSON.stringify(replies.shift()),
+    });
+
+    const graph = result?.output.mysteryGraph;
+    expect(graph?.nodes.filter((n) => n.kind === "clue")).toHaveLength(6);
+    expect(graph?.nodes.find((n) => n.mark === "culprit")?.label).toBe(
+      "Mara Quill",
+    );
+    expect(graph?.edges.some((e) => e.kind === "supports")).toBe(true);
+    expect(result?.output.content).not.toContain("mysteryGraph");
+  });
+
   it("states the expected JSON keys and the banned names in the prompts", async () => {
     const [foundation, cast, clues, pressure] = validStages();
     const replies = [foundation, cast, clues, pressure];

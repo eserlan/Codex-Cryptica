@@ -497,6 +497,8 @@ export interface GeneratorOutput {
   oneShot?: import("generator-engine").OneShotAdventure;
   /** Structured point-crawl network with topological nodes and routes. */
   pointCrawl?: import("generator-engine").PointCrawlNetwork;
+  /** GM-only clue network of a staged mystery, drawn as a graph. */
+  mysteryGraph?: import("generator-engine").MysteryGraph;
   /** Structured business document (#3627). */
   business?: import("generator-engine").BusinessDocument;
   /** Arbitrary generation metadata preserved across flows. */

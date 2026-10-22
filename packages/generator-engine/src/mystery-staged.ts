@@ -12,6 +12,8 @@ import {
   type DraftCheck,
   type JsonObject,
 } from "./staged-runtime";
+import { buildMysteryGraph } from "./mystery-graph";
+import { list, record, text } from "./mystery-obj";
 import { normalizeMysteryStage } from "./mystery-staged-normalize";
 import { BANNED_NAMES } from "./naming-policy";
 import { StagedProgress, type StagedProgressStep } from "./staged-progress";
@@ -32,13 +34,6 @@ export interface MysteryStagedDependencies {
 }
 
 type Obj = JsonObject;
-const record = (value: unknown): Obj =>
-  value && typeof value === "object" && !Array.isArray(value)
-    ? (value as Obj)
-    : {};
-const list = (value: unknown): unknown[] => (Array.isArray(value) ? value : []);
-const text = (value: unknown): string =>
-  typeof value === "string" ? value.trim() : "";
 const hasText = (value: unknown): boolean => text(value).length > 0;
 const missing = (value: Obj, keys: readonly string[]): string[] =>
   keys
@@ -511,6 +506,7 @@ function assembleOutput(
     lore: tidy(stripMysteryMarkdownImages(fixedTruth)),
     labels: ["mystery", "investigation", "mystery-generator"],
     status: "draft",
+    mysteryGraph: buildMysteryGraph(foundation, cast, clues),
   };
 }
 

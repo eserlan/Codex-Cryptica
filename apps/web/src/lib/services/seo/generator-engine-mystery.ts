@@ -95,6 +95,7 @@ export class GeneratorEngineMystery extends GeneratorEngineSpecialized {
             lore: result.output.lore,
             labels: result.output.labels,
             status: "draft",
+            mysteryGraph: result.output.mysteryGraph,
           }
         : null;
     } catch (error) {

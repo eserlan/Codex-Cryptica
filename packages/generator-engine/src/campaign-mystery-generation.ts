@@ -8,6 +8,7 @@ import { contextChain } from "./campaign-generator-registry";
 import { completeText } from "./campaign-generator-service-core";
 import { buildMysteryPrompt, parseMysteryResponse } from "./public-mystery";
 import { generateMysteryStaged } from "./mystery-staged";
+import type { MysteryGraph } from "./mystery-graph";
 
 function mapMysteryDraft(
   generator: CampaignGeneratorDefinition,
@@ -18,6 +19,7 @@ function mapMysteryDraft(
     content: string;
     lore: string;
     labels: string[];
+    mysteryGraph?: MysteryGraph;
   },
 ): GeneratedDraft {
   return generator.mapOutputToDraft(
@@ -27,6 +29,7 @@ function mapMysteryDraft(
       content: output.content,
       lore: output.lore,
       labels: output.labels,
+      mysteryGraph: output.mysteryGraph,
     },
     request,
   );

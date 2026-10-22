@@ -11,6 +11,7 @@
   import StarSystemDiagram from "../StarSystemDiagram.svelte";
   import ConstellationChart from "../ConstellationChart.svelte";
   import PointCrawlGraph from "../PointCrawlGraph.svelte";
+  import MysteryClueGraph from "../MysteryClueGraph.svelte";
   import { blobToDataUrl } from "$lib/utils/svg-export";
 
   let {
@@ -116,3 +117,4 @@
     />
   </div>
 {/if}
+<MysteryClueGraph graph={generatedData?.mysteryGraph} />
