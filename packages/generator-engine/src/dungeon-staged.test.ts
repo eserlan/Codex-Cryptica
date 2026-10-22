@@ -3,96 +3,18 @@ import {
   checkFactionGrounding,
   checkFactions,
   checkSectors,
-  checkTerritoryAccess,
   DUNGEON_REVIEW_MARKER,
   generateDungeonStaged,
 } from "./dungeon-staged";
-import { buildDungeonPrompt, type ResolvedDungeon } from "./public-dungeon";
+import {
+  OPTIONS,
+  setup,
+  foundation,
+  sectors,
+  faction,
+  factions,
+} from "./dungeon-staged.test-fixtures";
 import type { StagedProgressStep } from "./staged-progress";
-
-const OPTIONS = { genre: "Classic Fantasy", scale: "Sprawling" };
-
-function setup() {
-  const { resolved } = buildDungeonPrompt(OPTIONS);
-  return resolved;
-}
-
-function foundation(resolved: ResolvedDungeon) {
-  return {
-    title: "The Glasswrights' Descent",
-    summary: "A drowned workshop that still hums.",
-    throughline:
-      "Glasswrights dug it, the tide broke it, now two crews fight over it.",
-    history: "Glasswrights cut the descent to temper glass in the deep heat.",
-    currentState: "Contested by two crews.",
-    signatureFeature: "A furnace that burns blue without fuel.",
-    secret: "The furnace feeds on whoever tends it.",
-    sectorBriefs: resolved.sectors.map((s) => ({
-      id: s.id,
-      brief: `Role of ${s.id}.`,
-    })),
-  };
-}
-
-function sectors(resolved: ResolvedDungeon) {
-  return {
-    sectors: resolved.sectors.map((s, i) => ({
-      id: s.id,
-      name: `Hollow ${i + 1}`,
-      description: `Description of hollow ${i + 1}.`,
-      stockType: "Trap",
-      stockDetail: `Unique brass idol number ${i + 1}`,
-    })),
-    hazards: ["Scalding steam vents", "A floor that tilts toward the furnace"],
-    treasures: ["A glassblower's signet", "A map etched into a brass plate"],
-    hooks: ["A guild offers a bounty", "A salvage crew asks for help"],
-  };
-}
-
-function faction(
-  name: string,
-  territory: string[],
-  goal = "Cap the steam vents",
-) {
-  return {
-    name,
-    identity: "A crew of salvagers.",
-    virtue: "Patient",
-    vice: "Greedy",
-    goal,
-    drive: "WRONG",
-    obstacle: "Scalding steam vents block the lower hollows.",
-    origin: "Came for the glass after the tide.",
-    belief: "The furnace can be tamed.",
-    territorySectorIds: territory,
-    presence: territory.map((id) => ({
-      sectorId: id,
-      detail: `${name} camp in ${id}.`,
-    })),
-    strength: "Heat-proof gear.",
-    leader: { name: `${name} Lead`, description: "Runs the crew." },
-    notable: { name: `${name} Second`, description: "Keeps the books." },
-    relationship: "Stalls the rivals while mapping the vents.",
-  };
-}
-
-function factions(
-  resolved: ResolvedDungeon,
-  override: Partial<ReturnType<typeof faction>> = {},
-) {
-  const [a, b] = [resolved.sectors[0].id, resolved.sectors[1].id];
-  return {
-    factionSituation: "Lantern Wrights and Weir Wardens both want the furnace.",
-    factions: [
-      { ...faction("Lantern Wrights", [a]), ...override },
-      faction(
-        "Weir Wardens",
-        [b],
-        "Seal the signet away from the Lantern Wrights",
-      ),
-    ],
-  };
-}
 
 type Reply = (n: number, message: string) => unknown;
 function script(replies: {
@@ -533,97 +455,6 @@ describe("generateDungeonStaged", () => {
       }),
     ).rejects.toBeDefined();
     expect(s.calls).toHaveLength(1);
-  });
-});
-
-describe("checkTerritoryAccess", () => {
-  const SECTORS = ["A", "B", "C", "D"].map((name, i) => ({
-    id: `sector-${i + 1}`,
-    name: `${name} Hall`,
-  }));
-  const CHAIN = [0, 1, 2].map((i) => ({
-    from: i,
-    to: i + 1,
-    via: "the main passage",
-  }));
-  const holder = (territory: string[], text = "Strong walls.") => ({
-    name: "Custodians",
-    goal: "Keep the records.",
-    obstacle: "Few hands.",
-    relationship: "Wary.",
-    strength: text,
-    origin: "",
-    belief: "",
-    territorySectorIds: territory,
-  });
-
-  it("flags territory split by a sector it does not hold", () => {
-    const issues = checkTerritoryAccess(
-      [holder(["sector-1", "sector-3"])],
-      SECTORS,
-      CHAIN,
-    );
-    expect(issues).toHaveLength(1);
-    expect(issues[0]).toContain("only connect through B Hall;");
-    expect(issues[0]).not.toContain("D Hall");
-  });
-
-  it.each([
-    ["Tunnel-fighting veterans."],
-    ["Supplies run low and morale is cut off from hope."],
-    ["They plan to cross swords with the Choir."],
-    ["They pass the time cataloguing bones."],
-  ])(
-    "still flags a split territory when the text only seems to explain it: %s",
-    (strength) => {
-      expect(
-        checkTerritoryAccess(
-          [holder(["sector-1", "sector-3"], strength)],
-          SECTORS,
-          CHAIN,
-        ),
-      ).toHaveLength(1);
-    },
-  );
-
-  it.each([
-    ["A truce lets them pass the B Hall."],
-    ["They smuggle supplies past the Choir: by night, in sacks."],
-    ["The archive is an isolated enclave behind Choir lines."],
-    ["They bribe the guards of b hall for each crossing."],
-    ["Runners use a secret passage under the floor."],
-  ])("accepts a split territory whose text says how: %s", (strength) => {
-    expect(
-      checkTerritoryAccess(
-        [holder(["sector-1", "sector-3"], strength)],
-        SECTORS,
-        CHAIN,
-      ),
-    ).toEqual([]);
-  });
-
-  it("accepts connected territory, a shortcut, or text that says how it crosses", () => {
-    expect(
-      checkTerritoryAccess([holder(["sector-1", "sector-2"])], SECTORS, CHAIN),
-    ).toEqual([]);
-    expect(
-      checkTerritoryAccess([holder(["sector-1", "sector-4"])], SECTORS, [
-        ...CHAIN,
-        { from: 0, to: 3, via: "a collapsed shaft" },
-      ]),
-    ).toEqual([]);
-    expect(
-      checkTerritoryAccess(
-        [
-          holder(
-            ["sector-1", "sector-3"],
-            "A truce lets them pass the B Hall.",
-          ),
-        ],
-        SECTORS,
-        CHAIN,
-      ),
-    ).toEqual([]);
   });
 });
 
