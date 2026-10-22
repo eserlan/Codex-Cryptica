@@ -40,6 +40,7 @@ describe("shouldSyncGeneratorTheme", () => {
     expect(shouldSyncGeneratorTheme("council-vote")).toBe(true);
     expect(shouldSyncGeneratorTheme("secret-society")).toBe(true);
     expect(shouldSyncGeneratorTheme("plot-twist-generator")).toBe(true);
+    expect(shouldSyncGeneratorTheme("mystery-investigation")).toBe(true);
   });
 
   it("is false for an unrecognized slug", () => {

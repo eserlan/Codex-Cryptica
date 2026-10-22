@@ -736,7 +736,7 @@
     />
   {:else if slug === "mystery-investigation"}
     <MysteryInvestigationFormFields
-      bind:genre={mysteryInvestigation.genre}
+      bind:genre={activeTheme}
       bind:tone={mysteryInvestigation.tone}
       bind:mysteryType={mysteryInvestigation.mysteryType}
       bind:scope={mysteryInvestigation.scope}
