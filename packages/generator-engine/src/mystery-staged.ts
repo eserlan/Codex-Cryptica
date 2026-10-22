@@ -90,6 +90,7 @@ function checkFoundation(
       "means",
       "opportunity",
       "constraints",
+      "atStart",
       ...KEY_ITEM_FIELDS,
     ]),
   );
@@ -277,6 +278,7 @@ function checkClues(data: Obj, foundation: Obj, cast: Obj): DraftCheck {
         if (
           !pathClues.length ||
           new Set(pathClues).size !== pathClues.length ||
+          !hasText(path.reasoning) ||
           !pathClues.every((id) => clueIds.includes(id)) ||
           !pathItems.some((clue) =>
             list(clue.supports).map(text).includes(revelationId),
@@ -313,7 +315,11 @@ function checkClues(data: Obj, foundation: Obj, cast: Obj): DraftCheck {
 /** The goal is fixed; how the party reaches it is open. */
 function missingSolutionSpace(data: Obj): string[] {
   const hard = missing(data, ["objective"]);
-  if (list(data.approaches).filter(hasText).length < 3)
+  const approaches = list(data.approaches)
+    .map(text)
+    .map((approach) => approach.trim().toLowerCase())
+    .filter(Boolean);
+  if (new Set(approaches).size < 3)
     hard.push(
       '"approaches" needs at least three different ways the party could reach the objective',
     );
@@ -406,6 +412,15 @@ function items(
   return values.map((value, index) => render(record(value), index)).join("\n");
 }
 
+function readableUnknownId(id: string): string {
+  const kind = /^(person|place|clue|rev)-\d+$/.exec(id)?.[1];
+  if (kind === "person") return "an unlisted person";
+  if (kind === "place") return "an unlisted place";
+  if (kind === "clue") return "an unlisted lead";
+  if (kind === "rev") return "an unlisted conclusion";
+  return id;
+}
+
 function assembleOutput(
   foundation: Obj,
   cast: Obj,
@@ -422,7 +437,9 @@ function assembleOutput(
     people.map((person) => [text(person.id), text(person.name)]),
   );
   const sourceName = (id: unknown) =>
-    placeNames.get(text(id)) ?? personNames.get(text(id)) ?? text(id);
+    placeNames.get(text(id)) ??
+    personNames.get(text(id)) ??
+    readableUnknownId(text(id));
   // Players never see clue ids: a lead that points at another clue says "Lead N".
   const clueLabels = new Map(
     list(clues.clues).map((clue, index) => [

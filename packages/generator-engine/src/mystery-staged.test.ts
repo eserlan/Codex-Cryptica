@@ -22,6 +22,7 @@ function validStages() {
       methodReason:
         "The archive is locked after hours, so a copied key was needed",
       disputedFact: "Whether the north pasture was common land",
+      atStart: "The record is still in the archive vault",
       victimStatus:
         "The keeper is locked in the bell loft and can be freed with the spare key",
     },
@@ -70,8 +71,17 @@ function validStages() {
     })),
     independentPaths: ["record", "bell", "key"].flatMap(
       (revelationId, index) => [
-        { revelationId, clueIds: [`clue-${index + 1}`] },
-        { revelationId, clueIds: [`clue-${index + 4}`] },
+        {
+          revelationId,
+          clueIds: [`clue-${index + 1}`],
+          reasoning: "This clue directly establishes the conclusion.",
+        },
+        {
+          revelationId,
+          clueIds: [`clue-${index + 4}`],
+          reasoning:
+            "This independent clue directly establishes the conclusion.",
+        },
       ],
     ),
   };
@@ -219,7 +229,7 @@ describe("generateMysteryStaged", () => {
     expect(nodeIds?.length).toBe(new Set(nodeIds).size);
   });
 
-  it("replaces a route that does not support its revelation with one derived from the clues", async () => {
+  it("retries a route that does not support its revelation", async () => {
     const [foundation, cast, validClues, pressure] = validStages();
     const clues = {
       ...validClues,
@@ -231,6 +241,7 @@ describe("generateMysteryStaged", () => {
       foundation,
       cast,
       clues,
+      validClues,
       pressure,
       { status: "consistent", issues: [] },
       { status: "consistent", issues: [] },
@@ -239,18 +250,14 @@ describe("generateMysteryStaged", () => {
       complete: async () => JSON.stringify(replies.shift()),
     });
 
-    expect(result?.stats.aiCalls).toBe(6);
+    expect(result?.stats.aiCalls).toBe(7);
     expect(result?.output.content).toContain("**Culprit:** Lead 1");
   });
 
-  it("stops at the clues when no two sources support a revelation", async () => {
+  it("does not derive unreasoned routes when model paths are missing", async () => {
     const [foundation, cast, validClues, pressure] = validStages();
     const clues = {
-      clues: validClues.clues.map((clue) => ({
-        ...clue,
-        sourceId: "place-1",
-        supports: ["record"],
-      })),
+      clues: validClues.clues,
       independentPaths: [],
     };
     const replies = [foundation, cast, clues, clues, pressure];
@@ -549,7 +556,7 @@ describe("generateMysteryStaged", () => {
     expect(stopped).toBe("clues");
   });
 
-  it("drops overlapping routes and derives independent ones from the clues", async () => {
+  it("drops overlapping routes and retries for independent explanations", async () => {
     const [foundation, cast, clues, pressure] = validStages();
     clues.clues[0].leadsTo = ["clue-2"];
     clues.clues[3].leadsTo = ["clue-2"];
@@ -561,6 +568,7 @@ describe("generateMysteryStaged", () => {
       foundation,
       cast,
       clues,
+      validStages()[2],
       pressure,
       { status: "consistent", issues: [] },
       { status: "consistent", issues: [] },
@@ -570,7 +578,7 @@ describe("generateMysteryStaged", () => {
     });
 
     expect(result?.stats.outcome).toBe("staged");
-    expect(result?.stats.repairedStages).toEqual([]);
+    expect(result?.stats.repairedStages).toContain("mystery-clues");
   });
 
   it("keeps the checked case when the repair reply is unusable", async () => {
@@ -659,6 +667,41 @@ describe("generateMysteryStaged", () => {
     expect(stopped).toBe("pressure");
   });
 
+  it("stops at pressure when the approaches are duplicate strings", async () => {
+    const [foundation, cast, clues, pressure] = validStages();
+    const scripted = {
+      ...pressure,
+      approaches: [
+        "Search the archive",
+        " search the archive ",
+        "SEARCH THE ARCHIVE",
+      ],
+    };
+    let stopped: string | undefined;
+    const replies = [foundation, cast, clues, scripted, scripted];
+    const result = await generateMysteryStaged(resolveMystery(), {
+      complete: async () => JSON.stringify(replies.shift()),
+      onStats: (stats) => (stopped = stats.stoppedAt),
+    });
+
+    expect(result).toBeNull();
+    expect(stopped).toBe("pressure");
+  });
+
+  it("requires a nonblank starting state in the foundation", async () => {
+    const [foundation] = validStages();
+    delete foundation.truth.atStart;
+    const replies = [foundation, foundation];
+    let stopped: string | undefined;
+    const result = await generateMysteryStaged(resolveMystery(), {
+      complete: async () => JSON.stringify(replies.shift()),
+      onStats: (stats) => (stopped = stats.stoppedAt),
+    });
+
+    expect(result).toBeNull();
+    expect(stopped).toBe("foundation");
+  });
+
   it("replaces internal ids in model prose with names and labels", async () => {
     const [foundation, cast, clues, pressure] = validStages();
     foundation.truth.motive = "person-1 wanted what clue-2 hints at";
@@ -683,6 +726,55 @@ describe("generateMysteryStaged", () => {
     expect(result?.output.content).toContain(
       "If Bell tower burns, Sella Reed flees.",
     );
+  });
+
+  it("replaces unknown internal ids in model prose with readable fallbacks", async () => {
+    const [foundation, cast, clues, pressure] = validStages();
+    foundation.truth.motive = "The lost note names place-99 and rev-99.";
+    pressure.escalation = "If clue-99 appears, person-99 escapes.";
+    const replies = [
+      foundation,
+      cast,
+      clues,
+      pressure,
+      { status: "consistent", issues: [] },
+      { status: "consistent", issues: [] },
+    ];
+    const result = await generateMysteryStaged(resolveMystery(), {
+      complete: async () => JSON.stringify(replies.shift()),
+    });
+
+    const all = `${result?.output.content}\n${result?.output.lore}`;
+    expect(all).not.toMatch(/\b(?:person|place|clue|rev)-\d+\b/);
+    expect(all).toContain("an unlisted place");
+    expect(all).toContain("an unlisted conclusion");
+    expect(all).toContain("an unlisted lead");
+    expect(all).toContain("an unlisted person");
+  });
+
+  it("retries clue routes that have no explanation", async () => {
+    const [foundation, cast, clues, pressure] = validStages();
+    const unexplained = {
+      ...clues,
+      independentPaths: clues.independentPaths.map((path, index) =>
+        index === 0 ? { ...path, reasoning: " " } : path,
+      ),
+    };
+    const replies = [
+      foundation,
+      cast,
+      unexplained,
+      clues,
+      pressure,
+      { status: "consistent", issues: [] },
+      { status: "consistent", issues: [] },
+    ];
+    const result = await generateMysteryStaged(resolveMystery(), {
+      complete: async () => JSON.stringify(replies.shift()),
+    });
+
+    expect(result?.stats.repairedStages).toContain("mystery-clues");
+    expect(result?.output.content).toContain("This clue directly establishes");
   });
 
   it("shows where things stand when play starts and why each route works", async () => {
