@@ -77,7 +77,7 @@ Implement alongside Part A unless the user explicitly excludes the no-login tool
 
 ### Page wiring
 
-4. **New `apps/web/src/lib/components/seo/<Name>FormFields.svelte`**, mirroring `QuestFormFields.svelte`: `$bindable` props per option (defaulted from `<name>Config`), `SelectWithCustomOption` per select, a "Surprise Me" button, plain `<textarea>`/`<input>` for free text. Only declare a `selectClass` if you use it separately from `inputClass`, or eslint's `no-unused-vars` fails the commit.
+4. **New `apps/web/src/lib/components/seo/<Name>FormFields.svelte`**, mirroring `QuestFormFields.svelte`: `$bindable` props per option (defaulted from `<name>Config`), `SelectWithCustomOption` per select, a "Surprise Me" button, plain `<textarea>`/`<input>` for free text. **Surprise Me randomizes the options only, never `genre`/theme.** The genre is the user's world choice and is kept in sync with the page theme (`generator-theme-sync.ts`); re-rolling it fights that sync. Pick every other option, leave `genre` alone, and add a form-field test that sets a non-default genre, clicks Surprise Me, and asserts the genre is unchanged (make the mocked `pickFrom` return a different value so the test can fail). Only declare a `selectClass` if you use it separately from `inputClass`, or eslint's `no-unused-vars` fails the commit.
 
 5. **`generator-page-meta.ts`**: add the slug to `ValidSlug` and a `slugMeta[slug]` entry (`pageTitle`, `metaDescription`, `introTitle`, `eyebrow`, `introText`, `canonicalPath`, `faqs`, optional `relatedLinks`).
 
