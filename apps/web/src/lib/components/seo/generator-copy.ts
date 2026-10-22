@@ -56,6 +56,7 @@ export function buildSectionMarkdown(markdown: string): string {
 /** Case-file sections that spoil the answer; the handout leaves them out. */
 const MYSTERY_GM_HEADINGS = new Set([
   "actual timeline",
+  "revelations",
   "suspect knowledge and alibis",
   "clue index",
   "lead graph (adjacency list)",
