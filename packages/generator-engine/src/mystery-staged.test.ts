@@ -1159,3 +1159,59 @@ describe("concept block in stage 1", () => {
     expect(messages[0]).toContain("Concept constraints for this case");
   });
 });
+
+describe("case seed in stage 1", () => {
+  it("uses a supplied seed in place of the rolled concept", async () => {
+    const [foundation, cast, clues, pressure] = validStages();
+    const replies = [
+      foundation,
+      cast,
+      clues,
+      pressure,
+      { status: "consistent", issues: [] },
+      { status: "consistent", issues: [] },
+    ];
+    const messages: string[] = [];
+    await generateMysteryStaged(resolveMystery(), {
+      complete: async (_system, message) => {
+        messages.push(message);
+        return JSON.stringify(replies.shift());
+      },
+      seed: {
+        premise: "A dyer vanishes the night before the levy.",
+        stake: "the guild charter",
+        setting: "a dye works",
+        distinctiveElement: "a vat that glows",
+        titleIdea: "Indigo Night",
+      },
+    });
+    expect(messages[0]).toContain(
+      "Case seed, chosen before writing and locked",
+    );
+    expect(messages[0]).toContain("Indigo Night");
+    expect(messages[0]).not.toContain("Concept constraints for this case");
+  });
+
+  it("falls back to the rolled concept when the seed is null", async () => {
+    const [foundation, cast, clues, pressure] = validStages();
+    const replies = [
+      foundation,
+      cast,
+      clues,
+      pressure,
+      { status: "consistent", issues: [] },
+      { status: "consistent", issues: [] },
+    ];
+    const messages: string[] = [];
+    await generateMysteryStaged(resolveMystery(), {
+      complete: async (_system, message) => {
+        messages.push(message);
+        return JSON.stringify(replies.shift());
+      },
+      seed: null,
+      rng: () => 0.5,
+    });
+    expect(messages[0]).toContain("Concept constraints for this case");
+    expect(messages[0]).not.toContain("Case seed, chosen before writing");
+  });
+});

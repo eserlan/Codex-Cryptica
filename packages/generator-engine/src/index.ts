@@ -394,6 +394,13 @@ export {
   type MysteryStagedStats,
 } from "./mystery-staged";
 export {
+  generateConceptSeed,
+  formatSeedBlock,
+  type ConceptSeed,
+  type ConceptSeedDeps,
+  type ConceptSeedInput,
+} from "./concept-seed";
+export {
   buildComicBookEventPrompt,
   parseComicBookEventResponse,
   generateComicBookEventLocal,

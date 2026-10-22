@@ -91,23 +91,28 @@ export function buildMysteryPrompt(
   systemInstruction: string;
   userMessage: string;
   resolved: ResolvedMysteryOptions;
+  /**
+   * The campaign and session context alone, for the staged route, which adds
+   * its own case seed. The one-pass `userMessage` carries a concept of its own.
+   */
+  context: string;
 } {
   const resolved = resolveMystery(options);
   const avoid = avoidNamesExcludingContext(
     resolved.avoidNames,
     resolved.campaignContext,
   );
-  const concept = formatConceptBlock(
-    rollConcept(resolved.genre, resolved.tone),
-  );
-  const context = [resolved.campaignContext, sessionContext, concept]
+  const context = [resolved.campaignContext, sessionContext]
     .map((value) => value.trim())
     .filter(Boolean)
     .join("\n\n");
+  const concept = formatConceptBlock(
+    rollConcept(resolved.genre, resolved.tone),
+  );
   const userMessage = `Create a playable, system-neutral mystery investigation as JSON. This MVP uses Fixed Truth: establish one canonical GM-only solution and keep it stable throughout the case. It is not an emergent-solution case.
 
 Options: ${JSON.stringify({ genre: resolved.genre, tone: resolved.tone, mysteryType: resolved.mysteryType, scope: resolved.scope, complexity: resolved.complexity, clueDensity: resolved.clueDensity, pressure: resolved.pressure })}
-${formatCampaignContextBlock(context)}
+${formatCampaignContextBlock(context)}${concept ? `\n${concept}\n` : ""}
 ${avoid.length ? `Already used names — do not reuse: ${avoid.join(", ")}` : ""}
 ${NAME_BAN_PROMPT}
 
@@ -119,6 +124,7 @@ All IDs must be stable and cross-references valid. Every essential revelation ne
       "You are an experienced mystery designer for tabletop role-playing games. Create fair, playable investigations with a stable truth, multiple evidence routes, and explicit player/GM information boundaries. Return valid JSON only.",
     userMessage,
     resolved,
+    context,
   };
 }
 

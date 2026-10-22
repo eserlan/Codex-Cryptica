@@ -18,6 +18,7 @@ import {
   findPlacementIssues,
 } from "./mystery-consistency";
 import { formatConceptBlock, rollConcept } from "./concept-dimensions";
+import { type ConceptSeed, formatSeedBlock } from "./concept-seed";
 import { buildMysteryGraph } from "./mystery-graph";
 import { list, record, text } from "./mystery-obj";
 import { normalizeMysteryStage } from "./mystery-staged-normalize";
@@ -38,6 +39,11 @@ export interface MysteryStagedDependencies {
   onProgress?: (steps: StagedProgressStep[]) => void;
   onStats?: (stats: MysteryStagedStats) => void;
   contextPrefix?: string;
+  /**
+   * The case seed chosen before this run (see `concept-seed.ts`). Absent or
+   * `null` means the rolled dimensions alone shape the case.
+   */
+  seed?: ConceptSeed | null;
   /** Source for the rolled concept; injected in tests. */
   rng?: Rng;
 }
@@ -710,9 +716,11 @@ export async function generateMysteryStaged(
     { id: "mystery-final-audit", label: "Final consistency check" },
   ] as const;
   const progress = new StagedProgress(steps, deps.onProgress);
-  const concept = formatConceptBlock(
-    rollConcept(resolved.genre, resolved.tone, deps.rng ?? defaultRng),
-  );
+  const concept = deps.seed
+    ? formatSeedBlock(deps.seed)
+    : formatConceptBlock(
+        rollConcept(resolved.genre, resolved.tone, deps.rng ?? defaultRng),
+      );
   const context = [deps.contextPrefix, concept].filter(Boolean).join("\n\n");
   const stats: MysteryStagedStats = {
     outcome: "staged",

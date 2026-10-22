@@ -1,5 +1,6 @@
 import {
   buildMysteryPrompt,
+  generateConceptSeed,
   generateMysteryLocal,
   generateMysteryStaged,
   parseMysteryResponse,
@@ -9,6 +10,7 @@ import {
 import {
   formatRecentInputsNote,
   generationInputHistoryStore,
+  generationSeedHistoryStore,
   summarizeResolvedInputs,
 } from "./generation-input-history";
 import { GeneratorEngineSpecialized } from "./generator-engine-specialized";
@@ -73,16 +75,28 @@ export class GeneratorEngineMystery extends GeneratorEngineSpecialized {
     controls: MysteryRunControls,
   ): Promise<GeneratorOutput | null> {
     try {
+      const complete = (system: string, message: string) =>
+        this.runModel(
+          system,
+          message,
+          LANGUAGE_GENERATION_CONFIG,
+          false,
+          controls.signal,
+        );
+      const seed = await generateConceptSeed(
+        {
+          genre: prompt.resolved.genre,
+          tone: prompt.resolved.tone,
+          context: prompt.context,
+          recent: generationSeedHistoryStore.recent("mystery-investigation"),
+        },
+        { complete, signal: controls.signal },
+      );
+      generationSeedHistoryStore.record("mystery-investigation", seed);
       const result = await generateMysteryStaged(prompt.resolved, {
-        complete: (system, message) =>
-          this.runModel(
-            system,
-            message,
-            LANGUAGE_GENERATION_CONFIG,
-            false,
-            controls.signal,
-          ),
-        contextPrefix: prompt.userMessage,
+        complete,
+        contextPrefix: prompt.context,
+        seed,
         onProgress: controls.onProgress,
         signal: controls.signal,
       });

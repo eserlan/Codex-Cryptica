@@ -96,48 +96,60 @@ Target from the plan: no motif in more than 2 of 16, and no "The X Beneath Y" pa
 
 ## PR 2: LLM seed stage (pick from candidates)
 
+Branch: `feat/generator-concept-seed`, stacked on PR 1 (`feat/generator-concept-diversity`) because it uses `concept-dimensions.ts`.
+
+**Status: implemented for mystery and one-shot. Adventure, heist and tome are deferred** (see T10).
+
 Code rolls the dimensions. The model writes several consistent seeds that fit them, and code picks one. Choosing from a list instead of taking the first answer counters mode collapse, because a model's first idea is always its most typical. This PR also owns the title problem from T6.
 
 ### T8. Shared seed stage
 
-New file: `packages/generator-engine/src/concept-seed.ts`, alongside `staged-runtime.ts`.
+File: `packages/generator-engine/src/concept-seed.ts`
 
-- [ ] `generateConceptSeed({ dimensions, genre, context, recent, complete, rng, signal })`:
-  - asks for **5 candidate seeds** shaped `{premise, stake, setting, distinctiveElement, titleIdea}`, consistent with the rolled dimensions and the campaign context;
-  - normalises and checks the reply through `runCheckedStage`;
-  - drops candidates that match recent concepts (shared-word overlap with the seed history);
-  - picks one with `rng`.
-- [ ] If the reply is unusable after retries, it falls back to the dimensions alone and never blocks generation.
-- [ ] Tests:
-  - picks from the valid candidates;
-  - filters recent repeats;
-  - all candidates filtered → picks the least similar;
-  - malformed reply → falls back to dimensions only;
-  - an abort signal stops it.
+- [x] `generateConceptSeed({ genre, tone, context, recent }, { complete, rng, signal })` asks for five candidates shaped `{premise, stake, setting, distinctiveElement, titleIdea}`, consistent with the rolled dimensions and the context. It checks the reply with `askChecked` (the runtime that `runCheckedStage` wraps; it has no progress object to update). Only the first five candidates are considered, even if the model returns more.
+- [x] Picks at random among candidates that share fewer than two content words with a recent seed (premise and title idea). If every candidate repeats, picks at random among the least similar.
+- [x] Returns `null` when no usable reply arrives after retries, or when the call fails, so the caller falls back to the rolled dimensions. Cancellation propagates.
+- [x] Tests (14): complete and incomplete candidates, trimming, bad shapes, repeat filtering, least-similar fallback, the injected rng, the recent seeds and dimensions in the request, unreadable replies, a failing call, partial replies with a retry, cancellation, the candidate cap, and the block format.
 
-### T9. Concept history
+### T9. Seed history
 
 File: `apps/web/src/lib/services/seo/generation-input-history.ts`
 
-- [ ] Record each run's accepted seed (premise, stake, title) per generator, not just the options. It stays in `sessionStorage` and keeps the last 5.
-- [ ] Pass the history to T8 as `recent`.
-- [ ] Tests: record, read back, cap, and broken storage.
+- [x] `GenerationSeedHistoryStore`: session storage under `GENERATION_SEED_HISTORY`, five seeds per generator, most recent first, one per premise. Malformed and blank entries are dropped on read and write.
+- [x] Mystery (web) and one-shot (web) read the history and record the accepted seed.
+- [ ] The campaign mystery path has no web history yet and passes `recent: []`.
+- [x] Tests (7): record and read back, per-generator keys, premise de-duplication, the cap, blank and incomplete seeds, malformed stored entries, and unavailable storage. A blank-premise bug was found by these tests and fixed.
 
 ### T10. Lock the seed into the stage pipelines
 
-- [ ] Mystery first: stage 1 receives a `SEED (locked)` block and must honour its premise and stake. The title comes from the candidate `titleIdea`, which addresses T6.
-- [ ] Then adventure, heist, tome and one-shot, each with a test that the seed reaches the first stage prompt.
-- [ ] Add an "Imagining the premise" step to `staged-progress`.
+- [x] **Mystery** (`mystery-staged.ts`): `deps.seed` replaces the rolled concept in stage 1 with a locked case seed block. The title idea is the suggested title. Callers run the seed first: the web service (with history) and the campaign path (`campaign-mystery-generation.ts`).
+- [x] **Mystery one-pass** (`public-mystery.ts`): `buildMysteryPrompt` now returns `context` (campaign and session context only). The staged route uses `context`, so the one-pass concept block no longer reaches stage 1. The web staged route previously passed `userMessage` as its context, which also carried the one-pass instructions; that is now `context`, a behaviour change.
+- [x] **One-shot** (`one-shot-staged.ts`): `deps.seed` replaces the rolled concept in the core stage. The web caller runs the seed first, with one-shot history.
+- [ ] **Adventure, heist, tome**: deferred. Their prompts are built synchronously from the context chain, so they need an async pre-pass in the campaign service, as the name pre-pass does. That is a separate change.
+- [ ] "Imagining the premise" progress step: not added. It would change the step lists that the staged progress tests pin. Users will see no step while the seed call runs.
 
 ### T11. Live check
 
-- [ ] Run 30 to 50 generations on default settings across mystery, adventure, one-shot, heist and tome.
-- [ ] Compare central concepts, mechanisms, objects and title patterns against the T6 baseline. The title target must be met here.
-- [ ] Note the added latency for each generator.
+Scratch scripts, not committed. Default mystery options (Classic Fantasy). Each batch of eight ran in parallel; each batch received the previous batch's accepted seeds as history, the same as a session.
+
+| Variant                                                                  | Succeeded      | Successful titles with "Bell" | Titles with "Beneath" |
+| ------------------------------------------------------------------------ | -------------- | ----------------------------- | --------------------- |
+| Seed on (five batches, 40 runs)                                          | 27 of 40 (67%) | 1 of 27                       | 0 of 27               |
+| Seed off, concept block only (three batches, 24 runs, earlier and today) | 18 of 24 (75%) | 10 of 18                      | 9 of 18               |
+
+- **Titles: met.** The seed stage removes the bell and "Beneath" defaults from the titles. This was the reason for the stage.
+- **Success rate: inconclusive.** The 8-point gap is within the noise at these sample sizes. Most failures in both variants stop at stage 3, the independent-route check, which is a pre-existing staged-route issue.
+- **Locked vs soft seed block:** the locked wording (the plan's design) was used for 32 runs, 21 succeeded (66%). A softened wording gave 6 of 8 in one batch. Too few runs to choose between them, so the locked wording stays.
+- The seed-off baseline was measured on a noisier day: 4 of 8, with 4 bell titles. The earlier 7 of 8 and 7 of 8 batches are not directly comparable.
 
 ### T12. Validate and open the PR
 
-- [ ] Same gates as T7.
+- [x] `bun scripts/lint-changed.mjs`: passes.
+- [x] `bun scripts/test-changed.mjs`: passes.
+- [x] `packages/generator-engine` suite: passes, except the pre-existing heist failure (also fails on the clean branch).
+- [x] `apps/web` svelte-check: 0 errors. It found a type error in PR 1's `concept-dimensions.ts`; fixed here and in PR 1.
+- [x] `bunx fallow audit`: see the PR body.
+- [ ] codex-review and the PR.
 
 ---
 
