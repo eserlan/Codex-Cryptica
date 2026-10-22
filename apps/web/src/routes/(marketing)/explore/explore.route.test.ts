@@ -50,7 +50,7 @@ describe("/explore route", () => {
     ).not.toBe("https://codexcryptica.com/og-image.png");
   });
 
-  it("renders Features and silhouettes links under Build & Explore", () => {
+  it("renders Features, silhouettes, and biomes links under Build & Explore", () => {
     render(Page, { props: { data: emptyData } });
 
     const featuresLink = document.querySelector('a[href="/features"]');
@@ -60,6 +60,10 @@ describe("/explore route", () => {
     const silhouettesLink = document.querySelector('a[href="/silhouettes"]');
     expect(silhouettesLink).toBeTruthy();
     expect(silhouettesLink?.textContent).toContain("Vector Silhouettes");
+
+    const biomesLink = document.querySelector('a[href="/biomes"]');
+    expect(biomesLink).toBeTruthy();
+    expect(biomesLink?.textContent).toContain("Biome Explorer");
   });
 
   it("groups the topic links under Browse by Topic in directory order", () => {
