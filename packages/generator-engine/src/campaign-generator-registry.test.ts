@@ -1,5 +1,6 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import {
+  contextChain,
   getGenerator,
   getDefaultInstruction,
   isTitleBanned,
@@ -1177,12 +1178,12 @@ describe("buildPrompt template injection", () => {
     // "## Hook") must not appear once a template supplies a different set —
     // showing both would give the model two competing heading sets.
     expect(withTpl).not.toContain("## Who She Is");
-    expect(withTpl).not.toContain("Ottavia Brenn");
+    expect(withTpl).not.toContain("Hesper Quayle");
 
     const withoutTpl = getGenerator("npc").buildPrompt(
       run("npc", { vaultContext: ctxWithTemplate(false) }),
     );
-    expect(withoutTpl).toContain("Ottavia Brenn");
+    expect(withoutTpl).toContain("Hesper Quayle");
   });
 });
 
@@ -1916,5 +1917,54 @@ describe("point-crawl generator", () => {
     expect(draft.entityType).toBe("note");
     expect(draft.pointCrawl?.nodes).toHaveLength(9);
     expect(draft.labels).toContain("point-crawl");
+  });
+});
+
+describe("story generator concept block", () => {
+  it("adds a concept to the adventure, heist and tome prompts", () => {
+    for (const id of ["adventure", "heist", "tome"] as const) {
+      const prompt = getGenerator(id).buildPrompt(
+        run(id, { options: { genre: "Pirate", tone: "Tense" } }),
+      );
+      expect(prompt, id).toContain("Concept constraints for this case");
+    }
+  });
+
+  it("uses the adventure theme when rolling concepts without explicit genre or vault context", () => {
+    const random = vi.spyOn(Math, "random").mockReturnValue(0.85);
+    try {
+      const prompt = getGenerator("adventure").buildPrompt(
+        run("adventure", { themeId: "pirate" }),
+      );
+      expect(prompt).toContain("a formal procedure must be completed");
+    } finally {
+      random.mockRestore();
+    }
+  });
+
+  it("leaves other generators without a concept", () => {
+    const prompt = getGenerator("npc").buildPrompt(run("npc"));
+    expect(prompt).not.toContain("Concept constraints for this case");
+  });
+
+  it("returns the same concept for repeated calls on one request", () => {
+    const request = run("heist", { options: { genre: "Cosmic Horror" } });
+    // Pin the random source so a fresh roll would pick different entries.
+    const random = vi.spyOn(Math, "random").mockReturnValue(0);
+    try {
+      const first = contextChain(request);
+      expect(first).toContain("Concept constraints for this case");
+      random.mockReturnValue(0.99);
+      expect(contextChain(request)).toBe(first);
+    } finally {
+      random.mockRestore();
+    }
+  });
+
+  it("adds no concept to a refinement of an existing entity", () => {
+    const prompt = getGenerator("adventure").buildPrompt(
+      run("adventure", { interaction: { input: "make it darker" } }),
+    );
+    expect(prompt).not.toContain("Concept constraints for this case");
   });
 });

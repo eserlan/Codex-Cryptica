@@ -17,10 +17,12 @@ import {
   findCircularItemRoutes,
   findPlacementIssues,
 } from "./mystery-consistency";
+import { formatConceptBlock, rollConcept } from "./concept-dimensions";
 import { buildMysteryGraph } from "./mystery-graph";
 import { list, record, text } from "./mystery-obj";
 import { normalizeMysteryStage } from "./mystery-staged-normalize";
 import { BANNED_NAMES } from "./naming-policy";
+import { type Rng, defaultRng } from "./random-utils";
 import { StagedProgress, type StagedProgressStep } from "./staged-progress";
 
 export interface MysteryStagedStats {
@@ -36,6 +38,8 @@ export interface MysteryStagedDependencies {
   onProgress?: (steps: StagedProgressStep[]) => void;
   onStats?: (stats: MysteryStagedStats) => void;
   contextPrefix?: string;
+  /** Source for the rolled concept; injected in tests. */
+  rng?: Rng;
 }
 
 type Obj = JsonObject;
@@ -706,6 +710,10 @@ export async function generateMysteryStaged(
     { id: "mystery-final-audit", label: "Final consistency check" },
   ] as const;
   const progress = new StagedProgress(steps, deps.onProgress);
+  const concept = formatConceptBlock(
+    rollConcept(resolved.genre, resolved.tone, deps.rng ?? defaultRng),
+  );
+  const context = [deps.contextPrefix, concept].filter(Boolean).join("\n\n");
   const stats: MysteryStagedStats = {
     outcome: "staged",
     aiCalls: 0,
@@ -736,7 +744,7 @@ export async function generateMysteryStaged(
   };
   const foundation = await run(
     "mystery-foundation",
-    `STAGE 1 OF 7: Case foundation. ${deps.contextPrefix ?? ""}\nOptions: ${JSON.stringify(resolved)}\nEstablish a fixed mystery, title, player-safe summary, central question, opening hook, perpetratorId exactly "person-1", truth (perpetratorName, motive, means, opportunity, constraints, plus keyItem: the central object, document or evidence at stake; keyItemLocation: where it is now; keyItemFate: what the culprit intends for it; recovery: what the party must do to recover it or prove who took it; methodReason: why the method needed what it used, e.g. why a copied key rather than walking in, and it must agree with the opportunity; it also fixes the physical or magical rules the method relies on, which every later stage must reuse unchanged (if draining an oil silences a ward, nothing may later say the oil quiets it), and mundane steps must be physically plausible (a wax press of a keyhole does not copy a key); atStart: where the key item, the culprit and anyone taken are at the moment play begins, consistent with the last timeline event; disputedFact: the exact fact the case turns on; victimStatus: if anyone was taken, hurt or lured away, how they are held or incapacitated and how the party can free them, otherwise an empty string; and where a magical object has a function, keep it consistent with the motive, so do not make the object preserve what the culprit means to erase without saying which effect is which), an ordered timeline of at least three events, and at least three revelations with stable ids, a fact stating the actual conclusion and a kind (include one each of "culprit", "motive" and "item"). Keep the truth private. Do not create suspects, clues, or outcomes yet.\nReturn JSON of exactly this shape (string values are plain strings): {"title":"","summary":"player-safe summary","centralQuestion":"","openingHook":"","perpetratorId":"person-1","truth":{"perpetratorName":"","motive":"","means":"","opportunity":"","constraints":"one string","keyItem":"","keyItemLocation":"","keyItemFate":"","recovery":"","methodReason":"","disputedFact":"","victimStatus":"","atStart":""},"timeline":["one event string each"],"revelations":[{"id":"rev-1","kind":"culprit","fact":""},{"id":"rev-2","kind":"motive","fact":""},{"id":"rev-3","kind":"item","fact":""}]}.`,
+    `STAGE 1 OF 7: Case foundation. ${context}\nOptions: ${JSON.stringify(resolved)}\nEstablish a fixed mystery, title, player-safe summary, central question, opening hook, perpetratorId exactly "person-1", truth (perpetratorName, motive, means, opportunity, constraints, plus keyItem: the central physical object or piece of evidence at stake, something the party can find and carry, chosen to fit the mystery type; keyItemLocation: where it is now; keyItemFate: what the culprit intends for it; recovery: what the party must do to recover it or prove who took it; methodReason: why the method needed what it used, e.g. why a forged pass rather than walking in, and it must agree with the opportunity; it also fixes the physical or magical rules the method relies on, which every later stage must reuse unchanged (if a forged badge opens a door, nothing may later say the badge was never accepted), and mundane steps must be physically plausible (a rubbing of a lock does not copy its key); atStart: where the key item, the culprit and anyone taken are at the moment play begins, consistent with the last timeline event; disputedFact: the exact fact the case turns on; victimStatus: if anyone was taken, hurt or lured away, how they are held or incapacitated and how the party can free them, otherwise an empty string; and where a magical object has a function, keep it consistent with the motive, so do not make the object preserve what the culprit means to erase without saying which effect is which), an ordered timeline of at least three events, and at least three revelations with stable ids, a fact stating the actual conclusion and a kind (include one each of "culprit", "motive" and "item"). Keep the truth private. Do not create suspects, clues, or outcomes yet.\nReturn JSON of exactly this shape (string values are plain strings): {"title":"","summary":"player-safe summary","centralQuestion":"","openingHook":"","perpetratorId":"person-1","truth":{"perpetratorName":"","motive":"","means":"","opportunity":"","constraints":"one string","keyItem":"","keyItemLocation":"","keyItemFate":"","recovery":"","methodReason":"","disputedFact":"","victimStatus":"","atStart":""},"timeline":["one event string each"],"revelations":[{"id":"rev-1","kind":"culprit","fact":""},{"id":"rev-2","kind":"motive","fact":""},{"id":"rev-3","kind":"item","fact":""}]}.`,
     (data) => checkFoundation(data, resolved),
     normalizeMysteryStage.foundation,
   );
