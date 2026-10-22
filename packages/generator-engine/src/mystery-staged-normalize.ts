@@ -61,6 +61,7 @@ function normalizeFoundation(data: Obj): Obj {
       "methodReason",
       "disputedFact",
       "victimStatus",
+      "atStart",
     ]);
   next.timeline = mapList(next.timeline, flattenText);
   next.revelations = mapList(next.revelations, (item) => {
@@ -162,83 +163,16 @@ function normalizeClues(data: Obj, revelationIds: readonly string[] = []): Obj {
           ...item,
           revelationId: flattenText(item.revelationId ?? item.revelation),
           clueIds: toIdList(item.clueIds ?? item.clues ?? item.path),
+          ...withReasoning(item.reasoning ?? item.why),
         }
       : item,
   );
-  next.independentPaths = withDerivedPaths(
+  next.independentPaths = withIndependentPaths(
     next.independentPaths,
     next.clues,
-    revelationIds,
   );
   return next;
 }
-
-/** Whether a supplied route meets the structural checks used by the validator. */
-function isUsableRoute(
-  route: Obj,
-  revelationId: string,
-  byId: Map<string, Obj>,
-): boolean {
-  if (route.revelationId !== revelationId) return false;
-  const ids = Array.isArray(route.clueIds) ? route.clueIds : [];
-  const pathIds = ids.map(flattenText);
-  if (!pathIds.length || new Set(pathIds).size !== pathIds.length) return false;
-  const pathClues = pathIds.map((id) => byId.get(id));
-  if (
-    pathClues.some((clue) => !clue) ||
-    !pathClues.some(
-      (clue) =>
-        Array.isArray(clue?.supports) && clue.supports.includes(revelationId),
-    )
-  )
-    return false;
-  return !pathClues.some(
-    (clue, index) =>
-      index < pathClues.length - 1 &&
-      (!Array.isArray(clue?.leadsTo) ||
-        !clue.leadsTo.map(flattenText).includes(pathIds[index + 1])),
-  );
-}
-
-/** Sources already used by the routes given for one revelation. */
-function routeSources(
-  routes: Obj[],
-  revelationId: string,
-  byId: Map<string, Obj>,
-): Set<string> {
-  const sources = new Set<string>();
-  for (const route of routes) {
-    if (!isUsableRoute(route, revelationId, byId)) continue;
-    const ids = Array.isArray(route.clueIds) ? route.clueIds : [];
-    const first = byId.get(flattenText(ids[0]));
-    const source = flattenText(first?.sourceId);
-    if (source) sources.add(source);
-  }
-  return sources;
-}
-
-/** One single-clue route per distinct source, up to two sources in all. */
-function derivedRoutes(
-  clues: Obj[],
-  revelationId: string,
-  sources: Set<string>,
-): Obj[] {
-  const routes: Obj[] = [];
-  for (const clue of clues) {
-    if (sources.size >= 2) break;
-    const source = flattenText(clue.sourceId);
-    const supports = Array.isArray(clue.supports) ? clue.supports : [];
-    if (!supports.includes(revelationId) || sources.has(source)) continue;
-    sources.add(source);
-    routes.push({ revelationId, clueIds: [flattenText(clue.id)] });
-  }
-  return routes;
-}
-
-/**
- * Top up each revelation to two single-clue routes from distinct sources,
- * using clues that already support it. A route the model gave is kept.
- */
 /**
  * Keep a route only when it shares no clue and no starting source with a route
  * already kept for the same revelation, so every pair left can be followed
@@ -264,26 +198,14 @@ function independentRoutes(routes: Obj[], byId: Map<string, Obj>): Obj[] {
 const toIds = (value: unknown): unknown[] =>
   Array.isArray(value) ? value : [];
 
-function withDerivedPaths(
-  paths: unknown,
-  clues: unknown,
-  revelationIds: readonly string[],
-): unknown {
-  if (!revelationIds.length || !Array.isArray(clues)) return paths;
+function withIndependentPaths(paths: unknown, clues: unknown): unknown {
+  if (!Array.isArray(clues)) return paths;
   const clueList = clues.filter(isRecord);
   const byId = new Map(clueList.map((clue) => [flattenText(clue.id), clue]));
-  const given = independentRoutes(
+  return independentRoutes(
     Array.isArray(paths) ? paths.filter(isRecord) : [],
     byId,
   );
-  const derived = revelationIds.flatMap((revelationId) =>
-    derivedRoutes(
-      clueList,
-      revelationId,
-      routeSources(given, revelationId, byId),
-    ),
-  );
-  return [...given, ...derived];
 }
 
 /** Keep only ids the locked foundation defines (skipped when none are known). */
@@ -291,6 +213,29 @@ function onlyKnown(ids: unknown, known: readonly string[]): unknown {
   return Array.isArray(ids) && known.length
     ? ids.filter((id) => known.includes(flattenText(id)))
     : ids;
+}
+
+/** A route's explanation, only when the model gave one. */
+function withReasoning(value: unknown): Obj {
+  const reasoning = flattenText(value).trim();
+  return reasoning ? { reasoning } : {};
+}
+
+/** A list of plain strings from a list, a delimited string or a list of objects. */
+function toTextList(value: unknown): string[] {
+  const items =
+    typeof value === "string"
+      ? value.split(/\n|;/)
+      : Array.isArray(value)
+        ? value
+        : [];
+  return items
+    .map((item) =>
+      flattenText(item)
+        .replace(/^\s*[-*\d.)]+\s*/, "")
+        .trim(),
+    )
+    .filter(Boolean);
 }
 
 function toIdList(value: unknown): unknown {
@@ -303,7 +248,12 @@ function toIdList(value: unknown): unknown {
 }
 
 function normalizePressure(data: Obj): Obj {
-  const next: Obj = { ...data, escalation: flattenText(data.escalation) };
+  const next: Obj = {
+    ...data,
+    escalation: flattenText(data.escalation),
+    objective: flattenText(data.objective ?? data.goal),
+    approaches: toTextList(data.approaches ?? data.possibleApproaches),
+  };
   next.pressureClock = mapList(next.pressureClock, (item) =>
     flattenFields(item, ["trigger", "consequence"]),
   );
