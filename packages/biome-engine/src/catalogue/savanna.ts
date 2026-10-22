@@ -113,6 +113,16 @@ export const savanna: ReferenceBiome = {
     mainIllustration(
       base,
       "Golden grassland with a lone acacia tree, a herd of grazing animals and a waterhole under a wide sky.",
+      {
+        tool: "gpt-6-luna",
+        generatedAt: "2026-10-22",
+        review: {
+          reviewedBy: "Espen Erlandsen",
+          reviewedAt: "2026-10-22",
+          notes:
+            "Open golden tropical savanna with umbrella acacia tree, grazing wildlife herd and watering hole under wide sky.",
+        },
+      },
     ),
   ],
 };
