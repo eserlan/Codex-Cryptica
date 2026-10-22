@@ -77,7 +77,22 @@ const touched = GENERATORS.filter(
   (item) =>
     showAll ||
     changed.some((file) =>
-      isMappedGeneratorChange(item, file, ENGINE_PREFIXES),
+      isMappedGeneratorChange(
+        item,
+        file,
+        ENGINE_PREFIXES,
+        file === "apps/web/src/lib/services/seo/generator-engine-specialized.ts"
+          ? execFileSync(
+              "git",
+              ["diff", "--function-context", base, "HEAD", "--", file],
+              {
+                cwd: ROOT,
+                encoding: "utf8",
+                stdio: ["ignore", "pipe", "pipe"],
+              },
+            )
+          : "",
+      ),
     ),
 );
 if (touched.length === 0) {

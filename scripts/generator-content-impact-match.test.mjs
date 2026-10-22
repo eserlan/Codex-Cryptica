@@ -13,14 +13,27 @@ const pointCrawl = {
   changed: /(?:^|\/)(?:public-point-crawl|.*point-crawl.*)\.[cm]?[jt]s$/,
 };
 
-test("maps Point Crawl changes in the shared specialized generator service", () => {
+test("maps Point Crawl method changes in the shared specialized generator service", () => {
   assert.equal(
     isMappedGeneratorChange(
       pointCrawl,
       "apps/web/src/lib/services/seo/generator-engine-specialized.ts",
       enginePrefixes,
+      "@@ -437,10 +437,10 @@ async generatePointCrawl()",
     ),
     true,
+  );
+});
+
+test("does not map unrelated changes in the shared specialized generator service", () => {
+  assert.equal(
+    isMappedGeneratorChange(
+      pointCrawl,
+      "apps/web/src/lib/services/seo/generator-engine-specialized.ts",
+      enginePrefixes,
+      "@@ -526,10 +526,10 @@ async generateBusiness()",
+    ),
+    false,
   );
 });
 
