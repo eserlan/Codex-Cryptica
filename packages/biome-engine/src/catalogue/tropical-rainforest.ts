@@ -117,6 +117,16 @@ export const tropicalRainforest: ReferenceBiome = {
     mainIllustration(
       base,
       "A river winding through dense rainforest with tall layered trees, hanging vines and mist under the canopy.",
+      {
+        tool: "gpt-6-luna",
+        generatedAt: "2026-10-22",
+        review: {
+          reviewedBy: "Espen Erlandsen",
+          reviewedAt: "2026-10-22",
+          notes:
+            "Dense tropical canopy with winding river, towering trees, hanging vines and morning mist.",
+        },
+      },
     ),
   ],
 };

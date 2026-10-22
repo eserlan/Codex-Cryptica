@@ -35,14 +35,16 @@ export function biomeImageUrl(id: string, n = 1): string {
 export function mainIllustration(
   biome: Omit<ReferenceBiome, "images">,
   alt: string,
+  overrides?: Partial<Pick<GeneratedImage, "tool" | "generatedAt" | "review">>,
 ): GeneratedImage {
   return {
     origin: "generated",
     url: biomeImageUrl(biome.id),
     alt,
     kind: "illustration",
-    tool: PENDING,
-    generatedAt: PENDING,
+    tool: overrides?.tool ?? PENDING,
+    generatedAt: overrides?.generatedAt ?? PENDING,
     prompt: buildBiomeImagePrompt(biome),
+    ...(overrides?.review ? { review: overrides.review } : {}),
   };
 }
