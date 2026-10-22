@@ -40,6 +40,7 @@ export const GENERATOR_SECTION_MAP: Record<GeneratorId, GeneratorSectionId> = {
   puzzle: "adventures-encounters",
   rumour: "adventures-encounters",
   "council-vote": "adventures-encounters",
+  "mystery-investigation": "adventures-encounters",
 
   // Loot & Lore
   "magic-item": "loot-lore",

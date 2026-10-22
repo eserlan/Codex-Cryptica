@@ -556,6 +556,31 @@ export const generatorEntries: DiscoveryEntryInput[] = [
     status: "live",
   },
   {
+    id: "generator-mystery-investigation",
+    pageKind: "generator",
+    canonicalPath: "/generators/mystery-investigation",
+    primaryIntent: "rpg mystery generator",
+    intentAliases: [
+      "mystery investigation generator",
+      "ttrpg mystery case generator",
+      "rpg clue network generator",
+    ],
+    userJob: "create",
+    uniqueValue:
+      "A playable fixed-truth investigation with a locked GM solution, cross-checked suspects and timelines, multiple independent clue paths, pressure and distinct outcomes.",
+    parentCluster: "mystery-investigation-design",
+    relatedIntents: ["answer-run-mystery-without-railroading"],
+    acknowledgedOverlap: [
+      {
+        with: "answer-run-mystery-without-railroading",
+        reason:
+          "The answer teaches a GM how to run a mystery without railroading; this page creates a specific playable case. They serve the distinct jobs of learning and creating.",
+      },
+    ],
+    indexable: true,
+    status: "live",
+  },
+  {
     id: "generator-adventure-idea-generator",
     pageKind: "generator",
     canonicalPath: "/generators/adventure-idea-generator",

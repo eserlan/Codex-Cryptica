@@ -23,6 +23,7 @@ export const FEATURE_HELP_ARTICLES = {
   HEX_CRAWL_MODE: "hex-crawl-mode",
   BIOME_EXPLORER: "biome-explorer",
   POINT_CRAWL_GENERATOR: "point-crawl-generator",
+  MYSTERY_INVESTIGATION_GENERATOR: "mystery-investigation-generator",
   TOV_GENERATORS: "tales-of-the-valiant-generators",
 } as const;
 

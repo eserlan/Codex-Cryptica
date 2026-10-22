@@ -366,6 +366,7 @@
       bind:alienRace={forms.alienRace}
       bind:creature={forms.creature}
       bind:tome={forms.tome}
+      bind:mysteryInvestigation={forms.mysteryInvestigation}
       onPersonalityGenreChange={genreHandlers.personality}
       onBusinessGenreChange={genreHandlers.business}
       onRumourGenreChange={genreHandlers.rumour}

@@ -1,0 +1,90 @@
+import { describe, expect, it } from "vitest";
+import {
+  buildMysteryPrompt,
+  generateMysteryLocal,
+  mysteryConfig,
+  parseMysteryResponse,
+  resolveMystery,
+} from "./public-mystery";
+
+describe("Mystery & Investigation generator", () => {
+  it("resolves suspect counts from the selected complexity", () => {
+    expect(
+      resolveMystery({ complexity: mysteryConfig.complexities[0] })
+        .suspectCount,
+    ).toBe(3);
+    expect(
+      resolveMystery({ complexity: mysteryConfig.complexities[1] })
+        .suspectCount,
+    ).toBe(4);
+    expect(
+      resolveMystery({ complexity: mysteryConfig.complexities[2] })
+        .suspectCount,
+    ).toBe(5);
+  });
+
+  it("builds a fixed-truth prompt with selected options, context and name exclusions", () => {
+    const prompt = buildMysteryPrompt(
+      {
+        genre: "Science Fiction",
+        mysteryType: "Conspiracy",
+        campaignContext: "The orbiting city of Meridian",
+        avoidNames: ["Rook", "Meridian"],
+      },
+      "Recent case: Rook disappeared.",
+    );
+    expect(prompt.resolved.genre).toBe("Science Fiction");
+    expect(prompt.userMessage).toContain('"mysteryType":"Conspiracy"');
+    expect(prompt.userMessage).toContain("The orbiting city of Meridian");
+    expect(prompt.userMessage).toContain("Recent case: Rook disappeared.");
+    expect(prompt.userMessage).toContain("Rook");
+    expect(prompt.userMessage).not.toContain(
+      "Already created or used this session — do NOT reuse these names or generate duplicate concepts: Meridian",
+    );
+    expect(prompt.userMessage).toContain("two independent paths");
+    expect(prompt.userMessage).toContain("player-facing text");
+    expect(prompt.userMessage).toMatch(/return only JSON/i);
+  });
+
+  it("creates a deterministic local draft and keeps GM truth in Lore", () => {
+    const options = {
+      genre: "Detective / Noir",
+      campaignContext: "The city council is divided",
+    };
+    const first = generateMysteryLocal(options, () => 0);
+    const second = generateMysteryLocal(options, () => 0);
+    expect(first).toEqual(second);
+    expect(first.type).toBe("note");
+    expect(first.content).toContain("The city council is divided");
+    expect(first.content).toContain("Evidence");
+    expect(first.lore).toContain("GM-Only Fixed Truth");
+    expect(first.lore).not.toBe(first.content);
+    const names = [...first.content.matchAll(/\*\*([^*]+) —/g)].map(
+      (match) => match[1],
+    );
+    expect(new Set(names).size).toBe(names.length);
+  });
+
+  it("rejects malformed or incomplete one-pass model output for fallback", () => {
+    expect(parseMysteryResponse("not JSON")).toBeNull();
+    expect(
+      parseMysteryResponse('{"title":"Incomplete","content":"Player text"}'),
+    ).toBeNull();
+    expect(
+      parseMysteryResponse(
+        JSON.stringify({
+          title: "Complete",
+          summary: "Summary",
+          content: "Player case",
+          lore: "GM truth",
+        }),
+      ),
+    ).toMatchObject({
+      type: "note",
+      title: "Complete",
+      content: "Player case",
+      lore: "GM truth",
+      status: "draft",
+    });
+  });
+});

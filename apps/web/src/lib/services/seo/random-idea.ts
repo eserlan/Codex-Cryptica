@@ -25,7 +25,8 @@ export interface RandomIdeaCategory {
     | "holiday"
     | "tome"
     | "point-crawl"
-    | "business";
+    | "business"
+    | "mystery-investigation";
   label: string;
   generate: (
     engine: DefaultGeneratorEngine,
@@ -200,6 +201,12 @@ export const randomIdeaCategories: RandomIdeaCategory[] = [
     label: "Business",
     generate: (engine, useAI, theme) =>
       engine.generateBusiness({ genre: theme, useAI }),
+  },
+  {
+    key: "mystery-investigation",
+    label: "Mystery & Investigation",
+    generate: (engine, useAI, theme) =>
+      engine.generateMysteryInvestigation({ genre: theme, useAI }),
   },
 ];
 

@@ -380,6 +380,20 @@ export {
   type VillainStagedStats,
 } from "./villain-staged";
 export {
+  buildMysteryPrompt,
+  parseMysteryResponse,
+  generateMysteryLocal,
+  resolveMystery,
+  mysteryConfig,
+  type MysteryGeneratorOptions,
+  type ResolvedMysteryOptions,
+} from "./public-mystery";
+export {
+  generateMysteryStaged,
+  type MysteryStagedDependencies,
+  type MysteryStagedStats,
+} from "./mystery-staged";
+export {
   buildComicBookEventPrompt,
   parseComicBookEventResponse,
   generateComicBookEventLocal,

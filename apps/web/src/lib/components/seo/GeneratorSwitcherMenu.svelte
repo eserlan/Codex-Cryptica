@@ -89,6 +89,10 @@
           path: "/generators/one-shot-adventure-generator",
         },
         {
+          label: "Mystery & Investigation Generator",
+          path: "/generators/mystery-investigation",
+        },
+        {
           label: "Point Crawl Generator",
           path: "/generators/point-crawl",
         },

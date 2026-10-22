@@ -122,6 +122,9 @@ function makeFakeEngine(): any {
       .mockImplementation(
         async (fn: () => Promise<unknown>, _onRaw: (s: string) => void) => fn(),
       ),
+    generateMysteryInvestigation: vi
+      .fn()
+      .mockResolvedValue({ type: "note", title: "mystery" }),
   };
   return fake;
 }
@@ -226,8 +229,8 @@ describe("generator-page-generation", () => {
       expect(isStreamableSlug("settlement" as ValidSlug)).toBe(true);
     });
 
-    it("exposes exactly eleven non-streamable slugs", () => {
-      expect(NON_STREAMABLE_SLUGS).toHaveLength(11);
+    it("exposes exactly twelve non-streamable slugs", () => {
+      expect(NON_STREAMABLE_SLUGS).toHaveLength(12);
       expect([...NON_STREAMABLE_SLUGS].sort()).toEqual(
         [
           "adventure-generator",
@@ -238,6 +241,7 @@ describe("generator-page-generation", () => {
           "dungeon-generator",
           "heist",
           "language-generator",
+          "mystery-investigation",
           "one-shot-adventure-generator",
           "point-crawl",
           "tome",
@@ -254,6 +258,7 @@ describe("generator-page-generation", () => {
       "council-vote",
       "dungeon-generator",
       "heist",
+      "mystery-investigation",
       "one-shot-adventure-generator",
       "point-crawl",
       "tome",

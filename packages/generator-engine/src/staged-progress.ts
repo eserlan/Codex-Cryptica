@@ -37,7 +37,14 @@ export type StagedStepId =
   | "concept"
   | "organisation"
   | "plan"
-  | "ending";
+  | "ending"
+  | "mystery-foundation"
+  | "mystery-cast"
+  | "mystery-clues"
+  | "mystery-pressure"
+  | "mystery-audit"
+  | "mystery-repair"
+  | "mystery-final-audit";
 
 export interface StagedProgressStep {
   id: StagedStepId;
