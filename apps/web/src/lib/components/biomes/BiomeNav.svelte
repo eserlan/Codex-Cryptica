@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { BiomeExplorerStore } from "$lib/stores/biome-explorer.svelte";
 
-  type Tab = "library" | "compare" | "mine";
+  type Tab = "library" | "compare";
 
   let {
     store,
@@ -11,15 +11,9 @@
   const tabs = $derived<{ id: Tab; label: string }[]>([
     { id: "library", label: "Library" },
     { id: "compare", label: `Compare (${store.compareIds.length})` },
-    { id: "mine", label: "My biomes" },
   ]);
 
-  // Editing a saved biome belongs under My biomes.
-  const isActive = (id: Tab) =>
-    store.view === id ||
-    (store.view === "editor" &&
-      id === "mine" &&
-      Boolean(store.draft?.entityId));
+  const isActive = (id: Tab) => store.view === id;
 </script>
 
 <nav aria-label="Biome Explorer views" class="flex gap-2">

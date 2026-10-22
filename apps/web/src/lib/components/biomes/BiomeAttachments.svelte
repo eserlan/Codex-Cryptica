@@ -25,17 +25,6 @@
       linkError = "Links must start with https:// and be a full web address.";
     }
   }
-
-  async function chooseFile(event: Event) {
-    const input = event.currentTarget as HTMLInputElement;
-    const file = input.files?.[0];
-    try {
-      if (file) await store.attachImage(file);
-    } finally {
-      // Let someone choose the same file again after fixing a problem.
-      input.value = "";
-    }
-  }
 </script>
 
 <fieldset class="flex flex-col gap-3 rounded-xl border border-theme-border p-4">
@@ -77,52 +66,12 @@
 </fieldset>
 
 <fieldset class="flex flex-col gap-3 rounded-xl border border-theme-border p-4">
-  <legend class="px-1 text-theme-text">Your picture and links</legend>
-
-  {#if store.attachedImageUrl}
-    <figure class="m-0 flex flex-col gap-2">
-      <img
-        src={store.attachedImageUrl}
-        alt="Your picture for {draft?.title || 'this biome'}"
-        class="aspect-[16/10] w-full max-w-md rounded-lg border border-theme-border object-cover"
-      />
-      <figcaption class="text-xs text-theme-muted">
-        Your own picture. It is stored in your vault.
-      </figcaption>
-    </figure>
-    <button
-      type="button"
-      class="self-start rounded border border-theme-border px-3 py-1 text-sm text-theme-text hover:border-theme-primary"
-      onclick={() => store.removeImage()}>Remove picture</button
-    >
-  {/if}
-
-  <div class="flex flex-col gap-1">
-    <label for="biome-picture" class="text-sm text-theme-muted"
-      >Add a picture</label
-    >
-    <input
-      id="biome-picture"
-      type="file"
-      accept="image/*"
-      disabled={!draft?.entityId}
-      onchange={chooseFile}
-      class="text-sm text-theme-text"
-    />
-    {#if !draft?.entityId}
-      <p class="text-xs text-theme-muted">
-        Save the biome first, then you can add a picture to it.
-      </p>
-    {/if}
-    {#if store.attachError}
-      <p role="alert" class="text-sm text-theme-danger">{store.attachError}</p>
-    {/if}
-  </div>
+  <legend class="px-1 text-theme-text">Reference links</legend>
 
   <div class="flex flex-col gap-2">
     <p class="text-sm text-theme-muted">
-      Links to references you want to keep with this biome. They stay private:
-      they are never included when a vault is shared or published.
+      Links to references you want to keep with this biome. They are included
+      when you copy or download the biome's Markdown.
     </p>
     {#if links.length > 0}
       <ul class="m-0 flex list-none flex-col gap-1 p-0 text-sm">
