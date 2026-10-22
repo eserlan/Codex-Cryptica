@@ -21,8 +21,10 @@
   let failed = $state(false);
   let copied = $state(false);
   let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  let destroyed = false;
 
   onDestroy(() => {
+    destroyed = true;
     if (timeoutId) clearTimeout(timeoutId);
   });
 
@@ -31,6 +33,7 @@
     try {
       if (clipboard?.writeText) {
         await clipboard.writeText(image.prompt);
+        if (destroyed) return;
         copied = true;
         if (timeoutId) clearTimeout(timeoutId);
         timeoutId = setTimeout(() => {
@@ -109,7 +112,7 @@
 
       {#if !compact}
         <div class="flex flex-wrap items-center gap-3">
-          <span class="text-theme-muted/70">Visual references:</span>
+          <span class="text-theme-muted">Visual references:</span>
           <a
             href={wikimediaSearchUrl}
             target="_blank"
@@ -151,10 +154,10 @@
             >
               {#if copied}
                 <span
-                  class="icon-[lucide--check] h-3.5 w-3.5 text-emerald-500"
+                  class="icon-[lucide--check] h-3.5 w-3.5 text-theme-text"
                   aria-hidden="true"
                 ></span>
-                <span class="font-medium text-emerald-500">Prompt copied!</span>
+                <span class="font-medium text-theme-text">Prompt copied!</span>
               {:else}
                 <span class="icon-[lucide--copy] h-3.5 w-3.5" aria-hidden="true"
                 ></span>

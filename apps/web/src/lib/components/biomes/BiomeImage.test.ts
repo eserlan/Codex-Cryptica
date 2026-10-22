@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import BiomeImage from "./BiomeImage.svelte";
 import type { ImageRef } from "biome-engine";
@@ -30,6 +30,10 @@ const licensed: ImageRef = {
 };
 
 describe("BiomeImage", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it("shows alt text and an AI illustration label with tool and date for a generated image", () => {
     render(BiomeImage, { props: { image: generated, biomeName: "Tundra" } });
     const img = screen.getByRole("img", { name: generated.alt });
@@ -138,6 +142,58 @@ describe("BiomeImage", () => {
     await fireEvent.click(copyBtn);
     expect(copiedText).toBe("Frozen tundra with dwarf willows");
     expect(screen.getByText(/prompt copied!/i)).toBeTruthy();
+  });
+
+  it("does not show copied feedback when clipboard access fails", async () => {
+    const clipboard = {
+      writeText: async () => {
+        throw new Error("Clipboard access denied");
+      },
+    };
+    render(BiomeImage, {
+      props: { image: generated, biomeName: "Tundra", clipboard },
+    });
+
+    await fireEvent.click(screen.getByRole("button", { name: /copy prompt/i }));
+
+    expect(screen.queryByText(/prompt copied!/i)).toBeNull();
+  });
+
+  it("clears copied feedback when the two-second timer expires", async () => {
+    vi.useFakeTimers();
+    const clipboard = { writeText: async () => {} };
+    render(BiomeImage, {
+      props: { image: generated, biomeName: "Tundra", clipboard },
+    });
+
+    await fireEvent.click(screen.getByRole("button", { name: /copy prompt/i }));
+    expect(screen.getByText(/prompt copied!/i)).toBeTruthy();
+
+    await vi.advanceTimersByTimeAsync(2000);
+
+    expect(screen.queryByText(/prompt copied!/i)).toBeNull();
+  });
+
+  it("does not schedule feedback after unmount while clipboard writing is pending", async () => {
+    vi.useFakeTimers();
+    let resolveWrite!: () => void;
+    const clipboard = {
+      writeText: () =>
+        new Promise<void>((resolve) => {
+          resolveWrite = resolve;
+        }),
+    };
+    const { unmount } = render(BiomeImage, {
+      props: { image: generated, biomeName: "Tundra", clipboard },
+    });
+
+    await fireEvent.click(screen.getByRole("button", { name: /copy prompt/i }));
+    unmount();
+    resolveWrite();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(vi.getTimerCount()).toBe(0);
   });
 
   it("omits reference links and prompt copy when compact", () => {
