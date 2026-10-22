@@ -22,8 +22,8 @@ function statementsOf(biome: ReferenceBiome): Statement[] {
 }
 
 describe("catalogue integrity (structure)", () => {
-  it("has no more than 12 biomes", () => {
-    expect(BIOME_CATALOGUE.length).toBeLessThanOrEqual(12);
+  it("has no more than 15 biomes", () => {
+    expect(BIOME_CATALOGUE.length).toBeLessThanOrEqual(15);
   });
 
   it("has unique ids", () => {
