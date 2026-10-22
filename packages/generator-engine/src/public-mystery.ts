@@ -102,10 +102,7 @@ export function buildMysteryPrompt(
     resolved.avoidNames,
     resolved.campaignContext,
   );
-  const concept = formatConceptBlock(
-    rollConcept(resolved.genre, resolved.tone),
-  );
-  const context = [resolved.campaignContext, sessionContext, concept]
+  const context = [resolved.campaignContext, sessionContext]
     .map((value) => value.trim())
     .filter(Boolean)
     .join("\n\n");
