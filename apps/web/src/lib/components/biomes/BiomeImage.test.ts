@@ -38,7 +38,7 @@ describe("BiomeImage", () => {
     expect(screen.getByText(/AI illustration/)).toBeTruthy();
     expect(screen.getByText(/Test Model 1/)).toBeTruthy();
     expect(screen.getByText(/2026-10-21/)).toBeTruthy();
-    expect(screen.queryByText(/photo/i)).toBeNull();
+    expect(screen.queryByText(/^Photo/)).toBeNull();
   });
 
   it("omits tool and date while they are still pending", () => {
@@ -100,5 +100,52 @@ describe("BiomeImage", () => {
     expect(modalUIStore.lightbox.show).toBe(true);
     expect(modalUIStore.lightbox.imageUrl).toBe(generated.url);
     expect(modalUIStore.lightbox.title).toBe(generated.alt);
+  });
+
+  it("shows outbound photo search links for Wikimedia Commons and Unsplash", () => {
+    render(BiomeImage, { props: { image: generated, biomeName: "Tundra" } });
+    const wikimedia = screen.getByRole("link", { name: /wikimedia/i });
+    expect(wikimedia.getAttribute("href")).toBe(
+      "https://commons.wikimedia.org/w/index.php?search=Tundra%20landscape",
+    );
+    expect(wikimedia.getAttribute("target")).toBe("_blank");
+    expect(wikimedia.getAttribute("rel")).toBe("noopener noreferrer");
+
+    const unsplash = screen.getByRole("link", { name: /unsplash/i });
+    expect(unsplash.getAttribute("href")).toBe(
+      "https://unsplash.com/s/photos/tundra",
+    );
+    expect(unsplash.getAttribute("target")).toBe("_blank");
+    expect(unsplash.getAttribute("rel")).toBe("noopener noreferrer");
+  });
+
+  it("copies the generation prompt when clicking Copy prompt", async () => {
+    let copiedText = "";
+    const clipboard = {
+      writeText: async (text: string) => {
+        copiedText = text;
+      },
+    };
+    render(BiomeImage, {
+      props: {
+        image: { ...generated, prompt: "Frozen tundra with dwarf willows" },
+        biomeName: "Tundra",
+        clipboard,
+      },
+    });
+
+    const copyBtn = screen.getByRole("button", { name: /copy prompt/i });
+    await fireEvent.click(copyBtn);
+    expect(copiedText).toBe("Frozen tundra with dwarf willows");
+    expect(screen.getByText(/prompt copied!/i)).toBeTruthy();
+  });
+
+  it("omits reference links and prompt copy when compact", () => {
+    render(BiomeImage, {
+      props: { image: generated, biomeName: "Tundra", compact: true },
+    });
+    expect(screen.queryByRole("link", { name: /wikimedia/i })).toBeNull();
+    expect(screen.queryByRole("link", { name: /unsplash/i })).toBeNull();
+    expect(screen.queryByRole("button", { name: /copy prompt/i })).toBeNull();
   });
 });
