@@ -29,7 +29,7 @@ export interface ConceptSeed {
   titleIdea: string;
 }
 
-export const SEED_CANDIDATE_COUNT = 5;
+const SEED_CANDIDATE_COUNT = 5;
 
 /** Two shared content words with a recent seed count as a repeat. */
 const REPEAT_SHARED_WORDS = 2;
