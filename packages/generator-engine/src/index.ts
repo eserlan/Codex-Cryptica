@@ -380,6 +380,27 @@ export {
   type VillainStagedStats,
 } from "./villain-staged";
 export {
+  buildMysteryPrompt,
+  parseMysteryResponse,
+  generateMysteryLocal,
+  resolveMystery,
+  mysteryConfig,
+  type MysteryGeneratorOptions,
+  type ResolvedMysteryOptions,
+} from "./public-mystery";
+export {
+  generateMysteryStaged,
+  type MysteryStagedDependencies,
+  type MysteryStagedStats,
+} from "./mystery-staged";
+export {
+  generateConceptSeed,
+  formatSeedBlock,
+  type ConceptSeed,
+  type ConceptSeedDeps,
+  type ConceptSeedInput,
+} from "./concept-seed";
+export {
   buildComicBookEventPrompt,
   parseComicBookEventResponse,
   generateComicBookEventLocal,
@@ -702,6 +723,17 @@ export {
   type NightSkyConstellationEntry,
   type NightSkyData,
 } from "./public-constellation";
+export {
+  buildMysteryGraph,
+  buildMysteryGraphDiagram,
+  type MysteryGraph,
+  type MysteryGraphNode,
+  type MysteryGraphEdge,
+  type MysteryGraphNodeKind,
+  type MysteryGraphDiagramLayout,
+  type MysteryGraphDiagramNode,
+  type MysteryGraphDiagramEdge,
+} from "./mystery-graph";
 export {
   buildConstellationDiagram,
   type ConstellationDiagramNode,

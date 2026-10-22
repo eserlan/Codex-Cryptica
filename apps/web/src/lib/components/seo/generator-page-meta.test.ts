@@ -51,9 +51,27 @@ const allExpectedSlugs: ValidSlug[] = [
   "personality",
   "tome",
   "point-crawl",
+  "mystery-investigation",
 ];
 
 describe("generator-page-meta completeness and social preview tags", () => {
+  it("uses the Mystery & Investigation Generator's rendered social screenshot", () => {
+    expect(slugMeta["mystery-investigation"].ogImage).toBe(
+      "https://assets.codexcryptica.com/screenshots/generator-mystery-investigation.png",
+    );
+    expect(slugMeta["mystery-investigation"].ogImageAlt).toMatch(
+      /player-facing clues and a separate GM-only truth panel/,
+    );
+    expect(slugMeta["mystery-investigation"].relatedLinks).toContainEqual({
+      href: "/answers/how-do-you-run-a-mystery-without-railroading",
+      label: "Run a mystery without railroading",
+    });
+    expect(slugMeta["mystery-investigation"].relatedLinks).toContainEqual({
+      href: "/answers/how-do-you-handle-players-reaching-the-wrong-conclusion-in-an-rpg-mystery",
+      label: "Handle a plausible but wrong conclusion",
+    });
+  });
+
   it("uses Puzzle's own rendered social screenshot", () => {
     expect(slugMeta.puzzle.ogImage).toBe(
       "https://assets.codexcryptica.com/screenshots/generator-puzzle.png",

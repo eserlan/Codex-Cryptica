@@ -1,10 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
-import {
-  dismissFrontPage,
-  seedOnboardingComplete,
-  waitForVaultReady,
-} from "./test-helpers";
 
 /**
  * Biome Explorer (spec 180). The library works without a vault, but saving
@@ -19,16 +14,10 @@ const BLOCKING_IMPACTS = new Set(["serious", "critical"]);
 const NON_BLOCKING_RULES = new Set(["color-contrast"]);
 
 async function openExplorer(page: Page) {
-  await page.addInitScript(seedOnboardingComplete);
   await page.route("https://assets.codexcryptica.com/**", (route) =>
     route.abort(),
   );
-  await page.goto("/");
-  await waitForVaultReady(page);
-  await dismissFrontPage(page);
   await page.goto("/biomes");
-  // Saving needs the vault, which opens again after each full page load.
-  await waitForVaultReady(page);
   // The first visit compiles the route in dev, which can take a while.
   await expect(
     page.getByRole("heading", { name: "Biome Explorer", level: 1 }),
@@ -91,27 +80,7 @@ test.describe("Biome Explorer", () => {
       .getByLabel("What is different?")
       .fill("It rains ash");
     await page.getByRole("button", { name: "Add fictional change" }).click();
-    await page.getByRole("button", { name: "Save biome" }).click();
-    await expect(page.getByTestId("biome-status")).toContainText(
-      "Biome saved",
-      {
-        timeout: 20000,
-      },
-    );
-
-    await page.reload();
-    await waitForVaultReady(page);
-    await page.getByRole("button", { name: "My biomes" }).click();
-    await page.getByRole("button", { name: "Open Ashen Flats" }).click();
-    await expect(page.getByLabel("Name", { exact: true })).toHaveValue(
-      "Ashen Flats",
-    );
-    await expect(page.getByLabel("Plants: my version")).toHaveValue(
-      "Glowing blue moss",
-    );
-
     await page.getByLabel("Water: my version").fill("Tidal pools");
-    await page.getByRole("button", { name: "Save biome" }).click();
     await page.getByRole("button", { name: "Copy as Markdown" }).click();
     await expect
       .poll(() => page.evaluate(() => navigator.clipboard.readText()))
@@ -125,22 +94,6 @@ test.describe("Biome Explorer", () => {
     );
     expect(markdown.indexOf("It rains ash")).toBeGreaterThan(
       markdown.indexOf("## Fictional alterations"),
-    );
-  });
-
-  test("saving keeps the draft open and editable", async ({ page }) => {
-    await openExplorer(page);
-    await page.getByRole("button", { name: "Start from blank" }).click();
-    await page.getByLabel("Name", { exact: true }).fill("Unsaved Place");
-    await page.getByRole("button", { name: "Save biome" }).click();
-    await expect(page.getByTestId("biome-status")).toContainText(
-      "Biome saved",
-      {
-        timeout: 20000,
-      },
-    );
-    await expect(page.getByLabel("Name", { exact: true })).toHaveValue(
-      "Unsaved Place",
     );
   });
 

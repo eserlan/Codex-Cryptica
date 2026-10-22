@@ -762,3 +762,58 @@ describe("runOneShotStages", () => {
     expect(scenePrompts[1]).toContain(a.scenes[0].title);
   });
 });
+
+describe("runOneShotStages concept block", () => {
+  it("gives the core prompt a rolled concept", async () => {
+    const a = local();
+    const { call } = fakeModel(a);
+    const prompts: StagePrompt[] = [];
+    await runOneShotStages(
+      { ...options, durationHours: 4 },
+      {
+        call: (p) => {
+          prompts.push(p);
+          return call(p);
+        },
+      },
+      "",
+      seeded(),
+    );
+    expect(prompts[0].userMessage).toContain(
+      "Concept constraints for this case",
+    );
+  });
+});
+
+describe("runOneShotStages seed", () => {
+  it("gives the core prompt the supplied seed instead of a rolled concept", async () => {
+    const a = local();
+    const { call } = fakeModel(a);
+    const prompts: StagePrompt[] = [];
+    await runOneShotStages(
+      { ...options, durationHours: 4 },
+      {
+        call: (p) => {
+          prompts.push(p);
+          return call(p);
+        },
+        seed: {
+          premise: "A ferryman refuses to cross after dark.",
+          stake: "the valley's grain",
+          setting: "a river crossing",
+          distinctiveElement: "a silent ferry",
+          titleIdea: "The Last Crossing",
+        },
+      },
+      "",
+      seeded(),
+    );
+    expect(prompts[0].userMessage).toContain(
+      "Case seed, chosen before writing and locked",
+    );
+    expect(prompts[0].userMessage).toContain("The Last Crossing");
+    expect(prompts[0].userMessage).not.toContain(
+      "Concept constraints for this case",
+    );
+  });
+});

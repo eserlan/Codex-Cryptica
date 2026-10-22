@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { untrack } from "svelte";
+  import { browser, building } from "$app/environment";
   import { beforeNavigate, goto } from "$app/navigation";
   import { base } from "$app/paths";
   import { page } from "$app/state";
@@ -9,59 +9,45 @@
   import BiomeDetail from "$lib/components/biomes/BiomeDetail.svelte";
   import BiomeEditorView from "$lib/components/biomes/BiomeEditorView.svelte";
   import BiomeCompare from "$lib/components/biomes/BiomeCompare.svelte";
-  import BiomeMineView from "$lib/components/biomes/BiomeMineView.svelte";
   import BiomeCopyFallback from "$lib/components/biomes/BiomeCopyFallback.svelte";
   import BiomeNav from "$lib/components/biomes/BiomeNav.svelte";
   import BiomeNotice from "$lib/components/biomes/BiomeNotice.svelte";
+  import SeoHead from "$lib/components/seo/SeoHead.svelte";
+  import { buildAbsoluteUrl } from "$lib/seo/site";
+
+  const cleanBase = $derived(base === "/" ? "" : base);
 
   let query = $state("");
   let filters = $state<FilterFacet[]>([]);
 
-  const biomeParam = $derived(page.url.searchParams.get("biome"));
-  const profileParam = $derived(page.url.searchParams.get("profile"));
+  // Read query parameters in browser after prerender to avoid accessing searchParams
+  // during static prerendering, while resolving synchronously on the client.
+  const biomeParam = $derived(
+    browser && !building ? page.url.searchParams.get("biome") : null,
+  );
   const selected = $derived(biomeParam ? getBiome(biomeParam) : undefined);
-
-  let profileMissing = $state(false);
-
-  // Open a profile named in the address, once per change of the address.
-  $effect(() => {
-    const id = profileParam;
-    if (!id) {
-      profileMissing = false;
-      return;
-    }
-    untrack(() => {
-      void store.openProfile(id).then((ok) => {
-        profileMissing = !ok;
-      });
-    });
-  });
 
   // A biome named in the address belongs to the Library.
   $effect(() => {
-    if (biomeParam && store.view !== "library" && store.view !== "editor")
+    if (biomeParam && store.view !== "library" && store.view !== "editor") {
       store.setView("library");
-  });
-
-  // The list is read when the view is shown.
-  $effect(() => {
-    if (store.view === "mine") void store.refreshProfiles();
+    }
   });
 
   const openBiome = (id: string) =>
-    goto(`${base}/biomes?biome=${encodeURIComponent(id)}`, {
+    goto(`${cleanBase}/biomes?biome=${encodeURIComponent(id)}`, {
       keepFocus: false,
     });
-  const backToLibrary = () => goto(`${base}/biomes`);
+  const backToLibrary = () => goto(`${cleanBase}/biomes`);
 
   function makeMine(id: string) {
-    if (store.startFromReference(id)) void goto(`${base}/biomes`);
+    if (store.startFromReference(id)) void goto(`${cleanBase}/biomes`);
   }
 
-  function showTab(view: "library" | "compare" | "mine") {
+  function showTab(view: "library" | "compare") {
     if (store.draft && !store.discardDraft()) return;
     store.setView(view);
-    if (biomeParam || profileParam) void goto(`${base}/biomes`);
+    if (biomeParam) void goto(`${cleanBase}/biomes`);
   }
 
   // Leaving the page with unsaved changes asks first.
@@ -81,11 +67,28 @@
       if (gone) void goto(target);
     }
   });
+
+  const pageTitle = $derived(
+    selected
+      ? `${selected.name} Biome | Biome Explorer | Codex Cryptica`
+      : "Biome Explorer | Environment Inspiration & Ecology Reference | Codex Cryptica",
+  );
+  const pageDescription = $derived(
+    selected
+      ? selected.summary
+      : "Curated reference library of real-world environments with ecology, conditions, plausibility guidelines, side-by-side comparison, and customizable Markdown export.",
+  );
 </script>
 
-<svelte:head>
-  <title>Codex Cryptica | Biome Explorer</title>
-</svelte:head>
+<SeoHead
+  title={pageTitle}
+  description={pageDescription}
+  canonicalUrl={buildAbsoluteUrl("/biomes")}
+  image="https://assets.codexcryptica.com/screenshots/feature-connect.jpg"
+  imageAlt="Codex Cryptica Biome Explorer — real-world environments, ecology, and climate references"
+  imageWidth={1600}
+  imageHeight={1000}
+/>
 
 <svelte:window
   onbeforeunload={(event) => {
@@ -93,34 +96,23 @@
   }}
 />
 
-<main class="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6">
+<main class="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-8">
   <header class="flex flex-col gap-1">
-    <h1 class="font-header text-3xl text-theme-text">Biome Explorer</h1>
-    <p class="text-sm text-theme-muted">
-      Browse real-world environments, see why they look the way they do, and
-      build your own.
+    <h1 class="font-header text-3xl text-theme-text sm:text-4xl">
+      Biome Explorer
+    </h1>
+    <p class="text-base text-theme-muted">
+      Browse real-world environments, understand why they look the way they do,
+      compare climates side by side, and customize biomes with Markdown export.
     </p>
   </header>
 
   <BiomeNav {store} onSelect={showTab} />
 
-  <p class="sr-only" aria-live="polite" data-testid="biome-status">
-    {#if store.saveState === "idle" && store.draft && !store.draft.dirty && store.draft.entityId}
-      Biome saved.
-    {/if}
-  </p>
-
-  {#if profileParam && profileMissing}
-    <BiomeNotice
-      message={store.openError ?? "We couldn't open that biome."}
-      onAction={backToLibrary}
-    />
-  {:else if store.view === "editor"}
+  {#if store.view === "editor"}
     <BiomeEditorView {store} />
   {:else if store.view === "compare"}
     <BiomeCompare {store} onBrowse={() => showTab("library")} />
-  {:else if store.view === "mine"}
-    <BiomeMineView {store} />
   {:else if biomeParam && !selected}
     <BiomeNotice
       message="We couldn't find that biome."

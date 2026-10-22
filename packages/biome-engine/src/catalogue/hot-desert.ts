@@ -111,6 +111,16 @@ export const hotDesert: ReferenceBiome = {
     mainIllustration(
       base,
       "A desert of rock and sand with dunes in the distance, a few dry shrubs and a pale sky at dusk.",
+      {
+        tool: "gemini-3.1-flash-image",
+        generatedAt: "2026-10-22",
+        review: {
+          reviewedBy: "Espen Erlandsen",
+          reviewedAt: "2026-10-22",
+          notes:
+            "Golden dunes, rocky desert pavement and arid shrubs beneath a dramatic dusk sky.",
+        },
+      },
     ),
   ],
 };

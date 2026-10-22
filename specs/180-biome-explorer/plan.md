@@ -12,8 +12,8 @@ Everything works offline and without AI. One clearly optional AI action ("Sugges
 **Technical approach (from [research.md](./research.md)):**
 
 - A new framework-free package `packages/biome-engine` holds the catalogue (data modules, one per biome), the zod schemas, search and filter, the comparison matrix, profile creation and departure diffing, validation, Markdown rendering, the prompt builder, and the (injected) AI suggestion service.
-- `schema` gains one optional `biome` field on `EntitySchema` (additive, no migration), following `statSheet` and `report`.
-- Thin, DI-based web stores and services wire it to the vault; a new `(app)/biomes` route, a nav item and a Help article surface it.
+- Surface: A public marketing route `(marketing)/biomes`, prerendered with dedicated SEO metadata and OpenGraph tags, linked via `/explore` and `/tools`.
+- Client workbench with instant Markdown copy and download export, with no vault required.
 - Library images are mostly AI illustrations the team generates before release (labelled, reviewed, with recorded provenance), plus optional licensed photographs; they are hosted on R2 (`assets.codexcryptica.com/biomes/…`), never committed. Text is bundled, so it works offline. Missing images fall back to a labelled placeholder.
 - Maps, hex crawl and generators are not touched (FR-031).
 

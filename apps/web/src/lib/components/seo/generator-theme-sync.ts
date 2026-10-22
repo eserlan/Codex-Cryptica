@@ -39,6 +39,7 @@ export interface GeneratorThemeSyncContext {
   business?: ThemeState;
   pointCrawl?: ThemeState;
   oneShot?: ThemeState;
+  mysteryInvestigation?: ThemeState;
   mapOneShotGenre?: (genre: string) => string | null;
   themeToQuestGenre: Record<string, string | undefined>;
   mapSocialHubGenre: (genre: string) => string;
@@ -84,6 +85,7 @@ export function syncGeneratorTheme({
   business,
   pointCrawl,
   oneShot,
+  mysteryInvestigation,
   mapOneShotGenre,
   themeToQuestGenre,
   mapSocialHubGenre,
@@ -138,5 +140,7 @@ export function syncGeneratorTheme({
     // Genre drives the skin: the one-shot genre list has no 1:1 theme labels.
     const theme = mapOneShotGenre?.(oneShot.genre ?? "");
     if (theme) setActiveTheme(theme);
+  } else if (slug === "mystery-investigation" && mysteryInvestigation) {
+    mysteryInvestigation.genre = activeTheme;
   }
 }

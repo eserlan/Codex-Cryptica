@@ -70,6 +70,7 @@ describe("Generators SvelteKit Route", () => {
         { slug: "tome" },
         { slug: "point-crawl" },
         { slug: "business" },
+        { slug: "mystery-investigation" },
       ]);
     });
   });

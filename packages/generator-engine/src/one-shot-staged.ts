@@ -36,6 +36,8 @@ import type {
 } from "./one-shot-types";
 import { regenerateOneShotLocal, resolveOneShot } from "./public-one-shot";
 import { type Rng, defaultRng } from "./random-utils";
+import { formatConceptBlock, rollConcept } from "./concept-dimensions";
+import { type ConceptSeed, formatSeedBlock } from "./concept-seed";
 import {
   StagedProgress,
   type StagedProgressStep,
@@ -53,6 +55,8 @@ export interface OneShotStageDeps {
   call: (prompt: StagePrompt, signal?: AbortSignal) => Promise<string>;
   signal?: AbortSignal;
   onProgress?: (steps: OneShotProgressStep[]) => void;
+  /** The case seed chosen before this run; absent or `null` uses the rolled dimensions. */
+  seed?: ConceptSeed | null;
 }
 
 export interface OneShotStagedResult {
@@ -420,11 +424,17 @@ export async function runOneShotStages(
   throwIfAborted(deps.signal);
   const progress = new StagedProgress(STEPS, deps.onProgress);
   const resolved = resolveOneShot(options, rng);
+  const concept = deps.seed
+    ? formatSeedBlock(deps.seed)
+    : formatConceptBlock(rollConcept(resolved.genre, resolved.tone ?? "", rng));
   const core = await required(
     deps,
     progress,
     "core",
-    corePrompt(resolved, sessionContext),
+    corePrompt(
+      resolved,
+      [sessionContext, concept].filter(Boolean).join("\n\n"),
+    ),
   );
   const structure = await required(
     deps,

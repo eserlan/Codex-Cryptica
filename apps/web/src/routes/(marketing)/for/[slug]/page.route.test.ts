@@ -52,3 +52,24 @@ describe("/for/[slug] theme preview", () => {
     expect(previewTheme).not.toHaveBeenCalledWith("fantasy");
   });
 });
+
+describe("/for/[slug] canonical metadata", () => {
+  it("states the same apex URL in the canonical link and og:url", () => {
+    render(LandingPage, {
+      props: { data: { config: makeConfig({ slug: "meta-page" }) } },
+    });
+
+    const canonical = document.head
+      .querySelector('link[rel="canonical"]')
+      ?.getAttribute("href");
+    const ogUrl = document.head
+      .querySelector('meta[property="og:url"]')
+      ?.getAttribute("content");
+
+    expect(canonical).toMatch(/^https:\/\/codexcryptica\.com\/for\/meta-page/);
+    expect(ogUrl).toBe(canonical);
+    expect(
+      document.head.querySelectorAll('meta[property="og:url"]'),
+    ).toHaveLength(1);
+  });
+});

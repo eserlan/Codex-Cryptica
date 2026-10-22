@@ -1,4 +1,5 @@
 import { EXEMPLARS } from "./campaign-generator-exemplars";
+import { formatConceptBlock, rollConcept } from "./concept-dimensions";
 import {
   type CampaignGeneratorDefinition,
   type GeneratedDraft,
@@ -173,6 +174,12 @@ import {
 } from "./business-local";
 import { businessGeneratorOutput } from "./business-output";
 import { businessOptionsFromRequest } from "./campaign-business-generation";
+import {
+  buildMysteryPrompt,
+  generateMysteryLocal,
+  mysteryConfig,
+  type MysteryGeneratorOptions,
+} from "./public-mystery";
 
 /**
  * Generator id -> default vault category id.
@@ -181,6 +188,7 @@ import { businessOptionsFromRequest } from "./campaign-business-generation";
  * `faction` matches by name; the rest map to distinct categories.
  */
 export const GENERATOR_ENTITY_TYPE: Record<GeneratorId, string> = {
+  "mystery-investigation": "note",
   business: "faction",
   npc: "character",
   faction: "faction",
@@ -336,6 +344,7 @@ function optionalOutputFields(output: GeneratorOutput) {
     interpretations: copyIfPresent(output.interpretations),
     nightSky: output.nightSky,
     pointCrawl: output.pointCrawl,
+    mysteryGraph: output.mysteryGraph,
     business: output.business,
   };
 }
@@ -687,13 +696,83 @@ export { SYSTEM_INSTRUCTION };
 // Generator-specific prompt builders
 // ---------------------------------------------------------------------------
 
+/**
+ * Scenario generators whose context carries a rolled concept. The mystery adds
+ * its own in `mystery-staged.ts` and `public-mystery.ts`, so it is left out.
+ * Generators that make a thing or a person (NPC, item, creature) are left out
+ * too: the dimensions describe a situation, so they would not fit.
+ */
+const CONCEPT_GENERATORS = new Set<GeneratorId>([
+  "adventure",
+  "heist",
+  "tome",
+  "quest",
+  "plot-twist",
+  "event",
+  "encounter",
+  "secret-society",
+  "faction",
+  "puzzle",
+  "rumour",
+  "news-sheet",
+]);
+
+/**
+ * Generators that write several separate items. One concept for the whole run
+ * would make every item about the same thing, so the model is asked to spread it.
+ */
+const MULTI_ITEM_GENERATORS = new Set<GeneratorId>(["rumour", "news-sheet"]);
+const SPREAD_NOTE =
+  "This output has several separate items. Spread these choices across them instead of building every item around all of them.";
+
+/** One concept per request, so every part of a run sees the same choices. */
+const conceptByRequest = new WeakMap<GeneratorRunRequest, string>();
+
+/** The genre and tone a request asks for, or empty when none is set. */
+function conceptInputs(request: GeneratorRunRequest): {
+  genre: string;
+  tone: string;
+} {
+  return {
+    genre: String(
+      request.options?.genre ??
+        request.vaultContext?.themeName ??
+        themeIdToLabel[request.themeId ?? ""] ??
+        "",
+    ),
+    tone: String(request.options?.tone ?? ""),
+  };
+}
+
+function rollConceptBlock(request: GeneratorRunRequest): string {
+  const { genre, tone } = conceptInputs(request);
+  const block = formatConceptBlock(rollConcept(genre, tone));
+  if (!block) return "";
+  const spread = MULTI_ITEM_GENERATORS.has(request.generatorId)
+    ? `\n${SPREAD_NOTE}`
+    : "";
+  return `\n${block}${spread}\n`;
+}
+
+function conceptBlock(request: GeneratorRunRequest): string {
+  if (request.interaction || !CONCEPT_GENERATORS.has(request.generatorId)) {
+    return "";
+  }
+  let block = conceptByRequest.get(request);
+  if (block === undefined) {
+    block = rollConceptBlock(request);
+    conceptByRequest.set(request, block);
+  }
+  return block;
+}
+
 /** Shared prompt context chain (everything before the task instruction). */
-function contextChain(request: GeneratorRunRequest): string {
+export function contextChain(request: GeneratorRunRequest): string {
   // Preferences (the form's explicit dropdown selections, e.g. race/role) are
   // direct user choices like the free-text instructions above them — surface
   // them right after, ahead of the generic world context, rather than buried
   // several paragraphs down where a model can lose track of them.
-  return `${instructionsBlock(request)}${optionsBlock(request)}${vaultContextBlock(request)}${worldBlock(request)}${bannedNamesBlock(request)}${namingBlock(request)}${templateBlock(request)}`;
+  return `${instructionsBlock(request)}${optionsBlock(request)}${conceptBlock(request)}${vaultContextBlock(request)}${worldBlock(request)}${bannedNamesBlock(request)}${namingBlock(request)}${templateBlock(request)}`;
 }
 
 function npcPrompt(request: GeneratorRunRequest): string {
@@ -2087,6 +2166,48 @@ function pointCrawlPrompt(request: GeneratorRunRequest): string {
   return `${systemInstruction}\n\n${userMessage}`;
 }
 
+function mysteryOptions(request: GeneratorRunRequest): MysteryGeneratorOptions {
+  return {
+    genre: optionString(
+      request,
+      "genre",
+      request.vaultContext?.themeName || "Fantasy",
+    ),
+    tone: optionString(request, "tone", "Eerie"),
+    mysteryType: optionString(request, "mysteryType", "Disappearance"),
+    scope: optionString(request, "scope", "One-shot case"),
+    complexity: optionString(request, "complexity", "Standard (4 suspects)"),
+    clueDensity: optionString(request, "clueDensity", "Balanced"),
+    pressure: optionString(request, "pressure", "Moderate"),
+    campaignContext: request.instructions,
+    avoidNames: [
+      ...(request.vaultContext?.bannedNames ?? []),
+      ...(request.vaultContext?.existingTitles ?? []),
+    ],
+  };
+}
+
+function generateMysteryCampaign(
+  request: GeneratorRunRequest,
+): GeneratorOutput {
+  const output = generateMysteryLocal(mysteryOptions(request));
+  return {
+    title: output.title,
+    summary: output.summary ?? "",
+    content: output.content,
+    lore: output.lore,
+    labels: output.labels,
+  };
+}
+
+function mysteryPrompt(request: GeneratorRunRequest): string {
+  const { systemInstruction, userMessage } = buildMysteryPrompt(
+    mysteryOptions(request),
+    contextChain(request),
+  );
+  return `${systemInstruction}\n\n${userMessage}`;
+}
+
 const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
   business: {
     id: "business",
@@ -2159,6 +2280,88 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
       lore: output.lore,
     }),
     buildPrompt: businessPrompt,
+  },
+  "mystery-investigation": {
+    id: "mystery-investigation",
+    label: "Mystery & Investigation",
+    description:
+      "Build a fair, fixed-truth case with suspects, locations, a linked clue network, pressure, and multiple outcomes.",
+    entityType: GENERATOR_ENTITY_TYPE["mystery-investigation"],
+    defaultInstruction:
+      "Create a coherent system-neutral investigation with a stable GM-only truth, distinct suspects, testable clues, multiple independent routes to essential revelations, and fair outcomes.",
+    icon: "lucide:search",
+    options: [
+      {
+        id: "genre",
+        label: "Genre / setting",
+        control: "select",
+        choices: mysteryConfig.genres.map((value) => ({ value, label: value })),
+        defaultValue: "Fantasy",
+      },
+      {
+        id: "tone",
+        label: "Tone",
+        control: "select",
+        choices: mysteryConfig.tones.map((value) => ({ value, label: value })),
+        defaultValue: "Eerie",
+      },
+      {
+        id: "mysteryType",
+        label: "Mystery type",
+        control: "select",
+        choices: mysteryConfig.types.map((value) => ({ value, label: value })),
+        defaultValue: "Disappearance",
+      },
+      {
+        id: "scope",
+        label: "Scope",
+        control: "select",
+        choices: mysteryConfig.scopes.map((value) => ({ value, label: value })),
+        defaultValue: "One-shot case",
+      },
+      {
+        id: "complexity",
+        label: "Complexity",
+        control: "select",
+        choices: mysteryConfig.complexities.map((value) => ({
+          value,
+          label: value,
+        })),
+        defaultValue: "Standard (4 suspects)",
+      },
+      {
+        id: "clueDensity",
+        label: "Clue density",
+        control: "select",
+        choices: mysteryConfig.clueDensities.map((value) => ({
+          value,
+          label: value,
+        })),
+        defaultValue: "Balanced",
+      },
+      {
+        id: "pressure",
+        label: "Danger / pressure",
+        control: "select",
+        choices: mysteryConfig.pressures.map((value) => ({
+          value,
+          label: value,
+        })),
+        defaultValue: "Moderate",
+      },
+    ],
+    defaults: {
+      genre: "Fantasy",
+      tone: "Eerie",
+      mysteryType: "Disappearance",
+      scope: "One-shot case",
+      complexity: "Standard (4 suspects)",
+      clueDensity: "Balanced",
+      pressure: "Moderate",
+    },
+    generate: generateMysteryCampaign,
+    mapOutputToDraft: mapOutputToDraft("mystery-investigation"),
+    buildPrompt: mysteryPrompt,
   },
   npc: {
     id: "npc",

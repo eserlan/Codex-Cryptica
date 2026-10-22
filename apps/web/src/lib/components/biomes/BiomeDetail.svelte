@@ -101,11 +101,17 @@
     {onToggleCompare}
   />
 
-  <div class="grid gap-3 sm:grid-cols-2">
-    {#each biome.images as image (image.url)}
-      <BiomeImage {image} biomeName={biome.name} />
-    {/each}
-  </div>
+  {#if biome.images.length === 1}
+    <div class="w-full">
+      <BiomeImage image={biome.images[0]} biomeName={biome.name} />
+    </div>
+  {:else if biome.images.length > 1}
+    <div class="grid gap-4 sm:grid-cols-2">
+      {#each biome.images as image (image.url)}
+        <BiomeImage {image} biomeName={biome.name} />
+      {/each}
+    </div>
+  {/if}
 
   <div class="flex flex-col gap-2">
     {#each visible as section (section.id)}

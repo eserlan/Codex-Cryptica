@@ -17,6 +17,11 @@
  * served for `/` and every non-prerendered route, so injecting here reaches
  * exactly the pages that lack tags and nothing else.
  *
+ * The canonical link is injected for the same reason: a crawler that does not
+ * run JS otherwise sees no canonical for `/` at all (#4303). It is tagged
+ * `data-shell-canonical` so the client can drop it when a hydrated page sets
+ * its own (see `src/lib/seo/shell-canonical.ts`).
+ *
  * Deliberately does NOT inject `<title>` or `<meta name="description">`:
  * client-side `<svelte:head>` appends its own, and a browser uses the *first*
  * `<title>` in the document, so a static one would freeze dynamic page titles.
@@ -53,7 +58,8 @@ export const DEFAULT_SHELL_META = {
 };
 
 /** Marker so a re-run recognises its own output regardless of tag contents. */
-const MARKER = "<!-- fallback-social-metadata (scripts/inject-shell-og.mjs) -->";
+const MARKER =
+  "<!-- fallback-social-metadata (scripts/inject-shell-og.mjs) -->";
 
 /**
  * Escapes a string for use inside a double-quoted HTML attribute. `&` must go
@@ -72,6 +78,7 @@ export function buildOgBlock(meta = DEFAULT_SHELL_META) {
   const e = escapeAttribute;
   return [
     `\t${MARKER}`,
+    `\t<link rel="canonical" href="${e(meta.url)}" data-shell-canonical />`,
     `\t<meta property="og:type" content="website" />`,
     `\t<meta property="og:site_name" content="${e(meta.siteName)}" />`,
     `\t<meta property="og:title" content="${e(meta.title)}" />`,
@@ -123,7 +130,9 @@ if (process.argv[1] && resolve(process.argv[1]) === __filename) {
   if (status === "already-present") {
     console.log("[shell-og] build/index.html already has OG tags — skipping.");
   } else if (status === "no-head") {
-    console.error("[shell-og] No </head> found in build/index.html — aborting.");
+    console.error(
+      "[shell-og] No </head> found in build/index.html — aborting.",
+    );
     process.exit(1);
   } else {
     writeFileSync(shellFile, html);

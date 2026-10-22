@@ -15,6 +15,7 @@ import type {
   NightSkyData,
 } from "./public-constellation";
 import type { PointCrawlNetwork } from "./point-crawl-state";
+import type { MysteryGraph } from "./mystery-graph";
 import type { BusinessDocument } from "./business-state";
 
 export type GeneratorId =
@@ -49,7 +50,8 @@ export type GeneratorId =
   | "holiday"
   | "tome"
   | "point-crawl"
-  | "business";
+  | "business"
+  | "mystery-investigation";
 
 export const SUPPORTED_GENERATOR_IDS: readonly GeneratorId[] = [
   "npc",
@@ -84,6 +86,7 @@ export const SUPPORTED_GENERATOR_IDS: readonly GeneratorId[] = [
   "tome",
   "point-crawl",
   "business",
+  "mystery-investigation",
 ] as const;
 
 /** A user-configurable field for a generator. */
@@ -162,6 +165,8 @@ export interface GeneratorOutput {
   nightSky?: NightSkyData;
   /** Structured point-crawl network graph and keyed locations. */
   pointCrawl?: PointCrawlNetwork;
+  /** The clue network of a staged mystery, for the GM-only graph. */
+  mysteryGraph?: MysteryGraph;
   /** Structured business document (14 sections plus optional management). */
   business?: BusinessDocument;
   /** Structured system mechanics (e.g. Tales of the Valiant BFRD stats). */
@@ -318,6 +323,8 @@ export interface GeneratedDraft {
   contextProvenance?: Array<{ id: string; title: string }>;
   /** Carried through from {@link GeneratorOutput.pointCrawl}. */
   pointCrawl?: PointCrawlNetwork;
+  /** Carried through from {@link GeneratorOutput.mysteryGraph}. */
+  mysteryGraph?: MysteryGraph;
   /** Carried through from {@link GeneratorOutput.business}. */
   business?: BusinessDocument;
   /** Structured system mechanics (e.g. Tales of the Valiant BFRD stats). */

@@ -15,7 +15,7 @@ Each biome answers two questions: what does it look like, and why does it look t
 
 ## Finding it
 
-Open the navigation drawer and choose **Biomes**. The Library works without a vault open and without AI, and its text works offline.
+Find the Biome Explorer at [/biomes](/biomes) or from the [Explore](/explore) and [Tools](/tools) directories. It works completely in the browser without an account, without a vault open, and without AI.
 
 ## Browsing and searching
 
@@ -42,16 +42,12 @@ Open a biome and choose **Make my own**, or choose **Start from blank** in the L
 - **Reference** on the left shows the real-world values. It never changes.
 - **My version** on the right is yours. Leave a box empty to keep the reference. A "Changed from reference" note appears next to anything you edit.
 
-Give the biome a name, then choose **Save biome**. A name is required.
+Give the biome a name, then customize its attributes or add fictional changes.
 
-## Saving, reopening and sharing
+## Copying and exporting
 
-Saved biomes are stored in your vault as notes, so they sync and back up with everything else. You will find them under **My biomes**, where you can open one, make a copy to try a variation, copy it as Markdown, or delete it.
-
-- **Edit biomes in the Biomes tool.** If you change the note text by hand, Biomes replaces it with a fresh version the next time you save.
 - **Copy as Markdown** and **Download Markdown** give you a readable document with the reference, your changes and the sources under separate headings. If your browser blocks copying, the text is shown so you can copy it yourself.
-- A saved biome follows your vault's normal sharing rules. Reference links you add are never included when a vault is shared or published.
-- You need an open vault that you can edit to save. Without one you can still browse, make a draft and copy it as Markdown.
+- Reference links and illustration prompts you add are included in the exported Markdown.
 
 ## Comparing biomes
 
@@ -71,8 +67,8 @@ Fictional changes are kept apart from the reference and from your other edits, b
 
 If AI is switched on, **Suggest effects** offers up to three knock-on effects for a fictional change. It sends only that change and a short summary of your biome to the AI service you have set up. Nothing is added until you choose **Add** on a suggestion, and anything you add is yours to edit. With AI off, everything else works the same and the button is replaced by a note.
 
-## Illustration prompt, your picture and your links
+## Illustration prompt and links
 
 In the editor, the **Illustration prompt** box gives you a ready-made description that starts with "fantasy, illustration of" and includes your own wording and any fictional changes. Choose **Copy prompt** and paste it into the image tool you like. Biomes does not make pictures for you. **Keep prompt with this biome** stores it with the biome so it appears in the Markdown too.
 
-Once a biome is saved you can **add a picture** of your own. It is stored in your vault with the biome and is shown separately from the library's pictures. You can also add up to ten web links (they must start with https://) to references you want to keep. Links stay private: they are left out when a vault is shared or published.
+You can also add up to ten web links (they must start with https://) to references you want to keep. They are included in the exported Markdown.

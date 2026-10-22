@@ -74,6 +74,7 @@ export { alienRaceConfig } from "generator-engine";
 export { creatureConfig } from "generator-engine";
 export { tomeConfig } from "generator-engine";
 export { pointCrawlConfig, businessConfig } from "generator-engine";
+export { mysteryConfig } from "generator-engine";
 export {
   nameTable,
   pickFrom,

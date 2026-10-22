@@ -2,23 +2,21 @@
 
 ## Route
 
-| Route                        | Purpose                                                                                                                           |
-| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| `/biomes`                    | Workspace with three views: **Library**, **Compare**, **My biomes**                                                               |
-| `/biomes?biome=<id>`         | Opens the Library with that biome's details expanded                                                                              |
-| `/biomes?profile=<entityId>` | Opens the editor for a saved profile; shows a plain "not found" message and a link back if the entity is missing or isn't a biome |
+| Route                | Purpose                                                                                          |
+| -------------------- | ------------------------------------------------------------------------------------------------ |
+| `/biomes`            | Public discovery workspace with two views: **Library**, **Compare**, plus interactive customizer |
+| `/biomes?biome=<id>` | Opens the Library with that biome's details expanded                                             |
 
-The nav item is "Biomes" (`view` group, overflow placement, `icon-[lucide--mountain-snow]`). The route works with no vault open for the Library and Compare views. **My biomes** and Save need an open, writable vault and otherwise explain why.
+The route is a public marketing surface under `(marketing)/biomes`, prerendered with dedicated SEO metadata and OpenGraph tags. Linked via `/explore` and `/tools`. Works completely client-side in the browser without requiring a vault or login.
 
 ## Views and key interactions
 
-| View      | Contents                                                                                             | Key behaviours                                                                            |
-| --------- | ---------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| Library   | Search box, filter chips ("Filters"), card grid                                                      | Live result count announced politely; empty state with "Clear search"; card opens details |
-| Details   | Image carousel with attribution, summary, expandable sections, sources, related links                | Sections are disclosure widgets; "Make my own", "Add to compare", "Copy as Markdown"      |
-| Compare   | 2–3 biomes, aligned rows                                                                             | Remove a biome; fewer than 2 prompts to add one; stacks on phones                         |
-| My biomes | List of saved profiles                                                                               | Open, make a copy, delete (confirmed), export as Markdown                                 |
-| Editor    | Reference column (read-only) beside "My version" fields, alterations list, prompt panel, attachments | Unsaved-changes guard; Save shows warnings without blocking                               |
+| View    | Contents                                                                                       | Key behaviours                                                                            |
+| ------- | ---------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Library | Search box, filter chips ("Filters"), card grid                                                | Live result count announced politely; empty state with "Clear search"; card opens details |
+| Details | Image carousel with attribution, summary, expandable sections, sources, related links          | Sections are disclosure widgets; "Make my own", "Add to compare", "Copy as Markdown"      |
+| Compare | 2–3 biomes, aligned rows                                                                       | Remove a biome; fewer than 2 prompts to add one; stacks on phones                         |
+| Editor  | Reference column (read-only) beside "My version" fields, alterations list, prompt panel, links | Unsaved-changes guard; Copy and Download Markdown; works without login                    |
 
 ## Component responsibilities (one each)
 

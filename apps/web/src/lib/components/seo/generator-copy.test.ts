@@ -1,12 +1,39 @@
 import { describe, expect, it } from "vitest";
 import {
   buildGeneratorMarkdown,
+  buildMysteryPlayerHandout,
   buildSectionMarkdown,
   buildSessionEntityMarkdown,
   parseGeneratorShareMarkdown,
 } from "./generator-copy";
 
 describe("generator copy formatting", () => {
+  it("exports a spoiler-safe mystery handout without GM lore", () => {
+    expect(
+      buildMysteryPlayerHandout({
+        title: "The Quiet Bell",
+        summary: "A keeper vanished before the winter bell.",
+        content: "## People to Question\nA clerk saw the ferry leave.",
+      }),
+    ).toBe(
+      "# The Quiet Bell\n\n*A keeper vanished before the winter bell.*\n\n## People to Question\nA clerk saw the ferry leave.",
+    );
+  });
+
+  it("leaves GM sections out of the player handout", () => {
+    const handout = buildMysteryPlayerHandout({
+      title: "The Quiet Bell",
+      content:
+        "## Opening Hook\nA keeper vanished.\n\n## Evidence and Leads\n- Lead 1\n\n## Revelations\n- rev-1 (culprit): the clerk did it.\n\n## Actual Timeline\n1. The clerk did it.\n\n## Possible Outcomes\n- correct: yes",
+    });
+    expect(handout).toContain("## Opening Hook");
+    expect(handout).toContain("## Evidence and Leads");
+    expect(handout).not.toContain("Actual Timeline");
+    expect(handout).not.toContain("Revelations");
+    expect(handout).not.toContain("clerk did it");
+    expect(handout).not.toContain("Possible Outcomes");
+  });
+
   it("builds the canonical full-result order", () => {
     expect(
       buildGeneratorMarkdown({

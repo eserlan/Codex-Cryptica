@@ -104,6 +104,16 @@ export const wetland: ReferenceBiome = {
     mainIllustration(
       base,
       "A shallow wetland of reeds and still water with a heron in the foreground and mist over distant trees.",
+      {
+        tool: "gemini-3.1-flash-image",
+        generatedAt: "2026-10-22",
+        review: {
+          reviewedBy: "Espen Erlandsen",
+          reviewedAt: "2026-10-22",
+          notes:
+            "Atmospheric marshland with still water, tall reeds, wading bird and morning mist through weeping trees.",
+        },
+      },
     ),
   ],
 };

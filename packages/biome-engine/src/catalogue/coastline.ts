@@ -102,6 +102,16 @@ export const coastline: ReferenceBiome = {
     mainIllustration(
       base,
       "A rocky shoreline with a sandy cove, grass-topped dunes, breaking waves and seabirds over the water.",
+      {
+        tool: "gpt-6-luna",
+        generatedAt: "2026-10-22",
+        review: {
+          reviewedBy: "Espen Erlandsen",
+          reviewedAt: "2026-10-22",
+          notes:
+            "Coastal marine environment with rocky cliffs, sandy cove, dune grasses, breaking waves and soaring seabirds.",
+        },
+      },
     ),
   ],
 };

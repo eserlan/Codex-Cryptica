@@ -38,6 +38,7 @@ function context(slug: string): GeneratorThemeSyncContext {
     minorMagicItem: state(),
     artifact: state(),
     creature: state(),
+    mysteryInvestigation: state(),
     themeToQuestGenre: {},
     mapSocialHubGenre: () => "Mapped Social",
     mapWorldGenre: () => "Mapped World",
@@ -88,5 +89,12 @@ describe("syncGeneratorTheme", () => {
     state.mapOneShotGenre = () => null;
     syncGeneratorTheme(state);
     expect(state.setActiveTheme).not.toHaveBeenCalled();
+  });
+
+  it("passes the selected full theme through as the mystery genre", () => {
+    const state = context("mystery-investigation");
+    state.activeTheme = "Space Opera Resistance";
+    syncGeneratorTheme(state);
+    expect(state.mysteryInvestigation?.genre).toBe("Space Opera Resistance");
   });
 });

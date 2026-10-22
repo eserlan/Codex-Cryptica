@@ -294,6 +294,13 @@
               icon: "icon-[lucide--waypoints]",
             },
             {
+              href: "/generators/mystery-investigation",
+              label: "Mystery & Investigation Generator",
+              summary:
+                "Build a playable case with a fixed GM solution, suspects, independently reachable clues, escalating pressure, and fair outcomes.",
+              icon: "icon-[lucide--search]",
+            },
+            {
               href: "/generators/magic-item",
               label: "Magic Item Generator",
               summary:
@@ -415,6 +422,13 @@
               summary:
                 "Browse the complete library of CC-licensed vector silhouettes for characters, creatures, and places with live theme palette previews and SVG export.",
               icon: "icon-[lucide--shapes]",
+            },
+            {
+              href: "/biomes",
+              label: "Biome Explorer",
+              summary:
+                "Browse curated real-world environments, compare biomes side by side, and customize climates with Markdown export.",
+              icon: "icon-[lucide--mountain-snow]",
             },
           ],
         },

@@ -67,6 +67,8 @@ export class SeoImportService {
     private registryStore = vaultRegistry,
     private storage: StorageLike = browserStorage,
     private mapLinker: EntityMapLinkingService = entityMapLinkingService,
+    private win: any = typeof window !== "undefined" ? window : undefined,
+    private doc: any = typeof document !== "undefined" ? document : undefined,
   ) {}
 
   /**
@@ -74,14 +76,14 @@ export class SeoImportService {
    * Returns the ID of the created entity, or null if no import occurred.
    */
   async checkAndHandlePendingImport(): Promise<string | null> {
-    if (typeof window === "undefined" || typeof localStorage === "undefined") {
+    if (!this.win || !this.storage) {
       return null;
     }
 
     // Clean up UTM query parameters from the address bar if present
-    if (window.history && window.location.search.includes("utm_source")) {
-      const cleanUrl = window.location.pathname + window.location.hash;
-      window.history.replaceState({}, document.title, cleanUrl);
+    if (this.win.history && this.win.location.search.includes("utm_source")) {
+      const cleanUrl = this.win.location.pathname + this.win.location.hash;
+      this.win.history.replaceState({}, this.doc?.title || "", cleanUrl);
     }
 
     const payload = this.storage.getItem("__codex_pending_import");

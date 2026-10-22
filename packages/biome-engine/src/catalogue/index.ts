@@ -9,6 +9,9 @@ import { tropicalRainforest } from "./tropical-rainforest";
 import { coastline } from "./coastline";
 import { savanna } from "./savanna";
 import { alpineMontane } from "./alpine-montane";
+import { semiAridDesert } from "./semi-arid-desert";
+import { mediterraneanScrub } from "./mediterranean-scrub";
+import { polarIceSheet } from "./polar-ice-sheet";
 
 export { BIOME_SOURCES } from "./sources";
 
@@ -18,7 +21,10 @@ export const BIOME_CATALOGUE: readonly ReferenceBiome[] = [
   borealForest,
   grasslandSteppe,
   hotDesert,
+  semiAridDesert,
+  mediterraneanScrub,
   tundra,
+  polarIceSheet,
   wetland,
   tropicalRainforest,
   coastline,

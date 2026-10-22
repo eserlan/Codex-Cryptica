@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
 import { render, screen, fireEvent, waitFor } from "@testing-library/svelte";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import RoutePage from "./+page.svelte";
 
 const state = vi.hoisted(() => ({
@@ -14,6 +14,7 @@ const nav = vi.hoisted(() => ({
 }));
 
 vi.mock("$app/state", () => state);
+vi.mock("$app/environment", () => ({ browser: true, building: false }));
 vi.mock("$app/navigation", () => ({
   goto: nav.goto,
   beforeNavigate: (cb: typeof nav.guard) => {
@@ -37,20 +38,31 @@ async function made() {
   return mod.__made;
 }
 
-describe("/biomes route", () => {
+describe("/biomes public route", () => {
   beforeEach(async () => {
+    document.head.innerHTML = "";
     nav.goto.mockReset();
     nav.guard = null;
     state.page.url = new URL("http://localhost/biomes");
     const m = await made();
-    m.setWritable(true);
-    m.vault.records.clear();
-    m.vault.failWrites = false;
     m.store.draft = null;
     m.store.discardPending = false;
-    m.store.openError = null;
     m.store.clearCompare();
     m.store.setView("library");
+  });
+
+  afterEach(() => {
+    document.head.innerHTML = "";
+  });
+
+  it("publishes dedicated Open Graph and page metadata", () => {
+    render(RoutePage);
+    expect(document.title).toContain("Biome Explorer");
+    expect(
+      document
+        .querySelector('meta[name="description"]')
+        ?.getAttribute("content"),
+    ).toContain("Curated reference library of real-world environments");
   });
 
   it("shows the library when no biome is selected", () => {
@@ -109,61 +121,6 @@ describe("/biomes route", () => {
     expect(screen.queryByText(/Based on/)).toBeNull();
   });
 
-  it("opens the editor for a saved profile named in ?profile=", async () => {
-    const m = await made();
-    m.store.startFromReference("tundra");
-    m.store.setTitle("Ashen Flats");
-    await m.store.save();
-    const id = m.store.draft!.entityId!;
-    m.store.discardDraft(true);
-
-    state.page.url = new URL(`http://localhost/biomes?profile=${id}`);
-    render(RoutePage);
-    await waitFor(() =>
-      expect((screen.getByLabelText("Name") as HTMLInputElement).value).toBe(
-        "Ashen Flats",
-      ),
-    );
-  });
-
-  it("shows a not-found message with a link back for a missing profile", async () => {
-    state.page.url = new URL("http://localhost/biomes?profile=does-not-exist");
-    render(RoutePage);
-    expect((await screen.findByRole("alert")).textContent).toMatch(
-      /couldn't open/i,
-    );
-    await fireEvent.click(
-      screen.getByRole("button", { name: "Back to all biomes" }),
-    );
-    expect(nav.goto).toHaveBeenCalledWith("/biomes");
-  });
-
-  it("explains that My biomes needs an editable vault, while the library still works", async () => {
-    const m = await made();
-    m.setWritable(false);
-    render(RoutePage);
-    expect(screen.getByRole("searchbox")).toBeTruthy();
-    await fireEvent.click(screen.getByRole("button", { name: "My biomes" }));
-    expect(await screen.findByText(/Open a vault you can edit/)).toBeTruthy();
-  });
-
-  it("explains why Save can't work without an editable vault and keeps the draft", async () => {
-    const m = await made();
-    m.setWritable(false);
-    render(RoutePage);
-    await fireEvent.click(
-      screen.getByRole("button", { name: "Start from blank" }),
-    );
-    await fireEvent.input(await screen.findByLabelText("Name"), {
-      target: { value: "Ashen Flats" },
-    });
-    await fireEvent.click(screen.getByRole("button", { name: "Save biome" }));
-    expect(
-      (await screen.findAllByText(/Open a vault you can edit/)).length,
-    ).toBeGreaterThan(0);
-    expect(m.store.draft?.title).toBe("Ashen Flats");
-  });
-
   it("asks before leaving the page with unsaved changes, and keeps the draft when declined", async () => {
     const m = await made();
     render(RoutePage);
@@ -175,14 +132,14 @@ describe("/biomes route", () => {
     });
 
     const cancel = vi.fn();
-    nav.guard!({ cancel, to: { url: new URL("http://localhost/map") } });
+    nav.guard!({ cancel, to: { url: new URL("http://localhost/explore") } });
     expect(cancel).toHaveBeenCalled();
     expect(await screen.findByRole("alertdialog")).toBeTruthy();
 
     await fireEvent.click(screen.getByRole("button", { name: "Keep editing" }));
     expect(m.store.draft?.title).toBe("Unsaved");
     expect(nav.goto).not.toHaveBeenCalledWith(
-      expect.objectContaining({ pathname: "/map" }),
+      expect.objectContaining({ pathname: "/explore" }),
     );
   });
 
@@ -196,19 +153,19 @@ describe("/biomes route", () => {
     });
     nav.guard!({
       cancel: vi.fn(),
-      to: { url: new URL("http://localhost/map") },
+      to: { url: new URL("http://localhost/explore") },
     });
     await fireEvent.click(
       await screen.findByRole("button", { name: "Discard changes" }),
     );
     await waitFor(() => expect(nav.goto).toHaveBeenCalled());
-    expect((nav.goto.mock.calls.at(-1)![0] as URL).pathname).toBe("/map");
+    expect((nav.goto.mock.calls.at(-1)![0] as URL).pathname).toBe("/explore");
   });
 
   it("does not interfere with navigation when nothing is unsaved", () => {
     render(RoutePage);
     const cancel = vi.fn();
-    nav.guard!({ cancel, to: { url: new URL("http://localhost/map") } });
+    nav.guard!({ cancel, to: { url: new URL("http://localhost/explore") } });
     expect(cancel).not.toHaveBeenCalled();
   });
 

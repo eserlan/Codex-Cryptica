@@ -24,6 +24,20 @@ Do **not** stage simple generators (NPC, name, tavern, rumour, single-item). A c
 6. **Coherence:** run the deterministic checks, then one model review of the assembled result (retried once, max ~5 issues). Feed both to one targeted repair. Accept the repair only if it parses and adds no deterministic problems. A missing review never blocks the result.
 7. **Failure and abort.** If a stage stays unusable, return `null`; the caller then runs the one-pass route, which keeps its local fallback. An abort throws (check the signal between calls with `throwIfAborted`, rethrow `AbortError`), and nothing partial is returned.
 
+## Making it reliable against a real model
+
+Unit tests with scripted replies will not catch these; they only show up against the live worker. Mystery (#4330) shipped with every one of them and fell back to the local draft on every run.
+
+- **Put the exact JSON shape in every stage prompt** (keys, nesting, "plain strings"). A prompt that only says "establish a summary, constraints, a timeline" gets `playerSafeSummary`, array `constraints`, object timeline events and `revelationId`, and every validator rejects it.
+- **Normalise before you validate.** Add a pure `<name>-staged-normalize.ts` that maps common key aliases and value shapes (list or object to string, alias ids) onto the contract, and run it on each reply inside the stage's `complete` wrapper, so the stored "locked" data is already normalised. Tolerate shape drift; keep rejecting missing content.
+- **Enforce locked facts in code, and say them in the prompt.** If a later stage must repeat a locked value (the culprit's name), overwrite it in the normaliser and name the exact value in the prompt.
+- **Derive structure the model is bad at.** Graph-like data (independent evidence routes) is cheaper to derive from the clues than to coax from the model. Top up from data the model already gave; do not invent content.
+- **Repair merges, it does not replace.** A repair reply that omits or reshapes an object must be merged over the previous object before it is validated.
+- **Give every stage the banned-name list** (`BANNED_NAMES` plus `avoidNames`) in the system prompt. Models reuse "Vale" and "Voss" constantly, and the name check will reject them.
+- **A reporting-only final audit must not discard a valid case.** Once every structural check has passed, remaining wording-level doubts from the last review are logged, not fatal. Accept unknown audit statuses by mapping them from the issues list.
+- **Render what the model returns.** Do not pass a list of strings through a helper that expects records (it renders empty). Players must never see internal ids (`clue-3`); label them ("Lead 3").
+- **Validate against the live model before opening the PR.** Run `bun run dev:proxy` (use `--port` if 8787 is taken) and the web app with `VITE_ORACLE_PROXY_URL` pointing at it. Drive the staged function from a script that posts to the worker and run it 6-8 times in parallel; log each retry's problem list to see which check keeps firing; keep going until every run succeeds. Then click through the real page once. Expect 60-100 s for a 7-call pipeline.
+
 ## Wiring
 
 - **Public** (the generator's method in `apps/web/src/lib/services/seo/generator-engine-*.ts`): staged by default, `staged: false` forces the one-pass baseline, and `signal` is threaded to `runModel`.
@@ -37,3 +51,7 @@ Do **not** stage simple generators (NPC, name, tavern, rumour, single-item). A c
 - Cover: happy path (call count, fixed plan kept), a retry that fixes a stage, a kept first draft when the retry is junk, `null` plus `stoppedAt` on an unusable stage, abort mid-run, an unreadable review, an accepted repair, and the progress statuses (including fallback/skipped).
 - Any regex over generated prose needs a counterexample table: flagged and not-flagged inputs (see codex-review `patterns.md` → Heuristic Prose Checks). Keep it a soft problem with its limits in the doc comment.
 - For each changed hunk, name the test that fails if it is reverted.
+
+### Causal integrity for mystery-style generators
+
+Valid shape is not the same as solvable. Require, in the locked foundation, where the central object is now, who holds it, its intended fate and how it is recovered, plus why the chosen method was needed. Give every revelation a `kind` and make sure the culprit, motive and object are each covered. Check that at least one clue leads to the object's location, and that the two routes to a revelation share no clue and start at different sources. Make the audit prompt list these invariants explicitly. If a repair reply is unusable, keep the case that already passed its checks instead of falling back.

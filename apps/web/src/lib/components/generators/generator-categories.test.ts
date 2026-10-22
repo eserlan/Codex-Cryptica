@@ -22,6 +22,15 @@ describe("generator-categories", () => {
     ).toBe("people-factions");
   });
 
+  it("places mystery and investigation in the adventures section", () => {
+    expect(
+      resolveGeneratorSection({
+        id: "mystery-investigation",
+        entityType: "note",
+      }),
+    ).toBe("adventures-encounters");
+  });
+
   it("falls back to entity type when not explicitly mapped", () => {
     // A hypothetical or new event generator not in the explicit map
     expect(
