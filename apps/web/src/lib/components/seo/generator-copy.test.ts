@@ -20,6 +20,19 @@ describe("generator copy formatting", () => {
     );
   });
 
+  it("leaves GM sections out of the player handout", () => {
+    const handout = buildMysteryPlayerHandout({
+      title: "The Quiet Bell",
+      content:
+        "## Opening Hook\nA keeper vanished.\n\n## Evidence and Leads\n- Lead 1\n\n## Actual Timeline\n1. The clerk did it.\n\n## Possible Outcomes\n- correct: yes",
+    });
+    expect(handout).toContain("## Opening Hook");
+    expect(handout).toContain("## Evidence and Leads");
+    expect(handout).not.toContain("Actual Timeline");
+    expect(handout).not.toContain("clerk did it");
+    expect(handout).not.toContain("Possible Outcomes");
+  });
+
   it("builds the canonical full-result order", () => {
     expect(
       buildGeneratorMarkdown({
