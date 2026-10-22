@@ -344,10 +344,15 @@ function checkClues(data: Obj, foundation: Obj, cast: Obj): DraftCheck {
   });
   hard.push(
     ...findBrokenReferences(
-      clues.flatMap((clue) => [
-        text(clue.observation),
-        text(clue.doesNotProve),
-      ]),
+      [
+        ...clues.flatMap((clue) => [
+          text(clue.observation),
+          text(clue.doesNotProve),
+        ]),
+        ...list(data.independentPaths).map((path) =>
+          text(record(path).reasoning),
+        ),
+      ],
       knownIds(foundation, cast, clueIds),
     ),
   );
@@ -397,6 +402,8 @@ function checkPressure(
     ...findBrokenReferences(
       [
         text(data.escalation),
+        text(data.objective),
+        ...list(data.approaches).map(text),
         ...list(data.pressureClock).flatMap((step) => [
           text(record(step).trigger),
           text(record(step).consequence),
@@ -405,6 +412,16 @@ function checkPressure(
           text(record(response).trigger),
           text(record(response).response),
         ]),
+        ...["correct", "partial", "mistaken", "failed", "unsolved"].flatMap(
+          (key) => {
+            const outcome = record(record(data.outcomes)[key]);
+            return [
+              text(outcome.condition),
+              text(outcome.consequence),
+              text(outcome.continuation),
+            ];
+          },
+        ),
       ],
       knownIds(foundation, cast, uniqueIds(list(clues.clues))),
     ),

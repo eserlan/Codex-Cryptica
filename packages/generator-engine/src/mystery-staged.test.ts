@@ -627,6 +627,28 @@ describe("generateMysteryStaged", () => {
     expect(result?.output.content).not.toContain("clue-42");
   });
 
+  it("retries clue routes whose reasoning points at an unknown person", async () => {
+    const [foundation, cast, clues, pressure] = validStages();
+    const dangling = structuredClone(clues);
+    dangling.independentPaths[0].reasoning =
+      "This conclusion depends on what person-9 witnessed.";
+    const replies = [
+      foundation,
+      cast,
+      dangling,
+      clues,
+      pressure,
+      { status: "consistent", issues: [] },
+      { status: "consistent", issues: [] },
+    ];
+    const result = await generateMysteryStaged(resolveMystery(), {
+      complete: async () => JSON.stringify(replies.shift()),
+    });
+
+    expect(result?.stats.repairedStages).toContain("mystery-clues");
+    expect(result?.output.content).not.toContain("person-9");
+  });
+
   it("stops at the pressure stage when the text keeps pointing at a missing person", async () => {
     const [foundation, cast, clues, pressure] = validStages();
     pressure.npcResponses[0].response = "Oren blames person-9";
@@ -639,6 +661,31 @@ describe("generateMysteryStaged", () => {
 
     expect(result).toBeNull();
     expect(stopped).toBe("pressure");
+  });
+
+  it("retries pressure prose with unknown IDs in all rendered fields", async () => {
+    const [foundation, cast, clues, pressure] = validStages();
+    const dangling = structuredClone(pressure);
+    dangling.objective += " before person-9 arrives";
+    dangling.approaches[0] += " with clue-42";
+    dangling.outcomes.correct.condition += " near person-9";
+    dangling.outcomes.partial.consequence += " because clue-42 is missing";
+    dangling.outcomes.unsolved.continuation += " before person-9 returns";
+    const replies = [
+      foundation,
+      cast,
+      clues,
+      dangling,
+      pressure,
+      { status: "consistent", issues: [] },
+      { status: "consistent", issues: [] },
+    ];
+    const result = await generateMysteryStaged(resolveMystery(), {
+      complete: async () => JSON.stringify(replies.shift()),
+    });
+
+    expect(result?.stats.repairedStages).toContain("mystery-pressure");
+    expect(result?.output.content).not.toMatch(/(?:person|clue)-(?:9|42)\b/);
   });
 
   it("stops at the clues when every route to the item starts at the item's location", async () => {
