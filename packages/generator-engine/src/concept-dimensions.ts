@@ -307,7 +307,7 @@ export const CONCEPT_DIMENSIONS: Record<
       "sealed-cargo",
       "a cargo of sealed goods",
       "a sealed cargo of goods that someone will pay dearly for depends on the outcome",
-      { families: PRE.concat(SPACE) },
+      { families: [...PRE, ...SPACE] },
     ),
     entry(
       "corporate-patent",
