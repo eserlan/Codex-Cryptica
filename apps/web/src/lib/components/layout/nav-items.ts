@@ -192,6 +192,16 @@ export function navItems(): NavItem[] {
       placement: "overflow",
     },
     {
+      id: "biomes",
+      icon: "icon-[lucide--mountain-snow]",
+      label: "Biomes",
+      title:
+        "Biome Explorer — browse real-world environments and build your own",
+      href: `${base}/biomes`,
+      group: "view",
+      placement: "overflow",
+    },
+    {
       id: "explorer",
       icon: "icon-[lucide--database]",
       label: "Entities",

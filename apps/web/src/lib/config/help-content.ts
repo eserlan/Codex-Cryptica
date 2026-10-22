@@ -21,6 +21,7 @@ export const FEATURE_HELP_ARTICLES = {
   SHARING_ENTITY_TEMPLATES: "sharing-templates",
   HEXCRAWL_MAPS: "hexcrawl-maps",
   HEX_CRAWL_MODE: "hex-crawl-mode",
+  BIOME_EXPLORER: "biome-explorer",
   POINT_CRAWL_GENERATOR: "point-crawl-generator",
   TOV_GENERATORS: "tales-of-the-valiant-generators",
 } as const;
@@ -45,6 +46,8 @@ export const HINT_KEYS = {
   ADVENTURE: "adventure-hint-seen",
   /** The Explore area's AI disclosure for hex discovery (FR-031). Device-local. */
   HEX_CRAWL_AI_NOTICE: "hex-crawl-ai-notice-seen",
+  /** The Biome Explorer's first-use note about the optional AI helper. Device-local. */
+  BIOME_AI_NOTICE: "biome-ai-notice-seen",
 } as const;
 
 /**
@@ -831,6 +834,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     content:
       "Click a hex with no pin or token to open its panel. Track its terrain, your notes and whether the party has explored it. Only you see this: players and guests never see hex notes, terrain, drafts or explored markers.",
     icon: "icon-[lucide--hexagon]",
+  },
+  "biome-explorer": {
+    id: "biome-explorer",
+    title: "Biome Explorer",
+    content:
+      "Browse real-world environments with credited pictures, see why each one looks the way it does, and find it under Biomes in the navigation drawer. Everything works without AI and the text works offline.",
+    icon: "icon-[lucide--mountain-snow]",
   },
   "point-crawl-generator": {
     id: "point-crawl-generator",

@@ -29,15 +29,16 @@ The Activity Bar has two kinds of button:
 
 ## Views
 
-| Button            | What it opens                                                                        | Read more                                                                             |
-| ----------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------- |
-| **Graph**         | The Knowledge Graph: every entry as a node, with its connections drawn between them. | [Knowledge Graph](/help#help/graph-basics)                                            |
-| **Map**           | The World Map, for placing locations and running a session on a map.                 | [Map Mode](/help#help/map-mode)                                                       |
-| **Canvas**        | The Spatial Canvas: a free-form board where you arrange entries and notes.           | [Spatial Canvas](/help#help/spatial-canvas)                                           |
-| **Timeline**      | The World Chronology: your entries placed on the calendar of your world.             | [Chronology](/help#help/chronology)                                                   |
-| **Table**         | The Entity Table: every entry in one list that you can filter and sort.              | [Entity Table](/help#help/entity-table)                                               |
-| **Play**          | Solo play. Start a solo session, or let the Oracle run an adventure.                 | [Solo Sessions](/help#help/solo-session), [Adventure Mode](/help#help/adventure-mode) |
-| **Rolls & Decks** | Your random tables and card decks, where you roll and draw.                          | [Roll Tables & Decks](/help#help/random-tables-decks)                                 |
+| Button            | What it opens                                                                                  | Read more                                                                             |
+| ----------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| **Graph**         | The Knowledge Graph: every entry as a node, with its connections drawn between them.           | [Knowledge Graph](/help#help/graph-basics)                                            |
+| **Map**           | The World Map, for placing locations and running a session on a map.                           | [Map Mode](/help#help/map-mode)                                                       |
+| **Canvas**        | The Spatial Canvas: a free-form board where you arrange entries and notes.                     | [Spatial Canvas](/help#help/spatial-canvas)                                           |
+| **Timeline**      | The World Chronology: your entries placed on the calendar of your world.                       | [Chronology](/help#help/chronology)                                                   |
+| **Table**         | The Entity Table: every entry in one list that you can filter and sort.                        | [Entity Table](/help#help/entity-table)                                               |
+| **Play**          | Solo play. Start a solo session, or let the Oracle run an adventure.                           | [Solo Sessions](/help#help/solo-session), [Adventure Mode](/help#help/adventure-mode) |
+| **Rolls & Decks** | Your random tables and card decks, where you roll and draw.                                    | [Roll Tables & Decks](/help#help/random-tables-decks)                                 |
+| **Biomes**        | A reference library of real-world environments, where you can compare them and build your own. | [Biomes](/help#help/biome-explorer)                                                   |
 
 ## Tools
 
@@ -92,7 +93,7 @@ The top bar only keeps the menu button, **Open Die Roller**, the **CC** name and
 
 ## Why a button might be missing
 
-- **On a phone**, the bottom bar only has room for the main buttons: Graph, Map, Canvas, Timeline, Table, Entities and Oracle. Play, Rolls & Decks, Generators, Shelf, Notes, Session Journal and Chat are only in the **menu drawer**. On a computer they are all in the bar.
+- **On a phone**, the bottom bar only has room for the main buttons: Graph, Map, Canvas, Timeline, Table, Entities and Oracle. Play, Rolls & Decks, Biomes, Generators, Shelf, Notes, Session Journal and Chat are only in the **menu drawer**. On a computer they are all in the bar.
 - **In Guided Mode**, the top bar hides the Die Roller, the status icons, **Manage vault**, **Save** and **Explore public worlds**.
 - **Generators** only appear once your vault is ready for them.
 - **Chat** is hidden when AI is switched off for the vault.
