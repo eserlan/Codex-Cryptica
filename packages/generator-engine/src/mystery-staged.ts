@@ -265,6 +265,14 @@ function checkClues(data: Obj, foundation: Obj, cast: Obj): DraftCheck {
       );
   });
   const paths = list(data.independentPaths).map(record);
+  hard.push(
+    ...paths
+      .filter((path) => !hasText(path.reasoning))
+      .map(
+        () =>
+          "every route needs reasoning explaining how its clues establish the conclusion",
+      ),
+  );
   for (const revelationId of revelationIds) {
     const matching = paths.filter(
       (path) => text(path.revelationId) === revelationId,
@@ -278,7 +286,6 @@ function checkClues(data: Obj, foundation: Obj, cast: Obj): DraftCheck {
         if (
           !pathClues.length ||
           new Set(pathClues).size !== pathClues.length ||
-          !hasText(path.reasoning) ||
           !pathClues.every((id) => clueIds.includes(id)) ||
           !pathItems.some((clue) =>
             list(clue.supports).map(text).includes(revelationId),

@@ -777,6 +777,32 @@ describe("generateMysteryStaged", () => {
     expect(result?.output.content).toContain("This clue directly establishes");
   });
 
+  it("rejects unexplained routes even when their revelation id is unknown", async () => {
+    const [foundation, cast, validClues, pressure] = validStages();
+    const clues = {
+      ...validClues,
+      independentPaths: [
+        ...validClues.independentPaths,
+        { revelationId: "rev-99", clueIds: ["clue-1"], reasoning: " " },
+      ],
+    };
+    const replies = [
+      foundation,
+      cast,
+      clues,
+      validClues,
+      pressure,
+      { status: "consistent", issues: [] },
+      { status: "consistent", issues: [] },
+    ];
+    const result = await generateMysteryStaged(resolveMystery(), {
+      complete: async () => JSON.stringify(replies.shift()),
+    });
+
+    expect(result?.stats.repairedStages).toContain("mystery-clues");
+    expect(result?.output.content).not.toContain("an unlisted conclusion");
+  });
+
   it("shows where things stand when play starts and why each route works", async () => {
     const [foundation, cast, clues, pressure] = validStages();
     (foundation.truth as Record<string, string>).atStart =
