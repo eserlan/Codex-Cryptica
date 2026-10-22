@@ -559,6 +559,47 @@ describe("generateMysteryStaged", () => {
     expect(stopped).toBe("clues");
   });
 
+  it("names clue targets as Lead numbers in the Clue Index, never as unlisted", async () => {
+    const [foundation, cast, clues, pressure] = validStages();
+    clues.clues[0].leadsTo = ["clue-2", "place-2"];
+    const replies = [
+      foundation,
+      cast,
+      clues,
+      pressure,
+      { status: "consistent", issues: [] },
+      { status: "consistent", issues: [] },
+    ];
+    const result = await generateMysteryStaged(resolveMystery(), {
+      complete: async () => JSON.stringify(replies.shift()),
+    });
+
+    expect(result?.output.content).toContain("Leads to: Lead 2, Bell tower.");
+    expect(result?.output.content).not.toContain("an unlisted lead");
+  });
+
+  it("asks for the clue to the key item's location to say what points there", async () => {
+    const [foundation, cast, clues, pressure] = validStages();
+    const replies = [
+      foundation,
+      cast,
+      clues,
+      pressure,
+      { status: "consistent", issues: [] },
+      { status: "consistent", issues: [] },
+    ];
+    const messages: string[] = [];
+    await generateMysteryStaged(resolveMystery(), {
+      complete: async (_system, message) => {
+        messages.push(message);
+        return JSON.stringify(replies.shift());
+      },
+    });
+
+    expect(messages[2]).toContain("STAGE 3 OF 7");
+    expect(messages[2]).toContain("points the party there");
+  });
+
   it("retries the cast when a person has no starting location", async () => {
     const [foundation, cast, clues, pressure] = validStages();
     const unplaced = {
