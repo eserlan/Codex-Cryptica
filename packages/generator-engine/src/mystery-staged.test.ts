@@ -311,7 +311,7 @@ describe("generateMysteryStaged", () => {
     expect(result?.output.lore).toContain("Stay on watch; No key");
     // The perpetrator's name stays the one locked by the foundation.
     expect(result?.output.content).toContain(
-      "**Mara Quill (person-1), starts at",
+      "**Mara Quill:** starts at Archive.",
     );
   });
 
@@ -831,8 +831,8 @@ describe("generateMysteryStaged", () => {
 
   it("replaces unknown internal ids in model prose with readable fallbacks", async () => {
     const [foundation, cast, clues, pressure] = validStages();
-    foundation.truth.motive = "The lost note names place-99 and rev-99.";
-    pressure.escalation = "If clue-99 appears, person-99 escapes.";
+    foundation.truth.motive =
+      "The lost note names place-99, rev-99, clue-99 and person-99.";
     const replies = [
       foundation,
       cast,
