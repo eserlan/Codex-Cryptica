@@ -12,6 +12,7 @@ import {
   summarizeResolvedInputs,
 } from "./generation-input-history";
 import { GeneratorEngineSpecialized } from "./generator-engine-specialized";
+import { LANGUAGE_GENERATION_CONFIG } from "./generator-ai-transport";
 import type { GeneratorOutput } from "./generator-helpers";
 
 interface MysteryRunControls {
@@ -74,7 +75,13 @@ export class GeneratorEngineMystery extends GeneratorEngineSpecialized {
     try {
       const result = await generateMysteryStaged(prompt.resolved, {
         complete: (system, message) =>
-          this.runModel(system, message, undefined, false, controls.signal),
+          this.runModel(
+            system,
+            message,
+            LANGUAGE_GENERATION_CONFIG,
+            false,
+            controls.signal,
+          ),
         contextPrefix: prompt.userMessage,
         onProgress: controls.onProgress,
         signal: controls.signal,
