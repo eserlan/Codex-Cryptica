@@ -131,6 +131,7 @@
   <meta property="og:title" content={config.seo.title} />
   <meta property="og:description" content={config.seo.description} />
   <meta property="og:type" content="website" />
+  <meta property="og:url" content={canonicalUrl} />
   <meta property="og:image" content={seoImage} />
   <meta property="og:image:alt" content={seoImageAlt} />
   <meta property="og:image:width" content="1200" />
