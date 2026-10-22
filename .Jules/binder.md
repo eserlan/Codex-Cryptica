@@ -343,3 +343,8 @@
 **Learning:** The `@codex/runtime` package exposes `systemIdGenerator` as a safe fallback when `crypto.randomUUID` is unavailable (e.g. in some SSR/worker contexts or older browsers). Using this ensures callers don't crash purely from a missing id function.
 
 **Action:** When a stable row ID is needed and `crypto.randomUUID` was directly used, replace it with `systemIdGenerator.uuid()` from `@codex/runtime` to safely handle unsupported environments.
+
+## 2024-10-21 - Inject window and document into SeoImportService
+
+**Learning:** When services like `SeoImportService` directly reference browser globals (`window.history`, `window.location`, `document.title`) and `localStorage` to strip UTM tracking from URLs or manage pending imports, testing them requires brittle, broad `vi.stubGlobal("window", ...)` stubs.
+**Action:** Inject `win` and `doc` (as well as `storage` for localStorage) directly into the service's constructor, defaulting to `typeof window !== "undefined" ? window : undefined` for production/SSR compatibility. This allows tests to pass in simple, tailored mock objects instead of patching global state.

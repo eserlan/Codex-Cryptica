@@ -18,7 +18,7 @@ describe("SeoImportService", () => {
         delete storage[key];
       },
     });
-    vi.stubGlobal("window", {});
+    // window stub removed in favor of DI
 
     mockVaultStore = {
       isInitialized: true,
@@ -44,7 +44,13 @@ describe("SeoImportService", () => {
       setActiveVault: vi.fn().mockResolvedValue(undefined),
     };
 
-    service = new SeoImportService(mockVaultStore, mockRegistryStore);
+    service = new SeoImportService(
+      mockVaultStore,
+      mockRegistryStore,
+      undefined,
+      undefined,
+      {},
+    );
   });
 
   afterEach(() => {
@@ -276,7 +282,7 @@ describe("SeoImportService", () => {
 
   it("should strip UTM query parameters if utm_source is present in search", async () => {
     const replaceState = vi.fn();
-    vi.stubGlobal("window", {
+    const win = {
       location: {
         pathname: "/test-path",
         search: "?utm_source=generator-faction&utm_medium=save-to-vault",
@@ -285,12 +291,21 @@ describe("SeoImportService", () => {
       history: {
         replaceState,
       },
-    });
-    vi.stubGlobal("document", {
+    };
+    const doc = {
       title: "Test Page",
-    });
+    };
 
-    const res = await service.checkAndHandlePendingImport();
+    const injectedService = new SeoImportService(
+      mockVaultStore,
+      mockRegistryStore,
+      service["storage"],
+      service["mapLinker"],
+      win,
+      doc,
+    );
+
+    const res = await injectedService.checkAndHandlePendingImport();
     expect(res).toBeNull();
     expect(replaceState).toHaveBeenCalledWith(
       {},
@@ -301,7 +316,7 @@ describe("SeoImportService", () => {
 
   it("should not strip query parameters if utm_source is not present", async () => {
     const replaceState = vi.fn();
-    vi.stubGlobal("window", {
+    const win = {
       location: {
         pathname: "/test-path",
         search: "?other_param=123",
@@ -310,9 +325,18 @@ describe("SeoImportService", () => {
       history: {
         replaceState,
       },
-    });
+    };
 
-    await service.checkAndHandlePendingImport();
+    const injectedService = new SeoImportService(
+      mockVaultStore,
+      mockRegistryStore,
+      service["storage"],
+      service["mapLinker"],
+      win,
+      undefined,
+    );
+
+    await injectedService.checkAndHandlePendingImport();
     expect(replaceState).not.toHaveBeenCalled();
   });
 
