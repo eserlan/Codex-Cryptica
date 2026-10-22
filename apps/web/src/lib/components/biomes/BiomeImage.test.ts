@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import BiomeImage from "./BiomeImage.svelte";
 import type { ImageRef } from "biome-engine";
+import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
 const host = "https://assets.codexcryptica.com/biomes/tundra";
 
@@ -88,5 +89,16 @@ describe("BiomeImage", () => {
     render(BiomeImage, { props: { image: generated, biomeName: "Tundra" } });
     await fireEvent.error(screen.getByRole("img", { name: generated.alt }));
     expect(screen.getByText(/AI illustration/)).toBeTruthy();
+  });
+
+  it("opens the image in the lightbox when clicked", async () => {
+    render(BiomeImage, { props: { image: generated, biomeName: "Tundra" } });
+    const button = screen.getByRole("button", {
+      name: /enlarge illustration of tundra/i,
+    });
+    await fireEvent.click(button);
+    expect(modalUIStore.lightbox.show).toBe(true);
+    expect(modalUIStore.lightbox.imageUrl).toBe(generated.url);
+    expect(modalUIStore.lightbox.title).toBe(generated.alt);
   });
 });
