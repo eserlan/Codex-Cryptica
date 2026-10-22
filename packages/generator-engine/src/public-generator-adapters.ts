@@ -28,6 +28,7 @@ import type { GeneratorMechanicsBundle } from "./tov-mechanics-schema";
 import type { LanguageProfileV1 } from "schema";
 import type { OneShotAdventure } from "./one-shot-types";
 import type { PointCrawlNetwork } from "./point-crawl-state";
+import type { MysteryGraph } from "./mystery-graph";
 import type { StarSystemBody } from "./public-star-system";
 import type {
   ConstellationPattern,
@@ -121,6 +122,7 @@ export interface PublicGeneratorOutput {
   oneShot?: OneShotAdventure;
   /** Structured point-crawl network, kept so single nodes/routes can be regenerated and saved. */
   pointCrawl?: PointCrawlNetwork;
+  mysteryGraph?: MysteryGraph;
   /** Structured canonical facts for tomes; prose is derived from these. */
   tomeFacts?: TomeCanonicalFacts;
   /** Optional rules system id (e.g. "tales-of-the-valiant"). */
@@ -158,6 +160,7 @@ function toPublic(draft: GeneratedDraft): PublicGeneratorOutput {
     languageProfile: draft.languageProfile,
     languageProfileVersion: draft.languageProfileVersion,
     pointCrawl: draft.pointCrawl,
+    mysteryGraph: draft.mysteryGraph,
   };
 }
 

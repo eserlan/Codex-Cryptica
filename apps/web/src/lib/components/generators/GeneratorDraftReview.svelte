@@ -13,6 +13,7 @@
   import { getDelveLocationTypeLabel } from "$lib/utils/delve-terminology";
   import DraftBody from "./DraftBody.svelte";
   import PointCrawlGraph from "$lib/components/seo/PointCrawlGraph.svelte";
+  import MysteryClueGraph from "$lib/components/seo/MysteryClueGraph.svelte";
   import GeneratorMechanicsPreview from "./GeneratorMechanicsPreview.svelte";
 
   interface Props {
@@ -273,6 +274,8 @@
       bind:selectedNodeIds={selectedPointCrawlNodeIds}
     />
   {/if}
+
+  <MysteryClueGraph graph={spoilerShield ? undefined : draft.mysteryGraph} />
 
   <DraftBody {draft} {spoilerShield} />
 

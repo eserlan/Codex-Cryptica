@@ -343,6 +343,7 @@ function optionalOutputFields(output: GeneratorOutput) {
     interpretations: copyIfPresent(output.interpretations),
     nightSky: output.nightSky,
     pointCrawl: output.pointCrawl,
+    mysteryGraph: output.mysteryGraph,
     business: output.business,
   };
 }

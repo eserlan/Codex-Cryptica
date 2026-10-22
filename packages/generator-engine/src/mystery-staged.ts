@@ -12,6 +12,8 @@ import {
   type DraftCheck,
   type JsonObject,
 } from "./staged-runtime";
+import { buildMysteryGraph } from "./mystery-graph";
+import { list, record, text } from "./mystery-obj";
 import { normalizeMysteryStage } from "./mystery-staged-normalize";
 import { BANNED_NAMES } from "./naming-policy";
 import { StagedProgress, type StagedProgressStep } from "./staged-progress";
@@ -32,13 +34,6 @@ export interface MysteryStagedDependencies {
 }
 
 type Obj = JsonObject;
-const record = (value: unknown): Obj =>
-  value && typeof value === "object" && !Array.isArray(value)
-    ? (value as Obj)
-    : {};
-const list = (value: unknown): unknown[] => (Array.isArray(value) ? value : []);
-const text = (value: unknown): string =>
-  typeof value === "string" ? value.trim() : "";
 const hasText = (value: unknown): boolean => text(value).length > 0;
 const missing = (value: Obj, keys: readonly string[]): string[] =>
   keys
@@ -46,6 +41,15 @@ const missing = (value: Obj, keys: readonly string[]): string[] =>
     .map((key) => `"${key}" is missing`);
 const uniqueIds = (items: unknown[]): string[] =>
   items.map((item) => text(record(item).id));
+const hasCrossGroupIdCollision = (...groups: string[][]): boolean => {
+  const seen = new Set<string>();
+  for (const id of groups.flat()) {
+    if (!id) continue;
+    if (seen.has(id)) return true;
+    seen.add(id);
+  }
+  return false;
+};
 
 /** What the GM needs to know about the case's central object, beyond who took it. */
 const KEY_ITEM_FIELDS = [
@@ -184,6 +188,14 @@ function checkCast(
     }),
   );
   hard.push(...checkLocations(data));
+  if (
+    hasCrossGroupIdCollision(
+      uniqueIds(list(foundation.revelations)),
+      uniqueIds(suspects),
+      uniqueIds(list(data.locations)),
+    )
+  )
+    hard.push("person, place and revelation ids must be unique across groups");
   const names = suspects.map((suspect) => text(suspect.name));
   if (
     new Set(names.map((name) => name.toLocaleLowerCase())).size !== names.length
@@ -213,6 +225,17 @@ function checkClues(data: Obj, foundation: Obj, cast: Obj): DraftCheck {
   const clueIds = uniqueIds(clues);
   if (clueIds.some((id) => !id) || new Set(clueIds).size !== clueIds.length)
     hard.push("clue ids must be present and unique");
+  if (
+    hasCrossGroupIdCollision(
+      uniqueIds(list(foundation.revelations)),
+      uniqueIds(list(cast.suspects)),
+      uniqueIds(list(cast.locations)),
+      clueIds,
+    )
+  )
+    hard.push(
+      "person, place, clue and revelation ids must be unique across groups",
+    );
   const allowedSources = new Set([
     ...uniqueIds(list(cast.suspects)),
     ...uniqueIds(list(cast.locations)),
@@ -516,6 +539,7 @@ function assembleOutput(
     lore: tidy(stripMysteryMarkdownImages(fixedTruth)),
     labels: ["mystery", "investigation", "mystery-generator"],
     status: "draft",
+    mysteryGraph: buildMysteryGraph(foundation, cast, clues),
   };
 }
 

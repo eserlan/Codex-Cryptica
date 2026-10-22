@@ -717,6 +717,17 @@ export {
   type NightSkyData,
 } from "./public-constellation";
 export {
+  buildMysteryGraph,
+  buildMysteryGraphDiagram,
+  type MysteryGraph,
+  type MysteryGraphNode,
+  type MysteryGraphEdge,
+  type MysteryGraphNodeKind,
+  type MysteryGraphDiagramLayout,
+  type MysteryGraphDiagramNode,
+  type MysteryGraphDiagramEdge,
+} from "./mystery-graph";
+export {
   buildConstellationDiagram,
   type ConstellationDiagramNode,
   type ConstellationDiagramLine,
