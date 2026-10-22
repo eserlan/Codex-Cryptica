@@ -7,6 +7,7 @@ import {
 import { contextChain } from "./campaign-generator-registry";
 import { completeText } from "./campaign-generator-service-core";
 import { buildMysteryPrompt, parseMysteryResponse } from "./public-mystery";
+import { generateConceptSeed } from "./concept-seed";
 import { generateMysteryStaged } from "./mystery-staged";
 import type { MysteryGraph } from "./mystery-graph";
 
@@ -49,11 +50,23 @@ async function generateMysteryStagedDraft(
   const context = contextChain(request);
   const prompt = buildMysteryPrompt(options, context);
   try {
+    const complete = async (instruction: string, message: string) =>
+      completeText(await gateway.complete(message, instruction, { signal }));
+    // The campaign path keeps no seed history, so no seed is excluded yet.
+    const seed = await generateConceptSeed(
+      {
+        genre: prompt.resolved.genre,
+        tone: prompt.resolved.tone,
+        context,
+        recent: [],
+      },
+      { complete, signal },
+    );
     const staged = await generateMysteryStaged(prompt.resolved, {
       contextPrefix: context,
+      seed,
       signal,
-      complete: async (instruction, message) =>
-        completeText(await gateway.complete(message, instruction, { signal })),
+      complete,
     });
     return staged ? mapMysteryDraft(generator, request, staged.output) : null;
   } catch (error) {
