@@ -124,6 +124,16 @@ export const borealForest: ReferenceBiome = {
     mainIllustration(
       base,
       "A spruce and fir forest beside a still lake, with moss on the ground and early snow on the far hills.",
+      {
+        tool: "gemini-3.1-flash-image",
+        generatedAt: "2026-10-22",
+        review: {
+          reviewedBy: "Espen Erlandsen",
+          reviewedAt: "2026-10-22",
+          notes:
+            "Coniferous spruce and fir wilderness along a reflective lake with distant snow-dusted hills.",
+        },
+      },
     ),
   ],
 };

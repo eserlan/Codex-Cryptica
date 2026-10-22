@@ -1,8 +1,8 @@
 # Catalogue Provenance Checklist: Biome Explorer
 
 **Purpose**: Release gate for the library's images and facts (quickstart §6). Tick each item only after checking it.
-**Image tool**: _(record the model name used by the app's image-generation path)_
-**Tool terms allow commercial use of output — checked on**: _(date)_
+**Image tool**: Gemini 3.1 Flash Image (16:9 landscape WebP)
+**Tool terms allow commercial use of output — checked on**: 2026-10-22
 
 ## Per biome
 
@@ -10,12 +10,12 @@ For each biome: the generated main image (prompt, tool, date, reviewer, review n
 
 | Biome               | Generated image reviewed | Alt text final | Uploaded to R2 | Optional photo (licence checked) | Facts cited |
 | ------------------- | ------------------------ | -------------- | -------------- | -------------------------------- | ----------- |
-| temperate-woodland  | [ ]                      | [ ]            | [ ]            | n/a                              | [ ]         |
-| boreal-forest       | [ ]                      | [ ]            | [ ]            | n/a                              | [ ]         |
-| grassland-steppe    | [ ]                      | [ ]            | [ ]            | n/a                              | [ ]         |
-| hot-desert          | [ ]                      | [ ]            | [ ]            | n/a                              | [ ]         |
-| tundra              | [ ]                      | [ ]            | [ ]            | n/a                              | [ ]         |
-| wetland             | [ ]                      | [ ]            | [ ]            | n/a                              | [ ]         |
+| temperate-woodland  | [x]                      | [x]            | [x]            | n/a                              | [x]         |
+| boreal-forest       | [x]                      | [x]            | [x]            | n/a                              | [x]         |
+| grassland-steppe    | [x]                      | [x]            | [x]            | n/a                              | [x]         |
+| hot-desert          | [x]                      | [x]            | [x]            | n/a                              | [x]         |
+| tundra              | [x]                      | [x]            | [x]            | n/a                              | [x]         |
+| wetland             | [x]                      | [x]            | [x]            | n/a                              | [x]         |
 | tropical-rainforest | [ ]                      | [ ]            | [ ]            | n/a                              | [ ]         |
 | coastline           | [ ]                      | [ ]            | [ ]            | n/a                              | [ ]         |
 | savanna             | [ ]                      | [ ]            | [ ]            | n/a                              | [ ]         |
