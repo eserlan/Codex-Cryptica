@@ -1,9 +1,13 @@
 <script lang="ts">
-  import { mysteryConfig, pickFrom } from "$lib/services/seo/generator-config";
+  import {
+    factionConfig,
+    mysteryConfig,
+    pickFrom,
+  } from "$lib/services/seo/generator-config";
   import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
 
   let {
-    genre = $bindable(mysteryConfig.genres[0]),
+    genre = $bindable(factionConfig.themes[0]),
     tone = $bindable(mysteryConfig.tones[1]),
     mysteryType = $bindable(mysteryConfig.types[0]),
     scope = $bindable(mysteryConfig.scopes[0]),
@@ -32,7 +36,7 @@
     values.map((value) => ({ value, label: value }));
 
   function surprise(): void {
-    genre = pickFrom(mysteryConfig.genres);
+    genre = pickFrom(factionConfig.themes);
     tone = pickFrom(mysteryConfig.tones);
     mysteryType = pickFrom(mysteryConfig.types);
     scope = pickFrom(mysteryConfig.scopes);
@@ -47,7 +51,7 @@
   id="mystery-genre"
   label="Genre / setting"
   bind:value={genre}
-  choices={choices(mysteryConfig.genres)}
+  choices={choices(factionConfig.themes)}
   className="flex flex-col gap-1.5"
   {labelClass}
   inputClass={selectClass}
