@@ -128,6 +128,14 @@ File: `apps/web/src/lib/services/seo/generation-input-history.ts`
 - [ ] **Adventure, heist, tome**: deferred. Their prompts are built synchronously from the context chain, so they need an async pre-pass in the campaign service, as the name pre-pass does. That is a separate change.
 - [ ] "Imagining the premise" progress step: not added. It would change the step lists that the staged progress tests pin. Users will see no step while the seed call runs.
 
+### T12. Code-rolled concept for the other scenario generators
+
+- [x] Quest, plot twist, event, encounter, secret society, faction, puzzle, rumour and news sheet join adventure, heist and tome in `CONCEPT_GENERATORS`. Same rule as before: rolled once per request, not on refinement.
+- [x] Rumour and news sheet write several separate items, so their block adds one line asking the model to spread the choices across the items instead of building every item around all of them.
+- [x] Left out on purpose: generators that make a thing or a person (NPC, items, creature, ship, alien race, language, star system, constellation, world, holiday, business, random table, dungeon, point crawl). The dimensions describe a situation and would not fit. Council vote, settlement community and villain keep their own variety logic.
+- [x] No seed step for these: it adds a model call, so it stays reserved for the long staged outputs.
+- [ ] Not run live. Check a few runs of each for repeated motifs before and after.
+
 ### T11. Live check
 
 Scratch scripts, not committed. Default mystery options (Classic Fantasy). Each batch of eight ran in parallel; each batch received the previous batch's accepted seeds as history, the same as a session.
