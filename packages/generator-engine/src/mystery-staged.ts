@@ -289,6 +289,22 @@ function checkAudit(data: Obj): DraftCheck {
  */
 const checkFinalAudit = checkAudit;
 
+/** Tidy model prose: stray double stops, ".," runs and a leading "If " we add ourselves. */
+function tidy(value: string): string {
+  return value
+    .replace(/\.,/g, ",")
+    .replace(/(^|[^.])\.{2}(?!\.)/g, "$1.")
+    .replace(/[ \t]{2,}/g, " ");
+}
+const trimStop = (value: unknown): string =>
+  text(value).replace(/[.;,\s]+$/, "");
+const afterIf = (value: unknown): string =>
+  trimStop(value).replace(/^if\s+/i, "");
+const sentence = (value: unknown): string => {
+  const body = trimStop(value);
+  return body ? `${body}.` : "";
+};
+
 function section(title: string, content: string): string {
   return `## ${title}\n${content}`;
 }
@@ -352,11 +368,16 @@ function assembleOutput(
     ),
     section("Pressure", text(pressure.escalation)),
   ].join("\n\n");
-  const gmTruth = [
+  const fixedTruth = [
     section(
       "Fixed Truth — GM Only",
       `**Responsible party:** ${text(truth.perpetratorName)} (${text(foundation.perpetratorId)}).\n\n**Motive:** ${text(truth.motive)}\n\n**Means:** ${text(truth.means)}\n\n**Opportunity:** ${text(truth.opportunity)}\n\n**Constraints:** ${text(truth.constraints)}`,
     ),
+  ].join("\n\n");
+  // The case file reads top to bottom in the main column; only the fixed
+  // facts sit in the side panel. Headings in `MYSTERY_GM_HEADINGS` are cut
+  // from the player handout.
+  const gmContent = [
     section(
       "Actual Timeline",
       list(foundation.timeline)
@@ -399,7 +420,7 @@ function assembleOutput(
       items(
         list(pressure.pressureClock),
         (step, index) =>
-          `${index + 1}. **When:** ${text(step.trigger)} **Then:** ${text(step.consequence)}`,
+          `${index + 1}. **When:** ${trimStop(step.trigger)}. **Then:** ${sentence(step.consequence)}`,
       ),
     ),
     section(
@@ -407,7 +428,7 @@ function assembleOutput(
       items(
         list(pressure.npcResponses),
         (response) =>
-          `- **${personNames.get(text(response.personId)) ?? text(response.personId)}:** If ${text(response.trigger)}, then ${text(response.response)}`,
+          `- **${personNames.get(text(response.personId)) ?? text(response.personId)}:** If ${afterIf(response.trigger)}, then ${afterIf(response.response).replace(/^then\s+/i, "")}.`,
       ),
     ),
     section(
@@ -415,7 +436,7 @@ function assembleOutput(
       ["correct", "partial", "mistaken", "failed", "unsolved"]
         .map((key) => {
           const outcome = record(record(pressure.outcomes)[key]);
-          return `- **${key}:** ${text(outcome.condition)} ${text(outcome.consequence)}${text(outcome.continuation) ? ` Continue with: ${text(outcome.continuation)}` : ""}`;
+          return `- **${key}:** ${sentence(outcome.condition)} ${sentence(outcome.consequence)}${text(outcome.continuation) ? ` Continue with: ${sentence(outcome.continuation)}` : ""}`;
         })
         .join("\n"),
     ),
@@ -424,8 +445,10 @@ function assembleOutput(
     type: "note",
     title: text(foundation.title),
     summary: text(foundation.summary),
-    content: stripMysteryMarkdownImages(playerContent),
-    lore: stripMysteryMarkdownImages(gmTruth),
+    content: tidy(
+      stripMysteryMarkdownImages(`${playerContent}\n\n${gmContent}`),
+    ),
+    lore: tidy(stripMysteryMarkdownImages(fixedTruth)),
     labels: ["mystery", "investigation", "mystery-generator"],
     status: "draft",
   };
@@ -508,7 +531,7 @@ export async function generateMysteryStaged(
   if (!clues) return stopped(stats, "clues");
   const pressure = await run(
     "mystery-pressure",
-    `STAGE 4 OF 7: Pressure and outcomes. FOUNDATION, CAST and CLUE NETWORK are locked; preserve every name, event, ID and connection.\nFOUNDATION: ${JSON.stringify(foundation.data)}\nCAST: ${JSON.stringify(cast.data)}\nCLUES: ${JSON.stringify(clues.data)}\nReturn an escalation description, a pressureClock with at least three trigger/consequence steps, npcResponses keyed to known person ids, and outcomes keyed correct, partial, mistaken, failed and unsolved. Every outcome has condition and consequence; unsolved also has a continuation hook and is warranted only when evidence was legitimately lost or made irrecoverable. A plausible wrong conclusion must be testable before irreversible action.\nReturn JSON of exactly this shape: {"escalation":"","pressureClock":[{"trigger":"","consequence":""}],"npcResponses":[{"personId":"person-1","trigger":"","response":""}],"outcomes":{"correct":{"condition":"","consequence":""},"partial":{"condition":"","consequence":""},"mistaken":{"condition":"","consequence":""},"failed":{"condition":"","consequence":""},"unsolved":{"condition":"","consequence":"","continuation":""}}}. All values are plain strings.`,
+    `STAGE 4 OF 7: Pressure and outcomes. FOUNDATION, CAST and CLUE NETWORK are locked; preserve every name, event, ID and connection.\nFOUNDATION: ${JSON.stringify(foundation.data)}\nCAST: ${JSON.stringify(cast.data)}\nCLUES: ${JSON.stringify(clues.data)}\nReturn an escalation description, a pressureClock with at least three trigger/consequence steps that form a real clock: time-ordered beats that advance whether or not the party acts (each trigger names a moment or deadline, each consequence makes the situation worse than the step before; never restate a conditional reaction there, those belong in npcResponses), npcResponses keyed to known person ids, and outcomes keyed correct, partial, mistaken, failed and unsolved. Every outcome has condition and consequence; unsolved also has a continuation hook and means the theft or crime stays unresolved because the trail went cold; if the historical truth itself is lost, say so in the consequence, and keep any later discovery in the continuation hook rather than contradicting the lost evidence. A plausible wrong conclusion must be testable before irreversible action.\nReturn JSON of exactly this shape: {"escalation":"","pressureClock":[{"trigger":"","consequence":""}],"npcResponses":[{"personId":"person-1","trigger":"","response":""}],"outcomes":{"correct":{"condition":"","consequence":""},"partial":{"condition":"","consequence":""},"mistaken":{"condition":"","consequence":""},"failed":{"condition":"","consequence":""},"unsolved":{"condition":"","consequence":"","continuation":""}}}. All values are plain strings.`,
     (data) => checkPressure(data, cast.data),
     normalizeMysteryStage.pressure,
   );

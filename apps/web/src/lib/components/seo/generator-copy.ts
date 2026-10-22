@@ -53,6 +53,32 @@ export function buildSectionMarkdown(markdown: string): string {
   return markdown.trim();
 }
 
+/** Case-file sections that spoil the answer; the handout leaves them out. */
+const MYSTERY_GM_HEADINGS = new Set([
+  "actual timeline",
+  "suspect knowledge and alibis",
+  "clue index",
+  "lead graph (adjacency list)",
+  "independent routes",
+  "pressure clock",
+  "npc responses",
+  "possible outcomes",
+]);
+
+function stripMysteryGmSections(content: string): string {
+  return content
+    .split(/\n(?=## )/)
+    .filter((block) => {
+      const heading = block
+        .match(/^## (.+)$/m)?.[1]
+        ?.trim()
+        .toLowerCase();
+      return !(heading && MYSTERY_GM_HEADINGS.has(heading));
+    })
+    .join("\n")
+    .trim();
+}
+
 /** A spoiler-safe export containing only the case's player-facing content. */
 export function buildMysteryPlayerHandout(
   document: Pick<GeneratorCopyDocument, "title" | "summary" | "content">,
@@ -60,7 +86,7 @@ export function buildMysteryPlayerHandout(
   return [
     `# ${document.title}`,
     document.summary ? `*${document.summary}*` : "",
-    document.content,
+    stripMysteryGmSections(document.content),
   ]
     .filter(Boolean)
     .join("\n\n")

@@ -110,7 +110,7 @@ describe("generateMysteryStaged", () => {
     expect(result?.output.content).toContain("People to Question");
     expect(result?.output.content).not.toContain("Responsible party");
     expect(result?.output.lore).toContain("Responsible party:** Mara Quill");
-    expect(result?.output.lore).toContain("Lead Graph (Adjacency List)");
+    expect(result?.output.content).toContain("Lead Graph (Adjacency List)");
     expect(result?.stats.aiCalls).toBe(6);
     expect(result?.stats.outcome).toBe("staged");
   });
@@ -179,7 +179,7 @@ describe("generateMysteryStaged", () => {
     });
 
     expect(result?.stats.aiCalls).toBe(6);
-    expect(result?.output.lore).toContain("**record:** clue-1");
+    expect(result?.output.content).toContain("**record:** clue-1");
   });
 
   it("stops at the clues when no two sources support a revelation", async () => {
@@ -238,7 +238,7 @@ describe("generateMysteryStaged", () => {
     expect(result?.output.summary).toBe(foundation.summary);
     expect(result?.output.lore).toContain("Stay on watch; No key");
     // The perpetrator's name stays the one locked by the foundation.
-    expect(result?.output.lore).toContain("**Mara Quill (person-1):**");
+    expect(result?.output.content).toContain("**Mara Quill (person-1):**");
   });
 
   it("moves places listed among the suspects into the locations", async () => {
@@ -310,10 +310,63 @@ describe("generateMysteryStaged", () => {
       complete: async () => JSON.stringify(replies.shift()),
     });
 
-    expect(result?.output.lore).toContain("1. The record was copied");
-    expect(result?.output.lore).toContain("3. The keeper disappeared");
+    expect(result?.output.content).toContain("1. The record was copied");
+    expect(result?.output.content).toContain("3. The keeper disappeared");
     expect(result?.output.content).toMatch(/Follow up: [^\n]*Lead \d/);
-    expect(result?.output.content).not.toMatch(/clue-\d/);
+    // Player-facing sections never show clue ids; the GM case file does.
+    expect(result?.output.content.split("## Actual Timeline")[0]).not.toMatch(
+      /clue-\d/,
+    );
+    expect(result?.output.lore).toContain("Fixed Truth");
+    expect(result?.output.lore).not.toContain("Actual Timeline");
+  });
+
+  it("cleans stray punctuation and doubled conditionals in the GM text", async () => {
+    const [foundation, cast, clues, pressure] = validStages();
+    pressure.npcResponses[0].trigger = "If the party asks together.";
+    pressure.npcResponses[0].response = "then Oren shares the log..";
+    pressure.pressureClock[0].trigger = "Dawn on day one.";
+    const replies = [
+      foundation,
+      cast,
+      clues,
+      pressure,
+      { status: "consistent", issues: [] },
+      { status: "consistent", issues: [] },
+    ];
+    const result = await generateMysteryStaged(resolveMystery(), {
+      complete: async () => JSON.stringify(replies.shift()),
+    });
+
+    const content = result?.output.content ?? "";
+    expect(content).toContain(
+      "If the party asks together, then Oren shares the log.",
+    );
+    expect(content).toContain("**When:** Dawn on day one. **Then:**");
+    expect(content).not.toMatch(/\.\.(?!\.)|\.,|If If/);
+  });
+
+  it("asks for a progressing pressure clock and a distinct unsolved outcome", async () => {
+    const prompts: string[] = [];
+    const [foundation, cast, clues, pressure] = validStages();
+    const replies = [
+      foundation,
+      cast,
+      clues,
+      pressure,
+      { status: "consistent", issues: [] },
+      { status: "consistent", issues: [] },
+    ];
+    await generateMysteryStaged(resolveMystery(), {
+      complete: async (_system, message) => {
+        prompts.push(message);
+        return JSON.stringify(replies.shift());
+      },
+    });
+
+    const stage4 = prompts.find((p) => p.startsWith("STAGE 4")) ?? "";
+    expect(stage4).toContain("advance whether or not the party acts");
+    expect(stage4).toContain("historical truth itself is lost");
   });
 
   it("states the expected JSON keys and the banned names in the prompts", async () => {
