@@ -22,6 +22,8 @@ function validStages() {
       methodReason:
         "The archive is locked after hours, so a copied key was needed",
       disputedFact: "Whether the north pasture was common land",
+      victimStatus:
+        "The keeper is locked in the bell loft and can be freed with the spare key",
     },
     timeline: [
       "The record was copied",
@@ -336,7 +338,7 @@ describe("generateMysteryStaged", () => {
 
   it("cleans stray punctuation and doubled conditionals in the GM text", async () => {
     const [foundation, cast, clues, pressure] = validStages();
-    pressure.npcResponses[0].trigger = "If the party asks together.";
+    pressure.npcResponses[0].trigger = "If The party asks together.";
     pressure.npcResponses[0].response = "then Oren shares the log..";
     pressure.pressureClock[0].trigger = "Dawn on day one.";
     const replies = [
@@ -357,6 +359,38 @@ describe("generateMysteryStaged", () => {
     );
     expect(content).toContain("**When:** Dawn on day one. **Then:**");
     expect(content).not.toMatch(/\.\.(?!\.)|\.,|If If/);
+  });
+
+  it("asks the audit whether the players can deduce and execute the solution", async () => {
+    const prompts: string[] = [];
+    const [foundation, cast, clues, pressure] = validStages();
+    const replies = [
+      foundation,
+      cast,
+      clues,
+      pressure,
+      { status: "consistent", issues: [] },
+      { status: "consistent", issues: [] },
+    ];
+    await generateMysteryStaged(resolveMystery(), {
+      complete: async (_system, message) => {
+        prompts.push(message);
+        return JSON.stringify(replies.shift());
+      },
+    });
+
+    const audit = prompts.find((p) => p.startsWith("STAGE 5")) ?? "";
+    expect(audit).toContain("can the players deduce the truth");
+    expect(audit).toContain("can the players execute the solution");
+    expect(audit).toContain("does the world behave consistently");
+    const finalAudit = prompts.find((p) => p.startsWith("STAGE 7")) ?? "";
+    expect(finalAudit).toContain("can the players deduce the truth");
+    expect(finalAudit).toContain("can the players execute the solution");
+    expect(finalAudit).toContain("does the world behave consistently");
+    expect(finalAudit).toContain("Recheck route sufficiency, test safety");
+    expect(prompts.find((p) => p.startsWith("STAGE 4"))).toContain(
+      "that test must itself be safe",
+    );
   });
 
   it("asks for a progressing pressure clock and a distinct unsolved outcome", async () => {
@@ -397,8 +431,9 @@ describe("generateMysteryStaged", () => {
     });
 
     expect(result?.output.lore).toContain(
-      "**The bell record:** now at Archive",
+      "**Key item:** The bell record. Now at Archive.",
     );
+    expect(result?.output.lore).toContain("locked in the bell loft");
     expect(result?.output.lore).toContain("Burn it at the next full moon");
     expect(result?.output.lore).toContain("a copied key was needed");
     expect(result?.output.lore).toContain("north pasture");

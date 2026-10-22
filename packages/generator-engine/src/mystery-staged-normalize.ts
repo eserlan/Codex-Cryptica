@@ -60,6 +60,7 @@ function normalizeFoundation(data: Obj): Obj {
       "recovery",
       "methodReason",
       "disputedFact",
+      "victimStatus",
     ]);
   next.timeline = mapList(next.timeline, flattenText);
   next.revelations = mapList(next.revelations, (item) => {
