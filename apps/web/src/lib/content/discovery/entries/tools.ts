@@ -223,4 +223,21 @@ export const toolEntries: DiscoveryEntryInput[] = [
     indexable: true,
     status: "live",
   },
+  {
+    id: "tool-biomes",
+    pageKind: "tool",
+    canonicalPath: "/biomes",
+    primaryIntent: "biome explorer for worldbuilding and rpgs",
+    intentAliases: [
+      "worldbuilding biomes guide",
+      "rpg environment inspiration",
+      "ttrpg climate and biome generator",
+    ],
+    userJob: "reference",
+    uniqueValue:
+      "Curated reference library of real-world environments with ecology, conditions, plausibility guidelines, side-by-side comparison, and customizable Markdown export.",
+    parentCluster: "worldbuilding",
+    indexable: true,
+    status: "live",
+  },
 ];

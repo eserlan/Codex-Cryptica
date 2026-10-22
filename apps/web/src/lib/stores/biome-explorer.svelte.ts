@@ -37,13 +37,9 @@ export const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024;
 
 export const BIOME_VIEW_KEY = "codex-biome-explorer-view";
 
-export type BiomeView = "library" | "compare" | "mine" | "editor";
+export type BiomeView = "library" | "compare" | "editor";
 type RememberedView = Exclude<BiomeView, "editor">;
-const REMEMBERED_VIEWS: readonly RememberedView[] = [
-  "library",
-  "compare",
-  "mine",
-];
+const REMEMBERED_VIEWS: readonly RememberedView[] = ["library", "compare"];
 
 export interface BiomeDraft {
   /** Present once the profile has been saved to the vault. */
@@ -65,15 +61,15 @@ export type SuggestionState =
   | { status: "error"; message: string };
 
 export interface BiomeExplorerDeps {
-  vault: BiomeVaultGateway;
   storage: StorageLike;
+  vault?: BiomeVaultGateway | null;
   /** Copies text to the clipboard. Returns false when that is not possible. */
   copyText: (text: string) => Promise<boolean>;
   isAiAllowed: () => boolean;
   /** The optional AI helper. Absent when AI cannot be used at all. */
   suggest?: SuggestRunner | null;
   /** True when a vault is open and can be written to (not a guest view). */
-  isVaultWritable: () => boolean;
+  isVaultWritable?: () => boolean;
   now: () => number;
   newId: () => string;
 }
@@ -416,7 +412,7 @@ export class BiomeExplorerStore {
     const draft = this.draft;
     if (!draft || this.saveState === "saving") return false;
 
-    if (!this.vaultWritable) {
+    if (!this.vaultWritable || !this.deps.vault) {
       this.saveState = "failed";
       this.saveError =
         "Open a vault you can edit to save biomes. Your changes are still here, and you can copy them as Markdown.";
@@ -510,7 +506,7 @@ export class BiomeExplorerStore {
 
   private async refreshImage(): Promise<void> {
     const id = this.draft?.entityId;
-    if (!id) {
+    if (!id || !this.deps.vault) {
       this.attachedImageUrl = "";
       return;
     }
@@ -528,7 +524,7 @@ export class BiomeExplorerStore {
   async attachImage(file: File): Promise<boolean> {
     const id = this.draft?.entityId;
     this.attachError = null;
-    if (!id) {
+    if (!id || !this.deps.vault) {
       this.attachError =
         "Save the biome first, then you can add a picture to it.";
       return false;
@@ -554,7 +550,7 @@ export class BiomeExplorerStore {
 
   async removeImage(): Promise<boolean> {
     const id = this.draft?.entityId;
-    if (!id) return false;
+    if (!id || !this.deps.vault) return false;
     this.attachError = null;
     try {
       await this.deps.vault.removeImage(id);
@@ -569,11 +565,11 @@ export class BiomeExplorerStore {
   // ----- reopening, reusing and deleting -----
 
   get vaultWritable(): boolean {
-    return this.deps.isVaultWritable();
+    return Boolean(this.deps.vault && this.deps.isVaultWritable?.());
   }
 
   async refreshProfiles(): Promise<void> {
-    if (!this.vaultWritable) {
+    if (!this.vaultWritable || !this.deps.vault) {
       this.profiles = [];
       return;
     }
@@ -587,6 +583,7 @@ export class BiomeExplorerStore {
   /** Opens a saved profile for editing. False when it cannot be read. */
   async openProfile(entityId: string): Promise<boolean> {
     this.openError = null;
+    if (!this.deps.vault) return false;
     const ticket = ++this.openTicket;
     try {
       const loaded = await this.deps.vault.load(entityId);
@@ -613,6 +610,7 @@ export class BiomeExplorerStore {
   /** Starts a new unsaved draft from a saved profile. The original is untouched. */
   async duplicateProfile(entityId: string): Promise<boolean> {
     this.openError = null;
+    if (!this.deps.vault) return false;
     try {
       const loaded = await this.deps.vault.load(entityId);
       if (loaded) {
@@ -640,7 +638,7 @@ export class BiomeExplorerStore {
 
   async confirmDelete(): Promise<boolean> {
     const id = this.deletePendingId;
-    if (!id) return false;
+    if (!id || !this.deps.vault) return false;
     this.deletePendingId = null;
     try {
       await this.deps.vault.remove(id);
@@ -692,6 +690,7 @@ export class BiomeExplorerStore {
   async copyProfileMarkdown(
     entityId: string,
   ): Promise<{ ok: boolean; text: string }> {
+    if (!this.deps.vault) return { ok: false, text: "" };
     try {
       const loaded = await this.deps.vault.load(entityId);
       if (loaded) {

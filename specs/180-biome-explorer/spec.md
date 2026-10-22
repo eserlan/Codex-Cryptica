@@ -9,7 +9,7 @@
 
 A worldbuilder on r/worldbuilding asked for "websites for environment / biome inspiration", because image boards are often inaccurate and drawing references takes time. Codex Cryptica can answer two questions at once: **what does this environment look like?** and **why does it look like that, and what can live there?**
 
-This is a standalone first release. It is a reference library plus reusable biome profiles saved in the vault. It does not depend on the unfinished Hex Crawl work, and existing maps and generators do not depend on it. Connecting biomes to map hexes, regions and the settlement, creature and encounter generators is follow-up #4290.
+**Architecture Update (Public Discovery Pivot)**: The Biome Explorer is deployed as a public discovery surface at `/biomes` under `(marketing)`, accessible without an account or vault. Users browse the curated reference library, compare environments side by side, and customize biomes in an interactive client workbench with structured Markdown copy and download export. In-vault entity persistence was superseded by this standalone public-first model.
 
 ## User Scenarios & Testing _(mandatory)_
 
