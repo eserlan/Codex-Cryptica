@@ -128,6 +128,16 @@ export const temperateWoodland: ReferenceBiome = {
     mainIllustration(
       base,
       "A broadleaf forest in early autumn, with oak and beech trees over a mossy floor and a stream.",
+      {
+        tool: "gemini-3.1-flash-image",
+        generatedAt: "2026-10-22",
+        review: {
+          reviewedBy: "Espen Erlandsen",
+          reviewedAt: "2026-10-22",
+          notes:
+            "Atmospheric 16:9 painterly woodland with autumnal oaks, beech trees, mossy forest floor and stream.",
+        },
+      },
     ),
   ],
 };

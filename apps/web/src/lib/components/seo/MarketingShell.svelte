@@ -20,12 +20,20 @@
   import MarketingFooter from "./MarketingFooter.svelte";
   import ReportProblemButton from "$lib/components/feedback/ReportProblemButton.svelte";
   import { feedbackAreaFor } from "feedback-engine";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import {
     MARKETING_NAV,
     shellCtaHref,
     shellFooterLinks,
     runShellCtaHandler,
   } from "./marketing-shell";
+
+  let hasOpenedLightbox = $state(false);
+  $effect(() => {
+    if (modalUIStore.lightbox.show) {
+      hasOpenedLightbox = true;
+    }
+  });
 
   let {
     onCtaClick,
@@ -184,4 +192,16 @@
       area={feedbackAreaFor({ pathname: page.url.pathname, surface: "public" })}
     />
   </div>
+
+  {#if hasOpenedLightbox}
+    {#await import("$lib/components/zen/ZenImageLightbox.svelte") then { default: ZenImageLightbox }}
+      {#if ZenImageLightbox}
+        <ZenImageLightbox
+          bind:show={modalUIStore.lightbox.show}
+          imageUrl={modalUIStore.lightbox.imageUrl}
+          title={modalUIStore.lightbox.title}
+        />
+      {/if}
+    {/await}
+  {/if}
 </div>

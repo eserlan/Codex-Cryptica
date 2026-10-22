@@ -119,6 +119,16 @@ export const tundra: ReferenceBiome = {
     mainIllustration(
       base,
       "A flat, treeless plain of low sedges and lichen with small pools, patches of snow and a pale low sun.",
+      {
+        tool: "gemini-3.1-flash-image",
+        generatedAt: "2026-10-22",
+        review: {
+          reviewedBy: "Espen Erlandsen",
+          reviewedAt: "2026-10-22",
+          notes:
+            "Treeless arctic plain with thaw pools, dwarf shrubs, lichens, lingering snow patches and pale low sun.",
+        },
+      },
     ),
   ],
 };

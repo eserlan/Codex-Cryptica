@@ -115,6 +115,16 @@ export const grasslandSteppe: ReferenceBiome = {
     mainIllustration(
       base,
       "A wide plain of tall grass under a large sky, with a herd of grazing animals in the distance.",
+      {
+        tool: "gemini-3.1-flash-image",
+        generatedAt: "2026-10-22",
+        review: {
+          reviewedBy: "Espen Erlandsen",
+          reviewedAt: "2026-10-22",
+          notes:
+            "Expansive windswept steppe grasslands under vast atmospheric clouds with distant grazing herd.",
+        },
+      },
     ),
   ],
 };
