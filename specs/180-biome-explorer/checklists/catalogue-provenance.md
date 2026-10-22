@@ -1,7 +1,7 @@
 # Catalogue Provenance Checklist: Biome Explorer
 
 **Purpose**: Release gate for the library's images and facts (quickstart §6). Tick each item only after checking it.
-**Image tool**: Gemini 3.1 Flash Image (1-6) / OpenAI GPT-6 Luna via Codex (7-10) (16:9 landscape WebP)
+**Image tool**: Gemini 3.1 Flash Image (1-6) / OpenAI GPT-6 Luna via Codex (7-13) (16:9 landscape WebP)
 **Tool terms allow commercial use of output — checked on**: 2026-10-22
 
 ## Per biome
@@ -14,7 +14,10 @@ For each biome: the generated main image (prompt, tool, date, reviewer, review n
 | boreal-forest       | [x]                      | [x]            | [x]            | n/a                              | [x]         |
 | grassland-steppe    | [x]                      | [x]            | [x]            | n/a                              | [x]         |
 | hot-desert          | [x]                      | [x]            | [x]            | n/a                              | [x]         |
+| semi-arid-desert    | [x]                      | [x]            | [x]            | n/a                              | [x]         |
+| mediterranean-scrub | [x]                      | [x]            | [x]            | n/a                              | [x]         |
 | tundra              | [x]                      | [x]            | [x]            | n/a                              | [x]         |
+| polar-ice-sheet     | [x]                      | [x]            | [x]            | n/a                              | [x]         |
 | wetland             | [x]                      | [x]            | [x]            | n/a                              | [x]         |
 | tropical-rainforest | [x]                      | [x]            | [x]            | n/a                              | [x]         |
 | coastline           | [x]                      | [x]            | [x]            | n/a                              | [x]         |
