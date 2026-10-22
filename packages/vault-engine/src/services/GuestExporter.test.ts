@@ -398,7 +398,8 @@ describe("GuestExporter", () => {
       title: "Ashen Flats",
       status: "active",
       kind: "biome",
-      content: "# Ashen Flats",
+      content:
+        "# Ashen Flats\n\n## Reference links\n\n- [Mine](https://example.com/my-research)\n\n## Sources\n\n1. Public source",
       connections: [],
       biome,
     };
@@ -411,6 +412,12 @@ describe("GuestExporter", () => {
       const exported = bundle.entities.find((e) => e.id === "biome-1");
       expect(exported?.biome?.own.terrain).toBe("Black glass flats");
       expect(exported?.biome?.referenceLinks).toEqual([]);
+      expect(exported?.content).not.toContain(
+        "https://example.com/my-research",
+      );
+      expect(exported?.content).not.toContain("## Reference links");
+      expect(exported?.content).toContain("## Sources");
+      expect(exported?.content).toContain("1. Public source");
     });
 
     it("does not change the original entity", () => {

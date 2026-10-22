@@ -62,6 +62,13 @@ export class GuestExporter {
       : sheet;
   }
 
+  private static redactBiomeReferenceLinks(content: string): string {
+    return content.replace(
+      /(^|\r?\n)## Reference links\r?\n[\s\S]*?(?=\r?\n## |\s*$)/,
+      "$1",
+    );
+  }
+
   /**
    * Compiles a sanitized guest-safe bundle of a campaign.
    * Excludes drafts and entities hidden by VisibilitySettings (Fog of War).
@@ -192,6 +199,9 @@ export class GuestExporter {
       // A biome profile's reference links are the owner's private research
       if (sanitized.biome) {
         sanitized.biome = { ...sanitized.biome, referenceLinks: [] };
+        if (sanitized.content) {
+          sanitized.content = this.redactBiomeReferenceLinks(sanitized.content);
+        }
       }
 
       // Redact dangling links in content
