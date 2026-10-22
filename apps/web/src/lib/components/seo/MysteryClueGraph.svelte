@@ -1,10 +1,20 @@
 <script lang="ts">
+  import { focusTrap } from "$lib/actions/focusTrap";
   import {
     buildMysteryGraphDiagram,
     type MysteryGraph,
     type MysteryGraphDiagramNode,
     type MysteryGraphNodeKind,
   } from "generator-engine";
+  import {
+    FULL_VIEW,
+    MAX_ZOOM,
+    ZOOM_STEP,
+    panBy,
+    viewBoxOf,
+    zoomAt,
+    type GraphView,
+  } from "./mystery-graph-view";
 
   let { graph }: { graph?: MysteryGraph } = $props();
 
@@ -93,6 +103,87 @@
   const nodeOpacity = (id: string) =>
     selectedId === null || related.has(id) ? 1 : 0.3;
 
+  /** The visible window into the diagram; zoomed in, it can be dragged. */
+  let camera = $state<GraphView>(FULL_VIEW);
+  let expanded = $state(false);
+  const size = $derived({
+    width: view?.layout.width ?? 1,
+    height: view?.layout.height ?? 1,
+  });
+  const canPan = $derived(camera.zoom > 1);
+
+  const zoomBy = (factor: number) => (camera = zoomAt(camera, factor, size));
+  const resetView = () => (camera = FULL_VIEW);
+
+  function setExpanded(next: boolean) {
+    expanded = next;
+    camera = FULL_VIEW;
+  }
+
+  /** Pixels across the drawn diagram, allowing for letterboxing when it is fitted to a box. */
+  function drawnWidth(box: DOMRect): number {
+    return Math.min(box.width, (box.height * size.width) / size.height);
+  }
+
+  let drag: { x: number; y: number; moved: boolean } | null = null;
+  /** Set when a drag ends, so the release does not also select a node. */
+  let suppressClick = false;
+
+  function startDrag(event: PointerEvent) {
+    if (!canPan) return;
+    drag = { x: event.clientX, y: event.clientY, moved: false };
+    (event.currentTarget as Element).setPointerCapture?.(event.pointerId);
+  }
+
+  function moveDrag(event: PointerEvent) {
+    if (!drag) return;
+    const dx = event.clientX - drag.x;
+    const dy = event.clientY - drag.y;
+    if (!drag.moved && Math.hypot(dx, dy) < 4) return;
+    drag = { x: event.clientX, y: event.clientY, moved: true };
+    const box = (event.currentTarget as Element).getBoundingClientRect();
+    camera = panBy(camera, dx, dy, drawnWidth(box), size);
+  }
+
+  function endDrag() {
+    suppressClick = drag?.moved ?? false;
+    drag = null;
+  }
+
+  function cancelDrag() {
+    drag = null;
+    suppressClick = false;
+  }
+
+  function select(id: string) {
+    if (suppressClick) {
+      suppressClick = false;
+      return;
+    }
+    toggle(id);
+  }
+
+  /** Wheel zooms around the cursor in the enlarged view; a non-passive listener so the page does not scroll. */
+  function wheelZoom(node: HTMLElement) {
+    const onWheel = (event: WheelEvent) => {
+      if (!expanded) return;
+      event.preventDefault();
+      const box = node.getBoundingClientRect();
+      camera = zoomAt(
+        camera,
+        event.deltaY < 0 ? ZOOM_STEP : 1 / ZOOM_STEP,
+        size,
+        (event.clientX - box.left) / box.width,
+        (event.clientY - box.top) / box.height,
+      );
+    };
+    node.addEventListener("wheel", onWheel, { passive: false });
+    return { destroy: () => node.removeEventListener("wheel", onWheel) };
+  }
+
+  const TOOL_BUTTON =
+    "flex h-7 w-7 items-center justify-center rounded-md border border-theme-border/50 bg-theme-bg/40 text-theme-text/70 transition-all hover:border-theme-primary hover:text-theme-primary disabled:opacity-40 disabled:hover:border-theme-border/50 disabled:hover:text-theme-text/70";
+
   const lineY = (node: MysteryGraphDiagramNode, count: number, row: number) =>
     node.y + (count === 1 ? 24 : 17 + row * 13);
 </script>
@@ -112,6 +203,94 @@
   </ul>
 {/snippet}
 
+{#snippet toolbar()}
+  <div class="flex gap-1.5" role="toolbar" aria-label="Graph view controls">
+    <button
+      type="button"
+      class={TOOL_BUTTON}
+      onclick={() => zoomBy(1 / ZOOM_STEP)}
+      disabled={camera.zoom <= 1}
+      title="Zoom out"
+      aria-label="Zoom out"
+    >
+      <span class="icon-[lucide--zoom-out] h-3.5 w-3.5" aria-hidden="true"
+      ></span>
+    </button>
+    <button
+      type="button"
+      class={TOOL_BUTTON}
+      onclick={() => zoomBy(ZOOM_STEP)}
+      disabled={camera.zoom >= MAX_ZOOM}
+      title="Zoom in"
+      aria-label="Zoom in"
+    >
+      <span class="icon-[lucide--zoom-in] h-3.5 w-3.5" aria-hidden="true"
+      ></span>
+    </button>
+    <button
+      type="button"
+      class={TOOL_BUTTON}
+      onclick={resetView}
+      disabled={!canPan}
+      title="Show the whole graph"
+      aria-label="Show the whole graph"
+    >
+      <span class="icon-[lucide--scan] h-3.5 w-3.5" aria-hidden="true"></span>
+    </button>
+    <button
+      type="button"
+      class={TOOL_BUTTON}
+      onclick={() => setExpanded(!expanded)}
+      title={expanded ? "Close the enlarged graph" : "Enlarge the graph"}
+      aria-label={expanded ? "Close the enlarged graph" : "Enlarge the graph"}
+    >
+      <span
+        class="{expanded
+          ? 'icon-[lucide--minimize-2]'
+          : 'icon-[lucide--maximize-2]'} h-3.5 w-3.5"
+        aria-hidden="true"
+      ></span>
+    </button>
+  </div>
+{/snippet}
+
+{#snippet canvas(fill: boolean)}
+  <div
+    class="{fill ? 'min-h-0 flex-1' : ''} {canPan
+      ? 'cursor-grab touch-none active:cursor-grabbing'
+      : ''}"
+    role="presentation"
+    data-testid="mystery-clue-graph-canvas"
+    onpointerdown={startDrag}
+    onpointermove={moveDrag}
+    onpointerup={endDrag}
+    onpointercancel={cancelDrag}
+    use:wheelZoom
+  >
+    <svg
+      viewBox={viewBoxOf(camera, size)}
+      preserveAspectRatio="xMidYMid meet"
+      class="block w-full {fill ? 'h-full' : 'h-auto'}"
+      role="img"
+      aria-label="Graph of how people, places and clues lead to the conclusions of the case"
+    >
+      {#each view?.layout.edges ?? [] as edge, i (i)}
+        <path
+          d={edge.path}
+          fill="none"
+          class={EDGE_CLASS[edge.kind]}
+          opacity={edgeOpacity(edge.from, edge.to)}
+          stroke-width={edge.kind === "supports" ? 1.6 : 1}
+          stroke-dasharray={edge.kind === "found" ? "3 3" : undefined}
+        />
+      {/each}
+      {#each view?.nodes ?? [] as item (item.node.id)}
+        {@render graphNode(item.node, item.lines)}
+      {/each}
+    </svg>
+  </div>
+{/snippet}
+
 {#snippet graphNode(node: MysteryGraphDiagramNode, lines: string[])}
   <g
     data-node-id={node.id}
@@ -122,7 +301,7 @@
     aria-label="{node.label}. Show its connections"
     opacity={nodeOpacity(node.id)}
     class="cursor-pointer outline-none focus-visible:opacity-100"
-    onclick={() => toggle(node.id)}
+    onclick={() => select(node.id)}
     onkeydown={(event) => {
       if (event.key === "Enter" || event.key === " ") {
         event.preventDefault();
@@ -180,28 +359,47 @@
         Select a person, place, clue or conclusion to see what connects to it.
       </p>
       {@render legend()}
+      {@render toolbar()}
     </div>
-    <div class="overflow-x-auto">
-      <svg
-        viewBox="0 0 {view.layout.width} {view.layout.height}"
-        class="block h-auto w-full"
-        role="img"
-        aria-label="Graph of how people, places and clues lead to the conclusions of the case"
-      >
-        {#each view.layout.edges as edge, i (i)}
-          <path
-            d={edge.path}
-            fill="none"
-            class={EDGE_CLASS[edge.kind]}
-            opacity={edgeOpacity(edge.from, edge.to)}
-            stroke-width={edge.kind === "supports" ? 1.6 : 1}
-            stroke-dasharray={edge.kind === "found" ? "3 3" : undefined}
-          />
-        {/each}
-        {#each view.nodes as item (item.node.id)}
-          {@render graphNode(item.node, item.lines)}
-        {/each}
-      </svg>
-    </div>
+    {#if expanded}
+      <p class="py-8 text-center text-micro text-theme-text/60">
+        The graph is open in the enlarged view.
+      </p>
+    {:else}
+      {@render canvas(false)}
+    {/if}
   </section>
+{/if}
+
+{#if view && expanded}
+  <div
+    class="fixed inset-0 z-50 flex bg-black/80 p-4"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Clue graph, enlarged"
+    tabindex="-1"
+    use:focusTrap
+    onkeydown={(event) => {
+      if (event.key === "Escape") setExpanded(false);
+    }}
+  >
+    <div
+      class="mx-auto flex h-full w-full max-w-7xl flex-col gap-2 rounded-2xl border border-theme-border/50 bg-theme-surface p-4"
+    >
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <h3
+          class="font-header text-xs font-bold uppercase tracking-wider text-theme-primary"
+        >
+          Clue Graph — GM Only
+        </h3>
+        {@render legend()}
+        {@render toolbar()}
+      </div>
+      <p class="text-micro text-theme-text/60">
+        Scroll or use the buttons to zoom; drag to move around when zoomed in.
+        Press Escape to close.
+      </p>
+      {@render canvas(true)}
+    </div>
+  </div>
 {/if}
