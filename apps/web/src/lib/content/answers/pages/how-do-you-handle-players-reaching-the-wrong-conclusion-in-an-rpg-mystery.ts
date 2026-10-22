@@ -15,7 +15,7 @@ export const howDoYouHandlePlayersReachingTheWrongConclusionInAnRpgMystery: Answ
         kind: "prose",
         heading: "The players are not wrong in the way a failed roll is wrong",
         paragraphs: [
-          "This problem is different from a missed clue or a poor roll. The players have listened, compared notes and reasoned from the evidence in front of them. The evidence genuinely permits more than one reading, and they have settled on the one you did not intend. Telling them they are wrong, out of character, teaches them to wait for your verdict instead of investigating. Quietly changing the culprit so they turn out to be right teaches the same lesson from the other side: deductions only matter once you approve them.",
+          "This problem is different from a missed clue or a poor roll. The players have listened, compared notes and reasoned from the evidence in front of them. The evidence genuinely permits more than one reading, and they have settled on the one you did not intend. Telling them they are wrong, out of character, teaches them to wait for your verdict instead of investigating.",
           "That does not mean every wrong conclusion must be protected. It means your first job is to work out what kind of wrong it is. A fair misreading, a gap in the clues you gave, and a conclusion the players reached because a session break swallowed a fact need different responses. The sections below separate those cases, then set out what you can do before an irreversible action closes the case.",
         ],
       },
@@ -75,7 +75,7 @@ export const howDoYouHandlePlayersReachingTheWrongConclusionInAnRpgMystery: Answ
           [
             "Adapt the answer to fit their theory",
             "Your table has agreed to an emergent or collaborative mystery style where a strong theory can establish the truth",
-            "In a pre-authored mystery this removes the point of deduction and trains players to argue confidently rather than investigate",
+            "It needs agreed procedures and must remain consistent with clues already established",
           ],
           [
             "Let the investigation fail",
@@ -89,15 +89,15 @@ export const howDoYouHandlePlayersReachingTheWrongConclusionInAnRpgMystery: Answ
         heading: "What a fair intervention looks like",
         paragraphs: [
           "A fair intervention gives the players something to do, not something to believe. It might be a witness who can be interviewed before the party acts, a record that can still be checked, a physical test that separates the two theories, or an NPC who disputes the accusation for reasons of their own and can be questioned. The party can pursue it, argue with it, or set it aside. What it must not be is you, out of character, announcing the right answer, or an NPC who arrives carrying exactly the missing fact and no other business in the scene.",
-          "Place the opportunity before the irreversible step, and let it cost something ordinary: time while the real culprit acts, a favour owed, a risk of being overheard. That keeps it part of the investigation rather than a safety net the players learn to wait for. If they test the theory and the test is honest, some wrong conclusions collapse on their own at this point, and the collapse feels earned because the players produced it.",
+          "Place the opportunity before the irreversible step. Use a cost when established time pressure, limited access, or someone's motives create one; a check or a repair to missing clue delivery need not add a penalty. If the test is honest, some wrong conclusions collapse on their own, and the players have produced the correction themselves.",
         ],
       },
       {
         kind: "prose",
         heading: "Handle irreversible decisions by making the finality legible",
         paragraphs: [
-          "Killing a suspect, burning an archive, or handing a named culprit to an authority that will execute them closes routes that questioning would have left open. Before the party crosses that line, state in plain terms what the action ends: once he is dead he cannot answer questions, once the letters are ash nobody can re-read them, once the accusation is public it cannot be unsaid. Describe what the characters can see of the stakes. Do not describe the stakes they cannot see, and do not hint that this particular NPC is too important to lose.",
-          "If you ask, are you sure, use it to clarify what the players believe will happen, not as a secret veto. It can prompt a useful check: do they think the witness has already told them everything, or that the evidence can be recovered another way? If their picture of the consequences is accurate and they proceed, respect the choice. An arbitrary rescue, such as guards arriving at the exact moment of the killing for unrelated reasons, tells the table the finality was never real. The next time you warn them, they will discount the warning.",
+          "Killing a suspect, burning an archive, or making a public accusation can close routes that questioning would have left open. Before the party crosses that line, state what the action is likely to end in these circumstances: whether the witness can still be questioned under the rules, whether another copy of the letters exists, and whether a public accusation can be withdrawn. Describe the stakes the characters can see. Do not reveal hidden stakes or hint that this particular NPC is too important to lose.",
+          "If you ask, are you sure, use it to clarify what the players believe will happen, not as a secret veto. Check whether they know what evidence remains and what recovery the rules allow. If their picture of the consequences is accurate and they proceed, respect the choice. Do not invent a convenient rescue to undo it; preserve established sources and recovery methods instead.",
           "Where the system you are playing has a procedure for acting under uncertainty, use it rather than improvising a reprieve. Where it does not, a short pause to confirm the order of actions and who is committed is usually enough. The aim is an informed decision, not a prevented one.",
         ],
       },
@@ -140,15 +140,15 @@ export const howDoYouHandlePlayersReachingTheWrongConclusionInAnRpgMystery: Answ
           },
           {
             term: "Make the stakes of the killing plain",
-            text: "When they settle on the vestry ambush, describe what is observable: Anselm is unarmed, alone, and the only person at the shrine who has not yet been questioned about the night of the third disappearance. Say, in character-neutral terms, that a dead man cannot be interviewed afterwards and that the shrine congregation will treat an unexplained killing as murder. If a player asks whether Anselm might know more, answer honestly from what the characters know: they have never asked him. That is a statement of the table's own position, not a hint about your notes. Then ask them to confirm they want to go ahead on that basis.",
+            text: "When they settle on the vestry ambush, describe what is observable: Anselm is unarmed, alone, and the only person at the shrine who has not yet been questioned about the night of the third disappearance. Say, in character-neutral terms, that killing Anselm ends the chance to question him while alive, and that the shrine congregation will treat an unexplained killing as murder. If the system allows speaking with or restoring the dead, that remains possible by its rules. If a player asks whether Anselm might know more, answer honestly from what the characters know: they have never asked him. That is a statement of the table's own position, not a hint about your notes. Then ask them to confirm they want to go ahead on that basis.",
           },
           {
             term: "If they proceed, let it stand",
-            text: "Anselm dies without revealing what he saw, because he never understood that the men he saw loading a bound figure onto a cart were the conspirators; he thought they were press-gangers and kept quiet from fear. Do not have him gasp a name with his last breath unless that fits what he knows and would say. The witness route is closed. The congregation finds the body, the city watch opens a murder investigation with the party among its suspects, and the real conspirators learn that the one man who could place them at the harbour is dead. The original mystery, as a question that could be solved by testimony, is gone. Say so through play rather than apology: the trail now runs through physical evidence, the clerk's records, and whatever the conspirators do next, emboldened.",
+            text: "Anselm dies without revealing what he saw, because he never understood that the men he saw loading a bound figure onto a cart were the conspirators; he thought they were press-gangers and kept quiet from fear. Do not have him gasp a name with his last breath unless that fits what he knows and would say. The chance to question him while alive is gone; use any established means of speaking with him if the system allows it. The congregation finds the body, the city watch opens a murder investigation with the party among its suspects, and the real conspirators learn that he can no longer testify in person. The trail still runs through physical evidence, the clerk's records, and whatever the conspirators do next, emboldened.",
           },
           {
             term: "Continue without making them retroactively right",
-            text: "Do not declare that Anselm was a cultist after all, and do not produce a replacement witness with the same information. Instead, follow the consequences into new decisions. The party may cover up the killing and become entangled with the watch. They may confess and bargain for mercy by offering to find the real culprits. The congregation may accuse the ferry captain, and the party must decide whether to let a second innocent person carry the blame. The conspirators, no longer afraid of Anselm's testimony, may overreach in a way that leaves fresh evidence. Each route keeps the fiction moving and keeps the earlier choice visible in the price of every later one. That is what failing forward can honestly mean here: not that the plan succeeds anyway, but that play continues into a situation the party's actions created.",
+            text: "Do not declare that Anselm was a cultist after all or invent a convenient witness just to restore his lost testimony. Follow the choices the party now faces: they may cover up the killing, confess and bargain for mercy, challenge the accusation against the ferry captain, or watch the conspirators overreach. Preserve other sources already established and any recovery supported by the rules. Play continues in a situation the party's actions created; their plan does not succeed anyway.",
           },
         ],
       },
@@ -156,8 +156,7 @@ export const howDoYouHandlePlayersReachingTheWrongConclusionInAnRpgMystery: Answ
         kind: "prose",
         heading: "Let a failed investigation become the next situation",
         paragraphs: [
-          "A mystery that cannot be solved as posed is not automatically a campaign that has stopped. It is a set of changed facts: a crime without a living witness, a wrongful accusation that someone will act on, a culprit who now believes they are safe, investigators whose own conduct needs covering up or answering for. Choose the consequence the fiction has already prepared. If the party silenced the witness, accountability, to the watch, the congregation, or their own patron, is usually closer to hand than a fresh clue, and it keeps the dead man's absence in the story rather than papering over it.",
-          "Keep the cost specific to what was lost. If the burned archive held the only copy of a manifest, later progress should require slower, riskier routes: interviewing people who handled the goods, watching the harbour, reconstructing the record from copies held elsewhere for a price. Recovery is possible without restoration. The party can still learn much of the truth, expose part of the conspiracy, or stop the next disappearance. What they cannot do is have the witness back, and that limit is what makes the earlier decision matter when they weigh the next one.",
+          "A mystery that cannot be solved as posed is not automatically a campaign that has stopped. Carry forward the consequences already prepared by the fiction, and assess what was actually lost. If the party silenced a witness, accountability may follow; if the rules allow speaking with or restoring the dead, use that procedure. Keep established corroborating sources available. Where an archive's only copy was destroyed, reconstruction may take time or access only if the circumstances support that cost. The party can still learn what the remaining evidence permits, expose part of the conspiracy, or stop the next disappearance.",
         ],
       },
       {
@@ -168,12 +167,12 @@ export const howDoYouHandlePlayersReachingTheWrongConclusionInAnRpgMystery: Answ
         items: [
           "Name the theory as the players hold it, and the action they are about to take on it.",
           "Check the clues as given in play: does established evidence fairly support their reading, or did a distinction never reach the table?",
-          "If evidence was missing, unclear, or forgotten, repair the route to it in the fiction and let the players draw their own conclusion.",
+          "If evidence was missing, unclear, or forgotten, repair its delivery directly and let the players draw their own conclusion; add a cost only when circumstances establish one.",
           "Remind players of anything their characters would know that the theory overlooks.",
-          "Before any irreversible step, look for one fair, in-fiction test, witness, or record the party can still pursue, and let it cost time or carry ordinary risk.",
-          "State the observable finality of the planned action and confirm the players understand what it closes off, without revealing the correct solution.",
-          "If they proceed, apply the consequence as established. Do not rewrite the culprit or produce a replacement source for what was destroyed.",
-          "Move play into the fallout: cover-up, wrongful accusation, accountability, or a bolder culprit, and let any later progress come by harder routes.",
+          "Before an irreversible step, offer a fair in-fiction test if one fits; do not require a cost, deadline, or risk.",
+          "State what the action is likely to close off, including known sources and rules-supported recovery, without revealing the correct solution.",
+          "If they proceed, apply consequences according to what is actually lost; preserve established sources and rules-supported recovery, and do not invent a convenient rescue.",
+          "Move play into the fallout already prepared by the fiction; later progress need not be harder unless the loss or circumstances make it so.",
           "Between sessions, note which clues the party never received and strengthen the next case's routes, rather than relitigating this one.",
         ],
       },
