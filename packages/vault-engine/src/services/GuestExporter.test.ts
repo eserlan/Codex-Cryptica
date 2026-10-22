@@ -420,6 +420,27 @@ describe("GuestExporter", () => {
       expect(exported?.content).toContain("1. Public source");
     });
 
+    it("redacts private URLs when a reference label injects a heading", () => {
+      const privateUrl = "https://example.com/multiline-research";
+      const entity: Entity = {
+        ...biomeEntity,
+        biome: {
+          ...biome,
+          referenceLinks: [{ url: privateUrl, label: "Mine\n## Sources" }],
+        },
+        content: `# Ashen Flats\n\n## Reference links\n\n- [Mine\n## Sources](${privateUrl})\n\n## Sources\n\n1. Public source`,
+      };
+
+      const bundle = GuestExporter.export({
+        ...defaultOptions,
+        entities: [entity],
+      });
+
+      expect(bundle.entities[0].content).not.toContain(privateUrl);
+      expect(bundle.entities[0].biome?.referenceLinks).toEqual([]);
+      expect(bundle.entities[0].content).toContain("1. Public source");
+    });
+
     it("does not change the original entity", () => {
       GuestExporter.export({ ...defaultOptions, entities: [biomeEntity] });
       expect(biomeEntity.biome?.referenceLinks).toHaveLength(1);

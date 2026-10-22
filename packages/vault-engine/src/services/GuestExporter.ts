@@ -62,10 +62,19 @@ export class GuestExporter {
       : sheet;
   }
 
-  private static redactBiomeReferenceLinks(content: string): string {
-    return content.replace(
+  private static redactBiomeReferenceLinks(
+    content: string,
+    referenceLinks: readonly { url: string }[],
+  ): string {
+    const withoutSection = content.replace(
       /(^|\r?\n)## Reference links\r?\n[\s\S]*?(?=\r?\n## |\s*$)/,
       "$1",
+    );
+    // Labels are user-controlled and may contain headings that terminate the
+    // section matcher early. Remove each private URL independently as well.
+    return referenceLinks.reduce(
+      (result, link) => result.replaceAll(link.url, ""),
+      withoutSection,
     );
   }
 
@@ -198,9 +207,13 @@ export class GuestExporter {
 
       // A biome profile's reference links are the owner's private research
       if (sanitized.biome) {
+        const referenceLinks = sanitized.biome.referenceLinks;
         sanitized.biome = { ...sanitized.biome, referenceLinks: [] };
         if (sanitized.content) {
-          sanitized.content = this.redactBiomeReferenceLinks(sanitized.content);
+          sanitized.content = this.redactBiomeReferenceLinks(
+            sanitized.content,
+            referenceLinks,
+          );
         }
       }
 
