@@ -89,6 +89,27 @@ describe("normalizeMysteryStage.clues", () => {
       { revelationId: "rev-1", clueIds: ["clue-2"] },
     ]);
   });
+
+  it("does not count a malformed route when topping up distinct sources", () => {
+    const malformed = { revelationId: "rev-1", clueIds: ["clue-1", "clue-1"] };
+    const out = normalizeMysteryStage.clues(
+      {
+        clues: [
+          clue("clue-1", "place-1", ["rev-1"]),
+          clue("clue-2", "place-1", ["rev-1"]),
+          clue("clue-3", "place-2", ["rev-1"]),
+        ],
+        independentPaths: [malformed],
+      },
+      ["rev-1"],
+    );
+
+    expect(out.independentPaths).toEqual([
+      malformed,
+      { revelationId: "rev-1", clueIds: ["clue-1"] },
+      { revelationId: "rev-1", clueIds: ["clue-3"] },
+    ]);
+  });
 });
 
 describe("normalizeMysteryStage.repair", () => {

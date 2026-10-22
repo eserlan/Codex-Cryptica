@@ -144,6 +144,33 @@ function normalizeClues(data: Obj, revelationIds: readonly string[] = []): Obj {
   return next;
 }
 
+/** Whether a supplied route meets the structural checks used by the validator. */
+function isUsableRoute(
+  route: Obj,
+  revelationId: string,
+  byId: Map<string, Obj>,
+): boolean {
+  if (route.revelationId !== revelationId) return false;
+  const ids = Array.isArray(route.clueIds) ? route.clueIds : [];
+  const pathIds = ids.map(flattenText);
+  if (!pathIds.length || new Set(pathIds).size !== pathIds.length) return false;
+  const pathClues = pathIds.map((id) => byId.get(id));
+  if (
+    pathClues.some((clue) => !clue) ||
+    !pathClues.some(
+      (clue) =>
+        Array.isArray(clue?.supports) && clue.supports.includes(revelationId),
+    )
+  )
+    return false;
+  return !pathClues.some(
+    (clue, index) =>
+      index < pathClues.length - 1 &&
+      (!Array.isArray(clue?.leadsTo) ||
+        !clue.leadsTo.map(flattenText).includes(pathIds[index + 1])),
+  );
+}
+
 /** Sources already used by the routes given for one revelation. */
 function routeSources(
   routes: Obj[],
@@ -152,10 +179,11 @@ function routeSources(
 ): Set<string> {
   const sources = new Set<string>();
   for (const route of routes) {
-    if (route.revelationId !== revelationId) continue;
+    if (!isUsableRoute(route, revelationId, byId)) continue;
     const ids = Array.isArray(route.clueIds) ? route.clueIds : [];
     const first = byId.get(flattenText(ids[0]));
-    if (first) sources.add(flattenText(first.sourceId));
+    const source = flattenText(first?.sourceId);
+    if (source) sources.add(source);
   }
   return sources;
 }
