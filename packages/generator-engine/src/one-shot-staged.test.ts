@@ -762,3 +762,25 @@ describe("runOneShotStages", () => {
     expect(scenePrompts[1]).toContain(a.scenes[0].title);
   });
 });
+
+describe("runOneShotStages concept block", () => {
+  it("gives the core prompt a rolled concept", async () => {
+    const a = local();
+    const { call } = fakeModel(a);
+    const prompts: StagePrompt[] = [];
+    await runOneShotStages(
+      { ...options, durationHours: 4 },
+      {
+        call: (p) => {
+          prompts.push(p);
+          return call(p);
+        },
+      },
+      "",
+      seeded(),
+    );
+    expect(prompts[0].userMessage).toContain(
+      "Concept constraints for this case",
+    );
+  });
+});

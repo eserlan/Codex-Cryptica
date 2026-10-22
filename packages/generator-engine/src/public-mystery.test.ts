@@ -112,3 +112,19 @@ describe("Mystery & Investigation generator", () => {
     expect(result?.lore).toBe("Truth ");
   });
 });
+
+describe("buildMysteryPrompt concept block", () => {
+  it("includes a rolled concept in the one-pass prompt", () => {
+    const prompt = buildMysteryPrompt({ genre: "Pirate", tone: "Tense" });
+    expect(prompt.userMessage).toContain("Concept constraints for this case");
+  });
+
+  it("keeps the caller's session context in the prompt", () => {
+    const prompt = buildMysteryPrompt(
+      { genre: "Pirate", tone: "Tense" },
+      "SESSION NOTE: keep it short",
+    );
+    expect(prompt.userMessage).toContain("SESSION NOTE: keep it short");
+    expect(prompt.userMessage).toContain("Concept constraints for this case");
+  });
+});

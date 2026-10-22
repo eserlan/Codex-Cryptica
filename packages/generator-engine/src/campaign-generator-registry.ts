@@ -1,4 +1,5 @@
 import { EXEMPLARS } from "./campaign-generator-exemplars";
+import { formatConceptBlock, rollConcept } from "./concept-dimensions";
 import {
   type CampaignGeneratorDefinition,
   type GeneratedDraft,
@@ -695,13 +696,53 @@ export { SYSTEM_INSTRUCTION };
 // Generator-specific prompt builders
 // ---------------------------------------------------------------------------
 
+/**
+ * Story generators whose context carries a rolled concept. The mystery adds
+ * its own in `mystery-staged.ts` and `public-mystery.ts`, so it is left out.
+ */
+const CONCEPT_GENERATORS = new Set<GeneratorId>(["adventure", "heist", "tome"]);
+
+/** One concept per request, so every part of a run sees the same choices. */
+const conceptByRequest = new WeakMap<GeneratorRunRequest, string>();
+
+/** The genre and tone a request asks for, or empty when none is set. */
+function conceptInputs(request: GeneratorRunRequest): {
+  genre: string;
+  tone: string;
+} {
+  return {
+    genre: String(
+      request.options?.genre ?? request.vaultContext?.themeName ?? "",
+    ),
+    tone: String(request.options?.tone ?? ""),
+  };
+}
+
+function rollConceptBlock(request: GeneratorRunRequest): string {
+  const { genre, tone } = conceptInputs(request);
+  const block = formatConceptBlock(rollConcept(genre, tone));
+  return block ? `\n${block}\n` : "";
+}
+
+function conceptBlock(request: GeneratorRunRequest): string {
+  if (request.interaction || !CONCEPT_GENERATORS.has(request.generatorId)) {
+    return "";
+  }
+  let block = conceptByRequest.get(request);
+  if (block === undefined) {
+    block = rollConceptBlock(request);
+    conceptByRequest.set(request, block);
+  }
+  return block;
+}
+
 /** Shared prompt context chain (everything before the task instruction). */
 export function contextChain(request: GeneratorRunRequest): string {
   // Preferences (the form's explicit dropdown selections, e.g. race/role) are
   // direct user choices like the free-text instructions above them — surface
   // them right after, ahead of the generic world context, rather than buried
   // several paragraphs down where a model can lose track of them.
-  return `${instructionsBlock(request)}${optionsBlock(request)}${vaultContextBlock(request)}${worldBlock(request)}${bannedNamesBlock(request)}${namingBlock(request)}${templateBlock(request)}`;
+  return `${instructionsBlock(request)}${optionsBlock(request)}${conceptBlock(request)}${vaultContextBlock(request)}${worldBlock(request)}${bannedNamesBlock(request)}${namingBlock(request)}${templateBlock(request)}`;
 }
 
 function npcPrompt(request: GeneratorRunRequest): string {

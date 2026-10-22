@@ -14,6 +14,7 @@ import {
 } from "./campaign-context";
 import { bannedNamesIn } from "./naming-policy";
 import { factionConfig } from "./public-faction-constants";
+import { formatConceptBlock, rollConcept } from "./concept-dimensions";
 
 export const mysteryConfig = {
   genres: factionConfig.themes,
@@ -96,7 +97,10 @@ export function buildMysteryPrompt(
     resolved.avoidNames,
     resolved.campaignContext,
   );
-  const context = [resolved.campaignContext, sessionContext]
+  const concept = formatConceptBlock(
+    rollConcept(resolved.genre, resolved.tone),
+  );
+  const context = [resolved.campaignContext, sessionContext, concept]
     .map((value) => value.trim())
     .filter(Boolean)
     .join("\n\n");
@@ -200,7 +204,7 @@ export function generateMysteryLocal(
       id: `person-${index + 1}`,
       name: index === 0 ? culprit : name(index),
       role: [
-        "records keeper",
+        "records clerk",
         "healer",
         "courier",
         "watch officer",
@@ -223,9 +227,9 @@ export function generateMysteryLocal(
   ];
   const clueLines = [
     "A fresh scrape on the archive latch supports recent access, but does not identify who opened it; compare the tool marks and access log.",
-    "A witness recalls the bell sounding early, supporting a shifted timeline, but not proving who caused it; check the clock mechanism and other witnesses.",
+    "A witness recalls the shutters banging early, supporting a shifted timeline, but not proving who caused it; check the latch mechanism and other witnesses.",
     "A delivery seal was replaced with the wrong wax, supporting interference with the evidence chain, but not proving the contents changed; find the matching seal at the storehouse.",
-    "A ledger entry was copied in a different ink, supporting a later alteration, but not proving who made it; compare the ink with the archive supplies.",
+    "A receipt was copied in a different ink, supporting a later alteration, but not proving who made it; compare the ink with the archive supplies.",
     "The courier route was changed that evening, supporting an opportunity window, but not proving a meeting occurred; ask who authorised the change.",
     "A damp footprint ends at a dry threshold, supporting a staged trail, but not proving who staged it; compare the tread with the storehouse floor.",
   ];
@@ -233,7 +237,7 @@ export function generateMysteryLocal(
   const lore = `## GM-Only Fixed Truth\n${culprit} is responsible. Their motive is to conceal an earlier act that would expose their role in the ${resolved.mysteryType.toLowerCase()}. They used routine access and a manipulated timeline; the physical traces above are genuine and independently testable.\n\n## Timeline\n1. The evidence was moved before the public account was given.\n2. The culprit created a plausible access window.\n3. The party discovers conflicting but testable accounts.\n\n## Running the Case\nKeep the truth fixed. Do not make a clue false to force suspense. If the party loses a critical lead, use the unsolved outcome and its consequences rather than adding an unearned rescue.`;
   return {
     type: "note",
-    title: `${pickFrom(["The Missing Ledger", "A Bell Out of Time", "The Sealed Room", "Ashes in the Archive"], rng)}`,
+    title: `${pickFrom(["The Last Witness", "Twelve Minutes Late", "The Locked Pantry", "Smoke Over the Yard"], rng)}`,
     summary: `${resolved.tone} ${resolved.genre.toLowerCase()} case about a ${resolved.mysteryType.toLowerCase()} with evidence the players can test.`,
     content: playerContent,
     lore,

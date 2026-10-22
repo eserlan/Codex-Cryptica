@@ -36,6 +36,7 @@ import type {
 } from "./one-shot-types";
 import { regenerateOneShotLocal, resolveOneShot } from "./public-one-shot";
 import { type Rng, defaultRng } from "./random-utils";
+import { formatConceptBlock, rollConcept } from "./concept-dimensions";
 import {
   StagedProgress,
   type StagedProgressStep,
@@ -420,11 +421,17 @@ export async function runOneShotStages(
   throwIfAborted(deps.signal);
   const progress = new StagedProgress(STEPS, deps.onProgress);
   const resolved = resolveOneShot(options, rng);
+  const concept = formatConceptBlock(
+    rollConcept(resolved.genre, resolved.tone ?? "", rng),
+  );
   const core = await required(
     deps,
     progress,
     "core",
-    corePrompt(resolved, sessionContext),
+    corePrompt(
+      resolved,
+      [sessionContext, concept].filter(Boolean).join("\n\n"),
+    ),
   );
   const structure = await required(
     deps,
