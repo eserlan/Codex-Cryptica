@@ -122,6 +122,16 @@ export const alpineMontane: ReferenceBiome = {
     mainIllustration(
       base,
       "A high mountain valley with a treeless alpine meadow, scree slopes, snow-covered peaks and a few stunted pines.",
+      {
+        tool: "gpt-6-luna",
+        generatedAt: "2026-10-22",
+        review: {
+          reviewedBy: "Espen Erlandsen",
+          reviewedAt: "2026-10-22",
+          notes:
+            "High alpine valley with meadow flora, rocky scree slopes, stunted krummholz pines and glaciated peaks.",
+        },
+      },
     ),
   ],
 };
