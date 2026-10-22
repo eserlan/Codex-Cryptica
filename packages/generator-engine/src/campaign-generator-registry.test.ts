@@ -1930,6 +1930,18 @@ describe("story generator concept block", () => {
     }
   });
 
+  it("uses the adventure theme when rolling concepts without explicit genre or vault context", () => {
+    const random = vi.spyOn(Math, "random").mockReturnValue(0.85);
+    try {
+      const prompt = getGenerator("adventure").buildPrompt(
+        run("adventure", { themeId: "pirate" }),
+      );
+      expect(prompt).toContain("a formal procedure must be completed");
+    } finally {
+      random.mockRestore();
+    }
+  });
+
   it("leaves other generators without a concept", () => {
     const prompt = getGenerator("npc").buildPrompt(run("npc"));
     expect(prompt).not.toContain("Concept constraints for this case");

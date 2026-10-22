@@ -712,7 +712,10 @@ function conceptInputs(request: GeneratorRunRequest): {
 } {
   return {
     genre: String(
-      request.options?.genre ?? request.vaultContext?.themeName ?? "",
+      request.options?.genre ??
+        request.vaultContext?.themeName ??
+        themeIdToLabel[request.themeId ?? ""] ??
+        "",
     ),
     tone: String(request.options?.tone ?? ""),
   };
