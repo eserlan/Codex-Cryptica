@@ -1,16 +1,6 @@
 {
-  "updated_at": 1792705942,
+  "updated_at": 1792771099,
   "candidates": [
-    {
-      "id": "reddit-39280708572-hex-journey-mode-plan-a-route-and-walk-i",
-      "title": "Hex Journey mode: plan a route and walk it one hex at a time",
-      "body": "Getting a party across six hexes usually meant dragging a token in a straight line while counting under my breath, then fixing fog and trying to remember which hexes I had already marked explored.\n\nI built Hex Journey mode so that becomes a previewed plan and then one deliberate step per move.\n\nHow it works is covered in the Hex Crawl guide: https://codexcryptica.com/help/hex-crawl-mode\n\n- Set a start with Set as journey start and pick any destination with Travel here to see the straight line, hex count and total distance in the map's own unit, plus an optional hours-per-hex estimate that stays an estimate and does not advance any calendar\n- Use Next hex to move the party token one hex at a time, each arrival clears fog, marks the hex explored, writes the session journal entry and opens that hex's panel so you can Explore when you choose to\n- If saving an arrival fails after the token has moved you get Retry arrival save without moving again or double writing, and Stop journey keeps what you have done and clears the rest\n- The route and controls are GM only, Player View and guests never see them, and the route is temporary so it clears if you leave the map, reload, move the token elsewhere or change the grid; it needs a hex grid and an eligible party token already at the origin\n\nTradeoff I kept is that the preview is a straight line with no terrain cost weighting, so a detour around mountains or water still needs a new leg.\n\nHow do you price overland travel at your table, do you use a fixed hours per hex, days per hex, or just count hexes and call it when it feels right?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-39280708572-0.png)",
-      "url": "https://codexcryptica.com/help/hex-crawl-mode",
-      "image_url": "https://assets.codexcryptica.com/announcements/release-39280708572-0.png",
-      "source_id": "39280708572",
-      "status": "approved",
-      "created_at": 1792425463
-    },
     {
       "id": "reddit-39407138621-my-first-online-session-taught-me-audio-",
       "title": "My first online session taught me audio matters more than maps",
