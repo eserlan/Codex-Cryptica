@@ -1,6 +1,20 @@
 <script lang="ts">
   import { tick } from "svelte";
   import {
+    adjustCounterCell,
+    defaultCellValue,
+    getColumnCellClass,
+    getColumnHeaderClass,
+    linkedValue,
+    moneyCell,
+    parseTableMoney,
+  } from "./item-table-values";
+  import {
+    captureRowFocus,
+    restoreRowFocus,
+    rowMoveDirection,
+  } from "./item-table-focus";
+  import {
     DEFAULT_ITEM_TABLE_COLUMNS,
     type Entity,
     type StatSheetField,
@@ -13,7 +27,6 @@
     adjustQuantity,
     ensureRowIds,
     formatMoney,
-    parseMoney,
     patchStock,
     resolveStockDisplay,
   } from "@codex/stat-sheet-engine";
@@ -105,16 +118,6 @@
     return typeof entityId === "string" ? vault.entities[entityId] : undefined;
   }
 
-  function linkedValue(row: Record<string, any>, columnId: string) {
-    const entity = linkedEntity(row);
-    if (!entity) return undefined;
-    if (columnId === "name") return entity.title;
-    const sourceField = entity.statSheet?.fields?.find(
-      (candidate) => candidate.id === columnId,
-    );
-    return sourceField?.value ?? sourceField?.formula;
-  }
-
   function updateRows(nextRows: Record<string, any>[]) {
     context.onUpdateField(field.id, {
       rows: stockEnabled ? ensureRowIds(nextRows) : nextRows,
@@ -165,8 +168,7 @@
       stockNotice = "";
       return;
     }
-    const precision = Math.min(6, (amount.split(".")[1] ?? "").length);
-    const price = parseMoney(amount, unit, precision);
+    const price = parseTableMoney(amount, unit);
     if (!price) {
       stockNotice = "Enter a price as digits, with a unit such as gp.";
       return;
@@ -182,33 +184,8 @@
     unit: string,
   ) {
     if (amount.trim() === "") return handleCellChange(rowIndex, colId, "");
-    const precision = Math.min(6, (amount.split(".")[1] ?? "").length);
-    const money = parseMoney(amount, unit, precision);
+    const money = parseTableMoney(amount, unit);
     if (money) handleCellChange(rowIndex, colId, money);
-  }
-
-  function moneyCell(row: Record<string, any>, colId: string) {
-    const v = row[colId];
-    return v && typeof v === "object" && typeof v.units === "number"
-      ? (v as { units: number; currency: string; precision: number })
-      : undefined;
-  }
-
-  function defaultCellValue(col: (typeof columns)[number]) {
-    switch (col.type) {
-      case "counter": {
-        const max = col.max ?? 6;
-        return { value: Math.max(col.min ?? 0, max), max };
-      }
-      case "number":
-        return 0;
-      case "dice":
-        return col.formula || "1d6";
-      case "checkbox":
-        return false;
-      default:
-        return "";
-    }
   }
 
   function handleAddRow() {
@@ -230,113 +207,27 @@
   function handleMoveRow(index: number, direction: -1 | 1) {
     const targetIndex = index + direction;
     if (targetIndex < 0 || targetIndex >= rows.length) return;
-
-    let focusSelector: string | null = null;
-    let selectionStart: number | null = null;
-    let selectionEnd: number | null = null;
-
-    const activeEl = document.activeElement as HTMLElement | null;
-    if (activeEl && tableContainer && tableContainer.contains(activeEl)) {
-      const activeRow =
-        activeEl.closest<HTMLTableRowElement>("tr[data-row-index]");
-      if (activeRow && Number(activeRow.dataset.rowIndex) === index) {
-        if (activeEl.tagName === "TR") {
-          focusSelector = `tr[data-row-index="${targetIndex}"]`;
-        } else if (activeEl.dataset.colId) {
-          const colId = activeEl.dataset.colId;
-          const counterAction = activeEl.dataset.counterAction;
-          const action = activeEl.dataset.action;
-          if (counterAction) {
-            focusSelector = `tr[data-row-index="${targetIndex}"] [data-col-id="${colId}"][data-counter-action="${counterAction}"]`;
-          } else if (action) {
-            focusSelector = `tr[data-row-index="${targetIndex}"] [data-col-id="${colId}"][data-action="${action}"]`;
-          } else {
-            focusSelector = `tr[data-row-index="${targetIndex}"] [data-col-id="${colId}"]`;
-          }
-          if (
-            activeEl instanceof HTMLInputElement &&
-            (activeEl.type === "text" ||
-              activeEl.type === "search" ||
-              activeEl.type === "url" ||
-              activeEl.type === "tel" ||
-              activeEl.type === "password" ||
-              activeEl.type === "number")
-          ) {
-            try {
-              selectionStart = activeEl.selectionStart;
-              selectionEnd = activeEl.selectionEnd;
-            } catch {
-              // Ignore for inputs that do not support selection
-            }
-          }
-        } else if (activeEl.dataset.action) {
-          const action = activeEl.dataset.action;
-          focusSelector = `tr[data-row-index="${targetIndex}"] [data-action="${action}"]`;
-        }
-      }
-    }
-
+    const focus = captureRowFocus(tableContainer, index, targetIndex);
     const next = [...rows];
     const [moved] = next.splice(index, 1);
     next.splice(targetIndex, 0, moved);
     updateRows(next);
-
-    if (focusSelector) {
-      const selector = focusSelector;
-      const restoreFocus = () => {
-        if (!tableContainer) return;
-        let targetEl = tableContainer.querySelector<HTMLElement>(selector);
-        // If the specific target button is disabled (e.g. Move Up at index 0), fallback to alternate move or row
-        if (targetEl && (targetEl as HTMLButtonElement).disabled) {
-          targetEl =
-            tableContainer.querySelector<HTMLElement>(
-              `tr[data-row-index="${targetIndex}"] [data-action="move-down"]`,
-            ) ??
-            tableContainer.querySelector<HTMLElement>(
-              `tr[data-row-index="${targetIndex}"] [data-action="move-up"]`,
-            ) ??
-            tableContainer.querySelector<HTMLElement>(
-              `tr[data-row-index="${targetIndex}"]`,
-            );
-        }
-        if (targetEl) {
-          targetEl.focus();
-          if (
-            targetEl instanceof HTMLInputElement &&
-            selectionStart !== null &&
-            selectionEnd !== null
-          ) {
-            try {
-              targetEl.setSelectionRange(selectionStart, selectionEnd);
-            } catch {
-              // Ignore
-            }
-          }
-        }
-      };
-
+    if (focus) {
+      const restoreFocus = () => restoreRowFocus(tableContainer, focus);
       void tick().then(() => {
         restoreFocus();
-        if (typeof requestAnimationFrame !== "undefined") {
+        if (typeof requestAnimationFrame !== "undefined")
           requestAnimationFrame(restoreFocus);
-        }
       });
     }
   }
 
   function handleRowKeyDown(e: KeyboardEvent, rIdx: number) {
-    if (context.readOnly) return;
-    if ((e.ctrlKey || e.metaKey || e.altKey) && !e.shiftKey) {
-      if (e.key === "ArrowUp") {
-        e.preventDefault();
-        e.stopPropagation();
-        handleMoveRow(rIdx, -1);
-      } else if (e.key === "ArrowDown") {
-        e.preventDefault();
-        e.stopPropagation();
-        handleMoveRow(rIdx, 1);
-      }
-    }
+    const direction = rowMoveDirection(e, context.readOnly);
+    if (direction === null) return;
+    e.preventDefault();
+    e.stopPropagation();
+    handleMoveRow(rIdx, direction);
   }
 
   function handleRemoveRow(index: number) {
@@ -355,31 +246,11 @@
 
   function handleCounterAdjust(rowIndex: number, colId: string, delta: number) {
     const col = columns.find((c) => c.id === colId);
-    const min = col?.min ?? 0;
-    const next = rows.map((r, i) => {
-      if (i !== rowIndex) return r;
-      const current = r[colId];
-      const value =
-        current && typeof current === "object"
-          ? Number(current.value)
-          : Number(current);
-      const max =
-        current && typeof current === "object" ? Number(current.max) : NaN;
-      const currentValue = Number.isFinite(value) ? value : 0;
-      const adjustedValue = currentValue + delta;
-      const nextValue = Math.max(
-        min,
-        Number.isFinite(max) ? Math.min(max, adjustedValue) : adjustedValue,
-      );
-      return {
-        ...r,
-        [colId]:
-          current && typeof current === "object"
-            ? { ...current, value: nextValue }
-            : nextValue,
-      };
-    });
-    updateRows(next);
+    handleCellChange(
+      rowIndex,
+      colId,
+      adjustCounterCell(rows[rowIndex][colId], delta, col?.min ?? 0),
+    );
   }
 
   async function handleDiceRoll(
@@ -413,47 +284,6 @@
         isError: true,
       };
     }
-  }
-
-  function getColumnHeaderClass(col: { id: string; type: string }): string {
-    if (col.type === "checkbox") return "w-10 px-1 py-1 text-center";
-    if (col.type === "number")
-      return "w-16 px-1 py-1 text-center whitespace-nowrap";
-    if (col.type === "dice")
-      return "w-24 px-1.5 py-1 text-center whitespace-nowrap";
-    if (col.type === "counter")
-      return "w-24 px-1.5 py-1 text-center whitespace-nowrap";
-    if (["name", "title", "item"].includes(col.id))
-      return "min-w-[7rem] px-2 py-1 text-left";
-    if (
-      ["effects", "traits", "description", "notes", "special"].includes(col.id)
-    )
-      return "min-w-[8rem] px-2 py-1 text-left";
-    return "min-w-[4rem] px-1.5 py-1 text-center whitespace-nowrap";
-  }
-
-  function getColumnCellClass(col: { id: string; type: string }): string {
-    if (col.type === "checkbox")
-      return "w-10 px-1 py-1 text-center align-middle";
-    if (col.type === "number") return "w-16 px-1 py-1 text-center align-middle";
-    if (col.type === "dice") return "w-24 px-1.5 py-1 text-center align-middle";
-    if (col.type === "counter")
-      return "w-24 px-1.5 py-1 text-center align-middle";
-    if (
-      [
-        "name",
-        "title",
-        "item",
-        "effects",
-        "traits",
-        "description",
-        "notes",
-        "special",
-      ].includes(col.id)
-    ) {
-      return "min-w-[7rem] px-2 py-1 text-left align-middle";
-    }
-    return "min-w-[4rem] px-1.5 py-1 text-center align-middle";
   }
 </script>
 
@@ -594,13 +424,13 @@
                     {#if col.type === "text"}
                       {#if context.readOnly}
                         <span class="font-medium text-theme-text"
-                          >{linkedValue(row, col.id) ??
+                          >{linkedValue(linked, col.id) ??
                             row[col.id] ??
                             "—"}</span
                         >
-                      {:else if linked && linkedValue(row, col.id) !== undefined}
+                      {:else if linked && linkedValue(linked, col.id) !== undefined}
                         <span class="font-medium text-theme-text"
-                          >{linkedValue(row, col.id)}</span
+                          >{linkedValue(linked, col.id)}</span
                         >
                       {:else}
                         <input
@@ -622,13 +452,13 @@
                     {:else if col.type === "number"}
                       {#if context.readOnly}
                         <span class="font-mono text-theme-text"
-                          >{linkedValue(row, col.id) ??
+                          >{linkedValue(linked, col.id) ??
                             row[col.id] ??
                             "—"}</span
                         >
-                      {:else if linked && linkedValue(row, col.id) !== undefined}
+                      {:else if linked && linkedValue(linked, col.id) !== undefined}
                         <span class="font-mono text-theme-text"
-                          >{linkedValue(row, col.id)}</span
+                          >{linkedValue(linked, col.id)}</span
                         >
                       {:else}
                         <input
