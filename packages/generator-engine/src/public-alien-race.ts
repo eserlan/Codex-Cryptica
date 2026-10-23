@@ -47,6 +47,11 @@ import {
   PSYCHOLOGIES,
   CONTINGENCIES,
   RELATIONS,
+  type TraitProfile,
+  type BodyPlanProfile,
+  type EnvironmentProfile,
+  type CommunicationProfile,
+  type LifespanProfile,
 } from "./public-alien-race-constants";
 
 export interface AlienRaceGeneratorOptions {
