@@ -8,6 +8,7 @@ import {
   runDetection,
   runRoute,
   scorePatterns,
+  sessionTokenFromEnv,
   summarise,
   summariseDetection,
   toMarkdown,
@@ -331,5 +332,31 @@ describe("parseModes", () => {
   it("accepts known modes and rejects unknown ones", () => {
     expect(parseModes("assess, develop")).toEqual(["assess", "develop"]);
     expect(() => parseModes("assess,grade")).toThrow("grade");
+  });
+});
+
+describe("sessionTokenFromEnv", () => {
+  it("mints nothing without an automation key, for a local proxy", async () => {
+    const mint = vi.fn();
+    await expect(
+      sessionTokenFromEnv("http://localhost:8787", {}, mint),
+    ).resolves.toBeUndefined();
+    await expect(
+      sessionTokenFromEnv("http://x", { CODEX_AUTOMATION_KEY: "  " }, mint),
+    ).resolves.toBeUndefined();
+    expect(mint).not.toHaveBeenCalled();
+  });
+
+  it("mints one token from the key, and surfaces a refused mint", async () => {
+    const mint = vi.fn().mockResolvedValue("tok");
+    await expect(
+      sessionTokenFromEnv("https://w", { CODEX_AUTOMATION_KEY: "k" }, mint),
+    ).resolves.toBe("tok");
+    expect(mint).toHaveBeenCalledWith("https://w", "k");
+
+    mint.mockRejectedValue(new Error("AUTOMATION_KEY_INVALID"));
+    await expect(
+      sessionTokenFromEnv("https://w", { CODEX_AUTOMATION_KEY: "k" }, mint),
+    ).rejects.toThrow("AUTOMATION_KEY_INVALID");
   });
 });

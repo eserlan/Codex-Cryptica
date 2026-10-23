@@ -22,6 +22,12 @@
  *   2. `bun run dev:proxy`
  *   3. `bun run eval:idea-patterns`
  *
+ * Or use the deployed worker, which already has provider keys but needs a
+ * session token: set CODEX_AUTOMATION_KEY in your shell and pass
+ * `--proxy https://oracle-proxy.espen-erlandsen.workers.dev`. The harness
+ * mints one automation token per run. That tests the deployed registry,
+ * so it uses whatever model production defaults to.
+ *
  * Each case costs one call per mode on the baseline route and two on the
  * assisted route; `--detect-only` costs one call per case. The analysis call goes through the same proxy model; to
  * try a smaller classifier (or Jev, #3465), give `analyseNarrativePatterns`
@@ -55,7 +61,11 @@ import {
   type PatternAnalysis,
 } from "../packages/generator-engine/src/narrative-pattern-analysis";
 import { NARRATIVE_PATTERNS } from "../packages/generator-engine/src/narrative-patterns";
-import { proxyComplete, type ProxyComplete } from "./adventure-ab";
+import {
+  mintAutomationToken,
+  proxyComplete,
+  type ProxyComplete,
+} from "./adventure-ab";
 
 export interface IdeaCase {
   id: string;
@@ -489,11 +499,30 @@ function parseCli() {
   }).values;
 }
 
+/**
+ * A session token for a deployed proxy, minted once per run when
+ * CODEX_AUTOMATION_KEY is set. A local proxy without SESSION_TOKEN_SECRET
+ * needs none.
+ */
+export async function sessionTokenFromEnv(
+  proxy: string,
+  env: Record<string, string | undefined> = process.env,
+  mint: typeof mintAutomationToken = mintAutomationToken,
+): Promise<string | undefined> {
+  const key = env.CODEX_AUTOMATION_KEY?.trim();
+  if (!key) return undefined;
+  const token = await mint(proxy, key);
+  process.stderr.write("  using an automation session token\n");
+  return token;
+}
+
 async function main() {
   const values = parseCli();
   const cases = IDEA_CASES.slice(0, Number(values.cases));
+  const sessionToken = await sessionTokenFromEnv(values.proxy);
+  const modelKey = values.model || undefined;
   const connect = (): ProxyComplete =>
-    proxyComplete(values.proxy, fetch, values.model || undefined);
+    proxyComplete(values.proxy, fetch, { modelKey, sessionToken });
   if (values["detect-only"]) {
     await detectOnly(cases, connect, values.json);
     return;
