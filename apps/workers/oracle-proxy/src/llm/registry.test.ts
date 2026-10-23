@@ -12,6 +12,17 @@ describe("registry invariants", () => {
     expect(new Set(keys).size).toBe(keys.length);
   });
 
+  it("serves Luna as GPT-6 Luna, by its bare OpenAI id", () => {
+    expect(getModel("luna-fast")).toMatchObject({
+      provider: "openai",
+      modelId: "gpt-6-luna",
+      enabled: true,
+    });
+    expect(
+      MODEL_REGISTRY.filter((m) => m.modelId.includes("5.6")).map((m) => m.key),
+    ).toEqual([]);
+  });
+
   it("has no dangling defaultModelKey/fallbackModelKey references", () => {
     for (const entry of OPERATION_DEFAULTS) {
       expect(getModel(entry.defaultModelKey)).toBeDefined();

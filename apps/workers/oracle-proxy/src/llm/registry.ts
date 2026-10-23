@@ -36,10 +36,12 @@ export const MODEL_REGISTRY: LlmModelDefinition[] = [
   {
     key: "luna-fast",
     provider: "openai",
-    // Confirmed against OpenAI's docs — do not use the "gpt-5.6" alias,
-    // which routes to a different model (Sol) in the same family.
-    modelId: "gpt-5.6-luna",
-    displayName: "GPT-5.6 Luna",
+    // GPT-6 Luna replaces gpt-5.6-luna. OpenAI's API takes the bare
+    // id, without the "openai/" prefix some routers use. Not yet checked
+    // live: gpt-5.6-luna rejected `temperature` and reasoning effort
+    // "minimal"; if GPT-6 Luna differs, the Gemini fallback absorbs failures.
+    modelId: "gpt-6-luna",
+    displayName: "GPT-6 Luna",
     capabilities: {
       structuredOutput: true,
       freeformGeneration: true,
@@ -52,7 +54,8 @@ export const MODEL_REGISTRY: LlmModelDefinition[] = [
       revision: false,
     },
     costTier: "low",
-    // $1 / 1M input tokens, $6 / 1M output tokens (standard short-context rate).
+    // UNVERIFIED for GPT-6 Luna: these are GPT-5.6 Luna's rates ($1 / 1M
+    // input, $6 / 1M output). Used for cost reporting only.
     pricing: { inputPer1kTokens: 0.001, outputPer1kTokens: 0.006 },
     availability: { public: true, authenticated: true, admin: true },
     enabled: true,
