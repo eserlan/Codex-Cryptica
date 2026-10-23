@@ -61,6 +61,7 @@ export function createEntity(
     updatedAt: systemClock.now(),
     createdAt: systemClock.now(),
     modifiedAt: systemClock.now(),
+    contentLoaded: true,
     ...initialData,
     type: resolvedType,
   } as LocalEntity;

@@ -5,6 +5,7 @@ import { cacheService } from "../../services/cache.svelte";
 import { SyncCoordinator, VaultRepository } from "@codex/vault-engine";
 import { appEventBus } from "@codex/events";
 import { fileIOAdapter } from "./adapters.svelte";
+import { updateLastInternalChange } from "./registry";
 import type { VaultRecord } from "../../utils/idb";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { notificationStore } from "$lib/stores/ui/notification.svelte";
@@ -105,6 +106,7 @@ export class SyncStore {
           );
           await cacheService.clearVault(activeId);
           await this.loadFiles(false);
+          await updateLastInternalChange(activeId);
         }
       },
     );
