@@ -12,6 +12,7 @@
  *   bun scripts/idea-pattern-ab.ts --markdown > ab.md    # read side by side
  *   bun scripts/idea-pattern-ab.ts --json > ab.json
  *   bun scripts/idea-pattern-ab.ts --detect-only         # pattern-finding only
+ *   bun scripts/idea-pattern-ab.ts --model luna-6        # a registry model key
  *
  * ## Running it
  *
@@ -478,6 +479,7 @@ function parseCli() {
   return parseArgs({
     options: {
       proxy: { type: "string", default: "http://localhost:8787" },
+      model: { type: "string", default: "" },
       cases: { type: "string", default: String(IDEA_CASES.length) },
       modes: { type: "string", default: "assess,develop" },
       json: { type: "boolean", default: false },
@@ -490,7 +492,8 @@ function parseCli() {
 async function main() {
   const values = parseCli();
   const cases = IDEA_CASES.slice(0, Number(values.cases));
-  const connect = (): ProxyComplete => proxyComplete(values.proxy);
+  const connect = (): ProxyComplete =>
+    proxyComplete(values.proxy, fetch, values.model || undefined);
   if (values["detect-only"]) {
     await detectOnly(cases, connect, values.json);
     return;

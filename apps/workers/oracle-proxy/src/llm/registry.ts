@@ -57,6 +57,26 @@ export const MODEL_REGISTRY: LlmModelDefinition[] = [
     availability: { public: true, authenticated: true, admin: true },
     enabled: true,
   },
+  {
+    // Opt-in only: no operation defaults to it. Callers reach it with
+    // `modelKeyOverride: "luna-6"`, e.g. the Idea Developer pattern harness
+    // (#3466). OpenAI's API takes the bare id, without an "openai/" prefix.
+    key: "luna-6",
+    provider: "openai",
+    modelId: "gpt-6-luna",
+    displayName: "GPT-6 Luna",
+    capabilities: {
+      structuredOutput: true,
+      freeformGeneration: true,
+      revision: false,
+    },
+    costTier: "low",
+    // UNVERIFIED: copied from GPT-5.6 Luna until GPT-6 Luna's published
+    // rates are confirmed. Used for cost reporting only.
+    pricing: { inputPer1kTokens: 0.001, outputPer1kTokens: 0.006 },
+    availability: { public: true, authenticated: true, admin: true },
+    enabled: true,
+  },
 ];
 
 export const OPERATION_DEFAULTS: OperationDefaults[] = [

@@ -115,6 +115,18 @@ describe("adventure A/B routes", () => {
     expect(failing.models).toEqual([]);
   });
 
+  it("asks for a specific model only when one is given", async () => {
+    const bodies: string[] = [];
+    const fetcher = (async (_url: string, init?: RequestInit) => {
+      bodies.push(String(init?.body));
+      return new Response(JSON.stringify({ content: "x" }));
+    }) as unknown as typeof fetch;
+    await proxyComplete("http://proxy", fetcher, "luna-6")("s", "m");
+    await proxyComplete("http://proxy", fetcher)("s", "m");
+    expect(JSON.parse(bodies[0]).modelKeyOverride).toBe("luna-6");
+    expect(JSON.parse(bodies[1])).not.toHaveProperty("modelKeyOverride");
+  });
+
   it("records the model that answered each successful call", async () => {
     const replies = [{ content: "a", modelKey: "luna-fast" }, { content: "b" }];
     const fetcher = (async () =>

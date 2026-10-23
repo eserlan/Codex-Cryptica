@@ -251,11 +251,14 @@ export type ProxyComplete = Complete & {
 
 /**
  * A stateless call through the local proxy, with calls and failures counted
- * and the model that answered each successful call recorded.
+ * and the model that answered each successful call recorded. `modelKey`
+ * asks the proxy for a registry model instead of the operation's default;
+ * the proxy still falls back if that model fails.
  */
 export function proxyComplete(
   proxy: string,
   fetcher: typeof fetch = fetch,
+  modelKey?: string,
 ): ProxyComplete {
   const complete = async (system: string, message: string) => {
     complete.calls++;
@@ -279,6 +282,7 @@ export function proxyComplete(
           { role: "system", content: system },
           { role: "user", content: message },
         ],
+        ...(modelKey ? { modelKeyOverride: modelKey } : {}),
       }),
     });
     const payload = (await response.json()) as {
