@@ -269,6 +269,37 @@ describe("rollBiasedConcept", () => {
     );
   });
 
+  it("uses a fresh eligible situation when every preferred situation is avoided", () => {
+    const preferredSituations = [
+      "staged-mishap",
+      "expert-error-covered",
+      "blame-on-wrong-people",
+      "false-accusation-deflection",
+    ];
+    const eligibleSituations = conceptPool(
+      "situation",
+      "Classic Fantasy",
+      "Grounded",
+    ).map((item) => item.id);
+    const remaining = eligibleSituations.filter(
+      (id) => !preferredSituations.includes(id),
+    );
+
+    expect(remaining.length).toBeGreaterThan(0);
+
+    const choices = rollMysteryConcept(
+      "Classic Fantasy",
+      "Grounded",
+      "Murder",
+      seeded(4),
+      new Set(preferredSituations),
+    );
+
+    expect(remaining).toContain(
+      choices.find((choice) => choice.dimension === "situation")?.id,
+    );
+  });
+
   it("falls back to generic rollConcept when no preferences are specified", () => {
     const direct = rollConcept("Pirate", "Eerie", seeded(10));
     const biased = rollBiasedConcept("Pirate", "Eerie", { rng: seeded(10) });

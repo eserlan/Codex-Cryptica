@@ -553,7 +553,10 @@ function rollBiasedDimension(
   const pool = conceptPool(dimension, genre, tone);
   const candidatePool = preferredPool(pool, dimension, options);
   const fresh = candidatePool.filter((item) => !options.avoidIds?.has(item.id));
-  const candidates = fresh.length ? fresh : candidatePool;
+  const available = fresh.length
+    ? fresh
+    : pool.filter((item) => !options.avoidIds?.has(item.id));
+  const candidates = available.length ? available : pool;
   const picked = pickFrom(
     candidates.length ? candidates : pool,
     options.rng ?? defaultRng,
