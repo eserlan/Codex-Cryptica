@@ -10,7 +10,11 @@
 import {
   type ConceptChoice,
   formatConceptBlock,
+  rollAdventureConcept,
   rollConcept,
+  rollCouncilVoteConcept,
+  rollHeistConcept,
+  rollMysteryConcept,
 } from "./concept-dimensions";
 import { type Rng, defaultRng, pickFrom } from "./random-utils";
 import {
@@ -135,9 +139,12 @@ export function pickSeed(
 }
 
 /** A seed rendered as the locked block the stage prompts carry. */
-export function formatSeedBlock(seed: ConceptSeed): string {
+export function formatSeedBlock(
+  seed: ConceptSeed,
+  label = "Case seed",
+): string {
   return [
-    "Case seed, chosen before writing and locked. Build the case around it: its premise and stake are fixed. Use the title idea as the title unless it would mislead players.",
+    `${label}, chosen before writing and locked. Build the case around it: its premise and stake are fixed. Use the title idea as the title unless it would mislead players.`,
     `- Premise: ${seed.premise}`,
     `- Stake: ${seed.stake}`,
     `- Setting: ${seed.setting}`,
@@ -149,10 +156,20 @@ export function formatSeedBlock(seed: ConceptSeed): string {
 export interface ConceptSeedInput {
   genre: string;
   tone: string;
+  /** Domain of the seed: "mystery", "adventure", "one-shot", etc. Defaults to "adventure" (or "mystery" if mysteryType is set). */
+  domain?: string;
+  /** Subtype or scenario emphasis (e.g. "Survival", "Murder", "Intrigue", "Theft"). */
+  subType?: string;
+  /** @deprecated Use subType or domain. Preserved for backwards compatibility with mystery generator. */
+  mysteryType?: string;
   /** Campaign or session context the seed must fit. */
   context: string;
   /** Seeds already generated recently, which candidates should not repeat. */
   recent: readonly ConceptSeed[];
+  /** Specific clichés, tropes, or motifs to actively avoid in the candidates. */
+  avoidTropes?: readonly string[];
+  /** Dimension IDs to avoid when rolling concept dimensions. */
+  avoidDimensionIds?: ReadonlySet<string>;
 }
 
 export interface ConceptSeedDeps {
@@ -168,6 +185,22 @@ function seedMessage(
   input: ConceptSeedInput,
   dimensions: readonly ConceptChoice[],
 ): string {
+  const isMystery =
+    input.domain === "mystery" ||
+    Boolean(input.mysteryType) ||
+    (input.subType !== undefined &&
+      [
+        "theft",
+        "murder",
+        "disappearance",
+        "conspiracy",
+        "strange phenomenon",
+        "other",
+      ].includes(input.subType.toLowerCase()));
+  const isHeist = input.domain === "heist";
+  const isCouncilVote = input.domain === "council-vote";
+  const subType = input.subType ?? input.mysteryType;
+
   const recent = input.recent.length
     ? `Recent seeds to avoid repeating (same situation, object or title):\n${input.recent
         .map((seed) => `- ${seed.premise} (${seed.titleIdea})`)
@@ -176,7 +209,46 @@ function seedMessage(
   const context = input.context.trim()
     ? `Campaign context (the candidates must fit it):\n${input.context.trim()}\n`
     : "";
-  return `Propose ${SEED_CANDIDATE_COUNT} different case seeds for a tabletop mystery. Each candidate must fit the concept constraints below, the genre (${input.genre}) and the tone (${input.tone}). The candidates must differ from each other in setting and central object.
+  const typeText = subType
+    ? isMystery
+      ? ` and the mystery type (${subType})`
+      : isHeist
+        ? ` and the heist type (${subType})`
+        : ` and the scenario emphasis (${subType})`
+    : "";
+
+  let typeGuidance = "";
+  if (isMystery) {
+    if (subType?.toLowerCase() === "other") {
+      typeGuidance =
+        " For mystery type Other, explore varied central situations (such as an unexplained event, a mechanical breakdown, an ideological sabotage, a disputed relationship, or a false accusation); do NOT make it a theft or missing item unless the premise explicitly demands it.";
+    } else if (subType && subType.toLowerCase() !== "theft") {
+      typeGuidance = ` Candidates must centre on the ${subType} (do NOT default to stolen objects, keys, or ledgers).`;
+    }
+  } else if (isHeist) {
+    if (subType) {
+      typeGuidance = ` Candidates must centre on a ${subType} objective (do NOT default to stealing a gem or art piece from an eccentric collector's mansion unless requested).`;
+    }
+  } else if (isCouncilVote) {
+    typeGuidance =
+      " Candidates must centre on a nuanced political conflict, disputed reform, succession crisis, or institutional deadlock (do NOT default to a simple monetary bribe, evil tax increase, or predictable corrupt tie-breaker).";
+  } else if (subType) {
+    typeGuidance = ` Candidates must centre on the ${subType} premise and playstyle (do NOT default to standard tavern notice boards, missing merchant caravans, or fetch quests).`;
+  }
+
+  const avoidTropesGuidance = input.avoidTropes?.length
+    ? ` Avoid the following familiar cliches and motifs: ${input.avoidTropes.join("; ")}.`
+    : "";
+
+  const subject = isMystery
+    ? "case seeds for a tabletop mystery"
+    : isHeist
+      ? "heist scenario concepts for a tabletop RPG score"
+      : isCouncilVote
+        ? "political vote concepts for a contentious council decision"
+        : "adventure seeds for a tabletop RPG scenario";
+
+  return `Propose ${SEED_CANDIDATE_COUNT} different ${subject}. Each candidate must fit the concept constraints below, the genre (${input.genre}), the tone (${input.tone})${typeText}. The candidates must differ from each other in central situation, conflict mechanism, and setting.${typeGuidance}${avoidTropesGuidance}
 
 ${formatConceptBlock(dimensions)}
 
@@ -219,7 +291,55 @@ export async function generateConceptSeed(
   input: ConceptSeedInput,
   { complete, rng = defaultRng, signal }: ConceptSeedDeps,
 ): Promise<ConceptSeed | null> {
-  const dimensions = rollConcept(input.genre, input.tone, rng);
+  const isMystery =
+    input.domain === "mystery" ||
+    Boolean(input.mysteryType) ||
+    (input.subType !== undefined &&
+      [
+        "theft",
+        "murder",
+        "disappearance",
+        "conspiracy",
+        "strange phenomenon",
+        "other",
+      ].includes(input.subType.toLowerCase()));
+  const isHeist = input.domain === "heist";
+  const isCouncilVote = input.domain === "council-vote";
+  const subType = input.subType ?? input.mysteryType;
+
+  const dimensions = isMystery
+    ? rollMysteryConcept(
+        input.genre,
+        input.tone,
+        subType,
+        rng,
+        input.avoidDimensionIds,
+      )
+    : isHeist
+      ? rollHeistConcept(
+          input.genre,
+          input.tone,
+          subType,
+          rng,
+          input.avoidDimensionIds,
+        )
+      : isCouncilVote
+        ? rollCouncilVoteConcept(
+            input.genre,
+            input.tone,
+            rng,
+            input.avoidDimensionIds,
+          )
+        : subType
+          ? rollAdventureConcept(
+              input.genre,
+              input.tone,
+              subType,
+              rng,
+              input.avoidDimensionIds,
+            )
+          : rollConcept(input.genre, input.tone, rng, input.avoidDimensionIds);
+
   const message = seedMessage(input, dimensions);
   const outcome = await askChecked(
     ({ problems, previous }) =>

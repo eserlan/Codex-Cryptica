@@ -6,7 +6,11 @@ import {
 } from "./campaign-generator-types";
 import { contextChain } from "./campaign-generator-registry";
 import { completeText } from "./campaign-generator-service-core";
-import { buildMysteryPrompt, parseMysteryResponse } from "./public-mystery";
+import {
+  buildMysteryPrompt,
+  extractMysteryNames,
+  parseMysteryResponse,
+} from "./public-mystery";
 import { generateConceptSeed } from "./concept-seed";
 import { generateMysteryStaged } from "./mystery-staged";
 import type { MysteryGraph } from "./mystery-graph";
@@ -45,6 +49,7 @@ async function generateMysteryStagedDraft(
   generator: CampaignGeneratorDefinition,
   request: GeneratorRunRequest,
   options: Record<string, unknown>,
+  bannedNames: Set<string>,
   signal?: AbortSignal,
 ): Promise<GeneratedDraft | null> {
   const context = contextChain(request);
@@ -57,6 +62,7 @@ async function generateMysteryStagedDraft(
       {
         genre: prompt.resolved.genre,
         tone: prompt.resolved.tone,
+        mysteryType: prompt.resolved.mysteryType,
         context,
         recent: [],
       },
@@ -68,7 +74,13 @@ async function generateMysteryStagedDraft(
       signal,
       complete,
     });
-    return staged ? mapMysteryDraft(generator, request, staged.output) : null;
+    if (staged) {
+      for (const name of extractMysteryNames(staged.output)) {
+        bannedNames.add(name);
+      }
+      return mapMysteryDraft(generator, request, staged.output);
+    }
+    return null;
   } catch (error) {
     if (
       signal?.aborted ||
@@ -85,6 +97,7 @@ async function generateMysteryOnePassDraft(
   generator: CampaignGeneratorDefinition,
   request: GeneratorRunRequest,
   options: Record<string, unknown>,
+  bannedNames: Set<string>,
   signal?: AbortSignal,
 ): Promise<GeneratedDraft | null> {
   const prompt = buildMysteryPrompt(options, contextChain(request));
@@ -98,7 +111,13 @@ async function generateMysteryOnePassDraft(
       },
     );
     const output = parseMysteryResponse(completeText(raw));
-    return output ? mapMysteryDraft(generator, request, output) : null;
+    if (output) {
+      for (const name of extractMysteryNames(output)) {
+        bannedNames.add(name);
+      }
+      return mapMysteryDraft(generator, request, output);
+    }
+    return null;
   } catch (error) {
     if (signal?.aborted) throw error;
     return null;
@@ -130,6 +149,7 @@ export async function generateCampaignMysteryWithAI(
       generator,
       request,
       options,
+      bannedNames,
       signal,
     );
     if (staged) return staged;
@@ -140,6 +160,7 @@ export async function generateCampaignMysteryWithAI(
     generator,
     request,
     options,
+    bannedNames,
     signal,
   );
 }

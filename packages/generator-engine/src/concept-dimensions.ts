@@ -125,6 +125,36 @@ export const CONCEPT_DIMENSIONS: Record<
       "a disaster is being blamed on the wrong people",
       "a disaster is being blamed on people who did not cause it",
     ),
+    entry(
+      "staged-mishap",
+      "a staged mishap or accident",
+      "what appears to be an accident, natural death, or coincidence was deliberately arranged",
+    ),
+    entry(
+      "vanishing-without-trace",
+      "a vanishing without obvious physical trace",
+      "someone disappeared under circumstances that seem physically or procedurally impossible",
+    ),
+    entry(
+      "secret-pact-fracturing",
+      "a secret pact or conspiracy is fracturing",
+      "an illicit agreement between influential parties is collapsing under blackmail, fear, or betrayal",
+    ),
+    entry(
+      "unexplained-manifestation",
+      "an unexplained phenomenon or anomaly",
+      "an uncanny occurrence, localized blight, or recurring manifestation has no clear physical source",
+    ),
+    entry(
+      "false-accusation-deflection",
+      "a calculated false accusation",
+      "suspicion was deliberately steered toward a vulnerable party to conceal the real responsible actor",
+    ),
+    entry(
+      "disputed-succession-tampering",
+      "tampering with authority or inheritance",
+      "a formal transfer of title, office, or estate was secretly manipulated from within",
+    ),
   ],
   conflictSource: [
     entry(
@@ -161,6 +191,26 @@ export const CONCEPT_DIMENSIONS: Record<
       "secret-kept-too-long",
       "a secret kept too long",
       "a secret that has been kept for years is starting to leak",
+    ),
+    entry(
+      "ideological-sabotage",
+      "ideological sabotage",
+      "the perpetrator is driven by a radical doctrine, principle, or cause rather than material greed",
+    ),
+    entry(
+      "blackmail-pressure",
+      "blackmail or extortion pressure",
+      "someone is acting under duress because an opponent holds leverage over them",
+    ),
+    entry(
+      "uncontrolled-contagion-anomaly",
+      "an uncontrolled anomaly or contagion",
+      "an experiment, cursed residue, or contaminant has escaped its originator's control",
+    ),
+    entry(
+      "jurisdictional-standoff",
+      "a jurisdictional standoff",
+      "competing authorities or factions refuse to cooperate, creating space for the deed",
     ),
     entry(
       "machine-misbehaves",
@@ -391,6 +441,385 @@ export function rollConcept(
       };
     },
   );
+}
+
+const MYSTERY_SITUATIONS: Record<string, readonly string[]> = {
+  theft: [
+    "routine-task-reveals",
+    "shared-resource-failing",
+    "two-communities-one-need",
+  ],
+  murder: [
+    "staged-mishap",
+    "expert-error-covered",
+    "blame-on-wrong-people",
+    "false-accusation-deflection",
+  ],
+  disappearance: [
+    "vanishing-without-trace",
+    "rescue-against-deadline",
+    "someone-not-who-they-claim",
+    "unverifiable-newcomer",
+  ],
+  conspiracy: [
+    "secret-pact-fracturing",
+    "someone-not-who-they-claim",
+    "routine-task-reveals",
+    "disputed-succession-tampering",
+  ],
+  "strange phenomenon": [
+    "unexplained-manifestation",
+    "shared-resource-failing",
+    "machine-misbehaves",
+    "machine-misbehaves-space",
+    "machine-misbehaves-post",
+  ],
+  other: [
+    "staged-mishap",
+    "false-accusation-deflection",
+    "disputed-succession-tampering",
+    "unexplained-manifestation",
+    "secret-pact-fracturing",
+    "two-communities-one-need",
+    "old-promise-called-in",
+    "expert-error-covered",
+  ],
+};
+
+const MYSTERY_CONFLICTS: Record<string, readonly string[]> = {
+  murder: [
+    "personal-rivalry",
+    "rival-ambition",
+    "secret-kept-too-long",
+    "blackmail-pressure",
+  ],
+  disappearance: [
+    "hidden-loyalty",
+    "blackmail-pressure",
+    "personal-rivalry",
+    "supernatural-oath",
+  ],
+  conspiracy: [
+    "institution-rules",
+    "hidden-loyalty",
+    "ideological-sabotage",
+    "jurisdictional-standoff",
+  ],
+  "strange phenomenon": [
+    "natural-forces",
+    "curse-or-spirit",
+    "uncontrolled-contagion-anomaly",
+    "machine-misbehaves",
+  ],
+  other: [
+    "competing-claims",
+    "ideological-sabotage",
+    "blackmail-pressure",
+    "jurisdictional-standoff",
+    "institution-rules",
+    "secret-kept-too-long",
+  ],
+};
+
+export interface BiasedConceptOptions {
+  preferredSituations?: readonly string[];
+  preferredConflicts?: readonly string[];
+  rng?: Rng;
+  avoidIds?: ReadonlySet<string>;
+}
+
+/**
+ * Rolls creative dimensions with optional preferred situations and conflict mechanisms,
+ * while allowing other dimensions to draw naturally from the genre and tone pool.
+ */
+export function rollBiasedConcept(
+  genre: string,
+  tone: string,
+  options: BiasedConceptOptions = {},
+): ConceptChoice[] {
+  const {
+    preferredSituations,
+    preferredConflicts,
+    rng = defaultRng,
+    avoidIds = new Set(),
+  } = options;
+
+  if (!preferredSituations?.length && !preferredConflicts?.length) {
+    return rollConcept(genre, tone, rng, avoidIds);
+  }
+
+  return (Object.keys(CONCEPT_DIMENSIONS) as ConceptDimension[]).map(
+    (dimension) => {
+      const pool = conceptPool(dimension, genre, tone);
+      let candidatePool = pool;
+      if (dimension === "situation" && preferredSituations?.length) {
+        const matches = pool.filter((item) =>
+          preferredSituations.includes(item.id),
+        );
+        if (matches.length) candidatePool = matches;
+      } else if (dimension === "conflictSource" && preferredConflicts?.length) {
+        const matches = pool.filter((item) =>
+          preferredConflicts.includes(item.id),
+        );
+        if (matches.length) candidatePool = matches;
+      }
+
+      const fresh = candidatePool.filter((item) => !avoidIds.has(item.id));
+      const candidates = fresh.length ? fresh : candidatePool;
+      const picked = pickFrom(candidates.length ? candidates : pool, rng);
+      return {
+        dimension,
+        id: picked.id,
+        label: picked.label,
+        guidance: picked.guidance,
+      };
+    },
+  );
+}
+
+/**
+ * Preferred situations per one-shot / adventure emphasis.
+ */
+export const ADVENTURE_EMPHASIS_SITUATIONS: Record<string, readonly string[]> =
+  {
+    "investigation / mystery": [
+      "routine-task-reveals",
+      "someone-not-who-they-claim",
+      "staged-mishap",
+      "vanishing-without-trace",
+    ],
+    exploration: [
+      "unexplained-manifestation",
+      "unverifiable-newcomer",
+      "rescue-against-deadline",
+    ],
+    action: [
+      "rescue-against-deadline",
+      "settlement-splitting",
+      "staged-mishap",
+      "blame-on-wrong-people",
+    ],
+    intrigue: [
+      "secret-pact-fracturing",
+      "false-accusation-deflection",
+      "disputed-succession-tampering",
+      "someone-not-who-they-claim",
+    ],
+    survival: [
+      "shared-resource-failing",
+      "settlement-splitting",
+      "two-communities-one-need",
+    ],
+  };
+
+/**
+ * Preferred conflict sources per one-shot / adventure emphasis.
+ */
+export const ADVENTURE_EMPHASIS_CONFLICTS: Record<string, readonly string[]> = {
+  "investigation / mystery": [
+    "secret-kept-too-long",
+    "blackmail-pressure",
+    "rival-ambition",
+  ],
+  exploration: ["natural-forces", "uncontrolled-contagion-anomaly"],
+  action: ["competing-claims", "rival-ambition", "ideological-sabotage"],
+  intrigue: [
+    "blackmail-pressure",
+    "jurisdictional-standoff",
+    "institution-rules",
+    "hidden-loyalty",
+  ],
+  survival: [
+    "natural-forces",
+    "uncontrolled-contagion-anomaly",
+    "competing-claims",
+  ],
+};
+
+/**
+ * Preferred situations per heist type.
+ */
+export const HEIST_SITUATIONS: Record<string, readonly string[]> = {
+  theft: [
+    "audit-about-to-expose",
+    "routine-task-reveals",
+    "competing-claims",
+    "expert-error-covered",
+    "false-accusation-deflection",
+    "secret-pact-fracturing",
+  ],
+  rescue: [
+    "rescue-against-deadline",
+    "someone-not-who-they-claim",
+    "blame-on-wrong-people",
+  ],
+  sabotage: [
+    "staged-mishap",
+    "uncontrolled-contagion-anomaly",
+    "shared-resource-failing",
+    "ideological-sabotage",
+  ],
+  extraction: [
+    "someone-not-who-they-claim",
+    "rescue-against-deadline",
+    "secret-pact-fracturing",
+  ],
+  information: [
+    "audit-about-to-expose",
+    "routine-task-reveals",
+    "false-accusation-deflection",
+    "disputed-succession-tampering",
+  ],
+  "plant evidence": [
+    "false-accusation-deflection",
+    "secret-pact-fracturing",
+    "blame-on-wrong-people",
+  ],
+  assassination: [
+    "staged-mishap",
+    "procedure-due-before-deadline",
+    "someone-not-who-they-claim",
+  ],
+};
+
+/**
+ * Preferred conflict sources per heist type.
+ */
+export const HEIST_CONFLICTS: Record<string, readonly string[]> = {
+  theft: [
+    "competing-claims",
+    "blackmail-pressure",
+    "rival-ambition",
+    "secret-kept-too-long",
+  ],
+  rescue: ["hidden-loyalty", "jurisdictional-standoff", "institution-rules"],
+  sabotage: ["ideological-sabotage", "rival-ambition", "competing-claims"],
+  extraction: [
+    "hidden-loyalty",
+    "jurisdictional-standoff",
+    "institution-rules",
+  ],
+  information: [
+    "secret-kept-too-long",
+    "blackmail-pressure",
+    "institution-rules",
+  ],
+  "plant evidence": [
+    "blackmail-pressure",
+    "institution-rules",
+    "jurisdictional-standoff",
+  ],
+  assassination: [
+    "rival-ambition",
+    "ideological-sabotage",
+    "secret-kept-too-long",
+  ],
+};
+
+/**
+ * Rolls creative dimensions tailored to a specific heist type.
+ */
+export function rollHeistConcept(
+  genre: string,
+  tone: string,
+  heistType?: string,
+  rng: Rng = defaultRng,
+  avoidIds: ReadonlySet<string> = new Set(),
+): ConceptChoice[] {
+  const norm = heistType?.trim().toLowerCase();
+  if (!norm) return rollConcept(genre, tone, rng, avoidIds);
+  return rollBiasedConcept(genre, tone, {
+    preferredSituations: HEIST_SITUATIONS[norm],
+    preferredConflicts: HEIST_CONFLICTS[norm],
+    rng,
+    avoidIds,
+  });
+}
+
+/**
+ * Preferred situations for political council vote scenarios.
+ */
+export const COUNCIL_VOTE_SITUATIONS: readonly string[] = [
+  "disputed-succession-tampering",
+  "two-communities-one-need",
+  "secret-pact-fracturing",
+  "shared-resource-failing",
+  "settlement-splitting",
+  "false-accusation-deflection",
+  "audit-about-to-expose",
+];
+
+/**
+ * Preferred conflict sources for political council vote scenarios.
+ */
+export const COUNCIL_VOTE_CONFLICTS: readonly string[] = [
+  "institution-rules",
+  "jurisdictional-standoff",
+  "blackmail-pressure",
+  "secret-pact-fracturing",
+  "competing-claims",
+  "rival-ambition",
+  "hidden-loyalty",
+];
+
+/**
+ * Rolls creative dimensions tailored to a contentious council vote.
+ */
+export function rollCouncilVoteConcept(
+  genre: string,
+  tone: string,
+  rng: Rng = defaultRng,
+  avoidIds: ReadonlySet<string> = new Set(),
+): ConceptChoice[] {
+  return rollBiasedConcept(genre, tone, {
+    preferredSituations: COUNCIL_VOTE_SITUATIONS,
+    preferredConflicts: COUNCIL_VOTE_CONFLICTS,
+    rng,
+    avoidIds,
+  });
+}
+
+/**
+ * Rolls creative dimensions tailored to a specific adventure or one-shot emphasis.
+ */
+export function rollAdventureConcept(
+  genre: string,
+  tone: string,
+  emphasis?: string,
+  rng: Rng = defaultRng,
+  avoidIds: ReadonlySet<string> = new Set(),
+): ConceptChoice[] {
+  const norm = emphasis?.trim().toLowerCase();
+  if (!norm) return rollConcept(genre, tone, rng, avoidIds);
+  return rollBiasedConcept(genre, tone, {
+    preferredSituations: ADVENTURE_EMPHASIS_SITUATIONS[norm],
+    preferredConflicts: ADVENTURE_EMPHASIS_CONFLICTS[norm],
+    rng,
+    avoidIds,
+  });
+}
+
+/**
+ * Rolls creative dimensions tailored to a specific mystery type, preventing
+ * non-theft investigations from defaulting to stolen-object structures.
+ */
+export function rollMysteryConcept(
+  genre: string,
+  tone: string,
+  mysteryType?: string,
+  rng: Rng = defaultRng,
+  avoidIds: ReadonlySet<string> = new Set(),
+): ConceptChoice[] {
+  const normType = mysteryType?.trim().toLowerCase();
+  if (!normType) {
+    return rollConcept(genre, tone, rng, avoidIds);
+  }
+  return rollBiasedConcept(genre, tone, {
+    preferredSituations: MYSTERY_SITUATIONS[normType],
+    preferredConflicts: MYSTERY_CONFLICTS[normType],
+    rng,
+    avoidIds,
+  });
 }
 
 const DIMENSION_NAMES: Record<ConceptDimension, string> = {

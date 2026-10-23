@@ -47,8 +47,40 @@ function normalizeFoundation(data: Obj): Obj {
     const summary = firstText(next, ["playerSafeSummary", "premise"]);
     if (summary !== undefined) next.summary = flattenText(summary);
   }
-  if (isRecord(next.truth))
-    next.truth = flattenFields(next.truth, [
+  if (isRecord(next.truth)) {
+    const truthObj = { ...next.truth };
+    if (!flattenText(truthObj.keyItem).trim()) {
+      const focal = firstText(truthObj, [
+        "focalElement",
+        "keyElement",
+        "centralSubject",
+        "centralElement",
+        "evidence",
+      ]);
+      if (focal !== undefined) truthObj.keyItem = flattenText(focal);
+    }
+    if (!flattenText(truthObj.keyItemLocation).trim()) {
+      const loc = firstText(truthObj, [
+        "focalLocation",
+        "keyLocation",
+        "centralLocation",
+        "evidenceLocation",
+      ]);
+      if (loc !== undefined) truthObj.keyItemLocation = flattenText(loc);
+    }
+    if (!flattenText(truthObj.keyItemFate).trim()) {
+      const fate = firstText(truthObj, ["focalFate", "intendedFate", "stakes"]);
+      if (fate !== undefined) truthObj.keyItemFate = flattenText(fate);
+    }
+    if (!flattenText(truthObj.recovery).trim()) {
+      const rec = firstText(truthObj, [
+        "resolution",
+        "resolutionAndProof",
+        "solution",
+      ]);
+      if (rec !== undefined) truthObj.recovery = flattenText(rec);
+    }
+    next.truth = flattenFields(truthObj, [
       "perpetratorName",
       "motive",
       "means",
@@ -63,6 +95,7 @@ function normalizeFoundation(data: Obj): Obj {
       "victimStatus",
       "atStart",
     ]);
+  }
   next.timeline = mapList(next.timeline, flattenText);
   next.revelations = mapList(next.revelations, (item) => {
     const rev = flattenFields(withId(item, ["revelationId", "key"]), [

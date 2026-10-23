@@ -3,6 +3,7 @@ import {
   buildHeistAuditPrompt,
   buildHeistPrompt,
   buildHeistRepairPrompt,
+  extractHeistNames,
   generateHeistLocal,
   heistConfig,
   parseHeistAuditResponse,
@@ -1109,5 +1110,61 @@ describe("Superhero theme regression (#3108)", () => {
     );
     expect(out.type).toBe("event");
     expect(out.content).toBeTruthy();
+  });
+});
+
+describe("buildHeistPrompt diversification", () => {
+  it("includes avoidNames in prompt instruction", () => {
+    const { userMessage } = buildHeistPrompt(
+      { avoidNames: ["Orsik Pell", "Vance"] },
+      "",
+      seededRng(1),
+    );
+    expect(userMessage).toContain(
+      "Avoid reusing these recent character or mark names: Orsik Pell, Vance.",
+    );
+  });
+
+  it("includes seed block when concept seed is provided", () => {
+    const seed = {
+      premise: "Infiltrate the submerged vault before high tide",
+      stake: "A stolen naval ledger",
+      setting: "The Sunken Docks",
+      distinctiveElement: "A rusted floodgate wheel",
+      titleIdea: "The Sinking Ledger",
+    };
+    const { userMessage } = buildHeistPrompt({ seed }, "", seededRng(1));
+    expect(userMessage).toContain(
+      "Heist score concept, chosen before writing and locked",
+    );
+    expect(userMessage).toContain(
+      "Infiltrate the submerged vault before high tide",
+    );
+    expect(userMessage).toContain("The Sinking Ledger");
+  });
+});
+
+describe("extractHeistNames", () => {
+  it("extracts names with honorifics, titles, and contacts", () => {
+    const output = {
+      title: "The Halden Job",
+      content:
+        "### The Score\nSteal the ledger from Lord Halden before dawn.\n\n### Casing the Target\n- **Contact**: Meet Archivist Pell at the side gate.",
+      lore: "### Complications\n- **Likely**: Captain Vane increases the perimeter watch.\n\n### The Getaway\n**Pursuit**: Dr Aris tracks the residue.",
+    };
+    const names = extractHeistNames(output);
+    expect(names).toContain("Halden");
+    expect(names).toContain("Pell");
+    expect(names).toContain("Vane");
+    expect(names).toContain("Aris");
+  });
+
+  it("returns an empty array when no person names are present", () => {
+    const output = {
+      title: "The Silent Vault",
+      content: "No names here.",
+      lore: "Routine patrols circle the building.",
+    };
+    expect(extractHeistNames(output)).toEqual([]);
   });
 });

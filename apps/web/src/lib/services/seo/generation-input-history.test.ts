@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   GenerationInputHistoryStore,
+  GenerationNameHistoryStore,
   GenerationSeedHistoryStore,
   summarizeResolvedInputs,
   formatRecentInputsNote,
@@ -212,6 +213,63 @@ describe("GenerationSeedHistoryStore", () => {
     expect(store.recent("mystery-investigation")).toEqual([]);
     expect(() =>
       store.record("mystery-investigation", seed("Lost")),
+    ).not.toThrow();
+  });
+});
+
+describe("GenerationNameHistoryStore", () => {
+  it("starts empty for any generator id", () => {
+    const store = new GenerationNameHistoryStore(memoryStorage());
+    expect(store.recent("mystery-investigation")).toEqual([]);
+  });
+
+  it("records names most-recent-first and de-duplicates case-insensitively", () => {
+    const store = new GenerationNameHistoryStore(memoryStorage());
+    store.record("mystery-investigation", ["Orsik Pell", "Kaelen Voss"]);
+    store.record("mystery-investigation", ["orsik pell", "Mara Vane"]);
+    expect(store.recent("mystery-investigation")).toEqual([
+      "orsik pell",
+      "Mara Vane",
+      "Kaelen Voss",
+    ]);
+  });
+
+  it("trims whitespace and ignores empty names", () => {
+    const store = new GenerationNameHistoryStore(memoryStorage());
+    store.record("mystery-investigation", ["  ", "  Corvin Ash  ", ""]);
+    expect(store.recent("mystery-investigation")).toEqual(["Corvin Ash"]);
+  });
+
+  it("caps history at 20 names per generator", () => {
+    const store = new GenerationNameHistoryStore(memoryStorage());
+    const names = Array.from({ length: 25 }, (_, i) => `Person ${i + 1}`);
+    store.record("mystery-investigation", names);
+    const recent = store.recent("mystery-investigation");
+    expect(recent).toHaveLength(20);
+    expect(recent[0]).toBe("Person 1");
+    expect(recent[19]).toBe("Person 20");
+  });
+
+  it("keeps generator ids independent", () => {
+    const store = new GenerationNameHistoryStore(memoryStorage());
+    store.record("mystery-investigation", ["Orsik Pell"]);
+    expect(store.recent("npc")).toEqual([]);
+  });
+
+  it("survives unreadable or unwritable storage", () => {
+    const broken = {
+      getItem: () => {
+        throw new Error("denied");
+      },
+      setItem: () => {
+        throw new Error("quota");
+      },
+      removeItem: () => {},
+    };
+    const store = new GenerationNameHistoryStore(broken);
+    expect(store.recent("mystery-investigation")).toEqual([]);
+    expect(() =>
+      store.record("mystery-investigation", ["Orsik Pell"]),
     ).not.toThrow();
   });
 });

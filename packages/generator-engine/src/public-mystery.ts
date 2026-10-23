@@ -171,6 +171,38 @@ export function parseMysteryResponse(
   };
 }
 
+/**
+ * Extracts generated person names from mystery output (graph, lore, or content)
+ * so subsequent generations can discourage reusing them immediately.
+ */
+export function extractMysteryNames(output: {
+  mysteryGraph?: { nodes: Array<{ kind: string; label: string }> };
+  content?: string;
+  lore?: string;
+}): string[] {
+  const names = new Set<string>();
+  if (output.mysteryGraph?.nodes) {
+    for (const node of output.mysteryGraph.nodes) {
+      if (node.kind === "person" && node.label.trim()) {
+        names.add(node.label.trim());
+      }
+    }
+  }
+  if (output.lore) {
+    const resp = output.lore.match(/\*\*Responsible party:\*\*\s*([^\n.]+)/i);
+    if (resp?.[1]) names.add(resp[1].trim());
+  }
+  if (output.content) {
+    const matches = output.content.matchAll(
+      /-\s+\*\*([^*]+?)\s+[—–-]\s+[^*]+?(?::\*\*|\*\*:)/g,
+    );
+    for (const m of matches) {
+      if (m[1]) names.add(m[1].trim());
+    }
+  }
+  return [...names];
+}
+
 export function generateMysteryLocal(
   options: MysteryGeneratorOptions = {},
   rng: Rng = defaultRng,
