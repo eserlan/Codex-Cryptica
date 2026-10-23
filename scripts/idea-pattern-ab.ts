@@ -273,13 +273,12 @@ export function summarise(runs: RouteRun[]): RouteSummary {
 
 /** How often each taxonomy pattern was matched across the assisted runs. */
 export function patternCoverage(runs: RouteRun[]): Record<string, number> {
-  const counts: Record<string, number> = {};
-  for (const run of runs) {
-    for (const match of run.analysis?.patterns ?? []) {
-      counts[match.pattern.id] = (counts[match.pattern.id] ?? 0) + 1;
-    }
-  }
-  return counts;
+  const ids = runs.flatMap(
+    (run) => run.analysis?.patterns.map((m) => m.pattern.id) ?? [],
+  );
+  return Object.fromEntries(
+    [...new Set(ids)].map((id) => [id, ids.filter((x) => x === id).length]),
+  );
 }
 
 export interface PatternScore {
@@ -403,18 +402,19 @@ function analysisMarkdown(analysis: PatternAnalysis): string {
 function runMarkdown(run: RouteRun, ideaCase: IdeaCase): string {
   const head = `### ${run.route} (calls: ${run.calls}, ${run.elapsedMs} ms)`;
   const score = scorePatterns(ideaCase, run.analysis, run.mode);
-  const scoreLine = score ? [scoreMarkdown(score)] : [];
-  if (!run.result) {
-    return [head, `_Failed: ${run.error}_`, ...scoreLine].join("\n\n");
-  }
+  const body = run.result
+    ? resultMarkdown(run, run.result)
+    : [`_Failed: ${run.error}_`];
+  return [head, ...(score ? [scoreMarkdown(score)] : []), ...body].join("\n\n");
+}
+
+function resultMarkdown(run: RouteRun, result: IdeaDevelopment): string[] {
   const leaked = leakedPatternNames(run);
   return [
-    head,
     ...(leaked.length ? [`_Names patterns: ${leaked.join(", ")}_`] : []),
-    ...scoreLine,
     ...(run.analysis ? [analysisMarkdown(run.analysis)] : []),
-    visibleText(run.result, run.mode).replace(/^## /gm, "#### "),
-  ].join("\n\n");
+    visibleText(result, run.mode).replace(/^## /gm, "#### "),
+  ];
 }
 
 /** Every case with both routes one after the other, for reading. */
@@ -444,8 +444,14 @@ export function parseModes(value: string): IdeaDeveloperMode[] {
   return modes;
 }
 
-async function main() {
-  const { values } = parseArgs({
+const rowFailed = (row: CaseRow) =>
+  Boolean(row.baseline.error || row.assisted.error);
+
+const progress = (failed: boolean, label: string) =>
+  process.stderr.write(`  ${failed ? "ERR" : "ok "} ${label}\n`);
+
+function parseCli() {
+  return parseArgs({
     options: {
       proxy: { type: "string", default: "http://localhost:8787" },
       cases: { type: "string", default: String(IDEA_CASES.length) },
@@ -454,49 +460,67 @@ async function main() {
       markdown: { type: "boolean", default: false },
       "detect-only": { type: "boolean", default: false },
     },
-  });
+  }).values;
+}
+
+async function main() {
+  const values = parseCli();
   const cases = IDEA_CASES.slice(0, Number(values.cases));
   const connect = (): ProxyComplete => proxyComplete(values.proxy);
   if (values["detect-only"]) {
     await detectOnly(cases, connect, values.json);
     return;
   }
-  const modes = parseModes(values.modes);
+  const rows = await runComparison(cases, parseModes(values.modes), connect);
+  reportComparison(rows, values);
+  if (rows.some(rowFailed)) process.exitCode = 1;
+}
+
+async function runComparison(
+  cases: IdeaCase[],
+  modes: IdeaDeveloperMode[],
+  connect: () => ProxyComplete,
+): Promise<CaseRow[]> {
   const rows: CaseRow[] = [];
   for (const ideaCase of cases) {
     for (const mode of modes) {
       const baseline = await runRoute("baseline", ideaCase, mode, connect());
       const assisted = await runRoute("assisted", ideaCase, mode, connect());
-      rows.push({ case: ideaCase, baseline, assisted });
-      process.stderr.write(
-        `  ${baseline.error || assisted.error ? "ERR" : "ok "} ${ideaCase.id} ${mode}\n`,
-      );
+      const row = { case: ideaCase, baseline, assisted };
+      rows.push(row);
+      progress(rowFailed(row), `${ideaCase.id} ${mode}`);
     }
   }
+  return rows;
+}
+
+function reportComparison(
+  rows: CaseRow[],
+  { json, markdown }: { json: boolean; markdown: boolean },
+): void {
   const summary = {
     baseline: summarise(rows.map((r) => r.baseline)),
     assisted: summarise(rows.map((r) => r.assisted)),
   };
   const coverage = patternCoverage(rows.map((r) => r.assisted));
   const scores = scoreRows(rows);
-  if (values.json) {
+  if (json) {
     const detection = summariseDetection(scores);
     console.log(
       JSON.stringify({ summary, detection, scores, coverage, rows }, null, 2),
     );
-  } else if (values.markdown) {
+    return;
+  }
+  if (markdown) {
     console.log(toMarkdown(rows));
-  } else {
-    console.table(summary);
-    printScores(scores);
-    console.table(coverage);
-    console.log(
-      "Usefulness is not scored. Use --markdown and read the routes side by side.",
-    );
+    return;
   }
-  if (rows.some((r) => r.baseline.error || r.assisted.error)) {
-    process.exitCode = 1;
-  }
+  console.table(summary);
+  printScores(scores, []);
+  console.table(coverage);
+  console.log(
+    "Usefulness is not scored. Use --markdown and read the routes side by side.",
+  );
 }
 
 /** One classifier call per case, scored against the hand labels. */
@@ -505,12 +529,7 @@ async function detectOnly(
   connect: () => ProxyComplete,
   json: boolean,
 ): Promise<void> {
-  const runs: DetectionRun[] = [];
-  for (const ideaCase of cases) {
-    const run = await runDetection(ideaCase, connect());
-    runs.push(run);
-    process.stderr.write(`  ${run.error ? "ERR" : "ok "} ${ideaCase.id}\n`);
-  }
+  const runs = await collectDetections(cases, connect);
   const scores = runs.flatMap(
     (r) => scorePatterns(r.ideaCase, r.analysis, "detect") ?? [],
   );
@@ -519,13 +538,26 @@ async function detectOnly(
     const detection = summariseDetection(scores);
     console.log(JSON.stringify({ detection, scores, errors, runs }, null, 2));
   } else {
-    printScores(scores);
-    for (const id of errors) console.log(`error: ${id}`);
+    printScores(scores, errors);
   }
   if (errors.length) process.exitCode = 1;
 }
 
-function printScores(scores: PatternScore[]): void {
+async function collectDetections(
+  cases: IdeaCase[],
+  connect: () => ProxyComplete,
+): Promise<DetectionRun[]> {
+  const runs: DetectionRun[] = [];
+  for (const ideaCase of cases) {
+    const run = await runDetection(ideaCase, connect());
+    runs.push(run);
+    progress(Boolean(run.error), ideaCase.id);
+  }
+  return runs;
+}
+
+function printScores(scores: PatternScore[], errors: string[]): void {
+  for (const id of errors) console.log(`error: ${id}`);
   console.table(summariseDetection(scores));
   console.table(
     scores.map((s) => ({
