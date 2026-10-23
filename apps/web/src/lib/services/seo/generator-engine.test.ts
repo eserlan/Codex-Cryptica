@@ -877,6 +877,14 @@ describe("DefaultGeneratorEngine", () => {
   });
 
   describe("generateHeist", () => {
+    const testSeed = {
+      premise: "A crew steals a relic from a guarded temple.",
+      stake: "The relic must be recovered before dawn.",
+      setting: "A temple district during a night festival.",
+      distinctiveElement: "The reliquary's wards react to spoken names.",
+      titleIdea: "The Midnight Reliquary Job",
+    };
+
     const auditJson = (verdict: "clean" | "repair" = "repair") =>
       JSON.stringify({
         verdict,
@@ -941,6 +949,7 @@ describe("DefaultGeneratorEngine", () => {
 
       const res = await engine.generateHeist({
         heistType: "Theft",
+        seed: testSeed,
         campaignContext: "The crew owes Magistrate Sorn a favour.",
         useAI: true,
         staged: false,
@@ -995,6 +1004,7 @@ describe("DefaultGeneratorEngine", () => {
 
       const res = await engine.generateHeist({
         heistType: "Theft",
+        seed: testSeed,
         useAI: true,
         staged: false,
       });
@@ -1234,6 +1244,7 @@ describe("DefaultGeneratorEngine", () => {
         targetType: "Temple Reliquary",
         targetScale: "Major",
         prize: "Sunstone Chalice",
+        seed: testSeed,
         useAI: true,
         onProgress,
       });
