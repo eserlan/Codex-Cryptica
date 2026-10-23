@@ -12,7 +12,7 @@
  *   bun scripts/idea-pattern-ab.ts --markdown > ab.md    # read side by side
  *   bun scripts/idea-pattern-ab.ts --json > ab.json
  *   bun scripts/idea-pattern-ab.ts --detect-only         # pattern-finding only
- *   bun scripts/idea-pattern-ab.ts --model luna-6        # a registry model key
+ *   bun scripts/idea-pattern-ab.ts --model gemini-flash-lite  # pick a registry model
  *
  * ## Running it
  *

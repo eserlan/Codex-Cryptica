@@ -121,9 +121,9 @@ describe("adventure A/B routes", () => {
       bodies.push(String(init?.body));
       return new Response(JSON.stringify({ content: "x" }));
     }) as unknown as typeof fetch;
-    await proxyComplete("http://proxy", fetcher, "luna-6")("s", "m");
+    await proxyComplete("http://proxy", fetcher, "gemini-flash-lite")("s", "m");
     await proxyComplete("http://proxy", fetcher)("s", "m");
-    expect(JSON.parse(bodies[0]).modelKeyOverride).toBe("luna-6");
+    expect(JSON.parse(bodies[0]).modelKeyOverride).toBe("gemini-flash-lite");
     expect(JSON.parse(bodies[1])).not.toHaveProperty("modelKeyOverride");
   });
 
