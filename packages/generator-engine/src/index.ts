@@ -384,12 +384,16 @@ export {
   parseMysteryResponse,
   generateMysteryLocal,
   resolveMystery,
+  extractMysteryNames,
   mysteryConfig,
   type MysteryGeneratorOptions,
   type ResolvedMysteryOptions,
 } from "./public-mystery";
 export {
   generateMysteryStaged,
+  allowedThirdRevelationKinds,
+  expectedThirdRevelationKind,
+  mysteryTypeGuidance,
   type MysteryStagedDependencies,
   type MysteryStagedStats,
 } from "./mystery-staged";
@@ -400,6 +404,25 @@ export {
   type ConceptSeedDeps,
   type ConceptSeedInput,
 } from "./concept-seed";
+export {
+  rollConcept,
+  rollBiasedConcept,
+  rollAdventureConcept,
+  rollMysteryConcept,
+  rollHeistConcept,
+  rollCouncilVoteConcept,
+  formatConceptBlock,
+  ADVENTURE_EMPHASIS_SITUATIONS,
+  ADVENTURE_EMPHASIS_CONFLICTS,
+  HEIST_SITUATIONS,
+  HEIST_CONFLICTS,
+  COUNCIL_VOTE_SITUATIONS,
+  COUNCIL_VOTE_CONFLICTS,
+  type BiasedConceptOptions,
+  type ConceptChoice,
+  type ConceptDimension,
+  type ConceptEntry,
+} from "./concept-dimensions";
 export {
   buildComicBookEventPrompt,
   parseComicBookEventResponse,
@@ -452,6 +475,7 @@ export {
   runCouncilVoteStaged,
   mergeCouncilVoteOutput,
   generateCouncilVoteLocal,
+  extractCouncilVoteNames,
   councilVoteConfig,
   COUNCIL_VOTE_PROGRESS_STEPS,
   type CouncilVoteStageId,
@@ -483,6 +507,7 @@ export {
   parseHeistAuditResponse,
   parseHeistResponse,
   generateHeistLocal,
+  extractHeistNames,
   heistConfig,
   type HeistGeneratorOptions,
   type HeistPrompt,

@@ -119,7 +119,10 @@ async function runStaged(
     progress: new StagedProgress(PROGRESS_STEPS, deps.onProgress),
     system: prompt.systemInstruction,
   };
-  const avoid = avoidNamesExcludingContext([], options.campaignContext);
+  const avoid = avoidNamesExcludingContext(
+    options.avoidNames ?? [],
+    options.campaignContext,
+  );
   const stage = createStageRunner(deps, run);
 
   throwIfAborted(deps.signal);
@@ -127,7 +130,7 @@ async function runStaged(
   // Stage 1: Objective
   const objectiveStage = await stage(
     "objective",
-    objectiveMessage(resolved, prefix),
+    objectiveMessage(resolved, prefix, deps.seed, avoid),
     (d) => checkHeistObjectiveStage(d, resolved, avoid),
   );
   if (!objectiveStage) return null;
@@ -135,7 +138,7 @@ async function runStaged(
   // Stage 2: Security Rings
   const securityStage = await stage(
     "security",
-    securityMessage(resolved, objectiveStage, prefix),
+    securityMessage(resolved, objectiveStage, prefix, avoid),
     (d) => checkHeistSecurityStage(d, objectiveStage, resolved, avoid),
   );
   if (!securityStage) return null;
@@ -143,7 +146,7 @@ async function runStaged(
   // Stage 3: Response & Getaway
   const responseStage = await stage(
     "response",
-    responseMessage(resolved, objectiveStage, securityStage, prefix),
+    responseMessage(resolved, objectiveStage, securityStage, prefix, avoid),
     (d) =>
       checkHeistResponseStage(
         d,

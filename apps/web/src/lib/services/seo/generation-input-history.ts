@@ -165,3 +165,52 @@ export class GenerationSeedHistoryStore {
 }
 
 export const generationSeedHistoryStore = new GenerationSeedHistoryStore();
+
+const NAME_STORAGE_KEY = "GENERATION_NAME_HISTORY";
+const MAX_NAMES_PER_GENERATOR = 20;
+
+/**
+ * Tracks names generated recently this session (per generator), so subsequent
+ * runs discourage immediately reusing the same culprit or suspect names.
+ */
+export class GenerationNameHistoryStore {
+  private storage: StorageLike;
+
+  constructor(storage: StorageLike = browserSessionStorage) {
+    this.storage = storage;
+  }
+
+  private loadAll(): Record<string, string[]> {
+    return readHistory(this.storage, NAME_STORAGE_KEY, isString);
+  }
+
+  recent(generatorId: string): string[] {
+    return this.loadAll()[generatorId] ?? [];
+  }
+
+  record(generatorId: string, names: readonly string[]): void {
+    const valid = names
+      .map((name) => name.trim())
+      .filter((name) => name.length > 0);
+    if (!valid.length) return;
+    const all = this.loadAll();
+    const existing = all[generatorId] ?? [];
+    const seen = new Set<string>();
+    const merged: string[] = [];
+    for (const name of [...valid, ...existing]) {
+      const lower = name.toLowerCase();
+      if (!seen.has(lower)) {
+        seen.add(lower);
+        merged.push(name);
+      }
+    }
+    all[generatorId] = merged.slice(0, MAX_NAMES_PER_GENERATOR);
+    try {
+      this.storage.setItem(NAME_STORAGE_KEY, JSON.stringify(all));
+    } catch {
+      // Best-effort: storage may be unavailable.
+    }
+  }
+}
+
+export const generationNameHistoryStore = new GenerationNameHistoryStore();
