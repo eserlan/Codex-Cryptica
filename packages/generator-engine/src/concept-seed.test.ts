@@ -212,6 +212,113 @@ describe("generateConceptSeed", () => {
     ).rejects.toThrow();
     expect(calls).toBe(1);
   });
+
+  it("prompts with adventure subject, scenario emphasis, and anti-tropes", async () => {
+    const messages: string[] = [];
+    await generateConceptSeed(
+      {
+        domain: "adventure",
+        subType: "Survival",
+        genre: "Classic Fantasy",
+        tone: "Bleak",
+        context: "A frozen pass",
+        recent: [],
+        avoidTropes: ["tavern notice board", "missing caravan"],
+      },
+      {
+        complete: async (_system, message) => {
+          messages.push(message);
+          return candidatesReply([fresh, other, fresh, other, fresh]);
+        },
+      },
+    );
+    expect(messages[0]).toContain(
+      "adventure seeds for a tabletop RPG scenario",
+    );
+    expect(messages[0]).toContain("scenario emphasis (Survival)");
+    expect(messages[0]).toContain(
+      "Candidates must centre on the Survival premise",
+    );
+    expect(messages[0]).toContain("tavern notice board; missing caravan");
+  });
+
+  it("customises prompt subject and guidance for heist domain", async () => {
+    const messages: string[] = [];
+    await generateConceptSeed(
+      {
+        domain: "heist",
+        subType: "Sabotage",
+        genre: "Cyberpunk / Corporate",
+        tone: "Tense",
+        context: "",
+        recent: [],
+        avoidTropes: ["gem in a mansion vault"],
+      },
+      {
+        complete: async (_system, message) => {
+          messages.push(message);
+          return candidatesReply([fresh, other, fresh, other, fresh]);
+        },
+      },
+    );
+    expect(messages[0]).toContain(
+      "heist scenario concepts for a tabletop RPG score",
+    );
+    expect(messages[0]).toContain("heist type (Sabotage)");
+    expect(messages[0]).toContain(
+      "Candidates must centre on a Sabotage objective",
+    );
+    expect(messages[0]).toContain("gem in a mansion vault");
+  });
+
+  it("customises prompt subject and guidance for council-vote domain", async () => {
+    const messages: string[] = [];
+    await generateConceptSeed(
+      {
+        domain: "council-vote",
+        genre: "Classic Fantasy",
+        tone: "Grounded",
+        context: "",
+        recent: [],
+        avoidTropes: ["simple monetary bribe"],
+      },
+      {
+        complete: async (_system, message) => {
+          messages.push(message);
+          return candidatesReply([fresh, other, fresh, other, fresh]);
+        },
+      },
+    );
+    expect(messages[0]).toContain(
+      "political vote concepts for a contentious council decision",
+    );
+    expect(messages[0]).toContain(
+      "Candidates must centre on a nuanced political conflict",
+    );
+    expect(messages[0]).toContain("simple monetary bribe");
+  });
+
+  it("respects avoidDimensionIds when rolling dimensions for seeds", async () => {
+    const messages: string[] = [];
+    await generateConceptSeed(
+      {
+        domain: "adventure",
+        genre: "Classic Fantasy",
+        tone: "Grounded",
+        context: "",
+        recent: [],
+        avoidDimensionIds: new Set(["someone-not-who-they-claim"]),
+      },
+      {
+        complete: async (_system, message) => {
+          messages.push(message);
+          return candidatesReply([fresh, other, fresh, other, fresh]);
+        },
+        rng: seeded(0),
+      },
+    );
+    expect(messages[0]).not.toContain("someone is not who they claim to be");
+  });
 });
 
 describe("formatSeedBlock", () => {
@@ -223,5 +330,10 @@ describe("formatSeedBlock", () => {
     expect(block).toContain(fresh.setting);
     expect(block).toContain(fresh.distinctiveElement);
     expect(block).toContain(fresh.titleIdea);
+  });
+
+  it("supports a custom seed label", () => {
+    const block = formatSeedBlock(fresh, "Adventure seed");
+    expect(block).toContain("Adventure seed, chosen before writing and locked");
   });
 });

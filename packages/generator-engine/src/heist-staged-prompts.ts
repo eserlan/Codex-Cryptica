@@ -1,11 +1,19 @@
 import type { JsonObject } from "./staged-runtime";
 import type { ResolvedHeist } from "./public-heist";
 import { formatCampaignContextBlock } from "./campaign-context";
+import { type ConceptSeed, formatSeedBlock } from "./concept-seed";
 import { NAME_BAN_PROMPT } from "./public-npc";
 import { text } from "./heist-staged-values";
 import { formatCasing, formatSecurityRings } from "./heist-staged-formatters";
 
-function settingBlock(resolved: ResolvedHeist, contextPrefix = ""): string {
+function settingBlock(
+  resolved: ResolvedHeist,
+  contextPrefix = "",
+  seed?: ConceptSeed | null,
+): string {
+  const seedBlock = seed
+    ? `\n\n${formatSeedBlock(seed, "Heist score concept")}\n`
+    : "";
   return `${contextPrefix ? `${contextPrefix}\n\n` : ""}Heist Options:
 - Genre: ${resolved.genre}
 - Heist Type: ${resolved.heistType}
@@ -17,18 +25,27 @@ function settingBlock(resolved: ResolvedHeist, contextPrefix = ""): string {
 - Possible detection trigger: ${resolved.objectiveEscapeCause}
 - Objective Complication: ${resolved.prizeComplication}
 - Pressure: ${resolved.pressure}
-${resolved.prize ? `- Requested Prize / Objective: ${resolved.prize}\n` : ""}${formatCampaignContextBlock(resolved.campaignContext)}`;
+${resolved.prize ? `- Requested Prize / Objective: ${resolved.prize}\n` : ""}${formatCampaignContextBlock(resolved.campaignContext)}${seedBlock}`;
 }
 
 export function objectiveMessage(
   resolved: ResolvedHeist,
   contextPrefix?: string,
+  seed?: ConceptSeed | null,
+  avoidNames: readonly string[] = [],
 ): string {
+  const avoidPrompt = avoidNames.length
+    ? `\nAvoid reusing these recent names: ${avoidNames.join(", ")}.\n`
+    : "";
+  const seedGuidance = seed
+    ? "Build the score around the locked concept seed above: its premise, stake, and setting are fixed.\n"
+    : "";
+
   return `STAGE 1 OF 3: Target, Objective & Casing.
 
-${settingBlock(resolved, contextPrefix)}
+${settingBlock(resolved, contextPrefix, seed)}
 
-Write the target, objective, player hook, and casing intel that the rest of the score must build on. Later stages add the security rings, alarm track, complications, and getaway; here, establish only:
+${seedGuidance}Write the target, objective, player hook, and casing intel that the rest of the score must build on. Later stages add the security rings, alarm track, complications, and getaway; here, establish only:
 - title: A single evocative name for this score (3-6 words).
 - summary: One sentence preserving the full success condition of The Score.
 - score: ONE sentence naming the full success condition, the place, and the deadline, including getting clear with the objective where required — plus at most one more sentence of context.
@@ -41,7 +58,7 @@ Write the target, objective, player hook, and casing intel that the rest of the 
   - **The objective**: One sentence describing where the objective sits and how it is handled.
 
 ${NAME_BAN_PROMPT}
-
+${avoidPrompt}
 Do not write the security rings, alarm track, complications, or getaway yet.
 
 Return ONLY a JSON object matching this schema:
@@ -62,7 +79,12 @@ export function securityMessage(
   resolved: ResolvedHeist,
   stage1: JsonObject,
   contextPrefix?: string,
+  avoidNames: readonly string[] = [],
 ): string {
+  const avoidPrompt = avoidNames.length
+    ? `\nAvoid reusing these recent names: ${avoidNames.join(", ")}.\n`
+    : "";
+
   return `STAGE 2 OF 3: Three Security Rings.
 
 ${settingBlock(resolved, contextPrefix)}
@@ -87,7 +109,7 @@ Rules:
 - Any clock introduced must have a stated step count and trigger.
 - Include "hiddenFactor": At most two sentences naming one thing the crew's casing intel gets wrong, and when it becomes obvious at the table (complicating the plan without invalidating every approach at once).
 ${NAME_BAN_PROMPT}
-
+${avoidPrompt}
 Do not write the alarm track, complications, getaway, or flashbacks yet.
 
 Return ONLY a JSON object matching this schema:
@@ -106,7 +128,12 @@ export function responseMessage(
   stage1: JsonObject,
   stage2: JsonObject,
   contextPrefix?: string,
+  avoidNames: readonly string[] = [],
 ): string {
+  const avoidPrompt = avoidNames.length
+    ? `\nAvoid reusing these recent names: ${avoidNames.join(", ")}.\n`
+    : "";
+
   return `STAGE 3 OF 3: Alarm Track, Complications, Getaway & Flashbacks.
 
 ${settingBlock(resolved, contextPrefix)}
@@ -134,7 +161,7 @@ Build the alarm track, complications, getaway, and flashbacks anchored strictly 
 - Flashback Opportunities: 4 to 6 bullets naming preparations players COULD establish. Must attach to obstacles established in Stage 2, and must not duplicate casing intel already completed in Stage 1.
 - Quick Reference: Seven short one-line bullets summarising: Objective, Primary obstacle, Hidden factor, Point of no return, Pressure, Default complication, Escape problem.
 ${NAME_BAN_PROMPT}
-
+${avoidPrompt}
 Return ONLY a JSON object matching this schema:
 {
   "quickReference": "Seven one-line bullets: - **Objective**: ...\\n- **Primary obstacle**: ...\\n- **Hidden factor**: ...\\n- **Point of no return**: ...\\n- **Pressure**: ...\\n- **Default complication**: ...\\n- **Escape problem**: ...",

@@ -1,5 +1,6 @@
 import {
   buildMysteryPrompt,
+  extractMysteryNames,
   generateConceptSeed,
   generateMysteryLocal,
   generateMysteryStaged,
@@ -10,6 +11,7 @@ import {
 import {
   formatRecentInputsNote,
   generationInputHistoryStore,
+  generationNameHistoryStore,
   generationSeedHistoryStore,
   summarizeResolvedInputs,
 } from "./generation-input-history";
@@ -42,8 +44,14 @@ export class GeneratorEngineMystery extends GeneratorEngineSpecialized {
     const recentInputs = generationInputHistoryStore.recent(
       "mystery-investigation",
     );
+    const recentNames = generationNameHistoryStore.recent(
+      "mystery-investigation",
+    );
+    const combinedAvoid = [
+      ...new Set([...(mysteryOptions.avoidNames ?? []), ...recentNames]),
+    ];
     const prompt = buildMysteryPrompt(
-      mysteryOptions,
+      { ...mysteryOptions, avoidNames: combinedAvoid },
       formatRecentInputsNote(recentInputs),
     );
     generationInputHistoryStore.record(
@@ -53,7 +61,12 @@ export class GeneratorEngineMystery extends GeneratorEngineSpecialized {
     return this.runWithAIFallback(
       useAI,
       () => this.generateMysteryWithAI(prompt, { onProgress, signal, staged }),
-      () => generateMysteryLocal(mysteryOptions),
+      () => {
+        const local = generateMysteryLocal(prompt.resolved);
+        const names = extractMysteryNames(local);
+        generationNameHistoryStore.record("mystery-investigation", names);
+        return local;
+      },
       signal,
     );
   }
@@ -87,6 +100,7 @@ export class GeneratorEngineMystery extends GeneratorEngineSpecialized {
         {
           genre: prompt.resolved.genre,
           tone: prompt.resolved.tone,
+          mysteryType: prompt.resolved.mysteryType,
           context: prompt.context,
           recent: generationSeedHistoryStore.recent("mystery-investigation"),
         },
@@ -100,18 +114,21 @@ export class GeneratorEngineMystery extends GeneratorEngineSpecialized {
         onProgress: controls.onProgress,
         signal: controls.signal,
       });
-      return result
-        ? {
-            type: "note",
-            title: result.output.title,
-            summary: result.output.summary ?? "",
-            content: result.output.content,
-            lore: result.output.lore,
-            labels: result.output.labels,
-            status: "draft",
-            mysteryGraph: result.output.mysteryGraph,
-          }
-        : null;
+      if (result) {
+        const names = extractMysteryNames(result.output);
+        generationNameHistoryStore.record("mystery-investigation", names);
+        return {
+          type: "note",
+          title: result.output.title,
+          summary: result.output.summary ?? "",
+          content: result.output.content,
+          lore: result.output.lore,
+          labels: result.output.labels,
+          status: "draft",
+          mysteryGraph: result.output.mysteryGraph,
+        };
+      }
+      return null;
     } catch (error) {
       if (
         controls.signal?.aborted ||
@@ -138,6 +155,8 @@ export class GeneratorEngineMystery extends GeneratorEngineSpecialized {
     const output = parseMysteryResponse(text);
     if (!output)
       throw new Error("Mystery generation returned an incomplete result");
+    const names = extractMysteryNames(output);
+    generationNameHistoryStore.record("mystery-investigation", names);
     return {
       type: "note",
       title: output.title,

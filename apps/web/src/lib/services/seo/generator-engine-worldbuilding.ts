@@ -11,9 +11,12 @@ import {
   buildCouncilVoteFoundationPrompt,
   runCouncilVoteStaged,
   generateCouncilVoteLocal,
+  extractCouncilVoteNames,
   buildHeistPrompt,
   generateHeistLocal,
   generateHeistStaged,
+  extractHeistNames,
+  generateConceptSeed,
   heistStatsLog,
   buildSecretSocietyPrompt,
   parseSecretSocietyResponse,
@@ -57,6 +60,8 @@ import {
 import { getSessionContext } from "./session-context";
 import {
   generationInputHistoryStore,
+  generationNameHistoryStore,
+  generationSeedHistoryStore,
   summarizeResolvedInputs,
   formatRecentInputsNote,
 } from "./generation-input-history";
@@ -66,6 +71,10 @@ import { runSeoHeistGeneration } from "./heist-generation-orchestration";
 import type { GeneratorOutput } from "./generator-helpers";
 
 import { GeneratorEngineCore } from "./generator-engine-core";
+
+type GeneratedConceptSeed = NonNullable<
+  Awaited<ReturnType<typeof generateConceptSeed>>
+>;
 
 export class GeneratorEngineWorldbuilding extends GeneratorEngineCore {
   async generateHeist(
@@ -84,12 +93,65 @@ export class GeneratorEngineWorldbuilding extends GeneratorEngineCore {
       ...heistOptions
     } = options;
     const recentInputs = generationInputHistoryStore.recent("heist");
+    const recentNames = generationNameHistoryStore.recent("heist");
+    const recentSeeds = generationSeedHistoryStore.recent("heist");
+    const combinedAvoid = [
+      ...new Set([...(heistOptions.avoidNames ?? []), ...recentNames]),
+    ];
+
     return this.runWithAIFallback(
       useAI,
       // fallow-ignore-next-line complexity
       async () => {
+        let seed = heistOptions.seed ?? null;
+        if (!seed) {
+          try {
+            seed = await generateConceptSeed(
+              {
+                genre: heistOptions.genre ?? "Classic Fantasy",
+                tone: "Tense",
+                domain: "heist",
+                subType: heistOptions.heistType,
+                context: getSessionContext(),
+                recent: recentSeeds,
+                avoidTropes: [
+                  "gem in a mansion vault",
+                  "laser grid corridor",
+                  "stealing from an eccentric art collector",
+                  "sleeping guard with brass key",
+                ],
+              },
+              {
+                complete: async (instruction, message) => {
+                  if (signal?.aborted) {
+                    throw (
+                      signal.reason ??
+                      new DOMException(
+                        "The operation was aborted",
+                        "AbortError",
+                      )
+                    );
+                  }
+                  return this.runModel(
+                    instruction,
+                    message,
+                    undefined,
+                    true,
+                    signal,
+                  );
+                },
+                signal,
+              },
+            );
+            generationSeedHistoryStore.record("heist", seed);
+          } catch (err) {
+            if (signal?.aborted) throw err;
+            // Seed failure is non-blocking
+          }
+        }
+
         const prompt = buildHeistPrompt(
-          heistOptions,
+          { ...heistOptions, avoidNames: combinedAvoid, seed },
           getSessionContext() + formatRecentInputsNote(recentInputs),
         );
         const { resolved } = prompt;
@@ -107,9 +169,10 @@ export class GeneratorEngineWorldbuilding extends GeneratorEngineCore {
           try {
             const stagedResult = await generateHeistStaged(
               prompt,
-              heistOptions,
+              { ...heistOptions, avoidNames: combinedAvoid },
               {
                 signal,
+                seed,
                 onProgress,
                 onStats: (stats) => {
                   if (import.meta.env.DEV) {
@@ -136,7 +199,11 @@ export class GeneratorEngineWorldbuilding extends GeneratorEngineCore {
                 },
               },
             );
-            if (stagedResult) return stagedResult.output;
+            if (stagedResult) {
+              const names = extractHeistNames(stagedResult.output);
+              generationNameHistoryStore.record("heist", names);
+              return stagedResult.output;
+            }
           } catch (err) {
             if (signal?.aborted) throw err;
             if (err instanceof DOMException && err.name === "AbortError") {
@@ -145,13 +212,24 @@ export class GeneratorEngineWorldbuilding extends GeneratorEngineCore {
             // Unexpected errors fall through to the one-pass route
           }
         }
-        return runSeoHeistGeneration(
+        const onePassOutput = await runSeoHeistGeneration(
           prompt,
           this.startChat.bind(this),
           this.sendChatMessage.bind(this),
         );
+        const names = extractHeistNames(onePassOutput);
+        generationNameHistoryStore.record("heist", names);
+        return onePassOutput;
       },
-      () => generateHeistLocal(heistOptions),
+      () => {
+        const local = generateHeistLocal({
+          ...heistOptions,
+          avoidNames: combinedAvoid,
+        });
+        const names = extractHeistNames(local);
+        generationNameHistoryStore.record("heist", names);
+        return local;
+      },
       signal,
     );
   }
@@ -165,11 +243,23 @@ export class GeneratorEngineWorldbuilding extends GeneratorEngineCore {
   ): Promise<GeneratorOutput> {
     const { useAI, onProgress, signal, ...councilVoteOptions } = options;
     const recentInputs = generationInputHistoryStore.recent("council-vote");
+    const recentNames = generationNameHistoryStore.recent("council-vote");
+    const recentSeeds = generationSeedHistoryStore.recent("council-vote");
+    const combinedAvoid = [
+      ...new Set([...(councilVoteOptions.avoidNames ?? []), ...recentNames]),
+    ];
+
     return this.runWithAIFallback(
       useAI,
       async () => {
-        const prompt = buildCouncilVoteFoundationPrompt(
+        const seed = await this.generateCouncilVoteSeed(
           councilVoteOptions,
+          recentSeeds,
+          signal,
+        );
+
+        const prompt = buildCouncilVoteFoundationPrompt(
+          { ...councilVoteOptions, avoidNames: combinedAvoid, seed },
           getSessionContext() + formatRecentInputsNote(recentInputs),
         );
         generationInputHistoryStore.record(
@@ -193,11 +283,57 @@ export class GeneratorEngineWorldbuilding extends GeneratorEngineCore {
             "Council Vote staged generation returned no usable draft.",
           );
         }
+        const names = extractCouncilVoteNames(output);
+        generationNameHistoryStore.record("council-vote", names);
         return output;
       },
-      () => generateCouncilVoteLocal(councilVoteOptions),
+      () => {
+        const local = generateCouncilVoteLocal({
+          ...councilVoteOptions,
+          avoidNames: combinedAvoid,
+        });
+        const names = extractCouncilVoteNames(local);
+        generationNameHistoryStore.record("council-vote", names);
+        return local;
+      },
       signal,
     );
+  }
+
+  private async generateCouncilVoteSeed(
+    options: CouncilVoteGeneratorOptions,
+    recentSeeds: readonly GeneratedConceptSeed[],
+    signal?: AbortSignal,
+  ): Promise<GeneratedConceptSeed | null> {
+    if (options.seed) return options.seed;
+    try {
+      const seed = await generateConceptSeed(
+        {
+          genre: options.genre ?? "Classic Fantasy",
+          tone: options.tone ?? "Grounded",
+          domain: "council-vote",
+          context: getSessionContext(),
+          recent: recentSeeds,
+          avoidTropes: [
+            "simple monetary bribe",
+            "evil tax increase vote",
+            "predictable tie-breaker vote",
+            "fetch quest for a lost signet ring",
+          ],
+        },
+        {
+          complete: (instruction, message) =>
+            this.runModel(instruction, message, undefined, true, signal),
+          signal,
+        },
+      );
+      generationSeedHistoryStore.record("council-vote", seed);
+      return seed;
+    } catch (error) {
+      if (signal?.aborted) throw error;
+      // Seed failure is non-blocking.
+      return null;
+    }
   }
 
   async generateSecretSociety(
