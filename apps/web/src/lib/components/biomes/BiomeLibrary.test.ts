@@ -5,6 +5,13 @@ import { fireEvent, render, screen } from "@testing-library/svelte";
 import BiomeLibrary from "./BiomeLibrary.svelte";
 import { BIOME_CATALOGUE } from "biome-engine";
 
+// The card's open button is named by the biome name followed by its summary;
+// the image lightbox button ("Enlarge illustration of …") also mentions the
+// name, so anchor on the start to target the card button alone.
+const escapeRegExp = (text: string) =>
+  text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const cardButtonName = (name: string) => new RegExp(`^${escapeRegExp(name)}`);
+
 describe("BiomeLibrary", () => {
   it("renders one card per biome with an image, name and summary", () => {
     render(BiomeLibrary, { props: { onOpen: () => {} } });
@@ -12,7 +19,12 @@ describe("BiomeLibrary", () => {
     expect(cards).toHaveLength(BIOME_CATALOGUE.length);
     const first = BIOME_CATALOGUE[0];
     expect(
-      screen.getByRole("button", { name: new RegExp(first.name) }),
+      screen.getByRole("button", { name: cardButtonName(first.name) }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("button", {
+        name: `Enlarge illustration of ${first.name}`,
+      }),
     ).toBeTruthy();
     expect(screen.getByText(first.summary)).toBeTruthy();
   });
@@ -59,9 +71,22 @@ describe("BiomeLibrary", () => {
     const onOpen = vi.fn();
     render(BiomeLibrary, { props: { onOpen } });
     await fireEvent.click(
-      screen.getByRole("button", { name: new RegExp(BIOME_CATALOGUE[0].name) }),
+      screen.getByRole("button", {
+        name: cardButtonName(BIOME_CATALOGUE[0].name),
+      }),
     );
     expect(onOpen).toHaveBeenCalledWith(BIOME_CATALOGUE[0].id);
+  });
+
+  it("does not open the biome when its illustration is enlarged", async () => {
+    const onOpen = vi.fn();
+    render(BiomeLibrary, { props: { onOpen } });
+    await fireEvent.click(
+      screen.getByRole("button", {
+        name: `Enlarge illustration of ${BIOME_CATALOGUE[0].name}`,
+      }),
+    );
+    expect(onOpen).not.toHaveBeenCalled();
   });
 
   it("offers Start from blank only when a handler is given", async () => {
