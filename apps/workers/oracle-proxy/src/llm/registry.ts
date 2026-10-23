@@ -54,9 +54,9 @@ export const MODEL_REGISTRY: LlmModelDefinition[] = [
       revision: false,
     },
     costTier: "low",
-    // UNVERIFIED for GPT-6 Luna: these are GPT-5.6 Luna's rates ($1 / 1M
-    // input, $6 / 1M output). Used for cost reporting only.
-    pricing: { inputPer1kTokens: 0.001, outputPer1kTokens: 0.006 },
+    // Standard text rates: $0.10 / 1M input tokens, $0.50 / 1M output
+    // tokens. (OpenAI GPT-6 Luna API pricing.)
+    pricing: { inputPer1kTokens: 0.0001, outputPer1kTokens: 0.0005 },
     availability: { public: true, authenticated: true, admin: true },
     enabled: true,
   },
