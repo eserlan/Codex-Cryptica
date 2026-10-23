@@ -1094,3 +1094,124 @@ describe("generateMysteryStaged", () => {
     ).rejects.toMatchObject({ name: "AbortError" });
   });
 });
+
+describe("concept block in stage 1", () => {
+  it("puts a rolled concept into the case foundation prompt", async () => {
+    const [foundation, cast, clues, pressure] = validStages();
+    const replies = [
+      foundation,
+      cast,
+      clues,
+      pressure,
+      { status: "consistent", issues: [] },
+      { status: "consistent", issues: [] },
+    ];
+    const messages: string[] = [];
+    const result = await generateMysteryStaged(
+      resolveMystery({ genre: "Classic Fantasy", tone: "Grounded" }),
+      {
+        complete: async (_system, message) => {
+          messages.push(message);
+          return JSON.stringify(replies.shift());
+        },
+        rng: () => 0.5,
+      },
+    );
+    expect(result?.stats.outcome).toBe("staged");
+    expect(messages[0]).toContain("Concept constraints for this case");
+  });
+
+  it("keeps the campaign context ahead of the concept", async () => {
+    const [foundation, cast, clues, pressure] = validStages();
+    const replies = [
+      foundation,
+      cast,
+      clues,
+      pressure,
+      { status: "consistent", issues: [] },
+      { status: "consistent", issues: [] },
+    ];
+    const messages: string[] = [];
+    await generateMysteryStaged(resolveMystery(), {
+      contextPrefix: "CAMPAIGN CONTEXT: the river town of Elmsford",
+      complete: async (_system, message) => {
+        messages.push(message);
+        return JSON.stringify(replies.shift());
+      },
+      rng: () => 0.5,
+    });
+    const stage1 = messages[0];
+    expect(stage1.indexOf("CAMPAIGN CONTEXT")).toBeLessThan(
+      stage1.indexOf("Concept constraints for this case"),
+    );
+  });
+
+  it("still stops with no output when the foundation is unusable", async () => {
+    const messages: string[] = [];
+    const result = await generateMysteryStaged(resolveMystery(), {
+      complete: async (_system, message) => {
+        messages.push(message);
+        return "not JSON";
+      },
+      rng: () => 0.5,
+    });
+    expect(result).toBeNull();
+    expect(messages[0]).toContain("Concept constraints for this case");
+  });
+});
+
+describe("case seed in stage 1", () => {
+  it("uses a supplied seed in place of the rolled concept", async () => {
+    const [foundation, cast, clues, pressure] = validStages();
+    const replies = [
+      foundation,
+      cast,
+      clues,
+      pressure,
+      { status: "consistent", issues: [] },
+      { status: "consistent", issues: [] },
+    ];
+    const messages: string[] = [];
+    await generateMysteryStaged(resolveMystery(), {
+      complete: async (_system, message) => {
+        messages.push(message);
+        return JSON.stringify(replies.shift());
+      },
+      seed: {
+        premise: "A dyer vanishes the night before the levy.",
+        stake: "the guild charter",
+        setting: "a dye works",
+        distinctiveElement: "a vat that glows",
+        titleIdea: "Indigo Night",
+      },
+    });
+    expect(messages[0]).toContain(
+      "Case seed, chosen before writing and locked",
+    );
+    expect(messages[0]).toContain("Indigo Night");
+    expect(messages[0]).not.toContain("Concept constraints for this case");
+  });
+
+  it("falls back to the rolled concept when the seed is null", async () => {
+    const [foundation, cast, clues, pressure] = validStages();
+    const replies = [
+      foundation,
+      cast,
+      clues,
+      pressure,
+      { status: "consistent", issues: [] },
+      { status: "consistent", issues: [] },
+    ];
+    const messages: string[] = [];
+    await generateMysteryStaged(resolveMystery(), {
+      complete: async (_system, message) => {
+        messages.push(message);
+        return JSON.stringify(replies.shift());
+      },
+      seed: null,
+      rng: () => 0.5,
+    });
+    expect(messages[0]).toContain("Concept constraints for this case");
+    expect(messages[0]).not.toContain("Case seed, chosen before writing");
+  });
+});

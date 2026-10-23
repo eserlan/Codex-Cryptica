@@ -14,6 +14,7 @@ import {
 } from "./campaign-context";
 import { bannedNamesIn } from "./naming-policy";
 import { factionConfig } from "./public-faction-constants";
+import { formatConceptBlock, rollConcept } from "./concept-dimensions";
 
 export const mysteryConfig = {
   genres: factionConfig.themes,
@@ -90,6 +91,11 @@ export function buildMysteryPrompt(
   systemInstruction: string;
   userMessage: string;
   resolved: ResolvedMysteryOptions;
+  /**
+   * The campaign and session context alone, for the staged route, which adds
+   * its own case seed. The one-pass `userMessage` carries a concept of its own.
+   */
+  context: string;
 } {
   const resolved = resolveMystery(options);
   const avoid = avoidNamesExcludingContext(
@@ -100,10 +106,13 @@ export function buildMysteryPrompt(
     .map((value) => value.trim())
     .filter(Boolean)
     .join("\n\n");
+  const concept = formatConceptBlock(
+    rollConcept(resolved.genre, resolved.tone),
+  );
   const userMessage = `Create a playable, system-neutral mystery investigation as JSON. This MVP uses Fixed Truth: establish one canonical GM-only solution and keep it stable throughout the case. It is not an emergent-solution case.
 
 Options: ${JSON.stringify({ genre: resolved.genre, tone: resolved.tone, mysteryType: resolved.mysteryType, scope: resolved.scope, complexity: resolved.complexity, clueDensity: resolved.clueDensity, pressure: resolved.pressure })}
-${formatCampaignContextBlock(context)}
+${formatCampaignContextBlock(context)}${concept ? `\n${concept}\n` : ""}
 ${avoid.length ? `Already used names — do not reuse: ${avoid.join(", ")}` : ""}
 ${NAME_BAN_PROMPT}
 
@@ -115,6 +124,7 @@ All IDs must be stable and cross-references valid. Every essential revelation ne
       "You are an experienced mystery designer for tabletop role-playing games. Create fair, playable investigations with a stable truth, multiple evidence routes, and explicit player/GM information boundaries. Return valid JSON only.",
     userMessage,
     resolved,
+    context,
   };
 }
 
@@ -200,7 +210,7 @@ export function generateMysteryLocal(
       id: `person-${index + 1}`,
       name: index === 0 ? culprit : name(index),
       role: [
-        "records keeper",
+        "records clerk",
         "healer",
         "courier",
         "watch officer",
@@ -223,9 +233,9 @@ export function generateMysteryLocal(
   ];
   const clueLines = [
     "A fresh scrape on the archive latch supports recent access, but does not identify who opened it; compare the tool marks and access log.",
-    "A witness recalls the bell sounding early, supporting a shifted timeline, but not proving who caused it; check the clock mechanism and other witnesses.",
+    "A witness recalls the shutters banging early, supporting a shifted timeline, but not proving who caused it; check the latch mechanism and other witnesses.",
     "A delivery seal was replaced with the wrong wax, supporting interference with the evidence chain, but not proving the contents changed; find the matching seal at the storehouse.",
-    "A ledger entry was copied in a different ink, supporting a later alteration, but not proving who made it; compare the ink with the archive supplies.",
+    "A receipt was copied in a different ink, supporting a later alteration, but not proving who made it; compare the ink with the archive supplies.",
     "The courier route was changed that evening, supporting an opportunity window, but not proving a meeting occurred; ask who authorised the change.",
     "A damp footprint ends at a dry threshold, supporting a staged trail, but not proving who staged it; compare the tread with the storehouse floor.",
   ];
@@ -233,7 +243,7 @@ export function generateMysteryLocal(
   const lore = `## GM-Only Fixed Truth\n${culprit} is responsible. Their motive is to conceal an earlier act that would expose their role in the ${resolved.mysteryType.toLowerCase()}. They used routine access and a manipulated timeline; the physical traces above are genuine and independently testable.\n\n## Timeline\n1. The evidence was moved before the public account was given.\n2. The culprit created a plausible access window.\n3. The party discovers conflicting but testable accounts.\n\n## Running the Case\nKeep the truth fixed. Do not make a clue false to force suspense. If the party loses a critical lead, use the unsolved outcome and its consequences rather than adding an unearned rescue.`;
   return {
     type: "note",
-    title: `${pickFrom(["The Missing Ledger", "A Bell Out of Time", "The Sealed Room", "Ashes in the Archive"], rng)}`,
+    title: `${pickFrom(["The Last Witness", "Twelve Minutes Late", "The Locked Pantry", "Smoke Over the Yard"], rng)}`,
     summary: `${resolved.tone} ${resolved.genre.toLowerCase()} case about a ${resolved.mysteryType.toLowerCase()} with evidence the players can test.`,
     content: playerContent,
     lore,

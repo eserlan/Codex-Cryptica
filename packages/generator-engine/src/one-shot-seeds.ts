@@ -69,14 +69,14 @@ export const ONE_SHOT_SEEDS: Record<string, OneShotSeed> = {
     ],
     items: [
       "the Moonlit Seal",
-      "a stolen relic bell",
-      "the reeve's ledger",
+      "a stolen reliquary casket",
+      "the reeve's seal ring",
       "the Crown of Thorns and Wheat",
       "a dragon's tithe-stone",
       "the founder's sword",
     ],
     hooks: [
-      "{patron} begs the party to recover {item} before the festival bells ring tomorrow.",
+      "{patron} begs the party to recover {item} before the festival fires are lit tomorrow.",
       "{patron} found {item} missing and a stranger's footprints leading to {place}.",
       "{patron} slides a purse across the table and asks the party to bring back {item}, no questions asked.",
       "A wounded courier dies at the party's feet, clutching a note from {patron} about {item}.",
@@ -103,7 +103,7 @@ export const ONE_SHOT_SEEDS: Record<string, OneShotSeed> = {
       "{villain} and {patron} were once sworn companions, and only one of them kept the oath.",
     ],
     weaknesses: [
-      "the ritual fails if the old bell is rung at the wrong hour",
+      "the ritual fails if the old hymn is sung at the wrong hour",
       "{villain} cannot cross water that has been blessed by the locals",
       "{villain}'s knights will lay down arms if their oath is read back to them",
       "{item} answers to whoever speaks its true name, and the archive still holds it",
@@ -116,7 +116,7 @@ export const ONE_SHOT_SEEDS: Record<string, OneShotSeed> = {
     ],
     readAloud: [
       "Rain drums on the tavern roof as the door swings open and a hush falls over the room.",
-      "The market is loud with bargaining until the bell in the square rings once, out of turn, and everyone stops.",
+      "The market is loud with bargaining until the watch horn sounds once, out of turn, and everyone stops.",
       "Lanterns sway on the bridge. Below, something heavy drifts past in the black water.",
       "The hall smells of wax and wet wool, and the only empty seats are the ones nearest the door.",
     ],
@@ -161,7 +161,7 @@ export const ONE_SHOT_SEEDS: Record<string, OneShotSeed> = {
       "the Duke's death warrant",
       "the Red Chalice",
       "a crown of rusted thorns",
-      "the plague ledger",
+      "the plague orders",
     ],
     hooks: [
       "{patron} offers the party absolution, gold or a horse out of here in exchange for {item}.",
@@ -203,7 +203,7 @@ export const ONE_SHOT_SEEDS: Record<string, OneShotSeed> = {
       "{patron} and everyone who sheltered them go to the pyre",
     ],
     readAloud: [
-      "Smoke from the pyres hangs low over the road, and somewhere a bell tolls for nobody in particular.",
+      "Smoke from the pyres hangs low over the road, and somewhere a dog howls for nobody in particular.",
       "The gate guard looks at you the way a butcher looks at a carcass, then waves you through.",
       "Crows line the gallows. None of them fly when you pass, and one of them follows.",
       "Candle stubs cover the chapel floor, each one lit for someone who did not come back.",
@@ -304,7 +304,7 @@ export const ONE_SHOT_SEEDS: Record<string, OneShotSeed> = {
       "the cellar under the chapel",
       "the sleeping asylum wing",
       "a fog-bound ferry landing",
-      "the church bell tower",
+      "the windmill loft",
       "the empty schoolhouse",
       "a taxidermist's shop",
       "the flooded quarry",

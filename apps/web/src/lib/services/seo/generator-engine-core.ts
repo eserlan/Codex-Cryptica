@@ -75,11 +75,14 @@ import {
   type PersonalityGeneratorOptions,
   type SettlementGeneratorOptions,
   type PublicGeneratorOutput,
+  generateConceptSeed,
+  resolveOneShot,
 } from "generator-engine";
 import { getSessionContext } from "./session-context";
 import { villainDomainHistoryStore } from "./villain-domain-history";
 import {
   generationInputHistoryStore,
+  generationSeedHistoryStore,
   summarizeResolvedInputs,
   formatRecentInputsNote,
 } from "./generation-input-history";
@@ -534,6 +537,27 @@ export class GeneratorEngineCore extends GeneratorEngineBase {
     return this.runWithAIFallback(
       useAI,
       async () => {
+        const resolved = resolveOneShot(oneShotOptions);
+        const seed = await generateConceptSeed(
+          {
+            genre: resolved.genre,
+            tone: resolved.tone ?? "",
+            context: getSessionContext(),
+            recent: generationSeedHistoryStore.recent("one-shot"),
+          },
+          {
+            complete: (systemInstruction, userMessage) =>
+              this.runModel(
+                systemInstruction,
+                userMessage,
+                ONE_SHOT_GENERATION_CONFIG,
+                true,
+                signal,
+              ),
+            signal,
+          },
+        );
+        generationSeedHistoryStore.record("one-shot", seed);
         const result = await runOneShotStages(
           oneShotOptions,
           {
@@ -547,6 +571,7 @@ export class GeneratorEngineCore extends GeneratorEngineBase {
               ),
             signal,
             onProgress,
+            seed,
           },
           getSessionContext() + formatRecentInputsNote(recentInputs),
         );

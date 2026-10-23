@@ -1,4 +1,5 @@
 import { EXEMPLARS } from "./campaign-generator-exemplars";
+import { formatConceptBlock, rollConcept } from "./concept-dimensions";
 import {
   type CampaignGeneratorDefinition,
   type GeneratedDraft,
@@ -695,13 +696,83 @@ export { SYSTEM_INSTRUCTION };
 // Generator-specific prompt builders
 // ---------------------------------------------------------------------------
 
+/**
+ * Scenario generators whose context carries a rolled concept. The mystery adds
+ * its own in `mystery-staged.ts` and `public-mystery.ts`, so it is left out.
+ * Generators that make a thing or a person (NPC, item, creature) are left out
+ * too: the dimensions describe a situation, so they would not fit.
+ */
+const CONCEPT_GENERATORS = new Set<GeneratorId>([
+  "adventure",
+  "heist",
+  "tome",
+  "quest",
+  "plot-twist",
+  "event",
+  "encounter",
+  "secret-society",
+  "faction",
+  "puzzle",
+  "rumour",
+  "news-sheet",
+]);
+
+/**
+ * Generators that write several separate items. One concept for the whole run
+ * would make every item about the same thing, so the model is asked to spread it.
+ */
+const MULTI_ITEM_GENERATORS = new Set<GeneratorId>(["rumour", "news-sheet"]);
+const SPREAD_NOTE =
+  "This output has several separate items. Spread these choices across them instead of building every item around all of them.";
+
+/** One concept per request, so every part of a run sees the same choices. */
+const conceptByRequest = new WeakMap<GeneratorRunRequest, string>();
+
+/** The genre and tone a request asks for, or empty when none is set. */
+function conceptInputs(request: GeneratorRunRequest): {
+  genre: string;
+  tone: string;
+} {
+  return {
+    genre: String(
+      request.options?.genre ??
+        request.vaultContext?.themeName ??
+        themeIdToLabel[request.themeId ?? ""] ??
+        "",
+    ),
+    tone: String(request.options?.tone ?? ""),
+  };
+}
+
+function rollConceptBlock(request: GeneratorRunRequest): string {
+  const { genre, tone } = conceptInputs(request);
+  const block = formatConceptBlock(rollConcept(genre, tone));
+  if (!block) return "";
+  const spread = MULTI_ITEM_GENERATORS.has(request.generatorId)
+    ? `\n${SPREAD_NOTE}`
+    : "";
+  return `\n${block}${spread}\n`;
+}
+
+function conceptBlock(request: GeneratorRunRequest): string {
+  if (request.interaction || !CONCEPT_GENERATORS.has(request.generatorId)) {
+    return "";
+  }
+  let block = conceptByRequest.get(request);
+  if (block === undefined) {
+    block = rollConceptBlock(request);
+    conceptByRequest.set(request, block);
+  }
+  return block;
+}
+
 /** Shared prompt context chain (everything before the task instruction). */
 export function contextChain(request: GeneratorRunRequest): string {
   // Preferences (the form's explicit dropdown selections, e.g. race/role) are
   // direct user choices like the free-text instructions above them — surface
   // them right after, ahead of the generic world context, rather than buried
   // several paragraphs down where a model can lose track of them.
-  return `${instructionsBlock(request)}${optionsBlock(request)}${vaultContextBlock(request)}${worldBlock(request)}${bannedNamesBlock(request)}${namingBlock(request)}${templateBlock(request)}`;
+  return `${instructionsBlock(request)}${optionsBlock(request)}${conceptBlock(request)}${vaultContextBlock(request)}${worldBlock(request)}${bannedNamesBlock(request)}${namingBlock(request)}${templateBlock(request)}`;
 }
 
 function npcPrompt(request: GeneratorRunRequest): string {
