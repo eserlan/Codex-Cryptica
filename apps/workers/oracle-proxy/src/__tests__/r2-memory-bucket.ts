@@ -116,27 +116,44 @@ export class Bucket {
     prefix,
     limit,
     cursor,
+    delimiter,
   }: {
     prefix: string;
     limit?: number;
     cursor?: string;
+    delimiter?: string;
   }) {
     this.ops.list++;
-    const keys = [...this.store.keys()]
-      .filter((key) => key.startsWith(prefix))
-      .sort();
+    // With a delimiter, keys below the next delimiter collapse into one
+    // folder entry, and `limit` counts objects and folders together, as on R2.
+    const entries = [
+      ...new Set(
+        [...this.store.keys()]
+          .filter((key) => key.startsWith(prefix))
+          .map((key) => {
+            const at = delimiter ? key.indexOf(delimiter, prefix.length) : -1;
+            return at === -1 ? key : key.slice(0, at + delimiter!.length);
+          }),
+      ),
+    ].sort();
     const start = cursor ? Number(cursor) || 0 : 0;
     const capped =
       typeof limit === "number"
-        ? keys.slice(start, start + limit)
-        : keys.slice(start);
-    const truncated = typeof limit === "number" && keys.length > start + limit;
+        ? entries.slice(start, start + limit)
+        : entries.slice(start);
+    const truncated =
+      typeof limit === "number" && entries.length > start + limit;
+    const isFolder = (entry: string) =>
+      Boolean(delimiter) && !this.store.has(entry);
     return {
-      objects: capped.map((key) => ({
-        key,
-        size: this.sizeOf(key),
-        customMetadata: this.store.get(key)?.customMetadata,
-      })),
+      objects: capped
+        .filter((entry) => !isFolder(entry))
+        .map((key) => ({
+          key,
+          size: this.sizeOf(key),
+          customMetadata: this.store.get(key)?.customMetadata,
+        })),
+      delimitedPrefixes: capped.filter(isFolder),
       truncated,
       cursor: truncated ? String(start + (limit as number)) : undefined,
     };

@@ -4,6 +4,7 @@
 **Created**: 2026-08-31
 **Status**: Draft
 **Amended**: 2026-09-24 — automatic background sync (#3189) reconciled into FR-018/SC-009; incremental entity sync added (#3354, FR-021–FR-023, SC-012–SC-013)
+**Amended**: 2026-10-23 — FR-016 relaxed to allow a metadata-only operator inventory (FR-024); disclosure updated to match (FR-002)
 **Input**: User description: "Support opt-in cloud backup to Codex Cryptica Cloud via Cloudflare R2 with explicit user permission and zero third-party sharing (GitHub issue #2593)"
 
 ## User Scenarios & Testing _(mandatory)_
@@ -113,11 +114,13 @@ A user who lost their vault's ownership code contacts Codex Cryptica support. Su
 - **FR-013a**: Where a device already holds a vault's recovery key locally, the restore flow MUST offer that backup directly — named, and selectable without typing — rather than requiring the user to re-enter a key the device already has. This covers the common case of restoring a vault saved from the same machine, and of switching between vaults that were each backed up here.
 - **FR-014**: The system MUST reject any restore, status, or delete request that does not present a valid ownership code for that vault's backup, without revealing whether a backup exists for an invalid code.
 - **FR-015**: The system MUST provide a support-only lookup that returns a vault backup's metadata (title, size, last-backup time) — never its content — when queried by an identifying detail such as the vault title, and MUST return no result if no single backup matches.
-- **FR-016**: The system MUST NOT provide any way to list, browse, or enumerate vault backups in bulk; only single, targeted lookups by an identifying detail are permitted.
+- **FR-016** _(amended 2026-10-23)_: The system MUST NOT expose vault backups in bulk to anyone but the operator, and even the operator's bulk view MUST be limited to the metadata in FR-024. No route, admin or otherwise, may list, browse or search backup **content** in bulk.
 - **FR-017**: Support MUST be able to re-issue a fresh ownership code for a backup located via lookup, so a user who lost their code can regain self-service access without support ever handling the vault's content.
 - **FR-018** _(amended by #3189)_: While backup is enabled, durable local writes MUST schedule a debounced automatic upload, and "Save to cloud" MUST remain available as an immediate manual upload. Automatic uploads MUST be guarded against overwriting a newer remote copy (pausing on divergence until the user chooses), MUST stop immediately and completely when backup is disabled — including any upload or snapshot build already in progress — and MUST NOT poll the server or pull anything. With backup off, nothing is uploaded under any trigger (FR-001, SC-002).
 - **FR-019**: A failed upload (e.g., no connectivity) MUST NOT block, delay, or roll back any local work; the vault's cloud backup status MUST simply reflect that the last save failed or is stale until the next successful one.
 - **FR-020**: The system MUST persist, per vault, whether CC Cloud backup is enabled and its ownership code in local storage that survives page reloads and app restarts, so the user is never re-prompted for consent or re-asked to re-enable it after the first time — matching how the Google Drive folder association is already persisted in IndexedDB.
+
+- **FR-024** _(added 2026-10-23)_: The operator MUST be able to list every stored backup, gated by the same admin secret as FR-015, showing only: backup id, vault title, stored size, entity count (when recorded), created time and last-backup time. The list MUST NOT include content, ownership codes or their hashes, and MUST be paged so one request never walks the whole bucket. This access MUST be disclosed on the consent screen (FR-002) and in the Cloud Backup help article.
 
 - **FR-021** _(#3354)_: After the first successful backup, an automatic or manual upload MUST read and send only the entities changed or deleted since the last successful upload, plus changed maps, canvases and media. Reading every entity to build an upload is only permitted for a full upload (FR-023).
 - **FR-022** _(#3354)_: The set of changed entities MUST survive page reloads, crashes and closed tabs, and an entity edited while an upload is in flight MUST be included in the next upload rather than lost. Changes MUST NOT be recorded while backup is off.
@@ -129,6 +132,7 @@ A user who lost their vault's ownership code contacts Codex Cryptica support. Su
 - **Consent Record**: The user's explicit opt-in decision for a given vault. Attributes: vault, whether granted, when granted, when (if ever) revoked.
 - **Restore Operation**: A one-time action reconstructing a vault's local data from its Cloud Backup. Attributes: target vault, source backup, outcome (succeeded/failed/cancelled).
 - **Changed-Entity Record** _(#3354)_: A persisted note that one entity, map or canvas in a backed-up vault has changed (or been deleted) since the last successful upload. Attributes: vault, item kind, item id, change version, whether it is a deletion. Removed only once an upload containing that version succeeds.
+- **Operator Inventory** _(FR-024)_: The operator's paged, metadata-only list of all backups (and, separately, of published vaults). Attributes per row: id, title, size, entity count, created and last-backup times. Never carries content or credentials.
 - **Support Lookup**: A single, targeted support query against Cloud Backup metadata by an identifying detail (e.g., vault title). Attributes: search detail used, matched backup (if exactly one), outcome (recovered/no match/ambiguous), whether a fresh ownership code was issued. Never carries vault content.
 
 ## Success Criteria _(mandatory)_

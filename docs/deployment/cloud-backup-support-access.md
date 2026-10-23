@@ -21,12 +21,14 @@ What it can do:
 - Issue that backup a fresh ownership code.
 - Read aggregate totals across every backup — vault count, asset count, total
   stored bytes — with no per-vault detail in the response at all.
+- List every backup and every published vault, one page at a time, with
+  metadata only: title, size, entity count and last-active time (FR-024).
 
 What it cannot do, because the routes do not exist:
 
 - Read, download, or restore a vault's contents.
-- List backups, or browse by partial title.
-- Return more than one backup's identifying detail in a single response.
+- Search or browse backups by content.
+- Return an ownership code, its hash, or a published vault's write token.
 
 ## Configure The Worker
 
@@ -169,15 +171,31 @@ enough that the scan hit its safety cap; the numbers are then a floor, not the
 true total, rather than the route silently paginating into an unbounded walk.
 
 This route walks the whole `cloud-backup/` prefix, unlike the lookup above,
-because summed totals carry no identifying information — an operator learns
-"how many" and "how big", never "which ones". It still cannot be extended to
-return a title, a backup id, or any other per-vault field without reopening
-the door FR-016 closes; treat that boundary as fixed, not as a starting point.
+because summed totals carry no identifying information. Per-vault detail
+lives in the inventory below, not here.
+
+## Vault Inventory
+
+`/admin/vaults` lists what is stored, as two tables: private Cloud Backups and
+published vaults. Each row shows the title, size in MB, entity count and when
+the vault was last active. It calls two paged routes (50 vaults per request):
+
+```bash
+curl "https://oracle-proxy.espen-erlandsen.workers.dev/api/admin/vaults/backups" \
+  -H "Authorization: Bearer $CLOUD_BACKUP_ADMIN_TOKEN"
+curl "https://oracle-proxy.espen-erlandsen.workers.dev/api/admin/vaults/published?cursor=$CURSOR" \
+  -H "Authorization: Bearer $CLOUD_BACKUP_ADMIN_TOKEN"
+```
+
+"Last active" means the last backup or the last publish. Nothing inside the
+app reports activity, and nothing should (constitution V). Backups made before
+entity counts were recorded show no count until their next sync.
+
+Users are told about this list on the Cloud Backup consent screen and in the
+help article. If a column is ever added, update both before it ships.
 
 ## What To Refuse
 
-Any request to list backups, to browse by partial title, to read a vault's
-contents, or to add per-vault detail to the stats route above. None of those
-exist, and none should be built — see FR-016 in `specs/162-cc-cloud-backup/spec.md`.
-The lookup also caps its scan and never paginates, for the same reason: an
-unbounded walk is bulk enumeration by another name.
+Any request to read a vault's contents, to search backups by content, or to add
+content, credentials or anything derived from them to the inventory. See FR-016
+and FR-024 in `specs/162-cc-cloud-backup/spec.md`.

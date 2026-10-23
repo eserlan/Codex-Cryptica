@@ -100,8 +100,21 @@ Story 4 support-assisted recovery. Never reachable by end users — gated by a W
 - **Request body**: `{ vaultTitle: string }` — exact or normalized-case match, not fuzzy/substring (keeps "ambiguous match" behavior predictable).
 - **Response 200 (exactly one match)**: `{ matched: true, backupId, vaultTitle, sizeBytes, lastPushedAt }`
 - **Response 200 (zero or multiple matches)**: `{ matched: false }` — deliberately identical shape for "not found" and "ambiguous," per the ambiguous-title edge case; the admin never learns "there are 3 vaults named X," only "try a different detail."
-- **No pagination parameter, no "list all" mode exists on this endpoint at all** (FR-016).
+- **No pagination parameter, no "list all" mode exists on this endpoint at all** — the operator inventory (FR-024) is a separate route.
 - **Scan bound**: the handler reads at most **1,000 manifest keys** per request (a single `list()` page). If the scan hits that ceiling without resolving to exactly one match it returns `{ matched: false }` and logs a bound-exceeded warning — it MUST NOT paginate onward, because an unbounded walk is bulk enumeration by another name. Revisit this design once the bucket holds more than ~1,000 backups; until then a secondary index is premature (research.md §5).
+
+## GET /api/admin/vaults/backups?cursor=
+
+Operator inventory (FR-024, added 2026-10-23). Lives outside `/api/cloud-backup/` because it sits next to the published-vault inventory below, but uses the same secret.
+
+- **Auth**: `Authorization: Bearer {CLOUD_BACKUP_ADMIN_TOKEN}`. A missing or wrong token answers 404, like the other admin routes.
+- **Response 200**: `{ vaults: [{ id, title, sizeBytes, entityCount, createdAt, lastActiveAt }], cursor }`. `entityCount` is `null` for backups that never recorded it; `cursor` is `null` on the last page.
+- **Page bound**: at most 50 backups per request (one delimited `list()` plus one manifest read each), so no request walks the whole bucket.
+- **Never returned**: content, the bundle, assets, `ownerCodeHash`.
+
+## GET /api/admin/vaults/published?cursor=
+
+The same inventory over published (public) vaults: `{ vaults: [{ id, title, sizeBytes, entityCount, createdAt: null, lastActiveAt, suspension }], cursor }`. `sizeBytes` counts the bundle plus its assets; `lastActiveAt` is the last publish; `suspension` is `"delist"`, `"disable"` or `null`; `writeToken` is never returned.
 
 ## POST /api/cloud-backup/admin/{backupId}/reissue-code
 

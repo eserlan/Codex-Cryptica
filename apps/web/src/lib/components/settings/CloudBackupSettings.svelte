@@ -362,9 +362,10 @@
             for good.
           </p>
           <p>
-            <strong class="text-theme-text">Support access:</strong> if you lose the
-            key, our support staff can look up a vault's title, size and last backup
-            time to help you recover it. They cannot read your vault's contents.
+            <strong class="text-theme-text">What we can see:</strong> Codex Cryptica
+            keeps a list of stored backups showing each vault's title, size, number
+            of entries and last backup time. We use it to run the service and to help
+            you recover a lost key. The list never includes your vault's contents.
           </p>
           <p>
             <strong class="text-theme-text">Turning it off:</strong> you can stop

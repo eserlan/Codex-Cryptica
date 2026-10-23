@@ -62,7 +62,11 @@ If Codex cannot read an entity body or one of the local image/map assets that Cl
 
 The recovery key identifies the backup and proves that you are allowed to restore or update it. There are no Codex accounts and there is no ordinary password-reset flow for Cloud Backup.
 
-Keep the key somewhere safe. If you lose it, recovery may not be possible. Support can use limited backup metadata such as a vault title, size, and last-backup time to help identify a backup, but support cannot read the vault contents through the support lookup.
+Keep the key somewhere safe. If you lose it, recovery may not be possible. Support can use a vault's title, size and last backup time to help identify your backup.
+
+## What Codex Cryptica can see
+
+Codex Cryptica keeps a list of stored backups. For each one it shows the vault's title, size, number of entries and last backup time. We use this list to run the service (for example, to manage storage) and to help you recover a lost key. It never includes your vault's contents. The backup itself is not end-to-end encrypted, as the consent screen explains.
 
 ## Restore a backup
 
