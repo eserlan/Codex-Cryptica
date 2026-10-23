@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   IDEA_CASES,
   leakedPatternNames,
+  modelCounts,
   parseModes,
   patternCoverage,
   runDetection,
@@ -171,6 +172,68 @@ describe("runRoute", () => {
     expect(run.result).toBeNull();
     expect(run.error).toContain("not readable");
     expect(run.calls).toBe(1);
+  });
+});
+
+/** A fake proxy completion that reports a model per call, as the proxy does. */
+const reportingModel = (...keys: string[]) => {
+  const inner = fakeModel();
+  const complete = Object.assign(
+    async (system: string, message: string) => {
+      const reply = await inner(system, message);
+      complete.models.push(keys.shift() ?? "unknown");
+      return reply;
+    },
+    { models: [] as string[] },
+  );
+  return complete;
+};
+
+describe("model reporting", () => {
+  it("records which model answered each call of a route", async () => {
+    const run = await runRoute(
+      "assisted",
+      dragon,
+      "assess",
+      reportingModel("luna-fast", "gemini-flash-lite"),
+      clock(),
+    );
+    expect(run.models).toEqual(["luna-fast", "gemini-flash-lite"]);
+  });
+
+  it("records models for detection, and none from a plain completion", async () => {
+    const run = await runDetection(dragon, reportingModel("gemini-flash-lite"));
+    expect(run.models).toEqual(["gemini-flash-lite"]);
+    const plain = await runRoute("baseline", dragon, "assess", fakeModel());
+    expect(plain.models).toEqual([]);
+  });
+
+  it("counts calls per model and flags a missing report", () => {
+    expect(
+      modelCounts([["luna-fast", "gemini-flash-lite"], ["luna-fast"]]),
+    ).toBe("luna-fast × 2, gemini-flash-lite × 1");
+    expect(modelCounts([[], []])).toBe("not reported");
+  });
+
+  it("shows models in the summary and the side-by-side heading", async () => {
+    const baseline = await runRoute(
+      "baseline",
+      dragon,
+      "assess",
+      reportingModel("gemini-flash-lite"),
+      clock(),
+    );
+    const assisted = await runRoute(
+      "assisted",
+      dragon,
+      "assess",
+      fakeModel(),
+      clock(),
+    );
+    expect(summarise([baseline]).models).toBe("gemini-flash-lite × 1");
+    const md = toMarkdown([{ case: dragon, baseline, assisted }]);
+    expect(md).toContain("ms, models: gemini-flash-lite)");
+    expect(md).toContain("ms, models: not reported)");
   });
 });
 

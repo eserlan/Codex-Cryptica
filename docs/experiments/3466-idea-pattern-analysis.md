@@ -1,7 +1,7 @@
 # Idea Developer pattern analysis: experiment and decision (#3466)
 
 **Status:** dry run done; production-model run pending.
-**Recommendation:** not an implementation epic yet. Run the Gemini comparison first; if it confirms the dry run, ship a narrow version as a reusable service (see [Decision](#decision)).
+**Recommendation:** not an implementation epic yet. Run the comparison against a real model first; if it confirms the dry run, ship a narrow version as a reusable service (see [Decision](#decision)).
 
 ## Question
 
@@ -18,7 +18,7 @@ Does a narrative-pattern pass, which names the familiar shapes a premise uses, w
 
 ## Dry run
 
-No Gemini key was available when this was written, so Claude stood in for **every** call on five premises in Assess mode. The baseline replies were written before the pattern analyses. Every reply went through the real prompts, Zod schemas, brief formatter and renderer. Full transcript: [3466-idea-pattern-dry-run.md](./3466-idea-pattern-dry-run.md).
+No model API key was available when this was written, so Claude stood in for **every** call on five premises in Assess mode. The baseline replies were written before the pattern analyses. Every reply went through the real prompts, Zod schemas, brief formatter and renderer. Full transcript: [3466-idea-pattern-dry-run.md](./3466-idea-pattern-dry-run.md).
 
 **Caveat:** the person who designed the prompts also played the model and knew the hypothesis. Treat this as a check of the pipeline and of the _kinds_ of difference to look for, not as evidence that the assisted route is better.
 
@@ -46,10 +46,12 @@ Against the hand labels, the dry-run analyses found 6/6 expected patterns, with 
 
 Not yet. The dry run is encouraging enough to justify a production-model run, not a build.
 
-1. **Score pattern-finding first:** `bun run eval:idea-patterns --detect-only` makes one classifier call per sample idea and scores it against the hand labels in `IDEA_CASES`. Each idea lists the patterns it clearly uses (`expected`) and defensible extra readings (`acceptable`); anything else the classifier matches counts as wrong. Four ideas expect no patterns, to catch invented matches. If Gemini misses many expected patterns or produces many wrong ones, stop here, because the later steps depend on it. The labels are one person's judgement, so review them before trusting the score.
-2. **Run the full comparison:** `bun run eval:idea-patterns --modes assess,challenge --markdown > ab.md` against the Gemini proxy. Read the output side by side, looking for findings 1–4. Each assisted run also shows its pattern score.
+**Which model answers:** the proxy sends both the harness's calls and the public page's to GPT-5.6 Luna (`luna-fast`) by default, with `gemini-3.5-flash-lite` as a silent fallback when there is no OpenAI key or Luna fails. To test what users get, set `OPENAI_API_KEY` in `apps/workers/oracle-proxy/.dev.vars`; with only `GEMINI_API_KEY`, every call falls back to Gemini, which tests a cheaper model. The harness records the proxy's `modelKey` for every call and shows the counts in its summary and each side-by-side heading. Check them before comparing runs, because a run that mixes models is not one model's result.
+
+1. **Score pattern-finding first:** `bun run eval:idea-patterns --detect-only` makes one classifier call per sample idea and scores it against the hand labels in `IDEA_CASES`. Each idea lists the patterns it clearly uses (`expected`) and defensible extra readings (`acceptable`); anything else the classifier matches counts as wrong. Four ideas expect no patterns, to catch invented matches. If the model misses many expected patterns or produces many wrong ones, stop here, because the later steps depend on it. The labels are one person's judgement, so review them before trusting the score.
+2. **Run the full comparison:** `bun run eval:idea-patterns --modes assess,challenge --markdown > ab.md` against the local proxy. Read the output side by side, looking for findings 1–4. Each assisted run also shows its pattern score.
 3. **Add a third arm before deciding:** a single call that carries only the matched patterns' expectations and levers, using a cheaper match step or even keyword pre-selection, with no structural-signal block. If it matches the two-call route, the extra call is not worth it.
-4. **If Gemini confirms the gain**, ship narrowly:
+4. **If the real model confirms the gain**, ship narrowly:
    - Assess and Challenge modes only.
    - A small curated taxonomy (about 20–40 entries) maintained for its levers, with a minimum-evidence threshold to reduce over-matching.
    - Packaged as a reusable `generator-engine` service so the Oracle narrative assistant (#3926) can use the same vocabulary, rather than as a feature only Idea Developer has.

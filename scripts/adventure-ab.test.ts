@@ -112,6 +112,17 @@ describe("adventure A/B routes", () => {
       fetcherFor(() => "", 500),
     );
     await expect(failing("s", "m")).rejects.toThrow();
+    expect(failing.models).toEqual([]);
+  });
+
+  it("records the model that answered each successful call", async () => {
+    const replies = [{ content: "a", modelKey: "luna-fast" }, { content: "b" }];
+    const fetcher = (async () =>
+      new Response(JSON.stringify(replies.shift()))) as unknown as typeof fetch;
+    const complete = proxyComplete("http://proxy", fetcher);
+    await complete("s", "m");
+    await complete("s", "m");
+    expect(complete.models).toEqual(["luna-fast", "unknown"]);
   });
 
   it("runs the one-pass route with one repair when the first reply is unusable", async () => {

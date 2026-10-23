@@ -156,7 +156,19 @@ export interface RouteRun {
   result: IdeaDevelopment | null;
   analysis: PatternAnalysis | null;
   error: string;
+  /** The model that answered each successful call, when the proxy says. */
+  models: string[];
 }
+
+/** A completion that may report which model answered, like `proxyComplete`. */
+type ModelReportingComplete = Complete & { models?: string[] };
+
+const modelsOf = (complete: ModelReportingComplete) => [
+  ...(complete.models ?? []),
+];
+
+const errorMessage = (error: unknown) =>
+  error instanceof Error ? error.message : String(error);
 
 function developer(complete: Complete): IdeaDeveloperService {
   return new IdeaDeveloperService({
@@ -169,7 +181,7 @@ export async function runRoute(
   route: RouteRun["route"],
   ideaCase: IdeaCase,
   mode: IdeaDeveloperMode,
-  complete: Complete,
+  complete: ModelReportingComplete,
   now: () => number = Date.now,
 ): Promise<RouteRun> {
   let calls = 0;
@@ -179,6 +191,16 @@ export async function runRoute(
   };
   const started = now();
   let analysis: PatternAnalysis | null = null;
+  const finish = (result: IdeaDevelopment | null, error: string): RouteRun => ({
+    route,
+    mode,
+    calls,
+    elapsedMs: now() - started,
+    result,
+    analysis,
+    error,
+    models: modelsOf(complete),
+  });
   try {
     let patternBrief = "";
     if (route === "assisted") {
@@ -188,25 +210,9 @@ export async function runRoute(
     const result = await developer(counted).develop(ideaCase.idea, mode, {
       patternBrief,
     });
-    return {
-      route,
-      mode,
-      calls,
-      elapsedMs: now() - started,
-      result,
-      analysis,
-      error: "",
-    };
+    return finish(result, "");
   } catch (error) {
-    return {
-      route,
-      mode,
-      calls,
-      elapsedMs: now() - started,
-      result: null,
-      analysis,
-      error: error instanceof Error ? error.message : String(error),
-    };
+    return finish(null, errorMessage(error));
   }
 }
 
@@ -246,6 +252,20 @@ export interface RouteSummary {
   meanOffList: number;
   /** Runs whose visible text names a taxonomy pattern. */
   leakedRuns: number;
+  /** Calls answered per model, e.g. "luna-fast × 18, gemini-flash-lite × 2". */
+  models: string;
+}
+
+/**
+ * How many calls each model answered across runs. The proxy falls back
+ * silently, so a mixed result here means the run is not one model's.
+ */
+export function modelCounts(perRun: string[][]): string {
+  const all = perRun.flat();
+  if (all.length === 0) return "not reported";
+  return [...new Set(all)]
+    .map((m) => `${m} × ${all.filter((x) => x === m).length}`)
+    .join(", ");
 }
 
 const median = (xs: number[]) => {
@@ -268,6 +288,7 @@ export function summarise(runs: RouteRun[]): RouteSummary {
     meanPatterns: mean(analysed.map((a) => a.patterns.length)),
     meanOffList: mean(analysed.map((a) => a.otherPatterns.length)),
     leakedRuns: runs.filter((r) => leakedPatternNames(r).length > 0).length,
+    models: modelCounts(runs.map((r) => r.models)),
   };
 }
 
@@ -321,21 +342,23 @@ export interface DetectionRun {
   ideaCase: IdeaCase;
   analysis: PatternAnalysis | null;
   error: string;
+  models: string[];
 }
 
 /** The classifier alone, for scoring pattern-finding without development. */
 export async function runDetection(
   ideaCase: IdeaCase,
-  complete: Complete,
+  complete: ModelReportingComplete,
 ): Promise<DetectionRun> {
   try {
     const analysis = await analyseNarrativePatterns(ideaCase.idea, complete);
-    return { ideaCase, analysis, error: "" };
+    return { ideaCase, analysis, error: "", models: modelsOf(complete) };
   } catch (error) {
     return {
       ideaCase,
       analysis: null,
-      error: error instanceof Error ? error.message : String(error),
+      error: errorMessage(error),
+      models: modelsOf(complete),
     };
   }
 }
@@ -400,7 +423,8 @@ function analysisMarkdown(analysis: PatternAnalysis): string {
 }
 
 function runMarkdown(run: RouteRun, ideaCase: IdeaCase): string {
-  const head = `### ${run.route} (calls: ${run.calls}, ${run.elapsedMs} ms)`;
+  const models = run.models.join(", ") || "not reported";
+  const head = `### ${run.route} (calls: ${run.calls}, ${run.elapsedMs} ms, models: ${models})`;
   const score = scorePatterns(ideaCase, run.analysis, run.mode);
   const body = run.result
     ? resultMarkdown(run, run.result)
@@ -516,7 +540,7 @@ function reportComparison(
     return;
   }
   console.table(summary);
-  printScores(scores, []);
+  printScores(scores, [], summary.assisted.models);
   console.table(coverage);
   console.log(
     "Usefulness is not scored. Use --markdown and read the routes side by side.",
@@ -534,11 +558,12 @@ async function detectOnly(
     (r) => scorePatterns(r.ideaCase, r.analysis, "detect") ?? [],
   );
   const errors = runs.filter((r) => r.error).map((r) => r.ideaCase.id);
+  const models = modelCounts(runs.map((r) => r.models));
   if (json) {
-    const detection = summariseDetection(scores);
+    const detection = { ...summariseDetection(scores), models };
     console.log(JSON.stringify({ detection, scores, errors, runs }, null, 2));
   } else {
-    printScores(scores, errors);
+    printScores(scores, errors, models);
   }
   if (errors.length) process.exitCode = 1;
 }
@@ -556,9 +581,13 @@ async function collectDetections(
   return runs;
 }
 
-function printScores(scores: PatternScore[], errors: string[]): void {
+function printScores(
+  scores: PatternScore[],
+  errors: string[],
+  models: string,
+): void {
   for (const id of errors) console.log(`error: ${id}`);
-  console.table(summariseDetection(scores));
+  console.table({ ...summariseDetection(scores), models });
   console.table(
     scores.map((s) => ({
       case: s.caseId,

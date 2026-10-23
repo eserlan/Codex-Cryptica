@@ -242,9 +242,17 @@ export function summarise(
 
 type Complete = (system: string, message: string) => Promise<string>;
 
-export type ProxyComplete = Complete & { calls: number; failures: number };
+export type ProxyComplete = Complete & {
+  calls: number;
+  failures: number;
+  /** The proxy's `modelKey` for each successful call, in order. */
+  models: string[];
+};
 
-/** A stateless call through the local proxy, with calls and failures counted. */
+/**
+ * A stateless call through the local proxy, with calls and failures counted
+ * and the model that answered each successful call recorded.
+ */
 export function proxyComplete(
   proxy: string,
   fetcher: typeof fetch = fetch,
@@ -273,12 +281,17 @@ export function proxyComplete(
         ],
       }),
     });
-    const payload = (await response.json()) as { content?: string };
+    const payload = (await response.json()) as {
+      content?: string;
+      modelKey?: string;
+    };
     if (!response.ok) throw new Error(JSON.stringify(payload).slice(0, 200));
+    complete.models.push(payload.modelKey ?? "unknown");
     return payload.content ?? "";
   };
   complete.calls = 0;
   complete.failures = 0;
+  complete.models = [] as string[];
   return complete;
 }
 
