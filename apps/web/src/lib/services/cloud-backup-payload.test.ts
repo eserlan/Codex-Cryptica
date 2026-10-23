@@ -406,7 +406,7 @@ describe("hydrateEntityContent", () => {
     expect(vault.reads).toEqual([]);
   });
 
-  it("reports an unreadable entity instead of dropping the backup", async () => {
+  it("reports and omits an unreadable entity", async () => {
     const vault = makeVault({ a: "full a", b: "full b" }, ["b"]);
 
     const result = await hydrateEntityContent(
@@ -416,8 +416,7 @@ describe("hydrateEntityContent", () => {
 
     expect(result.skippedEntities).toEqual(["b"]);
     expect((result.entities[0] as any).content).toBe("full a");
-    // The unreadable one keeps what it had rather than vanishing.
-    expect(result.entities).toHaveLength(2);
+    expect(result.entities.map((entity: any) => entity.id)).toEqual(["a"]);
   });
 
   it("reports an entity returning null as skipped", async () => {
@@ -434,6 +433,7 @@ describe("hydrateEntityContent", () => {
 
     expect(result.skippedEntities).toEqual(["b"]);
     expect((result.entities[0] as any).content).toBe("full a");
+    expect(result.entities.map((entity: any) => entity.id)).toEqual(["a"]);
   });
 
   it("stops reading once the build is aborted", async () => {
@@ -504,6 +504,39 @@ describe("buildCloudBackupPayload content fidelity", () => {
       "# Aldric\n\nThe whole body.\n",
     );
     expect(payload.skippedEntities).toEqual([]);
+  });
+
+  it("omits an unreadable preview from the backup bundle", async () => {
+    const records: Record<string, any> = {
+      readable: { id: "readable", content: "readable preview" },
+      unreadable: { id: "unreadable", content: "unreadable preview" },
+    };
+
+    const payload = await buildCloudBackupPayload(
+      "Vault",
+      Object.values(records) as never,
+      {
+        resolveImageUrl: async () => null,
+        fetch: okFetch,
+        hydrateEntities: {
+          isContentLoaded: () => false,
+          readFullEntity: async (id) => {
+            if (id === "unreadable") throw new Error("unreadable");
+            return { ...records[id], content: "# Readable full markdown" };
+          },
+        },
+      },
+    );
+
+    expect(payload.bundle.entities).toEqual([
+      { id: "readable", content: "# Readable full markdown" },
+    ]);
+    expect(
+      payload.bundle.entities.some((entity) =>
+        entity.content?.includes("unreadable preview"),
+      ),
+    ).toBe(false);
+    expect(payload.skippedEntities).toEqual(["unreadable"]);
   });
 
   it("still builds a payload when no hydrator is injected", async () => {
