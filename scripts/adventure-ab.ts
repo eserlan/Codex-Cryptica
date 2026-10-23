@@ -249,6 +249,22 @@ export type ProxyComplete = Complete & {
   models: string[];
 };
 
+/** The proxy request, asking for `modelKey` only when one is given. */
+function proxyRequestBody(
+  system: string,
+  message: string,
+  modelKey?: string,
+): string {
+  return JSON.stringify({
+    operation: "freeform-generation",
+    messages: [
+      { role: "system", content: system },
+      { role: "user", content: message },
+    ],
+    ...(modelKey ? { modelKeyOverride: modelKey } : {}),
+  });
+}
+
 /**
  * A stateless call through the local proxy, with calls and failures counted
  * and the model that answered each successful call recorded. `modelKey`
@@ -276,14 +292,7 @@ export function proxyComplete(
         "Content-Type": "application/json",
         Origin: "http://localhost:5173",
       },
-      body: JSON.stringify({
-        operation: "freeform-generation",
-        messages: [
-          { role: "system", content: system },
-          { role: "user", content: message },
-        ],
-        ...(modelKey ? { modelKeyOverride: modelKey } : {}),
-      }),
+      body: proxyRequestBody(system, message, modelKey),
     });
     const payload = (await response.json()) as {
       content?: string;
