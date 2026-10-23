@@ -713,7 +713,7 @@ describe("Oracle Proxy Worker Interactions API", () => {
     ];
     expect(String(calledUrl)).toContain("/v1/responses");
     const sent = JSON.parse(init.body as string);
-    expect(sent.model).toBe("gpt-5.6-luna");
+    expect(sent.model).toBe("gpt-6-luna");
     expect(sent.input).toBe("Tell me about the crone");
     expect(sent.store).toBe(true);
   });

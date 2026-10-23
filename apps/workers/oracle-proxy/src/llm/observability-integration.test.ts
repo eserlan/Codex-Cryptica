@@ -108,9 +108,9 @@ describe("US5 Scenario 2 — token usage and estimated cost are logged when avai
 
     const entry = JSON.parse(logs[logs.length - 1]);
     expect(entry.usage).toEqual({ promptTokens: 100, completionTokens: 50 });
-    // luna-fast's registry pricing: $1/$6 per 1M tokens -> 0.001/0.006 per 1k.
-    // (100/1000)*0.001 + (50/1000)*0.006 = 0.0004.
-    expect(entry.estimatedCostUsd).toBeCloseTo(0.0004);
+    // luna-fast's registry pricing: $0.10/$0.50 per 1M tokens -> 0.0001/0.0005 per 1k.
+    // (100/1000)*0.0001 + (50/1000)*0.0005 = 0.000035.
+    expect(entry.estimatedCostUsd).toBeCloseTo(0.000035);
   });
 });
 
