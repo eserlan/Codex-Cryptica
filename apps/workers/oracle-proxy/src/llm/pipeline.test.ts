@@ -231,7 +231,7 @@ describe("LLM operation pipeline: bounded call count (FR-009 — no silent 'impr
   });
 });
 
-describe("Story 3 — GPT-5.6 Luna available through the shared pipeline", () => {
+describe("Story 3 — Luna (GPT-6 Luna) available through the shared pipeline", () => {
   it("Scenario 1 — classification (Luna's primary default) returns valid structured output produced by Luna", async () => {
     const fetchMock = vi.fn(
       async () =>

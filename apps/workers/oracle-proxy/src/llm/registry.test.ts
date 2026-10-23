@@ -12,6 +12,18 @@ describe("registry invariants", () => {
     expect(new Set(keys).size).toBe(keys.length);
   });
 
+  it("serves Luna as GPT-6 Luna, by its bare OpenAI id", () => {
+    expect(getModel("luna-fast")).toMatchObject({
+      provider: "openai",
+      modelId: "gpt-6-luna",
+      enabled: true,
+      pricing: { inputPer1kTokens: 0.0001, outputPer1kTokens: 0.0005 },
+    });
+    expect(
+      MODEL_REGISTRY.filter((m) => m.modelId.includes("5.6")).map((m) => m.key),
+    ).toEqual([]);
+  });
+
   it("has no dangling defaultModelKey/fallbackModelKey references", () => {
     for (const entry of OPERATION_DEFAULTS) {
       expect(getModel(entry.defaultModelKey)).toBeDefined();
@@ -61,7 +73,7 @@ describe("help-answer operation", () => {
     ).toBe(true);
   });
 
-  it('uses low reasoning, the lowest depth gpt-5.6-luna accepts (it 400s on "minimal")', () => {
+  it("uses low reasoning, the lowest depth GPT-6 Luna accepts for this operation", () => {
     expect(getOperationDefaults("help-answer", "public")?.reasoningEffort).toBe(
       "low",
     );
