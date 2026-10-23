@@ -98,6 +98,25 @@ The model changed between the pattern-finding run (GPT-5.6 Luna) and this one, s
 - **But the GPT-6 Luna baseline is already strong.** It caught the reveal dependency, the dragon's real harm, the unclear player role and the guilds' motives unaided. The assisted gains are incremental: about one extra, sharper question per idea, not a different kind of critique.
 - **No regressions spotted.** No assisted output replaced the premise, scored the idea, or treated familiar patterns as flaws.
 
+## Follow-up: critique checks in Idea Developer
+
+Following the decision below, `CRITIQUE_CHECKS` in `idea-developer-service.ts` adds the three checks to the Assess and Challenge guidance: a deadline or trigger, people beyond the central figures, and a sincere grievance for an opposing side. There is no extra call. Each wording was checked with the baseline route only (10 ideas × Assess and Challenge, GPT-6 Luna via the deployed worker, one run each) and compared with the comparison run's baseline. Counts use rough keyword matching, so read them with the samples.
+
+| Of 20 outputs                                   | Before | v1  | v2  | v3  | **Shipped (v4)** |
+| ----------------------------------------------- | ------ | --- | --- | --- | ---------------- |
+| Raise a deadline or trigger                     | 4      | 20  | 16  | 18  | **20**           |
+| Raise wider stakeholders                        | 11     | 19  | 8   | 12  | **16**           |
+| Raise a sincere grievance                       | 2      | 16  | 5   | 3   | **7**            |
+| Grievance on ideas with no opposing side (of 8) | 0      | 6   | 0   | 0   | **1**            |
+| Stress tests + questions per output             | 8.2    | 7.2 | 5.5 | 6.2 | **7.1**          |
+
+- **v1, a plain "also check":** applied as a checklist. The moon idea got three generic, prompt-echoing stress tests in place of its own critique, and grievance questions appeared on ideas with no opposing side.
+- **v2, premise-first with "at most two items":** fixed the forcing, but the model read the cap as a limit on the whole critique, and outputs shrank.
+- **v3, "add to your usual critique" plus the cap:** better, but still short.
+- **v4, shipped:** "usual full, premise-specific critique first; these checks add to it", only where the premise clearly has the gap, and skip the grievance check with no opposing side. On the moon idea it kept its own points (clues, tone, uncanny or explainable) and added deadline and stakeholder points in its own terms. On the dragon idea, Challenge asked "What does the king believe he is doing for the kingdom, and who might sincerely agree with him?" The one grievance on a no-opponent idea (bakery caravan) is conditional ("if there is an opposing party behind them").
+
+Outputs are about one item shorter than before (7.1 against 8.2). That's acceptable given the added checks, but worth watching.
+
 ## Findings
 
 1. **The value comes from the levers, not the labels.** Every gain traced back to a taxonomy lever or a named expectation. Pattern names alone ("this is a Misunderstood Monster") added nothing a creator could act on.
@@ -112,7 +131,7 @@ The model changed between the pattern-finding run (GPT-5.6 Luna) and this one, s
 
 **Do instead:**
 
-1. **Fold the cheap gain into Idea Developer's prompts.** Add to the Assess and Challenge guidance: check for a deadline or trigger that forces action, ask who beyond the main figures is affected, and ask whether the antagonist could have a sincere grievance. These were the assisted route's most consistent additions, and they need no second call. Check the change with the harness's baseline route.
+1. **Fold the cheap gain into Idea Developer's prompts.** Add to the Assess and Challenge guidance: check for a deadline or trigger that forces action, ask who beyond the main figures is affected, and ask whether the antagonist could have a sincere grievance. These were the assisted route's most consistent additions, and they need no second call. **Done** (see [Follow-up](#follow-up-critique-checks-in-idea-developer)).
 2. **Keep the taxonomy as shared vocabulary**, not a runtime step: reference material for the Oracle narrative assistant (#3926) and the generators. If it is used at runtime later, let the model map near-synonyms onto list entries (GPT-6 Luna named the right shapes but would not map them), and add the missing common shapes listed under "How broad?".
 3. **Revisit only if** a later model or use case changes the trade-off: for example, a cheap classifier (#3465) cutting the extra latency, or #3926 needing pattern labels for its own reasons.
 

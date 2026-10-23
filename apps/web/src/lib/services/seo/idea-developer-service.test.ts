@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import {
+  CRITIQUE_CHECKS,
   IDEA_MAX_LENGTH,
   IdeaDeveloperService,
   toIdeaDeveloperMarkdown,
@@ -228,4 +229,49 @@ describe("toIdeaDeveloperMarkdown", () => {
       expect(markdown).not.toContain("## People with competing interests");
     }
   });
+});
+
+describe("IdeaDeveloperService critique checks", () => {
+  const critique = {
+    title: "The Architect's Toll",
+    whatIsInteresting: "A shared bridge with no heir to its toll.",
+    preservedCore: ["Two rival guilds share the only bridge."],
+    stressTests: ["Nothing yet forces either guild to act."],
+    questionsForCreator: ["Who else depends on the crossing?"],
+  };
+
+  it.each(["assess", "challenge"] as const)(
+    "asks %s mode about deadlines, wider stakeholders and sincere grievances",
+    async (mode) => {
+      const { service, transport } = makeService(critique);
+      await service.develop("Two guilds share a bridge", mode);
+      const prompt: string = transport.runModel.mock.calls[0][1];
+      expect(prompt).toContain(CRITIQUE_CHECKS);
+      expect(prompt).toContain("a deadline, trigger or worsening situation");
+      expect(prompt).toContain("no one beyond the central figures");
+      expect(prompt).toContain("sincere grievance");
+    },
+  );
+
+  it("keeps the checks additional, gap-only, and off premises without an opposing side", () => {
+    expect(CRITIQUE_CHECKS).toContain("must not shorten or replace it");
+    expect(CRITIQUE_CHECKS).toContain(
+      "only where this premise clearly has that gap",
+    );
+    expect(CRITIQUE_CHECKS).toContain("Do not invent answers");
+    expect(CRITIQUE_CHECKS).toContain(
+      "Skip the grievance check entirely when the premise has no opposing side",
+    );
+  });
+
+  it.each(["develop", "explore", "playable"] as const)(
+    "leaves %s mode's guidance unchanged",
+    async (mode) => {
+      const { service, transport } = makeService();
+      await service.develop("A village in a giant", mode);
+      expect(transport.runModel.mock.calls[0][1]).not.toContain(
+        CRITIQUE_CHECKS,
+      );
+    },
+  );
 });
