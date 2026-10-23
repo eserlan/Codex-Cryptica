@@ -1,41 +1,36 @@
 <script lang="ts">
-  import type { Entity, StatSheetField } from "schema";
-  import type { PresentationRenderContext } from "../types";
+  import type { Snippet } from "svelte";
+  import type { Entity } from "schema";
   import {
     adjustQuantity,
     formatMoney,
     resolveStockDisplay,
   } from "@codex/stat-sheet-engine";
   import { parseTableMoney, type ItemTableRow } from "./item-table-values";
-  import StockTradePanel from "./StockTradePanel.svelte";
 
   let {
     row,
     linked,
-    columnCount,
-    context,
-    field,
+    colspan,
+    readOnly,
     catalogue,
-    tradingEnabled,
-    tradeOpen,
+    trade,
+    tradePanel,
     onPatch,
     onNotice,
-    onToggleTrade,
-    onCloseTrade,
     onOpenLinked,
   }: {
     row: ItemTableRow;
     linked?: Entity;
-    columnCount: number;
-    context: PresentationRenderContext;
-    field: StatSheetField;
+    colspan: number;
+    readOnly: boolean;
     catalogue: boolean;
-    tradingEnabled: boolean;
-    tradeOpen: boolean;
+    /** Present only when this line can be traded (#3963). */
+    trade?: { open: boolean; onToggle: () => void };
+    /** Rendered under the editor while the trade form is open; gets the display name. */
+    tradePanel?: Snippet<[string]>;
     onPatch: (patch: Record<string, any>) => void;
     onNotice: (notice: string) => void;
-    onToggleTrade: () => void;
-    onCloseTrade: () => void;
     onOpenLinked: (entityId: string) => void;
   } = $props();
 
@@ -194,14 +189,14 @@
 {/snippet}
 
 {#snippet stockActions()}
-  {#if tradingEnabled && typeof row.rowId === "string"}
+  {#if trade}
     <button
       type="button"
       data-action="open-trade"
-      aria-expanded={tradeOpen}
+      aria-expanded={trade.open}
       aria-label={`Trade ${display.name}`}
       class="inline-flex items-center gap-1 rounded border border-theme-border/60 bg-theme-surface/40 px-2 py-0.5 text-micro font-bold text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary"
-      onclick={onToggleTrade}
+      onclick={trade.onToggle}
     >
       <span class="icon-[lucide--hand-coins] h-3 w-3" aria-hidden="true"></span>
       Trade
@@ -297,19 +292,13 @@
   data-testid="stock-row"
   data-row-id={row.rowId}
 >
-  <td colspan={columnCount + (context.readOnly ? 0 : 1)} class="px-2 py-1.5">
-    {#if context.readOnly}
+  <td {colspan} class="px-2 py-1.5">
+    {#if readOnly}
       {@render stockSummary()}
     {:else}
       {@render stockEditor()}
-      {#if tradingEnabled && tradeOpen && context.entityId}
-        <StockTradePanel
-          shopId={context.entityId}
-          {field}
-          {row}
-          name={display.name}
-          onClose={onCloseTrade}
-        />
+      {#if trade?.open && tradePanel}
+        {@render tradePanel(display.name)}
       {/if}
     {/if}
   </td>

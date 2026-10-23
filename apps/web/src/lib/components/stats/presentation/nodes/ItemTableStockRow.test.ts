@@ -1,15 +1,8 @@
 import { fireEvent, render, screen } from "@testing-library/svelte";
+import { createRawSnippet } from "svelte";
 import { describe, expect, it, vi } from "vitest";
-import type { Entity, StatSheetField } from "schema";
-import type { PresentationRenderContext } from "../types";
+import type { Entity } from "schema";
 import type { ItemTableRow } from "./item-table-values";
-
-vi.mock("$lib/stores/vault.svelte", () => ({
-  vault: { entities: {}, allEntities: [] },
-}));
-vi.mock("$lib/services/merchant-trade-instance", () => ({
-  merchantTradeService: { execute: vi.fn() },
-}));
 import ItemTableStockRow from "./ItemTableStockRow.svelte";
 
 function props(
@@ -21,27 +14,20 @@ function props(
 ) {
   return {
     row,
-    columnCount: 2,
-    field: {
-      id: "stock",
-      label: "Stock",
-      type: "item-table",
-    } as StatSheetField,
-    context: {
-      readOnly: false,
-      mode: "view",
-      entityId: "shop",
-    } as PresentationRenderContext,
+    colspan: 3,
+    readOnly: false,
     catalogue: false,
-    tradingEnabled: true,
-    tradeOpen: false,
+    trade: { open: false, onToggle: vi.fn() } as
+      { open: boolean; onToggle: () => void } | undefined,
     onPatch: vi.fn(),
     onNotice: vi.fn(),
-    onToggleTrade: vi.fn(),
-    onCloseTrade: vi.fn(),
     onOpenLinked: vi.fn(),
   };
 }
+
+const tradePanel = createRawSnippet((name: () => string) => ({
+  render: () => `<div data-testid="trade-panel">${name()}</div>`,
+}));
 
 describe("ItemTableStockRow", () => {
   it("patches stock quantity, clamps negatives and preserves cleared quantities", async () => {
@@ -95,7 +81,7 @@ describe("ItemTableStockRow", () => {
     });
     expect(p.onPatch).toHaveBeenLastCalledWith({ note: "Keep" });
     await fireEvent.click(screen.getByRole("button", { name: "Trade Rope" }));
-    expect(p.onToggleTrade).toHaveBeenCalledOnce();
+    expect(p.trade?.onToggle).toHaveBeenCalledOnce();
   });
 
   it("opens linked items through the supplied action", async () => {
@@ -114,7 +100,7 @@ describe("ItemTableStockRow", () => {
 
   it("shows stock summaries with GM notes only outside catalogue mode", async () => {
     const p = props();
-    p.context.readOnly = true;
+    p.readOnly = true;
     const { rerender } = render(ItemTableStockRow, { props: p });
     expect(screen.getByText("Rope")).toBeTruthy();
     expect(screen.getByText("×1")).toBeTruthy();
@@ -131,9 +117,41 @@ describe("ItemTableStockRow", () => {
       name: "Secret",
       stock: { availability: "hidden", note: "GM secret" },
     });
-    p.context.readOnly = true;
+    p.readOnly = true;
     render(ItemTableStockRow, { props: p });
     expect(screen.queryByText("Secret")).toBeNull();
     expect(screen.queryByText("GM secret")).toBeNull();
+  });
+
+  it("renders the trade panel only while the trade form is open", async () => {
+    const p = props();
+    const { rerender } = render(ItemTableStockRow, {
+      props: { ...p, tradePanel },
+    });
+    expect(screen.queryByTestId("trade-panel")).toBeNull();
+    expect(
+      screen
+        .getByRole("button", { name: "Trade Rope" })
+        .getAttribute("aria-expanded"),
+    ).toBe("false");
+    await rerender({
+      ...p,
+      tradePanel,
+      trade: { open: true, onToggle: vi.fn() },
+    });
+    expect(screen.getByTestId("trade-panel").textContent).toBe("Rope");
+    expect(
+      screen
+        .getByRole("button", { name: "Trade Rope" })
+        .getAttribute("aria-expanded"),
+    ).toBe("true");
+  });
+
+  it("offers no trade control when the line cannot be traded", () => {
+    render(ItemTableStockRow, {
+      props: { ...props(), trade: undefined, tradePanel },
+    });
+    expect(screen.queryByRole("button", { name: "Trade Rope" })).toBeNull();
+    expect(screen.queryByTestId("trade-panel")).toBeNull();
   });
 });

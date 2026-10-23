@@ -17,11 +17,16 @@
     restoreRowFocus,
     rowMoveDirection,
   } from "./item-table-focus";
-  import { DEFAULT_ITEM_TABLE_COLUMNS, type StatSheetField } from "schema";
+  import {
+    DEFAULT_ITEM_TABLE_COLUMNS,
+    type Entity,
+    type StatSheetField,
+  } from "schema";
   import type { PresentationRenderContext } from "../types";
   import { ensureRowIds, patchStock } from "@codex/stat-sheet-engine";
   import { vault } from "$lib/stores/vault.svelte";
   import ItemTableStockRow from "./ItemTableStockRow.svelte";
+  import StockTradePanel from "./StockTradePanel.svelte";
 
   let {
     field,
@@ -149,6 +154,16 @@
     updateRows(next);
   }
 
+  // Only a line with a stable id can hold the single open trade form.
+  function tradeFor(row: ItemTableRow) {
+    const rowId = typeof row.rowId === "string" ? row.rowId : null;
+    if (!tradingEnabled || !rowId) return undefined;
+    return {
+      open: tradeRowId === rowId,
+      onToggle: () => (tradeRowId = tradeRowId === rowId ? null : rowId),
+    };
+  }
+
   async function handleDiceRoll(
     rowIndex: number,
     colId: string,
@@ -204,6 +219,32 @@
   </tr>
 {/snippet}
 
+{#snippet stockRow(row: ItemTableRow, rIdx: number, linked?: Entity)}
+  <ItemTableStockRow
+    {row}
+    {linked}
+    {catalogue}
+    readOnly={context.readOnly}
+    colspan={columns.length + (context.readOnly ? 0 : 1)}
+    trade={tradeFor(row)}
+    onPatch={(patch) => handleStockPatch(rIdx, patch)}
+    onNotice={(notice) => (stockNotice = notice)}
+    onOpenLinked={(entityId) => (vault.selectedEntityId = entityId)}
+  >
+    {#snippet tradePanel(name: string)}
+      {#if context.entityId}
+        <StockTradePanel
+          shopId={context.entityId}
+          {field}
+          {row}
+          {name}
+          onClose={() => (tradeRowId = null)}
+        />
+      {/if}
+    {/snippet}
+  </ItemTableStockRow>
+{/snippet}
+
 {#snippet tableRow(row: ItemTableRow, rIdx: number)}
   {@const linked = linkedEntity(row)}
   {#if !(catalogue && row.stock?.availability === "hidden")}
@@ -236,22 +277,7 @@
       {/if}
     </tr>
     {#if stockEnabled}
-      <ItemTableStockRow
-        {row}
-        {linked}
-        {field}
-        {context}
-        {catalogue}
-        {tradingEnabled}
-        columnCount={columns.length}
-        tradeOpen={tradeRowId !== null && tradeRowId === row.rowId}
-        onPatch={(patch) => handleStockPatch(rIdx, patch)}
-        onNotice={(notice) => (stockNotice = notice)}
-        onToggleTrade={() =>
-          (tradeRowId = tradeRowId === row.rowId ? null : row.rowId)}
-        onCloseTrade={() => (tradeRowId = null)}
-        onOpenLinked={(entityId) => (vault.selectedEntityId = entityId)}
-      />
+      {@render stockRow(row, rIdx, linked)}
     {/if}
   {/if}
 {/snippet}
