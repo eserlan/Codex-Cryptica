@@ -104,6 +104,17 @@ describe("metrics", () => {
     expect(leakedPatternNames(clean)).toEqual([]);
   });
 
+  it("matches whole phrases only, so an embedded name is not a leak", async () => {
+    const embedded = await runRoute(
+      "assisted",
+      dragon,
+      "assess",
+      fakeModel(development("Who holds the hidden heirloom?")),
+      clock(),
+    );
+    expect(leakedPatternNames(embedded)).toEqual([]);
+  });
+
   it("summarises calls, failures, pattern counts and coverage", async () => {
     const ok = await runRoute(
       "assisted",
@@ -122,6 +133,7 @@ describe("metrics", () => {
     expect(summarise([ok, failed])).toMatchObject({
       runs: 2,
       failed: 1,
+      medianCalls: 1.5,
       meanPatterns: 1,
       meanOffList: 1,
       leakedRuns: 0,

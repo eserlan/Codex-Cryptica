@@ -184,10 +184,19 @@ function visibleText(result: IdeaDevelopment, mode: IdeaDeveloperMode): string {
  */
 export function leakedPatternNames(run: RouteRun): string[] {
   if (!run.result) return [];
-  const text = visibleText(run.result, run.mode).toLowerCase();
-  return NARRATIVE_PATTERNS.filter((p) =>
-    text.includes(p.name.toLowerCase()),
-  ).map((p) => p.name);
+  const text = visibleText(run.result, run.mode);
+  return NARRATIVE_PATTERNS.filter((p) => namesPhrase(text, p.name)).map(
+    (p) => p.name,
+  );
+}
+
+/** A whole-phrase match, so "hidden heirloom" does not count as "Hidden Heir". */
+function namesPhrase(text: string, phrase: string): boolean {
+  const escaped = phrase.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(
+    `(?<![\\p{L}\\p{N}])${escaped}(?![\\p{L}\\p{N}])`,
+    "iu",
+  ).test(text);
 }
 
 export interface RouteSummary {
@@ -205,7 +214,8 @@ export interface RouteSummary {
 const median = (xs: number[]) => {
   if (xs.length === 0) return 0;
   const s = [...xs].sort((a, b) => a - b);
-  return s[Math.floor(s.length / 2)];
+  const mid = Math.floor(s.length / 2);
+  return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
 };
 
 const mean = (xs: number[]) =>
