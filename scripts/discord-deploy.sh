@@ -4,6 +4,7 @@
 TYPE=$1 # "staging" or "production"
 WEBHOOK_URL=$2
 PAGE_URL=$3
+BASE_REF=$4
 
 if [ -z "$WEBHOOK_URL" ]; then
   echo "Error: Missing Webhook URL"
@@ -24,8 +25,8 @@ else
   DESCRIPTION="The latest stable version has been deployed to production."
 fi
 
-# Get the latest meaningful commit (skip the automated version bumps)
-REAL_COMMIT=$(git log --grep="chore(web): auto-bump" --invert-grep -n 1 --format="%H")
+# Get the latest meaningful commit (skip the automated version bumps and syncs)
+REAL_COMMIT=$(git log --grep="chore(web): auto-bump" --grep="sync: back-merge" --invert-grep -n 1 --format="%H")
 
 # Fallback: if no non-bump commit is found (e.g. shallow clone), use HEAD
 if [ -z "$REAL_COMMIT" ]; then
@@ -36,15 +37,23 @@ REAL_HASH=$(git rev-parse --short "$REAL_COMMIT")
 COMMIT_AUTHOR=$(git log -1 --pretty=%an "$REAL_COMMIT")
 
 if [ "$TYPE" == "production" ]; then
-  # Find the previous successful deployment commit using gh CLI
-  LAST_SUCCESS_SHA=$(gh run list --workflow "Deploy to Cloudflare Pages" --branch main --status success --limit 1 --json headSha --jq '.[0].headSha' || echo "")
+  # Determine base reference for changes.
+  # During promotion, origin/main holds the current production state prior to merge.
+  if [ -z "$BASE_REF" ]; then
+    if git rev-parse --verify origin/main >/dev/null 2>&1; then
+      BASE_REF="origin/main"
+    elif command -v gh >/dev/null 2>&1; then
+      # Fallback: find the previous successful promotion workflow run
+      BASE_REF=$(gh run list --workflow "Promote Staging to Production" --status success --limit 1 --json headSha --jq '.[0].headSha' 2>/dev/null || echo "")
+    fi
+  fi
   
-  if [ -n "$LAST_SUCCESS_SHA" ]; then
+  if [ -n "$BASE_REF" ]; then
     # List meaningful changes since the last deployment
-    RECENT_COMMITS=$(git log ${LAST_SUCCESS_SHA}..HEAD --no-merges --invert-grep --grep="chore(web): auto-bump" --pretty="- %s")
+    RECENT_COMMITS=$(git log "${BASE_REF}..HEAD" --no-merges --invert-grep --grep="chore(web): auto-bump" --grep="sync: back-merge" --pretty="- %s")
   else
     # Fallback if no previous run found
-    RECENT_COMMITS=$(git log -5 --no-merges --invert-grep --grep="chore(web): auto-bump" --pretty="- %s")
+    RECENT_COMMITS=$(git log -5 --no-merges --invert-grep --grep="chore(web): auto-bump" --grep="sync: back-merge" --pretty="- %s")
   fi
   
   # If there are no commits (e.g. forced re-deploy), show a fallback message

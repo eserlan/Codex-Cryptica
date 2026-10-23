@@ -877,6 +877,14 @@ describe("DefaultGeneratorEngine", () => {
   });
 
   describe("generateHeist", () => {
+    const deterministicSeed = {
+      premise: "A temple reliquary holds a dangerous secret.",
+      stake: "The crew must extract the relic before the ward closes.",
+      setting: "A mountain temple during the night vigil.",
+      distinctiveElement: "The bells ring only when someone lies.",
+      titleIdea: "The Bell-Silent Reliquary",
+    };
+
     const auditJson = (verdict: "clean" | "repair" = "repair") =>
       JSON.stringify({
         verdict,
@@ -944,6 +952,7 @@ describe("DefaultGeneratorEngine", () => {
         campaignContext: "The crew owes Magistrate Sorn a favour.",
         useAI: true,
         staged: false,
+        seed: deterministicSeed,
       });
 
       expect(generationChat.sendMessageStream).toHaveBeenCalledTimes(1);
@@ -997,6 +1006,7 @@ describe("DefaultGeneratorEngine", () => {
         heistType: "Theft",
         useAI: true,
         staged: false,
+        seed: deterministicSeed,
       });
 
       expect(generationChat.sendMessageStream).toHaveBeenCalledTimes(1);
@@ -1236,6 +1246,7 @@ describe("DefaultGeneratorEngine", () => {
         prize: "Sunstone Chalice",
         useAI: true,
         onProgress,
+        seed: deterministicSeed,
       });
 
       expect(runModel).toHaveBeenCalledTimes(4);
