@@ -181,25 +181,84 @@ export interface ConceptSeedDeps {
 const SEED_SYSTEM =
   "You design tabletop adventure premises. Propose distinct, playable candidates and return JSON only.";
 
+const MYSTERY_SUBTYPES = [
+  "theft",
+  "murder",
+  "disappearance",
+  "conspiracy",
+  "strange phenomenon",
+  "other",
+];
+
+function seedDomain(input: ConceptSeedInput) {
+  const subType = input.subType ?? input.mysteryType;
+  return {
+    isMystery:
+      input.domain === "mystery" ||
+      Boolean(input.mysteryType) ||
+      (input.subType !== undefined &&
+        MYSTERY_SUBTYPES.includes(input.subType.toLowerCase())),
+    isHeist: input.domain === "heist",
+    isCouncilVote: input.domain === "council-vote",
+    subType,
+  };
+}
+
+function seedTypeText(
+  subType: string | undefined,
+  isMystery: boolean,
+  isHeist: boolean,
+): string {
+  if (!subType) return "";
+  if (isMystery) return ` and the mystery type (${subType})`;
+  if (isHeist) return ` and the heist type (${subType})`;
+  return ` and the scenario emphasis (${subType})`;
+}
+
+function mysteryTypeGuidance(subType: string | undefined): string {
+  if (subType?.toLowerCase() === "other") {
+    return " For mystery type Other, explore varied central situations (such as an unexplained event, a mechanical breakdown, an ideological sabotage, a disputed relationship, or a false accusation); do NOT make it a theft or missing item unless the premise explicitly demands it.";
+  }
+  if (!subType || subType.toLowerCase() === "theft") return "";
+  return ` Candidates must centre on the ${subType} (do NOT default to stolen objects, keys, or ledgers).`;
+}
+
+function seedTypeGuidance(
+  subType: string | undefined,
+  isMystery: boolean,
+  isHeist: boolean,
+  isCouncilVote: boolean,
+): string {
+  if (isMystery) return mysteryTypeGuidance(subType);
+  if (isHeist && subType) {
+    return ` Candidates must centre on a ${subType} objective (do NOT default to stealing a gem or art piece from an eccentric collector's mansion unless requested).`;
+  }
+  if (isCouncilVote) {
+    return " Candidates must centre on a nuanced political conflict, disputed reform, succession crisis, or institutional deadlock (do NOT default to a simple monetary bribe, evil tax increase, or predictable corrupt tie-breaker).";
+  }
+  if (subType) {
+    return ` Candidates must centre on the ${subType} premise and playstyle (do NOT default to standard tavern notice boards, missing merchant caravans, or fetch quests).`;
+  }
+  return "";
+}
+
+function seedSubject(
+  isMystery: boolean,
+  isHeist: boolean,
+  isCouncilVote: boolean,
+): string {
+  if (isMystery) return "case seeds for a tabletop mystery";
+  if (isHeist) return "heist scenario concepts for a tabletop RPG score";
+  if (isCouncilVote)
+    return "political vote concepts for a contentious council decision";
+  return "adventure seeds for a tabletop RPG scenario";
+}
+
 function seedMessage(
   input: ConceptSeedInput,
   dimensions: readonly ConceptChoice[],
 ): string {
-  const isMystery =
-    input.domain === "mystery" ||
-    Boolean(input.mysteryType) ||
-    (input.subType !== undefined &&
-      [
-        "theft",
-        "murder",
-        "disappearance",
-        "conspiracy",
-        "strange phenomenon",
-        "other",
-      ].includes(input.subType.toLowerCase()));
-  const isHeist = input.domain === "heist";
-  const isCouncilVote = input.domain === "council-vote";
-  const subType = input.subType ?? input.mysteryType;
+  const { isMystery, isHeist, isCouncilVote, subType } = seedDomain(input);
 
   const recent = input.recent.length
     ? `Recent seeds to avoid repeating (same situation, object or title):\n${input.recent
@@ -209,44 +268,19 @@ function seedMessage(
   const context = input.context.trim()
     ? `Campaign context (the candidates must fit it):\n${input.context.trim()}\n`
     : "";
-  const typeText = subType
-    ? isMystery
-      ? ` and the mystery type (${subType})`
-      : isHeist
-        ? ` and the heist type (${subType})`
-        : ` and the scenario emphasis (${subType})`
-    : "";
-
-  let typeGuidance = "";
-  if (isMystery) {
-    if (subType?.toLowerCase() === "other") {
-      typeGuidance =
-        " For mystery type Other, explore varied central situations (such as an unexplained event, a mechanical breakdown, an ideological sabotage, a disputed relationship, or a false accusation); do NOT make it a theft or missing item unless the premise explicitly demands it.";
-    } else if (subType && subType.toLowerCase() !== "theft") {
-      typeGuidance = ` Candidates must centre on the ${subType} (do NOT default to stolen objects, keys, or ledgers).`;
-    }
-  } else if (isHeist) {
-    if (subType) {
-      typeGuidance = ` Candidates must centre on a ${subType} objective (do NOT default to stealing a gem or art piece from an eccentric collector's mansion unless requested).`;
-    }
-  } else if (isCouncilVote) {
-    typeGuidance =
-      " Candidates must centre on a nuanced political conflict, disputed reform, succession crisis, or institutional deadlock (do NOT default to a simple monetary bribe, evil tax increase, or predictable corrupt tie-breaker).";
-  } else if (subType) {
-    typeGuidance = ` Candidates must centre on the ${subType} premise and playstyle (do NOT default to standard tavern notice boards, missing merchant caravans, or fetch quests).`;
-  }
+  const typeText = seedTypeText(subType, isMystery, isHeist);
+  const typeGuidance = seedTypeGuidance(
+    subType,
+    isMystery,
+    isHeist,
+    isCouncilVote,
+  );
 
   const avoidTropesGuidance = input.avoidTropes?.length
     ? ` Avoid the following familiar cliches and motifs: ${input.avoidTropes.join("; ")}.`
     : "";
 
-  const subject = isMystery
-    ? "case seeds for a tabletop mystery"
-    : isHeist
-      ? "heist scenario concepts for a tabletop RPG score"
-      : isCouncilVote
-        ? "political vote concepts for a contentious council decision"
-        : "adventure seeds for a tabletop RPG scenario";
+  const subject = seedSubject(isMystery, isHeist, isCouncilVote);
 
   return `Propose ${SEED_CANDIDATE_COUNT} different ${subject}. Each candidate must fit the concept constraints below, the genre (${input.genre}), the tone (${input.tone})${typeText}. The candidates must differ from each other in central situation, conflict mechanism, and setting.${typeGuidance}${avoidTropesGuidance}
 

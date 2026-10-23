@@ -528,6 +528,44 @@ export interface BiasedConceptOptions {
   avoidIds?: ReadonlySet<string>;
 }
 
+function preferredPool(
+  pool: readonly ConceptEntry[],
+  dimension: ConceptDimension,
+  options: BiasedConceptOptions,
+): readonly ConceptEntry[] {
+  const preferredIds =
+    dimension === "situation"
+      ? options.preferredSituations
+      : dimension === "conflictSource"
+        ? options.preferredConflicts
+        : undefined;
+  if (!preferredIds?.length) return pool;
+  const matches = pool.filter((item) => preferredIds.includes(item.id));
+  return matches.length ? matches : pool;
+}
+
+function rollBiasedDimension(
+  dimension: ConceptDimension,
+  genre: string,
+  tone: string,
+  options: BiasedConceptOptions,
+): ConceptChoice {
+  const pool = conceptPool(dimension, genre, tone);
+  const candidatePool = preferredPool(pool, dimension, options);
+  const fresh = candidatePool.filter((item) => !options.avoidIds?.has(item.id));
+  const candidates = fresh.length ? fresh : candidatePool;
+  const picked = pickFrom(
+    candidates.length ? candidates : pool,
+    options.rng ?? defaultRng,
+  );
+  return {
+    dimension,
+    id: picked.id,
+    label: picked.label,
+    guidance: picked.guidance,
+  };
+}
+
 /**
  * Rolls creative dimensions with optional preferred situations and conflict mechanisms,
  * while allowing other dimensions to draw naturally from the genre and tone pool.
@@ -537,43 +575,19 @@ export function rollBiasedConcept(
   tone: string,
   options: BiasedConceptOptions = {},
 ): ConceptChoice[] {
-  const {
-    preferredSituations,
-    preferredConflicts,
-    rng = defaultRng,
-    avoidIds = new Set(),
-  } = options;
-
-  if (!preferredSituations?.length && !preferredConflicts?.length) {
-    return rollConcept(genre, tone, rng, avoidIds);
+  const hasPreferences =
+    Boolean(options.preferredSituations?.length) ||
+    Boolean(options.preferredConflicts?.length);
+  if (!hasPreferences) {
+    return rollConcept(
+      genre,
+      tone,
+      options.rng ?? defaultRng,
+      options.avoidIds,
+    );
   }
-
   return (Object.keys(CONCEPT_DIMENSIONS) as ConceptDimension[]).map(
-    (dimension) => {
-      const pool = conceptPool(dimension, genre, tone);
-      let candidatePool = pool;
-      if (dimension === "situation" && preferredSituations?.length) {
-        const matches = pool.filter((item) =>
-          preferredSituations.includes(item.id),
-        );
-        if (matches.length) candidatePool = matches;
-      } else if (dimension === "conflictSource" && preferredConflicts?.length) {
-        const matches = pool.filter((item) =>
-          preferredConflicts.includes(item.id),
-        );
-        if (matches.length) candidatePool = matches;
-      }
-
-      const fresh = candidatePool.filter((item) => !avoidIds.has(item.id));
-      const candidates = fresh.length ? fresh : candidatePool;
-      const picked = pickFrom(candidates.length ? candidates : pool, rng);
-      return {
-        dimension,
-        id: picked.id,
-        label: picked.label,
-        guidance: picked.guidance,
-      };
-    },
+    (dimension) => rollBiasedDimension(dimension, genre, tone, options),
   );
 }
 

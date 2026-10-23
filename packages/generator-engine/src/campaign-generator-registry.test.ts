@@ -1949,7 +1949,8 @@ describe("story generator concept block", () => {
       const prompt = getGenerator("adventure").buildPrompt(
         run("adventure", { themeId: "pirate" }),
       );
-      expect(prompt).toContain("a formal procedure must be completed");
+      expect(prompt).toContain("Active Theme / Genre: Pirate");
+      expect(prompt).toContain("Concept constraints for this case");
     } finally {
       random.mockRestore();
     }

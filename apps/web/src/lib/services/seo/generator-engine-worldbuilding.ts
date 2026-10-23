@@ -72,6 +72,10 @@ import type { GeneratorOutput } from "./generator-helpers";
 
 import { GeneratorEngineCore } from "./generator-engine-core";
 
+type GeneratedConceptSeed = NonNullable<
+  Awaited<ReturnType<typeof generateConceptSeed>>
+>;
+
 export class GeneratorEngineWorldbuilding extends GeneratorEngineCore {
   async generateHeist(
     options: HeistGeneratorOptions & {
@@ -248,35 +252,11 @@ export class GeneratorEngineWorldbuilding extends GeneratorEngineCore {
     return this.runWithAIFallback(
       useAI,
       async () => {
-        let seed = councilVoteOptions.seed ?? null;
-        if (!seed) {
-          try {
-            seed = await generateConceptSeed(
-              {
-                genre: councilVoteOptions.genre ?? "Classic Fantasy",
-                tone: councilVoteOptions.tone ?? "Grounded",
-                domain: "council-vote",
-                context: getSessionContext(),
-                recent: recentSeeds,
-                avoidTropes: [
-                  "simple monetary bribe",
-                  "evil tax increase vote",
-                  "predictable tie-breaker vote",
-                  "fetch quest for a lost signet ring",
-                ],
-              },
-              {
-                complete: (instruction, message) =>
-                  this.runModel(instruction, message, undefined, true, signal),
-                signal,
-              },
-            );
-            generationSeedHistoryStore.record("council-vote", seed);
-          } catch (err) {
-            if (signal?.aborted) throw err;
-            // Seed failure is non-blocking
-          }
-        }
+        const seed = await this.generateCouncilVoteSeed(
+          councilVoteOptions,
+          recentSeeds,
+          signal,
+        );
 
         const prompt = buildCouncilVoteFoundationPrompt(
           { ...councilVoteOptions, avoidNames: combinedAvoid, seed },
@@ -318,6 +298,42 @@ export class GeneratorEngineWorldbuilding extends GeneratorEngineCore {
       },
       signal,
     );
+  }
+
+  private async generateCouncilVoteSeed(
+    options: CouncilVoteGeneratorOptions,
+    recentSeeds: readonly GeneratedConceptSeed[],
+    signal?: AbortSignal,
+  ): Promise<GeneratedConceptSeed | null> {
+    if (options.seed) return options.seed;
+    try {
+      const seed = await generateConceptSeed(
+        {
+          genre: options.genre ?? "Classic Fantasy",
+          tone: options.tone ?? "Grounded",
+          domain: "council-vote",
+          context: getSessionContext(),
+          recent: recentSeeds,
+          avoidTropes: [
+            "simple monetary bribe",
+            "evil tax increase vote",
+            "predictable tie-breaker vote",
+            "fetch quest for a lost signet ring",
+          ],
+        },
+        {
+          complete: (instruction, message) =>
+            this.runModel(instruction, message, undefined, true, signal),
+          signal,
+        },
+      );
+      generationSeedHistoryStore.record("council-vote", seed);
+      return seed;
+    } catch (error) {
+      if (signal?.aborted) throw error;
+      // Seed failure is non-blocking.
+      return null;
+    }
   }
 
   async generateSecretSociety(
