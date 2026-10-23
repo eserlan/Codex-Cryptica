@@ -1,6 +1,6 @@
 # Oracle Proxy Worker
 
-Cloudflare Worker that proxies requests from Codex Cryptica clients to Google's Gemini API, and — via the LLM model registry/resolver — to any other configured provider (currently also OpenAI-compatible, including GPT-6 Luna).
+Cloudflare Worker that proxies requests from Codex Cryptica clients to Google's Gemini API, and — via the LLM model registry/resolver — to any other configured provider (currently also OpenAI-compatible, including GPT-5.6 Luna).
 
 ## Purpose
 
