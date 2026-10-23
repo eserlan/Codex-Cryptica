@@ -1,12 +1,13 @@
 <script lang="ts">
   import { tick } from "svelte";
+  import ItemTableCell from "./ItemTableCell.svelte";
   import {
-    adjustCounterCell,
+    rollItemTableDice,
+    type ItemTableRollState,
+  } from "./item-table-rolls";
+  import {
     defaultCellValue,
-    getColumnCellClass,
     getColumnHeaderClass,
-    linkedValue,
-    moneyCell,
     parseTableMoney,
   } from "./item-table-values";
   import {
@@ -20,9 +21,6 @@
     type StatSheetField,
   } from "schema";
   import type { PresentationRenderContext } from "../types";
-  import { rollStatSheetDiceField } from "$lib/utils/stat-sheet-field-actions";
-  import DiceBreakdownDisclosure from "$lib/components/dice/DiceBreakdownDisclosure.svelte";
-  import type { RollResult } from "dice-engine";
   import {
     adjustQuantity,
     ensureRowIds,
@@ -78,18 +76,7 @@
       !!context.entityId,
   );
 
-  let rollStateMap = $state<
-    Record<
-      string,
-      {
-        rolling: boolean;
-        text?: string;
-        success?: boolean;
-        isError?: boolean;
-        roll?: RollResult;
-      }
-    >
-  >({});
+  let rollStateMap = $state<Record<string, ItemTableRollState>>({});
   let showItemPicker = $state(false);
 
   const linkableItems = $derived.by(() => {
@@ -177,17 +164,6 @@
     handleStockPatch(rowIndex, { price });
   }
 
-  function handleMoneyCell(
-    rowIndex: number,
-    colId: string,
-    amount: string,
-    unit: string,
-  ) {
-    if (amount.trim() === "") return handleCellChange(rowIndex, colId, "");
-    const money = parseTableMoney(amount, unit);
-    if (money) handleCellChange(rowIndex, colId, money);
-  }
-
   function handleAddRow() {
     const newRow: Record<string, any> = {};
     for (const col of columns) newRow[col.id] = defaultCellValue(col);
@@ -244,15 +220,6 @@
     updateRows(next);
   }
 
-  function handleCounterAdjust(rowIndex: number, colId: string, delta: number) {
-    const col = columns.find((c) => c.id === colId);
-    handleCellChange(
-      rowIndex,
-      colId,
-      adjustCounterCell(rows[rowIndex][colId], delta, col?.min ?? 0),
-    );
-  }
-
   async function handleDiceRoll(
     rowIndex: number,
     colId: string,
@@ -260,30 +227,14 @@
   ) {
     const key = `${rowIndex}-${colId}`;
     rollStateMap[key] = { rolling: true };
-    // Named after the column, so an attack roll is not logged as damage.
-    const columnLabel = columns.find((c) => c.id === colId)?.label ?? "Roll";
-
-    try {
-      const res = await rollStatSheetDiceField({
-        id: `${field.id}_${rowIndex}_${colId}`,
-        label: `${rows[rowIndex]?.name || field.label} ${columnLabel}`,
-        type: "dice",
-        formula,
-      });
-      rollStateMap[key] = {
-        rolling: false,
-        text: res.text,
-        isError: res.isError,
-        success: res.success,
-        roll: res.roll,
-      };
-    } catch {
-      rollStateMap[key] = {
-        rolling: false,
-        text: "Error",
-        isError: true,
-      };
-    }
+    rollStateMap[key] = await rollItemTableDice(
+      field,
+      columns,
+      rows[rowIndex],
+      rowIndex,
+      colId,
+      formula,
+    );
   }
 </script>
 
@@ -410,241 +361,16 @@
                 onkeydown={(e) => handleRowKeyDown(e, rIdx)}
               >
                 {#each columns as col (col.id)}
-                  {@const isTextLeft = [
-                    "name",
-                    "title",
-                    "item",
-                    "effects",
-                    "traits",
-                    "description",
-                    "notes",
-                    "special",
-                  ].includes(col.id)}
-                  <td class={getColumnCellClass(col)}>
-                    {#if col.type === "text"}
-                      {#if context.readOnly}
-                        <span class="font-medium text-theme-text"
-                          >{linkedValue(linked, col.id) ??
-                            row[col.id] ??
-                            "—"}</span
-                        >
-                      {:else if linked && linkedValue(linked, col.id) !== undefined}
-                        <span class="font-medium text-theme-text"
-                          >{linkedValue(linked, col.id)}</span
-                        >
-                      {:else}
-                        <input
-                          type="text"
-                          data-col-id={col.id}
-                          aria-label={`${col.label} for item ${rIdx + 1}`}
-                          class="w-full rounded border border-theme-border/60 bg-theme-bg/80 px-1.5 py-0.5 {isTextLeft
-                            ? 'text-left'
-                            : 'text-center'} text-xs text-theme-text transition-colors focus:border-theme-primary focus:bg-theme-bg focus:outline-none"
-                          value={row[col.id] ?? ""}
-                          oninput={(e) =>
-                            handleCellChange(
-                              rIdx,
-                              col.id,
-                              (e.target as HTMLInputElement).value,
-                            )}
-                        />
-                      {/if}
-                    {:else if col.type === "number"}
-                      {#if context.readOnly}
-                        <span class="font-mono text-theme-text"
-                          >{linkedValue(linked, col.id) ??
-                            row[col.id] ??
-                            "—"}</span
-                        >
-                      {:else if linked && linkedValue(linked, col.id) !== undefined}
-                        <span class="font-mono text-theme-text"
-                          >{linkedValue(linked, col.id)}</span
-                        >
-                      {:else}
-                        <input
-                          type="number"
-                          data-col-id={col.id}
-                          aria-label={`${col.label} for item ${rIdx + 1}`}
-                          class="w-full max-w-[4rem] mx-auto rounded border border-theme-border/60 bg-theme-bg/80 px-1 py-0.5 text-center font-mono text-xs text-theme-text transition-colors focus:border-theme-primary focus:bg-theme-bg focus:outline-none"
-                          value={row[col.id] ?? 0}
-                          oninput={(e) =>
-                            handleCellChange(
-                              rIdx,
-                              col.id,
-                              Number((e.target as HTMLInputElement).value),
-                            )}
-                        />
-                      {/if}
-                    {:else if col.type === "dice"}
-                      {@const formula = row[col.id] || col.formula || "1d6"}
-                      {@const key = `${rIdx}-${col.id}`}
-                      {@const rollState = rollStateMap[key]}
-                      {#if context.mode === "view"}
-                        {#if !context.readOnly}
-                          <!-- Each row has its own formula (a longsword and a
-                               crossbow differ); the column's is the default. -->
-                          <input
-                            type="text"
-                            data-col-id={col.id}
-                            data-action="formula"
-                            aria-label={`${col.label} formula for ${row.name || `item ${rIdx + 1}`}`}
-                            class="mb-0.5 w-full max-w-[5.5rem] rounded border border-theme-border/60 bg-theme-bg/80 px-1 py-0.5 text-center font-mono text-xs text-theme-text transition-colors focus:border-theme-primary focus:bg-theme-bg focus:outline-none"
-                            value={formula}
-                            onchange={(e) =>
-                              handleCellChange(
-                                rIdx,
-                                col.id,
-                                // Cleared: store nothing, so the row follows
-                                // the column default rather than a copy of it.
-                                (e.target as HTMLInputElement).value.trim(),
-                              )}
-                          />
-                        {/if}
-                        <button
-                          type="button"
-                          data-col-id={col.id}
-                          data-action="roll"
-                          aria-label={`Roll ${formula} for ${row.name || `item ${rIdx + 1}`}`}
-                          class="inline-flex max-w-full items-center justify-center gap-1 rounded border border-theme-border/80 bg-theme-bg/60 px-1.5 py-0.5 font-mono text-xs text-theme-primary transition-all hover:border-theme-primary hover:bg-theme-primary/10 disabled:opacity-50"
-                          disabled={rollState?.rolling}
-                          onclick={() => handleDiceRoll(rIdx, col.id, formula)}
-                          title="Click to roll {formula}"
-                        >
-                          <span
-                            class="icon-[lucide--dice-5] h-3 w-3 shrink-0"
-                            aria-hidden="true"
-                          ></span>
-                          <span class="truncate">{formula}</span>
-                          {#if rollState?.text}
-                            <span
-                              class={rollState.isError
-                                ? "ml-0.5 font-bold text-red-400"
-                                : rollState.success === false
-                                  ? "ml-0.5 font-bold text-red-400"
-                                  : "ml-0.5 font-bold text-green-400"}
-                              >({rollState.text})</span
-                            >
-                          {/if}
-                        </button>
-                        <DiceBreakdownDisclosure
-                          parts={rollState?.roll?.parts}
-                          total={rollState?.roll?.total ?? 0}
-                          formula={rollState?.roll?.formula}
-                        />
-                      {:else if context.readOnly}
-                        <span class="font-mono text-xs text-theme-muted"
-                          >{formula}</span
-                        >
-                      {:else}
-                        <input
-                          type="text"
-                          data-col-id={col.id}
-                          aria-label={`${col.label} formula for item ${rIdx + 1}`}
-                          class="w-full max-w-[5.5rem] mx-auto rounded border border-theme-border/60 bg-theme-bg/80 px-1 py-0.5 text-center font-mono text-xs text-theme-text transition-colors focus:border-theme-primary focus:bg-theme-bg focus:outline-none"
-                          value={formula}
-                          oninput={(e) =>
-                            handleCellChange(
-                              rIdx,
-                              col.id,
-                              (e.target as HTMLInputElement).value,
-                            )}
-                        />
-                      {/if}
-                    {:else if col.type === "counter"}
-                      {@const val =
-                        typeof row[col.id] === "object"
-                          ? row[col.id]?.value
-                          : (row[col.id] ?? 0)}
-                      {@const max =
-                        typeof row[col.id] === "object"
-                          ? row[col.id]?.max
-                          : undefined}
-                      {#if context.readOnly}
-                        <span class="font-mono text-xs text-theme-text">
-                          {val}{max !== undefined ? ` / ${max}` : ""}
-                        </span>
-                      {:else}
-                        <div
-                          class="inline-flex items-center justify-center gap-0.5"
-                        >
-                          <button
-                            type="button"
-                            data-col-id={col.id}
-                            data-counter-action="dec"
-                            aria-label={`Decrease ${col.label} for ${row.name || `item ${rIdx + 1}`}`}
-                            class="flex h-5 w-5 items-center justify-center rounded text-theme-muted hover:bg-theme-surface/60 hover:text-theme-primary text-xs font-bold disabled:opacity-30"
-                            onclick={() =>
-                              handleCounterAdjust(
-                                rIdx,
-                                col.id,
-                                -(col.step ?? 1),
-                              )}
-                          >
-                            —
-                          </button>
-                          <span
-                            class="font-mono text-xs text-theme-text px-0.5"
-                          >
-                            {val}{max !== undefined ? ` / ${max}` : ""}
-                          </span>
-                          <button
-                            type="button"
-                            data-col-id={col.id}
-                            data-counter-action="inc"
-                            aria-label={`Increase ${col.label} for ${row.name || `item ${rIdx + 1}`}`}
-                            class="flex h-5 w-5 items-center justify-center rounded text-theme-muted hover:bg-theme-surface/60 hover:text-theme-primary text-xs font-bold disabled:opacity-30"
-                            onclick={() =>
-                              handleCounterAdjust(rIdx, col.id, col.step ?? 1)}
-                          >
-                            +
-                          </button>
-                        </div>
-                      {/if}
-                    {:else if col.type === "money"}
-                      {@const money = moneyCell(row, col.id)}
-                      {#if context.readOnly}
-                        <span class="font-mono text-theme-text"
-                          >{money ? formatMoney(money) : "—"}</span
-                        >
-                      {:else}
-                        <div class="inline-flex items-center gap-0.5">
-                          <input
-                            type="text"
-                            inputmode="decimal"
-                            data-col-id={col.id}
-                            aria-label={`${col.label} amount for item ${rIdx + 1}`}
-                            class="w-16 rounded border border-theme-border/60 bg-theme-bg/80 px-1 py-0.5 text-center font-mono text-xs text-theme-text focus:border-theme-primary focus:outline-none"
-                            value={money ? formatMoney(money, false) : ""}
-                            onchange={(e) =>
-                              handleMoneyCell(
-                                rIdx,
-                                col.id,
-                                (e.target as HTMLInputElement).value,
-                                money?.currency ?? "gp",
-                              )}
-                          />
-                          <span class="text-micro text-theme-muted"
-                            >{money?.currency ?? "gp"}</span
-                          >
-                        </div>
-                      {/if}
-                    {:else if col.type === "checkbox"}
-                      <input
-                        type="checkbox"
-                        data-col-id={col.id}
-                        aria-label={`${col.label} for item ${rIdx + 1}`}
-                        class="h-3.5 w-3.5 rounded border-theme-border text-theme-primary focus:ring-0 focus:ring-offset-0 cursor-pointer"
-                        checked={row[col.id] === true}
-                        disabled={context.readOnly}
-                        onchange={(e) =>
-                          handleCellChange(
-                            rIdx,
-                            col.id,
-                            (e.target as HTMLInputElement).checked,
-                          )}
-                      />
-                    {/if}
-                  </td>
+                  <ItemTableCell
+                    {row}
+                    {col}
+                    {rIdx}
+                    {linked}
+                    {context}
+                    rollState={rollStateMap[`${rIdx}-${col.id}`]}
+                    onChange={(value) => handleCellChange(rIdx, col.id, value)}
+                    onRoll={(formula) => handleDiceRoll(rIdx, col.id, formula)}
+                  />
                 {/each}
                 {#if !context.readOnly}
                   {@const rowLabel =
