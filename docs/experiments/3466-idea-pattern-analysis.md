@@ -1,7 +1,7 @@
 # Idea Developer pattern analysis: experiment and decision (#3466)
 
-**Status:** dry run done; pattern-finding scored on GPT-5.6 Luna (production); full side-by-side comparison pending.
-**Recommendation:** not an implementation epic yet. Pattern-finding held up on a real model, so run the full comparison next; if it confirms the dry run, ship a narrow version as a reusable service (see [Decision](#decision)).
+**Status:** dry run, GPT-5.6 Luna pattern-finding run, and full side-by-side comparison on GPT-6 Luna all done.
+**Recommendation:** don't build the two-call pattern pass. On GPT-6 Luna it gave modest, consistent gains for twice the latency. Take the cheap part instead: add its pressure and stakeholder checks to the Assess and Challenge prompts, and keep the taxonomy as shared vocabulary for #3926 (see [Decision](#decision)).
 
 ## Question
 
@@ -73,22 +73,57 @@ Run on 23 October 2026 with `bun run eval:idea-patterns --detect-only` against t
 2. **The list has gaps the model keeps naming.** About one off-list pattern per idea, three times the dry run's rate. _Heist_, _Inheritance Dispute_, _After the Ending_ and _Road Story_ are common TTRPG shapes worth adding, each with its own levers.
 3. **Wrong matches come from missing entries more than from loose reading.** Both errors sit next to an off-list name that fits better, so widening the list should reduce them more than a stricter prompt would.
 
+## Full comparison on GPT-6 Luna
+
+Run on 23 October 2026 with `bun scripts/idea-pattern-ab.ts --modes assess,challenge` against the deployed worker, straight after GPT-6 Luna was deployed (PR 4363): 10 ideas × 2 modes, baseline (1 call) against assisted (2 calls). All 60 calls were answered by `luna-fast`, with no Gemini fallbacks. One run per idea and mode. Full output: [3466-idea-pattern-gpt6-run.md](./3466-idea-pattern-gpt6-run.md).
+
+The model changed between the pattern-finding run (GPT-5.6 Luna) and this one, so differences between them mix the model with the method.
+
+| Measure                               | Baseline | Assisted    |
+| ------------------------------------- | -------- | ----------- |
+| Runs failed                           | 0 / 20   | 0 / 20      |
+| Calls per run                         | 1        | 2           |
+| Median time per run                   | 6.9 s    | 15.1 s      |
+| Pattern names leaked into output      | 0        | 0           |
+| Expected patterns found by the pass   | –        | 8 / 18      |
+| Wrong matches                         | –        | 1           |
+| List matches / off-list names per run | –        | 0.55 / 0.95 |
+
+**GPT-6 Luna maps far less to the list.** It found every expected pattern on dragon-protector and giant-village, and nothing from the list anywhere else, but it named the same shapes in its own words: _Contested succession_ for _Empty Throne_, _Foreknowledge of Disaster_ for _Prophecy Trap_, _Life inside a colossal creature_ for _Living Off the Beast_. It was the same in both modes, so this is the model reading "copy the id exactly; leave out loose matches" more strictly than GPT-5.6 did, not noise. Precision stayed high (one wrong match, the same defensible _Villain Has the Better Evidence_ on the dragon). The cost is that off-list names carry no levers, so 8 of 10 ideas reached the developer without the part that helped most in the dry run.
+
+**What the assisted output added, reading the pairs side by side:**
+
+- **Where list patterns matched, the levers came through.** On dragon-protector, only the assisted versions asked whether the knight "would make the choice that led to [their disgrace] again", who would be harmed if the legend were overturned, and "why do otherwise decent people support or serve" the king, each traceable to a lever. They also kept the dragon "genuinely dangerous" after the reveal.
+- **Without list matches, it still added pressure and stakeholders.** The brief's thin-structure notes and expectations reliably produced questions the baseline often lacked: a deadline or trigger ("What makes the case urgent: a hearing date…"), people affected beyond the main pair ("How much do travellers and nearby communities depend on the bridge…"), and whether the antagonist has "a sincere grievance".
+- **But the GPT-6 Luna baseline is already strong.** It caught the reveal dependency, the dragon's real harm, the unclear player role and the guilds' motives unaided. The assisted gains are incremental: about one extra, sharper question per idea, not a different kind of critique.
+- **No regressions spotted.** No assisted output replaced the premise, scored the idea, or treated familiar patterns as flaws.
+
 ## Findings
 
 1. **The value comes from the levers, not the labels.** Every gain traced back to a taxonomy lever or a named expectation. Pattern names alone ("this is a Misunderstood Monster") added nothing a creator could act on.
-2. **Structural signals duplicate the existing Assess prompt.** The baseline already found the reveal dependency, the missing conflict and the undefined player role. The seven-signal block costs tokens without adding much.
+2. **Structural signals mostly duplicate the existing Assess prompt, but not entirely.** In the dry run the baseline already found the reveal dependency, the missing conflict and the undefined player role. On GPT-6 Luna, though, the thin-structure notes were what reliably added deadline, escalation and wider-stakeholder questions, which is the one gain that survived when no list pattern matched.
 3. **A fixed list invites over-matching.** Even with an explicit "leave out loose matches" instruction, two of thirteen matches were stretches, and a wrong label brings the wrong levers with it. The brief's "it may be wrong" framing contained this, but did not stop it.
 4. **It helps premises that already have shape.** There was no gain on a one-line mood, and the gain on an already-subversive premise was mixed.
 5. **Familiarity stayed neutral.** No output treated a trope as a flaw, and no pattern names leaked into the creator-facing text.
 
 ## Decision
 
-Not yet. The dry run is encouraging enough to justify a production-model run, not a build.
+**Don't build the two-call pattern pass as an implementation epic.** On GPT-6 Luna, the model users now get, it doubled latency (6.9 s to 15.1 s median) for incremental gains: about one sharper question per idea. And because GPT-6 Luna rarely maps premises to the list, the levers that made the biggest difference in the dry run reached only 2 of 10 ideas.
 
-**Which model answers:** the proxy sends both the harness's calls and the public page's to Luna (`luna-fast`) by default: GPT-5.6 Luna today, GPT-6 Luna once #4363 ships, with `gemini-3.5-flash-lite` as a silent fallback when there is no OpenAI key or Luna fails. To test what users get, set `OPENAI_API_KEY` in `apps/workers/oracle-proxy/.dev.vars`; with only `GEMINI_API_KEY`, every call falls back to Gemini, which tests a cheaper model. The harness records the proxy's `modelKey` for every call and shows the counts in its summary and each side-by-side heading. Check them before comparing runs, because a run that mixes models is not one model's result.
+**Do instead:**
+
+1. **Fold the cheap gain into Idea Developer's prompts.** Add to the Assess and Challenge guidance: check for a deadline or trigger that forces action, ask who beyond the main figures is affected, and ask whether the antagonist could have a sincere grievance. These were the assisted route's most consistent additions, and they need no second call. Check the change with the harness's baseline route.
+2. **Keep the taxonomy as shared vocabulary**, not a runtime step: reference material for the Oracle narrative assistant (#3926) and the generators. If it is used at runtime later, let the model map near-synonyms onto list entries (GPT-6 Luna named the right shapes but would not map them), and add the missing common shapes listed under "How broad?".
+3. **Revisit only if** a later model or use case changes the trade-off: for example, a cheap classifier (#3465) cutting the extra latency, or #3926 needing pattern labels for its own reasons.
+
+This settles the issue's done-when list: a prototype, representative ideas, a pattern-assisted against normal comparison on the production model, and a decision.
+
+**Which model answers:** the proxy sends both the harness's calls and the public page's to Luna (`luna-fast`) by default: GPT-6 Luna since PR 4363 was deployed (it was GPT-5.6 Luna for the pattern-finding run), with `gemini-3.5-flash-lite` as a silent fallback when there is no OpenAI key or Luna fails. To test what users get, set `OPENAI_API_KEY` in `apps/workers/oracle-proxy/.dev.vars`; with only `GEMINI_API_KEY`, every call falls back to Gemini, which tests a cheaper model. The harness records the proxy's `modelKey` for every call and shows the counts in its summary and each side-by-side heading. Check them before comparing runs, because a run that mixes models is not one model's result.
+
+The steps that led here:
 
 1. **Score pattern-finding first:** `bun run eval:idea-patterns --detect-only` makes one classifier call per sample idea and scores it against the hand labels in `IDEA_CASES`. Each idea lists the patterns it clearly uses (`expected`) and defensible extra readings (`acceptable`); anything else the classifier matches counts as wrong. Four ideas expect no patterns, to catch invented matches. If the model misses many expected patterns or produces many wrong ones, stop here, because the later steps depend on it. The labels are one person's judgement, so review them before trusting the score. **Done on GPT-5.6 Luna; it passed** (see [Pattern-finding on GPT-5.6 Luna](#pattern-finding-on-gpt-56-luna)).
-2. **Run the full comparison:** `bun run eval:idea-patterns --modes assess,challenge --markdown > ab.md` against the local proxy. Read the output side by side, looking for findings 1–4. Each assisted run also shows its pattern score.
+2. **Run the full comparison:** `bun run eval:idea-patterns --modes assess,challenge --markdown > ab.md` against the local proxy. Read the output side by side, looking for findings 1–4. Each assisted run also shows its pattern score. **Done on GPT-6 Luna** (see [Full comparison on GPT-6 Luna](#full-comparison-on-gpt-6-luna)); the gains did not justify the second call.
 3. **Add a third arm before deciding:** a single call that carries only the matched patterns' expectations and levers, using a cheaper match step or even keyword pre-selection, with no structural-signal block. If it matches the two-call route, the extra call is not worth it.
 4. **If the real model confirms the gain**, ship narrowly:
    - Assess and Challenge modes only.
