@@ -53,7 +53,7 @@ if [ "$TYPE" == "production" ]; then
     RECENT_COMMITS=$(git log "${BASE_REF}..HEAD" --no-merges --invert-grep --grep="chore(web): auto-bump" --grep="sync: back-merge" --pretty="- %s")
   else
     # Fallback if no previous run found
-    RECENT_COMMITS=$(git log -5 --no-merges --invert-grep --grep="chore(web): auto-bump" --pretty="- %s")
+    RECENT_COMMITS=$(git log -5 --no-merges --invert-grep --grep="chore(web): auto-bump" --grep="sync: back-merge" --pretty="- %s")
   fi
   
   # If there are no commits (e.g. forced re-deploy), show a fallback message
