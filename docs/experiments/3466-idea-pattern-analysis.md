@@ -14,7 +14,7 @@ Does a narrative-pattern pass, which names the familiar shapes a premise uses, w
 | Pattern taxonomy | `packages/generator-engine/src/narrative-patterns.ts`         | 24 Codex-native patterns in five families (reveal, character, faction, situation, structure). Each has a shape, the expectation it sets up, and two **levers**: ways to complicate it without discarding it. Written for Codex; nothing taken from TV Tropes.                                                                                                               |
 | Analysis pass    | `packages/generator-engine/src/narrative-pattern-analysis.ts` | One classifier call returning matched patterns with evidence, off-list patterns, seven structural signals (`present`/`thin`/`missing`), reveal dependency, audience expectations and a sentence on distinctiveness. No scores. Unknown ids are kept as off-list rather than dropped. The completion function is injected, so a smaller model or Jev (#3465) can replace it. |
 | Brief hand-off   | `IdeaDeveloperService.develop(idea, mode, { patternBrief })`  | Optional. When present, the brief is appended after the idea as fallible background. The output schema is unchanged, and the public page does not send a brief, so users see no difference.                                                                                                                                                                                 |
-| A/B harness      | `scripts/idea-pattern-ab.ts` (`bun run eval:idea-patterns`)   | Ten premises; baseline (1 call) against assisted (2 calls) per mode. Reports calls, latency, pattern coverage, off-list rate, and whether pattern names leak into creator-facing text. `--markdown` prints both routes side by side for reading.                                                                                                                            |
+| A/B harness      | `scripts/idea-pattern-ab.ts` (`bun run eval:idea-patterns`)   | Ten premises; baseline (1 call) against assisted (2 calls) per mode. Scores pattern-finding against hand labels (found, missed, wrong), and reports calls, latency, pattern coverage, off-list rate, and whether pattern names leak into creator-facing text. `--detect-only` runs just the classifier; `--markdown` prints both routes side by side for reading.           |
 
 ## Dry run
 
@@ -32,6 +32,8 @@ No Gemini key was available when this was written, so Claude stood in for **ever
 
 Harness numbers (dry run): 2.2 taxonomy matches and 0.4 off-list patterns per idea; 11 of 24 patterns used; no pattern names leaked into creator-facing text; twice the calls.
 
+Against the hand labels, the dry-run analyses found 6/6 expected patterns, with 2 wrong (_Dwindling Lifeline_ for the bridge, _Prophecy Trap_ for the retired chosen one) and 3 of 5 exact. The labels were written after the dry run, so this only shows the scoring works; it is not evidence about any model.
+
 ## Findings
 
 1. **The value comes from the levers, not the labels.** Every gain traced back to a taxonomy lever or a named expectation. Pattern names alone ("this is a Misunderstood Monster") added nothing a creator could act on.
@@ -44,13 +46,14 @@ Harness numbers (dry run): 2.2 taxonomy matches and 0.4 off-list patterns per id
 
 Not yet. The dry run is encouraging enough to justify a production-model run, not a build.
 
-1. **Run the real comparison:** `bun run eval:idea-patterns --modes assess,challenge --markdown > ab.md` against the Gemini proxy. Read the output side by side, looking for findings 1–4.
-2. **Add a third arm before deciding:** a single call that carries only the matched patterns' expectations and levers, using a cheaper match step or even keyword pre-selection, with no structural-signal block. If it matches the two-call route, the extra call is not worth it.
-3. **If Gemini confirms the gain**, ship narrowly:
+1. **Score pattern-finding first:** `bun run eval:idea-patterns --detect-only` makes one classifier call per sample idea and scores it against the hand labels in `IDEA_CASES`. Each idea lists the patterns it clearly uses (`expected`) and defensible extra readings (`acceptable`); anything else the classifier matches counts as wrong. Four ideas expect no patterns, to catch invented matches. If Gemini misses many expected patterns or produces many wrong ones, stop here, because the later steps depend on it. The labels are one person's judgement, so review them before trusting the score.
+2. **Run the full comparison:** `bun run eval:idea-patterns --modes assess,challenge --markdown > ab.md` against the Gemini proxy. Read the output side by side, looking for findings 1–4. Each assisted run also shows its pattern score.
+3. **Add a third arm before deciding:** a single call that carries only the matched patterns' expectations and levers, using a cheaper match step or even keyword pre-selection, with no structural-signal block. If it matches the two-call route, the extra call is not worth it.
+4. **If Gemini confirms the gain**, ship narrowly:
    - Assess and Challenge modes only.
    - A small curated taxonomy (about 20–40 entries) maintained for its levers, with a minimum-evidence threshold to reduce over-matching.
    - Packaged as a reusable `generator-engine` service so the Oracle narrative assistant (#3926) can use the same vocabulary, rather than as a feature only Idea Developer has.
-4. **If it does not**, keep the taxonomy as an internal vocabulary for #3926 and the generators, and close this line of work.
+5. **If it does not**, keep the taxonomy as an internal vocabulary for #3926 and the generators, and close this line of work.
 
 ## The issue's open questions
 

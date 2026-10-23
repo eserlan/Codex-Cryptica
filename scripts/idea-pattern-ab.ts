@@ -11,6 +11,7 @@
  *   bun scripts/idea-pattern-ab.ts --modes assess,develop --cases 3
  *   bun scripts/idea-pattern-ab.ts --markdown > ab.md    # read side by side
  *   bun scripts/idea-pattern-ab.ts --json > ab.json
+ *   bun scripts/idea-pattern-ab.ts --detect-only         # pattern-finding only
  *
  * ## Running it
  *
@@ -21,13 +22,19 @@
  *   3. `bun run eval:idea-patterns`
  *
  * Each case costs one call per mode on the baseline route and two on the
- * assisted route. The analysis call goes through the same proxy model; to
+ * assisted route; `--detect-only` costs one call per case. The analysis call goes through the same proxy model; to
  * try a smaller classifier (or Jev, #3465), give `analyseNarrativePatterns`
  * in `runRoute` a different completion.
  *
  * ## What it measures
  *
- * Cost and latency, which taxonomy patterns were found, how often the model
+ * Pattern-finding against hand labels: each case lists the patterns it
+ * clearly uses (`expected`) and defensible extra readings (`acceptable`).
+ * A missed expected pattern is a miss; a match that is neither is wrong.
+ * The labels are one person's judgement; review them before trusting the
+ * score.
+ *
+ * Also cost and latency, which taxonomy patterns were found, how often the model
  * reached for a pattern the taxonomy lacks, and whether assisted output
  * leaks pattern names into the creator-facing text. Usefulness is not
  * scored: read the `--markdown` output side by side.
@@ -54,6 +61,16 @@ export interface IdeaCase {
   /** What the case is meant to exercise. */
   probe: string;
   idea: string;
+  /**
+   * Hand-labelled taxonomy ids the premise clearly uses. Not finding one
+   * counts as a miss.
+   */
+  expected: string[];
+  /**
+   * Defensible readings that are neither required nor wrong. Matching one
+   * is not counted against the classifier.
+   */
+  acceptable: string[];
 }
 
 export const IDEA_CASES: IdeaCase[] = [
@@ -61,51 +78,71 @@ export const IDEA_CASES: IdeaCase[] = [
     id: "dragon-protector",
     probe: "reveal-driven premise (the issue's example)",
     idea: "A disgraced knight discovers that the dragon terrorising the kingdom is actually protecting it from the king.",
+    expected: ["disgraced-champion", "misunderstood-monster", "rot-at-the-top"],
+    acceptable: ["truth-behind-the-legend"],
   },
   {
     id: "dragon-parts-town",
     probe: "static lore with a mystery and no conflict yet",
     idea: "A town where everything is made from dragon parts, but there are no dragons nearby.",
+    expected: ["living-off-the-beast"],
+    acceptable: ["the-town-keeps-a-secret"],
   },
   {
     id: "giant-village",
     probe: "setting with built-in pressure",
     idea: "A village has built its homes inside the ribs of a sleeping giant, and the bones have started to move.",
+    expected: ["safe-haven-falls"],
+    acceptable: ["living-off-the-beast", "sealed-thing-stirring"],
   },
   {
     id: "vague-moon",
     probe: "too thin to classify safely",
     idea: "Something is wrong with the moon.",
+    expected: [],
+    acceptable: [],
   },
   {
     id: "water-rights-heist",
     probe: "clear job, unclear opposition",
     idea: "The crew must steal back a desert colony's water rights from the corporation that bought them at auction.",
+    expected: ["dwindling-lifeline"],
+    acceptable: [],
   },
   {
     id: "drowned-city-ferry",
-    probe: "investigation hook with a pattern hidden in it",
+    probe: "investigation hook with no listed pattern",
     idea: "A detective in a half-drowned city realises every missing person she has looked for this year rode the same night ferry.",
+    expected: [],
+    acceptable: ["the-town-keeps-a-secret"],
   },
   {
     id: "lighthouse-log",
     probe: "horror premise built on a single eerie fact",
     idea: "A lighthouse keeper's logbook records every ship that will sink, in her own handwriting, dated a century ago.",
+    expected: ["prophecy-trap"],
+    acceptable: [],
   },
   {
     id: "bridge-toll",
     probe: "political premise with several familiar shapes",
     idea: "Two rival guilds share the only bridge across the river, and its architect has died without saying who inherits the toll.",
+    expected: ["empty-throne", "fragile-truce"],
+    acceptable: [],
   },
   {
     id: "bakery-caravan",
     probe: "low-conflict, character-led premise",
     idea: "A travelling bakery caravan follows a festival circuit across the desert, and this year the festivals are being cancelled one by one.",
+    expected: [],
+    acceptable: ["dwindling-lifeline"],
   },
   {
     id: "retired-chosen-one",
     probe: "premise that already subverts a familiar pattern",
     idea: "The chosen one fulfilled the prophecy twenty years ago; she now runs a tax office, and the dark lord she defeated is suing for compensation.",
+    expected: [],
+    acceptable: ["villain-has-better-evidence"],
   },
 ];
 
@@ -245,6 +282,100 @@ export function patternCoverage(runs: RouteRun[]): Record<string, number> {
   return counts;
 }
 
+export interface PatternScore {
+  caseId: string;
+  /** The Idea Developer mode, or "detect" for a detection-only run. */
+  label: string;
+  /** Expected patterns the classifier found. */
+  hits: string[];
+  /** Expected patterns it did not find. */
+  missed: string[];
+  /** Matches that are neither expected nor acceptable. */
+  wrong: string[];
+  /** Off-list names, reported but not scored. */
+  offList: string[];
+}
+
+/**
+ * Score one analysis against a case's hand labels; null when there is no
+ * analysis (the baseline route, or a failed classifier call).
+ */
+export function scorePatterns(
+  ideaCase: IdeaCase,
+  analysis: PatternAnalysis | null,
+  label: string,
+): PatternScore | null {
+  if (!analysis) return null;
+  const found = new Set(analysis.patterns.map((m) => m.pattern.id));
+  const allowed = new Set([...ideaCase.expected, ...ideaCase.acceptable]);
+  return {
+    caseId: ideaCase.id,
+    label,
+    hits: ideaCase.expected.filter((id) => found.has(id)),
+    missed: ideaCase.expected.filter((id) => !found.has(id)),
+    wrong: [...found].filter((id) => !allowed.has(id)),
+    offList: analysis.otherPatterns.map((o) => o.name),
+  };
+}
+
+export interface DetectionRun {
+  ideaCase: IdeaCase;
+  analysis: PatternAnalysis | null;
+  error: string;
+}
+
+/** The classifier alone, for scoring pattern-finding without development. */
+export async function runDetection(
+  ideaCase: IdeaCase,
+  complete: Complete,
+): Promise<DetectionRun> {
+  try {
+    const analysis = await analyseNarrativePatterns(ideaCase.idea, complete);
+    return { ideaCase, analysis, error: "" };
+  } catch (error) {
+    return {
+      ideaCase,
+      analysis: null,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
+export interface DetectionSummary {
+  /** Analyses scored. */
+  scored: number;
+  /** Expected patterns found, as "found/expected". */
+  found: string;
+  missed: number;
+  wrong: number;
+  /** Analyses with no misses and no wrong matches. */
+  exact: number;
+}
+
+export function summariseDetection(scores: PatternScore[]): DetectionSummary {
+  const hits = scores.reduce((n, s) => n + s.hits.length, 0);
+  const missed = scores.reduce((n, s) => n + s.missed.length, 0);
+  return {
+    scored: scores.length,
+    found: `${hits}/${hits + missed}`,
+    missed,
+    wrong: scores.reduce((n, s) => n + s.wrong.length, 0),
+    exact: scores.filter((s) => !s.missed.length && !s.wrong.length).length,
+  };
+}
+
+function scoreRows(rows: CaseRow[]): PatternScore[] {
+  return rows.flatMap(
+    (row) =>
+      scorePatterns(row.case, row.assisted.analysis, row.assisted.mode) ?? [],
+  );
+}
+
+function scoreMarkdown(score: PatternScore): string {
+  const list = (ids: string[]) => (ids.length ? ids.join(", ") : "none");
+  return `_Pattern score: found ${list(score.hits)}; missed ${list(score.missed)}; wrong ${list(score.wrong)}._`;
+}
+
 export interface CaseRow {
   case: IdeaCase;
   baseline: RouteRun;
@@ -269,13 +400,18 @@ function analysisMarkdown(analysis: PatternAnalysis): string {
   ].join("\n");
 }
 
-function runMarkdown(run: RouteRun): string {
+function runMarkdown(run: RouteRun, ideaCase: IdeaCase): string {
   const head = `### ${run.route} (calls: ${run.calls}, ${run.elapsedMs} ms)`;
-  if (!run.result) return `${head}\n\n_Failed: ${run.error}_`;
+  const score = scorePatterns(ideaCase, run.analysis, run.mode);
+  const scoreLine = score ? [scoreMarkdown(score)] : [];
+  if (!run.result) {
+    return [head, `_Failed: ${run.error}_`, ...scoreLine].join("\n\n");
+  }
   const leaked = leakedPatternNames(run);
   return [
     head,
     ...(leaked.length ? [`_Names patterns: ${leaked.join(", ")}_`] : []),
+    ...scoreLine,
     ...(run.analysis ? [analysisMarkdown(run.analysis)] : []),
     visibleText(run.result, run.mode).replace(/^## /gm, "#### "),
   ].join("\n\n");
@@ -291,9 +427,9 @@ export function toMarkdown(rows: CaseRow[]): string {
         "",
         `> ${row.case.idea}`,
         "",
-        runMarkdown(row.baseline),
+        runMarkdown(row.baseline, row.case),
         "",
-        runMarkdown(row.assisted),
+        runMarkdown(row.assisted, row.case),
       ].join("\n"),
     )
     .join("\n\n---\n\n");
@@ -316,12 +452,18 @@ async function main() {
       modes: { type: "string", default: "assess,develop" },
       json: { type: "boolean", default: false },
       markdown: { type: "boolean", default: false },
+      "detect-only": { type: "boolean", default: false },
     },
   });
+  const cases = IDEA_CASES.slice(0, Number(values.cases));
+  const connect = (): ProxyComplete => proxyComplete(values.proxy);
+  if (values["detect-only"]) {
+    await detectOnly(cases, connect, values.json);
+    return;
+  }
   const modes = parseModes(values.modes);
   const rows: CaseRow[] = [];
-  const connect = (): ProxyComplete => proxyComplete(values.proxy);
-  for (const ideaCase of IDEA_CASES.slice(0, Number(values.cases))) {
+  for (const ideaCase of cases) {
     for (const mode of modes) {
       const baseline = await runRoute("baseline", ideaCase, mode, connect());
       const assisted = await runRoute("assisted", ideaCase, mode, connect());
@@ -336,12 +478,17 @@ async function main() {
     assisted: summarise(rows.map((r) => r.assisted)),
   };
   const coverage = patternCoverage(rows.map((r) => r.assisted));
+  const scores = scoreRows(rows);
   if (values.json) {
-    console.log(JSON.stringify({ summary, coverage, rows }, null, 2));
+    const detection = summariseDetection(scores);
+    console.log(
+      JSON.stringify({ summary, detection, scores, coverage, rows }, null, 2),
+    );
   } else if (values.markdown) {
     console.log(toMarkdown(rows));
   } else {
     console.table(summary);
+    printScores(scores);
     console.table(coverage);
     console.log(
       "Usefulness is not scored. Use --markdown and read the routes side by side.",
@@ -350,6 +497,46 @@ async function main() {
   if (rows.some((r) => r.baseline.error || r.assisted.error)) {
     process.exitCode = 1;
   }
+}
+
+/** One classifier call per case, scored against the hand labels. */
+async function detectOnly(
+  cases: IdeaCase[],
+  connect: () => ProxyComplete,
+  json: boolean,
+): Promise<void> {
+  const runs: DetectionRun[] = [];
+  for (const ideaCase of cases) {
+    const run = await runDetection(ideaCase, connect());
+    runs.push(run);
+    process.stderr.write(`  ${run.error ? "ERR" : "ok "} ${ideaCase.id}\n`);
+  }
+  const scores = runs.flatMap(
+    (r) => scorePatterns(r.ideaCase, r.analysis, "detect") ?? [],
+  );
+  const errors = runs.filter((r) => r.error).map((r) => r.ideaCase.id);
+  if (json) {
+    const detection = summariseDetection(scores);
+    console.log(JSON.stringify({ detection, scores, errors, runs }, null, 2));
+  } else {
+    printScores(scores);
+    for (const id of errors) console.log(`error: ${id}`);
+  }
+  if (errors.length) process.exitCode = 1;
+}
+
+function printScores(scores: PatternScore[]): void {
+  console.table(summariseDetection(scores));
+  console.table(
+    scores.map((s) => ({
+      case: s.caseId,
+      run: s.label,
+      found: s.hits.join(", "),
+      missed: s.missed.join(", "),
+      wrong: s.wrong.join(", "),
+      offList: s.offList.join(", "),
+    })),
+  );
 }
 
 if (import.meta.main) {

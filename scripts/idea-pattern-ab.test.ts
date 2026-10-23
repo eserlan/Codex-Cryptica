@@ -4,14 +4,19 @@ import {
   leakedPatternNames,
   parseModes,
   patternCoverage,
+  runDetection,
   runRoute,
+  scorePatterns,
   summarise,
+  summariseDetection,
   toMarkdown,
 } from "./idea-pattern-ab";
 import {
+  parsePatternAnalysis,
   PATTERN_ANALYSIS_SYSTEM,
   STRUCTURAL_SIGNALS,
 } from "../packages/generator-engine/src/narrative-pattern-analysis";
+import { getNarrativePattern } from "../packages/generator-engine/src/narrative-patterns";
 
 const development = (stressTest = "Who pays when the truth comes out?") =>
   JSON.stringify({
@@ -51,6 +56,91 @@ describe("idea pattern cases", () => {
     expect(IDEA_CASES).toHaveLength(10);
     expect(new Set(IDEA_CASES.map((c) => c.id)).size).toBe(10);
     expect(new Set(IDEA_CASES.map((c) => c.probe)).size).toBe(10);
+  });
+
+  it("labels each case with real, non-overlapping taxonomy ids", () => {
+    for (const c of IDEA_CASES) {
+      for (const id of [...c.expected, ...c.acceptable]) {
+        expect(getNarrativePattern(id), `${c.id}: ${id}`).toBeDefined();
+      }
+      expect(c.expected.filter((id) => c.acceptable.includes(id))).toEqual([]);
+    }
+  });
+
+  it("includes premises that should match nothing, to catch invented matches", () => {
+    expect(IDEA_CASES.filter((c) => c.expected.length === 0).length).toBe(4);
+  });
+});
+
+describe("pattern scoring", () => {
+  const found = (...ids: string[]) =>
+    parsePatternAnalysis(
+      JSON.stringify({
+        ...JSON.parse(analysis),
+        patterns: ids.map((id) => ({ id, evidence: "x" })),
+      }),
+    );
+
+  it("splits matches into found, missed and wrong", () => {
+    const score = scorePatterns(
+      dragon,
+      found("misunderstood-monster", "hidden-heir"),
+      "detect",
+    );
+    expect(score).toMatchObject({
+      hits: ["misunderstood-monster"],
+      missed: ["disgraced-champion", "rot-at-the-top"],
+      wrong: ["hidden-heir"],
+      offList: ["Fallen Knight"],
+    });
+  });
+
+  it("does not count an acceptable reading as wrong", () => {
+    const score = scorePatterns(
+      dragon,
+      found(...dragon.expected, "truth-behind-the-legend"),
+      "detect",
+    );
+    expect(score).toMatchObject({ missed: [], wrong: [] });
+  });
+
+  it("returns no score without an analysis", () => {
+    expect(scorePatterns(dragon, null, "assess")).toBeNull();
+  });
+
+  it("totals found, missed, wrong and exact analyses", () => {
+    const moon = IDEA_CASES.find((c) => c.id === "vague-moon")!;
+    const scores = [
+      scorePatterns(dragon, found(...dragon.expected), "detect")!,
+      scorePatterns(dragon, found("misunderstood-monster"), "detect")!,
+      scorePatterns(moon, found("ticking-clock"), "detect")!,
+    ];
+    expect(summariseDetection(scores)).toEqual({
+      scored: 3,
+      found: "4/6",
+      missed: 2,
+      wrong: 1,
+      exact: 1,
+    });
+    expect(summariseDetection([])).toMatchObject({ found: "0/0", exact: 0 });
+  });
+});
+
+describe("runDetection", () => {
+  it("makes only the classifier call", async () => {
+    const complete = fakeModel();
+    const run = await runDetection(dragon, complete);
+    expect(complete).toHaveBeenCalledTimes(1);
+    expect(complete.mock.calls[0][0]).toBe(PATTERN_ANALYSIS_SYSTEM);
+    expect(run.analysis?.patterns).toHaveLength(1);
+  });
+
+  it("records a failed call instead of throwing", async () => {
+    const run = await runDetection(
+      dragon,
+      vi.fn().mockRejectedValue(new Error("proxy down")),
+    );
+    expect(run).toMatchObject({ analysis: null, error: "proxy down" });
   });
 });
 
@@ -167,6 +257,10 @@ describe("metrics", () => {
     expect(md).toContain("## dragon-protector · assess");
     expect(md).toContain("### baseline (calls: 1,");
     expect(md).toContain("_off-list_ **Fallen Knight**");
+    expect(md).toContain(
+      "_Pattern score: found misunderstood-monster; missed disgraced-champion, rot-at-the-top; wrong none._",
+    );
+    expect(md.match(/_Pattern score:/g)).toHaveLength(1);
   });
 });
 
