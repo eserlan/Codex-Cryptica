@@ -1,6 +1,6 @@
 /**
  * OpenAI-compatible provider adaptor. Handles every OpenAI-family model
- * (including GPT-6 Luna) — differentiated only by `modelId` in the
+ * (including GPT-5.6 Luna) — differentiated only by `modelId` in the
  * model's registry entry, never by adaptor code (FR-002/FR-005/FR-006).
  */
 
