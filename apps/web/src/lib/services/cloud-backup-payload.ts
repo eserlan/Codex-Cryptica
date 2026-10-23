@@ -141,8 +141,8 @@ export function collectAssetPaths(
  * Entities the vault has already loaded pass through untouched. The rest are
  * read from source without touching the live store, bounded so a 5k-entity
  * vault does not open five thousand OPFS reads at once. An entity that cannot
- * be read keeps whatever it had and is reported, matching the asset contract:
- * a partial backup is allowed, a silently partial one is not.
+ * be read is omitted and reported, so a preview can never masquerade as a
+ * complete backup.
  */
 export async function hydrateEntityContent(
   entities: readonly LocalEntity[],
@@ -152,6 +152,7 @@ export async function hydrateEntityContent(
 ): Promise<{ entities: LocalEntity[]; skippedEntities: string[] }> {
   const hydrated = [...entities];
   const skippedEntities: string[] = [];
+  const unreadableIndexes = new Set<number>();
   const pending = hydrated
     .map((entity, index) => ({ entity, index }))
     .filter(({ entity }) => entity?.id && !hydrator.isContentLoaded(entity.id));
@@ -161,9 +162,16 @@ export async function hydrateEntityContent(
     while (cursor < pending.length && !signal?.aborted) {
       const { entity, index } = pending[cursor++];
       try {
-        hydrated[index] = (await hydrator.readFullEntity(entity.id)) ?? entity;
+        const full = await hydrator.readFullEntity(entity.id);
+        if (full) {
+          hydrated[index] = full;
+        } else {
+          skippedEntities.push(entity.id);
+          unreadableIndexes.add(index);
+        }
       } catch {
         skippedEntities.push(entity.id);
+        unreadableIndexes.add(index);
       }
     }
   };
@@ -172,7 +180,10 @@ export async function hydrateEntityContent(
     Array.from({ length: Math.min(concurrency, pending.length) }, worker),
   );
 
-  return { entities: hydrated, skippedEntities };
+  return {
+    entities: hydrated.filter((_, index) => !unreadableIndexes.has(index)),
+    skippedEntities,
+  };
 }
 
 export async function buildCloudBackupPayload(
@@ -389,7 +400,8 @@ async function readFullOrNull(
 ): Promise<LocalEntity | null> {
   if (hydrator.isContentLoaded(id)) return current;
   try {
-    return (await hydrator.readFullEntity(id)) ?? current;
+    const full = await hydrator.readFullEntity(id);
+    return full ?? null;
   } catch {
     return null;
   }

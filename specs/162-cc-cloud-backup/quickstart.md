@@ -34,7 +34,7 @@ Two points that constrain the design rather than the process, so they belong
 here too:
 
 - A lookup answers `{ "matched": false }` for "nothing matched" **and** for
-  "several matched". Distinguishing them would let an admin count other
-  people's backups (FR-016).
+  "several matched". This predates the operator inventory (FR-024); when a
+  title is ambiguous, use `/admin/vaults` to tell the backups apart.
 - Re-issuing a code invalidates the previous one immediately, so identity has
   to be verified first — a vault title is not proof of ownership.

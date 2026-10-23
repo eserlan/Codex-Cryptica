@@ -21,6 +21,7 @@ import { handleSessionRequest, enforceLlmSession } from "./session-guard";
 import { handleHelpAsk } from "./help";
 import { handleTemplateDirectoryRoutes } from "./template-directory-routes";
 import { handleCloudBackupRoutes } from "./cloud-backup-routes";
+import { handleAdminVaultRoutes } from "./admin-vaults";
 import { handlePublishedRoutes } from "./publish-routes";
 import { handleGeneratorSharesRoute } from "./generator-shares";
 import { handleAssetGallery } from "./asset-gallery";
@@ -212,6 +213,13 @@ export default {
           : handleAnswerBySlugs;
       return handleCachedAggregateRead(request, env, ctx, handler);
     }
+
+    const adminVaultResponse = await handleAdminVaultRoutes(
+      request,
+      env,
+      pathname,
+    );
+    if (adminVaultResponse) return adminVaultResponse;
 
     const cloudBackupResponse = await handleCloudBackupRoutes(
       request,

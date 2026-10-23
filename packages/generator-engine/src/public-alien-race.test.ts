@@ -1,13 +1,15 @@
 import { describe, it, expect } from "vitest";
 import {
-  alienRaceConfig,
   buildAlienRacePrompt,
   generateAlienRaceLocal,
   parseAlienRaceResponse,
   resolveAlienRace,
+} from "./public-alien-race";
+import {
+  alienRaceConfig,
   GROUNDED_MODE,
   FREEFORM_MODE,
-} from "./public-alien-race";
+} from "./public-alien-race-constants";
 
 function seededRng(seed: number) {
   let state = seed;

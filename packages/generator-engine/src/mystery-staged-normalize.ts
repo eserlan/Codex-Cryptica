@@ -41,28 +41,66 @@ function withId(item: unknown, aliases: readonly string[]): unknown {
   return alias === undefined ? item : { ...item, id: flattenText(alias) };
 }
 
+function fillMissingField(
+  target: Obj,
+  field: string,
+  aliases: readonly string[],
+): void {
+  if (flattenText(target[field]).trim()) return;
+  const value = firstText(target, aliases);
+  if (value !== undefined) target[field] = flattenText(value);
+}
+
+const FOUNDATION_TRUTH_FIELDS = [
+  "perpetratorName",
+  "motive",
+  "means",
+  "opportunity",
+  "constraints",
+  "keyItem",
+  "keyItemLocation",
+  "keyItemFate",
+  "recovery",
+  "methodReason",
+  "disputedFact",
+  "victimStatus",
+  "atStart",
+] as const;
+
+function normalizeFoundationTruth(value: unknown): Obj | undefined {
+  if (!isRecord(value)) return undefined;
+  const truth: Obj = { ...value };
+  fillMissingField(truth, "keyItem", [
+    "focalElement",
+    "keyElement",
+    "centralSubject",
+    "centralElement",
+    "evidence",
+  ]);
+  fillMissingField(truth, "keyItemLocation", [
+    "focalLocation",
+    "keyLocation",
+    "centralLocation",
+    "evidenceLocation",
+  ]);
+  fillMissingField(truth, "keyItemFate", [
+    "focalFate",
+    "intendedFate",
+    "stakes",
+  ]);
+  fillMissingField(truth, "recovery", [
+    "resolution",
+    "resolutionAndProof",
+    "solution",
+  ]);
+  return flattenFields(truth, FOUNDATION_TRUTH_FIELDS) as Obj;
+}
+
 function normalizeFoundation(data: Obj): Obj {
   const next: Obj = { ...data };
-  if (!flattenText(next.summary).trim()) {
-    const summary = firstText(next, ["playerSafeSummary", "premise"]);
-    if (summary !== undefined) next.summary = flattenText(summary);
-  }
-  if (isRecord(next.truth))
-    next.truth = flattenFields(next.truth, [
-      "perpetratorName",
-      "motive",
-      "means",
-      "opportunity",
-      "constraints",
-      "keyItem",
-      "keyItemLocation",
-      "keyItemFate",
-      "recovery",
-      "methodReason",
-      "disputedFact",
-      "victimStatus",
-      "atStart",
-    ]);
+  fillMissingField(next, "summary", ["playerSafeSummary", "premise"]);
+  const truth = normalizeFoundationTruth(next.truth);
+  if (truth) next.truth = truth;
   next.timeline = mapList(next.timeline, flattenText);
   next.revelations = mapList(next.revelations, (item) => {
     const rev = flattenFields(withId(item, ["revelationId", "key"]), [

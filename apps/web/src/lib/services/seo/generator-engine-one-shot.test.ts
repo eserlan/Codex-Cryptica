@@ -2,6 +2,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { DefaultGeneratorEngine } from "./generator-engine";
 import { generateOneShotLocal } from "generator-engine";
+import {
+  generationNameHistoryStore,
+  generationSeedHistoryStore,
+} from "./generation-input-history";
 
 function modelReplying(text: string) {
   return {
@@ -15,9 +19,12 @@ function modelReplying(text: string) {
   };
 }
 
-type Stage = "core" | "structure" | "finale" | "scene" | "npcs" | "review";
+type Stage =
+  "seed" | "core" | "structure" | "finale" | "scene" | "npcs" | "review";
 
 function stageOf(prompt: string): Stage {
+  if (prompt.includes("adventure seeds") || prompt.includes("case seeds"))
+    return "seed";
   if (prompt.includes("Plan the core")) return "core";
   if (prompt.includes("Plan the scenes")) return "structure";
   if (prompt.includes("Work out how this one-shot")) return "finale";
@@ -25,6 +32,22 @@ function stageOf(prompt: string): Stage {
   if (prompt.includes("Give the supporting NPCs")) return "npcs";
   return "review";
 }
+
+const SEED_LOCK = "Case seed, chosen before writing and locked.";
+
+const seedCandidates = [
+  "A lighthouse keeper hides a stranded smuggler from the harbour watch.",
+  "A choir master needs a stolen hymnal back before the winter vigil.",
+  "A cartographer's apprentice finds a map of a street that does not exist.",
+  "A miller's guild suspects its new partner of poisoning the grain.",
+  "A retired duellist is challenged by someone wearing her old mask.",
+].map((premise, i) => ({
+  premise,
+  stake: `Stake ${i + 1}`,
+  setting: `Setting ${i + 1}`,
+  distinctiveElement: `Element ${i + 1}`,
+  titleIdea: `Title Idea ${i + 1}`,
+}));
 
 const stagedOptions = {
   durationHours: 3,
@@ -37,6 +60,7 @@ function stageReplies(): Record<Stage, (prompt: string) => string> {
   const a = generateOneShotLocal(stagedOptions).oneShot!;
   const [patron, antagonist, ...supporting] = a.npcs;
   return {
+    seed: () => JSON.stringify({ candidates: seedCandidates }),
     core: () =>
       JSON.stringify({
         title: "The Drowned Choir",
@@ -112,6 +136,9 @@ function stagedModel(
 }
 
 describe("DefaultGeneratorEngine staged one-shot", () => {
+  // Accepted seeds are remembered for the session; start each test clean.
+  beforeEach(() => sessionStorage.clear());
+
   it("generates in stages, each with a long output cap and JSON mode", async () => {
     const { client, calls } = stagedModel();
     const e = new DefaultGeneratorEngine(client as never);
@@ -121,7 +148,8 @@ describe("DefaultGeneratorEngine staged one-shot", () => {
     expect(
       out.oneShot!.scenes.every((sc) => sc.situation.startsWith("AI: ")),
     ).toBe(true);
-    expect(calls.map((c) => c.stage).slice(0, 3)).toEqual([
+    expect(calls.map((c) => c.stage).slice(0, 4)).toEqual([
+      "seed",
       "core",
       "structure",
       "finale",
@@ -133,6 +161,39 @@ describe("DefaultGeneratorEngine staged one-shot", () => {
         responseMimeType: "application/json",
       });
     }
+  });
+
+  it("locks the chosen case seed into the core stage", async () => {
+    const { client, calls } = stagedModel();
+    const e = new DefaultGeneratorEngine(client as never);
+    await e.generateOneShot({ ...stagedOptions, useAI: true });
+    expect(calls.filter((c) => c.stage === "seed")).toHaveLength(1);
+    const corePrompt = JSON.stringify(
+      calls.find((c) => c.stage === "core")!.request,
+    );
+    expect(corePrompt).toContain(SEED_LOCK);
+    expect(
+      seedCandidates.some(({ premise }) => corePrompt.includes(premise)),
+    ).toBe(true);
+  });
+
+  it("falls back to the rolled concept when no seed candidates are usable", async () => {
+    const { client, calls } = stagedModel({ seed: () => "no seeds here" });
+    const e = new DefaultGeneratorEngine(client as never);
+    const out = await e.generateOneShot({ ...stagedOptions, useAI: true });
+    expect(out.aiFallback).toBeUndefined();
+    expect(out.title).toBe("The Drowned Choir");
+    expect(calls.map((c) => c.stage).slice(0, 5)).toEqual([
+      "seed",
+      "seed",
+      "core",
+      "structure",
+      "finale",
+    ]);
+    const corePrompt = JSON.stringify(
+      calls.find((c) => c.stage === "core")!.request,
+    );
+    expect(corePrompt).not.toContain(SEED_LOCK);
   });
 
   it("forwards each step's progress to the page", async () => {
@@ -200,8 +261,37 @@ describe("DefaultGeneratorEngine staged one-shot", () => {
     const e = new DefaultGeneratorEngine(client as never);
     const out = await e.generateOneShot({ ...stagedOptions, useAI: true });
     expect(out.aiFallback).toBe(true);
-    expect(calls.map((c) => c.stage)).toEqual(["core", "core"]);
+    expect(calls.map((c) => c.stage)).toEqual(["seed", "core", "core"]);
     expect(out.oneShot?.scenes.length).toBeGreaterThanOrEqual(3);
+  });
+
+  it("seeds the adventure with emphasis, anti-tropes, and tracks NPC names across sessions", async () => {
+    const storageMap = new Map<string, string>();
+    const fakeSessionStorage = {
+      getItem: (k: string) => storageMap.get(k) ?? null,
+      setItem: (k: string, v: string) => storageMap.set(k, v),
+      removeItem: (k: string) => storageMap.delete(k),
+    };
+    (globalThis as unknown as { sessionStorage: unknown }).sessionStorage =
+      fakeSessionStorage;
+
+    const { client, calls } = stagedModel();
+    const e = new DefaultGeneratorEngine(client as never);
+    await e.generateOneShot({ ...stagedOptions, useAI: true });
+
+    const seedCall = calls.find((c) => c.stage === "seed");
+    expect(seedCall).toBeDefined();
+    const promptText = JSON.stringify(seedCall!.request);
+    expect(promptText).toContain("adventure seeds for a tabletop RPG scenario");
+    expect(promptText).toContain("scenario emphasis (Investigation / mystery)");
+    expect(promptText).toContain(
+      "tavern notice board; missing merchant caravan",
+    );
+
+    expect(generationSeedHistoryStore.recent("one-shot")).toHaveLength(1);
+    expect(
+      generationNameHistoryStore.recent("one-shot").length,
+    ).toBeGreaterThan(0);
   });
 });
 

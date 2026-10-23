@@ -23,7 +23,11 @@ import {
   generatePlaceholderName as generateName,
 } from "./random-utils";
 import { parseFencedJson } from "./llm-response-utils";
-import { formatCampaignContextBlock } from "./campaign-context";
+import {
+  avoidNamesExcludingContext,
+  formatCampaignContextBlock,
+} from "./campaign-context";
+import { type ConceptSeed, formatSeedBlock } from "./concept-seed";
 import {
   heistLocalState,
   HEIST_LOCAL_RESPONSE,
@@ -645,6 +649,8 @@ export interface HeistGeneratorOptions {
   targetType?: string;
   prize?: string;
   campaignContext?: string;
+  avoidNames?: string[];
+  seed?: ConceptSeed | null;
 }
 
 export interface ResolvedHeist {
@@ -850,6 +856,16 @@ export function buildHeistPrompt(
   rng: Rng = defaultRng,
 ): HeistPrompt {
   const resolved = resolveHeist(options, rng);
+  const avoid = avoidNamesExcludingContext(
+    options.avoidNames ?? [],
+    options.campaignContext,
+  );
+  const avoidNote = avoid.length
+    ? `Avoid reusing these recent character or mark names: ${avoid.join(", ")}.\n`
+    : "";
+  const seedBlock = options.seed
+    ? `\n\n${formatSeedBlock(options.seed, "Heist score concept")}\n`
+    : "";
 
   const userMessage = `Generate a table-ready RPG heist scenario in JSON format. This is a playable situation with interacting parts — an objective, intel, layered security, escalating consequences, and an escape shaped by the crew's choices — not an adventure synopsis and not long-form prose. Every detail you write must either create a decision, reveal usable information, or change how the heist can play. Cut anything that only sets a mood.
 Options:
@@ -863,7 +879,7 @@ Options:
 - Possible detection trigger (not necessarily immediate): ${resolved.objectiveEscapeCause}
 - Objective Complication (the objective MUST have this practical problem): ${resolved.prizeComplication}
 - Pressure (what that complication costs during play, and when it bites): ${resolved.pressure}
-${resolved.prize ? `- Requested Prize / Objective: ${resolved.prize}\n` : ""}${formatCampaignContextBlock(resolved.campaignContext)}
+${resolved.prize ? `- Requested Prize / Objective: ${resolved.prize}\n` : ""}${formatCampaignContextBlock(resolved.campaignContext)}${seedBlock}
 
 You must return a valid JSON object matching the following structure exactly:
 {
@@ -884,7 +900,7 @@ Once active, Pressure must advance during the job, not only on failure. Give it 
 Set the score firmly within the ${resolved.genre} genre — the target, its security, the alarm flavour, and the pursuit should all feel native to that setting rather than a fantasy heist with the nouns swapped.
 Scale the target to "${resolved.targetScale}": a Small score is a single building with a handful of staff, a Major score is a well-defended institution with a real security budget, and a Legendary score is a place that has never been successfully robbed and everyone knows it.
 ${NAME_BAN_PROMPT}
-${sessionContext}
+${avoidNote}${sessionContext}
 Write every section as scene-appropriate prose. Do not restate the wording of these instructions verbatim in the output, and never include prompt instructions, placeholder-name mapping notes, or any other meta-commentary about how the piece was generated — the output is the scenario itself, nothing about producing it.
 Before returning, run a consistency pass and fix anything that fails it. Contradictions: nothing offered as a solution may be something an earlier rule declared impossible, unless the text explicitly explains how that rule is circumvented — if the ward only admits a living guild member, no later flashback or route may bypass it with a dead member's signet. Every access method obeys the rules established for that ring; every named person, faction, patron, or rival keeps one consistent role throughout; no alarm effect closes a route that a later section still offers; "The Hidden Factor" complicates the plan without invalidating every approach at once. Continuity: the prize in "The Score", "The Prize", and the "Casing the Target" bullet is the same object; the entry vector is a real way through the "Perimeter" ring; escape options remain usable until their stated closure triggers, including the original entry route; the "GM Quick Reference" lines match the sections they summarise. Ownership and location: confirm who holds the objective when the job begins, and keep it consistent everywhere. If the crew starts with it, no section may also describe it as already secured inside the target, and there must be no step spent retrieving it. If the target holds it, the crew must not already have it. Alarm reachability: every level of the alarm track must be a state that can plausibly be reached during play — a mandatory objective action may not jump the track straight to Lockdown or Lethal Response, since that skips the escalation the track exists to provide. Objective completion need not raise the alarm at all; only an established detection event does, and it must respect successful bypasses. Objective coverage: every objective named in "The Score" has its own section with its own location, window, protection and multiple ways in, and is engaged with by the casing intel, the rings, and the getaway — never introduce an objective in "The Score" and then ignore it for the rest of the scenario. Playability: each security ring names at least two genuinely different approaches; the five alarm states escalate without repeating each other and level 4 still leaves a costly option; exactly one complication is marked "(default)"; pressure has an activation condition and a concrete trigger during play; an independent deadline can advance even while objective-specific pressure is dormant. Distinctness: if the alarm track already closes a route at some level, "When the Prize Is Taken" must not simply close it again — either name a different mechanism, or say explicitly that it makes the existing closure irreversible. No section repeats a heading used anywhere else, and no heading is left with nothing under it. Density: delete any sentence that does not create a decision, reveal usable information, or change how the heist plays.
 Return only the JSON object. Do not include markdown code block formatting like \`\`\`json.`;
@@ -1158,6 +1174,42 @@ export function parseHeistResponse(
     labels,
     status: "active",
   };
+}
+
+/**
+ * Extracts generated person, target, or patron names from heist output
+ * so subsequent runs can avoid reusing them immediately.
+ */
+export function extractHeistNames(output: {
+  title?: string;
+  content?: string;
+  lore?: string;
+}): string[] {
+  const names = new Set<string>();
+  const combined = `${output.title ?? ""}\n${output.content ?? ""}\n${output.lore ?? ""}`;
+
+  const honorificMatches = combined.matchAll(
+    /\b(?:Lord|Lady|Baron|Baroness|Archivist|Director|Dr\.?|Doctor|Captain|Officer|Keeper|Warden|Governor|Master|Count|Countess)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\b/g,
+  );
+  for (const m of honorificMatches) {
+    if (m[1]) names.add(m[1].trim());
+  }
+
+  const titleMatch = (output.title ?? "").match(
+    /^The\s+([A-Z][a-z]+)\s+(?:Job|Score|Run|Lift|Take|Heist)\b/i,
+  );
+  if (titleMatch?.[1]) {
+    names.add(titleMatch[1].trim());
+  }
+
+  const contactMatches = combined.matchAll(
+    /\b(?:named|contact|mark|pursuer|patron|rival)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\b/g,
+  );
+  for (const m of contactMatches) {
+    if (m[1]) names.add(m[1].trim());
+  }
+
+  return [...names];
 }
 
 export function generateHeistLocal(

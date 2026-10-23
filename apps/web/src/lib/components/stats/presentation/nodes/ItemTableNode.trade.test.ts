@@ -83,6 +83,19 @@ describe("Trade control on a stock table (#3963)", () => {
     expect(screen.queryByTestId("stock-trade-panel")).toBeNull();
   });
 
+  it("keeps the trade form closed while a malformed row receives its id", () => {
+    // Deliberately malformed persisted data, before row-id enrichment.
+    const field = {
+      ...stock,
+      rows: [{ rowId: null, name: "Rope", stock: { quantity: 1 } }],
+    } as unknown as StatSheetField;
+    const context = makeContext();
+    render(ItemTableNode, { props: { field, context } });
+    expect(context.onUpdateField).toHaveBeenCalled();
+    expect(tradeButtons()).toHaveLength(0);
+    expect(screen.queryByTestId("stock-trade-panel")).toBeNull();
+  });
+
   it("opening the form changes nothing", async () => {
     const context = makeContext();
     render(ItemTableNode, { props: { field: stock, context } });

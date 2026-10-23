@@ -17,7 +17,7 @@ import {
   findCircularItemRoutes,
   findPlacementIssues,
 } from "./mystery-consistency";
-import { formatConceptBlock, rollConcept } from "./concept-dimensions";
+import { formatConceptBlock, rollMysteryConcept } from "./concept-dimensions";
 import { type ConceptSeed, formatSeedBlock } from "./concept-seed";
 import { buildMysteryGraph } from "./mystery-graph";
 import { list, record, text } from "./mystery-obj";
@@ -76,14 +76,136 @@ const KEY_ITEM_FIELDS = [
   "disputedFact",
 ] as const;
 
-/** The conclusions players must be able to reach, so each can be tied to evidence. */
-const REVELATION_KINDS = ["culprit", "motive", "item"] as const;
+/**
+ * Allowed third revelation kinds for each mystery type.
+ * "item" is accepted across all types for backwards compatibility with saved cases and fixtures.
+ */
+export function allowedThirdRevelationKinds(mysteryType: string): string[] {
+  const norm = mysteryType.trim().toLowerCase();
+  if (norm === "theft") return ["item"];
+  if (norm === "murder") return ["method", "weapon", "cause", "means", "item"];
+  if (norm === "disappearance") return ["fate", "victim", "location", "item"];
+  if (norm === "conspiracy")
+    return ["objective", "conspiracy", "secret", "mechanism", "item"];
+  if (norm === "strange phenomenon")
+    return ["cause", "mechanism", "source", "anomaly", "item"];
+  return [
+    "mechanism",
+    "cause",
+    "event",
+    "situation",
+    "relationship",
+    "method",
+    "fate",
+    "secret",
+    "objective",
+    "item",
+  ];
+}
 
-function missingRevelationKinds(revelations: Obj[]): string[] {
-  const kinds = new Set(revelations.map((item) => text(item.kind)));
-  return REVELATION_KINDS.filter((kind) => !kinds.has(kind)).map(
-    (kind) => `a revelation with kind "${kind}" is required`,
+export function expectedThirdRevelationKind(mysteryType: string): string {
+  const norm = mysteryType.trim().toLowerCase();
+  if (norm === "theft") return "item";
+  if (norm === "murder") return "method";
+  if (norm === "disappearance") return "fate";
+  if (norm === "conspiracy") return "objective";
+  if (norm === "strange phenomenon") return "cause";
+  return "mechanism";
+}
+
+export function mysteryTypeGuidance(mysteryType: string): {
+  keyItemDesc: string;
+  revelationKind: string;
+  revelationDesc: string;
+  clueGuidance: string;
+} {
+  const norm = mysteryType.trim().toLowerCase();
+  if (norm === "theft") {
+    return {
+      keyItemDesc:
+        "plus keyItem: the central stolen object or physical asset at stake; keyItemLocation: where it is hidden or kept now; keyItemFate: what the culprit intends for it (e.g. sell, destroy, fence); recovery: what the party must do to recover it or prove who took it;",
+      revelationKind: "item",
+      revelationDesc: 'include one each of "culprit", "motive" and "item"',
+      clueGuidance:
+        "to the key item's location (keyItemLocationId in the cast) so the party can actually recover it",
+    };
+  }
+  if (norm === "murder") {
+    return {
+      keyItemDesc:
+        "plus keyItem: the central evidence, murder weapon, or cause of death at stake (e.g. poison vial, discarded weapon, concealed body, forensic trace); keyItemLocation: where this critical evidence or body is now; keyItemFate: how the culprit attempted to destroy, conceal, or explain it away; recovery: what the party must do to locate the evidence, establish the cause of death, or prove who did it;",
+      revelationKind: "method",
+      revelationDesc:
+        'include one each of "culprit", "motive" and "method" (or "weapon"/"cause")',
+      clueGuidance:
+        "to the critical evidence or crime scene location (keyItemLocationId in the cast) so the party can inspect it or uncover the forensic proof",
+    };
+  }
+  if (norm === "disappearance") {
+    return {
+      keyItemDesc:
+        "plus keyItem: the missing person or captive at the centre of the case (or their trail / vital personal effect); keyItemLocation: where the missing person is held or where their trail ends; keyItemFate: what the responsible party intends for them (e.g. ransom, sacrifice, execution, transport); recovery: how the party can locate, reach, and rescue them before that fate;",
+      revelationKind: "fate",
+      revelationDesc:
+        'include one each of "culprit", "motive" and "fate" (or "victim")',
+      clueGuidance:
+        "to where the missing person is held or where their trail leads (keyItemLocationId in the cast) so the party can reach and rescue them",
+    };
+  }
+  if (norm === "conspiracy") {
+    return {
+      keyItemDesc:
+        "plus keyItem: the secret pact, scheme, mechanism, or compromised relationship at the heart of the conspiracy; keyItemLocation: where the conspirators meet or where the critical proof is concealed; keyItemFate: what the conspiracy aims to trigger, execute, or overthrow; recovery: what the party must do to expose the pact, disrupt the scheme, or prove the conspiracy;",
+      revelationKind: "objective",
+      revelationDesc:
+        'include one each of "culprit", "motive" and "objective" (or "secret")',
+      clueGuidance:
+        "to the meeting place, secret archive, or scheme headquarters (keyItemLocationId in the cast) so the party can uncover the proof",
+    };
+  }
+  if (norm === "strange phenomenon") {
+    return {
+      keyItemDesc:
+        "plus keyItem: the anomalous mechanism, catalyst, source, or manifestation at the heart of the phenomenon; keyItemLocation: where the phenomenon originates, is anchored, or manifests; keyItemFate: what will happen if the phenomenon continues unchecked; recovery: what the party must do to analyze, contain, neutralize, or explain the phenomenon;",
+      revelationKind: "cause",
+      revelationDesc:
+        'include one each of "culprit", "motive" and "cause" (or "mechanism")',
+      clueGuidance:
+        "to where the phenomenon is anchored or active (keyItemLocationId in the cast) so the party can analyze or neutralize it",
+    };
+  }
+  return {
+    keyItemDesc:
+      "plus keyItem: the central focal subject, person, event, cause, mechanism, relationship or situation at stake (do not default to theft or stolen objects; centre on the specific situation, dispute, sabotage, deception or mystery); keyItemLocation: where this central situation, evidence, person or mechanism is active or located now; keyItemFate: the impending consequence or stakes if the situation remains unresolved; recovery: what the party must do to uncover the truth, resolve the situation, or prove what happened;",
+    revelationKind: "mechanism",
+    revelationDesc:
+      'include one each of "culprit", "motive" and "mechanism" (or "cause"/"situation")',
+    clueGuidance:
+      "to where the central situation or critical evidence is located (keyItemLocationId in the cast) so the party can investigate it",
+  };
+}
+
+function missingRevelationKinds(
+  revelations: Obj[],
+  mysteryType = "Other",
+): string[] {
+  const kinds = new Set(
+    revelations.map((item) => text(item.kind).trim().toLowerCase()),
   );
+  const hard: string[] = [];
+  if (!kinds.has("culprit"))
+    hard.push('a revelation with kind "culprit" is required');
+  if (!kinds.has("motive"))
+    hard.push('a revelation with kind "motive" is required');
+
+  const allowedThird = allowedThirdRevelationKinds(mysteryType);
+  if (!allowedThird.some((k) => kinds.has(k))) {
+    const expected = expectedThirdRevelationKind(mysteryType);
+    hard.push(
+      `a revelation with kind "${expected}" (or ${allowedThird.join(", ")}) is required`,
+    );
+  }
+  return hard;
 }
 
 function checkFoundation(
@@ -126,7 +248,7 @@ function checkFoundation(
   revelations.forEach((item, index) => {
     if (!hasText(item.fact)) hard.push(`revelation ${index + 1} needs a fact`);
   });
-  hard.push(...missingRevelationKinds(revelations));
+  hard.push(...missingRevelationKinds(revelations, resolved.mysteryType));
   addBannedNameFindings(
     [text(truth.perpetratorName), text(data.title)],
     resolved.avoidNames,
@@ -257,9 +379,11 @@ function checkRoutes(
   const clueIds = uniqueIds(clues);
   const revelationIds = new Set(uniqueIds(list(foundation.revelations)));
   const paths = list(data.independentPaths).map(record);
-  const itemRevelations = list(foundation.revelations)
+  const focalRevelations = list(foundation.revelations)
     .map(record)
-    .filter((rev) => text(rev.kind) === "item")
+    .filter(
+      (rev) => !["culprit", "motive"].includes(text(rev.kind).toLowerCase()),
+    )
     .map((rev) => text(rev.id));
   for (const revelationId of revelationIds) {
     const matching = paths.filter(
@@ -295,7 +419,7 @@ function checkRoutes(
       hard.push(
         `${revelationId} needs two independent evidence paths from distinct sources that share no clue`,
       );
-    else if (itemRevelations.includes(revelationId))
+    else if (focalRevelations.includes(revelationId))
       hard.push(
         ...findCircularItemRoutes(
           routes.map((route) => route.source),
@@ -719,7 +843,12 @@ export async function generateMysteryStaged(
   const concept = deps.seed
     ? formatSeedBlock(deps.seed)
     : formatConceptBlock(
-        rollConcept(resolved.genre, resolved.tone, deps.rng ?? defaultRng),
+        rollMysteryConcept(
+          resolved.genre,
+          resolved.tone,
+          resolved.mysteryType,
+          deps.rng ?? defaultRng,
+        ),
       );
   const context = [deps.contextPrefix, concept].filter(Boolean).join("\n\n");
   const stats: MysteryStagedStats = {
@@ -750,16 +879,17 @@ export async function generateMysteryStaged(
       deps.signal,
     );
   };
+  const guidance = mysteryTypeGuidance(resolved.mysteryType);
   const foundation = await run(
     "mystery-foundation",
-    `STAGE 1 OF 7: Case foundation. ${context}\nOptions: ${JSON.stringify(resolved)}\nEstablish a fixed mystery, title, player-safe summary, central question, opening hook, perpetratorId exactly "person-1", truth (perpetratorName, motive, means, opportunity, constraints, plus keyItem: the central physical object or piece of evidence at stake, something the party can find and carry, chosen to fit the mystery type; keyItemLocation: where it is now; keyItemFate: what the culprit intends for it; recovery: what the party must do to recover it or prove who took it; methodReason: why the method needed what it used, e.g. why a forged pass rather than walking in, and it must agree with the opportunity; it also fixes the physical or magical rules the method relies on, which every later stage must reuse unchanged (if a forged badge opens a door, nothing may later say the badge was never accepted), and mundane steps must be physically plausible (a rubbing of a lock does not copy its key); atStart: where the key item, the culprit and anyone taken are at the moment play begins, consistent with the last timeline event; disputedFact: the exact fact the case turns on; victimStatus: if anyone was taken, hurt or lured away, how they are held or incapacitated and how the party can free them, otherwise an empty string; and where a magical object has a function, keep it consistent with the motive, so do not make the object preserve what the culprit means to erase without saying which effect is which), an ordered timeline of at least three events, and at least three revelations with stable ids, a fact stating the actual conclusion and a kind (include one each of "culprit", "motive" and "item"). Keep the truth private. Do not create suspects, clues, or outcomes yet.\nReturn JSON of exactly this shape (string values are plain strings): {"title":"","summary":"player-safe summary","centralQuestion":"","openingHook":"","perpetratorId":"person-1","truth":{"perpetratorName":"","motive":"","means":"","opportunity":"","constraints":"one string","keyItem":"","keyItemLocation":"","keyItemFate":"","recovery":"","methodReason":"","disputedFact":"","victimStatus":"","atStart":""},"timeline":["one event string each"],"revelations":[{"id":"rev-1","kind":"culprit","fact":""},{"id":"rev-2","kind":"motive","fact":""},{"id":"rev-3","kind":"item","fact":""}]}.`,
+    `STAGE 1 OF 7: Case foundation. ${context}\nOptions: ${JSON.stringify(resolved)}\nEstablish a fixed mystery, title, player-safe summary, central question, opening hook, perpetratorId exactly "person-1", truth (perpetratorName, motive, means, opportunity, constraints, ${guidance.keyItemDesc} methodReason: why the method needed what it used, e.g. why a forged pass rather than walking in, and it must agree with the opportunity; it also fixes the physical or magical rules the method relies on, which every later stage must reuse unchanged (if a forged badge opens a door, nothing may later say the badge was never accepted), and mundane steps must be physically plausible (a rubbing of a lock does not copy its key); atStart: where the central subject/evidence, the culprit and anyone taken are at the moment play begins, consistent with the last timeline event; disputedFact: the exact fact the case turns on; victimStatus: if anyone was taken, hurt or lured away, how they are held or incapacitated and how the party can free them, otherwise an empty string; and where a magical object has a function, keep it consistent with the motive, so do not make the object preserve what the culprit means to erase without saying which effect is which), an ordered timeline of at least three events, and at least three revelations with stable ids, a fact stating the actual conclusion and a kind (${guidance.revelationDesc}). Keep the truth private. Do not create suspects, clues, or outcomes yet.\nReturn JSON of exactly this shape (string values are plain strings): {"title":"","summary":"player-safe summary","centralQuestion":"","openingHook":"","perpetratorId":"person-1","truth":{"perpetratorName":"","motive":"","means":"","opportunity":"","constraints":"one string","keyItem":"","keyItemLocation":"","keyItemFate":"","recovery":"","methodReason":"","disputedFact":"","victimStatus":"","atStart":""},"timeline":["one event string each"],"revelations":[{"id":"rev-1","kind":"culprit","fact":""},{"id":"rev-2","kind":"motive","fact":""},{"id":"rev-3","kind":"${guidance.revelationKind}","fact":""}]}.`,
     (data) => checkFoundation(data, resolved),
     normalizeMysteryStage.foundation,
   );
   if (!foundation) return stopped(stats, "foundation");
   const cast = await run(
     "mystery-cast",
-    `STAGE 2 OF 7: Suspects and locations. Treat this accepted foundation as locked; do not change its facts, names, IDs, or timeline.\nFOUNDATION: ${JSON.stringify(foundation.data)}\nReturn exactly ${resolved.suspectCount} suspects in "suspects" (people only; never put places there) and the places in "locations". Return exactly ${resolved.suspectCount} suspects with ids person-1 through person-${resolved.suspectCount}; person-1's name must be exactly the locked perpetratorName ${text(record(foundation.data.truth).perpetratorName)}. Each suspect has name, role, publicFace, startLocationId (the id of the one location they are at when play begins; it must not contradict their alibi, and anyone held captive stays where they are held), motive, secret, alibi, knows, believes, approach. Distinguish actual knowledge from belief, lie or omission; no unexplained knowledge or impossible alibis. Return at least three locations with unique stable ids, name, activity and evidence. One location must be where the key item is now (the foundation's keyItemLocation); return its id as keyItemLocationId. Do not write clues or change the truth.\nReturn JSON of exactly this shape: {"keyItemLocationId":"place-1","suspects":[{"id":"person-1","name":"","role":"","publicFace":"","startLocationId":"place-1","motive":"","secret":"","alibi":"","knows":"","believes":"","approach":""}],"locations":[{"id":"place-1","name":"","activity":"","evidence":""}]}. All values are plain strings.`,
+    `STAGE 2 OF 7: Suspects and locations. Treat this accepted foundation as locked; do not change its facts, names, IDs, or timeline.\nFOUNDATION: ${JSON.stringify(foundation.data)}\nReturn exactly ${resolved.suspectCount} suspects in "suspects" (people only; never put places there) and the places in "locations". Return exactly ${resolved.suspectCount} suspects with ids person-1 through person-${resolved.suspectCount}; person-1's name must be exactly the locked perpetratorName ${text(record(foundation.data.truth).perpetratorName)}. Each suspect has name, role, publicFace, startLocationId (the id of the one location they are at when play begins; it must not contradict their alibi, and anyone held captive stays where they are held), motive, secret, alibi, knows, believes, approach. Distinguish actual knowledge from belief, lie or omission; no unexplained knowledge or impossible alibis. Return at least three locations with unique stable ids, name, activity and evidence. One location must be where the key item or central subject is now (the foundation's keyItemLocation); return its id as keyItemLocationId. Do not write clues or change the truth.\nReturn JSON of exactly this shape: {"keyItemLocationId":"place-1","suspects":[{"id":"person-1","name":"","role":"","publicFace":"","startLocationId":"place-1","motive":"","secret":"","alibi":"","knows":"","believes":"","approach":""}],"locations":[{"id":"place-1","name":"","activity":"","evidence":""}]}. All values are plain strings.`,
     (data) => checkCast(data, foundation.data, resolved),
     (data) =>
       normalizeMysteryStage.cast(
@@ -770,7 +900,7 @@ export async function generateMysteryStaged(
   if (!cast) return stopped(stats, "cast");
   const clues = await run(
     "mystery-clues",
-    `STAGE 3 OF 7: Clue and lead network. FOUNDATION (locked): ${JSON.stringify(foundation.data)}\nCAST AND LOCATIONS (locked): ${JSON.stringify(cast.data)}\nReturn at least six concrete clues, each with id, observation, sourceId, supports (known revelation ids), doesNotProve and leadsTo (known person/place/clue ids). Return independentPaths with at least two paths to EACH revelation; each path must use existing clue ids, connect consecutive clues through leadsTo, contain a clue that supports the revelation, and begin at a distinct clue source. Every revelation must be supported by clues from at least two different sources; the simplest valid independent path is a single clue that supports the revelation, with two such paths from different sources. Include at least two useful investigation routes. The two paths for a revelation must share no clue and begin at different sources. At least one clue must lead to the key item's location (keyItemLocationId in the cast) so the party can actually recover it; that clue's observation must state the specific sign, record or witness account that points the party there (for example who was seen at that place, or what was carried to it), never just a missing item, and the clues must let players deduce the culprit, the motive and where the item is, without a GM declaration. Each route must by itself give enough information to establish its revelation (a clue that only shows something was prepared does not prove a motive), and a revelation must not hinge on one person agreeing to talk: give a route the party can find without that person's help. Keep every person where the cast places them (startLocationId) and refer only to ids that exist. Red herrings are true observations with testable alternative readings, never fabricated evidence.\nReturn JSON of exactly this shape: {"clues":[{"id":"clue-1","observation":"","sourceId":"person-or-place id","supports":["revelation id"],"doesNotProve":"","leadsTo":["person, place or clue id"]}],"independentPaths":[{"revelationId":"","clueIds":["clue-1","clue-2"],"reasoning":"how these clues together establish the conclusion"}]}. A route must collectively contain enough evidence for its conclusion: a single-clue route is valid only when that clue alone establishes it, and a route to the culprit must point to that specific person, not merely show tampering. Write each path's reasoning.`,
+    `STAGE 3 OF 7: Clue and lead network. FOUNDATION (locked): ${JSON.stringify(foundation.data)}\nCAST AND LOCATIONS (locked): ${JSON.stringify(cast.data)}\nReturn at least six concrete clues, each with id, observation, sourceId, supports (known revelation ids), doesNotProve and leadsTo (known person/place/clue ids). Return independentPaths with at least two paths to EACH revelation; each path must use existing clue ids, connect consecutive clues through leadsTo, contain a clue that supports the revelation, and begin at a distinct clue source. Every revelation must be supported by clues from at least two different sources; the simplest valid independent path is a single clue that supports the revelation, with two such paths from different sources. Include at least two useful investigation routes. The two paths for a revelation must share no clue and begin at different sources. At least one clue must lead to the key item or focal location (keyItemLocationId in the cast) ${guidance.clueGuidance}; that clue's observation must state the specific sign, record or witness account that points the party there (for example who was seen at that place, or what was carried to it), never just a missing item, and the clues must let players deduce the culprit, the motive and where the item or proof is, without a GM declaration. Each route must by itself give enough information to establish its revelation (a clue that only shows something was prepared does not prove a motive), and a revelation must not hinge on one person agreeing to talk: give a route the party can find without that person's help. Keep every person where the cast places them (startLocationId) and refer only to ids that exist. Red herrings are true observations with testable alternative readings, never fabricated evidence.\nReturn JSON of exactly this shape: {"clues":[{"id":"clue-1","observation":"","sourceId":"person-or-place id","supports":["revelation id"],"doesNotProve":"","leadsTo":["person, place or clue id"]}],"independentPaths":[{"revelationId":"","clueIds":["clue-1","clue-2"],"reasoning":"how these clues together establish the conclusion"}]}. A route must collectively contain enough evidence for its conclusion: a single-clue route is valid only when that clue alone establishes it, and a route to the culprit must point to that specific person, not merely show tampering. Write each path's reasoning.`,
     (data) => checkClues(data, foundation.data, cast.data),
     (data) =>
       normalizeMysteryStage.clues(
@@ -788,7 +918,7 @@ export async function generateMysteryStaged(
   if (!pressure) return stopped(stats, "pressure");
   const audit = await run(
     "mystery-audit",
-    `STAGE 5 OF 7: Audit this locked complete case. Do not rewrite or contradict any accepted content.\nFOUNDATION: ${JSON.stringify(foundation.data)}\nCAST: ${JSON.stringify(cast.data)}\nCLUES: ${JSON.stringify(clues.data)}\nPRESSURE AND OUTCOMES: ${JSON.stringify(pressure.data)}\nCheck these invariants and report any that fail: (A) causal consistency: can every significant action happen using the established rules, at the established time and place, and does the pressure clock start after the moment play begins without repeating the timeline; (B) evidence sufficiency: does each claimed route collectively contain enough evidence for its conclusion (a clue that only shows tampering does not identify the culprit; a clue about a group does not establish one person's motive), and is no revelation dependent on one person agreeing to talk; (C) solution flexibility: are the objective and world constraints kept separate from optional methods, with several workable approaches and no single mandatory sequence or self-contradicting failure condition. Also check that the world behaves consistently: items, magical effects, motives, NPC knowledge, timing and consequences agree across stages. Specifically: (1) the method is mechanically possible and its access, timing and tools agree with methodReason and the opportunity; (2) the key item has a known location, custody and fate; (3) every revelation has independent evidence that can actually be followed; (4) the culprit can be identified through evidence, not a GM declaration; (5) the true motive can be established; (6) every outcome is reachable with the evidence and actions that exist. Also check cross-stage contradictions, impossible chronology or knowledge, invalid links, false red herrings, missing consequences, and leakage of truth into player-facing fields. Return {"status":"consistent","issues":[]} only if there are no material defects. Otherwise return {"status":"needs-repair","issues":["specific field-level defect", ...]}.`,
+    `STAGE 5 OF 7: Audit this locked complete case. Do not rewrite or contradict any accepted content.\nFOUNDATION: ${JSON.stringify(foundation.data)}\nCAST: ${JSON.stringify(cast.data)}\nCLUES: ${JSON.stringify(clues.data)}\nPRESSURE AND OUTCOMES: ${JSON.stringify(pressure.data)}\nCheck these invariants and report any that fail: (A) causal consistency: can every significant action happen using the established rules, at the established time and place, and does the pressure clock start after the moment play begins without repeating the timeline; (B) evidence sufficiency: does each claimed route collectively contain enough evidence for its conclusion (a clue that only shows tampering does not identify the culprit; a clue about a group does not establish one person's motive), and is no revelation dependent on one person agreeing to talk; (C) solution flexibility: are the objective and world constraints kept separate from optional methods, with several workable approaches and no single mandatory sequence or self-contradicting failure condition. Also check that the world behaves consistently: items, magical effects, motives, NPC knowledge, timing and consequences agree across stages. Specifically: (1) the method is mechanically possible and its access, timing and tools agree with methodReason and the opportunity; (2) the key item or focal subject has a known location, custody and fate; (3) every revelation has independent evidence that can actually be followed; (4) the culprit can be identified through evidence, not a GM declaration; (5) the true motive can be established; (6) every outcome is reachable with the evidence and actions that exist. Also check cross-stage contradictions, impossible chronology or knowledge, invalid links, false red herrings, missing consequences, and leakage of truth into player-facing fields. Return {"status":"consistent","issues":[]} only if there are no material defects. Otherwise return {"status":"needs-repair","issues":["specific field-level defect", ...]}.`,
     checkAudit,
     normalizeMysteryStage.audit,
   );

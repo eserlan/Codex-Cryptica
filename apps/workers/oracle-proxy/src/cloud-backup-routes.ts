@@ -59,7 +59,7 @@ async function handleCloudBackupAdminRoutes(
 
   // Admin routes first: they are gated by a worker secret rather than a
   // vault's ownership code, and must never be reachable by the patterns
-  // below (spec 162, FR-016).
+  // below (spec 162).
   if (pathname === "/api/cloud-backup/admin/lookup")
     return methodGuardedAdminRoute(request, env, "POST", () =>
       handleCloudBackupAdminLookup(request, env),

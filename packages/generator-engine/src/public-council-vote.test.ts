@@ -6,6 +6,7 @@ import {
   buildCouncilVotePathsPrompt,
   buildCouncilVotePathsRepairPrompt,
   councilVoteConfig,
+  extractCouncilVoteNames,
   generateCouncilVoteLocal,
   mergeCouncilVoteOutput,
   parseCouncilVoteFoundation,
@@ -1056,5 +1057,63 @@ Tally: Support 5, Oppose 0, Abstain 0, Undecided 0.${suffix}`,
       runCouncilVoteStaged(prompt, { send, signal: controller.signal }),
     ).rejects.toThrow();
     expect(send).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("buildCouncilVoteFoundationPrompt diversification", () => {
+  it("includes avoidNames in prompt instruction and avoids them in members", () => {
+    const prompt = buildCouncilVoteFoundationPrompt(
+      { avoidNames: ["Alden", "Vance"] },
+      "",
+      seededRng(1),
+    );
+    expect(prompt.userMessage).toContain(
+      "Avoid reusing these recent councillor or NPC names: Alden, Vance.",
+    );
+    for (const member of prompt.resolved.members) {
+      expect(["Alden", "Vance"]).not.toContain(member.name);
+    }
+  });
+
+  it("includes seed block when concept seed is provided", () => {
+    const seed = {
+      premise: "Council deadlock over quarantine protocols",
+      stake: "A plague entering the lower wards",
+      setting: "The High Guildhall",
+      distinctiveElement: "A sealed brass ballot urn",
+      titleIdea: "The Quarantined Vote",
+    };
+    const prompt = buildCouncilVoteFoundationPrompt({ seed }, "", seededRng(1));
+    expect(prompt.userMessage).toContain(
+      "Political council vote concept, chosen before writing and locked",
+    );
+    expect(prompt.userMessage).toContain(
+      "Council deadlock over quarantine protocols",
+    );
+    expect(prompt.userMessage).toContain("The Quarantined Vote");
+  });
+});
+
+describe("extractCouncilVoteNames", () => {
+  it("extracts councillor names from markdown bullets in lore", () => {
+    const output = {
+      content: "The proposal will be voted on tomorrow.",
+      lore: `### Council Members
+- **Lord Lucan** (Patrician) — Initial stance: Opposed.
+- **Master Corvus (Guildmaster)** — Initial stance: Leaning Yes.
+- **Lady Valia — Pragmatist** — Initial stance: Neutral.`,
+    };
+    const names = extractCouncilVoteNames(output);
+    expect(names).toContain("Lord Lucan");
+    expect(names).toContain("Master Corvus");
+    expect(names).toContain("Lady Valia");
+  });
+
+  it("returns an empty array when no member bullets are found", () => {
+    const output = {
+      content: "Plain text with no members.",
+      lore: "Voting procedure is majority.",
+    };
+    expect(extractCouncilVoteNames(output)).toEqual([]);
   });
 });

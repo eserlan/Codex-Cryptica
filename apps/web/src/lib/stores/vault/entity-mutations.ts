@@ -164,13 +164,11 @@ export class EntityMutationService {
 
     this.entities = entities;
 
-    if (
-      updates.content !== undefined ||
-      updates.lore !== undefined ||
-      updates.title !== undefined ||
-      updates.labels !== undefined
-    ) {
+    if (updates.content !== undefined || updates.lore !== undefined) {
       this.deps.loader.markContentLoaded(id);
+      if (this.entities[id]) {
+        this.entities[id].contentLoaded = true;
+      }
     }
 
     if (updates.image && this.deps.invalidateUrlCache) {
@@ -332,7 +330,15 @@ export class EntityMutationService {
         if (result?.ok) {
           committedEntities[id] = stagedEntities[id];
           committedUpdates[id] = appliedUpdates[id];
-          this.deps.loader.markContentLoaded(id);
+          if (
+            appliedUpdates[id].content !== undefined ||
+            appliedUpdates[id].lore !== undefined
+          ) {
+            this.deps.loader.markContentLoaded(id);
+            if (stagedEntities[id]) {
+              stagedEntities[id].contentLoaded = true;
+            }
+          }
           items.push({ id, status: "success" });
         } else {
           items.push({ id, status: "failed", error: result?.error });

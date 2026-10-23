@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { factionConfig } from "./public-faction-constants";
 import {
   buildMysteryPrompt,
+  extractMysteryNames,
   generateMysteryLocal,
   mysteryConfig,
   parseMysteryResponse,
@@ -138,5 +139,41 @@ describe("buildMysteryPrompt context", () => {
     expect(prompt.context).toContain("SESSION NOTE: keep it short");
     expect(prompt.context).not.toContain("Concept constraints for this case");
     expect(prompt.userMessage).toContain("Concept constraints for this case");
+  });
+});
+
+describe("extractMysteryNames", () => {
+  it("extracts person node labels from the mystery graph", () => {
+    const names = extractMysteryNames({
+      mysteryGraph: {
+        nodes: [
+          { kind: "person", label: "Orsik Pell" },
+          { kind: "person", label: "Mara Vane" },
+          { kind: "location", label: "Old Archive" },
+          { kind: "item", label: "Ledger" },
+        ],
+      },
+    });
+    expect(names).toEqual(["Orsik Pell", "Mara Vane"]);
+  });
+
+  it("extracts culprit from lore when graph nodes are absent", () => {
+    const names = extractMysteryNames({
+      lore: "## GM Truth\n**Responsible party:** Valen Cross\nTheir motive was desperate debt.",
+    });
+    expect(names).toContain("Valen Cross");
+  });
+
+  it("extracts suspect names from content bullet lists", () => {
+    const names = extractMysteryNames({
+      content:
+        "## People to Question\n- **Kaelen Voss — Keeper:** Present at the watch.\n- **Elora Dane — Courier:** Delivered the dispatch.",
+    });
+    expect(names).toEqual(["Kaelen Voss", "Elora Dane"]);
+  });
+
+  it("returns an empty array when no person names are found", () => {
+    expect(extractMysteryNames({})).toEqual([]);
+    expect(extractMysteryNames({ content: "No names here" })).toEqual([]);
   });
 });
