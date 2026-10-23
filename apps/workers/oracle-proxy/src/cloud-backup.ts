@@ -11,8 +11,9 @@
  *
  * - **Wrong code and missing backup must be indistinguishable** (FR-014), so an
  *   attacker cannot probe for which vaults exist.
- * - **The admin lookup must never become a browsing tool** (FR-016), so it
- *   resolves to exactly one match or to nothing, and never paginates.
+ * - **The admin lookup stays a single-match tool** (FR-015), so it resolves to
+ *   exactly one match or to nothing, and never paginates. Listing backups is
+ *   the separate, metadata-only operator inventory (FR-024, `admin-vaults.ts`).
  */
 import {
   CLOUD_BACKUP_LIMITS,

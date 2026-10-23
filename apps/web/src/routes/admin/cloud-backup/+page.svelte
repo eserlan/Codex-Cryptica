@@ -5,8 +5,8 @@
    * Deliberately thin: it calls the same `/api/cloud-backup/admin/stats` route
    * described in `docs/deployment/cloud-backup-support-access.md` and renders
    * exactly what that route returns — counts and a byte total, never a title,
-   * a backup id, or any per-vault detail. There is nothing here to browse,
-   * because the worker route it calls has nothing to browse either (FR-016).
+   * a backup id, or any per-vault detail. The per-vault list is the separate
+   * `/admin/vaults` inventory (FR-024).
    *
    * The admin token is kept in component state only — never written to
    * localStorage/sessionStorage — so it does not linger on this device after
@@ -78,8 +78,10 @@
   </h1>
   <p class="mb-6 text-xs text-theme-muted">
     Aggregate counts only — no vault titles, no content, no images. See
-    <code>docs/deployment/cloud-backup-support-access.md</code> for what this token
-    can and cannot do.
+    <code>docs/deployment/cloud-backup-support-access.md</code> for what this
+    token can and cannot do. For a per-vault list, see
+    <a href="/admin/vaults" class="text-theme-link underline">Vault Inventory</a
+    >.
   </p>
 
   <form

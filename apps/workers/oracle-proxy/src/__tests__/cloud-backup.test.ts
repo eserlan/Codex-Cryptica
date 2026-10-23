@@ -521,7 +521,7 @@ describe("support lookup", () => {
   });
 
   it("answers a zero match and an ambiguous match identically", async () => {
-    // The admin must not learn that three vaults share a title (FR-016).
+    // The admin must not learn that three vaults share a title (FR-015).
     const env = makeEnv();
     await enable(env, "Shared Name");
     await enable(env, "Shared Name");

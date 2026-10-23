@@ -55,8 +55,8 @@ export async function handleCloudBackupAdminDelete(
  * Deliberately narrow. It resolves to exactly one match or to nothing: two
  * matches return the same empty answer as zero, so an admin never learns how
  * many vaults share a title. The scan reads one bounded page and never
- * paginates onward, because walking the whole prefix is bulk enumeration under
- * another name (FR-016).
+ * paginates onward. Browsing every backup's metadata is the operator inventory
+ * (FR-024, `admin-vaults.ts`), not this route.
  */
 export async function handleCloudBackupAdminLookup(
   request: Request,
@@ -133,9 +133,8 @@ function tallyStatsObjects(objects: any[], stats: StatsAccumulator): void {
  * Deliberately the opposite shape from the lookup above: this one *does* walk
  * the whole `cloud-backup/` prefix, because the only thing it returns is
  * summed totals — vault count, total stored bytes, total asset count. It never
- * returns a title, a backup id, or anything else that identifies one vault, so
- * it does not reopen the bulk-enumeration door FR-016 closes: an operator
- * learns "how many" and "how big", never "which ones".
+ * returns a title or a backup id; per-vault detail lives in the paged operator
+ * inventory (FR-024, `admin-vaults.ts`).
  */
 export async function handleCloudBackupAdminStats(
   request: Request,
