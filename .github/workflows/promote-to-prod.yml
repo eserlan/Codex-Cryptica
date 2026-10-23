@@ -187,7 +187,7 @@ jobs:
           DISCORD_WEBHOOK_URL: ${{ secrets.VITE_DISCORD_WEBHOOK_URL_PROD }}
         run: |
           # Use the existing script for the standard notification
-          ./scripts/discord-deploy.sh "production" "$DISCORD_WEBHOOK_URL" "https://codexcryptica.com/"
+          ./scripts/discord-deploy.sh "production" "$DISCORD_WEBHOOK_URL" "https://codexcryptica.com/" "origin/main"
 
           # Construct a simple one-line promotion summary
           RUN_ID="${{ needs.find-staging-build.outputs.run_id }}"
