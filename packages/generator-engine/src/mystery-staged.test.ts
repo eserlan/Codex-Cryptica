@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { generateMysteryStaged } from "./mystery-staged";
+import {
+  allowedThirdRevelationKinds,
+  expectedThirdRevelationKind,
+  generateMysteryStaged,
+  mysteryTypeGuidance,
+} from "./mystery-staged";
 import { resolveMystery } from "./public-mystery";
 
 function validStages() {
@@ -1213,5 +1218,110 @@ describe("case seed in stage 1", () => {
     });
     expect(messages[0]).toContain("Concept constraints for this case");
     expect(messages[0]).not.toContain("Case seed, chosen before writing");
+  });
+});
+
+describe("allowedThirdRevelationKinds and expectedThirdRevelationKind", () => {
+  it("adapts revelation kinds per mystery type while maintaining backwards compatibility with 'item'", () => {
+    expect(expectedThirdRevelationKind("theft")).toBe("item");
+    expect(allowedThirdRevelationKinds("theft")).toEqual(["item"]);
+
+    expect(expectedThirdRevelationKind("murder")).toBe("method");
+    expect(allowedThirdRevelationKinds("murder")).toContain("method");
+    expect(allowedThirdRevelationKinds("murder")).toContain("item");
+
+    expect(expectedThirdRevelationKind("disappearance")).toBe("fate");
+    expect(allowedThirdRevelationKinds("disappearance")).toContain("fate");
+    expect(allowedThirdRevelationKinds("disappearance")).toContain("item");
+
+    expect(expectedThirdRevelationKind("conspiracy")).toBe("objective");
+    expect(allowedThirdRevelationKinds("conspiracy")).toContain("objective");
+    expect(allowedThirdRevelationKinds("conspiracy")).toContain("item");
+
+    expect(expectedThirdRevelationKind("strange phenomenon")).toBe("cause");
+    expect(allowedThirdRevelationKinds("strange phenomenon")).toContain(
+      "cause",
+    );
+    expect(allowedThirdRevelationKinds("strange phenomenon")).toContain("item");
+
+    expect(expectedThirdRevelationKind("other")).toBe("mechanism");
+    expect(allowedThirdRevelationKinds("other")).toContain("mechanism");
+    expect(allowedThirdRevelationKinds("other")).toContain("item");
+  });
+});
+
+describe("mysteryTypeGuidance", () => {
+  it("provides tailored guidance steering 'Other' away from theft", () => {
+    const otherGuidance = mysteryTypeGuidance("Other");
+    expect(otherGuidance.keyItemDesc).toContain(
+      "do not default to theft or stolen objects",
+    );
+    expect(otherGuidance.revelationKind).toBe("mechanism");
+    expect(otherGuidance.revelationDesc).toContain("mechanism");
+
+    const theftGuidance = mysteryTypeGuidance("Theft");
+    expect(theftGuidance.keyItemDesc).toContain(
+      "central stolen object or physical asset",
+    );
+    expect(theftGuidance.revelationKind).toBe("item");
+
+    const murderGuidance = mysteryTypeGuidance("Murder");
+    expect(murderGuidance.keyItemDesc).toContain(
+      "murder weapon, or cause of death",
+    );
+    expect(murderGuidance.revelationKind).toBe("method");
+  });
+});
+
+describe("non-theft mystery type in staged pipeline", () => {
+  it("allows non-theft revelation kind like 'mechanism' for Mystery Type = Other", async () => {
+    const [foundation, cast, clues, pressure] = validStages();
+    // Adapt Stage 1 foundation for non-theft
+    foundation.truth.keyItem = "The broken succession agreement";
+    foundation.truth.keyItemLocation = "Archive";
+    foundation.truth.keyItemFate =
+      "Signed under false pretences before the deadline";
+    foundation.truth.recovery =
+      "Expose the altered seal or force an emergency session";
+
+    // Adapt Stage 1 revelations for non-theft: third revelation is kind: "mechanism"
+    const rev3 = foundation.revelations.find(
+      (r: { id: string }) => r.id === "key",
+    );
+    if (rev3) {
+      rev3.kind = "mechanism";
+      rev3.fact = "The council seal was stamped with a cracked matrix";
+    }
+
+    const replies = [
+      foundation,
+      cast,
+      clues,
+      pressure,
+      { status: "consistent", issues: [] },
+      { status: "consistent", issues: [] },
+    ];
+    const messages: string[] = [];
+
+    const result = await generateMysteryStaged(
+      resolveMystery({ mysteryType: "Other" }),
+      {
+        complete: async (_system, message) => {
+          messages.push(message);
+          return JSON.stringify(replies.shift());
+        },
+      },
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.stats.outcome).toBe("staged");
+    // Verify Stage 1 and Stage 3 prompts include 'Other' guidance
+    expect(messages[0]).toContain("do not default to theft or stolen objects");
+    expect(messages[0]).toContain(
+      'include one each of "culprit", "motive" and "mechanism"',
+    );
+    expect(messages[2]).toContain(
+      "to where the central situation or critical evidence is located",
+    );
   });
 });

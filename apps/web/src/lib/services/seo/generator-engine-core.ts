@@ -82,6 +82,7 @@ import { getSessionContext } from "./session-context";
 import { villainDomainHistoryStore } from "./villain-domain-history";
 import {
   generationInputHistoryStore,
+  generationNameHistoryStore,
   generationSeedHistoryStore,
   summarizeResolvedInputs,
   formatRecentInputsNote,
@@ -540,10 +541,17 @@ export class GeneratorEngineCore extends GeneratorEngineBase {
         const resolved = resolveOneShot(oneShotOptions);
         const seed = await generateConceptSeed(
           {
+            domain: "adventure",
+            subType: resolved.emphasis,
             genre: resolved.genre,
             tone: resolved.tone ?? "",
             context: getSessionContext(),
             recent: generationSeedHistoryStore.recent("one-shot"),
+            avoidTropes: [
+              "tavern notice board",
+              "missing merchant caravan",
+              "fetch quest for a lost relic",
+            ],
           },
           {
             complete: (systemInstruction, userMessage) =>
@@ -579,6 +587,12 @@ export class GeneratorEngineCore extends GeneratorEngineBase {
           "one-shot",
           summarizeResolvedInputs(result.resolved),
         );
+        if (result.adventure.npcs?.length) {
+          generationNameHistoryStore.record(
+            "one-shot",
+            result.adventure.npcs.map((n) => n.name),
+          );
+        }
         return {
           ...oneShotToOutput(result.adventure),
           ...(result.reviewSkipped ? { aiReviewSkipped: true } : {}),

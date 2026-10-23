@@ -1,6 +1,7 @@
 import type { StagedProgress, StagedProgressStep } from "./staged-progress";
 import type { PublicGeneratorOutput } from "./public-generator-adapters";
 import type { Rng } from "./random-utils";
+import type { ConceptSeed } from "./concept-seed";
 
 export type HeistStageId = "objective" | "security" | "response" | "coherence";
 
@@ -10,6 +11,8 @@ export interface HeistStagedDeps {
   rng?: Rng;
   /** Caller-supplied context placed before every stage. */
   contextPrefix?: string;
+  /** An optional concept seed rolled before writing, anchoring premise and stake. */
+  seed?: ConceptSeed | null;
   /** Live step list for the page. */
   onProgress?: (steps: StagedProgressStep[]) => void;
   /** Called once when a run finishes or gives up (not on abort). */

@@ -31,7 +31,11 @@ import {
   generatePlaceholderName as generateName,
 } from "./random-utils";
 import { parseFencedJson } from "./llm-response-utils";
-import { formatCampaignContextBlock } from "./campaign-context";
+import {
+  avoidNamesExcludingContext,
+  formatCampaignContextBlock,
+} from "./campaign-context";
+import { type ConceptSeed, formatSeedBlock } from "./concept-seed";
 import {
   FIXING_DETAIL,
   ONE_PASS_DETAIL,
@@ -63,6 +67,8 @@ export interface CouncilVoteGeneratorOptions {
   tone?: string;
   antagonistInfluence?: string;
   campaignContext?: string;
+  avoidNames?: string[];
+  seed?: ConceptSeed | null;
 }
 
 interface CouncilVoteMember {
@@ -115,13 +121,24 @@ function resolveCouncilVote(
     pickFrom(councilVoteConfig.antagonistInfluences, rng);
   const campaignContext = options.campaignContext?.trim() || undefined;
 
+  const avoidSet = new Set(
+    options.avoidNames?.map((n) => n.trim().toLowerCase()) ?? [],
+  );
   const members: CouncilVoteMember[] = Array.from(
     { length: councilSize },
-    () => ({
-      name: generateName(rng),
-      archetype: pickFrom(councilVoteConfig.archetypes, rng),
-      stance: pickFrom(councilVoteConfig.stances, rng),
-    }),
+    () => {
+      let name = generateName(rng);
+      let attempts = 0;
+      while (avoidSet.has(name.toLowerCase()) && attempts < 10) {
+        name = generateName(rng);
+        attempts++;
+      }
+      return {
+        name,
+        archetype: pickFrom(councilVoteConfig.archetypes, rng),
+        stance: pickFrom(councilVoteConfig.stances, rng),
+      };
+    },
   );
 
   return {
@@ -196,6 +213,16 @@ export function buildCouncilVoteFoundationPrompt(
   rng: Rng = defaultRng,
 ): CouncilVoteFoundationPrompt {
   const resolved = resolveCouncilVote(options, rng);
+  const avoid = avoidNamesExcludingContext(
+    options.avoidNames ?? [],
+    options.campaignContext,
+  );
+  const avoidPrompt = avoid.length
+    ? `Avoid reusing these recent councillor or NPC names: ${avoid.join(", ")}.\n`
+    : "";
+  const seedBlock = options.seed
+    ? `\n\n${formatSeedBlock(options.seed, "Political council vote concept")}\n`
+    : "";
 
   const userMessage = `Generate the FOUNDATION of a Council Vote political RPG quest in JSON format: the party must secure enough votes on a council before an urgent decision is made, instead of persuading a single ruler. This is step one of two — a second step will build the possible paths to victory afterward, treating everything you establish here as fixed, unchangeable fact. Do NOT write "Possible Paths" or "Follow-Up Hooks" yet; those come later.
 Options:
@@ -208,7 +235,7 @@ Options:
 - Scope: ${resolved.scope}
 - Tone: ${resolved.tone}
 - Antagonist Influence: ${resolved.antagonistInfluence}
-${formatCampaignContextBlock(resolved.campaignContext)}
+${formatCampaignContextBlock(resolved.campaignContext)}${seedBlock}
 
 You must return a valid JSON object matching the following structure exactly:
 {
@@ -222,7 +249,7 @@ This is a political puzzle, not a sequence of mandatory fetch quests: give most 
 Set the vote firmly within the ${resolved.genre} genre — the governing body, council members, and stakes should feel native to that setting.
 Before drafting anything else, fix the party's exact objective — the specific proposal outcome that would satisfy the party — and hold it immutable: state it clearly, since step two must never contradict it or introduce an amendment if it requires the proposal to pass unchanged.
 ${NAME_BAN_PROMPT}
-${sessionContext}
+${avoidPrompt}${sessionContext}
 Write every section as scene-appropriate prose. Do not restate the wording of these instructions verbatim in the output, and never include prompt instructions, placeholder-name mapping notes, or any other meta-commentary about how the piece was generated — the output is the adventure itself, nothing about producing it.
 Before returning, double-check: every councillor's stance is identical everywhere it appears (their own bullet and "Current Vote Estimate"); the tally in "Current Vote Estimate" is arithmetically correct for ${resolved.councilSize} seats; every dependency names a real councillor from this same roster and is stated in only one direction; and "Antagonist Influence" does not contradict any antagonist action described in "content". Fix any mismatch before responding.
 Return only the JSON object. Do not include markdown code block formatting like \`\`\`json.`;
@@ -985,6 +1012,48 @@ export function mergeCouncilVoteOutput(
     labels: foundation.labels,
     status: "active",
   };
+}
+
+/**
+ * Extracts generated councillor names from council vote output
+ * so subsequent generations can avoid immediately repeating them.
+ */
+export function extractCouncilVoteNames(output: {
+  content?: string;
+  lore?: string;
+}): string[] {
+  const names = new Set<string>();
+  const text = `${output.lore ?? ""}\n${output.content ?? ""}`;
+
+  const memberMatches = text.matchAll(
+    /-\s+\*\*([^*()\n]+?)(?:\s*\(([^)]+)\)|\s*[—–-]\s*[^*]+)?\*\*/g,
+  );
+  for (const m of memberMatches) {
+    const raw = m[1]?.trim();
+    if (
+      raw &&
+      raw.length > 1 &&
+      raw.length < 40 &&
+      !/^(?:voting|current|council|antagonist|investigation|the\b)/i.test(raw)
+    ) {
+      names.add(raw);
+    }
+  }
+
+  const altMatches = text.matchAll(/-\s+\*\*([^*()\n]+?)\*\*\s*\(([^)]+)\)/g);
+  for (const m of altMatches) {
+    const raw = m[1]?.trim();
+    if (
+      raw &&
+      raw.length > 1 &&
+      raw.length < 40 &&
+      !/^(?:voting|current|council|antagonist|investigation|the\b)/i.test(raw)
+    ) {
+      names.add(raw);
+    }
+  }
+
+  return [...names];
 }
 
 export function generateCouncilVoteLocal(

@@ -2,6 +2,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { DefaultGeneratorEngine } from "./generator-engine";
 import { generateOneShotLocal } from "generator-engine";
+import {
+  generationNameHistoryStore,
+  generationSeedHistoryStore,
+} from "./generation-input-history";
 
 function modelReplying(text: string) {
   return {
@@ -19,7 +23,8 @@ type Stage =
   "seed" | "core" | "structure" | "finale" | "scene" | "npcs" | "review";
 
 function stageOf(prompt: string): Stage {
-  if (prompt.includes("different case seeds")) return "seed";
+  if (prompt.includes("adventure seeds") || prompt.includes("case seeds"))
+    return "seed";
   if (prompt.includes("Plan the core")) return "core";
   if (prompt.includes("Plan the scenes")) return "structure";
   if (prompt.includes("Work out how this one-shot")) return "finale";
@@ -258,6 +263,35 @@ describe("DefaultGeneratorEngine staged one-shot", () => {
     expect(out.aiFallback).toBe(true);
     expect(calls.map((c) => c.stage)).toEqual(["seed", "core", "core"]);
     expect(out.oneShot?.scenes.length).toBeGreaterThanOrEqual(3);
+  });
+
+  it("seeds the adventure with emphasis, anti-tropes, and tracks NPC names across sessions", async () => {
+    const storageMap = new Map<string, string>();
+    const fakeSessionStorage = {
+      getItem: (k: string) => storageMap.get(k) ?? null,
+      setItem: (k: string, v: string) => storageMap.set(k, v),
+      removeItem: (k: string) => storageMap.delete(k),
+    };
+    (globalThis as unknown as { sessionStorage: unknown }).sessionStorage =
+      fakeSessionStorage;
+
+    const { client, calls } = stagedModel();
+    const e = new DefaultGeneratorEngine(client as never);
+    await e.generateOneShot({ ...stagedOptions, useAI: true });
+
+    const seedCall = calls.find((c) => c.stage === "seed");
+    expect(seedCall).toBeDefined();
+    const promptText = JSON.stringify(seedCall!.request);
+    expect(promptText).toContain("adventure seeds for a tabletop RPG scenario");
+    expect(promptText).toContain("scenario emphasis (Investigation / mystery)");
+    expect(promptText).toContain(
+      "tavern notice board; missing merchant caravan",
+    );
+
+    expect(generationSeedHistoryStore.recent("one-shot")).toHaveLength(1);
+    expect(
+      generationNameHistoryStore.recent("one-shot").length,
+    ).toBeGreaterThan(0);
   });
 });
 
