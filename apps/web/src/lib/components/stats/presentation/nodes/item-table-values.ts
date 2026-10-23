@@ -90,18 +90,7 @@ export function getColumnCellClass(col: { id: string; type: string }): string {
   if (col.type === "dice") return "w-24 px-1.5 py-1 text-center align-middle";
   if (col.type === "counter")
     return "w-24 px-1.5 py-1 text-center align-middle";
-  if (
-    [
-      "name",
-      "title",
-      "item",
-      "effects",
-      "traits",
-      "description",
-      "notes",
-      "special",
-    ].includes(col.id)
-  ) {
+  if (isTextColumn(col.id)) {
     return "min-w-[7rem] px-2 py-1 text-left align-middle";
   }
   return "min-w-[4rem] px-1.5 py-1 text-center align-middle";
