@@ -115,4 +115,17 @@ describe("answer page tables", () => {
       screen.getByText("Never [click](javascript:alert(1)) this."),
     ).toBeTruthy();
   });
+
+  it("renders the worked example point crawl diagram when diagram id is specified", () => {
+    renderAnswer([
+      {
+        kind: "example",
+        heading: "Copyable example: the road to Morzan's Crypt",
+        diagram: "point-crawl-morzan-crypt",
+        paragraphs: ["Follow the routes below."],
+      },
+    ]);
+
+    expect(screen.getByTestId("point-crawl-morzan-diagram")).toBeTruthy();
+  });
 });
