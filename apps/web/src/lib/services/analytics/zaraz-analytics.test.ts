@@ -79,10 +79,31 @@ describe("trackEvent", () => {
     );
   });
 
-  it("does not add AI acquisition fields for an unclassified visit", () => {
+  it("adds organic-search fields, and no AI fields, for a search referral", () => {
     attributionStore.captureIfAttributed(
       new URL("https://codexcryptica.com/answers/example"),
       "https://www.google.com/search?q=campaign",
+    );
+    const track = vi.fn();
+
+    trackEvent("seo_entry", {}, { zaraz: { track } });
+
+    const [, properties] = track.mock.calls[0];
+    expect(properties).toEqual(
+      expect.objectContaining({
+        acquisition_channel: "organic_search",
+        acquisition_search_engine: "google",
+        acquisition_landing_path: "/answers/example",
+      }),
+    );
+    expect(properties).not.toHaveProperty("acquisition_provider");
+    expect(properties).not.toHaveProperty("acquisition_source");
+  });
+
+  it("adds no acquisition fields for an unclassified visit", () => {
+    attributionStore.captureIfAttributed(
+      new URL("https://codexcryptica.com/answers/example"),
+      "https://example.org/post",
     );
     const track = vi.fn();
 

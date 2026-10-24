@@ -21,12 +21,14 @@ import {
   type AiReferralProvider,
   type AiReferralSource,
 } from "./ai-referral";
+import { classifySearchReferral, type SearchEngine } from "./search-referral";
 
 export interface Attribution {
   utm_source?: string;
   utm_medium?: string;
   utm_campaign?: string;
-  channel?: "ai_referral";
+  channel?: "ai_referral" | "organic_search";
+  search_engine?: SearchEngine;
   provider?: AiReferralProvider;
   source?: AiReferralSource;
   landing_path: string;
@@ -67,6 +69,13 @@ function writeAttribution(
   }
 }
 
+/** AI-assistant referrals win over plain search, which they would otherwise resemble. */
+function classifyReferral(url: URL, referrer?: string) {
+  return (
+    classifyAiReferral(url, referrer) ?? classifySearchReferral(url, referrer)
+  );
+}
+
 export class AttributionStore {
   private storage: StorageLike;
   private now: () => number;
@@ -86,8 +95,8 @@ export class AttributionStore {
    */
   captureIfAttributed(url: URL, referrer?: string): boolean {
     const hasAnyUtm = UTM_PARAMS.some((p) => !!url.searchParams.get(p));
-    const aiReferral = classifyAiReferral(url, referrer);
-    if (!hasAnyUtm && !aiReferral) return false;
+    const referral = classifyReferral(url, referrer);
+    if (!hasAnyUtm && !referral) return false;
 
     const attribution: Attribution = {
       landing_path: url.pathname,
@@ -97,7 +106,7 @@ export class AttributionStore {
       const value = url.searchParams.get(param);
       if (value) attribution[param] = value;
     }
-    if (aiReferral) Object.assign(attribution, aiReferral);
+    if (referral) Object.assign(attribution, referral);
 
     writeAttribution(this.storage, LATEST_TOUCH_KEY, attribution);
     if (!readAttribution(this.storage, FIRST_TOUCH_KEY)) {
