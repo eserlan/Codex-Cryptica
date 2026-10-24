@@ -34,7 +34,7 @@ export const howToAdaptAVideoGameIntoATabletopRpg: AnswerConfigInput = {
         },
         {
           term: "Supporting NPC",
-          text: "The hero appears as a non-player character (NPC) with a narrow job: a witness, a wounded survivor, a guild contact, someone who knows one useful thing. Give them one area of competence and one clear limit, such as an injury, a debt or a refusal to enter the place that matters. They can open a door; they must not walk through it, explain the revelation and win the fight on the other side.",
+          text: "The hero appears as a non-player character (NPC): a witness, a survivor, a guild contact or someone with useful knowledge. Let them be capable and willing to help, while leaving the party the consequential choices and the chance to affect the result. They can open a door without deciding what the party does next.",
         },
         {
           term: "Independent rival",
@@ -46,7 +46,7 @@ export const howToAdaptAVideoGameIntoATabletopRpg: AnswerConfigInput = {
         },
       ],
       outro:
-        "Whichever option you choose, apply one test to every scene you prepare: if the protagonist NPC could settle this without the PCs, rewrite the scene until they cannot. They may lack the information, the authority, the numbers or the willingness, but the missing piece must be something the party supplies.",
+        "Whichever option you choose, ask whether the PCs still make consequential decisions and whether their intervention affects the result. Keep the original hero from taking over the choices that define the central conflict; an ally can be capable, cooperate with the party and even solve part of the problem.",
     },
     {
       kind: "table",
@@ -61,7 +61,7 @@ export const howToAdaptAVideoGameIntoATabletopRpg: AnswerConfigInput = {
         [
           "Parallel events",
           "The game's crisis happens nearby while the party handles its consequences elsewhere: refugees, shortages, a faction moving troops, a road made unsafe.",
-          "Keep the original hero offstage. If the party can simply follow that hero, they will, and they become spectators again.",
+          "Give the party's assignment stakes and outcomes of its own. They may meet or follow the hero, but their choices about how to respond should shape what happens locally.",
         ],
         [
           "Sequel",
@@ -71,7 +71,7 @@ export const howToAdaptAVideoGameIntoATabletopRpg: AnswerConfigInput = {
         [
           "Alternate version",
           "The same starting situation, with no promise that events will follow the game. This gives knowledgeable players the most freedom to change the outcome.",
-          "Warn players that knowledge from the game is a rumour, not a guarantee. Change at least one important loyalty, location or motive so memorised solutions do not work unchanged.",
+          "Tell players how closely you expect to follow the source and whether the campaign may include spoilers. Let PC choices drive any divergence; changing a loyalty, location or motive is optional, not a requirement.",
         ],
       ],
     },
@@ -164,7 +164,7 @@ export const howToAdaptAVideoGameIntoATabletopRpg: AnswerConfigInput = {
         },
         {
           term: "Allow a different outcome",
-          text: "Decide before play begins which parts of the game's ending you are willing to lose. If the honest answer is none of them, run a prequel or sequel instead, where a different outcome costs the source less.",
+          text: "Decide which outcomes in this campaign remain open to the party. If the game's ending must remain intact, run a prequel or sequel with new stakes; otherwise, make clear what the party can change.",
         },
       ],
     },
@@ -194,7 +194,7 @@ export const howToAdaptAVideoGameIntoATabletopRpg: AnswerConfigInput = {
       kind: "prose",
       heading: "Start smaller than the game you love",
       paragraphs: [
-        "A first-time Game Master does not need the whole game converted before session one. Prepare the first crisis, three factions, two or three places, and a short list of names. That is enough material to run, and it leaves room for the party's choices to decide what you prepare next. Converting forty hours of scripted content in advance mostly produces notes you will have to defend against your own players.",
+        "A first-time Game Master does not need the whole game converted before session one. A full conversion is a lot of initial work, and much of it may go unused as the party's interests take shape. Prepare the first crisis, three factions, two or three places, and a short list of names; that is enough to run and lets you prepare what becomes relevant next. Required scenes and predetermined PC outcomes create pressure to steer the party, whatever the size of your notes.",
         "Tell the group at session zero what you are adapting and what may change. Players who know the game can then enjoy recognising a place without treating their memory as a walkthrough, and players who do not know it are not punished for missing references. Agree that the game's version is background reading, not evidence in an argument about what must happen next.",
       ],
     },
@@ -207,7 +207,7 @@ export const howToAdaptAVideoGameIntoATabletopRpg: AnswerConfigInput = {
         "Does each PC hold at least one responsibility, contact or personal stake that another PC does not?",
         "Could the party fail, refuse or redirect the first crisis and still have a campaign afterwards?",
         "Is there any scene where an NPC delivers the revelation, makes the decision or wins the fight while the party watches? Rewrite it.",
-        "Have you named at least one part of the game's ending you are prepared to let the party change?",
+        "Which outcomes in this campaign remain undecided, and can the party change them?",
         "Is your opening prep small enough to hold in a few pages: one crisis, a few factions, a few places?",
       ],
     },
