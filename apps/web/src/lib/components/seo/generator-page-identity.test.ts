@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { slugMeta } from "./generator-page-meta";
 import {
   resolveWorldThemeId,
   resolveGeneratorShareTheme,
@@ -37,6 +38,11 @@ describe("resolveGeneratorType", () => {
     expect(resolveGeneratorType("/generators/npc", "NPC Generator")).toBe(
       "npc",
     );
+  });
+
+  it("labels the point crawl generator's funnel events `point-crawl` (#4372)", () => {
+    const { canonicalPath, eyebrow } = slugMeta["point-crawl"];
+    expect(resolveGeneratorType(canonicalPath, eyebrow)).toBe("point-crawl");
   });
 
   it("falls back to a slugified eyebrow when there is no canonical path", () => {

@@ -79,10 +79,54 @@ describe("trackEvent", () => {
     );
   });
 
-  it("does not add AI acquisition fields for an unclassified visit", () => {
+  it("adds organic-search fields, and no AI fields, for a search referral", () => {
     attributionStore.captureIfAttributed(
       new URL("https://codexcryptica.com/answers/example"),
       "https://www.google.com/search?q=campaign",
+    );
+    const track = vi.fn();
+
+    trackEvent("seo_entry", {}, { zaraz: { track } });
+
+    const [, properties] = track.mock.calls[0];
+    expect(properties).toEqual(
+      expect.objectContaining({
+        acquisition_channel: "organic_search",
+        acquisition_search_engine: "google",
+        acquisition_landing_path: "/answers/example",
+      }),
+    );
+    expect(properties).not.toHaveProperty("acquisition_provider");
+    expect(properties).not.toHaveProperty("acquisition_source");
+  });
+
+  it("does not project a persisted organic touch into a later session", () => {
+    localStorage.setItem(
+      "codex-cryptica-attribution-latest",
+      JSON.stringify({
+        channel: "organic_search",
+        search_engine: "google",
+        landing_path: "/answers/example",
+        at: Date.now(),
+      }),
+    );
+    const track = vi.fn();
+
+    trackEvent("seo_entry", {}, { zaraz: { track } });
+
+    const [, properties] = track.mock.calls[0];
+    expect(properties.latest_touch).toEqual(
+      expect.objectContaining({ channel: "organic_search" }),
+    );
+    expect(properties).not.toHaveProperty("acquisition_channel");
+    expect(properties).not.toHaveProperty("acquisition_search_engine");
+    expect(properties).not.toHaveProperty("acquisition_landing_path");
+  });
+
+  it("adds no acquisition fields for an unclassified visit", () => {
+    attributionStore.captureIfAttributed(
+      new URL("https://codexcryptica.com/answers/example"),
+      "https://example.org/post",
     );
     const track = vi.fn();
 
