@@ -48,6 +48,11 @@ export const whatRpgMapMakingToolShouldIUse: AnswerConfigInput = {
           "Dungeondraft, Dungeon Alchemist, tools with Universal VTT export",
         ],
         [
+          "Node-and-route network (point crawl)",
+          "Locations, routes and their travel costs laid out as a graph. It is a planning diagram, not a tactical grid or an illustrated map",
+          "Codex Cryptica's Point Crawl Generator, or a general node-and-arrow diagram tool",
+        ],
+        [
           "Player handout or illustrative map",
           "Visual finish, annotations, and presentation without tactical data",
           "Inkarnate, Wonderdraft, Photoshop or Affinity with cartography brushes",
@@ -177,6 +182,12 @@ export const whatRpgMapMakingToolShouldIUse: AnswerConfigInput = {
       description:
         "Create room layouts and encounter-ready complexes when the job calls for a tactical battle map.",
       href: "/generators/dungeon-generator",
+    },
+    {
+      title: "Point Crawl Generator",
+      description:
+        "Plan a route network of locations, costed links and hidden shortcuts when the job is travel between places rather than a painted map.",
+      href: "/generators/point-crawl",
     },
     {
       title: "Faction generator",

@@ -2100,6 +2100,14 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     ],
     relatedLinks: [
       {
+        href: "/answers/how-do-you-build-a-point-crawl-for-an-rpg",
+        label: "How to Build a Point Crawl for an RPG",
+      },
+      {
+        href: "/answers/point-crawl-vs-hex-crawl",
+        label: "Point Crawl vs Hex Crawl",
+      },
+      {
         href: "/answers/what-is-a-point-crawl",
         label: "What Is a Point Crawl in Tabletop RPGs?",
       },
