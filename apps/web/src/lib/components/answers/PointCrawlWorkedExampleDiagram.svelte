@@ -244,9 +244,9 @@
         />
         <!-- Badge -->
         <rect
-          x="290"
+          x="280"
           y="90"
-          width="160"
+          width="180"
           height="20"
           rx="4"
           class="fill-theme-bg stroke-theme-border"
