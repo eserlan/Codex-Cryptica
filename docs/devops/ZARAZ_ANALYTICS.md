@@ -126,10 +126,14 @@ for destination-tool segmentation:
 - `acquisition_source`: `chatgpt`, `perplexity`, `copilot`, `claude` or `gemini`
 - `acquisition_landing_path`: the root-relative landing path
 
-For a latest-touch organic search landing (#4372) the flat properties are
+For an organic-search landing captured in the current browser tab session
+(#4372) the flat properties are
 `acquisition_channel: organic_search`, `acquisition_search_engine` (`google`,
 `bing`, `duckduckgo`, `yahoo`, `ecosia` or `brave`) and
 `acquisition_landing_path`.
+The persisted `latest_touch` remains available for funnel context, but its
+organic-search values are not projected into these flat acquisition fields in
+a later tab session without a new search referral.
 
 Zaraz and the configured destination tool supply the browser session/visit
 association. Codex does not create a separate visitor identifier.

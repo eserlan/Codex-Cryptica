@@ -87,12 +87,16 @@ export function trackEvent(
 
     const firstTouch = attributionStore.getFirstTouch();
     const latestTouch = attributionStore.getLatestTouch();
+    const acquisitionTouch =
+      latestTouch?.channel === "organic_search"
+        ? attributionStore.getSessionTouch()
+        : latestTouch;
 
     zaraz.track(name, {
       ...properties,
       ...(firstTouch ? { first_touch: firstTouch } : {}),
       ...(latestTouch ? { latest_touch: latestTouch } : {}),
-      ...flatAcquisitionProperties(latestTouch),
+      ...flatAcquisitionProperties(acquisitionTouch),
     });
   } catch {
     // tracking must never break the page

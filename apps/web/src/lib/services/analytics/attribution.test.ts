@@ -121,8 +121,13 @@ describe("AttributionStore", () => {
   });
 
   it("classifies a generic search referral as organic search, never as AI", () => {
-    const { storage } = makeStorage();
-    const store = new AttributionStore({ storage, now: () => 100 });
+    const { storage: localStorage } = makeStorage();
+    const { storage: sessionStorage } = makeStorage();
+    const store = new AttributionStore({
+      storage: localStorage,
+      sessionStorage,
+      now: () => 100,
+    });
 
     expect(
       store.captureIfAttributed(
@@ -136,6 +141,7 @@ describe("AttributionStore", () => {
       landing_path: "/answers/example",
       at: 100,
     });
+    expect(store.getSessionTouch()).toEqual(store.getLatestTouch());
   });
 
   it("does not store the search path or query", () => {
