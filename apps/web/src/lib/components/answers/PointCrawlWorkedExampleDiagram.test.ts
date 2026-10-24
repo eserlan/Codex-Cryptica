@@ -55,6 +55,21 @@ describe("PointCrawlWorkedExampleDiagram (#4370)", () => {
     expect(screen.getByTestId("route-hermit-crypt-hidden")).toBeTruthy();
   });
 
+  it("shows the road loop returning from Old Watchtower to Toll Bridge", () => {
+    render(PointCrawlWorkedExampleDiagram);
+
+    const loop = screen.getByTestId("route-toll-bridge-watchtower-loop");
+    const line = loop.querySelector("line");
+    const row = screen
+      .getAllByRole("rowheader", { name: "Old Watchtower" })
+      .map((header) => header.closest("tr"))
+      .find((candidate) => candidate?.textContent?.includes("Road loop"));
+
+    expect(line?.getAttribute("x1")).toBe("451");
+    expect(line?.getAttribute("x2")).toBe("289");
+    expect(row?.textContent).toContain("Toll Bridge");
+  });
+
   it("distinguishes hidden and conditional routes with distinct line styling", () => {
     render(PointCrawlWorkedExampleDiagram);
 
@@ -88,11 +103,11 @@ describe("PointCrawlWorkedExampleDiagram (#4370)", () => {
       2,
     );
     expect(
-      screen.getAllByRole("rowheader", { name: "Toll Bridge" }).length,
-    ).toBe(1);
+      screen.queryAllByRole("rowheader", { name: "Toll Bridge" }).length,
+    ).toBe(0);
     expect(
       screen.getAllByRole("rowheader", { name: "Old Watchtower" }).length,
-    ).toBe(1);
+    ).toBe(2);
     expect(
       screen.getAllByRole("rowheader", { name: "Hermit's Cairn" }).length,
     ).toBe(1);

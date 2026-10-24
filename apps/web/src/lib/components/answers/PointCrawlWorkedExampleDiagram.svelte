@@ -29,8 +29,8 @@
       hazard: "Spend 1 extra ration per traveller or forage (delay risk).",
     },
     {
-      from: "Toll Bridge",
-      to: "Old Watchtower",
+      from: "Old Watchtower",
+      to: "Toll Bridge",
       time: "0.5 day",
       type: "Road loop",
       hazard: "Keeper warns bridge guard if threatened; loops back to road.",
@@ -236,9 +236,9 @@
       <!-- 3. Toll Bridge <-> Old Watchtower (Road Loop) -->
       <g data-testid="route-toll-bridge-watchtower-loop">
         <line
-          x1="289"
+          x1="451"
           y1="100"
-          x2="451"
+          x2="289"
           y2="100"
           class="stroke-theme-border"
           stroke-width="2"
@@ -354,7 +354,7 @@
           x="570"
           y="146"
           text-anchor="middle"
-          class="font-mono text-[9px] fill-amber-400"
+          class="font-mono text-[9px] fill-theme-text"
         >
           ⚠ <tspan font-weight="bold">1 day</tspan> · Exposed (Alerts sentries)
         </text>
@@ -642,7 +642,7 @@
     </div>
     <div class="inline-flex items-center gap-1.5">
       <span class="text-amber-400 font-bold" aria-hidden="true">⚠</span>
-      <span class="text-amber-400">Exposed hazard (Alerts sentries)</span>
+      <span class="text-theme-text">Exposed hazard (Alerts sentries)</span>
     </div>
     <div class="inline-flex items-center gap-1.5">
       <span class="text-theme-primary font-bold" aria-hidden="true">⮂</span>
