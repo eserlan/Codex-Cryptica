@@ -5,6 +5,12 @@
     type StatSheetField,
     type PresentationTemplate,
   } from "schema";
+  import {
+    deriveFieldDisplayOverrides,
+    fieldReference,
+    generateStarterLayout,
+  } from "./editor-source";
+  import { downloadPresentationTemplate } from "$lib/utils/presentation-template-download";
   import { getUnusedFields } from "./visual-card-parser";
   // We accidentally lost use-visual-layout during a git checkout earlier because it wasn't tracked.
   import { useVisualLayout } from "./use-visual-layout.svelte";
@@ -13,11 +19,9 @@
   import {
     parseTemplate,
     validateAst,
-    exportPresentationTemplate,
     sanitizeSource,
     walkPresentationNodes,
     computeSectionKeys,
-    resolveFieldByKeyOrId,
   } from "@codex/stat-sheet-engine";
   import type {
     MissingFieldNode,
@@ -89,33 +93,6 @@
   // from a blank slate — visualLayout.handleSyncSourceFromVisualCards() regenerates the whole
   // template from this map, so a stale/empty seed silently drops previously
   // saved overrides on the next visual edit.
-  function deriveFieldDisplayOverrides(
-    src: string,
-    schemaFields: StatSheetField[] = [],
-  ): Record<string, { displayMode?: string; hideLabel?: boolean }> {
-    const result = parseTemplate(src, PRESENTATION_TEMPLATE_FORMAT_VERSION);
-    if (!result.ok) return {};
-    const overrides: Record<
-      string,
-      { displayMode?: string; hideLabel?: boolean }
-    > = {};
-    walkPresentationNodes(result.ast, (node) => {
-      if (node.type !== "field-reference") return;
-      const rawFieldId = node.fieldId as string;
-      const fieldId =
-        resolveFieldByKeyOrId(schemaFields, rawFieldId)?.id ?? rawFieldId;
-      const displayMode = node.displayMode as string | undefined;
-      const hideLabel = node.hideLabel as boolean | undefined;
-      if (displayMode || hideLabel) {
-        overrides[fieldId] = {
-          ...(displayMode ? { displayMode } : {}),
-          ...(hideLabel ? { hideLabel: true } : {}),
-        };
-      }
-    });
-    return overrides;
-  }
-
   // svelte-ignore state_referenced_locally
   let fieldDisplayOverrides = $state<
     Record<string, { displayMode?: string; hideLabel?: boolean }>
@@ -282,9 +259,6 @@
     ),
   );
 
-  const fieldReference = (field: StatSheetField): string =>
-    field.key ?? field.id;
-
   function insertSnippet(snippet: string, cursorOffset?: number) {
     const el = textareaEl;
     if (!el) {
@@ -305,39 +279,6 @@
     insertSnippet(`{{stat.${fieldReference(field)}}}`);
     showAutocomplete = false;
     autocompleteFilter = "";
-  }
-
-  function generateStarterLayout() {
-    let text = `## ${schema.name}\n\n`;
-    let inCard = false;
-
-    for (const f of schema.fields) {
-      if (f.type === "heading") {
-        if (inCard) {
-          text += `:::\n\n`;
-        }
-        text += `:::card\n### ${f.label}\n`;
-        inCard = true;
-      } else {
-        if (!inCard) {
-          text += `:::card\n`;
-          inCard = true;
-        }
-        if (f.type === "counter") {
-          text += `{{stat.${fieldReference(f)} display="current-max"}}\n`;
-        } else if (f.type === "dice") {
-          text += `{{stat.${fieldReference(f)} display="plain"}}\n`;
-        } else if (f.type === "number") {
-          text += `{{stat.${fieldReference(f)} display="prominent"}}\n`;
-        } else {
-          text += `{{stat.${fieldReference(f)}}}\n`;
-        }
-      }
-    }
-    if (inCard) {
-      text += `:::\n`;
-    }
-    source = text;
   }
 
   async function save() {
@@ -380,19 +321,7 @@
 
   function exportCurrent() {
     if (!template || duplicate) return;
-    const pkg = exportPresentationTemplate(template);
-    const blob = new Blob([JSON.stringify(pkg, null, 2)], {
-      type: "application/json",
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${template.name.replace(/[^a-z0-9-]+/gi, "-").toLowerCase()}.presentation.json`;
-    a.click();
-    // Defer revocation past the current tick: revoking immediately after
-    // click() can race the browser's download/navigation handoff in some
-    // browsers and produce a broken/empty download.
-    setTimeout(() => URL.revokeObjectURL(url), 0);
+    downloadPresentationTemplate(template);
   }
 </script>
 
@@ -512,7 +441,7 @@
                 <button
                   type="button"
                   class="rounded border border-theme-border px-1.5 py-0.5 text-micro font-medium text-theme-muted hover:border-theme-primary hover:text-theme-primary"
-                  onclick={generateStarterLayout}
+                  onclick={() => (source = generateStarterLayout(schema))}
                   title="Generate starter layout from schema fields"
                   data-testid="presentation-editor-auto-layout"
                 >
