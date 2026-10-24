@@ -64,6 +64,17 @@ export const whatIsAPointCrawl: AnswerConfigInput = {
     },
     {
       kind: "prose",
+      heading: "Try the structure",
+      paragraphs: [
+        "Sketch four points and four routes, give each route a time and a cost, then compare the network with the fen example above. If two routes feel the same, change one cost before you start playing.",
+      ],
+      cta: {
+        text: "Try the Point Crawl Generator",
+        href: "/generators/point-crawl",
+      },
+    },
+    {
+      kind: "prose",
       heading: "Where point crawls struggle",
       paragraphs: [
         "They are a poor fit when the geography itself is the content. Wilderness exploration where the point is not knowing what is out there (survey play, hex-by-hex discovery, resource attrition over unmapped country) needs a map that can hold unknowns. A point crawl tells players the shape of the network up front, which is a feature for a heist or a journey and a problem for a frontier.",
