@@ -2052,8 +2052,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     ],
   },
   "point-crawl": {
-    pageTitle:
-      "Point Crawl Generator | Interactive RPG Map & Route Network Builder | Codex Cryptica",
+    pageTitle: "Point Crawl Generator | RPG Route Map Maker | Codex Cryptica",
     metaDescription:
       "Generate playable 6–15 node point crawls for Dungeons, Cities, Wilderness, Regions, and Star Systems. Includes branching paths, loops, hidden shortcuts, key-before-lock gates, and an interactive SVG graph.",
     introTitle: "Point Crawl Generator",
