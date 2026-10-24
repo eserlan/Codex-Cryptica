@@ -259,7 +259,7 @@
           class="font-mono text-xs fill-theme-text"
         >
           <tspan class="fill-theme-primary font-bold">⮂</tspan>
-          <tspan font-weight="bold">0.5 day</tspan> · Road loop (Guard alert)
+          <tspan font-weight="bold">0.5 day</tspan> · Guard loop
         </text>
       </g>
 
