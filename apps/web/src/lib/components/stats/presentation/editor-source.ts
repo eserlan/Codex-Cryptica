@@ -62,3 +62,23 @@ function starterFieldReference(field: StatSheetField): string {
   const mode = modes[field.type];
   return `{{stat.${fieldReference(field)}${mode ? ` display="${mode}"` : ""}}}`;
 }
+
+/** Display options shared by the builder's cards and rows. */
+export interface VisualFieldOptions {
+  readonly overrides: Record<
+    string,
+    { displayMode?: string; hideLabel?: boolean }
+  >;
+  onContextMenu: (
+    event: MouseEvent,
+    cardId: string,
+    rowIndex: number,
+    fieldId: string,
+  ) => void;
+  onKeyDown: (
+    event: KeyboardEvent,
+    cardId: string,
+    rowIndex: number,
+    fieldId: string,
+  ) => void;
+}
