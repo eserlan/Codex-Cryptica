@@ -24,6 +24,7 @@
   import PublicLabelChip from "$lib/components/labels/PublicLabelChip.svelte";
   import ShareButton from "$lib/components/ShareButton.svelte";
   import UsefulnessFeedback from "$lib/components/UsefulnessFeedback.svelte";
+  import PointCrawlWorkedExampleDiagram from "$lib/components/answers/PointCrawlWorkedExampleDiagram.svelte";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
@@ -305,6 +306,9 @@
                 {@render inline(paragraph)}
               </p>
             {/each}
+            {#if section.diagram === "point-crawl-morzan-crypt"}
+              <PointCrawlWorkedExampleDiagram />
+            {/if}
             {#if section.items}
               <dl class="flex flex-col gap-4">
                 {#each section.items as item}

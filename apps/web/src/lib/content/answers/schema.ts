@@ -109,6 +109,9 @@ export const AnswerListBlockSchema = z.object({
   outro: z.string().optional(),
 });
 
+export const AnswerDiagramIdSchema = z.enum(["point-crawl-morzan-crypt"]);
+export type AnswerDiagramId = z.infer<typeof AnswerDiagramIdSchema>;
+
 /**
  * A concrete tabletop/worldbuilding example. Rendered as a distinct block so a
  * reader skimming for "show me" can find it, and so a page that genuinely does
@@ -119,6 +122,7 @@ export const AnswerExampleBlockSchema = z.object({
   heading: blockHeading,
   paragraphs: z.array(z.string().min(1)).min(1),
   items: z.array(AnswerListItemSchema).optional(),
+  diagram: AnswerDiagramIdSchema.optional(),
 });
 
 /** A short practical takeaway the reader can act on at the table. */
