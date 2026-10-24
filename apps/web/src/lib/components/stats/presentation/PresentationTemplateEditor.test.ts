@@ -18,6 +18,10 @@ vi.mock("$lib/stores/ui/notification.svelte", () => ({
 }));
 
 import PresentationTemplateEditor from "./PresentationTemplateEditor.svelte";
+import { downloadPresentationTemplate } from "$lib/utils/presentation-template-download";
+vi.mock("$lib/utils/presentation-template-download", () => ({
+  downloadPresentationTemplate: vi.fn(),
+}));
 
 const schema: StatSheetTemplate = {
   id: "schema-1",
@@ -469,5 +473,50 @@ describe("PresentationTemplateEditor", () => {
     expect(
       screen.getAllByDisplayValue(/Section \d+/).length,
     ).toBeGreaterThanOrEqual(1);
+  });
+});
+
+describe("editor action composition", () => {
+  it("exports the saved template rather than the unsaved source", async () => {
+    render(PresentationTemplateEditor, { schema, template: builtIn });
+    await fireEvent.input(screen.getByTestId("presentation-editor-source"), {
+      target: { value: "Unsaved changes" },
+    });
+    await fireEvent.click(screen.getByTestId("presentation-editor-export"));
+    expect(downloadPresentationTemplate).toHaveBeenCalledWith(builtIn);
+  });
+
+  it("does not offer export when duplicating a template", () => {
+    render(PresentationTemplateEditor, {
+      schema,
+      template: builtIn,
+      duplicate: true,
+    });
+    expect(screen.queryByTestId("presentation-editor-export")).toBeNull();
+    expect(downloadPresentationTemplate).not.toHaveBeenCalled();
+  });
+
+  it("keeps save failures visible and cancel closes without notifying onSaved", async () => {
+    const onSaved = vi.fn();
+    const onClose = vi.fn();
+    saveTemplate.mockResolvedValueOnce(null);
+    render(PresentationTemplateEditor, {
+      schema,
+      template: builtIn,
+      onSaved,
+      onClose,
+    });
+    await fireEvent.click(screen.getByTestId("presentation-editor-save"));
+    expect(screen.getByRole("alert").textContent).toBe(
+      "Failed to save template.",
+    );
+    expect(
+      (screen.getByTestId("presentation-editor-save") as HTMLButtonElement)
+        .disabled,
+    ).toBe(false);
+    expect(onSaved).not.toHaveBeenCalled();
+    await fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(onClose).toHaveBeenCalledOnce();
+    expect(saveTemplate).toHaveBeenCalledOnce();
   });
 });

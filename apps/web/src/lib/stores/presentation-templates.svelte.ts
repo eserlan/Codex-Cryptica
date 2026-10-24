@@ -1,3 +1,4 @@
+import { downloadPresentationTemplate } from "$lib/utils/presentation-template-download";
 import {
   systemClock,
   systemIdGenerator,
@@ -7,10 +8,7 @@ import {
 import { getDB } from "../utils/idb";
 import type { PresentationTemplate, StatSheetTemplateField } from "schema";
 import { vaultRegistry } from "./vault-registry.svelte";
-import {
-  getBuiltInPresentationTemplates,
-  exportPresentationTemplate,
-} from "@codex/stat-sheet-engine";
+import { getBuiltInPresentationTemplates } from "@codex/stat-sheet-engine";
 import { statSheetTemplates } from "./stat-sheet-templates.svelte";
 
 const ENTITY_LOCAL_SCHEMA_PREFIX = "entity-local-stat-sheet:";
@@ -300,17 +298,7 @@ export class PresentationTemplateStore {
    * Exports a presentation template as a JSON download in browser environment.
    */
   exportTemplate(template: PresentationTemplate): void {
-    if (typeof document === "undefined") return;
-    const pkg = exportPresentationTemplate(template);
-    const blob = new Blob([JSON.stringify(pkg, null, 2)], {
-      type: "application/json",
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${template.name.replace(/[^a-z0-9-]+/gi, "-").toLowerCase()}.presentation.json`;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 0);
+    downloadPresentationTemplate(template);
   }
 
   async deleteTemplate(id: string): Promise<boolean> {
