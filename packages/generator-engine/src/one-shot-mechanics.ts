@@ -66,14 +66,17 @@ function mentions(
     `\\b(${words.join("|")}|\\d+(?:st|nd|rd|th)?)\\s+(?:[a-z-]+\\s+)?${escapeRegExp(noun)}(?:e?s)?\\b`,
     "gi",
   );
-  return [...text.matchAll(re)].map((m) => {
+  const results: { word: string; n: number }[] = [];
+  // ⚡ Bolt Optimization: Replace [...matchAll].map() with an imperative loop to avoid intermediate allocations
+  for (const m of text.matchAll(re)) {
     const word = m[1];
     const ordinal = /^\d+(?:st|nd|rd|th)$/i.exec(word);
-    return {
+    results.push({
       word,
       n: ordinal ? Number(word.replace(/\D/g, "")) : numberOf(word),
-    };
-  });
+    });
+  }
+  return results;
 }
 
 /** A counted clock: the numbers in the story match its ticks. */

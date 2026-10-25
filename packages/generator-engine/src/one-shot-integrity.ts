@@ -255,7 +255,11 @@ const ACT_MINUTES =
 const checkPacing: GapCheck = (adventure) => {
   const b = adventure.briefing;
   const prose = [b.premise, b.prep, b.hook, b.objective, b.stakes].join("\n");
-  const acts = [...prose.matchAll(ACT_MINUTES)].map((m) => Number(m[1]));
+  const acts: number[] = [];
+  // ⚡ Bolt Optimization: Replace [...matchAll].map() with an imperative loop to avoid intermediate allocations
+  for (const match of prose.matchAll(ACT_MINUTES)) {
+    acts.push(Number(match[1]));
+  }
   if (acts.length < 2) return [];
   const stated = acts.reduce((a, n) => a + n, 0);
   const scenes = adventure.scenes.reduce((a, s) => a + s.minutes, 0);
