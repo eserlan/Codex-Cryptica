@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import type { Snippet } from "svelte";
   import { browser } from "$app/environment";
   import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
@@ -154,6 +155,22 @@
     backHref?: string;
     backLabel?: string;
   } = $props();
+
+  // The Quick Names lead changes DOM position at the same breakpoint as the
+  // visual layout, keeping keyboard focus order aligned on phones and desktop.
+  let isNarrowViewport = $state(false);
+  onMount(() => {
+    if (typeof window.matchMedia !== "function") return;
+    const media = window.matchMedia("(max-width: 1023px)");
+    const update = () => (isNarrowViewport = media.matches);
+    update();
+    if (media.addEventListener) {
+      media.addEventListener("change", update);
+      return () => media.removeEventListener("change", update);
+    }
+    media.addListener(update);
+    return () => media.removeListener(update);
+  });
 
   let outputCard = $state<HTMLElement | null>(null);
   let diagrams = $state<ReturnType<typeof GeneratorDiagrams> | null>(null);
@@ -337,11 +354,13 @@
     class="max-w-6xl mx-auto px-4 sm:px-6 py-12 w-full flex-grow grid grid-cols-1 lg:grid-cols-12 gap-8"
   >
     <!--
-      DOM order matches visual order (Parameters -> Output -> At the Table)
-      via order-1/2/3 below, so SEO/LLM crawlers that read raw markup instead
-      of applying CSS grid order see the H1 and intro copy before the
-      generator's empty-state placeholders (#2320).
+      The lead moves before the form in both the mobile DOM and visual order;
+      otherwise the columns retain their Parameters -> Output -> At the Table
+      order for crawlers that read raw markup (#2320).
     -->
+    {#if outputLead && isNarrowViewport}
+      <div class="order-1 lg:hidden">{@render outputLead()}</div>
+    {/if}
     <!-- Parameters Column: positioned on the left on desktop -->
     <div
       class="{columnClasses.form} space-y-6 {outputLead
@@ -379,10 +398,12 @@
     <!-- Output Card Column: middle column on desktop -->
     <div
       class="{columnClasses.output} flex flex-col {outputLead
-        ? 'order-1'
+        ? 'order-3'
         : 'order-2'} lg:order-2"
     >
-      {@render outputLead?.()}
+      {#if outputLead && !isNarrowViewport}
+        {@render outputLead()}
+      {/if}
       <!-- The scroll target after Generate: the result, not the lead. -->
       <div class="flex flex-col scroll-mt-20" bind:this={outputCard}>
         <GeneratorDiagrams

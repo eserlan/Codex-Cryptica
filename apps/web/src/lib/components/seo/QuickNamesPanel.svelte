@@ -23,6 +23,7 @@
     culture = $bindable(),
     gender,
     nameType = $bindable(),
+    pinned = $bindable<string[]>([]),
     cultureChoices = [],
     nameTypeChoices = [],
     askAi,
@@ -35,6 +36,7 @@
     culture: string;
     gender: string;
     nameType: string;
+    pinned?: string[];
     /** Options for the compact settings row shown on small screens. */
     cultureChoices?: readonly string[];
     nameTypeChoices?: readonly string[];
@@ -52,7 +54,6 @@
   // Rolled in the browser only: the server render shows placeholders, so a
   // random batch never mismatches on hydration.
   let names = $state<string[]>([]);
-  let pinned = $state<string[]>([]);
   let source = $state<"local" | "ai">("local");
   let parts = $state<NameParts>("full");
   let copiedIndex = $state<number | null>(null);
