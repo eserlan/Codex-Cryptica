@@ -14,11 +14,14 @@
     nameType = $bindable(nameGeneratorConfig.nameTypes[0]),
     context = $bindable(""),
     collapseAdvanced = false,
+    fixedTheme,
   }: {
     theme?: string;
     showTheme?: boolean;
     /** Tuck presentation and campaign context behind "More options". */
     collapseAdvanced?: boolean;
+    /** Limit cultures to one genre without showing the genre picker. */
+    fixedTheme?: string;
     culture: string;
     gender: string;
     nameType: string;
@@ -30,11 +33,10 @@
   const labelClass =
     "text-micro font-bold uppercase tracking-wider text-theme-text/80";
 
+  const cultureTheme = $derived(fixedTheme ?? (showTheme ? theme : undefined));
   const activeCultures = $derived(
-    showTheme
-      ? (nameGeneratorConfig.culturesByTheme[theme] ??
-          nameGeneratorConfig.cultures)
-      : nameGeneratorConfig.cultures,
+    (cultureTheme && nameGeneratorConfig.culturesByTheme[cultureTheme]) ||
+      nameGeneratorConfig.cultures,
   );
   const builtInCultures = nameGeneratorConfig.cultures;
   // Context that arrives pre-filled stays visible rather than hidden.
