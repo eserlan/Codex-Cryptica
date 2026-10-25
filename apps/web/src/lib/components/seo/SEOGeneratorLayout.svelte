@@ -335,10 +335,15 @@
   <!-- Marketing Header -->
 
   <!-- Compact Explainer Strip — no duplicate generate CTA (#1274) -->
-  <div class="w-full border-b border-theme-border/30 bg-theme-surface/10 px-6">
+  <!-- On phones a lead (Quick names) replaces it, so the tool starts higher. -->
+  <div
+    class="w-full border-b border-theme-border/30 bg-theme-surface/10 px-6 {outputLead
+      ? 'hidden sm:block'
+      : ''}"
+  >
     <div class="max-w-6xl mx-auto py-4 flex items-center justify-between gap-4">
       <p
-        class="text-xs font-bold text-theme-text/75 uppercase tracking-widest font-header"
+        class="text-xs font-bold text-theme-text uppercase tracking-widest font-header"
       >
         {explainerText ??
           `Generate campaign-ready ${generatedNoun} in seconds — no account required.`}
