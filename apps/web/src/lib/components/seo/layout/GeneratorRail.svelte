@@ -35,7 +35,7 @@
         in:fade={{ duration: 250 }}
         class="seo-rail seo-md text-sm leading-relaxed text-theme-text/85 {variant ===
         'names'
-          ? 'max-w-xl mx-auto columns-2 sm:columns-3 gap-8 py-4'
+          ? 'py-2'
           : ''}"
       >
         {@html renderGeneratorLore(lore, variant)}

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import type { Snippet } from "svelte";
   import { browser } from "$app/environment";
   import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
@@ -58,6 +59,7 @@
     formFields,
     outputExtras = undefined,
     outputLead = undefined,
+    aiToggleScope = undefined,
     progressSteps = null,
     worldTheme = "workspace",
     initialDraft = null,
@@ -107,8 +109,13 @@
     outputExtras?: Snippet<
       [GeneratorOutput, (output: GeneratorOutput) => void, boolean]
     >;
-    /** Content above the output card, e.g. the Quick Names batch. */
+    /**
+     * Content above the output card, e.g. the Quick Names batch. It leads on
+     * phones, and the sample draft folds away beneath it.
+     */
     outputLead?: Snippet;
+    /** What the AI toggle covers, when the page has other AI controls. */
+    aiToggleScope?: string;
     /** Live steps of a staged generation, shown in the output card. */
     progressSteps?: OneShotProgressStep[] | null;
     worldTheme?: string;
@@ -148,6 +155,22 @@
     backHref?: string;
     backLabel?: string;
   } = $props();
+
+  // The Quick Names lead changes DOM position at the same breakpoint as the
+  // visual layout, keeping keyboard focus order aligned on phones and desktop.
+  let isNarrowViewport = $state(false);
+  onMount(() => {
+    if (typeof window.matchMedia !== "function") return;
+    const media = window.matchMedia("(max-width: 1023px)");
+    const update = () => (isNarrowViewport = media.matches);
+    update();
+    if (media.addEventListener) {
+      media.addEventListener("change", update);
+      return () => media.removeEventListener("change", update);
+    }
+    media.addListener(update);
+    return () => media.removeListener(update);
+  });
 
   let outputCard = $state<HTMLElement | null>(null);
   let diagrams = $state<ReturnType<typeof GeneratorDiagrams> | null>(null);
@@ -254,6 +277,44 @@
   $effect(() => registerShellCtaHandler(save.trackHeaderOpenCodex));
 </script>
 
+{#snippet outputCardBlock()}
+  <GeneratorOutputCard
+    generatedData={session.generatedData}
+    aiFallbackDismissed={session.aiFallbackDismissed}
+    isBusy={session.showOutputLoading}
+    isExampleDraft={session.isExampleDraft}
+    {generatedSingular}
+    {variant}
+    worldTheme={theme || worldTheme}
+    documentContent={documentLayout.content}
+    {documentSections}
+    copied={clipboard.copied}
+    copiedSectionId={clipboard.copiedSectionId}
+    contextTrimmed={contextSelection.trimmed}
+    onDismissAiFallback={session.dismissAiFallback}
+    onRetryAi={() => void session.handleGenerate({ forceAI: true })}
+    {progressSteps}
+    onSaveToCodex={save.handleSaveToCodex}
+    onRefine={when(canFollowUp, refinement.openForCurrentOutput)}
+    onCopyMarkdown={clipboard.handleCopyMarkdown}
+    onCopySection={(sectionId, markdown) =>
+      void clipboard.handleCopySection(sectionId, markdown)}
+    onPrepareShare={when(canFollowUp, sharing.prepareCurrentOutputShare)}
+    {...sharing.currentOutputTracking}
+    onContainerClick={clipboard.handleContainerClick}
+    onContainerKeydown={clipboard.handleContainerKeydown}
+    onSelectHubEntity={(entity) => (selectedHubEntity = entity)}
+    onSaveHubToCodex={save.handleSaveHubToCodex}
+    onBuildDelveCanvas={handoffs.handleBuildDelveCanvas}
+    onBuildAdventureCanvas={handoffs.handleBuildAdventureCanvas}
+    onGeneratePlotTwist={when(canFollowUp, onGeneratePlotTwist)}
+    onGenerateRoster={when(canFollowUp, onGenerateRoster)}
+    {onOpenMemberAsCharacter}
+    onSendToMonsterLabs={when(canFollowUp, handoffs.handleSendToMonsterLabs)}
+    isSendingToMonsterLabs={handoffs.monsterLabsFlow.state === "loading"}
+  />
+{/snippet}
+
 <SEOGeneratorHead
   title={pageTitle}
   description={metaDescription}
@@ -274,10 +335,15 @@
   <!-- Marketing Header -->
 
   <!-- Compact Explainer Strip — no duplicate generate CTA (#1274) -->
-  <div class="w-full border-b border-theme-border/30 bg-theme-surface/10 px-6">
+  <!-- On phones a lead (Quick names) replaces it, so the tool starts higher. -->
+  <div
+    class="w-full border-b border-theme-border/30 bg-theme-surface/10 px-6 {outputLead
+      ? 'hidden sm:block'
+      : ''}"
+  >
     <div class="max-w-6xl mx-auto py-4 flex items-center justify-between gap-4">
       <p
-        class="text-xs font-bold text-theme-text/75 uppercase tracking-widest font-header"
+        class="text-xs font-bold text-theme-text uppercase tracking-widest font-header"
       >
         {explainerText ??
           `Generate campaign-ready ${generatedNoun} in seconds — no account required.`}
@@ -293,13 +359,19 @@
     class="max-w-6xl mx-auto px-4 sm:px-6 py-12 w-full flex-grow grid grid-cols-1 lg:grid-cols-12 gap-8"
   >
     <!--
-      DOM order matches visual order (Parameters -> Output -> At the Table)
-      via order-1/2/3 below, so SEO/LLM crawlers that read raw markup instead
-      of applying CSS grid order see the H1 and intro copy before the
-      generator's empty-state placeholders (#2320).
+      The lead moves before the form in both the mobile DOM and visual order;
+      otherwise the columns retain their Parameters -> Output -> At the Table
+      order for crawlers that read raw markup (#2320).
     -->
+    {#if outputLead && isNarrowViewport}
+      <div class="order-1 lg:hidden">{@render outputLead()}</div>
+    {/if}
     <!-- Parameters Column: positioned on the left on desktop -->
-    <div class="{columnClasses.form} space-y-6 order-1 lg:order-1">
+    <div
+      class="{columnClasses.form} space-y-6 {outputLead
+        ? 'order-2'
+        : 'order-1'} lg:order-1"
+    >
       <GeneratorFormPanel
         {canonicalPath}
         {eyebrow}
@@ -316,6 +388,7 @@
         {isOnline}
         {aiModeRequired}
         {aiDataNotice}
+        {aiToggleScope}
         {offlineMessage}
         {showSubmitButton}
         {busyLabel}
@@ -329,64 +402,48 @@
 
     <!-- Output Card Column: middle column on desktop -->
     <div
-      class="{columnClasses.output} flex flex-col order-2 lg:order-2 scroll-mt-20"
-      bind:this={outputCard}
+      class="{columnClasses.output} flex flex-col {outputLead
+        ? 'order-3'
+        : 'order-2'} lg:order-2"
     >
-      {@render outputLead?.()}
-      <GeneratorDiagrams
-        bind:this={diagrams}
-        generatedData={session.generatedData}
-        useAI={session.useAI}
-        onReplaceOutput={!session.isExampleDraft
-          ? session.replaceOutput
-          : undefined}
-        onCopy={clipboard.trackDiagramCopy}
-      />
-      <GeneratorOutputCard
-        generatedData={session.generatedData}
-        aiFallbackDismissed={session.aiFallbackDismissed}
-        isBusy={session.showOutputLoading}
-        isExampleDraft={session.isExampleDraft}
-        {generatedSingular}
-        {variant}
-        worldTheme={theme || worldTheme}
-        documentContent={documentLayout.content}
-        {documentSections}
-        copied={clipboard.copied}
-        copiedSectionId={clipboard.copiedSectionId}
-        contextTrimmed={contextSelection.trimmed}
-        onDismissAiFallback={session.dismissAiFallback}
-        onRetryAi={() => void session.handleGenerate({ forceAI: true })}
-        {progressSteps}
-        onSaveToCodex={save.handleSaveToCodex}
-        onRefine={when(canFollowUp, refinement.openForCurrentOutput)}
-        onCopyMarkdown={clipboard.handleCopyMarkdown}
-        onCopySection={(sectionId, markdown) =>
-          void clipboard.handleCopySection(sectionId, markdown)}
-        onPrepareShare={when(canFollowUp, sharing.prepareCurrentOutputShare)}
-        {...sharing.currentOutputTracking}
-        onContainerClick={clipboard.handleContainerClick}
-        onContainerKeydown={clipboard.handleContainerKeydown}
-        onSelectHubEntity={(entity) => (selectedHubEntity = entity)}
-        onSaveHubToCodex={save.handleSaveHubToCodex}
-        onBuildDelveCanvas={handoffs.handleBuildDelveCanvas}
-        onBuildAdventureCanvas={handoffs.handleBuildAdventureCanvas}
-        onGeneratePlotTwist={when(canFollowUp, onGeneratePlotTwist)}
-        onGenerateRoster={when(canFollowUp, onGenerateRoster)}
-        {onOpenMemberAsCharacter}
-        onSendToMonsterLabs={when(
-          canFollowUp,
-          handoffs.handleSendToMonsterLabs,
-        )}
-        isSendingToMonsterLabs={handoffs.monsterLabsFlow.state === "loading"}
-      />
-      {#if outputExtras && session.generatedData && !session.isExampleDraft}
-        {@render outputExtras(
-          session.generatedData,
-          session.replaceOutput,
-          session.useAI,
-        )}
+      {#if outputLead && !isNarrowViewport}
+        {@render outputLead()}
       {/if}
+      <!-- The scroll target after Generate: the result, not the lead. -->
+      <div class="flex flex-col scroll-mt-20" bind:this={outputCard}>
+        <GeneratorDiagrams
+          bind:this={diagrams}
+          generatedData={session.generatedData}
+          useAI={session.useAI}
+          onReplaceOutput={!session.isExampleDraft
+            ? session.replaceOutput
+            : undefined}
+          onCopy={clipboard.trackDiagramCopy}
+        />
+        {#if outputLead && session.isExampleDraft}
+          <details class="group rounded-2xl border border-theme-border/50">
+            <summary
+              class="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-3 text-sm font-bold text-theme-text"
+            >
+              See an example write-up
+              <span
+                class="icon-[lucide--chevron-down] h-4 w-4 transition-transform group-open:rotate-180"
+                aria-hidden="true"
+              ></span>
+            </summary>
+            {@render outputCardBlock()}
+          </details>
+        {:else}
+          {@render outputCardBlock()}
+        {/if}
+        {#if outputExtras && session.generatedData && !session.isExampleDraft}
+          {@render outputExtras(
+            session.generatedData,
+            session.replaceOutput,
+            session.useAI,
+          )}
+        {/if}
+      </div>
     </div>
 
     <!-- At the Table Column: positioned on the right on desktop -->

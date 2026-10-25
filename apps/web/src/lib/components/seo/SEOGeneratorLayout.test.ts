@@ -43,6 +43,7 @@ if (typeof Element !== "undefined" && !Element.prototype.animate) {
 describe("SEOGeneratorLayout Theming Sync", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
   });
 
   it("calls themeStore.setTheme when isThemeCustomizable is true and theme changes", async () => {
@@ -103,6 +104,98 @@ describe("SEOGeneratorLayout Theming Sync", () => {
       props: { generate: vi.fn(), formFields: noopSnippet },
     });
     expect(screen.queryByText("Lead content")).toBeNull();
+  });
+
+  it("folds the sample draft away and leads with the lead content on phones", () => {
+    vi.stubGlobal(
+      "matchMedia",
+      vi.fn(() => ({
+        matches: true,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      })),
+    );
+    const outputLead = createRawSnippet(() => ({
+      render: () => "<p>Lead content</p>",
+    }));
+    const { container } = render(SEOGeneratorLayout, {
+      props: {
+        generate: vi.fn(),
+        formFields: noopSnippet,
+        outputLead,
+        initialDraft: {
+          type: "character",
+          title: "Sample names",
+          content: "- **Ael**: x",
+          lore: "",
+          labels: [],
+          status: "draft",
+        },
+        aiToggleScope: "Applies to the write-up only.",
+      },
+    });
+
+    const details = screen
+      .getByText("See an example write-up")
+      .closest("details")!;
+    expect(details.open).toBe(false);
+    expect(details.textContent).toContain("Sample names");
+    const lead = screen.getByText("Lead content").parentElement!;
+    expect(lead.className).toMatch(/(^| )order-1( |$)/);
+    expect(container.querySelector("form")!.closest(".order-2")).toBeTruthy();
+    expect(screen.getByText("Applies to the write-up only.")).toBeTruthy();
+  });
+
+  it("places the lead controls before the form in the mobile keyboard order", async () => {
+    vi.stubGlobal(
+      "matchMedia",
+      vi.fn(() => ({
+        matches: true,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      })),
+    );
+    const outputLead = createRawSnippet(() => ({
+      render: () => '<button type="button">Quick name</button>',
+    }));
+    const formFields = createRawSnippet(() => ({
+      render: () => '<input aria-label="Name setting" />',
+    }));
+
+    render(SEOGeneratorLayout, {
+      props: { generate: vi.fn(), formFields, outputLead },
+    });
+    await tick();
+
+    const quickName = screen.getByRole("button", { name: "Quick name" });
+    const setting = screen.getByRole("textbox", { name: "Name setting" });
+    expect(
+      Boolean(
+        quickName.compareDocumentPosition(setting) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+      ),
+    ).toBe(true);
+    vi.unstubAllGlobals();
+  });
+
+  it("shows the sample draft openly when there is no lead content", () => {
+    render(SEOGeneratorLayout, {
+      props: {
+        generate: vi.fn(),
+        formFields: noopSnippet,
+        initialDraft: {
+          type: "character",
+          title: "Sample names",
+          content: "- **Ael**: x",
+          lore: "",
+          labels: [],
+          status: "draft",
+        },
+      },
+    });
+
+    expect(screen.queryByText("See an example write-up")).toBeNull();
+    expect(screen.getByText("Sample names").closest("details")).toBeNull();
   });
 
   it("widens the form column only for pages that opt in with wideForm", () => {
