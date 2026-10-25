@@ -181,6 +181,13 @@ export const howDoScarcityAndShortagesAffectPricesAndConflictInAnRpgWorld: Answe
         "generator-settlement",
         "for-economy-trade",
       ],
+      acknowledgedOverlap: [
+        {
+          with: "answer-post-scarcity-civilisation",
+          reason:
+            "This answer runs shortages through changing access, group responses, and visible pressure when goods can run out; the post-scarcity answer designs a guaranteed material floor and shifts conflict toward finite attention, places, consent, and competing values.",
+        },
+      ],
     },
     seo: {
       title: "How Do Scarcity and Shortages Affect Prices? | Codex Cryptica",

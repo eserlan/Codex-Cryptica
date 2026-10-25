@@ -347,6 +347,11 @@ export const howDoIGiveDifferentCivilisationsDistinctStrengthsAndWeaknesses: Ans
       ],
       acknowledgedOverlap: [
         {
+          with: "answer-post-scarcity-civilisation",
+          reason:
+            "This answer profiles what polities can do through causes, capabilities, and dependencies across several domains; the post-scarcity answer traces the institutional and social effects of one specific capability: universal material provision.",
+        },
+        {
           with: "answer-believable-fantasy-economy",
           reason:
             "The economy answer builds a six-link model for regional production, exchange, control, and pressure; this answer builds a four-link model for capabilities and dependencies across military, logistics, economy, infrastructure, diplomacy, administration, knowledge, and social coordination.",

@@ -189,6 +189,11 @@ export const howDoIBuildABelievableEconomyForAFantasyWorld: AnswerConfigInput =
       ],
       acknowledgedOverlap: [
         {
+          with: "answer-post-scarcity-civilisation",
+          reason:
+            "This answer builds production, exchange, control, and pressure for economies where resources are limited; the post-scarcity answer starts from guaranteed basic goods and examines what replaces wages and property, and which limits remain.",
+        },
+        {
           with: "answer-trade-routes-shape-cities-kingdoms",
           reason:
             "This answer builds a whole economy from resources, production, exchange, and pressure; the trade-routes answer focuses on where goods must pass, who collects there, and how rival paths reshape settlements.",

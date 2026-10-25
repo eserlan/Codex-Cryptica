@@ -168,7 +168,7 @@ export const howDoIBuildABelievablePostScarcityCivilisation: AnswerConfigInput =
       },
       {
         kind: "checklist",
-        heading: "A ten-minute worksheet for your own civilisation",
+        heading: "A worksheet for your own civilisation",
         intro:
           "Answer each question in one or two lines, in terms a visitor could observe. Stop and revise any answer that only restates that the society is advanced:",
         items: [
