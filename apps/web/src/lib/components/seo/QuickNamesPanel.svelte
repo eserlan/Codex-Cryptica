@@ -54,6 +54,7 @@
   // Rolled in the browser only: the server render shows placeholders, so a
   // random batch never mismatches on hydration.
   let names = $state<string[]>([]);
+  let nameSources = $state<Record<string, "local" | "ai">>({});
   let source = $state<"local" | "ai">("local");
   let parts = $state<NameParts>("full");
   let copiedIndex = $state<number | null>(null);
@@ -124,6 +125,12 @@
   function showBatch(fresh: string[], from: "local" | "ai") {
     batchId++;
     names = mergePinned(pinned, fresh);
+    nameSources = Object.fromEntries(
+      names.map((name) => [
+        name,
+        pinned.includes(name) && nameSources[name] ? nameSources[name] : from,
+      ]),
+    );
     source = from;
     copiedIndex = null;
     allCopied = false;
@@ -160,6 +167,17 @@
       .filter(Boolean)
       .join(" · "),
   );
+
+  const privacyNotice = $derived.by(() => {
+    const hasLocal = names.some((name) => nameSources[name] === "local");
+    const hasAi = names.some((name) => nameSources[name] === "ai");
+    if (hasLocal && hasAi) {
+      return "This list includes names rolled on your device and names supplied by our AI service.";
+    }
+    return hasAi
+      ? "These names came from our AI service."
+      : "Rolled on your device: no account, no AI.";
+  });
 
   /** Bring the full generator's button into view and focus it. */
   function showFullGenerator() {
@@ -221,11 +239,7 @@
       >Copies a plain list, one name per line.</span
     >
   </div>
-  <p class="mt-2 text-xs text-theme-text">
-    {source === "ai"
-      ? "These names came from our AI service."
-      : "Rolled on your device: no account, no AI."}
-  </p>
+  <p class="mt-2 text-xs text-theme-text">{privacyNotice}</p>
 {/snippet}
 
 {#snippet settings()}

@@ -360,6 +360,47 @@ describe("QuickNamesPanel", () => {
     expect(screen.queryByText(/came from our AI service/i)).toBeNull();
   });
 
+  it.each([
+    ["local", "ai"],
+    ["ai", "local"],
+  ] as const)(
+    "reports both sources when a %s name stays pinned through a %s batch",
+    async (pinnedSource, nextSource) => {
+      renderPanel({
+        askAi: async () => ({ names: ["Ysolde Brightwater"], fallback: false }),
+      });
+      await waitFor(() => expect(nameButtons()).toHaveLength(10));
+
+      if (pinnedSource === "ai") {
+        await fireEvent.click(screen.getByRole("button", { name: "Ask AI" }));
+        await waitFor(() =>
+          expect(nameButtons().map(nameOf)).toContain("Ysolde Brightwater"),
+        );
+      }
+      const name =
+        pinnedSource === "ai" ? "Ysolde Brightwater" : nameOf(nameButtons()[0]);
+      await fireEvent.click(
+        screen.getByRole("button", { name: `Pin ${name}` }),
+      );
+
+      if (nextSource === "ai") {
+        await fireEvent.click(screen.getByRole("button", { name: "Ask AI" }));
+      } else {
+        await fireEvent.click(
+          screen.getByRole("button", { name: /new names/i }),
+        );
+      }
+
+      await waitFor(() =>
+        expect(
+          screen.getByText(
+            /includes names rolled on your device and names supplied by our AI service/i,
+          ),
+        ).toBeTruthy(),
+      );
+    },
+  );
+
   it("keeps the local note when the AI fails and names are rolled instead", async () => {
     renderPanel({ askAi: async () => ({ names: [], fallback: true }) });
     await waitFor(() => expect(nameButtons()).toHaveLength(10));
