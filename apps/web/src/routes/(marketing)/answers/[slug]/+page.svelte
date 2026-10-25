@@ -32,6 +32,9 @@
   // A bare "/" base would make every link protocol-relative ("//answers/...").
   const cleanBase = base === "/" ? "" : base;
 
+  const inlineLinkClass =
+    "text-theme-primary underline decoration-theme-primary/40 underline-offset-2 transition-colors hover:decoration-theme-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-accent";
+
   let answer = $derived(data.answer);
   let related = $derived(data.related);
   let canonical = $derived(buildAbsoluteUrl(answerPath(answer)));
@@ -99,13 +102,23 @@
      rather than printing the markdown. -->
 {#snippet inline(text: string)}
   {#each parseInlineLinks(text) as segment, segmentIndex (segmentIndex)}
-    {#if segment.kind === "link"}
+    {#if segment.kind === "link" && segment.external}
       <a
-        href={segment.external ? segment.href : `${cleanBase}${segment.href}`}
-        target={segment.external ? "_blank" : undefined}
-        rel={segment.external ? "noopener noreferrer" : undefined}
-        class="text-theme-primary underline decoration-theme-primary/40 underline-offset-2 transition-colors hover:decoration-theme-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-accent"
-        >{segment.text}</a
+        href={segment.href}
+        target="_blank"
+        rel="noopener noreferrer"
+        class={inlineLinkClass}>{segment.text}</a
+      >
+    {:else if segment.kind === "link"}
+      <a
+        href="{cleanBase}{segment.href}"
+        class={inlineLinkClass}
+        use:trackDiscoveryClick={{
+          sourceKind: "answer",
+          sourceId: answer.slug,
+          placement: "inline_link",
+          ...classifyDiscoveryTarget(segment.href),
+        }}>{segment.text}</a
       >
     {:else}{segment.text}{/if}
   {/each}
