@@ -157,6 +157,7 @@ export const howDoScarcityAndShortagesAffectPricesAndConflictInAnRpgWorld: Answe
       "how-do-i-make-different-cultures-feel-distinct-without-relying-on-stereotypes",
       "how-do-i-create-interesting-islands-and-ports-for-a-pirate-campaign",
       "how-should-a-fantasy-adventuring-guild-handle-wages-dues-and-shared-expenses",
+      "how-do-i-build-a-believable-post-scarcity-civilisation",
     ],
     discovery: {
       id: "answer-scarcity-shortages-prices-conflict",

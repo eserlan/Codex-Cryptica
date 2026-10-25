@@ -313,6 +313,7 @@ export const howDoIGiveDifferentCivilisationsDistinctStrengthsAndWeaknesses: Ans
       "how-do-i-make-different-cultures-feel-distinct-without-relying-on-stereotypes",
       "how-do-fantasy-cities-defend-against-flying-creatures-and-teleportation",
       "how-should-magic-have-been-discovered-in-my-world",
+      "how-do-i-build-a-believable-post-scarcity-civilisation",
     ],
     labels: ["fantasy"],
     discovery: {
