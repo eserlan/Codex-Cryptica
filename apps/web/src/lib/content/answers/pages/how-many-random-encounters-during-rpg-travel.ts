@@ -7,7 +7,7 @@ export const howManyRandomEncountersDuringRpgTravel: AnswerConfigInput = {
   question: "How many random encounters should you use during RPG travel?",
   kind: "framework",
   shortAnswer:
-    "Start with roughly one substantial encounter per week of travel, and treat that figure as a loose baseline rather than a rule. Some weeks should pass without incident, and a dangerous or unfamiliar route can support two or three in a week when each one offers a real choice. Decide first how much table time the journey deserves, then spend that time on a small number of scenes. A sighting, rumour, or brief choice can stay brief, and many rolled prompts work best as colour or foreshadowing instead of a full encounter.",
+    "As a pacing heuristic, start with roughly one substantial encounter per week of travel, not a rule. Some weeks should pass without incident, and a dangerous or unfamiliar route can support two or three in a week when each one offers a real choice. Decide first how much table time the journey deserves, then spend that time on a small number of scenes. A sighting, rumour, or brief choice can stay brief, and many rolled prompts work best as colour or foreshadowing instead of a full encounter.",
   sections: [
     {
       kind: "prose",
@@ -49,8 +49,8 @@ export const howManyRandomEncountersDuringRpgTravel: AnswerConfigInput = {
       kind: "prose",
       heading: "What the starting rates assume",
       paragraphs: [
-        "Read the table as a pacing heuristic, not a system rule. A substantial encounter means a scene the party plays out with a decision inside it, such as whether to aid the robbery victim, bargain with the stranger, or enter the tournament. Brief colour sits outside the count. A week with one substantial encounter, two rumours, and a change of weather has had plenty happen; only one part of it asked the players to commit time and risk.",
-        "Several conditions move the rate up or down. Destination urgency lowers it: a party racing a closing pass or a rival messenger has reason to refuse detours, and the fiction should honour that refusal. Route danger raises it, because danger the players chose when they picked the road deserves visible form. Repeated routes lower it sharply, since a second telling of the same shrine mystery rewards nobody. Current plot momentum matters too. A journey that interrupts a tense sequence at the destination can afford fewer diversions than a journey that is itself the current story. Player appetite overrides the arithmetic in both directions, and the section on reading the table below covers how to judge it.",
+        "Read the table as a pacing heuristic, not a system rule. A substantial encounter means a scene the party plays out with a decision inside it, such as whether to aid the robbery victim, bargain with the stranger, or enter the tournament. Brief colour sits outside the count. A week with one substantial encounter, two rumours, and a change of weather has had plenty happen; only one part of it asked the players to commit time and risk. These sizes are starting choices: if players investigate a detail, expand the scene or agree together how to summarise or pause it.",
+        "Several conditions move the rate up or down. Destination urgency lowers it: a party racing a closing pass or a rival messenger may choose to refuse detours. Honour that choice without inventing a punishment; any established toll, flood, injury, or deadline still has its ordinary effects. Route danger raises the rate, because danger the players chose when they picked the road deserves visible form. Repeated routes lower it sharply, since a second telling of the same shrine mystery rewards nobody. Current plot momentum matters too. A journey that interrupts a tense sequence at the destination can afford fewer diversions than a journey that is itself the current story. Player appetite overrides the arithmetic in both directions, and the section on reading the table below covers how to judge it. A scene budget controls narration only; it does not silently cancel agreed hazard checks, resource costs, or other travel procedures.",
       ],
     },
     {
@@ -73,11 +73,11 @@ export const howManyRandomEncountersDuringRpgTravel: AnswerConfigInput = {
         },
         {
           term: "Play out only what earns a scene",
-          text: "Give a prompt a full scene when it presents a choice with consequences the party cannot walk past unchanged: a cost, a commitment, a piece of knowledge that alters the plan. Everything else stays at the size it needs, covered in the four sizes below.",
+          text: "Start each prompt at a suitable size. If players investigate, expand it or agree how to summarise or pause it. Give it a full scene when it presents a choice with consequences the party cannot walk past unchanged: a cost, a commitment, or knowledge that alters the plan.",
         },
         {
           term: "Montage the remainder",
-          text: "Summarise the rest in a sentence or two each as part of the travel narration. Montage keeps the road populated and plants information for later without opening a scene the table then has to close.",
+          text: "Agree with the table which remaining prompts to summarise in a sentence or two. Montage keeps the road populated without requiring full scenes.",
         },
       ],
     },
@@ -89,19 +89,19 @@ export const howManyRandomEncountersDuringRpgTravel: AnswerConfigInput = {
       items: [
         {
           term: "Colour",
-          text: "A detail the party notices and passes: smoke from a shrine chimney, fresh cart tracks turning off the road, a gibbet with a new notice nailed beneath it. Colour takes a sentence, gives the region texture, and asks nothing of the players. Most prompts on most journeys should land here.",
+          text: "A detail first presented in passing: shrine smoke, fresh cart tracks, a new notice beneath the gibbet. Colour gives the region texture. Most prompts can start here; players may investigate as described above.",
         },
         {
           term: "Foreshadowing",
-          text: "A detail that will matter later: the robbery victim describes attackers wearing a livery the party will meet at the destination, or the stranger asks after a name the party knows. Play it briefly, let the players note it, and move on. The payoff belongs to a later scene.",
+          text: "A detail that may matter later: the robbery victim describes a livery the party may see at the destination, or the stranger asks after a name they know. Present it briefly; the payoff can come later.",
         },
         {
           term: "A meaningful decision",
-          text: "A short scene with a real fork: help the victim and lose half a day, or press on and arrive ahead of the weather; enter the tournament and risk coin for local goodwill, or sleep early and leave unknown. The decision changes time, resources, standing, or knowledge, and then the journey resumes.",
+          text: "A short scene with a real fork: help the victim and lose half a day, or press on ahead of the weather; enter the tournament and risk coin for local goodwill, or sleep early and leave unknown. Play out the effects on time, resources, standing, or knowledge.",
         },
         {
           term: "A full side quest",
-          text: "An event that opens its own thread: the sphinx will trade passage for a riddle answered honestly and remembers the answer, or the shrine's keeper asks the party to carry a relic onward. Reserve this size for prompts that connect to the wider campaign, and spend budget on it knowingly. One per journey is plenty for most campaigns.",
+          text: "An event that opens its own thread: a sphinx trades passage for an honest answer it will remember, or a shrine keeper asks the party to carry a relic onward. Reserve this for prompts tied to the wider campaign, and budget for it knowingly. One per journey is plenty for most campaigns.",
         },
       ],
     },
@@ -110,27 +110,27 @@ export const howManyRandomEncountersDuringRpgTravel: AnswerConfigInput = {
       heading: "Quiet weeks do useful work",
       paragraphs: [
         "Nothing happens is a valuable result, and a table that cannot produce it will eventually crowd out everything else. A quiet week establishes that the road is sometimes simply a road, which makes the week with the sphinx feel like an event rather than a schedule. Quiet travel also returns time to the destination, lets supplies and injuries settle into bookkeeping the players chose, and gives recent consequences room to be discussed in camp before the next interruption arrives.",
-        "Treat each rolled prompt as an offer rather than an instruction. If a prompt duplicates last week's decision, arrives while the party is racing a deadline they care about, or belongs to a region the party left two days ago, shrink it to colour, save it for a later journey, or let it go entirely. The prompt has done its job by giving you material to judge; it does not need a scene to justify the roll.",
+        "Treat each prompt as material to judge, not an instruction to open a scene. If it repeats last week's decision, clashes with a deadline, or belongs to a region the party left behind, agree whether to summarise it or leave it out. Keep established consequences and locations intact; do not move unresolved situations just to protect the schedule.",
       ],
     },
     {
       kind: "example",
       heading: "Three weeks on the Salt Road",
       paragraphs: [
-        "A party is travelling three weeks to reach a border town before a trade fair ends. The GM decides the journey is a connecting trip inside two three hour sessions, and sets a budget of one substantial encounter, a handful of brief events, and quiet travel otherwise. The GM rolls once per week and gets prompts for all three weeks, then sizes each one against the budget.",
+        "A party is travelling three weeks to reach a border town before a trade fair ends. The GM decides the journey is a connecting trip inside two three-hour sessions, and sets a budget of two substantial encounters, a handful of brief events, and quiet travel otherwise. The GM rolls once per week and gets prompts for all three weeks, then sizes each one against the budget. The two scenes take about fifty minutes of table time together. The rescue costs half a day in the fiction; competing can affect the party's standing at the fair.",
       ],
       items: [
         {
           term: "Week one: quiet, with one rumour planted",
-          text: "The roll offers a strange shrine. The party is fresh, the fair deadline is distant, and the GM wants the road to feel long before it feels eventful, so the shrine becomes colour and foreshadowing. The travellers pass its smoke and a keeper ringing a handbell at dawn; a carter at the next camp says the keeper blesses caravans that leave salt, and warns that nobody has seen her for a month. Two minutes of table time. The players note the rumour and walk on.",
+          text: "The roll offers a strange shrine. The party is fresh, the fair deadline is distant, and the GM wants the road to feel long before it feels eventful, so the shrine is first presented as colour and foreshadowing. The travellers pass its smoke and a keeper ringing a handbell at dawn; a carter at the next camp says the keeper blesses caravans that leave salt, and warns that nobody has seen her for a month. The brief narration takes two minutes. The players can investigate if they wish; here, they accept the rumour and walk on.",
         },
         {
-          term: "Week two: a short decision with a cost",
-          text: "The roll offers a robbery victim. The GM plays this as a meaningful decision of about ten minutes. The victim, a salt merchant's guard, can describe the ambush site and warn that the attackers now hold the only bridge on the route. Helping him back to the last waystation costs half a day against the fair deadline; leaving him keeps the schedule and sends the party towards an ambush they now know about. The players choose to help, lose the half day, and gain the bridge warning plus the merchant's name to use in town. The journey resumes with their plan changed.",
+          term: "Week two: a rescue with a cost",
+          text: "The roll offers a robbery victim. The GM starts this meaningful decision as a ten-minute scene. The victim is a salt merchant's guard, hurt and stranded beside the road. Helping him back to the last waystation costs half a day against the fair deadline; leaving him keeps the schedule. The players choose to help, lose the half day, and learn the merchant house's name from the guard. The journey resumes with their plan changed.",
         },
         {
-          term: "Week three: the substantial encounter",
-          text: "The roll offers a gambling tournament at the last waystation, and the GM spends the budget here. The tournament is run by the same merchant house whose guard the party rescued, so the earlier decision pays off in an introduction and a staked seat. Forty minutes of play follow: the party wagers coin and a favour, learns that a rival house is buying up salt contracts before the fair, and leaves with a debt owed to them and a reason to arrive carefully. The encounter is substantial because its consequences walk into the destination with the party. Had the players ignored the victim in week two, the same tournament would have run colder, with no introduction and higher stakes to enter.",
+          term: "Week three: a tournament and an introduction",
+          text: "The roll offers a gambling tournament at the last waystation. The rescued guard introduces the party to his merchant house's representative, paying off their earlier choice. In the forty-minute scene, they can compete, wagering coin and a favour, or decline; either way, they learn that a rival house is buying up salt contracts before the fair. Competing may change their standing or leave them owing a debt. If they had left the guard behind, there would be no introduction, though they could still approach the tournament.",
         },
       ],
     },
@@ -142,10 +142,9 @@ export const howManyRandomEncountersDuringRpgTravel: AnswerConfigInput = {
       items: [
         "Players lean in when a prompt appears, ask what their characters can see or try, and refer back to earlier road events. The rate is working; hold it.",
         "Players start asking how many days remain, summarise their own actions to move things along, or check supplies mainly to end the leg. Shrink the next prompt to colour or skip it.",
-        "A rolled prompt would repeat a decision the party made last week. Convert it to a rumour at camp or save it for different terrain.",
-        "An unplanned detour is running long while the destination waits. Close the scene on its next real decision, and carry any unfinished thread to the destination or a later journey.",
-        "The party refuses a detour because the destination matters more right now. Honour the refusal without penalty; urgency the players feel is pacing information, and the saved prompt keeps for another road.",
-        "Nobody can recall the last travel event when you reach camp. The journey has had enough scenes; montage to arrival.",
+        "An unplanned detour is running long while the destination waits. Ask whether players want to continue, summarise or pause it; do not move an unresolved situation elsewhere just to meet the budget.",
+        "The party refuses a detour because the destination matters more right now. Do not invent a penalty for refusing; let established costs and deadlines have their ordinary effects. The prompt can be left behind or revisited if the fiction supports it.",
+        "Before adding another scene, ask whether players want to keep playing out the journey or move on to arrival.",
       ],
     },
   ],
@@ -181,7 +180,7 @@ export const howManyRandomEncountersDuringRpgTravel: AnswerConfigInput = {
       "how many encounters per week of travel rpg",
     ],
     uniqueValue:
-      "Pacing heuristics for how often random encounters should occur during RPG travel, separating frequency from scene duration, budgeting substantial scenes by table time, and showing a worked three-week journey with a quiet week, a short decision, and one substantial encounter.",
+      "Pacing heuristics for how often random encounters should occur during RPG travel, separating frequency from scene duration, budgeting substantial scenes by table time, and showing a worked three-week journey with quiet travel and two consequential scenes.",
     relatedIntents: [
       "answer-travel-interesting",
       "answer-random-encounter",
