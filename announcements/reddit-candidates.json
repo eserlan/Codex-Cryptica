@@ -1,5 +1,5 @@
 {
-  "updated_at": 1792942629,
+  "updated_at": 1792943711,
   "candidates": [
     {
       "id": "reddit-39665758623-my-party-kept-going-to-separate-houses-a",
@@ -32,14 +32,14 @@
       "created_at": 1792705942
     },
     {
-      "id": "reddit-40203955328-my-players-loved-a-video-game-s-world-bu",
-      "title": "My players loved a video game's world but the hero left them with nothing to decide",
-      "body": "I tried to bring a favourite video game to the table for its setting and conflicts, but the original protagonist had already made the big choices. My first prep just replayed his plot and left the party watching someone else's story.\n\nI built a system-agnostic guide that keeps the game's setting and conflicts but hands the decisive choices to the party.\n\nYou can read it here: https://codexcryptica.com/answers/how-to-adapt-a-video-game-into-a-tabletop-rpg\n\nIt walks through:\n- five protagonist treatments, from removing the hero to recasting them as a rival, patron or background figure\n- a timeline table that separates fixed world history from hero-specific turns you can open up\n- a conversion worksheet to map factions, stakes and player-facing decisions\n- a six-step workflow to rebuild the game as a playable arc\n- a full Arx Fatalis worked example showing before and after\n\nTradeoff I am still weighing: the closer you stay to canon, the less room the party has to change outcomes. I leaned toward player agency over fidelity, so some lore gets cut or moved.\n\nWhich game's world would you steal for the table, and what would you have to change about its hero to make room for the party?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-40203955328-0.png)",
-      "url": "https://codexcryptica.com/answers/how-to-adapt-a-video-game-into-a-tabletop-rpg",
-      "image_url": "https://assets.codexcryptica.com/announcements/release-40203955328-0.png",
+      "id": "reddit-40203955328-my-point-crawls-looked-right-until-playe",
+      "title": "My point crawls looked right until players asked what the routes actually cost",
+      "body": "My wilderness notes were either a hex grid no one wanted to track, or a set of named places joined by identical lines. At the table there was no reason to pick one road over another.\n\nI added a copyable six-node diagram to the point crawl how-to so the cost differences are playable at a glance, and tightened the links from the related explainers into the generator.\n\nSee it here: https://codexcryptica.com/answers/how-do-you-build-a-point-crawl-for-an-rpg\n\nWhat changed:\n- Morzan's Crypt, a six-node worked example with costed routes that differ in travel time, terrain and hazard\n- a layout you can copy as a starting template for your own region\n- new CTAs and cross-links from What Is a Point Crawl, Point Crawl vs Hex Crawl and What Map Tool Should I Use to the Point Crawl Generator\n\nA single example reads faster but it can narrow what people imagine a point crawl could be. I kept it to one compact crypt so the pattern stays visible rather than exhaustive.\n\nWhen you map travel, do your routes differ enough that the party actually debates them, or do they tend to collapse to one obvious path?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-40203955328-1.png)",
+      "url": "https://codexcryptica.com/answers/how-do-you-build-a-point-crawl-for-an-rpg",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-40203955328-1.png",
       "source_id": "40203955328",
       "status": "approved",
-      "created_at": 1792942629
+      "created_at": 1792943711
     }
   ]
 }
