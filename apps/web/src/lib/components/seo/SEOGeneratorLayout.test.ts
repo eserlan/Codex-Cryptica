@@ -2,7 +2,7 @@
 
 import { render, fireEvent, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
-import { tick, type Snippet } from "svelte";
+import { createRawSnippet, tick, type Snippet } from "svelte";
 import SEOGeneratorLayout from "./SEOGeneratorLayout.svelte";
 import { themeStore } from "$lib/stores/theme.svelte";
 import { runShellCtaHandler } from "./marketing-shell";
@@ -87,6 +87,22 @@ describe("SEOGeneratorLayout Theming Sync", () => {
     });
 
     expect(setThemeSpy).toHaveBeenCalledWith("cyberpunk");
+  });
+
+  it("renders a page's lead content above the output only when given", () => {
+    const outputLead = createRawSnippet(() => ({
+      render: () => "<p>Lead content</p>",
+    }));
+    const { unmount } = render(SEOGeneratorLayout, {
+      props: { generate: vi.fn(), formFields: noopSnippet, outputLead },
+    });
+    expect(screen.getByText("Lead content")).toBeTruthy();
+    unmount();
+
+    render(SEOGeneratorLayout, {
+      props: { generate: vi.fn(), formFields: noopSnippet },
+    });
+    expect(screen.queryByText("Lead content")).toBeNull();
   });
 
   it("widens the form column only for pages that opt in with wideForm", () => {

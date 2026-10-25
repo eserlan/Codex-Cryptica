@@ -120,4 +120,32 @@ describe("generator page composition", () => {
       expect.objectContaining({ location: "The market" }),
     );
   });
+
+  it("leads the fantasy name page with Quick Names that follow the culture setting", async () => {
+    render(GeneratorPageContent, {
+      props: { slug: "fantasy-names", persistence },
+    });
+    const panel = screen
+      .getByRole("heading", { name: "Quick names" })
+      .closest("section")!;
+    const namesBefore = () =>
+      Array.from(panel.querySelectorAll("li button")).map(
+        (button) => button.textContent,
+      );
+
+    await waitFor(() => expect(namesBefore()).toHaveLength(10));
+    const first = namesBefore();
+    await fireEvent.change(
+      screen.getByRole("combobox", { name: "Culture / Style" }),
+      { target: { value: "Dwarven" } },
+    );
+    await waitFor(() => expect(namesBefore()).not.toEqual(first));
+    expect(screen.getByText(/More options: presentation/)).toBeTruthy();
+  });
+
+  it("keeps Quick Names off other generator pages", () => {
+    renderBusiness();
+
+    expect(screen.queryByRole("heading", { name: "Quick names" })).toBeNull();
+  });
 });

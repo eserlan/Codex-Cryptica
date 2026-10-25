@@ -560,6 +560,7 @@
     />
   {:else if slug === "fantasy-names"}
     <NameFormFields
+      collapseAdvanced
       bind:culture={names.culture}
       bind:gender={names.gender}
       bind:nameType={names.nameType}
