@@ -122,6 +122,31 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/tools/rpg-npc-generator</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/tools/cyberpunk-nomad-clan-generator</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/tools/idea-developer</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/tools/session-prep-builder</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/silhouettes</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/llms.txt</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
@@ -453,6 +478,11 @@
   </url>
   <url>
     <loc>https://codexcryptica.com/generators/business</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/generators/mystery-investigation</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -1268,6 +1298,11 @@
   </url>
   <url>
     <loc>https://codexcryptica.com/answers/how-should-magic-have-been-discovered-in-my-world</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/how-to-adapt-a-video-game-into-a-tabletop-rpg</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>

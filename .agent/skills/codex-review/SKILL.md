@@ -27,6 +27,12 @@ project-specific findings below.
 The PR reviewer (dev-agents "Luna") repeatedly finds the defects below after this review passes.
 Run these sweeps on every review; they are where most second and third review rounds come from.
 
+0. **Mechanical checks first**: Run `bun run lint:changed`. Besides ESLint and Prettier it runs
+   `scripts/check-ui-patterns.mjs` on the changed lines (theme contrast, `renderMarkdown`
+   without `allowImages: false`, responsive `order-*`, `setTimeout` without cleanup), and the
+   discovery audit when discovery content changes. `test:changed` covers the sitemap against the
+   discovery registry. See [docs/local-pr-checks.md](../../../docs/local-pr-checks.md). Do not
+   re-derive by hand what these already compute.
 1. **Revert check (tests)**: For each changed hunk, name the test that fails if the hunk is
    reverted. No name means a missing or non-discriminating test. See
    [The Revert Check](references/patterns.md#the-revert-check-would-any-test-fail) for the recurring
@@ -35,10 +41,14 @@ Run these sweeps on every review; they are where most second and third review ro
    check each: every button with the same contrast pair, every model field interpolated into the
    same Markdown, every AI entry point (retry, regenerate) behind the disclosure, every opener path
    that needs focus restore, every article repeating the same claim, every field holding a merged id.
+   For a new function or option, enumerate its input space (every culture, theme, mode, entity
+   kind, empty and maximum case) and check the sibling functions that take the same input.
 3. **Model-output guards**: Check each parse/validation guard in the diff against
    [Model-Output Shape Guards](references/patterns.md#model-output-shape-guards-that-let-junk-through)
    (`null`/array/`{}`, `NaN`, unescaped `RegExp`, duplicate ids, missing maximum, graph
-   reachability, silent truncation).
+   reachability, silent truncation). Every new validator, user-input or config parser included,
+   gets a bad-input table in its test: repeats, a missing field, an unknown id, a duplicate id,
+   empty input and the over-limit case, each with the expected outcome.
 4. **Heuristic checks**: Any regex over generated prose needs a counterexample table in its test
    (flagged and not-flagged, with unrelated clauses, lists and punctuation). See
    [Heuristic Prose Checks](references/patterns.md#heuristic-prose-checks-regex-validators).
@@ -52,9 +62,12 @@ Run these sweeps on every review; they are where most second and third review ro
 7. **Claims**: Every capability, rule, number and privacy claim in changed content, help copy, or
    the PR description has a code path or a cited source. Evergreen blog posts go through the
    discovery registry. The PR description matches `git diff origin/staging...HEAD --stat`.
+   A new user-facing workflow or control has a Help entry (`apps/web/src/lib/content/help`, and
+   the `help-engine` feature registry when the in-app assistant should know it).
 8. **Re-review the fix**: A fix is new code. Re-run the relevant sweep over the fix itself, and
    for heuristics, re-run the whole counterexample table. Most second-round findings are defects
-   in the first round's fix.
+   in the first round's fix. Automated fixer commits go through the same gates (sweep 0, tests,
+   type-check) before they are pushed.
 
 ## Review Output Guidelines
 

@@ -38,7 +38,8 @@ export const toolEntries: DiscoveryEntryInput[] = [
       "Long-standing entry point for D&D-qualified NPC queries, with fuller on-page explanation than the generator route carries.",
     parentCluster: "npc-creation",
     relatedIntents: ["generator-dnd-npc"],
-    indexable: true,
+    // A 301 stub to /generators/npc (#2567), so it is kept out of the sitemap.
+    indexable: false,
     status: "live",
   },
   {
@@ -66,7 +67,8 @@ export const toolEntries: DiscoveryEntryInput[] = [
       "Fantasy-qualified entry point for faction queries, with worked examples of agendas and rivalries on the page.",
     parentCluster: "faction-creation",
     relatedIntents: ["generator-faction"],
-    indexable: true,
+    // A 301 stub to /generators/faction (#2567), so it is kept out of the sitemap.
+    indexable: false,
     status: "live",
   },
   {
