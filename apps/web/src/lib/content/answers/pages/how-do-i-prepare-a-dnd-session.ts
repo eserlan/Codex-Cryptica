@@ -195,7 +195,7 @@ export const howDoIPrepareADndSession: AnswerConfigInput = {
       title: "D&D NPC Generator",
       description:
         "A named D&D character with a want and a secret when the people slot is thin.",
-      href: "/tools/dnd-npc-generator",
+      href: "/generators/dnd-npc",
     },
     {
       title: "Encounter Generator",

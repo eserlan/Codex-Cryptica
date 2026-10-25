@@ -54,7 +54,7 @@
         href: "/free-rpg-campaign-manager",
         label: "Free RPG campaign manager",
       },
-      { href: "/tools/dnd-npc-generator", label: "D&D NPC generator" },
+      { href: "/generators/dnd-npc", label: "D&D NPC generator" },
     ],
     faq: [
       {

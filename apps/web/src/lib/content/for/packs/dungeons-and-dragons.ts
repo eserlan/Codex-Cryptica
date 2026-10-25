@@ -95,7 +95,7 @@ export const dungeonsAndDragons: LandingPageConfig = {
       title: "D&D NPC Generator",
       description:
         "Create an NPC with a name, a motive, and a reason to care about the party — during prep or mid-session.",
-      href: "/tools/dnd-npc-generator",
+      href: "/generators/dnd-npc",
       badge: "Generator",
     },
     {

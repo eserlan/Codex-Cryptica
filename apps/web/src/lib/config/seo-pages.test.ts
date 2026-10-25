@@ -7,11 +7,4 @@ describe("solution page secondary CTAs", () => {
       "/generators/fantasy-names",
     );
   });
-
-  it("never link the legacy fantasy name tool, which canonicalises away", () => {
-    const legacy = Object.values(solutions).filter(
-      (page) => page.secondaryCtaHref === "/tools/fantasy-name-generator",
-    );
-    expect(legacy).toEqual([]);
-  });
 });

@@ -83,10 +83,7 @@ Codex Cryptica is local-first: vault data is stored locally by default and does 
 
 ## Free Generators
 
-- [D&D NPC Generator](https://codexcryptica.com/tools/dnd-npc-generator): Client-side name, trait, motive, and backstory generator.
 - [RPG NPC Generator](https://codexcryptica.com/tools/rpg-npc-generator): System-agnostic NPC generator for tabletop games.
-- [Faction Generator](https://codexcryptica.com/tools/faction-generator): Fantasy faction generator with agendas, rivals, conflicts, and hooks.
-- [Fantasy Name Generator](https://codexcryptica.com/tools/fantasy-name-generator): Client-side fantasy name generator.
 - [Quest Hook Generator](https://codexcryptica.com/tools/quest-hook-generator): RPG quest hook and adventure seed generator.
 - [Vampire Clan Generator](https://codexcryptica.com/tools/vampire-clan-generator): Gothic vampire clan generator for World of Darkness-style games.
 

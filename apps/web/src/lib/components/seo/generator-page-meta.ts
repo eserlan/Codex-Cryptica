@@ -274,7 +274,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       },
     ],
     relatedLinks: [
-      { href: "/tools/dnd-npc-generator", label: "D&D NPC Generator" },
+      { href: "/generators/dnd-npc", label: "D&D NPC Generator" },
       { href: "/solutions/worldbuilding-tool", label: "Worldbuilding tool" },
     ],
   },

@@ -35,10 +35,10 @@ export const toolEntries: DiscoveryEntryInput[] = [
     intentAliases: ["dnd 5e npc maker"],
     userJob: "create",
     uniqueValue:
-      "Long-standing entry point for D&D-qualified NPC queries, with fuller on-page explanation than the generator route carries.",
+      "Legacy URL kept only as a 301 redirect to /generators/npc so old links still resolve; it carries no content of its own.",
     parentCluster: "npc-creation",
     relatedIntents: ["generator-dnd-npc"],
-    indexable: true,
+    indexable: false,
     status: "live",
   },
   {
@@ -63,10 +63,10 @@ export const toolEntries: DiscoveryEntryInput[] = [
     intentAliases: ["fantasy guild generator"],
     userJob: "create",
     uniqueValue:
-      "Fantasy-qualified entry point for faction queries, with worked examples of agendas and rivalries on the page.",
+      "Legacy URL kept only as a 301 redirect to /generators/faction so old links still resolve; it carries no content of its own.",
     parentCluster: "faction-creation",
     relatedIntents: ["generator-faction"],
-    indexable: true,
+    indexable: false,
     status: "live",
   },
   {

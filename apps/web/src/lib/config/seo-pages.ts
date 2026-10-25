@@ -174,7 +174,7 @@ export const solutions: Record<string, SEOPageData> = {
         href: "/solutions/ai-worldbuilding-tool",
         label: "AI worldbuilding tool",
       },
-      { href: "/tools/dnd-npc-generator", label: "D&D NPC generator" },
+      { href: "/generators/dnd-npc", label: "D&D NPC generator" },
     ],
   },
   "local-first-rpg": {
@@ -251,7 +251,7 @@ export const solutions: Record<string, SEOPageData> = {
       "Codex Cryptica includes an AI-assisted writing layer called the Lore Oracle. It reads your campaign context, answers questions about your world, helps you draft NPC descriptions and faction goals, and suggests revisions to existing entries, all running locally with your own API key.",
     ctaText: "Try the Lore Oracle",
     secondaryCtaText: "See AI generators",
-    secondaryCtaHref: "/tools/dnd-npc-generator",
+    secondaryCtaHref: "/generators/dnd-npc",
     keywords: [
       "ai dm assistant",
       "ai game master helper",
@@ -280,7 +280,7 @@ export const solutions: Record<string, SEOPageData> = {
       },
     ],
     relatedLinks: [
-      { href: "/tools/dnd-npc-generator", label: "D&D NPC generator" },
+      { href: "/generators/dnd-npc", label: "D&D NPC generator" },
       { href: "/tools/quest-hook-generator", label: "Quest hook generator" },
       { href: "/solutions/ai-gm-assistant", label: "AI GM assistant solution" },
     ],
@@ -350,7 +350,7 @@ export const solutions: Record<string, SEOPageData> = {
         href: "/solutions/worldbuilding-tool",
         label: "Structured worldbuilding tool",
       },
-      { href: "/tools/dnd-npc-generator", label: "DnD NPC generator" },
+      { href: "/generators/dnd-npc", label: "DnD NPC generator" },
     ],
     faq: [
       {

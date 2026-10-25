@@ -107,7 +107,7 @@ export const howDoYouImproviseNpcsOnTheSpot: AnswerConfigInput = {
       title: "D&D NPC generator",
       description:
         "Tailored NPCs for 5th edition campaigns with personality traits and equipment.",
-      href: "/tools/dnd-npc-generator",
+      href: "/generators/dnd-npc",
     },
     {
       title: "Faction generator",

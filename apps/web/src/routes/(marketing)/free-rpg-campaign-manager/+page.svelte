@@ -373,7 +373,7 @@
           >AI RPG Campaign Manager</a
         >
         <a
-          href="{base}/tools/dnd-npc-generator"
+          href="{base}/generators/dnd-npc"
           class="hover:text-theme-primary transition-colors"
           >DnD NPC Generator</a
         >
