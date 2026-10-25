@@ -129,7 +129,7 @@ describe("generator page composition", () => {
       .getByRole("heading", { name: "Quick names" })
       .closest("section")!;
     const namesBefore = () =>
-      Array.from(panel.querySelectorAll("li button")).map(
+      Array.from(panel.querySelectorAll('li button[aria-label^="Copy "]')).map(
         (button) => button.textContent,
       );
 
@@ -159,8 +159,22 @@ describe("generator page composition", () => {
     expect(screen.getByRole("button", { name: "Ask AI" })).toBeTruthy();
   });
 
+  it("relabels the full generator and scopes its AI toggle on names pages", () => {
+    render(GeneratorPageContent, {
+      props: { slug: "fantasy-names", persistence },
+    });
+
+    expect(screen.getByTestId("generate-label").textContent).toBe(
+      "Generate names with notes",
+    );
+    expect(screen.getByTestId("ai-toggle-scope").textContent).toMatch(
+      /Quick names has its own Ask AI/,
+    );
+  });
+
   it("keeps Quick Names off other generator pages", () => {
     renderBusiness();
+    expect(screen.getByTestId("generate-label").textContent).toBe("");
 
     expect(screen.queryByRole("heading", { name: "Quick names" })).toBeNull();
   });

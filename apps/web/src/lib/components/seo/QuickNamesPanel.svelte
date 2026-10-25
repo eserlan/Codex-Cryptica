@@ -1,5 +1,7 @@
 <script lang="ts">
-  import { rollNames } from "generator-engine";
+  import { untrack } from "svelte";
+  import { rollNames, type NameParts } from "generator-engine";
+  import QuickNameRow from "./QuickNameRow.svelte";
   import {
     trackPublicGeneratorAction,
     type PublicGeneratorAction,
@@ -7,16 +9,23 @@
   import {
     QUICK_NAMES_COUNT,
     formatQuickNameList,
+    mergePinned,
+    namesToCopy,
     quickNamesAnalytics,
+    togglePinned,
     usableAiNames,
+    withCurrentChoice,
     type QuickNamesAiResult,
   } from "./quick-names";
 
   let {
     generatorType,
-    culture,
+    culture = $bindable(),
     gender,
-    nameType,
+    nameType = $bindable(),
+    pinned = $bindable<string[]>([]),
+    cultureChoices = [],
+    nameTypeChoices = [],
     askAi,
     isOnline = true,
     rng = Math.random,
@@ -27,6 +36,10 @@
     culture: string;
     gender: string;
     nameType: string;
+    pinned?: string[];
+    /** Options for the compact settings row shown on small screens. */
+    cultureChoices?: readonly string[];
+    nameTypeChoices?: readonly string[];
     /** Ask the AI for a batch; omitted, the panel offers local rolls only. */
     askAi?: (query: string) => Promise<QuickNamesAiResult>;
     isOnline?: boolean;
@@ -41,6 +54,8 @@
   // Rolled in the browser only: the server render shows placeholders, so a
   // random batch never mismatches on hydration.
   let names = $state<string[]>([]);
+  let source = $state<"local" | "ai">("local");
+  let parts = $state<NameParts>("full");
   let copiedIndex = $state<number | null>(null);
   let allCopied = $state(false);
   let announcement = $state("");
@@ -52,14 +67,21 @@
 
   function roll(): string[] {
     return rollNames(
-      { culture, gender, nameType, count: String(QUICK_NAMES_COUNT) },
+      {
+        culture,
+        gender,
+        nameType,
+        parts,
+        count: String(QUICK_NAMES_COUNT),
+      },
       rng,
     );
   }
 
-  // Changing culture or name type in the settings rolls a fresh batch.
+  // Changing a setting rolls a fresh batch; pinning a name must not.
   $effect(() => {
-    showBatch(roll());
+    const fresh = roll();
+    untrack(() => showBatch(fresh, "local"));
   });
 
   $effect(() => () => clearTimeout(resetTimer));
@@ -99,17 +121,33 @@
     }
   }
 
-  function showBatch(batch: string[]) {
+  function showBatch(fresh: string[], from: "local" | "ai") {
     batchId++;
-    names = batch;
+    names = mergePinned(pinned, fresh);
+    source = from;
     copiedIndex = null;
     allCopied = false;
   }
 
   function reroll() {
-    showBatch(roll());
+    showBatch(roll(), "local");
     announcement = "New names rolled.";
     track("reroll", analytics({ roll_source: "local" }));
+  }
+
+  function togglePin(name: string) {
+    const wasPinned = pinned.includes(name);
+    pinned = togglePinned(pinned, name);
+    announcement = wasPinned
+      ? `Unpinned ${name}.`
+      : `Pinned ${name}. It stays when you roll again.`;
+  }
+
+  function copyAll() {
+    const list = namesToCopy(names, pinned);
+    const message =
+      pinned.length > 0 ? "Copied the pinned names." : "Copied all names.";
+    void copy(formatQuickNameList(list), null, message);
   }
 
   async function rollWithAi() {
@@ -121,7 +159,7 @@
     aiBusy = false;
     // A newer batch (New names, a settings change) wins over a slow reply.
     if (requestId !== batchId) return;
-    showBatch(aiNames ?? roll());
+    showBatch(aiNames ?? roll(), aiNames ? "ai" : "local");
     announcement = aiNames
       ? "AI names ready."
       : "The AI couldn't answer, so these names were rolled on your device.";
@@ -132,32 +170,92 @@
   }
 </script>
 
-{#snippet nameButton(name: string, index: number, copied: boolean)}
-  <button
-    type="button"
-    onclick={() => void copy(name, index, `Copied ${name}.`)}
-    class="group flex min-h-11 w-full items-center justify-between gap-3 rounded-lg border px-3 py-2 text-left transition-all {copied
-      ? 'border-theme-primary/70 bg-theme-primary/10'
-      : 'border-theme-border/60 bg-theme-bg/40 hover:border-theme-primary/50 hover:bg-theme-surface/50'}"
-    aria-label="Copy {name}"
-  >
-    <span class="font-header text-base font-bold text-theme-text break-all"
-      >{name}</span
+{#snippet batchActions()}
+  <div class="flex items-center gap-2">
+    <button
+      type="button"
+      onclick={reroll}
+      class="inline-flex min-h-11 items-center gap-1.5 rounded-lg bg-theme-primary px-3 py-2 text-micro font-bold uppercase tracking-wider text-theme-on-primary font-header hover:brightness-110 transition-all"
     >
-    <span
-      class="inline-flex shrink-0 items-center gap-1 text-nano font-bold uppercase tracking-wider {copied
-        ? 'text-theme-primary'
-        : 'text-theme-text group-hover:text-theme-primary'}"
-      aria-hidden="true"
+      <span class="icon-[lucide--dices] h-4 w-4" aria-hidden="true"></span>
+      New names
+    </button>
+    <button
+      type="button"
+      onclick={copyAll}
+      disabled={names.length === 0}
+      aria-describedby="quick-names-copy-help"
+      class="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-theme-border/70 px-3 py-2 text-micro font-bold uppercase tracking-wider text-theme-text font-header hover:border-theme-primary/60 hover:text-theme-primary transition-all disabled:opacity-50"
     >
       <span
-        class={copied
-          ? "icon-[lucide--check] h-3.5 w-3.5"
-          : "icon-[lucide--copy] h-3.5 w-3.5"}
+        class={allCopied
+          ? "icon-[lucide--check] h-4 w-4"
+          : "icon-[lucide--copy] h-4 w-4"}
+        aria-hidden="true"
       ></span>
-      {copied ? "Copied" : "Copy"}
-    </span>
-  </button>
+      {allCopied
+        ? "Copied"
+        : pinned.length > 0
+          ? `Copy pinned (${pinned.length})`
+          : "Copy all"}
+    </button>
+  </div>
+{/snippet}
+
+{#snippet batchOptions()}
+  <div
+    class="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-theme-text"
+  >
+    <p id="quick-names-copy-help">
+      {pinned.length > 0 ? "Copy pinned" : "Copy all"} gives a plain list, one name
+      per line. Rolled on your device: no account, no AI.
+    </p>
+    {#if nameType === "Person"}
+      <label class="inline-flex items-center gap-1.5">
+        <input
+          type="checkbox"
+          checked={parts === "first"}
+          onchange={(event) =>
+            (parts = event.currentTarget.checked ? "first" : "full")}
+          class="h-4 w-4 accent-theme-primary"
+        />
+        First names only
+      </label>
+    {/if}
+  </div>
+{/snippet}
+
+{#snippet compactSettings()}
+  <div class="mt-4 grid grid-cols-2 gap-2 lg:hidden">
+    <label class="flex flex-col gap-1">
+      <span
+        class="text-micro font-bold uppercase tracking-wider text-theme-text"
+        >Culture</span
+      >
+      <select
+        bind:value={culture}
+        class="w-full rounded-lg border border-theme-border/60 bg-theme-bg/60 px-2 py-2 text-base text-theme-text"
+      >
+        {#each withCurrentChoice(cultureChoices, culture) as choice (choice)}
+          <option value={choice}>{choice}</option>
+        {/each}
+      </select>
+    </label>
+    <label class="flex flex-col gap-1">
+      <span
+        class="text-micro font-bold uppercase tracking-wider text-theme-text"
+        >Name type</span
+      >
+      <select
+        bind:value={nameType}
+        class="w-full rounded-lg border border-theme-border/60 bg-theme-bg/60 px-2 py-2 text-base text-theme-text"
+      >
+        {#each withCurrentChoice(nameTypeChoices, nameType) as choice (choice)}
+          <option value={choice}>{choice}</option>
+        {/each}
+      </select>
+    </label>
+  </div>
 {/snippet}
 
 {#snippet aiForm()}
@@ -211,43 +309,31 @@
     <div>
       <h2
         id="quick-names-heading"
-        class="font-header text-lg font-bold text-theme-primary"
+        class="flex items-center gap-2 font-header text-lg font-bold text-theme-primary"
       >
         Quick names
+        {#if source === "ai"}
+          <span
+            class="inline-flex items-center gap-1 rounded-full border border-theme-primary/50 px-2 py-0.5 text-nano font-bold uppercase tracking-wider text-theme-text"
+          >
+            <span class="icon-[lucide--sparkles] h-3 w-3" aria-hidden="true"
+            ></span>
+            AI names
+          </span>
+        {/if}
       </h2>
       <p class="mt-1 text-sm text-theme-text">
-        Tap a name to copy it. New names rolls instantly on your device, with no
-        account and no AI.
+        Tap a name to copy it. Pin favourites to keep them when you roll again.
       </p>
     </div>
-    <div class="flex items-center gap-2">
-      <button
-        type="button"
-        onclick={reroll}
-        class="inline-flex items-center gap-1.5 rounded-lg bg-theme-primary px-3 py-2 text-micro font-bold uppercase tracking-wider text-theme-on-primary font-header hover:brightness-110 transition-all"
-      >
-        <span class="icon-[lucide--dices] h-4 w-4" aria-hidden="true"></span>
-        New names
-      </button>
-      <button
-        type="button"
-        onclick={() =>
-          void copy(formatQuickNameList(names), null, "Copied all names.")}
-        disabled={names.length === 0}
-        class="inline-flex items-center gap-1.5 rounded-lg border border-theme-border/70 px-3 py-2 text-micro font-bold uppercase tracking-wider text-theme-text font-header hover:border-theme-primary/60 hover:text-theme-primary transition-all disabled:opacity-50"
-      >
-        <span
-          class={allCopied
-            ? "icon-[lucide--check] h-4 w-4"
-            : "icon-[lucide--copy] h-4 w-4"}
-          aria-hidden="true"
-        ></span>
-        {allCopied ? "Copied" : "Copy all"}
-      </button>
-    </div>
+    {@render batchActions()}
   </div>
 
-  <ul class="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2" aria-label="Names">
+  {#if cultureChoices.length > 0}{@render compactSettings()}{/if}
+
+  {@render batchOptions()}
+
+  <ul class="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2" aria-label="Names">
     {#if names.length === 0}
       {#each { length: QUICK_NAMES_COUNT } as _, i (i)}
         <li
@@ -257,7 +343,15 @@
       {/each}
     {:else}
       {#each names as name, i (`${i}-${name}`)}
-        <li>{@render nameButton(name, i, copiedIndex === i)}</li>
+        <li>
+          <QuickNameRow
+            {name}
+            copied={copiedIndex === i}
+            pinned={pinned.includes(name)}
+            onCopy={() => void copy(name, i, `Copied ${name}.`)}
+            onTogglePin={() => togglePin(name)}
+          />
+        </li>
       {/each}
     {/if}
   </ul>
@@ -265,8 +359,8 @@
   {#if askAi}{@render aiForm()}{/if}
 
   <p class="mt-3 text-xs text-theme-text">
-    Want meanings and culture notes? Adjust the settings and generate a full
-    write-up.
+    Want meanings and culture notes? Use “Generate names with notes” in the
+    settings.
   </p>
 
   <p class="sr-only" role="status" aria-live="polite">{announcement}</p>

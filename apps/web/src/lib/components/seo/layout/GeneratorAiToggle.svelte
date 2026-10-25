@@ -2,7 +2,13 @@
   let {
     isOnline,
     useAI = $bindable(true),
-  }: { isOnline: boolean; useAI?: boolean } = $props();
+    scope = undefined,
+  }: {
+    isOnline: boolean;
+    useAI?: boolean;
+    /** Says what the toggle applies to when a page has other AI controls. */
+    scope?: string;
+  } = $props();
 </script>
 
 <div class="flex flex-col gap-1 pt-1">
@@ -37,6 +43,9 @@
       AI writes unique, rich lore on each generate.
     {:else}
       Fast offline mode — local tables only, no AI.
+    {/if}
+    {#if scope}
+      <span class="block">{scope}</span>
     {/if}
   </p>
 </div>

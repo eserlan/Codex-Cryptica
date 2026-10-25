@@ -107,3 +107,49 @@ export async function usableAiNames(
     return null;
   }
 }
+
+/** Cultures offered for a genre; unknown or absent genres get the full list. */
+export function culturesForTheme(theme?: string): string[] {
+  return (
+    (theme && nameGeneratorConfig.culturesByTheme[theme]) ||
+    nameGeneratorConfig.cultures
+  );
+}
+
+/** Keep a typed-in value selectable alongside the preset choices. */
+export function withCurrentChoice(
+  choices: readonly string[],
+  value: string,
+): string[] {
+  return value && !choices.includes(value) ? [...choices, value] : [...choices];
+}
+
+/**
+ * Pinned names stay at the top of a new batch; the fresh names fill the rest
+ * without repeating a pinned one.
+ */
+export function mergePinned(
+  pinned: readonly string[],
+  fresh: readonly string[],
+  count: number = QUICK_NAMES_COUNT,
+): string[] {
+  const rest = fresh.filter((name) => !pinned.includes(name));
+  return [...pinned, ...rest].slice(0, Math.max(count, pinned.length));
+}
+
+export function togglePinned(
+  pinned: readonly string[],
+  name: string,
+): string[] {
+  return pinned.includes(name)
+    ? pinned.filter((entry) => entry !== name)
+    : [...pinned, name];
+}
+
+/** "Copy all" copies only the pinned names when there are any. */
+export function namesToCopy(
+  names: readonly string[],
+  pinned: readonly string[],
+): readonly string[] {
+  return pinned.length > 0 ? pinned : names;
+}

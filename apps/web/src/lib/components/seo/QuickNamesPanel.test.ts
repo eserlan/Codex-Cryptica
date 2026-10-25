@@ -19,6 +19,9 @@ function renderPanel(
     writeText: (text: string) => Promise<void>;
     askAi: (query: string) => Promise<QuickNamesAiResult>;
     isOnline: boolean;
+    nameType: string;
+    cultureChoices: string[];
+    nameTypeChoices: string[];
   }> = {},
 ) {
   const writeText = vi.fn(overrides.writeText ?? (async () => {}));
@@ -28,7 +31,9 @@ function renderPanel(
       generatorType: "fantasy-names",
       culture: overrides.culture ?? "High Elf",
       gender: "Any",
-      nameType: "Person",
+      nameType: overrides.nameType ?? "Person",
+      cultureChoices: overrides.cultureChoices ?? [],
+      nameTypeChoices: overrides.nameTypeChoices ?? [],
       rng: seededRng(4),
       writeText,
       track,
@@ -38,6 +43,9 @@ function renderPanel(
   });
   return { writeText, track };
 }
+
+const nameOf = (button: HTMLElement) =>
+  button.getAttribute("aria-label")!.replace(/^Copy /, "");
 
 const nameButtons = () =>
   screen
@@ -49,7 +57,7 @@ describe("QuickNamesPanel", () => {
     renderPanel();
 
     await waitFor(() => expect(nameButtons()).toHaveLength(10));
-    expect(screen.getByText(/no account and no AI/i)).toBeTruthy();
+    expect(screen.getByText(/no account, no AI/i)).toBeTruthy();
   });
 
   it("copies one name with visible and announced feedback", async () => {
@@ -257,5 +265,101 @@ describe("QuickNamesPanel", () => {
     renderPanel();
 
     expect(screen.queryByRole("button", { name: "Ask AI" })).toBeNull();
+  });
+
+  it("keeps pinned names through New names and copies only them", async () => {
+    const { writeText } = renderPanel();
+    await waitFor(() => expect(nameButtons()).toHaveLength(10));
+    const name = nameOf(nameButtons()[3]);
+    const before = nameButtons().map(nameOf);
+
+    await fireEvent.click(screen.getByRole("button", { name: `Pin ${name}` }));
+    expect(nameButtons().map(nameOf)).toEqual(before);
+    expect(
+      screen
+        .getByRole("button", { name: `Unpin ${name}` })
+        .getAttribute("aria-pressed"),
+    ).toBe("true");
+    await fireEvent.click(screen.getByRole("button", { name: /new names/i }));
+
+    expect(nameOf(nameButtons()[0])).toBe(name);
+    expect(nameButtons()).toHaveLength(10);
+    await fireEvent.click(
+      screen.getByRole("button", { name: /copy pinned \(1\)/i }),
+    );
+    expect(writeText).toHaveBeenLastCalledWith(name);
+  });
+
+  it("drops a name from the kept set when it is unpinned", async () => {
+    renderPanel();
+    await waitFor(() => expect(nameButtons()).toHaveLength(10));
+    const name = nameOf(nameButtons()[0]);
+
+    await fireEvent.click(screen.getByRole("button", { name: `Pin ${name}` }));
+    await fireEvent.click(
+      screen.getByRole("button", { name: `Unpin ${name}` }),
+    );
+
+    expect(screen.getByRole("button", { name: /^copy all$/i })).toBeTruthy();
+    expect(screen.getByRole("status").textContent).toBe(`Unpinned ${name}.`);
+  });
+
+  it("offers first names only for people and rolls without surnames", async () => {
+    renderPanel({ culture: "Dwarven" });
+    await waitFor(() => expect(nameButtons()).toHaveLength(10));
+    expect(nameButtons().every((b) => nameOf(b).includes(" "))).toBe(true);
+
+    await fireEvent.click(
+      screen.getByRole("checkbox", { name: /first names only/i }),
+    );
+
+    await waitFor(() =>
+      expect(nameButtons().some((b) => nameOf(b).includes(" "))).toBe(false),
+    );
+  });
+
+  it("hides the first-names option for other name types", async () => {
+    renderPanel({ nameType: "Place" });
+    await waitFor(() => expect(nameButtons()).toHaveLength(10));
+
+    expect(
+      screen.queryByRole("checkbox", { name: /first names only/i }),
+    ).toBeNull();
+  });
+
+  it("badges a batch that came from the AI, and drops the badge on New names", async () => {
+    renderPanel({
+      askAi: async () => ({ names: ["Ysolde Brightwater"], fallback: false }),
+    });
+    await waitFor(() => expect(nameButtons()).toHaveLength(10));
+
+    await fireEvent.click(screen.getByRole("button", { name: "Ask AI" }));
+    await waitFor(() => expect(screen.getByText("AI names")).toBeTruthy());
+    await fireEvent.click(screen.getByRole("button", { name: /new names/i }));
+
+    expect(screen.queryByText("AI names")).toBeNull();
+  });
+
+  it("lets small screens change culture and name type inside the panel", async () => {
+    renderPanel({
+      cultureChoices: ["Generic Fantasy", "Dwarven"],
+      nameTypeChoices: ["Person", "Place"],
+    });
+    await waitFor(() => expect(nameButtons()).toHaveLength(10));
+    const before = nameButtons().map(nameOf);
+
+    await fireEvent.change(
+      screen.getByRole("combobox", { name: "Name type" }),
+      {
+        target: { value: "Place" },
+      },
+    );
+
+    await waitFor(() => expect(nameButtons().map(nameOf)).not.toEqual(before));
+    const cultures = Array.from(
+      (screen.getByRole("combobox", { name: "Culture" }) as HTMLSelectElement)
+        .options,
+    ).map((option) => option.value);
+    expect(cultures).toEqual(["Generic Fantasy", "Dwarven", "High Elf"]);
   });
 });

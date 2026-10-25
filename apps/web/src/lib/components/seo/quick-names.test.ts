@@ -4,7 +4,12 @@ import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
 import {
   QUICK_NAMES_COUNT,
   askQuickNamesAi,
+  culturesForTheme,
   extractQuickNames,
+  mergePinned,
+  namesToCopy,
+  togglePinned,
+  withCurrentChoice,
   formatQuickNameList,
   quickNamesAnalytics,
   usableAiNames,
@@ -158,5 +163,42 @@ describe("usableAiNames", () => {
     ],
   ])("returns null for %s", async (_label, askAi) => {
     expect(await usableAiNames(askAi, "q")).toBeNull();
+  });
+});
+
+describe("pinning helpers", () => {
+  it("keeps pinned names first and fills the rest without repeats", () => {
+    expect(mergePinned(["B"], ["A", "B", "C"], 3)).toEqual(["B", "A", "C"]);
+  });
+
+  it("never drops a pinned name, even past a full batch", () => {
+    expect(mergePinned(["A", "B", "C"], ["D"], 2)).toEqual(["A", "B", "C"]);
+  });
+
+  it("toggles a name in and out of the pinned set", () => {
+    expect(togglePinned(["A"], "B")).toEqual(["A", "B"]);
+    expect(togglePinned(["A", "B"], "A")).toEqual(["B"]);
+  });
+
+  it("copies the pinned names when there are any, otherwise the batch", () => {
+    expect(namesToCopy(["A", "B"], ["B"])).toEqual(["B"]);
+    expect(namesToCopy(["A", "B"], [])).toEqual(["A", "B"]);
+  });
+});
+
+describe("choice helpers", () => {
+  it("adds a typed-in value to the preset choices once", () => {
+    expect(withCurrentChoice(["A"], "Custom")).toEqual(["A", "Custom"]);
+    expect(withCurrentChoice(["A"], "A")).toEqual(["A"]);
+    expect(withCurrentChoice(["A"], "")).toEqual(["A"]);
+  });
+
+  it("offers a genre's cultures, or the full list for an unknown genre", () => {
+    expect(culturesForTheme("Classic Fantasy")).toContain("Dwarven");
+    expect(culturesForTheme("Classic Fantasy")).not.toContain(
+      "Sailor's Nickname",
+    );
+    expect(culturesForTheme("Not a genre")).toContain("Sailor's Nickname");
+    expect(culturesForTheme()).toContain("Sailor's Nickname");
   });
 });

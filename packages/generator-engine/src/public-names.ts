@@ -7,7 +7,9 @@ import { NAME_BAN_PROMPT } from "./public-npc";
 import { type Rng, defaultRng, pickFrom } from "./random-utils";
 import { parseFencedJson } from "./llm-response-utils";
 import { nameGeneratorConfig } from "./public-names-constants";
+import { type NameParts, patternedName } from "./public-names-patterns";
 export { nameGeneratorConfig } from "./public-names-constants";
+export type { NameParts } from "./public-names-patterns";
 
 export interface NamesGeneratorOptions {
   theme?: string;
@@ -16,6 +18,8 @@ export interface NamesGeneratorOptions {
   nameType?: string;
   count?: string;
   context?: string;
+  /** People only: "first" drops the surname from a quick roll. */
+  parts?: NameParts;
 }
 
 export interface ResolvedNames {
@@ -117,19 +121,51 @@ export function rollNames(
   options: NamesGeneratorOptions = {},
   rng: Rng = defaultRng,
 ): string[] {
-  const { culture, count } = resolveNames(options);
+  const { culture, gender, nameType, count } = resolveNames(options);
   const prefixes =
     nameGeneratorConfig.culturePrefixes[culture] ||
     nameGeneratorConfig.culturePrefixes["Generic Fantasy"];
   const suffixes =
     nameGeneratorConfig.cultureSuffixes[culture] ||
     nameGeneratorConfig.cultureSuffixes["Generic Fantasy"];
-  const roll = () => {
-    const prefix = pickFrom(prefixes, rng);
-    return (
-      prefix.charAt(0).toUpperCase() + prefix.slice(1) + pickFrom(suffixes, rng)
-    );
+  // Each ending is used at most twice per batch while others are free, so a
+  // batch doesn't read as one name with different openings.
+  const endingUse = new Map<string, number>();
+  const pickEnding = () => {
+    let ending = pickFrom(suffixes, rng);
+    for (let retry = 0; retry < 4 && (endingUse.get(ending) ?? 0) >= 2; retry++)
+      ending = pickFrom(suffixes, rng);
+    endingUse.set(ending, (endingUse.get(ending) ?? 0) + 1);
+    return ending;
   };
+  const wordUse = new Map<string, number>();
+  const spread = (list: readonly string[]) => {
+    let word = pickFrom(list, rng);
+    for (let retry = 0; retry < 4 && (wordUse.get(word) ?? 0) >= 1; retry++)
+      word = pickFrom(list, rng);
+    wordUse.set(word, (wordUse.get(word) ?? 0) + 1);
+    return word;
+  };
+  const stem = () => {
+    const prefix = pickFrom(prefixes, rng);
+    return prefix.charAt(0).toUpperCase() + prefix.slice(1);
+  };
+  const root = () => stem() + pickEnding();
+  const roll = () =>
+    patternedName({
+      // A typed-in culture rolls from the generic tables, so it takes the
+      // generic patterns too; other genres' presets keep their own style.
+      culture: nameGeneratorConfig.culturePrefixes[culture]
+        ? culture
+        : "Generic Fantasy",
+      gender,
+      nameType,
+      parts: options.parts ?? "full",
+      root,
+      stem,
+      spread,
+      rng,
+    }) ?? root();
 
   const names: string[] = [];
   const seen = new Set<string>();
