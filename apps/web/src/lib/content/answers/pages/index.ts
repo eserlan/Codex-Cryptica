@@ -129,6 +129,7 @@ import { howDoesMagicChangeSocietyInAFantasyWorld } from "./how-does-magic-chang
 import { howDoesMagicCreateSocialClassesAndInequality } from "./how-does-magic-create-social-classes-and-inequality";
 import { howLongShouldATtrpgSessionBe } from "./how-long-should-a-ttrpg-session-be";
 import { howManyNpcsDoesAnRpgTownNeed } from "./how-many-npcs-does-an-rpg-town-need";
+import { howManyRandomEncountersDuringRpgTravel } from "./how-many-random-encounters-during-rpg-travel";
 import { howMuchCampaignLoreShouldPlayersBeExpectedToRemember } from "./how-much-campaign-lore-should-players-be-expected-to-remember";
 import { howMuchOfThePlotShouldADmPrepare } from "./how-much-of-the-plot-should-a-dm-prepare";
 import { howMuchPrepDoYouNeedForAnRpgSession } from "./how-much-prep-do-you-need-for-an-rpg-session";
@@ -316,6 +317,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoesMagicCreateSocialClassesAndInequality,
     howLongShouldATtrpgSessionBe,
     howManyNpcsDoesAnRpgTownNeed,
+    howManyRandomEncountersDuringRpgTravel,
     howMuchCampaignLoreShouldPlayersBeExpectedToRemember,
     howMuchOfThePlotShouldADmPrepare,
     howMuchPrepDoYouNeedForAnRpgSession,
