@@ -23,6 +23,7 @@
     isOnline,
     aiModeRequired,
     aiDataNotice,
+    aiToggleScope,
     offlineMessage,
     showSubmitButton,
     busyLabel,
@@ -47,6 +48,7 @@
     isOnline: boolean;
     aiModeRequired: boolean;
     aiDataNotice?: string;
+    aiToggleScope?: string;
     offlineMessage?: string;
     showSubmitButton: boolean;
     busyLabel?: string;
@@ -94,6 +96,7 @@
       {generateLabel}
       {generatedSingular}
       {aiDataNotice}
+      {aiToggleScope}
       bind:useAI
     />
   </form>

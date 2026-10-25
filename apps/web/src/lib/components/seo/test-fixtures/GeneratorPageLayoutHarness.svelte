@@ -10,6 +10,8 @@
     formFields,
     relatedLinks = [],
     outputLead,
+    generateLabel,
+    aiToggleScope,
   }: {
     pageTitle?: string;
     theme?: string;
@@ -18,6 +20,8 @@
     formFields: Snippet<[() => void]>;
     relatedLinks?: { href: string; label: string }[];
     outputLead?: Snippet;
+    generateLabel?: string;
+    aiToggleScope?: string;
   } = $props();
   let status = $state("");
 
@@ -39,6 +43,8 @@
 <p data-testid="initial-draft">{initialDraft?.title ?? "No initial draft"}</p>
 {@render formFields(() => void trigger())}
 {@render outputLead?.()}
+<p data-testid="generate-label">{generateLabel ?? ""}</p>
+<p data-testid="ai-toggle-scope">{aiToggleScope ?? ""}</p>
 <button type="button" onclick={trigger}>Generate from harness</button>
 <p role="status">{status}</p>
 <ul data-testid="related-links">

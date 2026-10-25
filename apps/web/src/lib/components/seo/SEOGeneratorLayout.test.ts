@@ -105,6 +105,58 @@ describe("SEOGeneratorLayout Theming Sync", () => {
     expect(screen.queryByText("Lead content")).toBeNull();
   });
 
+  it("folds the sample draft away and leads with the lead content on phones", () => {
+    const outputLead = createRawSnippet(() => ({
+      render: () => "<p>Lead content</p>",
+    }));
+    const { container } = render(SEOGeneratorLayout, {
+      props: {
+        generate: vi.fn(),
+        formFields: noopSnippet,
+        outputLead,
+        initialDraft: {
+          type: "character",
+          title: "Sample names",
+          content: "- **Ael**: x",
+          lore: "",
+          labels: [],
+          status: "draft",
+        },
+        aiToggleScope: "Applies to the write-up only.",
+      },
+    });
+
+    const details = screen
+      .getByText("See an example write-up")
+      .closest("details")!;
+    expect(details.open).toBe(false);
+    expect(details.textContent).toContain("Sample names");
+    const lead = screen.getByText("Lead content").parentElement!;
+    expect(lead.className).toMatch(/(^| )order-1( |$)/);
+    expect(container.querySelector("form")!.closest(".order-2")).toBeTruthy();
+    expect(screen.getByText("Applies to the write-up only.")).toBeTruthy();
+  });
+
+  it("shows the sample draft openly when there is no lead content", () => {
+    render(SEOGeneratorLayout, {
+      props: {
+        generate: vi.fn(),
+        formFields: noopSnippet,
+        initialDraft: {
+          type: "character",
+          title: "Sample names",
+          content: "- **Ael**: x",
+          lore: "",
+          labels: [],
+          status: "draft",
+        },
+      },
+    });
+
+    expect(screen.queryByText("See an example write-up")).toBeNull();
+    expect(screen.getByText("Sample names").closest("details")).toBeNull();
+  });
+
   it("widens the form column only for pages that opt in with wideForm", () => {
     const generate = vi.fn().mockResolvedValue({});
     const narrow = render(SEOGeneratorLayout, {

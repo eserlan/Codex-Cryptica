@@ -6,7 +6,12 @@
   import type { OneShotProgressStep } from "generator-engine";
   import GeneratorPageOutputExtras from "./GeneratorPageOutputExtras.svelte";
   import QuickNamesPanel from "./QuickNamesPanel.svelte";
-  import { FANTASY_NAME_THEME, askQuickNamesAi } from "./quick-names";
+  import {
+    FANTASY_NAME_THEME,
+    askQuickNamesAi,
+    culturesForTheme,
+  } from "./quick-names";
+  import { nameGeneratorConfig } from "$lib/services/seo/generator-config";
   import { generatorEngine } from "$lib/services/seo/generator-engine";
   import { onlineStatus } from "$lib/stores/online.svelte";
   import { onDestroy, onMount, untrack } from "svelte";
@@ -272,6 +277,12 @@
     getHandlers: () => GENERATE_HANDLERS,
   });
 
+  const isNamesPage = $derived(slug === "names" || slug === "fantasy-names");
+  // The genre the names page is set to; the fantasy page is fixed.
+  const namesTheme = $derived(
+    slug === "names" ? activeTheme : FANTASY_NAME_THEME,
+  );
+
   const initialDraft = $derived(
     remixDraft ??
       ((handoffState.questPremise && slug === "plot-twist-generator") ||
@@ -285,14 +296,16 @@
 {#snippet quickNames()}
   <QuickNamesPanel
     generatorType={slug}
-    culture={forms.names.culture}
+    bind:culture={forms.names.culture}
     gender={forms.names.gender}
-    nameType={forms.names.nameType}
+    bind:nameType={forms.names.nameType}
+    cultureChoices={culturesForTheme(namesTheme)}
+    nameTypeChoices={nameGeneratorConfig.nameTypes}
     isOnline={onlineStatus.current}
     askAi={(query) =>
       askQuickNamesAi((options) => generatorEngine.generateNames(options), {
         ...forms.names,
-        theme: slug === "names" ? activeTheme : FANTASY_NAME_THEME,
+        theme: namesTheme,
         query,
       })}
   />
@@ -330,8 +343,10 @@
     ? openMemberAsCharacter
     : undefined}
   autoGenerateExplicit={slug === "faction-roster"}
-  outputLead={slug === "names" || slug === "fantasy-names"
-    ? quickNames
+  outputLead={isNamesPage ? quickNames : undefined}
+  generateLabel={isNamesPage ? "Generate names with notes" : undefined}
+  aiToggleScope={isNamesPage
+    ? "Applies to Generate names with notes. Quick names has its own Ask AI."
     : undefined}
 >
   {#snippet outputExtras(output, replaceOutput, useAI)}

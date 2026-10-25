@@ -4,6 +4,7 @@
     factionConfig,
   } from "$lib/services/seo/generator-config";
   import { untrack } from "svelte";
+  import { culturesForTheme } from "./quick-names";
   import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
 
   let {
@@ -34,10 +35,7 @@
     "text-micro font-bold uppercase tracking-wider text-theme-text/80";
 
   const cultureTheme = $derived(fixedTheme ?? (showTheme ? theme : undefined));
-  const activeCultures = $derived(
-    (cultureTheme && nameGeneratorConfig.culturesByTheme[cultureTheme]) ||
-      nameGeneratorConfig.cultures,
-  );
+  const activeCultures = $derived(culturesForTheme(cultureTheme));
   const builtInCultures = nameGeneratorConfig.cultures;
   // Context that arrives pre-filled stays visible rather than hidden.
   const advancedOpen = untrack(() => context.trim() !== "");

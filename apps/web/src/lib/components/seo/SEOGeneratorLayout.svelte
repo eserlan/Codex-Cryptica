@@ -58,6 +58,7 @@
     formFields,
     outputExtras = undefined,
     outputLead = undefined,
+    aiToggleScope = undefined,
     progressSteps = null,
     worldTheme = "workspace",
     initialDraft = null,
@@ -107,8 +108,13 @@
     outputExtras?: Snippet<
       [GeneratorOutput, (output: GeneratorOutput) => void, boolean]
     >;
-    /** Content above the output card, e.g. the Quick Names batch. */
+    /**
+     * Content above the output card, e.g. the Quick Names batch. It leads on
+     * phones, and the sample draft folds away beneath it.
+     */
     outputLead?: Snippet;
+    /** What the AI toggle covers, when the page has other AI controls. */
+    aiToggleScope?: string;
     /** Live steps of a staged generation, shown in the output card. */
     progressSteps?: OneShotProgressStep[] | null;
     worldTheme?: string;
@@ -254,6 +260,44 @@
   $effect(() => registerShellCtaHandler(save.trackHeaderOpenCodex));
 </script>
 
+{#snippet outputCardBlock()}
+  <GeneratorOutputCard
+    generatedData={session.generatedData}
+    aiFallbackDismissed={session.aiFallbackDismissed}
+    isBusy={session.showOutputLoading}
+    isExampleDraft={session.isExampleDraft}
+    {generatedSingular}
+    {variant}
+    worldTheme={theme || worldTheme}
+    documentContent={documentLayout.content}
+    {documentSections}
+    copied={clipboard.copied}
+    copiedSectionId={clipboard.copiedSectionId}
+    contextTrimmed={contextSelection.trimmed}
+    onDismissAiFallback={session.dismissAiFallback}
+    onRetryAi={() => void session.handleGenerate({ forceAI: true })}
+    {progressSteps}
+    onSaveToCodex={save.handleSaveToCodex}
+    onRefine={when(canFollowUp, refinement.openForCurrentOutput)}
+    onCopyMarkdown={clipboard.handleCopyMarkdown}
+    onCopySection={(sectionId, markdown) =>
+      void clipboard.handleCopySection(sectionId, markdown)}
+    onPrepareShare={when(canFollowUp, sharing.prepareCurrentOutputShare)}
+    {...sharing.currentOutputTracking}
+    onContainerClick={clipboard.handleContainerClick}
+    onContainerKeydown={clipboard.handleContainerKeydown}
+    onSelectHubEntity={(entity) => (selectedHubEntity = entity)}
+    onSaveHubToCodex={save.handleSaveHubToCodex}
+    onBuildDelveCanvas={handoffs.handleBuildDelveCanvas}
+    onBuildAdventureCanvas={handoffs.handleBuildAdventureCanvas}
+    onGeneratePlotTwist={when(canFollowUp, onGeneratePlotTwist)}
+    onGenerateRoster={when(canFollowUp, onGenerateRoster)}
+    {onOpenMemberAsCharacter}
+    onSendToMonsterLabs={when(canFollowUp, handoffs.handleSendToMonsterLabs)}
+    isSendingToMonsterLabs={handoffs.monsterLabsFlow.state === "loading"}
+  />
+{/snippet}
+
 <SEOGeneratorHead
   title={pageTitle}
   description={metaDescription}
@@ -299,7 +343,11 @@
       generator's empty-state placeholders (#2320).
     -->
     <!-- Parameters Column: positioned on the left on desktop -->
-    <div class="{columnClasses.form} space-y-6 order-1 lg:order-1">
+    <div
+      class="{columnClasses.form} space-y-6 {outputLead
+        ? 'order-2'
+        : 'order-1'} lg:order-1"
+    >
       <GeneratorFormPanel
         {canonicalPath}
         {eyebrow}
@@ -316,6 +364,7 @@
         {isOnline}
         {aiModeRequired}
         {aiDataNotice}
+        {aiToggleScope}
         {offlineMessage}
         {showSubmitButton}
         {busyLabel}
@@ -329,64 +378,46 @@
 
     <!-- Output Card Column: middle column on desktop -->
     <div
-      class="{columnClasses.output} flex flex-col order-2 lg:order-2 scroll-mt-20"
-      bind:this={outputCard}
+      class="{columnClasses.output} flex flex-col {outputLead
+        ? 'order-1'
+        : 'order-2'} lg:order-2"
     >
       {@render outputLead?.()}
-      <GeneratorDiagrams
-        bind:this={diagrams}
-        generatedData={session.generatedData}
-        useAI={session.useAI}
-        onReplaceOutput={!session.isExampleDraft
-          ? session.replaceOutput
-          : undefined}
-        onCopy={clipboard.trackDiagramCopy}
-      />
-      <GeneratorOutputCard
-        generatedData={session.generatedData}
-        aiFallbackDismissed={session.aiFallbackDismissed}
-        isBusy={session.showOutputLoading}
-        isExampleDraft={session.isExampleDraft}
-        {generatedSingular}
-        {variant}
-        worldTheme={theme || worldTheme}
-        documentContent={documentLayout.content}
-        {documentSections}
-        copied={clipboard.copied}
-        copiedSectionId={clipboard.copiedSectionId}
-        contextTrimmed={contextSelection.trimmed}
-        onDismissAiFallback={session.dismissAiFallback}
-        onRetryAi={() => void session.handleGenerate({ forceAI: true })}
-        {progressSteps}
-        onSaveToCodex={save.handleSaveToCodex}
-        onRefine={when(canFollowUp, refinement.openForCurrentOutput)}
-        onCopyMarkdown={clipboard.handleCopyMarkdown}
-        onCopySection={(sectionId, markdown) =>
-          void clipboard.handleCopySection(sectionId, markdown)}
-        onPrepareShare={when(canFollowUp, sharing.prepareCurrentOutputShare)}
-        {...sharing.currentOutputTracking}
-        onContainerClick={clipboard.handleContainerClick}
-        onContainerKeydown={clipboard.handleContainerKeydown}
-        onSelectHubEntity={(entity) => (selectedHubEntity = entity)}
-        onSaveHubToCodex={save.handleSaveHubToCodex}
-        onBuildDelveCanvas={handoffs.handleBuildDelveCanvas}
-        onBuildAdventureCanvas={handoffs.handleBuildAdventureCanvas}
-        onGeneratePlotTwist={when(canFollowUp, onGeneratePlotTwist)}
-        onGenerateRoster={when(canFollowUp, onGenerateRoster)}
-        {onOpenMemberAsCharacter}
-        onSendToMonsterLabs={when(
-          canFollowUp,
-          handoffs.handleSendToMonsterLabs,
-        )}
-        isSendingToMonsterLabs={handoffs.monsterLabsFlow.state === "loading"}
-      />
-      {#if outputExtras && session.generatedData && !session.isExampleDraft}
-        {@render outputExtras(
-          session.generatedData,
-          session.replaceOutput,
-          session.useAI,
-        )}
-      {/if}
+      <!-- The scroll target after Generate: the result, not the lead. -->
+      <div class="flex flex-col scroll-mt-20" bind:this={outputCard}>
+        <GeneratorDiagrams
+          bind:this={diagrams}
+          generatedData={session.generatedData}
+          useAI={session.useAI}
+          onReplaceOutput={!session.isExampleDraft
+            ? session.replaceOutput
+            : undefined}
+          onCopy={clipboard.trackDiagramCopy}
+        />
+        {#if outputLead && session.isExampleDraft}
+          <details class="group rounded-2xl border border-theme-border/50">
+            <summary
+              class="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-3 text-sm font-bold text-theme-text"
+            >
+              See an example write-up
+              <span
+                class="icon-[lucide--chevron-down] h-4 w-4 transition-transform group-open:rotate-180"
+                aria-hidden="true"
+              ></span>
+            </summary>
+            {@render outputCardBlock()}
+          </details>
+        {:else}
+          {@render outputCardBlock()}
+        {/if}
+        {#if outputExtras && session.generatedData && !session.isExampleDraft}
+          {@render outputExtras(
+            session.generatedData,
+            session.replaceOutput,
+            session.useAI,
+          )}
+        {/if}
+      </div>
     </div>
 
     <!-- At the Table Column: positioned on the right on desktop -->
