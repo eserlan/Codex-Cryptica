@@ -340,6 +340,107 @@ describe("QuickNamesPanel", () => {
     expect(screen.queryByText("AI names")).toBeNull();
   });
 
+  it("says where the batch came from, so an AI batch never claims no AI", async () => {
+    renderPanel({
+      askAi: async () => ({ names: ["Ysolde Brightwater"], fallback: false }),
+    });
+    await waitFor(() => expect(nameButtons()).toHaveLength(10));
+    expect(
+      screen.getByText(/rolled on your device: no account, no AI/i),
+    ).toBeTruthy();
+
+    await fireEvent.click(screen.getByRole("button", { name: "Ask AI" }));
+    await waitFor(() =>
+      expect(screen.getByText(/came from our AI service/i)).toBeTruthy(),
+    );
+    expect(screen.queryByText(/no account, no AI/i)).toBeNull();
+
+    await fireEvent.click(screen.getByRole("button", { name: /new names/i }));
+    expect(screen.getByText(/no account, no AI/i)).toBeTruthy();
+    expect(screen.queryByText(/came from our AI service/i)).toBeNull();
+  });
+
+  it("keeps the local note when the AI fails and names are rolled instead", async () => {
+    renderPanel({ askAi: async () => ({ names: [], fallback: true }) });
+    await waitFor(() => expect(nameButtons()).toHaveLength(10));
+
+    await fireEvent.click(screen.getByRole("button", { name: "Ask AI" }));
+    await waitFor(() =>
+      expect(screen.getByRole("status").textContent).toMatch(
+        /couldn't answer/i,
+      ),
+    );
+    expect(screen.getByText(/no account, no AI/i)).toBeTruthy();
+    expect(screen.queryByText(/came from our AI service/i)).toBeNull();
+  });
+
+  it("summarises the current settings on the collapsed settings row", async () => {
+    renderPanel({ culture: "Dwarven" });
+    await waitFor(() => expect(nameButtons()).toHaveLength(10));
+    const summary = () =>
+      document.querySelector("summary")!.textContent!.replace(/\s+/g, " ");
+
+    expect(summary()).toContain("Dwarven · Person");
+    expect(summary()).not.toContain("First names only");
+
+    await fireEvent.click(
+      screen.getByRole("checkbox", { name: /first names only/i }),
+    );
+    expect(summary()).toContain("Dwarven · Person · First names only");
+  });
+
+  it("lists the names before the actions that act on them", async () => {
+    renderPanel();
+    await waitFor(() => expect(nameButtons()).toHaveLength(10));
+    const list = screen.getByRole("list", { name: "Names" });
+    const newNames = screen.getByRole("button", { name: /new names/i });
+    const settings = document.querySelector("details")!;
+
+    expect(
+      settings.compareDocumentPosition(list) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      list.compareDocumentPosition(newNames) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it("shows a copy icon on each row and words only for the copied one", async () => {
+    const { writeText } = renderPanel();
+    await waitFor(() => expect(nameButtons()).toHaveLength(10));
+    const [first, second] = nameButtons();
+
+    expect(first.textContent).not.toMatch(/\bcopy\b/i);
+    await fireEvent.click(first);
+    await waitFor(() => expect(writeText).toHaveBeenCalled());
+    await waitFor(() => expect(first.textContent).toMatch(/copied/i));
+    expect(second.textContent).not.toMatch(/copied/i);
+  });
+
+  it("jumps to the full generator's button for names with notes", async () => {
+    const target = document.createElement("button");
+    target.id = "generate-button";
+    target.scrollIntoView = vi.fn();
+    document.body.append(target);
+    try {
+      renderPanel();
+      await fireEvent.click(
+        screen.getByRole("button", { name: /generate names with notes/i }),
+      );
+      expect(target.scrollIntoView).toHaveBeenCalled();
+      expect(document.activeElement).toBe(target);
+    } finally {
+      target.remove();
+    }
+  });
+
+  it("does nothing harmful when the full generator is not on the page", async () => {
+    renderPanel();
+    await fireEvent.click(
+      screen.getByRole("button", { name: /generate names with notes/i }),
+    );
+    expect(document.activeElement).not.toBeNull();
+  });
+
   it("lets small screens change culture and name type inside the panel", async () => {
     renderPanel({
       cultureChoices: ["Generic Fantasy", "Dwarven"],

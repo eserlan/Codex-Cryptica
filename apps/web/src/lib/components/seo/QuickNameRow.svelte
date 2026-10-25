@@ -27,17 +27,15 @@
       >{name}</span
     >
     <span
-      class="inline-flex shrink-0 items-center gap-1 text-nano font-bold uppercase tracking-wider {copied
-        ? 'text-theme-primary'
-        : 'text-theme-text group-hover:text-theme-primary'}"
+      class="inline-flex shrink-0 items-center gap-1 text-xs font-bold text-theme-text"
       aria-hidden="true"
     >
-      <span
-        class={copied
-          ? "icon-[lucide--check] h-3.5 w-3.5"
-          : "icon-[lucide--copy] h-3.5 w-3.5"}
-      ></span>
-      {copied ? "Copied" : "Copy"}
+      {#if copied}
+        <span class="icon-[lucide--check] h-4 w-4"></span>
+        Copied
+      {:else}
+        <span class="icon-[lucide--copy] h-4 w-4"></span>
+      {/if}
     </span>
   </button>
   <button
@@ -48,7 +46,7 @@
     title={pinned ? "Unpin" : "Pin to keep when rolling again"}
     class="flex min-h-11 w-11 shrink-0 items-center justify-center rounded-lg border transition-all {pinned
       ? 'border-theme-primary/70 bg-theme-primary/15 text-theme-primary'
-      : 'border-theme-border/60 bg-theme-bg/40 text-theme-text hover:border-theme-primary/50 hover:text-theme-primary'}"
+      : 'border-transparent text-theme-text hover:border-theme-border/60 hover:text-theme-primary'}"
   >
     <span
       class={pinned
