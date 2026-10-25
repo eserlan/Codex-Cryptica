@@ -21,9 +21,9 @@ describe("GeneratorConfigForm", { timeout: 20000 }, () => {
       name: "NPC Creates Character",
     });
 
-    // Expand the Adventures & Encounters group to reveal the Plot Twist generator
+    // Expand the Encounters & Complications group to reveal the Plot Twist generator
     const adventuresGroupButton = screen.getByRole("button", {
-      name: /adventures & encounters/i,
+      name: /encounters & complications/i,
     });
     await fireEvent.click(adventuresGroupButton);
 
@@ -485,18 +485,18 @@ describe("GeneratorConfigForm", { timeout: 20000 }, () => {
       },
     });
 
-    // All four broad categories should be rendered as accordion buttons
+    // The shared categories should be rendered as accordion buttons
     const peopleGroupButton = screen.getByRole("button", {
-      name: /people & factions/i,
+      name: /characters, villains & names/i,
     });
     const locationsGroupButton = screen.getByRole("button", {
-      name: /locations & worlds/i,
+      name: /places & settlements/i,
     });
     const adventuresGroupButton = screen.getByRole("button", {
-      name: /adventures & encounters/i,
+      name: /encounters & complications/i,
     });
     const lootGroupButton = screen.getByRole("button", {
-      name: /loot & lore/i,
+      name: /items & lore/i,
     });
 
     expect(peopleGroupButton.getAttribute("aria-expanded")).toBe("false");
@@ -517,7 +517,7 @@ describe("GeneratorConfigForm", { timeout: 20000 }, () => {
       }),
     ).toBeNull();
 
-    // Click to expand Adventures & Encounters group
+    // Click to expand Encounters & Complications group
     await fireEvent.click(adventuresGroupButton);
     expect(adventuresGroupButton.getAttribute("aria-expanded")).toBe("true");
 
@@ -547,7 +547,7 @@ describe("GeneratorConfigForm", { timeout: 20000 }, () => {
     });
 
     const locationsGroupButton = screen.getByRole("button", {
-      name: /locations & worlds/i,
+      name: /places & settlements/i,
     });
     expect(locationsGroupButton.getAttribute("aria-expanded")).toBe("true");
 

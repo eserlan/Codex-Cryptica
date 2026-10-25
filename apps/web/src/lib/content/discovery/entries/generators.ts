@@ -22,7 +22,7 @@ export const generatorEntries: DiscoveryEntryInput[] = [
     intentAliases: ["tabletop generators hub", "random generators for rpgs"],
     userJob: "navigate",
     uniqueValue:
-      "Directory of every live in-browser generator, grouped by genre, for a reader who does not yet know which one they need.",
+      "Directory of every live in-browser generator, grouped by what the GM walks away with (characters, places, adventures, items and more) with theme hubs for genre, for a reader who does not yet know which one they need.",
     indexable: true,
     status: "live",
   },

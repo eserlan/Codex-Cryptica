@@ -27,6 +27,7 @@
     slugMeta,
   } from "./generator-page-meta";
   import { slugDrafts } from "./generator-page-drafts";
+  import { withCategoryRelatedLinks } from "$lib/content/generator-catalogue";
   import {
     createGenerate,
     createGeneratorHandlers,
@@ -108,6 +109,9 @@
   const initialHubGenre = resolveHubGeneratorGenre(hubContext.theme);
 
   const meta = $derived({ ...slugMeta[slug], ...(metaOverrides ?? {}) });
+  const relatedLinks = $derived(
+    withCategoryRelatedLinks(slug, meta.relatedLinks ?? []),
+  );
 
   const _initialHandoff = initializeHandoffState(_initialSlug);
   let handoffState = $state<GeneratorHandoffState>({
@@ -287,7 +291,7 @@
   keywords={meta.keywords ?? []}
   labels={meta.labels ?? []}
   faqs={meta.faqs ?? []}
-  relatedLinks={meta.relatedLinks ?? []}
+  {relatedLinks}
   bind:theme={activeTheme}
   isThemeCustomizable={shouldSyncGeneratorTheme(slug)}
   supportsStreaming={isStreamableSlug(slug)}
