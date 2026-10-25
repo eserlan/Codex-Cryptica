@@ -185,7 +185,7 @@
     <button
       type="submit"
       disabled={aiBusy || !isOnline}
-      class="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-lg border border-theme-primary/60 bg-theme-primary/10 px-3 py-2 text-micro font-bold uppercase tracking-wider text-theme-primary font-header hover:bg-theme-primary/20 transition-all disabled:opacity-50"
+      class="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-lg border border-theme-primary/60 bg-theme-primary/10 px-3 py-2 text-micro font-bold uppercase tracking-wider text-theme-text font-header hover:bg-theme-primary/20 transition-all disabled:opacity-50"
     >
       <span
         class={aiBusy
