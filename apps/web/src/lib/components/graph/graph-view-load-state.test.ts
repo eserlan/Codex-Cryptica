@@ -15,13 +15,14 @@ describe("GraphViewLoadState", () => {
       isSuspended: false,
       applyCurrentLayout: vi.fn(),
     } as unknown as GraphViewHost;
+    const vault = {
+      activeVaultId: undefined as string | undefined,
+      status: "idle",
+      allEntities: [],
+      releaseThumbnailUrl: vi.fn(),
+    };
     const deps = {
-      vault: {
-        activeVaultId: undefined,
-        status: "idle",
-        allEntities: [],
-        releaseThumbnailUrl: vi.fn(),
-      },
+      vault,
       debugStore: { log: vi.fn() },
     } as unknown as GraphViewDependencies;
     const state = new GraphViewLoadState(
@@ -29,11 +30,11 @@ describe("GraphViewLoadState", () => {
       deps,
       new GraphRenderActivity(host),
     );
-    return { state, host, deps, destroy };
+    return { state, host, deps, destroy, vault };
   }
 
   it("finalizes a load and resets on vault switches", () => {
-    const { state, host, deps, destroy } = setup();
+    const { state, host, vault, destroy } = setup();
     state.reconcile();
     expect(host.loadPhase).toBe("finalized");
     expect(host.applyCurrentLayout).toHaveBeenCalledWith({
@@ -41,7 +42,7 @@ describe("GraphViewLoadState", () => {
       isInitial: true,
       isForced: true,
     });
-    deps.vault.activeVaultId = "another-vault";
+    vault.activeVaultId = "another-vault";
     state.reconcile();
     expect(host.loadPhase).toBe("idle");
     expect(destroy).toHaveBeenCalledOnce();

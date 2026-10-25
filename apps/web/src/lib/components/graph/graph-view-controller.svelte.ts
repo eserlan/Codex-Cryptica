@@ -2,26 +2,14 @@ import { untrack } from "svelte";
 import { GraphViewInteractions } from "./graph-view-interactions";
 import type { GraphViewDependencies, LoadPhase } from "./graph-view-types";
 import { GraphViewMeasurements } from "./graph-view-measurements";
-import {
-  applyLayoutSnapshot,
-  restoreEverydayPositions,
-  type LayoutPositions,
-} from "./graph-layout-snapshot";
 import type { Core } from "cytoscape";
 import {
   initGraph,
   LayoutManager,
   GraphImageManager,
-  attachCommunityHulls,
   type CommunityHullOverlay,
-  syncGraphElements,
-  applyLargeGraphRenderHints,
   type LayoutRequest,
 } from "graph-engine";
-import { isTemporalMetadataEqual } from "$lib/utils/comparison";
-import { MIN_FOCUS_DEPTH } from "$lib/stores/graph.svelte";
-import { themeStore } from "$lib/stores/theme.svelte";
-import { categories } from "$lib/stores/categories.svelte";
 import {
   browserPerformanceCapture,
   browserPerformanceRecorder,
@@ -40,8 +28,10 @@ import {
   resolveFocusDepth,
 } from "./graph-focus-zoom-ratchet";
 import { GraphViewLoadState } from "./graph-view-load-state";
+import { GraphViewSync } from "./graph-view-sync";
+import { GraphViewAppearance } from "./graph-view-appearance";
 import { GraphViewLayout } from "./graph-view-layout";
-import { syncGraphImages, releaseGraphImages } from "./graph-image-sync";
+import { releaseGraphImages } from "./graph-image-sync";
 
 export type { LoadPhase, GraphViewDependencies } from "./graph-view-types";
 
@@ -86,14 +76,8 @@ export class GraphViewController {
   private measurements: GraphViewMeasurements;
   private interactions: GraphViewInteractions;
 
-  // Zoom-driven focus depth ratchet (debounces zoom into settled samples and
-  // maps them to depth changes; see FocusZoomRatchet). lastSyncedFocusDepth
-  // lets syncElements detect depth-driven element churn and preserve the
-  // viewport for it.
-  private lastSyncedFocusDepth = MIN_FOCUS_DEPTH;
-  private lastSyncedFocusRootId: string | null = null;
-  private lastSyncedGraphStructureVersion = 0;
-  private lastSyncedFilterSignature = "";
+  private elementSync: GraphViewSync;
+  private appearance: GraphViewAppearance;
 
   private activity: GraphRenderActivity;
   private loadState: GraphViewLoadState;
@@ -126,6 +110,13 @@ export class GraphViewController {
       this.measurements,
       this.loadState,
     );
+    this.elementSync = new GraphViewSync(
+      this,
+      deps,
+      this.activity,
+      this.measurements,
+    );
+    this.appearance = new GraphViewAppearance(this, deps, this.activity);
     this.selectedId = options.selectedId;
     this.deps = deps;
     this.interactions = new GraphViewInteractions(this, deps);
@@ -224,25 +215,12 @@ export class GraphViewController {
       instance.on("select unselect", "node", updateSelectionCount);
       updateSelectionCount();
 
-      if (
-        import.meta.env.DEV ||
-        (globalThis as { __CODEX_PERFORMANCE_CAPTURE__?: boolean })
-          .__CODEX_PERFORMANCE_CAPTURE__ === true
-      ) {
+      if (this.exposeDebugInstance()) {
         (window as any).cy = instance;
         (window as any).graphViewController = this;
       }
 
-      const hullCanvas = container.querySelector<HTMLCanvasElement>(
-        "canvas[data-community-hulls]",
-      );
-      this.communityHulls?.destroy();
-      this.communityHulls = hullCanvas
-        ? attachCommunityHulls(instance, hullCanvas, {
-            enabled: untrack(() => this.communityHullsWanted()),
-            strong: untrack(() => this.deps.graph.communityMode === "strong"),
-          })
-        : undefined;
+      this.appearance.attachHulls(instance, container);
 
       this.cleanupEvents = this.interactions.attach(instance);
 
@@ -270,10 +248,20 @@ export class GraphViewController {
       this.cleanupEvents();
       this.cleanupEvents = undefined;
     }
-    this.communityHulls?.destroy();
-    this.communityHulls = undefined;
-    this.interactions.clearNodeSelectTimer();
+    this.appearance.destroyHulls();
     this.measurements.clearRenderReadyMeasurement();
+    this.destroyGraphResources();
+  };
+
+  private exposeDebugInstance() {
+    return (
+      import.meta.env.DEV ||
+      (globalThis as { __CODEX_PERFORMANCE_CAPTURE__?: boolean })
+        .__CODEX_PERFORMANCE_CAPTURE__ === true
+    );
+  }
+
+  private destroyGraphResources() {
     if (this.layoutManager) {
       this.layoutManager.stop();
       this.layoutManager = undefined;
@@ -283,160 +271,22 @@ export class GraphViewController {
       this.imageManager = undefined;
     }
     if (this.cy) {
-      if (
-        import.meta.env.DEV ||
-        (globalThis as { __CODEX_PERFORMANCE_CAPTURE__?: boolean })
-          .__CODEX_PERFORMANCE_CAPTURE__ === true
-      ) {
+      if (this.exposeDebugInstance()) {
         delete (window as any).cy;
         delete (window as any).graphViewController;
       }
       this.cy.destroy();
       this.cy = undefined;
     }
-  };
+  }
 
   applyCurrentLayout = (req: LayoutRequest) =>
     this.layout.applyCurrentLayout(req);
 
-  /**
-   * The graph only places an entity when it is first added, so when a view's
-   * saved layout opens or closes, entities already on screen are moved here:
-   * to their saved positions, or back to the vault's everyday ones. Entities
-   * added later are placed from the layout by the elements themselves.
-   * Timeline and orbit arrange entities on their own, so they are left alone.
-   */
-  private lastLayoutOverride: LayoutPositions | null = null;
-  private syncLayoutOverride() {
-    const override = this.deps.graph.layoutOverride ?? null;
-    if (override === this.lastLayoutOverride) return;
-    const previous = this.lastLayoutOverride;
-    this.lastLayoutOverride = override;
-    if (override) {
-      if (this.deps.graph.timelineMode || this.deps.graph.orbitMode) return;
-      applyLayoutSnapshot(this.cy, override);
-    } else if (previous) {
-      restoreEverydayPositions(
-        this.cy,
-        (id) => this.deps.vault.entities[id]?.metadata?.coordinates,
-      );
-    }
-  }
-
-  // Sync Logic
-  syncElements = () => {
-    if (this.activity.deferWhileSuspended()) return;
-    if (this.cy && this.deps.graph.elements) {
-      const syncGeneration = ++this.activity.elementSyncGeneration;
-      const syncCy = this.cy;
-      const visibilityGeneration = this.activity.generation;
-      this.activity.needsReconcile = false;
-      // When the element set changed because zoom changed the focus detail level
-      // (not a real entity edit), keep the user's camera — the depth change was
-      // driven by their zoom, so refitting would fight it.
-      const focusDepthChanged =
-        this.deps.graph.focusDepth !== this.lastSyncedFocusDepth;
-      const focusRootId = this.deps.graph.focusRootId;
-      const focusRootChanged = focusRootId !== this.lastSyncedFocusRootId;
-      const graphStructureVersion = this.deps.vault.graphStructureVersion ?? 0;
-      const filterSignature = [
-        this.deps.graph.labelFilterMode,
-        ...Array.from(this.deps.graph.activeLabels).sort(),
-        "|",
-        ...Array.from(this.deps.graph.activeCategories).sort(),
-      ].join("\u0000");
-      const focusMembershipOnly =
-        this.loadPhase !== "idle" &&
-        this.deps.graph.focusViewActive &&
-        (focusDepthChanged || focusRootChanged) &&
-        graphStructureVersion === this.lastSyncedGraphStructureVersion &&
-        filterSignature === this.lastSyncedFilterSignature;
-      // Explicit detail controls can change focus depth without a Cytoscape
-      // zoom event. Start the same lifecycle span here so every membership
-      // transition is measured through render readiness.
-      if (focusDepthChanged) this.measurements.startFocusDepthMeasurement();
-      this.lastSyncedFocusDepth = this.deps.graph.focusDepth;
-      this.lastSyncedFocusRootId = focusRootId;
-      this.lastSyncedGraphStructureVersion = graphStructureVersion;
-      this.lastSyncedFilterSignature = filterSignature;
-
-      this.syncLayoutOverride();
-      syncGraphElements(this.cy, {
-        elements: this.deps.graph.elements,
-        vaultStatus: this.deps.vault.status,
-        initialLoaded: this.loadPhase !== "idle",
-        isTemporalMetadataEqual,
-        activeLabels: this.deps.graph.activeLabels,
-        labelFilterMode: this.deps.graph.labelFilterMode,
-        activeCategories: this.deps.graph.activeCategories,
-        focusMembershipOnly,
-        skipRenderedWeightSync:
-          this.deps.graph.perfStylingActive &&
-          !this.deps.graph.timelineMode &&
-          this.deps.graph.activeLabels.size === 0 &&
-          this.deps.graph.activeCategories.size === 0,
-        performanceRecorder: browserPerformanceRecorder,
-        onFirstElements: () => {
-          this.loadPhase = "elements";
-        },
-        onLayoutUpdate: (req) => {
-          // A future/asynchronous sync callback must never lay out a newer
-          // focus depth or a switched vault with stale membership data.
-          if (
-            syncGeneration !== this.activity.elementSyncGeneration ||
-            this.cy !== syncCy ||
-            visibilityGeneration !== this.activity.generation ||
-            this.isSuspended
-          )
-            return;
-          if (focusDepthChanged) req.viewport = "preserve";
-          this.applyCurrentLayout(req);
-        },
-      });
-      this.measurements.scheduleRenderReadyMeasurement();
-    }
-  };
-
-  /**
-   * Re-applies the renderer-level large-graph hints (hideEdgesOnViewport,
-   * motionBlur) whenever the graph crosses the perf-mode threshold. cy is
-   * constructed while the vault is still empty, so these can't be set correctly
-   * at init time — they have to be patched onto the live renderer once entities
-   * have streamed in and `isLargeGraph` settles.
-   */
-  syncRenderHints = () => {
-    if (this.activity.deferWhileSuspended()) return;
-    if (this.cy) {
-      applyLargeGraphRenderHints(this.cy, this.deps.graph.isLargeGraph);
-    }
-  };
-
-  /** Timeline and orbit arrange nodes by date or distance, not by community. */
-  private communityHullsWanted() {
-    const g = this.deps.graph;
-    return g.communityMode !== "off" && !g.timelineMode && !g.orbitMode;
-  }
-
-  syncCommunityHulls = () => {
-    this.communityHulls?.setEnabled(this.communityHullsWanted());
-    this.communityHulls?.setStrong(this.deps.graph.communityMode === "strong");
-  };
-
-  syncImages = () => {
-    if (this.activity.deferWhileSuspended()) return;
-    if (this.cy && this.deps.graph.elements && this.imageManager) {
-      untrack(() => {
-        syncGraphImages({
-          imageManager: this.imageManager!,
-          graph: this.deps.graph,
-          vault: this.deps.vault,
-          debugStore: this.deps.debugStore,
-          activeTheme: themeStore.activeTheme,
-          categoryList: categories.list,
-        });
-      });
-    }
-  };
+  syncElements = () => this.elementSync.syncElements();
+  syncRenderHints = () => this.appearance.syncRenderHints();
+  syncCommunityHulls = () => this.appearance.syncCommunityHulls();
+  syncImages = () => this.appearance.syncImages();
 
   clearGraphSelection = () => this.interactions.clearGraphSelection();
   applyFocus = (id: string | null) => this.interactions.applyFocus(id);

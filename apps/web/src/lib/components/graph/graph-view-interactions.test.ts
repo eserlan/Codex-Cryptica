@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import cytoscape from "cytoscape";
 import type { Core, NodeSingular } from "cytoscape";
 import { setupGraphEvents } from "graph-engine";
 import { GraphViewInteractions } from "./graph-view-interactions";
@@ -131,5 +132,54 @@ describe("GraphViewInteractions", () => {
       }),
     );
     expect(host.pendingSearchFocus?.entityId).toBe("first");
+  });
+
+  it("highlights two neighbourhood levels and clears dimming for missing nodes", () => {
+    const { interactions, host } = setup();
+    const cy = cytoscape({
+      headless: true,
+      elements: [
+        ...["first", "second", "third", "unrelated"].map((id) => ({
+          data: { id },
+        })),
+        { data: { id: "one", source: "first", target: "second" } },
+        { data: { id: "two", source: "second", target: "third" } },
+      ],
+    });
+    host.cy = cy;
+    try {
+      interactions.applyFocus("first");
+      expect(cy.$id("first").hasClass("neighborhood")).toBe(true);
+      expect(cy.$id("second").hasClass("neighborhood")).toBe(true);
+      expect(cy.$id("third").hasClass("secondary-neighborhood")).toBe(true);
+      expect(cy.$id("unrelated").hasClass("dimmed")).toBe(true);
+      interactions.applyFocus("missing");
+      expect(
+        cy.$(".dimmed, .neighborhood, .secondary-neighborhood").length,
+      ).toBe(0);
+    } finally {
+      cy.destroy();
+    }
+  });
+
+  it("keeps hover coordinates current and opens edge editing with defaults", () => {
+    const { cy, host, handlers } = setup();
+    const renderedPosition = { x: 50, y: 70 };
+    cy.$id = vi
+      .fn()
+      .mockReturnValue({ length: 1, renderedPosition: () => renderedPosition });
+    handlers.onNodeMouseOver!("first", { x: 10, y: 20 });
+    expect(host.hoveredEntityId).toBe("first");
+    expect(handlers.onViewportChange!(null)).toEqual(renderedPosition);
+    handlers.onNodeMouseOut!();
+    expect(host.hoveredEntityId).toBeNull();
+    expect(host.hoverPosition).toBeNull();
+    handlers.onEdgeTap!({ source: "first", target: "second" });
+    expect(host.editingEdge).toEqual({
+      source: "first",
+      target: "second",
+      label: "",
+      type: "neutral",
+    });
   });
 });
