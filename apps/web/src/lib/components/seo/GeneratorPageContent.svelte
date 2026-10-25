@@ -5,6 +5,7 @@
   import { createAdventureDefaults } from "./generator-page-adventure-defaults";
   import type { OneShotProgressStep } from "generator-engine";
   import GeneratorPageOutputExtras from "./GeneratorPageOutputExtras.svelte";
+  import QuickNamesPanel from "./QuickNamesPanel.svelte";
   import { onDestroy, onMount, untrack } from "svelte";
   import { browser } from "$app/environment";
   import { page } from "$app/state";
@@ -278,6 +279,15 @@
   );
 </script>
 
+{#snippet quickNames()}
+  <QuickNamesPanel
+    generatorType={slug}
+    culture={forms.names.culture}
+    gender={forms.names.gender}
+    nameType={forms.names.nameType}
+  />
+{/snippet}
+
 <SEOGeneratorLayout
   bind:this={seoLayoutRef}
   pageTitle={meta.pageTitle}
@@ -310,6 +320,7 @@
     ? openMemberAsCharacter
     : undefined}
   autoGenerateExplicit={slug === "faction-roster"}
+  outputLead={slug === "fantasy-names" ? quickNames : undefined}
 >
   {#snippet outputExtras(output, replaceOutput, useAI)}
     <GeneratorPageOutputExtras

@@ -109,24 +109,46 @@ export function parseNamesResponse(
   };
 }
 
+/**
+ * Roll a batch of names from the local culture tables, without AI. Repeats are
+ * re-rolled a few times so a batch reads as distinct names.
+ */
+export function rollNames(
+  options: NamesGeneratorOptions = {},
+  rng: Rng = defaultRng,
+): string[] {
+  const { culture, count } = resolveNames(options);
+  const prefixes =
+    nameGeneratorConfig.culturePrefixes[culture] ||
+    nameGeneratorConfig.culturePrefixes["Generic Fantasy"];
+  const suffixes =
+    nameGeneratorConfig.cultureSuffixes[culture] ||
+    nameGeneratorConfig.cultureSuffixes["Generic Fantasy"];
+  const roll = () => {
+    const prefix = pickFrom(prefixes, rng);
+    return (
+      prefix.charAt(0).toUpperCase() + prefix.slice(1) + pickFrom(suffixes, rng)
+    );
+  };
+
+  const names: string[] = [];
+  const seen = new Set<string>();
+  for (let tries = 0; names.length < count && tries < count * 5; tries++) {
+    const name = roll();
+    if (seen.has(name)) continue;
+    seen.add(name);
+    names.push(name);
+  }
+  while (names.length < count) names.push(roll());
+  return names;
+}
+
 export function generateNamesLocal(
   options: NamesGeneratorOptions = {},
   rng: Rng = defaultRng,
 ): PublicGeneratorOutput {
   const resolved = resolveNames(options);
-  const prefixes =
-    nameGeneratorConfig.culturePrefixes[resolved.culture] ||
-    nameGeneratorConfig.culturePrefixes["Generic Fantasy"];
-  const suffixes =
-    nameGeneratorConfig.cultureSuffixes[resolved.culture] ||
-    nameGeneratorConfig.cultureSuffixes["Generic Fantasy"];
-
-  const generated: string[] = [];
-  for (let i = 0; i < resolved.count; i++) {
-    const prefix = pickFrom(prefixes, rng);
-    const suffix = pickFrom(suffixes, rng);
-    generated.push(prefix.charAt(0).toUpperCase() + prefix.slice(1) + suffix);
-  }
+  const generated = rollNames(options, rng);
 
   const nameList = generated
     .map(

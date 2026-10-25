@@ -57,6 +57,7 @@
     generate,
     formFields,
     outputExtras = undefined,
+    outputLead = undefined,
     progressSteps = null,
     worldTheme = "workspace",
     initialDraft = null,
@@ -106,6 +107,8 @@
     outputExtras?: Snippet<
       [GeneratorOutput, (output: GeneratorOutput) => void, boolean]
     >;
+    /** Content above the output card, e.g. the Quick Names batch. */
+    outputLead?: Snippet;
     /** Live steps of a staged generation, shown in the output card. */
     progressSteps?: OneShotProgressStep[] | null;
     worldTheme?: string;
@@ -329,6 +332,7 @@
       class="{columnClasses.output} flex flex-col order-2 lg:order-2 scroll-mt-20"
       bind:this={outputCard}
     >
+      {@render outputLead?.()}
       <GeneratorDiagrams
         bind:this={diagrams}
         generatedData={session.generatedData}

@@ -63,6 +63,7 @@ export function labelValueHtml(
             class="opacity-100 md:opacity-0 md:group-hover:opacity-100 md:focus-within:opacity-100 p-1 hover:bg-theme-primary/10 text-theme-text/40 hover:text-theme-primary rounded transition-all duration-150 flex items-center justify-center cursor-pointer"
             data-copy-text="${escapedLabel}"
             title="Copy name to clipboard"
+            aria-label="Copy ${escapedLabel}"
           >
             <span class="icon-[lucide--copy] w-3.5 h-3.5" aria-hidden="true"></span>
           </button>
