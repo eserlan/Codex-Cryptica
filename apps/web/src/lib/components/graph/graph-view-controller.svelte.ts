@@ -1,4 +1,5 @@
 import { untrack } from "svelte";
+import { GraphViewMeasurements } from "./graph-view-measurements";
 import { unsavedPositionUpdates } from "./position-persistence";
 import {
   applyLayoutSnapshot,
@@ -129,11 +130,7 @@ export class GraphViewController {
   private nodeSelectSpan: ReturnType<
     typeof browserPerformanceRecorder.start
   > | null = null;
-  private renderReadyFrameOne: number | null = null;
-  private renderReadyFrameTwo: number | null = null;
-  private renderReadySpan: PerformanceOperationHandle | null = null;
-  private focusDepthSpan: PerformanceOperationHandle | null = null;
-  private focusDepthStartCounts: { nodes: number; edges: number } | null = null;
+  private measurements: GraphViewMeasurements;
   private readonly NODE_SELECT_DELAY_MS = 300;
 
   // Zoom-driven focus depth ratchet (debounces zoom into settled samples and
@@ -190,6 +187,7 @@ export class GraphViewController {
     options: { selectedId: string | null },
     deps: GraphViewDependencies,
   ) {
+    this.measurements = new GraphViewMeasurements(this, deps.graph);
     this.selectedId = options.selectedId;
     this.deps = deps;
     this.clock = deps.clock ?? systemClock;
@@ -228,7 +226,7 @@ export class GraphViewController {
     this.focusZoomRatchet.unsuppress();
     this.layoutManager?.stop();
     this.cy?.stop();
-    this.clearRenderReadyMeasurement();
+    this.measurements.clearRenderReadyMeasurement();
     this.clearNodeSelectTimer();
     this.clearVisibilityTimers();
   };
@@ -504,7 +502,7 @@ export class GraphViewController {
     this.communityHulls?.destroy();
     this.communityHulls = undefined;
     this.clearNodeSelectTimer();
-    this.clearRenderReadyMeasurement();
+    this.measurements.clearRenderReadyMeasurement();
     if (this.layoutManager) {
       this.layoutManager.stop();
       this.layoutManager = undefined;
@@ -672,78 +670,13 @@ export class GraphViewController {
         span.cancel();
         return;
       }
-      span.complete(() => this.graphMeasurementDimensions());
+      span.complete(() => this.measurements.graphMeasurementDimensions());
     } catch (error) {
-      span.fail("unexpected", () => this.graphMeasurementDimensions());
+      span.fail("unexpected", () =>
+        this.measurements.graphMeasurementDimensions(),
+      );
       throw error;
     }
-  };
-
-  private graphMeasurementDimensions = () => ({
-    entityCount: this.deps.graph.stats.nodeCount,
-    renderedNodeCount: this.cy?.nodes().length,
-  });
-
-  private clearRenderReadyMeasurement = (clearFocusDepth = true) => {
-    if (this.renderReadyFrameOne !== null) {
-      cancelAnimationFrame(this.renderReadyFrameOne);
-      this.renderReadyFrameOne = null;
-    }
-    if (this.renderReadyFrameTwo !== null) {
-      cancelAnimationFrame(this.renderReadyFrameTwo);
-      this.renderReadyFrameTwo = null;
-    }
-    this.renderReadySpan?.cancel();
-    this.renderReadySpan = null;
-    if (clearFocusDepth) {
-      this.focusDepthSpan?.cancel();
-      this.focusDepthSpan = null;
-      this.focusDepthStartCounts = null;
-    }
-  };
-
-  private startFocusDepthMeasurement = () => {
-    if (this.focusDepthSpan) return;
-    this.focusDepthStartCounts = {
-      nodes: this.cy?.nodes().length ?? 0,
-      edges: this.cy?.edges().length ?? 0,
-    };
-    this.focusDepthSpan = browserPerformanceRecorder.start(
-      "graph_focus_depth_change",
-    );
-  };
-
-  private focusDepthMeasurementDimensions = () => {
-    const nodes = this.cy?.nodes().length ?? 0;
-    const edges = this.cy?.edges().length ?? 0;
-    const start = this.focusDepthStartCounts;
-    return {
-      ...this.graphMeasurementDimensions(),
-      renderedEdgeCount: edges,
-      addedNodeCount: Math.max(0, nodes - (start?.nodes ?? nodes)),
-      removedNodeCount: Math.max(0, (start?.nodes ?? nodes) - nodes),
-      addedEdgeCount: Math.max(0, edges - (start?.edges ?? edges)),
-      removedEdgeCount: Math.max(0, (start?.edges ?? edges) - edges),
-    };
-  };
-
-  private scheduleRenderReadyMeasurement = () => {
-    this.clearRenderReadyMeasurement(false);
-    this.renderReadySpan = browserPerformanceRecorder.start(
-      "graph_sync_render_ready",
-    );
-    this.renderReadyFrameOne = requestAnimationFrame(() => {
-      this.renderReadyFrameOne = null;
-      this.renderReadyFrameTwo = requestAnimationFrame(() => {
-        this.renderReadyFrameTwo = null;
-        const dimensions = () => this.graphMeasurementDimensions();
-        this.renderReadySpan?.complete(dimensions);
-        this.renderReadySpan = null;
-        this.focusDepthSpan?.complete(this.focusDepthMeasurementDimensions);
-        this.focusDepthSpan = null;
-        this.focusDepthStartCounts = null;
-      });
-    });
   };
 
   private handleResize = () => {
@@ -846,7 +779,7 @@ export class GraphViewController {
       // Explicit detail controls can change focus depth without a Cytoscape
       // zoom event. Start the same lifecycle span here so every membership
       // transition is measured through render readiness.
-      if (focusDepthChanged) this.startFocusDepthMeasurement();
+      if (focusDepthChanged) this.measurements.startFocusDepthMeasurement();
       this.lastSyncedFocusDepth = this.deps.graph.focusDepth;
       this.lastSyncedFocusRootId = focusRootId;
       this.lastSyncedGraphStructureVersion = graphStructureVersion;
@@ -885,7 +818,7 @@ export class GraphViewController {
           this.applyCurrentLayout(req);
         },
       });
-      this.scheduleRenderReadyMeasurement();
+      this.measurements.scheduleRenderReadyMeasurement();
     }
   };
 
@@ -916,10 +849,7 @@ export class GraphViewController {
       },
     );
     if (result) {
-      this.focusDepthSpan?.cancel();
-      this.focusDepthSpan = null;
-      this.focusDepthStartCounts = null;
-      this.startFocusDepthMeasurement();
+      this.measurements.restartFocusDepthMeasurement();
       this.deps.graph.focusDepth = result.depth;
     }
   };

@@ -462,8 +462,8 @@ describe("GraphViewController", () => {
       deps.graph.focusDepth = 2;
       controller.syncElements();
 
-      const focusSpan = (controller as any).focusDepthSpan;
-      const renderReadySpan = (controller as any).renderReadySpan;
+      const focusSpan = (controller as any).measurements.focusDepthSpan;
+      const renderReadySpan = (controller as any).measurements.renderReadySpan;
 
       expect(focusSpan).not.toBeNull();
       expect(renderReadySpan).not.toBeNull();
@@ -484,8 +484,8 @@ describe("GraphViewController", () => {
 
       expect(renderReadyCompleteSpy).toHaveBeenCalled();
       expect(focusCompleteSpy).toHaveBeenCalled();
-      expect((controller as any).focusDepthSpan).toBeNull();
-      expect((controller as any).renderReadySpan).toBeNull();
+      expect((controller as any).measurements.focusDepthSpan).toBeNull();
+      expect((controller as any).measurements.renderReadySpan).toBeNull();
     });
   });
 
