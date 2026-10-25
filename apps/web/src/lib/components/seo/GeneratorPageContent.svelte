@@ -6,6 +6,9 @@
   import type { OneShotProgressStep } from "generator-engine";
   import GeneratorPageOutputExtras from "./GeneratorPageOutputExtras.svelte";
   import QuickNamesPanel from "./QuickNamesPanel.svelte";
+  import { FANTASY_NAME_THEME, askQuickNamesAi } from "./quick-names";
+  import { generatorEngine } from "$lib/services/seo/generator-engine";
+  import { onlineStatus } from "$lib/stores/online.svelte";
   import { onDestroy, onMount, untrack } from "svelte";
   import { browser } from "$app/environment";
   import { page } from "$app/state";
@@ -285,6 +288,13 @@
     culture={forms.names.culture}
     gender={forms.names.gender}
     nameType={forms.names.nameType}
+    isOnline={onlineStatus.current}
+    askAi={(query) =>
+      askQuickNamesAi((options) => generatorEngine.generateNames(options), {
+        ...forms.names,
+        theme: slug === "names" ? activeTheme : FANTASY_NAME_THEME,
+        query,
+      })}
   />
 {/snippet}
 
@@ -320,7 +330,9 @@
     ? openMemberAsCharacter
     : undefined}
   autoGenerateExplicit={slug === "faction-roster"}
-  outputLead={slug === "fantasy-names" ? quickNames : undefined}
+  outputLead={slug === "names" || slug === "fantasy-names"
+    ? quickNames
+    : undefined}
 >
   {#snippet outputExtras(output, replaceOutput, useAI)}
     <GeneratorPageOutputExtras

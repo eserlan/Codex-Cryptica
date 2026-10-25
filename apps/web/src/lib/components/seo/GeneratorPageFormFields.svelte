@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { FANTASY_NAME_THEME } from "./quick-names";
   import RPGNPCFormFields from "$lib/components/seo/RPGNPCFormFields.svelte";
   import FactionFormFields from "$lib/components/seo/FactionFormFields.svelte";
   import FactionRosterFormFields from "$lib/components/seo/FactionRosterFormFields.svelte";
@@ -561,6 +562,7 @@
   {:else if slug === "fantasy-names"}
     <NameFormFields
       collapseAdvanced
+      fixedTheme={FANTASY_NAME_THEME}
       bind:culture={names.culture}
       bind:gender={names.gender}
       bind:nameType={names.nameType}

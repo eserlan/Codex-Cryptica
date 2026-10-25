@@ -37,4 +37,24 @@ describe("NameFormFields", () => {
     expect(container.querySelector("details")).toBeNull();
     expect(container.querySelector("#name-context")).toBeTruthy();
   });
+
+  it("limits cultures to one genre when the page fixes it", () => {
+    render(NameFormFields, {
+      props: { ...base, fixedTheme: "Classic Fantasy" },
+    });
+    const options = Array.from(
+      (
+        screen.getByRole("combobox", {
+          name: "Culture / Style",
+        }) as HTMLSelectElement
+      ).options,
+    ).map((o) => o.value);
+
+    expect(options).toContain("Dwarven");
+    expect(options).not.toContain("Sailor's Nickname");
+    expect(options).not.toContain("Dream Fragment");
+    expect(
+      screen.queryByRole("combobox", { name: "Choose a vibe" }),
+    ).toBeNull();
+  });
 });

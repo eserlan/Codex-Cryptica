@@ -3,6 +3,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import { tick } from "svelte";
 import QuickNamesPanel from "./QuickNamesPanel.svelte";
+import type { QuickNamesAiResult } from "./quick-names";
 
 function seededRng(seed = 1): () => number {
   let s = seed >>> 0;
@@ -16,6 +17,8 @@ function renderPanel(
   overrides: Partial<{
     culture: string;
     writeText: (text: string) => Promise<void>;
+    askAi: (query: string) => Promise<QuickNamesAiResult>;
+    isOnline: boolean;
   }> = {},
 ) {
   const writeText = vi.fn(overrides.writeText ?? (async () => {}));
@@ -29,6 +32,8 @@ function renderPanel(
       rng: seededRng(4),
       writeText,
       track,
+      askAi: overrides.askAi,
+      isOnline: overrides.isOnline ?? true,
     },
   });
   return { writeText, track };
@@ -160,5 +165,97 @@ describe("QuickNamesPanel", () => {
     await tick();
 
     expect(nameButtons()[1].textContent).not.toContain("Copied");
+  });
+
+  it("replaces the batch with AI names and keeps the description out of analytics", async () => {
+    const askAi = vi
+      .fn()
+      .mockResolvedValue({ names: ["Zephyrine", "Quillon"], fallback: false });
+    const { track } = renderPanel({ askAi });
+    await waitFor(() => expect(nameButtons()).toHaveLength(10));
+
+    await fireEvent.input(screen.getByLabelText(/ask ai for names like/i), {
+      target: { value: "sky pirates" },
+    });
+    await fireEvent.click(screen.getByRole("button", { name: "Ask AI" }));
+
+    await waitFor(() =>
+      expect(nameButtons().map((b) => b.textContent)).toEqual([
+        expect.stringContaining("Zephyrine"),
+        expect.stringContaining("Quillon"),
+      ]),
+    );
+    expect(askAi).toHaveBeenCalledWith("sky pirates");
+    expect(screen.getByRole("status").textContent).toBe("AI names ready.");
+    expect(track).toHaveBeenCalledWith(
+      "reroll",
+      expect.objectContaining({ roll_source: "ai", ai_result: "ok" }),
+    );
+    expect(JSON.stringify(track.mock.calls)).not.toMatch(
+      /sky pirates|Zephyrine/,
+    );
+  });
+
+  it.each([
+    [
+      "the AI fell back to local tables",
+      async () => ({ names: ["Local"], fallback: true }),
+    ],
+    ["the AI returned no names", async () => ({ names: [], fallback: false })],
+    [
+      "the AI request failed",
+      async () => {
+        throw new Error("proxy down");
+      },
+    ],
+  ])("rolls on the device when %s", async (_label, askAi) => {
+    const { track } = renderPanel({ askAi });
+    await waitFor(() => expect(nameButtons()).toHaveLength(10));
+
+    await fireEvent.click(screen.getByRole("button", { name: "Ask AI" }));
+
+    await waitFor(() =>
+      expect(screen.getByRole("status").textContent).toMatch(
+        /rolled on your device/,
+      ),
+    );
+    expect(nameButtons()).toHaveLength(10);
+    expect(track).toHaveBeenCalledWith(
+      "reroll",
+      expect.objectContaining({ ai_result: "fallback" }),
+    );
+  });
+
+  it("ignores an AI reply that arrives after New names", async () => {
+    let answer: (result: QuickNamesAiResult) => void = () => {};
+    renderPanel({
+      askAi: () => new Promise((resolve) => (answer = resolve)),
+    });
+    await waitFor(() => expect(nameButtons()).toHaveLength(10));
+
+    await fireEvent.click(screen.getByRole("button", { name: "Ask AI" }));
+    await fireEvent.click(screen.getByRole("button", { name: /new names/i }));
+    const local = nameButtons().map((b) => b.textContent);
+    answer({ names: ["Late"], fallback: false });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await tick();
+
+    expect(nameButtons().map((b) => b.textContent)).toEqual(local);
+  });
+
+  it("disables Ask AI offline and explains why", async () => {
+    renderPanel({ askAi: vi.fn(), isOnline: false });
+
+    expect(
+      (screen.getByRole("button", { name: "Ask AI" }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(true);
+    expect(screen.getByText(/needs a connection/i)).toBeTruthy();
+  });
+
+  it("offers no AI form when the page gives it no AI", () => {
+    renderPanel();
+
+    expect(screen.queryByRole("button", { name: "Ask AI" })).toBeNull();
   });
 });

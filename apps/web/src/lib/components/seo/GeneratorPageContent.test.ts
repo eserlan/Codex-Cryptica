@@ -141,6 +141,22 @@ describe("generator page composition", () => {
     );
     await waitFor(() => expect(namesBefore()).not.toEqual(first));
     expect(screen.getByText(/More options: presentation/)).toBeTruthy();
+    const cultures = Array.from(
+      (
+        screen.getByRole("combobox", {
+          name: "Culture / Style",
+        }) as HTMLSelectElement
+      ).options,
+    ).map((option) => option.value);
+    expect(cultures).toContain("High Elf");
+    expect(cultures).not.toContain("Sailor's Nickname");
+  });
+
+  it("gives the any-genre names page Quick Names too", () => {
+    render(GeneratorPageContent, { props: { slug: "names", persistence } });
+
+    expect(screen.getByRole("heading", { name: "Quick names" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Ask AI" })).toBeTruthy();
   });
 
   it("keeps Quick Names off other generator pages", () => {

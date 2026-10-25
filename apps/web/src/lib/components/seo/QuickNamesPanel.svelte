@@ -8,6 +8,8 @@
     QUICK_NAMES_COUNT,
     formatQuickNameList,
     quickNamesAnalytics,
+    usableAiNames,
+    type QuickNamesAiResult,
   } from "./quick-names";
 
   let {
@@ -15,6 +17,8 @@
     culture,
     gender,
     nameType,
+    askAi,
+    isOnline = true,
     rng = Math.random,
     writeText = (text: string) => navigator.clipboard.writeText(text),
     track = trackPublicGeneratorAction,
@@ -23,6 +27,9 @@
     culture: string;
     gender: string;
     nameType: string;
+    /** Ask the AI for a batch; omitted, the panel offers local rolls only. */
+    askAi?: (query: string) => Promise<QuickNamesAiResult>;
+    isOnline?: boolean;
     rng?: () => number;
     writeText?: (text: string) => Promise<void>;
     track?: (
@@ -37,6 +44,10 @@
   let copiedIndex = $state<number | null>(null);
   let allCopied = $state(false);
   let announcement = $state("");
+  let query = $state("");
+  let aiBusy = $state(false);
+  // Bumped by every new batch, so a slow AI reply can't replace a newer one.
+  let batchId = 0;
   let resetTimer: ReturnType<typeof setTimeout> | undefined;
 
   function roll(): string[] {
@@ -48,9 +59,7 @@
 
   // Changing culture or name type in the settings rolls a fresh batch.
   $effect(() => {
-    names = roll();
-    copiedIndex = null;
-    allCopied = false;
+    showBatch(roll());
   });
 
   $effect(() => () => clearTimeout(resetTimer));
@@ -90,12 +99,36 @@
     }
   }
 
-  function reroll() {
-    names = roll();
+  function showBatch(batch: string[]) {
+    batchId++;
+    names = batch;
     copiedIndex = null;
     allCopied = false;
+  }
+
+  function reroll() {
+    showBatch(roll());
     announcement = "New names rolled.";
-    track("reroll", analytics());
+    track("reroll", analytics({ roll_source: "local" }));
+  }
+
+  async function rollWithAi() {
+    if (!askAi || aiBusy) return;
+    aiBusy = true;
+    announcement = "Asking the AI for names…";
+    const requestId = ++batchId;
+    const aiNames = await usableAiNames(askAi, query);
+    aiBusy = false;
+    // A newer batch (New names, a settings change) wins over a slow reply.
+    if (requestId !== batchId) return;
+    showBatch(aiNames ?? roll());
+    announcement = aiNames
+      ? "AI names ready."
+      : "The AI couldn't answer, so these names were rolled on your device.";
+    track(
+      "reroll",
+      analytics({ roll_source: "ai", ai_result: aiNames ? "ok" : "fallback" }),
+    );
   }
 </script>
 
@@ -127,6 +160,49 @@
   </button>
 {/snippet}
 
+{#snippet aiForm()}
+  <form
+    class="mt-4 flex flex-col gap-2 sm:flex-row sm:items-end"
+    onsubmit={(event) => {
+      event.preventDefault();
+      void rollWithAi();
+    }}
+  >
+    <label class="flex flex-1 flex-col gap-1.5">
+      <span
+        class="text-micro font-bold uppercase tracking-wider text-theme-text/80"
+        >Ask AI for names like… (optional)</span
+      >
+      <input
+        type="text"
+        bind:value={query}
+        maxlength="200"
+        placeholder="e.g. harsh desert nomads, a gloomy port town"
+        aria-describedby="quick-names-ai-help"
+        class="w-full rounded-lg border border-theme-border/60 bg-theme-bg/60 px-3 py-2 text-base md:text-sm text-theme-text focus:border-theme-primary/60 focus:outline-none"
+      />
+    </label>
+    <button
+      type="submit"
+      disabled={aiBusy || !isOnline}
+      class="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-lg border border-theme-primary/60 bg-theme-primary/10 px-3 py-2 text-micro font-bold uppercase tracking-wider text-theme-primary font-header hover:bg-theme-primary/20 transition-all disabled:opacity-50"
+    >
+      <span
+        class={aiBusy
+          ? "icon-[lucide--loader-circle] h-4 w-4 animate-spin"
+          : "icon-[lucide--sparkles] h-4 w-4"}
+        aria-hidden="true"
+      ></span>
+      {aiBusy ? "Asking…" : "Ask AI"}
+    </button>
+  </form>
+  <p id="quick-names-ai-help" class="mt-1.5 text-xs text-theme-text/65">
+    {isOnline
+      ? "Ask AI sends your description and settings to our AI service."
+      : "Ask AI needs a connection. New names still works offline."}
+  </p>
+{/snippet}
+
 <section
   class="mb-6 rounded-2xl border border-theme-primary/30 bg-theme-surface/30 p-4 sm:p-5 shadow-sm"
   aria-labelledby="quick-names-heading"
@@ -140,7 +216,8 @@
         Quick names
       </h2>
       <p class="mt-1 text-sm text-theme-text/75">
-        Tap a name to copy it. Rolled on your device, with no account and no AI.
+        Tap a name to copy it. New names rolls instantly on your device, with no
+        account and no AI.
       </p>
     </div>
     <div class="flex items-center gap-2">
@@ -185,9 +262,11 @@
     {/if}
   </ul>
 
+  {#if askAi}{@render aiForm()}{/if}
+
   <p class="mt-3 text-xs text-theme-text/65">
-    Want meanings, culture notes or AI-written names? Adjust the settings and
-    generate a full write-up.
+    Want meanings and culture notes? Adjust the settings and generate a full
+    write-up.
   </p>
 
   <p class="sr-only" role="status" aria-live="polite">{announcement}</p>
