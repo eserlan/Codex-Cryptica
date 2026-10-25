@@ -255,11 +255,16 @@ function hasTopLevelFalseOption(argument, property) {
   if (!argument || argument[0] !== "{" || !argument.endsWith("}")) return false;
   const wrapped = `__options(${argument.slice(1, -1)})`;
   const fields = callArguments(wrapped, "__options".length);
-  return fields.some((field) =>
-    new RegExp(
-      `^(?:\\b${property}\\b|['"]${property}['"])\\s*:\\s*false\\s*$`,
-    ).test(field.replace(/\/\*[\s\S]*?\*\/|\/\/[^\n]*/g, "").trim()),
-  );
+  let isFalse = false;
+  for (const field of fields) {
+    const clean = field.replace(/\/\*[\s\S]*?\*\/|\/\/[^\n]*/g, "").trim();
+    const option = clean.match(
+      new RegExp(`^(?:\\b${property}\\b|['"]${property}['"])\\s*:\\s*(.*)$`),
+    );
+    if (clean.startsWith("...") || clean.startsWith("[")) isFalse = false;
+    if (option) isFalse = option[1].trim() === "false";
+  }
+  return isFalse;
 }
 
 /** A base order differing from a responsive one on the same element. */
@@ -294,6 +299,9 @@ export function timerProblems(source, file) {
       );
       const timerId = assigned?.[1] ?? assigned?.[2];
       if (!timerId) return true;
+      // Without a parser, a repeated declaration makes name-based cleanup
+      // matching ambiguous: the cleanup may refer to a shadowing binding.
+      if (hasAmbiguousTimerBinding(source, timerId)) return true;
       return !hasTimerCleanup(source, timerId);
     })
     .map((match) => ({
@@ -302,6 +310,12 @@ export function timerProblems(source, file) {
       message:
         "setTimeout without teardown cleanup in this component: clear its stored timer ID in an $effect cleanup or onDestroy.",
     }));
+}
+
+function hasAmbiguousTimerBinding(source, timerId) {
+  const escaped = timerId.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const declarations = new RegExp(`\\b(?:const|let|var)\\s+${escaped}\\b`, "g");
+  return [...source.matchAll(declarations)].length > 1;
 }
 
 function hasTimerCleanup(source, timerId) {

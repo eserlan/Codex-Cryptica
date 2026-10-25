@@ -155,6 +155,21 @@ describe("pattern rules", () => {
         "renderMarkdown(text, { /* allowImages: false */ inline: true })",
       ),
     ).toHaveLength(1);
+    expect(
+      remoteImageProblems(
+        "renderMarkdown(text, { allowImages: false, ...options })",
+      ),
+    ).toHaveLength(1);
+    expect(
+      remoteImageProblems(
+        "renderMarkdown(text, { allowImages: false, allowImages: true })",
+      ),
+    ).toHaveLength(1);
+    expect(
+      remoteImageProblems(
+        "renderMarkdown(text, { ...options, allowImages: false })",
+      ),
+    ).toHaveLength(0);
   });
 
   it("flags a responsive order that differs from the base order (#4398)", () => {
@@ -193,6 +208,12 @@ describe("pattern rules", () => {
     expect(
       timerProblems(
         "const timer = setTimeout(f, 1); clearTimeout(timer);",
+        "A.svelte",
+      ),
+    ).toHaveLength(1);
+    expect(
+      timerProblems(
+        "let timer; { const timer = setTimeout(f, 1); } onDestroy(() => clearTimeout(timer));",
         "A.svelte",
       ),
     ).toHaveLength(1);
