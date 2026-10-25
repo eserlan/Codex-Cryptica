@@ -85,6 +85,17 @@ describe("generator page composition", () => {
     );
   });
 
+  it("adds same-category generators to the page's related links", () => {
+    renderBusiness();
+    const hrefs = Array.from(
+      screen.getByTestId("related-links").querySelectorAll("a"),
+    ).map((a) => a.getAttribute("href"));
+
+    expect(hrefs).toContain("/generators/faction");
+    expect(hrefs).not.toContain("/generators/business");
+    expect(new Set(hrefs).size).toBe(hrefs.length);
+  });
+
   it("keeps edited fields available after a failed generation and retries them", async () => {
     generateBusiness.mockRejectedValueOnce(new Error("offline"));
     renderBusiness();

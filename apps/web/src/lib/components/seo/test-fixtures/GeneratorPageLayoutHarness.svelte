@@ -8,12 +8,14 @@
     initialDraft,
     generate,
     formFields,
+    relatedLinks = [],
   }: {
     pageTitle?: string;
     theme?: string;
     initialDraft?: GeneratorOutput | null;
     generate: (options: { useAI: boolean }) => Promise<GeneratorOutput>;
     formFields: Snippet<[() => void]>;
+    relatedLinks?: { href: string; label: string }[];
   } = $props();
   let status = $state("");
 
@@ -36,3 +38,8 @@
 {@render formFields(() => void trigger())}
 <button type="button" onclick={trigger}>Generate from harness</button>
 <p role="status">{status}</p>
+<ul data-testid="related-links">
+  {#each relatedLinks as link (link.href)}
+    <li><a href={link.href}>{link.label}</a></li>
+  {/each}
+</ul>

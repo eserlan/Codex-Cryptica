@@ -115,8 +115,7 @@
   }): string {
     const sectionId = resolveGeneratorSection(gen);
     return (
-      GENERATOR_SECTION_CATEGORIES.find((c) => c.id === sectionId)?.label ??
-      "Loot & Lore"
+      GENERATOR_SECTION_CATEGORIES.find((c) => c.id === sectionId)?.label ?? ""
     );
   }
 
@@ -138,7 +137,7 @@
     filteredGenerators.filter((g) => favoritesStore.isFavorite(g.id)),
   );
 
-  // Group all generators into the four condensed categories
+  // Group all generators into the shared generator categories
   // Pre-favourited generators remain present in their category
   interface GeneratorGroup {
     id: GeneratorSectionId;
