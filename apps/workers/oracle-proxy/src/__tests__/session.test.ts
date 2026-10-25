@@ -359,6 +359,23 @@ describe("POST /api/session", () => {
 });
 
 describe("LLM session guard", () => {
+  it("uses the injected idGenerator to create the session token id", async () => {
+    const mockIdGenerator = { uuid: () => "mocked-uuid-12345" };
+    const { token } = await mintSessionToken(
+      SECRET,
+      "1.2.3.4",
+      undefined,
+      undefined,
+      "human",
+      mockIdGenerator,
+    );
+    const result = await verifySessionToken(SECRET, token);
+    expect(result.valid).toBe(true);
+    if (result.valid) {
+      expect(result.payload.jti).toBe("mocked-uuid-12345");
+    }
+  });
+
   it("lets a valid human token through when origin is allowed", async () => {
     const { token } = await mintSessionToken(
       SECRET,

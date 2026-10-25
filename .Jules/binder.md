@@ -348,3 +348,8 @@
 
 **Learning:** When services like `SeoImportService` directly reference browser globals (`window.history`, `window.location`, `document.title`) and `localStorage` to strip UTM tracking from URLs or manage pending imports, testing them requires brittle, broad `vi.stubGlobal("window", ...)` stubs.
 **Action:** Inject `win` and `doc` (as well as `storage` for localStorage) directly into the service's constructor, defaulting to `typeof window !== "undefined" ? window : undefined` for production/SSR compatibility. This allows tests to pass in simple, tailored mock objects instead of patching global state.
+## 2026-10-25 - Dependency injection of idGenerator into oracle-proxy session
+
+**Learning:** The `mintSessionToken` function in `oracle-proxy` hard-coded `crypto.randomUUID()` for ID generation, missing an opportunity for testability. I successfully injected `idGenerator` into the signature, defaulting to `{ uuid: () => crypto.randomUUID() }`.
+
+**Action:** Use an explicitly injected `idGenerator` argument instead of global browser APIs for random ID generation when dealing with backend ID generation code to improve testability without altering existing functionality.
