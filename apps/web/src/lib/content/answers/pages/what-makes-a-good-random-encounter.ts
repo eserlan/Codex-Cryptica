@@ -175,6 +175,7 @@ export const whatMakesAGoodRandomEncounter: AnswerConfigInput = {
     "how-do-i-make-sea-travel-interesting-in-a-ttrpg",
     "how-do-i-run-a-pirate-campaign-focused-on-exploration",
     "which-tabletop-rpgs-have-squad-and-mass-battle-rules",
+    "how-many-random-encounters-during-rpg-travel",
   ],
   discovery: {
     id: "answer-random-encounter",
@@ -187,6 +188,13 @@ export const whatMakesAGoodRandomEncounter: AnswerConfigInput = {
     uniqueValue:
       "Four criteria for an encounter entry, a before-and-after rewrite of the same monster, and guidance on when not to roll at all.",
     relatedIntents: ["generator-encounter"],
+    acknowledgedOverlap: [
+      {
+        with: "answer-encounter-frequency-travel",
+        reason:
+          "Encounter design concerns what makes a single random encounter worth playing; the encounter frequency answer concerns how often encounters of any quality should occur during travel and how much table time each should receive.",
+      },
+    ],
   },
 
   seo: {
