@@ -3,9 +3,11 @@ import {
   changedLines,
   checkSource,
   classVariants,
+  contrastProblems,
   contrastRatio,
   loadThemes,
   parseColour,
+  problemTouchesChangedLines,
   remoteImageProblems,
   timerProblems,
   visualOrderProblems,
@@ -80,6 +82,54 @@ describe("contrast — cases PR review flagged", () => {
     );
     expect(variants[0].map((t) => t.name)).toContain("icon-[lucide--x]");
   });
+
+  it("uses the normal-text threshold for unbold text-xl", () => {
+    const variant = (className) =>
+      classVariants(`<span class="${className}">x</span>`)[0];
+    const lowContrastTheme = [
+      {
+        id: "test",
+        tokens: {
+          background: "#000000",
+          surface: "#000000",
+          text: "#707070",
+        },
+      },
+    ];
+    expect(
+      contrastProblems(variant("text-xl text-theme-text"), lowContrastTheme),
+    ).toHaveLength(1);
+    expect(
+      contrastProblems(
+        variant("text-xl font-bold text-theme-text"),
+        lowContrastTheme,
+      ),
+    ).toHaveLength(0);
+    expect(
+      contrastProblems(variant("text-2xl text-theme-text"), lowContrastTheme),
+    ).toHaveLength(0);
+  });
+
+  it("keeps a contrast issue when only its background line changed", () => {
+    const [problem] = contrastProblems(
+      [
+        { name: "text-theme-primary", line: 4 },
+        { name: "bg-theme-primary/10", line: 9 },
+      ],
+      [
+        {
+          id: "test",
+          tokens: {
+            background: "#ffffff",
+            surface: "#ffffff",
+            primary: "#888888",
+          },
+        },
+      ],
+    );
+    expect(problem.lines).toEqual([4, 9]);
+    expect(problemTouchesChangedLines(problem, new Set([9]))).toBe(true);
+  });
 });
 
 describe("pattern rules", () => {
@@ -95,6 +145,16 @@ describe("pattern rules", () => {
         "renderMarkdown(fn(a, b), {\n  allowImages: false,\n})",
       ),
     ).toHaveLength(0);
+    expect(
+      remoteImageProblems(
+        "renderMarkdown(text, { flags: { allowImages: false } })",
+      ),
+    ).toHaveLength(1);
+    expect(
+      remoteImageProblems(
+        "renderMarkdown(text, { /* allowImages: false */ inline: true })",
+      ),
+    ).toHaveLength(1);
   });
 
   it("flags a responsive order that differs from the base order (#4398)", () => {
@@ -107,6 +167,11 @@ describe("pattern rules", () => {
         classVariants('<div class="order-1 lg:order-1">x</div>'),
       ),
     ).toHaveLength(0);
+    expect(
+      visualOrderProblems(
+        classVariants('<div class="order-1 sm:order-1 md:order-2">x</div>'),
+      ),
+    ).toHaveLength(1);
   });
 
   it("flags setTimeout in a component that never clears it (#4345)", () => {
@@ -119,6 +184,18 @@ describe("pattern rules", () => {
         "A.svelte",
       ),
     ).toHaveLength(0);
+    expect(
+      timerProblems(
+        "const first = setTimeout(f, 1); const second = setTimeout(g, 2); onDestroy(() => clearTimeout(first));",
+        "A.svelte",
+      ),
+    ).toHaveLength(1);
+    expect(
+      timerProblems(
+        "const timer = setTimeout(f, 1); clearTimeout(timer);",
+        "A.svelte",
+      ),
+    ).toHaveLength(1);
     expect(timerProblems("setTimeout(f, 1)", "helper.ts")).toHaveLength(0);
   });
 

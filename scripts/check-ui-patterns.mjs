@@ -11,7 +11,7 @@
  *   remote-images   renderMarkdown(...) without `allowImages: false`.
  *   visual-order    a base order-N with a different responsive sm:/md:/lg:
  *                   order, which splits visual order from keyboard order.
- *   timer-cleanup   setTimeout in a component that never calls clearTimeout.
+ *   timer-cleanup   component timers cleared from teardown cleanup by stored ID.
  *
  * Silence a reviewed line with a `ui-check-ignore: <reason>` comment on the
  * line itself or the line above.
@@ -107,7 +107,7 @@ export function classVariants(source) {
   return variants;
 }
 
-const LARGE_TEXT = /^text-(xl|[2-9]xl)$/;
+const LARGE_TEXT = /^text-(2xl|[3-9]xl)$/;
 const FG_CLASS =
   /^text-theme-(text|muted|primary|secondary|accent|on-primary|bg)(?:\/(\d+))?$/;
 const BG_CLASS = /^bg-theme-(bg|surface|primary|accent|secondary)(?:\/(\d+))?$/;
@@ -117,6 +117,7 @@ function minimumRatio(names) {
   const isIcon = names.some((n) => n.startsWith("icon-["));
   const isLarge =
     names.some((n) => LARGE_TEXT.test(n)) ||
+    (names.includes("text-xl") && names.includes("font-bold")) ||
     (names.includes("text-lg") && names.includes("font-bold"));
   return isIcon || isLarge ? 3 : 4.5;
 }
@@ -161,6 +162,7 @@ export function contrastProblems(variant, themes) {
     {
       rule: "contrast",
       line: fgToken.line,
+      lines: bgToken ? [fgToken.line, bgToken.line] : [fgToken.line],
       message: `${fgToken.name}${bgToken ? ` on ${bgToken.name}` : ""} is ${worst.ratio.toFixed(2)}:1 in ${worst.theme} (needs ${minimum}:1). Use a full-strength token (e.g. text-theme-text) or text-theme-on-primary on primary fills.`,
     },
   ];
@@ -172,14 +174,8 @@ export function contrastProblems(variant, themes) {
 export function remoteImageProblems(source) {
   const problems = [];
   for (const match of source.matchAll(/\brenderMarkdown\s*\(/g)) {
-    let depth = 0;
-    let end = match.index + match[0].length - 1;
-    for (; end < source.length; end++) {
-      if (source[end] === "(") depth++;
-      else if (source[end] === ")" && --depth === 0) break;
-    }
-    const call = source.slice(match.index, end + 1);
-    if (/allowImages\s*:\s*false/.test(call)) continue;
+    const args = callArguments(source, match.index + match[0].length - 1);
+    if (hasTopLevelFalseOption(args[1], "allowImages")) continue;
     problems.push({
       rule: "remote-images",
       line: source.slice(0, match.index).split("\n").length,
@@ -190,34 +186,149 @@ export function remoteImageProblems(source) {
   return problems;
 }
 
+/** Split call arguments while ignoring commas inside nested syntax and comments. */
+function callArguments(source, openIndex) {
+  const args = [];
+  let start = openIndex + 1;
+  const stack = [")"];
+  let quote = null;
+  let escaped = false;
+  let lineComment = false;
+  let blockComment = false;
+  for (let i = start; i < source.length; i++) {
+    const char = source[i];
+    const next = source[i + 1];
+    if (lineComment) {
+      if (char === "\n") lineComment = false;
+      continue;
+    }
+    if (blockComment) {
+      if (char === "*" && next === "/") {
+        blockComment = false;
+        i++;
+      }
+      continue;
+    }
+    if (quote) {
+      if (escaped) escaped = false;
+      else if (char === "\\") escaped = true;
+      else if (char === quote) quote = null;
+      continue;
+    }
+    if (char === "/" && next === "/") {
+      lineComment = true;
+      i++;
+      continue;
+    }
+    if (char === "/" && next === "*") {
+      blockComment = true;
+      i++;
+      continue;
+    }
+    if (char === "'" || char === '"' || char === "`") {
+      quote = char;
+      continue;
+    }
+    if (char === "(" || char === "{" || char === "[") {
+      stack.push(char === "(" ? ")" : char === "{" ? "}" : "]");
+      continue;
+    }
+    if (char === "," && stack.length === 1) {
+      args.push(source.slice(start, i).trim());
+      start = i + 1;
+      continue;
+    }
+    if (char === stack.at(-1)) {
+      if (stack.length === 1) {
+        const last = source.slice(start, i).trim();
+        if (last) args.push(last);
+        return args;
+      }
+      stack.pop();
+    }
+  }
+  return args;
+}
+
+/** Accept only a direct object-literal property, never a nested or commented one. */
+function hasTopLevelFalseOption(argument, property) {
+  if (!argument || argument[0] !== "{" || !argument.endsWith("}")) return false;
+  const wrapped = `__options(${argument.slice(1, -1)})`;
+  const fields = callArguments(wrapped, "__options".length);
+  return fields.some((field) =>
+    new RegExp(
+      `^(?:\\b${property}\\b|['"]${property}['"])\\s*:\\s*false\\s*$`,
+    ).test(field.replace(/\/\*[\s\S]*?\*\/|\/\/[^\n]*/g, "").trim()),
+  );
+}
+
 /** A base order differing from a responsive one on the same element. */
 export function visualOrderProblems(variants) {
   const problems = [];
   for (const variant of variants) {
     const base = variant.find((t) => /^order-\d+$/.test(t.name));
-    const responsive = variant.find((t) =>
+    const responsive = variant.filter((t) =>
       /^(sm|md|lg|xl|2xl):order-\d+$/.test(t.name),
     );
-    if (!base || !responsive) continue;
-    if (base.name === responsive.name.split(":")[1]) continue;
+    const mismatches = responsive.filter(
+      (token) => base && base.name !== token.name.split(":")[1],
+    );
+    if (!base || mismatches.length === 0) continue;
     problems.push({
       rule: "visual-order",
       line: base.line,
-      message: `${base.name} with ${responsive.name} shows elements in a different order from the keyboard and screen-reader order at one breakpoint. Move the element in the DOM instead, or confirm the reordered block has no controls.`,
+      message: `${base.name} with ${mismatches.map((token) => token.name).join(", ")} shows elements in a different order from the keyboard and screen-reader order at one breakpoint. Move the element in the DOM instead, or confirm the reordered block has no controls.`,
     });
   }
   return problems;
 }
 
-/** setTimeout in a component that never clears a timer. */
+/** Timers in a component without matching teardown cleanup by stored ID. */
 export function timerProblems(source, file) {
-  if (!file.endsWith(".svelte") || /clearTimeout\s*\(/.test(source)) return [];
-  return [...source.matchAll(/\bsetTimeout\s*\(/g)].map((match) => ({
-    rule: "timer-cleanup",
-    line: source.slice(0, match.index).split("\n").length,
-    message:
-      "setTimeout with no clearTimeout in this component: the callback can run after it is destroyed. Clear it in an $effect cleanup or onDestroy.",
-  }));
+  if (!file.endsWith(".svelte")) return [];
+  return [...source.matchAll(/\bsetTimeout\s*\(/g)]
+    .filter((match) => {
+      const before = source.slice(Math.max(0, match.index - 120), match.index);
+      const assigned = before.match(
+        /(?:const|let|var)\s+([\w$]+)\s*=\s*$|([\w$]+)\s*=\s*$/,
+      );
+      const timerId = assigned?.[1] ?? assigned?.[2];
+      if (!timerId) return true;
+      return !hasTimerCleanup(source, timerId);
+    })
+    .map((match) => ({
+      rule: "timer-cleanup",
+      line: source.slice(0, match.index).split("\n").length,
+      message:
+        "setTimeout without teardown cleanup in this component: clear its stored timer ID in an $effect cleanup or onDestroy.",
+    }));
+}
+
+function hasTimerCleanup(source, timerId) {
+  const escaped = timerId.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const clear = `clearTimeout\\s*\\(\\s*${escaped}\\s*\\)`;
+  const teardown = [...source.matchAll(/\bonDestroy\s*\(/g)].some((match) =>
+    callArguments(source, match.index + match[0].lastIndexOf("(")).some((arg) =>
+      new RegExp(clear).test(arg),
+    ),
+  );
+  const effectCleanup = [...source.matchAll(/\$effect\s*\(/g)].some((match) => {
+    const effect = callArguments(
+      source,
+      match.index + match[0].lastIndexOf("("),
+    )[0];
+    return (
+      effect &&
+      new RegExp(`return\\s*\\(\\s*\\)\\s*=>[\\s\\S]*?${clear}`).test(effect)
+    );
+  });
+  return teardown || effectCleanup;
+}
+
+export function problemTouchesChangedLines(problem, lines) {
+  return (
+    !lines || (problem.lines ?? [problem.line]).some((line) => lines.has(line))
+  );
 }
 
 /** Drop problems on lines marked `ui-check-ignore`. */
@@ -340,7 +451,7 @@ if (import.meta.main) {
       readFileSync(file, "utf8"),
       file,
       themes,
-    ).filter((problem) => !lines || lines.has(problem.line));
+    ).filter((problem) => problemTouchesChangedLines(problem, lines));
     for (const problem of problems) {
       count++;
       console.log(

@@ -30,8 +30,8 @@ untracked files are checked in full.
 - **visual-order**: a base `order-N` with a different `sm:`/`md:`/`lg:`/`xl:`
   order. Visual order then differs from DOM order, so keyboard and screen
   reader order no longer match what people see.
-- **timer-cleanup**: `setTimeout` in a `.svelte` file that never calls
-  `clearTimeout`.
+- **timer-cleanup**: a `.svelte` `setTimeout` whose stored ID is not cleared in
+  an `onDestroy` handler or `$effect` cleanup.
 
 When a flagged line is right as it is, add a `ui-check-ignore: <reason>`
 comment on that line or the line above.
