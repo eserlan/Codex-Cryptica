@@ -41,7 +41,7 @@ export const whatIsAPointCrawl: AnswerConfigInput = {
       kind: "example",
       heading: "A worked example: the Saltmere fens",
       paragraphs: [
-        "Six points, four of which the party will probably visit. The costs are what make the map playable; without them, every route is the same route.",
+        "Four named points joined by four routes, two of them between the same pair of points. The costs are what make the map playable; without them, every route is the same route.",
       ],
       items: [
         {
@@ -64,6 +64,17 @@ export const whatIsAPointCrawl: AnswerConfigInput = {
     },
     {
       kind: "prose",
+      heading: "Try the structure",
+      paragraphs: [
+        "Sketch four points and four routes, give each route a time and a cost, then compare the network with the fen example above. If two routes feel the same, change one cost before you start playing.",
+      ],
+      cta: {
+        text: "Try the Point Crawl Generator",
+        href: "/generators/point-crawl",
+      },
+    },
+    {
+      kind: "prose",
       heading: "Where point crawls struggle",
       paragraphs: [
         "They are a poor fit when the geography itself is the content. Wilderness exploration where the point is not knowing what is out there (survey play, hex-by-hex discovery, resource attrition over unmapped country) needs a map that can hold unknowns. A point crawl tells players the shape of the network up front, which is a feature for a heist or a journey and a problem for a frontier.",
@@ -77,7 +88,7 @@ export const whatIsAPointCrawl: AnswerConfigInput = {
       items: [
         "Every point is somewhere a scene could plausibly happen.",
         "No two links out of the same point cost the same thing.",
-        "At least one link is conditional, hidden, or earned.",
+        "Each link carries a cost the party can weigh before committing: time, difficulty or hazard.",
         "The party can learn about a point before they reach it: rumour, signpost, map fragment.",
         "You know what changes at each point if the party comes back later.",
       ],

@@ -120,14 +120,66 @@ describe("AttributionStore", () => {
     });
   });
 
-  it("keeps generic search referrals out of AI attribution", () => {
+  it("classifies a generic search referral as organic search, never as AI", () => {
+    const { storage: localStorage } = makeStorage();
+    const { storage: sessionStorage } = makeStorage();
+    const store = new AttributionStore({
+      storage: localStorage,
+      sessionStorage,
+      now: () => 100,
+    });
+
+    expect(
+      store.captureIfAttributed(
+        urlWith("/answers/example"),
+        "https://www.google.com/search?q=campaign",
+      ),
+    ).toBe(true);
+    expect(store.getLatestTouch()).toEqual({
+      channel: "organic_search",
+      search_engine: "google",
+      landing_path: "/answers/example",
+      at: 100,
+    });
+    expect(store.getSessionTouch()).toEqual(store.getLatestTouch());
+  });
+
+  it("does not store the search path or query", () => {
+    const { storage, store: map } = makeStorage();
+    const store = new AttributionStore({ storage, now: () => 100 });
+
+    store.captureIfAttributed(
+      urlWith("/answers/example"),
+      "https://www.google.com/search?q=secret+campaign",
+    );
+
+    expect([...map.values()].join("")).not.toContain("secret");
+  });
+
+  it("lets a UTM-tagged landing keep its campaign attribution over a search referrer", () => {
+    const { storage } = makeStorage();
+    const store = new AttributionStore({ storage, now: () => 100 });
+
+    store.captureIfAttributed(
+      urlWith("/answers/example", { utm_source: "newsletter" }),
+      "https://www.google.com/",
+    );
+
+    expect(store.getLatestTouch()).toEqual({
+      utm_source: "newsletter",
+      landing_path: "/answers/example",
+      at: 100,
+    });
+  });
+
+  it("ignores a non-search external referrer", () => {
     const { storage } = makeStorage();
     const store = new AttributionStore({ storage, now: () => 100 });
 
     expect(
       store.captureIfAttributed(
         urlWith("/answers/example"),
-        "https://www.google.com/search?q=campaign",
+        "https://example.org/post",
       ),
     ).toBe(false);
     expect(store.getLatestTouch()).toBeNull();

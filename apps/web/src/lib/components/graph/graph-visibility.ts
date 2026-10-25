@@ -29,3 +29,36 @@ export function resolveGraphVisibility(
     reason,
   };
 }
+
+/** Compares both source inputs and their derived visibility policy. */
+export function sameGraphVisibility(
+  a: GraphVisibilitySnapshot,
+  b: GraphVisibilitySnapshot,
+): boolean {
+  return (
+    a.suspended === b.suspended &&
+    a.reason === b.reason &&
+    a.documentVisible === b.documentVisible &&
+    a.surfaceCovered === b.surfaceCovered &&
+    a.containerIntersecting === b.containerIntersecting
+  );
+}
+
+/** Shared cancellation generation for layout and element-sync callbacks. */
+export class GraphRenderActivity {
+  generation = 0;
+  elementSyncGeneration = 0;
+  needsReconcile = false;
+
+  constructor(private source: { readonly isSuspended: boolean }) {}
+
+  deferWhileSuspended() {
+    if (!this.source.isSuspended) return false;
+    this.needsReconcile = true;
+    return true;
+  }
+
+  isCurrent(generation: number) {
+    return generation === this.generation && !this.source.isSuspended;
+  }
+}

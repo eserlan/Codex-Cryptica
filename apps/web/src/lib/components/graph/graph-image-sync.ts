@@ -68,3 +68,13 @@ export function syncGraphImages({
       debugStore.error("Incremental image resolution failed", error),
   });
 }
+
+/** Releases the manager's thumbnail references on a vault reset or teardown. */
+export function releaseGraphImages(
+  imageManager: GraphImageManager | undefined,
+  vault: Pick<typeof vaultStore, "releaseThumbnailUrl">,
+): void {
+  imageManager?.destroy({
+    releaseImageUrl: (path: string) => vault.releaseThumbnailUrl(path),
+  } as Parameters<GraphImageManager["destroy"]>[0]);
+}

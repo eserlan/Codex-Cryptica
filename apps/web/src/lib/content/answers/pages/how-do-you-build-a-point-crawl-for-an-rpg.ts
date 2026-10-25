@@ -47,6 +47,7 @@ export const howDoYouBuildAPointCrawlForAnRpg: AnswerConfigInput = {
     {
       kind: "example",
       heading: "Copyable example: the road to Morzan's Crypt",
+      diagram: "point-crawl-morzan-crypt",
       paragraphs: [
         "Copy these six nodes and routes, then change the names and costs to fit your game. Travel times assume a party moving at an ordinary pace; adjust them for your rules, weather, or group.",
       ],

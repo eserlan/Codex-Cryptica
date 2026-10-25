@@ -135,6 +135,7 @@ import { howMuchPrepDoYouNeedForAnRpgSession } from "./how-much-prep-do-you-need
 import { howMuchRuleOfCoolShouldADmAllow } from "./how-much-rule-of-cool-should-a-dm-allow";
 import { howShouldAFantasyAdventuringGuildHandleWagesDuesAndSharedExpenses } from "./how-should-a-fantasy-adventuring-guild-handle-wages-dues-and-shared-expenses";
 import { howShouldMagicHaveBeenDiscoveredInMyWorld } from "./how-should-magic-have-been-discovered-in-my-world";
+import { howToAdaptAVideoGameIntoATabletopRpg } from "./how-to-adapt-a-video-game-into-a-tabletop-rpg";
 import { howToCreateACyberpunkCityDistrict } from "./how-to-create-a-cyberpunk-city-district";
 import { howToCreateASciFiStarSystemForAnRpg } from "./how-to-create-a-sci-fi-star-system-for-an-rpg";
 import { howToCreateRumoursForAFantasyTown } from "./how-to-create-rumours-for-a-fantasy-town";
@@ -321,6 +322,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howMuchRuleOfCoolShouldADmAllow,
     howShouldAFantasyAdventuringGuildHandleWagesDuesAndSharedExpenses,
     howShouldMagicHaveBeenDiscoveredInMyWorld,
+    howToAdaptAVideoGameIntoATabletopRpg,
     howToCreateACyberpunkCityDistrict,
     howToCreateASciFiStarSystemForAnRpg,
     howToCreateRumoursForAFantasyTown,

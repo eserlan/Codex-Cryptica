@@ -173,6 +173,7 @@ export const howMuchOfThePlotShouldADmPrepare: AnswerConfigInput = {
     "how-do-you-manage-a-campaign-timeline-in-an-rpg",
     "how-do-you-create-quest-hooks-without-railroading",
     "how-do-i-plan-story-arcs-for-an-rpg-campaign",
+    "how-to-adapt-a-video-game-into-a-tabletop-rpg",
   ],
   discovery: {
     id: "answer-how-much-plot-should-a-dm-prepare",

@@ -2052,8 +2052,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     ],
   },
   "point-crawl": {
-    pageTitle:
-      "Point Crawl Generator | Interactive RPG Map & Route Network Builder | Codex Cryptica",
+    pageTitle: "Point Crawl Generator | RPG Route Map Maker | Codex Cryptica",
     metaDescription:
       "Generate playable 6–15 node point crawls for Dungeons, Cities, Wilderness, Regions, and Star Systems. Includes branching paths, loops, hidden shortcuts, key-before-lock gates, and an interactive SVG graph.",
     introTitle: "Point Crawl Generator",
@@ -2099,6 +2098,14 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       },
     ],
     relatedLinks: [
+      {
+        href: "/answers/how-do-you-build-a-point-crawl-for-an-rpg",
+        label: "How to Build a Point Crawl for an RPG",
+      },
+      {
+        href: "/answers/point-crawl-vs-hex-crawl",
+        label: "Point Crawl vs Hex Crawl",
+      },
       {
         href: "/answers/what-is-a-point-crawl",
         label: "What Is a Point Crawl in Tabletop RPGs?",
