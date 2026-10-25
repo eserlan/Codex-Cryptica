@@ -114,7 +114,7 @@
     <span
       class="inline-flex shrink-0 items-center gap-1 text-nano font-bold uppercase tracking-wider {copied
         ? 'text-theme-primary'
-        : 'text-theme-text/50 group-hover:text-theme-primary'}"
+        : 'text-theme-text group-hover:text-theme-primary'}"
       aria-hidden="true"
     >
       <span
@@ -139,7 +139,7 @@
       >
         Quick names
       </h2>
-      <p class="mt-1 text-sm text-theme-text/75">
+      <p class="mt-1 text-sm text-theme-text">
         Tap a name to copy it. Rolled on your device, with no account and no AI.
       </p>
     </div>
@@ -185,7 +185,7 @@
     {/if}
   </ul>
 
-  <p class="mt-3 text-xs text-theme-text/65">
+  <p class="mt-3 text-xs text-theme-text">
     Want meanings, culture notes or AI-written names? Adjust the settings and
     generate a full write-up.
   </p>
