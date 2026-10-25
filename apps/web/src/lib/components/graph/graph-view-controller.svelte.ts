@@ -1,4 +1,6 @@
 import { untrack } from "svelte";
+import { GraphViewInteractions } from "./graph-view-interactions";
+import type { GraphViewDependencies, LoadPhase } from "./graph-view-types";
 import { GraphViewMeasurements } from "./graph-view-measurements";
 import { unsavedPositionUpdates } from "./position-persistence";
 import {
@@ -13,32 +15,15 @@ import {
   GraphImageManager,
   attachCommunityHulls,
   type CommunityHullOverlay,
-  setupGraphEvents,
   syncGraphElements,
   applyLargeGraphRenderHints,
   type LayoutRequest,
 } from "graph-engine";
 import { isTemporalMetadataEqual } from "$lib/utils/comparison";
-import {
-  MIN_FOCUS_DEPTH,
-  MAX_FOCUS_DEPTH,
-  type graph as graphStore,
-} from "$lib/stores/graph.svelte";
-import type { vault as vaultStore } from "$lib/stores/vault.svelte";
-import type { debugStore as debugStoreType } from "$lib/stores/debug.svelte";
-import type { layoutUIStore as layoutUIStoreType } from "$lib/stores/ui/layout-ui.svelte";
-import type { connectionModeStore as connectionModeStoreType } from "$lib/stores/ui/connection-mode.svelte";
-import type { modalUIStore as modalUIStoreType } from "$lib/stores/ui/modal-ui.svelte";
+import { MIN_FOCUS_DEPTH, MAX_FOCUS_DEPTH } from "$lib/stores/graph.svelte";
 import { themeStore } from "$lib/stores/theme.svelte";
 import { categories } from "$lib/stores/categories.svelte";
-import {
-  DEFAULT_SEARCH_ENTITY_ZOOM,
-  consumePendingSearchEntityFocus,
-  SEARCH_ENTITY_FOCUS_EVENT,
-  markSearchEntityFocusHandled,
-} from "../search/search-focus";
 import type { LocalEntity } from "$lib/stores/vault/types";
-import { systemClock, type Clock } from "$lib/utils/runtime-deps";
 import {
   browserPerformanceCapture,
   browserPerformanceRecorder,
@@ -58,7 +43,7 @@ import {
 import { hasDegenerateSavedCoordinates } from "./saved-coordinate-health";
 import { syncGraphImages } from "./graph-image-sync";
 
-export type LoadPhase = "idle" | "elements" | "finalized" | "ready";
+export type { LoadPhase, GraphViewDependencies } from "./graph-view-types";
 
 export { FOCUS_ZOOM_STEP_FACTOR, resolveFocusDepth };
 
@@ -80,16 +65,6 @@ export function resolveViewport(
   if (reason === "Elements Update" && !hasNewNodes && !hasRemovedNodes)
     return "preserve";
   return "fit";
-}
-
-export interface GraphViewDependencies {
-  clock?: Clock;
-  graph: typeof graphStore;
-  vault: typeof vaultStore;
-  debugStore: typeof debugStoreType;
-  layoutUIStore: typeof layoutUIStoreType;
-  connectionModeStore: typeof connectionModeStoreType;
-  modalUIStore: typeof modalUIStoreType;
 }
 
 export class GraphViewController {
@@ -126,12 +101,8 @@ export class GraphViewController {
 
   loadPhase = $state<LoadPhase>("idle");
 
-  private nodeSelectTimer: number | null = null;
-  private nodeSelectSpan: ReturnType<
-    typeof browserPerformanceRecorder.start
-  > | null = null;
   private measurements: GraphViewMeasurements;
-  private readonly NODE_SELECT_DELAY_MS = 300;
+  private interactions: GraphViewInteractions;
 
   // Zoom-driven focus depth ratchet (debounces zoom into settled samples and
   // maps them to depth changes; see FocusZoomRatchet). lastSyncedFocusDepth
@@ -178,10 +149,8 @@ export class GraphViewController {
   } | null = $state(null);
 
   private cleanupEvents?: () => void;
-  private searchFocusListener: ((event: Event) => void) | null = null;
 
   private deps: GraphViewDependencies;
-  private clock: Clock;
 
   constructor(
     options: { selectedId: string | null },
@@ -190,7 +159,7 @@ export class GraphViewController {
     this.measurements = new GraphViewMeasurements(this, deps.graph);
     this.selectedId = options.selectedId;
     this.deps = deps;
-    this.clock = deps.clock ?? systemClock;
+    this.interactions = new GraphViewInteractions(this, deps);
   }
 
   setVisibilityInputs = (inputs: GraphVisibilityInputs) => {
@@ -227,7 +196,7 @@ export class GraphViewController {
     this.layoutManager?.stop();
     this.cy?.stop();
     this.measurements.clearRenderReadyMeasurement();
-    this.clearNodeSelectTimer();
+    this.interactions.clearNodeSelectTimer();
     this.clearVisibilityTimers();
   };
 
@@ -321,155 +290,17 @@ export class GraphViewController {
           })
         : undefined;
 
-      this.cleanupEvents = setupGraphEvents(instance, {
-        onNodeMouseOver: (id, renderedPos) => {
-          this.hoverPosition = renderedPos;
-          this.hoveredEntityId = id;
-        },
-        onNodeMouseOut: () => {
-          this.hoveredEntityId = null;
-          this.hoverPosition = null;
-        },
-        onNodeTap: async (id, node) => {
-          const cyInstance =
-            typeof node?.cy === "function" ? node.cy() : this.cy;
-          const lastCxtTap =
-            (cyInstance?.scratch?.("_lastCxtTap") as number | undefined) ?? 0;
-          if (this.clock.now() - lastCxtTap < 400) {
-            return;
-          }
-
-          const container =
-            typeof cyInstance?.container === "function"
-              ? cyInstance.container()
-              : typeof this.cy?.container === "function"
-                ? this.cy.container()
-                : null;
-          if (container) {
-            const rect = container.getBoundingClientRect();
-            const renderedPos = node.renderedPosition();
-            this.deps.layoutUIStore.setLastSelectedNodePosition({
-              x: rect.left + renderedPos.x,
-              y: rect.top + renderedPos.y,
-            });
-          } else {
-            this.deps.layoutUIStore.setLastSelectedNodePosition(null);
-          }
-
-          if (this.deps.connectionModeStore.isConnecting) {
-            if (!this.deps.connectionModeStore.connectingNodeId) {
-              this.deps.connectionModeStore.connectingNodeId = id;
-              node.addClass("selected-source");
-            } else if (this.deps.connectionModeStore.connectingNodeId === id) {
-              this.deps.connectionModeStore.connectingNodeId = null;
-              node.removeClass("selected-source");
-            } else {
-              const source = this.deps.connectionModeStore.connectingNodeId;
-              const target = id;
-              await this.deps.vault.addConnection(source, target, "neutral");
-              this.deps.connectionModeStore.toggleConnectMode();
-            }
-          } else {
-            if (this.deps.layoutUIStore.isMobile) {
-              this.clearGraphSelection();
-              this.deps.modalUIStore.openZenMode(id);
-              return;
-            }
-            this.clearNodeSelectTimer();
-            const selectionStartedAt = browserPerformanceCapture.now();
-            this.nodeSelectSpan =
-              browserPerformanceRecorder.start("graph_select");
-            this.nodeSelectTimer = window.setTimeout(() => {
-              this.selectedId = id;
-              this.nodeSelectTimer = null;
-              requestAnimationFrame(() => {
-                requestAnimationFrame(() => {
-                  this.nodeSelectSpan?.complete(() => ({
-                    renderedNodeCount: this.cy?.nodes().length ?? 0,
-                    renderedEdgeCount: this.cy?.edges().length ?? 0,
-                    longestAnimationFrameMs:
-                      browserPerformanceCapture.longestAnimationFrameSince(
-                        selectionStartedAt,
-                      ),
-                  }));
-                  this.nodeSelectSpan = null;
-                });
-              });
-            }, this.NODE_SELECT_DELAY_MS);
-          }
-        },
-        onNodeDoubleTap: (id, _node) => {
-          this.clearGraphSelection();
-          this.deps.modalUIStore.openZenMode(id);
-        },
-        onEdgeTap: (data) => {
-          this.editingEdge = {
-            source: data.source,
-            target: data.target,
-            label: data.label || "",
-            type: data.connectionType || "neutral",
-          };
-        },
-        onBackgroundTap: () => {
-          this.clearGraphSelection();
-          if (this.deps.connectionModeStore.isConnecting)
-            this.deps.connectionModeStore.toggleConnectMode();
-        },
-        onViewportChange: () => {
-          if (this.hoveredEntityId && instance) {
-            const node = instance.$id(this.hoveredEntityId);
-            if (node.length > 0) {
-              const renderedPos = node.renderedPosition();
-              this.hoverPosition = renderedPos;
-            }
-          }
-          return this.hoverPosition;
-        },
-      });
+      this.cleanupEvents = this.interactions.attach(instance);
 
       instance.on("zoom", this.handleFocusZoom);
 
       this.deps.debugStore.log(
         "[GraphViewController] Init successful, cy initialized",
       );
-      this.setupEventListeners();
+      window.addEventListener("resize", this.handleResize);
+      this.interactions.listenForSearchFocus();
     } catch (err) {
       this.deps.debugStore.error("Graph Init Failed", err);
-    }
-  };
-
-  private setupEventListeners = () => {
-    window.addEventListener("resize", this.handleResize);
-    this.searchFocusListener = (event: Event) => {
-      const detail = (
-        event as CustomEvent<{
-          entityId?: string;
-          zoom?: number;
-          requestId?: number;
-        }>
-      ).detail;
-      if (!detail?.entityId) return;
-      if (typeof detail.requestId === "number") {
-        markSearchEntityFocusHandled(detail.requestId);
-      }
-      this.pendingSearchFocus = {
-        entityId: detail.entityId,
-        zoom: detail.zoom ?? DEFAULT_SEARCH_ENTITY_ZOOM,
-        timestamp: systemClock.now(),
-      };
-    };
-
-    window.addEventListener(
-      SEARCH_ENTITY_FOCUS_EVENT,
-      this.searchFocusListener,
-    );
-
-    const bufferedSearchFocus = consumePendingSearchEntityFocus();
-    if (bufferedSearchFocus) {
-      this.pendingSearchFocus = {
-        ...bufferedSearchFocus,
-        timestamp: systemClock.now(),
-      };
     }
   };
 
@@ -488,20 +319,14 @@ export class GraphViewController {
       clearTimeout(this.slashGuardTimer);
       this.slashGuardTimer = null;
     }
-    if (this.searchFocusListener) {
-      window.removeEventListener(
-        SEARCH_ENTITY_FOCUS_EVENT,
-        this.searchFocusListener,
-      );
-      this.searchFocusListener = null;
-    }
+    this.interactions.destroy();
     if (this.cleanupEvents) {
       this.cleanupEvents();
       this.cleanupEvents = undefined;
     }
     this.communityHulls?.destroy();
     this.communityHulls = undefined;
-    this.clearNodeSelectTimer();
+    this.interactions.clearNodeSelectTimer();
     this.measurements.clearRenderReadyMeasurement();
     if (this.layoutManager) {
       this.layoutManager.stop();
@@ -712,15 +537,6 @@ export class GraphViewController {
     }, 250);
   };
 
-  private clearNodeSelectTimer = () => {
-    if (this.nodeSelectTimer !== null) {
-      clearTimeout(this.nodeSelectTimer);
-      this.nodeSelectTimer = null;
-    }
-    this.nodeSelectSpan?.cancel();
-    this.nodeSelectSpan = null;
-  };
-
   /**
    * The graph only places an entity when it is first added, so when a view's
    * saved layout opens or closes, entities already on screen are moved here:
@@ -901,58 +717,8 @@ export class GraphViewController {
     }
   };
 
-  /**
-   * Clears graph-side selection: deselects all nodes, nulls selectedId, and
-   * removes neighbourhood dimming. Call this whenever focus ownership moves
-   * away from the graph (focus mode takeover, double-tap Zen, background tap).
-   */
-  clearGraphSelection = () => {
-    this.selectedId = null;
-    this.clearNodeSelectTimer();
-    if (this.cy) {
-      this.cy.$("node:selected").unselect();
-      this.applyFocus(null);
-    }
-  };
-
-  applyFocus = (id: string | null) => {
-    const currentCy = this.cy;
-    if (!currentCy) return;
-    try {
-      currentCy.batch(() => {
-        const allEles = currentCy.elements();
-        if (!id) {
-          allEles.removeClass("dimmed neighborhood secondary-neighborhood");
-        } else {
-          const node = currentCy.$id(id);
-          if (node.length > 0) {
-            const firstLevel = node.closedNeighborhood();
-            const firstLevelNodes = firstLevel.nodes();
-            const secondLevelNodes = firstLevelNodes
-              .neighborhood()
-              .nodes()
-              .not(firstLevelNodes);
-            const secondLevelEdges =
-              secondLevelNodes.edgesWith(firstLevelNodes);
-            const secondLevel = secondLevelNodes.add(secondLevelEdges);
-
-            allEles.addClass("dimmed");
-            allEles.removeClass("neighborhood secondary-neighborhood");
-
-            firstLevel.removeClass("dimmed");
-            firstLevel.addClass("neighborhood");
-
-            secondLevel.removeClass("dimmed");
-            secondLevel.addClass("secondary-neighborhood");
-          } else {
-            allEles.removeClass("dimmed neighborhood secondary-neighborhood");
-          }
-        }
-      });
-    } catch {
-      /* ignore */
-    }
-  };
+  clearGraphSelection = () => this.interactions.clearGraphSelection();
+  applyFocus = (id: string | null) => this.interactions.applyFocus(id);
 
   reconcileLoadState = () => {
     if (this.isSuspended) {

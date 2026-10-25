@@ -550,12 +550,12 @@ describe("GraphViewController", () => {
     it("clearGraphSelection cancels any pending node select timer", () => {
       const clearSpy = vi.spyOn(global, "clearTimeout");
       // Force a timer into place by inspecting private state via any cast
-      (controller as any).nodeSelectTimer = 999;
+      (controller as any).interactions.nodeSelectTimer = 999;
 
       controller.clearGraphSelection();
 
       expect(clearSpy).toHaveBeenCalledWith(999);
-      expect((controller as any).nodeSelectTimer).toBeNull();
+      expect((controller as any).interactions.nodeSelectTimer).toBeNull();
     });
   });
 
