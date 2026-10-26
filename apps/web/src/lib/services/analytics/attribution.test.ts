@@ -1,5 +1,6 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { AttributionStore } from "./attribution";
+import { systemClock } from "#lib/utils/runtime-deps.js";
 
 function makeStorage(initial: Record<string, string> = {}) {
   const map = new Map(Object.entries(initial));
@@ -20,6 +21,28 @@ function urlWith(path: string, params: Record<string, string> = {}) {
 }
 
 describe("AttributionStore", () => {
+  it("falls back to the shared systemClock when no clock is injected", () => {
+    const { storage } = makeStorage();
+    const spy = vi.spyOn(systemClock, "now").mockReturnValue(4242);
+    const store = new AttributionStore({ storage });
+
+    store.captureIfAttributed(urlWith("/x", { utm_source: "reddit" }));
+
+    expect(store.getFirstTouch()?.at).toBe(4242);
+    spy.mockRestore();
+  });
+
+  it("prefers an injected clock over systemClock", () => {
+    const { storage } = makeStorage();
+    const spy = vi.spyOn(systemClock, "now").mockReturnValue(4242);
+    const store = new AttributionStore({ storage, now: () => 7 });
+
+    store.captureIfAttributed(urlWith("/x", { utm_source: "reddit" }));
+
+    expect(store.getFirstTouch()?.at).toBe(7);
+    spy.mockRestore();
+  });
+
   it("no-ops entirely when the URL carries no utm_* param", () => {
     const { storage } = makeStorage();
     const store = new AttributionStore({ storage, now: () => 100 });
