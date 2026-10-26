@@ -11,10 +11,24 @@ export function flattenText(value: unknown): string {
   if (typeof value === "string") return value;
   if (typeof value === "number" || typeof value === "boolean")
     return String(value);
-  if (Array.isArray(value))
-    return value.map(flattenText).filter(Boolean).join("; ");
-  if (isRecord(value))
-    return Object.values(value).map(flattenText).filter(Boolean).join(" — ");
+  if (Array.isArray(value)) {
+    const result: string[] = [];
+    for (const item of value) {
+      const flat = flattenText(item);
+      if (flat) result.push(flat);
+    }
+    return result.join("; ");
+  }
+  if (isRecord(value)) {
+    const result: string[] = [];
+    for (const key in value) {
+      if (Object.prototype.hasOwnProperty.call(value, key)) {
+        const flat = flattenText(value[key]);
+        if (flat) result.push(flat);
+      }
+    }
+    return result.join(" — ");
+  }
   return "";
 }
 
@@ -326,9 +340,13 @@ function normalizePressure(data: Obj): Obj {
 
 /** Only "consistent" and "needs-repair" are statuses; issues decide the rest. */
 function normalizeAudit(data: Obj): Obj {
-  const issues = Array.isArray(data.issues)
-    ? data.issues.map(flattenText).filter((issue) => issue.trim())
-    : [];
+  const issues: string[] = [];
+  if (Array.isArray(data.issues)) {
+    for (const issue of data.issues) {
+      const flat = flattenText(issue);
+      if (flat.trim()) issues.push(flat);
+    }
+  }
   const status = flattenText(data.status).trim().toLowerCase();
   const consistent =
     issues.length === 0 && /^(consistent|pass|ok)/.test(status);
