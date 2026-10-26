@@ -9,7 +9,7 @@ import { GENERATOR_CATALOGUE } from "#lib/content/generator-catalogue.js";
 vi.mock("$app/paths", () => ({
   base: "",
   asset: (p: string) => p,
-  resolve: (p: string) => p,
+  resolve: (p: string) => (p === "" ? "/" : p),
 }));
 
 describe("Generator hubs", () => {
@@ -67,5 +67,19 @@ describe("Generator index structure", () => {
     expect(link).toBeTruthy();
     expect(container.querySelector("section#places")).toBeTruthy();
     expect(nav.querySelector('a[href="#not-a-category"]')).toBeNull();
+  });
+
+  it("never produces protocol-relative links (e.g. //generators/...)", () => {
+    const { container } = render(Page);
+    const links = container.querySelectorAll<HTMLAnchorElement>("a[href]");
+
+    expect(links.length).toBeGreaterThan(0);
+    for (const link of links) {
+      const href = link.getAttribute("href") ?? "";
+      expect(href.startsWith("//")).toBe(false);
+      if (href.startsWith("/generators")) {
+        expect(href).toMatch(/^\/generators\/[a-z0-9-]+$/);
+      }
+    }
   });
 });
