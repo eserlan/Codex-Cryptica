@@ -1,5 +1,5 @@
 {
-  "updated_at": 1793013901,
+  "updated_at": 1793028272,
   "candidates": [
     {
       "id": "reddit-39855478849-a-mystery-case-you-can-actually-run-with",
@@ -30,6 +30,16 @@
       "source_id": "40298726905",
       "status": "approved",
       "created_at": 1793013901
+    },
+    {
+      "id": "reddit-40344435304-i-stopped-forcing-party-balance-and-star",
+      "title": "I stopped forcing party balance and started costing the gaps instead",
+      "body": "I had a table where everyone wanted to play spellcasters and no one wanted to cover healing. My first instinct was to ask someone to switch, but that would have traded their character for my encounter plan.\n\nI built a guide that treats balance as a coverage audit instead of a requirement, so you can run the party players actually bring.\n\nYou can read it here: https://codexcryptica.com/answers/does-an-rpg-party-need-balanced-roles\n\nIt walks through:\n\n- a quick audit for what the party can do across fighting, recovery, information, travel and social leverage\n- pricing a missing capability in extra time, coin or risk instead of blocking the scene\n- tuning encounters to lean on existing strengths rather than punishing what is absent\n- worked examples for a healer-less fantasy party, a Traveller crew without a pilot, and a Call of Cthulhu group light on interpersonal skills\n\nThe tradeoff is it asks more of your prep to price those gaps honestly, instead of giving you a neat template that runs itself. I am still testing where that extra prep stops feeling useful.\n\nWhat unbalanced line-up have you actually run, and how did you cover the missing piece at the table?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-40344435304-0.png)",
+      "url": "https://codexcryptica.com/answers/does-an-rpg-party-need-balanced-roles",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-40344435304-0.png",
+      "source_id": "40344435304",
+      "status": "approved",
+      "created_at": 1793028272
     }
   ]
 }
