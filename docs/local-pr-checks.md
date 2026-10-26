@@ -33,6 +33,10 @@ untracked files are checked in full.
 - **timer-cleanup**: a `.svelte` `setTimeout` whose stored ID is not cleared in
   an `onDestroy` handler or `$effect` cleanup.
 
+These rules match source text, not a syntax tree, so a pass is not proof:
+spreads, comments and shadowed names can hide a problem. Ambiguous shapes are
+flagged rather than guessed.
+
 When a flagged line is right as it is, add a `ui-check-ignore: <reason>`
 comment on that line or the line above.
 

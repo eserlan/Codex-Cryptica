@@ -171,6 +171,23 @@ Luna finds these in almost every generator PR. Check each guard in the diff agai
   rejection) and document the known limits in its doc comment, rather than layering another
   regex.
 
+### Regex Checks Over Source Code (Local Lint Rules)
+
+- **Issue**: `scripts/check-ui-patterns.mjs` matches source text, not a syntax tree. In PR #4405
+  Luna bypassed it three rounds running: `allowImages: false` inside a comment or nested object,
+  then overridden by a later spread (`{ allowImages: false, ...options }`), then a `clearTimeout`
+  that names an outer binding while the timer is stored in a shadowing `const` or parameter.
+- **Pattern**: A passing check means "no known shape matched", never "safe". When the diff
+  touches one of its categories (contrast, `renderMarkdown`, `order-*`, `setTimeout`), still read
+  the hunk for that category. For a new rule, or a fix to an existing one, the test needs a
+  bypass table as well as hits: comment, nested object, spread or duplicate key after the safe
+  value, shadowed name (block `const` and parameter), unrelated call with the same name, and two
+  instances where only one is safe.
+- **Stop rule**: When a rule needs scope or data-flow, stop adding regex: flag the ambiguous shape
+  (conservative false positive with `ui-check-ignore`), parse with the Svelte or TypeScript
+  compiler, or move the guarantee into the code (e.g. `renderMarkdown` defaulting to no remote
+  images) so the check is no longer needed.
+
 ### Staged and Multi-Call AI Pipelines
 
 - **Abort end to end**: Every staged pipeline accepts an `AbortSignal`, checks it between calls,

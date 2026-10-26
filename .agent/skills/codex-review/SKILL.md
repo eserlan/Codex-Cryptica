@@ -32,7 +32,9 @@ Run these sweeps on every review; they are where most second and third review ro
    without `allowImages: false`, responsive `order-*`, `setTimeout` without cleanup), and the
    discovery audit when discovery content changes. `test:changed` covers the sitemap against the
    discovery registry. See [docs/local-pr-checks.md](../../../docs/local-pr-checks.md). Do not
-   re-derive by hand what these already compute.
+   re-derive by hand what these already compute, but the UI pattern rules are regex heuristics:
+   a pass is not proof. See
+   [Regex Checks Over Source Code](references/patterns.md#regex-checks-over-source-code-local-lint-rules).
 1. **Revert check (tests)**: For each changed hunk, name the test that fails if the hunk is
    reverted. No name means a missing or non-discriminating test. See
    [The Revert Check](references/patterns.md#the-revert-check-would-any-test-fail) for the recurring
