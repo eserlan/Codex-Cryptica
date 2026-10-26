@@ -5,13 +5,13 @@ import {
   delveAreaEnhancementService,
   isPlaceholderDelveAreaName,
   type AreaPopulationProgress,
-} from "$lib/services/delve-area-enhancement";
+} from "#lib/services/delve-area-enhancement.js";
 
 import {
   flowEdgeToCanvasEdge,
   flowNodesToCanvasNodes,
 } from "./canvas-workspace-helpers";
-import { systemClock, type Clock } from "$lib/utils/runtime-deps";
+import { systemClock, type Clock } from "#lib/utils/runtime-deps.js";
 
 type AreaPopulationResult = Awaited<
   ReturnType<typeof delveAreaEnhancementService.populateAllAreas>

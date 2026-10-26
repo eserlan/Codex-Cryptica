@@ -18,7 +18,7 @@ import {
   type StatBlockReaderGateway,
 } from "@codex/stat-sheet-engine";
 import type { Entity, StatSheet, StatSheetField } from "schema";
-import { applyDerivedModifiers } from "$lib/utils/stat-sheet-field-actions";
+import { applyDerivedModifiers } from "#lib/utils/stat-sheet-field-actions.js";
 
 type ImportStep =
   | "paste"

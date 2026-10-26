@@ -1,4 +1,4 @@
-import { base } from "$app/paths";
+import { asset } from "$app/paths";
 import { vaultRegistry } from "./vault-registry.svelte";
 import { mapRegistry } from "./map-registry.svelte";
 import { canvasRegistry } from "./canvas-registry.svelte";
@@ -43,6 +43,7 @@ import {
   AssetManager,
   FileManager,
 } from "@codex/vault-engine";
+
 import {
   fileIOAdapter,
   assetIOAdapter,
@@ -56,14 +57,14 @@ import { migrateStructure } from "./vault/migration";
 import { VaultMessenger } from "./vault/messenger";
 import { VaultStorageManager } from "./vault/storage";
 import { p2pGuestService } from "../cloud-bridge/p2p/guest-service";
-import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
 import { guestVault } from "./guest-vault.svelte";
-import { onboardingFunnel } from "$lib/app/onboarding/onboarding-funnel";
+import { onboardingFunnel } from "#lib/app/onboarding/onboarding-funnel.js";
 import { statSheetTemplates } from "./stat-sheet-templates.svelte";
 import { presentationTemplates } from "./presentation-templates.svelte";
 import { entityTemplateStore } from "./entity-templates/entity-template-store.svelte";
 import { DeadExternalImagePruner } from "./vault/dead-external-image-pruner";
-import { browserPerformanceRecorder } from "$lib/services/performance/browser-performance-capture";
+import { browserPerformanceRecorder } from "#lib/services/performance/browser-performance-capture.js";
 
 export class VaultStore {
   // Reactive State
@@ -582,7 +583,7 @@ export class VaultStore {
           : "Storage access denied. Running in Guest Mode.";
 
       try {
-        const response = await fetch(`${base}/vault-samples/fantasy.json`);
+        const response = await fetch(asset("vault-samples/fantasy.json"));
         if (!response.ok) {
           console.warn("Failed to load fallback demo data");
           return;
@@ -697,8 +698,7 @@ export class VaultStore {
             id,
             linkedImage,
           ),
-        )
-        // A failed save or copy must not stall the images queued after it.
+        ) // A failed save or copy must not stall the images queued after it.
         .catch((error) =>
           console.warn("[Vault] Could not copy linked image", error),
         );
@@ -966,6 +966,7 @@ export class VaultStore {
 }
 
 const VAULT_KEY = "__codex_vault_instance__";
+
 export const vault: VaultStore =
   (globalThis as any)[VAULT_KEY] ??
   ((globalThis as any)[VAULT_KEY] = new VaultStore());

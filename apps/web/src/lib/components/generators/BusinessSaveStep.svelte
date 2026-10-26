@@ -3,7 +3,7 @@
     BusinessRelationshipLabel,
     BusinessSavePlan,
   } from "generator-engine";
-  import type { BusinessSaveChoices } from "$lib/services/generators/business-vault-save";
+  import type { BusinessSaveChoices } from "#lib/services/generators/business-vault-save.js";
 
   let {
     plan,

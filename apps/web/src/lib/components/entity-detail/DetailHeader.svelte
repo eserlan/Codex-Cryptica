@@ -1,43 +1,42 @@
 <script lang="ts">
   import type { Entity } from "schema";
-  import { vault } from "$lib/stores/vault.svelte";
-  import { guestChatStore } from "$lib/stores/guest-chat.svelte";
+  import { vault } from "#lib/stores/vault.svelte.js";
+  import { guestChatStore } from "#lib/stores/guest-chat.svelte.js";
   import { isEntityVisible, resolveStatureFromLabels } from "schema";
   import { fade } from "svelte/transition";
-  import LabelBadge from "$lib/components/labels/LabelBadge.svelte";
-  import LabelInput from "$lib/components/labels/LabelInput.svelte";
-  import AliasInput from "$lib/components/labels/AliasInput.svelte";
-  import SidepanelRevisionButton from "$lib/components/entity/SidepanelRevisionButton.svelte";
-  import { shelf } from "$lib/features/shelf";
-  import { themeStore } from "$lib/stores/theme.svelte";
+  import LabelBadge from "#lib/components/labels/LabelBadge.svelte";
+  import LabelInput from "#lib/components/labels/LabelInput.svelte";
+  import AliasInput from "#lib/components/labels/AliasInput.svelte";
+  import SidepanelRevisionButton from "#lib/components/entity/SidepanelRevisionButton.svelte";
+  import { shelf } from "#lib/features/shelf/index.js";
+  import { themeStore } from "#lib/stores/theme.svelte.js";
   import { page } from "$app/state";
-  import { base } from "$app/paths";
   import {
     dispatchSearchEntityFocus,
     DEFAULT_SEARCH_ENTITY_ZOOM,
-  } from "$lib/components/search/search-focus";
-  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
-  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  } from "#lib/components/search/search-focus.js";
+  import { layoutUIStore } from "#lib/stores/ui/layout-ui.svelte.js";
+  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
   import { soundBiteService } from "@codex/audio-engine";
-  import { guestVault } from "$lib/stores/guest-vault.svelte";
-  import { copyGuestEntityLink } from "$lib/services/publishing/guest-link";
-  import { notificationStore } from "$lib/stores/ui/notification.svelte";
-  import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
+  import { guestVault } from "#lib/stores/guest-vault.svelte.js";
+  import { copyGuestEntityLink } from "#lib/services/publishing/guest-link.js";
+  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
+  import { canvasRegistry } from "#lib/stores/canvas-registry.svelte.js";
   import {
     dungeonDelveService,
     isDelveLocationEntity,
-  } from "$lib/services/dungeon-delve-service";
+  } from "#lib/services/dungeon-delve-service.js";
   import { goto } from "$app/navigation";
-  import { openCanvasFromZen } from "$lib/stores/ui/navigation";
-  import StructuralSuggestionBanner from "$lib/components/guided/StructuralSuggestionBanner.svelte";
-  import { getDelveCanvasLabel } from "$lib/utils/delve-terminology";
-  import SaveStatusIndicator from "$lib/components/ui/SaveStatusIndicator.svelte";
+  import { openCanvasFromZen } from "#lib/stores/ui/navigation.js";
+  import StructuralSuggestionBanner from "#lib/components/guided/StructuralSuggestionBanner.svelte";
+  import { getDelveCanvasLabel } from "#lib/utils/delve-terminology.js";
+  import SaveStatusIndicator from "#lib/components/ui/SaveStatusIndicator.svelte";
   import {
     isMonsterLabsHandoffEligibleType,
     getMonsterLabsActionLabel,
-  } from "$lib/services/seo/monsterlabs-handoff";
-  import { createMonsterLabsHandoffFlow } from "$lib/services/seo/monsterlabs-handoff-flow.svelte";
-  import MonsterLabsSendingModal from "$lib/components/modals/MonsterLabsSendingModal.svelte";
+  } from "#lib/services/seo/monsterlabs-handoff.js";
+  import { createMonsterLabsHandoffFlow } from "#lib/services/seo/monsterlabs-handoff-flow.svelte.js";
+  import MonsterLabsSendingModal from "#lib/components/modals/MonsterLabsSendingModal.svelte";
 
   let {
     entity,
@@ -45,13 +44,13 @@
     editTitle = $bindable(),
     editAliases = $bindable([]),
     onClose,
-  } = $props<{
+  }: {
     entity: Entity;
     isEditing: boolean;
     editTitle: string;
     editAliases: string[];
     onClose: () => void;
-  }>();
+  } = $props();
 
   let linkCopied = $state(false);
 
@@ -66,11 +65,9 @@
     }
   };
 
-  const isGraphView = $derived.by(() => {
-    const path = page.url.pathname;
-    const normalizedBase = base.endsWith("/") ? base : `${base}/`;
-    return path === base || path === normalizedBase || path === "/";
-  });
+  const isGraphView = $derived(
+    page.url.pathname === "/" || page.url.pathname === "",
+  );
 
   let isObscured = $derived.by(() => {
     if (!entity || !vault.isGuest) return false;
@@ -200,10 +197,12 @@
     >
       Protocol Redacted
     </h3>
+
     <p class="text-xs text-theme-muted leading-relaxed max-w-xs">
       This {themeStore.jargon.entity.toLowerCase()} is currently obscured by Fog of
       War. Switch to Admin Mode or remove the
-      <code class="text-amber-500">hidden</code> tag to decrypt.
+      <code class="text-amber-500">hidden</code>
+      tag to decrypt.
     </p>
     <button
       type="button"

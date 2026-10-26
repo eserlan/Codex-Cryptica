@@ -1,4 +1,4 @@
-import { sessionHubStore } from "$lib/stores/session-hub.svelte";
+import { sessionHubStore } from "#lib/stores/session-hub.svelte.js";
 import { getContextSelection } from "generator-engine";
 
 export const SESSION_DRAFTS_KEY = "SESSION_DRAFTS";

@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { base } from "$app/paths";
-  const cleanBase = base === "/" ? "" : base;
-  import { importsConfig } from "$lib/config/seo-pages";
-  import { safeJsonLd } from "$lib/utils/json-ld";
+  import { resolve } from "$app/paths";
+  const cleanBase = resolve("") === "/" ? "" : resolve("");
+  import { importsConfig } from "#lib/config/seo-pages.js";
+  import { safeJsonLd } from "#lib/utils/json-ld.js";
 
   const importers = Object.values(importsConfig);
 
@@ -77,12 +77,13 @@
           >
             <span
               class="block font-header text-lg font-bold mb-2 group-hover:text-theme-primary transition-colors"
+              >{importer.h1}</span
             >
-              {importer.h1}
-            </span>
-            <span class="block text-base text-theme-muted leading-relaxed mb-4">
-              {importer.subheading}
-            </span>
+
+            <span class="block text-base text-theme-muted leading-relaxed mb-4"
+              >{importer.subheading}</span
+            >
+
             <span
               class="inline-flex items-center gap-1.5 text-xs font-bold text-theme-primary"
             >

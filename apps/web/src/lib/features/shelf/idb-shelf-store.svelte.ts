@@ -4,7 +4,7 @@ import type {
   ShelfEntrySummary,
   ShelfStore,
 } from "@codex/entity-shelf";
-import { getDB } from "$lib/utils/idb";
+import { getDB } from "#lib/utils/idb.js";
 
 /**
  * The `ShelfStore` port over IndexedDB.

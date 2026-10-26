@@ -2,10 +2,10 @@
 import { render, fireEvent } from "@testing-library/svelte";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import ZenHeader from "./ZenHeader.svelte";
-import { vault } from "$lib/stores/vault.svelte";
-import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+import { vault } from "#lib/stores/vault.svelte.js";
+import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
 
-vi.mock("$lib/stores/vault.svelte", () => ({
+vi.mock("#lib/stores/vault.svelte.js", () => ({
   vault: {
     isGuest: false,
     selectedEntityId: "entity-1",
@@ -16,7 +16,7 @@ vi.mock("$lib/stores/vault.svelte", () => ({
   },
 }));
 
-vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
+vi.mock("#lib/stores/ui/modal-ui.svelte.js", () => ({
   modalUIStore: {
     openZenMode: vi.fn(),
     openParentPicker: vi.fn(),
@@ -25,35 +25,39 @@ vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
   },
 }));
 
-vi.mock("$lib/stores/ui/layout-ui.svelte", () => ({
+vi.mock("#lib/stores/ui/layout-ui.svelte.js", () => ({
   layoutUIStore: { findInGraph: vi.fn() },
 }));
-vi.mock("$lib/stores/guest-chat.svelte", () => ({
+vi.mock("#lib/stores/guest-chat.svelte.js", () => ({
   guestChatStore: { openChat: vi.fn() },
 }));
-vi.mock("$lib/stores/guest-vault.svelte", () => ({
+vi.mock("#lib/stores/guest-vault.svelte.js", () => ({
   guestVault: { publishId: null },
 }));
-vi.mock("$lib/stores/canvas-registry.svelte", () => ({
+vi.mock("#lib/stores/canvas-registry.svelte.js", () => ({
   canvasRegistry: {
     findCanvasForEntity: () => undefined,
     importCanvas: vi.fn(),
   },
 }));
-vi.mock("$lib/stores/theme.svelte", () => ({
+vi.mock("#lib/stores/theme.svelte.js", () => ({
   themeStore: { activeTheme: { id: "fantasy" }, jargon: { entity: "Entity" } },
 }));
-vi.mock("$lib/features/shelf", () => ({ shelf: { shelve: vi.fn() } }));
+vi.mock("#lib/features/shelf/index.js", () => ({ shelf: { shelve: vi.fn() } }));
 vi.mock("@codex/audio-engine", () => ({
   soundBiteService: { loadFromEntity: vi.fn() },
 }));
 vi.mock("$app/state", () => ({ page: { url: { pathname: "/" } } }));
-vi.mock("$app/paths", () => ({ base: "" }));
+vi.mock("$app/paths", () => ({
+  base: "",
+  asset: (p: string) => p,
+  resolve: (p: string) => p,
+}));
 vi.mock("$app/navigation", () => ({ goto: vi.fn() }));
-vi.mock("$lib/components/labels/AliasInput.svelte", () => ({
+vi.mock("#lib/components/labels/AliasInput.svelte", () => ({
   default: vi.fn(),
 }));
-vi.mock("$lib/components/labels/CategoryRadioGroup.svelte", () => ({
+vi.mock("#lib/components/labels/CategoryRadioGroup.svelte", () => ({
   default: vi.fn(),
 }));
 

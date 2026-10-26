@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { PUBLIC_WORLDS_NOTICE } from "$lib/config/public-worlds-notice";
+  import { PUBLIC_WORLDS_NOTICE } from "#lib/config/public-worlds-notice.js";
 
   interface Props {
     onReport?: () => void;

@@ -5,13 +5,13 @@ import { describe, expect, it, vi } from "vitest";
 import type { StatSheetField } from "schema";
 import type { PresentationRenderContext } from "../types";
 
-vi.mock("$lib/utils/stat-sheet-field-actions", () => ({
+vi.mock("#lib/utils/stat-sheet-field-actions.js", () => ({
   rollStatSheetDiceField: vi.fn(),
 }));
-vi.mock("$lib/stores/vault.svelte", () => ({
+vi.mock("#lib/stores/vault.svelte.js", () => ({
   vault: { entities: {}, allEntities: [] },
 }));
-vi.mock("$lib/services/merchant-trade-instance", () => ({
+vi.mock("#lib/services/merchant-trade-instance.js", () => ({
   merchantTradeService: { execute: vi.fn() },
 }));
 

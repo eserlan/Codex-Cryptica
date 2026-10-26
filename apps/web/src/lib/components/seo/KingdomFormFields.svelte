@@ -1,6 +1,9 @@
 <script lang="ts">
-  import { kingdomConfig, pickFrom } from "$lib/services/seo/generator-config";
-  import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
+  import {
+    kingdomConfig,
+    pickFrom,
+  } from "#lib/services/seo/generator-config.js";
+  import SelectWithCustomOption from "#lib/components/forms/SelectWithCustomOption.svelte";
 
   let {
     polityType = $bindable(kingdomConfig.polityTypes[0]),

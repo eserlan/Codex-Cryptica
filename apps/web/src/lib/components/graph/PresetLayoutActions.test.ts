@@ -4,7 +4,7 @@ import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import PresetLayoutActions from "./PresetLayoutActions.svelte";
 import PresetLayoutToggle from "./PresetLayoutToggle.svelte";
-import type { ViewPreset } from "$lib/stores/view-presets";
+import type { ViewPreset } from "#lib/stores/view-presets.js";
 
 const preset = (layout = false): ViewPreset => ({
   id: "p1",

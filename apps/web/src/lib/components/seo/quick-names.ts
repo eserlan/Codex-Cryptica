@@ -1,5 +1,5 @@
-import { nameGeneratorConfig } from "$lib/services/seo/generator-config";
-import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
+import { nameGeneratorConfig } from "#lib/services/seo/generator-config.js";
+import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
 
 /** How many names a Quick Names batch shows. */
 export const QUICK_NAMES_COUNT = 10;

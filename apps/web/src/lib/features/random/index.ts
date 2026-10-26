@@ -1,7 +1,7 @@
 import { DeckService } from "random-source-engine";
-import { vault } from "$lib/stores/vault.svelte";
-import { RandomSourceStore } from "$lib/stores/random-source-store.svelte";
-import { VaultDeckStateStore } from "$lib/stores/deck-state-store";
+import { vault } from "#lib/stores/vault.svelte.js";
+import { RandomSourceStore } from "#lib/stores/random-source-store.svelte.js";
+import { VaultDeckStateStore } from "#lib/stores/deck-state-store.js";
 import { VaultRandomSourceFiles } from "./vault-random-source-files";
 
 export { VaultRandomSourceFiles } from "./vault-random-source-files";

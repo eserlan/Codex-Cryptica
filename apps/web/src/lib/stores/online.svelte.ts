@@ -1,4 +1,4 @@
-import { browser } from "$app/environment";
+import { browser } from "$app/env";
 
 /**
  * Single shared reactive source for network online/offline status (#1494).

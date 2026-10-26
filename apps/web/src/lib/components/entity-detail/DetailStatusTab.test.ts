@@ -2,12 +2,12 @@
 import { render, screen, fireEvent } from "@testing-library/svelte";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import DetailStatusTab from "./DetailStatusTab.svelte";
-import { vault } from "$lib/stores/vault.svelte";
+import { vault } from "#lib/stores/vault.svelte.js";
 
 // Mock Svelte client runtime
 
 // Mock stores
-vi.mock("$lib/stores/vault.svelte", () => ({
+vi.mock("#lib/stores/vault.svelte.js", () => ({
   vault: {
     isGuest: false,
     defaultVisibility: "public",
@@ -44,7 +44,7 @@ vi.mock("$lib/stores/vault.svelte", () => ({
   },
 }));
 
-vi.mock("$lib/stores/theme.svelte", () => ({
+vi.mock("#lib/stores/theme.svelte.js", () => ({
   themeStore: {
     activeTheme: { id: "fantasy" },
     jargon: {
@@ -53,13 +53,13 @@ vi.mock("$lib/stores/theme.svelte", () => ({
   },
 }));
 
-vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
+vi.mock("#lib/stores/ui/modal-ui.svelte.js", () => ({
   modalUIStore: {
     openGeneratorWorkflowForEntity: vi.fn(),
   },
 }));
 
-vi.mock("$lib/stores/oracle.svelte", () => ({
+vi.mock("#lib/stores/oracle.svelte.js", () => ({
   oracle: {
     effectiveApiKey: "test-key",
     modelName: "test-model",
@@ -77,7 +77,7 @@ vi.mock("./generate-personality", () => ({
   generatePersonality: vi.fn(),
 }));
 
-vi.mock("$lib/cloud-bridge/oracle-bridge", () => ({
+vi.mock("#lib/cloud-bridge/oracle-bridge.js", () => ({
   oracleBridge: {
     isReady: false,
   },
@@ -88,20 +88,20 @@ vi.mock("comlink", () => ({
 }));
 
 // Mock sub-components to simplify testing
-vi.mock("$lib/components/MarkdownEditor.svelte", () => ({
+vi.mock("#lib/components/MarkdownEditor.svelte", () => ({
   default: vi.fn(),
 }));
-vi.mock("$lib/components/timeline/TemporalEditor.svelte", () => ({
+vi.mock("#lib/components/timeline/TemporalEditor.svelte", () => ({
   default: vi.fn(),
 }));
-vi.mock("$lib/components/connections/ConnectionEditor.svelte", () => ({
+vi.mock("#lib/components/connections/ConnectionEditor.svelte", () => ({
   default: vi.fn(),
 }));
 vi.mock("./proposals/DetailProposals.svelte", () => ({
   default: vi.fn(),
 }));
 
-vi.mock("$lib/components/ui/Autocomplete.svelte", async () => {
+vi.mock("#lib/components/ui/Autocomplete.svelte", async () => {
   const mod = await import("./MockAutocomplete.svelte");
   return {
     default: mod.default,
@@ -360,7 +360,7 @@ describe("DetailStatusTab", () => {
   });
 
   it("renders 'Generate Related' button and triggers modal open when clicked", async () => {
-    const { modalUIStore } = await import("$lib/stores/ui/modal-ui.svelte");
+    const { modalUIStore } = await import("#lib/stores/ui/modal-ui.svelte.js");
     render(DetailStatusTab, {
       entity: mockEntity,
       isEditing: false,
@@ -380,7 +380,7 @@ describe("DetailStatusTab", () => {
   });
 
   it("hides the 'Generate Related' button for guest sessions", async () => {
-    const { modalUIStore } = await import("$lib/stores/ui/modal-ui.svelte");
+    const { modalUIStore } = await import("#lib/stores/ui/modal-ui.svelte.js");
     (vault as any).isGuest = true;
 
     render(DetailStatusTab, {

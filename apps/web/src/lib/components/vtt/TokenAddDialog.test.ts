@@ -30,11 +30,11 @@ const mapSessionMock = vi.hoisted(() => ({
   addToken: vi.fn(),
 }));
 
-vi.mock("$lib/stores/vault.svelte", () => ({
+vi.mock("#lib/stores/vault.svelte.js", () => ({
   vault: vaultMock,
 }));
 
-vi.mock("$lib/stores/map-session.svelte", () => ({
+vi.mock("#lib/stores/map-session.svelte.js", () => ({
   mapSession: mapSessionMock,
 }));
 

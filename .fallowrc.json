@@ -62,6 +62,14 @@
     {
       "file": "apps/web/src/lib/components/zen/ZenView.svelte",
       "exports": ["requestClose"]
+    },
+    {
+      "file": "apps/web/src/lib/components/seo/SEOGeneratorLayout.svelte",
+      "exports": ["triggerExplicitAutoGenerate"]
+    },
+    {
+      "file": "apps/web/src/lib/components/seo/test-fixtures/GeneratorPageLayoutHarness.svelte",
+      "exports": ["triggerExplicitAutoGenerate"]
     }
   ],
   "audit": {

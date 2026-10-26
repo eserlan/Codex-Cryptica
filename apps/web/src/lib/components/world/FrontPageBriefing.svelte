@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onDestroy } from "svelte";
-  import ArticleRenderer from "$lib/components/blog/ArticleRenderer.svelte";
+  import ArticleRenderer from "#lib/components/blog/ArticleRenderer.svelte";
 
   let {
     draftDescription = $bindable(),

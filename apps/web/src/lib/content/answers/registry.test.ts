@@ -22,8 +22,8 @@ import { PIRATE_TOPIC_CONFIG } from "../topics/pirates";
 import { SOLO_RPG_TOPIC_CONFIG } from "../topics/solo-rpg";
 import { DND_TOPIC_CONFIG } from "../topics/dnd";
 import { DND_BEGINNERS_TOPIC_CONFIG } from "../topics/dnd-beginners";
-import { solutions } from "$lib/config/seo-pages";
-import { featuresConfig } from "$lib/config/seo-features";
+import { solutions } from "#lib/config/seo-pages.js";
+import { featuresConfig } from "#lib/config/seo-features.js";
 import { match as isGeneratorSlug } from "../../../params/generator_slug";
 import {
   buildAnswerFaqJsonLd,

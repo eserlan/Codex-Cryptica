@@ -1,25 +1,26 @@
 <script lang="ts">
-  import { browser } from "$app/environment";
-  import { base } from "$app/paths";
-  import SeoHead from "$lib/components/seo/SeoHead.svelte";
-  import PublicLabelChip from "$lib/components/labels/PublicLabelChip.svelte";
-  import { buildAbsoluteUrl } from "$lib/seo/site";
-  import type { TopicJobHubConfig } from "$lib/content/topics/job-hub-types";
+  import { browser } from "$app/env";
+  import { resolve } from "$app/paths";
+  import SeoHead from "#lib/components/seo/SeoHead.svelte";
+  import PublicLabelChip from "#lib/components/labels/PublicLabelChip.svelte";
+  import { buildAbsoluteUrl } from "#lib/seo/site.js";
+  import type { TopicJobHubConfig } from "#lib/content/topics/job-hub-types.js";
   import {
     buildJobHubJsonLd,
     buildJobHubBreadcrumbJsonLd,
-  } from "$lib/content/topics/job-hub-json-ld";
+  } from "#lib/content/topics/job-hub-json-ld.js";
+
   import {
     trackDiscoveryPageViewed,
     classifyDiscoveryTarget,
     createDiscoveryViewGuard,
-  } from "$lib/services/analytics/discovery-tracking";
-  import { trackDiscoveryClick } from "$lib/actions/trackDiscoveryClick";
+  } from "#lib/services/analytics/discovery-tracking.js";
+  import { trackDiscoveryClick } from "#lib/actions/trackDiscoveryClick.js";
 
   let { config }: { config: TopicJobHubConfig } = $props();
 
   // A bare "/" base would make every link protocol-relative ("//answers/...").
-  const cleanBase = base === "/" ? "" : base;
+  const cleanBase = resolve("") === "/" ? "" : resolve("");
 
   const canonical = $derived(buildAbsoluteUrl(config.canonicalPath));
 

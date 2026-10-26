@@ -7,9 +7,9 @@
     type PointCrawlRoute,
     type PointCrawlRegenTarget,
   } from "generator-engine";
-  import { svgToPngBlob } from "$lib/utils/svg-export";
-  import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
-  import { focusTrap } from "$lib/actions/focusTrap";
+  import { svgToPngBlob } from "#lib/utils/svg-export.js";
+  import { discoveryPolicyStore } from "#lib/stores/ui/discovery-policy.svelte.js";
+  import { focusTrap } from "#lib/actions/focusTrap.js";
   import PointCrawlGraphToolbar from "./PointCrawlGraphToolbar.svelte";
   import PointCrawlInspector from "./PointCrawlInspector.svelte";
 

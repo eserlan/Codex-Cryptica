@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { navigationHistoryStore } from "$lib/stores/navigation/NavigationHistoryStore.svelte";
-  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-  import { vault } from "$lib/stores/vault.svelte";
-  import { browser } from "$app/environment";
+  import { navigationHistoryStore } from "#lib/stores/navigation/NavigationHistoryStore.svelte.js";
+  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+  import { vault } from "#lib/stores/vault.svelte.js";
+  import { browser } from "$app/env";
   import { beforeNavigate } from "$app/navigation";
-  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
+  import { layoutUIStore } from "#lib/stores/ui/layout-ui.svelte.js";
 
   $effect(() => {
     const id = layoutUIStore.isEntityExplorerWorkspace
@@ -107,6 +107,8 @@
   }
 
   beforeNavigate((navigation) => {
+    if (navigation.shallow && navigation.type === "goto") return;
+
     trackOriginPath(navigation.from?.url);
 
     if (navigation.type === "popstate" && navigation.delta !== undefined) {

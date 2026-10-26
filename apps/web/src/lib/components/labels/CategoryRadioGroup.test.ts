@@ -3,7 +3,7 @@ import { render, fireEvent } from "@testing-library/svelte";
 import { describe, it, expect, vi } from "vitest";
 import CategoryRadioGroup from "./CategoryRadioGroup.svelte";
 
-vi.mock("$lib/stores/categories.svelte", () => ({
+vi.mock("#lib/stores/categories.svelte.js", () => ({
   categories: {
     list: [
       {

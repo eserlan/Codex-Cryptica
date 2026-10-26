@@ -2,9 +2,9 @@
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import DetailChatsTab from "./DetailChatsTab.svelte";
-import { guestChatStore } from "$lib/stores/guest-chat.svelte";
+import { guestChatStore } from "#lib/stores/guest-chat.svelte.js";
 
-vi.mock("$lib/stores/vault.svelte", () => ({
+vi.mock("#lib/stores/vault.svelte.js", () => ({
   vault: {
     isGuest: false,
     loadTranscriptsForCharacter: vi.fn().mockResolvedValue([]),
@@ -13,7 +13,7 @@ vi.mock("$lib/stores/vault.svelte", () => ({
   },
 }));
 
-vi.mock("$lib/stores/guest-chat.svelte", () => ({
+vi.mock("#lib/stores/guest-chat.svelte.js", () => ({
   guestChatStore: {
     transcripts: {},
     isGenerating: false,
@@ -28,11 +28,11 @@ vi.mock("$lib/stores/guest-chat.svelte", () => ({
   },
 }));
 
-vi.mock("$lib/stores/proposer.svelte", () => ({
+vi.mock("#lib/stores/proposer.svelte.js", () => ({
   proposerStore: { promoteToRumor: vi.fn() },
 }));
 
-vi.mock("$lib/services/character-chat-export", () => ({
+vi.mock("#lib/services/character-chat-export.js", () => ({
   characterChatExportService: {
     copyConversation: vi.fn().mockResolvedValue(true),
     sendConversationToJournal: vi.fn().mockResolvedValue("new-note-id"),
@@ -92,7 +92,7 @@ describe("DetailChatsTab", () => {
     };
 
     beforeEach(async () => {
-      const { vault } = await import("$lib/stores/vault.svelte");
+      const { vault } = await import("#lib/stores/vault.svelte.js");
       vi.mocked(vault.loadTranscriptsForCharacter).mockResolvedValue([
         transcriptWithMessages,
       ] as any);
@@ -153,7 +153,7 @@ describe("DetailChatsTab", () => {
       );
 
       const { characterChatExportService } =
-        await import("$lib/services/character-chat-export");
+        await import("#lib/services/character-chat-export.js");
       expect(characterChatExportService.copyConversation).toHaveBeenCalledWith(
         expect.objectContaining({ id: "t-1" }),
         expect.objectContaining({ speakerName: "Alice" }),
@@ -171,7 +171,7 @@ describe("DetailChatsTab", () => {
       );
 
       const { characterChatExportService } =
-        await import("$lib/services/character-chat-export");
+        await import("#lib/services/character-chat-export.js");
       expect(
         characterChatExportService.sendConversationToJournal,
       ).toHaveBeenCalledWith(
@@ -191,7 +191,7 @@ describe("DetailChatsTab", () => {
       messages: [{ id: "m-1", role: "user", content: "Hello there" }],
     };
 
-    const { vault } = await import("$lib/stores/vault.svelte");
+    const { vault } = await import("#lib/stores/vault.svelte.js");
     vi.mocked(vault.loadTranscriptsForCharacter).mockResolvedValue([
       transcriptWithMessages,
     ] as any);
@@ -224,7 +224,7 @@ describe("DetailChatsTab", () => {
       messages: [{ id: "m-1", role: "user", content: "Hello there" }],
     };
 
-    const { vault } = await import("$lib/stores/vault.svelte");
+    const { vault } = await import("#lib/stores/vault.svelte.js");
     vi.mocked(vault.loadTranscriptsForCharacter).mockResolvedValue([
       transcriptWithMessages,
     ] as any);
@@ -256,13 +256,13 @@ describe("DetailChatsTab", () => {
       messages: [{ id: "m-1", role: "user", content: "Hello there" }],
     };
 
-    const { vault } = await import("$lib/stores/vault.svelte");
+    const { vault } = await import("#lib/stores/vault.svelte.js");
     vi.mocked(vault.loadTranscriptsForCharacter).mockResolvedValue([
       transcriptWithMessages,
     ] as any);
 
     // Mock systemClock globally
-    const { systemClock } = await import("$lib/utils/runtime-deps");
+    const { systemClock } = await import("#lib/utils/runtime-deps.js");
     vi.spyOn(systemClock, "now").mockReturnValue(7777);
 
     render(DetailChatsTab, { entity: character }); // No clock prop
@@ -296,7 +296,7 @@ describe("DetailChatsTab", () => {
       messages: [{ id: "m-1", role: "user", content: "Hello there" }],
     };
 
-    const { vault } = await import("$lib/stores/vault.svelte");
+    const { vault } = await import("#lib/stores/vault.svelte.js");
     vi.mocked(vault.loadTranscriptsForCharacter).mockResolvedValue([
       transcriptWithMessages,
     ] as any);
@@ -323,7 +323,7 @@ describe("DetailChatsTab", () => {
 
   describe("guest mode", () => {
     beforeEach(async () => {
-      const { vault } = await import("$lib/stores/vault.svelte");
+      const { vault } = await import("#lib/stores/vault.svelte.js");
       (vault as any).isGuest = true;
       guestChatStore.transcripts = {
         "char-1": {
@@ -347,7 +347,7 @@ describe("DetailChatsTab", () => {
       await fireEvent.click(copyBtn);
 
       const { characterChatExportService } =
-        await import("$lib/services/character-chat-export");
+        await import("#lib/services/character-chat-export.js");
       expect(characterChatExportService.copyConversation).toHaveBeenCalledWith(
         expect.objectContaining({ id: "guest-session-1" }),
         expect.objectContaining({ speakerName: "Adventurer" }),

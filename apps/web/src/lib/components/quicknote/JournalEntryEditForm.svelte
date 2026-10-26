@@ -1,5 +1,5 @@
 <script lang="ts">
-  import MarkdownEditor from "$lib/components/MarkdownEditor.svelte";
+  import MarkdownEditor from "#lib/components/MarkdownEditor.svelte";
 
   /**
    * The inline edit form for a typed journal entry (#3476). Edits with the

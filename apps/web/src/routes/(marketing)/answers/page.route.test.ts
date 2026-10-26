@@ -6,9 +6,13 @@ import Page from "./+page.svelte";
 import {
   AnswerConfigSchema,
   type AnswerConfig,
-} from "$lib/content/answers/schema";
+} from "#lib/content/answers/schema.js";
 
-vi.mock("$app/paths", () => ({ base: "" }));
+vi.mock("$app/paths", () => ({
+  base: "",
+  asset: (p: string) => p,
+  resolve: (p: string) => p,
+}));
 
 const mockAnswers: AnswerConfig[] = [
   AnswerConfigSchema.parse({

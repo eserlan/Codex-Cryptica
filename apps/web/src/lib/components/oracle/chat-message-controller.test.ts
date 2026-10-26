@@ -9,22 +9,22 @@ vi.mock("dompurify", () => ({
 vi.mock("@codex/events", () => ({
   appEventBus: { subscribe: vi.fn() },
 }));
-vi.mock("$lib/services/ClipboardService", () => ({
+vi.mock("#lib/services/ClipboardService.js", () => ({
   clipboardService: { copyHtmlAndText: vi.fn() },
 }));
-vi.mock("$lib/services/parser", () => ({
+vi.mock("#lib/services/parser.js", () => ({
   parserService: { parse: vi.fn() },
 }));
-vi.mock("$lib/services/RevisionService.svelte", () => ({
+vi.mock("#lib/services/RevisionService.svelte.js", () => ({
   revisionService: { pendingDraft: null },
 }));
-vi.mock("$lib/stores/graph.svelte", () => ({
+vi.mock("#lib/stores/graph.svelte.js", () => ({
   graph: {},
 }));
-vi.mock("$lib/stores/oracle.svelte", () => ({
+vi.mock("#lib/stores/oracle.svelte.js", () => ({
   oracle: { updateMessageEntity: vi.fn() },
 }));
-vi.mock("$lib/stores/vault.svelte", () => ({
+vi.mock("#lib/stores/vault.svelte.js", () => ({
   vault: { isGuest: false, entities: {} },
 }));
 vi.mock("./chat-message.actions", () => ({

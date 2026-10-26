@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
 
   const error = $derived(notificationStore.globalError);
   const isEnabled = $derived(!(window as any).DISABLE_ERROR_OVERLAY);

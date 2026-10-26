@@ -1,16 +1,16 @@
-import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
+import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
 import type { SessionEntity } from "generator-engine";
-import { sessionHubStore } from "$lib/stores/session-hub.svelte";
-import { trackPublicGeneratorAction } from "$lib/services/analytics/zaraz-analytics";
+import { sessionHubStore } from "#lib/stores/session-hub.svelte.js";
+import { trackPublicGeneratorAction } from "#lib/services/analytics/zaraz-analytics.js";
 import {
   trackSaveToCodex,
   countRelatedEntities,
-} from "$lib/services/analytics/generator-save-tracking";
+} from "#lib/services/analytics/generator-save-tracking.js";
 import {
   saveGeneratorOutput,
   saveSessionHubEntities,
-} from "$lib/components/seo/generator-save-flow";
-import type { getGeneratorDocumentLayout } from "$lib/components/seo/generator-document-layout";
+} from "#lib/components/seo/generator-save-flow.js";
+import type { getGeneratorDocumentLayout } from "#lib/components/seo/generator-document-layout.js";
 
 type DocumentLayout = ReturnType<typeof getGeneratorDocumentLayout>;
 

@@ -7,14 +7,14 @@ import PlayToolsVault from "./PlayToolsVault.svelte";
 
 const { openLightbox } = vi.hoisted(() => ({ openLightbox: vi.fn() }));
 
-vi.mock("$lib/stores/vault.svelte", () => ({
+vi.mock("#lib/stores/vault.svelte.js", () => ({
   vault: {
     resolveImageUrl: vi.fn(async (path: string) => `blob:${path}`),
     releaseImageUrl: vi.fn(),
   },
 }));
 
-vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
+vi.mock("#lib/stores/ui/modal-ui.svelte.js", () => ({
   modalUIStore: { openLightbox },
 }));
 

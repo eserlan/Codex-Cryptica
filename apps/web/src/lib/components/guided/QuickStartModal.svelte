@@ -8,16 +8,16 @@
     STARTER_CONSTELLATION_THEME_IDS,
     type StarterConstellationResult,
   } from "generator-engine";
-  import ModalShell from "$lib/components/ui/ModalShell.svelte";
-  import { vault } from "$lib/stores/vault.svelte";
-  import { themeStore } from "$lib/stores/theme.svelte";
-  import { oracle } from "$lib/stores/oracle.svelte";
-  import { notificationStore } from "$lib/stores/ui/notification.svelte";
-  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-  import { aiGeneratorGateway } from "$lib/services/generators/ai-generator-gateway";
-  import { graph } from "$lib/stores/graph.svelte";
+  import ModalShell from "#lib/components/ui/ModalShell.svelte";
+  import { vault } from "#lib/stores/vault.svelte.js";
+  import { themeStore } from "#lib/stores/theme.svelte.js";
+  import { oracle } from "#lib/stores/oracle.svelte.js";
+  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
+  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+  import { aiGeneratorGateway } from "#lib/services/generators/ai-generator-gateway.js";
+  import { graph } from "#lib/stores/graph.svelte.js";
 
-  let { onClose } = $props<{ onClose: () => void }>();
+  let { onClose }: { onClose: () => void } = $props();
 
   // One id drives two different things, and they are named differently: the
   // theme "Ancient Parchment" generates a "Classic Fantasy" world, "LCARS

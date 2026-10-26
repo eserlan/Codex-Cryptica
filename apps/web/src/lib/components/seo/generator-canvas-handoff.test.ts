@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { PENDING_DELVE_CANVAS_KEY } from "$lib/services/seo/pending-delve-transfer";
+import { PENDING_DELVE_CANVAS_KEY } from "#lib/services/seo/pending-delve-transfer.js";
 import { handoffGeneratorToCanvas } from "./generator-canvas-handoff";
 
 const output = { title: "The Sunken Gate" } as never;

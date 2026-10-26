@@ -11,9 +11,9 @@
  * rows it sends and, once it succeeds, clears only rows still holding the
  * stamp it sent — so an edit landing mid-upload stays pending (FR-022).
  */
-import { getDB, type CloudBackupDirtyRow } from "$lib/utils/idb";
+import { getDB, type CloudBackupDirtyRow } from "#lib/utils/idb.js";
 import type { DurableVaultChange } from "./vault/registry";
-import { systemIdGenerator } from "$lib/utils/runtime-deps";
+import { systemIdGenerator } from "#lib/utils/runtime-deps.js";
 
 export type { CloudBackupDirtyRow };
 

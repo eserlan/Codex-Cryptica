@@ -2,10 +2,10 @@
   import { onDestroy } from "svelte";
   import { oneShotToOutput, renderGmSheet } from "generator-engine";
   import type { OneShotRegenTarget } from "generator-engine";
-  import { generatorEngine } from "$lib/services/seo/generator-engine";
+  import { generatorEngine } from "#lib/services/seo/generator-engine.js";
   import OneShotPartRow from "./OneShotPartRow.svelte";
   import RefineNotice from "./RefineNotice.svelte";
-  import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
+  import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
 
   let {
     output,

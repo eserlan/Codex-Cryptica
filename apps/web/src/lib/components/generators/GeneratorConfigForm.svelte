@@ -27,14 +27,14 @@
     worldConfig,
   } from "generator-engine";
   import type { AIPolicy, GeneratorRunRequest } from "generator-engine";
-  import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
-  import { getDelveLocationTypeLabel } from "$lib/utils/delve-terminology";
-  import type { DetectedVaultLanguage } from "$lib/services/generators/generator-vault-context";
+  import SelectWithCustomOption from "#lib/components/forms/SelectWithCustomOption.svelte";
+  import { getDelveLocationTypeLabel } from "#lib/utils/delve-terminology.js";
+  import type { DetectedVaultLanguage } from "#lib/services/generators/generator-vault-context.js";
   import {
     GeneratorFavoritesStore,
     generatorFavoritesStore,
-  } from "$lib/stores/ui/generator-favorites.svelte";
-  import { systemProfileStore } from "$lib/stores/system-profile.svelte";
+  } from "#lib/stores/ui/generator-favorites.svelte.js";
+  import { systemProfileStore } from "#lib/stores/system-profile.svelte.js";
 
   interface Props {
     generatorId: GeneratorId | null;

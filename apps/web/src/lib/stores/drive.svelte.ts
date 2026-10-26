@@ -1,6 +1,6 @@
 import { appEventBus } from "@codex/events";
 import { type CloudSyncMetadata } from "@codex/sync-engine";
-import { systemClock } from "$lib/utils/runtime-deps";
+import { systemClock } from "#lib/utils/runtime-deps.js";
 
 export type DriveSyncStatus = "idle" | "syncing" | "error" | "connected";
 

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { revisionService } from "$lib/services/RevisionService.svelte";
+  import { revisionService } from "#lib/services/RevisionService.svelte.js";
   import { slide } from "svelte/transition";
 
   const draft = $derived(revisionService.pendingDraft);

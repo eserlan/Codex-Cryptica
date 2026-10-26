@@ -1,26 +1,26 @@
 <script lang="ts">
-  import { vault } from "$lib/stores/vault.svelte";
-  import type { EntityIndexEntry } from "$lib/utils/entity-mention-detector";
-  import HelpZenDetailSurface from "$lib/components/help-assistant/HelpZenDetailSurface.svelte";
-  import { themeStore } from "$lib/stores/theme.svelte";
-  import MarkdownEditor from "$lib/components/MarkdownEditor.svelte";
-  import TemporalEditor from "$lib/components/timeline/TemporalEditor.svelte";
-  import { revisionService } from "$lib/services/RevisionService.svelte";
-  import DetailProposals from "$lib/components/entity-detail/proposals/DetailProposals.svelte";
-  import GenerateRelatedButton from "$lib/components/entity-detail/GenerateRelatedButton.svelte";
-  import EntityProposals from "$lib/components/entity-detail/EntityProposals.svelte";
+  import { vault } from "#lib/stores/vault.svelte.js";
+  import type { EntityIndexEntry } from "#lib/utils/entity-mention-detector.js";
+  import HelpZenDetailSurface from "#lib/components/help-assistant/HelpZenDetailSurface.svelte";
+  import { themeStore } from "#lib/stores/theme.svelte.js";
+  import MarkdownEditor from "#lib/components/MarkdownEditor.svelte";
+  import TemporalEditor from "#lib/components/timeline/TemporalEditor.svelte";
+  import { revisionService } from "#lib/services/RevisionService.svelte.js";
+  import DetailProposals from "#lib/components/entity-detail/proposals/DetailProposals.svelte";
+  import GenerateRelatedButton from "#lib/components/entity-detail/GenerateRelatedButton.svelte";
+  import EntityProposals from "#lib/components/entity-detail/EntityProposals.svelte";
   import ZenConnections from "./ZenConnections.svelte";
-  import { getTemporalLabel } from "$lib/components/entity-detail/detail-tabs";
+  import { getTemporalLabel } from "#lib/components/entity-detail/detail-tabs.js";
   import { isEntityVisible, type Entity } from "schema";
-  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-  import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
+  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+  import { canvasRegistry } from "#lib/stores/canvas-registry.svelte.js";
   import {
     dungeonDelveService,
     isDelveLocationEntity,
-  } from "$lib/services/dungeon-delve-service";
+  } from "#lib/services/dungeon-delve-service.js";
   import { goto } from "$app/navigation";
-  import { openCanvasFromZen } from "$lib/stores/ui/navigation";
-  import { getDelveCanvasLabel } from "$lib/utils/delve-terminology";
+  import { openCanvasFromZen } from "#lib/stores/ui/navigation.js";
+  import { getDelveCanvasLabel } from "#lib/utils/delve-terminology.js";
 
   let {
     entity,
@@ -28,13 +28,13 @@
     scrollContainer = $bindable(),
     onNavigate = () => {},
     isPopout = false,
-  } = $props<{
+  }: {
     entity: Entity | null;
     editState: any;
     scrollContainer: HTMLDivElement | undefined;
     onNavigate?: (id: string) => void;
     isPopout?: boolean;
-  }>();
+  } = $props();
 
   const existingCanvas = $derived.by(() => {
     if (!entity) return undefined;
@@ -54,7 +54,7 @@
     });
   });
   import { calendarEngine } from "chronology-engine";
-  import { calendarStore } from "$lib/stores/calendar.svelte";
+  import { calendarStore } from "#lib/stores/calendar.svelte.js";
 
   const formatDate = (date: any) => {
     if (!date || date.year === undefined) return "";

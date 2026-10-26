@@ -11,23 +11,23 @@
     askQuickNamesAi,
     culturesForTheme,
   } from "./quick-names";
-  import { nameGeneratorConfig } from "$lib/services/seo/generator-config";
-  import { generatorEngine } from "$lib/services/seo/generator-engine";
-  import { onlineStatus } from "$lib/stores/online.svelte";
+  import { nameGeneratorConfig } from "#lib/services/seo/generator-config.js";
+  import { generatorEngine } from "#lib/services/seo/generator-engine.js";
+  import { onlineStatus } from "#lib/stores/online.svelte.js";
   import { onDestroy, onMount, untrack } from "svelte";
-  import { browser } from "$app/environment";
+  import { browser } from "$app/env";
   import { page } from "$app/state";
-  import { hubContext } from "$lib/stores/hub-context.svelte";
-  import { sessionHubStore } from "$lib/stores/session-hub.svelte";
-  import { UIPersistence } from "$lib/stores/ui/persistence";
+  import { hubContext } from "#lib/stores/hub-context.svelte.js";
+  import { sessionHubStore } from "#lib/stores/session-hub.svelte.js";
+  import { UIPersistence } from "#lib/stores/ui/persistence.js";
   import SEOGeneratorLayout from "./SEOGeneratorLayout.svelte";
   import GeneratorPageFormFields from "./GeneratorPageFormFields.svelte";
   import {
     factionConfig,
     oneShotConfig,
     themeToQuestGenre,
-  } from "$lib/services/seo/generator-config";
-  import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
+  } from "#lib/services/seo/generator-config.js";
+  import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
 
   import { createGeneratorRemixLoader } from "./generator-page-remix";
   import {
@@ -36,7 +36,7 @@
     slugMeta,
   } from "./generator-page-meta";
   import { slugDrafts } from "./generator-page-drafts";
-  import { withCategoryRelatedLinks } from "$lib/content/generator-catalogue";
+  import { withCategoryRelatedLinks } from "#lib/content/generator-catalogue.js";
   import {
     createGenerate,
     createGeneratorHandlers,
@@ -64,7 +64,7 @@
     shouldSyncGeneratorTheme,
   } from "./generator-theme-maps";
   import { syncGeneratorTheme } from "./generator-theme-sync";
-  import { generatorShareService } from "$lib/services/sharing/GeneratorShareService";
+  import { generatorShareService } from "#lib/services/sharing/GeneratorShareService.js";
   import {
     resolveInitialActiveTheme,
     resolveOneShotGenre,
@@ -77,9 +77,7 @@
     metaOverrides = undefined,
     initialDraftOverride = undefined,
     persistence = new UIPersistence(),
-  }: {
-    slug: ValidSlug;
-    urlHubTheme?: string;
+
     /**
      * Page copy that differs from the slug's own, for routes that present the
      * same generator under a different URL and pitch.
@@ -90,11 +88,14 @@
      * FAQs, related links and canonical here, so the generator wiring exists
      * once while the pages keep their distinct content and URLs.
      */
-    metaOverrides?: Partial<SlugMetaEntry>;
     /**
      * Replaces the slug's default initial draft (from slugDrafts) when provided.
      * Used by alternative routes that need a different default draft on first load.
      */
+  }: {
+    slug: ValidSlug;
+    urlHubTheme?: string;
+    metaOverrides?: Partial<SlugMetaEntry>;
     initialDraftOverride?: GeneratorOutput;
     persistence?: UIPersistence;
   } = $props();
@@ -116,12 +117,10 @@
     (hubContext.theme && HUB_LABELS[hubContext.theme]) ?? "All generators",
   );
   const initialHubGenre = resolveHubGeneratorGenre(hubContext.theme);
-
   const meta = $derived({ ...slugMeta[slug], ...(metaOverrides ?? {}) });
   const relatedLinks = $derived(
     withCategoryRelatedLinks(slug, meta.relatedLinks ?? []),
   );
-
   const _initialHandoff = initializeHandoffState(_initialSlug);
   let handoffState = $state<GeneratorHandoffState>({
     ..._initialHandoff,
@@ -163,6 +162,7 @@
     handoffState,
     (updates) => {
       Object.assign(handoffState, updates);
+
       if (updates.questPremise !== undefined)
         forms.plotTwist.premise = updates.questPremise;
       if (updates.factionContext !== undefined)

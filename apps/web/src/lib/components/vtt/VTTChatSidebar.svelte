@@ -1,8 +1,8 @@
 <script lang="ts">
   import VTTChat from "./VTTChat.svelte";
-  import { mapSession } from "$lib/stores/map-session.svelte";
-  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
-  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { mapSession } from "#lib/stores/map-session.svelte.js";
+  import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
+  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
 
   let {
     collapsed = $bindable(false),

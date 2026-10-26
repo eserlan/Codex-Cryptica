@@ -1,7 +1,7 @@
 <script lang="ts">
   import { untrack } from "svelte";
-  import { vault } from "$lib/stores/vault.svelte";
-  import { explorerUIStore } from "$lib/stores/ui/explorer-ui.svelte";
+  import { vault } from "#lib/stores/vault.svelte.js";
+  import { explorerUIStore } from "#lib/stores/ui/explorer-ui.svelte.js";
 
   let {
     searchQuery = $bindable(""),

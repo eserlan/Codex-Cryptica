@@ -19,7 +19,7 @@ import {
   rumourConfig,
   secretSocietyConfig,
   tomeConfig,
-} from "$lib/services/seo/generator-config";
+} from "#lib/services/seo/generator-config.js";
 import type { GeneratorHandoffState } from "./generator-page-handoffs";
 
 /** Fresh, page-local adventure form defaults. */

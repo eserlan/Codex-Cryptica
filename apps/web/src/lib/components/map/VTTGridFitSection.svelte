@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { mapSession } from "$lib/stores/map-session.svelte";
-  import { mapStore } from "$lib/stores/map.svelte";
+  import { mapSession } from "#lib/stores/map-session.svelte.js";
+  import { mapStore } from "#lib/stores/map.svelte.js";
 
   let {
     isHex,

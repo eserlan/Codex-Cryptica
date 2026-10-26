@@ -4,7 +4,7 @@ import { render, screen, fireEvent } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import CreatureFormFields from "./CreatureFormFields.svelte";
 
-vi.mock("$lib/services/seo/generator-config", () => ({
+vi.mock("#lib/services/seo/generator-config.js", () => ({
   creatureConfig: {
     genres: [
       "Classic Fantasy",

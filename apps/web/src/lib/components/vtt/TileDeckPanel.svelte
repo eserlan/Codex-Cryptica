@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { mapSession } from "$lib/stores/map-session.svelte";
-  import { vault } from "$lib/stores/vault.svelte";
-  import { notificationStore } from "$lib/stores/ui/notification.svelte";
-  import { tileDeckPanelUIStore } from "$lib/stores/ui/tile-deck-panel-ui.svelte";
+  import { mapSession } from "#lib/stores/map-session.svelte.js";
+  import { vault } from "#lib/stores/vault.svelte.js";
+  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
+  import { tileDeckPanelUIStore } from "#lib/stores/ui/tile-deck-panel-ui.svelte.js";
 
   const FREQUENCY_OPTIONS = [
     { label: "Every", value: 1, title: "On every drawn tile" },
@@ -16,11 +16,11 @@
     getTileCategoryFromName,
     STARTER_DECK_CATALOG,
     StarterTileDeckService,
-  } from "$lib/services/vtt/StarterTileDeckService";
+  } from "#lib/services/vtt/StarterTileDeckService.js";
   import {
     randomSources,
     ensureRandomSourcesLoaded,
-  } from "$lib/features/random";
+  } from "#lib/features/random/index.js";
   import type { TileDeckStockingMode } from "../../../types/vtt";
 
   let deckName = $state("");

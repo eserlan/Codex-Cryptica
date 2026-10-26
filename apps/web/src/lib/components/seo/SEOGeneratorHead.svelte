@@ -1,6 +1,6 @@
 <script lang="ts">
-  import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
-  import { buildAbsoluteUrl } from "$lib/seo/site";
+  import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
+  import { buildAbsoluteUrl } from "#lib/seo/site.js";
   import {
     buildBreadcrumbJsonLd,
     buildFaqJsonLd,

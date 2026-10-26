@@ -4,7 +4,7 @@
     type PromotionScope,
     type SessionJournal,
   } from "session-journal-engine";
-  import { categories as categoryStore } from "$lib/stores/categories.svelte";
+  import { categories as categoryStore } from "#lib/stores/categories.svelte.js";
 
   /**
    * The small form in front of turning journal content into an entity

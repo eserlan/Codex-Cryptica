@@ -3,14 +3,14 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import VaultActionsMenu from "./VaultActionsMenu.svelte";
-import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-import { openImportWindow } from "$lib/stores/ui/navigation";
-import { soloSessionStore } from "$lib/stores/solo-session-instance";
+import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+import { openImportWindow } from "#lib/stores/ui/navigation.js";
+import { soloSessionStore } from "#lib/stores/solo-session-instance.js";
 
-vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
+vi.mock("#lib/stores/ui/modal-ui.svelte.js", () => ({
   modalUIStore: { openSettings: vi.fn(), openShare: vi.fn() },
 }));
-vi.mock("$lib/stores/ui/navigation", () => ({ openImportWindow: vi.fn() }));
+vi.mock("#lib/stores/ui/navigation.js", () => ({ openImportWindow: vi.fn() }));
 
 describe("VaultActionsMenu", () => {
   beforeEach(() => vi.clearAllMocks());

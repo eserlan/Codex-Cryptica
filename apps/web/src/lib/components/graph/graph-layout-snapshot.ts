@@ -1,5 +1,5 @@
 import type { Core } from "cytoscape";
-import type { ViewLayoutSnapshot } from "$lib/stores/view-presets";
+import type { ViewLayoutSnapshot } from "#lib/stores/view-presets.js";
 
 /**
  * Helpers for a view's optional saved layout (#3456). Pure and forgiving: they

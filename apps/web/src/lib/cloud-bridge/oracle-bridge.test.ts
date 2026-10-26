@@ -30,7 +30,7 @@ vi.mock("comlink", () => ({
 }));
 
 // Mock worker import
-vi.mock("$lib/workers/oracle.worker?worker", () => {
+vi.mock("#lib/workers/oracle.worker?worker", () => {
   return {
     default: class MockWorker {
       terminate = vi.fn();

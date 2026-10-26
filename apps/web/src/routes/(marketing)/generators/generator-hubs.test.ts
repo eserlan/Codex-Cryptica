@@ -3,11 +3,13 @@
 import { render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import Page from "./+page.svelte";
-import { HUB_THEME_SLUGS } from "$lib/content/hub-themes";
-import { GENERATOR_CATALOGUE } from "$lib/content/generator-catalogue";
+import { HUB_THEME_SLUGS } from "#lib/content/hub-themes.js";
+import { GENERATOR_CATALOGUE } from "#lib/content/generator-catalogue.js";
 
 vi.mock("$app/paths", () => ({
   base: "",
+  asset: (p: string) => p,
+  resolve: (p: string) => p,
 }));
 
 describe("Generator hubs", () => {

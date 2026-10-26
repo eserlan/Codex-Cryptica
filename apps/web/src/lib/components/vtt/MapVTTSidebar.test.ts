@@ -23,55 +23,55 @@ const sessionModeStoreMock = vi.hoisted(() => ({
   isGuestMode: false,
 }));
 
-vi.mock("$lib/components/map/VTTControls.svelte", () => ({
+vi.mock("#lib/components/map/VTTControls.svelte", () => ({
   default: function VTTControlsMock() {
     return {};
   },
 }));
 
-vi.mock("$lib/components/explorer/EntityList.svelte", () => ({
+vi.mock("#lib/components/explorer/EntityList.svelte", () => ({
   default: function EntityListMock() {
     return {};
   },
 }));
 
-vi.mock("$lib/components/vtt/InitiativePanel.svelte", () => ({
+vi.mock("#lib/components/vtt/InitiativePanel.svelte", () => ({
   default: function InitiativePanelMock() {
     return {};
   },
 }));
 
-vi.mock("$lib/components/vtt/TokenDetail.svelte", () => ({
+vi.mock("#lib/components/vtt/TokenDetail.svelte", () => ({
   default: function TokenDetailMock() {
     return {};
   },
 }));
 
-vi.mock("$lib/components/vtt/VTTChatSidebar.svelte", () => ({
+vi.mock("#lib/components/vtt/VTTChatSidebar.svelte", () => ({
   default: function VTTChatSidebarMock() {
     return {};
   },
 }));
 
-vi.mock("$lib/components/vtt/TileDeckPanel.svelte", () => ({
+vi.mock("#lib/components/vtt/TileDeckPanel.svelte", () => ({
   default: function TileDeckPanelMock() {
     return {};
   },
 }));
 
-vi.mock("$lib/stores/ui/layout-ui.svelte", () => ({
+vi.mock("#lib/stores/ui/layout-ui.svelte.js", () => ({
   layoutUIStore: layoutUIStoreMock,
   MIN_VTT_SIDEBAR_WIDTH: 280,
   MAX_SIDEBAR_VW: 40,
 }));
 
-vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
+vi.mock("#lib/stores/ui/modal-ui.svelte.js", () => ({
   modalUIStore: {
     openZenMode: vi.fn(),
   },
 }));
 
-vi.mock("$lib/stores/ui/session-mode.svelte", () => ({
+vi.mock("#lib/stores/ui/session-mode.svelte.js", () => ({
   sessionModeStore: sessionModeStoreMock,
 }));
 

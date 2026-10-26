@@ -1,8 +1,8 @@
 <script lang="ts">
   import type { Entity, PresentationTemplate, StatSheetTemplate } from "schema";
-  import { vault } from "$lib/stores/vault.svelte";
-  import { statSheetTemplates } from "$lib/stores/stat-sheet-templates.svelte";
-  import { presentationTemplates } from "$lib/stores/presentation-templates.svelte";
+  import { vault } from "#lib/stores/vault.svelte.js";
+  import { statSheetTemplates } from "#lib/stores/stat-sheet-templates.svelte.js";
+  import { presentationTemplates } from "#lib/stores/presentation-templates.svelte.js";
 
   let { entity, schema }: { entity: Entity; schema: StatSheetTemplate } =
     $props();

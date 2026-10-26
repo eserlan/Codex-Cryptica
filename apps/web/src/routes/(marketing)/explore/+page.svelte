@@ -1,17 +1,17 @@
 <script lang="ts">
   import { onDestroy, onMount } from "svelte";
-  import { base } from "$app/paths";
+  import { resolve } from "$app/paths";
   import { page } from "$app/state";
   import { invalidateAll } from "$app/navigation";
-  import SeoHead from "$lib/components/seo/SeoHead.svelte";
-  import { buildAbsoluteUrl } from "$lib/seo/site";
-  import ExploreLabelResults from "$lib/components/explore/ExploreLabelResults.svelte";
-  import ExploreSearch from "$lib/components/explore/ExploreSearch.svelte";
-  import ExploreSectionList from "$lib/components/explore/ExploreSectionList.svelte";
-  import { EXPLORE_SECTIONS } from "$lib/components/explore/explore-sections";
-  import { themeStore } from "$lib/stores/theme.svelte";
-  import { HUB_SLUG_TO_THEME_ID } from "$lib/components/seo/generator-theme-maps";
-  import { isPublicLabel } from "$lib/content/labels";
+  import SeoHead from "#lib/components/seo/SeoHead.svelte";
+  import { buildAbsoluteUrl } from "#lib/seo/site.js";
+  import ExploreLabelResults from "#lib/components/explore/ExploreLabelResults.svelte";
+  import ExploreSearch from "#lib/components/explore/ExploreSearch.svelte";
+  import ExploreSectionList from "#lib/components/explore/ExploreSectionList.svelte";
+  import { EXPLORE_SECTIONS } from "#lib/components/explore/explore-sections.js";
+  import { themeStore } from "#lib/stores/theme.svelte.js";
+  import { HUB_SLUG_TO_THEME_ID } from "#lib/components/seo/generator-theme-maps.js";
+  import { isPublicLabel } from "#lib/content/labels.js";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
@@ -28,12 +28,15 @@
       ? (HUB_SLUG_TO_THEME_ID[data.label] ?? null)
       : null,
   );
+
   const themeBootstrap = $derived.by(() => {
     if (!labelThemeId) return "";
+
     const serializedTheme = JSON.stringify(labelThemeId).replaceAll(
       "<",
       "\\u003C",
     );
+
     return (
       "<" +
       "script>window.__codexApplyTheme && window.__codexApplyTheme(" +
@@ -64,7 +67,7 @@
     themeStore.previewTheme(null);
   });
 
-  const cleanBase = base === "/" ? "" : base;
+  const cleanBase = resolve("") === "/" ? "" : resolve("");
 
   const TITLE = "Explore Codex Cryptica";
   const DESCRIPTION =

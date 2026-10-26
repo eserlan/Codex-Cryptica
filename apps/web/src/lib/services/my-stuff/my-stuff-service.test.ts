@@ -5,8 +5,8 @@ import {
   LOCAL_SHARES_KEY,
   MANAGEMENT_TOKENS_KEY,
 } from "./my-stuff-service";
-import type { StorageLike } from "$lib/utils/runtime-deps";
-import type { AnswerConfig } from "$lib/content/answers/schema";
+import type { StorageLike } from "#lib/utils/runtime-deps.js";
+import type { AnswerConfig } from "#lib/content/answers/schema.js";
 
 class MockStorage implements StorageLike {
   private map = new Map<string, string>();

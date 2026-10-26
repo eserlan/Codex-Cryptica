@@ -7,7 +7,7 @@
  * construction — so a singleton constructed at import still works when the global
  * is polyfilled later (the lesson from #1363).
  */
-import type { StorageLike } from "$lib/stores/ui/persistence";
+import type { StorageLike } from "#lib/stores/ui/persistence.js";
 
 export type { StorageLike };
 

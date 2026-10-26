@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { isHelpAssistantAvailable } from "$lib/services/help-assistant/help-availability";
+  import { isHelpAssistantAvailable } from "#lib/services/help-assistant/help-availability.js";
 
   const available = $derived(isHelpAssistantAvailable());
 
@@ -8,7 +8,7 @@
   // in with it when the assistant is off.
   async function open() {
     const { helpAssistant } =
-      await import("$lib/stores/help-assistant/help-runtime");
+      await import("#lib/stores/help-assistant/help-runtime.js");
     helpAssistant.open();
   }
 </script>

@@ -1,14 +1,14 @@
 <script lang="ts">
-  import { base } from "$app/paths";
+  import { resolve } from "$app/paths";
   import { SILHOUETTES, loadSilhouetteSvg } from "schema";
   import type {
     SilhouetteDefinition,
     SilhouetteGenre,
     SilhouetteCategory,
   } from "schema";
-  import SeoHead from "$lib/components/seo/SeoHead.svelte";
-  import SilhouetteGlyph from "$lib/components/ui/SilhouetteGlyph.svelte";
-  import { buildAbsoluteUrl } from "$lib/seo/site";
+  import SeoHead from "#lib/components/seo/SeoHead.svelte";
+  import SilhouetteGlyph from "#lib/components/ui/SilhouetteGlyph.svelte";
+  import { buildAbsoluteUrl } from "#lib/seo/site.js";
 
   interface ThemePalette {
     id: string;
@@ -257,7 +257,7 @@
           aria-hidden="true"
           class="icon-[lucide--sparkles] h-3.5 w-3.5 text-theme-accent"
         ></span>
-        <span class="text-theme-muted">Free &amp; Open Assets</span>
+        <span class="text-theme-muted">Free & Open Assets</span>
         <span class="text-theme-border">•</span>
         <span class="text-theme-primary"
           >{SILHOUETTES.length}+ Vector Silhouettes</span
@@ -271,8 +271,9 @@
         <h1
           class="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-theme-primary"
         >
-          Vector RPG Silhouettes &amp; Token Art
+          Vector RPG Silhouettes & Token Art
         </h1>
+
         <p class="text-sm sm:text-base text-theme-muted leading-relaxed">
           High-contrast, scalable vector silhouettes for tabletop RPG
           characters, monstrous creatures, places, items, and faction heraldry.
@@ -488,7 +489,7 @@
                 aria-hidden="true"
                 class="icon-[lucide--rotate-ccw] h-3.5 w-3.5"
               ></span>
-              Clear search &amp; filters
+              Clear search & filters
             </button>
           </div>
         {:else}
@@ -657,8 +658,9 @@
               <div
                 class="text-micro uppercase font-bold tracking-wider text-theme-muted"
               >
-                Tags &amp; Keywords
+                Tags & Keywords
               </div>
+
               <div
                 class="flex flex-wrap gap-1 max-h-24 overflow-y-auto pr-1 scrollbar-thin"
               >
@@ -776,7 +778,7 @@
 
         <div class="pt-2 flex flex-wrap gap-3 items-center">
           <a
-            href="{base}/free-rpg-campaign-manager"
+            href="{resolve('')}/free-rpg-campaign-manager"
             class="px-5 py-2.5 rounded-xl text-xs font-bold bg-theme-accent text-theme-accent-contrast hover:opacity-90 transition-opacity flex items-center gap-2 shadow-md"
           >
             <span aria-hidden="true" class="icon-[lucide--castle] h-4 w-4"
@@ -784,12 +786,12 @@
             Explore Campaign Workspace
           </a>
           <a
-            href="{base}/tools"
+            href="{resolve('')}/tools"
             class="px-5 py-2.5 rounded-xl text-xs font-semibold bg-theme-base border border-theme-border text-theme-primary hover:border-theme-accent transition-colors flex items-center gap-2"
           >
             <span aria-hidden="true" class="icon-[lucide--wrench] h-4 w-4"
             ></span>
-            Browse All RPG Tools &amp; Generators
+            Browse All RPG Tools & Generators
           </a>
         </div>
       </div>

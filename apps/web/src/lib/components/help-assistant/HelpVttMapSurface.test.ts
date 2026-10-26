@@ -34,20 +34,20 @@ const mocks = vi.hoisted(() => ({
   p2pHost: { isHosting: true },
 }));
 
-vi.mock("$lib/stores/map.svelte", () => ({ mapStore: mocks.mapStore }));
-vi.mock("$lib/stores/map-session.svelte", () => ({
+vi.mock("#lib/stores/map.svelte.js", () => ({ mapStore: mocks.mapStore }));
+vi.mock("#lib/stores/map-session.svelte.js", () => ({
   mapSession: mocks.mapSession,
 }));
-vi.mock("$lib/stores/ui/session-mode.svelte", () => ({
+vi.mock("#lib/stores/ui/session-mode.svelte.js", () => ({
   sessionModeStore: mocks.session,
 }));
-vi.mock("$lib/cloud-bridge/p2p/host-service.svelte", () => ({
+vi.mock("#lib/cloud-bridge/p2p/host-service.svelte.js", () => ({
   p2pHost: mocks.p2pHost,
 }));
 
-import { helpSurfaces } from "$lib/stores/help-assistant/help-surface.svelte";
-import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
-import { mapControlsUIStore } from "$lib/stores/ui/map-controls-ui.svelte";
+import { helpSurfaces } from "#lib/stores/help-assistant/help-surface.svelte.js";
+import { layoutUIStore } from "#lib/stores/ui/layout-ui.svelte.js";
+import { mapControlsUIStore } from "#lib/stores/ui/map-controls-ui.svelte.js";
 import HelpVttMapSurface from "./HelpVttMapSurface.svelte";
 
 const facts = (): VttHelpFacts => helpSurfaces.vttMap!.facts();

@@ -2,7 +2,7 @@ import type { Entity } from "schema";
 import {
   resolveSelectionReportInput,
   type SelectionReportResult,
-} from "$lib/services/report-selection-input";
+} from "#lib/services/report-selection-input.js";
 
 export function useTableReportGeneration(
   selectedEntityIds: string[],

@@ -16,8 +16,8 @@ const { vaultMock } = vi.hoisted(() => ({
     allEntities: [] as unknown[],
   },
 }));
-vi.mock("$lib/stores/vault.svelte", () => ({ vault: vaultMock }));
-vi.mock("$lib/stores/theme.svelte", () => ({
+vi.mock("#lib/stores/vault.svelte.js", () => ({ vault: vaultMock }));
+vi.mock("#lib/stores/theme.svelte.js", () => ({
   themeStore: {
     jargon: {
       tab_status: "Status",

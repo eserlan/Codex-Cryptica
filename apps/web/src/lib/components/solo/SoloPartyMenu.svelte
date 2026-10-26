@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { soloSessionStore } from "$lib/stores/solo-session-instance";
-  import { vault } from "$lib/stores/vault.svelte";
-  import { characterChoices } from "$lib/services/solo-characters";
+  import { soloSessionStore } from "#lib/stores/solo-session-instance.js";
+  import { vault } from "#lib/stores/vault.svelte.js";
+  import { characterChoices } from "#lib/services/solo-characters.js";
   import SoloMenu from "./SoloMenu.svelte";
 
   const characters = $derived(characterChoices(vault.entities));

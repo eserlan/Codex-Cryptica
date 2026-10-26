@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { driveStore } from "$lib/stores/drive.svelte";
-  import { onlineStatus } from "$lib/stores/online.svelte";
-  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
-  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { driveStore } from "#lib/stores/drive.svelte.js";
+  import { onlineStatus } from "#lib/stores/online.svelte.js";
+  import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
+  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
 
   const getStatusColor = () => {
     if (!onlineStatus.current) return "text-chrome-muted grayscale";

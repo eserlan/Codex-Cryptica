@@ -1,13 +1,16 @@
 <script lang="ts">
   import type { FamilyConnectionType } from "@codex/family-engine";
   import { buildFamilyTree } from "@codex/family-engine";
-  import { vault } from "$lib/stores/vault.svelte";
-  import Autocomplete from "$lib/components/ui/Autocomplete.svelte";
+  import { vault } from "#lib/stores/vault.svelte.js";
+  import Autocomplete from "#lib/components/ui/Autocomplete.svelte";
 
-  let { focusId, relation } = $props<{
+  let {
+    focusId,
+    relation,
+  }: {
     focusId: string;
     relation: "parent" | "child" | "partner" | "sibling";
-  }>();
+  } = $props();
 
   // Link type from the focus character's perspective:
   // add a parent  -> focus child_of   target

@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { vault } from "$lib/stores/vault.svelte";
-  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { vault } from "#lib/stores/vault.svelte.js";
+  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
 
   let editingLabel = $state<string | null>(null);
   let renameValue = $state("");

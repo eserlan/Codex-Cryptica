@@ -4,7 +4,7 @@ import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import PuzzleFormFields from "./PuzzleFormFields.svelte";
 
-vi.mock("$lib/services/seo/generator-config", () => ({
+vi.mock("#lib/services/seo/generator-config.js", () => ({
   puzzleConfig: {
     genres: ["Fantasy", "Lancer"],
     purposes: ["Sealed door", "Disable device"],

@@ -1,47 +1,47 @@
 <script lang="ts">
   import "../../app.css";
-  import { browser } from "$app/environment";
-  import { base } from "$app/paths";
+  import { browser } from "$app/env";
+  import { resolve } from "$app/paths";
   import { page } from "$app/state";
   import { onMount, onDestroy } from "svelte";
-  import { shelf } from "$lib/features/shelf";
-  import { ensureRandomSourcesLoaded } from "$lib/features/random";
+  import { shelf } from "#lib/features/shelf/index.js";
+  import { ensureRandomSourcesLoaded } from "#lib/features/random/index.js";
   import { preloadCode } from "$app/navigation";
 
   // Stores
-  import { helpStore } from "$lib/stores/help.svelte";
-  import { searchStore } from "$lib/stores/search.svelte";
-  import { vault } from "$lib/stores/vault.svelte";
-  import { vaultRegistry } from "$lib/stores/vault-registry.svelte";
-  import { themeStore } from "$lib/stores/theme.svelte";
-  import { categories } from "$lib/stores/categories.svelte";
-  import { quickNoteStore } from "$lib/stores/quicknote.svelte";
+  import { helpStore } from "#lib/stores/help.svelte.js";
+  import { searchStore } from "#lib/stores/search.svelte.js";
+  import { vault } from "#lib/stores/vault.svelte.js";
+  import { vaultRegistry } from "#lib/stores/vault-registry.svelte.js";
+  import { themeStore } from "#lib/stores/theme.svelte.js";
+  import { categories } from "#lib/stores/categories.svelte.js";
+  import { quickNoteStore } from "#lib/stores/quicknote.svelte.js";
   import { appEventBus, CrossTabBroadcaster } from "@codex/events";
-  import { demoService } from "$lib/services/demo";
-  import { initAiSessionEager } from "$lib/services/ai/session-bootstrap";
+  import { demoService } from "#lib/services/demo.js";
+  import { initAiSessionEager } from "#lib/services/ai/session-bootstrap.js";
   import { configureGDriveSync, initGDriveSync } from "@codex/gdrive-sync";
-  import { getDB, DB_NAME, DB_VERSION } from "$lib/utils/idb";
-  import { HELP_ARTICLES } from "$lib/config/help-content";
-  import { getHelpArticleIdFromHash } from "$lib/components/help/help-direct-link";
-  import { VERSION } from "$lib/config";
-  import releases from "$lib/content/changelog/releases.json";
+  import { getDB, DB_NAME, DB_VERSION } from "#lib/utils/idb.js";
+  import { HELP_ARTICLES } from "#lib/config/help-content.js";
+  import { getHelpArticleIdFromHash } from "#lib/components/help/help-direct-link.js";
+  import { VERSION } from "#lib/config/index.js";
+  import releases from "#lib/content/changelog/releases.json";
   import { THEMES, isEntityVisible } from "schema";
 
   // Components & Providers
-  import AppHeader from "$lib/components/layout/AppHeader.svelte";
-  import AppFooter from "$lib/components/layout/AppFooter.svelte";
-  import NotificationToast from "$lib/components/layout/NotificationToast.svelte";
-  import FatalErrorOverlay from "$lib/components/layout/FatalErrorOverlay.svelte";
-  import ActivityBar from "$lib/components/layout/ActivityBar.svelte";
-  import SoloSessionBar from "$lib/components/solo/SoloSessionBar.svelte";
-  import SidebarPanelHost from "$lib/components/layout/SidebarPanelHost.svelte";
-  import MobileDemoBanner from "$lib/components/layout/MobileDemoBanner.svelte";
-  import GlobalModalProvider from "$lib/components/modals/GlobalModalProvider.svelte";
-  import GuestSessionBootstrap from "$lib/components/vtt/GuestSessionBootstrap.svelte";
-  import QuickNoteScratchpad from "$lib/components/quicknote/QuickNoteScratchpad.svelte";
-  import EntityExplorerWorkspace from "$lib/components/layout/EntityExplorerWorkspace.svelte";
-  import NavigationShortcuts from "$lib/components/layout/NavigationShortcuts.svelte";
-  import OnboardingHost from "$lib/components/onboarding/OnboardingHost.svelte";
+  import AppHeader from "#lib/components/layout/AppHeader.svelte";
+  import AppFooter from "#lib/components/layout/AppFooter.svelte";
+  import NotificationToast from "#lib/components/layout/NotificationToast.svelte";
+  import FatalErrorOverlay from "#lib/components/layout/FatalErrorOverlay.svelte";
+  import ActivityBar from "#lib/components/layout/ActivityBar.svelte";
+  import SoloSessionBar from "#lib/components/solo/SoloSessionBar.svelte";
+  import SidebarPanelHost from "#lib/components/layout/SidebarPanelHost.svelte";
+  import MobileDemoBanner from "#lib/components/layout/MobileDemoBanner.svelte";
+  import GlobalModalProvider from "#lib/components/modals/GlobalModalProvider.svelte";
+  import GuestSessionBootstrap from "#lib/components/vtt/GuestSessionBootstrap.svelte";
+  import QuickNoteScratchpad from "#lib/components/quicknote/QuickNoteScratchpad.svelte";
+  import EntityExplorerWorkspace from "#lib/components/layout/EntityExplorerWorkspace.svelte";
+  import NavigationShortcuts from "#lib/components/layout/NavigationShortcuts.svelte";
+  import OnboardingHost from "#lib/components/onboarding/OnboardingHost.svelte";
 
   // Logic & Hooks
   import {
@@ -50,33 +50,33 @@
     setupWindowGlobals,
     registerServiceWorker,
     type VaultServiceWorkerSession,
-  } from "$lib/app/init/app-init";
-  import { isVaultAppPath } from "$lib/service-worker/lifecycle";
-  import { mapControlsUIStore } from "$lib/stores/ui/map-controls-ui.svelte";
-  import { initFullscreenOnFirstInteraction } from "$lib/app/init/fullscreen-on-interaction";
-  import { useGlobalShortcuts } from "$lib/hooks/useGlobalShortcuts.svelte";
-  import { soloPlayGuard } from "$lib/stores/solo-session-instance";
-  import { shouldConsiderVaultThemePrompt as themePromptGate } from "$lib/app/onboarding/vault-theme-prompt-gate";
-  import { initOnboardingFunnel } from "$lib/app/onboarding/onboarding-funnel-init";
-  import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
-  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
-  import { guidedModeStore } from "$lib/stores/ui/guided-mode.svelte";
-  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-  import { notificationStore } from "$lib/stores/ui/notification.svelte";
-  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
-  import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
-  import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
-  import { explorerUIStore } from "$lib/stores/ui/explorer-ui.svelte";
-  import { vaultThemePromptStore } from "$lib/stores/ui/vault-theme-prompt.svelte";
-  import { worldStore } from "$lib/stores/world.svelte";
+  } from "#lib/app/init/app-init.js";
+  import { isVaultAppPath } from "#lib/service-worker/lifecycle.js";
+  import { mapControlsUIStore } from "#lib/stores/ui/map-controls-ui.svelte.js";
+  import { initFullscreenOnFirstInteraction } from "#lib/app/init/fullscreen-on-interaction.js";
+  import { useGlobalShortcuts } from "#lib/hooks/useGlobalShortcuts.svelte.js";
+  import { soloPlayGuard } from "#lib/stores/solo-session-instance.js";
+  import { shouldConsiderVaultThemePrompt as themePromptGate } from "#lib/app/onboarding/vault-theme-prompt-gate.js";
+  import { initOnboardingFunnel } from "#lib/app/onboarding/onboarding-funnel-init.js";
+  import { onboardingStore } from "#lib/stores/ui/onboarding.svelte.js";
+  import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
+  import { guidedModeStore } from "#lib/stores/ui/guided-mode.svelte.js";
+  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
+  import { layoutUIStore } from "#lib/stores/ui/layout-ui.svelte.js";
+  import { discoveryPolicyStore } from "#lib/stores/ui/discovery-policy.svelte.js";
+  import { connectionModeStore } from "#lib/stores/ui/connection-mode.svelte.js";
+  import { explorerUIStore } from "#lib/stores/ui/explorer-ui.svelte.js";
+  import { vaultThemePromptStore } from "#lib/stores/ui/vault-theme-prompt.svelte.js";
+  import { worldStore } from "#lib/stores/world.svelte.js";
   import { initAudioEngine } from "@codex/audio-engine";
-  import { debugStore } from "$lib/stores/debug.svelte";
-  import { oracle } from "$lib/stores/oracle.svelte";
-  import "$lib/stores/proposer.svelte";
-  import "$lib/cloud-bridge/p2p/guest-bootstrap";
-  import { oracleBridge } from "$lib/cloud-bridge/oracle-bridge";
+  import { debugStore } from "#lib/stores/debug.svelte.js";
+  import { oracle } from "#lib/stores/oracle.svelte.js";
+  import "#lib/stores/proposer.svelte.js";
+  import "#lib/cloud-bridge/p2p/guest-bootstrap.js";
+  import { oracleBridge } from "#lib/cloud-bridge/oracle-bridge.js";
   import { aiClientManager } from "@codex/ai-engine";
-  import { writeOpfsFile, deleteOpfsEntry } from "$lib/utils/opfs";
+  import { writeOpfsFile, deleteOpfsEntry } from "#lib/utils/opfs.js";
 
   let { children } = $props();
 
@@ -95,9 +95,10 @@
 
   const isVaultCacheSessionActive = () => {
     const pathname =
-      base && page.url.pathname.startsWith(base)
-        ? page.url.pathname.slice(base.length) || "/"
+      resolve("") && page.url.pathname.startsWith(resolve(""))
+        ? page.url.pathname.slice(resolve("").length) || "/"
         : page.url.pathname;
+
     return (
       !!vault.activeVaultId &&
       !sessionModeStore.isGuestMode &&
@@ -108,12 +109,13 @@
 
   // Derived
   const isPopup = $derived(
-    page.url.pathname === `${base}/oracle` ||
-      page.url.pathname === `${base}/help` ||
-      page.url.pathname.startsWith(`${base}/help/`) ||
-      page.url.pathname === `${base}/import` ||
-      page.url.pathname === `${base}/dice`,
+    page.url.pathname === "/oracle" ||
+      page.url.pathname === "/help" ||
+      page.url.pathname.startsWith("/help/") ||
+      page.url.pathname === "/import" ||
+      page.url.pathname === "/dice",
   );
+
   const anyModalOpen = $derived(
     modalUIStore.isAnyModalOpen ||
       searchStore.isOpen ||
@@ -124,12 +126,14 @@
   const isZenPopout = $derived(
     /\/vault\/[^/]+\/entity\/[^/]+$/.test(page.url.pathname),
   );
+
   // The map goes full-bleed (no header, navigation or footer) while VTT is on,
   // or when the user has maximized it.
   const isMapFullscreen = $derived(
-    page.url.pathname.startsWith(`${base}/map`) &&
+    page.url.pathname.startsWith("/map") &&
       (!!mapSession?.vttEnabled || mapControlsUIStore.maximized),
   );
+
   const isEntityExplorerWorkspace = $derived(
     !isPopup &&
       !isMapFullscreen &&
@@ -146,7 +150,7 @@
     // Strip funnel tracking params — defer so the CF beacon fires first
     const trackingParams = ["ref", "utm_source", "utm_medium", "utm_campaign"];
     if (trackingParams.some((p) => page.url.searchParams.has(p))) {
-      const clean = new URL(page.url);
+      const clean = new URL(page.url.href);
       trackingParams.forEach((p) => clean.searchParams.delete(p));
       requestIdleCallback(
         () => history.replaceState(history.state, "", clean.toString()),
@@ -254,17 +258,17 @@
     if (!browser) return;
 
     if (
-      page.url.pathname.startsWith(`${base}/map`) ||
+      page.url.pathname.startsWith(resolve(`map`)) ||
       sessionModeStore.isGuestMode
     ) {
-      import("$lib/stores/map-session.svelte")
+      import("#lib/stores/map-session.svelte.js")
         .then((m) => {
           mapSession = m.mapSession;
         })
         .catch((err) => {
           console.error("Failed to lazy-load map-session store", err);
         });
-      import("$lib/components/vtt/VTTSharedImageLightbox.svelte")
+      import("#lib/components/vtt/VTTSharedImageLightbox.svelte")
         .then((m) => {
           VTTSharedImageLightbox = m.default;
         })
@@ -284,7 +288,7 @@
   // Initialization Logic
   $effect(() => {
     // This layout only serves workspace routes — always boot except on landing page
-    const isLandingPage = page.url.pathname === `${base}/`;
+    const isLandingPage = page.url.pathname === "/" || page.url.pathname === "";
     const shouldShowLanding = onboardingStore.isLandingPageVisible;
 
     if (!hasBooted) {
@@ -338,9 +342,9 @@
       void initGDriveSync();
 
       // Preload heavy route chunks so first navigation is instant
-      preloadCode(`${base}/canvas`).catch(() => {});
-      preloadCode(`${base}/map`).catch(() => {});
+      preloadCode("/(app)/canvas").catch(() => {});
 
+      preloadCode("/(app)/map").catch(() => {});
       serviceWorkerSession = registerServiceWorker();
       serviceWorkerSession.setVaultSessionActive(isVaultCacheSessionActive());
 
@@ -427,10 +431,10 @@
 
     const [{ canvasRegistry }, { graph }, { oracle }, { calendarStore }] =
       await Promise.all([
-        import("$lib/stores/canvas-registry.svelte"),
-        import("$lib/stores/graph.svelte"),
-        import("$lib/stores/oracle.svelte"),
-        import("$lib/stores/calendar.svelte"),
+        import("#lib/stores/canvas-registry.svelte.js"),
+        import("#lib/stores/graph.svelte.js"),
+        import("#lib/stores/oracle.svelte.js"),
+        import("#lib/stores/calendar.svelte.js"),
       ]);
 
     return { canvasRegistry, graph, oracle, calendarStore };
@@ -650,7 +654,7 @@
 <svelte:window onkeydown={handleKeydown} />
 <svelte:document
   onvisibilitychange={() => (isDocumentVisible = !document.hidden)}
-/>
+></svelte:document>
 <svelte:head>
   <title>Codex Cryptica | AI RPG Campaign Manager</title>
   <meta

@@ -5,8 +5,8 @@ vi.mock("$app/environment", () => ({
 }));
 
 import { HelpStore } from "./help.svelte";
-import { HELP_ARTICLES } from "$lib/config/help-content";
-import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+import { HELP_ARTICLES } from "#lib/config/help-content.js";
+import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
 
 describe("HelpStore", () => {
   let mockStorage: any;

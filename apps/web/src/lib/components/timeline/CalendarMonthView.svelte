@@ -5,11 +5,11 @@
   } from "chronology-engine";
   import { calendarEngine } from "chronology-engine";
   import CalendarDayOverflow from "./CalendarDayOverflow.svelte";
-  import GraphTooltip from "$lib/components/graph/GraphTooltip.svelte";
-  import { calendarStore } from "$lib/stores/calendar.svelte";
-  import { vault } from "$lib/stores/vault.svelte";
+  import GraphTooltip from "#lib/components/graph/GraphTooltip.svelte";
+  import { calendarStore } from "#lib/stores/calendar.svelte.js";
+  import { vault } from "#lib/stores/vault.svelte.js";
   import { onDestroy } from "svelte";
-  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
   import { createEntryClickHandlers } from "./entry-click";
 
   const CELL_DBLCLICK_DELAY = 260;

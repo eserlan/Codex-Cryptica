@@ -19,7 +19,7 @@ import {
   browserSessionStorage,
   browserStorage,
   type StorageLike,
-} from "$lib/utils/runtime-deps";
+} from "#lib/utils/runtime-deps.js";
 import {
   classifyAiReferral,
   type AiReferralProvider,

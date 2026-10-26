@@ -2,7 +2,7 @@
   import {
     sessionJournalStore,
     type SessionJournalStore,
-  } from "$lib/stores/session-journal.svelte";
+  } from "#lib/stores/session-journal.svelte.js";
   import { tick } from "svelte";
   import type {
     JournalEntry,
@@ -12,10 +12,10 @@
   import {
     sessionJournalPromoter,
     type SessionJournalPromoter,
-  } from "$lib/stores/session-journal-promoter";
+  } from "#lib/stores/session-journal-promoter.js";
   import JournalComposer from "./JournalComposer.svelte";
   import { entriesInSection, sectionIsGone } from "session-journal-engine";
-  import { quickNoteStore } from "$lib/stores/quicknote.svelte";
+  import { quickNoteStore } from "#lib/stores/quicknote.svelte.js";
   import JournalEntryRow from "./JournalEntryRow.svelte";
   import JournalPromoteActions from "./JournalPromoteActions.svelte";
   import JournalPromoteToggle from "./JournalPromoteToggle.svelte";
@@ -23,7 +23,7 @@
   import JournalHeader from "./JournalHeader.svelte";
   import JournalStartScreen from "./JournalStartScreen.svelte";
   import { JournalPromotionState } from "./journal-promotion.svelte";
-  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
 
   /**
    * Session Journal (#3402 slice 1, #3406): a persistent, chronological

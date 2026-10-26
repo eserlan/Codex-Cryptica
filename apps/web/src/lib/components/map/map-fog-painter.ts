@@ -6,7 +6,7 @@ import {
   getActiveHexConfig,
 } from "./hex-fog-stroke";
 import { hexToPoint, pointToHex, type HexCoord } from "map-engine";
-import type { GridType } from "$lib/stores/map.svelte";
+import type { GridType } from "#lib/stores/map.svelte.js";
 import { MaskUndoRecorder } from "./mask-undo-recorder";
 
 export interface MapFogPainterDeps {

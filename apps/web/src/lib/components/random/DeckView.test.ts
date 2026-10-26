@@ -16,14 +16,14 @@ const { openLightbox } = vi.hoisted(() => ({ openLightbox: vi.fn() }));
 // and opens pictures through the app's shared lightbox store; both are
 // reached for by module path rather than passed as props, so they need
 // mocking here the way every other test touching them does.
-vi.mock("$lib/stores/vault.svelte", () => ({
+vi.mock("#lib/stores/vault.svelte.js", () => ({
   vault: {
     resolveImageUrl: vi.fn(async (path: string) => `blob:${path}`),
     releaseImageUrl: vi.fn(),
   },
 }));
 
-vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
+vi.mock("#lib/stores/ui/modal-ui.svelte.js", () => ({
   modalUIStore: { openLightbox },
 }));
 
@@ -31,7 +31,7 @@ import DeckView from "./DeckView.svelte";
 import {
   clearOracleChatDraft,
   getOracleChatDraft,
-} from "$lib/components/oracle/oracle-chat-input";
+} from "#lib/components/oracle/oracle-chat-input.js";
 
 if (typeof Element !== "undefined" && !Element.prototype.animate) {
   Element.prototype.animate = () =>

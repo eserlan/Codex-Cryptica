@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { base } from "$app/paths";
+  import { resolve } from "$app/paths";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
@@ -134,15 +134,15 @@
     },
     {
       q: "Can AI help with campaign prep without taking over?",
-      a: `Yes. You direct the Lore Oracle to fill templates, revise existing entries, or generate related entity suggestions. Every result lands in a sandbox draft. Nothing enters your saved lore without your explicit approval. Read more in <a href="${base}/blog/ai-campaign-prep-without-losing-your-voice" class="text-theme-primary hover:underline">Six Ways to Use AI in Campaign Prep Without Losing Your Voice</a>.`,
+      a: `Yes. You direct the Lore Oracle to fill templates, revise existing entries, or generate related entity suggestions. Every result lands in a sandbox draft. Nothing enters your saved lore without your explicit approval. Read more in <a href="${resolve("")}/blog/ai-campaign-prep-without-losing-your-voice" class="text-theme-primary hover:underline">Six Ways to Use AI in Campaign Prep Without Losing Your Voice</a>.`,
     },
     {
       q: "How does Codex keep AI drafts out of canon?",
-      a: `Codex separates AI drafts from saved files at an architectural level. Generated content lives in a temporary review state. You choose what to accept, edit, or discard. The AI cannot silently write to your vault. See <a href="${base}/blog/drafts-are-not-canon" class="text-theme-primary hover:underline">Drafts Are Not Canon</a> for the full explanation.`,
+      a: `Codex separates AI drafts from saved files at an architectural level. Generated content lives in a temporary review state. You choose what to accept, edit, or discard. The AI cannot silently write to your vault. See <a href="${resolve("")}/blog/drafts-are-not-canon" class="text-theme-primary hover:underline">Drafts Are Not Canon</a> for the full explanation.`,
     },
     {
       q: "Can I use Codex Cryptica without AI?",
-      a: `Completely. The lore library, chronological timeline, interactive lore graph, entity templates, and local vault are all fully functional with AI switched off. AI is a layer on top of a working campaign manager, not a requirement for it. See <a href="${base}/blog/worldbuilding-tool-without-ai" class="text-theme-primary hover:underline">A Worldbuilding Tool Should Still Work Without AI</a>.`,
+      a: `Completely. The lore library, chronological timeline, interactive lore graph, entity templates, and local vault are all fully functional with AI switched off. AI is a layer on top of a working campaign manager, not a requirement for it. See <a href="${resolve("")}/blog/worldbuilding-tool-without-ai" class="text-theme-primary hover:underline">A Worldbuilding Tool Should Still Work Without AI</a>.`,
     },
     {
       q: "What does vault-aware AI mean?",
@@ -150,7 +150,7 @@
     },
     {
       q: "What is the difference between context and memory?",
-      a: `Context is what you explicitly pass to the AI for a single query: the entity you are editing, the notes you have selected. Memory is persistent state across sessions. Codex uses context from your structured vault (frontmatter, linked entities, timelines) rather than relying on an opaque memory layer that can drift or hallucinate. Read more in <a href="${base}/blog/ai-slop-is-context-failure" class="text-theme-primary hover:underline">AI Slop Happens When the Tool Has No Memory</a>.`,
+      a: `Context is what you explicitly pass to the AI for a single query: the entity you are editing, the notes you have selected. Memory is persistent state across sessions. Codex uses context from your structured vault (frontmatter, linked entities, timelines) rather than relying on an opaque memory layer that can drift or hallucinate. Read more in <a href="${resolve("")}/blog/ai-slop-is-context-failure" class="text-theme-primary hover:underline">AI Slop Happens When the Tool Has No Memory</a>.`,
     },
     {
       q: "Can the Lore Oracle read my whole vault?",
@@ -418,6 +418,7 @@
           >
             <div class="flex items-center justify-between mb-4">
               <span class="{principle.icon} text-theme-primary w-6 h-6"></span>
+
               <span
                 class="text-micro font-mono font-bold text-theme-muted uppercase tracking-widest"
                 >Part {principle.step}</span
@@ -438,7 +439,7 @@
               class="mt-auto pt-4 border-t border-theme-border/30 flex items-center justify-between"
             >
               <a
-                href="{base}/blog/{principle.slug}"
+                href="{resolve('')}/blog/{principle.slug}"
                 class="inline-flex items-center gap-1.5 text-micro font-bold text-theme-primary hover:text-theme-text transition-colors group font-header"
               >
                 Read Article
@@ -505,14 +506,16 @@
       </p>
       <div class="flex flex-wrap justify-center gap-4">
         <a
-          href="{base}/?utm_source=ra-pillar-footer&utm_medium=footer-cta&utm_campaign=seo-funnel"
+          href="{resolve(
+            '',
+          )}/?utm_source=ra-pillar-footer&utm_medium=footer-cta&utm_campaign=seo-funnel"
           class="px-8 py-3.5 bg-theme-primary text-theme-bg font-bold text-xs rounded-xl shadow-lg hover:brightness-110 active:scale-95 transition-all"
           id="footer-cta-btn"
         >
           Launch Codex Cryptica
         </a>
         <a
-          href="{base}/blog"
+          href="{resolve('')}/blog"
           class="px-8 py-3.5 border border-theme-border hover:border-theme-primary/60 text-theme-text font-bold text-xs rounded-xl transition-all"
         >
           Explore All Devlogs

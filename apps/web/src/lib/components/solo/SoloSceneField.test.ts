@@ -10,7 +10,7 @@ const env = vi.hoisted(() => ({
     renameScene: vi.fn(async (_name: string) => true),
   },
 }));
-vi.mock("$lib/stores/solo-session-instance", () => ({
+vi.mock("#lib/stores/solo-session-instance.js", () => ({
   soloSessionStore: env.store,
 }));
 

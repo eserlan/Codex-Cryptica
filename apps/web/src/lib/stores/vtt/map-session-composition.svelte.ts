@@ -12,9 +12,9 @@ import { VTTSessionLifecycleManager } from "./vtt-session-lifecycle-manager.svel
 import { VTTSessionSnapshotManager } from "./vtt-session-snapshot-manager";
 import { VTTTokenManager } from "./vtt-token-manager.svelte";
 import { VTTTileDeckManager } from "./vtt-tile-deck-manager.svelte";
-import type { VTTSessionService } from "$lib/services/vtt-session";
-import { randomSources } from "$lib/features/random";
-import { notificationStore } from "$lib/stores/ui/notification.svelte";
+import type { VTTSessionService } from "#lib/services/vtt-session.js";
+import { randomSources } from "#lib/features/random/index.js";
+import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
 import type { EncounterSession } from "../../../types/vtt";
 
 function initializeStorageEffects(store: MapSessionStore) {

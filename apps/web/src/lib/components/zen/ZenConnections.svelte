@@ -1,6 +1,6 @@
 <script lang="ts">
-  import ConnectionCreator from "$lib/components/connections/ConnectionCreator.svelte";
-  import { vault } from "$lib/stores/vault.svelte";
+  import ConnectionCreator from "#lib/components/connections/ConnectionCreator.svelte";
+  import { vault } from "#lib/stores/vault.svelte.js";
   import type { Entity } from "schema";
   import ZenConnectionRow from "./ZenConnectionRow.svelte";
   import {

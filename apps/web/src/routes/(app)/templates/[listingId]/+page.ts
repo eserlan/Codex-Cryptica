@@ -1,6 +1,6 @@
 import { redirect } from "@sveltejs/kit";
 import { resolve } from "$app/paths";
-import { publicEntityTemplateDirectoryService } from "$lib/services/publishing/PublicEntityTemplateDirectoryService";
+import { publicEntityTemplateDirectoryService } from "#lib/services/publishing/PublicEntityTemplateDirectoryService.js";
 
 export const ssr = false;
 

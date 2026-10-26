@@ -1,7 +1,7 @@
 import { appEventBus } from "@codex/events";
 import { ORACLE_EVENTS } from "@codex/oracle-engine";
-import { notificationStore } from "$lib/stores/ui/notification.svelte";
-import { debugStore } from "$lib/stores/debug.svelte";
+import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
+import { debugStore } from "#lib/stores/debug.svelte.js";
 
 /**
  * Initializes global event listeners for Oracle actions.

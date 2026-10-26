@@ -1,5 +1,5 @@
 <script lang="ts" module>
-  import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
+  import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
 
   /** Whether a result needs telling the user AI didn't fully deliver it. */
   export function hasAiNotice(data: GeneratorOutput | null): boolean {

@@ -2,7 +2,7 @@ import type { Entity, Connection } from "schema";
 import { sanitizeId } from "../../utils/markdown";
 import type { LocalEntity, BatchCreateInput } from "./types";
 import { deleteOpfsEntry } from "../../utils/opfs";
-import { systemClock } from "$lib/utils/runtime-deps";
+import { systemClock } from "#lib/utils/runtime-deps.js";
 
 /**
  * ENTITY MUTATION GUARDRAIL:

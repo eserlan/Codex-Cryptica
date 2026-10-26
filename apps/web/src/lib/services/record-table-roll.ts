@@ -1,8 +1,8 @@
 import type { RandomSource, RollOutcome } from "random-source-engine";
 import type { RollResult } from "dice-engine";
 import { dieFormula } from "random-source-engine";
-import type { diceHistory as DiceHistory } from "$lib/stores/dice-history.svelte";
-import type { Clock } from "$lib/utils/runtime-deps";
+import type { diceHistory as DiceHistory } from "#lib/stores/dice-history.svelte.js";
+import type { Clock } from "#lib/utils/runtime-deps.js";
 
 type History = Pick<typeof DiceHistory, "addResult">;
 

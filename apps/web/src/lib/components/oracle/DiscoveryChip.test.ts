@@ -29,23 +29,23 @@ const { mockVault, mockOracle, mockFocusEntity } = vi.hoisted(() => ({
   mockFocusEntity: vi.fn(),
 }));
 
-vi.mock("$lib/stores/vault.svelte", () => ({
+vi.mock("#lib/stores/vault.svelte.js", () => ({
   vault: mockVault,
 }));
 
-vi.mock("$lib/stores/oracle.svelte", () => ({
+vi.mock("#lib/stores/oracle.svelte.js", () => ({
   oracle: mockOracle,
 }));
 
-vi.mock("$lib/components/search/search-focus", () => ({
+vi.mock("#lib/components/search/search-focus.js", () => ({
   DEFAULT_SEARCH_ENTITY_ZOOM: 2,
   dispatchSearchEntityFocus: mockFocusEntity,
 }));
 
 import DiscoveryChip from "./DiscoveryChip.svelte";
-import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
-import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
-import { notificationStore } from "$lib/stores/ui/notification.svelte";
+import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
+import { discoveryPolicyStore } from "#lib/stores/ui/discovery-policy.svelte.js";
+import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
 
 describe("DiscoveryChip", () => {
   beforeEach(() => {

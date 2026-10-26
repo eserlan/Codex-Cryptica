@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { base } from "$app/paths";
-  import { publishingService } from "$lib/services/publishing/PublishingService.svelte";
-  import { vault } from "$lib/stores/vault.svelte";
-  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { resolve } from "$app/paths";
+  import { publishingService } from "#lib/services/publishing/PublishingService.svelte.js";
+  import { vault } from "#lib/stores/vault.svelte.js";
+  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
   import PublishPreviewModal from "./PublishPreviewModal.svelte";
   import PublishingDashboard from "./PublishingDashboard.svelte";
   import PublicListingSettings from "./PublicListingSettings.svelte";
@@ -82,6 +82,7 @@
         >
           Player-Safe Snapshot Hosting
         </h3>
+
         <p class="text-sm text-theme-text/80 leading-relaxed mt-2">
           Publishing compiles a read-only snapshot of your campaign, cleans all
           GM secrets (lore and art direction fields), redacts private links, and
@@ -142,8 +143,10 @@
           >Public Listing</span
         >
         <p class="text-xs text-theme-text/50">
-          Opt-in below to also list this world in <a
-            href="{base}/worlds"
+          Opt-in below to also list this world in
+
+          <a
+            href="{resolve('')}/worlds"
             class="underline hover:text-theme-primary transition-colors"
             >Explore Worlds</a
           > for anyone to discover.

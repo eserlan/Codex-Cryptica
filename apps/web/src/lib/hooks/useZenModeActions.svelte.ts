@@ -1,11 +1,11 @@
-import { vault as defaultVault } from "$lib/stores/vault.svelte";
-import { base } from "$app/paths";
-import { openEntityPopout } from "$lib/utils/zen-popout";
+import { vault as defaultVault } from "#lib/stores/vault.svelte.js";
+import { resolve } from "$app/paths";
+import { openEntityPopout } from "#lib/utils/zen-popout.js";
 import type { Entity } from "schema";
-import { notificationStore } from "$lib/stores/ui/notification.svelte";
-import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
-import { focusEntity } from "$lib/stores/ui/navigation";
+import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
+import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+import { layoutUIStore } from "#lib/stores/ui/layout-ui.svelte.js";
+import { focusEntity } from "#lib/stores/ui/navigation.js";
 
 export interface ZenModeActionsDependencies {
   vault?: typeof defaultVault;
@@ -118,7 +118,7 @@ export function createZenModeActions(
     openEntityPopout(
       vault.activeVaultId ?? "guest",
       entityForPopout,
-      base,
+      resolve(""),
       vault.isGuest,
     );
 

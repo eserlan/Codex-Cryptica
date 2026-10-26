@@ -3,7 +3,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, within } from "@testing-library/svelte";
 import BiomeCompare from "./BiomeCompare.svelte";
-import { makeStore } from "$lib/stores/biome-explorer.test-helpers";
+import { makeStore } from "#lib/stores/biome-explorer.test-helpers.js";
 
 function setup(ids: string[]) {
   const made = makeStore();

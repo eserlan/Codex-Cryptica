@@ -28,7 +28,7 @@ import { pickDirectory } from "../../utils/fs";
 import { convertToWebP, generateThumbnail } from "../../utils/image-processing";
 import { DEFAULT_ENTITY_TYPE } from "schema";
 import type { LocalEntity } from "./types";
-import { notificationStore } from "$lib/stores/ui/notification.svelte";
+import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
 
 export const fileIOAdapter: IFileIOAdapter = {
   walkDirectory: walkOpfsDirectory as any,

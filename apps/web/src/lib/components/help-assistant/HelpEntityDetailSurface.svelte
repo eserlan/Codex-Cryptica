@@ -1,8 +1,8 @@
 <script lang="ts">
   import type { Entity } from "schema";
-  import { vault } from "$lib/stores/vault.svelte";
-  import { helpSurfaces } from "$lib/stores/help-assistant/help-surface.svelte";
-  import type { EntityDetailTab } from "$lib/components/entity-detail/detail-tabs";
+  import { vault } from "#lib/stores/vault.svelte.js";
+  import { helpSurfaces } from "#lib/stores/help-assistant/help-surface.svelte.js";
+  import type { EntityDetailTab } from "#lib/components/entity-detail/detail-tabs.js";
 
   /**
    * Renderless. Tells the help assistant which entry kind and tab are showing

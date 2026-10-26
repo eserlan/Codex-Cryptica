@@ -14,7 +14,10 @@
     toRanged,
     toWeighted,
   } from "random-source-engine";
-  import { systemIdGenerator, type IdGenerator } from "$lib/utils/runtime-deps";
+  import {
+    systemIdGenerator,
+    type IdGenerator,
+  } from "#lib/utils/runtime-deps.js";
   import { computeWindow } from "./virtual-window";
   import SourceIdentityFields from "./SourceIdentityFields.svelte";
   import TableRoller from "./TableRoller.svelte";

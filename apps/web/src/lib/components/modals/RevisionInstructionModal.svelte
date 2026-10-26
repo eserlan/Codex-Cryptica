@@ -1,9 +1,9 @@
 <script lang="ts">
   import { tick } from "svelte";
-  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-  import { revisionService } from "$lib/services/RevisionService.svelte";
-  import { vault } from "$lib/stores/vault.svelte";
-  import ModalShell from "$lib/components/ui/ModalShell.svelte";
+  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+  import { revisionService } from "#lib/services/RevisionService.svelte.js";
+  import { vault } from "#lib/stores/vault.svelte.js";
+  import ModalShell from "#lib/components/ui/ModalShell.svelte";
 
   const dialog = $derived(modalUIStore.revisionDialog);
   const entityId = $derived(dialog.entityId);

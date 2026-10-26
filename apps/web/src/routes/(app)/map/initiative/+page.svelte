@@ -1,5 +1,5 @@
 <script lang="ts">
-  import InitiativePanel from "$lib/components/vtt/InitiativePanel.svelte";
+  import InitiativePanel from "#lib/components/vtt/InitiativePanel.svelte";
 </script>
 
 <svelte:head>
