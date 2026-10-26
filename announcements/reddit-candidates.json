@@ -1,16 +1,6 @@
 {
-  "updated_at": 1792963482,
+  "updated_at": 1792997773,
   "candidates": [
-    {
-      "id": "reddit-39726577159-two-quick-references-for-new-d-d-players",
-      "title": "Two quick references for new D&D players: your turn and your dice",
-      "body": "New players at my table kept asking \"can I move and attack?\" and then hunting the book for which die to pick up. The turn stalled before it started.\n\nI built two beginner pages that answer the two most common freeze ups in plain language, so you can act without flipping the rulebook mid turn.\n\nStart with what you can do on your turn: https://codexcryptica.com/answers/what-can-i-do-on-my-turn-in-dnd-combat\n\n- action, bonus action, movement and reaction in one glance\n- what you can do if you do not want to attack\n- companion guide on which dice to roll and when at https://codexcryptica.com/answers/which-dice-do-i-roll-in-dnd-and-when\n- when to roll a d20, when to roll damage, and what advantage actually changes\n- plain examples instead of rules citations\n\nQuick references speed up play but they trim edge cases like ready action timing. I kept it to the 90 percent case and linked out where the book matters.\n\nWhat rule did your newest player get stuck on longest in their first combat, movement or dice choice?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-39726577159-3.png)",
-      "url": "https://codexcryptica.com/answers/what-can-i-do-on-my-turn-in-dnd-combat",
-      "image_url": "https://assets.codexcryptica.com/announcements/release-39726577159-3.png",
-      "source_id": "39726577159",
-      "status": "approved",
-      "created_at": 1792651884
-    },
     {
       "id": "reddit-39855478849-a-mystery-case-you-can-actually-run-with",
       "title": "A mystery case you can actually run without patching it mid-session",
