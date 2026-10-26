@@ -14,7 +14,10 @@ export function classifyApiError(err: unknown): ClassifiedError {
     };
   }
   const msg = err instanceof Error ? err.message : String(err);
-  if (/\(code: SESSION_TOKEN_(MISSING|INVALID|EXPIRED)\)/.test(msg)) {
+  if (
+    /\(code: SESSION_TOKEN_(MISSING|INVALID|EXPIRED)\)/.test(msg) ||
+    /Verification (failed|timed out|expired)/i.test(msg)
+  ) {
     // The proxy never received (or rejected) our anti-abuse capability
     // token. In practice this almost always means the invisible Turnstile
     // challenge that mints it never completed — most often because an ad

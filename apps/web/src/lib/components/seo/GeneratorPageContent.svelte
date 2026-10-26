@@ -230,8 +230,15 @@
     }
   }
 
-  onMount(() =>
-    mountGeneratorPage({
+  onMount(() => {
+    // Warm up the capability session on generator pages so the invisible
+    // challenge solves in the background while the user reads the page/options,
+    // avoiding on-click freezes or latency.
+    void import("#lib/services/ai/session-bootstrap.js").then((m) =>
+      m.initAiSessionEager(),
+    );
+
+    return mountGeneratorPage({
       slug,
       hubTheme: hubContext.theme,
       urlHubTheme,
@@ -240,8 +247,8 @@
       forms,
       setActiveTheme,
       applyWorldHandoff: applyPendingDevelopWorld,
-    }),
-  );
+    });
+  });
 
   const loadRemixDraft = createGeneratorRemixLoader({
     getShared: (id) => generatorShareService.get(id),

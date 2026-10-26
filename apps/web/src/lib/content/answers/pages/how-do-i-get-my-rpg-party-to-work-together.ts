@@ -176,6 +176,7 @@ export const howDoIGetMyRpgPartyToWorkTogether: AnswerConfigInput = {
     "how-do-i-run-a-bard-or-face-without-sidelining-the-party",
     "how-do-i-get-my-friends-interested-in-playing-dnd",
     "how-do-i-encourage-party-bonding-during-downtime",
+    "does-an-rpg-party-need-balanced-roles",
   ],
   discovery: {
     id: "answer-party-cohesion",

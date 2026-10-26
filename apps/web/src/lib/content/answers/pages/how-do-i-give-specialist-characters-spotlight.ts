@@ -167,6 +167,7 @@ export const howDoIGiveSpecialistCharactersSpotlight: AnswerConfigInput = {
     "how-do-i-run-a-bard-or-face-without-sidelining-the-party",
     "how-do-i-make-roleplay-more-engaging",
     "how-do-i-run-a-stealth-mission-in-a-tabletop-rpg",
+    "does-an-rpg-party-need-balanced-roles",
   ],
   discovery: {
     id: "answer-specialist-character-spotlight",

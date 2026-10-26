@@ -90,6 +90,13 @@ describe("classifyApiError", () => {
         ),
       ).type,
     ).toBe("verification");
+    expect(
+      classifyApiError(
+        new Error(
+          "Verification failed (code: 600010). Please try generating again.",
+        ),
+      ).type,
+    ).toBe("verification");
   });
 
   it("returns unknown for generic errors with a generic message", () => {
