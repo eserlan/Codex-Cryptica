@@ -81,6 +81,19 @@ export function filterAnswerPageFiles(files, root = process.cwd()) {
   });
 }
 
+/** Changed components and modules that the UI pattern checker should inspect. */
+export function filterUiPatternFiles(files, root = process.cwd()) {
+  return files.filter((file) => {
+    const normalized = file.replace(/\\/g, "/");
+    return (
+      /^(apps|packages)\//.test(normalized) &&
+      /\.(svelte|ts)$/.test(normalized) &&
+      !/\.(test|spec)\.ts$/.test(normalized) &&
+      existsSync(resolve(root, normalized))
+    );
+  });
+}
+
 const CONTENT_PREFIXES = [
   "apps/web/src/lib/content/answers/",
   "apps/web/src/lib/content/for/",
@@ -266,6 +279,27 @@ export function runLintChanged({
     } catch {
       success = false;
       console.error("❌ Answer editorial check failed.");
+    }
+  }
+
+  const uiFiles = filterUiPatternFiles(changedFiles, cwd);
+  if (uiFiles.length > 0) {
+    const uiBase = base ?? resolveGitBase(cwd);
+    try {
+      console.log(`\n🎨 Checking UI patterns on ${uiFiles.length} file(s)...`);
+      execFileSync(
+        "bun",
+        [
+          "scripts/check-ui-patterns.mjs",
+          ...(uiBase ? ["--base", uiBase] : []),
+          "--files",
+          ...uiFiles,
+        ],
+        { cwd, stdio: "inherit" },
+      );
+    } catch {
+      success = false;
+      console.error("❌ UI pattern check failed.");
     }
   }
 

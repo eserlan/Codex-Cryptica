@@ -71,7 +71,7 @@
   aria-labelledby="morzan-diagram-title"
   data-testid="point-crawl-morzan-diagram"
 >
-  <div class="mb-3 flex items-center justify-between text-xs text-theme-muted">
+  <div class="mb-3 flex items-center justify-between text-xs text-theme-text">
     <div class="flex items-center gap-2">
       <span
         class="icon-[lucide--map] h-4 w-4 text-theme-primary"
@@ -81,11 +81,10 @@
         >Network Map</span
       >
     </div>
-    <span class="hidden sm:inline-block font-mono text-xs text-theme-muted">
+    <span class="hidden sm:inline-block font-mono text-xs text-theme-text">
       6 Nodes • 7 Links • 2 Approaches to Crypt
     </span>
-    <span class="sm:hidden font-mono text-xs text-theme-muted"
-      >Scroll map →</span
+    <span class="sm:hidden font-mono text-xs text-theme-text">Scroll map →</span
     >
   </div>
 
@@ -642,7 +641,7 @@
 
   <!-- Legend -->
   <div
-    class="mt-4 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 border-t border-theme-border/60 pt-3 text-xs text-theme-muted"
+    class="mt-4 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 border-t border-theme-border/60 pt-3 text-xs text-theme-text"
     aria-label="Map Legend"
   >
     <div class="inline-flex items-center gap-1.5">
@@ -661,14 +660,14 @@
         class="h-0.5 w-4 border-b-2 border-dashed border-theme-primary"
         aria-hidden="true"
       ></span>
-      <span class="text-theme-primary">Hidden track (Unseen)</span>
+      <span class="text-theme-text">Hidden track (Unseen)</span>
     </div>
     <div class="inline-flex items-center gap-1.5">
       <span class="text-amber-400 font-bold" aria-hidden="true">⚠</span>
       <span class="text-theme-text">Exposed hazard (Alerts sentries)</span>
     </div>
     <div class="inline-flex items-center gap-1.5">
-      <span class="text-theme-primary font-bold" aria-hidden="true">⮂</span>
+      <span class="text-theme-text font-bold" aria-hidden="true">⮂</span>
       <span>Road loop</span>
     </div>
   </div>
@@ -678,7 +677,7 @@
     class="group mt-4 rounded border border-theme-border/60 bg-theme-bg/40 text-xs"
   >
     <summary
-      class="flex cursor-pointer list-none items-center gap-2 px-3 py-2 font-mono text-theme-muted transition-colors hover:text-theme-primary focus-visible:outline-2 focus-visible:outline-theme-accent"
+      class="flex cursor-pointer list-none items-center gap-2 px-3 py-2 font-mono text-theme-text transition-colors hover:text-theme-primary focus-visible:outline-2 focus-visible:outline-theme-accent"
     >
       <span
         class="icon-[lucide--chevron-right] h-3.5 w-3.5 transition-transform group-open:rotate-90"
@@ -701,14 +700,14 @@
             <th scope="col" class="py-1.5">Trade-off / Consequences</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-theme-border/40 text-theme-muted">
+        <tbody class="divide-y divide-theme-border/40 text-theme-text">
           {#each routes as r}
             <tr>
               <th scope="row" class="py-2 pr-3 font-semibold text-theme-text"
                 >{r.from}</th
               >
               <td class="py-2 pr-3 text-theme-text">{r.to}</td>
-              <td class="py-2 pr-3 font-mono text-theme-primary">{r.time}</td>
+              <td class="py-2 pr-3 font-mono text-theme-text">{r.time}</td>
               <td class="py-2 pr-3">{r.type}</td>
               <td class="py-2">{r.hazard}</td>
             </tr>
@@ -727,14 +726,14 @@
       <p class="font-header font-bold text-theme-text">
         Plan your own point crawl map
       </p>
-      <p class="text-xs text-theme-muted">
+      <p class="text-xs text-theme-text">
         Generate custom regional networks with travel times, hidden paths, and
         hazard trade-offs.
       </p>
     </div>
     <a
       href="{cleanBase}/generators/point-crawl"
-      class="inline-flex shrink-0 items-center gap-2 border border-theme-primary bg-theme-primary/10 px-4 py-2 font-header text-xs font-bold text-theme-primary transition-colors hover:bg-theme-primary hover:text-theme-on-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-accent"
+      class="inline-flex shrink-0 items-center gap-2 border border-theme-primary bg-theme-primary/10 px-4 py-2 font-header text-xs font-bold text-theme-text transition-colors hover:bg-theme-primary hover:text-theme-on-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-accent"
       use:trackDiscoveryClick={{
         sourceKind: "answer",
         sourceId: "how-do-you-build-a-point-crawl-for-an-rpg",
