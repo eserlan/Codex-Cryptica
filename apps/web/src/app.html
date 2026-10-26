@@ -11,8 +11,9 @@
       // Stale-build recovery: an edge-cached page can outlive the deploy whose
       // /_app/immutable/ chunks it references. When one of those fails to load
       // the app never hydrates, so reload once with a cache-busting parameter.
-      // Must run before %sveltekit.head% emits the modulepreload links. The root
-      // layout disarms it on mount; after that hooks.client.ts handles skew.
+      // Must run before SvelteKit's head output emits the modulepreload links
+      // (never name its placeholder here: SvelteKit fills only the first one).
+      // The root layout disarms it on mount; then hooks.client.ts handles skew.
       (function (w) {
         var KEY = "__cc_reload";
         try {
