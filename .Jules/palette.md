@@ -232,3 +232,8 @@
 
 **Learning:** When filter chips or selection cards act as toggle buttons (e.g. Genre chips, Category chips, Palette selectors, and Silhouette cards), adding `aria-pressed={isActive}` correctly communicates the pressed/selected state to screen readers, improving the accessibility of custom interactive elements.
 **Action:** Always add `aria-pressed={isActive}` or `aria-pressed={isSelected}` to toggle-like buttons or selection cards.
+
+## 2026-10-26 - [Always explicitly hide decorative icons from screen readers]
+
+**Learning:** Found several visually decorative icons inside buttons and toggles across the web app that lacked 'aria-hidden="true"'. These elements disrupt screen reader flow by announcing redundant or confusing class names alongside the visible label text.
+**Action:** Whenever adding or maintaining buttons, links, or toggles that contain decorative icons alongside textual labels, ensure the inner icon element explicitly includes 'aria-hidden="true"'.
