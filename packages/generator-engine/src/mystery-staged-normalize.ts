@@ -6,29 +6,23 @@ type Obj = JsonObject;
 const isRecord = (value: unknown): value is Obj =>
   !!value && typeof value === "object" && !Array.isArray(value);
 
+/** Flattens each value and joins the non-empty results, without an intermediate map/filter array. */
+function joinFlattened(values: Iterable<unknown>, separator: string): string {
+  const parts: string[] = [];
+  for (const item of values) {
+    const flat = flattenText(item);
+    if (flat) parts.push(flat);
+  }
+  return parts.join(separator);
+}
+
 /** Flatten a string, list or object into one readable string. */
 export function flattenText(value: unknown): string {
   if (typeof value === "string") return value;
   if (typeof value === "number" || typeof value === "boolean")
     return String(value);
-  if (Array.isArray(value)) {
-    const result: string[] = [];
-    for (const item of value) {
-      const flat = flattenText(item);
-      if (flat) result.push(flat);
-    }
-    return result.join("; ");
-  }
-  if (isRecord(value)) {
-    const result: string[] = [];
-    for (const key in value) {
-      if (Object.prototype.hasOwnProperty.call(value, key)) {
-        const flat = flattenText(value[key]);
-        if (flat) result.push(flat);
-      }
-    }
-    return result.join(" — ");
-  }
+  if (Array.isArray(value)) return joinFlattened(value, "; ");
+  if (isRecord(value)) return joinFlattened(Object.values(value), " — ");
   return "";
 }
 
