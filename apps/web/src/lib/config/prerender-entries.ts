@@ -1,4 +1,9 @@
 export const PRERENDER_ENTRIES = [
+  // Every parameterless route with `prerender = true`. Without it, a page is
+  // only built if the crawler reaches it from a listed entry, and
+  // `handleUnseenRoutes: "ignore"` drops the rest silently (production
+  // lost /changelog, /for, /topics/* and more after the SvelteKit 3 move).
+  "*",
   "/",
   "/help",
   "/features",
