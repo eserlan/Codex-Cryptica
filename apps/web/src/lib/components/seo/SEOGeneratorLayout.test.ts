@@ -147,6 +147,34 @@ describe("SEOGeneratorLayout Theming Sync", () => {
     expect(screen.getByText("Applies to the write-up only.")).toBeTruthy();
   });
 
+  it("labels the folded example as 'See example names with notes' when variant is names", () => {
+    const outputLead = createRawSnippet(() => ({
+      render: () => "<p>Quick names</p>",
+    }));
+    render(SEOGeneratorLayout, {
+      props: {
+        generate: vi.fn(),
+        formFields: noopSnippet,
+        outputLead,
+        variant: "names",
+        initialDraft: {
+          type: "character",
+          title: "Sample names",
+          content: "- **Ael**: x",
+          lore: "",
+          labels: [],
+          status: "draft",
+        },
+      },
+    });
+
+    const details = screen
+      .getByText("See example names with notes")
+      .closest("details")!;
+    expect(details.open).toBe(false);
+    expect(screen.queryByText("See an example write-up")).toBeNull();
+  });
+
   it("places the lead controls before the form in the mobile keyboard order", async () => {
     vi.stubGlobal(
       "matchMedia",
