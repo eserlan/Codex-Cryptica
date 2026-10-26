@@ -42,18 +42,18 @@ const { updateEntity, setDefaultPresentationTemplate, templatesForSchema } =
     ],
   }));
 
-vi.mock("$lib/stores/vault.svelte", () => ({
+vi.mock("#lib/stores/vault.svelte.js", () => ({
   vault: { isGuest: false, updateEntity },
 }));
 
-vi.mock("$lib/stores/stat-sheet-templates.svelte", () => ({
+vi.mock("#lib/stores/stat-sheet-templates.svelte.js", () => ({
   statSheetTemplates: {
     getDefaultPresentationTemplateId: () => null,
     setDefaultPresentationTemplate,
   },
 }));
 
-vi.mock("$lib/stores/presentation-templates.svelte", () => ({
+vi.mock("#lib/stores/presentation-templates.svelte.js", () => ({
   presentationTemplates: {
     availableTemplatesForSchema: (schemaId: string) =>
       templatesForSchema.filter((t) => t.schemaTemplateId === schemaId),

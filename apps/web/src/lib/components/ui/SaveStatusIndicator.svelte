@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { vault as defaultVault } from "$lib/stores/vault.svelte";
+  import { vault as defaultVault } from "#lib/stores/vault.svelte.js";
   import { fade } from "svelte/transition";
 
   let {
@@ -7,13 +7,13 @@
     status: explicitStatus,
     errorMessage: explicitErrorMessage,
     class: className = "",
-  } = $props<{
+  }: {
     vault?: typeof defaultVault;
     status?:
       "idle" | "loading" | "saving" | "saved" | "needs-permission" | "error";
     errorMessage?: string | null;
     class?: string;
-  }>();
+  } = $props();
 
   const currentStatus = $derived(explicitStatus ?? vault.status);
   const currentErrorMessage = $derived(

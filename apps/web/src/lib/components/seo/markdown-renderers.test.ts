@@ -43,6 +43,15 @@ describe("labelValueHtml", () => {
     expect(result).toContain("Title");
     expect(result).toContain("Value");
   });
+
+  it("names each name's copy button for screen readers, escaped", () => {
+    expect(labelValueHtml("Aelar", "Value", "names")).toContain(
+      'aria-label="Copy Aelar"',
+    );
+    expect(labelValueHtml('Vex "the Red"', "Value", "names")).toContain(
+      'aria-label="Copy Vex &quot;the Red&quot;"',
+    );
+  });
 });
 
 describe("renderGeneratorMarkdown", () => {

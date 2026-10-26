@@ -4,7 +4,7 @@ import { render, screen, fireEvent } from "@testing-library/svelte";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import Autocomplete from "./Autocomplete.svelte";
 import { searchService } from "@codex/search-orchestrator";
-import { vault } from "$lib/stores/vault.svelte";
+import { vault } from "#lib/stores/vault.svelte.js";
 
 vi.mock("@codex/search-orchestrator", () => ({
   searchService: {
@@ -12,21 +12,21 @@ vi.mock("@codex/search-orchestrator", () => ({
   },
 }));
 
-vi.mock("$lib/stores/vault.svelte", () => ({
+vi.mock("#lib/stores/vault.svelte.js", () => ({
   vault: {
     entities: {},
     defaultVisibility: "public",
   },
 }));
 
-vi.mock("$lib/stores/categories.svelte", () => ({
+vi.mock("#lib/stores/categories.svelte.js", () => ({
   categories: {
     getCategory: vi.fn(() => ({ icon: "user" })),
     getColor: vi.fn(() => "#fff"),
   },
 }));
 
-vi.mock("$lib/stores/ui/session-mode.svelte", () => ({
+vi.mock("#lib/stores/ui/session-mode.svelte.js", () => ({
   sessionModeStore: {
     sharedMode: false,
   },

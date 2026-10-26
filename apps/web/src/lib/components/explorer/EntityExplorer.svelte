@@ -1,17 +1,17 @@
 <script lang="ts">
-  import { recordEntryFound } from "$lib/app/onboarding/journey/journey-milestones-runtime";
-  import { vault } from "$lib/stores/vault.svelte";
+  import { recordEntryFound } from "#lib/app/onboarding/journey/journey-milestones-runtime.js";
+  import { vault } from "#lib/stores/vault.svelte.js";
   import EntityList from "./EntityList.svelte";
 
   import {
     dispatchSearchEntityFocus,
     DEFAULT_SEARCH_ENTITY_ZOOM,
-  } from "$lib/components/search/search-focus";
+  } from "#lib/components/search/search-focus.js";
 
   import type { Entity } from "schema";
-  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
-  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+  import { layoutUIStore } from "#lib/stores/ui/layout-ui.svelte.js";
+  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
 
   function handleSelect(entity: Entity) {
     if (layoutUIStore.isEntityExplorerWorkspace) {

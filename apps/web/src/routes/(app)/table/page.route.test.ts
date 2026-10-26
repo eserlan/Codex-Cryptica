@@ -6,11 +6,15 @@ import { SvelteURL } from "svelte/reactivity";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Entity } from "schema";
 import RoutePage from "./+page.svelte";
-import { vault } from "$lib/stores/vault.svelte";
-import { graph } from "$lib/stores/graph.svelte";
-import { explorerUIStore } from "$lib/stores/ui/explorer-ui.svelte";
+import { vault } from "#lib/stores/vault.svelte.js";
+import { graph } from "#lib/stores/graph.svelte.js";
+import { explorerUIStore } from "#lib/stores/ui/explorer-ui.svelte.js";
 
-vi.mock("$app/paths", () => ({ base: "" }));
+vi.mock("$app/paths", () => ({
+  base: "",
+  asset: (p: string) => `/${p.replace(/^\//, "")}`,
+  resolve: (route: string) => route.replace(/\/\([^)]+\)/g, "") || "/",
+}));
 vi.mock("$app/navigation", () => ({ goto: vi.fn() }));
 
 const { mockPage } = vi.hoisted(() => ({
@@ -30,7 +34,7 @@ type MutableVaultMock = {
   allEntities: Entity[];
 };
 
-vi.mock("$lib/stores/vault.svelte", () => ({
+vi.mock("#lib/stores/vault.svelte.js", () => ({
   vault: {
     activeVaultId: null as string | null,
     isInitialized: false,

@@ -15,9 +15,9 @@ import {
   type BulkMutationItemResult,
 } from "./bulk-results";
 import type { ImmediateSaveEntry } from "./entity-persistence";
-import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
 import { updateLastInternalChange } from "./registry";
-import { systemClock } from "$lib/utils/runtime-deps";
+import { systemClock } from "#lib/utils/runtime-deps.js";
 import {
   performanceRecorder,
   type PerformanceRecorder,

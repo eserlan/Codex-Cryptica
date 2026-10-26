@@ -2,10 +2,10 @@
   import { onMount } from "svelte";
   import { fade } from "svelte/transition";
   import { parseOracleResponse } from "editor-core";
-  import type { ChatMessage } from "$lib/stores/oracle.svelte";
-  import { oracle } from "$lib/stores/oracle.svelte";
-  import { vault } from "$lib/stores/vault.svelte";
-  import { graph } from "$lib/stores/graph.svelte";
+  import type { ChatMessage } from "#lib/stores/oracle.svelte.js";
+  import { oracle } from "#lib/stores/oracle.svelte.js";
+  import { vault } from "#lib/stores/vault.svelte.js";
+  import { graph } from "#lib/stores/graph.svelte.js";
   import ImageMessage from "./ImageMessage.svelte";
   import RollMessage from "./RollMessage.svelte";
   import ConnectionWizard from "./ConnectionWizard.svelte";
@@ -23,10 +23,10 @@
   import {
     createVaultMentionSource,
     sourceEntitiesFor,
-  } from "$lib/stores/oracle/mention-source";
+  } from "#lib/stores/oracle/mention-source.js";
   import { entityLinkClicks, linkEntityTitlesInHtml } from "./link-entity-html";
-  import { sanitizeId } from "$lib/utils/markdown";
-  import { revisionService } from "$lib/services/RevisionService.svelte";
+  import { sanitizeId } from "#lib/utils/markdown.js";
+  import { revisionService } from "#lib/services/RevisionService.svelte.js";
   import Autocomplete from "../ui/Autocomplete.svelte";
 
   let { message = $bindable() }: { message: ChatMessage } = $props();

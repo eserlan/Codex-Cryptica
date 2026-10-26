@@ -3,10 +3,10 @@
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("$lib/stores/help.svelte", () => ({
+vi.mock("#lib/stores/help.svelte.js", () => ({
   helpStore: { openHelpToArticle: vi.fn() },
 }));
-vi.mock("$lib/stores/entity-templates/entity-template-install", () => ({
+vi.mock("#lib/stores/entity-templates/entity-template-install.js", () => ({
   installEntityTemplateFromListing: vi.fn(),
 }));
 
@@ -39,7 +39,7 @@ describe("EntityTemplateInstallModal", () => {
   });
 
   it("links to the sharing help article", async () => {
-    const { helpStore } = await import("$lib/stores/help.svelte");
+    const { helpStore } = await import("#lib/stores/help.svelte.js");
     render(EntityTemplateInstallModal, {
       listingId: "l1",
       title: "T",

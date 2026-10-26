@@ -10,7 +10,7 @@ const { mockVaultState } = vi.hoisted(() => ({
   },
 }));
 
-vi.mock("$lib/stores/vault.svelte", () => ({
+vi.mock("#lib/stores/vault.svelte.js", () => ({
   vault: mockVaultState,
 }));
 

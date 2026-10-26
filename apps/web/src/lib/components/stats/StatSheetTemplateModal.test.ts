@@ -11,11 +11,11 @@ const { updateEntity, confirm, notify, saveAsTemplate } = vi.hoisted(() => ({
   saveAsTemplate: vi.fn(),
 }));
 
-vi.mock("$lib/stores/vault.svelte", () => ({
+vi.mock("#lib/stores/vault.svelte.js", () => ({
   vault: { updateEntity },
 }));
 
-vi.mock("$lib/stores/ui/notification.svelte", () => ({
+vi.mock("#lib/stores/ui/notification.svelte.js", () => ({
   notificationStore: { confirm, notify },
 }));
 
@@ -30,7 +30,7 @@ const DEFAULT_TEMPLATES = [
 
 const templateState = vi.hoisted(() => ({ templates: [] as any[] }));
 
-vi.mock("$lib/stores/stat-sheet-templates.svelte", () => ({
+vi.mock("#lib/stores/stat-sheet-templates.svelte.js", () => ({
   statSheetTemplates: {
     get allTemplates() {
       return templateState.templates;
@@ -43,7 +43,7 @@ vi.mock("$lib/stores/stat-sheet-templates.svelte", () => ({
   },
 }));
 
-vi.mock("$lib/stores/categories.svelte", () => ({
+vi.mock("#lib/stores/categories.svelte.js", () => ({
   categories: {
     getCategory: (id: string) =>
       id === "location" ? { id, label: "Location" } : undefined,

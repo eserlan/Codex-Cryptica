@@ -1,15 +1,15 @@
 <script lang="ts">
-  import GuestInfoOverlay from "$lib/components/vtt/GuestInfoOverlay.svelte";
-  import { handleActiveMapSelection } from "$lib/components/map/map-page-actions";
-  import { p2pHost } from "$lib/cloud-bridge/p2p/host-service.svelte";
-  import { mapStore } from "$lib/stores/map.svelte";
-  import { vault } from "$lib/stores/vault.svelte";
-  import { notificationStore } from "$lib/stores/ui/notification.svelte";
-  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
-  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
-  import { mapControlsUIStore } from "$lib/stores/ui/map-controls-ui.svelte";
-  import { guestVault } from "$lib/stores/guest-vault.svelte";
-  import { mapSession } from "$lib/stores/map-session.svelte";
+  import GuestInfoOverlay from "#lib/components/vtt/GuestInfoOverlay.svelte";
+  import { handleActiveMapSelection } from "#lib/components/map/map-page-actions.js";
+  import { p2pHost } from "#lib/cloud-bridge/p2p/host-service.svelte.js";
+  import { mapStore } from "#lib/stores/map.svelte.js";
+  import { vault } from "#lib/stores/vault.svelte.js";
+  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
+  import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
+  import { layoutUIStore } from "#lib/stores/ui/layout-ui.svelte.js";
+  import { mapControlsUIStore } from "#lib/stores/ui/map-controls-ui.svelte.js";
+  import { guestVault } from "#lib/stores/guest-vault.svelte.js";
+  import { mapSession } from "#lib/stores/map-session.svelte.js";
   import PinNoteButton from "./PinNoteButton.svelte";
 
   // On phones the map switcher stays put and the other actions live behind

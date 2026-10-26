@@ -19,11 +19,11 @@ const instance = vi.hoisted(() => ({
     editable: true,
   },
 }));
-vi.mock("$lib/stores/solo-session-instance", () => instance);
+vi.mock("#lib/stores/solo-session-instance.js", () => instance);
 
 import PlayPage from "./PlayPage.svelte";
-import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
-import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { discoveryPolicyStore } from "#lib/stores/ui/discovery-policy.svelte.js";
+import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
 
 beforeEach(() => {
   instance.soloSessionStore.isActive = false;

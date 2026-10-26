@@ -1,14 +1,15 @@
 <script lang="ts">
   import { onMount, type Snippet } from "svelte";
-  import { base } from "$app/paths";
+  import { resolve } from "$app/paths";
   import { page } from "$app/state";
   import {
     browserStorage,
     systemIdGenerator,
     type IdGenerator,
     type StorageLike,
-  } from "$lib/utils/runtime-deps";
-  import { browser } from "$app/environment";
+  } from "#lib/utils/runtime-deps.js";
+
+  import { browser } from "$app/env";
   import type {
     Diagnostic,
     ExportFormat,
@@ -17,8 +18,8 @@
   import {
     ensureRandomSourcesLoaded,
     randomSources,
-  } from "$lib/features/random";
-  import { vault } from "$lib/stores/vault.svelte";
+  } from "#lib/features/random/index.js";
+  import { vault } from "#lib/stores/vault.svelte.js";
   import ImportWizard from "./ImportWizard.svelte";
   import ExportDialog from "./ExportDialog.svelte";
   import TableGenerateDialog from "./TableGenerateDialog.svelte";
@@ -30,7 +31,7 @@
     type PlayerContext,
     type SourceMode,
   } from "./source-workspace";
-  import EmptyState from "$lib/components/ui/EmptyState.svelte";
+  import EmptyState from "#lib/components/ui/EmptyState.svelte";
   import { createLongPressTracker } from "./long-press-tracker";
   import {
     collectLabels,
@@ -548,7 +549,7 @@
         {#each KINDS as option}
           {@const current = option.id === kind}
           <a
-            href="{base}{option.href}"
+            href="{resolve('')}{option.href}"
             aria-current={current ? "page" : undefined}
             class="{toggleClass(current)} gap-1"
             data-testid="source-kind-{option.id}"
@@ -911,10 +912,8 @@
               <button
                 type="button"
                 class="rounded border border-theme-border px-2.5 py-1 font-header text-micro uppercase tracking-widest text-theme-muted"
-                onclick={() => (deleteImpact = undefined)}
+                onclick={() => (deleteImpact = undefined)}>Keep it</button
               >
-                Keep it
-              </button>
             </div>
           </div>
         {/if}
@@ -943,9 +942,8 @@
                 type="button"
                 class="rounded border border-theme-border px-2.5 py-1 font-header text-micro uppercase tracking-widest text-theme-muted"
                 onclick={() => (pendingRename = undefined)}
+                >Keep the name</button
               >
-                Keep the name
-              </button>
             </div>
           </div>
         {/if}

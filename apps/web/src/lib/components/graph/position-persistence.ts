@@ -1,4 +1,4 @@
-import type { LocalEntity } from "$lib/stores/vault/types";
+import type { LocalEntity } from "#lib/stores/vault/types.js";
 
 type PositionUpdates = Record<string, Partial<LocalEntity>>;
 
@@ -39,4 +39,37 @@ export function unsavedPositionUpdates(
     if (entity && !hasSavedPosition(entity)) unsaved[id] = update;
   }
   return unsaved;
+}
+
+interface LayoutPositionPolicy {
+  status: string;
+  loadPhase: string;
+  isInitial: boolean;
+  focusViewActive: boolean;
+  savedCoordsDegenerate: boolean;
+  healed?: boolean;
+}
+
+/** Selects safe writes without replacing saved positions from a partial focus view. */
+export function selectLayoutPositionUpdates(
+  updates: PositionUpdates,
+  getEntity: (id: string) => unknown,
+  policy: LayoutPositionPolicy,
+): { updates: PositionUpdates | null; healsSavedCoordinates: boolean } {
+  const unsaved = unsavedPositionUpdates(updates, getEntity);
+  if (policy.status === "loading")
+    return { updates: null, healsSavedCoordinates: false };
+  const persistAll =
+    !policy.focusViewActive &&
+    (policy.healed ||
+      policy.savedCoordsDegenerate ||
+      (!policy.isInitial && policy.loadPhase === "ready"));
+  return {
+    updates: persistAll
+      ? updates
+      : Object.keys(unsaved).length > 0
+        ? unsaved
+        : null,
+    healsSavedCoordinates: Boolean(persistAll),
+  };
 }

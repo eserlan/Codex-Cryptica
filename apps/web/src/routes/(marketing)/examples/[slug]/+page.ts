@@ -4,7 +4,7 @@ import {
   getAllExampleSlugs,
   getRelatedExamples,
   getConnectedExample,
-} from "$lib/content/examples/registry";
+} from "#lib/content/examples/registry.js";
 import type { PageLoad, EntryGenerator } from "./$types";
 
 export const prerender = true;

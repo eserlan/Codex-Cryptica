@@ -28,20 +28,20 @@ const env = vi.hoisted(() => ({
   },
 }));
 
-vi.mock("$lib/stores/ui/discovery-policy.svelte", () => ({
+vi.mock("#lib/stores/ui/discovery-policy.svelte.js", () => ({
   get discoveryPolicyStore() {
     return { aiDisabled: env.aiDisabled };
   },
 }));
-vi.mock("$lib/stores/ui/layout-ui.svelte", () => ({
+vi.mock("#lib/stores/ui/layout-ui.svelte.js", () => ({
   layoutUIStore: env.layout,
 }));
-vi.mock("$lib/stores/oracle.svelte", () => ({ oracle: env.oracle }));
-vi.mock("$lib/stores/vault.svelte", () => ({ vault: { maps: env.maps } }));
-vi.mock("$lib/stores/session-journal.svelte", () => ({
+vi.mock("#lib/stores/oracle.svelte.js", () => ({ oracle: env.oracle }));
+vi.mock("#lib/stores/vault.svelte.js", () => ({ vault: { maps: env.maps } }));
+vi.mock("#lib/stores/session-journal.svelte.js", () => ({
   sessionJournalStore: env.journal,
 }));
-vi.mock("$lib/stores/solo-session-instance", () => ({
+vi.mock("#lib/stores/solo-session-instance.js", () => ({
   soloSessionStore: {
     get session() {
       return env.session;

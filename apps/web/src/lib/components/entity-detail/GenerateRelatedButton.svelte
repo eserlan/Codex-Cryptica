@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
 
-  let { entityId } = $props<{ entityId: string }>();
+  let { entityId }: { entityId: string } = $props();
 </script>
 
 <button

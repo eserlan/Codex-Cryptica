@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { EntityTemplateDetail } from "schema";
-  import EntityTemplatePreview from "$lib/components/settings/entity-templates/EntityTemplatePreview.svelte";
+  import EntityTemplatePreview from "#lib/components/settings/entity-templates/EntityTemplatePreview.svelte";
 
   let {
     detail,

@@ -5,7 +5,7 @@
   import {
     entityTemplatePublishStore,
     type RecoverResult,
-  } from "$lib/stores/entity-templates/entity-template-publish-store.svelte";
+  } from "#lib/stores/entity-templates/entity-template-publish-store.svelte.js";
 
   type Store = Pick<
     typeof entityTemplatePublishStore,

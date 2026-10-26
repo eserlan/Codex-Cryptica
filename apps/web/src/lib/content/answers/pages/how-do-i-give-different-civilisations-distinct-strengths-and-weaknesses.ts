@@ -313,6 +313,7 @@ export const howDoIGiveDifferentCivilisationsDistinctStrengthsAndWeaknesses: Ans
       "how-do-i-make-different-cultures-feel-distinct-without-relying-on-stereotypes",
       "how-do-fantasy-cities-defend-against-flying-creatures-and-teleportation",
       "how-should-magic-have-been-discovered-in-my-world",
+      "how-do-i-build-a-believable-post-scarcity-civilisation",
     ],
     labels: ["fantasy"],
     discovery: {
@@ -345,6 +346,11 @@ export const howDoIGiveDifferentCivilisationsDistinctStrengthsAndWeaknesses: Ans
         "for-economy-trade",
       ],
       acknowledgedOverlap: [
+        {
+          with: "answer-post-scarcity-civilisation",
+          reason:
+            "This answer profiles what polities can do through causes, capabilities, and dependencies across several domains; the post-scarcity answer traces the institutional and social effects of one specific capability: universal material provision.",
+        },
         {
           with: "answer-believable-fantasy-economy",
           reason:

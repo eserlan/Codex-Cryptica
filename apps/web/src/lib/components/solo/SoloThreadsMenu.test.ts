@@ -17,8 +17,9 @@ const env = vi.hoisted(() => {
   return { files, vault, modal };
 });
 
-vi.mock("$lib/stores/solo-session-instance", async () => {
-  const { SoloThreadsStore } = await import("$lib/stores/solo-threads.svelte");
+vi.mock("#lib/stores/solo-session-instance.js", async () => {
+  const { SoloThreadsStore } =
+    await import("#lib/stores/solo-threads.svelte.js");
   const soloThreads = new SoloThreadsStore({
     vaultId: () => "v1",
     files: () => ({
@@ -41,11 +42,13 @@ vi.mock("$lib/stores/solo-session-instance", async () => {
   });
   return { soloThreads };
 });
-vi.mock("$lib/stores/vault.svelte", () => ({ vault: env.vault }));
-vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({ modalUIStore: env.modal }));
+vi.mock("#lib/stores/vault.svelte.js", () => ({ vault: env.vault }));
+vi.mock("#lib/stores/ui/modal-ui.svelte.js", () => ({
+  modalUIStore: env.modal,
+}));
 
 import SoloThreadsMenu from "./SoloThreadsMenu.svelte";
-import { soloThreads } from "$lib/stores/solo-session-instance";
+import { soloThreads } from "#lib/stores/solo-session-instance.js";
 
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 

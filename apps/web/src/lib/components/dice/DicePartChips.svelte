@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { getDiceIcon } from "$lib/utils/dice-icons";
-  import type { DiceBreakdownPart } from "$lib/utils/dice-breakdown";
+  import { getDiceIcon } from "#lib/utils/dice-icons.js";
+  import type { DiceBreakdownPart } from "#lib/utils/dice-breakdown.js";
 
   /** One dice group of a breakdown: kept dice, then any dropped dice. */
   let {

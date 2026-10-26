@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { oracle } from "$lib/stores/oracle.svelte";
+  import { oracle } from "#lib/stores/oracle.svelte.js";
   import ChatMessage from "./ChatMessage.svelte";
   import CommandMenu from "./CommandMenu.svelte";
   import EntityMentionPicker from "./EntityMentionPicker.svelte";
@@ -8,18 +8,18 @@
   } from "./EntityMentionDisambiguation.svelte";
   import { searchService } from "@codex/search-orchestrator";
   import { OracleMentionController } from "./oracle-mention-controller.svelte";
-  import { createVaultMentionSource } from "$lib/stores/oracle/mention-source";
+  import { createVaultMentionSource } from "#lib/stores/oracle/mention-source.js";
   import { takeMentionHint } from "./oracle-mention-hint";
-  import { browserStorage } from "$lib/utils/runtime-deps";
+  import { browserStorage } from "#lib/utils/runtime-deps.js";
   import { type Mention, type ResolvedMention } from "entity-mention-engine";
-  import { planMentionSend } from "$lib/stores/oracle/mention-intent";
-  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { planMentionSend } from "#lib/stores/oracle/mention-intent.js";
+  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
   import { chatCommands } from "../../config/chat-commands";
   import { fade } from "svelte/transition";
   import { tick } from "svelte";
   import { isChatNearBottom, scrollChatToBottom } from "./oracle-chat-scroll";
-  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-  import EmptyState from "$lib/components/ui/EmptyState.svelte";
+  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+  import EmptyState from "#lib/components/ui/EmptyState.svelte";
   import {
     ORACLE_CHAT_INPUT_EVENT,
     getOracleChatDraft,
@@ -27,7 +27,7 @@
     takeOraclePrefill,
   } from "./oracle-chat-input";
 
-  let { onOpenSettings } = $props<{ onOpenSettings?: () => void }>();
+  let { onOpenSettings }: { onOpenSettings?: () => void } = $props();
 
   let input = $state("");
 

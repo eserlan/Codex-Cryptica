@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { FEATURE_HINTS } from "$lib/config/help-content";
-  import { FEATURE_GROUPS } from "$lib/config/feature-groups";
-  import { base } from "$app/paths";
+  import { FEATURE_HINTS } from "#lib/config/help-content.js";
+  import { FEATURE_GROUPS } from "#lib/config/feature-groups.js";
+  import { resolve } from "$app/paths";
   import { fly } from "svelte/transition";
 
   // Grouped by the job a reader is trying to do, rather than mapping the whole
@@ -166,7 +166,9 @@
           with absolute privacy and smart tools.
         </p>
         <a
-          href="{base}/?utm_source=features-page&utm_medium=features-cta&utm_campaign=marketing"
+          href="{resolve(
+            '',
+          )}/?utm_source=features-page&utm_medium=features-cta&utm_campaign=marketing"
           class="inline-block px-12 py-5 bg-theme-primary text-theme-bg font-bold font-header text-sm rounded-lg hover:bg-theme-primary/90 hover:shadow-[0_0_40px_var(--color-accent-primary)] transition-all active:scale-95"
         >
           Enter the Codex

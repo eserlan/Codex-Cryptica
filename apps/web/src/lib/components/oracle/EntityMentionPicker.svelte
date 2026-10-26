@@ -9,14 +9,14 @@
     listId = "entity-mention-list",
     anchorEl = null,
     onSelect,
-  } = $props<{
+  }: {
     suggestions: MentionSuggestion[];
     activeIndex?: number;
     loading?: boolean;
     listId?: string;
     anchorEl?: HTMLElement | null;
     onSelect: (index: number) => void;
-  }>();
+  } = $props();
 
   let panelEl = $state<HTMLDivElement>();
   let viewportHeight = $state(

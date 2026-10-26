@@ -1,23 +1,23 @@
 <script lang="ts">
-  import { building, browser } from "$app/environment";
-  import { base } from "$app/paths";
+  import { building, browser } from "$app/env";
+  import { resolve } from "$app/paths";
   import { goto } from "$app/navigation";
   import { page } from "$app/state";
-  import GuestLoginModal from "$lib/components/modals/GuestLoginModal.svelte";
-  import { p2pGuestService } from "$lib/cloud-bridge/p2p/guest-service";
+  import GuestLoginModal from "#lib/components/modals/GuestLoginModal.svelte";
+  import { p2pGuestService } from "#lib/cloud-bridge/p2p/guest-service.js";
   import {
     buildGuestRoutePath,
     normalizeGuestView,
-  } from "$lib/utils/guest-session";
-  import { mergeGuestEntityUpdate } from "$lib/utils/guest-entity-merge";
-  import { buildGuestPresencePayload } from "$lib/cloud-bridge/p2p/p2p-helpers";
-  import { themeStore } from "$lib/stores/theme.svelte";
-  import { vault } from "$lib/stores/vault.svelte";
-  import { vaultRegistry } from "$lib/stores/vault-registry.svelte";
-  import { vaultEventBus } from "$lib/stores/vault/events.svelte";
-  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
-  import { entityTemplateStore } from "$lib/stores/entity-templates/entity-template-store.svelte";
-  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  } from "#lib/utils/guest-session.js";
+  import { mergeGuestEntityUpdate } from "#lib/utils/guest-entity-merge.js";
+  import { buildGuestPresencePayload } from "#lib/cloud-bridge/p2p/p2p-helpers.js";
+  import { themeStore } from "#lib/stores/theme.svelte.js";
+  import { vault } from "#lib/stores/vault.svelte.js";
+  import { vaultRegistry } from "#lib/stores/vault-registry.svelte.js";
+  import { vaultEventBus } from "#lib/stores/vault/events.svelte.js";
+  import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
+  import { entityTemplateStore } from "#lib/stores/entity-templates/entity-template-store.svelte.js";
+  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
   import { untrack } from "svelte";
 
   const shareId = $derived(
@@ -89,10 +89,10 @@
 
   const navigateToGuestView = async () => {
     if (!browser) return;
-    const targetPath = buildGuestRoutePath(base, guestView);
+    const targetPath = buildGuestRoutePath(resolve(""), guestView);
     if (!targetPath || page.url.pathname === targetPath) return;
 
-    const nextUrl = new URL(page.url);
+    const nextUrl = new URL(page.url.href);
     nextUrl.pathname = targetPath;
     nextUrl.searchParams.set("shareId", shareId ?? "");
     if (guestView) {

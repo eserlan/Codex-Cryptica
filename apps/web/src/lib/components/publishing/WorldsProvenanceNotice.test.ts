@@ -3,7 +3,7 @@
 import { render, screen, fireEvent } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import WorldsProvenanceNotice from "./WorldsProvenanceNotice.svelte";
-import { PUBLIC_WORLDS_NOTICE } from "$lib/config/public-worlds-notice";
+import { PUBLIC_WORLDS_NOTICE } from "#lib/config/public-worlds-notice.js";
 
 describe("WorldsProvenanceNotice", () => {
   it("renders the provenance header, body text, and author responsibility without obtrusive styling", () => {

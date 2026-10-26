@@ -36,7 +36,7 @@ vi.mock("./vault.svelte", () => ({
 import { mapStore } from "./map.svelte";
 import { vault } from "./vault.svelte";
 import { MapSessionStore } from "./map-session.svelte";
-import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
 
 describe("MapSessionStore", () => {
   let service: {

@@ -2,7 +2,11 @@
 
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("$app/paths", () => ({ base: "" }));
+vi.mock("$app/paths", () => ({
+  base: "",
+  asset: (p: string) => p,
+  resolve: (p: string) => p,
+}));
 
 vi.mock("./vault-registry.svelte", () => ({
   vaultRegistry: { activeVaultId: "vault-1" },

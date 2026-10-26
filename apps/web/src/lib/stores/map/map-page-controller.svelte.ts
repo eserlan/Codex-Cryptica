@@ -1,17 +1,17 @@
-import { soloPlayGuard as defaultSoloPlayGuard } from "$lib/stores/solo-session-instance";
-import { mapStore as defaultMapStore } from "$lib/stores/map.svelte";
-import { mapSession as defaultMapSession } from "$lib/stores/map-session.svelte";
-import { vault as defaultVault } from "$lib/stores/vault.svelte";
-import { modalUIStore as defaultModalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-import { notificationStore as defaultNotificationStore } from "$lib/stores/ui/notification.svelte";
-import { sessionModeStore as defaultSessionModeStore } from "$lib/stores/ui/session-mode.svelte";
-import { layoutUIStore as defaultLayoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
+import { soloPlayGuard as defaultSoloPlayGuard } from "#lib/stores/solo-session-instance.js";
+import { mapStore as defaultMapStore } from "#lib/stores/map.svelte.js";
+import { mapSession as defaultMapSession } from "#lib/stores/map-session.svelte.js";
+import { vault as defaultVault } from "#lib/stores/vault.svelte.js";
+import { modalUIStore as defaultModalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+import { notificationStore as defaultNotificationStore } from "#lib/stores/ui/notification.svelte.js";
+import { sessionModeStore as defaultSessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
+import { layoutUIStore as defaultLayoutUIStore } from "#lib/stores/ui/layout-ui.svelte.js";
 import {
   shouldShowInitiativePanel,
   VTT_ENTITY_TYPES,
   ENTITY_TRANSFER_TYPE,
   TILE_TRANSFER_TYPE,
-} from "$lib/components/map/vtt-ui";
+} from "#lib/components/map/vtt-ui.js";
 import type { SessionMode } from "../../../types/vtt";
 import type { Entity, Point } from "schema";
 

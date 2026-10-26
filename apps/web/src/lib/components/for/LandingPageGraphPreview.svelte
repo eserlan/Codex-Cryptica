@@ -5,13 +5,13 @@
     LandingPageGraphPalette,
     LandingPageGraphStep,
     LandingPageSurfaceStyle,
-  } from "$lib/content/for/schema";
+  } from "#lib/content/for/schema.js";
   import { onMount } from "svelte";
   import {
     getPositions,
     WIDE_VIEWBOX,
     COMPACT_VIEWBOX,
-  } from "$lib/components/for/graph-preview-layout";
+  } from "#lib/components/for/graph-preview-layout.js";
 
   let {
     steps,

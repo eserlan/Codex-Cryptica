@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { StatSheetField } from "schema";
 import { rollItemTableDice } from "./item-table-rolls";
 
-vi.mock("$lib/utils/stat-sheet-field-actions", () => ({
+vi.mock("#lib/utils/stat-sheet-field-actions.js", () => ({
   rollStatSheetDiceField: vi.fn(),
 }));
 const field: StatSheetField = {

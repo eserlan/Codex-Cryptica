@@ -1,8 +1,8 @@
 import { render, screen, waitFor } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import RoutePage from "./+page.svelte";
-import { vault } from "$lib/stores/vault.svelte";
-import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
+import { vault } from "#lib/stores/vault.svelte.js";
+import { onboardingStore } from "#lib/stores/ui/onboarding.svelte.js";
 
 type MutableVaultMock = {
   activeVaultId: string | null;
@@ -19,15 +19,15 @@ vi.mock("$app/state", () => ({
   },
 }));
 
-vi.mock("$lib/components/world/FrontPage.svelte", async () => ({
+vi.mock("#lib/components/world/FrontPage.svelte", async () => ({
   default: (await import("./__tests__/FrontPageStub.svelte")).default,
 }));
 
-vi.mock("$lib/components/EntityDetailPanel.svelte", async () => ({
+vi.mock("#lib/components/EntityDetailPanel.svelte", async () => ({
   default: (await import("./__tests__/EntityDetailPanelStub.svelte")).default,
 }));
 
-vi.mock("$lib/stores/vault.svelte", () => ({
+vi.mock("#lib/stores/vault.svelte.js", () => ({
   vault: {
     activeVaultId: null as string | null,
     selectedEntityId: null as string | null,

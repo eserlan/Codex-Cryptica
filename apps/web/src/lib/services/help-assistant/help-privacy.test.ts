@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import { SETTINGS_PANEL_IDS } from "help-engine";
-import { HelpAssistantStore } from "$lib/stores/help-assistant/help-assistant.svelte";
-import { HelpContextStore } from "$lib/stores/help-assistant/help-context.svelte";
-import { HelpSurfaceRegistry } from "$lib/stores/help-assistant/help-surface.svelte";
+import { HelpAssistantStore } from "#lib/stores/help-assistant/help-assistant.svelte.js";
+import { HelpContextStore } from "#lib/stores/help-assistant/help-context.svelte.js";
+import { HelpSurfaceRegistry } from "#lib/stores/help-assistant/help-surface.svelte.js";
 import { HelpClient } from "./help-client";
 import type { VttHelpFacts } from "help-engine";
 

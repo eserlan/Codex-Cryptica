@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 import { createEmptySessionPrep, type SessionPrep } from "generator-engine";
 import SessionPrepBuilderForm from "./SessionPrepBuilderForm.svelte";
 
-vi.mock("$lib/services/seo/session-prep-service", () => ({
+vi.mock("#lib/services/seo/session-prep-service.js", () => ({
   SESSION_PREP_SEED_MAX_LENGTH: 2000,
 }));
 

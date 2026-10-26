@@ -1,8 +1,8 @@
-import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
-import { dungeonDelveService } from "$lib/services/dungeon-delve-service";
+import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
+import { dungeonDelveService } from "#lib/services/dungeon-delve-service.js";
 import { generateAdventureGraphTopology } from "generator-engine";
 import { getGeneratorDocumentLayout } from "./generator-document-layout";
-import { createPendingDelveTransfer } from "$lib/services/seo/pending-delve-transfer";
+import { createPendingDelveTransfer } from "#lib/services/seo/pending-delve-transfer.js";
 
 type CanvasBuilder = (data: GeneratorOutput) => unknown;
 

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { mapSession } from "$lib/stores/map-session.svelte";
+  import { mapSession } from "#lib/stores/map-session.svelte.js";
   import { vttModeMenu } from "./vtt-mode-menu.svelte";
   import { getPrimaryButtonStateClass } from "./vtt-ui";
 

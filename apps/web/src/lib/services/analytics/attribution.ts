@@ -20,7 +20,7 @@ import {
   browserStorage,
   type StorageLike,
   systemClock,
-} from "$lib/utils/runtime-deps";
+} from "#lib/utils/runtime-deps.js";
 import {
   classifyAiReferral,
   type AiReferralProvider,

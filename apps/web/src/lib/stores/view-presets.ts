@@ -1,6 +1,6 @@
-import { systemClock, type Clock } from "$lib/utils/runtime-deps";
-import type { TableColumnFilters } from "$lib/components/explorer/entityListFiltering";
-import type { SortState } from "$lib/components/table/entityTableSort";
+import { systemClock, type Clock } from "#lib/utils/runtime-deps.js";
+import type { TableColumnFilters } from "#lib/components/explorer/entityListFiltering.js";
+import type { SortState } from "#lib/components/table/entityTableSort.js";
 
 /**
  * Unified saved view presets: named filter & presentation states scoped per vault.

@@ -7,8 +7,12 @@ import type {
   VaultReader,
   VaultWriter,
 } from "@codex/entity-shelf";
-import { parseMarkdown, stringifyEntity } from "$lib/utils/markdown";
-import { deleteOpfsEntry, readOpfsBlob, writeOpfsFile } from "$lib/utils/opfs";
+import { parseMarkdown, stringifyEntity } from "#lib/utils/markdown.js";
+import {
+  deleteOpfsEntry,
+  readOpfsBlob,
+  writeOpfsFile,
+} from "#lib/utils/opfs.js";
 
 /**
  * `VaultReader` and `VaultWriter` over the open vault, plus the record codec.

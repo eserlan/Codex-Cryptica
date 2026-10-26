@@ -13,11 +13,11 @@ const { resolveImageUrl, releaseImageUrl } = vi.hoisted(() => ({
   releaseImageUrl: vi.fn(),
 }));
 
-vi.mock("$lib/stores/vault.svelte", () => ({
+vi.mock("#lib/stores/vault.svelte.js", () => ({
   vault: { resolveImageUrl, releaseImageUrl },
 }));
 
-vi.mock("$lib/components/ui/SilhouetteAvatar.svelte", async () => ({
+vi.mock("#lib/components/ui/SilhouetteAvatar.svelte", async () => ({
   default: (await import("./test-support/silhouette-avatar-stub.svelte"))
     .default,
 }));

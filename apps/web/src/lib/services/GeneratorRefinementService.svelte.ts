@@ -10,7 +10,7 @@ import {
 import {
   GeneratorAITransport,
   LANGUAGE_GENERATION_CONFIG,
-} from "$lib/services/seo/generator-ai-transport";
+} from "#lib/services/seo/generator-ai-transport.js";
 
 export type RefinementRunner = (
   source: RefinementDocument,

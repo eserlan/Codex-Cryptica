@@ -2,8 +2,8 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { waitFor } from "@testing-library/svelte";
-import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
-import { guestVault } from "$lib/stores/guest-vault.svelte";
+import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
+import { guestVault } from "#lib/stores/guest-vault.svelte.js";
 
 const vaultMock = vi.hoisted(() => ({
   activeVaultId: "vault-a",

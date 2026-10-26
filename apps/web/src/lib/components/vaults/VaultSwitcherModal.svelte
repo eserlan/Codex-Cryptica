@@ -1,13 +1,13 @@
 <script lang="ts">
-  import { vault } from "$lib/stores/vault.svelte";
-  import { vaultRegistry } from "$lib/stores/vault-registry.svelte";
-  import type { VaultRecord } from "$lib/utils/idb";
-  import { notificationStore } from "$lib/stores/ui/notification.svelte";
-  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-  import ModalShell from "$lib/components/ui/ModalShell.svelte";
-  import { pickDirectory } from "$lib/utils/fs";
+  import { vault } from "#lib/stores/vault.svelte.js";
+  import { vaultRegistry } from "#lib/stores/vault-registry.svelte.js";
+  import type { VaultRecord } from "#lib/utils/idb.js";
+  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
+  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+  import ModalShell from "#lib/components/ui/ModalShell.svelte";
+  import { pickDirectory } from "#lib/utils/fs.js";
 
-  let { onClose } = $props<{ onClose: () => void }>();
+  let { onClose }: { onClose: () => void } = $props();
 
   let isLoading = $state(false);
   let showCreate = $state(false);

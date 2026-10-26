@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { OracleActionManager } from "../action-manager.svelte";
-import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
 import type { IOracleStore } from "../types";
 
 describe("OracleActionManager", () => {

@@ -36,44 +36,44 @@ const guestVaultMock = vi.hoisted(() => ({
   publishId: null as string | null,
 }));
 
-vi.mock("$lib/components/vtt/GuestInfoOverlay.svelte", () => ({
+vi.mock("#lib/components/vtt/GuestInfoOverlay.svelte", () => ({
   default: function GuestInfoOverlayMock() {
     return {};
   },
 }));
 
-vi.mock("$lib/cloud-bridge/p2p/host-service.svelte", () => ({
+vi.mock("#lib/cloud-bridge/p2p/host-service.svelte.js", () => ({
   p2pHost: {
     isHosting: false,
     broadcastActiveMapSync: vi.fn(),
   },
 }));
 
-vi.mock("$lib/stores/map.svelte", () => ({
+vi.mock("#lib/stores/map.svelte.js", () => ({
   mapStore: mapStoreMock,
 }));
 
-vi.mock("$lib/stores/vault.svelte", () => ({
+vi.mock("#lib/stores/vault.svelte.js", () => ({
   vault: vaultMock,
 }));
 
-vi.mock("$lib/stores/ui/notification.svelte", () => ({
+vi.mock("#lib/stores/ui/notification.svelte.js", () => ({
   notificationStore: {
     confirm: vi.fn().mockResolvedValue(false),
   },
 }));
 
-vi.mock("$lib/stores/ui/session-mode.svelte", () => ({
+vi.mock("#lib/stores/ui/session-mode.svelte.js", () => ({
   sessionModeStore: sessionModeStoreMock,
 }));
 
-vi.mock("$lib/stores/guest-vault.svelte", () => ({
+vi.mock("#lib/stores/guest-vault.svelte.js", () => ({
   guestVault: guestVaultMock,
 }));
 
 import MapHUD from "./MapHUD.svelte";
-import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
-import { mapControlsUIStore } from "$lib/stores/ui/map-controls-ui.svelte";
+import { layoutUIStore } from "#lib/stores/ui/layout-ui.svelte.js";
+import { mapControlsUIStore } from "#lib/stores/ui/map-controls-ui.svelte.js";
 
 describe("MapHUD", () => {
   beforeEach(() => {
@@ -169,7 +169,7 @@ describe("MapHUD", () => {
   });
 
   it("offers the note button out of play, and leaves it to the VTT toolbar in play", async () => {
-    const { mapSession } = await import("$lib/stores/map-session.svelte");
+    const { mapSession } = await import("#lib/stores/map-session.svelte.js");
     mapSession.setVttEnabled(false);
 
     const { unmount } = render(MapHUD, {
@@ -189,7 +189,7 @@ describe("MapHUD", () => {
   });
 
   it("hides the note button from guests", async () => {
-    const { mapSession } = await import("$lib/stores/map-session.svelte");
+    const { mapSession } = await import("#lib/stores/map-session.svelte.js");
     mapSession.setVttEnabled(false);
     sessionModeStoreMock.isGuestMode = true;
 

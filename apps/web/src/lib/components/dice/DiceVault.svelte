@@ -2,13 +2,13 @@
   import {
     diceHistory,
     type DiceHistoryStore,
-  } from "$lib/stores/dice-history.svelte";
-  import { mapSession } from "$lib/stores/map-session.svelte";
+  } from "#lib/stores/dice-history.svelte.js";
+  import { mapSession } from "#lib/stores/map-session.svelte.js";
   import { diceEngine, diceParser } from "dice-engine";
   import { slide } from "svelte/transition";
   import RollLog from "./RollLog.svelte";
   import { tick } from "svelte";
-  import { getDiceIcon } from "$lib/utils/dice-icons";
+  import { getDiceIcon } from "#lib/utils/dice-icons.js";
 
   let {
     isStandalone = false,

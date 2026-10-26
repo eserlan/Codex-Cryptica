@@ -9,7 +9,7 @@ vi.mock("./VTTChatCard.svelte", () => ({
   },
 }));
 
-vi.mock("$lib/components/dice/DiceRollResult.svelte", () => ({
+vi.mock("#lib/components/dice/DiceRollResult.svelte", () => ({
   default: function DiceRollResultMock() {
     return {};
   },

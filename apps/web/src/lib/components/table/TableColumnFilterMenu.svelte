@@ -6,7 +6,7 @@
     LabelFilterMode,
     SummaryFilterMode,
     TableColumnFilters,
-  } from "$lib/components/explorer/entityListFiltering";
+  } from "#lib/components/explorer/entityListFiltering.js";
 
   let {
     columnKey,

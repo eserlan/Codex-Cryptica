@@ -6,7 +6,7 @@ import { GameSystemRegistry, SYSTEM_NEUTRAL_ID, TOV_SYSTEM_ID } from "schema";
 import {
   SystemProfileStore,
   type ISystemProfileStorage,
-} from "$lib/stores/system-profile.svelte";
+} from "#lib/stores/system-profile.svelte.js";
 import GameSystemSettings from "./GameSystemSettings.svelte";
 
 function storage(

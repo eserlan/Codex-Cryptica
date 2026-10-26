@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { CalendarEventEntry } from "chronology-engine";
   import { onDestroy } from "svelte";
-  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
   import { createEntryClickHandlers } from "./entry-click";
 
   let {

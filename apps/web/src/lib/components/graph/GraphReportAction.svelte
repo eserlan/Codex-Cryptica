@@ -1,10 +1,10 @@
 <script lang="ts">
   import { untrack } from "svelte";
   import type { Core, NodeSingular } from "cytoscape";
-  import { vault } from "$lib/stores/vault.svelte";
-  import { openSelectionReport } from "$lib/components/reports/open-selection-report";
+  import { vault } from "#lib/stores/vault.svelte.js";
+  import { openSelectionReport } from "#lib/components/reports/open-selection-report.js";
 
-  let { cy } = $props<{ cy: Core }>();
+  let { cy }: { cy: Core } = $props();
 
   let selectedIds = $state<string[]>([]);
 

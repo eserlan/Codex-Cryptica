@@ -1,15 +1,15 @@
 <script lang="ts">
   import { onDestroy } from "svelte";
   import type { RecentActivity } from "@codex/vault-engine";
-  import { vault } from "$lib/stores/vault.svelte";
-  import { categories } from "$lib/stores/categories.svelte";
-  import { getIconClass } from "$lib/utils/icon";
-  import { renderMarkdown } from "$lib/utils/markdown";
-  import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
-  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-  import { systemClock } from "$lib/utils/runtime-deps";
+  import { vault } from "#lib/stores/vault.svelte.js";
+  import { categories } from "#lib/stores/categories.svelte.js";
+  import { getIconClass } from "#lib/utils/icon.js";
+  import { renderMarkdown } from "#lib/utils/markdown.js";
+  import { onboardingStore } from "#lib/stores/ui/onboarding.svelte.js";
+  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+  import { systemClock } from "#lib/utils/runtime-deps.js";
 
-  let { activity } = $props<{ activity: RecentActivity }>();
+  let { activity }: { activity: RecentActivity } = $props();
   let imageUrl = $state("");
   let clickTimer: ReturnType<typeof setTimeout> | null = null;
 

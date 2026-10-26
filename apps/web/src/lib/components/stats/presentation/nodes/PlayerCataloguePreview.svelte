@@ -4,7 +4,7 @@
     formatMoney,
     projectCatalogueFields,
   } from "@codex/stat-sheet-engine";
-  import { vault } from "$lib/stores/vault.svelte";
+  import { vault } from "#lib/stores/vault.svelte.js";
   import type { PresentationRenderContext } from "../types";
 
   /**

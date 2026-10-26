@@ -1,4 +1,4 @@
-import { systemClock } from "$lib/utils/runtime-deps";
+import { systemClock } from "#lib/utils/runtime-deps.js";
 /**
  * Retry `fn` until it succeeds or `attempts` are exhausted.
  *

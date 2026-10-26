@@ -2,7 +2,7 @@
 import { render, fireEvent } from "@testing-library/svelte";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import ParentPickerModal from "./ParentPickerModal.svelte";
-import { vault } from "$lib/stores/vault.svelte";
+import { vault } from "#lib/stores/vault.svelte.js";
 
 // A three-deep line — Keep is nested under Citadel, which is nested under
 // Realm — so descendants can be told apart from unrelated entities.
@@ -29,11 +29,11 @@ const ENTITIES: Record<string, any> = {
 };
 
 const notify = vi.fn();
-vi.mock("$lib/stores/ui/notification.svelte", () => ({
+vi.mock("#lib/stores/ui/notification.svelte.js", () => ({
   notificationStore: { notify: (...args: unknown[]) => notify(...args) },
 }));
 
-vi.mock("$lib/stores/vault.svelte", () => ({
+vi.mock("#lib/stores/vault.svelte.js", () => ({
   vault: {
     updateEntity: vi.fn(),
     get entities() {

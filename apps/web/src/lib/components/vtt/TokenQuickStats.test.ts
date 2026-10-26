@@ -12,7 +12,7 @@ const { updateEntity, addResult, sendResolvedRollMessage, vaultState } =
     vaultState: { isGuest: false },
   }));
 
-vi.mock("$lib/stores/vault.svelte", () => ({
+vi.mock("#lib/stores/vault.svelte.js", () => ({
   vault: {
     get isGuest() {
       return vaultState.isGuest;
@@ -21,11 +21,11 @@ vi.mock("$lib/stores/vault.svelte", () => ({
   },
 }));
 
-vi.mock("$lib/stores/dice-history.svelte", () => ({
+vi.mock("#lib/stores/dice-history.svelte.js", () => ({
   diceHistory: { addResult },
 }));
 
-vi.mock("$lib/stores/map-session.svelte", () => ({
+vi.mock("#lib/stores/map-session.svelte.js", () => ({
   mapSession: {
     vttEnabled: true,
     sendResolvedRollMessage,

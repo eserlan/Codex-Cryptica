@@ -1,7 +1,7 @@
 /**
  * Atom 1.0 feeds for intentionally published editorial content (Answers and
  * blog posts). Pure functions: routes gather the entries, this renders them.
- * Kept free of `$lib` aliases so the rendering stays trivially testable.
+ * Kept free of `#lib` aliases so the rendering stays trivially testable.
  */
 
 export type FeedContentType = "answer" | "blog";

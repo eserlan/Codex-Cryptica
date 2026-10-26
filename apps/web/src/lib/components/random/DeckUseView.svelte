@@ -3,14 +3,14 @@
   import SourceHeading from "./SourceHeading.svelte";
   import DeckView from "./DeckView.svelte";
   import { DeckService } from "random-source-engine";
-  import { deckService, randomSources } from "$lib/features/random";
-  import type { RandomSourceStore } from "$lib/stores/random-source-store.svelte";
+  import { deckService, randomSources } from "#lib/features/random/index.js";
+  import type { RandomSourceStore } from "#lib/stores/random-source-store.svelte.js";
   import {
     diceHistory,
     type DiceHistoryStore,
-  } from "$lib/stores/dice-history.svelte";
-  import { mapSession } from "$lib/stores/map-session.svelte";
-  import { systemClock, type Clock } from "$lib/utils/runtime-deps";
+  } from "#lib/stores/dice-history.svelte.js";
+  import { mapSession } from "#lib/stores/map-session.svelte.js";
+  import { systemClock, type Clock } from "#lib/utils/runtime-deps.js";
 
   /**
    * A deck as it is used at the table (issue 2258).

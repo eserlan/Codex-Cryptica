@@ -7,7 +7,7 @@ import {
 import type {
   AskInput,
   HelpAskResult,
-} from "$lib/services/help-assistant/help-client";
+} from "#lib/services/help-assistant/help-client.js";
 import { HelpAssistantStore } from "./help-assistant.svelte";
 
 const screen = (over: Record<string, unknown> = {}): HelpContext =>

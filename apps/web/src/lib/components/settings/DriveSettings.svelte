@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { driveStore } from "$lib/stores/drive.svelte";
-  import { vault } from "$lib/stores/vault.svelte";
+  import { driveStore } from "#lib/stores/drive.svelte.js";
+  import { vault } from "#lib/stores/vault.svelte.js";
   import {
     connectVaultToDrive,
     disconnectVaultFromDrive,
@@ -10,9 +10,9 @@
     importVaultFromDrive,
   } from "@codex/gdrive-sync";
   import { onMount } from "svelte";
-  import { getDB } from "$lib/utils/idb";
+  import { getDB } from "#lib/utils/idb.js";
   import { SyncRegistry, CloudSyncMetadataService } from "@codex/sync-engine";
-  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
 
   let isConnecting = $state(false);
   let isPushing = $state(false);

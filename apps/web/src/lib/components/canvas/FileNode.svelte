@@ -5,7 +5,7 @@
     type NodeProps,
     type ResizeParams,
   } from "@xyflow/svelte";
-  import { vault } from "$lib/stores/vault.svelte";
+  import { vault } from "#lib/stores/vault.svelte.js";
 
   let { data, selected, width, height }: NodeProps = $props();
 

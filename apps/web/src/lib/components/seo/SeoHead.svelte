@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { base } from "$app/paths";
-  import { buildAbsoluteUrl, getRobotsDirective } from "$lib/seo/site";
+  import { resolve } from "$app/paths";
+  import { buildAbsoluteUrl, getRobotsDirective } from "#lib/seo/site.js";
 
   interface Props {
     title: string;
@@ -36,7 +36,8 @@
     jsonLd = [],
   }: Props = $props();
 
-  const cleanBase = $derived(base.replace(/\/+$/, ""));
+  const cleanBase = $derived(resolve("").replace(/\/+$/, ""));
+
   const resolvedCanonicalUrl = $derived(
     canonicalUrl
       ? canonicalUrl.startsWith("http://") ||
@@ -45,6 +46,7 @@
         : buildAbsoluteUrl(canonicalUrl)
       : undefined,
   );
+
   const jsonLdSnippets = $derived(
     Array.isArray(jsonLd)
       ? jsonLd.filter(

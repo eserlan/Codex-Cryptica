@@ -1,6 +1,9 @@
 <script lang="ts">
-  import { businessConfig, pickFrom } from "$lib/services/seo/generator-config";
-  import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
+  import {
+    businessConfig,
+    pickFrom,
+  } from "#lib/services/seo/generator-config.js";
+  import SelectWithCustomOption from "#lib/components/forms/SelectWithCustomOption.svelte";
   import { businessTypeAfterGenreChange } from "./business-form";
 
   let {

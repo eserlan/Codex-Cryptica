@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
-import { categories } from "$lib/stores/categories.svelte";
+import { categories } from "#lib/stores/categories.svelte.js";
 import { PIRATE_DARK } from "schema";
 import type { GraphImageManager } from "graph-engine";
-import { syncGraphImages } from "./graph-image-sync";
+import { syncGraphImages, releaseGraphImages } from "./graph-image-sync";
 
 describe("syncGraphImages", () => {
   it("configures image sync from graph, theme, and vault state", () => {
@@ -56,5 +56,23 @@ describe("syncGraphImages", () => {
       "Incremental image resolution failed",
       error,
     );
+  });
+});
+
+describe("releaseGraphImages", () => {
+  it("releases thumbnail references through the vault", () => {
+    const destroy = vi.fn();
+    const releaseThumbnailUrl = vi.fn();
+    releaseGraphImages({ destroy } as unknown as GraphImageManager, {
+      releaseThumbnailUrl,
+    });
+    destroy.mock.calls[0][0].releaseImageUrl("portrait.png");
+    expect(releaseThumbnailUrl).toHaveBeenCalledWith("portrait.png");
+  });
+
+  it("does nothing before an image manager exists", () => {
+    const releaseThumbnailUrl = vi.fn();
+    releaseGraphImages(undefined, { releaseThumbnailUrl });
+    expect(releaseThumbnailUrl).not.toHaveBeenCalled();
   });
 });

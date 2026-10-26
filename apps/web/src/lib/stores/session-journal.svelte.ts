@@ -25,7 +25,7 @@ import {
   systemIdGenerator,
   type Clock,
   type IdGenerator,
-} from "$lib/utils/runtime-deps";
+} from "#lib/utils/runtime-deps.js";
 
 export type SessionJournalControlState = "start" | "open" | "resume";
 

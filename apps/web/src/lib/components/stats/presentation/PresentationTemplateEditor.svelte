@@ -1,8 +1,8 @@
 <script lang="ts">
   import { type StatSheetTemplate, type PresentationTemplate } from "schema";
-  import { downloadPresentationTemplate } from "$lib/utils/presentation-template-download";
+  import { downloadPresentationTemplate } from "#lib/utils/presentation-template-download.js";
   import PresentationSourceEditor from "./PresentationSourceEditor.svelte";
-  import { presentationTemplates } from "$lib/stores/presentation-templates.svelte";
+  import { presentationTemplates } from "#lib/stores/presentation-templates.svelte.js";
   import { PresentationEditorSaveState } from "./editor-save.svelte";
   import PresentationRenderer from "./PresentationRenderer.svelte";
   import PresentationSyntaxHelpModal from "./PresentationSyntaxHelpModal.svelte";

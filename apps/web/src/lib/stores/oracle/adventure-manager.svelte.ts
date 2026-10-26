@@ -25,23 +25,23 @@ import {
   adventureControlAuthority,
   type AdventureControlAuthority,
   type AdventureControlLease,
-} from "$lib/services/adventure/adventure-control-lease";
+} from "#lib/services/adventure/adventure-control-lease.js";
 import {
   adventureControlCoordinator,
   type AdventureControlCoordinator,
-} from "$lib/services/adventure/adventure-control-coordinator";
+} from "#lib/services/adventure/adventure-control-coordinator.js";
 import {
   adventureSessionRepository,
   type AdventureSessionRepository,
-} from "$lib/services/adventure/adventure-session-repository";
+} from "#lib/services/adventure/adventure-session-repository.js";
 import {
   adventureContextService,
   type AdventureContextService,
-} from "$lib/services/adventure/adventure-context-service";
+} from "#lib/services/adventure/adventure-context-service.js";
 import { adventureTurnGenerationService } from "@codex/ai-engine";
-import { oracleBridge } from "$lib/cloud-bridge/oracle-bridge";
+import { oracleBridge } from "#lib/cloud-bridge/oracle-bridge.js";
 import { diceEngine as defaultDiceEngine, diceParser } from "dice-engine";
-import { systemIdGenerator } from "$lib/utils/runtime-deps";
+import { systemIdGenerator } from "#lib/utils/runtime-deps.js";
 
 export interface AdventureManagerDependencies {
   repository?: AdventureSessionRepository;

@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { helpStore } from "$lib/stores/help.svelte";
+  import { helpStore } from "#lib/stores/help.svelte.js";
   import { fade } from "svelte/transition";
   import { onMount } from "svelte";
   import GuideTooltip from "./GuideTooltip.svelte";
-  import { computeSpotlightClipPath } from "$lib/utils/spotlight";
+  import { computeSpotlightClipPath } from "#lib/utils/spotlight.js";
 
   let targetRect = $state<DOMRect | null>(null);
 

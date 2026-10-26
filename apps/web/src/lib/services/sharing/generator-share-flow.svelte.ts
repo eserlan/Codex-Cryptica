@@ -2,7 +2,7 @@
  * Share flow state machine similar to MonsterLabs handoff.
  * Handles confirm → loading → ready states for safe async share creation.
  */
-import { notificationStore } from "$lib/stores/ui/notification.svelte";
+import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
 
 export type GeneratorShareFlowState = "confirm" | "loading" | "ready";
 

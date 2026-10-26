@@ -2,17 +2,20 @@
   import { fly } from "svelte/transition";
   import { marked } from "marked";
   import DOMPurify from "dompurify";
-  import { browser } from "$app/environment";
+  import { browser } from "$app/env";
   import { deriveEntityTypePalette } from "schema";
   import type { Entity } from "schema";
-  import { categories } from "$lib/stores/categories.svelte";
-  import { themeStore } from "$lib/stores/theme.svelte";
-  import { getIconClass } from "$lib/utils/icon";
+  import { categories } from "#lib/stores/categories.svelte.js";
+  import { themeStore } from "#lib/stores/theme.svelte.js";
+  import { getIconClass } from "#lib/utils/icon.js";
 
-  let { hoveredEntity, hoverPosition } = $props<{
+  let {
+    hoveredEntity,
+    hoverPosition,
+  }: {
     hoveredEntity: Entity | null;
     hoverPosition: { x: number; y: number } | null;
-  }>();
+  } = $props();
 
   // Entity type must not ride on node colour alone (issue #2680): hovering a
   // node names the type in words, with its icon, next to the title.

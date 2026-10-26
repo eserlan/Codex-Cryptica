@@ -157,6 +157,7 @@ export const howDoScarcityAndShortagesAffectPricesAndConflictInAnRpgWorld: Answe
       "how-do-i-make-different-cultures-feel-distinct-without-relying-on-stereotypes",
       "how-do-i-create-interesting-islands-and-ports-for-a-pirate-campaign",
       "how-should-a-fantasy-adventuring-guild-handle-wages-dues-and-shared-expenses",
+      "how-do-i-build-a-believable-post-scarcity-civilisation",
     ],
     discovery: {
       id: "answer-scarcity-shortages-prices-conflict",
@@ -179,6 +180,13 @@ export const howDoScarcityAndShortagesAffectPricesAndConflictInAnRpgWorld: Answe
         "generator-faction",
         "generator-settlement",
         "for-economy-trade",
+      ],
+      acknowledgedOverlap: [
+        {
+          with: "answer-post-scarcity-civilisation",
+          reason:
+            "This answer runs shortages through changing access, group responses, and visible pressure when goods can run out; the post-scarcity answer designs a guaranteed material floor and shifts conflict toward finite attention, places, consent, and competing values.",
+        },
       ],
     },
     seo: {

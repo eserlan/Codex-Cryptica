@@ -4,7 +4,7 @@ import {
   systemIdGenerator,
   browserSessionStorage,
   type StorageLike,
-} from "$lib/utils/runtime-deps";
+} from "#lib/utils/runtime-deps.js";
 
 export const SESSION_DRAFTS_KEY = "SESSION_DRAFTS";
 

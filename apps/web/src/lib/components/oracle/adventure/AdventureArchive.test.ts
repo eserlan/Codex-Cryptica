@@ -4,7 +4,7 @@ import AdventureArchive from "./AdventureArchive.svelte";
 import type {
   AdventureArchiveEntry,
   AdventureListResult,
-} from "$lib/services/adventure/adventure-session-repository";
+} from "#lib/services/adventure/adventure-session-repository.js";
 
 const archivedEntry: AdventureArchiveEntry = {
   id: "session-1",

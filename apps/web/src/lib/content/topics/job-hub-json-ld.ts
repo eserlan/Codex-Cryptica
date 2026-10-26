@@ -1,5 +1,5 @@
-import { safeJsonLd } from "$lib/utils/json-ld";
-import { buildAbsoluteUrl } from "$lib/seo/site";
+import { safeJsonLd } from "#lib/utils/json-ld.js";
+import { buildAbsoluteUrl } from "#lib/seo/site.js";
 import type { TopicJobHubConfig } from "./job-hub-types";
 
 /** Every distinct page the hub links to, in reading order. */

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import { page } from "$app/state";
-  import TemplateDirectory from "$lib/components/stats/community-template/TemplateDirectory.svelte";
+  import TemplateDirectory from "#lib/components/stats/community-template/TemplateDirectory.svelte";
   import EntityTemplateBrowse from "./EntityTemplateBrowse.svelte";
 
   type Kind = "stat-sheet" | "entity";
@@ -19,8 +19,7 @@
     kind = next;
     void goto(next === "entity" ? "?kind=entity" : "?", {
       replaceState: true,
-      keepFocus: true,
-      noScroll: true,
+      reset: false,
     });
   }
 </script>

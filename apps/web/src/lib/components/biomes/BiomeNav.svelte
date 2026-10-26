@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { BiomeExplorerStore } from "$lib/stores/biome-explorer.svelte";
+  import type { BiomeExplorerStore } from "#lib/stores/biome-explorer.svelte.js";
 
   type Tab = "library" | "compare";
 

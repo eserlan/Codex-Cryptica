@@ -414,6 +414,7 @@ export const howDoIMakeDifferentCulturesFeelDistinctWithoutRelyingOnStereotypes:
       "how-do-fantasy-cities-defend-against-flying-creatures-and-teleportation",
       "can-multiple-gods-share-a-domain",
       "where-do-worldbuilding-ideas-come-from",
+      "how-do-i-build-a-believable-post-scarcity-civilisation",
     ],
     discovery: {
       id: "answer-cultures-without-stereotypes",

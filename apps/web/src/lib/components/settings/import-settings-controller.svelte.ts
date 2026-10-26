@@ -1,12 +1,12 @@
-import { oracle } from "$lib/stores/oracle.svelte";
-import { vault } from "$lib/stores/vault.svelte";
-import { importQueue } from "$lib/stores/import-queue.svelte";
+import { oracle } from "#lib/stores/oracle.svelte.js";
+import { vault } from "#lib/stores/vault.svelte.js";
+import { importQueue } from "#lib/stores/import-queue.svelte.js";
 import { aiClientManager } from "@codex/ai-engine";
-import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
-import { notificationStore } from "$lib/stores/ui/notification.svelte";
-import { themeStore } from "$lib/stores/theme.svelte";
-import { createWebVaultWriter } from "$lib/features/importer/web-vault-writer";
+import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+import { connectionModeStore } from "#lib/stores/ui/connection-mode.svelte.js";
+import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
+import { themeStore } from "#lib/stores/theme.svelte.js";
+import { createWebVaultWriter } from "#lib/features/importer/web-vault-writer.js";
 import type { CreaturePack } from "@codex/content-packs";
 import {
   TextParser,

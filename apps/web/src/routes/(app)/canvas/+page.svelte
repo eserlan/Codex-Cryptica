@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
-  import { vault } from "$lib/stores/vault.svelte";
+  import { canvasRegistry } from "#lib/stores/canvas-registry.svelte.js";
+  import { vault } from "#lib/stores/vault.svelte.js";
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { untrack } from "svelte";
-  import { pendingDelveTransferService } from "$lib/services/seo/pending-delve-transfer";
+  import { pendingDelveTransferService } from "#lib/services/seo/pending-delve-transfer.js";
 
   let showFallback = $state(false);
   let initializationError = $state<string | null>(null);
@@ -23,7 +23,7 @@
 
     if (vault.isInitialized && !vault.activeVaultId) {
       hasNavigated = true;
-      goto(resolve("/"));
+      goto("/");
       return;
     }
 

@@ -1,12 +1,12 @@
 <script lang="ts">
   import type { Entity, VaultEntitySummary } from "schema";
   import type { SoundBiteVoiceMode } from "schema";
-  import { vault } from "$lib/stores/vault.svelte";
+  import { vault } from "#lib/stores/vault.svelte.js";
   import { soundBiteService } from "@codex/audio-engine";
-  import { p2pHost } from "$lib/cloud-bridge/p2p/host-service.svelte";
+  import { p2pHost } from "#lib/cloud-bridge/p2p/host-service.svelte.js";
   import { onMount } from "svelte";
 
-  let { entity, onClose } = $props<{ entity: Entity; onClose?: () => void }>();
+  let { entity, onClose }: { entity: Entity; onClose?: () => void } = $props();
 
   // ─── State ────────────────────────────────────────────────────────────────
 

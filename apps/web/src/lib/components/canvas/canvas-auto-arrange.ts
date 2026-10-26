@@ -11,7 +11,7 @@ import {
   type DelveCanvasNode,
   type DelveRoomNodeData,
 } from "generator-engine";
-import { systemClock, type Clock } from "$lib/utils/runtime-deps";
+import { systemClock, type Clock } from "#lib/utils/runtime-deps.js";
 import {
   flowNodeToCanvasNode,
   flowEdgeToCanvasEdge,

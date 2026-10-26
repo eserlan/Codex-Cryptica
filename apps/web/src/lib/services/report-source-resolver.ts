@@ -5,7 +5,7 @@ import {
   resolveCanvasReportInput,
   type CanvasReportEdge,
   type CanvasReportNode,
-} from "$lib/components/canvas/canvas-report-generation";
+} from "#lib/components/canvas/canvas-report-generation.js";
 import { resolveSelectionReportInput } from "./report-selection-input";
 
 export interface ReportSourceDeps {

@@ -48,6 +48,10 @@ After generation you see a **review screen** showing the full draft. You can:
 
 **Open in Editor** creates a temporary entity record and opens its suggested Chronicle and Lore for review. **Apply Changes** keeps the generated content; **Discard** removes the new draft entity. Before you choose Open in Editor, the preview does not create an entity.
 
+### Quick Names
+
+On supported public name generators, the **Quick Names** panel rolls names on your device. Tap a name to copy it. The settings row shows the current culture and name type; open it to change them or to choose **First names only**. Pin a name to keep it in the batch when you roll again; select it again to unpin it. **Copy pinned** copies only pinned names, while **Copy all** copies the full current batch. **Ask AI** sends your description and settings to our AI service, and the panel says when the names on screen came from it. For meanings and culture notes, choose **Generate names with notes**.
+
 ### Contextual Generation
 
 When the generator is opened from an entity's detail panel, it automatically includes that entity's name and a summary of its immediate neighbors as generation context. This grounds the new entity in your existing lore without sending your full vault to any server.
