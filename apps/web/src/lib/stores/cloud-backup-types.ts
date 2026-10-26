@@ -116,3 +116,21 @@ export interface CloudBackupDeps {
   /** Local storage for persisting caches across sessions. */
   storage?: StorageLike;
 }
+
+/** Reactive values shared by the app-side backup workflows. */
+export interface CloudBackupViewState {
+  status: CloudBackupStatus;
+  lastPushedAt: string | null;
+  errorMessage: string | null;
+  ownerCode: string | null;
+  recoveryKey: string | null;
+  knownBackups: import("@codex/cloud-backup-sync").KnownCloudBackup[];
+  skippedAssets: string[];
+  skippedEntities: string[];
+  uploadProgress: { uploaded: number; total: number } | null;
+  consented: boolean;
+  autoState: CloudAutoSyncState;
+  autoConflictRemoteAt: string | null;
+}
+
+export type CloudBackupDepsProvider = () => CloudBackupDeps | null;

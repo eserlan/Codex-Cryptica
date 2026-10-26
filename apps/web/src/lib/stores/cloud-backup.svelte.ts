@@ -1,8 +1,8 @@
+import { CloudBackupUploads } from "./cloud-backup-uploads";
+import type { SnapshotOutcome } from "./cloud-backup-types";
 import {
   attachCloudBackup,
-  type CloudBackupTiming,
   enableCloudBackup,
-  pushVaultToCloudBackup,
   disableCloudBackup,
   deleteCloudBackup,
   restoreVaultFromCloudBackup,
@@ -10,17 +10,14 @@ import {
   getCloudBackupOwnershipCode,
   formatRecoveryKey,
   listKnownCloudBackups,
-  planAssetUploads,
-  pushDeltaToCloudBackup,
   fetchCloudBackupIndex,
-  type VaultDeltaPayload,
   type KnownCloudBackup,
 } from "@codex/cloud-backup-sync";
 import { hashCloudBackupEntity, type LocalCloudBackupRecord } from "schema";
 import { onlineStatus } from "./online.svelte";
-import type { CloudBackupDirtyRow } from "./cloud-backup-dirty";
+
 import type { DurableVaultChange } from "./vault/registry";
-import { browserStorage, type StorageLike } from "#lib/utils/runtime-deps.js";
+
 export { cloudBackupBrowserStorage } from "./cloud-backup-browser-storage";
 
 /**
@@ -53,11 +50,9 @@ import {
   AUTO_SYNC_DEBOUNCE_MS,
   AUTO_SYNC_RETRY_MS,
   RECONCILE_DELAY_MS,
-  BACKUP_OFF,
   type CloudBackupStatus,
   type CloudAutoSyncState,
   type CloudBackupDeps,
-  type SnapshotOutcome,
 } from "./cloud-backup-types";
 export {
   AUTO_SYNC_DEBOUNCE_MS,
@@ -125,9 +120,6 @@ export class CloudBackupStore {
   autoConflictRemoteAt = $state<string | null>(null);
 
   private deps: CloudBackupDeps | null = null;
-  private pushing = false;
-  /** The in-flight snapshot build, aborted by `disable`. */
-  private activeBuild: AbortController | null = null;
   /**
    * Vault whose first backup is being built. Its record is not enabled yet,
    * but an edit made meanwhile must still be tracked or it would be missing
@@ -135,15 +127,10 @@ export class CloudBackupStore {
    */
   private enablingVaultId: string | null = null;
   private reconcileTimer: ReturnType<typeof setTimeout> | null = null;
-  /** Lets `disable` persist its off record after any cancelled push settles. */
-  private activePush: Promise<SnapshotOutcome> | null = null;
   private autoPending = false;
   private autoTimer: ReturnType<typeof setTimeout> | null = null;
   private autoListenersAttached = false;
-  private hashCache: Record<string, string> = {};
-  private get localStorage(): StorageLike {
-    return this.deps?.storage ?? browserStorage;
-  }
+  private uploads = new CloudBackupUploads(this, () => this.deps);
 
   /** Wires the store up. Called once from app init with the real runtime. */
   configure(deps: CloudBackupDeps) {
@@ -167,7 +154,7 @@ export class CloudBackupStore {
 
     const record = await getLocalCloudBackupRecord(this.deps.runtime, vaultId);
     this.applyRecord(record);
-    this.loadHashCache(vaultId);
+    this.uploads.media.load(vaultId);
     // Catch-up: sync resumes when the user returns, guarded so a newer
     // remote can never be overwritten by a stale return.
     if (this.status !== "off") {
@@ -318,8 +305,7 @@ export class CloudBackupStore {
       return false;
     }
     this.applyRecord(result.value);
-    this.hashCache = {};
-    this.saveHashCache(vaultId);
+    this.uploads.media.reset(vaultId);
     this.autoPending = false;
     this.autoConflictRemoteAt = null;
     this.autoState = "idle";
@@ -331,10 +317,7 @@ export class CloudBackupStore {
   async disable(vaultId: string) {
     // Disabling stops automation cold: no pending push may survive it, or
     // "off" would stop meaning "nothing leaves the device".
-    this.activeBuild?.abort();
-    await this.activePush?.catch(() => undefined);
-    this.activeBuild = null;
-    this.activePush = null;
+    await this.uploads.cancel();
     this.clearAutoTimer();
     this.clearReconcileTimer();
     this.autoPending = false;
@@ -463,14 +446,14 @@ export class CloudBackupStore {
    * (the user chose to overwrite by pressing the button).
    */
   async backUpNow(): Promise<boolean> {
-    if (!this.deps || this.pushing) return false;
+    if (!this.deps || this.uploads.pushing) return false;
     const vaultId = this.deps.activeVaultId();
     if (!vaultId) return false;
 
-    this.pushing = true;
+    this.uploads.pushing = true;
     this.status = "syncing";
     try {
-      const out = await this.pushSnapshot(vaultId, { guarded: false });
+      const out = await this.uploads.pushSnapshot(vaultId, { guarded: false });
       if (!out.ok) {
         if (out.notEnabled) {
           // Not enabled for this vault — nothing was sent.
@@ -494,7 +477,7 @@ export class CloudBackupStore {
         error instanceof Error ? error.message : "Cloud backup failed.";
       return false;
     } finally {
-      this.pushing = false;
+      this.uploads.pushing = false;
       this.uploadProgress = null;
       if (this.autoPending && !this.autoTimer) this.scheduleAutoPush();
     }
@@ -570,11 +553,11 @@ export class CloudBackupStore {
     if (!onlineStatus.current) {
       return this.deferAutoSyncOffline();
     }
-    if (this.pushing) {
+    if (this.uploads.pushing) {
       return this.deferAutoSyncWhilePushing();
     }
     this.clearAutoTimer();
-    this.pushing = true;
+    this.uploads.pushing = true;
     this.autoState = "saving";
     try {
       return await this.completeAutoSync(vaultId);
@@ -602,7 +585,7 @@ export class CloudBackupStore {
   }
 
   private async completeAutoSync(vaultId: string): Promise<boolean> {
-    const out = await this.pushSnapshot(vaultId, { guarded: true });
+    const out = await this.uploads.pushSnapshot(vaultId, { guarded: true });
     if (out.notEnabled) return this.stopAutoSyncBackupOff();
     if (out.ok) {
       this.autoPending = false;
@@ -648,7 +631,7 @@ export class CloudBackupStore {
   }
 
   private finishAutoSyncPush(): void {
-    this.pushing = false;
+    this.uploads.pushing = false;
     this.uploadProgress = null;
     // Chain work that arrived mid-push — unless a retry timer is already
     // armed (scheduling again would replace the backoff with the debounce).
@@ -665,11 +648,11 @@ export class CloudBackupStore {
   async resolveConflictKeepMine(): Promise<boolean> {
     if (!this.deps || this.autoState !== "conflict") return false;
     const vaultId = this.deps.activeVaultId();
-    if (!vaultId || this.status === "off" || this.pushing) return false;
-    this.pushing = true;
+    if (!vaultId || this.status === "off" || this.uploads.pushing) return false;
+    this.uploads.pushing = true;
     this.autoState = "saving";
     try {
-      const out = await this.pushSnapshot(vaultId, { guarded: false });
+      const out = await this.uploads.pushSnapshot(vaultId, { guarded: false });
       if (!out.ok) {
         // The choice stands but the push failed: stay pending and retry with
         // backoff, or "retrying" is a label for a retry that never comes.
@@ -683,7 +666,7 @@ export class CloudBackupStore {
       this.errorMessage = null;
       return true;
     } finally {
-      this.pushing = false;
+      this.uploads.pushing = false;
       this.uploadProgress = null;
     }
   }
@@ -744,211 +727,6 @@ export class CloudBackupStore {
     if (this.autoTimer) {
       clearTimeout(this.autoTimer);
       this.autoTimer = null;
-    }
-  }
-
-  /**
-   * Shared snapshot push for manual and automatic paths. Manual callers pass
-   * `guarded: false` (explicit user act, current behaviour); automatic
-   * callers pass `guarded: true` (abort on remote divergence). Unchanged
-   * media bytes are skipped in both cases via the content-hash cache.
-   */
-  private async pushSnapshot(
-    vaultId: string,
-    opts: { guarded: boolean },
-  ): Promise<SnapshotOutcome> {
-    const push = new AbortController();
-    this.activeBuild = push;
-    const operation = (async () => {
-      // Check before building: the snapshot reads every entity, so learning
-      // that backup is off only at upload time costs a whole-vault read.
-      const record = await getLocalCloudBackupRecord(
-        this.deps!.runtime,
-        vaultId,
-      );
-      if (push.signal.aborted || !record?.enabled) return BACKUP_OFF;
-
-      // Taken before building, so anything changed after this point stays
-      // pending even though the snapshot may happen to include it.
-      const sent = (await this.deps!.dirty?.snapshot(vaultId)) ?? [];
-      if (push.signal.aborted) return BACKUP_OFF;
-
-      // Keep the cancellation guard live through upload, including delta
-      // writes, so disable can wait before persisting the off record.
-      const out = await this.uploadChanges(vaultId, opts, sent, push.signal);
-      if (push.signal.aborted) return BACKUP_OFF;
-      if (out.ok) await this.deps!.dirty?.clearSent(sent);
-      return out;
-    })();
-    this.activePush = operation;
-    try {
-      const out = await operation;
-      return push.signal.aborted ? BACKUP_OFF : out;
-    } finally {
-      if (this.activeBuild === push) {
-        this.activeBuild = null;
-        this.activePush = null;
-      }
-    }
-  }
-
-  /**
-   * Sends only the recorded changes when it can (#3354), otherwise a full
-   * snapshot. Only automatic, guarded pushes go incremental: "Save to cloud"
-   * and "keep mine" are explicit and stay full. With nothing recorded, an
-   * automatic push has nothing to send.
-   */
-  private async uploadChanges(
-    vaultId: string,
-    opts: { guarded: boolean },
-    sent: readonly CloudBackupDirtyRow[],
-    signal: AbortSignal,
-  ): Promise<SnapshotOutcome> {
-    const deps = this.deps!;
-    const base = this.lastPushedAt;
-    if (!opts.guarded || !deps.dirty || !deps.buildDelta || !base) {
-      return this.uploadSnapshot(vaultId, opts, signal);
-    }
-    if (sent.length === 0) return { ok: true };
-
-    const delta = await deps.buildDelta(
-      vaultId,
-      sent,
-      new Set(Object.keys(this.hashCache)),
-      signal,
-    );
-    if (signal.aborted) return BACKUP_OFF;
-    const out = delta
-      ? await this.sendDelta(vaultId, delta, base, signal)
-      : null;
-    return out ?? this.uploadSnapshot(vaultId, opts, signal);
-  }
-
-  /** Publishes a delta; `null` means the backup needs a full upload instead. */
-  private async sendDelta(
-    vaultId: string,
-    delta: VaultDeltaPayload,
-    base: string,
-    signal: AbortSignal,
-  ): Promise<SnapshotOutcome | null> {
-    const result = await pushDeltaToCloudBackup(
-      this.deps!.runtime,
-      vaultId,
-      delta,
-      base,
-      signal,
-    );
-    if (!result.ok) {
-      if ("fullPushRequired" in result) return null;
-      return {
-        ok: false,
-        conflict: result.conflict,
-        remoteAt: result.remoteLastPushedAt,
-        error: result.error,
-      };
-    }
-    if (!result.value) return BACKUP_OFF;
-    this.lastPushedAt = result.value.lastPushedAt;
-    return { ok: true };
-  }
-
-  private async uploadSnapshot(
-    vaultId: string,
-    opts: { guarded: boolean },
-    signal: AbortSignal,
-  ): Promise<SnapshotOutcome> {
-    const deps = this.deps!;
-    const payload = await deps.buildPayload(vaultId, signal);
-    if (signal.aborted) return BACKUP_OFF;
-    this.skippedAssets =
-      (payload as { skippedAssets?: string[] }).skippedAssets ?? [];
-    this.skippedEntities =
-      (payload as { skippedEntities?: string[] }).skippedEntities ?? [];
-    const { skipAssetUploadIds, freshHashes } = await this.planUploads(
-      payload.assets ?? [],
-      deps.timing,
-    );
-    const result = await pushVaultToCloudBackup(
-      deps.runtime,
-      vaultId,
-      payload,
-      (progress) => {
-        this.uploadProgress = progress;
-      },
-      {
-        skipAssetUploadIds,
-        ...(opts.guarded ? { expectLastPushedAt: this.lastPushedAt } : {}),
-        signal,
-        onTiming: deps.timing,
-      },
-    );
-    if (!result.ok) {
-      return {
-        ok: false,
-        conflict: result.conflict,
-        remoteAt: result.remoteLastPushedAt,
-        error: result.error,
-      };
-    }
-    if (!result.value) return BACKUP_OFF;
-    this.hashCache = freshHashes;
-    this.saveHashCache(vaultId);
-    this.lastPushedAt = result.value.lastPushedAt;
-    return { ok: true };
-  }
-
-  /**
-   * Detects unchanged media so the upload can skip known bytes. Timed apart
-   * from the network: hashing is the CPU-proportional block on this side of
-   * the upload. Falls back to uploading everything when hashing is
-   * unavailable (no WebCrypto), as before.
-   */
-  private async planUploads(
-    assets: { assetId: string; bytes: Uint8Array; mimeType: string }[],
-    timing?: (timing: CloudBackupTiming) => void,
-  ): Promise<{
-    skipAssetUploadIds: string[];
-    freshHashes: Record<string, string>;
-  }> {
-    const hashStartedAt = performance.now();
-    try {
-      const plan = await planAssetUploads(assets, this.hashCache);
-      timing?.({
-        stage: "hash",
-        durationMs: performance.now() - hashStartedAt,
-        count: assets.length,
-        bytes: assets.reduce((total, asset) => total + asset.bytes.length, 0),
-      });
-      return {
-        skipAssetUploadIds: plan.skippedIds,
-        freshHashes: plan.hashes,
-      };
-    } catch {
-      return { skipAssetUploadIds: [], freshHashes: {} };
-    }
-  }
-
-  private hashCacheKey(vaultId: string): string {
-    return `codex.cloud-backup-hashes.${vaultId}`;
-  }
-
-  private loadHashCache(vaultId: string): void {
-    try {
-      const raw = this.localStorage.getItem(this.hashCacheKey(vaultId));
-      this.hashCache = raw ? (JSON.parse(raw) as Record<string, string>) : {};
-    } catch {
-      this.hashCache = {};
-    }
-  }
-
-  private saveHashCache(vaultId: string): void {
-    try {
-      this.localStorage.setItem(
-        this.hashCacheKey(vaultId),
-        JSON.stringify(this.hashCache),
-      );
-    } catch {
-      // Storage blocked: uploads just get more expensive, never broken.
     }
   }
 }
