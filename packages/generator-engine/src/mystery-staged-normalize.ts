@@ -6,15 +6,23 @@ type Obj = JsonObject;
 const isRecord = (value: unknown): value is Obj =>
   !!value && typeof value === "object" && !Array.isArray(value);
 
+/** Flattens each value and joins the non-empty results, without an intermediate map/filter array. */
+function joinFlattened(values: Iterable<unknown>, separator: string): string {
+  const parts: string[] = [];
+  for (const item of values) {
+    const flat = flattenText(item);
+    if (flat) parts.push(flat);
+  }
+  return parts.join(separator);
+}
+
 /** Flatten a string, list or object into one readable string. */
 export function flattenText(value: unknown): string {
   if (typeof value === "string") return value;
   if (typeof value === "number" || typeof value === "boolean")
     return String(value);
-  if (Array.isArray(value))
-    return value.map(flattenText).filter(Boolean).join("; ");
-  if (isRecord(value))
-    return Object.values(value).map(flattenText).filter(Boolean).join(" — ");
+  if (Array.isArray(value)) return joinFlattened(value, "; ");
+  if (isRecord(value)) return joinFlattened(Object.values(value), " — ");
   return "";
 }
 
@@ -326,9 +334,13 @@ function normalizePressure(data: Obj): Obj {
 
 /** Only "consistent" and "needs-repair" are statuses; issues decide the rest. */
 function normalizeAudit(data: Obj): Obj {
-  const issues = Array.isArray(data.issues)
-    ? data.issues.map(flattenText).filter((issue) => issue.trim())
-    : [];
+  const issues: string[] = [];
+  if (Array.isArray(data.issues)) {
+    for (const issue of data.issues) {
+      const flat = flattenText(issue);
+      if (flat.trim()) issues.push(flat);
+    }
+  }
   const status = flattenText(data.status).trim().toLowerCase();
   const consistent =
     issues.length === 0 && /^(consistent|pass|ok)/.test(status);
