@@ -1,13 +1,13 @@
 <script lang="ts">
-  import SEOGeneratorLayout from "$lib/components/seo/SEOGeneratorLayout.svelte";
-  import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
+  import SEOGeneratorLayout from "#lib/components/seo/SEOGeneratorLayout.svelte";
+  import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
   import {
     createIdeaDeveloperService,
     IDEA_DEVELOPER_MODES,
     IDEA_MAX_LENGTH,
     toIdeaDeveloperMarkdown,
     type IdeaDeveloperMode,
-  } from "$lib/services/seo/idea-developer-service";
+  } from "#lib/services/seo/idea-developer-service.js";
 
   const ideaDeveloper = createIdeaDeveloperService();
   let idea = $state("");

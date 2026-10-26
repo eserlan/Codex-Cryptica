@@ -1,11 +1,11 @@
 <script lang="ts">
   import { fade, scale } from "svelte/transition";
-  import { loreMergeStore } from "$lib/stores/ui/lore-merge.svelte";
+  import { loreMergeStore } from "#lib/stores/ui/lore-merge.svelte.js";
   import {
     composeLore,
     type LoreSectionChoice,
-  } from "$lib/utils/lore-sections";
-  import { focusTrap } from "$lib/actions/focusTrap";
+  } from "#lib/utils/lore-sections.js";
+  import { focusTrap } from "#lib/actions/focusTrap.js";
 
   const dialog = $derived(loreMergeStore.dialog);
   const plan = $derived(dialog.plan);

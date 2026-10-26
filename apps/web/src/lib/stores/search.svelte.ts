@@ -18,8 +18,8 @@ if (typeof window !== "undefined") {
 }
 
 import { vault as defaultVault } from "./vault.svelte";
-import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
-import { browserStorage, type StorageLike } from "$lib/utils/runtime-deps";
+import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
+import { browserStorage, type StorageLike } from "#lib/utils/runtime-deps.js";
 import { guestVault } from "./guest-vault.svelte";
 
 export class SearchStore {

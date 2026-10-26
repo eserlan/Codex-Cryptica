@@ -4,7 +4,7 @@
     type NodeProps,
     type ResizeParams,
   } from "@xyflow/svelte";
-  import { vault } from "$lib/stores/vault.svelte";
+  import { vault } from "#lib/stores/vault.svelte.js";
   import {
     DEFAULT_CANVAS_TEXT_BACKGROUND,
     DEFAULT_CANVAS_TEXT_FONT_SIZE,

@@ -8,7 +8,7 @@ import type { MissingImageReference } from "@codex/importer";
 const fsMocks = vi.hoisted(() => ({
   isFileSystemAccessSupported: vi.fn(() => true),
 }));
-vi.mock("$lib/utils/fs", () => fsMocks);
+vi.mock("#lib/utils/fs.js", () => fsMocks);
 
 function ref(
   overrides: Partial<MissingImageReference> = {},

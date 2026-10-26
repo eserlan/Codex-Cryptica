@@ -2,9 +2,13 @@
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { render } from "@testing-library/svelte";
-import { getAllExamples } from "$lib/content/examples/registry";
+import { getAllExamples } from "#lib/content/examples/registry.js";
 
-vi.mock("$app/paths", () => ({ base: "" }));
+vi.mock("$app/paths", () => ({
+  base: "",
+  asset: (p: string) => p,
+  resolve: (p: string) => p,
+}));
 
 import Page from "./+page.svelte";
 

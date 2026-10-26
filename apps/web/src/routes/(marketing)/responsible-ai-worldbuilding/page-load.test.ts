@@ -5,9 +5,11 @@ import Page from "./+page.svelte";
 
 vi.mock("$app/paths", () => ({
   base: "",
+  asset: (p: string) => p,
+  resolve: (p: string) => p,
 }));
 
-vi.mock("$lib/content/blog-content", () => ({
+vi.mock("#lib/content/blog-content.js", () => ({
   loadBlogIndex: vi.fn().mockResolvedValue([
     {
       slug: "lore-oracle-not-the-author",
@@ -27,7 +29,7 @@ vi.mock("$lib/content/blog-content", () => ({
   ]),
 }));
 
-vi.mock("$lib/seo/site", () => ({
+vi.mock("#lib/seo/site.js", () => ({
   buildAbsoluteUrl: (path: string) => `https://example.com${path}`,
 }));
 

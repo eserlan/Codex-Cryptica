@@ -1,14 +1,17 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { base } from "$app/paths";
-  import SeoHead from "$lib/components/seo/SeoHead.svelte";
-  import { buildAbsoluteUrl } from "$lib/seo/site";
-  import { buildAnswerIndexJsonLd } from "$lib/content/answers/json-ld";
+  import { resolve } from "$app/paths";
+  import SeoHead from "#lib/components/seo/SeoHead.svelte";
+  import { buildAbsoluteUrl } from "#lib/seo/site.js";
+  import { buildAnswerIndexJsonLd } from "#lib/content/answers/json-ld.js";
   import {
     ANSWER_CATEGORIES,
     groupAnswersByCategory,
-  } from "$lib/content/answers/categories";
-  import type { AnswerConfig, AnswerKind } from "$lib/content/answers/schema";
+  } from "#lib/content/answers/categories.js";
+  import type {
+    AnswerConfig,
+    AnswerKind,
+  } from "#lib/content/answers/schema.js";
   import {
     ANSWER_SORT_OPTIONS,
     DEFAULT_ANSWER_SORT,
@@ -17,21 +20,21 @@
     readStoredAnswerSort,
     sortAnswers,
     type AnswerSortOption,
-  } from "$lib/content/answers/sort";
-  import { browserStorage } from "$lib/utils/runtime-deps";
+  } from "#lib/content/answers/sort.js";
+  import { browserStorage } from "#lib/utils/runtime-deps.js";
   import type { PageData } from "./$types";
   import CommunityFavourites, {
     type CommunityFavourite,
-  } from "$lib/components/answers/CommunityFavourites.svelte";
+  } from "#lib/components/answers/CommunityFavourites.svelte";
   import {
     COMMUNITY_MAX_ITEMS,
     communityAggregates,
-  } from "$lib/services/community/community-aggregates";
-  import { getAnswer } from "$lib/content/answers/registry";
+  } from "#lib/services/community/community-aggregates.js";
+  import { getAnswer } from "#lib/content/answers/registry.js";
 
   let { data }: { data: PageData } = $props();
 
-  const cleanBase = base === "/" ? "" : base;
+  const cleanBase = resolve("") === "/" ? "" : resolve("");
 
   const TITLE = "RPG and worldbuilding answers";
   const DESCRIPTION =
@@ -244,7 +247,7 @@
     rel="alternate"
     type="application/atom+xml"
     title="Codex Cryptica answers"
-    href="{base}/answers/feed.xml"
+    href="{resolve('')}/answers/feed.xml"
   />
 </svelte:head>
 
@@ -280,12 +283,13 @@
       >
         {TITLE}
       </h1>
+
       <p class="max-w-2xl text-lg leading-relaxed text-theme-muted">
         {DESCRIPTION} Each page answers one question directly, then explains the framework
         behind it with a concrete example.
       </p>
       <a
-        href="{base}/answers/feed.xml"
+        href="{resolve('')}/answers/feed.xml"
         class="mt-4 inline-flex items-center gap-2 text-sm text-theme-primary hover:underline"
       >
         <span class="icon-[lucide--rss] h-4 w-4" aria-hidden="true"></span>
@@ -467,13 +471,13 @@
                   {KIND_LABEL[answer.kind] ?? answer.kind}
                 </span>
                 {#if showCategory && cat}
-                  <span class="text-theme-muted/40">&bull;</span>
-                  <span class="font-mono text-meta text-theme-muted">
-                    {cat.title}
-                  </span>
+                  <span class="text-theme-muted/40">•</span>
+                  <span class="font-mono text-meta text-theme-muted"
+                    >{cat.title}</span
+                  >
                 {/if}
                 {#if answer.publishedAt}
-                  <span class="text-theme-muted/40">&bull;</span>
+                  <span class="text-theme-muted/40">•</span>
                   <time
                     datetime={answer.publishedAt}
                     class="font-mono text-meta text-theme-muted"
@@ -569,21 +573,23 @@
               >
             {/if}
             {#if activeKind !== "all"}
-              &bull; format: <span class="text-theme-primary"
+              • format:
+              <span class="text-theme-primary"
                 >{KIND_LABEL[activeKind] ?? activeKind}</span
               >
             {/if}
             {#if searchQuery}
-              &bull; matching &ldquo;<span class="text-theme-text"
-                >{searchQuery}</span
-              >&rdquo;
+              • matching “
+              <span class="text-theme-text">{searchQuery}</span>
+              ”
             {/if}
             {#if sortBy !== DEFAULT_ANSWER_SORT}
               {@const currentSort = ANSWER_SORT_OPTIONS.find(
                 (o) => o.id === sortBy,
               )}
               {#if currentSort}
-                &bull; sorted by <span class="text-theme-primary"
+                • sorted by
+                <span class="text-theme-primary"
                   >{currentSort.label.toLowerCase()}</span
                 >
               {/if}
@@ -618,7 +624,7 @@
         </h2>
         <p class="mt-2 max-w-sm text-sm text-theme-muted">
           {#if searchQuery}
-            No reference answers matched your search &ldquo;{searchQuery}&rdquo;.
+            No reference answers matched your search “{searchQuery}”.
           {:else}
             No reference answers matched your selected filter criteria.
           {/if}

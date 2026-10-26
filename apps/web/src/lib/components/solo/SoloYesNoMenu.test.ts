@@ -30,14 +30,16 @@ const env = vi.hoisted(() => {
   return { store, layout, oracleUi, policy };
 });
 
-vi.mock("$lib/stores/solo-session-instance", () => ({
+vi.mock("#lib/stores/solo-session-instance.js", () => ({
   soloSessionStore: env.store,
 }));
-vi.mock("$lib/stores/ui/layout-ui.svelte", () => ({
+vi.mock("#lib/stores/ui/layout-ui.svelte.js", () => ({
   layoutUIStore: env.layout,
 }));
-vi.mock("$lib/stores/oracle.svelte", () => ({ oracle: { ui: env.oracleUi } }));
-vi.mock("$lib/stores/ui/discovery-policy.svelte", () => ({
+vi.mock("#lib/stores/oracle.svelte.js", () => ({
+  oracle: { ui: env.oracleUi },
+}));
+vi.mock("#lib/stores/ui/discovery-policy.svelte.js", () => ({
   discoveryPolicyStore: env.policy,
 }));
 

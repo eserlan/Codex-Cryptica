@@ -2,7 +2,7 @@ import { BaseHandler, type P2PHandlerContext } from "./base-handler";
 import type { P2PMessage } from "../p2p-protocol";
 import type { P2PConnection } from "../transport/transport-interface";
 import { isVTTMessage } from "../p2p-protocol";
-import { systemClock } from "$lib/utils/runtime-deps";
+import { systemClock } from "#lib/utils/runtime-deps.js";
 
 export class VTTHandler extends BaseHandler {
   canHandle(message: P2PMessage): boolean {

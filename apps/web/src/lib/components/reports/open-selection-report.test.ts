@@ -22,12 +22,12 @@ const { notify, entities } = vi.hoisted(() => ({
   } as Record<string, unknown>,
 }));
 
-vi.mock("$lib/stores/vault.svelte", () => ({ vault: { entities } }));
-vi.mock("$lib/stores/ui/notification.svelte", () => ({
+vi.mock("#lib/stores/vault.svelte.js", () => ({ vault: { entities } }));
+vi.mock("#lib/stores/ui/notification.svelte.js", () => ({
   notificationStore: { notify },
 }));
 
-import { reportPanelStore } from "$lib/stores/ui/report-panel.svelte";
+import { reportPanelStore } from "#lib/stores/ui/report-panel.svelte.js";
 import { openSelectionReport } from "./open-selection-report";
 
 describe("openSelectionReport", () => {

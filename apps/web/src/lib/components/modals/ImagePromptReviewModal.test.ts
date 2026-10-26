@@ -2,11 +2,11 @@
 import { render, fireEvent, waitFor } from "@testing-library/svelte";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import ImagePromptReviewModal from "./ImagePromptReviewModal.svelte";
-import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-import { oracle } from "$lib/stores/oracle.svelte";
-import { vault } from "$lib/stores/vault.svelte";
+import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+import { oracle } from "#lib/stores/oracle.svelte.js";
+import { vault } from "#lib/stores/vault.svelte.js";
 
-vi.mock("$lib/stores/oracle.svelte", () => ({
+vi.mock("#lib/stores/oracle.svelte.js", () => ({
   oracle: {
     regenerateEntityPrompt: vi.fn(),
     regenerateMessagePrompt: vi.fn(),
@@ -15,14 +15,14 @@ vi.mock("$lib/stores/oracle.svelte", () => ({
   },
 }));
 
-vi.mock("$lib/stores/vault.svelte", () => ({
+vi.mock("#lib/stores/vault.svelte.js", () => ({
   vault: {
     isGuest: false,
     addLabel: vi.fn().mockResolvedValue(true),
   },
 }));
 
-vi.mock("$lib/stores/ui/notification.svelte", () => ({
+vi.mock("#lib/stores/ui/notification.svelte.js", () => ({
   notificationStore: { notify: vi.fn() },
 }));
 

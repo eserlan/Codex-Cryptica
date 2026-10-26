@@ -1,4 +1,4 @@
-import { browserStorage, type StorageLike } from "$lib/utils/runtime-deps";
+import { browserStorage, type StorageLike } from "#lib/utils/runtime-deps.js";
 
 /**
  * Per-vault persistence in `localStorage`.

@@ -1,8 +1,8 @@
 import { pointToHex } from "map-engine";
-import type { HexCrawlStore } from "$lib/stores/hex-crawl/hex-crawl.svelte";
-import { mapSession } from "$lib/stores/map-session.svelte";
-import { mapStore } from "$lib/stores/map.svelte";
-import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import type { HexCrawlStore } from "#lib/stores/hex-crawl/hex-crawl.svelte.js";
+import { mapSession } from "#lib/stores/map-session.svelte.js";
+import { mapStore } from "#lib/stores/map.svelte.js";
+import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
 import {
   canSeeHexCrawl,
   hexGridConfigFor,

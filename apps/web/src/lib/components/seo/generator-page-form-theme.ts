@@ -3,7 +3,7 @@ import {
   businessConfig,
   rumourConfig,
   puzzleConfig,
-} from "$lib/services/seo/generator-config";
+} from "#lib/services/seo/generator-config.js";
 import {
   mapShipGenreToTheme,
   mapWorldGenreToTheme,

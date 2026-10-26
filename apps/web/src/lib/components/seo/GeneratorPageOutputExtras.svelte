@@ -1,6 +1,6 @@
 <script lang="ts">
   import { businessGeneratorOutput } from "generator-engine";
-  import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
+  import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
   import OneShotRefinePanel from "./OneShotRefinePanel.svelte";
   import PointCrawlRefinePanel from "./PointCrawlRefinePanel.svelte";
   import BusinessRefinePanel from "./BusinessRefinePanel.svelte";

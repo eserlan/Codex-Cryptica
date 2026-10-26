@@ -22,7 +22,7 @@ import {
   type MilestoneContext,
 } from "onboarding-journey-engine";
 import { SHELL_CONTROL_IDS, type GuidanceAction } from "help-engine";
-import type { Clock, StorageLike } from "$lib/utils/runtime-deps";
+import type { Clock, StorageLike } from "#lib/utils/runtime-deps.js";
 
 export const JOURNEY_KEY_PREFIX = "codex-onboarding-journey:";
 export const JOURNEY_SESSION_KEY = "codex-onboarding-journey-active";

@@ -4,7 +4,7 @@ import {
   type GuidanceAction,
   type HelpContext,
 } from "help-engine";
-import { vault } from "$lib/stores/vault.svelte";
+import { vault } from "#lib/stores/vault.svelte.js";
 import {
   HelpActionRunner,
   type HelpActionRunnerDeps,

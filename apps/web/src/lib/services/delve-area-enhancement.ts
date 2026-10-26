@@ -11,9 +11,9 @@ import {
 } from "generator-engine";
 import { aiClientManager } from "@codex/ai-engine";
 import { extractJsonObject } from "@codex/runtime";
-import { oracle } from "$lib/stores/oracle.svelte";
-import { vault } from "$lib/stores/vault.svelte";
-import { systemClock, type Clock } from "$lib/utils/runtime-deps";
+import { oracle } from "#lib/stores/oracle.svelte.js";
+import { vault } from "#lib/stores/vault.svelte.js";
+import { systemClock, type Clock } from "#lib/utils/runtime-deps.js";
 import { z } from "zod";
 
 const EnhancedAreaSchema = z.object({

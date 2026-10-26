@@ -1,5 +1,5 @@
 import type { VisualCard } from "./visual-card-parser";
-import { systemIdGenerator } from "$lib/utils/runtime-deps";
+import { systemIdGenerator } from "#lib/utils/runtime-deps.js";
 
 /**
  * Creates a new VisualCard with default settings.

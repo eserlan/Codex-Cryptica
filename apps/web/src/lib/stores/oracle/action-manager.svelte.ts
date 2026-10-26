@@ -6,8 +6,8 @@ import type {
   RegeneratedPrompt,
   ReviewedPromptOptions,
 } from "./types";
-import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-import { systemClock } from "$lib/utils/runtime-deps";
+import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+import { systemClock } from "#lib/utils/runtime-deps.js";
 import { ASPECT_RATIO_DIMENSIONS, type AspectRatio } from "schema";
 
 export class OracleActionManager {

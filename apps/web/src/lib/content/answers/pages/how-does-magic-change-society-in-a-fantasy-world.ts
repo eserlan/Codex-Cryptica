@@ -237,6 +237,7 @@ export const howDoesMagicChangeSocietyInAFantasyWorld: AnswerConfigInput = {
     "how-do-you-create-a-believable-fictional-religion",
     "how-do-you-create-a-fantasy-faction",
     "how-do-i-build-a-believable-economy-for-a-fantasy-world",
+    "how-do-i-build-a-believable-post-scarcity-civilisation",
   ],
   discovery: {
     id: "answer-how-does-magic-change-society-in-a-fantasy-world",

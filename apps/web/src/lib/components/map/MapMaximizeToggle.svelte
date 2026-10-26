@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { getPrimaryButtonStateClass } from "$lib/components/map/vtt-ui";
-  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
-  import { mapControlsUIStore } from "$lib/stores/ui/map-controls-ui.svelte";
+  import { getPrimaryButtonStateClass } from "#lib/components/map/vtt-ui.js";
+  import { layoutUIStore } from "#lib/stores/ui/layout-ui.svelte.js";
+  import { mapControlsUIStore } from "#lib/stores/ui/map-controls-ui.svelte.js";
 
   const maximized = $derived(mapControlsUIStore.maximized);
 

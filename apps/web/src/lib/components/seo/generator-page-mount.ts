@@ -1,8 +1,8 @@
-import { themeIdToLabel } from "$lib/services/seo/generator-config";
+import { themeIdToLabel } from "#lib/services/seo/generator-config.js";
 import {
   UI_STORAGE_KEYS,
   type UIPersistence,
-} from "$lib/stores/ui/persistence";
+} from "#lib/stores/ui/persistence.js";
 import type { createCharacterDefaults } from "./generator-page-character-defaults";
 import type { createSettingDefaults } from "./generator-page-setting-defaults";
 import {

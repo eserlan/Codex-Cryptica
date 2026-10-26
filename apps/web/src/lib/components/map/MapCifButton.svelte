@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { isHelpAssistantAvailable } from "$lib/services/help-assistant/help-availability";
+  import { isHelpAssistantAvailable } from "#lib/services/help-assistant/help-availability.js";
   import {
     cifPopout,
     helpAssistant,
     toggleCif,
-  } from "$lib/stores/help-assistant/help-runtime";
-  import { getPrimaryButtonStateClass } from "$lib/components/map/vtt-ui";
+  } from "#lib/stores/help-assistant/help-runtime.js";
+  import { getPrimaryButtonStateClass } from "#lib/components/map/vtt-ui.js";
 
   const available = $derived(isHelpAssistantAvailable());
   const open = $derived(helpAssistant.isOpen || cifPopout.connected);

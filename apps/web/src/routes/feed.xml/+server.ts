@@ -1,5 +1,5 @@
-import { renderCombinedFeed } from "$lib/seo/editorial-feed";
-import { FEED_HEADERS } from "$lib/seo/feed";
+import { renderCombinedFeed } from "#lib/seo/editorial-feed.js";
+import { FEED_HEADERS } from "#lib/seo/feed.js";
 
 // fallow-ignore-next-line unused-export
 export const prerender = true;

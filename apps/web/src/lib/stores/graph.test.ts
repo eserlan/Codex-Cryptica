@@ -75,8 +75,8 @@ import {
 import { vault } from "./vault.svelte";
 import { GraphTransformer } from "graph-engine";
 import { isEntityVisible } from "schema";
-import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
-import { explorerUIStore } from "$lib/stores/ui/explorer-ui.svelte";
+import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
+import { explorerUIStore } from "#lib/stores/ui/explorer-ui.svelte.js";
 
 describe("GraphStore", () => {
   beforeEach(() => {

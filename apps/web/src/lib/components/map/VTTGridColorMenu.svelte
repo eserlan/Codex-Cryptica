@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { mapStore } from "$lib/stores/map.svelte";
+  import { mapStore } from "#lib/stores/map.svelte.js";
   import { vttModeMenu } from "./vtt-mode-menu.svelte";
 
   const gridColors = [

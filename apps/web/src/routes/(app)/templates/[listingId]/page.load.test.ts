@@ -2,9 +2,13 @@ import { describe, expect, it, vi } from "vitest";
 
 const { probeListing } = vi.hoisted(() => ({ probeListing: vi.fn() }));
 
-vi.mock("$app/paths", () => ({ resolve: (p: string) => p }));
+vi.mock("$app/paths", () => ({
+  base: "",
+  asset: (p: string) => p,
+  resolve: (p: string) => p,
+}));
 vi.mock(
-  "$lib/services/publishing/PublicEntityTemplateDirectoryService",
+  "#lib/services/publishing/PublicEntityTemplateDirectoryService.js",
   () => ({
     publicEntityTemplateDirectoryService: { probeListing },
   }),

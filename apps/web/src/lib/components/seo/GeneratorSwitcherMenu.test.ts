@@ -3,10 +3,12 @@
 import { render, screen, fireEvent } from "@testing-library/svelte";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import GeneratorSwitcherMenu from "./GeneratorSwitcherMenu.svelte";
-import { themeStore } from "$lib/stores/theme.svelte";
+import { themeStore } from "#lib/stores/theme.svelte.js";
 
 vi.mock("$app/paths", () => ({
   base: "",
+  asset: (p: string) => p,
+  resolve: (p: string) => p,
 }));
 
 vi.mock("$app/environment", () => ({

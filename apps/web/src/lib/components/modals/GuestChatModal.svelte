@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { guestChatStore } from "$lib/stores/guest-chat.svelte";
+  import { guestChatStore } from "#lib/stores/guest-chat.svelte.js";
   import { fly, fade } from "svelte/transition";
   import { quintOut } from "svelte/easing";
   import GuestChatPanel from "../guest/GuestChatPanel.svelte";
-  import { focusTrap } from "$lib/actions/focusTrap";
+  import { focusTrap } from "#lib/actions/focusTrap.js";
 
   const handleClose = () => {
     guestChatStore.showChatModal = false;

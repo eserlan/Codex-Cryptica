@@ -2,7 +2,7 @@ import { error } from "@sveltejs/kit";
 import {
   getLandingPage,
   getAllLandingPageSlugs,
-} from "$lib/content/for/registry";
+} from "#lib/content/for/registry.js";
 import type { PageLoad, EntryGenerator } from "./$types";
 
 export const prerender = true;

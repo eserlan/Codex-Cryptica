@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { base } from "$app/paths";
-  import { RA_SERIES } from "$lib/content/responsible-ai-series";
+  import { resolve } from "$app/paths";
+  import { RA_SERIES } from "#lib/content/responsible-ai-series.js";
 
   let { currentSlug }: { currentSlug: string } = $props();
 </script>
@@ -34,7 +34,7 @@
           </span>
         {:else}
           <a
-            href="{base}/blog/{article.slug}"
+            href="{resolve('')}/blog/{article.slug}"
             class="text-sm text-theme-text hover:text-theme-primary transition-colors leading-snug"
           >
             {article.title}

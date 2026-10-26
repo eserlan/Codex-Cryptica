@@ -5,8 +5,8 @@
     normalizeCanvasTextBackground,
     normalizeCanvasTextFontSize,
   } from "@codex/canvas-engine";
-  import CanvasContextMenu from "$lib/components/canvas/CanvasContextMenu.svelte";
-  import type { vault as VaultStore } from "$lib/stores/vault.svelte";
+  import CanvasContextMenu from "#lib/components/canvas/CanvasContextMenu.svelte";
+  import type { vault as VaultStore } from "#lib/stores/vault.svelte.js";
   import {
     normalizeEntityCardViewPreference,
     type EntityCardViewPreference,

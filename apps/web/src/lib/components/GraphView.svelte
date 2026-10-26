@@ -1,16 +1,16 @@
 <script lang="ts">
   import { onMount, onDestroy, untrack } from "svelte";
-  import { graph } from "$lib/stores/graph.svelte";
-  import { vault } from "$lib/stores/vault.svelte";
-  import { categories } from "$lib/stores/categories.svelte";
+  import { graph } from "#lib/stores/graph.svelte.js";
+  import { vault } from "#lib/stores/vault.svelte.js";
+  import { categories } from "#lib/stores/categories.svelte.js";
   import { getGraphStyles, MAX_TRANSITION_ELEMENTS } from "graph-engine";
   import { NodeHighlight } from "./graph/node-highlight";
 
-  import { themeStore } from "$lib/stores/theme.svelte";
-  import OrbitControls from "$lib/components/graph/OrbitControls.svelte";
-  import ContextMenu from "$lib/components/graph/ContextMenu.svelte";
-  import SelectionConnector from "$lib/components/graph/SelectionConnector.svelte";
-  import GraphReportAction from "$lib/components/graph/GraphReportAction.svelte";
+  import { themeStore } from "#lib/stores/theme.svelte.js";
+  import OrbitControls from "#lib/components/graph/OrbitControls.svelte";
+  import ContextMenu from "#lib/components/graph/ContextMenu.svelte";
+  import SelectionConnector from "#lib/components/graph/SelectionConnector.svelte";
+  import GraphReportAction from "#lib/components/graph/GraphReportAction.svelte";
   import GraphTooltip from "./graph/GraphTooltip.svelte";
   import EdgeEditorModal from "./graph/EdgeEditorModal.svelte";
   import GraphHUD from "./graph/GraphHUD.svelte";
@@ -20,11 +20,11 @@
     handleGraphActionShortcut,
   } from "./graph/graph-keyboard";
   import { DEFAULT_SEARCH_ENTITY_ZOOM } from "./search/search-focus";
-  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
-  import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
-  import { notificationStore } from "$lib/stores/ui/notification.svelte";
-  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-  import { debugStore } from "$lib/stores/debug.svelte";
+  import { layoutUIStore } from "#lib/stores/ui/layout-ui.svelte.js";
+  import { connectionModeStore } from "#lib/stores/ui/connection-mode.svelte.js";
+  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
+  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+  import { debugStore } from "#lib/stores/debug.svelte.js";
   import { GraphViewController } from "./graph/graph-view-controller.svelte";
   import {
     MOBILE_ENTRY_MIN_ZOOM,
@@ -35,18 +35,20 @@
     buildSelectionAnnouncement,
   } from "./graph/graph-a11y";
   import { createHoverContentLoader } from "./graph/hover-content-loader";
-  import GraphEmptyState from "$lib/components/graph/GraphEmptyState.svelte";
-  import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
-  import { onboardingFunnel } from "$lib/app/onboarding/onboarding-funnel";
-  import { helpStore } from "$lib/stores/help.svelte";
-  import { openImportWindow } from "$lib/stores/ui/navigation";
+  import GraphEmptyState from "#lib/components/graph/GraphEmptyState.svelte";
+  import { onboardingStore } from "#lib/stores/ui/onboarding.svelte.js";
+  import { onboardingFunnel } from "#lib/app/onboarding/onboarding-funnel.js";
+  import { helpStore } from "#lib/stores/help.svelte.js";
+  import { openImportWindow } from "#lib/stores/ui/navigation.js";
   import { fly, fade } from "svelte/transition";
-  import { computeSpotlightClipPath } from "$lib/utils/spotlight";
-  import { COACH_MARKS } from "$lib/config/help-content";
+  import { computeSpotlightClipPath } from "#lib/utils/spotlight.js";
+  import { COACH_MARKS } from "#lib/config/help-content.js";
 
-  let { selectedId = $bindable(null) } = $props<{
+  let {
+    selectedId = $bindable(null),
+  }: {
     selectedId: string | null;
-  }>();
+  } = $props();
 
   const controller = new GraphViewController(
     { selectedId: untrack(() => selectedId) },

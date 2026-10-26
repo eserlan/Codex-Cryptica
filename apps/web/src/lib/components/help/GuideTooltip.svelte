@@ -1,16 +1,22 @@
 <script lang="ts">
-  import { helpStore } from "$lib/stores/help.svelte";
+  import { helpStore } from "#lib/stores/help.svelte.js";
   import { fly } from "svelte/transition";
-  import { renderMarkdown } from "$lib/utils/markdown";
-  import type { GuideStep } from "$lib/config/help-content";
+  import { renderMarkdown } from "#lib/utils/markdown.js";
+  import type { GuideStep } from "#lib/config/help-content.js";
 
-  let { step, targetRect, isLast, current, total } = $props<{
+  let {
+    step,
+    targetRect,
+    isLast,
+    current,
+    total,
+  }: {
     step: GuideStep;
     targetRect: DOMRect | null;
     isLast: boolean;
     current: number;
     total: number;
-  }>();
+  } = $props();
 
   // ⚡ Bolt Optimization: Memoize expensive markdown parsing and sanitization.
   // Previously, this ran inline on every template evaluation (e.g., when tooltipStyle updated).

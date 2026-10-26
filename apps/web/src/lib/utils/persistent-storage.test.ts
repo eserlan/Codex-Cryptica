@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { requestPersistentStorage } from "./persistent-storage";
 
-vi.mock("$lib/stores/debug.svelte", () => ({
+vi.mock("#lib/stores/debug.svelte.js", () => ({
   debugStore: { log: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
 

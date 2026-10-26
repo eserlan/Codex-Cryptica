@@ -3,7 +3,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import PublicListingSettings from "./PublicListingSettings.svelte";
-import { worldStore } from "$lib/stores/world.svelte";
+import { worldStore } from "#lib/stores/world.svelte.js";
 
 describe("PublicListingSettings", () => {
   it("blocks public listing until a guest snapshot exists", () => {

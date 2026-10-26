@@ -1,19 +1,19 @@
 <script lang="ts">
-  import { vault } from "$lib/stores/vault.svelte";
-  import { calendarStore } from "$lib/stores/calendar.svelte";
+  import { vault } from "#lib/stores/vault.svelte.js";
+  import { calendarStore } from "#lib/stores/calendar.svelte.js";
   import { slide } from "svelte/transition";
-  import { demoService } from "$lib/services/demo";
+  import { demoService } from "#lib/services/demo.js";
   import { goto } from "$app/navigation";
   import { page } from "$app/state";
-  import { themeStore } from "$lib/stores/theme.svelte";
+  import { themeStore } from "#lib/stores/theme.svelte.js";
   import CloudDestinationSettings from "./CloudDestinationSettings.svelte";
   import VaultBackupSettings from "./VaultBackupSettings.svelte";
   import CalendarEraSettings from "./CalendarEraSettings.svelte";
   import GameSystemSettings from "./GameSystemSettings.svelte";
-  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
-  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-  import { notificationStore } from "$lib/stores/ui/notification.svelte";
-  import { systemClock } from "$lib/utils/runtime-deps";
+  import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
+  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
+  import { systemClock } from "#lib/utils/runtime-deps.js";
 
   const handleVisibilityChange = async (e: Event) => {
     const value = (e.target as HTMLSelectElement).value as "visible" | "hidden";

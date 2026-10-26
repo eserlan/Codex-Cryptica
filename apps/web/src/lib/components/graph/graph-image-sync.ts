@@ -4,11 +4,11 @@ import {
   resolveEntitySilhouette,
 } from "schema";
 import type { GraphImageManager } from "graph-engine";
-import type { graph as graphStore } from "$lib/stores/graph.svelte";
-import type { vault as vaultStore } from "$lib/stores/vault.svelte";
-import type { debugStore as debugStoreType } from "$lib/stores/debug.svelte";
-import type { themeStore } from "$lib/stores/theme.svelte";
-import { categories } from "$lib/stores/categories.svelte";
+import type { graph as graphStore } from "#lib/stores/graph.svelte.js";
+import type { vault as vaultStore } from "#lib/stores/vault.svelte.js";
+import type { debugStore as debugStoreType } from "#lib/stores/debug.svelte.js";
+import type { themeStore } from "#lib/stores/theme.svelte.js";
+import { categories } from "#lib/stores/categories.svelte.js";
 
 type ActiveTheme = typeof themeStore.activeTheme;
 type CategoryList = typeof categories.list;

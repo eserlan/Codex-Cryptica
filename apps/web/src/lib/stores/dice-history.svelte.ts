@@ -7,7 +7,7 @@ import {
   type IdGenerator,
   systemClock,
   systemIdGenerator,
-} from "$lib/utils/runtime-deps";
+} from "#lib/utils/runtime-deps.js";
 
 /**
  * A roll or draw sourced from a random table or card deck (#2247).

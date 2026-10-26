@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { vault } from "$lib/stores/vault.svelte";
-  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { vault } from "#lib/stores/vault.svelte.js";
+  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
   import {
     CANVAS_TEXT_BACKGROUND_PRESETS,
     CANVAS_TEXT_FONT_SIZE_PRESETS,
@@ -12,7 +12,7 @@
     ENTITY_CARD_VIEW_OPTIONS,
     type EntityCardViewPreference,
   } from "./cards/entity-card-variant";
-  import SpatialImageControls from "$lib/components/spatial/SpatialImageControls.svelte";
+  import SpatialImageControls from "#lib/components/spatial/SpatialImageControls.svelte";
 
   let {
     x,
@@ -46,7 +46,7 @@
     showImageLabels = false,
     onToggleShowImageLabels,
     onClose,
-  } = $props<{
+  }: {
     x: number;
     y: number;
     targetId?: string;
@@ -80,7 +80,7 @@
     showImageLabels?: boolean;
     onToggleShowImageLabels?: () => void;
     onClose: () => void;
-  }>();
+  } = $props();
 
   const effectiveBackground = $derived(
     nodeBackground ?? textNodeBackground ?? DEFAULT_CANVAS_TEXT_BACKGROUND,

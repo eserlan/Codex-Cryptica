@@ -1,9 +1,9 @@
 /** @vitest-environment jsdom */
 import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
-import { UIPersistence } from "$lib/stores/ui/persistence";
-import { hubContext } from "$lib/stores/hub-context.svelte";
+import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
+import { UIPersistence } from "#lib/stores/ui/persistence.js";
+import { hubContext } from "#lib/stores/hub-context.svelte.js";
 import GeneratorPageContent from "./GeneratorPageContent.svelte";
 
 const generateBusiness = vi.hoisted(() => vi.fn());
@@ -11,10 +11,10 @@ vi.mock("./SEOGeneratorLayout.svelte", async () => ({
   default: (await import("./test-fixtures/GeneratorPageLayoutHarness.svelte"))
     .default,
 }));
-vi.mock("$lib/services/seo/generator-engine", () => ({
+vi.mock("#lib/services/seo/generator-engine.js", () => ({
   generatorEngine: { generateBusiness },
 }));
-vi.mock("$lib/stores/session-hub.svelte", () => ({
+vi.mock("#lib/stores/session-hub.svelte.js", () => ({
   sessionHubStore: { entities: [] },
 }));
 vi.mock("$app/state", () => ({

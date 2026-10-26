@@ -15,9 +15,13 @@ const { listEntityTemplates, goto } = vi.hoisted(() => ({
 }));
 
 vi.mock("$app/navigation", () => ({ goto }));
-vi.mock("$app/paths", () => ({ resolve: (p: string) => p }));
+vi.mock("$app/paths", () => ({
+  base: "",
+  asset: (p: string) => p,
+  resolve: (p: string) => p,
+}));
 vi.mock(
-  "$lib/services/publishing/PublicEntityTemplateDirectoryService",
+  "#lib/services/publishing/PublicEntityTemplateDirectoryService.js",
   () => ({
     publicEntityTemplateDirectoryService: { listEntityTemplates },
   }),

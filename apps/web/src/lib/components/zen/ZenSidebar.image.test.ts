@@ -2,7 +2,7 @@
 import { fireEvent, render, waitFor } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import ZenSidebar from "./ZenSidebar.svelte";
-import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
 
 const { mockVault } = vi.hoisted(() => ({
   mockVault: {
@@ -18,8 +18,8 @@ const { mockVault } = vi.hoisted(() => ({
   },
 }));
 
-vi.mock("$lib/stores/vault.svelte", () => ({ vault: mockVault }));
-vi.mock("$lib/stores/oracle.svelte", () => ({
+vi.mock("#lib/stores/vault.svelte.js", () => ({ vault: mockVault }));
+vi.mock("#lib/stores/oracle.svelte.js", () => ({
   oracle: {
     messages: [],
     apiKey: null,
@@ -28,38 +28,40 @@ vi.mock("$lib/stores/oracle.svelte", () => ({
     drawEntity: vi.fn(),
   },
 }));
-vi.mock("$lib/services/RevisionService.svelte", () => ({
+vi.mock("#lib/services/RevisionService.svelte.js", () => ({
   revisionService: { isRevising: false },
 }));
-vi.mock("$lib/stores/theme.svelte", () => ({
+vi.mock("#lib/stores/theme.svelte.js", () => ({
   themeStore: { activeTheme: { id: "fantasy" } },
 }));
-vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
+vi.mock("#lib/stores/ui/modal-ui.svelte.js", () => ({
   modalUIStore: {
     openRevisionDialog: vi.fn(),
     openSilhouettePicker: vi.fn(),
   },
 }));
-vi.mock("$lib/stores/ui/discovery-policy.svelte", () => ({
+vi.mock("#lib/stores/ui/discovery-policy.svelte.js", () => ({
   discoveryPolicyStore: { aiDisabled: false },
 }));
-vi.mock("$lib/stores/ui/notification.svelte", () => ({
+vi.mock("#lib/stores/ui/notification.svelte.js", () => ({
   notificationStore: { notify: vi.fn() },
 }));
-vi.mock("$lib/stores/debug.svelte", () => ({ debugStore: { error: vi.fn() } }));
-vi.mock("$lib/stores/guest-chat.svelte", () => ({
+vi.mock("#lib/stores/debug.svelte.js", () => ({
+  debugStore: { error: vi.fn() },
+}));
+vi.mock("#lib/stores/guest-chat.svelte.js", () => ({
   guestChatStore: { openChat: vi.fn() },
 }));
-vi.mock("$lib/components/labels/LabelBadge.svelte", () => ({
+vi.mock("#lib/components/labels/LabelBadge.svelte", () => ({
   default: vi.fn(),
 }));
-vi.mock("$lib/components/labels/LabelInput.svelte", () => ({
+vi.mock("#lib/components/labels/LabelInput.svelte", () => ({
   default: vi.fn(),
 }));
-vi.mock("$lib/components/connections/ConnectionEditor.svelte", () => ({
+vi.mock("#lib/components/connections/ConnectionEditor.svelte", () => ({
   default: vi.fn(),
 }));
-vi.mock("$lib/components/connections/ConnectionCreator.svelte", () => ({
+vi.mock("#lib/components/connections/ConnectionCreator.svelte", () => ({
   default: vi.fn(),
 }));
 

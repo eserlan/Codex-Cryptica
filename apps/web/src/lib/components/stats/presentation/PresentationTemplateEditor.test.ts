@@ -9,17 +9,17 @@ const { saveTemplate, uniqueNameForSchema } = vi.hoisted(() => ({
   uniqueNameForSchema: vi.fn((name: string) => name),
 }));
 
-vi.mock("$lib/stores/presentation-templates.svelte", () => ({
+vi.mock("#lib/stores/presentation-templates.svelte.js", () => ({
   presentationTemplates: { saveTemplate, uniqueNameForSchema },
 }));
 
-vi.mock("$lib/stores/ui/notification.svelte", () => ({
+vi.mock("#lib/stores/ui/notification.svelte.js", () => ({
   notificationStore: { notify: vi.fn() },
 }));
 
 import PresentationTemplateEditor from "./PresentationTemplateEditor.svelte";
-import { downloadPresentationTemplate } from "$lib/utils/presentation-template-download";
-vi.mock("$lib/utils/presentation-template-download", () => ({
+import { downloadPresentationTemplate } from "#lib/utils/presentation-template-download.js";
+vi.mock("#lib/utils/presentation-template-download.js", () => ({
   downloadPresentationTemplate: vi.fn(),
 }));
 

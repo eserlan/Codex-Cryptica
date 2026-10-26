@@ -1,10 +1,10 @@
-import { downloadPresentationTemplate } from "$lib/utils/presentation-template-download";
+import { downloadPresentationTemplate } from "#lib/utils/presentation-template-download.js";
 import {
   systemClock,
   systemIdGenerator,
   type Clock,
   type IdGenerator,
-} from "$lib/utils/runtime-deps";
+} from "#lib/utils/runtime-deps.js";
 import { getDB } from "../utils/idb";
 import type { PresentationTemplate, StatSheetTemplateField } from "schema";
 import { vaultRegistry } from "./vault-registry.svelte";

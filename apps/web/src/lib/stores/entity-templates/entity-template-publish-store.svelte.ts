@@ -11,13 +11,13 @@ import {
   EntityTemplateDirectoryError,
   publicEntityTemplateDirectoryService,
   type PublicEntityTemplateDirectoryService,
-} from "$lib/services/publishing/PublicEntityTemplateDirectoryService";
+} from "#lib/services/publishing/PublicEntityTemplateDirectoryService.js";
 import {
   entityTemplatePublishRegistry,
   type EntityTemplatePublishRegistry,
   type PublishLink,
-} from "$lib/stores/publishing/entity-template-publish-registry";
-import { vaultRegistry } from "$lib/stores/vault-registry.svelte";
+} from "#lib/stores/publishing/entity-template-publish-registry.js";
+import { vaultRegistry } from "#lib/stores/vault-registry.svelte.js";
 import { entityTemplateStore } from "./entity-template-store.svelte";
 
 export interface PublishMetadata {

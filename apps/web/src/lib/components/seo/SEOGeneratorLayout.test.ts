@@ -4,7 +4,7 @@ import { render, fireEvent, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import { createRawSnippet, tick, type Snippet } from "svelte";
 import SEOGeneratorLayout from "./SEOGeneratorLayout.svelte";
-import { themeStore } from "$lib/stores/theme.svelte";
+import { themeStore } from "#lib/stores/theme.svelte.js";
 import { runShellCtaHandler } from "./marketing-shell";
 
 const noopSnippet = (() => {}) as unknown as Snippet;
@@ -15,12 +15,13 @@ vi.mock("$app/environment", () => ({
 
 vi.mock("$app/paths", () => ({
   base: "",
-  resolve: (path: string) => path,
+  asset: (p: string) => p,
+  resolve: (p: string) => p,
 }));
 
 const trackEventMock = vi.hoisted(() => vi.fn());
 const trackPublicGeneratorActionMock = vi.hoisted(() => vi.fn());
-vi.mock("$lib/services/analytics/zaraz-analytics", () => ({
+vi.mock("#lib/services/analytics/zaraz-analytics.js", () => ({
   trackEvent: trackEventMock,
   trackPublicGeneratorAction: trackPublicGeneratorActionMock,
 }));
@@ -144,6 +145,34 @@ describe("SEOGeneratorLayout Theming Sync", () => {
     expect(lead.className).toMatch(/(^| )order-1( |$)/);
     expect(container.querySelector("form")!.closest(".order-2")).toBeTruthy();
     expect(screen.getByText("Applies to the write-up only.")).toBeTruthy();
+  });
+
+  it("labels the folded example as 'See example names with notes' when variant is names", () => {
+    const outputLead = createRawSnippet(() => ({
+      render: () => "<p>Quick names</p>",
+    }));
+    render(SEOGeneratorLayout, {
+      props: {
+        generate: vi.fn(),
+        formFields: noopSnippet,
+        outputLead,
+        variant: "names",
+        initialDraft: {
+          type: "character",
+          title: "Sample names",
+          content: "- **Ael**: x",
+          lore: "",
+          labels: [],
+          status: "draft",
+        },
+      },
+    });
+
+    const details = screen
+      .getByText("See example names with notes")
+      .closest("details")!;
+    expect(details.open).toBe(false);
+    expect(screen.queryByText("See an example write-up")).toBeNull();
   });
 
   it("places the lead controls before the form in the mobile keyboard order", async () => {

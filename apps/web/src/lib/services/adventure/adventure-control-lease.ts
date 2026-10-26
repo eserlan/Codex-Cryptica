@@ -1,10 +1,10 @@
-import { entityDb } from "$lib/utils/entity-db";
+import { entityDb } from "#lib/utils/entity-db.js";
 import {
   systemClock,
   systemIdGenerator,
   type Clock,
   type IdGenerator,
-} from "$lib/utils/runtime-deps";
+} from "#lib/utils/runtime-deps.js";
 
 export interface AdventureLeaseKey {
   vaultId: string;

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { fade, scale } from "svelte/transition";
-  import { mapSession } from "$lib/stores/map-session.svelte";
+  import { mapSession } from "#lib/stores/map-session.svelte.js";
 
   let { close }: { close: () => void } = $props();
   let loading = $state(false);

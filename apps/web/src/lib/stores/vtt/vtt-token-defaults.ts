@@ -5,8 +5,11 @@ import type {
 } from "../../../types/vtt";
 import type { MapLayer } from "map-engine";
 import { normalizeTokenVisibility } from "map-engine";
-import { hashToColor } from "$lib/utils/vtt-helpers";
-import { type IdGenerator, systemIdGenerator } from "$lib/utils/runtime-deps";
+import { hashToColor } from "#lib/utils/vtt-helpers.js";
+import {
+  type IdGenerator,
+  systemIdGenerator,
+} from "#lib/utils/runtime-deps.js";
 import { NOTE_DEFAULT_COLOR, noteDefaults } from "./vtt-token-notes";
 
 function defaultShape(kind: Token["kind"], gridType: string): TokenBaseShape {

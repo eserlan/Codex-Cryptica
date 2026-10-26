@@ -4,8 +4,8 @@
   import {
     publishBatch,
     type PublishBatchResult,
-  } from "$lib/services/publishing/publish-batch";
-  import { publicTemplateDirectoryService } from "$lib/services/publishing/PublicTemplateDirectoryService";
+  } from "#lib/services/publishing/publish-batch.js";
+  import { publicTemplateDirectoryService } from "#lib/services/publishing/PublicTemplateDirectoryService.js";
 
   const VALID_CATEGORIES = [
     { id: "character", label: "Character" },
@@ -41,11 +41,11 @@
     templates,
     onClose = () => {},
     onPublished = () => {},
-  } = $props<{
+  }: {
     templates: StatSheetTemplate[];
     onClose?: () => void;
     onPublished?: (listingId: string, ownerToken: string) => void;
-  }>();
+  } = $props();
 
   // This dialog mounts for one explicit selection and owns editable public
   // metadata until it is closed.

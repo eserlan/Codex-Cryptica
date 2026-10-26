@@ -1,16 +1,16 @@
 import { goto } from "$app/navigation";
 import { resolve } from "$app/paths";
-import { dev } from "$app/environment";
-import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
-import { trackPublicGeneratorAction } from "$lib/services/analytics/zaraz-analytics";
-import { createMonsterLabsHandoffFlow } from "$lib/services/seo/monsterlabs-handoff-flow.svelte";
-import { unregisterDevelopmentServiceWorkers } from "$lib/utils/dev-service-worker";
+import { dev } from "$app/env";
+import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
+import { trackPublicGeneratorAction } from "#lib/services/analytics/zaraz-analytics.js";
+import { createMonsterLabsHandoffFlow } from "#lib/services/seo/monsterlabs-handoff-flow.svelte.js";
+import { unregisterDevelopmentServiceWorkers } from "#lib/utils/dev-service-worker.js";
 import {
   buildAdventureCanvasTransfer,
   buildDelveCanvasTransfer,
-} from "$lib/components/seo/generator-canvas-transfer";
-import { handoffGeneratorToCanvas } from "$lib/components/seo/generator-canvas-handoff";
-import type { getGeneratorDocumentLayout } from "$lib/components/seo/generator-document-layout";
+} from "#lib/components/seo/generator-canvas-transfer.js";
+import { handoffGeneratorToCanvas } from "#lib/components/seo/generator-canvas-handoff.js";
+import type { getGeneratorDocumentLayout } from "#lib/components/seo/generator-document-layout.js";
 
 type DocumentLayout = ReturnType<typeof getGeneratorDocumentLayout>;
 
@@ -49,8 +49,8 @@ export function useGeneratorHandoffs(deps: {
         localStorage.setItem(key, JSON.stringify(transfer)),
       unregisterDevelopmentServiceWorkers,
       isDevelopment: dev,
-      navigate: () => goto(resolve("/canvas")),
-      navigateInDevelopment: () => window.location.assign(resolve("/canvas")),
+      navigate: () => goto(resolve("canvas")),
+      navigateInDevelopment: () => window.location.assign(resolve("canvas")),
     });
   }
 

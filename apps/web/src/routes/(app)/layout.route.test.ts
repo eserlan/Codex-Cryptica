@@ -14,7 +14,11 @@ const { quickNoteScratchpadMock, setVaultSessionActiveMock } = vi.hoisted(
 );
 
 vi.mock("$app/environment", () => ({ browser: true }));
-vi.mock("$app/paths", () => ({ base: "" }));
+vi.mock("$app/paths", () => ({
+  base: "",
+  asset: (p: string) => p,
+  resolve: (p: string) => p,
+}));
 vi.mock("$app/state", () => ({
   page: {
     url: new URL("http://localhost/"),
@@ -24,67 +28,67 @@ vi.mock("$app/navigation", () => ({
   preloadCode: vi.fn().mockResolvedValue(undefined),
   beforeNavigate: vi.fn(),
 }));
-vi.mock("$lib/components/layout/AppHeader.svelte", () => ({
+vi.mock("#lib/components/layout/AppHeader.svelte", () => ({
   default: function AppHeaderMock() {
     return { $$render: () => "<div data-testid='app-header'></div>" };
   },
 }));
-vi.mock("$lib/components/onboarding/OnboardingHost.svelte", () => ({
+vi.mock("#lib/components/onboarding/OnboardingHost.svelte", () => ({
   default: function OnboardingHostMock() {
     return { $$render: () => "" };
   },
 }));
-vi.mock("$lib/components/layout/NotificationToast.svelte", () => ({
+vi.mock("#lib/components/layout/NotificationToast.svelte", () => ({
   default: function NotificationToastMock() {
     return { $$render: () => "" };
   },
 }));
-vi.mock("$lib/components/layout/FatalErrorOverlay.svelte", () => ({
+vi.mock("#lib/components/layout/FatalErrorOverlay.svelte", () => ({
   default: function FatalErrorOverlayMock() {
     return { $$render: () => "" };
   },
 }));
-vi.mock("$lib/components/layout/ActivityBar.svelte", () => ({
+vi.mock("#lib/components/layout/ActivityBar.svelte", () => ({
   default: function ActivityBarMock() {
     return { $$render: () => "<div data-testid='activity-bar'></div>" };
   },
 }));
-vi.mock("$lib/stores/solo-session-instance", () => ({
+vi.mock("#lib/stores/solo-session-instance.js", () => ({
   soloPlayGuard: { toggleSharedMode: () => true, requestShare: () => true },
 }));
-vi.mock("$lib/components/solo/SoloSessionBar.svelte", () => ({
+vi.mock("#lib/components/solo/SoloSessionBar.svelte", () => ({
   default: function SoloSessionBarStub() {},
 }));
-vi.mock("$lib/components/layout/SidebarPanelHost.svelte", () => ({
+vi.mock("#lib/components/layout/SidebarPanelHost.svelte", () => ({
   default: function SidebarPanelHostMock() {
     return { $$render: () => "<div data-testid='sidebar-host'></div>" };
   },
 }));
-vi.mock("$lib/components/layout/MobileDemoBanner.svelte", () => ({
+vi.mock("#lib/components/layout/MobileDemoBanner.svelte", () => ({
   default: function MobileDemoBannerMock() {
     return { $$render: () => "" };
   },
 }));
-vi.mock("$lib/components/modals/GlobalModalProvider.svelte", () => ({
+vi.mock("#lib/components/modals/GlobalModalProvider.svelte", () => ({
   default: function GlobalModalProviderMock() {
     return {
       $$render: () => "<div data-testid='global-modal-provider'></div>",
     };
   },
 }));
-vi.mock("$lib/components/vtt/GuestSessionBootstrap.svelte", () => ({
+vi.mock("#lib/components/vtt/GuestSessionBootstrap.svelte", () => ({
   default: function GuestSessionBootstrapMock() {
     return { $$render: () => "" };
   },
 }));
-vi.mock("$lib/components/quicknote/QuickNoteScratchpad.svelte", () => ({
+vi.mock("#lib/components/quicknote/QuickNoteScratchpad.svelte", () => ({
   default: quickNoteScratchpadMock,
 }));
-vi.mock("$lib/components/layout/EntityExplorerWorkspace.svelte", async () => {
+vi.mock("#lib/components/layout/EntityExplorerWorkspace.svelte", async () => {
   const mod = await import("./__tests__/EntityExplorerWorkspaceStub.svelte");
   return { default: mod.default };
 });
-vi.mock("$lib/stores/help.svelte", () => ({
+vi.mock("#lib/stores/help.svelte.js", () => ({
   helpStore: {
     init: vi.fn(),
     isInitialized: false,
@@ -94,10 +98,10 @@ vi.mock("$lib/stores/help.svelte", () => ({
     startTour: vi.fn(),
   },
 }));
-vi.mock("$lib/stores/search.svelte", () => ({
+vi.mock("#lib/stores/search.svelte.js", () => ({
   searchStore: { isOpen: false },
 }));
-vi.mock("$lib/stores/vault.svelte", () => ({
+vi.mock("#lib/stores/vault.svelte.js", () => ({
   vault: {
     isInitialized: true,
     activeVaultId: "v1",
@@ -107,20 +111,20 @@ vi.mock("$lib/stores/vault.svelte", () => ({
     status: "idle",
   },
 }));
-vi.mock("$lib/stores/vault-registry.svelte", () => ({
+vi.mock("#lib/stores/vault-registry.svelte.js", () => ({
   vaultRegistry: {},
 }));
-vi.mock("$lib/stores/theme.svelte", () => ({
+vi.mock("#lib/stores/theme.svelte.js", () => ({
   themeStore: {
     init: vi.fn().mockResolvedValue(undefined),
     currentThemeId: "workspace",
     hasSavedThemeForVault: vi.fn(async () => true),
   },
 }));
-vi.mock("$lib/stores/categories.svelte", () => ({
+vi.mock("#lib/stores/categories.svelte.js", () => ({
   categories: {},
 }));
-vi.mock("$lib/stores/quicknote.svelte", () => ({
+vi.mock("#lib/stores/quicknote.svelte.js", () => ({
   quickNoteStore: {},
 }));
 vi.mock("@codex/events", () => ({
@@ -134,29 +138,29 @@ vi.mock("@codex/events", () => ({
     destroy() {}
   },
 }));
-vi.mock("$lib/services/demo", () => ({
+vi.mock("#lib/services/demo.js", () => ({
   demoService: {
     startDemo: vi.fn(),
   },
 }));
-vi.mock("$lib/app/onboarding/onboarding-funnel-init", () => ({
+vi.mock("#lib/app/onboarding/onboarding-funnel-init.js", () => ({
   initOnboardingFunnel: vi.fn(),
 }));
 vi.mock("@codex/gdrive-sync", () => ({
   initGDriveSync: vi.fn(),
   configureGDriveSync: vi.fn(),
 }));
-vi.mock("$lib/stores/proposer.svelte", () => ({}));
-vi.mock("$lib/cloud-bridge/p2p/guest-bootstrap", () => ({}));
-vi.mock("$lib/config/help-content", () => ({
+vi.mock("#lib/stores/proposer.svelte.js", () => ({}));
+vi.mock("#lib/cloud-bridge/p2p/guest-bootstrap.js", () => ({}));
+vi.mock("#lib/config/help-content.js", () => ({
   HELP_ARTICLES: [{ id: "family-tree" }],
 }));
-vi.mock("$lib/config", () => ({
+vi.mock("#lib/config/index.js", () => ({
   VERSION: "0.0.0",
   PATREON_URL: "https://patreon.com/codexcryptica",
   DISCORD_URL: "https://discord.gg/codexcryptica",
 }));
-vi.mock("$lib/content/changelog/releases.json", () => ({
+vi.mock("#lib/content/changelog/releases.json", () => ({
   default: [],
 }));
 vi.mock("schema", async (importOriginal) => {
@@ -168,7 +172,7 @@ vi.mock("schema", async (importOriginal) => {
     DEFAULT_ITEM_TABLE_COLUMNS: [],
   };
 });
-vi.mock("$lib/app/init/app-init", () => ({
+vi.mock("#lib/app/init/app-init.js", () => ({
   bootSystem: vi.fn(() => true),
   initializeGlobalListeners: vi.fn(() => () => {}),
   setupWindowGlobals: vi.fn(),
@@ -177,10 +181,10 @@ vi.mock("$lib/app/init/app-init", () => ({
     destroy: vi.fn(),
   })),
 }));
-vi.mock("$lib/hooks/useGlobalShortcuts.svelte", () => ({
+vi.mock("#lib/hooks/useGlobalShortcuts.svelte.js", () => ({
   useGlobalShortcuts: vi.fn(() => vi.fn()),
 }));
-vi.mock("$lib/stores/ui/onboarding.svelte", () => ({
+vi.mock("#lib/stores/ui/onboarding.svelte.js", () => ({
   onboardingStore: {
     showChangelog: false,
     isLandingPageVisible: false,
@@ -193,14 +197,14 @@ vi.mock("$lib/stores/ui/onboarding.svelte", () => ({
     markVersionAsSeen: vi.fn(),
   },
 }));
-vi.mock("$lib/stores/ui/session-mode.svelte", () => ({
+vi.mock("#lib/stores/ui/session-mode.svelte.js", () => ({
   sessionModeStore: {
     isGuestMode: false,
     isDemoMode: false,
     wasConverted: false,
   },
 }));
-vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
+vi.mock("#lib/stores/ui/modal-ui.svelte.js", () => ({
   modalUIStore: {
     isAnyModalOpen: false,
     vaultThemePrompt: { open: false, vaultId: null },
@@ -213,7 +217,7 @@ vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
     lightbox: { show: false },
   },
 }));
-vi.mock("$lib/stores/ui/vault-theme-prompt.svelte", () => ({
+vi.mock("#lib/stores/ui/vault-theme-prompt.svelte.js", () => ({
   vaultThemePromptStore: {
     startTracking: vi.fn(),
     pauseTracking: vi.fn(),
@@ -221,47 +225,47 @@ vi.mock("$lib/stores/ui/vault-theme-prompt.svelte", () => ({
     shouldAutoPrompt: vi.fn(() => false),
   },
 }));
-vi.mock("$lib/stores/ui/notification.svelte", () => ({
+vi.mock("#lib/stores/ui/notification.svelte.js", () => ({
   notificationStore: {
     confirmationDialog: { open: false },
   },
 }));
-vi.mock("$lib/stores/ui/discovery-policy.svelte", () => ({
+vi.mock("#lib/stores/ui/discovery-policy.svelte.js", () => ({
   discoveryPolicyStore: {},
 }));
-vi.mock("$lib/stores/ui/connection-mode.svelte", () => ({
+vi.mock("#lib/stores/ui/connection-mode.svelte.js", () => ({
   connectionModeStore: {},
 }));
-vi.mock("$lib/stores/ui/explorer-ui.svelte", () => ({
+vi.mock("#lib/stores/ui/explorer-ui.svelte.js", () => ({
   explorerUIStore: {},
 }));
-vi.mock("$lib/stores/world.svelte", () => ({
+vi.mock("#lib/stores/world.svelte.js", () => ({
   worldStore: {},
 }));
-vi.mock("$lib/stores/canvas-registry.svelte", () => ({
+vi.mock("#lib/stores/canvas-registry.svelte.js", () => ({
   canvasRegistry: {},
 }));
-vi.mock("$lib/stores/graph.svelte", () => ({
+vi.mock("#lib/stores/graph.svelte.js", () => ({
   graph: {},
 }));
-vi.mock("$lib/stores/oracle.svelte", () => ({
+vi.mock("#lib/stores/oracle.svelte.js", () => ({
   oracle: {
     init: vi.fn(),
   },
 }));
-vi.mock("$lib/stores/calendar.svelte", () => ({
+vi.mock("#lib/stores/calendar.svelte.js", () => ({
   calendarStore: {},
 }));
 
 import LayoutTestHost from "./__tests__/LayoutTestHost.svelte";
-import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
-import { helpStore } from "$lib/stores/help.svelte";
-import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
-import { themeStore } from "$lib/stores/theme.svelte";
-import { vaultThemePromptStore } from "$lib/stores/ui/vault-theme-prompt.svelte";
-import { vault } from "$lib/stores/vault.svelte";
-import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { layoutUIStore } from "#lib/stores/ui/layout-ui.svelte.js";
+import { helpStore } from "#lib/stores/help.svelte.js";
+import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+import { onboardingStore } from "#lib/stores/ui/onboarding.svelte.js";
+import { themeStore } from "#lib/stores/theme.svelte.js";
+import { vaultThemePromptStore } from "#lib/stores/ui/vault-theme-prompt.svelte.js";
+import { vault } from "#lib/stores/vault.svelte.js";
+import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
 import { page } from "$app/state";
 
 describe("+layout.svelte", () => {

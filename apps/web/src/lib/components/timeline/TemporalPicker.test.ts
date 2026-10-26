@@ -3,10 +3,12 @@
 import { render, screen, fireEvent } from "@testing-library/svelte";
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import TemporalPicker from "./TemporalPicker.svelte";
-import { calendarStore } from "$lib/stores/calendar.svelte";
+import { calendarStore } from "#lib/stores/calendar.svelte.js";
 
 vi.mock("$app/paths", () => ({
   base: "",
+  asset: (p: string) => p,
+  resolve: (p: string) => p,
 }));
 
 // Polyfill Element.prototype.animate for JSDOM
@@ -25,7 +27,7 @@ if (typeof Element !== "undefined" && !Element.prototype.animate) {
 
 // Mock calendarStore
 
-vi.mock("$lib/stores/calendar.svelte", () => {
+vi.mock("#lib/stores/calendar.svelte.js", () => {
   const mockCalendarConfig = {
     useGregorian: false,
     months: [
@@ -54,7 +56,7 @@ vi.mock("$lib/stores/calendar.svelte", () => {
 });
 
 // Mock graph store for eras
-vi.mock("$lib/stores/graph.svelte", () => ({
+vi.mock("#lib/stores/graph.svelte.js", () => ({
   graph: {
     eras: [
       {

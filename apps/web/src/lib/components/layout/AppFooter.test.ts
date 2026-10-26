@@ -3,13 +3,15 @@
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import AppFooter from "./AppFooter.svelte";
-import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
 
 vi.mock("$app/paths", () => ({
   base: "",
+  asset: (p: string) => p,
+  resolve: (p: string) => p,
 }));
 
-vi.mock("$lib/config", () => ({
+vi.mock("#lib/config/index.js", () => ({
   PATREON_URL: "https://patreon.com/codexcryptica",
 }));
 

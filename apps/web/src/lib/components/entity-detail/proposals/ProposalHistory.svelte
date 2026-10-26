@@ -1,11 +1,13 @@
 <script lang="ts">
-  import { proposerStore } from "$lib/stores/proposer.svelte";
-  import { vault } from "$lib/stores/vault.svelte";
+  import { proposerStore } from "#lib/stores/proposer.svelte.js";
+  import { vault } from "#lib/stores/vault.svelte.js";
   import type { Proposal } from "@codex/proposer";
 
-  let { history = proposerStore.activeHistory } = $props<{
+  let {
+    history = proposerStore.activeHistory,
+  }: {
     history?: Proposal[];
-  }>();
+  } = $props();
 
   const handleReEvaluate = async (proposal: Proposal) => {
     await proposerStore.reEvaluate(proposal);

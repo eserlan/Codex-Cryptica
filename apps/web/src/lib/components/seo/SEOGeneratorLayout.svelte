@@ -1,22 +1,22 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import type { Snippet } from "svelte";
-  import { browser } from "$app/environment";
-  import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
+  import { browser } from "$app/env";
+  import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
   import type { OneShotProgressStep } from "generator-engine";
-  import type { MarkdownSectionForCopy } from "$lib/components/seo/markdown-sections";
-  import { splitMarkdownForCopy } from "$lib/components/seo/markdown-sections";
-  import { getGeneratorDocumentLayout } from "$lib/components/seo/generator-document-layout";
+  import type { MarkdownSectionForCopy } from "#lib/components/seo/markdown-sections.js";
+  import { splitMarkdownForCopy } from "#lib/components/seo/markdown-sections.js";
+  import { getGeneratorDocumentLayout } from "#lib/components/seo/generator-document-layout.js";
   import { getGeneratorColumnClasses } from "./generator-column-classes";
-  import { themeStore } from "$lib/stores/theme.svelte";
-  import { onlineStatus } from "$lib/stores/online.svelte";
-  import { sessionHubStore } from "$lib/stores/session-hub.svelte";
+  import { themeStore } from "#lib/stores/theme.svelte.js";
+  import { onlineStatus } from "#lib/stores/online.svelte.js";
+  import { sessionHubStore } from "#lib/stores/session-hub.svelte.js";
   import { getContextSelection, type SessionEntity } from "generator-engine";
   import {
     clipboardService as defaultClipboardService,
     type ClipboardService,
-  } from "$lib/services/ClipboardService";
-  import { when } from "$lib/utils/when";
+  } from "#lib/services/ClipboardService.js";
+  import { when } from "#lib/utils/when.js";
   import { registerShellCtaHandler } from "./marketing-shell";
   import {
     resolveWorldThemeId,
@@ -83,6 +83,25 @@
     wideForm = false,
     singleColumn = false,
     showSubmitButton = true,
+
+    /** Public discovery labels (#2762). Chips linking to `/explore?label=X`. */
+    /** Extra controls under the output card, e.g. per-part regeneration. */
+    /**
+     * Content above the output card, e.g. the Quick Names batch. It leads on
+     * phones, and the sample draft folds away beneath it.
+     */
+    /** What the AI toggle covers, when the page has other AI controls. */
+    /** Live steps of a staged generation, shown in the output card. */
+    /** Enables actions when a public result was explicitly opened as a remix. */
+    /** Replaces the generator-specific explainer strip for focused public tools. */
+    /** Hides the local-mode toggle when the workflow cannot operate without AI. */
+    /** Gives multi-step builders a wider form column; the side panel moves below. */
+    /** Stacks form, output and table notes in one centred column on desktop. */
+    /**
+     * False when the form fields drive the flow themselves (e.g. a wizard) and
+     * call the `submit` they are given. Hides the shared button and AI toggle,
+     * and ignores implicit submits such as Enter in a single-input form.
+     */
   }: {
     canonicalPath?: string;
     pageTitle?: string;
@@ -90,7 +109,6 @@
     ogImage?: string;
     ogImageAlt?: string;
     keywords?: string[];
-    /** Public discovery labels (#2762). Chips linking to `/explore?label=X`. */
     labels?: string[];
     eyebrow?: string;
     introTitle?: string;
@@ -105,18 +123,11 @@
       onPreview?: (preview: GeneratorOutput) => void;
     }) => Promise<GeneratorOutput>;
     formFields: Snippet<[() => void]>;
-    /** Extra controls under the output card, e.g. per-part regeneration. */
     outputExtras?: Snippet<
       [GeneratorOutput, (output: GeneratorOutput) => void, boolean]
     >;
-    /**
-     * Content above the output card, e.g. the Quick Names batch. It leads on
-     * phones, and the sample draft folds away beneath it.
-     */
     outputLead?: Snippet;
-    /** What the AI toggle covers, when the page has other AI controls. */
     aiToggleScope?: string;
-    /** Live steps of a staged generation, shown in the output card. */
     progressSteps?: OneShotProgressStep[] | null;
     worldTheme?: string;
     initialDraft?: GeneratorOutput | null;
@@ -133,24 +144,14 @@
     ) => void;
     clipboardService?: ClipboardService;
     autoGenerateExplicit?: boolean;
-    /** Enables actions when a public result was explicitly opened as a remix. */
     initialDraftIsUserGenerated?: boolean;
-    /** Replaces the generator-specific explainer strip for focused public tools. */
     explainerText?: string;
     showGeneratorSwitcher?: boolean;
-    /** Hides the local-mode toggle when the workflow cannot operate without AI. */
     aiModeRequired?: boolean;
     aiDataNotice?: string;
     offlineMessage?: string;
-    /** Gives multi-step builders a wider form column; the side panel moves below. */
     wideForm?: boolean;
-    /** Stacks form, output and table notes in one centred column on desktop. */
     singleColumn?: boolean;
-    /**
-     * False when the form fields drive the flow themselves (e.g. a wizard) and
-     * call the `submit` they are given. Hides the shared button and AI toggle,
-     * and ignores implicit submits such as Enter in a single-input form.
-     */
     showSubmitButton?: boolean;
     backHref?: string;
     backLabel?: string;
@@ -259,6 +260,11 @@
   });
 
   const canFollowUp = $derived(session.userGenerationSucceeded);
+  const exampleWriteupLabel = $derived(
+    variant === "names"
+      ? "See example names with notes"
+      : "See an example write-up",
+  );
 
   export function triggerExplicitAutoGenerate() {
     session.triggerExplicitAutoGenerate();
@@ -425,7 +431,7 @@
             <summary
               class="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-3 text-sm font-bold text-theme-text"
             >
-              See an example write-up
+              {exampleWriteupLabel}
               <span
                 class="icon-[lucide--chevron-down] h-4 w-4 transition-transform group-open:rotate-180"
                 aria-hidden="true"
@@ -461,7 +467,6 @@
   </div>
 
   <FaqSection {introTitle} {faqs} />
-
   <RelatedLinksSection {relatedLinks} />
 
   <GeneratorModals

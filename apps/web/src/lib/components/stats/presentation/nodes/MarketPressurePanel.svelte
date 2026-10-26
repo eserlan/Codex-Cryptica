@@ -14,13 +14,13 @@
     type PressurePreset,
     type RevertConflict,
   } from "@codex/stat-sheet-engine";
-  import { vault } from "$lib/stores/vault.svelte";
+  import { vault } from "#lib/stores/vault.svelte.js";
   import {
     systemClock,
     systemIdGenerator,
     type Clock,
     type IdGenerator,
-  } from "$lib/utils/runtime-deps";
+  } from "#lib/utils/runtime-deps.js";
   import type { PresentationRenderContext } from "../types";
   import MarketHistory from "./MarketHistory.svelte";
   import MarketPressureDiff from "./MarketPressureDiff.svelte";

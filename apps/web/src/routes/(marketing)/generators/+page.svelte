@@ -1,11 +1,13 @@
 <script lang="ts">
-  import { base } from "$app/paths";
-  import { safeJsonLd } from "$lib/utils/json-ld";
-  import SeoHead from "$lib/components/seo/SeoHead.svelte";
+  import { resolve } from "$app/paths";
+  import { safeJsonLd } from "#lib/utils/json-ld.js";
+  import SeoHead from "#lib/components/seo/SeoHead.svelte";
   import {
     generatorPath,
     groupGeneratorCatalogue,
-  } from "$lib/content/generator-catalogue";
+  } from "#lib/content/generator-catalogue.js";
+
+  const cleanBase = resolve("") === "/" ? "" : resolve("");
 
   const origin = "https://codexcryptica.com";
 
@@ -208,6 +210,7 @@
         >
           RPG Generators
         </h1>
+
         <p class="text-base md:text-lg text-theme-muted leading-relaxed">
           Free, table-ready generators for tabletop GMs. No login required:
           generate a draft, copy it, or save it into your local Codex Cryptica
@@ -224,10 +227,11 @@
     icon: string;
   })}
     <a
-      href="{base}{item.href}"
+      href="{cleanBase}{item.href}"
       class="group block h-full rounded-xl border border-theme-border/60 bg-theme-surface/35 p-5 hover:border-theme-primary/60 hover:bg-theme-surface/55 transition-colors"
     >
       <span class="{item.icon} h-5 w-5 text-theme-primary mb-4 block"></span>
+
       <span
         class="block font-header text-base font-bold text-theme-text mb-2 group-hover:text-theme-primary transition-colors"
       >
@@ -310,6 +314,7 @@
       >
         Browse by Theme
       </h2>
+
       <ul class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {#each themeHubs as hub (hub.href)}
           <li>{@render card(hub)}</li>

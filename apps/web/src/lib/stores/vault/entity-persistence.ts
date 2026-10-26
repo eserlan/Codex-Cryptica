@@ -4,12 +4,12 @@ import { cacheService } from "../../services/cache.svelte";
 import type { LocalEntity } from "./types";
 import { VaultRepository } from "@codex/vault-engine";
 import type { Entity } from "schema";
-import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
 import { updateLastInternalChange } from "./registry";
-import { systemClock } from "$lib/utils/runtime-deps";
+import { systemClock } from "#lib/utils/runtime-deps.js";
 import { runWithConcurrency } from "./bulk-results";
 
-import { notificationStore } from "$lib/stores/ui/notification.svelte";
+import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
 
 export interface PersistenceDependencies {
   repository: VaultRepository;

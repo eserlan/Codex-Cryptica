@@ -1,9 +1,9 @@
 <script lang="ts">
   import { fade } from "svelte/transition";
-  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
-  import { focusEntity } from "$lib/stores/ui/navigation";
+  import { layoutUIStore } from "#lib/stores/ui/layout-ui.svelte.js";
+  import { focusEntity } from "#lib/stores/ui/navigation.js";
 
-  let { entityId } = $props<{ entityId: string }>();
+  let { entityId }: { entityId: string } = $props();
 
   function handleClose() {
     if (layoutUIStore.isEntityExplorerWorkspace) {

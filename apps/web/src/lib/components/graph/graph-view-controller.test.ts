@@ -11,7 +11,7 @@ import {
   deriveEntityTypeTone,
   PIRATE_DARK,
 } from "schema";
-import { categories } from "$lib/stores/categories.svelte";
+import { categories } from "#lib/stores/categories.svelte.js";
 import {
   syncGraphElements,
   applyLargeGraphRenderHints,
@@ -104,7 +104,7 @@ vi.mock("graph-engine", () => {
 
 // A dark theme is what makes the per-type glyph colours diverge: on a light
 // theme every type clears contrast against the theme primary already.
-vi.mock("$lib/stores/theme.svelte", async () => {
+vi.mock("#lib/stores/theme.svelte.js", async () => {
   const { PIRATE_DARK: theme } = await import("schema");
   return { themeStore: { activeTheme: theme } };
 });

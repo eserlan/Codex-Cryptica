@@ -1,10 +1,10 @@
 import { appEventBus, type AppEventBus } from "@codex/events";
-import { sessionJournalStore } from "$lib/stores/session-journal.svelte";
+import { sessionJournalStore } from "#lib/stores/session-journal.svelte.js";
 import {
   SessionJournalCapture,
   type JournalCaptureTarget,
-} from "$lib/stores/session-journal-capture";
-import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+} from "#lib/stores/session-journal-capture.js";
+import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
 
 /**
  * Starts the Session Journal's capture listener (spec 163, slice 3): rolls,

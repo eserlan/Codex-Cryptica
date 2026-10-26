@@ -1,14 +1,14 @@
 <script lang="ts">
   import type { DiscoveryProposal } from "@codex/oracle-engine";
-  import { vault } from "$lib/stores/vault.svelte";
-  import { oracle } from "$lib/stores/oracle.svelte";
+  import { vault } from "#lib/stores/vault.svelte.js";
+  import { oracle } from "#lib/stores/oracle.svelte.js";
   import {
     DEFAULT_SEARCH_ENTITY_ZOOM,
     dispatchSearchEntityFocus,
-  } from "$lib/components/search/search-focus";
-  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
-  import { notificationStore } from "$lib/stores/ui/notification.svelte";
-  import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
+  } from "#lib/components/search/search-focus.js";
+  import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
+  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
+  import { discoveryPolicyStore } from "#lib/stores/ui/discovery-policy.svelte.js";
 
   interface Props {
     proposal: DiscoveryProposal;

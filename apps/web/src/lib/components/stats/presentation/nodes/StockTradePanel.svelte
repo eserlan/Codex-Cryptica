@@ -1,5 +1,8 @@
 <script lang="ts">
-  import { systemIdGenerator, type IdGenerator } from "$lib/utils/runtime-deps";
+  import {
+    systemIdGenerator,
+    type IdGenerator,
+  } from "#lib/utils/runtime-deps.js";
 
   import type { StatSheetField } from "schema";
   import {
@@ -11,13 +14,13 @@
     walletKeyFor,
     type TradeKind,
   } from "@codex/stat-sheet-engine";
-  import { vault } from "$lib/stores/vault.svelte";
+  import { vault } from "#lib/stores/vault.svelte.js";
   import TradePreview from "./TradePreview.svelte";
-  import { merchantTradeService } from "$lib/services/merchant-trade-instance";
+  import { merchantTradeService } from "#lib/services/merchant-trade-instance.js";
   import type {
     MerchantTradeService,
     TradeOutcome,
-  } from "$lib/services/merchant-trade";
+  } from "#lib/services/merchant-trade.js";
 
   let {
     shopId,

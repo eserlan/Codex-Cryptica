@@ -2,7 +2,7 @@ import type { GuidanceAction } from "help-engine";
 import type {
   HelpMessage,
   HelpStatus,
-} from "$lib/stores/help-assistant/help-assistant.svelte";
+} from "#lib/stores/help-assistant/help-assistant.svelte.js";
 
 /**
  * How the Cif pop-out window talks to the main window. The main window keeps

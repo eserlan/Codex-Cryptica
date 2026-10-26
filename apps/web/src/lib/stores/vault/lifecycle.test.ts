@@ -75,6 +75,8 @@ vi.mock("$app/environment", () => ({
 
 vi.mock("$app/paths", () => ({
   base: "",
+  asset: (p: string) => p,
+  resolve: (p: string) => p,
 }));
 
 vi.mock("$app/navigation", () => ({
@@ -82,7 +84,7 @@ vi.mock("$app/navigation", () => ({
   invalidateAll: vi.fn(),
 }));
 
-vi.mock("$lib/workers/oracle.worker?worker", () => ({
+vi.mock("#lib/workers/oracle.worker?worker", () => ({
   default: vi.fn(),
 }));
 

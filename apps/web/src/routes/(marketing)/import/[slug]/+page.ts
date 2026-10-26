@@ -1,5 +1,5 @@
 import { error } from "@sveltejs/kit";
-import { importsConfig } from "$lib/config/seo-pages";
+import { importsConfig } from "#lib/config/seo-pages.js";
 import type { EntryGenerator, PageLoad } from "./$types";
 
 export const prerender = true;

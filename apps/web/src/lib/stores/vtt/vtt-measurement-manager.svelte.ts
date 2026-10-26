@@ -5,8 +5,8 @@ import type {
   Token,
 } from "../../../types/vtt";
 import type { Point } from "schema";
-import { hashToColor, cloneMeasurement } from "$lib/utils/vtt-helpers";
-import { systemClock } from "$lib/utils/runtime-deps";
+import { hashToColor, cloneMeasurement } from "#lib/utils/vtt-helpers.js";
+import { systemClock } from "#lib/utils/runtime-deps.js";
 
 /**
  * How long a ping stays alive — both for visual animation in MapCanvas and

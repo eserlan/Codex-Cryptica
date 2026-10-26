@@ -6,7 +6,7 @@ import {
   type CifToHost,
   type CifToPopout,
   type HelpAssistantView,
-} from "$lib/services/help-assistant/cif-popout-protocol";
+} from "#lib/services/help-assistant/cif-popout-protocol.js";
 
 export interface PopoutWindow {
   closed: boolean;

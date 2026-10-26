@@ -53,11 +53,11 @@ const {
   ],
 }));
 
-vi.mock("$lib/stores/stat-sheet/built-in-templates", () => ({
+vi.mock("#lib/stores/stat-sheet/built-in-templates.js", () => ({
   BUILT_IN_STAT_SHEET_TEMPLATES: BUILT_INS,
 }));
 
-vi.mock("$lib/stores/stat-sheet-templates.svelte", () => ({
+vi.mock("#lib/stores/stat-sheet-templates.svelte.js", () => ({
   statSheetTemplates: {
     get templates() {
       return templatesState.templates;
@@ -81,7 +81,7 @@ vi.mock("$lib/stores/stat-sheet-templates.svelte", () => ({
   },
 }));
 
-vi.mock("$lib/stores/categories.svelte", () => ({
+vi.mock("#lib/stores/categories.svelte.js", () => ({
   categories: {
     list: [
       { id: "character", label: "Character" },
@@ -90,12 +90,14 @@ vi.mock("$lib/stores/categories.svelte", () => ({
   },
 }));
 
-vi.mock("$lib/stores/ui/notification.svelte", () => ({
+vi.mock("#lib/stores/ui/notification.svelte.js", () => ({
   notificationStore: { confirm, notify },
 }));
 
 vi.mock("$app/paths", () => ({
-  resolve: (path: string) => `/app${path}`,
+  base: "",
+  asset: (p: string) => p,
+  resolve: (path: string) => `/app${path.replace(/\/\([^)]+\)/g, "")}`,
 }));
 
 import StatSheetTemplateSettings from "./StatSheetTemplateSettings.svelte";

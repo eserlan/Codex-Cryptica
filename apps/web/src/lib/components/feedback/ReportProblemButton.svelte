@@ -1,11 +1,14 @@
 <script lang="ts">
-  import { feedbackDialog } from "$lib/stores/ui/feedback-dialog.svelte";
+  import { feedbackDialog } from "#lib/stores/ui/feedback-dialog.svelte.js";
 
-  let { area = undefined, label = "Report a problem" } = $props<{
+  let {
+    area = undefined,
+    label = "Report a problem",
+  }: {
     /** The area the report comes from; see FEEDBACK_AREAS. */
     area?: string;
     label?: string;
-  }>();
+  } = $props();
 </script>
 
 <button

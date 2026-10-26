@@ -3,7 +3,7 @@
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import type { EntityTemplateDetail } from "schema";
-  import { publicEntityTemplateDirectoryService } from "$lib/services/publishing/PublicEntityTemplateDirectoryService";
+  import { publicEntityTemplateDirectoryService } from "#lib/services/publishing/PublicEntityTemplateDirectoryService.js";
   import EntityTemplateListingDetail from "./EntityTemplateListingDetail.svelte";
 
   type Probe = Awaited<

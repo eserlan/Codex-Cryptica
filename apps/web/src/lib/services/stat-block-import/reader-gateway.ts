@@ -1,6 +1,6 @@
 import type { AIGeneratorGateway } from "generator-engine";
 import type { StatBlockReaderGateway } from "@codex/stat-sheet-engine";
-import { aiGeneratorGateway } from "$lib/services/generators/ai-generator-gateway";
+import { aiGeneratorGateway } from "#lib/services/generators/ai-generator-gateway.js";
 
 /**
  * Adapts the app's AI gateway to the reader. Always a one-shot request: no

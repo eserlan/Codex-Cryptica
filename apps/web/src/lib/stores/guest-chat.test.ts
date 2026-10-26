@@ -3,7 +3,11 @@ import { vi } from "vitest";
 (globalThis as any).mockDbStore = new Map<string, any>();
 
 // Mocks must be declared before any imports
-vi.mock("$app/paths", () => ({ base: "" }));
+vi.mock("$app/paths", () => ({
+  base: "",
+  asset: (p: string) => p,
+  resolve: (p: string) => p,
+}));
 vi.mock("./vault.svelte", () => ({
   vault: {
     isGuest: true,
@@ -26,7 +30,7 @@ vi.mock("./vault.svelte", () => ({
   },
 }));
 
-vi.mock("$lib/cloud-bridge/p2p/guest-service", () => ({
+vi.mock("#lib/cloud-bridge/p2p/guest-service.js", () => ({
   p2pGuestService: {
     connected: true,
     peerId: "test-peer-id",
@@ -102,7 +106,7 @@ vi.mock("../utils/idb", () => {
 
 import { describe, it, expect, beforeEach } from "vitest";
 import { GuestChatStore } from "./guest-chat.svelte";
-import { p2pGuestService } from "$lib/cloud-bridge/p2p/guest-service";
+import { p2pGuestService } from "#lib/cloud-bridge/p2p/guest-service.js";
 import { oracle } from "./oracle.svelte";
 import { vault } from "./vault.svelte";
 

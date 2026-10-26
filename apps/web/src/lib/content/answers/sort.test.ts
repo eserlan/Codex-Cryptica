@@ -11,7 +11,7 @@ import {
   clearStoredAnswerSort,
   type AnswerSortOption,
 } from "./sort";
-import type { StorageLike } from "$lib/utils/runtime-deps";
+import type { StorageLike } from "#lib/utils/runtime-deps.js";
 import type { AnswerConfig } from "./schema";
 
 function createMockAnswer(

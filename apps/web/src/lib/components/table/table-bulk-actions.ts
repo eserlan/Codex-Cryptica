@@ -1,7 +1,7 @@
-import { notificationStore } from "$lib/stores/ui/notification.svelte";
-import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-import { vault } from "$lib/stores/vault.svelte";
-import { openSelectionReport } from "$lib/components/reports/open-selection-report";
+import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
+import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+import { vault } from "#lib/stores/vault.svelte.js";
+import { openSelectionReport } from "#lib/components/reports/open-selection-report.js";
 import type { Entity } from "schema";
 
 // Single pass over the selection, no intermediate array.

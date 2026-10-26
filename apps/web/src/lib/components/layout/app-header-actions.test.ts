@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { openFrontPage } from "./app-header-actions";
-import { vault } from "$lib/stores/vault.svelte";
-import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
-import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
-import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+import { vault } from "#lib/stores/vault.svelte.js";
+import { onboardingStore } from "#lib/stores/ui/onboarding.svelte.js";
+import { layoutUIStore } from "#lib/stores/ui/layout-ui.svelte.js";
+import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
 
 const mocks = vi.hoisted(() => ({
   closeSidebar: vi.fn(),
@@ -14,7 +14,7 @@ const mocks = vi.hoisted(() => ({
   closeLightbox: vi.fn(),
 }));
 
-vi.mock("$lib/stores/vault.svelte", () => ({
+vi.mock("#lib/stores/vault.svelte.js", () => ({
   vault: {
     selectedEntityId: "entity-1",
   },

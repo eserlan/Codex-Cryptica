@@ -1,4 +1,4 @@
-import type { LocalEntity } from "$lib/stores/vault/types";
+import type { LocalEntity } from "#lib/stores/vault/types.js";
 import type { CloudBackupTiming } from "@codex/cloud-backup-sync";
 
 import { systemClock, type Clock } from "../utils/runtime-deps";

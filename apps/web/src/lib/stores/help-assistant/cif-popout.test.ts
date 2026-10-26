@@ -5,7 +5,7 @@ import {
   parseToPopout,
   type CifChannel,
   type HelpAssistantView,
-} from "$lib/services/help-assistant/cif-popout-protocol";
+} from "#lib/services/help-assistant/cif-popout-protocol.js";
 import type { HelpStatus } from "./help-assistant.svelte";
 import { CifPopoutHost, type PopoutWindow } from "./cif-popout-host.svelte";
 import { CifPopoutClient } from "./cif-popout-client.svelte";

@@ -3,7 +3,7 @@ import {
   MIN_RECENT_LIMIT,
   MAX_RECENT_LIMIT,
 } from "./front-page-constants";
-import { browserStorage, type StorageLike } from "$lib/utils/runtime-deps";
+import { browserStorage, type StorageLike } from "#lib/utils/runtime-deps.js";
 
 /**
  * Generate the localStorage key for the recent-limit preference.

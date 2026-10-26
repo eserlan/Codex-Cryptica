@@ -1,13 +1,13 @@
 <script lang="ts">
-  import { vault } from "$lib/stores/vault.svelte";
+  import { vault } from "#lib/stores/vault.svelte.js";
   import { fly, fade } from "svelte/transition";
   import { quintOut } from "svelte/easing";
-  import { base } from "$app/paths";
+  import { resolve } from "$app/paths";
   import { goto, beforeNavigate } from "$app/navigation";
   import { page } from "$app/state";
-  import { openEntityPopout } from "$lib/utils/zen-popout";
+  import { openEntityPopout } from "#lib/utils/zen-popout.js";
   import ZenView from "../zen/ZenView.svelte";
-  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
 
   const ENTITY_ROUTE = /\/vault\/[^/]+\/entity\/[^/]+$/;
 
@@ -21,6 +21,8 @@
   // Zen mode closed), leaving the user on a blank screen.
   let lastAppPath: string | null = null;
   beforeNavigate((nav) => {
+    if (nav.shallow && nav.type === "goto") return;
+
     const fromUrl = nav.from?.url;
     if (fromUrl && !ENTITY_ROUTE.test(fromUrl.pathname)) {
       const path = `${fromUrl.pathname}${fromUrl.search || ""}`;
@@ -53,8 +55,9 @@
       setTimeout(() => {
         if (typeof window !== "undefined" && window.closed) return;
         modalUIStore.closeZenMode();
-        void goto(modalUIStore.lastAppPath ?? lastAppPath ?? `${base}/`);
+        void goto(modalUIStore.lastAppPath ?? lastAppPath ?? resolve("/(app)"));
       }, 50);
+
       return;
     }
     modalUIStore.closeZenMode();
@@ -103,7 +106,7 @@
       openEntityPopout(
         vault.activeVaultId ?? "guest",
         entityForPopout,
-        base,
+        resolve(""),
         vault.isGuest,
       );
       modalUIStore.closeZenMode();

@@ -1,5 +1,5 @@
-import { browser } from "$app/environment";
-import { base } from "$app/paths";
+import { browser } from "$app/env";
+import { resolve } from "$app/paths";
 import "../event-registrations";
 import { debugStore } from "../../stores/debug.svelte";
 import { IS_STAGING } from "../../config";
@@ -18,37 +18,38 @@ function timeCloudBackupSave(timing: CloudBackupTiming): void {
       (timing.bytes !== undefined ? ` bytes=${timing.bytes}` : ""),
   );
 }
-import { requestPersistentStorage } from "$lib/utils/persistent-storage";
+import { requestPersistentStorage } from "#lib/utils/persistent-storage.js";
 import { initOracleEventListeners } from "../../listeners/oracle-events";
 import { initSessionJournalCapture } from "../../listeners/session-journal-events";
-import { notificationStore } from "$lib/stores/ui/notification.svelte";
+import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
 import { configureAIEngine } from "@codex/ai-engine";
 import { preloadGraphCore } from "graph-engine";
 import { searchService } from "@codex/search-orchestrator";
 import {
   browserPerformanceCapture,
   browserPerformanceRecorder,
-} from "$lib/services/performance/browser-performance-capture";
+} from "#lib/services/performance/browser-performance-capture.js";
 import { entityTemplateStore } from "../../stores/entity-templates/entity-template-store.svelte";
 import { registerFlushSavesOnHide } from "./flush-saves-on-hide";
-import { vault } from "$lib/stores/vault.svelte";
-import { mapRegistry } from "$lib/stores/map-registry.svelte";
-import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
-import { getDB } from "$lib/utils/idb";
+import { vault } from "#lib/stores/vault.svelte.js";
+import { mapRegistry } from "#lib/stores/map-registry.svelte.js";
+import { canvasRegistry } from "#lib/stores/canvas-registry.svelte.js";
+import { getDB } from "#lib/utils/idb.js";
 import {
   cloudBackupStore,
   cloudBackupBrowserStorage,
-} from "$lib/stores/cloud-backup.svelte";
+} from "#lib/stores/cloud-backup.svelte.js";
+
 import {
   assetIdForPath,
   buildCloudBackupDelta,
   buildCloudBackupPayload,
   collectAssetPaths,
-} from "$lib/services/cloud-backup-payload";
-import { onDurableVaultChange } from "$lib/stores/vault/registry";
-import { vaultEventBus } from "$lib/stores/vault/events.svelte";
-import { CloudBackupDirtyStore } from "$lib/stores/cloud-backup-dirty";
-import { writeOpfsFile } from "$lib/utils/opfs";
+} from "#lib/services/cloud-backup-payload.js";
+import { onDurableVaultChange } from "#lib/stores/vault/registry.js";
+import { vaultEventBus } from "#lib/stores/vault/events.svelte.js";
+import { CloudBackupDirtyStore } from "#lib/stores/cloud-backup-dirty.js";
+import { writeOpfsFile } from "#lib/utils/opfs.js";
 import {
   handleVersionSkewReload,
   isVersionSkewError,
@@ -195,7 +196,7 @@ export function initializeGlobalListeners(_calendarStore?: any) {
   const initSystemProfile = async () => {
     try {
       const { systemProfileStore } =
-        await import("$lib/stores/system-profile.svelte");
+        await import("#lib/stores/system-profile.svelte.js");
       await systemProfileStore.init(vault.activeVaultId);
     } catch (err) {
       console.error(
@@ -208,8 +209,8 @@ export function initializeGlobalListeners(_calendarStore?: any) {
   const handleVaultSwitched = async () => {
     void initSystemProfile();
     try {
-      const { calendarStore } = await import("$lib/stores/calendar.svelte");
-      const { timelineStore } = await import("$lib/stores/timeline.svelte");
+      const { calendarStore } = await import("#lib/stores/calendar.svelte.js");
+      const { timelineStore } = await import("#lib/stores/timeline.svelte.js");
       await calendarStore.init();
       timelineStore.resetVaultGuard();
       void timelineStore.init();
@@ -802,6 +803,7 @@ export function registerServiceWorker(deps?: {
   const performanceApi = deps?.performance ?? win.performance;
   const isDev = deps?.isDev ?? import.meta.env.DEV;
   const now = deps?.now ?? Date.now;
+  const serviceWorkerUrl = `${resolve("/(app)").replace(/\/+$/, "")}/service-worker.js`;
 
   let isVaultSessionActive = false;
   let registration: ServiceWorkerRegistration | undefined;
@@ -903,7 +905,7 @@ export function registerServiceWorker(deps?: {
     isRegistered = true;
     cleanup();
 
-    nav.serviceWorker.register(`${base}/service-worker.js`).then(
+    nav.serviceWorker.register(serviceWorkerUrl).then(
       (registeredWorker) => {
         registration = registeredWorker;
         if (isDestroyed) return;

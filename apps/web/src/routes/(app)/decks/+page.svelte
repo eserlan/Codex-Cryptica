@@ -1,7 +1,7 @@
 <script lang="ts">
-  import SourceWorkspace from "$lib/components/random/SourceWorkspace.svelte";
-  import CardEditor from "$lib/components/random/CardEditor.svelte";
-  import DeckUseView from "$lib/components/random/DeckUseView.svelte";
+  import SourceWorkspace from "#lib/components/random/SourceWorkspace.svelte";
+  import CardEditor from "#lib/components/random/CardEditor.svelte";
+  import DeckUseView from "#lib/components/random/DeckUseView.svelte";
 </script>
 
 <svelte:head>

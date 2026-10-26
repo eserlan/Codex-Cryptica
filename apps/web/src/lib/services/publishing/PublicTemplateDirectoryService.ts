@@ -15,7 +15,7 @@ import { getTemplateDirectoryBaseUrl } from "./template-directory-http";
 import {
   getTemplateOwnerToken,
   saveTemplateOwnerToken,
-} from "$lib/stores/publishing/template-publish-registry";
+} from "#lib/stores/publishing/template-publish-registry.js";
 
 export interface TemplateDirectoryServiceDeps {
   fetch?: typeof fetch;

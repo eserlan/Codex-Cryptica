@@ -17,7 +17,7 @@ const fsMocks = vi.hoisted(() => ({
   pickDirectory: vi.fn(),
   isFileSystemAccessSupported: vi.fn(() => true),
 }));
-vi.mock("$lib/utils/fs", () => fsMocks);
+vi.mock("#lib/utils/fs.js", () => fsMocks);
 
 function baseDeps(
   overrides: Partial<ImportSettingsControllerDeps> = {},

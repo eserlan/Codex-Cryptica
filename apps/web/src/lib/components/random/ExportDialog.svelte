@@ -7,7 +7,7 @@
     type ExportFormat,
     type RandomSource,
   } from "random-source-engine";
-  import { downloadText } from "$lib/utils/download";
+  import { downloadText } from "#lib/utils/download.js";
 
   /**
    * Getting one table or deck back out of the vault (issue 2263).

@@ -3,15 +3,19 @@
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("$lib/stores/help.svelte", () => ({
+vi.mock("#lib/stores/help.svelte.js", () => ({
   helpStore: { openHelpToArticle: vi.fn() },
 }));
-vi.mock("$app/paths", () => ({ resolve: (p: string) => p }));
-vi.mock("$lib/stores/entity-templates/entity-template-store.svelte", () => ({
+vi.mock("$app/paths", () => ({
+  base: "",
+  asset: (p: string) => p,
+  resolve: (p: string) => p,
+}));
+vi.mock("#lib/stores/entity-templates/entity-template-store.svelte.js", () => ({
   entityTemplateStore: { canEdit: true },
 }));
 vi.mock(
-  "$lib/stores/entity-templates/entity-template-publish-store.svelte",
+  "#lib/stores/entity-templates/entity-template-publish-store.svelte.js",
   () => ({
     entityTemplatePublishStore: {
       links: {},
@@ -20,7 +24,7 @@ vi.mock(
     },
   }),
 );
-vi.mock("$lib/stores/entity-templates/entity-template-install", () => ({
+vi.mock("#lib/stores/entity-templates/entity-template-install.js", () => ({
   installEntityTemplateFromListing: vi.fn(),
 }));
 
@@ -117,7 +121,7 @@ describe("EntityTemplateListingDetail", () => {
 describe("EntityTemplateListingDetail after the owner removes the listing", () => {
   it("stops showing the listing once the owner controls report it unpublished", async () => {
     const { entityTemplatePublishStore } =
-      await import("$lib/stores/entity-templates/entity-template-publish-store.svelte");
+      await import("#lib/stores/entity-templates/entity-template-publish-store.svelte.js");
     Object.assign(entityTemplatePublishStore, {
       hasOwnerToken: vi.fn(async () => true),
       ownerStatus: vi.fn(async () => "active"),

@@ -1,6 +1,6 @@
 import type { PageLoad } from "./$types";
-import { building } from "$app/environment";
-import { getPublicContentByLabel } from "$lib/content/labels/aggregate";
+import { building } from "$app/env";
+import { getPublicContentByLabel } from "#lib/content/labels/aggregate.js";
 
 export const prerender = true;
 export const ssr = true;
@@ -41,6 +41,7 @@ export const load: PageLoad = async ({ fetch, url }) => {
       const page = (await response.json()) as {
         results: WorldDirectoryResult[];
       };
+
       for (const world of page.results) {
         results.push({
           kind: "world",

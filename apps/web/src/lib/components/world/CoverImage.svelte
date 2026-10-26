@@ -7,7 +7,7 @@
     onGenerate,
     onCancel,
     onSetupAI,
-  } = $props<{
+  }: {
     hasImage?: boolean;
     isSaving?: boolean;
     aiDisabled?: boolean;
@@ -15,7 +15,7 @@
     onGenerate: () => Promise<void> | void;
     onCancel?: () => void;
     onSetupAI?: () => void;
-  }>();
+  } = $props();
 
   let isDragging = $state(false);
   let isGenerating = $state(false);

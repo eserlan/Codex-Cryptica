@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { vault } from "$lib/stores/vault.svelte";
-  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { vault } from "#lib/stores/vault.svelte.js";
+  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
   import type { FactionRosterMember } from "./entity-card-variant";
 
   let {

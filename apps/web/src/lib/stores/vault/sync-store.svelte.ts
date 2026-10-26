@@ -7,13 +7,13 @@ import { appEventBus } from "@codex/events";
 import { fileIOAdapter } from "./adapters.svelte";
 import { updateLastInternalChange } from "./registry";
 import type { VaultRecord } from "../../utils/idb";
-import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
-import { notificationStore } from "$lib/stores/ui/notification.svelte";
-import { systemClock } from "$lib/utils/runtime-deps";
+import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
+import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
+import { systemClock } from "#lib/utils/runtime-deps.js";
 import {
   browserPerformanceCapture,
   browserPerformanceRecorder,
-} from "$lib/services/performance/browser-performance-capture";
+} from "#lib/services/performance/browser-performance-capture.js";
 import type { PerformanceOperationHandle } from "@codex/performance-observability";
 
 /**

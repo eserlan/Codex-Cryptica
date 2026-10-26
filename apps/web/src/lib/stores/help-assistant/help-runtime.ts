@@ -1,36 +1,36 @@
-import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
-import { soloSessionStore } from "$lib/stores/solo-session-instance";
+import { discoveryPolicyStore } from "#lib/stores/ui/discovery-policy.svelte.js";
+import { soloSessionStore } from "#lib/stores/solo-session-instance.js";
 import { goto } from "$app/navigation";
-import { base } from "$app/paths";
+import { resolve } from "$app/paths";
 import { page } from "$app/state";
 import { FEATURE_REGISTRY, type DestinationId } from "help-engine";
-import { getHelpArticles } from "$lib/config/help-content";
-import { HelpActionRunner } from "$lib/services/help-assistant/help-action-runner";
-import { buildFallback } from "$lib/services/help-assistant/help-fallback";
-import { generatorsAvailable } from "$lib/services/help-assistant/generator-availability";
-import { helpClient } from "$lib/services/help-assistant/help-client";
-import { helpHighlight } from "$lib/services/help-assistant/help-highlight.svelte";
+import { getHelpArticles } from "#lib/config/help-content.js";
+import { HelpActionRunner } from "#lib/services/help-assistant/help-action-runner.js";
+import { buildFallback } from "#lib/services/help-assistant/help-fallback.js";
+import { generatorsAvailable } from "#lib/services/help-assistant/generator-availability.js";
+import { helpClient } from "#lib/services/help-assistant/help-client.js";
+import { helpHighlight } from "#lib/services/help-assistant/help-highlight.svelte.js";
 import {
   CifFlight,
   locateCifHome,
-} from "$lib/services/help-assistant/cif-flight.svelte";
-import { helpStore } from "$lib/stores/help.svelte";
-import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
-import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-import { feedbackDialog } from "$lib/stores/ui/feedback-dialog.svelte";
-import { vault } from "$lib/stores/vault.svelte";
-import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+} from "#lib/services/help-assistant/cif-flight.svelte.js";
+import { helpStore } from "#lib/stores/help.svelte.js";
+import { layoutUIStore } from "#lib/stores/ui/layout-ui.svelte.js";
+import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+import { feedbackDialog } from "#lib/stores/ui/feedback-dialog.svelte.js";
+import { vault } from "#lib/stores/vault.svelte.js";
+import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
 import { waitFor } from "./help-wait-for";
 import {
   CIF_POPOUT_WINDOW,
   createCifChannel,
-} from "$lib/services/help-assistant/cif-popout-protocol";
+} from "#lib/services/help-assistant/cif-popout-protocol.js";
 import { CifPopoutHost } from "./cif-popout-host.svelte";
 import { HelpAssistantStore } from "./help-assistant.svelte";
 import { HelpContextStore } from "./help-context.svelte";
 import { helpSurfaces } from "./help-surface.svelte";
-import { quickNoteStore } from "$lib/stores/quicknote.svelte";
-import { reportPanelStore } from "$lib/stores/ui/report-panel.svelte";
+import { quickNoteStore } from "#lib/stores/quicknote.svelte.js";
+import { reportPanelStore } from "#lib/stores/ui/report-panel.svelte.js";
 
 /**
  * Production wiring for the help assistant. The classes take their
@@ -77,12 +77,12 @@ export const helpAssistant = new HelpAssistantStore({
 });
 
 const DESTINATIONS: Record<DestinationId, string> = {
-  graph: `${base}/`,
-  tables: `${base}/tables`,
-  canvas: `${base}/canvas`,
-  map: `${base}/map`,
-  import: `${base}/import`,
-  timeline: `${base}/timeline`,
+  graph: resolve(""),
+  tables: resolve("tables"),
+  canvas: resolve("canvas"),
+  map: resolve("map"),
+  import: resolve("import"),
+  timeline: resolve("timeline"),
 };
 
 export const helpActionRunner = new HelpActionRunner({
@@ -133,7 +133,7 @@ export const cifPopout = new CifPopoutHost({
   createChannel: createCifChannel,
   openWindow: () =>
     window.open(
-      `${window.location.origin}${base}/cif`,
+      `${window.location.origin}${resolve("")}/cif`,
       CIF_POPOUT_WINDOW,
       cifPopoutFeatures(),
     ),

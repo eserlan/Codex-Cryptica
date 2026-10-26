@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { vault } from "$lib/stores/vault.svelte";
-  import { guidedModeStore } from "$lib/stores/ui/guided-mode.svelte";
-  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-  import { evaluateEntityRecommendations } from "$lib/services/contextual-recommendations";
+  import { vault } from "#lib/stores/vault.svelte.js";
+  import { guidedModeStore } from "#lib/stores/ui/guided-mode.svelte.js";
+  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+  import { evaluateEntityRecommendations } from "#lib/services/contextual-recommendations.js";
   import { INTENT_CATEGORY_GENERATOR_ID } from "./contextual-intent-helper";
 
   let { entityId }: { entityId: string } = $props();

@@ -1,9 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AssetStore } from "./asset-store.svelte";
 import { p2pGuestService } from "../../cloud-bridge/p2p/guest-service";
-import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
 
-vi.mock("$app/paths", () => ({ base: "" }));
+vi.mock("$app/paths", () => ({
+  base: "",
+  asset: (p: string) => `/${p.replace(/^\//, "")}`,
+  resolve: (p: string) => p,
+}));
 
 vi.mock("../../cloud-bridge/p2p/guest-service", () => ({
   p2pGuestService: {

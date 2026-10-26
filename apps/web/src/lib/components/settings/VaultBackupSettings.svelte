@@ -1,13 +1,13 @@
 <script lang="ts">
-  import { vault } from "$lib/stores/vault.svelte";
-  import { vaultRegistry } from "$lib/stores/vault-registry.svelte";
-  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { vault } from "#lib/stores/vault.svelte.js";
+  import { vaultRegistry } from "#lib/stores/vault-registry.svelte.js";
+  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
   import {
     exportVaultToZip,
     parseVaultArchive,
     writeArchiveToVault,
     VAULT_ARCHIVE_EXTENSION,
-  } from "$lib/utils/vault-archive";
+  } from "#lib/utils/vault-archive.js";
 
   let isExporting = $state(false);
   let isImporting = $state(false);

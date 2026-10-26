@@ -1,10 +1,10 @@
 <script lang="ts">
   import type { IntentCategory } from "generator-engine";
-  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-  import { vault } from "$lib/stores/vault.svelte";
+  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+  import { vault } from "#lib/stores/vault.svelte.js";
   import { resolveIntentContext } from "./contextual-intent-helper";
-  import ModalShell from "$lib/components/ui/ModalShell.svelte";
-  import { isVaultReadyForGenerators } from "$lib/stores/vault/readiness";
+  import ModalShell from "#lib/components/ui/ModalShell.svelte";
+  import { isVaultReadyForGenerators } from "#lib/stores/vault/readiness.js";
 
   let initialPrompt = $state("");
 

@@ -1,8 +1,8 @@
 import type { Core } from "cytoscape";
 import { syncGraphElements, type LayoutRequest } from "graph-engine";
-import { MIN_FOCUS_DEPTH } from "$lib/stores/graph.svelte";
-import { isTemporalMetadataEqual } from "$lib/utils/comparison";
-import { browserPerformanceRecorder } from "$lib/services/performance/browser-performance-capture";
+import { MIN_FOCUS_DEPTH } from "#lib/stores/graph.svelte.js";
+import { isTemporalMetadataEqual } from "#lib/utils/comparison.js";
+import { browserPerformanceRecorder } from "#lib/services/performance/browser-performance-capture.js";
 import {
   applyLayoutSnapshot,
   restoreEverydayPositions,

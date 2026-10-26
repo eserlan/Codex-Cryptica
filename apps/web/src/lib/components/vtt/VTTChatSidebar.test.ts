@@ -9,7 +9,7 @@ vi.mock("./VTTChat.svelte", () => ({
   },
 }));
 
-vi.mock("$lib/stores/map-session.svelte", () => ({
+vi.mock("#lib/stores/map-session.svelte.js", () => ({
   mapSession: {
     chatMessages: [],
     clearChatMessages: vi.fn(),
@@ -17,9 +17,9 @@ vi.mock("$lib/stores/map-session.svelte", () => ({
 }));
 
 import VTTChatSidebar from "./VTTChatSidebar.svelte";
-import { mapSession } from "$lib/stores/map-session.svelte";
-import { notificationStore } from "$lib/stores/ui/notification.svelte";
-import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { mapSession } from "#lib/stores/map-session.svelte.js";
+import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
+import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
 
 beforeEach(() => {
   notificationStore.confirm = vi.fn().mockResolvedValue(true);

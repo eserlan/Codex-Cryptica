@@ -5,22 +5,24 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("$app/paths", () => ({
   base: "",
+  asset: (p: string) => p,
+  resolve: (p: string) => p,
 }));
 
-vi.mock("$lib/cloud-bridge/p2p/host-service.svelte", () => ({
+vi.mock("#lib/cloud-bridge/p2p/host-service.svelte.js", () => ({
   p2pHost: {
     startHosting: vi.fn().mockResolvedValue("peer-123"),
   },
 }));
 
-vi.mock("$lib/stores/map-session.svelte", () => ({
+vi.mock("#lib/stores/map-session.svelte.js", () => ({
   mapSession: {
     vttEnabled: true,
   },
 }));
 
 import VTTShareButton from "./VTTShareButton.svelte";
-import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
 
 describe("VTTShareButton", () => {
   beforeEach(() => {

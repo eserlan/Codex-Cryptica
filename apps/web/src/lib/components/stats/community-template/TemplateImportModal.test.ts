@@ -3,7 +3,7 @@
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("$lib/stores/stat-sheet-templates.svelte", () => ({
+vi.mock("#lib/stores/stat-sheet-templates.svelte.js", () => ({
   statSheetTemplates: { importPublicTemplate: vi.fn() },
 }));
 
