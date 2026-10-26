@@ -138,6 +138,6 @@ export const steampunkRpgs: LandingPageConfig = {
     description:
       "Build a connected city where every patent, strike, and secret changes who holds power next.",
     buttonText: "Start Building Free",
-    buttonHref: "/app",
+    buttonHref: "/",
   },
 };

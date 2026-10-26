@@ -123,6 +123,6 @@ export const gothicHorror: LandingPageConfig = {
     description:
       "Keep families, estates, heirlooms, and session notes connected in a local-first workspace.",
     buttonText: "Start Building Free",
-    buttonHref: "/app",
+    buttonHref: "/",
   },
 };

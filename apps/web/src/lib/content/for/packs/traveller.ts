@@ -124,7 +124,7 @@ export const traveller: LandingPageConfig = {
     description:
       "Keep your Referee notes, patrons, worlds, and faction relationships connected with relationship graphs, interactive maps, and local-first storage.",
     buttonText: "Start Building Free",
-    buttonHref: "/app",
+    buttonHref: "/",
   },
   disclaimer:
     "Codex Cryptica is an independent campaign management tool and is not affiliated with, endorsed, sponsored, or specifically approved by Mongoose Publishing Ltd. or Far Future Enterprises. Traveller is a registered trademark of Far Future Enterprises, used under license by Mongoose Publishing Ltd.",

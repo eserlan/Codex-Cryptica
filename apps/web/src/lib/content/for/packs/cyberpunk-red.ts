@@ -129,7 +129,7 @@ export const cyberpunkRed: LandingPageConfig = {
     description:
       "Keep your Cyberpunk RED campaign connected with relationship graphs, district maps, and local-first notes.",
     buttonText: "Start Building Free",
-    buttonHref: "/app",
+    buttonHref: "/",
   },
   disclaimer:
     "Codex Cryptica is an independent campaign management tool and is not affiliated with, endorsed, sponsored, or specifically approved by R. Talsorian Games, Inc. Cyberpunk and Cyberpunk RED are registered trademarks of R. Talsorian Games, Inc. and CD PROJEKT S.A.",
