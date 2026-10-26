@@ -13,7 +13,7 @@ import {
   shouldHandleVaultRequest,
 } from "#lib/service-worker/lifecycle.js";
 
-const CACHE_VERSION = "737";
+const CACHE_VERSION = "738";
 const appVersion =
   typeof __APP_VERSION__ !== "undefined" ? __APP_VERSION__ : "dev";
 const CACHE = `cache-${appVersion}-${CACHE_VERSION}`;
