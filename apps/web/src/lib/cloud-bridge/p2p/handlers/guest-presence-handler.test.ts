@@ -7,7 +7,7 @@ const { mockEntityTemplates } = vi.hoisted(() => ({
   mockEntityTemplates: { clearForGuest: vi.fn() },
 }));
 
-vi.mock("#lib/stores/entity-templates/entity-template-store.svelte.js", () => ({
+vi.mock("$lib/stores/entity-templates/entity-template-store.svelte", () => ({
   entityTemplateStore: mockEntityTemplates,
 }));
 

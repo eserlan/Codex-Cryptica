@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { resolve } from "$app/paths";
+  import { base } from "$app/paths";
   import { fly } from "svelte/transition";
 
   let { data } = $props();
@@ -26,7 +26,6 @@
       >
         The Chronology
       </h1>
-
       <p class="text-theme-text/70 max-w-2xl text-lg leading-relaxed font-body">
         Tracking the architectural evolution and protocol updates of Codex
         Cryptica. Witness the steady progression of the ultimate local-first
@@ -123,7 +122,7 @@
         Cryptica today.
       </p>
       <a
-        href="{resolve('')}/?ref=changelog"
+        href="{base}/?ref=changelog"
         class="inline-block px-12 py-5 bg-theme-primary text-theme-bg font-bold font-header text-sm rounded-lg hover:bg-theme-primary/90 hover:shadow-[0_0_30px_rgba(var(--color-theme-primary-rgb),0.3)] transition-all active:scale-95"
       >
         Enter Workspace

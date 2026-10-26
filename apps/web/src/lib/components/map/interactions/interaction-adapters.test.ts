@@ -19,22 +19,22 @@ const mapStoreMock = vi.hoisted(() => ({
   >,
 }));
 
-vi.mock("#lib/stores/map-session.svelte.js", () => ({
+vi.mock("$lib/stores/map-session.svelte", () => ({
   mapSession: mapSessionMock,
 }));
-vi.mock("#lib/stores/map.svelte.js", () => ({ mapStore: mapStoreMock }));
-vi.mock("#lib/cloud-bridge/p2p/guest-service.js", () => ({
+vi.mock("$lib/stores/map.svelte", () => ({ mapStore: mapStoreMock }));
+vi.mock("$lib/cloud-bridge/p2p/guest-service", () => ({
   p2pGuestService: { peerId: null },
 }));
-vi.mock("#lib/cloud-bridge/p2p/host-service.svelte.js", () => ({
+vi.mock("$lib/cloud-bridge/p2p/host-service.svelte", () => ({
   p2pHost: {},
 }));
-vi.mock("#lib/stores/ui/session-mode.svelte.js", () => ({
+vi.mock("$lib/stores/ui/session-mode.svelte", () => ({
   sessionModeStore: { isGuestMode: false },
 }));
-vi.mock("#lib/stores/ui/layout-ui.svelte.js", () => ({ layoutUIStore: {} }));
-vi.mock("#lib/stores/vault.svelte.js", () => ({ vault: {} }));
-vi.mock("#lib/stores/ui/notification.svelte.js", () => ({
+vi.mock("$lib/stores/ui/layout-ui.svelte", () => ({ layoutUIStore: {} }));
+vi.mock("$lib/stores/vault.svelte", () => ({ vault: {} }));
+vi.mock("$lib/stores/ui/notification.svelte", () => ({
   notificationStore: {},
 }));
 

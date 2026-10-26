@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { ViewPreset } from "#lib/stores/view-presets.js";
+  import type { ViewPreset } from "$lib/stores/view-presets";
 
   /**
    * The layout controls for one saved view (#3456): a marker when the view has

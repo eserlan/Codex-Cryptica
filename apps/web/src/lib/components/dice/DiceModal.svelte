@@ -1,8 +1,8 @@
 <script lang="ts">
   import { scale } from "svelte/transition";
   import PlayToolsVault, { type PlayToolsTab } from "./PlayToolsVault.svelte";
-  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
-  import { openDiceWindow } from "#lib/stores/ui/navigation.js";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { openDiceWindow } from "$lib/stores/ui/navigation";
   import {
     clampBounds,
     getCenteredBounds,

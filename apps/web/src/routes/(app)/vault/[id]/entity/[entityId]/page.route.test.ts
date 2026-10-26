@@ -1,9 +1,9 @@
 import { render, waitFor } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import RoutePage from "./+page.svelte";
-import { vault } from "#lib/stores/vault.svelte.js";
-import { requestZenPopoutPayload } from "#lib/utils/zen-popout.js";
-import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
+import { vault } from "$lib/stores/vault.svelte";
+import { requestZenPopoutPayload } from "$lib/utils/zen-popout";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
 type MutableVaultMock = {
   activeVaultId: string | null;
@@ -27,7 +27,7 @@ vi.mock("$app/state", () => ({
   },
 }));
 
-vi.mock("#lib/stores/vault.svelte.js", () => ({
+vi.mock("$lib/stores/vault.svelte", () => ({
   vault: {
     activeVaultId: null as string | null,
     isInitialized: false,
@@ -40,7 +40,7 @@ vi.mock("#lib/stores/vault.svelte.js", () => ({
   },
 }));
 
-vi.mock("#lib/utils/zen-popout.js", () => ({
+vi.mock("$lib/utils/zen-popout", () => ({
   consumeZenPopoutPayload: vi.fn(() => null),
   requestZenPopoutPayload: vi.fn(),
 }));

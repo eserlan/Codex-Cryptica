@@ -2,17 +2,15 @@
 import { render, fireEvent, within } from "@testing-library/svelte";
 import { describe, it, expect, vi } from "vitest";
 import ZenConnections from "./ZenConnections.svelte";
-import { vault } from "#lib/stores/vault.svelte.js";
+import { vault } from "$lib/stores/vault.svelte";
 
 // Mock SvelteKit base path
 vi.mock("$app/paths", () => ({
   base: "",
-  asset: (p: string) => p,
-  resolve: (p: string) => p,
 }));
 
 // Mock stores
-vi.mock("#lib/stores/vault.svelte.js", () => {
+vi.mock("$lib/stores/vault.svelte", () => {
   const mockEntities: Record<string, any> = {
     "entity-1": {
       id: "entity-1",
@@ -81,7 +79,7 @@ vi.mock("#lib/stores/vault.svelte.js", () => {
   };
 });
 
-vi.mock("#lib/components/ui/Autocomplete.svelte", async () => {
+vi.mock("$lib/components/ui/Autocomplete.svelte", async () => {
   const mod = await import("../entity-detail/MockAutocomplete.svelte");
   return {
     default: mod.default,

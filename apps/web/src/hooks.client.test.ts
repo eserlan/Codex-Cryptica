@@ -103,9 +103,10 @@ describe("hooks.client - Version Skew Error Handling", () => {
       } as any;
 
       const res = handleError({
-        kind: "unknown",
         error: new Error("Failed to fetch dynamically imported module"),
         event: mockEvent,
+        status: 500,
+        message: "Module load error",
       });
 
       expect((res as App.Error)?.message).toContain(
@@ -125,9 +126,10 @@ describe("hooks.client - Version Skew Error Handling", () => {
       } as any;
 
       const res = handleError({
-        kind: "unknown",
-        error: new Error("Internal error"),
+        error: new Error("Normal render failure"),
         event: mockEvent,
+        status: 500,
+        message: "Internal error",
       });
 
       expect((res as App.Error)?.message).toBe("Internal error");

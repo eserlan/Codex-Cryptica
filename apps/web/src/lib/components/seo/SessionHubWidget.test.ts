@@ -2,7 +2,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/svelte";
 import SessionHubWidget from "./SessionHubWidget.svelte";
-import { sessionHubStore } from "#lib/stores/session-hub.svelte.js";
+import { sessionHubStore } from "$lib/stores/session-hub.svelte";
 
 describe("SessionHubWidget", () => {
   beforeEach(() => {

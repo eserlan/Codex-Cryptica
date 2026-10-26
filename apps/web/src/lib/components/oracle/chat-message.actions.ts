@@ -1,14 +1,14 @@
-import { graph as defaultGraph } from "#lib/stores/graph.svelte.js";
-import { debugStore } from "#lib/stores/debug.svelte.js";
+import { graph as defaultGraph } from "$lib/stores/graph.svelte";
+import { debugStore } from "$lib/stores/debug.svelte";
 import {
   oracle as defaultOracle,
   type ChatMessage,
-} from "#lib/stores/oracle.svelte.js";
-import { vault as defaultVault } from "#lib/stores/vault.svelte.js";
-import { revisionService as defaultRevisionService } from "#lib/services/RevisionService.svelte.js";
-import { sanitizeId } from "#lib/utils/markdown.js";
+} from "$lib/stores/oracle.svelte";
+import { vault as defaultVault } from "$lib/stores/vault.svelte";
+import { revisionService as defaultRevisionService } from "$lib/services/RevisionService.svelte";
+import { sanitizeId } from "$lib/utils/markdown";
 import type { ParsedChatMessage } from "./chat-message.helpers";
-import { systemClock } from "#lib/utils/runtime-deps.js";
+import { systemClock } from "$lib/utils/runtime-deps";
 
 type EntityLike = {
   id: string;

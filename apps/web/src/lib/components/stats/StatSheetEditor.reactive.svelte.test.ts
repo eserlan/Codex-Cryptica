@@ -6,11 +6,11 @@ import type { Entity } from "schema";
 
 const { updateEntity } = vi.hoisted(() => ({ updateEntity: vi.fn() }));
 
-vi.mock("#lib/stores/vault.svelte.js", () => ({
+vi.mock("$lib/stores/vault.svelte", () => ({
   vault: { updateEntity },
 }));
 
-vi.mock("#lib/stores/ui/notification.svelte.js", () => ({
+vi.mock("$lib/stores/ui/notification.svelte", () => ({
   notificationStore: { confirm: vi.fn() },
 }));
 

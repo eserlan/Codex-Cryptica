@@ -1,10 +1,7 @@
 import type { IStorageAdapter, SerializedGraph } from "../types";
 import { createPeer, type PeerFactory } from "./peer-factory";
 import { debugStore } from "../../stores/debug.svelte";
-import {
-  type IdGenerator,
-  systemIdGenerator,
-} from "#lib/utils/runtime-deps.js";
+import { type IdGenerator, systemIdGenerator } from "$lib/utils/runtime-deps";
 
 export class P2PClientAdapter implements IStorageAdapter {
   private hostId: string;

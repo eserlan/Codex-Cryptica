@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { BiomeOwnFields, Departure } from "biome-engine";
-  import type { BiomeExplorerStore } from "#lib/stores/biome-explorer.svelte.js";
+  import type { BiomeExplorerStore } from "$lib/stores/biome-explorer.svelte";
 
   let {
     store,

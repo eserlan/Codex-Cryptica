@@ -15,14 +15,14 @@ const mapMock = vi.hoisted(() => ({
   project: (p: { x: number; y: number }) => p,
   unproject: (p: { x: number; y: number }) => p,
 }));
-vi.mock("#lib/stores/map.svelte.js", () => ({ mapStore: mapMock }));
-vi.mock("#lib/stores/vault.svelte.js", () => ({
+vi.mock("$lib/stores/map.svelte", () => ({ mapStore: mapMock }));
+vi.mock("$lib/stores/vault.svelte", () => ({
   vault: {
     maps: { "map-1": { hexCrawl: { enabled: true, hexes: {} }, pins: [] } },
     entities: {},
   },
 }));
-vi.mock("#lib/stores/ui/discovery-policy.svelte.js", () => ({
+vi.mock("$lib/stores/ui/discovery-policy.svelte", () => ({
   discoveryPolicyStore: { aiDisabled: true },
 }));
 

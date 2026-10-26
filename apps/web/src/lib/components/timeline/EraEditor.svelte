@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { graph } from "#lib/stores/graph.svelte.js";
+  import { graph } from "$lib/stores/graph.svelte";
   import type { Era } from "schema";
-  import { sanitizeId } from "#lib/utils/markdown.js";
+  import { sanitizeId } from "$lib/utils/markdown";
 
   let newEraName = $state("");
   let newEraStart = $state<number>(0);

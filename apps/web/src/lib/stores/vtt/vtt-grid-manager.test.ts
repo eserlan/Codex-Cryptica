@@ -3,7 +3,7 @@ import {
   VTTGridManager,
   type VTTGridManagerDependencies,
 } from "./vtt-grid-manager.svelte";
-import type { StorageLike } from "#lib/utils/runtime-deps.js";
+import type { StorageLike } from "$lib/utils/runtime-deps";
 
 function memoryStorage(initial: Record<string, string> = {}): StorageLike {
   const map = new Map(Object.entries(initial));

@@ -58,7 +58,7 @@ function asMode(value: string | null | undefined): SourceMode | undefined {
  * the stored value instead.
  */
 export function resolveMode(
-  search: { get(name: string): string | null },
+  search: URLSearchParams,
   stored?: string | null,
 ): SourceMode {
   return asMode(search.get(MODE_PARAM)) ?? asMode(stored) ?? DEFAULT_MODE;

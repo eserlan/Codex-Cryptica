@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { sessionHubStore } from "#lib/stores/session-hub.svelte.js";
+  import { sessionHubStore } from "$lib/stores/session-hub.svelte";
   import type { SessionEntity } from "generator-engine";
 
   let {

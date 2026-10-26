@@ -29,8 +29,8 @@ import {
 import type {
   BiomeEntitySummary,
   BiomeVaultGateway,
-} from "#lib/services/biome/biome-vault-gateway.js";
-import type { StorageLike } from "#lib/utils/runtime-deps.js";
+} from "$lib/services/biome/biome-vault-gateway";
+import type { StorageLike } from "$lib/utils/runtime-deps";
 
 /** The largest picture a user can attach to a biome. */
 export const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024;

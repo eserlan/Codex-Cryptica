@@ -11,39 +11,37 @@ vi.mock("$app/state", () => ({
 
 vi.mock("$app/paths", () => ({
   base: "",
-  asset: (p: string) => p,
-  resolve: (p: string) => p,
 }));
 
 vi.mock("$app/environment", () => ({
   browser: true,
 }));
 
-vi.mock("#lib/stores/help.svelte.js", () => ({
+vi.mock("$lib/stores/help.svelte", () => ({
   helpStore: {
     activeTour: null,
   },
 }));
 
-vi.mock("#lib/stores/oracle.svelte.js", () => ({
+vi.mock("$lib/stores/oracle.svelte", () => ({
   oracle: {
     isOpen: false,
   },
 }));
 
-vi.mock("#lib/stores/search.svelte.js", () => ({
+vi.mock("$lib/stores/search.svelte", () => ({
   searchStore: {
     isOpen: false,
   },
 }));
 
-vi.mock("#lib/stores/ui/onboarding.svelte.js", () => ({
+vi.mock("$lib/stores/ui/onboarding.svelte", () => ({
   onboardingStore: {
     showChangelog: false,
   },
 }));
 
-vi.mock("#lib/stores/ui/notification.svelte.js", () => ({
+vi.mock("$lib/stores/ui/notification.svelte", () => ({
   notificationStore: {
     confirmationDialog: {
       open: false,
@@ -51,7 +49,7 @@ vi.mock("#lib/stores/ui/notification.svelte.js", () => ({
   },
 }));
 
-vi.mock("#lib/stores/ui/modal-ui.svelte.js", () => ({
+vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
   modalUIStore: {
     showSettings: false,
     statBlockImport: { open: false, entityId: null },
@@ -102,11 +100,11 @@ vi.mock("./ZenModeModal.svelte", async () => ({
   default: (await import("./__tests__/ZenModeModalStub.svelte")).default,
 }));
 
-vi.mock("#lib/components/dice/DiceModal.svelte", async () => ({
+vi.mock("$lib/components/dice/DiceModal.svelte", async () => ({
   default: (await import("./__tests__/ModalStub.svelte")).default,
 }));
 
-vi.mock("#lib/components/modals/GuestChatModal.svelte", async () => ({
+vi.mock("$lib/components/modals/GuestChatModal.svelte", async () => ({
   default: (await import("./__tests__/ModalStub.svelte")).default,
 }));
 
@@ -116,14 +114,14 @@ vi.mock("./MobileCreateEntitySheet.svelte", async () => ({
 }));
 
 vi.mock(
-  "#lib/components/help-assistant/HelpAssistantHost.svelte",
+  "$lib/components/help-assistant/HelpAssistantHost.svelte",
   async () => ({
     default: (await import("./__tests__/ModalStub.svelte")).default,
   }),
 );
 
 import GlobalModalProvider from "./GlobalModalProvider.svelte";
-import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
 describe("GlobalModalProvider", () => {
   afterEach(() => {

@@ -17,7 +17,7 @@ import {
 } from "./visual-card-operations";
 import { syncSourceFromVisualCards } from "./visual-card-serializer";
 import type { StatSheetField } from "schema";
-import { systemIdGenerator } from "#lib/utils/runtime-deps.js";
+import { systemIdGenerator } from "$lib/utils/runtime-deps";
 
 export function useVisualLayout({
   source,

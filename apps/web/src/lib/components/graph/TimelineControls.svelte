@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { graph } from "#lib/stores/graph.svelte.js";
-  import { vault } from "#lib/stores/vault.svelte.js";
+  import { graph } from "$lib/stores/graph.svelte";
+  import { vault } from "$lib/stores/vault.svelte";
   import { fade } from "svelte/transition";
   import type { LayoutRequest } from "graph-engine";
 
-  let { onApply }: { onApply?: (req: LayoutRequest) => void } = $props();
+  let { onApply } = $props<{ onApply?: (req: LayoutRequest) => void }>();
 
   const toggle = () => {
     graph.toggleTimeline();

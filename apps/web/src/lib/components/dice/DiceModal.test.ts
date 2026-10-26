@@ -3,7 +3,7 @@
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import DiceModal from "./DiceModal.svelte";
-import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 import {
   PLAY_TOOLS_WINDOW_STORAGE_KEY,
   saveBounds,
@@ -29,11 +29,11 @@ const { openDiceWindow } = vi.hoisted(() => ({
   openDiceWindow: vi.fn(),
 }));
 
-vi.mock("#lib/stores/ui/navigation.js", () => ({
+vi.mock("$lib/stores/ui/navigation", () => ({
   openDiceWindow,
 }));
 
-vi.mock("#lib/stores/vault.svelte.js", () => ({
+vi.mock("$lib/stores/vault.svelte", () => ({
   vault: {
     resolveImageUrl: vi.fn(async (path: string) => `blob:${path}`),
     releaseImageUrl: vi.fn(),
@@ -42,7 +42,7 @@ vi.mock("#lib/stores/vault.svelte.js", () => ({
   },
 }));
 
-vi.mock("#lib/features/random/index.js", () => ({
+vi.mock("$lib/features/random", () => ({
   ensureRandomSourcesLoaded: vi.fn(),
   randomSources: {
     decks: [],

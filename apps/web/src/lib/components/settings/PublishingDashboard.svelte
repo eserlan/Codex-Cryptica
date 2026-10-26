@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { publishingService } from "#lib/services/publishing/PublishingService.svelte.js";
-  import { vaultRegistry } from "#lib/stores/vault-registry.svelte.js";
-  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
+  import { publishingService } from "$lib/services/publishing/PublishingService.svelte";
+  import { vaultRegistry } from "$lib/stores/vault-registry.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
   const items = $derived.by(() => {
     return Object.values(publishingService.publishedVaults).sort(

@@ -1,12 +1,10 @@
 import { describe, it, expect, afterEach, vi } from "vitest";
 import { render, screen } from "@testing-library/svelte";
 import Page from "./+page.svelte";
-import { importsConfig } from "#lib/config/seo-pages.js";
+import { importsConfig } from "$lib/config/seo-pages";
 
 vi.mock("$app/paths", () => ({
   base: "",
-  asset: (p: string) => p,
-  resolve: (p: string) => p,
 }));
 
 describe("Migration Hub", () => {

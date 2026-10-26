@@ -5,7 +5,7 @@
     type BusinessDocument,
     type BusinessSectionId,
   } from "generator-engine";
-  import { generatorEngine } from "#lib/services/seo/generator-engine.js";
+  import { generatorEngine } from "$lib/services/seo/generator-engine";
   import RefineNotice from "./RefineNotice.svelte";
 
   let {

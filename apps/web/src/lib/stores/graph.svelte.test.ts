@@ -12,7 +12,7 @@ vi.mock("../utils/idb", () => ({
 }));
 
 import { GraphStore } from "./graph.svelte";
-import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { LARGE_GRAPH_NODE_THRESHOLD } from "graph-engine";
 
 /**

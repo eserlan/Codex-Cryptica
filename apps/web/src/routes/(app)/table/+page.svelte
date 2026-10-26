@@ -1,12 +1,12 @@
 <script lang="ts">
   import { tick } from "svelte";
-  import { resolve } from "$app/paths";
+  import { base } from "$app/paths";
   import { page } from "$app/state";
-  import { vault } from "#lib/stores/vault.svelte.js";
-  import { categories } from "#lib/stores/categories.svelte.js";
-  import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
-  import { guestVault } from "#lib/stores/guest-vault.svelte.js";
-  import { getIconClass } from "#lib/utils/icon.js";
+  import { vault } from "$lib/stores/vault.svelte";
+  import { categories } from "$lib/stores/categories.svelte";
+  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { guestVault } from "$lib/stores/guest-vault.svelte";
+  import { getIconClass } from "$lib/utils/icon";
   import {
     filterEntities,
     countEntityTypes,
@@ -14,19 +14,18 @@
     parseEntitySearchQuery,
     evaluateEntityMissingFields,
     type TableColumnFilters,
-  } from "#lib/components/explorer/entityListFiltering.js";
+  } from "$lib/components/explorer/entityListFiltering";
   import { searchService } from "@codex/search-orchestrator";
   import type { SearchIndexProgress } from "@codex/search-engine";
-  import EntityTable from "#lib/components/table/EntityTable.svelte";
-  import EntityTableSearch from "#lib/components/table/EntityTableSearch.svelte";
-  import TableContextMenu from "#lib/components/table/TableContextMenu.svelte";
-  import TableViewPresets from "#lib/components/table/TableViewPresets.svelte";
-  import VaultAuditPanel from "#lib/components/table/VaultAuditPanel.svelte";
+  import EntityTable from "$lib/components/table/EntityTable.svelte";
+  import EntityTableSearch from "$lib/components/table/EntityTableSearch.svelte";
+  import TableContextMenu from "$lib/components/table/TableContextMenu.svelte";
+  import TableViewPresets from "$lib/components/table/TableViewPresets.svelte";
+  import VaultAuditPanel from "$lib/components/table/VaultAuditPanel.svelte";
   import {
     computeVaultAuditCounts,
     type VaultAuditPreset,
-  } from "#lib/components/table/vaultAudit.js";
-
+  } from "$lib/components/table/vaultAudit";
   import {
     handleChangeType,
     handleDeleteSelected,
@@ -34,18 +33,18 @@
     openBulkLabels,
     handleManageLabels,
     withoutIds,
-  } from "#lib/components/table/table-bulk-actions.js";
-  import { computeVaultDistribution } from "#lib/components/table/vaultDistribution.js";
-  import type { ViewPreset } from "#lib/stores/view-presets.js";
-  import EmptyState from "#lib/components/ui/EmptyState.svelte";
+  } from "$lib/components/table/table-bulk-actions";
+  import { computeVaultDistribution } from "$lib/components/table/vaultDistribution";
+  import type { ViewPreset } from "$lib/stores/view-presets";
+  import EmptyState from "$lib/components/ui/EmptyState.svelte";
   import {
     sortEntities,
     nextSortState,
     type SortKey,
     type SortState,
     type ConnectionSummary,
-  } from "#lib/components/table/entityTableSort.js";
-  import { browserPerformanceRecorder } from "#lib/services/performance/browser-performance-capture.js";
+  } from "$lib/components/table/entityTableSort";
+  import { browserPerformanceRecorder } from "$lib/services/performance/browser-performance-capture";
   import type {
     PerformanceOperation,
     PerformanceOperationHandle,
@@ -95,10 +94,8 @@
 
   const graphHref = $derived(
     sessionModeStore.isGuestMode && guestVault.publishId
-      ? resolve("/(app)/guest/[publishId]", {
-          publishId: guestVault.publishId,
-        })
-      : resolve("/(app)"),
+      ? `${base}/guest/${guestVault.publishId}`
+      : `${base}/`,
   );
 
   $effect(() => {
@@ -201,6 +198,7 @@
   const auditCounts = $derived(
     computeVaultAuditCounts(vault.allEntities, connectionCounts),
   );
+
   const typeCounts = $derived(
     countEntityTypes(vault.allEntities, {
       allowedTypes: null,
@@ -556,6 +554,7 @@
   }
 
   let showMobileFilters = $state(false);
+
   const hasActiveColumnFilters = $derived(
     Boolean(
       columnFilters.nameQuery ||
@@ -570,12 +569,14 @@
       (columnFilters.modifiedMode && columnFilters.modifiedMode !== "all"),
     ),
   );
+
   const activeFilterCount = $derived(
     typeFilters.size +
       labelFilters.size +
       (showIncompleteOnly ? 1 : 0) +
       (hasActiveColumnFilters ? 1 : 0),
   );
+
   const hasActiveFilters = $derived(
     searchQuery.trim().length > 0 ||
       typeFilters.size > 0 ||
@@ -612,7 +613,10 @@
   );
 </script>
 
-<svelte:head><title>Entity Table</title></svelte:head>
+<svelte:head>
+  <title>Entity Table</title>
+</svelte:head>
+
 <svelte:window onkeydown={handleKeyDown} />
 
 <div

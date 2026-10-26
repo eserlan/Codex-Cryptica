@@ -28,7 +28,7 @@ import {
   MONSTERLABS_MAGIC_ITEM_GENERATOR_URL,
 } from "./monsterlabs-handoff";
 import { compressMonsterLabsDescription } from "./monsterlabs-description-compression";
-import { discoveryPolicyStore } from "#lib/stores/ui/discovery-policy.svelte.js";
+import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
 
 /**
  * A `window.open` stub. The handoff no longer pre-opens a blank tab (that

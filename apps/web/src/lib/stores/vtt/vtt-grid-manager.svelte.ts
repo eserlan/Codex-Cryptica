@@ -2,7 +2,7 @@ import { type mapStore, type GridType } from "../map.svelte";
 import type { Point } from "schema";
 import type { HexLabelConfig } from "map-engine";
 import type { VTTMessage } from "../../../types/vtt";
-import { browserStorage, type StorageLike } from "#lib/utils/runtime-deps.js";
+import { browserStorage, type StorageLike } from "$lib/utils/runtime-deps";
 
 const GRID_MEASURE_PREFIX = "codex.vtt.grid-measure";
 

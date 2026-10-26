@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { canvasRegistry } from "#lib/stores/canvas-registry.svelte.js";
+  import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
 
   let {
     onSelect,

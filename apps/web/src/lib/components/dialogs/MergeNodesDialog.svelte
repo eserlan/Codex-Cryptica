@@ -2,23 +2,23 @@
   import {
     nodeMergeService,
     type IMergedContentProposal,
-  } from "#lib/services/node-merge.service.svelte.js";
-  import { vault } from "#lib/stores/vault.svelte.js";
-  import { themeStore } from "#lib/stores/theme.svelte.js";
-  import { revisionService } from "#lib/services/RevisionService.svelte.js";
-  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
+  } from "$lib/services/node-merge.service.svelte";
+  import { vault } from "$lib/stores/vault.svelte";
+  import { themeStore } from "$lib/stores/theme.svelte";
+  import { revisionService } from "$lib/services/RevisionService.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
   let {
     isOpen = false,
     sourceNodeIds = [],
     onClose = () => {},
     onSuccess = () => {},
-  }: {
+  } = $props<{
     isOpen: boolean;
     sourceNodeIds: string[];
     onClose?: () => void;
     onSuccess?: () => void;
-  } = $props();
+  }>();
 
   let targetId = $state("");
   let targetTitle = $derived(vault.entities[targetId]?.title || targetId);

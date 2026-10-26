@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { nomadClanConfig } from "#lib/services/seo/generator-config.js";
-  import SelectWithCustomOption from "#lib/components/forms/SelectWithCustomOption.svelte";
+  import { nomadClanConfig } from "$lib/services/seo/generator-config";
+  import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
 
   let {
     role = $bindable(nomadClanConfig.roles[0]),

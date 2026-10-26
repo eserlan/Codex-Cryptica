@@ -2,9 +2,9 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import CharacterChat from "./CharacterChat.svelte";
-import { guestChatStore } from "#lib/stores/guest-chat.svelte.js";
+import { guestChatStore } from "$lib/stores/guest-chat.svelte";
 
-vi.mock("#lib/stores/vault.svelte.js", () => ({
+vi.mock("$lib/stores/vault.svelte", () => ({
   vault: {
     entities: {
       "char-1": {
@@ -21,7 +21,7 @@ vi.mock("#lib/stores/vault.svelte.js", () => ({
   },
 }));
 
-vi.mock("#lib/stores/guest-chat.svelte.js", () => ({
+vi.mock("$lib/stores/guest-chat.svelte", () => ({
   guestChatStore: {
     transcripts: {},
     isGenerating: false,
@@ -35,14 +35,14 @@ vi.mock("#lib/stores/guest-chat.svelte.js", () => ({
   },
 }));
 
-vi.mock("#lib/services/character-chat-export.js", () => ({
+vi.mock("$lib/services/character-chat-export", () => ({
   characterChatExportService: {
     copyConversation: vi.fn().mockResolvedValue(true),
     sendConversationToJournal: vi.fn().mockResolvedValue("new-note-id"),
   },
 }));
 
-vi.mock("#lib/stores/ui/notification.svelte.js", () => ({
+vi.mock("$lib/stores/ui/notification.svelte", () => ({
   notificationStore: {
     confirm: vi.fn().mockResolvedValue(true),
   },
@@ -232,7 +232,7 @@ describe("CharacterChat", () => {
       await fireEvent.click(copyButton);
 
       const { characterChatExportService } =
-        await import("#lib/services/character-chat-export.js");
+        await import("$lib/services/character-chat-export");
       expect(characterChatExportService.copyConversation).toHaveBeenCalledWith(
         expect.objectContaining({ id: "transcript-active" }),
         expect.objectContaining({ characterTitle: "Mara the Blacksmith" }),
@@ -256,7 +256,7 @@ describe("CharacterChat", () => {
       await fireEvent.click(journalButton);
 
       const { characterChatExportService } =
-        await import("#lib/services/character-chat-export.js");
+        await import("$lib/services/character-chat-export");
       expect(
         characterChatExportService.sendConversationToJournal,
       ).toHaveBeenCalledWith(
@@ -317,7 +317,7 @@ describe("CharacterChat", () => {
 
     it("deleting a message asks for confirmation via notificationStore.confirm", async () => {
       const { notificationStore } =
-        await import("#lib/stores/ui/notification.svelte.js");
+        await import("$lib/stores/ui/notification.svelte");
       guestChatStore.transcripts = {
         "char-1": {
           ...activeTranscript,

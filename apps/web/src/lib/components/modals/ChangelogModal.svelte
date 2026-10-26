@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { VERSION } from "#lib/config/index.js";
+  import { VERSION } from "$lib/config";
   import releases from "../../content/changelog/releases.json";
-  import { onboardingStore } from "#lib/stores/ui/onboarding.svelte.js";
-  import ModalShell from "#lib/components/ui/ModalShell.svelte";
+  import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
+  import ModalShell from "$lib/components/ui/ModalShell.svelte";
 
   // Only treat a new minor version as "new" for the auto-prompt and header copy.
   const hasUnseenMinorReleases = $derived.by(() => {

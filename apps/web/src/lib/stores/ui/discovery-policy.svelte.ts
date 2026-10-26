@@ -3,7 +3,7 @@ import type {
   EntityDiscoveryMode,
   OracleAutomationPolicy,
 } from "@codex/oracle-engine";
-import type { ActivityEvent } from "#lib/types/activity.js";
+import type { ActivityEvent } from "$lib/types/activity";
 import type { UIPersistence } from "./persistence";
 import {
   UIPersistence as DefaultPersistence,

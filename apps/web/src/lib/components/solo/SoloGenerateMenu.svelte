@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
-  import { vault } from "#lib/stores/vault.svelte.js";
-  import { isVaultReadyForGenerators } from "#lib/stores/vault/readiness.js";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { vault } from "$lib/stores/vault.svelte";
+  import { isVaultReadyForGenerators } from "$lib/stores/vault/readiness";
   import SoloMenu from "./SoloMenu.svelte";
 
   const ready = $derived(isVaultReadyForGenerators(vault));

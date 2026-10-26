@@ -1,5 +1,5 @@
 <script lang="ts">
-  import MarkdownEditor from "#lib/components/MarkdownEditor.svelte";
+  import MarkdownEditor from "$lib/components/MarkdownEditor.svelte";
 
   let content = "# Initial Content";
   let output = "";

@@ -1,33 +1,33 @@
 <script lang="ts">
-  import EntityDetailPanel from "#lib/components/EntityDetailPanel.svelte";
-  import MapHUD from "#lib/components/map/MapHUD.svelte";
-  import HelpVttMapSurface from "#lib/components/help-assistant/HelpVttMapSurface.svelte";
-  import MapUploadOverlay from "#lib/components/map/MapUploadOverlay.svelte";
-  import MapView from "#lib/components/map/MapView.svelte";
-  import MapVTTControlsHUD from "#lib/components/map/MapVTTControlsHUD.svelte";
-  import VTTGridColorMenu from "#lib/components/map/VTTGridColorMenu.svelte";
-  import VTTGridSettings from "#lib/components/map/VTTGridSettings.svelte";
-  import { createHexCrawlServices } from "#lib/components/map/hex-crawl/hex-crawl-services.svelte.js";
-  import { provideHexCrawlStore } from "#lib/components/map/hex-crawl/hex-crawl-context.js";
-  import TokenAddDialog from "#lib/components/vtt/TokenAddDialog.svelte";
-  import NoteAddDialog from "#lib/components/vtt/NoteAddDialog.svelte";
-  import MapVTTSidebar from "#lib/components/vtt/MapVTTSidebar.svelte";
+  import EntityDetailPanel from "$lib/components/EntityDetailPanel.svelte";
+  import MapHUD from "$lib/components/map/MapHUD.svelte";
+  import HelpVttMapSurface from "$lib/components/help-assistant/HelpVttMapSurface.svelte";
+  import MapUploadOverlay from "$lib/components/map/MapUploadOverlay.svelte";
+  import MapView from "$lib/components/map/MapView.svelte";
+  import MapVTTControlsHUD from "$lib/components/map/MapVTTControlsHUD.svelte";
+  import VTTGridColorMenu from "$lib/components/map/VTTGridColorMenu.svelte";
+  import VTTGridSettings from "$lib/components/map/VTTGridSettings.svelte";
+  import { createHexCrawlServices } from "$lib/components/map/hex-crawl/hex-crawl-services.svelte";
+  import { provideHexCrawlStore } from "$lib/components/map/hex-crawl/hex-crawl-context";
+  import TokenAddDialog from "$lib/components/vtt/TokenAddDialog.svelte";
+  import NoteAddDialog from "$lib/components/vtt/NoteAddDialog.svelte";
+  import MapVTTSidebar from "$lib/components/vtt/MapVTTSidebar.svelte";
   import {
     MapPageController,
     type MapPageControllerDependencies,
-  } from "#lib/stores/map/map-page-controller.svelte.js";
-  import { mapStore } from "#lib/stores/map.svelte.js";
+  } from "$lib/stores/map/map-page-controller.svelte";
+  import { mapStore } from "$lib/stores/map.svelte";
 
   // Hex crawl state for the page: the map view and the grid settings both read it.
   const hexCrawl = createHexCrawlServices();
   provideHexCrawlStore(hexCrawl.store);
-  import { mapSession } from "#lib/stores/map-session.svelte.js";
-  import { vault } from "#lib/stores/vault.svelte.js";
-  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
-  import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
-  import { guestVault } from "#lib/stores/guest-vault.svelte.js";
-  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
-  import { layoutUIStore } from "#lib/stores/ui/layout-ui.svelte.js";
+  import { mapSession } from "$lib/stores/map-session.svelte";
+  import { vault } from "$lib/stores/vault.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { guestVault } from "$lib/stores/guest-vault.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
   import type { Entity } from "schema";
 
   const controller = new MapPageController({

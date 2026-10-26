@@ -2,7 +2,7 @@ import type { Token } from "../../../types/vtt";
 import { punchFogCircle } from "./fog-stroke";
 import { punchHexFogRadius, getActiveHexConfig } from "./hex-fog-stroke";
 import { getTokenCenter, pointToHex } from "map-engine";
-import type { GridType } from "#lib/stores/map.svelte.js";
+import type { GridType } from "$lib/stores/map.svelte";
 
 export interface TokenVisionRevealerDeps {
   mapStore: {

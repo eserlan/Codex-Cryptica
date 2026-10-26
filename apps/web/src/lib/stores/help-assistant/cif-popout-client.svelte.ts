@@ -5,7 +5,7 @@ import {
   type CifSnapshot,
   type CifToHost,
   type HelpAssistantView,
-} from "#lib/services/help-assistant/cif-popout-protocol.js";
+} from "$lib/services/help-assistant/cif-popout-protocol";
 import type { HelpMessage, HelpStatus } from "./help-assistant.svelte";
 
 /** How long to wait for the main window to say whether a question was sent. */

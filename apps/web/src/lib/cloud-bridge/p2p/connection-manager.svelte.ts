@@ -1,6 +1,6 @@
 import { createPeer, type PeerFactory } from "./peer-factory";
 import { debugStore } from "../../stores/debug.svelte";
-import { systemClock } from "#lib/utils/runtime-deps.js";
+import { systemClock } from "$lib/utils/runtime-deps";
 
 export interface ConnectionState {
   status:

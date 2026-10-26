@@ -1,6 +1,7 @@
 <script lang="ts">
+  import { onDestroy } from "svelte";
   import type { ImageRef } from "biome-engine";
-  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import BiomeImageCredit from "./BiomeImageCredit.svelte";
 
   let {
@@ -22,11 +23,9 @@
   let timeoutId: ReturnType<typeof setTimeout> | undefined;
   let destroyed = false;
 
-  $effect(() => {
-    return () => {
-      destroyed = true;
-      if (timeoutId) clearTimeout(timeoutId);
-    };
+  onDestroy(() => {
+    destroyed = true;
+    if (timeoutId) clearTimeout(timeoutId);
   });
 
   async function copyPrompt() {

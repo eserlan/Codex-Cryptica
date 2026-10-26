@@ -2,9 +2,9 @@ import { z } from "zod";
 import type { Entity } from "schema";
 import { CanvasSchema, type Canvas } from "@codex/canvas-engine";
 import { AdventureFlowLayout } from "generator-engine";
-import { canvasRegistry } from "#lib/stores/canvas-registry.svelte.js";
-import { vault } from "#lib/stores/vault.svelte.js";
-import { browserStorage, type StorageLike } from "#lib/utils/runtime-deps.js";
+import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
+import { vault } from "$lib/stores/vault.svelte";
+import { browserStorage, type StorageLike } from "$lib/utils/runtime-deps";
 import { ImportDraftSchema, type ImportDraft } from "./import-handler";
 
 export const PENDING_DELVE_CANVAS_KEY = "__codex_pending_canvas";

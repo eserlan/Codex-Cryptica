@@ -1,6 +1,6 @@
 <script lang="ts">
-  import EmptyState from "#lib/components/ui/EmptyState.svelte";
-  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+  import EmptyState from "$lib/components/ui/EmptyState.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
   let { isGuest }: { isGuest: boolean } = $props();
 </script>

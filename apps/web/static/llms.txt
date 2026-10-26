@@ -94,7 +94,7 @@ Codex Cryptica is local-first: vault data is stored locally by default and does 
 
 The pages above are informational landing pages; these are the canonical, no-login-required tools that actually generate and let you save a draft into a vault. The `/tools/*` pages above link into these for the interactive experience.
 
-- [Generators Hub](https://codexcryptica.com/generators): Directory of every live in-browser RPG generator, grouped by what it makes (characters, places, adventures, items and more), with theme hubs for genre.
+- [Generators Hub](https://codexcryptica.com/generators): Directory of every live in-browser RPG generator, grouped by genre.
 <!-- LLMS-GENERATORS:START -->
 - [Random RPG Idea Generator](https://codexcryptica.com/generators/random): Draws from every generator at once, for a reader who wants a prompt rather than a specific artefact.
 - [RPG NPC Generator](https://codexcryptica.com/generators/npc): Create NPCs across any genre with secrets, faction ties, and table-ready hooks. Works without login, then imports into your local Codex vault.

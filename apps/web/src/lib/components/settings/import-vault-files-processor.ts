@@ -12,7 +12,7 @@ import {
   ImportEngine,
   setItemDecision,
 } from "@codex/importer";
-import { createWebVaultWriter } from "#lib/features/importer/web-vault-writer.js";
+import { createWebVaultWriter } from "$lib/features/importer/web-vault-writer";
 import { wrapWithAbort } from "./import-abort-utils";
 
 export interface VaultFilesProcessorCallbacks {

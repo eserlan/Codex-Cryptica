@@ -6,10 +6,7 @@ import type {
   Token,
   TokenCreationInput,
 } from "../../../types/vtt";
-import {
-  systemIdGenerator,
-  type IdGenerator,
-} from "#lib/utils/runtime-deps.js";
+import { systemIdGenerator, type IdGenerator } from "$lib/utils/runtime-deps";
 import {
   canPlaceSpatialImage,
   snapToNeighborTiles,

@@ -13,8 +13,8 @@
     CanvasRedrawScheduler,
     hasActivePings,
   } from "./map-canvas-scheduler";
-  import { PING_DURATION_MS } from "#lib/stores/vtt/vtt-measurement-manager.svelte.js";
-  import { systemClock } from "#lib/utils/runtime-deps.js";
+  import { PING_DURATION_MS } from "$lib/stores/vtt/vtt-measurement-manager.svelte";
+  import { systemClock } from "$lib/utils/runtime-deps";
 
   interface EnrichedToken extends Token {
     label: string;

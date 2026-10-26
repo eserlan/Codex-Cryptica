@@ -1,10 +1,10 @@
 <script lang="ts">
-  import type { ContextualRollResult } from "#lib/stores/dice-history.svelte.js";
+  import type { ContextualRollResult } from "$lib/stores/dice-history.svelte";
   import type { ChatCardPayload } from "../../../types/vtt";
   import { slide } from "svelte/transition";
   import DiceBreakdown from "./DiceBreakdown.svelte";
-  import { mapSession } from "#lib/stores/map-session.svelte.js";
-  import { addToOracleChatInput } from "#lib/components/oracle/oracle-chat-input.js";
+  import { mapSession } from "$lib/stores/map-session.svelte";
+  import { addToOracleChatInput } from "$lib/components/oracle/oracle-chat-input";
 
   let {
     rolls = [],

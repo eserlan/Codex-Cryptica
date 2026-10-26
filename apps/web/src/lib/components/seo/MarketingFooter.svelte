@@ -1,14 +1,14 @@
 <script lang="ts">
-  import { resolve } from "$app/paths";
-  import { PATREON_URL } from "#lib/config/index.js";
-
-  const cleanBase = resolve("") === "/" ? "" : resolve("");
+  import { base } from "$app/paths";
+  import { PATREON_URL } from "$lib/config";
+  const cleanBase = base === "/" ? "" : base;
 
   let {
     extraLinks = [],
-
+  }: {
     /** Page-specific links rendered before the standard set (Terms, Privacy, Explore). */
-  }: { extraLinks?: { href: string; label: string }[] } = $props();
+    extraLinks?: { href: string; label: string }[];
+  } = $props();
 </script>
 
 <!--

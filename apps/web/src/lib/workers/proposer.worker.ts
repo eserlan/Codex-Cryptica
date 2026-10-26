@@ -2,7 +2,7 @@
 import { aiClientManager, RelayedSessionToken } from "@codex/ai-engine";
 import type { CachedToken } from "@codex/ai-engine";
 import type { Proposal } from "@codex/proposer";
-import { systemClock } from "#lib/utils/runtime-deps.js";
+import { systemClock } from "$lib/utils/runtime-deps";
 
 // This worker has its own isolated aiClientManager instance (Workers don't
 // share module state with the main thread) and no DOM, so it can't solve a

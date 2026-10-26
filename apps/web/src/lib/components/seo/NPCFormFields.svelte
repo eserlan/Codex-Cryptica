@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { npcConfig } from "#lib/services/seo/generator-config.js";
-  import SelectWithCustomOption from "#lib/components/forms/SelectWithCustomOption.svelte";
+  import { npcConfig } from "$lib/services/seo/generator-config";
+  import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
 
   let {
     race = $bindable(npcConfig.races[0]),

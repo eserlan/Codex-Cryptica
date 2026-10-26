@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { mapStore } from "#lib/stores/map.svelte.js";
-  import { mapSession } from "#lib/stores/map-session.svelte.js";
-  import { themeStore } from "#lib/stores/theme.svelte.js";
-  import { isFogHex } from "#lib/utils/color.js";
-  import { getPrimaryButtonStateClass } from "#lib/components/map/vtt-ui.js";
+  import { mapStore } from "$lib/stores/map.svelte";
+  import { mapSession } from "$lib/stores/map-session.svelte";
+  import { themeStore } from "$lib/stores/theme.svelte";
+  import { isFogHex } from "$lib/utils/color";
+  import { getPrimaryButtonStateClass } from "$lib/components/map/vtt-ui";
 
   const pickerValue = $derived(
     isFogHex(mapStore.fogColor)

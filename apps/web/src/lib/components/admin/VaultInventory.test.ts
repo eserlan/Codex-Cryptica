@@ -6,7 +6,7 @@ import {
   VaultInventoryService,
   type VaultInventoryKind,
   type VaultInventoryRow,
-} from "#lib/services/admin/vault-inventory.js";
+} from "$lib/services/admin/vault-inventory";
 
 const row = (
   id: string,

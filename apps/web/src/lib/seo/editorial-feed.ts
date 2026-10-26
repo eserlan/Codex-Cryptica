@@ -1,6 +1,6 @@
-import { loadBlogIndex } from "#lib/content/blog-content.js";
-import { getAnswerCategory } from "#lib/content/answers/categories.js";
-import { getAllAnswers, answerPath } from "#lib/content/answers/registry.js";
+import { loadBlogIndex } from "$lib/content/blog-content";
+import { getAnswerCategory } from "$lib/content/answers/categories";
+import { getAllAnswers, answerPath } from "$lib/content/answers/registry";
 import { buildAbsoluteUrl } from "./site";
 import { renderAtomFeed, type FeedEntry, type FeedMeta } from "./feed";
 

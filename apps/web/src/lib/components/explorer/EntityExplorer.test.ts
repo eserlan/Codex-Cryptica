@@ -8,7 +8,7 @@ vi.mock("./EntityList.svelte", async () => {
   return { default: mod.default };
 });
 
-vi.mock("#lib/stores/vault.svelte.js", () => ({
+vi.mock("$lib/stores/vault.svelte", () => ({
   vault: {
     allEntities: [],
     isGuest: false,
@@ -18,31 +18,31 @@ vi.mock("#lib/stores/vault.svelte.js", () => ({
   },
 }));
 
-vi.mock("#lib/stores/ui/modal-ui.svelte.js", () => ({
+vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
   modalUIStore: {
     openZenMode: vi.fn(),
   },
 }));
 
-vi.mock("#lib/stores/ui/navigation.js", () => ({
+vi.mock("$lib/stores/ui/navigation", () => ({
   focusEntity: vi.fn(),
 }));
 
-vi.mock("#lib/stores/ui/notification.svelte.js", () => ({
+vi.mock("$lib/stores/ui/notification.svelte", () => ({
   notificationStore: {
     notify: vi.fn(),
   },
 }));
 
-vi.mock("#lib/app/onboarding/journey/journey-milestones-runtime.js", () => ({
+vi.mock("$lib/app/onboarding/journey/journey-milestones-runtime", () => ({
   recordEntryFound: vi.fn(),
 }));
 
 import EntityExplorer from "./EntityExplorer.svelte";
-import { recordEntryFound } from "#lib/app/onboarding/journey/journey-milestones-runtime.js";
-import { layoutUIStore } from "#lib/stores/ui/layout-ui.svelte.js";
-import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
-import { focusEntity } from "#lib/stores/ui/navigation.js";
+import { recordEntryFound } from "$lib/app/onboarding/journey/journey-milestones-runtime";
+import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
+import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+import { focusEntity } from "$lib/stores/ui/navigation";
 
 describe("EntityExplorer", () => {
   beforeEach(() => {

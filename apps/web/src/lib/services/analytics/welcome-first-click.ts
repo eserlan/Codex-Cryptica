@@ -28,7 +28,7 @@
  */
 
 import { trackEvent } from "./zaraz-analytics";
-import { browserStorage, type StorageLike } from "#lib/utils/runtime-deps.js";
+import { browserStorage, type StorageLike } from "$lib/utils/runtime-deps";
 
 /** The five things a visitor can do on the welcome screen. */
 export const WELCOME_ACTIONS = [

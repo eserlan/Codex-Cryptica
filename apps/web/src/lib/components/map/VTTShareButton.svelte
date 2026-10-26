@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { mapSession } from "#lib/stores/map-session.svelte.js";
-  import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
+  import { mapSession } from "$lib/stores/map-session.svelte";
+  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
   let { onShare }: { onShare?: () => void } = $props();
   let canShareVtt = $derived(

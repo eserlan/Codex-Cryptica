@@ -51,7 +51,7 @@ vi.stubGlobal("Worker", MockWorker);
 // module-unique Symbol() we can't reach from here.
 
 // Mock debugStore
-vi.mock("#lib/stores/debug.svelte.js", () => ({
+vi.mock("$lib/stores/debug.svelte", () => ({
   debugStore: {
     log: vi.fn(),
     warn: vi.fn(),
@@ -62,8 +62,8 @@ vi.mock("#lib/stores/debug.svelte.js", () => ({
 // Import after mock
 import { SearchService } from "@codex/search-orchestrator";
 import { appEventBus } from "@codex/events";
-import { debugStore } from "#lib/stores/debug.svelte.js";
-import { vaultEventBus } from "#lib/stores/vault/events.svelte.js";
+import { debugStore } from "$lib/stores/debug.svelte";
+import { vaultEventBus } from "$lib/stores/vault/events.svelte";
 
 // Helpers to access collaborator internals without fragile prototype traversal
 function coordinator(s: SearchService) {
@@ -80,7 +80,7 @@ describe("SearchService", () => {
   let service: SearchService;
 
   beforeEach(async () => {
-    const { entityDb } = await import("#lib/utils/entity-db.js");
+    const { entityDb } = await import("$lib/utils/entity-db");
     service = new SearchService({
       db: entityDb,
       debug: debugStore,
@@ -172,7 +172,7 @@ describe("SearchService", () => {
   });
 
   it("should load an index from IndexedDB", async () => {
-    const { entityDb } = await import("#lib/utils/entity-db.js");
+    const { entityDb } = await import("$lib/utils/entity-db");
 
     vi.spyOn(entityDb.searchIndex, "get").mockResolvedValueOnce({
       vaultId: "test-vault",
@@ -189,7 +189,7 @@ describe("SearchService", () => {
   });
 
   it("should skip saving an empty index", async () => {
-    const { entityDb } = await import("#lib/utils/entity-db.js");
+    const { entityDb } = await import("$lib/utils/entity-db");
 
     mockApi.exportIndex.mockResolvedValueOnce({ _docIds: [] });
     const putSpy = vi
@@ -202,7 +202,7 @@ describe("SearchService", () => {
   });
 
   it("should save a populated index to IndexedDB", async () => {
-    const { entityDb } = await import("#lib/utils/entity-db.js");
+    const { entityDb } = await import("$lib/utils/entity-db");
 
     const expectedData = {
       _docIds: ["1"],
@@ -280,7 +280,7 @@ describe("SearchService", () => {
   describe("Vault Events", () => {
     beforeEach(async () => {
       vaultEventBus.reset(false);
-      const { entityDb } = await import("#lib/utils/entity-db.js");
+      const { entityDb } = await import("$lib/utils/entity-db");
       service = new SearchService({
         db: entityDb,
         debug: debugStore,
@@ -440,7 +440,7 @@ describe("SearchService", () => {
   it("should index content in background using Dexie and batching", async () => {
     vi.useFakeTimers();
     try {
-      const { entityDb } = await import("#lib/utils/entity-db.js");
+      const { entityDb } = await import("$lib/utils/entity-db");
       const indexBatchSpy = vi
         .spyOn(pipeline(service), "indexBatch")
         .mockResolvedValue(undefined);
@@ -613,7 +613,7 @@ describe("SearchService", () => {
     });
 
     it("should handle error in loadIndex", async () => {
-      const { entityDb } = await import("#lib/utils/entity-db.js");
+      const { entityDb } = await import("$lib/utils/entity-db");
       vi.spyOn(entityDb.searchIndex, "get").mockRejectedValue(
         new Error("DB Error"),
       );
@@ -638,7 +638,7 @@ describe("SearchService", () => {
     });
 
     it("should handle error in indexContentInBackground", async () => {
-      const { entityDb } = await import("#lib/utils/entity-db.js");
+      const { entityDb } = await import("$lib/utils/entity-db");
       vi.spyOn(entityDb.entityContent, "where").mockImplementation(() => {
         throw new Error("Query Error");
       });

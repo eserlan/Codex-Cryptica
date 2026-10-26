@@ -1,11 +1,7 @@
 import { vi } from "vitest";
 
 // Mocks must be declared before any imports that trigger SvelteKit or vault side effects
-vi.mock("$app/paths", () => ({
-  base: "",
-  asset: (p: string) => p,
-  resolve: (p: string) => p,
-}));
+vi.mock("$app/paths", () => ({ base: "" }));
 vi.mock("./vault.svelte", () => ({
   vault: {
     activeVaultId: "test-vault-123",

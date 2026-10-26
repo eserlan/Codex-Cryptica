@@ -4,7 +4,7 @@ import {
   factionConfig,
   npcThemeConfig,
   pantheonConfig,
-} from "#lib/services/seo/generator-config.js";
+} from "$lib/services/seo/generator-config";
 
 const handoff = { npcContext: "A trusted scout", factionContext: "The Watch" };
 

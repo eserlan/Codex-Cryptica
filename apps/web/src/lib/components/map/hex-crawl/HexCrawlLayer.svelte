@@ -8,9 +8,9 @@
   import { hexToPoint, type HexCoord } from "map-engine";
   import type { Point } from "schema";
   import { normalizeHexCrawlState } from "hex-crawl-engine";
-  import { mapStore } from "#lib/stores/map.svelte.js";
-  import { vault } from "#lib/stores/vault.svelte.js";
-  import { discoveryPolicyStore } from "#lib/stores/ui/discovery-policy.svelte.js";
+  import { mapStore } from "$lib/stores/map.svelte";
+  import { vault } from "$lib/stores/vault.svelte";
+  import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
   import type { MapFogPainter } from "../map-fog-painter";
   import type { HexCrawlServices } from "./hex-crawl-services.svelte";
   import { buildDiscoveryWiring } from "./hex-discovery-wiring";

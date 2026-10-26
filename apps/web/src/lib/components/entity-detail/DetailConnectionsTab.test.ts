@@ -9,7 +9,7 @@ import {
   beforeEach,
   vi,
 } from "vitest";
-import { discoveryPolicyStore } from "#lib/stores/ui/discovery-policy.svelte.js";
+import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
 import type { Entity } from "schema";
 
 const { entities, vaultMock, cyInstances, imageManagerInstances } = vi.hoisted(
@@ -148,8 +148,8 @@ vi.mock("graph-engine", () => {
   };
 });
 
-vi.mock("#lib/stores/vault.svelte.js", () => ({ vault: vaultMock }));
-vi.mock("#lib/stores/categories.svelte.js", () => ({
+vi.mock("$lib/stores/vault.svelte", () => ({ vault: vaultMock }));
+vi.mock("$lib/stores/categories.svelte", () => ({
   categories: {
     getCategory: (type: string) => ({
       color: "#abcdef",
@@ -157,12 +157,12 @@ vi.mock("#lib/stores/categories.svelte.js", () => ({
     }),
   },
 }));
-vi.mock("#lib/stores/theme.svelte.js", () => ({
+vi.mock("$lib/stores/theme.svelte", () => ({
   themeStore: {
     activeTheme: { tokens: { text: "#111", border: "#ccc", primary: "#f00" } },
   },
 }));
-vi.mock("#lib/stores/ui/layout-ui.svelte.js", () => ({
+vi.mock("$lib/stores/ui/layout-ui.svelte", () => ({
   layoutUIStore: { setLastSelectedNodePosition: vi.fn() },
 }));
 

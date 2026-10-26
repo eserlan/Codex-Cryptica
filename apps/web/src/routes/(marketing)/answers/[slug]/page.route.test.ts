@@ -3,14 +3,9 @@
 import { describe, expect, it, vi } from "vitest";
 import { render, screen, within } from "@testing-library/svelte";
 import Page from "./+page.svelte";
-import { AnswerConfigSchema } from "#lib/content/answers/schema.js";
-import * as discoveryTracking from "#lib/services/analytics/discovery-tracking.js";
+import { AnswerConfigSchema } from "$lib/content/answers/schema";
 
-vi.mock("$app/paths", () => ({
-  base: "",
-  asset: (p: string) => p,
-  resolve: (p: string) => p,
-}));
+vi.mock("$app/paths", () => ({ base: "" }));
 vi.mock("$app/environment", () => ({ browser: false }));
 
 function renderAnswer(sections: unknown[]) {
@@ -132,34 +127,5 @@ describe("answer page tables", () => {
     ]);
 
     expect(screen.getByTestId("point-crawl-morzan-diagram")).toBeTruthy();
-  });
-
-  it("tracks clicks on site links in prose but not external citations", () => {
-    const spy = vi
-      .spyOn(discoveryTracking, "trackDiscoveryClick")
-      .mockImplementation(() => {});
-    renderAnswer([
-      {
-        kind: "list",
-        items: [
-          {
-            text: "Try the [Fantasy Name Generator](/generators/fantasy-names) or read [the SRD](https://example.com/srd).",
-          },
-        ],
-      },
-    ]);
-
-    screen.getByRole("link", { name: "the SRD" }).click();
-    expect(spy).not.toHaveBeenCalled();
-
-    screen.getByRole("link", { name: "Fantasy Name Generator" }).click();
-    expect(spy).toHaveBeenCalledWith({
-      sourceKind: "answer",
-      sourceId: "which-classless-rpgs-fit",
-      placement: "inline_link",
-      targetKind: "generator",
-      targetId: "fantasy-names",
-    });
-    spy.mockRestore();
   });
 });

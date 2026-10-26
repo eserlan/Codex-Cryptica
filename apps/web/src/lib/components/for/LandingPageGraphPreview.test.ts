@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { getAllLandingPages } from "#lib/content/for/registry.js";
-import { getPositions } from "#lib/components/for/graph-preview-layout.js";
+import { getAllLandingPages } from "$lib/content/for/registry";
+import { getPositions } from "$lib/components/for/graph-preview-layout";
 
 describe("LandingPageGraphPreview Layout & Positions", () => {
   const distance = (

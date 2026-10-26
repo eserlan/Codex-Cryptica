@@ -41,7 +41,7 @@ const env = vi.hoisted(() => ({
   quickNote: { open: vi.fn(), openJournal: vi.fn() },
 }));
 
-vi.mock("#lib/stores/solo-session-instance.js", () => ({
+vi.mock("$lib/stores/solo-session-instance", () => ({
   soloSessionStore: env.store,
   soloPlayGuard: {
     soloStartBlockedReason: () => null,
@@ -50,26 +50,24 @@ vi.mock("#lib/stores/solo-session-instance.js", () => ({
   soloTablePins: { pins: [], pin: () => true, unpin: () => {} },
   soloPromoter: { promote: vi.fn() },
 }));
-vi.mock("#lib/stores/ui/modal-ui.svelte.js", () => ({
-  modalUIStore: env.modal,
-}));
-vi.mock("#lib/stores/ui/layout-ui.svelte.js", () => ({
+vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({ modalUIStore: env.modal }));
+vi.mock("$lib/stores/ui/layout-ui.svelte", () => ({
   layoutUIStore: env.layout,
 }));
-vi.mock("#lib/stores/ui/discovery-policy.svelte.js", () => ({
+vi.mock("$lib/stores/ui/discovery-policy.svelte", () => ({
   discoveryPolicyStore: env.discovery,
 }));
-vi.mock("#lib/stores/ui/session-mode.svelte.js", () => ({
+vi.mock("$lib/stores/ui/session-mode.svelte", () => ({
   sessionModeStore: env.mode,
 }));
-vi.mock("#lib/stores/vault.svelte.js", () => ({ vault: env.vault }));
-vi.mock("#lib/stores/session-journal.svelte.js", () => ({
+vi.mock("$lib/stores/vault.svelte", () => ({ vault: env.vault }));
+vi.mock("$lib/stores/session-journal.svelte", () => ({
   sessionJournalStore: env.journal,
 }));
-vi.mock("#lib/stores/quicknote.svelte.js", () => ({
+vi.mock("$lib/stores/quicknote.svelte", () => ({
   quickNoteStore: env.quickNote,
 }));
-vi.mock("#lib/stores/dice-history.svelte.js", () => ({
+vi.mock("$lib/stores/dice-history.svelte", () => ({
   diceHistory: { addResult: vi.fn(async () => {}) },
 }));
 

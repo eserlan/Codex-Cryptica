@@ -1,7 +1,7 @@
 <script lang="ts">
   import PlayToolsVault, {
     type PlayToolsTab,
-  } from "#lib/components/dice/PlayToolsVault.svelte";
+  } from "$lib/components/dice/PlayToolsVault.svelte";
   import { page } from "$app/state";
 
   const rawTab = $derived(page.url.searchParams.get("tab"));

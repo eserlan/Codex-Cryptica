@@ -1,16 +1,16 @@
-import { oracle } from "#lib/stores/oracle.svelte.js";
-import { vault } from "#lib/stores/vault.svelte.js";
+import { oracle } from "$lib/stores/oracle.svelte";
+import { vault } from "$lib/stores/vault.svelte";
 import {
   nodeMergeService,
   type IMergedContentProposal,
-} from "#lib/services/node-merge.service.svelte.js";
+} from "$lib/services/node-merge.service.svelte";
 import { type RevisionDraft } from "@codex/oracle-engine";
-import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
-import { generatorSessionManager } from "#lib/services/generators/generator-session-manager.js";
-import type { LocalEntity } from "#lib/stores/vault/types.js";
-import { systemClock, type Clock } from "#lib/utils/runtime-deps.js";
-import { buildLoreMergePlan } from "#lib/utils/lore-sections.js";
-import { loreMergeStore } from "#lib/stores/ui/lore-merge.svelte.js";
+import { notificationStore } from "$lib/stores/ui/notification.svelte";
+import { generatorSessionManager } from "$lib/services/generators/generator-session-manager";
+import type { LocalEntity } from "$lib/stores/vault/types";
+import { systemClock, type Clock } from "$lib/utils/runtime-deps";
+import { buildLoreMergePlan } from "$lib/utils/lore-sections";
+import { loreMergeStore } from "$lib/stores/ui/lore-merge.svelte";
 
 export type RevisionRequest = {
   entityId: string;

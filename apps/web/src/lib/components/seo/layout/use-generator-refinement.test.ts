@@ -15,7 +15,7 @@ const service = vi.hoisted(() => ({
   accept: vi.fn(),
 }));
 
-vi.mock("#lib/services/GeneratorRefinementService.svelte.js", () => ({
+vi.mock("$lib/services/GeneratorRefinementService.svelte", () => ({
   GeneratorRefinementService: class {
     iteration = service.iteration;
     start = service.start;
@@ -23,14 +23,14 @@ vi.mock("#lib/services/GeneratorRefinementService.svelte.js", () => ({
     accept = service.accept;
   },
 }));
-vi.mock("#lib/stores/session-hub.svelte.js", () => ({ sessionHubStore: hub }));
-vi.mock("#lib/stores/ui/lore-merge.svelte.js", () => ({
+vi.mock("$lib/stores/session-hub.svelte", () => ({ sessionHubStore: hub }));
+vi.mock("$lib/stores/ui/lore-merge.svelte", () => ({
   loreMergeStore: { request: loreRequest },
 }));
-vi.mock("#lib/utils/lore-sections.js", () => ({
+vi.mock("$lib/utils/lore-sections", () => ({
   buildLoreMergePlan: vi.fn(() => ({ hasChanges: true })),
 }));
-vi.mock("#lib/services/analytics/zaraz-analytics.js", () => ({
+vi.mock("$lib/services/analytics/zaraz-analytics", () => ({
   trackEvent: track,
 }));
 

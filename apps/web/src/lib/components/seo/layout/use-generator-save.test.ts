@@ -5,18 +5,18 @@ const saveOutput = vi.hoisted(() => vi.fn());
 const saveHub = vi.hoisted(() => vi.fn());
 const track = vi.hoisted(() => vi.fn());
 
-vi.mock("#lib/components/seo/generator-save-flow.js", () => ({
+vi.mock("$lib/components/seo/generator-save-flow", () => ({
   saveGeneratorOutput: saveOutput,
   saveSessionHubEntities: saveHub,
 }));
-vi.mock("#lib/services/analytics/zaraz-analytics.js", () => ({
+vi.mock("$lib/services/analytics/zaraz-analytics", () => ({
   trackPublicGeneratorAction: track,
 }));
-vi.mock("#lib/services/analytics/generator-save-tracking.js", () => ({
+vi.mock("$lib/services/analytics/generator-save-tracking", () => ({
   trackSaveToCodex: vi.fn(),
   countRelatedEntities: vi.fn(),
 }));
-vi.mock("#lib/stores/session-hub.svelte.js", () => ({
+vi.mock("$lib/stores/session-hub.svelte", () => ({
   sessionHubStore: { provenance: {}, entities: [] },
 }));
 

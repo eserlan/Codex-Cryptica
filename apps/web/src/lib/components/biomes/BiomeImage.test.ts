@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import BiomeImage from "./BiomeImage.svelte";
 import type { ImageRef } from "biome-engine";
-import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
 const host = "https://assets.codexcryptica.com/biomes/tundra";
 
@@ -188,7 +188,6 @@ describe("BiomeImage", () => {
     });
 
     await fireEvent.click(screen.getByRole("button", { name: /copy prompt/i }));
-    vi.advanceTimersByTime(0);
     unmount();
     resolveWrite();
     await Promise.resolve();

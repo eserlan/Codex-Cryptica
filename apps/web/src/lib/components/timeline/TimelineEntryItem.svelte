@@ -1,9 +1,9 @@
 <script lang="ts">
-  import type { TimelineEntry } from "#lib/stores/timeline.svelte.js";
-  import { vault } from "#lib/stores/vault.svelte.js";
-  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+  import type { TimelineEntry } from "$lib/stores/timeline.svelte";
+  import { vault } from "$lib/stores/vault.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
-  let { entry }: { entry: TimelineEntry } = $props();
+  let { entry } = $props<{ entry: TimelineEntry }>();
 
   const entity = $derived(vault.entities[entry.entityId]);
 

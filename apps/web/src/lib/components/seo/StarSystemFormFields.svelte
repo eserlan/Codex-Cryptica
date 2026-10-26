@@ -2,8 +2,8 @@
   import {
     pickFrom,
     starSystemConfig,
-  } from "#lib/services/seo/generator-config.js";
-  import SelectWithCustomOption from "#lib/components/forms/SelectWithCustomOption.svelte";
+  } from "$lib/services/seo/generator-config";
+  import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
 
   let {
     systemType = $bindable(starSystemConfig.systemTypes[0]),

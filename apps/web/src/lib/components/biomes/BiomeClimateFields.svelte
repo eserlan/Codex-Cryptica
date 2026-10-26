@@ -1,6 +1,6 @@
 <script lang="ts">
   import { untrack } from "svelte";
-  import type { BiomeExplorerStore } from "#lib/stores/biome-explorer.svelte.js";
+  import type { BiomeExplorerStore } from "$lib/stores/biome-explorer.svelte";
 
   let {
     store,

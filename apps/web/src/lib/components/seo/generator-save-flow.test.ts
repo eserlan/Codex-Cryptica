@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
+import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
 import {
   businessGeneratorOutput as businessGeneratorOutputFor,
   generateBusinessLocal,

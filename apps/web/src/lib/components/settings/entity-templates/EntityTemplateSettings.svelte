@@ -1,19 +1,19 @@
 <script lang="ts">
   import type { DraftTemplate, EntityTemplate } from "entity-template-engine";
-  import { categories } from "#lib/stores/categories.svelte.js";
-  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
+  import { categories } from "$lib/stores/categories.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import {
     entityTemplateStore,
     EntityTemplateError,
-  } from "#lib/stores/entity-templates/entity-template-store.svelte.js";
-  import { downloadText } from "#lib/utils/download.js";
+  } from "$lib/stores/entity-templates/entity-template-store.svelte";
+  import { downloadText } from "$lib/utils/download";
   import { onMount } from "svelte";
-  import { EntityTemplateDirectoryError } from "#lib/services/publishing/PublicEntityTemplateDirectoryService.js";
+  import { EntityTemplateDirectoryError } from "$lib/services/publishing/PublicEntityTemplateDirectoryService";
   import {
     entityTemplatePublishStore,
     type PublishMetadata,
-  } from "#lib/stores/entity-templates/entity-template-publish-store.svelte.js";
-  import EntityTemplatePublishModal from "#lib/components/community-templates/EntityTemplatePublishModal.svelte";
+  } from "$lib/stores/entity-templates/entity-template-publish-store.svelte";
+  import EntityTemplatePublishModal from "$lib/components/community-templates/EntityTemplatePublishModal.svelte";
   import EntityTemplateEditor from "./EntityTemplateEditor.svelte";
   import EntityTemplateRow from "./EntityTemplateRow.svelte";
   import EntityTemplateToolbar from "./EntityTemplateToolbar.svelte";

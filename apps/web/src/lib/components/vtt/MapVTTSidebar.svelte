@@ -1,19 +1,19 @@
 <script lang="ts">
-  import VTTControls from "#lib/components/map/VTTControls.svelte";
-  import EntityList from "#lib/components/explorer/EntityList.svelte";
-  import InitiativePanel from "#lib/components/vtt/InitiativePanel.svelte";
-  import TokenDetail from "#lib/components/vtt/TokenDetail.svelte";
-  import VTTChatSidebar from "#lib/components/vtt/VTTChatSidebar.svelte";
-  import TileDeckPanel from "#lib/components/vtt/TileDeckPanel.svelte";
-  import ResizerHandle from "#lib/components/layout/ResizerHandle.svelte";
-  import { VTT_ENTITY_TYPES } from "#lib/components/map/vtt-ui.js";
+  import VTTControls from "$lib/components/map/VTTControls.svelte";
+  import EntityList from "$lib/components/explorer/EntityList.svelte";
+  import InitiativePanel from "$lib/components/vtt/InitiativePanel.svelte";
+  import TokenDetail from "$lib/components/vtt/TokenDetail.svelte";
+  import VTTChatSidebar from "$lib/components/vtt/VTTChatSidebar.svelte";
+  import TileDeckPanel from "$lib/components/vtt/TileDeckPanel.svelte";
+  import ResizerHandle from "$lib/components/layout/ResizerHandle.svelte";
+  import { VTT_ENTITY_TYPES } from "$lib/components/map/vtt-ui";
   import {
     layoutUIStore,
     MIN_VTT_SIDEBAR_WIDTH,
     MAX_SIDEBAR_VW,
-  } from "#lib/stores/ui/layout-ui.svelte.js";
-  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
-  import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
+  } from "$lib/stores/ui/layout-ui.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
   import type { Entity } from "schema";
 
   let {

@@ -2,7 +2,7 @@ import { getAllAnswers, answerPath } from "../answers/registry";
 import { getAllLandingPages, landingPageLabels } from "../for/registry";
 import { getLandingPageCanonicalUrl } from "../for/canonical";
 import { getAllExamples, examplePath } from "../examples/registry";
-import { slugMeta } from "#lib/components/seo/generator-page-meta.js";
+import { slugMeta } from "$lib/components/seo/generator-page-meta";
 import { isContentClusterSlug, isPublicLabel } from "../labels";
 import { HUB_THEME_LABELS, HUB_THEME_SLUGS } from "../hub-themes";
 import { getEntryByPath } from "../discovery/registry";

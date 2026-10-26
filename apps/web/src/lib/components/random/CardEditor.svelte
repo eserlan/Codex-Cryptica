@@ -1,11 +1,8 @@
 <script lang="ts">
   import type { Card, Diagnostic, RandomSource } from "random-source-engine";
   import { parseReferences } from "random-source-engine";
-  import {
-    systemIdGenerator,
-    type IdGenerator,
-  } from "#lib/utils/runtime-deps.js";
-  import { vault } from "#lib/stores/vault.svelte.js";
+  import { systemIdGenerator, type IdGenerator } from "$lib/utils/runtime-deps";
+  import { vault } from "$lib/stores/vault.svelte";
   import SourceIdentityFields from "./SourceIdentityFields.svelte";
   import CardImage from "./CardImage.svelte";
   import DeckView from "./DeckView.svelte";

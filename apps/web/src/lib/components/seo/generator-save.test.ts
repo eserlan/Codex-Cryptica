@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { SessionEntity } from "generator-engine";
-import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
+import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
 import {
   buildGeneratorSavePayload,
   buildHubSaveDrafts,

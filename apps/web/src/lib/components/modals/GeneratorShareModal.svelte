@@ -1,6 +1,6 @@
 <script lang="ts">
-  import ModalShell from "#lib/components/ui/ModalShell.svelte";
-  import type { GeneratorShareFlowState } from "#lib/services/sharing/generator-share-flow.svelte.js";
+  import ModalShell from "$lib/components/ui/ModalShell.svelte";
+  import type { GeneratorShareFlowState } from "$lib/services/sharing/generator-share-flow.svelte";
 
   let {
     open,

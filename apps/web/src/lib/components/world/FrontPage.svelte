@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { vault } from "#lib/stores/vault.svelte.js";
-  import { worldStore } from "#lib/stores/world.svelte.js";
-  import { themeStore } from "#lib/stores/theme.svelte.js";
-  import { hexToRgb } from "#lib/utils/color.js";
+  import { vault } from "$lib/stores/vault.svelte";
+  import { worldStore } from "$lib/stores/world.svelte";
+  import { themeStore } from "$lib/stores/theme.svelte";
+  import { hexToRgb } from "$lib/utils/color";
   import { partitionAndSortRecentActivity } from "./front-page/front-page-entities";
   import {
     readRecentLimit,
@@ -13,14 +13,14 @@
   import FrontPageHero from "./FrontPageHero.svelte";
   import FrontPageEntities from "./FrontPageEntities.svelte";
   import FrontPageBriefing from "./FrontPageBriefing.svelte";
-  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
-  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
-  import { oracle } from "#lib/stores/oracle.svelte.js";
-  import { discoveryPolicyStore } from "#lib/stores/ui/discovery-policy.svelte.js";
-  import { openImportWindow } from "#lib/stores/ui/navigation.js";
-  import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
-  import { guestVault } from "#lib/stores/guest-vault.svelte.js";
-  import { resolve } from "$app/paths";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { oracle } from "$lib/stores/oracle.svelte";
+  import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
+  import { openImportWindow } from "$lib/stores/ui/navigation";
+  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { guestVault } from "$lib/stores/guest-vault.svelte";
+  import { base } from "$app/paths";
 
   let { onClose }: { onClose?: () => void } = $props();
 
@@ -471,7 +471,6 @@
               >
                 Start your world
               </h2>
-
               <p class="mt-2 text-sm text-theme-muted leading-relaxed max-w-xl">
                 Welcome to your new archive! Start shaping your world by
                 creating your first entity, importing existing notes, or letting
@@ -585,7 +584,7 @@
               </div>
             </div>
             <a
-              href="{resolve('')}/table?mode=audit"
+              href="{base}/table?mode=audit"
               class="inline-flex shrink-0 items-center justify-center gap-2 rounded-full border border-theme-primary/40 bg-theme-primary/10 px-5 py-2.5 text-xs font-bold uppercase tracking-[0.15em] text-theme-primary transition-all hover:bg-theme-primary hover:text-theme-bg"
             >
               <span>Open Audit</span>
@@ -615,14 +614,14 @@
         {#if sessionModeStore.isGuestMode}
           <div class="flex justify-center pt-2">
             <a
-              href="{resolve('')}/worlds"
+              href="{base}/worlds"
               class="inline-flex items-center gap-2 text-xs font-medium text-theme-muted hover:text-theme-primary transition-colors"
             >
               <span
                 aria-hidden="true"
                 class="icon-[lucide--compass] h-3.5 w-3.5"
               ></span>
-              Made with Codex Cryptica · Explore more public worlds
+              Made with Codex Cryptica &middot; Explore more public worlds
             </a>
           </div>
         {/if}

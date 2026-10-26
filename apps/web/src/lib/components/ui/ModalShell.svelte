@@ -1,6 +1,6 @@
 <script lang="ts">
   import { fade, scale } from "svelte/transition";
-  import { focusTrap } from "#lib/actions/focusTrap.js";
+  import { focusTrap } from "$lib/actions/focusTrap";
   import type { Snippet } from "svelte";
 
   let {

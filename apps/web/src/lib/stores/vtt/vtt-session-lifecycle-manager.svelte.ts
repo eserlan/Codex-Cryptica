@@ -1,10 +1,10 @@
-import { createEncounterSession } from "#lib/services/vtt-session.js";
+import { createEncounterSession } from "$lib/services/vtt-session";
 import type { EncounterSnapshotSummary, SessionMode } from "../../../types/vtt";
 import {
   browserSessionStorage,
   browserStorage,
   type StorageLike,
-} from "#lib/utils/runtime-deps.js";
+} from "$lib/utils/runtime-deps";
 
 export interface VTTSessionLifecycleManagerDependencies {
   getMapId: () => string | null;

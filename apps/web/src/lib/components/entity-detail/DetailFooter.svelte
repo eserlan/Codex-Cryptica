@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { vault } from "#lib/stores/vault.svelte.js";
-  import { themeStore } from "#lib/stores/theme.svelte.js";
+  import { vault } from "$lib/stores/vault.svelte";
+  import { themeStore } from "$lib/stores/theme.svelte";
 
   let {
     isEditing,
@@ -12,7 +12,7 @@
     onSave,
     onDelete,
     onStartEdit,
-  }: {
+  } = $props<{
     isEditing: boolean;
     isSaving?: boolean;
     isDirty?: boolean;
@@ -22,7 +22,7 @@
     onSave: () => void;
     onDelete: () => void;
     onStartEdit: () => void;
-  } = $props();
+  }>();
 </script>
 
 <div

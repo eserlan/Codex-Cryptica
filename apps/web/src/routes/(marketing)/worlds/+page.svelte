@@ -2,11 +2,11 @@
   import { resolve } from "$app/paths";
   import { marked } from "marked";
   import DOMPurify from "dompurify";
-  import { browser } from "$app/env";
-  import { browserStorage } from "#lib/utils/runtime-deps.js";
-  import WorldsProvenanceNotice from "#lib/components/publishing/WorldsProvenanceNotice.svelte";
-  import CopyrightReportModal from "#lib/components/publishing/CopyrightReportModal.svelte";
-  import PublicLabelChip from "#lib/components/labels/PublicLabelChip.svelte";
+  import { browser } from "$app/environment";
+  import { browserStorage } from "$lib/utils/runtime-deps";
+  import WorldsProvenanceNotice from "$lib/components/publishing/WorldsProvenanceNotice.svelte";
+  import CopyrightReportModal from "$lib/components/publishing/CopyrightReportModal.svelte";
+  import PublicLabelChip from "$lib/components/labels/PublicLabelChip.svelte";
 
   const VIEW_MODE_KEY = "cc_directory_view_mode";
 
@@ -79,11 +79,9 @@
       >
         Public Worlds
       </p>
-
       <h1 class="text-4xl font-header font-bold text-theme-text">
         Browse shared guest worlds
       </h1>
-
       <p class="max-w-2xl text-base leading-relaxed text-theme-text/70">
         Every result opens the read-only guest view. Private notes, editor
         state, and write access stay out of this directory.
@@ -127,7 +125,7 @@
           Search
         </button>
         <a
-          href={resolve("worlds")}
+          href={resolve("/worlds")}
           class="min-h-12 rounded border border-theme-border px-4 py-2 text-xs font-bold text-theme-text inline-flex items-center"
         >
           Clear

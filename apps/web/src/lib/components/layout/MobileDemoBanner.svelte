@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { demoService } from "#lib/services/demo.js";
-  import { themeStore } from "#lib/stores/theme.svelte.js";
-  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
+  import { demoService } from "$lib/services/demo";
+  import { themeStore } from "$lib/stores/theme.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
   let isSaving = $state(false);
 

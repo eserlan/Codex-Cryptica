@@ -1,24 +1,24 @@
 <script lang="ts">
-  import { oracle } from "#lib/stores/oracle.svelte.js";
-  import { resolve } from "$app/paths";
+  import { oracle } from "$lib/stores/oracle.svelte";
+  import { base } from "$app/paths";
   import OracleChat from "./OracleChat.svelte";
   import { fly, fade } from "svelte/transition";
-  import { demoService } from "#lib/services/demo.js";
+  import { demoService } from "$lib/services/demo";
   import { goto } from "$app/navigation";
   import { page } from "$app/state";
-  import { themeStore } from "#lib/stores/theme.svelte.js";
-  import { discoveryPolicyStore } from "#lib/stores/ui/discovery-policy.svelte.js";
-  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
-  import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
-  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
+  import { themeStore } from "$lib/stores/theme.svelte";
+  import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import AdventureSurface from "./adventure/AdventureSurface.svelte";
   let adventureMode = $state(false);
 
-  const _isPopup = $derived(page.url.pathname === resolve(`oracle`));
+  const _isPopup = $derived(page.url.pathname === `${base}/oracle`);
 
   const popOut = () => {
     window.open(
-      resolve(`oracle`),
+      `${base}/oracle`,
       "codex-oracle",
       "width=600,height=800,menubar=no,toolbar=no,location=no,status=no",
     );

@@ -2,8 +2,8 @@
 
 import { describe, expect, it, vi } from "vitest";
 import { createEmptySessionPrep, type SessionPrep } from "generator-engine";
-import type { SessionPrepService } from "#lib/services/seo/session-prep-service.js";
-import { renderGeneratorMarkdown } from "#lib/components/seo/markdown-renderers.js";
+import type { SessionPrepService } from "$lib/services/seo/session-prep-service";
+import { renderGeneratorMarkdown } from "$lib/components/seo/markdown-renderers";
 import { EXAMPLE_SESSION_PREP } from "./example-prep";
 import {
   buildSessionPrep,

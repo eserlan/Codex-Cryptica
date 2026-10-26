@@ -1,7 +1,7 @@
 import type { GeneratorShare, GeneratorShareCreate } from "schema";
-import { resolveOracleProxyUrl } from "#lib/config/oracle-proxy.js";
-import { browserStorage, type StorageLike } from "#lib/utils/runtime-deps.js";
-import { buildAbsoluteUrl } from "#lib/seo/site.js";
+import { resolveOracleProxyUrl } from "$lib/config/oracle-proxy";
+import { browserStorage, type StorageLike } from "$lib/utils/runtime-deps";
+import { buildAbsoluteUrl } from "$lib/seo/site";
 
 const MANAGEMENT_TOKENS_KEY = "codex_generator_share_management_tokens";
 

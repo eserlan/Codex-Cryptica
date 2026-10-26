@@ -2,7 +2,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import GeneratorOutputCard from "./GeneratorOutputCard.svelte";
-import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
+import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
 
 // Stub Element.prototype.animate for JSDOM / Svelte 5 transitions compatibility
 if (typeof Element !== "undefined" && !Element.prototype.animate) {

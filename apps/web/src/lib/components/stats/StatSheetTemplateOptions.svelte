@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { StatSheetTemplate } from "schema";
-  import { categories } from "#lib/stores/categories.svelte.js";
+  import { categories } from "$lib/stores/categories.svelte";
   import { partitionTemplatesForCategory } from "@codex/stat-sheet-engine";
 
   let {
@@ -8,12 +8,12 @@
     category,
     systemId = null,
     onApply,
-  }: {
+  } = $props<{
     templates: StatSheetTemplate[];
     category: string;
     systemId?: string | null;
     onApply: (templateId: string) => void;
-  } = $props();
+  }>();
 
   // #3960: templates made for this entity's category are listed first, so a
   // Location or Faction is not buried under character sheets. Nothing is

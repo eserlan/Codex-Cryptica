@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { categories } from "#lib/stores/categories.svelte.js";
-  import { getIconClass } from "#lib/utils/icon.js";
+  import { categories } from "$lib/stores/categories.svelte";
+  import { getIconClass } from "$lib/utils/icon";
   import type { Category } from "schema";
 
   export interface CategoryOption {

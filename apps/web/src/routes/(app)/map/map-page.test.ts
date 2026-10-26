@@ -28,7 +28,7 @@ const controllerState = vi.hoisted(() => ({
 
 const gridSettingsMock = vi.hoisted(() => vi.fn(() => ({})));
 
-vi.mock("#lib/stores/map/map-page-controller.svelte.js", () => ({
+vi.mock("$lib/stores/map/map-page-controller.svelte", () => ({
   MapPageController: class MapPageControllerMock {
     activeMap = controllerState.activeMap;
     showInitiativePanel = controllerState.showInitiativePanel;
@@ -53,59 +53,59 @@ vi.mock("#lib/stores/map/map-page-controller.svelte.js", () => ({
   },
 }));
 
-vi.mock("#lib/components/map/MapHUD.svelte", () => ({
+vi.mock("$lib/components/map/MapHUD.svelte", () => ({
   default: function MapHUDMock() {
     return {};
   },
 }));
 
-vi.mock("#lib/components/map/MapUploadOverlay.svelte", () => ({
+vi.mock("$lib/components/map/MapUploadOverlay.svelte", () => ({
   default: function MapUploadOverlayMock() {
     return {};
   },
 }));
 
-vi.mock("#lib/components/map/MapView.svelte", () => ({
+vi.mock("$lib/components/map/MapView.svelte", () => ({
   default: function MapViewMock() {
     return {};
   },
 }));
 
-vi.mock("#lib/components/map/MapVTTControlsHUD.svelte", () => ({
+vi.mock("$lib/components/map/MapVTTControlsHUD.svelte", () => ({
   default: function MapVTTControlsHUDMock() {
     return {};
   },
 }));
 
-vi.mock("#lib/components/map/VTTGridColorMenu.svelte", () => ({
+vi.mock("$lib/components/map/VTTGridColorMenu.svelte", () => ({
   default: function VTTGridColorMenuMock() {
     return {};
   },
 }));
 
-vi.mock("#lib/components/map/VTTGridSettings.svelte", () => ({
+vi.mock("$lib/components/map/VTTGridSettings.svelte", () => ({
   default: gridSettingsMock,
 }));
 
-vi.mock("#lib/components/vtt/TokenAddDialog.svelte", () => ({
+vi.mock("$lib/components/vtt/TokenAddDialog.svelte", () => ({
   default: function TokenAddDialogMock() {
     return {};
   },
 }));
 
-vi.mock("#lib/components/vtt/MapVTTSidebar.svelte", () => ({
+vi.mock("$lib/components/vtt/MapVTTSidebar.svelte", () => ({
   default: function MapVTTSidebarMock() {
     return {};
   },
 }));
 
-vi.mock("#lib/components/EntityDetailPanel.svelte", async () => ({
-  default: (await import("#lib/components/modals/__tests__/ModalStub.svelte"))
+vi.mock("$lib/components/EntityDetailPanel.svelte", async () => ({
+  default: (await import("$lib/components/modals/__tests__/ModalStub.svelte"))
     .default,
 }));
 
-vi.mock("#lib/components/ShareModal.svelte", async () => ({
-  default: (await import("#lib/components/modals/__tests__/ModalStub.svelte"))
+vi.mock("$lib/components/ShareModal.svelte", async () => ({
+  default: (await import("$lib/components/modals/__tests__/ModalStub.svelte"))
     .default,
 }));
 
@@ -113,7 +113,7 @@ const mapStoreMock = vi.hoisted(() => ({
   activeMap: { id: "map-1" } as { id: string } | null,
 }));
 
-vi.mock("#lib/stores/map.svelte.js", () => ({
+vi.mock("$lib/stores/map.svelte", () => ({
   mapStore: mapStoreMock,
 }));
 
@@ -122,7 +122,7 @@ const mapSessionMock = vi.hoisted(() => ({
   showGridSettings: false,
 }));
 
-vi.mock("#lib/stores/map-session.svelte.js", () => ({
+vi.mock("$lib/stores/map-session.svelte", () => ({
   mapSession: mapSessionMock,
 }));
 
@@ -134,30 +134,30 @@ const vaultMock = vi.hoisted(() => ({
   },
 }));
 
-vi.mock("#lib/stores/vault.svelte.js", () => ({ vault: vaultMock }));
+vi.mock("$lib/stores/vault.svelte", () => ({ vault: vaultMock }));
 
-vi.mock("#lib/stores/ui/notification.svelte.js", () => ({
+vi.mock("$lib/stores/ui/notification.svelte", () => ({
   notificationStore: {},
 }));
 
 const sessionModeStoreMock = vi.hoisted(() => ({ isGuestMode: false }));
 const guestVaultMock = vi.hoisted(() => ({ publishId: null as string | null }));
 
-vi.mock("#lib/stores/ui/session-mode.svelte.js", () => ({
+vi.mock("$lib/stores/ui/session-mode.svelte", () => ({
   sessionModeStore: sessionModeStoreMock,
 }));
 
-vi.mock("#lib/stores/guest-vault.svelte.js", () => ({
+vi.mock("$lib/stores/guest-vault.svelte", () => ({
   guestVault: guestVaultMock,
 }));
 
-vi.mock("#lib/stores/ui/modal-ui.svelte.js", () => ({
+vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
   modalUIStore: {
     openZenMode: vi.fn(),
   },
 }));
 
-vi.mock("#lib/stores/ui/layout-ui.svelte.js", () => ({
+vi.mock("$lib/stores/ui/layout-ui.svelte", () => ({
   layoutUIStore: {
     vttChatSidebarCollapsed: false,
   },

@@ -1,8 +1,8 @@
 <script lang="ts">
   import type { AdventureNodeData, AdventureNodeType } from "generator-engine";
-  import { vault } from "#lib/stores/vault.svelte.js";
-  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
-  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
+  import { vault } from "$lib/stores/vault.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import CanvasCenterConnectionHandles from "./CanvasCenterConnectionHandles.svelte";
@@ -147,7 +147,7 @@
         "dungeon-generator",
       );
     } else {
-      void goto(resolve("generators/dungeon-generator"));
+      void goto(resolve("/generators/dungeon-generator"));
     }
   }
 </script>

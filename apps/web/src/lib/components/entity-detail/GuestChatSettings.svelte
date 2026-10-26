@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Entity, GuestChatConfig } from "schema";
-  import { vault } from "#lib/stores/vault.svelte.js";
+  import { vault } from "$lib/stores/vault.svelte";
   import { generatePersonality } from "./generate-personality";
   import { generatePersonalityProfile } from "./generate-personality-profile";
 
@@ -10,13 +10,13 @@
     editContent,
     editLore = $bindable(),
     editGuestChatConfig = $bindable(),
-  }: {
+  } = $props<{
     entity: Entity;
     isEditing: boolean;
     editContent: string;
     editLore?: string;
     editGuestChatConfig?: GuestChatConfig;
-  } = $props();
+  }>();
 
   let isGeneratingPersonality = $state(false);
   let isGeneratingPersonalityProfile = $state(false);

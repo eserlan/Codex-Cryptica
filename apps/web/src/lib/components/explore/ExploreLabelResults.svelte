@@ -3,7 +3,7 @@
     groupPublicLabelResults,
     type PublicContentKind,
     type PublicLabelResult,
-  } from "#lib/content/labels/aggregate.js";
+  } from "$lib/content/labels/aggregate";
 
   let {
     label,

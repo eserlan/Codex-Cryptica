@@ -3,7 +3,7 @@ import { canvasRegistry } from "./canvas-registry.svelte";
 import { vaultRegistry } from "./vault-registry.svelte";
 import * as vaultIO from "./vault/io";
 import { getVaultDir } from "../utils/opfs";
-import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
+import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
 vi.mock("./vault-registry.svelte", () => ({
   vaultRegistry: {

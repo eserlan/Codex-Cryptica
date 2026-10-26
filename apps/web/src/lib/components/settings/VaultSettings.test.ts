@@ -3,19 +3,15 @@
 import { render, screen, fireEvent } from "@testing-library/svelte";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import VaultSettings from "./VaultSettings.svelte";
-import { calendarStore } from "#lib/stores/calendar.svelte.js";
+import { calendarStore } from "$lib/stores/calendar.svelte";
 import { DEFAULT_CALENDAR } from "chronology-engine";
 
 vi.mock("$app/navigation", () => ({ goto: vi.fn() }));
 vi.mock("$app/state", () => ({ page: { url: { pathname: "/" } } }));
-vi.mock("$app/paths", () => ({
-  base: "",
-  asset: (p: string) => p,
-  resolve: (p: string) => p,
-}));
+vi.mock("$app/paths", () => ({ base: "" }));
 vi.mock("$app/environment", () => ({ browser: true }));
 
-vi.mock("#lib/stores/vault.svelte.js", () => ({
+vi.mock("$lib/stores/vault.svelte", () => ({
   vault: {
     defaultVisibility: "visible",
     setDefaultVisibility: vi.fn(),
@@ -24,32 +20,32 @@ vi.mock("#lib/stores/vault.svelte.js", () => ({
   },
 }));
 
-vi.mock("#lib/services/demo.js", () => ({
+vi.mock("$lib/services/demo", () => ({
   demoService: {
     isDemoVault: () => false,
   },
 }));
 
-vi.mock("#lib/stores/theme.svelte.js", () => ({
+vi.mock("$lib/stores/theme.svelte", () => ({
   themeStore: {
     theme: "default",
     setTheme: vi.fn(),
   },
 }));
 
-vi.mock("#lib/stores/ui/session-mode.svelte.js", () => ({
+vi.mock("$lib/stores/ui/session-mode.svelte", () => ({
   sessionModeStore: {
     isSessionActive: false,
   },
 }));
 
-vi.mock("#lib/stores/ui/modal-ui.svelte.js", () => ({
+vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
   modalUIStore: {
     closeModal: vi.fn(),
   },
 }));
 
-vi.mock("#lib/stores/ui/notification.svelte.js", () => ({
+vi.mock("$lib/stores/ui/notification.svelte", () => ({
   notificationStore: {
     notify: vi.fn(),
     confirm: vi.fn(),

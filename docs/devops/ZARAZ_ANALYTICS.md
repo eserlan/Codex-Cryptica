@@ -255,9 +255,7 @@ instead of calling the classifier.
 
 `placement` is a short, page-local string identifying where on the page the
 link lives — e.g. on `/answers/[slug]`: `section_cta`, `codex_connection`,
-`related_tool`, `related_guide`, `related_answer`, and `inline_link` for a
-site link written inside the answer's own prose (external citations are not
-tracked). Each wired page defines
+`related_tool`, `related_guide`, `related_answer`. Each wired page defines
 its own placement names for its own link groups; there is no shared enum,
 since it's meant to describe layout, not carry business meaning on its own.
 

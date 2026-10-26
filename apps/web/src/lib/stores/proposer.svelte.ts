@@ -7,9 +7,9 @@ import { TIER_MODES } from "schema";
 import type { Proposal } from "@codex/proposer";
 import { ProposerService } from "@codex/proposer";
 import { getDB, DB_NAME, DB_VERSION } from "../utils/idb";
-import { discoveryPolicyStore } from "#lib/stores/ui/discovery-policy.svelte.js";
+import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
 import { notificationStore } from "./ui/notification.svelte";
-import { systemClock, type Clock } from "#lib/utils/runtime-deps.js";
+import { systemClock, type Clock } from "$lib/utils/runtime-deps";
 
 class ProposerStore {
   private service: ProposerService | null = null;

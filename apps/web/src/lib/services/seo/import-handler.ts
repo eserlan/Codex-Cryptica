@@ -1,12 +1,12 @@
 import { z } from "zod";
-import { vault } from "#lib/stores/vault.svelte.js";
-import { vaultRegistry } from "#lib/stores/vault-registry.svelte.js";
-import { browserStorage, type StorageLike } from "#lib/utils/runtime-deps.js";
-import { dataUrlToFile } from "#lib/utils/svg-export.js";
+import { vault } from "$lib/stores/vault.svelte";
+import { vaultRegistry } from "$lib/stores/vault-registry.svelte";
+import { browserStorage, type StorageLike } from "$lib/utils/runtime-deps";
+import { dataUrlToFile } from "$lib/utils/svg-export";
 import {
   entityMapLinkingService,
   type EntityMapLinkingService,
-} from "#lib/services/entity-map-linking.js";
+} from "$lib/services/entity-map-linking";
 
 export const ImportDraftSchema = z.object({
   type: z.enum([

@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { focusTrap } from "#lib/actions/focusTrap.js";
-  import { soloSessionStore } from "#lib/stores/solo-session-instance.js";
+  import { focusTrap } from "$lib/actions/focusTrap";
+  import { soloSessionStore } from "$lib/stores/solo-session-instance";
 
   type MapChoice = { id: string; name: string };
   type CharacterChoice = { id: string; name: string };

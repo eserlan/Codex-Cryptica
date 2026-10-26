@@ -2,17 +2,15 @@
 import { render, fireEvent, screen } from "@testing-library/svelte";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import ZenContent from "./ZenContent.svelte";
-import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
-import { vault } from "#lib/stores/vault.svelte.js";
-import { revisionService } from "#lib/services/RevisionService.svelte.js";
+import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+import { vault } from "$lib/stores/vault.svelte";
+import { revisionService } from "$lib/services/RevisionService.svelte";
 
 vi.mock("$app/paths", () => ({
   base: "",
-  asset: (p: string) => p,
-  resolve: (p: string) => p,
 }));
 
-vi.mock("#lib/stores/vault.svelte.js", () => ({
+vi.mock("$lib/stores/vault.svelte", () => ({
   vault: {
     isGuest: false,
     allEntities: [
@@ -35,7 +33,7 @@ vi.mock("#lib/stores/vault.svelte.js", () => ({
   },
 }));
 
-vi.mock("#lib/stores/theme.svelte.js", () => ({
+vi.mock("$lib/stores/theme.svelte", () => ({
   themeStore: {
     jargon: {
       chronicle_header: "Chronicle",
@@ -44,25 +42,25 @@ vi.mock("#lib/stores/theme.svelte.js", () => ({
   },
 }));
 
-vi.mock("#lib/services/RevisionService.svelte.js", () => ({
+vi.mock("$lib/services/RevisionService.svelte", () => ({
   revisionService: {
     pendingDraft: null,
     isRevising: false,
   },
 }));
 
-vi.mock("#lib/components/MarkdownEditor.svelte", () => ({
+vi.mock("$lib/components/MarkdownEditor.svelte", () => ({
   default: vi.fn(),
 }));
 
 vi.mock(
-  "#lib/components/entity-detail/proposals/DetailProposals.svelte",
+  "$lib/components/entity-detail/proposals/DetailProposals.svelte",
   () => ({
     default: vi.fn(),
   }),
 );
 
-vi.mock("#lib/stores/ui/modal-ui.svelte.js", () => ({
+vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
   modalUIStore: {
     openGeneratorWorkflowForEntity: vi.fn(),
     openRevisionDialog: vi.fn(),

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { tick } from "svelte";
-  import { vault } from "#lib/stores/vault.svelte.js";
-  import { categories } from "#lib/stores/categories.svelte.js";
+  import { vault } from "$lib/stores/vault.svelte";
+  import { categories } from "$lib/stores/categories.svelte";
   import {
     groupEntitiesForExplorer,
     flattenGroupedEntities,
@@ -23,15 +23,15 @@
   } from "@codex/search-orchestrator";
   import type { SearchIndexProgress } from "@codex/search-engine";
   import type { Entity } from "schema";
-  import { explorerUIStore } from "#lib/stores/ui/explorer-ui.svelte.js";
-  import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
+  import { explorerUIStore } from "$lib/stores/ui/explorer-ui.svelte";
+  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
   import EntityListItem from "./EntityListItem.svelte";
   import EntityListSearch from "./EntityListSearch.svelte";
   import EntityListFilterBar from "./EntityListFilterBar.svelte";
   import EntityEmptyState from "./EntityEmptyState.svelte";
   import EntitySearchEmptyState from "./EntitySearchEmptyState.svelte";
   import { sortExplorerEntities } from "./entityListSorting";
-  import { browserPerformanceRecorder } from "#lib/services/performance/browser-performance-capture.js";
+  import { browserPerformanceRecorder } from "$lib/services/performance/browser-performance-capture";
   import type { PerformanceOperationHandle } from "@codex/performance-observability";
   import {
     ENTITY_EXPLORER_PAGE_SIZE,

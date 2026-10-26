@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Handle, Position } from "@xyflow/svelte";
-  import { connectionModeStore } from "#lib/stores/ui/connection-mode.svelte.js";
+  import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
 
   let {
     legacySourceHandleIds = [],

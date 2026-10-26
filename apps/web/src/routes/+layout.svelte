@@ -1,9 +1,9 @@
 <script lang="ts">
   import "../app.css";
-  import { resolve } from "$app/paths";
+  import { base } from "$app/paths";
   import { onMount } from "svelte";
-  import FeedbackHost from "#lib/components/feedback/FeedbackHost.svelte";
-  import { watchShellCanonical } from "#lib/seo/shell-canonical.js";
+  import FeedbackHost from "$lib/components/feedback/FeedbackHost.svelte";
+  import { watchShellCanonical } from "$lib/seo/shell-canonical";
   let { children } = $props();
 
   // Only render a global override when a staging/preview build sets it
@@ -25,10 +25,10 @@
   // for pages that never generate (blog, privacy, landing).
   onMount(() => {
     const stopShellCanonical = watchShellCanonical(document);
-    void import("#lib/services/ai/session-bootstrap.js").then((m) =>
+    void import("$lib/services/ai/session-bootstrap").then((m) =>
       m.initAiSession(),
     );
-    void import("#lib/services/mobile/capacitor-bridge.js").then((m) =>
+    void import("$lib/services/mobile/capacitor-bridge").then((m) =>
       m.capacitorBridge.init(),
     );
     return stopShellCanonical;
@@ -43,7 +43,7 @@
     rel="sitemap"
     type="application/xml"
     title="Sitemap"
-    href="{resolve('')}/sitemap.xml"
+    href="{base}/sitemap.xml"
   />
 </svelte:head>
 

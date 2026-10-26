@@ -5,10 +5,10 @@ import {
   type DelveCanvasNode,
 } from "generator-engine";
 import type { Entity } from "schema";
-import { canvasRegistry } from "#lib/stores/canvas-registry.svelte.js";
-import { vault } from "#lib/stores/vault.svelte.js";
-import { systemClock } from "#lib/utils/runtime-deps.js";
-import type { LocalEntity } from "#lib/stores/vault/types.js";
+import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
+import { vault } from "$lib/stores/vault.svelte";
+import { systemClock } from "$lib/utils/runtime-deps";
+import type { LocalEntity } from "$lib/stores/vault/types";
 
 export interface FinalizeDelveDossierRequest {
   canvas: Canvas;

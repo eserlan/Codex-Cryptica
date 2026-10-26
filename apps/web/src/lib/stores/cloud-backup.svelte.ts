@@ -27,7 +27,7 @@ import type {
   CloudBackupDirtyStore,
 } from "./cloud-backup-dirty";
 import type { DurableVaultChange } from "./vault/registry";
-import { browserStorage, type StorageLike } from "#lib/utils/runtime-deps.js";
+import { browserStorage, type StorageLike } from "$lib/utils/runtime-deps";
 export { cloudBackupBrowserStorage } from "./cloud-backup-browser-storage";
 
 /**

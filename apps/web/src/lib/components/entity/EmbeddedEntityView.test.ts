@@ -15,13 +15,13 @@ vi.mock("../zen/ZenView.svelte", async () => ({
   default: (await import("./__tests__/ZenViewStub.svelte")).default,
 }));
 
-vi.mock("#lib/stores/ui/navigation.js", () => ({
+vi.mock("$lib/stores/ui/navigation", () => ({
   focusEntity: vi.fn(),
 }));
 
 let isExplorerWorkspace = false;
 
-vi.mock("#lib/stores/ui/layout-ui.svelte.js", () => ({
+vi.mock("$lib/stores/ui/layout-ui.svelte", () => ({
   layoutUIStore: {
     get isEntityExplorerWorkspace() {
       return isExplorerWorkspace;
@@ -31,8 +31,8 @@ vi.mock("#lib/stores/ui/layout-ui.svelte.js", () => ({
 }));
 
 import EmbeddedEntityView from "./EmbeddedEntityView.svelte";
-import { layoutUIStore } from "#lib/stores/ui/layout-ui.svelte.js";
-import { focusEntity } from "#lib/stores/ui/navigation.js";
+import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
+import { focusEntity } from "$lib/stores/ui/navigation";
 
 describe("EmbeddedEntityView", () => {
   beforeEach(() => {

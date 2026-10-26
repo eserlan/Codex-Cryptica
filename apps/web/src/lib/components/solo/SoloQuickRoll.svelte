@@ -1,8 +1,8 @@
 <script lang="ts">
   import { diceEngine, diceParser } from "dice-engine";
   import { resolveQuickRoll } from "solo-session-engine";
-  import { soloSessionStore } from "#lib/stores/solo-session-instance.js";
-  import { diceHistory } from "#lib/stores/dice-history.svelte.js";
+  import { soloSessionStore } from "$lib/stores/solo-session-instance";
+  import { diceHistory } from "$lib/stores/dice-history.svelte";
 
   let input = $state("");
   let result = $state<string | null>(null);

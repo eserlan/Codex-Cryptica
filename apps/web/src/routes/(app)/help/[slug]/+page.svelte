@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { parserService } from "#lib/services/parser.js";
-  import { browser } from "$app/env";
-  import { renderMarkdown } from "#lib/utils/markdown.js";
+  import { parserService } from "$lib/services/parser";
+  import { browser } from "$app/environment";
+  import { renderMarkdown } from "$lib/utils/markdown";
   import DOMPurify from "dompurify";
-  import { resolve } from "$app/paths";
+  import { base } from "$app/paths";
 
   let { data } = $props();
   const { article } = data;
@@ -46,7 +46,7 @@
       </p>
     </div>
     <a
-      href="{resolve('')}/help"
+      href="{base}/help"
       class="text-xs text-theme-muted hover:text-theme-primary transition-colors uppercase font-mono tracking-widest flex items-center gap-2"
     >
       <span aria-hidden="true" class="icon-[lucide--chevron-left] w-4 h-4"

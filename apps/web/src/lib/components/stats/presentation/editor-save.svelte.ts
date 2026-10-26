@@ -3,8 +3,8 @@ import {
   type PresentationTemplate,
 } from "schema";
 import { sanitizeSource } from "@codex/stat-sheet-engine";
-import { presentationTemplates } from "#lib/stores/presentation-templates.svelte.js";
-import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
+import { presentationTemplates } from "$lib/stores/presentation-templates.svelte";
+import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
 type SaveInput = Parameters<typeof presentationTemplates.saveTemplate>[0];
 type EditorDraft = Omit<SaveInput, "description" | "formatVersion"> & {

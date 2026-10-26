@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { vault } from "#lib/stores/vault.svelte.js";
+  import { vault } from "$lib/stores/vault.svelte";
   import { fade } from "svelte/transition";
 
   let {

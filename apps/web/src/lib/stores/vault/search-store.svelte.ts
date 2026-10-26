@@ -4,7 +4,7 @@ import {
   buildSearchAliases,
   buildSearchKeywords,
 } from "@codex/search-orchestrator";
-import { systemClock } from "#lib/utils/runtime-deps.js";
+import { systemClock } from "$lib/utils/runtime-deps";
 
 export class SearchStore {
   constructor(private _serviceRegistry: ServiceRegistry) {

@@ -13,7 +13,7 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
   cancel: () => {},
 });
 
-vi.mock("#lib/stores/ui/modal-ui.svelte.js", () => {
+vi.mock("$lib/stores/ui/modal-ui.svelte", () => {
   const workflow = {
     open: true,
     launchMode: "workspace" as "workspace" | "contextual",
@@ -35,13 +35,13 @@ const captureMocks = vi.hoisted(() => ({
   result: vi.fn(),
   saved: vi.fn(),
 }));
-vi.mock("#lib/services/generator-journal-capture.js", () => ({
+vi.mock("$lib/services/generator-journal-capture", () => ({
   publishGeneratedCapture: captureMocks.result,
   publishGeneratedSaved: captureMocks.saved,
 }));
 
 const soloMock = vi.hoisted(() => ({ isActive: false }));
-vi.mock("#lib/stores/solo-session-instance.js", () => ({
+vi.mock("$lib/stores/solo-session-instance", () => ({
   soloSessionStore: soloMock,
 }));
 
@@ -60,7 +60,7 @@ const campaignServiceMocks = vi.hoisted(() => ({
     ((stats: import("generator-engine").AdventureStagedStats) => void) | null,
 }));
 
-vi.mock("#lib/actions/focusTrap.js", () => ({
+vi.mock("$lib/actions/focusTrap", () => ({
   focusTrap: () => ({ destroy: () => {} }),
 }));
 
@@ -90,11 +90,11 @@ const { vaultMock, saveDraftMock, notifyMock } = vi.hoisted(() => {
   return { vaultMock, saveDraftMock, notifyMock };
 });
 
-vi.mock("#lib/stores/vault.svelte.js", () => ({
+vi.mock("$lib/stores/vault.svelte", () => ({
   vault: vaultMock,
 }));
 
-vi.mock("#lib/stores/categories.svelte.js", () => ({
+vi.mock("$lib/stores/categories.svelte", () => ({
   categories: {
     list: [
       { id: "character", label: "Character" },
@@ -103,7 +103,7 @@ vi.mock("#lib/stores/categories.svelte.js", () => ({
   },
 }));
 
-vi.mock("#lib/stores/ui/notification.svelte.js", () => ({
+vi.mock("$lib/stores/ui/notification.svelte", () => ({
   notificationStore: {
     notify: notifyMock,
   },
@@ -149,8 +149,8 @@ vi.mock("generator-engine", async () => {
 });
 
 import CampaignGeneratorModal from "./CampaignGeneratorModal.svelte";
-import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
-import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
+import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
 const store = modalUIStore as typeof modalUIStore & {
   _workflow: {

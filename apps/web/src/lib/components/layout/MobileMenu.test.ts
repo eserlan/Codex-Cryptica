@@ -3,13 +3,13 @@
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import MobileMenu from "./MobileMenu.svelte";
-import { guidedModeStore } from "#lib/stores/ui/guided-mode.svelte.js";
-import { layoutUIStore } from "#lib/stores/ui/layout-ui.svelte.js";
-import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
-import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
-import { vault } from "#lib/stores/vault.svelte.js";
-import { vaultRegistry } from "#lib/stores/vault-registry.svelte.js";
-import { sessionJournalStore } from "#lib/stores/session-journal.svelte.js";
+import { guidedModeStore } from "$lib/stores/ui/guided-mode.svelte";
+import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+import { vault } from "$lib/stores/vault.svelte";
+import { vaultRegistry } from "$lib/stores/vault-registry.svelte";
+import { sessionJournalStore } from "$lib/stores/session-journal.svelte";
 
 // jsdom has no Web Animations API, which Svelte's transitions drive. The
 // drawer's open and close behaviour is the subject here, not its animation.
@@ -21,8 +21,6 @@ vi.mock("svelte/transition", async (importOriginal) => ({
 
 vi.mock("$app/paths", () => ({
   base: "",
-  asset: (p: string) => p,
-  resolve: (p: string) => p,
 }));
 
 vi.mock("$app/state", () => ({
@@ -31,11 +29,11 @@ vi.mock("$app/state", () => ({
   },
 }));
 
-vi.mock("#lib/config/index.js", () => ({
+vi.mock("$lib/config", () => ({
   PATREON_URL: "https://patreon.com/EspenE",
 }));
 
-vi.mock("#lib/components/VaultControls.svelte", () => ({
+vi.mock("$lib/components/VaultControls.svelte", () => ({
   default: function VaultControlsMock() {
     return {};
   },

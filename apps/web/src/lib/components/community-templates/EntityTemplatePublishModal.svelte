@@ -11,8 +11,8 @@
   import {
     entityTemplatePublishStore,
     type PublishMetadata,
-  } from "#lib/stores/entity-templates/entity-template-publish-store.svelte.js";
-  import EntityTemplatePreview from "#lib/components/settings/entity-templates/EntityTemplatePreview.svelte";
+  } from "$lib/stores/entity-templates/entity-template-publish-store.svelte";
+  import EntityTemplatePreview from "$lib/components/settings/entity-templates/EntityTemplatePreview.svelte";
   import SharingHelpLink from "./SharingHelpLink.svelte";
   import PublishedTokenPanel from "./PublishedTokenPanel.svelte";
   import PublishDetailsFields from "./PublishDetailsFields.svelte";

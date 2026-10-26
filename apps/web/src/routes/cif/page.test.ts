@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 import { render, screen, waitFor } from "@testing-library/svelte";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { CIF_CHANNEL } from "#lib/services/help-assistant/cif-popout-protocol.js";
+import { CIF_CHANNEL } from "$lib/services/help-assistant/cif-popout-protocol";
 import Page from "./+page.svelte";
 
 beforeEach(() => {

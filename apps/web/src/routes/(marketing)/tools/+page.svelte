@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { resolve } from "$app/paths";
+  import { base } from "$app/paths";
 
   type ToolLink = {
     href: string;
@@ -7,7 +7,12 @@
     summary: string;
     icon: string;
   };
-  type ToolGroup = { title?: string; links: ToolLink[] };
+
+  type ToolGroup = {
+    title?: string;
+    links: ToolLink[];
+  };
+
   type ToolSection = {
     title: string;
     description: string;
@@ -629,10 +634,8 @@
     name="description"
     content="Browse Codex Cryptica's RPG generators, campaign tools, solution pages, and comparison guides from one central tools hub."
   />
-
   <link rel="canonical" href="https://codexcryptica.com/tools" />
-
-  <link rel="help" href="{resolve('')}/llms.txt" />
+  <link rel="help" href="{base}/llms.txt" />
 </svelte:head>
 
 <div
@@ -652,7 +655,6 @@
         >
           RPG Tools, Generators, and Comparisons
         </h1>
-
         <p class="text-base md:text-lg text-theme-muted leading-relaxed">
           A central index for Codex Cryptica's public campaign tools,
           generators, solution pages, and comparison guides.
@@ -689,7 +691,7 @@
                 {#each group.links as link (link.href)}
                   <li>
                     <a
-                      href="{resolve('')}{link.href}"
+                      href="{base}{link.href}"
                       class="group block h-full rounded-xl border border-theme-border/60 bg-theme-surface/35 p-5 hover:border-theme-primary/60 hover:bg-theme-surface/55 transition-colors"
                     >
                       <span

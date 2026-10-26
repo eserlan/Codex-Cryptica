@@ -67,7 +67,7 @@ vi.mock("../debug.svelte", () => ({
   },
 }));
 
-import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 describe("EntityStore", () => {
   let repository: {
     entities: Record<string, LocalEntity>;

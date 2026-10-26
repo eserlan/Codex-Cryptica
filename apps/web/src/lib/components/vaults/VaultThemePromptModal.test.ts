@@ -11,20 +11,20 @@ const vaultThemePromptModalMocks = vi.hoisted(() => ({
   markAppliedMock: vi.fn(),
 }));
 
-vi.mock("#lib/stores/theme.svelte.js", () => ({
+vi.mock("$lib/stores/theme.svelte", () => ({
   themeStore: {
     setTheme: vaultThemePromptModalMocks.setThemeMock,
   },
 }));
 
-vi.mock("#lib/stores/ui/modal-ui.svelte.js", () => ({
+vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
   modalUIStore: {
     vaultThemePrompt: { open: true, vaultId: "v1" },
     closeVaultThemePrompt: vaultThemePromptModalMocks.closeVaultThemePromptMock,
   },
 }));
 
-vi.mock("#lib/stores/ui/vault-theme-prompt.svelte.js", () => ({
+vi.mock("$lib/stores/ui/vault-theme-prompt.svelte", () => ({
   vaultThemePromptStore: {
     markDismissed: vaultThemePromptModalMocks.markDismissedMock,
     markApplied: vaultThemePromptModalMocks.markAppliedMock,

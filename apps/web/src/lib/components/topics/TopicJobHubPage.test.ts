@@ -1,15 +1,11 @@
 import { render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("$app/paths", () => ({
-  base: "",
-  asset: (p: string) => p,
-  resolve: (p: string) => p,
-}));
+vi.mock("$app/paths", () => ({ base: "" }));
 vi.mock("$app/environment", () => ({ browser: false }));
 
 import TopicJobHubPage from "./TopicJobHubPage.svelte";
-import { DND_TOPIC_CONFIG } from "#lib/content/topics/dnd.js";
+import { DND_TOPIC_CONFIG } from "$lib/content/topics/dnd";
 
 describe("TopicJobHubPage", () => {
   it("leads with the primary call to action, then the DM jobs", () => {

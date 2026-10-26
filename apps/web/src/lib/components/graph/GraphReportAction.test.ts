@@ -8,8 +8,8 @@ const { vaultState, openSelectionReport } = vi.hoisted(() => ({
   openSelectionReport: vi.fn(),
 }));
 
-vi.mock("#lib/stores/vault.svelte.js", () => ({ vault: vaultState }));
-vi.mock("#lib/components/reports/open-selection-report.js", () => ({
+vi.mock("$lib/stores/vault.svelte", () => ({ vault: vaultState }));
+vi.mock("$lib/components/reports/open-selection-report", () => ({
   openSelectionReport,
 }));
 

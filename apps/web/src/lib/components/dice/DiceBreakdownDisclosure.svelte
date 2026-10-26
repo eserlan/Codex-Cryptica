@@ -3,7 +3,7 @@
   import {
     hasBreakdownDetail,
     type DiceBreakdownPart,
-  } from "#lib/utils/dice-breakdown.js";
+  } from "$lib/utils/dice-breakdown";
 
   /**
    * Compact by default, transparent on demand (#3443): a small chevron that

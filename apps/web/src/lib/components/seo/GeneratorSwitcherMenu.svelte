@@ -1,14 +1,11 @@
 <script lang="ts">
-  import { resolve } from "$app/paths";
-  import { browser } from "$app/env";
+  import { base } from "$app/paths";
+  import { browser } from "$app/environment";
   import { fade } from "svelte/transition";
-  import { themeStore } from "#lib/stores/theme.svelte.js";
-  import {
-    generatorPath,
-    groupGeneratorCatalogue,
-  } from "#lib/content/generator-catalogue.js";
+  import { themeStore } from "$lib/stores/theme.svelte";
 
-  const cleanBase = resolve("") === "/" ? "" : resolve("");
+  const cleanBase = base === "/" ? "" : base;
+
   let { canonicalPath, eyebrow }: { canonicalPath?: string; eyebrow: string } =
     $props();
 
@@ -16,7 +13,6 @@
   const FANTASY_ONLY = new Set([
     "/generators/dnd-npc",
     "/generators/fantasy-names",
-    "/generators/item",
     "/generators/magic-item",
     "/generators/kingdom",
     "/generators/pantheon-generator",
@@ -32,13 +28,123 @@
   // cosmic-horror one.
   const NOMAD_CLAN_EXCLUDED_THEMES = new Set(["pirate", "cosmic_horror"]);
 
-  const GENERATOR_GROUPS = groupGeneratorCatalogue().map((group) => ({
-    label: group.label,
-    items: group.items.map((entry) => ({
-      label: entry.label,
-      path: generatorPath(entry.slug),
-    })),
-  }));
+  const GENERATOR_GROUPS = [
+    {
+      label: "Characters & Names",
+      items: [
+        { label: "RPG NPC Generator", path: "/generators/npc" },
+        { label: "D&D NPC Generator", path: "/generators/dnd-npc" },
+        { label: "Vampire Clan Generator", path: "/generators/vampire-clan" },
+        { label: "Nomad Clan Generator", path: "/generators/nomad-clan" },
+        { label: "RPG Name Generator", path: "/generators/names" },
+        { label: "Fantasy Name Generator", path: "/generators/fantasy-names" },
+        {
+          label: "Superhero Origin Generator",
+          path: "/generators/origin-generator",
+        },
+      ],
+    },
+    {
+      label: "Worldbuilding",
+      items: [
+        { label: "Holiday & Festival Generator", path: "/generators/holiday" },
+        { label: "Faction Generator", path: "/generators/faction" },
+        {
+          label: "Faction Roster Generator",
+          path: "/generators/faction-roster",
+        },
+        {
+          label: "Dark Fantasy Faction Generator",
+          path: "/generators/dark-fantasy-faction",
+        },
+        { label: "Settlement Generator", path: "/generators/settlement" },
+        { label: "Star System Generator", path: "/generators/star-system" },
+        { label: "Constellation Generator", path: "/generators/constellation" },
+        { label: "Alien Race Generator", path: "/generators/alien-race" },
+        { label: "Creature Generator", path: "/generators/creature" },
+        { label: "Ship Generator", path: "/generators/ship-generator" },
+        {
+          label: "Language Profile Generator",
+          path: "/generators/language-generator",
+        },
+        { label: "Kingdom Generator", path: "/generators/kingdom" },
+        { label: "Nation Generator", path: "/generators/nation" },
+        { label: "Pantheon Generator", path: "/generators/pantheon-generator" },
+        { label: "God & Deity Generator", path: "/generators/god-generator" },
+      ],
+    },
+    {
+      label: "Adventure",
+      items: [
+        {
+          label: "Dungeon & Delve Generator",
+          path: "/generators/dungeon-generator",
+        },
+        {
+          label: "Adventure Idea Generator",
+          path: "/generators/adventure-generator",
+        },
+        {
+          label: "One-Shot Adventure Builder",
+          path: "/generators/one-shot-adventure-generator",
+        },
+        {
+          label: "Mystery & Investigation Generator",
+          path: "/generators/mystery-investigation",
+        },
+        {
+          label: "Point Crawl Generator",
+          path: "/generators/point-crawl",
+        },
+        { label: "Business Generator", path: "/generators/business" },
+        { label: "Quest Hook Generator", path: "/generators/quest" },
+        { label: "Rumour Generator", path: "/generators/rumour" },
+        { label: "Encounter Generator", path: "/generators/encounter" },
+        { label: "Puzzle Generator", path: "/generators/puzzle" },
+        {
+          label: "Plot Twist & Complication Generator",
+          path: "/generators/plot-twist-generator",
+        },
+        {
+          label: "BBEG / Campaign Villain Generator",
+          path: "/generators/bbeg-generator",
+        },
+        {
+          label: "Comic Book Event Generator",
+          path: "/generators/comic-book-event-generator",
+        },
+        {
+          label: "Villain Scheme Generator",
+          path: "/generators/villain-scheme-generator",
+        },
+        { label: "Heist Generator", path: "/generators/heist" },
+        { label: "Council Vote Generator", path: "/generators/council-vote" },
+        {
+          label: "Secret Society Generator",
+          path: "/generators/secret-society",
+        },
+        { label: "Magic Item Generator", path: "/generators/magic-item" },
+        {
+          label: "Minor Magic Item & Trinket Generator",
+          path: "/generators/minor-magic-item",
+        },
+        {
+          label: "Artifact & Relic Generator",
+          path: "/generators/artifact-generator",
+        },
+        {
+          label: "Tome & Forbidden Book Generator",
+          path: "/generators/tome",
+        },
+        { label: "Tavern Generator", path: "/generators/tavern" },
+        { label: "Social Hub Generator", path: "/generators/social-hub" },
+        {
+          label: "News Sheet Generator",
+          path: "/generators/news-sheet-generator",
+        },
+      ],
+    },
+  ];
 
   const visibleGroups = $derived.by(() => {
     const themeId = themeStore.worldThemeId;
@@ -127,7 +233,7 @@
     <div
       bind:this={menuEl}
       transition:fade={{ duration: 100 }}
-      class="absolute left-0 top-full mt-1.5 z-50 w-64 max-h-[70vh] overflow-y-auto rounded-xl border border-theme-border/60 bg-theme-surface shadow-xl backdrop-blur-sm"
+      class="absolute left-0 top-full mt-1.5 z-50 w-64 rounded-xl border border-theme-border/60 bg-theme-surface shadow-xl backdrop-blur-sm overflow-hidden"
       role="menu"
       aria-labelledby="generator-switcher-btn"
     >

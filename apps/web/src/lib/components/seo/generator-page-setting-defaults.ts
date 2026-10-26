@@ -11,7 +11,7 @@ import {
   socialHubConfig,
   starSystemConfig,
   worldConfig,
-} from "#lib/services/seo/generator-config.js";
+} from "$lib/services/seo/generator-config";
 import {
   SETTLEMENT_GENRE_FOR_HUB,
   mapHubGenreToShipGenre,

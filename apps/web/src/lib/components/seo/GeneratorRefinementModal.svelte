@@ -1,7 +1,7 @@
 <script lang="ts">
   import { tick } from "svelte";
   import type { RefinementDocument } from "generator-engine";
-  import { GeneratorRefinementService } from "#lib/services/GeneratorRefinementService.svelte.js";
+  import { GeneratorRefinementService } from "$lib/services/GeneratorRefinementService.svelte";
 
   let {
     open,

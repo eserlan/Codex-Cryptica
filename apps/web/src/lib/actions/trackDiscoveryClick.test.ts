@@ -2,7 +2,7 @@
 
 import { describe, it, expect, vi } from "vitest";
 import { trackDiscoveryClick } from "./trackDiscoveryClick";
-import * as discoveryTracking from "#lib/services/analytics/discovery-tracking.js";
+import * as discoveryTracking from "$lib/services/analytics/discovery-tracking";
 
 describe("trackDiscoveryClick action", () => {
   it("fires trackDiscoveryClick with the given params on a real click", () => {

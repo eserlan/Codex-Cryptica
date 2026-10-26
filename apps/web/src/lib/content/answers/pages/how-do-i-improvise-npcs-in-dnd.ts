@@ -109,7 +109,7 @@ export const howDoIImproviseNpcsInDnd: AnswerConfigInput = {
       items: [
         {
           term: "Give them a name if they do not have one",
-          text: "Mara is easier to recall than 'the stable hand'. A name is the cheapest form of continuity you can add. Stuck for one mid-scene? The [Fantasy Name Generator](/generators/fantasy-names) gives you a handful to pick from.",
+          text: "Mara is easier to recall than 'the stable hand'. A name is the cheapest form of continuity you can add.",
         },
         {
           term: "Capture only what was established",

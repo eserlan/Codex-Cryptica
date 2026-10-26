@@ -1,19 +1,19 @@
 import { getDB } from "../utils/idb";
 import type { GuestChatTranscript, GuestChatMessage } from "schema";
 import { vault } from "./vault.svelte";
-import { p2pGuestService } from "#lib/cloud-bridge/p2p/guest-service.js";
+import { p2pGuestService } from "$lib/cloud-bridge/p2p/guest-service";
 import { oracle } from "./oracle.svelte";
-import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
-import { discoveryPolicyStore } from "#lib/stores/ui/discovery-policy.svelte.js";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
 import type { OracleExecutionContext } from "@codex/oracle-engine";
 import { extractCueAndQuery } from "@codex/oracle-engine";
-import { oracleBridge } from "#lib/cloud-bridge/oracle-bridge.js";
+import { oracleBridge } from "$lib/cloud-bridge/oracle-bridge";
 import * as Comlink from "comlink";
 import {
   systemClock,
   type IdGenerator,
   systemIdGenerator,
-} from "#lib/utils/runtime-deps.js";
+} from "$lib/utils/runtime-deps";
 
 function resolveGuestCharacterId(
   username: string | null | undefined,

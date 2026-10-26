@@ -6,13 +6,13 @@
     mentions = [],
     lookup,
     onOpen,
-  }: {
+  } = $props<{
     text: string;
     mentions?: Mention[];
     /** Returns the live title for a visible entity, or undefined when it is gone. */
     lookup: (entityId: string) => string | undefined;
     onOpen: (entityId: string) => void;
-  } = $props();
+  }>();
 
   const segments = $derived(segmentText(text, mentions));
 </script>

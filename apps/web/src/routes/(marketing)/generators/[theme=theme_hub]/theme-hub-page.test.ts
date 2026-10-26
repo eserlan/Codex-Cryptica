@@ -4,8 +4,8 @@ import { render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import Page from "./+page.svelte";
 import type { ThemeSlug } from "./+page";
-import { HUB_THEME_SLUGS } from "#lib/content/hub-themes.js";
-import { getLandingPagesForHub } from "#lib/content/for/registry.js";
+import { HUB_THEME_SLUGS } from "$lib/content/hub-themes";
+import { getLandingPagesForHub } from "$lib/content/for/registry";
 
 vi.mock("$app/environment", () => ({
   browser: true,
@@ -13,8 +13,6 @@ vi.mock("$app/environment", () => ({
 
 vi.mock("$app/paths", () => ({
   base: "",
-  asset: (p: string) => p,
-  resolve: (p: string) => p,
 }));
 
 if (typeof Element !== "undefined" && !Element.prototype.animate) {

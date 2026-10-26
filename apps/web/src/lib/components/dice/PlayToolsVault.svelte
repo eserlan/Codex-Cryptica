@@ -3,17 +3,17 @@
     randomSources,
     deckService,
     ensureRandomSourcesLoaded,
-  } from "#lib/features/random/index.js";
-  import type { RandomSourceStore } from "#lib/stores/random-source-store.svelte.js";
+  } from "$lib/features/random";
+  import type { RandomSourceStore } from "$lib/stores/random-source-store.svelte";
   import { DeckService, type RandomSource } from "random-source-engine";
   import {
     diceHistory,
     type DiceHistoryStore,
-  } from "#lib/stores/dice-history.svelte.js";
-  import { mapSession } from "#lib/stores/map-session.svelte.js";
+  } from "$lib/stores/dice-history.svelte";
+  import { mapSession } from "$lib/stores/map-session.svelte";
   import DiceVault from "./DiceVault.svelte";
-  import DeckUseView from "#lib/components/random/DeckUseView.svelte";
-  import TableUseView from "#lib/components/random/TableUseView.svelte";
+  import DeckUseView from "$lib/components/random/DeckUseView.svelte";
+  import TableUseView from "$lib/components/random/TableUseView.svelte";
 
   export type PlayToolsTab = "dice" | "decks" | "tables";
 

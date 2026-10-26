@@ -316,7 +316,7 @@ export const solutions: Record<string, SEOPageData> = {
       "Create deep fantasy lore without writing from scratch. Codex Cryptica's AI worldbuilding tools help you draft detailed characters, histories, and locations. The built-in Lore Oracle reads your active vault's context, ensuring new additions stay consistent with your established world. All prompts are processed directly via your own API key under strict creative privacy.",
     ctaText: "Try AI Assistant Features",
     secondaryCtaText: "Try name generator",
-    secondaryCtaHref: "/generators/fantasy-names",
+    secondaryCtaHref: "/tools/fantasy-name-generator",
     keywords: [
       "ai worldbuilding tool",
       "ai lore generator",

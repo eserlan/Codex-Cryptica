@@ -1,6 +1,6 @@
 import type { Token } from "../../../types/vtt";
 import { nextZIndexInLayer, type MapLayer } from "map-engine";
-import type { IdGenerator } from "#lib/utils/runtime-deps.js";
+import type { IdGenerator } from "$lib/utils/runtime-deps";
 
 /** Hydrate authored entity text while preserving independent token metadata. */
 export function hydrateTokenRecords(

@@ -1,7 +1,7 @@
 /**
  * Single source of truth for the static sitemap paths and XML row rendering.
  * Shared by the `/sitemap.xml` route, `scripts/generate-sitemap.mjs` (run with
- * Bun, so this file must stay dependency-free and use no `#lib` aliases) and
+ * Bun, so this file must stay dependency-free and use no `$lib` aliases) and
  * the `sitemap.ts` helper, so a new public route is added in exactly one place.
  */
 

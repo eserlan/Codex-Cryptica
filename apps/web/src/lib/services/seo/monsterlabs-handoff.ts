@@ -2,18 +2,18 @@
  * MonsterLabs collaboration (#2871, #2872): hand Codex characters, creatures,
  * and items off to MonsterLabs' D&D monster and magic item generators so
  * fiction-first content can become playable mechanics without copy/paste.
- * Built on the generic outbound handoff in `#lib/utils/external-generator-handoff.js`.
+ * Built on the generic outbound handoff in `$lib/utils/external-generator-handoff`.
  */
 import {
   buildExternalGeneratorUrl,
   sendToExternalGenerator,
   type ExternalGeneratorHandoffResult,
-} from "#lib/utils/external-generator-handoff.js";
+} from "$lib/utils/external-generator-handoff";
 import {
   compressMonsterLabsDescription,
   MONSTERLABS_PROMPT_CHAR_LIMIT,
 } from "./monsterlabs-description-compression";
-import { discoveryPolicyStore } from "#lib/stores/ui/discovery-policy.svelte.js";
+import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
 
 export const MONSTERLABS_MONSTER_GENERATOR_URL =
   "https://monsterlabs.app/dnd-monster-generator";

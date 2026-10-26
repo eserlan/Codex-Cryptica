@@ -9,7 +9,7 @@ const { rollStatSheetDiceField } = vi.hoisted(() => ({
   rollStatSheetDiceField: vi.fn(),
 }));
 
-vi.mock("#lib/utils/stat-sheet-field-actions.js", () => ({
+vi.mock("$lib/utils/stat-sheet-field-actions", () => ({
   rollStatSheetDiceField,
 }));
 

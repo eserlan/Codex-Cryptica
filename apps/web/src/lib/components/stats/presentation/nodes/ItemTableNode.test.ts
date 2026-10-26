@@ -23,11 +23,11 @@ const { rollStatSheetDiceField, vaultState } = vi.hoisted(() => ({
   },
 }));
 
-vi.mock("#lib/utils/stat-sheet-field-actions.js", () => ({
+vi.mock("$lib/utils/stat-sheet-field-actions", () => ({
   rollStatSheetDiceField,
 }));
 
-vi.mock("#lib/stores/vault.svelte.js", () => ({
+vi.mock("$lib/stores/vault.svelte", () => ({
   vault: {
     get entities() {
       return vaultState.entities;

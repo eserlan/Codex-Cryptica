@@ -1,4 +1,4 @@
-import { resolveOracleProxyUrl } from "#lib/config/oracle-proxy.js";
+import { resolveOracleProxyUrl } from "$lib/config/oracle-proxy";
 
 /**
  * Anonymous community usefulness aggregates (spec 164).

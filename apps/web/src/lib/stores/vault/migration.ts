@@ -17,7 +17,7 @@ import {
 } from "../../utils/idb";
 import { debugStore } from "../debug.svelte";
 import { walkDirectory } from "../../utils/fs";
-import { systemClock } from "#lib/utils/runtime-deps.js";
+import { systemClock } from "$lib/utils/runtime-deps";
 
 const LEGACY_OPFS_MIGRATION_VERSION = 1;
 

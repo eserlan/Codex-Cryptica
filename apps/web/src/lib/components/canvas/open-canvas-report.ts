@@ -1,8 +1,8 @@
 import type { Edge, Node } from "@xyflow/svelte";
 import type { Canvas } from "@codex/canvas-engine";
-import { vault } from "#lib/stores/vault.svelte.js";
-import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
-import { reportPanelStore } from "#lib/stores/ui/report-panel.svelte.js";
+import { vault } from "$lib/stores/vault.svelte";
+import { notificationStore } from "$lib/stores/ui/notification.svelte";
+import { reportPanelStore } from "$lib/stores/ui/report-panel.svelte";
 import { useCanvasReportGeneration } from "./canvas-report-generation";
 
 const getEntity = (id: string) => vault.entities[id];

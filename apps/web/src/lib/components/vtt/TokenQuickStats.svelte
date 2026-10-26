@@ -1,15 +1,15 @@
 <script lang="ts">
   import type { Entity, StatSheetField } from "schema";
-  import { vault } from "#lib/stores/vault.svelte.js";
+  import { vault } from "$lib/stores/vault.svelte";
   import {
     computeAdjustedCounterValue,
     rollStatSheetDiceField,
-  } from "#lib/utils/stat-sheet-field-actions.js";
+  } from "$lib/utils/stat-sheet-field-actions";
   import TovLuckControl from "../stats/TovLuckControl.svelte";
   import TovDoomControl from "../stats/TovDoomControl.svelte";
   import { isTovLuckField, isTovDoomField } from "@codex/stat-sheet-engine";
 
-  let { entity }: { entity: Entity } = $props();
+  let { entity } = $props<{ entity: Entity }>();
 
   const readOnly = $derived(vault.isGuest);
   const fields = $derived(entity.statSheet?.fields ?? []);

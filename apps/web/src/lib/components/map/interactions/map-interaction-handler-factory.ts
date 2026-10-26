@@ -1,6 +1,6 @@
-import { mapSession } from "#lib/stores/map-session.svelte.js";
-import { mapStore } from "#lib/stores/map.svelte.js";
-import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
+import { mapSession } from "$lib/stores/map-session.svelte";
+import { mapStore } from "$lib/stores/map.svelte";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import type { MapFogPainter } from "../map-fog-painter";
 import { BoxSelectionHandler } from "./box-selection-handler.svelte";
 import { ContextMenuInteractionHandler } from "./context-menu-interaction-handler.svelte";
@@ -8,7 +8,7 @@ import { CreationInteractionHandler } from "./creation-interaction-handler";
 import { FogInteractionHandler } from "./fog-interaction-handler";
 import { HexClickInteractionHandler } from "./hex-click-interaction-handler";
 import { createHexClickDependencies } from "./hex-click-adapters";
-import type { HexCrawlStore } from "#lib/stores/hex-crawl/hex-crawl.svelte.js";
+import type { HexCrawlStore } from "$lib/stores/hex-crawl/hex-crawl.svelte";
 import { GridInteractionHandler } from "./grid-interaction-handler.svelte";
 import {
   broadcastActiveMapFogSync,

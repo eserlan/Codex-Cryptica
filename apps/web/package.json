@@ -1,7 +1,7 @@
 {
   "name": "web",
   "private": true,
-  "version": "0.36.10",
+  "version": "0.36.8",
   "type": "module",
   "scripts": {
     "dev": "vite dev",
@@ -120,8 +120,8 @@
     "@iconify-json/mdi": "^1.2.3",
     "@iconify/tailwind4": "^1.2.3",
     "@playwright/test": "^1.60.0",
-    "@sveltejs/adapter-static": "^4.0.0",
-    "@sveltejs/kit": "^3.0.0",
+    "@sveltejs/adapter-static": "^3.0.10",
+    "@sveltejs/kit": "^2.60.1",
     "@sveltejs/vite-plugin-svelte": "^7.1.2",
     "@tailwindcss/typography": "^0.5.20",
     "@tailwindcss/vite": "^4.3.0",
@@ -136,15 +136,11 @@
     "fake-indexeddb": "^6.2.5",
     "jsdom": "^30.0.1",
     "rollup-plugin-visualizer": "^7.0.1",
-    "svelte": "^5.57.1",
-    "svelte-check": "^4.7.5",
+    "svelte": "^5.55.9",
+    "svelte-check": "^4.4.8",
     "tailwindcss": "^4.3.0",
     "typescript": "^6.0.3",
     "vite": "^8.0.14",
     "vitest": "^5.0.0"
-  },
-  "imports": {
-    "#lib": "./src/lib/index.js",
-    "#lib/*": "./src/lib/*"
   }
 }

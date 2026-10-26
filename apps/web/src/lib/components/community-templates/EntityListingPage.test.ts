@@ -4,13 +4,9 @@ import { render, screen, waitFor } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("$app/navigation", () => ({ goto: vi.fn() }));
-vi.mock("$app/paths", () => ({
-  base: "",
-  asset: (p: string) => p,
-  resolve: (p: string) => p,
-}));
+vi.mock("$app/paths", () => ({ resolve: (p: string) => p }));
 vi.mock(
-  "#lib/services/publishing/PublicEntityTemplateDirectoryService.js",
+  "$lib/services/publishing/PublicEntityTemplateDirectoryService",
   () => ({
     publicEntityTemplateDirectoryService: { probeListing: vi.fn() },
   }),

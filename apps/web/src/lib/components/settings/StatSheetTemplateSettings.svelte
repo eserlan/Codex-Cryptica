@@ -1,17 +1,17 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
   import type { StatSheetTemplate } from "schema";
-  import { statSheetTemplates } from "#lib/stores/stat-sheet-templates.svelte.js";
-  import { BUILT_IN_STAT_SHEET_TEMPLATES } from "#lib/stores/stat-sheet/built-in-templates.js";
-  import { categories } from "#lib/stores/categories.svelte.js";
-  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
-  import { vaultRegistry } from "#lib/stores/vault-registry.svelte.js";
-  import TemplatePublishModal from "#lib/components/stats/community-template/TemplatePublishModal.svelte";
-  import { presentationTemplates } from "#lib/stores/presentation-templates.svelte.js";
+  import { statSheetTemplates } from "$lib/stores/stat-sheet-templates.svelte";
+  import { BUILT_IN_STAT_SHEET_TEMPLATES } from "$lib/stores/stat-sheet/built-in-templates";
+  import { categories } from "$lib/stores/categories.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { vaultRegistry } from "$lib/stores/vault-registry.svelte";
+  import TemplatePublishModal from "$lib/components/stats/community-template/TemplatePublishModal.svelte";
+  import { presentationTemplates } from "$lib/stores/presentation-templates.svelte";
   import { importPresentationTemplatePackage } from "@codex/stat-sheet-engine";
   import type { PresentationTemplate } from "schema";
 
-  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
   const handleDefaultChange = (categoryId: string, templateId: string) => {
     statSheetTemplates.setDefaultTemplate(categoryId, templateId || null);
@@ -21,6 +21,7 @@
   let renameValue = $state("");
   let expandedIds = $state(new Set<string>());
   let selectedPresentationSchemaId = $state<string>("");
+
   const selectedPresentationSchema = $derived(
     statSheetTemplates.availableTemplates.find(
       (t) => t.id === selectedPresentationSchemaId,
@@ -504,7 +505,6 @@
         >
           Applicable Templates for Vault ({vaultRegistry.vaultName})
         </h4>
-
         <p class="text-micro text-theme-muted mt-1 leading-relaxed">
           Select which stat sheet templates apply to this campaign/vault.
           Disabled templates will be hidden from entity template pickers.
@@ -519,7 +519,6 @@
     >
       Default Template by Category
     </h4>
-
     <p class="text-micro text-theme-muted mb-4 leading-relaxed">
       When set, new entities of that category automatically start with this
       template's fields already applied. Leave as "None" for categories that
@@ -663,7 +662,7 @@
         Vault Templates
       </h4>
       <a
-        href={resolve("/(app)/templates")}
+        href={resolve("/templates")}
         class="inline-flex items-center gap-1.5 rounded border border-theme-primary/40 px-2.5 py-1.5 text-micro font-bold uppercase tracking-wide text-theme-primary transition-colors hover:border-theme-primary hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
         data-testid="browse-community-stat-sheet-templates"
       >

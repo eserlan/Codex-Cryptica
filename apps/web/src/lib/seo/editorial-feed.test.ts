@@ -4,11 +4,11 @@ import {
   renderBlogFeed,
   renderCombinedFeed,
 } from "./editorial-feed";
-import { getAllAnswers } from "#lib/content/answers/registry.js";
+import { getAllAnswers } from "$lib/content/answers/registry";
 import {
   loadBlogIndex,
   loadLocalBlogArticles,
-} from "#lib/content/blog-content.js";
+} from "$lib/content/blog-content";
 
 const count = (xml: string) => (xml.match(/<entry>/g) ?? []).length;
 

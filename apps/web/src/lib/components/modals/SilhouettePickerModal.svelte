@@ -5,11 +5,11 @@
     SilhouetteDefinition,
   } from "schema";
   import { SILHOUETTES, resolveEntitySilhouette } from "schema";
-  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
-  import { vault } from "#lib/stores/vault.svelte.js";
-  import { themeStore } from "#lib/stores/theme.svelte.js";
-  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
-  import SilhouetteGlyph from "#lib/components/ui/SilhouetteGlyph.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { vault } from "$lib/stores/vault.svelte";
+  import { themeStore } from "$lib/stores/theme.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import SilhouetteGlyph from "$lib/components/ui/SilhouetteGlyph.svelte";
 
   const entity = $derived(modalUIStore.silhouettePickerState.entity);
   const currentTheme = $derived(themeStore.activeTheme?.id || "default");

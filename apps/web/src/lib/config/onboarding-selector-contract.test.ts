@@ -31,43 +31,39 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ONBOARDING_TOUR, COACH_MARKS } from "./help-content";
 
-import ActivityBar from "#lib/components/layout/ActivityBar.svelte";
-import AppHeader from "#lib/components/layout/AppHeader.svelte";
-import GraphToolbar from "#lib/components/graph/GraphToolbar.svelte";
-import { discoveryPolicyStore } from "#lib/stores/ui/discovery-policy.svelte.js";
-import { guestChatStore } from "#lib/stores/guest-chat.svelte.js";
-import { layoutUIStore } from "#lib/stores/ui/layout-ui.svelte.js";
-import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
-import { guestStore } from "#lib/stores/guest.svelte.js";
+import ActivityBar from "$lib/components/layout/ActivityBar.svelte";
+import AppHeader from "$lib/components/layout/AppHeader.svelte";
+import GraphToolbar from "$lib/components/graph/GraphToolbar.svelte";
+import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
+import { guestChatStore } from "$lib/stores/guest-chat.svelte";
+import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { guestStore } from "$lib/stores/guest.svelte";
 
-vi.mock("#lib/stores/theme.svelte.js", () => ({
+vi.mock("$lib/stores/theme.svelte", () => ({
   themeStore: { activeTheme: { id: "default" } },
 }));
 vi.mock("$app/state", () => ({ page: { url: { pathname: "/" } } }));
-vi.mock("$app/paths", () => ({
-  base: "",
-  asset: (p: string) => p,
-  resolve: (p: string) => p,
-}));
-vi.mock("#lib/stores/guest-chat.svelte.js", () => ({
+vi.mock("$app/paths", () => ({ base: "" }));
+vi.mock("$lib/stores/guest-chat.svelte", () => ({
   guestChatStore: { showChatModal: false },
 }));
-vi.mock("#lib/config/index.js", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("#lib/config/index.js")>();
+vi.mock("$lib/config", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("$lib/config")>();
   return {
     ...actual,
     IS_STAGING: false,
   };
 });
-vi.mock("#lib/stores/search.svelte.js", () => ({
+vi.mock("$lib/stores/search.svelte", () => ({
   searchStore: { open: vi.fn(), query: "", setQuery: vi.fn() },
 }));
-vi.mock("#lib/components/VaultControls.svelte", () => ({
+vi.mock("$lib/components/VaultControls.svelte", () => ({
   default: function VaultControlsMock() {
     return {};
   },
 }));
-vi.mock("#lib/components/layout/app-header-actions.js", () => ({
+vi.mock("$lib/components/layout/app-header-actions", () => ({
   openFrontPage: vi.fn(),
 }));
 

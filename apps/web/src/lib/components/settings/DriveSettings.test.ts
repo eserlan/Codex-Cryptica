@@ -12,14 +12,14 @@ const mocks = vi.hoisted(() => ({
   confirm: vi.fn(),
 }));
 
-vi.mock("#lib/stores/vault.svelte.js", () => ({
+vi.mock("$lib/stores/vault.svelte", () => ({
   vault: { activeVaultId: "vault-1" },
 }));
-vi.mock("#lib/stores/drive.svelte.js", () => ({ driveStore: {} }));
-vi.mock("#lib/stores/ui/notification.svelte.js", () => ({
+vi.mock("$lib/stores/drive.svelte", () => ({ driveStore: {} }));
+vi.mock("$lib/stores/ui/notification.svelte", () => ({
   notificationStore: { notify: mocks.notify, confirm: mocks.confirm },
 }));
-vi.mock("#lib/utils/idb.js", () => ({ getDB: vi.fn().mockResolvedValue({}) }));
+vi.mock("$lib/utils/idb", () => ({ getDB: vi.fn().mockResolvedValue({}) }));
 vi.mock("@codex/gdrive-sync", () => ({
   connectVaultToDrive: vi.fn(),
   disconnectVaultFromDrive: vi.fn(),

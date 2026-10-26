@@ -1,13 +1,13 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { parse } from "marked";
-  import { asset, resolve } from "$app/paths";
+  import { base } from "$app/paths";
 
   let {
     fileName,
     title,
     initialContent = "",
-  }: { fileName: string; title: string; initialContent?: string } = $props();
+  } = $props<{ fileName: string; title: string; initialContent?: string }>();
   // Local state for client-side fetching fallback
   let fetchedContent = $state("");
 
@@ -22,12 +22,9 @@
     // Only fetch client-side when there was no server-provided content.
     if (initialContent) return;
     try {
-      const targetPath = fileName.replace(/^\//, "");
-      const res = await fetch(asset(targetPath as any));
-
+      const res = await fetch(`${base}/${fileName}`);
       if (!res.ok)
         throw new Error(`Failed to fetch ${fileName}: ${res.statusText}`);
-
       const text = await res.text();
       fetchedContent = parse(text) as string;
     } catch (err) {
@@ -54,7 +51,7 @@
 >
   <div class="mb-8 border-b border-theme-border/30 pb-4">
     <a
-      href={resolve("/(app)")}
+      href="{base}/"
       class="text-theme-primary hover:text-theme-secondary font-mono text-sm flex items-center gap-2"
     >
       <span aria-hidden="true" class="icon-[lucide--arrow-left] w-4 h-4"></span>

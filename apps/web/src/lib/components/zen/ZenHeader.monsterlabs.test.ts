@@ -8,12 +8,10 @@ describe("ZenHeader MonsterLabs handoff action", () => {
   );
 
   it("imports the shared MonsterLabs handoff service and confirm-first flow", () => {
-    expect(source).toMatch(
-      /from "#lib\/services\/seo\/monsterlabs-handoff(\.js)?"/,
-    );
+    expect(source).toContain('from "$lib/services/seo/monsterlabs-handoff"');
     expect(source).toContain("isMonsterLabsHandoffEligibleType");
-    expect(source).toMatch(
-      /from "#lib\/services\/seo\/monsterlabs-handoff-flow\.svelte(\.js)?"/,
+    expect(source).toContain(
+      'from "$lib/services/seo/monsterlabs-handoff-flow.svelte"',
     );
     expect(source).toContain("createMonsterLabsHandoffFlow");
   });

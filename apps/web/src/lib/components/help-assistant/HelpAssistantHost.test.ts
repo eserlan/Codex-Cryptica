@@ -7,20 +7,20 @@ import {
   within,
 } from "@testing-library/svelte";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { discoveryPolicyStore } from "#lib/stores/ui/discovery-policy.svelte.js";
+import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
 import {
   cifPopout,
   helpAssistant,
   helpActionRunner,
   toggleCif,
-} from "#lib/stores/help-assistant/help-runtime.js";
-import { helpHighlight } from "#lib/services/help-assistant/help-highlight.svelte.js";
-import { layoutUIStore } from "#lib/stores/ui/layout-ui.svelte.js";
+} from "$lib/stores/help-assistant/help-runtime";
+import { helpHighlight } from "$lib/services/help-assistant/help-highlight.svelte";
+import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
 import HelpAssistantHost from "./HelpAssistantHost.svelte";
 
 vi.mock("$app/navigation", () => ({ goto: vi.fn(), afterNavigate: vi.fn() }));
 vi.mock("$app/state", () => ({ page: { route: { id: "/(app)" } } }));
-vi.mock("#lib/stores/help.svelte.js", () => ({
+vi.mock("$lib/stores/help.svelte", () => ({
   helpStore: { openHelpToArticle: vi.fn(), openHelpWindow: vi.fn() },
 }));
 

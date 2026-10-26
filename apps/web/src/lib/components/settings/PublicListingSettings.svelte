@@ -14,15 +14,14 @@
     }
     return cut.slice(0, max - 3) + "...";
   }
-
-  import { resolve } from "$app/paths";
+  import { base } from "$app/paths";
   import {
     PublicDirectoryService,
     publicDirectoryService,
-  } from "#lib/services/publishing/PublicDirectoryService.js";
-  import { worldStore } from "#lib/stores/world.svelte.js";
-  import { vault } from "#lib/stores/vault.svelte.js";
-  import { themeStore } from "#lib/stores/theme.svelte.js";
+  } from "$lib/services/publishing/PublicDirectoryService";
+  import { worldStore } from "$lib/stores/world.svelte";
+  import { vault } from "$lib/stores/vault.svelte";
+  import { themeStore } from "$lib/stores/theme.svelte";
 
   interface NotificationLike {
     notify: (message: string, kind?: "success" | "error" | "info") => void;
@@ -561,7 +560,7 @@
 
     {#if existingListing}
       <a
-        href="{resolve('')}/worlds"
+        href="{base}/worlds"
         class="inline-flex items-center gap-1.5 self-start text-xs font-bold uppercase tracking-wider text-theme-primary underline hover:text-theme-primary/80 transition-colors"
         data-testid="public-listing-view-directory"
       >

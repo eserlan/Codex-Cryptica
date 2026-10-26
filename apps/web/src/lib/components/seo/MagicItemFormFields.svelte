@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { magicItemConfig } from "#lib/services/seo/generator-config.js";
-  import SelectWithCustomOption from "#lib/components/forms/SelectWithCustomOption.svelte";
+  import { magicItemConfig } from "$lib/services/seo/generator-config";
+  import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
 
   let {
     type = $bindable(magicItemConfig.typesByTheme["Classic Fantasy"][0]),

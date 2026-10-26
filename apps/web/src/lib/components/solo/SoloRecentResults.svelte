@@ -1,7 +1,7 @@
 <script lang="ts">
   import { recentResults, type JournalEntry } from "session-journal-engine";
-  import { sessionJournalStore } from "#lib/stores/session-journal.svelte.js";
-  import { categories } from "#lib/stores/categories.svelte.js";
+  import { sessionJournalStore } from "$lib/stores/session-journal.svelte";
+  import { categories } from "$lib/stores/categories.svelte";
   import SoloMenu from "./SoloMenu.svelte";
   import SoloSaveResultDialog from "./SoloSaveResultDialog.svelte";
 

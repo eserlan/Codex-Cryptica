@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { JourneyStore } from "#lib/app/onboarding/journey/journey-store.svelte.js";
+  import type { JourneyStore } from "$lib/app/onboarding/journey/journey-store.svelte";
 
   /** The card's title, position and minimise button. */
   let {

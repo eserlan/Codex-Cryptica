@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { oracle } from "#lib/stores/oracle.svelte.js";
+  import { oracle } from "$lib/stores/oracle.svelte";
   import { onMount } from "svelte";
   import InlineKeySetup from "../oracle/InlineKeySetup.svelte";
-  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
-  import { discoveryPolicyStore } from "#lib/stores/ui/discovery-policy.svelte.js";
-  import { isHelpAssistantAvailable } from "#lib/services/help-assistant/help-availability.js";
-  import { tipsStore } from "#lib/app/onboarding/tips/tips-runtime.js";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
+  import { isHelpAssistantAvailable } from "$lib/services/help-assistant/help-availability";
+  import { tipsStore } from "$lib/app/onboarding/tips/tips-runtime";
   import CifTipsSetting from "./CifTipsSetting.svelte";
   import { DEFAULT_CF_IMAGE_MODEL } from "@codex/oracle-engine";
 

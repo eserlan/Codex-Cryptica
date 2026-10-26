@@ -1,20 +1,26 @@
 <script lang="ts">
-  import { browser } from "$app/env";
-  import { helpStore } from "#lib/stores/help.svelte.js";
+  import { browser } from "$app/environment";
+  import { helpStore } from "$lib/stores/help.svelte";
   import { page } from "$app/state";
-  import { oracle } from "#lib/stores/oracle.svelte.js";
-  import { searchStore } from "#lib/stores/search.svelte.js";
-  import { onboardingStore } from "#lib/stores/ui/onboarding.svelte.js";
-  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
-  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
-  import { loreMergeStore } from "#lib/stores/ui/lore-merge.svelte.js";
-  import { guestChatStore } from "#lib/stores/guest-chat.svelte.js";
-  import { reportPanelStore } from "#lib/stores/ui/report-panel.svelte.js";
-  import { isHelpAssistantEnabled } from "#lib/config/help-assistant.js";
+  import { base } from "$app/paths";
+  import { oracle } from "$lib/stores/oracle.svelte";
+  import { searchStore } from "$lib/stores/search.svelte";
+  import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { loreMergeStore } from "$lib/stores/ui/lore-merge.svelte";
+  import { guestChatStore } from "$lib/stores/guest-chat.svelte";
+  import { reportPanelStore } from "$lib/stores/ui/report-panel.svelte";
+  import { isHelpAssistantEnabled } from "$lib/config/help-assistant";
 
-  let { isMobileMenuOpen = $bindable(false) }: { isMobileMenuOpen: boolean } =
-    $props();
-  const isLoginRoute = $derived(page.url.pathname === "/login");
+  let {
+    isMobileMenuOpen = $bindable(false),
+  }: {
+    isMobileMenuOpen: boolean;
+  } = $props();
+
+  const isLoginRoute = $derived(page.url.pathname === `${base}/login`);
+
   const isSpecialEnv =
     import.meta.env.DEV || import.meta.env.VITE_STAGING === "true";
 
@@ -41,7 +47,7 @@
 
 <!-- fallow-ignore-next-line complexity -- This host intentionally composes independent lazy modal routes; the new route only adds one branch to the existing registry. -->
 {#if searchStore.isOpen}
-  {#await loadModal(() => import("#lib/components/search/SearchModal.svelte"), "SearchModal") then SearchModal}
+  {#await loadModal(() => import("$lib/components/search/SearchModal.svelte"), "SearchModal") then SearchModal}
     {#if SearchModal}
       <SearchModal />
     {/if}
@@ -58,7 +64,7 @@
 
 {#if !isLoginRoute}
   {#if oracle.isOpen}
-    {#await loadModal(() => import("#lib/components/oracle/OracleWindow.svelte"), "OracleWindow") then OracleWindow}
+    {#await loadModal(() => import("$lib/components/oracle/OracleWindow.svelte"), "OracleWindow") then OracleWindow}
       {#if OracleWindow}
         <OracleWindow />
       {/if}
@@ -67,7 +73,7 @@
 
   {#if browser}
     {#if modalUIStore.showSettings}
-      {#await loadModal(() => import("#lib/components/settings/SettingsModal.svelte"), "SettingsModal") then SettingsModal}
+      {#await loadModal(() => import("$lib/components/settings/SettingsModal.svelte"), "SettingsModal") then SettingsModal}
         {#if SettingsModal}
           <SettingsModal />
         {/if}
@@ -83,7 +89,7 @@
     {/if}
 
     {#if helpStore.activeTour}
-      {#await loadModal(() => import("#lib/components/help/TourOverlay.svelte"), "TourOverlay") then TourOverlay}
+      {#await loadModal(() => import("$lib/components/help/TourOverlay.svelte"), "TourOverlay") then TourOverlay}
         {#if TourOverlay}
           <TourOverlay />
         {/if}
@@ -91,7 +97,7 @@
     {/if}
 
     {#if isMobileMenuOpen}
-      {#await loadModal(() => import("#lib/components/layout/MobileMenu.svelte"), "MobileMenu") then MobileMenu}
+      {#await loadModal(() => import("$lib/components/layout/MobileMenu.svelte"), "MobileMenu") then MobileMenu}
         {#if MobileMenu}
           <MobileMenu bind:isOpen={isMobileMenuOpen} />
         {/if}
@@ -123,7 +129,7 @@
     {/if}
 
     {#if modalUIStore.mergeDialog.open}
-      {#await loadModal(() => import("#lib/components/dialogs/MergeNodesDialog.svelte"), "MergeNodesDialog") then MergeNodesDialog}
+      {#await loadModal(() => import("$lib/components/dialogs/MergeNodesDialog.svelte"), "MergeNodesDialog") then MergeNodesDialog}
         {#if MergeNodesDialog}
           <MergeNodesDialog
             isOpen={modalUIStore.mergeDialog.open}
@@ -135,7 +141,7 @@
     {/if}
 
     {#if modalUIStore.bulkLabelDialog.open}
-      {#await loadModal(() => import("#lib/components/dialogs/BulkLabelDialog.svelte"), "BulkLabelDialog") then BulkLabelDialog}
+      {#await loadModal(() => import("$lib/components/dialogs/BulkLabelDialog.svelte"), "BulkLabelDialog") then BulkLabelDialog}
         {#if BulkLabelDialog}
           <BulkLabelDialog
             isOpen={modalUIStore.bulkLabelDialog.open}
@@ -147,7 +153,7 @@
     {/if}
 
     {#if modalUIStore.showDiceModal}
-      {#await loadModal(() => import("#lib/components/dice/DiceModal.svelte"), "DiceModal") then DiceModal}
+      {#await loadModal(() => import("$lib/components/dice/DiceModal.svelte"), "DiceModal") then DiceModal}
         {#if DiceModal}
           <DiceModal />
         {/if}
@@ -155,7 +161,7 @@
     {/if}
 
     {#if modalUIStore.showCanvasSelector}
-      {#await loadModal(() => import("#lib/components/canvas/CanvasSelectionModal.svelte"), "CanvasSelectionModal") then CanvasSelectionModal}
+      {#await loadModal(() => import("$lib/components/canvas/CanvasSelectionModal.svelte"), "CanvasSelectionModal") then CanvasSelectionModal}
         {#if CanvasSelectionModal}
           <CanvasSelectionModal />
         {/if}
@@ -163,7 +169,7 @@
     {/if}
 
     {#if reportPanelStore.request}
-      {#await loadModal(() => import("#lib/components/reports/ReportPanel.svelte"), "ReportPanel") then ReportPanel}
+      {#await loadModal(() => import("$lib/components/reports/ReportPanel.svelte"), "ReportPanel") then ReportPanel}
         {#if ReportPanel && reportPanelStore.request}
           <ReportPanel
             input={reportPanelStore.request.input}
@@ -177,7 +183,7 @@
     {/if}
 
     {#if isSpecialEnv}
-      {#await loadModal(() => import("#lib/components/debug/DebugConsole.svelte"), "DebugConsole") then DebugConsole}
+      {#await loadModal(() => import("$lib/components/debug/DebugConsole.svelte"), "DebugConsole") then DebugConsole}
         {#if DebugConsole}
           <DebugConsole />
         {/if}
@@ -185,7 +191,7 @@
     {/if}
 
     {#if modalUIStore.soundBite?.show}
-      {#await loadModal(() => import("#lib/components/modals/SoundBiteModal.svelte"), "SoundBiteModal") then SoundBiteModal}
+      {#await loadModal(() => import("$lib/components/modals/SoundBiteModal.svelte"), "SoundBiteModal") then SoundBiteModal}
         {#if SoundBiteModal}
           <SoundBiteModal />
         {/if}
@@ -193,7 +199,7 @@
     {/if}
 
     {#if modalUIStore.relatedEntityDialog.open}
-      {#await loadModal(() => import("#lib/components/entity-detail/RelatedEntityModal.svelte"), "RelatedEntityModal") then RelatedEntityModal}
+      {#await loadModal(() => import("$lib/components/entity-detail/RelatedEntityModal.svelte"), "RelatedEntityModal") then RelatedEntityModal}
         {#if RelatedEntityModal}
           <RelatedEntityModal
             isOpen={modalUIStore.relatedEntityDialog.open}
@@ -205,7 +211,7 @@
     {/if}
 
     {#if modalUIStore.parentPickerDialog.open}
-      {#await loadModal(() => import("#lib/components/entity-detail/ParentPickerModal.svelte"), "ParentPickerModal") then ParentPickerModal}
+      {#await loadModal(() => import("$lib/components/entity-detail/ParentPickerModal.svelte"), "ParentPickerModal") then ParentPickerModal}
         {#if ParentPickerModal}
           <ParentPickerModal
             isOpen={modalUIStore.parentPickerDialog.open}
@@ -217,7 +223,7 @@
     {/if}
 
     {#if modalUIStore.showVaultSwitcher}
-      {#await loadModal(() => import("#lib/components/vaults/VaultSwitcherModal.svelte"), "VaultSwitcherModal") then VaultSwitcherModal}
+      {#await loadModal(() => import("$lib/components/vaults/VaultSwitcherModal.svelte"), "VaultSwitcherModal") then VaultSwitcherModal}
         {#if VaultSwitcherModal}
           <VaultSwitcherModal
             onClose={() => modalUIStore.closeVaultSwitcher()}
@@ -227,7 +233,7 @@
     {/if}
 
     {#if modalUIStore.vaultThemePrompt.open}
-      {#await loadModal(() => import("#lib/components/vaults/VaultThemePromptModal.svelte"), "VaultThemePromptModal") then VaultThemePromptModal}
+      {#await loadModal(() => import("$lib/components/vaults/VaultThemePromptModal.svelte"), "VaultThemePromptModal") then VaultThemePromptModal}
         {#if VaultThemePromptModal}
           <VaultThemePromptModal />
         {/if}
@@ -235,7 +241,7 @@
     {/if}
 
     {#if modalUIStore.showShare}
-      {#await loadModal(() => import("#lib/components/ShareModal.svelte"), "ShareModal") then ShareModal}
+      {#await loadModal(() => import("$lib/components/ShareModal.svelte"), "ShareModal") then ShareModal}
         {#if ShareModal}
           <ShareModal close={() => modalUIStore.closeShare()} />
         {/if}
@@ -259,7 +265,7 @@
     {/if}
 
     {#if modalUIStore.generatorWorkflow.open}
-      {#await loadModal(() => import("#lib/components/generators/CampaignGeneratorModal.svelte"), "CampaignGeneratorModal") then CampaignGeneratorModal}
+      {#await loadModal(() => import("$lib/components/generators/CampaignGeneratorModal.svelte"), "CampaignGeneratorModal") then CampaignGeneratorModal}
         {#if CampaignGeneratorModal}
           <CampaignGeneratorModal />
         {/if}
@@ -267,7 +273,7 @@
     {/if}
 
     {#if modalUIStore.statBlockImport.open}
-      {#await loadModal(() => import("#lib/components/stats/import/StatBlockImportModal.svelte"), "StatBlockImportModal") then StatBlockImportModal}
+      {#await loadModal(() => import("$lib/components/stats/import/StatBlockImportModal.svelte"), "StatBlockImportModal") then StatBlockImportModal}
         {#if StatBlockImportModal}
           <StatBlockImportModal
             entityId={modalUIStore.statBlockImport.entityId}
@@ -279,7 +285,7 @@
     {/if}
 
     {#if modalUIStore.showIntentCreateMenu}
-      {#await loadModal(() => import("#lib/components/guided/IntentCreateModal.svelte"), "IntentCreateModal") then IntentCreateModal}
+      {#await loadModal(() => import("$lib/components/guided/IntentCreateModal.svelte"), "IntentCreateModal") then IntentCreateModal}
         {#if IntentCreateModal}
           <IntentCreateModal />
         {/if}
@@ -287,7 +293,7 @@
     {/if}
 
     {#if modalUIStore.showQuickStartModal}
-      {#await loadModal(() => import("#lib/components/guided/QuickStartModal.svelte"), "QuickStartModal") then QuickStartModal}
+      {#await loadModal(() => import("$lib/components/guided/QuickStartModal.svelte"), "QuickStartModal") then QuickStartModal}
         {#if QuickStartModal}
           <QuickStartModal
             onClose={() => modalUIStore.closeQuickStartModal()}
@@ -298,7 +304,7 @@
 
     <!-- Global Image Lightbox -->
     {#if hasOpenedLightbox}
-      {#await loadModal(() => import("#lib/components/zen/ZenImageLightbox.svelte"), "ZenImageLightbox") then ZenImageLightbox}
+      {#await loadModal(() => import("$lib/components/zen/ZenImageLightbox.svelte"), "ZenImageLightbox") then ZenImageLightbox}
         {#if ZenImageLightbox}
           <ZenImageLightbox
             bind:show={modalUIStore.lightbox.show}
@@ -311,7 +317,7 @@
 
     <!-- Presentation Template Manager -->
     {#if modalUIStore.activePresentationManagerSchema}
-      {#await loadModal(() => import("#lib/components/stats/presentation/PresentationTemplateManager.svelte"), "PresentationTemplateManager") then PresentationTemplateManager}
+      {#await loadModal(() => import("$lib/components/stats/presentation/PresentationTemplateManager.svelte"), "PresentationTemplateManager") then PresentationTemplateManager}
         {#if PresentationTemplateManager}
           <PresentationTemplateManager
             schema={modalUIStore.activePresentationManagerSchema}
@@ -324,7 +330,7 @@
 
     <!-- Presentation Template Editor -->
     {#if modalUIStore.presentationEditorState?.open && modalUIStore.presentationEditorState?.schema}
-      {#await loadModal(() => import("#lib/components/stats/presentation/PresentationTemplateEditor.svelte"), "PresentationTemplateEditor") then PresentationTemplateEditor}
+      {#await loadModal(() => import("$lib/components/stats/presentation/PresentationTemplateEditor.svelte"), "PresentationTemplateEditor") then PresentationTemplateEditor}
         {#if PresentationTemplateEditor}
           <PresentationTemplateEditor
             schema={modalUIStore.presentationEditorState.schema}
@@ -347,7 +353,7 @@
 
     <!-- Guest Character Chat Modal -->
     {#if guestChatStore.showChatModal}
-      {#await loadModal(() => import("#lib/components/modals/GuestChatModal.svelte"), "GuestChatModal") then GuestChatModal}
+      {#await loadModal(() => import("$lib/components/modals/GuestChatModal.svelte"), "GuestChatModal") then GuestChatModal}
         {#if GuestChatModal}
           <GuestChatModal />
         {/if}
@@ -357,7 +363,7 @@
     <!-- Contextual help assistant (#3427). Loaded only when the flag is on, so
          with it off none of the help code is downloaded. -->
     {#if isHelpAssistantEnabled()}
-      {#await loadModal(() => import("#lib/components/help-assistant/HelpAssistantHost.svelte"), "HelpAssistantHost") then HelpAssistantHost}
+      {#await loadModal(() => import("$lib/components/help-assistant/HelpAssistantHost.svelte"), "HelpAssistantHost") then HelpAssistantHost}
         {#if HelpAssistantHost}
           <HelpAssistantHost />
         {/if}

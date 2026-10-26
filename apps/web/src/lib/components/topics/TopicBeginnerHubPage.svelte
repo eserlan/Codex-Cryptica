@@ -1,29 +1,28 @@
 <script lang="ts">
-  import { browser } from "$app/env";
-  import { resolve } from "$app/paths";
-  import SeoHead from "#lib/components/seo/SeoHead.svelte";
-  import PublicLabelChip from "#lib/components/labels/PublicLabelChip.svelte";
-  import { buildAbsoluteUrl } from "#lib/seo/site.js";
+  import { browser } from "$app/environment";
+  import { base } from "$app/paths";
+  import SeoHead from "$lib/components/seo/SeoHead.svelte";
+  import PublicLabelChip from "$lib/components/labels/PublicLabelChip.svelte";
+  import { buildAbsoluteUrl } from "$lib/seo/site";
   import type {
     TopicBeginnerHubConfig,
     TopicLearningStep,
     TopicScopeColumn,
-  } from "#lib/content/topics/beginner-hub-types.js";
+  } from "$lib/content/topics/beginner-hub-types";
   import {
     buildBeginnerHubJsonLd,
     buildBeginnerHubBreadcrumbJsonLd,
-  } from "#lib/content/topics/beginner-hub-json-ld.js";
-
+  } from "$lib/content/topics/beginner-hub-json-ld";
   import {
     trackDiscoveryPageViewed,
     classifyDiscoveryTarget,
     createDiscoveryViewGuard,
-  } from "#lib/services/analytics/discovery-tracking.js";
-  import { trackDiscoveryClick } from "#lib/actions/trackDiscoveryClick.js";
+  } from "$lib/services/analytics/discovery-tracking";
+  import { trackDiscoveryClick } from "$lib/actions/trackDiscoveryClick";
 
   let { config }: { config: TopicBeginnerHubConfig } = $props();
 
-  const cleanBase = resolve("") === "/" ? "" : resolve("");
+  const cleanBase = base === "/" ? "" : base;
   const canonical = $derived(buildAbsoluteUrl(config.canonicalPath));
 
   const seenTopic = createDiscoveryViewGuard();
@@ -61,8 +60,10 @@
     >
       {step.heading}
     </h2>
+    <p class="mb-5 leading-relaxed text-theme-muted">
+      {step.summary}
+    </p>
 
-    <p class="mb-5 leading-relaxed text-theme-muted">{step.summary}</p>
     <!-- Key Takeaways for this step -->
     <div class="mb-6 border border-theme-border/60 bg-theme-surface/50 p-5">
       <p
@@ -222,8 +223,10 @@
       >
         {config.startHere.heading}
       </h2>
+      <p class="mb-4 text-theme-muted">
+        {config.startHere.intro}
+      </p>
 
-      <p class="mb-4 text-theme-muted">{config.startHere.intro}</p>
       <!-- The 4-step loop visual progression -->
       <ol class="mb-6 grid list-none gap-3 sm:grid-cols-2">
         {#each config.startHere.playLoopSteps as step (step.step)}
@@ -322,7 +325,6 @@
       >
         {config.scopeComparison.heading}
       </h2>
-
       <p class="mb-6 leading-relaxed text-theme-muted">
         {config.scopeComparison.intro}
       </p>

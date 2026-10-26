@@ -7,11 +7,11 @@ const env = vi.hoisted(() => ({
   ready: true,
   openGeneratorWorkflow: vi.fn(),
 }));
-vi.mock("#lib/stores/ui/modal-ui.svelte.js", () => ({
+vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
   modalUIStore: { openGeneratorWorkflow: env.openGeneratorWorkflow },
 }));
-vi.mock("#lib/stores/vault.svelte.js", () => ({ vault: {} }));
-vi.mock("#lib/stores/vault/readiness.js", () => ({
+vi.mock("$lib/stores/vault.svelte", () => ({ vault: {} }));
+vi.mock("$lib/stores/vault/readiness", () => ({
   isVaultReadyForGenerators: () => env.ready,
 }));
 

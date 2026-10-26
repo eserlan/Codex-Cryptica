@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { mapStore } from "#lib/stores/map.svelte.js";
-  import { mapSession } from "#lib/stores/map-session.svelte.js";
-  import { LAYER_OPTIONS as LAYER_META } from "#lib/components/ui/LayerMenu.svelte";
+  import { mapStore } from "$lib/stores/map.svelte";
+  import { mapSession } from "$lib/stores/map-session.svelte";
+  import { LAYER_OPTIONS as LAYER_META } from "$lib/components/ui/LayerMenu.svelte";
 
   let { onClose }: { onClose: () => void } = $props();
 </script>

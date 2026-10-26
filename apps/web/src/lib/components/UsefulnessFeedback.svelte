@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { UIPersistence } from "#lib/stores/ui/persistence.js";
+  import { UIPersistence } from "$lib/stores/ui/persistence";
   import {
     COMMUNITY_MIN_YES,
     communityAggregates,
     type CommunityAggregatesService,
-  } from "#lib/services/community/community-aggregates.js";
+  } from "$lib/services/community/community-aggregates";
 
   const DEFAULT_REASONS = [
     "Too vague",

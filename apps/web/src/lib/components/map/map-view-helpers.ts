@@ -5,8 +5,8 @@ import {
   type HexGridConfig,
   type HexOrientation,
 } from "map-engine";
-import { measureDistance } from "#lib/utils/vtt-helpers.js";
-import type { GridType } from "#lib/stores/map.svelte.js";
+import { measureDistance } from "$lib/utils/vtt-helpers";
+import type { GridType } from "$lib/stores/map.svelte";
 
 export function hashToColor(input: string): string {
   let hash = 0;

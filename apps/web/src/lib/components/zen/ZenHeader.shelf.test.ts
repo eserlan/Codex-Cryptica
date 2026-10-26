@@ -8,7 +8,7 @@ describe("ZenHeader send to shelf action", () => {
   );
 
   it("imports the shelf feature", () => {
-    expect(source).toMatch(/from "#lib\/features\/shelf(\/index\.js)?"/);
+    expect(source).toContain('from "$lib/features/shelf"');
   });
 
   it("exposes a host-only send to shelf button when not editing", () => {

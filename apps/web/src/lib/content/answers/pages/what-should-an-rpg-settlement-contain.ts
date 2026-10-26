@@ -30,7 +30,7 @@ export const whatShouldAnRpgSettlementContain: AnswerConfigInput = {
         },
         {
           term: "Two or three named people",
-          text: "One who wants something from the party, one who has something they need, one who is a problem. Everyone else can be improvised. If you need names for them or for the town itself, the [Fantasy Name Generator](/generators/fantasy-names) covers people and places; for other genres, use the [RPG Name Generator](/generators/names).",
+          text: "One who wants something from the party, one who has something they need, one who is a problem. Everyone else can be improvised.",
         },
         {
           term: "One unsolved local problem",

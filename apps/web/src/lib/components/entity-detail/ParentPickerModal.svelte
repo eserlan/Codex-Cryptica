@@ -2,13 +2,13 @@
   import { tick } from "svelte";
   import { fade, scale } from "svelte/transition";
   import type { Entity } from "schema";
-  import { vault } from "#lib/stores/vault.svelte.js";
-  import { categories } from "#lib/stores/categories.svelte.js";
-  import { getIconClass } from "#lib/utils/icon.js";
-  import { sanitizeId } from "#lib/utils/markdown.js";
-  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
-  import EmptyState from "#lib/components/ui/EmptyState.svelte";
-  import { matchesEntityQuery } from "#lib/utils/entity-search-match.js";
+  import { vault } from "$lib/stores/vault.svelte";
+  import { categories } from "$lib/stores/categories.svelte";
+  import { getIconClass } from "$lib/utils/icon";
+  import { sanitizeId } from "$lib/utils/markdown";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import EmptyState from "$lib/components/ui/EmptyState.svelte";
+  import { matchesEntityQuery } from "$lib/utils/entity-search-match";
   import { buildParentCandidates } from "./parent-picker-candidates";
 
   let {

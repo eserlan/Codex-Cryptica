@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { resolve } from "$app/paths";
-  import { trackDiscoveryClick } from "#lib/actions/trackDiscoveryClick.js";
-  import { classifyDiscoveryTarget } from "#lib/services/analytics/discovery-tracking.js";
+  import { base } from "$app/paths";
+  import { trackDiscoveryClick } from "$lib/actions/trackDiscoveryClick";
+  import { classifyDiscoveryTarget } from "$lib/services/analytics/discovery-tracking";
 
-  const cleanBase = resolve("") === "/" ? "" : resolve("");
+  const cleanBase = base === "/" ? "" : base;
 
   interface RouteRow {
     from: string;
@@ -120,7 +120,7 @@
           <path
             d="M 0 1.5 L 9 5 L 0 8.5 z"
             class="fill-theme-border stroke-none"
-          ></path>
+          />
         </marker>
         <marker
           id="pc-arrow-primary"
@@ -134,7 +134,7 @@
           <path
             d="M 0 1.5 L 9 5 L 0 8.5 z"
             class="fill-theme-primary stroke-none"
-          ></path>
+          />
         </marker>
         <marker
           id="pc-arrow-hazard"
@@ -145,24 +145,20 @@
           markerHeight="6"
           orient="auto"
         >
-          <path d="M 0 1.5 L 9 5 L 0 8.5 z" fill="#f59e0b" stroke="none"></path>
+          <path d="M 0 1.5 L 9 5 L 0 8.5 z" fill="#f59e0b" stroke="none" />
         </marker>
       </defs>
 
       <!-- Grid subtle background texture / scale markings -->
-
       <g class="stroke-theme-border/25" stroke-dasharray="2 6" stroke-width="1">
-        <line x1="75" y1="15" x2="75" y2="385"></line>
-        <line x1="265" y1="15" x2="265" y2="385"></line>
-        <line x1="475" y1="15" x2="475" y2="385"></line>
-        <line x1="665" y1="15" x2="665" y2="385"></line>
+        <line x1="75" y1="15" x2="75" y2="385" />
+        <line x1="265" y1="15" x2="265" y2="385" />
+        <line x1="475" y1="15" x2="475" y2="385" />
+        <line x1="665" y1="15" x2="665" y2="385" />
       </g>
 
       <!-- Layer Column Headers -->
-      <g
-        font-size="9.5"
-        class="font-mono uppercase tracking-[0.14em] fill-theme-muted"
-      >
+      <g class="font-mono text-xs uppercase tracking-[0.14em] fill-theme-muted">
         <text x="75" y="20" text-anchor="middle">Start</text>
         <text x="265" y="20" text-anchor="middle">Waypoints (Layer 1)</text>
         <text x="475" y="20" text-anchor="middle">Staging Sites (Layer 2)</text>
@@ -181,7 +177,7 @@
           class="stroke-theme-border"
           stroke-width="2"
           marker-end="url(#pc-arrow-default)"
-        ></line>
+        />
         <!-- Badge -->
         <rect
           x="92"
@@ -191,13 +187,12 @@
           rx="4"
           class="fill-theme-bg stroke-theme-border"
           stroke-width="1"
-        ></rect>
+        />
         <text
-          font-size="9"
           x="165"
           y="146"
           text-anchor="middle"
-          class="font-mono fill-theme-text"
+          class="font-mono text-xs fill-theme-text"
         >
           <tspan font-weight="bold" class="fill-theme-primary">0.5 day</tspan> · 2
           sp toll / Watched
@@ -214,7 +209,7 @@
           class="stroke-theme-border"
           stroke-width="2"
           marker-end="url(#pc-arrow-default)"
-        ></line>
+        />
         <!-- Badge -->
         <rect
           x="90"
@@ -224,13 +219,12 @@
           rx="4"
           class="fill-theme-bg stroke-theme-border"
           stroke-width="1"
-        ></rect>
+        />
         <text
-          font-size="9"
           x="165"
           y="262"
           text-anchor="middle"
-          class="font-mono fill-theme-text"
+          class="font-mono text-xs fill-theme-text"
         >
           <tspan font-weight="bold" class="fill-theme-primary">1 day</tspan> · Extra
           ration / Delay
@@ -247,7 +241,7 @@
           class="stroke-theme-border"
           stroke-width="2"
           marker-end="url(#pc-arrow-default)"
-        ></line>
+        />
         <!-- Badge -->
         <rect
           x="280"
@@ -257,16 +251,15 @@
           rx="4"
           class="fill-theme-bg stroke-theme-border"
           stroke-width="1"
-        ></rect>
+        />
         <text
-          font-size="9"
           x="370"
           y="104"
           text-anchor="middle"
-          class="font-mono fill-theme-text"
+          class="font-mono text-xs fill-theme-text"
         >
           <tspan class="fill-theme-primary font-bold">⮂</tspan>
-          <tspan font-weight="bold">0.5 day</tspan> · Guard loop
+          <tspan font-weight="bold">0.5 day</tspan> · Road loop
         </text>
       </g>
 
@@ -280,7 +273,7 @@
           class="stroke-theme-border"
           stroke-width="2"
           marker-end="url(#pc-arrow-default)"
-        ></line>
+        />
         <!-- Badge -->
         <rect
           x="298"
@@ -290,13 +283,12 @@
           rx="4"
           class="fill-theme-bg stroke-theme-border"
           stroke-width="1"
-        ></rect>
+        />
         <text
-          font-size="9"
           x="370"
           y="204"
           text-anchor="middle"
-          class="font-mono fill-theme-text"
+          class="font-mono text-xs fill-theme-text"
         >
           <tspan font-weight="bold" class="fill-theme-primary">0.5 day</tspan> · Tracks
           reveal rival
@@ -314,7 +306,7 @@
           stroke-dasharray="4 3"
           stroke-width="2"
           marker-end="url(#pc-arrow-default)"
-        ></line>
+        />
         <!-- Badge -->
         <rect
           x="292"
@@ -324,13 +316,12 @@
           rx="4"
           class="fill-theme-bg stroke-theme-border"
           stroke-width="1"
-        ></rect>
+        />
         <text
-          font-size="9"
           x="370"
           y="304"
           text-anchor="middle"
-          class="font-mono fill-theme-text"
+          class="font-mono text-xs fill-theme-text"
         >
           🔒 <tspan font-weight="bold">0.5 day</tspan> · Needs news (Guide)
         </text>
@@ -346,7 +337,7 @@
           stroke="#f59e0b"
           stroke-width="2.5"
           marker-end="url(#pc-arrow-hazard)"
-        ></line>
+        />
         <!-- Badge -->
         <rect
           x="495"
@@ -356,13 +347,12 @@
           rx="4"
           class="fill-theme-bg stroke-amber-500/80"
           stroke-width="1"
-        ></rect>
+        />
         <text
-          font-size="9"
           x="570"
           y="146"
           text-anchor="middle"
-          class="font-mono fill-theme-text"
+          class="font-mono text-xs fill-theme-text"
         >
           ⚠ <tspan font-weight="bold">1 day</tspan> · Exposed (Alerts sentries)
         </text>
@@ -379,7 +369,7 @@
           stroke-dasharray="6 4"
           stroke-width="2.5"
           marker-end="url(#pc-arrow-primary)"
-        ></line>
+        />
         <!-- Badge -->
         <rect
           x="490"
@@ -389,13 +379,12 @@
           rx="4"
           class="fill-theme-bg stroke-theme-primary"
           stroke-width="1"
-        ></rect>
+        />
         <text
-          font-size="9"
           x="570"
           y="262"
           text-anchor="middle"
-          class="font-mono fill-theme-primary"
+          class="font-mono text-xs fill-theme-primary"
         >
           👁 <tspan font-weight="bold">0.5 day</tspan> · Hidden track (Unseen)
         </text>
@@ -409,24 +398,22 @@
           r="24"
           class="fill-theme-surface stroke-theme-primary"
           stroke-width="2"
-        ></circle>
+        />
         <circle
           r="17"
           class="fill-theme-primary/10 stroke-theme-primary/50"
           stroke-width="1"
-        ></circle>
+        />
         <text
-          font-size="11"
           y="4"
           text-anchor="middle"
-          class="font-mono font-bold fill-theme-primary">1</text
+          class="font-mono text-xs font-bold fill-theme-primary">1</text
         >
         <!-- Top role tag -->
         <text
-          font-size="9"
           y="-30"
           text-anchor="middle"
-          class="font-mono uppercase tracking-wider font-bold fill-theme-primary"
+          class="font-mono text-xs uppercase tracking-wider font-bold fill-theme-primary"
         >
           START
         </text>
@@ -439,10 +426,9 @@
           Oakhaven
         </text>
         <text
-          font-size="9"
           y="52"
           text-anchor="middle"
-          class="font-mono fill-theme-muted"
+          class="font-mono text-xs fill-theme-muted"
         >
           Rumour board
         </text>
@@ -454,17 +440,16 @@
           r="22"
           class="fill-theme-surface stroke-theme-border"
           stroke-width="2"
-        ></circle>
+        />
         <circle
           r="16"
           class="fill-theme-bg stroke-theme-border/60"
           stroke-width="1"
-        ></circle>
+        />
         <text
-          font-size="11"
           y="4"
           text-anchor="middle"
-          class="font-mono font-bold fill-theme-text">2</text
+          class="font-mono text-xs font-bold fill-theme-text">2</text
         >
         <!-- Top Labels -->
         <text
@@ -475,10 +460,9 @@
           Toll Bridge
         </text>
         <text
-          font-size="9"
           y="-27"
           text-anchor="middle"
-          class="font-mono fill-theme-muted"
+          class="font-mono text-xs fill-theme-muted"
         >
           Watched crossing
         </text>
@@ -490,17 +474,16 @@
           r="22"
           class="fill-theme-surface stroke-theme-border"
           stroke-width="2"
-        ></circle>
+        />
         <circle
           r="16"
           class="fill-theme-bg stroke-theme-border/60"
           stroke-width="1"
-        ></circle>
+        />
         <text
-          font-size="11"
           y="4"
           text-anchor="middle"
-          class="font-mono font-bold fill-theme-text">3</text
+          class="font-mono text-xs font-bold fill-theme-text">3</text
         >
         <!-- Bottom Labels -->
         <text
@@ -511,10 +494,9 @@
           Reed Causeway
         </text>
         <text
-          font-size="9"
           y="50"
           text-anchor="middle"
-          class="font-mono fill-theme-muted"
+          class="font-mono text-xs fill-theme-muted"
         >
           Muddy & unwatched
         </text>
@@ -526,17 +508,16 @@
           r="22"
           class="fill-theme-surface stroke-theme-border"
           stroke-width="2"
-        ></circle>
+        />
         <circle
           r="16"
           class="fill-theme-bg stroke-theme-border/60"
           stroke-width="1"
-        ></circle>
+        />
         <text
-          font-size="11"
           y="4"
           text-anchor="middle"
-          class="font-mono font-bold fill-theme-text">4</text
+          class="font-mono text-xs font-bold fill-theme-text">4</text
         >
         <!-- Top Labels -->
         <text
@@ -547,10 +528,9 @@
           Old Watchtower
         </text>
         <text
-          font-size="9"
           y="-27"
           text-anchor="middle"
-          class="font-mono fill-theme-muted"
+          class="font-mono text-xs fill-theme-muted"
         >
           High ground view
         </text>
@@ -562,17 +542,16 @@
           r="22"
           class="fill-theme-surface stroke-theme-border"
           stroke-width="2"
-        ></circle>
+        />
         <circle
           r="16"
           class="fill-theme-bg stroke-theme-border/60"
           stroke-width="1"
-        ></circle>
+        />
         <text
-          font-size="11"
           y="4"
           text-anchor="middle"
-          class="font-mono font-bold fill-theme-text">5</text
+          class="font-mono text-xs font-bold fill-theme-text">5</text
         >
         <!-- Bottom Labels -->
         <text
@@ -583,10 +562,9 @@
           Hermit's Cairn
         </text>
         <text
-          font-size="9"
           y="50"
           text-anchor="middle"
-          class="font-mono fill-theme-muted"
+          class="font-mono text-xs fill-theme-muted"
         >
           Guide to hidden track
         </text>
@@ -598,25 +576,23 @@
           r="24"
           class="fill-theme-surface stroke-theme-primary"
           stroke-width="2"
-        ></circle>
+        />
         <circle
           r="18"
           class="fill-theme-primary/15 stroke-theme-primary/60"
           stroke-width="1.5"
           stroke-dasharray="3 2"
-        ></circle>
+        />
         <text
-          font-size="11"
           y="4"
           text-anchor="middle"
-          class="font-mono font-bold fill-theme-primary">6</text
+          class="font-mono text-xs font-bold fill-theme-primary">6</text
         >
         <!-- Top role tag -->
         <text
-          font-size="9"
           y="-30"
           text-anchor="middle"
-          class="font-mono uppercase tracking-wider font-bold fill-theme-primary"
+          class="font-mono text-xs uppercase tracking-wider font-bold fill-theme-primary"
         >
           GOAL
         </text>
@@ -629,10 +605,9 @@
           Morzan's Crypt
         </text>
         <text
-          font-size="9"
           y="52"
           text-anchor="middle"
-          class="font-mono fill-theme-primary font-bold"
+          class="font-mono text-xs fill-theme-primary font-bold"
         >
           The Goal
         </text>

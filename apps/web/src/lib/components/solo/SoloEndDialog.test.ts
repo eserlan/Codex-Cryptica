@@ -11,10 +11,10 @@ const env = vi.hoisted(() => ({
   notification: { confirm: vi.fn(async (_o: unknown) => true) },
 }));
 
-vi.mock("#lib/stores/solo-session-instance.js", () => ({
+vi.mock("$lib/stores/solo-session-instance", () => ({
   soloSessionStore: env.store,
 }));
-vi.mock("#lib/stores/ui/notification.svelte.js", () => ({
+vi.mock("$lib/stores/ui/notification.svelte", () => ({
   notificationStore: env.notification,
 }));
 

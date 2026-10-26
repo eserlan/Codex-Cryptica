@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
-import { EntityTemplateDirectoryError } from "#lib/services/publishing/PublicEntityTemplateDirectoryService.js";
+import { EntityTemplateDirectoryError } from "$lib/services/publishing/PublicEntityTemplateDirectoryService";
 import {
   EntityTemplatePublishRegistry,
   type SettingsKv,
-} from "#lib/stores/publishing/entity-template-publish-registry.js";
+} from "$lib/stores/publishing/entity-template-publish-registry";
 import { EntityTemplatePublishStore } from "./entity-template-publish-store.svelte";
 import { makeStore, draft } from "./test-helpers";
 

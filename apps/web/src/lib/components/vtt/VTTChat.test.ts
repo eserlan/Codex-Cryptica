@@ -9,13 +9,13 @@ vi.mock("./VTTChatMessage.svelte", () => ({
   },
 }));
 
-vi.mock("#lib/components/oracle/CommandMenu.svelte", () => ({
+vi.mock("$lib/components/oracle/CommandMenu.svelte", () => ({
   default: function CommandMenuMock() {
     return {};
   },
 }));
 
-vi.mock("#lib/stores/map-session.svelte.js", () => ({
+vi.mock("$lib/stores/map-session.svelte", () => ({
   mapSession: {
     chatMessages: [],
     sendChatMessage: vi.fn(),
@@ -23,8 +23,8 @@ vi.mock("#lib/stores/map-session.svelte.js", () => ({
 }));
 
 import VTTChat from "./VTTChat.svelte";
-import { mapSession } from "#lib/stores/map-session.svelte.js";
-import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+import { mapSession } from "$lib/stores/map-session.svelte";
+import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
 describe("VTTChat", () => {
   it("submits slash roll commands through the VTT session chat", async () => {

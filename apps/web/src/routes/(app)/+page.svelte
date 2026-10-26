@@ -1,24 +1,24 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { vault } from "#lib/stores/vault.svelte.js";
+  import { vault } from "$lib/stores/vault.svelte";
   import { page } from "$app/state";
   import { fade } from "svelte/transition";
-  import { themeStore } from "#lib/stores/theme.svelte.js";
-  import { demoService } from "#lib/services/demo.js";
-  import { building, browser } from "$app/env";
-  import { SCHEMA_ORG } from "#lib/config/index.js";
-  import { safeJsonLd } from "#lib/utils/json-ld.js";
-  import { onboardingStore } from "#lib/stores/ui/onboarding.svelte.js";
-  import { onboardingFunnel } from "#lib/app/onboarding/onboarding-funnel.js";
-  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
-  import { layoutUIStore } from "#lib/stores/ui/layout-ui.svelte.js";
-  import { focusEntity } from "#lib/stores/ui/navigation.js";
-  import { seoImportService } from "#lib/services/seo/import-handler.js";
-  import WelcomeGraphPreview from "#lib/components/welcome/WelcomeGraphPreview.svelte";
+  import { themeStore } from "$lib/stores/theme.svelte";
+  import { demoService } from "$lib/services/demo";
+  import { building, browser } from "$app/environment";
+  import { SCHEMA_ORG } from "$lib/config";
+  import { safeJsonLd } from "$lib/utils/json-ld";
+  import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
+  import { onboardingFunnel } from "$lib/app/onboarding/onboarding-funnel";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
+  import { focusEntity } from "$lib/stores/ui/navigation";
+  import { seoImportService } from "$lib/services/seo/import-handler";
+  import WelcomeGraphPreview from "$lib/components/welcome/WelcomeGraphPreview.svelte";
   import {
     trackWelcomeFirstClick,
     type WelcomeAction,
-  } from "#lib/services/analytics/welcome-first-click.js";
+  } from "$lib/services/analytics/welcome-first-click";
 
   // "Open Existing Vault" dismisses the landing page and opens the vault
   // switcher with the matching intent.
@@ -83,7 +83,7 @@
     if (isSpecialEnv) {
       console.error(`Failed to load ${name}`, error);
     } else {
-      import("#lib/stores/debug.svelte.js")
+      import("$lib/stores/debug.svelte")
         .then((m) => {
           if (m?.debugStore) {
             m.debugStore.error(`Failed to lazy-load component: ${name}`, error);
@@ -258,9 +258,7 @@
       property="og:description"
       content="Codex Cryptica is a free, local-first RPG campaign manager and worldbuilding tool for GMs: private Markdown notes, visual lore graphs, timelines, offline prep, and optional AI — all in your browser."
     />
-
     <meta property="og:url" content="https://codexcryptica.com/" />
-
     <meta
       property="og:image"
       content="https://assets.codexcryptica.com/screenshots/living-lore-graph.png"

@@ -7,11 +7,11 @@ import {
   generateOneShotLocal,
   generatePointCrawlLocal,
 } from "generator-engine";
-import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
+import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
 import GeneratorPageOutputExtras from "./GeneratorPageOutputExtras.svelte";
 
 const regenerate = vi.hoisted(() => vi.fn());
-vi.mock("#lib/services/seo/generator-engine.js", () => ({
+vi.mock("$lib/services/seo/generator-engine", () => ({
   generatorEngine: { regenerateBusinessSection: regenerate },
 }));
 

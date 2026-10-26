@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { appEventBus } from "@codex/events";
-import { initOracleEventListeners } from "#lib/listeners/oracle-events.js";
+import { initOracleEventListeners } from "$lib/listeners/oracle-events";
 import { ORACLE_EVENTS } from "@codex/oracle-engine";
-import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
+import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
 afterEach(() => {
   appEventBus.reset();

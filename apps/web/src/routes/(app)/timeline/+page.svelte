@@ -1,18 +1,18 @@
 <script lang="ts">
-  import { timelineStore } from "#lib/stores/timeline.svelte.js";
-  import { graph } from "#lib/stores/graph.svelte.js";
-  import { vault } from "#lib/stores/vault.svelte.js";
-  import VerticalTimeline from "#lib/components/timeline/VerticalTimeline.svelte";
-  import HorizontalTimeline from "#lib/components/timeline/HorizontalTimeline.svelte";
-  import TimelineLayoutToggle from "#lib/components/timeline/TimelineLayoutToggle.svelte";
-  import TimelineFilterBar from "#lib/components/timeline/TimelineFilterBar.svelte";
-  import CalendarMonthView from "#lib/components/timeline/CalendarMonthView.svelte";
-  import CalendarAgendaView from "#lib/components/timeline/CalendarAgendaView.svelte";
-  import YearWheelPicker from "#lib/components/timeline/YearWheelPicker.svelte";
+  import { timelineStore } from "$lib/stores/timeline.svelte";
+  import { graph } from "$lib/stores/graph.svelte";
+  import { vault } from "$lib/stores/vault.svelte";
+  import VerticalTimeline from "$lib/components/timeline/VerticalTimeline.svelte";
+  import HorizontalTimeline from "$lib/components/timeline/HorizontalTimeline.svelte";
+  import TimelineLayoutToggle from "$lib/components/timeline/TimelineLayoutToggle.svelte";
+  import TimelineFilterBar from "$lib/components/timeline/TimelineFilterBar.svelte";
+  import CalendarMonthView from "$lib/components/timeline/CalendarMonthView.svelte";
+  import CalendarAgendaView from "$lib/components/timeline/CalendarAgendaView.svelte";
+  import YearWheelPicker from "$lib/components/timeline/YearWheelPicker.svelte";
   import { onMount } from "svelte";
-  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
-  import { calendarStore } from "#lib/stores/calendar.svelte.js";
-  import { layoutUIStore } from "#lib/stores/ui/layout-ui.svelte.js";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { calendarStore } from "$lib/stores/calendar.svelte";
+  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
 
   let EntityDetailPanel = $state<any>(null);
   let showYearPicker = $state(false);

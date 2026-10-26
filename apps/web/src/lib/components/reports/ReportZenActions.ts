@@ -6,13 +6,13 @@ import {
   type ReportDetail,
   type ReportScope,
 } from "entity-report-engine";
-import { vault } from "#lib/stores/vault.svelte.js";
-import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
+import { vault } from "$lib/stores/vault.svelte";
+import { notificationStore } from "$lib/stores/ui/notification.svelte";
 import {
   reportService,
   type ReportService,
-} from "#lib/services/report-service.js";
-import { resolveReportSource } from "#lib/services/report-source-resolver.js";
+} from "$lib/services/report-service";
+import { resolveReportSource } from "$lib/services/report-source-resolver";
 
 export type RegenerateOutcome =
   "applied" | "cancelled" | "source-missing" | "failed";

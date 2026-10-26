@@ -1,8 +1,7 @@
 import { afterEach, describe, expect, it, vi, beforeEach } from "vitest";
 
 vi.mock("$app/environment", () => ({ browser: true }));
-vi.mock("$app/env", () => ({ browser: true }));
-vi.mock("#lib/services/publishing/turnstile.js", () => ({
+vi.mock("$lib/services/publishing/turnstile", () => ({
   getSessionTurnstileToken: vi.fn(async () => "challenge-token"),
 }));
 
@@ -10,13 +9,13 @@ const { oracleSetTokenProvider, proposerSetTokenProvider } = vi.hoisted(() => ({
   oracleSetTokenProvider: vi.fn(),
   proposerSetTokenProvider: vi.fn(),
 }));
-vi.mock("#lib/cloud-bridge/oracle-bridge.js", () => ({
+vi.mock("$lib/cloud-bridge/oracle-bridge", () => ({
   oracleBridge: {
     setSessionToken: vi.fn(),
     setTokenProvider: oracleSetTokenProvider,
   },
 }));
-vi.mock("#lib/cloud-bridge/proposer-bridge.js", () => ({
+vi.mock("$lib/cloud-bridge/proposer-bridge", () => ({
   proposerBridge: {
     setSessionToken: vi.fn(),
     setTokenProvider: proposerSetTokenProvider,
@@ -42,14 +41,6 @@ describe("session-bootstrap worker token-provider wiring", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.resetModules();
-    vi.stubEnv(
-      "VITE_ORACLE_PROXY_URL",
-      "https://oracle-proxy.example.workers.dev",
-    );
-  });
-
-  afterEach(() => {
-    vi.unstubAllEnvs();
   });
 
   it("wires a pull-token provider into both bridges when the session manager is created", async () => {

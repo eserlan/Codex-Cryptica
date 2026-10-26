@@ -1,5 +1,5 @@
-import releases from "#lib/content/changelog/releases.json";
-import { buildAbsoluteUrl } from "#lib/seo/site.js";
+import releases from "$lib/content/changelog/releases.json";
+import { buildAbsoluteUrl } from "$lib/seo/site";
 import type { PageLoad } from "./$types";
 
 export const prerender = true;

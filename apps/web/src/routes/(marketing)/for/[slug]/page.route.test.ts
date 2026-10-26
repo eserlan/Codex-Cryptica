@@ -1,15 +1,11 @@
 import { render } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { LandingPageConfig } from "#lib/content/for/schema.js";
+import type { LandingPageConfig } from "$lib/content/for/schema";
 
 const previewTheme = vi.fn();
 
-vi.mock("$app/paths", () => ({
-  base: "",
-  asset: (p: string) => p,
-  resolve: (p: string) => p,
-}));
-vi.mock("#lib/stores/theme.svelte.js", () => ({
+vi.mock("$app/paths", () => ({ base: "" }));
+vi.mock("$lib/stores/theme.svelte", () => ({
   themeStore: {
     previewTheme: (id: string | null) => previewTheme(id),
   },

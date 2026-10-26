@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { revisionService } from "#lib/services/RevisionService.svelte.js";
-  import { vault } from "#lib/stores/vault.svelte.js";
-  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+  import { revisionService } from "$lib/services/RevisionService.svelte";
+  import { vault } from "$lib/stores/vault.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
-  let { entityId }: { entityId: string } = $props();
+  let { entityId } = $props<{ entityId: string }>();
 
   const isHost = $derived(!vault.isGuest);
   const isRevising = $derived(revisionService.isRevising);

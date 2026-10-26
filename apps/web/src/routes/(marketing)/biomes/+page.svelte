@@ -1,21 +1,21 @@
 <script lang="ts">
-  import { browser, building } from "$app/env";
+  import { browser, building } from "$app/environment";
   import { beforeNavigate, goto } from "$app/navigation";
-  import { resolve } from "$app/paths";
+  import { base } from "$app/paths";
   import { page } from "$app/state";
   import { getBiome, type FilterFacet } from "biome-engine";
-  import { biomeExplorer as store } from "#lib/stores/biome-explorer-instance.js";
-  import BiomeLibrary from "#lib/components/biomes/BiomeLibrary.svelte";
-  import BiomeDetail from "#lib/components/biomes/BiomeDetail.svelte";
-  import BiomeEditorView from "#lib/components/biomes/BiomeEditorView.svelte";
-  import BiomeCompare from "#lib/components/biomes/BiomeCompare.svelte";
-  import BiomeCopyFallback from "#lib/components/biomes/BiomeCopyFallback.svelte";
-  import BiomeNav from "#lib/components/biomes/BiomeNav.svelte";
-  import BiomeNotice from "#lib/components/biomes/BiomeNotice.svelte";
-  import SeoHead from "#lib/components/seo/SeoHead.svelte";
-  import { buildAbsoluteUrl } from "#lib/seo/site.js";
+  import { biomeExplorer as store } from "$lib/stores/biome-explorer-instance";
+  import BiomeLibrary from "$lib/components/biomes/BiomeLibrary.svelte";
+  import BiomeDetail from "$lib/components/biomes/BiomeDetail.svelte";
+  import BiomeEditorView from "$lib/components/biomes/BiomeEditorView.svelte";
+  import BiomeCompare from "$lib/components/biomes/BiomeCompare.svelte";
+  import BiomeCopyFallback from "$lib/components/biomes/BiomeCopyFallback.svelte";
+  import BiomeNav from "$lib/components/biomes/BiomeNav.svelte";
+  import BiomeNotice from "$lib/components/biomes/BiomeNotice.svelte";
+  import SeoHead from "$lib/components/seo/SeoHead.svelte";
+  import { buildAbsoluteUrl } from "$lib/seo/site";
 
-  const cleanBase = $derived(resolve("") === "/" ? "" : resolve(""));
+  const cleanBase = $derived(base === "/" ? "" : base);
 
   let query = $state("");
   let filters = $state<FilterFacet[]>([]);
@@ -36,7 +36,7 @@
 
   const openBiome = (id: string) =>
     goto(`${cleanBase}/biomes?biome=${encodeURIComponent(id)}`, {
-      reset: true,
+      keepFocus: false,
     });
   const backToLibrary = () => goto(`${cleanBase}/biomes`);
 
@@ -52,10 +52,7 @@
 
   // Leaving the page with unsaved changes asks first.
   let leaveTo = $state<URL | null>(null);
-
-  beforeNavigate(({ cancel, to, shallow, type }) => {
-    if (shallow && type === "goto") return;
-
+  beforeNavigate(({ cancel, to }) => {
     if (store.draft?.dirty && to) {
       cancel();
       leaveTo = to.url;

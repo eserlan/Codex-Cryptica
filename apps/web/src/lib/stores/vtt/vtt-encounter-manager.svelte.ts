@@ -1,19 +1,19 @@
 import {
   createEncounterSession,
   type VTTSessionService,
-} from "#lib/services/vtt-session.js";
+} from "$lib/services/vtt-session";
 import type {
   EncounterSession,
   EncounterSnapshotSummary,
   SessionMode,
   MeasurementState,
 } from "../../../types/vtt";
-import { cloneMeasurement } from "#lib/utils/vtt-helpers.js";
+import { cloneMeasurement } from "$lib/utils/vtt-helpers";
 import {
   systemClock,
   type IdGenerator,
   systemIdGenerator,
-} from "#lib/utils/runtime-deps.js";
+} from "$lib/utils/runtime-deps";
 
 export interface VTTEncounterManagerDependencies {
   service: VTTSessionService;

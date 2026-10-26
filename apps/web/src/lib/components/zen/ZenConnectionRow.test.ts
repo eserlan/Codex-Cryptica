@@ -3,7 +3,7 @@ import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import ZenConnectionRow from "./ZenConnectionRow.svelte";
 
-vi.mock("#lib/stores/vault.svelte.js", () => ({
+vi.mock("$lib/stores/vault.svelte", () => ({
   vault: { isGuest: false },
 }));
 

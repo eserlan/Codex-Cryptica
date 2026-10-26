@@ -1,5 +1,5 @@
 import { themeIdToLabel } from "generator-engine";
-import { generatorEngine } from "#lib/services/seo/generator-engine.js";
+import { generatorEngine } from "$lib/services/seo/generator-engine";
 
 /** What a generated encounter needs to know about where it is happening. */
 export interface NoteEncounterRequest {

@@ -24,10 +24,10 @@ const categoriesMock = vi.hoisted(() => ({
   resetToDefaults: vi.fn(),
 }));
 
-vi.mock("#lib/stores/categories.svelte.js", () => ({
+vi.mock("$lib/stores/categories.svelte", () => ({
   categories: categoriesMock,
 }));
-vi.mock("#lib/stores/ui/notification.svelte.js", () => ({
+vi.mock("$lib/stores/ui/notification.svelte", () => ({
   notificationStore: { confirm: vi.fn(), notify: vi.fn() },
 }));
 

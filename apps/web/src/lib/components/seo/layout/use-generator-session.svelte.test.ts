@@ -9,11 +9,11 @@ const hub = vi.hoisted(() => ({
 const track = vi.hoisted(() => vi.fn());
 
 vi.mock("$app/environment", () => ({ browser: true, dev: false }));
-vi.mock("#lib/stores/session-hub.svelte.js", () => ({ sessionHubStore: hub }));
-vi.mock("#lib/stores/online.svelte.js", () => ({
+vi.mock("$lib/stores/session-hub.svelte", () => ({ sessionHubStore: hub }));
+vi.mock("$lib/stores/online.svelte", () => ({
   onlineStatus: { current: true },
 }));
-vi.mock("#lib/services/analytics/zaraz-analytics.js", () => ({
+vi.mock("$lib/services/analytics/zaraz-analytics", () => ({
   trackEvent: track,
 }));
 

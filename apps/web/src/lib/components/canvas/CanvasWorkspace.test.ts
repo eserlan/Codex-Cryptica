@@ -35,7 +35,7 @@ const { canvasLogic, canvasRegistry, importFileToVault } = vi.hoisted(() => ({
   },
 }));
 
-vi.mock("#lib/stores/ui/modal-ui.svelte.js", () => ({
+vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
   modalUIStore: {
     showCanvasSelector: false,
   },
@@ -66,14 +66,14 @@ vi.mock("@xyflow/svelte", async () => ({
   },
 }));
 
-vi.mock("#lib/stores/vault.svelte.js", () => ({
+vi.mock("$lib/stores/vault.svelte", () => ({
   vault: {
     isGuest: false,
     importFileToVault,
   },
 }));
 
-vi.mock("#lib/stores/canvas-registry.svelte.js", () => ({
+vi.mock("$lib/stores/canvas-registry.svelte", () => ({
   canvasRegistry,
 }));
 
@@ -85,13 +85,13 @@ vi.mock("$app/state", () => ({
   },
 }));
 
-vi.mock("#lib/stores/ui/connection-mode.svelte.js", () => ({
+vi.mock("$lib/stores/ui/connection-mode.svelte", () => ({
   connectionModeStore: {
     isConnecting: false,
   },
 }));
 
-vi.mock("#lib/stores/ui/session-mode.svelte.js", () => ({
+vi.mock("$lib/stores/ui/session-mode.svelte", () => ({
   sessionModeStore: {
     isGuestMode: false,
   },
@@ -111,31 +111,31 @@ vi.mock("./ConnectionLine.svelte", () => ({
   },
 }));
 
-vi.mock("#lib/components/canvas/EntityNode.svelte", () => ({
+vi.mock("$lib/components/canvas/EntityNode.svelte", () => ({
   default: function EntityNodeMock() {
     return {};
   },
 }));
 
-vi.mock("#lib/components/canvas/CanvasContextMenu.svelte", () => ({
+vi.mock("$lib/components/canvas/CanvasContextMenu.svelte", () => ({
   default: function CanvasContextMenuMock() {
     return {};
   },
 }));
 
-vi.mock("#lib/components/canvas/CustomEdge.svelte", () => ({
+vi.mock("$lib/components/canvas/CustomEdge.svelte", () => ({
   default: function CustomEdgeMock() {
     return {};
   },
 }));
 
-vi.mock("#lib/components/canvas/EdgeLabelModal.svelte", () => ({
+vi.mock("$lib/components/canvas/EdgeLabelModal.svelte", () => ({
   default: function EdgeLabelModalMock() {
     return {};
   },
 }));
 
-vi.mock("#lib/components/canvas/CanvasSelectionModal.svelte", async () => ({
+vi.mock("$lib/components/canvas/CanvasSelectionModal.svelte", async () => ({
   default: (await import("../modals/__tests__/CanvasSelectionModalStub.svelte"))
     .default,
 }));
@@ -146,8 +146,8 @@ vi.mock("./CanvasHUD.svelte", async () => ({
 }));
 
 import CanvasWorkspace from "./CanvasWorkspace.svelte";
-import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
-import { vault } from "#lib/stores/vault.svelte.js";
+import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+import { vault } from "$lib/stores/vault.svelte";
 
 function setGuestMode(isGuest: boolean) {
   Object.defineProperty(vault, "isGuest", {

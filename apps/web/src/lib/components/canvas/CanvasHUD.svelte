@@ -1,7 +1,7 @@
 <script lang="ts">
-  import CategoryFilter from "#lib/components/labels/CategoryFilter.svelte";
-  import { canvasRegistry } from "#lib/stores/canvas-registry.svelte.js";
-  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+  import CategoryFilter from "$lib/components/labels/CategoryFilter.svelte";
+  import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import {
     CANVAS_DRAWING_WIDTH_PRESETS,
     DEFAULT_CANVAS_DRAWING_WIDTH,
@@ -39,7 +39,7 @@
     showImageLabels = false,
     onToggleShowImageLabels,
     onGenerateReport,
-  }: {
+  } = $props<{
     canvasName: string;
     sourceEntityId?: string;
     sourceEntityTitle?: string;
@@ -73,7 +73,7 @@
     showImageLabels?: boolean;
     onToggleShowImageLabels?: () => void;
     onGenerateReport?: () => void;
-  } = $props();
+  }>();
 
   let isAddMenuOpen = $state(false);
   let isStrokeWidthMenuOpen = $state(false);

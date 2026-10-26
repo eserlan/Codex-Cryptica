@@ -1,19 +1,19 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createZenModeActions } from "./useZenModeActions.svelte";
 
-vi.mock("#lib/utils/zen-popout.js", () => ({
+vi.mock("$lib/utils/zen-popout", () => ({
   openEntityPopout: vi.fn(),
 }));
 
-vi.mock("#lib/stores/ui/navigation.js", () => ({
+vi.mock("$lib/stores/ui/navigation", () => ({
   focusEntity: vi.fn(),
 }));
 
-import { openEntityPopout } from "#lib/utils/zen-popout.js";
-import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
-import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
-import { layoutUIStore } from "#lib/stores/ui/layout-ui.svelte.js";
-import { focusEntity } from "#lib/stores/ui/navigation.js";
+import { openEntityPopout } from "$lib/utils/zen-popout";
+import { notificationStore } from "$lib/stores/ui/notification.svelte";
+import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
+import { focusEntity } from "$lib/stores/ui/navigation";
 
 describe("useZenModeActions", () => {
   let mockVault: any;

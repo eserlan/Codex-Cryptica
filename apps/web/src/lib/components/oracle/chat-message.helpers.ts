@@ -1,4 +1,4 @@
-import type { ChatMessage } from "#lib/stores/oracle.svelte.js";
+import type { ChatMessage } from "$lib/stores/oracle.svelte";
 
 const ALLOWED_URI_REGEXP =
   /^(?:(?:https?|mailto|tel|data|blob):|[^&#?./]?(?:[#/?]|$))/i;

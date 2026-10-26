@@ -8,13 +8,13 @@
     isNoteCollapsed,
     snapPointToHexCenter,
   } from "map-engine";
-  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
-  import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
   import { vault } from "../../stores/vault.svelte";
-  import SpatialImageControls from "#lib/components/spatial/SpatialImageControls.svelte";
-  import ImageFocusMenu from "#lib/components/ui/ImageFocusMenu.svelte";
-  import LayerMenu from "#lib/components/ui/LayerMenu.svelte";
-  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
+  import SpatialImageControls from "$lib/components/spatial/SpatialImageControls.svelte";
+  import ImageFocusMenu from "$lib/components/ui/ImageFocusMenu.svelte";
+  import LayerMenu from "$lib/components/ui/LayerMenu.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
   let {
     x,

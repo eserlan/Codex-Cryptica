@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { p2pHost } from "#lib/cloud-bridge/p2p/host-service.svelte.js";
-  import { p2pGuestService } from "#lib/cloud-bridge/p2p/guest-service.js";
-  import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
+  import { p2pHost } from "$lib/cloud-bridge/p2p/host-service.svelte";
+  import { p2pGuestService } from "$lib/cloud-bridge/p2p/guest-service";
+  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
   // Determine current role and state
   const isHost = $derived(p2pHost.isHosting);

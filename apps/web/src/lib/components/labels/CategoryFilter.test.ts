@@ -12,7 +12,7 @@ const asCss = (hex: string) => {
   return `rgb(${r}, ${g}, ${b})`;
 };
 
-vi.mock("#lib/stores/categories.svelte.js", () => ({
+vi.mock("$lib/stores/categories.svelte", () => ({
   categories: {
     list: [
       {
@@ -29,7 +29,7 @@ const themeStoreMock = vi.hoisted(() => ({
   activeTheme: undefined as unknown,
 }));
 
-vi.mock("#lib/stores/theme.svelte.js", () => ({
+vi.mock("$lib/stores/theme.svelte", () => ({
   themeStore: themeStoreMock,
 }));
 

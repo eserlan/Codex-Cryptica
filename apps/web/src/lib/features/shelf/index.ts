@@ -1,7 +1,7 @@
 import type { Entity, PresentationTemplate, StatSheetTemplate } from "schema";
-import { vault } from "#lib/stores/vault.svelte.js";
-import { statSheetTemplates } from "#lib/stores/stat-sheet-templates.svelte.js";
-import { presentationTemplates } from "#lib/stores/presentation-templates.svelte.js";
+import { vault } from "$lib/stores/vault.svelte";
+import { statSheetTemplates } from "$lib/stores/stat-sheet-templates.svelte";
+import { presentationTemplates } from "$lib/stores/presentation-templates.svelte";
 import { ShelfStore } from "./shelf.svelte";
 import type { ShelfVaultDeps } from "./web-shelf-vault";
 

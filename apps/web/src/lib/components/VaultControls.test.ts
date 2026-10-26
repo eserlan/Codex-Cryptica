@@ -3,7 +3,7 @@
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
-vi.mock("#lib/stores/vault.svelte.js", () => ({
+vi.mock("$lib/stores/vault.svelte", () => ({
   vault: {
     isInitialized: true,
     isGuest: false,
@@ -38,13 +38,13 @@ const mockEntityTemplateStore = vi.hoisted(() => ({
   effectiveDefaultFor: vi.fn(() => "tmpl-char-default"),
 }));
 
-vi.mock("#lib/stores/entity-templates/entity-template-store.svelte.js", () => ({
+vi.mock("$lib/stores/entity-templates/entity-template-store.svelte", () => ({
   entityTemplateStore: mockEntityTemplateStore,
 }));
 
 const profile = vi.hoisted(() => ({ isTalesOfTheValiant: false }));
 
-vi.mock("#lib/stores/system-profile.svelte.js", () => ({
+vi.mock("$lib/stores/system-profile.svelte", () => ({
   systemProfileStore: {
     get isTalesOfTheValiant() {
       return profile.isTalesOfTheValiant;
@@ -52,11 +52,11 @@ vi.mock("#lib/stores/system-profile.svelte.js", () => ({
   },
 }));
 
-vi.mock("#lib/stores/categories.svelte.js", () => ({
+vi.mock("$lib/stores/categories.svelte", () => ({
   categories: { list: [{ id: "character", label: "Character" }] },
 }));
 
-vi.mock("#lib/stores/theme.svelte.js", () => ({
+vi.mock("$lib/stores/theme.svelte", () => ({
   themeStore: {
     jargon: { vault: "World", entity: "Entity" },
     worldThemeId: "fantasy",
@@ -64,7 +64,7 @@ vi.mock("#lib/stores/theme.svelte.js", () => ({
   },
 }));
 
-vi.mock("#lib/services/demo.js", () => ({
+vi.mock("$lib/services/demo", () => ({
   demoService: {
     startDemo: vi.fn(),
     exitDemo: vi.fn(),
@@ -72,26 +72,22 @@ vi.mock("#lib/services/demo.js", () => ({
   },
 }));
 
-vi.mock("#lib/cloud-bridge/p2p/guest-service.js", () => ({
+vi.mock("$lib/cloud-bridge/p2p/guest-service", () => ({
   p2pGuestService: { leaveSession: vi.fn() },
 }));
 
-vi.mock("$app/paths", () => ({
-  base: "",
-  asset: (p: string) => p,
-  resolve: (p: string) => p,
-}));
+vi.mock("$app/paths", () => ({ base: "" }));
 vi.mock("$app/navigation", () => ({ goto: vi.fn() }));
 
-vi.mock("#lib/stores/ui/session-mode.svelte.js", () => ({
+vi.mock("$lib/stores/ui/session-mode.svelte", () => ({
   sessionModeStore: { isDemoMode: false, isGuestMode: false },
 }));
 
-vi.mock("#lib/stores/ui/notification.svelte.js", () => ({
+vi.mock("$lib/stores/ui/notification.svelte", () => ({
   notificationStore: { notify: vi.fn() },
 }));
 
-vi.mock("#lib/stores/ui/modal-ui.svelte.js", () => ({
+vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
   modalUIStore: {
     pendingCreateEntity: false,
     pendingCreateDate: null,
@@ -103,32 +99,32 @@ vi.mock("#lib/stores/ui/modal-ui.svelte.js", () => ({
   },
 }));
 
-vi.mock("#lib/stores/ui/layout-ui.svelte.js", () => ({
+vi.mock("$lib/stores/ui/layout-ui.svelte", () => ({
   layoutUIStore: { isMobile: false },
 }));
 
-vi.mock("#lib/stores/online.svelte.js", () => ({
+vi.mock("$lib/stores/online.svelte", () => ({
   onlineStatus: { current: true },
 }));
 
-vi.mock("#lib/stores/ui/navigation.js", () => ({
+vi.mock("$lib/stores/ui/navigation", () => ({
   openImportWindow: vi.fn(),
 }));
 
-vi.mock("#lib/services/EntityTemplateService.svelte.js", () => ({
+vi.mock("$lib/services/EntityTemplateService.svelte", () => ({
   entityTemplateService: {
     resolveTemplate: vi.fn(async () => ""),
     extractSummary: vi.fn(() => ""),
   },
 }));
 
-vi.mock("#lib/stores/proposer.svelte.js", () => ({
+vi.mock("$lib/stores/proposer.svelte", () => ({
   proposerStore: { draftEntity: null, clearDraftEntity: vi.fn() },
 }));
 
 import VaultControls from "./VaultControls.svelte";
-import { guidedModeStore } from "#lib/stores/ui/guided-mode.svelte.js";
-import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+import { guidedModeStore } from "$lib/stores/ui/guided-mode.svelte";
+import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
 describe("VaultControls", () => {
   beforeEach(() => {
@@ -181,7 +177,7 @@ describe("VaultControls", () => {
 
   it("passes selected templateId to entityTemplateService.resolveTemplate on entity creation", async () => {
     const { entityTemplateService } =
-      await import("#lib/services/EntityTemplateService.svelte.js");
+      await import("$lib/services/EntityTemplateService.svelte");
     guidedModeStore.setGuidedMode(false);
     modalUIStore.pendingCreateEntity = true;
     render(VaultControls);

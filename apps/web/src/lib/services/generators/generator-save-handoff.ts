@@ -1,5 +1,5 @@
-import { focusEntity } from "#lib/stores/ui/navigation.js";
-import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
+import { focusEntity } from "$lib/stores/ui/navigation";
+import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
 export interface SavedEntityHandoffDeps {
   /** Zen/mobile surfaces navigate via focusEntity; others just select. */

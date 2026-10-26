@@ -12,9 +12,9 @@ vi.mock("../utils/idb", () => ({
 
 import { flushSync } from "svelte";
 import { GraphStore } from "./graph.svelte";
-import { GraphLayoutPresets } from "#lib/components/graph/graph-layout-presets.svelte.js";
+import { GraphLayoutPresets } from "$lib/components/graph/graph-layout-presets.svelte";
 import { ViewPresetsStore } from "./view-presets.svelte";
-import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
 class FakeVault {
   entities = $state<Record<string, any>>({});

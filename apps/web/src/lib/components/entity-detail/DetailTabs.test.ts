@@ -3,13 +3,13 @@ import { render } from "@testing-library/svelte";
 import { describe, it, expect, vi } from "vitest";
 import DetailTabs from "./DetailTabs.svelte";
 
-vi.mock("#lib/stores/vault.svelte.js", () => ({
+vi.mock("$lib/stores/vault.svelte", () => ({
   vault: {
     isGuest: false,
   },
 }));
 
-vi.mock("#lib/stores/categories.svelte.js", () => ({
+vi.mock("$lib/stores/categories.svelte", () => ({
   categories: {
     list: [
       { id: "npc", label: "Npc" },
@@ -19,7 +19,7 @@ vi.mock("#lib/stores/categories.svelte.js", () => ({
   },
 }));
 
-vi.mock("#lib/stores/theme.svelte.js", () => ({
+vi.mock("$lib/stores/theme.svelte", () => ({
   themeStore: {
     activeTheme: { id: "fantasy" },
     jargon: {
@@ -29,7 +29,7 @@ vi.mock("#lib/stores/theme.svelte.js", () => ({
   },
 }));
 
-vi.mock("#lib/stores/calendar.svelte.js", () => {
+vi.mock("$lib/stores/calendar.svelte", () => {
   const mockCalendarConfig = {
     useGregorian: false,
     months: [{ id: "m1", name: "Alpha", days: 10 }],

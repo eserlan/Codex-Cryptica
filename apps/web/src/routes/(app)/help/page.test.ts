@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { prerender, trailingSlash } from "./+page";
-import { PRERENDER_ENTRIES } from "#lib/config/prerender-entries.js";
+import config from "../../../../svelte.config.js";
 
 describe("Help index route", () => {
   it("is prerendered so direct Help URLs receive a successful document response", () => {
     expect(prerender).toBe(true);
     expect(trailingSlash).toBe("always");
-    expect(PRERENDER_ENTRIES).toContain("/help");
+    expect(config.kit?.prerender?.entries).toContain("/help");
   });
 });

@@ -1,5 +1,5 @@
-import { safeJsonLd } from "#lib/utils/json-ld.js";
-import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
+import { safeJsonLd } from "$lib/utils/json-ld";
+import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
 
 type Faq = { question: string; answer: string };
 

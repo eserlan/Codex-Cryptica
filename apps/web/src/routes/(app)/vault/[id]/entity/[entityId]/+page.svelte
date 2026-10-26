@@ -1,15 +1,15 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { page } from "$app/state";
-  import { vault } from "#lib/stores/vault.svelte.js";
+  import { vault } from "$lib/stores/vault.svelte";
   import {
     consumeZenPopoutPayload,
     requestZenPopoutPayload,
     type ZenPopoutPayload,
-  } from "#lib/utils/zen-popout.js";
-  import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
-  import { entityTemplateStore } from "#lib/stores/entity-templates/entity-template-store.svelte.js";
-  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+  } from "$lib/utils/zen-popout";
+  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { entityTemplateStore } from "$lib/stores/entity-templates/entity-template-store.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
   const VAULT_INIT_TIMEOUT_MS = 5000;
   const VAULT_INIT_POLL_MS = 50;

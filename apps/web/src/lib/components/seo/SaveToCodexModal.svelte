@@ -54,7 +54,7 @@
 
       <div class="flex flex-col gap-2 mt-4">
         <a
-          href={resolve("") + redirectQuery}
+          href={resolve("/") + redirectQuery}
           onclick={onConfirm}
           class="w-full py-3 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-widest text-xs rounded-xl shadow-lg hover:brightness-110 transition-all flex items-center justify-center gap-2 whitespace-nowrap"
         >

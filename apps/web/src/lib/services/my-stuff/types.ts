@@ -1,4 +1,4 @@
-import type { AnswerCategoryId } from "#lib/content/answers/schema.js";
+import type { AnswerCategoryId } from "$lib/content/answers/schema";
 
 export interface LikedAnswerItem {
   slug: string;

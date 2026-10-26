@@ -2,27 +2,24 @@
   import { marked } from "marked";
   import { gfmHeadingId } from "marked-gfm-heading-id";
   import DOMPurify from "dompurify";
-  import { browser } from "$app/env";
-  import { resolve } from "$app/paths";
-  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+  import { browser } from "$app/environment";
+  import { base } from "$app/paths";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
   // Enable heading IDs for table of contents anchors
   marked.use(gfmHeadingId());
 
-  let {
-    content = "",
-  }: {
+  let { content = "" } = $props<{
     content?: string;
-  } = $props();
+  }>();
 
   // Ensure all root-relative links/images in Markdown respect the SvelteKit base path
   // Matches ](/path) and src="/path"
   const processedContent = $derived(
     content
-      .replace(/\]\(\//g, `](${resolve("")}/`)
-      .replace(/src="\//g, `src="${resolve("")}/`),
+      .replace(/\]\(\//g, `](${base}/`)
+      .replace(/src="\//g, `src="${base}/`),
   );
-
   const renderedHtml = $derived(marked.parse(processedContent));
   const sanitizedHtml = $derived(
     browser

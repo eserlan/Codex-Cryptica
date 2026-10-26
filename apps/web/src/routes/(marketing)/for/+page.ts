@@ -1,4 +1,4 @@
-import { getAllLandingPages } from "#lib/content/for/registry.js";
+import { getAllLandingPages } from "$lib/content/for/registry";
 import type { PageLoad } from "./$types";
 
 export const prerender = true;

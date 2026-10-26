@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  resolveGraphVisibility,
-  sameGraphVisibility,
-  GraphRenderActivity,
-} from "./graph-visibility";
+import { resolveGraphVisibility } from "./graph-visibility";
 
 const visible = {
   documentVisible: true,
@@ -40,37 +36,5 @@ describe("resolveGraphVisibility", () => {
     expect(
       resolveGraphVisibility({ ...visible, containerIntersecting: false }),
     ).toMatchObject({ suspended: true, reason: "offscreen" });
-  });
-});
-
-describe("render activity", () => {
-  it("accepts current callbacks and defers work while suspended", () => {
-    const source = { isSuspended: false };
-    const activity = new GraphRenderActivity(source);
-    expect(activity.isCurrent(0)).toBe(true);
-    expect(activity.deferWhileSuspended()).toBe(false);
-    source.isSuspended = true;
-    expect(activity.isCurrent(0)).toBe(false);
-    expect(activity.deferWhileSuspended()).toBe(true);
-    expect(activity.needsReconcile).toBe(true);
-    source.isSuspended = false;
-    activity.generation++;
-    expect(activity.isCurrent(0)).toBe(false);
-    expect(activity.isCurrent(1)).toBe(true);
-  });
-
-  it("compares visibility snapshots, including changes while already suspended", () => {
-    const snapshot = resolveGraphVisibility(visible);
-    expect(sameGraphVisibility(snapshot, { ...snapshot })).toBe(true);
-    expect(
-      sameGraphVisibility(snapshot, { ...snapshot, reason: "offscreen" }),
-    ).toBe(false);
-    const hidden = resolveGraphVisibility({
-      ...visible,
-      documentVisible: false,
-    });
-    expect(
-      sameGraphVisibility(hidden, { ...hidden, surfaceCovered: true }),
-    ).toBe(false);
   });
 });

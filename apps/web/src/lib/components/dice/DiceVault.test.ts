@@ -8,7 +8,7 @@ const { addResult, sendResolvedRollMessage } = vi.hoisted(() => ({
   sendResolvedRollMessage: vi.fn(),
 }));
 
-vi.mock("#lib/stores/dice-history.svelte.js", () => ({
+vi.mock("$lib/stores/dice-history.svelte", () => ({
   diceHistory: {
     modalHistory: [],
     addResult,
@@ -16,7 +16,7 @@ vi.mock("#lib/stores/dice-history.svelte.js", () => ({
   },
 }));
 
-vi.mock("#lib/stores/map-session.svelte.js", () => ({
+vi.mock("$lib/stores/map-session.svelte", () => ({
   mapSession: {
     vttEnabled: true,
     sendResolvedRollMessage,

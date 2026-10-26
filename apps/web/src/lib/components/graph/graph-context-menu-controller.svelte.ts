@@ -1,15 +1,15 @@
-import type { graph as graphStoreType } from "#lib/stores/graph.svelte.js";
-import type { vault as vaultStoreType } from "#lib/stores/vault.svelte.js";
-import type { oracle as oracleStoreType } from "#lib/stores/oracle.svelte.js";
-import type { revisionService as revisionServiceType } from "#lib/services/RevisionService.svelte.js";
-import type { canvasRegistry as canvasRegistryType } from "#lib/stores/canvas-registry.svelte.js";
-import type { modalUIStore as modalUIStoreType } from "#lib/stores/ui/modal-ui.svelte.js";
-import type { connectionModeStore as connectionModeStoreType } from "#lib/stores/ui/connection-mode.svelte.js";
-import type { notificationStore as notificationStoreType } from "#lib/stores/ui/notification.svelte.js";
+import type { graph as graphStoreType } from "$lib/stores/graph.svelte";
+import type { vault as vaultStoreType } from "$lib/stores/vault.svelte";
+import type { oracle as oracleStoreType } from "$lib/stores/oracle.svelte";
+import type { revisionService as revisionServiceType } from "$lib/services/RevisionService.svelte";
+import type { canvasRegistry as canvasRegistryType } from "$lib/stores/canvas-registry.svelte";
+import type { modalUIStore as modalUIStoreType } from "$lib/stores/ui/modal-ui.svelte";
+import type { connectionModeStore as connectionModeStoreType } from "$lib/stores/ui/connection-mode.svelte";
+import type { notificationStore as notificationStoreType } from "$lib/stores/ui/notification.svelte";
 import type { Core, EventObject, NodeSingular } from "cytoscape";
 import type { ImageFocus } from "schema";
-import { shelf } from "#lib/features/shelf/index.js";
-import { systemClock, type Clock } from "#lib/utils/runtime-deps.js";
+import { shelf } from "$lib/features/shelf";
+import { systemClock, type Clock } from "$lib/utils/runtime-deps";
 
 export interface GraphContextMenuDependencies {
   graph: typeof graphStoreType;

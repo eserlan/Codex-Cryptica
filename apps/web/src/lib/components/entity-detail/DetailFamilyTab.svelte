@@ -2,7 +2,7 @@
   import type { Entity } from "schema";
   import { untrack } from "svelte";
   import { buildFamilyTree } from "@codex/family-engine";
-  import { vault } from "#lib/stores/vault.svelte.js";
+  import { vault } from "$lib/stores/vault.svelte";
   import FamilyTree from "./family-tree/FamilyTree.svelte";
   import FamilyMemberCard from "./family-tree/FamilyMemberCard.svelte";
   import EmptyFamilySlot from "./family-tree/EmptyFamilySlot.svelte";
@@ -13,7 +13,7 @@
     onNavigate = (id: string) => {
       vault.selectedEntityId = id;
     },
-  }: { entity: Entity; onNavigate?: (id: string) => void } = $props();
+  } = $props<{ entity: Entity; onNavigate?: (id: string) => void }>();
 
   // Focus can be re-centred on any relative (US3); defaults to this entity and
   // resets whenever the panel switches to a different entity.

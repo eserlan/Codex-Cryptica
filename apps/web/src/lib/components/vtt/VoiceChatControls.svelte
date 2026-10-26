@@ -1,13 +1,13 @@
 <script lang="ts">
-  import { p2pHost } from "#lib/cloud-bridge/p2p/host-service.svelte.js";
-  import { p2pGuestService } from "#lib/cloud-bridge/p2p/guest-service.js";
-  import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
-  import { voiceChat } from "#lib/cloud-bridge/p2p/voice/voice-chat.svelte.js";
+  import { p2pHost } from "$lib/cloud-bridge/p2p/host-service.svelte";
+  import { p2pGuestService } from "$lib/cloud-bridge/p2p/guest-service";
+  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { voiceChat } from "$lib/cloud-bridge/p2p/voice/voice-chat.svelte";
   import type {
     VoiceHostAccess,
     VoiceGuestAccess,
     VoicePeer,
-  } from "#lib/cloud-bridge/p2p/voice/voice-chat.svelte.js";
+  } from "$lib/cloud-bridge/p2p/voice/voice-chat.svelte";
 
   const isHost = $derived(p2pHost.isHosting);
   const isLiveGuest = $derived(

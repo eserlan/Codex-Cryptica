@@ -52,23 +52,23 @@ const {
   },
 }));
 
-vi.mock("#lib/stores/search.svelte.js", () => ({
+vi.mock("$lib/stores/search.svelte", () => ({
   searchStore: mockSearchStore,
 }));
 
-vi.mock("#lib/stores/vault.svelte.js", () => ({
+vi.mock("$lib/stores/vault.svelte", () => ({
   vault: mockVault,
 }));
 
-vi.mock("#lib/stores/categories.svelte.js", () => ({
+vi.mock("$lib/stores/categories.svelte", () => ({
   categories: mockCategories,
 }));
 
-vi.mock("#lib/utils/icon.js", () => ({
+vi.mock("$lib/utils/icon", () => ({
   getIconClass: vi.fn(() => "icon-[lucide--file-text]"),
 }));
 
-vi.mock("#lib/utils/markdown.js", () => ({
+vi.mock("$lib/utils/markdown", () => ({
   renderMarkdown: vi.fn((value: string) => value),
 }));
 
@@ -82,12 +82,12 @@ vi.mock("./search-focus", () => ({
   resolveSearchResultEntityId: vi.fn((result) => result.id),
 }));
 
-vi.mock("#lib/stores/ui/modal-ui.svelte.js", () => ({
+vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
   modalUIStore: mockModalUIStore,
 }));
 
 import SearchModal from "./SearchModal.svelte";
-import { layoutUIStore } from "#lib/stores/ui/layout-ui.svelte.js";
+import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
 
 describe("SearchModal", () => {
   beforeEach(() => {

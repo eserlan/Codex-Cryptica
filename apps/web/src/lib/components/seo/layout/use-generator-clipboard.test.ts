@@ -4,10 +4,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const track = vi.hoisted(() => vi.fn());
 const inlineCopy = vi.hoisted(() => vi.fn());
 
-vi.mock("#lib/services/analytics/zaraz-analytics.js", () => ({
+vi.mock("$lib/services/analytics/zaraz-analytics", () => ({
   trackPublicGeneratorAction: track,
 }));
-vi.mock("#lib/components/seo/generator-inline-copy.js", () => ({
+vi.mock("$lib/components/seo/generator-inline-copy", () => ({
   handleGeneratorInlineCopy: inlineCopy,
 }));
 

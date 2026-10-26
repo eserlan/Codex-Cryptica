@@ -1,14 +1,14 @@
 <script lang="ts">
-  import { resolve } from "$app/paths";
-  const cleanBase = resolve("") === "/" ? "" : resolve("");
+  import { base } from "$app/paths";
+  const cleanBase = base === "/" ? "" : base;
   import { fade } from "svelte/transition";
-  import { safeJsonLd } from "#lib/utils/json-ld.js";
+  import { safeJsonLd } from "$lib/utils/json-ld";
   import {
     parseChronicaFiles,
     parseObsidianFiles,
     parseJsonExport,
     traverseEntry,
-  } from "#lib/services/seo/import-parser.js";
+  } from "$lib/services/seo/import-parser";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
@@ -425,7 +425,6 @@
             <span class="block text-lg font-extrabold text-theme-primary"
               >{parseStats.total}</span
             >
-
             <span
               class="text-nano uppercase tracking-widest text-theme-muted font-header"
               >Total</span
@@ -437,7 +436,6 @@
             <span class="block text-lg font-extrabold text-theme-primary"
               >{parseStats.characters}</span
             >
-
             <span
               class="text-nano uppercase tracking-widest text-theme-muted font-header"
               >Characters</span
@@ -449,7 +447,6 @@
             <span class="block text-lg font-extrabold text-theme-primary"
               >{parseStats.locations}</span
             >
-
             <span
               class="text-nano uppercase tracking-widest text-theme-muted font-header"
               >Locations</span
@@ -461,7 +458,6 @@
             <span class="block text-lg font-extrabold text-theme-primary"
               >{parseStats.factions}</span
             >
-
             <span
               class="text-nano uppercase tracking-widest text-theme-muted font-header"
               >Factions</span
@@ -473,7 +469,6 @@
             <span class="block text-lg font-extrabold text-theme-primary"
               >{parseStats.items}</span
             >
-
             <span
               class="text-nano uppercase tracking-widest text-theme-muted font-header"
               >Items</span

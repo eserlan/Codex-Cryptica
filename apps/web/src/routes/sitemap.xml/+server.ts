@@ -2,21 +2,21 @@ import {
   solutions,
   featuresConfig,
   importsConfig,
-} from "#lib/config/seo-pages.js";
-import { comparisons } from "#lib/config/seo-comparisons.js";
-import { loadLocalBlogArticles } from "#lib/content/blog-content.js";
+} from "$lib/config/seo-pages";
+import { comparisons } from "$lib/config/seo-comparisons";
+import { loadLocalBlogArticles } from "$lib/content/blog-content";
 import { VALID_HUB_THEMES } from "../../params/theme_hub";
 import { GENERATOR_SLUGS } from "../../params/generator_slug";
-import { getAllLandingPageSlugs } from "#lib/content/for/registry.js";
-import { getAllAnswers, answerPath } from "#lib/content/answers/registry.js";
-import { getAllExamples, examplePath } from "#lib/content/examples/registry.js";
+import { getAllLandingPageSlugs } from "$lib/content/for/registry";
+import { getAllAnswers, answerPath } from "$lib/content/answers/registry";
+import { getAllExamples, examplePath } from "$lib/content/examples/registry";
 import {
   STATIC_SITEMAP_ROUTES,
   configPageRoutes,
   contentRoute,
   renderSitemapDocument,
   renderSitemapUrl,
-} from "#lib/seo/sitemap-routes.js";
+} from "$lib/seo/sitemap-routes";
 
 // fallow-ignore-next-line unused-export
 export const prerender = true;

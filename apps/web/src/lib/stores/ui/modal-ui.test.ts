@@ -4,9 +4,9 @@ import { beforeEach, describe, it, expect } from "vitest";
 (global as any).$state = (v: any) => v;
 
 import { ModalUIStore } from "./modal-ui.svelte";
-import { vault } from "#lib/stores/vault.svelte.js";
+import { vault } from "$lib/stores/vault.svelte";
 import { sessionModeStore } from "./session-mode.svelte";
-import { vaultRegistry } from "#lib/stores/vault-registry.svelte.js";
+import { vaultRegistry } from "$lib/stores/vault-registry.svelte";
 
 beforeEach(() => {
   sessionModeStore.isGuestMode = false;

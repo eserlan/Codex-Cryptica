@@ -1,4 +1,4 @@
-import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
+import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
 import { parseGeneratorShareMarkdown } from "./generator-copy";
 import { resolveGeneratorShareTheme } from "./generator-page-identity";
 

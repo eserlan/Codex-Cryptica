@@ -1,9 +1,9 @@
 <script lang="ts">
   import type { Entity } from "schema";
-  import MarkdownEditor from "#lib/components/MarkdownEditor.svelte";
-  import { vault } from "#lib/stores/vault.svelte.js";
-  import type { EntityIndexEntry } from "#lib/utils/entity-mention-detector.js";
-  import { revisionService } from "#lib/services/RevisionService.svelte.js";
+  import MarkdownEditor from "$lib/components/MarkdownEditor.svelte";
+  import { vault } from "$lib/stores/vault.svelte";
+  import type { EntityIndexEntry } from "$lib/utils/entity-mention-detector";
+  import { revisionService } from "$lib/services/RevisionService.svelte";
   import DetailProposals from "./proposals/DetailProposals.svelte";
   import EntityProposals from "./EntityProposals.svelte";
 
@@ -11,11 +11,11 @@
     entity,
     isEditing,
     editLore = $bindable(),
-  }: {
+  } = $props<{
     entity: Entity;
     isEditing: boolean;
     editLore: string;
-  } = $props();
+  }>();
 
   const draft = $derived(
     revisionService.pendingDraft?.entityId === entity.id

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
-vi.mock("#lib/stores/oracle.svelte.js", () => ({
+vi.mock("$lib/stores/oracle.svelte", () => ({
   oracle: {
     reviseSmartApply: vi.fn().mockResolvedValue({}),
     reviseEntity: vi.fn().mockResolvedValue({
@@ -10,7 +10,7 @@ vi.mock("#lib/stores/oracle.svelte.js", () => ({
   },
 }));
 
-vi.mock("#lib/stores/vault.svelte.js", () => ({
+vi.mock("$lib/stores/vault.svelte", () => ({
   vault: {
     isGuest: false,
     entities: {
@@ -20,8 +20,8 @@ vi.mock("#lib/stores/vault.svelte.js", () => ({
 }));
 
 import { RevisionService } from "./RevisionService.svelte";
-import { oracle } from "#lib/stores/oracle.svelte.js";
-import { vault } from "#lib/stores/vault.svelte.js";
+import { oracle } from "$lib/stores/oracle.svelte";
+import { vault } from "$lib/stores/vault.svelte";
 
 describe("RevisionService", () => {
   let service: RevisionService;

@@ -3,10 +3,10 @@
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import type { TemplateDirectoryResult } from "schema";
-  import { publicTemplateDirectoryService } from "#lib/services/publishing/PublicTemplateDirectoryService.js";
-  import DirectoryFeedback from "#lib/components/community-templates/DirectoryFeedback.svelte";
-  import DirectorySearchForm from "#lib/components/community-templates/DirectorySearchForm.svelte";
-  import TemplateCardShell from "#lib/components/community-templates/TemplateCardShell.svelte";
+  import { publicTemplateDirectoryService } from "$lib/services/publishing/PublicTemplateDirectoryService";
+  import DirectoryFeedback from "$lib/components/community-templates/DirectoryFeedback.svelte";
+  import DirectorySearchForm from "$lib/components/community-templates/DirectorySearchForm.svelte";
+  import TemplateCardShell from "$lib/components/community-templates/TemplateCardShell.svelte";
 
   let query = $state("");
   let system = $state("");

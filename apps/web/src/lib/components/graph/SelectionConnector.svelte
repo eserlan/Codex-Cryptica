@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { vault } from "#lib/stores/vault.svelte.js";
+  import { vault } from "$lib/stores/vault.svelte";
   import { fade } from "svelte/transition";
   import { untrack } from "svelte";
   import type { Core, NodeSingular } from "cytoscape";
-  import { connectionModeStore } from "#lib/stores/ui/connection-mode.svelte.js";
-  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
+  import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
-  let { cy }: { cy: Core } = $props();
+  let { cy } = $props<{ cy: Core }>();
 
   let selection = $state<NodeSingular[]>([]);
   let position = $state({ x: 0, y: 0 });

@@ -1,16 +1,16 @@
-import { browser as defaultBrowser } from "$app/env";
+import { browser as defaultBrowser } from "$app/environment";
 import DOMPurify from "dompurify";
 import { appEventBus as defaultAppEventBus } from "@codex/events";
 import { ORACLE_EVENTS } from "@codex/oracle-engine";
-import { clipboardService as defaultClipboardService } from "#lib/services/ClipboardService.js";
-import { parserService as defaultParserService } from "#lib/services/parser.js";
-import { revisionService as defaultRevisionService } from "#lib/services/RevisionService.svelte.js";
-import { graph as defaultGraph } from "#lib/stores/graph.svelte.js";
+import { clipboardService as defaultClipboardService } from "$lib/services/ClipboardService";
+import { parserService as defaultParserService } from "$lib/services/parser";
+import { revisionService as defaultRevisionService } from "$lib/services/RevisionService.svelte";
+import { graph as defaultGraph } from "$lib/stores/graph.svelte";
 import {
   oracle as defaultOracle,
   type ChatMessage,
-} from "#lib/stores/oracle.svelte.js";
-import { vault as defaultVault } from "#lib/stores/vault.svelte.js";
+} from "$lib/stores/oracle.svelte";
+import { vault as defaultVault } from "$lib/stores/vault.svelte";
 import { isVisibleDiscoveryProposal } from "./discovery-proposal-filter";
 import {
   type DomPurifyLike,

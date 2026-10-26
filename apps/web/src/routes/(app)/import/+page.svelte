@@ -1,5 +1,5 @@
 <script lang="ts">
-  import ImportSettings from "#lib/components/settings/ImportSettings.svelte";
+  import ImportSettings from "$lib/components/settings/ImportSettings.svelte";
 </script>
 
 <svelte:head>

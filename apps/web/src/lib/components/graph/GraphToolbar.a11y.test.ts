@@ -15,7 +15,7 @@ import { render, fireEvent } from "@testing-library/svelte";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import GraphToolbar from "./GraphToolbar.svelte";
-import { layoutUIStore } from "#lib/stores/ui/layout-ui.svelte.js";
+import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
 
 // Opening the mobile menu runs a Svelte transition (same shim as
 // EdgeEditorModal.test.ts).

@@ -1,11 +1,8 @@
 <script lang="ts">
-  import { calendarStore } from "#lib/stores/calendar.svelte.js";
+  import { calendarStore } from "$lib/stores/calendar.svelte";
   import type { CalendarEra } from "chronology-engine";
   import { formatEraYear } from "chronology-engine";
-  import {
-    systemIdGenerator,
-    type IdGenerator,
-  } from "#lib/utils/runtime-deps.js";
+  import { systemIdGenerator, type IdGenerator } from "$lib/utils/runtime-deps";
 
   let { idGenerator = systemIdGenerator }: { idGenerator?: IdGenerator } =
     $props();

@@ -34,7 +34,7 @@ const { vaultState } = vi.hoisted(() => ({
   },
 }));
 
-vi.mock("#lib/stores/vault.svelte.js", () => ({
+vi.mock("$lib/stores/vault.svelte", () => ({
   vault: {
     get entities() {
       return vaultState.entities;
@@ -44,7 +44,7 @@ vi.mock("#lib/stores/vault.svelte.js", () => ({
     },
   },
 }));
-vi.mock("#lib/services/merchant-trade-instance.js", () => ({
+vi.mock("$lib/services/merchant-trade-instance", () => ({
   merchantTradeService: { execute: vi.fn() },
 }));
 

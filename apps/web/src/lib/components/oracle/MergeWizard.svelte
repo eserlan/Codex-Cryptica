@@ -1,14 +1,14 @@
 <script lang="ts">
-  import { oracle, type ChatMessage } from "#lib/stores/oracle.svelte.js";
-  import { vault } from "#lib/stores/vault.svelte.js";
+  import { oracle, type ChatMessage } from "$lib/stores/oracle.svelte";
+  import { vault } from "$lib/stores/vault.svelte";
   import {
     nodeMergeService,
     type IMergedContentProposal,
-  } from "#lib/services/node-merge.service.svelte.js";
+  } from "$lib/services/node-merge.service.svelte";
   import Autocomplete from "../ui/Autocomplete.svelte";
   import { fade, slide } from "svelte/transition";
-  import { themeStore } from "#lib/stores/theme.svelte.js";
-  import { revisionService } from "#lib/services/RevisionService.svelte.js";
+  import { themeStore } from "$lib/stores/theme.svelte";
+  import { revisionService } from "$lib/services/RevisionService.svelte";
 
   let { message = $bindable() }: { message: ChatMessage } = $props();
 

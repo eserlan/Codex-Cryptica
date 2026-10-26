@@ -1,7 +1,7 @@
 import type { Canvas } from "@codex/canvas-engine";
-import type { vault as VaultStore } from "#lib/stores/vault.svelte.js";
-import type { canvasRegistry as CanvasRegistryStore } from "#lib/stores/canvas-registry.svelte.js";
-import type { modalUIStore as ModalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+import type { vault as VaultStore } from "$lib/stores/vault.svelte";
+import type { canvasRegistry as CanvasRegistryStore } from "$lib/stores/canvas-registry.svelte";
+import type { modalUIStore as ModalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 import { openOrCreateSourceEntity } from "../canvas-source-entity";
 import type { CanvasLogic } from "./canvas-logic-type";
 

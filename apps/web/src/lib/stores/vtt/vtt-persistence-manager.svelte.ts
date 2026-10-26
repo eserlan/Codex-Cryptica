@@ -1,10 +1,10 @@
 import type { EncounterSession, VTTMessage } from "../../../types/vtt";
-import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import {
   browserSessionStorage,
   browserStorage,
   type StorageLike,
-} from "#lib/utils/runtime-deps.js";
+} from "$lib/utils/runtime-deps";
 
 const STORAGE_PREFIX = "codex.vtt.session";
 const POPOUT_STORAGE_PREFIX = "codex.vtt.popout";

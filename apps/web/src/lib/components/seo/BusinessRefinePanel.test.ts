@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { generateBusinessLocal, type BusinessDocument } from "generator-engine";
 
 const regenerate = vi.fn();
-vi.mock("#lib/services/seo/generator-engine.js", () => ({
+vi.mock("$lib/services/seo/generator-engine", () => ({
   generatorEngine: {
     regenerateBusinessSection: (...args: unknown[]) => regenerate(...args),
   },

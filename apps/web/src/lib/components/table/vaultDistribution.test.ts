@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Category } from "schema";
-import type { EntityWithPreview } from "#lib/components/explorer/entityListFiltering.js";
+import type { EntityWithPreview } from "$lib/components/explorer/entityListFiltering";
 import {
   computeVaultDistribution,
   getEntityEffectiveLabels,

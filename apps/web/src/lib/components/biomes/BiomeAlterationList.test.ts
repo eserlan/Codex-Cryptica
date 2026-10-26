@@ -3,7 +3,7 @@
 import { describe, expect, it } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import BiomeAlterationList from "./BiomeAlterationList.svelte";
-import { makeStore } from "#lib/stores/biome-explorer.test-helpers.js";
+import { makeStore } from "$lib/stores/biome-explorer.test-helpers";
 
 const goodJson = JSON.stringify({
   suggestions: [

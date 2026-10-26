@@ -2,8 +2,8 @@
   import {
     socialHubConfig,
     pickFrom,
-  } from "#lib/services/seo/generator-config.js";
-  import SelectWithCustomOption from "#lib/components/forms/SelectWithCustomOption.svelte";
+  } from "$lib/services/seo/generator-config";
+  import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
 
   const fantasyVenueTypes = socialHubConfig.venueTypesByGenre["Fantasy"];
   const fantasyClienteles = socialHubConfig.clientelesByGenre["Fantasy"];

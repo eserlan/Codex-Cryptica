@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { soloSessionStore } from "#lib/stores/solo-session-instance.js";
+  import { soloSessionStore } from "$lib/stores/solo-session-instance";
 
   let draft = $state(soloSessionStore.session?.sceneName ?? "");
   const current = $derived(soloSessionStore.session?.sceneName ?? "");

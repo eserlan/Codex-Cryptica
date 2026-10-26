@@ -1,10 +1,10 @@
 <script lang="ts">
   import { fade, scale } from "svelte/transition";
-  import { focusTrap } from "#lib/actions/focusTrap.js";
-  import { oracle } from "#lib/stores/oracle.svelte.js";
-  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
-  import { vault } from "#lib/stores/vault.svelte.js";
-  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
+  import { focusTrap } from "$lib/actions/focusTrap";
+  import { oracle } from "$lib/stores/oracle.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { vault } from "$lib/stores/vault.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
   const dialog = $derived(modalUIStore.imagePromptReview);
   const target = $derived(dialog.target);

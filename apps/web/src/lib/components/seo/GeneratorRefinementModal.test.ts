@@ -2,7 +2,7 @@
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import GeneratorRefinementModal from "./GeneratorRefinementModal.svelte";
-import { GeneratorRefinementService } from "#lib/services/GeneratorRefinementService.svelte.js";
+import { GeneratorRefinementService } from "$lib/services/GeneratorRefinementService.svelte";
 
 const source = {
   type: "character",

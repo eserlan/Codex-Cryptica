@@ -2,13 +2,13 @@
   import type {
     AdventureArchiveEntry,
     AdventureSessionRepository,
-  } from "#lib/services/adventure/adventure-session-repository.js";
+  } from "$lib/services/adventure/adventure-session-repository";
   import AdventureTranscript from "./AdventureTranscript.svelte";
   import {
     createPlayerTranscript,
     type AdventureSession,
   } from "@codex/adventure-engine";
-  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
   type Confirm = (options: {
     title: string;

@@ -2,7 +2,7 @@ import type { ConceptSeed } from "generator-engine";
 import {
   browserSessionStorage,
   type StorageLike,
-} from "#lib/utils/runtime-deps.js";
+} from "$lib/utils/runtime-deps";
 
 const STORAGE_KEY = "GENERATION_INPUT_HISTORY";
 const MAX_HISTORY_PER_GENERATOR = 3;

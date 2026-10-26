@@ -3,10 +3,10 @@ import {
   generatePersonality,
   personalitySectionTitle,
 } from "./generate-personality";
-import { oracle } from "#lib/stores/oracle.svelte.js";
-import { upsertMarkdownSection } from "#lib/utils/markdown.js";
+import { oracle } from "$lib/stores/oracle.svelte";
+import { upsertMarkdownSection } from "$lib/utils/markdown";
 
-vi.mock("#lib/stores/oracle.svelte.js", () => ({
+vi.mock("$lib/stores/oracle.svelte", () => ({
   oracle: {
     effectiveApiKey: "test-key",
     modelName: "test-model",
@@ -16,7 +16,7 @@ vi.mock("#lib/stores/oracle.svelte.js", () => ({
   },
 }));
 
-vi.mock("#lib/cloud-bridge/oracle-bridge.js", () => ({
+vi.mock("$lib/cloud-bridge/oracle-bridge", () => ({
   oracleBridge: {
     isReady: true,
   },
@@ -26,7 +26,7 @@ vi.mock("comlink", () => ({
   proxy: vi.fn((fn) => fn),
 }));
 
-vi.mock("#lib/utils/markdown.js", () => ({
+vi.mock("$lib/utils/markdown", () => ({
   upsertMarkdownSection: vi.fn(
     (lore, title, text) => `${lore}\n\n## ${title}\n${text}`,
   ),

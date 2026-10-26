@@ -1,5 +1,5 @@
 <script lang="ts">
-  import EmbeddedEntityView from "#lib/components/entity/EmbeddedEntityView.svelte";
+  import EmbeddedEntityView from "$lib/components/entity/EmbeddedEntityView.svelte";
 
   let { entityId }: { entityId: string | null } = $props();
 </script>

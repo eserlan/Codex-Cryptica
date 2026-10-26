@@ -23,10 +23,7 @@ import { updatedToken, moveLinkedTokens } from "./vtt-token-updates";
 import { VTTTokenOwnership } from "./vtt-token-ownership";
 import { VTTTokenSelection } from "./vtt-token-selection";
 import { VTTTokenSync } from "./vtt-token-sync";
-import {
-  type IdGenerator,
-  systemIdGenerator,
-} from "#lib/utils/runtime-deps.js";
+import { type IdGenerator, systemIdGenerator } from "$lib/utils/runtime-deps";
 
 export { normalizeToken } from "map-engine";
 

@@ -1,7 +1,7 @@
 import type { GuestChatTranscript, Entity, Connection } from "schema";
-import { clipboardService as defaultClipboardService } from "#lib/services/ClipboardService.js";
-import { notificationStore as defaultNotificationStore } from "#lib/stores/ui/notification.svelte.js";
-import { vault as defaultVault } from "#lib/stores/vault.svelte.js";
+import { clipboardService as defaultClipboardService } from "$lib/services/ClipboardService";
+import { notificationStore as defaultNotificationStore } from "$lib/stores/ui/notification.svelte";
+import { vault as defaultVault } from "$lib/stores/vault.svelte";
 
 export interface CharacterChatExportOptions {
   speakerName?: string;

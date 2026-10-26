@@ -4,11 +4,11 @@ import {
   resolveEntitySilhouette,
 } from "schema";
 import type { GraphImageManager } from "graph-engine";
-import type { graph as graphStore } from "#lib/stores/graph.svelte.js";
-import type { vault as vaultStore } from "#lib/stores/vault.svelte.js";
-import type { debugStore as debugStoreType } from "#lib/stores/debug.svelte.js";
-import type { themeStore } from "#lib/stores/theme.svelte.js";
-import { categories } from "#lib/stores/categories.svelte.js";
+import type { graph as graphStore } from "$lib/stores/graph.svelte";
+import type { vault as vaultStore } from "$lib/stores/vault.svelte";
+import type { debugStore as debugStoreType } from "$lib/stores/debug.svelte";
+import type { themeStore } from "$lib/stores/theme.svelte";
+import { categories } from "$lib/stores/categories.svelte";
 
 type ActiveTheme = typeof themeStore.activeTheme;
 type CategoryList = typeof categories.list;
@@ -67,14 +67,4 @@ export function syncGraphImages({
     onError: (error) =>
       debugStore.error("Incremental image resolution failed", error),
   });
-}
-
-/** Releases the manager's thumbnail references on a vault reset or teardown. */
-export function releaseGraphImages(
-  imageManager: GraphImageManager | undefined,
-  vault: Pick<typeof vaultStore, "releaseThumbnailUrl">,
-): void {
-  imageManager?.destroy({
-    releaseImageUrl: (path: string) => vault.releaseThumbnailUrl(path),
-  } as Parameters<GraphImageManager["destroy"]>[0]);
 }

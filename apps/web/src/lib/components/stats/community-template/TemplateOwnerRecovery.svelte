@@ -3,11 +3,11 @@
     listingId,
     token = "",
     onSave = () => {},
-  }: {
+  } = $props<{
     listingId: string;
     token?: string;
     onSave?: (token: string) => void;
-  } = $props();
+  }>();
   let value = $state("");
   let copied = $state(false);
   let lastToken = $state("");

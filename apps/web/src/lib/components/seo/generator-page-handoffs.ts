@@ -1,13 +1,13 @@
-import { browser } from "$app/env";
+import { browser } from "$app/environment";
 import { goto, afterNavigate } from "$app/navigation";
 import { resolve } from "$app/paths";
-import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
-import type { MarkdownSectionForCopy } from "#lib/components/seo/markdown-sections.js";
+import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
+import type { MarkdownSectionForCopy } from "$lib/components/seo/markdown-sections";
 import {
   buildPlotTwistPremise,
   buildFactionRosterContext,
   buildRosterMemberContext,
-} from "#lib/services/seo/generator-handoffs.js";
+} from "$lib/services/seo/generator-handoffs";
 import { parseDevelopWorldHandoff } from "./generator-page-world-handoff";
 import type { ValidSlug } from "./generator-page-meta";
 import { page } from "$app/state";
@@ -60,15 +60,12 @@ export function setupHandoffNavigation(
   state: GeneratorHandoffState,
   onStateChange: (updates: Partial<GeneratorHandoffState>) => void,
 ) {
-  afterNavigate(({ to, shallow, type }) => {
-    if (shallow && type === "goto") return;
-
+  afterNavigate(({ to }) => {
     const slug = getSlug();
     const premise =
       slug === "plot-twist-generator"
         ? (to?.url.searchParams.get("questPremise") ?? "")
         : "";
-
     if (premise !== state.questPremise) {
       onStateChange({ questPremise: premise });
     }
@@ -77,14 +74,12 @@ export function setupHandoffNavigation(
       slug === "faction-roster"
         ? (to?.url.searchParams.get("factionContext") ?? "")
         : "";
-
     if (factionContext !== state.factionContext) {
       onStateChange({ factionContext });
     }
 
     const npcContext =
       slug === "npc" ? (to?.url.searchParams.get("npcContext") ?? "") : "";
-
     if (npcContext !== state.npcContext) {
       onStateChange({ npcContext });
     }
@@ -95,16 +90,14 @@ export function openPlotTwistFromQuest(draft: GeneratorOutput): void {
   const params = new URLSearchParams({
     questPremise: buildPlotTwistPremise(draft),
   });
-
-  void goto(resolve(`generators/plot-twist-generator?${params}`));
+  void goto(resolve(`/generators/plot-twist-generator?${params}`));
 }
 
 export function openRosterFromFaction(draft: GeneratorOutput): void {
   const params = new URLSearchParams({
     factionContext: buildFactionRosterContext(draft),
   });
-
-  void goto(resolve(`generators/faction-roster?${params}`));
+  void goto(resolve(`/generators/faction-roster?${params}`));
 }
 
 export function openMemberAsCharacter(
@@ -114,7 +107,7 @@ export function openMemberAsCharacter(
   const params = new URLSearchParams({
     npcContext: buildRosterMemberContext(section.markdown, data.title),
   });
-  void goto(resolve(`generators/npc?${params}`));
+  void goto(resolve(`/generators/npc?${params}`));
 }
 
 export function applyPendingDevelopWorld(): ReturnType<
@@ -123,11 +116,11 @@ export function applyPendingDevelopWorld(): ReturnType<
   const handoff = parseDevelopWorldHandoff(page.url.searchParams);
   if (!handoff) return null;
 
-  const cleanUrl = new URL(page.url.href);
+  const cleanUrl = new URL(page.url);
   for (const key of handoff.paramKeys) {
     cleanUrl.searchParams.delete(key);
   }
-  goto(cleanUrl, { replaceState: true, reset: false });
+  goto(cleanUrl, { replaceState: true, noScroll: true, keepFocus: true });
 
   return handoff;
 }

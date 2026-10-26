@@ -1,13 +1,13 @@
 <script lang="ts">
-  import { canvasRegistry } from "#lib/stores/canvas-registry.svelte.js";
+  import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
 
   import { page } from "$app/state";
   import { goto } from "$app/navigation";
   import { fade, scale, slide } from "svelte/transition";
   import { tick } from "svelte";
-  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
-  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
-  import { systemClock } from "#lib/utils/runtime-deps.js";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { systemClock } from "$lib/utils/runtime-deps";
 
   let searchQuery = $state("");
   const activeCanvasId = $derived(page.params.slug);

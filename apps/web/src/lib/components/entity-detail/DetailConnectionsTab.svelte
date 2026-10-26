@@ -2,11 +2,11 @@
   import type { Entity } from "schema";
   import type { Core } from "cytoscape";
   import { initGraph, GraphImageManager } from "graph-engine";
-  import { vault } from "#lib/stores/vault.svelte.js";
-  import { categories } from "#lib/stores/categories.svelte.js";
-  import { themeStore } from "#lib/stores/theme.svelte.js";
-  import { layoutUIStore } from "#lib/stores/ui/layout-ui.svelte.js";
-  import AskAboutThis from "#lib/components/help-assistant/AskAboutThis.svelte";
+  import { vault } from "$lib/stores/vault.svelte";
+  import { categories } from "$lib/stores/categories.svelte";
+  import { themeStore } from "$lib/stores/theme.svelte";
+  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
+  import AskAboutThis from "$lib/components/help-assistant/AskAboutThis.svelte";
   import {
     buildConnectionNeighbors,
     vaultConnectionContext,

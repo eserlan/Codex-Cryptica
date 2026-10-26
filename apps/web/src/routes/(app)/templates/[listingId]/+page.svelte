@@ -3,10 +3,10 @@
   import { page } from "$app/state";
   import { resolve } from "$app/paths";
   import type { PublicTemplatePackage, TemplateDirectoryResult } from "schema";
-  import { publicTemplateDirectoryService } from "#lib/services/publishing/PublicTemplateDirectoryService.js";
-  import TemplateImportModal from "#lib/components/stats/community-template/TemplateImportModal.svelte";
-  import TemplateOwnerRecovery from "#lib/components/stats/community-template/TemplateOwnerRecovery.svelte";
-  import { saveTemplateOwnerToken } from "#lib/stores/publishing/template-publish-registry.js";
+  import { publicTemplateDirectoryService } from "$lib/services/publishing/PublicTemplateDirectoryService";
+  import TemplateImportModal from "$lib/components/stats/community-template/TemplateImportModal.svelte";
+  import TemplateOwnerRecovery from "$lib/components/stats/community-template/TemplateOwnerRecovery.svelte";
+  import { saveTemplateOwnerToken } from "$lib/stores/publishing/template-publish-registry";
 
   let listing = $state<TemplateDirectoryResult | null>(null);
   let packageData = $state<PublicTemplatePackage | null>(null);
@@ -155,10 +155,9 @@
       {error}
     </p>
   {:else if listing}
-    <a class="text-sm text-theme-primary underline" href={resolve("templates")}
+    <a class="text-sm text-theme-primary underline" href={resolve("/templates")}
       >Back to community templates</a
     >
-
     <header class="space-y-2">
       <h1 class="font-header text-3xl font-bold text-theme-text">
         {listing.title}

@@ -1,7 +1,7 @@
 import type { Milestone } from "onboarding-journey-engine";
-import type { VaultEvent } from "#lib/stores/vault/events.svelte.js";
-import { SEARCH_ENTITY_FOCUS_EVENT } from "#lib/components/search/search-focus.js";
-import type { Clock } from "#lib/utils/runtime-deps.js";
+import type { VaultEvent } from "$lib/stores/vault/events.svelte";
+import { SEARCH_ENTITY_FOCUS_EVENT } from "$lib/components/search/search-focus";
+import type { Clock } from "$lib/utils/runtime-deps";
 
 /** The journal capture event a generator save publishes (`publishGeneratedSaved`). */
 const JOURNAL_CAPTURE = "JOURNAL:CAPTURE";

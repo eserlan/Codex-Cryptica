@@ -1,5 +1,5 @@
-import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
-import { PENDING_DELVE_CANVAS_KEY } from "#lib/services/seo/pending-delve-transfer.js";
+import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
+import { PENDING_DELVE_CANVAS_KEY } from "$lib/services/seo/pending-delve-transfer";
 
 export interface GeneratorCanvasHandoffDependencies {
   storeTransfer: (key: string, transfer: unknown) => void;

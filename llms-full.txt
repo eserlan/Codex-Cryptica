@@ -2239,10 +2239,6 @@ After generation you see a **review screen** showing the full draft. You can:
 
 **Open in Editor** creates a temporary entity record and opens its suggested Chronicle and Lore for review. **Apply Changes** keeps the generated content; **Discard** removes the new draft entity. Before you choose Open in Editor, the preview does not create an entity.
 
-### Quick Names
-
-On supported public name generators, the **Quick Names** panel rolls names on your device. Tap a name to copy it. The settings row shows the current culture and name type; open it to change them or to choose **First names only**. Pin a name to keep it in the batch when you roll again; select it again to unpin it. **Copy pinned** copies only pinned names, while **Copy all** copies the full current batch. **Ask AI** sends your description and settings to our AI service, and the panel says when the names on screen came from it. For meanings and culture notes, choose **Generate names with notes**.
-
 ### Contextual Generation
 
 When the generator is opened from an entity's detail panel, it automatically includes that entity's name and a summary of its immediate neighbors as generation context. This grounds the new entity in your existing lore without sending your full vault to any server.
@@ -3135,11 +3131,7 @@ If Codex cannot read an entity body or one of the local image/map assets that Cl
 
 The recovery key identifies the backup and proves that you are allowed to restore or update it. There are no Codex accounts and there is no ordinary password-reset flow for Cloud Backup.
 
-Keep the key somewhere safe. If you lose it, recovery may not be possible. Support can use a vault's title, size and last backup time to help identify your backup.
-
-## What Codex Cryptica can see
-
-Codex Cryptica keeps a list of stored backups. For each one it shows the vault's title, size, number of entries and last backup time. We use this list to run the service (for example, to manage storage) and to help you recover a lost key. It never includes your vault's contents. The backup itself is not end-to-end encrypted, as the consent screen explains.
+Keep the key somewhere safe. If you lose it, recovery may not be possible. Support can use limited backup metadata such as a vault title, size, and last-backup time to help identify a backup, but support cannot read the vault contents through the support lookup.
 
 ## Restore a backup
 
@@ -3617,24 +3609,6 @@ In the lineage view, drag to pan, scroll or pinch to zoom, and use **⊞** to ex
 ## One source of truth
 
 The Family Tree is just a view of your normal entity connections — it doesn't create a separate family database. Family links you add here also show up in the graph and connection views, and connections you make elsewhere show up here.
-
----
-
-### MYSTERY & INVESTIGATION GENERATOR
-
-Open **Campaign Generators** and choose **Mystery & Investigation**. Choose a genre, tone, case type, scope, complexity, clue density and pressure, then generate the case in one go. Add campaign context to connect it to your setting. The default design is **Fixed Truth**: the responsible person, motive, means and timeline are decided before the suspects and clues are written.
-
-The staged run builds the truth, cast and locations, clue network, pressure and outcomes, then checks the assembled case. You can cancel while it runs. Each essential revelation is meant to have two evidence routes from different sources, so one missed clue does not stop the investigation. Review the draft for fit with your table before play.
-
-## Keep GM truth private
-
-The draft separates player-facing case material in **Content** from the solution, actual timeline, suspect knowledge, clue index and outcomes in **Lore**. Use **Copy Player Handout** for the spoiler-safe Content-only export and share that with players; keep Lore in your GM notes. **Copy GM Case File** includes both Content and Lore. Check the saved entity before exporting or sharing it, especially if your vault workflow includes Lore.
-
-## AI and offline use
-
-With AI enabled, the case is built in stages so later parts use the accepted facts and names from earlier parts. If a stage cannot produce a usable result after a retry, the generator tries one-pass generation; if that also fails, it creates a local draft. With AI Disabled, it uses a local template without a network request; expect a simpler case that you should expand before running.
-
-The result remains a draft until you choose the available save or apply action. Review and refine it, then keep it in your vault or discard it.
 
 ---
 
@@ -4239,10 +4213,6 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** Build a believable fantasy economy by tracing six links for each region: what it has and needs, how resources are worked, how goods and labour move, who controls access or takes a share, what strains the arrangement, and what the players can see changing as a result. A believable economy does not need a perfectly calibrated price list; it needs causes the players can see, such as bread costing more after a blocked pass, a mine town having coin but no food, or someone with power responding to the strain.
 
-### [How do I build a believable post-scarcity civilisation?](https://codexcryptica.com/answers/how-do-i-build-a-believable-post-scarcity-civilisation)
-
-**Direct answer:** Take the abundance seriously and follow its consequences. Decide which goods and services nobody can be deprived of, then name what stays finite: time, skilled attention, desirable places, trust, consent and the capacity to coordinate. Show who builds and repairs the systems that provide for everyone, how institutions change when survival no longer depends on wages or land, and where citizens still disagree. A prosperous civilisation becomes credible, and can still oppose the protagonists, when its conflicts come from competing values and policies rather than from a hidden cost that makes the prosperity fake.
-
 ### [How do I combine multiple enemies into one squad in a tabletop RPG?](https://codexcryptica.com/answers/how-do-i-combine-multiple-enemies-into-one-squad-in-an-rpg)
 
 **Direct answer:** To combine similar enemies into one squad, decide what to abstract and what to keep visible: its footprint, a casualty track, one activation whose attack reflects its remaining strength, and clear rules for targeting, area effects and morale. Show members falling and the squad changing as it takes losses, rather than turning it into a single giant creature with extra hit points.
@@ -4731,10 +4701,6 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** A town needs roughly three to five named NPCs for a single visit, six to ten for a settlement the party returns to across a campaign, and no fixed number for the background population, which stays unnamed until a player addresses someone directly. Scale by how many roles the party will interact with, not by the town's population figure, and add named NPCs only when the story creates a reason for one.
 
-### [How many random encounters should you use during RPG travel?](https://codexcryptica.com/answers/how-many-random-encounters-during-rpg-travel)
-
-**Direct answer:** As a pacing heuristic, start with roughly one substantial encounter per week of travel, not a rule. Some weeks should pass without incident, and a dangerous or unfamiliar route can support two or three in a week when each one offers a real choice. Decide first how much table time the journey deserves, then spend that time on a small number of scenes. A sighting, rumour, or brief choice can stay brief, and many rolled prompts work best as colour or foreshadowing instead of a full encounter.
-
 ### [How much campaign lore should players be expected to remember?](https://codexcryptica.com/answers/how-much-campaign-lore-should-players-be-expected-to-remember)
 
 **Direct answer:** Players should reliably remember their current goal and whichever two or three NPCs and factions are active right now, but not a campaign encyclopedia of every name, title, or detail mentioned once. Separate player memory from character memory: if the character would obviously know something, restate it rather than testing whether the player recalls it. Reinforce important information through play — repetition, consistent hooks, recurring symbols — rather than hiding it behind a memory check, and lower your expectations further after a long gap between sessions. Most forgetting is normal and fixable with a quick reminder, not a sign players aren't paying attention.
@@ -4758,10 +4724,6 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 ### [How should magic have been discovered in my world?](https://codexcryptica.com/answers/how-should-magic-have-been-discovered-in-my-world)
 
 **Direct answer:** Choose how your people first learned to use magic separately from where magic itself comes from, then decide who remembers, controls, or forbids that discovery today. The model you pick, whether slow natural enquiry, divine gift, inheritance from a fallen civilisation, planar catastrophe, outsider teaching, rediscovery of banned lore, multiple independent traditions, or an ancient force only recently made usable, shapes who claims authority, which institutions guard the knowledge, and what laws, customs, and beliefs shape play now.
-
-### [How do I turn a single-player video game into a tabletop RPG campaign?](https://codexcryptica.com/answers/how-to-adapt-a-video-game-into-a-tabletop-rpg)
-
-**Direct answer:** Keep the setting, conflicts, factions and atmosphere that make the game worth visiting, but give the original hero's important choices to the player characters. The protagonist can be absent, missing, a legend, a rival or a supporting character; what they must not do is solve the central problem while the party watches. Adapt the game's possibilities, not its walkthrough: turn scripted quests into open problems, split the hero's jobs between the party, and let the ending differ from the one on screen.
 
 ### [How do you create a cyberpunk city district?](https://codexcryptica.com/answers/how-to-create-a-cyberpunk-city-district)
 
@@ -5116,8 +5078,6 @@ The canonical, no-login-required tools that actually generate and let you save a
 - [Adventure Idea Generator](https://codexcryptica.com/generators/adventure-generator): Create rich, multi-layered adventure scenarios across any RPG genre or world theme. Generates initial situations, primary pressures, key locations, key actors, threats, discoveries, complications, stakes, and non-linear possible outcomes — a situation, not a plot.
 
 - [One-Shot Adventure Builder](https://codexcryptica.com/generators/one-shot-adventure-generator): Pick a genre, session length and style, and get a complete single-session adventure: a GM briefing, an opening scene, three to six scenes with minute budgets, NPCs, challenges, clues, a finale and a cheat sheet. Each scene is marked essential or optional, with a way to shorten or skip it and a running-late path. Regenerate one scene or NPC without changing the rest. Works without login.
-
-- [Mystery & Investigation Generator](https://codexcryptica.com/generators/mystery-investigation): Build a case the players can investigate: lock in what really happened, then create suspects, locations, evidence, independent leads and outcomes that agree with that truth. The first version uses a fixed solution and keeps GM-only details separate from player-facing material.
 
 - [Adventure Idea Generator](https://codexcryptica.com/generators/adventure-idea-generator): Create rich, multi-layered adventure scenarios across any RPG genre or world theme. Generates initial situations, primary pressures, key locations, key actors, threats, discoveries, complications, stakes, and non-linear possible outcomes — a situation, not a plot.
 

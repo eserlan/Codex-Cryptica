@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { vampireConfig } from "#lib/services/seo/generator-config.js";
-  import SelectWithCustomOption from "#lib/components/forms/SelectWithCustomOption.svelte";
+  import { vampireConfig } from "$lib/services/seo/generator-config";
+  import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
 
   let {
     archetype = $bindable(vampireConfig.archetypes[0]),

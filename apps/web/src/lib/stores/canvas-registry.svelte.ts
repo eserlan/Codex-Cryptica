@@ -11,16 +11,16 @@ import {
   type Canvas,
   type CanvasNode,
 } from "@codex/canvas-engine";
-import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
-import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
+import { notificationStore } from "$lib/stores/ui/notification.svelte";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { guestVault } from "./guest-vault.svelte";
 import { updateLastInternalChange } from "./vault/registry";
 import {
   systemClock,
   type IdGenerator,
   systemIdGenerator,
-} from "#lib/utils/runtime-deps.js";
-import { toRouteSlug } from "#lib/utils/slug.js";
+} from "$lib/utils/runtime-deps";
+import { toRouteSlug } from "$lib/utils/slug";
 
 export interface CanvasAddResult {
   canvasId: string;

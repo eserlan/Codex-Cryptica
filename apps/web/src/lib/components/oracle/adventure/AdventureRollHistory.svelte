@@ -1,7 +1,7 @@
 <script lang="ts">
-  import type { AdventureManager } from "#lib/stores/oracle/adventure-manager.svelte.js";
+  import type { AdventureManager } from "$lib/stores/oracle/adventure-manager.svelte";
 
-  import DiceBreakdownDisclosure from "#lib/components/dice/DiceBreakdownDisclosure.svelte";
+  import DiceBreakdownDisclosure from "$lib/components/dice/DiceBreakdownDisclosure.svelte";
 
   let { manager }: { manager: AdventureManager } = $props();
 

@@ -1,8 +1,8 @@
 /** @vitest-environment jsdom */
 import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { discoveryPolicyStore } from "#lib/stores/ui/discovery-policy.svelte.js";
-import { helpAssistant } from "#lib/stores/help-assistant/help-runtime.js";
+import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
+import { helpAssistant } from "$lib/stores/help-assistant/help-runtime";
 import AskAboutThis from "./AskAboutThis.svelte";
 
 vi.mock("$app/navigation", () => ({ goto: vi.fn(), afterNavigate: vi.fn() }));

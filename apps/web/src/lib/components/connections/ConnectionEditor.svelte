@@ -1,19 +1,14 @@
 <script lang="ts">
   import { untrack } from "svelte";
-  import { vault } from "#lib/stores/vault.svelte.js";
+  import { vault } from "$lib/stores/vault.svelte";
   import type { Connection } from "schema";
 
-  let {
-    sourceId,
-    connection,
-    onSave,
-    onCancel,
-  }: {
+  let { sourceId, connection, onSave, onCancel } = $props<{
     sourceId: string;
     connection: Connection;
     onSave: () => void;
     onCancel: () => void;
-  } = $props();
+  }>();
 
   let type = $state(untrack(() => connection.type));
   let label = $state(untrack(() => connection.label || ""));

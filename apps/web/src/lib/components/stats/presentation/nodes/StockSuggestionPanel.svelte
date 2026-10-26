@@ -11,8 +11,8 @@
     type ReviewedLine,
     type StockGenre,
   } from "@codex/stat-sheet-engine";
-  import { vault } from "#lib/stores/vault.svelte.js";
-  import { gatherShopText } from "#lib/services/shop-stock-context.js";
+  import { vault } from "$lib/stores/vault.svelte";
+  import { gatherShopText } from "$lib/services/shop-stock-context";
   import type { PresentationRenderContext } from "../types";
   import StockSuggestionLine, {
     type LineChoice,

@@ -1,5 +1,5 @@
 import { error } from "@sveltejs/kit";
-import { HELP_ARTICLES } from "#lib/config/help-content.js";
+import { HELP_ARTICLES } from "$lib/config/help-content";
 import type { PageLoad } from "./$types";
 
 export const prerender = true;

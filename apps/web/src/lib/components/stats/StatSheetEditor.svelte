@@ -11,23 +11,20 @@
     uniqueFieldKey,
     validateFieldKeyFormat,
   } from "@codex/stat-sheet-engine";
-  import { vault } from "#lib/stores/vault.svelte.js";
-  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
-  import {
-    type IdGenerator,
-    systemIdGenerator,
-  } from "#lib/utils/runtime-deps.js";
-  import { applyTypedFormula } from "#lib/utils/stat-sheet-field-actions.js";
+  import { vault } from "$lib/stores/vault.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { type IdGenerator, systemIdGenerator } from "$lib/utils/runtime-deps";
+  import { applyTypedFormula } from "$lib/utils/stat-sheet-field-actions";
 
   let {
     entity,
     onClose = () => {},
     idGenerator = systemIdGenerator,
-  }: {
+  } = $props<{
     entity: Entity;
     onClose?: () => void;
     idGenerator?: IdGenerator;
-  } = $props();
+  }>();
 
   const FIELD_TYPES: { value: StatSheetFieldType; label: string }[] = [
     { value: "counter", label: "Counter" },

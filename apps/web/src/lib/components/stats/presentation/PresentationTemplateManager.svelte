@@ -1,13 +1,13 @@
 <script lang="ts">
   import type { Entity, StatSheetTemplate, PresentationTemplate } from "schema";
-  import { presentationTemplates } from "#lib/stores/presentation-templates.svelte.js";
-  import { statSheetTemplates } from "#lib/stores/stat-sheet-templates.svelte.js";
-  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
+  import { presentationTemplates } from "$lib/stores/presentation-templates.svelte";
+  import { statSheetTemplates } from "$lib/stores/stat-sheet-templates.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import {
     analyzePresentationCompatibility,
     importPresentationTemplatePackage,
   } from "@codex/stat-sheet-engine";
-  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
   let {
     schema,

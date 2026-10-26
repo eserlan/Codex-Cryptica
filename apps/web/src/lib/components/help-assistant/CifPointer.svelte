@@ -1,7 +1,7 @@
 <script lang="ts">
   import { untrack } from "svelte";
-  import type { CifFlightPhase } from "#lib/services/help-assistant/cif-flight.svelte.js";
-  import type { HighlightRect } from "#lib/services/help-assistant/help-highlight.svelte.js";
+  import type { CifFlightPhase } from "$lib/services/help-assistant/cif-flight.svelte";
+  import type { HighlightRect } from "$lib/services/help-assistant/help-highlight.svelte";
   import { CIF_POINTER_SIZE, placeCifPointer } from "./cif-pointer-placement";
   import CifSprite from "./CifSprite.svelte";
 

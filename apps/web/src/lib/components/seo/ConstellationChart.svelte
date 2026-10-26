@@ -1,7 +1,7 @@
 <script lang="ts">
   import { buildConstellationDiagram } from "generator-engine";
   import type { ConstellationPattern } from "generator-engine";
-  import { svgToPngBlob } from "#lib/utils/svg-export.js";
+  import { svgToPngBlob } from "$lib/utils/svg-export";
 
   let {
     pattern,

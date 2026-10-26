@@ -1,27 +1,27 @@
 <script lang="ts">
   import type { Entity } from "schema";
-  import { vault } from "#lib/stores/vault.svelte.js";
-  import { oracle } from "#lib/stores/oracle.svelte.js";
-  import { debugStore } from "#lib/stores/debug.svelte.js";
+  import { vault } from "$lib/stores/vault.svelte";
+  import { oracle } from "$lib/stores/oracle.svelte";
+  import { debugStore } from "$lib/stores/debug.svelte";
   import { fade } from "svelte/transition";
   import { isEntityVisible, composeImagePrompt } from "schema";
-  import { themeStore } from "#lib/stores/theme.svelte.js";
-  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
-  import { discoveryPolicyStore } from "#lib/stores/ui/discovery-policy.svelte.js";
-  import { p2pHost } from "#lib/cloud-bridge/p2p/host-service.svelte.js";
-  import { mapSession } from "#lib/stores/map-session.svelte.js";
-  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
-  import SilhouetteAvatar from "#lib/components/ui/SilhouetteAvatar.svelte";
+  import { themeStore } from "$lib/stores/theme.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
+  import { p2pHost } from "$lib/cloud-bridge/p2p/host-service.svelte";
+  import { mapSession } from "$lib/stores/map-session.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import SilhouetteAvatar from "$lib/components/ui/SilhouetteAvatar.svelte";
 
   let {
     entity,
     isEditing,
     editImage = $bindable(),
-  }: {
+  } = $props<{
     entity: Entity;
     isEditing: boolean;
     editImage: string;
-  } = $props();
+  }>();
 
   let resolvedImageUrl = $state("");
   let isDraggingOver = $state(false);
@@ -339,7 +339,6 @@
         <button
           type="button"
           onclick={() => {
-            if (!entity.image) return;
             const success = mapSession.showImageToPlayers(
               entity.title,
               entity.image,

@@ -5,17 +5,17 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import ActivityBar from "./ActivityBar.svelte";
 import { page } from "$app/state";
-import { discoveryPolicyStore } from "#lib/stores/ui/discovery-policy.svelte.js";
-import { guestChatStore } from "#lib/stores/guest-chat.svelte.js";
-import { layoutUIStore } from "#lib/stores/ui/layout-ui.svelte.js";
-import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
-import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
-import { vault } from "#lib/stores/vault.svelte.js";
-import { vaultRegistry } from "#lib/stores/vault-registry.svelte.js";
-import { sessionJournalStore } from "#lib/stores/session-journal.svelte.js";
-import { helpAssistant } from "#lib/stores/help-assistant/help-runtime.js";
+import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
+import { guestChatStore } from "$lib/stores/guest-chat.svelte";
+import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+import { vault } from "$lib/stores/vault.svelte";
+import { vaultRegistry } from "$lib/stores/vault-registry.svelte";
+import { sessionJournalStore } from "$lib/stores/session-journal.svelte";
+import { helpAssistant } from "$lib/stores/help-assistant/help-runtime";
 
-vi.mock("#lib/stores/theme.svelte.js", () => ({
+vi.mock("$lib/stores/theme.svelte", () => ({
   themeStore: {
     activeTheme: { id: "default" },
   },
@@ -29,11 +29,9 @@ vi.mock("$app/state", () => ({
 
 vi.mock("$app/paths", () => ({
   base: "",
-  asset: (p: string) => `/${p.replace(/^\//, "")}`,
-  resolve: (route: string) => route.replace(/\/\([^)]+\)/g, "") || "/",
 }));
 
-vi.mock("#lib/stores/guest-chat.svelte.js", () => ({
+vi.mock("$lib/stores/guest-chat.svelte", () => ({
   guestChatStore: {
     showChatModal: false,
   },
@@ -54,7 +52,7 @@ describe("ActivityBar", () => {
     vault.isInitialized = true;
     vaultRegistry.activeVaultId = "vault-1";
     vault.status = "idle";
-    (page.url as any).pathname = "/";
+    page.url.pathname = "/";
   });
 
   /** The accent bar only renders on the active item. */
@@ -71,19 +69,19 @@ describe("ActivityBar", () => {
     });
 
     it("lights the random slot on both of the routes behind it", () => {
-      (page.url as any).pathname = "/tables";
+      page.url.pathname = "/tables";
       const tables = render(ActivityBar);
       expect(isActive("random")).toBe(true);
       tables.unmount();
 
-      (page.url as any).pathname = "/decks";
+      page.url.pathname = "/decks";
       render(ActivityBar);
       expect(isActive("random")).toBe(true);
     });
 
     // /tables starts with /table, and a bare prefix test lit up both (#2247).
     it("does not light the entity table on the random tables route", () => {
-      (page.url as any).pathname = "/tables";
+      page.url.pathname = "/tables";
 
       render(ActivityBar);
 
@@ -92,7 +90,7 @@ describe("ActivityBar", () => {
     });
 
     it("still lights the entity table on its own route", () => {
-      (page.url as any).pathname = "/table";
+      page.url.pathname = "/table";
 
       render(ActivityBar);
 
@@ -101,7 +99,7 @@ describe("ActivityBar", () => {
     });
 
     it("ignores a trailing slash when matching", () => {
-      (page.url as any).pathname = "/decks/";
+      page.url.pathname = "/decks/";
 
       render(ActivityBar);
 

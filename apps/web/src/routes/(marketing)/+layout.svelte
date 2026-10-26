@@ -1,18 +1,18 @@
 <script lang="ts">
   import "../../app.css";
   import { onMount, onDestroy } from "svelte";
-  import { browser } from "$app/env";
-  import { resolve } from "$app/paths";
+  import { browser } from "$app/environment";
+  import { base } from "$app/paths";
   import { page } from "$app/state";
-  import { SCHEMA_ORG } from "#lib/config/index.js";
-  import { safeJsonLd } from "#lib/utils/json-ld.js";
-  import { attributionStore } from "#lib/services/analytics/attribution.js";
-  import MarketingShell from "#lib/components/seo/MarketingShell.svelte";
+  import { SCHEMA_ORG } from "$lib/config";
+  import { safeJsonLd } from "$lib/utils/json-ld";
+  import { attributionStore } from "$lib/services/analytics/attribution";
+  import MarketingShell from "$lib/components/seo/MarketingShell.svelte";
   import {
     trackEvent,
     initCodexAnalyticsBridge,
     resetCodexAnalyticsBridge,
-  } from "#lib/services/analytics/zaraz-analytics.js";
+  } from "$lib/services/analytics/zaraz-analytics";
 
   let { children } = $props();
   let analyticsReady = $state(false);
@@ -24,15 +24,15 @@
   /** Coarse entry-page category for the seo_entry event — never anything
    *  more specific than the top-level route group (#1796). */
   function entryPageType(pathname: string): string {
-    if (pathname.startsWith("/generators")) return "generator";
-    if (pathname.startsWith("/solutions")) return "solutions";
-    if (pathname.startsWith("/vs")) return "comparison";
-    if (pathname.startsWith("/alternatives")) return "alternatives";
-    if (pathname.startsWith("/blog")) return "blog";
-    if (pathname.startsWith("/import")) return "importer";
-    if (pathname.startsWith("/migrations")) return "importer";
-    if (pathname.startsWith("/tools")) return "tools";
-    if (pathname.startsWith("/topics")) return "topics";
+    if (pathname.startsWith(`${base}/generators`)) return "generator";
+    if (pathname.startsWith(`${base}/solutions`)) return "solutions";
+    if (pathname.startsWith(`${base}/vs`)) return "comparison";
+    if (pathname.startsWith(`${base}/alternatives`)) return "alternatives";
+    if (pathname.startsWith(`${base}/blog`)) return "blog";
+    if (pathname.startsWith(`${base}/import`)) return "importer";
+    if (pathname.startsWith(`${base}/migrations`)) return "importer";
+    if (pathname.startsWith(`${base}/tools`)) return "tools";
+    if (pathname.startsWith(`${base}/topics`)) return "topics";
     return "other";
   }
 
@@ -54,7 +54,7 @@
     const referrer = initialReferrerConsumed ? undefined : initialReferrer;
     initialReferrerConsumed = true;
     const capturedNewAttribution = attributionStore.captureIfAttributed(
-      new URL(page.url.href),
+      new URL(page.url),
       referrer,
     );
     if (capturedNewAttribution) {
@@ -75,12 +75,12 @@
 </script>
 
 <svelte:head>
-  <link rel="help" href="{resolve('')}/llms.txt" />
+  <link rel="help" href="{base}/llms.txt" />
   <link
     rel="alternate"
     type="application/atom+xml"
     title="Codex Cryptica answers and blog"
-    href="{resolve('')}/feed.xml"
+    href="{base}/feed.xml"
   />
   <!-- eslint-disable-next-line svelte/no-at-html-tags -->
   {@html `<scr` +

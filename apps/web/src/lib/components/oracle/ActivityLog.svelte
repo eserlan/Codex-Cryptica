@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { vault } from "#lib/stores/vault.svelte.js";
-  import { sessionActivity } from "#lib/services/SessionActivityService.js";
+  import { vault } from "$lib/stores/vault.svelte";
+  import { sessionActivity } from "$lib/services/SessionActivityService";
   import {
     DEFAULT_SEARCH_ENTITY_ZOOM,
     dispatchSearchEntityFocus,
-  } from "#lib/components/search/search-focus.js";
+  } from "$lib/components/search/search-focus";
   import { slide } from "svelte/transition";
-  import { discoveryPolicyStore } from "#lib/stores/ui/discovery-policy.svelte.js";
+  import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
 
   function formatTime(ts: number) {
     return new Date(ts).toLocaleTimeString([], {

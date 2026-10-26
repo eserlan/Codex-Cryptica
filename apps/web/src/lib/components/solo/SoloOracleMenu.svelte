@@ -4,13 +4,13 @@
     type OracleShortcut,
   } from "solo-session-engine";
   import { recentResults } from "session-journal-engine";
-  import { discoveryPolicyStore } from "#lib/stores/ui/discovery-policy.svelte.js";
-  import { layoutUIStore } from "#lib/stores/ui/layout-ui.svelte.js";
-  import { oracle } from "#lib/stores/oracle.svelte.js";
-  import { vault } from "#lib/stores/vault.svelte.js";
-  import { sessionJournalStore } from "#lib/stores/session-journal.svelte.js";
-  import { resolve } from "$app/paths";
-  import { soloSessionStore } from "#lib/stores/solo-session-instance.js";
+  import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
+  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
+  import { oracle } from "$lib/stores/oracle.svelte";
+  import { vault } from "$lib/stores/vault.svelte";
+  import { sessionJournalStore } from "$lib/stores/session-journal.svelte";
+  import { base } from "$app/paths";
+  import { soloSessionStore } from "$lib/stores/solo-session-instance";
   import SoloMenu from "./SoloMenu.svelte";
 
   const SHORTCUTS: { kind: OracleShortcut; label: string }[] = [
@@ -84,7 +84,7 @@
       <li class="mt-1 border-t border-theme-border/40 pt-1">
         <!-- An explicit choice: Adventure Mode is never started by default (spec 174, US5). -->
         <a
-          href="{resolve('')}/adventure"
+          href="{base}/adventure"
           role="menuitem"
           class="block w-full rounded-md px-3 py-1.5 text-left text-sm text-theme-text hover:bg-theme-primary/10"
           data-testid="solo-adventure-entry"

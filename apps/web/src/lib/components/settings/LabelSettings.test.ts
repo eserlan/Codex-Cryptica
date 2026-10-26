@@ -20,8 +20,8 @@ const notificationMock = vi.hoisted(() => ({
   notify: vi.fn(),
 }));
 
-vi.mock("#lib/stores/vault.svelte.js", () => ({ vault: vaultMock }));
-vi.mock("#lib/stores/ui/notification.svelte.js", () => ({
+vi.mock("$lib/stores/vault.svelte", () => ({ vault: vaultMock }));
+vi.mock("$lib/stores/ui/notification.svelte", () => ({
   notificationStore: notificationMock,
 }));
 

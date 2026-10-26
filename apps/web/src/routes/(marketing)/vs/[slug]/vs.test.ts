@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { load, entries } from "./+page";
 
-vi.mock("#lib/config/seo-comparisons.js", () => ({
+vi.mock("$lib/config/seo-comparisons", () => ({
   comparisons: {
     "test-comp": {
       slug: "test-comp",
@@ -38,15 +38,15 @@ describe("Comparisons SvelteKit Route", () => {
 describe("Responsible AI trust banner config", () => {
   it("world-anvil comparison has aiTrustSection enabled", async () => {
     const { comparisons: realComparisons } = (await vi.importActual(
-      "#lib/config/seo-comparisons.js",
-    )) as typeof import("#lib/config/seo-comparisons.js");
+      "$lib/config/seo-comparisons",
+    )) as typeof import("$lib/config/seo-comparisons");
     expect(realComparisons["world-anvil"].aiTrustSection).toBe(true);
   });
 
   it("non-World-Anvil comparisons do not have aiTrustSection", async () => {
     const { comparisons: realComparisons } = (await vi.importActual(
-      "#lib/config/seo-comparisons.js",
-    )) as typeof import("#lib/config/seo-comparisons.js");
+      "$lib/config/seo-comparisons",
+    )) as typeof import("$lib/config/seo-comparisons");
     const others = Object.entries(realComparisons).filter(
       ([slug]) => slug !== "world-anvil",
     );
@@ -59,8 +59,8 @@ describe("Responsible AI trust banner config", () => {
 describe("Kanka self-hosted comparison config", () => {
   it("covers self-hosted intent, risk reversal, proof, and fair-fit guidance", async () => {
     const { comparisons: realComparisons } = (await vi.importActual(
-      "#lib/config/seo-comparisons.js",
-    )) as typeof import("#lib/config/seo-comparisons.js");
+      "$lib/config/seo-comparisons",
+    )) as typeof import("$lib/config/seo-comparisons");
     const kanka = realComparisons["kanka-alternative"];
 
     expect(kanka.eyebrow).toMatch(/self-hosted Kanka alternative/i);
@@ -89,8 +89,8 @@ describe("Kanka self-hosted comparison config", () => {
 
   it("does not repeat outdated entity-limit or proprietary-format claims", async () => {
     const { comparisons: realComparisons } = (await vi.importActual(
-      "#lib/config/seo-comparisons.js",
-    )) as typeof import("#lib/config/seo-comparisons.js");
+      "$lib/config/seo-comparisons",
+    )) as typeof import("$lib/config/seo-comparisons");
     const pageCopy = JSON.stringify(realComparisons["kanka-alternative"]);
 
     expect(pageCopy).not.toContain("Limited on free tier");
@@ -102,8 +102,8 @@ describe("Kanka self-hosted comparison config", () => {
 describe("Chronica comparison config", () => {
   it("points switchers to the Chronica import and gives fair-fit guidance", async () => {
     const { comparisons: realComparisons } = (await vi.importActual(
-      "#lib/config/seo-comparisons.js",
-    )) as typeof import("#lib/config/seo-comparisons.js");
+      "$lib/config/seo-comparisons",
+    )) as typeof import("$lib/config/seo-comparisons");
     const chronica = realComparisons.chronica;
 
     expect(chronica.secondaryCtaHref).toBe("/import/chronica");
@@ -119,8 +119,8 @@ describe("Chronica comparison config", () => {
 
   it("does not claim Chronica lacks features we could not verify", async () => {
     const { comparisons: realComparisons } = (await vi.importActual(
-      "#lib/config/seo-comparisons.js",
-    )) as typeof import("#lib/config/seo-comparisons.js");
+      "$lib/config/seo-comparisons",
+    )) as typeof import("$lib/config/seo-comparisons");
 
     for (const row of realComparisons.chronica.comparisonTable) {
       expect(row.competitorHas, row.feature).not.toBe("No");

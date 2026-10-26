@@ -1,10 +1,7 @@
 <script lang="ts">
-  import type { AdventureManager } from "#lib/stores/oracle/adventure-manager.svelte.js";
-  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
-  import {
-    type IdGenerator,
-    systemIdGenerator,
-  } from "#lib/utils/runtime-deps.js";
+  import type { AdventureManager } from "$lib/stores/oracle/adventure-manager.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { type IdGenerator, systemIdGenerator } from "$lib/utils/runtime-deps";
 
   let {
     manager,

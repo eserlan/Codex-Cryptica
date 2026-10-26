@@ -5,7 +5,7 @@ import { cacheService } from "../../services/cache.svelte";
 import { readFileAsText } from "../../utils/opfs";
 import { parseMarkdown, sanitizeId } from "../../utils/markdown";
 import { VaultRepository } from "@codex/vault-engine";
-import { systemClock } from "#lib/utils/runtime-deps.js";
+import { systemClock } from "$lib/utils/runtime-deps";
 
 /**
  * Lazy content loads read a file's frontmatter to RESTORE metadata that was

@@ -14,13 +14,13 @@
    * reflow all of them in a single commit. Widths converge on the grammar's
    * three tokens page by page in phase 3, where each can be looked at.
    */
-  import { resolve } from "$app/paths";
+  import { base } from "$app/paths";
   import { page } from "$app/state";
-  import { DISCORD_URL, GITHUB_URL } from "#lib/config/index.js";
+  import { DISCORD_URL, GITHUB_URL } from "$lib/config";
   import MarketingFooter from "./MarketingFooter.svelte";
-  import ReportProblemButton from "#lib/components/feedback/ReportProblemButton.svelte";
+  import ReportProblemButton from "$lib/components/feedback/ReportProblemButton.svelte";
   import { feedbackAreaFor } from "feedback-engine";
-  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import {
     MARKETING_NAV,
     shellCtaHref,
@@ -39,23 +39,21 @@
     onCtaClick,
     footerLinks,
     children,
-
+  }: {
     /** Extra work on the header CTA, e.g. the generator pages' action tracking. */
+    onCtaClick?: () => void;
     /**
      * Page-specific footer links, rendered before the standard set. Defaults to
      * the path-derived set, preserving what SEOPageLayout used to pass.
      */
-  }: {
-    onCtaClick?: () => void;
     footerLinks?: { href: string; label: string }[];
     children?: import("svelte").Snippet;
   } = $props();
 
-  const cleanBase = $derived(resolve("") === "/" ? "" : resolve(""));
-  const logoHref = $derived(
-    shellCtaHref(resolve(""), page.url.pathname, "logo"),
-  );
-  const ctaHref = $derived(shellCtaHref(resolve(""), page.url.pathname, "nav"));
+  const cleanBase = $derived(base === "/" ? "" : base);
+  const logoHref = $derived(shellCtaHref(base, page.url.pathname, "logo"));
+  const ctaHref = $derived(shellCtaHref(base, page.url.pathname, "nav"));
+
   const isCurrent = (href: string) =>
     page.url.pathname.startsWith(`${cleanBase}${href}`) ? "page" : undefined;
 </script>
@@ -82,8 +80,7 @@
         >
           <!-- Non-breaking space: prettier collapses a leading literal space
                inside the span, which rendered the wordmark as "CodexCryptica". -->
-          Codex
-          <span class="hidden sm:inline">Cryptica</span>
+          Codex<span class="hidden sm:inline">&nbsp;Cryptica</span>
         </span>
       </a>
 
@@ -197,7 +194,7 @@
   </div>
 
   {#if hasOpenedLightbox}
-    {#await import("#lib/components/zen/ZenImageLightbox.svelte") then { default: ZenImageLightbox }}
+    {#await import("$lib/components/zen/ZenImageLightbox.svelte") then { default: ZenImageLightbox }}
       {#if ZenImageLightbox}
         <ZenImageLightbox
           bind:show={modalUIStore.lightbox.show}

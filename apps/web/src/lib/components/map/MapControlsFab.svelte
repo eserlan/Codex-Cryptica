@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { mapControlsUIStore } from "#lib/stores/ui/map-controls-ui.svelte.js";
+  import { mapControlsUIStore } from "$lib/stores/ui/map-controls-ui.svelte";
 </script>
 
 <!-- Phones only: reveals and hides the map controls, like the graph's. -->

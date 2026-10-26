@@ -4,7 +4,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock(
-  "#lib/stores/entity-templates/entity-template-publish-store.svelte.js",
+  "$lib/stores/entity-templates/entity-template-publish-store.svelte",
   () => ({
     entityTemplatePublishStore: {},
   }),

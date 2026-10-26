@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { load, entries } from "./+page";
-import { HUB_THEME_SLUGS } from "#lib/content/hub-themes.js";
+import { HUB_THEME_SLUGS } from "$lib/content/hub-themes";
 
 describe("Generator Theme Hub Route", () => {
   describe("load", () => {

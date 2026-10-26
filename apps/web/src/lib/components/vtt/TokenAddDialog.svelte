@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { vault } from "#lib/stores/vault.svelte.js";
-  import { mapSession } from "#lib/stores/map-session.svelte.js";
+  import { vault } from "$lib/stores/vault.svelte";
+  import { mapSession } from "$lib/stores/map-session.svelte";
   import { fade, scale } from "svelte/transition";
 
   let query = $state("");

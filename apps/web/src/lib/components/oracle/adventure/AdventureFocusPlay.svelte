@@ -1,9 +1,9 @@
 <script lang="ts">
   import { tick } from "svelte";
-  import type { AdventureManager } from "#lib/stores/oracle/adventure-manager.svelte.js";
-  import type { AdventureSessionRepository } from "#lib/services/adventure/adventure-session-repository.js";
+  import type { AdventureManager } from "$lib/stores/oracle/adventure-manager.svelte";
+  import type { AdventureSessionRepository } from "$lib/services/adventure/adventure-session-repository";
   import type { ProvisionalFact } from "@codex/adventure-engine";
-  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import AdventureArchive from "./AdventureArchive.svelte";
   import AdventureCorrectionForm from "./AdventureCorrectionForm.svelte";
   import AdventureManagementMenu from "./AdventureManagementMenu.svelte";

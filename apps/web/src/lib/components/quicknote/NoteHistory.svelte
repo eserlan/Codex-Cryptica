@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { quickNoteStore } from "#lib/stores/quicknote.svelte.js";
+  import { quickNoteStore } from "$lib/stores/quicknote.svelte";
   import { fade } from "svelte/transition";
-  import EmptyState from "#lib/components/ui/EmptyState.svelte";
+  import EmptyState from "$lib/components/ui/EmptyState.svelte";
 
   // Formatter for timestamps
   function formatTime(timestamp: number): string {

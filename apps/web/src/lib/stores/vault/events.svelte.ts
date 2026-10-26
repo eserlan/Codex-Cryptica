@@ -1,7 +1,7 @@
 import { appEventBus, type AppEvent } from "@codex/events";
 import { VAULT_EVENTS } from "@codex/vault-engine";
 import type { LocalEntity } from "./types";
-import { systemClock } from "#lib/utils/runtime-deps.js";
+import { systemClock } from "$lib/utils/runtime-deps";
 
 export type VaultEvent =
   | { type: "VAULT_OPENING"; vaultId: string }

@@ -9,11 +9,11 @@ const { updateEntity, confirm } = vi.hoisted(() => ({
   confirm: vi.fn().mockResolvedValue(true),
 }));
 
-vi.mock("#lib/stores/vault.svelte.js", () => ({
+vi.mock("$lib/stores/vault.svelte", () => ({
   vault: { updateEntity },
 }));
 
-vi.mock("#lib/stores/ui/notification.svelte.js", () => ({
+vi.mock("$lib/stores/ui/notification.svelte", () => ({
   notificationStore: { confirm },
 }));
 

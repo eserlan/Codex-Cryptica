@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("#lib/stores/oracle.svelte.js", () => ({
+vi.mock("$lib/stores/oracle.svelte", () => ({
   oracle: {
     reviseSmartApply: vi.fn().mockImplementation((_id, incoming) =>
       Promise.resolve({
@@ -12,7 +12,7 @@ vi.mock("#lib/stores/oracle.svelte.js", () => ({
   },
 }));
 
-vi.mock("#lib/stores/vault.svelte.js", () => ({
+vi.mock("$lib/stores/vault.svelte", () => ({
   vault: {
     isGuest: false,
     entities: {} as any,
@@ -21,26 +21,26 @@ vi.mock("#lib/stores/vault.svelte.js", () => ({
   },
 }));
 
-vi.mock("#lib/services/node-merge.service.svelte.js", () => ({
+vi.mock("$lib/services/node-merge.service.svelte", () => ({
   nodeMergeService: {
     executeMerge: vi.fn().mockResolvedValue(undefined),
   },
 }));
 
-vi.mock("#lib/services/generators/generator-session-manager.js", () => ({
+vi.mock("$lib/services/generators/generator-session-manager", () => ({
   generatorSessionManager: {
     commitAcceptedEntity: vi.fn(),
     reset: vi.fn(),
   },
 }));
 
-import { oracle } from "#lib/stores/oracle.svelte.js";
-import { vault } from "#lib/stores/vault.svelte.js";
-import { nodeMergeService } from "#lib/services/node-merge.service.svelte.js";
+import { oracle } from "$lib/stores/oracle.svelte";
+import { vault } from "$lib/stores/vault.svelte";
+import { nodeMergeService } from "$lib/services/node-merge.service.svelte";
 import { revisionService, RevisionService } from "./RevisionService.svelte";
-import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
-import { loreMergeStore } from "#lib/stores/ui/lore-merge.svelte.js";
-import { generatorSessionManager } from "#lib/services/generators/generator-session-manager.js";
+import { notificationStore } from "$lib/stores/ui/notification.svelte";
+import { loreMergeStore } from "$lib/stores/ui/lore-merge.svelte";
+import { generatorSessionManager } from "$lib/services/generators/generator-session-manager";
 
 describe("RevisionService", () => {
   beforeEach(() => {

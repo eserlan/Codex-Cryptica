@@ -22,11 +22,11 @@ vi.mock("../zen/ZenView.svelte", () => {
   throw new Error("simulated chunk load failure");
 });
 
-vi.mock("#lib/stores/ui/navigation.js", () => ({
+vi.mock("$lib/stores/ui/navigation", () => ({
   focusEntity: vi.fn(),
 }));
 
-vi.mock("#lib/stores/ui/layout-ui.svelte.js", () => ({
+vi.mock("$lib/stores/ui/layout-ui.svelte", () => ({
   layoutUIStore: {
     isEntityExplorerWorkspace: false,
     clearEntityExplorerWorkspaceFocus: vi.fn(),

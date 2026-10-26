@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { BiomeAlteration } from "biome-engine";
-  import type { BiomeExplorerStore } from "#lib/stores/biome-explorer.svelte.js";
+  import type { BiomeExplorerStore } from "$lib/stores/biome-explorer.svelte";
   import BiomeSuggestions from "./BiomeSuggestions.svelte";
   import { ASPECT_LABELS } from "./biome-labels";
 

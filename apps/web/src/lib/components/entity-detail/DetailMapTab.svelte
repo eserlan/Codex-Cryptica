@@ -1,20 +1,20 @@
 <script lang="ts">
   import type { Entity } from "schema";
   import { goto } from "$app/navigation";
-  import { mapStore } from "#lib/stores/map.svelte.js";
-  import { vault } from "#lib/stores/vault.svelte.js";
-  import { canvasRegistry } from "#lib/stores/canvas-registry.svelte.js";
+  import { mapStore } from "$lib/stores/map.svelte";
+  import { vault } from "$lib/stores/vault.svelte";
+  import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
   import {
     dungeonDelveService,
     isDelveLocationEntity,
-  } from "#lib/services/dungeon-delve-service.js";
-  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
-  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
-  import { themeStore } from "#lib/stores/theme.svelte.js";
-  import { openCanvasFromZen } from "#lib/stores/ui/navigation.js";
-  import { getDelveCanvasLabel } from "#lib/utils/delve-terminology.js";
+  } from "$lib/services/dungeon-delve-service";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { themeStore } from "$lib/stores/theme.svelte";
+  import { openCanvasFromZen } from "$lib/stores/ui/navigation";
+  import { getDelveCanvasLabel } from "$lib/utils/delve-terminology";
 
-  let { entity }: { entity?: Entity | null } = $props();
+  let { entity } = $props<{ entity?: Entity | null }>();
 
   let isDungeonLocation = $derived.by(() => {
     return isDelveLocationEntity(entity);

@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { COMMUNITY_QUORUM } from "#lib/services/community/community-aggregates.js";
-  import { formatAnswerDate } from "#lib/content/answers/sort.js";
-  import { resolve } from "$app/paths";
+  import { COMMUNITY_QUORUM } from "$lib/services/community/community-aggregates";
+  import { formatAnswerDate } from "$lib/content/answers/sort";
+  import { base } from "$app/paths";
 
   /**
    * A community-validated answer. Rows deliberately share the standard
@@ -21,7 +21,7 @@
 
   let { favourites }: { favourites: CommunityFavourite[] } = $props();
 
-  const cleanBase = resolve("") === "/" ? "" : resolve("");
+  const cleanBase = base === "/" ? "" : base;
   // Quorum is enforced here as well as at fetch time (defence in depth):
   // a thin community signal must never render as a one-item strip.
   let visible = $derived(favourites.length >= COMMUNITY_QUORUM);
@@ -57,16 +57,15 @@
                 <div class="mb-1.5 flex flex-wrap items-center gap-2">
                   <span
                     class="font-mono text-meta uppercase tracking-wider text-theme-primary"
-                    >{favourite.kindLabel}</span
                   >
-
-                  <span class="text-theme-muted/40">•</span>
-                  <span class="font-mono text-meta text-theme-muted"
-                    >{favourite.categoryTitle}</span
-                  >
-
+                    {favourite.kindLabel}
+                  </span>
+                  <span class="text-theme-muted/40">&bull;</span>
+                  <span class="font-mono text-meta text-theme-muted">
+                    {favourite.categoryTitle}
+                  </span>
                   {#if favourite.publishedAt}
-                    <span class="text-theme-muted/40">•</span>
+                    <span class="text-theme-muted/40">&bull;</span>
                     <time
                       datetime={favourite.publishedAt}
                       class="font-mono text-meta text-theme-muted"
@@ -74,11 +73,10 @@
                       {formatAnswerDate(favourite.publishedAt)}
                     </time>
                   {/if}
-
-                  <span class="text-theme-muted/40">•</span>
-                  <span class="font-mono text-meta text-theme-muted"
-                    >{favourite.yes} readers found this helpful</span
-                  >
+                  <span class="text-theme-muted/40">&bull;</span>
+                  <span class="font-mono text-meta text-theme-muted">
+                    {favourite.yes} readers found this helpful
+                  </span>
                 </div>
                 <h3
                   class="font-header text-lg font-bold text-theme-text transition-colors group-hover:text-theme-primary sm:text-xl"

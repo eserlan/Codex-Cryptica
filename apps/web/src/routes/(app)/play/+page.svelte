@@ -1,5 +1,5 @@
 <script lang="ts">
-  import PlayPage from "#lib/components/solo/PlayPage.svelte";
+  import PlayPage from "$lib/components/solo/PlayPage.svelte";
 </script>
 
 <!-- Tailwind provides this utility; Fallow cannot resolve generated v4 classes here. -->

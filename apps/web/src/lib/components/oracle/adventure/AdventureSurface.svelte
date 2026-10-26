@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { oracle } from "#lib/stores/oracle.svelte.js";
+  import { oracle } from "$lib/stores/oracle.svelte";
   import AdventureArchive from "./AdventureArchive.svelte";
   import AdventureStart from "./AdventureStart.svelte";
   import AdventureFocusPlay from "./AdventureFocusPlay.svelte";
-  import { adventureContextService } from "#lib/services/adventure/adventure-context-service.js";
-  import { adventureSessionRepository } from "#lib/services/adventure/adventure-session-repository.js";
-  import { createAdventureEntityDraft } from "#lib/services/adventure/adventure-provisional-fact-creator.js";
-  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
+  import { adventureContextService } from "$lib/services/adventure/adventure-context-service";
+  import { adventureSessionRepository } from "$lib/services/adventure/adventure-session-repository";
+  import { createAdventureEntityDraft } from "$lib/services/adventure/adventure-provisional-fact-creator";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import type { ProvisionalFact } from "@codex/adventure-engine";
 
   let vaultId = $derived(oracle.vault.activeVaultId ?? "default");

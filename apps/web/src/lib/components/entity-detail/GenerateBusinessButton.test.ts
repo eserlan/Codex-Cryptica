@@ -3,7 +3,7 @@ import { fireEvent, render, screen } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const openForEntity = vi.fn();
-vi.mock("#lib/stores/ui/modal-ui.svelte.js", () => ({
+vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
   modalUIStore: {
     openGeneratorWorkflowForEntity: (...args: unknown[]) =>
       openForEntity(...args),

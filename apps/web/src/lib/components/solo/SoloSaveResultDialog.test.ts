@@ -16,10 +16,10 @@ const env = vi.hoisted(() => ({
     current: { id: "j1", status: "active", entries: [], sections: [] } as any,
   },
 }));
-vi.mock("#lib/stores/solo-session-instance.js", () => ({
+vi.mock("$lib/stores/solo-session-instance", () => ({
   soloPromoter: env.promoter,
 }));
-vi.mock("#lib/stores/session-journal.svelte.js", () => ({
+vi.mock("$lib/stores/session-journal.svelte", () => ({
   sessionJournalStore: env.journal,
 }));
 

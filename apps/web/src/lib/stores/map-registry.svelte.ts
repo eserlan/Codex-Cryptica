@@ -3,8 +3,8 @@ import { getVaultDir, deleteOpfsEntry } from "../utils/opfs";
 import { vaultRegistry } from "./vault-registry.svelte";
 import { saveMapsToDisk, loadMapsFromDisk } from "./vault/io";
 import type { KeyedTaskQueue } from "@codex/vault-engine";
-import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
-import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
+import { notificationStore } from "$lib/stores/ui/notification.svelte";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { guestVault } from "./guest-vault.svelte";
 import { updateLastInternalChange } from "./vault/registry";
 

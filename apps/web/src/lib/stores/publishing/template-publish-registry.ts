@@ -1,4 +1,4 @@
-import { getDB } from "#lib/utils/idb.js";
+import { getDB } from "$lib/utils/idb";
 
 const key = (listingId: string) => `templatePublishOwnerToken:${listingId}`;
 

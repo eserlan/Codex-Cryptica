@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Component } from "svelte";
-  import { feedbackDialog } from "#lib/stores/ui/feedback-dialog.svelte.js";
+  import { feedbackDialog } from "$lib/stores/ui/feedback-dialog.svelte";
 
   // The dialog's code is loaded the first time anyone opens it, so the app's
   // first paint does not pay for it.

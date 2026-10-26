@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { sessionJournalStore } from "#lib/stores/session-journal.svelte.js";
+  import { sessionJournalStore } from "$lib/stores/session-journal.svelte";
 
   /**
    * A dot that shows a Session Journal is running (spec 163, FR-019), so a

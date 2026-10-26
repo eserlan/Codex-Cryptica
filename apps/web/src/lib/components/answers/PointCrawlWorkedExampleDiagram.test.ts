@@ -4,11 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/svelte";
 import PointCrawlWorkedExampleDiagram from "./PointCrawlWorkedExampleDiagram.svelte";
 
-vi.mock("$app/paths", () => ({
-  base: "",
-  asset: (p: string) => p,
-  resolve: (p: string) => p,
-}));
+vi.mock("$app/paths", () => ({ base: "" }));
 vi.mock("$app/environment", () => ({ browser: false }));
 
 describe("PointCrawlWorkedExampleDiagram (#4370)", () => {

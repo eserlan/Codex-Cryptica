@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { categories } from "#lib/stores/categories.svelte.js";
-  import { getIconClass } from "#lib/utils/icon.js";
-  import { explorerUIStore } from "#lib/stores/ui/explorer-ui.svelte.js";
+  import { categories } from "$lib/stores/categories.svelte";
+  import { getIconClass } from "$lib/utils/icon";
+  import { explorerUIStore } from "$lib/stores/ui/explorer-ui.svelte";
 
   let {
     typeFilters = $bindable(),

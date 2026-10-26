@@ -1,5 +1,5 @@
 <script lang="ts">
-  import EmptyState from "#lib/components/ui/EmptyState.svelte";
+  import EmptyState from "$lib/components/ui/EmptyState.svelte";
 </script>
 
 <div data-testid="no-entities-found">

@@ -1,26 +1,25 @@
 <script lang="ts">
-  import { browser } from "$app/env";
-  import { resolve } from "$app/paths";
-  import SeoHead from "#lib/components/seo/SeoHead.svelte";
-  import PublicLabelChip from "#lib/components/labels/PublicLabelChip.svelte";
-  import { buildAbsoluteUrl } from "#lib/seo/site.js";
-  import type { TopicHubConfig } from "#lib/content/topics/types.js";
+  import { browser } from "$app/environment";
+  import { base } from "$app/paths";
+  import SeoHead from "$lib/components/seo/SeoHead.svelte";
+  import PublicLabelChip from "$lib/components/labels/PublicLabelChip.svelte";
+  import { buildAbsoluteUrl } from "$lib/seo/site";
+  import type { TopicHubConfig } from "$lib/content/topics/types";
   import {
     buildTopicJsonLd,
     buildTopicBreadcrumbJsonLd,
-  } from "#lib/content/topics/json-ld.js";
-
+  } from "$lib/content/topics/json-ld";
   import {
     trackDiscoveryPageViewed,
     classifyDiscoveryTarget,
     createDiscoveryViewGuard,
-  } from "#lib/services/analytics/discovery-tracking.js";
-  import { trackDiscoveryClick } from "#lib/actions/trackDiscoveryClick.js";
+  } from "$lib/services/analytics/discovery-tracking";
+  import { trackDiscoveryClick } from "$lib/actions/trackDiscoveryClick";
 
   let { config }: { config: TopicHubConfig } = $props();
 
   // A bare "/" base would make every link protocol-relative ("//answers/...").
-  const cleanBase = resolve("") === "/" ? "" : resolve("");
+  const cleanBase = base === "/" ? "" : base;
 
   const canonical = $derived(buildAbsoluteUrl(config.canonicalPath));
 
@@ -212,11 +211,9 @@
                 ...classifyDiscoveryTarget(example.href),
               }}>{example.title}</a
             >
-
             <p class="mt-2 text-base leading-relaxed text-theme-muted">
               {example.description}
             </p>
-
             <p class="mt-2 text-base leading-relaxed text-theme-text">
               <strong class="font-bold"
                 >{config.copy.exampleHighlightLabel}</strong

@@ -8,7 +8,7 @@ const { addFamilyLink, createEntity, vaultState } = vi.hoisted(() => ({
   vaultState: { entities: {} as Record<string, unknown> },
 }));
 
-vi.mock("#lib/stores/vault.svelte.js", () => ({
+vi.mock("$lib/stores/vault.svelte", () => ({
   vault: {
     get selectedEntityId() {
       return null;
@@ -22,7 +22,7 @@ vi.mock("#lib/stores/vault.svelte.js", () => ({
 }));
 
 // Swap the search-worker-backed Autocomplete for the lightweight mock.
-vi.mock("#lib/components/ui/Autocomplete.svelte", async () => {
+vi.mock("$lib/components/ui/Autocomplete.svelte", async () => {
   const mod = await import("../MockAutocomplete.svelte");
   return { default: mod.default };
 });

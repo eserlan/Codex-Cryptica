@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { resolve } from "$app/paths";
+  import { base } from "$app/paths";
   import type { Entity } from "schema";
-  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
-  import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
-  import { vault } from "#lib/stores/vault.svelte.js";
-  import { categories } from "#lib/stores/categories.svelte.js";
-  import { getIconClass } from "#lib/utils/icon.js";
-  import { buildGuestEntityUrl } from "#lib/services/publishing/guest-link.js";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { vault } from "$lib/stores/vault.svelte";
+  import { categories } from "$lib/stores/categories.svelte";
+  import { getIconClass } from "$lib/utils/icon";
+  import { buildGuestEntityUrl } from "$lib/services/publishing/guest-link";
   import { entitySnippet } from "./entityTableSnippet";
   import {
     getEntityCreatedAt,
@@ -51,12 +51,8 @@
   const href = $derived(
     sessionModeStore.isGuestMode
       ? buildGuestEntityUrl(vaultId, entity.id, "")
-      : resolve("/(app)/vault/[id]/entity/[entityId]", {
-          id: vaultId,
-          entityId: entity.id,
-        }),
+      : `${base}/vault/${vaultId}/entity/${entity.id}`,
   );
-
   const snippet = $derived(entitySnippet(entity));
   const chips = $derived(getEntityLabels(entity).slice(0, 3));
   const extraChips = $derived(

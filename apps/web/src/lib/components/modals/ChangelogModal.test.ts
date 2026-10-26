@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import ChangelogModal from "./ChangelogModal.svelte";
 import releases from "../../content/changelog/releases.json";
-import { onboardingStore } from "#lib/stores/ui/onboarding.svelte.js";
+import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
 
 describe("ChangelogModal", () => {
   beforeEach(() => {

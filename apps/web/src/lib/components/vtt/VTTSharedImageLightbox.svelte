@@ -1,15 +1,12 @@
 <script lang="ts">
-  import { vault } from "#lib/stores/vault.svelte.js";
+  import { vault } from "$lib/stores/vault.svelte";
   import type { SharedTokenImageState } from "../../../types/vtt";
-  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
-  let {
-    imageState,
-    onClose,
-  }: {
+  let { imageState, onClose } = $props<{
     imageState: SharedTokenImageState | null;
     onClose: () => void;
-  } = $props();
+  }>();
 
   let resolvedImageUrl = $state("");
   let lastResolvedPath = $state<string | null>(null);

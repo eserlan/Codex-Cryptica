@@ -3,7 +3,7 @@
 import { render, screen, fireEvent } from "@testing-library/svelte";
 import { describe, expect, it, beforeEach } from "vitest";
 import GuidedModeToggle from "./GuidedModeToggle.svelte";
-import { guidedModeStore } from "#lib/stores/ui/guided-mode.svelte.js";
+import { guidedModeStore } from "$lib/stores/ui/guided-mode.svelte";
 
 describe("GuidedModeToggle", () => {
   beforeEach(() => {

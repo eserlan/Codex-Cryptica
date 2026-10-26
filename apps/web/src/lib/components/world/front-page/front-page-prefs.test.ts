@@ -6,7 +6,7 @@ import {
   readRecentLimit,
 } from "./front-page-prefs";
 import { DEFAULT_RECENT_LIMIT } from "./front-page-constants";
-import type { StorageLike } from "#lib/utils/runtime-deps.js";
+import type { StorageLike } from "$lib/utils/runtime-deps";
 
 function createMockStorage(): StorageLike {
   const store = new Map<string, string>();

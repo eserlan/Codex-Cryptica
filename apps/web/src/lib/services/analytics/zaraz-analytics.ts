@@ -25,8 +25,7 @@ interface ZarazLike {
   track: (eventName: string, properties?: Record<string, unknown>) => void;
 }
 
-export type PublicGeneratorAction =
-  "save_to_codex" | "copy" | "open_codex" | "reroll";
+export type PublicGeneratorAction = "save_to_codex" | "copy" | "open_codex";
 
 function flatAcquisitionProperties(
   attribution: ReturnType<typeof attributionStore.getLatestTouch>,

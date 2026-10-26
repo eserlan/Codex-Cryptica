@@ -1,19 +1,16 @@
 <script lang="ts">
   import type { Entity, StatSheetField } from "schema";
-  import { vault } from "#lib/stores/vault.svelte.js";
-  import { statSheetTemplates } from "#lib/stores/stat-sheet-templates.svelte.js";
-  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
+  import { vault } from "$lib/stores/vault.svelte";
+  import { statSheetTemplates } from "$lib/stores/stat-sheet-templates.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import StatSheetTemplateOptions from "./StatSheetTemplateOptions.svelte";
-  import { applyDerivedModifiers } from "#lib/utils/stat-sheet-field-actions.js";
-  import { systemProfileStore } from "#lib/stores/system-profile.svelte.js";
+  import { applyDerivedModifiers } from "$lib/utils/stat-sheet-field-actions";
+  import { systemProfileStore } from "$lib/stores/system-profile.svelte";
 
-  let {
-    entity,
-    onClose = () => {},
-  }: {
+  let { entity, onClose = () => {} } = $props<{
     entity: Entity;
     onClose?: () => void;
-  } = $props();
+  }>();
 
   let saveAsName = $state("");
   let isSaving = $state(false);

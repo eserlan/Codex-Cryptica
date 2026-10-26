@@ -1,8 +1,8 @@
 <script lang="ts">
   import InlineKeySetup from "../oracle/InlineKeySetup.svelte";
-  import ImportDropzone from "#lib/features/importer/ImportDropzone.svelte";
-  import VaultFilesDropzone from "#lib/features/importer/VaultFilesDropzone.svelte";
-  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+  import ImportDropzone from "$lib/features/importer/ImportDropzone.svelte";
+  import VaultFilesDropzone from "$lib/features/importer/VaultFilesDropzone.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import type { CreaturePack } from "@codex/content-packs";
   import type { DroppedItem } from "@codex/importer";
 

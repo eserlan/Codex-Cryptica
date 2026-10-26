@@ -1,5 +1,5 @@
-import { discoveryPolicyStore } from "#lib/stores/ui/discovery-policy.svelte.js";
-import { isHelpAssistantEnabled } from "#lib/config/help-assistant.js";
+import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
+import { isHelpAssistantEnabled } from "$lib/config/help-assistant";
 
 /**
  * Whether the help assistant may appear at all: the build flag is on and the

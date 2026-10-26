@@ -1,19 +1,19 @@
 <script lang="ts">
-  import SEOGeneratorLayout from "#lib/components/seo/SEOGeneratorLayout.svelte";
-  import SessionPrepBuilderForm from "#lib/components/seo/session-prep/SessionPrepBuilderForm.svelte";
-  import { EXAMPLE_SESSION_PREP } from "#lib/components/seo/session-prep/example-prep.js";
+  import SEOGeneratorLayout from "$lib/components/seo/SEOGeneratorLayout.svelte";
+  import SessionPrepBuilderForm from "$lib/components/seo/session-prep/SessionPrepBuilderForm.svelte";
+  import { EXAMPLE_SESSION_PREP } from "$lib/components/seo/session-prep/example-prep";
   import {
     buildSessionPrep,
     toSessionPrepOutput,
-  } from "#lib/components/seo/session-prep/session-prep-output.js";
-  import { createSessionPrepService } from "#lib/services/seo/session-prep-service.js";
-  import { onlineStatus } from "#lib/stores/online.svelte.js";
+  } from "$lib/components/seo/session-prep/session-prep-output";
+  import { createSessionPrepService } from "$lib/services/seo/session-prep-service";
+  import { onlineStatus } from "$lib/stores/online.svelte";
   import {
     createEmptySessionPrep,
     type SessionPrep,
     type SessionPrepGuidance,
   } from "generator-engine";
-  import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
+  import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
 
   const service = createSessionPrepService();
   const exampleDraft = toSessionPrepOutput(EXAMPLE_SESSION_PREP);

@@ -5,7 +5,7 @@ import {
   buildBreadcrumbJsonLd,
   buildResultJsonLd,
 } from "./generator-json-ld";
-import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
+import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
 
 describe("buildFaqJsonLd", () => {
   it("returns an empty string when there are no faqs", () => {

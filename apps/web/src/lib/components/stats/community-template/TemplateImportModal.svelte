@@ -1,16 +1,16 @@
 <script lang="ts">
   import type { PublicTemplatePackage } from "schema";
-  import { statSheetTemplates } from "#lib/stores/stat-sheet-templates.svelte.js";
+  import { statSheetTemplates } from "$lib/stores/stat-sheet-templates.svelte";
 
   let {
     packageData,
     onClose = () => {},
     onImported = () => {},
-  }: {
+  } = $props<{
     packageData: PublicTemplatePackage;
     onClose?: () => void;
     onImported?: () => void;
-  } = $props();
+  }>();
   let name = $state("");
   let error = $state("");
   let isSaving = $state(false);

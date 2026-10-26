@@ -1,6 +1,6 @@
 <script lang="ts">
   import { dialogFocus } from "./biome-dialog-focus";
-  import type { BiomeExplorerStore } from "#lib/stores/biome-explorer.svelte.js";
+  import type { BiomeExplorerStore } from "$lib/stores/biome-explorer.svelte";
 
   let { store }: { store: BiomeExplorerStore } = $props();
 </script>

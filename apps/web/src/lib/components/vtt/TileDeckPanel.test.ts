@@ -26,18 +26,18 @@ const tileDeckPanelUIStoreMock = vi.hoisted(() => ({
   toggleGrid: vi.fn(),
 }));
 
-vi.mock("#lib/stores/map-session.svelte.js", () => ({
+vi.mock("$lib/stores/map-session.svelte", () => ({
   mapSession: mapSessionMock,
 }));
-vi.mock("#lib/stores/vault.svelte.js", () => ({ vault: vaultMock }));
-vi.mock("#lib/features/random/index.js", () => ({
+vi.mock("$lib/stores/vault.svelte", () => ({ vault: vaultMock }));
+vi.mock("$lib/features/random", () => ({
   randomSources: randomSourcesMock,
   ensureRandomSourcesLoaded: vi.fn(async () => {}),
 }));
-vi.mock("#lib/stores/ui/notification.svelte.js", () => ({
+vi.mock("$lib/stores/ui/notification.svelte", () => ({
   notificationStore: { notify: vi.fn(), confirm: vi.fn() },
 }));
-vi.mock("#lib/stores/ui/tile-deck-panel-ui.svelte.js", () => ({
+vi.mock("$lib/stores/ui/tile-deck-panel-ui.svelte", () => ({
   tileDeckPanelUIStore: tileDeckPanelUIStoreMock,
 }));
 

@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { mapStore } from "#lib/stores/map.svelte.js";
-  import { mapSession } from "#lib/stores/map-session.svelte.js";
+  import { mapStore } from "$lib/stores/map.svelte";
+  import { mapSession } from "$lib/stores/map-session.svelte";
   import SoloTravelReadout from "./SoloTravelReadout.svelte";
   import {
     SOLO_EXPLORATION_CONTEXT,

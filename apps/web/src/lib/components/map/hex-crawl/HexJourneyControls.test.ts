@@ -5,7 +5,7 @@ import { resolve } from "node:path";
 import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import HexJourneyControls from "./HexJourneyControls.svelte";
-import { HexJourneyStore } from "#lib/stores/hex-crawl/hex-journey.svelte.js";
+import { HexJourneyStore } from "$lib/stores/hex-crawl/hex-journey.svelte";
 
 const APP_CSS = readFileSync(resolve(process.cwd(), "src/app.css"), "utf8");
 

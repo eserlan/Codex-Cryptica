@@ -1,5 +1,5 @@
 import { getContext, setContext } from "svelte";
-import type { HexCrawlStore } from "#lib/stores/hex-crawl/hex-crawl.svelte.js";
+import type { HexCrawlStore } from "$lib/stores/hex-crawl/hex-crawl.svelte";
 
 const HEX_CRAWL_STORE = Symbol("hex-crawl-store");
 

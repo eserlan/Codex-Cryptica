@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { AdventureManager } from "#lib/stores/oracle/adventure-manager.svelte.js";
+  import type { AdventureManager } from "$lib/stores/oracle/adventure-manager.svelte";
   import AdventureComposer from "./AdventureComposer.svelte";
   import AdventureLiveTranscript from "./AdventureLiveTranscript.svelte";
   let { manager }: { manager: AdventureManager } = $props();

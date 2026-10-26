@@ -1,6 +1,6 @@
 import type { StatSheetField } from "schema";
 import type { RollResult } from "dice-engine";
-import { rollStatSheetDiceField } from "#lib/utils/stat-sheet-field-actions.js";
+import { rollStatSheetDiceField } from "$lib/utils/stat-sheet-field-actions";
 import type { ItemTableColumn, ItemTableRow } from "./item-table-values";
 
 export interface ItemTableRollState {

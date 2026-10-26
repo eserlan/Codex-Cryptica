@@ -16,7 +16,7 @@ const env = vi.hoisted(() => ({
     selectedEntityId: null as string | null,
   },
 }));
-vi.mock("#lib/stores/solo-session-instance.js", () => ({
+vi.mock("$lib/stores/solo-session-instance", () => ({
   soloSessionStore: {
     get party() {
       return env.party;
@@ -27,7 +27,7 @@ vi.mock("#lib/stores/solo-session-instance.js", () => ({
     setParty: env.setParty,
   },
 }));
-vi.mock("#lib/stores/vault.svelte.js", () => ({ vault: env.vault }));
+vi.mock("$lib/stores/vault.svelte", () => ({ vault: env.vault }));
 
 import SoloPartyMenu from "./SoloPartyMenu.svelte";
 

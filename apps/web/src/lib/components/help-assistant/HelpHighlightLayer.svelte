@@ -1,7 +1,7 @@
 <script lang="ts">
   import { untrack } from "svelte";
-  import type { CifFlight } from "#lib/services/help-assistant/cif-flight.svelte.js";
-  import type { HelpHighlightService } from "#lib/services/help-assistant/help-highlight.svelte.js";
+  import type { CifFlight } from "$lib/services/help-assistant/cif-flight.svelte";
+  import type { HelpHighlightService } from "$lib/services/help-assistant/help-highlight.svelte";
   import CifPointer from "./CifPointer.svelte";
 
   let {

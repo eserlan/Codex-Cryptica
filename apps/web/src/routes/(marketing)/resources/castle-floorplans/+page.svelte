@@ -1,22 +1,23 @@
 <script lang="ts">
-  import { resolve } from "$app/paths";
-  import SeoHead from "#lib/components/seo/SeoHead.svelte";
-  import { buildAbsoluteUrl } from "#lib/seo/site.js";
+  import { base } from "$app/paths";
+  import SeoHead from "$lib/components/seo/SeoHead.svelte";
+  import { buildAbsoluteUrl } from "$lib/seo/site";
   import {
     FLOORPLAN_CATEGORIES,
     CASTLE_FLOORPLAN_RESOURCES,
     getResourcesByCategory,
-  } from "#lib/content/resources/castle-floorplans.js";
+  } from "$lib/content/resources/castle-floorplans";
   import {
     buildCastleFloorplansJsonLd,
     buildCastleFloorplansBreadcrumbJsonLd,
-  } from "#lib/content/resources/json-ld.js";
+  } from "$lib/content/resources/json-ld";
 
-  const cleanBase = resolve("") === "/" ? "" : resolve("");
+  const cleanBase = base === "/" ? "" : base;
 
   const TITLE = "Great Castle Floorplans for RPGs and Worldbuilding";
   const DESCRIPTION =
     "Curated links to real castle, palace, and fortress floor plans, chosen as reference for medieval and fantasy RPG maps rather than reproduced from their original publishers.";
+
   const categoriesWithResources = FLOORPLAN_CATEGORIES.map((category) => ({
     category,
     resources: getResourcesByCategory(category.id),
@@ -88,7 +89,6 @@
         <h2 class="font-header text-xl font-bold text-theme-text">
           {category.label}
         </h2>
-
         <p class="mt-1 text-sm leading-relaxed text-theme-muted">
           {category.description}
         </p>

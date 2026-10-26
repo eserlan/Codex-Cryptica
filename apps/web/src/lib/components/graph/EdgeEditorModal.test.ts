@@ -19,7 +19,7 @@ if (typeof Element !== "undefined" && !Element.prototype.animate) {
 
 // Mock Svelte client runtime
 
-vi.mock("#lib/stores/vault.svelte.js", () => ({
+vi.mock("$lib/stores/vault.svelte", () => ({
   vault: {
     isGuest: false,
     updateConnection: vi.fn(),
@@ -28,7 +28,7 @@ vi.mock("#lib/stores/vault.svelte.js", () => ({
 }));
 
 import EdgeEditorModal from "./EdgeEditorModal.svelte";
-import { vault } from "#lib/stores/vault.svelte.js";
+import { vault } from "$lib/stores/vault.svelte";
 
 const testVault = vault as unknown as { isGuest: boolean };
 

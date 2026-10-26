@@ -1,13 +1,10 @@
 <script lang="ts">
-  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
-  let {
-    entityId,
-    entityType,
-  }: {
+  let { entityId, entityType } = $props<{
     entityId: string;
     entityType: string;
-  } = $props();
+  }>();
 
   /** A business is anchored to a place, a person or an organisation (FR-012). */
   const ANCHOR_TYPES = ["location", "character", "faction"];

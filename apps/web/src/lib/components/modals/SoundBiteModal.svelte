@@ -1,8 +1,8 @@
 <script lang="ts">
   import { fade, fly } from "svelte/transition";
-  import { vault } from "#lib/stores/vault.svelte.js";
-  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
-  import DetailSoundBite from "#lib/components/entity-detail/DetailSoundBite.svelte";
+  import { vault } from "$lib/stores/vault.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import DetailSoundBite from "$lib/components/entity-detail/DetailSoundBite.svelte";
 
   const entityId = $derived(modalUIStore.soundBite?.entityId);
   const entity = $derived(entityId ? vault.entities[entityId] : null);

@@ -173,7 +173,7 @@ function fakeDirectory(name = "root") {
 
 describe("threads file in a vault folder", () => {
   it("is part of the folder walk, so folder saves and exports include it", async () => {
-    const { walkOpfsDirectory } = await import("#lib/utils/opfs.js");
+    const { walkOpfsDirectory } = await import("$lib/utils/opfs");
     const { dir } = fakeDirectory();
     const files = await (
       await import("./vault-threads-file")

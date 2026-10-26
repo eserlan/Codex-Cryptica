@@ -1,5 +1,5 @@
 <script lang="ts">
-  import SEOPageLayout from "#lib/components/seo/SEOPageLayout.svelte";
+  import SEOPageLayout from "$lib/components/seo/SEOPageLayout.svelte";
   let { data } = $props();
 </script>
 

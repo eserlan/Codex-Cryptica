@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { calendarStore } from "#lib/stores/calendar.svelte.js";
-  import { graph } from "#lib/stores/graph.svelte.js";
+  import { calendarStore } from "$lib/stores/calendar.svelte";
+  import { graph } from "$lib/stores/graph.svelte";
   import type { TemporalMetadata } from "schema";
   import type { DateSelection } from "chronology-engine";
   import {
@@ -22,7 +22,7 @@
     parsePickerDateInput,
     precisionPatch,
   } from "./utils/temporal-picker-selection";
-  import { systemClock } from "#lib/utils/runtime-deps.js";
+  import { systemClock } from "$lib/utils/runtime-deps";
 
   let {
     value = $bindable(),

@@ -1,12 +1,12 @@
 <script lang="ts">
   import { fly, fade } from "svelte/transition";
-  import { resolve } from "$app/paths";
+  import { base } from "$app/paths";
   import { page } from "$app/state";
-  import { PATREON_URL } from "#lib/config/index.js";
-  import VaultControls from "#lib/components/VaultControls.svelte";
-  import GuidedModeToggle from "#lib/components/guided/GuidedModeToggle.svelte";
-  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
-  import { quickNoteStore } from "#lib/stores/quicknote.svelte.js";
+  import { PATREON_URL } from "$lib/config";
+  import VaultControls from "$lib/components/VaultControls.svelte";
+  import GuidedModeToggle from "$lib/components/guided/GuidedModeToggle.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { quickNoteStore } from "$lib/stores/quicknote.svelte";
   import SessionJournalIndicator from "./SessionJournalIndicator.svelte";
   import { isToolActive, isViewActive, navItems } from "./nav-items";
 
@@ -232,7 +232,7 @@
           </a>
         {/if}
         <a
-          href="{resolve('')}/explore"
+          href="{base}/explore"
           class="flex items-center gap-3 p-2 text-sm font-mono text-theme-secondary hover:text-theme-primary transition-colors focus:outline-none focus:ring-1 focus:ring-theme-primary rounded"
           onclick={close}
         >
@@ -253,7 +253,7 @@
           Help
         </button>
         <a
-          href="{resolve('')}/privacy"
+          href="{base}/privacy"
           target="_blank"
           rel="noopener noreferrer"
           class="flex items-center gap-3 p-2 text-sm font-mono text-theme-secondary hover:text-theme-primary transition-colors focus:outline-none focus:ring-1 focus:ring-theme-primary rounded"
@@ -262,7 +262,7 @@
           Privacy
         </a>
         <a
-          href="{resolve('')}/terms"
+          href="{base}/terms"
           target="_blank"
           rel="noopener noreferrer"
           class="flex items-center gap-3 p-2 text-sm font-mono text-theme-secondary hover:text-theme-primary transition-colors focus:outline-none focus:ring-1 focus:ring-theme-primary rounded"

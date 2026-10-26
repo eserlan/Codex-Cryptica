@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { AdventureManager } from "#lib/stores/oracle/adventure-manager.svelte.js";
+  import type { AdventureManager } from "$lib/stores/oracle/adventure-manager.svelte";
   let { manager }: { manager: AdventureManager } = $props();
   let action = $derived(manager.draft);
   let disabled = $derived(

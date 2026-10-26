@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { mapStore } from "#lib/stores/map.svelte.js";
-  import { mapSession } from "#lib/stores/map-session.svelte.js";
-  import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
+  import { mapStore } from "$lib/stores/map.svelte";
+  import { mapSession } from "$lib/stores/map-session.svelte";
+  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
   import { getPrimaryButtonStateClass } from "./vtt-ui";
 
   /**

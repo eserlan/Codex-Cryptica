@@ -4,11 +4,7 @@ import { render, screen, fireEvent } from "@testing-library/svelte";
 import { describe, it, expect, vi } from "vitest";
 import EmptyState from "./EmptyState.svelte";
 
-vi.mock("$app/paths", () => ({
-  base: "",
-  asset: (p: string) => p,
-  resolve: (p: string) => p,
-}));
+vi.mock("$app/paths", () => ({ base: "" }));
 
 describe("EmptyState", () => {
   it("renders headline", () => {

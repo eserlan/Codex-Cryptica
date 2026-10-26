@@ -1,11 +1,11 @@
-import EntityNode from "#lib/components/canvas/EntityNode.svelte";
-import FileNode from "#lib/components/canvas/FileNode.svelte";
-import TextNode from "#lib/components/canvas/TextNode.svelte";
-import DelveRoomNode from "#lib/components/canvas/DelveRoomNode.svelte";
-import DelveSectorNode from "#lib/components/canvas/DelveSectorNode.svelte";
-import AdventureNode from "#lib/components/canvas/AdventureNode.svelte";
-import CustomEdge from "#lib/components/canvas/CustomEdge.svelte";
-import DelveEdge from "#lib/components/canvas/DelveEdge.svelte";
+import EntityNode from "$lib/components/canvas/EntityNode.svelte";
+import FileNode from "$lib/components/canvas/FileNode.svelte";
+import TextNode from "$lib/components/canvas/TextNode.svelte";
+import DelveRoomNode from "$lib/components/canvas/DelveRoomNode.svelte";
+import DelveSectorNode from "$lib/components/canvas/DelveSectorNode.svelte";
+import AdventureNode from "$lib/components/canvas/AdventureNode.svelte";
+import CustomEdge from "$lib/components/canvas/CustomEdge.svelte";
+import DelveEdge from "$lib/components/canvas/DelveEdge.svelte";
 
 export const nodeTypes = {
   entity: EntityNode,

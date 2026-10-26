@@ -1,11 +1,11 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
-  import { resolve } from "$app/paths";
+  import { base } from "$app/paths";
   import GeneratorIntroPanel from "../GeneratorIntroPanel.svelte";
   import GeneratorOfflineNotice from "./GeneratorOfflineNotice.svelte";
   import GeneratorSubmitControls from "./GeneratorSubmitControls.svelte";
 
-  const cleanBase = resolve("") === "/" ? "" : resolve("");
+  const cleanBase = base === "/" ? "" : base;
 
   let {
     canonicalPath,
@@ -23,7 +23,6 @@
     isOnline,
     aiModeRequired,
     aiDataNotice,
-    aiToggleScope,
     offlineMessage,
     showSubmitButton,
     busyLabel,
@@ -48,7 +47,6 @@
     isOnline: boolean;
     aiModeRequired: boolean;
     aiDataNotice?: string;
-    aiToggleScope?: string;
     offlineMessage?: string;
     showSubmitButton: boolean;
     busyLabel?: string;
@@ -96,7 +94,6 @@
       {generateLabel}
       {generatedSingular}
       {aiDataNotice}
-      {aiToggleScope}
       bind:useAI
     />
   </form>

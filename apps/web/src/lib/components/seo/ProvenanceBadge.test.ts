@@ -2,7 +2,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/svelte";
 import ProvenanceBadge from "./ProvenanceBadge.svelte";
-import { sessionHubStore } from "#lib/stores/session-hub.svelte.js";
+import { sessionHubStore } from "$lib/stores/session-hub.svelte";
 
 describe("ProvenanceBadge", () => {
   beforeEach(() => {

@@ -5,7 +5,7 @@ import {
   removeGuestHistory,
   clearGuestHistory,
 } from "./guest-history";
-import type { StorageLike } from "#lib/utils/runtime-deps.js";
+import type { StorageLike } from "$lib/utils/runtime-deps";
 
 class MockStorage implements StorageLike {
   private data: Record<string, string> = {};

@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { graph } from "#lib/stores/graph.svelte.js";
-  import { vault } from "#lib/stores/vault.svelte.js";
+  import { graph } from "$lib/stores/graph.svelte";
+  import { vault } from "$lib/stores/vault.svelte";
   import { fade } from "svelte/transition";
 
   let centralEntity = $derived(

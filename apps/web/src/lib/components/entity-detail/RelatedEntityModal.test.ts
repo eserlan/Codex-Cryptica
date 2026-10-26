@@ -18,9 +18,9 @@ vi.mock("@codex/ai-engine", () => ({
 import { render, fireEvent, screen, waitFor } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import RelatedEntityModal from "./RelatedEntityModal.svelte";
-import { vault } from "#lib/stores/vault.svelte.js";
+import { vault } from "$lib/stores/vault.svelte";
 import { textGenerationService } from "@codex/ai-engine";
-import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
+import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
 const mockDiscoveryPolicyStore = vi.hoisted(() => ({
   aiDisabled: false,
@@ -40,11 +40,9 @@ const mockOracle = vi.hoisted(() => ({
 
 vi.mock("$app/paths", () => ({
   base: "",
-  asset: (p: string) => p,
-  resolve: (p: string) => p,
 }));
 
-vi.mock("#lib/stores/vault.svelte.js", () => ({
+vi.mock("$lib/stores/vault.svelte", () => ({
   vault: {
     isGuest: false,
     entities: {
@@ -72,7 +70,7 @@ vi.mock("#lib/stores/vault.svelte.js", () => ({
   },
 }));
 
-vi.mock("#lib/stores/categories.svelte.js", () => ({
+vi.mock("$lib/stores/categories.svelte", () => ({
   categories: {
     list: [
       { id: "character", label: "Character" },
@@ -112,11 +110,11 @@ const mockEntityTemplateStore = vi.hoisted(() => ({
   }),
 }));
 
-vi.mock("#lib/stores/entity-templates/entity-template-store.svelte.js", () => ({
+vi.mock("$lib/stores/entity-templates/entity-template-store.svelte", () => ({
   entityTemplateStore: mockEntityTemplateStore,
 }));
 
-vi.mock("#lib/stores/oracle.svelte.js", () => ({
+vi.mock("$lib/stores/oracle.svelte", () => ({
   oracle: mockOracle,
 }));
 
@@ -125,21 +123,21 @@ const mockThemeStore = vi.hoisted(() => ({
   activeTheme: { name: "Sci-Fi Terminal" },
 }));
 
-vi.mock("#lib/stores/theme.svelte.js", () => ({
+vi.mock("$lib/stores/theme.svelte", () => ({
   themeStore: mockThemeStore,
 }));
 
-vi.mock("#lib/stores/ui/notification.svelte.js", () => ({
+vi.mock("$lib/stores/ui/notification.svelte", () => ({
   notificationStore: {
     notify: vi.fn(),
   },
 }));
 
-vi.mock("#lib/stores/ui/discovery-policy.svelte.js", () => ({
+vi.mock("$lib/stores/ui/discovery-policy.svelte", () => ({
   discoveryPolicyStore: mockDiscoveryPolicyStore,
 }));
 
-vi.mock("#lib/services/EntityTemplateService.svelte.js", () => ({
+vi.mock("$lib/services/EntityTemplateService.svelte", () => ({
   entityTemplateService: {
     resolveTemplate: vi.fn().mockResolvedValue("Resolved template outline"),
   },
@@ -439,7 +437,7 @@ describe("RelatedEntityModal", () => {
 
   it("passes selected templateId and parentEntity to entityTemplateService.resolveTemplate when generating", async () => {
     const { entityTemplateService } =
-      await import("#lib/services/EntityTemplateService.svelte.js");
+      await import("$lib/services/EntityTemplateService.svelte");
 
     render(RelatedEntityModal, {
       isOpen: true,

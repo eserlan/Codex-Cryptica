@@ -1,5 +1,5 @@
 import { computeProvenance, type SessionEntity } from "generator-engine";
-import type { sessionHubStore } from "#lib/stores/session-hub.svelte.js";
+import type { sessionHubStore } from "$lib/stores/session-hub.svelte";
 
 type SessionHub = typeof sessionHubStore;
 

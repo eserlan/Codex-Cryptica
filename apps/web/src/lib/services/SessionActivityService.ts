@@ -1,5 +1,5 @@
-import type { ActivityEvent } from "#lib/types/activity.js";
-import { discoveryPolicyStore } from "#lib/stores/ui/discovery-policy.svelte.js";
+import type { ActivityEvent } from "$lib/types/activity";
+import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
 import {
   systemClock,
   systemIdGenerator,
@@ -7,7 +7,7 @@ import {
   type Clock,
   type IdGenerator,
   type StorageLike,
-} from "#lib/utils/runtime-deps.js";
+} from "$lib/utils/runtime-deps";
 
 export type { ActivityEvent };
 

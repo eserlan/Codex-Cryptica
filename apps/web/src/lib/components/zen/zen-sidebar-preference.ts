@@ -1,4 +1,4 @@
-import { browserStorage, type StorageLike } from "#lib/utils/runtime-deps.js";
+import { browserStorage, type StorageLike } from "$lib/utils/runtime-deps";
 
 const KEY = "zen-sidebar-collapsed";
 

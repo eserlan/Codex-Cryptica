@@ -15,7 +15,7 @@ import type { Entity, Era } from "schema";
 import { graph } from "./graph.svelte";
 import { vault, type VaultStore } from "./vault.svelte";
 import { calendarStore, type CalendarStore } from "./calendar.svelte";
-import { systemClock } from "#lib/utils/runtime-deps.js";
+import { systemClock } from "$lib/utils/runtime-deps";
 
 export interface TimelineEntry {
   entityId: string;

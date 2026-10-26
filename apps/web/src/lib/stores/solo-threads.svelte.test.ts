@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import type { VaultFileAccess } from "#lib/services/vault-threads-file.js";
-import { THREADS_PATH } from "#lib/services/vault-threads-file.js";
+import type { VaultFileAccess } from "$lib/services/vault-threads-file";
+import { THREADS_PATH } from "$lib/services/vault-threads-file";
 import { SoloThreadsStore, type SoloThreadsDeps } from "./solo-threads.svelte";
 
 const memoryFiles = (initial?: string) => {

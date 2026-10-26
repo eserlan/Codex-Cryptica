@@ -15,7 +15,7 @@ const graph = vi.hoisted(() => ({
   deleteViewPreset: vi.fn(),
   resetView: vi.fn(),
 }));
-vi.mock("#lib/stores/graph.svelte.js", () => ({ graph }));
+vi.mock("$lib/stores/graph.svelte", () => ({ graph }));
 
 // jsdom has no Web Animations API, which the panel's fade drives.
 vi.mock("svelte/transition", async (importOriginal) => ({

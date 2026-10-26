@@ -2,9 +2,9 @@
 import { render, screen } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import InlinePreviewOverlay from "./InlinePreviewOverlay.svelte";
-import { revisionService } from "#lib/services/RevisionService.svelte.js";
+import { revisionService } from "$lib/services/RevisionService.svelte";
 
-vi.mock("#lib/services/RevisionService.svelte.js", () => ({
+vi.mock("$lib/services/RevisionService.svelte", () => ({
   revisionService: {
     isRevising: false,
     pendingDraft: null,

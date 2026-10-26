@@ -25,10 +25,10 @@ const { hero, parent, vaultMock } = vi.hoisted(() => {
   return { hero, parent, vaultMock };
 });
 
-vi.mock("#lib/stores/vault.svelte.js", () => ({ vault: vaultMock }));
+vi.mock("$lib/stores/vault.svelte", () => ({ vault: vaultMock }));
 
 // EmptyFamilySlot pulls in the search-worker-backed Autocomplete; stub it.
-vi.mock("#lib/components/ui/Autocomplete.svelte", async () => {
+vi.mock("$lib/components/ui/Autocomplete.svelte", async () => {
   const mod = await import("./MockAutocomplete.svelte");
   return { default: mod.default };
 });

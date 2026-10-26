@@ -6,7 +6,7 @@ import {
   assembleReportInput,
   connectionPairs,
   type RelationshipPair,
-} from "#lib/services/report-input-mapper.js";
+} from "$lib/services/report-input-mapper";
 
 export type CanvasReportError =
   "no-selection" | "no-entities" | "unsupported-canvas";

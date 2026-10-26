@@ -8,7 +8,7 @@
  * connections — is ever observed or tracked. `is_first_saved_entity` and
  * `vault_created` are therefore *inferred*, not confirmed: a first-time
  * saver will cause the app's existing import handler
- * (`#lib/services/seo/import-handler.ts`) to auto-create a vault, but this
+ * (`$lib/services/seo/import-handler.ts`) to auto-create a vault, but this
  * module never looks at whether that actually happened. Likewise
  * `related_entity_created` counts [[wiki-links]]/references already present
  * in the content the generator just produced — describing what's about to
@@ -20,7 +20,7 @@
  * read real vault state.
  */
 
-import { browserStorage, type StorageLike } from "#lib/utils/runtime-deps.js";
+import { browserStorage, type StorageLike } from "$lib/utils/runtime-deps";
 import { trackEvent } from "./zaraz-analytics";
 
 const HAS_SAVED_KEY = "codex-cryptica-has-saved-to-vault";

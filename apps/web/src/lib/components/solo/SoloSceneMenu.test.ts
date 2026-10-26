@@ -14,7 +14,7 @@ const env = vi.hoisted(() => ({
   renameScene: vi.fn(async (_n: string) => true),
   openJournal: vi.fn(),
 }));
-vi.mock("#lib/stores/solo-session-instance.js", () => ({
+vi.mock("$lib/stores/solo-session-instance", () => ({
   soloSessionStore: {
     get scenes() {
       return env.scenes;
@@ -27,7 +27,7 @@ vi.mock("#lib/stores/solo-session-instance.js", () => ({
     renameScene: env.renameScene,
   },
 }));
-vi.mock("#lib/stores/quicknote.svelte.js", () => ({
+vi.mock("$lib/stores/quicknote.svelte", () => ({
   quickNoteStore: { openJournal: env.openJournal },
 }));
 

@@ -1,15 +1,15 @@
 <script lang="ts">
-  import { resolve } from "$app/paths";
+  import { base } from "$app/paths";
   import SoloSetupDialog from "./SoloSetupDialog.svelte";
   import {
     soloPlayGuard,
     soloSessionStore,
-  } from "#lib/stores/solo-session-instance.js";
-  import { discoveryPolicyStore } from "#lib/stores/ui/discovery-policy.svelte.js";
-  import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
-  import { sessionJournalStore } from "#lib/stores/session-journal.svelte.js";
-  import { vault } from "#lib/stores/vault.svelte.js";
-  import { characterChoices } from "#lib/services/solo-characters.js";
+  } from "$lib/stores/solo-session-instance";
+  import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
+  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { sessionJournalStore } from "$lib/stores/session-journal.svelte";
+  import { vault } from "$lib/stores/vault.svelte";
+  import { characterChoices } from "$lib/services/solo-characters";
   import SoloThreadsMenu from "./SoloThreadsMenu.svelte";
 
   let setupOpen = $state(false);
@@ -74,9 +74,10 @@
           data-testid="play-start-solo"
           data-help-target="play-start-solo-session"
           disabled={!!blockedReason}
-          onclick={() => (setupOpen = true)}>Start Solo Session</button
+          onclick={() => (setupOpen = true)}
         >
-
+          Start Solo Session
+        </button>
         {#if blockedReason}
           <p class="mt-2 text-sm text-theme-muted">{blockedReason}</p>
         {/if}
@@ -96,7 +97,7 @@
 
     {#if !discoveryPolicyStore.aiDisabled}
       <a
-        href="{resolve('')}/adventure"
+        href="{base}/adventure"
         class="block rounded-lg border border-theme-border p-4 hover:border-theme-primary/60"
         data-testid="play-adventure-mode"
       >

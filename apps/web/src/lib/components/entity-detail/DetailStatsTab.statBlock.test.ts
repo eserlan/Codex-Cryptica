@@ -10,7 +10,7 @@ const { vaultState, profile, openStatBlockImport } = vi.hoisted(() => ({
   openStatBlockImport: vi.fn(),
 }));
 
-vi.mock("#lib/stores/vault.svelte.js", () => ({
+vi.mock("$lib/stores/vault.svelte", () => ({
   vault: {
     get isGuest() {
       return vaultState.isGuest;
@@ -19,7 +19,7 @@ vi.mock("#lib/stores/vault.svelte.js", () => ({
   },
 }));
 
-vi.mock("#lib/stores/system-profile.svelte.js", () => ({
+vi.mock("$lib/stores/system-profile.svelte", () => ({
   systemProfileStore: {
     get isTalesOfTheValiant() {
       return profile.isTalesOfTheValiant;
@@ -27,15 +27,15 @@ vi.mock("#lib/stores/system-profile.svelte.js", () => ({
   },
 }));
 
-vi.mock("#lib/stores/ui/modal-ui.svelte.js", () => ({
+vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
   modalUIStore: { openStatBlockImport },
 }));
 
-vi.mock("#lib/stores/ui/notification.svelte.js", () => ({
+vi.mock("$lib/stores/ui/notification.svelte", () => ({
   notificationStore: { confirm: vi.fn(), notify: vi.fn() },
 }));
 
-vi.mock("#lib/stores/stat-sheet-templates.svelte.js", () => ({
+vi.mock("$lib/stores/stat-sheet-templates.svelte", () => ({
   statSheetTemplates: {
     allTemplates: [],
     availableTemplates: [],
@@ -44,7 +44,7 @@ vi.mock("#lib/stores/stat-sheet-templates.svelte.js", () => ({
   },
 }));
 
-vi.mock("#lib/stores/presentation-templates.svelte.js", () => ({
+vi.mock("$lib/stores/presentation-templates.svelte", () => ({
   presentationTemplates: {
     availableTemplatesForSchema: () => [],
   },

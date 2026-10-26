@@ -133,12 +133,6 @@ export const howDoYouCreateAFantasyFaction: AnswerConfigInput = {
         "Turns a faction's next move into a scene: who votes which way, and what changes their mind.",
       href: "/generators/council-vote",
     },
-    {
-      title: "Fantasy name generator",
-      description:
-        "Names for the faction itself, its founder and the places it holds, in a consistent cultural style.",
-      href: "/generators/fantasy-names",
-    },
   ],
   relatedForPages: [
     {

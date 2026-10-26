@@ -8,18 +8,18 @@
    * exclusive, and shows only the chosen destination's controls.
    */
   import { onMount } from "svelte";
-  import { driveStore } from "#lib/stores/drive.svelte.js";
-  import { cloudBackupStore } from "#lib/stores/cloud-backup.svelte.js";
-  import { vault } from "#lib/stores/vault.svelte.js";
-  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
-  import { getDB } from "#lib/utils/idb.js";
+  import { driveStore } from "$lib/stores/drive.svelte";
+  import { cloudBackupStore } from "$lib/stores/cloud-backup.svelte";
+  import { vault } from "$lib/stores/vault.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { getDB } from "$lib/utils/idb";
   import { SyncRegistry, CloudSyncMetadataService } from "@codex/sync-engine";
   import {
     resolveCloudDestination,
     canSelectDestination,
     DESTINATION_LABEL,
     type CloudDestination,
-  } from "#lib/services/cloud-destination.js";
+  } from "$lib/services/cloud-destination";
   import DriveSettings from "./DriveSettings.svelte";
   import CloudBackupSettings from "./CloudBackupSettings.svelte";
 

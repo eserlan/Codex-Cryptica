@@ -7,10 +7,10 @@ import {
   handleManageLabels,
   withoutIds,
 } from "./table-bulk-actions";
-import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
-import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
-import { vault } from "#lib/stores/vault.svelte.js";
-import * as OpenSelectionReport from "#lib/components/reports/open-selection-report.js";
+import { notificationStore } from "$lib/stores/ui/notification.svelte";
+import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+import { vault } from "$lib/stores/vault.svelte";
+import * as OpenSelectionReport from "$lib/components/reports/open-selection-report";
 import type { Entity } from "schema";
 
 describe("table-bulk-actions", () => {

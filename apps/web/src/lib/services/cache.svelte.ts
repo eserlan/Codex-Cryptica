@@ -1,7 +1,7 @@
 import { entityDb, type GraphEntityRecord } from "../utils/entity-db";
 import type { LocalEntity } from "../stores/vault/types";
 import { debugStore } from "../stores/debug.svelte";
-import { systemClock } from "#lib/utils/runtime-deps.js";
+import { systemClock } from "$lib/utils/runtime-deps";
 
 const CONTENT_PREVIEW_VERSION = 1;
 const CONTENT_PREVIEW_LIMIT = 280;

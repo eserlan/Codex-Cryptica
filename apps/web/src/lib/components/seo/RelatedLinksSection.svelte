@@ -1,7 +1,8 @@
 <script lang="ts">
-  import { resolve } from "$app/paths";
+  import { base } from "$app/paths";
 
-  const cleanBase = resolve("") === "/" ? "" : resolve("");
+  const cleanBase = base === "/" ? "" : base;
+
   let { relatedLinks }: { relatedLinks: { href: string; label: string }[] } =
     $props();
 </script>

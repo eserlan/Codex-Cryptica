@@ -4,7 +4,7 @@ import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import JournalEntryRow from "./JournalEntryRow.svelte";
 
-vi.mock("#lib/components/MarkdownEditor.svelte", async () => ({
+vi.mock("$lib/components/MarkdownEditor.svelte", async () => ({
   default: (await import("./test-support/markdown-editor-stub"))
     .markdownEditorStub,
 }));

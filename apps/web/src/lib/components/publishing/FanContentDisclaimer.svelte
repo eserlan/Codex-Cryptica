@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { PUBLIC_WORLDS_NOTICE } from "#lib/config/public-worlds-notice.js";
+  import { PUBLIC_WORLDS_NOTICE } from "$lib/config/public-worlds-notice";
 
   interface Props {
     fanContent?: boolean;

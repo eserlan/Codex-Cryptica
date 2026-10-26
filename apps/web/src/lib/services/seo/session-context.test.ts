@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { getSessionContext } from "./session-context";
-import { sessionHubStore } from "#lib/stores/session-hub.svelte.js";
+import { sessionHubStore } from "$lib/stores/session-hub.svelte";
 
 describe("getSessionContext", () => {
   beforeEach(() => {

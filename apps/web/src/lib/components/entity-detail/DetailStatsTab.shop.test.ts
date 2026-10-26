@@ -15,7 +15,7 @@ const { updateEntity, vaultState } = vi.hoisted(() => ({
   vaultState: { isGuest: false },
 }));
 
-vi.mock("#lib/stores/vault.svelte.js", () => ({
+vi.mock("$lib/stores/vault.svelte", () => ({
   vault: {
     get isGuest() {
       return vaultState.isGuest;
@@ -25,22 +25,22 @@ vi.mock("#lib/stores/vault.svelte.js", () => ({
     allEntities: [],
   },
 }));
-vi.mock("#lib/stores/ui/notification.svelte.js", () => ({
+vi.mock("$lib/stores/ui/notification.svelte", () => ({
   notificationStore: { confirm: vi.fn(), notify: vi.fn() },
 }));
-vi.mock("#lib/stores/stat-sheet-templates.svelte.js", () => ({
+vi.mock("$lib/stores/stat-sheet-templates.svelte", () => ({
   statSheetTemplates: {
     allTemplates: [SHOP_MERCHANT_TEMPLATE],
     availableTemplates: [SHOP_MERCHANT_TEMPLATE],
     getDefaultPresentationTemplateId: () => null,
   },
 }));
-vi.mock("#lib/stores/presentation-templates.svelte.js", () => ({
+vi.mock("$lib/stores/presentation-templates.svelte", () => ({
   presentationTemplates: {
     availableTemplatesForSchema: () => getShopPresentationTemplates(),
   },
 }));
-vi.mock("#lib/services/merchant-trade-instance.js", () => ({
+vi.mock("$lib/services/merchant-trade-instance", () => ({
   merchantTradeService: { execute: vi.fn() },
 }));
 

@@ -14,8 +14,6 @@ vi.mock("$app/navigation", () => ({
 
 vi.mock("$app/paths", () => ({
   base: "",
-  asset: (p: string) => p,
-  resolve: (p: string) => p,
 }));
 
 vi.mock("$app/state", () => ({
@@ -26,7 +24,7 @@ vi.mock("$app/state", () => ({
 
 let capturedOnGraphData: ((graph: unknown) => void) | null = null;
 
-vi.mock("#lib/cloud-bridge/p2p/guest-service.js", () => ({
+vi.mock("$lib/cloud-bridge/p2p/guest-service", () => ({
   p2pGuestService: {
     connectToHost: vi.fn((_hostId, onGraphData) => {
       capturedOnGraphData = onGraphData;
@@ -38,8 +36,8 @@ vi.mock("#lib/cloud-bridge/p2p/guest-service.js", () => ({
 }));
 
 import GuestSessionBootstrap from "./GuestSessionBootstrap.svelte";
-import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
-import { vault } from "#lib/stores/vault.svelte.js";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { vault } from "$lib/stores/vault.svelte";
 
 describe("GuestSessionBootstrap", () => {
   beforeEach(() => {

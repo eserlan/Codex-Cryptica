@@ -1,9 +1,9 @@
 <script lang="ts">
   import type { Canvas } from "@codex/canvas-engine";
-  import EdgeAttributeModal from "#lib/components/canvas/EdgeAttributeModal.svelte";
-  import EdgeLabelModal from "#lib/components/canvas/EdgeLabelModal.svelte";
-  import RoomStockingDrawer from "#lib/components/canvas/RoomStockingDrawer.svelte";
-  import AdventureNodeDrawer from "#lib/components/canvas/AdventureNodeDrawer.svelte";
+  import EdgeAttributeModal from "$lib/components/canvas/EdgeAttributeModal.svelte";
+  import EdgeLabelModal from "$lib/components/canvas/EdgeLabelModal.svelte";
+  import RoomStockingDrawer from "$lib/components/canvas/RoomStockingDrawer.svelte";
+  import AdventureNodeDrawer from "$lib/components/canvas/AdventureNodeDrawer.svelte";
   import type { CanvasLogic } from "./hooks/canvas-logic-type";
   import type { useCanvasAreaEnhancement } from "./canvas-area-enhancement.svelte";
   import type { useDelveRoomSelection } from "./hooks/use-delve-room-selection.svelte";

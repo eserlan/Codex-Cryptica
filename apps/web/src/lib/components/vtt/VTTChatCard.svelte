@@ -1,5 +1,5 @@
 <script lang="ts">
-  import CardImage from "#lib/components/random/CardImage.svelte";
+  import CardImage from "$lib/components/random/CardImage.svelte";
   import type { ChatCardPayload } from "../../../types/vtt";
 
   let { cards = [] }: { cards: ChatCardPayload[] } = $props();

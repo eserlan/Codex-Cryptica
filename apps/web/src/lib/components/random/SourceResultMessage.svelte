@@ -1,8 +1,8 @@
 <script lang="ts">
   import type { ResolutionNode } from "random-source-engine";
-  import type { RandomSourceRollPayload } from "#lib/stores/dice-history.svelte.js";
-  import { vault } from "#lib/stores/vault.svelte.js";
-  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
+  import type { RandomSourceRollPayload } from "$lib/stores/dice-history.svelte";
+  import { vault } from "$lib/stores/vault.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import ResolutionChain from "./ResolutionChain.svelte";
 
   /**

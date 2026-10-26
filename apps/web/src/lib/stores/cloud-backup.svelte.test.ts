@@ -1,7 +1,7 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 
 const onlineState = vi.hoisted(() => ({ current: true }));
-vi.mock("#lib/stores/online.svelte.js", () => ({
+vi.mock("$lib/stores/online.svelte", () => ({
   onlineStatus: onlineState,
 }));
 

@@ -1,4 +1,4 @@
-import type { HighlightRect } from "#lib/services/help-assistant/help-highlight.svelte.js";
+import type { HighlightRect } from "$lib/services/help-assistant/help-highlight.svelte";
 
 /** Rendered size of the pointing Cif, in px (matches `h-12 w-11`). */
 export const CIF_POINTER_SIZE = { width: 44, height: 48 } as const;

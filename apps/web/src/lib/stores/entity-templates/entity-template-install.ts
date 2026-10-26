@@ -3,11 +3,11 @@ import {
   type EntityTemplate,
 } from "entity-template-engine";
 import type { PublicEntityTemplatePackage } from "schema";
-import { categories } from "#lib/stores/categories.svelte.js";
+import { categories } from "$lib/stores/categories.svelte";
 import {
   EntityTemplateDirectoryError,
   publicEntityTemplateDirectoryService,
-} from "#lib/services/publishing/PublicEntityTemplateDirectoryService.js";
+} from "$lib/services/publishing/PublicEntityTemplateDirectoryService";
 import { entityTemplateStore } from "./entity-template-store.svelte";
 
 /**

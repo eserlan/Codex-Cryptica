@@ -5,12 +5,12 @@
     selectedId = $bindable(null),
     id,
     ariaLabel,
-  }: {
+  } = $props<{
     value?: string;
     selectedId?: string | null;
     id?: string;
     ariaLabel?: string;
-  } = $props();
+  }>();
 
   // When value changes, simulate selection of corresponding test entity ID
   $effect(() => {

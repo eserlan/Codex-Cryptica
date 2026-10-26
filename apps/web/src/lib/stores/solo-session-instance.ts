@@ -1,3 +1,4 @@
+import { base } from "$app/paths";
 import { appEventBus } from "@codex/events";
 import { JOURNAL_EVENTS } from "session-journal-engine";
 import { goto } from "$app/navigation";
@@ -5,8 +6,8 @@ import {
   browserStorage,
   systemClock,
   systemIdGenerator,
-} from "#lib/utils/runtime-deps.js";
-import { characterChoices } from "#lib/services/solo-characters.js";
+} from "$lib/utils/runtime-deps";
+import { characterChoices } from "$lib/services/solo-characters";
 import { vault } from "./vault.svelte";
 import { vaultRegistry } from "./vault-registry.svelte";
 import { mapStore } from "./map.svelte";
@@ -19,14 +20,14 @@ import { createSoloPlayGuard } from "./ui/solo-play-guard";
 import { resolveSoloPlaceName, SoloSessionStore } from "./solo-session.svelte";
 import { createDraftOnlyPromoter } from "./session-journal-promoter";
 import { SoloTablePinsStore } from "./solo-table-pins.svelte";
-import { randomSources } from "#lib/features/random/index.js";
+import { randomSources } from "$lib/features/random";
 import { vaultRegistry as registry } from "./vault-registry.svelte";
 import { SoloThreadsStore } from "./solo-threads.svelte";
-import { getVaultDir } from "#lib/utils/opfs.js";
+import { getVaultDir } from "$lib/utils/opfs";
 import {
   opfsVaultFiles,
   type VaultFileAccess,
-} from "#lib/services/vault-threads-file.js";
+} from "$lib/services/vault-threads-file";
 
 /**
  * The vault's threads file, read and written through the vault's own OPFS
@@ -108,7 +109,7 @@ export const soloSessionStore = new SoloSessionStore({
       mapStore.soloFog = on;
     },
   },
-  navigate: (path) => goto(path),
+  navigate: (path) => goto(`${base}${path}`),
   isGuest: () => sessionModeStore.isGuestMode || vault.isGuest,
   isSharedPlayOn: () => isSharedPlayOn(),
   notify: (message) => notificationStore.notify(message, "info"),

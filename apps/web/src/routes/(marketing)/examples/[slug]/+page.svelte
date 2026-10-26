@@ -1,26 +1,26 @@
 <script lang="ts">
-  import { browser } from "$app/env";
-  import { resolve } from "$app/paths";
-  import SeoHead from "#lib/components/seo/SeoHead.svelte";
-  import { buildAbsoluteUrl } from "#lib/seo/site.js";
-  import { examplePath } from "#lib/content/examples/registry.js";
+  import { browser } from "$app/environment";
+  import { base } from "$app/paths";
+  import SeoHead from "$lib/components/seo/SeoHead.svelte";
+  import { buildAbsoluteUrl } from "$lib/seo/site";
+  import { examplePath } from "$lib/content/examples/registry";
   import {
     buildExampleJsonLd,
     buildExampleBreadcrumbJsonLd,
-  } from "#lib/content/examples/json-ld.js";
-  import { themeStore } from "#lib/stores/theme.svelte.js";
+  } from "$lib/content/examples/json-ld";
+  import { themeStore } from "$lib/stores/theme.svelte";
   import {
     trackDiscoveryPageViewed,
     classifyDiscoveryTarget,
     createDiscoveryViewGuard,
-  } from "#lib/services/analytics/discovery-tracking.js";
-  import { trackDiscoveryClick } from "#lib/actions/trackDiscoveryClick.js";
-  import PublicLabelChip from "#lib/components/labels/PublicLabelChip.svelte";
+  } from "$lib/services/analytics/discovery-tracking";
+  import { trackDiscoveryClick } from "$lib/actions/trackDiscoveryClick";
+  import PublicLabelChip from "$lib/components/labels/PublicLabelChip.svelte";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
 
-  const cleanBase = resolve("") === "/" ? "" : resolve("");
+  const cleanBase = base === "/" ? "" : base;
 
   let example = $derived(data.example);
   let related = $derived(data.related);

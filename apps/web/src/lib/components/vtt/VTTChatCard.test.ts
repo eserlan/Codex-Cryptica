@@ -3,7 +3,7 @@
 import { render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("#lib/components/random/CardImage.svelte", () => ({
+vi.mock("$lib/components/random/CardImage.svelte", () => ({
   default: function CardImageMock() {
     return {};
   },

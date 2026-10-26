@@ -1,14 +1,14 @@
 <script lang="ts">
-  import ShelfPanel from "#lib/components/shelf/ShelfPanel.svelte";
+  import ShelfPanel from "$lib/components/shelf/ShelfPanel.svelte";
   import { onMount } from "svelte";
-  import { debugStore } from "#lib/stores/debug.svelte.js";
-  import { KeyboardInset } from "#lib/services/help-assistant/keyboard-inset.svelte.js";
+  import { debugStore } from "$lib/stores/debug.svelte";
+  import { KeyboardInset } from "$lib/services/help-assistant/keyboard-inset.svelte";
   import ResizerHandle from "./ResizerHandle.svelte";
   import {
     layoutUIStore,
     MAX_SIDEBAR_VW,
     MIN_LEFT_SIDEBAR_WIDTH,
-  } from "#lib/stores/ui/layout-ui.svelte.js";
+  } from "$lib/stores/ui/layout-ui.svelte";
 
   let OracleSidebarPanel = $state<any>(null);
   let EntityExplorer = $state<any>(null);

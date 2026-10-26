@@ -3,7 +3,7 @@ import {
   getKeyboardViewportUpdate,
   getZoomViewportUpdate,
   shouldIgnoreMapKeyboardEvent,
-} from "#lib/components/map/map-view-helpers.js";
+} from "$lib/components/map/map-view-helpers";
 
 export interface PanZoomBounds {
   width: number;

@@ -9,8 +9,8 @@
     SYSTEM_NEUTRAL_ID,
     type GameSystemRegistry,
   } from "schema";
-  import { systemProfileStore } from "#lib/stores/system-profile.svelte.js";
-  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
+  import { systemProfileStore } from "$lib/stores/system-profile.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
   let {
     store = systemProfileStore,

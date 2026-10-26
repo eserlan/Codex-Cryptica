@@ -9,7 +9,7 @@ import { contextRetrievalService } from "@codex/ai-engine";
 import { vaultEventBus } from "./vault/events.svelte";
 import { vault } from "./vault.svelte";
 import { oracle } from "./oracle.svelte";
-import { systemClock } from "#lib/utils/runtime-deps.js";
+import { systemClock } from "$lib/utils/runtime-deps";
 
 /**
  * Reactive Svelte 5 Store to manage the state of the QuickNote Fast Scratchpad.

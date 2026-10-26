@@ -21,9 +21,9 @@ describe("GeneratorConfigForm", { timeout: 20000 }, () => {
       name: "NPC Creates Character",
     });
 
-    // Expand the Encounters & Complications group to reveal the Plot Twist generator
+    // Expand the Adventures & Encounters group to reveal the Plot Twist generator
     const adventuresGroupButton = screen.getByRole("button", {
-      name: /encounters & complications/i,
+      name: /adventures & encounters/i,
     });
     await fireEvent.click(adventuresGroupButton);
 
@@ -337,9 +337,9 @@ describe("GeneratorConfigForm", { timeout: 20000 }, () => {
 
   it("renders favourite generators in a dedicated section when starred", async () => {
     const { GeneratorFavoritesStore } =
-      await import("#lib/stores/ui/generator-favorites.svelte.js");
+      await import("$lib/stores/ui/generator-favorites.svelte");
     const { UIPersistence, UI_STORAGE_KEYS } =
-      await import("#lib/stores/ui/persistence.js");
+      await import("$lib/stores/ui/persistence");
 
     const storageMap = new Map<string, string>();
     const mockStorage = {
@@ -485,18 +485,18 @@ describe("GeneratorConfigForm", { timeout: 20000 }, () => {
       },
     });
 
-    // The shared categories should be rendered as accordion buttons
+    // All four broad categories should be rendered as accordion buttons
     const peopleGroupButton = screen.getByRole("button", {
-      name: /characters, villains & names/i,
+      name: /people & factions/i,
     });
     const locationsGroupButton = screen.getByRole("button", {
-      name: /places & settlements/i,
+      name: /locations & worlds/i,
     });
     const adventuresGroupButton = screen.getByRole("button", {
-      name: /encounters & complications/i,
+      name: /adventures & encounters/i,
     });
     const lootGroupButton = screen.getByRole("button", {
-      name: /items & lore/i,
+      name: /loot & lore/i,
     });
 
     expect(peopleGroupButton.getAttribute("aria-expanded")).toBe("false");
@@ -517,7 +517,7 @@ describe("GeneratorConfigForm", { timeout: 20000 }, () => {
       }),
     ).toBeNull();
 
-    // Click to expand Encounters & Complications group
+    // Click to expand Adventures & Encounters group
     await fireEvent.click(adventuresGroupButton);
     expect(adventuresGroupButton.getAttribute("aria-expanded")).toBe("true");
 
@@ -547,7 +547,7 @@ describe("GeneratorConfigForm", { timeout: 20000 }, () => {
     });
 
     const locationsGroupButton = screen.getByRole("button", {
-      name: /places & settlements/i,
+      name: /locations & worlds/i,
     });
     expect(locationsGroupButton.getAttribute("aria-expanded")).toBe("true");
 
@@ -563,7 +563,7 @@ describe("GeneratorConfigForm", { timeout: 20000 }, () => {
 
   it("initializes gameSystem default from systemProfileStore vault profile if set", async () => {
     const { systemProfileStore } =
-      await import("#lib/stores/system-profile.svelte.js");
+      await import("$lib/stores/system-profile.svelte");
     systemProfileStore.vaultSystemId = "tales-of-the-valiant";
 
     const onsubmit = vi.fn();
@@ -597,7 +597,7 @@ describe("GeneratorConfigForm", { timeout: 20000 }, () => {
 
   it("defaults to system-neutral when vault profile is not set", async () => {
     const { systemProfileStore } =
-      await import("#lib/stores/system-profile.svelte.js");
+      await import("$lib/stores/system-profile.svelte");
     systemProfileStore.vaultSystemId = null;
 
     const onsubmit = vi.fn();
@@ -617,7 +617,7 @@ describe("GeneratorConfigForm", { timeout: 20000 }, () => {
 
   it("displays informational notice when AI generation is disabled and ToV system is selected", async () => {
     const { systemProfileStore } =
-      await import("#lib/stores/system-profile.svelte.js");
+      await import("$lib/stores/system-profile.svelte");
     systemProfileStore.vaultSystemId = "tales-of-the-valiant";
 
     render(GeneratorConfigForm, {
@@ -639,7 +639,7 @@ describe("GeneratorConfigForm", { timeout: 20000 }, () => {
 
   it("inherits ToV and displays party size and level inputs for encounter generator", async () => {
     const { systemProfileStore } =
-      await import("#lib/stores/system-profile.svelte.js");
+      await import("$lib/stores/system-profile.svelte");
     systemProfileStore.vaultSystemId = "tales-of-the-valiant";
 
     const onsubmit = vi.fn();

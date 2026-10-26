@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { focusTrap } from "#lib/actions/focusTrap.js";
+  import { focusTrap } from "$lib/actions/focusTrap";
   import type { JournalEntry } from "session-journal-engine";
   import { suggestCategory } from "solo-session-engine";
-  import { soloPromoter } from "#lib/stores/solo-session-instance.js";
-  import { sessionJournalStore } from "#lib/stores/session-journal.svelte.js";
+  import { soloPromoter } from "$lib/stores/solo-session-instance";
+  import { sessionJournalStore } from "$lib/stores/session-journal.svelte";
 
   let {
     entry,

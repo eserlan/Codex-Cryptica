@@ -171,7 +171,6 @@ export const howDoYouMakeTravelInterestingInATabletopRpg: AnswerConfigInput = {
     "how-do-i-run-ship-to-ship-combat-without-sidelining-the-party",
     "how-do-i-make-sea-travel-interesting-in-a-ttrpg",
     "how-do-i-run-a-pirate-campaign-focused-on-exploration",
-    "how-many-random-encounters-during-rpg-travel",
   ],
   discovery: {
     id: "answer-travel-interesting",
@@ -185,13 +184,6 @@ export const howDoYouMakeTravelInterestingInATabletopRpg: AnswerConfigInput = {
     uniqueValue:
       "A five-pillar wilderness travel framework replacing empty random combat with branching route dilemmas, camp roles, tangible time costs, and situational road discoveries.",
     relatedIntents: ["answer-point-crawl", "answer-random-encounter"],
-    acknowledgedOverlap: [
-      {
-        with: "answer-encounter-frequency-travel",
-        reason:
-          "The travel framework concerns how to structure an engaging journey with routes, roles, and costs; the encounter frequency answer concerns the narrower pacing decision of how often encounters should occur and how much table time each should receive.",
-      },
-    ],
   },
 
   seo: {

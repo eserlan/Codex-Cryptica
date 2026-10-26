@@ -1,6 +1,6 @@
 <script lang="ts">
   import { computeDepartures } from "biome-engine";
-  import type { BiomeExplorerStore } from "#lib/stores/biome-explorer.svelte.js";
+  import type { BiomeExplorerStore } from "$lib/stores/biome-explorer.svelte";
   import BiomeAlterationList from "./BiomeAlterationList.svelte";
   import BiomeAttachments from "./BiomeAttachments.svelte";
   import BiomeClimateFields from "./BiomeClimateFields.svelte";

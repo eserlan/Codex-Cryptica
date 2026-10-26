@@ -11,7 +11,7 @@ import {
   systemClock,
   type IdGenerator,
   systemIdGenerator,
-} from "#lib/utils/runtime-deps.js";
+} from "$lib/utils/runtime-deps";
 
 export class OracleChatManager {
   isChatHistoryReady = $state(false);

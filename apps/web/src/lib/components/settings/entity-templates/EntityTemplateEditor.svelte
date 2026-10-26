@@ -5,8 +5,8 @@
     type DraftTemplate,
     type ValidationIssue,
   } from "entity-template-engine";
-  import { categories } from "#lib/stores/categories.svelte.js";
-  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
+  import { categories } from "$lib/stores/categories.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
   let {
     initial,

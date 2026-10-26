@@ -1,5 +1,5 @@
 import { parseTemplate, resolveFieldByKeyOrId } from "@codex/stat-sheet-engine";
-import { systemIdGenerator } from "#lib/utils/runtime-deps.js";
+import { systemIdGenerator } from "$lib/utils/runtime-deps";
 import { PRESENTATION_TEMPLATE_FORMAT_VERSION } from "schema";
 import type { StatSheetField } from "schema";
 

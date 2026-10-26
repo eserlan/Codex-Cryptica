@@ -55,7 +55,7 @@ const mockVault = vi.hoisted(() => {
   };
 });
 
-vi.mock("#lib/stores/vault.svelte.js", () => ({
+vi.mock("$lib/stores/vault.svelte", () => ({
   vault: mockVault,
 }));
 

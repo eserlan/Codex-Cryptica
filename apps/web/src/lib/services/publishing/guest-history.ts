@@ -3,7 +3,7 @@ import {
   systemClock,
   browserStorage,
   type StorageLike,
-} from "#lib/utils/runtime-deps.js";
+} from "$lib/utils/runtime-deps";
 
 const STORAGE_KEY = "guest_history";
 

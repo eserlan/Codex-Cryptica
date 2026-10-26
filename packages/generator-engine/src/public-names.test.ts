@@ -4,7 +4,6 @@ import {
   generateNamesLocal,
   nameGeneratorConfig,
   parseNamesResponse,
-  rollNames,
 } from "./public-names";
 import { NAME_BAN_PROMPT } from "./public-npc";
 
@@ -139,111 +138,5 @@ describe("parseNamesResponse", () => {
       parseNamesResponse('{"content":"x","lore":"y"}', resolved).labels,
     ).toContain("name-generator");
     expect(() => parseNamesResponse("nope", resolved)).toThrow();
-  });
-});
-
-describe("rollNames", () => {
-  it("rolls a distinct, capitalised batch of the requested size", () => {
-    const names = rollNames({ culture: "High Elf", count: "10" }, seededRng(3));
-
-    expect(names).toHaveLength(10);
-    expect(new Set(names).size).toBe(10);
-    for (const name of names) expect(name).toMatch(/^[A-Z]/);
-  });
-
-  it("matches the names in the local write-up for the same seed", () => {
-    const names = rollNames({ count: "4" }, seededRng(21));
-    const output = generateNamesLocal({ count: "4" }, seededRng(21));
-
-    for (const name of names) expect(output.content).toContain(`**${name}**`);
-  });
-
-  it("still fills the batch when the tables cannot supply enough unique names", () => {
-    const constant = () => 0;
-
-    expect(rollNames({ count: "3" }, constant)).toHaveLength(3);
-  });
-
-  it("falls back to the generic tables for an unknown culture", () => {
-    const custom = rollNames({ culture: "Made-up", count: "5" }, seededRng(8));
-    const generic = rollNames(
-      { culture: "Generic Fantasy", count: "5" },
-      seededRng(8),
-    );
-
-    expect(custom).toEqual(generic);
-  });
-});
-
-describe("rollNames follows the name type for fantasy cultures", () => {
-  const roll = (options: Record<string, string>, seed = 11) =>
-    rollNames({ count: "10", ...options }, seededRng(seed));
-
-  it("gives people a first name and a surname", () => {
-    for (const name of roll({ culture: "Dwarven", nameType: "Person" }))
-      expect(name).toMatch(/^\S+ \S+$/);
-  });
-
-  it("drops the surname when only first names are asked for", () => {
-    for (const name of roll({
-      culture: "Dwarven",
-      nameType: "Person",
-      parts: "first",
-    }))
-      expect(name).not.toContain(" ");
-  });
-
-  it("uses the gender for Norse patronymics", () => {
-    const feminine = roll({
-      culture: "Norse / Viking",
-      nameType: "Person",
-      gender: "Feminine",
-    });
-    const masculine = roll({
-      culture: "Norse / Viking",
-      nameType: "Person",
-      gender: "Masculine",
-    });
-
-    for (const name of feminine) expect(name).toMatch(/dottir$/);
-    for (const name of masculine) expect(name).toMatch(/son$/);
-  });
-
-  it("builds places from a place word, not a person's name", () => {
-    for (const name of roll({ culture: "High Elf", nameType: "Place" }))
-      expect(name).toMatch(
-        /(mere|hold|ford|wick|reach|vale|haven|fell|march|crest|moor|barrow)( \w+)?$/,
-      );
-  });
-
-  it("names factions as groups and items as objects", () => {
-    for (const name of roll({ nameType: "Faction" }))
-      expect(name).toMatch(/^The \w+ \S+$|^\S+ of the \w+ \w+$/);
-    for (const name of roll({ nameType: "Item" }))
-      expect(name).toMatch(/^The \w+ \w+$|^\w+'s \w+$/);
-  });
-
-  it("gives a typed-in culture the generic patterns", () => {
-    for (const name of roll({ culture: "Assyrian", nameType: "Person" }))
-      expect(name).toContain(" ");
-  });
-
-  it("keeps other genres' presets as single generated names", () => {
-    for (const name of roll({
-      culture: "Sailor's Nickname",
-      nameType: "Person",
-    }))
-      expect(name).not.toContain(" ");
-  });
-
-  it("uses no first-name ending more than twice in a batch", () => {
-    const names = roll({ nameType: "Person", parts: "first" }, 2);
-    const endings = names.map((name) =>
-      nameGeneratorConfig.cultureSuffixes["Generic Fantasy"].find((suffix) =>
-        name.endsWith(suffix),
-      ),
-    );
-    for (const ending of new Set(endings))
-      expect(endings.filter((e) => e === ending).length).toBeLessThanOrEqual(2);
   });
 });

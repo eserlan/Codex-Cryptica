@@ -1,4 +1,4 @@
-import { summarizeEncounterSession } from "#lib/services/vtt-session.js";
+import { summarizeEncounterSession } from "$lib/services/vtt-session";
 import type { RollResult } from "dice-engine";
 import type { Point } from "schema";
 import type { HexLabelConfig } from "map-engine";

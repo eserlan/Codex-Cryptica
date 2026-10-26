@@ -7,8 +7,6 @@ vi.stubGlobal("$state", (v: any) => v);
 
 vi.mock("$app/paths", () => ({
   base: "",
-  asset: (p: string) => p,
-  resolve: (p: string) => p,
 }));
 
 vi.mock("../../stores/ui/notification.svelte", () => {

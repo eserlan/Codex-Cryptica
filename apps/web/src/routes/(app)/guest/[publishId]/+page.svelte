@@ -1,26 +1,26 @@
 <script lang="ts">
   import { onMount, untrack } from "svelte";
   import { page } from "$app/state";
-  import { goto } from "$app/navigation";
-  import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
-  import { guestVault } from "#lib/stores/guest-vault.svelte.js";
-  import { entityTemplateStore } from "#lib/stores/entity-templates/entity-template-store.svelte.js";
-  import { themeStore } from "#lib/stores/theme.svelte.js";
-  import { vault } from "#lib/stores/vault.svelte.js";
-  import { onboardingStore } from "#lib/stores/ui/onboarding.svelte.js";
-  import { layoutUIStore } from "#lib/stores/ui/layout-ui.svelte.js";
-  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+  import { replaceState } from "$app/navigation";
+  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { guestVault } from "$lib/stores/guest-vault.svelte";
+  import { entityTemplateStore } from "$lib/stores/entity-templates/entity-template-store.svelte";
+  import { themeStore } from "$lib/stores/theme.svelte";
+  import { vault } from "$lib/stores/vault.svelte";
+  import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
+  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import {
     addGuestHistory,
     removeGuestHistory,
-  } from "#lib/services/publishing/guest-history.js";
-  import { resolve } from "$app/paths";
-  import GraphView from "#lib/components/GraphView.svelte";
-  import EntityDetailPanel from "#lib/components/EntityDetailPanel.svelte";
-  import EmbeddedEntityView from "#lib/components/entity/EmbeddedEntityView.svelte";
-  import FrontPage from "#lib/components/world/FrontPage.svelte";
-  import FanContentDisclaimer from "#lib/components/publishing/FanContentDisclaimer.svelte";
-  import CopyrightReportModal from "#lib/components/publishing/CopyrightReportModal.svelte";
+  } from "$lib/services/publishing/guest-history";
+  import { base } from "$app/paths";
+  import GraphView from "$lib/components/GraphView.svelte";
+  import EntityDetailPanel from "$lib/components/EntityDetailPanel.svelte";
+  import EmbeddedEntityView from "$lib/components/entity/EmbeddedEntityView.svelte";
+  import FrontPage from "$lib/components/world/FrontPage.svelte";
+  import FanContentDisclaimer from "$lib/components/publishing/FanContentDisclaimer.svelte";
+  import CopyrightReportModal from "$lib/components/publishing/CopyrightReportModal.svelte";
 
   let { data } = $props();
 
@@ -41,12 +41,11 @@
   $effect(() => {
     if (loading) return;
     const id = selectedEntity?.id ?? null;
-    const url = new URL(untrack(() => page.url.href));
+    const url = new URL(untrack(() => page.url));
     if ((url.searchParams.get("entity") ?? null) === id) return;
     if (id) url.searchParams.set("entity", id);
     else url.searchParams.delete("entity");
-
-    goto(url, { shallow: true, replace: true });
+    replaceState(url, {});
   });
 
   // Inverse direction: back/forward restores ?entity= — apply it to the
@@ -172,7 +171,7 @@
 
         <div class="flex flex-col w-full gap-2">
           <a
-            href="{resolve('')}/guest"
+            href="{base}/guest"
             class="flex items-center justify-center px-4 py-2.5 rounded-lg font-medium text-sm transition-all border border-theme-border bg-theme-surface hover:bg-theme-bg text-theme-primary"
           >
             <span
@@ -182,7 +181,7 @@
             Back to Shared Worlds
           </a>
           <a
-            href="{resolve('')}/worlds"
+            href="{base}/worlds"
             class="flex items-center justify-center px-4 py-2.5 rounded-lg font-medium text-sm transition-all text-theme-muted hover:text-theme-primary"
           >
             <span aria-hidden="true" class="icon-[lucide--compass] mr-2 h-4 w-4"

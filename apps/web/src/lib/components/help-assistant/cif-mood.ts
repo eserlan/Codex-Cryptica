@@ -1,4 +1,4 @@
-import type { HelpStatus } from "#lib/stores/help-assistant/help-assistant.svelte.js";
+import type { HelpStatus } from "$lib/stores/help-assistant/help-assistant.svelte";
 
 export type CifMood =
   | "idle"

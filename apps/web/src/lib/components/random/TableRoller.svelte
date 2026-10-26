@@ -1,23 +1,20 @@
 <script lang="ts">
   import type { RandomSource, RollOutcome } from "random-source-engine";
-  import {
-    recordTableRoll,
-    tableDie,
-  } from "#lib/services/record-table-roll.js";
-  import { randomSources } from "#lib/features/random/index.js";
-  import type { RandomSourceStore } from "#lib/stores/random-source-store.svelte.js";
+  import { recordTableRoll, tableDie } from "$lib/services/record-table-roll";
+  import { randomSources } from "$lib/features/random";
+  import type { RandomSourceStore } from "$lib/stores/random-source-store.svelte";
   import {
     diceHistory,
     type DiceHistoryStore,
-  } from "#lib/stores/dice-history.svelte.js";
-  import { addToOracleChatInput } from "#lib/components/oracle/oracle-chat-input.js";
-  import { mapSession } from "#lib/stores/map-session.svelte.js";
-  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
-  import { copyTextToClipboard } from "#lib/utils/share-link.js";
-  import { systemClock, type Clock } from "#lib/utils/runtime-deps.js";
+  } from "$lib/stores/dice-history.svelte";
+  import { addToOracleChatInput } from "$lib/components/oracle/oracle-chat-input";
+  import { mapSession } from "$lib/stores/map-session.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { copyTextToClipboard } from "$lib/utils/share-link";
+  import { systemClock, type Clock } from "$lib/utils/runtime-deps";
   import { fade } from "svelte/transition";
   import ResolutionChain from "./ResolutionChain.svelte";
-  import DiceBreakdownDisclosure from "#lib/components/dice/DiceBreakdownDisclosure.svelte";
+  import DiceBreakdownDisclosure from "$lib/components/dice/DiceBreakdownDisclosure.svelte";
 
   /**
    * Rolls one table and shows the result, the die value behind it, and a way to

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { SettingsTab } from "#lib/stores/ui/modal-ui.svelte.js";
+  import type { SettingsTab } from "$lib/stores/ui/modal-ui.svelte";
   import { fly, fade } from "svelte/transition";
   import AISettings from "./AISettings.svelte";
   import EraEditor from "../timeline/EraEditor.svelte";
@@ -10,16 +10,16 @@
   import HelpTab from "../help/HelpTab.svelte";
   import VaultSettings from "./VaultSettings.svelte";
   import PublishingSettings from "./PublishingSettings.svelte";
-  import { vault } from "#lib/stores/vault.svelte.js";
-  import { resolve } from "$app/paths";
-  import { VERSION, CODENAME } from "#lib/config/index.js";
-  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
-  import { focusTrap } from "#lib/actions/focusTrap.js";
-  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
-  import { connectionModeStore } from "#lib/stores/ui/connection-mode.svelte.js";
-  import { discoveryPolicyStore } from "#lib/stores/ui/discovery-policy.svelte.js";
-  import { onboardingStore } from "#lib/stores/ui/onboarding.svelte.js";
-  import { openImportWindow } from "#lib/stores/ui/navigation.js";
+  import { vault } from "$lib/stores/vault.svelte";
+  import { base } from "$app/paths";
+  import { VERSION, CODENAME } from "$lib/config";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { focusTrap } from "$lib/actions/focusTrap";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
+  import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
+  import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
+  import { openImportWindow } from "$lib/stores/ui/navigation";
 
   const tabs: { id: SettingsTab; label: string; icon: string }[] = [
     { id: "vault", label: "Vault", icon: "icon-[lucide--database]" },
@@ -34,7 +34,11 @@
       label: "Templates",
       icon: "icon-[lucide--layout-template]",
     },
-    { id: "theme", label: "Theme", icon: "icon-[lucide--palette]" },
+    {
+      id: "theme",
+      label: "Theme",
+      icon: "icon-[lucide--palette]",
+    },
     {
       id: "publishing",
       label: "Publishing",
@@ -231,7 +235,6 @@
               >
                 Archive Importer
               </h3>
-
               <p class="text-sm text-chrome-text/70 leading-relaxed mb-6">
                 Import existing documents, lore bibles, or JSON data via the
                 dedicated importer. This allows for continuous imports without
@@ -302,7 +305,6 @@
               >
                 World Eras
               </h3>
-
               <p class="text-sm text-chrome-text/70 leading-relaxed mb-4">
                 Define chronological boundaries for your world's history. These
                 will be visualized on the timeline graph.
@@ -333,7 +335,6 @@
             >
               Campaign Labels
             </h3>
-
             <p class="text-sm text-chrome-text/70 mb-4 leading-relaxed">
               Manage the custom labels used across your entities. Renaming a
               label here will update all labeled files project-wide.
@@ -487,7 +488,7 @@
                 </button>
 
                 <a
-                  href="{resolve('')}/changelog"
+                  href="{base}/changelog"
                   target="_blank"
                   rel="noopener noreferrer"
                   class="mt-3 flex items-center justify-between p-4 bg-chrome-surface border border-chrome-border hover:border-chrome-accent transition-all rounded group"
@@ -518,7 +519,7 @@
               </h3>
               <div class="flex flex-col gap-3">
                 <a
-                  href="{resolve('')}/privacy"
+                  href="{base}/privacy"
                   target="_blank"
                   rel="noopener noreferrer"
                   class="flex items-center justify-between p-3 bg-chrome-surface border border-chrome-border hover:border-chrome-accent transition-all rounded group"
@@ -533,7 +534,7 @@
                   ></span>
                 </a>
                 <a
-                  href="{resolve('')}/terms"
+                  href="{base}/terms"
                   target="_blank"
                   rel="noopener noreferrer"
                   class="flex items-center justify-between p-3 bg-chrome-surface border border-chrome-border hover:border-chrome-accent transition-all rounded group"

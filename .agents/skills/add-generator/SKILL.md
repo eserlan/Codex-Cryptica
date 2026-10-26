@@ -44,7 +44,7 @@ Complete both Part A and Part B for every new generator. An explicit user reques
    - Build the prompt with the shared helpers `contextChain(request)`, `OUTPUT_SCHEMA`, `exemplarBlock(request, id)`, `groundingNote(request)`, `loreGuidance(request, checklist)`. Don't hand-roll context assembly.
    - Write the local fallback (simple tier: inline with `pick()`/`optionString()`/`generateName()`; rich tier: wrap the imported `generateXLocal`).
    - Add the `REGISTRY` block: `id`, `label`, `description`, `entityType`, `defaultInstruction`, `icon` (a plain `lucide:name` string with no build-time check, so confirm it exists in `@iconify-json/lucide`'s icons.json), `options`, `defaults`, `generate`, `mapOutputToDraft: mapOutputToDraft(id)`, `buildPrompt`.
-   - No UI wiring: `CampaignGeneratorModal`/`GeneratorConfigForm` drive off `listGenerators()`/`isSupportedGenerator()`. The picker's category comes from the generator catalogue (Part B step 12): set `generatorId` on the public catalogue entry. Only when the generator has **no** public page (an explicitly scoped-out Part B), file it in `IN_APP_ONLY_SECTIONS` in `apps/web/src/lib/components/generators/generator-categories.ts`; `generator-categories.test.ts` fails if a registered generator has no explicit category.
+   - No UI wiring: `CampaignGeneratorModal`/`GeneratorConfigForm` drive off `listGenerators()`/`isSupportedGenerator()`.
 
 4. **Update the two hard-coded exact-match tests in `campaign-generator-registry.test.ts`**. They do not iterate `SUPPORTED_GENERATOR_IDS`, so they WILL fail:
    - `"lists all generators in order"`: the full `listGenerators().map(g => g.id)` array.
@@ -95,35 +95,25 @@ Implement alongside Part A unless the user explicitly excludes the no-login tool
 
 11. **`routes/(marketing)/generators/[theme=theme_hub]/[slug=generator_slug]/+page.ts`**: the same `validSlugs` addition for the theme+slug route. Easy to miss: it's a sibling directory, not the same file as step 10.
 
-12. **Generator catalogue: categorise the generator.** Add one entry to `GENERATOR_CATALOGUE` in `apps/web/src/lib/content/generator-catalogue.ts`: `slug`, `label`, `summary`, `icon` (Iconify class), `category`, and `generatorId` (the Part A id, when the page fronts an in-app generator). This single entry places the generator everywhere it is grouped, so do **not** hand-edit these, which all derive from it:
-    - the `/generators` index cards, category sections and jump links, plus its `ItemList` JSON-LD;
-    - the `GeneratorSwitcherMenu` groups on every generator page;
-    - the same-category related links appended to every generator page (keep `relatedLinks` in `slugMeta` for hand-picked links only, such as cross-category or `/answers` pages);
-    - the in-app picker groups in `GeneratorConfigForm`, through `generatorId`.
-
-    **Choosing the category.** Categories are defined, with a one-line description each, in `GENERATOR_CATEGORIES` in the same file. Read them before choosing.
-    - File by **what the GM walks away with**, never by genre or theme. Theme hubs cover genre, so a cyberpunk faction goes under factions and a sci-fi planet under realms.
-    - When it could fit two, pick the one a GM would scan first when looking for it, and the one its in-app counterpart and closest sibling already use. A villain is a character (`bbeg-generator`); a villain's _plan_ is a complication (`villain-scheme-generator`).
-    - Do not add a category for one generator. `generator-catalogue.test.ts` requires every category to hold 2–10 entries. If a category would pass 10, or nothing fits, stop and propose a regrouping to the user rather than overloading a category or adding a new one. Any new category is a public `/generators` structure change.
-    - Place the entry next to its closest siblings within the category's block: the catalogue order is the display order.
-
-    Tests that fail when this step is missed or wrong: `generator-catalogue.test.ts` (every self-canonical served slug catalogued exactly once; category sizes) and `generator-categories.test.ts` (in-app generator lands in the same category as its public page). An alias slug whose `canonicalPath` points at another generator stays out of the catalogue.
+12. **`routes/(marketing)/generators/+page.svelte`**: add `{href, label, summary, icon}` to the right group in `generators`.
 
 13. **`routes/(marketing)/generators/[theme=theme_hub]/+page.svelte`**: add a card to `sharedCards()`. It propagates to every theme hub.
 
-14. **`services/seo/random-idea.ts`**: if it suits "Surprise Me", add its `key` to `RandomIdeaCategory["key"]` and an entry to `randomIdeaCategories`. Update `random-idea.test.ts`'s exact-match sorted array and the `dispatches each category` mock engine, which calls **every** category's `generate()`.
+14. **`GeneratorSwitcherMenu.svelte`**: add `{label, path}` to the matching `GENERATOR_GROUPS` entry.
 
-15. **`routes/(marketing)/tools/+page.svelte`**: add a listing entry pointing at `/generators/<slug>`. A dedicated `/tools/<slug>-generator` page needs an explicit user request.
+15. **`services/seo/random-idea.ts`**: if it suits "Surprise Me", add its `key` to `RandomIdeaCategory["key"]` and an entry to `randomIdeaCategories`. Update `random-idea.test.ts`'s exact-match sorted array and the `dispatches each category` mock engine, which calls **every** category's `generate()`.
 
-16. **`routes/(marketing)/generators/[slug=generator_slug]/generators.test.ts`**: add the slug to its hard-coded `entries()` array.
+16. **`routes/(marketing)/tools/+page.svelte`**: add a listing entry pointing at `/generators/<slug>`. A dedicated `/tools/<slug>-generator` page needs an explicit user request.
+
+17. **`routes/(marketing)/generators/[slug=generator_slug]/generators.test.ts`**: add the slug to its hard-coded `entries()` array.
 
 ### Discovery and machine-readable listings
 
-17. **Discovery registry (Constitution XIII).** A generator page is a public discovery page. Before building it, check whether the intent already has an owner (`findIntentOwner`); if it does, extend that page or add an alias instead. Otherwise add an entry to `apps/web/src/lib/content/discovery/entries/generators.ts`: `id: "generator-<slug>"`, `pageKind: "generator"`, `canonicalPath`, `primaryIntent`, `intentAliases`, `userJob`, `uniqueValue`, `parentCluster`, `relatedIntents`, and an `acknowledgedOverlap` with a reason for each intentional overlap. `generator-point-crawl` is a good model. Run `bun scripts/discovery-audit.mjs`; it also runs in `prebuild`, so an error fails CI. See [docs/discovery-intent-registry.md](../../../docs/discovery-intent-registry.md).
+18. **Discovery registry (Constitution XIII).** A generator page is a public discovery page. Before building it, check whether the intent already has an owner (`findIntentOwner`); if it does, extend that page or add an alias instead. Otherwise add an entry to `apps/web/src/lib/content/discovery/entries/generators.ts`: `id: "generator-<slug>"`, `pageKind: "generator"`, `canonicalPath`, `primaryIntent`, `intentAliases`, `userJob`, `uniqueValue`, `parentCluster`, `relatedIntents`, and an `acknowledgedOverlap` with a reason for each intentional overlap. `generator-point-crawl` is a good model. Run `bun scripts/discovery-audit.mjs`; it also runs in `prebuild`, so an error fails CI. See [docs/discovery-intent-registry.md](../../../docs/discovery-intent-registry.md).
 
-18. **`llms.txt`**: run `bun run sync:llms-generators`. It rebuilds the generator section from `slugMeta` and the discovery entries; its `--check` mode fails when the file is stale.
+19. **`llms.txt`**: run `bun run sync:llms-generators`. It rebuilds the generator section from `slugMeta` and the discovery entries; its `--check` mode fails when the file is stale.
 
-19. **Social image (required).** Capture the rendered `/generators/<slug>` page in a real browser at a social-card viewport: an actual screenshot, not generated art, a mockup or another generator's image. Upload it with Wrangler to `codex-cryptica-statics/screenshots/generator-<slug>.png` using `--content-type image/png --remote`, check that `https://assets.codexcryptica.com/screenshots/generator-<slug>.png` returns the image, and use that URL with accurate alt text for `ogImage` in `generator-page-meta.ts`. Delete the local file afterwards; images never go in git. If authenticated R2 upload is unavailable, stop and report it rather than reusing another image.
+20. **Social image (required).** Capture the rendered `/generators/<slug>` page in a real browser at a social-card viewport: an actual screenshot, not generated art, a mockup or another generator's image. Upload it with Wrangler to `codex-cryptica-statics/screenshots/generator-<slug>.png` using `--content-type image/png --remote`, check that `https://assets.codexcryptica.com/screenshots/generator-<slug>.png` returns the image, and use that URL with accurate alt text for `ogImage` in `generator-page-meta.ts`. Delete the local file afterwards; images never go in git. If authenticated R2 upload is unavailable, stop and report it rather than reusing another image.
 
 ---
 
@@ -163,7 +153,7 @@ Validate only what changed (AGENTS.md); never run the repository-wide suites:
 bun run test:changed     # impacted tests (generator-engine runs on bun test, apps/web on vitest)
 bun run lint:changed     # changed-file lint and formatting
 cd apps/web && bunx svelte-check --tsconfig ./tsconfig.json --threshold error   # expect 0 errors
-bun scripts/discovery-audit.mjs   # Part B step 17
+bun scripts/discovery-audit.mjs   # Part B step 18
 bunx fallow audit --format json --quiet --explain --gate-marker agent   # before committing
 ```
 

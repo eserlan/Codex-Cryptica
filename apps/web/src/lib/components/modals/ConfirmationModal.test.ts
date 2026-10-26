@@ -3,9 +3,9 @@
 import { render, screen } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import ConfirmationModal from "./ConfirmationModal.svelte";
-import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
+import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
-vi.mock("#lib/actions/focusTrap.js", () => ({
+vi.mock("$lib/actions/focusTrap", () => ({
   focusTrap: () => ({ destroy() {} }),
 }));
 

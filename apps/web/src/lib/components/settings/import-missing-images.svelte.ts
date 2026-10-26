@@ -1,7 +1,7 @@
 import type { MissingImageReference, CCImportPackage } from "@codex/importer";
 import { resolveMissingImage } from "@codex/importer";
-import { pickDirectory, isFileSystemAccessSupported } from "#lib/utils/fs.js";
-import type { notificationStore as defaultNotificationStore } from "#lib/stores/ui/notification.svelte.js";
+import { pickDirectory, isFileSystemAccessSupported } from "$lib/utils/fs";
+import type { notificationStore as defaultNotificationStore } from "$lib/stores/ui/notification.svelte";
 
 export interface MissingImagesHandlerDeps {
   notificationStore: typeof defaultNotificationStore;

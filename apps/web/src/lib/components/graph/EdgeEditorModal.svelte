@@ -1,17 +1,15 @@
 <script lang="ts">
   import { fade, fly } from "svelte/transition";
-  import { vault } from "#lib/stores/vault.svelte.js";
+  import { vault } from "$lib/stores/vault.svelte";
 
-  let {
-    editingEdge = $bindable(),
-  }: {
+  let { editingEdge = $bindable() } = $props<{
     editingEdge: {
       source: string;
       target: string;
       label: string;
       type: string;
     } | null;
-  } = $props();
+  }>();
 
   let edgeEditInput = $state("");
   let edgeEditType = $state("neutral");

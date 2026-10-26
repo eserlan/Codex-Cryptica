@@ -1,13 +1,13 @@
 <script lang="ts">
-  import { categories } from "#lib/stores/categories.svelte.js";
-  import { getIconClass } from "#lib/utils/icon.js";
+  import { categories } from "$lib/stores/categories.svelte";
+  import { getIconClass } from "$lib/utils/icon";
   import type { Entity } from "schema";
-  import { explorerUIStore } from "#lib/stores/ui/explorer-ui.svelte.js";
-  import { layoutUIStore } from "#lib/stores/ui/layout-ui.svelte.js";
-  import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
-  import { detectCycle } from "#lib/stores/vault/entities.js";
-  import { vault } from "#lib/stores/vault.svelte.js";
-  import type { LocalEntity } from "#lib/stores/vault/types.js";
+  import { explorerUIStore } from "$lib/stores/ui/explorer-ui.svelte";
+  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
+  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { detectCycle } from "$lib/stores/vault/entities";
+  import { vault } from "$lib/stores/vault.svelte";
+  import type { LocalEntity } from "$lib/stores/vault/types";
 
   let {
     entity,

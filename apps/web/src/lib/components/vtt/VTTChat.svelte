@@ -1,10 +1,10 @@
 <script lang="ts">
-  import type { ChatCommand } from "#lib/config/chat-commands.js";
-  import CommandMenu from "#lib/components/oracle/CommandMenu.svelte";
-  import { mapSession } from "#lib/stores/map-session.svelte.js";
+  import type { ChatCommand } from "$lib/config/chat-commands";
+  import CommandMenu from "$lib/components/oracle/CommandMenu.svelte";
+  import { mapSession } from "$lib/stores/map-session.svelte";
   import { tick } from "svelte";
   import VTTChatMessage from "./VTTChatMessage.svelte";
-  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
   let input = $state("");
   let scrollContainer = $state<HTMLDivElement>();

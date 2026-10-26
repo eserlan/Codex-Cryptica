@@ -7,7 +7,7 @@ import {
   vi,
   type Mock,
 } from "vitest";
-import type { StorageLike } from "#lib/utils/runtime-deps.js";
+import type { StorageLike } from "$lib/utils/runtime-deps";
 
 interface MockStorage extends StorageLike {
   getItem: Mock<(key: string) => string | null>;
@@ -87,7 +87,7 @@ vi.mock("./quicknote.svelte", () => ({
 }));
 
 import { SearchStore } from "./search.svelte";
-import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { guestVault } from "./guest-vault.svelte";
 
 describe("SearchStore", () => {

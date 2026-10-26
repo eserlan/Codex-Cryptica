@@ -2,14 +2,14 @@
   import type { RandomSource } from "random-source-engine";
   import SourceHeading from "./SourceHeading.svelte";
   import TableRoller from "./TableRoller.svelte";
-  import { randomSources } from "#lib/features/random/index.js";
-  import type { RandomSourceStore } from "#lib/stores/random-source-store.svelte.js";
+  import { randomSources } from "$lib/features/random";
+  import type { RandomSourceStore } from "$lib/stores/random-source-store.svelte";
   import {
     diceHistory,
     type DiceHistoryStore,
-  } from "#lib/stores/dice-history.svelte.js";
-  import { mapSession } from "#lib/stores/map-session.svelte.js";
-  import { systemClock, type Clock } from "#lib/utils/runtime-deps.js";
+  } from "$lib/stores/dice-history.svelte";
+  import { mapSession } from "$lib/stores/map-session.svelte";
+  import { systemClock, type Clock } from "$lib/utils/runtime-deps";
 
   /**
    * A table as it is used at the table, rather than as it is written

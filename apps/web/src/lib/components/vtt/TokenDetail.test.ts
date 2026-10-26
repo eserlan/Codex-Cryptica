@@ -3,10 +3,10 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import TokenDetail from "./TokenDetail.svelte";
-import { mapSession } from "#lib/stores/map-session.svelte.js";
-import { mapStore } from "#lib/stores/map.svelte.js";
-import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
-import { vault } from "#lib/stores/vault.svelte.js";
+import { mapSession } from "$lib/stores/map-session.svelte";
+import { mapStore } from "$lib/stores/map.svelte";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { vault } from "$lib/stores/vault.svelte";
 import { pointToHex } from "map-engine";
 
 const hexStoreMock = vi.hoisted(() => ({
@@ -15,11 +15,11 @@ const hexStoreMock = vi.hoisted(() => ({
     openHex: (mapId: string, hex: unknown, opener?: HTMLElement) => void;
   },
 }));
-vi.mock("#lib/components/map/hex-crawl/hex-crawl-context.js", () => ({
+vi.mock("$lib/components/map/hex-crawl/hex-crawl-context", () => ({
   useHexCrawlStore: () => hexStoreMock.current,
 }));
 
-vi.mock("#lib/stores/vault.svelte.js", () => ({
+vi.mock("$lib/stores/vault.svelte", () => ({
   vault: {
     entities: {} as Record<string, any>,
     isGuest: false,
@@ -28,7 +28,7 @@ vi.mock("#lib/stores/vault.svelte.js", () => ({
   },
 }));
 
-vi.mock("#lib/stores/map.svelte.js", () => ({
+vi.mock("$lib/stores/map.svelte", () => ({
   mapStore: {
     isGMMode: false,
     activeMapId: "map-1",
@@ -42,20 +42,20 @@ vi.mock("#lib/stores/map.svelte.js", () => ({
 }));
 
 const oracleMock = vi.hoisted(() => ({ isEnabled: true }));
-vi.mock("#lib/stores/oracle.svelte.js", () => ({ oracle: oracleMock }));
-vi.mock("#lib/stores/theme.svelte.js", () => ({
+vi.mock("$lib/stores/oracle.svelte", () => ({ oracle: oracleMock }));
+vi.mock("$lib/stores/theme.svelte", () => ({
   themeStore: { worldThemeId: "fantasy" },
 }));
 
 const notifyMock = vi.hoisted(() => vi.fn());
-vi.mock("#lib/stores/ui/notification.svelte.js", () => ({
+vi.mock("$lib/stores/ui/notification.svelte", () => ({
   notificationStore: { notify: notifyMock, confirm: vi.fn() },
 }));
 
 const generateNoteEncounterMock = vi.hoisted(() =>
   vi.fn(async () => ({ body: "Three cultists mid-ritual", aiFallback: false })),
 );
-vi.mock("#lib/services/vtt/note-encounter.js", () => ({
+vi.mock("$lib/services/vtt/note-encounter", () => ({
   generateNoteEncounter: generateNoteEncounterMock,
 }));
 

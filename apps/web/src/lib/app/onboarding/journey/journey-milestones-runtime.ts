@@ -1,7 +1,7 @@
 import { appEventBus } from "@codex/events";
-import { vaultEventBus } from "#lib/stores/vault/events.svelte.js";
-import { systemClock } from "#lib/utils/runtime-deps.js";
-import { vault } from "#lib/stores/vault.svelte.js";
+import { vaultEventBus } from "$lib/stores/vault/events.svelte";
+import { systemClock } from "$lib/utils/runtime-deps";
+import { vault } from "$lib/stores/vault.svelte";
 import { JourneyMilestones } from "./journey-milestones";
 
 /** Production milestone sources. Kept apart from the store so the Explorer can report without loading Cif. */

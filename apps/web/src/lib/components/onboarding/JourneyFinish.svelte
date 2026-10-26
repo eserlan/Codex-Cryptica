@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { JourneyStore } from "#lib/app/onboarding/journey/journey-store.svelte.js";
+  import type { JourneyStore } from "$lib/app/onboarding/journey/journey-store.svelte";
 
   /** The finish state of the journey card: what was done, one suggestion, Done. */
   let { store }: { store: JourneyStore } = $props();

@@ -1,9 +1,6 @@
 <script lang="ts">
-  import {
-    nationConfig,
-    pickFrom,
-  } from "#lib/services/seo/generator-config.js";
-  import SelectWithCustomOption from "#lib/components/forms/SelectWithCustomOption.svelte";
+  import { nationConfig, pickFrom } from "$lib/services/seo/generator-config";
+  import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
 
   let {
     genre = $bindable(nationConfig.genres[0]),

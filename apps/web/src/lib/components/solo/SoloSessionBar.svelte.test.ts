@@ -4,26 +4,26 @@ import { render, fireEvent, screen } from "@testing-library/svelte";
 import SoloSessionBar from "./SoloSessionBar.svelte";
 
 // Mock the stores
-vi.mock("#lib/stores/solo-session-instance.js", () => ({
+vi.mock("$lib/stores/solo-session-instance", () => ({
   soloSessionStore: {
     isActive: true,
     session: { mapId: "map1" },
   },
 }));
 
-vi.mock("#lib/stores/ui/session-mode.svelte.js", () => ({
+vi.mock("$lib/stores/ui/session-mode.svelte", () => ({
   sessionModeStore: {
     isGuestMode: false,
   },
 }));
 
-vi.mock("#lib/stores/ui/layout-ui.svelte.js", () => ({
+vi.mock("$lib/stores/ui/layout-ui.svelte", () => ({
   layoutUIStore: {
     isMobile: false,
   },
 }));
 
-vi.mock("#lib/stores/vault.svelte.js", () => ({
+vi.mock("$lib/stores/vault.svelte", () => ({
   vault: {
     maps: {
       map1: { name: "Test Map" },

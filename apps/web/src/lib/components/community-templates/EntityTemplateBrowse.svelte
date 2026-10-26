@@ -4,7 +4,7 @@
   import { resolve } from "$app/paths";
   import { GENERIC_TEMPLATES } from "schema";
   import type { EntityTemplateListing } from "schema";
-  import { publicEntityTemplateDirectoryService } from "#lib/services/publishing/PublicEntityTemplateDirectoryService.js";
+  import { publicEntityTemplateDirectoryService } from "$lib/services/publishing/PublicEntityTemplateDirectoryService";
   import DirectoryFeedback from "./DirectoryFeedback.svelte";
   import DirectorySearchForm from "./DirectorySearchForm.svelte";
   import EntityTemplateCard from "./EntityTemplateCard.svelte";

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { StorageLike } from "#lib/utils/runtime-deps.js";
+import type { StorageLike } from "$lib/utils/runtime-deps";
 import { cloudBackupBrowserStorage } from "./cloud-backup-browser-storage";
 
 describe("cloudBackupBrowserStorage", () => {

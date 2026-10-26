@@ -15,7 +15,7 @@ const mocks = vi.hoisted(() => ({
   pendingDraft: { chronicle: "Draft", deleteOnDiscard: false },
 }));
 
-vi.mock("#lib/stores/vault.svelte.js", () => ({
+vi.mock("$lib/stores/vault.svelte", () => ({
   vault: {
     activeVaultId: "v1",
     selectedEntityId: null,
@@ -26,7 +26,7 @@ vi.mock("#lib/stores/vault.svelte.js", () => ({
     addConnection: mocks.addConnection,
   },
 }));
-vi.mock("#lib/stores/proposer.svelte.js", () => ({
+vi.mock("$lib/stores/proposer.svelte", () => ({
   proposerStore: {
     get draftEntity() {
       return mocks.draftEntity.value;
@@ -36,16 +36,14 @@ vi.mock("#lib/stores/proposer.svelte.js", () => ({
     },
   },
 }));
-vi.mock("#lib/stores/ui/modal-ui.svelte.js", () => ({
+vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
   modalUIStore: { requestCreateEntity: mocks.requestCreateEntity },
 }));
 vi.mock("@codex/search-orchestrator", () => ({
   searchService: { search: mocks.search },
 }));
-vi.mock("#lib/stores/oracle.svelte.js", () => ({
-  oracle: { apiKey: undefined },
-}));
-vi.mock("#lib/services/RevisionService.svelte.js", () => ({
+vi.mock("$lib/stores/oracle.svelte", () => ({ oracle: { apiKey: undefined } }));
+vi.mock("$lib/services/RevisionService.svelte", () => ({
   revisionService: { revise: mocks.revise, pendingDraft: mocks.pendingDraft },
 }));
 

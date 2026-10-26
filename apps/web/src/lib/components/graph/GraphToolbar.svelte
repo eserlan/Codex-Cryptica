@@ -1,17 +1,17 @@
 <script lang="ts">
   import { fade } from "svelte/transition";
   import type { Core } from "cytoscape";
-  import { resolve } from "$app/paths";
-  import { graph } from "#lib/stores/graph.svelte.js";
-  import { vault } from "#lib/stores/vault.svelte.js";
-  import { guestStore } from "#lib/stores/guest.svelte.js";
+  import { base } from "$app/paths";
+  import { graph } from "$lib/stores/graph.svelte";
+  import { vault } from "$lib/stores/vault.svelte";
+  import { guestStore } from "$lib/stores/guest.svelte";
   import Minimap from "./Minimap.svelte";
   import GraphViewPresets from "./GraphViewPresets.svelte";
   import TimelineControls from "./TimelineControls.svelte";
-  import { layoutUIStore } from "#lib/stores/ui/layout-ui.svelte.js";
-  import { connectionModeStore } from "#lib/stores/ui/connection-mode.svelte.js";
-  import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
-  import { soloPlayGuard } from "#lib/stores/solo-session-instance.js";
+  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
+  import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
+  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { soloPlayGuard } from "$lib/stores/solo-session-instance";
   import type { LayoutRequest } from "graph-engine";
 
   let {
@@ -20,13 +20,13 @@
     isSuspended = false,
     onApplyLayout,
     selectedCount,
-  }: {
+  } = $props<{
     cy: Core | undefined;
     isLayoutRunning: boolean;
     isSuspended?: boolean;
     onApplyLayout: (req: LayoutRequest) => Promise<void>;
     selectedCount: number;
-  } = $props();
+  }>();
 
   let showMinimap = $state(false);
   let isMobileMenuOpen = $state(false);
@@ -94,11 +94,8 @@
       <span aria-hidden="true" class="icon-[lucide--map] w-4 h-4"></span>
     </button>
   {/if}
-
   <GraphViewPresets {cy} />
-
   <div class="h-6 w-px bg-theme-border/30 mx-1 flex-shrink-0"></div>
-
   <TimelineControls
     onApply={(req) => {
       void onApplyLayout(req).catch((e: any) => console.error(e));
@@ -113,20 +110,18 @@
       onclick={() => cy?.zoom(cy.zoom() * 1.2)}
       title="Zoom In"
       aria-label="Zoom In"
+      ><span aria-hidden="true" class="icon-[lucide--zoom-in] w-4 h-4"
+      ></span></button
     >
-      <span aria-hidden="true" class="icon-[lucide--zoom-in] w-4 h-4"></span>
-    </button>
-
     <button
       type="button"
       class="w-8 h-8 flex-shrink-0 flex items-center justify-center border border-theme-border bg-theme-surface/80 text-theme-primary hover:bg-theme-primary/20 hover:text-theme-text transition"
       onclick={() => cy?.zoom(cy.zoom() / 1.2)}
       title="Zoom Out"
       aria-label="Zoom Out"
+      ><span aria-hidden="true" class="icon-[lucide--zoom-out] w-4 h-4"
+      ></span></button
     >
-      <span aria-hidden="true" class="icon-[lucide--zoom-out] w-4 h-4"></span>
-    </button>
-
     <button
       type="button"
       class="w-8 h-8 flex-shrink-0 flex items-center justify-center border border-theme-border bg-theme-surface/80 text-theme-primary hover:bg-theme-primary/20 hover:text-theme-text transition"
@@ -136,10 +131,9 @@
       }}
       title="Fit to Screen"
       aria-label="Fit to Screen"
+      ><span aria-hidden="true" class="icon-[lucide--maximize] w-4 h-4"
+      ></span></button
     >
-      <span aria-hidden="true" class="icon-[lucide--maximize] w-4 h-4"></span>
-    </button>
-
     <button
       type="button"
       class="w-8 h-8 flex-shrink-0 {layoutUIStore.isMobile
@@ -154,15 +148,13 @@
       title={graph.stableLayout ? "Stable Layout: ON" : "Stable Layout: OFF"}
       aria-label="Toggle Stable Layout"
       aria-pressed={graph.stableLayout}
-    >
-      <span
+      ><span
         aria-hidden="true"
         class="{graph.stableLayout
           ? 'icon-[lucide--pin]'
           : 'icon-[lucide--pin-off]'} w-4 h-4"
-      ></span>
-    </button>
-
+      ></span></button
+    >
     {#if !sessionModeStore.isGuestMode}
       <button
         type="button"
@@ -181,9 +173,9 @@
         title={connectionTooltip}
         aria-label={connectionTooltip}
         aria-pressed={isConnecting}
+        ><span aria-hidden="true" class="icon-[lucide--link] w-4 h-4"
+        ></span></button
       >
-        <span aria-hidden="true" class="icon-[lucide--link] w-4 h-4"></span>
-      </button>
     {/if}
     <button
       type="button"
@@ -198,14 +190,13 @@
       }}
       title="Redraw Layout"
       aria-label="Redraw Layout"
-    >
-      <span
+      ><span
         aria-hidden="true"
         class="icon-[lucide--refresh-cw] w-4 h-4 {isLayoutRunning
           ? 'animate-spin'
           : ''}"
-      ></span>
-    </button>
+      ></span></button
+    >
   </div>
   <div
     class="h-6 w-px bg-theme-border/30 mx-2 {layoutUIStore.isMobile
@@ -255,10 +246,9 @@
     title={graph.showLabels ? "Labels: ON" : "Labels: OFF"}
     aria-label="Toggle Labels"
     aria-pressed={graph.showLabels}
+    ><span aria-hidden="true" class="icon-[lucide--type] w-4 h-4"
+    ></span></button
   >
-    <span aria-hidden="true" class="icon-[lucide--type] w-4 h-4"></span>
-  </button>
-
   <button
     type="button"
     class="w-8 h-8 flex-shrink-0 items-center justify-center border {layoutUIStore.isMobile
@@ -273,10 +263,9 @@
     title={graph.showImages ? "Images: ON" : "Images: OFF"}
     aria-label="Toggle Images"
     aria-pressed={graph.showImages}
+    ><span aria-hidden="true" class="icon-[lucide--image] w-4 h-4"
+    ></span></button
   >
-    <span aria-hidden="true" class="icon-[lucide--image] w-4 h-4"></span>
-  </button>
-
   <button
     type="button"
     class="w-8 h-8 flex-shrink-0 items-center justify-center border {layoutUIStore.isMobile
@@ -301,9 +290,9 @@
         ? "Group backgrounds: soft. Press to strengthen"
         : "Group backgrounds: hidden. Press to show"}
     aria-pressed={graph.communityMode !== "off"}
+    ><span aria-hidden="true" class="icon-[lucide--group] w-4 h-4"
+    ></span></button
   >
-    <span aria-hidden="true" class="icon-[lucide--group] w-4 h-4"></span>
-  </button>
 
   <div
     class="{layoutUIStore.isMobile
@@ -333,7 +322,7 @@
        only as an icon in the activity rail. The label is worded exactly as the
        graph's screen-reader description names it (graph-a11y.ts). -->
   <a
-    href="{resolve('')}/table"
+    href="{base}/table"
     onclick={closeMenuIfMobile}
     class="{layoutUIStore.isMobile
       ? 'flex'

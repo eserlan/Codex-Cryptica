@@ -3,8 +3,8 @@
   import SaveToCodexModal from "../SaveToCodexModal.svelte";
   import EntityDetailModal from "../EntityDetailModal.svelte";
   import GeneratorRefinementModal from "../GeneratorRefinementModal.svelte";
-  import LoreMergeModal from "#lib/components/modals/LoreMergeModal.svelte";
-  import MonsterLabsSendingModal from "#lib/components/modals/MonsterLabsSendingModal.svelte";
+  import LoreMergeModal from "$lib/components/modals/LoreMergeModal.svelte";
+  import MonsterLabsSendingModal from "$lib/components/modals/MonsterLabsSendingModal.svelte";
   import type { useGeneratorSave } from "./use-generator-save.svelte";
   import type { useGeneratorRefinement } from "./use-generator-refinement.svelte";
   import type { useGeneratorHandoffs } from "./use-generator-handoffs.svelte";

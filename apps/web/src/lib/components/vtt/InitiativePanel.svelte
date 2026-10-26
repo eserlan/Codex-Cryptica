@@ -1,11 +1,11 @@
 <script lang="ts">
   import { tick } from "svelte";
-  import { resolve } from "$app/paths";
-  import { mapStore } from "#lib/stores/map.svelte.js";
-  import { mapSession } from "#lib/stores/map-session.svelte.js";
-  import { guestStore } from "#lib/stores/guest.svelte.js";
-  import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
-  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+  import { base } from "$app/paths";
+  import { mapStore } from "$lib/stores/map.svelte";
+  import { mapSession } from "$lib/stores/map-session.svelte";
+  import { guestStore } from "$lib/stores/guest.svelte";
+  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
   let draggedIndex = $state<number | null>(null);
   let {
@@ -102,8 +102,7 @@
     if (typeof window === "undefined") return;
     mapSession.refreshPopoutSnapshot();
 
-    const url = resolve(`map/initiative`);
-
+    const url = `${base}/map/initiative`;
     window.open(
       url,
       "codex-initiative",

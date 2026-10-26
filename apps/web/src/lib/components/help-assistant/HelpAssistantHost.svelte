@@ -1,17 +1,17 @@
 <script lang="ts">
   import { afterNavigate } from "$app/navigation";
   import type { GuidanceAction } from "help-engine";
-  import { helpHighlight } from "#lib/services/help-assistant/help-highlight.svelte.js";
-  import { shouldStepAside } from "#lib/services/help-assistant/cif-step-aside.js";
-  import { isHelpAssistantAvailable } from "#lib/services/help-assistant/help-availability.js";
-  import { helpStore } from "#lib/stores/help.svelte.js";
+  import { helpHighlight } from "$lib/services/help-assistant/help-highlight.svelte";
+  import { shouldStepAside } from "$lib/services/help-assistant/cif-step-aside";
+  import { isHelpAssistantAvailable } from "$lib/services/help-assistant/help-availability";
+  import { helpStore } from "$lib/stores/help.svelte";
   import {
     cifFlight,
     cifPopout,
     helpActionRunner,
     helpAssistant,
-  } from "#lib/stores/help-assistant/help-runtime.js";
-  import { layoutUIStore } from "#lib/stores/ui/layout-ui.svelte.js";
+  } from "$lib/stores/help-assistant/help-runtime";
+  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
   import HelpAssistantPanel from "./HelpAssistantPanel.svelte";
   import HelpHighlightLayer from "./HelpHighlightLayer.svelte";
 
@@ -44,11 +44,10 @@
     }
   });
 
-  afterNavigate(({ shallow, type }) => {
-    if (shallow && type === "goto") return;
+  afterNavigate(() => helpHighlight.clear());
 
-    return helpHighlight.clear();
-  });
+  // Closing the chat mid-flight sends a homeward Cif to the Cif button instead,
+  // or ends the flight when there is none.
   $effect(() => {
     if (!helpAssistant.isOpen) cifFlight.homeLost();
   });

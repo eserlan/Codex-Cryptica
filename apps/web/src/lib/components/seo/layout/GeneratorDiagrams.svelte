@@ -7,12 +7,12 @@
   import {
     generatorEngine,
     type GeneratorOutput,
-  } from "#lib/services/seo/generator-engine.js";
+  } from "$lib/services/seo/generator-engine";
   import StarSystemDiagram from "../StarSystemDiagram.svelte";
   import ConstellationChart from "../ConstellationChart.svelte";
   import PointCrawlGraph from "../PointCrawlGraph.svelte";
   import MysteryClueGraph from "../MysteryClueGraph.svelte";
-  import { blobToDataUrl } from "#lib/utils/svg-export.js";
+  import { blobToDataUrl } from "$lib/utils/svg-export";
 
   let {
     generatedData,

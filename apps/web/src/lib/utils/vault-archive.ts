@@ -7,7 +7,7 @@ import {
   writeOpfsFile,
   VAULTS_DIR,
 } from "./opfs";
-import { systemClock } from "#lib/utils/runtime-deps.js";
+import { systemClock } from "$lib/utils/runtime-deps";
 import { downloadBlob } from "./download";
 
 /**

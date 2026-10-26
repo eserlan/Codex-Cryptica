@@ -9,10 +9,7 @@ import {
   type ResolutionContext,
   type RollOutcome,
 } from "random-source-engine";
-import {
-  type IdGenerator,
-  systemIdGenerator,
-} from "#lib/utils/runtime-deps.js";
+import { type IdGenerator, systemIdGenerator } from "$lib/utils/runtime-deps";
 
 /**
  * Vault-backed CRUD for random tables and card decks (#2247).

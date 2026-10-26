@@ -1,10 +1,10 @@
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
-import type { ContextualRollResult } from "#lib/stores/dice-history.svelte.js";
+import type { ContextualRollResult } from "$lib/stores/dice-history.svelte";
 import {
   clearOracleChatDraft,
   getOracleChatDraft,
-} from "#lib/components/oracle/oracle-chat-input.js";
+} from "$lib/components/oracle/oracle-chat-input";
 import RollLog from "./RollLog.svelte";
 
 const roll = (

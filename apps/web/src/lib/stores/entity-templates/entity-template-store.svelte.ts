@@ -16,13 +16,10 @@ import {
   type ValidationIssue,
 } from "entity-template-engine";
 import { resolveTemplateSync } from "../../services/EntityTemplateConstants";
-import {
-  systemIdGenerator,
-  type IdGenerator,
-} from "#lib/utils/runtime-deps.js";
-import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
-import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
-import { themeStore } from "#lib/stores/theme.svelte.js";
+import { systemIdGenerator, type IdGenerator } from "$lib/utils/runtime-deps";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { notificationStore } from "$lib/stores/ui/notification.svelte";
+import { themeStore } from "$lib/stores/theme.svelte";
 import { buildBuiltinTemplates } from "./builtin-templates";
 import {
   entityTemplateRepository,

@@ -1,11 +1,11 @@
 import { render, waitFor } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import RoutePage from "./+page.svelte";
-import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
-import { guestVault } from "#lib/stores/guest-vault.svelte.js";
-import { themeStore } from "#lib/stores/theme.svelte.js";
-import { vault } from "#lib/stores/vault.svelte.js";
-import { onboardingStore } from "#lib/stores/ui/onboarding.svelte.js";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { guestVault } from "$lib/stores/guest-vault.svelte";
+import { themeStore } from "$lib/stores/theme.svelte";
+import { vault } from "$lib/stores/vault.svelte";
+import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
 
 vi.mock("$app/environment", () => ({
   browser: true,
@@ -13,8 +13,6 @@ vi.mock("$app/environment", () => ({
 
 vi.mock("$app/paths", () => ({
   base: "",
-  asset: (p: string) => p,
-  resolve: (p: string) => p,
 }));
 
 const pageState = vi.hoisted(() => ({
@@ -25,23 +23,22 @@ vi.mock("$app/state", () => ({
 }));
 
 vi.mock("$app/navigation", () => ({
-  goto: vi.fn(),
   replaceState: vi.fn(),
 }));
 
-vi.mock("#lib/stores/ui/modal-ui.svelte.js", () => ({
+vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
   modalUIStore: {
     openZenMode: vi.fn(),
   },
 }));
 
-vi.mock("#lib/stores/ui/session-mode.svelte.js", () => ({
+vi.mock("$lib/stores/ui/session-mode.svelte", () => ({
   sessionModeStore: {
     isGuestMode: false,
   },
 }));
 
-vi.mock("#lib/stores/guest-vault.svelte.js", () => ({
+vi.mock("$lib/stores/guest-vault.svelte", () => ({
   guestVault: {
     publishId: "published-1",
     entities: [],
@@ -50,7 +47,7 @@ vi.mock("#lib/stores/guest-vault.svelte.js", () => ({
   },
 }));
 
-vi.mock("#lib/stores/theme.svelte.js", () => ({
+vi.mock("$lib/stores/theme.svelte", () => ({
   themeStore: {
     worldThemeId: "local-theme",
     resolveJargon: vi.fn(() => "Loading Shared World..."),
@@ -59,7 +56,7 @@ vi.mock("#lib/stores/theme.svelte.js", () => ({
   },
 }));
 
-vi.mock("#lib/stores/vault.svelte.js", () => ({
+vi.mock("$lib/stores/vault.svelte", () => ({
   vault: {
     selectedEntityId: null,
     entities: {},
@@ -67,33 +64,33 @@ vi.mock("#lib/stores/vault.svelte.js", () => ({
   },
 }));
 
-vi.mock("#lib/stores/ui/layout-ui.svelte.js", () => ({
+vi.mock("$lib/stores/ui/layout-ui.svelte", () => ({
   layoutUIStore: {
     mainViewMode: "graph",
     focusedEntityId: null,
   },
 }));
 
-vi.mock("#lib/services/publishing/guest-history.js", () => ({
+vi.mock("$lib/services/publishing/guest-history", () => ({
   addGuestHistory: vi.fn(),
   removeGuestHistory: vi.fn(),
 }));
 
-vi.mock("#lib/components/GraphView.svelte", async () => ({
+vi.mock("$lib/components/GraphView.svelte", async () => ({
   default: (await import("../../__tests__/GraphViewStub.svelte")).default,
 }));
 
-vi.mock("#lib/components/EntityDetailPanel.svelte", async () => ({
+vi.mock("$lib/components/EntityDetailPanel.svelte", async () => ({
   default: (await import("../../__tests__/EntityDetailPanelStub.svelte"))
     .default,
 }));
 
-vi.mock("#lib/components/entity/EmbeddedEntityView.svelte", async () => ({
+vi.mock("$lib/components/entity/EmbeddedEntityView.svelte", async () => ({
   default: (await import("../../__tests__/EmbeddedEntityViewStub.svelte"))
     .default,
 }));
 
-vi.mock("#lib/components/world/FrontPage.svelte", async () => ({
+vi.mock("$lib/components/world/FrontPage.svelte", async () => ({
   default: (await import("../../__tests__/FrontPageStub.svelte")).default,
 }));
 
@@ -139,7 +136,7 @@ describe("/guest/[publishId] page", () => {
   });
 
   it("opens the entity in zen mode from the ?entity= deep link once the bundle loads", async () => {
-    const { modalUIStore } = await import("#lib/stores/ui/modal-ui.svelte.js");
+    const { modalUIStore } = await import("$lib/stores/ui/modal-ui.svelte");
     pageState.url = new URL(
       "http://localhost/guest/published-1?entity=aglarond",
     );

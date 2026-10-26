@@ -1,10 +1,10 @@
 <script lang="ts">
-  import OracleChat from "#lib/components/oracle/OracleChat.svelte";
-  import { oracle } from "#lib/stores/oracle.svelte.js";
+  import OracleChat from "$lib/components/oracle/OracleChat.svelte";
+  import { oracle } from "$lib/stores/oracle.svelte";
   import { onMount } from "svelte";
-  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
-  import { KeyboardInset } from "#lib/services/help-assistant/keyboard-inset.svelte.js";
-  import { layoutUIStore } from "#lib/stores/ui/layout-ui.svelte.js";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { KeyboardInset } from "$lib/services/help-assistant/keyboard-inset.svelte";
+  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
 
   const keyboard = new KeyboardInset();
   $effect(() => {

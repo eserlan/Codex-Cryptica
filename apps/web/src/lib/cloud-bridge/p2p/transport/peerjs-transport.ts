@@ -5,10 +5,7 @@ import type {
 } from "./transport-interface";
 import type { TransportErrorPayload } from "./transport-events";
 import { createPeer, type PeerFactory } from "../peer-factory";
-import {
-  type IdGenerator,
-  systemIdGenerator,
-} from "#lib/utils/runtime-deps.js";
+import { type IdGenerator, systemIdGenerator } from "$lib/utils/runtime-deps";
 
 const MAX_GUESTS = 10;
 

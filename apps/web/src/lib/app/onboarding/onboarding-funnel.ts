@@ -18,7 +18,7 @@
  *
  * The tracker forwards to `window.__codexAnalytics.track` when present (a
  * hook explicitly wired only from the (marketing) layout, see
- * `#lib/services/analytics/zaraz-analytics.ts`) and logs to the debug store.
+ * `$lib/services/analytics/zaraz-analytics.ts`) and logs to the debug store.
  *
  * It deliberately does NOT forward through a GTM-style `window.dataLayer`,
  * even though that's a common "ambient pipeline" pattern: Cloudflare Zaraz
@@ -31,8 +31,8 @@
  * custom-event API, so funnel events deliberately do not depend on it either.
  */
 
-import { browserStorage, type StorageLike } from "#lib/utils/runtime-deps.js";
-import { debugStore } from "#lib/stores/debug.svelte.js";
+import { browserStorage, type StorageLike } from "$lib/utils/runtime-deps";
+import { debugStore } from "$lib/stores/debug.svelte";
 
 export const ONBOARDING_FUNNEL_STEPS = [
   "welcome_shown",

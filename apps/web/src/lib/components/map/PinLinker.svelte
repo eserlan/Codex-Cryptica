@@ -3,15 +3,12 @@
   import { vault } from "../../stores/vault.svelte";
   import { fade, scale } from "svelte/transition";
   import type { Entity } from "schema";
-  import EmptyState from "#lib/components/ui/EmptyState.svelte";
+  import EmptyState from "$lib/components/ui/EmptyState.svelte";
 
-  let {
-    onSelect,
-    onCancel,
-  }: {
+  let { onSelect, onCancel } = $props<{
     onSelect: (entityId: string) => void;
     onCancel: () => void;
-  } = $props();
+  }>();
 
   let query = $state("");
   let inputEl = $state<HTMLInputElement | null>(null);

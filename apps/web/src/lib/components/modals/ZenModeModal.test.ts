@@ -5,8 +5,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("$app/paths", () => ({
   base: "",
-  asset: (p: string) => p,
-  resolve: (p: string) => p,
 }));
 
 vi.mock("$app/state", () => ({
@@ -17,13 +15,13 @@ vi.mock("$app/state", () => ({
   },
 }));
 
-vi.mock("#lib/services/ClipboardService.js", () => ({
+vi.mock("$lib/services/ClipboardService", () => ({
   clipboardService: {
     copyEntity: vi.fn().mockResolvedValue(true),
   },
 }));
 
-vi.mock("#lib/hooks/useEditState.svelte.js", () => ({
+vi.mock("$lib/hooks/useEditState.svelte", () => ({
   createEditState: vi.fn(() => ({
     isEditing: false,
     cancel: vi.fn(),
@@ -31,7 +29,7 @@ vi.mock("#lib/hooks/useEditState.svelte.js", () => ({
   })),
 }));
 
-vi.mock("#lib/hooks/useZenModeActions.svelte.js", () => ({
+vi.mock("$lib/hooks/useZenModeActions.svelte", () => ({
   useZenModeActions: vi.fn().mockReturnValue({
     handleClose: vi.fn((cb) => cb()),
     handlePopOut: vi.fn(),
@@ -63,11 +61,11 @@ vi.mock("../zen/ZenContent.svelte", async () => ({
   default: (await import("./__tests__/ModalStub.svelte")).default,
 }));
 
-vi.mock("#lib/components/entity-detail/DetailMapTab.svelte", async () => ({
+vi.mock("$lib/components/entity-detail/DetailMapTab.svelte", async () => ({
   default: (await import("./__tests__/ModalStub.svelte")).default,
 }));
 
-vi.mock("#lib/stores/vault.svelte.js", () => {
+vi.mock("$lib/stores/vault.svelte", () => {
   const entities: Record<string, any> = {
     "entity-1": {
       id: "entity-1",
@@ -93,7 +91,7 @@ vi.mock("#lib/stores/vault.svelte.js", () => {
   };
 });
 
-vi.mock("#lib/utils/zen-popout.js", async () => {
+vi.mock("$lib/utils/zen-popout", async () => {
   const actual = await import("../../utils/zen-popout");
   return {
     ...actual,
@@ -102,7 +100,7 @@ vi.mock("#lib/utils/zen-popout.js", async () => {
 });
 
 import ZenModeModal from "./ZenModeModal.svelte";
-import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
 describe("ZenModeModal", () => {
   beforeEach(() => {

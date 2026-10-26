@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Goal } from "onboarding-journey-engine";
-  import { journeyStore } from "#lib/app/onboarding/journey/journey-runtime.js";
-  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+  import { journeyStore } from "$lib/app/onboarding/journey/journey-runtime";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
   /**
    * Guided setup inside Help → Getting Started (spec 175, FR-025): start a

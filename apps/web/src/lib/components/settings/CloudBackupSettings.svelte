@@ -7,13 +7,13 @@
    * say plainly what is stored, who can read it — including the hosting
    * provider — and how to get rid of it.
    */
-  import { cloudBackupStore } from "#lib/stores/cloud-backup.svelte.js";
-  import CloudBackupAttach from "#lib/components/settings/CloudBackupAttach.svelte";
+  import { cloudBackupStore } from "$lib/stores/cloud-backup.svelte";
+  import CloudBackupAttach from "$lib/components/settings/CloudBackupAttach.svelte";
   import { parseRecoveryKey } from "@codex/cloud-backup-sync";
-  import { vault } from "#lib/stores/vault.svelte.js";
-  import { vaultRegistry } from "#lib/stores/vault-registry.svelte.js";
-  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
-  import { focusTrap } from "#lib/actions/focusTrap.js";
+  import { vault } from "$lib/stores/vault.svelte";
+  import { vaultRegistry } from "$lib/stores/vault-registry.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { focusTrap } from "$lib/actions/focusTrap";
 
   let showConsent = $state(false);
   let showRestore = $state(false);

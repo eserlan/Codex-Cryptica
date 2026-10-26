@@ -3,7 +3,7 @@
 import { describe, expect, it } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import BiomeProfileEditor from "./BiomeProfileEditor.svelte";
-import { makeStore } from "#lib/stores/biome-explorer.test-helpers.js";
+import { makeStore } from "$lib/stores/biome-explorer.test-helpers";
 
 function setup() {
   const made = makeStore();

@@ -1,6 +1,6 @@
 import type { Point } from "schema";
 import type { Token } from "../../../../types/vtt";
-import { hitTestToken } from "#lib/utils/vtt-helpers.js";
+import { hitTestToken } from "$lib/utils/vtt-helpers";
 
 export interface TokenSelectionDependencies {
   getTokens: () => Token[];

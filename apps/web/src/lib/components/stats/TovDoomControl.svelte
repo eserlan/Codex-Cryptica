@@ -7,12 +7,12 @@
     readOnly = false,
     onChange,
     testIdPrefix = "tov-doom",
-  }: {
+  } = $props<{
     field: StatSheetField;
     readOnly?: boolean;
     onChange: (value: number) => void;
     testIdPrefix?: string;
-  } = $props();
+  }>();
 
   const current = $derived(typeof field.value === "number" ? field.value : 0);
   const max = $derived(field.max ?? TOV_DOOM_REFERENCE.defaultMax);

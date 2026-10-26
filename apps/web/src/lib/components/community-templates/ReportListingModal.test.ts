@@ -4,12 +4,12 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock(
-  "#lib/services/publishing/PublicEntityTemplateDirectoryService.js",
+  "$lib/services/publishing/PublicEntityTemplateDirectoryService",
   () => ({
     publicEntityTemplateDirectoryService: { reportEntityTemplate: vi.fn() },
   }),
 );
-vi.mock("#lib/stores/publishing/entity-template-publish-registry.js", () => ({
+vi.mock("$lib/stores/publishing/entity-template-publish-registry", () => ({
   entityTemplatePublishRegistry: {
     hasReported: vi.fn(),
     markReported: vi.fn(),

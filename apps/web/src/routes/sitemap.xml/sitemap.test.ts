@@ -13,7 +13,7 @@ const { RA_SLUGS } = vi.hoisted(() => ({
   ],
 }));
 
-vi.mock("#lib/config/seo-pages.js", () => ({
+vi.mock("$lib/config/seo-pages", () => ({
   solutions: {
     "test-sol": { slug: "test-sol" },
   },
@@ -25,13 +25,13 @@ vi.mock("#lib/config/seo-pages.js", () => ({
   },
 }));
 
-vi.mock("#lib/config/seo-comparisons.js", () => ({
+vi.mock("$lib/config/seo-comparisons", () => ({
   comparisons: {
     "test-comp": { slug: "test-comp" },
   },
 }));
 
-vi.mock("#lib/content/blog-content.js", () => ({
+vi.mock("$lib/content/blog-content", () => ({
   loadLocalBlogArticles: vi.fn().mockReturnValue([
     { slug: "test-blog-post", publishedAt: "2026-06-01T12:00:00.000Z" },
     ...RA_SLUGS.map((slug) => ({

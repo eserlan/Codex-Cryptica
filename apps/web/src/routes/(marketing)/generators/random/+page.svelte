@@ -1,14 +1,14 @@
 <script lang="ts">
-  import { browser } from "$app/env";
-  import SEOGeneratorLayout from "#lib/components/seo/SEOGeneratorLayout.svelte";
-  import { generatorEngine } from "#lib/services/seo/generator-engine.js";
+  import { browser } from "$app/environment";
+  import SEOGeneratorLayout from "$lib/components/seo/SEOGeneratorLayout.svelte";
+  import { generatorEngine } from "$lib/services/seo/generator-engine";
   import {
     randomIdeaCategories,
     pickNextCategory,
     pickRandomIdeaTheme,
     type RandomIdeaCategory,
-  } from "#lib/services/seo/random-idea.js";
-  import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
+  } from "$lib/services/seo/random-idea";
+  import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
 
   let currentCategory = $state<RandomIdeaCategory | null>(null);
   let rollingLabel = $state<string | null>(null);

@@ -25,10 +25,10 @@ vi.mock("$app/environment", () => ({ browser: true }));
 vi.mock("$app/state", () => ({
   page: { url: new URL("http://localhost/") },
 }));
-vi.mock("#lib/content/changelog/releases.json", () => ({
+vi.mock("$lib/content/changelog/releases.json", () => ({
   default: [{ version: "0.9.0" }],
 }));
-vi.mock("#lib/stores/help.svelte.js", async () => {
+vi.mock("$lib/stores/help.svelte", async () => {
   const { reactiveHelp } = await import("./test-help-store.svelte");
   return {
     helpStore: new Proxy(h.helpStore, {
@@ -44,17 +44,17 @@ vi.mock("#lib/stores/help.svelte.js", async () => {
     }),
   };
 });
-vi.mock("#lib/stores/vault.svelte.js", () => ({ vault: h.vault }));
-vi.mock("#lib/stores/ui/session-mode.svelte.js", () => ({
+vi.mock("$lib/stores/vault.svelte", () => ({ vault: h.vault }));
+vi.mock("$lib/stores/ui/session-mode.svelte", () => ({
   sessionModeStore: h.session,
 }));
-vi.mock("#lib/stores/ui/modal-ui.svelte.js", () => ({ modalUIStore: h.modal }));
-vi.mock("#lib/stores/help-assistant/help-runtime.js", () => ({
+vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({ modalUIStore: h.modal }));
+vi.mock("$lib/stores/help-assistant/help-runtime", () => ({
   helpContext: { current: { area: "other" } },
   helpAssistant: { isOpen: false },
   cifPopout: { connected: false },
 }));
-vi.mock("#lib/app/onboarding/tips/tips-runtime.js", () => ({
+vi.mock("$lib/app/onboarding/tips/tips-runtime", () => ({
   tipsStore: {
     enabled: false,
     current: null,
@@ -67,18 +67,18 @@ vi.mock("#lib/app/onboarding/tips/tips-runtime.js", () => ({
     dismiss: () => {},
   },
 }));
-vi.mock("#lib/services/help-assistant/help-highlight.svelte.js", () => ({
+vi.mock("$lib/services/help-assistant/help-highlight.svelte", () => ({
   helpHighlight: { current: null },
 }));
-vi.mock("#lib/services/help-assistant/help-availability.js", () => ({
+vi.mock("$lib/services/help-assistant/help-availability", () => ({
   isHelpAssistantAvailable: () => false,
 }));
-vi.mock("#lib/app/onboarding/journey/journey-milestones-runtime.js", () => ({
+vi.mock("$lib/app/onboarding/journey/journey-milestones-runtime", () => ({
   journeyMilestones: h.milestones,
 }));
-vi.mock("#lib/app/onboarding/journey/journey-runtime.js", async () => {
+vi.mock("$lib/app/onboarding/journey/journey-runtime", async () => {
   const { JourneyStore } =
-    await import("#lib/app/onboarding/journey/journey-store.svelte.js");
+    await import("$lib/app/onboarding/journey/journey-store.svelte");
   const memory = () => {
     const data = new Map<string, string>();
     return {
@@ -103,9 +103,9 @@ vi.mock("#lib/app/onboarding/journey/journey-runtime.js", async () => {
 });
 
 import OnboardingHost from "./OnboardingHost.svelte";
-import { onboardingStore } from "#lib/stores/ui/onboarding.svelte.js";
+import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
 import { reactiveHelp } from "./test-help-store.svelte";
-import { journeyStore } from "#lib/app/onboarding/journey/journey-runtime.js";
+import { journeyStore } from "$lib/app/onboarding/journey/journey-runtime";
 
 describe("OnboardingHost", () => {
   beforeEach(() => {

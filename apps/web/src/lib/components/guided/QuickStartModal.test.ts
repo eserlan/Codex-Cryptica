@@ -34,7 +34,7 @@ const {
   requestLayoutMock: vi.fn(),
 }));
 
-vi.mock("#lib/stores/vault.svelte.js", () => ({
+vi.mock("$lib/stores/vault.svelte", () => ({
   vault: {
     createVault: createVaultMock,
     createEntity: createEntityMock,
@@ -44,13 +44,13 @@ vi.mock("#lib/stores/vault.svelte.js", () => ({
   },
 }));
 
-vi.mock("#lib/stores/theme.svelte.js", () => ({
+vi.mock("$lib/stores/theme.svelte", () => ({
   themeStore: {
     setTheme: setThemeMock,
   },
 }));
 
-vi.mock("#lib/stores/oracle.svelte.js", () => ({
+vi.mock("$lib/stores/oracle.svelte", () => ({
   oracle: {
     isEnabled: false,
     reviseNewEntityDraft: reviseNewEntityDraftMock,
@@ -59,26 +59,26 @@ vi.mock("#lib/stores/oracle.svelte.js", () => ({
 
 // Real store, not a mock: the draft-retention behaviour under test lives here,
 // and each test resets it so nothing leaks between renders.
-vi.mock("#lib/stores/ui/notification.svelte.js", () => ({
+vi.mock("$lib/stores/ui/notification.svelte", () => ({
   notificationStore: {
     notify: vi.fn(),
   },
 }));
 
-vi.mock("#lib/services/generators/ai-generator-gateway.js", () => ({
+vi.mock("$lib/services/generators/ai-generator-gateway", () => ({
   aiGeneratorGateway: {
     complete: vi.fn(),
   },
 }));
 
-vi.mock("#lib/stores/graph.svelte.js", () => ({
+vi.mock("$lib/stores/graph.svelte", () => ({
   graph: {
     requestLayout: requestLayoutMock,
   },
 }));
 
 import QuickStartModal from "./QuickStartModal.svelte";
-import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
 describe("QuickStartModal", () => {
   beforeEach(() => {

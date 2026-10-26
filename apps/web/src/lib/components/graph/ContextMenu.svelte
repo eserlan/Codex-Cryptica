@@ -1,22 +1,22 @@
 <script lang="ts">
-  import { graph } from "#lib/stores/graph.svelte.js";
-  import { vault } from "#lib/stores/vault.svelte.js";
-  import { oracle } from "#lib/stores/oracle.svelte.js";
-  import { revisionService } from "#lib/services/RevisionService.svelte.js";
-  import { canvasRegistry } from "#lib/stores/canvas-registry.svelte.js";
-  import { categories } from "#lib/stores/categories.svelte.js";
-  import { themeStore } from "#lib/stores/theme.svelte.js";
+  import { graph } from "$lib/stores/graph.svelte";
+  import { vault } from "$lib/stores/vault.svelte";
+  import { oracle } from "$lib/stores/oracle.svelte";
+  import { revisionService } from "$lib/services/RevisionService.svelte";
+  import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
+  import { categories } from "$lib/stores/categories.svelte";
+  import { themeStore } from "$lib/stores/theme.svelte";
   import { deriveEntityTypePalette } from "schema";
-  import CanvasPicker from "#lib/components/canvas/CanvasPicker.svelte";
+  import CanvasPicker from "$lib/components/canvas/CanvasPicker.svelte";
   import type { Core } from "cytoscape";
-  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
-  import { connectionModeStore } from "#lib/stores/ui/connection-mode.svelte.js";
-  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
-  import { discoveryPolicyStore } from "#lib/stores/ui/discovery-policy.svelte.js";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
   import { GraphContextMenuController } from "./graph-context-menu-controller.svelte";
-  import ImageFocusMenu from "#lib/components/ui/ImageFocusMenu.svelte";
+  import ImageFocusMenu from "$lib/components/ui/ImageFocusMenu.svelte";
 
-  let { cy }: { cy: Core } = $props();
+  let { cy } = $props<{ cy: Core }>();
 
   const controller = new GraphContextMenuController(() => cy, {
     graph,

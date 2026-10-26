@@ -1,12 +1,12 @@
 <script lang="ts">
   import { fade } from "svelte/transition";
   import type { Core } from "cytoscape";
-  import { graph } from "#lib/stores/graph.svelte.js";
+  import { graph } from "$lib/stores/graph.svelte";
   import { GraphLayoutPresets } from "./graph-layout-presets.svelte";
   import PresetLayoutToggle from "./PresetLayoutToggle.svelte";
   import PresetLayoutActions from "./PresetLayoutActions.svelte";
 
-  let { cy }: { cy: Core | undefined } = $props();
+  let { cy } = $props<{ cy: Core | undefined }>();
 
   let isOpen = $state(false);
   let newPresetName = $state("");

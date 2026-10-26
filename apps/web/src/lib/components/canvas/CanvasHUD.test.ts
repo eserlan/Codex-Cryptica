@@ -7,7 +7,7 @@ const { openZenMode } = vi.hoisted(() => ({
   openZenMode: vi.fn(),
 }));
 
-vi.mock("#lib/stores/ui/modal-ui.svelte.js", () => ({
+vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
   modalUIStore: {
     showCanvasSelector: false,
     openZenMode,
@@ -15,13 +15,13 @@ vi.mock("#lib/stores/ui/modal-ui.svelte.js", () => ({
   },
 }));
 
-vi.mock("#lib/stores/canvas-registry.svelte.js", () => ({
+vi.mock("$lib/stores/canvas-registry.svelte", () => ({
   canvasRegistry: {
     status: "idle",
   },
 }));
 
-vi.mock("#lib/components/labels/CategoryFilter.svelte", () => ({
+vi.mock("$lib/components/labels/CategoryFilter.svelte", () => ({
   default: function CategoryFilterMock() {
     return {};
   },

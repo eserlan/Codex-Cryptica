@@ -1,8 +1,8 @@
 <script lang="ts">
   import type { ImportPlan } from "@codex/entity-shelf";
-  import { shelf as defaultShelf } from "#lib/features/shelf/index.js";
-  import { layoutUIStore } from "#lib/stores/ui/layout-ui.svelte.js";
-  import type { ShelfStore } from "#lib/features/shelf/shelf.svelte.js";
+  import { shelf as defaultShelf } from "$lib/features/shelf";
+  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
+  import type { ShelfStore } from "$lib/features/shelf/shelf.svelte";
   import ShelfEntryCard from "./ShelfEntryCard.svelte";
   import ImportOutcomeSummary from "./ImportOutcomeSummary.svelte";
   import TemplateConflictStep from "./TemplateConflictStep.svelte";

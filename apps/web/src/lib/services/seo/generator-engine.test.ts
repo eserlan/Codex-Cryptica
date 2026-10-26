@@ -9,7 +9,7 @@ import {
   tomeConfig,
   type PublicGeneratorOutput,
 } from "generator-engine";
-import { sessionHubStore } from "#lib/stores/session-hub.svelte.js";
+import { sessionHubStore } from "$lib/stores/session-hub.svelte";
 import { generationInputHistoryStore } from "./generation-input-history";
 
 function expectPromptToContain(

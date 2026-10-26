@@ -14,30 +14,30 @@ const { confirm, notify } = vi.hoisted(() => ({
   notify: vi.fn(),
 }));
 
-vi.mock("#lib/stores/ui/notification.svelte.js", () => ({
+vi.mock("$lib/stores/ui/notification.svelte", () => ({
   notificationStore: { confirm, notify },
 }));
 
-vi.mock("#lib/utils/download.js", () => ({ downloadText: vi.fn() }));
+vi.mock("$lib/utils/download", () => ({ downloadText: vi.fn() }));
 
 // Sharing uses the real vault registry and device storage; these tests only
 // need the settings screen, so give it a fake publish store.
 vi.mock(
-  "#lib/stores/entity-templates/entity-template-publish-store.svelte.js",
+  "$lib/stores/entity-templates/entity-template-publish-store.svelte",
   () => ({
     entityTemplatePublishStore: {},
   }),
 );
 vi.mock(
-  "#lib/components/community-templates/EntityTemplatePublishModal.svelte",
+  "$lib/components/community-templates/EntityTemplatePublishModal.svelte",
   async () => ({
     default: (await import("./__fakes__/FakePublishModal.svelte")).default,
   }),
 );
 
 import EntityTemplateSettings from "./EntityTemplateSettings.svelte";
-import { makeStore } from "#lib/stores/entity-templates/test-helpers.js";
-import { downloadText } from "#lib/utils/download.js";
+import { makeStore } from "$lib/stores/entity-templates/test-helpers";
+import { downloadText } from "$lib/utils/download";
 
 function makePublishStore(over: Record<string, unknown> = {}) {
   return {
@@ -464,7 +464,7 @@ describe("EntityTemplateSettings", () => {
 
     it("reports a failed sharing action instead of failing silently", async () => {
       const { EntityTemplateDirectoryError } =
-        await import("#lib/services/publishing/PublicEntityTemplateDirectoryService.js");
+        await import("$lib/services/publishing/PublicEntityTemplateDirectoryService");
       const publishStore = makePublishStore({
         publishState: vi.fn((t: any) =>
           t.source === "user"

@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 import type { PresentationTemplate } from "schema";
-vi.mock("#lib/stores/presentation-templates.svelte.js", () => ({
+vi.mock("$lib/stores/presentation-templates.svelte", () => ({
   presentationTemplates: {},
 }));
-vi.mock("#lib/stores/ui/notification.svelte.js", () => ({
+vi.mock("$lib/stores/ui/notification.svelte", () => ({
   notificationStore: {},
 }));
 import { PresentationEditorSaveState } from "./editor-save.svelte";

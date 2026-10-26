@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { focusTrap } from "#lib/actions/focusTrap.js";
+  import { focusTrap } from "$lib/actions/focusTrap";
   import {
     buildMysteryGraphDiagram,
     type MysteryGraph,

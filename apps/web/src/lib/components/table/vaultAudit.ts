@@ -4,7 +4,7 @@ import {
   type ConnectionSummaryLike,
   type EntityWithPreview,
   type TableColumnFilters,
-} from "#lib/components/explorer/entityListFiltering.js";
+} from "$lib/components/explorer/entityListFiltering";
 
 export interface VaultAuditCounts {
   totalEntities: number;

@@ -6,7 +6,7 @@ import { interactionSessions } from "@codex/ai-engine";
 import { getConnectionProposer } from "./hooks";
 import { withLoreTemplate } from "./lore-template";
 import type { OracleUiSnapshot, IOracleStore } from "./types";
-import { createRandomSourceOracleAdapter } from "#lib/features/random/oracle-adapter.svelte.js";
+import { createRandomSourceOracleAdapter } from "$lib/features/random/oracle-adapter.svelte";
 
 /** One adapter for the session; it reads the open vault on every call. */
 const randomSourceOracle = createRandomSourceOracleAdapter();

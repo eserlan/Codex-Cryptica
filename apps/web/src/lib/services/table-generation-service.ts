@@ -16,11 +16,8 @@ import {
 } from "generator-engine";
 import { aiGeneratorGateway } from "./generators/ai-generator-gateway";
 import { searchService as defaultSearchService } from "@codex/search-orchestrator";
-import { randomSources as defaultRandomSources } from "#lib/features/random/index.js";
-import {
-  systemIdGenerator,
-  type IdGenerator,
-} from "#lib/utils/runtime-deps.js";
+import { randomSources as defaultRandomSources } from "$lib/features/random/index";
+import { systemIdGenerator, type IdGenerator } from "$lib/utils/runtime-deps";
 
 export interface TableGenerationServiceDeps {
   searchService?: {

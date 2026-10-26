@@ -165,7 +165,6 @@ export const howDoIBuildABelievableEconomyForAFantasyWorld: AnswerConfigInput =
       "how-common-should-magic-be-in-a-fantasy-world",
       "how-does-magic-change-society-in-a-fantasy-world",
       "how-should-a-fantasy-adventuring-guild-handle-wages-dues-and-shared-expenses",
-      "how-do-i-build-a-believable-post-scarcity-civilisation",
     ],
     discovery: {
       id: "answer-believable-fantasy-economy",
@@ -188,11 +187,6 @@ export const howDoIBuildABelievableEconomyForAFantasyWorld: AnswerConfigInput =
         "for-economy-trade",
       ],
       acknowledgedOverlap: [
-        {
-          with: "answer-post-scarcity-civilisation",
-          reason:
-            "This answer builds production, exchange, control, and pressure for economies where resources are limited; the post-scarcity answer starts from guaranteed basic goods and examines what replaces wages and property, and which limits remain.",
-        },
         {
           with: "answer-trade-routes-shape-cities-kingdoms",
           reason:

@@ -3,7 +3,7 @@
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import UsefulnessFeedback from "./UsefulnessFeedback.svelte";
-import { UIPersistence, type StorageLike } from "#lib/stores/ui/persistence.js";
+import { UIPersistence, type StorageLike } from "$lib/stores/ui/persistence";
 
 function fakeStorage(): StorageLike {
   const store = new Map<string, string>();

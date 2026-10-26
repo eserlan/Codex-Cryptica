@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { focusEntity } from "#lib/stores/ui/navigation.js";
+  import { focusEntity } from "$lib/stores/ui/navigation";
 
   let { entityId }: { entityId: string } = $props();
 </script>

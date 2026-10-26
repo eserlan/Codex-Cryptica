@@ -1,7 +1,7 @@
-// Relative rather than `#lib`: this module is loaded by
+// Relative rather than `$lib`: this module is loaded by
 // `scripts/discovery-audit.mjs`, which runs in `prebuild` — before Vite, and
 // therefore with no alias resolution beyond whatever tsconfig happens to be on
-// disk. `#lib` only resolves through the generated `.svelte-kit/tsconfig.json`,
+// disk. `$lib` only resolves through the generated `.svelte-kit/tsconfig.json`,
 // so an alias here makes the build depend on a file `svelte-kit sync` may not
 // have written yet.
 import { solutions } from "../../config/seo-pages";

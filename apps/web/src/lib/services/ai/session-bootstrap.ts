@@ -1,12 +1,12 @@
-import { browser } from "$app/env";
+import { browser } from "$app/environment";
 import {
   AiSessionManager,
   aiClientManager,
   type CachedToken,
 } from "@codex/ai-engine";
-import { getSessionTurnstileToken } from "#lib/services/publishing/turnstile.js";
-import { oracleBridge } from "#lib/cloud-bridge/oracle-bridge.js";
-import { proposerBridge } from "#lib/cloud-bridge/proposer-bridge.js";
+import { getSessionTurnstileToken } from "$lib/services/publishing/turnstile";
+import { oracleBridge } from "$lib/cloud-bridge/oracle-bridge";
+import { proposerBridge } from "$lib/cloud-bridge/proposer-bridge";
 
 /**
  * Wires the shared `aiClientManager` to a session manager that mints

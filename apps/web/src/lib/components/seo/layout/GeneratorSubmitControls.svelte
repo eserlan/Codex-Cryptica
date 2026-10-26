@@ -10,7 +10,6 @@
     generateLabel = undefined,
     generatedSingular,
     aiDataNotice = undefined,
-    aiToggleScope = undefined,
     useAI = $bindable(true),
   }: {
     isBusy: boolean;
@@ -21,7 +20,6 @@
     generateLabel?: string;
     generatedSingular: string;
     aiDataNotice?: string;
-    aiToggleScope?: string;
     useAI?: boolean;
   } = $props();
 </script>
@@ -54,5 +52,5 @@
 {/if}
 
 {#if showSubmitButton && !aiModeRequired}
-  <GeneratorAiToggle {isOnline} scope={aiToggleScope} bind:useAI />
+  <GeneratorAiToggle {isOnline} bind:useAI />
 {/if}

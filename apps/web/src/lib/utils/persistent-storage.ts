@@ -1,4 +1,4 @@
-import { debugStore } from "#lib/stores/debug.svelte.js";
+import { debugStore } from "$lib/stores/debug.svelte";
 
 /**
  * Asks the browser to make this origin's storage persistent (#2619).

@@ -1,5 +1,5 @@
-import { loadBlogIndex } from "#lib/content/blog-content.js";
-import { buildAbsoluteUrl } from "#lib/seo/site.js";
+import { loadBlogIndex } from "$lib/content/blog-content";
+import { buildAbsoluteUrl } from "$lib/seo/site";
 import type { PageLoad } from "./$types";
 
 export const prerender = true;

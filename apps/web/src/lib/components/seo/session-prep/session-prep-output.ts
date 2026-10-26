@@ -7,8 +7,8 @@ import {
   type SessionPrep,
   type SessionPrepGuidance,
 } from "generator-engine";
-import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
-import type { SessionPrepService } from "#lib/services/seo/session-prep-service.js";
+import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
+import type { SessionPrepService } from "$lib/services/seo/session-prep-service";
 
 /**
  * With AI on, drafts any empty steps first. If that fails but the GM has

@@ -2,7 +2,7 @@
   import {
     loadGuestDisplayName,
     saveGuestDisplayName,
-  } from "#lib/utils/guest-name-storage.js";
+  } from "$lib/utils/guest-name-storage";
 
   let {
     onJoin,

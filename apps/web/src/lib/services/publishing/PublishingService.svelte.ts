@@ -2,8 +2,8 @@ import { GuestExporter, type ExporterOptions } from "@codex/vault-engine";
 import { sanitizeSheetForGuests } from "@codex/stat-sheet-engine";
 import type { PublishRegistry } from "schema";
 import { getPublishTurnstileToken } from "./turnstile";
-import { retryWithBackoff } from "#lib/utils/retry.js";
-import { worldStore } from "#lib/stores/world.svelte.js";
+import { retryWithBackoff } from "$lib/utils/retry";
+import { worldStore } from "$lib/stores/world.svelte";
 
 export interface PublishingServiceDeps {
   fetch?: typeof fetch;

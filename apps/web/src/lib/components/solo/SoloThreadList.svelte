@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Thread, ThreadKind } from "solo-session-engine";
-  import { vault } from "#lib/stores/vault.svelte.js";
+  import { vault } from "$lib/stores/vault.svelte";
   import SoloThreadRow from "./SoloThreadRow.svelte";
 
   const KIND_LABELS: Record<ThreadKind, string> = {

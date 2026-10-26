@@ -1,18 +1,15 @@
 <script lang="ts">
   import { untrack } from "svelte";
-  import { proposerStore } from "#lib/stores/proposer.svelte.js";
-  import { vault } from "#lib/stores/vault.svelte.js";
+  import { proposerStore } from "$lib/stores/proposer.svelte";
+  import { vault } from "$lib/stores/vault.svelte";
   import type { Proposal } from "@codex/proposer";
   import ProposalHistory from "./ProposalHistory.svelte";
-  import { discoveryPolicyStore } from "#lib/stores/ui/discovery-policy.svelte.js";
+  import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
 
-  let {
-    isEditing,
-    entityId,
-  }: {
+  let { isEditing, entityId } = $props<{
     isEditing: boolean;
     entityId?: string;
-  } = $props();
+  }>();
   let showHistory = $state(false);
   let isAutoProposeSuppressed = $state(false);
   let lastEvaluatedEntityId = $state<string | null>(null);
@@ -185,7 +182,7 @@
       </div>
     {/if}
 
-    {#if (isAutoProposeSuppressed || activeProposals.length > 4) && activeEntityId}
+    {#if isAutoProposeSuppressed || activeProposals.length > 4}
       <div class="pb-6">
         <button
           type="button"

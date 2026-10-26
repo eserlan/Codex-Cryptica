@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { timelineStore } from "#lib/stores/timeline.svelte.js";
-  import { categories } from "#lib/stores/categories.svelte.js";
-  import { getIconClass } from "#lib/utils/icons.js";
+  import { timelineStore } from "$lib/stores/timeline.svelte";
+  import { categories } from "$lib/stores/categories.svelte";
+  import { getIconClass } from "$lib/utils/icons";
 
   const typeCounts = $derived.by(() => {
     const counts = new Map<string, number>();

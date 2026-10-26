@@ -7,11 +7,11 @@ const mapStoreMock = vi.hoisted(() => ({
   gridColor: null as string | null,
 }));
 
-vi.mock("#lib/stores/map.svelte.js", () => ({
+vi.mock("$lib/stores/map.svelte", () => ({
   mapStore: mapStoreMock,
 }));
 
-import { mapSession } from "#lib/stores/map-session.svelte.js";
+import { mapSession } from "$lib/stores/map-session.svelte";
 import VTTModeToggle from "./VTTModeToggle.svelte";
 import VTTGridColorMenu from "./VTTGridColorMenu.svelte";
 

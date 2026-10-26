@@ -4,7 +4,7 @@ import type {
   BiomeEntitySummary,
   BiomeVaultGateway,
   LoadedBiome,
-} from "#lib/services/biome/biome-vault-gateway.js";
+} from "$lib/services/biome/biome-vault-gateway";
 import { BiomeExplorerStore } from "./biome-explorer.svelte";
 
 export function memoryStorage(seed: Record<string, string> = {}) {

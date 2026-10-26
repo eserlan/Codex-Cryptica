@@ -3,8 +3,8 @@
     pickFrom,
     factionConfig,
     constellationConfig,
-  } from "#lib/services/seo/generator-config.js";
-  import SelectWithCustomOption from "#lib/components/forms/SelectWithCustomOption.svelte";
+  } from "$lib/services/seo/generator-config";
+  import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
 
   let {
     mode = $bindable("single"),

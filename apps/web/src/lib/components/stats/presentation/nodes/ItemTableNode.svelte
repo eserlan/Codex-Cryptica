@@ -24,7 +24,7 @@
   } from "schema";
   import type { PresentationRenderContext } from "../types";
   import { ensureRowIds, patchStock } from "@codex/stat-sheet-engine";
-  import { vault } from "#lib/stores/vault.svelte.js";
+  import { vault } from "$lib/stores/vault.svelte";
   import ItemTableStockRow from "./ItemTableStockRow.svelte";
   import StockTradePanel from "./StockTradePanel.svelte";
 

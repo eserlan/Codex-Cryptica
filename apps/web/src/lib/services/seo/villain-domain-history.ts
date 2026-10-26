@@ -1,7 +1,7 @@
 import {
   browserSessionStorage,
   type StorageLike,
-} from "#lib/utils/runtime-deps.js";
+} from "$lib/utils/runtime-deps";
 
 const STORAGE_KEY = "VILLAIN_CONFLICT_DOMAIN_HISTORY";
 const MAX_HISTORY = 5;

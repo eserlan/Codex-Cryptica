@@ -3,21 +3,19 @@
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import AppHeader from "./AppHeader.svelte";
-import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
-import { guidedModeStore } from "#lib/stores/ui/guided-mode.svelte.js";
-import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { guidedModeStore } from "$lib/stores/ui/guided-mode.svelte";
+import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
 vi.mock("$app/paths", () => ({
   base: "",
-  asset: (p: string) => p,
-  resolve: (p: string) => p,
 }));
 
-vi.mock("#lib/config/index.js", () => ({
+vi.mock("$lib/config", () => ({
   IS_STAGING: false,
 }));
 
-vi.mock("#lib/stores/search.svelte.js", () => ({
+vi.mock("$lib/stores/search.svelte", () => ({
   searchStore: {
     open: vi.fn(),
     query: "",

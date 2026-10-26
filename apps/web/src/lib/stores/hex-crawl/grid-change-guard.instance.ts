@@ -1,6 +1,6 @@
 import { countHexRecords, normalizeHexCrawlState } from "hex-crawl-engine";
-import { vault } from "#lib/stores/vault.svelte.js";
-import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
+import { vault } from "$lib/stores/vault.svelte";
+import { notificationStore } from "$lib/stores/ui/notification.svelte";
 import { GridChangeGuard } from "./grid-change-guard.svelte";
 
 /** The app-wide grid change guard, wired to the vault and the confirmation dialog. */

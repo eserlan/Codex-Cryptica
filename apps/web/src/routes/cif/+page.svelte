@@ -3,9 +3,9 @@
   import {
     createCifChannel,
     type CifChannel,
-  } from "#lib/services/help-assistant/cif-popout-protocol.js";
-  import { CifPopoutClient } from "#lib/stores/help-assistant/cif-popout-client.svelte.js";
-  import HelpAssistantPanel from "#lib/components/help-assistant/HelpAssistantPanel.svelte";
+  } from "$lib/services/help-assistant/cif-popout-protocol";
+  import { CifPopoutClient } from "$lib/stores/help-assistant/cif-popout-client.svelte";
+  import HelpAssistantPanel from "$lib/components/help-assistant/HelpAssistantPanel.svelte";
 
   // Cif in its own window. The conversation, the screen it is about and the AI
   // request all live in the main Codex Cryptica window; this page shows them.

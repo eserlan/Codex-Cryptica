@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { makeStore } from "./biome-explorer.test-helpers";
 import { BIOME_AI_NOTICE_KEY } from "./biome-explorer.svelte";
-import { HINT_KEYS } from "#lib/config/help-content.js";
+import { HINT_KEYS } from "$lib/config/help-content";
 
 const goodJson = JSON.stringify({
   suggestions: [

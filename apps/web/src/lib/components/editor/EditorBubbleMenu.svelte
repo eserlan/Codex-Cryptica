@@ -1,7 +1,7 @@
 <script lang="ts">
   import { type Editor } from "@tiptap/core";
 
-  let { editor }: { editor: Editor | null } = $props();
+  let { editor } = $props<{ editor: Editor | null }>();
 
   let element: HTMLDivElement;
 

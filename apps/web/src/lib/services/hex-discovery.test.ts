@@ -1,7 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import type { Entity, Map as MapRecord } from "schema";
 import { HexDiscoveryService } from "hex-crawl-engine";
-import { HexCrawlStore } from "#lib/stores/hex-crawl/hex-crawl.svelte.js";
+import { HexCrawlStore } from "$lib/stores/hex-crawl/hex-crawl.svelte";
 import { appEventBus } from "@codex/events";
 import {
   HexDiscoveryController,

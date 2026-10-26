@@ -24,16 +24,16 @@ const { save, openZenMode, notify } = vi.hoisted(() => ({
   notify: vi.fn(),
 }));
 
-vi.mock("#lib/stores/vault.svelte.js", () => ({
+vi.mock("$lib/stores/vault.svelte", () => ({
   vault: { resolveImageUrl: vi.fn(async () => "blob:portrait") },
 }));
-vi.mock("#lib/services/report-service.js", () => ({
+vi.mock("$lib/services/report-service", () => ({
   reportService: { save },
 }));
-vi.mock("#lib/stores/ui/modal-ui.svelte.js", () => ({
+vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
   modalUIStore: { openZenMode },
 }));
-vi.mock("#lib/stores/ui/notification.svelte.js", () => ({
+vi.mock("$lib/stores/ui/notification.svelte", () => ({
   notificationStore: { notify },
 }));
 

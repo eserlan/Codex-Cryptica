@@ -6,8 +6,8 @@ import {
   type ShelfEntrySummary,
 } from "@codex/entity-shelf";
 import { appEventBus as defaultAppEventBus } from "@codex/events";
-import { SHELF_EVENTS } from "#lib/events/shelf.js";
-import { systemClock, type Clock } from "#lib/utils/runtime-deps.js";
+import { SHELF_EVENTS } from "$lib/events/shelf";
+import { systemClock, type Clock } from "$lib/utils/runtime-deps";
 import { idbShelfStore } from "./idb-shelf-store.svelte";
 import {
   vaultRecordCodec,

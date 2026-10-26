@@ -29,7 +29,7 @@ const {
   },
 }));
 
-vi.mock("#lib/stores/vault.svelte.js", () => ({
+vi.mock("$lib/stores/vault.svelte", () => ({
   vault: {
     get isGuest() {
       return vaultState.isGuest;
@@ -38,7 +38,7 @@ vi.mock("#lib/stores/vault.svelte.js", () => ({
   },
 }));
 
-vi.mock("#lib/stores/stat-sheet-templates.svelte.js", () => ({
+vi.mock("$lib/stores/stat-sheet-templates.svelte", () => ({
   statSheetTemplates: {
     get categoryDefaults() {
       return templateState.categoryDefaults;
@@ -50,11 +50,11 @@ vi.mock("#lib/stores/stat-sheet-templates.svelte.js", () => ({
   },
 }));
 
-vi.mock("#lib/stores/dice-history.svelte.js", () => ({
+vi.mock("$lib/stores/dice-history.svelte", () => ({
   diceHistory: { addResult },
 }));
 
-vi.mock("#lib/stores/map-session.svelte.js", () => ({
+vi.mock("$lib/stores/map-session.svelte", () => ({
   mapSession: {
     vttEnabled: true,
     sendResolvedRollMessage,

@@ -2,7 +2,7 @@
   import {
     timelineStore,
     type TimelineViewMode,
-  } from "#lib/stores/timeline.svelte.js";
+  } from "$lib/stores/timeline.svelte";
 
   const modes: Array<{ id: TimelineViewMode; icon: string; label: string }> = [
     { id: "calendar", icon: "icon-[lucide--calendar-days]", label: "Calendar" },

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { publishingService } from "#lib/services/publishing/PublishingService.svelte.js";
+  import { publishingService } from "$lib/services/publishing/PublishingService.svelte";
   import { onMount } from "svelte";
 
   let { show = $bindable(), vaultId, onConfirm } = $props();

@@ -4,8 +4,8 @@ import type {
   VTTMessage,
 } from "../../../types/vtt";
 import { diceEngine, type RollResult } from "dice-engine";
-import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
-import { systemClock } from "#lib/utils/runtime-deps.js";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { systemClock } from "$lib/utils/runtime-deps";
 
 export interface VTTChatDependencies {
   emit: (message: VTTMessage) => void;

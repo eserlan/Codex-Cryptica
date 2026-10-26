@@ -12,11 +12,11 @@ import {
   WINDOW_MARGIN,
   type ViewportSize,
   type WindowBounds,
-} from "#lib/utils/window-bounds.js";
+} from "$lib/utils/window-bounds";
 
 /**
  * Play Tools' own window: a caller-facing wrapper over the shared, generic
- * bounds math in `#lib/utils/window-bounds.ts` (pulled out from here once
+ * bounds math in `$lib/utils/window-bounds.ts` (pulled out from here once
  * the Quicknote/Journal scratchpad needed the same math, #3490), keeping
  * this module's original storage key and argument order so `DiceModal`
  * doesn't have to change.

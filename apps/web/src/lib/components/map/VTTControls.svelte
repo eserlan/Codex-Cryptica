@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { mapStore } from "#lib/stores/map.svelte.js";
-  import { mapSession } from "#lib/stores/map-session.svelte.js";
-  import EncounterManager from "#lib/components/vtt/EncounterManager.svelte";
+  import { mapStore } from "$lib/stores/map.svelte";
+  import { mapSession } from "$lib/stores/map-session.svelte";
+  import EncounterManager from "$lib/components/vtt/EncounterManager.svelte";
   import { getPrimaryButtonStateClass } from "./vtt-ui";
-  import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
+  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
   import PinNoteButton from "./PinNoteButton.svelte";
-  import ReportProblemButton from "#lib/components/feedback/ReportProblemButton.svelte";
-  import { mapControlsUIStore } from "#lib/stores/ui/map-controls-ui.svelte.js";
+  import ReportProblemButton from "$lib/components/feedback/ReportProblemButton.svelte";
+  import { mapControlsUIStore } from "$lib/stores/ui/map-controls-ui.svelte";
 
   let canManageVtt = $derived(!sessionModeStore.isGuestMode);
 

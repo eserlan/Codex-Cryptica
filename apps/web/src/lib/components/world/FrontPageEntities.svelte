@@ -1,8 +1,8 @@
 <script lang="ts">
   import type { RecentActivity } from "@codex/vault-engine";
   import EntityCard from "./EntityCard.svelte";
-  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
-  import { openImportWindow } from "#lib/stores/ui/navigation.js";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { openImportWindow } from "$lib/stores/ui/navigation";
 
   let {
     displayedRecentActivity,

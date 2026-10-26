@@ -5,10 +5,10 @@
     TENSION_MIN,
     type Likelihood,
   } from "solo-session-engine";
-  import { soloSessionStore } from "#lib/stores/solo-session-instance.js";
-  import { discoveryPolicyStore } from "#lib/stores/ui/discovery-policy.svelte.js";
-  import { layoutUIStore } from "#lib/stores/ui/layout-ui.svelte.js";
-  import { oracle } from "#lib/stores/oracle.svelte.js";
+  import { soloSessionStore } from "$lib/stores/solo-session-instance";
+  import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
+  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
+  import { oracle } from "$lib/stores/oracle.svelte";
   import SoloMenu from "./SoloMenu.svelte";
 
   const QUESTION_LIMIT = 200;

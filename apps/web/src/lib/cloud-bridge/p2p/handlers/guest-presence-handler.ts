@@ -3,7 +3,7 @@ import type { GuestHandlerContext } from "./guest-handler-context";
 import type { P2PMessage } from "../p2p-protocol";
 import type { P2PConnection } from "../transport/transport-interface";
 import { upsertGuestRoster } from "../p2p-helpers";
-import { entityTemplateStore } from "#lib/stores/entity-templates/entity-template-store.svelte.js";
+import { entityTemplateStore } from "$lib/stores/entity-templates/entity-template-store.svelte";
 
 const HANDLED = new Set(["GUEST_STATUS", "GUEST_JOIN_REJECTED"]);
 

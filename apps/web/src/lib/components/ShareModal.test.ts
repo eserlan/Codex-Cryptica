@@ -6,16 +6,14 @@ import ShareModal from "./ShareModal.svelte";
 
 vi.mock("$app/paths", () => ({
   base: "",
-  asset: (p: string) => p,
-  resolve: (p: string) => p,
 }));
 
-vi.mock("#lib/utils/guest-session.js", () => ({
+vi.mock("$lib/utils/guest-session", () => ({
   getGuestViewFromPathname: vi.fn(() => "campaign"),
   normalizeGuestView: vi.fn((view: string | null | undefined) => view ?? null),
 }));
 
-vi.mock("#lib/cloud-bridge/p2p/host-service.svelte.js", () => ({
+vi.mock("$lib/cloud-bridge/p2p/host-service.svelte", () => ({
   p2pHost: {
     isHosting: true,
     activePeerId: "peer-123",
@@ -39,7 +37,7 @@ describe("ShareModal", () => {
     );
 
     const { p2pHost } =
-      await import("#lib/cloud-bridge/p2p/host-service.svelte.js");
+      await import("$lib/cloud-bridge/p2p/host-service.svelte");
     expect(p2pHost.startHosting).not.toHaveBeenCalled();
   });
 });

@@ -8,22 +8,18 @@ const monsterLabs = vi.hoisted(() => ({
 }));
 
 vi.mock("$app/navigation", () => ({ goto: vi.fn() }));
-vi.mock("$app/paths", () => ({
-  base: "",
-  asset: (p: string) => p,
-  resolve: (p: string) => p,
-}));
+vi.mock("$app/paths", () => ({ resolve: (p: string) => p }));
 vi.mock("$app/environment", () => ({ dev: false, browser: true }));
-vi.mock("#lib/utils/dev-service-worker.js", () => ({
+vi.mock("$lib/utils/dev-service-worker", () => ({
   unregisterDevelopmentServiceWorkers: vi.fn(),
 }));
-vi.mock("#lib/components/seo/generator-canvas-handoff.js", () => ({
+vi.mock("$lib/components/seo/generator-canvas-handoff", () => ({
   handoffGeneratorToCanvas: handoff,
 }));
-vi.mock("#lib/services/seo/monsterlabs-handoff-flow.svelte.js", () => ({
+vi.mock("$lib/services/seo/monsterlabs-handoff-flow.svelte", () => ({
   createMonsterLabsHandoffFlow: () => monsterLabs,
 }));
-vi.mock("#lib/services/analytics/zaraz-analytics.js", () => ({
+vi.mock("$lib/services/analytics/zaraz-analytics", () => ({
   trackPublicGeneratorAction: vi.fn(),
 }));
 

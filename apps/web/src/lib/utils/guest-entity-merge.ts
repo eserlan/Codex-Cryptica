@@ -1,5 +1,5 @@
 import type { Entity } from "schema";
-import type { LocalEntity } from "#lib/stores/vault/types.js";
+import type { LocalEntity } from "$lib/stores/vault/types";
 
 export function mergeGuestEntityUpdate(
   currentEntity: LocalEntity | undefined,

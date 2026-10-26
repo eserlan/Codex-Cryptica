@@ -1,4 +1,4 @@
-import { resolve } from "$app/paths";
+import { base } from "$app/paths";
 import { layoutUIStore, type LayoutUIStore } from "./layout-ui.svelte";
 import { modalUIStore } from "./modal-ui.svelte";
 import { UI_STORAGE_KEYS, UIPersistence } from "./persistence";
@@ -59,7 +59,6 @@ export function focusEntity(
   entityId: string | null,
   vault?: VaultSelectionPort | null,
 ): void;
-
 export function focusEntity(
   layout: LayoutUIStore,
   entityId: string | null,
@@ -78,7 +77,6 @@ export function focusEntity(
   const entityId = hasInjectedLayout
     ? (entityIdOrVault as string | null)
     : layoutOrEntityId;
-
   const vault = hasInjectedLayout
     ? maybeVault
     : (entityIdOrVault as VaultSelectionPort | null | undefined);
@@ -108,7 +106,7 @@ export function openImportWindow() {
   const left = window.screenX + (window.outerWidth - width) / 2;
   const top = window.screenY + (window.outerHeight - height) / 2;
 
-  const url = `${window.location.origin}${resolve("")}/import`;
+  const url = `${window.location.origin}${base}/import`;
   const features = `width=${width},height=${height},left=${left},top=${top},toolbar=0,location=0,menubar=0,noopener,noreferrer`;
 
   const newWin = window.open(url, "CodexCrypticaImport", features);
@@ -138,7 +136,7 @@ export function openDiceWindow(tab?: "dice" | "decks" | "tables") {
   }
 
   const query = params.toString();
-  const url = `${window.location.origin}${resolve("")}/dice${query ? `?${query}` : ""}`;
+  const url = `${window.location.origin}${base}/dice${query ? `?${query}` : ""}`;
   const features = `width=${width},height=${height},left=${left},top=${top},toolbar=0,location=0,menubar=0,noopener,noreferrer`;
 
   const newWin = window.open(url, "CodexCrypticaDice", features);

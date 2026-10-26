@@ -1,10 +1,10 @@
 /** @vitest-environment jsdom */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createCanvasLogic } from "./use-canvas-logic.svelte";
-import type { IdGenerator } from "#lib/utils/runtime-deps.js";
+import type { IdGenerator } from "$lib/utils/runtime-deps";
 import type { CanvasStore } from "@codex/canvas-engine";
-import { vault } from "#lib/stores/vault.svelte.js";
-import { canvasRegistry } from "#lib/stores/canvas-registry.svelte.js";
+import { vault } from "$lib/stores/vault.svelte";
+import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
 
 vi.mock("@xyflow/svelte", () => ({
   useSvelteFlow: () => ({
@@ -14,7 +14,7 @@ vi.mock("@xyflow/svelte", () => ({
   addEdge: (edge: any, edges: any[]) => [...edges, edge],
 }));
 
-vi.mock("#lib/stores/vault.svelte.js", () => ({
+vi.mock("$lib/stores/vault.svelte", () => ({
   vault: {
     isInitialized: true,
     activeVaultId: "vault-1",
@@ -24,7 +24,7 @@ vi.mock("#lib/stores/vault.svelte.js", () => ({
   },
 }));
 
-vi.mock("#lib/stores/canvas-registry.svelte.js", () => ({
+vi.mock("$lib/stores/canvas-registry.svelte", () => ({
   canvasRegistry: {
     isLoaded: true,
     canvases: {},
@@ -33,7 +33,7 @@ vi.mock("#lib/stores/canvas-registry.svelte.js", () => ({
   },
 }));
 
-vi.mock("#lib/stores/debug.svelte.js", () => ({
+vi.mock("$lib/stores/debug.svelte", () => ({
   debugStore: {
     warn: vi.fn(),
   },

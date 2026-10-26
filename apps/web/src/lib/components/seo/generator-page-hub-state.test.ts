@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { UIPersistence } from "#lib/stores/ui/persistence.js";
+import { UIPersistence } from "$lib/stores/ui/persistence";
 import {
   getHubMountPatch,
   resolveInitialActiveTheme,

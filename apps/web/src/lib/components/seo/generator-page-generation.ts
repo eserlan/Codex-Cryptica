@@ -4,10 +4,10 @@ import {
   extractPartialJsonStringFields,
   type OneShotProgressStep,
 } from "generator-engine";
-import { generatorEngine } from "#lib/services/seo/generator-engine.js";
-import { resolvePlotTwistPremiseForGeneration } from "#lib/services/seo/generator-handoffs.js";
+import { generatorEngine } from "$lib/services/seo/generator-engine";
+import { resolvePlotTwistPremiseForGeneration } from "$lib/services/seo/generator-handoffs";
 import type { ValidSlug } from "./generator-page-meta";
-import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
+import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
 
 export const NON_STREAMABLE_SLUGS: readonly ValidSlug[] = [
   "council-vote",

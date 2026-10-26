@@ -3,15 +3,13 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import EntityList from "./EntityList.svelte";
-import { explorerUIStore } from "#lib/stores/ui/explorer-ui.svelte.js";
+import { explorerUIStore } from "$lib/stores/ui/explorer-ui.svelte";
 
 vi.mock("$app/paths", () => ({
   base: "",
-  asset: (p: string) => p,
-  resolve: (p: string) => p,
 }));
 
-vi.mock("#lib/stores/vault.svelte.js", () => ({
+vi.mock("$lib/stores/vault.svelte", () => ({
   vault: {
     activeVaultId: "vault-1",
     allEntities: [
@@ -59,14 +57,14 @@ vi.mock("#lib/stores/vault.svelte.js", () => ({
   },
 }));
 
-vi.mock("#lib/stores/categories.svelte.js", () => ({
+vi.mock("$lib/stores/categories.svelte", () => ({
   categories: {
     list: [{ id: "npc", label: "NPC", icon: "user", color: "#fff" }],
     getCategory: () => ({ icon: "user" }),
   },
 }));
 
-vi.mock("#lib/utils/icon.js", () => ({
+vi.mock("$lib/utils/icon", () => ({
   getIconClass: () => "",
 }));
 

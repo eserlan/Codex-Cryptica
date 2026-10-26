@@ -1,7 +1,7 @@
 import {
   trackDiscoveryClick as emitDiscoveryClick,
   type DiscoveryClickInput,
-} from "#lib/services/analytics/discovery-tracking.js";
+} from "$lib/services/analytics/discovery-tracking";
 
 /**
  * Svelte action for discovery-page links/CTAs (#2687):

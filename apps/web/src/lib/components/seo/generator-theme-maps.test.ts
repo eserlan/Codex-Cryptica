@@ -1,5 +1,5 @@
 import { factionConfig } from "generator-engine";
-import { oneShotConfig } from "#lib/services/seo/generator-config.js";
+import { oneShotConfig } from "$lib/services/seo/generator-config";
 import { describe, expect, it } from "vitest";
 import {
   mapHubGenreToShipGenre,

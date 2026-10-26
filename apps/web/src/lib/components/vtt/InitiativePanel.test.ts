@@ -34,16 +34,16 @@ const mapStoreMock = vi.hoisted(() => ({
   isGMMode: true,
 }));
 
-vi.mock("#lib/stores/map-session.svelte.js", () => ({
+vi.mock("$lib/stores/map-session.svelte", () => ({
   mapSession: mapSessionMock,
 }));
 
-vi.mock("#lib/stores/map.svelte.js", () => ({
+vi.mock("$lib/stores/map.svelte", () => ({
   mapStore: mapStoreMock,
 }));
 
 import InitiativePanel from "./InitiativePanel.svelte";
-import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
 describe("InitiativePanel", () => {
   beforeEach(() => {

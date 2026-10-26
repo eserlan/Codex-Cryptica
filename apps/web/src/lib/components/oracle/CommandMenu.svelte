@@ -7,7 +7,7 @@
   import { vault } from "../../stores/vault.svelte";
   import { isEntityVisible } from "schema";
   import type { SearchResult } from "schema";
-  import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
+  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
   let {
     input = $bindable(""),
@@ -15,13 +15,13 @@
     commands = chatCommands,
     onSelect,
     onClose,
-  }: {
+  } = $props<{
     input: string;
     anchorEl: HTMLElement | null;
     commands?: ChatCommand[];
     onSelect: (command: ChatCommand) => void;
     onClose: () => void;
-  } = $props();
+  }>();
 
   let menuEl = $state<HTMLDivElement>();
   let selectedIndex = $state(0);

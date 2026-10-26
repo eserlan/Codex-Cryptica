@@ -1,4 +1,4 @@
-import type { StorageLike } from "#lib/utils/runtime-deps.js";
+import type { StorageLike } from "$lib/utils/runtime-deps";
 
 export const MAX_TABLE_PINS = 3;
 export const pinsKey = (vaultId: string) => `codex-solo-table-pins:${vaultId}`;

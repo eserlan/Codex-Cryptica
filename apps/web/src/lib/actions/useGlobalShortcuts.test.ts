@@ -1,43 +1,43 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-vi.mock("#lib/stores/search.svelte.js", () => ({
+vi.mock("$lib/stores/search.svelte", () => ({
   searchStore: {
     open: vi.fn(),
   },
 }));
 
-vi.mock("#lib/stores/vault.svelte.js", () => ({
+vi.mock("$lib/stores/vault.svelte", () => ({
   vault: {
     selectedEntityId: null,
   },
 }));
 
-vi.mock("#lib/stores/oracle.svelte.js", () => ({
+vi.mock("$lib/stores/oracle.svelte", () => ({
   oracle: {
     undo: vi.fn(),
     redo: vi.fn(),
   },
 }));
 
-vi.mock("#lib/stores/ui/modal-ui.svelte.js", () => ({
+vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
   modalUIStore: {
     openZenMode: vi.fn(),
   },
 }));
 
-vi.mock("#lib/stores/ui/session-mode.svelte.js", () => ({
+vi.mock("$lib/stores/ui/session-mode.svelte", () => ({
   sessionModeStore: {
     sharedMode: false,
   },
 }));
 
 import { createGlobalShortcutHandler } from "./useGlobalShortcuts";
-import { searchStore } from "#lib/stores/search.svelte.js";
-import { vault } from "#lib/stores/vault.svelte.js";
-import { oracle } from "#lib/stores/oracle.svelte.js";
-import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
-import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
-import { soloSessionStore } from "#lib/stores/solo-session-instance.js";
+import { searchStore } from "$lib/stores/search.svelte";
+import { vault } from "$lib/stores/vault.svelte";
+import { oracle } from "$lib/stores/oracle.svelte";
+import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { soloSessionStore } from "$lib/stores/solo-session-instance";
 
 describe("createGlobalShortcutHandler", () => {
   let handler: ReturnType<typeof createGlobalShortcutHandler>;

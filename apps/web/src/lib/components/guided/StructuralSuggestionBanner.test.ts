@@ -7,18 +7,18 @@ const { dismissedIds } = vi.hoisted(() => ({
   dismissedIds: new Set<string>(),
 }));
 
-vi.mock("#lib/stores/vault.svelte.js", () => ({
+vi.mock("$lib/stores/vault.svelte", () => ({
   vault: { entities: {} as Record<string, any> },
 }));
 
-vi.mock("#lib/stores/ui/guided-mode.svelte.js", () => ({
+vi.mock("$lib/stores/ui/guided-mode.svelte", () => ({
   guidedModeStore: {
     isRecommendationDismissed: (id: string) => dismissedIds.has(id),
     dismissRecommendation: vi.fn((id: string) => dismissedIds.add(id)),
   },
 }));
 
-vi.mock("#lib/stores/ui/modal-ui.svelte.js", () => ({
+vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
   modalUIStore: {
     openIntentGeneratorWorkflow: vi.fn(),
     openGeneratorWorkflowForEntity: vi.fn(),
@@ -26,9 +26,9 @@ vi.mock("#lib/stores/ui/modal-ui.svelte.js", () => ({
 }));
 
 import StructuralSuggestionBanner from "./StructuralSuggestionBanner.svelte";
-import { vault } from "#lib/stores/vault.svelte.js";
-import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
-import { guidedModeStore } from "#lib/stores/ui/guided-mode.svelte.js";
+import { vault } from "$lib/stores/vault.svelte";
+import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+import { guidedModeStore } from "$lib/stores/ui/guided-mode.svelte";
 
 describe("StructuralSuggestionBanner", () => {
   beforeEach(() => {

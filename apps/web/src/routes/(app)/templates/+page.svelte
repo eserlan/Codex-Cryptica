@@ -1,5 +1,5 @@
 <script lang="ts">
-  import TemplatesDirectoryPage from "#lib/components/community-templates/TemplatesDirectoryPage.svelte";
+  import TemplatesDirectoryPage from "$lib/components/community-templates/TemplatesDirectoryPage.svelte";
 </script>
 
 <svelte:head>

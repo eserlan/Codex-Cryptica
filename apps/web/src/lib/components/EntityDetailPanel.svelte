@@ -2,7 +2,7 @@
   import type { Entity, GuestChatConfig } from "schema";
   import { fade } from "svelte/transition";
   import { quintOut } from "svelte/easing";
-  import { vault } from "#lib/stores/vault.svelte.js";
+  import { vault } from "$lib/stores/vault.svelte";
   import ResizerHandle from "./layout/ResizerHandle.svelte";
 
   // Sub-components
@@ -23,24 +23,24 @@
     createEntityDetailTabIds,
     type EntityDetailTab,
   } from "./entity-detail/detail-tabs";
-  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import {
     layoutUIStore,
     MAX_SIDEBAR_VW,
     MIN_RIGHT_SIDEBAR_WIDTH,
-  } from "#lib/stores/ui/layout-ui.svelte.js";
-  import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
-  import { guestVault } from "#lib/stores/guest-vault.svelte.js";
+  } from "$lib/stores/ui/layout-ui.svelte";
+  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { guestVault } from "$lib/stores/guest-vault.svelte";
 
   let {
     entity: _entity,
     onClose,
     onDateClick,
-  }: {
+  } = $props<{
     entity: Entity | null;
     onClose: () => void;
     onDateClick?: (year: number, month: number) => void;
-  } = $props();
+  }>();
 
   const tabInstanceId = $props.id();
 

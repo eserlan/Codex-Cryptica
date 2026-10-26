@@ -1,22 +1,22 @@
 <script lang="ts">
   import { fade } from "svelte/transition";
-  import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
-  import { renderGeneratorMarkdown } from "#lib/components/seo/markdown-renderers.js";
-  import type { MarkdownSectionForCopy } from "#lib/components/seo/markdown-sections.js";
+  import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
+  import { renderGeneratorMarkdown } from "$lib/components/seo/markdown-renderers";
+  import type { MarkdownSectionForCopy } from "$lib/components/seo/markdown-sections";
   import type { OneShotProgressStep, SessionEntity } from "generator-engine";
   import SessionHubWidget from "./SessionHubWidget.svelte";
   import GeneratorAiNotice, { hasAiNotice } from "./GeneratorAiNotice.svelte";
   import GenerationProgressList from "./GenerationProgressList.svelte";
-  import GeneratorMechanicsPreview from "#lib/components/generators/GeneratorMechanicsPreview.svelte";
+  import GeneratorMechanicsPreview from "$lib/components/generators/GeneratorMechanicsPreview.svelte";
   import {
     isFactionDraft,
     isFactionRosterDraft,
-  } from "#lib/services/seo/generator-handoffs.js";
+  } from "$lib/services/seo/generator-handoffs";
   import {
     isMonsterLabsHandoffEligibleType,
     isMonsterLabsItemEligibleType,
-  } from "#lib/services/seo/monsterlabs-handoff.js";
-  import ShareButton from "#lib/components/ShareButton.svelte";
+  } from "$lib/services/seo/monsterlabs-handoff";
+  import ShareButton from "$lib/components/ShareButton.svelte";
   import { buildMysteryPlayerHandout } from "./generator-copy";
 
   const HIDDEN_TAGS = new Set([

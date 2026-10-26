@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { FEATURE_HELP_ARTICLES } from "./help-content";
-import { loadHelpArticles } from "#lib/content/loader.js";
+import { loadHelpArticles } from "$lib/content/loader";
 
 const article = (id: string) => loadHelpArticles().find((a) => a.id === id);
 

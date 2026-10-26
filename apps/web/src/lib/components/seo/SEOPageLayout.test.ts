@@ -2,15 +2,11 @@
 
 import { render, screen } from "@testing-library/svelte";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { SEOComparisonPageData } from "#lib/config/seo-comparisons.js";
+import type { SEOComparisonPageData } from "$lib/config/seo-comparisons";
 import SEOPageLayout from "./SEOPageLayout.svelte";
-import { worldbuildingToolRoot } from "#lib/config/seo-pages.js";
+import { worldbuildingToolRoot } from "$lib/config/seo-pages";
 
-vi.mock("$app/paths", () => ({
-  base: "",
-  asset: (p: string) => p,
-  resolve: (p: string) => p,
-}));
+vi.mock("$app/paths", () => ({ base: "" }));
 
 vi.mock("$app/environment", () => ({
   browser: true,

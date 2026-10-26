@@ -1,24 +1,24 @@
 <script lang="ts">
-  import { oracle } from "#lib/stores/oracle.svelte.js";
+  import { oracle } from "$lib/stores/oracle.svelte";
   import OracleChat from "./OracleChat.svelte";
   import OracleStatus from "./OracleStatus.svelte";
   import ActivityLog from "./ActivityLog.svelte";
-  import { demoService } from "#lib/services/demo.js";
-  import { themeStore } from "#lib/stores/theme.svelte.js";
+  import { demoService } from "$lib/services/demo";
+  import { themeStore } from "$lib/stores/theme.svelte";
   import { page } from "$app/state";
   import { goto } from "$app/navigation";
-  import { resolve } from "$app/paths";
+  import { base } from "$app/paths";
   import { fly } from "svelte/transition";
   import { onMount } from "svelte";
-  import { FEATURE_HINTS, HINT_KEYS } from "#lib/config/help-content.js";
-  import { mapSession } from "#lib/stores/map-session.svelte.js";
+  import { FEATURE_HINTS, HINT_KEYS } from "$lib/config/help-content";
+  import { mapSession } from "$lib/stores/map-session.svelte";
   import VTTChat from "../vtt/VTTChat.svelte";
-  import { discoveryPolicyStore } from "#lib/stores/ui/discovery-policy.svelte.js";
-  import { layoutUIStore } from "#lib/stores/ui/layout-ui.svelte.js";
-  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
-  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
-  import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
-  import { browserStorage, type StorageLike } from "#lib/utils/runtime-deps.js";
+  import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
+  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { browserStorage, type StorageLike } from "$lib/utils/runtime-deps";
 
   const connectionHint = FEATURE_HINTS["oracle-connection-modes"];
 
@@ -48,7 +48,7 @@
 
   const popOut = () => {
     window.open(
-      resolve(`oracle`),
+      `${base}/oracle`,
       "codex-oracle",
       "width=600,height=800,menubar=no,toolbar=no,location=no,status=no",
     );

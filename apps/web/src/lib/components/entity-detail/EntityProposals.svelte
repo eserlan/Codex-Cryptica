@@ -1,25 +1,25 @@
 <script lang="ts">
   import { extractProposals } from "editor-core";
-  import { vault } from "#lib/stores/vault.svelte.js";
-  import { proposerStore } from "#lib/stores/proposer.svelte.js";
-  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+  import { vault } from "$lib/stores/vault.svelte";
+  import { proposerStore } from "$lib/stores/proposer.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { searchService } from "@codex/search-orchestrator";
-  import { revisionService } from "#lib/services/RevisionService.svelte.js";
-  import { oracle } from "#lib/stores/oracle.svelte.js";
+  import { revisionService } from "$lib/services/RevisionService.svelte";
+  import { oracle } from "$lib/stores/oracle.svelte";
   import {
     loadIgnoredEntityProposals,
     saveIgnoredEntityProposals,
-  } from "#lib/utils/entity-proposal-ignores.js";
+  } from "$lib/utils/entity-proposal-ignores";
 
   let {
     content,
     isEditing = false,
     entityId,
-  }: {
+  } = $props<{
     content: string;
     isEditing?: boolean;
     entityId?: string;
-  } = $props();
+  }>();
 
   const existingTitles = $derived.by(() => {
     const names = new Set<string>();

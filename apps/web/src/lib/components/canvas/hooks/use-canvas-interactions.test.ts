@@ -4,7 +4,7 @@ import type { Node } from "@xyflow/svelte";
 
 const connectionMode = vi.hoisted(() => ({ isConnecting: false }));
 
-vi.mock("#lib/stores/ui/connection-mode.svelte.js", () => ({
+vi.mock("$lib/stores/ui/connection-mode.svelte", () => ({
   connectionModeStore: connectionMode,
 }));
 vi.mock("../canvas-workspace-helpers", () => ({

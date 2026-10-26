@@ -1,41 +1,42 @@
 <script lang="ts">
-  import { getIconClass } from "#lib/utils/icon.js";
-  import { categories } from "#lib/stores/categories.svelte.js";
-  import { vault } from "#lib/stores/vault.svelte.js";
-  import { guestChatStore } from "#lib/stores/guest-chat.svelte.js";
+  import { getIconClass } from "$lib/utils/icon";
+  import { categories } from "$lib/stores/categories.svelte";
+  import { vault } from "$lib/stores/vault.svelte";
+  import { guestChatStore } from "$lib/stores/guest-chat.svelte";
   import type { Entity } from "schema";
-  import ReportZenButtons from "#lib/components/reports/ReportZenButtons.svelte";
-  import AliasInput from "#lib/components/labels/AliasInput.svelte";
-  import CategoryRadioGroup from "#lib/components/labels/CategoryRadioGroup.svelte";
+  import ReportZenButtons from "$lib/components/reports/ReportZenButtons.svelte";
+  import AliasInput from "$lib/components/labels/AliasInput.svelte";
+  import CategoryRadioGroup from "$lib/components/labels/CategoryRadioGroup.svelte";
   import {
     dispatchSearchEntityFocus,
     DEFAULT_SEARCH_ENTITY_ZOOM,
-  } from "#lib/components/search/search-focus.js";
+  } from "$lib/components/search/search-focus";
 
   import { page } from "$app/state";
-  import { layoutUIStore } from "#lib/stores/ui/layout-ui.svelte.js";
-  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+  import { base } from "$app/paths";
+  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { soundBiteService } from "@codex/audio-engine";
-  import { guestVault } from "#lib/stores/guest-vault.svelte.js";
-  import { copyGuestEntityLink } from "#lib/services/publishing/guest-link.js";
-  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
-  import { canvasRegistry } from "#lib/stores/canvas-registry.svelte.js";
+  import { guestVault } from "$lib/stores/guest-vault.svelte";
+  import { copyGuestEntityLink } from "$lib/services/publishing/guest-link";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
   import {
     dungeonDelveService,
     isDelveLocationEntity,
-  } from "#lib/services/dungeon-delve-service.js";
+  } from "$lib/services/dungeon-delve-service";
   import { goto } from "$app/navigation";
-  import { themeStore } from "#lib/stores/theme.svelte.js";
-  import { openCanvasFromZen } from "#lib/stores/ui/navigation.js";
-  import { getDelveCanvasLabel } from "#lib/utils/delve-terminology.js";
-  import { shelf } from "#lib/features/shelf/index.js";
-  import SaveStatusIndicator from "#lib/components/ui/SaveStatusIndicator.svelte";
+  import { themeStore } from "$lib/stores/theme.svelte";
+  import { openCanvasFromZen } from "$lib/stores/ui/navigation";
+  import { getDelveCanvasLabel } from "$lib/utils/delve-terminology";
+  import { shelf } from "$lib/features/shelf";
+  import SaveStatusIndicator from "$lib/components/ui/SaveStatusIndicator.svelte";
   import {
     isMonsterLabsHandoffEligibleType,
     getMonsterLabsActionLabel,
-  } from "#lib/services/seo/monsterlabs-handoff.js";
-  import { createMonsterLabsHandoffFlow } from "#lib/services/seo/monsterlabs-handoff-flow.svelte.js";
-  import MonsterLabsSendingModal from "#lib/components/modals/MonsterLabsSendingModal.svelte";
+  } from "$lib/services/seo/monsterlabs-handoff";
+  import { createMonsterLabsHandoffFlow } from "$lib/services/seo/monsterlabs-handoff-flow.svelte";
+  import MonsterLabsSendingModal from "$lib/components/modals/MonsterLabsSendingModal.svelte";
 
   let {
     entity,
@@ -52,7 +53,7 @@
     onApproveDraft,
     onRejectDraft,
     isDraftActioning = false,
-  }: {
+  } = $props<{
     entity: Entity;
     editState: any;
     isSaving: boolean;
@@ -67,7 +68,7 @@
     onApproveDraft?: () => void;
     onRejectDraft?: () => void;
     isDraftActioning?: boolean;
-  } = $props();
+  }>();
 
   let linkCopied = $state(false);
   let shelvedJustNow = $state(false);
@@ -114,9 +115,11 @@
     }
   };
 
-  const isGraphView = $derived(
-    page.url.pathname === "/" || page.url.pathname === "",
-  );
+  const isGraphView = $derived.by(() => {
+    const path = page.url.pathname;
+    const normalizedBase = base.endsWith("/") ? base : `${base}/`;
+    return path === base || path === normalizedBase || path === "/";
+  });
 
   const handleFindInGraph = () => {
     const entityId = entity?.id;

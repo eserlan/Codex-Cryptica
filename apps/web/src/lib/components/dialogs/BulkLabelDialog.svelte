@@ -1,21 +1,21 @@
 <script lang="ts">
-  import { vault } from "#lib/stores/vault.svelte.js";
-  import { graph } from "#lib/stores/graph.svelte.js";
-  import { themeStore } from "#lib/stores/theme.svelte.js";
+  import { vault } from "$lib/stores/vault.svelte";
+  import { graph } from "$lib/stores/graph.svelte";
+  import { themeStore } from "$lib/stores/theme.svelte";
   import { fade, fly } from "svelte/transition";
-  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
-  import { layoutUIStore } from "#lib/stores/ui/layout-ui.svelte.js";
-  import EmptyState from "#lib/components/ui/EmptyState.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
+  import EmptyState from "$lib/components/ui/EmptyState.svelte";
 
   let {
     isOpen = false,
     entityIds = [],
     onClose = () => {},
-  }: {
+  } = $props<{
     isOpen: boolean;
     entityIds: string[];
     onClose?: () => void;
-  } = $props();
+  }>();
 
   type Tab = "apply" | "remove";
   let activeTab = $state<Tab>("apply");

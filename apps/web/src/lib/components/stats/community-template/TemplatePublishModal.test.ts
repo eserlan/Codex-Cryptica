@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 
 const { publishTemplate } = vi.hoisted(() => ({ publishTemplate: vi.fn() }));
 
-vi.mock("#lib/services/publishing/PublicTemplateDirectoryService.js", () => ({
+vi.mock("$lib/services/publishing/PublicTemplateDirectoryService", () => ({
   publicTemplateDirectoryService: { publishTemplate },
 }));
 

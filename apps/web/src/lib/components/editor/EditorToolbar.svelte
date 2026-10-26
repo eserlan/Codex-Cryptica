@@ -9,13 +9,13 @@
     isZenMode,
     onToggleZenMode,
     compact = false,
-  }: {
+  } = $props<{
     editor: Editor | null;
     isZenMode: boolean;
     onToggleZenMode: () => void;
     /** Inline marks and lists only: no headings, link/table, or Zen mode. */
     compact?: boolean;
-  } = $props();
+  }>();
 
   // Optimization: Single state object for all formatting states.
   // Assignment to its properties only triggers reactivity if the value actually changes.

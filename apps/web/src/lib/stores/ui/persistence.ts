@@ -1,4 +1,4 @@
-import { browserStorage } from "#lib/utils/runtime-deps.js";
+import { browserStorage } from "$lib/utils/runtime-deps";
 export interface StorageLike {
   getItem(key: string): string | null;
   setItem(key: string, value: string): void;

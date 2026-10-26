@@ -2,8 +2,8 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { sanitizeHelpContext, type HelpAnswer } from "help-engine";
-import type { HelpAskResult } from "#lib/services/help-assistant/help-client.js";
-import { HelpAssistantStore } from "#lib/stores/help-assistant/help-assistant.svelte.js";
+import type { HelpAskResult } from "$lib/services/help-assistant/help-client";
+import { HelpAssistantStore } from "$lib/stores/help-assistant/help-assistant.svelte";
 import HelpAssistantPanel from "./HelpAssistantPanel.svelte";
 import { DELIGHT_MS } from "./cif-mood";
 

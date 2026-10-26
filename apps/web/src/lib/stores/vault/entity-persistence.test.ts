@@ -9,7 +9,7 @@ vi.hoisted(() => {
 vi.mock("../debug.svelte", () => ({
   debugStore: { log: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
-vi.mock("#lib/stores/ui/session-mode.svelte.js", () => ({
+vi.mock("$lib/stores/ui/session-mode.svelte", () => ({
   sessionModeStore: { isDemoMode: false, isGuestMode: false },
 }));
 const cacheSet = vi.fn(async () => true);

@@ -1,4 +1,4 @@
-import { trackEvent } from "#lib/services/analytics/zaraz-analytics.js";
+import { trackEvent } from "$lib/services/analytics/zaraz-analytics";
 
 export type MyStuffTab = "liked" | "shared";
 

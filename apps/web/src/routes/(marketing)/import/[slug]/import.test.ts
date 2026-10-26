@@ -2,9 +2,9 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import { load, entries } from "./+page";
 import Page from "./+page.svelte";
-import { importsConfig } from "#lib/config/seo-imports.js";
-import * as importParser from "#lib/services/seo/import-parser.js";
-import type { ParsedEntity } from "#lib/services/seo/wa-parser.js";
+import { importsConfig } from "$lib/config/seo-imports";
+import * as importParser from "$lib/services/seo/import-parser";
+import type { ParsedEntity } from "$lib/services/seo/wa-parser";
 
 vi.mock("$app/environment", () => ({
   browser: true,
@@ -12,8 +12,6 @@ vi.mock("$app/environment", () => ({
 
 vi.mock("$app/paths", () => ({
   base: "",
-  asset: (p: string) => p,
-  resolve: (p: string) => p,
 }));
 
 // Stub Element.prototype.animate for Svelte transitions compatibility in Vitest
@@ -332,8 +330,8 @@ describe("Imports SvelteKit Route", () => {
 
     it("world-anvil-export config has aiTrustSection enabled", async () => {
       const { importsConfig } = (await vi.importActual(
-        "#lib/config/seo-pages.js",
-      )) as typeof import("#lib/config/seo-pages.js");
+        "$lib/config/seo-pages",
+      )) as typeof import("$lib/config/seo-pages");
       expect(importsConfig["world-anvil-export"].aiTrustSection).toBe(true);
     });
   });
@@ -394,8 +392,8 @@ describe("Imports SvelteKit Route", () => {
 
     it("import configs have relatedLinks pointing to their vs counterpart", async () => {
       const { importsConfig } = (await vi.importActual(
-        "#lib/config/seo-pages.js",
-      )) as typeof import("#lib/config/seo-pages.js");
+        "$lib/config/seo-pages",
+      )) as typeof import("$lib/config/seo-pages");
       expect(
         importsConfig["obsidian-vault"].relatedLinks?.some(
           (l) => l.href === "/vs/obsidian",
@@ -500,8 +498,8 @@ describe("Imports SvelteKit Route", () => {
 
     it("thread-weaver and scabard configs load correctly", async () => {
       const { importsConfig } = (await vi.importActual(
-        "#lib/config/seo-pages.js",
-      )) as typeof import("#lib/config/seo-pages.js");
+        "$lib/config/seo-pages",
+      )) as typeof import("$lib/config/seo-pages");
       expect(importsConfig["thread-weaver"].toolUrl).toBe(
         "https://ambiancearchitect.itch.io/thread-weaver-engine",
       );

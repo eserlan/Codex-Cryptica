@@ -1,6 +1,6 @@
 <script lang="ts">
-  import SEOPageLayout from "#lib/components/seo/SEOPageLayout.svelte";
-  import type { SEOPageData } from "#lib/config/seo-pages.js";
+  import SEOPageLayout from "$lib/components/seo/SEOPageLayout.svelte";
+  import type { SEOPageData } from "$lib/config/seo-pages";
 
   const data: SEOPageData = {
     slug: "ai-rpg-campaign-manager",

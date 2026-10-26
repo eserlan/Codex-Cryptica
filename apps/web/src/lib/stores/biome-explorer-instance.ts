@@ -1,12 +1,12 @@
 import { aiClientManager } from "@codex/ai-engine";
-import { createBiomeSuggestRunner } from "#lib/services/biome/biome-suggest-runner.js";
+import { createBiomeSuggestRunner } from "$lib/services/biome/biome-suggest-runner";
 import { oracle } from "./oracle.svelte";
-import { clipboardService } from "#lib/services/ClipboardService.js";
+import { clipboardService } from "$lib/services/ClipboardService";
 import {
   browserStorage,
   systemClock,
   systemIdGenerator,
-} from "#lib/utils/runtime-deps.js";
+} from "$lib/utils/runtime-deps";
 import { BiomeExplorerStore } from "./biome-explorer.svelte";
 import { discoveryPolicyStore } from "./ui/discovery-policy.svelte";
 

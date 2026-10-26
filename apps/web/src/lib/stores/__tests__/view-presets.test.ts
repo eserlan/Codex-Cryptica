@@ -6,7 +6,7 @@ import {
   type ViewPresetState,
 } from "../view-presets";
 import { ViewPresetsStore } from "../view-presets.svelte";
-import { filterEntities } from "#lib/components/explorer/entityListFiltering.js";
+import { filterEntities } from "$lib/components/explorer/entityListFiltering";
 import type { Entity } from "schema";
 
 describe("view-presets serialization & parsing", () => {

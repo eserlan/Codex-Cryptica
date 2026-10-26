@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { categories } from "#lib/stores/categories.svelte.js";
-  import { themeStore } from "#lib/stores/theme.svelte.js";
+  import { categories } from "$lib/stores/categories.svelte";
+  import { themeStore } from "$lib/stores/theme.svelte";
   import { deriveEntityTypePalette } from "schema";
-  import { getIconClass } from "#lib/utils/icon.js";
+  import { getIconClass } from "$lib/utils/icon";
 
   let {
     activeCategories,

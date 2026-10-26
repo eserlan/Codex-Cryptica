@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { Entity, StatSheetField } from "schema";
 import type { PresentationRenderContext } from "../types";
 
-vi.mock("#lib/stores/vault.svelte.js", () => ({
+vi.mock("$lib/stores/vault.svelte", () => ({
   vault: { entities: {}, allEntities: [] },
 }));
 import ItemTableToolbar from "./ItemTableToolbar.svelte";

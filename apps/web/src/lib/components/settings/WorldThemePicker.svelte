@@ -10,7 +10,7 @@
     previewEnabled = false,
     descriptionClass = "text-xs text-theme-muted/70 leading-relaxed",
     cardClass = "bg-theme-surface border-theme-border hover:border-theme-primary/50",
-  }: {
+  } = $props<{
     selectedThemeId: string;
     onSelect: (themeId: WorldThemeId) => void;
     onPreview?: (themeId: WorldThemeId | null) => void;
@@ -18,7 +18,7 @@
     previewEnabled?: boolean;
     descriptionClass?: string;
     cardClass?: string;
-  } = $props();
+  }>();
 
   const worldThemes = Object.values(THEMES);
 

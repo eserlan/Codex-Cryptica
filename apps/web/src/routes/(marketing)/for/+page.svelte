@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { resolve } from "$app/paths";
+  import { base } from "$app/paths";
   import type { PageData } from "./$types";
-  import type { LandingPageConfig } from "#lib/content/for/schema.js";
+  import type { LandingPageConfig } from "$lib/content/for/schema";
 
   let { data }: { data: PageData } = $props();
 
@@ -16,7 +16,7 @@
   <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
     {#each pages as page}
       <a
-        href="{resolve('')}/for/{page.slug}"
+        href="{base}/for/{page.slug}"
         class="group flex h-full flex-col overflow-hidden rounded-xl border border-theme-border bg-theme-surface p-6 shadow-md transition-all hover:border-theme-primary/50 hover:shadow-lg"
         style:background-image="var(--bg-texture-overlay)"
       >

@@ -40,7 +40,7 @@ vi.mock("./NoteHistory.svelte", () => ({
 }));
 
 import QuickNoteScratchpad from "./QuickNoteScratchpad.svelte";
-import { quickNoteStore } from "#lib/stores/quicknote.svelte.js";
+import { quickNoteStore } from "$lib/stores/quicknote.svelte";
 
 describe("QuickNoteScratchpad tabs", () => {
   beforeEach(() => {

@@ -1,5 +1,5 @@
 import { onMount } from "svelte";
-import { connectionModeStore } from "#lib/stores/ui/connection-mode.svelte.js";
+import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
 
 export function useCanvasEvents(params: {
   onQuickSpawn: (

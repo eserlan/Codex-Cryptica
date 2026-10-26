@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { shipConfig, pickFrom } from "#lib/services/seo/generator-config.js";
-  import SelectWithCustomOption from "#lib/components/forms/SelectWithCustomOption.svelte";
+  import { shipConfig, pickFrom } from "$lib/services/seo/generator-config";
+  import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
 
   let {
     genre = $bindable(shipConfig.genres[0]),

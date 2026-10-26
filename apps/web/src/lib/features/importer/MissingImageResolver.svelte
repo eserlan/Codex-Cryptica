@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { MissingImageReference } from "@codex/importer";
-  import { isFileSystemAccessSupported } from "#lib/utils/fs.js";
+  import { isFileSystemAccessSupported } from "$lib/utils/fs";
 
   interface Props {
     refs: MissingImageReference[];

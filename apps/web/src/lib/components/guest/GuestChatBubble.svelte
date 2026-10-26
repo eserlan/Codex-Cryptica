@@ -1,14 +1,11 @@
 <script lang="ts">
   import type { GuestChatMessage } from "schema";
-  import { renderMarkdown } from "#lib/utils/markdown.js";
+  import { renderMarkdown } from "$lib/utils/markdown";
 
-  let {
-    message,
-    characterTitle = "Character",
-  }: {
+  let { message, characterTitle = "Character" } = $props<{
     message: GuestChatMessage;
     characterTitle?: string;
-  } = $props();
+  }>();
 
   const isUser = $derived(message.role === "user");
 </script>

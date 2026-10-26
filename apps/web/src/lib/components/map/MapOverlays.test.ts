@@ -26,11 +26,11 @@ const mocks = vi.hoisted(() => ({
   vault: { entities: { e1: { title: "The Red Hand" } } },
 }));
 
-vi.mock("#lib/stores/map.svelte.js", () => ({ mapStore: mocks.mapStore }));
-vi.mock("#lib/stores/map-session.svelte.js", () => ({
+vi.mock("$lib/stores/map.svelte", () => ({ mapStore: mocks.mapStore }));
+vi.mock("$lib/stores/map-session.svelte", () => ({
   mapSession: mocks.mapSession,
 }));
-vi.mock("#lib/stores/vault.svelte.js", () => ({ vault: mocks.vault }));
+vi.mock("$lib/stores/vault.svelte", () => ({ vault: mocks.vault }));
 vi.mock("./PinLinker.svelte", () => ({ default: () => ({}) }));
 vi.mock("./MapPinPopover.svelte", () => ({ default: () => ({}) }));
 vi.mock("./TokenHealthBarPopover.svelte", () => ({ default: () => ({}) }));
@@ -41,10 +41,10 @@ const hexStoreMock = vi.hoisted(() => ({
     openHex: (mapId: string, hex: unknown, opener?: HTMLElement) => void;
   },
 }));
-vi.mock("#lib/components/map/hex-crawl/hex-crawl-context.js", () => ({
+vi.mock("$lib/components/map/hex-crawl/hex-crawl-context", () => ({
   useHexCrawlStore: () => hexStoreMock.current,
 }));
-vi.mock("#lib/stores/ui/session-mode.svelte.js", () => ({
+vi.mock("$lib/stores/ui/session-mode.svelte", () => ({
   sessionModeStore: { isGuestMode: false },
 }));
 

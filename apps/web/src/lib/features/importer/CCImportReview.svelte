@@ -4,7 +4,7 @@
     MatchDecision,
     ItemDecision,
   } from "@codex/importer";
-  import { categories } from "#lib/stores/categories.svelte.js";
+  import { categories } from "$lib/stores/categories.svelte";
 
   interface Props {
     session: CCImportSession;

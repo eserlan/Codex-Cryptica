@@ -2,7 +2,7 @@ import type { Entity } from "schema";
 import {
   resolveSelectionReportInput,
   type SelectionReportResult,
-} from "#lib/services/report-selection-input.js";
+} from "$lib/services/report-selection-input";
 
 export function useGraphReportGeneration(
   selectedNodeIds: string[],

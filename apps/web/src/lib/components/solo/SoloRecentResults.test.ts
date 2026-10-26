@@ -7,13 +7,13 @@ const env = vi.hoisted(() => ({
   journal: { current: null as any, open: vi.fn(), start: vi.fn() },
   controlState: "start" as string,
 }));
-vi.mock("#lib/stores/session-journal.svelte.js", () => ({
+vi.mock("$lib/stores/session-journal.svelte", () => ({
   sessionJournalStore: env.journal,
 }));
-vi.mock("#lib/stores/solo-session-instance.js", () => ({
+vi.mock("$lib/stores/solo-session-instance", () => ({
   soloPromoter: { promote: vi.fn() },
 }));
-vi.mock("#lib/stores/categories.svelte.js", () => ({
+vi.mock("$lib/stores/categories.svelte", () => ({
   categories: {
     list: ["character", "location", "item", "faction", "event", "note"].map(
       (id) => ({ id }),

@@ -7,8 +7,8 @@ import {
   type CanvasDrawing,
   type CanvasDrawingPoint,
 } from "@codex/canvas-engine";
-import { vault } from "#lib/stores/vault.svelte.js";
-import { systemIdGenerator } from "#lib/utils/runtime-deps.js";
+import { vault } from "$lib/stores/vault.svelte";
+import { systemIdGenerator } from "$lib/utils/runtime-deps";
 
 export function useCanvasDrawing(logic: {
   drawings: CanvasDrawing[];

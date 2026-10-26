@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { BiomeExplorerStore } from "#lib/stores/biome-explorer.svelte.js";
+  import type { BiomeExplorerStore } from "$lib/stores/biome-explorer.svelte";
 
   let { store }: { store: BiomeExplorerStore } = $props();
 

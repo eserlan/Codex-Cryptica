@@ -1,10 +1,10 @@
-import { getDB } from "#lib/utils/idb.js";
+import { getDB } from "$lib/utils/idb";
 import {
   systemClock,
   systemIdGenerator,
   type Clock,
   type IdGenerator,
-} from "#lib/utils/runtime-deps.js";
+} from "$lib/utils/runtime-deps";
 import {
   parseViewPresets,
   viewPresetsSettingsKey,

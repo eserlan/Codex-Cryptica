@@ -136,7 +136,6 @@ export const howDoYouMakeAnAlienSpeciesFeelBelievable: AnswerConfigInput = {
     "how-to-create-a-sci-fi-star-system-for-an-rpg",
     "how-do-i-run-common-character-roles-in-a-sci-fi-or-space-opera-rpg",
     "how-do-i-make-different-cultures-feel-distinct-without-relying-on-stereotypes",
-    "how-do-i-build-a-believable-post-scarcity-civilisation",
   ],
   labels: ["sci-fi"],
   discovery: {

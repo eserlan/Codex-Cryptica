@@ -1,5 +1,5 @@
-import { safeJsonLd } from "#lib/utils/json-ld.js";
-import { buildAbsoluteUrl } from "#lib/seo/site.js";
+import { safeJsonLd } from "$lib/utils/json-ld";
+import { buildAbsoluteUrl } from "$lib/seo/site";
 import type {
   TopicBeginnerHubConfig,
   TopicLearningStepLink,

@@ -10,11 +10,11 @@ const { addResult, notify, sendResolvedRollMessage, mapSessionState } =
     mapSessionState: { vttEnabled: true },
   }));
 
-vi.mock("#lib/stores/dice-history.svelte.js", () => ({
+vi.mock("$lib/stores/dice-history.svelte", () => ({
   diceHistory: { addResult },
 }));
 
-vi.mock("#lib/stores/map-session.svelte.js", () => ({
+vi.mock("$lib/stores/map-session.svelte", () => ({
   mapSession: {
     get vttEnabled() {
       return mapSessionState.vttEnabled;
@@ -23,7 +23,7 @@ vi.mock("#lib/stores/map-session.svelte.js", () => ({
   },
 }));
 
-vi.mock("#lib/stores/ui/notification.svelte.js", () => ({
+vi.mock("$lib/stores/ui/notification.svelte", () => ({
   notificationStore: { notify },
 }));
 

@@ -6,12 +6,12 @@
     isFocus = false,
     onSelect,
     onOpen,
-  }: {
+  } = $props<{
     member: FamilyMember;
     isFocus?: boolean;
     onSelect?: (id: string) => void;
     onOpen?: (id: string) => void;
-  } = $props();
+  }>();
 
   const selectable = $derived(!!onSelect && !isFocus);
 

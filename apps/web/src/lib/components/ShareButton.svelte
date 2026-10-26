@@ -1,11 +1,11 @@
 <script lang="ts">
   import { tick, untrack } from "svelte";
-  import { copyTextToClipboard } from "#lib/utils/share-link.js";
+  import { copyTextToClipboard } from "$lib/utils/share-link";
   import {
     createGeneratorShareFlow,
     type GeneratorShareFlow,
-  } from "#lib/services/sharing/generator-share-flow.svelte.js";
-  import GeneratorShareModal from "#lib/components/modals/GeneratorShareModal.svelte";
+  } from "$lib/services/sharing/generator-share-flow.svelte";
+  import GeneratorShareModal from "$lib/components/modals/GeneratorShareModal.svelte";
 
   type PreparedShare = {
     url: string;

@@ -1,4 +1,4 @@
-import { isVaultReadyForGenerators } from "#lib/stores/vault/readiness.js";
+import { isVaultReadyForGenerators } from "$lib/stores/vault/readiness";
 
 /**
  * Whether the generator workflow can really open right now: a vault that is

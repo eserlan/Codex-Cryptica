@@ -1,10 +1,10 @@
 import { tick } from "svelte";
-import { browser } from "$app/env";
-import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
-import { onlineStatus } from "#lib/stores/online.svelte.js";
-import { sessionHubStore } from "#lib/stores/session-hub.svelte.js";
-import { trackEvent } from "#lib/services/analytics/zaraz-analytics.js";
-import type { getGeneratorDocumentLayout } from "#lib/components/seo/generator-document-layout.js";
+import { browser } from "$app/environment";
+import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
+import { onlineStatus } from "$lib/stores/online.svelte";
+import { sessionHubStore } from "$lib/stores/session-hub.svelte";
+import { trackEvent } from "$lib/services/analytics/zaraz-analytics";
+import type { getGeneratorDocumentLayout } from "$lib/components/seo/generator-document-layout";
 import type { getContextSelection } from "generator-engine";
 import { recordGeneratedEntity } from "./record-generated-entity";
 

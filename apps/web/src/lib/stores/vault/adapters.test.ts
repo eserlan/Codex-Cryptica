@@ -6,7 +6,7 @@ import { cacheService } from "../../services/cache.svelte";
 import * as imageProcessing from "../../utils/image-processing";
 import { getDB } from "../../utils/idb";
 import { LocalSyncService, SyncRegistry } from "@codex/sync-engine";
-import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
+import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
 vi.mock("../../utils/opfs", () => ({
   walkOpfsDirectory: vi.fn(),

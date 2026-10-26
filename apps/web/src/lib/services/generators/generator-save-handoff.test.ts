@@ -5,11 +5,11 @@ const { focusEntityMock, notifyMock } = vi.hoisted(() => ({
   notifyMock: vi.fn(),
 }));
 
-vi.mock("#lib/stores/ui/navigation.js", () => ({
+vi.mock("$lib/stores/ui/navigation", () => ({
   focusEntity: focusEntityMock,
 }));
 
-vi.mock("#lib/stores/ui/notification.svelte.js", () => ({
+vi.mock("$lib/stores/ui/notification.svelte", () => ({
   notificationStore: { notify: notifyMock },
 }));
 

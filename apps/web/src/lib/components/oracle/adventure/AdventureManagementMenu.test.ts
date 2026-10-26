@@ -15,7 +15,7 @@ function manager(overrides: Record<string, unknown> = {}) {
   } as any;
 }
 
-vi.mock("#lib/stores/ui/notification.svelte.js", () => ({
+vi.mock("$lib/stores/ui/notification.svelte", () => ({
   notificationStore: {
     confirm: vi.fn().mockResolvedValue(true),
     notify: vi.fn(),

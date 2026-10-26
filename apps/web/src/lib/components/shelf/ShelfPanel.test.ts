@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { render } from "@testing-library/svelte";
 import type { ShelfEntrySummary } from "@codex/entity-shelf";
 import ShelfPanel from "./ShelfPanel.svelte";
-import type { ShelfStore } from "#lib/features/shelf/shelf.svelte.js";
+import type { ShelfStore } from "$lib/features/shelf/shelf.svelte";
 
 function entry(overrides: Partial<ShelfEntrySummary> = {}): ShelfEntrySummary {
   return {

@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { renderMarkdown } from "#lib/utils/markdown.js";
-  import type { HelpMessage } from "#lib/stores/help-assistant/help-assistant.svelte.js";
+  import { renderMarkdown } from "$lib/utils/markdown";
+  import type { HelpMessage } from "$lib/stores/help-assistant/help-assistant.svelte";
   import HelpSourceChips from "./HelpSourceChips.svelte";
   import HelpTopicList from "./HelpTopicList.svelte";
 

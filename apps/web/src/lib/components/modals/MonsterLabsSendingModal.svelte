@@ -1,6 +1,6 @@
 <script lang="ts">
-  import ModalShell from "#lib/components/ui/ModalShell.svelte";
-  import type { MonsterLabsHandoffState } from "#lib/services/seo/monsterlabs-handoff-flow.svelte.js";
+  import ModalShell from "$lib/components/ui/ModalShell.svelte";
+  import type { MonsterLabsHandoffState } from "$lib/services/seo/monsterlabs-handoff-flow.svelte";
 
   let {
     open,

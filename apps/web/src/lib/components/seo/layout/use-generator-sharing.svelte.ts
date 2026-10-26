@@ -1,15 +1,15 @@
-import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
+import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
 import type { SessionEntity } from "generator-engine";
-import { generatorShareService } from "#lib/services/sharing/GeneratorShareService.js";
+import { generatorShareService } from "$lib/services/sharing/GeneratorShareService";
 import {
   trackGeneratorShareCreated,
   trackGeneratorShareLinkCopied,
   trackGeneratorShareCompleted,
   trackGeneratorShareClicked,
   type GeneratorShareSource,
-} from "#lib/services/sharing/generator-share-tracking.js";
-import { createGeneratorPageSharing } from "#lib/components/seo/generator-page-sharing.js";
-import type { getGeneratorDocumentLayout } from "#lib/components/seo/generator-document-layout.js";
+} from "$lib/services/sharing/generator-share-tracking";
+import { createGeneratorPageSharing } from "$lib/components/seo/generator-page-sharing";
+import type { getGeneratorDocumentLayout } from "$lib/components/seo/generator-document-layout";
 
 type DocumentLayout = ReturnType<typeof getGeneratorDocumentLayout>;
 

@@ -1,4 +1,4 @@
-import { trackEvent } from "#lib/services/analytics/zaraz-analytics.js";
+import { trackEvent } from "$lib/services/analytics/zaraz-analytics";
 
 export type GeneratorShareSource =
   "current_output" | "session_hub_detail" | "shared_page";

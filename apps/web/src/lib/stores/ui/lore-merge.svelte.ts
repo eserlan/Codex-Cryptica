@@ -1,7 +1,7 @@
 import type {
   LoreMergePlan,
   LoreSectionChoice,
-} from "#lib/utils/lore-sections.js";
+} from "$lib/utils/lore-sections";
 
 /**
  * State for the lore revision review dialog (#2591).

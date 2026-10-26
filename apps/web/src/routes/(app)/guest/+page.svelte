@@ -1,15 +1,15 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { resolve } from "$app/paths";
+  import { base } from "$app/paths";
   import {
     getGuestHistory,
     removeGuestHistory,
     clearGuestHistory,
-  } from "#lib/services/publishing/guest-history.js";
-  import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
-  import { guestVault } from "#lib/stores/guest-vault.svelte.js";
-  import { themeStore } from "#lib/stores/theme.svelte.js";
-  import { vault } from "#lib/stores/vault.svelte.js";
+  } from "$lib/services/publishing/guest-history";
+  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { guestVault } from "$lib/stores/guest-vault.svelte";
+  import { themeStore } from "$lib/stores/theme.svelte";
+  import { vault } from "$lib/stores/vault.svelte";
   import type { GuestHistory } from "schema";
 
   let history = $state<GuestHistory[]>([]);
@@ -126,7 +126,7 @@
               class="p-4 bg-theme-surface/50 border border-theme-border/40 hover:border-theme-primary/45 rounded-lg flex items-center justify-between gap-4 transition-all group"
             >
               <a
-                href="{resolve('')}/guest/{item.publishId}"
+                href="{base}/guest/{item.publishId}"
                 class="flex-1 space-y-1 text-left"
               >
                 <div
@@ -141,7 +141,7 @@
 
               <div class="flex items-center gap-2">
                 <a
-                  href="{resolve('')}/guest/{item.publishId}"
+                  href="{base}/guest/{item.publishId}"
                   class="px-3 py-1.5 bg-theme-primary hover:bg-theme-primary/95 text-white text-xs font-bold font-header uppercase tracking-wider rounded transition-all flex items-center gap-1"
                 >
                   Open
@@ -172,7 +172,7 @@
     <!-- Back to Main App Link -->
     <div class="text-center pt-4">
       <a
-        href="{resolve('')}/"
+        href="{base}/"
         class="inline-flex items-center text-xs text-theme-primary hover:underline"
       >
         <span

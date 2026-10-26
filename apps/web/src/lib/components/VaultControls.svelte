@@ -1,29 +1,27 @@
 <script lang="ts">
-  import { vault } from "#lib/stores/vault.svelte.js";
-  import { categories } from "#lib/stores/categories.svelte.js";
-  import { systemProfileStore } from "#lib/stores/system-profile.svelte.js";
-  import { themeStore } from "#lib/stores/theme.svelte.js";
-  import { demoService } from "#lib/services/demo.js";
-  import { p2pGuestService } from "#lib/cloud-bridge/p2p/guest-service.js";
-  import { resolve } from "$app/paths";
+  import { vault } from "$lib/stores/vault.svelte";
+  import { categories } from "$lib/stores/categories.svelte";
+  import { systemProfileStore } from "$lib/stores/system-profile.svelte";
+  import { themeStore } from "$lib/stores/theme.svelte";
+  import { demoService } from "$lib/services/demo";
+  import { p2pGuestService } from "$lib/cloud-bridge/p2p/guest-service";
+  import { base } from "$app/paths";
   import { goto } from "$app/navigation";
-  import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
-  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
-  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
-  import { layoutUIStore } from "#lib/stores/ui/layout-ui.svelte.js";
-  import { onlineStatus } from "#lib/stores/online.svelte.js";
+  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
+  import { onlineStatus } from "$lib/stores/online.svelte";
   import VaultActionsMenu from "./layout/VaultActionsMenu.svelte";
-  import { entityTemplateService } from "#lib/services/EntityTemplateService.svelte.js";
-  import { entityTemplateStore } from "#lib/stores/entity-templates/entity-template-store.svelte.js";
-  import { proposerStore } from "#lib/stores/proposer.svelte.js";
+  import { entityTemplateService } from "$lib/services/EntityTemplateService.svelte";
+  import { entityTemplateStore } from "$lib/stores/entity-templates/entity-template-store.svelte";
+  import { proposerStore } from "$lib/stores/proposer.svelte";
   import { tick } from "svelte";
-  import { guidedModeStore } from "#lib/stores/ui/guided-mode.svelte.js";
+  import { guidedModeStore } from "$lib/stores/ui/guided-mode.svelte";
 
-  let {
-    orientation = "horizontal",
-  }: {
+  let { orientation = "horizontal" } = $props<{
     orientation?: "horizontal" | "vertical";
-  } = $props();
+  }>();
 
   let showForm = $state(false);
   let showNoVaultMenu = $state(false);
@@ -327,8 +325,10 @@
           {#if vault.failedFiles.length > 0}
             <button
               class="text-nano text-chrome-muted hover:text-chrome-text underline font-sans"
-              onclick={() => (vault.failedFiles = [])}>CLEAR</button
+              onclick={() => (vault.failedFiles = [])}
             >
+              CLEAR
+            </button>
           {/if}
         </div>
       {:else if vault.allEntities.length > 0}
@@ -407,7 +407,7 @@
             await p2pGuestService.leaveSession();
             sessionModeStore.guestUsername = null;
             sessionModeStore.isGuestMode = false;
-            await goto(resolve(""), { replaceState: true });
+            await goto(base, { replaceState: true });
           }}
           data-testid="exit-guest-mode-button"
           aria-label="Exit Guest Mode"

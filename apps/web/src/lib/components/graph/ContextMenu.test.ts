@@ -3,25 +3,25 @@
 import { render, screen, waitFor, fireEvent } from "@testing-library/svelte";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import ContextMenu from "./ContextMenu.svelte";
-import { vault } from "#lib/stores/vault.svelte.js";
-import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+import { vault } from "$lib/stores/vault.svelte";
+import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 import { deriveEntityTypeTone, parseColor, FANTASY_DARK } from "schema";
 
 // Pinned rather than read from the real store: the derived tone has to be
 // deterministic, and the singleton theme store resolves against app appearance
 // and localStorage.
-vi.mock("#lib/stores/theme.svelte.js", async () => {
+vi.mock("$lib/stores/theme.svelte", async () => {
   const { FANTASY_DARK: theme } = await import("schema");
   return { themeStore: { activeTheme: theme } };
 });
 
-vi.mock("#lib/stores/graph.svelte.js", () => ({
+vi.mock("$lib/stores/graph.svelte", () => ({
   graph: {
     setCentralNode: vi.fn(),
   },
 }));
 
-vi.mock("#lib/stores/vault.svelte.js", () => ({
+vi.mock("$lib/stores/vault.svelte", () => ({
   vault: {
     isGuest: false,
     entities: {},
@@ -30,19 +30,19 @@ vi.mock("#lib/stores/vault.svelte.js", () => ({
   },
 }));
 
-vi.mock("#lib/stores/oracle.svelte.js", () => ({
+vi.mock("$lib/stores/oracle.svelte", () => ({
   oracle: {
     drawEntity: vi.fn(),
   },
 }));
 
-vi.mock("#lib/services/RevisionService.svelte.js", () => ({
+vi.mock("$lib/services/RevisionService.svelte", () => ({
   revisionService: {
     revise: vi.fn(),
   },
 }));
 
-vi.mock("#lib/stores/canvas-registry.svelte.js", () => ({
+vi.mock("$lib/stores/canvas-registry.svelte", () => ({
   canvasRegistry: {
     addEntities: vi.fn(),
     createCanvas: vi.fn(),
@@ -50,7 +50,7 @@ vi.mock("#lib/stores/canvas-registry.svelte.js", () => ({
   },
 }));
 
-vi.mock("#lib/stores/categories.svelte.js", () => ({
+vi.mock("$lib/stores/categories.svelte", () => ({
   categories: {
     list: [
       {
@@ -63,7 +63,7 @@ vi.mock("#lib/stores/categories.svelte.js", () => ({
   },
 }));
 
-vi.mock("#lib/stores/ui/modal-ui.svelte.js", () => ({
+vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
   modalUIStore: {
     openMergeDialog: vi.fn(),
     openBulkLabelDialog: vi.fn(),
@@ -74,20 +74,20 @@ vi.mock("#lib/stores/ui/modal-ui.svelte.js", () => ({
   },
 }));
 
-vi.mock("#lib/stores/ui/connection-mode.svelte.js", () => ({
+vi.mock("$lib/stores/ui/connection-mode.svelte", () => ({
   connectionModeStore: {
     startSelectionConnection: vi.fn(),
   },
 }));
 
-vi.mock("#lib/stores/ui/notification.svelte.js", () => ({
+vi.mock("$lib/stores/ui/notification.svelte", () => ({
   notificationStore: {
     notify: vi.fn(),
     confirm: vi.fn(),
   },
 }));
 
-vi.mock("#lib/stores/ui/discovery-policy.svelte.js", () => ({
+vi.mock("$lib/stores/ui/discovery-policy.svelte", () => ({
   discoveryPolicyStore: {
     aiDisabled: false,
   },

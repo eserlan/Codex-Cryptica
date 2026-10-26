@@ -1,4 +1,4 @@
-import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
+import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
 import {
   isPublishedBfrdDoomGuidance,
   type ProvenanceRecord,

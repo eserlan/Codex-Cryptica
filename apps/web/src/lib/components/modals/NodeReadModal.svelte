@@ -1,13 +1,13 @@
 <script lang="ts">
-  import { vault } from "#lib/stores/vault.svelte.js";
-  import { parserService } from "#lib/services/parser.js";
-  import { browser } from "$app/env";
+  import { vault } from "$lib/stores/vault.svelte";
+  import { parserService } from "$lib/services/parser";
+  import { browser } from "$app/environment";
   import DOMPurify from "dompurify";
-  import { getIconClass } from "#lib/utils/icon.js";
-  import { categories } from "#lib/stores/categories.svelte.js";
-  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
-  import { focusTrap } from "#lib/actions/focusTrap.js";
-  import { clipboardService } from "#lib/services/ClipboardService.js";
+  import { getIconClass } from "$lib/utils/icon";
+  import { categories } from "$lib/stores/categories.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { focusTrap } from "$lib/actions/focusTrap";
+  import { clipboardService } from "$lib/services/ClipboardService";
 
   const close = () => modalUIStore.closeReadMode();
 
@@ -246,7 +246,6 @@
               >
                 Lore & Context
               </h4>
-
               <div class="prose prose-invert prose-sm max-w-none text-gray-300">
                 {#await parserService.parse(entity.lore) then html}
                   {@html browser

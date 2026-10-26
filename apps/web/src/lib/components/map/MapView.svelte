@@ -8,8 +8,8 @@
   import { MapFogPainter } from "./map-fog-painter";
   import { resolveVisionSourceTokens } from "./vtt-vision";
   import { broadcastActiveMapFogSync } from "./interactions/interaction-adapters";
-  import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
-  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
+  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { MapViewAssetLoader } from "./map-view-loader";
   import { MapInteractionManager } from "./map-interactions.svelte";
   import { MapMoveCoordinator } from "./map-move-coordinator";
@@ -21,7 +21,7 @@
   import type { HexCrawlServices } from "./hex-crawl/hex-crawl-services.svelte";
   import MapContextMenu from "./MapContextMenu.svelte";
   import { syncMapAssets } from "./map-asset-sync.svelte";
-  import { clampPointToBounds } from "#lib/utils/vtt-helpers.js";
+  import { clampPointToBounds } from "$lib/utils/vtt-helpers";
   import { mapSession } from "../../stores/map-session.svelte";
   import {
     SOLO_EXPLORATION_CONTEXT,

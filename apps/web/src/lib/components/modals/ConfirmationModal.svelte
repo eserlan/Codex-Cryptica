@@ -1,8 +1,8 @@
 <script lang="ts">
   import { fade, scale } from "svelte/transition";
-  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
-  import { focusTrap } from "#lib/actions/focusTrap.js";
-  import DecorativeGlowFrame from "#lib/components/ui/DecorativeGlowFrame.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { focusTrap } from "$lib/actions/focusTrap";
+  import DecorativeGlowFrame from "$lib/components/ui/DecorativeGlowFrame.svelte";
 
   const dialog = $derived(notificationStore.confirmationDialog);
 

@@ -1,8 +1,8 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import HelpTab from "#lib/components/help/HelpTab.svelte";
-  import { helpStore } from "#lib/stores/help.svelte.js";
-  import { getHelpArticleIdFromHash } from "#lib/components/help/help-direct-link.js";
+  import HelpTab from "$lib/components/help/HelpTab.svelte";
+  import { helpStore } from "$lib/stores/help.svelte";
+  import { getHelpArticleIdFromHash } from "$lib/components/help/help-direct-link";
 
   const selectArticleFromHash = () => {
     const articleId = getHelpArticleIdFromHash(window.location.hash);

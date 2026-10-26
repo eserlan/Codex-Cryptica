@@ -7,7 +7,7 @@ import type { Milestone } from "onboarding-journey-engine";
 import {
   JourneyStore,
   type JourneyStoreDeps,
-} from "#lib/app/onboarding/journey/journey-store.svelte.js";
+} from "$lib/app/onboarding/journey/journey-store.svelte";
 import JourneyCard from "./JourneyCard.svelte";
 
 const memory = () => {

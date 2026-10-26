@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { takeMentionHint } from "./oracle-mention-hint";
-import { HINT_KEYS } from "#lib/config/help-content.js";
+import { HINT_KEYS } from "$lib/config/help-content";
 
 const memory = (initial: Record<string, string> = {}) => {
   const store: Record<string, string> = { ...initial };

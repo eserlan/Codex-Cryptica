@@ -6,10 +6,10 @@
   import { mapSession } from "../../stores/map-session.svelte";
   import { vault } from "../../stores/vault.svelte";
   import type { MapInteractionManager } from "./map-interactions.svelte";
-  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
-  import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
-  import HexThisHexButton from "#lib/components/map/hex-crawl/HexThisHexButton.svelte";
-  import { computeAdjustedCounterValue } from "#lib/utils/stat-sheet-field-actions.js";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import HexThisHexButton from "$lib/components/map/hex-crawl/HexThisHexButton.svelte";
+  import { computeAdjustedCounterValue } from "$lib/utils/stat-sheet-field-actions";
   import type { MapPin } from "schema";
 
   let { interactions }: { interactions: MapInteractionManager } = $props();

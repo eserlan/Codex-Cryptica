@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { load, entries } from "./+page";
 
-vi.mock("#lib/config/seo-pages.js", () => ({
+vi.mock("$lib/config/seo-pages", () => ({
   solutions: {
     "test-solution": {
       slug: "test-solution",

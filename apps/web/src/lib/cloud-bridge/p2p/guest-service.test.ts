@@ -5,11 +5,7 @@ vi.stubGlobal("$state", (v: any) => v);
 (globalThis as any).$state.snapshot = (v: any) => v;
 (globalThis as any).$derived = (v: any) => v;
 
-vi.mock("$app/paths", () => ({
-  base: "",
-  asset: (p: string) => p,
-  resolve: (p: string) => p,
-}));
+vi.mock("$app/paths", () => ({ base: "" }));
 
 const { mockMapSession } = vi.hoisted(() => ({
   mockMapSession: {

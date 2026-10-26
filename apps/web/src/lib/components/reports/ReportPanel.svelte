@@ -1,6 +1,6 @@
 <script lang="ts">
   import { fade, scale } from "svelte/transition";
-  import { focusTrap } from "#lib/actions/focusTrap.js";
+  import { focusTrap } from "$lib/actions/focusTrap";
   import {
     DEFAULT_REPORT_DETAIL,
     DEFAULT_REPORT_INCLUDE,
@@ -12,10 +12,10 @@
   } from "entity-report-engine";
   import ReportPreview from "./ReportPreview.svelte";
   import ReportIncludeOptions from "./ReportIncludeOptions.svelte";
-  import { reportService } from "#lib/services/report-service.js";
-  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
-  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
-  import type { ReportRescopeResult } from "#lib/stores/ui/report-panel.svelte.js";
+  import { reportService } from "$lib/services/report-service";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import type { ReportRescopeResult } from "$lib/stores/ui/report-panel.svelte";
 
   let {
     input,

@@ -8,8 +8,8 @@
    * slug. The wiring lived in two places and could drift in one; only the
    * copy and the URL were ever really this page's own.
    */
-  import GeneratorPageContent from "#lib/components/seo/GeneratorPageContent.svelte";
-  import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
+  import GeneratorPageContent from "$lib/components/seo/GeneratorPageContent.svelte";
+  import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
 
   const initialDraftOverride: GeneratorOutput = {
     type: "event",

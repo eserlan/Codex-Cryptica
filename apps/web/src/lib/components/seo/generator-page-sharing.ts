@@ -3,12 +3,12 @@ import type { SessionEntity } from "generator-engine";
 import type {
   CreatedGeneratorShare,
   GeneratorShareCreateInput,
-} from "#lib/services/sharing/GeneratorShareService.js";
+} from "$lib/services/sharing/GeneratorShareService";
 import {
   buildGeneratorMarkdown,
   type GeneratorCopyDocument,
 } from "./generator-copy";
-import type { GeneratorShareSource } from "#lib/services/sharing/generator-share-tracking.js";
+import type { GeneratorShareSource } from "$lib/services/sharing/generator-share-tracking";
 
 export type GeneratorShareDocument = GeneratorCopyDocument & {
   /** Entity type used to select the share preview silhouette. */
