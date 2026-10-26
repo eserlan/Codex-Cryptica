@@ -24,6 +24,9 @@
   // Imported dynamically to keep @codex/ai-engine out of the initial bundle
   // for pages that never generate (blog, privacy, landing).
   onMount(() => {
+    // The app booted, so its chunks loaded: hand chunk failures from here on
+    // to the version-skew handling in hooks.client.ts (see app.html).
+    window.__codexDisarmStaleBuildRecovery?.();
     const stopShellCanonical = watchShellCanonical(document);
     void import("#lib/services/ai/session-bootstrap.js").then((m) =>
       m.initAiSession(),

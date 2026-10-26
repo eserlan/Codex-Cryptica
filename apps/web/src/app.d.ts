@@ -15,6 +15,8 @@ declare global {
   }
   var gapi: typeof import("gapi");
   const __APP_VERSION__: string;
+  /** Set by the stale-build recovery script in app.html. */
+  var __codexDisarmStaleBuildRecovery: (() => void) | undefined;
 }
 
 interface ImportMetaEnv {
