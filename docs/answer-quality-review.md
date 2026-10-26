@@ -9,12 +9,13 @@ Improve articles without making them longer, more complicated or more prescripti
 ## Primary objectives
 
 Every Answer should:
+
 1. Answer the question immediately. The opening paragraph should convey the core recommendation.
 2. Solve the reader's actual problem with usable techniques rather than generic advice, abstract theory or extensive lists.
 3. Preserve player agency. Avoid secretly invalidating choices, forcing prepared scenes or arbitrary consequences.
 4. Respect different playstyles and systems; avoid universalising one GMing philosophy.
 5. Explain why a technique works with causal reasoning.
-6. Offer concrete, runnable examples that demonstrate the advice.
+6. Use examples to make advice actionable: include concrete, runnable examples for procedural or game-preparation guidance, and clarifying examples for definitions where useful.
 7. Remain internally consistent across conclusions, examples, checklists and rules references.
 8. Add distinctive value beyond a generic AI-generated response.
 9. Lead naturally to useful, accurate and non-intrusive Codex Cryptica functionality.
@@ -89,6 +90,7 @@ Identify the strongest concepts first. Preserve them in proposed improvements. P
 ### Prioritise substance
 
 Review in this order:
+
 1. Factual/mechanical correctness.
 2. Conceptual problems.
 3. Practical usability.
@@ -109,6 +111,7 @@ Identify what the article claims, the supporting evidence/reasoning, counterexam
 
 Search for existing issues concerning the article and criticism. Reuse an open issue covering the same problem. Otherwise propose one consolidated `copy-fix` issue with a specific problem-focused title.
 Reference the Answer URL, original issue and implementation PR. Include:
+
 - Context.
 - What works and must be preserved.
 - Specific problems, with examples from the article.
@@ -122,6 +125,7 @@ Do not edit article source, merge PRs, publish pages or change production config
 ## Scoring
 
 Score against these bands, then apply the caps (whichever is lowest):
+
 - 9-10: publish as-is. Distinctive, correct, runnable tonight; remaining notes are cosmetic.
 - 8.5: publish-ready. Minor suggestions only; no material weakness. This is the quality gate.
 - 8: solid and usable, but one notable improvement stands between it and ready.
