@@ -119,6 +119,6 @@ export const fantasyWorldbuilding: LandingPageConfig = {
     description:
       "Connect your realms, factions, and histories in a fast, local-first workspace built for worldbuilders and storytellers.",
     buttonText: "Start Worldbuilding Free",
-    buttonHref: "/app",
+    buttonHref: "/",
   },
 };

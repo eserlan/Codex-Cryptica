@@ -75,7 +75,9 @@ export function shellCtaHref(
   pathname: string,
   slot: "logo" | "nav",
 ): string {
-  const cleanBase = base === "/" ? "" : base;
+  // Strip every trailing slash: during prerendering `resolve("")` is relative
+  // ("./", "../../"), and keeping it would emit a broken "..//" path.
+  const cleanBase = base.replace(/\/+$/, "");
   const source = shellUtmSource(pathname, slot);
   return `${cleanBase}/?utm_source=${source}&utm_medium=nav&utm_campaign=seo-funnel`;
 }

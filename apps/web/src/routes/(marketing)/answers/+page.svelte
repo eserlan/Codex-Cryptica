@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { resolve } from "$app/paths";
+  import { basePath } from "#lib/utils/base-path.js";
   import SeoHead from "#lib/components/seo/SeoHead.svelte";
   import { buildAbsoluteUrl } from "#lib/seo/site.js";
   import { buildAnswerIndexJsonLd } from "#lib/content/answers/json-ld.js";
@@ -34,7 +34,7 @@
 
   let { data }: { data: PageData } = $props();
 
-  const cleanBase = resolve("") === "/" ? "" : resolve("");
+  const cleanBase = basePath();
 
   const TITLE = "RPG and worldbuilding answers";
   const DESCRIPTION =
@@ -247,7 +247,7 @@
     rel="alternate"
     type="application/atom+xml"
     title="Codex Cryptica answers"
-    href="{resolve('')}/answers/feed.xml"
+    href="{basePath()}/answers/feed.xml"
   />
 </svelte:head>
 
@@ -289,7 +289,7 @@
         behind it with a concrete example.
       </p>
       <a
-        href="{resolve('')}/answers/feed.xml"
+        href="{basePath()}/answers/feed.xml"
         class="mt-4 inline-flex items-center gap-2 text-sm text-theme-primary hover:underline"
       >
         <span class="icon-[lucide--rss] h-4 w-4" aria-hidden="true"></span>

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { resolve } from "$app/paths";
+  import { basePath } from "#lib/utils/base-path.js";
 
   type ToolLink = {
     href: string;
@@ -632,7 +632,7 @@
 
   <link rel="canonical" href="https://codexcryptica.com/tools" />
 
-  <link rel="help" href="{resolve('')}/llms.txt" />
+  <link rel="help" href="{basePath()}/llms.txt" />
 </svelte:head>
 
 <div
@@ -689,7 +689,7 @@
                 {#each group.links as link (link.href)}
                   <li>
                     <a
-                      href="{resolve('')}{link.href}"
+                      href="{basePath()}{link.href}"
                       class="group block h-full rounded-xl border border-theme-border/60 bg-theme-surface/35 p-5 hover:border-theme-primary/60 hover:bg-theme-surface/55 transition-colors"
                     >
                       <span

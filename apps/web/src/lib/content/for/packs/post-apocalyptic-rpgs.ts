@@ -144,6 +144,6 @@ export const postApocalypticRpgs: LandingPageConfig = {
     description:
       "Tie your settlements, supplies, factions, and threats together in a campaign vault you control.",
     buttonText: "Start Building Free",
-    buttonHref: "/app",
+    buttonHref: "/",
   },
 };

@@ -10,6 +10,7 @@ import {
   parseColour,
   problemTouchesChangedLines,
   remoteImageProblems,
+  resolveConcatProblems,
   timerProblems,
   visualOrderProblems,
 } from "./check-ui-patterns.mjs";
@@ -256,6 +257,33 @@ describe("pattern rules", () => {
       'navigator.serviceWorker.register(`${resolve("/(app)")}/service-worker.js`);',
     ])
       expect(basePathProblems(source)).toEqual([]);
+  });
+
+  it('flags a path appended to resolve("") (production //tools links)', () => {
+    for (const source of [
+      `<a href="{resolve('')}/answers">`,
+      '<a href="{resolve("")}{link.href}">',
+      "<a href=\"{resolve(\n  '',\n)}/?utm_source=x\">",
+      'const url = `${resolve("")}/cif`;',
+      '.replace(/x/g, `](${resolve("")}/`)',
+      "const url = `${resolve('')}${path}`;",
+      'const href = resolve("") + "/answers";',
+    ])
+      expect(resolveConcatProblems(source)).toHaveLength(1);
+  });
+
+  it('accepts resolve("") on its own and other resolve calls', () => {
+    for (const source of [
+      "<a href={resolve('')}>Home</a>",
+      'await goto(resolve(""), { replaceState: true });',
+      'const cleanBase = resolve("") === "/" ? "" : resolve("");',
+      'href={resolve("") + redirectQuery}',
+      "<a href=\"{resolve('/answers')}\">",
+      '<a href="{basePath()}/answers">',
+      'shellCtaHref(resolve(""), page.url.pathname, "logo")',
+      'const tables = resolve("tables");',
+    ])
+      expect(resolveConcatProblems(source)).toEqual([]);
   });
 
   it("respects a ui-check-ignore comment on or above the line", () => {

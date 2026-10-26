@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { resolve } from "$app/paths";
+  import { basePath } from "#lib/utils/base-path.js";
   import { trackDiscoveryClick } from "#lib/actions/trackDiscoveryClick.js";
   import { classifyDiscoveryTarget } from "#lib/services/analytics/discovery-tracking.js";
 
-  const cleanBase = resolve("") === "/" ? "" : resolve("");
+  const cleanBase = basePath();
 
   interface RouteRow {
     from: string;

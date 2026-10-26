@@ -131,7 +131,7 @@ export const scumAndVillainy: LandingPageConfig = {
     description:
       "Keep your scoundrels, ships, debts, and sector heat organised with intuitive relationship graphs and offline-ready local storage.",
     buttonText: "Start Building Free",
-    buttonHref: "/app",
+    buttonHref: "/",
   },
   disclaimer:
     "Codex Cryptica is an independent campaign management tool and is not affiliated with, endorsed, sponsored, or specifically approved by Evil Hat Productions or the creators of Scum and Villainy.",

@@ -139,6 +139,6 @@ export const westMarches: LandingPageConfig = {
     description:
       "Give your table one shared world that remembers every trip out, whoever made it.",
     buttonText: "Start Building Free",
-    buttonHref: "/app",
+    buttonHref: "/",
   },
 };

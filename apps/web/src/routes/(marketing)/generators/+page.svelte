@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { resolve } from "$app/paths";
+  import { basePath } from "#lib/utils/base-path.js";
   import { safeJsonLd } from "#lib/utils/json-ld.js";
   import SeoHead from "#lib/components/seo/SeoHead.svelte";
   import {
@@ -7,7 +7,7 @@
     groupGeneratorCatalogue,
   } from "#lib/content/generator-catalogue.js";
 
-  const cleanBase = resolve("") === "/" ? "" : resolve("");
+  const cleanBase = basePath();
 
   const origin = "https://codexcryptica.com";
 

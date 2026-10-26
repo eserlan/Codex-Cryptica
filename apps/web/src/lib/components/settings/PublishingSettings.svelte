@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { resolve } from "$app/paths";
+  import { basePath } from "#lib/utils/base-path.js";
   import { publishingService } from "#lib/services/publishing/PublishingService.svelte.js";
   import { vault } from "#lib/stores/vault.svelte.js";
   import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
@@ -146,7 +146,7 @@
           Opt-in below to also list this world in
 
           <a
-            href="{resolve('')}/worlds"
+            href="{basePath()}/worlds"
             class="underline hover:text-theme-primary transition-colors"
             >Explore Worlds</a
           > for anyone to discover.

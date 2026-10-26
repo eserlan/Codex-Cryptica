@@ -145,6 +145,6 @@ export const piratesHighSeas: LandingPageConfig = {
     description:
       "Build a connected sea where every prize taken changes who hunts you next.",
     buttonText: "Start Building Free",
-    buttonHref: "/app",
+    buttonHref: "/",
   },
 };

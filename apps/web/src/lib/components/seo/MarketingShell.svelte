@@ -15,6 +15,7 @@
    * three tokens page by page in phase 3, where each can be looked at.
    */
   import { resolve } from "$app/paths";
+  import { basePath } from "#lib/utils/base-path.js";
   import { page } from "$app/state";
   import { DISCORD_URL, GITHUB_URL } from "#lib/config/index.js";
   import MarketingFooter from "./MarketingFooter.svelte";
@@ -51,7 +52,7 @@
     children?: import("svelte").Snippet;
   } = $props();
 
-  const cleanBase = $derived(resolve("") === "/" ? "" : resolve(""));
+  const cleanBase = $derived(basePath());
   const logoHref = $derived(
     shellCtaHref(resolve(""), page.url.pathname, "logo"),
   );

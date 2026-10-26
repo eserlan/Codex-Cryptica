@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { resolve } from "$app/paths";
+  import { basePath } from "#lib/utils/base-path.js";
   import SeoHead from "#lib/components/seo/SeoHead.svelte";
   import { buildAbsoluteUrl } from "#lib/seo/site.js";
   import { buildExampleIndexJsonLd } from "#lib/content/examples/json-ld.js";
@@ -7,7 +7,7 @@
 
   let { data }: { data: PageData } = $props();
 
-  const cleanBase = resolve("") === "/" ? "" : resolve("");
+  const cleanBase = basePath();
 
   const TITLE = "Generator examples";
   const DESCRIPTION =

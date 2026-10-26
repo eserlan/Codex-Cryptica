@@ -1,11 +1,11 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
-  import { resolve } from "$app/paths";
+  import { basePath } from "#lib/utils/base-path.js";
   import GeneratorIntroPanel from "../GeneratorIntroPanel.svelte";
   import GeneratorOfflineNotice from "./GeneratorOfflineNotice.svelte";
   import GeneratorSubmitControls from "./GeneratorSubmitControls.svelte";
 
-  const cleanBase = resolve("") === "/" ? "" : resolve("");
+  const cleanBase = basePath();
 
   let {
     canonicalPath,

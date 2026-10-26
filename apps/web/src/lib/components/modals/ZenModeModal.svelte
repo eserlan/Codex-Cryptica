@@ -3,6 +3,7 @@
   import { fly, fade } from "svelte/transition";
   import { quintOut } from "svelte/easing";
   import { resolve } from "$app/paths";
+  import { basePath } from "#lib/utils/base-path.js";
   import { goto, beforeNavigate } from "$app/navigation";
   import { page } from "$app/state";
   import { openEntityPopout } from "#lib/utils/zen-popout.js";
@@ -106,7 +107,7 @@
       openEntityPopout(
         vault.activeVaultId ?? "guest",
         entityForPopout,
-        resolve(""),
+        basePath(),
         vault.isGuest,
       );
       modalUIStore.closeZenMode();

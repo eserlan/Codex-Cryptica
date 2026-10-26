@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { resolve } from "$app/paths";
+  import { basePath } from "#lib/utils/base-path.js";
   import SeoHead from "#lib/components/seo/SeoHead.svelte";
   import PublicLabelChip from "#lib/components/labels/PublicLabelChip.svelte";
   import ShareButton from "#lib/components/ShareButton.svelte";
@@ -30,7 +30,7 @@
   let errorMessage = $state<string | null>(null);
   let revoking = $state(false);
   let revoked = $state(false);
-  const cleanBase = resolve("") === "/" ? "" : resolve("");
+  const cleanBase = basePath();
 
   const shareUrl = $derived(buildAbsoluteUrl(`/share/${data.shareId}`));
   const generatorUrl = $derived(

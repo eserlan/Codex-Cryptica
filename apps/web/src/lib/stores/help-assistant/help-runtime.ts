@@ -2,6 +2,7 @@ import { discoveryPolicyStore } from "#lib/stores/ui/discovery-policy.svelte.js"
 import { soloSessionStore } from "#lib/stores/solo-session-instance.js";
 import { goto } from "$app/navigation";
 import { resolve } from "$app/paths";
+import { basePath } from "#lib/utils/base-path.js";
 import { page } from "$app/state";
 import { FEATURE_REGISTRY, type DestinationId } from "help-engine";
 import { getHelpArticles } from "#lib/config/help-content.js";
@@ -133,7 +134,7 @@ export const cifPopout = new CifPopoutHost({
   createChannel: createCifChannel,
   openWindow: () =>
     window.open(
-      `${window.location.origin}${resolve("")}/cif`,
+      `${window.location.origin}${basePath()}/cif`,
       CIF_POPOUT_WINDOW,
       cifPopoutFeatures(),
     ),
