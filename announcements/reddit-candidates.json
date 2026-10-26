@@ -1,5 +1,5 @@
 {
-  "updated_at": 1793012609,
+  "updated_at": 1793013901,
   "candidates": [
     {
       "id": "reddit-39855478849-a-mystery-case-you-can-actually-run-with",
@@ -22,14 +22,14 @@
       "created_at": 1792943711
     },
     {
-      "id": "reddit-40298726905-how-many-travel-encounters-fit-in-a-sess",
-      "title": "How many travel encounters fit in a session without stalling it",
-      "body": "I was rolling every day on the road and losing half the session to fights that went nowhere.\n\nI needed a way to decide frequency before I rolled anything. So I built a guide that turns encounter rate into table time.\n\nOne sentence version: pick a rate that fits the journey, budget it against your session length, then use smaller events where a full scene would stall the trip.\n\nWhat it gives you:\n\n- starting rates by journey type (0 to 1 for background travel, about 1 per week for ordinary, 2 to 3 per week for dangerous or exploration)\n- a 5 step method to turn that rate into a count you can actually run\n- four sizes of travel event, from colour to full scene, so not everything costs the same at the table\n\nHeads up: the numbers assume a three hour session with travel as part of the night, not the whole night. If your group runs shorter or gives travel the whole session, you will want to adjust down or up.\n\nHow many travel encounters make your sessions feel full but still leave time for the destination itself?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-40298726905-1.png)",
-      "url": "https://codexcryptica.com/answers/how-many-random-encounters-should-you-use-during-rpg-travel",
-      "image_url": "https://assets.codexcryptica.com/announcements/release-40298726905-1.png",
+      "id": "reddit-40298726905-quick-names-ten-fantasy-names-you-can-co",
+      "title": "Quick Names: ten fantasy names you can copy without leaving the page",
+      "body": "Naming a whole street of NPCs was taking longer than writing the scene they were in.\n\nI wanted something that felt more like grabbing names off a tray than prompting an AI. So I upgraded the Fantasy Name Generator with Quick Names, a ten-name batch that rolls on device.\n\nNo account, no AI call, just names you can use right away: https://codexcryptica.com/tools/fantasy-name-generator\n\nWhat changed:\n\n- instant 10 name batch rolled locally on device\n- one tap copy per name with feedback, plus Copy all as a plain list\n- New names to reroll the set\n- pins that keep the ones you like when you reroll\n- real patterns for people, places, factions and items per fantasy culture, not just first names\n\nLimitation worth noting: the patterns are curated per culture for consistency, so they will feel coherent but less wild than a fully open generator. I am curious if that is the right balance.\n\nWhich culture do you reach for most when you need ten names fast, and what mix do you wish it covered better?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/screenshots/generator-fantasy-names.jpg)",
+      "url": "https://codexcryptica.com/tools/fantasy-name-generator",
+      "image_url": "https://assets.codexcryptica.com/screenshots/generator-fantasy-names.jpg",
       "source_id": "40298726905",
       "status": "approved",
-      "created_at": 1793012609
+      "created_at": 1793013901
     }
   ]
 }
