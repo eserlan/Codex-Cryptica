@@ -9,8 +9,8 @@ import {
   type HelpContext,
 } from "help-engine";
 import type { DestinationId, FeedbackKindId } from "help-engine";
-import type { HelpSurfaceRegistry } from "$lib/stores/help-assistant/help-surface.svelte";
-import type { SettingsTab } from "$lib/stores/ui/modal-ui.svelte";
+import type { HelpSurfaceRegistry } from "#lib/stores/help-assistant/help-surface.svelte.js";
+import type { SettingsTab } from "#lib/stores/ui/modal-ui.svelte.js";
 import type { HelpHighlightService } from "./help-highlight.svelte";
 
 export interface HelpActionRunnerDeps {

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { UIPersistence } from "$lib/stores/ui/persistence";
+import { UIPersistence } from "#lib/stores/ui/persistence.js";
 import { createCharacterDefaults } from "./generator-page-character-defaults";
 import { createSettingDefaults } from "./generator-page-setting-defaults";
 import { mountGeneratorPage } from "./generator-page-mount";

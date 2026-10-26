@@ -5,13 +5,13 @@ import type {
   CommunityHullOverlay,
   LayoutRequest,
 } from "graph-engine";
-import type { graph as graphStore } from "$lib/stores/graph.svelte";
-import type { vault as vaultStore } from "$lib/stores/vault.svelte";
-import type { debugStore as debugStoreType } from "$lib/stores/debug.svelte";
-import type { layoutUIStore as layoutUIStoreType } from "$lib/stores/ui/layout-ui.svelte";
-import type { connectionModeStore as connectionModeStoreType } from "$lib/stores/ui/connection-mode.svelte";
-import type { modalUIStore as modalUIStoreType } from "$lib/stores/ui/modal-ui.svelte";
-import type { Clock } from "$lib/utils/runtime-deps";
+import type { graph as graphStore } from "#lib/stores/graph.svelte.js";
+import type { vault as vaultStore } from "#lib/stores/vault.svelte.js";
+import type { debugStore as debugStoreType } from "#lib/stores/debug.svelte.js";
+import type { layoutUIStore as layoutUIStoreType } from "#lib/stores/ui/layout-ui.svelte.js";
+import type { connectionModeStore as connectionModeStoreType } from "#lib/stores/ui/connection-mode.svelte.js";
+import type { modalUIStore as modalUIStoreType } from "#lib/stores/ui/modal-ui.svelte.js";
+import type { Clock } from "#lib/utils/runtime-deps.js";
 
 export type LoadPhase = "idle" | "elements" | "finalized" | "ready";
 

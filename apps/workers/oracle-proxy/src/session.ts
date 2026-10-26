@@ -80,11 +80,12 @@ export async function mintSessionToken(
   nowSeconds: number = Math.floor(Date.now() / 1000),
   ttlSeconds: number = SESSION_TOKEN_TTL_SECONDS,
   scope: SessionScope = "human",
+  idGenerator: { uuid: () => string } = { uuid: () => crypto.randomUUID() },
 ): Promise<{ token: string; expiresAt: number; scope: SessionScope }> {
   const expiresAt = nowSeconds + ttlSeconds;
   const payload: SessionTokenPayload = {
     exp: expiresAt,
-    jti: crypto.randomUUID(),
+    jti: idGenerator.uuid(),
     ip,
     scope,
   };

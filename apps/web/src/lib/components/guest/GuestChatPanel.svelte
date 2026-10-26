@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { guestChatStore } from "$lib/stores/guest-chat.svelte";
-  import { vault } from "$lib/stores/vault.svelte";
+  import { guestChatStore } from "#lib/stores/guest-chat.svelte.js";
+  import { vault } from "#lib/stores/vault.svelte.js";
   import { isEntityVisible, type Entity } from "schema";
-  import { characterChatExportService } from "$lib/services/character-chat-export";
-  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { characterChatExportService } from "#lib/services/character-chat-export.js";
+  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
   import {
     rollOracleOutcome,
     rollPbtAMove,

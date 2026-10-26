@@ -1,10 +1,10 @@
 <script lang="ts">
   import { entryTypeLabel, type JournalEntry } from "session-journal-engine";
-  import DiceBreakdownDisclosure from "$lib/components/dice/DiceBreakdownDisclosure.svelte";
+  import DiceBreakdownDisclosure from "#lib/components/dice/DiceBreakdownDisclosure.svelte";
   import JournalEntryEditForm from "./JournalEntryEditForm.svelte";
   import JournalEntryActions from "./JournalEntryActions.svelte";
-  import { parseBreakdownParts } from "$lib/utils/dice-breakdown";
-  import { renderMarkdown } from "$lib/utils/markdown";
+  import { parseBreakdownParts } from "#lib/utils/dice-breakdown.js";
+  import { renderMarkdown } from "#lib/utils/markdown.js";
 
   /**
    * One entry in the Session Journal (#3402 slice 3, #3408; promote controls

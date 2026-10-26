@@ -1,12 +1,12 @@
 import { tick } from "svelte";
 import type { Canvas } from "@codex/canvas-engine";
 import type { DelveCanvasEdge, DelveCanvasNode } from "generator-engine";
-import type { vault as VaultStore } from "$lib/stores/vault.svelte";
-import { delveDossierService } from "$lib/services/delve-dossier-service";
-import { notificationStore } from "$lib/stores/ui/notification.svelte";
-import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-import { themeStore } from "$lib/stores/theme.svelte";
-import { getDelveTerm } from "$lib/utils/delve-terminology";
+import type { vault as VaultStore } from "#lib/stores/vault.svelte.js";
+import { delveDossierService } from "#lib/services/delve-dossier-service.js";
+import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
+import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+import { themeStore } from "#lib/stores/theme.svelte.js";
+import { getDelveTerm } from "#lib/utils/delve-terminology.js";
 import {
   flowEdgeToCanvasEdge,
   flowNodesToCanvasNodes,

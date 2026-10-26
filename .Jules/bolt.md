@@ -72,3 +72,8 @@
 
 **Learning:** When filtering and mapping arrays (e.g. `assignments.filter().map()`) to create a Set, and then using `images.flatMap()` to filter based on that Set, it creates unnecessary intermediate arrays that increase garbage collection pressure.
 **Action:** Replace these chained declarative array methods with imperative `for...of` loops and pre-allocated arrays (e.g., pushing directly into a result array after a `Set.has` check) to prevent intermediate allocation overhead.
+
+## 2026-10-25 - Imperative Iteration Over Intermediate Arrays for matchAll()
+
+**Learning:** In V8/JS engines, parsing large string payloads (like parsing generated text files or markdown content) using `String.prototype.matchAll(regex)` combined with `[...string.matchAll(...)].map(...)` eagerly evaluates the entire iterator, forcing the engine to allocate an intermediate array. This spikes garbage collection pressure and CPU usage unnecessarily for large arrays or high-frequency operations.
+**Action:** Replace chained operations on iterators such as `[...matchAll(...)]` with a single imperative `for...of` loop over the iterator to process matches lazily. If mapping to a new array is required, instantiate the array and push to it inside the loop. Avoid `Array.from()` over `matchAll()` as well.

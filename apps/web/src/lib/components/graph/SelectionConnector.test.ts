@@ -17,12 +17,12 @@ if (typeof Element !== "undefined" && !Element.prototype.animate) {
 }
 
 import SelectionConnector from "./SelectionConnector.svelte";
-import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
+import { connectionModeStore } from "#lib/stores/ui/connection-mode.svelte.js";
 
 // Mock Svelte client runtime
 
 // Mock stores
-vi.mock("$lib/stores/ui/connection-mode.svelte", () => ({
+vi.mock("#lib/stores/ui/connection-mode.svelte.js", () => ({
   connectionModeStore: {
     showSelectionConnector: false,
     lastConnectionLabel: "",
@@ -31,13 +31,13 @@ vi.mock("$lib/stores/ui/connection-mode.svelte", () => ({
   },
 }));
 
-vi.mock("$lib/stores/ui/notification.svelte", () => ({
+vi.mock("#lib/stores/ui/notification.svelte.js", () => ({
   notificationStore: {
     notify: vi.fn(),
   },
 }));
 
-vi.mock("$lib/stores/vault.svelte", () => ({
+vi.mock("#lib/stores/vault.svelte.js", () => ({
   vault: {
     addConnection: vi.fn(),
     entities: {},

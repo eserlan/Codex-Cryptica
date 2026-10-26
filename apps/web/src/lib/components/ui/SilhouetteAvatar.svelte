@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Entity, SilhouetteDefinition } from "schema";
   import { resolveEntitySilhouette, SILHOUETTE_MAP } from "schema";
-  import { themeStore } from "$lib/stores/theme.svelte";
+  import { themeStore } from "#lib/stores/theme.svelte.js";
   import SilhouetteGlyph from "./SilhouetteGlyph.svelte";
 
   let {

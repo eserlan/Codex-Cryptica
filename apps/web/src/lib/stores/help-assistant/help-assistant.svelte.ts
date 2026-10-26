@@ -12,11 +12,11 @@ import type {
   AskInput,
   HelpAskResult,
   HelpClientError,
-} from "$lib/services/help-assistant/help-client";
+} from "#lib/services/help-assistant/help-client.js";
 import {
   fallbackMessage,
   type HelpFallback,
-} from "$lib/services/help-assistant/help-fallback";
+} from "#lib/services/help-assistant/help-fallback.js";
 
 export type HelpStatus =
   "idle" | "pending" | "answered" | "no-match" | "out-of-scope" | "fallback";

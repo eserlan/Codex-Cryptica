@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { soloSessionStore } from "$lib/stores/solo-session-instance";
-  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-  import { sessionJournalStore } from "$lib/stores/session-journal.svelte";
-  import { quickNoteStore } from "$lib/stores/quicknote.svelte";
-  import { vault } from "$lib/stores/vault.svelte";
+  import { soloSessionStore } from "#lib/stores/solo-session-instance.js";
+  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+  import { sessionJournalStore } from "#lib/stores/session-journal.svelte.js";
+  import { quickNoteStore } from "#lib/stores/quicknote.svelte.js";
+  import { vault } from "#lib/stores/vault.svelte.js";
   import SoloEndDialog from "./SoloEndDialog.svelte";
   import SoloRecentResults from "./SoloRecentResults.svelte";
   import SoloGenerateMenu from "./SoloGenerateMenu.svelte";

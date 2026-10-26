@@ -1,9 +1,9 @@
 <script lang="ts">
   import type { Entity, GuestChatMessage, GuestChatTranscript } from "schema";
-  import { guestChatStore } from "$lib/stores/guest-chat.svelte";
-  import { vault } from "$lib/stores/vault.svelte";
-  import { characterChatExportService } from "$lib/services/character-chat-export";
-  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { guestChatStore } from "#lib/stores/guest-chat.svelte.js";
+  import { vault } from "#lib/stores/vault.svelte.js";
+  import { characterChatExportService } from "#lib/services/character-chat-export.js";
+  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
   import {
     rollOracleOutcome,
     rollPbtAMove,
@@ -12,7 +12,7 @@
   } from "@codex/oracle-engine";
   import { tick } from "svelte";
 
-  let { entity } = $props<{ entity: Entity }>();
+  let { entity }: { entity: Entity } = $props();
 
   let editingMessageId = $state<string | null>(null);
   let messageEditContent = $state("");

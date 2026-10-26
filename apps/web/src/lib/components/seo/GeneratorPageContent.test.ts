@@ -1,9 +1,9 @@
 /** @vitest-environment jsdom */
 import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
-import { UIPersistence } from "$lib/stores/ui/persistence";
-import { hubContext } from "$lib/stores/hub-context.svelte";
+import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
+import { UIPersistence } from "#lib/stores/ui/persistence.js";
+import { hubContext } from "#lib/stores/hub-context.svelte.js";
 import GeneratorPageContent from "./GeneratorPageContent.svelte";
 
 const generateBusiness = vi.hoisted(() => vi.fn());
@@ -11,10 +11,10 @@ vi.mock("./SEOGeneratorLayout.svelte", async () => ({
   default: (await import("./test-fixtures/GeneratorPageLayoutHarness.svelte"))
     .default,
 }));
-vi.mock("$lib/services/seo/generator-engine", () => ({
+vi.mock("#lib/services/seo/generator-engine.js", () => ({
   generatorEngine: { generateBusiness },
 }));
-vi.mock("$lib/stores/session-hub.svelte", () => ({
+vi.mock("#lib/stores/session-hub.svelte.js", () => ({
   sessionHubStore: { entities: [] },
 }));
 vi.mock("$app/state", () => ({
@@ -119,5 +119,63 @@ describe("generator page composition", () => {
     expect(generateBusiness).toHaveBeenLastCalledWith(
       expect.objectContaining({ location: "The market" }),
     );
+  });
+
+  it("leads the fantasy name page with Quick Names that follow the culture setting", async () => {
+    render(GeneratorPageContent, {
+      props: { slug: "fantasy-names", persistence },
+    });
+    const panel = screen
+      .getByRole("heading", { name: "Quick names" })
+      .closest("section")!;
+    const namesBefore = () =>
+      Array.from(panel.querySelectorAll('li button[aria-label^="Copy "]')).map(
+        (button) => button.textContent,
+      );
+
+    await waitFor(() => expect(namesBefore()).toHaveLength(10));
+    const first = namesBefore();
+    await fireEvent.change(
+      screen.getByRole("combobox", { name: "Culture / Style" }),
+      { target: { value: "Dwarven" } },
+    );
+    await waitFor(() => expect(namesBefore()).not.toEqual(first));
+    expect(screen.getByText(/More options: presentation/)).toBeTruthy();
+    const cultures = Array.from(
+      (
+        screen.getByRole("combobox", {
+          name: "Culture / Style",
+        }) as HTMLSelectElement
+      ).options,
+    ).map((option) => option.value);
+    expect(cultures).toContain("High Elf");
+    expect(cultures).not.toContain("Sailor's Nickname");
+  });
+
+  it("gives the any-genre names page Quick Names too", () => {
+    render(GeneratorPageContent, { props: { slug: "names", persistence } });
+
+    expect(screen.getByRole("heading", { name: "Quick names" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Ask AI" })).toBeTruthy();
+  });
+
+  it("relabels the full generator and scopes its AI toggle on names pages", () => {
+    render(GeneratorPageContent, {
+      props: { slug: "fantasy-names", persistence },
+    });
+
+    expect(screen.getByTestId("generate-label").textContent).toBe(
+      "Generate names with notes",
+    );
+    expect(screen.getByTestId("ai-toggle-scope").textContent).toMatch(
+      /Quick names has its own Ask AI/,
+    );
+  });
+
+  it("keeps Quick Names off other generator pages", () => {
+    renderBusiness();
+    expect(screen.getByTestId("generate-label").textContent).toBe("");
+
+    expect(screen.queryByRole("heading", { name: "Quick names" })).toBeNull();
   });
 });

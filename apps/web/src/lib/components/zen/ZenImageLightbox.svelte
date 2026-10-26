@@ -1,20 +1,20 @@
 <script lang="ts">
   import { fade } from "svelte/transition";
   import { quintOut } from "svelte/easing";
-  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-  import { p2pHost } from "$lib/cloud-bridge/p2p/host-service.svelte";
-  import { mapSession } from "$lib/stores/map-session.svelte";
-  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+  import { p2pHost } from "#lib/cloud-bridge/p2p/host-service.svelte.js";
+  import { mapSession } from "#lib/stores/map-session.svelte.js";
+  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
 
   let {
     show = $bindable(false),
     imageUrl,
     title = "",
-  } = $props<{
+  }: {
     show: boolean;
     imageUrl: string;
     title?: string;
-  }>();
+  } = $props();
 
   let lightboxBackdrop = $state<HTMLDivElement>();
 

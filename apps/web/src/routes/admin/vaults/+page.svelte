@@ -1,5 +1,5 @@
 <script lang="ts">
-  import VaultInventory from "$lib/components/admin/VaultInventory.svelte";
+  import VaultInventory from "#lib/components/admin/VaultInventory.svelte";
 </script>
 
 <svelte:head>

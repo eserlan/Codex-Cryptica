@@ -5,7 +5,7 @@
     STAR_TYPE_COLORS,
   } from "generator-engine";
   import type { StarSystemBody } from "generator-engine";
-  import { svgToPngBlob } from "$lib/utils/svg-export";
+  import { svgToPngBlob } from "#lib/utils/svg-export.js";
 
   let {
     bodies,

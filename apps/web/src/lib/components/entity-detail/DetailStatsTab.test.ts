@@ -52,15 +52,15 @@ const {
   };
 });
 
-vi.mock("$lib/stores/vault.svelte", () => ({
+vi.mock("#lib/stores/vault.svelte.js", () => ({
   vault: { isGuest: false, updateEntity },
 }));
 
-vi.mock("$lib/stores/ui/notification.svelte", () => ({
+vi.mock("#lib/stores/ui/notification.svelte.js", () => ({
   notificationStore: { confirm: vi.fn(), notify: vi.fn() },
 }));
 
-vi.mock("$lib/stores/stat-sheet-templates.svelte", () => ({
+vi.mock("#lib/stores/stat-sheet-templates.svelte.js", () => ({
   statSheetTemplates: {
     allTemplates: [schema],
     availableTemplates: [schema],
@@ -68,7 +68,7 @@ vi.mock("$lib/stores/stat-sheet-templates.svelte", () => ({
   },
 }));
 
-vi.mock("$lib/stores/presentation-templates.svelte", () => ({
+vi.mock("#lib/stores/presentation-templates.svelte.js", () => ({
   presentationTemplates: {
     availableTemplatesForSchema: (schemaId: string) =>
       schemaId.startsWith("entity-local-stat-sheet:")

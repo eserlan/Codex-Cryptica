@@ -1,4 +1,4 @@
-import { base } from "$app/paths";
+import { resolve } from "$app/paths";
 
 /**
  * Shareable deep link to an entity in a published guest world.
@@ -9,7 +9,7 @@ export function buildGuestEntityUrl(
   entityId: string,
   origin: string = typeof location !== "undefined" ? location.origin : "",
 ): string {
-  return `${origin}${base}/guest/${encodeURIComponent(publishId)}?entity=${encodeURIComponent(entityId)}`;
+  return `${origin}${resolve("")}/guest/${encodeURIComponent(publishId)}?entity=${encodeURIComponent(entityId)}`;
 }
 
 /** Copy the shareable guest entity link to the clipboard. */

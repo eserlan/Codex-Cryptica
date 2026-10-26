@@ -19,7 +19,8 @@ import {
   browserSessionStorage,
   browserStorage,
   type StorageLike,
-} from "$lib/utils/runtime-deps";
+  systemClock,
+} from "#lib/utils/runtime-deps.js";
 import {
   classifyAiReferral,
   type AiReferralProvider,
@@ -95,7 +96,7 @@ export class AttributionStore {
   ) {
     this.storage = deps.storage ?? browserStorage;
     this.sessionStorage = deps.sessionStorage ?? browserSessionStorage;
-    this.now = deps.now ?? Date.now;
+    this.now = deps.now ?? (() => systemClock.now());
   }
 
   /**

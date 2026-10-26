@@ -27,12 +27,15 @@
     type ImportFormat,
     type RandomSource,
   } from "random-source-engine";
-  import { collectDroppedItems } from "$lib/features/importer/vault-file-collector";
-  import { randomSources } from "$lib/features/random";
-  import type { RandomSourceStore } from "$lib/stores/random-source-store.svelte";
-  import { systemIdGenerator, type IdGenerator } from "$lib/utils/runtime-deps";
-  import { vault } from "$lib/stores/vault.svelte";
-  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { collectDroppedItems } from "#lib/features/importer/vault-file-collector.js";
+  import { randomSources } from "#lib/features/random/index.js";
+  import type { RandomSourceStore } from "#lib/stores/random-source-store.svelte.js";
+  import {
+    systemIdGenerator,
+    type IdGenerator,
+  } from "#lib/utils/runtime-deps.js";
+  import { vault } from "#lib/stores/vault.svelte.js";
+  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
 
   let {
     kind = "table",

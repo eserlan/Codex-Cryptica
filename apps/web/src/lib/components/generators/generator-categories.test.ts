@@ -5,7 +5,7 @@ import {
 } from "./generator-categories";
 import type { GeneratorId } from "generator-engine";
 import { listGenerators } from "generator-engine";
-import { GENERATOR_CATALOGUE } from "$lib/content/generator-catalogue";
+import { GENERATOR_CATALOGUE } from "#lib/content/generator-catalogue.js";
 
 describe("generator-categories", () => {
   it("files every registered generator under an explicit category", () => {

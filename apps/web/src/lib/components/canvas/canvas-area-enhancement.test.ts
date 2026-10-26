@@ -2,9 +2,9 @@
 
 import type { Canvas } from "@codex/canvas-engine";
 import { describe, expect, it, vi } from "vitest";
-import type { AreaPopulationProgress } from "$lib/services/delve-area-enhancement";
+import type { AreaPopulationProgress } from "#lib/services/delve-area-enhancement.js";
 import { useCanvasAreaEnhancement } from "./canvas-area-enhancement.svelte";
-import { type Clock } from "$lib/utils/runtime-deps";
+import { type Clock } from "#lib/utils/runtime-deps.js";
 
 function room(id: string, sectorId = "sector-1", name = id) {
   return {

@@ -3,6 +3,7 @@ import {
   filterAnswerPageFiles,
   filterFormattableFiles,
   filterLintableFiles,
+  filterUiPatternFiles,
   isIgnoredPath,
   touchesDiscoveryContent,
 } from "./lint-changed.mjs";
@@ -19,6 +20,22 @@ describe("lint-changed", () => {
         "apps/web/src/lib/content/blog/front-page.md",
       ]),
     ).toEqual([page]);
+  });
+
+  test("selects changed components and modules for the UI pattern check", () => {
+    const component = "apps/web/src/lib/components/seo/QuickNamesPanel.svelte";
+    const module = "packages/generator-engine/src/public-names.ts";
+    expect(
+      filterUiPatternFiles([
+        component,
+        module,
+        "apps/web/src/lib/components/seo/QuickNamesPanel.test.ts",
+        "packages/generator-engine/src/public-names.spec.ts",
+        "apps/web/src/lib/components/seo/Deleted.svelte",
+        "scripts/check-ui-patterns.mjs",
+        "docs/local-pr-checks.md",
+      ]),
+    ).toEqual([component, module]);
   });
 
   test("detects changes to discovery content that need mesh and intent checks", () => {

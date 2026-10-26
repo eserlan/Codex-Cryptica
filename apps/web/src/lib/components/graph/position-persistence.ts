@@ -1,4 +1,4 @@
-import type { LocalEntity } from "$lib/stores/vault/types";
+import type { LocalEntity } from "#lib/stores/vault/types.js";
 
 type PositionUpdates = Record<string, Partial<LocalEntity>>;
 

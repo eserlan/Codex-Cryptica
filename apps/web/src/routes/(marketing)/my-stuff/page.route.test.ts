@@ -3,7 +3,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { render, fireEvent, screen } from "@testing-library/svelte";
 
-vi.mock("$app/paths", () => ({ base: "" }));
+vi.mock("$app/paths", () => ({
+  base: "",
+  asset: (p: string) => p,
+  resolve: (p: string) => p,
+}));
 vi.mock("$app/environment", () => ({ browser: true }));
 
 import Page from "./+page.svelte";
@@ -11,7 +15,7 @@ import {
   myStuffService,
   ANSWER_FEEDBACK_PREFIX,
   MANAGEMENT_TOKENS_KEY,
-} from "$lib/services/my-stuff/my-stuff-service";
+} from "#lib/services/my-stuff/my-stuff-service.js";
 
 describe("/my-stuff route", () => {
   beforeEach(() => {

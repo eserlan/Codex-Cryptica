@@ -1,8 +1,8 @@
 import type { Entity } from "schema";
-import { oracle } from "$lib/stores/oracle.svelte";
-import { oracleBridge } from "$lib/cloud-bridge/oracle-bridge";
+import { oracle } from "#lib/stores/oracle.svelte.js";
+import { oracleBridge } from "#lib/cloud-bridge/oracle-bridge.js";
 import * as Comlink from "comlink";
-import { upsertMarkdownSection } from "$lib/utils/markdown";
+import { upsertMarkdownSection } from "#lib/utils/markdown.js";
 import { BANNED_NAMES } from "generator-engine";
 
 export const personalitySectionTitle = "Personality & Voice";

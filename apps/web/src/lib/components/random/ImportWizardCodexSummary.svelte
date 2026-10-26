@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { CodexImportOk } from "random-source-engine";
-  import type { RandomSourceStore } from "$lib/stores/random-source-store.svelte";
+  import type { RandomSourceStore } from "#lib/stores/random-source-store.svelte.js";
   type Props = {
     codex: CodexImportOk;
     noun: string;

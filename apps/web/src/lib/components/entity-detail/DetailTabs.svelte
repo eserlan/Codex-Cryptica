@@ -1,9 +1,9 @@
 <script lang="ts">
   import type { Entity } from "schema";
-  import { vault } from "$lib/stores/vault.svelte";
-  import { themeStore } from "$lib/stores/theme.svelte";
+  import { vault } from "#lib/stores/vault.svelte.js";
+  import { themeStore } from "#lib/stores/theme.svelte.js";
   import { calendarEngine } from "chronology-engine";
-  import { calendarStore } from "$lib/stores/calendar.svelte";
+  import { calendarStore } from "#lib/stores/calendar.svelte.js";
   import {
     createEntityDetailTabIds,
     getNextEntityDetailTabInList,
@@ -11,8 +11,8 @@
     type EntityDetailTab,
     getTemporalLabel,
   } from "./detail-tabs";
-  import CategoryRadioGroup from "$lib/components/labels/CategoryRadioGroup.svelte";
-  import HelpEntityDetailSurface from "$lib/components/help-assistant/HelpEntityDetailSurface.svelte";
+  import CategoryRadioGroup from "#lib/components/labels/CategoryRadioGroup.svelte";
+  import HelpEntityDetailSurface from "#lib/components/help-assistant/HelpEntityDetailSurface.svelte";
 
   let {
     entity,
@@ -22,7 +22,7 @@
     idPrefix,
     canGuestEdit = false,
     onDateClick,
-  } = $props<{
+  }: {
     entity: Entity;
     activeTab: EntityDetailTab;
     isEditing: boolean;
@@ -30,7 +30,7 @@
     idPrefix: string;
     canGuestEdit?: boolean;
     onDateClick?: (year: number, month: number) => void;
-  }>();
+  } = $props();
 
   function getNavigableDate(): { year: number; month: number } | null {
     const d = entity.start_date ?? entity.date ?? entity.end_date;

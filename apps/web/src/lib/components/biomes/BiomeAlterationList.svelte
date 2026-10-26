@@ -3,7 +3,7 @@
     BIOME_ALTERATION_ASPECTS,
     type BiomeAlterationAspect,
   } from "biome-engine";
-  import type { BiomeExplorerStore } from "$lib/stores/biome-explorer.svelte";
+  import type { BiomeExplorerStore } from "#lib/stores/biome-explorer.svelte.js";
   import BiomeAlterationCard from "./BiomeAlterationCard.svelte";
   import { ASPECT_LABELS } from "./biome-labels";
 

@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Entity } from "schema";
-  import { vault } from "$lib/stores/vault.svelte";
-  import { helpSurfaces } from "$lib/stores/help-assistant/help-surface.svelte";
+  import { vault } from "#lib/stores/vault.svelte.js";
+  import { helpSurfaces } from "#lib/stores/help-assistant/help-surface.svelte.js";
 
   let {
     entity,

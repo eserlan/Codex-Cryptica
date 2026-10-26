@@ -2,7 +2,7 @@
   import type { Core } from "cytoscape";
   import { untrack } from "svelte";
 
-  import { isTransparent } from "$lib/utils/color";
+  import { isTransparent } from "#lib/utils/color.js";
 
   interface Props {
     cy: Core;

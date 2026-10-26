@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { categories } from "$lib/stores/categories.svelte";
-  import { sanitizeId } from "$lib/utils/markdown";
-  import { getIconClass } from "$lib/utils/icon";
+  import { categories } from "#lib/stores/categories.svelte.js";
+  import { sanitizeId } from "#lib/utils/markdown.js";
+  import { getIconClass } from "#lib/utils/icon.js";
   import { fade, scale } from "svelte/transition";
-  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
 
   let newLabel = $state("");
   let newColor = $state("#60a5fa");

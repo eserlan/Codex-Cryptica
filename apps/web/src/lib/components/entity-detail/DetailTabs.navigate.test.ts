@@ -6,7 +6,7 @@ import DetailTabs from "./DetailTabs.svelte";
 
 // Minimal mocks required by DetailTabs
 
-vi.mock("$lib/stores/categories.svelte", () => ({
+vi.mock("#lib/stores/categories.svelte.js", () => ({
   categories: {
     list: [
       { id: "character", label: "Character", icon: "user", color: "#fff" },
@@ -14,18 +14,18 @@ vi.mock("$lib/stores/categories.svelte", () => ({
   },
 }));
 
-vi.mock("$lib/stores/vault.svelte", () => ({
+vi.mock("#lib/stores/vault.svelte.js", () => ({
   vault: { isGuest: false },
 }));
 
-vi.mock("$lib/stores/theme.svelte", () => ({
+vi.mock("#lib/stores/theme.svelte.js", () => ({
   themeStore: {
     activeTheme: { id: "default" },
     jargon: { tab_status: "Status", tab_lore: "Lore" },
   },
 }));
 
-vi.mock("$lib/stores/calendar.svelte", () => ({
+vi.mock("#lib/stores/calendar.svelte.js", () => ({
   calendarStore: {
     config: {
       useGregorian: false,

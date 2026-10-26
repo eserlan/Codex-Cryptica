@@ -2,7 +2,7 @@
   import type { TemporalMetadata } from "schema";
   import type { DateSelection } from "chronology-engine";
   import { calendarEngine } from "chronology-engine";
-  import { calendarStore } from "$lib/stores/calendar.svelte";
+  import { calendarStore } from "#lib/stores/calendar.svelte.js";
   import { slide } from "svelte/transition";
   import TemporalPicker from "./TemporalPicker.svelte";
 
@@ -10,11 +10,11 @@
     value = $bindable(),
     label = "Chronological Date",
     referenceValue,
-  } = $props<{
+  }: {
     value?: TemporalMetadata | DateSelection;
     label?: string;
     referenceValue?: TemporalMetadata | DateSelection;
-  }>();
+  } = $props();
 
   let showPicker = $state(false);
   let triggerElement = $state<HTMLElement>();

@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { installEntityTemplateFromListing } from "$lib/stores/entity-templates/entity-template-install";
-  import type { InstallResult } from "$lib/stores/entity-templates/entity-template-install";
+  import { installEntityTemplateFromListing } from "#lib/stores/entity-templates/entity-template-install.js";
+  import type { InstallResult } from "#lib/stores/entity-templates/entity-template-install.js";
   import SharingHelpLink from "./SharingHelpLink.svelte";
 
   let {

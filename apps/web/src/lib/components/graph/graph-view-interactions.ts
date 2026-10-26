@@ -1,10 +1,10 @@
 import type { Core, NodeSingular } from "cytoscape";
 import { setupGraphEvents } from "graph-engine";
-import { systemClock, type Clock } from "$lib/utils/runtime-deps";
+import { systemClock, type Clock } from "#lib/utils/runtime-deps.js";
 import {
   browserPerformanceCapture,
   browserPerformanceRecorder,
-} from "$lib/services/performance/browser-performance-capture";
+} from "#lib/services/performance/browser-performance-capture.js";
 import {
   DEFAULT_SEARCH_ENTITY_ZOOM,
   consumePendingSearchEntityFocus,

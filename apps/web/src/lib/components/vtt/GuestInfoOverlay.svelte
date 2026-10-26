@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { guestStore } from "$lib/stores/guest.svelte";
-  import { mapSession } from "$lib/stores/map-session.svelte";
+  import { guestStore } from "#lib/stores/guest.svelte.js";
+  import { mapSession } from "#lib/stores/map-session.svelte.js";
   import { fade, slide } from "svelte/transition";
 
   const guests = $derived(guestStore.allGuests);

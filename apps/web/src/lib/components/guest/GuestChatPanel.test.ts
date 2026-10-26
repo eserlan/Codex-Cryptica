@@ -3,7 +3,7 @@ import { fireEvent, render, screen } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import GuestChatPanel from "./GuestChatPanel.svelte";
 
-vi.mock("$lib/stores/vault.svelte", () => ({
+vi.mock("#lib/stores/vault.svelte.js", () => ({
   vault: {
     isGuest: false,
     allEntities: [
@@ -21,14 +21,14 @@ vi.mock("$lib/stores/vault.svelte", () => ({
   },
 }));
 
-vi.mock("$lib/services/character-chat-export", () => ({
+vi.mock("#lib/services/character-chat-export.js", () => ({
   characterChatExportService: {
     copyConversation: vi.fn().mockResolvedValue(true),
     sendConversationToJournal: vi.fn().mockResolvedValue("new-note-id"),
   },
 }));
 
-vi.mock("$lib/stores/guest-chat.svelte", () => ({
+vi.mock("#lib/stores/guest-chat.svelte.js", () => ({
   guestChatStore: {
     activeCharacterId: "char-1",
     activeTranscript: {
@@ -76,7 +76,7 @@ describe("GuestChatPanel", () => {
     await fireEvent.click(copyBtn);
 
     const { characterChatExportService } =
-      await import("$lib/services/character-chat-export");
+      await import("#lib/services/character-chat-export.js");
     expect(characterChatExportService.copyConversation).toHaveBeenCalledWith(
       expect.objectContaining({ id: "t-1" }),
       expect.objectContaining({ characterTitle: "Mara the Blacksmith" }),
@@ -90,7 +90,7 @@ describe("GuestChatPanel", () => {
     await fireEvent.click(journalBtn);
 
     const { characterChatExportService } =
-      await import("$lib/services/character-chat-export");
+      await import("#lib/services/character-chat-export.js");
     expect(
       characterChatExportService.sendConversationToJournal,
     ).toHaveBeenCalledWith(

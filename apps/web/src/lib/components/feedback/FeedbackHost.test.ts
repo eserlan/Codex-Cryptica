@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 import { render, screen, waitFor } from "@testing-library/svelte";
 import { describe, expect, it } from "vitest";
-import { feedbackDialog } from "$lib/stores/ui/feedback-dialog.svelte";
+import { feedbackDialog } from "#lib/stores/ui/feedback-dialog.svelte.js";
 import FeedbackHost from "./FeedbackHost.svelte";
 
 // jsdom has no Web Animations API, which Svelte transitions use on close.

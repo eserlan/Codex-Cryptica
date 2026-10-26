@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { helpStore } from "$lib/stores/help.svelte";
-  import { FEATURE_HELP_ARTICLES } from "$lib/config/help-content";
+  import { helpStore } from "#lib/stores/help.svelte.js";
+  import { FEATURE_HELP_ARTICLES } from "#lib/config/help-content.js";
 
   let {
     openHelp = (id: string) => helpStore.openHelpToArticle(id),

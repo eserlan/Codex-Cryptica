@@ -16,7 +16,7 @@ const defaultStorage = vi.hoisted(() => {
   };
 });
 
-vi.mock("$lib/utils/runtime-deps", () => ({
+vi.mock("#lib/utils/runtime-deps.js", () => ({
   browserStorage: defaultStorage.storage,
 }));
 
@@ -24,7 +24,7 @@ import {
   readSidebarCollapsed,
   writeSidebarCollapsed,
 } from "./zen-sidebar-preference";
-import type { StorageLike } from "$lib/utils/runtime-deps";
+import type { StorageLike } from "#lib/utils/runtime-deps.js";
 
 beforeEach(() => {
   defaultStorage.values.clear();

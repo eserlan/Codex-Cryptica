@@ -92,6 +92,8 @@ interface ResolvedCouncilVote {
   members: CouncilVoteMember[];
 }
 
+const ROMAN_SUFFIXES = ["II", "III", "IV", "V", "VI", "VII", "VIII", "IX"];
+
 function resolveCouncilVote(
   options: CouncilVoteGeneratorOptions,
   rng: Rng,
@@ -124,15 +126,25 @@ function resolveCouncilVote(
   const avoidSet = new Set(
     options.avoidNames?.map((n) => n.trim().toLowerCase()) ?? [],
   );
+  // Members are keyed by name in the ballot audit, so no two may share one.
+  // Avoiding past names is best effort; a repeat within the council is not.
+  const taken = new Set<string>();
   const members: CouncilVoteMember[] = Array.from(
     { length: councilSize },
     () => {
       let name = generateName(rng);
       let attempts = 0;
-      while (avoidSet.has(name.toLowerCase()) && attempts < 10) {
+      while (
+        (avoidSet.has(name.toLowerCase()) || taken.has(name.toLowerCase())) &&
+        attempts < 10
+      ) {
         name = generateName(rng);
         attempts++;
       }
+      const base = name;
+      for (let n = 2; taken.has(name.toLowerCase()); n++)
+        name = `${base} ${ROMAN_SUFFIXES[n - 2] ?? n}`;
+      taken.add(name.toLowerCase());
       return {
         name,
         archetype: pickFrom(councilVoteConfig.archetypes, rng),
@@ -472,27 +484,32 @@ function readCouncilVoteMemberPositions(foundationLore: string): {
     foundationLore.match(
       /###\s*Council Members\s*\n([\s\S]*?)(?=\n###\s|$)/i,
     )?.[1] ?? "";
-  const members = [
-    ...section.matchAll(
-      /^\s*-\s*\*\*(.+?)\*\*[^\n]*?Initial stance:\s*(Support|Oppose|Abstain|Undecided|Leaning|Unknown)\b[^\n]*$/gim,
-    ),
-  ].map((match) => ({
-    name: match[1].trim(),
-    position: normalizedPosition(match[2] as CouncilVoteInitialPosition),
-  }));
+  const members: CouncilVoteMemberPosition[] = [];
+  // ⚡ Bolt Optimization: Replace [...matchAll].map() with an imperative loop to reduce GC pressure
+  for (const match of section.matchAll(
+    /^\s*-\s*\*\*(.+?)\*\*[^\n]*?Initial stance:\s*(Support|Oppose|Abstain|Undecided|Leaning|Unknown)\b[^\n]*$/gim,
+  )) {
+    members.push({
+      name: match[1].trim(),
+      position: normalizedPosition(match[2] as CouncilVoteInitialPosition),
+    });
+  }
   return { section, members };
 }
 
 function readCouncilVoteBallotRows(text: string): CouncilVoteBallotRow[] {
-  return [
-    ...text.matchAll(
-      /^\s*-\s*\*\*(.+?)\*\*\s*[—:-]\s*(Support|Oppose|Abstain|Undecided)\s*[—:-]\s*Reason:\s*([^\n]+)$/gim,
-    ),
-  ].map((match) => ({
-    name: match[1].trim(),
-    position: match[2] as CouncilVotePosition,
-    reason: match[3].trim(),
-  }));
+  const rows: CouncilVoteBallotRow[] = [];
+  // ⚡ Bolt Optimization: Replace [...matchAll].map() with an imperative loop to reduce GC pressure
+  for (const match of text.matchAll(
+    /^\s*-\s*\*\*(.+?)\*\*\s*[—:-]\s*(Support|Oppose|Abstain|Undecided)\s*[—:-]\s*Reason:\s*([^\n]+)$/gim,
+  )) {
+    rows.push({
+      name: match[1].trim(),
+      position: match[2] as CouncilVotePosition,
+      reason: match[3].trim(),
+    });
+  }
+  return rows;
 }
 
 function auditBallotRoster(

@@ -11,7 +11,7 @@ const { svgToPngBlob } = vi.hoisted(() => ({
   svgToPngBlob: vi.fn(async () => new Blob(["png"], { type: "image/png" })),
 }));
 
-vi.mock("$lib/utils/svg-export", () => ({ svgToPngBlob }));
+vi.mock("#lib/utils/svg-export.js", () => ({ svgToPngBlob }));
 
 import PointCrawlGraph from "./PointCrawlGraph.svelte";
 

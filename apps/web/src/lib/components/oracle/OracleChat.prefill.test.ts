@@ -26,7 +26,7 @@ const env = vi.hoisted(() => {
   };
 });
 
-vi.mock("$lib/stores/oracle.svelte", () => ({ oracle: env.oracle }));
+vi.mock("#lib/stores/oracle.svelte.js", () => ({ oracle: env.oracle }));
 
 import OracleChat from "./OracleChat.svelte";
 

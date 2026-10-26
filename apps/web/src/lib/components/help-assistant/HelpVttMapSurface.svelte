@@ -1,13 +1,13 @@
 <script lang="ts">
   import type { VttHelpFacts, VttPanelId } from "help-engine";
-  import { p2pHost } from "$lib/cloud-bridge/p2p/host-service.svelte";
-  import { mapSession } from "$lib/stores/map-session.svelte";
-  import { mapStore } from "$lib/stores/map.svelte";
-  import { reachableVttActions } from "$lib/services/help-assistant/vtt-help-actions";
-  import { helpSurfaces } from "$lib/stores/help-assistant/help-surface.svelte";
-  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
-  import { mapControlsUIStore } from "$lib/stores/ui/map-controls-ui.svelte";
-  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { p2pHost } from "#lib/cloud-bridge/p2p/host-service.svelte.js";
+  import { mapSession } from "#lib/stores/map-session.svelte.js";
+  import { mapStore } from "#lib/stores/map.svelte.js";
+  import { reachableVttActions } from "#lib/services/help-assistant/vtt-help-actions.js";
+  import { helpSurfaces } from "#lib/stores/help-assistant/help-surface.svelte.js";
+  import { layoutUIStore } from "#lib/stores/ui/layout-ui.svelte.js";
+  import { mapControlsUIStore } from "#lib/stores/ui/map-controls-ui.svelte.js";
+  import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
 
   /**
    * Renderless. Tells the help assistant a few yes/no facts about the user's

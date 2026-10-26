@@ -5,6 +5,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("$app/paths", () => ({
   base: "",
+  asset: (p: string) => p,
+  resolve: (p: string) => p,
 }));
 
 vi.mock("$app/state", () => ({
@@ -15,13 +17,13 @@ vi.mock("$app/state", () => ({
   },
 }));
 
-vi.mock("$lib/services/ClipboardService", () => ({
+vi.mock("#lib/services/ClipboardService.js", () => ({
   clipboardService: {
     copyEntity: vi.fn().mockResolvedValue(true),
   },
 }));
 
-vi.mock("$lib/hooks/useEditState.svelte", () => ({
+vi.mock("#lib/hooks/useEditState.svelte.js", () => ({
   createEditState: vi.fn(() => ({
     isEditing: false,
     cancel: vi.fn(),
@@ -29,7 +31,7 @@ vi.mock("$lib/hooks/useEditState.svelte", () => ({
   })),
 }));
 
-vi.mock("$lib/hooks/useZenModeActions.svelte", () => ({
+vi.mock("#lib/hooks/useZenModeActions.svelte.js", () => ({
   useZenModeActions: vi.fn().mockReturnValue({
     handleClose: vi.fn((cb) => cb()),
     handlePopOut: vi.fn(),
@@ -61,11 +63,11 @@ vi.mock("../zen/ZenContent.svelte", async () => ({
   default: (await import("./__tests__/ModalStub.svelte")).default,
 }));
 
-vi.mock("$lib/components/entity-detail/DetailMapTab.svelte", async () => ({
+vi.mock("#lib/components/entity-detail/DetailMapTab.svelte", async () => ({
   default: (await import("./__tests__/ModalStub.svelte")).default,
 }));
 
-vi.mock("$lib/stores/vault.svelte", () => {
+vi.mock("#lib/stores/vault.svelte.js", () => {
   const entities: Record<string, any> = {
     "entity-1": {
       id: "entity-1",
@@ -91,7 +93,7 @@ vi.mock("$lib/stores/vault.svelte", () => {
   };
 });
 
-vi.mock("$lib/utils/zen-popout", async () => {
+vi.mock("#lib/utils/zen-popout.js", async () => {
   const actual = await import("../../utils/zen-popout");
   return {
     ...actual,
@@ -100,7 +102,7 @@ vi.mock("$lib/utils/zen-popout", async () => {
 });
 
 import ZenModeModal from "./ZenModeModal.svelte";
-import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
 
 describe("ZenModeModal", () => {
   beforeEach(() => {

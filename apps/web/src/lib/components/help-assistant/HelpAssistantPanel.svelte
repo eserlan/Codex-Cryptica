@@ -3,9 +3,9 @@
   import { fly } from "svelte/transition";
   import { quintOut } from "svelte/easing";
   import type { GuidanceAction } from "help-engine";
-  import { KeyboardInset } from "$lib/services/help-assistant/keyboard-inset.svelte";
-  import type { HelpAssistantView } from "$lib/services/help-assistant/cif-popout-protocol";
-  import ReportProblemButton from "$lib/components/feedback/ReportProblemButton.svelte";
+  import { KeyboardInset } from "#lib/services/help-assistant/keyboard-inset.svelte.js";
+  import type { HelpAssistantView } from "#lib/services/help-assistant/cif-popout-protocol.js";
+  import ReportProblemButton from "#lib/components/feedback/ReportProblemButton.svelte";
   import HelpActionOffer from "./HelpActionOffer.svelte";
   import HelpAssistantHeader from "./HelpAssistantHeader.svelte";
   import { cifMood, DELIGHT_MS } from "./cif-mood";

@@ -5,8 +5,8 @@ import {
   type HelpAnswer,
   type HelpTurn,
 } from "help-engine";
-import { resolveOracleProxyUrl } from "$lib/config/oracle-proxy";
-import { getAiSessionToken } from "$lib/services/ai/session-bootstrap";
+import { resolveOracleProxyUrl } from "#lib/config/oracle-proxy.js";
+import { getAiSessionToken } from "#lib/services/ai/session-bootstrap.js";
 
 export type HelpErrorKind =
   | "offline"

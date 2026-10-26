@@ -7,10 +7,10 @@ import {
 } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import FrontPage from "./FrontPage.svelte";
-import { hexToRgb } from "$lib/utils/color";
-import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
-import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-import { notificationStore } from "$lib/stores/ui/notification.svelte";
+import { hexToRgb } from "#lib/utils/color.js";
+import { onboardingStore } from "#lib/stores/ui/onboarding.svelte.js";
+import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
 
 const mocks = vi.hoisted(() => ({
   load: vi.fn(),
@@ -107,7 +107,7 @@ if (!HTMLElement.prototype.animate) {
   });
 }
 
-vi.mock("$lib/stores/theme.svelte", () => ({
+vi.mock("#lib/stores/theme.svelte.js", () => ({
   themeStore: {
     activeTheme: {
       id: "cyberpunk",
@@ -136,7 +136,7 @@ vi.mock("@codex/ai-engine", () => ({
   },
 }));
 
-vi.mock("$lib/stores/vault.svelte", () => ({
+vi.mock("#lib/stores/vault.svelte.js", () => ({
   vault: {
     activeVaultId: "vault-1",
     vaultName: "Moonfall",
@@ -161,7 +161,7 @@ vi.mock("$lib/stores/vault.svelte", () => ({
   },
 }));
 
-vi.mock("$lib/stores/world.svelte", () => ({
+vi.mock("#lib/stores/world.svelte.js", () => ({
   worldStore: Object.assign(worldStoreMock, {
     load: mocks.load,
     saveDescription: mocks.saveDescription,
@@ -171,7 +171,7 @@ vi.mock("$lib/stores/world.svelte", () => ({
   }),
 }));
 
-vi.mock("$lib/stores/oracle.svelte", () => ({
+vi.mock("#lib/stores/oracle.svelte.js", () => ({
   oracle: {
     apiKey: "test-api-key",
     effectiveApiKey: "test-api-key",
@@ -182,7 +182,7 @@ vi.mock("$lib/stores/oracle.svelte", () => ({
   },
 }));
 
-vi.mock("$lib/stores/timeline.svelte", () => ({
+vi.mock("#lib/stores/timeline.svelte.js", () => ({
   timelineStore: {
     calendarMonthView: {
       title: "June 2026",
@@ -227,7 +227,7 @@ vi.mock("$lib/stores/timeline.svelte", () => ({
   },
 }));
 
-vi.mock("$lib/stores/ui/discovery-policy.svelte", () => ({
+vi.mock("#lib/stores/ui/discovery-policy.svelte.js", () => ({
   discoveryPolicyStore: {
     aiDisabled: false,
   },
@@ -1154,8 +1154,8 @@ describe("FrontPage", () => {
   });
 
   it("renders 'Start your world' card and empty state actions when vault has no entities", async () => {
-    const { vault } = await import("$lib/stores/vault.svelte");
-    const { worldStore } = await import("$lib/stores/world.svelte");
+    const { vault } = await import("#lib/stores/vault.svelte.js");
+    const { worldStore } = await import("#lib/stores/world.svelte.js");
     const originalAllEntities = vault.allEntities;
     const originalRecentActivity = worldStore.recentActivity;
     // Mock zero entities using type casting to bypass the read-only getter type check
@@ -1194,7 +1194,7 @@ describe("FrontPage", () => {
 
   it("does not render Vault Audit workbench card in guest mode", async () => {
     const { sessionModeStore } =
-      await import("$lib/stores/ui/session-mode.svelte");
+      await import("#lib/stores/ui/session-mode.svelte.js");
     sessionModeStore.isGuestMode = true;
 
     try {

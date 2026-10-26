@@ -3,20 +3,24 @@
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("$lib/stores/help.svelte", () => ({
+vi.mock("#lib/stores/help.svelte.js", () => ({
   helpStore: { openHelpToArticle: vi.fn() },
 }));
-vi.mock("$app/paths", () => ({ resolve: (p: string) => p }));
-vi.mock("$lib/utils/download", () => ({ downloadText: vi.fn() }));
+vi.mock("$app/paths", () => ({
+  base: "",
+  asset: (p: string) => p,
+  resolve: (p: string) => p,
+}));
+vi.mock("#lib/utils/download.js", () => ({ downloadText: vi.fn() }));
 vi.mock(
-  "$lib/stores/entity-templates/entity-template-publish-store.svelte",
+  "#lib/stores/entity-templates/entity-template-publish-store.svelte.js",
   () => ({
     entityTemplatePublishStore: {},
   }),
 );
 
 import EntityTemplatePublishModal from "./EntityTemplatePublishModal.svelte";
-import { downloadText } from "$lib/utils/download";
+import { downloadText } from "#lib/utils/download.js";
 
 const template = {
   id: "t1",
@@ -68,7 +72,7 @@ describe("EntityTemplatePublishModal (publish)", () => {
   });
 
   it("links to the sharing help article", async () => {
-    const { helpStore } = await import("$lib/stores/help.svelte");
+    const { helpStore } = await import("#lib/stores/help.svelte.js");
     render(EntityTemplatePublishModal, { template, store: store() });
     await fireEvent.click(screen.getByText("How sharing works"));
     expect(helpStore.openHelpToArticle).toHaveBeenCalledWith(

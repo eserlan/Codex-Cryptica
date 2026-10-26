@@ -3,8 +3,8 @@ import { mapRegistry } from "./map-registry.svelte";
 import { vaultRegistry } from "./vault-registry.svelte";
 import { loadMapsFromDisk, saveMapsToDisk } from "./vault/io";
 import { getVaultDir, deleteOpfsEntry } from "../utils/opfs";
-import { notificationStore } from "$lib/stores/ui/notification.svelte";
-import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
+import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
 
 // Mock dependencies
 vi.mock("./vault-registry.svelte", () => ({

@@ -1,11 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
-import { trackEvent } from "$lib/services/analytics/zaraz-analytics";
+import { trackEvent } from "#lib/services/analytics/zaraz-analytics.js";
 import {
   trackGeneratorShareCreated,
   trackGeneratorShareOpened,
 } from "./generator-share-tracking";
 
-vi.mock("$lib/services/analytics/zaraz-analytics", () => ({
+vi.mock("#lib/services/analytics/zaraz-analytics.js", () => ({
   trackEvent: vi.fn(),
 }));
 

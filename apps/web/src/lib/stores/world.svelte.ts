@@ -5,9 +5,9 @@ import {
   type FrontPageEntity,
   type RecentActivity,
 } from "@codex/vault-engine";
-import { entityDb } from "$lib/utils/entity-db";
-import { vault } from "$lib/stores/vault.svelte";
-import { oracle } from "$lib/stores/oracle.svelte";
+import { entityDb } from "#lib/utils/entity-db.js";
+import { vault } from "#lib/stores/vault.svelte.js";
+import { oracle } from "#lib/stores/oracle.svelte.js";
 import { imageGenerationService } from "@codex/ai-engine";
 import { textGenerationService } from "@codex/ai-engine";
 import { DEFAULT_CF_IMAGE_MODEL } from "@codex/oracle-engine";

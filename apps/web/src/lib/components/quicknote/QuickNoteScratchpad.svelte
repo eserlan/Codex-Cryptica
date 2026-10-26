@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { quickNoteStore } from "$lib/stores/quicknote.svelte";
+  import { quickNoteStore } from "#lib/stores/quicknote.svelte.js";
   import NoteHistory from "./NoteHistory.svelte";
   import SessionJournalView from "./SessionJournalView.svelte";
   import { fade, scale } from "svelte/transition";
@@ -14,7 +14,7 @@
     MIN_WINDOW_WIDTH,
     MIN_WINDOW_HEIGHT,
     type WindowBounds,
-  } from "$lib/utils/window-bounds";
+  } from "#lib/utils/window-bounds.js";
 
   /**
    * Notes and Journal are deliberately separate tabs, not merged into one

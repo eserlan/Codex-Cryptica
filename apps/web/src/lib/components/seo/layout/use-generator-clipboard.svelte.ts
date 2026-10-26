@@ -1,14 +1,14 @@
-import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
+import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
 import type { SessionEntity } from "generator-engine";
-import type { ClipboardService } from "$lib/services/ClipboardService";
-import { trackPublicGeneratorAction } from "$lib/services/analytics/zaraz-analytics";
+import type { ClipboardService } from "#lib/services/ClipboardService.js";
+import { trackPublicGeneratorAction } from "#lib/services/analytics/zaraz-analytics.js";
 import {
   buildGeneratorMarkdown,
   buildSectionMarkdown,
   buildSessionEntityMarkdown,
-} from "$lib/components/seo/generator-copy";
-import { handleGeneratorInlineCopy } from "$lib/components/seo/generator-inline-copy";
-import type { getGeneratorDocumentLayout } from "$lib/components/seo/generator-document-layout";
+} from "#lib/components/seo/generator-copy.js";
+import { handleGeneratorInlineCopy } from "#lib/components/seo/generator-inline-copy.js";
+import type { getGeneratorDocumentLayout } from "#lib/components/seo/generator-document-layout.js";
 
 type DocumentLayout = ReturnType<typeof getGeneratorDocumentLayout>;
 

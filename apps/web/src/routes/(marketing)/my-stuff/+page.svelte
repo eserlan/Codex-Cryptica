@@ -1,10 +1,10 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { browser } from "$app/environment";
-  import { base } from "$app/paths";
-  import SeoHead from "$lib/components/seo/SeoHead.svelte";
-  import { buildAbsoluteUrl } from "$lib/seo/site";
-  import { myStuffService } from "$lib/services/my-stuff/my-stuff-service";
+  import { browser } from "$app/env";
+  import { resolve } from "$app/paths";
+  import SeoHead from "#lib/components/seo/SeoHead.svelte";
+  import { buildAbsoluteUrl } from "#lib/seo/site.js";
+  import { myStuffService } from "#lib/services/my-stuff/my-stuff-service.js";
   import {
     trackMyStuffOpened,
     trackMyStuffItemOpened,
@@ -12,14 +12,14 @@
     trackMyStuffShareRevoked,
     trackMyStuffLikedRemoved,
     type MyStuffTab,
-  } from "$lib/services/my-stuff/my-stuff-tracking";
-  import { copyTextToClipboard } from "$lib/utils/share-link";
+  } from "#lib/services/my-stuff/my-stuff-tracking.js";
+  import { copyTextToClipboard } from "#lib/utils/share-link.js";
   import type {
     LikedAnswerItem,
     SharedGeneratorItem,
-  } from "$lib/services/my-stuff/types";
+  } from "#lib/services/my-stuff/types.js";
 
-  const cleanBase = $derived(base === "/" ? "" : base);
+  const cleanBase = $derived(resolve("") === "/" ? "" : resolve(""));
 
   let activeTab = $state<MyStuffTab>("liked");
   let likedAnswers = $state<LikedAnswerItem[]>([]);

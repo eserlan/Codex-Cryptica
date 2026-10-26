@@ -3,7 +3,7 @@ import {
   GENERATOR_CATALOGUE,
   GENERATOR_CATEGORIES,
   type GeneratorCategoryId,
-} from "$lib/content/generator-catalogue";
+} from "#lib/content/generator-catalogue.js";
 
 /**
  * The in-app generator picker uses the same categories as the public

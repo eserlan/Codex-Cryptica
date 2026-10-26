@@ -1,6 +1,6 @@
 import type { Core } from "cytoscape";
 import type { PerformanceOperationHandle } from "@codex/performance-observability";
-import { browserPerformanceRecorder } from "$lib/services/performance/browser-performance-capture";
+import { browserPerformanceRecorder } from "#lib/services/performance/browser-performance-capture.js";
 
 function countChanges(current: number, previous: number) {
   return {

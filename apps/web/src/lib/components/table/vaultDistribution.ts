@@ -1,6 +1,6 @@
 import type { Category } from "schema";
-import type { EntityWithPreview } from "$lib/components/explorer/entityListFiltering";
-import { getIconClass } from "$lib/utils/icons";
+import type { EntityWithPreview } from "#lib/components/explorer/entityListFiltering.js";
+import { getIconClass } from "#lib/utils/icons.js";
 
 export interface DistributionItem {
   id: string;

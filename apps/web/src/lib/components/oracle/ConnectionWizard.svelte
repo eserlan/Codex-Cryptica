@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { oracle, type ChatMessage } from "$lib/stores/oracle.svelte";
-  import { vault } from "$lib/stores/vault.svelte";
+  import { oracle, type ChatMessage } from "#lib/stores/oracle.svelte.js";
+  import { vault } from "#lib/stores/vault.svelte.js";
   import Autocomplete from "../ui/Autocomplete.svelte";
   import { fade, slide } from "svelte/transition";
 

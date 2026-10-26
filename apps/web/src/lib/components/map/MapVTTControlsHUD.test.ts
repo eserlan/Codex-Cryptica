@@ -7,7 +7,7 @@ import {
   screen,
 } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { soloSessionStore } from "$lib/stores/solo-session-instance";
+import { soloSessionStore } from "#lib/stores/solo-session-instance.js";
 
 const mapStoreMock = vi.hoisted(() => ({
   isGMMode: true,
@@ -43,26 +43,26 @@ const sessionModeStoreMock = vi.hoisted(() => ({
   sharedMode: false,
 }));
 
-vi.mock("$lib/components/map/VTTModeToggle.svelte", () => ({
+vi.mock("#lib/components/map/VTTModeToggle.svelte", () => ({
   default: function VTTModeToggleMock() {
     return {};
   },
 }));
 
-vi.mock("$lib/stores/map.svelte", () => ({
+vi.mock("#lib/stores/map.svelte.js", () => ({
   mapStore: mapStoreMock,
 }));
 
-vi.mock("$lib/stores/map-session.svelte", () => ({
+vi.mock("#lib/stores/map-session.svelte.js", () => ({
   mapSession: mapSessionMock,
 }));
 
-vi.mock("$lib/stores/ui/session-mode.svelte", () => ({
+vi.mock("#lib/stores/ui/session-mode.svelte.js", () => ({
   sessionModeStore: sessionModeStoreMock,
 }));
 
-import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
-import { mapControlsUIStore } from "$lib/stores/ui/map-controls-ui.svelte";
+import { layoutUIStore } from "#lib/stores/ui/layout-ui.svelte.js";
+import { mapControlsUIStore } from "#lib/stores/ui/map-controls-ui.svelte.js";
 import MapVTTControlsHUD from "./MapVTTControlsHUD.svelte";
 
 describe("MapVTTControlsHUD", () => {

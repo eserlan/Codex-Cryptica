@@ -8,8 +8,8 @@
    * backup. Split out of `CloudBackupSettings` so that panel's template stays
    * under its complexity budget.
    */
-  import { cloudBackupStore } from "$lib/stores/cloud-backup.svelte";
-  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { cloudBackupStore } from "#lib/stores/cloud-backup.svelte.js";
+  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
   import { parseRecoveryKey } from "@codex/cloud-backup-sync";
 
   interface Props {

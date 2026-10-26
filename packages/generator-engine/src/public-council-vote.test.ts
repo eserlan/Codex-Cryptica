@@ -65,6 +65,22 @@ describe("generateCouncilVoteLocal", () => {
     expect(out.lore).toContain("Unanimous, 5 seats");
   });
 
+  it("gives every council member a distinct name", () => {
+    for (let seed = 1; seed <= 200; seed++) {
+      const names = extractCouncilVoteNames(
+        generateCouncilVoteLocal({ councilSize: "9" }, seededRng(seed)),
+      );
+      expect(names).toHaveLength(9);
+    }
+  });
+
+  it("keeps names distinct even when the random source repeats itself", () => {
+    const out = generateCouncilVoteLocal({ councilSize: "5" }, () => 0);
+    const names = extractCouncilVoteNames(out);
+    expect(new Set(names.map((n) => n.toLowerCase())).size).toBe(5);
+    expect(names.slice(1).every((n) => / (?:II|III|IV|V)$/.test(n))).toBe(true);
+  });
+
   it("is deterministic for a fixed seed", () => {
     expect(generateCouncilVoteLocal({}, seededRng(9))).toEqual(
       generateCouncilVoteLocal({}, seededRng(9)),

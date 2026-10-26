@@ -4,20 +4,22 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { hexToPoint } from "map-engine";
 import type { HexCrawlState } from "hex-crawl-engine";
-import { HexCrawlStore } from "$lib/stores/hex-crawl/hex-crawl.svelte";
+import { HexCrawlStore } from "#lib/stores/hex-crawl/hex-crawl.svelte.js";
 
 const mapStoreMock = vi.hoisted(() => ({
   addPin: vi.fn(async () => undefined),
 }));
-vi.mock("$lib/stores/map.svelte", () => ({ mapStore: mapStoreMock }));
+vi.mock("#lib/stores/map.svelte.js", () => ({ mapStore: mapStoreMock }));
 
 const vaultMock = vi.hoisted(() => ({
   createEntity: vi.fn(async () => "entity-new"),
 }));
-vi.mock("$lib/stores/vault.svelte", () => ({ vault: vaultMock }));
+vi.mock("#lib/stores/vault.svelte.js", () => ({ vault: vaultMock }));
 
 const modalMock = vi.hoisted(() => ({ openZenMode: vi.fn() }));
-vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({ modalUIStore: modalMock }));
+vi.mock("#lib/stores/ui/modal-ui.svelte.js", () => ({
+  modalUIStore: modalMock,
+}));
 
 import HexCrawlPanel from "./HexCrawlPanel.svelte";
 import { HEX_HINT_KEY } from "./hex-crawl-hint";

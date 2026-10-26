@@ -4,7 +4,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import AdventureFocusPlay from "./AdventureFocusPlay.svelte";
 
-vi.mock("$lib/actions/focusTrap", () => ({
+vi.mock("#lib/actions/focusTrap.js", () => ({
   focusTrap: () => ({ destroy() {} }),
 }));
 

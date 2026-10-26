@@ -6,7 +6,7 @@ import {
   pointToHex,
   type HexGridConfig,
 } from "map-engine";
-import { snapToGrid, clampPointToBounds } from "$lib/utils/vtt-helpers";
+import { snapToGrid, clampPointToBounds } from "#lib/utils/vtt-helpers.js";
 
 const SQRT_3 = Math.sqrt(3);
 const TOKEN_COORD_PRECISION = 2;

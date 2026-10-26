@@ -1,5 +1,5 @@
 import type { AnswerConfig } from "./schema";
-import { browserStorage, type StorageLike } from "$lib/utils/runtime-deps";
+import { browserStorage, type StorageLike } from "#lib/utils/runtime-deps.js";
 
 export type AnswerSortOption = "category" | "az" | "za" | "newest" | "oldest";
 

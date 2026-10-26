@@ -13,14 +13,14 @@ const CATEGORIES = vi.hoisted(() => [
   },
 ]);
 
-vi.mock("$lib/stores/categories.svelte", () => ({
+vi.mock("#lib/stores/categories.svelte.js", () => ({
   categories: {
     list: CATEGORIES,
     getCategory: (id: string) => CATEGORIES.find((c) => c.id === id),
   },
 }));
 
-vi.mock("$lib/stores/theme.svelte", () => ({
+vi.mock("#lib/stores/theme.svelte.js", () => ({
   themeStore: { activeTheme: FANTASY_DARK },
 }));
 

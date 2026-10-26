@@ -1,26 +1,27 @@
 <script lang="ts">
-  import { browser } from "$app/environment";
-  import { base } from "$app/paths";
-  const cleanBase = base === "/" ? "" : base;
-  import { safeJsonLd } from "$lib/utils/json-ld";
-  import type { SEOPageData } from "$lib/config/seo-pages";
-  import type { SEOComparisonPageData } from "$lib/config/seo-comparisons";
+  import { browser } from "$app/env";
+  import { resolve } from "$app/paths";
+  const cleanBase = resolve("") === "/" ? "" : resolve("");
+  import { safeJsonLd } from "#lib/utils/json-ld.js";
+  import type { SEOPageData } from "#lib/config/seo-pages.js";
+  import type { SEOComparisonPageData } from "#lib/config/seo-comparisons.js";
   import {
     trackDiscoveryPageViewed,
     classifyDiscoveryTarget,
     createDiscoveryViewGuard,
     type DiscoverySourceKind,
-  } from "$lib/services/analytics/discovery-tracking";
-  import { trackDiscoveryClick } from "$lib/actions/trackDiscoveryClick";
+  } from "#lib/services/analytics/discovery-tracking.js";
+  import { trackDiscoveryClick } from "#lib/actions/trackDiscoveryClick.js";
 
   let {
     data,
     type = "solution",
     canonicalUrl,
+
+    /** Override the computed canonical URL (e.g. for standalone routes outside /solutions). */
   }: {
     data: SEOPageData | SEOComparisonPageData;
     type?: "solution" | "comparison";
-    /** Override the computed canonical URL (e.g. for standalone routes outside /solutions). */
     canonicalUrl?: string;
   } = $props();
 
@@ -36,6 +37,7 @@
   let discoverySourceKind: DiscoverySourceKind = $derived(
     type === "comparison" ? "comparison" : "other",
   );
+
   let discoveryPath = $derived(
     canonicalUrl ??
       `/${type === "comparison" ? "vs" : "solutions"}/${data.slug}`,
@@ -183,7 +185,9 @@
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary" />
   <meta name="twitter:title" content={data.title} />
+
   <meta name="twitter:description" content={data.description} />
+
   <meta
     name="twitter:image"
     content="https://assets.codexcryptica.com/screenshots/feature-connect.jpg"

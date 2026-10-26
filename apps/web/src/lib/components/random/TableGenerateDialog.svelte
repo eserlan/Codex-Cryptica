@@ -6,7 +6,7 @@
   import {
     tableGenerationService as defaultGeneratorService,
     type TableGenerationService,
-  } from "$lib/services/table-generation-service";
+  } from "#lib/services/table-generation-service.js";
   import TableStagingPreview from "./TableStagingPreview.svelte";
 
   let {

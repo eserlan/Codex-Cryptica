@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Core } from "cytoscape";
-import { browserPerformanceRecorder } from "$lib/services/performance/browser-performance-capture";
+import { browserPerformanceRecorder } from "#lib/services/performance/browser-performance-capture.js";
 import { GraphViewMeasurements } from "./graph-view-measurements";
 
 describe("GraphViewMeasurements", () => {

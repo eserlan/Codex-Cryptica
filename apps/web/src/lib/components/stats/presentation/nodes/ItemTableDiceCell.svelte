@@ -2,7 +2,7 @@
   import type { PresentationRenderContext } from "../types";
   import type { ItemTableColumn, ItemTableRow } from "./item-table-values";
   import type { ItemTableRollState } from "./item-table-rolls";
-  import DiceBreakdownDisclosure from "$lib/components/dice/DiceBreakdownDisclosure.svelte";
+  import DiceBreakdownDisclosure from "#lib/components/dice/DiceBreakdownDisclosure.svelte";
   let {
     row,
     col,

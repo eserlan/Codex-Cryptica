@@ -1,18 +1,19 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { base } from "$app/paths";
-  import SeoHead from "$lib/components/seo/SeoHead.svelte";
-  import PublicLabelChip from "$lib/components/labels/PublicLabelChip.svelte";
-  import ShareButton from "$lib/components/ShareButton.svelte";
-  import SilhouetteGlyph from "$lib/components/ui/SilhouetteGlyph.svelte";
-  import { renderGeneratorMarkdown } from "$lib/components/seo/markdown-renderers";
-  import { parseGeneratorShareMarkdown } from "$lib/components/seo/generator-copy";
-  import { buildAbsoluteUrl } from "$lib/seo/site";
+  import { resolve } from "$app/paths";
+  import SeoHead from "#lib/components/seo/SeoHead.svelte";
+  import PublicLabelChip from "#lib/components/labels/PublicLabelChip.svelte";
+  import ShareButton from "#lib/components/ShareButton.svelte";
+  import SilhouetteGlyph from "#lib/components/ui/SilhouetteGlyph.svelte";
+  import { renderGeneratorMarkdown } from "#lib/components/seo/markdown-renderers.js";
+  import { parseGeneratorShareMarkdown } from "#lib/components/seo/generator-copy.js";
+  import { buildAbsoluteUrl } from "#lib/seo/site.js";
   import { resolveEntitySilhouette } from "schema";
   import {
     generatorShareService,
     type GeneratorShareService,
-  } from "$lib/services/sharing/GeneratorShareService";
+  } from "#lib/services/sharing/GeneratorShareService.js";
+
   import {
     trackGeneratorShareClicked,
     trackGeneratorShareGenerateClicked,
@@ -20,7 +21,7 @@
     trackGeneratorShareOpened,
     trackGeneratorShareRemixClicked,
     trackGeneratorShareCompleted,
-  } from "$lib/services/sharing/generator-share-tracking";
+  } from "#lib/services/sharing/generator-share-tracking.js";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
@@ -29,7 +30,7 @@
   let errorMessage = $state<string | null>(null);
   let revoking = $state(false);
   let revoked = $state(false);
-  const cleanBase = base === "/" ? "" : base;
+  const cleanBase = resolve("") === "/" ? "" : resolve("");
 
   const shareUrl = $derived(buildAbsoluteUrl(`/share/${data.shareId}`));
   const generatorUrl = $derived(

@@ -1,5 +1,5 @@
 import type { Canvas, CanvasStore } from "@codex/canvas-engine";
-import type { vault as VaultStore } from "$lib/stores/vault.svelte";
+import type { vault as VaultStore } from "#lib/stores/vault.svelte.js";
 import { createFlowTextNode } from "../canvas-workspace-helpers";
 import { presentCanvasNodes } from "../canvas-workspace-nodes";
 import {

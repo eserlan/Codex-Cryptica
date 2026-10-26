@@ -21,18 +21,23 @@ vi.mock("$app/navigation", () => ({
     nav.guard = cb;
   },
 }));
-vi.mock("$app/paths", () => ({ base: "" }));
-vi.mock("$lib/stores/biome-explorer-instance", async () => {
-  const { makeStore } = await import("$lib/stores/biome-explorer.test-helpers");
+vi.mock("$app/paths", () => ({
+  base: "",
+  asset: (p: string) => p,
+  resolve: (p: string) => p,
+}));
+vi.mock("#lib/stores/biome-explorer-instance.js", async () => {
+  const { makeStore } =
+    await import("#lib/stores/biome-explorer.test-helpers.js");
   const made = makeStore();
   return { biomeExplorer: made.store, __made: made };
 });
 
 async function made() {
   const mod =
-    (await import("$lib/stores/biome-explorer-instance")) as unknown as {
+    (await import("#lib/stores/biome-explorer-instance.js")) as unknown as {
       __made: ReturnType<
-        typeof import("$lib/stores/biome-explorer.test-helpers").makeStore
+        typeof import("#lib/stores/biome-explorer.test-helpers.js").makeStore
       >;
     };
   return mod.__made;

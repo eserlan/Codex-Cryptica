@@ -1,17 +1,21 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/svelte";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import RoutePage from "./+page.svelte";
-import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
-import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-import { demoService } from "$lib/services/demo";
+import { onboardingStore } from "#lib/stores/ui/onboarding.svelte.js";
+import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+import { demoService } from "#lib/services/demo.js";
 
 vi.mock("$app/state", () => ({
   page: { url: new URL("http://localhost/"), params: {} },
 }));
 vi.mock("$app/environment", () => ({ browser: true, building: false }));
-vi.mock("$app/paths", () => ({ base: "" }));
+vi.mock("$app/paths", () => ({
+  base: "",
+  asset: (p: string) => p,
+  resolve: (p: string) => p,
+}));
 
-vi.mock("$lib/stores/vault.svelte", () => ({
+vi.mock("#lib/stores/vault.svelte.js", () => ({
   vault: {
     isInitialized: true,
     activeVaultId: "v1",
@@ -21,11 +25,11 @@ vi.mock("$lib/stores/vault.svelte", () => ({
     status: "idle",
   },
 }));
-vi.mock("$lib/stores/ui/layout-ui.svelte", () => ({
+vi.mock("#lib/stores/ui/layout-ui.svelte.js", () => ({
   layoutUIStore: { mainViewMode: "graph", focusedEntityId: null },
 }));
-vi.mock("$lib/stores/ui/navigation", () => ({ focusEntity: vi.fn() }));
-vi.mock("$lib/stores/theme.svelte", () => ({
+vi.mock("#lib/stores/ui/navigation.js", () => ({ focusEntity: vi.fn() }));
+vi.mock("#lib/stores/theme.svelte.js", () => ({
   themeStore: {
     resolveJargon: (k: string) => k,
     activeTheme: {
@@ -37,8 +41,10 @@ vi.mock("$lib/stores/theme.svelte", () => ({
     },
   },
 }));
-vi.mock("$lib/services/demo", () => ({ demoService: { startDemo: vi.fn() } }));
-vi.mock("$lib/config", () => ({
+vi.mock("#lib/services/demo.js", () => ({
+  demoService: { startDemo: vi.fn() },
+}));
+vi.mock("#lib/config/index.js", () => ({
   SCHEMA_ORG: {},
   DISCORD_URL: "https://discord.gg/5UUMCChF2u",
   REDDIT_URL: "https://www.reddit.com/r/codexcryptica/",
@@ -53,7 +59,7 @@ vi.mock("../../lib/components/GraphView.svelte", async () => ({
 vi.mock("../../lib/components/world/FrontPage.svelte", async () => ({
   default: (await import("./__tests__/FrontPageStub.svelte")).default,
 }));
-vi.mock("$lib/components/world/FrontPage.svelte", async () => ({
+vi.mock("#lib/components/world/FrontPage.svelte", async () => ({
   default: (await import("./__tests__/FrontPageStub.svelte")).default,
 }));
 vi.mock("../../lib/components/EntityDetailPanel.svelte", async () => ({

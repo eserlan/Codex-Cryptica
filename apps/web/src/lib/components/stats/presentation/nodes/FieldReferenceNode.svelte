@@ -4,8 +4,8 @@
   import MissingFieldNode from "./MissingFieldNode.svelte";
   import ItemTableNode from "./ItemTableNode.svelte";
 
-  import { rollStatSheetDiceField } from "$lib/utils/stat-sheet-field-actions";
-  import DiceBreakdownDisclosure from "$lib/components/dice/DiceBreakdownDisclosure.svelte";
+  import { rollStatSheetDiceField } from "#lib/utils/stat-sheet-field-actions.js";
+  import DiceBreakdownDisclosure from "#lib/components/dice/DiceBreakdownDisclosure.svelte";
   import type { RollResult } from "dice-engine";
 
   let {

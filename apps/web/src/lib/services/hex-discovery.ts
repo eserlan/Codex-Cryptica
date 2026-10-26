@@ -22,8 +22,8 @@ import {
 } from "hex-crawl-engine";
 import type { Entity, Map as MapRecord } from "schema";
 import { extractJsonObject } from "@codex/runtime";
-import type { HexCrawlStore } from "$lib/stores/hex-crawl/hex-crawl.svelte";
-import { publishGeneratedSaved } from "$lib/services/generator-journal-capture";
+import type { HexCrawlStore } from "#lib/stores/hex-crawl/hex-crawl.svelte.js";
+import { publishGeneratedSaved } from "#lib/services/generator-journal-capture.js";
 
 /** Label on every entity saved from a discovery (FR-028). */
 const DISCOVERY_LABEL = "hex-crawl-discovery";

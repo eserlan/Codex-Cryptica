@@ -1,6 +1,6 @@
 import * as Comlink from "comlink";
-import OracleWorker from "$lib/workers/oracle.worker?worker";
-import { browser } from "$app/environment";
+import OracleWorker from "#lib/workers/oracle.worker?worker";
+import { browser } from "$app/env";
 import type { TextGenerationService } from "schema";
 import type { CachedToken } from "@codex/ai-engine";
 

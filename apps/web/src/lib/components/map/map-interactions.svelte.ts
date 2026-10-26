@@ -16,8 +16,8 @@ import {
   type MapInteractionHandlerOverrides,
   type MapInteractionHandlers,
 } from "./interactions/map-interaction-handler-factory";
-import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
-import { notificationStore } from "$lib/stores/ui/notification.svelte";
+import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
+import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
 
 type MapInputEvent = MouseEvent | PointerEvent;
 

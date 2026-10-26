@@ -2,8 +2,8 @@
 import { render, fireEvent } from "@testing-library/svelte";
 import { describe, it, expect, vi } from "vitest";
 import DetailHeader from "./DetailHeader.svelte";
-import { vault } from "$lib/stores/vault.svelte";
-import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+import { vault } from "#lib/stores/vault.svelte.js";
+import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
 
 // Stub Element.prototype.animate for JSDOM / Svelte 5 transitions compatibility
 // (MonsterLabsSendingModal's ModalShell uses fade/scale transitions).
@@ -22,20 +22,20 @@ if (typeof Element !== "undefined" && !Element.prototype.animate) {
 }
 
 // Mock stores
-vi.mock("$lib/stores/ui/layout-ui.svelte", () => ({
+vi.mock("#lib/stores/ui/layout-ui.svelte.js", () => ({
   layoutUIStore: {
     findInGraph: vi.fn(),
   },
 }));
 
-vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
+vi.mock("#lib/stores/ui/modal-ui.svelte.js", () => ({
   modalUIStore: {
     openZenMode: vi.fn(),
     openParentPicker: vi.fn(),
   },
 }));
 
-vi.mock("$lib/stores/vault.svelte", () => ({
+vi.mock("#lib/stores/vault.svelte.js", () => ({
   vault: {
     isGuest: false,
     selectedEntityId: "entity-1",
@@ -59,7 +59,7 @@ vi.mock("$lib/stores/vault.svelte", () => ({
   },
 }));
 
-vi.mock("$lib/stores/theme.svelte", () => ({
+vi.mock("#lib/stores/theme.svelte.js", () => ({
   themeStore: {
     activeTheme: { id: "fantasy" },
     jargon: {
@@ -76,19 +76,21 @@ vi.mock("$app/state", () => ({
 
 vi.mock("$app/paths", () => ({
   base: "",
+  asset: (p: string) => p,
+  resolve: (p: string) => p,
 }));
 
 // Mock sub-components
-vi.mock("$lib/components/labels/LabelBadge.svelte", () => ({
+vi.mock("#lib/components/labels/LabelBadge.svelte", () => ({
   default: vi.fn(),
 }));
-vi.mock("$lib/components/labels/LabelInput.svelte", () => ({
+vi.mock("#lib/components/labels/LabelInput.svelte", () => ({
   default: vi.fn(),
 }));
-vi.mock("$lib/components/labels/AliasInput.svelte", () => ({
+vi.mock("#lib/components/labels/AliasInput.svelte", () => ({
   default: vi.fn(),
 }));
-vi.mock("$lib/components/entity/SidepanelRevisionButton.svelte", () => ({
+vi.mock("#lib/components/entity/SidepanelRevisionButton.svelte", () => ({
   default: vi.fn(),
 }));
 

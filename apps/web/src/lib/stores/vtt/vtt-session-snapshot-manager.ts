@@ -13,7 +13,10 @@ import {
   normalizeEncounterSession,
   type HexLabelConfig,
 } from "map-engine";
-import { type IdGenerator, systemIdGenerator } from "$lib/utils/runtime-deps";
+import {
+  type IdGenerator,
+  systemIdGenerator,
+} from "#lib/utils/runtime-deps.js";
 
 export interface VTTSessionSnapshotManagerDependencies {
   getSessionId: () => string | null;

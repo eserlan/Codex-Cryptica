@@ -18,7 +18,7 @@
     type VaultInventoryKind,
     type VaultInventoryRow,
     type VaultSortKey,
-  } from "$lib/services/admin/vault-inventory";
+  } from "#lib/services/admin/vault-inventory.js";
 
   let {
     service = new VaultInventoryService(),

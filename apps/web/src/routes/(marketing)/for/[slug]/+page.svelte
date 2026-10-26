@@ -1,28 +1,28 @@
 <script lang="ts">
   import { onDestroy } from "svelte";
-  import { browser } from "$app/environment";
-  import { base } from "$app/paths";
-  import { buildAbsoluteUrl } from "$lib/seo/site";
+  import { browser } from "$app/env";
+  import { resolve } from "$app/paths";
+  import { buildAbsoluteUrl } from "#lib/seo/site.js";
   // Matches the marketing shell: a bare "/" base would make every link
   // protocol-relative ("//generators/...").
-  const cleanBase = base === "/" ? "" : base;
+  const cleanBase = resolve("") === "/" ? "" : resolve("");
   import type { PageData } from "./$types";
   import type {
     LandingPageConfig,
     LandingPageSection,
-  } from "$lib/content/for/schema";
-  import { themeStore } from "$lib/stores/theme.svelte";
-  import { hubThemeLabel, type HubThemeSlug } from "$lib/content/hub-themes";
-  import LandingPageGraphPreview from "$lib/components/for/LandingPageGraphPreview.svelte";
-  import { getLandingPageCanonicalUrl } from "$lib/content/for/canonical";
-  import { landingPageLabels } from "$lib/content/for/registry";
-  import PublicLabelChip from "$lib/components/labels/PublicLabelChip.svelte";
+  } from "#lib/content/for/schema.js";
+  import { themeStore } from "#lib/stores/theme.svelte.js";
+  import { hubThemeLabel, type HubThemeSlug } from "#lib/content/hub-themes.js";
+  import LandingPageGraphPreview from "#lib/components/for/LandingPageGraphPreview.svelte";
+  import { getLandingPageCanonicalUrl } from "#lib/content/for/canonical.js";
+  import { landingPageLabels } from "#lib/content/for/registry.js";
+  import PublicLabelChip from "#lib/components/labels/PublicLabelChip.svelte";
   import {
     trackDiscoveryPageViewed,
     classifyDiscoveryTarget,
     createDiscoveryViewGuard,
-  } from "$lib/services/analytics/discovery-tracking";
-  import { trackDiscoveryClick } from "$lib/actions/trackDiscoveryClick";
+  } from "#lib/services/analytics/discovery-tracking.js";
+  import { trackDiscoveryClick } from "#lib/actions/trackDiscoveryClick.js";
 
   let { data }: { data: PageData } = $props();
   let config: LandingPageConfig = $derived(data.config);
@@ -35,6 +35,7 @@
       "<",
       "\\u003C",
     );
+
     return (
       "<" +
       "script>window.__codexApplyTheme && window.__codexApplyTheme(" +
@@ -88,6 +89,7 @@
         : buildAbsoluteUrl(config.seo.image)
       : buildAbsoluteUrl("/og-image.png"),
   );
+
   let seoImageAlt = $derived(
     config.seo.imageAlt ?? `${config.hero.title} — Codex Cryptica`,
   );

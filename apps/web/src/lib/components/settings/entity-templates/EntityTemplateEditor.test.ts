@@ -7,7 +7,7 @@ const { confirm } = vi.hoisted(() => ({
   confirm: vi.fn().mockResolvedValue(true),
 }));
 
-vi.mock("$lib/stores/ui/notification.svelte", () => ({
+vi.mock("#lib/stores/ui/notification.svelte.js", () => ({
   notificationStore: { confirm, notify: vi.fn() },
 }));
 

@@ -3,7 +3,7 @@ import { createVaultDir, deleteVaultDir, getVaultDir } from "../../utils/opfs";
 import { sanitizeId } from "../../utils/markdown";
 import { debounce } from "../../utils/debounce";
 import type { PublishRegistry } from "schema";
-import { systemClock } from "$lib/utils/runtime-deps";
+import { systemClock } from "#lib/utils/runtime-deps.js";
 
 export { getVaultDir, createVaultDir };
 

@@ -149,6 +149,7 @@ export const whatIsAPointCrawl: AnswerConfigInput = {
     "how-do-i-run-exploration-in-a-huge-ruined-city",
     "how-do-i-make-sea-travel-interesting-in-a-ttrpg",
     "how-do-i-run-a-pirate-campaign-focused-on-exploration",
+    "how-many-random-encounters-during-rpg-travel",
   ],
   discovery: {
     id: "answer-point-crawl",

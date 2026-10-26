@@ -1,19 +1,19 @@
 <script lang="ts">
-  import { vault } from "$lib/stores/vault.svelte";
-  import { oracle } from "$lib/stores/oracle.svelte";
-  import { guestChatStore } from "$lib/stores/guest-chat.svelte";
-  import LabelBadge from "$lib/components/labels/LabelBadge.svelte";
-  import LabelInput from "$lib/components/labels/LabelInput.svelte";
+  import { vault } from "#lib/stores/vault.svelte.js";
+  import { oracle } from "#lib/stores/oracle.svelte.js";
+  import { guestChatStore } from "#lib/stores/guest-chat.svelte.js";
+  import LabelBadge from "#lib/components/labels/LabelBadge.svelte";
+  import LabelInput from "#lib/components/labels/LabelInput.svelte";
   import ZenConnections from "./ZenConnections.svelte";
-  import SilhouetteAvatar from "$lib/components/ui/SilhouetteAvatar.svelte";
-  import { revisionService } from "$lib/services/RevisionService.svelte";
+  import SilhouetteAvatar from "#lib/components/ui/SilhouetteAvatar.svelte";
+  import { revisionService } from "#lib/services/RevisionService.svelte.js";
   import { isEntityVisible, composeImagePrompt, type Entity } from "schema";
-  import { themeStore } from "$lib/stores/theme.svelte";
-  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-  import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
-  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { themeStore } from "#lib/stores/theme.svelte.js";
+  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+  import { discoveryPolicyStore } from "#lib/stores/ui/discovery-policy.svelte.js";
+  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
 
-  import { debugStore } from "$lib/stores/debug.svelte";
+  import { debugStore } from "#lib/stores/debug.svelte.js";
 
   let {
     entity,
@@ -23,7 +23,7 @@
     onNavigate,
     onDelete,
     isPopout = false,
-  } = $props<{
+  }: {
     entity: Entity | null;
     editState: any;
     resolvedImageUrl: string;
@@ -33,7 +33,7 @@
     onNavigate: (id: string) => void;
     onDelete: () => Promise<void>;
     isPopout?: boolean;
-  }>();
+  } = $props();
 
   let isImageLoaded = $state(false);
   let isDraggingOver = $state(false);

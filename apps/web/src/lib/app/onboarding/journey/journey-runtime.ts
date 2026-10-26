@@ -1,16 +1,16 @@
-import { helpStore } from "$lib/stores/help.svelte";
-import { categories } from "$lib/stores/categories.svelte";
+import { helpStore } from "#lib/stores/help.svelte.js";
+import { categories } from "#lib/stores/categories.svelte.js";
 import {
   helpActionRunner,
   helpContext,
-} from "$lib/stores/help-assistant/help-runtime";
-import { askCifPrompt } from "$lib/stores/help-assistant/ask-cif";
-import { isHelpAssistantAvailable } from "$lib/services/help-assistant/help-availability";
+} from "#lib/stores/help-assistant/help-runtime.js";
+import { askCifPrompt } from "#lib/stores/help-assistant/ask-cif.js";
+import { isHelpAssistantAvailable } from "#lib/services/help-assistant/help-availability.js";
 import {
   browserSessionStorage,
   browserStorage,
   systemClock,
-} from "$lib/utils/runtime-deps";
+} from "#lib/utils/runtime-deps.js";
 import { JourneyStore } from "./journey-store.svelte";
 
 /** Production wiring for guided-setup journeys (spec 175). */

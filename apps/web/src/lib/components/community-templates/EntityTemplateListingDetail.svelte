@@ -3,11 +3,11 @@
   import { resolve } from "$app/paths";
   import type { EntityTemplate } from "entity-template-engine";
   import type { EntityTemplateDetail } from "schema";
-  import { entityTemplateStore } from "$lib/stores/entity-templates/entity-template-store.svelte";
+  import { entityTemplateStore } from "#lib/stores/entity-templates/entity-template-store.svelte.js";
   import {
     entityTemplatePublishStore,
     type PublishMetadata,
-  } from "$lib/stores/entity-templates/entity-template-publish-store.svelte";
+  } from "#lib/stores/entity-templates/entity-template-publish-store.svelte.js";
   import EntityTemplateListingView from "./EntityTemplateListingView.svelte";
   import OwnerControls from "./OwnerControls.svelte";
   import EntityTemplatePublishModal from "./EntityTemplatePublishModal.svelte";

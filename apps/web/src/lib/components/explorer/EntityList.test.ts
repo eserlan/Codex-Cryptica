@@ -4,11 +4,13 @@ import { fireEvent, render, screen } from "@testing-library/svelte";
 import { tick } from "svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import EntityList from "./EntityList.svelte";
-import { explorerUIStore } from "$lib/stores/ui/explorer-ui.svelte";
-import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { explorerUIStore } from "#lib/stores/ui/explorer-ui.svelte.js";
+import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
 
 vi.mock("$app/paths", () => ({
   base: "",
+  asset: (p: string) => p,
+  resolve: (p: string) => p,
 }));
 
 // Setup standard mock vault data with hierarchy, using vi.hoisted to prevent hoisting order issues
@@ -92,11 +94,11 @@ const mockVault = vi.hoisted(() => {
   return vaultData;
 });
 
-vi.mock("$lib/stores/vault.svelte", () => ({
+vi.mock("#lib/stores/vault.svelte.js", () => ({
   vault: mockVault,
 }));
 
-vi.mock("$lib/stores/categories.svelte", () => ({
+vi.mock("#lib/stores/categories.svelte.js", () => ({
   categories: {
     list: [
       { id: "npc", label: "NPC", icon: "user", color: "#60a5fa" },
@@ -114,7 +116,7 @@ vi.mock("$lib/stores/categories.svelte", () => ({
   },
 }));
 
-vi.mock("$lib/utils/icon", () => ({
+vi.mock("#lib/utils/icon.js", () => ({
   getIconClass: () => "",
 }));
 

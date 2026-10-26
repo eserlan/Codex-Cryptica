@@ -15,15 +15,15 @@
   import { EmbedExtension } from "./editor/EmbedExtension";
   import { MarkdownTablePasteExtension } from "./editor/MarkdownTablePasteExtension";
   import { protectVaultImageSource } from "./editor/vault-image";
-  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-  import { openCanvasHref } from "$lib/stores/ui/navigation";
-  import { vault } from "$lib/stores/vault.svelte";
+  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+  import { openCanvasHref } from "#lib/stores/ui/navigation.js";
+  import { vault } from "#lib/stores/vault.svelte.js";
   import {
     createEntityAutoLinkExtension,
     ENTITY_INDEX_CHANGED_META,
     type EntityAutoLinkOptions,
   } from "./editor/EntityAutoLinkExtension";
-  import type { EntityIndexEntry } from "$lib/utils/entity-mention-detector";
+  import type { EntityIndexEntry } from "#lib/utils/entity-mention-detector.js";
 
   import EditorToolbar from "./editor/EditorToolbar.svelte";
   import EditorBubbleMenu from "./editor/EditorBubbleMenu.svelte";

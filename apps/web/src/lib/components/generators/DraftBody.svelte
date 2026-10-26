@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { GeneratedDraft } from "generator-engine";
-  import { renderMarkdown } from "$lib/utils/markdown";
+  import { renderMarkdown } from "#lib/utils/markdown.js";
 
   /**
    * The read-only body of a generator draft: summary, content and GM

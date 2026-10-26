@@ -1,11 +1,11 @@
 <script lang="ts">
-  import ModalShell from "$lib/components/ui/ModalShell.svelte";
+  import ModalShell from "#lib/components/ui/ModalShell.svelte";
   import {
     copyrightReportService,
     type CopyrightReportReceipt,
     type CopyrightReportSubmission,
-  } from "$lib/services/publishing/CopyrightReportService";
-  import { getCopyrightReportTurnstileToken } from "$lib/services/publishing/turnstile";
+  } from "#lib/services/publishing/CopyrightReportService.js";
+  import { getCopyrightReportTurnstileToken } from "#lib/services/publishing/turnstile.js";
 
   interface Props {
     open: boolean;

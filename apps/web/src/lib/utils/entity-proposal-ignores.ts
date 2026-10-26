@@ -1,4 +1,4 @@
-import { browserStorage, type StorageLike } from "$lib/utils/runtime-deps";
+import { browserStorage, type StorageLike } from "#lib/utils/runtime-deps.js";
 
 const storageKey = (vaultId: string | null) =>
   `entity-proposal-ignores:${vaultId ?? "default"}`;

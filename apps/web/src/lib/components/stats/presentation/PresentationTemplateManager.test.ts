@@ -85,7 +85,7 @@ const {
   };
 });
 
-vi.mock("$lib/stores/presentation-templates.svelte", () => ({
+vi.mock("#lib/stores/presentation-templates.svelte.js", () => ({
   presentationTemplates: {
     templates: mockTemplates,
     availableTemplatesForSchema,
@@ -97,7 +97,7 @@ vi.mock("$lib/stores/presentation-templates.svelte", () => ({
   },
 }));
 
-vi.mock("$lib/stores/stat-sheet-templates.svelte", () => ({
+vi.mock("#lib/stores/stat-sheet-templates.svelte.js", () => ({
   statSheetTemplates: {
     allTemplates: mockStatSheetTemplates,
     getDefaultPresentationTemplateId: () => null,
@@ -105,11 +105,11 @@ vi.mock("$lib/stores/stat-sheet-templates.svelte", () => ({
   },
 }));
 
-vi.mock("$lib/stores/ui/notification.svelte", () => ({
+vi.mock("#lib/stores/ui/notification.svelte.js", () => ({
   notificationStore: { notify, confirm },
 }));
 
-vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
+vi.mock("#lib/stores/ui/modal-ui.svelte.js", () => ({
   modalUIStore: { presentationEditorState: { open: false } },
 }));
 

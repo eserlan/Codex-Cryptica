@@ -6,6 +6,8 @@ import MarketingShell from "./MarketingShell.svelte";
 
 vi.mock("$app/paths", () => ({
   base: "",
+  asset: (p: string) => p,
+  resolve: (p: string) => p,
 }));
 
 vi.mock("$app/state", () => ({
@@ -14,7 +16,7 @@ vi.mock("$app/state", () => ({
   },
 }));
 
-vi.mock("$lib/config", () => ({
+vi.mock("#lib/config/index.js", () => ({
   DISCORD_URL: "https://discord.gg/5UUMCChF2u",
   GITHUB_URL: "https://github.com/eserlan/Codex-Cryptica",
   PATREON_URL: "https://patreon.com/EspenE",

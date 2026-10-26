@@ -1,4 +1,4 @@
-import { buildAbsoluteUrl } from "$lib/seo/site";
+import { buildAbsoluteUrl } from "#lib/seo/site.js";
 import type { LandingPageConfig } from "./schema";
 
 /**
@@ -10,7 +10,7 @@ import type { LandingPageConfig } from "./schema";
  * for the rare page that has to point somewhere other than its own route.
  *
  * Deliberately not in `registry.ts`: that module is loaded by
- * `scripts/discovery-audit.mjs` outside Vite, where `$lib` does not resolve.
+ * `scripts/discovery-audit.mjs` outside Vite, where `#lib` does not resolve.
  */
 export function getLandingPageCanonicalUrl(config: LandingPageConfig): string {
   return config.seo.canonical ?? buildAbsoluteUrl(`/for/${config.slug}`);

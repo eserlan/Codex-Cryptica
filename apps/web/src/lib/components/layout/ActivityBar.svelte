@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { quickNoteStore } from "$lib/stores/quicknote.svelte";
+  import { quickNoteStore } from "#lib/stores/quicknote.svelte.js";
   import SessionJournalIndicator from "./SessionJournalIndicator.svelte";
   import { page } from "$app/state";
   import {
@@ -8,13 +8,13 @@
     navItems,
     type NavItem,
   } from "./nav-items";
-  import { isHelpAssistantAvailable } from "$lib/services/help-assistant/help-availability";
+  import { isHelpAssistantAvailable } from "#lib/services/help-assistant/help-availability.js";
   import {
     cifPopout,
     helpAssistant,
     toggleCif,
-  } from "$lib/stores/help-assistant/help-runtime";
-  import HelpAskButton from "$lib/components/help-assistant/HelpAskButton.svelte";
+  } from "#lib/stores/help-assistant/help-runtime.js";
+  import HelpAskButton from "#lib/components/help-assistant/HelpAskButton.svelte";
 
   // fallow-ignore-next-line code-duplication
   const items = $derived(navItems());

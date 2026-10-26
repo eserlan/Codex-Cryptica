@@ -9,7 +9,7 @@ describe("ZenHeader category selection", () => {
     );
 
     expect(source).toContain(
-      'import CategoryRadioGroup from "$lib/components/labels/CategoryRadioGroup.svelte"',
+      'import CategoryRadioGroup from "#lib/components/labels/CategoryRadioGroup.svelte"',
     );
     expect(source).toContain("<CategoryRadioGroup");
     expect(source).toContain("bind:value={editState.type}");

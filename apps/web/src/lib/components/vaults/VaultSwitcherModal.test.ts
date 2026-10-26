@@ -4,8 +4,8 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { tick } from "svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import VaultSwitcherModal from "./VaultSwitcherModal.svelte";
-import { vaultRegistry } from "$lib/stores/vault-registry.svelte";
-import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+import { vaultRegistry } from "#lib/stores/vault-registry.svelte.js";
+import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
 
 const { createVaultMock, importFromFolderMock, vaultRegistryMock } = vi.hoisted(
   () => ({
@@ -26,7 +26,7 @@ const { createVaultMock, importFromFolderMock, vaultRegistryMock } = vi.hoisted(
   }),
 );
 
-vi.mock("$lib/stores/vault.svelte", () => ({
+vi.mock("#lib/stores/vault.svelte.js", () => ({
   vault: {
     createVault: createVaultMock,
     importFromFolder: importFromFolderMock,
@@ -40,21 +40,21 @@ vi.mock("$lib/stores/vault.svelte", () => ({
   },
 }));
 
-vi.mock("$lib/stores/vault-registry.svelte", () => ({
+vi.mock("#lib/stores/vault-registry.svelte.js", () => ({
   vaultRegistry: vaultRegistryMock,
 }));
 
-vi.mock("$lib/stores/ui/notification.svelte", () => ({
+vi.mock("#lib/stores/ui/notification.svelte.js", () => ({
   notificationStore: {
     confirm: vi.fn(async () => false),
     notify: vi.fn(),
   },
 }));
 
-vi.mock("$lib/stores/ui/modal-ui.svelte", async () => {
+vi.mock("#lib/stores/ui/modal-ui.svelte.js", async () => {
   const actual = await vi.importActual<
-    typeof import("$lib/stores/ui/modal-ui.svelte")
-  >("$lib/stores/ui/modal-ui.svelte");
+    typeof import("#lib/stores/ui/modal-ui.svelte.js")
+  >("#lib/stores/ui/modal-ui.svelte.js");
   return { modalUIStore: actual.modalUIStore };
 });
 
@@ -155,7 +155,7 @@ describe("VaultSwitcherModal", () => {
 
   it("surfaces an error toast instead of silently doing nothing when vault creation fails", async () => {
     const { notificationStore } =
-      await import("$lib/stores/ui/notification.svelte");
+      await import("#lib/stores/ui/notification.svelte.js");
     createVaultMock.mockRejectedValueOnce(
       new Error("Storage access restricted by browser sandbox"),
     );

@@ -5,7 +5,10 @@ import {
   type StatSheetField,
 } from "schema";
 import { vaultRegistry } from "./vault-registry.svelte";
-import { type IdGenerator, systemIdGenerator } from "$lib/utils/runtime-deps";
+import {
+  type IdGenerator,
+  systemIdGenerator,
+} from "#lib/utils/runtime-deps.js";
 import {
   importTemplatePackage,
   validateFieldKeys,
