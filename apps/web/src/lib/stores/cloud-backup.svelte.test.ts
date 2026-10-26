@@ -23,6 +23,7 @@ vi.mock("./vault/events.svelte", () => {
 });
 
 import { CloudBackupStore } from "./cloud-backup.svelte";
+import * as cloudBackupApi from "./cloud-backup.svelte";
 import { vaultEventBus } from "./vault/events.svelte";
 import { createMemoryStorage } from "@codex/cloud-backup-sync";
 import { hashCloudBackupEntity } from "schema";
@@ -1236,5 +1237,23 @@ describe("incremental uploads (#3354)", () => {
       .map((row) => `${row.id}${row.deleted ? ":deleted" : ""}`)
       .sort();
     expect(rows).toEqual(["local-only", "remote-only:deleted", "stale"]);
+  });
+});
+
+describe("cloud backup compatibility facade", () => {
+  it("preserves every original runtime export and sync delay", () => {
+    expect(Object.keys(cloudBackupApi).sort()).toEqual([
+      "AUTO_SYNC_DEBOUNCE_MS",
+      "AUTO_SYNC_RETRY_MS",
+      "CloudBackupStore",
+      "RECONCILE_DELAY_MS",
+      "cloudBackupBrowserStorage",
+      "cloudBackupStore",
+      "createInertRuntime",
+    ]);
+    expect(cloudBackupApi.AUTO_SYNC_DEBOUNCE_MS).toBe(5000);
+    expect(cloudBackupApi.AUTO_SYNC_RETRY_MS).toBe(30000);
+    expect(cloudBackupApi.RECONCILE_DELAY_MS).toBe(60000);
+    expect(cloudBackupApi.cloudBackupStore).toBeInstanceOf(CloudBackupStore);
   });
 });

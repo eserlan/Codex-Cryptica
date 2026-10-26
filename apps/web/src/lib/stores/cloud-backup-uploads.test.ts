@@ -48,7 +48,14 @@ beforeEach(() => {
   vi.mocked(getLocalCloudBackupRecord).mockResolvedValue(record);
   vi.mocked(pushVaultToCloudBackup).mockResolvedValue({
     ok: true,
-    value: { ...record, lastPushedAt: "new" },
+    value: {
+      schemaVersion: 1,
+      backupId: "backup",
+      vaultTitle: "Vault",
+      sizeBytes: 0,
+      createdAt: "previous",
+      lastPushedAt: "new",
+    },
   });
 });
 
@@ -116,6 +123,7 @@ describe("cloud backup uploads", () => {
       vaultTitle: "Vault",
       upserts: [],
       deletes: [],
+      assetIds: [],
     }));
     await deps.dirty!.record("vault", { kind: "entity", ids: ["edited"] });
     vi.mocked(pushDeltaToCloudBackup).mockResolvedValueOnce({

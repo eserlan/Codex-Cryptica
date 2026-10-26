@@ -1,12 +1,19 @@
 import { describe, expect, it, vi } from "vitest";
-import { fetchCloudBackupAsset } from "@codex/cloud-backup-sync";
-import { restoreCloudBackupIntoNewVault } from "./cloud-backup-restore";
+import {
+  fetchCloudBackupAsset,
+  restoreVaultFromCloudBackup,
+} from "@codex/cloud-backup-sync";
+import {
+  restoreCloudBackupIntoNewVault,
+  CloudBackupRestore,
+} from "./cloud-backup-restore";
 import { createInertRuntime } from "./cloud-backup-runtime";
 import type { CloudBackupDeps } from "./cloud-backup-types";
 
 vi.mock("@codex/cloud-backup-sync", async (importOriginal) => ({
   ...(await importOriginal<object>()),
   fetchCloudBackupAsset: vi.fn(),
+  restoreVaultFromCloudBackup: vi.fn(),
 }));
 
 const credentials = { backupId: "backup", ownerCode: "code" };
@@ -128,5 +135,68 @@ describe("cloud backup restore", () => {
       ),
     ).rejects.toThrow("Write failed");
     expect(restore.importMaps).not.toHaveBeenCalled();
+  });
+});
+
+describe("restore workflow", () => {
+  it("does not fetch or create a vault without restore dependencies", async () => {
+    const state = { errorMessage: null as string | null };
+    const restore = new CloudBackupRestore(state, () => null);
+    expect(await restore.fetchForRestore("backup", "code")).toBeNull();
+    expect(await restore.restoreIntoNewVault("backup", "code")).toBeNull();
+    expect(state.errorMessage).toBe(
+      "Restore is not available in this context.",
+    );
+  });
+
+  it("stages a successful download before creating a vault", async () => {
+    const state = { errorMessage: null as string | null };
+    const deps: CloudBackupDeps = {
+      runtime: createInertRuntime(),
+      activeVaultId: () => null,
+      buildPayload: vi.fn(),
+      restore: target(),
+    };
+    vi.mocked(restoreVaultFromCloudBackup).mockImplementationOnce(async () => {
+      expect(deps.restore!.createVault).not.toHaveBeenCalled();
+      return { ok: true, value: material({ entities: [1] }) };
+    });
+    expect(
+      await new CloudBackupRestore(state, () => deps).restoreIntoNewVault(
+        "backup",
+        "code",
+      ),
+    ).toEqual({
+      vaultId: "new-vault",
+      vaultTitle: "Restored",
+      missingAssets: 0,
+    });
+  });
+
+  it("reports download and import failures without reporting success", async () => {
+    const state = { errorMessage: null as string | null };
+    const deps: CloudBackupDeps = {
+      runtime: createInertRuntime(),
+      activeVaultId: () => null,
+      buildPayload: vi.fn(),
+      restore: target(),
+    };
+    const restore = new CloudBackupRestore(state, () => deps);
+    vi.mocked(restoreVaultFromCloudBackup).mockResolvedValueOnce({
+      ok: false,
+      error: "Download failed",
+    });
+    expect(await restore.restoreIntoNewVault("backup", "code")).toBeNull();
+    expect(state.errorMessage).toBe("Download failed");
+    expect(deps.restore!.createVault).not.toHaveBeenCalled();
+    vi.mocked(restoreVaultFromCloudBackup).mockResolvedValueOnce({
+      ok: true,
+      value: material({}),
+    });
+    vi.mocked(deps.restore!.createVault).mockRejectedValueOnce(
+      new Error("Storage failed"),
+    );
+    expect(await restore.restoreIntoNewVault("backup", "code")).toBeNull();
+    expect(state.errorMessage).toBe("Storage failed");
   });
 });

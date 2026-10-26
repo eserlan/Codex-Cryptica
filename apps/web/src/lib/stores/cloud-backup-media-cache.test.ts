@@ -60,6 +60,7 @@ describe("backup media hash cache", () => {
     ];
     vi.mocked(planAssetUploads).mockResolvedValue({
       skippedIds: ["a"],
+      toUpload: [],
       hashes: { a: "new" },
     });
     const timing = vi.fn();

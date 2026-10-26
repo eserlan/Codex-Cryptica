@@ -1,9 +1,13 @@
 import {
   fetchCloudBackupAsset,
   type CloudBackupRuntime,
-  type restoreVaultFromCloudBackup,
+  restoreVaultFromCloudBackup,
 } from "@codex/cloud-backup-sync";
-import type { CloudBackupDeps } from "./cloud-backup-types";
+import type {
+  CloudBackupDepsProvider,
+  CloudBackupViewState,
+  CloudBackupDeps,
+} from "./cloud-backup-types";
 
 type RestoreTarget = NonNullable<CloudBackupDeps["restore"]>;
 type RestoreMaterial = Extract<
@@ -18,20 +22,31 @@ function listFrom(bundle: unknown, key: string): unknown[] {
   return Array.isArray(value) ? value : [];
 }
 
+function readCollections(bundle: unknown) {
+  return {
+    entities: listFrom(bundle, "entities"),
+    maps: listFrom(bundle, "maps"),
+    canvases: listFrom(bundle, "canvases"),
+    sessionJournals: listFrom(bundle, "sessionJournals"),
+  };
+}
+
 /** Restore collections in order, preserving the vault receiver for each importer. */
 async function importCollections(
   restore: RestoreTarget,
   vaultId: string,
-  bundle: unknown,
+  collections: ReturnType<typeof readCollections>,
 ): Promise<void> {
-  const collections = [
-    ["entities", "importEntities"],
+  if (collections.entities.length > 0) {
+    await restore.importEntities(vaultId, collections.entities);
+  }
+  const optionalCollections = [
     ["maps", "importMaps"],
     ["canvases", "importCanvases"],
     ["sessionJournals", "importSessionJournals"],
   ] as const;
-  for (const [key, method] of collections) {
-    const items = listFrom(bundle, key);
+  for (const [key, method] of optionalCollections) {
+    const items = collections[key];
     if (items.length > 0 && restore[method]) {
       await restore[method](vaultId, items);
     }
@@ -82,9 +97,10 @@ export async function restoreCloudBackupIntoNewVault(
   credentials: RestoreCredentials,
   material: RestoreMaterial,
 ): Promise<{ vaultId: string; vaultTitle: string; missingAssets: number }> {
+  const collections = readCollections(material.bundle);
   const vaultTitle = material.manifest.vaultTitle;
   const vaultId = await restore.createVault(vaultTitle);
-  await importCollections(restore, vaultId, material.bundle);
+  await importCollections(restore, vaultId, collections);
   const missingAssets = await importAssets(
     runtime,
     credentials,
@@ -92,4 +108,73 @@ export async function restoreCloudBackupIntoNewVault(
     restore.importAsset,
   );
   return { vaultId, vaultTitle, missingAssets };
+}
+
+/** Stages downloads before creating a vault and reports failures to Settings. */
+export class CloudBackupRestore {
+  constructor(
+    private state: Pick<CloudBackupViewState, "errorMessage">,
+    private getDeps: CloudBackupDepsProvider,
+  ) {}
+  private get deps() {
+    return this.getDeps();
+  }
+
+  /**
+   * Fetches a backup for restore. Returns the material rather than writing it,
+   * so the caller decides the destination (FR-006a) after confirming.
+   */
+  async fetchForRestore(backupId: string, ownerCode: string) {
+    if (!this.deps) return null;
+    const result = await restoreVaultFromCloudBackup(this.deps.runtime, {
+      backupId,
+      ownerCode,
+    });
+    if (!result.ok) {
+      this.state.errorMessage = result.error;
+      return null;
+    }
+    return result.value;
+  }
+
+  /**
+   * Restores a backup into a brand-new vault (FR-006a).
+   *
+   * The download is staged first and the new vault is only created once the
+   * material is in hand, so a failure mid-transfer leaves the user exactly
+   * where they were — no half-built vault, and nothing they already had is
+   * touched (FR-011). Restoring *into* an existing vault is deliberately not
+   * offered here; that path needs its own overwrite confirmation.
+   */
+  async restoreIntoNewVault(
+    backupId: string,
+    ownerCode: string,
+  ): Promise<{
+    vaultId: string;
+    vaultTitle: string;
+    missingAssets: number;
+  } | null> {
+    if (!this.deps?.restore) {
+      this.state.errorMessage = "Restore is not available in this context.";
+      return null;
+    }
+
+    const material = await this.fetchForRestore(backupId, ownerCode);
+    if (!material) return null;
+
+    try {
+      return await restoreCloudBackupIntoNewVault(
+        this.deps.runtime,
+        this.deps.restore,
+        { backupId, ownerCode },
+        material,
+      );
+    } catch (error) {
+      this.state.errorMessage =
+        error instanceof Error
+          ? error.message
+          : "The backup could not be restored.";
+      return null;
+    }
+  }
 }

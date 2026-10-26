@@ -34,6 +34,10 @@ export class CloudBackupSync {
 
   reset(): void {
     this.clearTimer();
+    this.resetState();
+  }
+
+  resetState(): void {
     this.pending = false;
     this.state.autoConflictRemoteAt = null;
     this.state.autoState = "idle";
@@ -77,11 +81,15 @@ export class CloudBackupSync {
     }
     if (!out.ok)
       return this.failManualSave(out.error ?? "Cloud backup failed.");
-    this.state.status = "idle";
-    this.state.errorMessage = null;
-    this.pending = false;
     this.state.autoConflictRemoteAt = null;
     if (this.state.autoState !== "idle") this.state.autoState = "saved";
+    return this.completeSave();
+  }
+
+  private completeSave(): true {
+    this.pending = false;
+    this.state.status = "idle";
+    this.state.errorMessage = null;
     return true;
   }
 
@@ -153,11 +161,8 @@ export class CloudBackupSync {
     const out = await this.uploads.pushSnapshot(vaultId, { guarded: true });
     if (out.notEnabled) return this.stopAutoSyncBackupOff();
     if (out.ok) {
-      this.pending = false;
       this.state.autoState = "saved";
-      this.state.status = "idle";
-      this.state.errorMessage = null;
-      return true;
+      return this.completeSave();
     }
     if (out.conflict) return this.pauseAutoSyncOnConflict(out);
     // Ordinary failure: local data is untouched; stay pending and retry
@@ -230,11 +235,8 @@ export class CloudBackupSync {
         return false;
       }
       this.state.autoConflictRemoteAt = null;
-      this.pending = false;
       this.state.autoState = "saved";
-      this.state.status = "idle";
-      this.state.errorMessage = null;
-      return true;
+      return this.completeSave();
     } finally {
       this.uploads.pushing = false;
       this.state.uploadProgress = null;

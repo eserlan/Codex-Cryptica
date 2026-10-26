@@ -127,6 +127,18 @@ describe("cloud backup sync orchestration", () => {
     expect(uploads.pushing).toBe(false);
   });
 
+  it("preserves a queued save when only association state resets", async () => {
+    const { sync, state, uploads } = harness();
+    sync.notifyLocalChange();
+    sync.resetState();
+    expect(state.autoState).toBe("idle");
+    await vi.advanceTimersByTimeAsync(10);
+    expect(uploads.pushSnapshot).toHaveBeenCalledWith("vault", {
+      guarded: true,
+    });
+    expect(state.autoState).toBe("saved");
+  });
+
   it("stops automatic and manual saves cleanly for a disabled record", async () => {
     const { sync, state, uploads } = harness();
     uploads.pushSnapshot.mockResolvedValue({ ok: false, notEnabled: true });
