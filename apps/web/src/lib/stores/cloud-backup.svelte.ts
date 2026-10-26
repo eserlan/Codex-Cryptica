@@ -6,7 +6,6 @@ import {
   disableCloudBackup,
   deleteCloudBackup,
   restoreVaultFromCloudBackup,
-  fetchCloudBackupAsset,
   getLocalCloudBackupRecord,
   getCloudBackupOwnershipCode,
   formatRecoveryKey,
@@ -16,16 +15,10 @@ import {
   fetchCloudBackupIndex,
   type VaultDeltaPayload,
   type KnownCloudBackup,
-  createMemoryStorage,
-  type CloudBackupRuntime,
-  type VaultBundlePayload,
 } from "@codex/cloud-backup-sync";
 import { hashCloudBackupEntity, type LocalCloudBackupRecord } from "schema";
 import { onlineStatus } from "./online.svelte";
-import type {
-  CloudBackupDirtyRow,
-  CloudBackupDirtyStore,
-} from "./cloud-backup-dirty";
+import type { CloudBackupDirtyRow } from "./cloud-backup-dirty";
 import type { DurableVaultChange } from "./vault/registry";
 import { browserStorage, type StorageLike } from "#lib/utils/runtime-deps.js";
 export { cloudBackupBrowserStorage } from "./cloud-backup-browser-storage";
@@ -56,112 +49,25 @@ export { cloudBackupBrowserStorage } from "./cloud-backup-browser-storage";
  * A true race still needs server revisions (follow-up, documented in #3189).
  */
 
-export type CloudBackupStatus = "off" | "idle" | "syncing" | "error";
-
-/**
- * Ephemeral automatic-sync state (#3189), separate from the persisted
- * `CloudBackupStatus`. Shown in Settings as: Saving… / Saved to cloud /
- * Offline — changes will sync later / Sync failed — retrying, plus a
- * conflict state that pauses automation until the user reconciles.
- */
-export type CloudAutoSyncState =
-  "idle" | "pending" | "saving" | "saved" | "offline" | "retrying" | "conflict";
-
-/** Quiet period after editing settles before an auto-push (default 5s). */
-export const AUTO_SYNC_DEBOUNCE_MS = 5000;
-/** Wait before retrying a failed auto-push (default 30s). */
-export const AUTO_SYNC_RETRY_MS = 30000;
-
-/** Wait after a vault opens before the once-per-session consistency check. */
-export const RECONCILE_DELAY_MS = 60_000;
-
-interface SnapshotOutcome {
-  ok: boolean;
-  notEnabled?: boolean;
-  conflict?: boolean;
-  remoteAt?: string | null;
-  error?: string;
-}
-
-const BACKUP_OFF: SnapshotOutcome = {
-  ok: false,
-  notEnabled: true,
-  error: "Cloud backup is off.",
-};
-
-export interface CloudBackupDeps {
-  runtime: CloudBackupRuntime;
-  /**
-   * Builds the whole-vault snapshot. Injected so this store stays
-   * vault-agnostic. The signal aborts when backup is disabled mid-build, so a
-   * large vault does not keep reading every entity for a push that will never
-   * be sent.
-   */
-  buildPayload: (
-    vaultId: string,
-    signal?: AbortSignal,
-  ) => Promise<VaultBundlePayload>;
-  activeVaultId: () => string | null;
-  /**
-   * Vault-writing side of restore. Injected rather than imported so this store
-   * has no direct dependency on the vault store, and so tests can assert the
-   * ordering (fetch, then create, then import) without a real vault.
-   */
-  restore?: {
-    createVault: (name: string) => Promise<string>;
-    importEntities: (vaultId: string, entities: unknown[]) => Promise<void>;
-    /** Writes the restored maps and canvases back into the new vault. */
-    importMaps?: (vaultId: string, maps: unknown[]) => Promise<void>;
-    importCanvases?: (vaultId: string, canvases: unknown[]) => Promise<void>;
-    /** Writes the restored session journals back into the new vault (spec
-     *  163-session-journal, FR-016). */
-    importSessionJournals?: (
-      vaultId: string,
-      journals: unknown[],
-    ) => Promise<void>;
-    /** Writes one restored media file back into the vault. */
-    importAsset?: (
-      path: string,
-      bytes: Uint8Array,
-      mimeType: string,
-    ) => Promise<void>;
-  };
-  /**
-   * Changed-item tracking for incremental uploads (#3354). Optional so the
-   * store stays usable without it; with it, every successful upload clears
-   * exactly the changes it carried.
-   */
-  dirty?: CloudBackupDirtyStore;
-  /**
-   * Builds an incremental upload from recorded changes, or `null` when they
-   * call for a full upload (#3354). `uploadedAssetIds` are the media the
-   * backup already holds; a delta never carries media.
-   */
-  buildDelta?: (
-    vaultId: string,
-    changes: readonly CloudBackupDirtyRow[],
-    uploadedAssetIds: ReadonlySet<string>,
-    signal: AbortSignal,
-  ) => Promise<VaultDeltaPayload | null>;
-  /**
-   * Local entities for the idle consistency check (#3354). `entity` is the
-   * full record when `loaded`; unloaded bodies are never read for the check.
-   */
-  listLocalEntities?: () => { id: string; loaded: boolean; entity: unknown }[];
-  /** Delay before the once-per-session consistency check; tests shorten it. */
-  reconcileDelayMs?: number;
-  /**
-   * Stage timings for the worker-or-not question (counts, bytes, ms — never
-   * content). Unset in tests and anywhere else that should stay silent.
-   */
-  timing?: (timing: CloudBackupTiming) => void;
-  /** Quiet period before an auto-push; overridable in tests. */
-  debounceMs?: number;
-  /** Wait before retrying a failed auto-push; overridable in tests. */
-  retryMs?: number;
-  /** Local storage for persisting caches across sessions. */
-  storage?: StorageLike;
-}
+import {
+  AUTO_SYNC_DEBOUNCE_MS,
+  AUTO_SYNC_RETRY_MS,
+  RECONCILE_DELAY_MS,
+  BACKUP_OFF,
+  type CloudBackupStatus,
+  type CloudAutoSyncState,
+  type CloudBackupDeps,
+  type SnapshotOutcome,
+} from "./cloud-backup-types";
+export {
+  AUTO_SYNC_DEBOUNCE_MS,
+  AUTO_SYNC_RETRY_MS,
+  RECONCILE_DELAY_MS,
+  type CloudBackupStatus,
+  type CloudAutoSyncState,
+  type CloudBackupDeps,
+} from "./cloud-backup-types";
+import { restoreCloudBackupIntoNewVault } from "./cloud-backup-restore";
 
 /**
  * Entities to mark for the consistency check: any the remote lacks or holds
@@ -499,75 +405,12 @@ export class CloudBackupStore {
     if (!material) return null;
 
     try {
-      const listFrom = (key: string): unknown[] => {
-        const value = (material.bundle as Record<string, unknown>)?.[key];
-        return Array.isArray(value) ? value : [];
-      };
-      const entities = listFrom("entities");
-      const maps = listFrom("maps");
-      const canvases = listFrom("canvases");
-      const sessionJournals = listFrom("sessionJournals");
-      const vaultId = await this.deps.restore.createVault(
-        material.manifest.vaultTitle,
+      return await restoreCloudBackupIntoNewVault(
+        this.deps.runtime,
+        this.deps.restore,
+        { backupId, ownerCode },
+        material,
       );
-      if (entities.length > 0) {
-        await this.deps.restore.importEntities(vaultId, entities);
-      }
-      // Maps and canvases are vault content in their own right; a restore that
-      // brought back only entities would silently lose them.
-      if (maps.length > 0 && this.deps.restore.importMaps) {
-        await this.deps.restore.importMaps(vaultId, maps);
-      }
-      if (canvases.length > 0 && this.deps.restore.importCanvases) {
-        await this.deps.restore.importCanvases(vaultId, canvases);
-      }
-      // Session journals (spec 163-session-journal, FR-016) — same "content
-      // in its own right" reasoning as maps/canvases above.
-      if (
-        sessionJournals.length > 0 &&
-        this.deps.restore.importSessionJournals
-      ) {
-        await this.deps.restore.importSessionJournals(vaultId, sessionJournals);
-      }
-
-      // Media, so a restored vault does not come back with broken images.
-      const manifest = Array.isArray((material.bundle as any)?.assetManifest)
-        ? ((material.bundle as any).assetManifest as {
-            assetId: string;
-            path: string;
-            mimeType: string;
-          }[])
-        : [];
-      const importAsset = this.deps.restore.importAsset;
-      let missingAssets = 0;
-
-      if (importAsset) {
-        for (const asset of manifest) {
-          const bytes = await fetchCloudBackupAsset(
-            this.deps.runtime,
-            { backupId, ownerCode },
-            asset.assetId,
-          );
-          if (!bytes.ok) {
-            // One unreadable image must not undo an otherwise good restore.
-            missingAssets += 1;
-            continue;
-          }
-          try {
-            await importAsset(asset.path, bytes.value, asset.mimeType);
-          } catch {
-            missingAssets += 1;
-          }
-        }
-      } else if (manifest.length > 0) {
-        missingAssets = manifest.length;
-      }
-
-      return {
-        vaultId,
-        vaultTitle: material.manifest.vaultTitle,
-        missingAssets,
-      };
     } catch (error) {
       this.errorMessage =
         error instanceof Error
@@ -1112,13 +955,4 @@ export class CloudBackupStore {
 
 export const cloudBackupStore = new CloudBackupStore();
 
-/** A runtime with no persistence, for contexts that never enable backup. */
-export function createInertRuntime(baseUrl = ""): CloudBackupRuntime {
-  return {
-    baseUrl,
-    storage: createMemoryStorage(),
-    fetch: (async () => {
-      throw new Error("Cloud backup is not configured.");
-    }) as CloudBackupRuntime["fetch"],
-  };
-}
+export { createInertRuntime } from "./cloud-backup-runtime";
