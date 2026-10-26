@@ -129,6 +129,6 @@ export const cosmicHorror: LandingPageConfig = {
     description:
       "Map the hidden web of cults, anomalies, and classified files. Let your players uncover the rest in a fast, private, local-first workspace.",
     buttonText: "Start Building Free",
-    buttonHref: "/app",
+    buttonHref: "/",
   },
 };

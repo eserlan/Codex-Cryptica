@@ -164,6 +164,6 @@ export const economyTrade: LandingPageConfig = {
     description:
       "Connect your towns, factions, routes, and shortages in one place, so every price tells the truth about your world.",
     buttonText: "Start Building Free",
-    buttonHref: "/app",
+    buttonHref: "/",
   },
 };

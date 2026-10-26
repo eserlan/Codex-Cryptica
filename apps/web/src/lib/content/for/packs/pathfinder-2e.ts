@@ -121,7 +121,7 @@ export const pathfinder2e: LandingPageConfig = {
     description:
       "Keep your Pathfinder 2e campaign connected between sessions, with relationship graphs, interactive maps, and local-first storage.",
     buttonText: "Start Building Free",
-    buttonHref: "/app",
+    buttonHref: "/",
   },
   disclaimer:
     "Codex Cryptica is an independent campaign management tool and is not affiliated with, endorsed, sponsored, or specifically approved by Paizo Inc. Pathfinder and its logos are registered trademarks of Paizo Inc.",

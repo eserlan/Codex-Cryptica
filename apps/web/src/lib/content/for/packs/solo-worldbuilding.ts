@@ -137,6 +137,6 @@ export const soloWorldbuilding: LandingPageConfig = {
     description:
       "Give every prompt somewhere to land, and every discovery a connection to what came before.",
     buttonText: "Start Building Solo",
-    buttonHref: "/app",
+    buttonHref: "/",
   },
 };

@@ -131,6 +131,6 @@ export const spaceWestern: LandingPageConfig = {
     description:
       "Build a connected frontier where every job changes who controls the next port.",
     buttonText: "Start Building Free",
-    buttonHref: "/app",
+    buttonHref: "/",
   },
 };

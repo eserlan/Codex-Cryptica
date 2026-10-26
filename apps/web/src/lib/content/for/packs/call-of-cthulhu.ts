@@ -136,7 +136,7 @@ export const callOfCthulhu: LandingPageConfig = {
     description:
       "Map clue networks, track handouts and suspects, and run your Call of Cthulhu scenarios in a local-first workspace.",
     buttonText: "Start Your Investigation Free",
-    buttonHref: "/app",
+    buttonHref: "/",
   },
   disclaimer:
     "Codex Cryptica is an independent campaign management tool and is not affiliated with, endorsed, sponsored, or specifically approved by Chaosium Inc. Call of Cthulhu is a registered trademark of Chaosium Inc.",

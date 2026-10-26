@@ -138,6 +138,6 @@ export const starshipCampaigns: LandingPageConfig = {
     description:
       "Keep your crew, ship, sector maps, and fleet orders organised with intuitive relationship graphs and offline-ready local storage.",
     buttonText: "Start Building Free",
-    buttonHref: "/app",
+    buttonHref: "/",
   },
 };

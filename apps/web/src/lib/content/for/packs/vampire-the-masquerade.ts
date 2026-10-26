@@ -123,7 +123,7 @@ export const vampireTheMasquerade: LandingPageConfig = {
     description:
       "Take command of your nocturnal city. Map bloodlines, track boons and breaches, and run your Vampire chronicle with complete local privacy.",
     buttonText: "Start Your Chronicle Free",
-    buttonHref: "/app",
+    buttonHref: "/",
   },
   disclaimer:
     "Codex Cryptica is an independent campaign management tool and is not affiliated with, endorsed, sponsored, or specifically approved by Paradox Interactive or World of Darkness. Vampire: The Masquerade is a registered trademark of Paradox Interactive AB.",

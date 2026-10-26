@@ -144,6 +144,6 @@ export const sandboxCampaigns: LandingPageConfig = {
     description:
       "Build a world where every thread you have prepared is one link away from the one they chose.",
     buttonText: "Start Building Free",
-    buttonHref: "/app",
+    buttonHref: "/",
   },
 };
