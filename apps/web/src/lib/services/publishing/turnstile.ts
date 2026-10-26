@@ -84,13 +84,23 @@ async function solveInvisibleChallenge(
     let widgetId = "";
     const cleanup = () => {
       if (widgetId) turnstile.remove(widgetId);
-      container.remove();
+      // Defers removal to the next microtask/tick to prevent racing Turnstile's
+      // internal error recovery/reset logic on the container element.
+      setTimeout(() => {
+        container.remove();
+      }, 0);
     };
-    const fail = (reason: string) => () => {
+    const fail = (reason: string) => (errorCode?: unknown) => {
       window.clearTimeout(timeout);
       cleanup();
+      const codeSuffix =
+        errorCode !== undefined && errorCode !== null && errorCode !== ""
+          ? ` (code: ${errorCode})`
+          : "";
       reject(
-        new Error(`Verification ${reason}. Please try ${retryPhrase} again.`),
+        new Error(
+          `Verification ${reason}${codeSuffix}. Please try ${retryPhrase} again.`,
+        ),
       );
     };
     const timeout = window.setTimeout(fail("timed out"), 30_000);
@@ -104,8 +114,8 @@ async function solveInvisibleChallenge(
         cleanup();
         resolve(token);
       },
-      "error-callback": fail("failed"),
-      "expired-callback": fail("expired"),
+      "error-callback": (err: unknown) => fail("failed")(err),
+      "expired-callback": () => fail("expired")(),
     });
     turnstile.execute(widgetId);
   });
