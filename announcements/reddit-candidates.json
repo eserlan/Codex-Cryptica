@@ -1,5 +1,5 @@
 {
-  "updated_at": 1793011407,
+  "updated_at": 1793012609,
   "candidates": [
     {
       "id": "reddit-39855478849-a-mystery-case-you-can-actually-run-with",
@@ -22,14 +22,14 @@
       "created_at": 1792943711
     },
     {
-      "id": "reddit-40298726905-post-scarcity-that-stays-believable-when",
-      "title": "Post-scarcity that stays believable when players push on it",
-      "body": "My post-scarcity setting fell over the first time the party asked who actually keeps the lights on.\n\nIf everything is free, nothing costs anything, and everyone agrees, there is nowhere for a story to grip. So I built a framework that makes abundance credible by naming what is guaranteed and what stays scarce.\n\nThe idea is simple. Define the abundance on purpose, then build conflict from time, places, trust and coordination, not from a hidden fee you forgot to mention.\n\nWhat the page walks through:\n\n- what is guaranteed for every citizen and what the limits are\n- what stays finite no matter how good the tech is (time, places, trust, coordination)\n- who maintains the systems and what they are owed in return\n- how institutions and status shift when stuff stops being scarce\n\nTradeoff I am still weighing: it leans toward politics and values as the source of tension. If you want your utopia to secretly be a dystopia, you will need to add that betrayal back in yourself.\n\nHow do you handle it when your players ask for more than the system can give. What do they still have to earn or negotiate for at your table?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-40298726905-0.png)",
-      "url": "https://codexcryptica.com/answers/how-do-i-build-a-believable-post-scarcity-civilisation",
-      "image_url": "https://assets.codexcryptica.com/announcements/release-40298726905-0.png",
+      "id": "reddit-40298726905-how-many-travel-encounters-fit-in-a-sess",
+      "title": "How many travel encounters fit in a session without stalling it",
+      "body": "I was rolling every day on the road and losing half the session to fights that went nowhere.\n\nI needed a way to decide frequency before I rolled anything. So I built a guide that turns encounter rate into table time.\n\nOne sentence version: pick a rate that fits the journey, budget it against your session length, then use smaller events where a full scene would stall the trip.\n\nWhat it gives you:\n\n- starting rates by journey type (0 to 1 for background travel, about 1 per week for ordinary, 2 to 3 per week for dangerous or exploration)\n- a 5 step method to turn that rate into a count you can actually run\n- four sizes of travel event, from colour to full scene, so not everything costs the same at the table\n\nHeads up: the numbers assume a three hour session with travel as part of the night, not the whole night. If your group runs shorter or gives travel the whole session, you will want to adjust down or up.\n\nHow many travel encounters make your sessions feel full but still leave time for the destination itself?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-40298726905-1.png)",
+      "url": "https://codexcryptica.com/answers/how-many-random-encounters-should-you-use-during-rpg-travel",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-40298726905-1.png",
       "source_id": "40298726905",
       "status": "approved",
-      "created_at": 1793011407
+      "created_at": 1793012609
     }
   ]
 }
