@@ -4239,6 +4239,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** Build a believable fantasy economy by tracing six links for each region: what it has and needs, how resources are worked, how goods and labour move, who controls access or takes a share, what strains the arrangement, and what the players can see changing as a result. A believable economy does not need a perfectly calibrated price list; it needs causes the players can see, such as bread costing more after a blocked pass, a mine town having coin but no food, or someone with power responding to the strain.
 
+### [How do I build a believable post-scarcity civilisation?](https://codexcryptica.com/answers/how-do-i-build-a-believable-post-scarcity-civilisation)
+
+**Direct answer:** Take the abundance seriously and follow its consequences. Decide which goods and services nobody can be deprived of, then name what stays finite: time, skilled attention, desirable places, trust, consent and the capacity to coordinate. Show who builds and repairs the systems that provide for everyone, how institutions change when survival no longer depends on wages or land, and where citizens still disagree. A prosperous civilisation becomes credible, and can still oppose the protagonists, when its conflicts come from competing values and policies rather than from a hidden cost that makes the prosperity fake.
+
 ### [How do I combine multiple enemies into one squad in a tabletop RPG?](https://codexcryptica.com/answers/how-do-i-combine-multiple-enemies-into-one-squad-in-an-rpg)
 
 **Direct answer:** To combine similar enemies into one squad, decide what to abstract and what to keep visible: its footprint, a casualty track, one activation whose attack reflects its remaining strength, and clear rules for targeting, area effects and morale. Show members falling and the squad changing as it takes losses, rather than turning it into a single giant creature with extra hit points.

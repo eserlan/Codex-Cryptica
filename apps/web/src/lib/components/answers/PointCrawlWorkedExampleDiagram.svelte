@@ -81,10 +81,10 @@
         >Network Map</span
       >
     </div>
-    <span class="hidden sm:inline-block font-mono text-[11px] text-theme-muted">
+    <span class="hidden sm:inline-block font-mono text-xs text-theme-muted">
       6 Nodes • 7 Links • 2 Approaches to Crypt
     </span>
-    <span class="sm:hidden font-mono text-[11px] text-theme-muted"
+    <span class="sm:hidden font-mono text-xs text-theme-muted"
       >Scroll map →</span
     >
   </div>
@@ -160,7 +160,8 @@
 
       <!-- Layer Column Headers -->
       <g
-        class="font-mono text-[9.5px] uppercase tracking-[0.14em] fill-theme-muted"
+        font-size="9.5"
+        class="font-mono uppercase tracking-[0.14em] fill-theme-muted"
       >
         <text x="75" y="20" text-anchor="middle">Start</text>
         <text x="265" y="20" text-anchor="middle">Waypoints (Layer 1)</text>
@@ -192,10 +193,11 @@
           stroke-width="1"
         ></rect>
         <text
+          font-size="9"
           x="165"
           y="146"
           text-anchor="middle"
-          class="font-mono text-[9px] fill-theme-text"
+          class="font-mono fill-theme-text"
         >
           <tspan font-weight="bold" class="fill-theme-primary">0.5 day</tspan> · 2
           sp toll / Watched
@@ -224,10 +226,11 @@
           stroke-width="1"
         ></rect>
         <text
+          font-size="9"
           x="165"
           y="262"
           text-anchor="middle"
-          class="font-mono text-[9px] fill-theme-text"
+          class="font-mono fill-theme-text"
         >
           <tspan font-weight="bold" class="fill-theme-primary">1 day</tspan> · Extra
           ration / Delay
@@ -256,10 +259,11 @@
           stroke-width="1"
         ></rect>
         <text
+          font-size="9"
           x="370"
           y="104"
           text-anchor="middle"
-          class="font-mono text-[9px] fill-theme-text"
+          class="font-mono fill-theme-text"
         >
           <tspan class="fill-theme-primary font-bold">⮂</tspan>
           <tspan font-weight="bold">0.5 day</tspan> · Road loop (Guard alert)
@@ -288,10 +292,11 @@
           stroke-width="1"
         ></rect>
         <text
+          font-size="9"
           x="370"
           y="204"
           text-anchor="middle"
-          class="font-mono text-[9px] fill-theme-text"
+          class="font-mono fill-theme-text"
         >
           <tspan font-weight="bold" class="fill-theme-primary">0.5 day</tspan> · Tracks
           reveal rival
@@ -321,10 +326,11 @@
           stroke-width="1"
         ></rect>
         <text
+          font-size="9"
           x="370"
           y="304"
           text-anchor="middle"
-          class="font-mono text-[9px] fill-theme-text"
+          class="font-mono fill-theme-text"
         >
           🔒 <tspan font-weight="bold">0.5 day</tspan> · Needs news (Guide)
         </text>
@@ -352,10 +358,11 @@
           stroke-width="1"
         ></rect>
         <text
+          font-size="9"
           x="570"
           y="146"
           text-anchor="middle"
-          class="font-mono text-[9px] fill-theme-text"
+          class="font-mono fill-theme-text"
         >
           ⚠ <tspan font-weight="bold">1 day</tspan> · Exposed (Alerts sentries)
         </text>
@@ -384,10 +391,11 @@
           stroke-width="1"
         ></rect>
         <text
+          font-size="9"
           x="570"
           y="262"
           text-anchor="middle"
-          class="font-mono text-[9px] fill-theme-primary"
+          class="font-mono fill-theme-primary"
         >
           👁 <tspan font-weight="bold">0.5 day</tspan> · Hidden track (Unseen)
         </text>
@@ -408,15 +416,17 @@
           stroke-width="1"
         ></circle>
         <text
+          font-size="11"
           y="4"
           text-anchor="middle"
-          class="font-mono text-[11px] font-bold fill-theme-primary">1</text
+          class="font-mono font-bold fill-theme-primary">1</text
         >
         <!-- Top role tag -->
         <text
+          font-size="9"
           y="-30"
           text-anchor="middle"
-          class="font-mono text-[9px] uppercase tracking-wider font-bold fill-theme-primary"
+          class="font-mono uppercase tracking-wider font-bold fill-theme-primary"
         >
           START
         </text>
@@ -429,9 +439,10 @@
           Oakhaven
         </text>
         <text
+          font-size="9"
           y="52"
           text-anchor="middle"
-          class="font-mono text-[9px] fill-theme-muted"
+          class="font-mono fill-theme-muted"
         >
           Rumour board
         </text>
@@ -450,9 +461,10 @@
           stroke-width="1"
         ></circle>
         <text
+          font-size="11"
           y="4"
           text-anchor="middle"
-          class="font-mono text-[11px] font-bold fill-theme-text">2</text
+          class="font-mono font-bold fill-theme-text">2</text
         >
         <!-- Top Labels -->
         <text
@@ -463,9 +475,10 @@
           Toll Bridge
         </text>
         <text
+          font-size="9"
           y="-27"
           text-anchor="middle"
-          class="font-mono text-[9px] fill-theme-muted"
+          class="font-mono fill-theme-muted"
         >
           Watched crossing
         </text>
@@ -484,9 +497,10 @@
           stroke-width="1"
         ></circle>
         <text
+          font-size="11"
           y="4"
           text-anchor="middle"
-          class="font-mono text-[11px] font-bold fill-theme-text">3</text
+          class="font-mono font-bold fill-theme-text">3</text
         >
         <!-- Bottom Labels -->
         <text
@@ -497,9 +511,10 @@
           Reed Causeway
         </text>
         <text
+          font-size="9"
           y="50"
           text-anchor="middle"
-          class="font-mono text-[9px] fill-theme-muted"
+          class="font-mono fill-theme-muted"
         >
           Muddy & unwatched
         </text>
@@ -518,9 +533,10 @@
           stroke-width="1"
         ></circle>
         <text
+          font-size="11"
           y="4"
           text-anchor="middle"
-          class="font-mono text-[11px] font-bold fill-theme-text">4</text
+          class="font-mono font-bold fill-theme-text">4</text
         >
         <!-- Top Labels -->
         <text
@@ -531,9 +547,10 @@
           Old Watchtower
         </text>
         <text
+          font-size="9"
           y="-27"
           text-anchor="middle"
-          class="font-mono text-[9px] fill-theme-muted"
+          class="font-mono fill-theme-muted"
         >
           High ground view
         </text>
@@ -552,9 +569,10 @@
           stroke-width="1"
         ></circle>
         <text
+          font-size="11"
           y="4"
           text-anchor="middle"
-          class="font-mono text-[11px] font-bold fill-theme-text">5</text
+          class="font-mono font-bold fill-theme-text">5</text
         >
         <!-- Bottom Labels -->
         <text
@@ -565,9 +583,10 @@
           Hermit's Cairn
         </text>
         <text
+          font-size="9"
           y="50"
           text-anchor="middle"
-          class="font-mono text-[9px] fill-theme-muted"
+          class="font-mono fill-theme-muted"
         >
           Guide to hidden track
         </text>
@@ -587,15 +606,17 @@
           stroke-dasharray="3 2"
         ></circle>
         <text
+          font-size="11"
           y="4"
           text-anchor="middle"
-          class="font-mono text-[11px] font-bold fill-theme-primary">6</text
+          class="font-mono font-bold fill-theme-primary">6</text
         >
         <!-- Top role tag -->
         <text
+          font-size="9"
           y="-30"
           text-anchor="middle"
-          class="font-mono text-[9px] uppercase tracking-wider font-bold fill-theme-primary"
+          class="font-mono uppercase tracking-wider font-bold fill-theme-primary"
         >
           GOAL
         </text>
@@ -608,9 +629,10 @@
           Morzan's Crypt
         </text>
         <text
+          font-size="9"
           y="52"
           text-anchor="middle"
-          class="font-mono text-[9px] fill-theme-primary font-bold"
+          class="font-mono fill-theme-primary font-bold"
         >
           The Goal
         </text>

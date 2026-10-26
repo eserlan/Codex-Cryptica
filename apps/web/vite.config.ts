@@ -298,6 +298,7 @@ export default defineConfig({
   } as any,
   ssr: {
     noExternal: [
+      "cookie",
       "graph-engine",
       "map-engine",
       "editor-core",

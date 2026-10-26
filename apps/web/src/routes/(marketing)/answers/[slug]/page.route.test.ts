@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import { render, screen, within } from "@testing-library/svelte";
 import Page from "./+page.svelte";
 import { AnswerConfigSchema } from "#lib/content/answers/schema.js";
-import * as discoveryTracking from "$lib/services/analytics/discovery-tracking";
+import * as discoveryTracking from "#lib/services/analytics/discovery-tracking.js";
 
 vi.mock("$app/paths", () => ({
   base: "",
