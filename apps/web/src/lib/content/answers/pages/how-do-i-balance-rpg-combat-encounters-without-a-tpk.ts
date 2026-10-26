@@ -148,6 +148,7 @@ export const howDoIBalanceRpgCombatEncountersWithoutATpk: AnswerConfigInput = {
     "how-do-i-combine-multiple-enemies-into-one-squad-in-an-rpg",
     "which-tabletop-rpgs-have-squad-and-mass-battle-rules",
     "how-do-i-track-monsters-initiative-and-hit-points-in-dnd-combat",
+    "does-an-rpg-party-need-balanced-roles",
   ],
   discovery: {
     id: "answer-encounter-balance",

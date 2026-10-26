@@ -175,6 +175,7 @@ export const howDoIRunCommonCharacterRolesInAFantasyRpg: AnswerConfigInput = {
     "how-do-you-run-character-roles-in-a-cyberpunk-rpg",
     "how-do-i-handle-divination-magic-without-letting-one-character-solve-every-mystery",
     "how-do-i-run-a-bard-or-face-without-sidelining-the-party",
+    "does-an-rpg-party-need-balanced-roles",
   ],
   discovery: {
     id: "answer-fantasy-character-roles",
