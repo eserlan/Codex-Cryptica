@@ -260,6 +260,11 @@
   });
 
   const canFollowUp = $derived(session.userGenerationSucceeded);
+  const exampleWriteupLabel = $derived(
+    variant === "names"
+      ? "See example names with notes"
+      : "See an example write-up",
+  );
 
   export function triggerExplicitAutoGenerate() {
     session.triggerExplicitAutoGenerate();
@@ -426,7 +431,7 @@
             <summary
               class="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-3 text-sm font-bold text-theme-text"
             >
-              See an example write-up
+              {exampleWriteupLabel}
               <span
                 class="icon-[lucide--chevron-down] h-4 w-4 transition-transform group-open:rotate-180"
                 aria-hidden="true"
