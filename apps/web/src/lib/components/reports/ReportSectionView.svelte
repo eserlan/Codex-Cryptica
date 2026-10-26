@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { vault } from "$lib/stores/vault.svelte";
-  import { renderMarkdown } from "$lib/utils/markdown";
-  import SilhouetteAvatar from "$lib/components/ui/SilhouetteAvatar.svelte";
+  import { vault } from "#lib/stores/vault.svelte.js";
+  import { renderMarkdown } from "#lib/utils/markdown.js";
+  import SilhouetteAvatar from "#lib/components/ui/SilhouetteAvatar.svelte";
 
   export interface SectionViewModel {
     title: string;

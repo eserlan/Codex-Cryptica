@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { mapStore } from "$lib/stores/map.svelte";
+  import { mapStore } from "#lib/stores/map.svelte.js";
 </script>
 
 {#if mapStore.showFog}

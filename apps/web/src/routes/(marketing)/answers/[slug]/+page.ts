@@ -3,7 +3,7 @@ import {
   getAnswer,
   getAllAnswerSlugs,
   getRelatedAnswers,
-} from "$lib/content/answers/registry";
+} from "#lib/content/answers/registry.js";
 import type { PageLoad, EntryGenerator } from "./$types";
 
 export const prerender = true;

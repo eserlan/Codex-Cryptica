@@ -1,28 +1,33 @@
 <script lang="ts">
   import { fade } from "svelte/transition";
-  import { themeStore } from "$lib/stores/theme.svelte";
+  import { themeStore } from "#lib/stores/theme.svelte.js";
   import {
     FOCUS_DETAIL_STEP,
     FOCUS_EDGE_CAP,
     graph,
-  } from "$lib/stores/graph.svelte";
-  import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
+  } from "#lib/stores/graph.svelte.js";
+  import { canvasRegistry } from "#lib/stores/canvas-registry.svelte.js";
   import type { Entity } from "schema";
-  import LabelFilter from "$lib/components/labels/LabelFilter.svelte";
-  import CategoryFilter from "$lib/components/labels/CategoryFilter.svelte";
+  import LabelFilter from "#lib/components/labels/LabelFilter.svelte";
+  import CategoryFilter from "#lib/components/labels/CategoryFilter.svelte";
   import type { Core, NodeSingular } from "cytoscape";
-  import { notificationStore } from "$lib/stores/ui/notification.svelte";
-  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
-  import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
+  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
+  import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
+  import { connectionModeStore } from "#lib/stores/ui/connection-mode.svelte.js";
 
-  let { selectedEntity, parentEntity, selectedId, isLayoutRunning, cy } =
-    $props<{
-      selectedEntity: Entity | null;
-      parentEntity: Entity | null;
-      selectedId: string | null;
-      isLayoutRunning: boolean;
-      cy: Core | undefined;
-    }>();
+  let {
+    selectedEntity,
+    parentEntity,
+    selectedId,
+    isLayoutRunning,
+    cy,
+  }: {
+    selectedEntity: Entity | null;
+    parentEntity: Entity | null;
+    selectedId: string | null;
+    isLayoutRunning: boolean;
+    cy: Core | undefined;
+  } = $props();
 
   const hasActiveFilters = $derived(
     graph.activeCategories.size > 0 ||

@@ -6,8 +6,9 @@ import Page from "./+page.svelte";
 import { load } from "./+page";
 
 vi.mock("$app/paths", () => ({
-  resolve: (value: string) => value,
   base: "",
+  asset: (p: string) => p,
+  resolve: (p: string) => p,
 }));
 
 describe("/worlds route", () => {

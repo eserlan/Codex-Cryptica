@@ -1,4 +1,9 @@
-import { DISCORD_URL, GITHUB_URL, REDDIT_URL, PATREON_URL } from "$lib/config";
+import {
+  DISCORD_URL,
+  GITHUB_URL,
+  REDDIT_URL,
+  PATREON_URL,
+} from "#lib/config/index.js";
 
 export type ExploreLink = {
   href: string;

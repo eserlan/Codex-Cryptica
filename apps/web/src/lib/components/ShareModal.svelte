@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { base } from "$app/paths";
-  import { p2pHost } from "$lib/cloud-bridge/p2p/host-service.svelte";
-  import { getGuestViewFromPathname } from "$lib/utils/guest-session";
+  import { resolve } from "$app/paths";
+  import { p2pHost } from "#lib/cloud-bridge/p2p/host-service.svelte.js";
+  import { getGuestViewFromPathname } from "#lib/utils/guest-session.js";
   import {
     buildP2PShareLink,
     copyTextToClipboard,
     startShareSession,
-  } from "$lib/utils/share-link";
+  } from "#lib/utils/share-link.js";
 
   let { close }: { close: () => void } = $props();
 
@@ -27,8 +27,9 @@
       window.location.origin,
       window.location.pathname,
       peerId,
-      getGuestViewFromPathname(window.location.pathname, base),
+      getGuestViewFromPathname(window.location.pathname, resolve("")),
     );
+
     return true;
   }
 
@@ -45,7 +46,7 @@
       await startShareSession({
         origin: window.location.origin,
         pathname: window.location.pathname,
-        view: getGuestViewFromPathname(window.location.pathname, base),
+        view: getGuestViewFromPathname(window.location.pathname, resolve("")),
         clipboard: navigator.clipboard,
         startHosting: p2pHost.startHosting.bind(p2pHost),
         onLink: (shareLink) => {

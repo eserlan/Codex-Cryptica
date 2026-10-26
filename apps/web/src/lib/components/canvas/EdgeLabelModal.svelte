@@ -1,6 +1,6 @@
 <script lang="ts">
   import { tick } from "svelte";
-  import ModalShell from "$lib/components/ui/ModalShell.svelte";
+  import ModalShell from "#lib/components/ui/ModalShell.svelte";
 
   let {
     isOpen = $bindable(false),

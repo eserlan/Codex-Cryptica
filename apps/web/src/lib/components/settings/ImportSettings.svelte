@@ -1,14 +1,14 @@
 <script lang="ts">
   import { slide, fade } from "svelte/transition";
-  import CCImportReview from "$lib/features/importer/CCImportReview.svelte";
-  import CCImportReport from "$lib/features/importer/CCImportReport.svelte";
-  import MissingImageResolver from "$lib/features/importer/MissingImageResolver.svelte";
+  import CCImportReview from "#lib/features/importer/CCImportReview.svelte";
+  import CCImportReport from "#lib/features/importer/CCImportReport.svelte";
+  import MissingImageResolver from "#lib/features/importer/MissingImageResolver.svelte";
   import ImportProgress from "../import/ImportProgress.svelte";
-  import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
+  import { connectionModeStore } from "#lib/stores/ui/connection-mode.svelte.js";
   import ImportSourcePicker from "./ImportSourcePicker.svelte";
   import { ImportSettingsController } from "./import-settings-controller.svelte";
 
-  let { isStandalone = false } = $props<{ isStandalone?: boolean }>();
+  let { isStandalone = false }: { isStandalone?: boolean } = $props();
 
   const controller = new ImportSettingsController();
 

@@ -7,7 +7,7 @@ import {
 } from "@codex/ai-engine";
 import { oracleBridge } from "../cloud-bridge/oracle-bridge";
 import * as Comlink from "comlink";
-import { notificationStore } from "$lib/stores/ui/notification.svelte";
+import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
 
 import { setConnectionProposer } from "./oracle/hooks";
 

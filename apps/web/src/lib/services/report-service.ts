@@ -4,10 +4,10 @@ import {
   renderReportMarkdown,
   type ReportDocument,
 } from "entity-report-engine";
-import { vault } from "$lib/stores/vault.svelte";
-import { systemClock } from "$lib/utils/runtime-deps";
-import type { LocalEntity } from "$lib/stores/vault/types";
-import { clipboardService } from "$lib/services/ClipboardService";
+import { vault } from "#lib/stores/vault.svelte.js";
+import { systemClock } from "#lib/utils/runtime-deps.js";
+import type { LocalEntity } from "#lib/stores/vault/types.js";
+import { clipboardService } from "#lib/services/ClipboardService.js";
 
 export type ReportSaveProvenance = Omit<
   ReportProvenance,

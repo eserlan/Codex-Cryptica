@@ -4,10 +4,10 @@ import { flushSync } from "svelte";
 
 const session = vi.hoisted(() => ({ isGuestMode: false }));
 
-vi.mock("$lib/stores/ui/session-mode.svelte", () => ({
+vi.mock("#lib/stores/ui/session-mode.svelte.js", () => ({
   sessionModeStore: session,
 }));
-vi.mock("$lib/services/delve-area-enhancement", () => ({
+vi.mock("#lib/services/delve-area-enhancement.js", () => ({
   isPlaceholderDelveAreaName: vi.fn(() => false),
 }));
 vi.mock("../canvas-auto-arrange", () => ({

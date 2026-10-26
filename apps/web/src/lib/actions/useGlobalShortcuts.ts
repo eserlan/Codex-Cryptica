@@ -1,8 +1,8 @@
-import { searchStore } from "$lib/stores/search.svelte";
-import { vault } from "$lib/stores/vault.svelte";
-import { oracle } from "$lib/stores/oracle.svelte";
-import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-import { soloPlayGuard } from "$lib/stores/solo-session-instance";
+import { searchStore } from "#lib/stores/search.svelte.js";
+import { vault } from "#lib/stores/vault.svelte.js";
+import { oracle } from "#lib/stores/oracle.svelte.js";
+import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+import { soloPlayGuard } from "#lib/stores/solo-session-instance.js";
 
 const isTypingTarget = (target: EventTarget | null) => {
   const element = target as HTMLElement | null;

@@ -27,14 +27,14 @@
     worldConfig,
   } from "generator-engine";
   import type { AIPolicy, GeneratorRunRequest } from "generator-engine";
-  import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
-  import { getDelveLocationTypeLabel } from "$lib/utils/delve-terminology";
-  import type { DetectedVaultLanguage } from "$lib/services/generators/generator-vault-context";
+  import SelectWithCustomOption from "#lib/components/forms/SelectWithCustomOption.svelte";
+  import { getDelveLocationTypeLabel } from "#lib/utils/delve-terminology.js";
+  import type { DetectedVaultLanguage } from "#lib/services/generators/generator-vault-context.js";
   import {
     GeneratorFavoritesStore,
     generatorFavoritesStore,
-  } from "$lib/stores/ui/generator-favorites.svelte";
-  import { systemProfileStore } from "$lib/stores/system-profile.svelte";
+  } from "#lib/stores/ui/generator-favorites.svelte.js";
+  import { systemProfileStore } from "#lib/stores/system-profile.svelte.js";
 
   interface Props {
     generatorId: GeneratorId | null;
@@ -115,8 +115,7 @@
   }): string {
     const sectionId = resolveGeneratorSection(gen);
     return (
-      GENERATOR_SECTION_CATEGORIES.find((c) => c.id === sectionId)?.label ??
-      "Loot & Lore"
+      GENERATOR_SECTION_CATEGORIES.find((c) => c.id === sectionId)?.label ?? ""
     );
   }
 
@@ -138,7 +137,7 @@
     filteredGenerators.filter((g) => favoritesStore.isFavorite(g.id)),
   );
 
-  // Group all generators into the four condensed categories
+  // Group all generators into the shared generator categories
   // Pre-favourited generators remain present in their category
   interface GeneratorGroup {
     id: GeneratorSectionId;

@@ -3,8 +3,12 @@ import {
   SessionActivityService,
   ACTIVITY_LOG_RETENTION_MS,
 } from "./SessionActivityService";
-import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
-import type { Clock, IdGenerator, StorageLike } from "$lib/utils/runtime-deps";
+import { discoveryPolicyStore } from "#lib/stores/ui/discovery-policy.svelte.js";
+import type {
+  Clock,
+  IdGenerator,
+  StorageLike,
+} from "#lib/utils/runtime-deps.js";
 
 const STORAGE_KEY = "codex_oracle_activity_log";
 

@@ -6,9 +6,11 @@ import MarketingFooter from "./MarketingFooter.svelte";
 
 vi.mock("$app/paths", () => ({
   base: "",
+  asset: (p: string) => p,
+  resolve: (p: string) => p,
 }));
 
-vi.mock("$lib/config", () => ({
+vi.mock("#lib/config/index.js", () => ({
   PATREON_URL: "https://patreon.com/EspenE",
 }));
 

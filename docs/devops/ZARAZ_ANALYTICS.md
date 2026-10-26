@@ -96,7 +96,7 @@ user-authored content.
 
 | Event                              | Fires when                                                                             | Properties                                                                                                                                 |
 | ---------------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| `seo_entry`                        | A marketing page is visited with new UTM or AI-referral attribution                    | `entry_page_type` (`generator` \| `solutions` \| `comparison` \| `alternatives` \| `blog` \| `importer` \| `tools` \| `topics` \| `other`) |
+| `seo_entry`                        | A marketing page is visited with new UTM, AI-referral or organic-search attribution    | `entry_page_type` (`generator` \| `solutions` \| `comparison` \| `alternatives` \| `blog` \| `importer` \| `tools` \| `topics` \| `other`) |
 | `generator_started`                | A visitor submits a generator form (not the silent auto-draft on page load)            | `generator_type`                                                                                                                           |
 | `generator_completed`              | Generation succeeds                                                                    | `generator_type`                                                                                                                           |
 | `entity_saved`                     | "Save to Codex" is clicked                                                             | `generator_type`, `is_hub_batch`, `item_count`, `is_first_saved_entity`                                                                    |
@@ -126,6 +126,15 @@ for destination-tool segmentation:
 - `acquisition_source`: `chatgpt`, `perplexity`, `copilot`, `claude` or `gemini`
 - `acquisition_landing_path`: the root-relative landing path
 
+For an organic-search landing captured in the current browser tab session
+(#4372) the flat properties are
+`acquisition_channel: organic_search`, `acquisition_search_engine` (`google`,
+`bing`, `duckduckgo`, `yahoo`, `ecosia` or `brave`) and
+`acquisition_landing_path`.
+The persisted `latest_touch` remains available for funnel context, but its
+organic-search values are not projected into these flat acquisition fields in
+a later tab session without a new search referral.
+
 Zaraz and the configured destination tool supply the browser session/visit
 association. Codex does not create a separate visitor identifier.
 
@@ -149,6 +158,66 @@ spoofed suffixes remain in their existing channel because they cannot be
 identified confidently. The initial referrer is consumed once per marketing
 page mount; later client-side navigation can still capture a new UTM-tagged
 landing URL without reusing the original referrer.
+
+### Organic-search classification (#4372)
+
+When a landing has no `utm_source` and the initial external referrer is a
+search engine's own results host, attribution records
+`{ channel: "organic_search", search_engine }`. Only the engine name is kept:
+the referrer path and query (the visitor's search terms) are discarded.
+AI-assistant referrers are checked first, so `gemini.google.com` stays
+`ai_referral`; `docs.google.com`, `mail.google.com`, spoofed suffixes and
+non-http(s) referrers are not search referrals. A UTM-tagged landing keeps its
+campaign attribution.
+
+Known limits — read these before trusting an organic segment:
+
+- Browsers and search engines can strip the referrer (`noreferrer`, private
+  modes, some in-app browsers), so **unlabelled sessions are not "not Google"
+  and must never be counted as Google**. Treat them as unattributed.
+- Google rarely passes the query, so this says nothing about keywords. Use
+  Search Console for queries, impressions and clicks.
+- Attribution is captured only on marketing pages, once per page mount, so
+  the referrer of a return visit with no new landing is not re-read.
+- `seo_entry` now also fires for organic-search landings. Compare `seo_entry`
+  counts before and after the deployment date of #4372 with that in mind.
+- Search Console clicks, Amplitude events and organic landings are different
+  units (clicks, events, sessions). Cross-check direction and rough scale;
+  do not require them to match.
+- Crawlers, synthetic and QA traffic are not excluded by this module. Exclude
+  known test sessions in Amplitude (internal `utm_source`/`utm_medium` tags
+  for QA runs, or a saved cohort of test devices) before reading human counts.
+
+### Point-crawl funnel (#4372)
+
+Generator events carry `generator_type: "point-crawl"` (the last segment of
+`/generators/point-crawl`, pinned by a test). The three Answers are
+`what-is-a-point-crawl` (definition), `how-do-you-build-a-point-crawl-for-an-rpg`
+(how-to) and `point-crawl-vs-hex-crawl` (comparison).
+
+| Step | Event and filter                                                                                      |
+| ---- | ----------------------------------------------------------------------------------------------------- |
+| 1    | `discovery_page_viewed` where `source_kind = answer` and `source_id` is one of the three Answer slugs |
+| 2    | `discovery_click` where `target_kind = generator` and `target_id = point-crawl` (same `source_id`)    |
+| 3    | `generator_started` where `generator_type = point-crawl`                                              |
+| 4    | `generator_completed` where `generator_type = point-crawl`                                            |
+| 5    | `public_generator_action_clicked` where `action = save_to_codex` and `generator_type = point-crawl`   |
+
+- Build it as a funnel on the Amplitude session or device, with a fixed
+  window (24 hours within a session; 7 days for the weekly comparison), and
+  segment by `acquisition_channel` (`organic_search`, `ai_referral`, unset).
+  Landing on the generator directly skips steps 1–2, so report a second
+  funnel starting at step 3 for direct generator traffic.
+- Show `action = copy` and `action = open_codex` as separate series. Copy is
+  valid product utility, not a failed save.
+- `entity_saved` and `vault_created` are **pre-import intent signals**, fired
+  on the outbound click. They do not confirm the entity was persisted or
+  retained in a vault, and no report should claim downstream retention.
+- Per-Answer effectiveness is step 1 → step 2 split by `source_id`; the
+  `placement` property separates the prose CTA from related-tool links.
+- Compare two equal weekly windows after the content/CTA changes (#4369,
+  #4371) are deployed. Report the numbers; do not claim the changes caused
+  any difference.
 
 ### Discovery funnel (#2687)
 
@@ -186,7 +255,9 @@ instead of calling the classifier.
 
 `placement` is a short, page-local string identifying where on the page the
 link lives — e.g. on `/answers/[slug]`: `section_cta`, `codex_connection`,
-`related_tool`, `related_guide`, `related_answer`. Each wired page defines
+`related_tool`, `related_guide`, `related_answer`, and `inline_link` for a
+site link written inside the answer's own prose (external citations are not
+tracked). Each wired page defines
 its own placement names for its own link groups; there is no shared enum,
 since it's meant to describe layout, not carry business meaning on its own.
 

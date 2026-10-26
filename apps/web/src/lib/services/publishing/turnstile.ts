@@ -1,4 +1,4 @@
-import { browser } from "$app/environment";
+import { browser } from "$app/env";
 
 const VITE_TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY;
 

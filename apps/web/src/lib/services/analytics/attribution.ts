@@ -15,18 +15,25 @@
  * (see (marketing)/+layout.svelte) — it has no callers inside the actual app.
  */
 
-import { browserStorage, type StorageLike } from "$lib/utils/runtime-deps";
+import {
+  browserSessionStorage,
+  browserStorage,
+  type StorageLike,
+  systemClock,
+} from "#lib/utils/runtime-deps.js";
 import {
   classifyAiReferral,
   type AiReferralProvider,
   type AiReferralSource,
 } from "./ai-referral";
+import { classifySearchReferral, type SearchEngine } from "./search-referral";
 
 export interface Attribution {
   utm_source?: string;
   utm_medium?: string;
   utm_campaign?: string;
-  channel?: "ai_referral";
+  channel?: "ai_referral" | "organic_search";
+  search_engine?: SearchEngine;
   provider?: AiReferralProvider;
   source?: AiReferralSource;
   landing_path: string;
@@ -35,6 +42,7 @@ export interface Attribution {
 
 const FIRST_TOUCH_KEY = "codex-cryptica-attribution-first";
 const LATEST_TOUCH_KEY = "codex-cryptica-attribution-latest";
+const SESSION_TOUCH_KEY = "codex-cryptica-attribution-session";
 
 const UTM_PARAMS = ["utm_source", "utm_medium", "utm_campaign"] as const;
 
@@ -67,13 +75,28 @@ function writeAttribution(
   }
 }
 
+/** AI-assistant referrals win over plain search, which they would otherwise resemble. */
+function classifyReferral(url: URL, referrer?: string) {
+  return (
+    classifyAiReferral(url, referrer) ?? classifySearchReferral(url, referrer)
+  );
+}
+
 export class AttributionStore {
   private storage: StorageLike;
+  private sessionStorage: StorageLike;
   private now: () => number;
 
-  constructor(deps: { storage?: StorageLike; now?: () => number } = {}) {
+  constructor(
+    deps: {
+      storage?: StorageLike;
+      sessionStorage?: StorageLike;
+      now?: () => number;
+    } = {},
+  ) {
     this.storage = deps.storage ?? browserStorage;
-    this.now = deps.now ?? Date.now;
+    this.sessionStorage = deps.sessionStorage ?? browserSessionStorage;
+    this.now = deps.now ?? (() => systemClock.now());
   }
 
   /**
@@ -86,8 +109,8 @@ export class AttributionStore {
    */
   captureIfAttributed(url: URL, referrer?: string): boolean {
     const hasAnyUtm = UTM_PARAMS.some((p) => !!url.searchParams.get(p));
-    const aiReferral = classifyAiReferral(url, referrer);
-    if (!hasAnyUtm && !aiReferral) return false;
+    const referral = classifyReferral(url, referrer);
+    if (!hasAnyUtm && !referral) return false;
 
     const attribution: Attribution = {
       landing_path: url.pathname,
@@ -97,9 +120,10 @@ export class AttributionStore {
       const value = url.searchParams.get(param);
       if (value) attribution[param] = value;
     }
-    if (aiReferral) Object.assign(attribution, aiReferral);
+    if (referral) Object.assign(attribution, referral);
 
     writeAttribution(this.storage, LATEST_TOUCH_KEY, attribution);
+    writeAttribution(this.sessionStorage, SESSION_TOUCH_KEY, attribution);
     if (!readAttribution(this.storage, FIRST_TOUCH_KEY)) {
       writeAttribution(this.storage, FIRST_TOUCH_KEY, attribution);
     }
@@ -114,11 +138,17 @@ export class AttributionStore {
     return readAttribution(this.storage, LATEST_TOUCH_KEY);
   }
 
+  /** Attribution captured in the current browser tab session only. */
+  getSessionTouch(): Attribution | null {
+    return readAttribution(this.sessionStorage, SESSION_TOUCH_KEY);
+  }
+
   /** Clears both stored attributions. Primarily for tests. */
   reset() {
     try {
       this.storage.removeItem(FIRST_TOUCH_KEY);
       this.storage.removeItem(LATEST_TOUCH_KEY);
+      this.sessionStorage.removeItem(SESSION_TOUCH_KEY);
     } catch {
       // ignore
     }

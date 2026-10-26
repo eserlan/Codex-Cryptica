@@ -1,12 +1,13 @@
-import { vault } from "$lib/stores/vault.svelte";
-import { themeStore } from "$lib/stores/theme.svelte";
-import { base } from "$app/paths";
-import type { IDemoActions } from "$lib/types/demo";
-import { vaultRegistry } from "$lib/stores/vault-registry.svelte";
-import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
-import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
-import { notificationStore } from "$lib/stores/ui/notification.svelte";
-import { onboardingFunnel } from "$lib/app/onboarding/onboarding-funnel";
+import { vault } from "#lib/stores/vault.svelte.js";
+import { themeStore } from "#lib/stores/theme.svelte.js";
+import { asset } from "$app/paths";
+import type { AssetPath } from "$app/types";
+import type { IDemoActions } from "#lib/types/demo.js";
+import { vaultRegistry } from "#lib/stores/vault-registry.svelte.js";
+import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
+import { onboardingStore } from "#lib/stores/ui/onboarding.svelte.js";
+import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
+import { onboardingFunnel } from "#lib/app/onboarding/onboarding-funnel.js";
 
 class DemoService implements IDemoActions {
   async startDemo(theme: string): Promise<void> {
@@ -40,9 +41,13 @@ class DemoService implements IDemoActions {
       onboardingFunnel.track("demo_started");
 
       // 3. Fetch sample data
-      const response = await fetch(`${base}/vault-samples/${jsonName}.json`);
+      const response = await fetch(
+        asset(`vault-samples/${jsonName}.json` as AssetPath),
+      );
+
       if (!response.ok)
         throw new Error(`Failed to load demo data for ${theme}`);
+
       const data = await response.json();
 
       // 4. Set Theme (Note: themeStore.setTheme will check isDemoMode)
@@ -108,7 +113,7 @@ class DemoService implements IDemoActions {
 
     // Reload to clear transient state safely
     if (typeof window !== "undefined") {
-      window.location.href = base || "/";
+      window.location.href = "/";
     }
   }
 

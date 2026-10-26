@@ -149,6 +149,7 @@ export const howDoYouCreateQuestHooksWithoutRailroading: AnswerConfigInput = {
     "how-do-i-turn-economic-pressures-into-rpg-adventure-hooks",
     "how-do-i-make-interviewing-npcs-interesting-in-an-investigation",
     "how-do-i-make-a-campaign-threat-feel-urgent-without-railroading",
+    "how-to-adapt-a-video-game-into-a-tabletop-rpg",
   ],
   discovery: {
     id: "answer-quest-hooks-without-railroading",

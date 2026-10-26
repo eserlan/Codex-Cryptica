@@ -568,6 +568,8 @@ export {
   buildNamesPrompt,
   parseNamesResponse,
   generateNamesLocal,
+  rollNames,
+  type NameParts,
   nameGeneratorConfig,
   type NamesGeneratorOptions,
   type NamesPrompt,

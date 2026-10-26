@@ -102,6 +102,7 @@
 **Learning:** In the generator-engine, the main campaign orchestration god file often mixes prompt compilation, output mapping, and local fallback data arrays (e.g. \`NPC_RACES\`, \`FACTION_GOALS\`, \`ITEM_EFFECTS\`). Extracting these static options lists and minor configuration mappers into dedicated \`campaign-generator-local-constants.ts\` significantly cuts down line count while retaining their cohesion as feature-specific fallbacks.
 
 **Action:** For large registry or generator orchestration files containing static fallback arrays or local mappings, extract those purely data-driven constants into feature-owned \`-constants.ts\` files.
+
 ## 2025-02-19 - Extract static constants from Alien Race generator
 
 **Learning:** In the generator-engine package, large campaign orchestration god-files often mix prompt compilation with local fallback data arrays. To perform safe god-file reductions without changing runtime behavior, extract these static option lists and configuration mappers into dedicated feature-owned *-constants.ts files to drastically reduce line counts while maintaining feature cohesion.

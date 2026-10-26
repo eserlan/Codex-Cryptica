@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createMockOpfs } from "../../../tests/mocks/storage";
 import { cacheService } from "../../services/cache.svelte";
 import { SyncStore } from "./sync-store.svelte";
-import { notificationStore } from "$lib/stores/ui/notification.svelte";
+import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
 import { appEventBus } from "@codex/events";
 import { vaultEventBus } from "./events.svelte";
 

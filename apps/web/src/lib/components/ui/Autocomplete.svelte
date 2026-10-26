@@ -4,13 +4,13 @@
 
 <script lang="ts">
   import { searchService } from "@codex/search-orchestrator";
-  import { vault } from "$lib/stores/vault.svelte";
-  import { categories } from "$lib/stores/categories.svelte";
-  import { getIconClass } from "$lib/utils/icon";
+  import { vault } from "#lib/stores/vault.svelte.js";
+  import { categories } from "#lib/stores/categories.svelte.js";
+  import { getIconClass } from "#lib/utils/icon.js";
   import type { SearchResult } from "schema";
   import { isEntityVisible } from "schema";
   import { onDestroy, onMount, tick } from "svelte";
-  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
 
   let {
     value = $bindable(""),
@@ -21,7 +21,7 @@
     id,
     ariaLabel,
     ariaLabelledBy,
-  } = $props<{
+  }: {
     value?: string;
     selectedId?: string | null;
     placeholder?: string;
@@ -29,7 +29,7 @@
     id?: string;
     ariaLabel?: string;
     ariaLabelledBy?: string;
-  }>();
+  } = $props();
 
   let results = $state<SearchResult[]>([]);
   let selectedIndex = $state(0);

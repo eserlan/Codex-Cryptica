@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { mapSession } from "$lib/stores/map-session.svelte";
-  import { mapStore, type GridType } from "$lib/stores/map.svelte";
+  import { mapSession } from "#lib/stores/map-session.svelte.js";
+  import { mapStore, type GridType } from "#lib/stores/map.svelte.js";
   import {
     type HexLabelConfig,
     type HexLabelStyle,
@@ -8,12 +8,12 @@
   } from "map-engine";
   import { onDestroy } from "svelte";
   import { fade } from "svelte/transition";
-  import { notificationStore } from "$lib/stores/ui/notification.svelte";
-  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
-  import { hexGridChangeGuard } from "$lib/stores/hex-crawl/grid-change-guard.instance";
+  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
+  import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
+  import { hexGridChangeGuard } from "#lib/stores/hex-crawl/grid-change-guard.instance.js";
   import VTTGridFitSection from "./VTTGridFitSection.svelte";
   import HexCrawlModeToggle from "./hex-crawl/HexCrawlModeToggle.svelte";
-  import type { HexCrawlStore } from "$lib/stores/hex-crawl/hex-crawl.svelte";
+  import type { HexCrawlStore } from "#lib/stores/hex-crawl/hex-crawl.svelte.js";
 
   let {
     close,

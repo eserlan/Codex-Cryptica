@@ -3,7 +3,7 @@
 import { render, fireEvent, screen } from "@testing-library/svelte";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import TableContextMenu from "../TableContextMenu.svelte";
-import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
 
 describe("TableContextMenu", () => {
   afterEach(() => {

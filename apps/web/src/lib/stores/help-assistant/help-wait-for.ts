@@ -1,4 +1,4 @@
-import { systemClock, type Clock } from "$lib/utils/runtime-deps";
+import { systemClock, type Clock } from "#lib/utils/runtime-deps.js";
 
 /** Waits for a condition, settling promptly when the caller cancels. */
 export function waitFor(

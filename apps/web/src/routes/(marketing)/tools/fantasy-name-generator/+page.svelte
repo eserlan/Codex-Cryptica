@@ -8,16 +8,16 @@
    * slug. The wiring lived in two places and could drift in one; only the
    * copy and the URL were ever really this page's own. The preferred search URL is now /generators/fantasy-names.
    */
-  import GeneratorPageContent from "$lib/components/seo/GeneratorPageContent.svelte";
-  import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
+  import GeneratorPageContent from "#lib/components/seo/GeneratorPageContent.svelte";
+  import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
 
   const initialDraftOverride: GeneratorOutput = {
     type: "character",
     title: "Generic Fantasy Names — Person",
-    summary: "",
+    summary: "Curated names with linguistic roots and naming conventions.",
     content:
-      "These names blend rolling vowels with grounded, archaic surnames, built for a classic secondary-world fantasy setting.\n\n- **Iridian Vespera**: A nomadic chronicler known for weaving history into rhythmic poetry.\n- **Bramwell Hallowfist**: A retired siege engineer who now runs a quiet borderlands apothecary.\n- **Sylvara Quint**: A sharp-witted investigator who recovers stolen celestial artifacts.\n- **Mordantus Krell**: A reclusive scholar obsessed with sunken underwater civilizations.\n- **Fennelora Brightspire**: A charismatic diplomat whose family has brokered peace for generations.",
-    lore: "### Culture\nDrawn from a composite culture where old trade-guild roots and nomadic mountain tongues have merged.\n\n### Style\nMulti-syllabic, rolling sounds over sharp consonants: elegant and historied rather than rugged.\n\n### Usage Suggestions\nUse the ornate first names for scholars and nobles, and the compound surnames as hooks players can ask about.",
+      "A curated set of classic secondary-world fantasy names. Use them as full character names, or mix and match the given names and compound surnames to suit your setting.\n\n- **Iridian Vespera**: Ornate rolling-vowel given name paired with an archaic nightfall-root surname.\n- **Bramwell Hallowfist**: Grounded, historic compound surname; common in border valleys and craft guilds.\n- **Sylvara Quint**: Melodic sylvan given name with a sharp, numbered lineage surname.\n- **Mordantus Krell**: Austere scholar's name; heavy consonants favoured in coastal academies.\n- **Fennelora Brightspire**: Melodic diminutive given name paired with a noble beacon-house surname.\n- **Theron Greybourne**: Classical heroic given name with a river-marker geographical surname.\n- **Kaelen Stonehart**: Resilient northern given name with an ancient martial lineage surname.\n- **Mirelle Ashworth**: Soft courtly given name paired with an old hearth-estate surname.",
+    lore: "### Culture & Naming Conventions\nDerived from secondary-world fantasy settings where old trade-guild roots, border lineages, and ancient court tongues merge.\n\n### Structure & Components\n- **Given Names**: Multi-syllabic, rolling vowel combinations (`Iridi-`, `Sylv-`, `Fenn-`) with soft or liquid consonants.\n- **Surnames**: Two-part compound names joining landscape or craft markers (`Hallow-`, `Grey-`, `Stone-`) with settlement or nature roots (`-fist`, `-bourne`, `-hart`).\n- **Titles & Epithets**: Frequently appended with geographical or occupational suffixes for distinguishing common names.\n\n### Usage Suggestions\n- Mix and match stems freely: drop a syllable, combine a prefix from one name with a suffix from another.\n- Use ornate given names for scholars, ambassadors, and court figures; reserve heavy compound surnames for frontier travellers and guild artisans.",
     labels: ["rpg-names", "name-generator", "imported-draft"],
     status: "draft",
   };

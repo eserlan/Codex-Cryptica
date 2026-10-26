@@ -7,14 +7,14 @@ import MobileDemoBanner from "./MobileDemoBanner.svelte";
 const mockConvertToWorld = vi.fn();
 const mockExitDemo = vi.fn();
 
-vi.mock("$lib/services/demo", () => ({
+vi.mock("#lib/services/demo.js", () => ({
   demoService: {
     convertToWorld: () => mockConvertToWorld(),
     exitDemo: () => mockExitDemo(),
   },
 }));
 
-vi.mock("$lib/stores/theme.svelte", () => ({
+vi.mock("#lib/stores/theme.svelte.js", () => ({
   themeStore: {
     jargon: {
       vault: "campaign",
@@ -23,7 +23,7 @@ vi.mock("$lib/stores/theme.svelte", () => ({
 }));
 
 const mockNotify = vi.fn();
-vi.mock("$lib/stores/ui/notification.svelte", () => ({
+vi.mock("#lib/stores/ui/notification.svelte.js", () => ({
   notificationStore: {
     notify: (...args: any[]) => mockNotify(...args),
   },

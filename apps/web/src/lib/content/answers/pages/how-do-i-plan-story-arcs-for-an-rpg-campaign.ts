@@ -220,6 +220,7 @@ export const howDoIPlanStoryArcsForAnRpgCampaign: AnswerConfigInput = {
     "how-do-you-keep-track-of-npcs-in-a-long-campaign",
     "how-do-i-prepare-an-rpg-session-step-by-step",
     "how-do-you-generate-useful-rpg-rumours",
+    "how-to-adapt-a-video-game-into-a-tabletop-rpg",
   ],
   discovery: {
     id: "answer-plan-story-arcs-rpg-campaign",

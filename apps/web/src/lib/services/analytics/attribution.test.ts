@@ -1,5 +1,6 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { AttributionStore } from "./attribution";
+import { systemClock } from "#lib/utils/runtime-deps.js";
 
 function makeStorage(initial: Record<string, string> = {}) {
   const map = new Map(Object.entries(initial));
@@ -20,6 +21,28 @@ function urlWith(path: string, params: Record<string, string> = {}) {
 }
 
 describe("AttributionStore", () => {
+  it("falls back to the shared systemClock when no clock is injected", () => {
+    const { storage } = makeStorage();
+    const spy = vi.spyOn(systemClock, "now").mockReturnValue(4242);
+    const store = new AttributionStore({ storage });
+
+    store.captureIfAttributed(urlWith("/x", { utm_source: "reddit" }));
+
+    expect(store.getFirstTouch()?.at).toBe(4242);
+    spy.mockRestore();
+  });
+
+  it("prefers an injected clock over systemClock", () => {
+    const { storage } = makeStorage();
+    const spy = vi.spyOn(systemClock, "now").mockReturnValue(4242);
+    const store = new AttributionStore({ storage, now: () => 7 });
+
+    store.captureIfAttributed(urlWith("/x", { utm_source: "reddit" }));
+
+    expect(store.getFirstTouch()?.at).toBe(7);
+    spy.mockRestore();
+  });
+
   it("no-ops entirely when the URL carries no utm_* param", () => {
     const { storage } = makeStorage();
     const store = new AttributionStore({ storage, now: () => 100 });
@@ -120,14 +143,66 @@ describe("AttributionStore", () => {
     });
   });
 
-  it("keeps generic search referrals out of AI attribution", () => {
+  it("classifies a generic search referral as organic search, never as AI", () => {
+    const { storage: localStorage } = makeStorage();
+    const { storage: sessionStorage } = makeStorage();
+    const store = new AttributionStore({
+      storage: localStorage,
+      sessionStorage,
+      now: () => 100,
+    });
+
+    expect(
+      store.captureIfAttributed(
+        urlWith("/answers/example"),
+        "https://www.google.com/search?q=campaign",
+      ),
+    ).toBe(true);
+    expect(store.getLatestTouch()).toEqual({
+      channel: "organic_search",
+      search_engine: "google",
+      landing_path: "/answers/example",
+      at: 100,
+    });
+    expect(store.getSessionTouch()).toEqual(store.getLatestTouch());
+  });
+
+  it("does not store the search path or query", () => {
+    const { storage, store: map } = makeStorage();
+    const store = new AttributionStore({ storage, now: () => 100 });
+
+    store.captureIfAttributed(
+      urlWith("/answers/example"),
+      "https://www.google.com/search?q=secret+campaign",
+    );
+
+    expect([...map.values()].join("")).not.toContain("secret");
+  });
+
+  it("lets a UTM-tagged landing keep its campaign attribution over a search referrer", () => {
+    const { storage } = makeStorage();
+    const store = new AttributionStore({ storage, now: () => 100 });
+
+    store.captureIfAttributed(
+      urlWith("/answers/example", { utm_source: "newsletter" }),
+      "https://www.google.com/",
+    );
+
+    expect(store.getLatestTouch()).toEqual({
+      utm_source: "newsletter",
+      landing_path: "/answers/example",
+      at: 100,
+    });
+  });
+
+  it("ignores a non-search external referrer", () => {
     const { storage } = makeStorage();
     const store = new AttributionStore({ storage, now: () => 100 });
 
     expect(
       store.captureIfAttributed(
         urlWith("/answers/example"),
-        "https://www.google.com/search?q=campaign",
+        "https://example.org/post",
       ),
     ).toBe(false);
     expect(store.getLatestTouch()).toBeNull();

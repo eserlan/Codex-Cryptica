@@ -1,7 +1,7 @@
 /**
  * Single source of truth for the static sitemap paths and XML row rendering.
  * Shared by the `/sitemap.xml` route, `scripts/generate-sitemap.mjs` (run with
- * Bun, so this file must stay dependency-free and use no `$lib` aliases) and
+ * Bun, so this file must stay dependency-free and use no `#lib` aliases) and
  * the `sitemap.ts` helper, so a new public route is added in exactly one place.
  */
 
@@ -62,6 +62,19 @@ export const STATIC_SITEMAP_ROUTES: SitemapRoute[] = [
     priority: "0.8",
   },
   { path: "/biomes", changefreq: "monthly", priority: "0.8" },
+  { path: "/tools/rpg-npc-generator", changefreq: "monthly", priority: "0.8" },
+  {
+    path: "/tools/cyberpunk-nomad-clan-generator",
+    changefreq: "monthly",
+    priority: "0.8",
+  },
+  { path: "/tools/idea-developer", changefreq: "monthly", priority: "0.8" },
+  {
+    path: "/tools/session-prep-builder",
+    changefreq: "monthly",
+    priority: "0.8",
+  },
+  { path: "/silhouettes", changefreq: "monthly", priority: "0.8" },
   { path: "/llms.txt", changefreq: "weekly", priority: "0.7" },
   { path: "/llms-full.txt", changefreq: "weekly", priority: "0.7" },
   { path: "/terms", changefreq: "yearly", priority: "0.5" },

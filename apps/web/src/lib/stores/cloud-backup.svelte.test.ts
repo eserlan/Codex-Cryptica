@@ -1,7 +1,7 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 
 const onlineState = vi.hoisted(() => ({ current: true }));
-vi.mock("$lib/stores/online.svelte", () => ({
+vi.mock("#lib/stores/online.svelte.js", () => ({
   onlineStatus: onlineState,
 }));
 
@@ -23,6 +23,7 @@ vi.mock("./vault/events.svelte", () => {
 });
 
 import { CloudBackupStore } from "./cloud-backup.svelte";
+import * as cloudBackupApi from "./cloud-backup.svelte";
 import { vaultEventBus } from "./vault/events.svelte";
 import { createMemoryStorage } from "@codex/cloud-backup-sync";
 import { hashCloudBackupEntity } from "schema";
@@ -884,7 +885,7 @@ describe("automatic background sync (#3189)", () => {
       expect(calls).toEqual([]);
 
       // A pending queue still flushes on close.
-      (store as any).autoPending = true;
+      store.notifyLocalChange("v-1");
       window.dispatchEvent(new Event("pagehide"));
       await vi.advanceTimersByTimeAsync(50);
       expect(calls.some((url) => url.endsWith("/status"))).toBe(true);
@@ -895,8 +896,8 @@ describe("automatic background sync (#3189)", () => {
 
   it("manual save satisfies pending autosync and clears conflict", async () => {
     const { store, calls } = await enabledHarness();
-    (store as any).autoState = "conflict";
-    (store as any).autoPending = true;
+    store.notifyLocalChange("v-1");
+    store.autoState = "conflict";
     calls.length = 0;
 
     const ok = await store.backUpNow();
@@ -1236,5 +1237,23 @@ describe("incremental uploads (#3354)", () => {
       .map((row) => `${row.id}${row.deleted ? ":deleted" : ""}`)
       .sort();
     expect(rows).toEqual(["local-only", "remote-only:deleted", "stale"]);
+  });
+});
+
+describe("cloud backup compatibility facade", () => {
+  it("preserves every original runtime export and sync delay", () => {
+    expect(Object.keys(cloudBackupApi).sort()).toEqual([
+      "AUTO_SYNC_DEBOUNCE_MS",
+      "AUTO_SYNC_RETRY_MS",
+      "CloudBackupStore",
+      "RECONCILE_DELAY_MS",
+      "cloudBackupBrowserStorage",
+      "cloudBackupStore",
+      "createInertRuntime",
+    ]);
+    expect(cloudBackupApi.AUTO_SYNC_DEBOUNCE_MS).toBe(5000);
+    expect(cloudBackupApi.AUTO_SYNC_RETRY_MS).toBe(30000);
+    expect(cloudBackupApi.RECONCILE_DELAY_MS).toBe(60000);
+    expect(cloudBackupApi.cloudBackupStore).toBeInstanceOf(CloudBackupStore);
   });
 });

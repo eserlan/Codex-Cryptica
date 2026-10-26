@@ -3,8 +3,8 @@
 import { render, fireEvent, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import TableViewPresets from "../TableViewPresets.svelte";
-import { ViewPresetsStore } from "$lib/stores/view-presets.svelte";
-import type { ViewPreset } from "$lib/stores/view-presets";
+import { ViewPresetsStore } from "#lib/stores/view-presets.svelte.js";
+import type { ViewPreset } from "#lib/stores/view-presets.js";
 
 describe("TableViewPresets component", () => {
   let store: ViewPresetsStore;

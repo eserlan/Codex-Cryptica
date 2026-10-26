@@ -5,7 +5,7 @@
     SortKey,
     SortState,
   } from "./entityTableSort";
-  import type { TableColumnFilters } from "$lib/components/explorer/entityListFiltering";
+  import type { TableColumnFilters } from "#lib/components/explorer/entityListFiltering.js";
   import EntityTableRow from "./EntityTableRow.svelte";
   import TableColumnFilterMenu from "./TableColumnFilterMenu.svelte";
   import {

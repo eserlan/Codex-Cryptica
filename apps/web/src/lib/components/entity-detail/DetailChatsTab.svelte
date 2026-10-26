@@ -5,12 +5,12 @@
     GuestChatTranscript,
     GuestChatMessage,
   } from "schema";
-  import { vault } from "$lib/stores/vault.svelte";
-  import { guestChatStore } from "$lib/stores/guest-chat.svelte";
-  import { proposerStore } from "$lib/stores/proposer.svelte";
+  import { vault } from "#lib/stores/vault.svelte.js";
+  import { guestChatStore } from "#lib/stores/guest-chat.svelte.js";
+  import { proposerStore } from "#lib/stores/proposer.svelte.js";
   import { tick } from "svelte";
-  import { systemClock, type Clock } from "$lib/utils/runtime-deps";
-  import { characterChatExportService } from "$lib/services/character-chat-export";
+  import { systemClock, type Clock } from "#lib/utils/runtime-deps.js";
+  import { characterChatExportService } from "#lib/services/character-chat-export.js";
   import CharacterChat from "./CharacterChat.svelte";
   import GuestChatSettings from "./GuestChatSettings.svelte";
 
@@ -21,14 +21,14 @@
     editLore = $bindable(),
     editGuestChatConfig = $bindable(),
     clock = systemClock,
-  } = $props<{
+  }: {
     entity: Entity;
     isEditing?: boolean;
     editContent?: string;
     editLore?: string;
     editGuestChatConfig?: GuestChatConfig;
     clock?: Clock;
-  }>();
+  } = $props();
 
   // Host state
   let transcripts = $state<GuestChatTranscript[]>([]);

@@ -3,7 +3,7 @@
   import {
     formatModifier,
     type DiceBreakdownPart,
-  } from "$lib/utils/dice-breakdown";
+  } from "#lib/utils/dice-breakdown.js";
 
   /**
    * The shared "how was this rolled" view (#3443). It only renders the trace

@@ -28,9 +28,9 @@ import {
 import { diceHistory as defaultDiceHistory } from "./dice-history.svelte";
 import { categories as defaultCategories } from "./categories.svelte";
 import type { TextGenerationService } from "schema";
-import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
-import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
-import { notificationStore } from "$lib/stores/ui/notification.svelte";
+import { discoveryPolicyStore } from "#lib/stores/ui/discovery-policy.svelte.js";
+import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
+import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
 
 import {
   type EntityRevisionRequest,

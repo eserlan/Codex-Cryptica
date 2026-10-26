@@ -8,6 +8,11 @@ const roots = [
   resolve(process.cwd(), "../../packages"),
 ];
 
+const hasSub12pxHtmlText = (markup: string) => {
+  const htmlOutsideSvg = markup.replace(/<svg\b[\s\S]*?<\/svg\s*>/gi, "");
+  return /(?<![\w-])text-\[(?:[0-9]|1[01])px\]/.test(htmlOutsideSvg);
+};
+
 const walk = (dir: string, out: string[] = []) => {
   for (const name of readdirSync(dir)) {
     if (name === "node_modules" || name === ".svelte-kit") continue;
@@ -22,16 +27,16 @@ describe("mobile typography guard", () => {
   it("has no sub-12px arbitrary text sizes in markup", () => {
     const offenders = roots
       .flatMap((r) => walk(r))
-      .filter((f) =>
-        /(?<![\w-])text-\[(?:[0-9]|1[01])px\]/.test(readFileSync(f, "utf8")),
-      );
+      .filter((f) => hasSub12pxHtmlText(readFileSync(f, "utf8")));
     expect(offenders).toEqual([]);
   });
 
   it("flags a tiny arbitrary size when one is introduced", () => {
-    const re = /(?<![\w-])text-\[(?:[0-9]|1[01])px\]/;
-    expect(re.test('<p class="text-[10px]">')).toBe(true);
-    expect(re.test('<p class="md:text-[11px]">')).toBe(true);
-    expect(re.test('<p class="text-meta text-[13px]">')).toBe(false);
+    expect(hasSub12pxHtmlText('<p class="text-[10px]">')).toBe(true);
+    expect(hasSub12pxHtmlText('<p class="md:text-[11px]">')).toBe(true);
+    expect(hasSub12pxHtmlText('<p class="text-meta text-[13px]">')).toBe(false);
+    expect(
+      hasSub12pxHtmlText('<svg><text class="text-[9px]">Map</text></svg>'),
+    ).toBe(false);
   });
 });

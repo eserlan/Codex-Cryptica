@@ -1,10 +1,10 @@
 import { tick, untrack } from "svelte";
 import type { Canvas } from "@codex/canvas-engine";
 import type { DelveEdgeData, DelveRoomNodeData } from "generator-engine";
-import type { vault as VaultStore } from "$lib/stores/vault.svelte";
-import type { canvasRegistry as CanvasRegistryStore } from "$lib/stores/canvas-registry.svelte";
-import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
-import { isPlaceholderDelveAreaName } from "$lib/services/delve-area-enhancement";
+import type { vault as VaultStore } from "#lib/stores/vault.svelte.js";
+import type { canvasRegistry as CanvasRegistryStore } from "#lib/stores/canvas-registry.svelte.js";
+import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
+import { isPlaceholderDelveAreaName } from "#lib/services/delve-area-enhancement.js";
 import { autoArrangeCanvasNodes } from "../canvas-auto-arrange";
 import type { CanvasLogic } from "./canvas-logic-type";
 

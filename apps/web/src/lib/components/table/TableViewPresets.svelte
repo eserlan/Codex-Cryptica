@@ -2,10 +2,13 @@
   import {
     viewPresetsStore,
     type ViewPresetsStore,
-  } from "$lib/stores/view-presets.svelte";
-  import type { ViewPreset, ViewPresetState } from "$lib/stores/view-presets";
-  import type { TableColumnFilters } from "$lib/components/explorer/entityListFiltering";
-  import type { SortState } from "$lib/components/table/entityTableSort";
+  } from "#lib/stores/view-presets.svelte.js";
+  import type {
+    ViewPreset,
+    ViewPresetState,
+  } from "#lib/stores/view-presets.js";
+  import type { TableColumnFilters } from "#lib/components/explorer/entityListFiltering.js";
+  import type { SortState } from "#lib/components/table/entityTableSort.js";
 
   let {
     activeVaultId,

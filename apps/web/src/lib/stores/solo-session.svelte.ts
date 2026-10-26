@@ -22,7 +22,7 @@ import {
   type OracleAnswer,
   type RandomEvent,
 } from "solo-session-engine";
-import type { StorageLike } from "$lib/utils/runtime-deps";
+import type { StorageLike } from "#lib/utils/runtime-deps.js";
 import {
   formatOracleAnswer,
   formatPartyChange,

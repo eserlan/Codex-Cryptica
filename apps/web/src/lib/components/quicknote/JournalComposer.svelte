@@ -1,8 +1,8 @@
 <script lang="ts">
-  import type { SessionJournalStore } from "$lib/stores/session-journal.svelte";
+  import type { SessionJournalStore } from "#lib/stores/session-journal.svelte.js";
   import type { SessionJournal } from "session-journal-engine";
-  import { notificationStore } from "$lib/stores/ui/notification.svelte";
-  import MarkdownEditor from "$lib/components/MarkdownEditor.svelte";
+  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
+  import MarkdownEditor from "#lib/components/MarkdownEditor.svelte";
 
   /**
    * The bottom of the Session Journal while a journal is running (#3402 slice

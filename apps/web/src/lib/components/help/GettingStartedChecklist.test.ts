@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 
 const mockCompleted = vi.fn<() => string[]>();
 
-vi.mock("$lib/app/onboarding/onboarding-funnel", () => ({
+vi.mock("#lib/app/onboarding/onboarding-funnel.js", () => ({
   onboardingFunnel: {
     completed: () => mockCompleted(),
   },
@@ -22,10 +22,10 @@ const journey = vi.hoisted(() => ({
   closeSettings: vi.fn(),
 }));
 
-vi.mock("$lib/app/onboarding/journey/journey-runtime", () => ({
+vi.mock("#lib/app/onboarding/journey/journey-runtime.js", () => ({
   journeyStore: journey.store,
 }));
-vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
+vi.mock("#lib/stores/ui/modal-ui.svelte.js", () => ({
   modalUIStore: { closeSettings: journey.closeSettings },
 }));
 

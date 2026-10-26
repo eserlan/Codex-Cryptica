@@ -34,9 +34,9 @@ function normalize(value: string | null): string {
  * untouched. `developSystem` alone (with no body) never yields a handoff,
  * since it has nothing to contribute to `dominantFeature`.
  */
-export function parseDevelopWorldHandoff(
-  searchParams: URLSearchParams,
-): DevelopWorldHandoff | null {
+export function parseDevelopWorldHandoff(searchParams: {
+  get(name: string): string | null;
+}): DevelopWorldHandoff | null {
   const systemTitle = normalize(searchParams.get("developSystem"));
   const bodyName = normalize(searchParams.get("developBody"));
   if (!bodyName) return null;

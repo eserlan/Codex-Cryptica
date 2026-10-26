@@ -25,26 +25,39 @@ interface ZarazLike {
   track: (eventName: string, properties?: Record<string, unknown>) => void;
 }
 
-export type PublicGeneratorAction = "save_to_codex" | "copy" | "open_codex";
+export type PublicGeneratorAction =
+  "save_to_codex" | "copy" | "open_codex" | "reroll";
 
 function flatAcquisitionProperties(
   attribution: ReturnType<typeof attributionStore.getLatestTouch>,
 ): Record<string, string> {
+  if (typeof attribution?.landing_path !== "string") return {};
+
   if (
-    attribution?.channel !== "ai_referral" ||
-    typeof attribution.provider !== "string" ||
-    typeof attribution.source !== "string" ||
-    typeof attribution.landing_path !== "string"
+    attribution.channel === "ai_referral" &&
+    typeof attribution.provider === "string" &&
+    typeof attribution.source === "string"
   ) {
-    return {};
+    return {
+      acquisition_channel: attribution.channel,
+      acquisition_provider: attribution.provider,
+      acquisition_source: attribution.source,
+      acquisition_landing_path: attribution.landing_path,
+    };
   }
 
-  return {
-    acquisition_channel: attribution.channel,
-    acquisition_provider: attribution.provider,
-    acquisition_source: attribution.source,
-    acquisition_landing_path: attribution.landing_path,
-  };
+  if (
+    attribution.channel === "organic_search" &&
+    typeof attribution.search_engine === "string"
+  ) {
+    return {
+      acquisition_channel: attribution.channel,
+      acquisition_search_engine: attribution.search_engine,
+      acquisition_landing_path: attribution.landing_path,
+    };
+  }
+
+  return {};
 }
 
 /** Tracks a public-generator action without coupling UI code to Zaraz. */
@@ -75,12 +88,16 @@ export function trackEvent(
 
     const firstTouch = attributionStore.getFirstTouch();
     const latestTouch = attributionStore.getLatestTouch();
+    const acquisitionTouch =
+      latestTouch?.channel === "organic_search"
+        ? attributionStore.getSessionTouch()
+        : latestTouch;
 
     zaraz.track(name, {
       ...properties,
       ...(firstTouch ? { first_touch: firstTouch } : {}),
       ...(latestTouch ? { latest_touch: latestTouch } : {}),
-      ...flatAcquisitionProperties(latestTouch),
+      ...flatAcquisitionProperties(acquisitionTouch),
     });
   } catch {
     // tracking must never break the page

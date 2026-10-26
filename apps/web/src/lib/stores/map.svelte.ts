@@ -26,14 +26,14 @@ import {
   writeGridGeometry,
 } from "./map-grid-geometry";
 import { deleteOpfsEntry, writeOpfsFile } from "../utils/opfs";
-import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
 import { guestVault } from "./guest-vault.svelte";
 import {
   browserStorage,
   type StorageLike,
   type IdGenerator,
   systemIdGenerator,
-} from "$lib/utils/runtime-deps";
+} from "#lib/utils/runtime-deps.js";
 
 /** Fixed canvas size for a blank map, which has no image to derive size from. */
 export const BLANK_MAP_SIZE = 4000;

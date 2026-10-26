@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import AdventureSurface from "$lib/components/oracle/adventure/AdventureSurface.svelte";
-  import { oracle } from "$lib/stores/oracle.svelte";
+  import AdventureSurface from "#lib/components/oracle/adventure/AdventureSurface.svelte";
+  import { oracle } from "#lib/stores/oracle.svelte.js";
 
   onMount(() => {
     void oracle.init();

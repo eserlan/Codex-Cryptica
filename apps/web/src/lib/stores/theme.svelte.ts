@@ -26,12 +26,12 @@ import type {
   ResolvedAppAppearanceId,
   WorldThemeId,
 } from "schema";
-import { browser } from "$app/environment";
+import { browser } from "$app/env";
 import { getDB } from "../utils/idb";
 import { hexToRgb } from "../utils/color";
 import { getOpfsRoot, getVaultDir, readFileAsText } from "../utils/opfs";
 import { updateVaultConfig } from "../utils/vault-config";
-import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
 
 import { guestVault } from "./guest-vault.svelte";
 import { vaultRegistry } from "./vault-registry.svelte";
@@ -579,7 +579,6 @@ export class ThemeStore {
       "--font-display-val",
       tokens.fontDisplay ?? tokens.fontHeader,
     );
-
     root.style.setProperty(
       "--theme-border-width",
       `${theme.graph.nodeBorderWidth}px`,

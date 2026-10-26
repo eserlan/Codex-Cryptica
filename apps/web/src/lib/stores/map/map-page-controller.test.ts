@@ -2,31 +2,31 @@
 
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("$lib/stores/map.svelte", () => ({
+vi.mock("#lib/stores/map.svelte.js", () => ({
   mapStore: {},
 }));
 
-vi.mock("$lib/stores/map-session.svelte", () => ({
+vi.mock("#lib/stores/map-session.svelte.js", () => ({
   mapSession: {},
 }));
 
-vi.mock("$lib/stores/vault.svelte", () => ({
+vi.mock("#lib/stores/vault.svelte.js", () => ({
   vault: {},
 }));
 
-vi.mock("$lib/stores/ui/notification.svelte", () => ({
+vi.mock("#lib/stores/ui/notification.svelte.js", () => ({
   notificationStore: {},
 }));
 
-vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
+vi.mock("#lib/stores/ui/modal-ui.svelte.js", () => ({
   modalUIStore: {},
 }));
 
-vi.mock("$lib/stores/ui/session-mode.svelte", () => ({
+vi.mock("#lib/stores/ui/session-mode.svelte.js", () => ({
   sessionModeStore: {},
 }));
 
-vi.mock("$lib/stores/ui/layout-ui.svelte", () => ({
+vi.mock("#lib/stores/ui/layout-ui.svelte.js", () => ({
   layoutUIStore: {
     vttChatSidebarCollapsed: false,
     toggleVttChatSidebar: vi.fn(),

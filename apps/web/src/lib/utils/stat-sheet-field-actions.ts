@@ -1,8 +1,8 @@
 import type { StatSheetField } from "schema";
 import { resolveFieldByKeyOrId } from "@codex/stat-sheet-engine";
-import { mapSession } from "$lib/stores/map-session.svelte";
-import { diceHistory } from "$lib/stores/dice-history.svelte";
-import { notificationStore } from "$lib/stores/ui/notification.svelte";
+import { mapSession } from "#lib/stores/map-session.svelte.js";
+import { diceHistory } from "#lib/stores/dice-history.svelte.js";
+import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
 import { diceEngine, diceParser, type RollResult } from "dice-engine";
 
 export interface DiceRollDisplay {

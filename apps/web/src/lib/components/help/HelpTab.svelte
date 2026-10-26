@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { helpStore } from "$lib/stores/help.svelte";
-  import { parserService } from "$lib/services/parser";
-  import { browser } from "$app/environment";
-  import { renderMarkdown } from "$lib/utils/markdown";
+  import { helpStore } from "#lib/stores/help.svelte.js";
+  import { parserService } from "#lib/services/parser.js";
+  import { browser } from "$app/env";
+  import { renderMarkdown } from "#lib/utils/markdown.js";
   import DOMPurify from "dompurify";
   import { slide } from "svelte/transition";
   import { onMount } from "svelte";

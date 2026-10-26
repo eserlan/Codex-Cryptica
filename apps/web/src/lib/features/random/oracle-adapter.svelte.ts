@@ -4,14 +4,14 @@ import type {
   RollOutcome,
 } from "random-source-engine";
 import { DeckService } from "random-source-engine";
-import type { RandomSourceStore } from "$lib/stores/random-source-store.svelte";
+import type { RandomSourceStore } from "#lib/stores/random-source-store.svelte.js";
 import {
   diceHistory,
   type DiceHistoryStore,
   type RandomSourceRollPayload,
-} from "$lib/stores/dice-history.svelte";
+} from "#lib/stores/dice-history.svelte.js";
 import { deckService, randomSources } from ".";
-import { systemClock, type Clock } from "$lib/utils/runtime-deps";
+import { systemClock, type Clock } from "#lib/utils/runtime-deps.js";
 
 /**
  * What `/table` and `/deck` talk to (#2247, FR-039).

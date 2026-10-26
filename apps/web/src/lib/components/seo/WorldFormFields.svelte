@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { pickFrom, worldConfig } from "$lib/services/seo/generator-config";
-  import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
+  import { pickFrom, worldConfig } from "#lib/services/seo/generator-config.js";
+  import SelectWithCustomOption from "#lib/components/forms/SelectWithCustomOption.svelte";
 
   let {
     worldType = $bindable(worldConfig.worldTypes[0]),

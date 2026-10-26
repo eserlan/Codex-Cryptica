@@ -1,9 +1,9 @@
 <script lang="ts">
   import { Handle, Position, type NodeProps } from "@xyflow/svelte";
-  import { vault } from "$lib/stores/vault.svelte";
-  import { categories } from "$lib/stores/categories.svelte";
-  import { getIconClass } from "$lib/utils/icon";
-  import { renderMarkdown } from "$lib/utils/markdown";
+  import { vault } from "#lib/stores/vault.svelte.js";
+  import { categories } from "#lib/stores/categories.svelte.js";
+  import { getIconClass } from "#lib/utils/icon.js";
+  import { renderMarkdown } from "#lib/utils/markdown.js";
   import CharacterCardBody from "./cards/CharacterCardBody.svelte";
   import FactionCardBody from "./cards/FactionCardBody.svelte";
   import FactionImageOnlyBody from "./cards/FactionImageOnlyBody.svelte";
@@ -25,8 +25,8 @@
     normalizeCanvasTextBackground,
   } from "@codex/canvas-engine";
   import { canvasTextBackgroundStyle } from "./canvas-workspace-helpers";
-  import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
-  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { connectionModeStore } from "#lib/stores/ui/connection-mode.svelte.js";
+  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
 
   let { data, selected }: NodeProps = $props();
 

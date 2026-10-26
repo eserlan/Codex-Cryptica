@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { ProvenanceRecord } from "generator-engine";
-  import { sessionHubStore } from "$lib/stores/session-hub.svelte";
+  import { sessionHubStore } from "#lib/stores/session-hub.svelte.js";
 
   let {
     record,

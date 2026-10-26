@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { computeVaultAuditCounts, VAULT_AUDIT_PRESETS } from "./vaultAudit";
-import type { EntityWithPreview } from "$lib/components/explorer/entityListFiltering";
+import type { EntityWithPreview } from "#lib/components/explorer/entityListFiltering.js";
 
 describe("vaultAudit pure functions", () => {
   describe("computeVaultAuditCounts", () => {

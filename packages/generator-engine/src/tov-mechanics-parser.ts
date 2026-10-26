@@ -28,11 +28,17 @@ const SEQUENCED_DOOM_EFFECT_PATTERN =
   /\bthen\b[\s,;:—–.…-]+(.+?)(?=$|[.!?;])/gi;
 
 function hasUnpublishedSequencedDoomEffect(clause: string): boolean {
-  return Array.from(clause.matchAll(SEQUENCED_DOOM_EFFECT_PATTERN)).some(
-    ([, effect]) =>
+  // ⚡ Bolt Optimization: Replace Array.from(matchAll).some() with imperative loop to reduce GC pressure
+  for (const match of clause.matchAll(SEQUENCED_DOOM_EFFECT_PATTERN)) {
+    const effect = match[1];
+    if (
       !DOOM_SPEND_INTENT_PATTERN.test(effect) ||
-      !PUBLISHED_DOOM_SPEND_PATTERN.test(effect),
-  );
+      !PUBLISHED_DOOM_SPEND_PATTERN.test(effect)
+    ) {
+      return true;
+    }
+  }
+  return false;
 }
 
 /**

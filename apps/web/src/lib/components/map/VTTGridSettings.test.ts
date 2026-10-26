@@ -29,14 +29,14 @@ const mocks = vi.hoisted(() => ({
   },
 }));
 
-vi.mock("$lib/stores/map.svelte", () => ({ mapStore: mocks.mapStore }));
-vi.mock("$lib/stores/map-session.svelte", () => ({
+vi.mock("#lib/stores/map.svelte.js", () => ({ mapStore: mocks.mapStore }));
+vi.mock("#lib/stores/map-session.svelte.js", () => ({
   mapSession: mocks.mapSession,
 }));
-vi.mock("$lib/stores/ui/notification.svelte", () => ({
+vi.mock("#lib/stores/ui/notification.svelte.js", () => ({
   notificationStore: mocks.notificationStore,
 }));
-vi.mock("$lib/stores/hex-crawl/grid-change-guard.instance", () => ({
+vi.mock("#lib/stores/hex-crawl/grid-change-guard.instance.js", () => ({
   hexGridChangeGuard: mocks.guard,
 }));
 

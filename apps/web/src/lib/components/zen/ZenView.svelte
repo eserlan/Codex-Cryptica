@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { vault } from "$lib/stores/vault.svelte";
-  import { clipboardService } from "$lib/services/ClipboardService";
-  import { createEditState } from "$lib/hooks/useEditState.svelte";
-  import { createZenModeActions } from "$lib/hooks/useZenModeActions.svelte";
+  import { vault } from "#lib/stores/vault.svelte.js";
+  import { clipboardService } from "#lib/services/ClipboardService.js";
+  import { createEditState } from "#lib/hooks/useEditState.svelte.js";
+  import { createZenModeActions } from "#lib/hooks/useZenModeActions.svelte.js";
   import ZenHeader from "./ZenHeader.svelte";
   import ZenSidebar from "./ZenSidebar.svelte";
   import ZenContent from "./ZenContent.svelte";
@@ -10,17 +10,17 @@
     readSidebarCollapsed,
     writeSidebarCollapsed,
   } from "./zen-sidebar-preference";
-  import DetailConnectionsTab from "$lib/components/entity-detail/DetailConnectionsTab.svelte";
-  import DetailMapTab from "$lib/components/entity-detail/DetailMapTab.svelte";
-  import DetailChatsTab from "$lib/components/entity-detail/DetailChatsTab.svelte";
-  import DetailFamilyTab from "$lib/components/entity-detail/DetailFamilyTab.svelte";
-  import DetailTimelineTab from "$lib/components/entity-detail/DetailTimelineTab.svelte";
-  import DetailStatsTab from "$lib/components/entity-detail/DetailStatsTab.svelte";
-  import InlinePreviewOverlay from "$lib/components/ui/InlinePreviewOverlay.svelte";
-  import { persistZenPopoutPayload } from "$lib/utils/zen-popout";
-  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-  import { notificationStore } from "$lib/stores/ui/notification.svelte";
-  import { focusEntity } from "$lib/stores/ui/navigation";
+  import DetailConnectionsTab from "#lib/components/entity-detail/DetailConnectionsTab.svelte";
+  import DetailMapTab from "#lib/components/entity-detail/DetailMapTab.svelte";
+  import DetailChatsTab from "#lib/components/entity-detail/DetailChatsTab.svelte";
+  import DetailFamilyTab from "#lib/components/entity-detail/DetailFamilyTab.svelte";
+  import DetailTimelineTab from "#lib/components/entity-detail/DetailTimelineTab.svelte";
+  import DetailStatsTab from "#lib/components/entity-detail/DetailStatsTab.svelte";
+  import InlinePreviewOverlay from "#lib/components/ui/InlinePreviewOverlay.svelte";
+  import { persistZenPopoutPayload } from "#lib/utils/zen-popout.js";
+  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
+  import { focusEntity } from "#lib/stores/ui/navigation.js";
 
   let {
     entityId,
@@ -28,13 +28,13 @@
     onPopOut,
     isPopout = false,
     class: className = "",
-  } = $props<{
+  }: {
     entityId: string;
     onClose: () => void;
     onPopOut?: () => void;
     isPopout?: boolean;
     class?: string;
-  }>();
+  } = $props();
 
   let entity = $derived(vault.entities[entityId] || null);
 

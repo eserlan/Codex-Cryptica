@@ -1,21 +1,21 @@
 <script lang="ts">
   import { tick, untrack } from "svelte";
-  import { searchStore } from "$lib/stores/search.svelte";
-  import { vault } from "$lib/stores/vault.svelte";
-  import { categories } from "$lib/stores/categories.svelte";
-  import { getIconClass } from "$lib/utils/icon";
+  import { searchStore } from "#lib/stores/search.svelte.js";
+  import { vault } from "#lib/stores/vault.svelte.js";
+  import { categories } from "#lib/stores/categories.svelte.js";
+  import { getIconClass } from "#lib/utils/icon.js";
   import type { SearchResult } from "schema";
-  import { renderMarkdown } from "$lib/utils/markdown";
+  import { renderMarkdown } from "#lib/utils/markdown.js";
   import { page } from "$app/state";
-  import { base } from "$app/paths";
+  import { resolve } from "$app/paths";
   import {
     DEFAULT_SEARCH_ENTITY_ZOOM,
     dispatchSearchEntityFocus,
     resolveSearchResultEntityId,
   } from "./search-focus";
-  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
-  import { explorerUIStore } from "$lib/stores/ui/explorer-ui.svelte";
-  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { layoutUIStore } from "#lib/stores/ui/layout-ui.svelte.js";
+  import { explorerUIStore } from "#lib/stores/ui/explorer-ui.svelte.js";
+  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
 
   let inputElement = $state<HTMLInputElement>();
   let resultsContainer = $state<HTMLDivElement>();
@@ -110,15 +110,13 @@
     }
   }
 
-  // Match the route segment exactly (not just a prefix) so e.g. `/tablet`
-  // doesn't get mistaken for `/table`, and account for a non-empty
-  // SvelteKit `base` path.
-  const escapedBase = base.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const isCanvasPage = $derived(
-    new RegExp(`^${escapedBase}/canvas(?:/|$)`).test(page.url.pathname),
+    page.url.pathname === resolve("/(app)/canvas") ||
+      page.url.pathname.startsWith(`${resolve("/(app)/canvas")}/`),
   );
   const isTablePage = $derived(
-    new RegExp(`^${escapedBase}/table(?:/|$)`).test(page.url.pathname),
+    page.url.pathname === resolve("/(app)/table") ||
+      page.url.pathname.startsWith(`${resolve("/(app)/table")}/`),
   );
   const hasLeftSidebar = $derived(layoutUIStore.leftSidebarOpen);
   const hasEntityPanel = $derived(Boolean(vault.selectedEntityId));
@@ -250,7 +248,7 @@
       const noteIdStr = result.id.replace("quicknote-", "");
       const noteId = parseInt(noteIdStr, 10);
       if (!isNaN(noteId)) {
-        import("$lib/stores/quicknote.svelte").then(({ quickNoteStore }) => {
+        import("#lib/stores/quicknote.svelte.js").then(({ quickNoteStore }) => {
           void quickNoteStore.openNoteById(noteId);
         });
       }

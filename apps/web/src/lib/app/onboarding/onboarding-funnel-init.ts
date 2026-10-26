@@ -11,7 +11,7 @@
  * is fine — only the first of each is recorded.
  */
 
-import { vaultEventBus } from "$lib/stores/vault/events.svelte";
+import { vaultEventBus } from "#lib/stores/vault/events.svelte.js";
 import { onboardingFunnel } from "./onboarding-funnel";
 
 let unsubscribe: (() => void) | null = null;

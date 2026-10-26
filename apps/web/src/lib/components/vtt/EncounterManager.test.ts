@@ -17,7 +17,7 @@ const mocks = vi.hoisted(() => ({
   startNewEncounter: vi.fn(),
 }));
 
-vi.mock("$lib/stores/map-session.svelte", () => ({
+vi.mock("#lib/stores/map-session.svelte.js", () => ({
   mapSession: {
     mapId: "map-1",
     name: "Goblin Ambush",

@@ -3,10 +3,12 @@
 import { render, screen, fireEvent } from "@testing-library/svelte";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import GeneratorSwitcherMenu from "./GeneratorSwitcherMenu.svelte";
-import { themeStore } from "$lib/stores/theme.svelte";
+import { themeStore } from "#lib/stores/theme.svelte.js";
 
 vi.mock("$app/paths", () => ({
   base: "",
+  asset: (p: string) => p,
+  resolve: (p: string) => p,
 }));
 
 vi.mock("$app/environment", () => ({
@@ -46,6 +48,27 @@ describe("GeneratorSwitcherMenu", () => {
 
     expect(screen.getByText("D&D NPC Generator")).toBeTruthy();
     expect(screen.getByText("Kingdom Generator")).toBeTruthy();
+    expect(screen.getByText("RPG Item & Loot Generator")).toBeTruthy();
+  });
+
+  it("lists generators from the shared catalogue under its categories", async () => {
+    themeStore.worldThemeId = "scifi";
+    render(GeneratorSwitcherMenu, {
+      props: {
+        canonicalPath: "/generators/world",
+        eyebrow: "Sci-Fi World Generator",
+      },
+    });
+
+    await fireEvent.click(screen.getByRole("button"));
+
+    expect(screen.getByText("Realms, Worlds & Creatures")).toBeTruthy();
+    expect(
+      screen
+        .getByText("Sci-Fi World Generator", { selector: "a" })
+        .getAttribute("href"),
+    ).toBe("/generators/world");
+    expect(screen.queryByText("RPG Item & Loot Generator")).toBeNull();
   });
 
   it("hides fantasy-only generators and horror-only generators outside those themes", async () => {

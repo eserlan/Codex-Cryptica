@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { pointCrawlConfig } from "$lib/services/seo/generator-config";
-import { generatorEngine } from "$lib/services/seo/generator-engine";
+import { pointCrawlConfig } from "#lib/services/seo/generator-config.js";
+import { generatorEngine } from "#lib/services/seo/generator-engine.js";
 import type {
   PointCrawlNetwork,
   PointCrawlNode,

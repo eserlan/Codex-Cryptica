@@ -6,7 +6,7 @@ import {
   ENTITY_INDEX_CHANGED_META,
   type EntityAutoLinkOptions,
 } from "./EntityAutoLinkExtension";
-import type { EntityIndexEntry } from "$lib/utils/entity-mention-detector";
+import type { EntityIndexEntry } from "#lib/utils/entity-mention-detector.js";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 

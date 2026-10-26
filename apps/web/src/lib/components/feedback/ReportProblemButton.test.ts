@@ -3,7 +3,7 @@ import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 
 const open = vi.hoisted(() => vi.fn());
-vi.mock("$lib/stores/ui/feedback-dialog.svelte", () => ({
+vi.mock("#lib/stores/ui/feedback-dialog.svelte.js", () => ({
   feedbackDialog: { open },
 }));
 

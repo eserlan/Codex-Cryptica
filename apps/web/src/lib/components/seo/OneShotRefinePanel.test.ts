@@ -2,7 +2,7 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import { generateOneShotLocal } from "generator-engine";
-import { generatorEngine } from "$lib/services/seo/generator-engine";
+import { generatorEngine } from "#lib/services/seo/generator-engine.js";
 import OneShotRefinePanel from "./OneShotRefinePanel.svelte";
 import OneShotFormFields from "./OneShotFormFields.svelte";
 

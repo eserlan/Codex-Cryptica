@@ -5,8 +5,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const previewTheme = vi.fn();
 
-vi.mock("$app/paths", () => ({ base: "" }));
-vi.mock("$lib/stores/theme.svelte", () => ({
+vi.mock("$app/paths", () => ({
+  base: "",
+  asset: (p: string) => p,
+  resolve: (p: string) => p,
+}));
+vi.mock("#lib/stores/theme.svelte.js", () => ({
   themeStore: {
     previewTheme: (id: string | null) => previewTheme(id),
   },

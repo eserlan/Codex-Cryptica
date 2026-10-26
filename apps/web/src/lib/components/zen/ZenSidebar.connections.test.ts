@@ -2,15 +2,17 @@
 import { render, fireEvent, screen, within } from "@testing-library/svelte";
 import { describe, it, expect, vi } from "vitest";
 import ZenSidebar from "./ZenSidebar.svelte";
-import { vault } from "$lib/stores/vault.svelte";
+import { vault } from "#lib/stores/vault.svelte.js";
 
 // Mock SvelteKit base path
 vi.mock("$app/paths", () => ({
   base: "",
+  asset: (p: string) => p,
+  resolve: (p: string) => p,
 }));
 
 // Mock stores
-vi.mock("$lib/stores/vault.svelte", () => {
+vi.mock("#lib/stores/vault.svelte.js", () => {
   const mockEntities: Record<string, any> = {
     "entity-1": {
       id: "entity-1",
@@ -88,34 +90,34 @@ vi.mock("$lib/stores/vault.svelte", () => {
   };
 });
 
-vi.mock("$lib/stores/oracle.svelte", () => ({
+vi.mock("#lib/stores/oracle.svelte.js", () => ({
   oracle: {
     tier: "advanced",
     isVisualizingEntity: vi.fn().mockReturnValue(false),
   },
 }));
 
-vi.mock("$lib/services/RevisionService.svelte", () => ({
+vi.mock("#lib/services/RevisionService.svelte.js", () => ({
   revisionService: {
     isRevising: false,
   },
 }));
 
-vi.mock("$lib/stores/ui/discovery-policy.svelte", () => ({
+vi.mock("#lib/stores/ui/discovery-policy.svelte.js", () => ({
   discoveryPolicyStore: {
     aiDisabled: false,
   },
 }));
 
-vi.mock("$lib/components/labels/LabelInput.svelte", () => ({
+vi.mock("#lib/components/labels/LabelInput.svelte", () => ({
   default: vi.fn(),
 }));
 
-vi.mock("$lib/components/labels/AliasInput.svelte", () => ({
+vi.mock("#lib/components/labels/AliasInput.svelte", () => ({
   default: vi.fn(),
 }));
 
-vi.mock("$lib/components/ui/Autocomplete.svelte", async () => {
+vi.mock("#lib/components/ui/Autocomplete.svelte", async () => {
   const mod = await import("../entity-detail/MockAutocomplete.svelte");
   return {
     default: mod.default,

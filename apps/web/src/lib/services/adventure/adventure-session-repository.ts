@@ -3,7 +3,7 @@ import {
   type Clock,
   systemIdGenerator,
   systemClock,
-} from "$lib/utils/runtime-deps";
+} from "#lib/utils/runtime-deps.js";
 import {
   parseAdventureSession,
   type AdventureSession,

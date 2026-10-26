@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { timelineStore } from "$lib/stores/timeline.svelte";
-  import { graph } from "$lib/stores/graph.svelte";
+  import { timelineStore } from "#lib/stores/timeline.svelte.js";
+  import { graph } from "#lib/stores/graph.svelte.js";
   import TimelineEntryItem from "./TimelineEntryItem.svelte";
   import { getRenderWindow, sliceRenderWindow } from "./utils/render-window";
   import { fade } from "svelte/transition";
   import { onMount } from "svelte";
-  import { browserPerformanceRecorder } from "$lib/services/performance/browser-performance-capture";
+  import { browserPerformanceRecorder } from "#lib/services/performance/browser-performance-capture.js";
 
   let container = $state<HTMLDivElement>();
   let scrollTop = $state(0);

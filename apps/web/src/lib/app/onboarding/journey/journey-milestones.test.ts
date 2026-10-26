@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import type { Milestone } from "onboarding-journey-engine";
-import type { VaultEvent } from "$lib/stores/vault/events.svelte";
-import { SEARCH_ENTITY_FOCUS_EVENT } from "$lib/components/search/search-focus";
+import type { VaultEvent } from "#lib/stores/vault/events.svelte.js";
+import { SEARCH_ENTITY_FOCUS_EVENT } from "#lib/components/search/search-focus.js";
 import { JourneyMilestones } from "./journey-milestones";
 
 /** A payload that throws if anything but the allowed fields is read. */

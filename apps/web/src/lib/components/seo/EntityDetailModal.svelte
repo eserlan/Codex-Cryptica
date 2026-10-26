@@ -4,8 +4,8 @@
   import {
     renderGeneratorMarkdown,
     renderGeneratorLore,
-  } from "$lib/components/seo/markdown-renderers";
-  import ShareButton from "$lib/components/ShareButton.svelte";
+  } from "#lib/components/seo/markdown-renderers.js";
+  import ShareButton from "#lib/components/ShareButton.svelte";
 
   let {
     entity,

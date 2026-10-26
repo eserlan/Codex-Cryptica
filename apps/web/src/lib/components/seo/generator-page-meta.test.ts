@@ -171,5 +171,14 @@ describe("generator-page-meta completeness and social preview tags", () => {
       );
       expect(hrefs).toContain("/examples/the-venting-helix-derelict-hazard");
     });
+
+    it("point crawl title keeps the primary phrase and fits the 70-character audit limit (#4371)", () => {
+      const { pageTitle } = slugMeta["point-crawl"];
+      expect(pageTitle).toBe(
+        "Point Crawl Generator | RPG Route Map Maker | Codex Cryptica",
+      );
+      expect(pageTitle.length).toBeLessThanOrEqual(70);
+      expect(pageTitle.startsWith("Point Crawl Generator")).toBe(true);
+    });
   });
 });

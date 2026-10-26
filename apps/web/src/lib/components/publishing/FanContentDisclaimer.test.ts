@@ -3,7 +3,7 @@
 import { render, screen } from "@testing-library/svelte";
 import { describe, expect, it } from "vitest";
 import FanContentDisclaimer from "./FanContentDisclaimer.svelte";
-import { PUBLIC_WORLDS_NOTICE } from "$lib/config/public-worlds-notice";
+import { PUBLIC_WORLDS_NOTICE } from "#lib/config/public-worlds-notice.js";
 
 describe("FanContentDisclaimer", () => {
   it("renders nothing when fanContent is false or undefined", () => {

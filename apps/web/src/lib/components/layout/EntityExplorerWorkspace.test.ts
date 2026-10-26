@@ -3,18 +3,18 @@
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("$lib/components/entity/EmbeddedEntityView.svelte", async () => {
+vi.mock("#lib/components/entity/EmbeddedEntityView.svelte", async () => {
   const mod = await import("./test-fixtures/EmbeddedEntityViewStub.svelte");
   return { default: mod.default };
 });
 
-vi.mock("$lib/stores/ui/navigation", () => ({
+vi.mock("#lib/stores/ui/navigation.js", () => ({
   focusEntity: vi.fn(),
 }));
 
 import EntityExplorerWorkspace from "./EntityExplorerWorkspace.svelte";
-import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
-import { focusEntity } from "$lib/stores/ui/navigation";
+import { layoutUIStore } from "#lib/stores/ui/layout-ui.svelte.js";
+import { focusEntity } from "#lib/stores/ui/navigation.js";
 
 describe("EntityExplorerWorkspace", () => {
   beforeEach(() => {

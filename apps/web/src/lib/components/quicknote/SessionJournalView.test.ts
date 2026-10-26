@@ -9,7 +9,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("$lib/components/MarkdownEditor.svelte", async () => ({
+vi.mock("#lib/components/MarkdownEditor.svelte", async () => ({
   default: (await import("./test-support/markdown-editor-stub"))
     .markdownEditorStub,
 }));
@@ -65,7 +65,7 @@ vi.mock("../../utils/idb", () => {
   };
 });
 
-import { SessionJournalStore } from "$lib/stores/session-journal.svelte";
+import { SessionJournalStore } from "#lib/stores/session-journal.svelte.js";
 import SessionJournalView from "./SessionJournalView.svelte";
 
 function fakeIds(prefix = "id") {

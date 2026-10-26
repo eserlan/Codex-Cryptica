@@ -1,6 +1,9 @@
 <script lang="ts">
-  import { puzzleConfig, pickFrom } from "$lib/services/seo/generator-config";
-  import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
+  import {
+    puzzleConfig,
+    pickFrom,
+  } from "#lib/services/seo/generator-config.js";
+  import SelectWithCustomOption from "#lib/components/forms/SelectWithCustomOption.svelte";
 
   let {
     genre = $bindable(puzzleConfig.genres[0]),

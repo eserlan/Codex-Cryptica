@@ -4,9 +4,9 @@
     type Thread,
     type ThreadKind,
   } from "solo-session-engine";
-  import { soloThreads } from "$lib/stores/solo-session-instance";
-  import { vault } from "$lib/stores/vault.svelte";
-  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { soloThreads } from "#lib/stores/solo-session-instance.js";
+  import { vault } from "#lib/stores/vault.svelte.js";
+  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
   import SoloMenu from "./SoloMenu.svelte";
   import SoloThreadDialog from "./SoloThreadDialog.svelte";
   import SoloThreadFilters from "./SoloThreadFilters.svelte";

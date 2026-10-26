@@ -1,25 +1,36 @@
 import { describe, expect, it } from "vitest";
-import { resolveGeneratorSection } from "./generator-categories";
+import {
+  GENERATOR_SECTION_MAP,
+  resolveGeneratorSection,
+} from "./generator-categories";
 import type { GeneratorId } from "generator-engine";
 import { listGenerators } from "generator-engine";
+import { GENERATOR_CATALOGUE } from "#lib/content/generator-catalogue.js";
 
 describe("generator-categories", () => {
-  it("resolves all known generators to a valid section", () => {
-    const allGenerators = listGenerators();
-
-    // Ensure every single registered generator resolves to a non-undefined section
-    for (const gen of allGenerators) {
-      const section = resolveGeneratorSection(gen);
-      expect(section).toBeDefined();
+  it("files every registered generator under an explicit category", () => {
+    for (const gen of listGenerators()) {
+      expect(GENERATOR_SECTION_MAP[gen.id], gen.id).toBeDefined();
     }
   });
 
-  it("prioritises the explicit map over entity type fallback", () => {
-    // Faction is 'faction' entity type, which defaults to 'people-factions'
-    // But we map it explicitly
-    expect(
-      resolveGeneratorSection({ id: "faction", entityType: "faction" }),
-    ).toBe("people-factions");
+  it("places each generator in the same category as its public page", () => {
+    const linked = GENERATOR_CATALOGUE.filter((entry) => entry.generatorId);
+    expect(linked.length).toBeGreaterThan(0);
+
+    for (const entry of linked) {
+      const gen = listGenerators().find((g) => g.id === entry.generatorId);
+      expect(gen, entry.slug).toBeDefined();
+      expect(resolveGeneratorSection(gen!), entry.slug).toBe(entry.category);
+    }
+  });
+
+  it("links each in-app generator to at most one public page", () => {
+    const ids = GENERATOR_CATALOGUE.flatMap((entry) =>
+      entry.generatorId ? [entry.generatorId] : [],
+    );
+
+    expect(new Set(ids).size).toBe(ids.length);
   });
 
   it("places mystery and investigation in the adventures section", () => {
@@ -28,24 +39,29 @@ describe("generator-categories", () => {
         id: "mystery-investigation",
         entityType: "note",
       }),
-    ).toBe("adventures-encounters");
+    ).toBe("adventures");
   });
 
   it("falls back to entity type when not explicitly mapped", () => {
-    // A hypothetical or new event generator not in the explicit map
     expect(
       resolveGeneratorSection({
         id: "new-event" as GeneratorId,
         entityType: "event",
       }),
-    ).toBe("adventures-encounters");
+    ).toBe("adventures");
 
-    // A hypothetical location generator
     expect(
       resolveGeneratorSection({
         id: "new-loc" as GeneratorId,
         entityType: "location",
       }),
-    ).toBe("locations-worlds");
+    ).toBe("places");
+
+    expect(
+      resolveGeneratorSection({
+        id: "new-thing" as GeneratorId,
+        entityType: "unknown",
+      }),
+    ).toBe("items");
   });
 });

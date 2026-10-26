@@ -67,6 +67,17 @@ export const pointCrawlVsHexCrawl: AnswerConfigInput = {
       ],
     },
     {
+      kind: "prose",
+      heading: "Test the choice",
+      paragraphs: [
+        "If the checklist below points to a point crawl, generate a network and check that every route has a distinct cost. If it points to a hex crawl, skip the generator and build the terrain, encounter and travel procedures first.",
+      ],
+      cta: {
+        text: "Try the Point Crawl Generator",
+        href: "/generators/point-crawl",
+      },
+    },
+    {
       kind: "checklist",
       heading: "Choose this structure when you prep",
       intro: "Answer these before drawing the first route or hex grid.",
@@ -100,6 +111,12 @@ export const pointCrawlVsHexCrawl: AnswerConfigInput = {
         "Create the outposts, ports, and frontier towns that anchor exploration.",
       href: "/generators/settlement",
     },
+    {
+      title: "Point Crawl Generator",
+      description:
+        "Build a node-and-route network with costed links, loops and hidden shortcuts, if the choice above points to a point crawl.",
+      href: "/generators/point-crawl",
+    },
   ],
   relatedForPages: [
     {
@@ -122,6 +139,7 @@ export const pointCrawlVsHexCrawl: AnswerConfigInput = {
     "how-do-you-prepare-a-sandbox-rpg-campaign",
     "what-rpg-map-making-tool-should-i-use",
     "how-do-i-run-exploration-in-a-huge-ruined-city",
+    "how-many-random-encounters-during-rpg-travel",
   ],
   discovery: {
     id: "answer-point-crawl-vs-hex-crawl",

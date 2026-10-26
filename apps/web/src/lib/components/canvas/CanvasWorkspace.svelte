@@ -8,11 +8,11 @@
   } from "@xyflow/svelte";
   import type { CanvasStore } from "@codex/canvas-engine";
   import { page } from "$app/state";
-  import { vault } from "$lib/stores/vault.svelte";
-  import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
-  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-  import { notificationStore } from "$lib/stores/ui/notification.svelte";
-  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { vault } from "#lib/stores/vault.svelte.js";
+  import { canvasRegistry } from "#lib/stores/canvas-registry.svelte.js";
+  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
+  import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
   import ConnectionLine from "./ConnectionLine.svelte";
   import CanvasHUD from "./CanvasHUD.svelte";
   import CanvasRotationToolbar from "./CanvasRotationToolbar.svelte";

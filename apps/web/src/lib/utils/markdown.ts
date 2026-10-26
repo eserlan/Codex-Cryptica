@@ -2,7 +2,7 @@ import { load as yamlLoad, dump as yamlDump } from "js-yaml";
 import type { Entity } from "schema";
 import { marked } from "marked";
 import DOMPurify from "dompurify";
-import { browser } from "$app/environment";
+import { browser } from "$app/env";
 
 export interface ParseResult {
   metadata: Partial<Entity>;

@@ -7,6 +7,7 @@ import { howDoFantasyCitiesDefendAgainstFlyingCreaturesAndTeleportation } from "
 import { howDoIBalanceRpgCombatEncountersWithoutATpk } from "./how-do-i-balance-rpg-combat-encounters-without-a-tpk";
 import { howDoIBuildABelievableConstitutionalCrisisOrCoup } from "./how-do-i-build-a-believable-constitutional-crisis-or-coup";
 import { howDoIBuildABelievableEconomyForAFantasyWorld } from "./how-do-i-build-a-believable-economy-for-a-fantasy-world";
+import { howDoIBuildABelievablePostScarcityCivilisation } from "./how-do-i-build-a-believable-post-scarcity-civilisation";
 import { howDoICombineMultipleEnemiesIntoOneSquadInAnRpg } from "./how-do-i-combine-multiple-enemies-into-one-squad-in-an-rpg";
 import { howDoICreateInterestingIslandsAndPortsForAPirateCampaign } from "./how-do-i-create-interesting-islands-and-ports-for-a-pirate-campaign";
 import { howDoIDecideWhatASettlementProducesImportsAndExports } from "./how-do-i-decide-what-a-settlement-produces-imports-and-exports";
@@ -129,12 +130,14 @@ import { howDoesMagicChangeSocietyInAFantasyWorld } from "./how-does-magic-chang
 import { howDoesMagicCreateSocialClassesAndInequality } from "./how-does-magic-create-social-classes-and-inequality";
 import { howLongShouldATtrpgSessionBe } from "./how-long-should-a-ttrpg-session-be";
 import { howManyNpcsDoesAnRpgTownNeed } from "./how-many-npcs-does-an-rpg-town-need";
+import { howManyRandomEncountersDuringRpgTravel } from "./how-many-random-encounters-during-rpg-travel";
 import { howMuchCampaignLoreShouldPlayersBeExpectedToRemember } from "./how-much-campaign-lore-should-players-be-expected-to-remember";
 import { howMuchOfThePlotShouldADmPrepare } from "./how-much-of-the-plot-should-a-dm-prepare";
 import { howMuchPrepDoYouNeedForAnRpgSession } from "./how-much-prep-do-you-need-for-an-rpg-session";
 import { howMuchRuleOfCoolShouldADmAllow } from "./how-much-rule-of-cool-should-a-dm-allow";
 import { howShouldAFantasyAdventuringGuildHandleWagesDuesAndSharedExpenses } from "./how-should-a-fantasy-adventuring-guild-handle-wages-dues-and-shared-expenses";
 import { howShouldMagicHaveBeenDiscoveredInMyWorld } from "./how-should-magic-have-been-discovered-in-my-world";
+import { howToAdaptAVideoGameIntoATabletopRpg } from "./how-to-adapt-a-video-game-into-a-tabletop-rpg";
 import { howToCreateACyberpunkCityDistrict } from "./how-to-create-a-cyberpunk-city-district";
 import { howToCreateASciFiStarSystemForAnRpg } from "./how-to-create-a-sci-fi-star-system-for-an-rpg";
 import { howToCreateRumoursForAFantasyTown } from "./how-to-create-rumours-for-a-fantasy-town";
@@ -193,6 +196,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIBalanceRpgCombatEncountersWithoutATpk,
     howDoIBuildABelievableConstitutionalCrisisOrCoup,
     howDoIBuildABelievableEconomyForAFantasyWorld,
+    howDoIBuildABelievablePostScarcityCivilisation,
     howDoICombineMultipleEnemiesIntoOneSquadInAnRpg,
     howDoICreateInterestingIslandsAndPortsForAPirateCampaign,
     howDoIDecideWhatASettlementProducesImportsAndExports,
@@ -315,12 +319,14 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoesMagicCreateSocialClassesAndInequality,
     howLongShouldATtrpgSessionBe,
     howManyNpcsDoesAnRpgTownNeed,
+    howManyRandomEncountersDuringRpgTravel,
     howMuchCampaignLoreShouldPlayersBeExpectedToRemember,
     howMuchOfThePlotShouldADmPrepare,
     howMuchPrepDoYouNeedForAnRpgSession,
     howMuchRuleOfCoolShouldADmAllow,
     howShouldAFantasyAdventuringGuildHandleWagesDuesAndSharedExpenses,
     howShouldMagicHaveBeenDiscoveredInMyWorld,
+    howToAdaptAVideoGameIntoATabletopRpg,
     howToCreateACyberpunkCityDistrict,
     howToCreateASciFiStarSystemForAnRpg,
     howToCreateRumoursForAFantasyTown,

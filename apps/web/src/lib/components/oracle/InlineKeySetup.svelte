@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { oracle } from "$lib/stores/oracle.svelte";
+  import { oracle } from "#lib/stores/oracle.svelte.js";
 
   import { fade } from "svelte/transition";
 

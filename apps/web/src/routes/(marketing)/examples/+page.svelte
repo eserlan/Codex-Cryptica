@@ -1,13 +1,13 @@
 <script lang="ts">
-  import { base } from "$app/paths";
-  import SeoHead from "$lib/components/seo/SeoHead.svelte";
-  import { buildAbsoluteUrl } from "$lib/seo/site";
-  import { buildExampleIndexJsonLd } from "$lib/content/examples/json-ld";
+  import { resolve } from "$app/paths";
+  import SeoHead from "#lib/components/seo/SeoHead.svelte";
+  import { buildAbsoluteUrl } from "#lib/seo/site.js";
+  import { buildExampleIndexJsonLd } from "#lib/content/examples/json-ld.js";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
 
-  const cleanBase = base === "/" ? "" : base;
+  const cleanBase = resolve("") === "/" ? "" : resolve("");
 
   const TITLE = "Generator examples";
   const DESCRIPTION =

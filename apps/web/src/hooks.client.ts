@@ -1,4 +1,4 @@
-import type { HandleClientError } from "@sveltejs/kit";
+import type { HandleClientError } from "@sveltejs/kit/hooks";
 
 const RELOAD_KEY = "codex_version_skew_reload_ts";
 const RELOAD_DEBOUNCE_MS = 10000;
@@ -42,13 +42,11 @@ export function isVersionSkewError(
   const errObj = error as { message?: string; stack?: string } | null;
   const message =
     typeof error === "string" ? error : errObj?.message || String(error || "");
-
   const containsModuleError =
     message.includes("Failed to fetch dynamically imported module") ||
     message.includes("Importing a module script failed") ||
     message.includes("error loading dynamically imported module") ||
     message.includes("Unexpected token '<'");
-
   const isImmutableAssetError =
     (message.includes("404") || message.includes("Load failed")) &&
     (urlPath.includes("/_app/immutable/") || urlPath.endsWith(".js"));
@@ -56,7 +54,13 @@ export function isVersionSkewError(
   return containsModuleError || isImmutableAssetError;
 }
 
-export const handleError: HandleClientError = ({ error, event, message }) => {
+export const handleError: HandleClientError = (input) => {
+  const { error, event } = input;
+  const message =
+    input.kind === "framework"
+      ? input.error.message
+      : (error as { message?: string } | null)?.message ||
+        (typeof error === "string" ? error : "An unexpected error occurred.");
   const urlPath = event?.url?.pathname || "";
 
   if (isVersionSkewError(error, urlPath)) {

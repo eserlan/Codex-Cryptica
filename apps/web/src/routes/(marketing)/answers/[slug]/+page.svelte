@@ -1,35 +1,40 @@
 <script lang="ts">
-  import { browser } from "$app/environment";
-  import { base } from "$app/paths";
-  import SeoHead from "$lib/components/seo/SeoHead.svelte";
-  import { buildAbsoluteUrl } from "$lib/seo/site";
-  import { answerPath } from "$lib/content/answers/registry";
-  import { parseInlineLinks } from "$lib/content/answers/inline-links";
+  import { browser } from "$app/env";
+  import { resolve } from "$app/paths";
+  import SeoHead from "#lib/components/seo/SeoHead.svelte";
+  import { buildAbsoluteUrl } from "#lib/seo/site.js";
+  import { answerPath } from "#lib/content/answers/registry.js";
+  import { parseInlineLinks } from "#lib/content/answers/inline-links.js";
   import {
     buildAnswerFaqJsonLd,
     buildAnswerBreadcrumbJsonLd,
-  } from "$lib/content/answers/json-ld";
+  } from "#lib/content/answers/json-ld.js";
+
   import {
     trackDiscoveryPageViewed,
     classifyDiscoveryTarget,
     createDiscoveryViewGuard,
-  } from "$lib/services/analytics/discovery-tracking";
-  import { trackDiscoveryClick } from "$lib/actions/trackDiscoveryClick";
+  } from "#lib/services/analytics/discovery-tracking.js";
+  import { trackDiscoveryClick } from "#lib/actions/trackDiscoveryClick.js";
   import {
     trackAnswerShareClicked,
     trackAnswerShareCompleted,
     trackAnswerShareLinkCopied,
-  } from "$lib/services/analytics/answer-share-tracking";
-  import { trackAnswerUsefulVote } from "$lib/services/analytics/answer-feedback-tracking";
-  import PublicLabelChip from "$lib/components/labels/PublicLabelChip.svelte";
-  import ShareButton from "$lib/components/ShareButton.svelte";
-  import UsefulnessFeedback from "$lib/components/UsefulnessFeedback.svelte";
+  } from "#lib/services/analytics/answer-share-tracking.js";
+  import { trackAnswerUsefulVote } from "#lib/services/analytics/answer-feedback-tracking.js";
+  import PublicLabelChip from "#lib/components/labels/PublicLabelChip.svelte";
+  import ShareButton from "#lib/components/ShareButton.svelte";
+  import UsefulnessFeedback from "#lib/components/UsefulnessFeedback.svelte";
+  import PointCrawlWorkedExampleDiagram from "#lib/components/answers/PointCrawlWorkedExampleDiagram.svelte";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
 
   // A bare "/" base would make every link protocol-relative ("//answers/...").
-  const cleanBase = base === "/" ? "" : base;
+  const cleanBase = resolve("") === "/" ? "" : resolve("");
+
+  const inlineLinkClass =
+    "text-theme-primary underline decoration-theme-primary/40 underline-offset-2 transition-colors hover:decoration-theme-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-accent";
 
   let answer = $derived(data.answer);
   let related = $derived(data.related);
@@ -98,13 +103,23 @@
      rather than printing the markdown. -->
 {#snippet inline(text: string)}
   {#each parseInlineLinks(text) as segment, segmentIndex (segmentIndex)}
-    {#if segment.kind === "link"}
+    {#if segment.kind === "link" && segment.external}
       <a
-        href={segment.external ? segment.href : `${cleanBase}${segment.href}`}
-        target={segment.external ? "_blank" : undefined}
-        rel={segment.external ? "noopener noreferrer" : undefined}
-        class="text-theme-primary underline decoration-theme-primary/40 underline-offset-2 transition-colors hover:decoration-theme-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-accent"
-        >{segment.text}</a
+        href={segment.href}
+        target="_blank"
+        rel="noopener noreferrer"
+        class={inlineLinkClass}>{segment.text}</a
+      >
+    {:else if segment.kind === "link"}
+      <a
+        href="{cleanBase}{segment.href}"
+        class={inlineLinkClass}
+        use:trackDiscoveryClick={{
+          sourceKind: "answer",
+          sourceId: answer.slug,
+          placement: "inline_link",
+          ...classifyDiscoveryTarget(segment.href),
+        }}>{segment.text}</a
       >
     {:else}{segment.text}{/if}
   {/each}
@@ -305,6 +320,9 @@
                 {@render inline(paragraph)}
               </p>
             {/each}
+            {#if section.diagram === "point-crawl-morzan-crypt"}
+              <PointCrawlWorkedExampleDiagram />
+            {/if}
             {#if section.items}
               <dl class="flex flex-col gap-4">
                 {#each section.items as item}

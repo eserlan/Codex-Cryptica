@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { importQueue } from "$lib/stores/import-queue.svelte";
+  import { importQueue } from "#lib/stores/import-queue.svelte.js";
 
-  let { totalChunks = 0 } = $props<{ totalChunks: number }>();
+  let { totalChunks = 0 }: { totalChunks: number } = $props();
 
   let segments = $derived.by(() => {
     const list = [];

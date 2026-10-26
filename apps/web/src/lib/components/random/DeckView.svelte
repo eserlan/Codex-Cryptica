@@ -6,22 +6,22 @@
     Spread,
   } from "random-source-engine";
   import { DeckService } from "random-source-engine";
-  import { deckService, randomSources } from "$lib/features/random";
-  import type { RandomSourceStore } from "$lib/stores/random-source-store.svelte";
+  import { deckService, randomSources } from "#lib/features/random/index.js";
+  import type { RandomSourceStore } from "#lib/stores/random-source-store.svelte.js";
   import {
     diceHistory,
     type DiceHistoryStore,
-  } from "$lib/stores/dice-history.svelte";
-  import { addToOracleChatInput } from "$lib/components/oracle/oracle-chat-input";
-  import { mapSession } from "$lib/stores/map-session.svelte";
-  import { notificationStore } from "$lib/stores/ui/notification.svelte";
-  import { copyTextToClipboard } from "$lib/utils/share-link";
+  } from "#lib/stores/dice-history.svelte.js";
+  import { addToOracleChatInput } from "#lib/components/oracle/oracle-chat-input.js";
+  import { mapSession } from "#lib/stores/map-session.svelte.js";
+  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
+  import { copyTextToClipboard } from "#lib/utils/share-link.js";
   import {
     systemIdGenerator,
     type IdGenerator,
     systemClock,
     type Clock,
-  } from "$lib/utils/runtime-deps";
+  } from "#lib/utils/runtime-deps.js";
   import type { ChatCardPayload } from "../../../types/vtt";
   import CardImage from "./CardImage.svelte";
   import { fade } from "svelte/transition";

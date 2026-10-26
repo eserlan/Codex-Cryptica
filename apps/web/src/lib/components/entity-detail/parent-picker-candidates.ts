@@ -1,5 +1,5 @@
 import type { Entity } from "schema";
-import { sanitizeId } from "$lib/utils/markdown";
+import { sanitizeId } from "#lib/utils/markdown.js";
 
 /**
  * Everything `entityId` could be nested under: every entity except itself and

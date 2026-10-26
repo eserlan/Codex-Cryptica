@@ -3,7 +3,7 @@ import {
   serialiseThreadsFile,
   type Thread,
 } from "solo-session-engine";
-import { readOpfsBlob, writeOpfsFile } from "$lib/utils/opfs";
+import { readOpfsBlob, writeOpfsFile } from "#lib/utils/opfs.js";
 
 /** Where the threads file lives inside the vault (spec 174, research R4). */
 export const THREADS_PATH = [".codex", "threads.json"];

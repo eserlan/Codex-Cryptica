@@ -1,8 +1,8 @@
 <script lang="ts">
-  import type { ChatMessage } from "$lib/stores/oracle.svelte";
-  import { vault } from "$lib/stores/vault.svelte";
+  import type { ChatMessage } from "#lib/stores/oracle.svelte.js";
+  import { vault } from "#lib/stores/vault.svelte.js";
   import { fade } from "svelte/transition";
-  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
 
   let { message }: { message: ChatMessage } = $props();
 

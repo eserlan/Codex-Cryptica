@@ -11,7 +11,7 @@
  * flag set for staging would switch the assistant on in production as well.
  * There is no general feature-flag system in the app.
  */
-import { IS_STAGING } from "$lib/config";
+import { IS_STAGING } from "#lib/config/index.js";
 
 export const HELP_ASSISTANT_DEV_SWITCH = "codex_help_assistant";
 

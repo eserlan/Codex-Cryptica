@@ -4,7 +4,7 @@ import {
   type SearchOptions,
   type SearchResult,
 } from "schema";
-import { matchesEntityQuery } from "$lib/utils/entity-search-match";
+import { matchesEntityQuery } from "#lib/utils/entity-search-match.js";
 
 export function hasEntityImage(entity: Entity): boolean {
   if (!entity.image || typeof entity.image !== "string") return false;

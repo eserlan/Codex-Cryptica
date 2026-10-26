@@ -53,18 +53,18 @@ const vaultMock = vi.hoisted(() => ({
   entities: {} as Record<string, { image?: string | null }>,
 }));
 
-vi.mock("$lib/stores/map.svelte", () => ({ mapStore: mapStoreMock }));
-vi.mock("$lib/stores/map-session.svelte", () => ({
+vi.mock("#lib/stores/map.svelte.js", () => ({ mapStore: mapStoreMock }));
+vi.mock("#lib/stores/map-session.svelte.js", () => ({
   mapSession: mapSessionMock,
 }));
-vi.mock("$lib/stores/ui/session-mode.svelte", () => ({
+vi.mock("#lib/stores/ui/session-mode.svelte.js", () => ({
   sessionModeStore: sessionModeStoreMock,
 }));
-vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
+vi.mock("#lib/stores/ui/modal-ui.svelte.js", () => ({
   modalUIStore: { openZenMode: vi.fn() },
 }));
-vi.mock("$lib/stores/vault.svelte", () => ({ vault: vaultMock }));
-vi.mock("$lib/stores/ui/notification.svelte", () => ({
+vi.mock("#lib/stores/vault.svelte.js", () => ({ vault: vaultMock }));
+vi.mock("#lib/stores/ui/notification.svelte.js", () => ({
   notificationStore: notificationStoreMock,
 }));
 

@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { getAllPublicContent } from "$lib/content/labels/aggregate";
+  import { getAllPublicContent } from "#lib/content/labels/aggregate.js";
   import {
     buildExploreSearchIndex,
     searchExplore,
-  } from "$lib/content/explore-search";
+  } from "#lib/content/explore-search.js";
   import ExploreLabelResults from "./ExploreLabelResults.svelte";
 
   let {

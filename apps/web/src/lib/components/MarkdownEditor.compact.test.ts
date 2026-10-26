@@ -4,7 +4,7 @@ import { render, screen, waitFor } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("$app/navigation", () => ({ goto: vi.fn() }));
-vi.mock("$lib/stores/vault.svelte", () => ({
+vi.mock("#lib/stores/vault.svelte.js", () => ({
   vault: { resolveImageUrl: vi.fn(), releaseImageUrl: vi.fn() },
 }));
 
