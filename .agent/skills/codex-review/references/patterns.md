@@ -152,6 +152,14 @@ Luna finds these in almost every generator PR. Check each guard in the diff agai
   must not assume array order is topological order (PRs #4105, #4127).
 - Silent truncation (`.slice(0, MAX)`) followed by marking the item saved discards generated text
   the user can no longer recover (PR #4152). Reject or keep the draft instead.
+- Required strings can be blank, and "at least three approaches" can be three copies of one. Trim,
+  then reject blanks, and count distinct values after trimming and case-folding (PR #4348, two
+  rounds: route reasoning, `truth.atStart`, approaches).
+- The guard must check the promised property, not a nearby proxy. "Players can find the key item"
+  needs a clue whose `leadsTo` contains `keyItemLocationId`, not any clue at any place (PR #4344).
+  A broken-reference scan covers every free-text field the output renders, outcomes and
+  reasoning included (PR #4350). Coverage counts only entries that passed validation, so one
+  malformed route does not block repair of a valid one (PR #4341).
 
 ### Heuristic Prose Checks (Regex Validators)
 
@@ -202,6 +210,25 @@ Luna finds these in almost every generator PR. Check each guard in the diff agai
   (PR #4186 continuity thread).
 - **Override honoured on retry**: A "Retry with AI" button must pass the AI override; calling the
   default handler re-reads the toggle and generates locally (PR #4114).
+- **New checks reach every stage**: When a PR adds a requirement (deducible, executable,
+  consistent with the world), the repair prompt and the final audit prompt must state it too.
+  Otherwise a repaired case is audited against the old contract and returned as passing
+  (PR #4346). Assert the requirement appears in each prompt's text.
+- **Local fallback is bounded**: A retry-until-valid loop in local generation (find an unused
+  name) runs on the main thread. Cap the attempts and return a deterministic result or a clear
+  failure when the pool is exhausted (PR #4334).
+
+### Variety and Anti-Repeat Controls
+
+- **Exclusions survive the fallback**: When the preferred pool has no fresh entry, widen to the full
+  pool filtered by `avoidIds` before dropping the filter (PR #4365). A test excludes every
+  preferred id while another eligible entry remains.
+- **History is read, not only written**: Storing recent names is not avoidance; check that the
+  generator reads the history into the prompt or roll, and that local fallback output is recorded
+  too (PR #4365 one-shot names).
+- **One source of truth for options**: Derive genre, theme and tone from the same resolved options
+  the rest of the request uses. Reading `vaultContext` alone dropped the genre for a themeId-only
+  request (PR #4352).
 
 ### Domain Grounding & Fact Consistency
 
@@ -230,6 +257,9 @@ Luna finds these in almost every generator PR. Check each guard in the diff agai
 - **Pattern**: List every action that sends data to a model (first run, retry, regenerate, refine,
   auto-run on open) and confirm each is behind the same disclosure/acknowledgement check. Test one
   secondary path with the notice unacknowledged.
+- **Provenance per item**: A batch-wide "made by AI" / "no AI used" note is wrong once the list
+  mixes sources (pinned names kept from an earlier batch). Track the source per item and show a
+  mixed-source notice when needed (PR #4403).
 
 ### External Responses and Stored Documents
 
@@ -250,6 +280,9 @@ Luna finds these in almost every generator PR. Check each guard in the diff agai
   private ones (Chronica `gm_secrets`) into a field the guest exporter does not strip (PR #4142,
   HIGH). Importers map an allowlist of fields; anything GM-only goes to a field the exporter
   already removes.
+- **Player-facing parts of one output**: The same boundary applies inside a generated result. A
+  "spoiler-safe" player handout must not append raw campaign context or any GM-only field
+  (PR #4334: the handout could name the culprit). List what feeds each player-facing field.
 
 ## UI & Accessibility
 
@@ -391,6 +424,17 @@ that foreground token; update the map when adding or changing an override. Any l
 failing theme. The three ratios are `text-theme-bg` on primary, `text-theme-primary` on a 15% tint,
 and `text-theme-on-primary` on primary.
 
+### Hand-Laid SVG Diagrams
+
+- **Issue**: Raising a diagram label to 12px for the mobile typography guard made it overrun the
+  node beside it, and each re-fix overlapped something else (PR #4383, three rounds). A directed
+  edge pointed the opposite way to the route text (PR #4379), and a hazard note replaced the route
+  type in a badge.
+- **Pattern**: A font-size change in fixed SVG coordinates is a layout change: recompute each
+  badge's width from its text and check it against the gap to neighbouring nodes. Check each edge's
+  direction against the prose and table that describe it. Screenshot the diagram at phone width
+  and desktop before pushing.
+
 ## Event Bus & Lifecycles
 
 ### Subscription Memory Leaks in Stores & Tests
@@ -494,6 +538,22 @@ class FeatureStore {
   transformation is necessary, and preserve unknown data unless a deliberate migration removes it.
   Test a legacy document, the new document, and an invalid document before changing persistence.
 
+### Never Persist a Placeholder as Content
+
+- **Issue**: Warm start shows a truncated preview until the full Markdown is hydrated. A cloud
+  backup built from an entity whose hydration failed uploaded the preview, overwriting the full
+  remote copy, while the UI said the note was absent (PR #4358, HIGH).
+- **Pattern**: Any write path (save, backup, export, sync) checks that it holds the real content.
+  Exclude records that failed to load, or abort the write, and assert the preview text is absent
+  from the written payload.
+
+### Attribution Is Scoped to Its Session
+
+- **Issue**: An organic-search touch was persisted and flattened onto every later event, so a later
+  direct visit counted as organic search (PR #4382).
+- **Pattern**: Analytics source fields expire at the session boundary or are cleared when a new
+  session starts. Test a second session with no referrer.
+
 ### Persistence That Resolves `false`
 
 - **Issue**: A store assigns new state, then awaits the save, and rolls back only in `catch`. The
@@ -570,6 +630,14 @@ class FeatureStore {
   {/if}
   ```
 
+### Base-Path-Aware URLs
+
+- **Issue**: Hard-coded root paths (`/service-worker.js`, `/`) break base-path deployments; after
+  the SvelteKit 3 migration they lost the service worker and stranded the Zen Mode fallback
+  (PR #4412).
+- **Pattern**: Build in-app URLs with `resolve()` from `$app/paths`, including service-worker
+  registration and `goto` fallbacks. Grep the diff for string literals starting with `/`.
+
 ### User-Agent Sniffing vs Environment Flags
 
 - **Issue**: Checking `navigator.userAgent` (e.g., looking for "jsdom") to detect a testing/jsdom environment is fragile and easily breaks in different browser/node runtimes.
@@ -617,6 +685,10 @@ class FeatureStore {
 - **Pattern**: Grep changed content for numbers with units of time or effort and remove any without
   a source. For each rules statement, check the publisher's own text (SRD, Kobold Press) and cite
   it in the PR. After removing a claim, grep for its other phrasings in the same file.
+- **Config numbers too**: Model prices in `oracle-proxy/src/llm/registry.ts` come from the
+  provider's published rate card, cited in the PR; a per-1k figure off by 10× inflated every cost
+  log (PR #4363). Update the dependent cost assertions in the same commit, or the fix fails its own
+  suite (the next two rounds of that PR).
 
 ### Content Edits Break Exact-String Tests
 
@@ -649,6 +721,9 @@ class FeatureStore {
   lockfile and a report; the report also quoted a line count that the PR itself changed (PR #4181).
 - **Pattern**: Before handoff, read `git diff origin/staging...HEAD --stat` against the PR
   description. Regenerate any figures (line counts, rankings) from the head commit.
+- **Scope claims**: "No user-facing change" or "experiment only" must hold for the default path.
+  An A/B harness that also edited the shared prompt changed every public response (PR #4361).
+  Keep experimental prompt text behind the experiment flag or option.
 
 ## Review Evidence
 

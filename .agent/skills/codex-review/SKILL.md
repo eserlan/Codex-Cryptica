@@ -43,6 +43,9 @@ Run these sweeps on every review; they are where most second and third review ro
    check each: every button with the same contrast pair, every model field interpolated into the
    same Markdown, every AI entry point (retry, regenerate) behind the disclosure, every opener path
    that needs focus restore, every article repeating the same claim, every field holding a merged id.
+   Fallback branches count as siblings: a fallback keeps the main path's filters and exclusions
+   (the deploy-notice fallback dropped the back-merge filter, PR #4364; the concept fallback
+   dropped `avoidIds`, PR #4365).
    For a new function or option, enumerate its input space (every culture, theme, mode, entity
    kind, empty and maximum case) and check the sibling functions that take the same input.
 3. **Model-output guards**: Check each parse/validation guard in the diff against
