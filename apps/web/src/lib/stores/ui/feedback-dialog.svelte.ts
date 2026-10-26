@@ -9,7 +9,7 @@ import {
   type FeedbackScreen,
   type NavigatorLike,
 } from "feedback-engine";
-import { VERSION } from "$lib/config";
+import { VERSION } from "#lib/config/index.js";
 import {
   FeedbackSubmitError,
   feedbackReportService,

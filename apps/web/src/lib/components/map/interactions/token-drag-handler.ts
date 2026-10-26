@@ -1,6 +1,6 @@
 import type { Point } from "schema";
 import type { Token } from "../../../../types/vtt";
-import { hitTestToken } from "$lib/utils/vtt-helpers";
+import { hitTestToken } from "#lib/utils/vtt-helpers.js";
 import { snapPointToHexCenter, type HexOrientation } from "map-engine";
 import { POINTER_DISPLACEMENT_THRESHOLD } from "./pointer-thresholds";
 

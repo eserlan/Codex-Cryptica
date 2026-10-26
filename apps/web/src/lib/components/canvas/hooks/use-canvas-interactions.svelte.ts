@@ -1,7 +1,7 @@
 import type { Node } from "@xyflow/svelte";
 import type { Canvas } from "@codex/canvas-engine";
-import type { vault as VaultStore } from "$lib/stores/vault.svelte";
-import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
+import type { vault as VaultStore } from "#lib/stores/vault.svelte.js";
+import { connectionModeStore } from "#lib/stores/ui/connection-mode.svelte.js";
 import { fitDelveSectorFrames } from "../canvas-workspace-helpers";
 import type { CanvasLogic } from "./canvas-logic-type";
 

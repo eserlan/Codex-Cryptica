@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { soloSessionStore } from "$lib/stores/solo-session-instance";
-  import { quickNoteStore } from "$lib/stores/quicknote.svelte";
+  import { soloSessionStore } from "#lib/stores/solo-session-instance.js";
+  import { quickNoteStore } from "#lib/stores/quicknote.svelte.js";
   import SoloMenu from "./SoloMenu.svelte";
   import SoloSceneField from "./SoloSceneField.svelte";
 

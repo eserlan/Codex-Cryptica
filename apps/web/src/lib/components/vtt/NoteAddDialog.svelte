@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { mapSession } from "$lib/stores/map-session.svelte";
-  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { mapSession } from "#lib/stores/map-session.svelte.js";
+  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
   import { fade, scale } from "svelte/transition";
 
   /**

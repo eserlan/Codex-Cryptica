@@ -1,4 +1,4 @@
-import { systemClock } from "$lib/utils/runtime-deps";
+import { systemClock } from "#lib/utils/runtime-deps.js";
 export interface LogEntry {
   timestamp: number;
   level: "info" | "warn" | "error";

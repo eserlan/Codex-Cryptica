@@ -1,8 +1,8 @@
 import type { LayoutOptions, LayoutRequest } from "graph-engine";
 import type { Entity } from "schema";
-import type { LocalEntity } from "$lib/stores/vault/types";
-import { MIN_FOCUS_DEPTH, MAX_FOCUS_DEPTH } from "$lib/stores/graph.svelte";
-import { browserPerformanceRecorder } from "$lib/services/performance/browser-performance-capture";
+import type { LocalEntity } from "#lib/stores/vault/types.js";
+import { MIN_FOCUS_DEPTH, MAX_FOCUS_DEPTH } from "#lib/stores/graph.svelte.js";
+import { browserPerformanceRecorder } from "#lib/services/performance/browser-performance-capture.js";
 import { applyLayoutSnapshot } from "./graph-layout-snapshot";
 import { selectLayoutPositionUpdates } from "./position-persistence";
 import {

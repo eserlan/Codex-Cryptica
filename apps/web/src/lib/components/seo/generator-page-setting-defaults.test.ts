@@ -6,7 +6,7 @@ import {
   shipConfig,
   socialHubConfig,
   worldConfig,
-} from "$lib/services/seo/generator-config";
+} from "#lib/services/seo/generator-config.js";
 
 describe("setting form defaults", () => {
   it("uses fantasy defaults without a hub, while ships start in sci-fi", () => {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { vi } from "vitest";
-import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
+import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
 import {
   QUICK_NAMES_COUNT,
   askQuickNamesAi,

@@ -6,11 +6,24 @@ import type { Entity } from "schema";
 import EntityTable from "../EntityTable.svelte";
 import type { ConnectionSummary, SortKey, SortState } from "../entityTableSort";
 import { goto } from "$app/navigation";
-import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
-import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-import { vault } from "$lib/stores/vault.svelte";
+import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
+import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+import { vault } from "#lib/stores/vault.svelte.js";
 
-vi.mock("$app/paths", () => ({ base: "" }));
+vi.mock("$app/paths", () => ({
+  base: "",
+  asset: (p: string) => `/${p.replace(/^\//, "")}`,
+  resolve: (route: string, params?: Record<string, string>) => {
+    if (!route) return "";
+    let path = route.replace(/\/\([^)]+\)/g, "") || "/";
+    if (params) {
+      for (const [k, v] of Object.entries(params)) {
+        path = path.replace(`[${k}]`, v);
+      }
+    }
+    return path;
+  },
+}));
 vi.mock("$app/navigation", () => ({ goto: vi.fn() }));
 
 function entity(

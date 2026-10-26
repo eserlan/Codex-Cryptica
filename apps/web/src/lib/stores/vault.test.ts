@@ -9,6 +9,8 @@ vi.hoisted(() => {
 
 vi.mock("$app/paths", () => ({
   base: "",
+  asset: (p: string) => `/${p.replace(/^\//, "")}`,
+  resolve: (p: string) => p,
 }));
 
 vi.mock("$app/environment", () => ({
@@ -210,7 +212,7 @@ import { vaultRegistry } from "./vault-registry.svelte";
 import { themeStore } from "./theme.svelte";
 import { mapRegistry } from "./map-registry.svelte";
 import { canvasRegistry } from "./canvas-registry.svelte";
-import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
 
 describe("VaultStore", () => {
   let testVault: VaultStore;

@@ -3,12 +3,12 @@
 import { cleanup, render, screen, waitFor } from "@testing-library/svelte";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("$lib/components/oracle/OracleChat.svelte", async () => {
+vi.mock("#lib/components/oracle/OracleChat.svelte", async () => {
   const mod = await import("./oracle-chat-test-stub.svelte");
   return { default: mod.default };
 });
 
-vi.mock("$lib/stores/oracle.svelte", () => ({
+vi.mock("#lib/stores/oracle.svelte.js", () => ({
   oracle: {
     init: vi.fn(),
     isLoading: false,
@@ -17,12 +17,12 @@ vi.mock("$lib/stores/oracle.svelte", () => ({
   },
 }));
 
-vi.mock("$lib/stores/ui/notification.svelte", () => ({
+vi.mock("#lib/stores/ui/notification.svelte.js", () => ({
   notificationStore: { notify: vi.fn() },
 }));
 
 import OraclePage from "./+page.svelte";
-import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
+import { layoutUIStore } from "#lib/stores/ui/layout-ui.svelte.js";
 
 describe("standalone Oracle keyboard inset", () => {
   beforeEach(() => {

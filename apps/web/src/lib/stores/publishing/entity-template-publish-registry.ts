@@ -1,4 +1,4 @@
-import { getDB } from "$lib/utils/idb";
+import { getDB } from "#lib/utils/idb.js";
 import {
   deleteTemplateOwnerToken,
   getTemplateOwnerToken,

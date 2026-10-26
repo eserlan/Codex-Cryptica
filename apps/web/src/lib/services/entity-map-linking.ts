@@ -1,5 +1,5 @@
-import { mapStore } from "$lib/stores/map.svelte";
-import { vault } from "$lib/stores/vault.svelte";
+import { mapStore } from "#lib/stores/map.svelte.js";
+import { vault } from "#lib/stores/vault.svelte.js";
 
 interface MapUploadStore {
   uploadMap(file: File, name: string): Promise<string | undefined>;

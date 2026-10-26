@@ -1,4 +1,4 @@
-import { getAllExamples } from "$lib/content/examples/registry";
+import { getAllExamples } from "#lib/content/examples/registry.js";
 import type { PageLoad } from "./$types";
 
 export const prerender = true;

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { EntityTemplateDirectoryError } from "$lib/services/publishing/PublicEntityTemplateDirectoryService";
+import { EntityTemplateDirectoryError } from "#lib/services/publishing/PublicEntityTemplateDirectoryService.js";
 import { installEntityTemplate } from "./entity-template-install";
 import { makeStore, draft } from "./test-helpers";
 

@@ -5,15 +5,15 @@
     type BusinessDocument,
     type GeneratedDraft,
   } from "generator-engine";
-  import type { BusinessSaveChoices } from "$lib/services/generators/business-vault-save";
-  import BusinessFallbackNote from "$lib/components/seo/BusinessFallbackNote.svelte";
-  import BusinessRefinePanel from "$lib/components/seo/BusinessRefinePanel.svelte";
+  import type { BusinessSaveChoices } from "#lib/services/generators/business-vault-save.js";
+  import BusinessFallbackNote from "#lib/components/seo/BusinessFallbackNote.svelte";
+  import BusinessRefinePanel from "#lib/components/seo/BusinessRefinePanel.svelte";
   import BusinessSaveStep from "./BusinessSaveStep.svelte";
   import type { Category } from "schema";
-  import { getDelveLocationTypeLabel } from "$lib/utils/delve-terminology";
+  import { getDelveLocationTypeLabel } from "#lib/utils/delve-terminology.js";
   import DraftBody from "./DraftBody.svelte";
-  import PointCrawlGraph from "$lib/components/seo/PointCrawlGraph.svelte";
-  import MysteryClueGraph from "$lib/components/seo/MysteryClueGraph.svelte";
+  import PointCrawlGraph from "#lib/components/seo/PointCrawlGraph.svelte";
+  import MysteryClueGraph from "#lib/components/seo/MysteryClueGraph.svelte";
   import GeneratorMechanicsPreview from "./GeneratorMechanicsPreview.svelte";
 
   interface Props {

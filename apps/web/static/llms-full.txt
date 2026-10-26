@@ -2241,7 +2241,7 @@ After generation you see a **review screen** showing the full draft. You can:
 
 ### Quick Names
 
-On supported public name generators, use the **Quick Names** panel above the settings on a phone to roll names locally. Pin a name to keep it in the batch when you roll again; select it again to unpin it. **Copy pinned** copies only pinned names, while **Copy all** copies the full current batch.
+On supported public name generators, the **Quick Names** panel rolls names on your device. Tap a name to copy it. The settings row shows the current culture and name type; open it to change them or to choose **First names only**. Pin a name to keep it in the batch when you roll again; select it again to unpin it. **Copy pinned** copies only pinned names, while **Copy all** copies the full current batch. **Ask AI** sends your description and settings to our AI service, and the panel says when the names on screen came from it. For meanings and culture notes, choose **Generate names with notes**.
 
 ### Contextual Generation
 
@@ -4726,6 +4726,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 ### [How many NPCs does an RPG town need?](https://codexcryptica.com/answers/how-many-npcs-does-an-rpg-town-need)
 
 **Direct answer:** A town needs roughly three to five named NPCs for a single visit, six to ten for a settlement the party returns to across a campaign, and no fixed number for the background population, which stays unnamed until a player addresses someone directly. Scale by how many roles the party will interact with, not by the town's population figure, and add named NPCs only when the story creates a reason for one.
+
+### [How many random encounters should you use during RPG travel?](https://codexcryptica.com/answers/how-many-random-encounters-during-rpg-travel)
+
+**Direct answer:** As a pacing heuristic, start with roughly one substantial encounter per week of travel, not a rule. Some weeks should pass without incident, and a dangerous or unfamiliar route can support two or three in a week when each one offers a real choice. Decide first how much table time the journey deserves, then spend that time on a small number of scenes. A sighting, rumour, or brief choice can stay brief, and many rolled prompts work best as colour or foreshadowing instead of a full encounter.
 
 ### [How much campaign lore should players be expected to remember?](https://codexcryptica.com/answers/how-much-campaign-lore-should-players-be-expected-to-remember)
 

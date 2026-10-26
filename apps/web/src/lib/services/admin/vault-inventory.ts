@@ -1,4 +1,4 @@
-import { resolveOracleProxyUrl } from "$lib/config/oracle-proxy";
+import { resolveOracleProxyUrl } from "#lib/config/oracle-proxy.js";
 
 /**
  * Operator vault inventory (spec 162, FR-024): metadata-only rows for the

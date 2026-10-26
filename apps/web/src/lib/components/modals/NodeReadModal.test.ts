@@ -13,11 +13,11 @@ const { copyContent, modalUIStore } = vi.hoisted(() => ({
   },
 }));
 
-vi.mock("$lib/services/ClipboardService", () => ({
+vi.mock("#lib/services/ClipboardService.js", () => ({
   clipboardService: { copyContent },
 }));
-vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({ modalUIStore }));
-vi.mock("$lib/stores/vault.svelte", () => ({
+vi.mock("#lib/stores/ui/modal-ui.svelte.js", () => ({ modalUIStore }));
+vi.mock("#lib/stores/vault.svelte.js", () => ({
   vault: {
     entities: {
       "entity-1": {
@@ -33,16 +33,16 @@ vi.mock("$lib/stores/vault.svelte", () => ({
     loadEntityContent: vi.fn(),
   },
 }));
-vi.mock("$lib/services/parser", () => ({
+vi.mock("#lib/services/parser.js", () => ({
   parserService: { parse: vi.fn().mockResolvedValue("<h1>Chronicle</h1>") },
 }));
-vi.mock("$lib/stores/categories.svelte", () => ({
+vi.mock("#lib/stores/categories.svelte.js", () => ({
   categories: { getCategory: vi.fn().mockReturnValue({ icon: "file" }) },
 }));
-vi.mock("$lib/utils/icon", () => ({
+vi.mock("#lib/utils/icon.js", () => ({
   getIconClass: vi.fn().mockReturnValue("icon"),
 }));
-vi.mock("$lib/actions/focusTrap", () => ({
+vi.mock("#lib/actions/focusTrap.js", () => ({
   focusTrap: () => ({ destroy: () => {} }),
 }));
 

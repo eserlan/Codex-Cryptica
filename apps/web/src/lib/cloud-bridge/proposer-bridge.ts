@@ -1,7 +1,10 @@
-import ProposerWorker from "$lib/workers/proposer.worker?worker";
-import { browser } from "$app/environment";
+import ProposerWorker from "#lib/workers/proposer.worker?worker";
+import { browser } from "$app/env";
 import type { Proposal } from "@codex/proposer";
-import { type IdGenerator, systemIdGenerator } from "$lib/utils/runtime-deps";
+import {
+  type IdGenerator,
+  systemIdGenerator,
+} from "#lib/utils/runtime-deps.js";
 import type { CachedToken } from "@codex/ai-engine";
 
 export class ProposerBridge {

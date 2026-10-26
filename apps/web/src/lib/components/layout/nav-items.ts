@@ -1,14 +1,14 @@
-import { base } from "$app/paths";
-import { vault } from "$lib/stores/vault.svelte";
-import { quickNoteStore } from "$lib/stores/quicknote.svelte";
-import { sessionJournalStore } from "$lib/stores/session-journal.svelte";
-import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
-import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
-import { guestVault } from "$lib/stores/guest-vault.svelte";
-import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
-import { guestChatStore } from "$lib/stores/guest-chat.svelte";
-import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-import { isVaultReadyForGenerators } from "$lib/stores/vault/readiness";
+import { resolve } from "$app/paths";
+import { vault } from "#lib/stores/vault.svelte.js";
+import { quickNoteStore } from "#lib/stores/quicknote.svelte.js";
+import { sessionJournalStore } from "#lib/stores/session-journal.svelte.js";
+import { layoutUIStore } from "#lib/stores/ui/layout-ui.svelte.js";
+import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
+import { guestVault } from "#lib/stores/guest-vault.svelte.js";
+import { discoveryPolicyStore } from "#lib/stores/ui/discovery-policy.svelte.js";
+import { guestChatStore } from "#lib/stores/guest-chat.svelte.js";
+import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+import { isVaultReadyForGenerators } from "#lib/stores/vault/readiness.js";
 
 /**
  * The one list of application navigation, shared by the Activity Bar and the
@@ -66,7 +66,7 @@ export function matchesPath(href: string, pathname: string): boolean {
   // The app root has no segment of its own to anchor on, so a prefix test
   // would match every route beneath it. Compared against `base` rather than
   // "" so this still holds if the app is ever served from a subpath.
-  if (target === stripSlash(base)) return current === target;
+  if (target === stripSlash(resolve("/(app)"))) return current === target;
   return current === target || current.startsWith(`${target}/`);
 }
 
@@ -75,10 +75,10 @@ export function isViewActive(
   urlOrPath: string | { pathname: string; search?: string },
 ): boolean {
   if (!item.href) return false;
+
   const pathname =
     typeof urlOrPath === "string" ? urlOrPath : urlOrPath.pathname;
   const search = typeof urlOrPath === "string" ? "" : (urlOrPath.search ?? "");
-
   const [itemPath, itemQuery] = item.href.split("?");
 
   if (itemQuery) {
@@ -122,8 +122,10 @@ export function navItems(): NavItem[] {
       title: "Knowledge Graph",
       href:
         sessionModeStore.isGuestMode && guestVault.publishId
-          ? `${base}/guest/${guestVault.publishId}`
-          : `${base}/`,
+          ? resolve("/(app)/guest/[publishId]", {
+              publishId: guestVault.publishId,
+            })
+          : resolve("/(app)"),
       group: "view",
       placement: "bar",
     },
@@ -132,7 +134,7 @@ export function navItems(): NavItem[] {
       icon: "icon-[lucide--compass]",
       label: "Map",
       title: "World Map",
-      href: `${base}/map`,
+      href: resolve("/(app)/map"),
       group: "view",
       placement: "bar",
     },
@@ -141,7 +143,7 @@ export function navItems(): NavItem[] {
       icon: "icon-[lucide--layout]",
       label: "Canvas",
       title: "Spatial Canvas",
-      href: `${base}/canvas`,
+      href: resolve("/(app)/canvas"),
       group: "view",
       placement: "bar",
     },
@@ -150,7 +152,7 @@ export function navItems(): NavItem[] {
       icon: "icon-[lucide--calendar-days]",
       label: "Timeline",
       title: "World Chronology",
-      href: `${base}/timeline`,
+      href: resolve("/(app)/timeline"),
       group: "view",
       placement: "bar",
     },
@@ -159,7 +161,7 @@ export function navItems(): NavItem[] {
       icon: "icon-[lucide--table]",
       label: "Table",
       title: "Entity Table — overview, filter, and sort all entities",
-      href: `${base}/table`,
+      href: resolve("/(app)/table"),
       group: "view",
       placement: "bar",
     },
@@ -168,8 +170,8 @@ export function navItems(): NavItem[] {
       icon: "icon-[lucide--swords]",
       label: "Play",
       title: "Play — start a solo session, or let the Oracle run an adventure",
-      href: `${base}/play`,
-      alsoActiveFor: [`${base}/adventure`],
+      href: resolve("/(app)/play"),
+      alsoActiveFor: [resolve("/(app)/adventure")],
       group: "view",
       // The desktop rail has room for a first-class Play workspace. On a
       // phone it remains in the navigation drawer, where its label can stay
@@ -186,8 +188,8 @@ export function navItems(): NavItem[] {
       // as the less table-ish of the two.
       label: "Rolls & Decks",
       title: "Random Tables & Card Decks — roll and draw from your own",
-      href: `${base}/tables`,
-      alsoActiveFor: [`${base}/decks`],
+      href: resolve("/(app)/tables"),
+      alsoActiveFor: [resolve("/(app)/decks")],
       group: "view",
       placement: "overflow",
     },

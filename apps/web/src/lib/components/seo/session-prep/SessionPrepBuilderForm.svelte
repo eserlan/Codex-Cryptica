@@ -20,7 +20,7 @@
   import {
     SESSION_PREP_SEED_MAX_LENGTH,
     type SessionPrepService,
-  } from "$lib/services/seo/session-prep-service";
+  } from "#lib/services/seo/session-prep-service.js";
   import SessionPrepStepSection from "./SessionPrepStep.svelte";
   import SessionPrepStepFields from "./SessionPrepStepFields.svelte";
   import { prepFieldClass } from "./prep-field-styles";

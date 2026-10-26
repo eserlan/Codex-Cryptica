@@ -1,11 +1,11 @@
-import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
+import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
 import type { RefinementDocument, SessionEntity } from "generator-engine";
-import { GeneratorRefinementService } from "$lib/services/GeneratorRefinementService.svelte";
-import { sessionHubStore } from "$lib/stores/session-hub.svelte";
-import { loreMergeStore } from "$lib/stores/ui/lore-merge.svelte";
-import { buildLoreMergePlan } from "$lib/utils/lore-sections";
-import { trackEvent } from "$lib/services/analytics/zaraz-analytics";
-import type { getGeneratorDocumentLayout } from "$lib/components/seo/generator-document-layout";
+import { GeneratorRefinementService } from "#lib/services/GeneratorRefinementService.svelte.js";
+import { sessionHubStore } from "#lib/stores/session-hub.svelte.js";
+import { loreMergeStore } from "#lib/stores/ui/lore-merge.svelte.js";
+import { buildLoreMergePlan } from "#lib/utils/lore-sections.js";
+import { trackEvent } from "#lib/services/analytics/zaraz-analytics.js";
+import type { getGeneratorDocumentLayout } from "#lib/components/seo/generator-document-layout.js";
 import type { getContextSelection } from "generator-engine";
 import { recordGeneratedEntity } from "./record-generated-entity";
 

@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { base } from "$app/paths";
-  import { PATREON_URL } from "$lib/config";
-  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { resolve } from "$app/paths";
+  import { PATREON_URL } from "#lib/config/index.js";
+  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
 </script>
 
 <footer
@@ -9,7 +9,7 @@
   data-testid="app-footer"
 >
   <div class="text-micro font-sans text-chrome-muted uppercase tracking-widest">
-    &copy; 2026 Codex Cryptica // Local-First Intelligence
+    © 2026 Codex Cryptica // Local-First Intelligence
   </div>
   <div class="flex gap-6">
     {#if PATREON_URL}
@@ -25,12 +25,12 @@
       </a>
     {/if}
     <a
-      href="{base}/generators"
+      href="{resolve('')}/generators"
       class="text-micro font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest"
       >Generators</a
     >
     <a
-      href="{base}/explore"
+      href="{resolve('')}/explore"
       class="text-micro font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest"
       >Explore</a
     >
@@ -41,14 +41,14 @@
       >Help</button
     >
     <a
-      href="{base}/privacy"
+      href="{resolve('')}/privacy"
       target="_blank"
       rel="noopener noreferrer"
       class="text-micro font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest"
       >Privacy</a
     >
     <a
-      href="{base}/terms"
+      href="{resolve('')}/terms"
       target="_blank"
       rel="noopener noreferrer"
       class="text-micro font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest"

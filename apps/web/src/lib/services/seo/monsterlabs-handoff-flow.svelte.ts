@@ -10,8 +10,8 @@ import {
   buildMonsterLabsHandoffUrl,
   type MonsterLabsHandoffSource,
 } from "./monsterlabs-handoff";
-import { openExternalGeneratorUrl } from "$lib/utils/external-generator-handoff";
-import { notificationStore } from "$lib/stores/ui/notification.svelte";
+import { openExternalGeneratorUrl } from "#lib/utils/external-generator-handoff.js";
+import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
 
 export type MonsterLabsHandoffState = "confirm" | "loading" | "ready";
 

@@ -30,7 +30,7 @@ vi.mock("svelte/transition", () => ({
   fade: () => ({ duration: 0 }),
 }));
 
-vi.mock("$lib/stores/theme.svelte", () => ({
+vi.mock("#lib/stores/theme.svelte.js", () => ({
   themeStore: {
     jargon: {
       vault: "Vault",
@@ -38,31 +38,31 @@ vi.mock("$lib/stores/theme.svelte", () => ({
   },
 }));
 
-vi.mock("$lib/stores/graph.svelte", () => ({
+vi.mock("#lib/stores/graph.svelte.js", () => ({
   FOCUS_DETAIL_STEP: 150,
   FOCUS_EDGE_CAP: 2_000,
   graph: mockGraph,
 }));
 
-vi.mock("$lib/stores/canvas-registry.svelte", () => ({
+vi.mock("#lib/stores/canvas-registry.svelte.js", () => ({
   canvasRegistry: {
     queueEntities: vi.fn(),
   },
 }));
 
-vi.mock("$lib/stores/ui/notification.svelte", () => ({
+vi.mock("#lib/stores/ui/notification.svelte.js", () => ({
   notificationStore: {
     notify: vi.fn(),
   },
 }));
 
-vi.mock("$lib/stores/ui/session-mode.svelte", () => ({
+vi.mock("#lib/stores/ui/session-mode.svelte.js", () => ({
   sessionModeStore: {
     sharedMode: false,
   },
 }));
 
-vi.mock("$lib/stores/ui/connection-mode.svelte", () => ({
+vi.mock("#lib/stores/ui/connection-mode.svelte.js", () => ({
   connectionModeStore: {
     isConnecting: false,
     connectingNodeId: null,
@@ -70,20 +70,20 @@ vi.mock("$lib/stores/ui/connection-mode.svelte", () => ({
   },
 }));
 
-vi.mock("$lib/stores/vault.svelte", () => ({
+vi.mock("#lib/stores/vault.svelte.js", () => ({
   vault: {
     labelIndex: [],
     labelCounts: {},
   },
 }));
 
-vi.mock("$lib/stores/categories.svelte", () => ({
+vi.mock("#lib/stores/categories.svelte.js", () => ({
   categories: {
     list: [],
   },
 }));
 
-vi.mock("$lib/utils/icon", () => ({
+vi.mock("#lib/utils/icon.js", () => ({
   getIconClass: () => "icon-[lucide--circle]",
 }));
 

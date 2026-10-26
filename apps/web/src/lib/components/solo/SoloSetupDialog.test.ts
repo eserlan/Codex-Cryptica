@@ -8,7 +8,7 @@ const instance = vi.hoisted(() => ({
     start: vi.fn(async (_setup: unknown) => {}),
   },
 }));
-vi.mock("$lib/stores/solo-session-instance", () => instance);
+vi.mock("#lib/stores/solo-session-instance.js", () => instance);
 
 import SoloSetupDialog from "./SoloSetupDialog.svelte";
 

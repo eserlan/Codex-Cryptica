@@ -1,3 +1,4 @@
+import adapter from "@sveltejs/adapter-static";
 import { sveltekit } from "@sveltejs/kit/vite";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "vitest/config";
@@ -7,6 +8,7 @@ import { dirname, resolve } from "node:path";
 import { execSync } from "node:child_process";
 import { svelteTesting } from "@testing-library/svelte/vite";
 import { visualizer } from "rollup-plugin-visualizer";
+import { PRERENDER_ENTRIES } from "./src/lib/config/prerender-entries";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const pkg = JSON.parse(
@@ -26,7 +28,7 @@ try {
     .toLowerCase()
     .includes("microsoft");
 } catch {
-  // Ignore
+  // Ignore non-Linux or inaccessible /proc/version
 }
 if (process.env.VITE_USE_POLLING === "true") {
   usePolling = true;
@@ -35,7 +37,40 @@ if (process.env.VITE_USE_POLLING === "true") {
 export default defineConfig({
   plugins: [
     tailwindcss(),
-    sveltekit() as any,
+    sveltekit({
+      version: { pollInterval: 60000 },
+      // We register and manage the ServiceWorker lifecycle deterministically via
+      // app-init.ts (supporting vault session caching, cleanup, and dev bypass).
+      // Disable SvelteKit's automatic inline registration to prevent duplicate racing
+      // registrations and InvalidStateError exceptions on prerendered routes.
+      serviceWorker: { register: false },
+
+      // Using adapter-static to generate a fully static site suitable for Cloudflare Pages (no SSR, only prerendered assets).
+      // Cloudflare Pages serves static files directly, and the fallback index.html supports SPA routing for the app shell.
+      // See https://svelte.dev/docs/kit/adapters for more information about adapter-static and other deployment targets.
+      adapter: adapter({ fallback: "index.html", strict: false }),
+
+      prerender: {
+        entries: [...PRERENDER_ENTRIES],
+        handleUnseenRoutes: "ignore",
+        // fallow-ignore-next-line complexity
+        handleHttpError: ({ path, message }) => {
+          // Ignore static assets/metadata files that return 404 during local crawling
+          const isIgnored =
+            path === "/app" ||
+            path.startsWith("/app/") ||
+            /\/(llms\.txt|favicon\.png|logo\.png|manifest\.webmanifest)$/.test(
+              path,
+            ) ||
+            path.includes("/images/");
+          if (isIgnored) {
+            return;
+          }
+
+          throw new Error(message);
+        },
+      },
+    }) as any,
     svelteTesting(),
     visualizer({
       emitFile: true,

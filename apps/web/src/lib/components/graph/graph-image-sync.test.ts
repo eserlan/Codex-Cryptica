@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { categories } from "$lib/stores/categories.svelte";
+import { categories } from "#lib/stores/categories.svelte.js";
 import { PIRATE_DARK } from "schema";
 import type { GraphImageManager } from "graph-engine";
 import { syncGraphImages, releaseGraphImages } from "./graph-image-sync";

@@ -47,7 +47,7 @@ export default defineConfig({
   use: {
     baseURL,
     trace: "on-first-retry",
-    screenshot: "on-failure",
+    screenshot: "only-on-failure",
   },
   projects: [
     {

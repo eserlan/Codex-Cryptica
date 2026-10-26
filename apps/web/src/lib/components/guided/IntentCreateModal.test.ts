@@ -3,7 +3,7 @@
 import { render, screen, fireEvent } from "@testing-library/svelte";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
-vi.mock("$lib/stores/vault.svelte", () => ({
+vi.mock("#lib/stores/vault.svelte.js", () => ({
   vault: {
     selectedEntityId: null,
     entities: {},
@@ -13,7 +13,7 @@ vi.mock("$lib/stores/vault.svelte", () => ({
   },
 }));
 
-vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
+vi.mock("#lib/stores/ui/modal-ui.svelte.js", () => ({
   modalUIStore: {
     closeIntentCreateMenu: vi.fn(),
     openIntentGeneratorWorkflow: vi.fn(),
@@ -23,8 +23,8 @@ vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
 }));
 
 import IntentCreateModal from "./IntentCreateModal.svelte";
-import { vault } from "$lib/stores/vault.svelte";
-import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+import { vault } from "#lib/stores/vault.svelte.js";
+import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
 
 describe("IntentCreateModal", () => {
   beforeEach(() => {

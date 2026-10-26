@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { GENERATOR_SLUGS } from "../../params/generator_slug";
-import { slugMeta } from "$lib/components/seo/generator-page-meta";
+import { slugMeta } from "#lib/components/seo/generator-page-meta.js";
 import {
   GENERATOR_CATALOGUE,
   GENERATOR_CATEGORIES,

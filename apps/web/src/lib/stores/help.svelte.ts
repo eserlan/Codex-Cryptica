@@ -1,16 +1,16 @@
-import { browser } from "$app/environment";
-import { base } from "$app/paths";
-import { VERSION } from "$lib/config";
-import { debugStore } from "$lib/stores/debug.svelte";
+import { browser } from "$app/env";
+import { resolve } from "$app/paths";
+import { VERSION } from "#lib/config/index.js";
+import { debugStore } from "#lib/stores/debug.svelte.js";
 import {
   type GuideStep,
   ONBOARDING_TOUR,
   HELP_ARTICLES,
-} from "$lib/config/help-content";
+} from "#lib/config/help-content.js";
 import { searchStore as defaultSearchStore } from "./search.svelte";
-import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
-import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-import { browserStorage, type StorageLike } from "$lib/utils/runtime-deps";
+import { onboardingStore } from "#lib/stores/ui/onboarding.svelte.js";
+import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+import { browserStorage, type StorageLike } from "#lib/utils/runtime-deps.js";
 
 const STORAGE_KEY = "codex-cryptica-help-state";
 
@@ -321,7 +321,7 @@ export class HelpStore {
     const left = window.screenX + (window.outerWidth - width) / 2;
     const top = window.screenY + (window.outerHeight - height) / 2;
 
-    const url = `${window.location.origin}${base}/help`;
+    const url = `${window.location.origin}${resolve("")}/help`;
     const features = `width=${width},height=${height},left=${left},top=${top},toolbar=0,location=0,menubar=0,noopener,noreferrer`;
 
     const newWin = window.open(url, "CodexCrypticaHelp", features);

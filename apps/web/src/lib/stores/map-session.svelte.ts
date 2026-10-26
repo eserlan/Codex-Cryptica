@@ -1,11 +1,11 @@
 import { vault } from "./vault.svelte";
 import { mapStore } from "./map.svelte";
-import { VTTSessionService } from "$lib/services/vtt-session";
+import { VTTSessionService } from "#lib/services/vtt-session.js";
 import type { SessionMode } from "../../types/vtt";
 import { initializeMapSessionComposition } from "./vtt/map-session-composition.svelte";
 import { MapSessionFacade } from "./vtt/map-session-facade";
 
-import { type StorageLike } from "$lib/utils/runtime-deps";
+import { type StorageLike } from "#lib/utils/runtime-deps.js";
 
 export interface MapSessionDependencies {
   mapStore: typeof mapStore;

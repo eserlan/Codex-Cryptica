@@ -1,9 +1,12 @@
 <script lang="ts">
-  import { randomSources } from "$lib/features/random";
-  import { recordTableRoll, tableDie } from "$lib/services/record-table-roll";
-  import { diceHistory } from "$lib/stores/dice-history.svelte";
-  import { soloTablePins } from "$lib/stores/solo-session-instance";
-  import { systemClock } from "$lib/utils/runtime-deps";
+  import { randomSources } from "#lib/features/random/index.js";
+  import {
+    recordTableRoll,
+    tableDie,
+  } from "#lib/services/record-table-roll.js";
+  import { diceHistory } from "#lib/stores/dice-history.svelte.js";
+  import { soloTablePins } from "#lib/stores/solo-session-instance.js";
+  import { systemClock } from "#lib/utils/runtime-deps.js";
   import type { RandomSource } from "random-source-engine";
   import SoloMenu from "./SoloMenu.svelte";
 

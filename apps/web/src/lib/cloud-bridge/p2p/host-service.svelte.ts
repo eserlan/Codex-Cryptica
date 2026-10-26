@@ -32,7 +32,7 @@ import {
   type IdGenerator,
   systemIdGenerator,
   systemClock,
-} from "$lib/utils/runtime-deps";
+} from "#lib/utils/runtime-deps.js";
 
 type HostDeps = {
   vault?: typeof defaultVault;

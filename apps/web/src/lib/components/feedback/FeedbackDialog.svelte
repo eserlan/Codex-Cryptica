@@ -1,10 +1,10 @@
 <script lang="ts">
   import type { FeedbackKind } from "feedback-engine";
-  import ModalShell from "$lib/components/ui/ModalShell.svelte";
-  import { DISCORD_URL, GITHUB_URL } from "$lib/config";
-  import type { FeedbackDialogStore } from "$lib/stores/ui/feedback-dialog.svelte";
+  import ModalShell from "#lib/components/ui/ModalShell.svelte";
+  import { DISCORD_URL, GITHUB_URL } from "#lib/config/index.js";
+  import type { FeedbackDialogStore } from "#lib/stores/ui/feedback-dialog.svelte.js";
 
-  let { store } = $props<{ store: FeedbackDialogStore }>();
+  let { store }: { store: FeedbackDialogStore } = $props();
 
   const KINDS: { value: FeedbackKind; label: string }[] = [
     { value: "problem", label: "Something isn't working" },

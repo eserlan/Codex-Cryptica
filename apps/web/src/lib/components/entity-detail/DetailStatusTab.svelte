@@ -1,33 +1,33 @@
 <script lang="ts">
   import type { Entity } from "schema";
-  import { vault } from "$lib/stores/vault.svelte";
+  import { vault } from "#lib/stores/vault.svelte.js";
   import { isEntityVisible } from "schema";
-  import MarkdownEditor from "$lib/components/MarkdownEditor.svelte";
-  import type { EntityIndexEntry } from "$lib/utils/entity-mention-detector";
-  import TemporalEditor from "$lib/components/timeline/TemporalEditor.svelte";
-  import ConnectionEditor from "$lib/components/connections/ConnectionEditor.svelte";
-  import ConnectionCreator from "$lib/components/connections/ConnectionCreator.svelte";
+  import MarkdownEditor from "#lib/components/MarkdownEditor.svelte";
+  import type { EntityIndexEntry } from "#lib/utils/entity-mention-detector.js";
+  import TemporalEditor from "#lib/components/timeline/TemporalEditor.svelte";
+  import ConnectionEditor from "#lib/components/connections/ConnectionEditor.svelte";
+  import ConnectionCreator from "#lib/components/connections/ConnectionCreator.svelte";
   import DetailProposals from "./proposals/DetailProposals.svelte";
   import GenerateRelatedButton from "./GenerateRelatedButton.svelte";
   import GenerateBusinessButton from "./GenerateBusinessButton.svelte";
   import EntityProposals from "./EntityProposals.svelte";
-  import { themeStore } from "$lib/stores/theme.svelte";
-  import { revisionService } from "$lib/services/RevisionService.svelte";
-  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
+  import { themeStore } from "#lib/stores/theme.svelte.js";
+  import { revisionService } from "#lib/services/RevisionService.svelte.js";
+  import { layoutUIStore } from "#lib/stores/ui/layout-ui.svelte.js";
   import { getTemporalLabel } from "./detail-tabs";
   import {
     buildConnectionNeighbors,
     toConnectionRows,
     vaultConnectionContext,
   } from "./entity-connections";
-  import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
+  import { canvasRegistry } from "#lib/stores/canvas-registry.svelte.js";
   import {
     dungeonDelveService,
     isDelveLocationEntity,
-  } from "$lib/services/dungeon-delve-service";
+  } from "#lib/services/dungeon-delve-service.js";
   import { goto } from "$app/navigation";
-  import { openCanvasFromZen } from "$lib/stores/ui/navigation";
-  import { getDelveCanvasLabel } from "$lib/utils/delve-terminology";
+  import { openCanvasFromZen } from "#lib/stores/ui/navigation.js";
+  import { getDelveCanvasLabel } from "#lib/utils/delve-terminology.js";
 
   let {
     entity,
@@ -36,14 +36,14 @@
     editContent = $bindable(),
     editStartDate = $bindable(),
     editEndDate = $bindable(),
-  } = $props<{
+  }: {
     entity: Entity;
     isEditing: boolean;
     editType: string;
     editContent: string;
     editStartDate: Entity["start_date"];
     editEndDate: Entity["end_date"];
-  }>();
+  } = $props();
 
   let editingConnectionTarget = $state<string | null>(null);
 

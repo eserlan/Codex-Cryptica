@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { guidedModeStore } from "$lib/stores/ui/guided-mode.svelte";
+  import { guidedModeStore } from "#lib/stores/ui/guided-mode.svelte.js";
 
   function toggle() {
     guidedModeStore.toggleGuidedMode();

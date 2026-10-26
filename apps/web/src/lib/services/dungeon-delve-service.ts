@@ -3,7 +3,7 @@ import {
   DelveFlowLayout,
   type DelveCanvasDocument,
 } from "generator-engine";
-import { type Clock, systemClock } from "$lib/utils/runtime-deps";
+import { type Clock, systemClock } from "#lib/utils/runtime-deps.js";
 
 export interface DungeonDelveServiceDeps {
   topologyGenerator?: DelveTopologyGenerator;

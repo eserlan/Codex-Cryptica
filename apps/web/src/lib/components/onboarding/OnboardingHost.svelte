@@ -1,28 +1,28 @@
 <script lang="ts">
-  import { browser } from "$app/environment";
+  import { browser } from "$app/env";
   import { page } from "$app/state";
   import { onMount, untrack } from "svelte";
   import type { InvitationChoice } from "onboarding-journey-engine";
-  import releases from "$lib/content/changelog/releases.json";
+  import releases from "#lib/content/changelog/releases.json";
   import {
     decideFirstRunAction,
     hasUnseenMinorRelease,
-  } from "$lib/app/onboarding/onboarding-orchestrator";
-  import { journeyStore } from "$lib/app/onboarding/journey/journey-runtime";
-  import { journeyMilestones } from "$lib/app/onboarding/journey/journey-milestones-runtime";
+  } from "#lib/app/onboarding/onboarding-orchestrator.js";
+  import { journeyStore } from "#lib/app/onboarding/journey/journey-runtime.js";
+  import { journeyMilestones } from "#lib/app/onboarding/journey/journey-milestones-runtime.js";
   import {
     cifPopout,
     helpAssistant,
     helpContext,
-  } from "$lib/stores/help-assistant/help-runtime";
-  import { helpHighlight } from "$lib/services/help-assistant/help-highlight.svelte";
-  import { isHelpAssistantAvailable } from "$lib/services/help-assistant/help-availability";
-  import { helpStore } from "$lib/stores/help.svelte";
-  import { vault } from "$lib/stores/vault.svelte";
-  import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
-  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
-  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-  import { tipsStore } from "$lib/app/onboarding/tips/tips-runtime";
+  } from "#lib/stores/help-assistant/help-runtime.js";
+  import { helpHighlight } from "#lib/services/help-assistant/help-highlight.svelte.js";
+  import { isHelpAssistantAvailable } from "#lib/services/help-assistant/help-availability.js";
+  import { helpStore } from "#lib/stores/help.svelte.js";
+  import { vault } from "#lib/stores/vault.svelte.js";
+  import { onboardingStore } from "#lib/stores/ui/onboarding.svelte.js";
+  import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
+  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+  import { tipsStore } from "#lib/app/onboarding/tips/tips-runtime.js";
   import GoalInvitation from "./GoalInvitation.svelte";
   import JourneyCard from "./JourneyCard.svelte";
   import CifTipChip from "./CifTipChip.svelte";

@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { focusTrap } from "$lib/actions/focusTrap";
-  import { soloSessionStore } from "$lib/stores/solo-session-instance";
-  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { focusTrap } from "#lib/actions/focusTrap.js";
+  import { soloSessionStore } from "#lib/stores/solo-session-instance.js";
+  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
 
   let { onclose }: { onclose: () => void } = $props();
 

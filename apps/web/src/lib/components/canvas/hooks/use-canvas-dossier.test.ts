@@ -7,19 +7,19 @@ vi.mock("../finalize-canvas-dossier", () => ({ finalizeCanvasDossier }));
 vi.mock("../canvas-image-export", () => ({
   exportCanvasImage: vi.fn(async () => new Blob(["img"])),
 }));
-vi.mock("$lib/services/delve-dossier-service", () => ({
+vi.mock("#lib/services/delve-dossier-service.js", () => ({
   delveDossierService: { finalize: vi.fn() },
 }));
-vi.mock("$lib/stores/ui/notification.svelte", () => ({
+vi.mock("#lib/stores/ui/notification.svelte.js", () => ({
   notificationStore: { notify: vi.fn() },
 }));
-vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
+vi.mock("#lib/stores/ui/modal-ui.svelte.js", () => ({
   modalUIStore: { openZenMode: vi.fn() },
 }));
-vi.mock("$lib/stores/theme.svelte", () => ({
+vi.mock("#lib/stores/theme.svelte.js", () => ({
   themeStore: { activeTheme: { id: "dark" } },
 }));
-vi.mock("$lib/utils/delve-terminology", () => ({
+vi.mock("#lib/utils/delve-terminology.js", () => ({
   getDelveTerm: vi.fn(() => "Dossier"),
 }));
 

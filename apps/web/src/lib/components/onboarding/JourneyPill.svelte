@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { JourneyStore } from "$lib/app/onboarding/journey/journey-store.svelte";
+  import type { JourneyStore } from "#lib/app/onboarding/journey/journey-store.svelte.js";
 
   /** The minimised card: a small pill that reopens guided setup. */
   let {

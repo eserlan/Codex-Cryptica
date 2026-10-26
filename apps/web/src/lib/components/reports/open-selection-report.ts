@@ -1,8 +1,8 @@
-import { vault } from "$lib/stores/vault.svelte";
-import { notificationStore } from "$lib/stores/ui/notification.svelte";
-import { reportPanelStore } from "$lib/stores/ui/report-panel.svelte";
-import { useGraphReportGeneration } from "$lib/components/graph/graph-report-generation";
-import { useTableReportGeneration } from "$lib/components/table/table-report-generation";
+import { vault } from "#lib/stores/vault.svelte.js";
+import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
+import { reportPanelStore } from "#lib/stores/ui/report-panel.svelte.js";
+import { useGraphReportGeneration } from "#lib/components/graph/graph-report-generation.js";
+import { useTableReportGeneration } from "#lib/components/table/table-report-generation.js";
 
 export function openSelectionReport(
   origin: "graph" | "table",

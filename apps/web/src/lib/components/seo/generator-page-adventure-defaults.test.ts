@@ -4,7 +4,7 @@ import {
   encounterConfig,
   magicItemConfig,
   oneShotConfig,
-} from "$lib/services/seo/generator-config";
+} from "#lib/services/seo/generator-config.js";
 
 describe("adventure form defaults", () => {
   it("preserves default choices and seeds only the plot twist from the quest", () => {

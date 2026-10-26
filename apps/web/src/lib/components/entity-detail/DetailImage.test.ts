@@ -19,7 +19,7 @@ const { mockOracle } = vi.hoisted(() => {
   };
 });
 
-vi.mock("$lib/stores/vault.svelte", () => ({
+vi.mock("#lib/stores/vault.svelte.js", () => ({
   vault: {
     isGuest: false,
     resolveImageUrl: vi.fn().mockResolvedValue(""),
@@ -30,47 +30,47 @@ vi.mock("$lib/stores/vault.svelte", () => ({
   },
 }));
 
-vi.mock("$lib/stores/oracle.svelte", () => ({
+vi.mock("#lib/stores/oracle.svelte.js", () => ({
   oracle: mockOracle,
 }));
 
-vi.mock("$lib/stores/debug.svelte", () => ({
+vi.mock("#lib/stores/debug.svelte.js", () => ({
   debugStore: {
     error: vi.fn(),
   },
 }));
 
-vi.mock("$lib/stores/theme.svelte", () => ({
+vi.mock("#lib/stores/theme.svelte.js", () => ({
   themeStore: {
     activeTheme: { id: "fantasy" },
   },
 }));
 
-vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
+vi.mock("#lib/stores/ui/modal-ui.svelte.js", () => ({
   modalUIStore: {
     openLightbox: vi.fn(),
   },
 }));
 
-vi.mock("$lib/stores/ui/discovery-policy.svelte", () => ({
+vi.mock("#lib/stores/ui/discovery-policy.svelte.js", () => ({
   discoveryPolicyStore: {
     aiDisabled: false,
   },
 }));
 
-vi.mock("$lib/cloud-bridge/p2p/host-service.svelte", () => ({
+vi.mock("#lib/cloud-bridge/p2p/host-service.svelte.js", () => ({
   p2pHost: {
     isHosting: false,
   },
 }));
 
-vi.mock("$lib/stores/map-session.svelte", () => ({
+vi.mock("#lib/stores/map-session.svelte.js", () => ({
   mapSession: {
     showImageToPlayers: vi.fn(),
   },
 }));
 
-vi.mock("$lib/stores/ui/notification.svelte", () => ({
+vi.mock("#lib/stores/ui/notification.svelte.js", () => ({
   notificationStore: {
     notify: vi.fn(),
   },
@@ -195,7 +195,7 @@ describe("DetailImage file picker", () => {
 
     await fireEvent.change(input!, { target: { files: [image] } });
 
-    const { vault } = await import("$lib/stores/vault.svelte");
+    const { vault } = await import("#lib/stores/vault.svelte.js");
     await waitFor(() => {
       expect(vault.saveImageToVault).toHaveBeenCalledWith(image, "entity-1");
       expect(vault.updateEntity).toHaveBeenCalledWith("entity-1", {
@@ -221,7 +221,7 @@ describe("DetailImage file picker", () => {
       },
     });
 
-    const { vault } = await import("$lib/stores/vault.svelte");
+    const { vault } = await import("#lib/stores/vault.svelte.js");
     await waitFor(() => {
       expect(vault.saveImageToVault).toHaveBeenCalledWith(image, "entity-1");
       expect(vault.updateEntity).toHaveBeenCalledWith("entity-1", {
@@ -244,7 +244,7 @@ describe("DetailImage file picker", () => {
 
     await fireEvent.change(input!, { target: { files: [file] } });
 
-    const { vault } = await import("$lib/stores/vault.svelte");
+    const { vault } = await import("#lib/stores/vault.svelte.js");
     expect(getByRole("alert").textContent).toContain(
       "Choose an image file to upload.",
     );

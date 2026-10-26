@@ -1,7 +1,7 @@
 <script lang="ts">
   import { getFactionRelations } from "./entity-card-variant";
   import FactionRosterMemberCard from "./FactionRosterMemberCard.svelte";
-  import { vault } from "$lib/stores/vault.svelte";
+  import { vault } from "#lib/stores/vault.svelte.js";
 
   let {
     entity,

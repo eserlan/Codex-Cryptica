@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { HexJourneyStore } from "$lib/stores/hex-crawl/hex-journey.svelte";
+  import type { HexJourneyStore } from "#lib/stores/hex-crawl/hex-journey.svelte.js";
   let { store, visible = true }: { store: HexJourneyStore; visible?: boolean } =
     $props();
   let hoursText = $state("");

@@ -2,11 +2,15 @@
   import type { FamilyTree } from "@codex/family-engine";
   import FamilyMemberCard from "./FamilyMemberCard.svelte";
 
-  let { tree, onSelect, onOpen } = $props<{
+  let {
+    tree,
+    onSelect,
+    onOpen,
+  }: {
     tree: FamilyTree;
     onSelect?: (id: string) => void;
     onOpen?: (id: string) => void;
-  }>();
+  } = $props();
 
   let parentsCollapsed = $state(false);
   let childrenCollapsed = $state(false);

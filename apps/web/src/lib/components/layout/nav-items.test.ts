@@ -3,13 +3,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { isToolActive, isViewActive, matchesPath, navItems } from "./nav-items";
-import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
-import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
-import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-import { vault } from "$lib/stores/vault.svelte";
-import { vaultRegistry } from "$lib/stores/vault-registry.svelte";
-import { quickNoteStore } from "$lib/stores/quicknote.svelte";
-import { sessionJournalStore } from "$lib/stores/session-journal.svelte";
+import { discoveryPolicyStore } from "#lib/stores/ui/discovery-policy.svelte.js";
+import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
+import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+import { vault } from "#lib/stores/vault.svelte.js";
+import { vaultRegistry } from "#lib/stores/vault-registry.svelte.js";
+import { quickNoteStore } from "#lib/stores/quicknote.svelte.js";
+import { sessionJournalStore } from "#lib/stores/session-journal.svelte.js";
 
 describe("nav items", () => {
   beforeEach(() => {

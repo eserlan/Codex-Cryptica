@@ -1,18 +1,18 @@
 <script lang="ts">
-  import { vault } from "$lib/stores/vault.svelte";
-  import { guestStore } from "$lib/stores/guest.svelte";
-  import { mapStore } from "$lib/stores/map.svelte";
-  import { mapSession } from "$lib/stores/map-session.svelte";
-  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { vault } from "#lib/stores/vault.svelte.js";
+  import { guestStore } from "#lib/stores/guest.svelte.js";
+  import { mapStore } from "#lib/stores/map.svelte.js";
+  import { mapSession } from "#lib/stores/map-session.svelte.js";
+  import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
   import TokenQuickStats from "./TokenQuickStats.svelte";
-  import SpatialImageDetails from "$lib/components/spatial/SpatialImageDetails.svelte";
+  import SpatialImageDetails from "#lib/components/spatial/SpatialImageDetails.svelte";
   import TokenNoteEditor from "./TokenNoteEditor.svelte";
   import { findTileBeneath, isNoteCollapsed } from "map-engine";
-  import { oracle } from "$lib/stores/oracle.svelte";
-  import { themeStore } from "$lib/stores/theme.svelte";
-  import { notificationStore } from "$lib/stores/ui/notification.svelte";
-  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-  import HexThisHexButton from "$lib/components/map/hex-crawl/HexThisHexButton.svelte";
+  import { oracle } from "#lib/stores/oracle.svelte.js";
+  import { themeStore } from "#lib/stores/theme.svelte.js";
+  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
+  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+  import HexThisHexButton from "#lib/components/map/hex-crawl/HexThisHexButton.svelte";
 
   const selectedToken = $derived(mapSession.selectedToken);
   const linkedEntity = $derived.by(() => {
@@ -173,7 +173,7 @@
       // Imported on demand: the generator pulls in the whole prompt/table
       // stack, which no VTT session should pay for until a GM asks for it.
       const { generateNoteEncounter } =
-        await import("$lib/services/vtt/note-encounter");
+        await import("#lib/services/vtt/note-encounter.js");
       const { body, aiFallback } = await generateNoteEncounter({
         themeId: themeStore.worldThemeId,
         context: mapStore.activeMap?.name,

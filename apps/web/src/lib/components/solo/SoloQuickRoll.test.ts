@@ -11,10 +11,10 @@ const env = vi.hoisted(() => ({
   history: { addResult: vi.fn(async (..._args: unknown[]) => {}) },
 }));
 
-vi.mock("$lib/stores/solo-session-instance", () => ({
+vi.mock("#lib/stores/solo-session-instance.js", () => ({
   soloSessionStore: env.store,
 }));
-vi.mock("$lib/stores/dice-history.svelte", () => ({
+vi.mock("#lib/stores/dice-history.svelte.js", () => ({
   diceHistory: env.history,
 }));
 

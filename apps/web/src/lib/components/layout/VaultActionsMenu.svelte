@@ -1,12 +1,14 @@
 <script lang="ts">
   import { tick } from "svelte";
-  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-  import { soloPlayGuard } from "$lib/stores/solo-session-instance";
-  import { openImportWindow } from "$lib/stores/ui/navigation";
+  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+  import { soloPlayGuard } from "#lib/stores/solo-session-instance.js";
+  import { openImportWindow } from "#lib/stores/ui/navigation.js";
 
-  let { orientation = "horizontal" } = $props<{
+  let {
+    orientation = "horizontal",
+  }: {
     orientation?: "horizontal" | "vertical";
-  }>();
+  } = $props();
 
   let isOpen = $state(false);
   let triggerEl = $state<HTMLButtonElement | null>(null);

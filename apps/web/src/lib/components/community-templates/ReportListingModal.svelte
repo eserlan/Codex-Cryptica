@@ -2,8 +2,8 @@
   import { onMount } from "svelte";
   import { ENTITY_TEMPLATE_LISTING_LIMITS } from "schema";
   import type { EntityTemplateReportInput } from "schema";
-  import { publicEntityTemplateDirectoryService } from "$lib/services/publishing/PublicEntityTemplateDirectoryService";
-  import { entityTemplatePublishRegistry } from "$lib/stores/publishing/entity-template-publish-registry";
+  import { publicEntityTemplateDirectoryService } from "#lib/services/publishing/PublicEntityTemplateDirectoryService.js";
+  import { entityTemplatePublishRegistry } from "#lib/stores/publishing/entity-template-publish-registry.js";
 
   let {
     listingId,

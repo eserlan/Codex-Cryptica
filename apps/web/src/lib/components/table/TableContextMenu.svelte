@@ -1,19 +1,26 @@
 <script lang="ts">
-  import { categories } from "$lib/stores/categories.svelte";
-  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
-  import { vault } from "$lib/stores/vault.svelte";
-  import { shelf } from "$lib/features/shelf";
+  import { categories } from "#lib/stores/categories.svelte.js";
+  import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
+  import { vault } from "#lib/stores/vault.svelte.js";
+  import { shelf } from "#lib/features/shelf/index.js";
 
-  let { x, y, selectedIds, onManageLabels, onChangeType, onDelete, onClose } =
-    $props<{
-      x: number;
-      y: number;
-      selectedIds: string[];
-      onManageLabels: () => void;
-      onChangeType: (type: string) => void;
-      onDelete: () => void;
-      onClose: () => void;
-    }>();
+  let {
+    x,
+    y,
+    selectedIds,
+    onManageLabels,
+    onChangeType,
+    onDelete,
+    onClose,
+  }: {
+    x: number;
+    y: number;
+    selectedIds: string[];
+    onManageLabels: () => void;
+    onChangeType: (type: string) => void;
+    onDelete: () => void;
+    onClose: () => void;
+  } = $props();
 
   let menuEl = $state<HTMLDivElement>();
   const isGuest = $derived(sessionModeStore.isGuestMode);

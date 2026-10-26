@@ -1,5 +1,5 @@
-import { FEATURE_HINTS, HINT_KEYS } from "$lib/config/help-content";
-import type { StorageLike } from "$lib/utils/runtime-deps";
+import { FEATURE_HINTS, HINT_KEYS } from "#lib/config/help-content.js";
+import type { StorageLike } from "#lib/utils/runtime-deps.js";
 
 /**
  * One-time hint for the first `@` in the Oracle composer. It is shown once per

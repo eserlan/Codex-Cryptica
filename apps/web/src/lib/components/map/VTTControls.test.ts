@@ -4,23 +4,23 @@ import { fireEvent, render, screen } from "@testing-library/svelte";
 import { tick } from "svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("$lib/components/vtt/EncounterManager.svelte", () => ({
+vi.mock("#lib/components/vtt/EncounterManager.svelte", () => ({
   default: function EncounterManagerMock() {
     return {};
   },
 }));
 
-vi.mock("$lib/cloud-bridge/p2p/host-service.svelte", () => ({
+vi.mock("#lib/cloud-bridge/p2p/host-service.svelte.js", () => ({
   p2pHost: {
     startHosting: vi.fn().mockResolvedValue("peer-123"),
   },
 }));
 
-vi.mock("$lib/utils/share-link", () => ({
+vi.mock("#lib/utils/share-link.js", () => ({
   startShareSession: vi.fn().mockResolvedValue("peer-123"),
 }));
 
-vi.mock("$lib/stores/vault.svelte", () => ({
+vi.mock("#lib/stores/vault.svelte.js", () => ({
   vault: {
     maps: {},
     allEntities: [],
@@ -29,7 +29,7 @@ vi.mock("$lib/stores/vault.svelte", () => ({
   },
 }));
 
-vi.mock("$lib/stores/map.svelte", () => ({
+vi.mock("#lib/stores/map.svelte.js", () => ({
   mapStore: {
     activeMapId: "map-1",
     activeMap: {
@@ -50,10 +50,10 @@ vi.mock("$lib/stores/map.svelte", () => ({
   },
 }));
 
-import { mapControlsUIStore } from "$lib/stores/ui/map-controls-ui.svelte";
+import { mapControlsUIStore } from "#lib/stores/ui/map-controls-ui.svelte.js";
 import VTTControls from "./VTTControls.svelte";
-import { mapSession } from "$lib/stores/map-session.svelte";
-import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { mapSession } from "#lib/stores/map-session.svelte.js";
+import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
 
 describe("VTTControls", () => {
   beforeEach(() => {
@@ -127,7 +127,7 @@ describe("VTTControls", () => {
 
   it("opens the feedback dialog from the tabletop with its area only", async () => {
     const { feedbackDialog } =
-      await import("$lib/stores/ui/feedback-dialog.svelte");
+      await import("#lib/stores/ui/feedback-dialog.svelte.js");
     const open = vi.spyOn(feedbackDialog, "open").mockImplementation(() => {});
     render(VTTControls);
     await fireEvent.click(

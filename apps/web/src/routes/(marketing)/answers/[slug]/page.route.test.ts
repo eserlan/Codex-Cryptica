@@ -3,9 +3,13 @@
 import { describe, expect, it, vi } from "vitest";
 import { render, screen, within } from "@testing-library/svelte";
 import Page from "./+page.svelte";
-import { AnswerConfigSchema } from "$lib/content/answers/schema";
+import { AnswerConfigSchema } from "#lib/content/answers/schema.js";
 
-vi.mock("$app/paths", () => ({ base: "" }));
+vi.mock("$app/paths", () => ({
+  base: "",
+  asset: (p: string) => p,
+  resolve: (p: string) => p,
+}));
 vi.mock("$app/environment", () => ({ browser: false }));
 
 function renderAnswer(sections: unknown[]) {

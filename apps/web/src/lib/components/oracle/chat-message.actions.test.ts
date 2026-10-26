@@ -5,7 +5,7 @@ const { revisionServiceMock } = vi.hoisted(() => ({
   revisionServiceMock: { pendingDraft: null as any },
 }));
 
-vi.mock("$lib/services/RevisionService.svelte", () => ({
+vi.mock("#lib/services/RevisionService.svelte.js", () => ({
   revisionService: revisionServiceMock,
   default: revisionServiceMock,
 }));

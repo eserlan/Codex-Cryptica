@@ -12,7 +12,7 @@ import {
   type TipsRecord,
 } from "onboarding-journey-engine";
 import type { HelpArea } from "help-engine";
-import type { StorageLike } from "$lib/utils/runtime-deps";
+import type { StorageLike } from "#lib/utils/runtime-deps.js";
 import type { TipContext } from "./tips-context";
 
 export type { TipContext } from "./tips-context";

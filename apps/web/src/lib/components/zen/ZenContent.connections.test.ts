@@ -2,15 +2,17 @@
 import { render, fireEvent } from "@testing-library/svelte";
 import { describe, it, expect, vi } from "vitest";
 import ZenContent from "./ZenContent.svelte";
-import { vault } from "$lib/stores/vault.svelte";
+import { vault } from "#lib/stores/vault.svelte.js";
 
 // Mock SvelteKit base path
 vi.mock("$app/paths", () => ({
   base: "",
+  asset: (p: string) => p,
+  resolve: (p: string) => p,
 }));
 
 // Mock stores
-vi.mock("$lib/stores/vault.svelte", () => {
+vi.mock("#lib/stores/vault.svelte.js", () => {
   const mockEntities: Record<string, any> = {
     "entity-1": {
       id: "entity-1",
@@ -74,7 +76,7 @@ vi.mock("$lib/stores/vault.svelte", () => {
   };
 });
 
-vi.mock("$lib/stores/theme.svelte", () => ({
+vi.mock("#lib/stores/theme.svelte.js", () => ({
   themeStore: {
     activeTheme: { id: "workspace" },
     jargon: {
@@ -84,13 +86,13 @@ vi.mock("$lib/stores/theme.svelte", () => ({
   },
 }));
 
-vi.mock("$lib/services/RevisionService.svelte", () => ({
+vi.mock("#lib/services/RevisionService.svelte.js", () => ({
   revisionService: {
     pendingDraft: null,
   },
 }));
 
-vi.mock("$lib/stores/canvas-registry.svelte", () => ({
+vi.mock("#lib/stores/canvas-registry.svelte.js", () => ({
   canvasRegistry: {
     findCanvasForEntity: (entityId: string) =>
       entityId === "delve-1" ? { slug: "delve-canvas" } : undefined,
@@ -98,7 +100,7 @@ vi.mock("$lib/stores/canvas-registry.svelte", () => ({
   },
 }));
 
-vi.mock("$lib/services/dungeon-delve-service", () => ({
+vi.mock("#lib/services/dungeon-delve-service.js", () => ({
   isDelveLocationEntity: (entity: { kind?: string }) =>
     entity.kind === "dungeon",
   dungeonDelveService: {
@@ -106,12 +108,12 @@ vi.mock("$lib/services/dungeon-delve-service", () => ({
   },
 }));
 
-vi.mock("$lib/components/MarkdownEditor.svelte", () => ({
+vi.mock("#lib/components/MarkdownEditor.svelte", () => ({
   default: vi.fn(),
 }));
 
 vi.mock(
-  "$lib/components/entity-detail/proposals/DetailProposals.svelte",
+  "#lib/components/entity-detail/proposals/DetailProposals.svelte",
   () => ({
     default: vi.fn(),
   }),

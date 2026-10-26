@@ -337,9 +337,9 @@ describe("GeneratorConfigForm", { timeout: 20000 }, () => {
 
   it("renders favourite generators in a dedicated section when starred", async () => {
     const { GeneratorFavoritesStore } =
-      await import("$lib/stores/ui/generator-favorites.svelte");
+      await import("#lib/stores/ui/generator-favorites.svelte.js");
     const { UIPersistence, UI_STORAGE_KEYS } =
-      await import("$lib/stores/ui/persistence");
+      await import("#lib/stores/ui/persistence.js");
 
     const storageMap = new Map<string, string>();
     const mockStorage = {
@@ -563,7 +563,7 @@ describe("GeneratorConfigForm", { timeout: 20000 }, () => {
 
   it("initializes gameSystem default from systemProfileStore vault profile if set", async () => {
     const { systemProfileStore } =
-      await import("$lib/stores/system-profile.svelte");
+      await import("#lib/stores/system-profile.svelte.js");
     systemProfileStore.vaultSystemId = "tales-of-the-valiant";
 
     const onsubmit = vi.fn();
@@ -597,7 +597,7 @@ describe("GeneratorConfigForm", { timeout: 20000 }, () => {
 
   it("defaults to system-neutral when vault profile is not set", async () => {
     const { systemProfileStore } =
-      await import("$lib/stores/system-profile.svelte");
+      await import("#lib/stores/system-profile.svelte.js");
     systemProfileStore.vaultSystemId = null;
 
     const onsubmit = vi.fn();
@@ -617,7 +617,7 @@ describe("GeneratorConfigForm", { timeout: 20000 }, () => {
 
   it("displays informational notice when AI generation is disabled and ToV system is selected", async () => {
     const { systemProfileStore } =
-      await import("$lib/stores/system-profile.svelte");
+      await import("#lib/stores/system-profile.svelte.js");
     systemProfileStore.vaultSystemId = "tales-of-the-valiant";
 
     render(GeneratorConfigForm, {
@@ -639,7 +639,7 @@ describe("GeneratorConfigForm", { timeout: 20000 }, () => {
 
   it("inherits ToV and displays party size and level inputs for encounter generator", async () => {
     const { systemProfileStore } =
-      await import("$lib/stores/system-profile.svelte");
+      await import("#lib/stores/system-profile.svelte.js");
     systemProfileStore.vaultSystemId = "tales-of-the-valiant";
 
     const onsubmit = vi.fn();

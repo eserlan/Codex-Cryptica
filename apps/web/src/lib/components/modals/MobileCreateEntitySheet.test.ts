@@ -3,10 +3,10 @@
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import MobileCreateEntitySheet from "./MobileCreateEntitySheet.svelte";
-import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-import { vault } from "$lib/stores/vault.svelte";
+import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+import { vault } from "#lib/stores/vault.svelte.js";
 
-vi.mock("$lib/stores/vault.svelte", () => ({
+vi.mock("#lib/stores/vault.svelte.js", () => ({
   vault: {
     isInitialized: true,
     isGuest: false,
@@ -19,7 +19,7 @@ vi.mock("$lib/stores/vault.svelte", () => ({
 
 const profile = vi.hoisted(() => ({ isTalesOfTheValiant: false }));
 
-vi.mock("$lib/stores/system-profile.svelte", () => ({
+vi.mock("#lib/stores/system-profile.svelte.js", () => ({
   systemProfileStore: {
     get isTalesOfTheValiant() {
       return profile.isTalesOfTheValiant;
@@ -27,7 +27,7 @@ vi.mock("$lib/stores/system-profile.svelte", () => ({
   },
 }));
 
-vi.mock("$lib/stores/categories.svelte", () => ({
+vi.mock("#lib/stores/categories.svelte.js", () => ({
   categories: {
     list: [
       { id: "event", label: "Event" },
@@ -36,32 +36,32 @@ vi.mock("$lib/stores/categories.svelte", () => ({
   },
 }));
 
-vi.mock("$lib/stores/theme.svelte", () => ({
+vi.mock("#lib/stores/theme.svelte.js", () => ({
   themeStore: {
     jargon: { entity: "entity", vault: "vault" },
     worldThemeId: "workspace",
   },
 }));
 
-vi.mock("$lib/stores/ui/modal-ui.svelte", async () => {
+vi.mock("#lib/stores/ui/modal-ui.svelte.js", async () => {
   const actual = await vi.importActual<
-    typeof import("$lib/stores/ui/modal-ui.svelte")
-  >("$lib/stores/ui/modal-ui.svelte");
+    typeof import("#lib/stores/ui/modal-ui.svelte.js")
+  >("#lib/stores/ui/modal-ui.svelte.js");
   return actual;
 });
 
-vi.mock("$lib/actions/focusTrap", () => ({
+vi.mock("#lib/actions/focusTrap.js", () => ({
   focusTrap: () => ({ destroy() {} }),
 }));
 
-vi.mock("$lib/services/EntityTemplateService.svelte", () => ({
+vi.mock("#lib/services/EntityTemplateService.svelte.js", () => ({
   entityTemplateService: {
     resolveTemplate: vi.fn(async () => ""),
     extractSummary: vi.fn(() => ""),
   },
 }));
 
-vi.mock("$lib/stores/proposer.svelte", () => ({
+vi.mock("#lib/stores/proposer.svelte.js", () => ({
   proposerStore: {
     draftEntity: null,
     clearDraftEntity: vi.fn(),
@@ -85,7 +85,7 @@ const mockEntityTemplateStore = vi.hoisted(() => ({
   effectiveDefaultFor: vi.fn((type: string) => `tmpl-${type}-default`),
 }));
 
-vi.mock("$lib/stores/entity-templates/entity-template-store.svelte", () => ({
+vi.mock("#lib/stores/entity-templates/entity-template-store.svelte.js", () => ({
   entityTemplateStore: mockEntityTemplateStore,
 }));
 
@@ -177,7 +177,7 @@ describe("MobileCreateEntitySheet", () => {
 
   it("passes selected templateId to entityTemplateService.resolveTemplate upon creating entity", async () => {
     const { entityTemplateService } =
-      await import("$lib/services/EntityTemplateService.svelte");
+      await import("#lib/services/EntityTemplateService.svelte.js");
     render(MobileCreateEntitySheet);
 
     const titleInput = screen.getByTestId("mobile-create-entity-title");

@@ -5,9 +5,9 @@ const { vault, load } = vi.hoisted(() => ({
   load: vi.fn(),
 }));
 
-vi.mock("$lib/stores/vault.svelte", () => ({ vault }));
+vi.mock("#lib/stores/vault.svelte.js", () => ({ vault }));
 
-vi.mock("$lib/stores/random-source-store.svelte", () => ({
+vi.mock("#lib/stores/random-source-store.svelte.js", () => ({
   RandomSourceStore: class {
     load = load;
   },

@@ -26,7 +26,7 @@ vi.mock("../explorer/EntityExplorer.svelte", () => ({
 // Stubbed for the same reason as the other two panels: mounting the real one
 // would drag in the whole vault and shelf dependency chain for a test about
 // which panel the host picks.
-vi.mock("$lib/components/shelf/ShelfPanel.svelte", () => ({
+vi.mock("#lib/components/shelf/ShelfPanel.svelte", () => ({
   default: function ShelfPanelMock() {
     return {
       $$render: () => '<div data-testid="shelf-panel">The Shelf</div>',
@@ -34,14 +34,14 @@ vi.mock("$lib/components/shelf/ShelfPanel.svelte", () => ({
   },
 }));
 
-vi.mock("$lib/stores/debug.svelte", () => ({
+vi.mock("#lib/stores/debug.svelte.js", () => ({
   debugStore: {
     error: vi.fn(),
   },
 }));
 
 import SidebarPanelHost from "./SidebarPanelHost.svelte";
-import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
+import { layoutUIStore } from "#lib/stores/ui/layout-ui.svelte.js";
 
 describe("SidebarPanelHost", () => {
   beforeEach(() => {

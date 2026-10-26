@@ -8,7 +8,7 @@
  * here; a test fails if a served, self-canonical slug is missing.
  */
 import type { GeneratorId } from "generator-engine";
-import type { ValidSlug } from "$lib/components/seo/generator-page-meta";
+import type { ValidSlug } from "#lib/components/seo/generator-page-meta.js";
 
 export const GENERATOR_CATEGORIES = [
   {

@@ -10,7 +10,7 @@ import type {
   GuestPresenceStatus,
   GuestSession,
 } from "../../stores/guest.svelte";
-import { systemClock } from "$lib/utils/runtime-deps";
+import { systemClock } from "#lib/utils/runtime-deps.js";
 
 type GuestRoster = Record<string, GuestSession>;
 

@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { themeStore } from "$lib/stores/theme.svelte";
-  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
+  import { themeStore } from "#lib/stores/theme.svelte.js";
+  import { layoutUIStore } from "#lib/stores/ui/layout-ui.svelte.js";
   import WorldThemePicker from "./WorldThemePicker.svelte";
 </script>
 

@@ -1,6 +1,6 @@
 import type { Core } from "cytoscape";
-import type { GraphStore } from "$lib/stores/graph.svelte";
-import type { ViewPreset } from "$lib/stores/view-presets";
+import type { GraphStore } from "#lib/stores/graph.svelte.js";
+import type { ViewPreset } from "#lib/stores/view-presets.js";
 import {
   captureLayoutSnapshot,
   countLayoutNodes,

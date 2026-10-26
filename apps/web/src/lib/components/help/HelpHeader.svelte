@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { helpStore } from "$lib/stores/help.svelte";
-  import ReportProblemButton from "$lib/components/feedback/ReportProblemButton.svelte";
+  import { helpStore } from "#lib/stores/help.svelte.js";
+  import ReportProblemButton from "#lib/components/feedback/ReportProblemButton.svelte";
 
   let { isStandalone = false } = $props();
 </script>

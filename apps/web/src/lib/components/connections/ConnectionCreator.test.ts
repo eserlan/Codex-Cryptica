@@ -2,15 +2,15 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import ConnectionCreator from "./ConnectionCreator.svelte";
-import { vault } from "$lib/stores/vault.svelte";
+import { vault } from "#lib/stores/vault.svelte.js";
 
-vi.mock("$lib/stores/vault.svelte", () => ({
+vi.mock("#lib/stores/vault.svelte.js", () => ({
   vault: {
     addConnection: vi.fn().mockResolvedValue(true),
   },
 }));
 
-vi.mock("$lib/components/ui/Autocomplete.svelte", async () => {
+vi.mock("#lib/components/ui/Autocomplete.svelte", async () => {
   const mod = await import("../entity-detail/MockAutocomplete.svelte");
   return {
     default: mod.default,

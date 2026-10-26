@@ -3,7 +3,7 @@
   import { StatBlockImportController } from "./stat-block-import-controller.svelte";
   import { defaultStatBlockImportDeps } from "./stat-block-import-deps";
   import StatBlockReview from "./StatBlockReview.svelte";
-  import { focusTrap } from "$lib/actions/focusTrap";
+  import { focusTrap } from "#lib/actions/focusTrap.js";
   import StatBlockPasteStep from "./StatBlockPasteStep.svelte";
 
   interface Props {

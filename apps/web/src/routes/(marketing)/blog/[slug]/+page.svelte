@@ -1,17 +1,17 @@
 <script lang="ts">
-  import { base } from "$app/paths";
-  import { themeStore } from "$lib/stores/theme.svelte";
-  import ArticleRenderer from "$lib/components/blog/ArticleRenderer.svelte";
-  import ResponsibleAISeriesNav from "$lib/components/blog/ResponsibleAISeriesNav.svelte";
-  import { RA_SERIES_SLUGS } from "$lib/content/responsible-ai-series";
-  import { safeJsonLd } from "$lib/utils/json-ld";
+  import { resolve } from "$app/paths";
+  import { themeStore } from "#lib/stores/theme.svelte.js";
+  import ArticleRenderer from "#lib/components/blog/ArticleRenderer.svelte";
+  import ResponsibleAISeriesNav from "#lib/components/blog/ResponsibleAISeriesNav.svelte";
+  import { RA_SERIES_SLUGS } from "#lib/content/responsible-ai-series.js";
+  import { safeJsonLd } from "#lib/utils/json-ld.js";
   import {
     SITE_AUTHOR,
     DISCORD_URL,
     REDDIT_URL,
     GITHUB_URL,
-  } from "$lib/config";
-  import SeoHead from "$lib/components/seo/SeoHead.svelte";
+  } from "#lib/config/index.js";
+  import SeoHead from "#lib/components/seo/SeoHead.svelte";
 
   let { data } = $props();
   const article = $derived(data.article);
@@ -32,6 +32,7 @@
   const DEFAULT_CARD_IMAGE_ALT =
     "A Codex Cryptica campaign vault showing an entity graph beside an open character record";
   const cardImage = $derived(article.image?.trim() || DEFAULT_CARD_IMAGE);
+
   const cardImageAlt = $derived(
     article.image?.trim()
       ? (article.imageAlt?.trim() ?? article.title)
@@ -92,7 +93,7 @@
   <div class="max-w-4xl mx-auto px-4 sm:px-6 py-20 md:py-32">
     <nav class="mb-12">
       <a
-        href="{base}/blog"
+        href="{resolve('')}/blog"
         class="inline-flex items-center gap-2 text-theme-primary hover:text-theme-text transition-colors text-xs font-bold group"
       >
         <span
@@ -251,7 +252,9 @@
           </p>
         </div>
         <a
-          href="{base}/?utm_source=blog-{article.slug}&utm_medium=blog-cta&utm_campaign=devlog"
+          href="{resolve(
+            '',
+          )}/?utm_source=blog-{article.slug}&utm_medium=blog-cta&utm_campaign=devlog"
           class="px-8 py-4 bg-theme-primary text-theme-bg font-bold font-header text-xs rounded hover:bg-theme-primary/90 transition-all active:scale-95 shadow-[0_0_30px_rgba(var(--color-primary-rgb),0.3)]"
         >
           Enter the Codex
