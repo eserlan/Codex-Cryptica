@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("$app/paths", () => ({
   base: "",
   asset: (p: string) => p,
-  resolve: (p: string) => p,
+  resolve: (p: string) => (p === "/(app)" ? "/preview/" : p),
 }));
 
 vi.mock("$app/navigation", () => ({ goto: vi.fn(), beforeNavigate: vi.fn() }));
@@ -71,6 +71,7 @@ describe("ZenModeModal close (standalone entity route)", () => {
     await waitFor(() => {
       expect(goto as unknown as ReturnType<typeof vi.fn>).toHaveBeenCalled();
     });
+    expect(goto).toHaveBeenCalledWith("/preview/");
   });
 
   it("navigates to modalUIStore.lastAppPath when tab cannot be closed", async () => {

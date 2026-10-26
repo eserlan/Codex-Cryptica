@@ -1,4 +1,5 @@
 import { browser } from "$app/env";
+import { resolve } from "$app/paths";
 import "../event-registrations";
 import { debugStore } from "../../stores/debug.svelte";
 import { IS_STAGING } from "../../config";
@@ -802,6 +803,7 @@ export function registerServiceWorker(deps?: {
   const performanceApi = deps?.performance ?? win.performance;
   const isDev = deps?.isDev ?? import.meta.env.DEV;
   const now = deps?.now ?? Date.now;
+  const serviceWorkerUrl = `${resolve("/(app)").replace(/\/+$/, "")}/service-worker.js`;
 
   let isVaultSessionActive = false;
   let registration: ServiceWorkerRegistration | undefined;
@@ -903,7 +905,7 @@ export function registerServiceWorker(deps?: {
     isRegistered = true;
     cleanup();
 
-    nav.serviceWorker.register("/service-worker.js").then(
+    nav.serviceWorker.register(serviceWorkerUrl).then(
       (registeredWorker) => {
         registration = registeredWorker;
         if (isDestroyed) return;

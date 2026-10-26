@@ -55,7 +55,7 @@
       setTimeout(() => {
         if (typeof window !== "undefined" && window.closed) return;
         modalUIStore.closeZenMode();
-        void goto(modalUIStore.lastAppPath ?? lastAppPath ?? "/");
+        void goto(modalUIStore.lastAppPath ?? lastAppPath ?? resolve("/(app)"));
       }, 50);
 
       return;
