@@ -7,6 +7,8 @@
     groupGeneratorCatalogue,
   } from "#lib/content/generator-catalogue.js";
 
+  const cleanBase = resolve("") === "/" ? "" : resolve("");
+
   const origin = "https://codexcryptica.com";
 
   const generators = groupGeneratorCatalogue().map((group) => ({
@@ -225,7 +227,7 @@
     icon: string;
   })}
     <a
-      href="{resolve('')}{item.href}"
+      href="{cleanBase}{item.href}"
       class="group block h-full rounded-xl border border-theme-border/60 bg-theme-surface/35 p-5 hover:border-theme-primary/60 hover:bg-theme-surface/55 transition-colors"
     >
       <span class="{item.icon} h-5 w-5 text-theme-primary mb-4 block"></span>
