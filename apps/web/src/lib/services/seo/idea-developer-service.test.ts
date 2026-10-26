@@ -138,14 +138,15 @@ describe("IdeaDeveloperService generation", () => {
       "Stress-test the premise constructively. Surface assumptions, likely points of confusion or playability risks, and ask focused questions. Do not dismiss the idea or silently rewrite its core.",
     ],
   ] as const)(
-    "preserves the original %s guidance when no pattern brief is sent",
+    "keeps the original %s guidance and adds the critique checks after it",
     async (mode, originalGuidance) => {
       const { service, transport } = makeService();
       await service.develop("A premise", mode);
 
       const prompt: string = transport.runModel.mock.calls[0][1];
-      expect(prompt).toContain(`Mode guidance: ${originalGuidance}`);
-      expect(prompt).not.toContain(CRITIQUE_CHECKS);
+      expect(prompt).toContain(
+        `Mode guidance: ${originalGuidance} ${CRITIQUE_CHECKS}`,
+      );
     },
   );
 
@@ -262,14 +263,20 @@ describe("IdeaDeveloperService critique checks", () => {
   };
 
   it.each(["assess", "challenge"] as const)(
-    "adds the experimental checks to %s mode when a pattern brief is supplied",
+    "adds the checks to %s mode exactly once, with or without a pattern brief",
     async (mode) => {
+      for (const options of [
+        {},
+        { patternBrief: "A familiar pattern brief" },
+      ]) {
+        const { service, transport } = makeService(critique);
+        await service.develop("Two guilds share a bridge", mode, options);
+        const prompt: string = transport.runModel.mock.calls[0][1];
+        expect(prompt.split(CRITIQUE_CHECKS)).toHaveLength(2);
+      }
       const { service, transport } = makeService(critique);
-      await service.develop("Two guilds share a bridge", mode, {
-        patternBrief: "A familiar pattern brief",
-      });
+      await service.develop("Two guilds share a bridge", mode);
       const prompt: string = transport.runModel.mock.calls[0][1];
-      expect(prompt).toContain(CRITIQUE_CHECKS);
       expect(prompt).toContain("a deadline, trigger or worsening situation");
       expect(prompt).toContain("no one beyond the central figures");
       expect(prompt).toContain("sincere grievance");
@@ -288,13 +295,18 @@ describe("IdeaDeveloperService critique checks", () => {
   });
 
   it.each(["develop", "explore", "playable"] as const)(
-    "leaves %s mode's guidance unchanged",
+    "leaves %s mode without the checks, even with a pattern brief",
     async (mode) => {
-      const { service, transport } = makeService();
-      await service.develop("A village in a giant", mode);
-      expect(transport.runModel.mock.calls[0][1]).not.toContain(
-        CRITIQUE_CHECKS,
-      );
+      for (const options of [
+        {},
+        { patternBrief: "A familiar pattern brief" },
+      ]) {
+        const { service, transport } = makeService();
+        await service.develop("A village in a giant", mode, options);
+        expect(transport.runModel.mock.calls[0][1]).not.toContain(
+          CRITIQUE_CHECKS,
+        );
+      }
     },
   );
 });

@@ -75,7 +75,7 @@ Run on 23 October 2026 with `bun run eval:idea-patterns --detect-only` against t
 
 ## Full comparison on GPT-6 Luna
 
-Run on 23 October 2026 with `bun scripts/idea-pattern-ab.ts --modes assess,challenge` against the deployed worker, straight after GPT-6 Luna was deployed (PR 4363): 10 ideas × 2 modes, baseline (1 call) against assisted (2 calls). All 60 calls were answered by `luna-fast`, with no Gemini fallbacks. One run per idea and mode. Full output: [3466-idea-pattern-gpt6-run.md](./3466-idea-pattern-gpt6-run.md).
+Run on 23 October 2026 with `bun scripts/idea-pattern-ab.ts --modes assess,challenge` against the deployed worker, straight after GPT-6 Luna was deployed (PR 4363): 10 ideas × 2 modes, baseline (1 call) against assisted (2 calls). All 60 calls were answered by `luna-fast`, with no Gemini fallbacks. One run per idea and mode. Excerpt with the quoted pairs: [3466-idea-pattern-gpt6-run.md](./3466-idea-pattern-gpt6-run.md).
 
 The model changed between the pattern-finding run (GPT-5.6 Luna) and this one, so differences between them mix the model with the method.
 
