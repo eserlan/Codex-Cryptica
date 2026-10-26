@@ -41,6 +41,7 @@ const chunk404 = {
 describe("stale-build recovery script in app.html", () => {
   it("is registered before SvelteKit's head output", () => {
     expect(recoveryScript).toBeDefined();
+    expect(recoveryScript).not.toContain("%sveltekit.");
     expect(appHtml.indexOf("// Stale-build recovery")).toBeLessThan(
       appHtml.indexOf("%sveltekit.head%"),
     );

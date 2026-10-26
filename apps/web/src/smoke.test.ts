@@ -12,6 +12,26 @@ describe("Web App Smoke Test", () => {
     expect(appHtmlContent).not.toContain('data-sveltekit-preload-data="hover"');
   });
 
+  it("uses each SvelteKit placeholder exactly once, never inside a script", () => {
+    const appHtmlContent = fs.readFileSync(
+      path.resolve(__dirname, "app.html"),
+      "utf-8",
+    );
+
+    // SvelteKit fills only the first occurrence, so a second copy (even in a
+    // comment) receives the whole <head> and leaves the real one as text.
+    for (const placeholder of ["%sveltekit.head%", "%sveltekit.body%"]) {
+      expect(appHtmlContent.split(placeholder)).toHaveLength(2);
+    }
+    const inlineScripts = [
+      ...appHtmlContent.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/g),
+    ].map((match) => match[1]);
+    expect(inlineScripts.length).toBeGreaterThan(0);
+    for (const script of inlineScripts) {
+      expect(script).not.toMatch(/%sveltekit\.[a-z.]+%/);
+    }
+  });
+
   it("should bootstrap first-paint font stacks to prevent heading FOUT (#3145)", () => {
     const appHtmlPath = path.resolve(__dirname, "app.html");
     const appHtmlContent = fs.readFileSync(appHtmlPath, "utf-8");
