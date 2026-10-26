@@ -29,7 +29,8 @@ Run these sweeps on every review; they are where most second and third review ro
 
 0. **Mechanical checks first**: Run `bun run lint:changed`. Besides ESLint and Prettier it runs
    `scripts/check-ui-patterns.mjs` on the changed lines (theme contrast, `renderMarkdown`
-   without `allowImages: false`, responsive `order-*`, `setTimeout` without cleanup), and the
+   without `allowImages: false`, responsive `order-*`, `setTimeout` without cleanup, root-path `goto`/`redirect` without
+   `resolve()`), and the
    discovery audit when discovery content changes. `test:changed` covers the sitemap against the
    discovery registry. See [docs/local-pr-checks.md](../../../docs/local-pr-checks.md). Do not
    re-derive by hand what these already compute, but the UI pattern rules are regex heuristics:

@@ -6,11 +6,11 @@ push. Judgement calls stay in the `codex-review` skill sweeps.
 
 ## What runs where
 
-| Check                                      | Runs in                                         | Catches                                                                                       |
-| ------------------------------------------ | ----------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| `scripts/check-ui-patterns.mjs`            | `bun run lint:changed`                          | Low theme contrast, remote Markdown images, split visual/keyboard order, timers never cleared |
-| `sitemap-discovery.test.ts`                | `bun run test:changed`                          | A live, indexable discovery registry entry that is missing from the sitemap                   |
-| `scripts/discovery-audit.mjs`, answer mesh | `bun run lint:changed` (discovery content only) | Duplicate intents, broken reciprocal links                                                    |
+| Check                                      | Runs in                                         | Catches                                                                                                                       |
+| ------------------------------------------ | ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `scripts/check-ui-patterns.mjs`            | `bun run lint:changed`                          | Low theme contrast, remote Markdown images, split visual/keyboard order, timers never cleared, root paths without `resolve()` |
+| `sitemap-discovery.test.ts`                | `bun run test:changed`                          | A live, indexable discovery registry entry that is missing from the sitemap                                                   |
+| `scripts/discovery-audit.mjs`, answer mesh | `bun run lint:changed` (discovery content only) | Duplicate intents, broken reciprocal links                                                                                    |
 
 ## UI pattern rules
 
@@ -32,6 +32,10 @@ untracked files are checked in full.
   reader order no longer match what people see.
 - **timer-cleanup**: a `.svelte` `setTimeout` whose stored ID is not cleared in
   an `onDestroy` handler or `$effect` cleanup.
+- **base-path**: a string literal starting with `/` passed to `goto`,
+  `pushState`, `replaceState`, `preloadData`, `preloadCode`, `redirect` or
+  `serviceWorker.register`. Build it with `resolve()` from `$app/paths` so
+  base-path deployments keep working (PR #4412). Applies to `.ts` files too.
 
 These rules match source text, not a syntax tree, so a pass is not proof:
 spreads, comments and shadowed names can hide a problem. Ambiguous shapes are

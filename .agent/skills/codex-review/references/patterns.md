@@ -636,7 +636,8 @@ class FeatureStore {
   the SvelteKit 3 migration they lost the service worker and stranded the Zen Mode fallback
   (PR #4412).
 - **Pattern**: Build in-app URLs with `resolve()` from `$app/paths`, including service-worker
-  registration and `goto` fallbacks. Grep the diff for string literals starting with `/`.
+  registration and `goto` fallbacks. `lint:changed` flags literal root paths in navigation,
+  `redirect` and service-worker calls; still check `href` and `fetch` by hand.
 
 ### User-Agent Sniffing vs Environment Flags
 

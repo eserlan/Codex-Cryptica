@@ -186,6 +186,32 @@ export function remoteImageProblems(source) {
   return problems;
 }
 
+/** Calls whose URL argument is resolved against the site root, by argument index. */
+const ROOT_PATH_CALLS = [
+  [/\b(?:goto|pushState|replaceState|preloadData|preloadCode)\s*\(/g, 0],
+  [/\bredirect\s*\(/g, 1],
+  [/\bserviceWorker\s*\.\s*register\s*\(/g, 0],
+];
+
+/** Root-relative string URLs that skip `resolve()` and break base-path deployments. */
+export function basePathProblems(source) {
+  const problems = [];
+  for (const [pattern, index] of ROOT_PATH_CALLS) {
+    for (const match of source.matchAll(pattern)) {
+      const url = callArguments(source, match.index + match[0].length - 1)[
+        index
+      ];
+      if (!url || !/^["'`]\/(?!\/)/.test(url)) continue;
+      problems.push({
+        rule: "base-path",
+        line: source.slice(0, match.index).split("\n").length,
+        message: `${match[0].replace(/\s*\($/, "")}(${url.split(/[,\n]/)[0]}) hard-codes a root path, which breaks base-path deployments. Build the URL with resolve() from $app/paths.`,
+      });
+    }
+  }
+  return problems;
+}
+
 /** Split call arguments while ignoring commas inside nested syntax and comments. */
 function callArguments(source, openIndex) {
   const args = [];
@@ -363,7 +389,10 @@ export function withoutIgnored(problems, source) {
 }
 
 export function checkSource(source, file, themes) {
-  const problems = [...remoteImageProblems(source)];
+  const problems = [
+    ...remoteImageProblems(source),
+    ...basePathProblems(source),
+  ];
   if (file.endsWith(".svelte")) {
     const variants = classVariants(source);
     for (const variant of variants)

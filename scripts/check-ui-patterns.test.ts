@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, it } from "bun:test";
 import {
+  basePathProblems,
   changedLines,
   checkSource,
   classVariants,
@@ -230,6 +231,31 @@ describe("pattern rules", () => {
       ),
     ).toHaveLength(0);
     expect(timerProblems("setTimeout(f, 1)", "helper.ts")).toHaveLength(0);
+  });
+
+  it("flags root-relative navigation and service-worker URLs (PR #4412)", () => {
+    for (const source of [
+      'goto("/map");',
+      "goto(`/canvas/${slug}`, { replaceState: true });",
+      "replaceState('/', {});",
+      'throw redirect(307, "/login");',
+      'navigator.serviceWorker.register("/service-worker.js");',
+    ])
+      expect(basePathProblems(source)).toHaveLength(1);
+  });
+
+  it("accepts resolved, relative, external and non-literal URLs", () => {
+    for (const source of [
+      'goto(resolve("/map"));',
+      "goto(`${base}/map`);",
+      "goto(url);",
+      'goto("?tab=lore");',
+      'goto("//cdn.example.com/x");',
+      'register("/x");',
+      "redirect(307, resolve('/login'));",
+      'navigator.serviceWorker.register(`${resolve("/(app)")}/service-worker.js`);',
+    ])
+      expect(basePathProblems(source)).toEqual([]);
   });
 
   it("respects a ui-check-ignore comment on or above the line", () => {
