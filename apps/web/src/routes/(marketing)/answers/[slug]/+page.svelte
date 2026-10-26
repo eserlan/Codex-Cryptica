@@ -1,6 +1,6 @@
 <script lang="ts">
   import { browser } from "$app/env";
-  import { resolve } from "$app/paths";
+  import { basePath } from "#lib/utils/base-path.js";
   import SeoHead from "#lib/components/seo/SeoHead.svelte";
   import { buildAbsoluteUrl } from "#lib/seo/site.js";
   import { answerPath } from "#lib/content/answers/registry.js";
@@ -31,7 +31,7 @@
   let { data }: { data: PageData } = $props();
 
   // A bare "/" base would make every link protocol-relative ("//answers/...").
-  const cleanBase = resolve("") === "/" ? "" : resolve("");
+  const cleanBase = basePath();
 
   const inlineLinkClass =
     "text-theme-primary underline decoration-theme-primary/40 underline-offset-2 transition-colors hover:decoration-theme-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-accent";

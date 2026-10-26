@@ -1,7 +1,7 @@
 <script lang="ts">
   import { COMMUNITY_QUORUM } from "#lib/services/community/community-aggregates.js";
   import { formatAnswerDate } from "#lib/content/answers/sort.js";
-  import { resolve } from "$app/paths";
+  import { basePath } from "#lib/utils/base-path.js";
 
   /**
    * A community-validated answer. Rows deliberately share the standard
@@ -21,7 +21,7 @@
 
   let { favourites }: { favourites: CommunityFavourite[] } = $props();
 
-  const cleanBase = resolve("") === "/" ? "" : resolve("");
+  const cleanBase = basePath();
   // Quorum is enforced here as well as at fetch time (defence in depth):
   // a thin community signal must never render as a one-item strip.
   let visible = $derived(favourites.length >= COMMUNITY_QUORUM);

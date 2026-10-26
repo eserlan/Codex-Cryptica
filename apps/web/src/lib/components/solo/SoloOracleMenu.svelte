@@ -9,7 +9,7 @@
   import { oracle } from "#lib/stores/oracle.svelte.js";
   import { vault } from "#lib/stores/vault.svelte.js";
   import { sessionJournalStore } from "#lib/stores/session-journal.svelte.js";
-  import { resolve } from "$app/paths";
+  import { basePath } from "#lib/utils/base-path.js";
   import { soloSessionStore } from "#lib/stores/solo-session-instance.js";
   import SoloMenu from "./SoloMenu.svelte";
 
@@ -84,7 +84,7 @@
       <li class="mt-1 border-t border-theme-border/40 pt-1">
         <!-- An explicit choice: Adventure Mode is never started by default (spec 174, US5). -->
         <a
-          href="{resolve('')}/adventure"
+          href="{basePath()}/adventure"
           role="menuitem"
           class="block w-full rounded-md px-3 py-1.5 text-left text-sm text-theme-text hover:bg-theme-primary/10"
           data-testid="solo-adventure-entry"

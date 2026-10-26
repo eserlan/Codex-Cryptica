@@ -11,7 +11,7 @@
   import VaultSettings from "./VaultSettings.svelte";
   import PublishingSettings from "./PublishingSettings.svelte";
   import { vault } from "#lib/stores/vault.svelte.js";
-  import { resolve } from "$app/paths";
+  import { basePath } from "#lib/utils/base-path.js";
   import { VERSION, CODENAME } from "#lib/config/index.js";
   import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
   import { focusTrap } from "#lib/actions/focusTrap.js";
@@ -487,7 +487,7 @@
                 </button>
 
                 <a
-                  href="{resolve('')}/changelog"
+                  href="{basePath()}/changelog"
                   target="_blank"
                   rel="noopener noreferrer"
                   class="mt-3 flex items-center justify-between p-4 bg-chrome-surface border border-chrome-border hover:border-chrome-accent transition-all rounded group"
@@ -518,7 +518,7 @@
               </h3>
               <div class="flex flex-col gap-3">
                 <a
-                  href="{resolve('')}/privacy"
+                  href="{basePath()}/privacy"
                   target="_blank"
                   rel="noopener noreferrer"
                   class="flex items-center justify-between p-3 bg-chrome-surface border border-chrome-border hover:border-chrome-accent transition-all rounded group"
@@ -533,7 +533,7 @@
                   ></span>
                 </a>
                 <a
-                  href="{resolve('')}/terms"
+                  href="{basePath()}/terms"
                   target="_blank"
                   rel="noopener noreferrer"
                   class="flex items-center justify-between p-3 bg-chrome-surface border border-chrome-border hover:border-chrome-accent transition-all rounded group"

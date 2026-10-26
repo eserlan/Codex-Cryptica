@@ -2,7 +2,7 @@
   import "../../app.css";
   import { onMount, onDestroy } from "svelte";
   import { browser } from "$app/env";
-  import { resolve } from "$app/paths";
+  import { basePath } from "#lib/utils/base-path.js";
   import { page } from "$app/state";
   import { SCHEMA_ORG } from "#lib/config/index.js";
   import { safeJsonLd } from "#lib/utils/json-ld.js";
@@ -75,12 +75,12 @@
 </script>
 
 <svelte:head>
-  <link rel="help" href="{resolve('')}/llms.txt" />
+  <link rel="help" href="{basePath()}/llms.txt" />
   <link
     rel="alternate"
     type="application/atom+xml"
     title="Codex Cryptica answers and blog"
-    href="{resolve('')}/feed.xml"
+    href="{basePath()}/feed.xml"
   />
   <!-- eslint-disable-next-line svelte/no-at-html-tags -->
   {@html `<scr` +

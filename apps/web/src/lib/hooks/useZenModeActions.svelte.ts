@@ -1,5 +1,5 @@
 import { vault as defaultVault } from "#lib/stores/vault.svelte.js";
-import { resolve } from "$app/paths";
+import { basePath } from "#lib/utils/base-path.js";
 import { openEntityPopout } from "#lib/utils/zen-popout.js";
 import type { Entity } from "schema";
 import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
@@ -118,7 +118,7 @@ export function createZenModeActions(
     openEntityPopout(
       vault.activeVaultId ?? "guest",
       entityForPopout,
-      resolve(""),
+      basePath(),
       vault.isGuest,
     );
 

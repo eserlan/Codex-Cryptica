@@ -2,6 +2,7 @@
   import "../../app.css";
   import { browser } from "$app/env";
   import { resolve } from "$app/paths";
+  import { basePath } from "#lib/utils/base-path.js";
   import { page } from "$app/state";
   import { onMount, onDestroy } from "svelte";
   import { shelf } from "#lib/features/shelf/index.js";
@@ -94,9 +95,10 @@
   let serviceWorkerSession: VaultServiceWorkerSession | undefined;
 
   const isVaultCacheSessionActive = () => {
+    const base = basePath();
     const pathname =
-      resolve("") && page.url.pathname.startsWith(resolve(""))
-        ? page.url.pathname.slice(resolve("").length) || "/"
+      base && page.url.pathname.startsWith(base)
+        ? page.url.pathname.slice(base.length) || "/"
         : page.url.pathname;
 
     return (

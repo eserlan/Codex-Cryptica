@@ -15,7 +15,7 @@
     return cut.slice(0, max - 3) + "...";
   }
 
-  import { resolve } from "$app/paths";
+  import { basePath } from "#lib/utils/base-path.js";
   import {
     PublicDirectoryService,
     publicDirectoryService,
@@ -561,7 +561,7 @@
 
     {#if existingListing}
       <a
-        href="{resolve('')}/worlds"
+        href="{basePath()}/worlds"
         class="inline-flex items-center gap-1.5 self-start text-xs font-bold uppercase tracking-wider text-theme-primary underline hover:text-theme-primary/80 transition-colors"
         data-testid="public-listing-view-directory"
       >

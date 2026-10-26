@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { resolve } from "$app/paths";
+  import { basePath } from "#lib/utils/base-path.js";
   import { themeStore } from "#lib/stores/theme.svelte.js";
   import { SITE_AUTHOR } from "#lib/config/index.js";
   import {
@@ -35,7 +35,7 @@
     rel="alternate"
     type="application/atom+xml"
     title="Codex Cryptica blog"
-    href="{resolve('')}/blog/feed.xml"
+    href="{basePath()}/blog/feed.xml"
   />
 </svelte:head>
 
@@ -69,7 +69,7 @@
         Learn how to secure your lore and master the spatial brain.
       </p>
       <a
-        href="{resolve('')}/blog/feed.xml"
+        href="{basePath()}/blog/feed.xml"
         class="mt-4 inline-flex items-center gap-2 text-sm text-theme-primary hover:underline"
       >
         <span class="icon-[lucide--rss] h-4 w-4" aria-hidden="true"></span>
@@ -95,7 +95,7 @@
           </p>
         </div>
         <a
-          href="{resolve('')}/responsible-ai-worldbuilding"
+          href="{basePath()}/responsible-ai-worldbuilding"
           class="inline-flex items-center gap-2 self-start sm:self-center px-4 py-2 text-xs font-bold font-header bg-theme-primary text-theme-bg rounded-lg hover:brightness-110 active:scale-95 transition-all shadow-md shrink-0"
         >
           Read the Pillar
@@ -133,7 +133,7 @@
             class="text-2xl md:text-3xl font-header font-bold group-hover:text-theme-primary transition-colors"
           >
             <a
-              href="{resolve('')}/blog/{article.slug}"
+              href="{basePath()}/blog/{article.slug}"
               class="after:absolute after:inset-0"
             >
               {article.title}
@@ -173,7 +173,7 @@
             class="text-2xl md:text-3xl font-header font-bold mb-3"
           >
             <a
-              href="{resolve('')}/responsible-ai-worldbuilding"
+              href="{basePath()}/responsible-ai-worldbuilding"
               class="hover:text-theme-primary transition-colors"
             >
               Responsible AI worldbuilding
@@ -191,7 +191,7 @@
                   >{String(i + 1).padStart(2, "0")}</span
                 >
                 <a
-                  href="{resolve('')}/blog/{article.slug}"
+                  href="{basePath()}/blog/{article.slug}"
                   class="text-theme-text hover:text-theme-primary transition-colors"
                 >
                   {article.title}

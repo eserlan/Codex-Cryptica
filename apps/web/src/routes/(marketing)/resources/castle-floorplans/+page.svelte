@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { resolve } from "$app/paths";
+  import { basePath } from "#lib/utils/base-path.js";
   import SeoHead from "#lib/components/seo/SeoHead.svelte";
   import { buildAbsoluteUrl } from "#lib/seo/site.js";
   import {
@@ -12,7 +12,7 @@
     buildCastleFloorplansBreadcrumbJsonLd,
   } from "#lib/content/resources/json-ld.js";
 
-  const cleanBase = resolve("") === "/" ? "" : resolve("");
+  const cleanBase = basePath();
 
   const TITLE = "Great Castle Floorplans for RPGs and Worldbuilding";
   const DESCRIPTION =

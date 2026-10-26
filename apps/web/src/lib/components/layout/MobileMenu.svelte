@@ -1,6 +1,6 @@
 <script lang="ts">
   import { fly, fade } from "svelte/transition";
-  import { resolve } from "$app/paths";
+  import { basePath } from "#lib/utils/base-path.js";
   import { page } from "$app/state";
   import { PATREON_URL } from "#lib/config/index.js";
   import VaultControls from "#lib/components/VaultControls.svelte";
@@ -232,7 +232,7 @@
           </a>
         {/if}
         <a
-          href="{resolve('')}/explore"
+          href="{basePath()}/explore"
           class="flex items-center gap-3 p-2 text-sm font-mono text-theme-secondary hover:text-theme-primary transition-colors focus:outline-none focus:ring-1 focus:ring-theme-primary rounded"
           onclick={close}
         >
@@ -253,7 +253,7 @@
           Help
         </button>
         <a
-          href="{resolve('')}/privacy"
+          href="{basePath()}/privacy"
           target="_blank"
           rel="noopener noreferrer"
           class="flex items-center gap-3 p-2 text-sm font-mono text-theme-secondary hover:text-theme-primary transition-colors focus:outline-none focus:ring-1 focus:ring-theme-primary rounded"
@@ -262,7 +262,7 @@
           Privacy
         </a>
         <a
-          href="{resolve('')}/terms"
+          href="{basePath()}/terms"
           target="_blank"
           rel="noopener noreferrer"
           class="flex items-center gap-3 p-2 text-sm font-mono text-theme-secondary hover:text-theme-primary transition-colors focus:outline-none focus:ring-1 focus:ring-theme-primary rounded"

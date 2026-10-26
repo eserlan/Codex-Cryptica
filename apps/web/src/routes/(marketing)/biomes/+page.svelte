@@ -1,7 +1,7 @@
 <script lang="ts">
   import { browser, building } from "$app/env";
   import { beforeNavigate, goto } from "$app/navigation";
-  import { resolve } from "$app/paths";
+  import { basePath } from "#lib/utils/base-path.js";
   import { page } from "$app/state";
   import { getBiome, type FilterFacet } from "biome-engine";
   import { biomeExplorer as store } from "#lib/stores/biome-explorer-instance.js";
@@ -15,7 +15,7 @@
   import SeoHead from "#lib/components/seo/SeoHead.svelte";
   import { buildAbsoluteUrl } from "#lib/seo/site.js";
 
-  const cleanBase = $derived(resolve("") === "/" ? "" : resolve(""));
+  const cleanBase = $derived(basePath());
 
   let query = $state("");
   let filters = $state<FilterFacet[]>([]);

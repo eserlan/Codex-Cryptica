@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { resolve } from "$app/paths";
+  import { basePath } from "#lib/utils/base-path.js";
   import SoloSetupDialog from "./SoloSetupDialog.svelte";
   import {
     soloPlayGuard,
@@ -96,7 +96,7 @@
 
     {#if !discoveryPolicyStore.aiDisabled}
       <a
-        href="{resolve('')}/adventure"
+        href="{basePath()}/adventure"
         class="block rounded-lg border border-theme-border p-4 hover:border-theme-primary/60"
         data-testid="play-adventure-mode"
       >

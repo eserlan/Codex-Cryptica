@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { resolve } from "$app/paths";
+  import { basePath } from "#lib/utils/base-path.js";
   import { fly } from "svelte/transition";
 
   let { data } = $props();
@@ -123,7 +123,7 @@
         Cryptica today.
       </p>
       <a
-        href="{resolve('')}/?ref=changelog"
+        href="{basePath()}/?ref=changelog"
         class="inline-block px-12 py-5 bg-theme-primary text-theme-bg font-bold font-header text-sm rounded-lg hover:bg-theme-primary/90 hover:shadow-[0_0_30px_rgba(var(--color-theme-primary-rgb),0.3)] transition-all active:scale-95"
       >
         Enter Workspace

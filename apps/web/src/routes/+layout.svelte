@@ -1,6 +1,6 @@
 <script lang="ts">
   import "../app.css";
-  import { resolve } from "$app/paths";
+  import { basePath } from "#lib/utils/base-path.js";
   import { onMount } from "svelte";
   import FeedbackHost from "#lib/components/feedback/FeedbackHost.svelte";
   import { watchShellCanonical } from "#lib/seo/shell-canonical.js";
@@ -43,7 +43,7 @@
     rel="sitemap"
     type="application/xml"
     title="Sitemap"
-    href="{resolve('')}/sitemap.xml"
+    href="{basePath()}/sitemap.xml"
   />
 </svelte:head>
 

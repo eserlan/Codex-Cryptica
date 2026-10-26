@@ -1,5 +1,5 @@
 import { browser } from "$app/env";
-import { resolve } from "$app/paths";
+import { basePath } from "#lib/utils/base-path.js";
 import { VERSION } from "#lib/config/index.js";
 import { debugStore } from "#lib/stores/debug.svelte.js";
 import {
@@ -321,7 +321,7 @@ export class HelpStore {
     const left = window.screenX + (window.outerWidth - width) / 2;
     const top = window.screenY + (window.outerHeight - height) / 2;
 
-    const url = `${window.location.origin}${resolve("")}/help`;
+    const url = `${window.location.origin}${basePath()}/help`;
     const features = `width=${width},height=${height},left=${left},top=${top},toolbar=0,location=0,menubar=0,noopener,noreferrer`;
 
     const newWin = window.open(url, "CodexCrypticaHelp", features);

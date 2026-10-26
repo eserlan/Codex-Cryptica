@@ -1,7 +1,7 @@
 <script lang="ts">
   import { browser } from "$app/env";
-  import { resolve } from "$app/paths";
-  const cleanBase = resolve("") === "/" ? "" : resolve("");
+  import { basePath } from "#lib/utils/base-path.js";
+  const cleanBase = basePath();
   import { safeJsonLd } from "#lib/utils/json-ld.js";
   import type { SEOPageData } from "#lib/config/seo-pages.js";
   import type { SEOComparisonPageData } from "#lib/config/seo-comparisons.js";

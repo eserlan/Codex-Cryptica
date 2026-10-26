@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount, type Snippet } from "svelte";
-  import { resolve } from "$app/paths";
+  import { basePath } from "#lib/utils/base-path.js";
   import { page } from "$app/state";
   import {
     browserStorage,
@@ -549,7 +549,7 @@
         {#each KINDS as option}
           {@const current = option.id === kind}
           <a
-            href="{resolve('')}{option.href}"
+            href="{basePath()}{option.href}"
             aria-current={current ? "page" : undefined}
             class="{toggleClass(current)} gap-1"
             data-testid="source-kind-{option.id}"
