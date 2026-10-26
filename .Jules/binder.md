@@ -361,5 +361,6 @@
 **Action:** Replaced `Date.now` fallback with `() => systemClock.now()` to maintain consistent time generation behavior across the app through the ambient runtime dependency seams.
 
 ## 2024-10-26 - Injecting Clock into ProposerService via ProposerStore
+
 **Learning:** Even when a store or class explicitly accepts a DI dependency (like `clock`) in its constructor, it must be carefully passed down to any instantiated internal services (like `ProposerService`) that also require that dependency. Failing to do so causes the internal service to fall back to hardcoded defaults (`Date.now`), breaking testability and deterministic timing.
 **Action:** Always verify that injected dependencies are propagated completely through the internal instantiation chain of the class.

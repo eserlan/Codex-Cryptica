@@ -154,7 +154,12 @@ class ProposerStore {
 
   private getService(): ProposerService {
     if (!this.service) {
-      this.service = new ProposerService(DB_NAME, DB_VERSION, getDB(), this.clock.now);
+      this.service = new ProposerService(
+        DB_NAME,
+        DB_VERSION,
+        getDB(),
+        this.clock.now,
+      );
     }
     return this.service;
   }
