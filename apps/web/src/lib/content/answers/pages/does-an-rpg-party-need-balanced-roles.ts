@@ -49,7 +49,7 @@ export const doesAnRpgPartyNeedBalancedRoles: AnswerConfigInput = {
         },
       ],
       outro:
-        "A gap only matters relative to a demand. If the campaign will never ask the party to repair a starship, a missing engineer is background colour. If every session depends on it, the gap needs a route around it, such as a hireable specialist, a service the party can pay for, or a different way to travel. Write down the two or three capabilities your next few sessions will genuinely test, and check the party against those rather than against a universal checklist.",
+        "A gap only matters relative to a demand. If the campaign will never ask the party to repair a starship, a missing engineer is background colour. If every session depends on it, that demand shapes what the campaign can fairly ask of this party. Write down the two or three capabilities your next few sessions will genuinely test, and check the party against those rather than against a universal checklist.",
     },
     {
       kind: "prose",
@@ -71,7 +71,7 @@ export const doesAnRpgPartyNeedBalancedRoles: AnswerConfigInput = {
         },
         {
           term: "Make gaps cost something specific",
-          text: "A missing capability should create a price, delay, risk or extra step, not a locked door. Without a healer, treatment may need a clinic, a favour or a longer recovery. Without a scout, the party may arrive later or noisier. The cost keeps the gap honest while play continues.",
+          text: "Where a workable alternative fits the fiction, let a missing capability create a price, delay, risk or extra step rather than stopping the campaign: without a healer, treatment may need a clinic, a favour or a longer recovery, and without a scout, the party may arrive later or noisier. That only holds where help, equipment or another method is plausibly available. With no money, no contact and no usable route at a remote place, a particular task may be unattainable for now, and postponing, abandoning or replacing that objective is legitimate play. Avoid making continued campaign play hinge on the single unavailable capability.",
         },
         {
           term: "Vary the demand across sessions",
@@ -104,7 +104,7 @@ export const doesAnRpgPartyNeedBalancedRoles: AnswerConfigInput = {
         },
         {
           term: "How a fight is framed",
-          text: "Bandits try to seize a bridge toll chest while a cart blocks one end of the bridge. The spellcasters can hold distance, use the cart and railings as cover, target the bandits blocking the far ramp, or bargain from strength. If the bandits close the distance, the party can retreat across the bridge and break contact rather than trade blows. Winning means keeping the chest or getting away intact, not standing in place until every bandit falls.",
+          text: "Bandits try to seize a bridge toll chest while a cart blocks one end of the bridge. The spellcasters can hold distance, use the cart and railings as cover, target the bandits blocking the far ramp, or bargain from strength. If the bandits close the distance, the party can fall back across the bridge while the bandits turn to secure the chest they came for, which gives the spellcasters a chance to get clear rather than trade blows. Resolve any retreat with the movement and disengaging procedures of the game you are playing. Winning means keeping the chest or getting away intact, not standing in place until every bandit falls.",
         },
         {
           term: "Where the gap still matters",
@@ -129,7 +129,7 @@ export const doesAnRpgPartyNeedBalancedRoles: AnswerConfigInput = {
         },
         {
           term: "Why it stays interesting",
-          text: "The missing specialist never becomes a wall. It becomes a recurring decision about money, trust and self-reliance that fits a trading campaign, and the crew strengths the players did choose keep shaping how they solve it.",
+          text: "At this starport, where paid help and contacts are available, the missing specialist becomes a recurring decision about money, trust and self-reliance that fits a trading campaign, and the crew strengths the players did choose keep shaping how they solve it.",
         },
       ],
     },
@@ -192,7 +192,7 @@ export const doesAnRpgPartyNeedBalancedRoles: AnswerConfigInput = {
       items: [
         "Which two or three capabilities will the next few sessions actually test, and how does this party handle each one?",
         "Where will the party's shared strength visibly succeed, so the players feel the benefit of the characters they chose?",
-        "If a gap matters, what does it cost in time, money, risk or obligation, and what route around it can the players choose?",
+        "If a gap matters, what does it cost in time, money, risk or obligation, if a workable alternative exists here?",
         "Have I signalled the dangers this party is poorly suited to face, and left a way to avoid, escape or reframe them?",
         "Am I varying what sessions demand, or testing the same weakness every week?",
         "For overlapping characters, what differs in priority, method or relationship, and have I asked the players how they want to share that ground?",
@@ -203,7 +203,7 @@ export const doesAnRpgPartyNeedBalancedRoles: AnswerConfigInput = {
   codexConnection: {
     heading: "Test an encounter against the party you have",
     paragraphs: [
-      "When you are reshaping a fight around an unconventional party, a starting encounter shape can help you think through opponents, ground and objectives before you adjust the details for your system. Codex Cryptica does not score party balance or difficulty for a given system. The encounter generator gives you participants and a situation to work from, and your notes on the party capabilities, contacts and costs above decide whether that situation is fair for the group at your table.",
+      "When you are reshaping a fight around an unconventional party, a starting encounter shape can help you think through opponents, ground and objectives before you adjust the details for your system. The encounter generator does not validate party balance or guarantee encounter difficulty. Its optional Tales of the Valiant mode does offer qualitative challenge guidance for a party size and level, with a recommended challenge range and suggested creatures, as a starting point rather than a balance calculation. Your notes on the party capabilities, contacts and costs above decide whether that situation is fair for the group at your table.",
     ],
     linkText: "Try the encounter generator",
     href: "/generators/encounter",
