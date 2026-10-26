@@ -884,7 +884,7 @@ describe("automatic background sync (#3189)", () => {
       expect(calls).toEqual([]);
 
       // A pending queue still flushes on close.
-      (store as any).autoPending = true;
+      store.notifyLocalChange("v-1");
       window.dispatchEvent(new Event("pagehide"));
       await vi.advanceTimersByTimeAsync(50);
       expect(calls.some((url) => url.endsWith("/status"))).toBe(true);
@@ -895,8 +895,8 @@ describe("automatic background sync (#3189)", () => {
 
   it("manual save satisfies pending autosync and clears conflict", async () => {
     const { store, calls } = await enabledHarness();
-    (store as any).autoState = "conflict";
-    (store as any).autoPending = true;
+    store.notifyLocalChange("v-1");
+    store.autoState = "conflict";
     calls.length = 0;
 
     const ok = await store.backUpNow();
