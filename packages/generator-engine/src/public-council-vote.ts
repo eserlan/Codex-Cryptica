@@ -92,6 +92,8 @@ interface ResolvedCouncilVote {
   members: CouncilVoteMember[];
 }
 
+const ROMAN_SUFFIXES = ["II", "III", "IV", "V", "VI", "VII", "VIII", "IX"];
+
 function resolveCouncilVote(
   options: CouncilVoteGeneratorOptions,
   rng: Rng,
@@ -124,15 +126,25 @@ function resolveCouncilVote(
   const avoidSet = new Set(
     options.avoidNames?.map((n) => n.trim().toLowerCase()) ?? [],
   );
+  // Members are keyed by name in the ballot audit, so no two may share one.
+  // Avoiding past names is best effort; a repeat within the council is not.
+  const taken = new Set<string>();
   const members: CouncilVoteMember[] = Array.from(
     { length: councilSize },
     () => {
       let name = generateName(rng);
       let attempts = 0;
-      while (avoidSet.has(name.toLowerCase()) && attempts < 10) {
+      while (
+        (avoidSet.has(name.toLowerCase()) || taken.has(name.toLowerCase())) &&
+        attempts < 10
+      ) {
         name = generateName(rng);
         attempts++;
       }
+      const base = name;
+      for (let n = 2; taken.has(name.toLowerCase()); n++)
+        name = `${base} ${ROMAN_SUFFIXES[n - 2] ?? n}`;
+      taken.add(name.toLowerCase());
       return {
         name,
         archetype: pickFrom(councilVoteConfig.archetypes, rng),
