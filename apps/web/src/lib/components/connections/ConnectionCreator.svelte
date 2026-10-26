@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { vault } from "$lib/stores/vault.svelte";
-  import Autocomplete from "$lib/components/ui/Autocomplete.svelte";
+  import { vault } from "#lib/stores/vault.svelte.js";
+  import Autocomplete from "#lib/components/ui/Autocomplete.svelte";
 
   let {
     entityId,
@@ -8,13 +8,13 @@
     initialTargetName = "",
     onCancel,
     onConnectionAdded,
-  } = $props<{
+  }: {
     entityId: string;
     initialTargetId?: string | null;
     initialTargetName?: string;
     onCancel: () => void;
     onConnectionAdded: () => void;
-  }>();
+  } = $props();
 
   let newConnectionTargetName = $state("");
   let newConnectionTargetId = $state<string | null>(null);

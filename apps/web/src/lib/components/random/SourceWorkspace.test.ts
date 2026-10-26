@@ -62,14 +62,16 @@ vi.mock("$app/state", () => ({
 
 vi.mock("$app/paths", () => ({
   base: "",
+  asset: (p: string) => p,
+  resolve: (p: string) => p,
 }));
 
-vi.mock("$lib/features/random", () => ({
+vi.mock("#lib/features/random/index.js", () => ({
   randomSources: mockRandomSources,
   ensureRandomSourcesLoaded: vi.fn(async () => {}),
 }));
 
-vi.mock("$lib/stores/vault.svelte", () => ({
+vi.mock("#lib/stores/vault.svelte.js", () => ({
   vault: {
     activeVaultId: "vault-1",
   },

@@ -1,4 +1,4 @@
-import { debugStore } from "$lib/stores/debug.svelte";
+import { debugStore } from "#lib/stores/debug.svelte.js";
 
 export function isFileSystemAccessSupported(): boolean {
   return (

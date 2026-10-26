@@ -20,10 +20,10 @@ import {
 } from "./mask-undo-recorder";
 import { visionRangeToPixels } from "./vtt-vision";
 import type { MapFogPainter } from "./map-fog-painter";
-import type { MapStore } from "$lib/stores/map.svelte";
-import type { MapSessionStore } from "$lib/stores/map-session.svelte";
-import type { SessionModeStore } from "$lib/stores/ui/session-mode.svelte";
-import type { OracleStore } from "$lib/stores/oracle.svelte";
+import type { MapStore } from "#lib/stores/map.svelte.js";
+import type { MapSessionStore } from "#lib/stores/map-session.svelte.js";
+import type { SessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
+import type { OracleStore } from "#lib/stores/oracle.svelte.js";
 import { TokenVisionRevealer } from "./token-vision-revealer";
 import { getActiveHexConfig } from "./hex-fog-stroke";
 import { appEventBus } from "@codex/events";

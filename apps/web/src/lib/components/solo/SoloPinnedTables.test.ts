@@ -47,13 +47,15 @@ const env = vi.hoisted(() => {
     pins: { pins: [] as string[], pin: vi.fn(() => true), unpin: vi.fn() },
   };
 });
-vi.mock("$lib/features/random", () => ({ randomSources: env.randomSources }));
-vi.mock("$lib/services/record-table-roll", () => ({
+vi.mock("#lib/features/random/index.js", () => ({
+  randomSources: env.randomSources,
+}));
+vi.mock("#lib/services/record-table-roll.js", () => ({
   recordTableRoll: env.recordTableRoll,
   tableDie: (_source: any) => ({ sides: 6, label: "d6" }),
 }));
-vi.mock("$lib/stores/dice-history.svelte", () => ({ diceHistory: {} }));
-vi.mock("$lib/stores/solo-session-instance", () => ({
+vi.mock("#lib/stores/dice-history.svelte.js", () => ({ diceHistory: {} }));
+vi.mock("#lib/stores/solo-session-instance.js", () => ({
   soloTablePins: env.pins,
 }));
 

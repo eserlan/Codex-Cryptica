@@ -1,12 +1,12 @@
-import { getAnswer } from "$lib/content/answers/registry";
-import { resolveOracleProxyUrl } from "$lib/config/oracle-proxy";
+import { getAnswer } from "#lib/content/answers/registry.js";
+import { resolveOracleProxyUrl } from "#lib/config/oracle-proxy.js";
 import {
   browserStorage,
   systemClock,
   type StorageLike,
   type Clock,
-} from "$lib/utils/runtime-deps";
-import { buildAbsoluteUrl } from "$lib/seo/site";
+} from "#lib/utils/runtime-deps.js";
+import { buildAbsoluteUrl } from "#lib/seo/site.js";
 import type {
   LikedAnswerItem,
   SharedGeneratorItem,

@@ -1,19 +1,19 @@
 <script lang="ts">
-  import ModalShell from "$lib/components/ui/ModalShell.svelte";
-  import ReportProblemButton from "$lib/components/feedback/ReportProblemButton.svelte";
-  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-  import { vault } from "$lib/stores/vault.svelte";
-  import { categories } from "$lib/stores/categories.svelte";
-  import { themeStore } from "$lib/stores/theme.svelte";
-  import { calendarStore } from "$lib/stores/calendar.svelte";
+  import ModalShell from "#lib/components/ui/ModalShell.svelte";
+  import ReportProblemButton from "#lib/components/feedback/ReportProblemButton.svelte";
+  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+  import { vault } from "#lib/stores/vault.svelte.js";
+  import { categories } from "#lib/stores/categories.svelte.js";
+  import { themeStore } from "#lib/stores/theme.svelte.js";
+  import { calendarStore } from "#lib/stores/calendar.svelte.js";
   import {
     buildVaultContext,
     detectVaultLanguages,
     findSingleQuestHook,
     latestTemporalYear,
     suggestPrimaryLanguageId,
-  } from "$lib/services/generators/generator-vault-context";
-  import { resolveCultureNaming } from "$lib/services/generators/generator-culture-naming";
+  } from "#lib/services/generators/generator-vault-context.js";
+  import { resolveCultureNaming } from "#lib/services/generators/generator-culture-naming.js";
   import {
     CampaignGeneratorService,
     composeDraftVaultFields,
@@ -37,8 +37,8 @@
     TomeStagedStats,
     GeneratorPromptMetrics,
   } from "generator-engine";
-  import { aiGeneratorGateway } from "$lib/services/generators/ai-generator-gateway";
-  import { generatorSessionManager } from "$lib/services/generators/generator-session-manager";
+  import { aiGeneratorGateway } from "#lib/services/generators/ai-generator-gateway.js";
+  import { generatorSessionManager } from "#lib/services/generators/generator-session-manager.js";
   import { interactionSessions } from "@codex/ai-engine";
   import {
     buildBusinessSavePlan,
@@ -47,18 +47,18 @@
   import {
     saveBusinessToVault,
     type BusinessSaveChoices,
-  } from "$lib/services/generators/business-vault-save";
-  import { entityTemplateService } from "$lib/services/EntityTemplateService.svelte";
-  import StarSystemDiagram from "$lib/components/seo/StarSystemDiagram.svelte";
-  import ConstellationChart from "$lib/components/seo/ConstellationChart.svelte";
-  import { blobToFile } from "$lib/utils/svg-export";
-  import { entityMapLinkingService } from "$lib/services/entity-map-linking";
+  } from "#lib/services/generators/business-vault-save.js";
+  import { entityTemplateService } from "#lib/services/EntityTemplateService.svelte.js";
+  import StarSystemDiagram from "#lib/components/seo/StarSystemDiagram.svelte";
+  import ConstellationChart from "#lib/components/seo/ConstellationChart.svelte";
+  import { blobToFile } from "#lib/utils/svg-export.js";
+  import { entityMapLinkingService } from "#lib/services/entity-map-linking.js";
   import {
     buildPlotTwistPremise,
     isQuestHookDraft,
     buildDelveBossContext,
     isDelveDraft,
-  } from "$lib/services/seo/generator-handoffs";
+  } from "#lib/services/seo/generator-handoffs.js";
 
   let loadingIndex = $state(0);
   let activeLoadingMessages = $derived(
@@ -76,20 +76,20 @@
     return () => clearInterval(interval);
   });
   import { searchService } from "@codex/search-orchestrator";
-  import { oracle } from "$lib/stores/oracle.svelte";
-  import { revisionService } from "$lib/services/RevisionService.svelte";
-  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
-  import { openSavedEntityInEditor } from "$lib/services/generators/generator-save-handoff";
-  import { savePointCrawlToVault } from "$lib/services/generators/point-crawl-vault-save";
+  import { oracle } from "#lib/stores/oracle.svelte.js";
+  import { revisionService } from "#lib/services/RevisionService.svelte.js";
+  import { layoutUIStore } from "#lib/stores/ui/layout-ui.svelte.js";
+  import { openSavedEntityInEditor } from "#lib/services/generators/generator-save-handoff.js";
+  import { savePointCrawlToVault } from "#lib/services/generators/point-crawl-vault-save.js";
 
   import GeneratorConfigForm from "./GeneratorConfigForm.svelte";
   import GeneratorDraftReview from "./GeneratorDraftReview.svelte";
-  import { soloSessionStore } from "$lib/stores/solo-session-instance";
-  import { systemClock } from "$lib/utils/runtime-deps";
+  import { soloSessionStore } from "#lib/stores/solo-session-instance.js";
+  import { systemClock } from "#lib/utils/runtime-deps.js";
   import {
     publishGeneratedCapture,
     publishGeneratedSaved,
-  } from "$lib/services/generator-journal-capture";
+  } from "#lib/services/generator-journal-capture.js";
 
   // Generators whose output is a plot the player will go on to play. During a
   // solo session these open with the spoilers hidden.

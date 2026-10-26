@@ -6,12 +6,17 @@
   import PanZoomContainer from "./PanZoomContainer.svelte";
   import { PanZoomState } from "../pan-zoom.svelte";
 
-  let { focusId, entities, onOpen, onRecenter } = $props<{
+  let {
+    focusId,
+    entities,
+    onOpen,
+    onRecenter,
+  }: {
     focusId: string;
     entities: Record<string, Entity>;
     onOpen: (id: string) => void;
     onRecenter: (id: string) => void;
-  }>();
+  } = $props();
 
   const CARD_WIDTH = 112;
   const CARD_HEIGHT = 96;

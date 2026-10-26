@@ -6,7 +6,7 @@ import {
   detectEntityMentions,
   sortEntityIndex,
   type EntityIndexEntry,
-} from "$lib/utils/entity-mention-detector";
+} from "#lib/utils/entity-mention-detector.js";
 
 export type { EntityIndexEntry };
 

@@ -1,13 +1,13 @@
 /** @vitest-environment jsdom */
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
-import { helpAssistant } from "$lib/stores/help-assistant/help-runtime";
+import { discoveryPolicyStore } from "#lib/stores/ui/discovery-policy.svelte.js";
+import { helpAssistant } from "#lib/stores/help-assistant/help-runtime.js";
 import MapCifButton from "./MapCifButton.svelte";
 
 vi.mock("$app/navigation", () => ({ goto: vi.fn(), afterNavigate: vi.fn() }));
 vi.mock("$app/state", () => ({ page: { route: { id: "/(app)/map" } } }));
-vi.mock("$lib/stores/help.svelte", () => ({
+vi.mock("#lib/stores/help.svelte.js", () => ({
   helpStore: { openHelpToArticle: vi.fn(), openHelpWindow: vi.fn() },
 }));
 

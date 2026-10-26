@@ -1,5 +1,8 @@
 import type { P2PClientTransport } from "./transport/client-transport";
-import { type IdGenerator, systemIdGenerator } from "$lib/utils/runtime-deps";
+import {
+  type IdGenerator,
+  systemIdGenerator,
+} from "#lib/utils/runtime-deps.js";
 
 const FILE_REQUEST_TIMEOUT_MS = 15_000;
 

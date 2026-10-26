@@ -13,20 +13,20 @@ const mocks = vi.hoisted(() => ({
   switchVault: vi.fn(),
 }));
 
-vi.mock("$lib/stores/vault.svelte", () => ({
+vi.mock("#lib/stores/vault.svelte.js", () => ({
   vault: {
     activeVaultId: "vault-1",
     vaultName: "Test Vault",
     switchVault: mocks.switchVault,
   },
 }));
-vi.mock("$lib/stores/vault-registry.svelte", () => ({
+vi.mock("#lib/stores/vault-registry.svelte.js", () => ({
   vaultRegistry: { createVault: mocks.createVault },
 }));
-vi.mock("$lib/stores/ui/notification.svelte", () => ({
+vi.mock("#lib/stores/ui/notification.svelte.js", () => ({
   notificationStore: { notify: mocks.notify },
 }));
-vi.mock("$lib/utils/vault-archive", () => ({
+vi.mock("#lib/utils/vault-archive.js", () => ({
   exportVaultToZip: mocks.exportVaultToZip,
   parseVaultArchive: mocks.parseVaultArchive,
   writeArchiveToVault: mocks.writeArchiveToVault,

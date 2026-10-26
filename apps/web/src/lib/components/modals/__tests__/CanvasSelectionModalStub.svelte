@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
 </script>
 
 {#if modalUIStore.showCanvasSelector}

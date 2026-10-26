@@ -6,7 +6,7 @@ import type { RandomSource, RollOutcome } from "random-source-engine";
 import {
   getOracleChatDraft,
   clearOracleChatDraft,
-} from "$lib/components/oracle/oracle-chat-input";
+} from "#lib/components/oracle/oracle-chat-input.js";
 
 import TableRoller from "./TableRoller.svelte";
 

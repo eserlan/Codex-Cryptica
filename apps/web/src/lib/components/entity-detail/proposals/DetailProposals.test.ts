@@ -2,11 +2,11 @@
 import { render, screen, fireEvent } from "@testing-library/svelte";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import DetailProposals from "./DetailProposals.svelte";
-import { proposerStore } from "$lib/stores/proposer.svelte";
-import { vault } from "$lib/stores/vault.svelte";
-import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
+import { proposerStore } from "#lib/stores/proposer.svelte.js";
+import { vault } from "#lib/stores/vault.svelte.js";
+import { discoveryPolicyStore } from "#lib/stores/ui/discovery-policy.svelte.js";
 
-vi.mock("$lib/stores/proposer.svelte", () => {
+vi.mock("#lib/stores/proposer.svelte.js", () => {
   const mockProposerStore = {
     getActiveProposalsForEntity: vi.fn().mockReturnValue([]),
     getActiveHistoryForEntity: vi.fn().mockReturnValue([]),
@@ -19,7 +19,7 @@ vi.mock("$lib/stores/proposer.svelte", () => {
   return { proposerStore: mockProposerStore };
 });
 
-vi.mock("$lib/stores/vault.svelte", () => ({
+vi.mock("#lib/stores/vault.svelte.js", () => ({
   vault: {
     selectedEntityId: "entity-1",
     status: "idle",
@@ -36,7 +36,7 @@ vi.mock("$lib/stores/vault.svelte", () => ({
   },
 }));
 
-vi.mock("$lib/stores/ui/discovery-policy.svelte", () => ({
+vi.mock("#lib/stores/ui/discovery-policy.svelte.js", () => ({
   discoveryPolicyStore: {
     aiDisabled: false,
   },

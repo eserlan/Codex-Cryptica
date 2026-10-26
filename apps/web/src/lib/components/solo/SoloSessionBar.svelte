@@ -1,14 +1,14 @@
 <script lang="ts">
-  import { soloSessionStore } from "$lib/stores/solo-session-instance";
-  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
-  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
-  import { vault } from "$lib/stores/vault.svelte";
+  import { soloSessionStore } from "#lib/stores/solo-session-instance.js";
+  import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
+  import { layoutUIStore } from "#lib/stores/ui/layout-ui.svelte.js";
+  import { vault } from "#lib/stores/vault.svelte.js";
   import SoloQuickRoll from "./SoloQuickRoll.svelte";
   import SoloActions from "./SoloActions.svelte";
   import SoloSessionSheet from "./SoloSessionSheet.svelte";
   import SoloSceneMenu from "./SoloSceneMenu.svelte";
 
-  import { browserStorage, type StorageLike } from "$lib/utils/runtime-deps";
+  import { browserStorage, type StorageLike } from "#lib/utils/runtime-deps.js";
 
   const MINIMISED_KEY = "codex-solo-bar-minimised";
 

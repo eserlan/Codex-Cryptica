@@ -13,7 +13,7 @@ import {
 import {
   browserPerformanceCapture,
   browserPerformanceRecorder,
-} from "$lib/services/performance/browser-performance-capture";
+} from "#lib/services/performance/browser-performance-capture.js";
 import type { PerformanceOperationHandle } from "@codex/performance-observability";
 import {
   resolveGraphVisibility,

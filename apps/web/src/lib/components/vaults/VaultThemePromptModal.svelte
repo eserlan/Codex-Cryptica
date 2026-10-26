@@ -1,8 +1,8 @@
 <script lang="ts">
-  import WorldThemePicker from "$lib/components/settings/WorldThemePicker.svelte";
-  import { themeStore } from "$lib/stores/theme.svelte";
-  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-  import { vaultThemePromptStore } from "$lib/stores/ui/vault-theme-prompt.svelte";
+  import WorldThemePicker from "#lib/components/settings/WorldThemePicker.svelte";
+  import { themeStore } from "#lib/stores/theme.svelte.js";
+  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+  import { vaultThemePromptStore } from "#lib/stores/ui/vault-theme-prompt.svelte.js";
   import { fade, scale } from "svelte/transition";
   import { DEFAULT_THEME, type WorldThemeId } from "schema";
 

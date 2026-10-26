@@ -1,7 +1,7 @@
 <script lang="ts">
   import { tick } from "svelte";
-  import type { AdventureManager } from "$lib/stores/oracle/adventure-manager.svelte";
-  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import type { AdventureManager } from "#lib/stores/oracle/adventure-manager.svelte.js";
+  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
 
   let { manager }: { manager: AdventureManager } = $props();
 

@@ -1,5 +1,5 @@
-import { safeJsonLd } from "$lib/utils/json-ld";
-import { buildAbsoluteUrl } from "$lib/seo/site";
+import { safeJsonLd } from "#lib/utils/json-ld.js";
+import { buildAbsoluteUrl } from "#lib/seo/site.js";
 import type { ExampleConfig } from "./schema";
 import { examplePath } from "./registry";
 

@@ -15,15 +15,18 @@ import {
   resolveLayoutOverride,
   withLayoutOverride,
   type LayoutPositions,
-} from "$lib/components/graph/graph-layout-snapshot";
-import { explorerUIStore } from "$lib/stores/ui/explorer-ui.svelte";
-import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
-import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
-import { type IdGenerator, systemIdGenerator } from "$lib/utils/runtime-deps";
+} from "#lib/components/graph/graph-layout-snapshot.js";
+import { explorerUIStore } from "#lib/stores/ui/explorer-ui.svelte.js";
+import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
+import { connectionModeStore } from "#lib/stores/ui/connection-mode.svelte.js";
+import {
+  type IdGenerator,
+  systemIdGenerator,
+} from "#lib/utils/runtime-deps.js";
 import {
   browserPerformanceCapture,
   browserPerformanceRecorder,
-} from "$lib/services/performance/browser-performance-capture";
+} from "#lib/services/performance/browser-performance-capture.js";
 
 // Focus-view detail level. Zoom reveals a bounded fixed-size increment rather
 // than doubling the rendered graph, so one gesture cannot synchronously add an

@@ -1,11 +1,11 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { base } from "$app/paths";
-  const cleanBase = base === "/" ? "" : base;
-  import { safeJsonLd } from "$lib/utils/json-ld";
-  import { themeStore } from "$lib/stores/theme.svelte";
-  import { hubContext } from "$lib/stores/hub-context.svelte";
-  import { getLandingPagesForHub } from "$lib/content/for/registry";
+  import { resolve } from "$app/paths";
+  const cleanBase = resolve("") === "/" ? "" : resolve("");
+  import { safeJsonLd } from "#lib/utils/json-ld.js";
+  import { themeStore } from "#lib/stores/theme.svelte.js";
+  import { hubContext } from "#lib/stores/hub-context.svelte.js";
+  import { getLandingPagesForHub } from "#lib/content/for/registry.js";
   import type { ThemeSlug } from "./+page";
 
   const { data } = $props();

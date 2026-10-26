@@ -6,6 +6,8 @@ vi.mock("$app/environment", () => ({
 
 vi.mock("$app/paths", () => ({
   base: "",
+  asset: (p: string) => p,
+  resolve: vi.fn((p: string) => p),
 }));
 
 // Mock debugStore to avoid actual logging during tests
@@ -21,30 +23,30 @@ vi.mock("../../config", () => ({
   IS_STAGING: true,
 }));
 
-vi.mock("$lib/stores/ui/notification.svelte", () => ({
+vi.mock("#lib/stores/ui/notification.svelte.js", () => ({
   notificationStore: {
     setGlobalError: vi.fn(),
     confirm: vi.fn(),
   },
 }));
 
-vi.mock("$lib/stores/ui/session-mode.svelte", () => ({
+vi.mock("#lib/stores/ui/session-mode.svelte.js", () => ({
   sessionModeStore: {
     isStaging: false,
   },
 }));
 
-vi.mock("$lib/stores/calendar.svelte", () => ({
+vi.mock("#lib/stores/calendar.svelte.js", () => ({
   calendarStore: {
     init: vi.fn(),
   },
 }));
 
-vi.mock("$lib/stores/system-profile.svelte", () => ({
+vi.mock("#lib/stores/system-profile.svelte.js", () => ({
   systemProfileStore: { init: vi.fn().mockResolvedValue(undefined) },
 }));
 
-vi.mock("$lib/stores/timeline.svelte", () => ({
+vi.mock("#lib/stores/timeline.svelte.js", () => ({
   timelineStore: {
     resetVaultGuard: vi.fn(),
     init: vi.fn().mockResolvedValue(undefined),
@@ -58,20 +60,24 @@ import {
   registerServiceWorker,
   collectVaultShellUrls,
 } from "./app-init";
-import { notificationStore } from "$lib/stores/ui/notification.svelte";
-import { calendarStore } from "$lib/stores/calendar.svelte";
-import { timelineStore } from "$lib/stores/timeline.svelte";
-import { systemProfileStore } from "$lib/stores/system-profile.svelte";
-import { vault } from "$lib/stores/vault.svelte";
+import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
+import { calendarStore } from "#lib/stores/calendar.svelte.js";
+import { timelineStore } from "#lib/stores/timeline.svelte.js";
+import { systemProfileStore } from "#lib/stores/system-profile.svelte.js";
+import { vault } from "#lib/stores/vault.svelte.js";
 import { resolveAITemplate } from "@codex/ai-engine";
-import { entityTemplateStore } from "$lib/stores/entity-templates/entity-template-store.svelte";
+import { entityTemplateStore } from "#lib/stores/entity-templates/entity-template-store.svelte.js";
 import { GENERIC_TEMPLATES } from "schema";
+import { resolve } from "$app/paths";
 
 describe("app-init", () => {
   let listenersCleanup: (() => void)[] = [];
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(resolve).mockImplementation((path) =>
+      path === "/(app)" ? "/" : path,
+    );
     listenersCleanup = [];
   });
 
@@ -418,6 +424,29 @@ describe("app-init", () => {
       });
 
       expect(registerSpy).toHaveBeenCalledWith("/service-worker.js");
+    });
+
+    it("registers the service worker beneath a configured base path", () => {
+      vi.mocked(resolve).mockImplementation((path) =>
+        path === "/(app)" ? "/preview/" : path,
+      );
+      const registerSpy = vi.fn().mockResolvedValue(undefined);
+      registerServiceWorker({
+        document: {
+          readyState: "complete",
+          visibilityState: "visible",
+          addEventListener: vi.fn(),
+          removeEventListener: vi.fn(),
+        } as any,
+        navigator: { serviceWorker: { register: registerSpy } } as any,
+        window: {
+          addEventListener: vi.fn(),
+          removeEventListener: vi.fn(),
+        } as any,
+        isDev: false,
+      });
+
+      expect(registerSpy).toHaveBeenCalledWith("/preview/service-worker.js");
     });
 
     it("seeds the loaded vault shell only after the session becomes active", async () => {

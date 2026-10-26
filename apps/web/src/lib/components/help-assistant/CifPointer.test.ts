@@ -1,6 +1,6 @@
 import { render } from "@testing-library/svelte";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { CifFlight } from "$lib/services/help-assistant/cif-flight.svelte";
+import { CifFlight } from "#lib/services/help-assistant/cif-flight.svelte.js";
 import CifPointer from "./CifPointer.svelte";
 import HelpHighlightLayer from "./HelpHighlightLayer.svelte";
 

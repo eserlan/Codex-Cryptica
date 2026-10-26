@@ -3,8 +3,8 @@ import {
   VTTPersistenceManager,
   type VTTPersistenceDependencies,
 } from "./vtt-persistence-manager.svelte";
-import { createEncounterSession } from "$lib/services/vtt-session";
-import type { StorageLike } from "$lib/utils/runtime-deps";
+import { createEncounterSession } from "#lib/services/vtt-session.js";
+import type { StorageLike } from "#lib/utils/runtime-deps.js";
 
 function createMockStorage(): StorageLike {
   const store = new Map<string, string>();

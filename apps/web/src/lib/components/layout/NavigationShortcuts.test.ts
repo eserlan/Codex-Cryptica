@@ -2,8 +2,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, fireEvent } from "@testing-library/svelte";
 import NavigationShortcuts from "./NavigationShortcuts.svelte";
-import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
+import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+import { layoutUIStore } from "#lib/stores/ui/layout-ui.svelte.js";
 
 vi.mock("$app/environment", () => ({
   browser: true,
@@ -13,7 +13,7 @@ vi.mock("$app/navigation", () => ({
   beforeNavigate: vi.fn(),
 }));
 
-vi.mock("$lib/stores/vault.svelte", () => ({
+vi.mock("#lib/stores/vault.svelte.js", () => ({
   vault: {
     selectedEntityId: null,
     entities: {
@@ -23,7 +23,7 @@ vi.mock("$lib/stores/vault.svelte", () => ({
   },
 }));
 
-vi.mock("$lib/stores/navigation/NavigationHistoryStore.svelte", () => ({
+vi.mock("#lib/stores/navigation/NavigationHistoryStore.svelte.js", () => ({
   navigationHistoryStore: {
     past: [],
     future: [],
@@ -33,7 +33,7 @@ vi.mock("$lib/stores/navigation/NavigationHistoryStore.svelte", () => ({
   },
 }));
 
-import { navigationHistoryStore } from "$lib/stores/navigation/NavigationHistoryStore.svelte";
+import { navigationHistoryStore } from "#lib/stores/navigation/NavigationHistoryStore.svelte.js";
 import { beforeNavigate } from "$app/navigation";
 
 describe("NavigationShortcuts", () => {

@@ -7,12 +7,17 @@
 </script>
 
 <script lang="ts">
-  let { name, candidates, onChoose, onSendAsText } = $props<{
+  let {
+    name,
+    candidates,
+    onChoose,
+    onSendAsText,
+  }: {
     name: string;
     candidates: MentionCandidate[];
     onChoose: (entityId: string) => void;
     onSendAsText: () => void;
-  }>();
+  } = $props();
 </script>
 
 <div

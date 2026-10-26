@@ -4,7 +4,7 @@ import { render, fireEvent, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import { createRawSnippet, tick, type Snippet } from "svelte";
 import SEOGeneratorLayout from "./SEOGeneratorLayout.svelte";
-import { themeStore } from "$lib/stores/theme.svelte";
+import { themeStore } from "#lib/stores/theme.svelte.js";
 import { runShellCtaHandler } from "./marketing-shell";
 
 const noopSnippet = (() => {}) as unknown as Snippet;
@@ -15,12 +15,13 @@ vi.mock("$app/environment", () => ({
 
 vi.mock("$app/paths", () => ({
   base: "",
-  resolve: (path: string) => path,
+  asset: (p: string) => p,
+  resolve: (p: string) => p,
 }));
 
 const trackEventMock = vi.hoisted(() => vi.fn());
 const trackPublicGeneratorActionMock = vi.hoisted(() => vi.fn());
-vi.mock("$lib/services/analytics/zaraz-analytics", () => ({
+vi.mock("#lib/services/analytics/zaraz-analytics.js", () => ({
   trackEvent: trackEventMock,
   trackPublicGeneratorAction: trackPublicGeneratorActionMock,
 }));

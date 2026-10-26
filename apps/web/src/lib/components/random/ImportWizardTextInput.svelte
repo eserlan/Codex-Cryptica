@@ -5,13 +5,13 @@
     pasted = $bindable(),
     cardPlaceholder,
     placeholder,
-  } = $props<{
+  }: {
     kind: "table" | "deck";
     name: string;
     pasted: string;
     cardPlaceholder: string;
     placeholder: string;
-  }>();
+  } = $props();
 </script>
 
 <label class="flex flex-col gap-1">

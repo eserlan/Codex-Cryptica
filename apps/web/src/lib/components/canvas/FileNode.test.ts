@@ -8,7 +8,7 @@ const { releaseImageUrl, resolveImageUrl } = vi.hoisted(() => ({
   resolveImageUrl: vi.fn().mockResolvedValue("blob:map"),
 }));
 
-vi.mock("$lib/stores/vault.svelte", () => ({
+vi.mock("#lib/stores/vault.svelte.js", () => ({
   vault: { releaseImageUrl, resolveImageUrl },
 }));
 

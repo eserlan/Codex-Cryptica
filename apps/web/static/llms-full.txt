@@ -2241,7 +2241,7 @@ After generation you see a **review screen** showing the full draft. You can:
 
 ### Quick Names
 
-On supported public name generators, use the **Quick Names** panel above the settings on a phone to roll names locally. Pin a name to keep it in the batch when you roll again; select it again to unpin it. **Copy pinned** copies only pinned names, while **Copy all** copies the full current batch.
+On supported public name generators, the **Quick Names** panel rolls names on your device. Tap a name to copy it. The settings row shows the current culture and name type; open it to change them or to choose **First names only**. Pin a name to keep it in the batch when you roll again; select it again to unpin it. **Copy pinned** copies only pinned names, while **Copy all** copies the full current batch. **Ask AI** sends your description and settings to our AI service, and the panel says when the names on screen came from it. For meanings and culture notes, choose **Generate names with notes**.
 
 ### Contextual Generation
 
@@ -4239,6 +4239,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** Build a believable fantasy economy by tracing six links for each region: what it has and needs, how resources are worked, how goods and labour move, who controls access or takes a share, what strains the arrangement, and what the players can see changing as a result. A believable economy does not need a perfectly calibrated price list; it needs causes the players can see, such as bread costing more after a blocked pass, a mine town having coin but no food, or someone with power responding to the strain.
 
+### [How do I build a believable post-scarcity civilisation?](https://codexcryptica.com/answers/how-do-i-build-a-believable-post-scarcity-civilisation)
+
+**Direct answer:** Take the abundance seriously and follow its consequences. Decide which goods and services nobody can be deprived of, then name what stays finite: time, skilled attention, desirable places, trust, consent and the capacity to coordinate. Show who builds and repairs the systems that provide for everyone, how institutions change when survival no longer depends on wages or land, and where citizens still disagree. A prosperous civilisation becomes credible, and can still oppose the protagonists, when its conflicts come from competing values and policies rather than from a hidden cost that makes the prosperity fake.
+
 ### [How do I combine multiple enemies into one squad in a tabletop RPG?](https://codexcryptica.com/answers/how-do-i-combine-multiple-enemies-into-one-squad-in-an-rpg)
 
 **Direct answer:** To combine similar enemies into one squad, decide what to abstract and what to keep visible: its footprint, a casualty track, one activation whose attack reflects its remaining strength, and clear rules for targeting, area effects and morale. Show members falling and the squad changing as it takes losses, rather than turning it into a single giant creature with extra hit points.
@@ -4726,6 +4730,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 ### [How many NPCs does an RPG town need?](https://codexcryptica.com/answers/how-many-npcs-does-an-rpg-town-need)
 
 **Direct answer:** A town needs roughly three to five named NPCs for a single visit, six to ten for a settlement the party returns to across a campaign, and no fixed number for the background population, which stays unnamed until a player addresses someone directly. Scale by how many roles the party will interact with, not by the town's population figure, and add named NPCs only when the story creates a reason for one.
+
+### [How many random encounters should you use during RPG travel?](https://codexcryptica.com/answers/how-many-random-encounters-during-rpg-travel)
+
+**Direct answer:** As a pacing heuristic, start with roughly one substantial encounter per week of travel, not a rule. Some weeks should pass without incident, and a dangerous or unfamiliar route can support two or three in a week when each one offers a real choice. Decide first how much table time the journey deserves, then spend that time on a small number of scenes. A sighting, rumour, or brief choice can stay brief, and many rolled prompts work best as colour or foreshadowing instead of a full encounter.
 
 ### [How much campaign lore should players be expected to remember?](https://codexcryptica.com/answers/how-much-campaign-lore-should-players-be-expected-to-remember)
 

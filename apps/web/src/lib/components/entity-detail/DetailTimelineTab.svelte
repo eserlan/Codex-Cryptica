@@ -2,15 +2,15 @@
   import type { Entity } from "schema";
   import type { EntityTimeline } from "chronology-engine";
   import { buildEntityTimeline } from "chronology-engine";
-  import { vault } from "$lib/stores/vault.svelte";
-  import { calendarStore } from "$lib/stores/calendar.svelte";
+  import { vault } from "#lib/stores/vault.svelte.js";
+  import { calendarStore } from "#lib/stores/calendar.svelte.js";
 
   let {
     entity,
     onNavigate = (id: string) => {
       vault.selectedEntityId = id;
     },
-  } = $props<{ entity: Entity; onNavigate?: (id: string) => void }>();
+  }: { entity: Entity; onNavigate?: (id: string) => void } = $props();
 
   const timeline = $derived<EntityTimeline>(
     buildEntityTimeline(entity, vault.allEntities, calendarStore.config),

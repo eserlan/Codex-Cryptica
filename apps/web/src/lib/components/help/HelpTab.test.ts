@@ -3,10 +3,10 @@ import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 
 const open = vi.hoisted(() => vi.fn());
-vi.mock("$lib/stores/ui/feedback-dialog.svelte", () => ({
+vi.mock("#lib/stores/ui/feedback-dialog.svelte.js", () => ({
   feedbackDialog: { open },
 }));
-vi.mock("$lib/stores/help.svelte", () => ({
+vi.mock("#lib/stores/help.svelte.js", () => ({
   helpStore: {
     searchQuery: "",
     searchResults: [],
@@ -19,8 +19,10 @@ vi.mock("$lib/stores/help.svelte", () => ({
     copyShareLink: vi.fn(),
   },
 }));
-vi.mock("$lib/services/parser", () => ({ parserService: { parse: vi.fn() } }));
-vi.mock("$lib/utils/markdown", () => ({ renderMarkdown: (s: string) => s }));
+vi.mock("#lib/services/parser.js", () => ({
+  parserService: { parse: vi.fn() },
+}));
+vi.mock("#lib/utils/markdown.js", () => ({ renderMarkdown: (s: string) => s }));
 
 import HelpTab from "./HelpTab.svelte";
 

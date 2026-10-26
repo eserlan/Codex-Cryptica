@@ -11,7 +11,7 @@ export interface GuideStep {
   position: "top" | "bottom" | "left" | "right";
 }
 
-import { loadHelpArticles, type HelpArticle } from "$lib/content/loader";
+import { loadHelpArticles, type HelpArticle } from "#lib/content/loader.js";
 
 export type { HelpArticle };
 

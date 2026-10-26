@@ -1,10 +1,10 @@
 <script lang="ts">
-  import type { JourneyStore } from "$lib/app/onboarding/journey/journey-store.svelte";
+  import type { JourneyStore } from "#lib/app/onboarding/journey/journey-store.svelte.js";
   import JourneyFinish from "./JourneyFinish.svelte";
   import JourneyStep from "./JourneyStep.svelte";
   import JourneyPill from "./JourneyPill.svelte";
   import JourneyHeader from "./JourneyHeader.svelte";
-  import type { HighlightRect } from "$lib/services/help-assistant/help-highlight.svelte";
+  import type { HighlightRect } from "#lib/services/help-assistant/help-highlight.svelte.js";
 
   let {
     store,

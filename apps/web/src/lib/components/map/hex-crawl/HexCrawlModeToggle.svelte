@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { HexCrawlStore } from "$lib/stores/hex-crawl/hex-crawl.svelte";
+  import type { HexCrawlStore } from "#lib/stores/hex-crawl/hex-crawl.svelte.js";
   import { canSeeHexCrawl, isHexGridType } from "./hex-crawl-view";
 
   let {

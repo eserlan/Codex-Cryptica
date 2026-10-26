@@ -1,11 +1,11 @@
-import type { RandomSourceFiles } from "$lib/stores/random-source-store.svelte";
+import type { RandomSourceFiles } from "#lib/stores/random-source-store.svelte.js";
 import {
   deleteOpfsEntry,
   getDirHandle,
   isNotFoundError,
   readFileAsText,
   writeOpfsFile,
-} from "$lib/utils/opfs";
+} from "#lib/utils/opfs.js";
 
 /**
  * `RandomSourceFiles` over the open vault (#2247).

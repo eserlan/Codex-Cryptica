@@ -11,9 +11,9 @@ import {
   type Canvas,
   type CanvasDrawing,
 } from "@codex/canvas-engine";
-import { vault } from "$lib/stores/vault.svelte";
-import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
-import { debugStore } from "$lib/stores/debug.svelte";
+import { vault } from "#lib/stores/vault.svelte.js";
+import { canvasRegistry } from "#lib/stores/canvas-registry.svelte.js";
+import { debugStore } from "#lib/stores/debug.svelte.js";
 import { useCanvasCategories } from "./use-canvas-categories.svelte";
 import {
   buildCanvasSavePayload,
@@ -30,7 +30,7 @@ import {
   type IdGenerator,
   systemClock,
   systemIdGenerator,
-} from "$lib/utils/runtime-deps";
+} from "#lib/utils/runtime-deps.js";
 
 export function createCanvasLogic(
   getEngine: () => CanvasStore,

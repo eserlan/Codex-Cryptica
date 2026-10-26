@@ -5,7 +5,7 @@
   import {
     trackPublicGeneratorAction,
     type PublicGeneratorAction,
-  } from "$lib/services/analytics/zaraz-analytics";
+  } from "#lib/services/analytics/zaraz-analytics.js";
   import {
     QUICK_NAMES_COUNT,
     formatQuickNameList,

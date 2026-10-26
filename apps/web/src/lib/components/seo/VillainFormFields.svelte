@@ -4,8 +4,8 @@
     villainConfig,
     factionConfig,
     pickFrom,
-  } from "$lib/services/seo/generator-config";
-  import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
+  } from "#lib/services/seo/generator-config.js";
+  import SelectWithCustomOption from "#lib/components/forms/SelectWithCustomOption.svelte";
 
   let {
     theme = $bindable(factionConfig.themes[0]),

@@ -1,17 +1,17 @@
 <script lang="ts">
   import { fade, scale } from "svelte/transition";
-  import { categories } from "$lib/stores/categories.svelte";
-  import { vault } from "$lib/stores/vault.svelte";
-  import { oracle } from "$lib/stores/oracle.svelte";
-  import { themeStore } from "$lib/stores/theme.svelte";
-  import { notificationStore } from "$lib/stores/ui/notification.svelte";
-  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { categories } from "#lib/stores/categories.svelte.js";
+  import { vault } from "#lib/stores/vault.svelte.js";
+  import { oracle } from "#lib/stores/oracle.svelte.js";
+  import { themeStore } from "#lib/stores/theme.svelte.js";
+  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
+  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
   import { textGenerationService } from "@codex/ai-engine";
-  import { entityTemplateService } from "$lib/services/EntityTemplateService.svelte";
-  import { entityTemplateStore } from "$lib/stores/entity-templates/entity-template-store.svelte";
-  import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
+  import { entityTemplateService } from "#lib/services/EntityTemplateService.svelte.js";
+  import { entityTemplateStore } from "#lib/stores/entity-templates/entity-template-store.svelte.js";
+  import { discoveryPolicyStore } from "#lib/stores/ui/discovery-policy.svelte.js";
   import type { ConnectedEntityPromptContext } from "schema";
-  import DecorativeGlowFrame from "$lib/components/ui/DecorativeGlowFrame.svelte";
+  import DecorativeGlowFrame from "#lib/components/ui/DecorativeGlowFrame.svelte";
 
   let {
     isOpen,

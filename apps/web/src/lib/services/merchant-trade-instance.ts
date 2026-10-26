@@ -1,8 +1,8 @@
 import { appEventBus } from "@codex/events";
 import { JOURNAL_EVENTS } from "session-journal-engine";
-import { systemClock } from "$lib/utils/runtime-deps";
-import { vault } from "$lib/stores/vault.svelte";
-import { statSheetTemplates } from "$lib/stores/stat-sheet-templates.svelte";
+import { systemClock } from "#lib/utils/runtime-deps.js";
+import { vault } from "#lib/stores/vault.svelte.js";
+import { statSheetTemplates } from "#lib/stores/stat-sheet-templates.svelte.js";
 import { MerchantTradeService, createCommerceRegistry } from "./merchant-trade";
 
 /** Production wiring for merchant trades (#3963). Tests build their own. */

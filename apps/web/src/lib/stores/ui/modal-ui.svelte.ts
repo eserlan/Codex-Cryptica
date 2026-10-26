@@ -1,7 +1,7 @@
 import type { AspectRatio, Entity } from "schema";
 import { sessionModeStore } from "./session-mode.svelte";
-import { vault } from "$lib/stores/vault.svelte";
-import { isVaultReadyForGenerators } from "$lib/stores/vault/readiness";
+import { vault } from "#lib/stores/vault.svelte.js";
+import { isVaultReadyForGenerators } from "#lib/stores/vault/readiness.js";
 
 export type SettingsTab =
   | "vault"

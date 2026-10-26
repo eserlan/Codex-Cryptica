@@ -11,7 +11,7 @@ import {
   seedVaultCache,
   shouldBypassFetchSynchronously,
   shouldHandleVaultRequest,
-} from "$lib/service-worker/lifecycle";
+} from "#lib/service-worker/lifecycle.js";
 
 const CACHE_VERSION = "735";
 const appVersion =

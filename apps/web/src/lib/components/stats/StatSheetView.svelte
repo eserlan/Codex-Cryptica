@@ -1,13 +1,16 @@
 <script lang="ts">
   import type { Entity, StatSheetField } from "schema";
-  import { vault } from "$lib/stores/vault.svelte";
-  import { statSheetTemplates } from "$lib/stores/stat-sheet-templates.svelte";
+  import { vault } from "#lib/stores/vault.svelte.js";
+  import { statSheetTemplates } from "#lib/stores/stat-sheet-templates.svelte.js";
   import {
     applyDerivedModifiers,
     computeAdjustedCounterValue,
     rollStatSheetDiceField,
-  } from "$lib/utils/stat-sheet-field-actions";
-  import { type IdGenerator, systemIdGenerator } from "$lib/utils/runtime-deps";
+  } from "#lib/utils/stat-sheet-field-actions.js";
+  import {
+    type IdGenerator,
+    systemIdGenerator,
+  } from "#lib/utils/runtime-deps.js";
   import ItemTableNode from "./presentation/nodes/ItemTableNode.svelte";
   import TovLuckControl from "./TovLuckControl.svelte";
   import TovDoomControl from "./TovDoomControl.svelte";
@@ -17,11 +20,11 @@
     entity,
     onOpenEditor = () => {},
     idGenerator = systemIdGenerator,
-  } = $props<{
+  }: {
     entity: Entity;
     onOpenEditor?: () => void;
     idGenerator?: IdGenerator;
-  }>();
+  } = $props();
 
   const readOnly = $derived(vault.isGuest);
   const fields = $derived(entity.statSheet?.fields ?? []);

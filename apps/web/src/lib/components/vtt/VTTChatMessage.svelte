@@ -1,10 +1,10 @@
 <script lang="ts">
-  import DiceRollResult from "$lib/components/dice/DiceRollResult.svelte";
-  import VTTChatCard from "$lib/components/vtt/VTTChatCard.svelte";
-  import { mapSession } from "$lib/stores/map-session.svelte";
+  import DiceRollResult from "#lib/components/dice/DiceRollResult.svelte";
+  import VTTChatCard from "#lib/components/vtt/VTTChatCard.svelte";
+  import { mapSession } from "#lib/stores/map-session.svelte.js";
   import type { ChatMessagePayload } from "../../../types/vtt";
 
-  let { message } = $props<{ message: ChatMessagePayload }>();
+  let { message }: { message: ChatMessagePayload } = $props();
 
   const isMe = $derived(message.senderId === (mapSession.myPeerId || "host"));
 </script>

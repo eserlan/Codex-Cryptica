@@ -1,9 +1,9 @@
 <script lang="ts">
   import type { AgendaSection, CalendarEventEntry } from "chronology-engine";
   import { onDestroy, onMount } from "svelte";
-  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
   import { createEntryClickHandlers } from "./entry-click";
-  import { browserPerformanceRecorder } from "$lib/services/performance/browser-performance-capture";
+  import { browserPerformanceRecorder } from "#lib/services/performance/browser-performance-capture.js";
   import { getRenderWindow, sliceRenderWindow } from "./utils/render-window";
 
   type AgendaRenderItem =

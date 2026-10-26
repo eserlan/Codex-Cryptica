@@ -3,8 +3,8 @@
   route (/generators/[theme]/[slug]) can reuse it without duplication.
 -->
 <script lang="ts">
-  import GeneratorPageContent from "$lib/components/seo/GeneratorPageContent.svelte";
-  import type { ValidSlug } from "$lib/components/seo/generator-page-meta";
+  import GeneratorPageContent from "#lib/components/seo/GeneratorPageContent.svelte";
+  import type { ValidSlug } from "#lib/components/seo/generator-page-meta.js";
 
   let { data } = $props();
 </script>

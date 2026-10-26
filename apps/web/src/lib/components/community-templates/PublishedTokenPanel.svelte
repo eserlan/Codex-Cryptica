@@ -1,6 +1,6 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
-  import { downloadText } from "$lib/utils/download";
+  import { downloadText } from "#lib/utils/download.js";
 
   let {
     templateName,

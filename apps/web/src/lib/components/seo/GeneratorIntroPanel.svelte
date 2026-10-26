@@ -1,6 +1,6 @@
 <script lang="ts">
   import GeneratorSwitcherMenu from "./GeneratorSwitcherMenu.svelte";
-  import PublicLabelChip from "$lib/components/labels/PublicLabelChip.svelte";
+  import PublicLabelChip from "#lib/components/labels/PublicLabelChip.svelte";
 
   let {
     canonicalPath,
@@ -24,9 +24,9 @@
     backLabel?: string;
   } = $props();
 
-  import { base } from "$app/paths";
+  import { resolve } from "$app/paths";
 
-  const cleanBase = base === "/" ? "" : base;
+  const cleanBase = resolve("") === "/" ? "" : resolve("");
 </script>
 
 <a

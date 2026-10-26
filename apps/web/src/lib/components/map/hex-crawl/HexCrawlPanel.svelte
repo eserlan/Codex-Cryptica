@@ -12,11 +12,11 @@
     hasPendingParts,
     type Terrain,
   } from "hex-crawl-engine";
-  import type { HexCrawlStore } from "$lib/stores/hex-crawl/hex-crawl.svelte";
-  import type { HexJourneyStore } from "$lib/stores/hex-crawl/hex-journey.svelte";
-  import { mapStore } from "$lib/stores/map.svelte";
-  import { vault } from "$lib/stores/vault.svelte";
-  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import type { HexCrawlStore } from "#lib/stores/hex-crawl/hex-crawl.svelte.js";
+  import type { HexJourneyStore } from "#lib/stores/hex-crawl/hex-journey.svelte.js";
+  import { mapStore } from "#lib/stores/map.svelte.js";
+  import { vault } from "#lib/stores/vault.svelte.js";
+  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
   import { canSeeHexCrawl, hexLabelFor } from "./hex-crawl-view";
   import HexTerrainPicker from "./HexTerrainPicker.svelte";
   import HexNotes from "./HexNotes.svelte";

@@ -1,6 +1,9 @@
 <script lang="ts">
-  import { originConfig, pickFrom } from "$lib/services/seo/generator-config";
-  import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
+  import {
+    originConfig,
+    pickFrom,
+  } from "#lib/services/seo/generator-config.js";
+  import SelectWithCustomOption from "#lib/components/forms/SelectWithCustomOption.svelte";
 
   // Superhero / Comic Book only, by design (#3111) — no theme/genre select
   // here, unlike most other public generators. See the add-generator skill's

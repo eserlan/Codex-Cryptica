@@ -1,5 +1,5 @@
-import { loadBlogArticle } from "$lib/content/blog-content";
-import { buildAbsoluteUrl } from "$lib/seo/site";
+import { loadBlogArticle } from "#lib/content/blog-content.js";
+import { buildAbsoluteUrl } from "#lib/seo/site.js";
 import { error } from "@sveltejs/kit";
 import type { PageLoad } from "./$types";
 

@@ -1,8 +1,8 @@
 import { untrack } from "svelte";
 import { attachCommunityHulls, applyLargeGraphRenderHints } from "graph-engine";
 import type { Core } from "cytoscape";
-import { themeStore } from "$lib/stores/theme.svelte";
-import { categories } from "$lib/stores/categories.svelte";
+import { themeStore } from "#lib/stores/theme.svelte.js";
+import { categories } from "#lib/stores/categories.svelte.js";
 import { syncGraphImages } from "./graph-image-sync";
 import type { GraphRenderActivity } from "./graph-visibility";
 import type { GraphViewDependencies, GraphViewHost } from "./graph-view-types";

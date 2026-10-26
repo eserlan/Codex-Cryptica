@@ -1,8 +1,8 @@
 import { describe, expect, it, vi, beforeAll, afterAll } from "vitest";
 import { render } from "@testing-library/svelte";
 import OracleSidebarPanel from "./OracleSidebarPanel.svelte";
-import { HINT_KEYS } from "$lib/config/help-content";
-import type { StorageLike } from "$lib/utils/runtime-deps";
+import { HINT_KEYS } from "#lib/config/help-content.js";
+import type { StorageLike } from "#lib/utils/runtime-deps.js";
 
 describe("OracleSidebarPanel", () => {
   const originalAnimate = Element.prototype.animate;

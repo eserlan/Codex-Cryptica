@@ -3,7 +3,7 @@ import { getDB, type VaultRecord } from "../utils/idb";
 import { getOpfsRoot, createVaultDir } from "../utils/opfs";
 import { debugStore } from "./debug.svelte";
 import * as registry from "./vault/registry";
-import { systemClock } from "$lib/utils/runtime-deps";
+import { systemClock } from "#lib/utils/runtime-deps.js";
 
 class VaultRegistryStore {
   availableVaults = $state<VaultRecord[]>([]);

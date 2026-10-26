@@ -1,7 +1,7 @@
 import { render, screen, fireEvent } from "@testing-library/svelte";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import CalendarEraSettings from "./CalendarEraSettings.svelte";
-import { calendarStore } from "$lib/stores/calendar.svelte";
+import { calendarStore } from "#lib/stores/calendar.svelte.js";
 import { DEFAULT_CALENDAR } from "chronology-engine";
 
 describe("CalendarEraSettings", () => {

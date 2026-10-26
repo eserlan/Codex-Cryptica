@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onboardingFunnel } from "$lib/app/onboarding/onboarding-funnel";
+  import { onboardingFunnel } from "#lib/app/onboarding/onboarding-funnel.js";
   import GuidedSetupGroup from "./GuidedSetupGroup.svelte";
 
   /** The standalone /help window has no app shell, so no journey can run there. */

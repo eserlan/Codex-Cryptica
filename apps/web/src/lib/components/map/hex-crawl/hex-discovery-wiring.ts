@@ -1,7 +1,7 @@
 import type { HexCoord } from "map-engine";
 import { matchFaction } from "hex-crawl-engine";
-import type { HexCrawlStore } from "$lib/stores/hex-crawl/hex-crawl.svelte";
-import type { HexDiscoveryController } from "$lib/services/hex-discovery";
+import type { HexCrawlStore } from "#lib/stores/hex-crawl/hex-crawl.svelte.js";
+import type { HexDiscoveryController } from "#lib/services/hex-discovery.js";
 import type { HexDiscoveryWiring } from "./discovery-controls";
 
 export interface DiscoveryWiringInput {

@@ -3,7 +3,11 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("$app/paths", () => ({ base: "" }));
+vi.mock("$app/paths", () => ({
+  base: "",
+  asset: (p: string) => p,
+  resolve: (p: string) => (p === "/(app)" ? "/preview/" : p),
+}));
 
 vi.mock("$app/navigation", () => ({ goto: vi.fn(), beforeNavigate: vi.fn() }));
 
@@ -17,7 +21,7 @@ vi.mock("../zen/ZenView.svelte", async () => ({
   default: (await import("./__tests__/ZenViewStub.svelte")).default,
 }));
 
-vi.mock("$lib/stores/vault.svelte", () => ({
+vi.mock("#lib/stores/vault.svelte.js", () => ({
   vault: {
     activeVaultId: "v1",
     isGuest: false,
@@ -29,7 +33,7 @@ vi.mock("$lib/stores/vault.svelte", () => ({
 }));
 
 import ZenModeModal from "./ZenModeModal.svelte";
-import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
 import { goto } from "$app/navigation";
 
 describe("ZenModeModal close (standalone entity route)", () => {
@@ -67,6 +71,7 @@ describe("ZenModeModal close (standalone entity route)", () => {
     await waitFor(() => {
       expect(goto as unknown as ReturnType<typeof vi.fn>).toHaveBeenCalled();
     });
+    expect(goto).toHaveBeenCalledWith("/preview/");
   });
 
   it("navigates to modalUIStore.lastAppPath when tab cannot be closed", async () => {

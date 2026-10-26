@@ -1,20 +1,20 @@
 <script lang="ts">
   import type { Entity, StatSheetField, StatSheetTemplate } from "schema";
-  import { vault } from "$lib/stores/vault.svelte";
-  import StatSheetView from "$lib/components/stats/StatSheetView.svelte";
-  import StatSheetEditor from "$lib/components/stats/StatSheetEditor.svelte";
-  import StatSheetTemplateModal from "$lib/components/stats/StatSheetTemplateModal.svelte";
-  import { notificationStore } from "$lib/stores/ui/notification.svelte";
-  import { presentationUIStore } from "$lib/stores/ui/presentation-ui.svelte";
-  import { statSheetTemplates } from "$lib/stores/stat-sheet-templates.svelte";
-  import { systemProfileStore } from "$lib/stores/system-profile.svelte";
-  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-  import { FEATURE_HINTS } from "$lib/config/help-content";
-  import { presentationTemplates } from "$lib/stores/presentation-templates.svelte";
-  import PresentationRenderer from "$lib/components/stats/presentation/PresentationRenderer.svelte";
-  import PresentationTemplatePicker from "$lib/components/stats/presentation/PresentationTemplatePicker.svelte";
-  import PresentationTemplateManager from "$lib/components/stats/presentation/PresentationTemplateManager.svelte";
-  import type { PresentationRenderContext } from "$lib/components/stats/presentation/types";
+  import { vault } from "#lib/stores/vault.svelte.js";
+  import StatSheetView from "#lib/components/stats/StatSheetView.svelte";
+  import StatSheetEditor from "#lib/components/stats/StatSheetEditor.svelte";
+  import StatSheetTemplateModal from "#lib/components/stats/StatSheetTemplateModal.svelte";
+  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
+  import { presentationUIStore } from "#lib/stores/ui/presentation-ui.svelte.js";
+  import { statSheetTemplates } from "#lib/stores/stat-sheet-templates.svelte.js";
+  import { systemProfileStore } from "#lib/stores/system-profile.svelte.js";
+  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+  import { FEATURE_HINTS } from "#lib/config/help-content.js";
+  import { presentationTemplates } from "#lib/stores/presentation-templates.svelte.js";
+  import PresentationRenderer from "#lib/components/stats/presentation/PresentationRenderer.svelte";
+  import PresentationTemplatePicker from "#lib/components/stats/presentation/PresentationTemplatePicker.svelte";
+  import PresentationTemplateManager from "#lib/components/stats/presentation/PresentationTemplateManager.svelte";
+  import type { PresentationRenderContext } from "#lib/components/stats/presentation/types.js";
   import {
     computeSectionKeys,
     TOV_MONSTER_TEMPLATE_ID,
@@ -28,9 +28,9 @@
   import {
     applyDerivedModifiers,
     computeAdjustedCounterValue,
-  } from "$lib/utils/stat-sheet-field-actions";
+  } from "#lib/utils/stat-sheet-field-actions.js";
 
-  let { entity } = $props<{ entity: Entity }>();
+  let { entity }: { entity: Entity } = $props();
 
   let isEditingLayout = $state(false);
   let showTemplateModal = $state(false);

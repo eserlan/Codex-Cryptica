@@ -19,7 +19,7 @@ import {
   loadThreads,
   saveThreads,
   type VaultFileAccess,
-} from "$lib/services/vault-threads-file";
+} from "#lib/services/vault-threads-file.js";
 
 export interface SoloThreadsDeps {
   /** The active vault, or null. */

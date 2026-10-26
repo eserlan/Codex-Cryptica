@@ -1,4 +1,4 @@
-import { renderMarkdown as renderMd } from "$lib/utils/markdown";
+import { renderMarkdown as renderMd } from "#lib/utils/markdown.js";
 
 function escapeGeneratorHtml(value: string): string {
   return value

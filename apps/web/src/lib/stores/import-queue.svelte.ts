@@ -1,6 +1,9 @@
 import { calculateFileHash } from "@codex/importer";
 import type { ImportQueueItem } from "@codex/importer";
-import { type IdGenerator, systemIdGenerator } from "$lib/utils/runtime-deps";
+import {
+  type IdGenerator,
+  systemIdGenerator,
+} from "#lib/utils/runtime-deps.js";
 
 export class ImportQueueStore {
   queue = $state<ImportQueueItem[]>([]);

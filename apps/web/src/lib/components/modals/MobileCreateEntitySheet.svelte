@@ -1,15 +1,15 @@
 <script lang="ts">
   import { fly, fade } from "svelte/transition";
   import { quintOut } from "svelte/easing";
-  import { vault } from "$lib/stores/vault.svelte";
-  import { categories } from "$lib/stores/categories.svelte";
-  import { themeStore } from "$lib/stores/theme.svelte";
-  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-  import { systemProfileStore } from "$lib/stores/system-profile.svelte";
-  import { focusTrap } from "$lib/actions/focusTrap";
-  import { entityTemplateService } from "$lib/services/EntityTemplateService.svelte";
-  import { entityTemplateStore } from "$lib/stores/entity-templates/entity-template-store.svelte";
-  import { proposerStore } from "$lib/stores/proposer.svelte";
+  import { vault } from "#lib/stores/vault.svelte.js";
+  import { categories } from "#lib/stores/categories.svelte.js";
+  import { themeStore } from "#lib/stores/theme.svelte.js";
+  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+  import { systemProfileStore } from "#lib/stores/system-profile.svelte.js";
+  import { focusTrap } from "#lib/actions/focusTrap.js";
+  import { entityTemplateService } from "#lib/services/EntityTemplateService.svelte.js";
+  import { entityTemplateStore } from "#lib/stores/entity-templates/entity-template-store.svelte.js";
+  import { proposerStore } from "#lib/stores/proposer.svelte.js";
 
   let newTitle = $state("");
   let newType = $state<string>("character");
