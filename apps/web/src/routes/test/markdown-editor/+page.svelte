@@ -28,6 +28,8 @@
   </div>
 
   <button
+    type="button"
+    aria-label="Insert embed"
     data-testid="insert-embed-btn"
     class="bg-blue-500 text-white px-4 py-2 rounded mb-4"
     onclick={insertEmbed}
