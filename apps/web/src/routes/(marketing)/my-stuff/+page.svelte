@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { browser } from "$app/env";
-  import { resolve } from "$app/paths";
+  import { basePath } from "#lib/utils/base-path.js";
   import SeoHead from "#lib/components/seo/SeoHead.svelte";
   import { buildAbsoluteUrl } from "#lib/seo/site.js";
   import { myStuffService } from "#lib/services/my-stuff/my-stuff-service.js";
@@ -19,7 +19,7 @@
     SharedGeneratorItem,
   } from "#lib/services/my-stuff/types.js";
 
-  const cleanBase = $derived(resolve("") === "/" ? "" : resolve(""));
+  const cleanBase = $derived(basePath());
 
   let activeTab = $state<MyStuffTab>("liked");
   let likedAnswers = $state<LikedAnswerItem[]>([]);

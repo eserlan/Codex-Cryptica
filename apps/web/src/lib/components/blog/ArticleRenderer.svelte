@@ -3,7 +3,7 @@
   import { gfmHeadingId } from "marked-gfm-heading-id";
   import DOMPurify from "dompurify";
   import { browser } from "$app/env";
-  import { resolve } from "$app/paths";
+  import { basePath } from "#lib/utils/base-path.js";
   import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
 
   // Enable heading IDs for table of contents anchors
@@ -19,8 +19,8 @@
   // Matches ](/path) and src="/path"
   const processedContent = $derived(
     content
-      .replace(/\]\(\//g, `](${resolve("")}/`)
-      .replace(/src="\//g, `src="${resolve("")}/`),
+      .replace(/\]\(\//g, `](${basePath()}/`)
+      .replace(/src="\//g, `src="${basePath()}/`),
   );
 
   const renderedHtml = $derived(marked.parse(processedContent));

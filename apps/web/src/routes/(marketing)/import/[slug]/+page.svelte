@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { resolve } from "$app/paths";
-  const cleanBase = resolve("") === "/" ? "" : resolve("");
+  import { basePath } from "#lib/utils/base-path.js";
+  const cleanBase = basePath();
   import { fade } from "svelte/transition";
   import { safeJsonLd } from "#lib/utils/json-ld.js";
   import {

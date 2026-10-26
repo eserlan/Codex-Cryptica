@@ -50,6 +50,17 @@ describe("shellCtaHref", () => {
       "/preview/?utm_source=marketing-logo&utm_medium=nav&utm_campaign=seo-funnel",
     );
   });
+
+  it.each([
+    ["./", "./?"],
+    ["../", "../?"],
+    ["../../", "../../?"],
+    ["/preview/", "/preview/?"],
+  ])("never doubles the slash after a %s base", (base, prefix) => {
+    const href = shellCtaHref(base, "/blog", "nav");
+    expect(href.startsWith(prefix)).toBe(true);
+    expect(href).not.toContain("//");
+  });
 });
 
 describe("shellFooterLinks", () => {

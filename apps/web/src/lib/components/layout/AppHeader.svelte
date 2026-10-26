@@ -1,6 +1,7 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
+  import { basePath } from "#lib/utils/base-path.js";
   import { IS_STAGING } from "#lib/config/index.js";
   import { searchStore } from "#lib/stores/search.svelte.js";
   import VaultControls from "../VaultControls.svelte";
@@ -167,7 +168,7 @@
         </span>
         <VoiceChatControls />
         <a
-          href="{resolve('')}/worlds"
+          href="{basePath()}/worlds"
           class="px-3 py-1.5 rounded-lg border border-chrome-border hover:border-chrome-accent hover:text-chrome-accent text-xs font-medium transition-all flex items-center gap-1.5"
         >
           <span class="icon-[lucide--compass] h-3.5 w-3.5" aria-hidden="true"
@@ -218,7 +219,7 @@
         <VaultControls />
         {#if !guidedModeStore.isGuidedMode}
           <a
-            href="{resolve('')}/worlds"
+            href="{basePath()}/worlds"
             class="w-8 h-8 flex items-center justify-center border border-chrome-border hover:border-chrome-accent text-chrome-muted hover:text-chrome-accent transition-all"
             title="Explore public worlds"
             aria-label="Explore public worlds"

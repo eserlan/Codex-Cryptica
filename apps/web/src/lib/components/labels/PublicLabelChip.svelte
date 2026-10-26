@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { resolve } from "$app/paths";
+  import { basePath } from "#lib/utils/base-path.js";
   import { labelHref } from "#lib/content/labels.js";
 
   let { label, size = "md" }: { label: string; size?: "sm" | "md" } = $props();
-  const cleanBase = resolve("") === "/" ? "" : resolve("");
+  const cleanBase = basePath();
   const sizeClasses = $derived(
     size === "sm" ? "px-1.5 py-0.5 text-nano" : "px-2 py-1 text-micro",
   );

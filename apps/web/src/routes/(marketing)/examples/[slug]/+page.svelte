@@ -1,6 +1,6 @@
 <script lang="ts">
   import { browser } from "$app/env";
-  import { resolve } from "$app/paths";
+  import { basePath } from "#lib/utils/base-path.js";
   import SeoHead from "#lib/components/seo/SeoHead.svelte";
   import { buildAbsoluteUrl } from "#lib/seo/site.js";
   import { examplePath } from "#lib/content/examples/registry.js";
@@ -20,7 +20,7 @@
 
   let { data }: { data: PageData } = $props();
 
-  const cleanBase = resolve("") === "/" ? "" : resolve("");
+  const cleanBase = basePath();
 
   let example = $derived(data.example);
   let related = $derived(data.related);

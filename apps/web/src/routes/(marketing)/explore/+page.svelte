@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onDestroy, onMount } from "svelte";
-  import { resolve } from "$app/paths";
+  import { basePath } from "#lib/utils/base-path.js";
   import { page } from "$app/state";
   import { invalidateAll } from "$app/navigation";
   import SeoHead from "#lib/components/seo/SeoHead.svelte";
@@ -67,7 +67,7 @@
     themeStore.previewTheme(null);
   });
 
-  const cleanBase = resolve("") === "/" ? "" : resolve("");
+  const cleanBase = basePath();
 
   const TITLE = "Explore Codex Cryptica";
   const DESCRIPTION =

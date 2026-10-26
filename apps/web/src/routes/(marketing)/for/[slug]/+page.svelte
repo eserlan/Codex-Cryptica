@@ -1,11 +1,11 @@
 <script lang="ts">
   import { onDestroy } from "svelte";
   import { browser } from "$app/env";
-  import { resolve } from "$app/paths";
+  import { basePath } from "#lib/utils/base-path.js";
   import { buildAbsoluteUrl } from "#lib/seo/site.js";
   // Matches the marketing shell: a bare "/" base would make every link
   // protocol-relative ("//generators/...").
-  const cleanBase = resolve("") === "/" ? "" : resolve("");
+  const cleanBase = basePath();
   import type { PageData } from "./$types";
   import type {
     LandingPageConfig,

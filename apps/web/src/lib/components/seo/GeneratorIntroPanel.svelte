@@ -24,9 +24,9 @@
     backLabel?: string;
   } = $props();
 
-  import { resolve } from "$app/paths";
+  import { basePath } from "#lib/utils/base-path.js";
 
-  const cleanBase = resolve("") === "/" ? "" : resolve("");
+  const cleanBase = basePath();
 </script>
 
 <a

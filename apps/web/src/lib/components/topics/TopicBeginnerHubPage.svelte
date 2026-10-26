@@ -1,6 +1,6 @@
 <script lang="ts">
   import { browser } from "$app/env";
-  import { resolve } from "$app/paths";
+  import { basePath } from "#lib/utils/base-path.js";
   import SeoHead from "#lib/components/seo/SeoHead.svelte";
   import PublicLabelChip from "#lib/components/labels/PublicLabelChip.svelte";
   import { buildAbsoluteUrl } from "#lib/seo/site.js";
@@ -23,7 +23,7 @@
 
   let { config }: { config: TopicBeginnerHubConfig } = $props();
 
-  const cleanBase = resolve("") === "/" ? "" : resolve("");
+  const cleanBase = basePath();
   const canonical = $derived(buildAbsoluteUrl(config.canonicalPath));
 
   const seenTopic = createDiscoveryViewGuard();

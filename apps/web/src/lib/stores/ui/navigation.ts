@@ -1,4 +1,4 @@
-import { resolve } from "$app/paths";
+import { basePath } from "#lib/utils/base-path.js";
 import { layoutUIStore, type LayoutUIStore } from "./layout-ui.svelte";
 import { modalUIStore } from "./modal-ui.svelte";
 import { UI_STORAGE_KEYS, UIPersistence } from "./persistence";
@@ -108,7 +108,7 @@ export function openImportWindow() {
   const left = window.screenX + (window.outerWidth - width) / 2;
   const top = window.screenY + (window.outerHeight - height) / 2;
 
-  const url = `${window.location.origin}${resolve("")}/import`;
+  const url = `${window.location.origin}${basePath()}/import`;
   const features = `width=${width},height=${height},left=${left},top=${top},toolbar=0,location=0,menubar=0,noopener,noreferrer`;
 
   const newWin = window.open(url, "CodexCrypticaImport", features);
@@ -138,7 +138,7 @@ export function openDiceWindow(tab?: "dice" | "decks" | "tables") {
   }
 
   const query = params.toString();
-  const url = `${window.location.origin}${resolve("")}/dice${query ? `?${query}` : ""}`;
+  const url = `${window.location.origin}${basePath()}/dice${query ? `?${query}` : ""}`;
   const features = `width=${width},height=${height},left=${left},top=${top},toolbar=0,location=0,menubar=0,noopener,noreferrer`;
 
   const newWin = window.open(url, "CodexCrypticaDice", features);
