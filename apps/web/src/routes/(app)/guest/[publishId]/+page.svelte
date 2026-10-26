@@ -14,7 +14,7 @@
     addGuestHistory,
     removeGuestHistory,
   } from "#lib/services/publishing/guest-history.js";
-  import { resolve } from "$app/paths";
+  import { basePath } from "#lib/utils/base-path.js";
   import GraphView from "#lib/components/GraphView.svelte";
   import EntityDetailPanel from "#lib/components/EntityDetailPanel.svelte";
   import EmbeddedEntityView from "#lib/components/entity/EmbeddedEntityView.svelte";
@@ -172,7 +172,7 @@
 
         <div class="flex flex-col w-full gap-2">
           <a
-            href="{resolve('')}/guest"
+            href="{basePath()}/guest"
             class="flex items-center justify-center px-4 py-2.5 rounded-lg font-medium text-sm transition-all border border-theme-border bg-theme-surface hover:bg-theme-bg text-theme-primary"
           >
             <span
@@ -182,7 +182,7 @@
             Back to Shared Worlds
           </a>
           <a
-            href="{resolve('')}/worlds"
+            href="{basePath()}/worlds"
             class="flex items-center justify-center px-4 py-2.5 rounded-lg font-medium text-sm transition-all text-theme-muted hover:text-theme-primary"
           >
             <span aria-hidden="true" class="icon-[lucide--compass] mr-2 h-4 w-4"

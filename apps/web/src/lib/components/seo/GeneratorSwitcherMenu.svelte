@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { resolve } from "$app/paths";
+  import { basePath } from "#lib/utils/base-path.js";
   import { browser } from "$app/env";
   import { fade } from "svelte/transition";
   import { themeStore } from "#lib/stores/theme.svelte.js";
@@ -8,7 +8,7 @@
     groupGeneratorCatalogue,
   } from "#lib/content/generator-catalogue.js";
 
-  const cleanBase = resolve("") === "/" ? "" : resolve("");
+  const cleanBase = basePath();
   let { canonicalPath, eyebrow }: { canonicalPath?: string; eyebrow: string } =
     $props();
 

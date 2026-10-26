@@ -127,6 +127,6 @@ export const mechaRpgs: LandingPageConfig = {
     description:
       "Keep the people, machines, battlefields, and consequences of your campaign connected in one local-first workspace.",
     buttonText: "Start Your Campaign",
-    buttonHref: "/app",
+    buttonHref: "/",
   },
 };

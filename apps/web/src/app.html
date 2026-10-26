@@ -7,6 +7,57 @@
       name="viewport"
       content="width=device-width, initial-scale=1, viewport-fit=cover"
     />
+    <script>
+      // Stale-build recovery: an edge-cached page can outlive the deploy whose
+      // /_app/immutable/ chunks it references. When one of those fails to load
+      // the app never hydrates, so reload once with a cache-busting parameter.
+      // Must run before SvelteKit's head output emits the modulepreload links
+      // (never name its placeholder here: SvelteKit fills only the first one).
+      // The root layout disarms it on mount; then hooks.client.ts handles skew.
+      (function (w) {
+        var KEY = "__cc_reload";
+        try {
+          var url = new URL(w.location.href);
+          var retried = url.searchParams.has(KEY);
+          if (retried) {
+            url.searchParams.delete(KEY);
+            w.history.replaceState(
+              w.history.state,
+              "",
+              url.pathname + url.search + url.hash,
+            );
+          }
+          var reloading = false;
+          var started = false;
+          w.__codexDisarmStaleBuildRecovery = function () {
+            started = true;
+          };
+          var recover = function (source) {
+            if (retried || reloading || started) return;
+            if (source.indexOf("/_app/immutable/") === -1) return;
+            if (w.navigator.onLine === false) return;
+            reloading = true;
+            var next = new URL(w.location.href);
+            next.searchParams.set(KEY, String(Date.now()));
+            w.location.replace(next.toString());
+          };
+          w.addEventListener(
+            "error",
+            function (e) {
+              var t = e.target;
+              if (t && (t.tagName === "LINK" || t.tagName === "SCRIPT")) {
+                recover(String(t.href || t.src || ""));
+              }
+            },
+            true,
+          );
+          w.addEventListener("unhandledrejection", function (e) {
+            var r = e.reason;
+            recover(String((r && r.message) || r || ""));
+          });
+        } catch (e) {}
+      })(window);
+    </script>
     <!-- Non-blocking Google Fonts: preconnect + preload/swap to avoid render-blocking -->
     <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />

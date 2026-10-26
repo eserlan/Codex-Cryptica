@@ -138,6 +138,6 @@ export const weirdWestRpgs: LandingPageConfig = {
     description:
       "Build a connected territory where every claim, killing, and old secret changes who holds the frontier next.",
     buttonText: "Start Building Free",
-    buttonHref: "/app",
+    buttonHref: "/",
   },
 };

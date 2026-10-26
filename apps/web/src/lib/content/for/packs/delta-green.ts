@@ -129,7 +129,7 @@ export const deltaGreen: LandingPageConfig = {
     description:
       "Map Agents, Bonds, caches, and the unnatural in a fast, local-first workspace built for long-running campaigns.",
     buttonText: "Open Your Case File Free",
-    buttonHref: "/app",
+    buttonHref: "/",
   },
   disclaimer:
     "Codex Cryptica is an independent campaign management tool and is not affiliated with, endorsed, sponsored, or specifically approved by Arc Dream Publishing or the Delta Green Partnership. Delta Green is a trademark of the Delta Green Partnership.",

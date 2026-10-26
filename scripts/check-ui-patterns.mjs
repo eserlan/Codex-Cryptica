@@ -212,6 +212,22 @@ export function basePathProblems(source) {
   return problems;
 }
 
+/**
+ * `resolve("")` with a path appended. Since SvelteKit 3 it ends in "/" (and is
+ * relative while prerendering), so `{resolve("")}/x` emits `//x` or `.//x`.
+ */
+const RESOLVE_CONCAT =
+  /(?:\{|\$\{)resolve\(\s*(["'`])\1\s*,?\s*\)\}(?=[/{$])|resolve\(\s*(["'`])\2\s*,?\s*\)\s*\+\s*["'`]\//g;
+
+export function resolveConcatProblems(source) {
+  return [...source.matchAll(RESOLVE_CONCAT)].map((match) => ({
+    rule: "resolve-concat",
+    line: source.slice(0, match.index).split("\n").length,
+    message:
+      'resolve("") ends in "/" (and is relative during prerendering), so appending a path yields a broken "//path" link. Use basePath() from #lib/utils/base-path.js, or resolve("/path").',
+  }));
+}
+
 /** Split call arguments while ignoring commas inside nested syntax and comments. */
 function callArguments(source, openIndex) {
   const args = [];
@@ -392,6 +408,7 @@ export function checkSource(source, file, themes) {
   const problems = [
     ...remoteImageProblems(source),
     ...basePathProblems(source),
+    ...resolveConcatProblems(source),
   ];
   if (file.endsWith(".svelte")) {
     const variants = classVariants(source);

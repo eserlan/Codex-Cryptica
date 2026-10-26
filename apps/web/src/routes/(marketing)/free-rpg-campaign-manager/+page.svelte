@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { resolve } from "$app/paths";
+  import { basePath } from "#lib/utils/base-path.js";
   import { browser } from "$app/env";
   import { fly } from "svelte/transition";
   import { safeJsonLd } from "#lib/utils/json-ld.js";
@@ -130,7 +130,7 @@
 
   <meta name="twitter:image" content="https://codexcryptica.com/logo.png" />
 
-  <link rel="help" href="{resolve('')}/llms.txt" />
+  <link rel="help" href="{basePath()}/llms.txt" />
   <!-- eslint-disable-next-line svelte/no-at-html-tags -->
   {@html `<scr` +
     `ipt type="application/ld+json">${faqSchemaString}</scr` +
@@ -159,7 +159,7 @@
 
       <div class="flex flex-wrap justify-center gap-4">
         <a
-          href="{resolve('')}/?ref=landing"
+          href="{basePath()}/?ref=landing"
           class="px-8 py-4 bg-theme-primary text-theme-bg font-bold font-header text-xs rounded-lg hover:bg-theme-primary/95 transition-all shadow-lg hover:shadow-theme-primary/20 active:scale-95"
         >
           Enter the Codex
@@ -183,7 +183,7 @@
         class="relative bg-theme-surface/60 border border-theme-border/80 rounded-3xl overflow-hidden shadow-2xl"
       >
         <img
-          src="{resolve('')}/images/rpg-vault-mockup.png"
+          src="{basePath()}/images/rpg-vault-mockup.png"
           alt="Codex Cryptica RPG campaign manager dashboard showing linked characters, locations, and factions inside a knowledge graph network."
           class="w-full h-auto object-cover opacity-95 group-hover:scale-[1.01] transition-transform duration-700"
         />
@@ -347,7 +347,7 @@
         </p>
         <div class="flex flex-wrap justify-center gap-4">
           <a
-            href="{resolve('')}/?ref=landing"
+            href="{basePath()}/?ref=landing"
             class="px-12 py-5 bg-theme-primary text-theme-bg font-bold font-header text-sm rounded-lg hover:bg-theme-primary/90 hover:shadow-[0_0_40px_var(--color-accent-primary)] transition-all active:scale-95"
           >
             Create Your Vault
@@ -362,23 +362,23 @@
     >
       <div class="flex flex-wrap justify-center gap-6">
         <a
-          href="{resolve('')}/"
+          href="{basePath()}/"
           class="hover:text-theme-primary transition-colors"
           >RPG campaign manager</a
         >
 
         <a
-          href="{resolve('')}/worldbuilding-tool"
+          href="{basePath()}/worldbuilding-tool"
           class="hover:text-theme-primary transition-colors"
           >worldbuilding tool</a
         >
         <a
-          href="{resolve('')}/ai-rpg-campaign-manager"
+          href="{basePath()}/ai-rpg-campaign-manager"
           class="hover:text-theme-primary transition-colors"
           >AI RPG Campaign Manager</a
         >
         <a
-          href="{resolve('')}/tools/dnd-npc-generator"
+          href="{basePath()}/tools/dnd-npc-generator"
           class="hover:text-theme-primary transition-colors"
           >DnD NPC Generator</a
         >

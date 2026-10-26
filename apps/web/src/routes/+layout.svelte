@@ -1,6 +1,6 @@
 <script lang="ts">
   import "../app.css";
-  import { resolve } from "$app/paths";
+  import { basePath } from "#lib/utils/base-path.js";
   import { onMount } from "svelte";
   import FeedbackHost from "#lib/components/feedback/FeedbackHost.svelte";
   import { watchShellCanonical } from "#lib/seo/shell-canonical.js";
@@ -24,6 +24,9 @@
   // Imported dynamically to keep @codex/ai-engine out of the initial bundle
   // for pages that never generate (blog, privacy, landing).
   onMount(() => {
+    // The app booted, so its chunks loaded: hand chunk failures from here on
+    // to the version-skew handling in hooks.client.ts (see app.html).
+    window.__codexDisarmStaleBuildRecovery?.();
     const stopShellCanonical = watchShellCanonical(document);
     void import("#lib/services/ai/session-bootstrap.js").then((m) =>
       m.initAiSession(),
@@ -43,7 +46,7 @@
     rel="sitemap"
     type="application/xml"
     title="Sitemap"
-    href="{resolve('')}/sitemap.xml"
+    href="{basePath()}/sitemap.xml"
   />
 </svelte:head>
 

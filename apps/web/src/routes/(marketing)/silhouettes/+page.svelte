@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { resolve } from "$app/paths";
+  import { basePath } from "#lib/utils/base-path.js";
   import { SILHOUETTES, loadSilhouetteSvg } from "schema";
   import type {
     SilhouetteDefinition,
@@ -352,6 +352,7 @@
         ></span>
         <input
           type="text"
+          aria-label="Search silhouettes"
           bind:value={searchQuery}
           placeholder="Search silhouettes by archetype, title, tags, or keywords (e.g. vampire, knight, tavern, alien, dragon)..."
           class="w-full pl-10 pr-9 py-2.5 text-sm rounded-xl bg-theme-base border border-theme-border/80 text-theme-primary placeholder-theme-muted/60 focus:outline-hidden focus:border-theme-accent focus:ring-2 focus:ring-theme-accent/30 transition-colors shadow-inner"
@@ -778,7 +779,7 @@
 
         <div class="pt-2 flex flex-wrap gap-3 items-center">
           <a
-            href="{resolve('')}/free-rpg-campaign-manager"
+            href="{basePath()}/free-rpg-campaign-manager"
             class="px-5 py-2.5 rounded-xl text-xs font-bold bg-theme-accent text-theme-accent-contrast hover:opacity-90 transition-opacity flex items-center gap-2 shadow-md"
           >
             <span aria-hidden="true" class="icon-[lucide--castle] h-4 w-4"
@@ -786,7 +787,7 @@
             Explore Campaign Workspace
           </a>
           <a
-            href="{resolve('')}/tools"
+            href="{basePath()}/tools"
             class="px-5 py-2.5 rounded-xl text-xs font-semibold bg-theme-base border border-theme-border text-theme-primary hover:border-theme-accent transition-colors flex items-center gap-2"
           >
             <span aria-hidden="true" class="icon-[lucide--wrench] h-4 w-4"

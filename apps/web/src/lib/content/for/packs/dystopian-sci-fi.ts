@@ -129,6 +129,6 @@ export const dystopianSciFi: LandingPageConfig = {
     description:
       "Keep institutions, social strata, controlled districts, and session notes connected with relationship graphs and local-first storage.",
     buttonText: "Start Building Free",
-    buttonHref: "/app",
+    buttonHref: "/",
   },
 };

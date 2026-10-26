@@ -20,7 +20,7 @@
   import { openImportWindow } from "#lib/stores/ui/navigation.js";
   import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
   import { guestVault } from "#lib/stores/guest-vault.svelte.js";
-  import { resolve } from "$app/paths";
+  import { basePath } from "#lib/utils/base-path.js";
 
   let { onClose }: { onClose?: () => void } = $props();
 
@@ -585,7 +585,7 @@
               </div>
             </div>
             <a
-              href="{resolve('')}/table?mode=audit"
+              href="{basePath()}/table?mode=audit"
               class="inline-flex shrink-0 items-center justify-center gap-2 rounded-full border border-theme-primary/40 bg-theme-primary/10 px-5 py-2.5 text-xs font-bold uppercase tracking-[0.15em] text-theme-primary transition-all hover:bg-theme-primary hover:text-theme-bg"
             >
               <span>Open Audit</span>
@@ -615,7 +615,7 @@
         {#if sessionModeStore.isGuestMode}
           <div class="flex justify-center pt-2">
             <a
-              href="{resolve('')}/worlds"
+              href="{basePath()}/worlds"
               class="inline-flex items-center gap-2 text-xs font-medium text-theme-muted hover:text-theme-primary transition-colors"
             >
               <span

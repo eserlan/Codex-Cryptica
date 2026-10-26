@@ -125,7 +125,7 @@ export const dungeonsAndDragons: LandingPageConfig = {
     description:
       "Keep your campaign's people, places, and plots connected between sessions, with relationship graphs, interactive maps, and local-first storage.",
     buttonText: "Start Building Free",
-    buttonHref: "/app",
+    buttonHref: "/",
   },
   disclaimer:
     "Codex Cryptica is an independent campaign management tool and is not affiliated with, endorsed, sponsored, or specifically approved by Wizards of the Coast LLC or Hasbro, Inc. Dungeons & Dragons and D&D are registered trademarks of Wizards of the Coast LLC.",

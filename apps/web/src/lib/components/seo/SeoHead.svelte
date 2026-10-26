@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { resolve } from "$app/paths";
+  import { basePath } from "#lib/utils/base-path.js";
   import { buildAbsoluteUrl, getRobotsDirective } from "#lib/seo/site.js";
 
   interface Props {
@@ -36,7 +36,7 @@
     jsonLd = [],
   }: Props = $props();
 
-  const cleanBase = $derived(resolve("").replace(/\/+$/, ""));
+  const cleanBase = $derived(basePath());
 
   const resolvedCanonicalUrl = $derived(
     canonicalUrl

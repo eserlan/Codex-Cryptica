@@ -1,6 +1,6 @@
 <script>
   import { page } from "$app/state";
-  import { resolve } from "$app/paths";
+  import { basePath } from "#lib/utils/base-path.js";
 </script>
 
 <div
@@ -10,7 +10,7 @@
   <p class="text-xl text-gray-700">{page.error?.message || "Unknown error"}</p>
 
   <a
-    href="{resolve('')}/"
+    href="{basePath()}/"
     class="mt-8 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
   >
     Return Home

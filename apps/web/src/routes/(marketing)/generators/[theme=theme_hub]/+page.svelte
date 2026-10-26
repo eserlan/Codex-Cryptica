@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { resolve } from "$app/paths";
-  const cleanBase = resolve("") === "/" ? "" : resolve("");
+  import { basePath } from "#lib/utils/base-path.js";
+  const cleanBase = basePath();
   import { safeJsonLd } from "#lib/utils/json-ld.js";
   import { themeStore } from "#lib/stores/theme.svelte.js";
   import { hubContext } from "#lib/stores/hub-context.svelte.js";

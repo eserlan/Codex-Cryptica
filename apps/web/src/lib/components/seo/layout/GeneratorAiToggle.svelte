@@ -27,7 +27,9 @@
         ? 'cursor-pointer'
         : 'opacity-50 cursor-not-allowed'}"
     >
-      <span class="icon-[lucide--sparkles] text-theme-primary w-3.5 h-3.5"
+      <span
+        class="icon-[lucide--sparkles] text-theme-primary w-3.5 h-3.5"
+        aria-hidden="true"
       ></span>
       AI Lore Co-Author Mode
     </label>

@@ -118,7 +118,7 @@ export const talesOfTheValiant: LandingPageConfig = {
     description:
       "Keep characters, locations, factions, quests, session journals and run sheets connected, with ToV rules notes alongside them in a private, local-first workspace.",
     buttonText: "Start Campaign Free",
-    buttonHref: "/app",
+    buttonHref: "/",
   },
   disclaimer:
     "Codex Cryptica is an independent campaign management platform and is not affiliated with, endorsed, or sponsored by Open Design LLC d/b/a Kobold Press. Tales of the Valiant and Black Flag Roleplaying are trademarks of Open Design LLC. This work includes open game mechanics from the Black Flag Reference Document, made available under the Creative Commons Attribution 4.0 International License (CC BY 4.0) by Open Design LLC.",

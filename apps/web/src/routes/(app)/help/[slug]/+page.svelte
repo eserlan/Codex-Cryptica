@@ -3,7 +3,7 @@
   import { browser } from "$app/env";
   import { renderMarkdown } from "#lib/utils/markdown.js";
   import DOMPurify from "dompurify";
-  import { resolve } from "$app/paths";
+  import { basePath } from "#lib/utils/base-path.js";
 
   let { data } = $props();
   const { article } = data;
@@ -46,7 +46,7 @@
       </p>
     </div>
     <a
-      href="{resolve('')}/help"
+      href="{basePath()}/help"
       class="text-xs text-theme-muted hover:text-theme-primary transition-colors uppercase font-mono tracking-widest flex items-center gap-2"
     >
       <span aria-hidden="true" class="icon-[lucide--chevron-left] w-4 h-4"

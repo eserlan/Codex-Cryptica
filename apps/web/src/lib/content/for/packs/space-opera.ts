@@ -124,6 +124,6 @@ export const spaceOpera: LandingPageConfig = {
     description:
       "Keep your space opera setting connected with relationship graphs, interactive maps, and local-first storage.",
     buttonText: "Start Building Free",
-    buttonHref: "/app",
+    buttonHref: "/",
   },
 };

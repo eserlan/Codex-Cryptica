@@ -1,7 +1,7 @@
 <script lang="ts">
   import { fade } from "svelte/transition";
   import type { Core } from "cytoscape";
-  import { resolve } from "$app/paths";
+  import { basePath } from "#lib/utils/base-path.js";
   import { graph } from "#lib/stores/graph.svelte.js";
   import { vault } from "#lib/stores/vault.svelte.js";
   import { guestStore } from "#lib/stores/guest.svelte.js";
@@ -333,7 +333,7 @@
        only as an icon in the activity rail. The label is worded exactly as the
        graph's screen-reader description names it (graph-a11y.ts). -->
   <a
-    href="{resolve('')}/table"
+    href="{basePath()}/table"
     onclick={closeMenuIfMobile}
     class="{layoutUIStore.isMobile
       ? 'flex'

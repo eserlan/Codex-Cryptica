@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { resolve } from "$app/paths";
+  import { basePath } from "#lib/utils/base-path.js";
   import { PATREON_URL } from "#lib/config/index.js";
   import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
 </script>
@@ -25,12 +25,12 @@
       </a>
     {/if}
     <a
-      href="{resolve('')}/generators"
+      href="{basePath()}/generators"
       class="text-micro font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest"
       >Generators</a
     >
     <a
-      href="{resolve('')}/explore"
+      href="{basePath()}/explore"
       class="text-micro font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest"
       >Explore</a
     >
@@ -41,14 +41,14 @@
       >Help</button
     >
     <a
-      href="{resolve('')}/privacy"
+      href="{basePath()}/privacy"
       target="_blank"
       rel="noopener noreferrer"
       class="text-micro font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest"
       >Privacy</a
     >
     <a
-      href="{resolve('')}/terms"
+      href="{basePath()}/terms"
       target="_blank"
       rel="noopener noreferrer"
       class="text-micro font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest"

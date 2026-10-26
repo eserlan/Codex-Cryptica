@@ -129,6 +129,6 @@ export const conspiracy: LandingPageConfig = {
     description:
       "Keep people, organisations, evidence, and timelines connected with relationship graphs and local-first notes.",
     buttonText: "Start Building Free",
-    buttonHref: "/app",
+    buttonHref: "/",
   },
 };
