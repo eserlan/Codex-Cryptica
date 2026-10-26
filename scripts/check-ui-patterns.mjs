@@ -315,7 +315,14 @@ export function timerProblems(source, file) {
 function hasAmbiguousTimerBinding(source, timerId) {
   const escaped = timerId.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const declarations = new RegExp(`\\b(?:const|let|var)\\s+${escaped}\\b`, "g");
-  return [...source.matchAll(declarations)].length > 1;
+  if ([...source.matchAll(declarations)].length > 1) return true;
+  // A function parameter of the same name also shadows the outer binding.
+  const name = new RegExp(`\\b${escaped}\\b`);
+  return [
+    ...source.matchAll(/\bfunction\s*[\w$]*\s*\(([^()]*)\)/g),
+    ...source.matchAll(/\(([^()]*)\)\s*=>/g),
+    ...source.matchAll(/([\w$]+)\s*=>/g),
+  ].some((match) => name.test(match[1]));
 }
 
 function hasTimerCleanup(source, timerId) {

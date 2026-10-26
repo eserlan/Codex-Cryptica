@@ -217,6 +217,18 @@ describe("pattern rules", () => {
         "A.svelte",
       ),
     ).toHaveLength(1);
+    expect(
+      timerProblems(
+        "let timer; function schedule(timer) { timer = setTimeout(f, 1); } onDestroy(() => clearTimeout(timer));",
+        "A.svelte",
+      ),
+    ).toHaveLength(1);
+    expect(
+      timerProblems(
+        "let timer; timer = setTimeout(f, 1); onDestroy(() => clearTimeout(timer));",
+        "A.svelte",
+      ),
+    ).toHaveLength(0);
     expect(timerProblems("setTimeout(f, 1)", "helper.ts")).toHaveLength(0);
   });
 
