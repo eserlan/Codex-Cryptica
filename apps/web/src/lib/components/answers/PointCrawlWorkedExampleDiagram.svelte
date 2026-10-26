@@ -84,8 +84,7 @@
     <span class="hidden sm:inline-block font-mono text-xs text-theme-text">
       6 Nodes • 7 Links • 2 Approaches to Crypt
     </span>
-    <span class="sm:hidden font-mono text-xs text-theme-text"
-      >Scroll map →</span
+    <span class="sm:hidden font-mono text-xs text-theme-text">Scroll map →</span
     >
   </div>
 

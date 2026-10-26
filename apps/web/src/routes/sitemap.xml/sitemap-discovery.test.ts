@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { GET } from "./+server";
-import { entries } from "$lib/content/discovery/entries";
+import { entries } from "#lib/content/discovery/entries/index.js";
 
 const ORIGIN = "https://codexcryptica.com";
 
