@@ -1,16 +1,6 @@
 {
-  "updated_at": 1793028272,
+  "updated_at": 1793051564,
   "candidates": [
-    {
-      "id": "reddit-39855478849-a-mystery-case-you-can-actually-run-with",
-      "title": "A mystery case you can actually run without patching it mid-session",
-      "body": "I kept handing my group a mystery that read fine until someone asked a basic question like where the suspect was at midnight or how two clues fit together, and I had to improvise an answer that contradicted the handout.\n\nI built a Mystery & Investigation generator that writes a complete fixed-truth case file first, and only ships it if the evidence holds up.\n\nTry it here: https://codexcryptica.com/generators/mystery-investigation\n\nWhat you get in the output:\n- a GM-only clue graph you can zoom, pan, and open enlarged, separate from what players see\n- suspects and timeline cross-checked so locations and alibis line up\n- at least two independent routes to the solution instead of one fragile chain\n- deterministic solvability checks that reject a case that does not connect\n- a table-ready file you can run as is, rather than an outline to finish yourself\n\nTradeoff I am still testing: it leans toward a locked truth to keep the case fair, so if you like to decide the culprit mid-session based on player theories it will feel too fixed. Curious where that line sits for you.\n\nWhat is the last investigation you ran where the group got stuck because a clue did not actually lead anywhere, and what did you have to patch on the fly?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-39855478849-0.png)",
-      "url": "https://codexcryptica.com/generators/mystery-investigation",
-      "image_url": "https://assets.codexcryptica.com/announcements/release-39855478849-0.png",
-      "source_id": "39855478849",
-      "status": "approved",
-      "created_at": 1792705942
-    },
     {
       "id": "reddit-40203955328-my-point-crawls-looked-right-until-playe",
       "title": "My point crawls looked right until players asked what the routes actually cost",
