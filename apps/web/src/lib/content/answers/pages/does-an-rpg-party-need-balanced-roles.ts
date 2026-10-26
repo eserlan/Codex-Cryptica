@@ -203,7 +203,7 @@ export const doesAnRpgPartyNeedBalancedRoles: AnswerConfigInput = {
   codexConnection: {
     heading: "Test an encounter against the party you have",
     paragraphs: [
-      "When you are reshaping a fight around an unconventional party, a starting encounter shape can help you think through opponents, ground and objectives before you adjust the details for your system. The encounter generator does not validate party balance or guarantee encounter difficulty. Its optional Tales of the Valiant mode does offer qualitative challenge guidance for a party size and level, with a recommended challenge range and suggested creatures, as a starting point rather than a balance calculation. Your notes on the party capabilities, contacts and costs above decide whether that situation is fair for the group at your table.",
+      "When preparing for an unconventional party, use the encounter generator to draft a situation, then check its opponents, ground and objectives against the capabilities you identified above. Add relevant strengths and gaps in Additional Context. The generator does not validate party composition or guarantee encounter difficulty; review the result using your system’s rules.",
     ],
     linkText: "Try the encounter generator",
     href: "/generators/encounter",
