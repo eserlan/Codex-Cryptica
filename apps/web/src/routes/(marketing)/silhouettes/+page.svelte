@@ -352,6 +352,7 @@
         ></span>
         <input
           type="text"
+          aria-label="Search silhouettes"
           bind:value={searchQuery}
           placeholder="Search silhouettes by archetype, title, tags, or keywords (e.g. vampire, knight, tavern, alien, dragon)..."
           class="w-full pl-10 pr-9 py-2.5 text-sm rounded-xl bg-theme-base border border-theme-border/80 text-theme-primary placeholder-theme-muted/60 focus:outline-hidden focus:border-theme-accent focus:ring-2 focus:ring-theme-accent/30 transition-colors shadow-inner"

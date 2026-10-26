@@ -31,10 +31,10 @@
       aria-hidden="true"
     >
       {#if copied}
-        <span class="icon-[lucide--check] h-4 w-4"></span>
+        <span class="icon-[lucide--check] h-4 w-4" aria-hidden="true"></span>
         Copied
       {:else}
-        <span class="icon-[lucide--copy] h-4 w-4"></span>
+        <span class="icon-[lucide--copy] h-4 w-4" aria-hidden="true"></span>
       {/if}
     </span>
   </button>
