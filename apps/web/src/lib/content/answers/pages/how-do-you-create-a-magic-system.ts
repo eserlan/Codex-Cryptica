@@ -144,6 +144,7 @@ export const howDoYouCreateAMagicSystem: AnswerConfigInput = {
     "how-does-magic-create-social-classes-and-inequality",
     "how-common-should-magic-be-in-a-fantasy-world",
     "how-does-magic-change-society-in-a-fantasy-world",
+    "how-to-keep-character-death-meaningful-with-resurrection",
   ],
   discovery: {
     id: "answer-create-magic-system",

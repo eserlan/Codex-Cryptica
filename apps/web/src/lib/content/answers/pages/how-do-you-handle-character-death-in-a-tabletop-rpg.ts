@@ -56,7 +56,7 @@ export const howDoYouHandleCharacterDeathInATabletopRpg: AnswerConfigInput = {
         },
         {
           term: "Why it works",
-          text: "The mechanical death is fully enforced without cheap resurrection tricks, but the player is given authorship over their departure, turning an unlucky roll into a legendary campaign memory.",
+          text: "The mechanical death is fully enforced, but the player is given authorship over their departure, turning an unlucky roll into a legendary campaign memory. Where the campaign contract allows revival, that same dignity applies to the return.",
         },
       ],
     },
@@ -130,6 +130,7 @@ export const howDoYouHandleCharacterDeathInATabletopRpg: AnswerConfigInput = {
     "how-do-you-make-a-boss-fight-memorable-in-a-tabletop-rpg",
     "how-do-i-run-a-large-battle-when-the-player-characters-are-part-of-an-army",
     "what-are-the-best-classless-fantasy-rpgs-with-skill-based-progression",
+    "how-to-keep-character-death-meaningful-with-resurrection",
   ],
   discovery: {
     id: "answer-handle-character-death",
@@ -145,7 +146,18 @@ export const howDoYouHandleCharacterDeathInATabletopRpg: AnswerConfigInput = {
     userJob: "adopt-workflow",
     uniqueValue:
       "A humane, practical three-step death protocol that gives players narrative agency over their final moments while preserving dramatic stakes and campaign continuity.",
-    relatedIntents: ["answer-session-zero", "answer-npc-relationships"],
+    relatedIntents: [
+      "answer-session-zero",
+      "answer-npc-relationships",
+      "answer-keep-death-meaningful-resurrection",
+    ],
+    acknowledgedOverlap: [
+      {
+        with: "answer-keep-death-meaningful-resurrection",
+        reason:
+          "This answer covers handling a death at the table and its immediate aftermath; the resurrection answer covers reversible death, revival policy, and long-term campaign stakes.",
+      },
+    ],
   },
   seo: {
     title: "How to Handle Character Death in a Tabletop RPG | Codex Cryptica",

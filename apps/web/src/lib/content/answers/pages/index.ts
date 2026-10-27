@@ -143,6 +143,7 @@ import { howToAdaptAVideoGameIntoATabletopRpg } from "./how-to-adapt-a-video-gam
 import { howToCreateACyberpunkCityDistrict } from "./how-to-create-a-cyberpunk-city-district";
 import { howToCreateASciFiStarSystemForAnRpg } from "./how-to-create-a-sci-fi-star-system-for-an-rpg";
 import { howToCreateRumoursForAFantasyTown } from "./how-to-create-rumours-for-a-fantasy-town";
+import { howToKeepCharacterDeathMeaningfulWithResurrection } from "./how-to-keep-character-death-meaningful-with-resurrection";
 import { howToWriteAnInWorldNewspaperForAnRpg } from "./how-to-write-an-in-world-newspaper-for-an-rpg";
 import { isMyRpgCampaignIdeaGood } from "./is-my-rpg-campaign-idea-good";
 import { pointCrawlVsHexCrawl } from "./point-crawl-vs-hex-crawl";
@@ -335,6 +336,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howToCreateACyberpunkCityDistrict,
     howToCreateASciFiStarSystemForAnRpg,
     howToCreateRumoursForAFantasyTown,
+    howToKeepCharacterDeathMeaningfulWithResurrection,
     howToWriteAnInWorldNewspaperForAnRpg,
     isMyRpgCampaignIdeaGood,
     pointCrawlVsHexCrawl,
