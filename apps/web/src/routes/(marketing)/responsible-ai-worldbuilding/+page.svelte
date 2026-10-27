@@ -201,13 +201,13 @@
 </svelte:head>
 
 <div
-  class="min-h-screen bg-theme-bg text-theme-text font-body selection:bg-theme-primary selection:text-theme-bg flex flex-col"
+  class="min-h-screen bg-theme-bg text-theme-text font-body selection:bg-theme-primary selection:text-theme-on-primary flex flex-col"
   style:background-image="var(--bg-texture-overlay)"
 >
   <!-- Hero Section -->
   <section class="max-w-6xl mx-auto px-4 sm:px-6 pt-16 pb-12 text-center">
     <div
-      class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-micro font-mono font-bold bg-theme-primary/10 border border-theme-primary/20 text-theme-primary mb-8 uppercase tracking-wider"
+      class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-micro font-mono font-bold bg-theme-primary/10 border border-theme-primary/20 text-theme-text mb-8 uppercase tracking-wider"
     >
       <span class="w-1.5 h-1.5 rounded-full bg-theme-primary animate-pulse"
       ></span>
@@ -217,12 +217,10 @@
       class="text-4xl md:text-6xl font-extrabold font-header leading-tight mb-6 tracking-wide"
       id="hero-h1"
     >
-      Responsible AI for <span class="text-theme-primary"
-        >RPG Worldbuilding</span
-      >
+      Responsible AI for <span class="text-theme-text">RPG Worldbuilding</span>
     </h1>
     <p
-      class="text-lg md:text-xl text-theme-text/80 font-header max-w-2xl mx-auto leading-relaxed mb-12"
+      class="text-lg md:text-xl text-theme-text font-header max-w-2xl mx-auto leading-relaxed mb-12"
     >
       AI should help you build your world, not take authorship away from you.
       Learn how Codex Cryptica keeps narrative control in your hands.
@@ -409,11 +407,11 @@
     class="border-t border-theme-border/30 bg-theme-surface/10 py-16 flex-grow"
   >
     <div class="max-w-7xl mx-auto px-4 sm:px-6">
-      <h2 class="text-center font-header text-2xl text-theme-primary mb-4">
+      <h2 class="text-center font-header text-2xl text-theme-text mb-4">
         The 7 Pillars of Responsible AI
       </h2>
       <p
-        class="text-center text-base text-theme-muted mb-12 max-w-xl mx-auto leading-relaxed"
+        class="text-center text-base text-theme-text mb-12 max-w-xl mx-auto leading-relaxed"
       >
         Read the devlog series detailing the design principles and technical
         implementations behind Codex's local-first AI system.
@@ -428,10 +426,10 @@
             class="flex flex-col p-6 bg-theme-surface/45 border border-theme-border/65 rounded-2xl shadow-sm backdrop-blur-sm hover:border-theme-primary/60 hover:-translate-y-1 transition-all duration-300"
           >
             <div class="flex items-center justify-between mb-4">
-              <span class="{principle.icon} text-theme-primary w-6 h-6"></span>
+              <span class="{principle.icon} text-theme-text w-6 h-6"></span>
 
               <span
-                class="text-micro font-mono font-bold text-theme-muted uppercase tracking-widest"
+                class="text-micro font-mono font-bold text-theme-text uppercase tracking-widest"
                 >Part {principle.step}</span
               >
             </div>
@@ -442,7 +440,7 @@
               {matchingArticle?.title || principle.title}
             </h3>
 
-            <p class="text-theme-muted text-sm leading-relaxed mb-6 flex-grow">
+            <p class="text-theme-text text-sm leading-relaxed mb-6 flex-grow">
               {principle.summary}
             </p>
 
@@ -451,7 +449,7 @@
             >
               <a
                 href="{basePath()}/blog/{principle.slug}"
-                class="inline-flex items-center gap-1.5 text-micro font-bold text-theme-primary hover:text-theme-text transition-colors group font-header"
+                class="inline-flex items-center gap-1.5 text-micro font-bold text-theme-text hover:text-theme-text transition-colors group font-header"
               >
                 Read Article
                 <span
@@ -468,11 +466,11 @@
   <!-- FAQ Section -->
   <section class="border-t border-theme-border/30 py-16">
     <div class="max-w-4xl mx-auto px-4 sm:px-6">
-      <h2 class="text-center font-header text-2xl text-theme-primary mb-4">
+      <h2 class="text-center font-header text-2xl text-theme-text mb-4">
         Frequently Asked Questions
       </h2>
       <p
-        class="text-center text-base text-theme-muted mb-12 max-w-xl mx-auto leading-relaxed"
+        class="text-center text-base text-theme-text mb-12 max-w-xl mx-auto leading-relaxed"
       >
         Common questions about responsible AI, vault privacy, and how the Lore
         Oracle works.
@@ -493,7 +491,7 @@
               ></span>
             </summary>
             <div
-              class="px-6 pb-5 pt-1 text-base text-theme-text/80 leading-relaxed border-t border-theme-border/30"
+              class="px-6 pb-5 pt-1 text-base text-theme-text leading-relaxed border-t border-theme-border/30"
             >
               {@html faq.a}
             </div>
@@ -510,7 +508,7 @@
     <div class="max-w-2xl mx-auto px-4 sm:px-6 font-header">
       <h2 class="text-3xl font-extrabold mb-4">Ready to Build Your World?</h2>
       <p
-        class="text-theme-muted text-base leading-relaxed mb-8 max-w-md mx-auto"
+        class="text-theme-text text-base leading-relaxed mb-8 max-w-md mx-auto"
       >
         No email sign-up required to start. Build a private, local-first
         campaign vault and use AI only when you choose.
@@ -518,7 +516,7 @@
       <div class="flex flex-wrap justify-center gap-4">
         <a
           href="{basePath()}/?utm_source=ra-pillar-footer&utm_medium=footer-cta&utm_campaign=seo-funnel"
-          class="px-8 py-3.5 bg-theme-primary text-theme-bg font-bold text-xs rounded-xl shadow-lg hover:brightness-110 active:scale-95 transition-all"
+          class="px-8 py-3.5 bg-theme-primary text-theme-on-primary font-bold text-xs rounded-xl shadow-lg hover:brightness-110 active:scale-95 transition-all"
           id="footer-cta-btn"
         >
           Launch Codex Cryptica

@@ -27,7 +27,7 @@
         The Chronology
       </h1>
 
-      <p class="text-theme-text/70 max-w-2xl text-lg leading-relaxed font-body">
+      <p class="text-theme-text max-w-2xl text-lg leading-relaxed font-body">
         Tracking the architectural evolution and protocol updates of Codex
         Cryptica. Witness the steady progression of the ultimate local-first
         lore engine.
@@ -147,7 +147,7 @@
       <div
         class="py-20 text-center border border-dashed border-theme-border rounded-lg bg-theme-surface/5"
       >
-        <p class="text-theme-muted font-mono">
+        <p class="text-theme-text font-mono">
           No records found in the chronology.
         </p>
       </div>
@@ -158,15 +158,13 @@
       <h3 class="text-2xl font-header font-bold mb-6 text-theme-text">
         Ready to deploy?
       </h3>
-      <p
-        class="text-theme-muted mb-12 max-w-xl mx-auto text-lg leading-relaxed"
-      >
+      <p class="text-theme-text mb-12 max-w-xl mx-auto text-lg leading-relaxed">
         Your world is waiting for its next chapter. Secure your lore with Codex
         Cryptica today.
       </p>
       <a
         href="{basePath()}/?ref=changelog"
-        class="inline-block px-12 py-5 bg-theme-primary text-theme-bg font-bold font-header text-sm rounded-lg hover:bg-theme-primary/90 hover:shadow-[0_0_30px_rgba(var(--color-theme-primary-rgb),0.3)] transition-all active:scale-95"
+        class="inline-block px-12 py-5 bg-theme-primary text-theme-on-primary font-bold font-header text-sm rounded-lg hover:bg-theme-primary/90 hover:shadow-[0_0_30px_rgba(var(--color-theme-primary-rgb),0.3)] transition-all active:scale-95"
       >
         Enter Workspace
       </a>
