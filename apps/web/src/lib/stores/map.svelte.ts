@@ -1,23 +1,14 @@
 import { vault } from "./vault.svelte";
-import type {
-  Map,
-  MapGridGeometry,
-  MapPin,
-  Point,
-  ViewportTransform,
-} from "schema";
+import type { Map, MapGridGeometry, Point, ViewportTransform } from "schema";
 import {
   imageToViewport,
   viewportToImage,
-  pointToHex,
-  hexToPoint,
   formatHexLabel,
   MAP_LAYER_ORDER,
   type HexCoord,
   type HexLabelConfig,
   type MapLayer,
 } from "map-engine";
-import { convertToWebP } from "../utils/image-processing";
 import {
   adoptGridGeometry,
   deviceGridFrom,
@@ -25,7 +16,6 @@ import {
   resolveGridGeometry,
   writeGridGeometry,
 } from "./map-grid-geometry";
-import { deleteOpfsEntry, writeOpfsFile } from "../utils/opfs";
 import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
 import { guestVault } from "./guest-vault.svelte";
 import {
@@ -35,8 +25,10 @@ import {
   systemIdGenerator,
 } from "#lib/utils/runtime-deps.js";
 
-/** Fixed canvas size for a blank map, which has no image to derive size from. */
-export const BLANK_MAP_SIZE = 4000;
+import { MapRecords } from "./map-records";
+import { MapPins } from "./map-pins";
+import { MapFog } from "./map-fog";
+export { BLANK_MAP_SIZE } from "./map-records";
 
 const MAP_SETTINGS_STORAGE_PREFIX = "codex-map-settings";
 const MAP_PAGE_STATE_STORAGE_PREFIX = "codex-map-page-state";
@@ -209,7 +201,9 @@ export class MapStore {
   private _viewportPersistTimer: ReturnType<typeof setTimeout> | null = null;
   private static _vaultSwitchHandler: (() => void) | null = null;
   private storage: StorageLike;
-  private idGenerator: IdGenerator;
+  private records: MapRecords;
+  private pinEditor: MapPins;
+  private fog: MapFog;
 
   activeMap = $derived.by(() => {
     const maps = vault.maps ?? {};
@@ -238,7 +232,9 @@ export class MapStore {
     idGenerator: IdGenerator = systemIdGenerator,
   ) {
     this.storage = storage;
-    this.idGenerator = idGenerator;
+    this.records = new MapRecords((id) => this.selectMap(id), idGenerator);
+    this.pinEditor = new MapPins(this, idGenerator);
+    this.fog = new MapFog(this);
     if (typeof window !== "undefined") {
       this.applySettings(null);
       this.restorePageState();
@@ -632,19 +628,7 @@ export class MapStore {
   }
 
   async setAsWorldMap(id: string) {
-    // 1. Clear existing world map flag
-    const maps = vault.maps ?? {};
-    for (const mapId of Object.keys(maps)) {
-      if (maps[mapId].isWorldMap) {
-        maps[mapId] = { ...maps[mapId], isWorldMap: false };
-      }
-    }
-
-    // 2. Set new world map
-    if (maps[id]) {
-      maps[id] = { ...maps[id], isWorldMap: true };
-      await vault.saveMaps();
-    }
+    return this.records.setAsWorldMap(id);
   }
 
   selectMap(id: string, pushToStack = false) {
@@ -713,387 +697,41 @@ export class MapStore {
   }
 
   async uploadMap(file: File, name: string): Promise<string | undefined> {
-    const vaultDir = await vault.getActiveVaultHandle();
-    if (!vaultDir) {
-      return undefined;
-    }
-
-    const id = this.idGenerator.uuid();
-    const storageName = `${id}.webp`;
-
-    // 1. Convert to WebP and Save to OPFS
-    try {
-      const webpBlob = await convertToWebP(file, 0.85);
-      await writeOpfsFile(
-        ["maps", storageName],
-        webpBlob,
-        vaultDir,
-        vaultDir.name,
-      );
-    } catch (err) {
-      console.error("[MapStore] Map upload failed", err);
-      return undefined;
-    }
-
-    // 2. Create Map entity
-    const map: Map = {
-      id,
-      name,
-      assetPath: `maps/${storageName}`,
-      dimensions: { width: 0, height: 0 }, // Will be updated on first load
-      pins: [],
-      fogOfWar: {
-        maskPath: `maps/${id}_mask.png`,
-      },
-    };
-
-    vault.maps[id] = map;
-    await vault.saveMaps();
-    this.selectMap(id);
-    return id;
+    return this.records.uploadMap(file, name);
   }
-
-  private async rollbackFailedImageReplacement(
-    mapId: string,
-    previousMap: Map,
-    replacementMap: Map,
-    vaultDir: FileSystemDirectoryHandle,
-    storageName: string,
-  ): Promise<void> {
-    // Keep edits made while the metadata save was pending, but restore the
-    // fields changed by this replacement operation.
-    const currentMap = vault.maps[mapId];
-    if (currentMap?.assetPath === replacementMap.assetPath) {
-      vault.maps[mapId] = {
-        ...currentMap,
-        assetPath: previousMap.assetPath,
-        dimensions: previousMap.dimensions,
-      };
-    }
-
-    await deleteOpfsEntry(vaultDir, ["maps", storageName], vaultDir.name).catch(
-      (err) =>
-        console.warn("[MapStore] Could not remove the unsaved map image", err),
-    );
-  }
-
-  /**
-   * Swaps a map's background image for a new one, keeping its pins, tokens
-   * and fog. Used to recover a map whose image is missing or unreadable.
-   * Dimensions are reset so they are recomputed from the new image on load.
-   */
   async replaceMapImage(mapId: string, file: File): Promise<boolean> {
-    const map = vault.maps[mapId];
-    const vaultDir = await vault.getActiveVaultHandle();
-    if (!map || !vaultDir) {
-      return false;
-    }
-
-    const storageName = `${this.idGenerator.uuid()}.webp`;
-    try {
-      const webpBlob = await convertToWebP(file, 0.85);
-      await writeOpfsFile(
-        ["maps", storageName],
-        webpBlob,
-        vaultDir,
-        vaultDir.name,
-      );
-    } catch (err) {
-      console.error("[MapStore] Map image replacement failed", err);
-      return false;
-    }
-
-    const previousPath = map.assetPath;
-    const replacementMap: Map = {
-      ...map,
-      assetPath: `maps/${storageName}`,
-      dimensions: { width: 0, height: 0 },
-    };
-    vault.maps[mapId] = replacementMap;
-    if (!(await vault.saveMapsWithResult())) {
-      // saveMaps reports storage errors instead of throwing. Restore the
-      // in-memory map and keep the old image, which the on-disk metadata may
-      // still reference.
-      await this.rollbackFailedImageReplacement(
-        mapId,
-        map,
-        replacementMap,
-        vaultDir,
-        storageName,
-      );
-      return false;
-    }
-
-    // Best-effort cleanup of the old local file and any cached object URL.
-    if (previousPath) {
-      vault.releaseImageUrl?.(previousPath);
-      if (previousPath.startsWith("maps/")) {
-        await deleteOpfsEntry(
-          vaultDir,
-          previousPath.split("/"),
-          vaultDir.name,
-        ).catch((err) =>
-          console.warn("[MapStore] Could not remove the old map image", err),
-        );
-      }
-    }
-    return true;
+    return this.records.replaceMapImage(mapId, file);
   }
-
-  /**
-   * Creates a map with no background image — a fixed-size blank canvas meant
-   * to be built up entirely from placed tile-deck tiles.
-   */
   async createBlankMap(name: string): Promise<string | undefined> {
-    const vaultDir = await vault.getActiveVaultHandle();
-    if (!vaultDir) {
-      return undefined;
-    }
-
-    const id = this.idGenerator.uuid();
-    const map: Map = {
-      id,
-      name,
-      assetPath: "",
-      dimensions: { width: BLANK_MAP_SIZE, height: BLANK_MAP_SIZE },
-      pins: [],
-      fogOfWar: {
-        maskPath: `maps/${id}_mask.png`,
-      },
-    };
-
-    vault.maps[id] = map;
-    await vault.saveMaps();
-    this.selectMap(id);
-    return id;
+    return this.records.createBlankMap(name);
   }
-
   async saveMask(canvas: HTMLCanvasElement) {
-    this.fogRevision++;
-    if (!this.activeMap?.fogOfWar || !this.activeMapId) return;
-    const vaultDir = await vault.getActiveVaultHandle();
-    if (!vaultDir) return;
-
-    return vault.saveQueue.enqueue(`mask-${this.activeMapId}`, async () => {
-      try {
-        const blob = await new Promise<Blob>((resolve, reject) => {
-          canvas.toBlob(
-            (b) =>
-              b
-                ? resolve(b)
-                : reject(new Error("Failed to create blob from canvas")),
-            "image/png",
-          );
-        });
-        await writeOpfsFile(
-          ["maps", `${this.activeMapId}_mask.png`],
-          blob,
-          vaultDir,
-          vaultDir.name,
-        );
-      } catch (err) {
-        console.error("[MapStore] Failed to save mask", err);
-      }
-    });
+    return this.fog.saveMask(canvas);
   }
-
   async loadMask(width: number, height: number): Promise<HTMLCanvasElement> {
-    const canvas = document.createElement("canvas");
-    canvas.width = width;
-    canvas.height = height;
-    const ctx = canvas.getContext("2d")!;
-
-    // Default: transparent (everything hidden by fog)
-    // The fog renderer uses destination-out, meaning OPAQUE mask pixels erase the fog,
-    // and TRANSPARENT mask pixels leave the fog intact.
-    ctx.clearRect(0, 0, width, height);
-
-    if (!this.activeMap?.fogOfWar || !this.activeMapId) {
-      return canvas;
-    }
-
-    const maskPath = this.activeMap.fogOfWar.maskPath;
-    const isRemoteMask =
-      /^([a-z]+:)?\/\//i.test(maskPath) ||
-      maskPath.startsWith("blob:") ||
-      maskPath.startsWith("data:");
-
-    if (isRemoteMask) {
-      try {
-        const response = await fetch(maskPath);
-        if (!response.ok) {
-          throw new Error(`Failed to fetch remote fog mask: ${maskPath}`);
-        }
-        const blob = await response.blob();
-        const bitmap = await createImageBitmap(blob);
-        ctx.drawImage(bitmap, 0, 0, width, height);
-        return canvas;
-      } catch (e) {
-        console.error("[MapStore] Failed to load remote fog mask:", e);
-        return canvas;
-      }
-    }
-
-    const vaultDir = await vault.getActiveVaultHandle();
-    if (!vaultDir) {
-      return canvas;
-    }
-
-    try {
-      const mapsDir = await vaultDir.getDirectoryHandle("maps");
-      const fileHandle = await mapsDir.getFileHandle(
-        `${this.activeMapId}_mask.png`,
-      );
-      const file = await fileHandle.getFile();
-      const bitmap = await createImageBitmap(file);
-      ctx.drawImage(bitmap, 0, 0, width, height);
-    } catch (e: any) {
-      if (e.name !== "NotFoundError") {
-        console.error("[MapStore] Failed to load mask from disk:", e);
-      }
-      // No saved mask or not found: canvas is already transparent (fully hidden fog)
-    }
-
-    return canvas;
+    return this.fog.loadMask(width, height);
   }
 
-  private computeHexPosition(coordinates: Point): {
-    coordinates: Point;
-    hexCoordinates?: { q: number; r: number };
-  } {
-    if (
-      this.showGrid &&
-      (this.gridType === "hex-pointy" || this.gridType === "hex-flat")
-    ) {
-      const orientation = this.gridType === "hex-flat" ? "flat" : "pointy";
-      const config = {
-        orientation,
-        size: this.gridSize || 50,
-        offsetX: this.gridOffsetX || 0,
-        offsetY: this.gridOffsetY || 0,
-      } as const;
-      const hexCoordinates = pointToHex(coordinates, config);
-      return {
-        coordinates: hexToPoint(hexCoordinates, config),
-        hexCoordinates,
-      };
-    }
-    return { coordinates };
-  }
-
-  // fallow-ignore-next-line complexity
   async addPin(entityId: string | undefined, coordinates: Point) {
-    if (!this.activeMapId || !vault.maps[this.activeMapId]) return;
-
-    let visuals = {};
-    if (entityId) {
-      const entity = vault.entities[entityId];
-      if (entity) {
-        const { categories } = await import("./categories.svelte");
-        visuals = {
-          color: categories.getColor(entity.type),
-          // For now we don't have icon mapping, but could add it later
-        };
-      }
-    }
-
-    const hexPosition = this.computeHexPosition(coordinates);
-
-    const newPin: MapPin = {
-      id: this.idGenerator.uuid(),
-      mapId: this.activeMapId,
-      entityId,
-      coordinates: hexPosition.coordinates,
-      hexCoordinates: hexPosition.hexCoordinates,
-      visuals,
-    };
-
-    if (!vault.maps) return;
-    const map = vault.maps[this.activeMapId];
-    if (map) {
-      map.pins = [...map.pins, newPin];
-      await vault.saveMaps();
-    }
+    return this.pinEditor.addPin(entityId, coordinates);
   }
-
-  // fallow-ignore-next-line complexity
   updatePinCoordinatesInMemory(pinId: string, coordinates: Point) {
-    if (!this.activeMapId || !vault.maps?.[this.activeMapId]) return;
-    const map = vault.maps[this.activeMapId];
-    if (map) {
-      const { hexCoordinates } = this.computeHexPosition(coordinates);
-      map.pins = map.pins.map((p: MapPin) =>
-        p.id === pinId ? { ...p, coordinates, hexCoordinates } : p,
-      );
-    }
+    this.pinEditor.updatePinCoordinatesInMemory(pinId, coordinates);
   }
-
   snapPinCoordinatesInMemory(pinId: string) {
-    if (!this.activeMapId || !vault.maps?.[this.activeMapId]) return;
-    const map = vault.maps[this.activeMapId];
-    const pin = map?.pins.find((candidate: MapPin) => candidate.id === pinId);
-    if (!map || !pin) return;
-
-    const hexPosition = this.computeHexPosition(pin.coordinates);
-    map.pins = map.pins.map((candidate: MapPin) =>
-      candidate.id === pinId
-        ? {
-            ...candidate,
-            coordinates: hexPosition.coordinates,
-            hexCoordinates: hexPosition.hexCoordinates,
-          }
-        : candidate,
-    );
+    this.pinEditor.snapPinCoordinatesInMemory(pinId);
   }
-
   async removePin(pinId: string) {
-    if (!this.activeMapId || !vault.maps?.[this.activeMapId]) {
-      return;
-    }
-
-    const map = vault.maps[this.activeMapId];
-    if (map) {
-      map.pins = map.pins.filter((p: MapPin) => p.id !== pinId);
-      await vault.saveMaps();
-    }
+    return this.pinEditor.removePin(pinId);
   }
-
-  /** Removes pins for a just-created entity from any map after a failed save. */
   async removePinsForEntity(entityId: string) {
-    let changed = false;
-    for (const map of Object.values(vault.maps ?? {})) {
-      const pins = map.pins.filter((pin: MapPin) => pin.entityId !== entityId);
-      if (pins.length === map.pins.length) continue;
-      map.pins = pins;
-      changed = true;
-    }
-    if (changed) await vault.saveMaps();
+    return this.pinEditor.removePinsForEntity(entityId);
   }
-
   jumpToPin(pinId: string) {
-    const pin = this.pins.find((p: MapPin) => p.id === pinId);
-    if (pin) {
-      // Use a balanced zoom level for inspection
-      const zoom = Math.max(1.2, this.viewport.zoom);
-      this.viewport = {
-        pan: {
-          x: -pin.coordinates.x * zoom,
-          y: -pin.coordinates.y * zoom,
-        },
-        zoom,
-      };
-    }
+    this.pinEditor.jumpToPin(pinId);
   }
-
   getEntitySubMap(entityId: string): Map | undefined {
-    // ⚡ Bolt Optimization: Replace Object.values().find() with an imperative loop over keys
-    // to avoid array allocation during this frequent lookup.
-    for (const key in vault.maps) {
-      if (vault.maps[key].parentEntityId === entityId) {
-        return vault.maps[key];
-      }
-    }
-    return undefined;
+    return this.records.getEntitySubMap(entityId);
   }
 }
 
