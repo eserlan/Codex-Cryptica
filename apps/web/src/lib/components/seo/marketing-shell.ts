@@ -64,10 +64,23 @@ export const PUBLIC_LAYOUT = {
     canvas: "px-4 sm:px-6 lg:px-8",
     prose: "px-4 sm:px-6",
   },
-  /** Inner readable measure: preserves 65-75ch line length */
+  /**
+   * Inner readable measure. `max-w-xl` (36rem) measured ~70 characters per line
+   * at text-lg in the default sans, ~76 in wider serifs and ~51 in monospace
+   * (#4462); the old `max-w-2xl` gave ~81. `lead` is for titles and short
+   * lead copy, not continuous paragraphs.
+   */
   prose: {
-    measure: "max-w-2xl",
+    measure: "max-w-xl",
     lead: "max-w-3xl",
+  },
+  /**
+   * No-aside modifier: a centred reading column for articles without a
+   * contextual rail. Wide blocks (tables) fill the column; every other direct
+   * child is centred at its own measure, so edges line up when measures match.
+   */
+  solo: {
+    column: "mx-auto w-full max-w-4xl [&>*]:mx-auto",
   },
   /** Content + contextual aside responsive split */
   split: {

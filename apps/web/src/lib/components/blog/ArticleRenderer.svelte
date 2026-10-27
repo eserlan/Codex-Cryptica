@@ -77,6 +77,11 @@
     text-transform: uppercase;
     margin-bottom: 2rem;
   }
+  /* Clear the sticky marketing header (~4.5rem) so TOC jumps land fully visible. */
+  .blog-content :global(h2),
+  .blog-content :global(h3) {
+    scroll-margin-top: 6rem;
+  }
   .blog-content :global(h2) {
     font-family: var(--font-header);
     letter-spacing: 0.05em;

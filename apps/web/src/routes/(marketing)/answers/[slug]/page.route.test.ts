@@ -212,4 +212,28 @@ describe("answer page widescreen aside", () => {
     expect(screen.queryByTestId("answer-related-inline")).toBeNull();
     expect(screen.getByRole("article").className).not.toContain("col-span");
   });
+
+  it("centres the article and aligns its measure when there is no aside", () => {
+    renderAnswer([prose]);
+
+    const article = screen.getByRole("article");
+    expect(article.className).toContain(PUBLIC_LAYOUT.solo.column);
+    expect(
+      screen.getByRole("navigation", { name: "Breadcrumb" }).className,
+    ).toContain(PUBLIC_LAYOUT.prose.measure);
+    expect(article.querySelector("section")?.className).toContain(
+      PUBLIC_LAYOUT.prose.measure,
+    );
+  });
+
+  it("keeps the split grid, uncentred, when an aside exists", () => {
+    renderAnswer([prose], {}, [{ slug: "hex-crawl-basics", question: "Hex?" }]);
+
+    const article = screen.getByRole("article");
+    expect(article.className).toContain(PUBLIC_LAYOUT.split.content);
+    expect(article.className).not.toContain("mx-auto");
+    expect(article.querySelector("section")?.className).toContain(
+      PUBLIC_LAYOUT.prose.measure,
+    );
+  });
 });

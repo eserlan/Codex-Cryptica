@@ -639,8 +639,8 @@
   class="min-h-screen bg-theme-bg text-theme-text font-body selection:bg-theme-primary selection:text-theme-bg"
   style:background-image="var(--bg-texture-overlay)"
 >
-  <section class="border-b border-theme-border/60 px-6 py-14 md:py-18">
-    <div class="max-w-7xl mx-auto">
+  <section class="border-b border-theme-border/60 py-14 md:py-18">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="max-w-3xl">
         <p
           class="text-xs font-mono uppercase tracking-[0.24em] text-theme-primary mb-4"
@@ -661,7 +661,7 @@
     </div>
   </section>
 
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 py-12 md:py-16 space-y-14">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 space-y-14">
     {#each toolSections as section (section.title)}
       <section aria-labelledby={`${section.title}-heading`}>
         <div class="max-w-3xl mb-6">

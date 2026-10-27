@@ -49,7 +49,7 @@ separately, because there was nothing to build them into.
 Public pages employ a deliberate **two-width architecture**:
 
 1. **Outer page canvas**: The outer container or shell constraint (`max-w-2xl`, `max-w-4xl`, `max-w-6xl`, or widescreen `max-w-7xl` up to ~1280–1440px+). This accommodates wide layouts, multi-column navigation, responsive content + complementary sidebar split views, dashboards, and full-bleed grids without feeling cramped.
-2. **Inner readable measure**: Body prose, article text, questions, and explanations **never stretch across wide viewports**. Continuous paragraphs are strictly constrained to a comfortable measure of **~65–75 characters per line** (`max-w-2xl` / `max-w-prose` / `~65ch`). Equating a wide outer shell with wide text columns is strictly prohibited.
+2. **Inner readable measure**: Body prose, article text, questions, and explanations **never stretch across wide viewports**. Continuous paragraphs are strictly constrained to a comfortable measure of **~65–75 characters per line** (`max-w-xl`, measured ~70 characters per line at `text-lg` in the default sans; see below). Equating a wide outer shell with wide text columns is strictly prohibited.
 
 ### Outer canvas widths
 
@@ -70,15 +70,21 @@ For long-form reading, documentation, answers, and articles with contextual asid
 
 - **Mobile (< 1024px / below `lg`)**: Stacks in natural source order into a single readable column. The contextual aside flows below the primary content or is collapsible; source order preserves accessible heading semantics.
 - **Desktop (>= 1024px / `lg` and `xl` 1280px–1440px+)**: The canvas expands to `--shell-full` (`max-w-7xl` / `1280px+`). Content and aside sit side-by-side:
-  - Main article/content column takes the primary span, with prose measure bounded at ~65–75ch (`max-w-2xl` / `max-w-prose`).
+  - Main article/content column takes the primary span, with prose measure bounded at ~65–75ch (`max-w-xl`).
   - Contextual aside occupies a bounded rail (`w-64` to `w-80` / `col-span-4`), sticky where appropriate, without giant blank dead zones or generic CTA clutter.
 
 ### Inner prose measure
 
-| Token             | Value                  | Use                                            |
-| ----------------- | ---------------------- | ---------------------------------------------- |
-| `--prose-measure` | `max-w-2xl` (~65–75ch) | Paragraphs, blockquotes, article copy, intros  |
-| `--prose-lead`    | `max-w-3xl`            | Lead summaries, hero descriptions, subheadings |
+| Token             | Value              | Use                                            |
+| ----------------- | ------------------ | ---------------------------------------------- |
+| `--prose-measure` | `max-w-xl` (~70ch) | Paragraphs, blockquotes, article copy, intros  |
+| `--prose-lead`    | `max-w-3xl`        | Lead summaries, hero descriptions, subheadings |
+
+Measured on a blog body at `text-lg` (1440px, #4462): `max-w-xl` gives ~70
+characters per line in the default sans (Inter), ~76 in wider serifs and ~51 in
+monospace; the previous `max-w-2xl` gave ~81 (serifs ~89). The widths are
+rem-based, so browser text zoom keeps the same line length. `lead` is for titles
+and short lead copy, not continuous paragraphs.
 
 ## 2. Vertical rhythm
 
@@ -153,7 +159,11 @@ One component, `MarketingShell`, rendered by `(marketing)/+layout.svelte` so all
 30 pages inherit it:
 
 - **Header:** wordmark linking to `/`, up to five nav items, one primary action
-  ("Open the app"). Collapses to wordmark plus menu below `md`.
+  ("Open the app"). Collapses to wordmark plus menu below `md`. Its inner box
+  uses `PUBLIC_LAYOUT.canvas.full` and `padding.canvas` (`max-w-7xl`,
+  `px-4 sm:px-6 lg:px-8`), so the wordmark and CTA sit on the same edges as
+  full-width page content (#4461). Narrower pages stay centred beneath it. The
+  nav sits beside the wordmark rather than floating mid-bar on ultrawide.
 - **Main:** a landmark with the width token as a prop, defaulting to
   `--shell-default`.
 - **Footer:** the existing `MarketingFooter`, reparented here rather than
@@ -207,4 +217,4 @@ Classes: **grid** = catalogue/directory, **prose** = long-form copy,
 | `/privacy`, `/terms`                                      | prose         | `max-w-5xl`, text `max-w-3xl` plus a 16rem rail at `lg`                                                               | Text stays at reading width; sticky contents rail beside it                                    |
 | `/biomes`                                                 | grid + detail | `max-w-7xl`, 4 columns at `xl`; detail 7/5 split at `lg`                                                              | Widened; the profile editor keeps `max-w-6xl`                                                  |
 
-Prose measure (`max-w-2xl`/`3xl`) on intros is unchanged everywhere.
+Prose measure is `max-w-xl` (changed from `2xl` in #4462) and `3xl` for lead copy.

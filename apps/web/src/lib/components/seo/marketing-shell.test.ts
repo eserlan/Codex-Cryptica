@@ -101,11 +101,26 @@ describe("shell configuration", () => {
 
   it("defines public layout primitives for widescreen and prose readability", () => {
     expect(PUBLIC_LAYOUT.canvas.full).toContain("max-w-7xl");
-    expect(PUBLIC_LAYOUT.prose.measure).toBe("max-w-2xl");
+    // ~70 characters per line at text-lg (#4462); max-w-2xl measured ~81.
+    expect(PUBLIC_LAYOUT.prose.measure).toBe("max-w-xl");
+    expect(PUBLIC_LAYOUT.prose.measure).not.toBe(PUBLIC_LAYOUT.prose.lead);
     expect(PUBLIC_LAYOUT.prose.lead).toBe("max-w-3xl");
     expect(PUBLIC_LAYOUT.split.container).toContain("grid-cols-1");
     expect(PUBLIC_LAYOUT.split.container).toContain("lg:grid-cols-12");
     expect(PUBLIC_LAYOUT.split.content).toContain("lg:col-span-8");
     expect(PUBLIC_LAYOUT.split.aside).toContain("lg:col-span-4");
+  });
+});
+
+describe("PUBLIC_LAYOUT.solo", () => {
+  it("centres a no-aside article column and every direct child", () => {
+    expect(PUBLIC_LAYOUT.solo.column).toContain("mx-auto");
+    expect(PUBLIC_LAYOUT.solo.column).toContain("max-w-4xl");
+    expect(PUBLIC_LAYOUT.solo.column).toContain("[&>*]:mx-auto");
+  });
+
+  it("does not alter the split layout used when a rail exists", () => {
+    expect(PUBLIC_LAYOUT.split.content).toBe("lg:col-span-8 min-w-0");
+    expect(PUBLIC_LAYOUT.split.content).not.toContain("mx-auto");
   });
 });
