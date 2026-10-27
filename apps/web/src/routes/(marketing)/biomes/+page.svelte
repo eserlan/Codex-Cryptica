@@ -107,7 +107,7 @@
     <h1 class="font-header text-3xl text-theme-text sm:text-4xl">
       Biome Explorer
     </h1>
-    <p class="text-base text-theme-muted">
+    <p class="text-base text-theme-text">
       Browse real-world environments, understand why they look the way they do,
       compare climates side by side, and customize biomes with Markdown export.
     </p>

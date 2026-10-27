@@ -47,7 +47,7 @@
   <div role="search" class="flex flex-col gap-3">
     <label
       for="biome-search"
-      class="font-mono text-xs uppercase tracking-wide text-theme-muted"
+      class="font-mono text-xs uppercase tracking-wide text-theme-text"
     >
       Search biomes
     </label>
@@ -75,10 +75,10 @@
             facet,
           )
             ? 'border-theme-primary bg-theme-primary/15 text-theme-text'
-            : 'border-theme-border text-theme-muted hover:border-theme-primary/60'}"
+            : 'border-theme-border text-theme-text hover:border-theme-primary/60'}"
           onclick={() => toggleFilter(facet)}
         >
-          {label} <span class="text-theme-muted">({count})</span>
+          {label} <span class="text-theme-text">({count})</span>
         </button>
       {/each}
     </div>
@@ -95,7 +95,7 @@
   {/if}
 
   <p
-    class="text-sm text-theme-muted"
+    class="text-sm text-theme-text"
     aria-live="polite"
     data-testid="biome-result-count"
   >
@@ -104,12 +104,12 @@
 
   {#if results.length === 0}
     <div
-      class="rounded-xl border border-theme-border bg-theme-surface/40 px-6 py-10 text-center text-sm text-theme-text/70"
+      class="rounded-xl border border-theme-border bg-theme-surface/40 px-6 py-10 text-center text-sm text-theme-text"
     >
       <p class="mb-3">No biomes match your search or filters.</p>
       <button
         type="button"
-        class="rounded border border-theme-border px-3 py-1 text-theme-primary hover:border-theme-primary"
+        class="rounded border border-theme-border px-3 py-1 text-theme-text hover:border-theme-primary"
         onclick={clearAll}>Clear search</button
       >
     </div>
