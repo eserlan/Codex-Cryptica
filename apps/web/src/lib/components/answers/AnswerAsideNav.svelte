@@ -32,7 +32,7 @@
 >
   <h2
     id={headingId}
-    class="flex shrink-0 items-center gap-2 font-mono text-micro uppercase tracking-widest text-theme-text"
+    class="flex shrink-0 items-center gap-2 font-mono text-xs uppercase tracking-widest text-theme-text"
   >
     <span
       class="icon-[lucide--compass] h-3.5 w-3.5 text-theme-primary"

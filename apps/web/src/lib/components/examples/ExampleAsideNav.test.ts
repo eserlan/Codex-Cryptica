@@ -46,6 +46,42 @@ describe("ExampleAsideNav", () => {
     );
   });
 
+  it("keeps the larger typography and scroll-bounded related list", () => {
+    const related = others.slice(0, 9).map((o) => ({
+      slug: o.slug,
+      title: o.title,
+    }));
+    const exampleWithRelatedTopic = {
+      ...example,
+      relatedTopics: [
+        {
+          href: "/for/test-topic",
+          title: "Related topic",
+          description: "A relevant guide for this example.",
+        },
+      ],
+    };
+    render(ExampleAsideNav, {
+      props: { example: exampleWithRelatedTopic, related },
+    });
+
+    const panel = screen.getByTestId("example-aside-panel");
+    expect(panel.querySelector("h2")?.className).toContain("text-xs");
+    expect(
+      screen.getByRole("link", { name: example.generator.name }).parentElement
+        ?.className,
+    ).toContain("text-base");
+    expect(screen.getByText("Related topic").className).toContain("text-base");
+    expect(
+      screen.getByText("A relevant guide for this example.").className,
+    ).toContain("text-sm");
+
+    const relatedLabel = screen.getByText(related[0].title);
+    expect(relatedLabel.className).toContain("text-sm");
+    expect(relatedLabel.closest("ul")?.className).toContain("flex-1");
+    expect(panel.querySelector("div.hidden.min-h-0.flex-1")).toBeTruthy();
+  });
+
   it("omits the other-examples list when there is nothing to show", () => {
     render(ExampleAsideNav, { props: { example, related: [] } });
 

@@ -47,10 +47,10 @@
             }}
           >
             <span
-              class="block font-header text-sm font-bold leading-snug text-theme-text transition-colors group-hover:text-theme-primary"
+              class="block font-header text-base font-bold leading-snug text-theme-text transition-colors group-hover:text-theme-primary"
               >{link.title}</span
             >
-            <span class="block truncate text-xs text-theme-text"
+            <span class="line-clamp-2 block text-sm text-theme-text"
               >{link.description}</span
             >
           </a>

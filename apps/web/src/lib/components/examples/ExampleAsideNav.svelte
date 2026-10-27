@@ -35,7 +35,7 @@
   <div class="shrink-0">
     <h2
       id={headingId}
-      class="mb-3 flex items-center gap-2 font-mono text-micro uppercase tracking-widest text-theme-text"
+      class="mb-3 flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-theme-text"
     >
       <span
         class="icon-[lucide--dices] h-3.5 w-3.5 text-theme-primary"
@@ -46,7 +46,7 @@
     <dl class="grid gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-1">
       <div>
         <dt class="font-mono text-xs text-theme-text">Generator</dt>
-        <dd class="text-sm text-theme-text">
+        <dd class="text-base text-theme-text">
           <a
             href="{cleanBase}{example.generator.href}"
             class="underline decoration-theme-primary/40 underline-offset-4 transition-colors hover:text-theme-primary"
@@ -61,7 +61,7 @@
       {#each example.context as fact (fact.label)}
         <div>
           <dt class="font-mono text-xs text-theme-text">{fact.label}</dt>
-          <dd class="text-sm text-theme-text">{fact.value}</dd>
+          <dd class="text-base text-theme-text">{fact.value}</dd>
         </div>
       {/each}
     </dl>
