@@ -115,7 +115,7 @@
     </div>
   {:else}
     <ul
-      class="grid list-none grid-cols-1 gap-4 p-0 sm:grid-cols-2 lg:grid-cols-3"
+      class="grid list-none grid-cols-1 gap-4 p-0 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
     >
       {#each results as { biome } (biome.id)}
         <li>
