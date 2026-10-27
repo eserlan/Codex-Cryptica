@@ -3,6 +3,14 @@ import fs from "node:fs";
 import path from "node:path";
 
 describe("Web App Smoke Test", () => {
+  it("disables periodic SvelteKit version polling", () => {
+    const config = fs.readFileSync(
+      path.resolve(__dirname, "../vite.config.ts"),
+      "utf-8",
+    );
+    expect(config).toMatch(/version:\s*\{\s*pollInterval:\s*0\s*\}/);
+  });
+
   it("should have narrowed SvelteKit preload-data scope on the body to 'tap'", () => {
     const appHtmlPath = path.resolve(__dirname, "app.html");
     const appHtmlContent = fs.readFileSync(appHtmlPath, "utf-8");

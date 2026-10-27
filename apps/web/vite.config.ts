@@ -38,7 +38,8 @@ export default defineConfig({
   plugins: [
     tailwindcss(),
     sveltekit({
-      version: { pollInterval: 60000 },
+      // The app checks for service-worker updates on launch and tab return.
+      version: { pollInterval: 0 },
       // We register and manage the ServiceWorker lifecycle deterministically via
       // app-init.ts (supporting vault session caching, cleanup, and dev bypass).
       // Disable SvelteKit's automatic inline registration to prevent duplicate racing
