@@ -44,7 +44,7 @@
           {KIND_LABEL[kind]}
         </h2>
       </div>
-      <div class="grid gap-4 sm:grid-cols-2">
+      <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {#each group as result (result.href)}
           <a
             href={result.href.startsWith("/")
