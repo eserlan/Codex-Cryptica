@@ -231,6 +231,7 @@ export const howDoIRunExplorationInAHugeRuinedCity: AnswerConfigInput = {
     "what-rpg-map-making-tool-should-i-use",
     "what-ttrpg-should-i-use-for-a-fantasy-dungeon-crawl",
     "how-do-i-run-secret-doors-in-dnd",
+    "how-can-i-make-free-custom-maps-for-online-tabletop-rpgs",
   ],
   labels: ["fantasy", "sci-fi", "modern", "post-apocalyptic"],
   discovery: {

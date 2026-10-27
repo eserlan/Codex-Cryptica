@@ -2,6 +2,7 @@ import { AnswerConfigSchema, type AnswerConfig } from "../schema";
 import { canMultipleGodsShareADomain } from "./can-multiple-gods-share-a-domain";
 import { canYouPlayATabletopRpgIn30MinuteSessions } from "./can-you-play-a-tabletop-rpg-in-30-minute-sessions";
 import { doesAnRpgPartyNeedBalancedRoles } from "./does-an-rpg-party-need-balanced-roles";
+import { howCanIMakeFreeCustomMapsForOnlineTabletopRpgs } from "./how-can-i-make-free-custom-maps-for-online-tabletop-rpgs";
 import { howCanIPractiseBeingADungeonMasterWithoutAGroup } from "./how-can-i-practise-being-a-dungeon-master-without-a-group";
 import { howCommonShouldMagicBeInAFantasyWorld } from "./how-common-should-magic-be-in-a-fantasy-world";
 import { howDoFantasyCitiesDefendAgainstFlyingCreaturesAndTeleportation } from "./how-do-fantasy-cities-defend-against-flying-creatures-and-teleportation";
@@ -193,6 +194,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     canMultipleGodsShareADomain,
     canYouPlayATabletopRpgIn30MinuteSessions,
     doesAnRpgPartyNeedBalancedRoles,
+    howCanIMakeFreeCustomMapsForOnlineTabletopRpgs,
     howCanIPractiseBeingADungeonMasterWithoutAGroup,
     howCommonShouldMagicBeInAFantasyWorld,
     howDoFantasyCitiesDefendAgainstFlyingCreaturesAndTeleportation,
