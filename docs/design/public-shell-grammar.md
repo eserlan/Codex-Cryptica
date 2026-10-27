@@ -12,12 +12,12 @@ Not a taste problem. A missing-file problem.
 `{@render children()}`. That is all. There is no shared wordmark, navigation, or
 footer for public pages, so three partial shells grew in the gap:
 
-| Shell                         |  Pages |
-| ----------------------------- | -----: |
-| `SEOGeneratorLayout`          |      8 |
-| `SEOPageLayout`               |      5 |
-| Bare `MarketingFooter` import |      5 |
-| **Nothing at all**            | **10** |
+| Shell                                                     |      Pages |
+| --------------------------------------------------------- | ---------: |
+| `SEOGeneratorLayout`                                      |          8 |
+| `SEOPageLayout` (`/features/[slug]`, `/vs`, `/solutions`) | structured | hero/FAQ/related `max-w-4xl`; features grid, product proof, hosting table `max-w-7xl`; feature matrix `max-w-6xl` | Widened where grid/media/table; hero and FAQ stay narrow |
+| Bare `MarketingFooter` import                             |          5 |
+| **Nothing at all**                                        |     **10** |
 
 The ten with nothing include `/generators`, `/blog`, `/blog/[slug]`, every
 individual generator page, `/worlds`, `/changelog`, and
