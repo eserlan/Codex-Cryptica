@@ -81,4 +81,16 @@ describe("responsible-ai-worldbuilding component", () => {
       screen.getByRole("heading", { name: /The 7 Pillars of Responsible AI/i }),
     ).toBeTruthy();
   });
+
+  it("lays the principle panels out side by side from lg and widens the pillars grid", async () => {
+    const data = await load({} as never);
+    const { container } = render(Page, { props: { data } as never });
+
+    const panels = container.querySelectorAll(
+      ".lg\\:col-span-7, .lg\\:col-span-5, .lg\\:col-span-12",
+    );
+    expect(panels.length).toBe(3);
+    expect(container.querySelector(".max-w-7xl")).not.toBeNull();
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+  });
 });
