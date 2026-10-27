@@ -8,11 +8,13 @@
     label,
     leadParagraph,
     heroImage,
+    eyebrow = "Topic Hub",
   }: {
     title: string;
     label: string;
     leadParagraph: string;
     heroImage?: TopicImage;
+    eyebrow?: string;
   } = $props();
 </script>
 
@@ -23,7 +25,7 @@
     <p
       class="mb-3 font-mono text-xs uppercase tracking-[0.18em] text-theme-text"
     >
-      Topic Hub
+      {eyebrow}
     </p>
     <h1
       class="font-header text-3xl font-bold tracking-tight text-theme-text sm:text-5xl"
