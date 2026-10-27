@@ -24,24 +24,24 @@ export const howCanIMakeFreeCustomMapsForOnlineTabletopRpgs: AnswerConfigInput =
         headers: ["Approach", "Best for", "Trade-off to check"],
         rows: [
           [
-            "Blank grid with draw tools",
-            "Whiteboard-style improvisation and simple rooms, roads and clearings drawn in minutes",
-            "Plain visuals. Confirm the VTT lets you draw and erase in real time, and who can see the drawing as you make it",
+            "Live shared drawing: [Excalidraw](https://excalidraw.com)",
+            "Whiteboard-style improvisation, with everyone sketching on one shared canvas during play",
+            "It supplies the live shared drawing, not a roleplaying grid. There are no RPG tokens, fog or measured grid built in, so draw the grid lines yourself and use labelled shapes as markers",
           ],
           [
-            "Free map generator",
-            "A finished-looking cave, dungeon or terrain piece when you have little drawing time",
-            "Less control over the exact layout. Check what the current free tier allows you to export and at what size",
+            "An image to export: [Dungeon Scrawl](https://www.dungeonscrawl.com)",
+            "A prepared room or dungeon you draw before the session, then export and drop into your VTT. This is the starting route used in the worked example below",
+            "Its free tier covers creating and saving maps and exporting them as PNG or WebP images, with square and hex grids and no sign-up. Higher-resolution and PDF export, commercial use and extra layers and textures sit in its paid tier",
           ],
           [
-            "Tiles or modular pieces",
-            "Dungeons and encounter spaces you will rearrange and reuse across sessions",
-            "Some setup before the first use, while you gather pieces that share a scale and style",
+            "A ready-made layout: [Watabou One Page Dungeon](https://watabou.github.io/one-page-dungeon/)",
+            "A complete dungeon layout in seconds when exact room placement does not matter",
+            "It supplies a reusable generated map you can export as an image, but the generator decides the layout. Regenerate or redraw parts when you need a specific room, entrance or secret door",
           ],
           [
-            "An existing map image, imported",
-            "Art you made in another program, a hand-drawn scan, or a free map published for reuse",
-            "Check the usage rights, then spend your time on scale and grid alignment rather than drawing",
+            "Tiles, modular pieces or an existing map image",
+            "Dungeons you will rearrange across sessions, art made in another program, a hand-drawn scan, or a free map published for reuse",
+            "Some setup while you gather pieces that share a scale and style. For a borrowed image, check the usage rights, then spend your time on scale and grid alignment rather than drawing",
           ],
         ],
       },
@@ -54,13 +54,13 @@ export const howCanIMakeFreeCustomMapsForOnlineTabletopRpgs: AnswerConfigInput =
             text: "Pick the surface first: the VTT or shared canvas your group will actually open, with a grid you can show or hide.",
           },
           {
-            text: "Sketch the space in straight lines and simple shapes, or import an image and align the grid in the picture with the grid on screen.",
+            text: "Sketch the space in straight lines and simple shapes, or import an image. For an imported image, count the squares across it, tell the VTT that span (or the pixels per square, if it asks for that instead), then nudge the grid offset until its lines sit on the lines in the picture.",
           },
           {
-            text: "Set the scale once: what one square or hex means in your game, and whether tokens snap to it.",
+            text: "Set the scale once: what one square or hex means in your game, and whether tokens snap to it. If the picture already draws its own grid, hide the VTT's visible grid overlay where the tool lets you keep snapping without showing a second grid, then drag one token across several squares and check that the move and any ruler reading count the same squares the picture shows.",
           },
           {
-            text: "Add one token per character and per group of opponents, named plainly enough to tell apart at small size.",
+            text: "Add one token per character and one per independently positioned opponent, named plainly enough to tell apart at small size. Use a single shared marker only when your rules, or the level of detail your group plays at, genuinely treat those opponents as one group.",
           },
           {
             text: "Look at the player view before the session. Hide secret rooms, and set fog or hidden areas if the VTT supports them and the scene needs them.",
@@ -72,14 +72,19 @@ export const howCanIMakeFreeCustomMapsForOnlineTabletopRpgs: AnswerConfigInput =
       },
       {
         kind: "example",
-        heading: "Worked example: a mill yard drawn on a blank grid",
+        heading:
+          "Worked example: a mill yard made in Dungeon Scrawl, then imported",
         paragraphs: [
-          "A first-time online game master needs a fight outside a mill tonight and has no map. She opens a blank square grid in her VTT instead of shopping for artwork.",
+          "A first-time online game master needs a fight outside a mill tonight and has no map. She starts with the Dungeon Scrawl route from the table above, rather than shopping for artwork or learning a full editor.",
         ],
         items: [
           {
-            term: "Sketch only what decides the fight",
-            text: "In about ten minutes she draws the mill as a rectangle along the top edge, a river as two wavy lines down one side, and the yard fence as a broken line with a gate gap. Three crates become small squares that can block sight and give cover. Nothing is coloured in; the shapes carry the decisions.",
+            term: "Draw only what decides the fight",
+            text: "She draws the mill as a rectangle along the top edge, a river down one side, and the yard fence as a broken line with a gate gap. Three crates become small squares that can block sight and give cover. The shapes carry the decisions; nothing needs colouring in.",
+          },
+          {
+            term: "Export and calibrate the import",
+            text: "She exports the drawing as a PNG and imports it into her VTT. The export is 2,000 pixels wide and spans 20 squares, so she sets the VTT grid to 20 squares across (100 pixels per square, in a tool that asks that way) and nudges the offset until the two grids coincide. Because the picture already shows a grid, she hides the VTT's visible overlay, keeping snapping on. A token dragged five squares across the yard reads as five squares on the ruler, so movement, token size and the printed squares now agree.",
           },
           {
             term: "Set scale and tokens",
@@ -88,10 +93,6 @@ export const howCanIMakeFreeCustomMapsForOnlineTabletopRpgs: AnswerConfigInput =
           {
             term: "Check the player view",
             text: "She switches to the player view and finds the office interior visible, so she covers it with fog until someone opens the door. She then sends the map link in the group chat and each player moves a token once to prove the permissions work.",
-          },
-          {
-            term: "Improvise during play",
-            text: "Mid-fight, a player drags a cart across the gate. She draws one new line for the cart, moves no artwork, and play continues. The map stayed a whiteboard with tokens, which was all the scene ever required.",
           },
         ],
       },
@@ -109,7 +110,7 @@ export const howCanIMakeFreeCustomMapsForOnlineTabletopRpgs: AnswerConfigInput =
           },
           {
             term: "Export and image size",
-            text: "If you make the picture outside the VTT, export a common image format such as PNG or JPG and keep the file only as large as the map needs. Very large images load slowly for players on weaker connections; a smaller, legible map beats a huge one nobody can open.",
+            text: "If you make the picture outside the VTT, export a common image format such as PNG or JPG. Work out the width you need from the calibration in the worked example (squares across multiplied by pixels per square), then check it against the destination VTT's upload limit and reduce the pixels per square if you exceed it. Let that limit, not a fixed file-size rule, decide the export size, and keep a smaller export ready for players on weaker connections.",
           },
           {
             term: "Draw before, or draw live",
@@ -145,7 +146,8 @@ export const howCanIMakeFreeCustomMapsForOnlineTabletopRpgs: AnswerConfigInput =
     codexConnection: {
       heading: "Where Codex Cryptica fits, and where it does not",
       paragraphs: [
-        "Codex Cryptica can present a map image on a configurable grid with tokens and fog, so an image you sketched, generated or imported can be shown and played on beside your campaign notes, with your vault stored on your own device rather than on a subscription server. It is a place to run a prepared map, not a sketching tool: it does not offer freehand drawing directly on the VTT grid, so the live whiteboard job still belongs to a draw-capable surface or to a quick image you prepare and import.",
+        "Codex Cryptica can present a map image on a configurable grid with tokens and fog, so an image you sketched, generated or imported can be shown and played on beside your campaign notes, with your vault stored on your own device rather than on a subscription server. It is a place to run a prepared map, not a sketching tool: it does not offer freehand drawing directly on the VTT grid, so the live whiteboard job still belongs to a draw-capable surface or to a quick image you prepare and import. Its Spatial Canvas is a separate freeform planning board with pencil and eraser sketching and no grid snapping, which suits laying out ideas rather than measuring tactical movement on a gridded map.",
+        "For the operational next step, follow the [VTT mode help](/help#help/vtt-mode) for presenting the prepared map with tokens.",
       ],
       linkText: "About the local-first campaign manager",
       href: "/features/local-first-rpg-campaign-manager",
