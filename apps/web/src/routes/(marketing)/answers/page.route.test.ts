@@ -127,6 +127,27 @@ describe("/answers route", () => {
     ).toBe(true);
   });
 
+  it("lays out grouped and filtered results as a two-column list from lg", async () => {
+    const { container } = render(Page, {
+      props: { data: { answers: mockAnswers } },
+    });
+
+    const grouped = screen.getAllByTestId("answer-list");
+    expect(grouped.length).toBeGreaterThan(0);
+    for (const list of grouped) {
+      expect(list.className).toContain("lg:grid-cols-2");
+    }
+
+    const searchInput = container.querySelector(
+      "#answers-search",
+    ) as HTMLInputElement;
+    await fireEvent.input(searchInput, { target: { value: "heist" } });
+
+    const [filtered] = screen.getAllByTestId("answer-list");
+    expect(filtered.className).toContain("lg:grid-cols-2");
+    expect(filtered.querySelectorAll("li")).toHaveLength(1);
+  });
+
   it("renders format filter chips", () => {
     render(Page, {
       props: { data: { answers: mockAnswers } },
