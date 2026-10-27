@@ -18,6 +18,13 @@ describe("/explore route", () => {
     document.head.innerHTML = "";
   });
 
+  it("uses the widescreen canvas instead of the article width", () => {
+    const { container } = render(Page, { props: { data: emptyData } });
+
+    expect(container.querySelector(".max-w-7xl")).not.toBeNull();
+    expect(container.querySelector(".max-w-5xl")).toBeNull();
+  });
+
   it("publishes dedicated Open Graph and Twitter metadata", () => {
     render(Page, { props: { data: emptyData } });
 

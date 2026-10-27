@@ -13,7 +13,7 @@
 </script>
 
 {#snippet pageGrid(pages: LandingPageConfig[], badge: string, linkText: string)}
-  <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+  <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
     {#each pages as page}
       <a
         href="{basePath()}/for/{page.slug}"
@@ -82,7 +82,7 @@
   class="min-h-screen bg-theme-bg text-theme-text font-body selection:bg-theme-primary selection:text-theme-bg transition-colors duration-300 overflow-y-auto"
   style:background-image="var(--bg-texture-overlay)"
 >
-  <div class="mx-auto max-w-6xl px-4 sm:px-6 py-16 sm:py-20">
+  <div class="mx-auto max-w-7xl px-4 sm:px-6 py-16 sm:py-20">
     <header class="mb-16 text-center">
       <p
         class="mb-3 text-xs font-mono font-bold uppercase tracking-[0.24em] text-theme-primary"

@@ -198,7 +198,7 @@
   style:background-image="var(--bg-texture-overlay)"
 >
   <section class="border-b border-theme-border/60 px-6 py-14 md:py-18">
-    <div class="max-w-6xl mx-auto">
+    <div class="max-w-7xl mx-auto">
       <div class="max-w-3xl">
         <p
           class="text-xs font-mono uppercase tracking-[0.24em] text-theme-primary mb-4"
@@ -243,7 +243,7 @@
     </a>
   {/snippet}
 
-  <div class="max-w-6xl mx-auto px-4 sm:px-6 py-12 md:py-16 space-y-12">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 py-12 md:py-16 space-y-12">
     <nav aria-label="Generator categories">
       <ul class="flex flex-wrap gap-2">
         {#each generators as section (section.id)}
@@ -283,7 +283,7 @@
           {section.label}
         </h2>
         <p class="text-sm text-theme-muted mb-4">{section.description}</p>
-        <ul class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <ul class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
           {#each section.items as gen (gen.href)}
             <li>{@render card(gen)}</li>
           {/each}
@@ -298,7 +298,7 @@
       >
         Not Sure Where to Start?
       </h2>
-      <ul class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+      <ul class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         <li>{@render card(surpriseMe)}</li>
       </ul>
     </section>
@@ -315,7 +315,7 @@
         Browse by Theme
       </h2>
 
-      <ul class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+      <ul class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         {#each themeHubs as hub (hub.href)}
           <li>{@render card(hub)}</li>
         {/each}

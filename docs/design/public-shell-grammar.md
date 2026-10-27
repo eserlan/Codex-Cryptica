@@ -55,12 +55,12 @@ Public pages employ a deliberate **two-width architecture**:
 
 Four canonical outer canvas widths, chosen by layout structure:
 
-| Token             | Value       | Use                                                                          |
-| ----------------- | ----------- | ---------------------------------------------------------------------------- |
-| `--shell-narrow`  | `max-w-2xl` | Focused single-column reading: legal, minimal announcements (~672px)         |
-| `--shell-default` | `max-w-4xl` | Standard single-column forms, standard landing views (~896px)                |
-| `--shell-wide`    | `max-w-6xl` | Multi-column directories: `/tools`, `/generators` (~1152px)                  |
-| `--shell-full`    | `max-w-7xl` | Widescreen layouts: article + contextual aside, split views (~1280px–1440px) |
+| Token             | Value       | Use                                                                                |
+| ----------------- | ----------- | ---------------------------------------------------------------------------------- |
+| `--shell-narrow`  | `max-w-2xl` | Focused single-column reading: legal, minimal announcements (~672px)               |
+| `--shell-default` | `max-w-4xl` | Standard single-column forms, standard landing views (~896px)                      |
+| `--shell-wide`    | `max-w-6xl` | Mid-width landing sections and marketing pages (~1152px)                           |
+| `--shell-full`    | `max-w-7xl` | Widescreen layouts: directories/catalogues, article + aside, split views (~1280px) |
 
 Horizontal padding is `px-4` below `sm`, `px-6` from `sm` up, and optionally `lg:px-8` on widescreen boundaries.
 
@@ -182,3 +182,23 @@ generator pages sit at **1.17 to 1.20 views per visit**. People arrive, act or d
 not, and leave. A consistent nav helps people who navigate between pages, and
 most visitors here do not. That number is chunk 10's problem, and this chunk is
 the foundation it needs rather than the fix itself.
+
+## 7. Route inventory (widescreen pass, #4437)
+
+Classes: **grid** = catalogue/directory, **prose** = long-form copy,
+**structured** = landing sections, **tool** = forms and interactive output.
+
+| Route family                                                        | Class      | Container                      | Decision                                 |
+| ------------------------------------------------------------------- | ---------- | ------------------------------ | ---------------------------------------- |
+| `/explore`, `/explore?label=`                                       | grid       | `max-w-7xl`, 3 columns at `xl` | Widened                                  |
+| `/examples`                                                         | grid       | `max-w-7xl`, 3 columns at `xl` | Widened                                  |
+| `/generators`, `/generators/[theme]`, `/tools`                      | grid       | `max-w-7xl`, 4 columns at `xl` | Widened                                  |
+| `/for`                                                              | grid       | `max-w-7xl`, 4 columns at `xl` | Widened                                  |
+| `/features`, `/worlds`                                              | grid       | `max-w-7xl`                    | Widened; card grids already responsive   |
+| `/blog`, `/answers`, `/topics/*`                                    | mixed      | `max-w-7xl`                    | Done in #4434, #4435, #4436              |
+| `SEOPageLayout` (`/features/[slug]`, `/vs`, `/solutions`)           | structured | `max-w-4xl` / `max-w-6xl`      | Exception: centred marketing sections    |
+| `/generators/[slug]`, `/tools/*` generator pages                    | tool       | `SEOGeneratorLayout`           | Exception: control/output pair is tuned  |
+| `/silhouettes`, `/biomes`                                           | tool       | own layout                     | Exception: interactive explorers         |
+| `/changelog`, `/privacy`, `/terms`, `/responsible-ai-worldbuilding` | prose      | `max-w-2xl` to `4xl`           | Exception: long-form copy stays readable |
+
+Prose measure (`max-w-2xl`/`3xl`) on intros is unchanged everywhere.
