@@ -27,6 +27,10 @@
   );
   const headings = $derived(extractBlogToc(articleContent));
   const hasAside = $derived(headings.length >= 2 || isRASeries);
+  // Without a rail the whole article sits on one centred reading measure.
+  const headLead = $derived(
+    hasAside ? PUBLIC_LAYOUT.prose.lead : PUBLIC_LAYOUT.prose.measure,
+  );
 
   // Every post had a bare link card before this: the root layout declares
   // twitter:card but no image anywhere, so there was nothing to show. A post
@@ -98,7 +102,7 @@
     <div
       class={hasAside
         ? `${PUBLIC_LAYOUT.split.content} ${PUBLIC_LAYOUT.prose.measure}`
-        : `mx-auto ${PUBLIC_LAYOUT.prose.lead}`}
+        : `mx-auto ${PUBLIC_LAYOUT.prose.measure}`}
     >
       <div class="mb-20">
         <ArticleRenderer content={articleContent} />
@@ -137,7 +141,7 @@
       class={hasAside ? "" : PUBLIC_LAYOUT.solo.column}
       data-testid="blog-column"
     >
-      <nav class="mb-12 {PUBLIC_LAYOUT.prose.lead}">
+      <nav class="mb-12 {headLead}">
         <a
           href="{basePath()}/blog"
           class="inline-flex items-center gap-2 text-theme-text hover:underline transition-colors text-xs font-bold group"
@@ -149,7 +153,7 @@
         </a>
       </nav>
 
-      <header class="mb-16 {PUBLIC_LAYOUT.prose.lead}">
+      <header class="mb-16 {headLead}">
         <div
           class="flex items-center gap-4 text-xs font-mono text-theme-text uppercase tracking-widest mb-6"
         >
@@ -204,10 +208,7 @@
 
       {@render articleBody()}
 
-      <footer
-        class="pt-12 border-t border-theme-border mt-16 {PUBLIC_LAYOUT.prose
-          .lead}"
-      >
+      <footer class="pt-12 border-t border-theme-border mt-16 {headLead}">
         <div>
           <p
             class="text-micro font-mono text-theme-text uppercase tracking-widest mb-3"
