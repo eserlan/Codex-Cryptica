@@ -109,3 +109,16 @@ describe("shell configuration", () => {
     expect(PUBLIC_LAYOUT.split.aside).toContain("lg:col-span-4");
   });
 });
+
+describe("PUBLIC_LAYOUT.solo", () => {
+  it("centres a no-aside article column and every direct child", () => {
+    expect(PUBLIC_LAYOUT.solo.column).toContain("mx-auto");
+    expect(PUBLIC_LAYOUT.solo.column).toContain("max-w-4xl");
+    expect(PUBLIC_LAYOUT.solo.column).toContain("[&>*]:mx-auto");
+  });
+
+  it("does not alter the split layout used when a rail exists", () => {
+    expect(PUBLIC_LAYOUT.split.content).toBe("lg:col-span-8 min-w-0");
+    expect(PUBLIC_LAYOUT.split.content).not.toContain("mx-auto");
+  });
+});
