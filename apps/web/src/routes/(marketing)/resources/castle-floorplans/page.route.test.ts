@@ -85,17 +85,20 @@ describe("/resources/castle-floorplans route", () => {
     ).toBe("/answers/what-makes-a-good-heist-target-in-a-tabletop-rpg");
   });
 
-  it("uses the widescreen canvas with two-column source cards and a four-column next-steps row", () => {
-    const { container } = render(Page);
+  it("uses the widescreen canvas with the next steps in a sticky sidebar", () => {
+    const { container, getByTestId } = render(Page);
 
     expect(container.querySelector(".max-w-7xl")).not.toBeNull();
     expect(container.querySelector(".max-w-3xl")).toBeNull();
-    const lists = [...container.querySelectorAll("ul.grid")].map(
-      (u) => u.className,
-    );
+    const aside = getByTestId("floorplan-next-steps");
+    expect(aside.tagName).toBe("ASIDE");
+    expect(aside.className).toContain("lg:sticky");
+    expect(aside.querySelectorAll("a")).toHaveLength(4);
+    // Phones read the sources first, then the sidebar.
+    const firstSource = container.querySelector("li[id]")!;
     expect(
-      lists.filter((c) => c.includes("lg:grid-cols-2")).length,
-    ).toBeGreaterThan(0);
-    expect(lists.some((c) => c.includes("lg:grid-cols-4"))).toBe(true);
+      firstSource.compareDocumentPosition(aside) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 });
