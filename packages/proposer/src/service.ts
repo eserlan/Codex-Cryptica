@@ -55,7 +55,7 @@ export class ProposerService implements IProposerService {
     dbName: string = DB_NAME,
     dbVersion?: number,
     externalDbPromise?: Promise<IDBPDatabase<any>>,
-    now: () => number = Date.now,
+    now: () => number = () => Date.now(),
   ) {
     this.dbName = dbName;
     this.dbVersion = dbVersion;
