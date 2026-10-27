@@ -205,7 +205,7 @@
   style:background-image="var(--bg-texture-overlay)"
 >
   <!-- Hero Section -->
-  <section class="max-w-4xl mx-auto px-4 sm:px-6 pt-16 pb-12 text-center">
+  <section class="max-w-6xl mx-auto px-4 sm:px-6 pt-16 pb-12 text-center">
     <div
       class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-micro font-mono font-bold bg-theme-primary/10 border border-theme-primary/20 text-theme-primary mb-8 uppercase tracking-wider"
     >
@@ -228,170 +228,177 @@
       Learn how Codex Cryptica keeps narrative control in your hands.
     </p>
 
-    <!-- At a Glance Section -->
+    <!-- The three principle panels: side by side from lg, stacked below. -->
     <div
-      class="max-w-3xl mx-auto mb-12 p-8 bg-theme-surface/40 border border-theme-border/60 rounded-2xl backdrop-blur-md shadow-lg text-left"
+      class="mx-auto mb-16 grid max-w-6xl grid-cols-1 gap-6 text-left lg:grid-cols-12"
     >
-      <div class="flex items-center gap-3 mb-6">
-        <span
-          aria-hidden="true"
-          class="icon-[lucide--info] text-theme-primary w-6 h-6"
-        ></span>
-        <h2 class="font-header font-bold text-lg">AI Principles at a Glance</h2>
-      </div>
-      <ul class="space-y-3 text-base text-theme-text/85">
-        <li class="flex items-start gap-3">
+      <!-- At a Glance Section -->
+      <div
+        class="p-8 lg:col-span-7 bg-theme-surface/40 border border-theme-border/60 rounded-2xl backdrop-blur-md shadow-lg text-left"
+      >
+        <div class="flex items-center gap-3 mb-6">
           <span
-            class="icon-[lucide--check-circle-2] text-theme-primary w-5 h-5 shrink-0 mt-0.5"
+            aria-hidden="true"
+            class="icon-[lucide--info] text-theme-primary w-6 h-6"
           ></span>
-          <span
-            ><strong>AI is optional</strong> — your core lore library, timelines,
-            graph, and local vault continue to work without AI.</span
-          >
-        </li>
-        <li class="flex items-start gap-3">
-          <span
-            class="icon-[lucide--check-circle-2] text-theme-primary w-5 h-5 shrink-0 mt-0.5"
-          ></span>
-          <span
-            ><strong>Your vault is local-first</strong> — all files are stored directly
-            in your browser's private filesystem.</span
-          >
-        </li>
-        <li class="flex items-start gap-3">
-          <span
-            class="icon-[lucide--check-circle-2] text-theme-primary w-5 h-5 shrink-0 mt-0.5"
-          ></span>
-          <span
-            ><strong>No silent execution</strong> — AI features only run when you
-            explicitly choose to invoke them.</span
-          >
-        </li>
-        <li class="flex items-start gap-3">
-          <span
-            class="icon-[lucide--check-circle-2] text-theme-primary w-5 h-5 shrink-0 mt-0.5"
-          ></span>
-          <span
-            ><strong>Context-aware</strong> — the Lore Oracle builds suggestions from
-            your selected campaign details, not hidden training datasets.</span
-          >
-        </li>
-        <li class="flex items-start gap-3">
-          <span
-            class="icon-[lucide--check-circle-2] text-theme-primary w-5 h-5 shrink-0 mt-0.5"
-          ></span>
-          <span
-            ><strong>Drafts are not canon</strong> — generated ideas live in a sandbox
-            and never write to your files without approval.</span
-          >
-        </li>
-        <li class="flex items-start gap-3">
-          <span
-            class="icon-[lucide--check-circle-2] text-theme-primary w-5 h-5 shrink-0 mt-0.5"
-          ></span>
-          <span
-            ><strong>Human in the loop</strong> — you review, edit, and approve every
-            single line that gets saved.</span
-          >
-        </li>
-        <li class="flex items-start gap-3">
-          <span
-            class="icon-[lucide--check-circle-2] text-theme-primary w-5 h-5 shrink-0 mt-0.5"
-          ></span>
-          <span
-            ><strong>Library first</strong> — Codex Cryptica is a private campaign
-            manager first, and an AI assistant second.</span
-          >
-        </li>
-      </ul>
-    </div>
-
-    <!-- Foundational Box -->
-    <div
-      class="max-w-3xl mx-auto mb-12 p-8 bg-theme-surface/30 border border-theme-border/60 rounded-2xl backdrop-blur-md shadow-lg text-left"
-    >
-      <div class="flex items-center gap-3 mb-4">
-        <span
-          aria-hidden="true"
-          class="icon-[lucide--lock] text-theme-primary w-6 h-6"
-        ></span>
-        <h2 class="font-header font-bold text-lg">Local-First Sovereignty</h2>
-      </div>
-      <p class="text-base text-theme-text/75 leading-relaxed">
-        True trust in digital worldbuilding requires full data ownership. Codex
-        Cryptica is built around a local-first architecture. Your campaign vault
-        lives in your browser's private filesystem (OPFS), running offline.
-        Codex does not store your campaign vault in a Codex database. When you
-        choose to utilize AI suggestions, your prompts are sent directly to your
-        configured API client, ensuring your private notes remain under your
-        domain.
-      </p>
-    </div>
-
-    <!-- What AI Can See Section -->
-    <div
-      class="max-w-3xl mx-auto mb-16 p-8 bg-theme-surface/30 border border-theme-border/60 rounded-2xl backdrop-blur-md shadow-lg text-left"
-    >
-      <div class="flex items-center gap-3 mb-6">
-        <span
-          aria-hidden="true"
-          class="icon-[lucide--eye] text-theme-primary w-6 h-6"
-        ></span>
-        <h2 class="font-header font-bold text-lg">What the Oracle Can See</h2>
-      </div>
-      <p class="text-base text-theme-muted mb-6 leading-relaxed">
-        Codex does not upload your entire vault. When you choose to query the
-        Lore Oracle, it works only with the specific campaign context needed for
-        that action.
-      </p>
-
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs font-mono">
-        <div
-          class="p-4 rounded-xl bg-green-500/5 border border-green-500/20 space-y-2"
-        >
-          <div
-            class="font-bold text-green-400 uppercase tracking-wider flex items-center gap-1.5"
-          >
-            <span class="w-2 h-2 rounded-full bg-green-400"></span>
-            Stays Local
-          </div>
-          <ul class="space-y-1 text-theme-muted">
-            <li>• Vault Markdown files</li>
-            <li>• Timeline histories</li>
-            <li>• Local graph structures</li>
-            <li>• Unselected campaign notes</li>
-          </ul>
+          <h2 class="font-header font-bold text-lg">
+            AI Principles at a Glance
+          </h2>
         </div>
-        <div
-          class="p-4 rounded-xl bg-yellow-500/5 border border-yellow-500/20 space-y-2"
-        >
-          <div
-            class="font-bold text-yellow-400 uppercase tracking-wider flex items-center gap-1.5"
-          >
-            <span class="w-2 h-2 rounded-full bg-yellow-400"></span>
-            May Be Sent
-          </div>
-          <ul class="space-y-1 text-theme-muted">
-            <li>• Active input prompt</li>
-            <li>• Selected context notes</li>
-            <li>• Draft text for revision</li>
-            <li>• Linked entity templates</li>
-          </ul>
+        <ul class="space-y-3 text-base text-theme-text/85">
+          <li class="flex items-start gap-3">
+            <span
+              class="icon-[lucide--check-circle-2] text-theme-primary w-5 h-5 shrink-0 mt-0.5"
+            ></span>
+            <span
+              ><strong>AI is optional</strong> — your core lore library, timelines,
+              graph, and local vault continue to work without AI.</span
+            >
+          </li>
+          <li class="flex items-start gap-3">
+            <span
+              class="icon-[lucide--check-circle-2] text-theme-primary w-5 h-5 shrink-0 mt-0.5"
+            ></span>
+            <span
+              ><strong>Your vault is local-first</strong> — all files are stored directly
+              in your browser's private filesystem.</span
+            >
+          </li>
+          <li class="flex items-start gap-3">
+            <span
+              class="icon-[lucide--check-circle-2] text-theme-primary w-5 h-5 shrink-0 mt-0.5"
+            ></span>
+            <span
+              ><strong>No silent execution</strong> — AI features only run when you
+              explicitly choose to invoke them.</span
+            >
+          </li>
+          <li class="flex items-start gap-3">
+            <span
+              class="icon-[lucide--check-circle-2] text-theme-primary w-5 h-5 shrink-0 mt-0.5"
+            ></span>
+            <span
+              ><strong>Context-aware</strong> — the Lore Oracle builds suggestions
+              from your selected campaign details, not hidden training datasets.</span
+            >
+          </li>
+          <li class="flex items-start gap-3">
+            <span
+              class="icon-[lucide--check-circle-2] text-theme-primary w-5 h-5 shrink-0 mt-0.5"
+            ></span>
+            <span
+              ><strong>Drafts are not canon</strong> — generated ideas live in a sandbox
+              and never write to your files without approval.</span
+            >
+          </li>
+          <li class="flex items-start gap-3">
+            <span
+              class="icon-[lucide--check-circle-2] text-theme-primary w-5 h-5 shrink-0 mt-0.5"
+            ></span>
+            <span
+              ><strong>Human in the loop</strong> — you review, edit, and approve
+              every single line that gets saved.</span
+            >
+          </li>
+          <li class="flex items-start gap-3">
+            <span
+              class="icon-[lucide--check-circle-2] text-theme-primary w-5 h-5 shrink-0 mt-0.5"
+            ></span>
+            <span
+              ><strong>Library first</strong> — Codex Cryptica is a private campaign
+              manager first, and an AI assistant second.</span
+            >
+          </li>
+        </ul>
+      </div>
+
+      <!-- Foundational Box -->
+      <div
+        class="p-8 lg:col-span-5 bg-theme-surface/30 border border-theme-border/60 rounded-2xl backdrop-blur-md shadow-lg text-left"
+      >
+        <div class="flex items-center gap-3 mb-4">
+          <span
+            aria-hidden="true"
+            class="icon-[lucide--lock] text-theme-primary w-6 h-6"
+          ></span>
+          <h2 class="font-header font-bold text-lg">Local-First Sovereignty</h2>
         </div>
-        <div
-          class="p-4 rounded-xl bg-red-500/5 border border-red-500/20 space-y-2"
-        >
+        <p class="text-base text-theme-text leading-relaxed">
+          True trust in digital worldbuilding requires full data ownership.
+          Codex Cryptica is built around a local-first architecture. Your
+          campaign vault lives in your browser's private filesystem (OPFS),
+          running offline. Codex does not store your campaign vault in a Codex
+          database. When you choose to utilize AI suggestions, your prompts are
+          sent directly to your configured API client, ensuring your private
+          notes remain under your domain.
+        </p>
+      </div>
+
+      <!-- What AI Can See Section -->
+      <div
+        class="p-8 lg:col-span-12 bg-theme-surface/30 border border-theme-border/60 rounded-2xl backdrop-blur-md shadow-lg text-left"
+      >
+        <div class="flex items-center gap-3 mb-6">
+          <span
+            aria-hidden="true"
+            class="icon-[lucide--eye] text-theme-primary w-6 h-6"
+          ></span>
+          <h2 class="font-header font-bold text-lg">What the Oracle Can See</h2>
+        </div>
+        <p class="text-base text-theme-text mb-6 leading-relaxed">
+          Codex does not upload your entire vault. When you choose to query the
+          Lore Oracle, it works only with the specific campaign context needed
+          for that action.
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs font-mono">
           <div
-            class="font-bold text-red-400 uppercase tracking-wider flex items-center gap-1.5"
+            class="p-4 rounded-xl bg-green-500/5 border border-green-500/20 space-y-2"
           >
-            <span class="w-2 h-2 rounded-full bg-red-400"></span>
-            Never Saved
+            <div
+              class="font-bold text-green-400 uppercase tracking-wider flex items-center gap-1.5"
+            >
+              <span class="w-2 h-2 rounded-full bg-green-400"></span>
+              Stays Local
+            </div>
+            <ul class="space-y-1 text-theme-text">
+              <li>• Vault Markdown files</li>
+              <li>• Timeline histories</li>
+              <li>• Local graph structures</li>
+              <li>• Unselected campaign notes</li>
+            </ul>
           </div>
-          <ul class="space-y-1 text-theme-muted text-micro">
-            <li>• No hosted campaign database</li>
-            <li>• No permanent chat files on our servers</li>
-            <li>• No cloud logging of your private vault</li>
-          </ul>
+          <div
+            class="p-4 rounded-xl bg-yellow-500/5 border border-yellow-500/20 space-y-2"
+          >
+            <div
+              class="font-bold text-yellow-400 uppercase tracking-wider flex items-center gap-1.5"
+            >
+              <span class="w-2 h-2 rounded-full bg-yellow-400"></span>
+              May Be Sent
+            </div>
+            <ul class="space-y-1 text-theme-text">
+              <li>• Active input prompt</li>
+              <li>• Selected context notes</li>
+              <li>• Draft text for revision</li>
+              <li>• Linked entity templates</li>
+            </ul>
+          </div>
+          <div
+            class="p-4 rounded-xl bg-red-500/5 border border-red-500/20 space-y-2"
+          >
+            <div
+              class="font-bold text-red-400 uppercase tracking-wider flex items-center gap-1.5"
+            >
+              <span class="w-2 h-2 rounded-full bg-red-400"></span>
+              Never Saved
+            </div>
+            <ul class="space-y-1 text-theme-text text-micro">
+              <li>• No hosted campaign database</li>
+              <li>• No permanent chat files on our servers</li>
+              <li>• No cloud logging of your private vault</li>
+            </ul>
+          </div>
         </div>
       </div>
     </div>
@@ -401,7 +408,7 @@
   <section
     class="border-t border-theme-border/30 bg-theme-surface/10 py-16 flex-grow"
   >
-    <div class="max-w-6xl mx-auto px-4 sm:px-6">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6">
       <h2 class="text-center font-header text-2xl text-theme-primary mb-4">
         The 7 Pillars of Responsible AI
       </h2>
