@@ -3,6 +3,7 @@
 import { render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import MarketingShell from "./MarketingShell.svelte";
+import { PUBLIC_LAYOUT } from "./marketing-shell";
 
 vi.mock("$app/paths", () => ({
   base: "",
@@ -67,5 +68,16 @@ describe("MarketingShell component", () => {
       "Generators",
       "Explore",
     ]);
+  });
+
+  it("shares the full-width page canvas and gutters so edges align (#4461)", () => {
+    render(MarketingShell);
+
+    const inner = screen.getByTestId("shell-header-inner");
+    expect(inner.className).toContain(PUBLIC_LAYOUT.canvas.full);
+    expect(inner.className).toContain(PUBLIC_LAYOUT.padding.canvas);
+    expect(inner.className).not.toContain("max-w-6xl");
+    // Gutters live on the inner box only; the header must not add its own.
+    expect(inner.closest("header")?.className).not.toMatch(/\bpx-/);
   });
 });

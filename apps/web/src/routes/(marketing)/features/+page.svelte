@@ -30,7 +30,7 @@
   class="min-h-screen bg-theme-bg text-theme-text font-body selection:bg-theme-primary selection:text-theme-bg transition-colors duration-300 overflow-y-auto"
   style:background-image="var(--bg-texture-overlay)"
 >
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 py-20">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
     <!-- Header -->
     <header class="mb-20 text-center">
       <h1

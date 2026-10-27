@@ -406,7 +406,7 @@
   <section
     class="border-t border-theme-border/30 bg-theme-surface/10 py-16 flex-grow"
   >
-    <div class="max-w-7xl mx-auto px-4 sm:px-6">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <h2 class="text-center font-header text-2xl text-theme-text mb-4">
         The 7 Pillars of Responsible AI
       </h2>
