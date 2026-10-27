@@ -81,6 +81,18 @@ describe("MapRecords", () => {
     expect(select).not.toHaveBeenCalled();
   });
 
+  it("does not publish a map when its converted image cannot be written", async () => {
+    const { records, vault, select } = setup();
+    vi.mocked(convertToWebP).mockResolvedValue(new Blob(["webp"]));
+    vi.mocked(writeOpfsFile).mockRejectedValueOnce(new Error("full"));
+    expect(
+      await records.uploadMap(new File([], "map.png"), "Map"),
+    ).toBeUndefined();
+    expect(vault.maps).toEqual({});
+    expect(vault.saveMaps).not.toHaveBeenCalled();
+    expect(select).not.toHaveBeenCalled();
+  });
+
   it("moves the world designation and looks up entity submaps", async () => {
     const { records, vault } = setup();
     await records.createBlankMap("Old");

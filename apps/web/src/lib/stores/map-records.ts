@@ -54,30 +54,44 @@ export class MapRecords {
 
     // 1. Convert to WebP and Save to OPFS
     try {
-      const webpBlob = await convertToWebP(file, 0.85);
-      await writeOpfsFile(
-        ["maps", storageName],
-        webpBlob,
-        vaultDir,
-        vaultDir.name,
-      );
+      await this.writeMapImage(file, storageName, vaultDir);
     } catch (err) {
       console.error("[MapStore] Map upload failed", err);
       return undefined;
     }
 
-    // 2. Create Map entity
+    // Dimensions will be updated on first load.
+    return this.createMapRecord(id, name, `maps/${storageName}`, 0);
+  }
+
+  private async writeMapImage(
+    file: File,
+    storageName: string,
+    vaultDir: FileSystemDirectoryHandle,
+  ) {
+    const webpBlob = await convertToWebP(file, 0.85);
+    await writeOpfsFile(
+      ["maps", storageName],
+      webpBlob,
+      vaultDir,
+      vaultDir.name,
+    );
+  }
+
+  private async createMapRecord(
+    id: string,
+    name: string,
+    assetPath: string,
+    size: number,
+  ): Promise<string> {
     const map: Map = {
       id,
       name,
-      assetPath: `maps/${storageName}`,
-      dimensions: { width: 0, height: 0 }, // Will be updated on first load
+      assetPath,
+      dimensions: { width: size, height: size },
       pins: [],
-      fogOfWar: {
-        maskPath: `maps/${id}_mask.png`,
-      },
+      fogOfWar: { maskPath: `maps/${id}_mask.png` },
     };
-
     this.vault.maps[id] = map;
     await this.vault.saveMaps();
     this.selectMap(id);
@@ -122,13 +136,7 @@ export class MapRecords {
 
     const storageName = `${this.idGenerator.uuid()}.webp`;
     try {
-      const webpBlob = await convertToWebP(file, 0.85);
-      await writeOpfsFile(
-        ["maps", storageName],
-        webpBlob,
-        vaultDir,
-        vaultDir.name,
-      );
+      await this.writeMapImage(file, storageName, vaultDir);
     } catch (err) {
       console.error("[MapStore] Map image replacement failed", err);
       return false;
@@ -182,21 +190,7 @@ export class MapRecords {
     }
 
     const id = this.idGenerator.uuid();
-    const map: Map = {
-      id,
-      name,
-      assetPath: "",
-      dimensions: { width: BLANK_MAP_SIZE, height: BLANK_MAP_SIZE },
-      pins: [],
-      fogOfWar: {
-        maskPath: `maps/${id}_mask.png`,
-      },
-    };
-
-    this.vault.maps[id] = map;
-    await this.vault.saveMaps();
-    this.selectMap(id);
-    return id;
+    return this.createMapRecord(id, name, "", BLANK_MAP_SIZE);
   }
 
   getEntitySubMap(entityId: string): Map | undefined {
