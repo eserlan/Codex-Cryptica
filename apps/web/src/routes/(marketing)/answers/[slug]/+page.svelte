@@ -90,10 +90,11 @@
   // Continuous prose keeps the ~65-75 character measure however wide the
   // canvas gets. Worked examples (and their diagrams) get a little more room,
   // and tables with three or more columns take the whole content column.
-  // Without a rail the article is centred, and its prose widens to the lead
-  // measure so the title, breadcrumb and body share one left edge.
-  const measure = $derived(
-    hasFurtherReading ? PUBLIC_LAYOUT.prose.measure : PUBLIC_LAYOUT.prose.lead,
+  // Without a rail the article is centred on one reading measure, so the
+  // breadcrumb and title share the body's edges instead of the wider lead.
+  const measure = PUBLIC_LAYOUT.prose.measure;
+  const headLead = $derived(
+    hasFurtherReading ? PUBLIC_LAYOUT.prose.lead : PUBLIC_LAYOUT.prose.measure,
   );
 
   function sectionWidth(section: AnswerBlock) {
@@ -165,7 +166,7 @@
           ? PUBLIC_LAYOUT.split.content
           : PUBLIC_LAYOUT.solo.column}"
       >
-        <nav aria-label="Breadcrumb" class="mb-8 {PUBLIC_LAYOUT.prose.lead}">
+        <nav aria-label="Breadcrumb" class="mb-8 {headLead}">
           <a
             href="{cleanBase}/answers"
             class="inline-flex min-h-[24px] items-center gap-2 py-1 font-mono text-xs text-theme-text transition-colors hover:text-theme-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-accent"
@@ -178,7 +179,7 @@
           </a>
         </nav>
 
-        <header class="mb-8 {PUBLIC_LAYOUT.prose.lead}">
+        <header class="mb-8 {headLead}">
           <p
             class="mb-3 font-mono text-xs uppercase tracking-[0.18em] text-theme-text"
           >

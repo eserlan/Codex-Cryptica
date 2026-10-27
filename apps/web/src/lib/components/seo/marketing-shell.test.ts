@@ -101,7 +101,9 @@ describe("shell configuration", () => {
 
   it("defines public layout primitives for widescreen and prose readability", () => {
     expect(PUBLIC_LAYOUT.canvas.full).toContain("max-w-7xl");
-    expect(PUBLIC_LAYOUT.prose.measure).toBe("max-w-2xl");
+    // ~70 characters per line at text-lg (#4462); max-w-2xl measured ~81.
+    expect(PUBLIC_LAYOUT.prose.measure).toBe("max-w-xl");
+    expect(PUBLIC_LAYOUT.prose.measure).not.toBe(PUBLIC_LAYOUT.prose.lead);
     expect(PUBLIC_LAYOUT.prose.lead).toBe("max-w-3xl");
     expect(PUBLIC_LAYOUT.split.container).toContain("grid-cols-1");
     expect(PUBLIC_LAYOUT.split.container).toContain("lg:grid-cols-12");
