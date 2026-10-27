@@ -200,7 +200,7 @@ Classes: **grid** = catalogue/directory, **prose** = long-form copy,
 | `SEOPageLayout` (`/features/[slug]`, `/vs`, `/solutions`)           | structured    | hero, FAQ, related `max-w-4xl`; features grid, product proof, hosting table `max-w-7xl`; feature matrix `max-w-6xl` | Widened where grid, media or table; hero and FAQ stay narrow |
 | `/generators/[slug]`, `/tools/*` generator pages                    | tool          | `SEOGeneratorLayout`                                                                                                | Exception: control/output pair is tuned                      |
 | `/silhouettes`                                                      | tool          | own layout                                                                                                          | Exception: interactive explorer                              |
-| `/biomes`                                                           | grid + detail | `max-w-7xl`, 4 columns at `xl`; detail 7/5 split at `lg`                                                            | Widened; the profile editor keeps `max-w-6xl`                |
 | `/changelog`, `/privacy`, `/terms`, `/responsible-ai-worldbuilding` | prose         | `max-w-2xl` to `4xl`                                                                                                | Exception: long-form copy stays readable                     |
+| `/biomes`                                                           | grid + detail | `max-w-7xl`, 4 columns at `xl`; detail 7/5 split at `lg`                                                            | Widened; the profile editor keeps `max-w-6xl`                |
 
 Prose measure (`max-w-2xl`/`3xl`) on intros is unchanged everywhere.
