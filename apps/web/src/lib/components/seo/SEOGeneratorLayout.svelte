@@ -376,11 +376,7 @@
       <div class="order-1 lg:hidden">{@render outputLead()}</div>
     {/if}
     <!-- Parameters Column: positioned on the left on desktop -->
-    <div
-      class="{columnClasses.form} space-y-6 {outputLead
-        ? 'order-2'
-        : 'order-1'} lg:order-1"
-    >
+    <div class="{columnClasses.form} space-y-6 order-1">
       <GeneratorFormPanel
         {canonicalPath}
         {eyebrow}
@@ -410,11 +406,7 @@
     </div>
 
     <!-- Output Card Column: middle column on desktop -->
-    <div
-      class="{columnClasses.output} flex flex-col {outputLead
-        ? 'order-3'
-        : 'order-2'} lg:order-2"
-    >
+    <div class="{columnClasses.output} flex flex-col order-2">
       {#if outputLead && !isNarrowViewport}
         {@render outputLead()}
       {/if}
