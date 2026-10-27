@@ -17,7 +17,7 @@ export const howToKeepCharacterDeathMeaningfulWithResurrection: AnswerConfigInpu
         paragraphs: [
           "A Game Master (GM) who allows revival often worries that a raised character proves the death never counted. That worry confuses two different things. Mechanical permanence is whether the character sheet leaves play. Narrative impact is what the death changed while it lasted and what the return changes next. A death can lack the first and still have plenty of the second.",
           "Consider what survives a successful revival. A companion who held a doorway so the others could escape still made that choice in front of witnesses, and those witnesses remember it. A negotiation missed while the party carried a body to a temple has still been missed. Enemies who saw a fighter fall have learned something about the party, and allies who spent a rare diamond to reverse the fall have one fewer diamond for the next emergency. None of that needs the character to stay dead in order to be true.",
-          "The practical rule is to let the return restore the person without rewinding the scene. Bring the character back, then play the consequences that were already set in motion. Do not void a sacrifice by treating the revival as though the sacrifice never happened, and do not compensate for the revival by inventing a fresh loss that nobody agreed to.",
+          "The practical rule is to let the return restore the person without rewinding the scene. Bring the character back, then play the consequences that were already set in motion. Do not void a sacrifice by treating the revival as though the sacrifice never happened.",
         ],
       },
       {
@@ -44,7 +44,7 @@ export const howToKeepCharacterDeathMeaningfulWithResurrection: AnswerConfigInpu
           [
             "Revival with a stated complication",
             "The group likes a defined cost beyond the rulebook price, such as a debt to the temple, a duty to a patron, or a change the character brings back.",
-            "Write the complication into the contract and state it before any casting. Never improvise one after a successful casting to make the return feel earned.",
+            "Write the complication into the contract and state it before any casting.",
           ],
           [
             "Revival as a quest",
@@ -100,7 +100,7 @@ export const howToKeepCharacterDeathMeaningfulWithResurrection: AnswerConfigInpu
         heading: "What the rules actually say in three systems",
         paragraphs: [
           "The summaries that follow are rules as written, checked against the published text. They are starting points for a contract, not recommendations, and any change your group makes to them is a house rule to record as such. In Dungeons and Dragons, revival arrives as a ladder of spells with explicit windows and prices. Revivify is a 3rd-level spell that touches a creature dead for no more than a minute and returns it with 1 hit point; it consumes diamonds worth 300 gold pieces, cannot help a creature that died of old age, and does not restore missing body parts. Raise Dead allows ten days and a diamond worth 500 gold pieces, and the returned creature works under a penalty that fades across long rests. Both the 2014 and the 2024 rules keep that same ladder shape, the same one-minute window, and the same 300 gold piece cost for Revivify; the 2024 text describes the Raise Dead penalty as a penalty to D20 tests, while the 2014 text lists the affected rolls directly. Read your own edition for the exact wording before quoting a cost at the table.",
-          "Tales of the Valiant, the Kobold Press game built for compatibility with fifth edition material, keeps the same family of revival magic, organised by spell rings rather than levels, so a group moving between the two games faces the same contract question with near-identical tools. Confirm the ring, components, and timing in your own copy, because printings and conversion choices differ, and do not assume a Dungeons and Dragons price list applies word for word. Dungeon World (first edition) keeps two moments separate. Last Breath triggers when a character is dying, not after death: the player rolls two six-sided dice with no modifier, cheating death and staying alive on a total of 10 or higher, accepting or refusing a bargain from Death on 7 to 9, and facing a sealed fate on 6 or lower. Returning a corpse is a different procedure, the Cleric spell Resurrection (level 3): the caster tells the GM they would like to resurrect a corpse whose soul has not yet fully departed, resurrection is always possible, and the GM gives one or more conditions to fulfil, chosen from taking days, weeks, or months, getting help from a named source, requiring a lot of money, or sacrificing something. The GM may allow the return now with the conditions met before it becomes permanent, or require the conditions first, so the cost is negotiated in the open rather than set by a component price.",
+          "Tales of the Valiant, the Kobold Press game built for compatibility with fifth edition material, organises spells by circles. In the Black Flag Reference Document, its Revivify is a 3rd-circle Divine and Wyrd spell with a casting time of 1 action and a range of Touch. It consumes diamonds worth 300 gp, returns a creature that has died within the last minute with 1 HP, and cannot return a creature that died of old age or restore missing body parts. A group moving between the two games therefore faces the same contract question with a closely comparable spell. Dungeon World (first edition) keeps two moments separate. Last Breath triggers when a character is dying, not after death: the player rolls two six-sided dice with no modifier, cheating death and staying alive on a total of 10 or higher, accepting or refusing a bargain from Death on 7 to 9, and facing a sealed fate on 6 or lower. Returning a corpse is a different procedure, the Cleric spell Resurrection (level 3): the caster tells the GM they would like to resurrect a corpse whose soul has not yet fully departed, resurrection is always possible, and the GM gives one or more conditions to fulfil, chosen from taking days, weeks, or months, getting help from a named source, requiring a lot of money, or sacrificing something. The GM may allow the return now with the conditions met before it becomes permanent, or require the conditions first, so the cost is negotiated in the open rather than set by a component price.",
         ],
         cta: {
           text: "Read the Resurrection spell in the Dungeon World SRD",
@@ -113,7 +113,7 @@ export const howToKeepCharacterDeathMeaningfulWithResurrection: AnswerConfigInpu
         heading:
           "Worked example: a battlefield revival that still costs the party",
         paragraphs: [
-          "The contract is rules as written with openly available revival. The party knows the costs, carries the components, and has agreed that what happens while someone is down still happens. Watch where the weight comes from: not from a new penalty, but from time, a consumed diamond, and a goal that kept moving.",
+          "The contract is rules as written with openly available revival. The party knows the costs, carries the components, and has agreed that what happens while someone is down still happens.",
         ],
         items: [
           {
@@ -122,15 +122,15 @@ export const howToKeepCharacterDeathMeaningfulWithResurrection: AnswerConfigInpu
           },
           {
             term: "The choice the players can see",
-            text: "The cleric's player states the real options aloud: spend an action and the diamond to cast Revivify within its one-minute window, or finish the fight first and risk the window closing. The table can see the bridge toll bell the raiders are trying to reach, and the cleric, standing at the bridge midpoint, is the only character in a position to cut off the raider running for it: the others are locked in melee at the far end or down. Choosing the revival means nobody stops that raider this round.",
+            text: "It is the cleric's turn. The wizard and the rogue act after the cleric, then the raider. The raider is 25 feet from the toll bell at the far end of the bridge, close enough to reach and ring it on his turn. The cleric stands at the midpoint, 20 feet from the fighter in one direction and 25 feet from the bell rope in the other. Reaching the rope and cutting it would take the cleric's movement and action this turn. Casting Revivify instead takes the cleric's movement towards the fighter and the same action, leaving the rope intact. The wizard and rogue are each 70 feet or more from the rope, so neither can reach it before the raider acts, although on their turns a workable ranged attack, spell, or other intervention from them could still stop him. The cleric's player states these options aloud, including the closing one-minute window if the party fights on first.",
           },
           {
             term: "The result",
-            text: "The cleric casts Revivify as the rules describe it. The diamond is consumed, the fighter returns with 1 hit point, and play continues without any extra roll or lingering penalty, because the contract never promised one. The raider reaches the bell, and the toll keeper's guards arrive two rounds later to find armed strangers on the bridge. The party wins the fight and loses the quiet crossing they wanted.",
+            text: "In this playthrough, the table chooses the revival and no other intervention stops the raider. The cleric moves to the fighter and casts Revivify as the rules describe it. The diamond is consumed and the fighter returns with 1 hit point. Because the cleric spent that movement and action on the casting, the rope is still there on the raider's turn, so he reaches it and rings the bell. The toll keeper's guards arrive two rounds later to find armed strangers on the bridge. The party wins the fight and loses the quiet crossing they wanted. A different choice that stopped the raider would have kept the bell silent; the cost follows from the action the party spent, not from the revival itself.",
           },
           {
             term: "What the GM does next",
-            text: "Name the cost that already exists rather than adding another one. The toll keeper saw the fighter die and stand up again, and will describe it that way to the guards and their captain. The party is down one diamond for the return journey. Ask the fighter's player what she remembers and what she wants to say to the cleric, then move on. The death mattered because the crossing, the diamond, and the witnesses changed, not because the return was taxed.",
+            text: "Name the cost that already exists. The toll keeper saw the fighter die and stand up again, and will describe it that way to the guards and their captain. The party is down one diamond for the return journey. Ask the fighter's player what she remembers and what she wants to say to the cleric, then move on.",
           },
         ],
       },
@@ -148,7 +148,7 @@ export const howToKeepCharacterDeathMeaningfulWithResurrection: AnswerConfigInpu
           },
           {
             term: "The agreed price",
-            text: "At the temple, the terms are the ones the contract promised: a diamond worth 500 gold pieces, a casting that takes an hour, and a returned character who works under the fading penalty the spell describes. The party sells the ranger's spare horse and a captured banner to meet the fee. Nobody invents a further price at the altar, and the ranger's player confirms she wants the return on those terms before the casting begins.",
+            text: "At the temple, the terms are the ones the contract promised: a diamond worth 500 gold pieces, a casting that takes an hour, and a returned character who works under the fading penalty the spell describes. The party sells the ranger's spare horse and a captured banner to meet the fee, and the ranger's player confirms she wants the return on those terms before the casting begins.",
           },
           {
             term: "The return",
@@ -167,7 +167,7 @@ export const howToKeepCharacterDeathMeaningfulWithResurrection: AnswerConfigInpu
           "What does a return cost in money, components, time, and obligation, and who in the setting can provide it? Have the players seen that scarcity or abundance in play before it decides a character's fate?",
           "Does the same contract apply to important non-player characters, including rulers, witnesses, and villains? What does that imply for succession, investigations, and war in this setting?",
           "Are there any house rules on top of the rulebook, such as extra penalties, failure chances, or limits per soul? If so, are they written here where a player can choose with full knowledge, or have we agreed there are none?",
-          "When a character dies: what has already changed while they were down, in time, objectives, resources, and witnesses? Play those changes instead of adding a new penalty.",
+          "When a character dies: what has already changed while they were down, in time, objectives, resources, and witnesses? Play those changes.",
           "When a character returns: what do they remember, who needs to be told, and what does the group do next about the consequences already in motion? Give the returning player the first word on how it felt.",
         ],
       },
@@ -196,8 +196,8 @@ export const howToKeepCharacterDeathMeaningfulWithResurrection: AnswerConfigInpu
       {
         system: "Tales of the Valiant",
         rationale:
-          "Kobold Press organises the familiar fifth edition revival spells by rings, so groups retain timed, component-based returns and face the same access and cost questions when setting a campaign contract.",
-        href: "https://koboldpress.com/",
+          "Kobold Press organises spells by circles, and the Black Flag Reference Document gives Revivify as a timed, component-based return, so groups face the same access and cost questions when setting a campaign contract.",
+        href: "https://bfrd.net/spells/revivify",
       },
     ],
     relatedAnswers: [
