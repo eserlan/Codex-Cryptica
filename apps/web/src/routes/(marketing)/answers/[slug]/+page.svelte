@@ -90,10 +90,16 @@
   // Continuous prose keeps the ~65-75 character measure however wide the
   // canvas gets. Worked examples (and their diagrams) get a little more room,
   // and tables with three or more columns take the whole content column.
+  // Without a rail the article is centred, and its prose widens to the lead
+  // measure so the title, breadcrumb and body share one left edge.
+  const measure = $derived(
+    hasFurtherReading ? PUBLIC_LAYOUT.prose.measure : PUBLIC_LAYOUT.prose.lead,
+  );
+
   function sectionWidth(section: AnswerBlock) {
     if (section.kind === "table" && section.headers.length > 2) return "";
     if (section.kind === "example") return PUBLIC_LAYOUT.prose.lead;
-    return PUBLIC_LAYOUT.prose.measure;
+    return measure;
   }
 
   // See discovery-tracking.ts: this route reuses one component instance
@@ -157,9 +163,9 @@
       <article
         class="break-words text-lg leading-relaxed {hasFurtherReading
           ? PUBLIC_LAYOUT.split.content
-          : ''}"
+          : PUBLIC_LAYOUT.solo.column}"
       >
-        <nav aria-label="Breadcrumb" class="mb-8">
+        <nav aria-label="Breadcrumb" class="mb-8 {PUBLIC_LAYOUT.prose.lead}">
           <a
             href="{cleanBase}/answers"
             class="inline-flex min-h-[24px] items-center gap-2 py-1 font-mono text-xs text-theme-text transition-colors hover:text-theme-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-accent"
@@ -217,8 +223,7 @@
         <!-- The direct answer, before anything else on the page. Ruled rather than
          boxed: the grammar reserves cards for parallel, comparable items. -->
         <p
-          class="mb-12 border-l-2 border-theme-primary pl-5 text-lg leading-relaxed text-theme-text {PUBLIC_LAYOUT
-            .prose.measure}"
+          class="mb-12 border-l-2 border-theme-primary pl-5 text-lg leading-relaxed text-theme-text {measure}"
         >
           {answer.shortAnswer}
         </p>
@@ -452,7 +457,7 @@
           </section>
         {/each}
 
-        <div class="mb-12 {PUBLIC_LAYOUT.prose.measure}">
+        <div class="mb-12 {measure}">
           <UsefulnessFeedback
             voteKey={answer.slug}
             slug={answer.slug}
@@ -467,10 +472,7 @@
         </div>
 
         {#if answer.systemsThatSupportThis && answer.systemsThatSupportThis.length > 0}
-          <section
-            class="mb-12 border-t border-theme-border pt-8 {PUBLIC_LAYOUT.prose
-              .measure}"
-          >
+          <section class="mb-12 border-t border-theme-border pt-8 {measure}">
             <h2
               class="mb-4 font-header text-xl font-bold text-theme-text sm:text-2xl"
             >
@@ -507,10 +509,7 @@
         {/if}
 
         {#if answer.codexConnection}
-          <section
-            class="mb-12 border-t border-theme-border pt-8 {PUBLIC_LAYOUT.prose
-              .measure}"
-          >
+          <section class="mb-12 border-t border-theme-border pt-8 {measure}">
             <h2
               class="mb-4 font-header text-xl font-bold text-theme-text sm:text-2xl"
             >

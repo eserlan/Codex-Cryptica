@@ -69,6 +69,14 @@ export const PUBLIC_LAYOUT = {
     measure: "max-w-2xl",
     lead: "max-w-3xl",
   },
+  /**
+   * No-aside modifier: a centred reading column for articles without a
+   * contextual rail. Wide blocks (tables) fill the column; every other direct
+   * child is centred at its own measure, so edges line up when measures match.
+   */
+  solo: {
+    column: "mx-auto w-full max-w-4xl [&>*]:mx-auto",
+  },
   /** Content + contextual aside responsive split */
   split: {
     container:

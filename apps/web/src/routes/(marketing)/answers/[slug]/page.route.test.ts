@@ -92,8 +92,9 @@ describe("answer page tables", () => {
     const [wide, narrow] = screen
       .getAllByTestId("answer-table")
       .map((el) => el.closest("section") as HTMLElement);
-    expect(wide.className).not.toContain(PUBLIC_LAYOUT.prose.measure);
-    expect(narrow.className).toContain(PUBLIC_LAYOUT.prose.measure);
+    // No related links here, so prose uses the centred lead measure.
+    expect(wide.className).not.toContain(PUBLIC_LAYOUT.prose.lead);
+    expect(narrow.className).toContain(PUBLIC_LAYOUT.prose.lead);
   });
 
   it("keeps four-plus column tables stacked until large screens", () => {
@@ -211,5 +212,29 @@ describe("answer page widescreen aside", () => {
     expect(screen.queryByTestId("answer-aside")).toBeNull();
     expect(screen.queryByTestId("answer-related-inline")).toBeNull();
     expect(screen.getByRole("article").className).not.toContain("col-span");
+  });
+
+  it("centres the article and aligns its measure when there is no aside", () => {
+    renderAnswer([prose]);
+
+    const article = screen.getByRole("article");
+    expect(article.className).toContain(PUBLIC_LAYOUT.solo.column);
+    expect(
+      screen.getByRole("navigation", { name: "Breadcrumb" }).className,
+    ).toContain(PUBLIC_LAYOUT.prose.lead);
+    expect(article.querySelector("section")?.className).toContain(
+      PUBLIC_LAYOUT.prose.lead,
+    );
+  });
+
+  it("keeps the split grid, uncentred, when an aside exists", () => {
+    renderAnswer([prose], {}, [{ slug: "hex-crawl-basics", question: "Hex?" }]);
+
+    const article = screen.getByRole("article");
+    expect(article.className).toContain(PUBLIC_LAYOUT.split.content);
+    expect(article.className).not.toContain("mx-auto");
+    expect(article.querySelector("section")?.className).toContain(
+      PUBLIC_LAYOUT.prose.measure,
+    );
   });
 });

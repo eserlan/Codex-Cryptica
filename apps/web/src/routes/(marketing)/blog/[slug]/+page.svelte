@@ -26,6 +26,7 @@
     article.content.replace(/^#[^\n]+\n/, "").trimStart(),
   );
   const headings = $derived(extractBlogToc(articleContent));
+  const hasAside = $derived(headings.length >= 2 || isRASeries);
 
   // Every post had a bare link card before this: the root layout declares
   // twitter:card but no image anywhere, so there was nothing to show. A post
@@ -93,15 +94,11 @@
 />
 
 {#snippet articleBody()}
-  <div
-    class={headings.length >= 2 || isRASeries
-      ? PUBLIC_LAYOUT.split.container
-      : ""}
-  >
+  <div class={hasAside ? PUBLIC_LAYOUT.split.container : ""}>
     <div
-      class="{headings.length >= 2 || isRASeries
-        ? PUBLIC_LAYOUT.split.content
-        : ''} {PUBLIC_LAYOUT.prose.measure}"
+      class={hasAside
+        ? `${PUBLIC_LAYOUT.split.content} ${PUBLIC_LAYOUT.prose.measure}`
+        : `mx-auto ${PUBLIC_LAYOUT.prose.lead}`}
     >
       <div class="mb-20">
         <ArticleRenderer content={articleContent} />
@@ -114,7 +111,7 @@
       {/if}
     </div>
 
-    {#if headings.length >= 2 || isRASeries}
+    {#if hasAside}
       <aside
         class="{PUBLIC_LAYOUT.split
           .aside} custom-scrollbar sticky top-24 hidden max-h-[calc(100vh-7rem)] scroll-py-2 space-y-8 self-start overflow-y-auto lg:block"
@@ -136,171 +133,179 @@
   class="min-h-screen bg-theme-bg text-theme-text selection:bg-theme-primary selection:text-theme-bg py-12 sm:py-20 md:py-28"
 >
   <PublicPageContainer width="full">
-    <nav class="mb-12">
-      <a
-        href="{basePath()}/blog"
-        class="inline-flex items-center gap-2 text-theme-text hover:underline transition-colors text-xs font-bold group"
-      >
-        <span
-          class="icon-[lucide--arrow-left] w-4 h-4 group-hover:-translate-x-1 transition-transform"
-        ></span>
-        Back to Archive
-      </a>
-    </nav>
-
-    <header class="mb-16 {PUBLIC_LAYOUT.prose.lead}">
-      <div
-        class="flex items-center gap-4 text-xs font-mono text-theme-text uppercase tracking-widest mb-6"
-      >
-        <time datetime={article.publishedAt}>
-          {new Date(article.publishedAt).toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-            timeZone: "UTC",
-          })}
-        </time>
-        <span aria-hidden="true" class="w-8 h-px bg-theme-border"></span><span
-          class="sr-only"
+    <div
+      class={hasAside ? "" : PUBLIC_LAYOUT.solo.column}
+      data-testid="blog-column"
+    >
+      <nav class="mb-12 {PUBLIC_LAYOUT.prose.lead}">
+        <a
+          href="{basePath()}/blog"
+          class="inline-flex items-center gap-2 text-theme-text hover:underline transition-colors text-xs font-bold group"
         >
-          ·
-        </span>
-        <span data-testid="blog-byline">By {authorName}</span>
-        {#if article.updatedAt}
+          <span
+            class="icon-[lucide--arrow-left] w-4 h-4 group-hover:-translate-x-1 transition-transform"
+          ></span>
+          Back to Archive
+        </a>
+      </nav>
+
+      <header class="mb-16 {PUBLIC_LAYOUT.prose.lead}">
+        <div
+          class="flex items-center gap-4 text-xs font-mono text-theme-text uppercase tracking-widest mb-6"
+        >
+          <time datetime={article.publishedAt}>
+            {new Date(article.publishedAt).toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+              timeZone: "UTC",
+            })}
+          </time>
           <span aria-hidden="true" class="w-8 h-px bg-theme-border"></span><span
             class="sr-only"
           >
             ·
           </span>
-          <span data-testid="blog-updated">
-            Updated <time datetime={article.updatedAt}
-              >{new Date(article.updatedAt).toLocaleDateString("en-US", {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-                timeZone: "UTC",
-              })}</time
-            >
-          </span>
-        {/if}
-        <span aria-hidden="true" class="w-8 h-px bg-theme-border"></span><span
-          class="sr-only"
-        >
-          ·
-        </span>
-        <span>{themeStore.resolveJargon("blog_entry")}</span>
-      </div>
-
-      <h1 class="text-3xl md:text-5xl font-header font-bold leading-tight mb-8">
-        {article.title}
-      </h1>
-
-      <p
-        class="text-theme-text text-xl italic leading-relaxed border-l-4 border-theme-primary pl-6"
-      >
-        {article.description}
-      </p>
-    </header>
-
-    {@render articleBody()}
-
-    <footer
-      class="pt-12 border-t border-theme-border mt-16 {PUBLIC_LAYOUT.prose
-        .lead}"
-    >
-      <div>
-        <p
-          class="text-micro font-mono text-theme-text uppercase tracking-widest mb-3"
-        >
-          Topics
-        </p>
-        <div class="flex flex-wrap gap-2">
-          {#each article.keywords.slice(0, 6) as keyword}
-            <span
-              class="px-3 py-1 bg-theme-surface border border-theme-border rounded-full text-micro font-mono text-theme-text tracking-wider"
-            >
-              {keyword
-                .replace(/-/g, " ")
-                .replace(/\b\w/g, (c) => c.toUpperCase())}
+          <span data-testid="blog-byline">By {authorName}</span>
+          {#if article.updatedAt}
+            <span aria-hidden="true" class="w-8 h-px bg-theme-border"
+            ></span><span class="sr-only"> · </span>
+            <span data-testid="blog-updated">
+              Updated <time datetime={article.updatedAt}
+                >{new Date(article.updatedAt).toLocaleDateString("en-US", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                  timeZone: "UTC",
+                })}</time
+              >
             </span>
-          {/each}
-        </div>
-      </div>
-
-      <div
-        class="mt-12 p-6 rounded-lg bg-theme-surface/40 border border-theme-border/70 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-header"
-      >
-        <div class="text-center sm:text-left">
-          <span class="font-bold text-theme-text block sm:inline"
-            >Join the discussion:</span
+          {/if}
+          <span aria-hidden="true" class="w-8 h-px bg-theme-border"></span><span
+            class="sr-only"
           >
-          <span class="text-theme-text ml-0 sm:ml-1"
-            >Share campaign notes, ask questions, or report issues.</span
-          >
+            ·
+          </span>
+          <span>{themeStore.resolveJargon("blog_entry")}</span>
         </div>
-        <div class="flex flex-wrap items-center justify-center gap-4 shrink-0">
-          {#if DISCORD_URL}
-            <a
-              href={DISCORD_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              class="text-theme-text hover:text-theme-primary transition-colors inline-flex items-center gap-1.5"
-            >
-              <span
-                class="icon-[lucide--message-square] w-3.5 h-3.5"
-                aria-hidden="true"
-              ></span>
-              Discord
-            </a>
-          {/if}
-          {#if REDDIT_URL}
-            <a
-              href={REDDIT_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              class="text-theme-text hover:text-theme-primary transition-colors inline-flex items-center gap-1.5"
-            >
-              <span
-                class="icon-[lucide--message-circle] w-3.5 h-3.5"
-                aria-hidden="true"
-              ></span>
-              Reddit
-            </a>
-          {/if}
-          {#if GITHUB_URL}
-            <a
-              href={GITHUB_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              class="text-theme-text hover:text-theme-primary transition-colors inline-flex items-center gap-1.5"
-            >
-              <span class="icon-[lucide--github] w-3.5 h-3.5" aria-hidden="true"
-              ></span>
-              GitHub
-            </a>
-          {/if}
-        </div>
-      </div>
 
-      <div
-        class="mt-8 p-8 rounded-lg bg-theme-surface/30 border border-theme-border flex flex-col md:flex-row items-center justify-between gap-8"
-      >
-        <div class="text-center md:text-left">
-          <h3 class="text-lg font-header font-bold mb-2">
-            Ready to bring your lore home?
-          </h3>
-          <p class="text-sm text-theme-text">
-            Local-first. Your vault stays yours.
-          </p>
-        </div>
-        <a
-          href="{basePath()}/?utm_source=blog-{article.slug}&utm_medium=blog-cta&utm_campaign=devlog"
-          class="px-8 py-4 bg-theme-primary text-theme-on-primary font-bold font-header text-xs rounded hover:bg-theme-primary/90 transition-all active:scale-95 shadow-[0_0_30px_rgba(var(--color-primary-rgb),0.3)]"
+        <h1
+          class="text-3xl md:text-5xl font-header font-bold leading-tight mb-8"
         >
-          Enter the Codex
-        </a>
-      </div>
-    </footer>
+          {article.title}
+        </h1>
+
+        <p
+          class="text-theme-text text-xl italic leading-relaxed border-l-4 border-theme-primary pl-6"
+        >
+          {article.description}
+        </p>
+      </header>
+
+      {@render articleBody()}
+
+      <footer
+        class="pt-12 border-t border-theme-border mt-16 {PUBLIC_LAYOUT.prose
+          .lead}"
+      >
+        <div>
+          <p
+            class="text-micro font-mono text-theme-text uppercase tracking-widest mb-3"
+          >
+            Topics
+          </p>
+          <div class="flex flex-wrap gap-2">
+            {#each article.keywords.slice(0, 6) as keyword}
+              <span
+                class="px-3 py-1 bg-theme-surface border border-theme-border rounded-full text-micro font-mono text-theme-text tracking-wider"
+              >
+                {keyword
+                  .replace(/-/g, " ")
+                  .replace(/\b\w/g, (c) => c.toUpperCase())}
+              </span>
+            {/each}
+          </div>
+        </div>
+
+        <div
+          class="mt-12 p-6 rounded-lg bg-theme-surface/40 border border-theme-border/70 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-header"
+        >
+          <div class="text-center sm:text-left">
+            <span class="font-bold text-theme-text block sm:inline"
+              >Join the discussion:</span
+            >
+            <span class="text-theme-text ml-0 sm:ml-1"
+              >Share campaign notes, ask questions, or report issues.</span
+            >
+          </div>
+          <div
+            class="flex flex-wrap items-center justify-center gap-4 shrink-0"
+          >
+            {#if DISCORD_URL}
+              <a
+                href={DISCORD_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="text-theme-text hover:text-theme-primary transition-colors inline-flex items-center gap-1.5"
+              >
+                <span
+                  class="icon-[lucide--message-square] w-3.5 h-3.5"
+                  aria-hidden="true"
+                ></span>
+                Discord
+              </a>
+            {/if}
+            {#if REDDIT_URL}
+              <a
+                href={REDDIT_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="text-theme-text hover:text-theme-primary transition-colors inline-flex items-center gap-1.5"
+              >
+                <span
+                  class="icon-[lucide--message-circle] w-3.5 h-3.5"
+                  aria-hidden="true"
+                ></span>
+                Reddit
+              </a>
+            {/if}
+            {#if GITHUB_URL}
+              <a
+                href={GITHUB_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="text-theme-text hover:text-theme-primary transition-colors inline-flex items-center gap-1.5"
+              >
+                <span
+                  class="icon-[lucide--github] w-3.5 h-3.5"
+                  aria-hidden="true"
+                ></span>
+                GitHub
+              </a>
+            {/if}
+          </div>
+        </div>
+
+        <div
+          class="mt-8 p-8 rounded-lg bg-theme-surface/30 border border-theme-border flex flex-col md:flex-row items-center justify-between gap-8"
+        >
+          <div class="text-center md:text-left">
+            <h3 class="text-lg font-header font-bold mb-2">
+              Ready to bring your lore home?
+            </h3>
+            <p class="text-sm text-theme-text">
+              Local-first. Your vault stays yours.
+            </p>
+          </div>
+          <a
+            href="{basePath()}/?utm_source=blog-{article.slug}&utm_medium=blog-cta&utm_campaign=devlog"
+            class="px-8 py-4 bg-theme-primary text-theme-on-primary font-bold font-header text-xs rounded hover:bg-theme-primary/90 transition-all active:scale-95 shadow-[0_0_30px_rgba(var(--color-primary-rgb),0.3)]"
+          >
+            Enter the Codex
+          </a>
+        </div>
+      </footer>
+    </div>
   </PublicPageContainer>
 </div>
 
