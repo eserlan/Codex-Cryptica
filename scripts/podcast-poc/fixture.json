@@ -1,0 +1,36 @@
+[
+  {
+    "id": "sample-map",
+    "title": "A clearer map for your next session",
+    "date": "2026-10-01T12:00:00Z",
+    "narration": "This fictional update makes it easier to find your notes while exploring a map. Open a location to see its description, then return to the map when you are ready to continue.",
+    "description": "A fictional update about finding notes on a map.",
+    "html": "<p>A fictional update about <strong>maps &amp; notes</strong>.</p><ul><li>Open a location.</li><li>Return to the map.</li></ul><p><a href=\"https://codexcryptica.com/\">Visit Codex Cryptica</a>.</p>"
+  },
+  {
+    "id": "sample-session",
+    "title": "Session notes: ideas & reminders",
+    "date": "2026-10-02T12:00:00Z",
+    "narration": "This fictional release adds a simple reminder to your session notes. Write down the next scene before you finish, so your group can pick up the story next time.",
+    "description": "A fictional update with Unicode: café, résumé and dice.",
+    "html": "<h2>Remember the next scene</h2><p>Use <em>one short note</em> to help everyone resume. Café &amp; dice are welcome.</p><p>See <a href=\"https://codexcryptica.com/\">the website</a>.</p>"
+  },
+  {
+    "id": "answer-investigating-detail",
+    "title": "How do I stop players from investigating every detail?",
+    "date": "2026-10-27T18:00:00Z",
+    "narration": "When players investigate every detail, give them clearer signals about what needs attention. In our latest answer, we explore how to distinguish atmosphere from an invitation or a real lead, while leaving room for curiosity.",
+    "description": "Give players clearer signals without shutting down their curiosity.",
+    "html": "<p><img src=\"https://assets.codexcryptica.com/og/stop-players-investigating-every-detail.jpg\" alt=\"A lighthouse above a harbour town at dawn, with boats and market stalls along the quay.\" /></p><p>Players treat the details a GM mentions as potential clues. That is a reasonable response, especially in a mystery. The trick is to make the weight of each detail clearer while leaving players free to follow their curiosity.</p><h2>Three ways to present a detail</h2><ul><li><strong>Atmosphere:</strong> Give the lighthouse a sentence to establish the harbour, then move on.</li><li><strong>Optional interaction:</strong> The keeper waves as the party passes. They can stop for a chat or continue without missing something essential.</li><li><strong>A clear lead:</strong> The lamp has been dark for three nights and the people sent to investigate have not returned. The change gives the party a problem to pursue.</li></ul><h2>Match the response to the investigation</h2><p>If the party asks about an ordinary detail, a truthful one-line answer or a short summary can be enough. Give it a full scene when their choices, risks or relationships make the consequences worth exploring. If they become interested in the lighthouse, let that interest matter even if you originally prepared nothing there.</p><h2>Share the pacing decision</h2><p>Offer a choice: summarise the search, or play through the climb and conversation with the keeper. Explain any visible cost, such as spending the morning, and let the group decide how much time to give it.</p><p><a href=\"https://codexcryptica.com/answers/stop-players-investigating-every-detail\">Read the full answer for a worked example and preparation checklist.</a></p>",
+    "artworkUrl": "https://assets.codexcryptica.com/cdn-cgi/image/width=1400,height=1400,fit=cover,format=jpeg/og/stop-players-investigating-every-detail.jpg"
+  },
+  {
+    "id": "answer-balanced-party-roles",
+    "title": "Does an RPG party need balanced roles?",
+    "date": "2026-10-27T19:32:58Z",
+    "narration": "Does your roleplaying party need a healer, a tank and a damage dealer? Not necessarily. Our latest answer looks at what the group can actually do, and how to prepare adventures around the characters your players want to play.",
+    "description": "A party does not need a prescribed set of roles. Look at its capabilities and the demands of the campaign.",
+    "artworkUrl": "https://assets.codexcryptica.com/cdn-cgi/image/width=1400,height=1400,fit=cover,format=jpeg/og/does-an-rpg-party-need-balanced-roles.jpg",
+    "html": "<p><img src=\"https://assets.codexcryptica.com/og/does-an-rpg-party-need-balanced-roles.jpg\" alt=\"Four spellcasters plan around a map in a highland ruin.\" /></p><p>Your party does not need a prescribed mix of tank, healer and damage dealer. What matters is what the characters can do together, what the game expects and whether the campaign gives their strengths room to matter.</p><h2>Look at capabilities, not labels</h2><p>Check the challenges your next few sessions will actually present. Can the party survive or retreat, recover between scenes, find information and solve practical problems? Equipment, contacts and shared resources can all help. A missing capability only matters when the campaign calls for it.</p><h2>Make room for strengths and gaps</h2><ul><li><strong>Let strengths work:</strong> Give a party of spellcasters or skilled negotiators problems where their chosen abilities make a difference.</li><li><strong>Give gaps a cost:</strong> If a workable alternative exists, the party might pay for treatment, hire help or spend more time recovering. Some tasks may be out of reach for now; avoid making the whole campaign depend on one unavailable capability.</li><li><strong>Show danger early:</strong> Warning signs, cover and a route to retreat give players choices when they face something their party is poorly suited to handle.</li></ul><h2>Talk when expectations do not match</h2><p>If the campaign promises gruelling dungeon survival but the party has no way to recover or retreat, discuss it together. Ask what players want to keep and consider in-world help or equipment before asking anyone to change character.</p><p><a href=\"https://codexcryptica.com/answers/does-an-rpg-party-need-balanced-roles\">Read the full answer for examples and a preparation checklist.</a></p>"
+  }
+]
