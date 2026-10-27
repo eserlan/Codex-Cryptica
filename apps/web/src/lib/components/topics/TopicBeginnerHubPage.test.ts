@@ -63,4 +63,52 @@ describe("TopicBeginnerHubPage", () => {
     expect(screen.getByText("Browser Dice Roller")).toBeTruthy();
     expect(screen.getByText("Running D&D (GM Hub)")).toBeTruthy();
   });
+
+  it("uses the wide topic canvas with the path rail beside the article from lg", () => {
+    const { container } = render(TopicBeginnerHubPage, {
+      props: { config: DND_BEGINNERS_TOPIC_CONFIG },
+    });
+
+    expect(container.querySelector("article")?.className).toContain(
+      "max-w-7xl",
+    );
+    expect(container.querySelector("article")?.className).not.toContain(
+      "max-w-3xl",
+    );
+    const nav = screen.getByTestId("topic-path-nav");
+    expect(nav.className).toContain("lg:sticky");
+    expect(nav.className).toContain("lg:col-start-9");
+  });
+
+  it("keeps Start Here before the path links and every step reachable by anchor", () => {
+    render(TopicBeginnerHubPage, {
+      props: { config: DND_BEGINNERS_TOPIC_CONFIG },
+    });
+
+    const nav = screen.getByTestId("topic-path-nav");
+    expect(
+      screen.getByTestId("topic-start-here").compareDocumentPosition(nav) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    for (const step of DND_BEGINNERS_TOPIC_CONFIG.learningSteps) {
+      const link = nav.querySelector(
+        `a[href="#${DND_BEGINNERS_TOPIC_CONFIG.slug}-${step.id}"]`,
+      );
+      expect(link).not.toBeNull();
+      expect(
+        document.getElementById(
+          `${DND_BEGINNERS_TOPIC_CONFIG.slug}-${step.id}`,
+        ),
+      ).not.toBeNull();
+    }
+  });
+
+  it("shows the beginner eyebrow and exactly one h1", () => {
+    render(TopicBeginnerHubPage, {
+      props: { config: DND_BEGINNERS_TOPIC_CONFIG },
+    });
+
+    expect(screen.getByText("Beginner Guide Hub")).toBeTruthy();
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+  });
 });

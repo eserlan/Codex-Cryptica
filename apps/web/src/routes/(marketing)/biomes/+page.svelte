@@ -99,12 +99,15 @@
   }}
 />
 
-<main class="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-8">
+<main
+  class="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-8 sm:px-6 lg:px-8"
+  data-testid="biomes-page"
+>
   <header class="flex flex-col gap-1">
     <h1 class="font-header text-3xl text-theme-text sm:text-4xl">
       Biome Explorer
     </h1>
-    <p class="text-base text-theme-muted">
+    <p class="text-base text-theme-text">
       Browse real-world environments, understand why they look the way they do,
       compare climates side by side, and customize biomes with Markdown export.
     </p>
