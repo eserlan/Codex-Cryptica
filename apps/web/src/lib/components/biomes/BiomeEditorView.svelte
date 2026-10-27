@@ -5,4 +5,8 @@
   let { store }: { store: BiomeExplorerStore } = $props();
 </script>
 
-<BiomeProfileEditor {store} />
+<!-- A form, not a catalogue: it keeps the width it had before the page canvas
+     widened, so the controls stay balanced. -->
+<div class="mx-auto w-full max-w-6xl" data-testid="biome-editor-width">
+  <BiomeProfileEditor {store} />
+</div>
