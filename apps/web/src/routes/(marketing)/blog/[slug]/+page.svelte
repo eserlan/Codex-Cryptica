@@ -2,7 +2,11 @@
   import { basePath } from "#lib/utils/base-path.js";
   import { themeStore } from "#lib/stores/theme.svelte.js";
   import ArticleRenderer from "#lib/components/blog/ArticleRenderer.svelte";
+  import BlogTableOfContents from "#lib/components/blog/BlogTableOfContents.svelte";
+  import { extractBlogToc } from "#lib/components/blog/blog-toc.js";
   import ResponsibleAISeriesNav from "#lib/components/blog/ResponsibleAISeriesNav.svelte";
+  import PublicPageContainer from "#lib/components/seo/PublicPageContainer.svelte";
+  import { PUBLIC_LAYOUT } from "#lib/components/seo/marketing-shell.js";
   import { RA_SERIES_SLUGS } from "#lib/content/responsible-ai-series.js";
   import { safeJsonLd } from "#lib/utils/json-ld.js";
   import {
@@ -21,6 +25,7 @@
   const articleContent = $derived(
     article.content.replace(/^#[^\n]+\n/, "").trimStart(),
   );
+  const headings = $derived(extractBlogToc(articleContent));
 
   // Every post had a bare link card before this: the root layout declares
   // twitter:card but no image anywhere, so there was nothing to show. A post
@@ -87,14 +92,54 @@
   jsonLd={jsonLdString}
 />
 
+{#snippet articleBody()}
+  <div
+    class={headings.length >= 2 || isRASeries
+      ? PUBLIC_LAYOUT.split.container
+      : ""}
+  >
+    <div
+      class="{headings.length >= 2 || isRASeries
+        ? PUBLIC_LAYOUT.split.content
+        : ''} {PUBLIC_LAYOUT.prose.measure}"
+    >
+      <div class="mb-20">
+        <ArticleRenderer content={articleContent} />
+      </div>
+
+      {#if isRASeries}
+        <div class="lg:hidden">
+          <ResponsibleAISeriesNav currentSlug={article.slug} />
+        </div>
+      {/if}
+    </div>
+
+    {#if headings.length >= 2 || isRASeries}
+      <aside
+        class="{PUBLIC_LAYOUT.split
+          .aside} space-y-8 sticky top-24 self-start hidden lg:block"
+        aria-label="Article navigation"
+      >
+        {#if headings.length >= 2}
+          <BlogTableOfContents {headings} />
+        {/if}
+
+        {#if isRASeries}
+          <ResponsibleAISeriesNav currentSlug={article.slug} />
+        {/if}
+      </aside>
+    {/if}
+  </div>
+{/snippet}
+
 <div
-  class="min-h-screen bg-theme-bg text-theme-text selection:bg-theme-primary selection:text-theme-bg"
+  class="min-h-screen bg-theme-bg text-theme-text selection:bg-theme-primary selection:text-theme-bg py-12 sm:py-20 md:py-28"
 >
-  <div class="max-w-4xl mx-auto px-4 sm:px-6 py-20 md:py-32">
+  <PublicPageContainer width="full">
     <nav class="mb-12">
       <a
         href="{basePath()}/blog"
-        class="inline-flex items-center gap-2 text-theme-primary hover:text-theme-text transition-colors text-xs font-bold group"
+        class="inline-flex items-center gap-2 text-theme-text hover:underline transition-colors text-xs font-bold group"
       >
         <span
           class="icon-[lucide--arrow-left] w-4 h-4 group-hover:-translate-x-1 transition-transform"
@@ -103,9 +148,9 @@
       </a>
     </nav>
 
-    <header class="mb-16">
+    <header class="mb-16 {PUBLIC_LAYOUT.prose.lead}">
       <div
-        class="flex items-center gap-4 text-xs font-mono text-theme-primary uppercase tracking-widest mb-6"
+        class="flex items-center gap-4 text-xs font-mono text-theme-text uppercase tracking-widest mb-6"
       >
         <time datetime={article.publishedAt}>
           {new Date(article.publishedAt).toLocaleDateString("en-US", {
@@ -151,31 +196,28 @@
       </h1>
 
       <p
-        class="text-theme-text/70 text-xl italic leading-relaxed border-l-4 border-theme-primary pl-6"
+        class="text-theme-text text-xl italic leading-relaxed border-l-4 border-theme-primary pl-6"
       >
         {article.description}
       </p>
     </header>
 
-    <div class="mb-20">
-      <ArticleRenderer content={articleContent} />
-    </div>
+    {@render articleBody()}
 
-    {#if isRASeries}
-      <ResponsibleAISeriesNav currentSlug={article.slug} />
-    {/if}
-
-    <footer class="pt-12 border-t border-theme-border">
+    <footer
+      class="pt-12 border-t border-theme-border mt-16 {PUBLIC_LAYOUT.prose
+        .lead}"
+    >
       <div>
         <p
-          class="text-micro font-mono text-theme-muted uppercase tracking-widest mb-3"
+          class="text-micro font-mono text-theme-text uppercase tracking-widest mb-3"
         >
           Topics
         </p>
         <div class="flex flex-wrap gap-2">
           {#each article.keywords.slice(0, 6) as keyword}
             <span
-              class="px-3 py-1 bg-theme-surface border border-theme-border rounded-full text-micro font-mono text-theme-muted tracking-wider"
+              class="px-3 py-1 bg-theme-surface border border-theme-border rounded-full text-micro font-mono text-theme-text tracking-wider"
             >
               {keyword
                 .replace(/-/g, " ")
@@ -192,7 +234,7 @@
           <span class="font-bold text-theme-text block sm:inline"
             >Join the discussion:</span
           >
-          <span class="text-theme-muted ml-0 sm:ml-1"
+          <span class="text-theme-text ml-0 sm:ml-1"
             >Share campaign notes, ask questions, or report issues.</span
           >
         </div>
@@ -202,7 +244,7 @@
               href={DISCORD_URL}
               target="_blank"
               rel="noopener noreferrer"
-              class="text-theme-muted hover:text-theme-primary transition-colors inline-flex items-center gap-1.5"
+              class="text-theme-text hover:text-theme-primary transition-colors inline-flex items-center gap-1.5"
             >
               <span
                 class="icon-[lucide--message-square] w-3.5 h-3.5"
@@ -216,7 +258,7 @@
               href={REDDIT_URL}
               target="_blank"
               rel="noopener noreferrer"
-              class="text-theme-muted hover:text-theme-primary transition-colors inline-flex items-center gap-1.5"
+              class="text-theme-text hover:text-theme-primary transition-colors inline-flex items-center gap-1.5"
             >
               <span
                 class="icon-[lucide--message-circle] w-3.5 h-3.5"
@@ -230,7 +272,7 @@
               href={GITHUB_URL}
               target="_blank"
               rel="noopener noreferrer"
-              class="text-theme-muted hover:text-theme-primary transition-colors inline-flex items-center gap-1.5"
+              class="text-theme-text hover:text-theme-primary transition-colors inline-flex items-center gap-1.5"
             >
               <span class="icon-[lucide--github] w-3.5 h-3.5" aria-hidden="true"
               ></span>
@@ -247,19 +289,19 @@
           <h3 class="text-lg font-header font-bold mb-2">
             Ready to bring your lore home?
           </h3>
-          <p class="text-sm text-theme-muted">
+          <p class="text-sm text-theme-text">
             Local-first. Your vault stays yours.
           </p>
         </div>
         <a
           href="{basePath()}/?utm_source=blog-{article.slug}&utm_medium=blog-cta&utm_campaign=devlog"
-          class="px-8 py-4 bg-theme-primary text-theme-bg font-bold font-header text-xs rounded hover:bg-theme-primary/90 transition-all active:scale-95 shadow-[0_0_30px_rgba(var(--color-primary-rgb),0.3)]"
+          class="px-8 py-4 bg-theme-primary text-theme-on-primary font-bold font-header text-xs rounded hover:bg-theme-primary/90 transition-all active:scale-95 shadow-[0_0_30px_rgba(var(--color-primary-rgb),0.3)]"
         >
           Enter the Codex
         </a>
       </div>
     </footer>
-  </div>
+  </PublicPageContainer>
 </div>
 
 <style>
