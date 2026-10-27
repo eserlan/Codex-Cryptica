@@ -55,7 +55,7 @@
     <nav aria-label="Breadcrumb" class="mb-8">
       <a
         href="{cleanBase}/explore"
-        class="inline-flex items-center gap-2 font-mono text-xs text-theme-muted transition-colors hover:text-theme-primary"
+        class="inline-flex items-center gap-2 font-mono text-xs text-theme-text transition-colors hover:text-theme-primary"
       >
         <span class="icon-[lucide--arrow-left] h-3.5 w-3.5" aria-hidden="true"
         ></span>
@@ -69,13 +69,13 @@
       >
         {TITLE}
       </h1>
-      <p class="text-lg leading-relaxed text-theme-muted">
+      <p class="text-lg leading-relaxed text-theme-text">
         A real building's floor plan settles arguments a description never does:
         where the guards actually stand, how far the kitchen is from the great
         hall, which window a rope trick reaches. The sources below are worth
         keeping open next to your map while you draw one.
       </p>
-      <p class="mt-4 text-base leading-relaxed text-theme-muted">
+      <p class="mt-4 text-base leading-relaxed text-theme-text">
         This page links out to the original publishers rather than copying their
         plans. Neither Codex Cryptica nor this page claims any rights over the
         linked material; read each source's own licensing notes before reusing
@@ -105,7 +105,7 @@
                   {resource.name}
                 </h3>
                 <span
-                  class="font-mono text-xs uppercase tracking-[0.14em] text-theme-muted"
+                  class="font-mono text-xs uppercase tracking-[0.14em] text-theme-text"
                 >
                   {COMPLEXITY_LABEL[resource.complexity]} · {resource.complexityNote}
                 </span>
@@ -124,11 +124,11 @@
                 class="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-theme-border pt-4"
               >
                 <div>
-                  <p class="font-mono text-xs text-theme-muted">
+                  <p class="font-mono text-xs text-theme-text">
                     Source: {resource.sourceName}
                   </p>
                   {#if resource.sourceNote}
-                    <p class="mt-1 max-w-sm text-xs text-theme-muted italic">
+                    <p class="mt-1 max-w-sm text-xs text-theme-text italic">
                       {resource.sourceNote}
                     </p>
                   {/if}
@@ -137,7 +137,7 @@
                   href={resource.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  class="inline-flex items-center gap-1.5 text-sm font-semibold text-theme-primary transition-colors hover:underline"
+                  class="inline-flex items-center gap-1.5 text-sm font-semibold text-theme-text transition-colors hover:text-theme-primary hover:underline"
                 >
                   View the {resource.name} floor plans
                   <span
@@ -156,7 +156,7 @@
       <h2 class="font-header text-xl font-bold text-theme-text">
         Put a floor plan to work in your campaign
       </h2>
-      <p class="mt-2 max-w-2xl text-base leading-relaxed text-theme-muted">
+      <p class="mt-2 max-w-2xl text-base leading-relaxed text-theme-text">
         A borrowed floor plan is a starting shape, not a finished location.
         These Codex Cryptica pages cover turning one into something your table
         can actually run.
@@ -172,7 +172,7 @@
             >
               What should an RPG settlement contain?
             </p>
-            <p class="mt-1 text-sm text-theme-muted">
+            <p class="mt-1 text-sm text-theme-text">
               Turn a building's footprint into a place with people, factions,
               and reasons to return.
             </p>
@@ -188,7 +188,7 @@
             >
               What makes a good heist target?
             </p>
-            <p class="mt-1 text-sm text-theme-muted">
+            <p class="mt-1 text-sm text-theme-text">
               A palace-scale floor plan like Biltmore's is a ready-made heist
               target once it has guards and a vault.
             </p>
@@ -204,7 +204,7 @@
             >
               Settlement generator
             </p>
-            <p class="mt-1 text-sm text-theme-muted">
+            <p class="mt-1 text-sm text-theme-text">
               Generate the town or district around the castle whose plan you
               just borrowed.
             </p>
@@ -220,7 +220,7 @@
             >
               Codex Cryptica worldbuilding tool
             </p>
-            <p class="mt-1 text-sm text-theme-muted">
+            <p class="mt-1 text-sm text-theme-text">
               Note rooms, NPCs, and factions against your map and link them into
               the rest of your campaign.
             </p>
