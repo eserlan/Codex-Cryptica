@@ -1,4 +1,4 @@
-# Smoke-test commit for the independent post-deployment coverage workflow (redeploy after skipped CI).
+# Smoke-test commit for the independent post-deployment coverage workflow (redeploy after skipped CI, #4469).
 name: Deploy to Cloudflare Pages
 
 on:

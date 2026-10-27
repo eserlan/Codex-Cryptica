@@ -183,6 +183,7 @@ export const howDoIGivePlayersImmersiveHandoutsInAnOnlineRpg: AnswerConfigInput 
       "how-do-i-run-a-successful-session-0",
       "how-do-you-help-players-remember-what-happened-in-a-ttrpg-campaign",
       "how-do-i-get-players-to-engage-with-my-campaign-world",
+      "how-can-i-make-free-custom-maps-for-online-tabletop-rpgs",
     ],
     discovery: {
       id: "answer-immersive-handouts-online-rpg",
