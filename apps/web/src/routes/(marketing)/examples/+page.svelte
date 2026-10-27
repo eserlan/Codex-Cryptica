@@ -35,7 +35,7 @@
   class="bg-theme-bg text-theme-text font-body selection:bg-theme-primary selection:text-theme-bg"
   style:background-image="var(--bg-texture-overlay)"
 >
-  <div class="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-20">
+  <div class="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-20 lg:px-8">
     <div class="mb-12 max-w-2xl">
       <h1
         class="mb-4 font-header text-3xl font-bold tracking-tight text-theme-text sm:text-5xl"

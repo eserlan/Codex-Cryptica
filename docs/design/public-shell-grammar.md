@@ -153,7 +153,11 @@ One component, `MarketingShell`, rendered by `(marketing)/+layout.svelte` so all
 30 pages inherit it:
 
 - **Header:** wordmark linking to `/`, up to five nav items, one primary action
-  ("Open the app"). Collapses to wordmark plus menu below `md`.
+  ("Open the app"). Collapses to wordmark plus menu below `md`. Its inner box
+  uses `PUBLIC_LAYOUT.canvas.full` and `padding.canvas` (`max-w-7xl`,
+  `px-4 sm:px-6 lg:px-8`), so the wordmark and CTA sit on the same edges as
+  full-width page content (#4461). Narrower pages stay centred beneath it. The
+  nav sits beside the wordmark rather than floating mid-bar on ultrawide.
 - **Main:** a landmark with the width token as a prop, defaulting to
   `--shell-default`.
 - **Footer:** the existing `MarketingFooter`, reparented here rather than

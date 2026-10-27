@@ -24,6 +24,7 @@
   import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
   import {
     MARKETING_NAV,
+    PUBLIC_LAYOUT,
     shellCtaHref,
     shellFooterLinks,
     runShellCtaHandler,
@@ -65,9 +66,15 @@
   <!-- chrome-shield: opts this header into the neutral chrome palette so world
        themes cannot bleed into site navigation. See app.css and #2578. -->
   <header
-    class="chrome-shield w-full border-b border-theme-border/60 bg-theme-surface/40 backdrop-blur-md px-4 sm:px-6 py-4 sticky top-0 z-50"
+    class="chrome-shield w-full border-b border-theme-border/60 bg-theme-surface/40 backdrop-blur-md py-4 sticky top-0 z-50"
   >
-    <div class="max-w-6xl mx-auto flex items-center justify-between gap-4">
+    <!-- Same canvas and gutters as full-width page content, so the wordmark
+         and the page edge line up. Narrower pages sit centred beneath it. -->
+    <div
+      class="{PUBLIC_LAYOUT.canvas.full} {PUBLIC_LAYOUT.padding
+        .canvas} flex items-center justify-between gap-4"
+      data-testid="shell-header-inner"
+    >
       <a
         href={logoHref}
         class="flex items-center gap-2 group min-w-0"
@@ -90,7 +97,7 @@
 
       <nav
         aria-label="Site"
-        class="hidden md:flex items-center gap-6 text-sm font-header text-theme-muted"
+        class="hidden md:mr-auto md:ml-8 md:flex items-center gap-6 text-sm font-header text-theme-text"
         data-testid="shell-nav"
       >
         {#each MARKETING_NAV as item (item.href)}
