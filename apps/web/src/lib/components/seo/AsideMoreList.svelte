@@ -37,7 +37,7 @@
 </script>
 
 {#if items.length > 0}
-  <div class="flex min-h-[8rem] flex-col">
+  <div class="flex min-h-0 flex-1 flex-col">
     <h3
       class="mb-3 font-mono text-xs font-bold uppercase tracking-[0.18em] text-theme-text"
     >
@@ -45,7 +45,7 @@
     </h3>
     <ul
       id="{listId}-list"
-      class="custom-scrollbar min-h-0 [scrollbar-width:thin] list-none space-y-2.5 overflow-y-auto pr-1"
+      class="custom-scrollbar min-h-0 flex-1 [scrollbar-width:thin] list-none space-y-2.5 overflow-y-auto pr-1"
     >
       {#each visible as item (item.slug)}
         <li>
