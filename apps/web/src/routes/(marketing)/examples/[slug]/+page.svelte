@@ -3,7 +3,10 @@
   import { basePath } from "#lib/utils/base-path.js";
   import SeoHead from "#lib/components/seo/SeoHead.svelte";
   import { buildAbsoluteUrl } from "#lib/seo/site.js";
-  import { examplePath } from "#lib/content/examples/registry.js";
+  import {
+    examplePath,
+    getAllExamples,
+  } from "#lib/content/examples/registry.js";
   import {
     buildExampleJsonLd,
     buildExampleBreadcrumbJsonLd,
@@ -15,6 +18,7 @@
     createDiscoveryViewGuard,
   } from "#lib/services/analytics/discovery-tracking.js";
   import { trackDiscoveryClick } from "#lib/actions/trackDiscoveryClick.js";
+  import ExampleAsideNav from "#lib/components/examples/ExampleAsideNav.svelte";
   import PublicLabelChip from "#lib/components/labels/PublicLabelChip.svelte";
   import type { PageData } from "./$types";
 
@@ -26,6 +30,18 @@
   let related = $derived(data.related);
   let connected = $derived(data.connected);
   let canonical = $derived(buildAbsoluteUrl(examplePath(example)));
+  // The sidebar keeps going past the curated "related" picks: the rest of the
+  // showcase follows, same genre first, so the rail is never thin.
+  let asideExamples = $derived.by(() => {
+    const picked = new Set([example.slug, ...related.map((r) => r.slug)]);
+    const rest = getAllExamples()
+      .filter((other) => !picked.has(other.slug))
+      .sort(
+        (a, b) =>
+          Number(b.genre === example.genre) - Number(a.genre === example.genre),
+      );
+    return [...related, ...rest];
+  });
   let hasFurtherReading = $derived(
     (example.relatedTopics?.length ?? 0) +
       example.relatedGenerators.length +
@@ -137,50 +153,17 @@
         {/if}
       </div>
 
-      <!-- Generation context: the settings behind the roll, never internal prompts. -->
-      <section
-        class="mb-8 border border-theme-border bg-theme-surface p-6 lg:sticky lg:top-24 lg:col-span-4 lg:col-start-9 lg:row-span-2 lg:row-start-1 lg:mb-0 lg:self-start"
+      <aside
+        class="mb-8 lg:sticky lg:top-24 lg:col-span-4 lg:col-start-9 lg:row-span-2 lg:row-start-1 lg:mb-0 lg:self-start"
+        aria-labelledby="example-aside-heading"
         data-testid="example-context"
       >
-        <h2
-          class="mb-4 font-mono text-xs uppercase tracking-[0.18em] text-theme-text"
-        >
-          How this was generated
-        </h2>
-        <dl class="grid gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-1">
-          <div>
-            <dt class="font-mono text-xs text-theme-text">Generator</dt>
-            <dd class="text-sm text-theme-text">
-              <a
-                href="{cleanBase}{example.generator.href}"
-                class="underline decoration-theme-primary/40 underline-offset-4 transition-colors hover:text-theme-primary"
-                use:trackDiscoveryClick={{
-                  sourceKind: "example",
-                  sourceId: example.slug,
-                  placement: "generation_context",
-                  ...classifyDiscoveryTarget(example.generator.href),
-                }}>{example.generator.name}</a
-              >
-            </dd>
-          </div>
-          {#each example.context as fact (fact.label)}
-            <div>
-              <dt class="font-mono text-xs text-theme-text">{fact.label}</dt>
-              <dd class="text-sm text-theme-text">{fact.value}</dd>
-            </div>
-          {/each}
-        </dl>
-        <p
-          class="mt-4 border-t border-theme-border pt-4 text-sm text-theme-text"
-        >
-          {#if example.provenance === "raw"}
-            The output below is reproduced exactly as generated. Nothing has
-            been rewritten.
-          {:else}
-            {example.provenanceNote}
-          {/if}
-        </p>
-      </section>
+        <ExampleAsideNav
+          {example}
+          related={asideExamples}
+          headingId="example-aside-heading"
+        />
+      </aside>
 
       <div class="min-w-0 lg:col-span-8 lg:row-start-2">
         {#if connected && example.connectedTo}
@@ -308,7 +291,10 @@
         </section>
 
         {#if hasFurtherReading}
-          <section class="border-t border-theme-border pt-8">
+          <section
+            class="border-t border-theme-border pt-8 lg:hidden"
+            data-testid="example-related-inline"
+          >
             <h2 class="mb-6 font-header text-xl font-bold text-theme-text">
               Related
             </h2>

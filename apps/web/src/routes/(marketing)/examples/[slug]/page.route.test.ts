@@ -64,4 +64,18 @@ describe("/examples/[slug] route", () => {
         .querySelector(`a[href="${example.generator.href}"]`),
     ).not.toBeNull();
   });
+
+  it("moves related links into the sidebar from lg and keeps them inline below", () => {
+    render(Page, { props: { data } });
+
+    const aside = screen.getByTestId("example-context");
+    expect(aside.tagName).toBe("ASIDE");
+    expect(aside.getAttribute("aria-labelledby")).toBe("example-aside-heading");
+    expect(screen.getByTestId("example-aside-panel").className).toContain(
+      "bg-theme-surface/30",
+    );
+    // The stacked list is hidden at lg, where the sidebar carries it.
+    const inline = screen.queryByTestId("example-related-inline");
+    if (inline) expect(inline.className).toContain("lg:hidden");
+  });
 });
