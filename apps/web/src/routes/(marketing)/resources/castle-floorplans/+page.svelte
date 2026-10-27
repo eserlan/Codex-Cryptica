@@ -51,7 +51,7 @@
   class="bg-theme-bg text-theme-text font-body selection:bg-theme-primary selection:text-theme-bg"
   style:background-image="var(--bg-texture-overlay)"
 >
-  <div class="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-20">
+  <div class="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-20 lg:px-8">
     <nav aria-label="Breadcrumb" class="mb-8">
       <a
         href="{cleanBase}/explore"
@@ -89,15 +89,15 @@
           {category.label}
         </h2>
 
-        <p class="mt-1 text-sm leading-relaxed text-theme-muted">
+        <p class="mt-1 max-w-2xl text-sm leading-relaxed text-theme-text">
           {category.description}
         </p>
 
-        <ul class="mt-6 grid list-none gap-6">
+        <ul class="mt-6 grid list-none gap-6 lg:grid-cols-2">
           {#each resources as resource (resource.id)}
             <li
               id={resource.id}
-              class="rounded-xl border border-theme-border bg-theme-surface p-5 shadow-sm"
+              class="flex flex-col rounded-xl border border-theme-border bg-theme-surface p-5 shadow-sm"
               style:background-image="var(--bg-texture-overlay)"
             >
               <div class="flex flex-wrap items-baseline justify-between gap-2">
@@ -115,7 +115,7 @@
                 {resource.description}
               </p>
 
-              <p class="mt-3 text-base leading-relaxed text-theme-muted">
+              <p class="mt-3 flex-1 text-base leading-relaxed text-theme-text">
                 <strong class="text-theme-text">Why it is useful:</strong>
                 {resource.whyUseful}
               </p>
@@ -161,11 +161,11 @@
         These Codex Cryptica pages cover turning one into something your table
         can actually run.
       </p>
-      <ul class="mt-5 grid list-none gap-4 sm:grid-cols-2">
+      <ul class="mt-5 grid list-none gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <li>
           <a
             href="{cleanBase}/answers/what-should-an-rpg-settlement-contain"
-            class="group block border border-theme-border bg-theme-surface p-4 transition-colors hover:border-theme-primary/50"
+            class="group block h-full border border-theme-border bg-theme-surface p-4 transition-colors hover:border-theme-primary/50"
           >
             <p
               class="font-header font-bold text-theme-text group-hover:text-theme-primary"
@@ -181,7 +181,7 @@
         <li>
           <a
             href="{cleanBase}/answers/what-makes-a-good-heist-target-in-a-tabletop-rpg"
-            class="group block border border-theme-border bg-theme-surface p-4 transition-colors hover:border-theme-primary/50"
+            class="group block h-full border border-theme-border bg-theme-surface p-4 transition-colors hover:border-theme-primary/50"
           >
             <p
               class="font-header font-bold text-theme-text group-hover:text-theme-primary"
@@ -197,7 +197,7 @@
         <li>
           <a
             href="{cleanBase}/generators/settlement"
-            class="group block border border-theme-border bg-theme-surface p-4 transition-colors hover:border-theme-primary/50"
+            class="group block h-full border border-theme-border bg-theme-surface p-4 transition-colors hover:border-theme-primary/50"
           >
             <p
               class="font-header font-bold text-theme-text group-hover:text-theme-primary"
@@ -213,7 +213,7 @@
         <li>
           <a
             href="{cleanBase}/worldbuilding-tool"
-            class="group block border border-theme-border bg-theme-surface p-4 transition-colors hover:border-theme-primary/50"
+            class="group block h-full border border-theme-border bg-theme-surface p-4 transition-colors hover:border-theme-primary/50"
           >
             <p
               class="font-header font-bold text-theme-text group-hover:text-theme-primary"
