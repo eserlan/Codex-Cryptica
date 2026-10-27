@@ -25,8 +25,8 @@ export const howCanIMakeFreeCustomMapsForOnlineTabletopRpgs: AnswerConfigInput =
         rows: [
           [
             "Live shared drawing: [Excalidraw](https://excalidraw.com)",
-            "Whiteboard-style improvisation, with everyone sketching on one shared canvas during play",
-            "It supplies the live shared drawing, not a roleplaying grid. There are no RPG tokens, fog or measured grid built in, so draw the grid lines yourself and use labelled shapes as markers",
+            "Whiteboard-style improvisation during play: enable Grid mode, agree what one cell represents, sketch walls and terrain, use labelled shapes as markers, then start Live collaboration and share the invitation link",
+            "Grid mode supplies the lines, but there are no RPG tokens, fog or automatic game-distance measurement, so judge movement by the agreed cell size",
           ],
           [
             "An image to export: [Dungeon Scrawl](https://www.dungeonscrawl.com)",
@@ -147,7 +147,7 @@ export const howCanIMakeFreeCustomMapsForOnlineTabletopRpgs: AnswerConfigInput =
       heading: "Where Codex Cryptica fits, and where it does not",
       paragraphs: [
         "Codex Cryptica can present a map image on a configurable grid with tokens and fog, so an image you sketched, generated or imported can be shown and played on beside your campaign notes, with your vault stored on your own device rather than on a subscription server. It is a place to run a prepared map, not a sketching tool: it does not offer freehand drawing directly on the VTT grid, so the live whiteboard job still belongs to a draw-capable surface or to a quick image you prepare and import. Its Spatial Canvas is a separate freeform planning board with pencil and eraser sketching and no grid snapping, which suits laying out ideas rather than measuring tactical movement on a gridded map.",
-        "For the operational next step, follow the [VTT mode help](/help#help/vtt-mode) for presenting the prepared map with tokens.",
+        "For the operational next step, follow the [VTT overview and setup](/help#help/vtt-session) for presenting the prepared map with tokens.",
       ],
       linkText: "About the local-first campaign manager",
       href: "/features/local-first-rpg-campaign-manager",
