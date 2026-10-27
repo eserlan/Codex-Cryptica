@@ -38,6 +38,7 @@
     "prepare": "husky",
     "assets:sync": "bun scripts/upload-images.mjs",
     "sync:answers": "bun scripts/sync-answers.ts",
+    "podcast:publish": "bun scripts/podcast/publish.ts",
     "sync:llms-generators": "bun scripts/sync-llms-generators.ts",
     "sync:help-embeddings": "bun scripts/sync-help-embeddings.ts",
     "check:answer-mesh": "bun scripts/check-answer-mesh.ts",
