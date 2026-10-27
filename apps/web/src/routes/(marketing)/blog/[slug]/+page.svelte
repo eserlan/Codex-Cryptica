@@ -92,6 +92,46 @@
   jsonLd={jsonLdString}
 />
 
+{#snippet articleBody()}
+  <div
+    class={headings.length >= 2 || isRASeries
+      ? PUBLIC_LAYOUT.split.container
+      : ""}
+  >
+    <div
+      class="{headings.length >= 2 || isRASeries
+        ? PUBLIC_LAYOUT.split.content
+        : ''} {PUBLIC_LAYOUT.prose.measure}"
+    >
+      <div class="mb-20">
+        <ArticleRenderer content={articleContent} />
+      </div>
+
+      {#if isRASeries}
+        <div class="lg:hidden">
+          <ResponsibleAISeriesNav currentSlug={article.slug} />
+        </div>
+      {/if}
+    </div>
+
+    {#if headings.length >= 2 || isRASeries}
+      <aside
+        class="{PUBLIC_LAYOUT.split
+          .aside} space-y-8 sticky top-24 self-start hidden lg:block"
+        aria-label="Article navigation"
+      >
+        {#if headings.length >= 2}
+          <BlogTableOfContents {headings} />
+        {/if}
+
+        {#if isRASeries}
+          <ResponsibleAISeriesNav currentSlug={article.slug} />
+        {/if}
+      </aside>
+    {/if}
+  </div>
+{/snippet}
+
 <div
   class="min-h-screen bg-theme-bg text-theme-text selection:bg-theme-primary selection:text-theme-bg py-12 sm:py-20 md:py-28"
 >
@@ -162,43 +202,7 @@
       </p>
     </header>
 
-    <div
-      class={headings.length >= 2 || isRASeries
-        ? PUBLIC_LAYOUT.split.container
-        : ""}
-    >
-      <div
-        class="{headings.length >= 2 || isRASeries
-          ? PUBLIC_LAYOUT.split.content
-          : ''} {PUBLIC_LAYOUT.prose.measure}"
-      >
-        <div class="mb-20">
-          <ArticleRenderer content={articleContent} />
-        </div>
-
-        {#if isRASeries}
-          <div class="lg:hidden">
-            <ResponsibleAISeriesNav currentSlug={article.slug} />
-          </div>
-        {/if}
-      </div>
-
-      {#if headings.length >= 2 || isRASeries}
-        <aside
-          class="{PUBLIC_LAYOUT.split
-            .aside} space-y-8 sticky top-24 self-start hidden lg:block"
-          aria-label="Article navigation"
-        >
-          {#if headings.length >= 2}
-            <BlogTableOfContents {headings} />
-          {/if}
-
-          {#if isRASeries}
-            <ResponsibleAISeriesNav currentSlug={article.slug} />
-          {/if}
-        </aside>
-      {/if}
-    </div>
+    {@render articleBody()}
 
     <footer
       class="pt-12 border-t border-theme-border mt-16 {PUBLIC_LAYOUT.prose

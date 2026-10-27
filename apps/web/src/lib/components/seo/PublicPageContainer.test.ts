@@ -2,6 +2,7 @@
 
 import { describe, expect, it } from "vitest";
 import { render } from "@testing-library/svelte";
+import { createRawSnippet } from "svelte";
 import PublicPageContainer from "./PublicPageContainer.svelte";
 
 describe("PublicPageContainer", () => {
@@ -35,5 +36,27 @@ describe("PublicPageContainer", () => {
     });
     const container = getByTestId("public-page-container");
     expect(container.className).toContain("max-w-6xl");
+  });
+
+  it("renders children before the aside when both snippets are provided", () => {
+    const children = createRawSnippet(() => ({
+      render: () => "<p>Main content</p>",
+    }));
+    const aside = createRawSnippet(() => ({
+      render: () => "<p>Aside content</p>",
+    }));
+
+    const { getByText } = render(PublicPageContainer, {
+      props: { children, aside },
+    });
+
+    const mainContent = getByText("Main content");
+    const asideContent = getByText("Aside content");
+    expect(mainContent).toBeTruthy();
+    expect(asideContent).toBeTruthy();
+    expect(
+      mainContent.compareDocumentPosition(asideContent) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 });

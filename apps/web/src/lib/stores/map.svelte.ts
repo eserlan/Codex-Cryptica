@@ -1,33 +1,22 @@
+import { MapDisplaySettings } from "./map-display-settings.svelte";
+import { MapNavigation } from "./map-navigation.svelte";
+import {
+  layerRecord,
+  type GridType,
+  type TokenVisionMode,
+} from "./map-settings";
+export type { GridType, TokenVisionMode } from "./map-settings";
 import { vault } from "./vault.svelte";
-import type {
-  Map,
-  MapGridGeometry,
-  MapPin,
-  Point,
-  ViewportTransform,
-} from "schema";
+import type { Map, Point, ViewportTransform } from "schema";
 import {
   imageToViewport,
   viewportToImage,
-  pointToHex,
-  hexToPoint,
   formatHexLabel,
-  MAP_LAYER_ORDER,
   type HexCoord,
   type HexLabelConfig,
   type MapLayer,
 } from "map-engine";
-import { convertToWebP } from "../utils/image-processing";
-import {
-  adoptGridGeometry,
-  deviceGridFrom,
-  geometryFromDevice,
-  resolveGridGeometry,
-  writeGridGeometry,
-} from "./map-grid-geometry";
-import { deleteOpfsEntry, writeOpfsFile } from "../utils/opfs";
 import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
-import { guestVault } from "./guest-vault.svelte";
 import {
   browserStorage,
   type StorageLike,
@@ -35,134 +24,10 @@ import {
   systemIdGenerator,
 } from "#lib/utils/runtime-deps.js";
 
-/** Fixed canvas size for a blank map, which has no image to derive size from. */
-export const BLANK_MAP_SIZE = 4000;
-
-const MAP_SETTINGS_STORAGE_PREFIX = "codex-map-settings";
-const MAP_PAGE_STATE_STORAGE_PREFIX = "codex-map-page-state";
-export type TokenVisionMode = "party" | "selected";
-export type GridType = "square" | "hex-pointy" | "hex-flat";
-
-type PersistedMapSettings = {
-  showFog: boolean;
-  /** Draw fog fully opaque in GM view, as players see it (solo play). */
-  soloFog: boolean;
-  showGrid: boolean;
-  gridType: GridType;
-  showHexCoordinates: boolean;
-  /** GM display preference: terrain icons on hex crawl hexes (device-local). */
-  showTerrainIcons: boolean;
-  hexLabelConfig?: HexLabelConfig;
-  brushRadius: number;
-  gridSize: number;
-  gridOffsetX: number;
-  gridOffsetY: number;
-  gridColor: string | null;
-  /** GM-chosen fog colour (#rrggbb); null means the theme colour. */
-  fogColor: string | null;
-  showLabels: boolean;
-  visionMode: TokenVisionMode;
-  /** Vision distance in grid units (e.g. feet), not pixels — converted to
-   * pixels using the map's gridSize/gridDistance at reveal time. */
-  visionRange: number;
-  /** Per-layer view toggle and edit-lock. GM-local, not synced to guests —
-   * same tier as showFog/showGrid. */
-  layerVisibility: Record<MapLayer, boolean>;
-  layerLocked: Record<MapLayer, boolean>;
-};
-
-const HEX_LABEL_STYLES = new Set<HexLabelConfig["style"]>([
-  "none",
-  "off",
-  "numeric",
-  "alphanumeric",
-  "axial",
-]);
-
-function isPersistedHexLabelConfig(value: unknown): value is HexLabelConfig {
-  if (value === null || typeof value !== "object" || Array.isArray(value)) {
-    return false;
-  }
-
-  const style = (value as Record<string, unknown>).style;
-  return (
-    typeof style === "string" &&
-    HEX_LABEL_STYLES.has(style as HexLabelConfig["style"])
-  );
-}
-
-function layerRecord<T>(value: T): Record<MapLayer, T> {
-  return Object.fromEntries(
-    MAP_LAYER_ORDER.map((layer) => [layer, value]),
-  ) as Record<MapLayer, T>;
-}
-
-type PersistedMapPageState = {
-  activeMapId: string | null;
-  viewports: Record<string, ViewportTransform>;
-};
-
-const DEFAULT_MAP_SETTINGS: PersistedMapSettings = {
-  showFog: false,
-  soloFog: false,
-  showGrid: false,
-  gridType: "square",
-  showHexCoordinates: false,
-  showTerrainIcons: false,
-  hexLabelConfig: { style: "none" },
-  brushRadius: 50,
-  gridSize: 50,
-  gridOffsetX: 0,
-  gridOffsetY: 0,
-  gridColor: null,
-  fogColor: null,
-  showLabels: true,
-  visionMode: "party",
-  visionRange: 60,
-  layerVisibility: layerRecord(true),
-  layerLocked: layerRecord(false),
-};
-
-const DEFAULT_VIEWPORT: ViewportTransform = {
-  pan: { x: 0, y: 0 },
-  zoom: 1,
-};
-
-/**
- * The grid fields to show: the map's stored geometry where it has one, else this
- * device's persisted settings, else the defaults (FR-037).
- */
-function gridFieldsFor(
-  geometry: MapGridGeometry | null,
-  next: PersistedMapSettings,
-) {
-  if (!geometry) return deviceGridFields(next);
-  return {
-    gridType: geometry.type,
-    gridSize: geometry.size,
-    gridOffsetX: geometry.offsetX,
-    gridOffsetY: geometry.offsetY,
-    hexLabelConfig: geometry.labels ?? deviceLabels(next),
-  };
-}
-
-function deviceGridFields(next: PersistedMapSettings) {
-  return {
-    gridType: next.gridType,
-    gridSize: next.gridSize,
-    gridOffsetX: next.gridOffsetX ?? 0,
-    gridOffsetY: next.gridOffsetY ?? 0,
-    hexLabelConfig: deviceLabels(next),
-  };
-}
-
-function deviceLabels(next: PersistedMapSettings): HexLabelConfig {
-  return (
-    next.hexLabelConfig ?? {
-      style: next.showHexCoordinates ? "numeric" : "none",
-    }
-  );
-}
+import { MapRecords } from "./map-records";
+import { MapPins } from "./map-pins";
+import { MapFog } from "./map-fog";
+export { BLANK_MAP_SIZE } from "./map-records";
 
 export class MapStore {
   activeMapId = $state<string | null>(null);
@@ -203,13 +68,11 @@ export class MapStore {
   visionRange = $state(60);
   layerVisibility = $state<Record<MapLayer, boolean>>(layerRecord(true));
   layerLocked = $state<Record<MapLayer, boolean>>(layerRecord(false));
-  private isRestoringSettings = false;
-  private pendingActiveMapId = $state<string | null>(null);
-  private _persistTimer: ReturnType<typeof setTimeout> | null = null;
-  private _viewportPersistTimer: ReturnType<typeof setTimeout> | null = null;
-  private static _vaultSwitchHandler: (() => void) | null = null;
-  private storage: StorageLike;
-  private idGenerator: IdGenerator;
+  private records: MapRecords;
+  private pinEditor: MapPins;
+  private fog: MapFog;
+  private settings: MapDisplaySettings;
+  private navigation: MapNavigation;
 
   activeMap = $derived.by(() => {
     const maps = vault.maps ?? {};
@@ -237,392 +100,16 @@ export class MapStore {
     storage: StorageLike = browserStorage,
     idGenerator: IdGenerator = systemIdGenerator,
   ) {
-    this.storage = storage;
-    this.idGenerator = idGenerator;
+    this.records = new MapRecords((id) => this.selectMap(id), idGenerator);
+    this.pinEditor = new MapPins(this, idGenerator);
+    this.fog = new MapFog(this);
+    this.settings = new MapDisplaySettings(this, storage);
+    this.navigation = new MapNavigation(this, this.settings, storage);
     if (typeof window !== "undefined") {
-      this.applySettings(null);
-      this.restorePageState();
-
-      $effect.root(() => {
-        $effect(() => {
-          const tracked = [
-            this.showFog,
-            this.soloFog,
-            this.showGrid,
-            this.gridType,
-            this.showHexCoordinates,
-            this.showTerrainIcons,
-            this.hexLabelConfig,
-            this.brushRadius,
-            this.gridSize,
-            this.gridOffsetX,
-            this.gridOffsetY,
-            this.gridColor,
-            this.fogColor,
-            this.showLabels,
-            this.visionMode,
-            this.visionRange,
-            // Individual properties, not the object references — Svelte's
-            // $state proxy only tracks reads at property-access granularity,
-            // so reading the Record itself wouldn't re-run this effect when
-            // a single layer's flag toggles.
-            ...MAP_LAYER_ORDER.map((layer) => this.layerVisibility[layer]),
-            ...MAP_LAYER_ORDER.map((layer) => this.layerLocked[layer]),
-          ];
-          void tracked;
-          this.schedulePersistSettings();
-        });
-      });
-    }
-
-    // Clear stack on vault switch and handle auto-selection
-    if (typeof window !== "undefined") {
-      if (MapStore._vaultSwitchHandler) {
-        window.removeEventListener(
-          "vault-switched",
-          MapStore._vaultSwitchHandler,
-        );
-      }
-      MapStore._vaultSwitchHandler = () => {
-        this.navigationStack = [];
-        this.pendingActiveMapId = null;
-        this.restorePageState();
-      };
-      window.addEventListener("vault-switched", MapStore._vaultSwitchHandler);
-
-      // Reactive auto-selection when maps are loaded or activeMapId is lost/invalid
-      $effect.root(() => {
-        $effect(() => {
-          const maps = vault.maps ?? {};
-          const pendingMapId = this.pendingActiveMapId;
-          if (pendingMapId && maps[pendingMapId]) {
-            this.pendingActiveMapId = null;
-            this.selectMap(pendingMapId);
-            return;
-          }
-
-          const hasLoadedMaps = Object.keys(maps).length > 0;
-          const isInvalid =
-            hasLoadedMaps && this.activeMapId ? !maps[this.activeMapId] : false;
-          if ((!this.activeMapId || isInvalid) && !pendingMapId) {
-            if (this.worldMap) {
-              this.selectMap(this.worldMap.id);
-            } else if (
-              hasLoadedMaps &&
-              (!sessionModeStore.isGuestMode || guestVault.publishId)
-            ) {
-              this.selectMap(Object.keys(maps)[0]);
-            }
-          }
-        });
-      });
-    }
-  }
-
-  private getSettingsStorageKey(mapId: string) {
-    return `${MAP_SETTINGS_STORAGE_PREFIX}:${mapId}`;
-  }
-
-  // fallow-ignore-next-line complexity
-  private readPersistedSettings(mapId: string): PersistedMapSettings | null {
-    if (typeof window === "undefined") return null;
-
-    try {
-      const raw = this.storage.getItem(this.getSettingsStorageKey(mapId));
-      if (!raw) return null;
-      const parsed = JSON.parse(raw) as Partial<PersistedMapSettings>;
-      return {
-        showFog:
-          typeof parsed.showFog === "boolean"
-            ? parsed.showFog
-            : DEFAULT_MAP_SETTINGS.showFog,
-        soloFog:
-          typeof parsed.soloFog === "boolean"
-            ? parsed.soloFog
-            : DEFAULT_MAP_SETTINGS.soloFog,
-        showGrid:
-          typeof parsed.showGrid === "boolean"
-            ? parsed.showGrid
-            : DEFAULT_MAP_SETTINGS.showGrid,
-        gridType:
-          parsed.gridType === "hex-pointy" ||
-          parsed.gridType === "hex-flat" ||
-          parsed.gridType === "square"
-            ? parsed.gridType
-            : DEFAULT_MAP_SETTINGS.gridType,
-        showHexCoordinates:
-          typeof parsed.showHexCoordinates === "boolean"
-            ? parsed.showHexCoordinates
-            : DEFAULT_MAP_SETTINGS.showHexCoordinates,
-        showTerrainIcons:
-          typeof parsed.showTerrainIcons === "boolean"
-            ? parsed.showTerrainIcons
-            : DEFAULT_MAP_SETTINGS.showTerrainIcons,
-        hexLabelConfig: isPersistedHexLabelConfig(parsed.hexLabelConfig)
-          ? parsed.hexLabelConfig
-          : {
-              style:
-                typeof parsed.showHexCoordinates === "boolean" &&
-                parsed.showHexCoordinates
-                  ? "numeric"
-                  : "none",
-            },
-        brushRadius:
-          typeof parsed.brushRadius === "number"
-            ? parsed.brushRadius
-            : DEFAULT_MAP_SETTINGS.brushRadius,
-        gridSize:
-          typeof parsed.gridSize === "number"
-            ? parsed.gridSize
-            : DEFAULT_MAP_SETTINGS.gridSize,
-        gridOffsetX:
-          typeof parsed.gridOffsetX === "number"
-            ? parsed.gridOffsetX
-            : DEFAULT_MAP_SETTINGS.gridOffsetX,
-        gridOffsetY:
-          typeof parsed.gridOffsetY === "number"
-            ? parsed.gridOffsetY
-            : DEFAULT_MAP_SETTINGS.gridOffsetY,
-        gridColor:
-          typeof parsed.gridColor === "string" || parsed.gridColor === null
-            ? parsed.gridColor
-            : DEFAULT_MAP_SETTINGS.gridColor,
-        fogColor:
-          typeof parsed.fogColor === "string" || parsed.fogColor === null
-            ? parsed.fogColor
-            : DEFAULT_MAP_SETTINGS.fogColor,
-        showLabels:
-          typeof parsed.showLabels === "boolean"
-            ? parsed.showLabels
-            : DEFAULT_MAP_SETTINGS.showLabels,
-        visionMode:
-          parsed.visionMode === "party" || parsed.visionMode === "selected"
-            ? parsed.visionMode
-            : DEFAULT_MAP_SETTINGS.visionMode,
-        visionRange:
-          typeof parsed.visionRange === "number"
-            ? parsed.visionRange
-            : DEFAULT_MAP_SETTINGS.visionRange,
-        // Spread-merged over defaults (not a bare typeof check) so an old
-        // persisted blob missing a since-added layer doesn't produce
-        // `undefined` for it.
-        layerVisibility:
-          parsed.layerVisibility && typeof parsed.layerVisibility === "object"
-            ? {
-                ...DEFAULT_MAP_SETTINGS.layerVisibility,
-                ...parsed.layerVisibility,
-              }
-            : DEFAULT_MAP_SETTINGS.layerVisibility,
-        layerLocked:
-          parsed.layerLocked && typeof parsed.layerLocked === "object"
-            ? { ...DEFAULT_MAP_SETTINGS.layerLocked, ...parsed.layerLocked }
-            : DEFAULT_MAP_SETTINGS.layerLocked,
-      };
-    } catch {
-      return null;
-    }
-  }
-
-  private schedulePersistSettings() {
-    if (this._persistTimer !== null) clearTimeout(this._persistTimer);
-    this._persistTimer = setTimeout(() => {
-      this._persistTimer = null;
-      this.persistSettings();
-    }, 250);
-  }
-
-  private persistSettings() {
-    if (
-      typeof window === "undefined" ||
-      this.isRestoringSettings ||
-      !this.activeMapId
-    ) {
-      return;
-    }
-
-    const payload: PersistedMapSettings = {
-      showFog: this.showFog,
-      soloFog: this.soloFog,
-      showGrid: this.showGrid,
-      gridType: this.gridType,
-      showHexCoordinates: this.showHexCoordinates,
-      showTerrainIcons: this.showTerrainIcons,
-      hexLabelConfig: this.hexLabelConfig,
-      brushRadius: this.brushRadius,
-      gridSize: this.gridSize,
-      gridOffsetX: this.gridOffsetX,
-      gridOffsetY: this.gridOffsetY,
-      gridColor: this.gridColor,
-      fogColor: this.fogColor,
-      showLabels: this.showLabels,
-      visionMode: this.visionMode,
-      visionRange: this.visionRange,
-      layerVisibility: this.layerVisibility,
-      layerLocked: this.layerLocked,
-    };
-
-    try {
-      this.storage.setItem(
-        this.getSettingsStorageKey(this.activeMapId),
-        JSON.stringify(payload),
-      );
-    } catch (err) {
-      console.warn("[MapStore] Failed to persist map settings", err);
-    }
-
-    // Grid geometry is also stored with the map, so it follows the map to other
-    // devices. Display preferences above stay device-local (FR-040).
-    const geometry = geometryFromDevice({
-      gridType: this.gridType,
-      gridSize: this.gridSize,
-      gridOffsetX: this.gridOffsetX,
-      gridOffsetY: this.gridOffsetY,
-      hexLabelConfig: this.hexLabelConfig,
-    });
-    void writeGridGeometry(
-      {
-        maps: vault.maps,
-        saveMaps: async () => {
-          await vault.saveMaps();
-          return true;
-        },
-      },
-      this.activeMapId,
-      geometry,
-    );
-  }
-
-  private getPageStateStorageKey(vaultId = vault.activeVaultId ?? "default") {
-    return `${MAP_PAGE_STATE_STORAGE_PREFIX}:${vaultId}`;
-  }
-
-  private readPageState(): PersistedMapPageState | null {
-    if (typeof window === "undefined") return null;
-
-    try {
-      const raw = this.storage.getItem(this.getPageStateStorageKey());
-      if (!raw) return null;
-      const parsed = JSON.parse(raw) as Partial<PersistedMapPageState>;
-      return {
-        activeMapId:
-          typeof parsed.activeMapId === "string" || parsed.activeMapId === null
-            ? parsed.activeMapId
-            : null,
-        viewports:
-          parsed.viewports && typeof parsed.viewports === "object"
-            ? Object.fromEntries(
-                Object.entries(parsed.viewports).filter(([, viewport]) =>
-                  this.isViewportTransform(viewport),
-                ),
-              )
-            : {},
-      };
-    } catch {
-      return null;
-    }
-  }
-
-  private isViewportTransform(value: unknown): value is ViewportTransform {
-    if (!value || typeof value !== "object") return false;
-    const viewport = value as ViewportTransform;
-    return (
-      !!viewport.pan &&
-      typeof viewport.pan.x === "number" &&
-      typeof viewport.pan.y === "number" &&
-      typeof viewport.zoom === "number"
-    );
-  }
-
-  private persistPageState() {
-    if (typeof window === "undefined" || this.isRestoringSettings) {
-      return;
-    }
-
-    const pageState = this.readPageState() ?? {
-      activeMapId: null,
-      viewports: {},
-    };
-
-    if (this.activeMapId) {
-      pageState.activeMapId = this.activeMapId;
-      pageState.viewports = {
-        ...pageState.viewports,
-        [this.activeMapId]: {
-          pan: { ...this.viewport.pan },
-          zoom: this.viewport.zoom,
-        },
-      };
-    } else {
-      pageState.activeMapId = null;
-    }
-
-    try {
-      this.storage.setItem(
-        this.getPageStateStorageKey(),
-        JSON.stringify(pageState),
-      );
-    } catch (err) {
-      console.warn("[MapStore] Failed to persist map page state", err);
-    }
-  }
-
-  private restorePageState() {
-    const pageState = this.readPageState();
-    const nextMapId = pageState?.activeMapId ?? null;
-    const nextViewport =
-      nextMapId && pageState?.viewports[nextMapId]
-        ? pageState.viewports[nextMapId]
-        : DEFAULT_VIEWPORT;
-
-    this.isRestoringSettings = true;
-    try {
-      this.pendingActiveMapId = nextMapId;
-      this.activeMapId = null;
-      this.viewport = nextViewport;
-      this.applySettings(nextMapId);
-    } finally {
-      this.isRestoringSettings = false;
-    }
-  }
-
-  /**
-   * The grid geometry this map should show. A map with no geometry adopts this
-   * device's, once (FR-038). A stored geometry wins over the device (FR-037).
-   */
-  private geometryForMap(
-    mapId: string | null,
-    persisted: PersistedMapSettings | null,
-  ): MapGridGeometry | null {
-    const map = mapId ? vault.maps?.[mapId] : undefined;
-    if (!map || !mapId) return null;
-    const device = persisted ? deviceGridFrom(persisted) : null;
-    if (adoptGridGeometry(vault.maps, mapId, device)) void vault.saveMaps();
-    return resolveGridGeometry(map, device);
-  }
-
-  private applySettings(mapId: string | null) {
-    const persisted = mapId ? this.readPersistedSettings(mapId) : null;
-    const next = persisted ?? DEFAULT_MAP_SETTINGS;
-    const geometry = this.geometryForMap(mapId, persisted);
-
-    this.isRestoringSettings = true;
-    try {
-      this.showFog = next.showFog;
-      this.soloFog = next.soloFog;
-      this.showGrid = next.showGrid;
-      this.showHexCoordinates = next.showHexCoordinates;
-      this.showTerrainIcons = next.showTerrainIcons;
-      this.brushRadius = next.brushRadius;
-      Object.assign(this, gridFieldsFor(geometry, next));
-      this.gridColor = next.gridColor;
-      this.fogColor = next.fogColor ?? null;
-      this.showLabels = next.showLabels;
-      this.visionMode = next.visionMode;
-      this.visionRange = next.visionRange;
-      this.layerVisibility = next.layerVisibility;
-      this.layerLocked = next.layerLocked;
-    } finally {
-      this.isRestoringSettings = false;
+      this.settings.applySettings(null);
+      this.navigation.restorePageState();
+      this.settings.start();
+      this.navigation.start();
     }
   }
 
@@ -632,72 +119,17 @@ export class MapStore {
   }
 
   async setAsWorldMap(id: string) {
-    // 1. Clear existing world map flag
-    const maps = vault.maps ?? {};
-    for (const mapId of Object.keys(maps)) {
-      if (maps[mapId].isWorldMap) {
-        maps[mapId] = { ...maps[mapId], isWorldMap: false };
-      }
-    }
-
-    // 2. Set new world map
-    if (maps[id]) {
-      maps[id] = { ...maps[id], isWorldMap: true };
-      await vault.saveMaps();
-    }
+    return this.records.setAsWorldMap(id);
   }
 
   selectMap(id: string, pushToStack = false) {
-    if (this.activeMapId === id) return;
-    if (pushToStack && this.activeMapId && this.activeMapId !== id) {
-      this.navigationStack.push(this.activeMapId);
-    }
-    this.persistPageState();
-    this.pendingActiveMapId = null;
-    this.activeMapId = id;
-    this.applySettings(id);
-    const pageState = this.readPageState();
-    this.viewport = pageState?.viewports[id] ?? {
-      pan: { x: 0, y: 0 },
-      zoom: 1,
-    };
-    this.persistPageState();
+    this.navigation.selectMap(id, pushToStack);
   }
-
   goBack() {
-    const prevId = this.navigationStack.pop();
-    if (prevId) {
-      this.persistPageState();
-      this.pendingActiveMapId = null;
-      this.activeMapId = prevId;
-      this.applySettings(prevId);
-      const pageState = this.readPageState();
-      this.viewport = pageState?.viewports[prevId] ?? {
-        pan: { x: 0, y: 0 },
-        zoom: 1,
-      };
-      this.persistPageState();
-    }
+    this.navigation.goBack();
   }
-
   updateViewport(pan: Point, zoom: number) {
-    this.viewport = { pan, zoom };
-    // Called on every pointermove while panning/dragging (including a map
-    // being nudged under a fixed grid for fine-tuning) — persisting
-    // synchronously here does a blocking localStorage read+write per frame,
-    // which was dropping frames badly enough to look like the drag was
-    // snapping to grid increments. Debounce it like schedulePersistSettings.
-    this.schedulePersistPageState();
-  }
-
-  private schedulePersistPageState() {
-    if (this._viewportPersistTimer !== null) {
-      clearTimeout(this._viewportPersistTimer);
-    }
-    this._viewportPersistTimer = setTimeout(() => {
-      this._viewportPersistTimer = null;
-      this.persistPageState();
-    }, 250);
+    this.navigation.updateViewport(pan, zoom);
   }
 
   setCanvasSize(width: number, height: number) {
@@ -713,387 +145,41 @@ export class MapStore {
   }
 
   async uploadMap(file: File, name: string): Promise<string | undefined> {
-    const vaultDir = await vault.getActiveVaultHandle();
-    if (!vaultDir) {
-      return undefined;
-    }
-
-    const id = this.idGenerator.uuid();
-    const storageName = `${id}.webp`;
-
-    // 1. Convert to WebP and Save to OPFS
-    try {
-      const webpBlob = await convertToWebP(file, 0.85);
-      await writeOpfsFile(
-        ["maps", storageName],
-        webpBlob,
-        vaultDir,
-        vaultDir.name,
-      );
-    } catch (err) {
-      console.error("[MapStore] Map upload failed", err);
-      return undefined;
-    }
-
-    // 2. Create Map entity
-    const map: Map = {
-      id,
-      name,
-      assetPath: `maps/${storageName}`,
-      dimensions: { width: 0, height: 0 }, // Will be updated on first load
-      pins: [],
-      fogOfWar: {
-        maskPath: `maps/${id}_mask.png`,
-      },
-    };
-
-    vault.maps[id] = map;
-    await vault.saveMaps();
-    this.selectMap(id);
-    return id;
+    return this.records.uploadMap(file, name);
   }
-
-  private async rollbackFailedImageReplacement(
-    mapId: string,
-    previousMap: Map,
-    replacementMap: Map,
-    vaultDir: FileSystemDirectoryHandle,
-    storageName: string,
-  ): Promise<void> {
-    // Keep edits made while the metadata save was pending, but restore the
-    // fields changed by this replacement operation.
-    const currentMap = vault.maps[mapId];
-    if (currentMap?.assetPath === replacementMap.assetPath) {
-      vault.maps[mapId] = {
-        ...currentMap,
-        assetPath: previousMap.assetPath,
-        dimensions: previousMap.dimensions,
-      };
-    }
-
-    await deleteOpfsEntry(vaultDir, ["maps", storageName], vaultDir.name).catch(
-      (err) =>
-        console.warn("[MapStore] Could not remove the unsaved map image", err),
-    );
-  }
-
-  /**
-   * Swaps a map's background image for a new one, keeping its pins, tokens
-   * and fog. Used to recover a map whose image is missing or unreadable.
-   * Dimensions are reset so they are recomputed from the new image on load.
-   */
   async replaceMapImage(mapId: string, file: File): Promise<boolean> {
-    const map = vault.maps[mapId];
-    const vaultDir = await vault.getActiveVaultHandle();
-    if (!map || !vaultDir) {
-      return false;
-    }
-
-    const storageName = `${this.idGenerator.uuid()}.webp`;
-    try {
-      const webpBlob = await convertToWebP(file, 0.85);
-      await writeOpfsFile(
-        ["maps", storageName],
-        webpBlob,
-        vaultDir,
-        vaultDir.name,
-      );
-    } catch (err) {
-      console.error("[MapStore] Map image replacement failed", err);
-      return false;
-    }
-
-    const previousPath = map.assetPath;
-    const replacementMap: Map = {
-      ...map,
-      assetPath: `maps/${storageName}`,
-      dimensions: { width: 0, height: 0 },
-    };
-    vault.maps[mapId] = replacementMap;
-    if (!(await vault.saveMapsWithResult())) {
-      // saveMaps reports storage errors instead of throwing. Restore the
-      // in-memory map and keep the old image, which the on-disk metadata may
-      // still reference.
-      await this.rollbackFailedImageReplacement(
-        mapId,
-        map,
-        replacementMap,
-        vaultDir,
-        storageName,
-      );
-      return false;
-    }
-
-    // Best-effort cleanup of the old local file and any cached object URL.
-    if (previousPath) {
-      vault.releaseImageUrl?.(previousPath);
-      if (previousPath.startsWith("maps/")) {
-        await deleteOpfsEntry(
-          vaultDir,
-          previousPath.split("/"),
-          vaultDir.name,
-        ).catch((err) =>
-          console.warn("[MapStore] Could not remove the old map image", err),
-        );
-      }
-    }
-    return true;
+    return this.records.replaceMapImage(mapId, file);
   }
-
-  /**
-   * Creates a map with no background image — a fixed-size blank canvas meant
-   * to be built up entirely from placed tile-deck tiles.
-   */
   async createBlankMap(name: string): Promise<string | undefined> {
-    const vaultDir = await vault.getActiveVaultHandle();
-    if (!vaultDir) {
-      return undefined;
-    }
-
-    const id = this.idGenerator.uuid();
-    const map: Map = {
-      id,
-      name,
-      assetPath: "",
-      dimensions: { width: BLANK_MAP_SIZE, height: BLANK_MAP_SIZE },
-      pins: [],
-      fogOfWar: {
-        maskPath: `maps/${id}_mask.png`,
-      },
-    };
-
-    vault.maps[id] = map;
-    await vault.saveMaps();
-    this.selectMap(id);
-    return id;
+    return this.records.createBlankMap(name);
   }
-
   async saveMask(canvas: HTMLCanvasElement) {
-    this.fogRevision++;
-    if (!this.activeMap?.fogOfWar || !this.activeMapId) return;
-    const vaultDir = await vault.getActiveVaultHandle();
-    if (!vaultDir) return;
-
-    return vault.saveQueue.enqueue(`mask-${this.activeMapId}`, async () => {
-      try {
-        const blob = await new Promise<Blob>((resolve, reject) => {
-          canvas.toBlob(
-            (b) =>
-              b
-                ? resolve(b)
-                : reject(new Error("Failed to create blob from canvas")),
-            "image/png",
-          );
-        });
-        await writeOpfsFile(
-          ["maps", `${this.activeMapId}_mask.png`],
-          blob,
-          vaultDir,
-          vaultDir.name,
-        );
-      } catch (err) {
-        console.error("[MapStore] Failed to save mask", err);
-      }
-    });
+    return this.fog.saveMask(canvas);
   }
-
   async loadMask(width: number, height: number): Promise<HTMLCanvasElement> {
-    const canvas = document.createElement("canvas");
-    canvas.width = width;
-    canvas.height = height;
-    const ctx = canvas.getContext("2d")!;
-
-    // Default: transparent (everything hidden by fog)
-    // The fog renderer uses destination-out, meaning OPAQUE mask pixels erase the fog,
-    // and TRANSPARENT mask pixels leave the fog intact.
-    ctx.clearRect(0, 0, width, height);
-
-    if (!this.activeMap?.fogOfWar || !this.activeMapId) {
-      return canvas;
-    }
-
-    const maskPath = this.activeMap.fogOfWar.maskPath;
-    const isRemoteMask =
-      /^([a-z]+:)?\/\//i.test(maskPath) ||
-      maskPath.startsWith("blob:") ||
-      maskPath.startsWith("data:");
-
-    if (isRemoteMask) {
-      try {
-        const response = await fetch(maskPath);
-        if (!response.ok) {
-          throw new Error(`Failed to fetch remote fog mask: ${maskPath}`);
-        }
-        const blob = await response.blob();
-        const bitmap = await createImageBitmap(blob);
-        ctx.drawImage(bitmap, 0, 0, width, height);
-        return canvas;
-      } catch (e) {
-        console.error("[MapStore] Failed to load remote fog mask:", e);
-        return canvas;
-      }
-    }
-
-    const vaultDir = await vault.getActiveVaultHandle();
-    if (!vaultDir) {
-      return canvas;
-    }
-
-    try {
-      const mapsDir = await vaultDir.getDirectoryHandle("maps");
-      const fileHandle = await mapsDir.getFileHandle(
-        `${this.activeMapId}_mask.png`,
-      );
-      const file = await fileHandle.getFile();
-      const bitmap = await createImageBitmap(file);
-      ctx.drawImage(bitmap, 0, 0, width, height);
-    } catch (e: any) {
-      if (e.name !== "NotFoundError") {
-        console.error("[MapStore] Failed to load mask from disk:", e);
-      }
-      // No saved mask or not found: canvas is already transparent (fully hidden fog)
-    }
-
-    return canvas;
+    return this.fog.loadMask(width, height);
   }
 
-  private computeHexPosition(coordinates: Point): {
-    coordinates: Point;
-    hexCoordinates?: { q: number; r: number };
-  } {
-    if (
-      this.showGrid &&
-      (this.gridType === "hex-pointy" || this.gridType === "hex-flat")
-    ) {
-      const orientation = this.gridType === "hex-flat" ? "flat" : "pointy";
-      const config = {
-        orientation,
-        size: this.gridSize || 50,
-        offsetX: this.gridOffsetX || 0,
-        offsetY: this.gridOffsetY || 0,
-      } as const;
-      const hexCoordinates = pointToHex(coordinates, config);
-      return {
-        coordinates: hexToPoint(hexCoordinates, config),
-        hexCoordinates,
-      };
-    }
-    return { coordinates };
-  }
-
-  // fallow-ignore-next-line complexity
   async addPin(entityId: string | undefined, coordinates: Point) {
-    if (!this.activeMapId || !vault.maps[this.activeMapId]) return;
-
-    let visuals = {};
-    if (entityId) {
-      const entity = vault.entities[entityId];
-      if (entity) {
-        const { categories } = await import("./categories.svelte");
-        visuals = {
-          color: categories.getColor(entity.type),
-          // For now we don't have icon mapping, but could add it later
-        };
-      }
-    }
-
-    const hexPosition = this.computeHexPosition(coordinates);
-
-    const newPin: MapPin = {
-      id: this.idGenerator.uuid(),
-      mapId: this.activeMapId,
-      entityId,
-      coordinates: hexPosition.coordinates,
-      hexCoordinates: hexPosition.hexCoordinates,
-      visuals,
-    };
-
-    if (!vault.maps) return;
-    const map = vault.maps[this.activeMapId];
-    if (map) {
-      map.pins = [...map.pins, newPin];
-      await vault.saveMaps();
-    }
+    return this.pinEditor.addPin(entityId, coordinates);
   }
-
-  // fallow-ignore-next-line complexity
   updatePinCoordinatesInMemory(pinId: string, coordinates: Point) {
-    if (!this.activeMapId || !vault.maps?.[this.activeMapId]) return;
-    const map = vault.maps[this.activeMapId];
-    if (map) {
-      const { hexCoordinates } = this.computeHexPosition(coordinates);
-      map.pins = map.pins.map((p: MapPin) =>
-        p.id === pinId ? { ...p, coordinates, hexCoordinates } : p,
-      );
-    }
+    this.pinEditor.updatePinCoordinatesInMemory(pinId, coordinates);
   }
-
   snapPinCoordinatesInMemory(pinId: string) {
-    if (!this.activeMapId || !vault.maps?.[this.activeMapId]) return;
-    const map = vault.maps[this.activeMapId];
-    const pin = map?.pins.find((candidate: MapPin) => candidate.id === pinId);
-    if (!map || !pin) return;
-
-    const hexPosition = this.computeHexPosition(pin.coordinates);
-    map.pins = map.pins.map((candidate: MapPin) =>
-      candidate.id === pinId
-        ? {
-            ...candidate,
-            coordinates: hexPosition.coordinates,
-            hexCoordinates: hexPosition.hexCoordinates,
-          }
-        : candidate,
-    );
+    this.pinEditor.snapPinCoordinatesInMemory(pinId);
   }
-
   async removePin(pinId: string) {
-    if (!this.activeMapId || !vault.maps?.[this.activeMapId]) {
-      return;
-    }
-
-    const map = vault.maps[this.activeMapId];
-    if (map) {
-      map.pins = map.pins.filter((p: MapPin) => p.id !== pinId);
-      await vault.saveMaps();
-    }
+    return this.pinEditor.removePin(pinId);
   }
-
-  /** Removes pins for a just-created entity from any map after a failed save. */
   async removePinsForEntity(entityId: string) {
-    let changed = false;
-    for (const map of Object.values(vault.maps ?? {})) {
-      const pins = map.pins.filter((pin: MapPin) => pin.entityId !== entityId);
-      if (pins.length === map.pins.length) continue;
-      map.pins = pins;
-      changed = true;
-    }
-    if (changed) await vault.saveMaps();
+    return this.pinEditor.removePinsForEntity(entityId);
   }
-
   jumpToPin(pinId: string) {
-    const pin = this.pins.find((p: MapPin) => p.id === pinId);
-    if (pin) {
-      // Use a balanced zoom level for inspection
-      const zoom = Math.max(1.2, this.viewport.zoom);
-      this.viewport = {
-        pan: {
-          x: -pin.coordinates.x * zoom,
-          y: -pin.coordinates.y * zoom,
-        },
-        zoom,
-      };
-    }
+    this.pinEditor.jumpToPin(pinId);
   }
-
   getEntitySubMap(entityId: string): Map | undefined {
-    // ⚡ Bolt Optimization: Replace Object.values().find() with an imperative loop over keys
-    // to avoid array allocation during this frequent lookup.
-    for (const key in vault.maps) {
-      if (vault.maps[key].parentEntityId === entityId) {
-        return vault.maps[key];
-      }
-    }
-    return undefined;
+    return this.records.getEntitySubMap(entityId);
   }
 }
 
