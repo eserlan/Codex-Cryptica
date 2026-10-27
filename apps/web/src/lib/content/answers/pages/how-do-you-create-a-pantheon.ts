@@ -174,5 +174,9 @@ export const howDoYouCreateAPantheon: AnswerConfigInput = {
     title: "How do you create a pantheon? | Codex Cryptica",
     description:
       "Build the entanglements between gods before their domains. Five structural moves, a three-god worked example, and the question that decides how a pantheon plays.",
+    image:
+      "https://assets.codexcryptica.com/og/how-do-you-create-a-pantheon.jpg",
+    imageAlt:
+      "Worshippers in contrasting dress crowd rival shrines in a temple courtyard beside the toppled statue of an older god",
   },
 };

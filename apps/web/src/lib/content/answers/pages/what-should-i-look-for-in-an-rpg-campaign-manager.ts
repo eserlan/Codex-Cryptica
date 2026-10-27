@@ -181,5 +181,9 @@ export const whatShouldILookForInAnRpgCampaignManager: AnswerConfigInput = {
       "What should I look for in an RPG campaign manager? | Codex Cryptica",
     description:
       "A neutral evaluation framework for RPG campaign-management software: organisation, relationships, maps, portability, local/cloud trade-offs, customisation and collaboration.",
+    image:
+      "https://assets.codexcryptica.com/og/what-should-i-look-for-in-an-rpg-campaign-manager.jpg",
+    imageAlt:
+      "A game master's study with sketches and portraits linked by red thread on the wall and a tablet showing a map of connected notes",
   },
 };

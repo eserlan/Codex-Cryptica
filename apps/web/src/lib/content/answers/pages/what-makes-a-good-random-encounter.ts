@@ -201,5 +201,9 @@ export const whatMakesAGoodRandomEncounter: AnswerConfigInput = {
     title: "What makes a good random encounter? | Codex Cryptica",
     description:
       "A good encounter is a situation in progress with a reason to be there and a way out that is not combat. Four criteria, a before-and-after example, and when not to roll.",
+    image:
+      "https://assets.codexcryptica.com/og/what-makes-a-good-random-encounter.jpg",
+    imageAlt:
+      "Travelers on a misty forest road at dusk react in different ways to a wounded mercenary resting by an overturned cart",
   },
 };

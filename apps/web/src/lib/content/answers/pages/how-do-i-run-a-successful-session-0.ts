@@ -225,5 +225,9 @@ export const howDoIRunASuccessfulSessionZero: AnswerConfigInput = {
     title: "How do I run a successful Session 0? | Codex Cryptica",
     description:
       "A practical, system-neutral Session 0 framework: eight things to cover, a table-agnostic approach to boundaries, a worked example and a usable agenda.",
+    image:
+      "https://assets.codexcryptica.com/og/how-do-i-run-a-successful-session-0.jpg",
+    imageAlt:
+      "A lantern-lit tavern table with an open character sheet, a map, dice and a quill while a party of adventurers talks by the fire",
   },
 };
