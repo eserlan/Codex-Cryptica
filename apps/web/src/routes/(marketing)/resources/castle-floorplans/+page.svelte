@@ -55,7 +55,7 @@
     <nav aria-label="Breadcrumb" class="mb-8">
       <a
         href="{cleanBase}/explore"
-        class="inline-flex items-center gap-2 font-mono text-xs text-theme-muted transition-colors hover:text-theme-primary"
+        class="inline-flex items-center gap-2 font-mono text-xs text-theme-text transition-colors hover:text-theme-primary"
       >
         <span class="icon-[lucide--arrow-left] h-3.5 w-3.5" aria-hidden="true"
         ></span>
@@ -69,13 +69,13 @@
       >
         {TITLE}
       </h1>
-      <p class="text-lg leading-relaxed text-theme-muted">
+      <p class="text-lg leading-relaxed text-theme-text">
         A real building's floor plan settles arguments a description never does:
         where the guards actually stand, how far the kitchen is from the great
         hall, which window a rope trick reaches. The sources below are worth
         keeping open next to your map while you draw one.
       </p>
-      <p class="mt-4 text-base leading-relaxed text-theme-muted">
+      <p class="mt-4 text-base leading-relaxed text-theme-text">
         This page links out to the original publishers rather than copying their
         plans. Neither Codex Cryptica nor this page claims any rights over the
         linked material; read each source's own licensing notes before reusing
