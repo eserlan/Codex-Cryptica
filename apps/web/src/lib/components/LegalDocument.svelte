@@ -60,7 +60,7 @@
   <div class="mb-8 border-b border-theme-border/30 pb-4">
     <a
       href={resolve("/(app)")}
-      class="text-theme-primary hover:text-theme-secondary font-mono text-sm flex items-center gap-2"
+      class="text-theme-text hover:text-theme-secondary font-mono text-sm flex items-center gap-2"
     >
       <span aria-hidden="true" class="icon-[lucide--arrow-left] w-4 h-4"></span>
       BACK TO CRYPTICA
