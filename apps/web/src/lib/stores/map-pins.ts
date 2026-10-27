@@ -1,6 +1,6 @@
 import type { MapPin, Point, ViewportTransform } from "schema";
 import { pointToHex, hexToPoint } from "map-engine";
-import type { GridType } from "./map.svelte";
+import type { GridType } from "./map-settings";
 import { vault as defaultVault } from "./vault.svelte";
 import {
   systemIdGenerator,
