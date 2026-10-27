@@ -139,7 +139,7 @@
     <nav class="mb-12">
       <a
         href="{basePath()}/blog"
-        class="inline-flex items-center gap-2 text-theme-primary hover:text-theme-text transition-colors text-xs font-bold group"
+        class="inline-flex items-center gap-2 text-theme-text hover:underline transition-colors text-xs font-bold group"
       >
         <span
           class="icon-[lucide--arrow-left] w-4 h-4 group-hover:-translate-x-1 transition-transform"
@@ -150,7 +150,7 @@
 
     <header class="mb-16 {PUBLIC_LAYOUT.prose.lead}">
       <div
-        class="flex items-center gap-4 text-xs font-mono text-theme-primary uppercase tracking-widest mb-6"
+        class="flex items-center gap-4 text-xs font-mono text-theme-text uppercase tracking-widest mb-6"
       >
         <time datetime={article.publishedAt}>
           {new Date(article.publishedAt).toLocaleDateString("en-US", {
@@ -196,7 +196,7 @@
       </h1>
 
       <p
-        class="text-theme-text/70 text-xl italic leading-relaxed border-l-4 border-theme-primary pl-6"
+        class="text-theme-text text-xl italic leading-relaxed border-l-4 border-theme-primary pl-6"
       >
         {article.description}
       </p>
@@ -210,14 +210,14 @@
     >
       <div>
         <p
-          class="text-micro font-mono text-theme-muted uppercase tracking-widest mb-3"
+          class="text-micro font-mono text-theme-text uppercase tracking-widest mb-3"
         >
           Topics
         </p>
         <div class="flex flex-wrap gap-2">
           {#each article.keywords.slice(0, 6) as keyword}
             <span
-              class="px-3 py-1 bg-theme-surface border border-theme-border rounded-full text-micro font-mono text-theme-muted tracking-wider"
+              class="px-3 py-1 bg-theme-surface border border-theme-border rounded-full text-micro font-mono text-theme-text tracking-wider"
             >
               {keyword
                 .replace(/-/g, " ")
@@ -234,7 +234,7 @@
           <span class="font-bold text-theme-text block sm:inline"
             >Join the discussion:</span
           >
-          <span class="text-theme-muted ml-0 sm:ml-1"
+          <span class="text-theme-text ml-0 sm:ml-1"
             >Share campaign notes, ask questions, or report issues.</span
           >
         </div>
@@ -244,7 +244,7 @@
               href={DISCORD_URL}
               target="_blank"
               rel="noopener noreferrer"
-              class="text-theme-muted hover:text-theme-primary transition-colors inline-flex items-center gap-1.5"
+              class="text-theme-text hover:text-theme-primary transition-colors inline-flex items-center gap-1.5"
             >
               <span
                 class="icon-[lucide--message-square] w-3.5 h-3.5"
@@ -258,7 +258,7 @@
               href={REDDIT_URL}
               target="_blank"
               rel="noopener noreferrer"
-              class="text-theme-muted hover:text-theme-primary transition-colors inline-flex items-center gap-1.5"
+              class="text-theme-text hover:text-theme-primary transition-colors inline-flex items-center gap-1.5"
             >
               <span
                 class="icon-[lucide--message-circle] w-3.5 h-3.5"
@@ -272,7 +272,7 @@
               href={GITHUB_URL}
               target="_blank"
               rel="noopener noreferrer"
-              class="text-theme-muted hover:text-theme-primary transition-colors inline-flex items-center gap-1.5"
+              class="text-theme-text hover:text-theme-primary transition-colors inline-flex items-center gap-1.5"
             >
               <span class="icon-[lucide--github] w-3.5 h-3.5" aria-hidden="true"
               ></span>
@@ -289,13 +289,13 @@
           <h3 class="text-lg font-header font-bold mb-2">
             Ready to bring your lore home?
           </h3>
-          <p class="text-sm text-theme-muted">
+          <p class="text-sm text-theme-text">
             Local-first. Your vault stays yours.
           </p>
         </div>
         <a
           href="{basePath()}/?utm_source=blog-{article.slug}&utm_medium=blog-cta&utm_campaign=devlog"
-          class="px-8 py-4 bg-theme-primary text-theme-bg font-bold font-header text-xs rounded hover:bg-theme-primary/90 transition-all active:scale-95 shadow-[0_0_30px_rgba(var(--color-primary-rgb),0.3)]"
+          class="px-8 py-4 bg-theme-primary text-theme-on-primary font-bold font-header text-xs rounded hover:bg-theme-primary/90 transition-all active:scale-95 shadow-[0_0_30px_rgba(var(--color-primary-rgb),0.3)]"
         >
           Enter the Codex
         </a>

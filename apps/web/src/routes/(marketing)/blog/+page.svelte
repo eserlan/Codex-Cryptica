@@ -72,7 +72,7 @@
       </p>
       <a
         href="{basePath()}/blog/feed.xml"
-        class="mt-4 inline-flex items-center gap-2 text-sm text-theme-primary hover:underline"
+        class="mt-4 inline-flex items-center gap-2 text-sm text-theme-text hover:underline"
       >
         <span class="icon-[lucide--rss] h-4 w-4" aria-hidden="true"></span>
         Subscribe to the blog
@@ -84,7 +84,7 @@
       >
         <div class="space-y-1">
           <h2
-            class="text-xs font-mono font-bold text-theme-primary flex items-center gap-2"
+            class="text-xs font-mono font-bold text-theme-text flex items-center gap-2"
           >
             <span aria-hidden="true" class="icon-[lucide--shield-alert] h-4 w-4"
             ></span>
@@ -98,7 +98,7 @@
         </div>
         <a
           href="{basePath()}/responsible-ai-worldbuilding"
-          class="inline-flex items-center gap-2 self-start sm:self-center px-4 py-2 text-xs font-bold font-header bg-theme-primary text-theme-bg rounded-lg hover:brightness-110 active:scale-95 transition-all shadow-md shrink-0"
+          class="inline-flex items-center gap-2 self-start sm:self-center px-4 py-2 text-xs font-bold font-header bg-theme-primary text-theme-on-primary rounded-lg hover:brightness-110 active:scale-95 transition-all shadow-md shrink-0"
         >
           Read the Pillar
           <span
@@ -167,7 +167,7 @@
           data-testid="blog-series-collection"
         >
           <div
-            class="flex items-center gap-4 text-xs font-mono text-theme-primary uppercase tracking-widest mb-3"
+            class="flex items-center gap-4 text-xs font-mono text-theme-text uppercase tracking-widest mb-3"
           >
             <span aria-hidden="true" class="icon-[lucide--shield-alert] h-4 w-4"
             ></span>
@@ -215,7 +215,7 @@
       <div
         class="py-20 text-center border border-dashed border-theme-border rounded-lg bg-theme-surface/5"
       >
-        <p class="text-theme-muted font-mono">
+        <p class="text-theme-text font-mono">
           No transmissions found in the archive.
         </p>
       </div>
