@@ -12,12 +12,12 @@ Not a taste problem. A missing-file problem.
 `{@render children()}`. That is all. There is no shared wordmark, navigation, or
 footer for public pages, so three partial shells grew in the gap:
 
-| Shell                                                     |      Pages |
-| --------------------------------------------------------- | ---------: |
-| `SEOGeneratorLayout`                                      |          8 |
-| `SEOPageLayout` (`/features/[slug]`, `/vs`, `/solutions`) | structured | hero/FAQ/related `max-w-4xl`; features grid, product proof, hosting table `max-w-7xl`; feature matrix `max-w-6xl` | Widened where grid/media/table; hero and FAQ stay narrow |
-| Bare `MarketingFooter` import                             |          5 |
-| **Nothing at all**                                        |     **10** |
+| Shell                         |  Pages |
+| ----------------------------- | -----: |
+| `SEOGeneratorLayout`          |      8 |
+| `SEOPageLayout`               |      5 |
+| Bare `MarketingFooter` import |      5 |
+| **Nothing at all**            | **10** |
 
 The ten with nothing include `/generators`, `/blog`, `/blog/[slug]`, every
 individual generator page, `/worlds`, `/changelog`, and
@@ -188,17 +188,17 @@ the foundation it needs rather than the fix itself.
 Classes: **grid** = catalogue/directory, **prose** = long-form copy,
 **structured** = landing sections, **tool** = forms and interactive output.
 
-| Route family                                                        | Class      | Container                      | Decision                                 |
-| ------------------------------------------------------------------- | ---------- | ------------------------------ | ---------------------------------------- |
-| `/explore`, `/explore?label=`                                       | grid       | `max-w-7xl`, 3 columns at `xl` | Widened                                  |
-| `/examples`                                                         | grid       | `max-w-7xl`, 3 columns at `xl` | Widened                                  |
-| `/generators`, `/generators/[theme]`, `/tools`                      | grid       | `max-w-7xl`, 4 columns at `xl` | Widened                                  |
-| `/for`                                                              | grid       | `max-w-7xl`, 4 columns at `xl` | Widened                                  |
-| `/features`, `/worlds`                                              | grid       | `max-w-7xl`                    | Widened; card grids already responsive   |
-| `/blog`, `/answers`, `/topics/*`                                    | mixed      | `max-w-7xl`                    | Done in #4434, #4435, #4436              |
-| `SEOPageLayout` (`/features/[slug]`, `/vs`, `/solutions`)           | structured | `max-w-4xl` / `max-w-6xl`      | Exception: centred marketing sections    |
-| `/generators/[slug]`, `/tools/*` generator pages                    | tool       | `SEOGeneratorLayout`           | Exception: control/output pair is tuned  |
-| `/silhouettes`, `/biomes`                                           | tool       | own layout                     | Exception: interactive explorers         |
-| `/changelog`, `/privacy`, `/terms`, `/responsible-ai-worldbuilding` | prose      | `max-w-2xl` to `4xl`           | Exception: long-form copy stays readable |
+| Route family                                                        | Class      | Container                                                                                                           | Decision                                                     |
+| ------------------------------------------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| `/explore`, `/explore?label=`                                       | grid       | `max-w-7xl`, 3 columns at `xl`                                                                                      | Widened                                                      |
+| `/examples`                                                         | grid       | `max-w-7xl`, 3 columns at `xl`                                                                                      | Widened                                                      |
+| `/generators`, `/generators/[theme]`, `/tools`                      | grid       | `max-w-7xl`, 4 columns at `xl`                                                                                      | Widened                                                      |
+| `/for`                                                              | grid       | `max-w-7xl`, 4 columns at `xl`                                                                                      | Widened                                                      |
+| `/features`, `/worlds`                                              | grid       | `max-w-7xl`                                                                                                         | Widened; card grids already responsive                       |
+| `/blog`, `/answers`, `/topics/*`                                    | mixed      | `max-w-7xl`                                                                                                         | Done in #4434, #4435, #4436                                  |
+| `SEOPageLayout` (`/features/[slug]`, `/vs`, `/solutions`)           | structured | hero, FAQ, related `max-w-4xl`; features grid, product proof, hosting table `max-w-7xl`; feature matrix `max-w-6xl` | Widened where grid, media or table; hero and FAQ stay narrow |
+| `/generators/[slug]`, `/tools/*` generator pages                    | tool       | `SEOGeneratorLayout`                                                                                                | Exception: control/output pair is tuned                      |
+| `/silhouettes`, `/biomes`                                           | tool       | own layout                                                                                                          | Exception: interactive explorers                             |
+| `/changelog`, `/privacy`, `/terms`, `/responsible-ai-worldbuilding` | prose      | `max-w-2xl` to `4xl`                                                                                                | Exception: long-form copy stays readable                     |
 
 Prose measure (`max-w-2xl`/`3xl`) on intros is unchanged everywhere.
