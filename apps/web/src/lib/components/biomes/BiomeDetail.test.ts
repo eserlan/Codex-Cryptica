@@ -127,4 +127,26 @@ describe("BiomeDetail", () => {
     render(BiomeDetail, { props: { biome: tundra } });
     expect(screen.queryByRole("button", { name: "Make my own" })).toBeNull();
   });
+
+  it("floats the images in a right column from lg and keeps them before the sections on phones", () => {
+    render(BiomeDetail, { props: { biome: tundra } });
+
+    const images = screen.getByTestId("biome-detail-images");
+    expect(images.className).toContain("lg:sticky");
+    expect(images.className).toContain("lg:col-start-8");
+    const climate = screen.getByRole("button", { name: /^Climate/ });
+    expect(
+      images.compareDocumentPosition(climate) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it("uses a single readable column when the biome has no images", () => {
+    render(BiomeDetail, { props: { biome: { ...tundra, images: [] } } });
+
+    expect(screen.queryByTestId("biome-detail-images")).toBeNull();
+    expect(screen.getByTestId("biome-detail").innerHTML).toContain(
+      "lg:max-w-4xl",
+    );
+  });
 });
