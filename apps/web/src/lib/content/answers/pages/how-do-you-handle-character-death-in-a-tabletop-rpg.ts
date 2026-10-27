@@ -7,7 +7,7 @@ export const howDoYouHandleCharacterDeathInATabletopRpg: AnswerConfigInput = {
   question: "How do you handle character death in a tabletop RPG?",
   kind: "framework",
   shortAnswer:
-    "Handle it in three steps: pause the table to confirm the result is final, give the dying character a last action or parting words, then take a short break before anyone touches a replacement sheet. Don't rush a dead character out of the room or slide a new one across the table in the same breath. Honouring the moment keeps the death feeling like a real story beat, and agreeing the process in advance stops it from turning into resentment.",
+    "Handle it in three steps: pause the table to confirm the character has died under the rules that apply, then check what revival, if any, your campaign contract allows before treating the departure as permanent. Give the dying character a last action or parting words, then take a short break before anyone touches a replacement sheet. Don't rush a dead character out of the room or slide a new one across the table in the same breath. Honouring the moment keeps the death feeling like a real story beat, and agreeing the process in advance stops it from turning into resentment.",
   sections: [
     {
       kind: "prose",
@@ -25,7 +25,7 @@ export const howDoYouHandleCharacterDeathInATabletopRpg: AnswerConfigInput = {
       items: [
         {
           term: "Call a pause and confirm the maths",
-          text: "Stop the action immediately. Verify hit point calculations and rule interpretations calmly with the player away from combat chaos, until you both agree the outcome is legitimate and irreversible.",
+          text: "Stop the action immediately. Verify hit point calculations and rule interpretations calmly with the player away from combat chaos, until you both agree the character has died under the applicable rules, then check any agreed revival route before treating the departure as permanent.",
         },
         {
           term: "Offer a final heroic stand or parting monologue",

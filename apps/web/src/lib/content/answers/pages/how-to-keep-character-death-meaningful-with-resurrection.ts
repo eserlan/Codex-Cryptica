@@ -21,34 +21,42 @@ export const howToKeepCharacterDeathMeaningfulWithResurrection: AnswerConfigInpu
         ],
       },
       {
-        kind: "list",
+        kind: "prose",
         heading: "Set the resurrection contract before anyone dies",
-        intro:
-          "The contract is the player-facing agreement about how return from death works at this table. State it in session zero, write it down where everyone can check it, and apply it the same way to player characters and to important non-player characters unless the group has agreed otherwise. Pick the version that fits your campaign, or combine two and say so plainly.",
-        items: [
-          {
-            term: "Rules as written, openly available",
-            text: "Revival works exactly as the rulebook describes it, for anyone who can pay the listed cost and find a caster. Best for heroic campaigns where death is a setback to recover from. The group accepts that wealthy or well-connected figures are hard to keep dead, and the GM builds stakes around time and objectives instead.",
-          },
-          {
-            term: "Rules as written, scarce access",
-            text: "The spells and rituals work as written, but casters, components, or consecrated places are rare in the setting. The scarcity must be visible before it matters: the party learns early that the nearest temple able to raise the dead is a week's travel away, or that suitable diamonds seldom reach the market. Scarcity invented at the moment of death feels like a veto, not a setting.",
-          },
-          {
-            term: "Revival with a stated complication",
-            text: "The group agrees in advance that a return carries a defined cost beyond the rulebook price, such as a debt to the temple that raised the character, a duty owed to a patron, or a change the character brings back with them. The complication is written into the contract, so a player choosing revival knows what they are accepting. It is never improvised after a successful casting to make the return feel earned.",
-          },
-          {
-            term: "Revival as a quest",
-            text: "Returning a character takes an adventure in its own right: recovering the body, persuading a keeper of the dead, or completing a task before a deadline. Best when the group enjoys playing absence and rescue. Agree who plays what while one character is dead, for example a temporary character or a companion, so the affected player is not left spectating for several sessions.",
-          },
-          {
-            term: "No return",
-            text: "Death is permanent in this campaign, by rulebook choice or by house rule. This is a legitimate contract when everyone chooses it knowingly, including players whose class or species abilities assume revival exists. Say which abilities that removes, and let players build with that knowledge rather than discovering it at the table.",
-          },
+        paragraphs: [
+          "The contract is the player-facing agreement about how return from death works at this table. State it in session zero, write it down where everyone can check it, and apply it the same way to player characters and to important non-player characters unless the group has agreed otherwise. Pick one approach, or combine two and say so plainly. Keep the player-facing terms separate from the in-world explanation: players need the real terms before they rely on an ability, while characters can still argue about theology, prices, and temple politics inside the fiction without rewriting terms the players already accepted.",
         ],
-        outro:
-          "Whichever version you choose, separate the player-facing expectation from the in-world explanation. Players need to know the real terms before they rely on an ability. Characters can still argue about theology, prices, and temple politics inside the fiction, but that argument should not rewrite terms the players already accepted.",
+      },
+      {
+        kind: "table",
+        headers: ["Approach", "Best when", "Principal trade-off"],
+        rows: [
+          [
+            "Rules as written, openly available",
+            "Heroic campaigns where death is a setback to recover from, for anyone who can pay the listed cost and find a caster.",
+            "Wealthy or well-connected figures are hard to keep dead, so stakes must come from time, objectives, and spent resources. Apply the same access to villains.",
+          ],
+          [
+            "Rules as written, scarce access",
+            "You want revival to stay possible but feel like a major undertaking, because casters, components, or consecrated places are rare.",
+            "Scarcity must be visible before it matters, for example a temple a week's travel away or diamonds that seldom reach market. Scarcity invented at the moment of death feels like a veto, not a setting.",
+          ],
+          [
+            "Revival with a stated complication",
+            "The group likes a defined cost beyond the rulebook price, such as a debt to the temple, a duty to a patron, or a change the character brings back.",
+            "Write the complication into the contract and state it before any casting. Never improvise one after a successful casting to make the return feel earned.",
+          ],
+          [
+            "Revival as a quest",
+            "The group enjoys playing absence and rescue, such as recovering the body, persuading a keeper of the dead, or meeting a deadline.",
+            "Agree who the affected player runs meanwhile, for example a temporary character or companion, so they are not left spectating for several sessions.",
+          ],
+          [
+            "No return",
+            "The group wants loss to be final and has chosen that tone together, by rulebook choice or house rule.",
+            "Say before character creation which revival abilities this removes, so players whose class or species assumes revival exists can build with that knowledge.",
+          ],
+        ],
       },
       {
         kind: "list",
@@ -74,40 +82,8 @@ export const howToKeepCharacterDeathMeaningfulWithResurrection: AnswerConfigInpu
           },
           {
             term: "Punishment: the gotcha restriction",
-            text: "Telling the party at the graveside that the soul is unwilling, the god refuses, or the body is somehow insufficient, when none of that was established beforehand, makes the return depend on GM mood. A refusal can be powerful fiction when the contract allowed for it and the players can investigate or contest it. As an improvised block, it reads as confiscation.",
+            text: "Telling the party at the graveside that the soul is unwilling, the god refuses, or the body is somehow insufficient, when none of that was established beforehand, makes the return depend on GM mood. That differs from a player choosing not to bring their own character back, or choosing retirement after a return: the player's choice about their character is theirs to make, while a GM declaration that the soul is unwilling blocks a casting that would otherwise work under the contract. A refusal can be powerful fiction when the contract allowed for it and the players can investigate or contest it. As an improvised block, it reads as confiscation.",
           },
-        ],
-      },
-      {
-        kind: "table",
-        heading: "Compare the main approaches before you commit",
-        headers: ["Approach", "Best when", "Watch for"],
-        rows: [
-          [
-            "Open availability, rules as written",
-            "The group wants heroic recovery and fast returns to play.",
-            "Death loses force as a deterrent, so stakes must come from objectives, timing, and cost. Villains with the same access need the same treatment.",
-          ],
-          [
-            "Scarce components or scarce casters",
-            "You want revival to stay possible but feel like a major undertaking.",
-            "Scarcity must be established early and applied consistently. If only the party ever struggles to find a diamond, the setting feels rigged.",
-          ],
-          [
-            "Agreed complications on return",
-            "The group likes lasting marks, debts, or duties and wants to choose them knowingly.",
-            "Complications chosen under grief can sour quickly. Offer the terms before the casting, and let the player decline the return instead.",
-          ],
-          [
-            "Revival as a quest",
-            "Absence, rescue, and journeys to the dead suit your campaign's pace.",
-            "One player may sit out for a long stretch. Provide a temporary character or another active role for them.",
-          ],
-          [
-            "Permanent death",
-            "The group wants loss to be final and has chosen that tone together.",
-            "Players need the full picture before building characters around revival abilities. Replacement characters and inheritance need a fair, quick route back into play.",
-          ],
         ],
       },
       {
@@ -124,8 +100,13 @@ export const howToKeepCharacterDeathMeaningfulWithResurrection: AnswerConfigInpu
         heading: "What the rules actually say in three systems",
         paragraphs: [
           "The summaries that follow are rules as written, checked against the published text. They are starting points for a contract, not recommendations, and any change your group makes to them is a house rule to record as such. In Dungeons and Dragons, revival arrives as a ladder of spells with explicit windows and prices. Revivify is a 3rd-level spell that touches a creature dead for no more than a minute and returns it with 1 hit point; it consumes diamonds worth 300 gold pieces, cannot help a creature that died of old age, and does not restore missing body parts. Raise Dead allows ten days and a diamond worth 500 gold pieces, and the returned creature works under a penalty that fades across long rests. Both the 2014 and the 2024 rules keep that same ladder shape, the same one-minute window, and the same 300 gold piece cost for Revivify; the 2024 text describes the Raise Dead penalty as a penalty to D20 tests, while the 2014 text lists the affected rolls directly. Read your own edition for the exact wording before quoting a cost at the table.",
-          "Tales of the Valiant, the Kobold Press game built for compatibility with fifth edition material, keeps the same family of revival magic, organised by spell rings rather than levels, so a group moving between the two games faces the same contract question with near-identical tools. Confirm the ring, components, and timing in your own copy, because printings and conversion choices differ, and do not assume a Dungeons and Dragons price list applies word for word. Dungeon World takes the opposite route and builds the stake into a single roll. Its Last Breath move triggers when a character is dying: the player rolls two six-sided dice with no modifier, cheating death on a total of 10 or higher, while a total of 7 to 9 means Death offers a bargain the player may accept or refuse, and a lower total seals the character's fate. There is no diamond to buy and no window to beat; the cost is whatever Death asks for, which is why the move needs a table willing to negotiate in the open.",
+          "Tales of the Valiant, the Kobold Press game built for compatibility with fifth edition material, keeps the same family of revival magic, organised by spell rings rather than levels, so a group moving between the two games faces the same contract question with near-identical tools. Confirm the ring, components, and timing in your own copy, because printings and conversion choices differ, and do not assume a Dungeons and Dragons price list applies word for word. Dungeon World (first edition) keeps two moments separate. Last Breath triggers when a character is dying, not after death: the player rolls two six-sided dice with no modifier, cheating death and staying alive on a total of 10 or higher, accepting or refusing a bargain from Death on 7 to 9, and facing a sealed fate on 6 or lower. Returning a corpse is a different procedure, the Cleric spell Resurrection (level 3): the caster tells the GM they would like to resurrect a corpse whose soul has not yet fully departed, resurrection is always possible, and the GM gives one or more conditions to fulfil, chosen from taking days, weeks, or months, getting help from a named source, requiring a lot of money, or sacrificing something. The GM may allow the return now with the conditions met before it becomes permanent, or require the conditions first, so the cost is negotiated in the open rather than set by a component price.",
         ],
+        cta: {
+          text: "Read the Resurrection spell in the Dungeon World SRD",
+          href: "https://www.dungeonworldsrd.com/classes/cleric/",
+          external: true,
+        },
       },
       {
         kind: "example",
@@ -137,11 +118,11 @@ export const howToKeepCharacterDeathMeaningfulWithResurrection: AnswerConfigInpu
         items: [
           {
             term: "The fall",
-            text: "In round three of a fight at a toll bridge, the fighter drops and then fails her death saving throws while the rest of the party is still engaged. She is dead, not merely unconscious, so healing words will not help. The cleric is twenty feet away with a clear path, holding the party's only suitable diamond.",
+            text: "In round three of a fight at a toll bridge, the fighter drops and then fails her death saving throws while the rest of the party is still engaged. She is dead, not merely unconscious, so healing words will not help. The toll keeper, sheltering behind the toll barrier a few paces away, sees her fall. The cleric is twenty feet away with a clear path, holding the party's only suitable diamond.",
           },
           {
             term: "The choice the players can see",
-            text: "The cleric's player states the real options aloud: spend an action and the diamond to cast Revivify within its one-minute window, or finish the fight first and risk the window closing. The table can see the bridge toll bell the raiders are trying to reach. Choosing the revival means nobody stops the raider running for that bell this round.",
+            text: "The cleric's player states the real options aloud: spend an action and the diamond to cast Revivify within its one-minute window, or finish the fight first and risk the window closing. The table can see the bridge toll bell the raiders are trying to reach, and the cleric, standing at the bridge midpoint, is the only character in a position to cut off the raider running for it: the others are locked in melee at the far end or down. Choosing the revival means nobody stops that raider this round.",
           },
           {
             term: "The result",
@@ -149,7 +130,7 @@ export const howToKeepCharacterDeathMeaningfulWithResurrection: AnswerConfigInpu
           },
           {
             term: "What the GM does next",
-            text: "Name the cost that already exists rather than adding another one. The guards saw the fighter die and stand up again, and they will describe it that way to their captain. The party is down one diamond for the return journey. Ask the fighter's player what she remembers and what she wants to say to the cleric, then move on. The death mattered because the crossing, the diamond, and the witnesses changed, not because the return was taxed.",
+            text: "Name the cost that already exists rather than adding another one. The toll keeper saw the fighter die and stand up again, and will describe it that way to the guards and their captain. The party is down one diamond for the return journey. Ask the fighter's player what she remembers and what she wants to say to the cleric, then move on. The death mattered because the crossing, the diamond, and the witnesses changed, not because the return was taxed.",
           },
         ],
       },
@@ -209,8 +190,8 @@ export const howToKeepCharacterDeathMeaningfulWithResurrection: AnswerConfigInpu
       {
         system: "Dungeon World",
         rationale:
-          "The Last Breath move resolves dying as an open negotiation: a strong roll cheats death, a middling roll earns a bargain from Death that the player may refuse, and a miss seals the character's fate.",
-        href: "https://www.dungeonworldsrd.com/moves/",
+          "Its Cleric spell Resurrection returns a corpse under GM-set conditions of time, help, money, or sacrifice, which a table states openly as its contract.",
+        href: "https://www.dungeonworldsrd.com/classes/cleric/",
       },
       {
         system: "Tales of the Valiant",
