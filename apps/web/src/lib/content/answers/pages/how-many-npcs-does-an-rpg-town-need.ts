@@ -122,6 +122,7 @@ export const howManyNpcsDoesAnRpgTownNeed: AnswerConfigInput = {
     "how-do-you-organise-npc-relationships",
     "how-do-you-improvise-npcs-on-the-spot",
     "how-do-you-create-a-fantasy-city-that-feels-alive",
+    "stop-players-investigating-every-detail",
   ],
   discovery: {
     id: "answer-npcs-per-town",

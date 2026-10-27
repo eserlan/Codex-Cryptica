@@ -150,6 +150,7 @@ export const howDoYouCreateQuestHooksWithoutRailroading: AnswerConfigInput = {
     "how-do-i-make-interviewing-npcs-interesting-in-an-investigation",
     "how-do-i-make-a-campaign-threat-feel-urgent-without-railroading",
     "how-to-adapt-a-video-game-into-a-tabletop-rpg",
+    "stop-players-investigating-every-detail",
   ],
   discovery: {
     id: "answer-quest-hooks-without-railroading",

@@ -174,6 +174,7 @@ export const howDoYouPrepareASandboxRpgCampaign: AnswerConfigInput = {
     "how-do-i-make-a-campaign-threat-feel-urgent-without-railroading",
     "how-do-i-start-a-dnd-campaign",
     "how-do-i-plan-story-arcs-for-an-rpg-campaign",
+    "stop-players-investigating-every-detail",
   ],
   discovery: {
     id: "answer-sandbox-campaign-prep",

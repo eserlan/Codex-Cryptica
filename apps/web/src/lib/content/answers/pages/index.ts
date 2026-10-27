@@ -146,6 +146,7 @@ import { howToWriteAnInWorldNewspaperForAnRpg } from "./how-to-write-an-in-world
 import { isMyRpgCampaignIdeaGood } from "./is-my-rpg-campaign-idea-good";
 import { pointCrawlVsHexCrawl } from "./point-crawl-vs-hex-crawl";
 import { shouldIShareWorldbuildingNotesWithMyPlayers } from "./should-i-share-worldbuilding-notes-with-my-players";
+import { stopPlayersInvestigatingEveryDetail } from "./stop-players-investigating-every-detail";
 import { whatAreTheBestClasslessFantasyRpgsWithSkillBasedProgression } from "./what-are-the-best-classless-fantasy-rpgs-with-skill-based-progression";
 import { whatAreTheProsAndConsOfBecomingADungeonMaster } from "./what-are-the-pros-and-cons-of-becoming-a-dungeon-master";
 import { whatCanIDoOnMyTurnInDndCombat } from "./what-can-i-do-on-my-turn-in-dnd-combat";
@@ -336,6 +337,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     isMyRpgCampaignIdeaGood,
     pointCrawlVsHexCrawl,
     shouldIShareWorldbuildingNotesWithMyPlayers,
+    stopPlayersInvestigatingEveryDetail,
     whatAreTheBestClasslessFantasyRpgsWithSkillBasedProgression,
     whatAreTheProsAndConsOfBecomingADungeonMaster,
     whatCanIDoOnMyTurnInDndCombat,
