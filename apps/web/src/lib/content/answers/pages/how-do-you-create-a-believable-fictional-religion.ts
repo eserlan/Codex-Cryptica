@@ -209,5 +209,9 @@ export const howDoYouCreateABelievableFictionalReligion: AnswerConfigInput = {
       "How do you create a believable fictional religion? | Codex Cryptica",
     description:
       "Write the practice before the doctrine: one rite, one prohibition, who pays, and what adherents disagree about. A worked example, and why coherence reads as fake.",
+    image:
+      "https://assets.codexcryptica.com/og/how-do-you-create-a-believable-fictional-religion.jpg",
+    imageAlt:
+      "Townsfolk in linen and wool bring baskets of grain to a hillside shrine at dawn while a priest receives the tithe",
   },
 };

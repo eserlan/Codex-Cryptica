@@ -181,7 +181,7 @@ export const howToWriteAnInWorldNewspaperForAnRpg: AnswerConfigInput = {
     description:
       "Build a playable in-world RPG newspaper with headlines, bias, public facts, sourced rumours and hooks, plus a compact worked issue for your campaign.",
     image:
-      "https://assets.codexcryptica.com/og/how-to-write-an-in-world-newspaper-for-an-rpg.png",
+      "https://assets.codexcryptica.com/og/how-to-write-an-in-world-newspaper-for-an-rpg.jpg",
     imageAlt:
       "An in-world newspaper beside ink and campaign notes on a rainy town desk",
   },

@@ -208,5 +208,9 @@ export const howDoYouCreateAFantasyFaction: AnswerConfigInput = {
     title: "How do you create a fantasy faction? | Codex Cryptica",
     description:
       "Six questions that turn a faction into a decision-making machine (goal, obstacle, recruits, limits, assets, next move) with a worked example and a usability test.",
+    image:
+      "https://assets.codexcryptica.com/og/how-do-you-create-a-fantasy-faction.jpg",
+    imageAlt:
+      "Guild members gather around a lamplit oak table of sealed ledgers and a carved city model as a rival envoy waits at the door",
   },
 };

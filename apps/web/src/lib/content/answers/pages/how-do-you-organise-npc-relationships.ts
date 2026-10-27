@@ -192,5 +192,9 @@ export const howDoYouOrganiseNpcRelationships: AnswerConfigInput = {
     title: "How do you organise NPC relationships? | Codex Cryptica",
     description:
       "Store NPC relationships as directed, named links with a reason and a visibility, not as ally lists on each page. What to record, a worked example, and when to stop.",
+    image:
+      "https://assets.codexcryptica.com/og/how-do-you-organise-npc-relationships.jpg",
+    imageAlt:
+      "Wooden faction tokens and miniatures linked by coloured threads in a dense web across a candlelit table as a hand adds a note",
   },
 };

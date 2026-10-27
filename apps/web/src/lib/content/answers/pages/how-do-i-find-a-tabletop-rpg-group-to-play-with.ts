@@ -183,5 +183,9 @@ export const howDoIFindATabletopRpgGroupToPlayWith: AnswerConfigInput = {
     title: "How to find a tabletop RPG group to play with | Codex Cryptica",
     description:
       "How to find a tabletop RPG or D&D group online or locally: dedicated group finders, local game stores, a fit checklist, and first-contact etiquette.",
+    image:
+      "https://assets.codexcryptica.com/og/how-do-i-find-a-tabletop-rpg-group-to-play-with.jpg",
+    imageAlt:
+      "Strangers of different ages greet each other at a long game store table spread with dice, miniatures and character sheets",
   },
 };

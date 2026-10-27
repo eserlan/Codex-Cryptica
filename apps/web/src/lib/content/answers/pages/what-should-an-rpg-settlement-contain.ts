@@ -212,5 +212,9 @@ export const whatShouldAnRpgSettlementContain: AnswerConfigInput = {
     title: "What should an RPG settlement contain? | Codex Cryptica",
     description:
       "Prepare a reason to exist, three or four enterable places, three people who want things, and one unsolved problem. A worked example, and what to leave out.",
+    image:
+      "https://assets.codexcryptica.com/og/what-should-an-rpg-settlement-contain.jpg",
+    imageAlt:
+      "A small river-crossing market town at golden hour, with a toll bridge, an inn, a forge, a chapel and a flooded field",
   },
 };

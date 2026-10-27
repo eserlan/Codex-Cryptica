@@ -202,5 +202,9 @@ export const whatRpgSystemShouldWeTryInsteadOfDnd: AnswerConfigInput = {
     title: "What RPG system should we try instead of D&D? | Codex Cryptica",
     description:
       "Choose by genre and play style, not popularity. A decision framework plus representative systems for tactical fantasy, horror, sci-fi, narrative play and more.",
+    image:
+      "https://assets.codexcryptica.com/og/what-rpg-system-should-we-try-instead-of-dnd.jpg",
+    imageAlt:
+      "Friends around a round table debate between several game boxes whose covers evoke science fiction, horror, samurai and cyberpunk",
   },
 };

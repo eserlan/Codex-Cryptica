@@ -1208,13 +1208,10 @@ describe("published answers", () => {
     expect(fighterWalkthrough).toContain("Resourceful");
   });
 
-  it("requires an R2 OG image on every answer published from 2026-09-07 onward", () => {
-    // #2711: seo.image/imageAlt stay optional in the schema so the 17
-    // answers published before this date are not broken retroactively, but
-    // every answer from this date forward must ship a real R2 illustration.
-    const IMAGE_REQUIRED_FROM = "2026-09-07";
+  it("requires an R2 OG image on every published answer", () => {
+    // #2711 exempted the answers published before 2026-09-07; they now have
+    // illustrations too, so the requirement covers every answer.
     for (const answer of published) {
-      if (answer.publishedAt < IMAGE_REQUIRED_FROM) continue;
       expect(answer.seo.image, `${answer.slug} is missing seo.image`).toMatch(
         /^https:\/\/assets\.codexcryptica\.com\/.+\.jpg$/,
       );

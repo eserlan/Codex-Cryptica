@@ -148,5 +148,9 @@ export const howDoIGetPlayersToEngageWithMyCampaignWorld: AnswerConfigInput = {
       "How do I get players to engage with my campaign world? | Codex Cryptica",
     description:
       "Lore becomes interesting when players can act on it. A framework for turning exposition into choices, plus a before/after example and why roleplaying isn't the same as performing.",
+    image:
+      "https://assets.codexcryptica.com/og/how-do-i-get-players-to-engage-with-my-campaign-world.jpg",
+    imageAlt:
+      "Adventurers in a ruined hall find relics tied to their own pasts: a carved family crest, an heirloom sword and a faded war fresco",
   },
 };
