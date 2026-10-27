@@ -42,18 +42,43 @@ separately, because there was nothing to build them into.
 - **The workspace themes are out of scope.** Parchment, LCARS, Pip-Boy and the
   rest stay exactly as they are. This grammar covers public pages only.
 
-## 1. Width
+## 1. Width and responsive layout
 
-Three widths, chosen by content type. No page invents a fourth.
+### The two-width concept
 
-| Token             | Value       | Use                                            |
-| ----------------- | ----------- | ---------------------------------------------- |
-| `--shell-narrow`  | `max-w-2xl` | Prose: blog posts, legal, long explanation     |
-| `--shell-default` | `max-w-4xl` | Standard page body, forms, generator output    |
-| `--shell-wide`    | `max-w-6xl` | Grids and directories: `/tools`, `/generators` |
+Public pages employ a deliberate **two-width architecture**:
 
-Horizontal padding is `px-4` below `sm`, `px-6` from `sm` up. One rule, every
-page.
+1. **Outer page canvas**: The outer container or shell constraint (`max-w-2xl`, `max-w-4xl`, `max-w-6xl`, or widescreen `max-w-7xl` up to ~1280–1440px+). This accommodates wide layouts, multi-column navigation, responsive content + complementary sidebar split views, dashboards, and full-bleed grids without feeling cramped.
+2. **Inner readable measure**: Body prose, article text, questions, and explanations **never stretch across wide viewports**. Continuous paragraphs are strictly constrained to a comfortable measure of **~65–75 characters per line** (`max-w-2xl` / `max-w-prose` / `~65ch`). Equating a wide outer shell with wide text columns is strictly prohibited.
+
+### Outer canvas widths
+
+Four canonical outer canvas widths, chosen by layout structure:
+
+| Token             | Value       | Use                                                                          |
+| ----------------- | ----------- | ---------------------------------------------------------------------------- |
+| `--shell-narrow`  | `max-w-2xl` | Focused single-column reading: legal, minimal announcements (~672px)         |
+| `--shell-default` | `max-w-4xl` | Standard single-column forms, standard landing views (~896px)                |
+| `--shell-wide`    | `max-w-6xl` | Multi-column directories: `/tools`, `/generators` (~1152px)                  |
+| `--shell-full`    | `max-w-7xl` | Widescreen layouts: article + contextual aside, split views (~1280px–1440px) |
+
+Horizontal padding is `px-4` below `sm`, `px-6` from `sm` up, and optionally `lg:px-8` on widescreen boundaries.
+
+### Responsive content + aside layout
+
+For long-form reading, documentation, answers, and articles with contextual asides (table of contents, related topics, metadata, tools):
+
+- **Mobile (< 1024px / below `lg`)**: Stacks in natural source order into a single readable column. The contextual aside flows below the primary content or is collapsible; source order preserves accessible heading semantics.
+- **Desktop (>= 1024px / `lg` and `xl` 1280px–1440px+)**: The canvas expands to `--shell-full` (`max-w-7xl` / `1280px+`). Content and aside sit side-by-side:
+  - Main article/content column takes the primary span, with prose measure bounded at ~65–75ch (`max-w-2xl` / `max-w-prose`).
+  - Contextual aside occupies a bounded rail (`w-64` to `w-80` / `col-span-4`), sticky where appropriate, without giant blank dead zones or generic CTA clutter.
+
+### Inner prose measure
+
+| Token             | Value                  | Use                                            |
+| ----------------- | ---------------------- | ---------------------------------------------- |
+| `--prose-measure` | `max-w-2xl` (~65–75ch) | Paragraphs, blockquotes, article copy, intros  |
+| `--prose-lead`    | `max-w-3xl`            | Lead summaries, hero descriptions, subheadings |
 
 ## 2. Vertical rhythm
 

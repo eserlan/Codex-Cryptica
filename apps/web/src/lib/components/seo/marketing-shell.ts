@@ -24,19 +24,59 @@ export const MARKETING_NAV: MarketingNavItem[] = [
 ];
 
 /**
- * Content widths from the grammar. Pages pick one; they do not invent a fourth.
+ * Content widths and responsive layout tokens from the grammar in
+ * docs/design/public-shell-grammar.md.
  *
- * Not applied by MarketingShell: it deliberately leaves width to the page so
- * adding the shell does not reflow thirty pages in one commit. Phase 3 moves
- * pages onto these tokens individually.
+ * Pages pick a documented token; they do not invent ad-hoc variants.
+ *
+ * Implements the two-width concept:
+ * - Outer canvas constraint (narrow, default, wide, or full for widescreen).
+ * - Inner readable measure (prose, lead) so paragraphs remain at ~65–75 chars
+ *   independent of outer canvas expansion.
+ * - Responsive split layout primitives for content + contextual aside.
+ *
+ * Not applied globally by MarketingShell: it deliberately leaves width to the
+ * page so adding the shell does not reflow thirty pages in one commit. Child
+ * migrations adopt these tokens individually.
  */
 export const SHELL_WIDTHS = {
   narrow: "max-w-2xl",
   default: "max-w-4xl",
   wide: "max-w-6xl",
+  full: "max-w-7xl",
 } as const;
 
 export type ShellWidth = keyof typeof SHELL_WIDTHS;
+
+/**
+ * Reusable layout primitives for public marketing pages.
+ */
+export const PUBLIC_LAYOUT = {
+  /** Outer page canvas containers */
+  canvas: {
+    narrow: "mx-auto w-full max-w-2xl",
+    default: "mx-auto w-full max-w-4xl",
+    wide: "mx-auto w-full max-w-6xl",
+    full: "mx-auto w-full max-w-7xl",
+  },
+  /** Standard responsive horizontal padding */
+  padding: {
+    canvas: "px-4 sm:px-6 lg:px-8",
+    prose: "px-4 sm:px-6",
+  },
+  /** Inner readable measure: preserves 65-75ch line length */
+  prose: {
+    measure: "max-w-2xl",
+    lead: "max-w-3xl",
+  },
+  /** Content + contextual aside responsive split */
+  split: {
+    container:
+      "grid grid-cols-1 gap-8 lg:grid-cols-12 lg:gap-12 xl:gap-16 items-start",
+    content: "lg:col-span-8 min-w-0",
+    aside: "lg:col-span-4 min-w-0",
+  },
+} as const;
 
 /**
  * The `utm_source` the wordmark and the header CTA carry.

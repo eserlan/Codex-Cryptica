@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   MARKETING_NAV,
+  PUBLIC_LAYOUT,
   SHELL_WIDTHS,
   shellCtaHref,
   shellFooterLinks,
@@ -89,7 +90,22 @@ describe("shell configuration", () => {
     }
   });
 
-  it("offers exactly the three widths the grammar allows", () => {
-    expect(Object.keys(SHELL_WIDTHS)).toEqual(["narrow", "default", "wide"]);
+  it("offers the canonical canvas widths the grammar allows", () => {
+    expect(Object.keys(SHELL_WIDTHS)).toEqual([
+      "narrow",
+      "default",
+      "wide",
+      "full",
+    ]);
+  });
+
+  it("defines public layout primitives for widescreen and prose readability", () => {
+    expect(PUBLIC_LAYOUT.canvas.full).toContain("max-w-7xl");
+    expect(PUBLIC_LAYOUT.prose.measure).toBe("max-w-2xl");
+    expect(PUBLIC_LAYOUT.prose.lead).toBe("max-w-3xl");
+    expect(PUBLIC_LAYOUT.split.container).toContain("grid-cols-1");
+    expect(PUBLIC_LAYOUT.split.container).toContain("lg:grid-cols-12");
+    expect(PUBLIC_LAYOUT.split.content).toContain("lg:col-span-8");
+    expect(PUBLIC_LAYOUT.split.aside).toContain("lg:col-span-4");
   });
 });
