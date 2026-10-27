@@ -22,6 +22,8 @@
     type AnswerSortOption,
   } from "#lib/content/answers/sort.js";
   import { browserStorage } from "#lib/utils/runtime-deps.js";
+  import PublicPageContainer from "#lib/components/seo/PublicPageContainer.svelte";
+  import { PUBLIC_LAYOUT } from "#lib/components/seo/marketing-shell.js";
   import type { PageData } from "./$types";
   import CommunityFavourites, {
     type CommunityFavourite,
@@ -35,6 +37,11 @@
   let { data }: { data: PageData } = $props();
 
   const cleanBase = basePath();
+
+  // One column until there is room for two scannable rows side by side; a
+  // single row stretched across the widescreen canvas is harder to read.
+  const ANSWER_LIST_CLASS =
+    "grid list-none grid-cols-1 lg:grid-cols-2 lg:gap-x-10";
 
   const TITLE = "RPG and worldbuilding answers";
   const DESCRIPTION =
@@ -260,12 +267,63 @@
   jsonLd={[buildAnswerIndexJsonLd(answers)]}
 />
 
+{#snippet answerCard(answer: AnswerConfig, showCategory: boolean)}
+  {@const cat = getCategoryInfo(answer.category)}
+  <li class="group border-b border-theme-border/60">
+    <a
+      href="{cleanBase}/answers/{answer.slug}"
+      class="-mx-2 block rounded-lg px-2 py-4 transition-colors hover:bg-theme-surface/40"
+    >
+      <div class="flex items-start justify-between gap-4">
+        <div class="flex-1">
+          <div class="mb-1.5 flex flex-wrap items-center gap-2">
+            <span
+              class="font-mono text-meta uppercase tracking-wider text-theme-text"
+            >
+              {KIND_LABEL[answer.kind] ?? answer.kind}
+            </span>
+            {#if showCategory && cat}
+              <span class="text-theme-text" aria-hidden="true">•</span>
+              <span class="font-mono text-meta text-theme-text"
+                >{cat.title}</span
+              >
+            {/if}
+            {#if answer.publishedAt}
+              <span class="text-theme-text" aria-hidden="true">•</span>
+              <time
+                datetime={answer.publishedAt}
+                class="font-mono text-meta text-theme-text"
+              >
+                {formatAnswerDate(answer.publishedAt)}
+              </time>
+            {/if}
+          </div>
+          <h3
+            class="font-header text-lg font-bold text-theme-text transition-colors group-hover:text-theme-primary sm:text-xl"
+          >
+            {answer.question}
+          </h3>
+          <p
+            class="mt-1.5 line-clamp-2 text-base leading-relaxed text-theme-text"
+          >
+            {answer.shortAnswer}
+          </p>
+        </div>
+        <span
+          class="icon-[lucide--arrow-right] mt-2 h-4 w-4 shrink-0 text-theme-muted transition-all group-hover:translate-x-1 group-hover:text-theme-primary"
+          aria-hidden="true"
+        ></span>
+      </div>
+    </a>
+  </li>
+{/snippet}
+
 <div
-  class="bg-theme-bg text-theme-text font-body selection:bg-theme-primary selection:text-theme-bg"
+  class="bg-theme-bg text-theme-text font-body selection:bg-theme-primary selection:text-theme-bg py-12 sm:py-20 md:py-24"
   style:background-image="var(--bg-texture-overlay)"
 >
-  <div class="mx-auto max-w-4xl px-4 py-12 sm:px-6 sm:py-20">
-    <header class="mb-10">
+  <PublicPageContainer width="full">
+    <header class="mb-10 {PUBLIC_LAYOUT.prose.lead}">
       <div class="mb-3 flex items-center gap-3">
         <p
           class="font-mono text-xs uppercase tracking-[0.18em] text-theme-primary"
@@ -455,57 +513,6 @@
       </div>
     </div>
 
-    {#snippet answerCard(answer: AnswerConfig, showCategory: boolean)}
-      {@const cat = getCategoryInfo(answer.category)}
-      <li class="group">
-        <a
-          href="{cleanBase}/answers/{answer.slug}"
-          class="-mx-2 block rounded-lg px-2 py-4 transition-colors hover:bg-theme-surface/40"
-        >
-          <div class="flex items-start justify-between gap-4">
-            <div class="flex-1">
-              <div class="mb-1.5 flex flex-wrap items-center gap-2">
-                <span
-                  class="font-mono text-meta uppercase tracking-wider text-theme-primary"
-                >
-                  {KIND_LABEL[answer.kind] ?? answer.kind}
-                </span>
-                {#if showCategory && cat}
-                  <span class="text-theme-muted/40">•</span>
-                  <span class="font-mono text-meta text-theme-muted"
-                    >{cat.title}</span
-                  >
-                {/if}
-                {#if answer.publishedAt}
-                  <span class="text-theme-muted/40">•</span>
-                  <time
-                    datetime={answer.publishedAt}
-                    class="font-mono text-meta text-theme-muted"
-                  >
-                    {formatAnswerDate(answer.publishedAt)}
-                  </time>
-                {/if}
-              </div>
-              <h3
-                class="font-header text-lg font-bold text-theme-text transition-colors group-hover:text-theme-primary sm:text-xl"
-              >
-                {answer.question}
-              </h3>
-              <p
-                class="mt-1.5 line-clamp-2 text-base leading-relaxed text-theme-muted"
-              >
-                {answer.shortAnswer}
-              </p>
-            </div>
-            <span
-              class="icon-[lucide--arrow-right] mt-2 h-4 w-4 shrink-0 text-theme-muted transition-all group-hover:translate-x-1 group-hover:text-theme-primary"
-              aria-hidden="true"
-            ></span>
-          </div>
-        </a>
-      </li>
-    {/snippet}
-
     <!-- Content Display -->
     {#if !isSearchingOrFiltered}
       <!-- Default Thematic Section View -->
@@ -534,12 +541,15 @@
                   #
                 </a>
               </div>
-              <p class="text-base leading-relaxed text-theme-muted">
+              <p
+                class="text-base leading-relaxed text-theme-text {PUBLIC_LAYOUT
+                  .prose.measure}"
+              >
                 {category.description}
               </p>
             </div>
 
-            <ul class="flex list-none flex-col divide-y divide-theme-border/60">
+            <ul class={ANSWER_LIST_CLASS} data-testid="answer-list">
               {#each catAnswers as answer (answer.slug)}
                 {@render answerCard(answer, false)}
               {/each}
@@ -604,7 +614,7 @@
           </button>
         </div>
 
-        <ul class="flex list-none flex-col divide-y divide-theme-border/60">
+        <ul class={ANSWER_LIST_CLASS} data-testid="answer-list">
           {#each filteredAnswers as answer (answer.slug)}
             {@render answerCard(answer, true)}
           {/each}
@@ -641,5 +651,5 @@
         </button>
       </div>
     {/if}
-  </div>
+  </PublicPageContainer>
 </div>

@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import { render, screen, within } from "@testing-library/svelte";
 import Page from "./+page.svelte";
 import { AnswerConfigSchema } from "#lib/content/answers/schema.js";
+import { PUBLIC_LAYOUT } from "#lib/components/seo/marketing-shell.js";
 import * as discoveryTracking from "#lib/services/analytics/discovery-tracking.js";
 
 vi.mock("$app/paths", () => ({
@@ -13,7 +14,11 @@ vi.mock("$app/paths", () => ({
 }));
 vi.mock("$app/environment", () => ({ browser: false }));
 
-function renderAnswer(sections: unknown[]) {
+function renderAnswer(
+  sections: unknown[],
+  extra: Record<string, unknown> = {},
+  related: Array<{ slug: string; question: string }> = [],
+) {
   const answer = AnswerConfigSchema.parse({
     slug: "which-classless-rpgs-fit",
     category: "running-the-game",
@@ -24,9 +29,10 @@ function renderAnswer(sections: unknown[]) {
     relatedAnswers: [],
     publishedAt: "2026-09-01",
     seo: { title: "Classless RPGs", description: "Comparison" },
+    ...extra,
   });
   return render(Page, {
-    props: { data: { answer, related: [] } as never },
+    props: { data: { answer, related } as never },
   });
 }
 
@@ -73,7 +79,7 @@ describe("answer page tables", () => {
     expect(screen.getByTestId("answer-table").textContent).not.toContain("](");
   });
 
-  it("breaks wide tables out of the reading column but not two-column ones", () => {
+  it("lets wide tables take the content column but keeps two-column ones at reading width", () => {
     renderAnswer([
       table,
       {
@@ -83,9 +89,11 @@ describe("answer page tables", () => {
       },
     ]);
 
-    const [wide, narrow] = screen.getAllByTestId("answer-table");
-    expect(wide.className).toContain("lg:-translate-x-1/2");
-    expect(narrow.className).not.toContain("lg:-translate-x-1/2");
+    const [wide, narrow] = screen
+      .getAllByTestId("answer-table")
+      .map((el) => el.closest("section") as HTMLElement);
+    expect(wide.className).not.toContain(PUBLIC_LAYOUT.prose.measure);
+    expect(narrow.className).toContain(PUBLIC_LAYOUT.prose.measure);
   });
 
   it("keeps four-plus column tables stacked until large screens", () => {
@@ -161,5 +169,47 @@ describe("answer page tables", () => {
       targetId: "fantasy-names",
     });
     spy.mockRestore();
+  });
+});
+
+describe("answer page widescreen aside", () => {
+  const prose = { kind: "prose", paragraphs: ["Advancement matters."] };
+
+  it("puts related links in a labelled aside and keeps the inline copy for small screens", () => {
+    renderAnswer(
+      [prose],
+      {
+        relatedTools: [
+          {
+            title: "NPC Generator",
+            description: "Roll an NPC.",
+            href: "/tools/npc-generator",
+          },
+        ],
+      },
+      [{ slug: "hex-crawl-basics", question: "How do you run a hex crawl?" }],
+    );
+
+    const aside = screen.getByTestId("answer-aside");
+    expect(aside.tagName).toBe("ASIDE");
+    expect(aside.className).toContain("lg:block");
+    const label = document.getElementById(
+      aside.getAttribute("aria-labelledby") ?? "",
+    );
+    expect(label?.textContent?.trim()).toBe("Related");
+    expect(within(aside).getByText("NPC Generator")).toBeTruthy();
+    expect(within(aside).getByText("How do you run a hex crawl?")).toBeTruthy();
+
+    const inline = screen.getByTestId("answer-related-inline");
+    expect(inline.className).toContain("lg:hidden");
+    expect(within(inline).getByText("NPC Generator")).toBeTruthy();
+  });
+
+  it("renders no aside or empty rail when there is nothing related", () => {
+    renderAnswer([prose]);
+
+    expect(screen.queryByTestId("answer-aside")).toBeNull();
+    expect(screen.queryByTestId("answer-related-inline")).toBeNull();
+    expect(screen.getByRole("article").className).not.toContain("col-span");
   });
 });
