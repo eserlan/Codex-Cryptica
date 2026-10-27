@@ -64,7 +64,7 @@
               class="icon-[lucide--corner-down-right] mt-1 h-3.5 w-3.5 shrink-0 text-theme-primary"
               aria-hidden="true"
             ></span>
-            <span class="font-header text-xs font-bold leading-snug"
+            <span class="font-header text-sm font-bold leading-snug"
               >{item.label}</span
             >
           </a>
@@ -74,7 +74,7 @@
     {#if hiddenCount > 0}
       <button
         type="button"
-        class="mt-3 inline-flex min-h-[24px] shrink-0 items-center gap-1.5 self-start font-mono text-xs text-theme-text underline decoration-theme-primary/40 underline-offset-2 transition-colors hover:text-theme-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-accent"
+        class="mt-3 inline-flex min-h-[24px] shrink-0 items-center gap-1.5 self-start font-mono text-sm text-theme-text underline decoration-theme-primary/40 underline-offset-2 transition-colors hover:text-theme-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-accent"
         aria-expanded={showAll}
         aria-controls="{listId}-list"
         onclick={() => (showAll = !showAll)}
