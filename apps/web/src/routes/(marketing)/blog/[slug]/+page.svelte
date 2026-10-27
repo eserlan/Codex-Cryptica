@@ -117,7 +117,7 @@
     {#if headings.length >= 2 || isRASeries}
       <aside
         class="{PUBLIC_LAYOUT.split
-          .aside} space-y-8 sticky top-24 self-start hidden lg:block"
+          .aside} custom-scrollbar sticky top-24 hidden max-h-[calc(100vh-7rem)] scroll-py-2 space-y-8 self-start overflow-y-auto lg:block"
         aria-label="Article navigation"
       >
         {#if headings.length >= 2}
