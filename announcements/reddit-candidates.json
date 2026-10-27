@@ -1,5 +1,5 @@
 {
-  "updated_at": 1793116441,
+  "updated_at": 1793140403,
   "candidates": [
     {
       "id": "reddit-40203955328-my-point-crawls-looked-right-until-playe",
@@ -40,6 +40,16 @@
       "source_id": "40531816255",
       "status": "approved",
       "created_at": 1793116441
+    },
+    {
+      "id": "reddit-40592635507-rerun-i-was-chasing-free-map-packs-when-all-i-",
+      "title": "I was chasing free map packs when all I needed was a blank grid that lines up",
+      "body": "I had a fight planned for a mill yard and no free map that actually matched the shape. Every pack was close but wrong, and the ones I imported never lined up with the VTT grid, so tokens snapped to the wrong squares.\n\nI built a guide that keeps the whole thing zero budget, from whiteboard-style sketching on a blank grid to a VTT-ready import, and shows when to draw live and when to prepare an image beforehand.\n\nIt is here:\nhttps://codexcryptica.com/answers/how-can-i-make-free-custom-maps-for-online-tabletop-rpgs\n\nWhat it covers:\n\n- the three jobs people mix up, VTT as the shared surface, map editor as the picture maker, and live drawing as the in-session fix\n- when a blank grid is enough and when a free route like Dungeon Scrawl for a prepared room or Watabou for a quick dungeon saves time\n- how to set scale and get the grid in the image to match the grid on screen so movement and tokens read right\n- a worked example, a mill yard built in Dungeon Scrawl and dropped into a VTT, with fog and a player-view check before sharing\n- a short checklist to catch the usual snags, hidden rooms, file size for weak connections, and reuse rights for art that is not yours\n\nI stayed on free browser tools so there is nothing to install, which keeps it fast but means you trade some art polish for speed. The blank grid will always look plain, and that is kind of the point when the location only matters for one fight.\n\nWhat map do you end up improvising most often because the free packs never have the right layout, and what breaks when you try to import it, grid alignment or file size?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-40592635507-rerun-0.png)",
+      "url": "https://codexcryptica.com/answers/how-can-i-make-free-custom-maps-for-online-tabletop-rpgs",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-40592635507-rerun-0.png",
+      "source_id": "40592635507-rerun",
+      "status": "approved",
+      "created_at": 1793140402
     }
   ]
 }
