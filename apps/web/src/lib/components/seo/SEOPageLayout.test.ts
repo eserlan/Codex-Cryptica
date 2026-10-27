@@ -286,6 +286,39 @@ describe("SEOPageLayout comparison details", () => {
     ).toBeTruthy();
   });
 
+  it("widens grid and media sections but keeps hero and FAQ at reading width", () => {
+    const { container } = render(SEOPageLayout, {
+      props: {
+        type: "comparison",
+        data: {
+          ...baseComparison,
+          productProof: {
+            eyebrow: "See it in action",
+            title: "Proof",
+            description: "Graph.",
+            imageSrc: "/images/living-lore-graph.png",
+            imageAlt: "Graph",
+            imageWidth: 1996,
+            imageHeight: 1089,
+            caption: "Caption",
+          },
+        } as SEOComparisonPageData,
+      },
+    });
+
+    const wide = (cls: string) => container.querySelectorAll(`section .${cls}`);
+    expect(wide("max-w-7xl").length).toBeGreaterThanOrEqual(1);
+    expect(
+      container.querySelector("#comparison-table")?.closest(".max-w-6xl"),
+    ).not.toBeNull();
+    expect(
+      container.querySelector("#hero-h1")?.closest("section")?.className,
+    ).toContain("max-w-4xl");
+    expect(
+      screen.getByText("Frequently Asked Questions").closest(".max-w-4xl"),
+    ).not.toBeNull();
+  });
+
   it("omits optional comparison sections when they are not configured", () => {
     render(SEOPageLayout, {
       props: { type: "comparison", data: baseComparison },

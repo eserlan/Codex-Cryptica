@@ -315,7 +315,7 @@
 
   {#if comparisonData?.hostingComparison}
     <section class="border-t border-theme-border/30 py-12 sm:py-16">
-      <div class="max-w-6xl mx-auto px-4 sm:px-6">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6">
         <div class="max-w-3xl mb-8">
           <p
             class="font-mono text-xs font-bold uppercase tracking-[0.24em] text-theme-primary mb-3"
@@ -383,7 +383,7 @@
 
   <!-- Features Grid -->
   <section class="border-t border-theme-border/30 bg-theme-surface/10 py-16">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6">
       <h2
         class="text-center font-header text-xl uppercase tracking-[0.2em] text-theme-primary mb-12"
       >
@@ -415,7 +415,7 @@
   {#if productProof}
     <section class="border-t border-theme-border/30 py-12 sm:py-16">
       <div
-        class="max-w-6xl mx-auto px-4 sm:px-6 grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-center"
+        class="max-w-7xl mx-auto px-4 sm:px-6 grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-center"
       >
         <div>
           <p
@@ -460,7 +460,7 @@
   <!-- Comparison Section (If comparison type) -->
   {#if type === "comparison" && comparisonData}
     <section class="border-t border-theme-border/30 py-16">
-      <div class="max-w-4xl mx-auto px-4 sm:px-6">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6">
         <h2
           class="text-center font-header text-2xl uppercase tracking-widest text-theme-primary mb-10"
         >
