@@ -200,6 +200,7 @@ export const howDoIPaceAnRpgOneShot: AnswerConfigInput = {
     "how-much-prep-do-you-need-for-an-rpg-session",
     "how-long-should-a-ttrpg-session-be",
     "what-are-the-pros-and-cons-of-becoming-a-dungeon-master",
+    "stop-players-investigating-every-detail",
   ],
   discovery: {
     id: "answer-pace-rpg-one-shot",

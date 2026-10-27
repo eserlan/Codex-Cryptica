@@ -2,6 +2,8 @@
   import { onMount } from "svelte";
   import { parse } from "marked";
   import { asset, resolve } from "$app/paths";
+  import BlogTableOfContents from "#lib/components/blog/BlogTableOfContents.svelte";
+  import { extractBlogToc } from "#lib/components/blog/blog-toc.js";
 
   let {
     fileName,
@@ -17,6 +19,9 @@
     if (fetchedContent) return parse(fetchedContent) as string;
     return "";
   });
+
+  // The same heading ids the rendered document carries, for the contents rail.
+  let headings = $derived(extractBlogToc(initialContent || fetchedContent));
 
   onMount(async () => {
     // Only fetch client-side when there was no server-provided content.
@@ -49,21 +54,33 @@
 </svelte:head>
 
 <div
-  class="max-w-3xl mx-auto px-6 py-12 bg-theme-bg min-h-screen"
+  class="max-w-5xl mx-auto px-6 py-12 bg-theme-bg min-h-screen"
   style:background-image="var(--bg-texture-overlay)"
 >
   <div class="mb-8 border-b border-theme-border/30 pb-4">
     <a
       href={resolve("/(app)")}
-      class="text-theme-primary hover:text-theme-secondary font-mono text-sm flex items-center gap-2"
+      class="text-theme-text hover:text-theme-secondary font-mono text-sm flex items-center gap-2"
     >
       <span aria-hidden="true" class="icon-[lucide--arrow-left] w-4 h-4"></span>
       BACK TO CRYPTICA
     </a>
   </div>
 
-  <div class="legal-content font-body text-theme-text/90">
-    {@html content}
+  <!-- Text stays at reading width; from lg a sticky contents rail uses the
+       space beside it. -->
+  <div class="lg:grid lg:grid-cols-[minmax(0,1fr)_16rem] lg:gap-12">
+    <div class="legal-content min-w-0 max-w-3xl font-body text-theme-text/90">
+      {@html content}
+    </div>
+    {#if headings.length >= 2}
+      <aside
+        class="hidden lg:sticky lg:top-24 lg:block lg:self-start"
+        data-testid="legal-contents"
+      >
+        <BlogTableOfContents {headings} />
+      </aside>
+    {/if}
   </div>
 </div>
 

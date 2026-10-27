@@ -143,7 +143,11 @@ describe("SEOGeneratorLayout Theming Sync", () => {
     expect(details.textContent).toContain("Sample names");
     const lead = screen.getByText("Lead content").parentElement!;
     expect(lead.className).toMatch(/(^| )order-1( |$)/);
-    expect(container.querySelector("form")!.closest(".order-2")).toBeTruthy();
+    const form = container.querySelector("form")!;
+    expect(form.closest(".order-1")).toBeTruthy();
+    expect(
+      lead.compareDocumentPosition(form) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
     expect(screen.getByText("Applies to the write-up only.")).toBeTruthy();
   });
 

@@ -84,4 +84,21 @@ describe("/resources/castle-floorplans route", () => {
       }).getAttribute("href"),
     ).toBe("/answers/what-makes-a-good-heist-target-in-a-tabletop-rpg");
   });
+
+  it("uses the widescreen canvas with the next steps in a sticky sidebar", () => {
+    const { container, getByTestId } = render(Page);
+
+    expect(container.querySelector(".max-w-7xl")).not.toBeNull();
+    expect(container.querySelector(".max-w-3xl")).toBeNull();
+    const aside = getByTestId("floorplan-next-steps");
+    expect(aside.tagName).toBe("ASIDE");
+    expect(aside.className).toContain("lg:sticky");
+    expect(aside.querySelectorAll("a")).toHaveLength(4);
+    // Phones read the sources first, then the sidebar.
+    const firstSource = container.querySelector("li[id]")!;
+    expect(
+      firstSource.compareDocumentPosition(aside) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
 });

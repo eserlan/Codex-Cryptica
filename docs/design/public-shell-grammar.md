@@ -42,18 +42,43 @@ separately, because there was nothing to build them into.
 - **The workspace themes are out of scope.** Parchment, LCARS, Pip-Boy and the
   rest stay exactly as they are. This grammar covers public pages only.
 
-## 1. Width
+## 1. Width and responsive layout
 
-Three widths, chosen by content type. No page invents a fourth.
+### The two-width concept
 
-| Token             | Value       | Use                                            |
-| ----------------- | ----------- | ---------------------------------------------- |
-| `--shell-narrow`  | `max-w-2xl` | Prose: blog posts, legal, long explanation     |
-| `--shell-default` | `max-w-4xl` | Standard page body, forms, generator output    |
-| `--shell-wide`    | `max-w-6xl` | Grids and directories: `/tools`, `/generators` |
+Public pages employ a deliberate **two-width architecture**:
 
-Horizontal padding is `px-4` below `sm`, `px-6` from `sm` up. One rule, every
-page.
+1. **Outer page canvas**: The outer container or shell constraint (`max-w-2xl`, `max-w-4xl`, `max-w-6xl`, or widescreen `max-w-7xl` up to ~1280–1440px+). This accommodates wide layouts, multi-column navigation, responsive content + complementary sidebar split views, dashboards, and full-bleed grids without feeling cramped.
+2. **Inner readable measure**: Body prose, article text, questions, and explanations **never stretch across wide viewports**. Continuous paragraphs are strictly constrained to a comfortable measure of **~65–75 characters per line** (`max-w-2xl` / `max-w-prose` / `~65ch`). Equating a wide outer shell with wide text columns is strictly prohibited.
+
+### Outer canvas widths
+
+Four canonical outer canvas widths, chosen by layout structure:
+
+| Token             | Value       | Use                                                                                |
+| ----------------- | ----------- | ---------------------------------------------------------------------------------- |
+| `--shell-narrow`  | `max-w-2xl` | Focused single-column reading: legal, minimal announcements (~672px)               |
+| `--shell-default` | `max-w-4xl` | Standard single-column forms, standard landing views (~896px)                      |
+| `--shell-wide`    | `max-w-6xl` | Mid-width landing sections and marketing pages (~1152px)                           |
+| `--shell-full`    | `max-w-7xl` | Widescreen layouts: directories/catalogues, article + aside, split views (~1280px) |
+
+Horizontal padding is `px-4` below `sm`, `px-6` from `sm` up, and optionally `lg:px-8` on widescreen boundaries.
+
+### Responsive content + aside layout
+
+For long-form reading, documentation, answers, and articles with contextual asides (table of contents, related topics, metadata, tools):
+
+- **Mobile (< 1024px / below `lg`)**: Stacks in natural source order into a single readable column. The contextual aside flows below the primary content or is collapsible; source order preserves accessible heading semantics.
+- **Desktop (>= 1024px / `lg` and `xl` 1280px–1440px+)**: The canvas expands to `--shell-full` (`max-w-7xl` / `1280px+`). Content and aside sit side-by-side:
+  - Main article/content column takes the primary span, with prose measure bounded at ~65–75ch (`max-w-2xl` / `max-w-prose`).
+  - Contextual aside occupies a bounded rail (`w-64` to `w-80` / `col-span-4`), sticky where appropriate, without giant blank dead zones or generic CTA clutter.
+
+### Inner prose measure
+
+| Token             | Value                  | Use                                            |
+| ----------------- | ---------------------- | ---------------------------------------------- |
+| `--prose-measure` | `max-w-2xl` (~65–75ch) | Paragraphs, blockquotes, article copy, intros  |
+| `--prose-lead`    | `max-w-3xl`            | Lead summaries, hero descriptions, subheadings |
 
 ## 2. Vertical rhythm
 
@@ -157,3 +182,29 @@ generator pages sit at **1.17 to 1.20 views per visit**. People arrive, act or d
 not, and leave. A consistent nav helps people who navigate between pages, and
 most visitors here do not. That number is chunk 10's problem, and this chunk is
 the foundation it needs rather than the fix itself.
+
+## 7. Route inventory (widescreen pass, #4437)
+
+Classes: **grid** = catalogue/directory, **prose** = long-form copy,
+**structured** = landing sections, **tool** = forms and interactive output.
+
+| Route family                                              | Class         | Container                                                                                                             | Decision                                                                                       |
+| --------------------------------------------------------- | ------------- | --------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `/explore`, `/explore?label=`                             | grid          | `max-w-7xl`, 3 columns at `xl`                                                                                        | Widened                                                                                        |
+| `/examples`                                               | grid          | `max-w-7xl`, 3 columns at `xl`                                                                                        | Widened                                                                                        |
+| `/examples/[slug]`                                        | structured    | `max-w-7xl`, 8/4 split at `lg`                                                                                        | Widened; generation context floats right                                                       |
+| `/generators`, `/generators/[theme]`, `/tools`            | grid          | `max-w-7xl`, 4 columns at `xl`                                                                                        | Widened                                                                                        |
+| `/for`                                                    | grid          | `max-w-7xl`, 4 columns at `xl`                                                                                        | Widened                                                                                        |
+| `/features`, `/worlds`                                    | grid          | `max-w-7xl`                                                                                                           | Widened; card grids already responsive                                                         |
+| `/blog`, `/answers`, `/topics/*`                          | mixed         | `max-w-7xl`                                                                                                           | Done in #4434, #4435, #4436                                                                    |
+| `SEOPageLayout` (`/features/[slug]`, `/vs`, `/solutions`) | structured    | hero, FAQ, related `max-w-4xl`; features grid, product proof, hosting table `max-w-7xl`; feature matrix `max-w-6xl`   | Widened where grid, media or table; hero and FAQ stay narrow                                   |
+| `/generators/[slug]`, `/tools/*` generator pages          | tool          | `SEOGeneratorLayout`: `max-w-7xl`; at 2xl `max-w-[96rem]` with fixed 19rem form and rail tracks and a flexible output | Widened; column order and the 3/6/3 split to xl unchanged, extra width goes to the output only |
+| `/tools/session-prep-builder`                             | tool          | single column `max-w-3xl`                                                                                             | Exception: step-by-step form stays narrow                                                      |
+| `/silhouettes`                                            | tool          | own layout                                                                                                            | Exception: interactive explorer                                                                |
+| `/resources/castle-floorplans`                            | grid          | `max-w-7xl`, 2 columns at `lg`, 4 for next steps                                                                      | Widened; intro stays `max-w-2xl`                                                               |
+| `/changelog`                                              | prose         | `max-w-6xl`, entries `max-w-3xl` plus a 16rem rail at `lg`                                                            | Entries stay at reading width; sticky release index beside them                                |
+| `/responsible-ai-worldbuilding`                           | structured    | `max-w-6xl` panels (7/5 split at `lg`), `max-w-7xl` pillars grid                                                      | Widened; hero copy and FAQ stay narrow                                                         |
+| `/privacy`, `/terms`                                      | prose         | `max-w-5xl`, text `max-w-3xl` plus a 16rem rail at `lg`                                                               | Text stays at reading width; sticky contents rail beside it                                    |
+| `/biomes`                                                 | grid + detail | `max-w-7xl`, 4 columns at `xl`; detail 7/5 split at `lg`                                                              | Widened; the profile editor keeps `max-w-6xl`                                                  |
+
+Prose measure (`max-w-2xl`/`3xl`) on intros is unchanged everywhere.

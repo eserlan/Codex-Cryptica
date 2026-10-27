@@ -913,7 +913,7 @@
   style:background-image="var(--bg-texture-overlay)"
 >
   <section class="border-b border-theme-border/60 px-6 py-14 md:py-18">
-    <div class="max-w-6xl mx-auto">
+    <div class="max-w-7xl mx-auto">
       <div class="flex items-center justify-between gap-4 mb-8">
         <a
           href="{cleanBase}/generators"
@@ -980,8 +980,8 @@
     </div>
   </section>
 
-  <div class="max-w-6xl mx-auto px-4 sm:px-6 py-12 md:py-16">
-    <ul class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 py-12 md:py-16">
+    <ul class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
       {#each config.cards as card (card.slug)}
         <li>
           <a

@@ -2,6 +2,8 @@
   import { basePath } from "#lib/utils/base-path.js";
   import { themeStore } from "#lib/stores/theme.svelte.js";
   import { SITE_AUTHOR } from "#lib/config/index.js";
+  import PublicPageContainer from "#lib/components/seo/PublicPageContainer.svelte";
+  import { PUBLIC_LAYOUT } from "#lib/components/seo/marketing-shell.js";
   import {
     RA_SERIES,
     RA_SERIES_SLUGS,
@@ -54,23 +56,23 @@
 />
 
 <div
-  class="min-h-screen bg-theme-bg text-theme-text selection:bg-theme-primary selection:text-theme-bg"
+  class="min-h-screen bg-theme-bg text-theme-text selection:bg-theme-primary selection:text-theme-bg py-12 sm:py-20 md:py-28"
 >
-  <div class="max-w-4xl mx-auto px-4 sm:px-6 py-20 md:py-32">
-    <header class="mb-16 md:mb-24">
+  <PublicPageContainer width="full">
+    <header class="mb-16 md:mb-24 {PUBLIC_LAYOUT.prose.lead}">
       <h1
         class="text-4xl md:text-6xl font-header font-bold mb-6 bg-gradient-to-r from-theme-text to-theme-text/60 bg-clip-text text-transparent"
       >
         The Archive
       </h1>
 
-      <p class="text-theme-text/70 max-w-2xl text-lg leading-relaxed">
+      <p class="text-theme-text text-lg leading-relaxed">
         Deep dives into the technology and philosophy behind Codex Cryptica.
         Learn how to secure your lore and master the spatial brain.
       </p>
       <a
         href="{basePath()}/blog/feed.xml"
-        class="mt-4 inline-flex items-center gap-2 text-sm text-theme-primary hover:underline"
+        class="mt-4 inline-flex items-center gap-2 text-sm text-theme-text hover:underline"
       >
         <span class="icon-[lucide--rss] h-4 w-4" aria-hidden="true"></span>
         Subscribe to the blog
@@ -82,13 +84,13 @@
       >
         <div class="space-y-1">
           <h2
-            class="text-xs font-mono font-bold text-theme-primary flex items-center gap-2"
+            class="text-xs font-mono font-bold text-theme-text flex items-center gap-2"
           >
             <span aria-hidden="true" class="icon-[lucide--shield-alert] h-4 w-4"
             ></span>
             Responsible AI Positioning
           </h2>
-          <p class="text-sm text-theme-muted">
+          <p class="text-sm text-theme-text">
             Read our 7-part devlog series and guidelines on keeping
             human-centric narrative control at the core of AI worldbuilding
             tools.
@@ -96,7 +98,7 @@
         </div>
         <a
           href="{basePath()}/responsible-ai-worldbuilding"
-          class="inline-flex items-center gap-2 self-start sm:self-center px-4 py-2 text-xs font-bold font-header bg-theme-primary text-theme-bg rounded-lg hover:brightness-110 active:scale-95 transition-all shadow-md shrink-0"
+          class="inline-flex items-center gap-2 self-start sm:self-center px-4 py-2 text-xs font-bold font-header bg-theme-primary text-theme-on-primary rounded-lg hover:brightness-110 active:scale-95 transition-all shadow-md shrink-0"
         >
           Read the Pillar
           <span
@@ -107,48 +109,52 @@
       </div>
     </header>
 
-    <div class="grid gap-12 md:gap-20">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">
       {#each standaloneArticles as article (article.slug)}
-        <article class="group relative flex flex-col gap-4">
-          <div
-            class="flex items-center gap-4 text-xs font-mono text-theme-primary uppercase tracking-widest mb-2"
-          >
-            <time datetime={article.publishedAt}>
-              {new Date(article.publishedAt).toLocaleDateString("en-US", {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-                timeZone: "UTC",
-              })}
-            </time>
-            <span aria-hidden="true" class="w-8 h-px bg-theme-border"></span>
-            <span data-testid="blog-index-byline"
-              >By {article.author?.trim() || SITE_AUTHOR.name}</span
+        <article
+          class="group relative flex flex-col justify-between rounded-2xl border border-theme-border/60 bg-theme-surface/25 p-6 hover:border-theme-primary/40 hover:bg-theme-surface/40 transition-all shadow-sm"
+        >
+          <div class="space-y-4">
+            <div
+              class="flex flex-wrap items-center gap-2 text-xs font-mono text-theme-text uppercase tracking-widest"
             >
-            <span aria-hidden="true" class="w-8 h-px bg-theme-border"></span>
-            <span>{themeStore.resolveJargon("blog_entry")}</span>
+              <time datetime={article.publishedAt}>
+                {new Date(article.publishedAt).toLocaleDateString("en-US", {
+                  year: "numeric",
+                  month: "short",
+                  day: "numeric",
+                  timeZone: "UTC",
+                })}
+              </time>
+              <span aria-hidden="true" class="text-theme-border">·</span>
+              <span data-testid="blog-index-byline"
+                >By {article.author?.trim() || SITE_AUTHOR.name}</span
+              >
+            </div>
+
+            <h2
+              class="text-xl md:text-2xl font-header font-bold group-hover:text-theme-primary transition-colors leading-snug"
+            >
+              <a
+                href="{basePath()}/blog/{article.slug}"
+                class="after:absolute after:inset-0"
+              >
+                {article.title}
+              </a>
+            </h2>
+
+            <p class="text-theme-text line-clamp-3 text-base leading-relaxed">
+              {article.description}
+            </p>
           </div>
 
-          <h2
-            class="text-2xl md:text-3xl font-header font-bold group-hover:text-theme-primary transition-colors"
-          >
-            <a
-              href="{basePath()}/blog/{article.slug}"
-              class="after:absolute after:inset-0"
-            >
-              {article.title}
-            </a>
-          </h2>
-
-          <p class="text-theme-text/70 line-clamp-3 text-lg leading-relaxed">
-            {article.description}
-          </p>
-
           <div
-            class="mt-2 flex items-center gap-2 text-theme-primary font-bold uppercase text-xs tracking-[0.2em] group-hover:gap-4 transition-all"
+            class="mt-6 pt-4 border-t border-theme-border/40 flex items-center justify-between text-theme-text font-bold uppercase text-xs tracking-[0.16em] group-hover:text-theme-primary transition-colors"
           >
-            {themeStore.resolveJargon("blog_action")}
-            <span aria-hidden="true" class="icon-[lucide--arrow-right] w-4 h-4"
+            <span>{themeStore.resolveJargon("blog_action")}</span>
+            <span
+              aria-hidden="true"
+              class="icon-[lucide--arrow-right] w-4 h-4 text-theme-primary group-hover:translate-x-1 transition-transform"
             ></span>
           </div>
         </article>
@@ -156,12 +162,12 @@
 
       {#if seriesArticles.length > 0}
         <section
-          class="rounded-2xl border border-theme-border/60 bg-theme-surface/25 p-6 md:p-8"
+          class="md:col-span-2 lg:col-span-3 rounded-2xl border border-theme-border/60 bg-theme-surface/30 p-6 md:p-8 mt-6"
           aria-labelledby="ra-series-heading"
           data-testid="blog-series-collection"
         >
           <div
-            class="flex items-center gap-4 text-xs font-mono text-theme-primary uppercase tracking-widest mb-3"
+            class="flex items-center gap-4 text-xs font-mono text-theme-text uppercase tracking-widest mb-3"
           >
             <span aria-hidden="true" class="icon-[lucide--shield-alert] h-4 w-4"
             ></span>
@@ -179,20 +185,22 @@
               Responsible AI worldbuilding
             </a>
           </h2>
-          <p class="text-theme-text/70 text-lg leading-relaxed mb-5">
+          <p class="text-theme-text text-lg leading-relaxed mb-6 max-w-3xl">
             One argument across seven posts: what an AI worldbuilding tool owes
             the person using it, and where the author's control has to stay.
           </p>
 
-          <ol class="space-y-2">
+          <ol class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {#each seriesArticles as article, i (article.slug)}
-              <li class="flex gap-3 text-sm">
-                <span class="font-mono text-theme-muted shrink-0"
+              <li
+                class="flex items-start gap-3 p-3 rounded-lg bg-theme-surface/40 border border-theme-border/40"
+              >
+                <span class="font-mono text-theme-text shrink-0 text-xs mt-0.5"
                   >{String(i + 1).padStart(2, "0")}</span
                 >
                 <a
                   href="{basePath()}/blog/{article.slug}"
-                  class="text-theme-text hover:text-theme-primary transition-colors"
+                  class="text-theme-text hover:text-theme-primary transition-colors text-sm font-medium leading-snug"
                 >
                   {article.title}
                 </a>
@@ -207,12 +215,12 @@
       <div
         class="py-20 text-center border border-dashed border-theme-border rounded-lg bg-theme-surface/5"
       >
-        <p class="text-theme-muted font-mono">
+        <p class="text-theme-text font-mono">
           No transmissions found in the archive.
         </p>
       </div>
     {/if}
-  </div>
+  </PublicPageContainer>
 </div>
 
 <style>
