@@ -7,7 +7,10 @@
   import type { MarkdownSectionForCopy } from "#lib/components/seo/markdown-sections.js";
   import { splitMarkdownForCopy } from "#lib/components/seo/markdown-sections.js";
   import { getGeneratorDocumentLayout } from "#lib/components/seo/generator-document-layout.js";
-  import { getGeneratorColumnClasses } from "./generator-column-classes";
+  import {
+    GENERATOR_CANVAS_CLASS,
+    getGeneratorColumnClasses,
+  } from "./generator-column-classes";
   import { themeStore } from "#lib/stores/theme.svelte.js";
   import { onlineStatus } from "#lib/stores/online.svelte.js";
   import { sessionHubStore } from "#lib/stores/session-hub.svelte.js";
@@ -347,7 +350,9 @@
       ? 'hidden sm:block'
       : ''}"
   >
-    <div class="max-w-6xl mx-auto py-4 flex items-center justify-between gap-4">
+    <div
+      class="{GENERATOR_CANVAS_CLASS} 2xl:max-w-[96rem] py-4 flex items-center justify-between gap-4"
+    >
       <p
         class="text-xs font-bold text-theme-text uppercase tracking-widest font-header"
       >
@@ -361,9 +366,7 @@
     </div>
   </div>
 
-  <div
-    class="max-w-6xl mx-auto px-4 sm:px-6 py-12 w-full flex-grow grid grid-cols-1 lg:grid-cols-12 gap-8"
-  >
+  <div class={columnClasses.container}>
     <!--
       The lead moves before the form in both the mobile DOM and visual order;
       otherwise the columns retain their Parameters -> Output -> At the Table
@@ -373,11 +376,7 @@
       <div class="order-1 lg:hidden">{@render outputLead()}</div>
     {/if}
     <!-- Parameters Column: positioned on the left on desktop -->
-    <div
-      class="{columnClasses.form} space-y-6 {outputLead
-        ? 'order-2'
-        : 'order-1'} lg:order-1"
-    >
+    <div class="{columnClasses.form} space-y-6 order-1">
       <GeneratorFormPanel
         {canonicalPath}
         {eyebrow}
@@ -407,11 +406,7 @@
     </div>
 
     <!-- Output Card Column: middle column on desktop -->
-    <div
-      class="{columnClasses.output} flex flex-col {outputLead
-        ? 'order-3'
-        : 'order-2'} lg:order-2"
-    >
+    <div class="{columnClasses.output} flex flex-col order-2">
       {#if outputLead && !isNarrowViewport}
         {@render outputLead()}
       {/if}
