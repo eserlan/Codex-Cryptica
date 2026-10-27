@@ -230,6 +230,7 @@ export const howDoIRunMyFirstOnlineTabletopRpgSession: AnswerConfigInput = {
     "how-do-i-track-monsters-initiative-and-hit-points-in-dnd-combat",
     "how-do-i-find-a-tabletop-rpg-group-to-play-with",
     "how-do-you-make-a-tabletop-rpg-session-more-engaging",
+    "how-can-i-make-free-custom-maps-for-online-tabletop-rpgs",
   ],
   discovery: {
     id: "answer-first-online-tabletop-rpg-session",
