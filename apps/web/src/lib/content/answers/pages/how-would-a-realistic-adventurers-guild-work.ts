@@ -71,7 +71,7 @@ export const howWouldARealisticAdventurersGuildWork: AnswerConfigInput = {
         },
         {
           term: "Widows, deputies and the edge of the system",
-          text: "Guilds often allowed a master's widow to keep a workshop running for a time, sometimes with a journeyman doing the licensed work. That is a business concession, not proof that any relative inherits a seat or a vote. Decide separately whether a spouse, adult child or named deputy may finish existing contracts, run the premises, sit in assembly or vote, and for how long. Write the answer down before a master dies mid-campaign and the table has to invent it under pressure.",
+          text: "Guilds often allowed a master's widow to keep a workshop running for a time, sometimes with a journeyman doing the licensed work. That is a business concession; any right to sit in assembly or vote is a separate rule. Decide whether a spouse, adult child or named deputy may finish existing contracts or run the premises, and for how long.",
         },
       ],
     },
@@ -106,14 +106,14 @@ export const howWouldARealisticAdventurersGuildWork: AnswerConfigInput = {
       kind: "prose",
       heading: "Why monsters strain the craft model",
       paragraphs: [
-        "A baker who fails produces bad bread. A hunter who fails may produce widows, a burned mill and a creature that has learned how people fight. High attrition changes every guild rule. Training takes longer because mistakes are lethal, so the guild needs supervised progression, team roles and a bar on apprentices taking solo contracts. Certification has to test judgement as well as courage: identifying a creature correctly, knowing when to withdraw, protecting bystanders and refusing bait that endangers a village. Magical creatures add examiners who may not be guild members at all, such as temple healers who certify undead work or licensed mages who judge whether a hunter can safely approach a warded lair. Decide who certifies the certifiers, or every difficult verdict becomes a faction fight.",
+        "Monster work is difficult to supervise: threats move beyond the guild's territory, reports may misidentify a creature, and field conditions can turn a sound plan dangerous. High attrition changes every guild rule. Training takes longer because mistakes are lethal, so the guild needs supervised progression, team roles and a bar on apprentices taking solo contracts. Certification has to test judgement as well as courage: identifying a creature correctly, knowing when to withdraw, protecting bystanders and refusing bait that endangers a village. Magical creatures add examiners who may not be guild members at all, such as temple healers who certify undead work or licensed mages who judge whether a hunter can safely approach a warded lair. Decide who certifies the certifiers, or every difficult verdict becomes a faction fight.",
         "Liability is the second strain. Ordinary guilds argue about shoddy goods; hunting guilds argue about collateral damage. If a team collapses a mine, poisons a well, fires a thatch roof or drives a creature through a market, the contract must say who pays and who investigates. A mature guild keeps a damage fund, requires a deposit or bond for high-risk work, sends a searcher to inspect the site, and can suspend a master whose teams repeatedly leave bills behind. Emergencies strain the model further. A dragon, plague beast or undead outbreak cannot wait for the next quarterly assembly. Give the warden emergency powers with limits: authority to commandeer guild members and stores for a stated period, a duty to report afterwards, and compensation for members and householders whose property was taken or destroyed. Without those limits, emergency power becomes the route by which a guild turns into an armed government.",
         "Coverage is the third strain. Monsters do not respect market towns, and rural clients are often the least able to pay. Options include circuit masters who ride a set route each season, village retainers funded by a lord or council tax, temple subsidies for undead and disease work, and a guild levy on profitable urban contracts to fund unprofitable rural ones. Each option creates a different politics. A dragon is the limiting case, and dragon capabilities vary considerably between settings. Where a dragon exceeds the local guild's resources, treat the hunt as a temporary coalition under a special contract, calling in siege engineers, soldiers, mages or neighbouring guilds as needed, with command, shares of the hoard and liability agreed before anyone leaves town. Where dragons regularly exceed a hall's capacity, give it a standing agreement with neighbouring specialists or the ruler. Whether that remains a guild or becomes a state service depends on who controls membership, funding and command.",
       ],
     },
     {
       kind: "table",
-      heading: "Five institutions that get called a guild",
+      heading: "Institutions that get called a guild",
       headers: ["Form", "Fits when", "Watch out for"],
       rows: [
         [
@@ -124,7 +124,7 @@ export const howWouldARealisticAdventurersGuildWork: AnswerConfigInput = {
         [
           "Mercenary company",
           "Work is mobile, military and hired by the campaign or season under a captain.",
-          "Loyalty follows the contract; training, welfare and local accountability are thin.",
+          "Loyalty follows the contract. Training and welfare depend on how permanent the company is and what its contracts provide; accountability to a client may not extend to local residents.",
         ],
         [
           "Religious order",
@@ -137,9 +137,14 @@ export const howWouldARealisticAdventurersGuildWork: AnswerConfigInput = {
           "Excellent access and gear, weak interest in rats, roads and poor clients.",
         ],
         [
-          "Bounty exchange or state office",
-          "Authorities want open rewards, frontier coverage or direct control of dangerous work.",
-          "Fraud, trophy theft and hunters taking risks the office never has to bury.",
+          "Bounty exchange",
+          "Clients want open rewards and independent claimants to cover a frontier or answer an urgent threat.",
+          "Proof, duplicate claims and trophy ownership need clear rules; contractors' injury and damage liability must be assigned.",
+        ],
+        [
+          "State hunting service",
+          "The ruler wants a publicly funded force that employs or commands hunters directly.",
+          "Public budgets, official priorities and jurisdiction shape coverage; the service answers for its employees' welfare and casualties.",
         ],
       ],
     },
