@@ -1,5 +1,5 @@
 {
-  "updated_at": 1793179026,
+  "updated_at": 1793180144,
   "candidates": [
     {
       "id": "reddit-40203955328-my-point-crawls-looked-right-until-playe",
@@ -52,14 +52,14 @@
       "created_at": 1793140402
     },
     {
-      "id": "reddit-40662112633-how-would-a-realistic-adventurers-guild-",
-      "title": "How would a realistic adventurers guild actually work without the quest board?",
-      "body": "I kept hitting the same snag with adventurers guilds. Stick a board in the tavern and suddenly the city lets any sword for hire take any job, with no licence, no training and no one liable when it goes sideways.\n\nI wanted something that felt more like a chartered trade than a job centre, so I built a guide that replaces the generic quest board with a licensed, chartered trade you can run at the table.\n\nFull write up here: https://codexcryptica.com/answers/how-would-a-realistic-adventurers-guild-work\n\nWhat it gives you to drop straight in:\n\n- apprentice to master ladder and what gates each promotion\n- entry control, training and who vouches for new members\n- how rates, dues and shared expenses are actually set and collected\n- liability when a contract goes wrong and emergency powers when the city calls everyone in\n- five institutional variants from city-chartered house to crown contractor, each with trade offs for control, freedom and politics\n\nI leaned toward the chartered model because it answers the money and liability questions cleanly, but it is heavier for a frontier style game, which is why the variants are there to swap in.\n\nHow does your world decide who is allowed to take on dangerous work \u2014 open to anyone, or gated behind membership or patronage?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-40662112633-0.png)",
-      "url": "https://codexcryptica.com/answers/how-would-a-realistic-adventurers-guild-work",
-      "image_url": "https://assets.codexcryptica.com/announcements/release-40662112633-0.png",
+      "id": "reddit-40662112633-how-do-you-keep-death-meaningful-when-re",
+      "title": "How do you keep death meaningful when resurrection is possible?",
+      "body": "At my table resurrection tended to go one of two ways. Either it was easy enough that death stopped meaning much, or it was so rare that a return felt arbitrary when it did happen.\n\nI built a guide around a single idea: agree an explicit resurrection contract before anyone dies, with set costs, access, time lost and relationship consequences, so returns honour the rules instead of cheapening sacrifice.\n\nFull write up here: https://codexcryptica.com/answers/how-to-keep-character-death-meaningful-with-resurrection\n\nWhat it covers:\n\n- what a revival costs in coin, favour or debt and who holds that debt afterwards\n- who can actually perform it and how hard that access is to get\n- time lost while you are gone and what moves on without you\n- how relationships and reputation shift when someone comes back\n- how to write the agreement down so the table knows what a death means before it happens\n\nI kept the costs as a menu rather than a single price, because the right weight varies a lot by group. Too light and death feels cheap, too heavy and players stop taking risks.\n\nHas your group ever set resurrection terms in advance, and what cost made a return feel earned rather than free?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-40662112633-1.png)",
+      "url": "https://codexcryptica.com/answers/how-to-keep-character-death-meaningful-with-resurrection",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-40662112633-1.png",
       "source_id": "40662112633",
       "status": "approved",
-      "created_at": 1793179026
+      "created_at": 1793180144
     }
   ]
 }
