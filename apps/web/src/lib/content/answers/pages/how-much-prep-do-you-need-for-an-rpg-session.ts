@@ -7,7 +7,7 @@ export const howMuchPrepDoYouNeedForAnRpgSession: AnswerConfigInput = {
   question: "How much prep do you need for an RPG session?",
   kind: "framework",
   shortAnswer:
-    "There is no time or page-count that applies to every GM, system or campaign, and chasing one is the wrong question. Prep only pays off when it creates choices at the table, so the useful measure is coverage, not hours: do you know the immediate situation, the people in it and what they want, a couple of places the party might go, a complication or two, and what happens if the players do nothing? If yes, you are ready, whether that took twenty minutes or two hours.",
+    "You have enough prep when you can start the next session, respond to the likely player choices, and improvise or defer the rest without stalling the table. There is no time or page-count that applies to every GM, system or campaign: judge by coverage, not hours. If you know the immediate situation, the people in it and what they want, a couple of likely places, a complication or two, and what happens if the players do nothing, you are ready whether that took twenty minutes or two hours.",
   sections: [
     {
       kind: "prose",
@@ -54,6 +54,15 @@ export const howMuchPrepDoYouNeedForAnRpgSession: AnswerConfigInput = {
       ],
       outro:
         "That's the whole list. A session with all seven covered in a page of bullet points is better prepared than one with forty pages of backstory and none of them.",
+    },
+    {
+      kind: "prose",
+      heading: "When should you stop preparing?",
+      paragraphs: [
+        "If you can start the next session, respond to the most likely player choices, and improvise or defer the rest without stalling the table, you have enough prep. Ask yourself: Do I know where play resumes? What is likely to happen next, and what do the key people want? Have I covered the likely choice points and any essential rules or materials? If yes, stop the required prep. You do not need every branch, map, or encounter fully specified; leave room for the players to choose.",
+        "For example, flesh out the neighbourhood the party is most likely to visit, just enough to run it. For a second neighbourhood, jot a one- or two-sentence premise, one distinctive NPC or obstacle, and a hook or choice. Leave detailed maps, stat blocks, quest chains, and a conditional boss until the party chooses that route or those details become necessary. Loot and levelling can be a short checklist; you do not need to solve a future plot to handle them.",
+        "Enjoying worldbuilding is a good reason to keep creating; it is different from needing to finish that work before you can play. Optional prep is valid, but it is not a readiness test.",
+      ],
     },
     {
       kind: "list",
@@ -179,7 +188,7 @@ export const howMuchPrepDoYouNeedForAnRpgSession: AnswerConfigInput = {
       "low prep gming",
     ],
     uniqueValue:
-      "Replaces the search for a universal prep-time ratio with a seven-item coverage checklist, a compact worked example, and the essential/reusable/optional-worldbuilding distinction that explains why more hours prepped isn't the same as better prepared.",
+      "Replaces the search for a universal prep-time ratio with a seven-item coverage checklist, a clear stopping rule, a compact worked example, and the essential/reusable/optional-worldbuilding distinction that explains why more hours prepped isn't the same as better prepared.",
     relatedIntents: [
       "answer-campaign-notes",
       "answer-random-encounter",
@@ -197,7 +206,7 @@ export const howMuchPrepDoYouNeedForAnRpgSession: AnswerConfigInput = {
   seo: {
     title: "How much prep do you need for an RPG session? | Codex Cryptica",
     description:
-      "There's no universal prep-time ratio. A compact checklist for what actually needs preparing, a worked example, and why worldbuilding isn't the same thing as session prep.",
+      "Know when to stop preparing for an RPG session with a practical coverage checklist, stopping rule, and a compact worked example. More worldbuilding is optional, not a readiness test.",
     image:
       "https://assets.codexcryptica.com/og/how-much-prep-do-you-need-for-an-rpg-session.jpg",
     imageAlt:
