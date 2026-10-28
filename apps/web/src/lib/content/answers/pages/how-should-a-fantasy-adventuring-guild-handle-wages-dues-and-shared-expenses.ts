@@ -182,6 +182,7 @@ export const howShouldAFantasyAdventuringGuildHandleWagesDuesAndSharedExpenses: 
       "how-do-i-turn-economic-pressures-into-rpg-adventure-hooks",
       "how-do-i-run-a-campaign-where-the-players-own-a-business",
       "how-do-you-create-a-fantasy-faction",
+      "how-would-a-realistic-adventurers-guild-work",
     ],
     discovery: {
       parentCluster: "economy-trade",

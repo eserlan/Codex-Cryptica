@@ -145,6 +145,7 @@ import { howToCreateASciFiStarSystemForAnRpg } from "./how-to-create-a-sci-fi-st
 import { howToCreateRumoursForAFantasyTown } from "./how-to-create-rumours-for-a-fantasy-town";
 import { howToKeepCharacterDeathMeaningfulWithResurrection } from "./how-to-keep-character-death-meaningful-with-resurrection";
 import { howToWriteAnInWorldNewspaperForAnRpg } from "./how-to-write-an-in-world-newspaper-for-an-rpg";
+import { howWouldARealisticAdventurersGuildWork } from "./how-would-a-realistic-adventurers-guild-work";
 import { isMyRpgCampaignIdeaGood } from "./is-my-rpg-campaign-idea-good";
 import { pointCrawlVsHexCrawl } from "./point-crawl-vs-hex-crawl";
 import { shouldIShareWorldbuildingNotesWithMyPlayers } from "./should-i-share-worldbuilding-notes-with-my-players";
@@ -338,6 +339,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howToCreateRumoursForAFantasyTown,
     howToKeepCharacterDeathMeaningfulWithResurrection,
     howToWriteAnInWorldNewspaperForAnRpg,
+    howWouldARealisticAdventurersGuildWork,
     isMyRpgCampaignIdeaGood,
     pointCrawlVsHexCrawl,
     shouldIShareWorldbuildingNotesWithMyPlayers,
