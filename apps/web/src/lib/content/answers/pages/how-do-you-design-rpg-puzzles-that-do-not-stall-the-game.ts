@@ -187,5 +187,9 @@ export const howDoYouDesignRpgPuzzlesThatDoNotStallTheGame: AnswerConfigInput =
         "How do you design RPG puzzles that do not stall the game? | Codex Cryptica",
       description:
         "Puzzles stall when there is one answer and no exit. Four properties that keep play moving, a redesigned vault door, and safety valves to prepare in advance.",
+      image:
+        "https://assets.codexcryptica.com/og/how-do-you-design-rpg-puzzles-that-do-not-stall-the-game.jpg",
+      imageAlt:
+        "Adventurers tackle a sealed vault door from several angles at once by torchlight as water seeps up through the floor",
     },
   };

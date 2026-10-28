@@ -198,5 +198,9 @@ export const howMuchPrepDoYouNeedForAnRpgSession: AnswerConfigInput = {
     title: "How much prep do you need for an RPG session? | Codex Cryptica",
     description:
       "There's no universal prep-time ratio. A compact checklist for what actually needs preparing, a worked example, and why worldbuilding isn't the same thing as session prep.",
+    image:
+      "https://assets.codexcryptica.com/og/how-much-prep-do-you-need-for-an-rpg-session.jpg",
+    imageAlt:
+      "A game master's candlelit desk with a few chosen prep notes, portraits and dice, a larger pile of unused books pushed aside",
   },
 };

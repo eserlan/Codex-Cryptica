@@ -204,5 +204,9 @@ export const howDoYouRunAConspiracyCampaign: AnswerConfigInput = {
     title: "How do you run a conspiracy campaign? | Codex Cryptica",
     description:
       "Decide the truth in full, then design how it leaks. The three documents to write first, why every conclusion needs three routes, and how to keep the trail consistent.",
+    image:
+      "https://assets.codexcryptica.com/og/how-do-you-run-a-conspiracy-campaign.jpg",
+    imageAlt:
+      "An investigator pins sealed letters, threads and portraits to a garret wall by candlelight while an informant watches from the door",
   },
 };

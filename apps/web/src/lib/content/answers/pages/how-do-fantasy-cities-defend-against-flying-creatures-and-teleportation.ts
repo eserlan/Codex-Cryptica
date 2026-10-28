@@ -303,6 +303,7 @@ export const howDoFantasyCitiesDefendAgainstFlyingCreaturesAndTeleportation: Ans
       "how-do-you-create-a-fantasy-faction",
       "how-do-you-start-worldbuilding-from-scratch",
       "how-does-magic-affect-politics-and-government",
+      "how-would-a-realistic-adventurers-guild-work",
     ],
     discovery: {
       id: "answer-fantasy-city-defence-flight-teleportation",

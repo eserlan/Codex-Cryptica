@@ -190,5 +190,9 @@ export const howDoYouOrganiseRpgCampaignNotes: AnswerConfigInput = {
     title: "How do you organise RPG campaign notes? | Codex Cryptica",
     description:
       "Split notes into durable entity pages, dated session logs and disposable prep, then link rather than file. A practical structure and a ten-minute post-session pass.",
+    image:
+      "https://assets.codexcryptica.com/og/how-do-you-organise-rpg-campaign-notes.jpg",
+    imageAlt:
+      "A tidy game master's desk with a bound campaign journal, an annotated regional map, index cards, miniatures and a tray of dice",
   },
 };

@@ -175,5 +175,8 @@ export const whatIsAPointCrawl: AnswerConfigInput = {
     title: "What is a point crawl? | Codex Cryptica",
     description:
       "A point crawl maps an adventure as named locations joined by explicit routes, not a hex grid. What it is made of, a worked fen example, and when not to use one.",
+    image: "https://assets.codexcryptica.com/og/what-is-a-point-crawl.jpg",
+    imageAlt:
+      "Travelers pause at a forking waystone above a highland valley, with paths leading to a ruined tower, a stone bridge, a camp and a shrine",
   },
 };

@@ -7,7 +7,7 @@ export const howDoYouHandleCharacterDeathInATabletopRpg: AnswerConfigInput = {
   question: "How do you handle character death in a tabletop RPG?",
   kind: "framework",
   shortAnswer:
-    "Handle it in three steps: pause the table to confirm the result is final, give the dying character a last action or parting words, then take a short break before anyone touches a replacement sheet. Don't rush a dead character out of the room or slide a new one across the table in the same breath. Honouring the moment keeps the death feeling like a real story beat, and agreeing the process in advance stops it from turning into resentment.",
+    "Handle it in three steps: pause the table to confirm the character has died under the rules that apply, then check what revival, if any, your campaign contract allows before treating the departure as permanent. Give the dying character a last action or parting words, then take a short break before anyone touches a replacement sheet. Don't rush a dead character out of the room or slide a new one across the table in the same breath. Honouring the moment keeps the death feeling like a real story beat, and agreeing the process in advance stops it from turning into resentment.",
   sections: [
     {
       kind: "prose",
@@ -25,7 +25,7 @@ export const howDoYouHandleCharacterDeathInATabletopRpg: AnswerConfigInput = {
       items: [
         {
           term: "Call a pause and confirm the maths",
-          text: "Stop the action immediately. Verify hit point calculations and rule interpretations calmly with the player away from combat chaos, until you both agree the outcome is legitimate and irreversible.",
+          text: "Stop the action immediately. Verify hit point calculations and rule interpretations calmly with the player away from combat chaos, until you both agree the character has died under the applicable rules, then check any agreed revival route before treating the departure as permanent.",
         },
         {
           term: "Offer a final heroic stand or parting monologue",
@@ -56,7 +56,7 @@ export const howDoYouHandleCharacterDeathInATabletopRpg: AnswerConfigInput = {
         },
         {
           term: "Why it works",
-          text: "The mechanical death is fully enforced without cheap resurrection tricks, but the player is given authorship over their departure, turning an unlucky roll into a legendary campaign memory.",
+          text: "The mechanical death is fully enforced, but the player is given authorship over their departure, turning an unlucky roll into a legendary campaign memory. Where the campaign contract allows revival, that same dignity applies to the return.",
         },
       ],
     },
@@ -130,6 +130,7 @@ export const howDoYouHandleCharacterDeathInATabletopRpg: AnswerConfigInput = {
     "how-do-you-make-a-boss-fight-memorable-in-a-tabletop-rpg",
     "how-do-i-run-a-large-battle-when-the-player-characters-are-part-of-an-army",
     "what-are-the-best-classless-fantasy-rpgs-with-skill-based-progression",
+    "how-to-keep-character-death-meaningful-with-resurrection",
   ],
   discovery: {
     id: "answer-handle-character-death",
@@ -145,7 +146,18 @@ export const howDoYouHandleCharacterDeathInATabletopRpg: AnswerConfigInput = {
     userJob: "adopt-workflow",
     uniqueValue:
       "A humane, practical three-step death protocol that gives players narrative agency over their final moments while preserving dramatic stakes and campaign continuity.",
-    relatedIntents: ["answer-session-zero", "answer-npc-relationships"],
+    relatedIntents: [
+      "answer-session-zero",
+      "answer-npc-relationships",
+      "answer-keep-death-meaningful-resurrection",
+    ],
+    acknowledgedOverlap: [
+      {
+        with: "answer-keep-death-meaningful-resurrection",
+        reason:
+          "This answer covers handling a death at the table and its immediate aftermath; the resurrection answer covers reversible death, revival policy, and long-term campaign stakes.",
+      },
+    ],
   },
   seo: {
     title: "How to Handle Character Death in a Tabletop RPG | Codex Cryptica",

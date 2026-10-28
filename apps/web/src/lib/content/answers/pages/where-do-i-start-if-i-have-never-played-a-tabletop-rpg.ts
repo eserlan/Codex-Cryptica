@@ -173,5 +173,9 @@ export const whereDoIStartIfIHaveNeverPlayedATabletopRpg: AnswerConfigInput = {
       "Where do I start with tabletop RPGs as a beginner? | Codex Cryptica",
     description:
       "What a complete beginner actually needs to play, starting as a player or a GM, a few terms explained, and a practical sequence from zero to a first session.",
+    image:
+      "https://assets.codexcryptica.com/og/where-do-i-start-if-i-have-never-played-a-tabletop-rpg.jpg",
+    imageAlt:
+      "Newcomers roll dice for the first time at a kitchen table on a rainy evening as an experienced friend guides them",
   },
 };

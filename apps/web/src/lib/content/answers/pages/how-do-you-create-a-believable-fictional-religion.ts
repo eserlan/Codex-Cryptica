@@ -173,6 +173,7 @@ export const howDoYouCreateABelievableFictionalReligion: AnswerConfigInput = {
     "how-should-magic-have-been-discovered-in-my-world",
     "how-does-magic-create-social-classes-and-inequality",
     "how-does-magic-change-society-in-a-fantasy-world",
+    "how-to-keep-character-death-meaningful-with-resurrection",
   ],
   discovery: {
     id: "answer-fictional-religion",
@@ -209,5 +210,9 @@ export const howDoYouCreateABelievableFictionalReligion: AnswerConfigInput = {
       "How do you create a believable fictional religion? | Codex Cryptica",
     description:
       "Write the practice before the doctrine: one rite, one prohibition, who pays, and what adherents disagree about. A worked example, and why coherence reads as fake.",
+    image:
+      "https://assets.codexcryptica.com/og/how-do-you-create-a-believable-fictional-religion.jpg",
+    imageAlt:
+      "Townsfolk in linen and wool bring baskets of grain to a hillside shrine at dawn while a priest receives the tithe",
   },
 };

@@ -170,7 +170,7 @@ export const howDoYouCreateAFictionalLanguageForAnRpg: AnswerConfigInput = {
     description:
       "Build a playable fictional language with sound rules, naming patterns, a small glossary and cultural customs. Includes a worked harbour scene and prep checklist.",
     image:
-      "https://assets.codexcryptica.com/og/how-do-you-create-a-fictional-language-for-an-rpg.png",
+      "https://assets.codexcryptica.com/og/how-do-you-create-a-fictional-language-for-an-rpg.jpg",
     imageAlt:
       "A linguist's notebook and carved harbour sign beside a lamplit river-port window",
   },

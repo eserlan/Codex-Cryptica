@@ -1,11 +1,13 @@
 /** @vitest-environment jsdom */
 
-import { render, screen } from "@testing-library/svelte";
+import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import Page from "./+page.svelte";
 import type { ThemeSlug } from "./+page";
 import { HUB_THEME_SLUGS } from "#lib/content/hub-themes.js";
 import { getLandingPagesForHub } from "#lib/content/for/registry.js";
+import { themeStore } from "#lib/stores/theme.svelte.js";
+import { hubContext } from "#lib/stores/hub-context.svelte.js";
 
 vi.mock("$app/environment", () => ({
   browser: true,
@@ -32,6 +34,31 @@ if (typeof Element !== "undefined" && !Element.prototype.animate) {
 }
 
 describe("Generator Theme Hub Page", () => {
+  it("applies the theme on mount without setting a generator's hub context", () => {
+    hubContext.set(null);
+    render(Page, { props: { data: { theme: "sci-fi" } } });
+
+    expect(themeStore.currentThemeId).toBe("scifi");
+    expect(hubContext.theme).toBeNull();
+  });
+
+  it("uses the latest hub when selecting a generator after navigation", async () => {
+    const { rerender } = render(Page, {
+      props: { data: { theme: "fantasy" } },
+    });
+    await rerender({ data: { theme: "sci-fi" } });
+    // Changing route data alone retains the original mount-only theme behaviour.
+    expect(themeStore.currentThemeId).toBe("fantasy");
+
+    const link = screen.getByRole("link", { name: /surprise me/i });
+    link.addEventListener("click", (event) => event.preventDefault());
+    await fireEvent.click(link);
+
+    expect(link.getAttribute("href")).toBe("/generators/random");
+    expect(themeStore.currentThemeId).toBe("scifi");
+    expect(hubContext.theme).toBe("sci-fi");
+  });
+
   it("shows the nomad clan generator on the cyberpunk hub", () => {
     render(Page, {
       props: {

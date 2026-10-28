@@ -166,6 +166,7 @@ export const howDoIBuildABelievableEconomyForAFantasyWorld: AnswerConfigInput =
       "how-does-magic-change-society-in-a-fantasy-world",
       "how-should-a-fantasy-adventuring-guild-handle-wages-dues-and-shared-expenses",
       "how-do-i-build-a-believable-post-scarcity-civilisation",
+      "how-would-a-realistic-adventurers-guild-work",
     ],
     discovery: {
       id: "answer-believable-fantasy-economy",
