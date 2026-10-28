@@ -173,6 +173,7 @@ export const howDoYouCreateABelievableFictionalReligion: AnswerConfigInput = {
     "how-should-magic-have-been-discovered-in-my-world",
     "how-does-magic-create-social-classes-and-inequality",
     "how-does-magic-change-society-in-a-fantasy-world",
+    "how-to-keep-character-death-meaningful-with-resurrection",
   ],
   discovery: {
     id: "answer-fictional-religion",

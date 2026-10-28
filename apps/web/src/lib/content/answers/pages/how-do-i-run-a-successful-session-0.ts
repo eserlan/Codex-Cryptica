@@ -187,6 +187,7 @@ export const howDoIRunASuccessfulSessionZero: AnswerConfigInput = {
     "how-do-i-give-players-immersive-handouts-in-an-online-rpg",
     "how-do-i-run-my-first-online-tabletop-rpg-session",
     "does-an-rpg-party-need-balanced-roles",
+    "how-to-keep-character-death-meaningful-with-resurrection",
   ],
   discovery: {
     id: "answer-session-zero",
