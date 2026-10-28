@@ -5,6 +5,12 @@ import {
   writeOpfsFile,
 } from "./opfs";
 import { entityDb } from "./entity-db";
+import {
+  type Clock,
+  type IdGenerator,
+  systemClock,
+  systemIdGenerator,
+} from "#lib/utils/runtime-deps.js";
 
 const CONFIG_PATH = [".codex", "config.json"];
 
@@ -25,6 +31,8 @@ export interface VaultConfigDependencies {
     vaultId: string,
   ): Promise<void>;
   withLock?: VaultConfigLock;
+  clock?: Clock;
+  idGenerator?: IdGenerator;
 }
 
 export type VaultConfigUpdater = (
@@ -39,6 +47,7 @@ export type VaultConfigUpdater = (
 export type VaultConfigLock = <T>(
   name: string,
   operation: (ensureHeld?: () => Promise<void>) => Promise<T>,
+  dependencies?: VaultConfigDependencies,
 ) => Promise<T>;
 
 const FALLBACK_LOCK_LEASE_MS = 15_000;
@@ -49,16 +58,18 @@ function wait(milliseconds: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
 }
 
-function createLockToken(): string {
-  return globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`;
+function createLockToken(idGenerator: IdGenerator): string {
+  return idGenerator.uuid();
 }
 
 async function withIndexedDbLock<T>(
   name: string,
   operation: (ensureHeld?: () => Promise<void>) => Promise<T>,
+  dependencies: VaultConfigDependencies = {} as VaultConfigDependencies,
 ): Promise<T> {
   const key = `vault-config-lock:${name}`;
-  const owner = createLockToken();
+  const clock = dependencies.clock ?? systemClock;
+  const owner = createLockToken(dependencies.idGenerator ?? systemIdGenerator);
   let acquired = false;
 
   while (!acquired) {
@@ -67,7 +78,7 @@ async function withIndexedDbLock<T>(
       entityDb.appSettings,
       async () => {
         const current = await entityDb.appSettings.get(key);
-        const now = Date.now();
+        const now = clock.now();
         if (current && current.value.expiresAt > now) return false;
 
         await entityDb.appSettings.put({
@@ -86,7 +97,7 @@ async function withIndexedDbLock<T>(
       .transaction("rw", entityDb.appSettings, async () => {
         const current = await entityDb.appSettings.get(key);
         if (current?.value.owner !== owner) return;
-        const now = Date.now();
+        const now = clock.now();
         await entityDb.appSettings.put({
           key,
           value: { owner, expiresAt: now + FALLBACK_LOCK_LEASE_MS },
@@ -100,7 +111,7 @@ async function withIndexedDbLock<T>(
     const stillHeld = await entityDb.appSettings.get(key);
     if (
       stillHeld?.value.owner !== owner ||
-      stillHeld.value.expiresAt <= Date.now()
+      stillHeld.value.expiresAt <= clock.now()
     ) {
       throw new Error("Vault config lock was lost before the write completed");
     }
@@ -119,18 +130,24 @@ async function withIndexedDbLock<T>(
   }
 }
 
-const withBrowserLock: VaultConfigLock = async (name, operation) => {
+const withBrowserLock = async <T>(
+  name: string,
+  operation: (ensureHeld?: () => Promise<void>) => Promise<T>,
+  dependencies: VaultConfigDependencies = {} as VaultConfigDependencies,
+): Promise<T> => {
   if (typeof navigator !== "undefined" && navigator.locks) {
     return navigator.locks.request(name, () => operation());
   }
-  return withIndexedDbLock(name, operation);
+  return withIndexedDbLock(name, operation, dependencies);
 };
 
 export function createVaultConfigUpdater(
   dependencies: VaultConfigDependencies,
 ): VaultConfigUpdater {
   const pendingWrites = new Map<string, Promise<void>>();
-  const withLock = dependencies.withLock ?? withBrowserLock;
+  const withLock =
+    dependencies.withLock ??
+    ((name, op) => withBrowserLock(name, op, dependencies));
 
   return async (vaultId, update) => {
     const previous = pendingWrites.get(vaultId) ?? Promise.resolve();
