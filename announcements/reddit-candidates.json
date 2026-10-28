@@ -1,5 +1,5 @@
 {
-  "updated_at": 1793140403,
+  "updated_at": 1793179026,
   "candidates": [
     {
       "id": "reddit-40203955328-my-point-crawls-looked-right-until-playe",
@@ -50,6 +50,16 @@
       "source_id": "40592635507-rerun",
       "status": "approved",
       "created_at": 1793140402
+    },
+    {
+      "id": "reddit-40662112633-how-would-a-realistic-adventurers-guild-",
+      "title": "How would a realistic adventurers guild actually work without the quest board?",
+      "body": "I kept hitting the same snag with adventurers guilds. Stick a board in the tavern and suddenly the city lets any sword for hire take any job, with no licence, no training and no one liable when it goes sideways.\n\nI wanted something that felt more like a chartered trade than a job centre, so I built a guide that replaces the generic quest board with a licensed, chartered trade you can run at the table.\n\nFull write up here: https://codexcryptica.com/answers/how-would-a-realistic-adventurers-guild-work\n\nWhat it gives you to drop straight in:\n\n- apprentice to master ladder and what gates each promotion\n- entry control, training and who vouches for new members\n- how rates, dues and shared expenses are actually set and collected\n- liability when a contract goes wrong and emergency powers when the city calls everyone in\n- five institutional variants from city-chartered house to crown contractor, each with trade offs for control, freedom and politics\n\nI leaned toward the chartered model because it answers the money and liability questions cleanly, but it is heavier for a frontier style game, which is why the variants are there to swap in.\n\nHow does your world decide who is allowed to take on dangerous work \u2014 open to anyone, or gated behind membership or patronage?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-40662112633-0.png)",
+      "url": "https://codexcryptica.com/answers/how-would-a-realistic-adventurers-guild-work",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-40662112633-0.png",
+      "source_id": "40662112633",
+      "status": "approved",
+      "created_at": 1793179026
     }
   ]
 }
