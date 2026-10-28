@@ -186,6 +186,7 @@ export const howDoYouCreateAFantasyFaction: AnswerConfigInput = {
     "how-do-i-make-a-campaign-threat-feel-urgent-without-railroading",
     "how-should-a-fantasy-adventuring-guild-handle-wages-dues-and-shared-expenses",
     "where-do-worldbuilding-ideas-come-from",
+    "how-would-a-realistic-adventurers-guild-work",
   ],
   discovery: {
     id: "answer-fantasy-faction",

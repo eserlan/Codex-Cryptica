@@ -307,6 +307,7 @@ export const howDoIRunACampaignWhereThePlayersOwnABusiness: AnswerConfigInput =
       "how-do-you-generate-useful-rpg-rumours",
       "how-should-a-fantasy-adventuring-guild-handle-wages-dues-and-shared-expenses",
       "how-do-i-encourage-party-bonding-during-downtime",
+      "how-would-a-realistic-adventurers-guild-work",
     ],
     discovery: {
       id: "answer-run-player-owned-business",
