@@ -104,7 +104,7 @@
     />
   </div>
 
-  <div class="hidden min-h-0 flex-1 flex-col lg:flex">
+  <div class="hidden min-h-0 flex-1 shrink-0 flex-col lg:flex">
     <AsideMoreList
       heading="Other examples"
       items={related.map((r) => ({ slug: r.slug, label: r.title }))}

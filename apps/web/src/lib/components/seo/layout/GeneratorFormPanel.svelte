@@ -78,7 +78,7 @@
   <GeneratorOfflineNotice {isOnline} {aiModeRequired} {offlineMessage} />
 
   <form
-    class="space-y-4"
+    class="generator-form space-y-4"
     action={canonicalPath ? `${cleanBase}${canonicalPath}` : undefined}
     method={canonicalPath ? "GET" : undefined}
     onsubmit={(event) => {
@@ -120,3 +120,21 @@
 
   <!-- Related links moved to bottom discover section -->
 </div>
+
+<style>
+  /* Generator-specific fields are supplied as snippets; keep their typography
+     consistent here even when a field component uses compact utility classes. */
+  .generator-form :global(input:not([type="checkbox"]):not([type="radio"])),
+  .generator-form :global(select),
+  .generator-form :global(textarea) {
+    font-size: 1rem;
+  }
+
+  .generator-form :global(label),
+  .generator-form :global(summary),
+  .generator-form :global(button),
+  .generator-form :global(p) {
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+</style>

@@ -49,5 +49,28 @@ describe("point-crawl cross-links (#4369)", () => {
       "/answers/point-crawl-vs-hex-crawl",
     ]);
     expect(hrefs).toContain("/answers/what-is-a-point-crawl");
+    expect(hrefs).toContain("/examples/the-receding-tide-road-point-crawl");
+  });
+
+  it("describes the comparison page example consistently with its edited provenance", () => {
+    const link = pointCrawlVsHexCrawl.relatedTools?.find(
+      (tool) => tool.href === "/examples/the-receding-tide-road-point-crawl",
+    );
+    expect(link?.description).toContain("lightly edited");
+    expect(link?.description).not.toContain("unedited");
+  });
+
+  it("links to the published point crawl example from the answers (#4373)", () => {
+    const EXAMPLE_HREF = "/examples/the-receding-tide-road-point-crawl";
+    expect(
+      whatIsAPointCrawl.relatedTools?.some(
+        (tool) => tool.href === EXAMPLE_HREF,
+      ),
+    ).toBe(true);
+    expect(
+      pointCrawlVsHexCrawl.relatedTools?.some(
+        (tool) => tool.href === EXAMPLE_HREF,
+      ),
+    ).toBe(true);
   });
 });

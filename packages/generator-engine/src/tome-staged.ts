@@ -52,6 +52,8 @@ import {
   hooksMessage,
 } from "./tome-staged-prompts";
 import { finishTomeCoherence } from "./tome-staged-coherence";
+import { withPublicCreativeCue } from "./public-creative-diversity";
+import { defaultRng } from "./random-utils";
 
 export type {
   TomeStageId,
@@ -133,7 +135,11 @@ async function runStaged(
     deps,
     run,
     "provenance",
-    provenanceMessage(resolved, prefix),
+    withPublicCreativeCue(
+      provenanceMessage(resolved, prefix),
+      "object",
+      deps.rng ?? defaultRng,
+    ),
     (d) => checkTomeProvenanceStage(d, resolved, avoid),
   );
   if (!provenanceStage) return null;

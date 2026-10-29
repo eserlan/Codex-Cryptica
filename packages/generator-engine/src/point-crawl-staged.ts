@@ -19,6 +19,7 @@
  */
 
 import { formatCampaignContextBlock } from "./campaign-context";
+import { withPublicCreativeCue } from "./public-creative-diversity";
 import { StagedProgress, type StagedProgressStep } from "./staged-progress";
 import { askJson, pool, throwIfAborted } from "./staged-runtime";
 import {
@@ -418,10 +419,10 @@ export async function generatePointCrawlStaged(
 
   // Stage 1: Topology naming & premise
   progress.set("structure", "active");
-  const topoPrompt = buildTopologyStagePrompt(
-    base,
-    options.campaignContext,
-    options.avoidNames,
+  const topoPrompt = withPublicCreativeCue(
+    buildTopologyStagePrompt(base, options.campaignContext, options.avoidNames),
+    "landscape",
+    rng,
   );
   const topoReply = await askJson(() => complete(topoPrompt), {
     signal,

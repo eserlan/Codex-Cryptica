@@ -1,3 +1,4 @@
+import { withPublicCreativeCue } from "./public-creative-diversity";
 /**
  * Public Settlement / Location generator — framework-free, genre-aware.
  *
@@ -199,7 +200,7 @@ Return only the JSON object. Do not include markdown code block formatting like 
   return {
     systemInstruction:
       "You are an assistant that generates detailed, genre-aware RPG campaign elements in JSON format. Match the genre, tone, and setting precisely — a cyberpunk district must feel nothing like a fantasy town. Build settlements that would keep making sense as places even if their current plot were removed.",
-    userMessage,
+    userMessage: withPublicCreativeCue(userMessage, "place", rng),
     resolved,
   };
 }

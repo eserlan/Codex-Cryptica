@@ -87,7 +87,7 @@ export function renderGeneratorMarkdown(
   return renderMd(
     safeValue
       // bold-key variant: "- **Key**: value" or "* **Key**: value"
-      .replace(/^[*-] \*\*(.*?)\*\*: (.*)$/gm, (_, k, v) =>
+      .replace(/^[*-] \*\*([^*\n]+?)(?::\*\*|\*\*:)[ \t]+(.*)$/gm, (_, k, v) =>
         labelValueHtml(k, v, variant),
       )
       // plain-key variant: "* Key: value" or "- Key: value" (key ≤ 60 chars, no colon in key)

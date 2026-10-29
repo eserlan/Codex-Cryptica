@@ -44,6 +44,7 @@ import {
 } from "./staged-progress";
 import { askModel, readJsonObject, type JsonObject } from "./staged-runtime";
 import { councilVoteConfig } from "./public-council-vote-constants";
+import { formatPublicScenarioConcept } from "./public-scenario-diversity";
 export { councilVoteConfig };
 
 export type CouncilVoteStageId = "foundation" | "paths";
@@ -234,7 +235,7 @@ export function buildCouncilVoteFoundationPrompt(
     : "";
   const seedBlock = options.seed
     ? `\n\n${formatSeedBlock(options.seed, "Political council vote concept")}\n`
-    : "";
+    : `\n\n${formatPublicScenarioConcept(resolved.genre, resolved.tone, rng)}\n`;
 
   const userMessage = `Generate the FOUNDATION of a Council Vote political RPG quest in JSON format: the party must secure enough votes on a council before an urgent decision is made, instead of persuading a single ruler. This is step one of two — a second step will build the possible paths to victory afterward, treating everything you establish here as fixed, unchangeable fact. Do NOT write "Possible Paths" or "Follow-Up Hooks" yet; those come later.
 Options:

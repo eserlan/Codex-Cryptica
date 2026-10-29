@@ -16,6 +16,7 @@ import {
   generatePlaceholderName as generateName,
 } from "./random-utils";
 import { parseFencedJson } from "./llm-response-utils";
+import { withPublicCreativeCue } from "./public-creative-diversity";
 import { formatCampaignContextBlock } from "./campaign-context";
 import { factionConfig } from "./public-faction-constants";
 import {
@@ -267,7 +268,7 @@ Return only the JSON object. Do not include markdown code block formatting like 
   return {
     systemInstruction:
       "You are an assistant that generates detailed RPG campaign villains in JSON format.",
-    userMessage,
+    userMessage: withPublicCreativeCue(userMessage, "character", rng),
     resolved,
   };
 }

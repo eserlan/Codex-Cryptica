@@ -18,6 +18,7 @@
   } from "#lib/services/seo/monsterlabs-handoff.js";
   import ShareButton from "#lib/components/ShareButton.svelte";
   import { buildMysteryPlayerHandout } from "./generator-copy";
+  import { pointCrawlHeading } from "./point-crawl-heading.js";
 
   const HIDDEN_TAGS = new Set([
     "imported-draft",
@@ -216,7 +217,7 @@
             <div class="flex flex-wrap gap-1.5">
               {#each (generatedData.labels ?? []).filter((l) => !HIDDEN_TAGS.has(l)) as label (label)}
                 <span
-                  class="rounded-full border border-theme-border/60 bg-theme-surface/20 px-2 py-0.5 text-nano uppercase tracking-wider font-mono font-bold text-theme-text/55"
+                  class="rounded-full border border-theme-border/60 bg-theme-surface/20 px-2.5 py-1 text-sm uppercase tracking-wider font-mono font-bold text-theme-text"
                 >
                   {label}
                 </span>
@@ -422,13 +423,30 @@
                 class="group/section rounded-xl border border-transparent transition-colors hover:border-theme-border/35 hover:bg-theme-surface/10"
               >
                 {#if section.heading}
+                  {@const pointHeading = pointCrawlHeading(
+                    section.heading,
+                    generatedData?.pointCrawl,
+                  )}
                   <div
                     class="mb-2 flex items-center justify-between gap-3 border-b border-theme-border/35 pb-2"
                   >
                     <h3
                       class="font-header text-base md:text-lg font-bold text-[color:color-mix(in_srgb,var(--color-primary)_65%,var(--color-text))]"
                     >
-                      {section.heading}
+                      {#if pointHeading}
+                        <span>{pointHeading.title}</span>
+                        <span
+                          class="ml-2 inline-flex items-center gap-1.5 rounded-full border border-theme-border bg-theme-surface px-3 py-1 align-middle font-sans text-sm font-semibold text-theme-text"
+                        >
+                          <span
+                            class="{pointHeading.icon} h-4 w-4"
+                            aria-hidden="true"
+                          ></span>
+                          {pointHeading.label}
+                        </span>
+                      {:else}
+                        {section.heading}
+                      {/if}
                     </h3>
                     <div class="flex items-center gap-1.5">
                       {#if onOpenMemberAsCharacter && isFactionRosterDraft(generatedData?.labels)}

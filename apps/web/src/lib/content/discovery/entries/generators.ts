@@ -484,8 +484,14 @@ export const generatorEntries: DiscoveryEntryInput[] = [
       "answer-build-a-point-crawl",
       "answer-point-crawl-vs-hex-crawl",
       "generator-dungeon-generator",
+      "example-receding-tide-road-point-crawl",
     ],
     acknowledgedOverlap: [
+      {
+        with: "example-receding-tide-road-point-crawl",
+        reason:
+          "This generator creates new interactive point crawls (create); the example page demonstrates a complete, playable coastal fantasy point crawl with network map and choice walkthrough (see-an-example).",
+      },
       {
         with: "answer-point-crawl",
         reason:

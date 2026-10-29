@@ -6,6 +6,7 @@
  */
 
 import { defaultRng, type Rng } from "./random-utils";
+import { withPublicCreativeCue } from "./public-creative-diversity";
 import { CRIMINAL_WORDS } from "./business-tables";
 import {
   generateBusinessLocal,
@@ -368,7 +369,13 @@ export async function generateBusinessStaged(
 
   doc = await identityStage(
     doc,
-    turnFor(businessStageMessage("identity", opts)),
+    turnFor(
+      withPublicCreativeCue(
+        businessStageMessage("identity", opts),
+        "organisation",
+        rng,
+      ),
+    ),
     ctx,
   );
   doc = await connectionsStage(

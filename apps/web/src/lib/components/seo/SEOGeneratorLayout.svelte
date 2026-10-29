@@ -69,7 +69,7 @@
     variant = "default",
     generateLabel = undefined,
     busyLabel = undefined,
-    inputHint = "Set your inputs — your draft updates to the right",
+    inputHint = undefined,
     backHref = undefined,
     backLabel = undefined,
     onGeneratePlotTwist = undefined,
@@ -195,6 +195,12 @@
   const generatedSingular = $derived(resolveGeneratedSingular(eyebrow));
   const columnClasses = $derived(
     getGeneratorColumnClasses(singleColumn, wideForm),
+  );
+  const activeInputHint = $derived(
+    inputHint ??
+      (isNarrowViewport
+        ? "Set your inputs — your draft updates below"
+        : "Set your inputs — your draft updates to the right"),
   );
   const contextSelection = $derived(
     getContextSelection(sessionHubStore.entities),
@@ -384,7 +390,7 @@
         {introTitle}
         {introText}
         {labels}
-        {inputHint}
+        inputHint={activeInputHint}
         {backHref}
         {backLabel}
         {formFields}

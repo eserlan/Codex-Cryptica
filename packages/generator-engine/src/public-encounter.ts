@@ -1,3 +1,4 @@
+import { formatPublicScenarioConcept } from "./public-scenario-diversity";
 /**
  * Public Encounter generator — framework-free, theme-aware.
  *
@@ -267,6 +268,7 @@ You must return a valid JSON object matching the following structure exactly:
 }
 ${tovInstructions}
 ${NAME_BAN_PROMPT}
+${formatPublicScenarioConcept(resolved.genre, resolved.tone, rng)}
 ${sessionContext}
 Before returning, run a consistency pass: the threat level must match the collective danger actually described among the listed participants, and must also scale the severity of the Outcomes & Consequences for every encounter type -- not just how dangerous Combat is, but how costly a Social, Exploration, Environmental, or Mixed failure/escalation becomes; the complication must genuinely complicate the stated stakes rather than being cosmetic; each possible approach must be a specific, exploitable feature of this encounter, described as an opportunity rather than a solved puzzle, drawn from this encounter's actual details rather than a repeated formula (not generic filler that would fit any encounter); the success outcome must not resolve every objective cleanly -- it needs a real cost or loose end; the outcomes must correspond to the approaches actually described; the player-facing content must contain zero information that is only revealed in the lore; the glance fields must be short and scannable, not prose duplicates of the lore sections; and no fact may be repeated across two sections.
 Return only the JSON object. Do not include markdown code block formatting like \`\`\`json.`;

@@ -254,6 +254,35 @@ export const STRUCTURAL_ROLE_LABELS: Record<PointCrawlStructuralRole, string> =
     connector: "Connector",
   };
 
+const ROLE_SYMBOLS: Record<
+  PointCrawlNodeRole | PointCrawlStructuralRole,
+  string
+> = {
+  start: "◎",
+  goal: "★",
+  hub: "✣",
+  chokepoint: "◆",
+  secret: "◇",
+  optional: "○",
+  connector: "●",
+  hazard: "▲",
+  obstacle: "◆",
+  side: "○",
+};
+
+/** Symbol supplements, rather than replaces, the point's role label. */
+export function pointCrawlNodeRoleSymbol(
+  node: Pick<PointCrawlNode, "role" | "structuralRole">,
+): string {
+  return ROLE_SYMBOLS[node.structuralRole ?? node.role] ?? "●";
+}
+
+export function pointCrawlRouteSymbol(
+  direction: PointCrawlRouteDirection,
+): string {
+  return direction === "one-way" ? "→" : "⇄";
+}
+
 export function pointCrawlNodeRoleLabel(node: PointCrawlNode): string {
   return node.structuralRole
     ? STRUCTURAL_ROLE_LABELS[node.structuralRole]
@@ -277,49 +306,62 @@ export function formatRouteConnectionLabel(route: PointCrawlRoute): string {
   return `${route.travelTime} · ${route.terrain}${tagSuffix}`;
 }
 
-/**
- * Deterministic single-sentence description of a route, guaranteed to agree
- * with its structured fields.
- */
+/** Render a route as a table-ready Markdown section from its structured fields. */
 export function renderPointCrawlRouteSummary(
   route: PointCrawlRoute,
   nodesById: ReadonlyMap<string, PointCrawlNode>,
-  fromNodeId = route.fromNodeId,
+  fromNodeId?: string,
 ): string {
   const fromName = nodesById.get(route.fromNodeId)?.name ?? route.fromNodeId;
   const toName = nodesById.get(route.toNodeId)?.name ?? route.toNodeId;
-  const arrow = route.direction === "one-way" ? "→" : "↔";
+  const arrow = pointCrawlRouteSymbol(route.direction);
   const visibilityNote =
-    route.visibility === "hidden"
-      ? " (hidden route)"
-      : route.visibility === "rumoured"
-        ? " (rumoured route)"
-        : "";
-  const gateNodeName = route.gate
-    ? (nodesById.get(route.gate.unlockedByNodeId)?.name ??
-      route.gate.unlockedByNodeId)
-    : undefined;
-  const gateSentence = route.gate
-    ? ` **Locked (${route.gate.kind})**: requires ${route.gate.requirement} (found at **${gateNodeName}**).`
-    : "";
+    route.visibility === "obvious" ? "" : ` (${route.visibility} route)`;
   const reverse = fromNodeId === route.toNodeId;
+  const originName = reverse ? toName : fromName;
   const approach = reverse
     ? route.approachFromTarget
     : route.approachFromSource;
-  return `**${fromName} ${arrow} ${toName}**${visibilityNote} — *${route.travelTime} via ${route.terrain}*. **Signpost**: ${approach ?? route.signpost} **Risk**: ${route.risk}${gateSentence}`;
+  const lines = [
+    `### ${fromName} ${arrow} ${toName}${visibilityNote}`,
+    "",
+    `**Travel:** ${route.travelTime}  `,
+    `**Terrain:** ${route.terrain}`,
+    "",
+    `**Signpost from ${originName}:** ${approach ?? route.signpost}`,
+    "",
+    `**Risk:** ${route.risk}`,
+  ];
+  if (
+    fromNodeId === undefined &&
+    route.direction === "bidirectional" &&
+    route.approachFromTarget
+  ) {
+    lines.push("", `**Approach from ${toName}:** ${route.approachFromTarget}`);
+  }
+  if (route.gate) {
+    const gateNodeName =
+      nodesById.get(route.gate.unlockedByNodeId)?.name ??
+      route.gate.unlockedByNodeId;
+    lines.push(
+      "",
+      `**Locked (${route.gate.kind}):** requires ${route.gate.requirement} (found at **${gateNodeName}**).`,
+    );
+  }
+  return lines.join("\n");
 }
 
 function renderPointCrawlLocations(crawl: PointCrawlNetwork): string[] {
   return crawl.nodes.flatMap((node, idx) => {
     const roleLabel = pointCrawlNodeRoleLabel(node);
     return [
-      `### ${idx + 1}. ${node.name} *(${roleLabel})*`,
+      `### ${idx + 1}. ${node.name} (${pointCrawlNodeRoleSymbol(node)} ${roleLabel})`,
       node.summary,
       "",
-      `- **Sights & Atmosphere**: ${node.sensoryDescription}`,
-      `- **Why Visit**: ${node.whyVisit}`,
-      `- **Encounter / Complication**: ${node.encounterOrHazard}`,
-      `- **Clue / Reward**: ${node.clueOrReward}`,
+      `- **Sights & Atmosphere:** ${node.sensoryDescription}`,
+      `- **Why Visit:** ${node.whyVisit}`,
+      `- **Encounter / Complication:** ${node.encounterOrHazard}`,
+      `- **Clue / Reward:** ${node.clueOrReward}`,
       "",
     ];
   });
@@ -330,12 +372,8 @@ function renderPointCrawlRoutes(
   nodesById: ReadonlyMap<string, PointCrawlNode>,
 ): string[] {
   return crawl.routes.flatMap((route) => [
-    `- ${renderPointCrawlRouteSummary(route, nodesById)}`,
-    ...(route.direction === "bidirectional" && route.approachFromTarget
-      ? [
-          `  - From **${nodesById.get(route.toNodeId)?.name ?? route.toNodeId}**: ${route.approachFromTarget}`,
-        ]
-      : []),
+    "",
+    renderPointCrawlRouteSummary(route, nodesById),
   ]);
 }
 
@@ -424,7 +462,7 @@ export function renderPointCrawlGmSheet(crawl: PointCrawlNetwork): string {
         ? nodesById.get(route.gate.unlockedByNodeId)
         : undefined;
       lines.push(
-        `- **${fromName} → ${toName}** (${route.terrain}): requires **${route.gate?.requirement}** (${route.gate?.kind}) obtained at **${unlockNode?.name ?? route.gate?.unlockedByNodeId}** before crossing.`,
+        `- **${fromName} ${pointCrawlRouteSymbol(route.direction)} ${toName}** (${route.terrain}): requires **${route.gate?.requirement}** (${route.gate?.kind}) obtained at **${unlockNode?.name ?? route.gate?.unlockedByNodeId}** before crossing.`,
       );
     }
   }
@@ -438,7 +476,7 @@ export function renderPointCrawlGmSheet(crawl: PointCrawlNetwork): string {
         nodesById.get(route.fromNodeId)?.name ?? route.fromNodeId;
       const toName = nodesById.get(route.toNodeId)?.name ?? route.toNodeId;
       lines.push(
-        `- **${fromName} ↔ ${toName}** (*${route.visibility}*, ${route.travelTime} via ${route.terrain}): ${route.signpost}`,
+        `- **${fromName} ${pointCrawlRouteSymbol(route.direction)} ${toName}** (*${route.visibility}*, ${route.travelTime} via ${route.terrain}): ${route.signpost}`,
       );
     }
   }

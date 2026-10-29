@@ -111,6 +111,9 @@ describe("generateBusinessStaged", () => {
         steps.push(list.map((s) => `${s.id}:${s.status}`).join(",")),
     });
     expect(calls).toHaveLength(3);
+    expect(calls[0]).toContain("Optional creative variation:");
+    expect(calls[1]).not.toContain("Optional creative variation:");
+    expect(calls[2]).not.toContain("Optional creative variation:");
     expect(doc.identity.name).toBe("Chrome Lily");
     expect(doc.relationships[0].name).toBe("Helix Medical Corp");
     expect(doc.fallbackSections).toEqual([]);
@@ -128,6 +131,9 @@ describe("generateBusinessStaged", () => {
     const doc = await generateBusinessStaged(OPTS, { send, rng: seeded(12) });
     expect(calls).toHaveLength(4);
     expect(calls[1]).toContain("not usable");
+    const cue = calls[0].match(/Optional creative variation:[^\n]+/)?.[0];
+    expect(cue).toBeTruthy();
+    expect(calls[1]).toContain(cue!);
     expect(doc.identity.name).toBe("Chrome Lily");
     expect(doc.fallbackSections).toEqual([]);
   });

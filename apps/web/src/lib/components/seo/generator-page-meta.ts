@@ -2111,6 +2111,10 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
         label: "What Is a Point Crawl in Tabletop RPGs?",
       },
       {
+        href: "/examples/the-receding-tide-road-point-crawl",
+        label: "Point Crawl Example: The Receding Tide Road",
+      },
+      {
         href: "/generators/dungeon-generator",
         label: "Dungeon & Delve Generator",
       },

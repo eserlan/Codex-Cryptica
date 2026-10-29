@@ -164,6 +164,10 @@ describe("GeneratorSwitcherMenu", () => {
     const currentLink = screen.getByText("Settlement Generator", {
       selector: "a",
     });
-    expect(currentLink.className).toContain("text-theme-primary");
+    expect(
+      currentLink
+        .querySelector("span")
+        ?.classList.contains("icon-[lucide--check]"),
+    ).toBe(true);
   });
 });

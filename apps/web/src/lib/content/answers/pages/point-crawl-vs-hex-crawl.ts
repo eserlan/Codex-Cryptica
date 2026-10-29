@@ -117,6 +117,12 @@ export const pointCrawlVsHexCrawl: AnswerConfigInput = {
         "Build a node-and-route network with costed links, loops and hidden shortcuts, if the choice above points to a point crawl.",
       href: "/generators/point-crawl",
     },
+    {
+      title: "Point crawl example: The Receding Tide Road",
+      description:
+        "Read a lightly edited 8-node coastal fantasy point crawl with network map, travel times, and key-before-lock gates.",
+      href: "/examples/the-receding-tide-road-point-crawl",
+    },
   ],
   relatedForPages: [
     {

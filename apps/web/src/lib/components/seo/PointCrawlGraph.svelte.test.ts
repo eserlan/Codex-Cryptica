@@ -32,6 +32,23 @@ describe("PointCrawlGraph", () => {
     const start = crawl.nodes.find((node) => node.id === crawl.startNodeId)!;
     const startElement = screen.getByTestId(`point-crawl-node-${start.id}`);
     expect(startElement.textContent).toContain("START");
+    expect(startElement.textContent).toContain("◎");
+    expect(startElement.getAttribute("aria-label")).toContain("Start Point");
+    // Role cues sit on a surface fill, so they must use the text token.
+    const goalElement = screen.getByTestId(
+      `point-crawl-node-${crawl.nodes.find((n) => n.role === "goal")!.id}`,
+    );
+    for (const el of [startElement, goalElement]) {
+      expect(
+        el
+          .querySelector("circle:not([stroke-dasharray])")
+          ?.getAttribute("class"),
+      ).toContain("fill-theme-surface");
+      for (const text of el.querySelectorAll("text")) {
+        expect(text.getAttribute("class")).toContain("fill-theme-text");
+        expect(text.getAttribute("class")).not.toContain("fill-theme-bg");
+      }
+    }
     await fireEvent.click(startElement);
     expect(
       screen.getByLabelText(`Location details: ${start.name}`),

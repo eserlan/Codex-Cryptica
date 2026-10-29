@@ -1,3 +1,4 @@
+import { withPublicCreativeCue } from "./public-creative-diversity";
 /**
  * Public Heist generator — framework-free, for the marketing/SEO generator
  * surface (no login, no vault context).
@@ -908,7 +909,9 @@ Return only the JSON object. Do not include markdown code block formatting like 
   return {
     systemInstruction:
       "You are an assistant that generates detailed RPG campaign elements in JSON format.",
-    userMessage,
+    userMessage: options.seed
+      ? userMessage
+      : withPublicCreativeCue(userMessage, "event", rng),
     reviewContext: [resolved.campaignContext, sessionContext]
       .filter(Boolean)
       .join("\n"),

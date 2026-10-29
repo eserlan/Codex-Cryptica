@@ -1,3 +1,4 @@
+import { withPublicCreativeCue } from "./public-creative-diversity";
 /**
  * Public Faction + Vampire Clan + Nomad Clan + Dark Fantasy Faction
  * generators — framework-free port of the SEO faction generator
@@ -148,7 +149,11 @@ ${sessionContext}
 - Faction Naming Directive: ${chosenNamingStyle}
 - NPC Naming Directive: ${chosenNpcStyle}`;
 
-  return { systemInstruction, userMessage, resolved };
+  return {
+    systemInstruction,
+    userMessage: withPublicCreativeCue(userMessage, "organisation", rng),
+    resolved,
+  };
 }
 
 export function parseFactionResponse(
@@ -394,7 +399,11 @@ ${sessionContext}
 - Territory: ${territory}
 - Current Conflict: ${conflict}${formatCampaignContextBlock(campaignContext)}`;
 
-  return { systemInstruction, userMessage, resolved };
+  return {
+    systemInstruction,
+    userMessage: withPublicCreativeCue(userMessage, "organisation", rng),
+    resolved,
+  };
 }
 
 export function parseNomadClanResponse(
@@ -597,7 +606,7 @@ Return only the JSON object. Do not include markdown code block formatting like 
   return {
     systemInstruction:
       "You are an assistant that generates detailed RPG campaign elements in JSON format.",
-    userMessage,
+    userMessage: withPublicCreativeCue(userMessage, "organisation", rng),
     resolved,
   };
 }
@@ -807,7 +816,11 @@ ${sessionContext}
 - Faction Naming Directive: ${chosenNamingStyle}
 - NPC Naming Directive: ${chosenNpcStyle}`;
 
-  return { systemInstruction, userMessage, resolved };
+  return {
+    systemInstruction,
+    userMessage: withPublicCreativeCue(userMessage, "organisation", rng),
+    resolved,
+  };
 }
 
 export function parseDarkFactionResponse(

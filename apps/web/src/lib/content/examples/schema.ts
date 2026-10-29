@@ -37,6 +37,7 @@ export const ExampleKindSchema = z.enum([
   "heist",
   "rumour",
   "council-vote",
+  "point-crawl",
 ]);
 export type ExampleKind = z.infer<typeof ExampleKindSchema>;
 

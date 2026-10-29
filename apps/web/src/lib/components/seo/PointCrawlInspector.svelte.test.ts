@@ -20,6 +20,9 @@ describe("PointCrawlInspector", () => {
 
     expect(screen.getByText(node.name)).toBeTruthy();
     expect(
+      screen.getByLabelText(`Location details: ${node.name}`).textContent,
+    ).toContain("◎");
+    expect(
       (
         screen.getByTestId(
           `point-crawl-toggle-save-${node.id}`,
@@ -41,9 +44,10 @@ describe("PointCrawlInspector", () => {
       props: { route, nodes: crawl.nodes, onRegeneratePart },
     });
 
+    expect(screen.getByLabelText("Route details").textContent).toContain("⇄");
     expect(
       screen.getByText(
-        `Approach from ${crawl.nodes.find((node) => node.id === route.toNodeId)!.name}:`,
+        `← Approach from ${crawl.nodes.find((node) => node.id === route.toNodeId)!.name}:`,
       ),
     ).toBeTruthy();
     await fireEvent.click(

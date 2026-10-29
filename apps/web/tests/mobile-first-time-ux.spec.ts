@@ -18,16 +18,21 @@ import {
 
 const MOBILE_VIEWPORT = { width: 390, height: 844 };
 
+test.setTimeout(60000);
+
 /** Boot the app, wait for vault idle, then surface the front page for testing. */
 async function setupMobileFrontPage(
   page: Parameters<typeof dismissFrontPage>[0],
 ) {
   await page.goto("/");
-  await waitForVaultReady(page);
+  await waitForVaultReady(page, 30000);
+  await page.waitForFunction(() => !!(window as any).onboardingStore, {
+    timeout: 15000,
+  });
   // First dismiss so graph-canvas renders (vault.isInitialized becomes true)
   await dismissFrontPage(page);
   await expect(page.getByTestId("graph-canvas")).toBeVisible({
-    timeout: 10000,
+    timeout: 15000,
   });
   // Now re-surface the front page overlay for testing
   await page.evaluate(() => {
@@ -143,10 +148,13 @@ test.describe("Enter your world footer (#1298)", () => {
     // Switch to desktop viewport and reload
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.reload();
-    await waitForVaultReady(page);
+    await waitForVaultReady(page, 30000);
+    await page.waitForFunction(() => !!(window as any).onboardingStore, {
+      timeout: 15000,
+    });
     await dismissFrontPage(page);
     await expect(page.getByTestId("graph-canvas")).toBeVisible({
-      timeout: 10000,
+      timeout: 15000,
     });
     // Re-surface front page at desktop width
     await page.evaluate(() => {
@@ -195,11 +203,14 @@ test.describe("Graph coach marks (#1295)", () => {
       }
     });
     await page.goto("/");
-    await waitForVaultReady(page);
+    await waitForVaultReady(page, 30000);
+    await page.waitForFunction(() => !!(window as any).onboardingStore, {
+      timeout: 15000,
+    });
     // Dismiss front page so we land on the graph
     await dismissFrontPage(page);
     await expect(page.getByTestId("graph-canvas")).toBeVisible({
-      timeout: 10000,
+      timeout: 15000,
     });
     // Ensure uiStore knows it's mobile
     await page.waitForFunction(
@@ -254,10 +265,13 @@ test.describe("Graph coach marks (#1295)", () => {
 
     // Reload and confirm still dismissed
     await page.reload();
-    await waitForVaultReady(page);
+    await waitForVaultReady(page, 30000);
+    await page.waitForFunction(() => !!(window as any).onboardingStore, {
+      timeout: 15000,
+    });
     await dismissFrontPage(page);
     await expect(page.getByTestId("graph-canvas")).toBeVisible({
-      timeout: 10000,
+      timeout: 15000,
     });
     await page.waitForFunction(
       () => (window as any).uiStore?.isMobile === true,

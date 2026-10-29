@@ -4,6 +4,7 @@ import {
   grounding,
   keepsSeedNames,
   namesUnder,
+  mintAutomationToken,
   proxyComplete,
   runCase,
   runOnePass,
@@ -112,6 +113,74 @@ describe("adventure A/B routes", () => {
       fetcherFor(() => "", 500),
     );
     await expect(failing("s", "m")).rejects.toThrow();
+    expect(failing.models).toEqual([]);
+  });
+
+  it("asks for a specific model only when one is given", async () => {
+    const bodies: string[] = [];
+    const fetcher = (async (_url: string, init?: RequestInit) => {
+      bodies.push(String(init?.body));
+      return new Response(JSON.stringify({ content: "x" }));
+    }) as unknown as typeof fetch;
+    await proxyComplete("http://proxy", fetcher, {
+      modelKey: "gemini-flash-lite",
+    })("s", "m");
+    await proxyComplete("http://proxy", fetcher)("s", "m");
+    expect(JSON.parse(bodies[0]).modelKeyOverride).toBe("gemini-flash-lite");
+    expect(JSON.parse(bodies[1])).not.toHaveProperty("modelKeyOverride");
+  });
+
+  it("sends a session token as a bearer header only when given", async () => {
+    const headers: Record<string, string>[] = [];
+    const fetcher = (async (_url: string, init?: RequestInit) => {
+      headers.push(init?.headers as Record<string, string>);
+      return new Response(JSON.stringify({ content: "x" }));
+    }) as unknown as typeof fetch;
+    await proxyComplete("http://proxy", fetcher, { sessionToken: "tok" })(
+      "s",
+      "m",
+    );
+    await proxyComplete("http://proxy", fetcher)("s", "m");
+    expect(headers[0].Authorization).toBe("Bearer tok");
+    expect(headers[1]).not.toHaveProperty("Authorization");
+  });
+
+  it("mints an automation token from the proxy's session route", async () => {
+    const seen: { url: string; key: string | null }[] = [];
+    const fetcher = (async (url: URL, init?: RequestInit) => {
+      const h = init?.headers as Record<string, string>;
+      seen.push({ url: String(url), key: h["X-Codex-Automation-Key"] });
+      return new Response(
+        JSON.stringify({ token: "minted", scope: "automation" }),
+      );
+    }) as unknown as typeof fetch;
+    await expect(
+      mintAutomationToken("https://proxy.example/", "secret", fetcher),
+    ).resolves.toBe("minted");
+    expect(seen).toEqual([
+      { url: "https://proxy.example/api/session", key: "secret" },
+    ]);
+  });
+
+  it("reports a refused mint by its code, never echoing the key", async () => {
+    const fetcher = (async () =>
+      new Response(
+        JSON.stringify({ error: { code: "AUTOMATION_KEY_INVALID" } }),
+        { status: 401 },
+      )) as unknown as typeof fetch;
+    const failure = mintAutomationToken("https://p.example", "secret", fetcher);
+    await expect(failure).rejects.toThrow("AUTOMATION_KEY_INVALID");
+    await expect(failure).rejects.not.toThrow("secret");
+  });
+
+  it("records the model that answered each successful call", async () => {
+    const replies = [{ content: "a", modelKey: "luna-fast" }, { content: "b" }];
+    const fetcher = (async () =>
+      new Response(JSON.stringify(replies.shift()))) as unknown as typeof fetch;
+    const complete = proxyComplete("http://proxy", fetcher);
+    await complete("s", "m");
+    await complete("s", "m");
+    expect(complete.models).toEqual(["luna-fast", "unknown"]);
   });
 
   it("runs the one-pass route with one repair when the first reply is unusable", async () => {

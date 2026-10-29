@@ -1,3 +1,4 @@
+import { withPublicCreativeCue } from "./public-creative-diversity";
 /**
  * Public Kingdom generator — framework-free port of the kingdom half of the
  * SEO kingdom/nation generator.
@@ -169,7 +170,11 @@ ${sessionContext}`;
 - Magic Level: ${resolved.magicLevel}${formatCampaignContextBlock(resolved.campaignContext)}
 - Naming Directive: ${resolved.namingDirective}`;
 
-  return { systemInstruction, userMessage, resolved };
+  return {
+    systemInstruction,
+    userMessage: withPublicCreativeCue(userMessage, "place", rng),
+    resolved,
+  };
 }
 
 export function parseKingdomResponse(text: string): PublicGeneratorOutput {

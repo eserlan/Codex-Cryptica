@@ -8,6 +8,8 @@ test.describe("Oracle Status", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
       localStorage.setItem("codex_skip_landing", "true");
+      localStorage.setItem("codex_guided_mode_active", "false");
+      localStorage.setItem("codex_goal_invitation", "dismissed");
       localStorage.setItem(
         "codex-cryptica-help-state",
         JSON.stringify({ completedTours: ["initial-onboarding"] }),

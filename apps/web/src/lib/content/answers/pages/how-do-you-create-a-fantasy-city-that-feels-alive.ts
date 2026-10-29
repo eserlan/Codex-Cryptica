@@ -25,7 +25,7 @@ export const howDoYouCreateAFantasyCityThatFeelsAlive: AnswerConfigInput = {
       items: [
         {
           term: "A daily rhythm",
-          text: "Name the time, place, and people involved. The river market opens at first bell; the watch changes at the south gate after dusk.",
+          text: "Name the time, place, and people involved. The river market opens at first bell; the watch changes at the south gate after dusk. Need a name for a district or a person? Try the [Fantasy Name Generator](/generators/fantasy-names).",
         },
         {
           term: "Two competing groups",

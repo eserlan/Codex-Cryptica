@@ -32,7 +32,7 @@ export const howManyNpcsDoesAnRpgTownNeed: AnswerConfigInput = {
         },
         {
           term: "The unnamed population: as needed, never in advance",
-          text: "Everyone else stays a role, not a name: the miller, the watch captain's second, the woman selling apples. If a player asks the miller a direct question, the miller becomes a name on the spot. Prepping names for people nobody addresses is prep that never gets spent.",
+          text: "Everyone else stays a role, not a name: the miller, the watch captain's second, the woman selling apples. If a player asks the miller a direct question, the miller becomes a name on the spot. Keep a short list from the [Fantasy Name Generator](/generators/fantasy-names) for a fantasy town, or the [RPG Name Generator](/generators/names) for other genres. Prepping names for people nobody addresses is prep that never gets spent.",
         },
       ],
     },

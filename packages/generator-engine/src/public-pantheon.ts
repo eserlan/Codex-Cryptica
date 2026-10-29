@@ -1,3 +1,4 @@
+import { withPublicCreativeCue } from "./public-creative-diversity";
 /**
  * Public Pantheon generator — framework-free port of the SEO pantheon
  * generator.
@@ -172,6 +173,7 @@ You must return a valid JSON object matching the following structure exactly, no
   "labels": ["rpg-deity", "deity-generator", "imported-draft", "${genreLabel(genre)}"]
 }
 ${NAME_BAN_PROMPT}
+${withPublicCreativeCue("", "character", rng)}
 ${sessionContext}
 Return only the JSON object. Do not include markdown code block formatting.`,
     };
@@ -313,6 +315,7 @@ The JSON object must match this structure exactly:
   ]
 }
 ${NAME_BAN_PROMPT}
+${withPublicCreativeCue("", "organisation", rng)}
 ${sessionContext}
 Return only the JSON object.`,
   };

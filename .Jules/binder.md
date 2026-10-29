@@ -364,3 +364,8 @@
 
 **Learning:** Even when a store or class explicitly accepts a DI dependency (like `clock`) in its constructor, it must be carefully passed down to any instantiated internal services (like `ProposerService`) that also require that dependency. Failing to do so causes the internal service to fall back to hardcoded defaults (`Date.now`), breaking testability and deterministic timing.
 **Action:** Always verify that injected dependencies are propagated completely through the internal instantiation chain of the class.
+
+## 2026-10-28 - Inject ambient dependencies into internal locks
+
+**Learning:** In vault configuration updates, global lock fallback mechanisms (IndexedDB) hardcode `Date.now()` and `crypto.randomUUID()`, making time-based tests flakey and coupled to globals.
+**Action:** Add `clock` and `idGenerator` seams to the `VaultConfigDependencies` interface and pass them down into the `withIndexedDbLock` / `withBrowserLock` functions. This allows explicit mock time/ID generation in lock tests.

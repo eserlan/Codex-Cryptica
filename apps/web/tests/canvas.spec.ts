@@ -1,15 +1,26 @@
 import { test, expect } from "@playwright/test";
-import { setupVaultPage } from "./test-helpers";
+import { seedOnboardingComplete } from "./test-helpers";
 
 test.describe("Spatial Canvas", () => {
+  test.setTimeout(60000);
+
   test.beforeEach(async ({ page }) => {
-    await setupVaultPage(page);
+    await page.addInitScript(seedOnboardingComplete);
     await page.goto("/canvas");
-    await page.waitForURL(/\/canvas\/.+/);
+    await page.waitForURL(/\/canvas\/.+/, { timeout: 30000 });
 
     await expect(page.locator(".svelte-flow")).toBeVisible({
       timeout: 15000,
     });
+    await page.waitForFunction(
+      () => {
+        const vault = (window as any).vault;
+        return (
+          !!vault && vault.isInitialized === true && vault.status === "idle"
+        );
+      },
+      { timeout: 15000 },
+    );
     await page.waitForTimeout(250);
 
     await page.evaluate(async () => {

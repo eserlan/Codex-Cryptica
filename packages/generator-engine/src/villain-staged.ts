@@ -63,6 +63,7 @@ import type {
   VillainStagedResult,
   VillainStagedStats,
 } from "./villain-staged-contracts";
+import { withPublicCreativeCue } from "./public-creative-diversity";
 import {
   REPAIRABLE_FIELDS,
   VILLAIN_SYSTEM,
@@ -157,7 +158,11 @@ async function runStaged(
 
   const concept = await stage(
     "concept",
-    conceptMessage(resolved, plan, deps),
+    withPublicCreativeCue(
+      conceptMessage(resolved, plan, deps),
+      "character",
+      deps.rng ?? defaultRng,
+    ),
     (d) => checkVillainConcept(d, plan.avoid, resolved.campaignContext),
   );
   if (!concept) return null;

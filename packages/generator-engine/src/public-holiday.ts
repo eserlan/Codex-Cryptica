@@ -1,3 +1,4 @@
+import { withPublicCreativeCue } from "./public-creative-diversity";
 import { pickFrom } from "./random-utils";
 import { avoidNamesExcludingContext } from "./campaign-context";
 import { parseFencedJson } from "./llm-response-utils";
@@ -143,7 +144,7 @@ Return only the JSON object. Do not include markdown code block formatting.`;
   return {
     systemInstruction:
       "You create culturally grounded, playable fictional observances and return valid JSON.",
-    userMessage,
+    userMessage: withPublicCreativeCue(userMessage, "event", rng),
     resolved,
   };
 }

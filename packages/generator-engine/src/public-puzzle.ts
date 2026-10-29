@@ -1,3 +1,4 @@
+import { formatPublicAnchoredScenarioCue } from "./public-scenario-diversity";
 import type { PublicGeneratorOutput } from "./public-generator-adapters";
 import { parseFencedJson } from "./llm-response-utils";
 import { factionConfig } from "./public-faction-constants";
@@ -235,6 +236,7 @@ export function generatePuzzleLocal(
 export function buildPuzzlePrompt(
   options: PuzzleGeneratorOptions = {},
   sessionContext = "",
+  rng: Rng = defaultRng,
 ): PuzzlePrompt {
   const resolved = resolvePuzzle(options);
   const systemInstruction = `You are an expert tabletop RPG encounter-puzzle designer. Create a runnable ${resolved.genre} puzzle. It must be system-neutral unless tailoring is requested. Never make progress depend on one class, spell, skill, ability, check, or intended answer. Build multiple viable approaches, fiction-first clues, creative solutions, and fail-forward escalation. Respect the genre's era, technology, institutions, and vocabulary; do not introduce modern concepts unless the selected genre supports them. Return only valid JSON.`;
@@ -257,6 +259,7 @@ export function buildPuzzlePrompt(
       `Downstream consequence: ${resolved.downstreamConsequence}`,
     resolved.campaignContext && `Campaign context: ${resolved.campaignContext}`,
     sessionContext && `Session context: ${sessionContext}`,
+    formatPublicAnchoredScenarioCue("puzzle", rng),
     "Avoid defaulting to lamps, lanterns, sconces, torches, or other light fixtures as the puzzle's central mechanism or recurring prop — this has become an overused default. Use one only if the genre or parameters above genuinely call for it. Draw the actual mechanism from a wide range of ingredients instead: sound, symbols, pressure plates, weight, movement, sequence, architecture, liquids, mirrors, reflections, inscriptions, temperature, timing, social cues, scent, or spatial relationships.",
     "Return JSON with title, summary, content, lore, and labels. Summary must be one or two vivid standalone sentences that name the actual setting or obstacle, the concrete mechanism or interaction, and the immediate stakes. Never describe the generator, complexity, document structure, player-facing material, GM guidance, or fail-forward play in the summary. Content is the main table-useful document and must use exactly these headings: ## Player-Facing Setup, ## Clues, ## Character Spotlight Opportunities, ## Alternate Solutions, ## Failure & Escalation, ## Running the Puzzle, and ## Scaling. Include ## Downstream Consequences in content when requested. Lore is the compact reference rail and must use exactly these headings: ### At a Glance, ### GM-Only Solution, and ### Escalating Hints. Keep the intended answer and progressive hints out of content; put the action-oriented guidance in content.",
   ]

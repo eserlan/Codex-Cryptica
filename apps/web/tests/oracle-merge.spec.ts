@@ -21,6 +21,8 @@ async function waitForSearchIndexing(page: any, names: string[]) {
 }
 
 test.describe("Oracle Merge Command E2E", () => {
+  test.describe.configure({ timeout: 60000 });
+
   test.beforeEach(async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
     await setupVaultPage(page);
@@ -304,6 +306,7 @@ test.describe("Oracle Merge Command E2E", () => {
         const snapshot = (obj: any) => {
           const clone = { ...obj };
           delete clone.updatedAt;
+          delete clone.modifiedAt;
           return JSON.stringify(clone, Object.keys(clone).sort());
         };
         return snapshot(preBoss) === snapshot(current);

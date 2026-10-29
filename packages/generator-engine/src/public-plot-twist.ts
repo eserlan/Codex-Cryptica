@@ -1,3 +1,4 @@
+import { formatPublicAnchoredScenarioCue } from "./public-scenario-diversity";
 import type { PublicGeneratorOutput } from "./public-generator-adapters";
 import { parseFencedJson } from "./llm-response-utils";
 import { defaultRng, pickFrom, type Rng } from "./random-utils";
@@ -403,6 +404,7 @@ export function generatePlotTwistLocal(
 
 export function buildPlotTwistPrompt(
   options: PlotTwistGeneratorOptions = {},
+  rng: Rng = defaultRng,
 ): PlotTwistPrompt {
   const resolved = resolvePlotTwist(options);
   const systemInstruction = `You are a thoughtful tabletop RPG story designer creating a ${resolved.genre} plot twist or complication. Reinterpret established facts; do not invalidate witnessed events or replace the premise with unrelated lore. Avoid cheap secret-villain, secret-relative, arbitrary resurrection, and "it was all a dream" reveals unless explicitly requested. The result must create meaningful player choices, trade-offs, or opportunities, not just surprise. Return only valid JSON with the requested fields.`;
@@ -424,6 +426,7 @@ export function buildPlotTwistPrompt(
       ? `Campaign context (authoritative grounding):\n${resolved.campaignContext}`
       : "",
     genreArchetypeHint,
+    formatPublicAnchoredScenarioCue("plot-twist", rng),
     "",
     "Find an assumption within the established situation that can be overturned without contradicting known facts.",
     "Return JSON with title, summary, content, lore, labels, and connections. The content field MUST contain the complete markdown sections ## The Reveal, ## What Everyone Believed, ## Why It Makes Sense, ## Foreshadowing, ## Immediate Consequences, and ## New Choices. Include 2-4 foreshadowing clues and at least 2 actionable player decisions in those sections. Reserve lore for brief GM notes or an at-a-glance summary. You may also provide reveal, believedAssumption, rationale, foreshadowing, immediateConsequences, and newChoices as structured fields.",

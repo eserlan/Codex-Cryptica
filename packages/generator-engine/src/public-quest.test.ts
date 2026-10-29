@@ -124,6 +124,8 @@ describe("buildQuestPrompt", () => {
       "- Existing: The Neon Compact (faction)",
       seededRng(4),
     );
+    expect(userMessage).toContain("Concept constraints for this case");
+    expect(userMessage).toContain("The campaign context still overrides them");
     expect(userMessage).toContain("- Genre: Cyberpunk");
     expect(userMessage).toContain("- Tone: Noir");
     expect(userMessage).toContain("- Location Type: Server Farm");

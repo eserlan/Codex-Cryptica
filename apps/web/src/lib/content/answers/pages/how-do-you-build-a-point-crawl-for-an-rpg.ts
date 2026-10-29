@@ -116,6 +116,12 @@ export const howDoYouBuildAPointCrawlForAnRpg: AnswerConfigInput = {
       href: "/generators/point-crawl",
     },
     {
+      title: "The Receding Tide Road point crawl example",
+      description:
+        "Inspect a complete, playable 8-location coastal fantasy point crawl with an exported network diagram, time costs, and key-before-lock gates.",
+      href: "/examples/the-receding-tide-road-point-crawl",
+    },
+    {
       title: "Quest Hook Generator",
       description:
         "Generate regional travel objectives, lost ruins, and faction rumours to anchor your point crawl nodes.",

@@ -63,6 +63,12 @@ describe("generateDungeonStaged", () => {
       complete: s.complete,
     });
     expect(result).not.toBeNull();
+    expect(s.calls[0]).toContain("Optional creative variation:");
+    expect(
+      s.calls
+        .slice(1)
+        .every((call) => !call.includes("Optional creative variation:")),
+    ).toBe(true);
     expect(result!.stats.aiCalls).toBe(4);
     expect(result!.stats.outcome).toBe("staged");
     expect(result!.stats.reviewSkipped).toBe(false);

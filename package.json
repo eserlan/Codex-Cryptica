@@ -55,6 +55,7 @@
     "fallow:summary": "fallow --summary",
     "eval:heist": "bun scripts/heist-eval.ts",
     "eval:adventure-ab": "bun scripts/adventure-ab.ts",
+    "eval:idea-patterns": "bun scripts/idea-pattern-ab.ts",
     "post:discussion": "bun scripts/post-to-github-discussion.ts",
     "deploy:pages": "bun run build && wrangler pages deploy apps/web/build --project-name=codex-cryptica --branch=$(git rev-parse --abbrev-ref HEAD)",
     "deploy:oracle": "bash apps/workers/oracle-proxy/deploy.sh"

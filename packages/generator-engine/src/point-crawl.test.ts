@@ -16,6 +16,7 @@ import {
   parsePointCrawlResponse,
   parsePointCrawlNetwork,
   pointCrawlConfig,
+  pointCrawlNodeRoleSymbol,
   reachableNodesBfs,
   regeneratePointCrawlPart,
   regeneratePointCrawlPartLocal,
@@ -31,6 +32,16 @@ import {
 } from "./index";
 
 describe("Point Crawl Topology & Playability (T004, T010)", () => {
+  it("assigns role symbols and respects structural roles", () => {
+    expect(pointCrawlNodeRoleSymbol({ role: "hazard" })).toBe("▲");
+    expect(
+      pointCrawlNodeRoleSymbol({ role: "hub", structuralRole: "chokepoint" }),
+    ).toBe("◆");
+    expect(
+      pointCrawlNodeRoleSymbol({ role: "hub", structuralRole: "connector" }),
+    ).toBe("●");
+  });
+
   it("clamps point counts strictly to the 6-15 range", () => {
     expect(clampPointCount(2)).toBe(6);
     expect(clampPointCount(6)).toBe(6);
@@ -343,6 +354,42 @@ describe("Point Crawl Topology & Playability (T004, T010)", () => {
     expect(formatRouteConnectionLabel(gated!)).toContain(
       `Locked: ${gated!.gate!.requirement}`,
     );
+    expect(md).toContain(
+      `**Sights & Atmosphere:** ${crawl.nodes[0].sensoryDescription}`,
+    );
+    const sample = crawl.routes[0];
+    const names = new Map(crawl.nodes.map((node) => [node.id, node]));
+    const formatted = renderPointCrawlRouteSummary(sample, names);
+    expect(
+      renderPointCrawlRouteSummary(
+        { ...sample, direction: "bidirectional" },
+        names,
+      ),
+    ).toContain(" ⇄ ");
+    expect(
+      renderPointCrawlRouteSummary({ ...sample, direction: "one-way" }, names),
+    ).toContain(" → ");
+    expect(md).toContain(`(${pointCrawlNodeRoleSymbol(crawl.nodes[0])} `);
+    expect(formatted).toContain("### ");
+    expect(formatted).toContain(`**Travel:** ${sample.travelTime}`);
+    expect(formatted).toContain(`**Terrain:** ${sample.terrain}`);
+    expect(formatted).toContain(`**Risk:** ${sample.risk}`);
+    expect(formatted).toContain(
+      `**Signpost from ${names.get(sample.fromNodeId)?.name ?? sample.fromNodeId}:** ${sample.approachFromSource ?? sample.signpost}`,
+    );
+    const reverse = renderPointCrawlRouteSummary(
+      { ...sample, approachFromTarget: "Return trail" },
+      names,
+      sample.toNodeId,
+    );
+    expect(reverse).toContain(
+      `**Signpost from ${names.get(sample.toNodeId)?.name ?? sample.toNodeId}:** Return trail`,
+    );
+    const unlocked = renderPointCrawlRouteSummary(
+      { ...sample, gate: undefined },
+      names,
+    );
+    expect(unlocked).not.toContain("**Locked (");
     const routeSection = md.split("## Route Network & Trade-Offs")[1] ?? "";
     const nodesById = new Map(crawl.nodes.map((node) => [node.id, node]));
     for (const route of crawl.routes) {
@@ -356,6 +403,7 @@ describe("Staged AI Point Crawl Generation & Fallbacks (T020)", () => {
   it("runs all 3 stages with live progress callbacks and repairs AI output", async () => {
     const progressHistory: OneShotProgressStep[][] = [];
     const detailPrompts: string[] = [];
+    const topologyPrompts: string[] = [];
     const crawl = await generatePointCrawlStaged(
       {
         genre: "Sci-Fi / Space Opera",
@@ -365,6 +413,7 @@ describe("Staged AI Point Crawl Generation & Fallbacks (T020)", () => {
       },
       async (prompt) => {
         if (prompt.includes("overarching premise")) {
+          topologyPrompts.push(prompt);
           return JSON.stringify({
             title: "The Vesper Drift Blockade",
             premise:
@@ -413,7 +462,13 @@ describe("Staged AI Point Crawl Generation & Fallbacks (T020)", () => {
       finalSteps.every((s) => s.status === "done" || s.status === "fallback"),
     ).toBe(true);
     expect(checkPointCrawlPlayability(crawl)).toEqual([]);
+    expect(topologyPrompts[0]).toContain("Optional creative variation:");
     expect(detailPrompts.length).toBeGreaterThan(1);
+    expect(
+      detailPrompts.every(
+        (prompt) => !prompt.includes("Optional creative variation:"),
+      ),
+    ).toBe(true);
     const plans = detailPrompts.map(
       (prompt) =>
         prompt.match(
@@ -613,6 +668,17 @@ describe("Multi-Entity Vault Save Draft Builder (T024)", () => {
         expect(rel.label).toContain("·");
       }
     }
+
+    const route = crawl.routes[0];
+    const sourceDraft = locationDrafts.find(
+      (draft) => draft.sourceNodeId === route.fromNodeId,
+    )!;
+    expect(sourceDraft.lore).toContain(`**Terrain:** ${route.terrain}`);
+    expect(sourceDraft.lore).toContain(`**Risk:** ${route.risk}`);
+    expect(masterNote.content).toContain(`**Terrain:** ${route.terrain}`);
+    const gated = crawl.routes.find((entry) => entry.gate)!;
+    expect(masterNote.content).toContain(`**Locked (${gated.gate!.kind}):**`);
+    expect(masterNote.content).toContain(gated.gate!.requirement);
 
     expect(masterNote.type).toBe("note");
     expect(masterNote.kind).toBe("point-crawl");

@@ -14,7 +14,7 @@ import { test, expect } from "@playwright/test";
 const PROXY_URL =
   process.env.ORACLE_PROXY_URL ||
   "https://oracle-proxy.espen-erlandsen.workers.dev";
-const ALLOWED_ORIGIN = "https://codex-cryptica.com";
+const ALLOWED_ORIGIN = "https://codexcryptica.com";
 
 test.describe("Oracle Proxy Worker Integration", () => {
   test.skip(
@@ -39,16 +39,12 @@ test.describe("Oracle Proxy Worker Integration", () => {
   test("proxy rejects requests from unauthorized origins", async ({
     request,
   }) => {
-    const response = await request.post(PROXY_URL, {
+    const response = await request.post(`${PROXY_URL}/api/session`, {
       headers: {
         "Content-Type": "application/json",
         Origin: "https://evil.com",
       },
-      data: {
-        contents: [{ role: "user", parts: [{ text: "test" }] }],
-        generationConfig: {},
-        model: "gemini-1.5-pro",
-      },
+      data: {},
     });
 
     // Should return 403 Forbidden for unauthorized origin
@@ -112,7 +108,7 @@ test.describe("Oracle Proxy Worker Integration", () => {
     expect(response.status()).toBe(405);
   });
 
-  test("proxy validates request body structure", async ({ request }) => {
+  test("proxy validates request or session token", async ({ request }) => {
     const response = await request.post(PROXY_URL, {
       headers: {
         "Content-Type": "application/json",
@@ -124,16 +120,28 @@ test.describe("Oracle Proxy Worker Integration", () => {
       },
     });
 
-    // Should return 400 Bad Request for invalid body
-    expect(response.status()).toBe(400);
+    // Returns 400 when session guard is off, or 401 when session token is required
+    expect([400, 401]).toContain(response.status());
 
     const body = await response.json();
     expect(body.error).toBeDefined();
-    expect(body.error.message).toContain("Invalid request format");
   });
 });
 
 test.describe("Oracle Proxy E2E Flow", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem("codex_skip_landing", "true");
+      localStorage.setItem("codex_guided_mode_active", "false");
+      localStorage.setItem("codex_goal_invitation", "dismissed");
+      localStorage.setItem("oracle-hint-seen", "true");
+      localStorage.setItem(
+        "codex-cryptica-help-state",
+        JSON.stringify({ completedTours: ["initial-onboarding"] }),
+      );
+    });
+  });
+
   test("Oracle uses proxy when no API key is set", async ({ page }) => {
     // Navigate to app
     await page.goto("/");

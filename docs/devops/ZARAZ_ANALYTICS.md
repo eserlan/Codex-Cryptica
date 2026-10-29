@@ -218,6 +218,8 @@ Generator events carry `generator_type: "point-crawl"` (the last segment of
 - Compare two equal weekly windows after the content/CTA changes (#4369,
   #4371) are deployed. Report the numbers; do not claim the changes caused
   any difference.
+- Step-by-step Amplitude setup and weekly reporting template:
+  [POINT_CRAWL_FUNNEL_RUNBOOK.md](./POINT_CRAWL_FUNNEL_RUNBOOK.md) (#4386).
 
 ### Discovery funnel (#2687)
 

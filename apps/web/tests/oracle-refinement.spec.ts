@@ -68,7 +68,7 @@ test.describe("Oracle UI Refinement", () => {
     // Close/reset vault
     await page.evaluate(async () => {
       if ((window as any).oracle?.chat) {
-        await (window as any).oracle.chat.clearHistory();
+        await (window as any).oracle.chat.reset();
       }
     });
 

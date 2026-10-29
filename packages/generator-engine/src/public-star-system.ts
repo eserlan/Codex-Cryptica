@@ -16,6 +16,7 @@
 import type { PublicGeneratorOutput } from "./public-generator-adapters";
 import { parseFencedJson, sanitizeText } from "./llm-response-utils";
 import { defaultRng, pickFrom, type Rng } from "./random-utils";
+import { withPublicCreativeCue } from "./public-creative-diversity";
 import { BANNED_NAMES, NAME_BAN_PROMPT } from "./public-npc-constants";
 import {
   avoidNamesExcludingContext,
@@ -668,6 +669,7 @@ export function generateStarSystemLocal(
 /** Build the dedicated AI brief; campaign context is prepended by the registry. */
 export function buildStarSystemPrompt(
   options: StarSystemGeneratorOptions = {},
+  rng: Rng = defaultRng,
 ): StarSystemPrompt {
   const systemType = options.systemType?.trim() || "an appropriate system type";
   const genre = options.genre?.trim() || "sci-fi";
@@ -709,7 +711,8 @@ export function buildStarSystemPrompt(
   return {
     systemInstruction:
       "You are a science-fiction worldbuilder creating a coherent, campaign-ready star system for a GM. Prioritise why the system matters — its stakes, factions, and conflicts — over an inventory of astronomical trivia. Return only one valid JSON object.",
-    userMessage: `Create a ${genre} star system of type ${systemType}, civilisation level ${civilisationLevel}, with a system character of ${systemCharacter}.
+    userMessage: withPublicCreativeCue(
+      `Create a ${genre} star system of type ${systemType}, civilisation level ${civilisationLevel}, with a system character of ${systemCharacter}.
 ${formatCampaignContextBlock(options.campaignContext)}
 
 Return JSON with "title", "summary", "labels", "connections", "bodies", "starType", and a markdown "lore" field. "summary" must describe the system as a whole in one sentence — its character, stakes, and what makes it worth visiting — never zoom in on a single body, faction, or station as if it were the whole pitch. Do not write anything under "## Major Bodies" in "lore" — leave that heading with no content below it, or omit the heading entirely; the Major Bodies section is generated automatically from "bodies", so any prose you put there yourself would be discarded. All body detail belongs only in "bodies": an array covering every planet, moon, asteroid belt, station, megastructure, or notable anomaly in the system (never the star(s) themselves), each shaped as {"name": string, "type": string, "description": string, "parentName": string, "distanceAU": number}. "description" is one lowercase sentence fragment (no leading capital, no trailing period) giving this body a clear, concrete role in at least one of: the system's economy (a resource, trade good, or manufacturing capacity it produces or processes), survival (habitat, food, water, fuel, or life support something else depends on), travel (a waypoint, fuel/repair stop, chokepoint, or hazard on the way somewhere), or conflict (a contested asset, military position, or faction stronghold) — never just a physical description with no stake attached. A moon/station/outpost nested under a parent (via "parentName") must also say concretely what it does there — what it extracts, guards, monitors, or processes from or for that parent — not merely that it orbits it. "parentName" is omitted for anything orbiting the star directly, and set to another body's exact "name" in this same array for anything orbiting that body instead — never the star, even if the description mentions the star by name. "distanceAU" is each body's distance from the star in astronomical units (1 AU ≈ Earth-Sun distance), required for every body with no "parentName" and omitted for one that has a "parentName" (it shares its parent's distance); values must be strictly increasing across the array in the order those star-orbiting bodies appear, and roughly plausible for the body's type (rocky/hot worlds well under 5 AU, gas/ice giants and outer bodies further out, typically 3-40 AU) — a GM-usable travel-time reference, not an astrophysics exercise. Include between 3 and 12 bodies with no "parentName", plus as many moons/stations nested under them as make sense; give each body a distinct, memorable name — do not number them generically without also giving at least the most important ones a proper name; at least one must be habitable or settled unless the civilisation level is Unexplored. "starType" must be the primary/most prominent star's classification: one of the standard spectral classes "O", "B", "A", "F", "G", "K", "M" (hottest to coolest), or — only for a non-stellar or otherwise irregular anchor body — "Brown Dwarf", "Neutron Star", "White Dwarf", or "Rogue Star"; it must match whatever "## The Star(s)" states. Labels must match the actual generated content: include only factual tags supported by the system's type, genre, civilisation level, and character. The lore must use these exact sections:
@@ -737,6 +740,9 @@ ${realismGuidance}
 ${NAME_BAN_PROMPT}${nameRestrictions}
 
 Before returning the JSON, perform one internal validation: confirm "summary" describes the whole system, not one body or station; confirm nothing was written under "## Major Bodies" in "lore"; confirm "starType" matches the spectral classification actually named in "## The Star(s)"; confirm "bodies" has between 3 and 12 entries with no "parentName", each with its own strictly-increasing "distanceAU", and that every entry with a "parentName" exactly matches another entry's "name" (never the star); confirm every body has a non-empty "description" that states a concrete economic, survival, travel, or conflict role, not just a physical description; confirm every faction, hazard, and hook you named is consistent with the civilisation level and system character, that each faction's stated territory matches a named body, and that no faction or side of the central conflict is written as simply right or simply villainous; confirm the conflict or mystery is foreshadowed elsewhere in the lore rather than appearing out of nowhere; confirm resource and material descriptions follow the Scientific Realism and genre guidance above rather than defaulting to unexplained exotic substances; and re-read every sentence in "bodies" and "lore" for wording slips — duplicated or mismatched punctuation (e.g. "..", "—-", stray double spaces), a body's type or name written inconsistently between its own entry and any place it's mentioned elsewhere, and no numeric designation or name reused. Quietly correct any mismatch, then return only the corrected final JSON.`,
+      "sky",
+      rng,
+    ),
   };
 }
 
