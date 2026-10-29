@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseInlineMarkup } from "./format";
+import { parseInlineMarkup, slugifyHeading } from "./format";
 
 describe("parseInlineMarkup", () => {
   it("returns an empty array for empty or falsy strings", () => {
@@ -55,5 +55,25 @@ describe("parseInlineMarkup", () => {
     expect(parseInlineMarkup(input)).toEqual([
       { text: "Prefix **** suffix", bold: false },
     ]);
+  });
+});
+
+describe("slugifyHeading", () => {
+  it("converts a standard section title into a kebab-case slug", () => {
+    expect(slugifyHeading("Keyed Locations (8 Points)")).toBe(
+      "keyed-locations-8-points",
+    );
+  });
+
+  it("strips special characters and punctuation", () => {
+    expect(
+      slugifyHeading("GM Reference: Locks, Gates & Hidden Shortcuts"),
+    ).toBe("gm-reference-locks-gates-hidden-shortcuts");
+  });
+
+  it("returns empty string for empty or falsy input", () => {
+    expect(slugifyHeading("")).toBe("");
+    // @ts-expect-error test falsy input defensively
+    expect(slugifyHeading(undefined)).toBe("");
   });
 });
