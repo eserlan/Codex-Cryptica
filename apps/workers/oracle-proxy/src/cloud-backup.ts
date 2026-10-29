@@ -20,7 +20,6 @@ import {
   CLOUD_BACKUP_SCHEMA_V2,
   CLOUD_BACKUP_SHARD_COUNT,
   CloudBackupDeltaSchema,
-  CloudBackupManifestSchema,
   cloudBackupShardOf,
   hashCloudBackupEntity,
   type CloudBackupDelta,
@@ -33,299 +32,58 @@ import {
   type EntityRecord,
   type Shard,
 } from "./cloud-backup-entities";
-
-export interface CloudBackupEnv {
-  BUCKET?: any;
-  ALLOWED_ORIGINS?: string;
-  ALLOW_CLOUDFLARE_PAGES_PREVIEW_ORIGINS?: string;
-  CLOUD_BACKUP_ADMIN_TOKEN?: string;
-}
-
-export const PREFIX = "cloud-backup/";
+import {
+  type CloudBackupEnv,
+  getManifestKey,
+  getBundleKey,
+  getShardKey,
+  getIndexKey,
+  getAssetKey,
+  getBackupPrefix,
+  storedBytes,
+  readJson,
+  writeJson,
+  writeManifest,
+  listKeys,
+  pruneAssets,
+  eraseBackupObjects,
+} from "./cloud-backup-storage";
+import {
+  cors,
+  json,
+  notFoundOrUnauthorized,
+  type BackupPayload,
+  tooLargeToRead,
+  readJsonBody,
+  isValidAssetId,
+  validatePayload,
+} from "./cloud-backup-http";
+import {
+  hashOwnerCode,
+  generateOwnerCode,
+  authorizeStoredBackup,
+} from "./cloud-backup-auth";
+export {
+  type CloudBackupEnv,
+  PREFIX,
+  getManifestKey,
+  getBundleKey,
+  getShardKey,
+  getIndexKey,
+  getAssetKey,
+  getBackupPrefix,
+  readManifest,
+  eraseBackupObjects,
+} from "./cloud-backup-storage";
+export { json, isValidAssetId } from "./cloud-backup-http";
+export {
+  bearerToken,
+  hashOwnerCode,
+  generateOwnerCode,
+  authorize,
+  isAdmin,
+} from "./cloud-backup-auth";
 const SCHEMA_VERSION = 1;
-
-/* ------------------------------------------------------------------ keys -- */
-
-export function getManifestKey(backupId: string): string {
-  return `${PREFIX}${backupId}/manifest.json`;
-}
-
-export function getBundleKey(backupId: string): string {
-  return `${PREFIX}${backupId}/bundle.json`;
-}
-
-/** v2 (#3354): one shard of entities, `{ [entityId]: entity }`. */
-export function getShardKey(backupId: string, shard: string): string {
-  return `${PREFIX}${backupId}/entities/${shard}.json`;
-}
-
-/**
- * v2 (#3354): `{ entityHashes: { [entityId]: sha256 } }`. Kept out of the
- * manifest on purpose — every authorised request reads the manifest, and a
- * per-entity hash map would make each of them pay for the whole vault's index.
- */
-export function getIndexKey(backupId: string): string {
-  return `${PREFIX}${backupId}/index.json`;
-}
-
-export function getAssetKey(backupId: string, assetId: string): string {
-  return `${PREFIX}${backupId}/assets/${assetId}`;
-}
-
-export function getBackupPrefix(backupId: string): string {
-  return `${PREFIX}${backupId}/`;
-}
-
-/* ------------------------------------------------------------- responses -- */
-
-function cors(request: Request): Record<string, string> {
-  const origin = request.headers.get("Origin") || "*";
-  return {
-    "Access-Control-Allow-Origin": origin,
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
-    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-  };
-}
-
-export function json(
-  request: Request,
-  body: unknown,
-  status = 200,
-  extra: Record<string, string> = {},
-): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { ...cors(request), "Content-Type": "application/json", ...extra },
-  });
-}
-
-/**
- * The single response used for both "no such backup" and "wrong code".
- *
- * Returning different bodies or statuses for those two cases would let anyone
- * enumerate which backups exist by trying codes (FR-014), so they are one
- * function rather than two call sites that must remember to stay in step.
- */
-function notFoundOrUnauthorized(request: Request): Response {
-  return json(request, { error: { message: "Backup not found" } }, 404);
-}
-
-/* ----------------------------------------------------------- credentials -- */
-
-/** Reads the bearer credential, tolerating a bare token like the sibling routes. */
-export function bearerToken(request: Request): string | null {
-  const value = request.headers.get("Authorization");
-  return value?.startsWith("Bearer ")
-    ? value.slice(7).trim() || null
-    : value?.trim() || null;
-}
-
-/** SHA-256 hex. Web Crypto only — the worker runs without `nodejs_compat`. */
-export async function hashOwnerCode(code: string): Promise<string> {
-  const digest = await crypto.subtle.digest(
-    "SHA-256",
-    new TextEncoder().encode(code),
-  );
-  const bytes = new Uint8Array(digest);
-  let hex = "";
-  // ⚡ Bolt Optimization: Replace chained .map().join() with an imperative loop
-  for (let i = 0; i < bytes.length; i++) {
-    hex += bytes[i].toString(16).padStart(2, "0");
-  }
-  return hex;
-}
-
-/** A fresh ownership code. Opaque, unguessable, unrelated to the backup id. */
-export function generateOwnerCode(): string {
-  const bytes = crypto.getRandomValues(new Uint8Array(32));
-  let hex = "";
-  // ⚡ Bolt Optimization: Replace chained .map().join() with an imperative loop
-  for (let i = 0; i < bytes.length; i++) {
-    hex += bytes[i].toString(16).padStart(2, "0");
-  }
-  return hex;
-}
-
-export async function readManifest(
-  env: CloudBackupEnv,
-  backupId: string,
-): Promise<{ manifest: CloudBackupManifest; ownerCodeHash?: string } | null> {
-  const object = await env.BUCKET?.get(getManifestKey(backupId));
-  if (!object) return null;
-  try {
-    const text =
-      typeof object.text === "function"
-        ? await object.text()
-        : new TextDecoder().decode(object.body);
-    const parsed = CloudBackupManifestSchema.safeParse(JSON.parse(text));
-    if (!parsed.success) return null;
-    return {
-      manifest: parsed.data,
-      ownerCodeHash: object.customMetadata?.ownerCodeHash,
-    };
-  } catch {
-    return null;
-  }
-}
-
-/**
- * Resolves a request to its backup, or to the undifferentiated failure response.
- *
- * Returns the manifest on success so callers do not re-read it.
- */
-export async function authorize(
-  request: Request,
-  env: CloudBackupEnv,
-  backupId: string,
-): Promise<
-  | { manifest: CloudBackupManifest; ownerCodeHash: string }
-  | { response: Response }
-> {
-  const code = bearerToken(request);
-  if (!code) return { response: notFoundOrUnauthorized(request) };
-
-  const record = await readManifest(env, backupId);
-  if (!record?.ownerCodeHash)
-    return { response: notFoundOrUnauthorized(request) };
-
-  // A backup's code only ever unlocks that backup: the hash compared here comes
-  // from the requested backup's own manifest, so another vault's valid code
-  // fails exactly like an invalid one (FR-012).
-  if (record.ownerCodeHash !== (await hashOwnerCode(code))) {
-    return { response: notFoundOrUnauthorized(request) };
-  }
-  return { manifest: record.manifest, ownerCodeHash: record.ownerCodeHash };
-}
-
-export function isAdmin(request: Request, env: CloudBackupEnv): boolean {
-  const expected = env.CLOUD_BACKUP_ADMIN_TOKEN;
-  // Closed by default: with no secret configured, no request is an admin.
-  if (!expected) return false;
-  return bearerToken(request) === expected;
-}
-
-/* ------------------------------------------------------------- payloads -- */
-
-interface BackupPayload {
-  vaultTitle: string;
-  bundle: unknown;
-  /** Ids of the assets uploaded for this snapshot. Anything else is pruned. */
-  assetIds?: string[];
-}
-
-/**
- * Rejects an oversized body before it is read.
- *
- * This has to happen first. Reading the body to measure it is what the size
- * limit exists to prevent: a vault large enough to matter would exhaust the
- * Worker's memory during `request.json()`, and the check meant to return a
- * clean 413 would never be reached.
- */
-function tooLargeToRead(request: Request, limit: number): Response | null {
-  const declared = Number(request.headers.get("Content-Length"));
-  if (Number.isFinite(declared) && declared > limit) {
-    return json(
-      request,
-      {
-        error: {
-          message: "This request is too large.",
-          limitBytes: limit,
-          actualBytes: declared,
-        },
-      },
-      413,
-    );
-  }
-  return null;
-}
-
-/** A size-checked JSON body, or the 413/400 response to return instead. */
-async function readJsonBody(
-  request: Request,
-): Promise<{ body: unknown } | { response: Response }> {
-  const oversized = tooLargeToRead(
-    request,
-    CLOUD_BACKUP_LIMITS.maxJsonBodyBytes,
-  );
-  if (oversized) return { response: oversized };
-  try {
-    return { body: await request.json() };
-  } catch {
-    return {
-      response: json(request, { error: { message: "Invalid JSON" } }, 400),
-    };
-  }
-}
-
-/** Bytes already stored for a backup, so the vault ceiling can be enforced. */
-async function storedBytes(
-  env: CloudBackupEnv,
-  backupId: string,
-): Promise<number> {
-  let total = 0;
-  const prefix = getBackupPrefix(backupId);
-  let listed = await env.BUCKET.list({ prefix });
-  for (;;) {
-    for (const object of listed.objects) total += object.size ?? 0;
-    if (!listed.truncated) break;
-    listed = await env.BUCKET.list({ prefix, cursor: listed.cursor });
-  }
-  return total;
-}
-
-/**
- * An asset id is a storage key segment, so it must not be able to climb out of
- * its prefix or collide with the manifest and bundle objects.
- */
-export function isValidAssetId(assetId: string): boolean {
-  return (
-    !!assetId &&
-    assetId.length <= 255 &&
-    !assetId.includes("/") &&
-    !assetId.includes("\\") &&
-    assetId !== "." &&
-    assetId !== ".."
-  );
-}
-
-function validatePayload(
-  request: Request,
-  body: unknown,
-): { payload: BackupPayload } | { response: Response } {
-  const candidate = body as Partial<BackupPayload> | null;
-  if (
-    !candidate ||
-    typeof candidate.vaultTitle !== "string" ||
-    !candidate.vaultTitle.trim() ||
-    candidate.vaultTitle.length > CLOUD_BACKUP_LIMITS.maxTitleLength ||
-    candidate.bundle === undefined
-  ) {
-    return {
-      response: json(
-        request,
-        { error: { message: "A vault title and bundle are required" } },
-        400,
-      ),
-    };
-  }
-  if (candidate.assetIds !== undefined) {
-    if (
-      !Array.isArray(candidate.assetIds) ||
-      candidate.assetIds.some(
-        (id) => typeof id !== "string" || !isValidAssetId(id),
-      )
-    ) {
-      return {
-        response: json(
-          request,
-          { error: { message: "Invalid asset list" } },
-          400,
-        ),
-      };
-    }
-  }
-  return { payload: candidate as BackupPayload };
-}
 
 /**
  * Commits a staged snapshot: bundle, then manifest, then prune.
@@ -374,41 +132,6 @@ async function commitSnapshot(
   return committed;
 }
 
-async function readJson<T>(
-  env: CloudBackupEnv,
-  key: string,
-): Promise<T | null> {
-  const object = await env.BUCKET.get(key);
-  if (!object) return null;
-  const text =
-    typeof object.text === "function"
-      ? await object.text()
-      : new TextDecoder().decode(object.body);
-  return JSON.parse(text) as T;
-}
-
-async function writeJson(
-  env: CloudBackupEnv,
-  key: string,
-  value: unknown,
-): Promise<void> {
-  await env.BUCKET.put(key, JSON.stringify(value), {
-    httpMetadata: { contentType: "application/json" },
-  });
-}
-
-async function writeManifest(
-  env: CloudBackupEnv,
-  backupId: string,
-  manifest: CloudBackupManifest,
-  ownerCodeHash: string,
-): Promise<void> {
-  await env.BUCKET.put(getManifestKey(backupId), JSON.stringify(manifest), {
-    httpMetadata: { contentType: "application/json" },
-    customMetadata: { ownerCodeHash, vaultTitle: manifest.vaultTitle },
-  });
-}
-
 async function writeIndex(
   env: CloudBackupEnv,
   backupId: string,
@@ -445,20 +168,6 @@ async function writeShards(
   }
 }
 
-async function listKeys(
-  env: CloudBackupEnv,
-  prefix: string,
-): Promise<string[]> {
-  const keys: string[] = [];
-  let listed = await env.BUCKET.list({ prefix });
-  for (;;) {
-    for (const object of listed.objects) keys.push(object.key);
-    if (!listed.truncated) break;
-    listed = await env.BUCKET.list({ prefix, cursor: listed.cursor });
-  }
-  return keys;
-}
-
 /** Every entity of a v2 backup, assembled from its shards. */
 async function readAllEntities(
   env: CloudBackupEnv,
@@ -471,23 +180,6 @@ async function readAllEntities(
     if (shard) entities.push(...Object.values(shard));
   }
   return entities;
-}
-
-/** Removes assets under the backup that the new snapshot does not include. */
-async function pruneAssets(
-  env: CloudBackupEnv,
-  backupId: string,
-  keep: Set<string>,
-): Promise<void> {
-  const prefix = `${getBackupPrefix(backupId)}assets/`;
-  let listed = await env.BUCKET.list({ prefix });
-  while (listed.objects.length > 0) {
-    for (const object of listed.objects) {
-      if (!keep.has(object.key)) await env.BUCKET.delete(object.key);
-    }
-    if (!listed.truncated) break;
-    listed = await env.BUCKET.list({ prefix, cursor: listed.cursor });
-  }
 }
 
 /* -------------------------------------------------------------- handlers -- */
@@ -574,11 +266,7 @@ export async function handleCloudBackupAssetUpload(
   backupId: string,
   assetId: string,
 ): Promise<Response> {
-  if (!env.BUCKET) {
-    return json(request, { error: { message: "Storage unavailable" } }, 500);
-  }
-
-  const auth = await authorize(request, env, backupId);
+  const auth = await authorizeStoredBackup(request, env, backupId);
   if ("response" in auth) return auth.response;
 
   if (!isValidAssetId(assetId)) {
@@ -648,11 +336,7 @@ export async function handleCommitCloudBackup(
   env: CloudBackupEnv,
   backupId: string,
 ): Promise<Response> {
-  if (!env.BUCKET) {
-    return json(request, { error: { message: "Storage unavailable" } }, 500);
-  }
-
-  const auth = await authorize(request, env, backupId);
+  const auth = await authorizeStoredBackup(request, env, backupId);
   if ("response" in auth) return auth.response;
 
   const read = await readJsonBody(request);
@@ -691,10 +375,7 @@ export async function handleGetCloudBackupStatus(
   env: CloudBackupEnv,
   backupId: string,
 ): Promise<Response> {
-  if (!env.BUCKET) {
-    return json(request, { error: { message: "Storage unavailable" } }, 500);
-  }
-  const auth = await authorize(request, env, backupId);
+  const auth = await authorizeStoredBackup(request, env, backupId);
   if ("response" in auth) return auth.response;
 
   // "syncing" is a client-local transient; the server only knows idle or error.
@@ -711,10 +392,7 @@ export async function handleGetCloudBackupBundle(
   env: CloudBackupEnv,
   backupId: string,
 ): Promise<Response> {
-  if (!env.BUCKET) {
-    return json(request, { error: { message: "Storage unavailable" } }, 500);
-  }
-  const auth = await authorize(request, env, backupId);
+  const auth = await authorizeStoredBackup(request, env, backupId);
   if ("response" in auth) return auth.response;
 
   const bundle = await readJson<Record<string, unknown>>(
@@ -742,10 +420,7 @@ export async function handleGetCloudBackupIndex(
   env: CloudBackupEnv,
   backupId: string,
 ): Promise<Response> {
-  if (!env.BUCKET) {
-    return json(request, { error: { message: "Storage unavailable" } }, 500);
-  }
-  const auth = await authorize(request, env, backupId);
+  const auth = await authorizeStoredBackup(request, env, backupId);
   if ("response" in auth) return auth.response;
 
   const index = await readJson<{ entityHashes: Record<string, string> }>(
@@ -887,11 +562,7 @@ export async function handleCloudBackupDelta(
   env: CloudBackupEnv,
   backupId: string,
 ): Promise<Response> {
-  if (!env.BUCKET) {
-    return json(request, { error: { message: "Storage unavailable" } }, 500);
-  }
-
-  const auth = await authorize(request, env, backupId);
+  const auth = await authorizeStoredBackup(request, env, backupId);
   if ("response" in auth) return auth.response;
 
   const read = await readJsonBody(request);
@@ -976,10 +647,7 @@ export async function handleGetCloudBackupAsset(
   backupId: string,
   assetId: string,
 ): Promise<Response> {
-  if (!env.BUCKET) {
-    return json(request, { error: { message: "Storage unavailable" } }, 500);
-  }
-  const auth = await authorize(request, env, backupId);
+  const auth = await authorizeStoredBackup(request, env, backupId);
   if ("response" in auth) return auth.response;
 
   const object = await env.BUCKET.get(getAssetKey(backupId, assetId));
@@ -995,36 +663,13 @@ export async function handleGetCloudBackupAsset(
   });
 }
 
-/**
- * Erases every object under a backup's prefix: manifest, bundle and assets.
- *
- * Shared by the owner and admin delete routes on purpose. Two copies of this
- * loop is how one of them ends up leaving orphaned assets behind after the
- * manifest is gone — unreachable, unbilled to anyone, and invisible.
- */
-export async function eraseBackupObjects(
-  env: CloudBackupEnv,
-  backupId: string,
-): Promise<void> {
-  const prefix = getBackupPrefix(backupId);
-  let listed = await env.BUCKET.list({ prefix });
-  while (listed.objects.length > 0) {
-    for (const object of listed.objects) await env.BUCKET.delete(object.key);
-    if (!listed.truncated) break;
-    listed = await env.BUCKET.list({ prefix, cursor: listed.cursor });
-  }
-}
-
 /** DELETE /api/cloud-backup/{backupId} — permanent erase (FR-010). */
 export async function handleDeleteCloudBackup(
   request: Request,
   env: CloudBackupEnv,
   backupId: string,
 ): Promise<Response> {
-  if (!env.BUCKET) {
-    return json(request, { error: { message: "Storage unavailable" } }, 500);
-  }
-  const auth = await authorize(request, env, backupId);
+  const auth = await authorizeStoredBackup(request, env, backupId);
   if ("response" in auth) return auth.response;
 
   await eraseBackupObjects(env, backupId);
