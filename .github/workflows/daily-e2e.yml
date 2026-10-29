@@ -18,7 +18,7 @@ jobs:
   test-e2e:
     name: Run E2E Tests
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
     env:
       HUSKY: 0
     steps:

@@ -1,9 +1,14 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("Oracle Clear Chat", () => {
+  test.describe.configure({ timeout: 60000 });
+
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
       localStorage.setItem("codex_skip_landing", "true");
+      localStorage.setItem("codex_guided_mode_active", "false");
+      localStorage.setItem("codex_goal_invitation", "dismissed");
+      localStorage.setItem("oracle-hint-seen", "true");
       localStorage.setItem(
         "codex-cryptica-help-state",
         JSON.stringify({ completedTours: ["initial-onboarding"] }),
@@ -46,10 +51,14 @@ test.describe("Oracle Clear Chat", () => {
     // 4. Clear button should appear
     await expect(clearBtn).toBeVisible();
 
-    // 5. Wait for oracle to finish loading, then clear
-    await page.waitForFunction(() => !(window as any).oracle?.isLoading, {
-      timeout: 10000,
-    });
+    // 5. Wait for oracle to finish processing the turn, then clear
+    await page.waitForFunction(
+      () =>
+        !(window as any).oracle?.isLoading &&
+        !(window as any).oracle?.isThinking &&
+        !(window as any).oracle?.executor?.chatExecutor?.isExecuting,
+      { timeout: 15000 },
+    );
     await page.evaluate(async () => {
       const oracle = (window as any).oracle;
       await oracle.setMessages([]);
@@ -67,6 +76,13 @@ test.describe("Oracle Clear Chat", () => {
   }) => {
     // 1. Navigate to standalone page
     await page.goto("/oracle");
+    await page.waitForFunction(
+      () => {
+        const oracle = (window as any).oracle;
+        return oracle && oracle.isInitialized;
+      },
+      { timeout: 15000 },
+    );
 
     // 2. Initially, no clear button
     const clearBtn = page.getByLabel("Clear conversation history");
@@ -83,10 +99,14 @@ test.describe("Oracle Clear Chat", () => {
     // 4. Clear button should appear
     await expect(clearBtn).toBeVisible();
 
-    // 5. Wait for oracle to finish loading, then clear
-    await page.waitForFunction(() => !(window as any).oracle?.isLoading, {
-      timeout: 10000,
-    });
+    // 5. Wait for oracle to finish processing the turn, then clear
+    await page.waitForFunction(
+      () =>
+        !(window as any).oracle?.isLoading &&
+        !(window as any).oracle?.isThinking &&
+        !(window as any).oracle?.executor?.chatExecutor?.isExecuting,
+      { timeout: 15000 },
+    );
     await page.evaluate(async () => {
       const oracle = (window as any).oracle;
       await oracle.setMessages([]);

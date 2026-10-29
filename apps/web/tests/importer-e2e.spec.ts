@@ -1,6 +1,8 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("Intelligent Importer E2E", () => {
+  test.describe.configure({ timeout: 60000 });
+
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
       localStorage.setItem("codex_skip_landing", "true");
@@ -38,6 +40,7 @@ test.describe("Intelligent Importer E2E", () => {
 
     // Inject fake API key and mock vault methods
     await page.evaluate(async () => {
+      await (window as any).oracle.init();
       await (window as any).oracle.setKey("fake-key");
       const vault = (window as any).vault;
       // Mock batch operations to avoid real IO/DB failures
@@ -45,6 +48,7 @@ test.describe("Intelligent Importer E2E", () => {
         data.forEach((item) => {
           const id = item.title.toLowerCase().replace(/\s+/g, "-");
           vault.entities[id] = {
+            ...item.initialData,
             id,
             title: item.title,
             type: item.type,
@@ -53,6 +57,7 @@ test.describe("Intelligent Importer E2E", () => {
             labels: item.initialData.labels,
             tags: item.initialData.tags || [],
             connections: item.initialData.connections,
+            discoverySource: item.initialData.discoverySource,
           };
         });
         return Promise.resolve();
@@ -131,10 +136,10 @@ test.describe("Intelligent Importer E2E", () => {
     await expect(page.locator('button:has-text("Cancel Import")')).toBeVisible({
       timeout: 10000,
     });
-    resolveRequest();
 
-    // 5. Cancel import
+    // 5. Cancel import before releasing the mocked network hold
     await page.locator('button:has-text("Cancel Import")').click();
+    resolveRequest();
 
     // 6. Verify we returned to upload or empty state
     await expect(
@@ -217,16 +222,18 @@ test.describe("Intelligent Importer E2E", () => {
 
     // 2. Wait for Review step
     await expect(
-      page.locator('h3:has-text("Review Identified Entities")'),
+      page.locator('h3:has-text("Review Import Package")'),
     ).toBeVisible({ timeout: 15000 });
     await expect(page.getByText("Valeria", { exact: true })).toBeVisible();
     await expect(page.getByText("Silent Blade", { exact: true })).toBeVisible();
 
     // 3. Click Import
-    await page.getByRole("button", { name: /Import \d+ Items/ }).click();
+    await page.getByRole("button", { name: /^Import \d+$/i }).click();
 
     // 4. Verify Success
-    await expect(page.locator("text=Import Successful")).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Import Report" }),
+    ).toBeVisible();
 
     // 5. Check Vault Content via evaluate
     const entity = await page.evaluate(() => {

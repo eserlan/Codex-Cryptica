@@ -5,6 +5,9 @@ test.describe("Mobile Entity Explorer (Issue 1311)", () => {
     // Mock init
     await page.addInitScript(() => {
       localStorage.setItem("codex_skip_landing", "true");
+      localStorage.setItem("codex_guided_mode_active", "false");
+      localStorage.setItem("codex_goal_invitation", "dismissed");
+      localStorage.setItem("codex_mobile_graph_coach_marks_seen", "true");
       localStorage.setItem(
         "codex-cryptica-help-state",
         JSON.stringify({ completedTours: ["initial-onboarding"] }),

@@ -112,7 +112,8 @@ test.describe("Interactive Demo Mode", () => {
     await page.waitForFunction(
       () =>
         (window as any).sessionModeStore?.isDemoMode &&
-        (window as any).vault?.status === "idle",
+        (window as any).vault?.status === "idle" &&
+        !!(window as any).vault?.demoVaultName,
       { timeout: 15000 },
     );
 
@@ -135,7 +136,8 @@ test.describe("Interactive Demo Mode", () => {
     await page.waitForFunction(
       () =>
         (window as any).sessionModeStore?.isDemoMode &&
-        (window as any).vault?.status === "idle",
+        (window as any).vault?.status === "idle" &&
+        !!(window as any).vault?.demoVaultName,
       { timeout: 15000 },
     );
 
@@ -153,7 +155,8 @@ test.describe("Interactive Demo Mode", () => {
     await page.waitForFunction(
       () =>
         (window as any).sessionModeStore?.isDemoMode &&
-        (window as any).vault?.status === "idle",
+        (window as any).vault?.status === "idle" &&
+        !!(window as any).vault?.demoVaultName,
       { timeout: 15000 },
     );
 

@@ -116,7 +116,7 @@ export class MergeExecutor
             beforeSource.title,
             { ...beforeSource },
           );
-          context.vault.updateEntity(targetId, beforeTarget);
+          await context.vault.updateEntity(targetId, beforeTarget);
         },
         undefined,
         async () => {

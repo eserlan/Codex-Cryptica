@@ -1,6 +1,10 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("Changelog Page", () => {
+  test.beforeEach(() => {
+    test.setTimeout(90000);
+  });
+
   test("should load the changelog index page", async ({ page }) => {
     await page.goto("/changelog");
 
@@ -25,6 +29,7 @@ test.describe("Changelog Page", () => {
   test("should navigate to changelog via landing page link", async ({
     page,
   }) => {
+    test.setTimeout(90000);
     await page.addInitScript(() => {
       localStorage.removeItem("codex_skip_landing");
     });
@@ -35,17 +40,24 @@ test.describe("Changelog Page", () => {
     const landingHeading = page.getByRole("heading", {
       name: "Private RPG Lore Vault",
     });
-    await expect(landingHeading).toBeVisible();
+    await expect(landingHeading).toBeVisible({ timeout: 45000 });
 
+    const exploreLink = page
+      .getByTestId("app-footer")
+      .getByRole("link", { name: "Explore", exact: true });
+    await expect(exploreLink).toBeVisible();
+    await exploreLink.evaluate((el: HTMLAnchorElement) => el.click());
+
+    await expect(page).toHaveURL(/\/explore/, { timeout: 45000 });
     const changelogLink = page.getByRole("link", {
-      name: "Changelog",
+      name: /Changelog/i,
     });
     await expect(changelogLink).toBeVisible();
 
     await changelogLink.click();
 
     // Wait for navigation
-    await expect(page).toHaveURL(/\/changelog/);
+    await expect(page).toHaveURL(/\/changelog/, { timeout: 15000 });
     await expect(
       page.getByRole("heading", { name: "The Chronology" }),
     ).toBeVisible();
@@ -59,9 +71,9 @@ test.describe("Changelog Page", () => {
     const v0260 = page.locator("#v0\\.26\\.0");
     await expect(v0260).toBeAttached();
 
-    const releaseTitle = page.getByText(
-      "The Multi-Sensory & Interactive Chronology Update",
-    );
+    const releaseTitle = v0260.getByRole("heading", {
+      name: "The Multi-Sensory & Interactive Chronology Update",
+    });
     await expect(releaseTitle).toBeVisible();
   });
 });

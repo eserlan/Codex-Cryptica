@@ -17,6 +17,18 @@ test.describe("In-app generator sessions", () => {
   }) => {
     const requests: Array<Record<string, unknown>> = [];
     await page.route(ORACLE_PROXY, async (route) => {
+      const url = new URL(route.request().url());
+      if (url.pathname === "/api/session") {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            token: "e2e-session-token",
+            expiresAt: Date.now() + 3600_000,
+          }),
+        });
+        return;
+      }
       const body = route.request().postDataJSON() as Record<string, unknown>;
       requests.push(body);
       const id = `interaction-${requests.length}`;

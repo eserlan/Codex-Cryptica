@@ -47,7 +47,7 @@ test.describe("Help Center System", () => {
     // The article keeps its current product-neutral title while retaining the
     // Gemini tag/content used by the search index.
     await expect(
-      page.getByText("Acquiring a OpenAI/Luna API Key"),
+      page.getByText("Oracle AI Access and Personal Keys"),
     ).toBeVisible();
     await expect(page.getByText("The Lore Oracle")).toBeVisible();
 

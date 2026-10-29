@@ -30,6 +30,7 @@ export function seedOnboardingComplete() {
     );
     localStorage.setItem("codex_goal_invitation", "dismissed");
     localStorage.setItem("codex_mobile_graph_coach_marks_seen", "true");
+    localStorage.setItem("oracle-hint-seen", "true");
   } catch {
     /* ignore */
   }
@@ -40,11 +41,16 @@ export async function setupVaultPage(page: Page) {
   await page.addInitScript(seedOnboardingComplete);
 
   await page.goto("/");
-  // Wait for vault initialization (OPFS auto-load)
+  // Wait for vault initialization (OPFS auto-load) and layout mount
   await page.waitForFunction(
     () => {
-      const status = (window as any).vault?.status;
-      return status === "idle";
+      const vault = (window as any).vault;
+      return (
+        !!vault &&
+        vault.isInitialized === true &&
+        vault.status === "idle" &&
+        !!(window as any).onboardingStore
+      );
     },
     {
       timeout: 15000,
@@ -85,7 +91,12 @@ export async function waitForVaultReady(page: Page, timeout = 15000) {
   await page.waitForFunction(
     () => {
       const vault = (window as any).vault;
-      return !!vault && vault.status === "idle";
+      return (
+        !!vault &&
+        vault.isInitialized === true &&
+        vault.status === "idle" &&
+        !!(window as any).onboardingStore
+      );
     },
     undefined,
     { timeout },
