@@ -100,6 +100,11 @@ describe("GeneratorIntroPanel", () => {
       screen.getByRole("link", { name: "All generators" }).getAttribute("href"),
     ).toBe("/generators");
     expect(screen.queryByTestId("public-label-chip")).toBeNull();
-    expect(screen.queryByText("Choose a role to begin")).toBeNull();
+    expect(
+      screen.getByText("Set your inputs — your draft updates below"),
+    ).toBeTruthy();
+    expect(
+      screen.getByText("Set your inputs — your draft updates to the right"),
+    ).toBeTruthy();
   });
 });

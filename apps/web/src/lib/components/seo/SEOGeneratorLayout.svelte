@@ -196,12 +196,6 @@
   const columnClasses = $derived(
     getGeneratorColumnClasses(singleColumn, wideForm),
   );
-  const activeInputHint = $derived(
-    inputHint ??
-      (isNarrowViewport
-        ? "Set your inputs — your draft updates below"
-        : "Set your inputs — your draft updates to the right"),
-  );
   const contextSelection = $derived(
     getContextSelection(sessionHubStore.entities),
   );
@@ -390,7 +384,7 @@
         {introTitle}
         {introText}
         {labels}
-        inputHint={activeInputHint}
+        {inputHint}
         {backHref}
         {backLabel}
         {formFields}

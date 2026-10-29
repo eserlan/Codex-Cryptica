@@ -39,7 +39,7 @@
     introTitle: string;
     introText: string;
     labels: string[];
-    inputHint: string;
+    inputHint?: string;
     backHref?: string;
     backLabel?: string;
     formFields: Snippet<[() => void]>;

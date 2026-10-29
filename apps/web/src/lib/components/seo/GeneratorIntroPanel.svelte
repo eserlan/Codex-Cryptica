@@ -19,7 +19,7 @@
     introTitle: string;
     introText: string;
     labels: string[];
-    inputHint: string;
+    inputHint?: string;
     backHref?: string;
     backLabel?: string;
   } = $props();
@@ -64,5 +64,19 @@
       ></span>
     {/if}
     {inputHint}
+  </p>
+{:else}
+  <!-- prettier-ignore -->
+  <p class="text-nano text-theme-text/45 uppercase tracking-widest font-header mb-5 flex items-center gap-1.5"><!-- ui-check-ignore: existing generator intro panel inputHint muted style -->
+    <span class="icon-[lucide--arrow-down] w-3 h-3 lg:hidden" aria-hidden="true"
+    ></span>
+    <span
+      class="icon-[lucide--arrow-right] w-3 h-3 hidden lg:inline-block"
+      aria-hidden="true"
+    ></span>
+    <span class="lg:hidden">Set your inputs — your draft updates below</span>
+    <span class="hidden lg:inline"
+      >Set your inputs — your draft updates to the right</span
+    >
   </p>
 {/if}
