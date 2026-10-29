@@ -94,11 +94,19 @@
         <dd class="text-theme-text/90">{node.whyVisit}</dd>
       </div>
       <div>
-        <dt class="font-bold text-theme-muted">Encounter / Hazard:</dt>
+        <dt
+          class="border-l-2 border-theme-accent pl-1.5 font-bold text-theme-text"
+        >
+          Encounter / Hazard:
+        </dt>
         <dd class="text-theme-text/90">{node.encounterOrHazard}</dd>
       </div>
       {#if node.clueOrReward}<div>
-          <dt class="font-bold text-theme-muted">Clue / Reward / Leverage:</dt>
+          <dt
+            class="border-l-2 border-theme-primary pl-1.5 font-bold text-theme-text"
+          >
+            Clue / Reward / Leverage:
+          </dt>
           <dd class="text-theme-text/90">{node.clueOrReward}</dd>
         </div>{/if}
     </dl>
@@ -137,21 +145,27 @@
     </div>
     <dl class="mt-2.5 grid grid-cols-1 gap-1.5 sm:grid-cols-2">
       <div>
-        <dt class="font-bold text-theme-muted">Signpost at Origin:</dt>
+        <dt class="font-mono font-bold text-theme-text">
+          → Signpost at Origin:
+        </dt>
         <dd class="text-theme-text/90">
           {route.approachFromSource ?? route.signpost}
         </dd>
       </div>
       {#if route.direction === "bidirectional"}<div>
-          <dt class="font-bold text-theme-muted">
-            Approach from {nodeNameById(route.toNodeId)}:
+          <dt class="font-mono font-bold text-theme-text">
+            ← Approach from {nodeNameById(route.toNodeId)}:
           </dt>
           <dd class="text-theme-text/90">
             {route.approachFromTarget ?? route.signpost}
           </dd>
         </div>{/if}
       <div>
-        <dt class="font-bold text-theme-muted">Risk / Toll:</dt>
+        <dt
+          class="border-l-2 border-theme-accent pl-1.5 font-bold text-theme-text"
+        >
+          Risk / Toll:
+        </dt>
         <dd class="text-theme-text/90">{route.risk}</dd>
       </div>
       {#if route.gate}<div class="sm:col-span-2">

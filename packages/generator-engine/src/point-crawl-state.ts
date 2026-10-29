@@ -277,36 +277,49 @@ export function formatRouteConnectionLabel(route: PointCrawlRoute): string {
   return `${route.travelTime} · ${route.terrain}${tagSuffix}`;
 }
 
-/**
- * Deterministic single-sentence description of a route, guaranteed to agree
- * with its structured fields.
- */
+/** Render a route as a table-ready Markdown section from its structured fields. */
 export function renderPointCrawlRouteSummary(
   route: PointCrawlRoute,
   nodesById: ReadonlyMap<string, PointCrawlNode>,
-  fromNodeId = route.fromNodeId,
+  fromNodeId?: string,
 ): string {
   const fromName = nodesById.get(route.fromNodeId)?.name ?? route.fromNodeId;
   const toName = nodesById.get(route.toNodeId)?.name ?? route.toNodeId;
   const arrow = route.direction === "one-way" ? "→" : "↔";
   const visibilityNote =
-    route.visibility === "hidden"
-      ? " (hidden route)"
-      : route.visibility === "rumoured"
-        ? " (rumoured route)"
-        : "";
-  const gateNodeName = route.gate
-    ? (nodesById.get(route.gate.unlockedByNodeId)?.name ??
-      route.gate.unlockedByNodeId)
-    : undefined;
-  const gateSentence = route.gate
-    ? ` **Locked (${route.gate.kind})**: requires ${route.gate.requirement} (found at **${gateNodeName}**).`
-    : "";
+    route.visibility === "obvious" ? "" : ` (${route.visibility} route)`;
   const reverse = fromNodeId === route.toNodeId;
+  const originName = reverse ? toName : fromName;
   const approach = reverse
     ? route.approachFromTarget
     : route.approachFromSource;
-  return `**${fromName} ${arrow} ${toName}**${visibilityNote} — *${route.travelTime} via ${route.terrain}*. **Signpost**: ${approach ?? route.signpost} **Risk**: ${route.risk}${gateSentence}`;
+  const lines = [
+    `### ${fromName} ${arrow} ${toName}${visibilityNote}`,
+    "",
+    `**Travel:** ${route.travelTime}  `,
+    `**Terrain:** ${route.terrain}`,
+    "",
+    `**Signpost from ${originName}:** ${approach ?? route.signpost}`,
+    "",
+    `**Risk:** ${route.risk}`,
+  ];
+  if (
+    fromNodeId === undefined &&
+    route.direction === "bidirectional" &&
+    route.approachFromTarget
+  ) {
+    lines.push("", `**Approach from ${toName}:** ${route.approachFromTarget}`);
+  }
+  if (route.gate) {
+    const gateNodeName =
+      nodesById.get(route.gate.unlockedByNodeId)?.name ??
+      route.gate.unlockedByNodeId;
+    lines.push(
+      "",
+      `**Locked (${route.gate.kind}):** requires ${route.gate.requirement} (found at **${gateNodeName}**).`,
+    );
+  }
+  return lines.join("\n");
 }
 
 function renderPointCrawlLocations(crawl: PointCrawlNetwork): string[] {
@@ -316,10 +329,10 @@ function renderPointCrawlLocations(crawl: PointCrawlNetwork): string[] {
       `### ${idx + 1}. ${node.name} *(${roleLabel})*`,
       node.summary,
       "",
-      `- **Sights & Atmosphere**: ${node.sensoryDescription}`,
-      `- **Why Visit**: ${node.whyVisit}`,
-      `- **Encounter / Complication**: ${node.encounterOrHazard}`,
-      `- **Clue / Reward**: ${node.clueOrReward}`,
+      `- **Sights & Atmosphere:** ${node.sensoryDescription}`,
+      `- **Why Visit:** ${node.whyVisit}`,
+      `- **Encounter / Complication:** ${node.encounterOrHazard}`,
+      `- **Clue / Reward:** ${node.clueOrReward}`,
       "",
     ];
   });
@@ -330,12 +343,8 @@ function renderPointCrawlRoutes(
   nodesById: ReadonlyMap<string, PointCrawlNode>,
 ): string[] {
   return crawl.routes.flatMap((route) => [
-    `- ${renderPointCrawlRouteSummary(route, nodesById)}`,
-    ...(route.direction === "bidirectional" && route.approachFromTarget
-      ? [
-          `  - From **${nodesById.get(route.toNodeId)?.name ?? route.toNodeId}**: ${route.approachFromTarget}`,
-        ]
-      : []),
+    "",
+    renderPointCrawlRouteSummary(route, nodesById),
   ]);
 }
 

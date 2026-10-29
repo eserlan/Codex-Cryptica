@@ -43,7 +43,7 @@ describe("PointCrawlInspector", () => {
 
     expect(
       screen.getByText(
-        `Approach from ${crawl.nodes.find((node) => node.id === route.toNodeId)!.name}:`,
+        `← Approach from ${crawl.nodes.find((node) => node.id === route.toNodeId)!.name}:`,
       ),
     ).toBeTruthy();
     await fireEvent.click(

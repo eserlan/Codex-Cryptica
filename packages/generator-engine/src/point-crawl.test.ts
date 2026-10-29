@@ -343,6 +343,32 @@ describe("Point Crawl Topology & Playability (T004, T010)", () => {
     expect(formatRouteConnectionLabel(gated!)).toContain(
       `Locked: ${gated!.gate!.requirement}`,
     );
+    expect(md).toContain(
+      `**Sights & Atmosphere:** ${crawl.nodes[0].sensoryDescription}`,
+    );
+    const sample = crawl.routes[0];
+    const names = new Map(crawl.nodes.map((node) => [node.id, node]));
+    const formatted = renderPointCrawlRouteSummary(sample, names);
+    expect(formatted).toContain("### ");
+    expect(formatted).toContain(`**Travel:** ${sample.travelTime}`);
+    expect(formatted).toContain(`**Terrain:** ${sample.terrain}`);
+    expect(formatted).toContain(`**Risk:** ${sample.risk}`);
+    expect(formatted).toContain(
+      `**Signpost from ${names.get(sample.fromNodeId)?.name ?? sample.fromNodeId}:** ${sample.approachFromSource ?? sample.signpost}`,
+    );
+    const reverse = renderPointCrawlRouteSummary(
+      { ...sample, approachFromTarget: "Return trail" },
+      names,
+      sample.toNodeId,
+    );
+    expect(reverse).toContain(
+      `**Signpost from ${names.get(sample.toNodeId)?.name ?? sample.toNodeId}:** Return trail`,
+    );
+    const unlocked = renderPointCrawlRouteSummary(
+      { ...sample, gate: undefined },
+      names,
+    );
+    expect(unlocked).not.toContain("**Locked (");
     const routeSection = md.split("## Route Network & Trade-Offs")[1] ?? "";
     const nodesById = new Map(crawl.nodes.map((node) => [node.id, node]));
     for (const route of crawl.routes) {
@@ -613,6 +639,17 @@ describe("Multi-Entity Vault Save Draft Builder (T024)", () => {
         expect(rel.label).toContain("·");
       }
     }
+
+    const route = crawl.routes[0];
+    const sourceDraft = locationDrafts.find(
+      (draft) => draft.sourceNodeId === route.fromNodeId,
+    )!;
+    expect(sourceDraft.lore).toContain(`**Terrain:** ${route.terrain}`);
+    expect(sourceDraft.lore).toContain(`**Risk:** ${route.risk}`);
+    expect(masterNote.content).toContain(`**Terrain:** ${route.terrain}`);
+    const gated = crawl.routes.find((entry) => entry.gate)!;
+    expect(masterNote.content).toContain(`**Locked (${gated.gate!.kind}):**`);
+    expect(masterNote.content).toContain(gated.gate!.requirement);
 
     expect(masterNote.type).toBe("note");
     expect(masterNote.kind).toBe("point-crawl");
