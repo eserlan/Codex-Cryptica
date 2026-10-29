@@ -123,6 +123,12 @@ export const whatIsAPointCrawl: AnswerConfigInput = {
       href: "/generators/point-crawl",
     },
     {
+      title: "Point crawl example: The Receding Tide Road",
+      description:
+        "Inspect a complete 8-location coastal point crawl with an exported network diagram, time costs, and clue-gated final ascent.",
+      href: "/examples/the-receding-tide-road-point-crawl",
+    },
+    {
       title: "Encounter generator",
       description: "Fills the links: what the party meets between the nodes.",
       href: "/generators/encounter",

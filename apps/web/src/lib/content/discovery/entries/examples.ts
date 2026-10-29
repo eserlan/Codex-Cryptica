@@ -486,4 +486,35 @@ export const exampleEntries: DiscoveryEntryInput[] = [
     indexable: true,
     status: "live",
   },
+  {
+    id: "example-receding-tide-road-point-crawl",
+    pageKind: "example",
+    canonicalPath: "/examples/the-receding-tide-road-point-crawl",
+    primaryIntent: "point crawl example",
+    intentAliases: [
+      "rpg point crawl example",
+      "example of a point crawl",
+      "sample point crawl adventure",
+    ],
+    audience: "Tabletop RPG game masters",
+    userJob: "see-an-example",
+    uniqueValue:
+      "A complete, playable 8-location coastal fantasy point crawl with an exported network diagram, time costs, hidden bypasses, key-before-lock gates, and an example of play.",
+    parentCluster: "adventure-mapping",
+    relatedIntents: [
+      "generator-point-crawl",
+      "answer-point-crawl",
+      "answer-build-a-point-crawl",
+      "answer-point-crawl-vs-hex-crawl",
+    ],
+    acknowledgedOverlap: [
+      {
+        with: "generator-point-crawl",
+        reason:
+          "The generator creates new interactive point crawls (create); this page presents a full, playable coastal fantasy example with network map and choice walkthrough (see-an-example).",
+      },
+    ],
+    indexable: true,
+    status: "live",
+  },
 ];
