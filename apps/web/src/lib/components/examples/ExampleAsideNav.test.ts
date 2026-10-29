@@ -79,7 +79,10 @@ describe("ExampleAsideNav", () => {
     const relatedLabel = screen.getByText(related[0].title);
     expect(relatedLabel.className).toContain("text-sm");
     expect(relatedLabel.closest("ul")?.className).toContain("flex-1");
-    expect(panel.querySelector("div.hidden.min-h-0.flex-1")).toBeTruthy();
+    expect(relatedLabel.closest("ul")?.className).toContain("shrink-0");
+    expect(
+      panel.querySelector("div.hidden.min-h-0.flex-1.shrink-0"),
+    ).toBeTruthy();
   });
 
   it("omits the other-examples list when there is nothing to show", () => {

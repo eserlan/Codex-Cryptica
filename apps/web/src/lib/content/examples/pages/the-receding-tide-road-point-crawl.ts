@@ -39,16 +39,6 @@ export const theRecedingTideRoad: ExampleConfigInput = {
       label: "Secret Route Frequency",
       value: "Standard (2 hidden shortcuts)",
     },
-    {
-      label: "Premise",
-      value:
-        "The Sunken Reliquary of Saint Vael: a flooded coastal abbey and sea-cliff pilgrimage network exposed only during the autumn king-tides, where rival salvage crews and drowned monastery guardians contest the sealed reliquary vault.",
-    },
-    {
-      label: "Campaign Context",
-      value:
-        "The Salt Coast, a chain of tidal fishing towns and ruined cliff-abbeys where smugglers and relic-wardens time their expeditions by the receding tide.",
-    },
   ],
   image: {
     src: "https://assets.codexcryptica.com/announcements/point-crawl-the-receding-tide-road.jpg",
