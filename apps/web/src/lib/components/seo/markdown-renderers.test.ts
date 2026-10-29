@@ -63,6 +63,24 @@ describe("renderGeneratorMarkdown", () => {
     expect(result).toContain("Bob");
   });
 
+  it("preserves multi-facet route bullets without swallowing bold spans", () => {
+    const html = renderGeneratorMarkdown(
+      "- **Gate ↔ Abbey** — *3 days via track*. **Signpost**: Follow the river. **Risk**: Flooding.",
+    );
+    const container = document.createElement("div");
+    container.innerHTML = html;
+    expect(container.querySelector(".seo-label")).toBeNull();
+    expect(container.querySelectorAll("strong")).toHaveLength(3);
+    expect(container.textContent).not.toContain("**");
+    expect(container.textContent).toContain("Follow the river");
+  });
+
+  it("renders a bold label with its colon inside the emphasis", () => {
+    const html = renderGeneratorMarkdown("- **Terrain:** Old road");
+    expect(html).toContain("seo-label");
+    expect(html).toContain("Old road");
+  });
+
   it("handles plain key formats", () => {
     const input = "* Age: 42";
     const result = renderGeneratorMarkdown(input, "default");

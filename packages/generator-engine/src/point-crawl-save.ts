@@ -93,7 +93,7 @@ function buildLocationLore(
   } else {
     for (const route of incidentRoutes) {
       lines.push(
-        `- ${renderPointCrawlRouteSummary(route, nodesById, node.id)}`,
+        `\n${renderPointCrawlRouteSummary(route, nodesById, node.id)}`,
       );
     }
   }
