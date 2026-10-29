@@ -8,6 +8,17 @@ export interface InlineMarkupSegment {
 }
 
 /**
+ * Converts a heading string into a URL-friendly anchor ID.
+ */
+export function slugifyHeading(heading: string): string {
+  if (!heading) return "";
+  return heading
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+/**
  * Parses inline markdown bold markup (`**text**`) into typed segments for safe Svelte rendering
  * without HTML injection or DOMPurify dependencies during SSR/prerender.
  */

@@ -195,19 +195,19 @@ export const theRecedingTideRoad: ExampleConfigInput = {
       items: [
         {
           term: "The Three-Bell Toll Sequence (Key-Before-Lock)",
-          text: "Location 7 (Lantern-Ruin Fork) is barred by a rusted drop-grate portcullis hung with three bronze chimes. Striking them in the order 'Low, High, Low' raises the gate. This sequence is carved into the pedestal of the center bell at Location 2 (The Three-Bell Causeway). Parties who bypassed the causeway via the upland bluff track (Route 8) will find the gate shut and must either backtrack or attempt a perilous DC 16 Athletics climb around the wave-washed outer cliff face.",
+          text: "Location 7 (Lantern-Ruin Fork) is barred by a rusted drop-grate portcullis hung with three bronze chimes. Striking them in the order **'Low, High, Low'** raises the gate. This sequence is carved into the pedestal of the center bell at **Location 2 (The Three-Bell Causeway)**. Parties who bypassed the causeway via the upland bluff track (Route 8) will find the gate shut and must either backtrack or attempt a perilous **DC 16 Strength (Athletics)** climb around the wave-washed outer cliff face.",
         },
         {
           term: "Hidden Shortcut A: Sub-Causeway Crawlspace (Route 10)",
-          text: "Beneath the raised stone arches of Location 2, an ancient inspection seam leads through a dry limestone tunnel directly into Location 5 (The Smugglers' Moon Door). Finding it requires searching beneath the arches (DC 13 Intelligence (Investigation) or a smuggler tide chart). Travel time is only 3 hours, completely bypassing the perilous 6-hour stepping-stone crossing and the Drowned Penitents at Location 4.",
+          text: "Beneath the raised stone arches of Location 2, an ancient inspection seam leads through a dry limestone tunnel directly into Location 5 (The Smugglers' Moon Door). Finding it requires searching beneath the arches (**DC 13 Intelligence (Investigation)** or a smuggler tide chart). Travel time is **only 3 hours**, completely bypassing the perilous 6-hour stepping-stone crossing and the Drowned Penitents at Location 4.",
         },
         {
           term: "Hidden Shortcut B: Buttress Goat Track (Route 11)",
-          text: "Behind the guano-covered buttresses of Location 3 (The Gull-King's Scree), feral goats have worn a narrow trail that contours around the cliff face to drop directly into the Moon Door cavern. A successful DC 14 Wisdom (Survival) check identifies the tracks. While it takes 6 hours to traverse, it allows parties coming from the upland bluff track to bypass the lower flats entirely.",
+          text: "Behind the guano-covered buttresses of Location 3 (The Gull-King's Scree), feral goats have worn a narrow trail that contours around the cliff face to drop directly into the Moon Door cavern. A successful **DC 14 Wisdom (Survival)** check identifies the tracks. While it takes **6 hours** to traverse, it allows parties coming from the upland bluff track to bypass the lower flats entirely.",
         },
         {
           term: "Environmental Hazard: The King-Tide Clock",
-          text: "The party has an 18-hour window from the moment they leave the Waystation. At hour 12, the lower mudflats and Bell-Pools (Locations 2 & 4, Routes 4 & 9) begin filling with swirling surf (+2 hours travel time or DC 12 Athletics to wade). At hour 16, Routes 4 and 9 are completely submerged and impassable without water-breathing. If the party tarries, their only retreat is via the upper cliff paths (Routes 6, 8, and 11).",
+          text: "The party has an **18-hour window** from the moment they leave the Waystation.\n\n**At hour 12:** The lower mudflats and Bell-Pools (Locations 2 & 4, Routes 4 & 9) begin filling with swirling surf (+2 hours travel time or **DC 12 Strength (Athletics)** to wade).\n\n**At hour 16:** Routes 4 and 9 are completely submerged and impassable without water-breathing.\n\nIf the party tarries, their only retreat is via the upper cliff paths (Routes 6, 8, and 11).",
         },
       ],
     },

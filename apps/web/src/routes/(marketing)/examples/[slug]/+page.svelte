@@ -11,7 +11,10 @@
     buildExampleJsonLd,
     buildExampleBreadcrumbJsonLd,
   } from "#lib/content/examples/json-ld.js";
-  import { parseInlineMarkup } from "#lib/content/examples/format.js";
+  import {
+    parseInlineMarkup,
+    slugifyHeading,
+  } from "#lib/content/examples/format.js";
   import { themeStore } from "#lib/stores/theme.svelte.js";
   import {
     trackDiscoveryPageViewed,
@@ -51,6 +54,25 @@
       related.length >
       0,
   );
+
+  let navSections = $derived.by(() => {
+    const sections: Array<{ id: string; label: string }> = [];
+    for (const block of example.output) {
+      if ("heading" in block && block.heading) {
+        sections.push({
+          id: slugifyHeading(block.heading),
+          label: block.heading,
+        });
+      }
+    }
+    if (example.annotation?.heading) {
+      sections.push({
+        id: "editorial-commentary",
+        label: "Design Notes",
+      });
+    }
+    return sections;
+  });
 
   // See discovery-tracking.ts: this route reuses one component instance
   // across /examples/a -> /examples/b navigations, so the guard (not just
@@ -196,6 +218,34 @@
           </aside>
         {/if}
 
+        <!-- Quick Jump Navigation for multi-section scenarios -->
+        {#if navSections.length >= 3}
+          <nav
+            aria-label="Table of contents"
+            class="mb-8 flex flex-wrap items-center gap-2 rounded-xl border border-theme-border/60 bg-theme-surface/30 px-3.5 py-2.5 text-xs backdrop-blur-sm"
+          >
+            <span
+              class="flex items-center gap-1.5 font-mono text-nano uppercase tracking-wider text-theme-text"
+            >
+              <span
+                class="icon-[lucide--list] h-3.5 w-3.5 text-theme-primary"
+                aria-hidden="true"
+              ></span>
+              Jump to:
+            </span>
+            <div class="flex flex-wrap items-center gap-1.5">
+              {#each navSections as section (section.id)}
+                <a
+                  href="#{section.id}"
+                  class="rounded border border-theme-border/40 bg-theme-bg/60 px-2.5 py-1 font-medium text-theme-text transition-colors hover:border-theme-primary/50 hover:text-theme-primary focus-visible:outline-2 focus-visible:outline-theme-primary"
+                >
+                  {section.label.replace(/\s*\([^)]*\)$/, "")}
+                </a>
+              {/each}
+            </div>
+          </nav>
+        {/if}
+
         <!-- The generated artefact: the substance of the page. -->
         <div class="mb-12">
           <h2 class="sr-only">Generated output</h2>
@@ -204,7 +254,8 @@
               {#if block.kind === "prose"}
                 {#if block.heading}
                   <h3
-                    class="mb-3 font-header text-xl font-bold text-theme-text sm:text-2xl"
+                    id={slugifyHeading(block.heading)}
+                    class="mb-3 scroll-mt-24 font-header text-xl font-bold text-theme-text sm:text-2xl"
                   >
                     {block.heading}
                   </h3>
@@ -217,7 +268,8 @@
               {:else if block.kind === "list"}
                 {#if block.heading}
                   <h3
-                    class="mb-3 font-header text-xl font-bold text-theme-text sm:text-2xl"
+                    id={slugifyHeading(block.heading)}
+                    class="mb-3 scroll-mt-24 font-header text-xl font-bold text-theme-text sm:text-2xl"
                   >
                     {block.heading}
                   </h3>
@@ -227,7 +279,7 @@
                     {block.intro}
                   </p>
                 {/if}
-                <ul class="flex list-none flex-col gap-4">
+                <ul class="flex list-none flex-col gap-7">
                   {#each block.items as item}
                     <li class="border-l border-theme-border pl-5">
                       {#if item.term}
@@ -252,27 +304,51 @@
                 </ul>
               {:else if block.kind === "facts"}
                 <h3
-                  class="mb-3 font-header text-xl font-bold text-theme-text sm:text-2xl"
+                  id={slugifyHeading(block.heading)}
+                  class="mb-3 scroll-mt-24 font-header text-xl font-bold text-theme-text sm:text-2xl"
                 >
                   {block.heading}
                 </h3>
-                <dl class="grid gap-x-6 gap-y-2 sm:grid-cols-2">
+                <dl class="grid gap-x-6 gap-y-3 sm:grid-cols-2">
                   {#each block.facts as fact}
                     <div>
-                      <dt class="font-mono text-xs text-theme-text">
+                      <dt
+                        class="font-mono text-xs font-bold uppercase tracking-wider text-theme-text"
+                      >
                         {fact.label}
                       </dt>
-                      <dd class="text-sm text-theme-text">{fact.value}</dd>
+                      <dd
+                        class="mt-0.5 text-sm leading-relaxed text-theme-text"
+                      >
+                        {fact.value}
+                      </dd>
                     </div>
                   {/each}
                 </dl>
               {:else if block.kind === "image"}
-                <img
-                  src={block.src}
-                  alt={block.alt}
-                  loading="lazy"
-                  class="w-full border border-theme-border"
-                />
+                <a
+                  href={block.src}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="group relative block cursor-zoom-in overflow-hidden border border-theme-border transition-colors hover:border-theme-primary/60"
+                  title="Open full resolution image in new tab"
+                >
+                  <img
+                    src={block.src}
+                    alt={block.alt}
+                    loading="lazy"
+                    class="w-full transition-transform duration-200 group-hover:scale-[1.01]"
+                  />
+                  <span
+                    class="pointer-events-none absolute bottom-2 right-2 flex items-center gap-1.5 rounded-sm bg-theme-bg/90 px-2 py-1 font-mono text-nano text-theme-text shadow-sm backdrop-blur transition-opacity group-hover:bg-theme-bg"
+                  >
+                    <span
+                      class="icon-[lucide--maximize-2] h-3 w-3 text-theme-primary"
+                      aria-hidden="true"
+                    ></span>
+                    Expand image ↗
+                  </span>
+                </a>
                 {#if block.caption}
                   <p class="mt-2 font-mono text-xs text-theme-text">
                     {block.caption}
@@ -284,7 +360,10 @@
         </div>
 
         <!-- Editorial reading: what makes this useful, not praise for the tool. -->
-        <section class="mb-12 border-t-2 border-theme-border/80 pt-10">
+        <section
+          id="editorial-commentary"
+          class="mb-12 scroll-mt-24 border-t-2 border-theme-border/80 pt-10"
+        >
           <p
             class="mb-2 font-mono text-xs uppercase tracking-[0.18em] text-theme-text"
           >
