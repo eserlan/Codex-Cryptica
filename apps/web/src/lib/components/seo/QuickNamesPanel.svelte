@@ -256,9 +256,14 @@
     </summary>
     <div class="grid grid-cols-2 gap-2 px-3 pb-3">
       {#if cultureChoices.length > 0}
-        <label class="flex flex-col gap-1 text-xs font-bold text-theme-text">
+        <label
+          for="quick-names-culture-select"
+          class="flex flex-col gap-1 text-xs font-bold text-theme-text"
+        >
           Culture
           <select
+            id="quick-names-culture-select"
+            name="quick_names_culture"
             bind:value={culture}
             class="w-full rounded-lg border border-theme-border/60 bg-theme-bg/60 px-2 py-2 text-base font-normal text-theme-text"
           >
@@ -269,9 +274,14 @@
         </label>
       {/if}
       {#if nameTypeChoices.length > 0}
-        <label class="flex flex-col gap-1 text-xs font-bold text-theme-text">
+        <label
+          for="quick-names-type-select"
+          class="flex flex-col gap-1 text-xs font-bold text-theme-text"
+        >
           Name type
           <select
+            id="quick-names-type-select"
+            name="quick_names_type"
             bind:value={nameType}
             class="w-full rounded-lg border border-theme-border/60 bg-theme-bg/60 px-2 py-2 text-base font-normal text-theme-text"
           >
@@ -283,9 +293,12 @@
       {/if}
       {#if nameType === "Person"}
         <label
+          for="quick-names-first-only"
           class="col-span-2 inline-flex min-h-11 items-center gap-2 text-sm text-theme-text"
         >
           <input
+            id="quick-names-first-only"
+            name="first_names_only"
             type="checkbox"
             checked={parts === "first"}
             onchange={(event) =>
@@ -307,11 +320,13 @@
       void rollWithAi();
     }}
   >
-    <label class="flex flex-1 flex-col gap-1.5">
+    <label for="quick-names-ai-query" class="flex flex-1 flex-col gap-1.5">
       <span class="text-sm font-bold text-theme-text"
         >Ask AI for names like… (optional)</span
       >
       <input
+        id="quick-names-ai-query"
+        name="quick_names_ai_query"
         type="text"
         bind:value={query}
         maxlength="200"
@@ -365,7 +380,10 @@
 
   {#if cultureChoices.length > 0 || nameType === "Person"}{@render settings()}{/if}
 
-  <ul class="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2" aria-label="Names">
+  <ul
+    class="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 2xl:grid-cols-3"
+    aria-label="Names"
+  >
     {#if names.length === 0}
       {#each { length: QUICK_NAMES_COUNT } as _, i (i)}
         <li

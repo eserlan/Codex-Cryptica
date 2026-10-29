@@ -16,6 +16,7 @@
     <input
       type="checkbox"
       id="ai-toggle"
+      name="use_ai"
       bind:checked={useAI}
       disabled={!isOnline}
       aria-describedby="ai-toggle-hint"
