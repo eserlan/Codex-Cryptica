@@ -53,10 +53,7 @@ export async function readManifest(
   const object = await env.BUCKET?.get(getManifestKey(backupId));
   if (!object) return null;
   try {
-    const text =
-      typeof object.text === "function"
-        ? await object.text()
-        : new TextDecoder().decode(object.body);
+    const text = await objectText(object);
     const parsed = CloudBackupManifestSchema.safeParse(JSON.parse(text));
     if (!parsed.success) return null;
     return {
@@ -75,11 +72,8 @@ export async function storedBytes(
 ): Promise<number> {
   let total = 0;
   const prefix = getBackupPrefix(backupId);
-  let listed = await env.BUCKET.list({ prefix });
-  for (;;) {
-    for (const object of listed.objects) total += object.size ?? 0;
-    if (!listed.truncated) break;
-    listed = await env.BUCKET.list({ prefix, cursor: listed.cursor });
+  for await (const objects of listObjectPages(env, prefix)) {
+    for (const object of objects) total += object.size ?? 0;
   }
   return total;
 }
@@ -90,11 +84,17 @@ export async function readJson<T>(
 ): Promise<T | null> {
   const object = await env.BUCKET.get(key);
   if (!object) return null;
-  const text =
-    typeof object.text === "function"
-      ? await object.text()
-      : new TextDecoder().decode(object.body);
+  const text = await objectText(object);
   return JSON.parse(text) as T;
+}
+
+async function objectText(object: {
+  text?: () => Promise<string>;
+  body: AllowSharedBufferSource;
+}): Promise<string> {
+  return typeof object.text === "function"
+    ? object.text()
+    : new TextDecoder().decode(object.body);
 }
 
 export async function writeJson(
@@ -124,11 +124,8 @@ export async function listKeys(
   prefix: string,
 ): Promise<string[]> {
   const keys: string[] = [];
-  let listed = await env.BUCKET.list({ prefix });
-  for (;;) {
-    for (const object of listed.objects) keys.push(object.key);
-    if (!listed.truncated) break;
-    listed = await env.BUCKET.list({ prefix, cursor: listed.cursor });
+  for await (const objects of listObjectPages(env, prefix)) {
+    for (const object of objects) keys.push(object.key);
   }
   return keys;
 }
@@ -140,14 +137,7 @@ export async function pruneAssets(
   keep: Set<string>,
 ): Promise<void> {
   const prefix = `${getBackupPrefix(backupId)}assets/`;
-  let listed = await env.BUCKET.list({ prefix });
-  while (listed.objects.length > 0) {
-    for (const object of listed.objects) {
-      if (!keep.has(object.key)) await env.BUCKET.delete(object.key);
-    }
-    if (!listed.truncated) break;
-    listed = await env.BUCKET.list({ prefix, cursor: listed.cursor });
-  }
+  await deleteListedObjects(env, prefix, keep);
 }
 
 /**
@@ -161,10 +151,32 @@ export async function eraseBackupObjects(
   env: CloudBackupEnv,
   backupId: string,
 ): Promise<void> {
-  const prefix = getBackupPrefix(backupId);
+  await deleteListedObjects(env, getBackupPrefix(backupId), new Set());
+}
+
+async function deleteListedObjects(
+  env: CloudBackupEnv,
+  prefix: string,
+  keep: ReadonlySet<string>,
+): Promise<void> {
+  for await (const objects of listObjectPages(env, prefix, true)) {
+    for (const object of objects) {
+      if (!keep.has(object.key)) await env.BUCKET.delete(object.key);
+    }
+  }
+}
+
+async function* listObjectPages(
+  env: CloudBackupEnv,
+  prefix: string,
+  stopWhenEmpty = false,
+): AsyncGenerator<Array<{ key: string; size?: number }>> {
   let listed = await env.BUCKET.list({ prefix });
-  while (listed.objects.length > 0) {
-    for (const object of listed.objects) await env.BUCKET.delete(object.key);
+  for (;;) {
+    // Destructive listings historically stop at an empty page; read listings
+    // continue through it. Keep both behaviours while sharing cursor handling.
+    if (stopWhenEmpty && listed.objects.length === 0) break;
+    yield listed.objects;
     if (!listed.truncated) break;
     listed = await env.BUCKET.list({ prefix, cursor: listed.cursor });
   }

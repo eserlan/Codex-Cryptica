@@ -115,4 +115,42 @@ describe("cloud backup storage", () => {
     ]);
     await eraseBackupObjects(env, "missing");
   });
+
+  it("decodes raw object bodies when an R2 adapter has no text method", async () => {
+    const get = vi
+      .fn()
+      .mockResolvedValue({ body: new TextEncoder().encode('{"ok":true}') });
+    expect(await readJson({ BUCKET: { get } }, "key")).toEqual({ ok: true });
+  });
+
+  it("deletes each listed page in order and preserves destructive empty-page stopping", async () => {
+    const list = vi
+      .fn()
+      .mockResolvedValueOnce({
+        objects: [{ key: "old" }, { key: "keep" }],
+        truncated: true,
+        cursor: "next",
+      })
+      .mockResolvedValueOnce({ objects: [{ key: "last" }], truncated: false });
+    const remove = vi.fn().mockResolvedValue(undefined);
+    const env = { BUCKET: { list, delete: remove } };
+    await pruneAssets(env, "b", new Set(["keep"]));
+    expect(remove.mock.calls).toEqual([["old"], ["last"]]);
+    expect(remove.mock.invocationCallOrder[0]).toBeLessThan(
+      list.mock.invocationCallOrder[1],
+    );
+    expect(list).toHaveBeenNthCalledWith(2, {
+      prefix: "cloud-backup/b/assets/",
+      cursor: "next",
+    });
+    list.mockClear().mockResolvedValueOnce({
+      objects: [],
+      truncated: true,
+      cursor: "unused",
+    });
+    remove.mockClear();
+    await eraseBackupObjects(env, "b");
+    expect(list).toHaveBeenCalledTimes(1);
+    expect(remove).not.toHaveBeenCalled();
+  });
 });

@@ -3,6 +3,7 @@ import { readManifest, type CloudBackupEnv } from "./cloud-backup-storage";
 import {
   notFoundOrUnauthorized,
   storageUnavailable,
+  readJsonBody,
 } from "./cloud-backup-http";
 
 /** Reads the bearer credential, tolerating a bare token like the sibling routes. */
@@ -79,4 +80,17 @@ export async function authorizeStoredBackup(
 ): ReturnType<typeof authorize> {
   if (!env.BUCKET) return { response: storageUnavailable(request) };
   return authorize(request, env, backupId);
+}
+
+/** Authenticate before parsing a protected write's size-checked JSON body. */
+export async function readAuthorizedJsonBody(
+  request: Request,
+  env: CloudBackupEnv,
+  backupId: string,
+) {
+  const auth = await authorizeStoredBackup(request, env, backupId);
+  if ("response" in auth) return auth;
+  const read = await readJsonBody(request);
+  if ("response" in read) return read;
+  return { auth, body: read.body };
 }

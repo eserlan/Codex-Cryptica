@@ -43,7 +43,7 @@ export function sizeLimitResponse(
   limitBytes: number,
   message: string,
 ): Response | null {
-  if (actualBytes <= limitBytes) return null;
+  if (!(actualBytes > limitBytes)) return null;
   return json(request, { error: { message, limitBytes, actualBytes } }, 413);
 }
 

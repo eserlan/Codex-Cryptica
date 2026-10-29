@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   authorize,
   authorizeStoredBackup,
@@ -6,9 +6,15 @@ import {
   generateOwnerCode,
   hashOwnerCode,
   isAdmin,
+  readAuthorizedJsonBody,
 } from "../cloud-backup-auth";
 import { writeManifest } from "../cloud-backup-storage";
 import { Bucket } from "./r2-memory-bucket";
+import {
+  createBackupFixture,
+  jsonRequest,
+  ownerRequest,
+} from "./cloud-backup-fixtures";
 
 const request = (code?: string) =>
   new Request("https://example.test", {
@@ -81,5 +87,33 @@ describe("cloud backup credentials", () => {
     expect("response" in (await authorize(request("code"), {}, "b"))).toBe(
       true,
     );
+  });
+
+  it("parses protected JSON only after authorization and returns JSON errors unchanged", async () => {
+    const { env, backupId, ownerCode, manifest } = await createBackupFixture();
+    const denied = jsonRequest({ value: true }, "wrong");
+    const parse = vi.spyOn(denied, "json");
+    const rejected = await readAuthorizedJsonBody(denied, env, backupId);
+    expect("response" in rejected && rejected.response.status).toBe(404);
+    expect(parse).not.toHaveBeenCalled();
+    const accepted = await readAuthorizedJsonBody(
+      jsonRequest({ value: true }, ownerCode),
+      env,
+      backupId,
+    );
+    expect(accepted).toEqual({
+      auth: { manifest, ownerCodeHash: await hashOwnerCode(ownerCode) },
+      body: { value: true },
+    });
+    const invalid = await readAuthorizedJsonBody(
+      ownerRequest(ownerCode, { method: "POST", body: "{" }),
+      env,
+      backupId,
+    );
+    expect("response" in invalid && invalid.response.status).toBe(400);
+    if ("response" in invalid)
+      expect(await invalid.response.json()).toEqual({
+        error: { message: "Invalid JSON" },
+      });
   });
 });
