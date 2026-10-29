@@ -32,6 +32,8 @@ describe("PointCrawlGraph", () => {
     const start = crawl.nodes.find((node) => node.id === crawl.startNodeId)!;
     const startElement = screen.getByTestId(`point-crawl-node-${start.id}`);
     expect(startElement.textContent).toContain("START");
+    expect(startElement.textContent).toContain("◎");
+    expect(startElement.getAttribute("aria-label")).toContain("Start Point");
     await fireEvent.click(startElement);
     expect(
       screen.getByLabelText(`Location details: ${start.name}`),

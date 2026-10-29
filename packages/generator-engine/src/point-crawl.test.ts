@@ -16,6 +16,7 @@ import {
   parsePointCrawlResponse,
   parsePointCrawlNetwork,
   pointCrawlConfig,
+  pointCrawlNodeRoleSymbol,
   reachableNodesBfs,
   regeneratePointCrawlPart,
   regeneratePointCrawlPartLocal,
@@ -31,6 +32,16 @@ import {
 } from "./index";
 
 describe("Point Crawl Topology & Playability (T004, T010)", () => {
+  it("assigns role symbols and respects structural roles", () => {
+    expect(pointCrawlNodeRoleSymbol({ role: "hazard" })).toBe("▲");
+    expect(
+      pointCrawlNodeRoleSymbol({ role: "hub", structuralRole: "chokepoint" }),
+    ).toBe("◆");
+    expect(
+      pointCrawlNodeRoleSymbol({ role: "hub", structuralRole: "connector" }),
+    ).toBe("●");
+  });
+
   it("clamps point counts strictly to the 6-15 range", () => {
     expect(clampPointCount(2)).toBe(6);
     expect(clampPointCount(6)).toBe(6);
@@ -349,6 +360,16 @@ describe("Point Crawl Topology & Playability (T004, T010)", () => {
     const sample = crawl.routes[0];
     const names = new Map(crawl.nodes.map((node) => [node.id, node]));
     const formatted = renderPointCrawlRouteSummary(sample, names);
+    expect(
+      renderPointCrawlRouteSummary(
+        { ...sample, direction: "bidirectional" },
+        names,
+      ),
+    ).toContain(" ⇄ ");
+    expect(
+      renderPointCrawlRouteSummary({ ...sample, direction: "one-way" }, names),
+    ).toContain(" → ");
+    expect(md).toContain(`(${pointCrawlNodeRoleSymbol(crawl.nodes[0])} `);
     expect(formatted).toContain("### ");
     expect(formatted).toContain(`**Travel:** ${sample.travelTime}`);
     expect(formatted).toContain(`**Terrain:** ${sample.terrain}`);

@@ -2,6 +2,11 @@
 import { describe, it, expect, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import GeneratorOutputCard from "./GeneratorOutputCard.svelte";
+import {
+  generatePointCrawlNetworkLocal,
+  pointCrawlNodeRoleLabel,
+  pointCrawlNodeRoleSymbol,
+} from "generator-engine";
 import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
 
 // Stub Element.prototype.animate for JSDOM / Svelte 5 transitions compatibility
@@ -40,6 +45,52 @@ describe("GeneratorOutputCard", () => {
       body: "Brotherhood of Hollow Crown is a fallen order with real authority.",
     },
   ];
+
+  it("renders a point role as a labelled icon badge without Markdown markers", () => {
+    const crawl = generatePointCrawlNetworkLocal({ pointCount: 6 });
+    const node = crawl.nodes[0];
+    const label = pointCrawlNodeRoleLabel(node);
+    const heading = `1. ${node.name} (${pointCrawlNodeRoleSymbol(node)} ${label})`;
+    const data = { ...sampleData, pointCrawl: crawl };
+    const { container } = render(GeneratorOutputCard, {
+      props: {
+        generatedData: data,
+        aiFallbackDismissed: false,
+        isBusy: false,
+        isExampleDraft: false,
+        generatedSingular: "Point Crawl",
+        variant: "default",
+        worldTheme: "Classic Fantasy",
+        documentContent: "",
+        copied: false,
+        copiedSectionId: null,
+        contextTrimmed: false,
+        documentSections: [
+          {
+            id: "point",
+            heading,
+            markdown: `### ${heading}`,
+            body: "A place.",
+          },
+        ],
+        onDismissAiFallback: vi.fn(),
+        onSaveToCodex: vi.fn(),
+        onCopyMarkdown: vi.fn(),
+        onCopySection: vi.fn(),
+        onContainerClick: vi.fn(),
+        onContainerKeydown: vi.fn(),
+        onSelectHubEntity: vi.fn(),
+        onSaveHubToCodex: vi.fn(),
+      },
+    });
+    const title = screen.getByRole("heading", { name: new RegExp(node.name) });
+    expect(title.textContent).toContain(label);
+    expect(title.textContent).not.toContain("*");
+    expect(title.querySelector('[aria-hidden="true"]')?.className).toContain(
+      "icon-[lucide--",
+    );
+    expect(container.textContent).toContain("A place.");
+  });
 
   it("uses 18px, relaxed typography for generated long-form copy", () => {
     const { container } = render(GeneratorOutputCard, {

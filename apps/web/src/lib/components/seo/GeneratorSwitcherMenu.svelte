@@ -110,13 +110,13 @@
     onclick={() => (showGeneratorMenu = !showGeneratorMenu)}
     aria-haspopup="true"
     aria-expanded={showGeneratorMenu}
-    class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-micro font-mono font-medium bg-theme-primary/10 border border-theme-primary/20 text-theme-primary hover:bg-theme-primary/20 transition-colors"
+    class="inline-flex items-center gap-2 px-3 py-2 rounded-full text-sm font-mono font-medium bg-theme-primary/10 border border-theme-primary/20 text-theme-text hover:bg-theme-primary/20 transition-colors"
   >
-    <span class="icon-[lucide--wand-sparkles] w-3.5 h-3.5" aria-hidden="true"
+    <span class="icon-[lucide--wand-sparkles] w-4 h-4" aria-hidden="true"
     ></span>
     {eyebrow}
     <span
-      class="icon-[lucide--chevron-down] w-3 h-3 transition-transform {showGeneratorMenu
+      class="icon-[lucide--chevron-down] w-4 h-4 transition-transform {showGeneratorMenu
         ? 'rotate-180'
         : ''}"
       aria-hidden="true"
@@ -134,7 +134,7 @@
       {#each visibleGroups as group (group.label)}
         <div class="px-3 pt-3 pb-1">
           <p
-            class="text-nano font-bold uppercase tracking-widest text-theme-muted/70 font-header mb-1.5"
+            class="text-xs font-bold uppercase tracking-wider text-theme-text font-header mb-1.5"
           >
             {group.label}
           </p>
@@ -146,17 +146,17 @@
               href="{cleanBase}{item.path}"
               role="menuitem"
               onclick={() => (showGeneratorMenu = false)}
-              class="flex items-center gap-2 px-2 py-1.5 rounded-lg text-meta font-medium transition-colors {isCurrent
-                ? 'text-theme-primary bg-theme-primary/10'
-                : 'text-theme-text/80 hover:bg-theme-surface/80 hover:text-theme-primary'}"
+              class="flex items-center gap-2 px-2 py-2 rounded-lg text-base font-medium transition-colors {isCurrent
+                ? 'text-theme-text bg-theme-primary/10'
+                : 'text-theme-text hover:bg-theme-surface/80'}"
             >
               {#if isCurrent}
                 <span
-                  class="icon-[lucide--check] w-3 h-3 text-theme-primary shrink-0"
+                  class="icon-[lucide--check] w-4 h-4 text-theme-text shrink-0"
                   aria-hidden="true"
                 ></span>
               {:else}
-                <span class="w-3 h-3 shrink-0"></span>
+                <span class="w-4 h-4 shrink-0"></span>
               {/if}
               {item.label}
             </a>
@@ -168,10 +168,10 @@
           href="{cleanBase}/generators"
           role="menuitem"
           onclick={() => (showGeneratorMenu = false)}
-          class="flex items-center gap-2 px-2 py-1.5 rounded-lg text-meta font-medium text-theme-muted hover:text-theme-primary hover:bg-theme-surface/80 transition-colors"
+          class="flex items-center gap-2 px-2 py-2 rounded-lg text-base font-medium text-theme-text hover:bg-theme-surface/80 transition-colors"
         >
           <span
-            class="icon-[lucide--layout-grid] w-3 h-3 shrink-0"
+            class="icon-[lucide--layout-grid] w-4 h-4 shrink-0"
             aria-hidden="true"
           ></span>
           All generators

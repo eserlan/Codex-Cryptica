@@ -2,6 +2,7 @@
   import { onDestroy } from "svelte";
   import {
     buildPointCrawlDiagramLayout,
+    pointCrawlNodeRoleSymbol,
     type PointCrawlNetwork,
     type PointCrawlNode,
     type PointCrawlRoute,
@@ -430,7 +431,7 @@
             : ''}"
           role="button"
           tabindex="0"
-          aria-label="{node.name} ({node.role})"
+          aria-label="{node.name} ({node.roleLabel})"
           data-testid="point-crawl-node-{node.id}"
           onpointerdown={(e) => handleNodePointerDown(e, node.id)}
           onclick={() => selectNode(node.id)}
@@ -461,13 +462,22 @@
             stroke-width={isSelectedNode || isNeighbour ? "2.5" : "1.5"}
           />
           <text
-            y="3"
+            y="-3"
+            text-anchor="middle"
+            aria-hidden="true"
+            class={node.role === "start" || node.role === "goal"
+              ? "fill-theme-bg"
+              : "fill-theme-text"}
+            font-size="12">{pointCrawlNodeRoleSymbol(node)}</text
+          >
+          <text
+            y="9"
             text-anchor="middle"
             class="font-header font-bold {node.role === 'start' ||
             node.role === 'goal'
               ? 'fill-theme-bg'
               : 'fill-theme-text'}"
-            font-size="8"
+            font-size="7"
           >
             {roleBadgeLabel(node)}
           </text>

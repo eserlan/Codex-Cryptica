@@ -2,6 +2,8 @@
   import {
     formatRouteConnectionLabel,
     pointCrawlNodeRoleLabel,
+    pointCrawlNodeRoleSymbol,
+    pointCrawlRouteSymbol,
     type PointCrawlNode,
     type PointCrawlRegenTarget,
     type PointCrawlRoute,
@@ -39,19 +41,20 @@
 <!-- fallow-ignore-next-line complexity -- one inspector switches between the two mutually exclusive selection types. -->
 {#if node}
   <section
-    class="mt-3 rounded-xl border border-theme-border/60 bg-theme-bg/60 p-3.5 text-xs"
+    class="mt-3 rounded-xl border border-theme-border/60 bg-theme-bg/60 p-4 text-base leading-relaxed"
     data-testid="point-crawl-node-inspector"
     aria-label={`Location details: ${node.name}`}
   >
     <div class="flex flex-wrap items-start justify-between gap-2">
       <div>
-        <div class="flex items-center gap-2">
+        <div class="flex flex-wrap items-center gap-2">
           <span
-            class="rounded bg-theme-primary/15 px-1.5 py-0.5 font-mono text-nano font-bold uppercase text-theme-primary"
-            >{pointCrawlNodeRoleLabel(node)}{#if node.traits?.length}
+            class="rounded bg-theme-primary/15 px-2 py-1 font-mono text-xs font-bold uppercase text-theme-text"
+            ><span aria-hidden="true">{pointCrawlNodeRoleSymbol(node)}</span>
+            {pointCrawlNodeRoleLabel(node)}{#if node.traits?.length}
               · {node.traits.join(", ")}{/if}</span
           >
-          <h4 class="font-header text-sm font-bold text-theme-text">
+          <h4 class="font-header text-lg font-bold text-theme-text">
             {node.name}
           </h4>
         </div>
@@ -60,7 +63,7 @@
       <div class="flex flex-wrap items-center gap-2">
         {#if onToggleSave}
           <label
-            class="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-theme-border/60 bg-theme-surface/50 px-2.5 py-1 text-nano font-bold uppercase tracking-wider text-theme-text"
+            class="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-theme-border/60 bg-theme-surface/50 px-3 py-2 text-xs font-bold uppercase tracking-wider text-theme-text"
           >
             <input
               type="checkbox"
@@ -84,13 +87,13 @@
         {/if}
       </div>
     </div>
-    <dl class="mt-2.5 grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+    <dl class="mt-4 grid grid-cols-1 gap-x-5 gap-y-3 sm:grid-cols-2">
       <div>
-        <dt class="font-bold text-theme-muted">Sensory:</dt>
+        <dt class="font-bold text-theme-text">Sensory:</dt>
         <dd class="text-theme-text/90">{node.sensoryDescription}</dd>
       </div>
       <div>
-        <dt class="font-bold text-theme-muted">Why Visit:</dt>
+        <dt class="font-bold text-theme-text">Why Visit:</dt>
         <dd class="text-theme-text/90">{node.whyVisit}</dd>
       </div>
       <div>
@@ -113,22 +116,24 @@
   </section>
 {:else if route}
   <section
-    class="mt-3 rounded-xl border border-theme-border/60 bg-theme-bg/60 p-3.5 text-xs"
+    class="mt-3 rounded-xl border border-theme-border/60 bg-theme-bg/60 p-4 text-base leading-relaxed"
     data-testid="point-crawl-route-inspector"
     aria-label="Route details"
   >
     <div class="flex flex-wrap items-start justify-between gap-2">
       <div>
-        <div class="flex items-center gap-2">
+        <div class="flex flex-wrap items-center gap-2">
           <span
-            class="rounded bg-theme-primary/15 px-1.5 py-0.5 font-mono text-nano font-bold uppercase text-theme-primary"
+            class="rounded bg-theme-primary/15 px-2 py-1 font-mono text-xs font-bold uppercase text-theme-text"
             >{route.visibility} · {route.direction}</span
           >
-          <h4 class="font-header text-sm font-bold text-theme-text">
-            {nodeNameById(route.fromNodeId)} → {nodeNameById(route.toNodeId)}
+          <h4 class="font-header text-lg font-bold text-theme-text">
+            {nodeNameById(route.fromNodeId)}
+            {pointCrawlRouteSymbol(route.direction)}
+            {nodeNameById(route.toNodeId)}
           </h4>
         </div>
-        <p class="mt-1 font-mono text-nano text-theme-muted">
+        <p class="mt-1 font-mono text-sm text-theme-text">
           {formatRouteConnectionLabel(route)}
         </p>
       </div>
@@ -143,7 +148,7 @@
         />
       {/if}
     </div>
-    <dl class="mt-2.5 grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+    <dl class="mt-4 grid grid-cols-1 gap-x-5 gap-y-3 sm:grid-cols-2">
       <div>
         <dt class="font-mono font-bold text-theme-text">
           → Signpost at Origin:
