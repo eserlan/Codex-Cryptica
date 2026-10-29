@@ -78,7 +78,9 @@ describe("AnswerAsideNav", () => {
     expect(getByText("Guides")).toBeTruthy();
     expect(getByText("Solo RPG Guide")).toBeTruthy();
     expect(getByText("Other answers")).toBeTruthy();
-    expect(getByText("How do you run a hex crawl?")).toBeTruthy();
+    const otherAnswer = getByText("How do you run a hex crawl?");
+    expect(otherAnswer).toBeTruthy();
+    expect(otherAnswer.closest("ul")?.className).toContain("shrink-0");
   });
 
   it("omits groups that have no links instead of rendering empty headings", () => {
