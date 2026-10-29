@@ -902,6 +902,8 @@ export {
   ROLE_LABELS,
   formatRouteConnectionLabel,
   pointCrawlNodeRoleLabel,
+  pointCrawlNodeRoleSymbol,
+  pointCrawlRouteSymbol,
   STRUCTURAL_ROLE_LABELS,
   renderPointCrawlRouteSummary,
   renderPointCrawlMarkdown,

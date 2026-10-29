@@ -22,7 +22,7 @@
 
 <!-- Mobile label — hidden on lg where the sticky card makes the context clear -->
 <p
-  class="lg:hidden text-micro font-bold uppercase tracking-widest font-header text-theme-muted mb-2"
+  class="lg:hidden text-sm font-bold uppercase tracking-widest font-header text-theme-text mb-2"
 >
   GM Reference
 </p>
@@ -33,7 +33,7 @@
     {#if generatedData}
       <div
         in:fade={{ duration: 250 }}
-        class="seo-rail seo-md text-sm leading-relaxed text-theme-text/85 {variant ===
+        class="seo-rail seo-md text-base leading-relaxed text-theme-text/85 {variant ===
         'names'
           ? 'py-2'
           : ''}"
@@ -49,10 +49,10 @@
       >
         <span aria-hidden="true" class="icon-[lucide--scroll] w-8 h-8 mb-3"
         ></span>
-        <p class="text-micro uppercase tracking-widest font-header">
+        <p class="text-sm uppercase tracking-widest font-header">
           At the Table
         </p>
-        <p class="text-sm mt-2 leading-relaxed">
+        <p class="text-base mt-2 leading-relaxed">
           GM utility details appear here after generation.
         </p>
       </div>
@@ -95,9 +95,10 @@
     color: color-mix(in srgb, var(--color-primary) 42%, var(--color-text));
     text-shadow: none;
     filter: none;
+    font-size: 0.875rem;
   }
   .seo-rail.seo-md :global(h3) {
-    font-size: var(--type-helper);
+    font-size: 0.875rem;
     text-transform: uppercase;
     letter-spacing: 0.08em;
     color: color-mix(in srgb, var(--color-text) 82%, transparent);
@@ -105,7 +106,7 @@
     border-bottom: none;
   }
   .seo-rail.seo-md :global(h2) {
-    font-size: 0.8125rem;
+    font-size: 1rem;
     border-bottom: 1px solid
       color-mix(in srgb, var(--color-border) 30%, transparent);
     margin: 1rem 0 0.5rem;

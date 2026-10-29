@@ -45,22 +45,27 @@
 >
   {introTitle}
 </h1>
-<p class="text-sm text-theme-text/70 leading-relaxed mb-4">{introText}</p>
+<p class="text-base text-theme-text leading-relaxed mb-4">{introText}</p>
 {#if labels.length}
   <div class="mb-4 flex flex-wrap gap-2">
     {#each labels as label (label)}
-      <PublicLabelChip {label} size="sm" />
+      <PublicLabelChip {label} size="lg" />
     {/each}
   </div>
 {/if}
 {#if inputHint}
   <p
-    class="text-nano text-theme-text/45 uppercase tracking-widest font-header mb-5 flex items-center gap-1.5"
+    class="text-sm text-theme-text font-header mb-5 flex items-center gap-2 leading-relaxed"
   >
     {#if inputHint.includes("below")}
-      <span class="icon-[lucide--arrow-down] w-3 h-3" aria-hidden="true"></span>
+      <span
+        class="icon-[lucide--arrow-down] w-4 h-4 shrink-0"
+        aria-hidden="true"
+      ></span>
     {:else if inputHint.includes("right")}
-      <span class="icon-[lucide--arrow-right] w-3 h-3" aria-hidden="true"
+      <span
+        class="icon-[lucide--arrow-right] w-4 h-4 shrink-0"
+        aria-hidden="true"
       ></span>
     {/if}
     {inputHint}

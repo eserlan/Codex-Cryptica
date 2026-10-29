@@ -254,6 +254,35 @@ export const STRUCTURAL_ROLE_LABELS: Record<PointCrawlStructuralRole, string> =
     connector: "Connector",
   };
 
+const ROLE_SYMBOLS: Record<
+  PointCrawlNodeRole | PointCrawlStructuralRole,
+  string
+> = {
+  start: "◎",
+  goal: "★",
+  hub: "✣",
+  chokepoint: "◆",
+  secret: "◇",
+  optional: "○",
+  connector: "●",
+  hazard: "▲",
+  obstacle: "◆",
+  side: "○",
+};
+
+/** Symbol supplements, rather than replaces, the point's role label. */
+export function pointCrawlNodeRoleSymbol(
+  node: Pick<PointCrawlNode, "role" | "structuralRole">,
+): string {
+  return ROLE_SYMBOLS[node.structuralRole ?? node.role] ?? "●";
+}
+
+export function pointCrawlRouteSymbol(
+  direction: PointCrawlRouteDirection,
+): string {
+  return direction === "one-way" ? "→" : "⇄";
+}
+
 export function pointCrawlNodeRoleLabel(node: PointCrawlNode): string {
   return node.structuralRole
     ? STRUCTURAL_ROLE_LABELS[node.structuralRole]
@@ -285,7 +314,7 @@ export function renderPointCrawlRouteSummary(
 ): string {
   const fromName = nodesById.get(route.fromNodeId)?.name ?? route.fromNodeId;
   const toName = nodesById.get(route.toNodeId)?.name ?? route.toNodeId;
-  const arrow = route.direction === "one-way" ? "→" : "↔";
+  const arrow = pointCrawlRouteSymbol(route.direction);
   const visibilityNote =
     route.visibility === "obvious" ? "" : ` (${route.visibility} route)`;
   const reverse = fromNodeId === route.toNodeId;
@@ -326,7 +355,7 @@ function renderPointCrawlLocations(crawl: PointCrawlNetwork): string[] {
   return crawl.nodes.flatMap((node, idx) => {
     const roleLabel = pointCrawlNodeRoleLabel(node);
     return [
-      `### ${idx + 1}. ${node.name} *(${roleLabel})*`,
+      `### ${idx + 1}. ${node.name} (${pointCrawlNodeRoleSymbol(node)} ${roleLabel})`,
       node.summary,
       "",
       `- **Sights & Atmosphere:** ${node.sensoryDescription}`,
@@ -433,7 +462,7 @@ export function renderPointCrawlGmSheet(crawl: PointCrawlNetwork): string {
         ? nodesById.get(route.gate.unlockedByNodeId)
         : undefined;
       lines.push(
-        `- **${fromName} → ${toName}** (${route.terrain}): requires **${route.gate?.requirement}** (${route.gate?.kind}) obtained at **${unlockNode?.name ?? route.gate?.unlockedByNodeId}** before crossing.`,
+        `- **${fromName} ${pointCrawlRouteSymbol(route.direction)} ${toName}** (${route.terrain}): requires **${route.gate?.requirement}** (${route.gate?.kind}) obtained at **${unlockNode?.name ?? route.gate?.unlockedByNodeId}** before crossing.`,
       );
     }
   }
@@ -447,7 +476,7 @@ export function renderPointCrawlGmSheet(crawl: PointCrawlNetwork): string {
         nodesById.get(route.fromNodeId)?.name ?? route.fromNodeId;
       const toName = nodesById.get(route.toNodeId)?.name ?? route.toNodeId;
       lines.push(
-        `- **${fromName} ↔ ${toName}** (*${route.visibility}*, ${route.travelTime} via ${route.terrain}): ${route.signpost}`,
+        `- **${fromName} ${pointCrawlRouteSymbol(route.direction)} ${toName}** (*${route.visibility}*, ${route.travelTime} via ${route.terrain}): ${route.signpost}`,
       );
     }
   }

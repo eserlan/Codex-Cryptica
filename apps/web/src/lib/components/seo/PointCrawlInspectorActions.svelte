@@ -47,9 +47,9 @@
       type="button"
       disabled={disabled || busy}
       onclick={() => (showSteeringInput = !showSteeringInput)}
-      class="inline-flex items-center gap-1 rounded-md border border-theme-border/60 bg-theme-surface/60 px-2.5 py-1 text-nano font-bold uppercase tracking-wider text-theme-text hover:border-theme-primary hover:text-theme-primary disabled:opacity-50"
+      class="inline-flex items-center gap-1 rounded-md border border-theme-border/60 bg-theme-surface/60 px-3 py-2 text-xs font-bold uppercase tracking-wider text-theme-text hover:border-theme-primary hover:text-theme-primary disabled:opacity-50"
       data-testid="point-crawl-inspector-revise"
-      ><span class="icon-[lucide--pencil] h-3 w-3" aria-hidden="true"
+      ><span class="icon-[lucide--pencil] h-4 w-4" aria-hidden="true"
       ></span>Steer</button
     >
   {/if}
@@ -57,10 +57,10 @@
     type="button"
     disabled={disabled || busy}
     onclick={() => submitRegen()}
-    class="inline-flex items-center gap-1 rounded-md border border-theme-border/60 bg-theme-surface/60 px-2.5 py-1 text-nano font-bold uppercase tracking-wider text-theme-text hover:border-theme-primary hover:text-theme-primary disabled:opacity-50"
+    class="inline-flex items-center gap-1 rounded-md border border-theme-border/60 bg-theme-surface/60 px-3 py-2 text-xs font-bold uppercase tracking-wider text-theme-text hover:border-theme-primary hover:text-theme-primary disabled:opacity-50"
     data-testid="point-crawl-inspector-regenerate"
     ><span
-      class="icon-[lucide--refresh-cw] h-3 w-3 {busy ? 'animate-spin' : ''}"
+      class="icon-[lucide--refresh-cw] h-4 w-4 {busy ? 'animate-spin' : ''}"
       aria-hidden="true"
     ></span>{label}</button
   >
@@ -78,12 +78,12 @@
       aria-label={target.kind === "node"
         ? "Steer location rewrite"
         : "Steer route rewrite"}
-      class="min-w-0 flex-1 rounded-lg border border-theme-border/60 bg-theme-bg px-2.5 py-1 text-xs text-theme-text focus:border-theme-primary focus:outline-none"
+      class="min-w-0 flex-1 rounded-lg border border-theme-border/60 bg-theme-bg px-3 py-2 text-base text-theme-text focus:border-theme-primary focus:outline-none"
     />
     <button
       type="submit"
       disabled={!steeringNote.trim() || disabled || busy}
-      class="rounded-md bg-theme-primary px-3 py-1 text-nano font-bold uppercase tracking-wider text-theme-bg disabled:opacity-50"
+      class="rounded-md bg-theme-primary px-3 py-2 text-xs font-bold uppercase tracking-wider text-theme-on-primary disabled:opacity-50"
       >Apply</button
     >
   </form>
