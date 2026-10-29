@@ -29,6 +29,8 @@
   X-Robots-Tag: noindex, nofollow
 /oracle*
   X-Robots-Tag: noindex, nofollow
+/play*
+  X-Robots-Tag: noindex, nofollow
 /table*
   X-Robots-Tag: noindex, nofollow
 /tables*
