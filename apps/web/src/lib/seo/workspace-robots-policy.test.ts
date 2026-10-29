@@ -30,6 +30,7 @@ describe("workspace robots policy", () => {
       "/import",
       "/map*",
       "/oracle*",
+      "/play*",
       "/table*",
       "/tables*",
       "/templates*",
