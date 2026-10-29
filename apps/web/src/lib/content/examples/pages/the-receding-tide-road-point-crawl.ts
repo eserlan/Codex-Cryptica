@@ -51,8 +51,8 @@ export const theRecedingTideRoad: ExampleConfigInput = {
     },
   ],
   image: {
-    src: "https://assets.codexcryptica.com/announcements/point-crawl-the-receding-tide-road-map.png",
-    alt: "Network diagram of The Receding Tide Road point crawl showing 8 connected locations from Ranger's Waystation to Hermit's Cliff-Shrine, with travel times, hidden crawlspaces, and the locked cliff arch requiring the Three-Bell sequence.",
+    src: "https://assets.codexcryptica.com/announcements/point-crawl-the-receding-tide-road.jpg",
+    alt: "Two pilgrims walking an ancient stone causeway flanked by ruined bell arches toward a cliff-monastery and sea-stack chapel as the tide recedes",
   },
   output: [
     {
