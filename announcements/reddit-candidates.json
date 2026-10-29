@@ -1,5 +1,5 @@
 {
-  "updated_at": 1793289584,
+  "updated_at": 1793303923,
   "candidates": [
     {
       "id": "reddit-40298726905-quick-names-ten-fantasy-names-you-can-co",
@@ -50,6 +50,16 @@
       "source_id": "40662112633",
       "status": "approved",
       "created_at": 1793180144
+    },
+    {
+      "id": "reddit-40943108454-the-receding-tide-road-an-8-point-coasta",
+      "title": "The Receding Tide Road \u2014 an 8-point coastal point crawl you can run tonight",
+      "body": "My wilderness travel kept falling into two bad options. Either I handwaved it as \"three days along the coast\" and skipped the journey, or I prepped a full hex map I never had time to finish and ran it as a corridor anyway.\n\nI built a concrete example to show the middle path. The Receding Tide Road is a complete, ready to run 8-location point crawl across tidal causeways and sea caves that shows how point crawls play at the table and what the Point Crawl Generator builds.\n\nYou can read and run it here: https://codexcryptica.com/examples/the-receding-tide-road-point-crawl\n\nWhat is on the page:\n\n- a network diagram you can put in front of players instead of a blank map\n- travel times between points, so choices have a cost without tracking hexes\n- 2 hidden bypasses that reward scouting and give a way around trouble\n- 2 loops that let the party circle back and approach from a new angle\n- a key before lock final ascent, so the last point has to be earned\n\nI kept it to eight points on purpose so it fits a single session and stays readable as an example. That means it leaves a lot of coast unexplored, which is an honest trade off if you want a longer campaign arc. It works as a one shot, and as a template you can extend rather than a world you have to fill.\n\nWhen you run travel, do your players favour a shortcut when they spot one, or do they tend to stick to the obvious road even when you hint at a bypass?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-40943108454-0.png)",
+      "url": "https://codexcryptica.com/examples/the-receding-tide-road-point-crawl",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-40943108454-0.png",
+      "source_id": "40943108454",
+      "status": "approved",
+      "created_at": 1793303923
     }
   ]
 }
