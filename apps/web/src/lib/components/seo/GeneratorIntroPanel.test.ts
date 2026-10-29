@@ -33,6 +33,55 @@ describe("GeneratorIntroPanel", () => {
       "#characters",
     );
     expect(screen.getByText("Choose a role to begin")).toBeTruthy();
+    expect(
+      screen
+        .getByText("Choose a role to begin")
+        .querySelector(".icon-\\[lucide--arrow-right\\]"),
+    ).toBeNull();
+  });
+
+  it("renders directional arrows matching directional inputHint copy", () => {
+    const { rerender } = render(GeneratorIntroPanel, {
+      props: {
+        canonicalPath: "/generators/fantasy-names",
+        eyebrow: "Fantasy Names",
+        showGeneratorSwitcher: false,
+        introTitle: "Fantasy Names",
+        introText: "Generate fantasy names.",
+        labels: [],
+        inputHint: "Set your inputs — your draft updates below",
+      },
+    });
+
+    const belowHint = screen.getByText(
+      "Set your inputs — your draft updates below",
+    );
+    expect(
+      belowHint.querySelector(".icon-\\[lucide--arrow-down\\]"),
+    ).toBeTruthy();
+    expect(
+      belowHint.querySelector(".icon-\\[lucide--arrow-right\\]"),
+    ).toBeNull();
+
+    rerender({
+      canonicalPath: "/generators/fantasy-names",
+      eyebrow: "Fantasy Names",
+      showGeneratorSwitcher: false,
+      introTitle: "Fantasy Names",
+      introText: "Generate fantasy names.",
+      labels: [],
+      inputHint: "Set your inputs — your draft updates to the right",
+    });
+
+    const rightHint = screen.getByText(
+      "Set your inputs — your draft updates to the right",
+    );
+    expect(
+      rightHint.querySelector(".icon-\\[lucide--arrow-right\\]"),
+    ).toBeTruthy();
+    expect(
+      rightHint.querySelector(".icon-\\[lucide--arrow-down\\]"),
+    ).toBeNull();
   });
 
   it("uses the generator defaults and hides optional discovery details", () => {
