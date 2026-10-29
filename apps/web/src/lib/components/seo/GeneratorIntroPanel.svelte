@@ -57,7 +57,12 @@
   <p
     class="text-nano text-theme-text/45 uppercase tracking-widest font-header mb-5 flex items-center gap-1.5"
   >
-    <span class="icon-[lucide--arrow-right] w-3 h-3" aria-hidden="true"></span>
+    {#if inputHint.includes("below")}
+      <span class="icon-[lucide--arrow-down] w-3 h-3" aria-hidden="true"></span>
+    {:else if inputHint.includes("right")}
+      <span class="icon-[lucide--arrow-right] w-3 h-3" aria-hidden="true"
+      ></span>
+    {/if}
     {inputHint}
   </p>
 {/if}
