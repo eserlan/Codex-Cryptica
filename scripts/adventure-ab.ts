@@ -242,12 +242,86 @@ export function summarise(
 
 type Complete = (system: string, message: string) => Promise<string>;
 
-export type ProxyComplete = Complete & { calls: number; failures: number };
+export type ProxyComplete = Complete & {
+  calls: number;
+  failures: number;
+  /** The proxy's `modelKey` for each successful call, in order. */
+  models: string[];
+};
 
-/** A stateless call through the local proxy, with calls and failures counted. */
+/** The proxy request, asking for `modelKey` only when one is given. */
+function proxyRequestBody(
+  system: string,
+  message: string,
+  modelKey?: string,
+): string {
+  return JSON.stringify({
+    operation: "freeform-generation",
+    messages: [
+      { role: "system", content: system },
+      { role: "user", content: message },
+    ],
+    ...(modelKey ? { modelKeyOverride: modelKey } : {}),
+  });
+}
+
+export interface ProxyOptions {
+  /** A registry model key to use instead of the operation's default. */
+  modelKey?: string;
+  /** A session token, required by a deployed proxy; see mintAutomationToken. */
+  sessionToken?: string;
+}
+
+function proxyHeaders(sessionToken?: string): Record<string, string> {
+  return {
+    "Content-Type": "application/json",
+    Origin: "http://localhost:5173",
+    ...(sessionToken ? { Authorization: `Bearer ${sessionToken}` } : {}),
+  };
+}
+
+/**
+ * Mint an automation session token from a deployed proxy, so a script can
+ * call it without the browser's Turnstile check. The key and token are
+ * never logged; a failure reports only the proxy's error code.
+ */
+export async function mintAutomationToken(
+  proxy: string,
+  automationKey: string,
+  fetcher: typeof fetch = fetch,
+): Promise<string> {
+  const response = await fetcher(new URL("/api/session", proxy), {
+    method: "POST",
+    headers: { "X-Codex-Automation-Key": automationKey },
+  });
+  const reply = await readMintReply(response);
+  if (response.ok && reply.token) return reply.token;
+  throw mintError(response.status, reply);
+}
+
+interface MintReply {
+  token?: string;
+  error?: { code?: string };
+}
+
+async function readMintReply(response: Response): Promise<MintReply> {
+  return response.json().catch(() => ({}));
+}
+
+function mintError(status: number, reply: MintReply): Error {
+  const code = reply.error?.code ?? `HTTP ${status}`;
+  return new Error(`Could not mint an automation session token (${code})`);
+}
+
+/**
+ * A stateless call through a proxy, with calls and failures counted and the
+ * model that answered each successful call recorded. A requested
+ * `modelKey` still falls back if that model fails.
+ */
 export function proxyComplete(
   proxy: string,
   fetcher: typeof fetch = fetch,
+  { modelKey, sessionToken }: ProxyOptions = {},
 ): ProxyComplete {
   const complete = async (system: string, message: string) => {
     complete.calls++;
@@ -261,24 +335,20 @@ export function proxyComplete(
   const send = async (system: string, message: string) => {
     const response = await fetcher(proxy, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Origin: "http://localhost:5173",
-      },
-      body: JSON.stringify({
-        operation: "freeform-generation",
-        messages: [
-          { role: "system", content: system },
-          { role: "user", content: message },
-        ],
-      }),
+      headers: proxyHeaders(sessionToken),
+      body: proxyRequestBody(system, message, modelKey),
     });
-    const payload = (await response.json()) as { content?: string };
+    const payload = (await response.json()) as {
+      content?: string;
+      modelKey?: string;
+    };
     if (!response.ok) throw new Error(JSON.stringify(payload).slice(0, 200));
+    complete.models.push(payload.modelKey ?? "unknown");
     return payload.content ?? "";
   };
   complete.calls = 0;
   complete.failures = 0;
+  complete.models = [] as string[];
   return complete;
 }
 

@@ -1117,3 +1117,21 @@ export {
   generateBusinessWithAI,
 } from "./campaign-business-generation";
 export { businessGeneratorOutput } from "./business-output";
+export {
+  NARRATIVE_PATTERNS,
+  getNarrativePattern,
+  formatPatternCatalogue,
+  type NarrativePattern,
+  type NarrativePatternFamily,
+} from "./narrative-patterns";
+export {
+  analyseNarrativePatterns,
+  buildPatternAnalysisMessage,
+  formatPatternBrief,
+  parsePatternAnalysis,
+  PATTERN_ANALYSIS_SYSTEM,
+  STRUCTURAL_SIGNALS,
+  type PatternAnalysis,
+  type PatternMatch,
+  type StructuralSignal,
+} from "./narrative-pattern-analysis";

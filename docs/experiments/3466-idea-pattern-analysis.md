@@ -1,0 +1,162 @@
+# Idea Developer pattern analysis: experiment and decision (#3466)
+
+**Status:** dry run, GPT-5.6 Luna pattern-finding run, and full side-by-side comparison on GPT-6 Luna all done.
+**Recommendation:** don't build the two-call pattern pass. On GPT-6 Luna it gave modest, consistent gains for twice the latency. Take the cheap part instead: add its pressure and stakeholder checks to the Assess and Challenge prompts, and keep the taxonomy as shared vocabulary for #3926 (see [Decision](#decision)).
+
+## Question
+
+Does a narrative-pattern pass, which names the familiar shapes a premise uses, what they lead an audience to expect, and where its structure is thin, make Idea Developer's critique more useful than the current single call?
+
+## What was built
+
+| Piece            | Where                                                         | Notes                                                                                                                                                                                                                                                                                                                                                                       |
+| ---------------- | ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Pattern taxonomy | `packages/generator-engine/src/narrative-patterns.ts`         | 24 Codex-native patterns in five families (reveal, character, faction, situation, structure). Each has a shape, the expectation it sets up, and two **levers**: ways to complicate it without discarding it. Written for Codex; nothing taken from TV Tropes.                                                                                                               |
+| Analysis pass    | `packages/generator-engine/src/narrative-pattern-analysis.ts` | One classifier call returning matched patterns with evidence, off-list patterns, seven structural signals (`present`/`thin`/`missing`), reveal dependency, audience expectations and a sentence on distinctiveness. No scores. Unknown ids are kept as off-list rather than dropped. The completion function is injected, so a smaller model or Jev (#3465) can replace it. |
+| Brief hand-off   | `IdeaDeveloperService.develop(idea, mode, { patternBrief })`  | Optional. When present, the brief is appended after the idea as fallible background. The output schema is unchanged, and the public page does not send a brief, so users see no difference.                                                                                                                                                                                 |
+| A/B harness      | `scripts/idea-pattern-ab.ts` (`bun run eval:idea-patterns`)   | Ten premises; baseline (1 call) against assisted (2 calls) per mode. Scores pattern-finding against hand labels (found, missed, wrong), and reports calls, latency, pattern coverage, off-list rate, and whether pattern names leak into creator-facing text. `--detect-only` runs just the classifier; `--markdown` prints both routes side by side for reading.           |
+
+## Dry run
+
+No model API key was available when this was written, so Claude stood in for **every** call on five premises in Assess mode. The baseline replies were written before the pattern analyses. Every reply went through the real prompts, Zod schemas, brief formatter and renderer. Full transcript: [3466-idea-pattern-dry-run.md](./3466-idea-pattern-dry-run.md).
+
+**Caveat:** the person who designed the prompts also played the model and knew the hypothesis. Treat this as a check of the pipeline and of the _kinds_ of difference to look for, not as evidence that the assisted route is better.
+
+| Premise            | Probe              | Assisted vs baseline                                                                                                                                                                                                                                                                                         |
+| ------------------ | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| dragon-protector   | reveal-driven      | **Better.** Only the assisted route raised the knight's own complicity ("What did the knight do in the king's service…"), which is the issue's own example prompt. It also suggested keeping the dragon genuinely dangerous and giving the king decent loyalists. Both routes spotted the reveal dependency. |
+| dragon-parts-town  | static lore        | **Slightly better.** It named the default expectation (supply runs out, townsfolk complicit) and offered "make the secret protective" and "split the town" as alternatives. The baseline already said "an image, not a situation".                                                                           |
+| vague-moon         | too thin           | **No difference.** Nothing matched; the structural signals only restated what the baseline already said.                                                                                                                                                                                                     |
+| bridge-toll        | several patterns   | **Better**, with one wrong label. "Let the vacancy be deliberate" and "a lie both sides maintain" were sharper than the baseline's gaps. But the classifier also matched _Dwindling Lifeline_ for "the only bridge", which is a stretch.                                                                     |
+| retired-chosen-one | already subversive | **Mixed.** "Right about the harm but wrong about who owes" was a real gain. But _Prophecy Trap_ was a loose match, and its expectation leaked in as a weaker stress test.                                                                                                                                    |
+
+Harness numbers (dry run): 2.2 taxonomy matches and 0.4 off-list patterns per idea; 11 of 24 patterns used; no pattern names leaked into creator-facing text; twice the calls.
+
+Against the hand labels, the dry-run analyses found 6/6 expected patterns, with 2 wrong (_Dwindling Lifeline_ for the bridge, _Prophecy Trap_ for the retired chosen one) and 3 of 5 exact. The labels were written after the dry run, so this only shows the scoring works; it is not evidence about any model.
+
+## Pattern-finding on GPT-5.6 Luna
+
+Run on 23 October 2026 with `bun run eval:idea-patterns --detect-only` against the deployed worker, using an automation session token. All 10 classifier calls were answered by `luna-fast`, which production still maps to GPT-5.6 Luna; the switch to GPT-6 Luna is in #4363 and was not deployed. One call per idea, so this is a single sample, not a measure of run-to-run consistency.
+
+| Measure                         | Result     |
+| ------------------------------- | ---------- |
+| Expected patterns found         | **8 / 9**  |
+| Missed                          | 1          |
+| Wrong matches                   | 2          |
+| Ideas exactly right             | **7 / 10** |
+| Off-list patterns per idea      | 1.2        |
+| Ideas expecting none, given one | 1 of 4     |
+
+| Idea               | Found                                                     | Missed        | Wrong                       | Off-list                                              |
+| ------------------ | --------------------------------------------------------- | ------------- | --------------------------- | ----------------------------------------------------- |
+| dragon-protector   | disgraced-champion, misunderstood-monster, rot-at-the-top |               | villain-has-better-evidence |                                                       |
+| dragon-parts-town  | living-off-the-beast                                      |               |                             |                                                       |
+| giant-village      | safe-haven-falls                                          |               |                             |                                                       |
+| vague-moon         |                                                           |               |                             |                                                       |
+| water-rights-heist | dwindling-lifeline                                        |               |                             | Heist, Corporate Exploitation                         |
+| drowned-city-ferry |                                                           |               |                             | Patterned Disappearances, Investigative Mystery       |
+| lighthouse-log     | prophecy-trap                                             |               |                             | Time Loop, Future Knowledge                           |
+| bridge-toll        | empty-throne                                              | fragile-truce |                             | Inheritance Dispute                                   |
+| bakery-caravan     |                                                           |               |                             | Road Story, Cascading Crisis                          |
+| retired-chosen-one |                                                           |               | disgraced-champion          | Retired Hero, Villainous Litigation, After the Ending |
+
+**Reading the misses and wrong matches:**
+
+- **Missed _Fragile Truce_ on bridge-toll.** Defensible: the premise says the guilds are rivals sharing a bridge but never states a truce. It found the stronger pattern, _Empty Throne_, and named _Inheritance Dispute_ off-list, which says the same thing in other words.
+- **_Villain Has the Better Evidence_ on dragon-protector.** A fair reading rather than an error: the dragon, cast as the villain, is acting on what the kingdom does not know. This is a labelling question, not a model failure; it should probably be _acceptable_. The labels were left unchanged after the run so the score stays honest; review them before the next one.
+- **_Disgraced Champion_ on retired-chosen-one.** A real mistake: she is retired and successful, not disgraced. It is also the only invented match among the four ideas labelled with no patterns. The model named the right shape off-list (_Retired Hero_, _After the Ending_), which suggests it reached for the nearest list entry when the list had no good fit.
+- **No over-matching elsewhere.** The two loose matches from the dry run (_Dwindling Lifeline_ on the bridge, _Prophecy Trap_ on the retired chosen one) did not appear, and the three other ideas with no expected patterns got none.
+
+**What it means:**
+
+1. **Pattern-finding is good enough to build on.** Most expected patterns were found and wrong matches were rare, so the classifier is not the weak link. That clears step 1 of the [Decision](#decision).
+2. **The list has gaps the model keeps naming.** About one off-list pattern per idea, three times the dry run's rate. _Heist_, _Inheritance Dispute_, _After the Ending_ and _Road Story_ are common TTRPG shapes worth adding, each with its own levers.
+3. **Wrong matches come from missing entries more than from loose reading.** Both errors sit next to an off-list name that fits better, so widening the list should reduce them more than a stricter prompt would.
+
+## Full comparison on GPT-6 Luna
+
+Run on 23 October 2026 with `bun scripts/idea-pattern-ab.ts --modes assess,challenge` against the deployed worker, straight after GPT-6 Luna was deployed (PR 4363): 10 ideas × 2 modes, baseline (1 call) against assisted (2 calls). All 60 calls were answered by `luna-fast`, with no Gemini fallbacks. One run per idea and mode. Excerpt with the quoted pairs: [3466-idea-pattern-gpt6-run.md](./3466-idea-pattern-gpt6-run.md).
+
+The model changed between the pattern-finding run (GPT-5.6 Luna) and this one, so differences between them mix the model with the method.
+
+| Measure                               | Baseline | Assisted    |
+| ------------------------------------- | -------- | ----------- |
+| Runs failed                           | 0 / 20   | 0 / 20      |
+| Calls per run                         | 1        | 2           |
+| Median time per run                   | 6.9 s    | 15.1 s      |
+| Pattern names leaked into output      | 0        | 0           |
+| Expected patterns found by the pass   | –        | 8 / 18      |
+| Wrong matches                         | –        | 1           |
+| List matches / off-list names per run | –        | 0.55 / 0.95 |
+
+**GPT-6 Luna maps far less to the list.** It found every expected pattern on dragon-protector and giant-village, and nothing from the list anywhere else, but it named the same shapes in its own words: _Contested succession_ for _Empty Throne_, _Foreknowledge of Disaster_ for _Prophecy Trap_, _Life inside a colossal creature_ for _Living Off the Beast_. It was the same in both modes, so this is the model reading "copy the id exactly; leave out loose matches" more strictly than GPT-5.6 did, not noise. Precision stayed high (one wrong match, the same defensible _Villain Has the Better Evidence_ on the dragon). The cost is that off-list names carry no levers, so 8 of 10 ideas reached the developer without the part that helped most in the dry run.
+
+**What the assisted output added, reading the pairs side by side:**
+
+- **Where list patterns matched, the levers came through.** On dragon-protector, only the assisted versions asked whether the knight "would make the choice that led to [their disgrace] again", who would be harmed if the legend were overturned, and "why do otherwise decent people support or serve" the king, each traceable to a lever. They also kept the dragon "genuinely dangerous" after the reveal.
+- **Without list matches, it still added pressure and stakeholders.** The brief's thin-structure notes and expectations reliably produced questions the baseline often lacked: a deadline or trigger ("What makes the case urgent: a hearing date…"), people affected beyond the main pair ("How much do travellers and nearby communities depend on the bridge…"), and whether the antagonist has "a sincere grievance".
+- **But the GPT-6 Luna baseline is already strong.** It caught the reveal dependency, the dragon's real harm, the unclear player role and the guilds' motives unaided. The assisted gains are incremental: about one extra, sharper question per idea, not a different kind of critique.
+- **No regressions spotted.** No assisted output replaced the premise, scored the idea, or treated familiar patterns as flaws.
+
+## Follow-up: critique checks in Idea Developer
+
+Following the decision below, `CRITIQUE_CHECKS` in `idea-developer-service.ts` adds the three checks to the Assess and Challenge guidance: a deadline or trigger, people beyond the central figures, and a sincere grievance for an opposing side. There is no extra call. Each wording was checked with the baseline route only (10 ideas × Assess and Challenge, GPT-6 Luna via the deployed worker, one run each) and compared with the comparison run's baseline. Counts use rough keyword matching, so read them with the samples.
+
+| Of 20 outputs                                   | Before | v1  | v2  | v3  | **Shipped (v4)** |
+| ----------------------------------------------- | ------ | --- | --- | --- | ---------------- |
+| Raise a deadline or trigger                     | 4      | 20  | 16  | 18  | **20**           |
+| Raise wider stakeholders                        | 11     | 19  | 8   | 12  | **16**           |
+| Raise a sincere grievance                       | 2      | 16  | 5   | 3   | **7**            |
+| Grievance on ideas with no opposing side (of 8) | 0      | 6   | 0   | 0   | **1**            |
+| Stress tests + questions per output             | 8.2    | 7.2 | 5.5 | 6.2 | **7.1**          |
+
+- **v1, a plain "also check":** applied as a checklist. The moon idea got three generic, prompt-echoing stress tests in place of its own critique, and grievance questions appeared on ideas with no opposing side.
+- **v2, premise-first with "at most two items":** fixed the forcing, but the model read the cap as a limit on the whole critique, and outputs shrank.
+- **v3, "add to your usual critique" plus the cap:** better, but still short.
+- **v4, shipped:** "usual full, premise-specific critique first; these checks add to it", only where the premise clearly has the gap, and skip the grievance check with no opposing side. On the moon idea it kept its own points (clues, tone, uncanny or explainable) and added deadline and stakeholder points in its own terms. On the dragon idea, Challenge asked "What does the king believe he is doing for the kingdom, and who might sincerely agree with him?" The one grievance on a no-opponent idea (bakery caravan) is conditional ("if there is an opposing party behind them").
+
+Outputs are about one item shorter than before (7.1 against 8.2). That's acceptable given the added checks, but worth watching.
+
+## Findings
+
+1. **The value comes from the levers, not the labels.** Every gain traced back to a taxonomy lever or a named expectation. Pattern names alone ("this is a Misunderstood Monster") added nothing a creator could act on.
+2. **Structural signals mostly duplicate the existing Assess prompt, but not entirely.** In the dry run the baseline already found the reveal dependency, the missing conflict and the undefined player role. On GPT-6 Luna, though, the thin-structure notes were what reliably added deadline, escalation and wider-stakeholder questions, which is the one gain that survived when no list pattern matched.
+3. **A fixed list invites over-matching.** Even with an explicit "leave out loose matches" instruction, two of thirteen matches were stretches, and a wrong label brings the wrong levers with it. The brief's "it may be wrong" framing contained this, but did not stop it.
+4. **It helps premises that already have shape.** There was no gain on a one-line mood, and the gain on an already-subversive premise was mixed.
+5. **Familiarity stayed neutral.** No output treated a trope as a flaw, and no pattern names leaked into the creator-facing text.
+
+## Decision
+
+**Don't build the two-call pattern pass as an implementation epic.** On GPT-6 Luna, the model users now get, it doubled latency (6.9 s to 15.1 s median) for incremental gains: about one sharper question per idea. And because GPT-6 Luna rarely maps premises to the list, the levers that made the biggest difference in the dry run reached only 2 of 10 ideas.
+
+**Do instead:**
+
+1. **Fold the cheap gain into Idea Developer's prompts.** Add to the Assess and Challenge guidance: check for a deadline or trigger that forces action, ask who beyond the main figures is affected, and ask whether the antagonist could have a sincere grievance. These were the assisted route's most consistent additions, and they need no second call. **Done** (see [Follow-up](#follow-up-critique-checks-in-idea-developer)).
+2. **Keep the taxonomy as shared vocabulary**, not a runtime step: reference material for the Oracle narrative assistant (#3926) and the generators. If it is used at runtime later, let the model map near-synonyms onto list entries (GPT-6 Luna named the right shapes but would not map them), and add the missing common shapes listed under "How broad?".
+3. **Revisit only if** a later model or use case changes the trade-off: for example, a cheap classifier (#3465) cutting the extra latency, or #3926 needing pattern labels for its own reasons.
+
+This settles the issue's done-when list: a prototype, representative ideas, a pattern-assisted against normal comparison on the production model, and a decision.
+
+**Which model answers:** the proxy sends both the harness's calls and the public page's to Luna (`luna-fast`) by default: GPT-6 Luna since PR 4363 was deployed (it was GPT-5.6 Luna for the pattern-finding run), with `gemini-3.5-flash-lite` as a silent fallback when there is no OpenAI key or Luna fails. To test what users get, set `OPENAI_API_KEY` in `apps/workers/oracle-proxy/.dev.vars`; with only `GEMINI_API_KEY`, every call falls back to Gemini, which tests a cheaper model. The harness records the proxy's `modelKey` for every call and shows the counts in its summary and each side-by-side heading. Check them before comparing runs, because a run that mixes models is not one model's result.
+
+The steps that led here:
+
+1. **Score pattern-finding first:** `bun run eval:idea-patterns --detect-only` makes one classifier call per sample idea and scores it against the hand labels in `IDEA_CASES`. Each idea lists the patterns it clearly uses (`expected`) and defensible extra readings (`acceptable`); anything else the classifier matches counts as wrong. Four ideas expect no patterns, to catch invented matches. If the model misses many expected patterns or produces many wrong ones, stop here, because the later steps depend on it. The labels are one person's judgement, so review them before trusting the score. **Done on GPT-5.6 Luna; it passed** (see [Pattern-finding on GPT-5.6 Luna](#pattern-finding-on-gpt-56-luna)).
+2. **Run the full comparison:** `bun run eval:idea-patterns --modes assess,challenge --markdown > ab.md` against the local proxy. Read the output side by side, looking for findings 1–4. Each assisted run also shows its pattern score. **Done on GPT-6 Luna** (see [Full comparison on GPT-6 Luna](#full-comparison-on-gpt-6-luna)); the gains did not justify the second call.
+3. **Add a third arm before deciding:** a single call that carries only the matched patterns' expectations and levers, using a cheaper match step or even keyword pre-selection, with no structural-signal block. If it matches the two-call route, the extra call is not worth it.
+4. **If the real model confirms the gain**, ship narrowly:
+   - Assess and Challenge modes only.
+   - A small curated taxonomy (about 20–40 entries) maintained for its levers, with a minimum-evidence threshold to reduce over-matching.
+   - Packaged as a reusable `generator-engine` service so the Oracle narrative assistant (#3926) can use the same vocabulary, rather than as a feature only Idea Developer has.
+5. **If it does not**, keep the taxonomy as an internal vocabulary for #3926 and the generators, and close this line of work.
+
+## The issue's open questions
+
+- **Curated database or LLM alone?** A small curated list, because the useful part (levers) is authored judgement an LLM does not supply by default. Labels alone are not worth curating.
+- **How broad?** Still small, but wider than 24. The dry run suggested diminishing returns (0.4 off-list matches per idea), but GPT-5.6 Luna named about one off-list pattern per idea, and both of its wrong matches sat next to a missing entry. Adding common TTRPG shapes such as _Heist_, _Inheritance Dispute_, _After the Ending_ and _Road Story_ looks worthwhile.
+- **Genre-specific or neutral?** Neutral shapes work across genres. Add genre-specific levers only where a lever does not translate.
+- **Avoiding "familiar = bad"?** Do it in the prompt ("Familiar patterns are not flaws"), and drop scores entirely. In the dry run this held.
+- **Useful or merely interesting?** Expectations and levers are useful. Pattern names and structural ratings are mostly interesting.
+- **Where should it live?** As a reusable service, shared with #3926; Idea Developer is a consumer.
+- **Can the taxonomy support generators or discovery?** Possibly, as a vocabulary, but that should not drive the taxonomy now (see Constitution XIII on discovery pages).
+- **Jev?** The classifier step is low-stakes and structured, so it is a reasonable place for #3465's cheaper model. `analyseNarrativePatterns` takes its own completion function, so the classifier can be swapped without touching the developer call. The harness currently sends both through the same proxy.
