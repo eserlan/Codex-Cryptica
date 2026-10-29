@@ -6,6 +6,8 @@ import Page from "./+page.svelte";
 import { AnswerConfigSchema } from "#lib/content/answers/schema.js";
 import { PUBLIC_LAYOUT } from "#lib/components/seo/marketing-shell.js";
 import * as discoveryTracking from "#lib/services/analytics/discovery-tracking.js";
+import { howManyNpcsDoesAnRpgTownNeed } from "#lib/content/answers/pages/how-many-npcs-does-an-rpg-town-need.js";
+import { howDoYouCreateAFantasyCityThatFeelsAlive } from "#lib/content/answers/pages/how-do-you-create-a-fantasy-city-that-feels-alive.js";
 
 vi.mock("$app/paths", () => ({
   base: "",
@@ -35,6 +37,39 @@ function renderAnswer(
     props: { data: { answer, related } as never },
   });
 }
+
+describe("contextual naming links", () => {
+  it.each([
+    howManyNpcsDoesAnRpgTownNeed,
+    howDoYouCreateAFantasyCityThatFeelsAlive,
+  ])("renders and tracks the fantasy link in $slug", (answer) => {
+    const spy = vi
+      .spyOn(discoveryTracking, "trackDiscoveryClick")
+      .mockImplementation(() => {});
+    renderAnswer(answer.sections, { ...answer, relatedAnswers: [] });
+    const link = screen.getByRole("link", { name: "Fantasy Name Generator" });
+    expect(link.getAttribute("href")).toBe("/generators/fantasy-names");
+    link.click();
+    expect(spy).toHaveBeenCalledWith({
+      sourceKind: "answer",
+      sourceId: answer.slug,
+      placement: "inline_link",
+      targetKind: "generator",
+      targetId: "fantasy-names",
+    });
+    spy.mockRestore();
+  });
+
+  it("keeps the broader naming option for other genres", () => {
+    const answer = howManyNpcsDoesAnRpgTownNeed;
+    renderAnswer(answer.sections, { ...answer, relatedAnswers: [] });
+    expect(
+      screen
+        .getByRole("link", { name: "RPG Name Generator" })
+        .getAttribute("href"),
+    ).toBe("/generators/names");
+  });
+});
 
 describe("answer page tables", () => {
   const table = {
