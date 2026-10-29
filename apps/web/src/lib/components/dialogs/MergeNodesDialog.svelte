@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { untrack } from "svelte";
   import {
     nodeMergeService,
     type IMergedContentProposal,
@@ -48,12 +49,25 @@
     }
   };
 
+  let initializedForOpen = false;
+
   $effect(() => {
-    if (isOpen && sourceNodeIds.length > 0) {
+    if (!isOpen) {
+      initializedForOpen = false;
+      proposal = null;
+      previewContent = "";
+      return;
+    }
+    if (sourceNodeIds.length > 0) {
       if (!targetId || !sourceNodeIds.includes(targetId)) {
         targetId = sourceNodeIds[0];
       }
-      // loadProposal(); // Removed to avoid redundant calls, triggered by specific user actions instead
+      if (!initializedForOpen) {
+        initializedForOpen = true;
+        untrack(() => {
+          void loadProposal();
+        });
+      }
     }
   });
 
@@ -62,7 +76,14 @@
     if (isLoading) return;
 
     // Check for unsaved changes (T011)
-    if (nodeMergeService.checkUnsavedChanges(sourceNodeIds)) {
+    const hasUnsavedChanges =
+      vault.status === "saved"
+        ? Boolean(
+            vault.selectedEntityId &&
+            sourceNodeIds.includes(vault.selectedEntityId),
+          )
+        : nodeMergeService.checkUnsavedChanges(sourceNodeIds);
+    if (hasUnsavedChanges) {
       if (
         !(await notificationStore.confirm({
           title: "Unsaved Changes",
@@ -225,7 +246,7 @@
         <button
           class="px-6 py-2 bg-theme-primary text-black font-bold rounded hover:bg-theme-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
           onclick={handleMerge}
-          disabled={!targetId || isLoading}
+          disabled={!targetId || !proposal || isLoading}
           aria-busy={isLoading}
         >
           {#if isLoading}

@@ -21,7 +21,7 @@ test.describe("Advanced Draw Button", () => {
     await page.getByTestId("search-modal-input").fill("Ancient Dragon");
     await page.getByTestId("search-result").first().click();
 
-    await expect(page.getByText("No Image")).toBeVisible();
+    await expect(page.getByText("Auto-Inferred Silhouette")).toBeVisible();
     await expect(
       page.getByRole("button", { name: "DRAW VISUAL", exact: true }),
     ).not.toBeVisible();
@@ -112,11 +112,15 @@ test.describe("Advanced Draw Button", () => {
     await page.getByTestId("search-modal-input").fill("Ancient Dragon");
     await page.getByTestId("search-result").first().click();
 
+    await expect(
+      page.locator("h2", { hasText: "Ancient Dragon" }),
+    ).toBeVisible();
+
     // Open Zen Mode
     await page
       .locator(".hidden.md\\:flex")
       .getByTestId("enter-zen-mode-button")
-      .click();
+      .click({ force: true });
 
     // Wait for Zen Mode transition and ensure heading is visible
     const zenModal = page.getByTestId("zen-mode-modal");

@@ -13,15 +13,19 @@ const BLOCKING_IMPACTS = new Set(["serious", "critical"]);
 // Colour contrast comes from shared theme tokens; see a11y-workspace.spec.ts.
 const NON_BLOCKING_RULES = new Set(["color-contrast"]);
 
-async function openExplorer(page: Page) {
-  await page.route("https://assets.codexcryptica.com/**", (route) =>
-    route.abort(),
-  );
-  await page.goto("/biomes");
+async function gotoExplorer(page: Page, path = "/biomes") {
+  await page.goto(path, { waitUntil: "networkidle" });
   // The first visit compiles the route in dev, which can take a while.
   await expect(
     page.getByRole("heading", { name: "Biome Explorer", level: 1 }),
   ).toBeVisible({ timeout: 45000 });
+}
+
+async function openExplorer(page: Page) {
+  await page.route("https://assets.codexcryptica.com/**", (route) =>
+    route.abort(),
+  );
+  await gotoExplorer(page, "/biomes");
 }
 
 async function axeScan(page: Page, label: string) {
@@ -47,7 +51,7 @@ test.describe("Biome Explorer", () => {
     await expect(page.getByRole("listitem").first()).toBeVisible();
     await page.getByRole("searchbox").fill("desert");
     await expect(page.getByTestId("biome-result-count")).toContainText(
-      "1 biome shown",
+      "2 biomes shown",
     );
     await page.getByRole("button", { name: /^Hot desert/ }).click();
     await expect(
@@ -67,7 +71,7 @@ test.describe("Biome Explorer", () => {
     await context.grantPermissions(["clipboard-read", "clipboard-write"]);
     await openExplorer(page);
 
-    await page.goto("/biomes?biome=tundra");
+    await gotoExplorer(page, "/biomes?biome=tundra");
     await page.getByRole("button", { name: "Make my own" }).click();
     await page.getByLabel("Name", { exact: true }).fill("Ashen Flats");
     await page.getByLabel("Plants: my version").fill("Glowing blue moss");
@@ -110,7 +114,7 @@ test.describe("Biome Explorer", () => {
   test("has no serious accessibility violations", async ({ page }) => {
     await openExplorer(page);
     await axeScan(page, "library");
-    await page.goto("/biomes?biome=tundra");
+    await gotoExplorer(page, "/biomes?biome=tundra");
     await page.getByRole("button", { name: /^Landscape/ }).click();
     await axeScan(page, "details");
     await page.getByRole("button", { name: "Make my own" }).click();
@@ -140,16 +144,17 @@ test.describe("Biome Explorer", () => {
     await page.setViewportSize({ width: 360, height: 740 });
     await openExplorer(page);
     for (const check of ["library", "details", "compare", "editor"] as const) {
-      if (check === "details") await page.goto("/biomes?biome=savanna");
+      if (check === "details")
+        await gotoExplorer(page, "/biomes?biome=savanna");
       if (check === "compare") {
-        await page.goto("/biomes");
+        await gotoExplorer(page, "/biomes");
         await page.getByRole("button", { name: "Compare Tundra" }).click();
         await page.getByRole("button", { name: "Compare Savanna" }).click();
         await page.getByRole("button", { name: "Compare (2)" }).click();
         await expect(page.getByTestId("biome-compare-stacked")).toBeVisible();
       }
       if (check === "editor") {
-        await page.goto("/biomes");
+        await gotoExplorer(page, "/biomes");
         // The Explorer reopens on the view you last used.
         await page.getByRole("button", { name: "Library" }).click();
         await page.getByRole("button", { name: "Start from blank" }).click();

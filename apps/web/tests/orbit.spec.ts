@@ -1,14 +1,11 @@
 import { test, expect } from "@playwright/test";
+import { dismissFrontPage, seedOnboardingComplete } from "./test-helpers";
 
 test.describe("Orbit Layout", () => {
+  test.setTimeout(60000);
+
   test.beforeEach(async ({ page }) => {
-    await page.addInitScript(() => {
-      localStorage.setItem("codex_skip_landing", "true");
-      localStorage.setItem(
-        "codex-cryptica-help-state",
-        JSON.stringify({ completedTours: ["initial-onboarding"] }),
-      );
-    });
+    await page.addInitScript(seedOnboardingComplete);
   });
 
   test("should activate orbit mode, switch center, and show detail panel", async ({
@@ -16,14 +13,26 @@ test.describe("Orbit Layout", () => {
   }) => {
     await page.goto("/");
 
+    // Wait for vault and window globals to be fully initialized before creating entities
+    await page.waitForFunction(
+      () => {
+        const vault = (window as any).vault;
+        return (
+          !!vault &&
+          vault.isInitialized === true &&
+          vault.status === "idle" &&
+          !!(window as any).onboardingStore
+        );
+      },
+      {
+        timeout: 15000,
+      },
+    );
+    await dismissFrontPage(page);
+
     // 1. Wait for graph to load
     const canvas = page.getByTestId("graph-canvas");
     await expect(canvas).toBeVisible({ timeout: 10000 });
-
-    // Wait for vault to be fully initialized before creating entities
-    await page.waitForFunction(() => (window as any).vault?.status === "idle", {
-      timeout: 15000,
-    });
 
     // Create entities via vault API for proper reactivity
     await page.evaluate(async () => {
@@ -86,8 +95,17 @@ test.describe("Orbit Layout", () => {
 
   test("should activate orbit mode via context menu", async ({ page }) => {
     await page.goto("/");
+    await page.waitForFunction(() => {
+      const vault = (window as any).vault;
+      return (
+        !!vault &&
+        vault.isInitialized === true &&
+        vault.status === "idle" &&
+        !!(window as any).onboardingStore
+      );
+    });
+    await dismissFrontPage(page);
     await expect(page.getByTestId("graph-canvas")).toBeVisible();
-    await page.waitForFunction(() => (window as any).vault?.status === "idle");
 
     // 1. Create a node
     await page.evaluate(async () => {

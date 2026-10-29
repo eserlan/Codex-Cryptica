@@ -103,7 +103,9 @@ test.describe("Oracle Undo", () => {
     await createBtn.click();
 
     // 3. Verify node exists
-    await expect(page.getByText("SAVED")).toBeVisible();
+    await expect(
+      page.getByTestId("chat-message").getByText("SAVED"),
+    ).toBeVisible();
     const nodeExists = await page.evaluate(
       () => !!(window as any).vault.entities["new-character"],
     );

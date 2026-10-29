@@ -1,12 +1,37 @@
 import { test, expect } from "@playwright/test";
-import { setupVaultPage, seedEntity } from "./test-helpers";
+import {
+  dismissFrontPage,
+  seedOnboardingComplete,
+  seedEntity,
+} from "./test-helpers";
 
 test.describe("Add to Canvas - Context Menu", () => {
   test.setTimeout(60000);
 
-  test.beforeEach(async ({ page }) => {
-    await setupVaultPage(page);
+  async function gotoGraphReady(page: any) {
+    await page.goto("/");
+    await page.waitForFunction(
+      () => {
+        const vault = (window as any).vault;
+        return (
+          !!vault &&
+          vault.isInitialized === true &&
+          vault.status === "idle" &&
+          !!(window as any).onboardingStore
+        );
+      },
+      { timeout: 30000 },
+    );
+    await dismissFrontPage(page);
+    await expect(page.getByTestId("graph-canvas")).toBeVisible({
+      timeout: 15000,
+    });
     await waitForCytoscape(page);
+  }
+
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(seedOnboardingComplete);
+    await gotoGraphReady(page);
   });
 
   async function waitForCytoscape(page: any) {
@@ -122,7 +147,7 @@ test.describe("Add to Canvas - Context Menu", () => {
     await page.waitForURL(/\/canvas\/.+/);
 
     // Go back to graph
-    await page.goto("/");
+    await gotoGraphReady(page);
     await waitForEntityNodes(page, ["Test Entity"]);
 
     // Right-click to open context menu
@@ -164,8 +189,7 @@ test.describe("Add to Canvas - Context Menu", () => {
     // Ensure we have a canvas
     await page.goto("/canvas");
     await page.waitForURL(/\/canvas\/.+/);
-    await page.goto("/");
-    await waitForCytoscape(page);
+    await gotoGraphReady(page);
     await waitForEntityNodes(page, [
       "Multi Entity 1",
       "Multi Entity 2",
@@ -261,7 +285,7 @@ test.describe("Add to Canvas - Context Menu", () => {
     // Ensure canvas exists
     await page.goto("/canvas");
     await page.waitForURL(/\/canvas\/.+/);
-    await page.goto("/");
+    await gotoGraphReady(page);
     await waitForEntityNodes(page, ["Duplicate Test Node"]);
 
     // Add entity to canvas first time

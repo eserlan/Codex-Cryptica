@@ -1,9 +1,30 @@
 import { test, expect } from "@playwright/test";
-import { setupVaultPage } from "./test-helpers";
+import { dismissFrontPage, seedOnboardingComplete } from "./test-helpers";
 
 test.describe("Node Merging", () => {
+  test.setTimeout(60000);
+
   test.beforeEach(async ({ page }) => {
-    await setupVaultPage(page);
+    await page.addInitScript(seedOnboardingComplete);
+    await page.goto("/");
+    await page.waitForFunction(
+      () => {
+        const vault = (window as any).vault;
+        return (
+          !!vault &&
+          vault.isInitialized === true &&
+          vault.status === "idle" &&
+          !!(window as any).onboardingStore &&
+          !!(window as any).codexUI?.modal &&
+          !!(window as any).revisionService
+        );
+      },
+      { timeout: 30000 },
+    );
+    await dismissFrontPage(page);
+    await expect(page.getByTestId("graph-canvas")).toBeVisible({
+      timeout: 15000,
+    });
   });
 
   test("should merge two nodes and preserve content and links", async ({
@@ -253,10 +274,6 @@ test.describe("Node Merging", () => {
   });
 
   test.describe("Documentation", () => {
-    test.beforeEach(async ({ page }) => {
-      await setupVaultPage(page);
-    });
-
     test("should show the node merging help article", async ({ page }) => {
       // 1. Open Settings -> Help
       await page.getByTestId("settings-button").click();

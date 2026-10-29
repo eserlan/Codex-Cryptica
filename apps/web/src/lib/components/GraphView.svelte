@@ -481,24 +481,27 @@
     }
   });
 
+  const activeMobileVaultKey = $derived(
+    vault.demoVaultName
+      ? `demo:${vault.demoVaultName}`
+      : (vault.activeVaultId ?? "default"),
+  );
+  const canApplyMobileEntryZoom = $derived(
+    layoutUIStore.isMobile &&
+      controller.loadPhase === "ready" &&
+      !surfaceCovered &&
+      mobileEntryVaultId !== activeMobileVaultKey,
+  );
+
   // A phone should enter a useful local view once per vault/session, then
   // leave the camera entirely under the user's control. This follows the
   // selection effect so an initially selected node cannot replace the legible
   // entry zoom with the previous full-graph fit.
   $effect(() => {
     const currentCy = controller.cy;
-    const vaultId = vault.activeVaultId ?? "default";
-    const isReady = controller.loadPhase === "ready";
     const entities = vault.allEntities;
-    if (
-      !layoutUIStore.isMobile ||
-      !currentCy ||
-      !isReady ||
-      mobileEntryVaultId === vaultId
-    )
-      return;
+    if (!canApplyMobileEntryZoom || !currentCy) return;
 
-    mobileEntryVaultId = vaultId;
     const entryId = resolveMobileEntryId(
       entities,
       controller.selectedId,
@@ -508,6 +511,7 @@
 
     const node = currentCy.$id(entryId);
     if (node.length > 0) {
+      mobileEntryVaultId = activeMobileVaultKey;
       untrack(() =>
         centerOnNode(
           node,

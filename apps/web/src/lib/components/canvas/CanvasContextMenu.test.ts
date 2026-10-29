@@ -540,3 +540,57 @@ describe("CanvasContextMenu image only view toggle", () => {
     ).toBeTruthy();
   });
 });
+
+describe("CanvasContextMenu viewport clamping", () => {
+  it("keeps coordinates unchanged when within viewport bounds", () => {
+    Object.defineProperty(window, "innerWidth", {
+      value: 1280,
+      configurable: true,
+    });
+    Object.defineProperty(window, "innerHeight", {
+      value: 720,
+      configurable: true,
+    });
+
+    render(CanvasContextMenu, {
+      props: {
+        x: 120,
+        y: 160,
+        targetId: "node-1",
+        targetType: "node",
+        onDelete: vi.fn(),
+        onClose: vi.fn(),
+      } as any,
+    });
+
+    const menu = screen.getByRole("menu", { name: "Canvas Context Menu" });
+    expect(menu.style.left).toBe("120px");
+    expect(menu.style.top).toBe("160px");
+  });
+
+  it("clamps coordinates to the minimum margin when negative or overflowing", () => {
+    Object.defineProperty(window, "innerWidth", {
+      value: 500,
+      configurable: true,
+    });
+    Object.defineProperty(window, "innerHeight", {
+      value: 400,
+      configurable: true,
+    });
+
+    render(CanvasContextMenu, {
+      props: {
+        x: 900,
+        y: -20,
+        targetId: "node-1",
+        targetType: "node",
+        onDelete: vi.fn(),
+        onClose: vi.fn(),
+      } as any,
+    });
+
+    const menu = screen.getByRole("menu", { name: "Canvas Context Menu" });
+    expect(menu.style.left).toBe("492px");
+    expect(menu.style.top).toBe("8px");
+  });
+});
