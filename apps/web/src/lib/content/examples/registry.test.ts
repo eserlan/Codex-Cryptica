@@ -357,6 +357,18 @@ describe("the published examples", () => {
     expect(recedingTide.kind).toBe("point-crawl");
     expect(recedingTide.genre).toBe("Classic Fantasy");
     expect(recedingTide.generator.href).toBe("/generators/point-crawl");
+    const walkthrough = recedingTide.output.find(
+      (block) =>
+        block.kind === "prose" && block.heading?.startsWith("Example of Play"),
+    );
+    expect(walkthrough?.kind).toBe("prose");
+    if (walkthrough?.kind === "prose") {
+      expect(walkthrough.paragraphs[1]).toContain("hour 14.5");
+      expect(walkthrough.paragraphs[1]).toContain(
+        "hour 15.5 with two and a half hours to spare",
+      );
+      expect(walkthrough.paragraphs[1]).not.toContain("four hours to spare");
+    }
     expect(recedingTide.provenance).toBe("lightly-edited");
     expect(recedingTide.provenanceNote).toContain(
       "Route terrain descriptions were condensed",

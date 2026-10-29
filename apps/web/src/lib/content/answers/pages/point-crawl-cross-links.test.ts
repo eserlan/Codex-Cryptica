@@ -52,6 +52,14 @@ describe("point-crawl cross-links (#4369)", () => {
     expect(hrefs).toContain("/examples/the-receding-tide-road-point-crawl");
   });
 
+  it("describes the comparison page example consistently with its edited provenance", () => {
+    const link = pointCrawlVsHexCrawl.relatedTools?.find(
+      (tool) => tool.href === "/examples/the-receding-tide-road-point-crawl",
+    );
+    expect(link?.description).toContain("lightly edited");
+    expect(link?.description).not.toContain("unedited");
+  });
+
   it("links to the published point crawl example from the answers (#4373)", () => {
     const EXAMPLE_HREF = "/examples/the-receding-tide-road-point-crawl";
     expect(

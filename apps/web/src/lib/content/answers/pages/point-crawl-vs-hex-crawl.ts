@@ -120,7 +120,7 @@ export const pointCrawlVsHexCrawl: AnswerConfigInput = {
     {
       title: "Point crawl example: The Receding Tide Road",
       description:
-        "Read an unedited 8-node coastal fantasy point crawl with network map, travel times, and key-before-lock gates.",
+        "Read a lightly edited 8-node coastal fantasy point crawl with network map, travel times, and key-before-lock gates.",
       href: "/examples/the-receding-tide-road-point-crawl",
     },
   ],
