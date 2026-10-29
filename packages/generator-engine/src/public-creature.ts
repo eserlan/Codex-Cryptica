@@ -1,3 +1,4 @@
+import { withPublicCreativeCue } from "./public-creative-diversity";
 /**
  * Public Creature / Monster generator (#2402) — framework-free generator
  * producing distinctive creatures, beasts, monsters, alien fauna, constructs,
@@ -350,7 +351,7 @@ Return only the JSON object. Do not include markdown code block formatting like 
 
   return {
     systemInstruction,
-    userMessage,
+    userMessage: withPublicCreativeCue(userMessage, "creature", rng),
     resolved,
   };
 }

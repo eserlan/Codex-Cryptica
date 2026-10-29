@@ -26,6 +26,7 @@ import {
   avoidNamesExcludingContext,
 } from "./campaign-context";
 import { tomeConfig } from "./public-tome-constants";
+import { withPublicCreativeCue } from "./public-creative-diversity";
 
 export { tomeConfig };
 export type { TomeCanonicalFacts };
@@ -430,7 +431,7 @@ Return ONLY the raw JSON object. Do not wrap in markdown code blocks like \`\`\`
 
   return {
     systemInstruction,
-    userMessage,
+    userMessage: withPublicCreativeCue(userMessage, "object", rng),
     resolved,
   };
 }

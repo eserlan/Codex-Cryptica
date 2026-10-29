@@ -1,3 +1,4 @@
+import { withPublicCreativeCue } from "./public-creative-diversity";
 /**
  * Public Dungeon / Delve generator — framework-free, theme-aware.
  *
@@ -1084,7 +1085,7 @@ ${formatDungeonJsonSchema(dungeon)}`;
 
   return {
     systemInstruction,
-    userMessage,
+    userMessage: withPublicCreativeCue(userMessage, "landscape"),
     resolved: dungeon,
   };
 }

@@ -1,3 +1,4 @@
+import { withPublicCreativeCue } from "./public-creative-diversity";
 /**
  * Public Personality generator (#2529).
  *
@@ -287,7 +288,7 @@ Return only the JSON object. Do not include markdown code block formatting like 
   return {
     systemInstruction:
       "You are an assistant that generates coherent, playable RPG character personalities in JSON format, prioritising behavioural specificity over descriptive adjectives.",
-    userMessage,
+    userMessage: withPublicCreativeCue(userMessage, "character", rng),
     resolved,
   };
 }

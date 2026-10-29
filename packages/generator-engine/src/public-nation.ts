@@ -1,3 +1,4 @@
+import { withPublicCreativeCue } from "./public-creative-diversity";
 /**
  * Public Nation generator — framework-free port of the nation half of the SEO
  * kingdom/nation generator.
@@ -271,7 +272,11 @@ ${sessionContext}`;
 - Scale: ${resolved.scale}
 - Conflict Level: ${resolved.conflictLevel}${formatCampaignContextBlock(resolved.campaignContext)}`;
 
-  return { systemInstruction, userMessage, resolved };
+  return {
+    systemInstruction,
+    userMessage: withPublicCreativeCue(userMessage, "place", rng),
+    resolved,
+  };
 }
 
 export function parseNationResponse(text: string): PublicGeneratorOutput {

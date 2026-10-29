@@ -14,7 +14,7 @@ import {
 } from "./campaign-context";
 import { bannedNamesIn } from "./naming-policy";
 import { factionConfig } from "./public-faction-constants";
-import { formatConceptBlock, rollConcept } from "./concept-dimensions";
+import { formatPublicScenarioConcept } from "./public-scenario-diversity";
 
 export const mysteryConfig = {
   genres: factionConfig.themes,
@@ -87,6 +87,7 @@ export function resolveMystery(
 export function buildMysteryPrompt(
   options: MysteryGeneratorOptions = {},
   sessionContext = "",
+  rng: Rng = defaultRng,
 ): {
   systemInstruction: string;
   userMessage: string;
@@ -106,8 +107,10 @@ export function buildMysteryPrompt(
     .map((value) => value.trim())
     .filter(Boolean)
     .join("\n\n");
-  const concept = formatConceptBlock(
-    rollConcept(resolved.genre, resolved.tone),
+  const concept = formatPublicScenarioConcept(
+    resolved.genre,
+    resolved.tone,
+    rng,
   );
   const userMessage = `Create a playable, system-neutral mystery investigation as JSON. This MVP uses Fixed Truth: establish one canonical GM-only solution and keep it stable throughout the case. It is not an emergent-solution case.
 

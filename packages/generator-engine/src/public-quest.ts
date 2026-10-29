@@ -18,6 +18,7 @@ import {
 } from "./random-utils";
 import { parseFencedJson } from "./llm-response-utils";
 import { formatCampaignContextBlock } from "./campaign-context";
+import { formatPublicScenarioConcept } from "./public-scenario-diversity";
 
 export const themeToQuestGenre: Record<string, string> = {
   "Classic Fantasy": "Classic Fantasy",
@@ -730,6 +731,7 @@ Options:
 - Twist: ${resolved.twist}
 - Reward: ${resolved.reward}
 ${formatCampaignContextBlock(resolved.campaignContext)}
+${formatPublicScenarioConcept(resolved.genre, resolved.tone, rng)}
 
 You must return a valid JSON object matching the following structure exactly:
 {

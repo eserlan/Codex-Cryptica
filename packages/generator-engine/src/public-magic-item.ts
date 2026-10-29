@@ -1,3 +1,4 @@
+import { withPublicCreativeCue } from "./public-creative-diversity";
 /**
  * Public Magic Item generator — framework-free port of the SEO magic-item
  * generator (`apps/web/src/lib/services/seo/generators/magic-item.ts`).
@@ -394,7 +395,7 @@ Return only the JSON object. Do not include markdown code block formatting like 
   return {
     systemInstruction:
       "You are an assistant that generates detailed RPG campaign elements in JSON format.",
-    userMessage,
+    userMessage: withPublicCreativeCue(userMessage, "object", rng),
     resolved,
   };
 }

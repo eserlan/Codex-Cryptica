@@ -1,3 +1,4 @@
+import { formatPublicScenarioConcept } from "./public-scenario-diversity";
 /**
  * Public News Sheet generator (#1639) — a genre-flexible in-world news/rumour
  * handout generator, inspired by the cyberpunk "news-sheet" format but usable
@@ -254,7 +255,8 @@ ${sessionContext}`;
 - Editorial Tone: ${resolved.tone}
 - Ownership / Bias: ${resolved.bias}
 - Censor Level: ${resolved.censorLevel}
-- Hook Density: ${resolved.hookDensity}${resolved.placeName ? `\n- Settlement / Region / Publication Name: ${resolved.placeName}` : ""}${resolved.headlineEvent ? `\n- Current Crisis or Headline Event (lead with this): ${resolved.headlineEvent}` : ""}${formatCampaignContextBlock(resolved.campaignContext)}`;
+- Hook Density: ${resolved.hookDensity}${resolved.placeName ? `\n- Settlement / Region / Publication Name: ${resolved.placeName}` : ""}${resolved.headlineEvent ? `\n- Current Crisis or Headline Event (lead with this): ${resolved.headlineEvent}` : ""}${formatCampaignContextBlock(resolved.campaignContext)}
+${formatPublicScenarioConcept(resolved.genre, resolved.tone, rng, true)}`;
 
   return { systemInstruction, userMessage, resolved };
 }

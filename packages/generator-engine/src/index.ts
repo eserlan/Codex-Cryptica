@@ -1135,3 +1135,8 @@ export {
   type PatternMatch,
   type StructuralSignal,
 } from "./narrative-pattern-analysis";
+
+export {
+  withPublicCreativeCue,
+  type PublicCreativeKind,
+} from "./public-creative-diversity";

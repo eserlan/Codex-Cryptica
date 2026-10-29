@@ -1,3 +1,4 @@
+import { withPublicCreativeCue } from "./public-creative-diversity";
 /**
  * Staged AI generation for the Heist generator (#4222).
  *
@@ -130,7 +131,12 @@ async function runStaged(
   // Stage 1: Objective
   const objectiveStage = await stage(
     "objective",
-    objectiveMessage(resolved, prefix, deps.seed, avoid),
+    deps.seed
+      ? objectiveMessage(resolved, prefix, deps.seed, avoid)
+      : withPublicCreativeCue(
+          objectiveMessage(resolved, prefix, deps.seed, avoid),
+          "event",
+        ),
     (d) => checkHeistObjectiveStage(d, resolved, avoid),
   );
   if (!objectiveStage) return null;

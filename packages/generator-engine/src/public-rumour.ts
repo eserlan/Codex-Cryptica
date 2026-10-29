@@ -1,3 +1,4 @@
+import { formatPublicScenarioConcept } from "./public-scenario-diversity";
 /**
  * Public Rumour generator — a lightweight companion to the Quest Hook
  * Generator (#2732). Where a quest hook is something the party could go and
@@ -146,6 +147,7 @@ You must return a valid JSON object matching the following structure exactly:
   "labels": ["rumour-generator", "local-rumours", "imported-draft"]
 }
 ${NAME_BAN_PROMPT}
+${formatPublicScenarioConcept(resolved.genre, resolved.tone, rng, true)}
 ${sessionContext}
 Return only the JSON object. Do not include markdown code block formatting like \`\`\`json.`;
 

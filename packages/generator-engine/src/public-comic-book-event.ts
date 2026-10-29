@@ -1,3 +1,4 @@
+import { formatPublicScenarioConcept } from "./public-scenario-diversity";
 /**
  * Public Comic Book Event generator (#3114, part of the Superhero / Comic
  * Book epic, #2288).
@@ -155,6 +156,7 @@ You must return a valid JSON object matching the following structure exactly:
 ${CONSEQUENCES_GUARDRAIL}
 ${CONSISTENCY_PASS}
 ${NAME_BAN_PROMPT}
+${formatPublicScenarioConcept("Superhero / Comic Book", resolved.tone, rng)}
 ${sessionContext}
 Return only the JSON object. Do not include markdown code block formatting like \`\`\`json.`;
 

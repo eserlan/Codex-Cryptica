@@ -1,3 +1,4 @@
+import { withPublicCreativeCue } from "./public-creative-diversity";
 /**
  * Public names generator — framework-free port of the SEO names generator.
  */
@@ -91,7 +92,7 @@ Return only the JSON object. Do not include markdown code block formatting like 
   return {
     systemInstruction:
       "You are an assistant that generates detailed RPG campaign elements in JSON format.",
-    userMessage,
+    userMessage: withPublicCreativeCue(userMessage, "names"),
     resolved,
   };
 }

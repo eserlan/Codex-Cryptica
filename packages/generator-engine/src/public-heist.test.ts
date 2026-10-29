@@ -1123,6 +1123,7 @@ describe("buildHeistPrompt diversification", () => {
     expect(userMessage).toContain(
       "Avoid reusing these recent character or mark names: Orsik Pell, Vance.",
     );
+    expect(userMessage).toContain("Optional creative variation:");
   });
 
   it("includes seed block when concept seed is provided", () => {
@@ -1141,6 +1142,7 @@ describe("buildHeistPrompt diversification", () => {
       "Infiltrate the submerged vault before high tide",
     );
     expect(userMessage).toContain("The Sinking Ledger");
+    expect(userMessage).not.toContain("Optional creative variation:");
   });
 });
 

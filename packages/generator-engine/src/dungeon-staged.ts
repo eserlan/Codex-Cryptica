@@ -48,6 +48,7 @@ import {
   type ResolvedDungeon,
 } from "./public-dungeon";
 import { defaultRng } from "./random-utils";
+import { withPublicCreativeCue } from "./public-creative-diversity";
 import type {
   DungeonStageId,
   DungeonStagedDeps,
@@ -143,7 +144,11 @@ async function generateStageDrafts(
     run,
     "foundation",
     systemFor(resolved, "foundation"),
-    foundationMessage(options, resolved, deps.contextPrefix),
+    withPublicCreativeCue(
+      foundationMessage(options, resolved, deps.contextPrefix),
+      "landscape",
+      deps.rng,
+    ),
     (d) => checkFoundation(d, resolved),
   );
   if (!foundation) return stopAt(run, "foundation");
