@@ -38,7 +38,7 @@
   const cleanBase = basePath();
 
   const inlineLinkClass =
-    "text-theme-primary underline decoration-theme-primary/40 underline-offset-2 transition-colors hover:decoration-theme-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-accent";
+    "text-theme-text underline decoration-theme-primary/40 underline-offset-2 transition-colors hover:decoration-theme-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-accent";
 
   let answer = $derived(data.answer);
   let related = $derived(data.related);

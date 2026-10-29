@@ -49,6 +49,8 @@ describe("contextual naming links", () => {
     renderAnswer(answer.sections, { ...answer, relatedAnswers: [] });
     const link = screen.getByRole("link", { name: "Fantasy Name Generator" });
     expect(link.getAttribute("href")).toBe("/generators/fantasy-names");
+    expect(link.classList.contains("text-theme-text")).toBe(true);
+    expect(link.classList.contains("text-theme-primary")).toBe(false);
     link.click();
     expect(spy).toHaveBeenCalledWith({
       sourceKind: "answer",
