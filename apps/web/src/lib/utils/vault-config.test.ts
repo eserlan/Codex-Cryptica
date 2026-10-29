@@ -222,7 +222,12 @@ describe("vault config updates", () => {
 
   it("refuses to write when the IndexedDB lock lease was taken over", async () => {
     vi.stubGlobal("navigator", {});
-    const deps = makeDeps(async () => JSON.stringify({ existing: true }));
+    const now = 1000;
+    const clock = { now: () => now };
+    const deps = {
+      ...makeDeps(async () => JSON.stringify({ existing: true })),
+      clock,
+    };
     const update = createVaultConfigUpdater(deps);
 
     await expect(
@@ -230,8 +235,8 @@ describe("vault config updates", () => {
         config.systemId = "tov";
         await entityDb.appSettings.put({
           key: "vault-config-lock:codex-vault-config:vault-lease-lost",
-          value: { owner: "another-tab", expiresAt: Date.now() + 60_000 },
-          updatedAt: Date.now(),
+          value: { owner: "another-tab", expiresAt: clock.now() + 60_000 },
+          updatedAt: clock.now(),
         });
       }),
     ).rejects.toThrow("lock was lost");
