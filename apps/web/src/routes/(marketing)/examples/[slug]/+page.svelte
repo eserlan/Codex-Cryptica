@@ -11,6 +11,7 @@
     buildExampleJsonLd,
     buildExampleBreadcrumbJsonLd,
   } from "#lib/content/examples/json-ld.js";
+  import { parseInlineMarkup } from "#lib/content/examples/format.js";
   import { themeStore } from "#lib/stores/theme.svelte.js";
   import {
     trackDiscoveryPageViewed,
@@ -91,6 +92,16 @@
   type="article"
   jsonLd={[buildExampleJsonLd(example), buildExampleBreadcrumbJsonLd(example)]}
 />
+
+{#snippet renderInline(text: string)}
+  {#each parseInlineMarkup(text) as seg}
+    {#if seg.bold}
+      <strong class="font-bold text-theme-text">{seg.text}</strong>
+    {:else}
+      {seg.text}
+    {/if}
+  {/each}
+{/snippet}
 
 <div
   class="bg-theme-bg text-theme-text font-body selection:bg-theme-primary selection:text-theme-bg"
@@ -200,7 +211,7 @@
                 {/if}
                 {#each block.paragraphs as paragraph}
                   <p class="mb-4 leading-relaxed text-theme-text last:mb-0">
-                    {paragraph}
+                    {@render renderInline(paragraph)}
                   </p>
                 {/each}
               {:else if block.kind === "list"}
@@ -216,7 +227,7 @@
                     {block.intro}
                   </p>
                 {/if}
-                <ul class="flex list-none flex-col gap-3">
+                <ul class="flex list-none flex-col gap-4">
                   {#each block.items as item}
                     <li class="border-l border-theme-border pl-5">
                       {#if item.term}
@@ -225,9 +236,17 @@
                           >{item.term}</strong
                         >
                       {/if}
-                      <span class="leading-relaxed text-theme-text"
-                        >{item.text}</span
+                      <div
+                        class="space-y-2 leading-relaxed text-theme-text {item.term
+                          ? 'mt-1.5'
+                          : ''}"
                       >
+                        {#each item.text.split("\n\n") as paragraph}
+                          <p class="leading-relaxed">
+                            {@render renderInline(paragraph)}
+                          </p>
+                        {/each}
+                      </div>
                     </li>
                   {/each}
                 </ul>
@@ -265,14 +284,21 @@
         </div>
 
         <!-- Editorial reading: what makes this useful, not praise for the tool. -->
-        <section class="mb-12 border-t border-theme-border pt-8">
+        <section class="mb-12 border-t-2 border-theme-border/80 pt-10">
+          <p
+            class="mb-2 font-mono text-xs uppercase tracking-[0.18em] text-theme-text"
+          >
+            Editorial Commentary & Table Usage
+          </p>
           <h2
             class="mb-4 font-header text-xl font-bold text-theme-text sm:text-2xl"
           >
             {example.annotation.heading}
           </h2>
           {#each example.annotation.paragraphs as paragraph}
-            <p class="mb-4 leading-relaxed text-theme-text">{paragraph}</p>
+            <p class="mb-4 leading-relaxed text-theme-text">
+              {@render renderInline(paragraph)}
+            </p>
           {/each}
           <a
             href="{cleanBase}{example.generator.href}"
