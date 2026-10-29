@@ -1,3 +1,4 @@
+import { withPublicCreativeCue } from "./public-creative-diversity";
 /**
  * Public Artifact & Relic Generator — framework-free port for unique, named,
  * lore-heavy magical (or precursor, occult, frontier, or industrial) objects
@@ -659,7 +660,7 @@ Return only the JSON object. Do not include markdown code block formatting like 
   return {
     systemInstruction:
       "You are an expert tabletop RPG designer specialising in evocative, campaign-shaping major artifacts, ancient relics, and legendary worldbuilding objects.",
-    userMessage,
+    userMessage: withPublicCreativeCue(userMessage, "object", rng),
     resolved,
   };
 }

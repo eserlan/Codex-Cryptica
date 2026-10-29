@@ -1,3 +1,4 @@
+import { withPublicCreativeCue } from "./public-creative-diversity";
 /**
  * Public Minor / Single-Use Magic Item generator — framework-free port following the
  * public-quest.ts / public-villain.ts shape (#2386).
@@ -820,7 +821,7 @@ Return only the JSON object. Do not include markdown code block formatting like 
   return {
     systemInstruction:
       "You are an expert tabletop RPG designer specialising in evocative, system-agnostic minor items, curiosities, technological tools, and consumable charms.",
-    userMessage,
+    userMessage: withPublicCreativeCue(userMessage, "object", rng),
     resolved,
   };
 }

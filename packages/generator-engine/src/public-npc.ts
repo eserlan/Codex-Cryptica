@@ -1,3 +1,4 @@
+import { withPublicCreativeCue } from "./public-creative-diversity";
 /**
  * Public NPC generator — framework-free port of the SEO NPC generator
  * (`apps/web/src/lib/services/seo/generators/npc.ts`). Owns the rich,
@@ -367,7 +368,11 @@ ${theme ? `- Genre/Theme: ${theme}` : ""}
 - Behavioral Directive: ${behavioralDirective}${formatCampaignContextBlock(campaignContext)}${formatDelveContextBlock(delveContext)}
 - Naming Directive: ${chosenNamingStyle}`;
 
-  return { systemInstruction, userMessage, resolved };
+  return {
+    systemInstruction,
+    userMessage: withPublicCreativeCue(userMessage, "character", rng),
+    resolved,
+  };
 }
 
 /**

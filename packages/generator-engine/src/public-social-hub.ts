@@ -1,3 +1,4 @@
+import { withPublicCreativeCue } from "./public-creative-diversity";
 /**
  * Public Social Hub + Tavern generators — framework-free port of the SEO
  * social-hub generator (`apps/web/src/lib/services/seo/generators/social-hub.ts`).
@@ -276,7 +277,11 @@ ${sessionContext}`;
 - Wealth Level: ${resolved.wealthLevel}
 - Primary Clientele: ${resolved.clientele}${formatCampaignContextBlock(resolved.campaignContext)}`;
 
-  return { systemInstruction, userMessage, resolved };
+  return {
+    systemInstruction,
+    userMessage: withPublicCreativeCue(userMessage, "place", rng),
+    resolved,
+  };
 }
 
 export function buildTavernPrompt(
@@ -314,7 +319,11 @@ ${sessionContext}
 - Primary Clientele: ${resolved.clientele}${formatCampaignContextBlock(resolved.campaignContext)}
 - Naming Directive: ${resolved.namingDirective}`;
 
-  return { systemInstruction, userMessage, resolved };
+  return {
+    systemInstruction,
+    userMessage: withPublicCreativeCue(userMessage, "place", rng),
+    resolved,
+  };
 }
 
 function parseJson(text: string): Record<string, unknown> {

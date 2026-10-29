@@ -31,6 +31,7 @@ export {
 
 import { parseFencedJson, sanitizeText } from "./llm-response-utils";
 import { defaultRng, pickFrom, type Rng } from "./random-utils";
+import { withPublicCreativeCue } from "./public-creative-diversity";
 import { BANNED_NAMES, NAME_BAN_PROMPT } from "./public-npc-constants";
 import {
   avoidNamesExcludingContext,
@@ -393,6 +394,7 @@ export function generateAlienRaceLocal(
 /** Build the dedicated AI brief; campaign context is prepended by the registry. */
 export function buildAlienRacePrompt(
   options: AlienRaceGeneratorOptions = {},
+  rng: Rng = defaultRng,
 ): AlienRacePrompt {
   const genre = options.genre?.trim() || "science-fiction";
   const generationMode = options.generationMode?.trim() || GROUNDED_MODE;
@@ -461,7 +463,8 @@ export function buildAlienRacePrompt(
   return {
     systemInstruction:
       "You are a xenobiologist and worldbuilder designing a coherent alien species for a tabletop RPG campaign. Build the species around one strong Core Alien Concept, and hold to one defining constraint: consequence. Every biological and environmental trait you establish must visibly change something else about the species — a trait that changes nothing is decoration, not biology. Never write a species that is humans with unusual appearances, and never write one that agrees with itself about everything. Return only one valid JSON object.",
-    userMessage: `Create a ${genre} alien species from these starting parameters:
+    userMessage: withPublicCreativeCue(
+      `Create a ${genre} alien species from these starting parameters:
 - Home environment: ${homeEnvironment}
 - Body plan: ${bodyPlan}
 - Psychology: ${psychology}
@@ -509,10 +512,13 @@ The single most important rule: **every major biological or environmental differ
 ${NAME_BAN_PROMPT}${nameRestrictions}
 
 Before returning, run a consistency pass: confirm the body plan you described in "## Biology & Lifecycle" is visibly reflected in "## Technology" (tools, architecture, or movement) and in at least one social concept in "## Culture & Social Structure"; confirm the communication method drives what "## Senses, Communication & Psychology" says about privacy or deception and matches "## Naming Conventions"; confirm the lifespan you established governs what "## Culture & Social Structure" says about inheritance, succession, or institutional memory; confirm the home environment is reflected in the technological speciality named in "## Technology" and in at least one entry under "## Weaknesses & Constraints"; confirm every weakness follows from a trait you actually described rather than being unrelated; confirm each of the three adventure hooks depends on a specific trait of this species and would not work unchanged for a generic species; confirm neither internal faction nor the species itself is written as simply villainous; confirm the Core Alien Concept is introduced in "## Overview" and visibly carried through at least three other sections, and that it is nonetheless not used to explain everything — there is a stated exception, contradiction or subculture it does not cover, and an archetype who does not fit; confirm at least one major cultural feature comes from history, geography, an institution, a technological accident, competing interests or inherited tradition rather than from biology, and is stated as such; confirm you have not reached for guild societies, efficiency-as-morality, entropy religions or physics-as-philosophy, communal identity, an inability to lie, hereditary castes, a non-spoken signal channel as the communication method, or a conservative-versus-reformer split unless the parameters genuinely forced it; confirm no major trait is purely cosmetic; confirm "## Internal Factions & Conflicts" contains at least one faction or subculture challenging a foundational cultural assumption, and that nothing in the draft describes the species as uniformly agreeing about anything without naming the exceptions;${
-      isFreeform(generationMode)
-        ? ""
-        : " confirm the physical picture holds together — environment, gravity, atmosphere, biology, senses and locomotion agreeing with one another, no sense without a medium to carry it, and no unjustified absolute stated without its mechanism and its cost;"
-    } and then apply the final test: **could this species be swapped for humans without changing the setting?** Read the draft as if every alien detail were merely decorative and ask whether the culture, technology, politics and hooks would still work unchanged. If they would, the species is not doing any work — go back and make its biology, psychology, lifecycle or environment matter more, changing at least one concrete thing about how it lives, builds or decides, until the answer is clearly no. Quietly correct anything that fails, then return only the corrected final JSON.`,
+        isFreeform(generationMode)
+          ? ""
+          : " confirm the physical picture holds together — environment, gravity, atmosphere, biology, senses and locomotion agreeing with one another, no sense without a medium to carry it, and no unjustified absolute stated without its mechanism and its cost;"
+      } and then apply the final test: **could this species be swapped for humans without changing the setting?** Read the draft as if every alien detail were merely decorative and ask whether the culture, technology, politics and hooks would still work unchanged. If they would, the species is not doing any work — go back and make its biology, psychology, lifecycle or environment matter more, changing at least one concrete thing about how it lives, builds or decides, until the answer is clearly no. Quietly correct anything that fails, then return only the corrected final JSON.`,
+      "creature",
+      rng,
+    ),
   };
 }
 

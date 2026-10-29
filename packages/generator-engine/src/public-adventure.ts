@@ -1,3 +1,4 @@
+import { withPublicCreativeCue } from "./public-creative-diversity";
 /**
  * Public Adventure Idea Generator — framework-free, theme-aware.
  *
@@ -500,6 +501,7 @@ function formatAdventureSeeds(
  */
 export function buildAdventurePrompt(
   options: AdventureGeneratorOptions,
+  rng: Rng = defaultRng,
 ): AdventurePrompt {
   const adventure = resolveAdventure(options);
   const genreHint =
@@ -548,7 +550,7 @@ Critical Structural Guidelines for Playability & Global Causal Coherence:
 
 Return ONLY a single valid JSON object matching the requested schema. ${NAME_BAN_PROMPT}`;
 
-  const briefing = `Write an original ${adventure.genre} adventure concept.
+  const briefingText = `Write an original ${adventure.genre} adventure concept.
 
 Setting Context:
 - Active Theme / Genre: ${adventure.genre} (${genreHint})
@@ -567,6 +569,8 @@ ${formatAdventureSeeds(
   ),
   Boolean(options.seed?.trim() && statesDeadline(options.seed)),
 )}`;
+
+  const briefing = withPublicCreativeCue(briefingText, "event", rng);
 
   const userMessage = `${briefing}
 

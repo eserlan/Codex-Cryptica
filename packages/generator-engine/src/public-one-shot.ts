@@ -12,6 +12,7 @@
 import type { PublicGeneratorOutput } from "./public-generator-adapters";
 import { parseFencedJson } from "./llm-response-utils";
 import { formatCampaignContextBlock } from "./campaign-context";
+import { formatPublicScenarioConcept } from "./public-scenario-diversity";
 import {
   type Rng,
   defaultRng,
@@ -965,6 +966,7 @@ export function buildOneShotPrompt(
   const buffer = bufferFor(resolved.durationMinutes);
   const userMessage = `Generate a run-ready, single-session RPG one-shot adventure as JSON.
 ${describeOneShotOptions(resolved)}
+${formatPublicScenarioConcept(resolved.genre, resolved.tone ?? "", rng)}
 
 Rules:
 - Exactly ${count} scenes. The first has kind "opening", the last "climax", the rest "middle".

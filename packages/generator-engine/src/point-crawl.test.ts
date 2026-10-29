@@ -403,6 +403,7 @@ describe("Staged AI Point Crawl Generation & Fallbacks (T020)", () => {
   it("runs all 3 stages with live progress callbacks and repairs AI output", async () => {
     const progressHistory: OneShotProgressStep[][] = [];
     const detailPrompts: string[] = [];
+    const topologyPrompts: string[] = [];
     const crawl = await generatePointCrawlStaged(
       {
         genre: "Sci-Fi / Space Opera",
@@ -412,6 +413,7 @@ describe("Staged AI Point Crawl Generation & Fallbacks (T020)", () => {
       },
       async (prompt) => {
         if (prompt.includes("overarching premise")) {
+          topologyPrompts.push(prompt);
           return JSON.stringify({
             title: "The Vesper Drift Blockade",
             premise:
@@ -460,7 +462,13 @@ describe("Staged AI Point Crawl Generation & Fallbacks (T020)", () => {
       finalSteps.every((s) => s.status === "done" || s.status === "fallback"),
     ).toBe(true);
     expect(checkPointCrawlPlayability(crawl)).toEqual([]);
+    expect(topologyPrompts[0]).toContain("Optional creative variation:");
     expect(detailPrompts.length).toBeGreaterThan(1);
+    expect(
+      detailPrompts.every(
+        (prompt) => !prompt.includes("Optional creative variation:"),
+      ),
+    ).toBe(true);
     const plans = detailPrompts.map(
       (prompt) =>
         prompt.match(

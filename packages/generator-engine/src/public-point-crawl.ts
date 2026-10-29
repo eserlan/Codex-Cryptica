@@ -30,6 +30,7 @@ import {
   clampPointCount,
 } from "./point-crawl-topology";
 import { type Rng, defaultRng, pickFrom } from "./random-utils";
+import { withPublicCreativeCue } from "./public-creative-diversity";
 
 export const pointCrawlConfig = {
   genres: [
@@ -213,7 +214,7 @@ Return ONLY a JSON object with this exact shape:
   return {
     systemInstruction:
       "You are an expert tabletop RPG adventure designer creating concrete, interconnected point crawl networks in JSON format.",
-    userMessage,
+    userMessage: withPublicCreativeCue(userMessage, "landscape", rng),
     resolved,
   };
 }

@@ -1,3 +1,4 @@
+import { withPublicCreativeCue } from "./public-creative-diversity";
 /**
  * Public Faction Roster generator — framework-free port following the
  * `public-faction.ts` / `public-pantheon.ts` shape (#2808).
@@ -253,7 +254,11 @@ ${sessionContext}
 - Structure: ${structure}
 - Emphasis: ${emphasis}${formatFactionContextBlock(resolved.factionContext, notableNpcs)}${formatCampaignContextBlock(campaignContext)}`;
 
-  return { systemInstruction, userMessage, resolved };
+  return {
+    systemInstruction,
+    userMessage: withPublicCreativeCue(userMessage, "character", rng),
+    resolved,
+  };
 }
 
 function formatMemberSection(member: FactionRosterMember): string {

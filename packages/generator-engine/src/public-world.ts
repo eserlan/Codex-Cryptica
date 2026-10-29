@@ -7,6 +7,7 @@
 import type { PublicGeneratorOutput } from "./public-generator-adapters";
 import { parseFencedJson } from "./llm-response-utils";
 import { defaultRng, pickFrom, type Rng } from "./random-utils";
+import { withPublicCreativeCue } from "./public-creative-diversity";
 import { BANNED_NAMES, NAME_BAN_PROMPT } from "./public-npc-constants";
 import {
   avoidNamesExcludingContext,
@@ -708,6 +709,7 @@ export function generateWorldLocal(
 /** Build the dedicated AI brief; campaign context is prepended by the registry. */
 export function buildWorldPrompt(
   options: WorldGeneratorOptions = {},
+  rng: Rng = defaultRng,
 ): WorldPrompt {
   const worldType = options.worldType?.trim() || "world";
   const habitability =
@@ -782,7 +784,8 @@ Make this pressure materially shape survival, settlement design, culture, econom
   return {
     systemInstruction:
       "You are a science-fiction worldbuilder creating evocative, coherent, immediately gameable material for a GM. Prioritise a few memorable connected ideas, understandable conflicts, useful locations, and playable hooks while keeping the setting internally consistent. Return only one valid JSON object.",
-    userMessage: `Create a ${genre} ${worldType} with ${habitability} conditions, ${civilisation}, and ${normalizedGenre === "lancer" ? "a civilian social model derived from the selected Lancer world frame" : `a primary societal model of ${societalModel}`}. ${normalizedGenre === "lancer" ? "For Lancer, derive the civilian social model from the selected world frame, world type, and tags; do not let the civilisation level determine it by itself." : "Treat the societal model as an independent variable: do not infer or replace it from the civilisation level."} Its dominant feature is: ${dominantFeature}. Its two Stars Without Number world tags are: ${worldTagOne} and ${worldTagTwo}.${lancerParameters}
+    userMessage: withPublicCreativeCue(
+      `Create a ${genre} ${worldType} with ${habitability} conditions, ${civilisation}, and ${normalizedGenre === "lancer" ? "a civilian social model derived from the selected Lancer world frame" : `a primary societal model of ${societalModel}`}. ${normalizedGenre === "lancer" ? "For Lancer, derive the civilian social model from the selected world frame, world type, and tags; do not let the civilisation level determine it by itself." : "Treat the societal model as an independent variable: do not infer or replace it from the civilisation level."} Its dominant feature is: ${dominantFeature}. Its two Stars Without Number world tags are: ${worldTagOne} and ${worldTagTwo}.${lancerParameters}
 ${formatCampaignContextBlock(options.campaignContext)}
 Star-system context may be provided before this brief. When it is, develop this world as part of that system: respect its parent star, orbit, neighbouring bodies, existing factions, and active conflicts. Do not regenerate or contradict the supplied system.
 
@@ -835,6 +838,9 @@ Then run a causal consistency check from environment and dominant feature throug
 Include at least two named settlements or factions, three notable locations, one secret or unresolved mystery, and three playable adventure hooks.
 
 ${NAME_BAN_PROMPT}${nameRestrictions}`,
+      "world",
+      rng,
+    ),
   };
 }
 

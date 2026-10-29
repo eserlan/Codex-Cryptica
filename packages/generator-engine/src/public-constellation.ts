@@ -21,6 +21,7 @@
 import type { PublicGeneratorOutput } from "./public-generator-adapters";
 import { parseFencedJson, sanitizeText } from "./llm-response-utils";
 import { defaultRng, pickFrom, type Rng } from "./random-utils";
+import { withPublicCreativeCue } from "./public-creative-diversity";
 import { BANNED_NAMES, NAME_BAN_PROMPT } from "./public-npc-constants";
 import { factionConfig } from "./public-faction-constants";
 import {
@@ -455,6 +456,7 @@ export function generateConstellationLocal(
 /** Build the dedicated AI brief; campaign context is prepended by the registry. */
 export function buildConstellationPrompt(
   options: ConstellationGeneratorOptions = {},
+  rng: Rng = defaultRng,
 ): ConstellationPrompt {
   const genre = options.genre?.trim() || "an appropriate genre";
   const visualImpression =
@@ -476,7 +478,8 @@ export function buildConstellationPrompt(
   return {
     systemInstruction:
       "You are a worldbuilder creating a culturally meaningful night-sky constellation for a GM, not an astronomy reference. Prioritise myth, use, and stakes over scientific accuracy. Return only one valid JSON object.",
-    userMessage: `Create a ${genre} constellation whose shape reads as a ${visualImpression}, primarily used for ${practicalUse}, and culturally regarded as ${culturalMeaning}.
+    userMessage: withPublicCreativeCue(
+      `Create a ${genre} constellation whose shape reads as a ${visualImpression}, primarily used for ${practicalUse}, and culturally regarded as ${culturalMeaning}.
 ${formatCampaignContextBlock(options.campaignContext)}
 
 Return JSON with "title", "summary", "labels", "connections", a markdown "lore" field, "pattern", and "interpretations". "summary" must describe the constellation as a whole in one sentence: what it looks like, who reads it that way, and why it matters. "pattern" is the star layout, shaped as {"stars": [{"name": string (optional, only for a prominent star worth naming), "brightness": "bright"|"moderate"|"faint", "x": number, "y": number, "notes": string (optional, a short folklore note for a named star only)}], "lines": [[number, number], ...]} — "x"/"y" are normalized 0-100 sky-plane coordinates (not astronomically real), "lines" are index pairs into "stars" tracing the shape as a single connected outline; include 4 to 9 stars, name only the one or two most prominent, and make every "lines" index a valid position in "stars". "interpretations" is an array with exactly one entry shaped as {"culture": string, "name": string (matching "title"), "visualImpression": string (a short descriptive phrase of a few words only, e.g. "a hooked serpent" or "a rearing beast with a raised head" — no leading article, since it is embedded after "read as a "; no terminal punctuation; the fuller description belongs in "summary" or "originMyth"), "originMyth": string, "seasonalVisibility": string, "practicalUse": string, "culturalMeaning": string, "omen": string, "adventureHook": string} — "culture" is the specific people or group who read the stars this way (never "some cultures" or "many people"), "originMyth" explains concretely why this shape is believed to exist in the sky, "seasonalVisibility" states when and where in the sky it can actually be seen, "practicalUse" is a concrete, mundane use (navigation, planting, migration, festivals, timekeeping) distinct from any supernatural meaning, "culturalMeaning" is its religious or symbolic weight, "omen" is what an unusual event involving it is believed to mean, and "adventureHook" is one concrete, playable hook tied to this specific constellation and culture, not a generic prophecy. The lore must use these exact sections:
@@ -493,6 +496,9 @@ Not every constellation needs to be a prophecy or supernatural omen — ground m
 ${NAME_BAN_PROMPT}${nameRestrictions}
 
 Before returning the JSON, perform one internal validation: confirm "pattern.stars" has between 4 and 9 entries and every "lines" entry references a valid index; confirm exactly one entry in "interpretations" and that its "name" matches "title"; confirm "culture" names a specific people or group, not a vague generalisation; confirm "practicalUse" describes a genuinely mundane use distinct from "culturalMeaning"/"omen"; confirm "adventureHook" is concrete and specific to this constellation, not a generic premise; and re-read every field for wording slips — duplicated or mismatched punctuation, a name written inconsistently between "title" and "interpretations[0].name". Quietly correct any mismatch, then return only the corrected final JSON.`,
+      "sky",
+      rng,
+    ),
   };
 }
 
@@ -824,6 +830,7 @@ export function generateNightSkyLocal(
 /** Build the dedicated night-sky AI brief; campaign context is prepended by the registry. */
 export function buildNightSkyPrompt(
   options: ConstellationGeneratorOptions = {},
+  rng: Rng = defaultRng,
 ): ConstellationPrompt {
   const genre = options.genre?.trim() || "an appropriate genre";
   const extraAvoidedNames = avoidNamesExcludingContext(
@@ -839,7 +846,8 @@ export function buildNightSkyPrompt(
   return {
     systemInstruction:
       "You are a worldbuilder creating one coherent, culturally meaningful night sky for a single people, not a list of unrelated star names. Return only one valid JSON object.",
-    userMessage: `Create a full ${genre} night sky: one specific culture's complete set of named constellations, covering every season.
+    userMessage: withPublicCreativeCue(
+      `Create a full ${genre} night sky: one specific culture's complete set of named constellations, covering every season.
 ${formatCampaignContextBlock(options.campaignContext)}
 
 Return JSON with "title" (a name for this sky/tradition as a whole, e.g. "The <Culture> Sky"), "summary", "labels", "connections", a markdown "lore" field, "culture", and "constellations". "culture" is the specific people or group whose sky this is (never "some cultures" or "many people"). "constellations" is an array of 8 to 15 entries, each shaped as {"season": "Spring"|"Summer"|"Autumn"|"Winter"|"Year-round", "skyRegion": "North"|"South"|"East"|"West"|"Circumpolar"|"Zenith", "pattern": {"stars": [{"name": string (optional), "brightness": "bright"|"moderate"|"faint", "x": number, "y": number, "notes": string (optional)}], "lines": [[number, number], ...]}, "interpretation": {"culture": string, "name": string, "visualImpression": string (a short descriptive phrase of a few words only, no leading article, no terminal punctuation — see the single-constellation format above), "originMyth": string, "seasonalVisibility": string, "practicalUse": string, "culturalMeaning": string, "omen": string, "adventureHook": string}}. Every entry's "pattern" follows the same rules as a single constellation (4 to 9 stars, valid "lines" indices only). Every entry's "interpretation.culture" must be the exact same string as the top-level "culture", and "interpretation.name" must be unique across the whole array. Distribute entries across all five seasons and multiple sky regions rather than clustering them in one combination.
@@ -849,6 +857,9 @@ At least three entries' "originMyth" must explicitly reference another named con
 ${NAME_BAN_PROMPT}${nameRestrictions}
 
 Before returning the JSON, perform one internal validation: confirm "constellations" has between 8 and 15 entries, each with a unique "interpretation.name" and the exact same "interpretation.culture" as top-level "culture"; confirm every entry's "pattern" has 4-9 stars and only valid "lines" indices; confirm at least three entries cross-reference another entry's exact name in their "originMyth"; confirm entries are spread across seasons and sky regions rather than repeating one combination; and re-read every field for wording slips or a name reused inconsistently. Quietly correct any mismatch, then return only the corrected final JSON.`,
+      "sky",
+      rng,
+    ),
   };
 }
 

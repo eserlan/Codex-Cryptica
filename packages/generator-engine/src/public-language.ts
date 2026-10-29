@@ -1,3 +1,4 @@
+import { withPublicCreativeCue } from "./public-creative-diversity";
 /**
  * Public Language generator — framework-free conlang generator.
  */
@@ -301,7 +302,7 @@ Return only the JSON object. Do not include markdown code block formatting like 
 
   return {
     systemInstruction,
-    userMessage,
+    userMessage: withPublicCreativeCue(userMessage, "language", _rng),
     resolved,
   };
 }

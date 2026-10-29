@@ -1,3 +1,4 @@
+import { withPublicCreativeCue } from "./public-creative-diversity";
 /**
  * Public Ship generator — framework-free, genre-aware.
  *
@@ -245,7 +246,7 @@ Return only the JSON object. Do not include markdown code block formatting like 
   return {
     systemInstruction:
       "You are an assistant that generates detailed, genre-aware RPG campaign elements in JSON format. Ships are traversable locations and adventure seeds — every ship must have a clear role, a problem the crew is managing, and at least one secret discoverable through play. Match the genre, tone, and setting precisely.",
-    userMessage,
+    userMessage: withPublicCreativeCue(userMessage, "object", rng),
     resolved,
   };
 }

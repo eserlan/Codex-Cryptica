@@ -1,3 +1,4 @@
+import { withPublicCreativeCue } from "./public-creative-diversity";
 /**
  * Public Superhero Origin generator (#3111) — one of six candidate
  * superhero-native generators evaluated individually out of the #2288 epic.
@@ -347,7 +348,7 @@ Return only the JSON object. Do not include markdown code block formatting like 
   return {
     systemInstruction:
       "You are an assistant that generates original superhero origin stories for tabletop RPG campaigns in JSON format. Origins must be usable campaign material — a concrete event, a GM-usable hook, and a lasting consequence — never just a backstory paragraph.",
-    userMessage,
+    userMessage: withPublicCreativeCue(userMessage, "event", rng),
     resolved,
   };
 }

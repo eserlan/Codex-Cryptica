@@ -1,3 +1,4 @@
+import { withPublicCreativeCue } from "./public-creative-diversity";
 /**
  * Public Superhero Villain Scheme generator — framework-free port following
  * the public-villain.ts / public-quest.ts shape (#3112, part of the #2288
@@ -182,7 +183,7 @@ Return only the JSON object. Do not include markdown code block formatting like 
   return {
     systemInstruction:
       "You are an assistant that generates detailed Superhero / Comic Book RPG villain schemes in JSON format.",
-    userMessage,
+    userMessage: withPublicCreativeCue(userMessage, "event", rng),
     resolved,
   };
 }
