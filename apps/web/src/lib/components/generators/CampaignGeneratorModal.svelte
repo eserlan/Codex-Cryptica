@@ -1,58 +1,35 @@
 <script lang="ts">
+  import { CampaignGeneration } from "./campaign-generation.svelte.js";
+  import {
+    campaignGeneratorSaver,
+    type CampaignSaveOptions,
+    type CampaignSaveContext,
+  } from "./campaign-generator-save.js";
+  import { publishGeneratedCapture } from "#lib/services/generator-journal-capture.js";
+  import { systemClock } from "#lib/utils/runtime-deps.js";
+  import {
+    type CampaignGenerateInput,
+    campaignGeneratorRequestBuilder,
+    collectSourceConnections,
+  } from "./campaign-generator-request.js";
   import ModalShell from "#lib/components/ui/ModalShell.svelte";
   import ReportProblemButton from "#lib/components/feedback/ReportProblemButton.svelte";
   import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
   import { vault } from "#lib/stores/vault.svelte.js";
   import { categories } from "#lib/stores/categories.svelte.js";
   import { themeStore } from "#lib/stores/theme.svelte.js";
-  import { calendarStore } from "#lib/stores/calendar.svelte.js";
   import {
-    buildVaultContext,
     detectVaultLanguages,
     findSingleQuestHook,
-    latestTemporalYear,
     suggestPrimaryLanguageId,
   } from "#lib/services/generators/generator-vault-context.js";
-  import { resolveCultureNaming } from "#lib/services/generators/generator-culture-naming.js";
   import {
-    CampaignGeneratorService,
-    composeDraftVaultFields,
-    getDefaultInstruction,
     isSupportedGenerator,
-    resolveEntityType,
-    adventureStatsLog,
-    heistStatsLog,
-    tomeStatsLog,
-    extractPartialJsonStringFields,
     type GeneratedDraft,
     type GeneratorId,
-    type GeneratorRunRequest,
-    type GeneratorVaultGateway,
   } from "generator-engine";
-  import type {
-    AdventureStagedStats,
-    AIGeneratorCompleteResult,
-    DungeonStagedStats,
-    HeistStagedStats,
-    TomeStagedStats,
-    GeneratorPromptMetrics,
-  } from "generator-engine";
-  import { aiGeneratorGateway } from "#lib/services/generators/ai-generator-gateway.js";
   import { generatorSessionManager } from "#lib/services/generators/generator-session-manager.js";
-  import { interactionSessions } from "@codex/ai-engine";
-  import {
-    buildBusinessSavePlan,
-    getThemeLoadingMessages,
-  } from "generator-engine";
-  import {
-    saveBusinessToVault,
-    type BusinessSaveChoices,
-  } from "#lib/services/generators/business-vault-save.js";
-  import { entityTemplateService } from "#lib/services/EntityTemplateService.svelte.js";
-  import StarSystemDiagram from "#lib/components/seo/StarSystemDiagram.svelte";
-  import ConstellationChart from "#lib/components/seo/ConstellationChart.svelte";
-  import { blobToFile } from "#lib/utils/svg-export.js";
-  import { entityMapLinkingService } from "#lib/services/entity-map-linking.js";
+  import { createCampaignGeneratorService } from "./campaign-generator-service.js";
   import {
     buildPlotTwistPremise,
     isQuestHookDraft,
@@ -60,44 +37,18 @@
     isDelveDraft,
   } from "#lib/services/seo/generator-handoffs.js";
 
-  let loadingIndex = $state(0);
-  let activeLoadingMessages = $derived(
-    getThemeLoadingMessages(themeStore.worldThemeId),
-  );
-
-  $effect(() => {
-    if (stage !== "generating") {
-      loadingIndex = 0;
-      return;
-    }
-    const interval = setInterval(() => {
-      loadingIndex = (loadingIndex + 1) % activeLoadingMessages.length;
-    }, 4200);
-    return () => clearInterval(interval);
-  });
-  import { searchService } from "@codex/search-orchestrator";
   import { oracle } from "#lib/stores/oracle.svelte.js";
-  import { revisionService } from "#lib/services/RevisionService.svelte.js";
-  import { layoutUIStore } from "#lib/stores/ui/layout-ui.svelte.js";
-  import { openSavedEntityInEditor } from "#lib/services/generators/generator-save-handoff.js";
-  import { savePointCrawlToVault } from "#lib/services/generators/point-crawl-vault-save.js";
 
-  import GeneratorConfigForm from "./GeneratorConfigForm.svelte";
-  import GeneratorDraftReview from "./GeneratorDraftReview.svelte";
+  import CampaignGeneratorConfigure from "./CampaignGeneratorConfigure.svelte";
+  import CampaignGeneratorReview from "./CampaignGeneratorReview.svelte";
+  import CampaignGenerationProgress from "./CampaignGenerationProgress.svelte";
   import { soloSessionStore } from "#lib/stores/solo-session-instance.js";
-  import { systemClock } from "#lib/utils/runtime-deps.js";
-  import {
-    publishGeneratedCapture,
-    publishGeneratedSaved,
-  } from "#lib/services/generator-journal-capture.js";
 
   // Generators whose output is a plot the player will go on to play. During a
   // solo session these open with the spoilers hidden.
   const SPOILER_SHIELDED_GENERATORS = new Set(["adventure", "point-crawl"]);
   const shouldShieldSpoilers = (id?: string | null) =>
     soloSessionStore.isActive && SPOILER_SHIELDED_GENERATORS.has(id ?? "");
-
-  type Stage = "configure" | "generating" | "review" | "saving" | "error";
 
   const workflow = $derived(modalUIStore.generatorWorkflow);
   const singleQuestHook = $derived(findSingleQuestHook(vault.entities));
@@ -114,18 +65,7 @@
     const sourceId = workflow.sourceEntityId;
     const sourceEntity = sourceId ? vault.entities[sourceId] : undefined;
     if (!sourceEntity) return undefined;
-    const connectedIds = new Set<string>();
-    for (const connection of sourceEntity.connections ?? []) {
-      connectedIds.add(connection.target);
-    }
-    for (const [id, entity] of Object.entries(vault.entities)) {
-      if (
-        id !== sourceId &&
-        entity.connections?.some((connection) => connection.target === sourceId)
-      ) {
-        connectedIds.add(id);
-      }
-    }
+    const connectedIds = collectSourceConnections(vault.entities, sourceId);
     return suggestPrimaryLanguageId(
       languageChoices,
       sourceEntity,
@@ -133,25 +73,6 @@
     );
   });
 
-  let stage = $state<Stage>("configure");
-  let draft = $state<GeneratedDraft | null>(null);
-  // Progressive preview while streaming (#2423): populated field-by-field as
-  // the model's response streams in, discarded once the fully validated
-  // draft replaces it — this is never itself offered for Save.
-  let streamedFields = $state<Record<string, string>>({});
-  let streamedJson = $state("");
-  let currentPhase = $state<string | null>(null);
-  let generationAbortController = $state<AbortController | null>(null);
-  let starSystemDiagramRef = $state<ReturnType<
-    typeof StarSystemDiagram
-  > | null>(null);
-  let constellationChartRef = $state<ReturnType<
-    typeof ConstellationChart
-  > | null>(null);
-  let draftReviewRef = $state<ReturnType<typeof GeneratorDraftReview> | null>(
-    null,
-  );
-  let errorMsg = $state<string | null>(null);
   let generatorId = $state<GeneratorId | null>(null);
   $effect(() => {
     const id = workflow.generatorId;
@@ -162,31 +83,28 @@
   // immediately with default options once, so the flow is Generate → Evaluate
   // → Customize instead of Configure → Generate.
   let hasAutoGenerated = $state(false);
+  const autoGenerateRequested = $derived(
+    workflow.open && workflow.autoGenerate && !hasAutoGenerated,
+  );
+  function autoGenerate(id: GeneratorId) {
+    hasAutoGenerated = true;
+    const initialPrompt = workflow.initialPrompt?.trim();
+    void onGenerate({
+      generatorId: id,
+      options: initialPrompt ? { name: initialPrompt } : {},
+      instructions: initialPrompt || undefined,
+      useAI: aiPolicy.isEnabled && aiPolicy.isAvailable,
+    });
+  }
   $effect(() => {
     if (
-      workflow.open &&
-      workflow.autoGenerate &&
-      !hasAutoGenerated &&
-      stage === "configure" &&
+      autoGenerateRequested &&
+      generation.stage === "configure" &&
       generatorId
-    ) {
-      hasAutoGenerated = true;
-      const initialPrompt = workflow.initialPrompt?.trim();
-      void onGenerate({
-        generatorId,
-        options: initialPrompt ? { name: initialPrompt } : {},
-        instructions: initialPrompt || undefined,
-        useAI: aiPolicy.isEnabled && aiPolicy.isAvailable,
-      });
-    }
+    )
+      autoGenerate(generatorId);
     if (!workflow.open) hasAutoGenerated = false;
   });
-
-  const vaultGateway: GeneratorVaultGateway = {
-    canWrite: () => !vault.isGuest,
-    createEntity: (type, title, data) => vault.createEntity(type, title, data),
-    addConnection: (src, tgt, rel) => vault.addConnection(src, tgt, rel),
-  };
 
   /** Vault titles → entity id, for matching a business's parties and people. */
   const businessExistingTitles = $derived(
@@ -214,57 +132,13 @@
     isAvailable: !vault.isGuest,
   });
 
-  const svcDeps = {
-    vault: vaultGateway,
-    aiGateway: aiGeneratorGateway,
-    onInteractionResult(result: AIGeneratorCompleteResult) {
-      if (result.interactionId) {
-        generatorSessionManager.commitInteraction(
-          result.interactionId,
-          result.replayed,
-        );
-      }
-    },
-    onPromptMetrics(metrics: GeneratorPromptMetrics) {
-      generatorSessionManager.recordPromptMetrics(metrics);
-    },
-    onDungeonStagedStats(stats: DungeonStagedStats) {
-      if (import.meta.env.DEV) {
-        console.debug("[Generator] staged dungeon run", {
-          outcome: stats.outcome,
-          stoppedAt: stats.stoppedAt,
-          aiCalls: stats.aiCalls,
-          repairedStageCount: stats.repairedStages.length,
-          reviewIssueCount: stats.reviewIssues.length,
-          reviewSkipped: stats.reviewSkipped,
-          coherenceRepaired: stats.coherenceRepaired,
-          remainingIssueCount: stats.remainingIssues.length,
-        });
-      }
-    },
-    onAdventureStagedStats(stats: AdventureStagedStats) {
-      if (import.meta.env.DEV) {
-        console.debug(
-          "[Generator] staged adventure run",
-          adventureStatsLog(stats),
-        );
-      }
-    },
-    onHeistStagedStats(stats: HeistStagedStats) {
-      if (import.meta.env.DEV) {
-        console.debug("[Generator] staged heist run", heistStatsLog(stats));
-      }
-    },
-    onTomeStagedStats(stats: TomeStagedStats) {
-      if (import.meta.env.DEV) {
-        console.debug("[Generator] staged tome run", tomeStatsLog(stats));
-      }
-    },
-    get aiPolicy() {
-      return aiPolicy;
-    },
-  };
-  const svc = new CampaignGeneratorService(svcDeps);
+  const svc = createCampaignGeneratorService(() => aiPolicy);
+  const generation = new CampaignGeneration({
+    service: svc,
+    requestBuilder: campaignGeneratorRequestBuilder,
+    publishGeneratedCapture,
+    clock: systemClock,
+  });
 
   function openPlotTwistFromQuestHook() {
     if (!singleQuestHook) return;
@@ -275,519 +149,98 @@
   }
 
   function openPlotTwistFromDraft() {
-    if (!draft) return;
-    const premise = buildPlotTwistPremise(draft);
-    stage = "configure";
-    draft = null;
-    errorMsg = null;
-    streamedFields = {};
-    streamedJson = "";
+    if (!generation.draft) return;
+    const premise = buildPlotTwistPremise(generation.draft);
+    generation.reset();
     modalUIStore.openIntentGeneratorWorkflow("plot-twist", null, premise);
   }
 
   function openBossFromDraft() {
-    if (!draft) return;
-    const context = buildDelveBossContext(draft);
-    stage = "configure";
-    draft = null;
-    errorMsg = null;
-    streamedFields = {};
-    streamedJson = "";
+    if (!generation.draft) return;
+    const context = buildDelveBossContext(generation.draft);
+    generation.reset();
     modalUIStore.openIntentGeneratorWorkflow("npc", null, context);
   }
 
   function close(options: { preserveSession?: boolean } = {}) {
-    generationAbortController?.abort();
-    generationAbortController = null;
+    generation.reset();
     modalUIStore.closeGeneratorWorkflow();
     if (!options.preserveSession) generatorSessionManager.reset();
-    stage = "configure";
-    draft = null;
-    errorMsg = null;
-    streamedFields = {};
-    streamedJson = "";
-    currentPhase = null;
   }
 
-  function cancelGeneration() {
-    generationAbortController?.abort();
-    generationAbortController = null;
-    streamedFields = {};
-    streamedJson = "";
-    currentPhase = null;
-    stage = "configure";
-    errorMsg = null;
-  }
-
-  async function onGenerate(
-    req: Pick<
-      GeneratorRunRequest,
-      "generatorId" | "options" | "useAI" | "instructions" | "primaryLanguageId"
-    >,
-  ) {
-    if (stage === "generating" || stage === "saving") return;
-    stage = "generating";
-    errorMsg = null;
-    streamedFields = {};
-    streamedJson = "";
-    currentPhase = null;
-    const abortController = new AbortController();
-    generationAbortController = abortController;
-    try {
-      const sourceEntityId = workflow.sourceEntityId;
-      const sourceEntity = sourceEntityId
-        ? vault.entities[sourceEntityId]
-        : undefined;
-      // Collect both outbound connections and inbound (entities that link to source).
-      const sourceConnectedIds = new Set<string>();
-      if (sourceEntity) {
-        for (const c of sourceEntity.connections ?? []) {
-          sourceConnectedIds.add(c.target);
-        }
-        for (const [id, e] of Object.entries(vault.entities)) {
-          if (
-            id !== sourceEntityId &&
-            e.connections?.some((c) => c.target === sourceEntityId)
-          ) {
-            sourceConnectedIds.add(id);
-          }
-        }
-      }
-      // Resolve the entity template following the normal selection rules
-      // (local vault override → theme default → generic) so the AI shapes its
-      // output to match the template the user would get from manual creation.
-      const targetEntityType = resolveEntityType(
-        req.generatorId,
-        categories.list.map((c) => c.id),
-      );
-      // Ships are persisted as locations, but their generated lore needs a
-      // vessel-specific outline rather than the generic location template.
-      const targetTemplateType =
-        req.generatorId === "ship" ? "ship" : targetEntityType;
-      let templateOutline = "";
-      try {
-        const folderHandle = await vault.getActiveFolderHandle();
-        const vaultHandle = await vault.getActiveVaultHandle();
-        const customTemplatesDirHandle = folderHandle ?? vaultHandle;
-        templateOutline = await entityTemplateService.resolveTemplate(
-          targetTemplateType,
-          themeStore.worldThemeId,
-          customTemplatesDirHandle,
-        );
-      } catch {
-        // Fall back to system defaults if the vault handle is unavailable.
-        templateOutline = await entityTemplateService.resolveTemplate(
-          targetTemplateType,
-          themeStore.worldThemeId,
-        );
-      }
-
-      // Use the non-AI search engine to find vault entities relevant to the
-      // user's request, so the world-grounding context is about what they asked
-      // for (e.g. "plains of shas") rather than a blind type sample.
-      let relevantIds: string[] = [];
-      const searchQuery = (
-        req.instructions?.trim() ||
-        sourceEntity?.title ||
-        ""
-      ).trim();
-      if (searchQuery) {
-        try {
-          const hits = await searchService.search(searchQuery, { limit: 8 });
-          relevantIds = hits.map((h) => h.id);
-        } catch {
-          // Search index unavailable — fall back to type-based sampling.
-        }
-      }
-
-      // Pass the in-world campaign date so generated content fits the current
-      // point in the timeline. Prefer the calendar's explicit present year;
-      // otherwise fall back to the latest structured event year in the vault.
-      const cal = calendarStore.config;
-      const presentYear =
-        typeof cal.presentYear === "number" && cal.presentYear !== 0
-          ? cal.presentYear
-          : latestTemporalYear(vault.entities);
-      const currentDate =
-        presentYear !== undefined
-          ? `${presentYear}${cal.epochLabel ? ` ${cal.epochLabel}` : ""}`
-          : undefined;
-
-      // Look up the naming conventions the vault records for the entity's
-      // culture (labels pick the culture; only its few naming notes are loaded).
-      const cultureNaming = resolveCultureNaming({
-        allEntities: vault.entities,
-        sourceEntity,
-        connectedIds: sourceConnectedIds,
-        instructions: req.instructions,
-        targetEntityType,
-      });
-      if (cultureNaming) {
-        await Promise.all(
-          cultureNaming.docIds.map((id) =>
-            vault.loadEntityContent(id).catch(() => undefined),
-          ),
-        );
-      }
-
-      const vaultContext = buildVaultContext({
-        themeId: themeStore.worldThemeId ?? "workspace",
-        themeName: themeStore.activeTheme?.name,
-        themeDescription: themeStore.activeTheme?.description,
-        currentDate,
-        sourceEntity,
-        allEntities: vault.entities,
-        connectedIds: sourceConnectedIds,
-        categoryLabels: categories.list.map((c) => ({
-          id: c.id,
-          label: c.label,
-        })),
-        targetEntityType,
-        templateOutline: templateOutline || undefined,
-        applyTemplate: !!templateOutline,
-        relevantIds,
-        primaryLanguageId: req.primaryLanguageId,
-        cultureNaming,
-      });
-      // When the user gives no instructions, fall back to the category's
-      // default brief so the model always has direction.
-      const instructions =
-        req.instructions?.trim() || getDefaultInstruction(req.generatorId);
-      const interactionTurn =
-        req.useAI &&
-        aiPolicy.isEnabled &&
-        aiPolicy.isAvailable &&
-        interactionSessions.enabled &&
-        generatorSessionManager.enabled
-          ? generatorSessionManager.prepare({
-              instruction: instructions,
-              vaultContext,
-            })
-          : null;
-      const runRequest: GeneratorRunRequest = {
-        ...req,
-        instructions,
-        themeId: themeStore.worldThemeId ?? "workspace",
-        vaultContext,
-        interaction: interactionTurn
-          ? {
-              input: interactionTurn.input,
-              previousInteractionId: interactionTurn.previousInteractionId,
-              store: true,
-            }
-          : undefined,
-      };
-
-      if (import.meta.env.DEV) {
-        console.debug("[Generator stream] modal generation started", {
-          generatorId: req.generatorId,
-          useAI: runRequest.useAI,
-          usesInteraction: !!runRequest.interaction,
-        });
-      }
-
-      for await (const event of svc.generateDraftStream(
-        runRequest,
-        abortController.signal,
-      )) {
-        if (abortController.signal.aborted) break;
-        if (event.type === "phase") {
-          streamedFields = {};
-          streamedJson = "";
-          currentPhase = event.label;
-        } else if (event.type === "delta") {
-          streamedJson += event.text;
-          streamedFields = extractPartialJsonStringFields(streamedJson);
-          if (import.meta.env.DEV) {
-            console.debug("[Generator stream] modal preview updated", {
-              deltaLength: event.text.length,
-              totalLength: streamedJson.length,
-              fields: Object.keys(streamedFields),
-            });
-          }
-        } else if (event.type === "field" && typeof event.value === "string") {
-          streamedFields = { ...streamedFields, [event.key]: event.value };
-          if (import.meta.env.DEV) {
-            console.debug("[Generator stream] modal field completed", {
-              key: event.key,
-              valueLength: event.value.length,
-            });
-          }
-        } else if (event.type === "draft") {
-          // A `draft` event is always the terminal outcome of
-          // generateDraftStream() — including after an `error` event, which
-          // it falls back from to local generation — so it always
-          // supersedes any earlier error state, and there's never a
-          // trailing `error` event after this without a `draft` following.
-          draft = event.draft;
-          errorMsg = null;
-          stage = "review";
-          // The journal is best-effort: it must never hold up the review.
-          try {
-            publishGeneratedCapture(
-              {
-                generatorId: event.draft.sourceGeneratorId,
-                title: event.draft.title,
-                summary: event.draft.summary,
-              },
-              { clock: systemClock },
-            );
-          } catch (err) {
-            console.error("Could not record the generated result:", err);
-          }
-          if (import.meta.env.DEV) {
-            console.debug("[Generator stream] modal received final draft");
-          }
-        } else if (import.meta.env.DEV) {
-          console.debug("[Generator stream] modal event", { type: event.type });
-        }
-        // `error` events are non-terminal here: generateDraftStream() always
-        // falls through to a local-generation `draft` event after one, so
-        // there's nothing to surface to the user — the spinner just keeps
-        // showing until that draft arrives. A truly fatal failure surfaces
-        // as a thrown exception, caught below.
-      }
-    } catch (err) {
-      if (abortController.signal.aborted) return;
-      errorMsg = err instanceof Error ? err.message : String(err);
-      stage = "error";
-    } finally {
-      if (generationAbortController === abortController) {
-        generationAbortController = null;
-      }
-    }
+  function onGenerate(req: CampaignGenerateInput) {
+    return generation.generate(req, workflow.sourceEntityId, () => aiPolicy);
   }
 
   async function onSave(
     reviewed: GeneratedDraft,
     createRelationship: boolean,
-    saveOptions?: {
-      selectedNodeIds?: string[];
-      openInGraph?: boolean;
-      businessChoices?: BusinessSaveChoices;
-    },
+    options?: CampaignSaveOptions,
+    exports: Pick<
+      CampaignSaveContext,
+      "exportStarSystem" | "exportConstellation" | "exportPointCrawl"
+    > = {},
   ) {
-    if (stage === "saving") return;
-    stage = "saving";
-    errorMsg = null;
+    if (generation.stage === "saving") return;
+    generation.stage = "saving";
+    generation.errorMsg = null;
     try {
-      if (reviewed.business) {
-        const plan = buildBusinessSavePlan(reviewed.business, {
-          existingTitles: businessExistingTitles,
-          source: businessSource,
-        });
-        const result = await saveBusinessToVault(
-          plan,
-          {
-            createEntity: (type, title, data) =>
-              vault.createEntity(type, title, data),
-            addConnection: (src, tgt, rel, label) =>
-              vault.addConnection(src, tgt, rel, label),
-            bulkDelete: (ids) => vault.bulkDelete(ids),
-          },
-          saveOptions?.businessChoices,
-        );
-        try {
-          publishGeneratedSaved(
-            { title: reviewed.title, category: reviewed.entityType },
-            { clock: systemClock },
-          );
-        } catch (err) {
-          console.error("Could not record the save:", err);
-        }
-        vault.selectedEntityId = result.businessId;
-        if (saveOptions?.openInGraph) {
-          layoutUIStore.mainViewMode = "visualization";
-        } else {
-          openSavedEntityInEditor(result.businessId, reviewed.title, {
-            isFocusMode:
-              layoutUIStore.mainViewMode === "focus" || layoutUIStore.isMobile,
-            selectEntity: (id) => {
-              vault.selectedEntityId = id;
-            },
-          });
-        }
-        close({ preserveSession: true });
-        return;
-      }
-
-      if (reviewed.pointCrawl) {
-        const result = await savePointCrawlToVault(
-          reviewed.pointCrawl,
-          {
-            createEntity: (type, title, data) =>
-              vault.createEntity(type, title, data),
-            addConnection: (src, tgt, rel, label) =>
-              vault.addConnection(src, tgt, rel, label),
-          },
-          {
-            selectedNodeIds: saveOptions?.selectedNodeIds,
-            overviewTitle: reviewed.title,
-            overviewLabels: reviewed.labels,
-            sourceEntityId: workflow.sourceEntityId ?? undefined,
-            createSourceRelationship: createRelationship,
-          },
-        );
-        try {
-          publishGeneratedSaved(
-            { title: reviewed.title, category: reviewed.entityType },
-            { clock: systemClock },
-          );
-        } catch (err) {
-          console.error("Could not record the save:", err);
-        }
-        if (draftReviewRef) {
-          try {
-            const blob = await draftReviewRef.exportPointCrawlPng();
-            if (blob) {
-              const file = blobToFile(blob, `${reviewed.title}.png`);
-              await entityMapLinkingService.linkImageToEntity(
-                file,
-                `${reviewed.title} Map`,
-                result.overviewNoteId,
-              );
-            }
-          } catch (err) {
-            console.error("Failed to link generated point-crawl diagram:", err);
-          }
-        }
-        vault.selectedEntityId = result.overviewNoteId;
-        if (saveOptions?.openInGraph) {
-          layoutUIStore.mainViewMode = "visualization";
-        } else {
-          openSavedEntityInEditor(result.overviewNoteId, reviewed.title, {
-            isFocusMode:
-              layoutUIStore.mainViewMode === "focus" || layoutUIStore.isMobile,
-            selectEntity: (id) => {
-              vault.selectedEntityId = id;
-            },
-          });
-        }
-        close({ preserveSession: true });
-        return;
-      }
-
-      // Create the entity skeleton (title + type + labels, no content yet).
-      const result = await svc.saveDraft({
-        draft: {
-          ...reviewed,
-          summary: "",
-          content: undefined,
-          lore: "",
-          sourceEntityId: workflow.sourceEntityId ?? undefined,
-          relationshipLabel:
-            workflow.launchMode === "contextual" ? "related" : undefined,
-        },
+      await campaignGeneratorSaver.save(
+        reviewed,
         createRelationship,
-        ...(workflow.prefillDate ? { start_date: workflow.prefillDate } : {}),
-      });
-      try {
-        publishGeneratedSaved(
-          { title: reviewed.title, category: reviewed.entityType },
-          { clock: systemClock },
-        );
-      } catch (err) {
-        console.error("Could not record the save:", err);
-      }
-      // Link the star-system generator's rasterized orbital diagram to the
-      // new entity's Map tab (#1935 follow-up). Best-effort: a rasterization
-      // or upload failure must never block the save that already succeeded.
-      if (reviewed.bodies?.length && starSystemDiagramRef) {
-        try {
-          const blob = await starSystemDiagramRef.exportPng();
-          if (blob) {
-            const file = blobToFile(blob, `${reviewed.title}.png`);
-            await entityMapLinkingService.linkImageToEntity(
-              file,
-              `${reviewed.title} Map`,
-              result.entityId,
-            );
-          }
-        } catch (err) {
-          console.error("Failed to link generated map image:", err);
-        }
-      } else if (reviewed.pattern?.stars?.length && constellationChartRef) {
-        try {
-          const blob = await constellationChartRef.exportPng();
-          if (blob) {
-            const file = blobToFile(blob, `${reviewed.title}.png`);
-            await entityMapLinkingService.linkImageToEntity(
-              file,
-              `${reviewed.title} Map`,
-              result.entityId,
-            );
-          }
-        } catch (err) {
-          console.error("Failed to link generated constellation chart:", err);
-        }
-      }
-      // Auto-wire the AI's suggested connections to existing entities (matched
-      // by exact, case-insensitive title). These live on the skeleton, so they
-      // are removed too if the user discards the draft.
-      if (reviewed.connections?.length) {
-        const sourceId = workflow.sourceEntityId ?? undefined;
-        const byTitle = new Map<string, string>();
-        for (const [id, e] of Object.entries(vault.entities)) {
-          byTitle.set(e.title.trim().toLowerCase(), id);
-        }
-        for (const conn of reviewed.connections) {
-          const targetId = byTitle.get(conn.targetTitle.trim().toLowerCase());
-          // Skip self and the source (the source link is created above).
-          if (
-            targetId &&
-            targetId !== result.entityId &&
-            targetId !== sourceId
-          ) {
-            try {
-              await vault.addConnection(
-                result.entityId,
-                targetId,
-                conn.relationship || "related",
-              );
-            } catch {
-              // Skip connections that fail (e.g. already exist).
-            }
-          }
-        }
-      }
-      // Push generated content as a pending draft so zen mode shows the
-      // proposal diff — user accepts or discards from the editor.
-      const vaultFields = composeDraftVaultFields(reviewed);
-      revisionService.pendingDraft = {
-        entityId: result.entityId,
-        source: "revise",
-        chronicle: vaultFields.content,
-        lore: vaultFields.lore,
-        timestamp: systemClock.now(),
-        deleteOnDiscard: true,
-        generatorSessionCommit: true,
-      };
-      // The entity is saved as of this point. Navigate to it (and only then
-      // dismiss the modal) so that if opening the editor fails, the failure
-      // has somewhere visible to surface instead of being lost behind an
-      // already-closed dialog (#2742). Stay in zen if already in zen (or on
-      // mobile, where zen is the better surface), otherwise show the draft
-      // in the entity sidebar without yanking the user into zen.
-      openSavedEntityInEditor(result.entityId, reviewed.title, {
-        isFocusMode:
-          layoutUIStore.mainViewMode === "focus" || layoutUIStore.isMobile,
-        selectEntity: (id) => {
-          vault.selectedEntityId = id;
+        {
+          get workflow() {
+            return workflow;
+          },
+          get businessExistingTitles() {
+            return businessExistingTitles;
+          },
+          get businessSource() {
+            return businessSource;
+          },
+          options,
+          get exportStarSystem() {
+            return exports.exportStarSystem;
+          },
+          get exportConstellation() {
+            return exports.exportConstellation;
+          },
+          get exportPointCrawl() {
+            return exports.exportPointCrawl;
+          },
         },
-      });
+        svc,
+      );
       close({ preserveSession: true });
     } catch (err) {
-      errorMsg = err instanceof Error ? err.message : String(err);
-      stage = "review";
+      generation.errorMsg = err instanceof Error ? err.message : String(err);
+      generation.stage = "review";
     }
   }
 
+  const themeId = $derived(themeStore.worldThemeId ?? "workspace");
+  const showRelationshipToggle = $derived(
+    workflow.launchMode === "contextual" && !!workflow.sourceEntityId,
+  );
+  const plotTwistAction = $derived(
+    generation.draft?.sourceGeneratorId === "quest" &&
+      isQuestHookDraft(generation.draft.labels)
+      ? openPlotTwistFromDraft
+      : undefined,
+  );
+  const bossAction = $derived(
+    generation.draft?.sourceGeneratorId === "dungeon" ||
+      isDelveDraft(generation.draft?.labels ?? [])
+      ? openBossFromDraft
+      : undefined,
+  );
+
   const title = $derived(
-    stage === "configure"
+    generation.stage === "configure"
       ? "Generate"
-      : stage === "generating"
+      : generation.stage === "generating"
         ? "Generating…"
-        : stage === "review" || stage === "saving"
+        : generation.stage === "review" || generation.stage === "saving"
           ? "Review Draft"
           : "Error",
   );
@@ -858,44 +311,14 @@
   <!-- Body -->
   <!-- fallow-ignore-next-line css-broken-reference -->
   <div class="px-5 py-4 overflow-y-auto max-h-[70vh] md:max-h-[85vh]">
-    {#if stage === "configure"}
-      {#if singleQuestHook && generatorId !== "plot-twist"}
-        <div
-          class="mb-4 rounded-lg border border-chrome-accent/30 bg-chrome-accent/5 p-3"
-          data-testid="plot-twist-from-quest-hook"
-        >
-          <div class="flex items-start gap-3">
-            <span
-              aria-hidden="true"
-              class="icon-[lucide--sparkles] mt-0.5 h-4 w-4 shrink-0 text-chrome-accent"
-            ></span>
-            <div class="min-w-0 flex-1">
-              <p class="text-xs font-semibold text-chrome-text">
-                One quest hook is in your campaign memory
-              </p>
-              <p class="mt-1 truncate text-xs text-chrome-muted">
-                {singleQuestHook.title}
-              </p>
-              <button
-                type="button"
-                class="mt-2 inline-flex items-center gap-2 rounded border border-chrome-accent/50 px-2.5 py-1.5 text-xs font-semibold text-chrome-accent transition hover:bg-chrome-accent/10"
-                onclick={openPlotTwistFromQuestHook}
-              >
-                <span
-                  aria-hidden="true"
-                  class="icon-[lucide--shuffle] h-3.5 w-3.5"
-                ></span>
-                Turn it into a Plot Twist
-              </button>
-            </div>
-          </div>
-        </div>
-      {/if}
-      <GeneratorConfigForm
+    {#if generation.stage === "configure"}
+      <CampaignGeneratorConfigure
+        questHook={singleQuestHook}
+        onPlotTwist={openPlotTwistFromQuestHook}
         bind:generatorId
         onsubmit={onGenerate}
         aiPolicy={svc.aiPolicy}
-        themeId={themeStore.worldThemeId ?? "workspace"}
+        {themeId}
         categoryLabels={categories.list.map((c) => ({
           id: c.id,
           label: c.label,
@@ -903,126 +326,45 @@
         languages={languageChoices}
         {suggestedLanguageId}
       />
-    {:else if stage === "generating"}
-      <div class="py-4">
-        <div class="flex items-center gap-3 text-sm text-chrome-muted">
-          <span
-            class="icon-[lucide--loader-circle] h-4 w-4 animate-spin text-chrome-accent"
-          ></span>
-          {currentPhase ??
-            activeLoadingMessages[loadingIndex] ??
-            "Generating your content…"}
-        </div>
-        {#if streamedFields.title || streamedFields.summary || streamedFields.lore}
-          <div
-            class="mt-4 space-y-2 rounded-lg border border-chrome-border bg-chrome-bg/40 p-3"
-            data-testid="generator-stream-preview"
-          >
-            {#if streamedFields.title}
-              <p class="text-sm font-bold text-chrome-text">
-                {streamedFields.title}
-              </p>
-            {/if}
-            {#if streamedFields.summary}
-              <p class="text-xs italic text-chrome-muted">
-                {streamedFields.summary}
-              </p>
-            {/if}
-            {#if streamedFields.lore && !shouldShieldSpoilers(generatorId)}
-              <!-- fallow-ignore-next-line css-broken-reference -->
-              <p
-                class="max-h-40 overflow-y-auto whitespace-pre-wrap text-xs text-chrome-muted"
-              >
-                {streamedFields.lore}
-              </p>
-            {/if}
-          </div>
-        {/if}
-        <button
-          type="button"
-          class="mt-4 px-3 py-1.5 border border-chrome-border rounded-lg text-xs font-bold uppercase tracking-wider text-chrome-muted hover:text-chrome-text hover:border-chrome-accent transition-colors"
-          onclick={cancelGeneration}
-        >
-          Cancel
-        </button>
-      </div>
-    {:else if (stage === "review" || stage === "saving") && draft}
-      {#if errorMsg}
+    {:else if generation.stage === "generating"}
+      <CampaignGenerationProgress
+        {themeId}
+        currentPhase={generation.currentPhase}
+        streamedFields={generation.streamedFields}
+        spoilerShield={shouldShieldSpoilers(generatorId)}
+        oncancel={() => generation.cancel()}
+      />
+    {:else if (generation.stage === "review" || generation.stage === "saving") && generation.draft}
+      {#if generation.errorMsg}
         <p
           class="mb-3 rounded border border-red-800/40 bg-red-950/30 px-3 py-2 text-xs text-red-400"
         >
-          {errorMsg}
+          {generation.errorMsg}
         </p>
       {/if}
-      {#if draft.bodies?.length}
-        <!-- Rendered off-screen and not otherwise shown in this review UI —
-             its only purpose here is to give exportPng() a live <svg> to
-             rasterize into the entity's linked map when the draft is saved
-             (#1935 follow-up). -->
-        <div
-          class="absolute h-px w-px overflow-hidden opacity-0"
-          aria-hidden="true"
-        >
-          <StarSystemDiagram
-            bind:this={starSystemDiagramRef}
-            bodies={draft.bodies}
-            starType={draft.starType}
-            title={draft.title}
-          />
-        </div>
-      {/if}
-      {#if draft.pattern?.stars?.length}
-        <!-- Rendered off-screen and not otherwise shown in this review UI —
-             its only purpose here is to give exportPng() a live <svg> to
-             rasterize into the entity's linked map when the draft is saved. -->
-        <div
-          class="absolute h-px w-px overflow-hidden opacity-0"
-          aria-hidden="true"
-        >
-          <ConstellationChart
-            bind:this={constellationChartRef}
-            pattern={draft.pattern}
-            title={draft.title}
-          />
-        </div>
-      {/if}
-      <GeneratorDraftReview
-        bind:this={draftReviewRef}
+      <CampaignGeneratorReview
         {businessExistingTitles}
         {businessSource}
         businessUseAI={aiPolicy.isEnabled && aiPolicy.isAvailable}
-        bind:draft
+        bind:draft={generation.draft}
         categories={categories.list}
-        saving={stage === "saving"}
-        themeId={themeStore.worldThemeId ?? "workspace"}
-        showRelationshipToggle={workflow.launchMode === "contextual" &&
-          !!workflow.sourceEntityId}
+        saving={generation.stage === "saving"}
+        {themeId}
+        {showRelationshipToggle}
         backLabel={workflow.autoGenerate ? "Customize" : "Back"}
-        spoilerShield={shouldShieldSpoilers(draft.sourceGeneratorId)}
+        spoilerShield={shouldShieldSpoilers(generation.draft.sourceGeneratorId)}
         onsave={onSave}
-        onback={() => {
-          stage = "configure";
-          errorMsg = null;
-        }}
-        onGeneratePlotTwist={draft.sourceGeneratorId === "quest" &&
-        isQuestHookDraft(draft.labels)
-          ? openPlotTwistFromDraft
-          : undefined}
-        onGenerateBoss={draft.sourceGeneratorId === "dungeon" ||
-        isDelveDraft(draft.labels)
-          ? openBossFromDraft
-          : undefined}
+        onback={() => generation.configure()}
+        onGeneratePlotTwist={plotTwistAction}
+        onGenerateBoss={bossAction}
       />
-    {:else if stage === "error"}
+    {:else if generation.stage === "error"}
       <div class="py-4">
-        <p class="mb-4 text-sm text-red-400">{errorMsg}</p>
+        <p class="mb-4 text-sm text-red-400">{generation.errorMsg}</p>
         <button
           type="button"
           class="px-4 py-2 border border-chrome-border rounded-lg text-xs font-bold uppercase tracking-wider text-chrome-muted hover:text-chrome-text hover:border-chrome-accent transition-colors"
-          onclick={() => {
-            stage = "configure";
-            errorMsg = null;
-          }}
+          onclick={() => generation.configure()}
         >
           Try again
         </button>
