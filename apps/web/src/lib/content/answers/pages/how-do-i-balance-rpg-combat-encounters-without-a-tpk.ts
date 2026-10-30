@@ -149,6 +149,7 @@ export const howDoIBalanceRpgCombatEncountersWithoutATpk: AnswerConfigInput = {
     "which-tabletop-rpgs-have-squad-and-mass-battle-rules",
     "how-do-i-track-monsters-initiative-and-hit-points-in-dnd-combat",
     "does-an-rpg-party-need-balanced-roles",
+    "how-do-i-balance-one-powerful-enemy-against-many-weaker-enemies",
   ],
   discovery: {
     id: "answer-encounter-balance",

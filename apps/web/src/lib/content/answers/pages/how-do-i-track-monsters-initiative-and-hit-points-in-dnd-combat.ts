@@ -210,6 +210,7 @@ export const howDoITrackMonstersInitiativeAndHitPointsInDndCombat: AnswerConfigI
       "what-can-i-do-on-my-turn-in-dnd-combat",
       "how-do-i-run-my-first-online-tabletop-rpg-session",
       "how-can-i-practise-being-a-dungeon-master-without-a-group",
+      "how-do-i-balance-one-powerful-enemy-against-many-weaker-enemies",
     ],
     discovery: {
       id: "answer-track-monsters-initiative-hit-points-dnd-combat",

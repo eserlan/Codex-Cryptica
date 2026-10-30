@@ -124,6 +124,7 @@ export const howDoIMakeCombatFasterWithoutMakingItLessExciting: AnswerConfigInpu
       "what-can-i-do-on-my-turn-in-dnd-combat",
       "how-do-i-combine-multiple-enemies-into-one-squad-in-an-rpg",
       "how-do-i-track-monsters-initiative-and-hit-points-in-dnd-combat",
+      "how-do-i-balance-one-powerful-enemy-against-many-weaker-enemies",
     ],
     discovery: {
       id: "answer-faster-exciting-combat",
