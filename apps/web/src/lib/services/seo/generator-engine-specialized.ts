@@ -1,3 +1,4 @@
+import { logDungeonStagedStats } from "#lib/services/generators/generator-staged-diagnostics.js";
 import {
   buildDungeonPrompt,
   buildDungeonRetryMessage,
@@ -144,20 +145,7 @@ export class GeneratorEngineSpecialized extends GeneratorEngineWorldbuilding {
               this.runModel(instruction, message, undefined, true, signal),
             signal,
             onProgress,
-            onStats: (stats) => {
-              if (import.meta.env.DEV) {
-                console.debug("[Generator] staged dungeon run", {
-                  outcome: stats.outcome,
-                  stoppedAt: stats.stoppedAt,
-                  aiCalls: stats.aiCalls,
-                  repairedStageCount: stats.repairedStages.length,
-                  reviewIssueCount: stats.reviewIssues.length,
-                  reviewSkipped: stats.reviewSkipped,
-                  coherenceRepaired: stats.coherenceRepaired,
-                  remainingIssueCount: stats.remainingIssues.length,
-                });
-              }
-            },
+            onStats: logDungeonStagedStats,
           });
           if (result) return result.output;
           // An unusable stage falls through to the one-pass route below.
