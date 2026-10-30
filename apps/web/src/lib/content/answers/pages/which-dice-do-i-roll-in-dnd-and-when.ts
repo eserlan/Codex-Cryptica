@@ -7,7 +7,7 @@ export const whichDiceDoIRollInDndAndWhen: AnswerConfigInput = {
   question: "Which dice do I roll in D&D, and when?",
   kind: "framework",
   shortAnswer:
-    "If you are trying something uncertain in D&D, you very often start with a twenty-sided die (d20) and add a modifier the Dungeon Master or your character sheet names. For an attack that requires an attack roll, the d20 decides whether it hits and you roll its listed damage on a hit. Other effects name their dice directly, so you do not need to memorise every one.",
+    "Most D&D ability checks, attack rolls and saving throws use a d20 plus the relevant modifier. For an attack that requires an attack roll, a successful hit is followed by the listed damage dice. Healing and other effects name their own dice and do not always require a d20 first. Your character sheet, spell, item or Dungeon Master normally tells you what to roll.",
   sections: [
     {
       kind: "table",
@@ -239,9 +239,9 @@ export const whichDiceDoIRollInDndAndWhen: AnswerConfigInput = {
     ],
   },
   seo: {
-    title: "Which dice do I roll in D&D, and when? | Codex Cryptica",
+    title: "D&D Dice Explained: What to Roll and When | Codex Cryptica",
     description:
-      "Beginner guide to D&D dice: when to roll a d20 for checks, attacks and saves, how damage dice, notation and advantage work, and why your sheet tells you which die to use.",
+      "Learn which D&D dice to roll: d20 for checks, attacks and saves; other dice for damage and healing. Includes dice notation and advantage.",
     image:
       "https://assets.codexcryptica.com/og/which-dice-do-i-roll-in-dnd-and-when.jpg",
     imageAlt:
