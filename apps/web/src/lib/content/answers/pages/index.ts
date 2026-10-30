@@ -6,6 +6,7 @@ import { howCanIMakeFreeCustomMapsForOnlineTabletopRpgs } from "./how-can-i-make
 import { howCanIPractiseBeingADungeonMasterWithoutAGroup } from "./how-can-i-practise-being-a-dungeon-master-without-a-group";
 import { howCommonShouldMagicBeInAFantasyWorld } from "./how-common-should-magic-be-in-a-fantasy-world";
 import { howDoFantasyCitiesDefendAgainstFlyingCreaturesAndTeleportation } from "./how-do-fantasy-cities-defend-against-flying-creatures-and-teleportation";
+import { howDoIBalanceOnePowerfulEnemyAgainstManyWeakerEnemies } from "./how-do-i-balance-one-powerful-enemy-against-many-weaker-enemies";
 import { howDoIBalanceRpgCombatEncountersWithoutATpk } from "./how-do-i-balance-rpg-combat-encounters-without-a-tpk";
 import { howDoIBuildABelievableConstitutionalCrisisOrCoup } from "./how-do-i-build-a-believable-constitutional-crisis-or-coup";
 import { howDoIBuildABelievableEconomyForAFantasyWorld } from "./how-do-i-build-a-believable-economy-for-a-fantasy-world";
@@ -200,6 +201,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howCanIPractiseBeingADungeonMasterWithoutAGroup,
     howCommonShouldMagicBeInAFantasyWorld,
     howDoFantasyCitiesDefendAgainstFlyingCreaturesAndTeleportation,
+    howDoIBalanceOnePowerfulEnemyAgainstManyWeakerEnemies,
     howDoIBalanceRpgCombatEncountersWithoutATpk,
     howDoIBuildABelievableConstitutionalCrisisOrCoup,
     howDoIBuildABelievableEconomyForAFantasyWorld,
