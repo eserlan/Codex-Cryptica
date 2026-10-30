@@ -7,7 +7,7 @@ export const whatCanIDoOnMyTurnInDndCombat: AnswerConfigInput = {
   question: "What can I do on my turn in D&D combat?",
   kind: "framework",
   shortAnswer:
-    "On your turn in D&D combat you can usually move up to your speed and take one action, and you sometimes have a bonus action if a class feature, spell, or piece of equipment gives you one. You can also interact briefly with something nearby and speak a few words. A reaction responds to a specific trigger, often on another creature's turn but sometimes on yours; after you use one, you cannot take another until the start of your next turn. Your class and features decide the interesting options inside those buckets, so describe what you want to accomplish and let the Dungeon Master tell you which action fits.",
+    "On your turn in D&D combat, you can normally move up to your speed and take one action. You can also use a bonus action when a rule grants one. A reaction responds to a specific trigger and can happen on your turn or another creature's turn. You can usually interact once with a simple object as part of your movement or action, and speak a few words. A reaction is not a free extra choice: once used, it is unavailable again until the start of your next turn. Your class and features determine which options are available, so describe what you want to accomplish and let the Dungeon Master tell you which action fits.",
   sections: [
     {
       kind: "table",
@@ -246,9 +246,9 @@ export const whatCanIDoOnMyTurnInDndCombat: AnswerConfigInput = {
     ],
   },
   seo: {
-    title: "What can I do on my turn in D&D combat? | Codex Cryptica",
+    title: "D&D Combat Turn: Actions & Bonus Actions | Codex Cryptica",
     description:
-      "A beginner guide to a D&D combat turn: movement, action, bonus action, free interaction, brief speech, and reactions, with purpose-led actions and flexible movement.",
+      "What can you do on your D&D turn? Move, take an action, and sometimes use a bonus action. Learn reactions, common combat options and edition differences.",
     image:
       "https://assets.codexcryptica.com/og/what-can-i-do-on-my-turn-in-dnd-combat.jpg",
     imageAlt:
