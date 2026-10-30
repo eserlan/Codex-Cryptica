@@ -9,41 +9,41 @@ export const howDoIBalanceOnePowerfulEnemyAgainstManyWeakerEnemies: AnswerConfig
       "How do I balance one powerful enemy against many weaker enemies in a tabletop RPG?",
     kind: "comparison",
     shortAnswer:
-      "Compare effective actions per round, not Challenge Rating (CR) or level alone. A single powerful enemy may have strong statistics but only one turn against three or more player character turns, so it can be controlled, surrounded or defeated before it acts enough times to matter. A group of weaker enemies gets many turns, more chances to concentrate attacks on one character, and more chances for one effect to land. Start from your system's own encounter-building rules for the edition you run, then compare how many meaningful actions each side gets, how much damage each side is likely to deal in a round, and how long each side is likely to stay in the fight.",
+      "Compare effective actions per round, not Challenge Rating (CR) or level alone. A turn is not the same as the attacks and abilities resolved inside it: a creature with several attacks can miss one and still threaten the party in the same turn, whilst a creature that loses its whole turn loses everything it would have done that round. A single powerful enemy can be controlled or focus-fired before it acts often enough; a group of weaker enemies gets more turns and more chances to concentrate on one character. Start from your system's own encounter-building rules for the edition you run, then compare effective actions, likely damage per round and how many rounds each side is likely to remain in the fight.",
     sections: [
       {
         kind: "prose",
         heading: "What action economy counts",
         paragraphs: [
-          "Action economy is the number of useful things each side can do in a round. In many games each combatant gets a turn with movement and one main action, plus smaller options such as a bonus action or a reaction where the rules allow them. Some powerful creatures also get off-turn or legendary actions. Those extra actions matter, but only count an action as effective if it can change the fight: deal damage to a reachable target, impose a condition, move an ally out of danger, protect an objective, or force the other side to spend its own action in reply.",
-          "Ten weak attacks that cannot hit, cannot reach anyone, or all land after the fight is decided are not ten effective actions. One strong attack that a character can reliably resist, avoid or undo may be less threatening than its damage number suggests. Count what each side can actually do to the targets in front of it, in the positions on the table, with the resources it has left. That count, set against likely damage and staying power, explains most of the difference between a solo enemy and a group.",
+          "Action economy is the number of useful things each side can do in a round. Keep three levels separate. A turn is one combatant's slot in the initiative order. An action is one of the choices made in that turn, such as attacking, casting or dashing, plus a bonus action or reaction where the rules allow them. An attack is a single roll resolved inside an action: an action that grants several attacks can partly fail and still partly succeed. Losing one attack reduces that turn's output. Losing an action removes one choice but may leave movement, a bonus action or a reaction. Losing a turn removes all of them for that round.",
+          "That distinction changes how you judge both sides. Several attacks, an area ability, a reaction and any off-turn or legendary actions a creature's rules grant can raise its output and make it more reliable without giving it another turn. They do not help if the creature never gets to act, and an off-turn ability that triggers rarely is worth less than its best case suggests. Count an action as effective only if it can change the fight in the positions on the table: reach a target, impose a condition, protect an objective, or force the other side to spend an action in reply. Ten attacks that cannot hit or cannot reach anyone are not ten effective actions.",
         ],
       },
       {
         kind: "list",
         heading: "One powerful enemy against the party",
         intro:
-          "A solo enemy concentrates its threat in one body and one turn. That shape has clear strengths and a predictable weakness:",
+          "A solo enemy concentrates its threat in one body. That shape has a clear strength and a predictable weakness:",
         items: [
           {
-            term: "One turn against several",
-            text: "Three player characters (PCs) get three turns for every one turn the enemy gets. If each PC can attack, cast, grapple, shove, hide or help, the party can try several different answers before the enemy acts again. A failed roll costs the party one of several attempts. A failed roll, a lost turn or a wasted action costs the solo enemy its whole round.",
+            term: "What a lost turn costs it",
+            text: "Against three player characters (PCs), the enemy acts once while the party acts three times. If control removes its turn, the party gets a full extra round against it and it deals no damage that round. A missed attack inside a multiattack turn is a smaller loss: the other attacks in that turn still resolve.",
           },
           {
             term: "Focus fire and control land on one target",
-            text: "Every PC can aim at the same creature, and there is nowhere for damage or conditions to be spread. A single failed saving throw against a disabling effect can remove the enemy's next turn, and with it a large share of the encounter's threat. High hit points (HP) do not fix a lost turn.",
+            text: "Every PC can aim at the same creature, and there is nowhere for damage or conditions to spread. High hit points (HP) extend how long it can stay in the fight, but they do not replace a turn it never takes.",
           },
           {
-            term: "Damage arrives in swings",
-            text: "To threaten several PCs with one turn, a solo enemy often needs high damage on each hit. That makes the fight swingy: a miss feels flat, a critical hit can drop a character before the party has had a chance to respond. The risk is sharper for a small party, where one character down removes a third of the party's actions.",
+            term: "How its damage is packaged matters",
+            text: "One design gives the solo enemy a single heavy hit. That version is swingy: a miss does nothing and a critical hit can drop a character at once. A different design spreads similar total damage across several smaller attacks or an area ability. That version is steadier, can threaten more than one character, and keeps some output when one attack misses. Neither follows automatically from being a solo enemy, so judge the stat block you have, not the label.",
           },
           {
             term: "Initiative and the first round matter more",
-            text: "If the party acts first and can deal heavy damage or land control before the enemy moves, the encounter may end as a contest. Note where the enemy starts, whether it can be reached or targeted in round one, and what it can still do if it begins the fight restrained, prone or out of position.",
+            text: "If the party acts first and can deal heavy damage or land control before the enemy moves, the encounter may be decided early. Note where the enemy starts, whether it can be reached or targeted in round one, and what it can still do if it begins the fight restrained, prone or out of position.",
           },
           {
             term: "Ways to give a solo enemy a fair share of the fight",
-            text: "Use only what your system actually allows: support creatures that draw fire and act on their own turns, a second objective the party must attend to, terrain that stops the whole party reaching the enemy at once, or defensive features and extra off-turn actions written into that creature's rules. Adding a support creature changes the question from a pure solo fight to the elite and support composition below, which is often the honest fix.",
+            text: "Use only what your system actually allows: support creatures that draw fire and act on their own turns, a second objective the party must attend to, terrain that stops the whole party reaching the enemy at once, or defensive features and extra off-turn actions written into that creature's rules. Adding support changes this into the elite and support composition below, which is often the honest fix.",
           },
         ],
       },
@@ -55,11 +55,11 @@ export const howDoIBalanceOnePowerfulEnemyAgainstManyWeakerEnemies: AnswerConfig
         items: [
           {
             term: "Many turns, many chances",
-            text: "Eight weak enemies get eight turns. Even if each attack is modest, several can aim at the same PC, surround a character to cut off retreat, or keep acting after one or two of them fall. Losing one member costs the group a fraction of its actions, not the whole round.",
+            text: "Eight weak enemies get eight turns. Several can aim at the same PC, surround a character to cut off retreat, or keep acting after one or two of them fall. Losing one member costs the group one turn out of eight, so its threat degrades gradually rather than vanishing in one round.",
           },
           {
             term: "Concentrated attacks add up",
-            text: "Judge the group by what a round of its attacks does to one target, not by one attack in isolation. If four enemies can reach the same character, work out how many are likely to hit against that character's defence and what the combined damage does to their HP. A foe that looks harmless alone may not be harmless as the fourth attacker.",
+            text: "Judge the group by a round of its attacks against one target, not by one attack in isolation. The worked example below does that sum for a specific character, because a foe that looks harmless alone may not be harmless as the fourth attacker.",
           },
           {
             term: "Area attacks and control cut the other way",
@@ -80,7 +80,7 @@ export const howDoIBalanceOnePowerfulEnemyAgainstManyWeakerEnemies: AnswerConfig
         heading: "Why party size matters",
         paragraphs: [
           "The same enemy group is a different encounter against three PCs than against five. Three characters bring fewer actions per round, fewer spells and abilities in reserve, and less cover when one character is down, controlled or out of position. Losing one PC's turn removes about a third of the party's round. Against five PCs it removes about a fifth, and another character is more likely to have the healing, control or movement needed to answer the problem.",
-          "Composition matters as much as headcount. A party of three with an area spell, strong healing and a character who can hold a doorway handles a horde differently from three single-target strikers with no healing. Before you adjust any numbers, list what this party can actually do: who can hit several enemies at once, who can stop an enemy acting, who can restore HP or remove a condition, and who falls over if four enemies choose them at once. Balance for the party in front of you, using the general guidance on avoiding a total party kill (TPK) in the related answer on encounter balance.",
+          "Composition matters as much as headcount. A party of three with an area spell, strong healing and a character who can hold a doorway handles a group differently from three single-target strikers with no healing. List what this party can actually do before you adjust any numbers: who can hit several enemies at once, who can stop an enemy acting, who can restore HP or remove a condition, and who is in trouble if several enemies choose them at once. For the wider question of signalling danger and avoiding a total party kill (TPK), see the related answer on balancing encounters without a TPK.",
         ],
       },
       {
@@ -91,19 +91,19 @@ export const howDoIBalanceOnePowerfulEnemyAgainstManyWeakerEnemies: AnswerConfig
           [
             "One powerful enemy",
             "One clear threat the players can read and plan against; little bookkeeping",
-            "Party gets several turns to one, so control or concentrated damage can end it early; single hits may need to be heavy and swingy",
-            "Add support, a second objective, or off-turn actions only where the rules provide them; check what happens if it loses its first turn",
+            "One lost turn removes all of its output for that round; concentrated damage and control land on a single body",
+            "Check what happens if it loses its first turn; add support, a second objective, or off-turn actions only where the rules provide them",
           ],
           [
             "Elite enemy with supporting creatures",
-            "Enemy turns roughly match party turns; party must choose between the elite, its support and the objective",
-            "Support can be ignored and the elite still focus-fired, or the support can overwhelm a small party while the elite acts",
-            "Give support a job the party cannot ignore, such as guarding, healing or holding a route; keep each support creature simple to run",
+            "In the worked example below, three enemy turns face three party turns and the party must split attention between the doorway and the gate",
+            "The party may ignore the support and focus on the elite, or the support may overwhelm a small party while the elite acts",
+            "Give each support creature a job the party cannot ignore, such as holding a route or working the gate; keep each one simple to run",
           ],
           [
             "Group of weaker enemies",
-            "Many turns and positions; threat degrades gradually as members fall; morale gives a natural end point",
-            "Concentrated attacks can drop one character quickly; many turns can slow play; one area effect can remove much of the group",
+            "Many turns and positions; threat falls gradually as members are removed; morale gives a natural end point",
+            "Attacks concentrated on one character can drop them quickly; many turns can slow play; one area effect can remove much of the group",
             "Spread starting positions, set a morale point, group initiative for similar foes, and check the combined damage against one PC",
           ],
         ],
@@ -113,28 +113,25 @@ export const howDoIBalanceOnePowerfulEnemyAgainstManyWeakerEnemies: AnswerConfig
         heading:
           "Worked example: three level 6 characters, three ways to build the fight",
         paragraphs: [
-          "A Game Master (GM) runs three level 6 player characters in Dungeons and Dragons (D&D) and wants a hard fight in a courtyard. The party has a fighter who can hold a doorway, a wizard with one area spell prepared, and a cleric who can heal. The numbers below are an illustrative reasoning exercise, not an official encounter calculation. For an official budget, use the encounter-building rules for the edition on your table: the 2014 Dungeon Master's Guide builds from per-character experience point (XP) thresholds with a multiplier for monster numbers, whilst the 2024 rules use a per-character XP budget with Low, Moderate and High difficulty bands and no number multiplier. The two methods are not interchangeable, so do not carry a total from one into the other.",
+          "A Game Master (GM) runs three level 6 player characters in Dungeons and Dragons (D&D): a fighter who can hold a doorway, a wizard with one area spell prepared, and a cleric who can heal. The comparison below holds the enemy side roughly constant so the composition is what changes: each option has about 102 HP in total and, if every enemy attacks the fighter, about 13 to 14 expected damage per round before the party interferes. Expected damage means hit chance multiplied by average damage on a hit. The stat blocks are invented to make the arithmetic visible. They are not an official encounter calculation and they do not establish that the three options have equal XP budgets. For an official budget, use the encounter-building rules for the edition on your table: the 2014 Dungeon Master's Guide builds from per-character experience point (XP) thresholds with a multiplier for monster numbers, whilst the 2024 rules use a per-character XP budget with Low, Moderate and High difficulty bands and no number multiplier. The two methods are not interchangeable, so do not carry a total from one into the other.",
+          "Party figures used throughout: fighter 52 HP, Armour Class (AC) 18, attack bonus +7, two attacks per Attack action for 1d8 + 4 each (average 8.5 per hit). Cleric 45 HP, AC 16, attack bonus +6, one attack for 1d8 + 3 (average 7.5). Wizard 32 HP, AC 13, attack bonus +7, one bolt for 2d10 (average 11). Against AC 14 the party's expected damage is about 24.5 per round if all three attack the same target: fighter 11.9, cleric 4.9, wizard 7.7. Against AC 15 it is about 22.7, and against AC 13 about 26.3. At 24.5 per round, a 102 HP pool lasts about four rounds (102 divided by 24.5 is 4.2) if the party can keep attacking it.",
         ],
         items: [
           {
-            term: "Count the party first",
-            text: "The party gets three turns per round. If the fighter is dropped or the wizard is held, the party loses a third of its actions and possibly its only area spell or its only way to hold the doorway. Any composition that can remove one PC's turn early is more dangerous to this party than the same composition against five characters.",
+            term: "Option A: one strong enemy alone (HP 102, AC 14)",
+            text: "The enemy has one turn with two attacks at +7 for 2d8 + 4 each (average 13 per hit). Against the fighter at AC 18 it needs 11 or more on the die, a 50 per cent chance per attack, so its expected damage is 2 x 0.5 x 13 = 13 per round. At that rate it needs about four rounds of hitting the fighter to drop them (52 divided by 13), which is roughly as long as the party needs to drop it. The fight is therefore a race between two similar clocks, decided by who loses time. If a control effect that can legally affect this creature in your edition succeeds and costs it a turn, it does not lose one of its two attacks: it loses both, plus its movement, and takes another 24.5 expected damage before it can reply. Its remaining HP falls to about 77 and it now has roughly three turns left instead of four, whilst the party has taken no damage in that round. If instead it merely misses one attack, it still resolves the other and deals about 6.5 expected damage that turn. Check both cases before you run a solo enemy, and rebuild it as option B if losing one turn makes the whole encounter collapse.",
           },
           {
-            term: "Option A: one strong enemy alone",
-            text: "The enemy gets one turn to the party's three. Suppose round one runs like this: the fighter rolls 14 + 7 = 21 against Armour Class (AC) 16 and hits for 11 damage; the cleric hits for 8; the wizard casts a disabling spell and the enemy fails its saving throw, so it loses its next turn. No rule has been broken and no roll was extreme, yet the enemy has taken 19 damage and a full round of party actions before it has acted once. Before using this composition, decide what the enemy can still do if it loses a turn, whether support or terrain stops all three PCs reaching it at once, and whether its single hit is so heavy that one lucky roll drops a level 6 character outright. If the honest answers are nothing, nothing, and yes, rebuild it as option B rather than adding more HP.",
+            term: "Option B: an elite with two supporting creatures (HP 60 + 21 + 21, AC 15 and 13)",
+            text: "The enemy side now has three turns. The elite stands in the doorway with one support creature beside it. The second support creature works a winch at the gate the party needs to open, far enough away that it is not standing with the doorway pair. The elite makes two attacks at +6 for 1d10 + 4 each (average 9.5). Against the fighter it needs 12 or more, a 45 per cent chance, for 2 x 0.45 x 9.5 = 8.6 expected damage. Each support creature makes one attack at +5 for 1d6 + 3 (average 6.5), needs 13 or more against the fighter, a 40 per cent chance, for 2.6 expected damage. If all three could reach the fighter they would deal about 13.8 per round, close to option A, but they start split between the doorway and the gate, so the party chooses who to engage first. If the party focuses on the elite at AC 15, it deals about 22.7 per round and drops the elite's 60 HP in about three rounds, during which the gate support creature keeps working unless someone spends actions to stop it. If the same control effect used in option A lands on the elite and costs it a turn, the enemy side still acts: the two support creatures can deal about 5.2 expected damage between them, and the gate still gets worked. Losing the elite hurts this composition badly, but it does not reduce its round to zero.",
           },
           {
-            term: "Option B: an elite enemy with two supporting creatures",
-            text: "The enemy side now gets three turns, matching the party. The elite threatens the fighter at the doorway, one support creature moves to cut off the wizard, and the second guards the gate the party needs to reach. The party must choose: concentrate on the elite and leave the wizard exposed, spend the wizard's area spell on support creatures bunched at the gate, or take the gate and accept the elite acting unchecked for a round. Each choice costs something the players can see. Keep the support creatures to one clear action each so three enemy turns do not become three long GM turns.",
-          },
-          {
-            term: "Option C: eight weaker enemies",
-            text: "The enemy side gets eight turns. Individually each enemy is a minor threat, but four of them can reach the cleric in round one. If two of those four hit for 6 damage each, the cleric takes 12 damage from enemies the budget treated as minor, and the party's healing is now under pressure from turn one. Set against that, the wizard's one area spell can catch several of them if they bunch up, and the GM sets a morale point in advance: the group checks when its leader falls or when four of them are down, and flees towards the gate on a failure. Spread their starting positions so the area spell is a good choice rather than an automatic answer, and run similar enemies on one initiative count to keep eight turns brief.",
+            term: "Option C: eight weaker enemies (HP 13 each, AC 13)",
+            text: "The enemy side has eight turns. Each enemy makes one attack at +4 for 1d6 + 2 (average 5.5). Four of them can reach the cleric at AC 16 in round one, where each needs 12 or more, a 45 per cent chance, for 2.5 expected damage. Together that is about 9.9 expected damage, so the cleric's 45 HP falls to about 35 after one focused round and to about 15 after three if nobody heals, moves them or removes attackers. No single hit is dramatic. The total is the threat, and it arrives even if one or two enemies miss. Casualties degrade it gradually: each enemy the party drops removes one turn and about 2.5 of that expected damage against the cleric. The wizard's area spell cuts the other way. If it deals an average of 28 damage, or 14 on a successful save, either result exceeds 13 HP, so every enemy it catches is likely to fall and its turn goes with it. Catching three enemies reduces eight enemy turns to five at once, which no single-target attack in this party can do. Set a morale point before initiative, such as a check when four enemies are down, and spread the starting positions so the area spell cannot catch all eight at once.",
           },
           {
             term: "What the comparison shows",
-            text: "No option is correct by CR alone. Option A risks a short, swingy fight decided by one saving throw. Option B gives both sides a similar number of turns and forces a choice of targets. Option C pressures one character at a time and rewards area spells and morale, at the cost of more bookkeeping. Pick the shape that tests what this party is good at without removing the one ability it cannot do without, then check the choice against your edition's budget before you run it.",
+            text: "All three options start with similar HP and similar damage if left alone, and all three last about four rounds against this party's focused damage. They differ in how they lose output. Option A loses everything for a round when it loses its turn and nothing else when it misses one attack. Option B loses about three fifths of its damage when the elite loses a turn (8.6 out of 13.8) and keeps the rest, plus a separate objective at the gate. Option C loses about an eighth of its turns each time one member falls, but can lose several turns to one area effect. Pick the shape whose way of failing produces the fight you want, then check that pick against your edition's budget before you run it.",
           },
         ],
       },
@@ -144,13 +141,11 @@ export const howDoIBalanceOnePowerfulEnemyAgainstManyWeakerEnemies: AnswerConfig
         intro: "Work through these before initiative:",
         items: [
           "Start from the encounter-building rules for your system and edition, and note which method you used if you write the encounter down for later.",
-          "Count effective actions per round on each side, including reactions and any off-turn actions the rules actually grant, and note what each action can reach.",
-          "Estimate a typical round of damage from each side against the targets it is likely to choose, including several weak enemies concentrating on one character.",
-          "Estimate how many rounds each side is likely to stay in the fight if the other side concentrates on it, and what changes if one character or enemy loses a turn.",
+          "List turns per round for each side, then list the attacks, area abilities, reactions and off-turn actions inside those turns, and note what each one can reach.",
+          "For the target each enemy is likely to choose, multiply hit chance by average damage on a hit and add the round up. Do this for several weak enemies aiming at one character as well as for a single powerful enemy.",
+          "Divide each side's HP by the other side's expected damage per round to estimate how many rounds it lasts. Repeat the estimate with one turn removed by control, one character down, and one group member removed, and note which composition changes most.",
           "List the party's area attacks, control effects, healing and ways to remove conditions, and check whether one composition removes the only copy of something the party needs.",
-          "Note terrain, starting positions and any objective besides defeating every enemy, and whether the party can retreat, negotiate or win another way.",
-          "Set pressure you can adjust honestly during play: a morale point, conditional reinforcements, or an objective that ends the fight, plus an escape route if the fight goes badly.",
-          "If the enemy count is slowing play, group initiative for similar enemies or combine them into a squad before you add more creatures.",
+          "Note terrain, starting positions and any objective besides defeating every enemy. Set a morale point or another way for the fight to end, plus an escape route the party can use if it goes badly.",
         ],
       },
       {
@@ -159,23 +154,11 @@ export const howDoIBalanceOnePowerfulEnemyAgainstManyWeakerEnemies: AnswerConfig
         items: [
           {
             term: "Raising CR until a solo enemy feels strong enough",
-            text: "A higher CR usually means heavier damage and tougher defences on the same one turn. It does not give the enemy more turns, and it can make the one hit it lands heavy enough to drop a character in a small party. Fix the action count or the situation before you fix the statistics.",
-          },
-          {
-            term: "Treating each weak enemy as negligible",
-            text: "One weak attack is minor. A round of weak attacks aimed at the same character, plus the movement to surround them and the turns that keep coming after the first enemy falls, is the actual threat. Add the round up before you dismiss it.",
-          },
-          {
-            term: "Filling the field until turns drag",
-            text: "A horde that takes longer to run than the party's own turns tests patience rather than judgement. Group initiative, average damage, simpler enemy actions or a squad abstraction keep the pressure without the wait, as covered in the related answer on making combat faster.",
-          },
-          {
-            term: "Giving a boss extra attacks without checking the damage",
-            text: "Extra actions answer the action count, but each added attack is also added damage aimed wherever you choose. Work out the new round of damage against one character before you add the attack, especially against a party of three.",
+            text: "A higher CR usually raises damage and defences on the same single turn. It does not change how much of the encounter disappears when that turn is lost. Fix the turn count or the situation before you fix the statistics.",
           },
           {
             term: "Treating the budget as a guarantee",
-            text: "An encounter budget estimates statistical weight. It does not know that your wizard has one area spell left, that the fighter starts the fight already hurt, or that the enemy begins surrounded. Use the budget to shortlist, then run the action, damage and survival checks in the checklist above. For memorable boss fights as campaign payoffs, rather than balance alone, see the related answer on making a boss fight memorable.",
+            text: "An encounter budget estimates statistical weight for an average party in an average position. It does not know that your wizard has one area spell left, that the fighter starts the fight already hurt, or that the enemy begins surrounded. Use the budget to shortlist, then run the action, damage and survival checks in the checklist above. For memorable boss fights as campaign payoffs, rather than balance alone, see the related answer on making a boss fight memorable.",
           },
         ],
       },
