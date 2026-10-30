@@ -1,16 +1,6 @@
 {
-  "updated_at": 1793303923,
+  "updated_at": 1793359688,
   "candidates": [
-    {
-      "id": "reddit-40298726905-quick-names-ten-fantasy-names-you-can-co",
-      "title": "Quick Names: ten fantasy names you can copy without leaving the page",
-      "body": "Naming a whole street of NPCs was taking longer than writing the scene they were in.\n\nI wanted something that felt more like grabbing names off a tray than prompting an AI. So I upgraded the Fantasy Name Generator with Quick Names, a ten-name batch that rolls on device.\n\nNo account, no AI call, just names you can use right away: https://codexcryptica.com/tools/fantasy-name-generator\n\nWhat changed:\n\n- instant 10 name batch rolled locally on device\n- one tap copy per name with feedback, plus Copy all as a plain list\n- New names to reroll the set\n- pins that keep the ones you like when you reroll\n- real patterns for people, places, factions and items per fantasy culture, not just first names\n\nLimitation worth noting: the patterns are curated per culture for consistency, so they will feel coherent but less wild than a fully open generator. I am curious if that is the right balance.\n\nWhich culture do you reach for most when you need ten names fast, and what mix do you wish it covered better?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/screenshots/generator-fantasy-names.jpg)",
-      "url": "https://codexcryptica.com/tools/fantasy-name-generator",
-      "image_url": "https://assets.codexcryptica.com/screenshots/generator-fantasy-names.jpg",
-      "source_id": "40298726905",
-      "status": "approved",
-      "created_at": 1793013901
-    },
     {
       "id": "reddit-40344435304-i-stopped-forcing-party-balance-and-star",
       "title": "I stopped forcing party balance and started costing the gaps instead",
