@@ -49,10 +49,10 @@ export const shouldIDevelopMyCharactersOrMyWorldFirst: AnswerConfigInput = {
     },
     {
       kind: "prose",
-      heading: "Build one connected cluster before you widen the scope",
+      heading: "One connected cluster is a useful place to begin",
       paragraphs: [
-        "Pick one person, one place and one tension, and link them on a single page. The person wants something specific this week. The place makes that want harder, more expensive or more dangerous. The tension involves at least one other person or group whose wishes cut across theirs. That small cluster is enough to draft a scene, plan an opening session, prototype a level or test whether the idea holds your interest.",
-        "Expand only when a real question demands it. A neighbouring town matters when your character must travel there, trade with it or flee to it. A royal lineage matters when it changes a law your character can break. Until then, a name and a one line note will do. This keeps early work proportionate and leaves blank space for better ideas that arrive later.",
+        "If it helps to have a small starting point, try linking one person, one place and one connection between them on a single page. That connection might be a tension, but it can just as well be a relationship, a daily routine or a question you keep returning to. Add conflict when it sharpens a story, session or design problem. A cluster like this can support a scene or session, but it can also simply hold ideas you already imagine so they are recorded and linked.",
+        "Widen the scope when something calls for it: a question your project needs answered, a design problem, curiosity about a corner you have already imagined, or the purpose the world is being built for. A neighbouring town might matter because your character travels there, because trade links the two places, or because you are interested in how they differ. A royal lineage might matter because it shapes a law, an inheritance or a story you want to tell. Until you have a reason to develop a detail, a name and a one line note will do, and that note is already worth writing down. This keeps early work proportionate and leaves blank space for better ideas that arrive later.",
       ],
     },
     {
@@ -68,7 +68,7 @@ export const shouldIDevelopMyCharactersOrMyWorldFirst: AnswerConfigInput = {
         },
         {
           term: "Starting from the character",
-          text: "Begin again with Sanna alone: a courier who is paid by speed, who cannot swim and who hides that fact from the boat crews. Her job reveals the town around her. Someone must pay for urgent messages, so there is trade worth hurrying for, perhaps a fish market selling to inland buyers before the catch spoils. Routes need marking and maintaining, so the town employs tide wardens and fines anyone who moves a channel post. Her secret implies a near accident in her past and a reason the crews would drop her if they knew. Law, trade and infrastructure have appeared because one person's working day required them.",
+          text: "Begin again with Sanna alone: a courier who is paid by speed, who cannot swim and who hides that fact from the boat crews. Her job implies someone pays for urgent messages, so some trade or errand is worth hurrying for; a fish market selling to inland buyers before the catch spoils is one choice that would fit. Routes that stay passable in a flood would need marking and care, so the town might employ tide wardens, or the boat crews might maintain the channel posts themselves. Her secret raises questions rather than settling her past: has she already had a scare in the water, and would the crews drop her if they knew, or insist she learn to swim? You could leave either question open, or choose a concrete reason instead: for example, crews require everyone aboard to help with water rescues, so her secret would cost her the work. Law, trade and infrastructure have appeared because one person's working day called for them, with some parts following directly and others left as choices to make.",
         },
         {
           term: "Where the two directions meet",
@@ -127,7 +127,7 @@ export const shouldIDevelopMyCharactersOrMyWorldFirst: AnswerConfigInput = {
   codexConnection: {
     heading: "Grow linked notes as the ideas connect in Codex Cryptica",
     paragraphs: [
-      "The method above maps directly onto linked notes. In Codex Cryptica you can keep one entity for each character, place, faction and event, link them as relationships form, and view those links in the graph to spot clusters that are ready to draft from and questions that are still isolated. Add entities when a scene or session introduces them, so the chronicle grows alongside the project.",
+      "The method above maps directly onto linked notes. In Codex Cryptica you can keep one entity for each character, place, faction and event, link them as relationships form, and view those links in the graph to spot clusters that are ready to draft from and questions that are still isolated. Add an entity when an idea benefits from its own note, and link it to what you already know.",
       "Your vault stays on your own device, and you can revise names, links and notes at any point as early ideas change.",
     ],
     linkText: "Organise worldbuilding notes in Codex Cryptica",
