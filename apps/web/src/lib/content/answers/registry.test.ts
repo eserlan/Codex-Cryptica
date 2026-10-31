@@ -16,6 +16,7 @@ import {
 import { answers } from "./pages";
 import { findIntentOwner, getDiscoveryEntries } from "../discovery/registry";
 import { getAllLandingPageSlugs } from "../for/registry";
+import { getAllExampleSlugs } from "../examples/registry";
 import { HEIST_TOPIC_CONFIG } from "../topics/heists";
 import { PUZZLE_TOPIC_CONFIG } from "../topics/puzzles";
 import { PIRATE_TOPIC_CONFIG } from "../topics/pirates";
@@ -1152,6 +1153,7 @@ describe("published answers", () => {
     // hand-written href is the easiest thing on these pages to get wrong, so
     // it is checked against the same registries the routes are built from.
     const forSlugs = new Set(getAllLandingPageSlugs());
+    const exampleSlugs = new Set(getAllExampleSlugs());
     const topicPaths = new Set([
       HEIST_TOPIC_CONFIG.canonicalPath,
       PUZZLE_TOPIC_CONFIG.canonicalPath,
@@ -1174,6 +1176,7 @@ describe("published answers", () => {
 
     const sectionChecks: Record<string, (slug: string) => boolean> = {
       answers: (slug) => getAllAnswerSlugs().includes(slug),
+      examples: (slug) => exampleSlugs.has(slug),
       for: (slug) => forSlugs.has(slug),
       generators: (slug) => isGeneratorSlug(slug),
       tools: (slug) => toolPages.has(slug),
