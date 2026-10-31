@@ -125,6 +125,7 @@ export const whereDoWorldbuildingIdeasComeFrom: AnswerConfigInput = {
     "how-do-i-design-a-geographically-realistic-town-or-village",
     "how-do-you-create-a-fantasy-faction",
     "how-do-you-create-a-fantasy-city-that-feels-alive",
+    "should-i-develop-my-characters-or-my-world-first",
   ],
   discovery: {
     id: "answer-worldbuilding-ideas-inspiration",
@@ -151,6 +152,11 @@ export const whereDoWorldbuildingIdeasComeFrom: AnswerConfigInput = {
         with: "answer-worldbuilding-for-fiction-writers",
         reason:
           "The fiction writers answer assumes a story premise exists and builds the minimum setting for an opening scene, whereas this answer explains how to find and test the idea before that stage, for writers and other creators alike.",
+      },
+      {
+        with: "answer-characters-or-world-first",
+        reason:
+          "This answer helps creators find and test a spark before choosing a premise, whereas the characters-or-world answer assumes ideas already exist and explains how to record and develop them together.",
       },
     ],
     relatedIntents: [
