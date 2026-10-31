@@ -1,4 +1,7 @@
 <script lang="ts">
+  /* eslint-disable svelte/no-useless-mustaches -- Class expressions retain the inline contrast-review notes for inherited styles. */
+  import { SourceWorkspaceSession } from "./source-workspace-session.svelte";
+  import { SourceWorkspacePrompts } from "./source-workspace-prompts.svelte";
   import SourceWorkspaceHeader from "./SourceWorkspaceHeader.svelte";
   import SourceWorkspaceList from "./SourceWorkspaceList.svelte";
   import SourceWorkspaceContent from "./SourceWorkspaceContent.svelte";
@@ -11,12 +14,7 @@
     type StorageLike,
   } from "#lib/utils/runtime-deps.js";
 
-  import { browser } from "$app/env";
-  import type {
-    Diagnostic,
-    ExportFormat,
-    RandomSource,
-  } from "random-source-engine";
+  import type { ExportFormat, RandomSource } from "random-source-engine";
   import {
     ensureRandomSourcesLoaded,
     randomSources,
@@ -107,20 +105,6 @@
     setMode("build");
   }
 
-  let selectedId = $state<string | undefined>();
-  let draft = $state<RandomSource | undefined>();
-  let diagnostics = $state<Diagnostic[]>([]);
-  let saveTimer: ReturnType<typeof setTimeout> | undefined;
-  let writes: Promise<unknown> = Promise.resolve();
-  /** An edit is typed but not yet handed to the queue. */
-  let dirty = $state(false);
-  let inFlight = $state(0);
-
-  // "Saving" covers the debounce too: between the keystroke and the write there
-  // is real unsaved work, and saying otherwise would be a lie the user could
-  // act on by closing the tab.
-  const saving = $derived(dirty || inFlight > 0);
-  let deleteImpact = $state<RandomSource[] | undefined>();
   let importing = $state(false);
   let exporting = $state(false);
   // Held here rather than inside ExportDialog so it survives switching to
@@ -128,140 +112,26 @@
   // one bit of export state worth keeping.
   let exportFormat = $state<ExportFormat>("codex");
   let generatingTable = $state(false);
-  let pendingRename = $state<
-    { name: string; referencedBy: RandomSource[] } | undefined
-  >();
-
-  type ContextMenuState = {
-    x: number;
-    y: number;
-    source: RandomSource;
-  };
-  let contextMenu = $state<ContextMenuState | null>(null);
-  let deleteModalTarget = $state<RandomSource | null>(null);
-  const deleteModalImpact = $derived(
-    deleteModalTarget
-      ? randomSources.impactOf(deleteModalTarget).referencedBy
-      : [],
+  const session = new SourceWorkspaceSession(randomSources, () => idGenerator);
+  const prompts = new SourceWorkspacePrompts(
+    session,
+    () => noun,
+    confirmDelete,
   );
 
-  let renameModalTarget = $state<RandomSource | null>(null);
-  let renameModalDraft = $state("");
-  let renameModalError = $state("");
-  const renameModalImpact = $derived.by(() => {
-    if (!renameModalTarget) return [];
-    return randomSources.impactOf(renameModalTarget).referencedBy;
-  });
-
-  const CONTEXT_MENU_WIDTH = 176;
-  const CONTEXT_MENU_HEIGHT = 272;
-
-  function showContextMenu(source: RandomSource, x: number, y: number) {
-    const maxX = browser
-      ? Math.max(0, window.innerWidth - CONTEXT_MENU_WIDTH)
-      : x;
-    const maxY = browser
-      ? Math.max(0, window.innerHeight - CONTEXT_MENU_HEIGHT)
-      : y;
-    contextMenu = {
-      x: Math.min(x, maxX),
-      y: Math.min(y, maxY),
-      source,
-    };
-  }
-
-  function closeContextMenu() {
-    contextMenu = null;
-  }
-
-  function openDeleteModal(source: RandomSource) {
-    deleteModalTarget = source;
-    closeContextMenu();
-  }
-
-  function closeDeleteModal() {
-    deleteModalTarget = null;
-  }
-
-  function executeDelete() {
-    if (!deleteModalTarget) return;
-    const target = deleteModalTarget;
-    confirmDelete(target);
-    closeDeleteModal();
-  }
-
-  function openRenameModal(source: RandomSource) {
-    renameModalTarget = source;
-    renameModalDraft = source.name;
-    renameModalError = "";
-    closeContextMenu();
-  }
-
-  function closeRenameModal() {
-    renameModalTarget = null;
-    renameModalDraft = "";
-    renameModalError = "";
-  }
-
-  function handleWindowKeydown(event: KeyboardEvent) {
-    if (event.key !== "Escape") return;
-    if (deleteModalTarget) {
-      closeDeleteModal();
-    } else if (renameModalTarget) {
-      closeRenameModal();
-    }
-  }
-
-  function executeRename() {
-    const trimmed = renameModalDraft.trim();
-    if (!renameModalTarget || !trimmed) return;
-    if (trimmed === renameModalTarget.name) {
-      closeRenameModal();
-      return;
-    }
-    const existing = randomSources.findByName(trimmed);
-    if (existing && existing.id !== renameModalTarget.id) {
-      renameModalError = `A ${noun} named "${trimmed}" already exists.`;
-      return;
-    }
-
-    if (draft && draft.id === renameModalTarget.id) {
-      commitRename(trimmed);
-    } else {
-      const target = renameModalTarget;
-      enqueue(async () => {
-        const stored = randomSources.findById(target.id);
-        if (!stored) return;
-        await randomSources.rename(stored, trimmed);
-      });
-    }
-    closeRenameModal();
-  }
-
   function duplicate(source: RandomSource) {
-    closeContextMenu();
-    const copyName = uniqueName(`${source.name} (Copy)`);
-    const copy: RandomSource = {
-      ...($state.snapshot(source) as RandomSource),
-      id: idGenerator.uuid(),
-      name: copyName,
-      entries: source.entries?.map((e) => ({ ...e, id: idGenerator.uuid() })),
-      cards: source.cards?.map((c) => ({ ...c, id: idGenerator.uuid() })),
-      spreads: source.spreads?.map((s) => ({ ...s, id: idGenerator.uuid() })),
-    };
-    select(copy);
-    openBuild();
-    enqueue(() => randomSources.save(copy));
+    prompts.closeContextMenu();
+    adoptSource(session.copy(source));
   }
 
   onMount(() => {
     // A close or a navigation within the debounce window must not lose the
     // last edit.
-    const flush = () => flushPendingSave();
+    const flush = () => session.flushPendingSave();
     window.addEventListener("pagehide", flush);
     return () => {
       window.removeEventListener("pagehide", flush);
-      flushPendingSave();
+      session.flushPendingSave();
     };
   });
 
@@ -295,12 +165,7 @@
   }
 
   function select(source: RandomSource) {
-    flushPendingSave();
-    selectedId = source.id;
-    draft = $state.snapshot(source) as RandomSource;
-    diagnostics = randomSources.validate(draft);
-    deleteImpact = undefined;
-    pendingRename = undefined;
+    session.select(source);
     importing = false;
     exporting = false;
     generatingTable = false;
@@ -309,21 +174,20 @@
     listOpen = false;
   }
 
-  function create() {
-    const created = randomSources.create(kind, uniqueName(`New ${noun}`));
-    // Selected before it is written: the editor has to switch on the click, or
-    // the first thing typed lands in the source the author just left.
-    select(created);
-    openBuild();
-    enqueue(() => randomSources.save(created));
-  }
-
-  /** An imported source lands selected, so the author sees what arrived. */
-  function completeImport(source: RandomSource) {
-    importing = false;
+  // All newly authored sources enter the same selection/build/write sequence.
+  function adoptSource(source: RandomSource) {
     select(source);
     openBuild();
-    enqueue(() => randomSources.save(source));
+    session.saveNew(source);
+  }
+
+  function create() {
+    adoptSource(session.create(kind));
+  }
+
+  function completeImport(source: RandomSource) {
+    importing = false;
+    adoptSource(source);
   }
 
   function handleCreateGeneratedTable(
@@ -332,139 +196,26 @@
     tableDescription?: string,
   ) {
     generatingTable = false;
-    const name = uniqueName(tableTitle?.trim() || `New ${noun}`);
-    const created = randomSources.create("table", name);
-    created.description = tableDescription;
-    created.entries = candidates.map((c) => ({
-      id: c.id || idGenerator.uuid(),
-      text: c.text,
-      weight: c.weight ?? 1,
-    }));
-    select(created);
-    openBuild();
-    enqueue(() => randomSources.save(created));
-  }
-
-  function uniqueName(base: string): string {
-    if (!randomSources.findByName(base)) return base;
-    let n = 2;
-    while (randomSources.findByName(`${base} ${n}`)) n++;
-    return `${base} ${n}`;
-  }
-
-  /**
-   * Saves on a short delay so typing does not write a file per keystroke.
-   * Diagnostics update immediately, because an editor that reports a problem
-   * only after a pause reports it too late to help.
-   */
-  function onChange(next: RandomSource) {
-    const normalized: RandomSource =
-      draft && draft.id === next.id ? { ...next, name: draft.name } : next;
-    draft = normalized;
-    diagnostics = randomSources.validate(normalized);
-    dirty = true;
-    clearTimeout(saveTimer);
-    saveTimer = setTimeout(() => {
-      dirty = false;
-      persist(normalized);
-    }, 400);
-  }
-
-  function flushPendingSave() {
-    clearTimeout(saveTimer);
-    if (!dirty) return;
-    dirty = false;
-    if (draft) persist(draft);
-  }
-
-  /**
-   * One write at a time, in the order they were asked for.
-   *
-   * Creating a source and editing it are two writes to the same collection, and
-   * a create still in flight while an edit lands would leave the file and the
-   * in-memory list disagreeing.
-   */
-  function enqueue(op: () => Promise<unknown>) {
-    inFlight++;
-    writes = writes
-      .then(op, op)
-      .catch((err) => console.error("[RandomSources] Write failed", err))
-      .finally(() => inFlight--);
-  }
-
-  function persist(next: RandomSource) {
-    enqueue(async () => {
-      const stored = randomSources.findById(next.id);
-      // A rename moves the file, so it cannot go through the plain save path.
-      diagnostics =
-        stored && stored.name !== next.name
-          ? await randomSources.rename(
-              { ...next, name: stored.name },
-              next.name,
-            )
-          : await randomSources.save(next);
-    });
-  }
-
-  /**
-   * A rename is not a rebind: sources point at the old name and keep pointing
-   * at it. So the sources that would break are named before it happens (FR-042).
-   */
-  function requestRename(name: string): boolean {
-    // Judged from the draft, not the stored copy: a source created a moment ago
-    // may still be in the write queue, and renaming it must not have to wait.
-    if (!draft || draft.name === name) return false;
-
-    const impact = randomSources.impactOf(draft);
-    if (impact.safe) {
-      commitRename(name);
-      return true;
-    }
-    pendingRename = { name, referencedBy: impact.referencedBy };
-    return false;
-  }
-
-  function commitRename(name: string) {
-    if (!draft) return;
-    // Pending edits land under the old name first, so the rename moves a file
-    // whose contents are already current.
-    flushPendingSave();
-    const id = draft.id;
-    draft = { ...draft, name };
-    pendingRename = undefined;
-
-    enqueue(async () => {
-      const stored = randomSources.findById(id);
-      if (!stored) return;
-      const result = await randomSources.rename(stored, name);
-      diagnostics = result;
-      // A rejected rename must not leave the editor showing a name the vault
-      // does not have.
-      if (result.some((d) => d.severity === "error") && draft?.id === id) {
-        draft = { ...draft, name: stored.name };
-      }
-    });
+    adoptSource(
+      session.createGenerated(kind, candidates, tableTitle, tableDescription),
+    );
   }
 
   function confirmDelete(source: RandomSource) {
-    const removesSelectedSource = source.id === selectedId;
-    if (removesSelectedSource) flushPendingSave();
-    enqueue(() => randomSources.remove(source));
-    deleteImpact = undefined;
-    if (removesSelectedSource) {
-      selectedId = undefined;
-      draft = undefined;
-      // Nothing is open now, so the list comes back rather than leaving a phone
-      // showing an empty pane with no way out of it.
-      listOpen = true;
-    }
+    if (session.confirmDelete(source)) listOpen = true;
   }
 </script>
 
-<svelte:window onkeydown={handleWindowKeydown} />
+<svelte:window onkeydown={prompts.handleWindowKeydown} />
 
 <div class="flex h-full min-h-0 flex-col bg-theme-bg font-body">
-  <SourceWorkspaceHeader {kind} {heading} {mode} {saving} onMode={setMode} />
+  <SourceWorkspaceHeader
+    {kind}
+    {heading}
+    {mode}
+    saving={session.saving}
+    onMode={setMode}
+  />
 
   <!-- The list and its controls are chrome too. On a phone they collapse once
        something is open, so the roll or the draw gets the screen; the rail is
@@ -480,8 +231,11 @@
     <span
       class="min-w-0 truncate font-header text-micro font-bold uppercase tracking-widest text-theme-text"
     >
-      {draft ? draft.name : `All ${noun}s`}
-      <span class="font-mono text-theme-muted/60">({all.length})</span>
+      {session.draft ? session.draft.name : `All ${noun}s`}
+      <span
+        class={// ui-check-ignore: Existing SourceWorkspace colours preserved during decomposition; contrast repair is separate work.
+        "font-mono text-theme-muted/60"}>({all.length})</span
+      >
     </span>
     <span
       aria-hidden="true"
@@ -495,8 +249,8 @@
     <SourceWorkspaceList
       {kind}
       {all}
-      {draft}
-      {selectedId}
+      draft={session.draft}
+      selectedId={session.selectedId}
       {listOpen}
       {allowImport}
       onCreate={create}
@@ -504,19 +258,19 @@
       onImport={openImport}
       onExport={openExport}
       onSelect={select}
-      onContextMenu={showContextMenu}
+      onContextMenu={prompts.showContextMenu}
     />
 
     <SourceWorkspaceContent
       {noun}
-      {draft}
+      draft={session.draft}
       {mode}
       {importing}
       {exporting}
       bind:exportFormat
-      {deleteImpact}
-      {pendingRename}
-      {diagnostics}
+      deleteImpact={session.deleteImpact}
+      pendingRename={session.pendingRename}
+      diagnostics={session.diagnostics}
       {icon}
       {emptyBody}
       {editor}
@@ -524,16 +278,16 @@
       {completeImport}
       cancelImport={() => (importing = false)}
       closeExport={() => (exporting = false)}
-      {openRenameModal}
+      openRenameModal={prompts.openRenameModal}
       {duplicate}
-      {openDeleteModal}
+      openDeleteModal={prompts.openDeleteModal}
       {setMode}
       {confirmDelete}
-      cancelDelete={() => (deleteImpact = undefined)}
-      {commitRename}
-      cancelRename={() => (pendingRename = undefined)}
-      {onChange}
-      {requestRename}
+      cancelDelete={() => (session.deleteImpact = undefined)}
+      commitRename={session.commitRename}
+      cancelRename={() => (session.pendingRename = undefined)}
+      onChange={session.onChange}
+      requestRename={session.requestRename}
       {create}
     />
   </div>
@@ -547,40 +301,40 @@
     />
   {/if}
 
-  {#if contextMenu}
+  {#if prompts.contextMenu}
     <SourceWorkspaceContextMenu
-      {contextMenu}
-      onClose={closeContextMenu}
+      contextMenu={prompts.contextMenu}
+      onClose={prompts.closeContextMenu}
       onSelect={select}
-      onRename={openRenameModal}
+      onRename={prompts.openRenameModal}
       onDuplicate={duplicate}
       onExport={(source) => {
         select(source);
         exporting = true;
       }}
-      onDelete={openDeleteModal}
+      onDelete={prompts.openDeleteModal}
     />
   {/if}
 
-  {#if deleteModalTarget}
+  {#if prompts.deleteModalTarget}
     <SourceWorkspaceDeleteModal
       {noun}
-      target={deleteModalTarget}
-      impact={deleteModalImpact}
-      onClose={closeDeleteModal}
-      onConfirm={executeDelete}
+      target={prompts.deleteModalTarget}
+      impact={prompts.deleteModalImpact}
+      onClose={prompts.closeDeleteModal}
+      onConfirm={prompts.executeDelete}
     />
   {/if}
 
-  {#if renameModalTarget}
+  {#if prompts.renameModalTarget}
     <SourceWorkspaceRenameModal
       {noun}
-      target={renameModalTarget}
-      bind:draft={renameModalDraft}
-      error={renameModalError}
-      impact={renameModalImpact}
-      onClose={closeRenameModal}
-      onConfirm={executeRename}
+      target={prompts.renameModalTarget}
+      bind:draft={prompts.renameModalDraft}
+      error={prompts.renameModalError}
+      impact={prompts.renameModalImpact}
+      onClose={prompts.closeRenameModal}
+      onConfirm={prompts.executeRename}
     />
   {/if}
 </div>

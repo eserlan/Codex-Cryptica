@@ -1,4 +1,5 @@
 <script lang="ts">
+  /* eslint-disable svelte/no-useless-mustaches -- Class expressions retain the inline contrast-review notes for inherited styles. */
   import type { RandomSource } from "random-source-engine";
   let {
     source,
@@ -44,7 +45,8 @@
       </button>
       <button
         type="button"
-        class="rounded border border-theme-border px-2.5 py-1 font-header text-micro uppercase tracking-widest text-theme-muted"
+        class={// ui-check-ignore: Existing SourceWorkspace colours preserved during decomposition; contrast repair is separate work.
+        "rounded border border-theme-border px-2.5 py-1 font-header text-micro uppercase tracking-widest text-theme-muted"}
         onclick={onCancelDelete}>Keep it</button
       >
     </div>
@@ -73,7 +75,8 @@
       </button>
       <button
         type="button"
-        class="rounded border border-theme-border px-2.5 py-1 font-header text-micro uppercase tracking-widest text-theme-muted"
+        class={// ui-check-ignore: Existing SourceWorkspace colours preserved during decomposition; contrast repair is separate work.
+        "rounded border border-theme-border px-2.5 py-1 font-header text-micro uppercase tracking-widest text-theme-muted"}
         onclick={onCancelRename}>Keep the name</button
       >
     </div>

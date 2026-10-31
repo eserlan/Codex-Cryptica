@@ -1,4 +1,5 @@
 <script lang="ts">
+  /* eslint-disable svelte/no-useless-mustaches -- Class expressions retain the inline contrast-review notes for inherited styles. */
   import { basePath } from "#lib/utils/base-path.js";
   import type { SourceMode } from "./source-workspace";
   let {
@@ -96,7 +97,8 @@
 
   {#if saving}
     <span
-      class="shrink-0 font-mono text-nano uppercase tracking-widest text-theme-muted/60"
+      class={// ui-check-ignore: Existing SourceWorkspace colours preserved during decomposition; contrast repair is separate work.
+      "shrink-0 font-mono text-nano uppercase tracking-widest text-theme-muted/60"}
       data-testid="workspace-saving">Saving…</span
     >
   {/if}

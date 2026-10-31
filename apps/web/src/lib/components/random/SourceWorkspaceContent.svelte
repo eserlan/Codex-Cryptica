@@ -88,35 +88,37 @@
       onCancel={cancelImport}
     />
   {:else if draft}
-    <SourceWorkspaceToolbar
-      {noun}
-      {mode}
-      onRename={() => openRenameModal(draft!)}
-      onDuplicate={() => duplicate(draft!)}
-      onDelete={() => openDeleteModal(draft!)}
-      onMode={setMode}
-    />
-
-    {#if mode === "use"}
-      {@render player({ source: draft })}
-    {:else}
-      <SourceWorkspaceNotices
-        source={draft}
-        {deleteImpact}
-        {pendingRename}
-        onDelete={confirmDelete}
-        onCancelDelete={cancelDelete}
-        onRename={commitRename}
-        onCancelRename={cancelRename}
+    {#key mode}
+      <SourceWorkspaceToolbar
+        {noun}
+        {mode}
+        onRename={() => openRenameModal(draft!)}
+        onDuplicate={() => duplicate(draft!)}
+        onDelete={() => openDeleteModal(draft!)}
+        onMode={setMode}
       />
 
-      {@render editor({
-        source: draft,
-        diagnostics,
-        onChange,
-        onRename: requestRename,
-      })}
-    {/if}
+      {#if mode === "use"}
+        {@render player({ source: draft })}
+      {:else}
+        <SourceWorkspaceNotices
+          source={draft}
+          {deleteImpact}
+          {pendingRename}
+          onDelete={confirmDelete}
+          onCancelDelete={cancelDelete}
+          onRename={commitRename}
+          onCancelRename={cancelRename}
+        />
+
+        {@render editor({
+          source: draft,
+          diagnostics,
+          onChange,
+          onRename: requestRename,
+        })}
+      {/if}
+    {/key}
   {:else}
     <EmptyState
       {icon}
