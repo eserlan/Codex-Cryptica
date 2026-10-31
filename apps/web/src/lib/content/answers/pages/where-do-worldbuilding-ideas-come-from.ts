@@ -125,6 +125,7 @@ export const whereDoWorldbuildingIdeasComeFrom: AnswerConfigInput = {
     "how-do-i-design-a-geographically-realistic-town-or-village",
     "how-do-you-create-a-fantasy-faction",
     "how-do-you-create-a-fantasy-city-that-feels-alive",
+    "should-i-develop-my-characters-or-my-world-first",
   ],
   discovery: {
     id: "answer-worldbuilding-ideas-inspiration",

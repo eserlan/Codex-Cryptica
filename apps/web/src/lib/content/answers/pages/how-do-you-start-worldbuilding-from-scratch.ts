@@ -156,6 +156,7 @@ export const howDoYouStartWorldbuildingFromScratch: AnswerConfigInput = {
     "how-do-i-start-a-dnd-campaign",
     "should-i-share-worldbuilding-notes-with-my-players",
     "where-do-worldbuilding-ideas-come-from",
+    "should-i-develop-my-characters-or-my-world-first",
   ],
   discovery: {
     id: "answer-worldbuilding-from-scratch",

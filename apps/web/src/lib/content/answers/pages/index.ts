@@ -149,6 +149,7 @@ import { howToWriteAnInWorldNewspaperForAnRpg } from "./how-to-write-an-in-world
 import { howWouldARealisticAdventurersGuildWork } from "./how-would-a-realistic-adventurers-guild-work";
 import { isMyRpgCampaignIdeaGood } from "./is-my-rpg-campaign-idea-good";
 import { pointCrawlVsHexCrawl } from "./point-crawl-vs-hex-crawl";
+import { shouldIDevelopMyCharactersOrMyWorldFirst } from "./should-i-develop-my-characters-or-my-world-first";
 import { shouldIShareWorldbuildingNotesWithMyPlayers } from "./should-i-share-worldbuilding-notes-with-my-players";
 import { stopPlayersInvestigatingEveryDetail } from "./stop-players-investigating-every-detail";
 import { whatAreTheBestClasslessFantasyRpgsWithSkillBasedProgression } from "./what-are-the-best-classless-fantasy-rpgs-with-skill-based-progression";
@@ -344,6 +345,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howWouldARealisticAdventurersGuildWork,
     isMyRpgCampaignIdeaGood,
     pointCrawlVsHexCrawl,
+    shouldIDevelopMyCharactersOrMyWorldFirst,
     shouldIShareWorldbuildingNotesWithMyPlayers,
     stopPlayersInvestigatingEveryDetail,
     whatAreTheBestClasslessFantasyRpgsWithSkillBasedProgression,
