@@ -1,6 +1,8 @@
 <script lang="ts">
+  import SourceWorkspaceHeader from "./SourceWorkspaceHeader.svelte";
+  import SourceWorkspaceList from "./SourceWorkspaceList.svelte";
+  import SourceWorkspaceContent from "./SourceWorkspaceContent.svelte";
   import { onMount, type Snippet } from "svelte";
-  import { basePath } from "#lib/utils/base-path.js";
   import { page } from "$app/state";
   import {
     browserStorage,
@@ -20,8 +22,6 @@
     randomSources,
   } from "#lib/features/random/index.js";
   import { vault } from "#lib/stores/vault.svelte.js";
-  import ImportWizard from "./ImportWizard.svelte";
-  import ExportDialog from "./ExportDialog.svelte";
   import TableGenerateDialog from "./TableGenerateDialog.svelte";
   import type { CandidateTableEntry } from "generator-engine";
   import {
@@ -31,13 +31,6 @@
     type PlayerContext,
     type SourceMode,
   } from "./source-workspace";
-  import EmptyState from "#lib/components/ui/EmptyState.svelte";
-  import { createLongPressTracker } from "./long-press-tracker";
-  import {
-    collectLabels,
-    countOf,
-    filterSources,
-  } from "./source-workspace-filter";
   import SourceWorkspaceDeleteModal from "./SourceWorkspaceDeleteModal.svelte";
   import SourceWorkspaceRenameModal from "./SourceWorkspaceRenameModal.svelte";
   import SourceWorkspaceContextMenu from "./SourceWorkspaceContextMenu.svelte";
@@ -93,19 +86,6 @@
     ),
   );
 
-  const MODES = [
-    { id: "use", label: "Use", icon: "icon-[lucide--dices]" },
-    { id: "build", label: "Build", icon: "icon-[lucide--pencil]" },
-  ] as const;
-
-  /** Both toggles share one shape so the header reads as one control strip. */
-  const toggleClass = (current: boolean) =>
-    `flex items-center rounded px-2 py-1 font-header text-micro font-bold uppercase tracking-wider transition-colors ${
-      current
-        ? "bg-theme-primary/15 text-theme-primary"
-        : "text-theme-muted hover:text-theme-text"
-    }`;
-
   /**
    * Whether the list and its controls are showing. Only consulted below `md`;
    * the desktop rail is always open.
@@ -127,28 +107,6 @@
     setMode("build");
   }
 
-  /**
-   * The two kinds share one Activity Bar slot, so switching between them
-   * happens here instead. Plain links rather than local state: each kind keeps
-   * its own URL, so a deck is still something you can bookmark and link to.
-   */
-  const KINDS = [
-    {
-      id: "table",
-      label: "Tables",
-      href: "/tables",
-      icon: "icon-[lucide--list-tree]",
-    },
-    {
-      id: "deck",
-      label: "Decks",
-      href: "/decks",
-      icon: "icon-[lucide--layers]",
-    },
-  ] as const;
-
-  let query = $state("");
-  let activeLabels = $state<string[]>([]);
   let selectedId = $state<string | undefined>();
   let draft = $state<RandomSource | undefined>();
   let diagnostics = $state<Diagnostic[]>([]);
@@ -210,41 +168,6 @@
       y: Math.min(y, maxY),
       source,
     };
-  }
-
-  function openContextMenu(e: MouseEvent, source: RandomSource) {
-    e.preventDefault();
-    e.stopPropagation();
-    showContextMenu(source, e.clientX, e.clientY);
-  }
-
-  const longPress = createLongPressTracker<RandomSource>({
-    onLongPress: (source, clientX, clientY) =>
-      showContextMenu(source, clientX, clientY),
-    vibrate: (ms) => {
-      if (typeof navigator !== "undefined" && "vibrate" in navigator) {
-        navigator.vibrate(ms);
-      }
-    },
-  });
-
-  function handleItemTouchStart(e: TouchEvent, source: RandomSource) {
-    const touch = e.touches?.[0];
-    longPress.handleTouchStart(
-      source,
-      touch?.clientX ?? 0,
-      touch?.clientY ?? 0,
-    );
-  }
-
-  function handleItemTouchMove(e: TouchEvent) {
-    const touch = e.touches[0];
-    if (!touch) return;
-    longPress.handleTouchMove(touch.clientX, touch.clientY);
-  }
-
-  function handleItemTouchEnd() {
-    longPress.handleTouchEnd();
   }
 
   function closeContextMenu() {
@@ -354,14 +277,21 @@
     kind === "table" ? randomSources.tables : randomSources.decks,
   );
 
-  const labels = $derived(collectLabels(all));
+  function openGenerate() {
+    generatingTable = true;
+    listOpen = false;
+  }
 
-  const visible = $derived.by(() => filterSources(all, query, activeLabels));
+  function openImport() {
+    importing = true;
+    exporting = false;
+    listOpen = false;
+  }
 
-  function toggleLabel(label: string) {
-    activeLabels = activeLabels.includes(label)
-      ? activeLabels.filter((l) => l !== label)
-      : [...activeLabels, label];
+  function openExport() {
+    exporting = true;
+    importing = false;
+    listOpen = false;
   }
 
   function select(source: RandomSource) {
@@ -534,59 +464,7 @@
 <svelte:window onkeydown={handleWindowKeydown} />
 
 <div class="flex h-full min-h-0 flex-col bg-theme-bg font-body">
-  <header
-    class="flex shrink-0 items-center justify-between gap-2 border-b border-theme-border bg-theme-surface px-3 py-2"
-  >
-    <h1 class="sr-only">{heading}</h1>
-
-    <!-- Both toggles on one row: on a phone this bar is pure chrome, and two
-         rows of it push the thing you came for below the fold. -->
-    <div class="flex min-w-0 items-center gap-1.5">
-      <nav
-        class="flex shrink-0 items-center gap-0.5 rounded-md border border-theme-border bg-theme-bg p-0.5"
-        aria-label="Random source kind"
-      >
-        {#each KINDS as option}
-          {@const current = option.id === kind}
-          <a
-            href="{basePath()}{option.href}"
-            aria-current={current ? "page" : undefined}
-            class="{toggleClass(current)} gap-1"
-            data-testid="source-kind-{option.id}"
-          >
-            <span aria-hidden="true" class="{option.icon} h-3.5 w-3.5"></span>
-            {option.label}
-          </a>
-        {/each}
-      </nav>
-
-      <nav
-        class="flex shrink-0 items-center gap-0.5 rounded-md border border-theme-border bg-theme-bg p-0.5"
-        aria-label="Workspace mode"
-      >
-        {#each MODES as option}
-          {@const current = option.id === mode}
-          <button
-            type="button"
-            aria-pressed={current}
-            onclick={() => setMode(option.id)}
-            class="{toggleClass(current)} gap-1"
-            data-testid="source-mode-{option.id}"
-          >
-            <span aria-hidden="true" class="{option.icon} h-3.5 w-3.5"></span>
-            {option.label}
-          </button>
-        {/each}
-      </nav>
-    </div>
-
-    {#if saving}
-      <span
-        class="shrink-0 font-mono text-nano uppercase tracking-widest text-theme-muted/60"
-        data-testid="workspace-saving">Saving…</span
-      >
-    {/if}
-  </header>
+  <SourceWorkspaceHeader {kind} {heading} {mode} {saving} onMode={setMode} />
 
   <!-- The list and its controls are chrome too. On a phone they collapse once
        something is open, so the roll or the draw gets the screen; the rail is
@@ -614,357 +492,50 @@
   </button>
 
   <div class="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden md:flex-row">
-    <aside
-      id="source-list"
-      class="w-full shrink-0 flex-col gap-3 border-theme-border p-4 md:flex md:w-72 md:border-r {listOpen
-        ? 'flex'
-        : 'hidden'}"
-    >
-      <input
-        class="rounded border border-theme-border bg-theme-surface px-3 py-2 text-xs text-theme-text focus:border-theme-primary focus:outline-none"
-        placeholder="Search {noun}s..."
-        bind:value={query}
-        data-testid="{noun}-search"
-      />
+    <SourceWorkspaceList
+      {kind}
+      {all}
+      {draft}
+      {selectedId}
+      {listOpen}
+      {allowImport}
+      onCreate={create}
+      onGenerate={openGenerate}
+      onImport={openImport}
+      onExport={openExport}
+      onSelect={select}
+      onContextMenu={showContextMenu}
+    />
 
-      {#if labels.length > 0}
-        <div class="flex flex-wrap gap-1.5">
-          {#each labels as label}
-            <button
-              type="button"
-              onclick={() => toggleLabel(label)}
-              class="rounded px-2 py-0.5 font-mono text-micro tracking-wider transition-colors {activeLabels.includes(
-                label,
-              )
-                ? 'bg-theme-primary text-theme-bg'
-                : 'bg-theme-primary/10 text-theme-primary hover:bg-theme-primary/20'}"
-            >
-              {label}
-            </button>
-          {/each}
-        </div>
-      {/if}
-
-      <button
-        type="button"
-        onclick={create}
-        class="flex items-center justify-center gap-2 rounded border border-theme-primary/30 bg-theme-primary/10 px-3 py-2 font-header text-micro font-bold uppercase tracking-widest text-theme-primary transition-all hover:bg-theme-primary hover:text-theme-bg"
-        data-testid="new-{noun}"
-      >
-        <span aria-hidden="true" class="icon-[lucide--plus] h-3.5 w-3.5"></span>
-        New {noun}
-      </button>
-
-      {#if kind === "table"}
-        <button
-          type="button"
-          onclick={() => {
-            generatingTable = true;
-            listOpen = false;
-          }}
-          class="flex items-center justify-center gap-2 rounded border border-theme-border px-3 py-2 font-header text-micro font-bold uppercase tracking-widest text-theme-text transition-colors hover:border-theme-primary hover:text-theme-primary"
-          data-testid="generate-table-btn"
-        >
-          <span
-            aria-hidden="true"
-            class="icon-[lucide--sparkles] h-3.5 w-3.5 text-theme-primary"
-          ></span>
-          Generate with AI
-        </button>
-      {/if}
-
-      {#if allowImport}
-        <button
-          type="button"
-          onclick={() => {
-            importing = true;
-            // Import and Export occupy the same panel, so opening one has to
-            // close the other — otherwise Export's `&& draft` check wins and
-            // the click does nothing visible (issue: import button no-op
-            // while Export is open).
-            exporting = false;
-            listOpen = false;
-          }}
-          class="flex items-center justify-center gap-2 rounded border border-theme-border px-3 py-2 font-header text-micro font-bold uppercase tracking-widest text-theme-text transition-colors hover:border-theme-primary hover:text-theme-primary"
-          data-testid="open-import"
-        >
-          <span
-            aria-hidden="true"
-            class="icon-[lucide--clipboard-paste] h-3.5 w-3.5"
-          ></span>
-          Import
-        </button>
-      {/if}
-
-      <!-- Beside Import, because they are the same job in two directions.
-           Disabled rather than hidden when nothing is open, so it is
-           discoverable before it is needed (issue 2263). -->
-      <button
-        type="button"
-        onclick={() => {
-          exporting = true;
-          importing = false;
-          listOpen = false;
-        }}
-        disabled={!draft}
-        title={draft ? `Export "${draft.name}"` : `Open a ${noun} to export it`}
-        class="flex items-center justify-center gap-2 rounded border border-theme-border px-3 py-2 font-header text-micro font-bold uppercase tracking-widest text-theme-text transition-colors hover:border-theme-primary hover:text-theme-primary disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-theme-border disabled:hover:text-theme-text"
-        data-testid="open-export"
-      >
-        <span aria-hidden="true" class="icon-[lucide--download] h-3.5 w-3.5"
-        ></span>
-        Export
-      </button>
-
-      <ul class="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
-        {#each visible as source (source.id)}
-          {@const isSelected = selectedId === source.id}
-          <li
-            class="group relative flex items-center justify-between rounded px-2 py-1.5 text-xs transition-colors select-none {isSelected
-              ? 'bg-theme-primary/15 text-theme-primary font-medium'
-              : 'text-theme-text hover:bg-theme-surface'}"
-            oncontextmenu={(e) => openContextMenu(e, source)}
-            ontouchstart={(e) => handleItemTouchStart(e, source)}
-            ontouchmove={handleItemTouchMove}
-            ontouchend={handleItemTouchEnd}
-            ontouchcancel={handleItemTouchEnd}
-          >
-            <button
-              type="button"
-              onclick={() => {
-                if (longPress.consumeTriggered()) return;
-                select(source);
-              }}
-              class="flex flex-1 min-w-0 items-center justify-between text-left focus:outline-none"
-              data-testid="{noun}-list-item"
-            >
-              <span class="truncate pr-1">{source.name}</span>
-              <span
-                class="ml-1 font-mono text-nano text-theme-muted/60 shrink-0"
-              >
-                {countOf(kind, source)}
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onclick={(e) => {
-                const rect = e.currentTarget.getBoundingClientRect();
-                showContextMenu(source, rect.right, rect.bottom);
-              }}
-              class="ml-1 flex h-7 w-7 sm:h-6 sm:w-6 shrink-0 items-center justify-center rounded p-1 text-theme-muted opacity-100 sm:opacity-0 transition-opacity hover:bg-theme-bg hover:text-theme-text group-hover:opacity-100 focus:opacity-100 active:scale-95"
-              aria-label="Actions for {source.name}"
-              data-testid="item-actions-{source.id}"
-            >
-              <span
-                aria-hidden="true"
-                class="icon-[lucide--more-vertical] h-3.5 w-3.5"
-              ></span>
-            </button>
-          </li>
-        {/each}
-      </ul>
-    </aside>
-
-    <section class="min-h-0 flex-1 overflow-y-auto p-4">
-      {#if exporting && draft}
-        <ExportDialog
-          source={draft}
-          bind:format={exportFormat}
-          onClose={() => (exporting = false)}
-        />
-      {:else if importing}
-        <ImportWizard
-          {kind}
-          onImport={completeImport}
-          onCancel={() => (importing = false)}
-        />
-      {:else if draft && mode === "use"}
-        <div
-          class="mb-3 flex items-center justify-between border-b border-theme-border pb-2"
-        >
-          <div class="flex items-center gap-2">
-            <button
-              type="button"
-              onclick={() => openRenameModal(draft!)}
-              class="flex items-center gap-1 rounded border border-theme-border px-2 py-1 font-header text-micro uppercase tracking-wider text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary"
-              title="Rename {noun}"
-              data-testid="header-rename-{noun}"
-            >
-              <span aria-hidden="true" class="icon-[lucide--pencil] h-3 w-3"
-              ></span>
-              <span>Rename</span>
-            </button>
-            <button
-              type="button"
-              onclick={() => duplicate(draft!)}
-              class="flex items-center gap-1 rounded border border-theme-border px-2 py-1 font-header text-micro uppercase tracking-wider text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary"
-              title="Duplicate {noun}"
-              data-testid="header-duplicate-{noun}"
-            >
-              <span aria-hidden="true" class="icon-[lucide--copy] h-3 w-3"
-              ></span>
-              <span>Duplicate</span>
-            </button>
-          </div>
-          <div class="flex items-center gap-2">
-            <button
-              type="button"
-              onclick={() => setMode("build")}
-              class="flex items-center gap-1.5 rounded bg-theme-primary/10 px-2.5 py-1 font-header text-micro font-bold uppercase tracking-wider text-theme-primary transition-colors hover:bg-theme-primary hover:text-theme-bg"
-              data-testid="header-edit-{noun}"
-            >
-              <span
-                aria-hidden="true"
-                class="icon-[lucide--pencil-ruler] h-3 w-3"
-              ></span>
-              <span>Edit {noun}</span>
-            </button>
-            <button
-              type="button"
-              onclick={() => openDeleteModal(draft!)}
-              class="flex items-center gap-1 rounded border border-theme-border px-2 py-1 font-header text-micro uppercase tracking-wider text-theme-muted transition-colors hover:border-red-500 hover:text-red-500"
-              title="Delete {noun}"
-              data-testid="header-delete-{noun}"
-            >
-              <span aria-hidden="true" class="icon-[lucide--trash-2] h-3 w-3"
-              ></span>
-              <span>Delete</span>
-            </button>
-          </div>
-        </div>
-        {@render player({ source: draft })}
-      {:else if draft}
-        <div
-          class="mb-3 flex items-center justify-between border-b border-theme-border pb-2"
-        >
-          <div class="flex items-center gap-2">
-            <button
-              type="button"
-              onclick={() => openRenameModal(draft!)}
-              class="flex items-center gap-1 rounded border border-theme-border px-2 py-1 font-header text-micro uppercase tracking-wider text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary"
-              title="Rename {noun}"
-              data-testid="header-rename-{noun}"
-            >
-              <span aria-hidden="true" class="icon-[lucide--pencil] h-3 w-3"
-              ></span>
-              <span>Rename</span>
-            </button>
-            <button
-              type="button"
-              onclick={() => duplicate(draft!)}
-              class="flex items-center gap-1 rounded border border-theme-border px-2 py-1 font-header text-micro uppercase tracking-wider text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary"
-              title="Duplicate {noun}"
-              data-testid="header-duplicate-{noun}"
-            >
-              <span aria-hidden="true" class="icon-[lucide--copy] h-3 w-3"
-              ></span>
-              <span>Duplicate</span>
-            </button>
-          </div>
-          <div class="flex items-center gap-2">
-            <button
-              type="button"
-              onclick={() => setMode("use")}
-              class="flex items-center gap-1.5 rounded bg-theme-primary/10 px-2.5 py-1 font-header text-micro font-bold uppercase tracking-wider text-theme-primary transition-colors hover:bg-theme-primary hover:text-theme-bg"
-              data-testid="header-use-{noun}"
-            >
-              <span aria-hidden="true" class="icon-[lucide--dices] h-3 w-3"
-              ></span>
-              <span>Use {noun}</span>
-            </button>
-            <button
-              type="button"
-              onclick={() => openDeleteModal(draft!)}
-              class="flex items-center gap-1.5 rounded border border-theme-border px-2.5 py-1 font-header text-micro uppercase tracking-widest text-theme-muted transition-colors hover:border-red-500 hover:text-red-500"
-              data-testid="delete-{noun}"
-            >
-              <span aria-hidden="true" class="icon-[lucide--trash-2] h-3 w-3"
-              ></span>
-              <span>Delete</span>
-            </button>
-          </div>
-        </div>
-
-        {#if deleteImpact}
-          <div
-            class="mb-3 rounded border border-red-500/40 bg-red-500/10 p-3 text-xs text-red-500"
-            data-testid="delete-impact"
-          >
-            {#if deleteImpact.length > 0}
-              <p class="mb-2">
-                {deleteImpact.map((s) => s.name).join(", ")}
-                {deleteImpact.length === 1 ? "refers" : "refer"} to "{draft.name}".
-                Deleting it leaves those references unresolved.
-              </p>
-            {:else}
-              <p class="mb-2">Delete "{draft.name}"? This cannot be undone.</p>
-            {/if}
-            <div class="flex gap-2">
-              <button
-                type="button"
-                class="rounded bg-red-500 px-2.5 py-1 font-header text-micro uppercase tracking-widest text-white"
-                onclick={() => confirmDelete(draft!)}
-                data-testid="confirm-delete"
-              >
-                Delete
-              </button>
-              <button
-                type="button"
-                class="rounded border border-theme-border px-2.5 py-1 font-header text-micro uppercase tracking-widest text-theme-muted"
-                onclick={() => (deleteImpact = undefined)}>Keep it</button
-              >
-            </div>
-          </div>
-        {/if}
-
-        {#if pendingRename}
-          <div
-            class="mb-3 rounded border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-600 dark:text-amber-400"
-            data-testid="rename-impact"
-          >
-            <p class="mb-2">
-              {pendingRename.referencedBy.map((s) => s.name).join(", ")}
-              {pendingRename.referencedBy.length === 1 ? "refers" : "refer"} to "{draft.name}"
-              by name. Renaming it to "{pendingRename.name}" leaves those
-              references pointing at nothing.
-            </p>
-            <div class="flex gap-2">
-              <button
-                type="button"
-                class="rounded bg-amber-500 px-2.5 py-1 font-header text-micro uppercase tracking-widest text-white"
-                onclick={() => commitRename(pendingRename!.name)}
-                data-testid="confirm-rename"
-              >
-                Rename anyway
-              </button>
-              <button
-                type="button"
-                class="rounded border border-theme-border px-2.5 py-1 font-header text-micro uppercase tracking-widest text-theme-muted"
-                onclick={() => (pendingRename = undefined)}
-                >Keep the name</button
-              >
-            </div>
-          </div>
-        {/if}
-
-        {@render editor({
-          source: draft,
-          diagnostics,
-          onChange,
-          onRename: requestRename,
-        })}
-      {:else}
-        <EmptyState
-          {icon}
-          headline="No {noun} open"
-          body={emptyBody}
-          cta="New {noun}"
-          onCta={create}
-          ctaTestId="empty-new-{noun}"
-        />
-      {/if}
-    </section>
+    <SourceWorkspaceContent
+      {noun}
+      {draft}
+      {mode}
+      {importing}
+      {exporting}
+      bind:exportFormat
+      {deleteImpact}
+      {pendingRename}
+      {diagnostics}
+      {icon}
+      {emptyBody}
+      {editor}
+      {player}
+      {completeImport}
+      cancelImport={() => (importing = false)}
+      closeExport={() => (exporting = false)}
+      {openRenameModal}
+      {duplicate}
+      {openDeleteModal}
+      {setMode}
+      {confirmDelete}
+      cancelDelete={() => (deleteImpact = undefined)}
+      {commitRename}
+      cancelRename={() => (pendingRename = undefined)}
+      {onChange}
+      {requestRename}
+      {create}
+    />
   </div>
 
   {#if kind === "table"}
@@ -1013,7 +584,3 @@
     />
   {/if}
 </div>
-
-<style>
-  @reference "../../../app.css";
-</style>
