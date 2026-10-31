@@ -213,6 +213,11 @@ export const howDoIStartWorldbuildingForANovelOrShortStory: AnswerConfigInput =
           reason:
             "This answer builds the setting needed for a story from an existing premise and viewpoint, whereas the ideas answer helps writers find and test a spark before choosing a story to develop.",
         },
+        {
+          with: "answer-characters-or-world-first",
+          reason:
+            "This answer builds the minimum setting for a novel or short story, whereas the characters-or-world answer offers a cross-medium workflow for developing characters and setting together from ideas already in hand.",
+        },
       ],
       relatedIntents: [
         "answer-worldbuilding-from-scratch",

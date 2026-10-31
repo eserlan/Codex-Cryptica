@@ -153,6 +153,11 @@ export const whereDoWorldbuildingIdeasComeFrom: AnswerConfigInput = {
         reason:
           "The fiction writers answer assumes a story premise exists and builds the minimum setting for an opening scene, whereas this answer explains how to find and test the idea before that stage, for writers and other creators alike.",
       },
+      {
+        with: "answer-characters-or-world-first",
+        reason:
+          "This answer helps creators find and test a spark before choosing a premise, whereas the characters-or-world answer assumes ideas already exist and explains how to record and develop them together.",
+      },
     ],
     relatedIntents: [
       "answer-worldbuilding-from-scratch",

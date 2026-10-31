@@ -188,6 +188,11 @@ export const howDoYouStartWorldbuildingFromScratch: AnswerConfigInput = {
         reason:
           "This answer develops a premise into a playable local sandbox for a GM, whereas the ideas answer helps creators find and test a spark before they have a premise to build.",
       },
+      {
+        with: "answer-characters-or-world-first",
+        reason:
+          "This answer helps GMs build a playable local sandbox from a premise, whereas the characters-or-world answer covers what to develop first and how to connect existing ideas across projects.",
+      },
     ],
     relatedIntents: [
       "answer-create-magic-system",

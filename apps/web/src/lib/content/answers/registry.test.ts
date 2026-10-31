@@ -54,6 +54,42 @@ const mockRegistry: Record<string, AnswerConfig> = {
 };
 
 describe("answer registry", () => {
+  it("keeps character and world development overlap acknowledgements reciprocal", () => {
+    const characterAndWorld =
+      answers["should-i-develop-my-characters-or-my-world-first"];
+    const overlaps = [
+      [
+        "how-do-you-start-worldbuilding-from-scratch",
+        "answer-worldbuilding-from-scratch",
+      ],
+      [
+        "how-do-i-start-worldbuilding-for-a-novel-or-short-story",
+        "answer-worldbuilding-for-fiction-writers",
+      ],
+      [
+        "where-do-worldbuilding-ideas-come-from",
+        "answer-worldbuilding-ideas-inspiration",
+      ],
+    ] as const;
+
+    for (const [slug, intentId] of overlaps) {
+      const relatedAnswer = answers[slug];
+
+      expect(characterAndWorld.discovery?.acknowledgedOverlap).toContainEqual(
+        expect.objectContaining({
+          with: intentId,
+          reason: expect.any(String),
+        }),
+      );
+      expect(relatedAnswer.discovery?.acknowledgedOverlap).toContainEqual(
+        expect.objectContaining({
+          with: characterAndWorld.discovery?.id,
+          reason: expect.any(String),
+        }),
+      );
+    }
+  });
+
   it("keeps settlement geography overlap acknowledgements reciprocal", () => {
     const geography =
       answers["how-do-i-design-a-geographically-realistic-town-or-village"];
