@@ -3,6 +3,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import type { RandomSource } from "random-source-engine";
+import type { EditorContext } from "./source-workspace";
 import SourceWorkspace from "./SourceWorkspace.svelte";
 
 const { mockTables, mockRandomSources } = vi.hoisted(() => {
@@ -347,4 +348,94 @@ describe("SourceWorkspace Organization and Actions", () => {
       }),
     );
   });
+});
+
+describe("SourceWorkspace composition lifecycle", () => {
+  const workspaceProps = () => ({
+    kind: "table" as const,
+    heading: "Random Tables",
+    icon: "icon-[lucide--list-tree]",
+    emptyBody: "No table open",
+    editor: vi.fn() as never,
+    player: vi.fn() as never,
+    storage: { getItem: () => "use", setItem: vi.fn(), removeItem: vi.fn() },
+  });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockRandomSources.tables = [...mockTables];
+  });
+  afterEach(() => vi.useRealTimers());
+
+  it("switches between import and export while keeping the chosen export format", async () => {
+    render(SourceWorkspace, { ...workspaceProps(), allowImport: true });
+    await fireEvent.click(
+      screen.getByText("Wilderness Encounters").closest("button")!,
+    );
+    await fireEvent.click(screen.getByTestId("open-export"));
+    const format = screen
+      .getByTestId("export-format-markdown-table")
+      .querySelector("input")!;
+    await fireEvent.change(format, { target: { checked: true } });
+    await fireEvent.click(screen.getByTestId("open-import"));
+    expect(screen.getByTestId("import-wizard")).toBeDefined();
+    expect(screen.queryByTestId("export-dialog")).toBeNull();
+    await fireEvent.click(screen.getByTestId("open-export"));
+    expect(screen.queryByTestId("import-wizard")).toBeNull();
+    expect(
+      screen.getByTestId("export-format-markdown-table").querySelector("input")!
+        .checked,
+    ).toBe(true);
+    expect(mockRandomSources.save).not.toHaveBeenCalled();
+  });
+
+  it("opens new sources in build mode and restores the mobile list after deletion", async () => {
+    const props = workspaceProps();
+    render(SourceWorkspace, props);
+    await fireEvent.click(screen.getByTestId("new-table"));
+    expect(props.storage.setItem).toHaveBeenCalledWith(
+      "codex-random-source-mode",
+      "build",
+    );
+    expect(
+      screen.getByTestId("toggle-source-list").getAttribute("aria-expanded"),
+    ).toBe("false");
+    await fireEvent.click(screen.getByTestId("delete-table"));
+    await fireEvent.click(screen.getByTestId("modal-delete-confirm"));
+    expect(
+      screen.getByTestId("toggle-source-list").getAttribute("aria-expanded"),
+    ).toBe("true");
+    expect(screen.getByTestId("empty-new-table")).toBeDefined();
+  });
+
+  it.each(["pagehide", "unmount"] as const)(
+    "flushes a pending editor change exactly once on %s",
+    async (trigger) => {
+      vi.useFakeTimers();
+      let context!: EditorContext;
+      const editor = (
+        _anchor: unknown,
+        current: EditorContext | (() => EditorContext),
+      ) => {
+        context = typeof current === "function" ? current() : current;
+      };
+      const { unmount } = render(SourceWorkspace, {
+        ...workspaceProps(),
+        editor: editor as never,
+      });
+      await fireEvent.click(screen.getByTestId("new-table"));
+      await vi.advanceTimersByTimeAsync(0);
+      mockRandomSources.save.mockClear();
+      context.onChange({ ...context.source, description: "Last edit" });
+      if (trigger === "pagehide")
+        await fireEvent(window, new Event("pagehide"));
+      else unmount();
+      await vi.advanceTimersByTimeAsync(0);
+      expect(mockRandomSources.save).toHaveBeenCalledExactlyOnceWith(
+        expect.objectContaining({ description: "Last edit" }),
+      );
+      await vi.advanceTimersByTimeAsync(500);
+      expect(mockRandomSources.save).toHaveBeenCalledOnce();
+    },
+  );
 });
