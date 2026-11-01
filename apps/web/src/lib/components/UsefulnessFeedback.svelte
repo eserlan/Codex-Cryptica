@@ -164,6 +164,8 @@
       <button
         type="button"
         onclick={handleYes}
+        aria-label="Yes, this was useful"
+        title="Yes, this was useful"
         class="inline-flex items-center gap-1.5 rounded-full border border-theme-border/60 bg-theme-surface/45 px-4 py-2 text-xs font-bold uppercase tracking-wider text-theme-text/80 transition-all hover:border-theme-primary/60 hover:text-theme-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-accent"
       >
         <span class="icon-[lucide--thumbs-up] h-3.5 w-3.5" aria-hidden="true"
@@ -173,6 +175,8 @@
       <button
         type="button"
         onclick={handleNo}
+        aria-label="No, this was not useful"
+        title="No, this was not useful"
         class="inline-flex items-center gap-1.5 rounded-full border border-theme-border/60 bg-theme-surface/45 px-4 py-2 text-xs font-bold uppercase tracking-wider text-theme-text/80 transition-all hover:border-theme-primary/60 hover:text-theme-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-accent"
       >
         <span class="icon-[lucide--thumbs-down] h-3.5 w-3.5" aria-hidden="true"
