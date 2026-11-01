@@ -123,5 +123,6 @@ describe("scenario-aware Oracle GM", () => {
     const state = JSON.parse(prompt.state);
     expect(state.playerScenario).toBeUndefined();
     expect(state["GM-ONLY scenario"]).toBeUndefined();
+    expect(prompt.behavior).not.toContain("A rumour may be exaggerated");
   });
 });
