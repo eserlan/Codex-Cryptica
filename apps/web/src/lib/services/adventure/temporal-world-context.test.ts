@@ -31,20 +31,20 @@ const calendar = {
 
 const records: Entity[] = [
   entity("guard", "character", {
-    connections: [{ target: "capital", label: "lives in" }],
+    connections: [{ target: "capital", type: "associated", strength: 1, label: "lives in" }],
   }),
   entity("capital", "location", {
     connections: [
-      { target: "king", label: "residence of" },
-      { target: "faction", label: "controlled by" },
-      { target: "notice", label: "mentioned in" },
+      { target: "king", type: "associated", strength: 1, label: "residence of" },
+      { target: "faction", type: "associated", strength: 1, label: "controlled by" },
+      { target: "notice", type: "associated", strength: 1, label: "mentioned in" },
     ],
   }),
   entity("king", "character", {
     start_date: year(600),
     end_date: year(620),
     lore: "The king's secret illness is not public.",
-    connections: [{ target: "death", label: "dies during" }],
+    connections: [{ target: "death", type: "associated", strength: 1, label: "dies during" }],
   }),
   entity("death", "event", {
     title: "Death of the King",
@@ -52,7 +52,7 @@ const records: Entity[] = [
     content: "King dies in year 620.",
   }),
   entity("faction", "faction", {
-    connections: [{ target: "alliance", label: "signed" }],
+    connections: [{ target: "alliance", type: "associated", strength: 1, label: "signed" }],
   }),
   entity("alliance", "event", {
     date: year(621),
@@ -65,7 +65,7 @@ const records: Entity[] = [
   entity("hidden", "event", {
     date: year(617),
     visibility: "hidden",
-    connections: [{ target: "king", label: "targets" }],
+    connections: [{ target: "king", type: "associated", strength: 1, label: "targets" }],
   }),
   entity("remote", "location", {
     content: "A distant, unconnected city.",
@@ -159,7 +159,7 @@ describe("resolveTemporalWorldContext", () => {
     const contradictory = entity("bad", "event", {
       start_date: year(624),
       end_date: year(620),
-      connections: [{ target: "capital", label: "involves" }],
+      connections: [{ target: "capital", type: "associated", strength: 1, label: "involves" }],
     });
     const result = resolve(year(618), {
       entities: [...records, contradictory],
