@@ -214,8 +214,9 @@ export function resolveTemporalWorldContext(
     ) {
       playerSafe.push(record);
     } else if (
-      applicability === "uncertain" ||
-      applicability === "contradictory"
+      entity.visibility !== "hidden" &&
+      (applicability === "uncertain" ||
+        applicability === "contradictory")
     ) {
       unresolved.push(record);
     }
