@@ -240,6 +240,35 @@ export const turnProposalSchema = z.discriminatedUnion("kind", [
   rollProposalSchema,
 ]);
 
+const scenarioStateSchema = z.object({
+  version: z.literal(1),
+  id,
+  origin: z.object({
+    kind: z.enum(["rumour", "manual"]),
+    batchTitle: text.optional(),
+    index: z.number().int().min(1).max(6).optional(),
+    sourceRecordId: id.optional(),
+  }).strict(),
+  playerVisible: z.object({
+    rumour: text,
+    lead: text,
+    source: text.optional(),
+  }).strict(),
+  gmOnly: z.object({
+    truth: text,
+    ifInvestigated: text.optional(),
+  }).strict(),
+  status: z.enum(["open", "resolved", "abandoned"]),
+  events: z.array(z.object({
+    id,
+    kind: z.enum(["discovery", "consequence", "status-change"]),
+    visibility: z.enum(["player", "gm"]),
+    text,
+    at: timestamp,
+    turnId: id.optional(),
+  }).strict()).max(100),
+}).strict();
+
 export const adventureSessionSchema = z.object({
   schemaVersion: z.literal(CURRENT_ADVENTURE_SCHEMA_VERSION),
   id,
@@ -253,6 +282,8 @@ export const adventureSessionSchema = z.object({
   playerCharacter: playerCharacterSchema,
   premise: text,
   sourceRecords: z.array(sourceSchema),
+  // Additive scenario extension: v1/v2 saved adventures without this field still load.
+  scenarioState: scenarioStateSchema.optional(),
   visibleState: visibleStateSchema,
   hiddenState: hiddenStateSchema,
   provisionalFacts: z.array(provisionalFactSchema).max(60),
@@ -341,6 +372,7 @@ export function parseAdventureSession(input: unknown): AdventureSession {
     visibleState: parsed.visibleState,
     hiddenState: parsed.hiddenState,
     provisionalFacts: parsed.provisionalFacts,
+    scenarioState: parsed.scenarioState,
   }).length;
   if (stateLength > MAX_SERIALIZED_STATE_CHARS) {
     throw new Error("state-budget-exceeded");
@@ -358,6 +390,7 @@ export function validateStateBudget(session: AdventureSession): boolean {
       visibleState: session.visibleState,
       hiddenState: session.hiddenState,
       provisionalFacts: session.provisionalFacts,
+      scenarioState: session.scenarioState,
     }).length <= MAX_SERIALIZED_STATE_CHARS
   );
 }
