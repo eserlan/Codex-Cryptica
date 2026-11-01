@@ -88,8 +88,15 @@ function classify(
   calendar: WorldCalendar,
 ): TemporalApplicability {
   if (!at) return "uncertain";
-  const start = entity.start_date ?? entity.date;
-  const end = entity.end_date ?? entity.date;
+  // A record's generic "date" is an occurrence date for Events, not a
+  // lifecycle interval for characters, factions or locations. In particular,
+  // a character's date must not make them disappear in subsequent years.
+  const start =
+    entity.type === "event"
+      ? (entity.start_date ?? entity.date)
+      : entity.start_date;
+  const end =
+    entity.type === "event" ? (entity.end_date ?? entity.date) : entity.end_date;
   if (!start && !end) return "uncertain";
   const startInterval = start ? interval(start, calendar) : null;
   const endInterval = end ? interval(end, calendar) : null;
@@ -119,12 +126,30 @@ function classify(
   return "uncertain";
 }
 
-function connected(entity: Entity, other: Entity): boolean {
+function connected(
+  entity: Entity,
+  other: Entity,
+  includeHidden = true,
+): boolean {
+  if (
+    !includeHidden &&
+    (entity.visibility === "hidden" || other.visibility === "hidden")
+  ) {
+    return false;
+  }
   return (
     entity.parent === other.id ||
     other.parent === entity.id ||
-    entity.connections.some((connection) => connection.target === other.id) ||
-    other.connections.some((connection) => connection.target === entity.id)
+    entity.connections.some(
+      (connection) =>
+        connection.target === other.id &&
+        (includeHidden || connection.hidden !== true),
+    ) ||
+    other.connections.some(
+      (connection) =>
+        connection.target === entity.id &&
+        (includeHidden || connection.hidden !== true),
+    )
   );
 }
 
@@ -172,6 +197,24 @@ export function resolveTemporalWorldContext(
       ranked.set(candidate.id, { entity: candidate, distance: 2 });
     }
   }
+  // GM retrieval may follow secret links. A player's context cannot:
+  // visible records reached ONLY through hidden relationships stay GM-only.
+  const playerReachable = new Set<string>([character.id, location.id]);
+  const playerDirect = query.entities.filter(
+    (entity) =>
+      !playerReachable.has(entity.id) &&
+      (connected(entity, character, false) ||
+        connected(entity, location, false)),
+  );
+  for (const entity of playerDirect) playerReachable.add(entity.id);
+  for (const entity of query.entities) {
+    if (
+      entity.visibility !== "hidden" &&
+      playerDirect.some((direct) => connected(entity, direct, false))
+    ) {
+      playerReachable.add(entity.id);
+    }
+  }
   const contextDate = interval(query.at, query.calendar);
   const rankedRows = [...ranked.values()].sort(
     (a, b) => a.distance - b.distance || a.entity.id.localeCompare(b.entity.id),
@@ -208,14 +251,20 @@ export function resolveTemporalWorldContext(
     });
     // A source's visibility and its temporal applicability are distinct
     // guards. Unknown/future records must not become player assertions.
+    if (entity.visibility === "hidden" || !playerReachable.has(entity.id)) {
+      continue;
+    }
+    // Explicitly selected character/place may have no dates. Include them
+    // with their uncertain label, not with an invented historical guarantee.
     if (
-      entity.visibility !== "hidden" &&
-      (applicability === "established" || applicability === "historical")
+      distance === 0 ||
+      applicability === "established" ||
+      applicability === "historical"
     ) {
       playerSafe.push(record);
     } else if (
-      entity.visibility !== "hidden" &&
-      (applicability === "uncertain" || applicability === "contradictory")
+      applicability === "uncertain" ||
+      applicability === "contradictory"
     ) {
       unresolved.push(record);
     }
