@@ -1,3 +1,6 @@
+import type { Entity } from "schema";
+import type { WorldCalendar, TemporalMetadata, DateSelection } from "chronology-engine";
+import { resolveTemporalWorldContext, type TemporalWorldContext } from "./temporal-world-context";
 import type {
   AdventureSession,
   ResolvedSourceExcerpt,
@@ -5,6 +8,11 @@ import type {
 } from "@codex/adventure-engine";
 
 export interface AdventureSourceResolver {
+  /** Optional world snapshot adapter for date-aware exploration starts. */
+  getWorldSnapshot?(vaultId: string): Promise<{
+    entities: Entity[];
+    calendar: WorldCalendar;
+  }>;
   getById(
     vaultId: string,
     recordId: string,
@@ -35,6 +43,21 @@ export class AdventureContextService {
 
   setResolver(resolver: AdventureSourceResolver): void {
     this.resolver = resolver;
+  }
+
+  /** Date-aware, bounded source retrieval; never writes or rewrites Vault canon. */
+  async resolveTemporalWorld(input: {
+    vaultId: string;
+    characterId: string;
+    locationId: string;
+    at: TemporalMetadata | DateSelection;
+    maxRecords?: number;
+  }): Promise<TemporalWorldContext> {
+    if (!this.resolver.getWorldSnapshot) {
+      throw new Error("temporal-world-not-configured");
+    }
+    const source = await this.resolver.getWorldSnapshot(input.vaultId);
+    return resolveTemporalWorldContext({ ...input, ...source });
   }
 
   async resolveAnchors(
