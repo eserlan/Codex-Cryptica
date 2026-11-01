@@ -127,7 +127,11 @@ describe("30-turn emergent adventure regression", () => {
         );
         expect(recorded.ok).toBe(true);
         if (!recorded.ok) throw new Error("roll recording failed");
-        const resolved = resolveRecordedRoll(recorded.value, ordinaryTurn(i), meta);
+        const resolved = resolveRecordedRoll(
+          recorded.value,
+          ordinaryTurn(i),
+          meta,
+        );
         expect(resolved.ok).toBe(true);
         if (!resolved.ok) throw new Error("roll resolution failed");
         session = resolved.value;
@@ -200,11 +204,11 @@ describe("30-turn emergent adventure regression", () => {
     expect(first.ok).toBe(true);
     if (!first.ok) return;
     expect(
-      applyCompletedTurn(
-        first.value,
-        ordinaryTurn(0),
-        { turnId: "turn-retry", inputId: "input-0", now },
-      ),
+      applyCompletedTurn(first.value, ordinaryTurn(0), {
+        turnId: "turn-retry",
+        inputId: "input-0",
+        now,
+      }),
     ).toEqual(
       expect.objectContaining({
         ok: false,
