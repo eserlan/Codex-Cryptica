@@ -67,15 +67,24 @@ export class AdventureContextService {
     // The Vault graph index may contain metadata-only records. Select the
     // small relevant subset *before* loading bodies from OPFS.
     const initial = resolveTemporalWorldContext({ ...input, ...source });
-    const selectedIds = new Set(initial.gmOnly.map((record) => record.id));
-    const entities = await Promise.all(
-      source.entities.map(async (entity) => {
-        if (!selectedIds.has(entity.id)) return entity;
+    const byId = new Map(source.entities.map((entity) => [entity.id, entity]));
+    // Only the bounded selection creates asynchronous OPFS reads. Mapping
+    // every Vault record into a Promise would scale memory with Vault size.
+    const hydrated = await Promise.all(
+      initial.gmOnly.map(async (record) => {
+        const entity = byId.get(record.id)!;
         const loaded = await this.resolver.getById(input.vaultId, entity.id);
-        return loaded
-          ? { ...entity, content: loaded.text, lore: loaded.lore }
-          : entity;
+        return [
+          record.id,
+          loaded
+            ? { ...entity, content: loaded.text, lore: loaded.lore }
+            : entity,
+        ] as const;
       }),
+    );
+    const overrides = new Map(hydrated);
+    const entities = source.entities.map(
+      (entity) => overrides.get(entity.id) ?? entity,
     );
     return resolveTemporalWorldContext({ ...input, ...source, entities });
   }
