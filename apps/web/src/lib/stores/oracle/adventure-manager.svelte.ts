@@ -488,25 +488,35 @@ export class AdventureManager {
     }
   }
 
+  private resetAdventureView(): void {
+    this.session = null;
+    this.readOnly = false;
+    this.draft = "";
+    this.errorMessage = null;
+    this.lastRollResult = null;
+    this.phase = "idle";
+  }
+
+  private async leavePreviousVault(
+    vaultId: string,
+    isCurrent: () => boolean,
+  ): Promise<boolean> {
+    if (!this.session || this.session.vaultId === vaultId) return true;
+    await this.destroy();
+    if (!isCurrent()) return false;
+    this.resetAdventureView();
+    return true;
+  }
+
   async openActive(vaultId: string): Promise<boolean> {
     const request = ++this.activeRestoreRequest;
     const isCurrent = () => request === this.activeRestoreRequest;
     if (this.session?.vaultId === vaultId && this.session.status === "active") {
       return true;
     }
-    if (this.session && this.session.vaultId !== vaultId) {
-      await this.destroy();
-      if (!isCurrent()) return false;
-      this.session = null;
-      this.readOnly = false;
-      this.draft = "";
-      this.errorMessage = null;
-      this.lastRollResult = null;
-      this.phase = "idle";
-    }
+    if (!(await this.leavePreviousVault(vaultId, isCurrent))) return false;
     const { effectiveActiveId } = await this.deps.repository.list(vaultId);
-    if (!isCurrent()) return false;
-    if (!effectiveActiveId) return false;
+    if (!isCurrent() || !effectiveActiveId) return false;
     await this.open(vaultId, effectiveActiveId, isCurrent);
     return isCurrent() && this.session?.vaultId === vaultId;
   }
