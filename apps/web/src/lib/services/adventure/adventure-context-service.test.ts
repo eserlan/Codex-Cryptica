@@ -55,7 +55,11 @@ describe("AdventureContextService", () => {
     await expect(service.resolveOpeningRelevant(session)).resolves.toEqual([]);
   });
   it("uses the live Vault graph/calendar adapter for a bounded temporal lookup", async () => {
-    const make = (id: string, type: string, options: Record<string, unknown> = {}) => ({
+    const make = (
+      id: string,
+      type: string,
+      options: Record<string, unknown> = {},
+    ) => ({
       id,
       type,
       title: id,
@@ -94,11 +98,12 @@ describe("AdventureContextService", () => {
     });
     expect(getWorldSnapshot).toHaveBeenCalledWith("vault-1");
     expect(result.playerSafe.map((r) => r.id)).toContain("king");
-    expect(JSON.stringify(result.playerSafe)).not.toContain("secret court plan");
+    expect(JSON.stringify(result.playerSafe)).not.toContain(
+      "secret court plan",
+    );
     expect(result.gmOnly.find((r) => r.id === "king")?.lore).toBe(
       "secret court plan",
     );
     expect(result.gmOnly.map((r) => r.id)).not.toContain("remote");
   });
-
 });
