@@ -84,8 +84,15 @@ describe("AdventureContextService", () => {
         make("remote", "location", { date: { year: 600 } }),
       ],
     });
+    const getById = vi.fn(async (_vaultId: string, id: string) => ({
+      id,
+      title: id,
+      type: id === "city" ? "location" : "character",
+      text: id + " body loaded from OPFS",
+      lore: id === "king" ? "secret court plan" : undefined,
+    }));
     const service = new AdventureContextService({
-      getById: vi.fn(),
+      getById,
       search: vi.fn(),
       getWorldSnapshot,
     });
@@ -105,5 +112,10 @@ describe("AdventureContextService", () => {
       "secret court plan",
     );
     expect(result.gmOnly.map((r) => r.id)).not.toContain("remote");
+    expect(getById).toHaveBeenCalledTimes(3);
+    expect(getById).not.toHaveBeenCalledWith("vault-1", "remote");
+    expect(result.gmOnly.find((r) => r.id === "king")?.content).toContain(
+      "body loaded from OPFS",
+    );
   });
 });
