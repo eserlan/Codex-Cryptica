@@ -60,7 +60,7 @@ function yearEnd(year: number, calendar: WorldCalendar): number {
 }
 
 function metadataInterval(
-  date: TemporalMetadata,
+  date: DateSelection,
   calendar: WorldCalendar,
 ): DayInterval {
   const first = calendarEngine.getTimelineValue(date, calendar);
@@ -84,7 +84,7 @@ function metadataInterval(
 }
 
 function selectionInterval(
-  date: DateSelection,
+  date: TemporalMetadata,
   calendar: WorldCalendar,
 ): DayInterval {
   const first = calendarEngine.getTimelineValue(date, calendar);
