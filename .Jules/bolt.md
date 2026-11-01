@@ -77,3 +77,8 @@
 
 **Learning:** In V8/JS engines, parsing large string payloads (like parsing generated text files or markdown content) using `String.prototype.matchAll(regex)` combined with `[...string.matchAll(...)].map(...)` eagerly evaluates the entire iterator, forcing the engine to allocate an intermediate array. This spikes garbage collection pressure and CPU usage unnecessarily for large arrays or high-frequency operations.
 **Action:** Replace chained operations on iterators such as `[...matchAll(...)]` with a single imperative `for...of` loop over the iterator to process matches lazily. If mapping to a new array is required, instantiate the array and push to it inside the loop. Avoid `Array.from()` over `matchAll()` as well.
+
+## 2026-10-31 - Replace chained array allocations with imperative loops in map transformations
+
+**Learning:** When performing map and filter operations on iterables (such as `names.flatMap(words).map(w => w.toLowerCase())` or `[...singles].filter().map()`), using the native array method chaining forces the JavaScript engine to allocate intermediate arrays for every step. In hot paths that evaluate many items, this dramatically increases garbage collection pressure and reduces CPU efficiency.
+**Action:** Replace chained declarative array methods with a single imperative loop (such as `for...of`) that processes the items sequentially and pushes valid matches directly into the destination array or Set, preventing intermediate array allocations entirely.

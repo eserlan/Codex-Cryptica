@@ -529,8 +529,17 @@ interface KnownNames {
 
 function knownNames(doc: BusinessDocument): KnownNames {
   const names = introducedNames(doc);
+  // ⚡ Bolt Optimization: Replaced names.flatMap(words).map(w => w.toLowerCase())
+  // with an imperative loop to prevent intermediate array allocations.
+  const wordsSet = new Set<string>();
+  for (const name of names) {
+    for (const w of words(name)) {
+      wordsSet.add(w.toLowerCase());
+    }
+  }
+
   return {
-    words: new Set(names.flatMap(words).map((w) => w.toLowerCase())),
+    words: wordsSet,
     full: names.map((n) => words(n).join(" ").toLowerCase()),
   };
 }
@@ -637,7 +646,14 @@ export function findUnintroducedNames(
   texts: readonly string[] = proseOf(doc),
 ): string[] {
   const { multis, singles } = scanForNames(texts, knownNames(doc));
-  const repeated = [...singles].filter(([, n]) => n >= 2).map(([w]) => w);
+  // ⚡ Bolt Optimization: Replaced [...singles].filter().map() with an imperative loop
+  // to avoid allocating intermediate arrays and reduce GC overhead.
+  const repeated: string[] = [];
+  for (const [w, n] of singles) {
+    if (n >= 2) {
+      repeated.push(w);
+    }
+  }
   return [...multis, ...repeated];
 }
 
