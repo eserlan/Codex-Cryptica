@@ -118,6 +118,39 @@ function initialSession(input: {
   };
 }
 
+function defaultGenerationService(): Pick<AdventureTurnGenerationService, "generate"> {
+  return {
+    generate: (request: any, options?: any) => {
+      if (!oracleBridge.isReady) {
+        return adventureTurnGenerationService.generate(request, options);
+      }
+      // AbortSignal is not structured-cloneable and must not cross Comlink.
+      const { signal: _signal, ...workerOptions } = options ?? {};
+      return oracleBridge.generateAdventureTurn(
+        $state.snapshot(request),
+        workerOptions,
+      ) as any;
+    },
+  };
+}
+
+function clearDefaultGenerationInteraction(sessionId: string) {
+  return oracleBridge.isReady
+    ? oracleBridge.clearAdventureInteraction(sessionId)
+    : Promise.resolve(
+        adventureTurnGenerationService.clearInteraction(sessionId),
+      );
+}
+
+/** All reducers share this discriminated success/error contract. */
+function acceptedSession(
+  result: { ok: boolean; value?: AdventureSession; errors?: { message: string }[] },
+  fallback: string,
+): AdventureSession {
+  if (result.ok && result.value) return result.value;
+  throw new Error(result.errors?.[0]?.message ?? fallback);
+}
+
 export class AdventureManager {
   session = $state.raw<AdventureSession | null>(null);
   phase = $state<
@@ -162,28 +195,9 @@ export class AdventureManager {
   constructor(deps: AdventureManagerDependencies = {}) {
     this.deps = {
       repository: deps.repository ?? adventureSessionRepository,
-      generation: deps.generation ?? {
-        generate: (request: any, options?: any) => {
-          if (oracleBridge.isReady) {
-            // AbortSignal is not structured-cloneable and must not cross Comlink.
-            const { signal: _signal, ...workerOptions } = options ?? {};
-            const sanitizedRequest = $state.snapshot(request);
-            return oracleBridge.generateAdventureTurn(
-              sanitizedRequest,
-              workerOptions,
-            ) as any;
-          }
-          return adventureTurnGenerationService.generate(request, options);
-        },
-      },
+      generation: deps.generation ?? defaultGenerationService(),
       clearGenerationInteraction:
-        deps.clearGenerationInteraction ??
-        ((sessionId) =>
-          oracleBridge.isReady
-            ? oracleBridge.clearAdventureInteraction(sessionId)
-            : Promise.resolve(
-                adventureTurnGenerationService.clearInteraction(sessionId),
-              )),
+        deps.clearGenerationInteraction ?? clearDefaultGenerationInteraction,
       context: deps.context ?? adventureContextService,
       authority: deps.authority ?? adventureControlAuthority,
       coordinator: deps.coordinator ?? adventureControlCoordinator,
@@ -191,6 +205,45 @@ export class AdventureManager {
       dice: deps.dice ?? defaultDiceEngine,
       idGenerator: deps.idGenerator ?? systemIdGenerator.uuid,
     };
+  }
+
+  private newTurnMetadata(playerAction: string): CommitMetadata {
+    return {
+      turnId: this.deps.idGenerator(),
+      inputId: this.deps.idGenerator(),
+      playerAction,
+      now: this.deps.now(),
+    };
+  }
+
+  private rollMetadata(inputId: string): CommitMetadata {
+    return {
+      turnId: this.deps.idGenerator(),
+      inputId,
+      now: this.deps.now(),
+    };
+  }
+
+  private async saveTurn(
+    previous: AdventureSession,
+    next: AdventureSession,
+  ): Promise<AdventureSession> {
+    await this.verifyControl();
+    const saved = await this.deps.repository.save(previous.revision, next);
+    if (!saved.ok) throw saved.error;
+    return saved.session;
+  }
+
+  private proposedSession(
+    session: AdventureSession,
+    proposal: Parameters<typeof applyCompletedTurn>[1] | Parameters<typeof applyRollRequest>[1],
+    meta: CommitMetadata,
+    errorLabel: string,
+  ): AdventureSession {
+    const result = proposal.kind === "roll-required"
+      ? applyRollRequest(session, proposal, meta)
+      : applyCompletedTurn(session, proposal, meta);
+    return acceptedSession(result, errorLabel);
   }
 
   async start(input: {
