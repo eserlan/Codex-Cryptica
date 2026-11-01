@@ -53,79 +53,122 @@ export interface TemporalWorldQuery {
 }
 
 type DateLike = TemporalMetadata | DateSelection;
+type DayInterval = { first: number; last: number };
 
-function interval(date: DateLike, calendar: WorldCalendar) {
-  if (!calendarEngine.isValid(date, calendar)) return null;
+function yearEnd(year: number, calendar: WorldCalendar): number {
+  return (year + 1) * calendarEngine.getDaysInYear(calendar) - 1;
+}
+
+function metadataInterval(
+  date: TemporalMetadata,
+  calendar: WorldCalendar,
+): DayInterval {
   const first = calendarEngine.getTimelineValue(date, calendar);
-  const yearEnd = (date.year + 1) * calendarEngine.getDaysInYear(calendar) - 1;
-  if ("precision" in date) {
-    if (date.precision === "day") return { first, last: first };
-    if (date.precision === "unit") {
-      const unit = calendarEngine
+  switch (date.precision) {
+    case "day":
+      return { first, last: first };
+    case "unit": {
+      const month = calendarEngine
         .getMonths(calendar)
-        .find((month) => month.id === date.unitId);
-      return { first, last: first + (unit?.days ?? 1) - 1 };
+        .find((item) => item.id === date.unitId);
+      return { first, last: first + (month?.days ?? 1) - 1 };
     }
-    if (date.precision === "anchor") {
-      // An intercalary anchor's placement is calendar-defined, but may
-      // only identify a year; do not overstate day-level certainty.
+    case "anchor":
       return {
         first: date.year * calendarEngine.getDaysInYear(calendar),
-        last: yearEnd,
+        last: yearEnd(date.year, calendar),
       };
-    }
-    return { first, last: yearEnd };
+    default:
+      return { first, last: yearEnd(date.year, calendar) };
   }
-  if (date.month === undefined) return { first, last: yearEnd };
+}
+
+function selectionInterval(
+  date: DateSelection,
+  calendar: WorldCalendar,
+): DayInterval {
+  const first = calendarEngine.getTimelineValue(date, calendar);
+  if (date.month === undefined) {
+    return { first, last: yearEnd(date.year, calendar) };
+  }
   if (date.day !== undefined) return { first, last: first };
   const month = calendarEngine.getMonths(calendar)[date.month - 1];
   return { first, last: first + (month?.days ?? 1) - 1 };
 }
 
+/** Retains the configured calendar's time scale and the source's precision. */
+function interval(date: DateLike, calendar: WorldCalendar): DayInterval | null {
+  if (!calendarEngine.isValid(date, calendar)) return null;
+  return "precision" in date
+    ? metadataInterval(date, calendar)
+    : selectionInterval(date, calendar);
+}
+
+function temporalBounds(entity: Entity): {
+  start?: DateLike;
+  end?: DateLike;
+} {
+  // Events have an occurrence date. Other entities have only an explicit
+  // lifecycle interval; a generic date cannot establish birth or death.
+  if (entity.type === "event") {
+    return {
+      start: entity.start_date ?? entity.date,
+      end: entity.end_date ?? entity.date,
+    };
+  }
+  return { start: entity.start_date, end: entity.end_date };
+}
+
+function temporalRelation(
+  at: DayInterval,
+  start: DayInterval | null,
+  end: DayInterval | null,
+): "future" | "historical" | null {
+  if (start && at.last < start.first) return "future";
+  if (end && at.first > end.last) return "historical";
+  return null;
+}
+
+function validBounds(
+  start: DateLike | undefined,
+  end: DateLike | undefined,
+  first: DayInterval | null,
+  last: DayInterval | null,
+): boolean {
+  if (start && !first) return false;
+  if (end && !last) return false;
+  return !(first && last && first.first > last.last);
+}
+
+function lifecycleApplicability(
+  at: DayInterval,
+  start: DayInterval | null,
+  end: DayInterval | null,
+): TemporalApplicability {
+  if (start && end && at.first >= start.last && at.last <= end.first) {
+    return "established";
+  }
+  if (start && !end && at.first > start.last) return "established";
+  return "uncertain";
+}
+
 function classify(
   entity: Entity,
-  at: ReturnType<typeof interval>,
+  at: DayInterval,
   calendar: WorldCalendar,
 ): TemporalApplicability {
-  if (!at) return "uncertain";
-  // A record's generic "date" is an occurrence date for Events, not a
-  // lifecycle interval for characters, factions or locations. In particular,
-  // a character's date must not make them disappear in subsequent years.
-  const start =
-    entity.type === "event"
-      ? (entity.start_date ?? entity.date)
-      : entity.start_date;
-  const end =
-    entity.type === "event"
-      ? (entity.end_date ?? entity.date)
-      : entity.end_date;
-  if (!start && !end) return "uncertain";
-  const startInterval = start ? interval(start, calendar) : null;
-  const endInterval = end ? interval(end, calendar) : null;
-  if ((start && !startInterval) || (end && !endInterval))
-    return "contradictory";
-  if (startInterval && endInterval && startInterval.first > endInterval.last) {
+  const bounds = temporalBounds(entity);
+  if (!bounds.start && !bounds.end) return "uncertain";
+  const start = bounds.start ? interval(bounds.start, calendar) : null;
+  const end = bounds.end ? interval(bounds.end, calendar) : null;
+  if (!validBounds(bounds.start, bounds.end, start, end)) {
     return "contradictory";
   }
-  if (startInterval && at.last < startInterval.first) return "future";
-  if (endInterval && at.first > endInterval.last) return "historical";
-  if (entity.type === "event") {
-    // Happening *in* a partly specified year is not the same as having
-    // already happened; keep it temporally uncertain at that boundary.
-    return "uncertain";
-  }
-  if (
-    startInterval &&
-    endInterval &&
-    at.first >= startInterval.last &&
-    at.last <= endInterval.first
-  ) {
-    return "established";
-  }
-  if (startInterval && !endInterval && at.first > startInterval.last) {
-    return "established";
-  }
-  return "uncertain";
+  const relation = temporalRelation(at, start, end);
+  if (relation) return relation;
+  return entity.type === "event"
+    ? "uncertain"
+    : lifecycleApplicability(at, start, end);
 }
 
 function connected(
@@ -155,20 +198,15 @@ function connected(
   );
 }
 
-/**
- * Prioritise explicitly selected entities, followed by their direct graph
- * neighbors and a bounded set of second-hop records. Never scan free text
- * for a relationship and never assume disconnected records are local.
- */
-export function resolveTemporalWorldContext(
+interface RankedEntity {
+  entity: Entity;
+  distance: number;
+}
+
+function contextSeeds(
   query: TemporalWorldQuery,
-): TemporalWorldContext {
-  const maxRecords = Math.max(2, Math.min(query.maxRecords ?? 14, 30));
-  const maxExcerptChars = Math.max(
-    40,
-    Math.min(query.maxExcerptChars ?? 1_200, 4_000),
-  );
-  const byId = new Map(query.entities.map((entity) => [entity.id, entity]));
+  byId: Map<string, Entity>,
+): [Entity, Entity] {
   const character = byId.get(query.characterId);
   const location = byId.get(query.locationId);
   if (!character || character.type !== "character") {
@@ -177,107 +215,159 @@ export function resolveTemporalWorldContext(
   if (!location || location.type !== "location") {
     throw new Error("temporal-world-location-not-found");
   }
-  if (!calendarEngine.isValid(query.at, query.calendar)) {
-    throw new Error("temporal-world-invalid-date");
-  }
+  return [character, location];
+}
 
-  const ranked = new Map<string, { entity: Entity; distance: number }>();
-  ranked.set(character.id, { entity: character, distance: 0 });
-  ranked.set(location.id, { entity: location, distance: 0 });
-  for (const candidate of query.entities) {
-    if (ranked.has(candidate.id)) continue;
-    if (connected(candidate, location) || connected(candidate, character)) {
-      ranked.set(candidate.id, { entity: candidate, distance: 1 });
-    }
-  }
-  const direct = [...ranked.values()]
-    .filter((record) => record.distance === 1)
-    .map((record) => record.entity);
-  for (const candidate of query.entities) {
-    if (ranked.has(candidate.id)) continue;
-    if (direct.some((neighbor) => connected(candidate, neighbor))) {
-      ranked.set(candidate.id, { entity: candidate, distance: 2 });
-    }
-  }
-  // GM retrieval may follow secret links. A player's context cannot:
-  // visible records reached ONLY through hidden relationships stay GM-only.
-  const playerReachable = new Set<string>([character.id, location.id]);
-  const playerDirect = query.entities.filter(
-    (entity) =>
-      !playerReachable.has(entity.id) &&
-      (connected(entity, character, false) ||
-        connected(entity, location, false)),
+/** Two graph hops, with optional hidden-link traversal for GM-only context. */
+function rankNearby(
+  entities: readonly Entity[],
+  character: Entity,
+  location: Entity,
+  includeHidden: boolean,
+): Map<string, RankedEntity> {
+  const ranked = new Map<string, RankedEntity>([
+    [character.id, { entity: character, distance: 0 }],
+    [location.id, { entity: location, distance: 0 }],
+  ]);
+  const direct = entities.filter(
+    (candidate) =>
+      !ranked.has(candidate.id) &&
+      (connected(candidate, character, includeHidden) ||
+        connected(candidate, location, includeHidden)),
   );
-  for (const entity of playerDirect) playerReachable.add(entity.id);
-  for (const entity of query.entities) {
-    if (
-      entity.visibility !== "hidden" &&
-      playerDirect.some((direct) => connected(entity, direct, false))
-    ) {
-      playerReachable.add(entity.id);
+  for (const entity of direct) {
+    ranked.set(entity.id, { entity, distance: 1 });
+  }
+  for (const entity of entities) {
+    if (ranked.has(entity.id)) continue;
+    if (direct.some((neighbor) => connected(entity, neighbor, includeHidden))) {
+      ranked.set(entity.id, { entity, distance: 2 });
     }
   }
-  const contextDate = interval(query.at, query.calendar);
-  const rankedRows = [...ranked.values()].sort(
-    (a, b) => a.distance - b.distance || a.entity.id.localeCompare(b.entity.id),
+  return ranked;
+}
+
+function makeRecord(
+  entity: Entity,
+  distance: number,
+  character: Entity,
+  location: Entity,
+  at: DayInterval,
+  calendar: WorldCalendar,
+  maxExcerptChars: number,
+): TemporalWorldRecord {
+  const sourceDate = entity.start_date ?? entity.date ?? entity.end_date;
+  return {
+    id: entity.id,
+    title: entity.title,
+    type: entity.type,
+    content: entity.content.slice(0, maxExcerptChars),
+    applicability: classify(entity, at, calendar),
+    linkedBy:
+      distance === 0
+        ? "selected"
+        : connected(entity, character)
+          ? "character"
+          : connected(entity, location)
+            ? "location"
+            : "neighbor",
+    ...(sourceDate && calendarEngine.isValid(sourceDate, calendar)
+      ? { dateLabel: calendarEngine.format(sourceDate, calendar) }
+      : {}),
+  };
+}
+
+function isEstablishedRecord(
+  record: TemporalWorldRecord,
+  distance: number,
+): boolean {
+  return (
+    distance === 0 ||
+    record.applicability === "established" ||
+    record.applicability === "historical"
   );
-  const selected = rankedRows.slice(0, maxRecords);
+}
+
+function isUnresolvedRecord(record: TemporalWorldRecord): boolean {
+  return (
+    record.applicability === "uncertain" ||
+    record.applicability === "contradictory"
+  );
+}
+
+function projectRecords(
+  selected: readonly RankedEntity[],
+  playerReachable: ReadonlySet<string>,
+  character: Entity,
+  location: Entity,
+  at: DayInterval,
+  calendar: WorldCalendar,
+  maxExcerptChars: number,
+): Pick<TemporalWorldContext, "playerSafe" | "gmOnly" | "unresolved"> {
   const playerSafe: TemporalWorldRecord[] = [];
   const gmOnly: GMTemporalWorldRecord[] = [];
   const unresolved: TemporalWorldRecord[] = [];
-
   for (const { entity, distance } of selected) {
-    const applicability = classify(entity, contextDate, query.calendar);
-    const sourceDate = entity.start_date ?? entity.date ?? entity.end_date;
-    const record: TemporalWorldRecord = {
-      id: entity.id,
-      title: entity.title,
-      type: entity.type,
-      content: entity.content.slice(0, maxExcerptChars),
-      applicability,
-      linkedBy:
-        distance === 0
-          ? "selected"
-          : connected(entity, character)
-            ? "character"
-            : connected(entity, location)
-              ? "location"
-              : "neighbor",
-      ...(sourceDate && calendarEngine.isValid(sourceDate, query.calendar)
-        ? { dateLabel: calendarEngine.format(sourceDate, query.calendar) }
-        : {}),
-    };
+    const record = makeRecord(
+      entity,
+      distance,
+      character,
+      location,
+      at,
+      calendar,
+      maxExcerptChars,
+    );
     gmOnly.push({
       ...record,
       ...(entity.lore ? { lore: entity.lore.slice(0, maxExcerptChars) } : {}),
     });
-    // A source's visibility and its temporal applicability are distinct
-    // guards. Unknown/future records must not become player assertions.
     if (entity.visibility === "hidden" || !playerReachable.has(entity.id)) {
       continue;
     }
-    // Explicitly selected character/place may have no dates. Include them
-    // with their uncertain label, not with an invented historical guarantee.
-    if (
-      distance === 0 ||
-      applicability === "established" ||
-      applicability === "historical"
-    ) {
+    if (isEstablishedRecord(record, distance)) {
       playerSafe.push(record);
-    } else if (
-      applicability === "uncertain" ||
-      applicability === "contradictory"
-    ) {
+    } else if (isUnresolvedRecord(record)) {
       unresolved.push(record);
     }
   }
+  return { playerSafe, gmOnly, unresolved };
+}
+
+/** Resolve a bounded two-hop snapshot without mutating or writing Vault canon. */
+export function resolveTemporalWorldContext(
+  query: TemporalWorldQuery,
+): TemporalWorldContext {
+  const byId = new Map(query.entities.map((entity) => [entity.id, entity]));
+  const [character, location] = contextSeeds(query, byId);
+  const at = interval(query.at, query.calendar);
+  if (!at) throw new Error("temporal-world-invalid-date");
+
+  const ranked = rankNearby(query.entities, character, location, true);
+  const playerReachable = new Set(
+    rankNearby(query.entities, character, location, false).keys(),
+  );
+  const rankedRows = [...ranked.values()].sort(
+    (a, b) => a.distance - b.distance || a.entity.id.localeCompare(b.entity.id),
+  );
+  const maxRecords = Math.max(2, Math.min(query.maxRecords ?? 14, 30));
+  const maxExcerptChars = Math.max(
+    40,
+    Math.min(query.maxExcerptChars ?? 1_200, 4_000),
+  );
+  const selected = rankedRows.slice(0, maxRecords);
   return {
     characterId: character.id,
     locationId: location.id,
     at: structuredClone(query.at),
-    playerSafe,
-    gmOnly,
-    unresolved,
+    ...projectRecords(
+      selected,
+      playerReachable,
+      character,
+      location,
+      at,
+      query.calendar,
+      maxExcerptChars,
+    ),
     omitted: Math.max(0, rankedRows.length - selected.length),
   };
 }
