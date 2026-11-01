@@ -64,7 +64,20 @@ export class AdventureContextService {
       throw new Error("temporal-world-not-configured");
     }
     const source = await this.resolver.getWorldSnapshot(input.vaultId);
-    return resolveTemporalWorldContext({ ...input, ...source });
+    // The Vault graph index may contain metadata-only records. Select the
+    // small relevant subset *before* loading bodies from OPFS.
+    const initial = resolveTemporalWorldContext({ ...input, ...source });
+    const selectedIds = new Set(initial.gmOnly.map((record) => record.id));
+    const entities = await Promise.all(
+      source.entities.map(async (entity) => {
+        if (!selectedIds.has(entity.id)) return entity;
+        const loaded = await this.resolver.getById(input.vaultId, entity.id);
+        return loaded
+          ? { ...entity, content: loaded.text, lore: loaded.lore }
+          : entity;
+      }),
+    );
+    return resolveTemporalWorldContext({ ...input, ...source, entities });
   }
 
   async resolveAnchors(
