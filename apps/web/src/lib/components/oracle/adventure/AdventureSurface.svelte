@@ -1,5 +1,6 @@
 <script lang="ts">
   import { oracle } from "#lib/stores/oracle.svelte.js";
+  import { calendarStore } from "#lib/stores/calendar.svelte.js";
   import AdventureArchive from "./AdventureArchive.svelte";
   import AdventureStart from "./AdventureStart.svelte";
   import AdventureFocusPlay from "./AdventureFocusPlay.svelte";
@@ -30,6 +31,15 @@
     return handle;
   });
   adventureContextService.setResolver({
+    async getWorldSnapshot(id) {
+      if (oracle.vault.activeVaultId !== id) {
+        throw new Error("vault-not-open");
+      }
+      return {
+        entities: oracle.vault.allEntities,
+        calendar: calendarStore.getSnapshot().config,
+      };
+    },
     async getById(vaultId, recordId) {
       if (oracle.vault.activeVaultId !== vaultId) return null;
       await oracle.vault.loadEntityContent(recordId);
