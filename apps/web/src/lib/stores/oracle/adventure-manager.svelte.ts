@@ -604,32 +604,30 @@ export class AdventureManager {
     await this.submitAction(action, false);
   }
 
+  private async persistRecordedOutcome(
+    session: AdventureSession,
+    outcome: SuppliedRollOutcome,
+  ): Promise<void> {
+    const pendingRoll = session.pendingRoll;
+    if (!pendingRoll) return;
+    await this.verifyControl();
+    const result = recordPendingRollOutcome(
+      session,
+      pendingRoll.inputId,
+      outcome,
+      this.rollMetadata(pendingRoll.inputId),
+    );
+    const next = acceptedSession(result, "invalid-roll");
+    this.session = await this.saveTurn(session, next);
+    this.errorMessage = null;
+    this.phase = "ready-to-resolve";
+    await this.resolveRoll();
+  }
+
   async recordRollOutcome(outcome: SuppliedRollOutcome): Promise<void> {
     if (!this.session?.pendingRoll || this.readOnly) return;
     try {
-      await this.verifyControl();
-      const result = recordPendingRollOutcome(
-        this.session,
-        this.session.pendingRoll.inputId,
-        outcome,
-        {
-          turnId: this.deps.idGenerator(),
-          inputId: this.session.pendingRoll.inputId,
-          now: this.deps.now(),
-        },
-      );
-      if (!result.ok)
-        throw new Error(result.errors[0]?.message ?? "invalid-roll");
-      await this.verifyControl();
-      const saved = await this.deps.repository.save(
-        this.session.revision,
-        result.value,
-      );
-      if (!saved.ok) throw saved.error;
-      this.session = saved.session;
-      this.errorMessage = null;
-      this.phase = "ready-to-resolve";
-      await this.resolveRoll();
+      await this.persistRecordedOutcome(this.session, outcome);
     } catch (cause) {
       this.errorMessage =
         cause instanceof Error
@@ -683,22 +681,13 @@ export class AdventureManager {
     if (proposal.kind !== "complete") {
       throw new Error("roll-resolution-requires-complete-turn");
     }
-    const result = resolveRecordedRoll(session, proposal, {
-      turnId: this.deps.idGenerator(),
-      inputId: this.deps.idGenerator(),
-      now: this.deps.now(),
-      playerAction: pendingRoll.playerAction,
-    });
-    if (!result.ok) {
-      throw new Error(result.errors[0]?.message ?? "roll-rejected");
-    }
-    await this.verifyControl();
-    const saved = await this.deps.repository.save(
-      session.revision,
-      result.value,
+    const result = resolveRecordedRoll(
+      session,
+      proposal,
+      this.newTurnMetadata(pendingRoll.playerAction),
     );
-    if (!saved.ok) throw saved.error;
-    this.session = saved.session;
+    const next = acceptedSession(result, "roll-rejected");
+    this.session = await this.saveTurn(session, next);
     this.phase = "ready";
   }
 
@@ -735,23 +724,15 @@ export class AdventureManager {
 
   async dismissRoll(): Promise<void> {
     if (!this.session?.pendingRoll || this.readOnly) return;
+    const session = this.session;
+    const pendingRoll = session.pendingRoll!;
     const result = dismissPendingRoll(
-      this.session,
-      this.session.pendingRoll.inputId,
-      {
-        turnId: this.deps.idGenerator(),
-        inputId: this.session.pendingRoll.inputId,
-        now: this.deps.now(),
-      },
+      session,
+      pendingRoll.inputId,
+      this.rollMetadata(pendingRoll.inputId),
     );
-    if (!result.ok)
-      throw new Error(result.errors[0]?.message ?? "invalid-roll");
-    const saved = await this.deps.repository.save(
-      this.session.revision,
-      result.value,
-    );
-    if (!saved.ok) throw saved.error;
-    this.session = saved.session;
+    const next = acceptedSession(result, "invalid-roll");
+    this.session = await this.saveTurn(session, next);
     this.phase = "ready";
   }
 
