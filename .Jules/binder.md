@@ -369,3 +369,9 @@
 
 **Learning:** In vault configuration updates, global lock fallback mechanisms (IndexedDB) hardcode `Date.now()` and `crypto.randomUUID()`, making time-based tests flakey and coupled to globals.
 **Action:** Add `clock` and `idGenerator` seams to the `VaultConfigDependencies` interface and pass them down into the `withIndexedDbLock` / `withBrowserLock` functions. This allows explicit mock time/ID generation in lock tests.
+
+## 2026-10-29 - Inject storage in HexCrawlLayer.svelte
+
+**Learning:** Svelte components tracking UI hints (like hex crawl AI and hint dismissals) should inject a `storage` dependency via `$props()` defaulting to `browserStorage` instead of hardcoding `window.localStorage`. This enables safe tests without polluting Vitest globals and cleanly handles SSR without manual `typeof window` checks.
+
+**Action:** Replace `typeof window !== "undefined" ? window.localStorage : null` with an optional `storage` property defaulting to `browserStorage` from `#lib/utils/runtime-deps.js`.
