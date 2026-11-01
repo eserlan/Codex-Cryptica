@@ -19,6 +19,25 @@ GM notes are hidden from the play surface, but they are not encrypted from the
 vault owner. Material invented during play stays provisional and is not added to
 your canonical vault automatically.
 
+## Play a generated rumour
+
+1. Open the **Rumour Generator** from Play or the Generators menu.
+2. Generate a batch of six rumours. The preview shows the player-facing
+   rumours; matching GM notes are initially hidden unless you choose to reveal
+   them.
+3. Choose **Play with Oracle** beside one rumour. Only that rumour and its
+   matching hidden GM preparation are passed to the existing Adventure Mode.
+4. Review the prefilled title and premise, and choose an existing vault
+   character or enter a provisional character.
+5. Start playing. A rumour is a lead, **not an assigned quest**. You may ignore
+   it, investigate it or pursue something else.
+
+If the vault already has an active Adventure, continue it or explicitly
+archive it before starting the selected rumour; no active progress is replaced
+automatically. You need an online Oracle connection to begin. The selected
+GM notes remain stored within the Adventure session but are not encrypted
+from the vault owner.
+
 ## Start an adventure
 
 1. Open **Play** from the activity bar.

@@ -89,6 +89,59 @@ describe("AdventureStart", () => {
     ).toBe("The Lantern Road");
   });
 
+  it("shows active-session errors even when the manager does not set errorMessage", async () => {
+    const start = vi.fn(async () => {
+      throw new Error("active-adventure-exists");
+    });
+    render(AdventureStart, {
+      props: { manager: manager(start), vaultId: "vault-1" },
+    });
+
+    await fillForm();
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Start adventure" }),
+    );
+
+    expect(start).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("alert").textContent).toMatch(
+      /adventure is already active/i,
+    );
+    expect(
+      (screen.getByLabelText("Adventure title") as HTMLInputElement).value,
+    ).toBe("The Lantern Road");
+  });
+
+  it("refuses to create a blank Oracle session while offline and retains the form", async () => {
+    const previous = Object.getOwnPropertyDescriptor(navigator, "onLine");
+    Object.defineProperty(navigator, "onLine", {
+      configurable: true,
+      value: false,
+    });
+    try {
+      const start = vi.fn(async () => undefined);
+      render(AdventureStart, {
+        props: { manager: manager(start), vaultId: "vault-1" },
+      });
+
+      await fillForm();
+      await fireEvent.click(
+        screen.getByRole("button", { name: "Start adventure" }),
+      );
+
+      expect(start).not.toHaveBeenCalled();
+      expect(screen.getByRole("alert").textContent).toMatch(/internet/i);
+      expect(
+        (screen.getByLabelText("Premise") as HTMLTextAreaElement).value,
+      ).toContain("A lantern has gone dark");
+    } finally {
+      if (previous) {
+        Object.defineProperty(navigator, "onLine", previous);
+      } else {
+        Reflect.deleteProperty(navigator, "onLine");
+      }
+    }
+  });
+
   it("survives being torn down and remounted, given the same bound values", async () => {
     // Simulates what actually happens in AdventureSurface.svelte: a failed
     // start briefly creates then archives a session, which unmounts and
