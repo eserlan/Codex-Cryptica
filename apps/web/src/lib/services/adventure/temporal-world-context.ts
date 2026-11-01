@@ -96,7 +96,9 @@ function classify(
       ? (entity.start_date ?? entity.date)
       : entity.start_date;
   const end =
-    entity.type === "event" ? (entity.end_date ?? entity.date) : entity.end_date;
+    entity.type === "event"
+      ? (entity.end_date ?? entity.date)
+      : entity.end_date;
   if (!start && !end) return "uncertain";
   const startInterval = start ? interval(start, calendar) : null;
   const endInterval = end ? interval(end, calendar) : null;
