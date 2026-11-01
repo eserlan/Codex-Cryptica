@@ -104,7 +104,7 @@ function initialSession(input: {
               id: input.idGenerator(),
               text: input.scenarioSeed.gmOnly.truth,
               status: "hidden",
-              revealCondition: "Reveal only after a justified in-world discovery.",
+              revealCondition: "Reveal after in-world discovery.",
             },
           ]
         : [],
