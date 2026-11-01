@@ -16,6 +16,7 @@ import {
   type AdventureSession,
   type CommitMetadata,
   type PlayerCharacter,
+  type ScenarioState,
   type StateCorrectionOutcome,
   type SuppliedRollOutcome,
   type VisibleStatePatch,
@@ -70,6 +71,7 @@ function initialSession(input: {
   premise: string;
   playerCharacter: PlayerCharacter;
   sourceRecords?: AdventureSession["sourceRecords"];
+  scenarioSeed?: ScenarioState;
   now: string;
   idGenerator: () => string;
 }): AdventureSession {
@@ -86,6 +88,7 @@ function initialSession(input: {
     playerCharacter: input.playerCharacter,
     premise: input.premise,
     sourceRecords: input.sourceRecords ?? [],
+    ...(input.scenarioSeed ? { scenarioState: structuredClone(input.scenarioSeed) } : {}),
     visibleState: {
       objectives: [],
       activeCharacters: [],
@@ -182,6 +185,7 @@ export class AdventureManager {
     premise: string;
     playerCharacter: PlayerCharacter;
     sourceRecords?: AdventureSession["sourceRecords"];
+  scenarioSeed?: ScenarioState;
   }): Promise<AdventureSession> {
     if (!input.premise.trim() || !input.title.trim())
       throw new Error("premise-and-title-required");
