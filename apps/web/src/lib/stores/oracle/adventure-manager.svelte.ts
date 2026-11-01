@@ -470,75 +470,104 @@ export class AdventureManager {
     return isCurrent() && this.session?.vaultId === vaultId;
   }
 
+  private canSubmitAction(action: string): boolean {
+    return Boolean(
+      this.session &&
+      !this.readOnly &&
+      action.trim() &&
+      this.phase !== "generating",
+    );
+  }
+
+  private startTurnGeneration(): AbortSignal {
+    this.generationController?.abort();
+    this.generationController = new AbortController();
+    this.phase = "generating";
+    this.errorMessage = null;
+    return this.generationController.signal;
+  }
+
+  private endTurnGeneration(signal: AbortSignal): void {
+    if (this.generationController?.signal === signal) {
+      this.generationController = null;
+    }
+  }
+
+  private recordTurnGenerationError(
+    cause: unknown,
+    signal: AbortSignal,
+    retryPhase: "ready" | "ready-to-resolve",
+  ): void {
+    if (signal.aborted) return;
+    const message = cause instanceof Error ? cause.message : String(cause);
+    const cancelled =
+      (cause instanceof DOMException && cause.name === "AbortError") ||
+      message === "cancelled";
+    this.errorMessage = message;
+    this.phase =
+      retryPhase === "ready" && message === "offline"
+        ? "offline"
+        : cancelled
+          ? retryPhase
+          : "error";
+  }
+
+  private async saveGeneratedAction(
+    session: AdventureSession,
+    action: string,
+    signal: AbortSignal,
+  ): Promise<void> {
+    await this.verifyControl();
+    const anchors = await this.deps.context.resolveAnchors(session);
+    const relevant = await this.deps.context.resolveActionRelevant(
+      session,
+      action,
+    );
+    const proposal = await this.deps.generation.generate(
+      { session, phase: "action", playerAction: action, anchors, relevant },
+      { signal },
+    );
+    if (signal.aborted) throw new DOMException("Cancelled", "AbortError");
+    validateRollExpression(proposal);
+    const meta: CommitMetadata = {
+      turnId: this.deps.idGenerator(),
+      inputId: this.deps.idGenerator(),
+      playerAction: action,
+      now: this.deps.now(),
+    };
+    const result =
+      proposal.kind === "roll-required"
+        ? applyRollRequest(session, proposal, meta)
+        : applyCompletedTurn(session, proposal, meta);
+    if (!result.ok) {
+      throw new Error(result.errors[0]?.message ?? "turn-rejected");
+    }
+    await this.verifyControl();
+    const saved = await this.deps.repository.save(
+      session.revision,
+      result.value,
+    );
+    if (!saved.ok) throw saved.error;
+    this.session = saved.session;
+    this.draft = "";
+    this.phase = saved.session.pendingRoll ? "awaiting-roll" : "ready";
+  }
+
   async submitAction(action = this.draft, preserveDraft = true): Promise<void> {
-    if (
-      !this.session ||
-      this.readOnly ||
-      !action.trim() ||
-      this.phase === "generating"
-    )
-      return;
+    if (!this.canSubmitAction(action)) return;
+    if (preserveDraft) this.draft = action;
     if (typeof navigator !== "undefined" && !navigator.onLine) {
-      if (preserveDraft) this.draft = action;
       this.phase = "offline";
       return;
     }
-    const session = this.session;
-    if (preserveDraft) this.draft = action;
-    this.phase = "generating";
-    this.errorMessage = null;
-    this.generationController?.abort();
-    this.generationController = new AbortController();
-    const signal = this.generationController.signal;
+    const session = this.session!;
+    const signal = this.startTurnGeneration();
     try {
-      await this.verifyControl();
-      const anchors = await this.deps.context.resolveAnchors(session);
-      const relevant = await this.deps.context.resolveActionRelevant(
-        session,
-        action,
-      );
-      const proposal = await this.deps.generation.generate(
-        { session, phase: "action", playerAction: action, anchors, relevant },
-        { signal },
-      );
-      validateRollExpression(proposal);
-      if (signal.aborted) throw new DOMException("Cancelled", "AbortError");
-      const meta: CommitMetadata = {
-        turnId: this.deps.idGenerator(),
-        inputId: this.deps.idGenerator(),
-        playerAction: action,
-        now: this.deps.now(),
-      };
-      const result =
-        proposal.kind === "roll-required"
-          ? applyRollRequest(session, proposal, meta)
-          : applyCompletedTurn(session, proposal, meta);
-      if (!result.ok)
-        throw new Error(result.errors[0]?.message ?? "turn-rejected");
-      await this.verifyControl();
-      const saved = await this.deps.repository.save(
-        session.revision,
-        result.value,
-      );
-      if (!saved.ok) throw saved.error;
-      this.session = saved.session;
-      this.draft = "";
-      this.phase = saved.session.pendingRoll ? "awaiting-roll" : "ready";
+      await this.saveGeneratedAction(session, action, signal);
     } catch (cause) {
-      if (signal.aborted) return;
-      this.errorMessage =
-        cause instanceof Error ? cause.message : String(cause);
-      const cancelled =
-        cause instanceof DOMException && cause.name === "AbortError";
-      this.phase =
-        this.errorMessage === "offline"
-          ? "offline"
-          : cancelled || this.errorMessage === "cancelled"
-            ? "ready"
-            : "error";
+      this.recordTurnGenerationError(cause, signal, "ready");
     } finally {
-      if (this.generationController?.signal === signal)
-        this.generationController = null;
+      this.endTurnGeneration(signal);
     }
   }
 
