@@ -8,7 +8,11 @@ function link(target: string, label: string) {
   return { target, type: "associated", strength: 1, label };
 }
 
-function entity(id: string, type: string, options: Partial<Entity> = {}): Entity {
+function entity(
+  id: string,
+  type: string,
+  options: Partial<Entity> = {},
+): Entity {
   return {
     id,
     type,
@@ -108,12 +112,10 @@ describe("resolveTemporalWorldContext", () => {
 
   it("does not treat a year-only death as already known in that year", () => {
     expect(
-      resolve(year(620)).gmOnly.find((r) => r.id === "death")
-        ?.applicability,
+      resolve(year(620)).gmOnly.find((r) => r.id === "death")?.applicability,
     ).toBe("uncertain");
     expect(
-      resolve(year(621)).gmOnly.find((r) => r.id === "death")
-        ?.applicability,
+      resolve(year(621)).gmOnly.find((r) => r.id === "death")?.applicability,
     ).toBe("historical");
   });
 
@@ -123,12 +125,12 @@ describe("resolveTemporalWorldContext", () => {
     expect(publicData).not.toContain("secret illness");
     expect(publicData).not.toContain("confidential plot");
     expect(publicData).not.toContain("No dates have been established.");
-    expect(
-      result.gmOnly.find((r) => r.id === "notice")?.applicability,
-    ).toBe("uncertain");
-    expect(
-      result.gmOnly.find((r) => r.id === "hidden")?.applicability,
-    ).toBe("historical");
+    expect(result.gmOnly.find((r) => r.id === "notice")?.applicability).toBe(
+      "uncertain",
+    );
+    expect(result.gmOnly.find((r) => r.id === "hidden")?.applicability).toBe(
+      "historical",
+    );
     expect(result.playerSafe.map((r) => r.id)).not.toContain("hidden");
     expect(result.unresolved.map((r) => r.id)).toContain("notice");
   });
@@ -149,12 +151,12 @@ describe("resolveTemporalWorldContext", () => {
   });
 
   it("rejects invalid start locations, characters and calendar dates", () => {
-    expect(() =>
-      resolve(year(618), { locationId: "remote-unknown" }),
-    ).toThrow("temporal-world-location-not-found");
-    expect(() =>
-      resolve(year(618), { characterId: "capital" }),
-    ).toThrow("temporal-world-character-not-found");
+    expect(() => resolve(year(618), { locationId: "remote-unknown" })).toThrow(
+      "temporal-world-location-not-found",
+    );
+    expect(() => resolve(year(618), { characterId: "capital" })).toThrow(
+      "temporal-world-character-not-found",
+    );
     expect(() => resolve({ year: Number.NaN })).toThrow(
       "temporal-world-invalid-date",
     );
@@ -169,9 +171,9 @@ describe("resolveTemporalWorldContext", () => {
     const result = resolve(year(618), {
       entities: [...records, contradictory],
     });
-    expect(
-      result.gmOnly.find((r) => r.id === "bad")?.applicability,
-    ).toBe("contradictory");
+    expect(result.gmOnly.find((r) => r.id === "bad")?.applicability).toBe(
+      "contradictory",
+    );
     expect(result.playerSafe.map((r) => r.id)).not.toContain("bad");
   });
 
