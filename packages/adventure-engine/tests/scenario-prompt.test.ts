@@ -53,7 +53,10 @@ function session(): AdventureSession {
   });
 }
 
-function proposal(narration: string, revealSecretIds: string[] = []): AdventureTurnProposal {
+function proposal(
+  narration: string,
+  revealSecretIds: string[] = [],
+): AdventureTurnProposal {
   return {
     kind: "complete",
     narration,
