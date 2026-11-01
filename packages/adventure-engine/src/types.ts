@@ -224,7 +224,12 @@ export type ScenarioStatus = "open" | "resolved" | "abandoned";
 
 export interface ScenarioSeed {
   id: string;
-  origin: { kind: "rumour" | "manual"; batchTitle?: string; index?: number; sourceRecordId?: string };
+  origin: {
+    kind: "rumour" | "manual";
+    batchTitle?: string;
+    index?: number;
+    sourceRecordId?: string;
+  };
   playerVisible: { rumour: string; lead: string; source?: string };
   gmOnly: { truth: string; ifInvestigated?: string };
 }
