@@ -336,6 +336,12 @@ export type {
   OneShotThread,
 } from "./one-shot-types";
 export {
+  selectRumourForPlay,
+  RumourSelectionError,
+  type SelectedRumourForPlay,
+  type RumourSelectionInput,
+} from "./rumour-play-selection";
+export {
   buildRumourPrompt,
   parseRumourResponse,
   generateRumourLocal,
