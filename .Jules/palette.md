@@ -237,3 +237,8 @@
 
 **Learning:** Found several visually decorative icons inside buttons and toggles across the web app that lacked 'aria-hidden="true"'. These elements disrupt screen reader flow by announcing redundant or confusing class names alongside the visible label text.
 **Action:** Whenever adding or maintaining buttons, links, or toggles that contain decorative icons alongside textual labels, ensure the inner icon element explicitly includes 'aria-hidden="true"'.
+
+## 2026-11-01 - Contextualizing Ambiguous Feedback Buttons
+
+**Learning:** Short feedback action labels like "Yes/No" are ambiguous when read out of context by a screen reader (e.g., in a rotor list of buttons). Adding descriptive `aria-label`s and tooltips clarifies the action's intent without cluttering visual space.
+**Action:** Add explicit `aria-label` and `title` values (e.g., "Yes, this was useful") to buttons that rely heavily on surrounding textual context to make sense.
