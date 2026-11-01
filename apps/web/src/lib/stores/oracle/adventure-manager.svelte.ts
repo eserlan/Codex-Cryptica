@@ -633,58 +633,62 @@ export class AdventureManager {
     });
   }
 
+  private async saveRollResolutionTurn(
+    session: AdventureSession,
+    signal: AbortSignal,
+  ): Promise<void> {
+    const pendingRoll = session.pendingRoll;
+    if (!pendingRoll?.suppliedOutcome) return;
+    const anchors = await this.deps.context.resolveAnchors(session);
+    const proposal = await this.deps.generation.generate(
+      {
+        session,
+        phase: "roll-resolution",
+        rollResolution: pendingRoll.suppliedOutcome,
+        anchors,
+        relevant: [],
+      },
+      { signal },
+    );
+    if (signal.aborted) throw new DOMException("Cancelled", "AbortError");
+    if (proposal.kind !== "complete") {
+      throw new Error("roll-resolution-requires-complete-turn");
+    }
+    const result = resolveRecordedRoll(session, proposal, {
+      turnId: this.deps.idGenerator(),
+      inputId: this.deps.idGenerator(),
+      now: this.deps.now(),
+      playerAction: pendingRoll.playerAction,
+    });
+    if (!result.ok) {
+      throw new Error(result.errors[0]?.message ?? "roll-rejected");
+    }
+    await this.verifyControl();
+    const saved = await this.deps.repository.save(
+      session.revision,
+      result.value,
+    );
+    if (!saved.ok) throw saved.error;
+    this.session = saved.session;
+    this.phase = "ready";
+  }
+
   async resolveRoll(): Promise<void> {
-    const pendingRoll = this.session?.pendingRoll;
-    if (!pendingRoll?.suppliedOutcome || this.readOnly || !this.session) return;
-    this.phase = "generating";
+    if (
+      !this.session?.pendingRoll?.suppliedOutcome ||
+      this.readOnly ||
+      this.phase === "generating"
+    ) {
+      return;
+    }
     const session = this.session;
-    this.generationController?.abort();
-    this.generationController = new AbortController();
-    const signal = this.generationController.signal;
+    const signal = this.startTurnGeneration();
     try {
-      const anchors = await this.deps.context.resolveAnchors(session);
-      const proposal = await this.deps.generation.generate(
-        {
-          session,
-          phase: "roll-resolution",
-          rollResolution: pendingRoll.suppliedOutcome,
-          anchors,
-          relevant: [],
-        },
-        { signal },
-      );
-      if (signal.aborted) throw new DOMException("Cancelled", "AbortError");
-      if (proposal.kind !== "complete")
-        throw new Error("roll-resolution-requires-complete-turn");
-      const result = resolveRecordedRoll(session, proposal, {
-        turnId: this.deps.idGenerator(),
-        inputId: this.deps.idGenerator(),
-        now: this.deps.now(),
-        playerAction: pendingRoll.playerAction,
-      });
-      if (!result.ok)
-        throw new Error(result.errors[0]?.message ?? "roll-rejected");
-      await this.verifyControl();
-      const saved = await this.deps.repository.save(
-        session.revision,
-        result.value,
-      );
-      if (!saved.ok) throw saved.error;
-      this.session = saved.session;
-      this.phase = "ready";
+      await this.saveRollResolutionTurn(session, signal);
     } catch (cause) {
-      if (signal.aborted) return;
-      this.errorMessage =
-        cause instanceof Error ? cause.message : String(cause);
-      const cancelled =
-        cause instanceof DOMException && cause.name === "AbortError";
-      this.phase =
-        cancelled || this.errorMessage === "cancelled"
-          ? "ready-to-resolve"
-          : "error";
+      this.recordTurnGenerationError(cause, signal, "ready-to-resolve");
     } finally {
-      if (this.generationController?.signal === signal)
-        this.generationController = null;
+      this.endTurnGeneration(signal);
     }
   }
 
