@@ -97,7 +97,19 @@ function initialSession(input: {
       knownFacts: [],
       relationships: [],
     },
-    hiddenState: { secrets: [], gmThreads: [] },
+    hiddenState: {
+      secrets: input.scenarioSeed
+        ? [
+            {
+              id: input.idGenerator(),
+              text: input.scenarioSeed.gmOnly.truth,
+              status: "hidden",
+              revealCondition: "Reveal after in-world discovery.",
+            },
+          ]
+        : [],
+      gmThreads: [],
+    },
     provisionalFacts: [],
     turns: [],
     pendingRoll: null,
