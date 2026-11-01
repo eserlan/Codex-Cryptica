@@ -12,11 +12,7 @@ import type { Entity } from "schema";
  * useful for ordinary world entry and future historical Adventure entry.
  */
 export type TemporalApplicability =
-  | "established"
-  | "historical"
-  | "future"
-  | "uncertain"
-  | "contradictory";
+  "established" | "historical" | "future" | "uncertain" | "contradictory";
 
 export interface TemporalWorldRecord {
   id: string;
@@ -178,8 +174,7 @@ export function resolveTemporalWorldContext(
   }
   const contextDate = interval(query.at, query.calendar);
   const rankedRows = [...ranked.values()].sort(
-    (a, b) =>
-      a.distance - b.distance || a.entity.id.localeCompare(b.entity.id),
+    (a, b) => a.distance - b.distance || a.entity.id.localeCompare(b.entity.id),
   );
   const selected = rankedRows.slice(0, maxRecords);
   const playerSafe: TemporalWorldRecord[] = [];
