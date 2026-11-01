@@ -156,6 +156,7 @@ export const howDoITurnAnRpgIdeaIntoAnAdventure: AnswerConfigInput = {
     "how-do-i-prepare-a-dnd-session",
     "how-do-i-start-a-dnd-campaign",
     "how-do-i-plan-story-arcs-for-an-rpg-campaign",
+    "what-are-the-classic-must-play-tabletop-rpg-adventures",
   ],
   discovery: {
     id: "answer-turn-rpg-idea-into-adventure",

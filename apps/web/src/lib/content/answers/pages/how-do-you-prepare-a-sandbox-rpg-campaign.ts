@@ -175,6 +175,7 @@ export const howDoYouPrepareASandboxRpgCampaign: AnswerConfigInput = {
     "how-do-i-start-a-dnd-campaign",
     "how-do-i-plan-story-arcs-for-an-rpg-campaign",
     "stop-players-investigating-every-detail",
+    "what-are-the-classic-must-play-tabletop-rpg-adventures",
   ],
   discovery: {
     id: "answer-sandbox-campaign-prep",
