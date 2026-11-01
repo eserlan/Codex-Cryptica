@@ -45,7 +45,9 @@ export function detectHiddenLeakage(
     );
     if (
       !revealedTruth &&
-      !hidden.some((secret) => normalize(secret.text) === normalize(scenarioTruth))
+      !hidden.some(
+        (secret) => normalize(secret.text) === normalize(scenarioTruth),
+      )
     ) {
       hidden.push({
         id: "scenario-baseline-truth",
