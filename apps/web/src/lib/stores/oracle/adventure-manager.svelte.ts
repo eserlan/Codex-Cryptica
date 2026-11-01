@@ -386,44 +386,60 @@ export class AdventureManager {
     const loaded = await this.deps.repository.load(vaultId, sessionId);
     if (loaded.condition === "unreadable") throw loaded.error;
     if (!isCurrent()) return;
-    const nextReadOnly =
+    const readOnly =
       loaded.condition === "duplicate-active-conflict" ||
       loaded.session.status === "archived";
-    let nextLease: AdventureControlLease | null = null;
-    let readOnly = nextReadOnly;
-    if (!readOnly && loaded.session.status === "active") {
-      const acquired = await this.deps.authority.acquire({
-        vaultId,
-        sessionId,
-      });
-      if (!isCurrent()) {
-        if (acquired.ok) await this.deps.authority.release(acquired.lease);
-        return;
-      }
-      if (!acquired.ok) {
-        readOnly = true;
-      } else {
-        nextLease = acquired.lease;
-      }
-    }
+    const nextLease = await this.acquireOpenedSessionLease(
+      vaultId,
+      sessionId,
+      readOnly,
+      isCurrent,
+    );
+    if (!isCurrent()) return;
+    this.activateOpenedSession(loaded.session, readOnly || !nextLease, nextLease);
+    await this.resumeRecordedRollIfNeeded(isCurrent);
+  }
+
+  private async acquireOpenedSessionLease(
+    vaultId: string,
+    sessionId: string,
+    readOnly: boolean,
+    isCurrent: () => boolean,
+  ): Promise<AdventureControlLease | null> {
+    if (readOnly) return null;
+    const acquired = await this.deps.authority.acquire({
+      vaultId,
+      sessionId,
+    });
     if (!isCurrent()) {
-      if (nextLease) await this.deps.authority.release(nextLease);
-      return;
+      if (acquired.ok) await this.deps.authority.release(acquired.lease);
+      return null;
     }
-    this.session = loaded.session;
+    return acquired.ok ? acquired.lease : null;
+  }
+
+  private activateOpenedSession(
+    session: AdventureSession,
+    readOnly: boolean,
+    lease: AdventureControlLease | null,
+  ) {
+    this.session = session;
     this.readOnly = readOnly;
-    if (nextLease) {
-      this.lease = nextLease;
-      this.deps.coordinator.start(nextLease);
+    if (lease) {
+      this.lease = lease;
+      this.deps.coordinator.start(lease);
     }
-    this.phase = loaded.session.pendingRoll?.suppliedOutcome
+    this.phase = session.pendingRoll?.suppliedOutcome
       ? "ready-to-resolve"
-      : loaded.session.pendingRoll
+      : session.pendingRoll
         ? "awaiting-roll"
         : "ready";
+  }
+
+  private async resumeRecordedRollIfNeeded(isCurrent: () => boolean) {
     if (
       !this.readOnly &&
-      loaded.session.pendingRoll?.suppliedOutcome &&
+      this.session?.pendingRoll?.suppliedOutcome &&
       this.lease &&
       isCurrent()
     ) {
