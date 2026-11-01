@@ -536,4 +536,53 @@ describe("/table page", () => {
     expect(rows).toHaveLength(1);
     expect(rows[0].textContent).toContain("Incomplete Entity");
   });
+
+  it("retains selection while sorting and clears it when filters change", async () => {
+    mutableVault.allEntities = [
+      entity({ id: "e1", title: "Aldric", type: "character" }),
+      entity({ id: "e2", title: "Brindlewood", type: "location" }),
+    ];
+    render(RoutePage);
+    await fireEvent.click(
+      screen.getByRole("checkbox", { name: "Select Aldric" }),
+    );
+    await fireEvent.click(screen.getByTestId("entity-table-sort-title"));
+    expect(
+      screen.getByTestId("entity-table-selection-count").textContent,
+    ).toContain("1 selected");
+    expect(
+      (
+        screen.getByRole("checkbox", {
+          name: "Select Aldric",
+        }) as HTMLInputElement
+      ).checked,
+    ).toBe(true);
+
+    await fireEvent.click(screen.getAllByTestId("entity-table-type-filter")[0]);
+    expect(screen.queryByTestId("entity-table-selection-toolbar")).toBeNull();
+    expect(
+      (
+        screen.getByRole("checkbox", {
+          name: "Select Aldric",
+        }) as HTMLInputElement
+      ).checked,
+    ).toBe(false);
+  });
+
+  it("dismisses a row context menu before clearing its selection on Escape", async () => {
+    mutableVault.allEntities = [entity({ id: "e1", title: "Aldric" })];
+    render(RoutePage);
+    await fireEvent.contextMenu(screen.getByTestId("entity-table-row"), {
+      clientX: 10,
+      clientY: 20,
+    });
+    expect(screen.getByTestId("entity-table-context-menu")).toBeTruthy();
+    await fireEvent.keyDown(window, { key: "Escape" });
+    expect(screen.queryByTestId("entity-table-context-menu")).toBeNull();
+    expect(
+      screen.getByTestId("entity-table-selection-count").textContent,
+    ).toContain("1 selected");
+    await fireEvent.keyDown(window, { key: "Escape" });
+    expect(screen.queryByTestId("entity-table-selection-toolbar")).toBeNull();
+  });
 });
