@@ -201,139 +201,181 @@ export class AdventureManager {
     sourceRecords?: AdventureSession["sourceRecords"];
     scenarioSeed?: ScenarioState;
   }): Promise<AdventureSession> {
-    if (!input.premise.trim() || !input.title.trim())
+    if (!input.premise.trim() || !input.title.trim()) {
       throw new Error("premise-and-title-required");
+    }
     this.activeRestoreRequest += 1;
     this.phase = "starting";
     this.errorMessage = null;
-    const current = await this.deps.repository.list(input.vaultId);
-    if (current.effectiveActiveId) {
-      const existing = await this.deps.repository.load(
-        input.vaultId,
-        current.effectiveActiveId,
-      );
-      const isIncompleteStart =
-        existing.condition !== "unreadable" &&
-        existing.session.status === "active" &&
-        existing.session.turns.length === 0;
-      if (isIncompleteStart) {
-        const recovery = await this.deps.authority.acquire({
-          vaultId: input.vaultId,
-          sessionId: existing.session.id,
-        });
-        if (recovery.ok) {
-          const archived = await this.deps.repository.archive(
-            input.vaultId,
-            existing.session.id,
-            existing.session.revision,
-          );
-          await this.deps.authority.release(recovery.lease);
-          if (!archived.ok) {
-            this.phase = "error";
-            this.errorMessage = archived.error.message;
-            throw archived.error;
-          }
-        } else {
-          this.phase = "ready";
-          throw new Error("active-adventure-exists");
-        }
-      } else {
-        this.phase = "ready";
-        throw new Error("active-adventure-exists");
-      }
+    await this.ensureStartAvailable(input.vaultId);
+    const saved = await this.persistNewAdventure(input);
+    await this.takeControlOfNewAdventure(saved);
+    await this.startOpeningIfOnline(saved);
+    return this.session ?? saved;
+  }
+
+  private async ensureStartAvailable(vaultId: string): Promise<void> {
+    const current = await this.deps.repository.list(vaultId);
+    if (!current.effectiveActiveId) return;
+    const existing = await this.deps.repository.load(
+      vaultId,
+      current.effectiveActiveId,
+    );
+    if (
+      existing.condition !== "unreadable" &&
+      existing.session.status === "active" &&
+      existing.session.turns.length === 0
+    ) {
+      await this.archiveIncompleteStart(vaultId, existing.session);
+      return;
     }
-    const session = initialSession({
+    this.phase = "ready";
+    throw new Error("active-adventure-exists");
+  }
+
+  private async archiveIncompleteStart(
+    vaultId: string,
+    existing: AdventureSession,
+  ): Promise<void> {
+    const recovery = await this.deps.authority.acquire({
+      vaultId,
+      sessionId: existing.id,
+    });
+    if (!recovery.ok) {
+      this.phase = "ready";
+      throw new Error("active-adventure-exists");
+    }
+    try {
+      const archived = await this.deps.repository.archive(
+        vaultId,
+        existing.id,
+        existing.revision,
+      );
+      if (!archived.ok) {
+        this.phase = "error";
+        this.errorMessage = archived.error.message;
+        throw archived.error;
+      }
+    } finally {
+      await this.deps.authority.release(recovery.lease);
+    }
+  }
+
+  private async persistNewAdventure(input: {
+    vaultId: string;
+    title: string;
+    premise: string;
+    playerCharacter: PlayerCharacter;
+    sourceRecords?: AdventureSession["sourceRecords"];
+    scenarioSeed?: ScenarioState;
+  }): Promise<AdventureSession> {
+    const created = initialSession({
       ...input,
       now: this.deps.now(),
       idGenerator: this.deps.idGenerator,
     });
-    const saved = await this.deps.repository.save(null, session);
+    const saved = await this.deps.repository.save(null, created);
     if (!saved.ok) {
       this.phase = "error";
       this.errorMessage = saved.error.message;
       throw saved.error;
     }
     this.session = saved.session;
+    return saved.session;
+  }
+
+  private async takeControlOfNewAdventure(session: AdventureSession) {
     const acquired = await this.deps.authority.acquire({
-      vaultId: input.vaultId,
-      sessionId: saved.session.id,
+      vaultId: session.vaultId,
+      sessionId: session.id,
     });
+    this.readOnly = !acquired.ok;
     if (acquired.ok) {
       this.lease = acquired.lease;
       this.deps.coordinator.start(acquired.lease);
-    } else {
-      this.readOnly = true;
     }
     this.phase = "ready";
-    if (
-      !this.readOnly &&
-      (typeof navigator === "undefined" || navigator.onLine)
-    ) {
-      await this.generateOpening(saved.session);
-    } else if (!this.readOnly) {
+  }
+
+  private async startOpeningIfOnline(session: AdventureSession) {
+    if (this.readOnly) return;
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
       this.phase = "offline";
+      return;
     }
-    return this.session ?? saved.session;
+    await this.generateOpening(session);
   }
 
   private async generateOpening(session: AdventureSession): Promise<void> {
     if (!this.lease || !(await this.deps.authority.verify(this.lease))) return;
     this.phase = "generating";
     try {
-      const anchors = await this.deps.context.resolveAnchors(session);
-      const relevant = await this.deps.context.resolveOpeningRelevant(session);
-      const proposal = await this.deps.generation.generate({
-        session,
-        phase: "opening",
-        anchors,
-        relevant,
-      });
-      if (this.session?.id !== session.id) return;
-      validateRollExpression(proposal);
-      const meta: CommitMetadata = {
-        turnId: this.deps.idGenerator(),
-        inputId: this.deps.idGenerator(),
-        playerAction: "",
-        now: this.deps.now(),
-      };
-      const result =
-        proposal.kind === "roll-required"
-          ? applyRollRequest(session, proposal, meta)
-          : applyCompletedTurn(session, proposal, meta);
-      if (!result.ok)
-        throw new Error(result.errors[0]?.message ?? "opening-rejected");
-      await this.verifyControl();
-      const saved = await this.deps.repository.save(
-        session.revision,
-        result.value,
-      );
-      if (!saved.ok) throw saved.error;
-      if (this.session?.id !== session.id) return;
-      this.session = saved.session;
-      this.phase = saved.session.pendingRoll ? "awaiting-roll" : "ready";
+      await this.persistOpeningTurn(session);
     } catch (cause) {
-      const message = cause instanceof Error ? cause.message : String(cause);
-      const archived = await this.deps.repository.archive(
-        session.vaultId,
-        session.id,
-        session.revision,
-      );
-      if (this.session?.id !== session.id) {
-        if (archived.ok) void this.deps.clearGenerationInteraction(session.id);
-        return;
-      }
-      if (archived.ok) {
-        void this.deps.clearGenerationInteraction(session.id);
-        this.session = null;
-        this.readOnly = false;
-        await this.deps.coordinator.stop();
-        this.lease = null;
-      } else {
-        this.errorMessage = `${message}; failed to clean up the incomplete adventure: ${archived.error.message}`;
-      }
-      this.errorMessage ??= message;
-      this.phase = this.errorMessage === "offline" ? "offline" : "error";
+      await this.handleFailedOpening(session, cause);
     }
+  }
+
+  private async persistOpeningTurn(session: AdventureSession): Promise<void> {
+    const anchors = await this.deps.context.resolveAnchors(session);
+    const relevant = await this.deps.context.resolveOpeningRelevant(session);
+    const proposal = await this.deps.generation.generate({
+      session,
+      phase: "opening",
+      anchors,
+      relevant,
+    });
+    if (this.session?.id !== session.id) return;
+    validateRollExpression(proposal);
+    const meta: CommitMetadata = {
+      turnId: this.deps.idGenerator(),
+      inputId: this.deps.idGenerator(),
+      playerAction: "",
+      now: this.deps.now(),
+    };
+    const result =
+      proposal.kind === "roll-required"
+        ? applyRollRequest(session, proposal, meta)
+        : applyCompletedTurn(session, proposal, meta);
+    if (!result.ok) {
+      throw new Error(result.errors[0]?.message ?? "opening-rejected");
+    }
+    await this.verifyControl();
+    const saved = await this.deps.repository.save(
+      session.revision,
+      result.value,
+    );
+    if (!saved.ok) throw saved.error;
+    if (this.session?.id !== session.id) return;
+    this.session = saved.session;
+    this.phase = saved.session.pendingRoll ? "awaiting-roll" : "ready";
+  }
+
+  private async handleFailedOpening(
+    session: AdventureSession,
+    cause: unknown,
+  ): Promise<void> {
+    const message = cause instanceof Error ? cause.message : String(cause);
+    const archived = await this.deps.repository.archive(
+      session.vaultId,
+      session.id,
+      session.revision,
+    );
+    if (this.session?.id !== session.id) {
+      if (archived.ok) void this.deps.clearGenerationInteraction(session.id);
+      return;
+    }
+    if (archived.ok) {
+      void this.deps.clearGenerationInteraction(session.id);
+      this.session = null;
+      this.readOnly = false;
+      await this.deps.coordinator.stop();
+      this.lease = null;
+    } else {
+      this.errorMessage = `${message}; failed to clean up the incomplete adventure: ${archived.error.message}`;
+    }
+    this.errorMessage ??= message;
+    this.phase = this.errorMessage === "offline" ? "offline" : "error";
   }
 
   async open(
