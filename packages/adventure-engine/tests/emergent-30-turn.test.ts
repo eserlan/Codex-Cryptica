@@ -79,9 +79,10 @@ function baseline(): AdventureSession {
 function ordinaryTurn(i: number): AdventureTurnProposal {
   return {
     kind: "complete",
-    narration: i % 5 === 0
-      ? "You are free to continue exploring or leave the village."
-      : "The locals respond to your questions without assigning a quest.",
+    narration:
+      i % 5 === 0
+        ? "You are free to continue exploring or leave the village."
+        : "The locals respond to your questions without assigning a quest.",
     visiblePatch: emptyVisible,
     hiddenPatch: emptyHidden,
     revealSecretIds: [],
@@ -98,7 +99,6 @@ function ordinaryTurn(i: number): AdventureTurnProposal {
 describe("30-turn emergent adventure regression", () => {
   it("plays, rolls, reloads and resolves a rumour without losing original truth", () => {
     let session = baseline();
-    let beforeReloadRevision = 0;
     for (let i = 0; i < 30; i += 1) {
       const meta = {
         turnId: "turn-" + i,
@@ -127,20 +127,12 @@ describe("30-turn emergent adventure regression", () => {
         );
         expect(recorded.ok).toBe(true);
         if (!recorded.ok) throw new Error("roll recording failed");
-        const resolved = resolveRecordedRoll(
-          recorded.value,
-          ordinaryTurn(i),
-          meta,
-        );
+        const resolved = resolveRecordedRoll(recorded.value, ordinaryTurn(i), meta);
         expect(resolved.ok).toBe(true);
         if (!resolved.ok) throw new Error("roll resolution failed");
         session = resolved.value;
       } else {
-        const completed = applyCompletedTurn(
-          session,
-          ordinaryTurn(i),
-          meta,
-        );
+        const completed = applyCompletedTurn(session, ordinaryTurn(i), meta);
         expect(completed.ok).toBe(true);
         if (!completed.ok) throw new Error("turn failed");
         session = completed.value;
@@ -162,7 +154,7 @@ describe("30-turn emergent adventure regression", () => {
         expect(event.ok).toBe(true);
         if (!event.ok) throw new Error("scenario progression failed");
         session = event.session;
-        beforeReloadRevision = session.revision;
+        const beforeReloadRevision = session.revision;
         // Simulate OPFS JSON roundtrip, not a new AI generation.
         session = parseAdventureSession(JSON.parse(JSON.stringify(session)));
         expect(session.revision).toBe(beforeReloadRevision);
@@ -183,12 +175,12 @@ describe("30-turn emergent adventure regression", () => {
       anchors: [],
       relevant: [],
     });
-    expect(JSON.stringify(JSON.parse(prompt.state).playerScenario)).not.toContain(
-      truth,
-    );
-    expect(JSON.parse(prompt.state)["GM-ONLY scenario"].baselineTruth.truth).toBe(
-      truth,
-    );
+    expect(
+      JSON.stringify(JSON.parse(prompt.state).playerScenario),
+    ).not.toContain(truth);
+    expect(
+      JSON.parse(prompt.state)["GM-ONLY scenario"].baselineTruth.truth,
+    ).toBe(truth);
   });
 
   it("rejects hidden truth, duplicates and stale replay without changing state", () => {
@@ -200,11 +192,11 @@ describe("30-turn emergent adventure regression", () => {
         narration: truth,
       }),
     ).not.toHaveLength(0);
-    const first = applyCompletedTurn(
-      session,
-      ordinaryTurn(0),
-      { turnId: "turn-0", inputId: "input-0", now },
-    );
+    const first = applyCompletedTurn(session, ordinaryTurn(0), {
+      turnId: "turn-0",
+      inputId: "input-0",
+      now,
+    });
     expect(first.ok).toBe(true);
     if (!first.ok) return;
     expect(
