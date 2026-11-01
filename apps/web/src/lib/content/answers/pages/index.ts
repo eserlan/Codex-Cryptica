@@ -153,6 +153,7 @@ import { shouldIDevelopMyCharactersOrMyWorldFirst } from "./should-i-develop-my-
 import { shouldIShareWorldbuildingNotesWithMyPlayers } from "./should-i-share-worldbuilding-notes-with-my-players";
 import { stopPlayersInvestigatingEveryDetail } from "./stop-players-investigating-every-detail";
 import { whatAreTheBestClasslessFantasyRpgsWithSkillBasedProgression } from "./what-are-the-best-classless-fantasy-rpgs-with-skill-based-progression";
+import { whatAreTheClassicMustPlayTabletopRpgAdventures } from "./what-are-the-classic-must-play-tabletop-rpg-adventures";
 import { whatAreTheProsAndConsOfBecomingADungeonMaster } from "./what-are-the-pros-and-cons-of-becoming-a-dungeon-master";
 import { whatCanIDoOnMyTurnInDndCombat } from "./what-can-i-do-on-my-turn-in-dnd-combat";
 import { whatCanPlayersActuallyBuyAndSellInAFantasySettlement } from "./what-can-players-actually-buy-and-sell-in-a-fantasy-settlement";
@@ -349,6 +350,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     shouldIShareWorldbuildingNotesWithMyPlayers,
     stopPlayersInvestigatingEveryDetail,
     whatAreTheBestClasslessFantasyRpgsWithSkillBasedProgression,
+    whatAreTheClassicMustPlayTabletopRpgAdventures,
     whatAreTheProsAndConsOfBecomingADungeonMaster,
     whatCanIDoOnMyTurnInDndCombat,
     whatCanPlayersActuallyBuyAndSellInAFantasySettlement,
