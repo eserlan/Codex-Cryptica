@@ -219,6 +219,36 @@ export interface ResourceCounter {
   updatedAt: string;
 }
 
+/** A lightweight situation, never a mandatory quest or separate play session. */
+export type ScenarioStatus = "open" | "resolved" | "abandoned";
+
+export interface ScenarioSeed {
+  id: string;
+  origin: {
+    kind: "rumour" | "manual";
+    batchTitle?: string;
+    index?: number;
+    sourceRecordId?: string;
+  };
+  playerVisible: { rumour: string; lead: string; source?: string };
+  gmOnly: { truth: string; ifInvestigated?: string };
+}
+
+export interface ScenarioEvent {
+  id: string;
+  kind: "discovery" | "consequence" | "status-change";
+  visibility: "player" | "gm";
+  text: string;
+  at: string;
+  turnId?: string;
+}
+
+export interface ScenarioState extends ScenarioSeed {
+  version: 1;
+  status: ScenarioStatus;
+  events: ScenarioEvent[];
+}
+
 export interface AdventureSession {
   schemaVersion: 1 | 2;
   id: string;
@@ -232,6 +262,8 @@ export interface AdventureSession {
   playerCharacter: PlayerCharacter;
   premise: string;
   sourceRecords: SourceRecordReference[];
+  /** Optional: ordinary and older adventures have no scenario context. */
+  scenarioState?: ScenarioState;
   visibleState: VisibleAdventureState;
   hiddenState: HiddenAdventureState;
   provisionalFacts: ProvisionalFact[];
