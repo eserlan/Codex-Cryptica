@@ -380,28 +380,16 @@ export class AdventureManager {
     });
     if (this.session?.id !== session.id) return;
     validateRollExpression(proposal);
-    const meta: CommitMetadata = {
-      turnId: this.deps.idGenerator(),
-      inputId: this.deps.idGenerator(),
-      playerAction: "",
-      now: this.deps.now(),
-    };
-    const result =
-      proposal.kind === "roll-required"
-        ? applyRollRequest(session, proposal, meta)
-        : applyCompletedTurn(session, proposal, meta);
-    if (!result.ok) {
-      throw new Error(result.errors[0]?.message ?? "opening-rejected");
-    }
-    await this.verifyControl();
-    const saved = await this.deps.repository.save(
-      session.revision,
-      result.value,
+    const next = this.proposedSession(
+      session,
+      proposal,
+      this.newTurnMetadata(""),
+      "opening-rejected",
     );
-    if (!saved.ok) throw saved.error;
+    const saved = await this.saveTurn(session, next);
     if (this.session?.id !== session.id) return;
-    this.session = saved.session;
-    this.phase = saved.session.pendingRoll ? "awaiting-roll" : "ready";
+    this.session = saved;
+    this.phase = saved.pendingRoll ? "awaiting-roll" : "ready";
   }
 
   private async handleFailedOpening(
@@ -582,28 +570,16 @@ export class AdventureManager {
     );
     if (signal.aborted) throw new DOMException("Cancelled", "AbortError");
     validateRollExpression(proposal);
-    const meta: CommitMetadata = {
-      turnId: this.deps.idGenerator(),
-      inputId: this.deps.idGenerator(),
-      playerAction: action,
-      now: this.deps.now(),
-    };
-    const result =
-      proposal.kind === "roll-required"
-        ? applyRollRequest(session, proposal, meta)
-        : applyCompletedTurn(session, proposal, meta);
-    if (!result.ok) {
-      throw new Error(result.errors[0]?.message ?? "turn-rejected");
-    }
-    await this.verifyControl();
-    const saved = await this.deps.repository.save(
-      session.revision,
-      result.value,
+    const next = this.proposedSession(
+      session,
+      proposal,
+      this.newTurnMetadata(action),
+      "turn-rejected",
     );
-    if (!saved.ok) throw saved.error;
-    this.session = saved.session;
+    const saved = await this.saveTurn(session, next);
+    this.session = saved;
     this.draft = "";
-    this.phase = saved.session.pendingRoll ? "awaiting-roll" : "ready";
+    this.phase = saved.pendingRoll ? "awaiting-roll" : "ready";
   }
 
   async submitAction(action = this.draft, preserveDraft = true): Promise<void> {
