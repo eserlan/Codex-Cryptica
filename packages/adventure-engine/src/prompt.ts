@@ -16,6 +16,7 @@ export interface AdventurePromptInput {
 }
 
 export function buildAdventurePrompt(input: AdventurePromptInput) {
+  const scenario = input.session.scenarioState;
   const phaseInstruction =
     input.phase === "opening"
       ? "This is the opening scene. No player action is expected yet; introduce an immediate situation and return a complete or roll-required proposal instead of asking the player for input."
@@ -27,13 +28,17 @@ export function buildAdventurePrompt(input: AdventurePromptInput) {
     phaseInstruction,
     "Never choose the player character's voluntary actions, dialogue, decisions, thoughts, or feelings.",
     "Canonical source records outrank provisional session material.",
-    "For an active scenario, portray an evolving situation rather than an assigned quest; never force objectives, rewards, scripted beats or a climax.",
-    "A rumour may be exaggerated, mistaken, harmless or mundane. It does not need to become an adventure.",
-    "Never rewrite the original GM-only scenario truth merely to manufacture a twist or prolong play.",
-    "Present actors with credible motives and reactions; new developments must follow established facts or player actions.",
-    "Respect the player's right to ignore, abandon, revisit or resolve a situation without forcing escalation.",
-    "Distinguish hearsay, observation and interpretation. Only reveal scenario secrets through justified fictional discovery.",
-    "The GM-ONLY scenario block is secret preparation and must never be paraphrased into narration, hints, suggested actions, roll prompts or recaps before disclosure.",
+    ...(scenario
+      ? [
+          "For an active scenario, portray an evolving situation rather than an assigned quest; never force objectives, rewards, scripted beats or a climax.",
+          "A rumour may be exaggerated, mistaken, harmless or mundane. It does not need to become an adventure.",
+          "Never rewrite the original GM-only scenario truth merely to manufacture a twist or prolong play.",
+          "Present actors with credible motives and reactions; new developments must follow established facts or player actions.",
+          "Respect the player's right to ignore, abandon, revisit or resolve a situation without forcing escalation.",
+          "Distinguish hearsay, observation and interpretation. Only reveal scenario secrets through justified fictional discovery.",
+          "The GM-ONLY scenario block is secret preparation and must never be paraphrased into narration, hints, suggested actions, roll prompts or recaps before disclosure.",
+        ]
+      : []),
     "Do not reveal unrevealed GM state; return explicit reveal IDs only when fictionally discovered.",
     "The GM-ONLY state block is not player knowledge and must never be copied into narration or roll copy.",
     "Source excerpt lore is GM-only: use it to drive consequences and reveals, but never state it to the player unless it is fictionally discovered.",
@@ -44,12 +49,9 @@ export function buildAdventurePrompt(input: AdventurePromptInput) {
     "Include exactly three concise suggestedActions. They are optional player choices, never actions you have decided for the character.",
     "Return only the requested structured schema.",
   ].join(" ");
-  const scenario = input.session.scenarioState;
   const state = JSON.stringify({
     playerVisibleState: input.session.visibleState,
-    playerScenario: scenario
-      ? playerScenarioProjection(scenario)
-      : undefined,
+    playerScenario: scenario ? playerScenarioProjection(scenario) : undefined,
     "GM-ONLY scenario": scenario
       ? {
           origin: scenario.origin,
