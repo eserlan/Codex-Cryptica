@@ -1,4 +1,10 @@
-import type { AdventureSession, ScenarioEvent, ScenarioSeed, ScenarioState, ScenarioStatus } from "./types";
+import type {
+  AdventureSession,
+  ScenarioEvent,
+  ScenarioSeed,
+  ScenarioState,
+  ScenarioStatus,
+} from "./types";
 import { parseAdventureSession } from "./schemas";
 
 /**
@@ -17,26 +23,41 @@ export function createScenarioState(seed: ScenarioSeed): ScenarioState {
   };
 }
 
-/** Only explicitly observable events/lead text cross the UI boundary. */
+/** Only explicitly observable events and lead text cross the UI boundary. */
 export function playerScenarioProjection(scenario: ScenarioState) {
   return {
     version: scenario.version,
     id: scenario.id,
     origin: {
       kind: scenario.origin.kind,
-      // Source record may be a GM-only note; do not expose its ID or batch provenance.
+      // A source record may be GM-only; do not expose its ID or provenance.
     },
     playerVisible: structuredClone(scenario.playerVisible),
     status: scenario.status,
     events: scenario.events
       .filter((event) => event.visibility === "player")
-      .map(({ id, kind, text, at, turnId }) => ({ id, kind, text, at, turnId })),
+      .map(({ id, kind, text, at, turnId }) => ({
+        id,
+        kind,
+        text,
+        at,
+        turnId,
+      })),
   };
 }
 
 export type ScenarioCommitResult =
   | { ok: true; session: AdventureSession }
-  | { ok: false; reason: "no-scenario" | "stale-revision" | "duplicate-event" | "invalid-transition" | "invalid-event" | "state-budget-exceeded" };
+  | {
+      ok: false;
+      reason:
+        | "no-scenario"
+        | "stale-revision"
+        | "duplicate-event"
+        | "invalid-transition"
+        | "invalid-event"
+        | "state-budget-exceeded";
+    };
 
 /**
  * Commit one bounded causal change. The caller must still use the existing
@@ -49,16 +70,20 @@ export function commitScenarioEvent(
   expectedRevision: number,
 ): ScenarioCommitResult {
   if (!session.scenarioState) return { ok: false, reason: "no-scenario" };
-  if (session.revision !== expectedRevision) return { ok: false, reason: "stale-revision" };
+  if (session.revision !== expectedRevision)
+    return { ok: false, reason: "stale-revision" };
   if (session.status !== "active" || session.scenarioState.status !== "open") {
     return { ok: false, reason: "invalid-transition" };
   }
   if (session.scenarioState.events.some((item) => item.id === event.id)) {
     return { ok: false, reason: "duplicate-event" };
   }
-  if (!["open", "resolved", "abandoned"].includes(nextStatus) ||
-      !Number.isFinite(Date.parse(event.at)) ||
-      !event.id.trim() || !event.text.trim()) {
+  if (
+    !["open", "resolved", "abandoned"].includes(nextStatus) ||
+    !Number.isFinite(Date.parse(event.at)) ||
+    !event.id.trim() ||
+    !event.text.trim()
+  ) {
     return { ok: false, reason: "invalid-event" };
   }
   const candidate = structuredClone(session);
