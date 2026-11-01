@@ -4,11 +4,11 @@ import type { Entity } from "schema";
 import { resolveTemporalWorldContext } from "./temporal-world-context";
 
 const year = (n: number) => ({ year: n });
-function entity(
-  id: string,
-  type: string,
-  options: Partial<Entity> = {},
-): Entity {
+function link(target: string, label: string) {
+  return { target, type: "associated", strength: 1, label };
+}
+
+function entity(id: string, type: string, options: Partial<Entity> = {}): Entity {
   return {
     id,
     type,
@@ -25,26 +25,31 @@ function entity(
 const calendar = {
   ...DEFAULT_CALENDAR,
   eras: [
-    { id: "after-fall", name: "After the Fall", startYear: 600, yearAtStart: 1 },
+    {
+      id: "after-fall",
+      name: "After the Fall",
+      startYear: 600,
+      yearAtStart: 1,
+    },
   ],
 };
 
 const records: Entity[] = [
   entity("guard", "character", {
-    connections: [{ target: "capital", type: "associated", strength: 1, label: "lives in" }],
+    connections: [link("capital", "lives in")],
   }),
   entity("capital", "location", {
     connections: [
-      { target: "king", type: "associated", strength: 1, label: "residence of" },
-      { target: "faction", type: "associated", strength: 1, label: "controlled by" },
-      { target: "notice", type: "associated", strength: 1, label: "mentioned in" },
+      link("king", "residence of"),
+      link("faction", "controlled by"),
+      link("notice", "mentioned in"),
     ],
   }),
   entity("king", "character", {
     start_date: year(600),
     end_date: year(620),
     lore: "The king's secret illness is not public.",
-    connections: [{ target: "death", type: "associated", strength: 1, label: "dies during" }],
+    connections: [link("death", "dies during")],
   }),
   entity("death", "event", {
     title: "Death of the King",
@@ -52,7 +57,7 @@ const records: Entity[] = [
     content: "King dies in year 620.",
   }),
   entity("faction", "faction", {
-    connections: [{ target: "alliance", type: "associated", strength: 1, label: "signed" }],
+    connections: [link("alliance", "signed")],
   }),
   entity("alliance", "event", {
     date: year(621),
@@ -65,7 +70,7 @@ const records: Entity[] = [
   entity("hidden", "event", {
     date: year(617),
     visibility: "hidden",
-    connections: [{ target: "king", type: "associated", strength: 1, label: "targets" }],
+    connections: [link("king", "targets")],
   }),
   entity("remote", "location", {
     content: "A distant, unconnected city.",
@@ -118,12 +123,12 @@ describe("resolveTemporalWorldContext", () => {
     expect(publicData).not.toContain("secret illness");
     expect(publicData).not.toContain("confidential plot");
     expect(publicData).not.toContain("No dates have been established.");
-    expect(result.gmOnly.find((r) => r.id === "notice")?.applicability).toBe(
-      "uncertain",
-    );
-    expect(result.gmOnly.find((r) => r.id === "hidden")?.applicability).toBe(
-      "historical",
-    );
+    expect(
+      result.gmOnly.find((r) => r.id === "notice")?.applicability,
+    ).toBe("uncertain");
+    expect(
+      result.gmOnly.find((r) => r.id === "hidden")?.applicability,
+    ).toBe("historical");
     expect(result.playerSafe.map((r) => r.id)).not.toContain("hidden");
     expect(result.unresolved.map((r) => r.id)).toContain("notice");
   });
@@ -150,16 +155,16 @@ describe("resolveTemporalWorldContext", () => {
     expect(() =>
       resolve(year(618), { characterId: "capital" }),
     ).toThrow("temporal-world-character-not-found");
-    expect(() =>
-      resolve({ year: Number.NaN }),
-    ).toThrow("temporal-world-invalid-date");
+    expect(() => resolve({ year: Number.NaN })).toThrow(
+      "temporal-world-invalid-date",
+    );
   });
 
   it("flags contradictory event windows rather than asserting them", () => {
     const contradictory = entity("bad", "event", {
       start_date: year(624),
       end_date: year(620),
-      connections: [{ target: "capital", type: "associated", strength: 1, label: "involves" }],
+      connections: [link("capital", "involves")],
     });
     const result = resolve(year(618), {
       entities: [...records, contradictory],
@@ -174,8 +179,8 @@ describe("resolveTemporalWorldContext", () => {
     const before = JSON.stringify(records);
     const result = resolve(year(618));
     expect(JSON.stringify(records)).toBe(before);
-    expect(
-      result.gmOnly.find((r) => r.id === "king")?.dateLabel,
-    ).toContain("After the Fall");
+    expect(result.gmOnly.find((r) => r.id === "king")?.dateLabel).toContain(
+      "After the Fall",
+    );
   });
 });
