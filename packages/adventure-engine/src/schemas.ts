@@ -240,34 +240,52 @@ export const turnProposalSchema = z.discriminatedUnion("kind", [
   rollProposalSchema,
 ]);
 
-const scenarioStateSchema = z.object({
-  version: z.literal(1),
-  id,
-  origin: z.object({
+const scenarioOriginSchema = z
+  .object({
     kind: z.enum(["rumour", "manual"]),
     batchTitle: text.optional(),
     index: z.number().int().min(1).max(6).optional(),
     sourceRecordId: id.optional(),
-  }).strict(),
-  playerVisible: z.object({
+  })
+  .strict();
+
+const scenarioPlayerVisibleSchema = z
+  .object({
     rumour: text,
     lead: text,
     source: text.optional(),
-  }).strict(),
-  gmOnly: z.object({
+  })
+  .strict();
+
+const scenarioGMOnlySchema = z
+  .object({
     truth: text,
     ifInvestigated: text.optional(),
-  }).strict(),
-  status: z.enum(["open", "resolved", "abandoned"]),
-  events: z.array(z.object({
+  })
+  .strict();
+
+const scenarioEventSchema = z
+  .object({
     id,
     kind: z.enum(["discovery", "consequence", "status-change"]),
     visibility: z.enum(["player", "gm"]),
     text,
     at: timestamp,
     turnId: id.optional(),
-  }).strict()).max(100),
-}).strict();
+  })
+  .strict();
+
+const scenarioStateSchema = z
+  .object({
+    version: z.literal(1),
+    id,
+    origin: scenarioOriginSchema,
+    playerVisible: scenarioPlayerVisibleSchema,
+    gmOnly: scenarioGMOnlySchema,
+    status: z.enum(["open", "resolved", "abandoned"]),
+    events: z.array(scenarioEventSchema).max(100),
+  })
+  .strict();
 
 export const adventureSessionSchema = z.object({
   schemaVersion: z.literal(CURRENT_ADVENTURE_SCHEMA_VERSION),
