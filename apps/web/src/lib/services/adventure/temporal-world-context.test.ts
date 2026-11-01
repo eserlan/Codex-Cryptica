@@ -81,6 +81,24 @@ const records: Entity[] = [
     content: "Hidden undated record",
     connections: [link("king", "secret connection")],
   }),
+  entity("dated-only-person", "character", {
+    date: year(600),
+    content: "A character known to be present in year 600.",
+    connections: [link("capital", "knows the ruler")],
+  }),
+  entity("secret-link", "event", {
+    date: year(617),
+    content: "The secret council met in 617.",
+    connections: [
+      {
+        target: "capital",
+        type: "associated",
+        strength: 1,
+        label: "concealed meeting",
+        hidden: true,
+      },
+    ],
+  }),
   entity("remote", "location", {
     content: "A distant, unconnected city.",
     date: year(601),
@@ -113,6 +131,33 @@ describe("resolveTemporalWorldContext", () => {
     expect(result.playerSafe.map((r) => r.id)).toContain("king");
     expect(result.playerSafe.map((r) => r.id)).not.toContain("death");
     expect(result.playerSafe.map((r) => r.id)).not.toContain("alliance");
+  });
+
+  it("does not interpret a generic character date as a death or end date", () => {
+    const result = resolve(year(618));
+    expect(
+      result.gmOnly.find((r) => r.id === "dated-only-person")?.applicability,
+    ).toBe("uncertain");
+    expect(result.playerSafe.map((r) => r.id)).not.toContain(
+      "dated-only-person",
+    );
+    expect(result.unresolved.map((r) => r.id)).toContain("dated-only-person");
+  });
+
+  it("includes explicitly selected undated character and location without inventing dates", () => {
+    const result = resolve(year(618));
+    for (const id of ["guard", "capital"]) {
+      expect(result.playerSafe.find((r) => r.id === id)?.applicability).toBe(
+        "uncertain",
+      );
+    }
+  });
+
+  it("never exposes a publicly visible record reached only through a hidden connection", () => {
+    const result = resolve(year(618));
+    expect(result.gmOnly.map((r) => r.id)).toContain("secret-link");
+    expect(result.playerSafe.map((r) => r.id)).not.toContain("secret-link");
+    expect(result.unresolved.map((r) => r.id)).not.toContain("secret-link");
   });
 
   it("does not treat a year-only death as already known in that year", () => {
