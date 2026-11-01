@@ -88,7 +88,9 @@ function initialSession(input: {
     playerCharacter: input.playerCharacter,
     premise: input.premise,
     sourceRecords: input.sourceRecords ?? [],
-    ...(input.scenarioSeed ? { scenarioState: structuredClone(input.scenarioSeed) } : {}),
+    ...(input.scenarioSeed
+      ? { scenarioState: structuredClone(input.scenarioSeed) }
+      : {}),
     visibleState: {
       objectives: [],
       activeCharacters: [],
