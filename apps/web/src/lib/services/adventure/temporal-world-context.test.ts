@@ -76,6 +76,11 @@ const records: Entity[] = [
     visibility: "hidden",
     connections: [link("king", "targets")],
   }),
+  entity("hidden-undated", "note", {
+    visibility: "hidden",
+    content: "Hidden undated record",
+    connections: [link("king", "secret connection")],
+  }),
   entity("remote", "location", {
     content: "A distant, unconnected city.",
     date: year(601),
@@ -133,6 +138,7 @@ describe("resolveTemporalWorldContext", () => {
     );
     expect(result.playerSafe.map((r) => r.id)).not.toContain("hidden");
     expect(result.unresolved.map((r) => r.id)).toContain("notice");
+    expect(result.unresolved.map((r) => r.id)).not.toContain("hidden-undated");
   });
 
   it("includes direct and second-hop connected records but excludes unrelated canon", () => {
