@@ -187,7 +187,7 @@ export class AdventureManager {
     premise: string;
     playerCharacter: PlayerCharacter;
     sourceRecords?: AdventureSession["sourceRecords"];
-  scenarioSeed?: ScenarioState;
+    scenarioSeed?: ScenarioState;
   }): Promise<AdventureSession> {
     if (!input.premise.trim() || !input.title.trim())
       throw new Error("premise-and-title-required");
