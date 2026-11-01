@@ -1,3 +1,13 @@
+import type { Entity } from "schema";
+import type {
+  WorldCalendar,
+  TemporalMetadata,
+  DateSelection,
+} from "chronology-engine";
+import {
+  resolveTemporalWorldContext,
+  type TemporalWorldContext,
+} from "./temporal-world-context";
 import type {
   AdventureSession,
   ResolvedSourceExcerpt,
@@ -5,6 +15,11 @@ import type {
 } from "@codex/adventure-engine";
 
 export interface AdventureSourceResolver {
+  /** Optional world snapshot adapter for date-aware exploration starts. */
+  getWorldSnapshot?(vaultId: string): Promise<{
+    entities: Entity[];
+    calendar: WorldCalendar;
+  }>;
   getById(
     vaultId: string,
     recordId: string,
@@ -35,6 +50,43 @@ export class AdventureContextService {
 
   setResolver(resolver: AdventureSourceResolver): void {
     this.resolver = resolver;
+  }
+
+  /** Date-aware, bounded source retrieval; never writes or rewrites Vault canon. */
+  async resolveTemporalWorld(input: {
+    vaultId: string;
+    characterId: string;
+    locationId: string;
+    at: TemporalMetadata | DateSelection;
+    maxRecords?: number;
+  }): Promise<TemporalWorldContext> {
+    if (!this.resolver.getWorldSnapshot) {
+      throw new Error("temporal-world-not-configured");
+    }
+    const source = await this.resolver.getWorldSnapshot(input.vaultId);
+    // The Vault graph index may contain metadata-only records. Select the
+    // small relevant subset *before* loading bodies from OPFS.
+    const initial = resolveTemporalWorldContext({ ...input, ...source });
+    const byId = new Map(source.entities.map((entity) => [entity.id, entity]));
+    // Only the bounded selection creates asynchronous OPFS reads. Mapping
+    // every Vault record into a Promise would scale memory with Vault size.
+    const hydrated = await Promise.all(
+      initial.gmOnly.map(async (record) => {
+        const entity = byId.get(record.id)!;
+        const loaded = await this.resolver.getById(input.vaultId, entity.id);
+        return [
+          record.id,
+          loaded
+            ? { ...entity, content: loaded.text, lore: loaded.lore }
+            : entity,
+        ] as const;
+      }),
+    );
+    const overrides = new Map(hydrated);
+    const entities = source.entities.map(
+      (entity) => overrides.get(entity.id) ?? entity,
+    );
+    return resolveTemporalWorldContext({ ...input, ...source, entities });
   }
 
   async resolveAnchors(

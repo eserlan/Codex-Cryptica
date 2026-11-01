@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { DEFAULT_CALENDAR } from "chronology-engine";
 import { AdventureContextService } from "./adventure-context-service";
 
 const session = {
@@ -52,5 +53,69 @@ describe("AdventureContextService", () => {
     });
 
     await expect(service.resolveOpeningRelevant(session)).resolves.toEqual([]);
+  });
+  it("uses the live Vault graph/calendar adapter for a bounded temporal lookup", async () => {
+    const make = (
+      id: string,
+      type: string,
+      options: Record<string, unknown> = {},
+    ) => ({
+      id,
+      type,
+      title: id,
+      content: id,
+      connections: [],
+      ...options,
+    });
+    const getWorldSnapshot = vi.fn().mockResolvedValue({
+      calendar: DEFAULT_CALENDAR,
+      entities: [
+        make("pc", "character", {
+          connections: [{ target: "city", type: "knows", strength: 1 }],
+        }),
+        make("city", "location", {
+          connections: [{ target: "king", type: "contains", strength: 1 }],
+        }),
+        make("king", "character", {
+          start_date: { year: 600 },
+          end_date: { year: 620 },
+          lore: "secret court plan",
+        }),
+        make("remote", "location", { date: { year: 600 } }),
+      ],
+    });
+    const getById = vi.fn(async (_vaultId: string, id: string) => ({
+      id,
+      title: id,
+      type: id === "city" ? "location" : "character",
+      text: id + " body loaded from OPFS",
+      lore: id === "king" ? "secret court plan" : undefined,
+    }));
+    const service = new AdventureContextService({
+      getById,
+      search: vi.fn(),
+      getWorldSnapshot,
+    });
+    const result = await service.resolveTemporalWorld({
+      vaultId: "vault-1",
+      characterId: "pc",
+      locationId: "city",
+      at: { year: 618 },
+      maxRecords: 3,
+    });
+    expect(getWorldSnapshot).toHaveBeenCalledWith("vault-1");
+    expect(result.playerSafe.map((r) => r.id)).toContain("king");
+    expect(JSON.stringify(result.playerSafe)).not.toContain(
+      "secret court plan",
+    );
+    expect(result.gmOnly.find((r) => r.id === "king")?.lore).toBe(
+      "secret court plan",
+    );
+    expect(result.gmOnly.map((r) => r.id)).not.toContain("remote");
+    expect(getById).toHaveBeenCalledTimes(3);
+    expect(getById).not.toHaveBeenCalledWith("vault-1", "remote");
+    expect(result.gmOnly.find((r) => r.id === "king")?.content).toContain(
+      "body loaded from OPFS",
+    );
   });
 });
