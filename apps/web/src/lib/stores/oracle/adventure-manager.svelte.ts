@@ -192,18 +192,27 @@ export class AdventureManager {
     }
   }
 
-  constructor(deps: AdventureManagerDependencies = {}) {
+  constructor({
+    repository = adventureSessionRepository,
+    generation = defaultGenerationService(),
+    clearGenerationInteraction = clearDefaultGenerationInteraction,
+    context = adventureContextService,
+    authority = adventureControlAuthority,
+    coordinator = adventureControlCoordinator,
+    now = () => new Date().toISOString(),
+    dice = defaultDiceEngine,
+    idGenerator = systemIdGenerator.uuid,
+  }: AdventureManagerDependencies = {}) {
     this.deps = {
-      repository: deps.repository ?? adventureSessionRepository,
-      generation: deps.generation ?? defaultGenerationService(),
-      clearGenerationInteraction:
-        deps.clearGenerationInteraction ?? clearDefaultGenerationInteraction,
-      context: deps.context ?? adventureContextService,
-      authority: deps.authority ?? adventureControlAuthority,
-      coordinator: deps.coordinator ?? adventureControlCoordinator,
-      now: deps.now ?? (() => new Date().toISOString()),
-      dice: deps.dice ?? defaultDiceEngine,
-      idGenerator: deps.idGenerator ?? systemIdGenerator.uuid,
+      repository,
+      generation,
+      clearGenerationInteraction,
+      context,
+      authority,
+      coordinator,
+      now,
+      dice,
+      idGenerator,
     };
   }
 
