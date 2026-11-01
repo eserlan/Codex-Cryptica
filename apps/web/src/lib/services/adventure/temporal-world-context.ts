@@ -61,8 +61,7 @@ type DateLike = TemporalMetadata | DateSelection;
 function interval(date: DateLike, calendar: WorldCalendar) {
   if (!calendarEngine.isValid(date, calendar)) return null;
   const first = calendarEngine.getTimelineValue(date, calendar);
-  const yearEnd =
-    (date.year + 1) * calendarEngine.getDaysInYear(calendar) - 1;
+  const yearEnd = (date.year + 1) * calendarEngine.getDaysInYear(calendar) - 1;
   if ("precision" in date) {
     if (date.precision === "day") return { first, last: first };
     if (date.precision === "unit") {
@@ -74,7 +73,10 @@ function interval(date: DateLike, calendar: WorldCalendar) {
     if (date.precision === "anchor") {
       // An intercalary anchor's placement is calendar-defined, but may
       // only identify a year; do not overstate day-level certainty.
-      return { first: date.year * calendarEngine.getDaysInYear(calendar), last: yearEnd };
+      return {
+        first: date.year * calendarEngine.getDaysInYear(calendar),
+        last: yearEnd,
+      };
     }
     return { first, last: yearEnd };
   }
@@ -95,7 +97,8 @@ function classify(
   if (!start && !end) return "uncertain";
   const startInterval = start ? interval(start, calendar) : null;
   const endInterval = end ? interval(end, calendar) : null;
-  if ((start && !startInterval) || (end && !endInterval)) return "contradictory";
+  if ((start && !startInterval) || (end && !endInterval))
+    return "contradictory";
   if (startInterval && endInterval && startInterval.first > endInterval.last) {
     return "contradictory";
   }
@@ -106,8 +109,12 @@ function classify(
     // already happened; keep it temporally uncertain at that boundary.
     return "uncertain";
   }
-  if (startInterval && endInterval &&
-      at.first >= startInterval.last && at.last <= endInterval.first) {
+  if (
+    startInterval &&
+    endInterval &&
+    at.first >= startInterval.last &&
+    at.last <= endInterval.first
+  ) {
     return "established";
   }
   if (startInterval && !endInterval && at.first > startInterval.last) {
@@ -172,8 +179,7 @@ export function resolveTemporalWorldContext(
   const contextDate = interval(query.at, query.calendar);
   const rankedRows = [...ranked.values()].sort(
     (a, b) =>
-      a.distance - b.distance ||
-      a.entity.id.localeCompare(b.entity.id),
+      a.distance - b.distance || a.entity.id.localeCompare(b.entity.id),
   );
   const selected = rankedRows.slice(0, maxRecords);
   const playerSafe: TemporalWorldRecord[] = [];
@@ -203,14 +209,14 @@ export function resolveTemporalWorldContext(
     };
     gmOnly.push({
       ...record,
-      ...(entity.lore
-        ? { lore: entity.lore.slice(0, maxExcerptChars) }
-        : {}),
+      ...(entity.lore ? { lore: entity.lore.slice(0, maxExcerptChars) } : {}),
     });
     // A source's visibility and its temporal applicability are distinct
     // guards. Unknown/future records must not become player assertions.
-    if (entity.visibility !== "hidden" &&
-        (applicability === "established" || applicability === "historical")) {
+    if (
+      entity.visibility !== "hidden" &&
+      (applicability === "established" || applicability === "historical")
+    ) {
       playerSafe.push(record);
     } else if (
       applicability === "uncertain" ||
