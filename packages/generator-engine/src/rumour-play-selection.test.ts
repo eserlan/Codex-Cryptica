@@ -70,7 +70,10 @@ describe("selectRumourForPlay", () => {
   });
 
   it("rejects missing required player information", () => {
-    const content = local.content.replace("- **Lead**:", "- **Something Else**:");
+    const content = local.content.replace(
+      "### Rumour 3\n",
+      "### Rumour 3\n- **Something Else**: invalid extra field\n",
+    );
     expect(() => selectRumourForPlay({ ...local, content }, 3))
       .toThrow(new RumourSelectionError("malformed-content"));
   });
