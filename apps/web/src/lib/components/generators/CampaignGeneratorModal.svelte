@@ -1,5 +1,14 @@
 <script lang="ts">
   import { CampaignGeneration } from "./campaign-generation.svelte.js";
+  import { goto } from "$app/navigation";
+  import { resolve } from "$app/paths";
+  import { selectRumourForPlay } from "generator-engine";
+  import { systemIdGenerator } from "#lib/utils/runtime-deps.js";
+  import {
+    rumourAdventureHandoff,
+    buildRumourScenario,
+  } from "#lib/stores/oracle/rumour-adventure-handoff.svelte.js";
+  import RumourPlayActions from "./RumourPlayActions.svelte";
   import {
     campaignGeneratorSaver,
     type CampaignSaveOptions,
@@ -170,6 +179,33 @@
 
   function onGenerate(req: CampaignGenerateInput) {
     return generation.generate(req, workflow.sourceEntityId, () => aiPolicy);
+  }
+
+  async function playGeneratedRumour(index: number): Promise<void> {
+    const draft = generation.draft;
+    const vaultId = oracle.vault.activeVaultId;
+    if (!draft || draft.sourceGeneratorId !== "rumour" || !draft.content) {
+      throw new Error("missing-rumour-draft");
+    }
+    if (!vaultId || vault.isGuest || !oracle.isEnabled) {
+      throw new Error("oracle-unavailable");
+    }
+    const selected = selectRumourForPlay(
+      { title: draft.title, content: draft.content, lore: draft.lore },
+      index,
+    );
+    rumourAdventureHandoff.prepare(
+      vaultId,
+      selected,
+      buildRumourScenario(selected, systemIdGenerator.uuid()),
+    );
+    try {
+      await goto(resolve("/(app)/adventure"));
+      close({ preserveSession: true });
+    } catch (cause) {
+      rumourAdventureHandoff.clear();
+      throw cause;
+    }
   }
 
   async function onSave(
@@ -358,6 +394,13 @@
         onGeneratePlotTwist={plotTwistAction}
         onGenerateBoss={bossAction}
       />
+      {#if generation.draft.sourceGeneratorId === "rumour" && oracle.isEnabled && !vault.isGuest}
+        <RumourPlayActions
+          draft={generation.draft}
+          disabled={generation.stage === "saving"}
+          onplay={playGeneratedRumour}
+        />
+      {/if}
     {:else if generation.stage === "error"}
       <div class="py-4">
         <p class="mb-4 text-sm text-red-400">{generation.errorMsg}</p>
