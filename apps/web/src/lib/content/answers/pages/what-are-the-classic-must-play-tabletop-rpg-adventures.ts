@@ -23,11 +23,11 @@ export const whatAreTheClassicMustPlayTabletopRpgAdventures: AnswerConfigInput =
         heading: "The Keep on the Borderlands (1979): frontier sandbox",
         paragraphs: [
           "Gary Gygax wrote this module for Basic Dungeons and Dragons. A frontier keep acts as a safe base while the party explores nearby caves held by rival groups. It represents exploratory sandbox play rather than a plotted story, and it suits groups who enjoy choosing their own targets over several sessions. Its portable lesson is the home base loop: rest and resupply in safety, choose a destination, return changed.",
-          "Get this version: Goodman Games' Original Adventures Reincarnated #1: Into the Borderlands is a hardcover that reprints the original modules and adds full fifth edition conversions of both this adventure and B1: In Search of the Unknown. It is the practical choice for a fifth edition group, but it does not include the fifth edition core rules, so you need those separately. If you want the 1979 text as written, the original B2 PDF is sold through the Dungeon Masters Guild and expects Basic Dungeons and Dragons rules or a retro-clone, not fifth edition.",
+          "Get this version: choose by rules and scope. The original B2 PDF, sold through the Dungeon Masters Guild, is the 1979 text for Basic Dungeons and Dragons or a retro-clone. Goodman Games' Original Adventures Reincarnated #1: Into the Borderlands (2018) reprints the original modules and adds conversions of B2 and B1: In Search of the Unknown for the 2014 fifth edition rules; it does not include those core rules, and it is now out of print, so copies depend on remaining shop stock or the second-hand market. For a current purchase, the Starter Set: Heroes of the Borderlands (2025) reimagines the keep, its wilderness and the Caves of Chaos for the revised 2024 rules in three booklets and includes a play guide, dice and ready-to-use character material, so no separate core books are needed to start. It does not reproduce B2 as written, and its scope is an introductory set rather than the full 1979 sandbox.",
         ],
         cta: {
-          text: "Into the Borderlands at Goodman Games",
-          href: "https://goodman-games.com/store/product/original-adventures-reincarnated-1-into-the-borderlands/",
+          text: "Heroes of the Borderlands Starter Set at the official D&D store",
+          href: "https://dndstore.wizards.com/uk/en/product/1246475/heroes-of-the-borderlands-starter-set",
           external: true,
         },
       },
@@ -128,7 +128,7 @@ export const whatAreTheClassicMustPlayTabletopRpgAdventures: AnswerConfigInput =
         heading: "The Delian Tomb: the short starter dungeon with two forms",
         paragraphs: [
           "Matt Colville outlined this goblin rescue and tomb expedition in the first Running the Game video, and it became a widely shared first adventure through the video and community write-ups. The original form is a five-room dungeon that fits one session and suits first-time GMs. Its lesson is economy: a clear request, a small site, one complication and a final room can teach the basic rhythm of play without a campaign's worth of preparation.",
-          "Get this version: choose by which form you want. For the one-evening dungeon, watch Colville's free Your First Adventure video and pick one community write-up, checking its system and level, because there is no single canonical text. For an official book, MCDM's The Delian Tomb is an expanded starter for its own game, Draw Steel: it adds a town, a wilderness sandbox and later stronghold material, so it runs for several sessions rather than one evening. The MCDM PDF was free when checked and unusually complete for a starter: it includes the Draw Steel starter rules and ready-to-play heroes, so no separate rulebook is needed.",
+          "Get this version: for the one-evening dungeon, start with Colville's free [Your First Adventure video](https://www.youtube.com/watch?v=zTD2RZz6mlo), which sets out the five-room tomb. If you want a written version ready to run, use Seth Harris's free [The Delian Tomb on the Dungeon Masters Guild](https://www.dmsguild.com/en/product/241073/the-delian-tomb): it adapts Colville's outline as a four-hour adventure for first-level fifth edition characters, so you still need the fifth edition rules, which it does not include. For an official book, MCDM's The Delian Tomb is an expanded starter for its own game, Draw Steel: it adds a town, a wilderness sandbox and later stronghold material, so it runs for several sessions rather than one evening. The MCDM PDF was free when checked and unusually complete for a starter: it includes the Draw Steel starter rules and ready-to-play heroes, so no separate rulebook is needed.",
         ],
         cta: {
           text: "The Delian Tomb for Draw Steel at MCDM",
@@ -177,7 +177,7 @@ export const whatAreTheClassicMustPlayTabletopRpgAdventures: AnswerConfigInput =
             "One evening and a first-time GM",
             "The Delian Tomb (short form)",
             "One session",
-            "Several write-ups exist; pick one system and level first",
+            "Use the Harris write-up for first-level fifth edition; the Draw Steel book is longer and uses a different game",
           ],
           [
             "High loss, strange fantasy, emergent characters",
@@ -187,9 +187,9 @@ export const whatAreTheClassicMustPlayTabletopRpgAdventures: AnswerConfigInput =
           ],
           [
             "A frontier sandbox you choose yourselves",
-            "The Keep on the Borderlands",
+            "The Keep on the Borderlands (original or Heroes of the Borderlands)",
             "Several sessions",
-            "Buy the fifth edition conversion or the Basic original; they use different rules",
+            "Heroes reimagines rather than reproduces B2; check which version you are buying",
           ],
           [
             "A lethal puzzle challenge",
