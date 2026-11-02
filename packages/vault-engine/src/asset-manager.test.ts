@@ -205,7 +205,7 @@ describe("AssetManager", () => {
       const p1 = assetManager.resolveImageUrl({} as any, "images/race.png");
 
       // 2. Mock URL cache to have it already (simulating p2 finished while p1 was still in try block)
-      (assetManager as any).urlCache.set("images/race.png", {
+      (assetManager as any).urlCache.entries.set("images/race.png", {
         url: "blob:winner",
         refs: 5,
       });
@@ -213,9 +213,9 @@ describe("AssetManager", () => {
       const result = await p1;
       expect(result).toBe("blob:winner");
       expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:mock-url");
-      expect((assetManager as any).urlCache.get("images/race.png").refs).toBe(
-        6,
-      );
+      expect(
+        (assetManager as any).urlCache.entries.get("images/race.png").refs,
+      ).toBe(6);
     });
 
     describe("external URLs", () => {
@@ -1201,45 +1201,57 @@ describe("AssetManager", () => {
     });
 
     it("should decrement ref count and revoke URL when reaching zero", () => {
-      (assetManager as any).urlCache.set("test.png", {
+      (assetManager as any).urlCache.entries.set("test.png", {
         url: "blob:test",
         refs: 1,
       });
 
       assetManager.releaseImageUrl("test.png");
       expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:test");
-      expect((assetManager as any).urlCache.has("test.png")).toBe(false);
+      expect((assetManager as any).urlCache.entries.has("test.png")).toBe(
+        false,
+      );
     });
 
     it("should NOT revoke if refs still above zero", () => {
-      (assetManager as any).urlCache.set("test.png", {
+      (assetManager as any).urlCache.entries.set("test.png", {
         url: "blob:test",
         refs: 2,
       });
 
       assetManager.releaseImageUrl("test.png");
       expect(URL.revokeObjectURL).not.toHaveBeenCalled();
-      expect((assetManager as any).urlCache.get("test.png").refs).toBe(1);
+      expect((assetManager as any).urlCache.entries.get("test.png").refs).toBe(
+        1,
+      );
     });
   });
 
   describe("clear", () => {
     it("should revoke all cached URLs and clear map", () => {
-      (assetManager as any).urlCache.set("a.png", { url: "blob:a", refs: 1 });
-      (assetManager as any).urlCache.set("b.png", { url: "blob:b", refs: 1 });
-      (assetManager as any).deadExternal.add("https://example.com/dead.png");
-      (assetManager as any).failedExternal.set(
+      (assetManager as any).urlCache.entries.set("a.png", {
+        url: "blob:a",
+        refs: 1,
+      });
+      (assetManager as any).urlCache.entries.set("b.png", {
+        url: "blob:b",
+        refs: 1,
+      });
+      (assetManager as any).network.deadExternal.add(
+        "https://example.com/dead.png",
+      );
+      (assetManager as any).network.failedExternal.set(
         "https://example.com/fail.png",
         123,
       );
 
       assetManager.clear();
       expect(URL.revokeObjectURL).toHaveBeenCalledTimes(2);
-      expect((assetManager as any).urlCache.size).toBe(0);
+      expect((assetManager as any).urlCache.entries.size).toBe(0);
       expect(assetManager.isDeadExternal("https://example.com/dead.png")).toBe(
         false,
       );
-      expect((assetManager as any).failedExternal.size).toBe(0);
+      expect((assetManager as any).network.failedExternal.size).toBe(0);
     });
   });
 
@@ -1266,7 +1278,7 @@ describe("AssetManager", () => {
       });
 
       // Trick resolveImageUrl to return a blob URL
-      (assetManager as any).urlCache.set("images/source.png", {
+      (assetManager as any).urlCache.entries.set("images/source.png", {
         url: "blob:src",
         refs: 1,
       });
@@ -1304,7 +1316,7 @@ describe("AssetManager", () => {
     it("should handle fetch failure during blob migration", async () => {
       mockIO.readOpfsBlob.mockRejectedValueOnce(new Error("Missing"));
       (global.fetch as any).mockRejectedValueOnce(new Error("Network Error"));
-      (assetManager as any).urlCache.set("images/fail.png", {
+      (assetManager as any).urlCache.entries.set("images/fail.png", {
         url: "blob:fail",
         refs: 1,
       });
