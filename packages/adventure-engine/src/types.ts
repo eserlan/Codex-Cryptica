@@ -249,6 +249,27 @@ export interface ScenarioState extends ScenarioSeed {
   events: ScenarioEvent[];
 }
 
+/** A canonical or provisional place for unscripted entry into a Vault. */
+export interface WorldEntryContext {
+  version: 1;
+  location:
+    | { kind: "canonical"; recordId: string; name: string }
+    | { kind: "provisional"; name: string };
+  /** Exact date precision is retained; an absent date is explicitly unspecified. */
+  at?: {
+    year: number;
+    month?: number;
+    day?: number;
+    precision?: "year" | "unit" | "day" | "anchor";
+    unitId?: string;
+    anchorId?: string;
+    calendarRevision?: number;
+    label?: string;
+  };
+  intent: "explore" | "scene" | "opportunity";
+  scenePrompt?: string;
+}
+
 export interface AdventureSession {
   schemaVersion: 1 | 2;
   id: string;
@@ -264,6 +285,8 @@ export interface AdventureSession {
   sourceRecords: SourceRecordReference[];
   /** Optional: ordinary and older adventures have no scenario context. */
   scenarioState?: ScenarioState;
+  /** Additive world-entry setup; absent in old and ordinary adventures. */
+  worldEntry?: WorldEntryContext;
   visibleState: VisibleAdventureState;
   hiddenState: HiddenAdventureState;
   provisionalFacts: ProvisionalFact[];
