@@ -13,6 +13,7 @@ const env = vi.hoisted(() => ({
     entries: [],
   })),
   notify: vi.fn(),
+  characters: [] as Array<{ id: string; name: string }>,
   pendingRumour: null as null | {
     selected: {
       index: number;
@@ -64,7 +65,7 @@ vi.mock("#lib/stores/ui/notification.svelte.js", () => ({
   notificationStore: { notify: env.notify, confirm: vi.fn() },
 }));
 vi.mock("#lib/services/solo-characters.js", () => ({
-  characterChoices: () => [],
+  characterChoices: () => env.characters,
 }));
 vi.mock(
   "#lib/services/adventure/adventure-provisional-fact-creator.js",
@@ -86,6 +87,7 @@ beforeEach(() => {
   env.openActive.mockClear();
   env.list.mockClear();
   env.pendingRumour = null;
+  env.characters = [];
 });
 
 describe("AdventureSurface entry", () => {
@@ -120,5 +122,26 @@ describe("AdventureSurface entry", () => {
         (screen.getByLabelText("Premise") as HTMLTextAreaElement).value,
       ).toBe("A wagon vanished outside the city.");
     });
+  });
+
+  it("keeps a canonical Vault character selected after returning to the choices", async () => {
+    env.characters = [{ id: "kael", name: "Kael" }];
+    render(AdventureSurface);
+    await screen.findByTestId("adventure-entry-choices");
+    await fireEvent.click(screen.getByTestId("adventure-own-premise"));
+
+    const selected = screen.getByTestId(
+      "adventure-character-picker",
+    ) as HTMLSelectElement;
+    await fireEvent.change(selected, { target: { value: "kael" } });
+    expect(selected.value).toBe("kael");
+
+    await fireEvent.click(screen.getByTestId("adventure-change-start"));
+    await fireEvent.click(screen.getByTestId("adventure-own-premise"));
+
+    expect(
+      (screen.getByTestId("adventure-character-picker") as HTMLSelectElement)
+        .value,
+    ).toBe("kael");
   });
 });
