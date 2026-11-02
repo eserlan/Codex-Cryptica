@@ -19,6 +19,8 @@
     describeWorldEntryStartFailure,
   } from "#lib/services/adventure/world-entry-start.js";
   import AdventureFocusPlay from "./AdventureFocusPlay.svelte";
+  import { campaignGeneratorRequestBuilder } from "#lib/components/generators/campaign-generator-request.js";
+  import { createCampaignGeneratorService } from "#lib/components/generators/campaign-generator-service.js";
   import { adventureContextService } from "#lib/services/adventure/adventure-context-service.js";
   import { adventureSessionRepository } from "#lib/services/adventure/adventure-session-repository.js";
   import { createAdventureEntityDraft } from "#lib/services/adventure/adventure-provisional-fact-creator.js";
@@ -219,6 +221,57 @@
     if (!handle) throw new Error("vault-not-open");
     return handle;
   });
+  // Standard AI/Vault-grounded Rumour Generator, without the player-facing
+  // review modal or a Vault write. Its existing local fallback remains usable.
+  const rumourPolicy = () => ({
+    isEnabled: oracle.isEnabled,
+    isAvailable: !vault.isGuest,
+  });
+  const backgroundRumourService = createCampaignGeneratorService(rumourPolicy);
+  oracle.adventure.setWorldEntryRumourGenerator(async (session, signal) => {
+    signal?.throwIfAborted();
+    const entry = session.worldEntry;
+    if (!entry) throw new Error("not-world-entry");
+    const sourceId =
+      entry.location.kind === "canonical" ? entry.location.recordId : null;
+    const year = entry.at?.year;
+    const dateInstruction =
+      year !== undefined
+        ? `This scene is set in year ${year}; never treat future events as current.`
+        : "World date unspecified: do not assert exact chronology.";
+    const request = await campaignGeneratorRequestBuilder.build(
+      {
+        generatorId: "rumour",
+        useAI: rumourPolicy().isEnabled && rumourPolicy().isAvailable,
+        options: { locationContext: entry.location.name },
+        instructions: [
+          `Create local rumours for ${entry.location.name} as hidden preparation.`,
+          dateInstruction,
+          "Ground people, sites and factions in relevant Vault context where possible.",
+          "Respect established chronology; avoid contradicting canonical sources.",
+          "Mix mundane, misleading and substantial situations, not assigned quests.",
+        ].join(" "),
+      },
+      sourceId,
+      // This is hidden background preparation, not a generator editing
+      // session. Do not attach it to the user's generator interaction history.
+      () => ({ isEnabled: false, isAvailable: false }),
+    );
+    signal?.throwIfAborted();
+    const generated = await backgroundRumourService.generateDraft(
+      request,
+      signal,
+    );
+    if (!generated.content || !generated.lore) {
+      throw new Error("rumour-generator-output-missing");
+    }
+    return {
+      title: generated.title,
+      content: generated.content,
+      lore: generated.lore,
+    };
+  });
+
   adventureContextService.setResolver({
     async getWorldSnapshot(id) {
       if (oracle.vault.activeVaultId !== id) {

@@ -105,6 +105,124 @@ function dependencies() {
 }
 
 describe("AdventureManager", () => {
+  it("uses the paired output of the normal Rumour Generator", async () => {
+    const { generateRumourLocal } = await import("generator-engine");
+    const deps: any = dependencies();
+    const batch = generateRumourLocal({ locationContext: "Northbrook" });
+    const manager = new AdventureManager(deps);
+    const generateRumours = vi.fn(async () => batch);
+    manager.setWorldEntryRumourGenerator(generateRumours);
+    await manager.start({
+      vaultId: "vault-1",
+      title: "Northbrook",
+      premise: "Explore Northbrook",
+      playerCharacter: {
+        kind: "provisional",
+        name: "Mara",
+        description: "Guide",
+      },
+      worldEntry: {
+        version: 1,
+        location: { kind: "provisional", name: "Northbrook" },
+        intent: "explore",
+      },
+    });
+    expect(generateRumours).toHaveBeenCalledOnce();
+    expect(manager.session?.hiddenState.gmThreads).toHaveLength(3);
+    expect(manager.session?.hiddenState.gmThreads[0]?.text).toContain(
+      "DORMANT, NOT YET HEARD",
+    );
+  });
+
+  it("persists world-entry situations across actions", async () => {
+    const deps: any = dependencies();
+    const generate = vi.fn(async (_request: any) => completeProposal);
+    deps.generation = { generate };
+    const manager = new AdventureManager(deps);
+    await manager.start({
+      vaultId: "vault-1",
+      title: "Lira in Northbrook",
+      premise: "Enter Northbrook",
+      playerCharacter: {
+        kind: "provisional",
+        name: "Lira",
+        description: "Traveller",
+      },
+      worldEntry: {
+        version: 1,
+        location: { kind: "provisional", name: "Northbrook" },
+        intent: "explore",
+      },
+    });
+    const opening = generate.mock.calls[0]?.[0] as any;
+    expect(opening.session.hiddenState.gmThreads).toHaveLength(3);
+    expect(opening.session.hiddenState.secrets).toHaveLength(6);
+    expect(manager.session?.hiddenState.gmThreads).toHaveLength(3);
+    expect(manager.session?.turns).toHaveLength(1);
+    expect(manager.transcript?.turns[0]?.narration).not.toContain(
+      "NOT YET HEARD",
+    );
+
+    await manager.submitAction("Ask the innkeeper what is happening nearby");
+    const action = generate.mock.calls[1]?.[0] as any;
+    expect(action.session.hiddenState).toEqual(manager.session?.hiddenState);
+    expect(manager.session?.hiddenState.gmThreads).toHaveLength(3);
+  });
+
+  it("cancels pending rumour preparation before starting turn generation", async () => {
+    const deps: any = dependencies();
+    const generate = vi.fn(async () => completeProposal);
+    deps.generation = { generate };
+    const manager = new AdventureManager(deps);
+    await manager.start({
+      vaultId: "vault-1",
+      title: "Northbrook",
+      premise: "Explore Northbrook",
+      playerCharacter: {
+        kind: "provisional",
+        name: "Mara",
+        description: "Guide",
+      },
+    });
+    manager.session = {
+      ...manager.session!,
+      worldEntry: {
+        version: 1,
+        location: { kind: "provisional", name: "Northbrook" },
+        intent: "explore",
+      },
+    };
+
+    let observedSignal: AbortSignal | undefined;
+    let signalPreparationStarted!: () => void;
+    const preparationStarted = new Promise<void>((resolve) => {
+      signalPreparationStarted = resolve;
+    });
+    manager.setWorldEntryRumourGenerator(
+      (_session, signal) =>
+        new Promise((_, reject) => {
+          observedSignal = signal;
+          signalPreparationStarted();
+          signal?.addEventListener(
+            "abort",
+            () =>
+              reject(
+                signal.reason ?? new DOMException("Cancelled", "AbortError"),
+              ),
+            { once: true },
+          );
+        }),
+    );
+
+    const action = manager.submitAction("Ask what is happening nearby");
+    await preparationStarted;
+    manager.cancel();
+    await action;
+
+    expect(observedSignal?.aborted).toBe(true);
+    expect(generate).toHaveBeenCalledTimes(1);
+  });
+
   it("preserves the opening and commits a grounded action through the repository", async () => {
     const manager = new AdventureManager(dependencies() as any);
     await manager.start({

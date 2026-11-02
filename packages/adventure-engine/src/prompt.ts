@@ -31,6 +31,10 @@ export function buildAdventurePrompt(input: AdventurePromptInput) {
       ? [
           "This is an open-ended World Entry scene in an existing Vault, not a pre-written quest. Establish the selected place as a lived-in environment; include ordinary sensory details, plausible actors and immediately available interactions, and stop for the player to choose an action.",
           "Do not force a villain, danger, quest, investigation, reward, objective, climax or timed twist merely to make the start exciting. An uneventful scene or a quiet conversation is valid.",
+          "GM-only world-entry seed threads are background possibilities, NOT rumours the player already knows or canonical Vault facts. Respect established sources, date and location; leave any incompatible seed dormant rather than contradicting canon.",
+          "When the player meaningfully explores, asks locals for news or follows an NPC's concerns, naturally reveal at most one plausible lead, clue or hearsay from a relevant hidden seed. Do not dump every rumour, assign quests or turn every mundane interaction into an ominous event.",
+          "Avoid endlessly substituting unrelated chores when the player actively pursues an emerging lead. Show observable consequences and actionable choices, but let quiet interactions remain quiet.",
+          "Keep each seeded secret's original GM truth unchanged. Update an existing gmThreads entry through hiddenPatch.gmThreads only when committed player actions or explicit in-world time passage justify a change; otherwise leave it dormant. Never escalate merely because another chat turn passed.",
           "Use only period-appropriate established sources as current facts. Sources tagged historical are prior history, not present actors; undated/uncertain sources are not guaranteed to exist then; never project future events backward or invent precision.",
           "The selected start date is in-world time, not device time. Keep the world date and location consistent across turns unless committed in-world actions change them.",
           ...(worldEntry.intent === "scene"
