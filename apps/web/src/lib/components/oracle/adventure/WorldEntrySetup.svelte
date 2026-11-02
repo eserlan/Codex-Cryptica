@@ -29,16 +29,24 @@
   // Avoid thousands of mobile <option> nodes in a large Vault.
   const visibleCharacters = $derived(
     characters
-      .filter((row) =>
-        row.id === setup.characterId ||
-        row.name.toLocaleLowerCase().includes(characterSearch.toLocaleLowerCase()))
+      .filter(
+        (row) =>
+          row.id === setup.characterId ||
+          row.name
+            .toLocaleLowerCase()
+            .includes(characterSearch.toLocaleLowerCase()),
+      )
       .slice(0, 80),
   );
   const visibleLocations = $derived(
     locations
-      .filter((row) =>
-        row.id === setup.locationId ||
-        row.name.toLocaleLowerCase().includes(locationSearch.toLocaleLowerCase()))
+      .filter(
+        (row) =>
+          row.id === setup.locationId ||
+          row.name
+            .toLocaleLowerCase()
+            .includes(locationSearch.toLocaleLowerCase()),
+      )
       .slice(0, 80),
   );
   const errors = $derived(
@@ -68,7 +76,9 @@
   </header>
 
   <fieldset class="space-y-2">
-    <legend class="text-sm font-semibold text-theme-text">1. Who are you playing?</legend>
+    <legend class="text-sm font-semibold text-theme-text"
+      >1. Who are you playing?</legend
+    >
     {#if characters.length}
       <label class="block text-sm text-theme-text">
         Find a Vault character
@@ -101,7 +111,11 @@
         <input
           value={setup.provisionalCharacterName}
           data-testid="world-entry-new-character"
-          oninput={(event) => setup = { ...setup, provisionalCharacterName: event.currentTarget.value }}
+          oninput={(event) =>
+            (setup = {
+              ...setup,
+              provisionalCharacterName: event.currentTarget.value,
+            })}
           placeholder="Who will you play?"
           class="mt-1 min-h-11 w-full rounded-md border border-theme-border bg-theme-bg p-2 text-theme-text"
         />
@@ -110,7 +124,11 @@
         Description (optional)
         <input
           value={setup.provisionalCharacterDescription}
-          oninput={(event) => setup = { ...setup, provisionalCharacterDescription: event.currentTarget.value }}
+          oninput={(event) =>
+            (setup = {
+              ...setup,
+              provisionalCharacterDescription: event.currentTarget.value,
+            })}
           placeholder="A few words about your character"
           class="mt-1 min-h-11 w-full rounded-md border border-theme-border bg-theme-bg p-2 text-theme-text"
         />
@@ -119,7 +137,9 @@
   </fieldset>
 
   <fieldset class="space-y-2">
-    <legend class="text-sm font-semibold text-theme-text">2. Where does the scene begin?</legend>
+    <legend class="text-sm font-semibold text-theme-text"
+      >2. Where does the scene begin?</legend
+    >
     {#if locations.length}
       <label class="block text-sm text-theme-text">
         Find a Vault place
@@ -135,7 +155,8 @@
         aria-label="Starting location"
         data-testid="world-entry-location"
         value={setup.locationId}
-        onchange={(event) => setup = { ...setup, locationId: event.currentTarget.value }}
+        onchange={(event) =>
+          (setup = { ...setup, locationId: event.currentTarget.value })}
         class="min-h-11 w-full rounded-md border border-theme-border bg-theme-bg p-2 text-theme-text"
       >
         <option value="">New / provisional place</option>
@@ -150,36 +171,49 @@
         <input
           data-testid="world-entry-new-location"
           value={setup.provisionalLocationName}
-          oninput={(event) => setup = { ...setup, provisionalLocationName: event.currentTarget.value }}
+          oninput={(event) =>
+            (setup = {
+              ...setup,
+              provisionalLocationName: event.currentTarget.value,
+            })}
           placeholder="Village, roadside, tavern…"
           class="mt-1 min-h-11 w-full rounded-md border border-theme-border bg-theme-bg p-2 text-theme-text"
         />
       </label>
     {/if}
-    <p class="text-xs text-theme-text">Only nearby, relevant world knowledge will be used.</p>
-  </fieldset>
-
-  <fieldset class="space-y-2">
-    <legend class="text-sm font-semibold text-theme-text">3. When does it happen?</legend>
     <p class="text-xs text-theme-text">
-      Optional. Choose a date using your Vault calendar and eras, or leave it unspecified.
+      Only nearby, relevant world knowledge will be used.
     </p>
-    <TemporalEditor bind:value={setup.at} label="Starting world date (optional)" />
   </fieldset>
 
   <fieldset class="space-y-2">
-    <legend class="text-sm font-semibold text-theme-text">4. How should it begin?</legend>
-    {#each [
-      { id: "explore", label: "Just put me there — open exploration" },
-      { id: "scene", label: "I have a particular scene in mind" },
-      { id: "opportunity", label: "Introduce a plausible local situation" },
-    ] as intent (intent.id)}
-      <label class="flex min-h-11 items-center gap-3 rounded-md border border-theme-border p-3 text-sm text-theme-text">
+    <legend class="text-sm font-semibold text-theme-text"
+      >3. When does it happen?</legend
+    >
+    <p class="text-xs text-theme-text">
+      Optional. Choose a date using your Vault calendar and eras, or leave it
+      unspecified.
+    </p>
+    <TemporalEditor
+      bind:value={setup.at}
+      label="Starting world date (optional)"
+    />
+  </fieldset>
+
+  <fieldset class="space-y-2">
+    <legend class="text-sm font-semibold text-theme-text"
+      >4. How should it begin?</legend
+    >
+    {#each [{ id: "explore", label: "Just put me there — open exploration" }, { id: "scene", label: "I have a particular scene in mind" }, { id: "opportunity", label: "Introduce a plausible local situation" }] as intent (intent.id)}
+      <label
+        class="flex min-h-11 items-center gap-3 rounded-md border border-theme-border p-3 text-sm text-theme-text"
+      >
         <input
           type="radio"
           name="world-entry-intent"
           checked={setup.intent === intent.id}
-          onchange={() => setup = { ...setup, intent: intent.id as WorldEntryIntent }}
+          onchange={() =>
+            (setup = { ...setup, intent: intent.id as WorldEntryIntent })}
         />
         <span>{intent.label}</span>
       </label>
@@ -190,7 +224,8 @@
         <textarea
           data-testid="world-entry-scene-note"
           value={setup.scenePrompt}
-          oninput={(event) => setup = { ...setup, scenePrompt: event.currentTarget.value }}
+          oninput={(event) =>
+            (setup = { ...setup, scenePrompt: event.currentTarget.value })}
           class="mt-1 min-h-24 w-full rounded-md border border-theme-border bg-theme-bg p-3 text-theme-text"
           placeholder="I want to speak with the steward about…"
         ></textarea>

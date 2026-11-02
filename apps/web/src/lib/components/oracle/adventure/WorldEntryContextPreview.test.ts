@@ -9,18 +9,28 @@ describe("WorldEntryContextPreview", () => {
     const onStart = vi.fn();
     render(WorldEntryContextPreview, {
       props: {
-        onBack, onStart,
+        onBack,
+        onStart,
         preview: {
-          records: [{
-            id: "location-1", title: "Bell Yard", type: "location",
-            applicability: "uncertain" as const, linkedBy: "selected" as const,
-          }],
-          omitted: 0, warnings: ["Time is unspecified."], dated: false,
+          records: [
+            {
+              id: "location-1",
+              title: "Bell Yard",
+              type: "location",
+              applicability: "uncertain" as const,
+              linkedBy: "selected" as const,
+            },
+          ],
+          omitted: 0,
+          warnings: ["Time is unspecified."],
+          dated: false,
           counts: { people: 0, locations: 1, events: 0 },
         },
       },
     });
-    expect(screen.getByTestId("preview-count-locations").textContent).toContain("1");
+    expect(screen.getByTestId("preview-count-locations").textContent).toContain(
+      "1",
+    );
     expect(screen.getByText("Bell Yard")).toBeTruthy();
     expect(screen.getByText(/Time is unspecified/)).toBeTruthy();
     await fireEvent.click(screen.getByTestId("world-entry-adjust"));

@@ -6,10 +6,14 @@
   import AdventureEntryChoices from "./AdventureEntryChoices.svelte";
   import WorldEntrySetup from "./WorldEntrySetup.svelte";
   import WorldEntryContextPreview from "./WorldEntryContextPreview.svelte";
-  import { emptyWorldEntrySetup, type WorldEntrySetup as WorldEntryDraft } from
-    "#lib/services/adventure/world-entry-setup.js";
-  import { resolveWorldEntryPreview, type WorldEntryContextPreview as ContextPreview } from
-    "#lib/services/adventure/world-entry-context-preview.js";
+  import {
+    emptyWorldEntrySetup,
+    type WorldEntrySetup as WorldEntryDraft,
+  } from "#lib/services/adventure/world-entry-setup.js";
+  import {
+    resolveWorldEntryPreview,
+    type WorldEntryContextPreview as ContextPreview,
+  } from "#lib/services/adventure/world-entry-context-preview.js";
   import { createWorldEntryStart } from "#lib/services/adventure/world-entry-start.js";
   import AdventureFocusPlay from "./AdventureFocusPlay.svelte";
   import { adventureContextService } from "#lib/services/adventure/adventure-context-service.js";
@@ -26,13 +30,22 @@
   let vaultId = $derived(oracle.vault.activeVaultId ?? "default");
   const selectedRumour = $derived(rumourAdventureHandoff.forVault(vaultId));
   const characters = $derived(characterChoices(oracle.vault.entities));
-  const locations = $derived(oracle.vault.allEntities.filter((entity) => entity.type === "location" && entity.visibility !== "hidden").map((entity) => ({ id: entity.id, name: entity.title })));
+  const locations = $derived(
+    oracle.vault.allEntities
+      .filter(
+        (entity) =>
+          entity.type === "location" && entity.visibility !== "hidden",
+      )
+      .map((entity) => ({ id: entity.id, name: entity.title })),
+  );
   const canDiscover = $derived(
     isVaultReadyForGenerators(vault) && !vault.isGuest,
   );
   // The typed world-entry draft lives here so view transitions cannot erase it.
   let worldSetup = $state(emptyWorldEntrySetup(vaultId));
-  let startApproach = $state<"choose" | "premise" | "world" | "preview">("choose");
+  let startApproach = $state<"choose" | "premise" | "world" | "preview">(
+    "choose",
+  );
   let worldPreview = $state<ContextPreview | null>(null);
   let worldStartBusy = $state(false);
   let worldStartError = $state<string | null>(null);
@@ -115,7 +128,10 @@
     worldStartBusy = true;
     try {
       const input = createWorldEntryStart(
-        worldSetup, characters, locations, calendarStore.config,
+        worldSetup,
+        characters,
+        locations,
+        calendarStore.config,
       );
       await oracle.adventure.start(input);
       if (oracle.adventure.errorMessage) {
@@ -126,9 +142,10 @@
         startApproach = "choose";
       }
     } catch (cause) {
-      worldStartError = cause instanceof Error && cause.message === "active-adventure-exists"
-        ? "An adventure is already active. Continue it or archive it first."
-        : "Unable to start the scene. Your setup has been preserved.";
+      worldStartError =
+        cause instanceof Error && cause.message === "active-adventure-exists"
+          ? "An adventure is already active. Continue it or archive it first."
+          : "Unable to start the scene. Your setup has been preserved.";
     } finally {
       worldStartBusy = false;
     }
@@ -353,31 +370,31 @@
           onStart={() => void startWorldEntry()}
         />
       {:else}
-      {#if !selectedRumour}
-        <button
-          type="button"
-          data-testid="adventure-change-start"
-          class="flex min-h-11 w-fit items-center gap-2 rounded-md px-3 text-sm text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
-          onclick={() => (startApproach = "choose")}
-        >
-          <span class="icon-[lucide--arrow-left] h-4 w-4" aria-hidden="true"
-          ></span>
-          Change starting approach
-        </button>
-      {/if}
-      <AdventureStart
-        manager={oracle.adventure}
-        {vaultId}
-        bind:title={startTitle}
-        bind:premise={startPremise}
-        bind:characterName={startCharacterName}
-        bind:selectedCharacterId={startCharacterId}
-        bind:characterDescription={startCharacterDescription}
-        {characters}
-        scenarioSeed={selectedRumour?.scenario}
-        onScenarioStarted={() => rumourAdventureHandoff.clear()}
-        onCancelScenario={cancelRumour}
-      />
+        {#if !selectedRumour}
+          <button
+            type="button"
+            data-testid="adventure-change-start"
+            class="flex min-h-11 w-fit items-center gap-2 rounded-md px-3 text-sm text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
+            onclick={() => (startApproach = "choose")}
+          >
+            <span class="icon-[lucide--arrow-left] h-4 w-4" aria-hidden="true"
+            ></span>
+            Change starting approach
+          </button>
+        {/if}
+        <AdventureStart
+          manager={oracle.adventure}
+          {vaultId}
+          bind:title={startTitle}
+          bind:premise={startPremise}
+          bind:characterName={startCharacterName}
+          bind:selectedCharacterId={startCharacterId}
+          bind:characterDescription={startCharacterDescription}
+          {characters}
+          scenarioSeed={selectedRumour?.scenario}
+          onScenarioStarted={() => rumourAdventureHandoff.clear()}
+          onCancelScenario={cancelRumour}
+        />
       {/if}
     {/if}
     <AdventureArchive

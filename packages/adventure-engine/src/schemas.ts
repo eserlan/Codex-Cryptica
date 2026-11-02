@@ -288,25 +288,32 @@ const scenarioStateSchema = z
   .strict();
 
 /** Optional, bounded world-entry setup. Old sessions remain compatible. */
-const worldEntrySchema = z.object({
-  version: z.literal(1),
-  location: z.discriminatedUnion("kind", [
-    z.object({ kind: z.literal("canonical"), recordId: id, name: text }).strict(),
-    z.object({ kind: z.literal("provisional"), name: text }).strict(),
-  ]),
-  at: z.object({
-    year: z.number().int().finite(),
-    month: z.number().int().min(1).max(12).optional(),
-    day: z.number().int().min(1).max(366).optional(),
-    precision: z.enum(["year", "unit", "day", "anchor"]).optional(),
-    unitId: id.optional(),
-    anchorId: id.optional(),
-    calendarRevision: z.number().int().positive().optional(),
-    label: z.string().max(MAX_TEXT_CHARS).optional(),
-  }).strict().optional(),
-  intent: z.enum(["explore", "scene", "opportunity"]),
-  scenePrompt: text.optional(),
-}).strict();
+const worldEntrySchema = z
+  .object({
+    version: z.literal(1),
+    location: z.discriminatedUnion("kind", [
+      z
+        .object({ kind: z.literal("canonical"), recordId: id, name: text })
+        .strict(),
+      z.object({ kind: z.literal("provisional"), name: text }).strict(),
+    ]),
+    at: z
+      .object({
+        year: z.number().int().finite(),
+        month: z.number().int().min(1).max(12).optional(),
+        day: z.number().int().min(1).max(366).optional(),
+        precision: z.enum(["year", "unit", "day", "anchor"]).optional(),
+        unitId: id.optional(),
+        anchorId: id.optional(),
+        calendarRevision: z.number().int().positive().optional(),
+        label: z.string().max(MAX_TEXT_CHARS).optional(),
+      })
+      .strict()
+      .optional(),
+    intent: z.enum(["explore", "scene", "opportunity"]),
+    scenePrompt: text.optional(),
+  })
+  .strict();
 
 export const adventureSessionSchema = z.object({
   schemaVersion: z.literal(CURRENT_ADVENTURE_SCHEMA_VERSION),

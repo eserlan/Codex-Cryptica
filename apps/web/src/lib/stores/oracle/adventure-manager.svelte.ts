@@ -93,17 +93,25 @@ function initialSession(input: {
     ...(input.scenarioSeed
       ? { scenarioState: structuredClone(input.scenarioSeed) }
       : {}),
-    ...(input.worldEntry ? { worldEntry: structuredClone(input.worldEntry) } : {}),
+    ...(input.worldEntry
+      ? { worldEntry: structuredClone(input.worldEntry) }
+      : {}),
     visibleState: {
-      ...(input.worldEntry ? {
-        location: {
-          id: input.idGenerator(),
-          text: input.worldEntry.location.name,
-          source: input.worldEntry.location.kind === "canonical" ? "canonical" as const : "provisional" as const,
-          ...(input.worldEntry.location.kind === "canonical"
-            ? { sourceRecordId: input.worldEntry.location.recordId } : {}),
-        },
-      } : {}),
+      ...(input.worldEntry
+        ? {
+            location: {
+              id: input.idGenerator(),
+              text: input.worldEntry.location.name,
+              source:
+                input.worldEntry.location.kind === "canonical"
+                  ? ("canonical" as const)
+                  : ("provisional" as const),
+              ...(input.worldEntry.location.kind === "canonical"
+                ? { sourceRecordId: input.worldEntry.location.recordId }
+                : {}),
+            },
+          }
+        : {}),
       objectives: [],
       activeCharacters: [],
       knownFacts: [],
@@ -130,7 +138,10 @@ function initialSession(input: {
   };
 }
 
-function defaultGenerationService(): Pick<AdventureTurnGenerationService, "generate"> {
+function defaultGenerationService(): Pick<
+  AdventureTurnGenerationService,
+  "generate"
+> {
   return {
     generate: (request: any, options?: any) => {
       if (!oracleBridge.isReady) {
@@ -156,7 +167,11 @@ function clearDefaultGenerationInteraction(sessionId: string) {
 
 /** All reducers share this discriminated success/error contract. */
 function acceptedSession(
-  result: { ok: boolean; value?: AdventureSession; errors?: { message: string }[] },
+  result: {
+    ok: boolean;
+    value?: AdventureSession;
+    errors?: { message: string }[];
+  },
   fallback: string,
 ): AdventureSession {
   if (result.ok && result.value) return result.value;
@@ -257,13 +272,16 @@ export class AdventureManager {
 
   private proposedSession(
     session: AdventureSession,
-    proposal: Parameters<typeof applyCompletedTurn>[1] | Parameters<typeof applyRollRequest>[1],
+    proposal:
+      | Parameters<typeof applyCompletedTurn>[1]
+      | Parameters<typeof applyRollRequest>[1],
     meta: CommitMetadata,
     errorLabel: string,
   ): AdventureSession {
-    const result = proposal.kind === "roll-required"
-      ? applyRollRequest(session, proposal, meta)
-      : applyCompletedTurn(session, proposal, meta);
+    const result =
+      proposal.kind === "roll-required"
+        ? applyRollRequest(session, proposal, meta)
+        : applyCompletedTurn(session, proposal, meta);
     return acceptedSession(result, errorLabel);
   }
 
@@ -274,7 +292,7 @@ export class AdventureManager {
     playerCharacter: PlayerCharacter;
     sourceRecords?: AdventureSession["sourceRecords"];
     scenarioSeed?: ScenarioState;
-  worldEntry?: WorldEntryContext;
+    worldEntry?: WorldEntryContext;
   }): Promise<AdventureSession> {
     if (!input.premise.trim() || !input.title.trim()) {
       throw new Error("premise-and-title-required");
@@ -343,7 +361,7 @@ export class AdventureManager {
     playerCharacter: PlayerCharacter;
     sourceRecords?: AdventureSession["sourceRecords"];
     scenarioSeed?: ScenarioState;
-  worldEntry?: WorldEntryContext;
+    worldEntry?: WorldEntryContext;
   }): Promise<AdventureSession> {
     const created = initialSession({
       ...input,
@@ -460,7 +478,11 @@ export class AdventureManager {
       isCurrent,
     );
     if (!isCurrent()) return;
-    this.activateOpenedSession(loaded.session, readOnly || !nextLease, nextLease);
+    this.activateOpenedSession(
+      loaded.session,
+      readOnly || !nextLease,
+      nextLease,
+    );
     await this.resumeRecordedRollIfNeeded(isCurrent);
   }
 

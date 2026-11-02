@@ -1,5 +1,9 @@
 import { calendarEngine } from "chronology-engine";
-import type { DateSelection, TemporalMetadata, WorldCalendar } from "chronology-engine";
+import type {
+  DateSelection,
+  TemporalMetadata,
+  WorldCalendar,
+} from "chronology-engine";
 import type { PlayerCharacter } from "@codex/adventure-engine";
 
 export type WorldEntryIntent = "explore" | "scene" | "opportunity";
@@ -70,14 +74,17 @@ export function worldEntryCharacter(
   draft: WorldEntrySetup,
   characters: readonly WorldEntryChoice[],
 ): PlayerCharacter {
-  const selected = characters.find((character) => character.id === draft.characterId);
+  const selected = characters.find(
+    (character) => character.id === draft.characterId,
+  );
   if (selected) {
     return { kind: "canonical", recordId: selected.id, name: selected.name };
   }
   return {
     kind: "provisional",
     name: draft.provisionalCharacterName.trim(),
-    description: draft.provisionalCharacterDescription.trim() ||
+    description:
+      draft.provisionalCharacterDescription.trim() ||
       draft.provisionalCharacterName.trim(),
   };
 }
@@ -86,8 +93,10 @@ export function worldEntryLocationName(
   draft: WorldEntrySetup,
   locations: readonly WorldEntryChoice[],
 ): string {
-  return locations.find((location) => location.id === draft.locationId)?.name ??
-    draft.provisionalLocationName.trim();
+  return (
+    locations.find((location) => location.id === draft.locationId)?.name ??
+    draft.provisionalLocationName.trim()
+  );
 }
 
 /** Stable title without a manufactured quest objective. */
@@ -96,6 +105,9 @@ export function worldEntryTitle(
   characters: readonly WorldEntryChoice[],
   locations: readonly WorldEntryChoice[],
 ): string {
-  return worldEntryCharacter(draft, characters).name +
-    " in " + worldEntryLocationName(draft, locations);
+  return (
+    worldEntryCharacter(draft, characters).name +
+    " in " +
+    worldEntryLocationName(draft, locations)
+  );
 }

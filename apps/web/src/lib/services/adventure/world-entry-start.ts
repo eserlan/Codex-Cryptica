@@ -1,6 +1,11 @@
 import { calendarEngine } from "chronology-engine";
 import type { WorldCalendar } from "chronology-engine";
-import type { AdventureSession, PlayerCharacter, SourceRecordReference, WorldEntryContext } from "@codex/adventure-engine";
+import type {
+  AdventureSession,
+  PlayerCharacter,
+  SourceRecordReference,
+  WorldEntryContext,
+} from "@codex/adventure-engine";
 import {
   validateWorldEntrySetup,
   worldEntryCharacter,
@@ -24,7 +29,12 @@ export function createWorldEntryStart(
   sourceRecords: SourceRecordReference[];
   worldEntry: WorldEntryContext;
 } {
-  const errors = validateWorldEntrySetup(setup, characters, locations, calendar);
+  const errors = validateWorldEntrySetup(
+    setup,
+    characters,
+    locations,
+    calendar,
+  );
   if (errors.length) throw new Error(errors.join(" "));
   const character = worldEntryCharacter(setup, characters);
   const locationName = worldEntryLocationName(setup, locations);
@@ -34,24 +44,39 @@ export function createWorldEntryStart(
   const when = setup.at
     ? " World date: " + calendarEngine.format(setup.at, calendar) + "."
     : " World date is unspecified; do not invent an exact year.";
-  const intent = setup.intent === "scene"
-    ? " Begin with this situation: " + setup.scenePrompt.trim().slice(0, 280) + "."
-    : setup.intent === "opportunity"
-      ? " Present a plausible local situation, not an assigned quest."
-      : " Begin with ordinary local life; the player may explore freely.";
-  const premise = ("Place: " + locationName + "." + when + intent +
-    " Let the player choose what to do.").slice(0, 600);
+  const intent =
+    setup.intent === "scene"
+      ? " Begin with this situation: " +
+        setup.scenePrompt.trim().slice(0, 280) +
+        "."
+      : setup.intent === "opportunity"
+        ? " Present a plausible local situation, not an assigned quest."
+        : " Begin with ordinary local life; the player may explore freely.";
+  const premise = (
+    "Place: " +
+    locationName +
+    "." +
+    when +
+    intent +
+    " Let the player choose what to do."
+  ).slice(0, 600);
   const sourceRecords: AdventureSession["sourceRecords"] = [];
   if (character.kind === "canonical") {
     sourceRecords.push({
-      recordId: character.recordId, recordType: "character",
-      displayName: character.name, role: "player-character", availability: "available",
+      recordId: character.recordId,
+      recordType: "character",
+      displayName: character.name,
+      role: "player-character",
+      availability: "available",
     });
   }
   if (location.kind === "canonical") {
     sourceRecords.push({
-      recordId: location.recordId, recordType: "location",
-      displayName: location.name, role: "anchor", availability: "available",
+      recordId: location.recordId,
+      recordType: "location",
+      displayName: location.name,
+      role: "anchor",
+      availability: "available",
     });
   }
   return {
@@ -66,7 +91,8 @@ export function createWorldEntryStart(
       ...(setup.at ? { at: structuredClone(setup.at) } : {}),
       intent: setup.intent,
       ...(setup.intent === "scene"
-        ? { scenePrompt: setup.scenePrompt.trim().slice(0, 600) } : {}),
+        ? { scenePrompt: setup.scenePrompt.trim().slice(0, 600) }
+        : {}),
     },
   };
 }

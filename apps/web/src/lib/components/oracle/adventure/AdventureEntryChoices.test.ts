@@ -73,7 +73,11 @@ describe("AdventureEntryChoices", () => {
     expect(screen.getByTestId("adventure-entry-choices").textContent).toContain(
       "Where will your story begin?",
     );
-    for (const id of ["adventure-discover", "adventure-own-premise", "adventure-enter-world"]) {
+    for (const id of [
+      "adventure-discover",
+      "adventure-own-premise",
+      "adventure-enter-world",
+    ]) {
       const button = screen.getByTestId(id);
       expect(button.className).toContain("min-h-44");
       expect(button.className).toContain("text-left");

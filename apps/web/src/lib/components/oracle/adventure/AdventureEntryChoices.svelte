@@ -99,14 +99,21 @@
       onclick={onEnterWorld}
       aria-describedby="adventure-world-description"
     >
-      <span class="flex h-10 w-10 items-center justify-center rounded-lg bg-theme-primary/10 text-theme-text" aria-hidden="true">
+      <span
+        class="flex h-10 w-10 items-center justify-center rounded-lg bg-theme-primary/10 text-theme-text"
+        aria-hidden="true"
+      >
         <span class="icon-[lucide--globe-2] h-5 w-5"></span>
       </span>
       <span class="font-header text-base font-semibold text-theme-text">
         Enter Your World
       </span>
-      <span id="adventure-world-description" class="text-sm leading-relaxed text-theme-text">
-        Choose a character, place, time and opening style. Explore your Vault without a prepared quest.
+      <span
+        id="adventure-world-description"
+        class="text-sm leading-relaxed text-theme-text"
+      >
+        Choose a character, place, time and opening style. Explore your Vault
+        without a prepared quest.
       </span>
     </button>
   </div>
