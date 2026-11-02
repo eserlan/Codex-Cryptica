@@ -31,7 +31,9 @@ describe("AdventureComposer", () => {
 
     const suggestions = screen.getByTestId("adventure-suggested-actions");
     expect(suggestions.tagName).toBe("DETAILS");
-    expect(suggestions.querySelector("summary")?.textContent).toContain("Suggested actions (3)");
+    expect(suggestions.querySelector("summary")?.textContent).toContain(
+      "Suggested actions (3)",
+    );
     expect(suggestions.querySelectorAll("button")).toHaveLength(3);
     expect(screen.getByLabelText("What do you do?")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Submit action" })).toBeTruthy();
@@ -80,7 +82,9 @@ describe("AdventureComposer", () => {
     m.suggestedActions = ["Search the wreckage"];
     render(AdventureComposer, { props: { manager: m } });
 
-    const details = screen.getByTestId("adventure-suggested-actions") as HTMLDetailsElement;
+    const details = screen.getByTestId(
+      "adventure-suggested-actions",
+    ) as HTMLDetailsElement;
     details.open = true;
     await fireEvent.click(
       screen.getByRole("button", { name: "Search the wreckage" }),
@@ -97,12 +101,14 @@ describe("AdventureComposer", () => {
     m.tryTakeControl = vi.fn().mockResolvedValue(true);
     render(AdventureComposer, { props: { manager: m } });
 
-    expect(screen.getByText(/Another tab may be controlling this adventure/)).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Submit action" }).hasAttribute("disabled")).toBe(true);
+    expect(screen.getByText(/Another tab may be controlling/)).toBeTruthy();
+    const submit = screen.getByRole("button", { name: "Submit action" });
+    expect(submit.hasAttribute("disabled")).toBe(true);
     const suggested = screen.getByTestId("adventure-suggested-actions");
     expect((suggested.querySelector("button") as HTMLButtonElement).disabled).toBe(true);
 
-    await fireEvent.click(screen.getByRole("button", { name: "Try to take control" }));
+    const retry = screen.getByRole("button", { name: "Try to take control" });
+    await fireEvent.click(retry);
     expect(m.tryTakeControl).toHaveBeenCalledOnce();
     expect(m.submitSuggestedAction).not.toHaveBeenCalled();
   });
@@ -128,7 +134,9 @@ describe("AdventureComposer", () => {
     m.suggestedActions = ["Search the wreckage"];
     const { rerender } = render(AdventureComposer, { props: { manager: m } });
 
-    const details = screen.getByTestId("adventure-suggested-actions") as HTMLDetailsElement;
+    const details = screen.getByTestId(
+      "adventure-suggested-actions",
+    ) as HTMLDetailsElement;
     details.open = true;
     const button = screen.getByRole("button", { name: "Search the wreckage" });
     button.focus();
