@@ -63,13 +63,22 @@ jobs:
 
       - name: Update bad_ips list
         if: steps.config.outputs.configured == 'true'
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          APPLY_INPUT: ${{ inputs.apply }}
+          DAYS_INPUT: ${{ inputs.days || '1' }}
         run: |
+          set -o pipefail
+          if ! [[ "$DAYS_INPUT" =~ ^[1-9][0-9]*$ ]]; then
+            echo "::error::days input must be a positive integer (got: $DAYS_INPUT)"
+            exit 1
+          fi
           MODE="--dry-run"
-          if [ "${{ github.event_name }}" = "schedule" ] || [ "${{ inputs.apply }}" = "true" ]; then
+          if [ "$EVENT_NAME" = "schedule" ] || [ "$APPLY_INPUT" = "true" ]; then
             MODE="--apply"
           fi
           echo "Running with $MODE"
-          bun scripts/update-bad-ips.ts "$MODE" --days "${{ inputs.days || '1' }}" | tee bad-ip-report.txt
+          bun scripts/update-bad-ips.ts "$MODE" --days "$DAYS_INPUT" | tee bad-ip-report.txt
           {
             echo "### Bad IP blocklist run"
             echo ""

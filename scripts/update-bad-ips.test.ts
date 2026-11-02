@@ -8,6 +8,7 @@ import {
   mergeListItems,
   parseArgs,
   subnet24,
+  waitForBulkOperation,
 } from "./update-bad-ips";
 
 const probes = ["/.env", "/.git/config", "/wp-login.php", "/xmlrpc.php"];
@@ -22,6 +23,14 @@ describe("isProbePath", () => {
     expect(isProbePath("/.git/config")).toBe(true);
     expect(isProbePath("/blog/my-post")).toBe(false);
     expect(isProbePath("/generators/npc")).toBe(false);
+  });
+
+  it("does not match ordinary routes that merely resemble probe paths", () => {
+    expect(isProbePath("/xenv")).toBe(false);
+    expect(isProbePath("/xgit")).toBe(false);
+    expect(isProbePath("/xaws")).toBe(false);
+    expect(isProbePath("/xsvn")).toBe(false);
+    expect(isProbePath("/.environment-guide")).toBe(false);
   });
 });
 
@@ -112,6 +121,51 @@ describe("subnet and CIDR helpers", () => {
   });
 });
 
+describe("waitForBulkOperation", () => {
+  function stubFetch(status: string) {
+    const original = globalThis.fetch;
+    globalThis.fetch = (async () =>
+      Response.json({
+        success: true,
+        result: { status, error: "boom" },
+      })) as typeof fetch;
+    return () => {
+      globalThis.fetch = original;
+    };
+  }
+
+  it("resolves when the operation completes", async () => {
+    const restore = stubFetch("completed");
+    try {
+      await waitForBulkOperation("t", "acct", "op-1", 1_000, 1);
+    } finally {
+      restore();
+    }
+  });
+
+  it("rejects when the operation fails", async () => {
+    const restore = stubFetch("failed");
+    try {
+      await expect(
+        waitForBulkOperation("t", "acct", "op-2", 1_000, 1),
+      ).rejects.toThrow("failed: boom");
+    } finally {
+      restore();
+    }
+  });
+
+  it("rejects when the operation never completes in time", async () => {
+    const restore = stubFetch("running");
+    try {
+      await expect(
+        waitForBulkOperation("t", "acct", "op-3", 5, 1),
+      ).rejects.toThrow("did not complete");
+    } finally {
+      restore();
+    }
+  });
+});
+
 describe("parseArgs", () => {
   it("defaults to dry-run and honours flags", () => {
     expect(parseArgs([])).toEqual({ apply: false, days: 1, maxNew: 100 });
@@ -161,6 +215,16 @@ describe("mergeListItems", () => {
     const ips = result.items.map((i) => i.ip);
     expect(ips).not.toContain("185.177.72.10");
     expect(ips).toContain("185.177.72.11");
+  });
+
+  it("prunes expired auto entries even with no new additions", () => {
+    const existing = [
+      { ip: "203.0.113.1", comment: "auto:probe-scan; expires=2026-01-01" },
+      { ip: "41.194.168.122", comment: "bad ip" },
+    ];
+    const result = mergeListItems(existing, [], { now });
+    expect(result.items.map((i) => i.ip)).toEqual(["41.194.168.122"]);
+    expect(result.removedExpired).toHaveLength(1);
   });
 
   it("caps new entries per run", () => {

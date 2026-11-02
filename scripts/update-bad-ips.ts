@@ -60,10 +60,10 @@ export interface ListItem {
 }
 
 const PROBE_PATTERNS: RegExp[] = [
-  /^\/.env(\.|$|\/)/i,
-  /^\/.git(\/|$)/i,
-  /^\/.aws(\/|$)/i,
-  /^\/.svn(\/|$)/i,
+  /^\/\.env(\.|$|\/)/i,
+  /^\/\.git(\/|$)/i,
+  /^\/\.aws(\/|$)/i,
+  /^\/\.svn(\/|$)/i,
   /^\/wp-(login|admin|content|includes)/i,
   /^\/xmlrpc\.php/i,
   /^\/vendor\/phpunit/i,
@@ -475,16 +475,54 @@ export async function fetchListItems(
   return { listId: list.id, items };
 }
 
+// fallow-ignore-next-line complexity -- bounded poll loop; terminal-state handling is unit-tested in update-bad-ips.test.ts.
+export async function waitForBulkOperation(
+  token: string,
+  accountId: string,
+  operationId: string,
+  timeoutMs = 60_000,
+  pollMs = 2_000,
+): Promise<void> {
+  const deadline = Date.now() + timeoutMs;
+  for (;;) {
+    const result = (await cfFetch(
+      token,
+      `/accounts/${accountId}/rules/lists/bulk-operations/${operationId}`,
+    )) as { status?: string; error?: string };
+    if (result.status === "completed") return;
+    if (result.status === "failed") {
+      throw new Error(
+        `Cloudflare bulk operation ${operationId} failed: ${result.error ?? "unknown error"}`,
+      );
+    }
+    if (Date.now() >= deadline) {
+      throw new Error(
+        `Cloudflare bulk operation ${operationId} did not complete within ${timeoutMs}ms (last status: ${result.status ?? "unknown"}).`,
+      );
+    }
+    await new Promise((resolve) => setTimeout(resolve, pollMs));
+  }
+}
+
 export async function replaceListItems(
   token: string,
   accountId: string,
   listId: string,
   items: ListItem[],
 ): Promise<void> {
-  await cfFetch(token, `/accounts/${accountId}/rules/lists/${listId}/items`, {
-    method: "PUT",
-    body: JSON.stringify(items),
-  });
+  // List-item replacement is asynchronous: HTTP acceptance only means the
+  // bulk operation was queued, so poll it to a terminal state.
+  const result = (await cfFetch(
+    token,
+    `/accounts/${accountId}/rules/lists/${listId}/items`,
+    {
+      method: "PUT",
+      body: JSON.stringify(items),
+    },
+  )) as { operation_id?: string };
+  if (result.operation_id) {
+    await waitForBulkOperation(token, accountId, result.operation_id);
+  }
 }
 
 // --- Optional enrichment ----------------------------------------------------
@@ -597,18 +635,19 @@ export async function run(argv = process.argv.slice(2)): Promise<void> {
       `Suggestion: ${s.ips.length} scanners from AS${s.asn}. Consider adding (ip.geoip.asnum eq ${s.asn}) to the WAF rule.`,
     );
   }
-  if (entries.length === 0) {
-    console.log("No new bad actors found.");
-    return;
-  }
+  if (entries.length === 0) console.log("No new bad actors found.");
 
   const token = process.env.CLOUDFLARE_BAD_IPS_TOKEN;
   const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
   if (!token || !accountId) {
-    console.log("Candidates (no Cloudflare list credentials, report only):");
-    for (const e of entries) console.log(`  ${e.ip}  (${e.reason})`);
+    if (entries.length > 0) {
+      console.log("Candidates (no Cloudflare list credentials, report only):");
+      for (const e of entries) console.log(`  ${e.ip}  (${e.reason})`);
+    }
     return;
   }
+  // Even with no new entries, fall through: merging with an empty addition
+  // set is what prunes expired auto entries on quiet days.
 
   const { listId, items: existing } = await fetchListItems(
     token,
