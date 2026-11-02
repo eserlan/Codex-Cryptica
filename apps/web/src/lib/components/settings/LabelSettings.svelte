@@ -100,7 +100,7 @@
 <div class="space-y-6">
   <div class="p-4 bg-theme-primary/5 border border-theme-primary/20 rounded-lg">
     <h4
-      class="text-xs font-bold text-theme-primary uppercase font-header tracking-[0.2em] mb-4"
+      class="text-xs font-bold text-theme-text uppercase font-header tracking-[0.2em] mb-4"
     >
       Project Labels
     </h4>
@@ -124,14 +124,14 @@
                   type="button"
                   onclick={handleRename}
                   disabled={isProcessing || !renameValue.trim()}
-                  class="px-3 py-1 disabled:opacity-50 bg-theme-primary text-theme-bg text-meta font-bold rounded uppercase font-header transition-colors"
+                  class="px-3 py-1 disabled:opacity-50 bg-theme-primary text-theme-on-primary text-meta font-bold rounded uppercase font-header transition-colors"
                 >
                   Save
                 </button>
                 <button
                   type="button"
                   onclick={() => (editingLabel = null)}
-                  class="px-3 py-1 border border-theme-border text-theme-muted text-meta font-bold rounded uppercase font-header hover:text-theme-text transition-colors"
+                  class="px-3 py-1 border border-theme-border text-theme-text text-meta font-bold rounded uppercase font-header hover:text-theme-text transition-colors"
                 >
                   Cancel
                 </button>
@@ -157,7 +157,7 @@
                 type="button"
                 onclick={() => startRename(label)}
                 disabled={isProcessing}
-                class="p-2 text-theme-muted hover:text-theme-primary transition-colors focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
+                class="p-2 text-theme-text hover:text-theme-primary transition-colors focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
                 title="Rename Label"
                 aria-label="Rename {label} label"
               >
@@ -185,11 +185,11 @@
           class="text-center py-12 border border-dashed border-theme-border rounded"
         >
           <div
-            class="icon-[lucide--tag] w-8 h-8 text-theme-muted/20 mx-auto mb-3"
+            class="icon-[lucide--tag] w-8 h-8 text-theme-muted mx-auto mb-3"
             aria-hidden="true"
           ></div>
           <p
-            class="text-xs text-theme-muted uppercase font-mono tracking-widest"
+            class="text-xs text-theme-text uppercase font-mono tracking-widest"
           >
             No labels indexed yet
           </p>
