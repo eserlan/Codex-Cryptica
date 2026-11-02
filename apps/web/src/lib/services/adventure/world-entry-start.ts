@@ -29,12 +29,7 @@ export function createWorldEntryStart(
   sourceRecords: SourceRecordReference[];
   worldEntry: WorldEntryContext;
 } {
-  const errors = validateWorldEntrySetup(
-    setup,
-    characters,
-    locations,
-    calendar,
-  );
+  const errors = validateWorldEntrySetup(setup, characters, locations, calendar);
   if (errors.length) throw new Error(errors.join(" "));
   const character = worldEntryCharacter(setup, characters);
   const locationName = worldEntryLocationName(setup, locations);
@@ -109,34 +104,41 @@ export function describeWorldEntryStartFailure(
   if (cause instanceof Error) {
     switch (cause.message) {
       case "active-adventure-exists":
-        return "An adventure is already active. Continue it or archive it first.";
+        return "An adventure is already active. Continue or archive it first.";
       case "vault-not-open":
-        return "The selected Vault is no longer open. Reopen it and retry. " + preserved;
+        return `Reopen the selected Vault and retry. ${preserved}`;
       case "control-lost":
-        return "Another tab controls this adventure. Switch to that tab and retry. " + preserved;
+        return `Another tab controls this adventure. Use that tab. ${preserved}`;
       case "invalid-session-id":
-        return "The new adventure could not be saved. Reopen the Vault and retry. " + preserved;
+        return `Could not save the new adventure. Reopen the Vault. ${preserved}`;
     }
-    if (
-      cause.message.startsWith("Choose a Vault before starting.") ||
-      cause.message.startsWith("Choose a character") ||
-      cause.message.startsWith("Choose a location") ||
-      cause.message.startsWith("Describe the scene") ||
-      cause.message.startsWith("Choose a valid date")
-    ) {
-      return cause.message + " " + preserved;
-    }
-    switch (cause.name) {
-      case "DataCloneError":
-        return "The selected world date could not be prepared. Try clearing and reselecting it. " + preserved;
-      case "QuotaExceededError":
-        return "Device storage is full. Free up some space and retry. " + preserved;
-      case "NotAllowedError":
-      case "SecurityError":
-        return "This browser cannot access the Vault storage. Check its site permissions. " + preserved;
-    }
+    const knownSetupError = [
+      "Choose a Vault",
+      "Choose a character",
+      "Choose a location",
+      "Describe the scene",
+      "Choose a valid date",
+    ].some((prefix) => cause.message.startsWith(prefix));
+    if (knownSetupError) return `${cause.message} ${preserved}`;
   }
+
+  // DOMException is not necessarily an instanceof Error in every browser
+  // or Vitest/jsdom realm. Check only a known name, never display raw causes.
+  const name =
+    cause && typeof cause === "object" && "name" in cause
+      ? cause.name
+      : null;
+  switch (name) {
+    case "DataCloneError":
+      return `Could not process the selected world date. Reselect it. ${preserved}`;
+    case "QuotaExceededError":
+      return `Device storage is full. Free some space and retry. ${preserved}`;
+    case "NotAllowedError":
+    case "SecurityError":
+      return `Check this site's Vault storage permissions. ${preserved}`;
+  }
+
   return stage === "setup"
-    ? "Could not prepare the scene from the current selections. Check the character, place and date. " + preserved
-    : "The adventure could not be launched. Check your Oracle connection and Vault, then retry. " + preserved;
+    ? `Check your character, place and date. ${preserved}`
+    : `Could not start the adventure. Check Oracle and the Vault. ${preserved}`;
 }
