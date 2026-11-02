@@ -2,7 +2,10 @@
   import { tick } from "svelte";
   import type { AdventureManager } from "#lib/stores/oracle/adventure-manager.svelte.js";
   import type { AdventureSessionRepository } from "#lib/services/adventure/adventure-session-repository.js";
-  import type { ProvisionalFact } from "@codex/adventure-engine";
+  import {
+    formatWorldElapsedMinutes,
+    type ProvisionalFact,
+  } from "@codex/adventure-engine";
   import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
   import AdventureArchive from "./AdventureArchive.svelte";
   import AdventureCorrectionForm from "./AdventureCorrectionForm.svelte";
@@ -45,6 +48,11 @@
   let playViewport = $state<HTMLElement>();
   const isFullscreen = $derived(fullscreenElement === focusElement);
   const transcriptLength = $derived(manager.transcript?.turns.length ?? 0);
+  const elapsedLabel = $derived(
+    manager.session?.worldTime
+      ? formatWorldElapsedMinutes(manager.session.worldTime.elapsedMinutes)
+      : null,
+  );
   const pendingRollId = $derived(manager.session?.pendingRoll?.id ?? null);
   const visibleEventVersion = $derived(
     `${transcriptLength}:${manager.phase}:${pendingRollId ?? ""}`,
@@ -149,6 +157,14 @@
             : manager.phase === "offline"
               ? "Waiting for connection"
               : manager.phase}
+          {#if elapsedLabel}
+            <span
+              class="ml-2 normal-case tracking-normal"
+              title="Elapsed fictional time since the adventure began"
+            >
+              · {elapsedLabel} elapsed
+            </span>
+          {/if}
         </p>
       </div>
     </div>
