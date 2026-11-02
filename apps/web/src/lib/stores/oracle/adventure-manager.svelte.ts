@@ -182,6 +182,8 @@ function initialSession(input: {
   };
 }
 
+let nextAdventureTurnRequestId = 0;
+
 function defaultGenerationService(): Pick<
   AdventureTurnGenerationService,
   "generate"
@@ -192,6 +194,7 @@ function defaultGenerationService(): Pick<
         return adventureTurnGenerationService.generate(request, options);
       }
       // AbortSignal is not structured-cloneable and must not cross Comlink.
+      const signal = options?.signal ?? request.signal;
       const { signal: _signal, ...workerOptions } = options ?? {};
       // Comlink cannot structured-clone functions nested inside the request.
       // Progress is a separate proxied argument at the bridge boundary.
@@ -201,11 +204,26 @@ function defaultGenerationService(): Pick<
         ...cloneableRequest
       } = request;
       const workerRequest = $state.snapshot(cloneableRequest);
-      return oracleBridge.generateAdventureTurn(
-        workerRequest,
-        workerOptions,
-        onNarration,
-      ) as any;
+      const requestId = String(++nextAdventureTurnRequestId);
+      const cancelWorkerRequest = () => {
+        if (!oracleBridge.isReady) return;
+        void oracleBridge.cancelAdventureTurn(requestId).catch(() => {});
+      };
+      signal?.addEventListener("abort", cancelWorkerRequest, { once: true });
+      if (signal?.aborted) {
+        signal.removeEventListener("abort", cancelWorkerRequest);
+        throw new DOMException("Cancelled", "AbortError");
+      }
+      return oracleBridge
+        .generateAdventureTurn(
+          workerRequest,
+          requestId,
+          workerOptions,
+          onNarration,
+        )
+        .finally(() => {
+          signal?.removeEventListener("abort", cancelWorkerRequest);
+        }) as any;
     },
   };
 }

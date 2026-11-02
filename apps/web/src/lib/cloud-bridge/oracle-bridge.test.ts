@@ -15,11 +15,13 @@ const {
   setSessionTokenProviderMock,
   proxyMock,
   generateAdventureTurnMock,
+  cancelAdventureTurnMock,
 } = vi.hoisted(() => ({
   setSessionTokenMock: vi.fn(),
   setSessionTokenProviderMock: vi.fn(),
   proxyMock: vi.fn((fn: unknown) => fn),
   generateAdventureTurnMock: vi.fn().mockResolvedValue({ kind: "complete" }),
+  cancelAdventureTurnMock: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock("comlink", () => ({
@@ -27,6 +29,7 @@ vi.mock("comlink", () => ({
     generateResponse: vi.fn(),
     expandQuery: vi.fn(),
     generateAdventureTurn: generateAdventureTurnMock,
+    cancelAdventureTurn: cancelAdventureTurnMock,
     setSessionToken: setSessionTokenMock,
     setSessionTokenProvider: setSessionTokenProviderMock,
     [releaseProxySymbol]: vi.fn(),
@@ -129,6 +132,7 @@ describe("OracleBridge", () => {
     expect(structuredClone(request)).toEqual(request);
     await bridge.generateAdventureTurn(
       request,
+      "turn-1",
       { modelName: "luna-fast" },
       narration,
     );
@@ -136,6 +140,7 @@ describe("OracleBridge", () => {
     expect(proxyMock).toHaveBeenCalledWith(narration);
     expect(generateAdventureTurnMock).toHaveBeenCalledWith(
       request,
+      "turn-1",
       { modelName: "luna-fast" },
       narration,
     );
@@ -146,14 +151,21 @@ describe("OracleBridge", () => {
 
   it("omits the progress callback for ordinary buffered adventure calls", async () => {
     const request = { phase: "opening", session: { id: "adventure-1" } };
-    await bridge.generateAdventureTurn(request);
+    await bridge.generateAdventureTurn(request, "turn-2");
 
     expect(generateAdventureTurnMock).toHaveBeenCalledWith(
       request,
+      "turn-2",
       undefined,
       undefined,
     );
     expect(proxyMock).not.toHaveBeenCalled();
+  });
+
+  it("forwards adventure turn cancellation to the worker", async () => {
+    await bridge.cancelAdventureTurn("turn-1");
+
+    expect(cancelAdventureTurnMock).toHaveBeenCalledWith("turn-1");
   });
 
   it("should handle worker initialization failure", () => {
