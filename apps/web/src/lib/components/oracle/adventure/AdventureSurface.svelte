@@ -36,6 +36,7 @@
   // unmounts, so the draft survives that round-trip instead of being lost.
   let startTitle = $state("");
   let startPremise = $state("");
+  let startCharacterId = $state("");
   let startCharacterName = $state("");
   let startCharacterDescription = $state("");
 
@@ -47,6 +48,7 @@
       startTitle = "";
       startPremise = "";
       startCharacterName = "";
+      startCharacterId = "";
       startCharacterDescription = "";
     }
     previousVaultId = currentVaultId;
@@ -283,6 +285,7 @@
         bind:title={startTitle}
         bind:premise={startPremise}
         bind:characterName={startCharacterName}
+        bind:selectedCharacterId={startCharacterId}
         bind:characterDescription={startCharacterDescription}
         {characters}
         scenarioSeed={selectedRumour?.scenario}
