@@ -217,8 +217,7 @@ export class AdventureManager {
   private readonly deps: Required<AdventureManagerDependencies>;
   private generationController: AbortController | null = null;
   private worldEntryRumourGenerator:
-    | ((session: AdventureSession) => Promise<RumourSelectionInput>)
-    | undefined;
+    ((session: AdventureSession) => Promise<RumourSelectionInput>) | undefined;
 
   setWorldEntryRumourGenerator(
     generator: (session: AdventureSession) => Promise<RumourSelectionInput>,

@@ -15,9 +15,9 @@ import type { AdventureSession } from "@codex/adventure-engine";
 export function needsWorldEntryBackground(session: AdventureSession): boolean {
   return Boolean(
     session.worldEntry &&
-      !session.scenarioState &&
-      session.hiddenState.secrets.length === 0 &&
-      session.hiddenState.gmThreads.length === 0,
+    !session.scenarioState &&
+    session.hiddenState.secrets.length === 0 &&
+    session.hiddenState.gmThreads.length === 0,
   );
 }
 
