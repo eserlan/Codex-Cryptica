@@ -142,41 +142,40 @@ describe("fictional world time", () => {
     );
     expect(current.worldTime).toBeUndefined();
     expect(saved.worldEntry?.at?.year).toBe(618);
-    expect(buildAdventurePrompt({
+    const prompt = buildAdventurePrompt({
       session: saved,
       phase: "action",
       playerAction: "Ask about the mill",
       anchors: [],
       relevant: [],
-    }).state).toContain("refugees seek supplies");
+    });
+    expect(prompt.state).toContain("refugees seek supplies");
   });
 
   it("accumulates elapsed time without inventing developments", () => {
     const base = session();
-    const first = applyTimeAdvance(base, {
-      minutes: 60,
-      cause: "Rest one hour",
-      developments: [],
-    }, "one");
+    const first = applyTimeAdvance(
+      base,
+      { minutes: 60, cause: "Rest one hour", developments: [] },
+      "one",
+    );
     expect(first.ok).toBe(true);
     if (!first.ok) return;
-    const next = applyTimeAdvance({ ...base, worldTime: first.value }, {
-      minutes: 120,
-      cause: "Rest two hours",
-      developments: [],
-    }, "two");
+    const next = applyTimeAdvance(
+      { ...base, worldTime: first.value },
+      { minutes: 120, cause: "Rest two hours", developments: [] },
+      "two",
+    );
     expect(next.ok && next.value?.elapsedMinutes).toBe(180);
     expect(next.ok && next.value?.events).toEqual([]);
   });
 
-  it("rejects unknown, duplicate and overlarge temporal events atomically", () => {
+  it("rejects invalid temporal events atomically", () => {
     const current = session();
     const advance = {
       minutes: 1440,
       cause: "Wait a day",
-      developments: [
-        { threadId: "unknown", text: "Something happened" },
-      ],
+      developments: [{ threadId: "unknown", text: "Something happened" }],
     };
     expect(applyTimeAdvance(current, advance, "wait")).toEqual({
       ok: false,
@@ -191,22 +190,30 @@ describe("fictional world time", () => {
     });
     expect(committed.ok).toBe(false);
     expect(current.worldTime).toBeUndefined();
-    expect(
-      applyTimeAdvance(current, {
+    const oversized = applyTimeAdvance(
+      current,
+      {
         minutes: 43_201,
         cause: "Implausibly long step",
         developments: [],
-      }, "other").ok,
-    ).toBe(false);
+      },
+      "other",
+    );
+    expect(oversized.ok).toBe(false);
   });
 
   it("keeps the clock unchanged until a pending roll resolves", () => {
-    const pending = applyRollRequest(session(), {
-      kind: "roll-required",
+    const request = {
+      kind: "roll-required" as const,
       uncertainty: "Safe passage?",
       stakes: "Might be delayed",
       sourceRecordIds: [],
-    }, { turnId: "roll", inputId: "action", now });
+    };
+    const pending = applyRollRequest(session(), request, {
+      turnId: "roll",
+      inputId: "action",
+      now,
+    });
     expect(pending.ok).toBe(true);
     if (!pending.ok) return;
     expect(pending.value.worldTime).toBeUndefined();
@@ -224,11 +231,11 @@ describe("fictional world time", () => {
       cause: "Crossing takes one hour",
       developments: [],
     };
-    const resolved = resolveRecordedRoll(
-      recorded.value,
-      resolution,
-      { turnId: "resolved", inputId: "resolution", now },
-    );
+    const resolved = resolveRecordedRoll(recorded.value, resolution, {
+      turnId: "resolved",
+      inputId: "resolution",
+      now,
+    });
     expect(resolved.ok && resolved.value.worldTime?.elapsedMinutes).toBe(60);
   });
 });
