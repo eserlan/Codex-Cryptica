@@ -63,6 +63,10 @@ export function buildAdventurePrompt(input: AdventurePromptInput) {
           "The GM-ONLY scenario block is secret preparation and must never be paraphrased into narration, hints, suggested actions, roll prompts or recaps before disclosure.",
         ]
       : []),
+    "World time is elapsed fictional minutes since adventure entry, not device time; the chosen Vault date may have only year precision. Never invent a precise calendar date or advance based on chat turn count.",
+    "Return timeAdvance only for a completed turn when meaningful fictional time actually passes: waiting, sleeping, travel or an explicitly timed event. Supply whole positive minutes, a causal description and a developments array (possibly empty). Do not advance merely for talking or because another model response occurred.",
+    "TimeAdvance developments are GM-ONLY events tied to existing hidden gmThreads IDs; describe credible actions or consequences by those actors during the elapsed time. Only generate events consistent with their motives, available time, prior facts and observed actions. Do not force dramatic escalation. Update the same gmThreads through hiddenPatch when its state genuinely changes.",
+    "Never copy timeAdvance.developments into narration, suggested actions or player-visible state unless the player has a justified way to observe the consequences. Do not reveal hidden rumours just because hours passed.",
     "Do not reveal unrevealed GM state; return explicit reveal IDs only when fictionally discovered.",
     "The GM-ONLY state block is not player knowledge and must never be copied into narration or roll copy.",
     "Source excerpt lore is GM-only: use it to drive consequences and reveals, but never state it to the player unless it is fictionally discovered.",
@@ -86,6 +90,7 @@ export function buildAdventurePrompt(input: AdventurePromptInput) {
         }
       : undefined,
     "GM-ONLY state": input.session.hiddenState,
+    "GM-ONLY fictional time": input.session.worldTime,
     provisionalFacts: input.session.provisionalFacts,
     worldEntry: worldEntry
       ? {

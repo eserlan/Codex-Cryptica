@@ -1,4 +1,5 @@
 import { detectHiddenLeakage } from "./hidden-state";
+import { applyTimeAdvance } from "./world-time";
 import {
   MAX_SERIALIZED_STATE_CHARS,
   parseTurnProposal,
@@ -298,9 +299,12 @@ export function applyCompletedTurn(
     secret.status = "revealed";
     secret.revealedOnTurnId = meta.turnId;
   }
+  const time = applyTimeAdvance(session, proposal.timeAdvance, meta.turnId);
+  if (!time.ok) return error("invalid-transition", time.reason);
   const candidate = clone(session);
   candidate.visibleState = visible.value;
   candidate.hiddenState = hidden.value;
+  if (time.value) candidate.worldTime = time.value;
   candidate.provisionalFacts = [
     ...candidate.provisionalFacts,
     ...provisionalFacts,
@@ -317,6 +321,14 @@ export function applyCompletedTurn(
     sourceRecordIds: proposal.sourceRecordIds,
     provisionalFactIds: provisionalFacts.map((fact) => fact.id),
     committedAt: now,
+    ...(proposal.timeAdvance
+      ? {
+          timeAdvance: {
+            minutes: proposal.timeAdvance.minutes,
+            cause: proposal.timeAdvance.cause,
+          },
+        }
+      : {}),
     suggestedActions: proposal.suggestedActions,
   };
   candidate.turns = [...candidate.turns, turn];
