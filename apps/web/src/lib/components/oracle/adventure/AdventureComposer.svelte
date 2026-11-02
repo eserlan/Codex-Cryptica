@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { AdventureManager } from "#lib/stores/oracle/adventure-manager.svelte.js";
+  import AdventureSuggestedActions from "./AdventureSuggestedActions.svelte";
 
   let { manager }: { manager: AdventureManager } = $props();
   let action = $derived(manager.draft);
@@ -35,7 +36,7 @@
         ? "flex items-center justify-between gap-3 py-1"
         : "hidden"}
     >
-      <p class="flex items-center gap-2 text-sm text-theme-secondary">
+      <p class="flex items-center gap-2 text-sm text-theme-text">
         <span
           class="icon-[lucide--sparkles] h-4 w-4 motion-safe:animate-pulse"
           aria-hidden="true"
@@ -43,31 +44,12 @@
         Oracle is responding…
       </p>
       <button
-        class="min-h-11 rounded-md border border-theme-border px-3 text-theme-primary"
+        class="min-h-11 rounded-md border border-theme-border px-3 text-theme-text"
         type="button"
         onclick={() => manager.cancel()}>Cancel</button
       >
     </div>
-    {#if manager.suggestedActions.length > 0}
-      <div
-        class={actionControlsVisible
-          ? "flex snap-x gap-2 overflow-x-auto overscroll-x-contain pb-1"
-          : "hidden"}
-        aria-label="Suggested actions"
-        data-testid="adventure-suggested-actions"
-      >
-        {#each manager.suggestedActions as suggestion (suggestion)}
-          <button
-            class="min-h-11 max-w-[15rem] shrink-0 snap-start rounded-lg border border-theme-border bg-theme-bg px-3 py-2 text-left text-xs leading-snug text-theme-primary transition hover:bg-theme-primary/10 sm:text-sm"
-            type="button"
-            {disabled}
-            onclick={() => void manager.submitSuggestedAction(suggestion)}
-          >
-            <span class="line-clamp-2">{suggestion}</span>
-          </button>
-        {/each}
-      </div>
-    {/if}
+    <AdventureSuggestedActions {manager} {disabled} visible={actionControlsVisible} />
     <div
       class={actionControlsVisible ? "flex items-end gap-2" : "hidden"}
       data-testid="adventure-free-action"
@@ -76,7 +58,7 @@
       <textarea
         id="adventure-action"
         rows="2"
-        class="min-h-11 max-h-32 min-w-0 flex-1 resize-y rounded-lg border border-theme-border bg-theme-bg px-3 py-2 text-sm leading-relaxed text-theme-primary placeholder:text-theme-muted"
+        class="min-h-11 max-h-32 min-w-0 flex-1 resize-y rounded-lg border border-theme-border bg-theme-bg px-3 py-2 text-sm leading-relaxed text-theme-text placeholder:text-theme-muted"
         bind:value={manager.draft}
         {disabled}
         placeholder="What do you do?"
