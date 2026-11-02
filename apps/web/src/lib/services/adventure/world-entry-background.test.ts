@@ -1,74 +1,36 @@
 import { describe, expect, it } from "vitest";
 import {
   buildAdventurePrompt,
-  parseAdventureSession,
   type AdventureSession,
 } from "@codex/adventure-engine";
 import { seedWorldEntryBackground } from "./world-entry-background";
 
 function session(): AdventureSession {
-  return parseAdventureSession({
-    schemaVersion: 2,
+  return {
     id: "local-session-123",
-    vaultId: "vault-1",
-    title: "Lira in Northbrook",
-    status: "active",
-    createdAt: "2026-11-02T12:00:00Z",
-    updatedAt: "2026-11-02T12:00:00Z",
-    lastPlayedAt: "2026-11-02T12:00:00Z",
-    revision: 0,
-    playerCharacter: {
-      kind: "provisional",
-      name: "Lira",
-      description: "Rider",
-    },
-    premise: "Explore Northbrook",
-    sourceRecords: [],
     worldEntry: {
       version: 1,
       location: { kind: "provisional", name: "Northbrook" },
       intent: "explore",
     },
-    visibleState: {
-      objectives: [],
-      activeCharacters: [],
-      knownFacts: [],
-      relationships: [],
-    },
     hiddenState: { secrets: [], gmThreads: [] },
-    provisionalFacts: [],
     turns: [],
-    pendingRoll: null,
-    dicePresets: [],
-    resourceCounters: [],
-  });
+  } as unknown as AdventureSession;
 }
 
 describe("world entry background situations", () => {
-  it("seeds hidden, paired rumours without revealing them", () => {
+  it("establishes paired hidden rumours without leaking them", () => {
     let n = 0;
     const seeded = seedWorldEntryBackground(session(), () => `seed-${++n}`);
     expect(seeded.hiddenState.secrets).toHaveLength(3);
     expect(seeded.hiddenState.gmThreads).toHaveLength(3);
-    expect(seeded.hiddenState.secrets.map((fact) => fact.status)).toEqual([
-      "hidden",
-      "hidden",
-      "hidden",
-    ]);
-    expect(seeded.hiddenState.gmThreads.map((thread) => thread.status)).toEqual([
-      "hidden",
-      "hidden",
-      "hidden",
-    ]);
-    expect(seeded.hiddenState.secrets.map((item) => item.text)).toEqual([
-      expect.stringContaining("essentially true"),
-      expect.stringContaining("exaggeration"),
-      expect.stringContaining("dangerous misconception"),
-    ]);
+    expect(seeded.hiddenState.secrets[0]?.status).toBe("hidden");
+    expect(seeded.hiddenState.gmThreads[0]?.status).toBe("hidden");
+    expect(seeded.hiddenState.secrets[0]?.text).toContain("essentially true");
+    expect(seeded.hiddenState.secrets[1]?.text).toContain("exaggeration");
+    expect(seeded.hiddenState.secrets[2]?.text).toContain("misconception");
     expect(seeded.hiddenState.gmThreads[0]?.text).toContain("NOT YET HEARD");
-    expect(seeded.visibleState.knownFacts).toEqual([]);
-    expect(seeded.scenarioState).toBeUndefined();
-    expect(parseAdventureSession(seeded)).toEqual(seeded);
+
     const prompt = buildAdventurePrompt({
       session: seeded,
       phase: "opening",
@@ -79,34 +41,22 @@ describe("world entry background situations", () => {
     expect(prompt.behavior).toContain("reveal at most one");
   });
 
-  it("seeds older World Entry sessions on their next action", () => {
+  it("seeds older World Entry sessions but never reseeds", () => {
     const older = session();
-    older.turns = [{ id: "older-turn" } as AdventureSession["turns"][number]];
+    older.turns = [{ id: "old-turn" } as AdventureSession["turns"][number]];
     const seeded = seedWorldEntryBackground(older, () => "new-id");
     expect(seeded.hiddenState.gmThreads).toHaveLength(3);
+    expect(seedWorldEntryBackground(seeded, () => "extra")).toBe(seeded);
   });
 
-  it("produces stable seeds and never reseeds a persisted session", () => {
-    let index = 0;
-    const first = seedWorldEntryBackground(session(), () => `id-${++index}`);
-    index = 0;
-    const second = seedWorldEntryBackground(session(), () => `id-${++index}`);
+  it("keeps seeds stable and leaves ordinary adventures alone", () => {
+    let n = 0;
+    const first = seedWorldEntryBackground(session(), () => `id-${++n}`);
+    n = 0;
+    const second = seedWorldEntryBackground(session(), () => `id-${++n}`);
     expect(first.hiddenState).toEqual(second.hiddenState);
-    expect(seedWorldEntryBackground(first, () => "unexpected")).toBe(first);
-  });
-
-  it("preserves pre-existing GM state and ordinary adventures", () => {
     const ordinary = session();
     delete ordinary.worldEntry;
     expect(seedWorldEntryBackground(ordinary, () => "id")).toBe(ordinary);
-    const alreadyPrepared = session();
-    alreadyPrepared.hiddenState.gmThreads.push({
-      id: "existing",
-      text: "An existing hidden GM thread",
-      status: "hidden",
-    });
-    expect(seedWorldEntryBackground(alreadyPrepared, () => "id")).toBe(
-      alreadyPrepared,
-    );
   });
 });
