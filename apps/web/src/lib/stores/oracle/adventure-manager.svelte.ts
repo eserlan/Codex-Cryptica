@@ -670,8 +670,9 @@ export class AdventureManager {
   }
 
   async submitSuggestedAction(action: string): Promise<void> {
-    // A selected suggestion must remain visible and editable until committed.
-    // This also preserves it after a failed, cancelled or offline generation.
+    // Treat a suggestion like a typed action. Keep the selected choice in the
+    // composer until it commits so offline errors, cancellations and provider
+    // failures leave the player with an editable, retryable action.
     await this.submitAction(action);
   }
 
