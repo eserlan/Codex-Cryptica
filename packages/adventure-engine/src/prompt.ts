@@ -1,5 +1,6 @@
 import { allocatePromptBudget } from "./context-budget";
 import { playerScenarioProjection } from "./scenario-state";
+import { ensureScenarioSecrets } from "./hidden-state";
 import type {
   AdventureSession,
   ResolvedSourceExcerpt,
@@ -30,6 +31,10 @@ export function buildAdventurePrompt(input: AdventurePromptInput) {
       ? [
           "This is an open-ended World Entry scene in an existing Vault, not a pre-written quest. Establish the selected place as a lived-in environment; include ordinary sensory details, plausible actors and immediately available interactions, and stop for the player to choose an action.",
           "Do not force a villain, danger, quest, investigation, reward, objective, climax or timed twist merely to make the start exciting. An uneventful scene or a quiet conversation is valid.",
+          "GM-only world-entry seed threads are background possibilities, NOT rumours the player already knows or canonical Vault facts. Respect established sources, date and location; leave any incompatible seed dormant rather than contradicting canon.",
+          "When the player meaningfully explores, asks locals for news or follows an NPC's concerns, naturally reveal at most one plausible lead, clue or hearsay from a relevant hidden seed. Do not dump every rumour, assign quests or turn every mundane interaction into an ominous event.",
+          "Avoid endlessly substituting unrelated chores when the player actively pursues an emerging lead. Show observable consequences and actionable choices, but let quiet interactions remain quiet.",
+          "Keep each seeded secret's original GM truth unchanged. Update an existing gmThreads entry through hiddenPatch.gmThreads only when committed player actions or explicit in-world time passage justify a change; otherwise leave it dormant. Never escalate merely because another chat turn passed.",
           "Use only period-appropriate established sources as current facts. Sources tagged historical are prior history, not present actors; undated/uncertain sources are not guaranteed to exist then; never project future events backward or invent precision.",
           "The selected start date is in-world time, not device time. Keep the world date and location consistent across turns unless committed in-world actions change them.",
           ...(worldEntry.intent === "scene"
@@ -59,6 +64,10 @@ export function buildAdventurePrompt(input: AdventurePromptInput) {
           "The GM-ONLY scenario block is secret preparation and must never be paraphrased into narration, hints, suggested actions, roll prompts or recaps before disclosure.",
         ]
       : []),
+    "World time is elapsed fictional minutes since adventure entry, not device time; the chosen Vault date may have only year precision. Never invent a precise calendar date or advance based on chat turn count.",
+    "Return timeAdvance only for a completed turn when meaningful fictional time actually passes: waiting, sleeping, travel or an explicitly timed event. Supply whole positive minutes, a causal description and a developments array (possibly empty). Do not advance merely for talking or because another model response occurred.",
+    "TimeAdvance developments are GM-ONLY events tied to existing hidden gmThreads IDs; describe credible actions or consequences by those actors during the elapsed time. Only generate events consistent with their motives, available time, prior facts and observed actions. Do not force dramatic escalation. Update the same gmThreads through hiddenPatch when its state genuinely changes.",
+    "Never copy timeAdvance.developments into narration, suggested actions or player-visible state unless the player has a justified way to observe the consequences. Do not reveal hidden rumours just because hours passed.",
     "Do not reveal unrevealed GM state; return explicit reveal IDs only when fictionally discovered.",
     "The GM-ONLY state block is not player knowledge and must never be copied into narration or roll copy.",
     "Source excerpt lore is GM-only: use it to drive consequences and reveals, but never state it to the player unless it is fictionally discovered.",
@@ -81,7 +90,9 @@ export function buildAdventurePrompt(input: AdventurePromptInput) {
           ),
         }
       : undefined,
-    "GM-ONLY state": input.session.hiddenState,
+    // Includes registered scenario secrets so their IDs can be revealed.
+    "GM-ONLY state": ensureScenarioSecrets(input.session).hiddenState,
+    "GM-ONLY fictional time": input.session.worldTime,
     provisionalFacts: input.session.provisionalFacts,
     worldEntry: worldEntry
       ? {

@@ -295,3 +295,8 @@
 ## 2025-01-20 - Reducing Garbage Collection Overhead with Sets
 **Learning:** In the generator-engine, chained array operations `.filter().map()` inside a `Set` initialization create intermediate array allocations that add significant garbage collection pressure.
 **Action:** Replace `new Set(array.filter().map())` patterns with imperative `for...of` loops and explicit `set.add()` calls to eliminate intermediate arrays entirely.
+
+## 2025-05-18 - Replacing Object.fromEntries(Object.entries().map()) with imperative loops
+
+**Learning:** Using `Object.fromEntries(Object.entries(obj).map(...))` creates two intermediate arrays, increasing garbage collection pressure. This pattern is particularly harmful inside hot paths like reactive derived blocks in Svelte.
+**Action:** Replace `Object.fromEntries(Object.entries(obj).map(...))` with an imperative `for...in` loop to iterate through the object properties and populate a new object to significantly reduce garbage collection pressure.

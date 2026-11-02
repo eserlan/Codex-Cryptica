@@ -105,4 +105,62 @@ describe("resolveWorldEntryPreview", () => {
         .records,
     ).toEqual([]);
   });
+
+  it("keeps date classification when the character is provisional", () => {
+    const entities = [
+      entity("village", "location", {
+        connections: [link("smith"), link("heir")],
+      }),
+      entity("smith", "character", { start_date: { year: 590 } }),
+      entity("heir", "character", { start_date: { year: 625 } }),
+    ];
+    const preview = resolveWorldEntryPreview({
+      entities,
+      calendar: DEFAULT_CALENDAR,
+      locationId: "village",
+      at: { year: 618 },
+    });
+    expect(preview.dated).toBe(true);
+    const ids = preview.records.map((record) => record.id);
+    expect(ids).toContain("smith");
+    // A future actor is withheld, not shown as merely uncertain.
+    expect(ids).not.toContain("heir");
+    expect(preview.warnings.join(" ")).toMatch(/character is provisional/i);
+  });
+
+  it("lists a selected record with conflicting dates, labelled contradictory", () => {
+    const entities = [
+      entity("pc", "character", {
+        start_date: { year: 630 },
+        end_date: { year: 600 },
+        connections: [link("village")],
+      }),
+      entity("village", "location"),
+    ];
+    const preview = resolveWorldEntryPreview({
+      entities,
+      calendar: DEFAULT_CALENDAR,
+      characterId: "pc",
+      locationId: "village",
+      at: { year: 618 },
+    });
+    expect(preview.records.find((record) => record.id === "pc")).toEqual(
+      expect.objectContaining({
+        applicability: "contradictory",
+        linkedBy: "selected",
+      }),
+    );
+  });
+
+  it("falls back with a warning when the date needs calendar repair", () => {
+    const preview = resolveWorldEntryPreview({
+      entities: sources,
+      calendar: { ...DEFAULT_CALENDAR, revision: 3 },
+      characterId: "pc",
+      locationId: "village",
+      at: { precision: "year", year: 618, calendarRevision: 1 },
+    });
+    expect(preview.dated).toBe(false);
+    expect(preview.warnings[0]).toMatch(/current calendar/i);
+  });
 });

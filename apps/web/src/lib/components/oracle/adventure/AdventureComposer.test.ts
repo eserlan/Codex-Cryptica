@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import { fireEvent, render, screen } from "@testing-library/svelte";
+import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import AdventureComposer from "./AdventureComposer.svelte";
 
@@ -20,6 +20,20 @@ function manager(
 }
 
 describe("AdventureComposer", () => {
+  it("starts at one line and expands the composer without native resize", async () => {
+    render(AdventureComposer, { props: { manager: manager("ready") } });
+    const textarea = screen.getByLabelText(
+      "What do you do?",
+    ) as HTMLTextAreaElement;
+    expect(textarea.rows).toBe(1);
+    expect(textarea.className).toContain("resize-none");
+    expect(textarea.className).toContain("text-base");
+    expect(screen.getByTestId("adventure-action-dock").className).toContain(
+      "max-h-[55%]",
+    );
+    await waitFor(() => expect(textarea.style.height).not.toBe(""));
+  });
+
   it("keeps free action visible beside a compact dropdown of suggested actions", () => {
     const m = manager("ready");
     m.suggestedActions = [

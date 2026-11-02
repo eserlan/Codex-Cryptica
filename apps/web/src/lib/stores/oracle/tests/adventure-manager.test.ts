@@ -105,6 +105,124 @@ function dependencies() {
 }
 
 describe("AdventureManager", () => {
+  it("uses the paired output of the normal Rumour Generator", async () => {
+    const { generateRumourLocal } = await import("generator-engine");
+    const deps: any = dependencies();
+    const batch = generateRumourLocal({ locationContext: "Northbrook" });
+    const manager = new AdventureManager(deps);
+    const generateRumours = vi.fn(async () => batch);
+    manager.setWorldEntryRumourGenerator(generateRumours);
+    await manager.start({
+      vaultId: "vault-1",
+      title: "Northbrook",
+      premise: "Explore Northbrook",
+      playerCharacter: {
+        kind: "provisional",
+        name: "Mara",
+        description: "Guide",
+      },
+      worldEntry: {
+        version: 1,
+        location: { kind: "provisional", name: "Northbrook" },
+        intent: "explore",
+      },
+    });
+    expect(generateRumours).toHaveBeenCalledOnce();
+    expect(manager.session?.hiddenState.gmThreads).toHaveLength(3);
+    expect(manager.session?.hiddenState.gmThreads[0]?.text).toContain(
+      "DORMANT, NOT YET HEARD",
+    );
+  });
+
+  it("persists world-entry situations across actions", async () => {
+    const deps: any = dependencies();
+    const generate = vi.fn(async (_request: any) => completeProposal);
+    deps.generation = { generate };
+    const manager = new AdventureManager(deps);
+    await manager.start({
+      vaultId: "vault-1",
+      title: "Lira in Northbrook",
+      premise: "Enter Northbrook",
+      playerCharacter: {
+        kind: "provisional",
+        name: "Lira",
+        description: "Traveller",
+      },
+      worldEntry: {
+        version: 1,
+        location: { kind: "provisional", name: "Northbrook" },
+        intent: "explore",
+      },
+    });
+    const opening = generate.mock.calls[0]?.[0] as any;
+    expect(opening.session.hiddenState.gmThreads).toHaveLength(3);
+    expect(opening.session.hiddenState.secrets).toHaveLength(6);
+    expect(manager.session?.hiddenState.gmThreads).toHaveLength(3);
+    expect(manager.session?.turns).toHaveLength(1);
+    expect(manager.transcript?.turns[0]?.narration).not.toContain(
+      "NOT YET HEARD",
+    );
+
+    await manager.submitAction("Ask the innkeeper what is happening nearby");
+    const action = generate.mock.calls[1]?.[0] as any;
+    expect(action.session.hiddenState).toEqual(manager.session?.hiddenState);
+    expect(manager.session?.hiddenState.gmThreads).toHaveLength(3);
+  });
+
+  it("cancels pending rumour preparation before starting turn generation", async () => {
+    const deps: any = dependencies();
+    const generate = vi.fn(async () => completeProposal);
+    deps.generation = { generate };
+    const manager = new AdventureManager(deps);
+    await manager.start({
+      vaultId: "vault-1",
+      title: "Northbrook",
+      premise: "Explore Northbrook",
+      playerCharacter: {
+        kind: "provisional",
+        name: "Mara",
+        description: "Guide",
+      },
+    });
+    manager.session = {
+      ...manager.session!,
+      worldEntry: {
+        version: 1,
+        location: { kind: "provisional", name: "Northbrook" },
+        intent: "explore",
+      },
+    };
+
+    let observedSignal: AbortSignal | undefined;
+    let signalPreparationStarted!: () => void;
+    const preparationStarted = new Promise<void>((resolve) => {
+      signalPreparationStarted = resolve;
+    });
+    manager.setWorldEntryRumourGenerator(
+      (_session, signal) =>
+        new Promise((_, reject) => {
+          observedSignal = signal;
+          signalPreparationStarted();
+          signal?.addEventListener(
+            "abort",
+            () =>
+              reject(
+                signal.reason ?? new DOMException("Cancelled", "AbortError"),
+              ),
+            { once: true },
+          );
+        }),
+    );
+
+    const action = manager.submitAction("Ask what is happening nearby");
+    await preparationStarted;
+    manager.cancel();
+    await action;
+
+    expect(observedSignal?.aborted).toBe(true);
+    expect(generate).toHaveBeenCalledTimes(1);
+  });
+
   it("preserves the opening and commits a grounded action through the repository", async () => {
     const manager = new AdventureManager(dependencies() as any);
     await manager.start({
@@ -1081,5 +1199,185 @@ describe("AdventureManager Phase 2 tools", () => {
     expect(releaseLease).toHaveBeenCalledWith(currentLease);
     expect(clearGenerationInteraction).toHaveBeenCalledWith(sessionId);
     expect(archiveSpy).not.toHaveBeenCalled();
+  });
+
+  describe("start safeguards", () => {
+    const startInput = {
+      vaultId: "vault-1",
+      title: "Road",
+      premise: "Find the road",
+      playerCharacter: {
+        kind: "provisional" as const,
+        name: "Mara",
+        description: "Guide",
+      },
+    };
+    const seed = (truth: string) => ({
+      version: 1 as const,
+      id: "scenario-1",
+      origin: { kind: "rumour" as const, batchTitle: "Town", index: 1 },
+      playerVisible: { rumour: "A rumour", lead: "A lead" },
+      gmOnly: { truth },
+      status: "open" as const,
+      events: [],
+    });
+
+    function onlineNavigator() {
+      Object.defineProperty(globalThis, "navigator", {
+        configurable: true,
+        value: { onLine: true },
+      });
+    }
+
+    it("rejects an invalid seed before archiving or writing anything", async () => {
+      onlineNavigator();
+      const deps: any = dependencies();
+      deps.repository.list = vi.fn(async () => ({
+        effectiveActiveId: "stale",
+        entries: [],
+      }));
+      deps.repository.archive = vi.fn();
+      deps.repository.save = vi.fn();
+      const manager = new AdventureManager(deps);
+      await expect(
+        manager.start({ ...startInput, scenarioSeed: seed("x".repeat(601)) }),
+      ).rejects.toThrow("invalid-adventure-setup");
+      expect(deps.repository.list).not.toHaveBeenCalled();
+      expect(deps.repository.archive).not.toHaveBeenCalled();
+      expect(deps.repository.save).not.toHaveBeenCalled();
+      expect(manager.starting).toBe(false);
+    });
+
+    it("saves a valid seeded start that reloads through the same schema", async () => {
+      onlineNavigator();
+      const deps: any = dependencies();
+      const manager = new AdventureManager(deps);
+      await manager.start({
+        ...startInput,
+        scenarioSeed: seed("The miller hides grain."),
+      });
+      expect(manager.session?.scenarioState?.gmOnly.truth).toBe(
+        "The miller hides grain.",
+      );
+      const { parseAdventureSession } = await import("@codex/adventure-engine");
+      expect(() =>
+        parseAdventureSession(JSON.parse(JSON.stringify(manager.session))),
+      ).not.toThrow();
+    });
+
+    it("refuses a second start while the first is still in flight", async () => {
+      onlineNavigator();
+      const deps: any = dependencies();
+      let release!: () => void;
+      const gate = new Promise<void>((resolve) => (release = resolve));
+      const listed = deps.repository.list;
+      deps.repository.list = vi.fn(async (...args: any[]) => {
+        await gate;
+        return listed(...args);
+      });
+      const manager = new AdventureManager(deps);
+      const first = manager.start(startInput);
+      expect(manager.starting).toBe(true);
+      await expect(manager.start(startInput)).rejects.toThrow(
+        "start-in-progress",
+      );
+      release();
+      await first;
+      expect(manager.starting).toBe(false);
+      expect(deps.repository.list).toHaveBeenCalledTimes(1);
+    });
+
+    it.each([
+      [
+        "a provider failure",
+        () => Promise.reject(new Error("provider-unavailable")),
+        undefined,
+        "opening-failed",
+      ],
+      [
+        "an unusable opening",
+        async () => ({ ...completeProposal, kind: "nonsense" }),
+        undefined,
+        "opening-rejected",
+      ],
+      [
+        "a full disk while saving the opening",
+        async () => completeProposal,
+        Object.assign(new Error("quota"), { name: "QuotaExceededError" }),
+        "storage-full",
+      ],
+      [
+        "a failed opening write",
+        async () => completeProposal,
+        new Error("write failed"),
+        "save-failed",
+      ],
+    ])(
+      "records a typed cause for %s",
+      async (_label, generate, saveError, expected) => {
+        onlineNavigator();
+        const deps: any = dependencies();
+        deps.generation = { generate };
+        if (saveError) {
+          const save = deps.repository.save;
+          deps.repository.save = vi.fn(async (revision: any, session: any) =>
+            revision === null
+              ? save(revision, session)
+              : { ok: false, error: saveError },
+          );
+        }
+        const manager = new AdventureManager(deps);
+        await manager.start(startInput);
+        expect(manager.errorCause).toBe(expected);
+      },
+    );
+
+    it("clears the typed cause on the next start", async () => {
+      onlineNavigator();
+      const deps: any = dependencies();
+      let fail = true;
+      deps.generation = {
+        async generate() {
+          if (fail) throw new Error("provider-unavailable");
+          return completeProposal;
+        },
+      };
+      const manager = new AdventureManager(deps);
+      await manager.start(startInput);
+      expect(manager.errorCause).toBe("opening-failed");
+      fail = false;
+      await manager.start(startInput);
+      expect(manager.errorCause).toBeNull();
+    });
+
+    it("releases the recovery lease and saves nothing when archiving rejects", async () => {
+      const deps: any = dependencies();
+      const stale = {
+        id: "stale-session",
+        vaultId: "vault-1",
+        status: "active",
+        turns: [],
+        revision: 0,
+      };
+      deps.repository.list = vi.fn(async () => ({
+        effectiveActiveId: stale.id,
+        entries: [],
+      }));
+      deps.repository.load = vi.fn(async () => ({
+        condition: "normal",
+        session: stale,
+      }));
+      deps.repository.archive = vi.fn(async () => {
+        throw new Error("disk-gone");
+      });
+      deps.repository.save = vi.fn();
+      deps.authority.release = vi.fn(async () => undefined);
+      const manager = new AdventureManager(deps);
+
+      await expect(manager.start(startInput)).rejects.toThrow("disk-gone");
+      expect(deps.authority.release).toHaveBeenCalledTimes(1);
+      expect(deps.repository.save).not.toHaveBeenCalled();
+      expect(manager.starting).toBe(false);
+    });
   });
 });

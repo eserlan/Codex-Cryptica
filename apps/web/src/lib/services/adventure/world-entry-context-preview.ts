@@ -121,44 +121,37 @@ function undatedPreview(
   );
 }
 
-/** Pure, bounded, player-safe preview. Only explicit source IDs survive. */
-export function resolveWorldEntryPreview(
+function canonicalRoot(
+  byId: ReadonlyMap<string, Entity>,
+  id: string | undefined,
+  type: "character" | "location",
+): string | undefined {
+  return id && byId.get(id)?.type === type ? id : undefined;
+}
+
+/** A stale calendar date falls back to the undated preview with a warning. */
+function staleDatePreview(
   query: WorldEntryPreviewQuery,
 ): WorldEntryContextPreview {
-  const byId = new Map(query.entities.map((entity) => [entity.id, entity]));
-  if (
-    !query.at ||
-    !query.characterId ||
-    !query.locationId ||
-    byId.get(query.characterId)?.type !== "character" ||
-    byId.get(query.locationId)?.type !== "location"
-  ) {
-    return undatedPreview(query);
-  }
+  const fallback = undatedPreview(query);
+  fallback.warnings.unshift(
+    "This date does not match the current calendar. Reselect it to check records against the period.",
+  );
+  return fallback;
+}
 
-  const snapshot = resolveTemporalWorldContext({
-    entities: query.entities,
-    calendar: query.calendar,
-    characterId: query.characterId,
-    locationId: query.locationId,
-    at: query.at,
-    maxRecords: query.maxRecords,
-    maxExcerptChars: 80,
-  });
-
-  // The canonical owner knows the future, but the character-facing preview
-  // must not present future events or hidden records as present.
-  const visible = snapshot.playerSafe
-    .filter((record) => record.applicability !== "future")
-    .map(({ id, title, type, applicability, dateLabel, linkedBy }) => ({
-      id,
-      title,
-      type,
-      applicability,
-      dateLabel,
-      linkedBy,
-    }));
+function datedWarnings(
+  snapshot: ReturnType<typeof resolveTemporalWorldContext>,
+  characterId: string | undefined,
+  locationId: string | undefined,
+): string[] {
   const warnings: string[] = [];
+  if (!characterId || !locationId) {
+    warnings.push(
+      (characterId ? "The starting place" : "The character") +
+        " is provisional, so only the selected Vault record's links are checked against this date.",
+    );
+  }
   if (snapshot.unresolved.length) {
     warnings.push(
       snapshot.unresolved.length +
@@ -167,5 +160,69 @@ export function resolveWorldEntryPreview(
   }
   if (snapshot.omitted)
     warnings.push("Only the most relevant linked Vault records are shown.");
-  return projected(visible, snapshot.omitted, warnings, true);
+  return warnings;
+}
+
+const toPreview = ({
+  id,
+  title,
+  type,
+  applicability,
+  dateLabel,
+  linkedBy,
+}: WorldEntryPreviewRecord): WorldEntryPreviewRecord => ({
+  id,
+  title,
+  type,
+  applicability,
+  dateLabel,
+  linkedBy,
+});
+
+/** Pure, bounded, player-safe preview. Only explicit source IDs survive. */
+export function resolveWorldEntryPreview(
+  query: WorldEntryPreviewQuery,
+): WorldEntryContextPreview {
+  const byId = new Map(query.entities.map((entity) => [entity.id, entity]));
+  const characterId = canonicalRoot(byId, query.characterId, "character");
+  const locationId = canonicalRoot(byId, query.locationId, "location");
+  // Keep classifying by date whenever a date and at least one canonical root
+  // exist; a provisional character or place must not discard the date.
+  if (!query.at || (!characterId && !locationId)) {
+    return undatedPreview(query);
+  }
+
+  let snapshot: ReturnType<typeof resolveTemporalWorldContext>;
+  try {
+    snapshot = resolveTemporalWorldContext({
+      entities: query.entities,
+      calendar: query.calendar,
+      characterId,
+      locationId,
+      at: query.at,
+      maxRecords: query.maxRecords,
+      maxExcerptChars: 80,
+    });
+  } catch (cause) {
+    if ((cause as Error)?.message === "temporal-world-invalid-date") {
+      return staleDatePreview(query);
+    }
+    throw cause;
+  }
+
+  // The canonical owner knows the future, but the character-facing preview
+  // must not present future events or hidden records as present. A selected
+  // record with uncertain or conflicting dates is still listed, labelled.
+  const visible = [
+    ...snapshot.playerSafe.filter(
+      (record) => record.applicability !== "future",
+    ),
+    ...snapshot.unresolved.filter((record) => record.linkedBy === "selected"),
+  ].map(toPreview);
+  return projected(
+    visible,
+    snapshot.omitted,
+    datedWarnings(snapshot, characterId, locationId),
+    true,
+  );
 }

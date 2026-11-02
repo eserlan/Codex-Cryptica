@@ -2,7 +2,7 @@ import {
   createScenarioState,
   type ScenarioState,
 } from "@codex/adventure-engine";
-import type { SelectedRumourForPlay } from "generator-engine";
+import type { GeneratedDraft, SelectedRumourForPlay } from "generator-engine";
 
 /**
  * Transient, same-tab handoff. GM truth never enters query parameters, URLs,
@@ -15,11 +15,17 @@ export class RumourAdventureHandoff {
     selected: SelectedRumourForPlay;
     scenario: ScenarioState;
   } | null>(null);
+  /**
+   * The generator batch the rumour came from, held in memory only (never
+   * persisted) so cancelling can return to the unchanged six rumours.
+   */
+  private source: { vaultId: string; draft: GeneratedDraft } | null = null;
 
   prepare(
     vaultId: string,
     selected: SelectedRumourForPlay,
     scenario: ScenarioState,
+    sourceDraft?: GeneratedDraft,
   ): void {
     if (!vaultId.trim()) throw new Error("No active vault");
     this.pending = {
@@ -27,14 +33,37 @@ export class RumourAdventureHandoff {
       selected: structuredClone(selected),
       scenario: structuredClone(scenario),
     };
+    this.source = sourceDraft
+      ? { vaultId, draft: structuredClone(sourceDraft) }
+      : null;
   }
 
   forVault(vaultId: string) {
     return this.pending?.vaultId === vaultId ? this.pending : null;
   }
 
+  /** The rumour was played or abandoned: drop it and its source batch. */
   clear(): void {
     this.pending = null;
+    this.source = null;
+  }
+
+  /**
+   * Cancel the selected rumour but keep its source batch for this Vault, so
+   * the generator can reopen on it. Returns whether a batch is available.
+   */
+  cancel(vaultId: string): boolean {
+    this.pending = null;
+    if (this.source && this.source.vaultId !== vaultId) this.source = null;
+    return this.source !== null;
+  }
+
+  /** Hand the kept batch back once; only within the same Vault. */
+  takeSourceDraft(vaultId: string): GeneratedDraft | null {
+    const source = this.source;
+    if (!source || source.vaultId !== vaultId) return null;
+    this.source = null;
+    return source.draft;
   }
 }
 

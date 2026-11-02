@@ -6,6 +6,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const env = vi.hoisted(() => ({
   openIntentGeneratorWorkflow: vi.fn(),
   openActive: vi.fn(async () => false),
+  setWorldEntryRumourGenerator: vi.fn((callback: unknown) => {
+    env.worldEntryRumourGenerator = callback;
+  }),
+  worldEntryRumourGenerator: null as unknown,
   setRootResolver: vi.fn(),
   setContextResolver: vi.fn(),
   list: vi.fn(async () => ({
@@ -34,6 +38,7 @@ vi.mock("#lib/stores/oracle.svelte.js", () => ({
     adventure: {
       session: null,
       openActive: env.openActive,
+      setWorldEntryRumourGenerator: env.setWorldEntryRumourGenerator,
       readOnly: false,
     },
   },
@@ -87,12 +92,25 @@ import AdventureSurface from "./AdventureSurface.svelte";
 beforeEach(() => {
   env.openIntentGeneratorWorkflow.mockClear();
   env.openActive.mockClear();
+  env.setWorldEntryRumourGenerator.mockClear();
+  env.worldEntryRumourGenerator = null;
   env.list.mockClear();
   env.pendingRumour = null;
   env.characters = [];
 });
 
 describe("AdventureSurface entry", () => {
+  it("registers the background rumour generator with the adventure manager", async () => {
+    render(AdventureSurface);
+    await screen.findByTestId("adventure-entry-choices");
+
+    expect(env.setWorldEntryRumourGenerator).toHaveBeenCalledTimes(1);
+    expect(env.setWorldEntryRumourGenerator).toHaveBeenCalledWith(
+      expect.any(Function),
+    );
+    expect(env.worldEntryRumourGenerator).toEqual(expect.any(Function));
+  });
+
   it("starts on approach choices and opens the existing Rumour Generator", async () => {
     render(AdventureSurface);
     await screen.findByTestId("adventure-entry-choices");

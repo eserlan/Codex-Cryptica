@@ -9,6 +9,7 @@ import {
   createPlayerTranscript,
   dismissPendingRoll,
   getRollHistory,
+  parseAdventureSession,
   recordPendingRollOutcome,
   removeDicePreset,
   removeResourceCounter,
@@ -44,6 +45,12 @@ import { adventureTurnGenerationService } from "@codex/ai-engine";
 import { oracleBridge } from "#lib/cloud-bridge/oracle-bridge.js";
 import { diceEngine as defaultDiceEngine, diceParser } from "dice-engine";
 import { systemIdGenerator } from "#lib/utils/runtime-deps.js";
+import type { AdventureStartFailure } from "#lib/services/adventure/adventure-start-failure.js";
+import {
+  needsWorldEntryBackground,
+  seedWorldEntryBackground,
+} from "#lib/services/adventure/world-entry-background.js";
+import type { RumourSelectionInput } from "generator-engine";
 
 export interface AdventureManagerDependencies {
   repository?: AdventureSessionRepository;
@@ -64,6 +71,43 @@ function validateRollExpression(proposal: {
   if (proposal.kind === "roll-required" && proposal.dice) {
     diceParser.parse(proposal.dice.expression);
   }
+}
+
+function storageFailure(cause: unknown): AdventureStartFailure | null {
+  const name =
+    cause !== null && typeof cause === "object" && "name" in cause
+      ? String((cause as { name: unknown }).name)
+      : "";
+  if (name === "QuotaExceededError") return "storage-full";
+  if (name === "NotAllowedError" || name === "SecurityError")
+    return "storage-permission";
+  return null;
+}
+
+/** Tags an opening failure with the stage it happened in. */
+class OpeningStageError extends Error {
+  constructor(
+    readonly failure: AdventureStartFailure,
+    readonly original: unknown,
+  ) {
+    super(original instanceof Error ? original.message : String(original));
+    this.name = "OpeningStageError";
+  }
+}
+
+function classifyOpeningFailure(cause: unknown): AdventureStartFailure {
+  if (cause instanceof OpeningStageError) return cause.failure;
+  const message = cause instanceof Error ? cause.message : String(cause);
+  if (message === "offline") return "offline";
+  if (message === "control-lost") return "control-lost";
+  return storageFailure(cause) ?? "opening-failed";
+}
+
+/** An opening is committed once it has a turn or a pending opening roll. */
+export function hasCommittedOpening(
+  session: AdventureSession | null | undefined,
+): boolean {
+  return Boolean(session && (session.turns.length > 0 || session.pendingRoll));
 }
 
 function initialSession(input: {
@@ -138,6 +182,8 @@ function initialSession(input: {
   };
 }
 
+let nextAdventureTurnRequestId = 0;
+
 function defaultGenerationService(): Pick<
   AdventureTurnGenerationService,
   "generate"
@@ -148,11 +194,36 @@ function defaultGenerationService(): Pick<
         return adventureTurnGenerationService.generate(request, options);
       }
       // AbortSignal is not structured-cloneable and must not cross Comlink.
+      const signal = options?.signal ?? request.signal;
       const { signal: _signal, ...workerOptions } = options ?? {};
-      return oracleBridge.generateAdventureTurn(
-        $state.snapshot(request),
-        workerOptions,
-      ) as any;
+      // Comlink cannot structured-clone functions nested inside the request.
+      // Progress is a separate proxied argument at the bridge boundary.
+      const {
+        onNarration,
+        signal: _requestSignal,
+        ...cloneableRequest
+      } = request;
+      const workerRequest = $state.snapshot(cloneableRequest);
+      const requestId = String(++nextAdventureTurnRequestId);
+      const cancelWorkerRequest = () => {
+        if (!oracleBridge.isReady) return;
+        void oracleBridge.cancelAdventureTurn(requestId).catch(() => {});
+      };
+      signal?.addEventListener("abort", cancelWorkerRequest, { once: true });
+      if (signal?.aborted) {
+        signal.removeEventListener("abort", cancelWorkerRequest);
+        throw new DOMException("Cancelled", "AbortError");
+      }
+      return oracleBridge
+        .generateAdventureTurn(
+          workerRequest,
+          requestId,
+          workerOptions,
+          onNarration,
+        )
+        .finally(() => {
+          signal?.removeEventListener("abort", cancelWorkerRequest);
+        }) as any;
     },
   };
 }
@@ -178,6 +249,17 @@ function acceptedSession(
   throw new Error(result.errors?.[0]?.message ?? fallback);
 }
 
+function isAbort(cause: unknown, signal?: AbortSignal): boolean {
+  return Boolean(
+    signal?.aborted ||
+    (cause instanceof DOMException && cause.name === "AbortError"),
+  );
+}
+
+function abortReason(signal: AbortSignal): unknown {
+  return signal.reason ?? new DOMException("Cancelled", "AbortError");
+}
+
 export class AdventureManager {
   session = $state.raw<AdventureSession | null>(null);
   phase = $state<
@@ -191,7 +273,19 @@ export class AdventureManager {
     | "error"
   >("idle");
   draft = $state("");
+  /** Uncommitted player-visible narration, cleared on failure or cancellation. */
+  streamedNarration = $state("");
   errorMessage = $state<string | null>(null);
+  /**
+   * Typed cause of the last start/opening failure. UI maps it to fixed,
+   * user-safe copy instead of showing `errorMessage` text verbatim.
+   */
+  errorCause = $state<AdventureStartFailure | null>(null);
+  /**
+   * Shared re-entry guard for start(). It lives in the manager because the
+   * start forms can unmount mid-start and lose any local guard.
+   */
+  starting = $state(false);
   lastRollResult = $state<string | null>(null);
   readOnly = $state(false);
   lease = $state<AdventureControlLease | null>(null);
@@ -211,6 +305,52 @@ export class AdventureManager {
 
   private readonly deps: Required<AdventureManagerDependencies>;
   private generationController: AbortController | null = null;
+  private worldEntryRumourGenerator:
+    | ((
+        session: AdventureSession,
+        signal?: AbortSignal,
+      ) => Promise<RumourSelectionInput>)
+    | undefined;
+
+  setWorldEntryRumourGenerator(
+    generator: (
+      session: AdventureSession,
+      signal?: AbortSignal,
+    ) => Promise<RumourSelectionInput>,
+  ): void {
+    this.worldEntryRumourGenerator = generator;
+  }
+
+  private async prepareWorldEntryBackground(
+    session: AdventureSession,
+    signal?: AbortSignal,
+  ): Promise<AdventureSession> {
+    if (!needsWorldEntryBackground(session)) return session;
+    const batch = await this.generateWorldEntryRumourBatch(session, signal);
+    if (signal?.aborted) throw abortReason(signal);
+    try {
+      return seedWorldEntryBackground(session, this.deps.idGenerator, batch);
+    } catch {
+      return seedWorldEntryBackground(session, this.deps.idGenerator);
+    }
+  }
+
+  private async generateWorldEntryRumourBatch(
+    session: AdventureSession,
+    signal?: AbortSignal,
+  ): Promise<RumourSelectionInput | undefined> {
+    if (!this.worldEntryRumourGenerator) return undefined;
+    if (signal?.aborted) throw abortReason(signal);
+    try {
+      const batch = await this.worldEntryRumourGenerator(session, signal);
+      if (signal?.aborted) throw abortReason(signal);
+      return batch;
+    } catch (cause) {
+      if (isAbort(cause, signal)) throw cause;
+      // A failed background generation must not interrupt an active adventure.
+      return undefined;
+    }
+  }
   private activeRestoreRequest = 0;
 
   private async verifyControl(): Promise<void> {
@@ -240,6 +380,14 @@ export class AdventureManager {
       now,
       dice,
       idGenerator,
+    };
+  }
+
+  private narrationPreview(sessionId: string, signal?: AbortSignal) {
+    return (text: string) => {
+      if (signal?.aborted || this.session?.id !== sessionId) return;
+      if (this.phase !== "generating") return;
+      this.streamedNarration = text;
     };
   }
 
@@ -297,14 +445,24 @@ export class AdventureManager {
     if (!input.premise.trim() || !input.title.trim()) {
       throw new Error("premise-and-title-required");
     }
-    this.activeRestoreRequest += 1;
-    this.phase = "starting";
-    this.errorMessage = null;
-    await this.ensureStartAvailable(input.vaultId);
-    const saved = await this.persistNewAdventure(input);
-    await this.takeControlOfNewAdventure(saved);
-    await this.startOpeningIfOnline(saved);
-    return this.session ?? saved;
+    // Validate with the reader's schema before archiving anything or writing,
+    // so an invalid seed can never be saved and then fail to load.
+    if (this.starting) throw new Error("start-in-progress");
+    const created = this.validatedNewSession(input);
+    this.starting = true;
+    try {
+      this.activeRestoreRequest += 1;
+      this.phase = "starting";
+      this.errorMessage = null;
+      this.errorCause = null;
+      await this.ensureStartAvailable(input.vaultId);
+      const saved = await this.persistNewAdventure(created);
+      await this.takeControlOfNewAdventure(saved);
+      await this.startOpeningIfOnline(saved);
+      return this.session ?? saved;
+    } finally {
+      this.starting = false;
+    }
   }
 
   private async ensureStartAvailable(vaultId: string): Promise<void> {
@@ -354,7 +512,7 @@ export class AdventureManager {
     }
   }
 
-  private async persistNewAdventure(input: {
+  private validatedNewSession(input: {
     vaultId: string;
     title: string;
     premise: string;
@@ -362,16 +520,28 @@ export class AdventureManager {
     sourceRecords?: AdventureSession["sourceRecords"];
     scenarioSeed?: ScenarioState;
     worldEntry?: WorldEntryContext;
-  }): Promise<AdventureSession> {
-    const created = initialSession({
-      ...input,
-      now: this.deps.now(),
-      idGenerator: this.deps.idGenerator,
-    });
+  }): AdventureSession {
+    try {
+      return parseAdventureSession(
+        initialSession({
+          ...input,
+          now: this.deps.now(),
+          idGenerator: this.deps.idGenerator,
+        }),
+      );
+    } catch {
+      throw new Error("invalid-adventure-setup");
+    }
+  }
+
+  private async persistNewAdventure(
+    created: AdventureSession,
+  ): Promise<AdventureSession> {
     const saved = await this.deps.repository.save(null, created);
     if (!saved.ok) {
       this.phase = "error";
       this.errorMessage = saved.error.message;
+      this.errorCause = "save-failed";
       throw saved.error;
     }
     this.session = saved.session;
@@ -413,24 +583,63 @@ export class AdventureManager {
   private async persistOpeningTurn(session: AdventureSession): Promise<void> {
     const anchors = await this.deps.context.resolveAnchors(session);
     const relevant = await this.deps.context.resolveOpeningRelevant(session);
+    // Commit the background together with the opening turn, not as a
+    // half-created separate save if Oracle fails.
+    const prepared = await this.prepareWorldEntryBackground(session);
     const proposal = await this.deps.generation.generate({
-      session,
+      session: prepared,
       phase: "opening",
       anchors,
       relevant,
+      onNarration: this.narrationPreview(session.id),
     });
     if (this.session?.id !== session.id) return;
-    validateRollExpression(proposal);
-    const next = this.proposedSession(
+    const saved = await this.saveOpening(
       session,
-      proposal,
-      this.newTurnMetadata(""),
-      "opening-rejected",
+      this.openingSession(prepared, proposal),
     );
-    const saved = await this.saveTurn(session, next);
     if (this.session?.id !== session.id) return;
     this.session = saved;
+    this.streamedNarration = "";
     this.phase = saved.pendingRoll ? "awaiting-roll" : "ready";
+  }
+
+  /** Applies the opening proposal; any rejection is an `opening-rejected`. */
+  private openingSession(
+    session: AdventureSession,
+    proposal:
+      | Parameters<typeof applyCompletedTurn>[1]
+      | Parameters<typeof applyRollRequest>[1],
+  ): AdventureSession {
+    try {
+      validateRollExpression(proposal);
+      return this.proposedSession(
+        session,
+        proposal,
+        this.newTurnMetadata(""),
+        "opening-rejected",
+      );
+    } catch (cause) {
+      throw new OpeningStageError("opening-rejected", cause);
+    }
+  }
+
+  /** Saves the opening, classifying lease loss and storage failures. */
+  private async saveOpening(
+    session: AdventureSession,
+    next: AdventureSession,
+  ): Promise<AdventureSession> {
+    try {
+      return await this.saveTurn(session, next);
+    } catch (cause) {
+      const message = cause instanceof Error ? cause.message : "";
+      throw new OpeningStageError(
+        message === "control-lost"
+          ? "control-lost"
+          : (storageFailure(cause) ?? "save-failed"),
+        cause,
+      );
+    }
   }
 
   private async handleFailedOpening(
@@ -438,6 +647,8 @@ export class AdventureManager {
     cause: unknown,
   ): Promise<void> {
     const message = cause instanceof Error ? cause.message : String(cause);
+    const failure = classifyOpeningFailure(cause);
+    this.streamedNarration = "";
     const archived = await this.deps.repository.archive(
       session.vaultId,
       session.id,
@@ -457,6 +668,7 @@ export class AdventureManager {
       this.errorMessage = `${message}; failed to clean up the incomplete adventure: ${archived.error.message}`;
     }
     this.errorMessage ??= message;
+    this.errorCause = archived.ok ? failure : "cleanup-failed";
     this.phase = this.errorMessage === "offline" ? "offline" : "error";
   }
 
@@ -620,6 +832,7 @@ export class AdventureManager {
     this.session = null;
     this.readOnly = false;
     this.draft = "";
+    this.streamedNarration = "";
     this.errorMessage = null;
     this.lastRollResult = null;
     this.phase = "idle";
@@ -662,6 +875,7 @@ export class AdventureManager {
     this.generationController?.abort();
     this.generationController = new AbortController();
     this.phase = "generating";
+    this.streamedNarration = "";
     this.errorMessage = null;
     return this.generationController.signal;
   }
@@ -678,6 +892,7 @@ export class AdventureManager {
     retryPhase: "ready" | "ready-to-resolve",
   ): void {
     if (signal.aborted) return;
+    this.streamedNarration = "";
     const message = cause instanceof Error ? cause.message : String(cause);
     const cancelled =
       (cause instanceof DOMException && cause.name === "AbortError") ||
@@ -702,20 +917,33 @@ export class AdventureManager {
       session,
       action,
     );
+    // Older World Entry sessions began without background situations.
+    // Seed on their next committed action too, without mutating the persisted
+    // session until the same optimistic-concurrency save succeeds.
+    const prepared = await this.prepareWorldEntryBackground(session, signal);
+    if (signal.aborted) throw abortReason(signal);
     const proposal = await this.deps.generation.generate(
-      { session, phase: "action", playerAction: action, anchors, relevant },
+      {
+        session: prepared,
+        phase: "action",
+        playerAction: action,
+        anchors,
+        relevant,
+        onNarration: this.narrationPreview(session.id, signal),
+      },
       { signal },
     );
     if (signal.aborted) throw new DOMException("Cancelled", "AbortError");
     validateRollExpression(proposal);
     const next = this.proposedSession(
-      session,
+      prepared,
       proposal,
       this.newTurnMetadata(action),
       "turn-rejected",
     );
     const saved = await this.saveTurn(session, next);
     this.session = saved;
+    this.streamedNarration = "";
     this.draft = "";
     this.phase = saved.pendingRoll ? "awaiting-roll" : "ready";
   }
@@ -815,6 +1043,7 @@ export class AdventureManager {
         rollResolution: pendingRoll.suppliedOutcome,
         anchors,
         relevant: [],
+        onNarration: this.narrationPreview(session.id, signal),
       },
       { signal },
     );
@@ -829,6 +1058,7 @@ export class AdventureManager {
     );
     const next = acceptedSession(result, "roll-rejected");
     this.session = await this.saveTurn(session, next);
+    this.streamedNarration = "";
     this.phase = "ready";
   }
 
@@ -854,6 +1084,7 @@ export class AdventureManager {
   cancel(): void {
     if (this.phase !== "generating") return;
     this.generationController?.abort();
+    this.streamedNarration = "";
     if (this.session)
       void this.deps.clearGenerationInteraction(this.session.id);
     this.generationController = null;

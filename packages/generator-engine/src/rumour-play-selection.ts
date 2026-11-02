@@ -75,24 +75,43 @@ function readFields(
   errorKind: "malformed-content" | "malformed-lore",
 ): Map<string, string> {
   const fields = new Map<string, string>();
-  for (const line of body
+  const lines = body
     .split("\n")
     .map((s) => s.trim())
-    .filter(Boolean)) {
+    .filter(Boolean);
+  // Exactly the expected labels, once each, in the advertised order.
+  if (lines.length !== expected.length) {
+    throw new RumourSelectionError(errorKind);
+  }
+  lines.forEach((line, position) => {
     const match = /^- \*\*([^*]+)\*\*:\s*(.*?)\s*$/.exec(line);
-    if (
-      !match ||
-      !expected.includes(match[1]!) ||
-      !match[2] ||
-      fields.has(match[1]!)
-    ) {
+    if (!match || match[1] !== expected[position] || !match[2]) {
       throw new RumourSelectionError(errorKind);
     }
     fields.set(match[1]!, match[2]!);
-  }
-  if (fields.size !== expected.length)
-    throw new RumourSelectionError(errorKind);
+  });
   return fields;
+}
+
+const PLAYER_FIELDS = ["Rumour", "Lead", "Source"] as const;
+const GM_FIELDS = [
+  "Reality",
+  "What's Actually Happening",
+  "If Investigated",
+] as const;
+
+type Reality = SelectedRumourForPlay["gmOnly"]["reality"];
+
+function readReality(fields: Map<string, string>): Reality {
+  const reality = fields.get("Reality");
+  if (
+    reality !== "essentially true" &&
+    reality !== "exaggeration" &&
+    reality !== "dangerous misconception"
+  ) {
+    throw new RumourSelectionError("malformed-lore");
+  }
+  return reality;
 }
 
 /** Extract only the selected entry and the matching hidden GM note. */
@@ -104,29 +123,25 @@ export function selectRumourForPlay(
   if (!Number.isInteger(index) || index < 1 || index > 6) {
     throw new RumourSelectionError("invalid-index");
   }
-  // Validate both entire batches; a malformed pair must not be launched.
-  const publicBody = sections(batch.content, "player").get(index);
-  const gmBody = sections(batch.lore, "gm").get(index);
-  if (!publicBody || !gmBody) throw new RumourSelectionError("unpaired-rumour");
-
-  const p = readFields(
-    publicBody,
-    ["Rumour", "Lead", "Source"],
-    "malformed-content",
-  );
-  const gm = readFields(
-    gmBody,
-    ["Reality", "What's Actually Happening", "If Investigated"],
-    "malformed-lore",
-  );
-  const reality = gm.get("Reality");
-  if (
-    reality !== "essentially true" &&
-    reality !== "exaggeration" &&
-    reality !== "dangerous misconception"
-  ) {
-    throw new RumourSelectionError("malformed-lore");
+  // Validate both entire batches, every entry, before returning one pair: a
+  // malformed batch must not be launched even if the chosen entry is fine.
+  const publicSections = sections(batch.content, "player");
+  const gmSections = sections(batch.lore, "gm");
+  const parsed = new Map<
+    number,
+    { p: Map<string, string>; gm: Map<string, string>; reality: Reality }
+  >();
+  for (let entry = 1; entry <= 6; entry += 1) {
+    const publicBody = publicSections.get(entry);
+    const gmBody = gmSections.get(entry);
+    if (!publicBody || !gmBody) {
+      throw new RumourSelectionError("unpaired-rumour");
+    }
+    const p = readFields(publicBody, PLAYER_FIELDS, "malformed-content");
+    const gm = readFields(gmBody, GM_FIELDS, "malformed-lore");
+    parsed.set(entry, { p, gm, reality: readReality(gm) });
   }
+  const { p, gm, reality } = parsed.get(index)!;
   const batchTitle = batch.title.trim() || "Word Around Town";
   return {
     batchTitle,

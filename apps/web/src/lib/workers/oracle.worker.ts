@@ -3,6 +3,7 @@ import * as Comlink from "comlink";
 import {
   aiClientManager,
   AdventureTurnGenerationService,
+  type AdventureTurnGenerationRequest,
 } from "@codex/ai-engine";
 import { DefaultTextGenerationService } from "@codex/ai-engine";
 import { RelayedSessionToken, type CachedToken } from "@codex/ai-engine";
@@ -22,6 +23,7 @@ class OracleWorker {
   private eventBus: BroadcastChannel;
   private sessionToken: RelayedSessionToken;
   private adventureGeneration: AdventureTurnGenerationService;
+  private adventureTurnControllers = new Map<string, AbortController>();
 
   constructor() {
     this.textGeneration = new DefaultTextGenerationService(aiClientManager);
@@ -296,10 +298,33 @@ class OracleWorker {
   }
 
   async generateAdventureTurn(
-    request: any,
+    request: Omit<AdventureTurnGenerationRequest, "onNarration" | "signal">,
+    requestId: string,
     options?: { apiKey?: string; modelName?: string },
+    onNarration?: (text: string) => void,
   ): Promise<any> {
-    return this.adventureGeneration.generate(request, options);
+    // Reassemble the callback only inside the worker. The wire request
+    // contains structured-cloneable data and no functions.
+    const controller = new AbortController();
+    this.adventureTurnControllers.set(requestId, controller);
+    try {
+      return await this.adventureGeneration.generate(
+        {
+          ...request,
+          ...(onNarration ? { onNarration } : {}),
+          signal: controller.signal,
+        },
+        { ...options, signal: controller.signal },
+      );
+    } finally {
+      if (this.adventureTurnControllers.get(requestId) === controller) {
+        this.adventureTurnControllers.delete(requestId);
+      }
+    }
+  }
+
+  cancelAdventureTurn(requestId: string): void {
+    this.adventureTurnControllers.get(requestId)?.abort();
   }
 
   clearAdventureInteraction(sessionId: string): void {

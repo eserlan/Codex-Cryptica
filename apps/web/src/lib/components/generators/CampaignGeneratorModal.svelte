@@ -47,6 +47,7 @@
   } from "#lib/services/seo/generator-handoffs.js";
 
   import { oracle } from "#lib/stores/oracle.svelte.js";
+  import { discoveryPolicyStore } from "#lib/stores/ui/discovery-policy.svelte.js";
 
   import CampaignGeneratorConfigure from "./CampaignGeneratorConfigure.svelte";
   import CampaignGeneratorReview from "./CampaignGeneratorReview.svelte";
@@ -171,6 +172,14 @@
     modalUIStore.openIntentGeneratorWorkflow("npc", null, context);
   }
 
+  // Returning from a cancelled rumour start: show the same batch again.
+  $effect(() => {
+    const vaultId = oracle.vault.activeVaultId;
+    if (!vaultId || workflow.generatorId !== "rumour") return;
+    const kept = rumourAdventureHandoff.takeSourceDraft(vaultId);
+    if (kept) generation.restoreDraft(kept);
+  });
+
   function close(options: { preserveSession?: boolean } = {}) {
     generation.reset();
     modalUIStore.closeGeneratorWorkflow();
@@ -187,9 +196,10 @@
     if (!draft || draft.sourceGeneratorId !== "rumour" || !draft.content) {
       throw new Error("missing-rumour-draft");
     }
-    if (!vaultId || vault.isGuest || !oracle.isEnabled) {
-      throw new Error("oracle-unavailable");
-    }
+    // Playing sends campaign and GM context to Oracle. `oracle.isEnabled` is
+    // always true; the privacy switch is the AI Disabled policy.
+    if (!vaultId || vault.isGuest) throw new Error("oracle-unavailable");
+    if (discoveryPolicyStore.aiDisabled) throw new Error("ai-disabled");
     const selected = selectRumourForPlay(
       { title: draft.title, content: draft.content, lore: draft.lore },
       index,
@@ -198,6 +208,8 @@
       vaultId,
       selected,
       buildRumourScenario(selected, systemIdGenerator.uuid()),
+      // Kept in memory so cancelling the start can return to this batch.
+      $state.snapshot(draft),
     );
     try {
       await goto(resolve("/(app)/adventure"));
@@ -367,7 +379,8 @@
         {themeId}
         currentPhase={generation.currentPhase}
         streamedFields={generation.streamedFields}
-        spoilerShield={shouldShieldSpoilers(generatorId)}
+        spoilerShield={generatorId === "rumour" ||
+          shouldShieldSpoilers(generatorId)}
         oncancel={() => generation.cancel()}
       />
     {:else if (generation.stage === "review" || generation.stage === "saving") && generation.draft}
@@ -394,9 +407,10 @@
         onGeneratePlotTwist={plotTwistAction}
         onGenerateBoss={bossAction}
       />
-      {#if generation.draft.sourceGeneratorId === "rumour" && oracle.isEnabled && !vault.isGuest}
+      {#if generation.draft.sourceGeneratorId === "rumour" && !vault.isGuest}
         <RumourPlayActions
           draft={generation.draft}
+          aiDisabled={discoveryPolicyStore.aiDisabled}
           disabled={generation.stage === "saving"}
           onplay={playGeneratedRumour}
         />

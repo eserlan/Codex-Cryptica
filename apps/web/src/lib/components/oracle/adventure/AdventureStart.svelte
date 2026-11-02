@@ -1,5 +1,14 @@
 <script lang="ts">
-  import type { AdventureManager } from "#lib/stores/oracle/adventure-manager.svelte.js";
+  import {
+    hasCommittedOpening,
+    type AdventureManager,
+  } from "#lib/stores/oracle/adventure-manager.svelte.js";
+  import {
+    describeAdventureStartFailure,
+    describeStartOutcome,
+    startPrecheck,
+  } from "#lib/services/adventure/adventure-start-failure.js";
+  import { discoveryPolicyStore } from "#lib/stores/ui/discovery-policy.svelte.js";
   import type { ScenarioState } from "@codex/adventure-engine";
   let {
     manager,
@@ -29,6 +38,12 @@
   let interacted = $state(false);
   let submitting = $state(false);
   let startError = $state<string | null>(null);
+  const shownError = $derived(
+    startError ??
+      (manager.errorCause
+        ? describeAdventureStartFailure(manager.errorCause)
+        : null),
+  );
 
   function startInput(): Parameters<AdventureManager["start"]>[0] | null {
     if (!title.trim() || !premise.trim()) return null;
@@ -47,6 +62,21 @@
             name: characterName,
             description: characterDescription || characterName,
           },
+      // The context service resolves anchors only from sourceRecords, so a
+      // chosen Vault character must be listed to reach Oracle as canonical text.
+      ...(canonical
+        ? {
+            sourceRecords: [
+              {
+                recordId: canonical.id,
+                recordType: "character",
+                displayName: canonical.name,
+                role: "player-character" as const,
+                availability: "available" as const,
+              },
+            ],
+          }
+        : {}),
       ...(scenarioSeed ? { scenarioSeed } : {}),
     };
   }
@@ -62,26 +92,35 @@
   }
 
   function describeStartFailure(cause: unknown): string {
-    return cause instanceof Error && cause.message === "active-adventure-exists"
-      ? "An adventure is already active in this Vault. Continue or archive it before starting another."
-      : "Could not start this adventure. Your choices are preserved.";
+    const message = cause instanceof Error ? cause.message : "";
+    if (message === "active-adventure-exists")
+      return "An adventure is already active in this Vault. Continue or archive it before starting another.";
+    if (message === "invalid-adventure-setup")
+      return "Some details are too long or invalid. Shorten them and retry. Your choices are preserved.";
+    return "Could not start this adventure. Your choices are preserved.";
   }
 
   async function submit() {
-    if (submitting) return;
+    if (submitting || manager.starting) return;
     interacted = true;
     startError = null;
     const input = startInput();
     if (!input) return;
-    if (typeof navigator !== "undefined" && !navigator.onLine) {
-      startError = "Connect to the internet to start with Oracle.";
-      return;
-    }
+    // Rechecked here: the policy can change after a rumour was selected.
+    startError = startPrecheck({
+      aiDisabled: discoveryPolicyStore.aiDisabled,
+      online: typeof navigator === "undefined" || navigator.onLine,
+    });
+    if (startError) return;
     submitting = true;
     try {
       await manager.start(input);
-      // An opening failure is reported in errorMessage without rejecting.
-      if (!manager.errorMessage) clearStartedDraft();
+      startError = describeStartOutcome({
+        errorCause: manager.errorCause,
+        committed: hasCommittedOpening(manager.session),
+        readOnly: manager.readOnly,
+      });
+      if (!startError) clearStartedDraft();
     } catch (cause) {
       startError = describeStartFailure(cause);
     } finally {
@@ -197,9 +236,7 @@
       Cancel selected rumour
     </button>
   {/if}
-  {#if startError || manager.errorMessage}
-    <p class="text-sm text-theme-danger" role="alert">
-      {startError ?? manager.errorMessage}
-    </p>
+  {#if shownError}
+    <p class="text-sm text-theme-danger" role="alert">{shownError}</p>
   {/if}
 </form>

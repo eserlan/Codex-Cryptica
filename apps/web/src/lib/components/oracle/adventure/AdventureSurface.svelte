@@ -19,16 +19,35 @@
     describeWorldEntryStartFailure,
   } from "#lib/services/adventure/world-entry-start.js";
   import AdventureFocusPlay from "./AdventureFocusPlay.svelte";
+  import { campaignGeneratorRequestBuilder } from "#lib/components/generators/campaign-generator-request.js";
+  import { createCampaignGeneratorService } from "#lib/components/generators/campaign-generator-service.js";
   import { adventureContextService } from "#lib/services/adventure/adventure-context-service.js";
   import { adventureSessionRepository } from "#lib/services/adventure/adventure-session-repository.js";
   import { createAdventureEntityDraft } from "#lib/services/adventure/adventure-provisional-fact-creator.js";
   import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
   import type { ProvisionalFact } from "@codex/adventure-engine";
+  import type { Entity } from "schema";
+  import {
+    describeStartOutcome,
+    startPrecheck,
+  } from "#lib/services/adventure/adventure-start-failure.js";
+  import { discoveryPolicyStore } from "#lib/stores/ui/discovery-policy.svelte.js";
+  import { hasCommittedOpening } from "#lib/stores/oracle/adventure-manager.svelte.js";
   import { rumourAdventureHandoff } from "#lib/stores/oracle/rumour-adventure-handoff.svelte.js";
   import { characterChoices } from "#lib/services/solo-characters.js";
   import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
   import { vault } from "#lib/stores/vault.svelte.js";
   import { isVaultReadyForGenerators } from "#lib/stores/vault/readiness.js";
+
+  /** Metadata restored with the body; date-aware context decides on it. */
+  function sourceMetadata(entity: Entity) {
+    return {
+      visibility: entity.visibility,
+      start_date: entity.start_date,
+      end_date: entity.end_date,
+      date: entity.date,
+    };
+  }
 
   let vaultId = $derived(oracle.vault.activeVaultId ?? "default");
   const selectedRumour = $derived(rumourAdventureHandoff.forVault(vaultId));
@@ -51,6 +70,8 @@
   );
   let worldPreview = $state<ContextPreview | null>(null);
   let worldStartBusy = $state(false);
+  // Leaving a start form mid-start would remount it with a fresh local guard.
+  const startInFlight = $derived(oracle.adventure.starting || worldStartBusy);
   let worldStartError = $state<string | null>(null);
   let previousVaultId: string | null = null;
   let previouslyPrefilledScenario = $state<string | null>(null);
@@ -58,6 +79,8 @@
   let sessionConflictError = $state<string | null>(null);
   let restoringActiveAdventure = $state(true);
   let activeRestoreRequest = 0;
+  // Invalidated on Vault change so an old start cannot touch the new draft.
+  let worldLaunchToken = 0;
 
   // Held here, not in AdventureStart, because a failed start briefly creates
   // then archives a session (manager.session flips non-null then back to
@@ -83,6 +106,7 @@
       worldPreview = null;
       worldStartBusy = false;
       worldStartError = null;
+      worldLaunchToken += 1;
     }
     previousVaultId = currentVaultId;
   });
@@ -122,13 +146,27 @@
   }
 
   async function startWorldEntry(): Promise<void> {
-    if (worldStartBusy) return;
-    worldStartError = null;
-    if (typeof navigator !== "undefined" && !navigator.onLine) {
-      worldStartError = "Connect to the internet to start with Oracle.";
-      return;
-    }
+    if (worldStartBusy || oracle.adventure.starting) return;
+    worldStartError = startPrecheck({
+      aiDisabled: discoveryPolicyStore.aiDisabled,
+      online: typeof navigator === "undefined" || navigator.onLine,
+    });
+    if (worldStartError) return;
+    const token = ++worldLaunchToken;
     worldStartBusy = true;
+    const message = await launchWorldEntry();
+    // A Vault switch mid-start resets this surface; drop the stale result.
+    if (token !== worldLaunchToken) return;
+    worldStartBusy = false;
+    worldStartError = message;
+    if (message) return;
+    worldSetup = emptyWorldEntrySetup(vaultId);
+    worldPreview = null;
+    startApproach = "choose";
+  }
+
+  /** Starts the adventure; returns copy to show, or null once it opened. */
+  async function launchWorldEntry(): Promise<string | null> {
     let stage: "setup" | "launch" = "setup";
     try {
       // Deeply reactive $state drafts contain Proxies that structuredClone
@@ -141,17 +179,13 @@
       );
       stage = "launch";
       await oracle.adventure.start(input);
-      if (oracle.adventure.errorMessage) {
-        worldStartError = oracle.adventure.errorMessage;
-      } else {
-        worldSetup = emptyWorldEntrySetup(vaultId);
-        worldPreview = null;
-        startApproach = "choose";
-      }
+      return describeStartOutcome({
+        errorCause: oracle.adventure.errorCause,
+        committed: hasCommittedOpening(oracle.adventure.session),
+        readOnly: oracle.adventure.readOnly,
+      });
     } catch (cause) {
-      worldStartError = describeWorldEntryStartFailure(cause, stage);
-    } finally {
-      worldStartBusy = false;
+      return describeWorldEntryStartFailure(cause, stage);
     }
   }
 
@@ -171,10 +205,12 @@
   }
 
   function cancelRumour(): void {
-    rumourAdventureHandoff.clear();
+    // Keep the source batch so the generator reopens on the same six rumours.
+    const hasSourceBatch = rumourAdventureHandoff.cancel(vaultId);
     startApproach = "choose";
     startTitle = "";
     startPremise = "";
+    if (hasSourceBatch) modalUIStore.openGeneratorWorkflow("rumour");
   }
 
   let existingEntityTitles = $derived(
@@ -185,6 +221,57 @@
     if (!handle) throw new Error("vault-not-open");
     return handle;
   });
+  // Standard AI/Vault-grounded Rumour Generator, without the player-facing
+  // review modal or a Vault write. Its existing local fallback remains usable.
+  const rumourPolicy = () => ({
+    isEnabled: oracle.isEnabled,
+    isAvailable: !vault.isGuest,
+  });
+  const backgroundRumourService = createCampaignGeneratorService(rumourPolicy);
+  oracle.adventure.setWorldEntryRumourGenerator(async (session, signal) => {
+    signal?.throwIfAborted();
+    const entry = session.worldEntry;
+    if (!entry) throw new Error("not-world-entry");
+    const sourceId =
+      entry.location.kind === "canonical" ? entry.location.recordId : null;
+    const year = entry.at?.year;
+    const dateInstruction =
+      year !== undefined
+        ? `This scene is set in year ${year}; never treat future events as current.`
+        : "World date unspecified: do not assert exact chronology.";
+    const request = await campaignGeneratorRequestBuilder.build(
+      {
+        generatorId: "rumour",
+        useAI: rumourPolicy().isEnabled && rumourPolicy().isAvailable,
+        options: { locationContext: entry.location.name },
+        instructions: [
+          `Create local rumours for ${entry.location.name} as hidden preparation.`,
+          dateInstruction,
+          "Ground people, sites and factions in relevant Vault context where possible.",
+          "Respect established chronology; avoid contradicting canonical sources.",
+          "Mix mundane, misleading and substantial situations, not assigned quests.",
+        ].join(" "),
+      },
+      sourceId,
+      // This is hidden background preparation, not a generator editing
+      // session. Do not attach it to the user's generator interaction history.
+      () => ({ isEnabled: false, isAvailable: false }),
+    );
+    signal?.throwIfAborted();
+    const generated = await backgroundRumourService.generateDraft(
+      request,
+      signal,
+    );
+    if (!generated.content || !generated.lore) {
+      throw new Error("rumour-generator-output-missing");
+    }
+    return {
+      title: generated.title,
+      content: generated.content,
+      lore: generated.lore,
+    };
+  });
+
   adventureContextService.setResolver({
     async getWorldSnapshot(id) {
       if (oracle.vault.activeVaultId !== id) {
@@ -206,6 +293,7 @@
         type: entity.type,
         text: entity.content,
         lore: entity.lore || undefined,
+        ...sourceMetadata(entity),
       };
     },
     async search(vaultId, query, limit) {
@@ -223,6 +311,7 @@
             type: entity.type,
             text: entity.content,
             lore: entity.lore || undefined,
+            ...sourceMetadata(entity),
           };
         }),
       );
@@ -270,6 +359,7 @@
   });
 </script>
 
+<!-- fallow-ignore-next-line css-broken-reference -->
 <div class="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4">
   {#if restoringActiveAdventure}
     <div
@@ -284,7 +374,7 @@
       Checking for an active adventure…
     </div>
   {:else if oracle.adventure.session}
-    {#if selectedRumour}
+    {#if selectedRumour && oracle.adventure.session.scenarioState?.id !== selectedRumour.scenario.id}
       <section
         class="rounded-md border border-theme-border bg-theme-surface p-3"
         data-testid="existing-adventure-rumour-choice"
@@ -353,7 +443,8 @@
         <button
           type="button"
           data-testid="world-entry-change-approach"
-          class="min-h-11 w-fit rounded-md px-3 text-sm text-theme-text hover:bg-theme-primary/10"
+          class="min-h-11 w-fit rounded-md px-3 text-sm text-theme-text hover:bg-theme-primary/10 disabled:opacity-50"
+          disabled={startInFlight}
           onclick={() => (startApproach = "choose")}
         >
           Change starting approach
@@ -370,7 +461,9 @@
           preview={worldPreview}
           starting={worldStartBusy}
           error={worldStartError}
-          onBack={() => (startApproach = "world")}
+          onBack={() => {
+            if (!startInFlight) startApproach = "world";
+          }}
           onStart={() => void startWorldEntry()}
         />
       {:else}
@@ -378,7 +471,8 @@
           <button
             type="button"
             data-testid="adventure-change-start"
-            class="flex min-h-11 w-fit items-center gap-2 rounded-md px-3 text-sm text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
+            class="flex min-h-11 w-fit items-center gap-2 rounded-md px-3 text-sm text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary disabled:opacity-50"
+            disabled={startInFlight}
             onclick={() => (startApproach = "choose")}
           >
             <span class="icon-[lucide--arrow-left] h-4 w-4" aria-hidden="true"

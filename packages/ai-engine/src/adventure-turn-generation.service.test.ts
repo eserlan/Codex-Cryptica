@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { AdventureTurnGenerationService } from "./adventure-turn-generation.service";
+import {
+  AdventureTurnGenerationService,
+  extractAdventureNarrationPrefix,
+} from "./adventure-turn-generation.service";
 
 const session = {
   schemaVersion: 1 as const,
@@ -63,6 +66,133 @@ if (typeof navigator === "undefined") {
 }
 
 describe("AdventureTurnGenerationService", () => {
+  it("emits only the first top-level player narration from partial JSON", () => {
+    expect(
+      extractAdventureNarrationPrefix(
+        '{"kind":"complete","narration":"The road\\nturns',
+      ),
+    ).toBe(["The road", "turns"].join(String.fromCharCode(10)));
+    expect(
+      extractAdventureNarrationPrefix(
+        '{"kind":"complete","hiddenPatch":{"gmThreads":[]},' +
+          '"narration":"GM private information"}',
+      ),
+    ).toBe("");
+    const rolling = '{"kind":"roll-required","setupNarration":"A shadow';
+    expect(extractAdventureNarrationPrefix(rolling)).toBe("A shadow");
+  });
+
+  it("streams the player's narration while keeping structured state private", async () => {
+    const previews: string[] = [];
+    const chunks = [
+      '{"kind":"complete","narration":"The gate',
+      ' opens.",',
+      completeResponse.slice(completeResponse.indexOf('"visiblePatch"')),
+    ];
+    const service = new AdventureTurnGenerationService({
+      async getModel() {
+        return {
+          async generateContent() {
+            throw new Error("buffered generation should not run");
+          },
+          async *generateContentStream() {
+            yield { type: "started" as const };
+            for (const text of chunks) yield { type: "delta" as const, text };
+            yield { type: "complete" as const, text: completeResponse };
+          },
+        };
+      },
+      async sendInteraction() {
+        throw new Error("buffered interactions must not run while streaming");
+      },
+    });
+    const result = await service.generate({
+      session,
+      phase: "action",
+      anchors: [],
+      relevant: [],
+      onNarration: (text) => previews.push(text),
+    });
+    expect(result.kind).toBe("complete");
+    expect(previews).toContain("The gate");
+    expect(previews.at(-1)).toBe("The road opens.");
+    expect(previews.join(" ")).not.toContain("hiddenPatch");
+  });
+
+  it("does not publish a partial narration containing an unrevealed secret", async () => {
+    const secret = "The miller hid the grain beneath the waterwheel.";
+    const protectedSession = {
+      ...session,
+      hiddenState: {
+        secrets: [{ id: "secret-1", text: secret, status: "hidden" as const }],
+        gmThreads: [],
+      },
+    };
+    const previews: string[] = [];
+    const leakedResponse = completeResponse.replace("The road opens.", secret);
+    const service = new AdventureTurnGenerationService({
+      async getModel() {
+        return {
+          async generateContent() {
+            throw new Error("buffered generation should not run");
+          },
+          async *generateContentStream() {
+            yield {
+              type: "delta" as const,
+              text: `{"kind":"complete","narration":"${secret}`,
+            };
+            yield { type: "complete" as const, text: leakedResponse };
+          },
+        };
+      },
+    });
+
+    await service.generate({
+      session: protectedSession,
+      phase: "action",
+      anchors: [],
+      relevant: [],
+      onNarration: (text) => previews.push(text),
+    });
+
+    expect(previews).toEqual([]);
+  });
+
+  it("rejects an interrupted stream instead of committing an incomplete turn", async () => {
+    const controller = new AbortController();
+    const service = new AdventureTurnGenerationService({
+      async getModel() {
+        return {
+          async generateContent() {
+            throw new Error("no buffered fallback after stream abort");
+          },
+          async *generateContentStream() {
+            yield {
+              type: "delta" as const,
+              text: '{"kind":"complete","narration":"A storm',
+            };
+            controller.abort();
+            yield { type: "complete" as const, text: completeResponse };
+          },
+        };
+      },
+    });
+    const seen: string[] = [];
+    await expect(
+      service.generate(
+        {
+          session,
+          phase: "action",
+          anchors: [],
+          relevant: [],
+          onNarration: (text) => seen.push(text),
+        },
+        { signal: controller.signal },
+      ),
+    ).rejects.toThrow("Cancelled");
+    expect(seen).toEqual(["A storm"]);
+  });
+
   it("forwards a stateless structured-generation request and parses the response", async () => {
     let request: any;
     let systemInstruction = "";
