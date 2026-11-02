@@ -16,7 +16,7 @@ describe("AdventureEntryChoices", () => {
 
     expect(onDiscover).toHaveBeenCalledTimes(1);
     expect(onOwnPremise).not.toHaveBeenCalled();
-    expect(screen.getByText(/Generate six rumours/)).toBeTruthy();
+    expect(screen.getByText(/Get six rumours instantly/)).toBeTruthy();
   });
 
   it("opens the existing manual premise form without generating anything", async () => {
