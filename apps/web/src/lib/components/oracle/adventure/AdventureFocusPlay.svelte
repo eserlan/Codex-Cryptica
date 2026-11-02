@@ -8,6 +8,7 @@
   import AdventureCorrectionForm from "./AdventureCorrectionForm.svelte";
   import AdventureManagementMenu from "./AdventureManagementMenu.svelte";
   import AdventurePlay from "./AdventurePlay.svelte";
+  import AdventureComposer from "./AdventureComposer.svelte";
   import AdventureProvisionalFacts from "./AdventureProvisionalFacts.svelte";
   import AdventureResourceCounters from "./AdventureResourceCounters.svelte";
   import AdventureRollHistory from "./AdventureRollHistory.svelte";
@@ -60,7 +61,7 @@
         .matches
         ? "auto"
         : "smooth";
-      playViewport.scrollTo({ top: playViewport.scrollHeight, behavior });
+      playViewport.scrollTo?.({ top: playViewport.scrollHeight, behavior });
     });
   });
 
@@ -114,17 +115,17 @@
 
 <section
   bind:this={focusElement}
-  class="relative flex min-h-0 flex-1 flex-col bg-theme-bg"
+  class="fixed inset-0 z-[100] flex h-[100dvh] min-h-0 w-full flex-col overflow-hidden bg-theme-bg sm:relative sm:inset-auto sm:z-auto sm:h-auto sm:min-h-[65vh] sm:flex-1"
   aria-labelledby="adventure-heading"
   data-testid="adventure-play-surface"
 >
   <header
-    class="flex flex-wrap items-center justify-between gap-3 border-b border-theme-border bg-theme-surface px-4 py-3"
+    class="flex shrink-0 items-center gap-2 border-b border-theme-border bg-theme-surface px-3 py-2 pt-[calc(0.5rem+env(safe-area-inset-top))] sm:flex-wrap sm:justify-between sm:gap-3 sm:px-4 sm:py-3"
   >
-    <div class="flex items-center gap-3">
+    <div class="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
       <button
         type="button"
-        class="flex min-h-10 min-w-10 items-center justify-center rounded-md border border-theme-border text-theme-primary transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
+        class="flex min-h-10 min-w-10 shrink-0 items-center justify-center rounded-md border border-theme-border text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
         onclick={() => void manager.close()}
         title="Leave adventure (saves automatically)"
         aria-label="Leave adventure"
@@ -132,14 +133,17 @@
         <span aria-hidden="true" class="icon-[lucide--arrow-left] h-4 w-4"
         ></span>
       </button>
-      <div>
+      <div class="min-w-0 flex-1">
         <h2
           id="adventure-heading"
-          class="font-header text-lg font-bold text-theme-text"
+          class="font-header truncate text-base font-bold leading-tight text-theme-text sm:text-lg"
+          title={manager.session?.title ?? "Adventure"}
         >
           {manager.session?.title ?? "Adventure"}
         </h2>
-        <p class="text-sm text-theme-muted">
+        <p
+          class="truncate text-[11px] uppercase tracking-wide text-theme-text sm:text-sm sm:normal-case sm:tracking-normal"
+        >
           {manager.readOnly
             ? "Read-only in this tab"
             : manager.phase === "offline"
@@ -148,11 +152,13 @@
         </p>
       </div>
     </div>
-    <div class="flex flex-wrap gap-2">
+    <div class="flex shrink-0 items-center gap-1 sm:gap-2">
       <button
         bind:this={toolsButton}
-        class="min-h-12 rounded-md border border-theme-border px-3 text-theme-primary transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
+        class="flex min-h-10 min-w-10 items-center justify-center rounded-md border border-theme-border px-2 text-theme-text transition sm:min-h-12 sm:px-3 hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
         type="button"
+        aria-label="Adventure tools"
+        title="Adventure tools"
         aria-controls="adventure-utilities"
         aria-expanded={utilitiesOpen}
         onclick={() => (utilitiesOpen = !utilitiesOpen)}
@@ -160,12 +166,13 @@
         <span class="inline-flex items-center gap-2">
           <span aria-hidden="true" class="icon-[lucide--panel-right] h-4 w-4"
           ></span>
-          Adventure tools
+          <span class="hidden sm:inline">Adventure tools</span>
         </span>
       </button>
       <button
-        class="min-h-12 rounded-md border border-theme-border px-3 text-theme-primary transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
+        class="hidden min-h-12 items-center gap-2 rounded-md border border-theme-border px-3 text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary sm:inline-flex"
         type="button"
+        aria-label={isFullscreen ? "Fullscreen active" : "Fullscreen"}
         aria-pressed={isFullscreen}
         disabled={fullscreenTransitioning}
         onclick={() => void toggleFullscreen()}
@@ -188,16 +195,20 @@
     <!-- fallow-ignore-next-line css-broken-reference -->
     <main
       bind:this={playViewport}
-      class="min-h-0 flex-1 overflow-y-auto p-4 lg:p-6"
+      class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-3 sm:p-4 lg:p-6"
       data-testid="adventure-play-viewport"
     >
       <div class="mx-auto max-w-3xl space-y-4">
         <AdventureStateSummary {manager} />
-        <AdventurePlay {manager} />
+        <AdventurePlay {manager} showComposer={false} />
         <AdventureRollPrompt {manager} />
       </div>
     </main>
   </div>
+
+  <!-- The composer stays outside the story scroll, visible above the keyboard
+       and mobile safe area. Never remount it across generation/roll phases. -->
+  <AdventureComposer {manager} />
 
   <!-- A bottom sheet rather than a side-by-side aside: this surface is often
        hosted in the app's own (already-narrow) sidebar panel, where a lg:
@@ -224,7 +235,7 @@
         </h3>
         <button
           type="button"
-          class="flex min-h-10 min-w-10 items-center justify-center rounded-md border border-theme-border text-theme-primary transition hover:bg-theme-primary/10"
+          class="flex min-h-10 min-w-10 items-center justify-center rounded-md border border-theme-border text-theme-text transition hover:bg-theme-primary/10"
           aria-label="Close adventure tools"
           onclick={closeTools}
         >

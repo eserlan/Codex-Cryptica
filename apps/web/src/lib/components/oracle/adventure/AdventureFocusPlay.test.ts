@@ -105,6 +105,26 @@ afterEach(() => {
 });
 
 describe("AdventureFocusPlay", () => {
+  it("uses a compact mobile shell with the action dock outside the narrative scroll", () => {
+    render(AdventureFocusPlay, { props: props() });
+
+    const surface = screen.getByTestId("adventure-play-surface");
+    const viewport = screen.getByTestId("adventure-play-viewport");
+    const dock = screen.getByTestId("adventure-action-dock");
+    const title = screen.getByRole("heading", { name: "The Drowned March" });
+
+    expect(surface.className).toContain("h-[100dvh]");
+    expect(surface.className).toContain("fixed");
+    expect(title.className).toContain("truncate");
+    expect(title.getAttribute("title")).toBe("The Drowned March");
+    expect(viewport.contains(dock)).toBe(false);
+    expect(surface.contains(dock)).toBe(true);
+    expect(
+      screen.getByRole("button", { name: "Adventure tools" }),
+    ).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Submit action" })).toBeTruthy();
+  });
+
   it("follows newly generated adventure events to the bottom", async () => {
     const scrollTo = vi.fn();
     Object.defineProperty(HTMLElement.prototype, "scrollTo", {
@@ -196,7 +216,9 @@ describe("AdventureFocusPlay", () => {
     // why: a lg: viewport breakpoint still fires even when this surface is
     // hosted in the app's own narrow sidebar, so it can never rely on an
     // actual side-by-side split reading as usable.
-    expect(screen.queryByLabelText("Adventure tools")).toBeNull();
+    expect(
+      screen.queryByRole("complementary", { name: "Adventure tools" }),
+    ).toBeNull();
     expect(screen.queryByText("Dice presets")).toBeNull();
     expect(screen.queryByText("Resource trackers")).toBeNull();
 
@@ -204,7 +226,9 @@ describe("AdventureFocusPlay", () => {
       screen.getByRole("button", { name: "Adventure tools" }),
     );
 
-    expect(screen.getByLabelText("Adventure tools")).toBeTruthy();
+    expect(
+      screen.getByRole("complementary", { name: "Adventure tools" }),
+    ).toBeTruthy();
     expect(screen.getByText("Dice presets")).toBeTruthy();
     expect(screen.getByText("Resource trackers")).toBeTruthy();
   });
@@ -215,18 +239,26 @@ describe("AdventureFocusPlay", () => {
     await fireEvent.click(
       screen.getByRole("button", { name: "Adventure tools" }),
     );
-    expect(screen.getByLabelText("Adventure tools")).toBeTruthy();
+    expect(
+      screen.getByRole("complementary", { name: "Adventure tools" }),
+    ).toBeTruthy();
 
     await fireEvent.click(screen.getAllByLabelText("Close adventure tools")[0]);
-    expect(screen.queryByLabelText("Adventure tools")).toBeNull();
+    expect(
+      screen.queryByRole("complementary", { name: "Adventure tools" }),
+    ).toBeNull();
 
     await fireEvent.click(
       screen.getByRole("button", { name: "Adventure tools" }),
     );
-    expect(screen.getByLabelText("Adventure tools")).toBeTruthy();
+    expect(
+      screen.getByRole("complementary", { name: "Adventure tools" }),
+    ).toBeTruthy();
 
     await fireEvent.keyDown(window, { key: "Escape" });
-    expect(screen.queryByLabelText("Adventure tools")).toBeNull();
+    expect(
+      screen.queryByRole("complementary", { name: "Adventure tools" }),
+    ).toBeNull();
   });
 
   it("keeps the adventure surface visible when fullscreen is denied", async () => {

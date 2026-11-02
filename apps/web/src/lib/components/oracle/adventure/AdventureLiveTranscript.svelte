@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import type { AdventureManager } from "#lib/stores/oracle/adventure-manager.svelte.js";
-  import DiceBreakdownDisclosure from "#lib/components/dice/DiceBreakdownDisclosure.svelte";
+  import AdventureNarrativeTurn from "./AdventureNarrativeTurn.svelte";
 
   let { manager }: { manager: AdventureManager } = $props();
 
@@ -29,41 +29,20 @@
   }
 </script>
 
-<div class="space-y-5" aria-live="polite" aria-label="Adventure transcript">
+<div
+  class="space-y-5"
+  aria-live="polite"
+  aria-label="Adventure transcript"
+  data-testid="adventure-narrative"
+>
   {#if manager.transcript}
     {#each manager.transcript.turns as turn (turn.sequence)}
-      {@const roll = rollFor(turn.sequence)}
-      <div class="space-y-2">
-        <p class="text-sm text-theme-secondary">
-          <span class="text-xs uppercase tracking-wide">You</span>
-          {turn.playerAction}
-        </p>
-        <p class="whitespace-pre-wrap text-sm text-theme-primary">
-          {turn.narration}
-        </p>
-        {#if roll}
-          <p
-            class="inline-flex items-center gap-1.5 rounded-full bg-theme-primary/10 px-2.5 py-1 text-xs text-theme-secondary"
-          >
-            <span aria-hidden="true" class="icon-[lucide--dices] h-3 w-3"
-            ></span>
-            {#if roll.expression}{roll.expression} —{/if}
-            {roll.outcome.value}
-          </p>
-          <DiceBreakdownDisclosure
-            parts={roll.outcome.parts}
-            total={typeof roll.outcome.value === "number"
-              ? roll.outcome.value
-              : 0}
-            formula={roll.expression}
-          />
-        {/if}
-      </div>
+      <AdventureNarrativeTurn {turn} roll={rollFor(turn.sequence)} />
     {/each}
   {/if}
   {#if manager.phase === "generating"}
     <div
-      class="flex items-center gap-2 text-sm text-theme-secondary"
+      class="flex items-center gap-2 text-sm text-theme-text"
       role="status"
       aria-live="off"
       data-testid="adventure-generating-status"

@@ -30,6 +30,29 @@ describe("AdventureLiveTranscript", () => {
     vi.useRealTimers();
   });
 
+  it("shows the opening narration without a blank player-action bubble", () => {
+    const m = manager({
+      transcript: {
+        sessionId: "session-1",
+        title: "The Drowned March",
+        turns: [
+          {
+            sequence: 0,
+            playerAction: "",
+            narration: "You arrive in the mountain village.",
+            committedAt: "2026-08-18T00:00:00.000Z",
+          },
+        ],
+      },
+    });
+    render(AdventureLiveTranscript, { props: { manager: m } });
+    expect(
+      screen.getByText("You arrive in the mountain village."),
+    ).toBeTruthy();
+    expect(screen.queryByText("You")).toBeNull();
+    expect(screen.getByText("Oracle")).toBeTruthy();
+  });
+
   it("renders a turn's player action and narration", () => {
     render(AdventureLiveTranscript, { props: { manager: manager() } });
 

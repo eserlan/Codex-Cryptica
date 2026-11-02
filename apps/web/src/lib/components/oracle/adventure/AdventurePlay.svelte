@@ -2,10 +2,15 @@
   import type { AdventureManager } from "#lib/stores/oracle/adventure-manager.svelte.js";
   import AdventureComposer from "./AdventureComposer.svelte";
   import AdventureLiveTranscript from "./AdventureLiveTranscript.svelte";
-  let { manager }: { manager: AdventureManager } = $props();
+  let {
+    manager,
+    showComposer = true,
+  }: { manager: AdventureManager; showComposer?: boolean } = $props();
 </script>
 
 <section class="space-y-4" aria-label="Adventure play">
   <AdventureLiveTranscript {manager} />
-  <AdventureComposer {manager} />
+  {#if showComposer}
+    <AdventureComposer {manager} />
+  {/if}
 </section>
