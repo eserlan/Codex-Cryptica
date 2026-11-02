@@ -46,7 +46,9 @@ describe("AdventureComposer", () => {
     const m = manager("generating");
     render(AdventureComposer, { props: { manager: m } });
 
-    expect(screen.getByText("Playing: Cross the flooded causeway")).toBeTruthy();
+    expect(
+      screen.getByText("Playing: Cross the flooded causeway"),
+    ).toBeTruthy();
 
     // The field stays mounted (just hidden) so a focused element is never
     // yanked out from under the user — see the comment in the component for
@@ -87,7 +89,9 @@ describe("AdventureComposer", () => {
     m.suggestedActions = ["Search the wreckage"];
     render(AdventureComposer, { props: { manager: m } });
 
-    const suggestions = screen.getByTestId("adventure-suggested-actions") as HTMLDetailsElement;
+    const suggestions = screen.getByTestId(
+      "adventure-suggested-actions",
+    ) as HTMLDetailsElement;
     await fireEvent.click(suggestions.querySelector("summary")!);
     expect(suggestions.open).toBe(true);
 
