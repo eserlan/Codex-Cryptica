@@ -587,12 +587,7 @@ export class AdventureTurnGenerationService {
     options: { apiKey?: string; modelName?: string; signal?: AbortSignal },
   ): Promise<AdventureTurnProposal> {
     if (this.aiClient.sendInteraction) {
-      return this.generateViaInteraction(
-        request,
-        prompt,
-        systemInstruction,
-        options,
-      );
+      return this.generateViaInteraction(request, prompt, systemInstruction, options);
     }
     const model = await this.aiClient.getModel(
       options.apiKey ?? "",
@@ -620,7 +615,10 @@ export class AdventureTurnGenerationService {
     const signal = options.signal ?? request.signal;
     if (signal?.aborted) throw new DOMException("Cancelled", "AbortError");
     const prompt = buildAdventurePrompt(request);
-    const systemInstruction = `${prompt.behavior}\n\nReturn only valid JSON that matches this response schema:\n${JSON.stringify(adventureTurnResponseSchema)}`;
+    const systemInstruction =
+      prompt.behavior +
+      "\\n\\nReturn only valid JSON that matches this response schema:\\n" +
+      JSON.stringify(adventureTurnResponseSchema);
 
     if (request.onNarration) {
       const streamed = await this.generateViaStream(
