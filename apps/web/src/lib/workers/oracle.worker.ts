@@ -3,6 +3,7 @@ import * as Comlink from "comlink";
 import {
   aiClientManager,
   AdventureTurnGenerationService,
+  type AdventureTurnGenerationRequest,
 } from "@codex/ai-engine";
 import { DefaultTextGenerationService } from "@codex/ai-engine";
 import { RelayedSessionToken, type CachedToken } from "@codex/ai-engine";
@@ -296,10 +297,16 @@ class OracleWorker {
   }
 
   async generateAdventureTurn(
-    request: any,
+    request: Omit<AdventureTurnGenerationRequest, "onNarration" | "signal">,
     options?: { apiKey?: string; modelName?: string },
+    onNarration?: (text: string) => void,
   ): Promise<any> {
-    return this.adventureGeneration.generate(request, options);
+    // Reassemble the callback only inside the worker. The wire request
+    // contains structured-cloneable data and no functions.
+    return this.adventureGeneration.generate(
+      onNarration ? { ...request, onNarration } : request,
+      options,
+    );
   }
 
   clearAdventureInteraction(sessionId: string): void {
