@@ -195,7 +195,11 @@ function defaultGenerationService(): Pick<
       const { signal: _signal, ...workerOptions } = options ?? {};
       // Comlink cannot structured-clone functions nested inside the request.
       // Progress is a separate proxied argument at the bridge boundary.
-      const { onNarration, signal: _requestSignal, ...cloneableRequest } = request;
+      const {
+        onNarration,
+        signal: _requestSignal,
+        ...cloneableRequest
+      } = request;
       const workerRequest = $state.snapshot(cloneableRequest);
       return oracleBridge.generateAdventureTurn(
         workerRequest,
