@@ -107,7 +107,7 @@ function dependencies() {
 describe("AdventureManager", () => {
   it("persists GM-only world-entry situations and retains them across actions", async () => {
     const deps: any = dependencies();
-    const generate = vi.fn(async () => completeProposal);
+    const generate = vi.fn(async (_request: any) => completeProposal);
     deps.generation = { generate };
     const manager = new AdventureManager(deps);
     await manager.start({
