@@ -108,7 +108,7 @@ describe("toRunSheetMarkdown", () => {
     expect(markdown).not.toMatch(/\.\.|\)\./);
   });
 
-  it("bolds a leading label in notes so they stay ordinary list items", () => {
+  it("renders labelled notes as ordinary list items without generator label blocks", () => {
     const value = createEmptySessionPrep("hook");
     value.reserve = [
       {
