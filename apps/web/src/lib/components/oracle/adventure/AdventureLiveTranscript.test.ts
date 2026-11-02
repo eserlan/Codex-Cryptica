@@ -171,9 +171,8 @@ describe("AdventureLiveTranscript", () => {
       streamedNarration: "The lantern gutters as you approach.",
     });
     render(AdventureLiveTranscript, { props: { manager: m } });
-    expect(screen.getByTestId("adventure-stream-preview").textContent).toContain(
-      "The lantern gutters as you approach.",
-    );
+    const preview = screen.getByTestId("adventure-stream-preview");
+    expect(preview.textContent).toContain("The lantern gutters as you approach.");
     expect(screen.queryByTestId("adventure-generating-status")).toBeNull();
   });
 

@@ -67,9 +67,9 @@ function parseAdventureResponse(text: string): AdventureTurnProposal {
 export function extractAdventureNarrationPrefix(buffer: string): string {
   // Require the first top-level fields to be kind and narration. Never show
   // a private hidden-state field as a partial player preview.
-  const match = /^\s*\{\s*"kind"\s*:\s*"(?:complete|roll-required)"\s*,\s*"(?:narration|setupNarration)"\s*:\s*"((?:[^"\\]|\\["\\/bfnrt]|\\u[0-9a-fA-F]{4})*)/.exec(
-    buffer,
-  );
+  const pattern =
+    /^\s*\{\s*"kind"\s*:\s*"(?:complete|roll-required)"\s*,\s*"(?:narration|setupNarration)"\s*:\s*"((?:[^"\\]|\\["\\/bfnrt]|\\u[0-9a-fA-F]{4})*)/;
+  const match = pattern.exec(buffer);
   if (!match) return "";
   try {
     return (JSON.parse('"' + match[1] + '"') as string).slice(0, 2_000);

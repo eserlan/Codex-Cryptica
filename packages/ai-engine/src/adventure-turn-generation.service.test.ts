@@ -78,9 +78,8 @@ describe("AdventureTurnGenerationService", () => {
           '"narration":"GM private information"}',
       ),
     ).toBe("");
-    expect(
-      extractAdventureNarrationPrefix('{"kind":"roll-required","setupNarration":"A shadow'),
-    ).toBe("A shadow");
+    const rolling = '{"kind":"roll-required","setupNarration":"A shadow';
+    expect(extractAdventureNarrationPrefix(rolling)).toBe("A shadow");
   });
 
   it("streams the player's narration while keeping structured state private", async () => {
@@ -129,7 +128,10 @@ describe("AdventureTurnGenerationService", () => {
             throw new Error("no buffered fallback after stream abort");
           },
           async *generateContentStream() {
-            yield { type: "delta" as const, text: '{"kind":"complete","narration":"A storm' };
+            yield {
+              type: "delta" as const,
+              text: '{"kind":"complete","narration":"A storm',
+            };
             controller.abort();
             yield { type: "complete" as const, text: completeResponse };
           },
