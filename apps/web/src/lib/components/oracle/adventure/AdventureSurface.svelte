@@ -194,7 +194,8 @@
     isAvailable: !vault.isGuest,
   });
   const backgroundRumourService = createCampaignGeneratorService(rumourPolicy);
-  oracle.adventure.setWorldEntryRumourGenerator(async (session) => {
+  oracle.adventure.setWorldEntryRumourGenerator(async (session, signal) => {
+    signal?.throwIfAborted();
     const entry = session.worldEntry;
     if (!entry) throw new Error("not-world-entry");
     const sourceId =
@@ -222,11 +223,19 @@
       // session. Do not attach it to the user's generator interaction history.
       () => ({ isEnabled: false, isAvailable: false }),
     );
-    const draft = await backgroundRumourService.generateDraft(request);
-    if (!draft.content || !draft.lore) {
+    signal?.throwIfAborted();
+    const generated = await backgroundRumourService.generateDraft(
+      request,
+      signal,
+    );
+    if (!generated.content || !generated.lore) {
       throw new Error("rumour-generator-output-missing");
     }
-    return { title: draft.title, content: draft.content, lore: draft.lore };
+    return {
+      title: generated.title,
+      content: generated.content,
+      lore: generated.lore,
+    };
   });
 
   adventureContextService.setResolver({
