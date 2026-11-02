@@ -19,18 +19,25 @@ GM notes are hidden from the play surface, but they are not encrypted from the
 vault owner. Material invented during play stays provisional and is not added to
 your canonical vault automatically.
 
-## Play a generated rumour
+## Choose how to start
 
-1. Open the **Rumour Generator** from Play or the Generators menu.
-2. Generate a batch of six rumours. The preview shows the player-facing
-   rumours; matching GM notes are initially hidden unless you choose to reveal
-   them.
-3. Choose **Play with Oracle** beside one rumour. Only that rumour and its
-   matching hidden GM preparation are passed to the existing Adventure Mode.
-4. Review the prefilled title and premise, and choose an existing vault
-   character or enter a provisional character.
-5. Start playing. A rumour is a lead, **not an assigned quest**. You may ignore
-   it, investigate it or pursue something else.
+Open **Play → Let the Oracle run the game**. On mobile, **Play** is in the
+navigation menu. If you have no active adventure, choose a starting approach:
+
+- **Discover an Adventure** opens the in-app Rumour Generator. Generate six
+  rumours, then choose **Play with Oracle** beside one lead. Only that rumour
+  and its matching hidden GM preparation pass to Adventure Mode. Review the
+  prefilled premise, choose your character, and start.
+- **Create Your Own Premise** opens the usual adventure form. Enter a title,
+  starting situation and character yourself. You can return to the starting
+  choices without discarding an unsaved draft.
+- **Enter Your World** is shown as **Coming later**. The planned entry will
+  begin with an existing Vault character, location and world date without a
+  prepared quest.
+
+A rumour is a lead, **not an assigned quest**. You may ignore it, investigate
+it, or pursue something else. GM notes are hidden by default in the generator
+review unless you choose to reveal them.
 
 If the vault already has an active Adventure, continue it or explicitly
 archive it before starting the selected rumour; no active progress is replaced
@@ -40,10 +47,11 @@ from the vault owner.
 
 ## Start an adventure
 
-1. Open **Play** from the activity bar.
-2. Enter an **Adventure title**, a **Premise** and your **Player character** name.
-3. Optionally add a **Character description**.
-4. Choose **Start adventure**, then respond to the situations the Oracle presents.
+1. Open **Play → Let the Oracle run the game**.
+2. Choose **Create Your Own Premise**.
+3. Enter an **Adventure title**, a **Premise** and your **Player character** name.
+4. Optionally add a **Character description**.
+5. Choose **Start adventure**, then respond to the situations the Oracle presents.
 
 Starting and continuing AI turns needs an available Oracle connection. Your stored
 session remains readable offline; a pending action can be retried after reconnecting.
