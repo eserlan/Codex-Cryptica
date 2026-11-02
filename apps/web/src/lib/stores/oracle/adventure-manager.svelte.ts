@@ -44,6 +44,7 @@ import { adventureTurnGenerationService } from "@codex/ai-engine";
 import { oracleBridge } from "#lib/cloud-bridge/oracle-bridge.js";
 import { diceEngine as defaultDiceEngine, diceParser } from "dice-engine";
 import { systemIdGenerator } from "#lib/utils/runtime-deps.js";
+import { seedWorldEntryBackground } from "#lib/services/adventure/world-entry-background.js";
 
 export interface AdventureManagerDependencies {
   repository?: AdventureSessionRepository;
@@ -413,8 +414,11 @@ export class AdventureManager {
   private async persistOpeningTurn(session: AdventureSession): Promise<void> {
     const anchors = await this.deps.context.resolveAnchors(session);
     const relevant = await this.deps.context.resolveOpeningRelevant(session);
+    // Commit the background together with the opening turn, not as a
+    // half-created separate save if Oracle fails.
+    const prepared = seedWorldEntryBackground(session, this.deps.idGenerator);
     const proposal = await this.deps.generation.generate({
-      session,
+      session: prepared,
       phase: "opening",
       anchors,
       relevant,
@@ -422,7 +426,7 @@ export class AdventureManager {
     if (this.session?.id !== session.id) return;
     validateRollExpression(proposal);
     const next = this.proposedSession(
-      session,
+      prepared,
       proposal,
       this.newTurnMetadata(""),
       "opening-rejected",

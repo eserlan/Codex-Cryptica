@@ -105,6 +105,39 @@ function dependencies() {
 }
 
 describe("AdventureManager", () => {
+  it("persists GM-only world-entry situations and retains them across actions", async () => {
+    const deps: any = dependencies();
+    const generate = vi.fn(async () => completeProposal);
+    deps.generation = { generate };
+    const manager = new AdventureManager(deps);
+    await manager.start({
+      vaultId: "vault-1",
+      title: "Lira in Northbrook",
+      premise: "Enter Northbrook",
+      playerCharacter: {
+        kind: "provisional",
+        name: "Lira",
+        description: "Traveller",
+      },
+      worldEntry: {
+        version: 1,
+        location: { kind: "provisional", name: "Northbrook" },
+        intent: "explore",
+      },
+    });
+    const opening = generate.mock.calls[0]?.[0] as any;
+    expect(opening.session.hiddenState.gmThreads).toHaveLength(3);
+    expect(opening.session.hiddenState.secrets).toHaveLength(3);
+    expect(manager.session?.hiddenState.gmThreads).toHaveLength(3);
+    expect(manager.session?.turns).toHaveLength(1);
+    expect(manager.transcript?.turns[0]?.narration).not.toContain("NOT YET HEARD");
+
+    await manager.submitAction("Ask the innkeeper what is happening nearby");
+    const action = generate.mock.calls[1]?.[0] as any;
+    expect(action.session.hiddenState).toEqual(manager.session?.hiddenState);
+    expect(manager.session?.hiddenState.gmThreads).toHaveLength(3);
+  });
+
   it("preserves the opening and commits a grounded action through the repository", async () => {
     const manager = new AdventureManager(dependencies() as any);
     await manager.start({
