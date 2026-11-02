@@ -706,14 +706,18 @@ export class AdventureManager {
       session,
       action,
     );
+    // Older World Entry sessions began without background situations.
+    // Seed on their next committed action too, without mutating the persisted
+    // session until the same optimistic-concurrency save succeeds.
+    const prepared = seedWorldEntryBackground(session, this.deps.idGenerator);
     const proposal = await this.deps.generation.generate(
-      { session, phase: "action", playerAction: action, anchors, relevant },
+      { session: prepared, phase: "action", playerAction: action, anchors, relevant },
       { signal },
     );
     if (signal.aborted) throw new DOMException("Cancelled", "AbortError");
     validateRollExpression(proposal);
     const next = this.proposedSession(
-      session,
+      prepared,
       proposal,
       this.newTurnMetadata(action),
       "turn-rejected",

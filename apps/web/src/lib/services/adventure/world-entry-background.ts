@@ -18,7 +18,6 @@ export function seedWorldEntryBackground(
   if (
     !session.worldEntry ||
     session.scenarioState ||
-    session.turns.length > 0 ||
     session.hiddenState.secrets.length > 0 ||
     session.hiddenState.gmThreads.length > 0
   ) {

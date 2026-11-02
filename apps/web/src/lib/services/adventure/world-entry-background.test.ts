@@ -77,6 +77,13 @@ describe("world entry background situations", () => {
     expect(prompt.behavior).toContain("reveal at most one");
   });
 
+  it("seeds older World Entry sessions on their next action", () => {
+    const older = session();
+    older.turns = [{ id: "older-turn" } as AdventureSession["turns"][number]];
+    const seeded = seedWorldEntryBackground(older, () => "new-id");
+    expect(seeded.hiddenState.gmThreads).toHaveLength(3);
+  });
+
   it("produces stable seeds and never reseeds a persisted session", () => {
     let index = 0;
     const first = seedWorldEntryBackground(session(), () => `id-${++index}`);
