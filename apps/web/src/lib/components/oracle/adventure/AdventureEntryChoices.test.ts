@@ -51,16 +51,18 @@ describe("AdventureEntryChoices", () => {
     expect(screen.getByText(/fully loaded Vault/)).toBeTruthy();
   });
 
-  it("shows Enter Your World as planned, never an actionable button", () => {
+  it("opens the new in-world scene setup without a generated quest", async () => {
+    const onEnterWorld = vi.fn();
     render(AdventureEntryChoices, {
-      props: { onDiscover: vi.fn(), onOwnPremise: vi.fn() },
+      props: { onDiscover: vi.fn(), onOwnPremise: vi.fn(), onEnterWorld },
     });
 
-    const planned = screen.getByTestId("adventure-enter-world-planned");
-    expect(planned.textContent).toContain("Enter Your World");
-    expect(planned.textContent).toContain("Coming later");
-    expect(planned.tagName).toBe("DIV");
-    expect(screen.getAllByRole("button")).toHaveLength(2);
+    const entry = screen.getByTestId("adventure-enter-world");
+    expect(entry.textContent).toContain("Enter Your World");
+    expect(entry.tagName).toBe("BUTTON");
+    await fireEvent.click(entry);
+    expect(onEnterWorld).toHaveBeenCalledOnce();
+    expect(screen.getAllByRole("button")).toHaveLength(3);
   });
 
   it("uses touch-sized cards in a single-column mobile layout", () => {
@@ -71,7 +73,11 @@ describe("AdventureEntryChoices", () => {
     expect(screen.getByTestId("adventure-entry-choices").textContent).toContain(
       "Where will your story begin?",
     );
-    for (const id of ["adventure-discover", "adventure-own-premise"]) {
+    for (const id of [
+      "adventure-discover",
+      "adventure-own-premise",
+      "adventure-enter-world",
+    ]) {
       const button = screen.getByTestId(id);
       expect(button.className).toContain("min-h-44");
       expect(button.className).toContain("text-left");

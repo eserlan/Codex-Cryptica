@@ -8,6 +8,7 @@ import {
   resolveTemporalWorldContext,
   type TemporalWorldContext,
 } from "./temporal-world-context";
+import { resolveWorldEntryPreview } from "./world-entry-context-preview";
 import type {
   AdventureSession,
   ResolvedSourceExcerpt,
@@ -129,9 +130,73 @@ export class AdventureContextService {
       }));
   }
 
+  private async resolveWorldEntryOpening(
+    session: AdventureSession,
+  ): Promise<ResolvedSourceExcerpt[]> {
+    const entry = session.worldEntry;
+    if (!entry || !this.resolver.getWorldSnapshot) return [];
+    const snapshot = await this.resolver.getWorldSnapshot(session.vaultId);
+    const characterId =
+      session.playerCharacter.kind === "canonical"
+        ? session.playerCharacter.recordId
+        : undefined;
+    const locationId =
+      entry.location.kind === "canonical" ? entry.location.recordId : undefined;
+    // Date-aware context is hydrated only for a bounded selection. When the
+    // start is provisional/undated, never assert events or undated actors.
+    const candidateRecords =
+      entry.at && characterId && locationId
+        ? (
+            await this.resolveTemporalWorld({
+              vaultId: session.vaultId,
+              characterId,
+              locationId,
+              at: entry.at,
+              maxRecords: 14,
+            })
+          ).playerSafe.filter((record) => record.applicability !== "future")
+        : resolveWorldEntryPreview({
+            entities: snapshot.entities,
+            calendar: snapshot.calendar,
+            characterId,
+            locationId,
+            at: entry.at,
+            maxRecords: 14,
+          }).records;
+    const anchored = new Set(
+      session.sourceRecords.map((source) => source.recordId),
+    );
+    const eligible = candidateRecords.filter(
+      (record) => !anchored.has(record.id),
+    );
+    const relevant = await Promise.all(
+      eligible.map(async (record) => {
+        const source = await this.resolver.getById(session.vaultId, record.id);
+        if (!source) return null;
+        return {
+          recordId: record.id,
+          displayName: record.title,
+          content: (
+            "[Period applicability: " +
+            record.applicability +
+            "] " +
+            source.text
+          ).slice(0, 1_500),
+          // GM-only lore never appears in the UI or player projections.
+          ...(source.lore ? { lore: source.lore.slice(0, 1_500) } : {}),
+          role: "turn-source" as const,
+        };
+      }),
+    );
+    return relevant.filter(
+      (value): value is NonNullable<typeof value> => value !== null,
+    );
+  }
+
   async resolveOpeningRelevant(
     session: AdventureSession,
   ): Promise<ResolvedSourceExcerpt[]> {
+    if (session.worldEntry) return this.resolveWorldEntryOpening(session);
     const playerCharacter = session.playerCharacter;
     const characterContext =
       playerCharacter.kind === "canonical"
