@@ -670,7 +670,9 @@ export class AdventureManager {
   }
 
   async submitSuggestedAction(action: string): Promise<void> {
-    await this.submitAction(action, false);
+    // A selected suggestion must remain visible and editable until committed.
+    // This also preserves it after a failed, cancelled or offline generation.
+    await this.submitAction(action);
   }
 
   private async persistRecordedOutcome(
