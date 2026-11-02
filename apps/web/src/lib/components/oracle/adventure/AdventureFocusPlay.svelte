@@ -61,7 +61,7 @@
         .matches
         ? "auto"
         : "smooth";
-      playViewport.scrollTo({ top: playViewport.scrollHeight, behavior });
+      playViewport.scrollTo?.({ top: playViewport.scrollHeight, behavior });
     });
   });
 
