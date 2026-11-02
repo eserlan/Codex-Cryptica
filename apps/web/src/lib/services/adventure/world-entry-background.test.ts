@@ -46,18 +46,20 @@ function session(): AdventureSession {
 
 describe("world entry background situations", () => {
   it("seeds hidden, paired rumours without revealing them", () => {
-    let nextId = 0;
-    const seeded = seedWorldEntryBackground(session(), () =>
-      `seed-${++nextId}`,
-    );
+    let n = 0;
+    const seeded = seedWorldEntryBackground(session(), () => `seed-${++n}`);
     expect(seeded.hiddenState.secrets).toHaveLength(3);
     expect(seeded.hiddenState.gmThreads).toHaveLength(3);
-    expect(
-      seeded.hiddenState.secrets.every((fact) => fact.status === "hidden"),
-    ).toBe(true);
-    expect(
-      seeded.hiddenState.gmThreads.every((thread) => thread.status === "hidden"),
-    ).toBe(true);
+    expect(seeded.hiddenState.secrets.map((fact) => fact.status)).toEqual([
+      "hidden",
+      "hidden",
+      "hidden",
+    ]);
+    expect(seeded.hiddenState.gmThreads.map((thread) => thread.status)).toEqual([
+      "hidden",
+      "hidden",
+      "hidden",
+    ]);
     expect(seeded.hiddenState.secrets.map((item) => item.text)).toEqual([
       expect.stringContaining("essentially true"),
       expect.stringContaining("exaggeration"),
