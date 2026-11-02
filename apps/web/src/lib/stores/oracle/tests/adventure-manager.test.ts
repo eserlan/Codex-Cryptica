@@ -160,7 +160,7 @@ describe("AdventureManager", () => {
 
     expect(await manager.tryTakeControl()).toBe(true);
     expect(manager.readOnly).toBe(false);
-    expect(manager.lease?.ownerId).toBe("new-owner");
+    expect(manager.lease).toMatchObject({ ownerId: "new-owner" });
     expect(manager.session?.turns).toHaveLength(1);
     expect(manager.draft).toBe("Ask about the shutter");
     expect(deps.authority.acquire).toHaveBeenCalledTimes(2);
