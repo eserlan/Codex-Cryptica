@@ -1,33 +1,17 @@
 import { LocalThumbnailCache } from "./local-thumbnail";
 import { type Clock, systemClock } from "./runtime";
 
-export interface IImageProcessor {
-  convertToWebP(blob: Blob, quality?: number): Promise<Blob>;
-  generateThumbnail(blob: Blob, size: number): Promise<Blob>;
-}
-
-export interface IAssetIOAdapter {
-  writeOpfsFile(
-    path: string[],
-    content: string | Blob | File,
-    root: FileSystemDirectoryHandle,
-    vaultId?: string,
-  ): Promise<void>;
-  readOpfsBlob(path: string[], root: FileSystemDirectoryHandle): Promise<Blob>;
-  getDirectoryHandle(
-    root: FileSystemDirectoryHandle,
-    path: string[],
-    create?: boolean,
-  ): Promise<FileSystemDirectoryHandle>;
-  isNotFoundError(err: any): boolean;
-  /** Removes a file, and does nothing when it is already gone. */
-  deleteFile?(
-    path: string[],
-    root: FileSystemDirectoryHandle,
-    vaultId?: string,
-  ): Promise<void>;
-}
-
+export type {
+  IAssetIOAdapter,
+  IImageProcessor,
+  ImageProbe,
+} from "./asset-types";
+import type {
+  IAssetIOAdapter,
+  IImageProcessor,
+  ImageProbe,
+} from "./asset-types";
+import { AssetStorage } from "./asset-storage";
 /** Longest side of a generated thumbnail; matches uploaded images' `_thumb`. */
 const THUMBNAIL_SIZE = 200;
 
@@ -62,14 +46,6 @@ const UNREACHABLE_TTL_MS = 24 * 60 * 60_000;
  * image on every load. A host that later adds CORS is noticed after this.
  */
 const NO_CORS_HOST_TTL_MS = 7 * 24 * 60 * 60_000;
-
-/**
- * Whether the browser can load a URL as a plain image, which needs no CORS
- * headers. `unknown` when it cannot be told (no browser, or it took too long).
- */
-export type ImageProbe = (
-  url: string,
-) => Promise<"loaded" | "failed" | "unknown">;
 
 const probeImageLoad: ImageProbe = (url) =>
   new Promise((resolve) => {
@@ -129,6 +105,7 @@ export class AssetManager {
   pruneDelayMs = 2000;
   private pruneTimer?: ReturnType<typeof setTimeout>;
   private localThumbnails: LocalThumbnailCache;
+  private storage: AssetStorage;
   private thumbnailWaiters: (() => void)[] = [];
   /**
    * When each unreachable external image last failed, by URL. `opaque` marks a
@@ -173,6 +150,7 @@ export class AssetManager {
     // Injected for tests; the default asks the browser to load the image.
     private probeImage: ImageProbe = probeImageLoad,
   ) {
+    this.storage = new AssetStorage(ioAdapter, imageProcessor, fetcher, clock);
     this.localThumbnails = new LocalThumbnailCache(
       ioAdapter,
       imageProcessor,
@@ -188,46 +166,18 @@ export class AssetManager {
     return this.deadExternal.has(url);
   }
 
-  async saveImageToVault(
+  saveImageToVault(
     vaultHandle: FileSystemDirectoryHandle | undefined,
     blob: Blob,
     entityId: string,
     originalName?: string,
   ): Promise<{ image: string; thumbnail: string }> {
-    if (!vaultHandle) throw new Error("Vault not open");
-
-    const timestamp = this.clock.now();
-    const baseName = originalName
-      ? originalName.replace(/\.[^/.]+$/, "")
-      : `img_${entityId}_${timestamp}`;
-    const filename = `${baseName}.webp`;
-    const thumbFilename = `${baseName}_thumb.webp`;
-
-    // Convert original image to WebP and save
-    const webpBlob = await this.imageProcessor.convertToWebP(blob);
-    await this.ioAdapter.writeOpfsFile(
-      ["images", filename],
-      webpBlob,
+    return this.storage.saveImageToVault(
       vaultHandle,
-      vaultHandle.name,
-    );
-
-    // Generate and save thumbnail
-    const thumbnailBlob = await this.imageProcessor.generateThumbnail(
       blob,
-      200,
+      entityId,
+      originalName,
     );
-    await this.ioAdapter.writeOpfsFile(
-      ["images", thumbFilename],
-      thumbnailBlob,
-      vaultHandle,
-      vaultHandle.name,
-    );
-
-    return {
-      image: `images/${filename}`,
-      thumbnail: `images/${thumbFilename}`,
-    };
   }
 
   resolveImageUrl(
@@ -301,39 +251,15 @@ export class AssetManager {
         } else if (vaultHandle || fallbackHandle) {
           // 4. Local Vault File (with fallback to Local FS for synced vaults)
           try {
-            const segments = cleanPath
-              .replace(/^(\.\/|\/)/, "")
-              .split("/")
-              .filter((s) => s && s !== ".");
-
-            let blob: Blob | undefined;
-
-            // Try primary storage (OPFS)
-            if (vaultHandle) {
-              try {
-                blob = await this.ioAdapter.readOpfsBlob(segments, vaultHandle);
-              } catch (err) {
-                // If not found and we have a fallback, keep going
-                if (!fallbackHandle) throw err;
-              }
-            }
-
-            // Try fallback storage (Local FS)
-            if (!blob && fallbackHandle) {
-              blob = await this.ioAdapter.readOpfsBlob(
-                segments,
-                fallbackHandle,
-              );
-            }
-
-            if (blob) {
-              url = URL.createObjectURL(blob);
-            }
+            const blob = await this.storage.readLocal(
+              cleanPath,
+              vaultHandle,
+              fallbackHandle,
+            );
+            if (blob) url = URL.createObjectURL(blob);
           } catch (err: any) {
-            // Gracefully handle "Not Found" errors from the File System API.
-            if (this.ioAdapter.isNotFoundError(err)) {
-              return "";
-            }
+            // Preserve adapter error classification for local reads.
+            if (this.ioAdapter.isNotFoundError(err)) return "";
             return "";
           }
         }
@@ -945,69 +871,18 @@ export class AssetManager {
    * in the specified vault's OPFS. If missing, it attempts to resolve it (fetching
    * from source if needed) and writes it to the vault.
    */
-  async ensureAssetPersisted(
+  ensureAssetPersisted(
     path: string,
     vaultHandle: FileSystemDirectoryHandle,
     fileFetcher?: (path: string) => Promise<Blob>,
     fallbackHandle?: FileSystemDirectoryHandle,
   ) {
-    if (!path) return;
-    const cleanPath = path.trim();
-    if (/^(data:|blob:|https?:)/i.test(cleanPath)) return;
-
-    const segments = cleanPath
-      .replace(/^(\.\/|\/)/, "")
-      .split("/")
-      .filter((s) => s && s !== ".");
-
-    // 1. Check if it already exists in OPFS
-    try {
-      await this.ioAdapter.readOpfsBlob(segments, vaultHandle);
-      // If no error, it's already there.
-      return;
-    } catch {
-      // 2. Not in OPFS, resolve it to get a Blob (or at least a source path)
-      const source = await this.resolveImageUrl(
-        undefined,
-        cleanPath,
-        fileFetcher,
-        fallbackHandle,
-      );
-
-      let blob: Blob | undefined;
-
-      if (source && source.startsWith("blob:")) {
-        try {
-          const response = await this.fetcher(source);
-          blob = await response.blob();
-        } catch (err) {
-          console.warn(
-            `[AssetManager] Failed to fetch blob from ${source}`,
-            err,
-          );
-        }
-      } else if (source && !source.startsWith("http") && fileFetcher) {
-        // Source is a relative path (common in demo mode)
-        try {
-          blob = await fileFetcher(source);
-        } catch (err) {
-          console.warn(
-            `[AssetManager] Failed to fetch via fileFetcher: ${source}`,
-            err,
-          );
-        }
-      }
-
-      if (blob) {
-        // 3. Write to this vault
-        await this.ioAdapter.writeOpfsFile(
-          segments,
-          blob,
-          vaultHandle,
-          vaultHandle.name,
-        );
-        console.log(`[AssetManager] Migrated asset to vault: ${cleanPath}`);
-      }
-    }
+    return this.storage.ensureAssetPersisted(
+      path,
+      vaultHandle,
+      (cleanPath) =>
+        this.resolveImageUrl(undefined, cleanPath, fileFetcher, fallbackHandle),
+      fileFetcher,
+    );
   }
 }
