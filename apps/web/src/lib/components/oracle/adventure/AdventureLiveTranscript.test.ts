@@ -172,7 +172,9 @@ describe("AdventureLiveTranscript", () => {
     });
     render(AdventureLiveTranscript, { props: { manager: m } });
     const preview = screen.getByTestId("adventure-stream-preview");
-    expect(preview.textContent).toContain("The lantern gutters as you approach.");
+    expect(preview.textContent).toContain(
+      "The lantern gutters as you approach.",
+    );
     expect(screen.queryByTestId("adventure-generating-status")).toBeNull();
   });
 
