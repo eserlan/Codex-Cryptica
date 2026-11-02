@@ -24,8 +24,9 @@ your canonical vault automatically.
 Open **Play → Let the Oracle run the game**. On mobile, **Play** is in the
 navigation menu. If you have no active adventure, choose a starting approach:
 
-- **Discover an Adventure** opens the in-app Rumour Generator. Generate six
-  rumours, then choose **Play with Oracle** beside one lead. Only that rumour
+- **Discover an Adventure** immediately generates six rumours using the in-app
+  Rumour Generator's defaults. Choose **Play with Oracle** beside one lead,
+  or select **Customize** to change the generator options. Only that rumour
   and its matching hidden GM preparation pass to Adventure Mode. Review the
   prefilled premise, choose your character, and start.
 - **Create Your Own Premise** opens the usual adventure form. Enter a title,
