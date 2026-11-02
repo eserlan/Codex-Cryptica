@@ -19,12 +19,13 @@
   // Keep the action field compact for one line, then grow as the player types.
   // Long prose scrolls inside the field so it never pushes the dock offscreen.
   $effect(() => {
-    const value = manager.draft;
-    if (!textarea) return;
+    const content = manager.draft;
+    if (!textarea || typeof content !== "string") return;
     void tick().then(() => {
       if (!textarea) return;
       textarea.style.height = "auto";
-      const maxHeight = Math.max(44, Math.min(192, window.innerHeight * 0.3));
+      const visibleHeight = window.visualViewport?.height ?? window.innerHeight;
+      const maxHeight = Math.max(44, Math.min(192, visibleHeight * 0.3));
       textarea.style.height = `${Math.min(textarea.scrollHeight, maxHeight)}px`;
       textarea.style.overflowY =
         textarea.scrollHeight > maxHeight ? "auto" : "hidden";
