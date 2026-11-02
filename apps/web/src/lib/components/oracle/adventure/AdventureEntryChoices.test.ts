@@ -39,7 +39,9 @@ describe("AdventureEntryChoices", () => {
       props: { onDiscover, onOwnPremise, canDiscover: false },
     });
 
-    const discover = screen.getByTestId("adventure-discover") as HTMLButtonElement;
+    const discover = screen.getByTestId(
+      "adventure-discover",
+    ) as HTMLButtonElement;
     expect(discover.disabled).toBe(true);
     await fireEvent.click(discover);
     await fireEvent.click(screen.getByTestId("adventure-own-premise"));
