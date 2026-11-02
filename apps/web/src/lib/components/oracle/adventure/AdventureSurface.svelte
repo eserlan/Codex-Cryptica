@@ -19,7 +19,9 @@
   let vaultId = $derived(oracle.vault.activeVaultId ?? "default");
   const selectedRumour = $derived(rumourAdventureHandoff.forVault(vaultId));
   const characters = $derived(characterChoices(oracle.vault.entities));
-  const canDiscover = $derived(isVaultReadyForGenerators(vault) && !vault.isGuest);
+  const canDiscover = $derived(
+    isVaultReadyForGenerators(vault) && !vault.isGuest,
+  );
   let startApproach = $state<"choose" | "premise">("choose");
   let previousVaultId: string | null = null;
   let previouslyPrefilledScenario = $state<string | null>(null);
@@ -270,7 +272,8 @@
           class="flex min-h-11 w-fit items-center gap-2 rounded-md px-3 text-sm text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
           onclick={() => (startApproach = "choose")}
         >
-          <span class="icon-[lucide--arrow-left] h-4 w-4" aria-hidden="true"></span>
+          <span class="icon-[lucide--arrow-left] h-4 w-4" aria-hidden="true"
+          ></span>
           Change starting approach
         </button>
       {/if}
