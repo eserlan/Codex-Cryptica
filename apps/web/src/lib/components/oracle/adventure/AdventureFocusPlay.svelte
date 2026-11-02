@@ -203,7 +203,7 @@
           {manager.session?.title ?? "Adventure"}
         </h2>
         <p
-          class="truncate text-[11px] uppercase tracking-wide text-theme-text sm:text-sm sm:normal-case sm:tracking-normal"
+          class="truncate text-xs uppercase tracking-wide text-theme-text sm:text-sm sm:normal-case sm:tracking-normal"
         >
           {manager.readOnly
             ? "Read-only in this tab"
