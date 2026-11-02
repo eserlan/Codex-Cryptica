@@ -3,6 +3,7 @@
   import { calendarStore } from "#lib/stores/calendar.svelte.js";
   import AdventureArchive from "./AdventureArchive.svelte";
   import AdventureStart from "./AdventureStart.svelte";
+  import AdventureEntryChoices from "./AdventureEntryChoices.svelte";
   import AdventureFocusPlay from "./AdventureFocusPlay.svelte";
   import { adventureContextService } from "#lib/services/adventure/adventure-context-service.js";
   import { adventureSessionRepository } from "#lib/services/adventure/adventure-session-repository.js";
@@ -11,10 +12,16 @@
   import type { ProvisionalFact } from "@codex/adventure-engine";
   import { rumourAdventureHandoff } from "#lib/stores/oracle/rumour-adventure-handoff.svelte.js";
   import { characterChoices } from "#lib/services/solo-characters.js";
+  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+  import { vault } from "#lib/stores/vault.svelte.js";
+  import { isVaultReadyForGenerators } from "#lib/stores/vault/readiness.js";
 
   let vaultId = $derived(oracle.vault.activeVaultId ?? "default");
   const selectedRumour = $derived(rumourAdventureHandoff.forVault(vaultId));
   const characters = $derived(characterChoices(oracle.vault.entities));
+  const canDiscover = $derived(isVaultReadyForGenerators(vault) && !vault.isGuest);
+  let startApproach = $state<"choose" | "premise">("choose");
+  let previousVaultId: string | null = null;
   let previouslyPrefilledScenario = $state<string | null>(null);
   let archivingForRumour = $state(false);
   let sessionConflictError = $state<string | null>(null);
@@ -29,6 +36,25 @@
   let startPremise = $state("");
   let startCharacterName = $state("");
   let startCharacterDescription = $state("");
+
+  // Never carry an unsaved character or premise draft between vaults.
+  $effect(() => {
+    const currentVaultId = vaultId;
+    if (previousVaultId !== null && previousVaultId !== currentVaultId) {
+      startApproach = "choose";
+      startTitle = "";
+      startPremise = "";
+      startCharacterName = "";
+      startCharacterDescription = "";
+    }
+    previousVaultId = currentVaultId;
+  });
+
+  function discoverAdventure(): void {
+    if (!canDiscover) return;
+    modalUIStore.openGeneratorWorkflow("rumour");
+  }
+
   $effect(() => {
     if (!selectedRumour) {
       previouslyPrefilledScenario = null;
@@ -61,6 +87,7 @@
 
   function cancelRumour(): void {
     rumourAdventureHandoff.clear();
+    startApproach = "choose";
     startTitle = "";
     startPremise = "";
   }
@@ -229,18 +256,37 @@
       />
     {/key}
   {:else}
-    <AdventureStart
-      manager={oracle.adventure}
-      {vaultId}
-      bind:title={startTitle}
-      bind:premise={startPremise}
-      bind:characterName={startCharacterName}
-      bind:characterDescription={startCharacterDescription}
-      {characters}
-      scenarioSeed={selectedRumour?.scenario}
-      onScenarioStarted={() => rumourAdventureHandoff.clear()}
-      onCancelScenario={cancelRumour}
-    />
+    {#if !selectedRumour && startApproach === "choose"}
+      <AdventureEntryChoices
+        {canDiscover}
+        onDiscover={discoverAdventure}
+        onOwnPremise={() => (startApproach = "premise")}
+      />
+    {:else}
+      {#if !selectedRumour}
+        <button
+          type="button"
+          data-testid="adventure-change-start"
+          class="flex min-h-11 w-fit items-center gap-2 rounded-md px-3 text-sm text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
+          onclick={() => (startApproach = "choose")}
+        >
+          <span class="icon-[lucide--arrow-left] h-4 w-4" aria-hidden="true"></span>
+          Change starting approach
+        </button>
+      {/if}
+      <AdventureStart
+        manager={oracle.adventure}
+        {vaultId}
+        bind:title={startTitle}
+        bind:premise={startPremise}
+        bind:characterName={startCharacterName}
+        bind:characterDescription={startCharacterDescription}
+        {characters}
+        scenarioSeed={selectedRumour?.scenario}
+        onScenarioStarted={() => rumourAdventureHandoff.clear()}
+        onCancelScenario={cancelRumour}
+      />
+    {/if}
     <AdventureArchive
       repository={adventureSessionRepository}
       {vaultId}
