@@ -125,4 +125,26 @@ describe("TableSelection", () => {
     expect(selection.allSelected).toBe(false);
     expect(selection.selectedIds.size).toBe(0);
   });
+
+  it("shares one row scan across selection reads until inputs change", () => {
+    let rows = $state(["a", "b", "c"].map((id) => ({ id }) as Entity));
+    const getRows = vi.fn(() => rows);
+    const cleanup = $effect.root(() => {
+      const selection = new TableSelection(getRows);
+      selection.toggleRow("a");
+      getRows.mockClear();
+      void selection.selectedVisible;
+      void selection.someSelected;
+      void selection.selectedVisible;
+      void selection.allSelected;
+      void selection.someSelected;
+      // selectedVisible and allSelected each scan once; repeats are cached.
+      expect(getRows).toHaveBeenCalledTimes(2);
+
+      rows = [...rows, { id: "d" } as Entity];
+      expect(selection.selectedVisible.map((e) => e.id)).toEqual(["a"]);
+      expect(selection.allSelected).toBe(false);
+    });
+    cleanup();
+  });
 });

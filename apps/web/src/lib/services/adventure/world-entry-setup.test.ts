@@ -5,6 +5,7 @@ import {
   validateWorldEntrySetup,
   worldEntryCharacter,
   worldEntryLocationName,
+  visibleWorldEntryChoices,
   worldEntryTitle,
 } from "./world-entry-setup";
 
@@ -81,5 +82,33 @@ describe("World Entry setup", () => {
       validateWorldEntrySetup(draft, characters, locations, DEFAULT_CALENDAR),
     ).toEqual([]);
     expect(draft.at).toEqual({ year: 618, precision: "year" });
+  });
+
+  it("keeps the current selection visible when the picker is truncated", () => {
+    const rows = Array.from({ length: 200 }, (_, i) => ({
+      id: "c-" + i,
+      name: "Character " + i,
+    }));
+    // Selected through search: far beyond the first 80 rows.
+    const cleared = visibleWorldEntryChoices(rows, "c-150", "");
+    expect(cleared).toHaveLength(80);
+    expect(cleared[0]?.id).toBe("c-150");
+    const searched = visibleWorldEntryChoices(rows, "c-150", "Character 2");
+    expect(searched[0]?.id).toBe("c-150");
+    expect(
+      searched.slice(1).every((row) => row.name.includes("Character 2")),
+    ).toBe(true);
+    expect(new Set(cleared.map((row) => row.id)).size).toBe(80);
+  });
+
+  it("lists matches only when nothing is selected", () => {
+    const rows = [
+      { id: "a", name: "Alder" },
+      { id: "b", name: "Birch" },
+    ];
+    expect(visibleWorldEntryChoices(rows, "", "bir")).toEqual([
+      { id: "b", name: "Birch" },
+    ]);
+    expect(visibleWorldEntryChoices(rows, "gone", "")).toEqual(rows);
   });
 });

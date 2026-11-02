@@ -121,4 +121,89 @@ describe("selectRumourForPlay", () => {
       ).index,
     ).toBe(2);
   });
+
+  /** The raw field value under a numbered heading, read independently. */
+  function fieldUnder(
+    markdown: string,
+    heading: string,
+    label: string,
+  ): string {
+    const start = markdown.indexOf(heading + "\n");
+    expect(start).toBeGreaterThanOrEqual(0);
+    const rest = markdown.slice(start + heading.length + 1);
+    const block = rest.split(/\n### /)[0]!;
+    const line = block
+      .split("\n")
+      .find((row) => row.startsWith("- **" + label + "**:"));
+    return line!.replace("- **" + label + "**:", "").trim();
+  }
+
+  it("pairs each player entry with the GM note under the same number", () => {
+    for (let index = 1; index <= 6; index += 1) {
+      const selected = selectRumourForPlay(local, index);
+      const player = "### Rumour " + index;
+      const gm = "### GM Notes — Rumour " + index;
+      expect(selected.playerVisible).toEqual({
+        rumour: fieldUnder(local.content, player, "Rumour"),
+        lead: fieldUnder(local.content, player, "Lead"),
+        source: fieldUnder(local.content, player, "Source"),
+      });
+      expect(selected.gmOnly).toEqual({
+        reality: fieldUnder(local.lore, gm, "Reality"),
+        whatsActuallyHappening: fieldUnder(
+          local.lore,
+          gm,
+          "What's Actually Happening",
+        ),
+        ifInvestigated: fieldUnder(local.lore, gm, "If Investigated"),
+      });
+    }
+  });
+
+  function swapLines(markdown: string, heading: string, a: string, b: string) {
+    const start = markdown.indexOf(heading + "\n");
+    const end = markdown.indexOf("\n### ", start + 1);
+    const block = markdown.slice(start, end === -1 ? undefined : end);
+    const lines = block.split("\n");
+    const ia = lines.findIndex((line) => line.startsWith("- **" + a + "**:"));
+    const ib = lines.findIndex((line) => line.startsWith("- **" + b + "**:"));
+    [lines[ia], lines[ib]] = [lines[ib]!, lines[ia]!];
+    return markdown.replace(block, lines.join("\n"));
+  }
+
+  it("rejects fields that appear out of order on either side", () => {
+    const content = swapLines(local.content, "### Rumour 1", "Rumour", "Lead");
+    expect(() => selectRumourForPlay({ ...local, content }, 1)).toThrow(
+      new RumourSelectionError("malformed-content"),
+    );
+    const lore = swapLines(
+      local.lore,
+      "### GM Notes — Rumour 1",
+      "Reality",
+      "What's Actually Happening",
+    );
+    expect(() => selectRumourForPlay({ ...local, lore }, 1)).toThrow(
+      new RumourSelectionError("malformed-lore"),
+    );
+  });
+
+  it("rejects a batch whose unselected entry is malformed", () => {
+    const missingLead = local.content.replace(
+      /(### Rumour 3\n(?:.*\n)*?)- \*\*Lead\*\*:[^\n]*\n/,
+      "$1",
+    );
+    expect(missingLead).not.toBe(local.content);
+    expect(() =>
+      selectRumourForPlay({ ...local, content: missingLead }, 1),
+    ).toThrow(new RumourSelectionError("malformed-content"));
+
+    const badReality = local.lore.replace(
+      /(### GM Notes — Rumour 5\n- \*\*Reality\*\*:)[^\n]*/,
+      "$1 probably",
+    );
+    expect(badReality).not.toBe(local.lore);
+    expect(() =>
+      selectRumourForPlay({ ...local, lore: badReality }, 1),
+    ).toThrow(new RumourSelectionError("malformed-lore"));
+  });
 });

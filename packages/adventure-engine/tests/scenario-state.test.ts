@@ -197,4 +197,80 @@ describe("Adventure scenario state", () => {
       }),
     ).toThrow();
   });
+
+  it("rejects a whitespace variant of a committed event id on replay", () => {
+    const first = commitScenarioEvent(
+      exampleSession(),
+      {
+        id: " event-1 ",
+        kind: "discovery",
+        visibility: "player",
+        text: "Fresh prints.",
+        at,
+      },
+      "open",
+      1,
+    );
+    expect(first.ok).toBe(true);
+    if (!first.ok) return;
+    expect(first.session.scenarioState?.events[0]?.id).toBe("event-1");
+    for (const replayId of [" event-1 ", "event-1", "event-1  "]) {
+      expect(
+        commitScenarioEvent(
+          first.session,
+          {
+            id: replayId,
+            kind: "discovery",
+            visibility: "player",
+            text: "Fresh prints.",
+            at,
+          },
+          "open",
+          2,
+        ),
+      ).toEqual({ ok: false, reason: "duplicate-event" });
+    }
+  });
+
+  it("reports a field-limit failure as an invalid event, not a full budget", () => {
+    expect(
+      commitScenarioEvent(
+        exampleSession(),
+        {
+          id: "event-long",
+          kind: "discovery",
+          visibility: "player",
+          text: "x".repeat(601),
+          at,
+        },
+        "open",
+        1,
+      ),
+    ).toEqual({ ok: false, reason: "invalid-event" });
+  });
+
+  it("reports a full event history as state-budget-exceeded", () => {
+    const full = createScenarioState(seed);
+    full.events = Array.from({ length: 100 }, (_, i) => ({
+      id: "event-" + i,
+      kind: "discovery" as const,
+      visibility: "player" as const,
+      text: "Clue",
+      at,
+    }));
+    expect(
+      commitScenarioEvent(
+        exampleSession(full),
+        {
+          id: "event-100",
+          kind: "discovery",
+          visibility: "player",
+          text: "One more clue",
+          at,
+        },
+        "open",
+        1,
+      ),
+    ).toEqual({ ok: false, reason: "state-budget-exceeded" });
+  });
 });

@@ -105,22 +105,31 @@ export class AssetManager {
       return Promise.resolve(cleanPath);
     }
 
-    // Check if already resolving this path
-    const ongoing = this.resolving.get(cleanPath);
-    if (ongoing) {
-      return ongoing;
-    }
-
-    // Ref-counting cache check
+    // Ref-counting cache check first: a URL published just before the
+    // in-flight entry is removed must still be retained by this consumer.
     const existing = this.urlCache.retain(cleanPath);
     if (existing !== undefined) return Promise.resolve(existing);
 
+    // Joining an in-flight resolution: take our own reference once it is
+    // published, so the first consumer's release cannot revoke our URL.
+    const ongoing = this.resolving.get(cleanPath);
+    if (ongoing) {
+      return ongoing.then((url) => this.urlCache.retain(cleanPath) ?? url);
+    }
+
+    const generation = this.generation;
     const resolution = this.resolveUncachedImage(
       vaultHandle,
       cleanPath,
+      generation,
       fileFetcher,
       fallbackHandle,
-    ).finally(() => this.resolving.delete(cleanPath));
+    ).finally(() => {
+      // Never delete a newer request's entry (e.g. after clear()).
+      if (this.resolving.get(cleanPath) === resolution) {
+        this.resolving.delete(cleanPath);
+      }
+    });
     this.resolving.set(cleanPath, resolution);
     return resolution;
   }
@@ -128,11 +137,12 @@ export class AssetManager {
   private async resolveUncachedImage(
     vaultHandle: FileSystemDirectoryHandle | undefined,
     path: string,
+    generation: number,
     fileFetcher?: (path: string) => Promise<Blob>,
     fallbackHandle?: FileSystemDirectoryHandle,
   ): Promise<string> {
     if (EXTERNAL_URL.test(path))
-      return this.resolveExternalImage(vaultHandle, path);
+      return this.resolveExternalImage(vaultHandle, path, generation);
     const url = await this.resolveLocalImage(
       vaultHandle,
       path,
@@ -140,34 +150,52 @@ export class AssetManager {
       fallbackHandle,
     );
     if (url === undefined) return "";
-    return this.cacheResolvedImage(path, url);
+    return this.cacheResolvedImage(path, url, generation);
   }
 
   private async resolveExternalImage(
     vaultHandle: FileSystemDirectoryHandle | undefined,
     path: string,
+    generation: number,
   ): Promise<string> {
     if (this.network.isDeadExternal(path)) return "";
-    if (!vaultHandle) return this.resolveTransientExternal(path);
+    if (!vaultHandle) return this.resolveTransientExternal(path, generation);
     const blob = await this.externalImages.readOrFetchExternal(
       vaultHandle,
       path,
     );
     if (!blob) return this.externalFallback(path);
-    return this.cacheResolvedImage(path, URL.createObjectURL(blob));
+    return this.cacheResolvedImage(path, URL.createObjectURL(blob), generation);
   }
 
-  private async resolveTransientExternal(path: string): Promise<string> {
+  private async resolveTransientExternal(
+    path: string,
+    generation: number,
+  ): Promise<string> {
     try {
       const blob = await this.network.fetchExternal(path);
       if (!blob) return this.externalFallback(path);
-      return this.urlCache.publish(path, URL.createObjectURL(blob));
+      return this.cacheResolvedImage(
+        path,
+        URL.createObjectURL(blob),
+        generation,
+      );
     } catch {
       return this.externalFallback(path);
     }
   }
 
-  private cacheResolvedImage(path: string, url: string): string {
+  private cacheResolvedImage(
+    path: string,
+    url: string,
+    generation: number,
+  ): string {
+    // The cache was cleared (vault switch) while this resolved: never publish
+    // the old vault's image into the new vault's path-keyed cache.
+    if (generation !== this.generation) {
+      if (url.startsWith("blob:")) URL.revokeObjectURL(url);
+      return "";
+    }
     if (url && url.startsWith("blob:")) {
       const cached = this.urlCache.reuse(path, url);
       if (cached !== undefined) return cached;

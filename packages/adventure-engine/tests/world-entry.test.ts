@@ -98,4 +98,30 @@ describe("world entry session and GM contract", () => {
     expect(prompt.behavior).toContain("Begin with open exploration");
     expect(JSON.parse(prompt.state).worldEntry.at.year).toBe(618);
   });
+
+  it("accepts custom-calendar dates beyond Gregorian month and day bounds", () => {
+    const raw = rawSession();
+    raw.worldEntry.at = {
+      year: 618,
+      // @ts-expect-error -- widening the fixture's literal date shape
+      month: 13,
+      day: 400,
+      precision: "day",
+    };
+    const session = parseAdventureSession(raw);
+    expect(session.worldEntry?.at).toMatchObject({ month: 13, day: 400 });
+  });
+
+  it("still rejects non-positive and fractional date parts", () => {
+    for (const at of [
+      { year: 618, month: 0 },
+      { year: 618, day: -1 },
+      { year: 618, day: 1.5 },
+    ]) {
+      const raw = rawSession();
+      // @ts-expect-error -- deliberately malformed date
+      raw.worldEntry.at = at;
+      expect(() => parseAdventureSession(raw)).toThrow();
+    }
+  });
 });

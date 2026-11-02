@@ -1,6 +1,15 @@
 import type { Entity } from "schema";
 import * as bulkActions from "#lib/components/table/table-bulk-actions.js";
 
+type BulkActions = Pick<
+  typeof bulkActions,
+  | "handleManageLabels"
+  | "handleChangeType"
+  | "handleDeleteSelected"
+  | "openBulkReport"
+  | "openBulkLabels"
+>;
+
 /** Selection and context-menu state for the currently visible table rows. */
 export class TableSelection {
   selectedIds = $state<Set<string>>(new Set());
@@ -9,29 +18,25 @@ export class TableSelection {
     null,
   );
   private isCommitting = $state(false);
+  private readonly getRows: () => Entity[];
+  private readonly actions: BulkActions;
 
-  constructor(
-    private readonly getRows: () => Entity[],
-    private readonly actions: Pick<
-      typeof bulkActions,
-      | "handleManageLabels"
-      | "handleChangeType"
-      | "handleDeleteSelected"
-      | "openBulkReport"
-      | "openBulkLabels"
-    > = bulkActions,
-  ) {}
-
-  get selectedVisible() {
-    return this.getRows().filter((e) => this.selectedIds.has(e.id));
+  constructor(getRows: () => Entity[], actions: BulkActions = bulkActions) {
+    this.getRows = getRows;
+    this.actions = actions;
   }
-  get allSelected() {
+
+  // Memoised: every consumer shares one row scan until rows or selection change.
+  readonly selectedVisible = $derived.by(() =>
+    this.getRows().filter((e) => this.selectedIds.has(e.id)),
+  );
+  readonly allSelected = $derived.by(() => {
     const rows = this.getRows();
     return rows.length > 0 && rows.every((e) => this.selectedIds.has(e.id));
-  }
-  get someSelected() {
-    return this.selectedVisible.length > 0 && !this.allSelected;
-  }
+  });
+  readonly someSelected = $derived(
+    this.selectedVisible.length > 0 && !this.allSelected,
+  );
 
   toggleRow = (id: string, options?: { shift?: boolean; ctrl?: boolean }) => {
     const next = new Set(this.selectedIds);

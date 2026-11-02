@@ -59,6 +59,14 @@ export class CampaignGeneration {
     this.draft = null;
   }
 
+  /** Show a previously generated draft again, without re-publishing it. */
+  restoreDraft(draft: GeneratedDraft) {
+    this.cancel();
+    this.draft = draft;
+    this.errorMsg = null;
+    this.stage = "review";
+  }
+
   private receiveDraft(draft: GeneratedDraft) {
     // A final draft supersedes non-terminal errors (the engine falls back locally).
     this.draft = draft;

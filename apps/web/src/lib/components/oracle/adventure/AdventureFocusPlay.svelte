@@ -1,5 +1,7 @@
 <script lang="ts">
   import { tick } from "svelte";
+  import { KeyboardInset } from "#lib/services/help-assistant/keyboard-inset.svelte.js";
+  import { bodyPortal, containTab } from "./adventure-phone-surface";
   import type { AdventureManager } from "#lib/stores/oracle/adventure-manager.svelte.js";
   import type { AdventureSessionRepository } from "#lib/services/adventure/adventure-session-repository.js";
   import type { ProvisionalFact } from "@codex/adventure-engine";
@@ -36,6 +38,50 @@
     onResume: (sessionId: string) => Promise<void>;
     onResumeArchived: (sessionId: string) => Promise<void>;
   } = $props();
+
+  // Matches the surface's own `sm:` breakpoint for full-screen phone play.
+  let phone = $state(false);
+  $effect(() => {
+    const query = window.matchMedia?.("(max-width: 639px)");
+    if (!query) return;
+    phone = query.matches;
+    const onChange = (event: MediaQueryListEvent) => (phone = event.matches);
+    query.addEventListener?.("change", onChange);
+    return () => query.removeEventListener?.("change", onChange);
+  });
+  // On Android Chrome and iOS Safari the keyboard overlays the page and
+  // `100dvh` does not shrink, so pin the surface to the visible viewport.
+  const keyboard = new KeyboardInset();
+  $effect(() => {
+    if (!phone) return;
+    return keyboard.start();
+  });
+  const keyboardStyle = $derived(phone ? keyboard.visibleStyle : undefined);
+
+  // Phone play covers the app chrome: move focus in, keep it in, and give it
+  // back on exit.
+  $effect(() => {
+    if (!phone || !focusElement) return;
+    const surface = focusElement;
+    const previous = document.activeElement;
+    // Wait for the body portal to move the surface: re-parenting a focused
+    // element drops its focus.
+    void tick().then(() => {
+      if (phone && !surface.contains(document.activeElement)) {
+        surface.querySelector<HTMLElement>("button")?.focus();
+      }
+    });
+    return () => {
+      if (
+        previous instanceof HTMLElement &&
+        previous.isConnected &&
+        (surface.contains(document.activeElement) ||
+          document.activeElement === document.body)
+      ) {
+        previous.focus();
+      }
+    };
+  });
 
   let utilitiesOpen = $state(false);
   let toolsButton = $state<HTMLButtonElement>();
@@ -115,9 +161,16 @@
 
 <section
   bind:this={focusElement}
+  use:bodyPortal={phone}
   class="fixed inset-0 z-[100] flex h-[100dvh] min-h-0 w-full flex-col overflow-hidden bg-theme-bg sm:relative sm:inset-auto sm:z-auto sm:h-auto sm:min-h-[65vh] sm:flex-1"
+  style={keyboardStyle}
+  role={phone ? "dialog" : undefined}
+  aria-modal={phone ? "true" : undefined}
   aria-labelledby="adventure-heading"
   data-testid="adventure-play-surface"
+  onkeydown={(event) => {
+    if (phone && focusElement) containTab(event, focusElement);
+  }}
 >
   <header
     class="flex shrink-0 items-center gap-2 border-b border-theme-border bg-theme-surface px-3 py-2 pt-[calc(0.5rem+env(safe-area-inset-top))] sm:flex-wrap sm:justify-between sm:gap-3 sm:px-4 sm:py-3"
@@ -194,8 +247,8 @@
   <div class="flex min-h-0 flex-1 flex-col">
     <!-- fallow-ignore-next-line css-broken-reference -->
     <main
-      bind:this={playViewport}
       class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-3 sm:p-4 lg:p-6"
+      bind:this={playViewport}
       data-testid="adventure-play-viewport"
     >
       <div class="mx-auto max-w-3xl space-y-4">
@@ -225,8 +278,8 @@
     ></button>
     <!-- fallow-ignore-next-line css-broken-reference -->
     <aside
-      id="adventure-utilities"
       class="absolute inset-x-0 bottom-0 z-30 max-h-[80%] overflow-y-auto rounded-t-xl border-t border-theme-border bg-theme-surface p-4 shadow-2xl"
+      id="adventure-utilities"
       aria-label="Adventure tools"
     >
       <div class="mb-3 flex items-center justify-between gap-3">

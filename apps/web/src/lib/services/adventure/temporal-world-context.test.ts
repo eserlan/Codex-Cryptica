@@ -236,4 +236,209 @@ describe("resolveTemporalWorldContext", () => {
       "After the Fall",
     );
   });
+
+  it("keeps a selected future location GM-only and a selected contradictory one unresolved", () => {
+    const futureVillage = entity("future-village", "location", {
+      start_date: year(621),
+    });
+    const future = resolve(year(618), {
+      entities: [...records, futureVillage],
+      locationId: "future-village",
+    });
+    expect(
+      future.gmOnly.find((r) => r.id === "future-village")?.applicability,
+    ).toBe("future");
+    expect(future.playerSafe.map((r) => r.id)).not.toContain("future-village");
+    expect(future.unresolved.map((r) => r.id)).not.toContain("future-village");
+
+    const brokenVillage = entity("broken-village", "location", {
+      start_date: year(625),
+      end_date: year(610),
+    });
+    const contradictory = resolve(year(618), {
+      entities: [...records, brokenVillage],
+      locationId: "broken-village",
+    });
+    expect(contradictory.playerSafe.map((r) => r.id)).not.toContain(
+      "broken-village",
+    );
+    expect(
+      contradictory.unresolved.find((r) => r.id === "broken-village")
+        ?.applicability,
+    ).toBe("contradictory");
+  });
+
+  it("keeps undated biography prose out of the player-safe layer", () => {
+    const king = entity("king", "character", {
+      start_date: year(600),
+      end_date: year(620),
+      content: "A stern ruler. He dies in 620 after the siege.",
+    });
+    const result = resolve(year(618), {
+      entities: records.map((r) => (r.id === "king" ? king : r)),
+    });
+    const safe = result.playerSafe.find((r) => r.id === "king");
+    expect(safe?.applicability).toBe("established");
+    expect(JSON.stringify(result.playerSafe)).not.toContain("dies in 620");
+    expect(safe?.content).toContain("king");
+    // Oracle (GM) still receives the full source text.
+    expect(result.gmOnly.find((r) => r.id === "king")?.content).toContain(
+      "dies in 620",
+    );
+  });
+
+  it("does not reach established records only through a withheld future record", () => {
+    const entities = [
+      entity("pc", "character", {}),
+      entity("village", "location", {
+        connections: [link("treaty", "signed at")],
+      }),
+      entity("treaty", "event", {
+        date: year(621),
+        connections: [link("envoy", "negotiated by")],
+      }),
+      entity("envoy", "character", { start_date: year(590) }),
+    ];
+    const result = resolveTemporalWorldContext({
+      entities,
+      calendar,
+      characterId: "pc",
+      locationId: "village",
+      at: year(618),
+    });
+    expect(result.gmOnly.map((r) => r.id)).toContain("envoy");
+    expect(result.playerSafe.map((r) => r.id)).not.toContain("envoy");
+    expect(result.unresolved.map((r) => r.id)).not.toContain("envoy");
+
+    // Through an established intermediary, the same record is reachable.
+    const viaPast = entities.map((r) =>
+      r.id === "treaty" ? { ...r, date: year(610) } : r,
+    );
+    const reachable = resolveTemporalWorldContext({
+      entities: viaPast,
+      calendar,
+      characterId: "pc",
+      locationId: "village",
+      at: year(618),
+    });
+    expect(reachable.playerSafe.map((r) => r.id)).toContain("envoy");
+  });
+
+  it("uses a placed anchor's day instead of widening it to the whole year", () => {
+    const anchored = {
+      ...DEFAULT_CALENDAR,
+      revision: 1,
+      anchors: [
+        {
+          id: "midsummer",
+          name: "Midsummer",
+          afterMonthId: "june",
+          afterDay: 30,
+        },
+      ],
+    };
+    const festival = entity("festival", "event", {
+      date: {
+        precision: "anchor",
+        year: 618,
+        anchorId: "midsummer",
+        calendarRevision: 1,
+      },
+      connections: [link("capital", "held in")],
+    } as Partial<Entity>);
+    const result = resolveTemporalWorldContext({
+      entities: [...records, festival],
+      calendar: anchored,
+      characterId: "guard",
+      locationId: "capital",
+      at: {
+        precision: "day",
+        year: 618,
+        unitId: "december",
+        day: 1,
+        calendarRevision: 1,
+      },
+    });
+    expect(result.gmOnly.find((r) => r.id === "festival")?.applicability).toBe(
+      "historical",
+    );
+
+    const before = resolveTemporalWorldContext({
+      entities: [...records, festival],
+      calendar: anchored,
+      characterId: "guard",
+      locationId: "capital",
+      at: {
+        precision: "day",
+        year: 618,
+        unitId: "march",
+        day: 1,
+        calendarRevision: 1,
+      },
+    });
+    expect(before.gmOnly.find((r) => r.id === "festival")?.applicability).toBe(
+      "future",
+    );
+  });
+
+  it("rejects a target date saved under an older calendar revision", () => {
+    expect(() =>
+      resolveTemporalWorldContext({
+        entities: records,
+        calendar: { ...DEFAULT_CALENDAR, revision: 2 },
+        characterId: "guard",
+        locationId: "capital",
+        at: { precision: "year", year: 618, calendarRevision: 1 },
+      }),
+    ).toThrow("temporal-world-invalid-date");
+  });
+
+  it("keeps source dates from an older calendar revision unresolved", () => {
+    const stale = entity("stale", "event", {
+      date: { precision: "year", year: 610, calendarRevision: 1 },
+      connections: [link("capital", "happened in")],
+    } as Partial<Entity>);
+    const result = resolveTemporalWorldContext({
+      entities: [...records, stale],
+      calendar: { ...DEFAULT_CALENDAR, revision: 2 },
+      characterId: "guard",
+      locationId: "capital",
+      at: { precision: "year", year: 618, calendarRevision: 2 },
+    });
+    expect(result.playerSafe.map((r) => r.id)).not.toContain("stale");
+    expect(result.unresolved.map((r) => r.id)).toContain("stale");
+  });
+
+  it("classifies dates with only one canonical root", () => {
+    const result = resolve(year(618), { characterId: undefined });
+    expect(result.characterId).toBeUndefined();
+    expect(result.gmOnly.find((r) => r.id === "king")?.applicability).toBe(
+      "established",
+    );
+    expect(result.gmOnly.find((r) => r.id === "death")?.applicability).toBe(
+      "future",
+    );
+    expect(() =>
+      resolve(year(618), { characterId: undefined, locationId: undefined }),
+    ).toThrow("temporal-world-no-canonical-root");
+  });
+
+  it("stays fast for a hub with thousands of direct neighbours", () => {
+    const spokes = Array.from({ length: 3_000 }, (_, i) =>
+      entity("spoke-" + i, "note", { connections: [link("hub", "near")] }),
+    );
+    const hub = entity("hub", "location", {
+      connections: spokes.map((spoke) => link(spoke.id, "near")),
+    });
+    const started = performance.now();
+    const result = resolveTemporalWorldContext({
+      entities: [entity("pc", "character"), hub, ...spokes],
+      calendar,
+      characterId: "pc",
+      locationId: "hub",
+      at: year(618),
+    });
+    expect(performance.now() - started).toBeLessThan(1_000);
+    expect(result.omitted).toBeGreaterThan(0);
+  });
 });

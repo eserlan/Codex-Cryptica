@@ -5,7 +5,7 @@ import type {
   ScenarioState,
   ScenarioStatus,
 } from "./types";
-import { parseAdventureSession } from "./schemas";
+import { parseAdventureSession, scenarioEventSchema } from "./schemas";
 
 /**
  * A scenario is a situation, not a quest. The player may leave, resolve it
@@ -75,25 +75,35 @@ export function commitScenarioEvent(
   if (session.status !== "active" || session.scenarioState.status !== "open") {
     return { ok: false, reason: "invalid-transition" };
   }
-  if (session.scenarioState.events.some((item) => item.id === event.id)) {
-    return { ok: false, reason: "duplicate-event" };
-  }
   if (
     !["open", "resolved", "abandoned"].includes(nextStatus) ||
-    !Number.isFinite(Date.parse(event.at)) ||
-    !event.id.trim() ||
-    !event.text.trim()
+    !Number.isFinite(Date.parse(event.at))
   ) {
     return { ok: false, reason: "invalid-event" };
   }
+  // Validate the event on its own first, so a field-limit failure is reported
+  // as an invalid event rather than as an exhausted state budget. The parsed
+  // event is canonical (trimmed IDs), so duplicates are compared as persisted.
+  const parsedEvent = scenarioEventSchema.safeParse(event);
+  if (!parsedEvent.success || !parsedEvent.data.text.trim()) {
+    return { ok: false, reason: "invalid-event" };
+  }
+  const canonicalEvent = parsedEvent.data as ScenarioEvent;
+  if (
+    session.scenarioState.events.some(
+      (item) => item.id.trim() === canonicalEvent.id,
+    )
+  ) {
+    return { ok: false, reason: "duplicate-event" };
+  }
   const candidate = structuredClone(session);
-  candidate.scenarioState!.events.push(structuredClone(event));
+  candidate.scenarioState!.events.push(structuredClone(canonicalEvent));
   candidate.scenarioState!.status = nextStatus;
   candidate.revision += 1;
-  candidate.updatedAt = event.at;
-  candidate.lastPlayedAt = event.at;
-  // Parsing validates size/bounds and the strict scenario schema, without
-  // silently truncating history or ever committing a partially valid event.
+  candidate.updatedAt = canonicalEvent.at;
+  candidate.lastPlayedAt = canonicalEvent.at;
+  // The event itself is valid, so a parse failure here means the bounded
+  // event history or serialised state budget is full. Nothing is truncated.
   try {
     return { ok: true, session: parseAdventureSession(candidate) };
   } catch {

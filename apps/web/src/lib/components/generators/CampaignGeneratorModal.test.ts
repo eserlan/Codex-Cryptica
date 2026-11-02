@@ -487,4 +487,86 @@ describe("CampaignGeneratorModal", () => {
       ).toBeTruthy();
     });
   });
+
+  describe("rumour play", () => {
+    async function rumourDraft() {
+      const { generateRumourLocal } =
+        await vi.importActual<typeof import("generator-engine")>(
+          "generator-engine",
+        );
+      let seed = 11;
+      const output = generateRumourLocal({}, () => {
+        seed = (seed * 1664525 + 1013904223) >>> 0;
+        return seed / 0x100000000;
+      });
+      return {
+        title: output.title,
+        summary: output.summary ?? "",
+        content: output.content,
+        lore: output.lore,
+        labels: ["rumour"],
+        entityType: "note",
+        sourceGeneratorId: "rumour" as const,
+        templateApplied: false,
+      };
+    }
+
+    it("hides streamed rumour GM notes even outside a solo session", async () => {
+      store._workflow.generatorId = "rumour";
+      streamMock.events = [
+        { type: "field", key: "title", value: "Word Around Town" },
+        { type: "field", key: "lore", value: "The miller hides the grain." },
+      ];
+      streamMock.waitForRelease = new Promise<void>((resolve) => {
+        streamMock.release = resolve;
+      });
+      render(CampaignGeneratorModal);
+      await fireEvent.click(screen.getByRole("button", { name: "Generate" }));
+      await screen.findByTestId("generator-stream-preview");
+      expect(screen.queryByText("The miller hides the grain.")).toBeNull();
+      expect(screen.getByText("Word Around Town")).toBeTruthy();
+      streamMock.release?.();
+    });
+
+    it("disables rumour play and explains why while AI Disabled is on", async () => {
+      const { discoveryPolicyStore } =
+        await import("#lib/stores/ui/discovery-policy.svelte.js");
+      discoveryPolicyStore.aiDisabled = true;
+      try {
+        store._workflow.generatorId = "rumour";
+        Object.assign(draftOverrides, await rumourDraft());
+        render(CampaignGeneratorModal);
+        await fireEvent.click(screen.getByRole("button", { name: "Generate" }));
+        await screen.findByTestId("rumour-play-actions");
+        expect(screen.getByTestId("rumour-play-ai-disabled")).toBeTruthy();
+        for (const button of screen.getAllByRole("button", {
+          name: "Play with Oracle",
+        })) {
+          expect((button as HTMLButtonElement).disabled).toBe(true);
+        }
+      } finally {
+        discoveryPolicyStore.aiDisabled = false;
+      }
+    });
+
+    it("reopens on the kept rumour batch after a cancelled start", async () => {
+      const { rumourAdventureHandoff } =
+        await import("#lib/stores/oracle/rumour-adventure-handoff.svelte.js");
+      (vaultMock as any).activeVaultId = "vault-1";
+      try {
+        const kept = await rumourDraft();
+        rumourAdventureHandoff.prepare("vault-1", {} as any, {} as any, kept);
+        expect(rumourAdventureHandoff.cancel("vault-1")).toBe(true);
+        store._workflow.generatorId = "rumour";
+        render(CampaignGeneratorModal);
+        // Straight to review on the same batch, without generating again.
+        expect(await screen.findByTestId("rumour-play-actions")).toBeTruthy();
+        expect(screen.getByDisplayValue(kept.title)).toBeTruthy();
+        expect(rumourAdventureHandoff.takeSourceDraft("vault-1")).toBeNull();
+      } finally {
+        delete (vaultMock as any).activeVaultId;
+        rumourAdventureHandoff.clear();
+      }
+    });
+  });
 });

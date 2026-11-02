@@ -80,4 +80,30 @@ describe("RumourPlayActions", () => {
     ).toBeNull();
     expect(onplay).not.toHaveBeenCalled();
   });
+
+  it("uses the readable chrome text token for the 12px play labels", () => {
+    render(RumourPlayActions, {
+      props: { draft: draft(), onplay: vi.fn(async () => undefined) },
+    });
+    for (const button of screen.getAllByRole("button", {
+      name: "Play with Oracle",
+    })) {
+      // The accent (#c8973a on white, 2.64:1) is decoration only.
+      expect(button.className).toContain("text-chrome-text");
+      expect(button.className).not.toContain("text-chrome-accent");
+    }
+  });
+
+  it("does not call onplay while AI Disabled is on", async () => {
+    const onplay = vi.fn(async () => undefined);
+    render(RumourPlayActions, {
+      props: { draft: draft(), onplay, aiDisabled: true },
+    });
+    const [first] = screen.getAllByRole("button", { name: "Play with Oracle" });
+    await fireEvent.click(first!);
+    expect(onplay).not.toHaveBeenCalled();
+    expect(screen.getByTestId("rumour-play-ai-disabled").textContent).toMatch(
+      /AI Disabled/,
+    );
+  });
 });

@@ -264,7 +264,7 @@ const scenarioGMOnlySchema = z
   })
   .strict();
 
-const scenarioEventSchema = z
+export const scenarioEventSchema = z
   .object({
     id,
     kind: z.enum(["discovery", "consequence", "status-change"]),
@@ -300,8 +300,10 @@ const worldEntrySchema = z
     at: z
       .object({
         year: z.number().int().finite(),
-        month: z.number().int().min(1).max(12).optional(),
-        day: z.number().int().min(1).max(366).optional(),
+        // Calendar-specific upper bounds belong to calendarEngine.isValid():
+        // custom calendars may have 13+ months or 400-day months.
+        month: z.number().int().min(1).optional(),
+        day: z.number().int().min(1).optional(),
         precision: z.enum(["year", "unit", "day", "anchor"]).optional(),
         unitId: id.optional(),
         anchorId: id.optional(),
