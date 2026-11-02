@@ -463,11 +463,14 @@ export class AdventureManager {
   async open(
     vaultId: string,
     sessionId: string,
-    isCurrent: () => boolean = () => true,
+    isCurrent?: () => boolean,
   ): Promise<void> {
+    const request = isCurrent ? null : ++this.activeRestoreRequest;
+    const isRequestCurrent =
+      isCurrent ?? (() => request === this.activeRestoreRequest);
     const loaded = await this.deps.repository.load(vaultId, sessionId);
     if (loaded.condition === "unreadable") throw loaded.error;
-    if (!isCurrent()) return;
+    if (!isRequestCurrent()) return;
     const readOnly =
       loaded.condition === "duplicate-active-conflict" ||
       loaded.session.status === "archived";
@@ -475,15 +478,15 @@ export class AdventureManager {
       vaultId,
       sessionId,
       readOnly,
-      isCurrent,
+      isRequestCurrent,
     );
-    if (!isCurrent()) return;
+    if (!isRequestCurrent()) return;
     this.activateOpenedSession(
       loaded.session,
       readOnly || !nextLease,
       nextLease,
     );
-    await this.resumeRecordedRollIfNeeded(isCurrent);
+    await this.resumeRecordedRollIfNeeded(isRequestCurrent);
   }
 
   /**
@@ -496,8 +499,13 @@ export class AdventureManager {
     if (!session || !this.readOnly || session.status !== "active") {
       return false;
     }
-    await this.open(session.vaultId, session.id);
-    return !this.readOnly;
+    const request = ++this.activeRestoreRequest;
+    const isCurrent = () =>
+      request === this.activeRestoreRequest &&
+      this.session?.vaultId === session.vaultId &&
+      this.session?.id === session.id;
+    await this.open(session.vaultId, session.id, isCurrent);
+    return isCurrent() && !this.readOnly;
   }
 
   private async acquireOpenedSessionLease(
@@ -830,6 +838,7 @@ export class AdventureManager {
    * Progress remains safely persisted in the repository.
    */
   async close(): Promise<void> {
+    this.activeRestoreRequest += 1;
     this.generationController?.abort();
     this.generationController = null;
     if (this.session) {
