@@ -50,7 +50,9 @@ vi.mock("#lib/stores/calendar.svelte.js", () => ({
   calendarStore: { getSnapshot: () => ({ config: {} }) },
 }));
 vi.mock("#lib/stores/ui/modal-ui.svelte.js", () => ({
-  modalUIStore: { openIntentGeneratorWorkflow: env.openIntentGeneratorWorkflow },
+  modalUIStore: {
+    openIntentGeneratorWorkflow: env.openIntentGeneratorWorkflow,
+  },
 }));
 vi.mock("#lib/services/adventure/adventure-session-repository.js", () => ({
   adventureSessionRepository: {
