@@ -463,27 +463,110 @@ export class AdventureManager {
   async open(
     vaultId: string,
     sessionId: string,
-    isCurrent: () => boolean = () => true,
+    isCurrent?: () => boolean,
   ): Promise<void> {
+    const request = isCurrent ? null : ++this.activeRestoreRequest;
+    const isRequestCurrent =
+      isCurrent ?? (() => request === this.activeRestoreRequest);
     const loaded = await this.deps.repository.load(vaultId, sessionId);
     if (loaded.condition === "unreadable") throw loaded.error;
-    if (!isCurrent()) return;
+    if (!isRequestCurrent()) return;
     const readOnly =
       loaded.condition === "duplicate-active-conflict" ||
       loaded.session.status === "archived";
-    const nextLease = await this.acquireOpenedSessionLease(
+    const opened = await this.acquireAndRefreshOpenedSession(
+      vaultId,
+      sessionId,
+      loaded.session,
+      readOnly,
+      isRequestCurrent,
+    );
+    if (!opened) return;
+    if (!isRequestCurrent()) {
+      if (opened.lease) await this.deps.authority.release(opened.lease);
+      return;
+    }
+    this.activateOpenedSession(opened.session, opened.readOnly, opened.lease);
+    await this.resumeRecordedRollIfNeeded(isRequestCurrent);
+  }
+
+  private async acquireAndRefreshOpenedSession(
+    vaultId: string,
+    sessionId: string,
+    session: AdventureSession,
+    readOnly: boolean,
+    isCurrent: () => boolean,
+  ): Promise<{
+    session: AdventureSession;
+    readOnly: boolean;
+    lease: AdventureControlLease | null;
+  } | null> {
+    const lease = await this.acquireOpenedSessionLease(
       vaultId,
       sessionId,
       readOnly,
       isCurrent,
     );
-    if (!isCurrent()) return;
-    this.activateOpenedSession(
-      loaded.session,
-      readOnly || !nextLease,
-      nextLease,
-    );
-    await this.resumeRecordedRollIfNeeded(isCurrent);
+    if (!lease) return { session, readOnly: true, lease: null };
+    if (!isCurrent()) {
+      await this.deps.authority.release(lease);
+      return null;
+    }
+    return this.refreshOpenedSession(vaultId, sessionId, lease, isCurrent);
+  }
+
+  private async refreshOpenedSession(
+    vaultId: string,
+    sessionId: string,
+    lease: AdventureControlLease,
+    isCurrent: () => boolean,
+  ): Promise<{
+    session: AdventureSession;
+    readOnly: boolean;
+    lease: AdventureControlLease | null;
+  } | null> {
+    let refreshed: Awaited<ReturnType<typeof this.deps.repository.load>>;
+    try {
+      refreshed = await this.deps.repository.load(vaultId, sessionId);
+    } catch (cause) {
+      await this.deps.authority.release(lease);
+      throw cause;
+    }
+    if (!isCurrent()) {
+      await this.deps.authority.release(lease);
+      return null;
+    }
+    if (refreshed.condition === "unreadable") {
+      await this.deps.authority.release(lease);
+      throw refreshed.error;
+    }
+    const canWrite =
+      refreshed.condition === "normal" && refreshed.session.status === "active";
+    if (!canWrite) await this.deps.authority.release(lease);
+    return {
+      session: refreshed.session,
+      readOnly: !canWrite,
+      lease: canWrite ? lease : null,
+    };
+  }
+
+  /**
+   * Retry a previously unavailable control lease without stealing it from
+   * another tab. open() reloads the latest committed session before enabling
+   * writes, so a stale read-only transcript cannot overwrite newer turns.
+   */
+  async tryTakeControl(): Promise<boolean> {
+    const session = this.session;
+    if (!session || !this.readOnly || session.status !== "active") {
+      return false;
+    }
+    const request = ++this.activeRestoreRequest;
+    const isCurrent = () =>
+      request === this.activeRestoreRequest &&
+      this.session?.vaultId === session.vaultId &&
+      this.session?.id === session.id;
+    await this.open(session.vaultId, session.id, isCurrent);
+    return isCurrent() && !this.readOnly;
   }
 
   private async acquireOpenedSessionLease(
@@ -547,7 +630,7 @@ export class AdventureManager {
     isCurrent: () => boolean,
   ): Promise<boolean> {
     if (!this.session || this.session.vaultId === vaultId) return true;
-    await this.destroy();
+    await this.destroy(isCurrent);
     if (!isCurrent()) return false;
     this.resetAdventureView();
     return true;
@@ -816,6 +899,7 @@ export class AdventureManager {
    * Progress remains safely persisted in the repository.
    */
   async close(): Promise<void> {
+    this.activeRestoreRequest += 1;
     this.generationController?.abort();
     this.generationController = null;
     if (this.session) {
@@ -1000,7 +1084,8 @@ export class AdventureManager {
     await this.persistLocalMutation(next);
   }
 
-  async destroy(): Promise<void> {
+  async destroy(isCurrent?: () => boolean): Promise<void> {
+    if (!isCurrent) this.activeRestoreRequest += 1;
     this.generationController?.abort();
     this.generationController = null;
     await this.deps.coordinator.stop();

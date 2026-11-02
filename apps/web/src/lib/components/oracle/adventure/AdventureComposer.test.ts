@@ -107,6 +107,28 @@ describe("AdventureComposer", () => {
     expect(m.submitSuggestedAction).toHaveBeenCalledWith("Search the wreckage");
   });
 
+  it("shows a control retry without allowing read-only actions", async () => {
+    const m = manager("ready");
+    m.readOnly = true;
+    m.session = { status: "active" };
+    m.suggestedActions = ["Steady the shutter"];
+    m.tryTakeControl = vi.fn().mockResolvedValue(true);
+    render(AdventureComposer, { props: { manager: m } });
+
+    expect(screen.getByText(/Another tab may be controlling/)).toBeTruthy();
+    const submit = screen.getByRole("button", { name: "Submit action" });
+    expect(submit.hasAttribute("disabled")).toBe(true);
+    const suggested = screen.getByTestId("adventure-suggested-actions");
+    expect(
+      (suggested.querySelector("button") as HTMLButtonElement).disabled,
+    ).toBe(true);
+
+    const retry = screen.getByRole("button", { name: "Try to take control" });
+    await fireEvent.click(retry);
+    expect(m.tryTakeControl).toHaveBeenCalledOnce();
+    expect(m.submitSuggestedAction).not.toHaveBeenCalled();
+  });
+
   it.each(["awaiting-roll", "ready-to-resolve"] as const)(
     "hides competing action controls while a roll is %s",
     (phase) => {

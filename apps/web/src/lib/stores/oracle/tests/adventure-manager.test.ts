@@ -125,6 +125,187 @@ describe("AdventureManager", () => {
     );
   });
 
+  it("retries a read-only lease without stealing control or losing the draft", async () => {
+    const deps: any = dependencies();
+    const manager = new AdventureManager(deps);
+    await manager.start({
+      vaultId: "vault-1",
+      title: "Road",
+      premise: "Find the road",
+      playerCharacter: {
+        kind: "provisional",
+        name: "Mara",
+        description: "Guide",
+      },
+    });
+
+    manager.readOnly = true;
+    manager.lease = null;
+    manager.draft = "Ask about the shutter";
+    const lease = {
+      vaultId: "vault-1",
+      sessionId: manager.session!.id,
+      ownerId: "new-owner",
+      fencingToken: 2,
+      expiresAt: Date.now() + 10_000,
+    };
+    deps.authority.acquire = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: false, reason: "held" })
+      .mockResolvedValueOnce({ ok: true, lease });
+
+    expect(await manager.tryTakeControl()).toBe(false);
+    expect(manager.readOnly).toBe(true);
+    expect(manager.session?.turns).toHaveLength(1);
+
+    expect(await manager.tryTakeControl()).toBe(true);
+    expect(manager.readOnly).toBe(false);
+    expect(manager.lease).toMatchObject({ ownerId: "new-owner" });
+    expect(manager.session?.turns).toHaveLength(1);
+    expect(manager.draft).toBe("Ask about the shutter");
+    expect(deps.authority.acquire).toHaveBeenCalledTimes(2);
+  });
+
+  it("reloads the session after acquiring a retry lease", async () => {
+    const deps: any = dependencies();
+    const manager = new AdventureManager(deps);
+    await manager.start({
+      vaultId: "vault-1",
+      title: "Road",
+      premise: "Find the road",
+      playerCharacter: {
+        kind: "provisional",
+        name: "Mara",
+        description: "Guide",
+      },
+    });
+
+    manager.readOnly = true;
+    manager.lease = null;
+    let resolveAcquire!: (result: any) => void;
+    let signalAcquireStarted!: () => void;
+    const acquireStarted = new Promise<void>((resolve) => {
+      signalAcquireStarted = resolve;
+    });
+    deps.authority.acquire = vi.fn(
+      () =>
+        new Promise((resolve) => {
+          resolveAcquire = resolve;
+          signalAcquireStarted();
+        }),
+    );
+
+    const retry = manager.tryTakeControl();
+    await acquireStarted;
+    const stale = manager.session!;
+    const latest = { ...stale, revision: stale.revision + 1 };
+    await deps.repository.save(stale.revision, latest);
+    const lease = {
+      vaultId: "vault-1",
+      sessionId: stale.id,
+      ownerId: "retry-owner",
+      fencingToken: 2,
+      expiresAt: Date.now() + 10_000,
+    };
+    resolveAcquire({ ok: true, lease });
+
+    expect(await retry).toBe(true);
+    expect(manager.session?.revision).toBe(latest.revision);
+    expect(manager.readOnly).toBe(false);
+    expect(manager.lease).toEqual(lease);
+  });
+
+  it("releases a retry lease when refreshing the session fails", async () => {
+    const deps: any = dependencies();
+    const manager = new AdventureManager(deps);
+    await manager.start({
+      vaultId: "vault-1",
+      title: "Road",
+      premise: "Find the road",
+      playerCharacter: {
+        kind: "provisional",
+        name: "Mara",
+        description: "Guide",
+      },
+    });
+
+    manager.readOnly = true;
+    manager.lease = null;
+    const loadedSession = manager.session!;
+    const lease = {
+      vaultId: "vault-1",
+      sessionId: loadedSession.id,
+      ownerId: "retry-owner",
+      fencingToken: 2,
+      expiresAt: Date.now() + 10_000,
+    };
+    const load = deps.repository.load;
+    deps.repository.load = vi
+      .fn()
+      .mockImplementationOnce(load)
+      .mockResolvedValueOnce({
+        condition: "unreadable",
+        error: new Error("session-unreadable"),
+      });
+    deps.authority.release = vi.fn(async () => undefined);
+    deps.authority.acquire = vi.fn().mockResolvedValue({ ok: true, lease });
+
+    await expect(manager.tryTakeControl()).rejects.toThrow(
+      "session-unreadable",
+    );
+    expect(deps.authority.release).toHaveBeenCalledWith(lease);
+    expect(manager.session).toBe(loadedSession);
+    expect(manager.readOnly).toBe(true);
+  });
+
+  it("releases a retry lease acquired after the adventure closes", async () => {
+    const deps: any = dependencies();
+    const manager = new AdventureManager(deps);
+    await manager.start({
+      vaultId: "vault-1",
+      title: "Road",
+      premise: "Find the road",
+      playerCharacter: {
+        kind: "provisional",
+        name: "Mara",
+        description: "Guide",
+      },
+    });
+
+    manager.readOnly = true;
+    manager.lease = null;
+    const lease = {
+      vaultId: "vault-1",
+      sessionId: manager.session!.id,
+      ownerId: "retry-owner",
+      fencingToken: 2,
+      expiresAt: Date.now() + 10_000,
+    };
+    let resolveAcquire!: (result: any) => void;
+    let signalAcquireStarted!: () => void;
+    const acquireStarted = new Promise<void>((resolve) => {
+      signalAcquireStarted = resolve;
+    });
+    deps.authority.acquire = vi.fn(
+      () =>
+        new Promise((resolve) => {
+          resolveAcquire = resolve;
+          signalAcquireStarted();
+        }),
+    );
+    deps.authority.release = vi.fn(async () => undefined);
+
+    const retry = manager.tryTakeControl();
+    await acquireStarted;
+    await manager.close();
+    resolveAcquire({ ok: true, lease });
+
+    expect(await retry).toBe(false);
+    expect(manager.session).toBeNull();
+    expect(manager.readOnly).toBe(false);
+    expect(deps.authority.release).toHaveBeenCalledWith(lease);
+  });
+
   it("plays a suggested action and clears the preserved draft after commit", async () => {
     const manager = new AdventureManager(dependencies() as any);
     await manager.start({
