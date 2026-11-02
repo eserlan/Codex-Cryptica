@@ -88,11 +88,58 @@ export function createWorldEntryStart(
     worldEntry: {
       version: 1,
       location,
-      ...(setup.at ? { at: structuredClone(setup.at) } : {}),
+      // DateSelection and TemporalMetadata have only primitive fields. A shallow
+      // copy deliberately unwraps Svelte $state proxies (which structuredClone
+      // rejects with DataCloneError) while retaining year-only precision.
+      ...(setup.at ? { at: { ...setup.at } } : {}),
       intent: setup.intent,
       ...(setup.intent === "scene"
         ? { scenePrompt: setup.scenePrompt.trim().slice(0, 600) }
         : {}),
     },
   };
+}
+
+/** Keep errors actionable without leaking private Vault/Oracle payloads. */
+export function describeWorldEntryStartFailure(
+  cause: unknown,
+  stage: "setup" | "launch",
+): string {
+  const message = cause instanceof Error ? cause.message : "";
+  if (message === "active-adventure-exists") {
+    return "An adventure is already active. Continue or archive it first.";
+  }
+  if (message === "vault-not-open") {
+    return "Reopen the selected Vault and retry. Your setup has been preserved.";
+  }
+  if (message === "control-lost") {
+    return "Another tab controls this adventure. Use that tab and retry.";
+  }
+  if (message === "invalid-session-id") {
+    return "Could not save the new adventure. Reopen the Vault and retry.";
+  }
+  if (
+    message.startsWith("Choose a ") ||
+    message.startsWith("Describe the scene")
+  ) {
+    return message + " Your setup has been preserved.";
+  }
+
+  // DOMException may come from another browser/test realm and not extend Error.
+  if (cause !== null && typeof cause === "object" && "name" in cause) {
+    switch (cause.name) {
+      case "DataCloneError":
+        return "Could not process the selected world date. Reselect it. Your setup has been preserved.";
+      case "QuotaExceededError":
+        return "Device storage is full. Free some space and retry. Your setup has been preserved.";
+      case "NotAllowedError":
+      case "SecurityError":
+        return "Check this site's Vault storage permissions. Your setup has been preserved.";
+    }
+  }
+
+  if (stage === "setup") {
+    return "Check your character, place and date. Your setup has been preserved.";
+  }
+  return "Could not start the adventure. Check Oracle and the Vault. Your setup has been preserved.";
 }

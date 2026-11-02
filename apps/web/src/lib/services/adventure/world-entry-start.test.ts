@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_CALENDAR } from "chronology-engine";
-import { createWorldEntryStart } from "./world-entry-start";
+import {
+  createWorldEntryStart,
+  describeWorldEntryStartFailure,
+} from "./world-entry-start";
 import { emptyWorldEntrySetup } from "./world-entry-setup";
 
 const characters = [{ id: "pc-1", name: "Lira" }];
@@ -53,6 +56,61 @@ describe("createWorldEntryStart", () => {
       scenePrompt: "Speak to the innkeeper.",
     });
     expect(start.premise).toContain("World date is unspecified");
+  });
+
+  it("accepts a reactive Proxy date and produces a cloneable start payload", () => {
+    // Svelte $state wraps the selected date in a Proxy when navigating
+    // from Set the Stage to the preview. Native structuredClone rejects it.
+    const reactiveDate = new Proxy(
+      { year: 618, precision: "year" as const, calendarRevision: 1 },
+      {},
+    );
+    expect(() => structuredClone(reactiveDate)).toThrow();
+    const setup = {
+      ...emptyWorldEntrySetup("vault-1"),
+      characterId: "pc-1",
+      locationId: "place-1",
+      at: reactiveDate,
+    };
+    const start = createWorldEntryStart(
+      setup,
+      characters,
+      locations,
+      DEFAULT_CALENDAR,
+    );
+    expect(start.worldEntry.at).toEqual({
+      year: 618,
+      precision: "year",
+      calendarRevision: 1,
+    });
+    expect(structuredClone(start.worldEntry)).toEqual(start.worldEntry);
+  });
+
+  it("reports safe actionable errors without displaying unknown private messages", () => {
+    expect(
+      describeWorldEntryStartFailure(
+        new DOMException("proxy failed", "DataCloneError"),
+        "setup",
+      ),
+    ).toContain("selected world date");
+    expect(
+      describeWorldEntryStartFailure(
+        new Error("active-adventure-exists"),
+        "launch",
+      ),
+    ).toContain("already active");
+    expect(
+      describeWorldEntryStartFailure(
+        new Error("private source content here"),
+        "launch",
+      ),
+    ).not.toContain("private source content here");
+    expect(
+      describeWorldEntryStartFailure(
+        new Error("Choose a location from this Vault."),
+        "setup",
+      ),
+    ).toContain("Choose a location");
   });
 
   it("rejects stale canonical record IDs before creating a session", () => {

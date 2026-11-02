@@ -14,7 +14,10 @@
     resolveWorldEntryPreview,
     type WorldEntryContextPreview as ContextPreview,
   } from "#lib/services/adventure/world-entry-context-preview.js";
-  import { createWorldEntryStart } from "#lib/services/adventure/world-entry-start.js";
+  import {
+    createWorldEntryStart,
+    describeWorldEntryStartFailure,
+  } from "#lib/services/adventure/world-entry-start.js";
   import AdventureFocusPlay from "./AdventureFocusPlay.svelte";
   import { adventureContextService } from "#lib/services/adventure/adventure-context-service.js";
   import { adventureSessionRepository } from "#lib/services/adventure/adventure-session-repository.js";
@@ -126,13 +129,17 @@
       return;
     }
     worldStartBusy = true;
+    let stage: "setup" | "launch" = "setup";
     try {
+      // Deeply reactive $state drafts contain Proxies that structuredClone
+      // cannot serialize. Snapshot before constructing the persisted session.
       const input = createWorldEntryStart(
-        worldSetup,
+        $state.snapshot(worldSetup),
         characters,
         locations,
         calendarStore.config,
       );
+      stage = "launch";
       await oracle.adventure.start(input);
       if (oracle.adventure.errorMessage) {
         worldStartError = oracle.adventure.errorMessage;
@@ -142,10 +149,7 @@
         startApproach = "choose";
       }
     } catch (cause) {
-      worldStartError =
-        cause instanceof Error && cause.message === "active-adventure-exists"
-          ? "An adventure is already active. Continue it or archive it first."
-          : "Unable to start the scene. Your setup has been preserved.";
+      worldStartError = describeWorldEntryStartFailure(cause, stage);
     } finally {
       worldStartBusy = false;
     }
