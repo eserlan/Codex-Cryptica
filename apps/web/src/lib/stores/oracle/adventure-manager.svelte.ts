@@ -44,7 +44,11 @@ import { adventureTurnGenerationService } from "@codex/ai-engine";
 import { oracleBridge } from "#lib/cloud-bridge/oracle-bridge.js";
 import { diceEngine as defaultDiceEngine, diceParser } from "dice-engine";
 import { systemIdGenerator } from "#lib/utils/runtime-deps.js";
-import { seedWorldEntryBackground } from "#lib/services/adventure/world-entry-background.js";
+import {
+  needsWorldEntryBackground,
+  seedWorldEntryBackground,
+} from "#lib/services/adventure/world-entry-background.js";
+import type { RumourSelectionInput } from "generator-engine";
 
 export interface AdventureManagerDependencies {
   repository?: AdventureSessionRepository;
@@ -212,6 +216,32 @@ export class AdventureManager {
 
   private readonly deps: Required<AdventureManagerDependencies>;
   private generationController: AbortController | null = null;
+  private worldEntryRumourGenerator:
+    | ((session: AdventureSession) => Promise<RumourSelectionInput>)
+    | undefined;
+
+  setWorldEntryRumourGenerator(
+    generator: (session: AdventureSession) => Promise<RumourSelectionInput>,
+  ): void {
+    this.worldEntryRumourGenerator = generator;
+  }
+
+  private async prepareWorldEntryBackground(
+    session: AdventureSession,
+  ): Promise<AdventureSession> {
+    if (!needsWorldEntryBackground(session)) return session;
+    let batch: RumourSelectionInput | undefined;
+    try {
+      batch = await this.worldEntryRumourGenerator?.(session);
+    } catch {
+      // A failed background generation must not interrupt an active adventure.
+    }
+    try {
+      return seedWorldEntryBackground(session, this.deps.idGenerator, batch);
+    } catch {
+      return seedWorldEntryBackground(session, this.deps.idGenerator);
+    }
+  }
   private activeRestoreRequest = 0;
 
   private async verifyControl(): Promise<void> {
@@ -416,7 +446,7 @@ export class AdventureManager {
     const relevant = await this.deps.context.resolveOpeningRelevant(session);
     // Commit the background together with the opening turn, not as a
     // half-created separate save if Oracle fails.
-    const prepared = seedWorldEntryBackground(session, this.deps.idGenerator);
+    const prepared = await this.prepareWorldEntryBackground(session);
     const proposal = await this.deps.generation.generate({
       session: prepared,
       phase: "opening",
@@ -709,7 +739,7 @@ export class AdventureManager {
     // Older World Entry sessions began without background situations.
     // Seed on their next committed action too, without mutating the persisted
     // session until the same optimistic-concurrency save succeeds.
-    const prepared = seedWorldEntryBackground(session, this.deps.idGenerator);
+    const prepared = await this.prepareWorldEntryBackground(session);
     const proposal = await this.deps.generation.generate(
       {
         session: prepared,
