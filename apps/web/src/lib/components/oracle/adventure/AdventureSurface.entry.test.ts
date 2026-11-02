@@ -14,7 +14,10 @@ const env = vi.hoisted(() => ({
   })),
   notify: vi.fn(),
   pendingRumour: null as null | {
-    selected: { index: number; playerVisible: { lead: string; rumour: string } };
+    selected: {
+      index: number;
+      playerVisible: { lead: string; rumour: string };
+    };
     scenario: { id: string; playerVisible: { lead: string; rumour: string } };
   },
 }));
@@ -63,9 +66,12 @@ vi.mock("#lib/stores/ui/notification.svelte.js", () => ({
 vi.mock("#lib/services/solo-characters.js", () => ({
   characterChoices: () => [],
 }));
-vi.mock("#lib/services/adventure/adventure-provisional-fact-creator.js", () => ({
-  createAdventureEntityDraft: vi.fn(),
-}));
+vi.mock(
+  "#lib/services/adventure/adventure-provisional-fact-creator.js",
+  () => ({
+    createAdventureEntityDraft: vi.fn(),
+  }),
+);
 vi.mock("#lib/stores/oracle/rumour-adventure-handoff.svelte.js", () => ({
   rumourAdventureHandoff: {
     forVault: () => env.pendingRumour,
