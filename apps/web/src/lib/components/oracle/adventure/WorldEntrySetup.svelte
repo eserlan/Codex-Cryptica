@@ -62,7 +62,7 @@
 >
   <header class="space-y-2">
     <h2 class="font-header text-xl text-theme-text">Set the Stage</h2>
-    <p class="text-sm text-theme-muted">
+    <p class="text-sm text-theme-text">
       Step into your world. No quest, villain or plot is required.
     </p>
   </header>
@@ -156,12 +156,12 @@
         />
       </label>
     {/if}
-    <p class="text-xs text-theme-muted">Only nearby, relevant world knowledge will be used.</p>
+    <p class="text-xs text-theme-text">Only nearby, relevant world knowledge will be used.</p>
   </fieldset>
 
   <fieldset class="space-y-2">
     <legend class="text-sm font-semibold text-theme-text">3. When does it happen?</legend>
-    <p class="text-xs text-theme-muted">
+    <p class="text-xs text-theme-text">
       Optional. Choose a date using your Vault calendar and eras, or leave it unspecified.
     </p>
     <TemporalEditor bind:value={setup.at} label="Starting world date (optional)" />
