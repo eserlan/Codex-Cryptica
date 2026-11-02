@@ -10,17 +10,26 @@ const { releaseProxySymbol } = vi.hoisted(() => ({
   releaseProxySymbol: Symbol("releaseProxy"),
 }));
 
-const { setSessionTokenMock, setSessionTokenProviderMock, proxyMock } =
-  vi.hoisted(() => ({
-    setSessionTokenMock: vi.fn(),
-    setSessionTokenProviderMock: vi.fn(),
-    proxyMock: vi.fn((fn: unknown) => fn),
-  }));
+const {
+  setSessionTokenMock,
+  setSessionTokenProviderMock,
+  proxyMock,
+  generateAdventureTurnMock,
+  cancelAdventureTurnMock,
+} = vi.hoisted(() => ({
+  setSessionTokenMock: vi.fn(),
+  setSessionTokenProviderMock: vi.fn(),
+  proxyMock: vi.fn((fn: unknown) => fn),
+  generateAdventureTurnMock: vi.fn().mockResolvedValue({ kind: "complete" }),
+  cancelAdventureTurnMock: vi.fn().mockResolvedValue(undefined),
+}));
 
 vi.mock("comlink", () => ({
   wrap: vi.fn().mockReturnValue({
     generateResponse: vi.fn(),
     expandQuery: vi.fn(),
+    generateAdventureTurn: generateAdventureTurnMock,
+    cancelAdventureTurn: cancelAdventureTurnMock,
     setSessionToken: setSessionTokenMock,
     setSessionTokenProvider: setSessionTokenProviderMock,
     [releaseProxySymbol]: vi.fn(),
@@ -107,6 +116,56 @@ describe("OracleBridge", () => {
   it("should not throw when wiring a token provider before the worker is ready", () => {
     (bridge as any).api = null;
     expect(() => bridge.setTokenProvider(vi.fn())).not.toThrow();
+  });
+
+  it("passes adventure narration as a separate proxied worker argument", async () => {
+    const request = {
+      phase: "action",
+      session: { id: "adventure-1" },
+      anchors: [],
+      relevant: [],
+    };
+    const narration = vi.fn();
+
+    // The first argument must remain cloneable. A nested function throws
+    // DataCloneError in a real postMessage call.
+    expect(structuredClone(request)).toEqual(request);
+    await bridge.generateAdventureTurn(
+      request,
+      "turn-1",
+      { modelName: "luna-fast" },
+      narration,
+    );
+
+    expect(proxyMock).toHaveBeenCalledWith(narration);
+    expect(generateAdventureTurnMock).toHaveBeenCalledWith(
+      request,
+      "turn-1",
+      { modelName: "luna-fast" },
+      narration,
+    );
+    expect(generateAdventureTurnMock.mock.calls[0]?.[0]).not.toHaveProperty(
+      "onNarration",
+    );
+  });
+
+  it("omits the progress callback for ordinary buffered adventure calls", async () => {
+    const request = { phase: "opening", session: { id: "adventure-1" } };
+    await bridge.generateAdventureTurn(request, "turn-2");
+
+    expect(generateAdventureTurnMock).toHaveBeenCalledWith(
+      request,
+      "turn-2",
+      undefined,
+      undefined,
+    );
+    expect(proxyMock).not.toHaveBeenCalled();
+  });
+
+  it("forwards adventure turn cancellation to the worker", async () => {
+    await bridge.cancelAdventureTurn("turn-1");
+
+    expect(cancelAdventureTurnMock).toHaveBeenCalledWith("turn-1");
   });
 
   it("should handle worker initialization failure", () => {

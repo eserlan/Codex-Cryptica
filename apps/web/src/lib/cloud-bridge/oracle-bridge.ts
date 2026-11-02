@@ -77,10 +77,24 @@ export class OracleBridge {
 
   public generateAdventureTurn(
     request: unknown,
+    requestId: string,
     options?: { apiKey?: string; modelName?: string },
+    onNarration?: (text: string) => void,
   ): Promise<unknown> {
     if (!this.api) throw new Error("[OracleBridge] Worker not initialized");
-    return this.api.generateAdventureTurn(request, options);
+    // Proxy callbacks must be top-level Comlink arguments. If nested in the
+    // request, postMessage attempts to clone the function and throws.
+    return this.api.generateAdventureTurn(
+      request,
+      requestId,
+      options,
+      onNarration ? Comlink.proxy(onNarration) : undefined,
+    );
+  }
+
+  public cancelAdventureTurn(requestId: string): Promise<void> {
+    if (!this.api) throw new Error("[OracleBridge] Worker not initialized");
+    return this.api.cancelAdventureTurn(requestId);
   }
 
   public clearAdventureInteraction(sessionId: string): Promise<void> {
