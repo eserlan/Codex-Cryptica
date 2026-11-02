@@ -157,7 +157,7 @@
                 type="button"
                 onclick={() => startRename(label)}
                 disabled={isProcessing}
-                class="p-2 text-theme-muted hover:text-theme-primary transition-colors"
+                class="p-2 text-theme-muted hover:text-theme-primary transition-colors focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
                 title="Rename Label"
                 aria-label="Rename {label} label"
               >
@@ -170,7 +170,7 @@
                 type="button"
                 onclick={() => handleDelete(label)}
                 disabled={isProcessing}
-                class="p-2 text-red-900/60 hover:text-red-500 transition-colors"
+                class="p-2 text-red-900/60 hover:text-red-500 transition-colors focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
                 title="Delete Label Project-wide"
                 aria-label="Delete {label} label project-wide"
               >
