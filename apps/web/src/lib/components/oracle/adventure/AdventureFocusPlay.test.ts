@@ -105,6 +105,24 @@ afterEach(() => {
 });
 
 describe("AdventureFocusPlay", () => {
+  it("uses a compact mobile shell with the action dock outside the narrative scroll", () => {
+    render(AdventureFocusPlay, { props: props() });
+
+    const surface = screen.getByTestId("adventure-play-surface");
+    const viewport = screen.getByTestId("adventure-play-viewport");
+    const dock = screen.getByTestId("adventure-action-dock");
+    const title = screen.getByRole("heading", { name: "The Drowned March" });
+
+    expect(surface.className).toContain("h-[100dvh]");
+    expect(surface.className).toContain("fixed");
+    expect(title.className).toContain("truncate");
+    expect(title.getAttribute("title")).toBe("The Drowned March");
+    expect(viewport.contains(dock)).toBe(false);
+    expect(surface.contains(dock)).toBe(true);
+    expect(screen.getByRole("button", { name: "Adventure tools" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Submit action" })).toBeTruthy();
+  });
+
   it("follows newly generated adventure events to the bottom", async () => {
     const scrollTo = vi.fn();
     Object.defineProperty(HTMLElement.prototype, "scrollTo", {
