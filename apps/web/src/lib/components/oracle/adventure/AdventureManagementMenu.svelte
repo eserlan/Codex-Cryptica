@@ -89,7 +89,7 @@
     <button
       bind:this={triggerEl}
       type="button"
-      class="flex min-h-10 min-w-10 items-center justify-center rounded-md border sm:min-h-12 sm:min-w-12 border-theme-border text-theme-primary transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
+      class="flex min-h-10 min-w-10 items-center justify-center rounded-md border sm:min-h-12 sm:min-w-12 border-theme-border text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
       onclick={() => (isOpen ? close() : void open())}
       onkeydown={handleTriggerKeydown}
       aria-haspopup="menu"
@@ -141,7 +141,7 @@
         <button
           type="button"
           role="menuitem"
-          class="w-full rounded-md px-3 py-2 text-left text-sm text-theme-primary hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-theme-primary"
+          class="w-full rounded-md px-3 py-2 text-left text-sm text-theme-text hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-theme-primary"
           onclick={() => run(() => void manager.close())}
         >
           <span
