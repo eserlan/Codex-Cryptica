@@ -29,7 +29,12 @@ export function createWorldEntryStart(
   sourceRecords: SourceRecordReference[];
   worldEntry: WorldEntryContext;
 } {
-  const errors = validateWorldEntrySetup(setup, characters, locations, calendar);
+  const errors = validateWorldEntrySetup(
+    setup,
+    characters,
+    locations,
+    calendar,
+  );
   if (errors.length) throw new Error(errors.join(" "));
   const character = worldEntryCharacter(setup, characters);
   const locationName = worldEntryLocationName(setup, locations);
