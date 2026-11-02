@@ -108,7 +108,7 @@ describe("toRunSheetMarkdown", () => {
     expect(markdown).not.toMatch(/\.\.|\)\./);
   });
 
-  it("bolds a leading label in notes so they stay ordinary list items", () => {
+  it("renders labelled notes as ordinary list items without generator label blocks", () => {
     const value = createEmptySessionPrep("hook");
     value.reserve = [
       {
@@ -119,7 +119,7 @@ describe("toRunSheetMarkdown", () => {
       { id: "r2", text: "A tinker with gossip", source: "gm" },
     ];
     expect(toRunSheetMarkdown(value)).toBe(
-      "## Reserve\n- **The Bellfounder's Yard:** noisy machinery\n- A tinker with gossip",
+      "## Reserve\n- **The Bellfounder's Yard** — noisy machinery\n- A tinker with gossip",
     );
   });
 

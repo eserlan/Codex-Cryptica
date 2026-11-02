@@ -23,7 +23,7 @@ jobs:
   audit:
     name: Codebase Intelligence Audit (Fallow)
     runs-on: ubuntu-latest
-    continue-on-error: true # Non-blocking PoC phase (#3167)
+    # Enforce the new-only audit gate: annotation failures must fail the PR check.
     timeout-minutes: 5
     env:
       HUSKY: 0

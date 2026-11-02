@@ -263,6 +263,49 @@ describe("AdventureManager", () => {
     expect(manager.session?.turns).toHaveLength(1);
   });
 
+  it("releases the recovery lease when archiving a stale start fails", async () => {
+    const deps: any = dependencies();
+    const stale = {
+      id: "stale-session",
+      vaultId: "vault-1",
+      status: "active",
+      turns: [],
+      revision: 0,
+    };
+    deps.repository.list = vi.fn(async () => ({
+      effectiveActiveId: stale.id,
+      entries: [],
+    }));
+    deps.repository.load = vi.fn(async () => ({
+      condition: "normal",
+      session: stale,
+    }));
+    deps.repository.archive = vi.fn(async () => ({
+      ok: false,
+      error: new Error("archive-failed"),
+    }));
+    deps.authority.release = vi.fn(async () => undefined);
+    const manager = new AdventureManager(deps);
+
+    await expect(
+      manager.start({
+        vaultId: "vault-1",
+        title: "Road",
+        premise: "Investigate the road",
+        playerCharacter: {
+          kind: "provisional",
+          name: "Mara",
+          description: "Guide",
+        },
+      }),
+    ).rejects.toThrow("archive-failed");
+
+    expect(deps.authority.release).toHaveBeenCalledTimes(1);
+    expect(manager.phase).toBe("error");
+    expect(manager.errorMessage).toBe("archive-failed");
+    expect(manager.session).toBeNull();
+  });
+
   it("resolves a recorded outcome immediately without a confirmation step", async () => {
     const deps: any = dependencies();
     const generate = vi.fn(async (request: any) => {

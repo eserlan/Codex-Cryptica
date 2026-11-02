@@ -29,65 +29,59 @@
   let submitting = $state(false);
   let startError = $state<string | null>(null);
 
+  function startInput(): Parameters<AdventureManager["start"]>[0] | null {
+    if (!title.trim() || !premise.trim()) return null;
+    const canonical = characters.find(
+      (character) => character.id === selectedCharacterId,
+    );
+    if (!canonical && !characterName.trim()) return null;
+    return {
+      vaultId,
+      title,
+      premise,
+      playerCharacter: canonical
+        ? { kind: "canonical", name: canonical.name, recordId: canonical.id }
+        : {
+            kind: "provisional",
+            name: characterName,
+            description: characterDescription || characterName,
+          },
+      ...(scenarioSeed ? { scenarioSeed } : {}),
+    };
+  }
+
+  function clearStartedDraft() {
+    if (scenarioSeed) onScenarioStarted?.();
+    title = "";
+    premise = "";
+    characterName = "";
+    characterDescription = "";
+    interacted = false;
+  }
+
+  function describeStartFailure(cause: unknown): string {
+    return cause instanceof Error && cause.message === "active-adventure-exists"
+      ? "An adventure is already active in this Vault. Continue or archive it before starting another."
+      : "Could not start this adventure. Your choices are preserved.";
+  }
+
   async function submit() {
     if (submitting) return;
     interacted = true;
     startError = null;
-    if (
-      !title.trim() ||
-      !premise.trim() ||
-      (!characterName.trim() && !selectedCharacterId)
-    )
-      return;
+    const input = startInput();
+    if (!input) return;
     if (typeof navigator !== "undefined" && !navigator.onLine) {
       startError = "Connect to the internet to start with Oracle.";
       return;
     }
     submitting = true;
     try {
-      const canonicalCharacter = characters.find(
-        (character) => character.id === selectedCharacterId,
-      );
-      await manager.start({
-        vaultId,
-        title,
-        premise,
-        playerCharacter: canonicalCharacter
-          ? {
-              kind: "canonical",
-              name: canonicalCharacter.name,
-              recordId: canonicalCharacter.id,
-            }
-          : {
-              kind: "provisional",
-              name: characterName,
-              description: characterDescription || characterName,
-            },
-        ...(scenarioSeed ? { scenarioSeed } : {}),
-      });
-      // manager.start() resolves normally even when the opening generation
-      // itself fails — generateOpening() catches its own errors internally
-      // (archiving the incomplete session and setting errorMessage) rather
-      // than rethrowing, so a resolved promise here is NOT the same as
-      // success. Only clear the draft once errorMessage confirms nothing
-      // went wrong; otherwise these bindable fields (which survive this
-      // component being torn down and remounted when session flips
-      // non-null then back to null) are left in place to retry.
-      if (!manager.errorMessage) {
-        if (scenarioSeed) onScenarioStarted?.();
-        title = "";
-        premise = "";
-        characterName = "";
-        characterDescription = "";
-        interacted = false;
-      }
+      await manager.start(input);
+      // An opening failure is reported in errorMessage without rejecting.
+      if (!manager.errorMessage) clearStartedDraft();
     } catch (cause) {
-      // Not every manager failure sets errorMessage. In particular a
-      // cross-tab active-session conflict rejects before generation starts.
-      startError =
-        cause instanceof Error && cause.message === "active-adventure-exists"
-          ? "An adventure is already active in this Vault. Continue or archive it before starting another."
-          : "Could not start this adventure. Your choices are preserved.";
+      startError = describeStartFailure(cause);
     } finally {
       submitting = false;
     }
