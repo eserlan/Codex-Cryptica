@@ -218,7 +218,9 @@
         ].join(" "),
       },
       sourceId,
-      rumourPolicy,
+      // This is hidden background preparation, not a generator editing
+      // session. Do not attach it to the user's generator interaction history.
+      () => ({ isEnabled: false, isAvailable: false }),
     );
     const draft = await backgroundRumourService.generateDraft(request);
     if (!draft.content || !draft.lore) {
