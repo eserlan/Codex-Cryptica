@@ -102,17 +102,22 @@
   // Wraps each discovery action so the panel re-reads the hex after it runs.
   const controls = $derived.by(() => {
     if (!discovery) return null;
-    const wrapped = Object.entries(discovery.controls).map(([key, fn]) => [
-      key,
-      async (...args: unknown[]) => {
-        try {
-          return await (fn as (...a: unknown[]) => Promise<unknown>)(...args);
-        } finally {
-          refresh();
-        }
-      },
-    ]);
-    return Object.fromEntries(wrapped) as unknown as HexDiscoveryControls;
+    // ⚡ Bolt Optimization: Replace Object.fromEntries(Object.entries().map()) with an imperative loop
+    // to avoid intermediate array allocations in reactive blocks, reducing garbage collection pressure.
+    const result: Record<string, unknown> = {};
+    for (const key in discovery.controls) {
+      if (Object.prototype.hasOwnProperty.call(discovery.controls, key)) {
+        const fn = discovery.controls[key as keyof typeof discovery.controls];
+        result[key] = async (...args: unknown[]) => {
+          try {
+            return await (fn as (...a: unknown[]) => Promise<unknown>)(...args);
+          } finally {
+            refresh();
+          }
+        };
+      }
+    }
+    return result as unknown as HexDiscoveryControls;
   });
 
   let header: HTMLElement | undefined = $state();
