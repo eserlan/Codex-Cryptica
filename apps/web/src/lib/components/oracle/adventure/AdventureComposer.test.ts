@@ -20,7 +20,7 @@ function manager(
 }
 
 describe("AdventureComposer", () => {
-  it("keeps free action visible beside a horizontally scrollable row of suggestions", () => {
+  it("keeps free action visible below a collapsible suggestion menu", () => {
     const m = manager("ready");
     m.suggestedActions = [
       "Steady the shutter as Sela lifts it.",
@@ -30,7 +30,8 @@ describe("AdventureComposer", () => {
     render(AdventureComposer, { props: { manager: m } });
 
     const suggestions = screen.getByTestId("adventure-suggested-actions");
-    expect(suggestions.className).toContain("overflow-x-auto");
+    expect(suggestions.tagName).toBe("DETAILS");
+    expect(suggestions.querySelector("summary")?.textContent).toContain("Suggested actions (3)");
     expect(suggestions.querySelectorAll("button")).toHaveLength(3);
     expect(screen.getByLabelText("What do you do?")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Submit action" })).toBeTruthy();
@@ -84,6 +85,24 @@ describe("AdventureComposer", () => {
     );
 
     expect(m.submitSuggestedAction).toHaveBeenCalledWith("Search the wreckage");
+  });
+
+  it("shows a control retry without allowing read-only actions", async () => {
+    const m = manager("ready");
+    m.readOnly = true;
+    m.session = { status: "active" };
+    m.suggestedActions = ["Steady the shutter"];
+    m.tryTakeControl = vi.fn().mockResolvedValue(true);
+    render(AdventureComposer, { props: { manager: m } });
+
+    expect(screen.getByText(/Another tab may be controlling this adventure/)).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Submit action" }).hasAttribute("disabled")).toBe(true);
+    const suggested = screen.getByTestId("adventure-suggested-actions");
+    expect((suggested.querySelector("button") as HTMLButtonElement).disabled).toBe(true);
+
+    await fireEvent.click(screen.getByRole("button", { name: "Try to take control" }));
+    expect(m.tryTakeControl).toHaveBeenCalledOnce();
+    expect(m.submitSuggestedAction).not.toHaveBeenCalled();
   });
 
   it.each(["awaiting-roll", "ready-to-resolve"] as const)(
