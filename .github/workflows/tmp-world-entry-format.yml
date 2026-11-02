@@ -26,5 +26,5 @@ jobs:
           if git diff --cached --quiet; then exit 0; fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git commit -m 'style(adventure): format world-entry implementation'
+          HUSKY=0 git commit -m ':art: style(adventure): format world-entry implementation'
           git push origin HEAD:refs/heads/feat/4572-world-entry-opening
