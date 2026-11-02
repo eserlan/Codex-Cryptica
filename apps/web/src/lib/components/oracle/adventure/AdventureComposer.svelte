@@ -37,7 +37,10 @@
         : "hidden"}
     >
       <div class="min-w-0">
-        <p class="flex items-center gap-2 text-sm text-theme-text" role="status">
+        <p
+          class="flex items-center gap-2 text-sm text-theme-text"
+          role="status"
+        >
           <span
             class="icon-[lucide--sparkles] h-4 w-4 shrink-0 motion-safe:animate-pulse"
             aria-hidden="true"
@@ -45,7 +48,7 @@
           Oracle is responding…
         </p>
         {#if manager.draft.trim()}
-          <p class="truncate text-xs text-theme-muted" title={manager.draft}>
+          <p class="truncate text-xs text-theme-text" title={manager.draft}>
             Playing: {manager.draft}
           </p>
         {/if}
