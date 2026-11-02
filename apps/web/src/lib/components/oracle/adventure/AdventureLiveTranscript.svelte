@@ -42,7 +42,7 @@
   {/if}
   {#if manager.phase === "generating" && manager.streamedNarration}
     <div class="space-y-2" data-testid="adventure-stream-preview">
-      <p class="text-xs text-theme-muted">Oracle is writing…</p>
+      <p class="text-xs text-theme-text">Oracle is writing…</p>
       <p class="whitespace-pre-wrap text-sm leading-relaxed text-theme-text">
         {manager.streamedNarration}
       </p>
