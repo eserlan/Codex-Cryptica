@@ -44,6 +44,11 @@ import { adventureTurnGenerationService } from "@codex/ai-engine";
 import { oracleBridge } from "#lib/cloud-bridge/oracle-bridge.js";
 import { diceEngine as defaultDiceEngine, diceParser } from "dice-engine";
 import { systemIdGenerator } from "#lib/utils/runtime-deps.js";
+import {
+  needsWorldEntryBackground,
+  seedWorldEntryBackground,
+} from "#lib/services/adventure/world-entry-background.js";
+import type { RumourSelectionInput } from "generator-engine";
 
 export interface AdventureManagerDependencies {
   repository?: AdventureSessionRepository;
@@ -178,6 +183,17 @@ function acceptedSession(
   throw new Error(result.errors?.[0]?.message ?? fallback);
 }
 
+function isAbort(cause: unknown, signal?: AbortSignal): boolean {
+  return Boolean(
+    signal?.aborted ||
+    (cause instanceof DOMException && cause.name === "AbortError"),
+  );
+}
+
+function abortReason(signal: AbortSignal): unknown {
+  return signal.reason ?? new DOMException("Cancelled", "AbortError");
+}
+
 export class AdventureManager {
   session = $state.raw<AdventureSession | null>(null);
   phase = $state<
@@ -211,6 +227,52 @@ export class AdventureManager {
 
   private readonly deps: Required<AdventureManagerDependencies>;
   private generationController: AbortController | null = null;
+  private worldEntryRumourGenerator:
+    | ((
+        session: AdventureSession,
+        signal?: AbortSignal,
+      ) => Promise<RumourSelectionInput>)
+    | undefined;
+
+  setWorldEntryRumourGenerator(
+    generator: (
+      session: AdventureSession,
+      signal?: AbortSignal,
+    ) => Promise<RumourSelectionInput>,
+  ): void {
+    this.worldEntryRumourGenerator = generator;
+  }
+
+  private async prepareWorldEntryBackground(
+    session: AdventureSession,
+    signal?: AbortSignal,
+  ): Promise<AdventureSession> {
+    if (!needsWorldEntryBackground(session)) return session;
+    const batch = await this.generateWorldEntryRumourBatch(session, signal);
+    if (signal?.aborted) throw abortReason(signal);
+    try {
+      return seedWorldEntryBackground(session, this.deps.idGenerator, batch);
+    } catch {
+      return seedWorldEntryBackground(session, this.deps.idGenerator);
+    }
+  }
+
+  private async generateWorldEntryRumourBatch(
+    session: AdventureSession,
+    signal?: AbortSignal,
+  ): Promise<RumourSelectionInput | undefined> {
+    if (!this.worldEntryRumourGenerator) return undefined;
+    if (signal?.aborted) throw abortReason(signal);
+    try {
+      const batch = await this.worldEntryRumourGenerator(session, signal);
+      if (signal?.aborted) throw abortReason(signal);
+      return batch;
+    } catch (cause) {
+      if (isAbort(cause, signal)) throw cause;
+      // A failed background generation must not interrupt an active adventure.
+      return undefined;
+    }
+  }
   private activeRestoreRequest = 0;
 
   private async verifyControl(): Promise<void> {
@@ -413,8 +475,11 @@ export class AdventureManager {
   private async persistOpeningTurn(session: AdventureSession): Promise<void> {
     const anchors = await this.deps.context.resolveAnchors(session);
     const relevant = await this.deps.context.resolveOpeningRelevant(session);
+    // Commit the background together with the opening turn, not as a
+    // half-created separate save if Oracle fails.
+    const prepared = await this.prepareWorldEntryBackground(session);
     const proposal = await this.deps.generation.generate({
-      session,
+      session: prepared,
       phase: "opening",
       anchors,
       relevant,
@@ -422,7 +487,7 @@ export class AdventureManager {
     if (this.session?.id !== session.id) return;
     validateRollExpression(proposal);
     const next = this.proposedSession(
-      session,
+      prepared,
       proposal,
       this.newTurnMetadata(""),
       "opening-rejected",
@@ -702,14 +767,25 @@ export class AdventureManager {
       session,
       action,
     );
+    // Older World Entry sessions began without background situations.
+    // Seed on their next committed action too, without mutating the persisted
+    // session until the same optimistic-concurrency save succeeds.
+    const prepared = await this.prepareWorldEntryBackground(session, signal);
+    if (signal.aborted) throw abortReason(signal);
     const proposal = await this.deps.generation.generate(
-      { session, phase: "action", playerAction: action, anchors, relevant },
+      {
+        session: prepared,
+        phase: "action",
+        playerAction: action,
+        anchors,
+        relevant,
+      },
       { signal },
     );
     if (signal.aborted) throw new DOMException("Cancelled", "AbortError");
     validateRollExpression(proposal);
     const next = this.proposedSession(
-      session,
+      prepared,
       proposal,
       this.newTurnMetadata(action),
       "turn-rejected",
