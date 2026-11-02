@@ -119,7 +119,9 @@ describe("AdventureFocusPlay", () => {
     expect(title.getAttribute("title")).toBe("The Drowned March");
     expect(viewport.contains(dock)).toBe(false);
     expect(surface.contains(dock)).toBe(true);
-    expect(screen.getByRole("button", { name: "Adventure tools" })).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Adventure tools" }),
+    ).toBeTruthy();
     expect(screen.getByRole("button", { name: "Submit action" })).toBeTruthy();
   });
 
@@ -214,7 +216,9 @@ describe("AdventureFocusPlay", () => {
     // why: a lg: viewport breakpoint still fires even when this surface is
     // hosted in the app's own narrow sidebar, so it can never rely on an
     // actual side-by-side split reading as usable.
-    expect(screen.queryByRole("complementary", { name: "Adventure tools" })).toBeNull();
+    expect(
+      screen.queryByRole("complementary", { name: "Adventure tools" }),
+    ).toBeNull();
     expect(screen.queryByText("Dice presets")).toBeNull();
     expect(screen.queryByText("Resource trackers")).toBeNull();
 
@@ -222,7 +226,9 @@ describe("AdventureFocusPlay", () => {
       screen.getByRole("button", { name: "Adventure tools" }),
     );
 
-    expect(screen.getByRole("complementary", { name: "Adventure tools" })).toBeTruthy();
+    expect(
+      screen.getByRole("complementary", { name: "Adventure tools" }),
+    ).toBeTruthy();
     expect(screen.getByText("Dice presets")).toBeTruthy();
     expect(screen.getByText("Resource trackers")).toBeTruthy();
   });
@@ -233,18 +239,26 @@ describe("AdventureFocusPlay", () => {
     await fireEvent.click(
       screen.getByRole("button", { name: "Adventure tools" }),
     );
-    expect(screen.getByRole("complementary", { name: "Adventure tools" })).toBeTruthy();
+    expect(
+      screen.getByRole("complementary", { name: "Adventure tools" }),
+    ).toBeTruthy();
 
     await fireEvent.click(screen.getAllByLabelText("Close adventure tools")[0]);
-    expect(screen.queryByRole("complementary", { name: "Adventure tools" })).toBeNull();
+    expect(
+      screen.queryByRole("complementary", { name: "Adventure tools" }),
+    ).toBeNull();
 
     await fireEvent.click(
       screen.getByRole("button", { name: "Adventure tools" }),
     );
-    expect(screen.getByRole("complementary", { name: "Adventure tools" })).toBeTruthy();
+    expect(
+      screen.getByRole("complementary", { name: "Adventure tools" }),
+    ).toBeTruthy();
 
     await fireEvent.keyDown(window, { key: "Escape" });
-    expect(screen.queryByRole("complementary", { name: "Adventure tools" })).toBeNull();
+    expect(
+      screen.queryByRole("complementary", { name: "Adventure tools" }),
+    ).toBeNull();
   });
 
   it("keeps the adventure surface visible when fullscreen is denied", async () => {

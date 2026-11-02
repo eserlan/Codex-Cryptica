@@ -15,7 +15,10 @@ describe("AdventureStateSummary", () => {
   it("collapses situation details behind a single-line location strip", () => {
     render(AdventureStateSummary, {
       manager: manager({
-        location: { id: "loc-1", text: "Tiny village in the high slopes of nombe" },
+        location: {
+          id: "loc-1",
+          text: "Tiny village in the high slopes of nombe",
+        },
         situation: { id: "sit-1", text: "Sela is fixing a shutter." },
         objectives: [],
         activeCharacters: [],

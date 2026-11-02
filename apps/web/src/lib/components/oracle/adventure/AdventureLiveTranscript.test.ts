@@ -46,7 +46,9 @@ describe("AdventureLiveTranscript", () => {
       },
     });
     render(AdventureLiveTranscript, { props: { manager: m } });
-    expect(screen.getByText("You arrive in the mountain village.")).toBeTruthy();
+    expect(
+      screen.getByText("You arrive in the mountain village."),
+    ).toBeTruthy();
     expect(screen.queryByText("You")).toBeNull();
     expect(screen.getByText("Oracle")).toBeTruthy();
   });

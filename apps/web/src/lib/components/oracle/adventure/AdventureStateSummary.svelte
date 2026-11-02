@@ -7,8 +7,14 @@
   {@const recap = manager.recap}
   {@const groups = [
     { label: "Objectives", items: recap.objectives.map((item) => item.text) },
-    { label: "Who's here", items: recap.activeCharacters.map((item) => item.text) },
-    { label: "What you know", items: recap.knownFacts.map((item) => item.text) },
+    {
+      label: "Who's here",
+      items: recap.activeCharacters.map((item) => item.text),
+    },
+    {
+      label: "What you know",
+      items: recap.knownFacts.map((item) => item.text),
+    },
     {
       label: "Recap: what just happened",
       items: recap.recentTurnSummaries,
@@ -40,7 +46,9 @@
           aria-hidden="true"
         ></span>
       </summary>
-      <div class="space-y-3 border-t border-theme-border px-3 py-3 text-sm text-theme-text">
+      <div
+        class="space-y-3 border-t border-theme-border px-3 py-3 text-sm text-theme-text"
+      >
         {#if recap.situation}
           <p>{recap.situation.text}</p>
         {/if}

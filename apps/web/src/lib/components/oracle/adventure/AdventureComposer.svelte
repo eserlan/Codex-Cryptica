@@ -49,7 +49,11 @@
         onclick={() => manager.cancel()}>Cancel</button
       >
     </div>
-    <AdventureSuggestedActions {manager} {disabled} visible={actionControlsVisible} />
+    <AdventureSuggestedActions
+      {manager}
+      {disabled}
+      visible={actionControlsVisible}
+    />
     <div
       class={actionControlsVisible ? "flex items-end gap-2" : "hidden"}
       data-testid="adventure-free-action"
