@@ -166,6 +166,54 @@ describe("AdventureManager", () => {
     expect(deps.authority.acquire).toHaveBeenCalledTimes(2);
   });
 
+  it("plays a suggested action and clears the preserved draft after commit", async () => {
+    const manager = new AdventureManager(dependencies() as any);
+    await manager.start({
+      vaultId: "vault-1",
+      title: "Road",
+      premise: "Find the road",
+      playerCharacter: {
+        kind: "provisional",
+        name: "Mara",
+        description: "Guide",
+      },
+    });
+
+    await manager.submitSuggestedAction("Search the wreckage");
+
+    expect(manager.session?.turns[1]?.playerAction).toBe("Search the wreckage");
+    expect(manager.draft).toBe("");
+    expect(manager.phase).toBe("ready");
+  });
+
+  it("keeps a failed suggested action in the composer for an editable retry", async () => {
+    const deps: any = dependencies();
+    deps.generation = {
+      async generate(request: any) {
+        if (request.phase === "opening") return completeProposal;
+        throw new Error("provider-unavailable");
+      },
+    };
+    const manager = new AdventureManager(deps);
+    await manager.start({
+      vaultId: "vault-1",
+      title: "Road",
+      premise: "Find the road",
+      playerCharacter: {
+        kind: "provisional",
+        name: "Mara",
+        description: "Guide",
+      },
+    });
+
+    await manager.submitSuggestedAction("Search the wreckage");
+
+    expect(manager.errorMessage).toBe("provider-unavailable");
+    expect(manager.phase).toBe("error");
+    expect(manager.draft).toBe("Search the wreckage");
+    expect(manager.session?.turns).toHaveLength(1);
+  });
+
   it("supplies ranked vault records with the opening request", async () => {
     const deps: any = dependencies();
     const relevant = [
