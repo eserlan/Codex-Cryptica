@@ -43,6 +43,7 @@ import {
 } from "#lib/services/adventure/adventure-context-service.js";
 import { adventureTurnGenerationService } from "@codex/ai-engine";
 import { oracleBridge } from "#lib/cloud-bridge/oracle-bridge.js";
+import * as Comlink from "comlink";
 import { diceEngine as defaultDiceEngine, diceParser } from "dice-engine";
 import { systemIdGenerator } from "#lib/utils/runtime-deps.js";
 import type { AdventureStartFailure } from "#lib/services/adventure/adventure-start-failure.js";
@@ -193,8 +194,12 @@ function defaultGenerationService(): Pick<
       }
       // AbortSignal is not structured-cloneable and must not cross Comlink.
       const { signal: _signal, ...workerOptions } = options ?? {};
+      const { onNarration, ...cloneableRequest } = request;
+      const workerRequest = $state.snapshot(cloneableRequest);
       return oracleBridge.generateAdventureTurn(
-        $state.snapshot(request),
+        onNarration
+          ? { ...workerRequest, onNarration: Comlink.proxy(onNarration) }
+          : workerRequest,
         workerOptions,
       ) as any;
     },
@@ -246,6 +251,8 @@ export class AdventureManager {
     | "error"
   >("idle");
   draft = $state("");
+  /** Uncommitted player-visible narration, cleared on failure or cancellation. */
+  streamedNarration = $state("");
   errorMessage = $state<string | null>(null);
   /**
    * Typed cause of the last start/opening failure. UI maps it to fixed,
@@ -351,6 +358,14 @@ export class AdventureManager {
       now,
       dice,
       idGenerator,
+    };
+  }
+
+  private narrationPreview(sessionId: string, signal?: AbortSignal) {
+    return (text: string) => {
+      if (signal?.aborted || this.session?.id !== sessionId) return;
+      if (this.phase !== "generating") return;
+      this.streamedNarration = text;
     };
   }
 
@@ -554,6 +569,7 @@ export class AdventureManager {
       phase: "opening",
       anchors,
       relevant,
+      onNarration: this.narrationPreview(session.id),
     });
     if (this.session?.id !== session.id) return;
     const saved = await this.saveOpening(
@@ -562,6 +578,7 @@ export class AdventureManager {
     );
     if (this.session?.id !== session.id) return;
     this.session = saved;
+    this.streamedNarration = "";
     this.phase = saved.pendingRoll ? "awaiting-roll" : "ready";
   }
 
@@ -609,6 +626,7 @@ export class AdventureManager {
   ): Promise<void> {
     const message = cause instanceof Error ? cause.message : String(cause);
     const failure = classifyOpeningFailure(cause);
+    this.streamedNarration = "";
     const archived = await this.deps.repository.archive(
       session.vaultId,
       session.id,
@@ -792,6 +810,7 @@ export class AdventureManager {
     this.session = null;
     this.readOnly = false;
     this.draft = "";
+    this.streamedNarration = "";
     this.errorMessage = null;
     this.lastRollResult = null;
     this.phase = "idle";
@@ -834,6 +853,7 @@ export class AdventureManager {
     this.generationController?.abort();
     this.generationController = new AbortController();
     this.phase = "generating";
+    this.streamedNarration = "";
     this.errorMessage = null;
     return this.generationController.signal;
   }
@@ -850,6 +870,7 @@ export class AdventureManager {
     retryPhase: "ready" | "ready-to-resolve",
   ): void {
     if (signal.aborted) return;
+    this.streamedNarration = "";
     const message = cause instanceof Error ? cause.message : String(cause);
     const cancelled =
       (cause instanceof DOMException && cause.name === "AbortError") ||
@@ -886,6 +907,7 @@ export class AdventureManager {
         playerAction: action,
         anchors,
         relevant,
+        onNarration: this.narrationPreview(session.id, signal),
       },
       { signal },
     );
@@ -899,6 +921,7 @@ export class AdventureManager {
     );
     const saved = await this.saveTurn(session, next);
     this.session = saved;
+    this.streamedNarration = "";
     this.draft = "";
     this.phase = saved.pendingRoll ? "awaiting-roll" : "ready";
   }
@@ -998,6 +1021,7 @@ export class AdventureManager {
         rollResolution: pendingRoll.suppliedOutcome,
         anchors,
         relevant: [],
+        onNarration: this.narrationPreview(session.id, signal),
       },
       { signal },
     );
@@ -1012,6 +1036,7 @@ export class AdventureManager {
     );
     const next = acceptedSession(result, "roll-rejected");
     this.session = await this.saveTurn(session, next);
+    this.streamedNarration = "";
     this.phase = "ready";
   }
 
@@ -1037,6 +1062,7 @@ export class AdventureManager {
   cancel(): void {
     if (this.phase !== "generating") return;
     this.generationController?.abort();
+    this.streamedNarration = "";
     if (this.session)
       void this.deps.clearGenerationInteraction(this.session.id);
     this.generationController = null;

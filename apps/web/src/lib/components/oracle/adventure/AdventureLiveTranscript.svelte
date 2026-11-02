@@ -40,7 +40,14 @@
       <AdventureNarrativeTurn {turn} roll={rollFor(turn.sequence)} />
     {/each}
   {/if}
-  {#if manager.phase === "generating"}
+  {#if manager.phase === "generating" && manager.streamedNarration}
+    <div class="space-y-2" data-testid="adventure-stream-preview">
+      <p class="text-xs text-theme-text">Oracle is writing…</p>
+      <p class="whitespace-pre-wrap text-sm leading-relaxed text-theme-text">
+        {manager.streamedNarration}
+      </p>
+    </div>
+  {:else if manager.phase === "generating"}
     <div
       class="flex items-center gap-2 text-sm text-theme-text"
       role="status"
