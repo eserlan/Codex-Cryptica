@@ -4,7 +4,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const env = vi.hoisted(() => ({
-  openGeneratorWorkflow: vi.fn(),
+  openIntentGeneratorWorkflow: vi.fn(),
   openActive: vi.fn(async () => false),
   setRootResolver: vi.fn(),
   setContextResolver: vi.fn(),
@@ -49,7 +49,7 @@ vi.mock("#lib/stores/calendar.svelte.js", () => ({
   calendarStore: { getSnapshot: () => ({ config: {} }) },
 }));
 vi.mock("#lib/stores/ui/modal-ui.svelte.js", () => ({
-  modalUIStore: { openGeneratorWorkflow: env.openGeneratorWorkflow },
+  modalUIStore: { openIntentGeneratorWorkflow: env.openIntentGeneratorWorkflow },
 }));
 vi.mock("#lib/services/adventure/adventure-session-repository.js", () => ({
   adventureSessionRepository: {
@@ -82,7 +82,7 @@ vi.mock("#lib/stores/oracle/rumour-adventure-handoff.svelte.js", () => ({
 import AdventureSurface from "./AdventureSurface.svelte";
 
 beforeEach(() => {
-  env.openGeneratorWorkflow.mockClear();
+  env.openIntentGeneratorWorkflow.mockClear();
   env.openActive.mockClear();
   env.list.mockClear();
   env.pendingRumour = null;
@@ -96,8 +96,8 @@ describe("AdventureSurface entry", () => {
     expect(screen.queryByLabelText("Premise")).toBeNull();
     await fireEvent.click(screen.getByTestId("adventure-discover"));
 
-    expect(env.openGeneratorWorkflow).toHaveBeenCalledTimes(1);
-    expect(env.openGeneratorWorkflow).toHaveBeenCalledWith("rumour");
+    expect(env.openIntentGeneratorWorkflow).toHaveBeenCalledTimes(1);
+    expect(env.openIntentGeneratorWorkflow).toHaveBeenCalledWith("rumour");
     expect(env.openActive).toHaveBeenCalledWith("vault-1");
   });
 
