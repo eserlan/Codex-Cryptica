@@ -28,59 +28,51 @@ export function seedWorldEntryBackground(
 ): AdventureSession {
   if (!needsWorldEntryBackground(session)) return session;
 
-  // Prefer the standard Vault-grounded generator. Retain its local fallback.
-  const batch =
-    generatedBatch ??
-    generateRumourLocal(
-      { locationContext: session.worldEntry!.location.name.slice(0, 80) },
-      seededRandom(session.id),
+  const locationContext = session.worldEntry!.location.name.slice(0, 80);
+  // Prefer the standard Vault-grounded generator. Incomplete categories or
+  // text that cannot fit the persisted schema use the deterministic local set.
+  const chosen =
+    selectCompleteSet(generatedBatch) ??
+    selectCompleteSet(
+      generateRumourLocal({ locationContext }, seededRandom(session.id)),
     );
-  const candidates = Array.from({ length: 6 }, (_, index) =>
-    selectRumourForPlay(batch, index + 1),
-  );
-  // Preserve the generator's exact player/GM pairing and vary reliability.
-  const chosen = [
-    candidates.find((item) => item.gmOnly.reality === "essentially true"),
-    candidates.find((item) => item.gmOnly.reality === "exaggeration"),
-    candidates.find(
-      (item) => item.gmOnly.reality === "dangerous misconception",
-    ),
-  ].filter((item): item is SelectedRumourForPlay => Boolean(item));
+  if (!chosen) return session;
 
   return {
     ...session,
     hiddenState: {
       secrets: [
         ...session.hiddenState.secrets,
-        ...chosen.map((item) => ({
-          id: allocateId(),
-          text: bounded(
-            [
-              `World-entry seed ${item.index} — original truth (${item.gmOnly.reality}):`,
-              item.gmOnly.whatsActuallyHappening,
-              `If investigated: ${item.gmOnly.ifInvestigated}`,
-            ].join(" "),
-          ),
-          status: "hidden" as const,
-          revealCondition:
-            "Reveal only after justified discovery; never leak GM truth.",
-        })),
+        ...chosen.flatMap((item) => [
+          {
+            id: allocateId(),
+            text: item.gmOnly.whatsActuallyHappening,
+            status: "hidden" as const,
+            revealCondition:
+              "Reveal only after justified discovery; never leak GM truth.",
+          },
+          {
+            id: allocateId(),
+            text: item.gmOnly.ifInvestigated,
+            status: "hidden" as const,
+            revealCondition:
+              "Reveal only after justified discovery; never leak GM truth.",
+          },
+        ]),
       ],
       gmThreads: [
         ...session.hiddenState.gmThreads,
         ...chosen.map((item) => ({
           id: allocateId(),
-          text: bounded(
-            [
-              `World-entry seed ${item.index} — DORMANT, NOT YET HEARD.`,
-              `Possible hearsay: "${item.playerVisible.rumour}"`,
-              `Lead: ${item.playerVisible.lead}.`,
-              `Source: ${item.playerVisible.source}.`,
-              "Progress: none. Introduce only when locally plausible.",
-              "React to actions or explicit world time, not turn count.",
-              "Treat as provisional until reconciled with Vault canon and date.",
-            ].join(" "),
-          ),
+          text: [
+            `World-entry seed ${item.index} — ${item.gmOnly.reality}; DORMANT, NOT YET HEARD.`,
+            `Possible hearsay: "${item.playerVisible.rumour}"`,
+            `Lead: ${item.playerVisible.lead}.`,
+            `Source: ${item.playerVisible.source}.`,
+            "Progress: none. Introduce only when locally plausible.",
+            "React to actions or explicit world time, not turn count.",
+            "Treat as provisional until reconciled with Vault canon and date.",
+          ].join(" "),
           status: "hidden" as const,
           revealCondition:
             "Player hears local gossip or discovers observable evidence.",
@@ -90,8 +82,50 @@ export function seedWorldEntryBackground(
   };
 }
 
-function bounded(value: string): string {
-  return value.slice(0, 600);
+const MAX_HIDDEN_TEXT_CHARS = 600;
+const REALITIES = [
+  "essentially true",
+  "exaggeration",
+  "dangerous misconception",
+] as const;
+
+function selectCompleteSet(
+  batch: RumourSelectionInput | undefined,
+): SelectedRumourForPlay[] | null {
+  if (!batch) return null;
+  try {
+    const candidates = Array.from({ length: 6 }, (_, index) =>
+      selectRumourForPlay(batch, index + 1),
+    );
+    const chosen = REALITIES.map((reality) =>
+      candidates.find((item) => item.gmOnly.reality === reality),
+    );
+    if (chosen.some((item) => !item)) return null;
+    const complete = chosen as SelectedRumourForPlay[];
+    return complete.every(fitsPersistedFields) ? complete : null;
+  } catch {
+    return null;
+  }
+}
+
+function fitsPersistedFields(item: SelectedRumourForPlay): boolean {
+  const threadText = [
+    `World-entry seed ${item.index} — ${item.gmOnly.reality}; DORMANT, NOT YET HEARD.`,
+    `Possible hearsay: "${item.playerVisible.rumour}"`,
+    `Lead: ${item.playerVisible.lead}.`,
+    `Source: ${item.playerVisible.source}.`,
+    "Progress: none. Introduce only when locally plausible.",
+    "React to actions or explicit world time, not turn count.",
+    "Treat as provisional until reconciled with Vault canon and date.",
+  ].join(" ");
+  return [
+    item.gmOnly.whatsActuallyHappening,
+    item.gmOnly.ifInvestigated,
+    threadText,
+  ].every(
+    (value) =>
+      value.trim().length > 0 && value.trim().length <= MAX_HIDDEN_TEXT_CHARS,
+  );
 }
 
 /** Stable within one session, including interrupted opening retries. */

@@ -183,6 +183,17 @@ function acceptedSession(
   throw new Error(result.errors?.[0]?.message ?? fallback);
 }
 
+function isAbort(cause: unknown, signal?: AbortSignal): boolean {
+  return Boolean(
+    signal?.aborted ||
+    (cause instanceof DOMException && cause.name === "AbortError"),
+  );
+}
+
+function abortReason(signal: AbortSignal): unknown {
+  return signal.reason ?? new DOMException("Cancelled", "AbortError");
+}
+
 export class AdventureManager {
   session = $state.raw<AdventureSession | null>(null);
   phase = $state<
@@ -217,28 +228,49 @@ export class AdventureManager {
   private readonly deps: Required<AdventureManagerDependencies>;
   private generationController: AbortController | null = null;
   private worldEntryRumourGenerator:
-    ((session: AdventureSession) => Promise<RumourSelectionInput>) | undefined;
+    | ((
+        session: AdventureSession,
+        signal?: AbortSignal,
+      ) => Promise<RumourSelectionInput>)
+    | undefined;
 
   setWorldEntryRumourGenerator(
-    generator: (session: AdventureSession) => Promise<RumourSelectionInput>,
+    generator: (
+      session: AdventureSession,
+      signal?: AbortSignal,
+    ) => Promise<RumourSelectionInput>,
   ): void {
     this.worldEntryRumourGenerator = generator;
   }
 
   private async prepareWorldEntryBackground(
     session: AdventureSession,
+    signal?: AbortSignal,
   ): Promise<AdventureSession> {
     if (!needsWorldEntryBackground(session)) return session;
-    let batch: RumourSelectionInput | undefined;
-    try {
-      batch = await this.worldEntryRumourGenerator?.(session);
-    } catch {
-      // A failed background generation must not interrupt an active adventure.
-    }
+    const batch = await this.generateWorldEntryRumourBatch(session, signal);
+    if (signal?.aborted) throw abortReason(signal);
     try {
       return seedWorldEntryBackground(session, this.deps.idGenerator, batch);
     } catch {
       return seedWorldEntryBackground(session, this.deps.idGenerator);
+    }
+  }
+
+  private async generateWorldEntryRumourBatch(
+    session: AdventureSession,
+    signal?: AbortSignal,
+  ): Promise<RumourSelectionInput | undefined> {
+    if (!this.worldEntryRumourGenerator) return undefined;
+    if (signal?.aborted) throw abortReason(signal);
+    try {
+      const batch = await this.worldEntryRumourGenerator(session, signal);
+      if (signal?.aborted) throw abortReason(signal);
+      return batch;
+    } catch (cause) {
+      if (isAbort(cause, signal)) throw cause;
+      // A failed background generation must not interrupt an active adventure.
+      return undefined;
     }
   }
   private activeRestoreRequest = 0;
@@ -738,7 +770,8 @@ export class AdventureManager {
     // Older World Entry sessions began without background situations.
     // Seed on their next committed action too, without mutating the persisted
     // session until the same optimistic-concurrency save succeeds.
-    const prepared = await this.prepareWorldEntryBackground(session);
+    const prepared = await this.prepareWorldEntryBackground(session, signal);
+    if (signal.aborted) throw abortReason(signal);
     const proposal = await this.deps.generation.generate(
       {
         session: prepared,
