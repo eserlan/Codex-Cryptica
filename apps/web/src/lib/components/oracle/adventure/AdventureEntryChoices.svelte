@@ -16,7 +16,7 @@
   data-testid="adventure-entry-choices"
 >
   <header class="space-y-2">
-    <p class="text-xs font-semibold uppercase tracking-widest text-theme-muted">
+    <p class="text-xs font-semibold uppercase tracking-widest text-theme-text">
       Adventure Mode
     </p>
     <h1
@@ -25,7 +25,7 @@
     >
       Where will your story begin?
     </h1>
-    <p class="max-w-2xl text-sm leading-relaxed text-theme-muted">
+    <p class="max-w-2xl text-sm leading-relaxed text-theme-text">
       Choose how to enter your adventure. You decide what your character does;
       Oracle responds as the world around them.
     </p>
@@ -37,7 +37,9 @@
       data-testid="adventure-discover"
       class="group flex min-h-44 flex-col items-start gap-3 rounded-xl border border-theme-primary/40 bg-theme-surface p-5 text-left transition hover:border-theme-primary hover:bg-theme-primary/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary disabled:cursor-not-allowed disabled:opacity-60"
       disabled={!canDiscover}
-      onclick={onDiscover}
+      onclick={() => {
+        if (canDiscover) onDiscover();
+      }}
       aria-describedby="adventure-discover-description"
     >
       <span
@@ -51,13 +53,13 @@
       </span>
       <span
         id="adventure-discover-description"
-        class="text-sm leading-relaxed text-theme-muted"
+        class="text-sm leading-relaxed text-theme-text"
       >
         Generate six rumours, choose a lead, and discover what happens when
         you investigate—or walk away.
       </span>
       {#if !canDiscover}
-        <span class="text-xs text-theme-muted">
+        <span class="text-xs text-theme-text">
           Open a fully loaded Vault to generate rumours.
         </span>
       {/if}
@@ -81,7 +83,7 @@
       </span>
       <span
         id="adventure-premise-description"
-        class="text-sm leading-relaxed text-theme-muted"
+        class="text-sm leading-relaxed text-theme-text"
       >
         Describe a starting situation, pick your character, and let Oracle
         bring the world to life.
@@ -94,7 +96,7 @@
       aria-label="Enter Your World — coming later"
     >
       <span
-        class="flex h-10 w-10 items-center justify-center rounded-lg bg-theme-bg text-theme-muted"
+        class="flex h-10 w-10 items-center justify-center rounded-lg bg-theme-bg text-theme-text"
         aria-hidden="true"
       >
         <span class="icon-[lucide--globe-2] h-5 w-5"></span>
@@ -103,9 +105,9 @@
         <span class="font-header text-base font-semibold text-theme-text">
           Enter Your World
         </span>
-        <span class="text-xs text-theme-muted">Coming later</span>
+        <span class="text-xs text-theme-text">Coming later</span>
       </div>
-      <p class="text-sm leading-relaxed text-theme-muted">
+      <p class="text-sm leading-relaxed text-theme-text">
         Start at a place and date in your existing Vault, without needing a
         prepared quest.
       </p>
