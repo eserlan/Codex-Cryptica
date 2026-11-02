@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_CALENDAR } from "chronology-engine";
-import { createWorldEntryStart, describeWorldEntryStartFailure } from "./world-entry-start";
+import {
+  createWorldEntryStart,
+  describeWorldEntryStartFailure,
+} from "./world-entry-start";
 import { emptyWorldEntrySetup } from "./world-entry-setup";
 
 const characters = [{ id: "pc-1", name: "Lira" }];
@@ -91,13 +94,22 @@ describe("createWorldEntryStart", () => {
       ),
     ).toContain("selected world date");
     expect(
-      describeWorldEntryStartFailure(new Error("active-adventure-exists"), "launch"),
+      describeWorldEntryStartFailure(
+        new Error("active-adventure-exists"),
+        "launch",
+      ),
     ).toContain("already active");
     expect(
-      describeWorldEntryStartFailure(new Error("private source content here"), "launch"),
+      describeWorldEntryStartFailure(
+        new Error("private source content here"),
+        "launch",
+      ),
     ).not.toContain("private source content here");
     expect(
-      describeWorldEntryStartFailure(new Error("Choose a location from this Vault."), "setup"),
+      describeWorldEntryStartFailure(
+        new Error("Choose a location from this Vault."),
+        "setup",
+      ),
     ).toContain("Choose a location");
   });
 
