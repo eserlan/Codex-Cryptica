@@ -17,6 +17,7 @@ import {
   type CommitMetadata,
   type PlayerCharacter,
   type ScenarioState,
+  type WorldEntryContext,
   type StateCorrectionOutcome,
   type SuppliedRollOutcome,
   type VisibleStatePatch,
@@ -72,6 +73,7 @@ function initialSession(input: {
   playerCharacter: PlayerCharacter;
   sourceRecords?: AdventureSession["sourceRecords"];
   scenarioSeed?: ScenarioState;
+  worldEntry?: WorldEntryContext;
   now: string;
   idGenerator: () => string;
 }): AdventureSession {
@@ -91,7 +93,17 @@ function initialSession(input: {
     ...(input.scenarioSeed
       ? { scenarioState: structuredClone(input.scenarioSeed) }
       : {}),
+    ...(input.worldEntry ? { worldEntry: structuredClone(input.worldEntry) } : {}),
     visibleState: {
+      ...(input.worldEntry ? {
+        location: {
+          id: input.idGenerator(),
+          text: input.worldEntry.location.name,
+          source: input.worldEntry.location.kind === "canonical" ? "canonical" as const : "provisional" as const,
+          ...(input.worldEntry.location.kind === "canonical"
+            ? { sourceRecordId: input.worldEntry.location.recordId } : {}),
+        },
+      } : {}),
       objectives: [],
       activeCharacters: [],
       knownFacts: [],
@@ -262,6 +274,7 @@ export class AdventureManager {
     playerCharacter: PlayerCharacter;
     sourceRecords?: AdventureSession["sourceRecords"];
     scenarioSeed?: ScenarioState;
+  worldEntry?: WorldEntryContext;
   }): Promise<AdventureSession> {
     if (!input.premise.trim() || !input.title.trim()) {
       throw new Error("premise-and-title-required");
@@ -330,6 +343,7 @@ export class AdventureManager {
     playerCharacter: PlayerCharacter;
     sourceRecords?: AdventureSession["sourceRecords"];
     scenarioSeed?: ScenarioState;
+  worldEntry?: WorldEntryContext;
   }): Promise<AdventureSession> {
     const created = initialSession({
       ...input,
