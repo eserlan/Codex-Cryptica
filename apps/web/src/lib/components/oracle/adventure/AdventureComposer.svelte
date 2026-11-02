@@ -50,7 +50,10 @@
       class="rounded-lg border border-theme-border bg-theme-bg p-3 text-sm text-theme-text"
       role="status"
     >
-      <p>Another tab may be controlling this adventure. Leave it there or close that tab, then try again here. Your progress is saved.</p>
+      <p>
+        Another tab may be controlling this adventure. Leave it there or close
+        that tab, then try again here. Your progress is saved.
+      </p>
       <button
         type="button"
         class="mt-2 min-h-11 rounded-lg border border-theme-border px-3 py-2 font-medium transition hover:bg-theme-primary/10 disabled:opacity-50"
@@ -60,7 +63,7 @@
         {retryingControl ? "Checking…" : "Try to take control"}
       </button>
       {#if controlRetryMessage}
-        <p class="mt-2 text-theme-muted">{controlRetryMessage}</p>
+        <p class="mt-2 text-theme-text">{controlRetryMessage}</p>
       {/if}
     </div>
   {/if}
