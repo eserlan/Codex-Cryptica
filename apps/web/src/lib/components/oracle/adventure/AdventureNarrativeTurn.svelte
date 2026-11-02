@@ -17,7 +17,7 @@
       class="ml-auto max-w-[90%] rounded-2xl rounded-br-sm bg-theme-primary/10 px-3 py-2"
     >
       <p
-        class="mb-1 text-[11px] font-semibold uppercase tracking-wide text-theme-text"
+        class="mb-1 text-xs font-semibold uppercase tracking-wide text-theme-text"
       >
         You
       </p>
@@ -27,9 +27,7 @@
     </div>
   {/if}
   <div class="space-y-1">
-    <p
-      class="text-[11px] font-semibold uppercase tracking-wide text-theme-text"
-    >
+    <p class="text-xs font-semibold uppercase tracking-wide text-theme-text">
       Oracle
     </p>
     <p class="whitespace-pre-wrap text-[15px] leading-7 text-theme-text">
