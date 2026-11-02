@@ -58,7 +58,6 @@ function parseAdventureResponse(text: string): AdventureTurnProposal {
   }
 }
 
-
 /**
  * Preview only the first top-level narration string in a structured JSON
  * response. This intentionally refuses nested fields and GM-only JSON.
@@ -529,7 +528,6 @@ export class AdventureTurnGenerationService {
       return parseAdventureResponse(result.text);
     }
   }
-
 
   /**
    * Adventure streaming uses the standard structured-generation SSE path.
