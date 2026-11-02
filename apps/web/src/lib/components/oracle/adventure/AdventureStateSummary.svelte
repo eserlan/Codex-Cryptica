@@ -5,73 +5,80 @@
 
 {#if manager.session && manager.recap}
   {@const recap = manager.recap}
-  {@const hasDetails =
-    recap.objectives.length ||
-    recap.activeCharacters.length ||
-    recap.knownFacts.length ||
-    recap.recentTurnSummaries.length}
   <section
-    class="rounded-lg border border-theme-border p-3"
     aria-labelledby="adventure-state-heading"
+    data-testid="adventure-scene-strip"
   >
-    <h3
-      id="adventure-state-heading"
-      class="text-xs font-semibold uppercase tracking-wide text-theme-secondary"
-    >
+    <h3 id="adventure-state-heading" class="sr-only">
       Current situation
     </h3>
-    {#if recap.location}<p class="mt-1 text-sm text-theme-primary">
-        <strong>{recap.location.text}</strong>
-      </p>{/if}
-    {#if recap.situation}<p class="text-sm text-theme-primary">
-        {recap.situation.text}
-      </p>{/if}
-    {#if hasDetails}
-      <details class="mt-2 text-sm">
-        <summary class="cursor-pointer font-medium text-theme-primary"
-          >Details</summary
-        >
-        {#if recap.objectives.length}<h4
-            class="mt-3 text-sm font-medium text-theme-primary"
-          >
-            Objectives
-          </h4>
-          <ul class="list-disc pl-5 text-sm text-theme-secondary">
-            {#each recap.objectives as objective (objective.id)}<li>
-                {objective.text}
-              </li>{/each}
-          </ul>{/if}
-        {#if recap.activeCharacters.length}<h4
-            class="mt-3 text-sm font-medium text-theme-primary"
-          >
-            Who's here
-          </h4>
-          <ul class="list-disc pl-5 text-sm text-theme-secondary">
-            {#each recap.activeCharacters as character (character.id)}<li>
-                {character.text}
-              </li>{/each}
-          </ul>{/if}
-        {#if recap.knownFacts.length}<h4
-            class="mt-3 text-sm font-medium text-theme-primary"
-          >
-            What you know
-          </h4>
-          <ul class="list-disc pl-5 text-sm text-theme-secondary">
-            {#each recap.knownFacts as fact (fact.id)}<li>
-                {fact.text}
-              </li>{/each}
-          </ul>{/if}
-        {#if recap.recentTurnSummaries.length}<h4
-            class="mt-3 text-sm font-medium text-theme-primary"
-          >
-            Recap: what just happened
-          </h4>
-          <ol class="mt-1 list-decimal space-y-1 pl-5 text-theme-secondary">
-            {#each recap.recentTurnSummaries as summary, index (index)}<li>
-                {summary}
-              </li>{/each}
-          </ol>{/if}
-      </details>
-    {/if}
+    <!-- Scene information is one compact row by default. The narrative below
+         is the primary play surface; the recap remains available on demand. -->
+    <details
+      class="group rounded-lg border border-theme-border bg-theme-surface/60"
+      data-testid="adventure-scene-details"
+    >
+      <summary
+        class="flex min-h-10 cursor-pointer list-none items-center gap-2 px-3 py-2 text-sm text-theme-primary [&::-webkit-details-marker]:hidden"
+      >
+        <span
+          class="icon-[lucide--map-pin] h-4 w-4 shrink-0 text-theme-secondary"
+          aria-hidden="true"
+        ></span>
+        <span class="min-w-0 flex-1 truncate font-medium">
+          {recap.location?.text ?? "Current situation"}
+        </span>
+        <span class="shrink-0 text-xs text-theme-secondary">Scene details</span>
+        <span
+          class="icon-[lucide--chevron-down] h-4 w-4 shrink-0 text-theme-secondary transition-transform group-open:rotate-180"
+          aria-hidden="true"
+        ></span>
+      </summary>
+      <div class="space-y-3 border-t border-theme-border px-3 py-3 text-sm text-theme-primary">
+        {#if recap.situation}
+          <p>{recap.situation.text}</p>
+        {/if}
+        {#if recap.objectives.length}
+          <div>
+            <h4 class="font-semibold">Objectives</h4>
+            <ul class="mt-1 list-disc pl-5 text-theme-secondary">
+              {#each recap.objectives as objective (objective.id)}
+                <li>{objective.text}</li>
+              {/each}
+            </ul>
+          </div>
+        {/if}
+        {#if recap.activeCharacters.length}
+          <div>
+            <h4 class="font-semibold">Who's here</h4>
+            <ul class="mt-1 list-disc pl-5 text-theme-secondary">
+              {#each recap.activeCharacters as character (character.id)}
+                <li>{character.text}</li>
+              {/each}
+            </ul>
+          </div>
+        {/if}
+        {#if recap.knownFacts.length}
+          <div>
+            <h4 class="font-semibold">What you know</h4>
+            <ul class="mt-1 list-disc pl-5 text-theme-secondary">
+              {#each recap.knownFacts as fact (fact.id)}
+                <li>{fact.text}</li>
+              {/each}
+            </ul>
+          </div>
+        {/if}
+        {#if recap.recentTurnSummaries.length}
+          <div>
+            <h4 class="font-semibold">Recap: what just happened</h4>
+            <ol class="mt-1 list-decimal space-y-1 pl-5 text-theme-secondary">
+              {#each recap.recentTurnSummaries as summary, index (index)}
+                <li>{summary}</li>
+              {/each}
+            </ol>
+          </div>
+        {/if}
+      </div>
+    </details>
   </section>
 {/if}
