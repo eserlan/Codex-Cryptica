@@ -43,25 +43,25 @@
           <div
             class="ml-auto max-w-[90%] rounded-2xl rounded-br-sm bg-theme-primary/10 px-3 py-2"
           >
-            <p class="mb-1 text-[11px] font-semibold uppercase tracking-wide text-theme-secondary">
+            <p class="mb-1 text-[11px] font-semibold uppercase tracking-wide text-theme-text">
               You
             </p>
-            <p class="whitespace-pre-wrap text-sm leading-relaxed text-theme-primary">
+            <p class="whitespace-pre-wrap text-sm leading-relaxed text-theme-text">
               {turn.playerAction}
             </p>
           </div>
         {/if}
         <div class="space-y-1">
-          <p class="text-[11px] font-semibold uppercase tracking-wide text-theme-secondary">
+          <p class="text-[11px] font-semibold uppercase tracking-wide text-theme-text">
             Oracle
           </p>
-          <p class="whitespace-pre-wrap text-[15px] leading-7 text-theme-primary">
+          <p class="whitespace-pre-wrap text-[15px] leading-7 text-theme-text">
             {turn.narration}
           </p>
         </div>
         {#if roll}
           <p
-            class="inline-flex items-center gap-1.5 rounded-full bg-theme-primary/10 px-2.5 py-1 text-xs text-theme-secondary"
+            class="inline-flex items-center gap-1.5 rounded-full bg-theme-primary/10 px-2.5 py-1 text-xs text-theme-text"
           >
             <span aria-hidden="true" class="icon-[lucide--dices] h-3 w-3"></span>
             {#if roll.expression}{roll.expression} —{/if}
@@ -80,7 +80,7 @@
   {/if}
   {#if manager.phase === "generating"}
     <div
-      class="flex items-center gap-2 text-sm text-theme-secondary"
+      class="flex items-center gap-2 text-sm text-theme-text"
       role="status"
       aria-live="off"
       data-testid="adventure-generating-status"
