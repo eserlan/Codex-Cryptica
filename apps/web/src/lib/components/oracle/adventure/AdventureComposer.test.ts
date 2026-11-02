@@ -124,9 +124,11 @@ describe("AdventureComposer", () => {
     m.suggestedActions = ["Search the wreckage"];
     const { rerender } = render(AdventureComposer, { props: { manager: m } });
 
-    await fireEvent.click(
-      screen.getByTestId("adventure-suggested-actions").querySelector("summary")!,
-    );
+    const summary = screen
+      .getByTestId("adventure-suggested-actions")
+      .querySelector("summary");
+    expect(summary).not.toBeNull();
+    await fireEvent.click(summary!);
     const button = screen.getByRole("button", { name: "Search the wreckage" });
     button.focus();
     expect(document.activeElement).toBe(button);
