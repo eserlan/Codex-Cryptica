@@ -20,7 +20,7 @@ function manager(
 }
 
 describe("AdventureComposer", () => {
-  it("keeps free action visible below a collapsible suggestion menu", () => {
+  it("keeps free action visible beside a compact dropdown of suggested actions", () => {
     const m = manager("ready");
     m.suggestedActions = [
       "Steady the shutter as Sela lifts it.",
@@ -31,17 +31,28 @@ describe("AdventureComposer", () => {
 
     const suggestions = screen.getByTestId("adventure-suggested-actions");
     expect(suggestions.tagName).toBe("DETAILS");
-    expect(suggestions.querySelector("summary")?.textContent).toContain(
-      "Suggested actions (3)",
+    expect((suggestions as HTMLDetailsElement).open).toBe(false);
+    expect(suggestions.className).not.toContain("overflow-x-auto");
+    const actionButtons = suggestions.querySelectorAll("button");
+    expect(actionButtons).toHaveLength(3);
+    expect(actionButtons[0].className).toContain("w-full");
+    expect(actionButtons[0].className).not.toContain("line-clamp");
+    expect(actionButtons[0].parentElement?.className).toContain("max-h-36");
+    expect(actionButtons[0].parentElement?.className).toContain(
+      "overflow-y-auto",
     );
-    expect(suggestions.querySelectorAll("button")).toHaveLength(3);
     expect(screen.getByLabelText("What do you do?")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Submit action" })).toBeTruthy();
     expect(screen.getByTestId("adventure-action-dock")).toBeTruthy();
   });
 
-  it("shows a Cancel affordance while generating, without removing the form", () => {
-    render(AdventureComposer, { props: { manager: manager("generating") } });
+  it("shows a Cancel affordance and the selected action while generating", () => {
+    const m = manager("generating");
+    render(AdventureComposer, { props: { manager: m } });
+
+    expect(
+      screen.getByText("Playing: Cross the flooded causeway"),
+    ).toBeTruthy();
 
     // The field stays mounted (just hidden) so a focused element is never
     // yanked out from under the user — see the comment in the component for
@@ -82,14 +93,17 @@ describe("AdventureComposer", () => {
     m.suggestedActions = ["Search the wreckage"];
     render(AdventureComposer, { props: { manager: m } });
 
-    const details = screen.getByTestId(
+    const suggestions = screen.getByTestId(
       "adventure-suggested-actions",
     ) as HTMLDetailsElement;
-    details.open = true;
+    await fireEvent.click(suggestions.querySelector("summary")!);
+    expect(suggestions.open).toBe(true);
+
     await fireEvent.click(
       screen.getByRole("button", { name: "Search the wreckage" }),
     );
 
+    expect(m.submitSuggestedAction).toHaveBeenCalledOnce();
     expect(m.submitSuggestedAction).toHaveBeenCalledWith("Search the wreckage");
   });
 
@@ -105,7 +119,9 @@ describe("AdventureComposer", () => {
     const submit = screen.getByRole("button", { name: "Submit action" });
     expect(submit.hasAttribute("disabled")).toBe(true);
     const suggested = screen.getByTestId("adventure-suggested-actions");
-    expect((suggested.querySelector("button") as HTMLButtonElement).disabled).toBe(true);
+    expect(
+      (suggested.querySelector("button") as HTMLButtonElement).disabled,
+    ).toBe(true);
 
     const retry = screen.getByRole("button", { name: "Try to take control" });
     await fireEvent.click(retry);
@@ -134,10 +150,11 @@ describe("AdventureComposer", () => {
     m.suggestedActions = ["Search the wreckage"];
     const { rerender } = render(AdventureComposer, { props: { manager: m } });
 
-    const details = screen.getByTestId(
-      "adventure-suggested-actions",
-    ) as HTMLDetailsElement;
-    details.open = true;
+    const summary = screen
+      .getByTestId("adventure-suggested-actions")
+      .querySelector("summary");
+    expect(summary).not.toBeNull();
+    await fireEvent.click(summary!);
     const button = screen.getByRole("button", { name: "Search the wreckage" });
     button.focus();
     expect(document.activeElement).toBe(button);
