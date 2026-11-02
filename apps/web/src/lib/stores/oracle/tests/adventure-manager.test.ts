@@ -105,6 +105,35 @@ function dependencies() {
 }
 
 describe("AdventureManager", () => {
+  it("uses the paired output of the normal Rumour Generator", async () => {
+    const { generateRumourLocal } = await import("generator-engine");
+    const deps: any = dependencies();
+    const batch = generateRumourLocal({ locationContext: "Northbrook" });
+    const manager = new AdventureManager(deps);
+    const generateRumours = vi.fn(async () => batch);
+    manager.setWorldEntryRumourGenerator(generateRumours);
+    await manager.start({
+      vaultId: "vault-1",
+      title: "Northbrook",
+      premise: "Explore Northbrook",
+      playerCharacter: {
+        kind: "provisional",
+        name: "Mara",
+        description: "Guide",
+      },
+      worldEntry: {
+        version: 1,
+        location: { kind: "provisional", name: "Northbrook" },
+        intent: "explore",
+      },
+    });
+    expect(generateRumours).toHaveBeenCalledOnce();
+    expect(manager.session?.hiddenState.gmThreads).toHaveLength(3);
+    expect(manager.session?.hiddenState.gmThreads[0]?.text).toContain(
+      "DORMANT, NOT YET HEARD",
+    );
+  });
+
   it("persists world-entry situations across actions", async () => {
     const deps: any = dependencies();
     const generate = vi.fn(async (_request: any) => completeProposal);
