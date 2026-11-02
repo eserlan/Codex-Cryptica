@@ -36,13 +36,20 @@
         ? "flex items-center justify-between gap-3 py-1"
         : "hidden"}
     >
-      <p class="flex items-center gap-2 text-sm text-theme-text">
-        <span
-          class="icon-[lucide--sparkles] h-4 w-4 motion-safe:animate-pulse"
-          aria-hidden="true"
-        ></span>
-        Oracle is responding…
-      </p>
+      <div class="min-w-0" role="status">
+        <p class="flex items-center gap-2 text-sm text-theme-text">
+          <span
+            class="icon-[lucide--sparkles] h-4 w-4 shrink-0 motion-safe:animate-pulse"
+            aria-hidden="true"
+          ></span>
+          Oracle is responding…
+        </p>
+        {#if manager.draft.trim()}
+          <p class="truncate text-xs text-theme-text" title={manager.draft}>
+            Playing: {manager.draft}
+          </p>
+        {/if}
+      </div>
       <button
         class="min-h-11 rounded-md border border-theme-border px-3 text-theme-text"
         type="button"
