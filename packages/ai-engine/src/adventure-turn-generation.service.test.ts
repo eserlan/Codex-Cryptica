@@ -71,7 +71,7 @@ describe("AdventureTurnGenerationService", () => {
       extractAdventureNarrationPrefix(
         '{"kind":"complete","narration":"The road\\nturns',
       ),
-    ).toBe("The road\\nturns");
+    ).toBe(["The road", "turns"].join(String.fromCharCode(10)));
     expect(
       extractAdventureNarrationPrefix(
         '{"kind":"complete","hiddenPatch":{"gmThreads":[]},' +
