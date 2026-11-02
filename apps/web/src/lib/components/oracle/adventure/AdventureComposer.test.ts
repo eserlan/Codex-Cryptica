@@ -20,7 +20,7 @@ function manager(
 }
 
 describe("AdventureComposer", () => {
-  it("keeps free action visible beside a horizontally scrollable row of suggestions", () => {
+  it("keeps free action visible beside a compact dropdown of suggested actions", () => {
     const m = manager("ready");
     m.suggestedActions = [
       "Steady the shutter as Sela lifts it.",
@@ -30,15 +30,23 @@ describe("AdventureComposer", () => {
     render(AdventureComposer, { props: { manager: m } });
 
     const suggestions = screen.getByTestId("adventure-suggested-actions");
-    expect(suggestions.className).toContain("overflow-x-auto");
-    expect(suggestions.querySelectorAll("button")).toHaveLength(3);
+    expect(suggestions.tagName).toBe("DETAILS");
+    expect((suggestions as HTMLDetailsElement).open).toBe(false);
+    expect(suggestions.className).not.toContain("overflow-x-auto");
+    const actionButtons = suggestions.querySelectorAll("button");
+    expect(actionButtons).toHaveLength(3);
+    expect(actionButtons[0].className).toContain("w-full");
+    expect(actionButtons[0].className).not.toContain("line-clamp");
     expect(screen.getByLabelText("What do you do?")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Submit action" })).toBeTruthy();
     expect(screen.getByTestId("adventure-action-dock")).toBeTruthy();
   });
 
-  it("shows a Cancel affordance while generating, without removing the form", () => {
-    render(AdventureComposer, { props: { manager: manager("generating") } });
+  it("shows a Cancel affordance and the selected action while generating", () => {
+    const m = manager("generating");
+    render(AdventureComposer, { props: { manager: m } });
+
+    expect(screen.getByText("Playing: Cross the flooded causeway")).toBeTruthy();
 
     // The field stays mounted (just hidden) so a focused element is never
     // yanked out from under the user — see the comment in the component for
@@ -79,10 +87,15 @@ describe("AdventureComposer", () => {
     m.suggestedActions = ["Search the wreckage"];
     render(AdventureComposer, { props: { manager: m } });
 
+    const suggestions = screen.getByTestId("adventure-suggested-actions") as HTMLDetailsElement;
+    await fireEvent.click(suggestions.querySelector("summary")!);
+    expect(suggestions.open).toBe(true);
+
     await fireEvent.click(
       screen.getByRole("button", { name: "Search the wreckage" }),
     );
 
+    expect(m.submitSuggestedAction).toHaveBeenCalledOnce();
     expect(m.submitSuggestedAction).toHaveBeenCalledWith("Search the wreckage");
   });
 
@@ -107,6 +120,9 @@ describe("AdventureComposer", () => {
     m.suggestedActions = ["Search the wreckage"];
     const { rerender } = render(AdventureComposer, { props: { manager: m } });
 
+    await fireEvent.click(
+      screen.getByTestId("adventure-suggested-actions").querySelector("summary")!,
+    );
     const button = screen.getByRole("button", { name: "Search the wreckage" });
     button.focus();
     expect(document.activeElement).toBe(button);
