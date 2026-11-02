@@ -69,7 +69,7 @@ describe("AdventureTurnGenerationService", () => {
   it("emits only the first top-level player narration from partial JSON", () => {
     expect(
       extractAdventureNarrationPrefix(
-        '{"kind":"complete","narration":"The road\\\\nturns',
+        '{"kind":"complete","narration":"The road\\nturns',
       ),
     ).toBe("The road\\nturns");
     expect(
