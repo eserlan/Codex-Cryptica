@@ -617,7 +617,7 @@ export class AdventureTurnGenerationService {
     const prompt = buildAdventurePrompt(request);
     const systemInstruction =
       prompt.behavior +
-      "\\n\\nReturn only valid JSON that matches this response schema:\\n" +
+      "\n\nReturn only valid JSON that matches this response schema:\n" +
       JSON.stringify(adventureTurnResponseSchema);
 
     if (request.onNarration) {
