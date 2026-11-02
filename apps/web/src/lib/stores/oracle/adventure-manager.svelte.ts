@@ -711,7 +711,13 @@ export class AdventureManager {
     // session until the same optimistic-concurrency save succeeds.
     const prepared = seedWorldEntryBackground(session, this.deps.idGenerator);
     const proposal = await this.deps.generation.generate(
-      { session: prepared, phase: "action", playerAction: action, anchors, relevant },
+      {
+        session: prepared,
+        phase: "action",
+        playerAction: action,
+        anchors,
+        relevant,
+      },
       { signal },
     );
     if (signal.aborted) throw new DOMException("Cancelled", "AbortError");
