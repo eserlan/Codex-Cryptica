@@ -2,7 +2,7 @@
   import { tick } from "svelte";
   import type { AdventureManager } from "#lib/stores/oracle/adventure-manager.svelte.js";
   import type { AdventureSessionRepository } from "#lib/services/adventure/adventure-session-repository.js";
-  import type { ProvisionalFact } from "@codex/adventure-engine";
+  import { formatWorldElapsedMinutes, type ProvisionalFact } from "@codex/adventure-engine";
   import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
   import AdventureArchive from "./AdventureArchive.svelte";
   import AdventureCorrectionForm from "./AdventureCorrectionForm.svelte";
@@ -149,6 +149,14 @@
             : manager.phase === "offline"
               ? "Waiting for connection"
               : manager.phase}
+          {#if manager.session?.worldTime}
+            <span
+              class="ml-2 normal-case tracking-normal"
+              title="Elapsed fictional time since the adventure began"
+            >
+              · {formatWorldElapsedMinutes(manager.session.worldTime.elapsedMinutes)} elapsed
+            </span>
+          {/if}
         </p>
       </div>
     </div>
