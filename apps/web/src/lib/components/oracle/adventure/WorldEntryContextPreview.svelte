@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { WorldEntryContextPreview } from
+  import type { WorldEntryContextPreview, WorldEntryPreviewRecord } from
     "#lib/services/adventure/world-entry-context-preview.js";
 
   let {
@@ -16,11 +16,14 @@
     error?: string | null;
   } = $props();
 
-  const categories = [
-    { key: "people", title: "People" },
-    { key: "locations", title: "Locations" },
-    { key: "events", title: "Events" },
-  ] as const;
+  function recordHint(record: WorldEntryPreviewRecord): string {
+    return [
+      record.type,
+      record.applicability === "uncertain" ? "date unconfirmed" :
+        record.applicability === "historical" ? "historical" : "",
+      record.dateLabel ?? "",
+    ].filter(Boolean).join(" · ");
+  }
 </script>
 
 <section
@@ -38,14 +41,18 @@
     </p>
   </header>
   <div class="grid grid-cols-3 gap-2 text-center">
-    {#each categories as category}
-      <div class="rounded-lg border border-theme-border bg-theme-bg p-3">
-        <p class="text-xl font-semibold text-theme-text" data-testid={"preview-count-" + category.key}>
-          {preview.counts[category.key]}
-        </p>
-        <p class="text-xs text-theme-muted">{category.title}</p>
-      </div>
-    {/each}
+    <div class="rounded-lg border border-theme-border bg-theme-bg p-3">
+      <p class="text-xl font-semibold text-theme-text" data-testid="preview-count-people">{preview.counts.people}</p>
+      <p class="text-xs text-theme-muted">People</p>
+    </div>
+    <div class="rounded-lg border border-theme-border bg-theme-bg p-3">
+      <p class="text-xl font-semibold text-theme-text" data-testid="preview-count-locations">{preview.counts.locations}</p>
+      <p class="text-xs text-theme-muted">Locations</p>
+    </div>
+    <div class="rounded-lg border border-theme-border bg-theme-bg p-3">
+      <p class="text-xl font-semibold text-theme-text" data-testid="preview-count-events">{preview.counts.events}</p>
+      <p class="text-xs text-theme-muted">Events</p>
+    </div>
   </div>
 
   {#if preview.warnings.length}
@@ -66,13 +73,7 @@
           <li class="flex flex-wrap items-start justify-between gap-x-3 rounded-md bg-theme-bg p-2 text-sm">
             <span class="font-medium text-theme-text">{record.title}</span>
             <span class="text-xs text-theme-muted">
-              {record.type}
-              {#if record.applicability === "uncertain"}
-                · date unconfirmed
-              {:else if record.applicability === "historical"}
-                · historical
-              {/if}
-              {#if record.dateLabel} · {record.dateLabel}{/if}
+              {recordHint(record)}
             </span>
           </li>
         {/each}
