@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { AdventureManager } from "#lib/stores/oracle/adventure-manager.svelte.js";
+
   let { manager }: { manager: AdventureManager } = $props();
   let action = $derived(manager.draft);
   let disabled = $derived(
@@ -9,8 +10,8 @@
       manager.phase === "awaiting-roll" ||
       manager.phase === "ready-to-resolve",
   );
-  // A pending roll is the current decision. Keep action controls mounted for
-  // fullscreen focus stability, but do not leave competing choices visible.
+  // Preserve controls in the DOM during phase transitions. Unmounting a
+  // focused button can exit native fullscreen unexpectedly in Chrome.
   let actionControlsVisible = $derived(
     manager.phase !== "generating" &&
       manager.phase !== "awaiting-roll" &&
@@ -19,14 +20,9 @@
 </script>
 
 <div
-  class="sticky bottom-0 z-10 space-y-2 border-t border-theme-border bg-theme-bg px-3 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:px-4"
+  class="z-10 shrink-0 space-y-2 border-t border-theme-border bg-theme-surface px-3 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] sm:px-4 sm:pt-3"
+  data-testid="adventure-action-dock"
 >
-  <!-- The form and its fields stay mounted across a generating/ready phase
-       change and are hidden/disabled with classes rather than an {#if} swap.
-       Destroying and recreating this subtree while one of its buttons (a
-       just-submitted suggested action, or the composer itself) still holds
-       focus makes Chrome silently exit native fullscreen — see Adventure
-       Mode's Fullscreen toggle in AdventureFocusPlay.svelte. -->
   <form
     class="space-y-2"
     onsubmit={(event) => {
@@ -36,55 +32,69 @@
   >
     <div
       class={manager.phase === "generating"
-        ? "flex items-center justify-between gap-3"
+        ? "flex items-center justify-between gap-3 py-1"
         : "hidden"}
     >
-      <p class="text-sm text-theme-secondary">Waiting for the Oracle…</p>
+      <p class="flex items-center gap-2 text-sm text-theme-secondary">
+        <span
+          class="icon-[lucide--sparkles] h-4 w-4 motion-safe:animate-pulse"
+          aria-hidden="true"
+        ></span>
+        Oracle is responding…
+      </p>
       <button
-        class="min-h-12 rounded-md border border-theme-border px-4 py-2 text-theme-primary"
+        class="min-h-11 rounded-md border border-theme-border px-3 text-theme-primary"
         type="button"
         onclick={() => manager.cancel()}>Cancel</button
       >
     </div>
     {#if manager.suggestedActions.length > 0}
       <div
-        class={actionControlsVisible ? "flex flex-wrap gap-2" : "hidden"}
+        class={actionControlsVisible
+          ? "flex snap-x gap-2 overflow-x-auto overscroll-x-contain pb-1"
+          : "hidden"}
         aria-label="Suggested actions"
         data-testid="adventure-suggested-actions"
       >
         {#each manager.suggestedActions as suggestion (suggestion)}
           <button
-            class="rounded-md border border-theme-border px-3 py-2 text-sm text-theme-primary transition hover:bg-theme-primary/10"
+            class="min-h-11 max-w-[15rem] shrink-0 snap-start rounded-lg border border-theme-border bg-theme-bg px-3 py-2 text-left text-xs leading-snug text-theme-primary transition hover:bg-theme-primary/10 sm:text-sm"
             type="button"
             {disabled}
             onclick={() => void manager.submitSuggestedAction(suggestion)}
-            >{suggestion}</button
           >
+            <span class="line-clamp-2">{suggestion}</span>
+          </button>
         {/each}
       </div>
     {/if}
     <div
-      class={actionControlsVisible ? "space-y-2" : "hidden"}
+      class={actionControlsVisible ? "flex items-end gap-2" : "hidden"}
       data-testid="adventure-free-action"
     >
-      <label class="block text-sm text-theme-primary" for="adventure-action"
-        >What do you do?</label
-      >
+      <label class="sr-only" for="adventure-action">What do you do?</label>
       <textarea
         id="adventure-action"
-        class="min-h-24 w-full rounded-md border border-theme-border bg-theme-surface px-3 py-2 text-theme-primary"
+        rows="2"
+        class="min-h-11 max-h-32 min-w-0 flex-1 resize-y rounded-lg border border-theme-border bg-theme-bg px-3 py-2 text-sm leading-relaxed text-theme-primary placeholder:text-theme-muted"
         bind:value={manager.draft}
         {disabled}
-        placeholder="Describe your character's action"
+        placeholder="What do you do?"
       ></textarea>
       <button
-        class="min-h-12 rounded-md bg-theme-primary px-4 py-2 text-theme-on-primary disabled:opacity-50"
+        class="flex min-h-11 min-w-11 shrink-0 items-center justify-center gap-2 rounded-lg bg-theme-primary px-3 py-2 text-theme-on-primary disabled:opacity-50"
         type="submit"
-        disabled={disabled || !manager.draft.trim()}>Submit action</button
+        aria-label="Submit action"
+        disabled={disabled || !manager.draft.trim()}
       >
+        <span class="icon-[lucide--send] h-4 w-4" aria-hidden="true"></span>
+        <span class="hidden sm:inline">Send</span>
+      </button>
     </div>
   </form>
-  {#if manager.errorMessage}<p class="text-sm text-theme-danger" role="alert">
+  {#if manager.errorMessage}
+    <p class="text-sm text-theme-danger" role="alert">
       {manager.errorMessage}
-    </p>{/if}
+    </p>
+  {/if}
 </div>
