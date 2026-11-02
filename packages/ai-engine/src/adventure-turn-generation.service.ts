@@ -219,6 +219,23 @@ const adventureTurnResponseSchema = {
       properties: {
         kind: { type: "string", enum: ["complete"] },
         narration: { ...textSchema, maxLength: 2_000 },
+        timeAdvance: {
+          type: "object",
+          required: ["minutes", "cause", "developments"],
+          properties: {
+            minutes: { type: "integer", minimum: 1, maximum: 43200 },
+            cause: textSchema,
+            developments: {
+              type: "array",
+              maxItems: 3,
+              items: {
+                type: "object",
+                required: ["threadId", "text"],
+                properties: { threadId: idSchema, text: textSchema },
+              },
+            },
+          },
+        },
         visiblePatch: {
           type: "object",
           properties: {

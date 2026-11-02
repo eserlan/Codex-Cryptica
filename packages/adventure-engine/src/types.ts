@@ -184,6 +184,27 @@ export interface ResolvedRollSnapshot {
   outcome: SuppliedRollOutcome;
 }
 
+/** Elapsed fictional time and up to three causal GM-only NPC/situation updates. */
+export interface TimeAdvanceProposal {
+  minutes: number;
+  cause: string;
+  developments: Array<{ threadId: string; text: string }>;
+}
+
+export interface WorldTimeState {
+  version: 1;
+  /** Minutes since the in-world scene began; no device clock arithmetic. */
+  elapsedMinutes: number;
+  /** Private event ledger. Never include in player transcript. */
+  events: Array<{
+    id: string;
+    turnId: string;
+    atMinute: number;
+    threadId: string;
+    text: string;
+  }>;
+}
+
 export interface CommittedAdventureTurn {
   id: string;
   sequence: number;
@@ -199,6 +220,8 @@ export interface CommittedAdventureTurn {
   sourceRecordIds: string[];
   provisionalFactIds: string[];
   committedAt: string;
+  /** Player-safe time interval; private developments live in worldTime. */
+  timeAdvance?: { minutes: number; cause: string };
   suggestedActions?: string[];
 }
 
@@ -287,6 +310,8 @@ export interface AdventureSession {
   scenarioState?: ScenarioState;
   /** Additive world-entry setup; absent in old and ordinary adventures. */
   worldEntry?: WorldEntryContext;
+  /** Optional for backwards-compatible local-first sessions. */
+  worldTime?: WorldTimeState;
   visibleState: VisibleAdventureState;
   hiddenState: HiddenAdventureState;
   provisionalFacts: ProvisionalFact[];
@@ -301,6 +326,7 @@ export interface AdventureSession {
 export interface CompletedTurnProposal {
   kind: "complete";
   narration: string;
+  timeAdvance?: TimeAdvanceProposal;
   visiblePatch: VisibleStateProposalPatch;
   hiddenPatch: HiddenStateProposalPatch;
   revealSecretIds: string[];

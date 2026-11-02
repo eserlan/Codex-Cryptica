@@ -209,9 +209,36 @@ const persistedHiddenPatchSchema = z.object({
   gmThreads: persistedCollectionPatch(hiddenThreadSchema),
 });
 
+const worldTimeEventSchema = z
+  .object({
+    id,
+    turnId: id,
+    atMinute: z.number().int().nonnegative(),
+    threadId: id,
+    text,
+  })
+  .strict();
+
+const worldTimeSchema = z
+  .object({
+    version: z.literal(1),
+    elapsedMinutes: z.number().int().min(0).max(52_560_000),
+    events: z.array(worldTimeEventSchema).max(80),
+  })
+  .strict();
+
+const timeAdvanceSchema = z
+  .object({
+    minutes: z.number().int().min(1).max(43_200),
+    cause: text,
+    developments: z.array(z.object({ threadId: id, text }).strict()).max(3),
+  })
+  .strict();
+
 const completeProposalSchema = z.object({
   kind: z.literal("complete"),
   narration,
+  timeAdvance: timeAdvanceSchema.optional(),
   visiblePatch: visiblePatchSchema,
   hiddenPatch: hiddenPatchSchema,
   revealSecretIds: z.array(id),
@@ -333,6 +360,7 @@ export const adventureSessionSchema = z.object({
   // Additive scenario extension: v1/v2 saved adventures without this field still load.
   scenarioState: scenarioStateSchema.optional(),
   worldEntry: worldEntrySchema.optional(),
+  worldTime: worldTimeSchema.optional(),
   visibleState: visibleStateSchema,
   hiddenState: hiddenStateSchema,
   provisionalFacts: z.array(provisionalFactSchema).max(60),
@@ -352,6 +380,9 @@ export const adventureSessionSchema = z.object({
       sourceRecordIds: z.array(id),
       provisionalFactIds: z.array(id),
       committedAt: timestamp,
+      timeAdvance: timeAdvanceSchema
+        .pick({ minutes: true, cause: true })
+        .optional(),
       suggestedActions: z.array(text).length(3).optional(),
     }),
   ),
@@ -423,6 +454,7 @@ export function parseAdventureSession(input: unknown): AdventureSession {
     provisionalFacts: parsed.provisionalFacts,
     scenarioState: parsed.scenarioState,
     worldEntry: parsed.worldEntry,
+    worldTime: parsed.worldTime,
   }).length;
   if (stateLength > MAX_SERIALIZED_STATE_CHARS) {
     throw new Error("state-budget-exceeded");
@@ -442,6 +474,7 @@ export function validateStateBudget(session: AdventureSession): boolean {
       provisionalFacts: session.provisionalFacts,
       scenarioState: session.scenarioState,
       worldEntry: session.worldEntry,
+      worldTime: session.worldTime,
     }).length <= MAX_SERIALIZED_STATE_CHARS
   );
 }
