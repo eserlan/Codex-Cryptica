@@ -8,6 +8,7 @@
     premise = $bindable(""),
     characterName = $bindable(""),
     characterDescription = $bindable(""),
+    selectedCharacterId = $bindable(""),
     characters = [],
     scenarioSeed,
     onScenarioStarted,
@@ -19,12 +20,12 @@
     premise?: string;
     characterName?: string;
     characterDescription?: string;
+    selectedCharacterId?: string;
     characters?: Array<{ id: string; name: string }>;
     scenarioSeed?: ScenarioState;
     onScenarioStarted?: () => void;
     onCancelScenario?: () => void;
   } = $props();
-  let selectedCharacterId = $state("");
   let interacted = $state(false);
   let submitting = $state(false);
   let startError = $state<string | null>(null);
@@ -56,6 +57,7 @@
     premise = "";
     characterName = "";
     characterDescription = "";
+    selectedCharacterId = "";
     interacted = false;
   }
 
@@ -161,6 +163,7 @@
     <input
       class="mt-1 w-full rounded-md border border-theme-border bg-theme-surface px-3 py-2 text-theme-text"
       bind:value={characterName}
+      oninput={() => (selectedCharacterId = "")}
       aria-invalid={interacted && !characterName.trim() && !selectedCharacterId}
       required={!selectedCharacterId}
     />
