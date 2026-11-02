@@ -54,7 +54,7 @@
 
   function discoverAdventure(): void {
     if (!canDiscover) return;
-    modalUIStore.openGeneratorWorkflow("rumour");
+    modalUIStore.openIntentGeneratorWorkflow("rumour");
   }
 
   $effect(() => {
