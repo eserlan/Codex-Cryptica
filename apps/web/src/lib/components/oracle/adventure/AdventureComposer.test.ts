@@ -80,6 +80,8 @@ describe("AdventureComposer", () => {
     m.suggestedActions = ["Search the wreckage"];
     render(AdventureComposer, { props: { manager: m } });
 
+    const details = screen.getByTestId("adventure-suggested-actions") as HTMLDetailsElement;
+    details.open = true;
     await fireEvent.click(
       screen.getByRole("button", { name: "Search the wreckage" }),
     );
@@ -126,6 +128,8 @@ describe("AdventureComposer", () => {
     m.suggestedActions = ["Search the wreckage"];
     const { rerender } = render(AdventureComposer, { props: { manager: m } });
 
+    const details = screen.getByTestId("adventure-suggested-actions") as HTMLDetailsElement;
+    details.open = true;
     const button = screen.getByRole("button", { name: "Search the wreckage" });
     button.focus();
     expect(document.activeElement).toBe(button);
