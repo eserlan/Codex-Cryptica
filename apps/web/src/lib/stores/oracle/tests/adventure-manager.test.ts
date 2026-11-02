@@ -125,6 +125,46 @@ describe("AdventureManager", () => {
     );
   });
 
+  it("retries a read-only lease without stealing control or losing the draft", async () => {
+    const deps: any = dependencies();
+    const manager = new AdventureManager(deps);
+    await manager.start({
+      vaultId: "vault-1",
+      title: "Road",
+      premise: "Find the road",
+      playerCharacter: {
+        kind: "provisional",
+        name: "Mara",
+        description: "Guide",
+      },
+    });
+
+    manager.readOnly = true;
+    manager.lease = null;
+    manager.draft = "Ask about the shutter";
+    const lease = {
+      vaultId: "vault-1",
+      sessionId: manager.session!.id,
+      ownerId: "new-owner",
+      fencingToken: 2,
+      expiresAt: Date.now() + 10_000,
+    };
+    deps.authority.acquire = vi.fn()
+      .mockResolvedValueOnce({ ok: false, reason: "held" })
+      .mockResolvedValueOnce({ ok: true, lease });
+
+    expect(await manager.tryTakeControl()).toBe(false);
+    expect(manager.readOnly).toBe(true);
+    expect(manager.session?.turns).toHaveLength(1);
+
+    expect(await manager.tryTakeControl()).toBe(true);
+    expect(manager.readOnly).toBe(false);
+    expect(manager.lease?.ownerId).toBe("new-owner");
+    expect(manager.session?.turns).toHaveLength(1);
+    expect(manager.draft).toBe("Ask about the shutter");
+    expect(deps.authority.acquire).toHaveBeenCalledTimes(2);
+  });
+
   it("supplies ranked vault records with the opening request", async () => {
     const deps: any = dependencies();
     const relevant = [
