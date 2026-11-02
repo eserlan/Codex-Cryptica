@@ -236,7 +236,7 @@ describe("AdventureFocusPlay", () => {
     expect(screen.getByRole("complementary", { name: "Adventure tools" })).toBeTruthy();
 
     await fireEvent.click(screen.getAllByLabelText("Close adventure tools")[0]);
-    expect(screen.queryByLabelText("Adventure tools")).toBeNull();
+    expect(screen.queryByRole("complementary", { name: "Adventure tools" })).toBeNull();
 
     await fireEvent.click(
       screen.getByRole("button", { name: "Adventure tools" }),
@@ -244,7 +244,7 @@ describe("AdventureFocusPlay", () => {
     expect(screen.getByRole("complementary", { name: "Adventure tools" })).toBeTruthy();
 
     await fireEvent.keyDown(window, { key: "Escape" });
-    expect(screen.queryByLabelText("Adventure tools")).toBeNull();
+    expect(screen.queryByRole("complementary", { name: "Adventure tools" })).toBeNull();
   });
 
   it("keeps the adventure surface visible when fullscreen is denied", async () => {
