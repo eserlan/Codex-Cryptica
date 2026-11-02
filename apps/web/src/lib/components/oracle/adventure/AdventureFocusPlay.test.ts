@@ -214,7 +214,7 @@ describe("AdventureFocusPlay", () => {
     // why: a lg: viewport breakpoint still fires even when this surface is
     // hosted in the app's own narrow sidebar, so it can never rely on an
     // actual side-by-side split reading as usable.
-    expect(screen.queryByLabelText("Adventure tools")).toBeNull();
+    expect(screen.queryByRole("complementary", { name: "Adventure tools" })).toBeNull();
     expect(screen.queryByText("Dice presets")).toBeNull();
     expect(screen.queryByText("Resource trackers")).toBeNull();
 
@@ -222,7 +222,7 @@ describe("AdventureFocusPlay", () => {
       screen.getByRole("button", { name: "Adventure tools" }),
     );
 
-    expect(screen.getByLabelText("Adventure tools")).toBeTruthy();
+    expect(screen.getByRole("complementary", { name: "Adventure tools" })).toBeTruthy();
     expect(screen.getByText("Dice presets")).toBeTruthy();
     expect(screen.getByText("Resource trackers")).toBeTruthy();
   });
@@ -233,7 +233,7 @@ describe("AdventureFocusPlay", () => {
     await fireEvent.click(
       screen.getByRole("button", { name: "Adventure tools" }),
     );
-    expect(screen.getByLabelText("Adventure tools")).toBeTruthy();
+    expect(screen.getByRole("complementary", { name: "Adventure tools" })).toBeTruthy();
 
     await fireEvent.click(screen.getAllByLabelText("Close adventure tools")[0]);
     expect(screen.queryByLabelText("Adventure tools")).toBeNull();
@@ -241,7 +241,7 @@ describe("AdventureFocusPlay", () => {
     await fireEvent.click(
       screen.getByRole("button", { name: "Adventure tools" }),
     );
-    expect(screen.getByLabelText("Adventure tools")).toBeTruthy();
+    expect(screen.getByRole("complementary", { name: "Adventure tools" })).toBeTruthy();
 
     await fireEvent.keyDown(window, { key: "Escape" });
     expect(screen.queryByLabelText("Adventure tools")).toBeNull();
