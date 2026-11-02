@@ -149,7 +149,8 @@ describe("AdventureManager", () => {
       fencingToken: 2,
       expiresAt: Date.now() + 10_000,
     };
-    deps.authority.acquire = vi.fn()
+    deps.authority.acquire = vi
+      .fn()
       .mockResolvedValueOnce({ ok: false, reason: "held" })
       .mockResolvedValueOnce({ ok: true, lease });
 
