@@ -101,7 +101,7 @@
   );
   const pendingRollId = $derived(manager.session?.pendingRoll?.id ?? null);
   const visibleEventVersion = $derived(
-    `${transcriptLength}:${manager.phase}:${pendingRollId ?? ""}`,
+    `${transcriptLength}:${manager.phase}:${pendingRollId ?? ""}:${manager.streamedNarration.length}`,
   );
 
   $effect.pre(() => {

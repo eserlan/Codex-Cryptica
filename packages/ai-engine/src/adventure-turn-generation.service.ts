@@ -20,6 +20,8 @@ export interface AdventureTurnGenerationRequest {
   anchors: ResolvedSourceExcerpt[];
   relevant: ResolvedSourceExcerpt[];
   signal?: AbortSignal;
+  /** Ephemeral player-facing preview; never a committed or trusted turn. */
+  onNarration?: (text: string) => void;
 }
 
 export interface AdventureAIClient {
@@ -54,6 +56,54 @@ function parseAdventureResponse(text: string): AdventureTurnProposal {
   } catch {
     throw new Error("invalid-adventure-response");
   }
+}
+
+
+/**
+ * Preview only the first top-level narration string in a structured JSON
+ * response. This intentionally refuses nested fields and GM-only JSON.
+ * Final JSON validation and hidden-truth guards still run at turn commit.
+ */
+export function extractAdventureNarrationPrefix(buffer: string): string {
+  const start = /^\s*\{\s*"kind"\s*:\s*"(?:complete|roll-required)"\s*,\s*"(?:narration|setupNarration)"\s*:\s*"/.exec(buffer);
+  if (!start) return "";
+  const begin = start[0].length;
+  let raw = "";
+  for (let i = begin; i < buffer.length && raw.length < 12_000; i += 1) {
+    const char = buffer[i]!;
+    if (char === '"') break;
+    if (char === "\\") {
+      const escape = buffer[i + 1];
+      if (!escape) break;
+      if (escape === "u") {
+        const hex = buffer.slice(i + 2, i + 6);
+        if (!/^[0-9a-fA-F]{4}$/.test(hex)) break;
+        raw += buffer.slice(i, i + 6);
+        i += 5;
+      } else {
+        if (!/["\\/bfnrt]/.test(escape)) break;
+        raw += buffer.slice(i, i + 2);
+        i += 1;
+      }
+    } else {
+      raw += char;
+    }
+  }
+  try {
+    return JSON.parse(`"${raw}"`).slice(0, 2_000);
+  } catch {
+    return "";
+  }
+}
+
+type AdventureStreamEvent =
+  | { type: "started" }
+  | { type: "delta"; text: string }
+  | { type: "complete"; text: string }
+  | { type: "error"; error: string };
+
+function streamAborted(signal?: AbortSignal): void {
+  if (signal?.aborted) throw new DOMException("Cancelled", "AbortError");
 }
 
 const idSchema = { type: "string", minLength: 1 } as const;
@@ -448,6 +498,81 @@ export class AdventureTurnGenerationService {
     }
   }
 
+
+  /**
+   * Adventure streaming uses the standard structured-generation SSE path.
+   * The Interactions endpoint currently buffers complete JSON, so when
+   * streaming is available we send a self-contained prompt (recent transcript,
+   * world state and selected Vault sources) rather than a delta interaction.
+   */
+  private async generateViaStream(
+    request: AdventureTurnGenerationRequest,
+    prompt: ReturnType<typeof buildAdventurePrompt>,
+    systemInstruction: string,
+    options: { apiKey?: string; modelName?: string; signal?: AbortSignal },
+  ): Promise<AdventureTurnProposal | null> {
+    const signal = options.signal ?? request.signal;
+    const model = await this.aiClient.getModel(
+      options.apiKey ?? "",
+      options.modelName ?? "luna-fast",
+      systemInstruction,
+    );
+    const streamModel = model as typeof model & {
+      generateContentStream?: (
+        input: unknown,
+        signal?: AbortSignal,
+      ) =>
+        | AsyncIterable<AdventureStreamEvent>
+        | Promise<{
+            stream: AsyncIterable<{ text(): string }>;
+            response: Promise<{ text(): string }>;
+          }>;
+    };
+    if (!streamModel.generateContentStream) return null;
+    // Never reuse stale partial Interactions context after switching to a
+    // self-contained streamed request.
+    this.clearInteraction(request.session.id);
+    let buffer = "";
+    const publish = () => {
+      if (signal?.aborted) return;
+      const narration = extractAdventureNarrationPrefix(buffer);
+      if (narration) request.onNarration?.(narration);
+    };
+    const input = {
+      contents: [{ role: "user", parts: [{ text: prompt.serialized }] }],
+      generationConfig: {
+        responseMimeType: "application/json",
+        responseSchema: adventureTurnResponseSchema,
+      },
+    };
+    streamAborted(signal);
+    const stream = await streamModel.generateContentStream(input, signal);
+    if (Symbol.asyncIterator in stream) {
+      for await (const event of stream) {
+        streamAborted(signal);
+        if (event.type === "delta") {
+          buffer += event.text;
+          publish();
+        } else if (event.type === "complete") {
+          buffer = event.text || buffer;
+          publish();
+        } else if (event.type === "error") {
+          throw new Error(event.error);
+        }
+      }
+    } else {
+      // Native Gemini SDK supports a different streaming return shape.
+      for await (const chunk of stream.stream) {
+        streamAborted(signal);
+        buffer += chunk.text();
+        publish();
+      }
+      buffer = (await stream.response).text() || buffer;
+    }
+    streamAborted(signal);
+    return parseAdventureResponse(buffer);
+  }
+
   async generate(
     request: AdventureTurnGenerationRequest,
     options: { apiKey?: string; modelName?: string; signal?: AbortSignal } = {},
@@ -459,6 +584,16 @@ export class AdventureTurnGenerationService {
     if (signal?.aborted) throw new DOMException("Cancelled", "AbortError");
     const prompt = buildAdventurePrompt(request);
     const systemInstruction = `${prompt.behavior}\n\nReturn only valid JSON that matches this response schema:\n${JSON.stringify(adventureTurnResponseSchema)}`;
+
+    if (request.onNarration) {
+      const streamed = await this.generateViaStream(
+        request,
+        prompt,
+        systemInstruction,
+        options,
+      );
+      if (streamed) return streamed;
+    }
 
     if (this.aiClient.sendInteraction) {
       return this.generateViaInteraction(

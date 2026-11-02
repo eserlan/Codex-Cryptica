@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { tick } from "svelte";
   import type { AdventureManager } from "#lib/stores/oracle/adventure-manager.svelte.js";
   import AdventureSuggestedActions from "./AdventureSuggestedActions.svelte";
 
@@ -13,6 +14,22 @@
   );
   let retryingControl = $state(false);
   let controlRetryMessage = $state<string | null>(null);
+  let textarea = $state<HTMLTextAreaElement>();
+
+  // Keep the action field compact for one line, then grow as the player types.
+  // Long prose scrolls inside the field so it never pushes the dock offscreen.
+  $effect(() => {
+    const value = manager.draft;
+    if (!textarea) return;
+    void tick().then(() => {
+      if (!textarea) return;
+      textarea.style.height = "auto";
+      const maxHeight = Math.max(44, Math.min(192, window.innerHeight * 0.3));
+      textarea.style.height = `${Math.min(textarea.scrollHeight, maxHeight)}px`;
+      textarea.style.overflowY =
+        textarea.scrollHeight > maxHeight ? "auto" : "hidden";
+    });
+  });
 
   async function retryControl(): Promise<void> {
     if (retryingControl) return;
@@ -42,7 +59,7 @@
 </script>
 
 <div
-  class="z-10 shrink-0 space-y-2 border-t border-theme-border bg-theme-surface px-3 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] sm:px-4 sm:pt-3"
+  class="z-10 min-h-0 max-h-[55%] shrink-0 space-y-2 overflow-y-auto border-t border-theme-border bg-theme-surface px-3 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] sm:px-4 sm:pt-3"
   data-testid="adventure-action-dock"
 >
   {#if manager.readOnly && manager.session?.status === "active"}
@@ -110,9 +127,10 @@
     >
       <label class="sr-only" for="adventure-action">What do you do?</label>
       <textarea
+        bind:this={textarea}
         id="adventure-action"
-        rows="2"
-        class="min-h-11 max-h-32 min-w-0 flex-1 resize-y rounded-lg border border-theme-border bg-theme-bg px-3 py-2 text-sm leading-relaxed text-theme-text placeholder:text-theme-muted"
+        rows="1"
+        class="min-h-11 min-w-0 flex-1 resize-none rounded-lg border border-theme-border bg-theme-bg px-3 py-2 text-base leading-relaxed text-theme-text placeholder:text-theme-muted"
         bind:value={manager.draft}
         {disabled}
         placeholder="What do you do?"
