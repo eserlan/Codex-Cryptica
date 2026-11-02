@@ -553,23 +553,12 @@ export class AdventureTurnGenerationService {
       generateContentStream?: (
         input: unknown,
         signal?: AbortSignal,
-      ) =>
-        | AsyncIterable<AdventureStreamEvent>
-        | Promise<{
-            stream: AsyncIterable<{ text(): string }>;
-            response: Promise<{ text(): string }>;
-          }>;
+      ) => AsyncIterable<AdventureStreamEvent> | Promise<AdventureStream>;
     };
     if (!streamModel.generateContentStream) return null;
-    // Never reuse stale partial Interactions context after switching to a
-    // self-contained streamed request.
+    // The streamed request is self-contained; stale Interactions state is
+    // never reused after switching transport.
     this.clearInteraction(request.session.id);
-    let buffer = "";
-    const publish = () => {
-      if (signal?.aborted) return;
-      const narration = extractAdventureNarrationPrefix(buffer);
-      if (narration) request.onNarration?.(narration);
-    };
     const input = {
       contents: [{ role: "user", parts: [{ text: prompt.serialized }] }],
       generationConfig: {
@@ -579,30 +568,46 @@ export class AdventureTurnGenerationService {
     };
     streamAborted(signal);
     const stream = await streamModel.generateContentStream(input, signal);
-    if (Symbol.asyncIterator in stream) {
-      for await (const event of stream) {
-        streamAborted(signal);
-        if (event.type === "delta") {
-          buffer += event.text;
-          publish();
-        } else if (event.type === "complete") {
-          buffer = event.text || buffer;
-          publish();
-        } else if (event.type === "error") {
-          throw new Error(event.error);
-        }
-      }
-    } else {
-      // Native Gemini SDK supports a different streaming return shape.
-      for await (const chunk of stream.stream) {
-        streamAborted(signal);
-        buffer += chunk.text();
-        publish();
-      }
-      buffer = (await stream.response).text() || buffer;
-    }
-    streamAborted(signal);
+    const buffer = await collectAdventureStream(
+      stream,
+      (text) => {
+        if (signal?.aborted) return;
+        const narration = extractAdventureNarrationPrefix(text);
+        if (narration) request.onNarration?.(narration);
+      },
+      signal,
+    );
     return parseAdventureResponse(buffer);
+  }
+
+  private async generateBuffered(
+    request: AdventureTurnGenerationRequest,
+    prompt: ReturnType<typeof buildAdventurePrompt>,
+    systemInstruction: string,
+    options: { apiKey?: string; modelName?: string; signal?: AbortSignal },
+  ): Promise<AdventureTurnProposal> {
+    if (this.aiClient.sendInteraction) {
+      return this.generateViaInteraction(
+        request,
+        prompt,
+        systemInstruction,
+        options,
+      );
+    }
+    const model = await this.aiClient.getModel(
+      options.apiKey ?? "",
+      options.modelName ?? "luna-fast",
+      systemInstruction,
+    );
+    const result = await model.generateContent({
+      contents: [{ role: "user", parts: [{ text: prompt.serialized }] }],
+      generationConfig: {
+        responseMimeType: "application/json",
+        responseSchema: adventureTurnResponseSchema,
+      },
+    });
+    streamAborted(options.signal ?? request.signal);
+    return parseAdventureResponse(result.response.text());
   }
 
   async generate(
@@ -627,33 +632,7 @@ export class AdventureTurnGenerationService {
       if (streamed) return streamed;
     }
 
-    if (this.aiClient.sendInteraction) {
-      return this.generateViaInteraction(
-        request,
-        prompt,
-        systemInstruction,
-        options,
-      );
-    }
-
-    const model = await this.aiClient.getModel(
-      options.apiKey ?? "",
-      options.modelName ?? "luna-fast",
-      systemInstruction,
-    );
-    const result = await model.generateContent({
-      contents: [{ role: "user", parts: [{ text: prompt.serialized }] }],
-      generationConfig: {
-        responseMimeType: "application/json",
-        responseSchema: adventureTurnResponseSchema,
-      },
-    });
-    if (signal?.aborted) throw new DOMException("Cancelled", "AbortError");
-    try {
-      return parseAdventureResponse(result.response.text());
-    } catch {
-      throw new Error("invalid-adventure-response");
-    }
+    return this.generateBuffered(request, prompt, systemInstruction, options);
   }
 }
 
