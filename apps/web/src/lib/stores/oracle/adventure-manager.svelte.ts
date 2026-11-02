@@ -486,6 +486,20 @@ export class AdventureManager {
     await this.resumeRecordedRollIfNeeded(isCurrent);
   }
 
+  /**
+   * Retry a previously unavailable control lease without stealing it from
+   * another tab. open() reloads the latest committed session before enabling
+   * writes, so a stale read-only transcript cannot overwrite newer turns.
+   */
+  async tryTakeControl(): Promise<boolean> {
+    const session = this.session;
+    if (!session || !this.readOnly || session.status !== "active") {
+      return false;
+    }
+    await this.open(session.vaultId, session.id);
+    return !this.readOnly;
+  }
+
   private async acquireOpenedSessionLease(
     vaultId: string,
     sessionId: string,
