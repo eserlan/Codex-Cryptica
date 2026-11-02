@@ -37,6 +37,10 @@ describe("AdventureComposer", () => {
     expect(actionButtons).toHaveLength(3);
     expect(actionButtons[0].className).toContain("w-full");
     expect(actionButtons[0].className).not.toContain("line-clamp");
+    expect(actionButtons[0].parentElement?.className).toContain("max-h-36");
+    expect(actionButtons[0].parentElement?.className).toContain(
+      "overflow-y-auto",
+    );
     expect(screen.getByLabelText("What do you do?")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Submit action" })).toBeTruthy();
     expect(screen.getByTestId("adventure-action-dock")).toBeTruthy();

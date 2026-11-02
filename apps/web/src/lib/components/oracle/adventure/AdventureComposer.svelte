@@ -36,11 +36,8 @@
         ? "flex items-center justify-between gap-3 py-1"
         : "hidden"}
     >
-      <div class="min-w-0">
-        <p
-          class="flex items-center gap-2 text-sm text-theme-text"
-          role="status"
-        >
+      <div class="min-w-0" role="status">
+        <p class="flex items-center gap-2 text-sm text-theme-text">
           <span
             class="icon-[lucide--sparkles] h-4 w-4 shrink-0 motion-safe:animate-pulse"
             aria-hidden="true"

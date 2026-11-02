@@ -36,7 +36,9 @@
         aria-hidden="true"
       ></span>
     </summary>
-    <div class="flex flex-col gap-2 border-t border-theme-border p-2">
+    <div
+      class="flex max-h-36 flex-col gap-2 overflow-y-auto overscroll-contain border-t border-theme-border p-2"
+    >
       {#each manager.suggestedActions as suggestion (suggestion)}
         <button
           class="min-h-11 w-full rounded-lg border border-theme-border bg-theme-surface px-3 py-2 text-left text-sm leading-relaxed whitespace-normal text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary disabled:opacity-50"
