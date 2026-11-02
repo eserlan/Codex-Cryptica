@@ -125,7 +125,7 @@
     <div class="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
       <button
         type="button"
-        class="flex min-h-10 min-w-10 shrink-0 items-center justify-center rounded-md border border-theme-border text-theme-primary transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
+        class="flex min-h-10 min-w-10 shrink-0 items-center justify-center rounded-md border border-theme-border text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
         onclick={() => void manager.close()}
         title="Leave adventure (saves automatically)"
         aria-label="Leave adventure"
@@ -141,7 +141,7 @@
         >
           {manager.session?.title ?? "Adventure"}
         </h2>
-        <p class="truncate text-[11px] uppercase tracking-wide text-theme-muted sm:text-sm sm:normal-case sm:tracking-normal">
+        <p class="truncate text-[11px] uppercase tracking-wide text-theme-text sm:text-sm sm:normal-case sm:tracking-normal">
           {manager.readOnly
             ? "Read-only in this tab"
             : manager.phase === "offline"
@@ -153,7 +153,7 @@
     <div class="flex shrink-0 items-center gap-1 sm:gap-2">
       <button
         bind:this={toolsButton}
-        class="flex min-h-10 min-w-10 items-center justify-center rounded-md border border-theme-border px-2 text-theme-primary transition sm:min-h-12 sm:px-3 hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
+        class="flex min-h-10 min-w-10 items-center justify-center rounded-md border border-theme-border px-2 text-theme-text transition sm:min-h-12 sm:px-3 hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
         type="button"
         aria-label="Adventure tools"
         title="Adventure tools"
@@ -168,7 +168,7 @@
         </span>
       </button>
       <button
-        class="hidden min-h-12 items-center gap-2 rounded-md border border-theme-border px-3 text-theme-primary transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary sm:inline-flex"
+        class="hidden min-h-12 items-center gap-2 rounded-md border border-theme-border px-3 text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary sm:inline-flex"
         type="button"
         aria-label={isFullscreen ? "Fullscreen active" : "Fullscreen"}
         aria-pressed={isFullscreen}
@@ -233,7 +233,7 @@
         </h3>
         <button
           type="button"
-          class="flex min-h-10 min-w-10 items-center justify-center rounded-md border border-theme-border text-theme-primary transition hover:bg-theme-primary/10"
+          class="flex min-h-10 min-w-10 items-center justify-center rounded-md border border-theme-border text-theme-text transition hover:bg-theme-primary/10"
           aria-label="Close adventure tools"
           onclick={closeTools}
         >
