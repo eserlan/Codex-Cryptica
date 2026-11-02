@@ -2,10 +2,12 @@
   let {
     onDiscover,
     onOwnPremise,
+    onEnterWorld = () => {},
     canDiscover = true,
   }: {
     onDiscover: () => void;
     onOwnPremise: () => void;
+    onEnterWorld?: () => void;
     canDiscover?: boolean;
   } = $props();
 </script>
@@ -90,27 +92,22 @@
       </span>
     </button>
 
-    <div
-      class="flex min-h-44 flex-col items-start gap-3 rounded-xl border border-theme-border bg-theme-surface/50 p-5 sm:col-span-2 xl:col-span-1"
-      data-testid="adventure-enter-world-planned"
-      aria-label="Enter Your World — coming later"
+    <button
+      type="button"
+      class="group flex min-h-44 flex-col items-start gap-3 rounded-xl border border-theme-border bg-theme-surface p-5 text-left transition hover:border-theme-primary hover:bg-theme-primary/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary sm:col-span-2 xl:col-span-1"
+      data-testid="adventure-enter-world"
+      onclick={onEnterWorld}
+      aria-describedby="adventure-world-description"
     >
-      <span
-        class="flex h-10 w-10 items-center justify-center rounded-lg bg-theme-bg text-theme-text"
-        aria-hidden="true"
-      >
+      <span class="flex h-10 w-10 items-center justify-center rounded-lg bg-theme-primary/10 text-theme-text" aria-hidden="true">
         <span class="icon-[lucide--globe-2] h-5 w-5"></span>
       </span>
-      <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
-        <span class="font-header text-base font-semibold text-theme-text">
-          Enter Your World
-        </span>
-        <span class="text-xs text-theme-text">Coming later</span>
-      </div>
-      <p class="text-sm leading-relaxed text-theme-text">
-        Start at a place and date in your existing Vault, without needing a
-        prepared quest.
-      </p>
-    </div>
+      <span class="font-header text-base font-semibold text-theme-text">
+        Enter Your World
+      </span>
+      <span id="adventure-world-description" class="text-sm leading-relaxed text-theme-text">
+        Choose a character, place, time and opening style. Explore your Vault without a prepared quest.
+      </span>
+    </button>
   </div>
 </section>
