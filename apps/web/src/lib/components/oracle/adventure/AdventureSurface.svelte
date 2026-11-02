@@ -4,6 +4,8 @@
   import AdventureArchive from "./AdventureArchive.svelte";
   import AdventureStart from "./AdventureStart.svelte";
   import AdventureEntryChoices from "./AdventureEntryChoices.svelte";
+  import WorldEntrySetup from "./WorldEntrySetup.svelte";
+  import { emptyWorldEntrySetup, worldEntryTitle, worldEntryLocationName, worldEntryCharacter } from "#lib/services/adventure/world-entry-setup.js";
   import AdventureFocusPlay from "./AdventureFocusPlay.svelte";
   import { adventureContextService } from "#lib/services/adventure/adventure-context-service.js";
   import { adventureSessionRepository } from "#lib/services/adventure/adventure-session-repository.js";
@@ -19,10 +21,13 @@
   let vaultId = $derived(oracle.vault.activeVaultId ?? "default");
   const selectedRumour = $derived(rumourAdventureHandoff.forVault(vaultId));
   const characters = $derived(characterChoices(oracle.vault.entities));
+  const locations = $derived(oracle.vault.allEntities.filter((entity) => entity.type === "location" && entity.visibility !== "hidden").map((entity) => ({ id: entity.id, name: entity.title })));
   const canDiscover = $derived(
     isVaultReadyForGenerators(vault) && !vault.isGuest,
   );
-  let startApproach = $state<"choose" | "premise">("choose");
+  // The typed world-entry draft lives here so view transitions cannot erase it.
+  let worldSetup = $state(emptyWorldEntrySetup(vaultId));
+  let startApproach = $state<"choose" | "premise" | "world">("choose");
   let previousVaultId: string | null = null;
   let previouslyPrefilledScenario = $state<string | null>(null);
   let archivingForRumour = $state(false);
@@ -50,6 +55,7 @@
       startCharacterName = "";
       startCharacterId = "";
       startCharacterDescription = "";
+      worldSetup = emptyWorldEntrySetup(currentVaultId);
     }
     previousVaultId = currentVaultId;
   });
@@ -267,6 +273,30 @@
         onOwnPremise={() => (startApproach = "premise")}
       />
     {:else}
+      {#if !selectedRumour && startApproach === "world"}
+        <WorldEntrySetup
+          bind:setup={worldSetup}
+          {characters}
+          {locations}
+          calendar={calendarStore.config}
+          onContinue={(next) => {
+            worldSetup = next;
+            startTitle = worldEntryTitle(next, characters, locations);
+            startCharacterId = next.characterId;
+            startCharacterName = worldEntryCharacter(next, characters).name;
+            startCharacterDescription = next.provisionalCharacterDescription;
+            const place = worldEntryLocationName(next, locations);
+            // A temporary, manually reviewable bridge; #4572 replaces this
+            // with persisted, time-aware world-entry metadata and context.
+            startPremise = "Begin an open-ended scene in " + place + ". " +
+              (next.intent === "scene" ? next.scenePrompt :
+                next.intent === "opportunity" ? "Present a credible local situation, not an assigned quest." :
+                  "Let the player explore freely. Do not assign a quest.") +
+              (next.at ? " World year: " + next.at.year + "." : "");
+            startApproach = "premise";
+          }}
+        />
+      {:else}
       {#if !selectedRumour}
         <button
           type="button"
@@ -292,6 +322,7 @@
         onScenarioStarted={() => rumourAdventureHandoff.clear()}
         onCancelScenario={cancelRumour}
       />
+      {/if}
     {/if}
     <AdventureArchive
       repository={adventureSessionRepository}
