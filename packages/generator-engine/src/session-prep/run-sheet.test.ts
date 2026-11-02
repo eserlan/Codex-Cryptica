@@ -119,7 +119,7 @@ describe("toRunSheetMarkdown", () => {
       { id: "r2", text: "A tinker with gossip", source: "gm" },
     ];
     expect(toRunSheetMarkdown(value)).toBe(
-      "## Reserve\n- **The Bellfounder's Yard:** noisy machinery\n- A tinker with gossip",
+      "## Reserve\n- **The Bellfounder's Yard** — noisy machinery\n- A tinker with gossip",
     );
   });
 
