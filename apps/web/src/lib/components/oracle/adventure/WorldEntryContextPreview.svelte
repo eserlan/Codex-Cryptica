@@ -23,9 +23,11 @@
       record.type,
       record.applicability === "uncertain"
         ? "date unconfirmed"
-        : record.applicability === "historical"
-          ? "historical"
-          : "",
+        : record.applicability === "contradictory"
+          ? "conflicting dates"
+          : record.applicability === "historical"
+            ? "historical"
+            : "",
       record.dateLabel ?? "",
     ]
       .filter(Boolean)

@@ -15,6 +15,14 @@ import {
   type WorldEntrySetup,
 } from "./world-entry-setup";
 
+/** Setup validation failure; its messages are fixed, user-safe copy. */
+export class WorldEntrySetupError extends Error {
+  constructor(readonly messages: readonly string[]) {
+    super(messages.join(" "));
+    this.name = "WorldEntrySetupError";
+  }
+}
+
 /** Retains canonical IDs and the actual date, without storing Vault bodies. */
 export function createWorldEntryStart(
   setup: WorldEntrySetup,
@@ -35,7 +43,7 @@ export function createWorldEntryStart(
     locations,
     calendar,
   );
-  if (errors.length) throw new Error(errors.join(" "));
+  if (errors.length) throw new WorldEntrySetupError(errors);
   const character = worldEntryCharacter(setup, characters);
   const locationName = worldEntryLocationName(setup, locations);
   const location: WorldEntryContext["location"] = setup.locationId
@@ -118,11 +126,10 @@ export function describeWorldEntryStartFailure(
   if (message === "invalid-session-id") {
     return "Could not save the new adventure. Reopen the Vault and retry.";
   }
-  if (
-    message.startsWith("Choose a ") ||
-    message.startsWith("Describe the scene")
-  ) {
-    return message + " Your setup has been preserved.";
+  // Only the exact messages produced by validateWorldEntrySetup are shown, and
+  // only while validating setup. Any other error text could carry Vault data.
+  if (stage === "setup" && cause instanceof WorldEntrySetupError) {
+    return cause.messages.join(" ") + " Your setup has been preserved.";
   }
 
   // DOMException may come from another browser/test realm and not extend Error.

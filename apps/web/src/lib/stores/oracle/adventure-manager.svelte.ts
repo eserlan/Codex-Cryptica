@@ -9,6 +9,7 @@ import {
   createPlayerTranscript,
   dismissPendingRoll,
   getRollHistory,
+  parseAdventureSession,
   recordPendingRollOutcome,
   removeDicePreset,
   removeResourceCounter,
@@ -44,6 +45,7 @@ import { adventureTurnGenerationService } from "@codex/ai-engine";
 import { oracleBridge } from "#lib/cloud-bridge/oracle-bridge.js";
 import { diceEngine as defaultDiceEngine, diceParser } from "dice-engine";
 import { systemIdGenerator } from "#lib/utils/runtime-deps.js";
+import type { AdventureStartFailure } from "#lib/services/adventure/adventure-start-failure.js";
 import {
   needsWorldEntryBackground,
   seedWorldEntryBackground,
@@ -69,6 +71,43 @@ function validateRollExpression(proposal: {
   if (proposal.kind === "roll-required" && proposal.dice) {
     diceParser.parse(proposal.dice.expression);
   }
+}
+
+function storageFailure(cause: unknown): AdventureStartFailure | null {
+  const name =
+    cause !== null && typeof cause === "object" && "name" in cause
+      ? String((cause as { name: unknown }).name)
+      : "";
+  if (name === "QuotaExceededError") return "storage-full";
+  if (name === "NotAllowedError" || name === "SecurityError")
+    return "storage-permission";
+  return null;
+}
+
+/** Tags an opening failure with the stage it happened in. */
+class OpeningStageError extends Error {
+  constructor(
+    readonly failure: AdventureStartFailure,
+    readonly original: unknown,
+  ) {
+    super(original instanceof Error ? original.message : String(original));
+    this.name = "OpeningStageError";
+  }
+}
+
+function classifyOpeningFailure(cause: unknown): AdventureStartFailure {
+  if (cause instanceof OpeningStageError) return cause.failure;
+  const message = cause instanceof Error ? cause.message : String(cause);
+  if (message === "offline") return "offline";
+  if (message === "control-lost") return "control-lost";
+  return storageFailure(cause) ?? "opening-failed";
+}
+
+/** An opening is committed once it has a turn or a pending opening roll. */
+export function hasCommittedOpening(
+  session: AdventureSession | null | undefined,
+): boolean {
+  return Boolean(session && (session.turns.length > 0 || session.pendingRoll));
 }
 
 function initialSession(input: {
@@ -208,6 +247,16 @@ export class AdventureManager {
   >("idle");
   draft = $state("");
   errorMessage = $state<string | null>(null);
+  /**
+   * Typed cause of the last start/opening failure. UI maps it to fixed,
+   * user-safe copy instead of showing `errorMessage` text verbatim.
+   */
+  errorCause = $state<AdventureStartFailure | null>(null);
+  /**
+   * Shared re-entry guard for start(). It lives in the manager because the
+   * start forms can unmount mid-start and lose any local guard.
+   */
+  starting = $state(false);
   lastRollResult = $state<string | null>(null);
   readOnly = $state(false);
   lease = $state<AdventureControlLease | null>(null);
@@ -359,14 +408,24 @@ export class AdventureManager {
     if (!input.premise.trim() || !input.title.trim()) {
       throw new Error("premise-and-title-required");
     }
-    this.activeRestoreRequest += 1;
-    this.phase = "starting";
-    this.errorMessage = null;
-    await this.ensureStartAvailable(input.vaultId);
-    const saved = await this.persistNewAdventure(input);
-    await this.takeControlOfNewAdventure(saved);
-    await this.startOpeningIfOnline(saved);
-    return this.session ?? saved;
+    // Validate with the reader's schema before archiving anything or writing,
+    // so an invalid seed can never be saved and then fail to load.
+    if (this.starting) throw new Error("start-in-progress");
+    const created = this.validatedNewSession(input);
+    this.starting = true;
+    try {
+      this.activeRestoreRequest += 1;
+      this.phase = "starting";
+      this.errorMessage = null;
+      this.errorCause = null;
+      await this.ensureStartAvailable(input.vaultId);
+      const saved = await this.persistNewAdventure(created);
+      await this.takeControlOfNewAdventure(saved);
+      await this.startOpeningIfOnline(saved);
+      return this.session ?? saved;
+    } finally {
+      this.starting = false;
+    }
   }
 
   private async ensureStartAvailable(vaultId: string): Promise<void> {
@@ -416,7 +475,7 @@ export class AdventureManager {
     }
   }
 
-  private async persistNewAdventure(input: {
+  private validatedNewSession(input: {
     vaultId: string;
     title: string;
     premise: string;
@@ -424,16 +483,28 @@ export class AdventureManager {
     sourceRecords?: AdventureSession["sourceRecords"];
     scenarioSeed?: ScenarioState;
     worldEntry?: WorldEntryContext;
-  }): Promise<AdventureSession> {
-    const created = initialSession({
-      ...input,
-      now: this.deps.now(),
-      idGenerator: this.deps.idGenerator,
-    });
+  }): AdventureSession {
+    try {
+      return parseAdventureSession(
+        initialSession({
+          ...input,
+          now: this.deps.now(),
+          idGenerator: this.deps.idGenerator,
+        }),
+      );
+    } catch {
+      throw new Error("invalid-adventure-setup");
+    }
+  }
+
+  private async persistNewAdventure(
+    created: AdventureSession,
+  ): Promise<AdventureSession> {
     const saved = await this.deps.repository.save(null, created);
     if (!saved.ok) {
       this.phase = "error";
       this.errorMessage = saved.error.message;
+      this.errorCause = "save-failed";
       throw saved.error;
     }
     this.session = saved.session;
@@ -485,17 +556,51 @@ export class AdventureManager {
       relevant,
     });
     if (this.session?.id !== session.id) return;
-    validateRollExpression(proposal);
-    const next = this.proposedSession(
-      prepared,
-      proposal,
-      this.newTurnMetadata(""),
-      "opening-rejected",
+    const saved = await this.saveOpening(
+      session,
+      this.openingSession(prepared, proposal),
     );
-    const saved = await this.saveTurn(session, next);
     if (this.session?.id !== session.id) return;
     this.session = saved;
     this.phase = saved.pendingRoll ? "awaiting-roll" : "ready";
+  }
+
+  /** Applies the opening proposal; any rejection is an `opening-rejected`. */
+  private openingSession(
+    session: AdventureSession,
+    proposal:
+      | Parameters<typeof applyCompletedTurn>[1]
+      | Parameters<typeof applyRollRequest>[1],
+  ): AdventureSession {
+    try {
+      validateRollExpression(proposal);
+      return this.proposedSession(
+        session,
+        proposal,
+        this.newTurnMetadata(""),
+        "opening-rejected",
+      );
+    } catch (cause) {
+      throw new OpeningStageError("opening-rejected", cause);
+    }
+  }
+
+  /** Saves the opening, classifying lease loss and storage failures. */
+  private async saveOpening(
+    session: AdventureSession,
+    next: AdventureSession,
+  ): Promise<AdventureSession> {
+    try {
+      return await this.saveTurn(session, next);
+    } catch (cause) {
+      const message = cause instanceof Error ? cause.message : "";
+      throw new OpeningStageError(
+        message === "control-lost"
+          ? "control-lost"
+          : (storageFailure(cause) ?? "save-failed"),
+        cause,
+      );
+    }
   }
 
   private async handleFailedOpening(
@@ -503,6 +608,7 @@ export class AdventureManager {
     cause: unknown,
   ): Promise<void> {
     const message = cause instanceof Error ? cause.message : String(cause);
+    const failure = classifyOpeningFailure(cause);
     const archived = await this.deps.repository.archive(
       session.vaultId,
       session.id,
@@ -522,6 +628,7 @@ export class AdventureManager {
       this.errorMessage = `${message}; failed to clean up the incomplete adventure: ${archived.error.message}`;
     }
     this.errorMessage ??= message;
+    this.errorCause = archived.ok ? failure : "cleanup-failed";
     this.phase = this.errorMessage === "offline" ? "offline" : "error";
   }
 

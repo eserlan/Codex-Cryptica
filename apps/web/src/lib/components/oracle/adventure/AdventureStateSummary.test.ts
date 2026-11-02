@@ -54,7 +54,8 @@ describe("AdventureStateSummary", () => {
       }),
     });
 
-    expect(screen.getByText("The lantern road")).toBeTruthy();
+    // Once in the compact summary line and once, untruncated, in the details.
+    expect(screen.getAllByText("The lantern road")).toHaveLength(2);
     expect(screen.getByText("The ward is failing")).toBeTruthy();
     expect(screen.getByText("Reach the bell-stone")).toBeTruthy();
     expect(screen.getByText("Father Gideon")).toBeTruthy();
@@ -91,5 +92,23 @@ describe("AdventureStateSummary", () => {
 
     expect(container.textContent).not.toContain("secret");
     expect(container.textContent).not.toContain("hidden");
+  });
+
+  it("shows the full location in the expanded details, not only the truncated line", () => {
+    const long =
+      "The flooded undercroft beneath the old lantern-keepers' hall at the edge of town";
+    render(AdventureStateSummary, {
+      manager: manager({
+        location: { id: "loc-1", text: long },
+        situation: undefined,
+        objectives: [],
+        activeCharacters: [],
+        knownFacts: [],
+        recentTurnSummaries: [],
+      }),
+    });
+    const full = screen.getByTestId("adventure-scene-location");
+    expect(full.textContent).toContain(long);
+    expect(full.querySelector(".truncate")).toBeNull();
   });
 });

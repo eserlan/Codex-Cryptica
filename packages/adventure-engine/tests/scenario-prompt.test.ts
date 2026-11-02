@@ -1,14 +1,41 @@
 import { describe, expect, it } from "vitest";
 import {
+  applyCompletedTurn,
+  applyRollRequest,
   buildAdventurePrompt,
   createScenarioState,
   detectHiddenLeakage,
+  ensureScenarioSecrets,
   parseAdventureSession,
+  scenarioEventSecretId,
+  SCENARIO_IF_INVESTIGATED_SECRET_ID,
+  SCENARIO_TRUTH_SECRET_ID,
 } from "../src";
 import type { AdventureSession, AdventureTurnProposal } from "../src";
 
 const now = "2026-11-01T11:00:00.000Z";
 const truth = "The miller has hidden grain beneath the waterwheel.";
+const ifInvestigated = "The ledger is missing three pages.";
+const gmEventText = "Smugglers will collect the grain at midnight.";
+
+const meta = {
+  turnId: "turn-1",
+  inputId: "input-1",
+  playerAction: "Look around",
+  now,
+};
+
+function withGmEvent(): AdventureSession {
+  const base = session();
+  base.scenarioState!.events.push({
+    id: "event-7",
+    kind: "consequence",
+    visibility: "gm",
+    text: gmEventText,
+    at: now,
+  });
+  return base;
+}
 
 function session(): AdventureSession {
   return parseAdventureSession({
@@ -48,7 +75,7 @@ function session(): AdventureSession {
         lead: "Old Mill",
         source: "Innkeeper",
       },
-      gmOnly: { truth },
+      gmOnly: { truth, ifInvestigated },
     }),
   });
 }
@@ -124,5 +151,105 @@ describe("scenario-aware Oracle GM", () => {
     expect(state.playerScenario).toBeUndefined();
     expect(state["GM-ONLY scenario"]).toBeUndefined();
     expect(prompt.behavior).not.toContain("A rumour may be exaggerated");
+  });
+
+  it.each([
+    ["baseline truth", truth, SCENARIO_TRUTH_SECRET_ID],
+    [
+      "if-investigated note",
+      ifInvestigated,
+      SCENARIO_IF_INVESTIGATED_SECRET_ID,
+    ],
+    ["GM-only event", gmEventText, scenarioEventSecretId("event-7")],
+  ])("rejects a complete turn that narrates the %s", (_label, text, id) => {
+    const result = applyCompletedTurn(withGmEvent(), proposal(text), meta);
+    expect(result.ok).toBe(false);
+    expect(detectHiddenLeakage(withGmEvent(), proposal(text))).toEqual([
+      { field: "root.narration", secretId: id },
+    ]);
+  });
+
+  it.each([
+    ["setup narration", { setupNarration: ifInvestigated }],
+    ["stakes", { stakes: truth }],
+    ["suggested actions", { suggestedActions: ["Ask", "Wait", gmEventText] }],
+  ])("rejects a roll request whose %s leaks GM text", (_label, leak) => {
+    const original = withGmEvent();
+    const result = applyRollRequest(
+      original,
+      {
+        kind: "roll-required",
+        uncertainty: "Can Kael climb the wheel?",
+        stakes: "A fall",
+        sourceRecordIds: [],
+        ...leak,
+      },
+      meta,
+    );
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.errors[0]?.code).toBe("hidden-leakage");
+    expect(original.pendingRoll).toBeNull();
+    expect(original.revision).toBe(0);
+  });
+
+  it("allows a safe roll request for a scenario session", () => {
+    const result = applyRollRequest(
+      withGmEvent(),
+      {
+        kind: "roll-required",
+        uncertainty: "Can Kael climb the wheel?",
+        stakes: "A fall",
+        sourceRecordIds: [],
+      },
+      meta,
+    );
+    expect(result.ok).toBe(true);
+  });
+
+  it("does not treat GM-only hidden patches as player-facing leakage", () => {
+    const hiddenOnly = proposal("The mill is quiet.");
+    hiddenOnly.hiddenPatch.secrets.add.push({
+      text: truth,
+      status: "hidden",
+    });
+    expect(detectHiddenLeakage(session(), hiddenOnly)).toEqual([]);
+    expect(applyCompletedTurn(session(), hiddenOnly, meta).ok).toBe(true);
+  });
+
+  it("registers scenario secrets so a restored session can reveal them", () => {
+    const restored = withGmEvent();
+    expect(restored.hiddenState.secrets).toEqual([]);
+    const ids = ensureScenarioSecrets(restored).hiddenState.secrets.map(
+      (secret) => secret.id,
+    );
+    expect(ids).toEqual([
+      SCENARIO_TRUTH_SECRET_ID,
+      SCENARIO_IF_INVESTIGATED_SECRET_ID,
+      scenarioEventSecretId("event-7"),
+    ]);
+    const prompt = JSON.parse(
+      buildAdventurePrompt({
+        session: restored,
+        phase: "action",
+        anchors: [],
+        relevant: [],
+      }).state,
+    );
+    expect(
+      prompt["GM-ONLY state"].secrets.map((s: { id: string }) => s.id),
+    ).toContain(SCENARIO_TRUTH_SECRET_ID);
+
+    const revealed = applyCompletedTurn(
+      restored,
+      proposal(truth, [SCENARIO_TRUTH_SECRET_ID]),
+      meta,
+    );
+    expect(revealed.ok).toBe(true);
+    if (!revealed.ok) return;
+    const secret = revealed.value.hiddenState.secrets.find(
+      (entry) => entry.id === SCENARIO_TRUTH_SECRET_ID,
+    );
+    expect(secret?.status).toBe("revealed");
+    expect(ensureScenarioSecrets(revealed.value)).toBe(revealed.value);
   });
 });

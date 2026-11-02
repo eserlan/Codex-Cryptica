@@ -183,7 +183,7 @@ describe("AdventureFocusPlay", () => {
   it("shows the current situation without opening the tools panel", () => {
     render(AdventureFocusPlay, { props: props() });
 
-    expect(screen.getByText("The lantern road")).toBeTruthy();
+    expect(screen.getAllByText("The lantern road").length).toBeGreaterThan(0);
     expect(screen.getByText("The ward is failing")).toBeTruthy();
   });
 
@@ -343,5 +343,76 @@ describe("AdventureFocusPlay", () => {
     await fireEvent.click(leaveButton);
 
     expect(m.close).toHaveBeenCalledOnce();
+  });
+
+  describe("at phone width", () => {
+    let viewport: EventTarget & { height: number; offsetTop: number };
+    const originalMatchMedia = window.matchMedia;
+    const originalViewport = Object.getOwnPropertyDescriptor(
+      window,
+      "visualViewport",
+    );
+
+    beforeEach(() => {
+      window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+        matches: query.includes("639px"),
+        media: query,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      })) as any;
+      viewport = Object.assign(new EventTarget(), {
+        height: window.innerHeight,
+        offsetTop: 0,
+      });
+      Object.defineProperty(window, "visualViewport", {
+        configurable: true,
+        value: viewport,
+      });
+    });
+
+    afterEach(() => {
+      window.matchMedia = originalMatchMedia;
+      if (originalViewport) {
+        Object.defineProperty(window, "visualViewport", originalViewport);
+      } else {
+        Reflect.deleteProperty(window, "visualViewport");
+      }
+    });
+
+    it("renders as a modal dialog outside any transformed host and takes focus", async () => {
+      const outside = document.createElement("button");
+      document.body.appendChild(outside);
+      outside.focus();
+      const { unmount } = render(AdventureFocusPlay, { props: props() });
+      const surface = screen.getByTestId("adventure-play-surface");
+      expect(surface.parentElement).toBe(document.body);
+      expect(surface.getAttribute("role")).toBe("dialog");
+      expect(surface.getAttribute("aria-modal")).toBe("true");
+      await waitFor(() =>
+        expect(surface.contains(document.activeElement)).toBe(true),
+      );
+      unmount();
+      expect(document.activeElement).toBe(outside);
+      outside.remove();
+    });
+
+    it("pins to the visible viewport when the keyboard reduces it", async () => {
+      render(AdventureFocusPlay, { props: props() });
+      const surface = screen.getByTestId("adventure-play-surface");
+      viewport.height = window.innerHeight - 300;
+      viewport.offsetTop = 40;
+      viewport.dispatchEvent(new Event("resize"));
+      await waitFor(() => {
+        expect(surface.style.top).toBe("40px");
+        expect(surface.style.height).toBe(window.innerHeight - 300 + "px");
+      });
+    });
+  });
+
+  it("is not a dialog and stays in place on wider screens", () => {
+    render(AdventureFocusPlay, { props: props() });
+    const surface = screen.getByTestId("adventure-play-surface");
+    expect(surface.getAttribute("role")).toBeNull();
+    expect(surface.parentElement).not.toBe(document.body);
   });
 });

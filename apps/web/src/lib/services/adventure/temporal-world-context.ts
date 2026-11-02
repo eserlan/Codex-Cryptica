@@ -18,7 +18,11 @@ export interface TemporalWorldRecord {
   id: string;
   title: string;
   type: string;
-  /** Content is source-authored, not AI-inferred. */
+  /**
+   * Source-authored, not AI-inferred. In `playerSafe`, a non-event record's
+   * content is a structured summary: a lifecycle date range establishes that
+   * the entity exists, not that its undated biography is safe for the period.
+   */
   content: string;
   applicability: TemporalApplicability;
   linkedBy: "character" | "location" | "neighbor" | "selected";
@@ -30,8 +34,8 @@ export interface GMTemporalWorldRecord extends TemporalWorldRecord {
 }
 
 export interface TemporalWorldContext {
-  characterId: string;
-  locationId: string;
+  characterId?: string;
+  locationId?: string;
   at: TemporalMetadata | DateSelection;
   /** Source-authored facts safe to include in the visible-context layer. */
   playerSafe: TemporalWorldRecord[];
@@ -45,8 +49,9 @@ export interface TemporalWorldContext {
 export interface TemporalWorldQuery {
   entities: readonly Entity[];
   calendar: WorldCalendar;
-  characterId: string;
-  locationId: string;
+  /** At least one canonical root is required; a provisional side is omitted. */
+  characterId?: string;
+  locationId?: string;
   at: TemporalMetadata | DateSelection;
   maxRecords?: number;
   maxExcerptChars?: number;
@@ -73,11 +78,18 @@ function metadataInterval(
         .find((item) => item.id === date.unitId);
       return { first, last: first + (month?.days ?? 1) - 1 };
     }
-    case "anchor":
+    case "anchor": {
+      // A placed anchor (after a month/day) is a known point; only an
+      // unplaced anchor is widened to its whole year.
+      const anchor = (calendar.anchors ?? []).find(
+        (item) => item.id === date.anchorId,
+      );
+      if (anchor?.afterMonthId) return { first, last: first };
       return {
         first: date.year * calendarEngine.getDaysInYear(calendar),
         last: yearEnd(date.year, calendar),
       };
+    }
     default:
       return { first, last: yearEnd(date.year, calendar) };
   }
@@ -97,7 +109,20 @@ function selectionInterval(
 }
 
 /** Retains the configured calendar's time scale and the source's precision. */
+/**
+ * A DateSelection saved under an older calendar revision may mean a different
+ * day under the current month layout. It needs explicit repair first.
+ */
+function needsCalendarRepair(date: DateLike, calendar: WorldCalendar): boolean {
+  return (
+    "precision" in date &&
+    date.calendarRevision !== undefined &&
+    date.calendarRevision !== (calendar.revision || 1)
+  );
+}
+
 function interval(date: DateLike, calendar: WorldCalendar): DayInterval | null {
+  if (needsCalendarRepair(date, calendar)) return null;
   if (!calendarEngine.isValid(date, calendar)) return null;
   return "precision" in date
     ? metadataInterval(date, calendar)
@@ -171,31 +196,47 @@ function classify(
     : lifecycleApplicability(at, start, end);
 }
 
-function connected(
-  entity: Entity,
-  other: Entity,
-  includeHidden = true,
-): boolean {
-  if (
-    !includeHidden &&
-    (entity.visibility === "hidden" || other.visibility === "hidden")
-  ) {
-    return false;
+/** Undirected links, built once per resolution instead of per lookup. */
+interface Adjacency {
+  /** Every link, including hidden links and hidden records (GM view). */
+  all: Map<string, Set<string>>;
+  /** Only visible links between non-hidden records (player view). */
+  visible: Map<string, Set<string>>;
+}
+
+function link(map: Map<string, Set<string>>, a: string, b: string): void {
+  if (a === b) return;
+  if (!map.has(a)) map.set(a, new Set());
+  if (!map.has(b)) map.set(b, new Set());
+  map.get(a)!.add(b);
+  map.get(b)!.add(a);
+}
+
+function buildAdjacency(byId: ReadonlyMap<string, Entity>): Adjacency {
+  const all = new Map<string, Set<string>>();
+  const visible = new Map<string, Set<string>>();
+  for (const entity of byId.values()) {
+    const links: Array<{ target: string; hidden: boolean }> = [
+      ...(entity.parent ? [{ target: entity.parent, hidden: false }] : []),
+      ...entity.connections.map((connection) => ({
+        target: connection.target,
+        hidden: connection.hidden === true,
+      })),
+    ];
+    for (const { target, hidden } of links) {
+      const other = byId.get(target);
+      if (!other) continue;
+      link(all, entity.id, other.id);
+      if (
+        !hidden &&
+        entity.visibility !== "hidden" &&
+        other.visibility !== "hidden"
+      ) {
+        link(visible, entity.id, other.id);
+      }
+    }
   }
-  return (
-    entity.parent === other.id ||
-    other.parent === entity.id ||
-    entity.connections.some(
-      (connection) =>
-        connection.target === other.id &&
-        (includeHidden || connection.hidden !== true),
-    ) ||
-    other.connections.some(
-      (connection) =>
-        connection.target === entity.id &&
-        (includeHidden || connection.hidden !== true),
-    )
-  );
+  return { all, visible };
 }
 
 interface RankedEntity {
@@ -206,53 +247,83 @@ interface RankedEntity {
 function contextSeeds(
   query: TemporalWorldQuery,
   byId: Map<string, Entity>,
-): [Entity, Entity] {
-  const character = byId.get(query.characterId);
-  const location = byId.get(query.locationId);
-  if (!character || character.type !== "character") {
-    throw new Error("temporal-world-character-not-found");
+): Entity[] {
+  const roots: Entity[] = [];
+  if (query.characterId) {
+    const character = byId.get(query.characterId);
+    if (!character || character.type !== "character") {
+      throw new Error("temporal-world-character-not-found");
+    }
+    roots.push(character);
   }
-  if (!location || location.type !== "location") {
-    throw new Error("temporal-world-location-not-found");
+  if (query.locationId) {
+    const location = byId.get(query.locationId);
+    if (!location || location.type !== "location") {
+      throw new Error("temporal-world-location-not-found");
+    }
+    roots.push(location);
   }
-  return [character, location];
+  if (!roots.length) throw new Error("temporal-world-no-canonical-root");
+  return roots;
 }
 
-/** Two graph hops, with optional hidden-link traversal for GM-only context. */
+/**
+ * Two graph hops from the roots. `canExpand` limits which first-hop records
+ * may lead further: the player view must not reach a record solely through
+ * one it withholds (a future or undated intermediary).
+ */
 function rankNearby(
-  entities: readonly Entity[],
-  character: Entity,
-  location: Entity,
-  includeHidden: boolean,
+  roots: readonly Entity[],
+  byId: ReadonlyMap<string, Entity>,
+  adjacency: Map<string, Set<string>>,
+  canExpand: (entity: Entity) => boolean,
 ): Map<string, RankedEntity> {
-  const ranked = new Map<string, RankedEntity>([
-    [character.id, { entity: character, distance: 0 }],
-    [location.id, { entity: location, distance: 0 }],
-  ]);
-  const direct = entities.filter(
-    (candidate) =>
-      !ranked.has(candidate.id) &&
-      (connected(candidate, character, includeHidden) ||
-        connected(candidate, location, includeHidden)),
+  const ranked = new Map<string, RankedEntity>(
+    roots.map((root) => [root.id, { entity: root, distance: 0 }]),
   );
-  for (const entity of direct) {
-    ranked.set(entity.id, { entity, distance: 1 });
-  }
-  for (const entity of entities) {
-    if (ranked.has(entity.id)) continue;
-    if (direct.some((neighbor) => connected(entity, neighbor, includeHidden))) {
-      ranked.set(entity.id, { entity, distance: 2 });
-    }
-  }
+  // Adds unseen neighbours of `from` at `distance`; returns those added.
+  const hop = (from: readonly Entity[], distance: number): Entity[] =>
+    from.flatMap((source) =>
+      [...(adjacency.get(source.id) ?? [])].flatMap((id) => {
+        const entity = byId.get(id);
+        if (!entity || ranked.has(id)) return [];
+        ranked.set(id, { entity, distance });
+        return [entity];
+      }),
+    );
+  hop(hop(roots, 1).filter(canExpand), 2);
   return ranked;
+}
+
+function linkedBy(
+  entity: Entity,
+  distance: number,
+  roots: readonly Entity[],
+  adjacency: Adjacency,
+): TemporalWorldRecord["linkedBy"] {
+  if (distance === 0) return "selected";
+  const neighbors = adjacency.all.get(entity.id);
+  const root = roots.find((candidate) => neighbors?.has(candidate.id));
+  if (!root) return "neighbor";
+  return root.type === "character" ? "character" : "location";
+}
+
+function summary(entity: Entity, dateLabel?: string): string {
+  return (
+    entity.title +
+    " (" +
+    entity.type +
+    (dateLabel ? ", " + dateLabel : "") +
+    "). Biography details are not period-checked."
+  );
 }
 
 function makeRecord(
   entity: Entity,
   distance: number,
-  character: Entity,
-  location: Entity,
-  at: DayInterval,
+  roots: readonly Entity[],
+  adjacency: Adjacency,
+  applicability: TemporalApplicability,
   calendar: WorldCalendar,
   maxExcerptChars: number,
 ): TemporalWorldRecord {
@@ -262,16 +333,11 @@ function makeRecord(
     title: entity.title,
     type: entity.type,
     content: entity.content.slice(0, maxExcerptChars),
-    applicability: classify(entity, at, calendar),
-    linkedBy:
-      distance === 0
-        ? "selected"
-        : connected(entity, character)
-          ? "character"
-          : connected(entity, location)
-            ? "location"
-            : "neighbor",
-    ...(sourceDate && calendarEngine.isValid(sourceDate, calendar)
+    applicability,
+    linkedBy: linkedBy(entity, distance, roots, adjacency),
+    ...(sourceDate &&
+    !needsCalendarRepair(sourceDate, calendar) &&
+    calendarEngine.isValid(sourceDate, calendar)
       ? { dateLabel: calendarEngine.format(sourceDate, calendar) }
       : {}),
   };
@@ -281,11 +347,15 @@ function isEstablishedRecord(
   record: TemporalWorldRecord,
   distance: number,
 ): boolean {
-  return (
-    distance === 0 ||
+  if (
     record.applicability === "established" ||
     record.applicability === "historical"
-  );
+  ) {
+    return true;
+  }
+  // The player chose this record, so an undated one may be used tentatively.
+  // A selected future record stays GM-only and a contradictory one unresolved.
+  return distance === 0 && record.applicability === "uncertain";
 }
 
 function isUnresolvedRecord(record: TemporalWorldRecord): boolean {
@@ -298,9 +368,9 @@ function isUnresolvedRecord(record: TemporalWorldRecord): boolean {
 function projectRecords(
   selected: readonly RankedEntity[],
   playerReachable: ReadonlySet<string>,
-  character: Entity,
-  location: Entity,
-  at: DayInterval,
+  roots: readonly Entity[],
+  adjacency: Adjacency,
+  applicabilityOf: (entity: Entity) => TemporalApplicability,
   calendar: WorldCalendar,
   maxExcerptChars: number,
 ): Pick<TemporalWorldContext, "playerSafe" | "gmOnly" | "unresolved"> {
@@ -311,9 +381,9 @@ function projectRecords(
     const record = makeRecord(
       entity,
       distance,
-      character,
-      location,
-      at,
+      roots,
+      adjacency,
+      applicabilityOf(entity),
       calendar,
       maxExcerptChars,
     );
@@ -325,7 +395,13 @@ function projectRecords(
       continue;
     }
     if (isEstablishedRecord(record, distance)) {
-      playerSafe.push(record);
+      // Events are dated facts. Other records keep only a structured summary
+      // here; their undated prose stays in the GM-only projection.
+      playerSafe.push(
+        entity.type === "event"
+          ? record
+          : { ...record, content: summary(entity, record.dateLabel) },
+      );
     } else if (isUnresolvedRecord(record)) {
       unresolved.push(record);
     }
@@ -338,13 +414,26 @@ export function resolveTemporalWorldContext(
   query: TemporalWorldQuery,
 ): TemporalWorldContext {
   const byId = new Map(query.entities.map((entity) => [entity.id, entity]));
-  const [character, location] = contextSeeds(query, byId);
+  const roots = contextSeeds(query, byId);
   const at = interval(query.at, query.calendar);
   if (!at) throw new Error("temporal-world-invalid-date");
 
-  const ranked = rankNearby(query.entities, character, location, true);
+  const applicability = new Map<string, TemporalApplicability>();
+  const applicabilityOf = (entity: Entity): TemporalApplicability => {
+    let value = applicability.get(entity.id);
+    if (!value) {
+      value = classify(entity, at, query.calendar);
+      applicability.set(entity.id, value);
+    }
+    return value;
+  };
+  const adjacency = buildAdjacency(byId);
+  const ranked = rankNearby(roots, byId, adjacency.all, () => true);
   const playerReachable = new Set(
-    rankNearby(query.entities, character, location, false).keys(),
+    rankNearby(roots, byId, adjacency.visible, (entity) => {
+      const value = applicabilityOf(entity);
+      return value === "established" || value === "historical";
+    }).keys(),
   );
   const rankedRows = [...ranked.values()].sort(
     (a, b) => a.distance - b.distance || a.entity.id.localeCompare(b.entity.id),
@@ -356,18 +445,71 @@ export function resolveTemporalWorldContext(
   );
   const selected = rankedRows.slice(0, maxRecords);
   return {
-    characterId: character.id,
-    locationId: location.id,
+    ...(query.characterId ? { characterId: query.characterId } : {}),
+    ...(query.locationId ? { locationId: query.locationId } : {}),
     at: structuredClone(query.at),
     ...projectRecords(
       selected,
       playerReachable,
-      character,
-      location,
-      at,
+      roots,
+      adjacency,
+      applicabilityOf,
       query.calendar,
       maxExcerptChars,
     ),
     omitted: Math.max(0, rankedRows.length - selected.length),
+  };
+}
+
+/**
+ * Classify one record at a date, outside the two-hop snapshot (anchors and
+ * search results). Returns null when the target date itself is unusable.
+ */
+export function classifyEntityAt(
+  entity: Entity,
+  at: TemporalMetadata | DateSelection,
+  calendar: WorldCalendar,
+): TemporalApplicability | null {
+  const target = interval(at, calendar);
+  return target ? classify(entity, target, calendar) : null;
+}
+
+/**
+ * Oracle excerpt for a dated session. Dated events that have happened are
+ * canonical content. Any other record contributes only a labelled summary as
+ * content; its undated prose goes to GM-only lore so Oracle may use it for
+ * consistency but never states it as current fact.
+ */
+export function periodExcerpt(input: {
+  title: string;
+  type: string;
+  text: string;
+  lore?: string;
+  applicability: TemporalApplicability;
+}): { content: string; lore?: string } {
+  const label = "[Period applicability: " + input.applicability + "] ";
+  if (
+    input.type === "event" &&
+    (input.applicability === "established" ||
+      input.applicability === "historical")
+  ) {
+    return {
+      content: label + input.text,
+      ...(input.lore ? { lore: input.lore } : {}),
+    };
+  }
+  const gmNote =
+    input.applicability === "future"
+      ? "Not yet true in this period; never state it as current."
+      : "Not period-checked; do not state period-specific details as current.";
+  const lore = [
+    input.text.trim() ? gmNote + " " + input.text : "",
+    input.lore ?? "",
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+  return {
+    content: label + input.title + " (" + input.type + ").",
+    ...(lore ? { lore } : {}),
   };
 }

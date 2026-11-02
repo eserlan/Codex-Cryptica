@@ -1200,4 +1200,184 @@ describe("AdventureManager Phase 2 tools", () => {
     expect(clearGenerationInteraction).toHaveBeenCalledWith(sessionId);
     expect(archiveSpy).not.toHaveBeenCalled();
   });
+
+  describe("start safeguards", () => {
+    const startInput = {
+      vaultId: "vault-1",
+      title: "Road",
+      premise: "Find the road",
+      playerCharacter: {
+        kind: "provisional" as const,
+        name: "Mara",
+        description: "Guide",
+      },
+    };
+    const seed = (truth: string) => ({
+      version: 1 as const,
+      id: "scenario-1",
+      origin: { kind: "rumour" as const, batchTitle: "Town", index: 1 },
+      playerVisible: { rumour: "A rumour", lead: "A lead" },
+      gmOnly: { truth },
+      status: "open" as const,
+      events: [],
+    });
+
+    function onlineNavigator() {
+      Object.defineProperty(globalThis, "navigator", {
+        configurable: true,
+        value: { onLine: true },
+      });
+    }
+
+    it("rejects an invalid seed before archiving or writing anything", async () => {
+      onlineNavigator();
+      const deps: any = dependencies();
+      deps.repository.list = vi.fn(async () => ({
+        effectiveActiveId: "stale",
+        entries: [],
+      }));
+      deps.repository.archive = vi.fn();
+      deps.repository.save = vi.fn();
+      const manager = new AdventureManager(deps);
+      await expect(
+        manager.start({ ...startInput, scenarioSeed: seed("x".repeat(601)) }),
+      ).rejects.toThrow("invalid-adventure-setup");
+      expect(deps.repository.list).not.toHaveBeenCalled();
+      expect(deps.repository.archive).not.toHaveBeenCalled();
+      expect(deps.repository.save).not.toHaveBeenCalled();
+      expect(manager.starting).toBe(false);
+    });
+
+    it("saves a valid seeded start that reloads through the same schema", async () => {
+      onlineNavigator();
+      const deps: any = dependencies();
+      const manager = new AdventureManager(deps);
+      await manager.start({
+        ...startInput,
+        scenarioSeed: seed("The miller hides grain."),
+      });
+      expect(manager.session?.scenarioState?.gmOnly.truth).toBe(
+        "The miller hides grain.",
+      );
+      const { parseAdventureSession } = await import("@codex/adventure-engine");
+      expect(() =>
+        parseAdventureSession(JSON.parse(JSON.stringify(manager.session))),
+      ).not.toThrow();
+    });
+
+    it("refuses a second start while the first is still in flight", async () => {
+      onlineNavigator();
+      const deps: any = dependencies();
+      let release!: () => void;
+      const gate = new Promise<void>((resolve) => (release = resolve));
+      const listed = deps.repository.list;
+      deps.repository.list = vi.fn(async (...args: any[]) => {
+        await gate;
+        return listed(...args);
+      });
+      const manager = new AdventureManager(deps);
+      const first = manager.start(startInput);
+      expect(manager.starting).toBe(true);
+      await expect(manager.start(startInput)).rejects.toThrow(
+        "start-in-progress",
+      );
+      release();
+      await first;
+      expect(manager.starting).toBe(false);
+      expect(deps.repository.list).toHaveBeenCalledTimes(1);
+    });
+
+    it.each([
+      [
+        "a provider failure",
+        () => Promise.reject(new Error("provider-unavailable")),
+        undefined,
+        "opening-failed",
+      ],
+      [
+        "an unusable opening",
+        async () => ({ ...completeProposal, kind: "nonsense" }),
+        undefined,
+        "opening-rejected",
+      ],
+      [
+        "a full disk while saving the opening",
+        async () => completeProposal,
+        Object.assign(new Error("quota"), { name: "QuotaExceededError" }),
+        "storage-full",
+      ],
+      [
+        "a failed opening write",
+        async () => completeProposal,
+        new Error("write failed"),
+        "save-failed",
+      ],
+    ])(
+      "records a typed cause for %s",
+      async (_label, generate, saveError, expected) => {
+        onlineNavigator();
+        const deps: any = dependencies();
+        deps.generation = { generate };
+        if (saveError) {
+          const save = deps.repository.save;
+          deps.repository.save = vi.fn(async (revision: any, session: any) =>
+            revision === null
+              ? save(revision, session)
+              : { ok: false, error: saveError },
+          );
+        }
+        const manager = new AdventureManager(deps);
+        await manager.start(startInput);
+        expect(manager.errorCause).toBe(expected);
+      },
+    );
+
+    it("clears the typed cause on the next start", async () => {
+      onlineNavigator();
+      const deps: any = dependencies();
+      let fail = true;
+      deps.generation = {
+        async generate() {
+          if (fail) throw new Error("provider-unavailable");
+          return completeProposal;
+        },
+      };
+      const manager = new AdventureManager(deps);
+      await manager.start(startInput);
+      expect(manager.errorCause).toBe("opening-failed");
+      fail = false;
+      await manager.start(startInput);
+      expect(manager.errorCause).toBeNull();
+    });
+
+    it("releases the recovery lease and saves nothing when archiving rejects", async () => {
+      const deps: any = dependencies();
+      const stale = {
+        id: "stale-session",
+        vaultId: "vault-1",
+        status: "active",
+        turns: [],
+        revision: 0,
+      };
+      deps.repository.list = vi.fn(async () => ({
+        effectiveActiveId: stale.id,
+        entries: [],
+      }));
+      deps.repository.load = vi.fn(async () => ({
+        condition: "normal",
+        session: stale,
+      }));
+      deps.repository.archive = vi.fn(async () => {
+        throw new Error("disk-gone");
+      });
+      deps.repository.save = vi.fn();
+      deps.authority.release = vi.fn(async () => undefined);
+      const manager = new AdventureManager(deps);
+
+      await expect(manager.start(startInput)).rejects.toThrow("disk-gone");
+      expect(deps.authority.release).toHaveBeenCalledTimes(1);
+      expect(deps.repository.save).not.toHaveBeenCalled();
+      expect(manager.starting).toBe(false);
+    });
+  });
 });

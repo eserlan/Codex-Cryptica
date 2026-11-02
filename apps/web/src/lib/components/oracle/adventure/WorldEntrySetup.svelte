@@ -4,6 +4,7 @@
   import {
     validateWorldEntrySetup,
     type WorldEntryChoice,
+    visibleWorldEntryChoices,
     type WorldEntrySetup,
     type WorldEntryIntent,
   } from "#lib/services/adventure/world-entry-setup.js";
@@ -28,26 +29,10 @@
 
   // Avoid thousands of mobile <option> nodes in a large Vault.
   const visibleCharacters = $derived(
-    characters
-      .filter(
-        (row) =>
-          row.id === setup.characterId ||
-          row.name
-            .toLocaleLowerCase()
-            .includes(characterSearch.toLocaleLowerCase()),
-      )
-      .slice(0, 80),
+    visibleWorldEntryChoices(characters, setup.characterId, characterSearch),
   );
   const visibleLocations = $derived(
-    locations
-      .filter(
-        (row) =>
-          row.id === setup.locationId ||
-          row.name
-            .toLocaleLowerCase()
-            .includes(locationSearch.toLocaleLowerCase()),
-      )
-      .slice(0, 80),
+    visibleWorldEntryChoices(locations, setup.locationId, locationSearch),
   );
   const errors = $derived(
     validateWorldEntrySetup(setup, characters, locations, calendar),

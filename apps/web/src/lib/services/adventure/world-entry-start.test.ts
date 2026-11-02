@@ -3,7 +3,12 @@ import { DEFAULT_CALENDAR } from "chronology-engine";
 import {
   createWorldEntryStart,
   describeWorldEntryStartFailure,
+  WorldEntrySetupError,
 } from "./world-entry-start";
+import {
+  describeAdventureStartFailure,
+  type AdventureStartFailure,
+} from "./adventure-start-failure";
 import { emptyWorldEntrySetup } from "./world-entry-setup";
 
 const characters = [{ id: "pc-1", name: "Lira" }];
@@ -107,10 +112,68 @@ describe("createWorldEntryStart", () => {
     ).not.toContain("private source content here");
     expect(
       describeWorldEntryStartFailure(
-        new Error("Choose a location from this Vault."),
+        new WorldEntrySetupError(["Choose a location from this Vault."]),
         "setup",
       ),
     ).toContain("Choose a location");
+  });
+
+  it("never passes through unknown text that merely looks like setup copy", () => {
+    for (const stage of ["setup", "launch"] as const) {
+      const shown = describeWorldEntryStartFailure(
+        new Error("Choose a location: PRIVATE_VAULT_SENTINEL"),
+        stage,
+      );
+      expect(shown).not.toContain("PRIVATE_VAULT_SENTINEL");
+    }
+    // Even genuine setup messages are not shown once the launch has begun.
+    expect(
+      describeWorldEntryStartFailure(
+        new WorldEntrySetupError(["Choose a location from this Vault."]),
+        "launch",
+      ),
+    ).not.toContain("Choose a location");
+  });
+
+  it("throws a typed setup error whose messages are the validator's copy", () => {
+    try {
+      createWorldEntryStart(
+        emptyWorldEntrySetup("vault-1"),
+        characters,
+        locations,
+        DEFAULT_CALENDAR,
+      );
+      expect.unreachable();
+    } catch (cause) {
+      expect(cause).toBeInstanceOf(WorldEntrySetupError);
+      expect((cause as WorldEntrySetupError).messages.length).toBeGreaterThan(
+        0,
+      );
+    }
+  });
+
+  it.each<AdventureStartFailure>([
+    "offline",
+    "opening-rejected",
+    "opening-failed",
+    "save-failed",
+    "storage-full",
+    "storage-permission",
+    "control-lost",
+    "cleanup-failed",
+  ])("maps the %s opening failure to fixed copy", (failure) => {
+    const copy = describeAdventureStartFailure(failure);
+    expect(copy.length).toBeGreaterThan(20);
+    expect(copy).not.toMatch(/undefined|Error:/);
+  });
+
+  it("gives storage-specific advice for storage failures", () => {
+    expect(describeAdventureStartFailure("storage-full")).toContain(
+      "storage is full",
+    );
+    expect(describeAdventureStartFailure("storage-permission")).toContain(
+      "permissions",
+    );
   });
 
   it("rejects stale canonical record IDs before creating a session", () => {

@@ -1,5 +1,6 @@
 import { allocatePromptBudget } from "./context-budget";
 import { playerScenarioProjection } from "./scenario-state";
+import { ensureScenarioSecrets } from "./hidden-state";
 import type {
   AdventureSession,
   ResolvedSourceExcerpt,
@@ -89,7 +90,8 @@ export function buildAdventurePrompt(input: AdventurePromptInput) {
           ),
         }
       : undefined,
-    "GM-ONLY state": input.session.hiddenState,
+    // Includes registered scenario secrets so their IDs can be revealed.
+    "GM-ONLY state": ensureScenarioSecrets(input.session).hiddenState,
     "GM-ONLY fictional time": input.session.worldTime,
     provisionalFacts: input.session.provisionalFacts,
     worldEntry: worldEntry

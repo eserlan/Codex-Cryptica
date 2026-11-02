@@ -111,3 +111,22 @@ export function worldEntryTitle(
     worldEntryLocationName(draft, locations)
   );
 }
+
+/**
+ * Bounded picker rows. The current selection is listed first so truncation
+ * can never hide the record that will be used at launch.
+ */
+export function visibleWorldEntryChoices(
+  rows: readonly WorldEntryChoice[],
+  selectedId: string,
+  search: string,
+  limit = 80,
+): WorldEntryChoice[] {
+  const needle = search.toLocaleLowerCase();
+  const selected = rows.find((row) => row.id === selectedId);
+  const matches = rows.filter(
+    (row) =>
+      row.id !== selectedId && row.name.toLocaleLowerCase().includes(needle),
+  );
+  return [...(selected ? [selected] : []), ...matches].slice(0, limit);
+}

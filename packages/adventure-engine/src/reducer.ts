@@ -1,4 +1,4 @@
-import { detectHiddenLeakage } from "./hidden-state";
+import { detectHiddenLeakage, ensureScenarioSecrets } from "./hidden-state";
 import { applyTimeAdvance } from "./world-time";
 import {
   MAX_SERIALIZED_STATE_CHARS,
@@ -226,12 +226,14 @@ function error(code: AdventureValidationError["code"], message: string) {
 }
 
 export function applyCompletedTurn(
-  session: AdventureSession,
+  sessionInput: AdventureSession,
   proposalInput: AdventureTurnProposal,
   meta: CommitMetadata,
   now = meta.now,
   createId: IdFactory = () => crypto.randomUUID(),
 ): Result<AdventureSession, AdventureValidationError[]> {
+  // Scenario GM text must be registered so it can be guarded and revealed.
+  const session = ensureScenarioSecrets(sessionInput);
   if (session.status !== "active" || session.pendingRoll) {
     return error(
       "invalid-transition",
@@ -358,6 +360,13 @@ export function applyRollRequest(
   const proposal = parseTurnProposal(proposalInput);
   if (proposal.kind !== "roll-required")
     return error("invalid-schema", "A roll is required.");
+  // Roll copy is shown to the player, so it gets the same secrecy guard.
+  if (detectHiddenLeakage(session, proposal).length > 0) {
+    return error(
+      "hidden-leakage",
+      "The response contains unrevealed GM information.",
+    );
+  }
   const candidate = clone(session);
   const pending: PendingRoll = {
     id: meta.turnId,

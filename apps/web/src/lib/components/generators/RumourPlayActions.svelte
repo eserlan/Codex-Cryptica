@@ -8,10 +8,13 @@
   let {
     draft,
     disabled = false,
+    aiDisabled = false,
     onplay,
   }: {
     draft: GeneratedDraft;
     disabled?: boolean;
+    /** AI Disabled is on: playing would send the rumour to Oracle. */
+    aiDisabled?: boolean;
     onplay: (rumourIndex: number) => Promise<void>;
   } = $props();
 
@@ -33,7 +36,7 @@
   let errorMessage = $state("");
 
   async function startPlay(rumour: SelectedRumourForPlay) {
-    if (busy) return;
+    if (busy || aiDisabled) return;
     chosen = rumour.index;
     busy = true;
     errorMessage = "";
@@ -58,6 +61,12 @@
     Choose one rumour to explore. The Oracle keeps its GM notes hidden while you
     play. The other five rumours will not be passed to the game.
   </p>
+  {#if aiDisabled}
+    <p class="text-xs text-chrome-text" data-testid="rumour-play-ai-disabled">
+      AI Disabled is on in Settings, so Oracle cannot play these rumours. Turn
+      it off to play one. Your rumours stay here.
+    </p>
+  {/if}
   {#if options}
     <ol class="space-y-2">
       {#each options as rumour (rumour.index)}
@@ -74,9 +83,9 @@
           </div>
           <button
             type="button"
-            class="shrink-0 rounded-lg border border-chrome-accent/60 px-3 py-2 text-xs font-semibold text-chrome-accent hover:bg-chrome-accent/10 disabled:opacity-50"
+            class="shrink-0 rounded-lg border border-chrome-accent/60 px-3 py-2 text-xs font-semibold text-chrome-text hover:bg-chrome-accent/10 disabled:opacity-50"
             data-testid={"play-rumour-" + rumour.index}
-            disabled={disabled || busy}
+            disabled={disabled || busy || aiDisabled}
             onclick={() => void startPlay(rumour)}
           >
             {busy && chosen === rumour.index ? "Opening…" : "Play with Oracle"}
