@@ -231,9 +231,7 @@ const timeAdvanceSchema = z
   .object({
     minutes: z.number().int().min(1).max(43_200),
     cause: text,
-    developments: z
-      .array(z.object({ threadId: id, text }).strict())
-      .max(3),
+    developments: z.array(z.object({ threadId: id, text }).strict()).max(3),
   })
   .strict();
 

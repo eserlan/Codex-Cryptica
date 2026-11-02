@@ -9,11 +9,12 @@ export function formatWorldElapsedMinutes(minutes: number): string {
   const days = Math.floor(minutes / 1440);
   const hours = Math.floor((minutes % 1440) / 60);
   const mins = minutes % 60;
-  return [
+  const parts = [
     days ? `${days}d` : "",
     hours ? `${hours}h` : "",
     mins ? `${mins}m` : "",
-  ].filter(Boolean).join(" ") || "0m";
+  ];
+  return parts.filter(Boolean).join(" ") || "0m";
 }
 
 /** Advance only from a committed fictional action, never the device clock. */
@@ -44,7 +45,9 @@ export function applyTimeAdvance(
   if (elapsedMinutes > 52_560_000) {
     return { ok: false, reason: "fictional-time-limit-exceeded" };
   }
-  const known = new Set(session.hiddenState.gmThreads.map((thread) => thread.id));
+  const known = new Set(
+    session.hiddenState.gmThreads.map((thread) => thread.id),
+  );
   const seen = new Set<string>();
   for (const change of advance.developments) {
     if (
@@ -57,9 +60,8 @@ export function applyTimeAdvance(
     }
     seen.add(change.threadId);
   }
-  if (previous.events.length + advance.developments.length > 80) {
-    return { ok: false, reason: "fictional-time-event-limit-exceeded" };
-  }
+  // Keep only recent events. Historical outcomes already live in the
+  // corresponding GM threads, so lengthy adventures can continue advancing.
   return {
     ok: true,
     value: {
@@ -68,13 +70,13 @@ export function applyTimeAdvance(
       events: [
         ...previous.events,
         ...advance.developments.map((item, index) => ({
-          id: `${turnId}:world:${index + 1}`,
+          id: `${turnId.slice(0, 140)}:world:${index + 1}`,
           turnId,
           atMinute: elapsedMinutes,
           threadId: item.threadId,
           text: item.text,
         })),
-      ],
+      ].slice(-80),
     },
   };
 }
