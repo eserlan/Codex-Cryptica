@@ -1,6 +1,7 @@
 import {
   generateRumourLocal,
   selectRumourForPlay,
+  type RumourSelectionInput,
   type SelectedRumourForPlay,
 } from "generator-engine";
 import type { AdventureSession } from "@codex/adventure-engine";
@@ -11,23 +12,29 @@ import type { AdventureSession } from "@codex/adventure-engine";
  * The local-generator fallback invents provisional details; Oracle must
  * reconcile them against date-aware Vault sources before using them in play.
  */
+export function needsWorldEntryBackground(session: AdventureSession): boolean {
+  return Boolean(
+    session.worldEntry &&
+      !session.scenarioState &&
+      session.hiddenState.secrets.length === 0 &&
+      session.hiddenState.gmThreads.length === 0,
+  );
+}
+
 export function seedWorldEntryBackground(
   session: AdventureSession,
   allocateId: () => string,
+  generatedBatch?: RumourSelectionInput,
 ): AdventureSession {
-  if (
-    !session.worldEntry ||
-    session.scenarioState ||
-    session.hiddenState.secrets.length > 0 ||
-    session.hiddenState.gmThreads.length > 0
-  ) {
-    return session;
-  }
+  if (!needsWorldEntryBackground(session)) return session;
 
-  const batch = generateRumourLocal(
-    { locationContext: session.worldEntry.location.name.slice(0, 80) },
-    seededRandom(session.id),
-  );
+  // Prefer the standard Vault-grounded generator. Retain its local fallback.
+  const batch =
+    generatedBatch ??
+    generateRumourLocal(
+      { locationContext: session.worldEntry!.location.name.slice(0, 80) },
+      seededRandom(session.id),
+    );
   const candidates = Array.from({ length: 6 }, (_, index) =>
     selectRumourForPlay(batch, index + 1),
   );
