@@ -4,6 +4,18 @@ import type {
   WorldTimeState,
 } from "./types";
 
+/** Short, player-safe duration relative to the adventure's start. */
+export function formatWorldElapsedMinutes(minutes: number): string {
+  const days = Math.floor(minutes / 1440);
+  const hours = Math.floor((minutes % 1440) / 60);
+  const mins = minutes % 60;
+  return [
+    days ? `${days}d` : "",
+    hours ? `${hours}h` : "",
+    mins ? `${mins}m` : "",
+  ].filter(Boolean).join(" ") || "0m";
+}
+
 /** Advance only from a committed fictional action, never the device clock. */
 export function applyTimeAdvance(
   session: AdventureSession,
