@@ -165,6 +165,18 @@ describe("AdventureLiveTranscript", () => {
     ).toBe("off");
   });
 
+  it("shows only the ephemeral player-safe narration while generating", () => {
+    const m = manager({
+      phase: "generating",
+      streamedNarration: "The lantern gutters as you approach.",
+    });
+    render(AdventureLiveTranscript, { props: { manager: m } });
+    expect(screen.getByTestId("adventure-stream-preview").textContent).toContain(
+      "The lantern gutters as you approach.",
+    );
+    expect(screen.queryByTestId("adventure-generating-status")).toBeNull();
+  });
+
   it("shows no generating indicator when the player can act", () => {
     render(AdventureLiveTranscript, { props: { manager: manager() } });
 
