@@ -17,7 +17,11 @@ function session(): AdventureSession {
     updatedAt: "2026-11-02T12:00:00Z",
     lastPlayedAt: "2026-11-02T12:00:00Z",
     revision: 0,
-    playerCharacter: { kind: "provisional", name: "Lira", description: "Rider" },
+    playerCharacter: {
+      kind: "provisional",
+      name: "Lira",
+      description: "Rider",
+    },
     premise: "Explore Northbrook",
     sourceRecords: [],
     worldEntry: {
@@ -41,13 +45,19 @@ function session(): AdventureSession {
 }
 
 describe("world entry background situations", () => {
-  it("seeds three paired GM truths and dormant rumour threads without revealing anything", () => {
+  it("seeds hidden, paired rumours without revealing them", () => {
     let nextId = 0;
-    const seeded = seedWorldEntryBackground(session(), () => `seed-${++nextId}`);
+    const seeded = seedWorldEntryBackground(session(), () =>
+      `seed-${++nextId}`,
+    );
     expect(seeded.hiddenState.secrets).toHaveLength(3);
     expect(seeded.hiddenState.gmThreads).toHaveLength(3);
-    expect(seeded.hiddenState.secrets.every((fact) => fact.status === "hidden")).toBe(true);
-    expect(seeded.hiddenState.gmThreads.every((thread) => thread.status === "hidden")).toBe(true);
+    expect(
+      seeded.hiddenState.secrets.every((fact) => fact.status === "hidden"),
+    ).toBe(true);
+    expect(
+      seeded.hiddenState.gmThreads.every((thread) => thread.status === "hidden"),
+    ).toBe(true);
     expect(seeded.hiddenState.secrets.map((item) => item.text)).toEqual([
       expect.stringContaining("essentially true"),
       expect.stringContaining("exaggeration"),
@@ -76,7 +86,7 @@ describe("world entry background situations", () => {
     expect(seedWorldEntryBackground(first, () => "unexpected")).toBe(first);
   });
 
-  it("does not modify manual adventures or worlds with established GM state", () => {
+  it("preserves pre-existing GM state and ordinary adventures", () => {
     const ordinary = session();
     delete ordinary.worldEntry;
     expect(seedWorldEntryBackground(ordinary, () => "id")).toBe(ordinary);
@@ -86,6 +96,8 @@ describe("world entry background situations", () => {
       text: "An existing hidden GM thread",
       status: "hidden",
     });
-    expect(seedWorldEntryBackground(alreadyPrepared, () => "id")).toBe(alreadyPrepared);
+    expect(seedWorldEntryBackground(alreadyPrepared, () => "id")).toBe(
+      alreadyPrepared,
+    );
   });
 });

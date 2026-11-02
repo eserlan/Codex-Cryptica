@@ -105,7 +105,7 @@ function dependencies() {
 }
 
 describe("AdventureManager", () => {
-  it("persists GM-only world-entry situations and retains them across actions", async () => {
+  it("persists world-entry situations across actions", async () => {
     const deps: any = dependencies();
     const generate = vi.fn(async (_request: any) => completeProposal);
     deps.generation = { generate };
@@ -130,7 +130,9 @@ describe("AdventureManager", () => {
     expect(opening.session.hiddenState.secrets).toHaveLength(3);
     expect(manager.session?.hiddenState.gmThreads).toHaveLength(3);
     expect(manager.session?.turns).toHaveLength(1);
-    expect(manager.transcript?.turns[0]?.narration).not.toContain("NOT YET HEARD");
+    expect(manager.transcript?.turns[0]?.narration).not.toContain(
+      "NOT YET HEARD",
+    );
 
     await manager.submitAction("Ask the innkeeper what is happening nearby");
     const action = generate.mock.calls[1]?.[0] as any;

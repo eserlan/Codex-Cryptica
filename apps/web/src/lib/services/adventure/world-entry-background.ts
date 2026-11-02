@@ -36,7 +36,9 @@ export function seedWorldEntryBackground(
   const chosen = [
     candidates.find((item) => item.gmOnly.reality === "essentially true"),
     candidates.find((item) => item.gmOnly.reality === "exaggeration"),
-    candidates.find((item) => item.gmOnly.reality === "dangerous misconception"),
+    candidates.find(
+      (item) => item.gmOnly.reality === "dangerous misconception",
+    ),
   ].filter((item): item is SelectedRumourForPlay => Boolean(item));
 
   return {
@@ -47,11 +49,15 @@ export function seedWorldEntryBackground(
         ...chosen.map((item) => ({
           id: allocateId(),
           text: bounded(
-            `World-entry seed ${item.index} — original truth (${item.gmOnly.reality}): ${item.gmOnly.whatsActuallyHappening} If investigated: ${item.gmOnly.ifInvestigated}`,
+            [
+              `World-entry seed ${item.index} — original truth (${item.gmOnly.reality}):`,
+              item.gmOnly.whatsActuallyHappening,
+              `If investigated: ${item.gmOnly.ifInvestigated}`,
+            ].join(" "),
           ),
           status: "hidden" as const,
           revealCondition:
-            "Only after justified in-world investigation; never disclose unearned GM truth.",
+            "Reveal only after justified discovery; never leak GM truth.",
         })),
       ],
       gmThreads: [
@@ -59,11 +65,19 @@ export function seedWorldEntryBackground(
         ...chosen.map((item) => ({
           id: allocateId(),
           text: bounded(
-            `World-entry seed ${item.index} — DORMANT, NOT YET HEARD. Possible hearsay: "${item.playerVisible.rumour}" Lead: ${item.playerVisible.lead}. Potential source: ${item.playerVisible.source}. Progress: none. Introduce only when locally plausible; react to player actions or explicit elapsed world time, not turn count. Treat details as provisional until reconciled with Vault canon and date.`,
+            [
+              `World-entry seed ${item.index} — DORMANT, NOT YET HEARD.`,
+              `Possible hearsay: "${item.playerVisible.rumour}"`,
+              `Lead: ${item.playerVisible.lead}.`,
+              `Source: ${item.playerVisible.source}.`,
+              "Progress: none. Introduce only when locally plausible.",
+              "React to actions or explicit world time, not turn count.",
+              "Treat as provisional until reconciled with Vault canon and date.",
+            ].join(" "),
           ),
           status: "hidden" as const,
           revealCondition:
-            "Player hears credible local gossip or discovers observable evidence.",
+            "Player hears local gossip or discovers observable evidence.",
         })),
       ],
     },
