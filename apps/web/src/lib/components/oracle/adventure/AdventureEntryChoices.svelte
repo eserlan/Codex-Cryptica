@@ -43,7 +43,7 @@
       aria-describedby="adventure-discover-description"
     >
       <span
-        class="flex h-10 w-10 items-center justify-center rounded-lg bg-theme-primary/10 text-theme-primary"
+        class="flex h-10 w-10 items-center justify-center rounded-lg bg-theme-primary/10 text-theme-text"
         aria-hidden="true"
       >
         <span class="icon-[lucide--sparkles] h-5 w-5"></span>
@@ -73,7 +73,7 @@
       aria-describedby="adventure-premise-description"
     >
       <span
-        class="flex h-10 w-10 items-center justify-center rounded-lg bg-theme-primary/10 text-theme-primary"
+        class="flex h-10 w-10 items-center justify-center rounded-lg bg-theme-primary/10 text-theme-text"
         aria-hidden="true"
       >
         <span class="icon-[lucide--book-open] h-5 w-5"></span>
