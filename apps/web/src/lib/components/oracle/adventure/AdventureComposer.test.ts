@@ -20,6 +20,23 @@ function manager(
 }
 
 describe("AdventureComposer", () => {
+  it("keeps free action visible beside a horizontally scrollable row of suggestions", () => {
+    const m = manager("ready");
+    m.suggestedActions = [
+      "Steady the shutter as Sela lifts it.",
+      "Ask Sela something before helping.",
+      "Decline or turn your attention elsewhere.",
+    ];
+    render(AdventureComposer, { props: { manager: m } });
+
+    const suggestions = screen.getByTestId("adventure-suggested-actions");
+    expect(suggestions.className).toContain("overflow-x-auto");
+    expect(suggestions.querySelectorAll("button")).toHaveLength(3);
+    expect(screen.getByLabelText("What do you do?")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Submit action" })).toBeTruthy();
+    expect(screen.getByTestId("adventure-action-dock")).toBeTruthy();
+  });
+
   it("shows a Cancel affordance while generating, without removing the form", () => {
     render(AdventureComposer, { props: { manager: manager("generating") } });
 
