@@ -35,7 +35,7 @@ export interface WorldEntryPreviewQuery {
 function projected(records: readonly WorldEntryPreviewRecord[], omitted: number,
   warnings: string[], dated: boolean): WorldEntryContextPreview {
   return {
-    records,
+    records: [...records],
     omitted,
     warnings,
     dated,
