@@ -587,7 +587,12 @@ export class AdventureTurnGenerationService {
     options: { apiKey?: string; modelName?: string; signal?: AbortSignal },
   ): Promise<AdventureTurnProposal> {
     if (this.aiClient.sendInteraction) {
-      return this.generateViaInteraction(request, prompt, systemInstruction, options);
+      return this.generateViaInteraction(
+        request,
+        prompt,
+        systemInstruction,
+        options,
+      );
     }
     const model = await this.aiClient.getModel(
       options.apiKey ?? "",
