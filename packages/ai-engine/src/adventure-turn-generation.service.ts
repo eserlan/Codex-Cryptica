@@ -84,8 +84,58 @@ type AdventureStreamEvent =
   | { type: "complete"; text: string }
   | { type: "error"; error: string };
 
+type AdventureStream =
+  | AsyncIterable<AdventureStreamEvent>
+  | {
+      stream: AsyncIterable<{ text(): string }>;
+      response: Promise<{ text(): string }>;
+    };
+
 function streamAborted(signal?: AbortSignal): void {
   if (signal?.aborted) throw new DOMException("Cancelled", "AbortError");
+}
+
+async function collectEventStream(
+  source: AsyncIterable<AdventureStreamEvent>,
+  publish: (buffer: string) => void,
+  signal?: AbortSignal,
+): Promise<string> {
+  let buffer = "";
+  for await (const event of source) {
+    streamAborted(signal);
+    if (event.type === "delta") buffer += event.text;
+    if (event.type === "complete") buffer = event.text || buffer;
+    if (event.type === "error") throw new Error(event.error);
+    publish(buffer);
+  }
+  streamAborted(signal);
+  return buffer;
+}
+
+async function collectSdkStream(
+  source: Exclude<AdventureStream, AsyncIterable<AdventureStreamEvent>>,
+  publish: (buffer: string) => void,
+  signal?: AbortSignal,
+): Promise<string> {
+  let buffer = "";
+  for await (const chunk of source.stream) {
+    streamAborted(signal);
+    buffer += chunk.text();
+    publish(buffer);
+  }
+  const response = await source.response;
+  streamAborted(signal);
+  return response.text() || buffer;
+}
+
+function collectAdventureStream(
+  source: AdventureStream,
+  publish: (buffer: string) => void,
+  signal?: AbortSignal,
+): Promise<string> {
+  return Symbol.asyncIterator in source
+    ? collectEventStream(source, publish, signal)
+    : collectSdkStream(source, publish, signal);
 }
 
 const idSchema = { type: "string", minLength: 1 } as const;
