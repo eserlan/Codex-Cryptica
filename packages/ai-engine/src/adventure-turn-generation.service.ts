@@ -65,32 +65,14 @@ function parseAdventureResponse(text: string): AdventureTurnProposal {
  * Final JSON validation and hidden-truth guards still run at turn commit.
  */
 export function extractAdventureNarrationPrefix(buffer: string): string {
-  const start = /^\s*\{\s*"kind"\s*:\s*"(?:complete|roll-required)"\s*,\s*"(?:narration|setupNarration)"\s*:\s*"/.exec(buffer);
-  if (!start) return "";
-  const begin = start[0].length;
-  let raw = "";
-  for (let i = begin; i < buffer.length && raw.length < 12_000; i += 1) {
-    const char = buffer[i]!;
-    if (char === '"') break;
-    if (char === "\\") {
-      const escape = buffer[i + 1];
-      if (!escape) break;
-      if (escape === "u") {
-        const hex = buffer.slice(i + 2, i + 6);
-        if (!/^[0-9a-fA-F]{4}$/.test(hex)) break;
-        raw += buffer.slice(i, i + 6);
-        i += 5;
-      } else {
-        if (!/["\\/bfnrt]/.test(escape)) break;
-        raw += buffer.slice(i, i + 2);
-        i += 1;
-      }
-    } else {
-      raw += char;
-    }
-  }
+  // Require the first top-level fields to be kind and narration. Never show
+  // a private hidden-state field as a partial player preview.
+  const match = /^\s*\{\s*"kind"\s*:\s*"(?:complete|roll-required)"\s*,\s*"(?:narration|setupNarration)"\s*:\s*"((?:[^"\\]|\\["\\/bfnrt]|\\u[0-9a-fA-F]{4})*)/.exec(
+    buffer,
+  );
+  if (!match) return "";
   try {
-    return JSON.parse(`"${raw}"`).slice(0, 2_000);
+    return (JSON.parse('"' + match[1] + '"') as string).slice(0, 2_000);
   } catch {
     return "";
   }
