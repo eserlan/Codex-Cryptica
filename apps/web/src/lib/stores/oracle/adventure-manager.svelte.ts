@@ -43,6 +43,7 @@ import {
 } from "#lib/services/adventure/adventure-context-service.js";
 import { adventureTurnGenerationService } from "@codex/ai-engine";
 import { oracleBridge } from "#lib/cloud-bridge/oracle-bridge.js";
+import * as Comlink from "comlink";
 import { diceEngine as defaultDiceEngine, diceParser } from "dice-engine";
 import { systemIdGenerator } from "#lib/utils/runtime-deps.js";
 import type { AdventureStartFailure } from "#lib/services/adventure/adventure-start-failure.js";
@@ -193,8 +194,12 @@ function defaultGenerationService(): Pick<
       }
       // AbortSignal is not structured-cloneable and must not cross Comlink.
       const { signal: _signal, ...workerOptions } = options ?? {};
+      const { onNarration, ...cloneableRequest } = request;
+      const workerRequest = $state.snapshot(cloneableRequest);
       return oracleBridge.generateAdventureTurn(
-        $state.snapshot(request),
+        onNarration
+          ? { ...workerRequest, onNarration: Comlink.proxy(onNarration) }
+          : workerRequest,
         workerOptions,
       ) as any;
     },

@@ -119,6 +119,45 @@ describe("AdventureTurnGenerationService", () => {
     expect(previews.join(" ")).not.toContain("hiddenPatch");
   });
 
+  it("does not publish a partial narration containing an unrevealed secret", async () => {
+    const secret = "The miller hid the grain beneath the waterwheel.";
+    const protectedSession = {
+      ...session,
+      hiddenState: {
+        secrets: [{ id: "secret-1", text: secret, status: "hidden" as const }],
+        gmThreads: [],
+      },
+    };
+    const previews: string[] = [];
+    const leakedResponse = completeResponse.replace("The road opens.", secret);
+    const service = new AdventureTurnGenerationService({
+      async getModel() {
+        return {
+          async generateContent() {
+            throw new Error("buffered generation should not run");
+          },
+          async *generateContentStream() {
+            yield {
+              type: "delta" as const,
+              text: `{"kind":"complete","narration":"${secret}`,
+            };
+            yield { type: "complete" as const, text: leakedResponse };
+          },
+        };
+      },
+    });
+
+    await service.generate({
+      session: protectedSession,
+      phase: "action",
+      anchors: [],
+      relevant: [],
+      onNarration: (text) => previews.push(text),
+    });
+
+    expect(previews).toEqual([]);
+  });
+
   it("rejects an interrupted stream instead of committing an incomplete turn", async () => {
     const controller = new AbortController();
     const service = new AdventureTurnGenerationService({

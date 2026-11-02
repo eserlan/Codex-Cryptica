@@ -113,6 +113,23 @@ export function detectHiddenLeakage(
   const revealed = new Set(
     proposal.kind === "complete" ? proposal.revealSecretIds : [],
   );
+  return detectHiddenTextFields(session, fields, revealed);
+}
+
+/** Checks partial player-facing text against the session's unrevealed secrets. */
+export function detectHiddenTextLeakage(
+  sessionInput: AdventureSession,
+  text: string,
+): HiddenLeakageFinding[] {
+  const session = ensureScenarioSecrets(sessionInput);
+  return detectHiddenTextFields(session, [["root", text]], new Set());
+}
+
+function detectHiddenTextFields(
+  session: AdventureSession,
+  fields: Array<[string, string]>,
+  revealed: Set<string>,
+): HiddenLeakageFinding[] {
   const hidden = session.hiddenState.secrets.filter(
     (secret) => secret.status === "hidden" && !revealed.has(secret.id),
   );

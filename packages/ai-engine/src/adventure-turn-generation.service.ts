@@ -4,6 +4,7 @@ import {
 } from "./client-manager";
 import {
   buildAdventurePrompt,
+  detectHiddenTextLeakage,
   parseTurnProposal,
   type AdventureSession,
   type AdventureTurnProposal,
@@ -61,7 +62,8 @@ function parseAdventureResponse(text: string): AdventureTurnProposal {
 /**
  * Preview only the first top-level narration string in a structured JSON
  * response. This intentionally refuses nested fields and GM-only JSON.
- * Final JSON validation and hidden-truth guards still run at turn commit.
+ * Final JSON validation and the turn guard still run at commit; this also
+ * checks each preview against the session's unrevealed secrets.
  */
 export function extractAdventureNarrationPrefix(buffer: string): string {
   // Require the first top-level fields to be kind and narration. Never show
@@ -571,7 +573,12 @@ export class AdventureTurnGenerationService {
       (text) => {
         if (signal?.aborted) return;
         const narration = extractAdventureNarrationPrefix(text);
-        if (narration) request.onNarration?.(narration);
+        if (
+          narration &&
+          detectHiddenTextLeakage(request.session, narration).length === 0
+        ) {
+          request.onNarration?.(narration);
+        }
       },
       signal,
     );
