@@ -55,8 +55,8 @@
         id="adventure-discover-description"
         class="text-sm leading-relaxed text-theme-text"
       >
-        Get six rumours instantly, choose a lead, and discover what happens when you
-        investigate—or walk away.
+        Get six rumours instantly, choose a lead, and discover what happens when
+        you investigate—or walk away.
       </span>
       {#if !canDiscover}
         <span class="text-xs text-theme-text">
