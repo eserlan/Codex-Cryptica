@@ -6,7 +6,11 @@ import AdventurePlay from "./AdventurePlay.svelte";
 
 function manager(phase: "ready" | "generating") {
   return {
-    session: { title: "The Drowned March" },
+    session: {
+      title: "The Drowned March",
+      turns: [],
+      pendingRoll: null,
+    },
     phase,
     draft: "Cross the flooded causeway",
     readOnly: false,
