@@ -777,16 +777,31 @@ export class AdventureTurnGenerationService {
 
     // System-proxy requests use provider-managed history by default. Custom
     // API keys remain on the stateless direct-SDK path, without cloud storage.
+    let fallbackToStateless = false;
     if (
       !options.apiKey &&
       (this.aiClient.sendInteraction || this.aiClient.sendInteractionStream)
     ) {
-      return this.generateViaInteraction(
-        request,
-        prompt,
-        systemInstruction,
-        options,
-      );
+      try {
+        return await this.generateViaInteraction(
+          request,
+          prompt,
+          systemInstruction,
+          options,
+        );
+      } catch (error) {
+        const reason = error instanceof Error ? error.message.toLowerCase() : "";
+        if (
+          !/interaction-client-unavailable|interaction-stream-unavailable|interaction.*(?:unsupported|not supported|not available)/.test(
+            reason,
+          )
+        )
+          throw error;
+        // Providers that cannot store conversations retain the original
+        // stateless structured streaming path. No remote ID is persisted.
+        this.clearInteraction(request.session.id);
+        fallbackToStateless = true;
+      }
     }
 
     if (request.onNarration) {
@@ -823,7 +838,13 @@ export class AdventureTurnGenerationService {
       }
     }
 
-    return this.generateBuffered(request, prompt, systemInstruction, options);
+    return this.generateBuffered(
+      request,
+      prompt,
+      systemInstruction,
+      options,
+      fallbackToStateless,
+    );
   }
 }
 
