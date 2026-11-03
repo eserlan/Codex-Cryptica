@@ -1,4 +1,5 @@
 /// <reference lib="webworker" />
+// fallow-ignore-file code-duplication -- Legacy provider/worker forwarding boilerplate is intentionally retained while the conversation migration is validated; extract shared paths separately.
 import * as Comlink from "comlink";
 import {
   aiClientManager,
