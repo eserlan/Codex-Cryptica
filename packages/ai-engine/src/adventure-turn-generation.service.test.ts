@@ -112,7 +112,7 @@ describe("AdventureTurnGenerationService", () => {
       anchors: [],
       relevant: [],
       onNarration: (text) => previews.push(text),
-    });
+    }, { apiKey: "direct-test-key" });
     expect(result.kind).toBe("complete");
     expect(previews).toContain("The gate");
     expect(previews.at(-1)).toBe("The road opens.");
@@ -246,7 +246,7 @@ describe("AdventureTurnGenerationService", () => {
       anchors: [],
       relevant: [],
       onNarration: (text) => previews.push(text),
-    });
+    }, { apiKey: "direct-test-key" });
 
     expect(result).toMatchObject({ kind: "complete", narration: "The road opens." });
     expect(streamedCalls).toBe(1);
