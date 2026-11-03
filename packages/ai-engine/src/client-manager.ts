@@ -664,7 +664,7 @@ export class DefaultAIClientManager {
     const decoder = new TextDecoder();
     let buffer = "";
     let completed = false;
-// fallow-ignore-next-line complexity -- Adapter orchestration and structured event paths are covered by focused provider/turn tests.
+    // fallow-ignore-next-line complexity -- Adapter orchestration and structured event paths are covered by focused provider/turn tests.
     function* parse(raw: string) {
       for (const line of raw.split("\n")) {
         if (!line.startsWith("data:")) continue;
