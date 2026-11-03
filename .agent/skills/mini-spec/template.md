@@ -42,7 +42,7 @@
 - <!-- Decision 1: Tradeoff chosen over alternatives (e.g. constructor DI, reuse existing engine) -->
 - <!-- Decision 2 -->
 
-### Failure, Edge & Cancellation Paths (Constitution V)
+### Failure, Edge & Cancellation Paths
 
 - **Positive / Expected Path**: <!-- Happy path behaviour -->
 - **Negative / Error Path**: <!-- Meaningful failure handling, invalid inputs, network/worker down -->

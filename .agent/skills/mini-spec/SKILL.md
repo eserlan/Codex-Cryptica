@@ -30,7 +30,7 @@ Produce an all-in-one, consolidated **Spec + Plan + Tasks** document for focused
 
 ## Codex-Cryptica Quality Guardrails (Mandatory)
 
-1. **Constitution V (Test Completeness)**: Every behavioral change MUST include unit tests covering both the expected success path and at least one meaningful failure, cancellation, or error path.
+1. **Constitution II (Test-Driven Development)**: Every behavioral change MUST include unit tests covering both the expected success path and at least one meaningful failure, cancellation, or error path.
 2. **Impacted-Only Validation**: Never suggest or run repository-wide test/lint suites (`bun run test` / `bun run lint`). Always specify `bun run test:changed` and `bun run lint:changed`.
 3. **UI Patterns**:
    - Always Svelte 5 Runes (`$state`, `$derived`, `$effect`).
