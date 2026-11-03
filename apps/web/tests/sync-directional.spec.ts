@@ -10,7 +10,9 @@ test.describe("Directional Vault Sync UI", () => {
     page,
   }) => {
     await page.getByTestId("open-vault-button").click();
-    await expect(page.getByText("VAULT SELECTOR")).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "SWITCH VAULT" }),
+    ).toBeVisible();
 
     const activeVaultRow = page.locator(
       "[data-testid='vault-switcher-modal'] .bg-theme-primary\\/10",
@@ -26,7 +28,9 @@ test.describe("Directional Vault Sync UI", () => {
     page,
   }) => {
     await page.getByTestId("open-vault-button").click();
-    await expect(page.getByText("VAULT SELECTOR")).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "SWITCH VAULT" }),
+    ).toBeVisible();
 
     const activeVaultRow = page.locator(
       "[data-testid='vault-switcher-modal'] .bg-theme-primary\\/10",
@@ -50,7 +54,9 @@ test.describe("Directional Vault Sync UI", () => {
     });
 
     await page.getByTestId("open-vault-button").click();
-    await expect(page.getByText("VAULT SELECTOR")).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "SWITCH VAULT" }),
+    ).toBeVisible();
 
     const activeVaultRow = page.locator(
       "[data-testid='vault-switcher-modal'] .bg-theme-primary\\/10",
