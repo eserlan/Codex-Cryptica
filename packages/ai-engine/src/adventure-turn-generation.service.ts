@@ -31,7 +31,10 @@ export interface AdventureAIClient {
     modelName: string,
     systemInstruction?: string,
   ): Promise<{
-    generateContent(input: unknown): Promise<{ response: { text(): string } }>;
+    generateContent(
+      input: unknown,
+      requestOptions?: { signal?: AbortSignal },
+    ): Promise<{ response: { text(): string } }>;
   }>;
   sendInteraction?: (params: {
     model: string;
@@ -606,13 +609,16 @@ export class AdventureTurnGenerationService {
       options.modelName ?? "luna-fast",
       systemInstruction,
     );
-    const result = await model.generateContent({
-      contents: [{ role: "user", parts: [{ text: prompt.serialized }] }],
-      generationConfig: {
-        responseMimeType: "application/json",
-        responseSchema: adventureTurnResponseSchema,
+    const result = await model.generateContent(
+      {
+        contents: [{ role: "user", parts: [{ text: prompt.serialized }] }],
+        generationConfig: {
+          responseMimeType: "application/json",
+          responseSchema: adventureTurnResponseSchema,
+        },
       },
-    });
+      { signal: options.signal ?? request.signal },
+    );
     streamAborted(options.signal ?? request.signal);
     return parseAdventureResponse(result.response.text());
   }

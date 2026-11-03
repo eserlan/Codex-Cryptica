@@ -350,6 +350,51 @@ describe("AdventureTurnGenerationService", () => {
     expect(repairs).toBe(0);
   });
 
+  it("aborts an in-flight structured repair when the player cancels", async () => {
+    const controller = new AbortController();
+    let retryStarted!: () => void;
+    const retryStartedPromise = new Promise<void>((resolve) => {
+      retryStarted = resolve;
+    });
+    let retrySignal: AbortSignal | undefined;
+    const service = new AdventureTurnGenerationService({
+      async getModel() {
+        return {
+          async generateContent(
+            _input: unknown,
+            requestOptions?: { signal?: AbortSignal },
+          ) {
+            retrySignal = requestOptions?.signal;
+            retryStarted();
+            await new Promise<void>((_resolve, reject) => {
+              const signal = requestOptions?.signal;
+              if (!signal) {
+                reject(new Error("repair signal was not forwarded"));
+                return;
+              }
+              signal.addEventListener("abort", () => reject(signal.reason), {
+                once: true,
+              });
+            });
+            return { response: { text: () => completeResponse } };
+          },
+          async *generateContentStream() {
+            yield { type: "complete" as const, text: "not-json" };
+          },
+        };
+      },
+    });
+
+    const generation = service.generate(
+      { session, phase: "action", anchors: [], relevant: [] },
+      { signal: controller.signal },
+    );
+    await retryStartedPromise;
+    expect(retrySignal).toBe(controller.signal);
+    controller.abort();
+    await expect(generation).rejects.toThrow();
+  });
+
   it("does not retry a streaming transport failure", async () => {
     let repairs = 0;
     const service = new AdventureTurnGenerationService({
