@@ -33,6 +33,7 @@ performance improvement in Codex-Cryptica, or conclude that nothing is worth cha
 ## The hot-path bar
 
 Only change code that runs often or over large inputs, for example:
+
 - per-frame or per-render work (canvas drawing, map and hex rendering, graph layout);
 - `$derived` blocks over vault entities;
 - search indexing;
@@ -48,6 +49,7 @@ cannot, pick something else or finish without a change.
 ## Measurement
 
 "Tests pass" is not a measurement. Give one of:
+
 - a quick benchmark run with Bun, with before and after numbers;
 - a concrete complexity argument naming the input size, for example "O(N·M) to O(N+M), N =
   entities in the vault (thousands)".

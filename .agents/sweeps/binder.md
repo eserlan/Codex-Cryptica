@@ -15,6 +15,7 @@ seam with a test. Or conclude that nothing is worth changing today.
 ## What to look for
 
 Direct use, inside services, stores, engines, workers or components, of:
+
 - time: `Date.now()`, `new Date()` meaning "now", `performance.now()`;
 - identity and randomness: `crypto.randomUUID()`, `crypto.getRandomValues`, `Math.random`;
 - storage: `localStorage`, `sessionStorage`, `window.localStorage`;

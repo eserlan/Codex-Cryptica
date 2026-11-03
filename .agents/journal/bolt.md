@@ -376,6 +376,7 @@ Critical, codebase-specific lessons for the `bolt` persona sweep. Merged from th
 **Action:** Replace \`.map(flattenText).filter(Boolean)\` with an imperative \`for...of\` or \`for...in\` loop to evaluate values lazily, only pushing non-empty strings directly into the final array.
 
 ## 2025-01-20 - Reducing Garbage Collection Overhead with Sets
+
 **Learning:** In the generator-engine, chained array operations `.filter().map()` inside a `Set` initialization create intermediate array allocations that add significant garbage collection pressure.
 **Action:** Replace `new Set(array.filter().map())` patterns with imperative `for...of` loops and explicit `set.add()` calls to eliminate intermediate arrays entirely.
 

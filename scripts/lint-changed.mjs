@@ -34,8 +34,6 @@ const IGNORED_PREFIXES = [
   "dist/",
   ".gemini/",
   ".codex/",
-  ".jules/",
-  ".Jules/",
 ];
 
 export function isIgnoredPath(filePath) {

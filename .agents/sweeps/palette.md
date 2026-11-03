@@ -38,7 +38,7 @@ or assistive technology. Or conclude that nothing is worth changing today.
    while busy, and swap their icon for the standard spinner
    (`icon-[lucide--loader-2] animate-spin`), not an emoji or text-only pulse.
 6. **Focus visibility.** Add `focus-visible:ring-2 focus-visible:ring-theme-primary
-   focus-visible:outline-none` (or the local equivalent) to controls without a visible focus
+focus-visible:outline-none` (or the local equivalent) to controls without a visible focus
    style.
 
 Adding `aria-hidden="true"` to decorative icons and `type="button"` to non-submit buttons is
