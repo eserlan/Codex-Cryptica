@@ -380,6 +380,7 @@ export async function callGemini(
  * structured JSON must accumulate `delta` text themselves and parse/validate
  * the buffer once `complete` fires.
  */
+// fallow-ignore-next-line complexity
 export async function* streamGemini(
   request: LlmRequest,
   model: LlmModelDefinition,
