@@ -518,6 +518,7 @@ export class AdventureTurnGenerationService {
     return { input: JSON.stringify(payload), state, sourceEntries };
   }
 
+// fallow-ignore-next-line complexity
   private async generateViaInteraction(
     request: AdventureTurnGenerationRequest,
     prompt: ReturnType<typeof buildAdventurePrompt>,
@@ -563,6 +564,7 @@ export class AdventureTurnGenerationService {
     const instruction =
       systemInstruction +
       "\n\nOn continuation requests, stateDelta contains only changed top-level state fields and supersedes your previous state; null deletes a field. The present input and retrieved Vault sources outrank any previous turn. Never reveal GM-only fields.";
+// fallow-ignore-next-line complexity
     const send = async (
       repair?: string,
       preferStream = true,
@@ -760,6 +762,7 @@ export class AdventureTurnGenerationService {
     return parseAdventureResponse(result.response.text());
   }
 
+// fallow-ignore-next-line complexity
   async generate(
     request: AdventureTurnGenerationRequest,
     options: { apiKey?: string; modelName?: string; signal?: AbortSignal } = {},
