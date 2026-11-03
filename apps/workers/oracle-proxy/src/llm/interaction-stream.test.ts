@@ -120,7 +120,7 @@ describe("Solo Adventure provider conversation SSE", () => {
     );
     vi.stubGlobal("fetch", fetcher);
     const res = await handleInteractionStream(
-      { model: "gemini-flash-lite", input: "continue", previous_interaction_id: "v1_prior" },
+      { model: "gemini-flash-lite", input: "continue", previous_interaction_id: "v1_prior", generationConfig: { responseMimeType: "application/json" } },
       request(),
       env,
     );
@@ -136,7 +136,9 @@ describe("Solo Adventure provider conversation SSE", () => {
     expect(JSON.parse(options.body)).toMatchObject({
       previous_interaction_id: "v1_prior",
       stream: true,
+      response_format: { type: "text", mime_type: "application/json" },
     });
+    expect(JSON.parse(options.body).generation_config?.response_mime_type).toBeUndefined();
   });
 
   it("reports incomplete streams as errors, never completed turns", async () => {
