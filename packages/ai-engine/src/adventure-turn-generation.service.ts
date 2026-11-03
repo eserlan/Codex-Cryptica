@@ -729,7 +729,7 @@ export class AdventureTurnGenerationService {
     forceStructuredOutput = false,
   ): Promise<AdventureTurnProposal> {
     streamAborted(options.signal ?? request.signal);
-    if (this.aiClient.sendInteraction && !forceStructuredOutput) {
+    if (this.aiClient.sendInteraction && !options.apiKey && !forceStructuredOutput) {
       return this.generateViaInteraction(
         request,
         prompt,
@@ -762,14 +762,25 @@ export class AdventureTurnGenerationService {
     }
     const signal = options.signal ?? request.signal;
     if (signal?.aborted) throw new DOMException("Cancelled", "AbortError");
-    // Each new request uses freshly retrieved sources; prior provider history
-    // may contain facts no longer applicable to this scene or disclosure scope.
-    this.clearInteraction(request.session.id);
     const prompt = buildAdventurePrompt(request);
     const systemInstruction =
       prompt.behavior +
       "\n\nReturn only valid JSON that matches this response schema:\n" +
       JSON.stringify(adventureTurnResponseSchema);
+
+    // System-proxy requests use provider-managed history by default. Custom
+    // API keys remain on the stateless direct-SDK path, without cloud storage.
+    if (
+      !options.apiKey &&
+      (this.aiClient.sendInteraction || this.aiClient.sendInteractionStream)
+    ) {
+      return this.generateViaInteraction(
+        request,
+        prompt,
+        systemInstruction,
+        options,
+      );
+    }
 
     if (request.onNarration) {
       try {
