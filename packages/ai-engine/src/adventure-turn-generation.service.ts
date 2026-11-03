@@ -31,7 +31,10 @@ export interface AdventureAIClient {
     modelName: string,
     systemInstruction?: string,
   ): Promise<{
-    generateContent(input: unknown): Promise<{ response: { text(): string } }>;
+    generateContent(
+      input: unknown,
+      requestOptions?: { signal?: AbortSignal },
+    ): Promise<{ response: { text(): string } }>;
   }>;
   sendInteraction?: (params: {
     model: string;
