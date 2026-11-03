@@ -39,7 +39,9 @@ test.describe("Vault Switching", () => {
 
   test("should open vault switcher modal", async ({ page }) => {
     await page.getByTestId("open-vault-button").click();
-    await expect(page.getByText("VAULT SELECTOR")).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "SWITCH VAULT" }),
+    ).toBeVisible();
     const modal = page.getByTestId("vault-switcher-modal");
     const defaultVaultRow = modal
       .getByRole("button", { name: /Default Vault|Local Vault/ })
