@@ -19,7 +19,8 @@
     describeWorldEntryStartFailure,
   } from "#lib/services/adventure/world-entry-start.js";
   import AdventureFocusPlay from "./AdventureFocusPlay.svelte";
-  import { campaignGeneratorRequestBuilder } from "#lib/components/generators/campaign-generator-request.js";
+  import { createAdventureBackgroundRequest } from "#lib/services/adventure/adventure-background-request.js";
+  import { themeStore } from "#lib/stores/theme.svelte.js";
   import { createCampaignGeneratorService } from "#lib/components/generators/campaign-generator-service.js";
   import { adventureContextService } from "#lib/services/adventure/adventure-context-service.js";
   import { adventureSessionRepository } from "#lib/services/adventure/adventure-session-repository.js";
@@ -228,49 +229,29 @@
     isAvailable: !vault.isGuest,
   });
   const backgroundRumourService = createCampaignGeneratorService(rumourPolicy);
-  oracle.adventure.setWorldEntryRumourGenerator(async (session, signal) => {
-    signal?.throwIfAborted();
-    const entry = session.worldEntry;
-    if (!entry) throw new Error("not-world-entry");
-    const sourceId =
-      entry.location.kind === "canonical" ? entry.location.recordId : null;
-    const year = entry.at?.year;
-    const dateInstruction =
-      year !== undefined
-        ? `This scene is set in year ${year}; never treat future events as current.`
-        : "World date unspecified: do not assert exact chronology.";
-    const request = await campaignGeneratorRequestBuilder.build(
-      {
-        generatorId: "rumour",
-        useAI: rumourPolicy().isEnabled && rumourPolicy().isAvailable,
-        options: { locationContext: entry.location.name },
-        instructions: [
-          `Create local rumours for ${entry.location.name} as hidden preparation.`,
-          dateInstruction,
-          "Ground people, sites and factions in relevant Vault context where possible.",
-          "Respect established chronology; avoid contradicting canonical sources.",
-          "Mix mundane, misleading and substantial situations, not assigned quests.",
-        ].join(" "),
-      },
-      sourceId,
-      // This is hidden background preparation, not a generator editing
-      // session. Do not attach it to the user's generator interaction history.
-      () => ({ isEnabled: false, isAvailable: false }),
-    );
-    signal?.throwIfAborted();
-    const generated = await backgroundRumourService.generateDraft(
-      request,
-      signal,
-    );
-    if (!generated.content || !generated.lore) {
-      throw new Error("rumour-generator-output-missing");
-    }
-    return {
-      title: generated.title,
-      content: generated.content,
-      lore: generated.lore,
-    };
-  });
+  oracle.adventure.setWorldEntryRumourGenerator(
+    async (session, signal, context) => {
+      signal?.throwIfAborted();
+      const policy = rumourPolicy();
+      const request = createAdventureBackgroundRequest(
+        session,
+        context,
+        policy.isEnabled && policy.isAvailable,
+        themeStore.worldThemeId ?? "workspace",
+      );
+      const generated = await backgroundRumourService.generateDraft(
+        request,
+        signal,
+      );
+      if (!generated.content || !generated.lore)
+        throw new Error("rumour-generator-output-missing");
+      return {
+        title: generated.title,
+        content: generated.content,
+        lore: generated.lore,
+      };
+    },
+  );
 
   adventureContextService.setResolver({
     async getWorldSnapshot(id) {
@@ -283,8 +264,11 @@
       };
     },
     async getById(vaultId, recordId) {
-      if (oracle.vault.activeVaultId !== vaultId) return null;
+      if (oracle.vault.activeVaultId !== vaultId)
+        throw new Error("vault-not-open");
       await oracle.vault.loadEntityContent(recordId);
+      if (oracle.vault.activeVaultId !== vaultId)
+        throw new Error("vault-not-open");
       const entity = oracle.vault.entities[recordId];
       if (!entity) return null;
       return {
@@ -293,16 +277,23 @@
         type: entity.type,
         text: entity.content,
         lore: entity.lore || undefined,
+        connections: entity.connections,
         ...sourceMetadata(entity),
       };
     },
     async search(vaultId, query, limit) {
-      if (oracle.vault.activeVaultId !== vaultId || !query.trim()) return [];
+      if (oracle.vault.activeVaultId !== vaultId)
+        throw new Error("vault-not-open");
+      if (!query.trim()) return [];
       const services = await oracle.vault.serviceRegistry.ensureInitialized();
       const matches = await services.search.search(query, { limit });
+      if (oracle.vault.activeVaultId !== vaultId)
+        throw new Error("vault-not-open");
       const records = await Promise.all(
         matches.map(async (match) => {
           await oracle.vault.loadEntityContent(match.id);
+          if (oracle.vault.activeVaultId !== vaultId)
+            throw new Error("vault-not-open");
           const entity = oracle.vault.entities[match.id];
           if (!entity) return null;
           return {
@@ -311,6 +302,7 @@
             type: entity.type,
             text: entity.content,
             lore: entity.lore || undefined,
+            connections: entity.connections,
             ...sourceMetadata(entity),
           };
         }),

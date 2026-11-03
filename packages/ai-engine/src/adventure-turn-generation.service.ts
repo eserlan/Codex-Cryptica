@@ -624,6 +624,9 @@ export class AdventureTurnGenerationService {
     }
     const signal = options.signal ?? request.signal;
     if (signal?.aborted) throw new DOMException("Cancelled", "AbortError");
+    // Each new request uses freshly retrieved sources; prior provider history
+    // may contain facts no longer applicable to this scene or disclosure scope.
+    this.clearInteraction(request.session.id);
     const prompt = buildAdventurePrompt(request);
     const systemInstruction =
       prompt.behavior +

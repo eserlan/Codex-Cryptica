@@ -110,3 +110,47 @@ describe("adventure generation adapter", () => {
     expect(oracleBridge.cancelAdventureTurn).not.toHaveBeenCalled();
   });
 });
+
+it.each([false, true])(
+  "delivers freshly grounded sources with worker ready=%s",
+  async (ready) => {
+    const { AdventureGroundingService } =
+      await import("#lib/services/adventure/adventure-grounding-service.js");
+    const { initialSession } = await import("../adventure-session");
+    const { startInput } = await import("./adventure-fixtures");
+    bridgeState.ready = ready;
+    vi.mocked(adventureTurnGenerationService.generate).mockResolvedValue(
+      completeProposal,
+    );
+    vi.mocked(oracleBridge.generateAdventureTurn).mockResolvedValue(
+      completeProposal,
+    );
+    const sources = [
+      {
+        recordId: "town",
+        displayName: "Town",
+        content: "Known town.",
+        role: "turn-source" as const,
+      },
+    ];
+    const service = new AdventureGroundingService({
+      resolveAnchors: async () => [],
+      resolveOpeningRelevant: async () => sources,
+      resolveActionRelevant: async () => sources,
+    });
+    await service.wrap(defaultGenerationService()).generate({
+      session: initialSession({
+        ...startInput,
+        now: "2026-11-03T12:00:00Z",
+        idGenerator: () => "session",
+      }),
+      phase: "opening",
+      anchors: [],
+      relevant: [],
+    });
+    const call = ready
+      ? vi.mocked(oracleBridge.generateAdventureTurn).mock.calls[0]
+      : vi.mocked(adventureTurnGenerationService.generate).mock.calls[0];
+    expect(call[0]).toMatchObject({ anchors: [], relevant: sources });
+  },
+);

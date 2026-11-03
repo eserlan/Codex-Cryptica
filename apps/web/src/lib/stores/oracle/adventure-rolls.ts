@@ -94,13 +94,12 @@ export class AdventureRolls {
     signal: AbortSignal,
   ) {
     const pendingRoll = session.pendingRoll!;
-    const anchors = await this.runtime.deps.context.resolveAnchors(session);
     const proposal = await this.runtime.deps.generation.generate(
       {
         session,
         phase: "roll-resolution",
         rollResolution: pendingRoll.suppliedOutcome,
-        anchors,
+        anchors: [],
         relevant: [],
         onNarration: this.runtime.narrationPreview(session.id, signal),
       },

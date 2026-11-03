@@ -48,6 +48,10 @@ export class AdventureManager extends AdventureState {
     return this.opening.start(...args);
   }
 
+  retryOpening(): Promise<void> {
+    return this.opening.retryOpening();
+  }
+
   open(
     ...args: Parameters<AdventureLifecycle["open"]>
   ): ReturnType<AdventureLifecycle["open"]> {

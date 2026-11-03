@@ -11,6 +11,11 @@ import {
   type TemporalWorldContext,
 } from "./temporal-world-context";
 import { resolveWorldEntryPreview } from "./world-entry-context-preview";
+import {
+  requiredGroundingSources,
+  selectGroundingCandidates,
+  MAX_GROUNDING_RECORDS,
+} from "@codex/adventure-engine";
 import type {
   AdventureSession,
   ResolvedSourceExcerpt,
@@ -24,6 +29,7 @@ export interface AdventureSourceRecord {
   type: string;
   text: string;
   lore?: string;
+  connections?: Entity["connections"];
   /**
    * Metadata restored with the body. Date-aware projections decide on these,
    * so the loaded values override the (possibly stale) graph index.
@@ -59,6 +65,7 @@ function hydrateEntity(entity: Entity, loaded: AdventureSourceRecord): Entity {
     ...entity,
     content: loaded.text,
     lore: loaded.lore,
+    connections: loaded.connections ?? entity.connections,
   };
   for (const key of METADATA_KEYS) {
     if (key in loaded) {
@@ -79,7 +86,7 @@ function withoutAnchored<T extends { id: string }>(
   records: T[],
 ): T[] {
   const anchored = new Set(
-    session.sourceRecords.map((reference) => reference.recordId),
+    requiredGroundingSources(session).map((reference) => reference.recordId),
   );
   return records.filter((record) => !anchored.has(record.id));
 }
@@ -89,6 +96,22 @@ export class AdventureContextService {
 
   setResolver(resolver: AdventureSourceResolver): void {
     this.resolver = resolver;
+  }
+
+  private remainingRecords(session: AdventureSession): number {
+    return Math.max(
+      0,
+      MAX_GROUNDING_RECORDS - requiredGroundingSources(session).length,
+    );
+  }
+
+  /** Recheck explicitly selected records after asynchronous retrieval. */
+  async verifyRequiredSources(session: AdventureSession): Promise<void> {
+    for (const reference of requiredGroundingSources(session)) {
+      if (!(await this.resolver.getById(session.vaultId, reference.recordId))) {
+        throw new Error("required-source-unavailable");
+      }
+    }
   }
 
   /** Date-aware, bounded source retrieval; never writes or rewrites Vault canon. */
@@ -125,7 +148,23 @@ export class AdventureContextService {
     );
     // Recompute with the restored metadata: a record restored as hidden, or
     // with a new end date, must not keep its index classification.
-    return resolveTemporalWorldContext({ ...input, ...source, entities });
+    const resolved = resolveTemporalWorldContext({
+      ...input,
+      ...source,
+      entities,
+    });
+    // Reclassification may discover new candidates after metadata changes.
+    // Leave those for a later interaction rather than hydrating beyond this selection.
+    const selected = (record: { id: string }) => overrides.has(record.id);
+    return {
+      ...resolved,
+      playerSafe: resolved.playerSafe.filter(selected),
+      gmOnly: resolved.gmOnly.filter(selected),
+      unresolved: resolved.unresolved.filter(selected),
+      omitted:
+        resolved.omitted +
+        resolved.gmOnly.filter((record) => !selected(record)).length,
+    };
   }
 
   /**
@@ -137,7 +176,9 @@ export class AdventureContextService {
     session: AdventureSession,
   ): Promise<PeriodPolicy | null> {
     const at = session.worldEntry?.at;
-    if (!at || !this.resolver.getWorldSnapshot) return null;
+    if (!at) return null;
+    if (!this.resolver.getWorldSnapshot)
+      throw new Error("temporal-world-not-configured");
     const snapshot = await this.resolver.getWorldSnapshot(session.vaultId);
     const byId = new Map(
       snapshot.entities.map((entity) => [entity.id, entity]),
@@ -171,6 +212,28 @@ export class AdventureContextService {
     maxChars: number,
   ): { content: string; lore?: string } {
     const applicability = policy?.classify(record);
+    if (record.visibility === "hidden") {
+      return {
+        content:
+          "[GM-only source: existence and identity are not player knowledge]" +
+          (applicability
+            ? " [Period applicability: " + applicability + "]"
+            : ""),
+        lore: [
+          applicability
+            ? "Period applicability: " +
+              applicability +
+              "; never project future or uncertain facts into established current knowledge."
+            : "",
+          record.title,
+          record.text,
+          record.lore,
+        ]
+          .filter(Boolean)
+          .join("\n")
+          .slice(0, maxChars),
+      };
+    }
     if (!applicability) {
       return {
         content: record.text.slice(0, maxChars),
@@ -195,13 +258,22 @@ export class AdventureContextService {
   ): Promise<ResolvedSourceExcerpt[]> {
     const policy = await this.periodPolicy(session);
     const excerpts: ResolvedSourceExcerpt[] = [];
-    for (const reference of session.sourceRecords) {
+    const references = requiredGroundingSources(session);
+    selectGroundingCandidates(
+      references.map((reference) => reference.recordId),
+      [],
+    );
+    for (const reference of references) {
       const record = await this.resolver.getById(
         session.vaultId,
         reference.recordId,
       );
-      if (!record) continue;
-      const { content, lore } = this.excerpt(record, policy, 8_000);
+      if (!record) throw new Error("required-source-unavailable");
+      const { content, lore } = this.excerpt(
+        record,
+        policy,
+        Math.max(8_000, record.text.length, record.lore?.length ?? 0),
+      );
       excerpts.push({
         recordId: record.id,
         displayName: record.title,
@@ -217,35 +289,93 @@ export class AdventureContextService {
     session: AdventureSession,
     action: string,
   ): Promise<ResolvedSourceExcerpt[]> {
-    const query = [action, session.visibleState.location?.text]
-      .filter(Boolean)
-      .join(" ");
-    const records = await this.resolver.search(session.vaultId, query, 8);
-    const policy = await this.periodPolicy(session);
-    return withoutAnchored(session, records).map((record) => {
-      const { content, lore } = this.excerpt(record, policy, 4_000);
-      return {
-        recordId: record.id,
-        displayName: record.title,
-        content,
-        lore,
-        role: "turn-source" as SourceRecordReference["role"],
-      };
-    });
+    if (this.remainingRecords(session) === 0) return [];
+    const { records, policy } = await this.searchSources(session, [
+      action,
+      session.visibleState.location?.text,
+    ]);
+    const searched = withoutAnchored(session, records)
+      .slice(0, this.remainingRecords(session))
+      .map((record) => {
+        const { content, lore } = this.excerpt(record, policy, 4_000);
+        return {
+          recordId: record.id,
+          displayName: record.title,
+          content,
+          lore,
+          role: "turn-source" as SourceRecordReference["role"],
+        };
+      });
+    const neighbors =
+      session.worldEntry && this.remainingRecords(session) > records.length
+        ? await this.resolveWorldEntryOpening(
+            session,
+            Math.min(14, this.remainingRecords(session) - records.length),
+          )
+        : [];
+    return [
+      ...new Map(
+        [...searched, ...neighbors].map((source) => [source.recordId, source]),
+      ).values(),
+    ];
   }
 
   private async resolveWorldEntryOpening(
     session: AdventureSession,
+    maxRecords = Math.min(14, this.remainingRecords(session)),
   ): Promise<ResolvedSourceExcerpt[]> {
     const entry = session.worldEntry;
-    if (!entry || !this.resolver.getWorldSnapshot) return [];
-    const snapshot = await this.resolver.getWorldSnapshot(session.vaultId);
+    if (
+      !entry ||
+      !this.resolver.getWorldSnapshot ||
+      this.remainingRecords(session) === 0
+    )
+      return [];
+    const candidateRecords = await this.openingCandidates(session, maxRecords);
+    const eligible = withoutAnchored(session, candidateRecords).slice(
+      0,
+      this.remainingRecords(session),
+    );
+    const relevant = await Promise.all(
+      eligible.map(async (record) => {
+        const source = await this.resolver.getById(session.vaultId, record.id);
+        if (!source) return null;
+        // Undated prose stays GM-only lore; only dated events are content.
+        const { content, lore } = this.excerpt(
+          source,
+          { classify: () => record.applicability },
+          1_500,
+        );
+        return {
+          recordId: record.id,
+          displayName: record.title,
+          content: content.slice(0, 1_500),
+          // GM-only lore never appears in the UI or player projections.
+          ...relationshipLore(lore, source.connections),
+          role: "turn-source" as const,
+        };
+      }),
+    );
+    return relevant.filter(
+      (value): value is NonNullable<typeof value> => value !== null,
+    );
+  }
+
+  private async openingCandidates(
+    session: AdventureSession,
+    maxRecords: number,
+  ) {
+    const entry = session.worldEntry!;
+    const snapshot = await this.resolver.getWorldSnapshot!(session.vaultId);
     const characterId =
       session.playerCharacter.kind === "canonical"
         ? session.playerCharacter.recordId
         : undefined;
     const locationId =
-      entry.location.kind === "canonical" ? entry.location.recordId : undefined;
+      session.visibleState?.location?.sourceRecordId ??
+      (entry.location.kind === "canonical"
+        ? entry.location.recordId
+        : undefined);
     // Date-aware context is hydrated only for a bounded selection. With a
     // date and at least one canonical root, classify by date; only a fully
     // provisional or undated start uses the conservative undated fallback.
@@ -257,65 +387,56 @@ export class AdventureContextService {
               characterId,
               locationId,
               at: entry.at,
-              maxRecords: 14,
+              maxRecords,
             })
-          ).playerSafe.filter((record) => record.applicability !== "future")
+          ).gmOnly
         : resolveWorldEntryPreview({
             entities: snapshot.entities,
             calendar: snapshot.calendar,
             characterId,
             locationId,
             at: entry.at,
-            maxRecords: 14,
+            maxRecords,
           }).records;
-    const eligible = withoutAnchored(session, candidateRecords);
-    const relevant = await Promise.all(
-      eligible.map(async (record) => {
-        const source = await this.resolver.getById(session.vaultId, record.id);
-        if (!source || source.visibility === "hidden") return null;
-        // Undated prose stays GM-only lore; only dated events are content.
-        const { content, lore } = periodExcerpt({
-          title: record.title,
-          type: record.type,
-          text: source.text,
-          lore: source.lore,
-          applicability: record.applicability,
-        });
-        return {
-          recordId: record.id,
-          displayName: record.title,
-          content: content.slice(0, 1_500),
-          // GM-only lore never appears in the UI or player projections.
-          ...(lore ? { lore: lore.slice(0, 1_500) } : {}),
-          role: "turn-source" as const,
-        };
-      }),
+    return candidateRecords;
+  }
+
+  private async searchSources(
+    session: AdventureSession,
+    terms: Array<string | undefined>,
+  ) {
+    const records = await this.resolver.search(
+      session.vaultId,
+      terms.filter(Boolean).join(" "),
+      Math.min(8, this.remainingRecords(session)),
     );
-    return relevant.filter(
-      (value): value is NonNullable<typeof value> => value !== null,
-    );
+    const policy = await this.periodPolicy(session);
+    return { records, policy };
   }
 
   async resolveOpeningRelevant(
     session: AdventureSession,
   ): Promise<ResolvedSourceExcerpt[]> {
     if (session.worldEntry) return this.resolveWorldEntryOpening(session);
+    if (this.remainingRecords(session) === 0) return [];
     const playerCharacter = session.playerCharacter;
     const characterContext =
       playerCharacter.kind === "canonical"
         ? playerCharacter.name
         : `${playerCharacter.name} ${playerCharacter.description}`;
-    const query = [session.title, session.premise, characterContext]
-      .filter(Boolean)
-      .join(" ");
-    const records = await this.resolver.search(session.vaultId, query, 8);
-    return withoutAnchored(session, records).map((record) => ({
-      recordId: record.id,
-      displayName: record.title,
-      content: record.text.slice(0, 4_000),
-      lore: record.lore,
-      role: "turn-source" as SourceRecordReference["role"],
-    }));
+    const { records, policy } = await this.searchSources(session, [
+      session.title,
+      session.premise,
+      characterContext,
+    ]);
+    return withoutAnchored(session, records)
+      .slice(0, this.remainingRecords(session))
+      .map((record) => ({
+        recordId: record.id,
+        displayName: record.title,
+        ...this.excerpt(record, policy, 4_000),
+        role: "turn-source" as const,
+      }));
   }
 }
 
@@ -327,3 +448,16 @@ export const adventureContextService = new AdventureContextService({
     return [];
   },
 });
+
+/** Relationships are references, not proof of period or character knowledge. */
+function relationshipLore(
+  lore: string | undefined,
+  connections: Entity["connections"] | undefined,
+): { lore?: string } {
+  const relations = connections?.length
+    ? "GM-only undated relationship references; do not assume these hold at the chosen date or are character knowledge: " +
+      JSON.stringify(connections.slice(0, 12))
+    : "";
+  const text = [lore, relations].filter(Boolean).join("\n").slice(0, 3_000);
+  return text ? { lore: text } : {};
+}

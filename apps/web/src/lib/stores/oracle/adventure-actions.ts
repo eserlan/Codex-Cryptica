@@ -50,11 +50,6 @@ export class AdventureActions {
     signal: AbortSignal,
   ) {
     await this.runtime.verifyControl();
-    const anchors = await this.runtime.deps.context.resolveAnchors(session);
-    const relevant = await this.runtime.deps.context.resolveActionRelevant(
-      session,
-      action,
-    );
     // Older World Entry sessions began without background situations.
     // Seed on their next committed action too, without mutating the persisted
     // session until the same optimistic-concurrency save succeeds.
@@ -65,8 +60,8 @@ export class AdventureActions {
         session: prepared,
         phase: "action",
         playerAction: action,
-        anchors,
-        relevant,
+        anchors: [],
+        relevant: [],
         onNarration: this.runtime.narrationPreview(session.id, signal),
       },
       { signal },

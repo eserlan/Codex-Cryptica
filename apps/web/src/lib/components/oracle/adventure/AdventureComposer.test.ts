@@ -186,3 +186,37 @@ describe("AdventureComposer", () => {
     expect(document.body.contains(button)).toBe(true);
   });
 });
+
+it("offers retry for an incomplete opening and invokes the existing manager", async () => {
+  const m = manager("ready");
+  m.session = { turns: [], pendingRoll: null };
+  m.errorMessage = "Unable to load world context. Please retry.";
+  m.retryOpening = vi.fn(async () => {});
+  render(AdventureComposer, { props: { manager: m } });
+  await fireEvent.click(screen.getByRole("button", { name: "Retry opening" }));
+  expect(m.retryOpening).toHaveBeenCalledOnce();
+});
+
+it("keeps an opening retry unavailable in read-only play", () => {
+  const m = manager("ready");
+  m.session = { turns: [], pendingRoll: null };
+  m.readOnly = true;
+  m.errorMessage = "Unable to load world context. Please retry.";
+  render(AdventureComposer, { props: { manager: m } });
+  expect(screen.queryByRole("button", { name: "Retry opening" })).toBeNull();
+});
+
+it("offers opening recovery after reload even without a stored error", () => {
+  const m = manager("ready");
+  m.session = { turns: [], pendingRoll: null };
+  m.retryOpening = vi.fn(async () => {});
+  render(AdventureComposer, { props: { manager: m } });
+  expect(
+    (screen.getByRole("button", { name: "Retry opening" }) as HTMLButtonElement)
+      .disabled,
+  ).toBe(false);
+  expect(
+    (screen.getByRole("button", { name: "Submit action" }) as HTMLButtonElement)
+      .disabled,
+  ).toBe(true);
+});

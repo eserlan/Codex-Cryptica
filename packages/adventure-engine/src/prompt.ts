@@ -70,6 +70,7 @@ export function buildAdventurePrompt(input: AdventurePromptInput) {
     "Never copy timeAdvance.developments into narration, suggested actions or player-visible state unless the player has a justified way to observe the consequences. Do not reveal hidden rumours just because hours passed.",
     "Do not reveal unrevealed GM state; return explicit reveal IDs only when fictionally discovered.",
     "The GM-ONLY state block is not player knowledge and must never be copied into narration or roll copy.",
+    "Source excerpts are world knowledge, not proof of character knowledge. Preserve period applicability and uncertainty labels; retrieved secrets or hidden identities are never revealed merely because they were retrieved.",
     "Source excerpt lore is GM-only: use it to drive consequences and reveals, but never state it to the player unless it is fictionally discovered.",
     "When a meaningful new player-visible person, place, faction, item, event, or clue enters play, add one concise provisionalFacts entry so the player may choose to save it to Codex. Never include any canonical/source record or fact already present in the supplied state; do not add fleeting details, duplicates, or any GM-only information.",
     "For every newly created fact (including add entries, location, situation, hidden state, and provisionalFacts), omit id. IDs are assigned when the turn is committed. Include an id only to update, remove, or reveal existing state.",
@@ -94,6 +95,8 @@ export function buildAdventurePrompt(input: AdventurePromptInput) {
     "GM-ONLY state": ensureScenarioSecrets(input.session).hiddenState,
     "GM-ONLY fictional time": input.session.worldTime,
     provisionalFacts: input.session.provisionalFacts,
+    pendingRoll:
+      input.phase === "roll-resolution" ? input.session.pendingRoll : undefined,
     worldEntry: worldEntry
       ? {
           location: worldEntry.location,

@@ -103,7 +103,7 @@ describe("30-turn emergent adventure regression", () => {
       const meta = {
         turnId: "turn-" + i,
         inputId: "input-" + i,
-        playerAction: "Player action " + i,
+        playerAction: i >= 15 ? "Return to the mill" : "Player action " + i,
         now,
       };
       if (i === 7) {
@@ -127,8 +127,15 @@ describe("30-turn emergent adventure regression", () => {
         );
         expect(recorded.ok).toBe(true);
         if (!recorded.ok) throw new Error("roll recording failed");
+        const reloadedRoll = parseAdventureSession(
+          JSON.parse(JSON.stringify(recorded.value)),
+        );
+        expect(reloadedRoll.pendingRoll?.suppliedOutcome).toEqual({
+          kind: "numeric",
+          value: 13,
+        });
         const resolved = resolveRecordedRoll(
-          recorded.value,
+          reloadedRoll,
           ordinaryTurn(i),
           meta,
         );
@@ -167,6 +174,7 @@ describe("30-turn emergent adventure regression", () => {
 
     expect(session.turns).toHaveLength(30);
     expect(session.turns[7]?.rollOutcome?.value).toBe(13);
+    expect(session.turns[20]?.playerAction).toBe("Return to the mill");
     expect(session.scenarioState?.status).toBe("open");
     expect(session.scenarioState?.events).toHaveLength(1);
     expect(session.scenarioState?.gmOnly.truth).toBe(truth);

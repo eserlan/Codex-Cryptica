@@ -63,3 +63,9 @@ Opening Play checks for an active adventure in the current vault so you can cont
 that world’s session.
 
 Adventure Mode is now chosen from the Play page. Starting a solo session does not need it. See [Solo Sessions](/help#help/solo-session).
+
+## Playing in your existing world
+
+Before an opening, action, dice resolution or background rumour generation, Oracle looks up relevant local Vault records and combines them with your adventure's committed discoveries. Existing Vault facts take priority over provisional details. Dated exploration keeps future and uncertain information distinct, and GM notes remain hidden preparation rather than character knowledge. Oracle can still make mistakes; review discoveries before saving them to campaign canon.
+
+If world information cannot be loaded, generation stops so you can retry. Your committed progress, action draft and any recorded dice result remain available. Restore a missing selected character, location or source record, or edit your selection, before retrying. If no opening has been committed, use **Retry opening**; this is also available after reopening the adventure. A successful lookup with no matches can continue with provisional details. Optional rumour generation can use a local fallback after its world lookup succeeds. AI generation needs an available, configured Oracle; inspecting existing play remains local.

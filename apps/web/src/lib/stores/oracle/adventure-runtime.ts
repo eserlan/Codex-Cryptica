@@ -1,3 +1,4 @@
+import { AdventureGroundingService } from "#lib/services/adventure/adventure-grounding-service.js";
 import type { AdventureSession, CommitMetadata } from "@codex/adventure-engine";
 import type { AdventureManagerDependencies } from "./adventure-dependencies";
 import type { AdventureState } from "./adventure-state.svelte";
@@ -12,7 +13,11 @@ export class AdventureRuntime {
     readonly state: AdventureState,
     readonly deps: Required<AdventureManagerDependencies>,
   ) {
-    this.background = new AdventureBackground(deps.idGenerator);
+    const grounding = new AdventureGroundingService(deps.context, (session) =>
+      this.verifySession(session),
+    );
+    deps.generation = grounding.wrap(deps.generation);
+    this.background = new AdventureBackground(deps.idGenerator, grounding);
   }
 
   async verifyControl(): Promise<void> {
@@ -22,6 +27,24 @@ export class AdventureRuntime {
     ) {
       throw new Error("control-lost");
     }
+  }
+
+  private assertCurrentSession(session: AdventureSession): void {
+    const current = this.state.session;
+    if (
+      this.state.readOnly ||
+      !current ||
+      current.id !== session.id ||
+      current.vaultId !== session.vaultId ||
+      current.revision !== session.revision
+    )
+      throw new Error("stale-adventure-context");
+  }
+
+  private async verifySession(session: AdventureSession): Promise<void> {
+    this.assertCurrentSession(session);
+    await this.verifyControl();
+    this.assertCurrentSession(session);
   }
 
   narrationPreview(sessionId: string, signal?: AbortSignal) {
@@ -53,9 +76,10 @@ export class AdventureRuntime {
     previous: AdventureSession,
     next: AdventureSession,
   ): Promise<AdventureSession> {
-    await this.verifyControl();
+    await this.verifySession(previous);
     const saved = await this.deps.repository.save(previous.revision, next);
     if (!saved.ok) throw saved.error;
+    this.assertCurrentSession(previous);
     return saved.session;
   }
 

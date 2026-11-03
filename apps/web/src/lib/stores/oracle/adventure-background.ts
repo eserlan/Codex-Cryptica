@@ -1,4 +1,8 @@
-import type { AdventureSession } from "@codex/adventure-engine";
+import { AdventureGroundingService } from "#lib/services/adventure/adventure-grounding-service.js";
+import type {
+  AdventureSession,
+  GroundingContext,
+} from "@codex/adventure-engine";
 import {
   needsWorldEntryBackground,
   seedWorldEntryBackground,
@@ -8,18 +12,23 @@ import { abortReason, isAbort } from "./adventure-generation.svelte";
 
 /** Prepares optional world-entry rumours without committing partial state. */
 export class AdventureBackground {
-  constructor(private readonly idGenerator: () => string) {}
+  constructor(
+    private readonly idGenerator: () => string,
+    private readonly grounding = new AdventureGroundingService(),
+  ) {}
   private worldEntryRumourGenerator:
     | ((
         session: AdventureSession,
-        signal?: AbortSignal,
+        signal: AbortSignal | undefined,
+        context: GroundingContext,
       ) => Promise<RumourSelectionInput>)
     | undefined;
 
   setGenerator(
     generator: (
       session: AdventureSession,
-      signal?: AbortSignal,
+      signal: AbortSignal | undefined,
+      context: GroundingContext,
     ) => Promise<RumourSelectionInput>,
   ): void {
     this.worldEntryRumourGenerator = generator;
@@ -45,8 +54,17 @@ export class AdventureBackground {
   ): Promise<RumourSelectionInput | undefined> {
     if (!this.worldEntryRumourGenerator) return undefined;
     if (signal?.aborted) throw abortReason(signal);
+    // Retrieval errors must propagate; only optional generation may fall back.
+    const context = await this.grounding.prepare(
+      { session, purpose: "background" },
+      signal,
+    );
     try {
-      const batch = await this.worldEntryRumourGenerator(session, signal);
+      const batch = await this.worldEntryRumourGenerator(
+        session,
+        signal,
+        context,
+      );
       if (signal?.aborted) throw abortReason(signal);
       return batch;
     } catch (cause) {
