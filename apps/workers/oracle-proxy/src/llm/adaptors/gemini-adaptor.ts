@@ -178,11 +178,10 @@ export interface GeminiInteractionResult {
  * `index.ts`'s `handleInteraction` did inline before extraction. No
  * behavior change (FR-007).
  */
-export async function forwardInteractionToGemini(
+/** Shared buffered/streaming Interactions payload mapping. */
+export function buildGeminiInteractionPayload(
   body: Record<string, any>,
-  env: GeminiEnv,
-  fetcher: typeof fetch = fetch,
-): Promise<GeminiInteractionResult> {
+): Record<string, unknown> {
   const targetModel = body.model || "gemini-3.5-flash-lite";
 
   const systemInstruction: string | undefined =
@@ -209,6 +208,16 @@ export async function forwardInteractionToGemini(
     } as Record<string, unknown>;
     payload.generation_config = mapGenerationConfig(rawConfig);
   }
+
+  return payload;
+}
+
+export async function forwardInteractionToGemini(
+  body: Record<string, any>,
+  env: GeminiEnv,
+  fetcher: typeof fetch = fetch,
+): Promise<GeminiInteractionResult> {
+  const payload = buildGeminiInteractionPayload(body);
 
   const url = `https://generativelanguage.googleapis.com/v1beta/interactions?key=${env.GEMINI_API_KEY}`;
 
