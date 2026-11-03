@@ -1,5 +1,5 @@
 ---
-title: "🛡️ Vigil"
+title: "✅ Vigil"
 journal: .agents/journal/vigil.md
 max_files: 8
 max_changed_lines: 200
@@ -51,6 +51,9 @@ shared by several failing tests, so the suite gets greener every day.
   server:
   `E2E_PORT=$((5200 + RANDOM % 700)) bunx playwright test tests/<spec>.spec.ts --reporter=list`.
 - Run each fixed spec at least twice (`--repeat-each=2`) to make sure it is not merely flaky.
+- Only commit a fix you have seen pass here. If the spec fails locally before reaching your
+  change, for example because of another failure in the same file, run just the affected test
+  with `--grep`. If that still cannot pass locally, pick another cluster.
 - Also run changed-file lint and the impacted unit tests, as AGENTS.md requires.
 
 ## When not to change anything
@@ -68,6 +71,9 @@ of them.
 - Never leave helper scripts or reports behind.
 
 ## Commit body (becomes the PR description)
+
+Keep the bold labels below. Plain `Label: text` lines are parsed as commit footers, and
+commitlint then rejects the message.
 
 **Failing tests:** the specs and titles this fixes, and how many of the run's failures that is.
 **Root cause:** what actually broke, and whether the test or the app was wrong.
