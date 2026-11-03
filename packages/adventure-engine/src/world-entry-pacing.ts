@@ -38,6 +38,7 @@ export function worldEntryPacing(
   for (let i = session.turns.length - 1; i >= 0; i -= 1) {
     if (hadSeedActivity(session.turns[i]!)) break;
     quietTurns += 1;
+    if (quietTurns >= WORLD_ENTRY_QUIET_TURN_LIMIT) break;
   }
   return {
     quietTurns,

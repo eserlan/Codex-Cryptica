@@ -127,7 +127,7 @@ function worldEntryBehavior(
     "When a sign is present in the scene, one suggestedAction may invite a closer look at it, phrased as an option, never as accepting a quest.",
     ...(pacing?.signDue
       ? [
-          `PACING: ${pacing.quietTurns} turns have passed without any world-entry seed surfacing. In this turn, weave one small background sign from a fitting unnoticed seed into the scene, and record its new Stage through hiddenPatch.gmThreads.`,
+          `PACING: At least ${pacing.quietTurns} turns have passed without any world-entry seed surfacing. In this turn, weave one small background sign from a fitting unnoticed seed into the scene, and record its new Stage through hiddenPatch.gmThreads.`,
         ]
       : []),
     "Use only period-appropriate established sources as current facts. Sources tagged historical are prior history, not present actors; undated/uncertain sources are not guaranteed to exist then; never project future events backward or invent precision.",

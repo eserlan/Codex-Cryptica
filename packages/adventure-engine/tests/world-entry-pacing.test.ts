@@ -107,7 +107,18 @@ describe("world entry pacing", () => {
       signDue: true,
     });
     expect(promptFor(s).behavior).toContain(
-      `PACING: ${WORLD_ENTRY_QUIET_TURN_LIMIT} turns have passed`,
+      `PACING: At least ${WORLD_ENTRY_QUIET_TURN_LIMIT} turns have passed`,
+    );
+  });
+
+  it("caps the quiet-turn count at the sign threshold", () => {
+    const s = session(quietTurns(WORLD_ENTRY_QUIET_TURN_LIMIT + 50));
+    expect(worldEntryPacing(s)).toEqual({
+      quietTurns: WORLD_ENTRY_QUIET_TURN_LIMIT,
+      signDue: true,
+    });
+    expect(promptFor(s).behavior).toContain(
+      `PACING: At least ${WORLD_ENTRY_QUIET_TURN_LIMIT} turns have passed`,
     );
   });
 
