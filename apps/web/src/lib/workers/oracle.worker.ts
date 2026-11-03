@@ -331,6 +331,10 @@ class OracleWorker {
     this.adventureGeneration.clearInteraction(sessionId);
   }
 
+  confirmAdventureInteraction(sessionId: string): void {
+    this.adventureGeneration.confirmInteraction(sessionId);
+  }
+
   async propose(
     text: string,
     context: { existingEntities: any[]; history: any[]; categories?: any[] },
