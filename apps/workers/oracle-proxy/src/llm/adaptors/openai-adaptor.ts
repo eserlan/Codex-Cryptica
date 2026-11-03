@@ -1,3 +1,4 @@
+// fallow-ignore-file code-duplication -- Legacy provider/worker forwarding boilerplate is intentionally retained while the conversation migration is validated; extract shared paths separately.
 /**
  * OpenAI-compatible provider adaptor. Handles every OpenAI-family model
  * (including GPT-5.6 Luna) — differentiated only by `modelId` in the
