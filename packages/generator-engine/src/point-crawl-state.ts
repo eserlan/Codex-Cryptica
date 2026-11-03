@@ -8,6 +8,8 @@
  * visual graph and text never contradict each other.
  */
 
+import { emphasisePointCrawlCues } from "./point-crawl-emphasis";
+
 export const POINT_CRAWL_SCALES = [
   "Dungeon",
   "Settlement",
@@ -328,16 +330,19 @@ export function renderPointCrawlRouteSummary(
     `**Travel:** ${route.travelTime}  `,
     `**Terrain:** ${route.terrain}`,
     "",
-    `**Signpost from ${originName}:** ${approach ?? route.signpost}`,
+    `**Signpost from ${originName}:** ${emphasisePointCrawlCues(approach ?? route.signpost)}`,
     "",
-    `**Risk:** ${route.risk}`,
+    `**Risk:** ${emphasisePointCrawlCues(route.risk)}`,
   ];
   if (
     fromNodeId === undefined &&
     route.direction === "bidirectional" &&
     route.approachFromTarget
   ) {
-    lines.push("", `**Approach from ${toName}:** ${route.approachFromTarget}`);
+    lines.push(
+      "",
+      `**Approach from ${toName}:** ${emphasisePointCrawlCues(route.approachFromTarget)}`,
+    );
   }
   if (route.gate) {
     const gateNodeName =
@@ -356,12 +361,12 @@ function renderPointCrawlLocations(crawl: PointCrawlNetwork): string[] {
     const roleLabel = pointCrawlNodeRoleLabel(node);
     return [
       `### ${idx + 1}. ${node.name} (${pointCrawlNodeRoleSymbol(node)} ${roleLabel})`,
-      node.summary,
+      emphasisePointCrawlCues(node.summary),
       "",
-      `- **Sights & Atmosphere:** ${node.sensoryDescription}`,
-      `- **Why Visit:** ${node.whyVisit}`,
-      `- **Encounter / Complication:** ${node.encounterOrHazard}`,
-      `- **Clue / Reward:** ${node.clueOrReward}`,
+      `- **Sights & Atmosphere:** ${emphasisePointCrawlCues(node.sensoryDescription)}`,
+      `- **Why Visit:** ${emphasisePointCrawlCues(node.whyVisit)}`,
+      `- **Encounter / Complication:** ${emphasisePointCrawlCues(node.encounterOrHazard)}`,
+      `- **Clue / Reward:** ${emphasisePointCrawlCues(node.clueOrReward)}`,
       "",
     ];
   });
@@ -389,7 +394,7 @@ function renderPointCrawlClock(
       : `at ${nodesById.get(clock.startsAt.nodeId)?.name ?? clock.startsAt.nodeId}`;
   const plural = clock.budget.value === 1 ? "" : "s";
   return [
-    `- **Clock**: ${clock.label} starts ${start}; ${clock.budget.value} ${clock.budget.unit}${plural}. Expiry: ${clock.expiry}`,
+    `- **Clock**: ${clock.label} starts ${start}; ${clock.budget.value} ${clock.budget.unit}${plural}. Expiry: ${emphasisePointCrawlCues(clock.expiry)}`,
   ];
 }
 
@@ -444,7 +449,7 @@ export function renderPointCrawlGmSheet(crawl: PointCrawlNetwork): string {
     `- **Scale & Density**: ${crawl.scale} · ${crawl.density} · ${crawl.dangerLevel}`,
     ...(crawl.adventurePlan?.clock
       ? [
-          `- **Clock**: ${crawl.adventurePlan.clock.label} starts ${crawl.adventurePlan.clock.startsAt === "crawl-start" ? "at the beginning" : `at ${nodesById.get(crawl.adventurePlan.clock.startsAt.nodeId)?.name ?? crawl.adventurePlan.clock.startsAt.nodeId}`}; ${crawl.adventurePlan.clock.budget.value} ${crawl.adventurePlan.clock.budget.unit}${crawl.adventurePlan.clock.budget.value === 1 ? "" : "s"}. Expiry: ${crawl.adventurePlan.clock.expiry}`,
+          `- **Clock**: ${crawl.adventurePlan.clock.label} starts ${crawl.adventurePlan.clock.startsAt === "crawl-start" ? "at the beginning" : `at ${nodesById.get(crawl.adventurePlan.clock.startsAt.nodeId)?.name ?? crawl.adventurePlan.clock.startsAt.nodeId}`}; ${crawl.adventurePlan.clock.budget.value} ${crawl.adventurePlan.clock.budget.unit}${crawl.adventurePlan.clock.budget.value === 1 ? "" : "s"}. Expiry: ${emphasisePointCrawlCues(crawl.adventurePlan.clock.expiry)}`,
         ]
       : []),
     "",
@@ -476,7 +481,7 @@ export function renderPointCrawlGmSheet(crawl: PointCrawlNetwork): string {
         nodesById.get(route.fromNodeId)?.name ?? route.fromNodeId;
       const toName = nodesById.get(route.toNodeId)?.name ?? route.toNodeId;
       lines.push(
-        `- **${fromName} ${pointCrawlRouteSymbol(route.direction)} ${toName}** (*${route.visibility}*, ${route.travelTime} via ${route.terrain}): ${route.signpost}`,
+        `- **${fromName} ${pointCrawlRouteSymbol(route.direction)} ${toName}** (*${route.visibility}*, ${route.travelTime} via ${route.terrain}): ${emphasisePointCrawlCues(route.signpost)}`,
       );
     }
   }
