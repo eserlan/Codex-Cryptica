@@ -4,6 +4,7 @@
  * plain object, so it can run identically from the CLI script
  * (scripts/convert-twe-to-cif.ts) and from the browser import flow.
  */
+import { systemClock, type Clock } from "@codex/runtime";
 
 function slug(str: string): string {
   return String(str || "")
@@ -40,7 +41,10 @@ export function isThreadWeaverExport(raw: unknown): boolean {
   );
 }
 
-export function convertThreadWeaverJsonToCif(raw: any): {
+export function convertThreadWeaverJsonToCif(
+  raw: any,
+  clock: Clock = systemClock,
+): {
   format: string;
   version: string;
   source: { system: string; worldKey: string; exportedAt: string };
@@ -505,7 +509,7 @@ export function convertThreadWeaverJsonToCif(raw: any): {
     source: {
       system: "thread-weaver",
       worldKey: rawSeed || "thread-weaver-campaign",
-      exportedAt: raw.exportedAt || new Date().toISOString(),
+      exportedAt: raw.exportedAt || new Date(clock.now()).toISOString(),
     },
     world: {
       title: "Thread Weaver Campaign World",
