@@ -6,6 +6,7 @@ import {
   findCandidates,
   isProbePath,
   fetchListItems,
+  formatCandidateReport,
   mapTrafficGroups,
   mergeListItems,
   parseArgs,
@@ -33,6 +34,27 @@ describe("isProbePath", () => {
     expect(isProbePath("/xaws")).toBe(false);
     expect(isProbePath("/xsvn")).toBe(false);
     expect(isProbePath("/.environment-guide")).toBe(false);
+  });
+});
+
+describe("formatCandidateReport", () => {
+  it("reports zero traffic when there are no vetted candidates", () => {
+    expect(formatCandidateReport([])).toBe(
+      "Bad actor traffic: 0 IP(s), 0 total request(s).",
+    );
+  });
+
+  it("totals requests and sorts busiest first", () => {
+    const candidates = findCandidates([
+      ...eventsFor("185.177.72.49", probes),
+      ...eventsFor("203.0.113.20", probes, { count: 9 }),
+    ]);
+    const report = formatCandidateReport(candidates);
+    expect(report).toContain("2 IP(s), 44 total request(s).");
+    expect(report.indexOf("203.0.113.20")).toBeLessThan(
+      report.indexOf("185.177.72.49"),
+    );
+    expect(report).toContain("distinctProbePaths=4");
   });
 });
 
