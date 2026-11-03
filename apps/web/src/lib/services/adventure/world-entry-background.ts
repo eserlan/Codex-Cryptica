@@ -8,7 +8,9 @@ import type { AdventureSession } from "@codex/adventure-engine";
 
 /**
  * Prepare GM-only background situations from the existing Rumour Generator.
- * No rumour becomes player knowledge or Vault canon simply by being seeded.
+ * Each seed is a situation already unfolding; the rumour is one of several
+ * ways it may surface. No seed becomes player knowledge or Vault canon simply
+ * by being seeded.
  * The local-generator fallback invents provisional details; Oracle must
  * reconcile them against date-aware Vault sources before using them in play.
  */
@@ -64,18 +66,10 @@ export function seedWorldEntryBackground(
         ...session.hiddenState.gmThreads,
         ...chosen.map((item) => ({
           id: allocateId(),
-          text: [
-            `World-entry seed ${item.index} — ${item.gmOnly.reality}; DORMANT, NOT YET HEARD.`,
-            `Possible hearsay: "${item.playerVisible.rumour}"`,
-            `Lead: ${item.playerVisible.lead}.`,
-            `Source: ${item.playerVisible.source}.`,
-            "Progress: none. Introduce only when locally plausible.",
-            "React to actions or explicit world time, not turn count.",
-            "Treat as provisional until reconciled with Vault canon and date.",
-          ].join(" "),
+          text: seedThreadText(item),
           status: "hidden" as const,
           revealCondition:
-            "Player hears local gossip or discovers observable evidence.",
+            "Player notices a sign, overhears talk or discovers evidence.",
         })),
       ],
     },
@@ -108,20 +102,28 @@ function selectCompleteSet(
   }
 }
 
-function fitsPersistedFields(item: SelectedRumourForPlay): boolean {
-  const threadText = [
-    `World-entry seed ${item.index} — ${item.gmOnly.reality}; DORMANT, NOT YET HEARD.`,
+/**
+ * A seed is a situation already unfolding in the world. The rumour is only
+ * one way it can surface; the GM tracks how visible it is via `Stage`.
+ */
+function seedThreadText(item: SelectedRumourForPlay): string {
+  return [
+    `World-entry seed ${item.index} — ${item.gmOnly.reality}; UNFOLDING, UNNOTICED.`,
+    "Already happening; its paired secrets hold the truth.",
     `Possible hearsay: "${item.playerVisible.rumour}"`,
     `Lead: ${item.playerVisible.lead}.`,
     `Source: ${item.playerVisible.source}.`,
-    "Progress: none. Introduce only when locally plausible.",
-    "React to actions or explicit world time, not turn count.",
+    "Stage: unnoticed.",
+    "May surface as traces, changed behaviour, notices, consequences or talk.",
     "Treat as provisional until reconciled with Vault canon and date.",
   ].join(" ");
+}
+
+function fitsPersistedFields(item: SelectedRumourForPlay): boolean {
   return [
     item.gmOnly.whatsActuallyHappening,
     item.gmOnly.ifInvestigated,
-    threadText,
+    seedThreadText(item),
   ].every(
     (value) =>
       value.trim().length > 0 && value.trim().length <= MAX_HIDDEN_TEXT_CHARS,
