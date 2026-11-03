@@ -617,6 +617,44 @@ export class AdventureTurnGenerationService {
     return parseAdventureResponse(result.response.text());
   }
 
+  private async generateStreamingOrRetry(
+    request: AdventureTurnGenerationRequest,
+    prompt: ReturnType<typeof buildAdventurePrompt>,
+    systemInstruction: string,
+    options: { apiKey?: string; modelName?: string; signal?: AbortSignal },
+  ): Promise<AdventureTurnProposal | null> {
+    try {
+      return await this.generateViaStream(
+        request,
+        prompt,
+        systemInstruction,
+        options,
+      );
+    } catch (error) {
+      // A complete stream can still contain malformed JSON or a response
+      // that violates the turn schema. Retry once with the provider's
+      // structured output constraint; never retry transport or abort errors.
+      if (
+        !(error instanceof Error) ||
+        error.message !== "invalid-adventure-response"
+      ) {
+        throw error;
+      }
+      streamAborted(options.signal ?? request.signal);
+      // The preview was never committed and may differ from the repaired
+      // result. Withdraw it before trying again.
+      request.onNarration?.("");
+      return this.generateBuffered(
+        request,
+        prompt,
+        systemInstruction +
+          "\n\nThe preceding response was invalid. Regenerate the turn as one complete JSON object matching the supplied schema. Do not include markdown.",
+        options,
+        true,
+      );
+    }
+  }
+
   async generate(
     request: AdventureTurnGenerationRequest,
     options: { apiKey?: string; modelName?: string; signal?: AbortSignal } = {},
@@ -636,37 +674,13 @@ export class AdventureTurnGenerationService {
       JSON.stringify(adventureTurnResponseSchema);
 
     if (request.onNarration) {
-      try {
-        const streamed = await this.generateViaStream(
-          request,
-          prompt,
-          systemInstruction,
-          options,
-        );
-        if (streamed) return streamed;
-      } catch (error) {
-        // A complete stream can still contain malformed JSON or a response
-        // that violates the turn schema. Retry once with the provider's
-        // structured output constraint; never retry transport or abort errors.
-        if (
-          !(error instanceof Error) ||
-          error.message !== "invalid-adventure-response"
-        ) {
-          throw error;
-        }
-        streamAborted(signal);
-        // The preview was never committed and may differ from the repaired
-        // result. Withdraw it before trying again.
-        request.onNarration("");
-        return this.generateBuffered(
-          request,
-          prompt,
-          systemInstruction +
-            "\n\nThe preceding response was invalid. Regenerate the turn as one complete JSON object matching the supplied schema. Do not include markdown.",
-          options,
-          true,
-        );
-      }
+      const streamed = await this.generateStreamingOrRetry(
+        request,
+        prompt,
+        systemInstruction,
+        options,
+      );
+      if (streamed) return streamed;
     }
 
     return this.generateBuffered(request, prompt, systemInstruction, options);

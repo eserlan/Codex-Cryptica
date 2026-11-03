@@ -248,7 +248,10 @@ describe("AdventureTurnGenerationService", () => {
       onNarration: (text) => previews.push(text),
     });
 
-    expect(result).toMatchObject({ kind: "complete", narration: "The road opens." });
+    expect(result).toMatchObject({
+      kind: "complete",
+      narration: "The road opens.",
+    });
     expect(streamedCalls).toBe(1);
     expect(bufferedInputs).toHaveLength(1);
     expect(previews).toContain("Unreliable");
