@@ -22,6 +22,7 @@
     "apps/web/src/lib/components/timeline/EraEditor.svelte",
     "apps/web/src/lib/components/stats/import/StatBlockImportModal.svelte"
   ],
+  "ignorePatterns": [".worktrees/**", "factory/jobs/**"],
   "ignoreDependencies": [
     "@capacitor/android",
     "@capacitor/ios",

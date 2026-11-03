@@ -18,7 +18,9 @@ test.describe("Vault Switching Accessibility", () => {
   }) => {
     // Create a second vault so the original vault becomes non-active and exposes its Delete button
     await page.getByTestId("open-vault-button").click();
-    await expect(page.getByText("VAULT SELECTOR")).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "SWITCH VAULT" }),
+    ).toBeVisible();
     await page.getByRole("button", { name: "NEW VAULT" }).click();
     await page.getByPlaceholder("Vault Name...").fill("A11yTestVault");
     await page.getByRole("button", { name: "CREATE" }).click();
@@ -26,7 +28,9 @@ test.describe("Vault Switching Accessibility", () => {
 
     // Re-open the vault switcher (creating a vault closes the modal)
     await page.getByTestId("open-vault-button").click();
-    await expect(page.getByText("VAULT SELECTOR")).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "SWITCH VAULT" }),
+    ).toBeVisible();
 
     const modal = page.getByTestId("vault-switcher-modal");
 
