@@ -193,6 +193,187 @@ describe("AdventureTurnGenerationService", () => {
     expect(seen).toEqual(["A storm"]);
   });
 
+  it("repairs a malformed stream in a long adventure with a fresh schema-constrained response", async () => {
+    const previews: string[] = [];
+    const bufferedInputs: any[] = [];
+    const oldTurnPatch = JSON.parse(completeResponse);
+    const longSession = {
+      ...session,
+      turns: Array.from({ length: 25 }, (_, sequence) => ({
+        id: `turn-${sequence}`,
+        sequence,
+        inputId: `input-${sequence}`,
+        playerAction: `Choice ${sequence}`,
+        narration: `Consequence ${sequence}`,
+        visiblePatch: oldTurnPatch.visiblePatch,
+        hiddenPatch: oldTurnPatch.hiddenPatch,
+        revealedSecretIds: [],
+        sourceRecordIds: [],
+        provisionalFactIds: [],
+        committedAt: session.createdAt,
+      })),
+    };
+    let streamedCalls = 0;
+    const service = new AdventureTurnGenerationService({
+      async getModel() {
+        return {
+          async generateContent(input: unknown) {
+            bufferedInputs.push(input);
+            return { response: { text: () => completeResponse } };
+          },
+          async *generateContentStream() {
+            streamedCalls += 1;
+            yield {
+              type: "delta" as const,
+              text: '{"kind":"complete","narration":"Unreliable',
+            };
+            yield {
+              type: "complete" as const,
+              text: '{"kind":"complete","narration":"Unreliable",',
+            };
+          },
+        };
+      },
+      async sendInteraction() {
+        throw new Error("repair must use the schema-constrained endpoint");
+      },
+    });
+
+    const result = await service.generate({
+      session: longSession,
+      phase: "action",
+      playerAction: "Continue after many turns",
+      anchors: [],
+      relevant: [],
+      onNarration: (text) => previews.push(text),
+    });
+
+    expect(result).toMatchObject({ kind: "complete", narration: "The road opens." });
+    expect(streamedCalls).toBe(1);
+    expect(bufferedInputs).toHaveLength(1);
+    expect(previews).toContain("Unreliable");
+    expect(previews.at(-1)).toBe("");
+    const input = bufferedInputs[0];
+    expect(input.generationConfig.responseSchema.oneOf).toHaveLength(2);
+    expect(input.contents[0].parts[0].text).toContain("Choice 24");
+    expect(input.contents[0].parts[0].text).not.toContain("Choice 0");
+  });
+
+  it("retries a schema-invalid complete stream exactly once", async () => {
+    let repairs = 0;
+    const service = new AdventureTurnGenerationService({
+      async getModel() {
+        return {
+          async generateContent() {
+            repairs += 1;
+            return { response: { text: () => completeResponse } };
+          },
+          async *generateContentStream() {
+            yield { type: "complete" as const, text: '{"kind":"complete"}' };
+          },
+        };
+      },
+    });
+    await expect(
+      service.generate({
+        session,
+        phase: "action",
+        anchors: [],
+        relevant: [],
+        onNarration: () => {},
+      }),
+    ).resolves.toMatchObject({ kind: "complete" });
+    expect(repairs).toBe(1);
+  });
+
+  it("fails without committing when both stream and one repair are invalid", async () => {
+    let repairs = 0;
+    const service = new AdventureTurnGenerationService({
+      async getModel() {
+        return {
+          async generateContent() {
+            repairs += 1;
+            return { response: { text: () => "not-json" } };
+          },
+          async *generateContentStream() {
+            yield { type: "complete" as const, text: "not-json" };
+          },
+        };
+      },
+    });
+    await expect(
+      service.generate({
+        session,
+        phase: "action",
+        anchors: [],
+        relevant: [],
+        onNarration: () => {},
+      }),
+    ).rejects.toThrow("invalid-adventure-response");
+    expect(repairs).toBe(1);
+    expect(session.turns).toHaveLength(0);
+  });
+
+  it("does not send a repair if the player cancels after an invalid stream", async () => {
+    const controller = new AbortController();
+    let repairs = 0;
+    const service = new AdventureTurnGenerationService({
+      async getModel() {
+        return {
+          async generateContent() {
+            repairs += 1;
+            return { response: { text: () => completeResponse } };
+          },
+          async *generateContentStream() {
+            yield { type: "complete" as const, text: "not-json" };
+          },
+        };
+      },
+    });
+    await expect(
+      service.generate(
+        {
+          session,
+          phase: "action",
+          anchors: [],
+          relevant: [],
+          onNarration: (text) => {
+            if (!text) controller.abort();
+          },
+        },
+        { signal: controller.signal },
+      ),
+    ).rejects.toThrow("Cancelled");
+    expect(repairs).toBe(0);
+  });
+
+  it("does not retry a streaming transport failure", async () => {
+    let repairs = 0;
+    const service = new AdventureTurnGenerationService({
+      async getModel() {
+        return {
+          async generateContent() {
+            repairs += 1;
+            return { response: { text: () => completeResponse } };
+          },
+          async *generateContentStream() {
+            yield { type: "error" as const, error: "connection-lost" };
+          },
+        };
+      },
+    });
+    await expect(
+      service.generate({
+        session,
+        phase: "action",
+        anchors: [],
+        relevant: [],
+        onNarration: () => {},
+      }),
+    ).rejects.toThrow("connection-lost");
+    expect(repairs).toBe(0);
+  });
+
   it("forwards a stateless structured-generation request and parses the response", async () => {
     let request: any;
     let systemInstruction = "";
