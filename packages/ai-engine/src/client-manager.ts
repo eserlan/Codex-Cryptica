@@ -548,7 +548,7 @@ export class DefaultAIClientManager {
    * {@link InteractionExpiredError} when the previous id has expired so the
    * caller can reset and replay full history.
    */
-// fallow-ignore-next-line complexity
+  // fallow-ignore-next-line complexity
   async sendInteraction(params: {
     model: string;
     input: string;
@@ -611,7 +611,7 @@ export class DefaultAIClientManager {
    * The returned id is *not* a commit acknowledgement: adventure storage
    * must confirm the turn before it can become the next continuation.
    */
-// fallow-ignore-next-line complexity
+  // fallow-ignore-next-line complexity
   async *sendInteractionStream(params: {
     model: string;
     input: string;
@@ -640,15 +640,12 @@ export class DefaultAIClientManager {
         ? { generationConfig: params.generationConfig }
         : {}),
     };
-    const response = await this.proxyFetch(
-      DefaultAIClientManager.PROXY_URL,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-        signal: params.signal,
-      },
-    );
+    const response = await this.proxyFetch(DefaultAIClientManager.PROXY_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      signal: params.signal,
+    });
     if (response.status === 409) {
       await response.body?.cancel();
       throw new InteractionExpiredError("Interaction expired");
@@ -688,7 +685,10 @@ export class DefaultAIClientManager {
         } else if (event.type === "error") {
           yield {
             type: "error" as const,
-            error: typeof event.error === "string" ? event.error : "interaction-stream-error",
+            error:
+              typeof event.error === "string"
+                ? event.error
+                : "interaction-stream-error",
           };
         }
       }
@@ -821,7 +821,7 @@ export class DefaultAIClientManager {
         };
       },
 
-// fallow-ignore-next-line complexity
+      // fallow-ignore-next-line complexity
       async generateContent(
         request: string | Array<GenerativeContentBlob | string> | any,
         requestOptions?: { signal?: AbortSignal },

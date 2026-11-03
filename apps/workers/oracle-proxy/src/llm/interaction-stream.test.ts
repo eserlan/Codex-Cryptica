@@ -63,7 +63,11 @@ describe("Solo Adventure provider conversation SSE", () => {
     expect(
       normalizeInteractionStreamEvent(
         "gemini",
-        { event_type: "step.delta", index: 1, delta: { type: "text", text: "{\"kind\"" } },
+        {
+          event_type: "step.delta",
+          index: 1,
+          delta: { type: "text", text: '{"kind"' },
+        },
         steps,
       ),
     ).toEqual({ type: "delta", text: '{"kind"' });
@@ -92,7 +96,10 @@ describe("Solo Adventure provider conversation SSE", () => {
     expect(result.status).toBe(200);
     const received = await eventsFrom(result);
     expect(received.map((x) => x.type)).toEqual([
-      "started", "delta", "delta", "complete",
+      "started",
+      "delta",
+      "delta",
+      "complete",
     ]);
     expect(received.at(-1)).toEqual({
       type: "complete",
@@ -112,15 +119,38 @@ describe("Solo Adventure provider conversation SSE", () => {
       sse([
         { event_type: "interaction.created", interaction: { id: "v1_reply" } },
         { event_type: "step.start", index: 0, step: { type: "thought" } },
-        { event_type: "step.delta", index: 0, delta: { type: "text", text: "secret reasoning" } },
-        { event_type: "step.start", index: 1, step: { type: "model_output", content: [{ type: "text", text: '{"kind":' }] } },
-        { event_type: "step.delta", index: 1, delta: { type: "text", text: '"complete"}' } },
-        { event_type: "interaction.completed", interaction: { id: "v1_reply" } },
+        {
+          event_type: "step.delta",
+          index: 0,
+          delta: { type: "text", text: "secret reasoning" },
+        },
+        {
+          event_type: "step.start",
+          index: 1,
+          step: {
+            type: "model_output",
+            content: [{ type: "text", text: '{"kind":' }],
+          },
+        },
+        {
+          event_type: "step.delta",
+          index: 1,
+          delta: { type: "text", text: '"complete"}' },
+        },
+        {
+          event_type: "interaction.completed",
+          interaction: { id: "v1_reply" },
+        },
       ]),
     );
     vi.stubGlobal("fetch", fetcher);
     const res = await handleInteractionStream(
-      { model: "gemini-flash-lite", input: "continue", previous_interaction_id: "v1_prior", generationConfig: { responseMimeType: "application/json" } },
+      {
+        model: "gemini-flash-lite",
+        input: "continue",
+        previous_interaction_id: "v1_prior",
+        generationConfig: { responseMimeType: "application/json" },
+      },
       request(),
       env,
     );
@@ -138,13 +168,18 @@ describe("Solo Adventure provider conversation SSE", () => {
       stream: true,
       response_format: { type: "text", mime_type: "application/json" },
     });
-    expect(JSON.parse(options.body).generation_config?.response_mime_type).toBeUndefined();
+    expect(
+      JSON.parse(options.body).generation_config?.response_mime_type,
+    ).toBeUndefined();
   });
 
   it("reports incomplete streams as errors, never completed turns", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () =>
-      sse([{ type: "response.output_text.delta", delta: "partial" }]),
-    ));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        sse([{ type: "response.output_text.delta", delta: "partial" }]),
+      ),
+    );
     const res = await handleInteractionStream(
       { model: "luna-fast", input: "test" },
       request(),
@@ -159,11 +194,19 @@ describe("Solo Adventure provider conversation SSE", () => {
   });
 
   it("reports expired provider continuations as a typed 409", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () =>
-      new Response('{"error":{"message":"not found"}}', { status: 404 }),
-    ));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(
+        async () =>
+          new Response('{"error":{"message":"not found"}}', { status: 404 }),
+      ),
+    );
     const res = await handleInteractionStream(
-      { model: "gemini-flash-lite", input: "continue", previous_interaction_id: "v1_expired" },
+      {
+        model: "gemini-flash-lite",
+        input: "continue",
+        previous_interaction_id: "v1_expired",
+      },
       request(),
       env,
     );

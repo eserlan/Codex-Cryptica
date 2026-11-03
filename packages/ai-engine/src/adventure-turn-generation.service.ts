@@ -83,7 +83,10 @@ function stateDelta(
   current: Record<string, unknown>,
 ): Record<string, unknown> {
   const delta: Record<string, unknown> = {};
-  for (const key of new Set([...Object.keys(previous), ...Object.keys(current)])) {
+  for (const key of new Set([
+    ...Object.keys(previous),
+    ...Object.keys(current),
+  ])) {
     if (JSON.stringify(previous[key]) !== JSON.stringify(current[key])) {
       delta[key] = key in current ? current[key] : null;
     }
@@ -479,10 +482,7 @@ export class AdventureTurnGenerationService {
         interaction.revision = savedRevision;
       return;
     }
-    if (
-      savedRevision !== undefined &&
-      savedRevision !== pending.revision + 1
-    ) {
+    if (savedRevision !== undefined && savedRevision !== pending.revision + 1) {
       this.clearInteraction(sessionId);
       return;
     }
@@ -540,7 +540,7 @@ export class AdventureTurnGenerationService {
     return { input: JSON.stringify(payload), state, sourceEntries };
   }
 
-// fallow-ignore-next-line complexity
+  // fallow-ignore-next-line complexity
   private async generateViaInteraction(
     request: AdventureTurnGenerationRequest,
     prompt: ReturnType<typeof buildAdventurePrompt>,
@@ -573,10 +573,7 @@ export class AdventureTurnGenerationService {
     if (
       sources.some((source) => {
         const oldHash = interaction.sourceHashes.get(source.recordId);
-        return (
-          oldHash &&
-          oldHash !== entityContentHash(JSON.stringify(source))
-        );
+        return oldHash && oldHash !== entityContentHash(JSON.stringify(source));
       })
     ) {
       this.clearInteraction(request.session.id);
@@ -586,7 +583,7 @@ export class AdventureTurnGenerationService {
     const instruction =
       systemInstruction +
       "\n\nOn continuation requests, stateDelta contains only changed top-level state fields and supersedes your previous state; null deletes a field. The present input and retrieved Vault sources outrank any previous turn. Never reveal GM-only fields.";
-// fallow-ignore-next-line complexity
+    // fallow-ignore-next-line complexity
     const send = async (
       repair?: string,
       preferStream = true,
@@ -760,7 +757,11 @@ export class AdventureTurnGenerationService {
     forceStructuredOutput = false,
   ): Promise<AdventureTurnProposal> {
     streamAborted(options.signal ?? request.signal);
-    if (this.aiClient.sendInteraction && !options.apiKey && !forceStructuredOutput) {
+    if (
+      this.aiClient.sendInteraction &&
+      !options.apiKey &&
+      !forceStructuredOutput
+    ) {
       return this.generateViaInteraction(
         request,
         prompt,
@@ -784,7 +785,7 @@ export class AdventureTurnGenerationService {
     return parseAdventureResponse(result.response.text());
   }
 
-// fallow-ignore-next-line complexity
+  // fallow-ignore-next-line complexity
   async generate(
     request: AdventureTurnGenerationRequest,
     options: { apiKey?: string; modelName?: string; signal?: AbortSignal } = {},
@@ -815,7 +816,8 @@ export class AdventureTurnGenerationService {
           options,
         );
       } catch (error) {
-        const reason = error instanceof Error ? error.message.toLowerCase() : "";
+        const reason =
+          error instanceof Error ? error.message.toLowerCase() : "";
         if (
           !/interaction-client-unavailable|interaction-stream-unavailable|interaction.*(?:unsupported|not supported|not available)/.test(
             reason,

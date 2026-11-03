@@ -26,7 +26,10 @@ export interface AdventureManagerDependencies {
   repository?: AdventureSessionRepository;
   generation?: Pick<AdventureTurnGenerationService, "generate">;
   clearGenerationInteraction?: (sessionId: string) => Promise<void>;
-  confirmGenerationInteraction?: (sessionId: string, revision?: number) => Promise<void>;
+  confirmGenerationInteraction?: (
+    sessionId: string,
+    revision?: number,
+  ) => Promise<void>;
   context?: AdventureContextService;
   authority?: AdventureControlAuthority;
   coordinator?: AdventureControlCoordinator;

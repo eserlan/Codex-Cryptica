@@ -60,7 +60,9 @@ describe("AdventureRuntime", () => {
     const { runtime, state, deps } = createAdventureRuntime();
     const verify = vi.spyOn(deps.authority, "verify");
     const save = vi.spyOn(deps.repository, "save");
-    const confirm = vi.spyOn(deps, "confirmGenerationInteraction").mockResolvedValue();
+    const confirm = vi
+      .spyOn(deps, "confirmGenerationInteraction")
+      .mockResolvedValue();
     const original = state.session!;
     const next = { ...original, revision: 1 };
     expect(await runtime.saveTurn(original, next)).toBe(next);
@@ -98,14 +100,19 @@ describe("AdventureRuntime", () => {
 
   it("does not advance remote memory on a failed save, and clears it on rejected generation", async () => {
     const { runtime, state, deps } = createAdventureRuntime();
-    const confirm = vi.spyOn(deps, "confirmGenerationInteraction").mockResolvedValue();
-    const clear = vi.spyOn(deps, "clearGenerationInteraction").mockResolvedValue();
+    const confirm = vi
+      .spyOn(deps, "confirmGenerationInteraction")
+      .mockResolvedValue();
+    const clear = vi
+      .spyOn(deps, "clearGenerationInteraction")
+      .mockResolvedValue();
     vi.spyOn(deps.repository, "save").mockResolvedValue({
-      ok: false, error: new Error("storage-failed"),
+      ok: false,
+      error: new Error("storage-failed"),
     } as any);
-    await expect(runtime.saveTurn(state.session!, state.session!)).rejects.toThrow(
-      "storage-failed",
-    );
+    await expect(
+      runtime.saveTurn(state.session!, state.session!),
+    ).rejects.toThrow("storage-failed");
     expect(confirm).not.toHaveBeenCalled();
     await runtime.runTurnGeneration(async () => {
       throw new Error("turn-rejected");
@@ -119,7 +126,9 @@ describe("AdventureRuntime", () => {
     vi.spyOn(deps, "confirmGenerationInteraction").mockRejectedValue(
       new Error("worker-disconnected"),
     );
-    const clear = vi.spyOn(deps, "clearGenerationInteraction").mockResolvedValue();
+    const clear = vi
+      .spyOn(deps, "clearGenerationInteraction")
+      .mockResolvedValue();
     const previous = state.session!;
     const next = { ...previous, revision: 1 };
     await expect(runtime.saveTurn(previous, next)).resolves.toBe(next);

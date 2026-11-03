@@ -71,7 +71,9 @@ describe("DefaultAIClientManager", () => {
 
     it("rejects expired ids and old proxies that cannot stream", async () => {
       vi.mocked(fetch).mockResolvedValueOnce(
-        new Response('{"error":{"code":"INTERACTION_NOT_FOUND"}}', { status: 409 }),
+        new Response('{"error":{"code":"INTERACTION_NOT_FOUND"}}', {
+          status: 409,
+        }),
       );
       const expired = manager.sendInteractionStream({
         model: "luna-fast",

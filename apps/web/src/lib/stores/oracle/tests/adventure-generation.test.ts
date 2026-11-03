@@ -89,7 +89,8 @@ describe("adventure generation adapter", () => {
     );
     await confirmDefaultGenerationInteraction("session", 1);
     expect(oracleBridge.confirmAdventureInteraction).toHaveBeenCalledWith(
-      "session", 1,
+      "session",
+      1,
     );
   });
 

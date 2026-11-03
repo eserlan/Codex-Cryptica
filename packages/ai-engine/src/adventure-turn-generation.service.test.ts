@@ -106,13 +106,16 @@ describe("AdventureTurnGenerationService", () => {
         throw new Error("buffered interactions must not run while streaming");
       },
     });
-    const result = await service.generate({
-      session,
-      phase: "action",
-      anchors: [],
-      relevant: [],
-      onNarration: (text) => previews.push(text),
-    }, { apiKey: "direct-test-key" });
+    const result = await service.generate(
+      {
+        session,
+        phase: "action",
+        anchors: [],
+        relevant: [],
+        onNarration: (text) => previews.push(text),
+      },
+      { apiKey: "direct-test-key" },
+    );
     expect(result.kind).toBe("complete");
     expect(previews).toContain("The gate");
     expect(previews.at(-1)).toBe("The road opens.");
@@ -239,16 +242,22 @@ describe("AdventureTurnGenerationService", () => {
       },
     });
 
-    const result = await service.generate({
-      session: longSession,
-      phase: "action",
-      playerAction: "Continue after many turns",
-      anchors: [],
-      relevant: [],
-      onNarration: (text) => previews.push(text),
-    }, { apiKey: "direct-test-key" });
+    const result = await service.generate(
+      {
+        session: longSession,
+        phase: "action",
+        playerAction: "Continue after many turns",
+        anchors: [],
+        relevant: [],
+        onNarration: (text) => previews.push(text),
+      },
+      { apiKey: "direct-test-key" },
+    );
 
-    expect(result).toMatchObject({ kind: "complete", narration: "The road opens." });
+    expect(result).toMatchObject({
+      kind: "complete",
+      narration: "The road opens.",
+    });
     expect(streamedCalls).toBe(1);
     expect(bufferedInputs).toHaveLength(1);
     expect(previews).toContain("Unreliable");
@@ -483,12 +492,14 @@ describe("AdventureTurnGenerationService", () => {
         return { id: `response-${calls.length}`, text: completeResponse };
       },
     });
-    const anchors = [{
-      recordId: "barrow",
-      displayName: "The Barrow",
-      content: "A sealed tomb.",
-      role: "anchor" as const,
-    }];
+    const anchors = [
+      {
+        recordId: "barrow",
+        displayName: "The Barrow",
+        content: "A sealed tomb.",
+        role: "anchor" as const,
+      },
+    ];
     for (let turn = 0; turn < 25; turn += 1) {
       await service.generate({
         session: { ...session, revision: turn },
@@ -519,55 +530,88 @@ describe("AdventureTurnGenerationService", () => {
   it("restarts a provider conversation when canonical lore changes", async () => {
     const calls: any[] = [];
     const service = new AdventureTurnGenerationService({
-      async getModel() { throw new Error("unexpected stateless"); },
+      async getModel() {
+        throw new Error("unexpected stateless");
+      },
       async sendInteraction(params) {
         calls.push(params);
         return { id: `reply-${calls.length}`, text: completeResponse };
       },
     });
-    const source = (content: string) => [{
-      recordId: "town",
-      displayName: "Town",
-      role: "anchor" as const,
-      content,
-    }];
-    await service.generate({ session, phase: "opening", anchors: source("Old town"), relevant: [] });
+    const source = (content: string) => [
+      {
+        recordId: "town",
+        displayName: "Town",
+        role: "anchor" as const,
+        content,
+      },
+    ];
+    await service.generate({
+      session,
+      phase: "opening",
+      anchors: source("Old town"),
+      relevant: [],
+    });
     service.confirmInteraction(session.id);
     await service.generate({
       session: { ...session, revision: 1 },
-      phase: "action", anchors: source("Old town"), relevant: [],
+      phase: "action",
+      anchors: source("Old town"),
+      relevant: [],
     });
     service.confirmInteraction(session.id);
     await service.generate({
       session: { ...session, revision: 2 },
-      phase: "action", anchors: source("Town was burned down"), relevant: [],
+      phase: "action",
+      anchors: source("Town was burned down"),
+      relevant: [],
     });
     expect(calls[1].previousInteractionId).toBe("reply-1");
     expect(calls[2].previousInteractionId).toBeNull();
-    expect(JSON.parse(calls[2].input).anchors[0].content).toBe("Town was burned down");
+    expect(JSON.parse(calls[2].input).anchors[0].content).toBe(
+      "Town was burned down",
+    );
   });
 
   it("never resumes an unsaved, cancelled or rejected proposal", async () => {
     const calls: any[] = [];
     const service = new AdventureTurnGenerationService({
-      async getModel() { throw new Error("unexpected stateless"); },
+      async getModel() {
+        throw new Error("unexpected stateless");
+      },
       async sendInteraction(params) {
         calls.push(params);
         return { id: `reply-${calls.length}`, text: completeResponse };
       },
     });
-    await service.generate({ session, phase: "opening", anchors: [], relevant: [] });
+    await service.generate({
+      session,
+      phase: "opening",
+      anchors: [],
+      relevant: [],
+    });
     // No confirmInteraction call: an uncommitted response must not become history.
-    await service.generate({ session, phase: "opening", anchors: [], relevant: [] });
+    await service.generate({
+      session,
+      phase: "opening",
+      anchors: [],
+      relevant: [],
+    });
     expect(calls[1].previousInteractionId).toBeNull();
     service.confirmInteraction(session.id);
     await service.generate({
-      session: { ...session, revision: 1 }, phase: "action", anchors: [], relevant: [],
+      session: { ...session, revision: 1 },
+      phase: "action",
+      anchors: [],
+      relevant: [],
     });
     expect(calls[2].previousInteractionId).toBe("reply-2");
     service.clearInteraction(session.id);
     await service.generate({
-      session: { ...session, revision: 1 }, phase: "action", anchors: [], relevant: [],
+      session: { ...session, revision: 1 },
+      phase: "action",
+      anchors: [],
+      relevant: [],
     });
     expect(calls[3].previousInteractionId).toBeNull();
   });
@@ -583,7 +627,12 @@ describe("AdventureTurnGenerationService", () => {
         return { id: `reply-${calls.length}`, text: completeResponse };
       },
     });
-    await service.generate({ session, phase: "opening", anchors: [], relevant: [] });
+    await service.generate({
+      session,
+      phase: "opening",
+      anchors: [],
+      relevant: [],
+    });
     service.confirmInteraction(session.id, 1);
     // Deterministic dice outcome save: no generation, only the local
     // revision changes. The next structured turn carries a state delta.
@@ -603,21 +652,36 @@ describe("AdventureTurnGenerationService", () => {
     const previews: string[] = [];
     const calls: any[] = [];
     const service = new AdventureTurnGenerationService({
-      async getModel() { throw new Error("stateless streaming should not run"); },
+      async getModel() {
+        throw new Error("stateless streaming should not run");
+      },
       async *sendInteractionStream(params) {
         calls.push(params);
         yield { type: "started" as const };
-        yield { type: "delta" as const, text: '{"kind":"complete","narration":"The road' };
-        yield { type: "complete" as const, text: completeResponse, id: `stream-${calls.length}` };
+        yield {
+          type: "delta" as const,
+          text: '{"kind":"complete","narration":"The road',
+        };
+        yield {
+          type: "complete" as const,
+          text: completeResponse,
+          id: `stream-${calls.length}`,
+        };
       },
     });
     await service.generate({
-      session, phase: "opening", anchors: [], relevant: [],
+      session,
+      phase: "opening",
+      anchors: [],
+      relevant: [],
       onNarration: (text) => previews.push(text),
     });
     service.confirmInteraction(session.id);
     await service.generate({
-      session: { ...session, revision: 1 }, phase: "action", anchors: [], relevant: [],
+      session: { ...session, revision: 1 },
+      phase: "action",
+      anchors: [],
+      relevant: [],
       onNarration: (text) => previews.push(text),
     });
     expect(calls[1].previousInteractionId).toBe("stream-1");

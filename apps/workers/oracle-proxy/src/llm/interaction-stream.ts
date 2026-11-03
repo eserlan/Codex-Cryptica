@@ -64,7 +64,10 @@ export function normalizeInteractionStreamEvent(
       // than repeating it in step.delta. Without it, JSON is truncated.
       const initial = Array.isArray(raw.step.content)
         ? raw.step.content
-            .filter((part: any) => part?.type === "text" && typeof part.text === "string")
+            .filter(
+              (part: any) =>
+                part?.type === "text" && typeof part.text === "string",
+            )
             .map((part: any) => part.text)
             .join("")
         : "";
@@ -74,9 +77,7 @@ export function normalizeInteractionStreamEvent(
       if (!modelOutputSteps.has(raw.index) || raw.delta?.type !== "text")
         return null;
       const text = raw.delta?.text;
-      return typeof text === "string" && text
-        ? { type: "delta", text }
-        : null;
+      return typeof text === "string" && text ? { type: "delta", text } : null;
     }
     if (type === "interaction.completed") {
       const id = raw.interaction?.id;
@@ -99,7 +100,8 @@ export function normalizeInteractionStreamEvent(
     if (type === "response.incomplete" || type === "response.failed")
       return { type: "error", error: "interaction-incomplete" };
   }
-  if (type === "error") return { type: "error", error: "interaction-stream-error" };
+  if (type === "error")
+    return { type: "error", error: "interaction-stream-error" };
   return null;
 }
 
@@ -124,12 +126,13 @@ export async function handleInteractionStream(
   const isGeminiId =
     typeof body.previous_interaction_id === "string" &&
     /^(?:v1_|interactions\/)/.test(body.previous_interaction_id);
-  if (isGeminiId || (provider === "openai" && !env.OPENAI_API_KEY)) provider = "gemini";
+  if (isGeminiId || (provider === "openai" && !env.OPENAI_API_KEY))
+    provider = "gemini";
   const fallbackModel =
     getModel("gemini-flash-lite")?.modelId ?? "gemini-3.5-flash-lite";
   let modelId =
     provider === "openai"
-      ? registered?.modelId ?? key
+      ? (registered?.modelId ?? key)
       : registered?.provider === "gemini"
         ? registered.modelId
         : key && !registered
@@ -138,13 +141,29 @@ export async function handleInteractionStream(
 
   let upstream: Response;
   try {
-    upstream = await upstreamRequest(body, provider, modelId, env, request.signal);
-    if (!upstream.ok && provider === "openai" && !body.previous_interaction_id) {
+    upstream = await upstreamRequest(
+      body,
+      provider,
+      modelId,
+      env,
+      request.signal,
+    );
+    if (
+      !upstream.ok &&
+      provider === "openai" &&
+      !body.previous_interaction_id
+    ) {
       // No prior conversation to corrupt: preserve existing Gemini fallback.
       await upstream.body?.cancel();
       provider = "gemini";
       modelId = fallbackModel;
-      upstream = await upstreamRequest(body, provider, modelId, env, request.signal);
+      upstream = await upstreamRequest(
+        body,
+        provider,
+        modelId,
+        env,
+        request.signal,
+      );
     }
   } catch {
     return json(502, "INTERACTION_STREAM_UNAVAILABLE");
@@ -165,7 +184,9 @@ export async function handleInteractionStream(
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
       const emit = (event: NormalizedEvent) =>
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
+        controller.enqueue(
+          encoder.encode(`data: ${JSON.stringify(event)}\n\n`),
+        );
       const steps = new Set<number>();
       let text = "";
       let completed = false;
