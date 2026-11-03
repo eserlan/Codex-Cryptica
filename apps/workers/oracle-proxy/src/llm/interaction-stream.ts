@@ -57,8 +57,17 @@ export function normalizeInteractionStreamEvent(
   const type = raw.event_type ?? raw.type;
   if (provider === "gemini") {
     if (type === "step.start") {
-      if (raw.step?.type === "model_output") modelOutputSteps.add(raw.index);
-      return null;
+      if (raw.step?.type !== "model_output") return null;
+      modelOutputSteps.add(raw.index);
+      // Gemini may include the initial output fragment in step.start rather
+      // than repeating it in step.delta. Without it, JSON is truncated.
+      const initial = Array.isArray(raw.step.content)
+        ? raw.step.content
+            .filter((part: any) => part?.type === "text" && typeof part.text === "string")
+            .map((part: any) => part.text)
+            .join("")
+        : "";
+      return initial ? { type: "delta", text: initial } : null;
     }
     if (type === "step.delta") {
       if (!modelOutputSteps.has(raw.index) || raw.delta?.type !== "text")
