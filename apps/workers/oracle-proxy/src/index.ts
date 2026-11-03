@@ -115,6 +115,7 @@ async function handleCopyrightReportRoute(
 }
 
 export default {
+  // fallow-ignore-next-line complexity
   async fetch(
     request: Request,
     env: Env,
