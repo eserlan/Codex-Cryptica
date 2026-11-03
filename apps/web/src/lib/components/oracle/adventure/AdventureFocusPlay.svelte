@@ -59,7 +59,14 @@
     if (!phone) return;
     return keyboard.start();
   });
-  const keyboardStyle = $derived(phone ? keyboard.visibleStyle : undefined);
+  // Even a sub-threshold viewport change can place the composer behind the
+  // Android keyboard toolbar. Use the measured visible area whenever possible,
+  // rather than falling back to 100dvh until a 120px gap is detected.
+  const keyboardStyle = $derived(
+    phone && keyboard.visibleHeight > 0
+      ? `top: ${keyboard.offsetTop}px; height: ${keyboard.visibleHeight}px; bottom: auto;`
+      : undefined,
+  );
 
   // Phone play covers the app chrome: move focus in, keep it in, and give it
   // back on exit.
@@ -277,7 +284,7 @@
 
   <!-- The composer stays outside the story scroll, visible above the keyboard
        and mobile safe area. Never remount it across generation/roll phases. -->
-  <AdventureComposer {manager} />
+  <AdventureComposer {manager} {phone} keyboardOpen={keyboard.keyboardOpen} />
 
   <!-- A bottom sheet rather than a side-by-side aside: this surface is often
        hosted in the app's own (already-narrow) sidebar panel, where a lg:
