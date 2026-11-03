@@ -5,7 +5,7 @@ rule **Block shady ips**, `(ip.src in $bad_ips)` — populated from observed
 probe traffic, instead of by hand.
 
 - Script: `scripts/update-bad-ips.ts`
-- Schedule: `.github/workflows/bad-ip-blocklist.yml`, daily 04:00 UTC
+- Schedule: `.github/workflows/bad-ip-blocklist.yml`, daily 01:00 UTC
   (applies changes). Manual `workflow_dispatch` runs are dry-run unless
   `apply` is ticked.
 - Tests: `scripts/update-bad-ips.test.ts`
