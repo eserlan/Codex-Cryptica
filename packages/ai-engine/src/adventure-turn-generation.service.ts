@@ -463,10 +463,29 @@ export class AdventureTurnGenerationService {
 
   /** Promote a provider interaction only after the adventure repository saved
    * the corresponding validated turn. A generated-but-unsaved reply is discarded. */
-  confirmInteraction(sessionId: string): void {
+  confirmInteraction(sessionId: string, savedRevision?: number): void {
     const interaction = this.interactions.get(sessionId);
-    const pending = interaction?.pending;
-    if (!interaction || !pending) return;
+    if (!interaction) return;
+    const pending = interaction.pending;
+    if (!pending) {
+      // Dice outcomes, dismissals and other deterministic local saves need
+      // no AI turn, but must not break the retained provider conversation.
+      // The next request sends these local changes via stateDelta.
+      if (
+        interaction.previousInteractionId &&
+        savedRevision !== undefined &&
+        interaction.revision === savedRevision - 1
+      )
+        interaction.revision = savedRevision;
+      return;
+    }
+    if (
+      savedRevision !== undefined &&
+      savedRevision !== pending.revision + 1
+    ) {
+      this.clearInteraction(sessionId);
+      return;
+    }
     interaction.previousInteractionId = pending.id;
     interaction.modelName = pending.modelName;
     interaction.revision = pending.revision + 1;
