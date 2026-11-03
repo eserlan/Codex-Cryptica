@@ -572,6 +572,33 @@ describe("AdventureTurnGenerationService", () => {
     expect(calls[3].previousInteractionId).toBeNull();
   });
 
+  it("continues after deterministic local dice outcome saves without discarding the provider thread", async () => {
+    const calls: any[] = [];
+    const service = new AdventureTurnGenerationService({
+      async getModel() {
+        throw new Error("unexpected stateless generation");
+      },
+      async sendInteraction(params) {
+        calls.push(params);
+        return { id: `reply-${calls.length}`, text: completeResponse };
+      },
+    });
+    await service.generate({ session, phase: "opening", anchors: [], relevant: [] });
+    service.confirmInteraction(session.id, 1);
+    // Deterministic dice outcome save: no generation, only the local
+    // revision changes. The next structured turn carries a state delta.
+    service.confirmInteraction(session.id, 2);
+    await service.generate({
+      session: { ...session, revision: 2 },
+      phase: "roll-resolution",
+      anchors: [],
+      relevant: [],
+    });
+    expect(calls[1].previousInteractionId).toBe("reply-1");
+    expect(JSON.parse(calls[1].input)).toHaveProperty("stateDelta");
+    expect(JSON.parse(calls[1].input)).not.toHaveProperty("transcript");
+  });
+
   it("streams only player-facing narration while retaining provider history", async () => {
     const previews: string[] = [];
     const calls: any[] = [];
