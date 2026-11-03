@@ -32,9 +32,12 @@ navigation menu. If you have no active adventure, choose a starting approach:
 - **Create Your Own Premise** opens the usual adventure form. Enter a title,
   starting situation and character yourself. You can return to the starting
   choices without discarding an unsaved draft.
-- **Enter Your World** is shown as **Coming later**. The planned entry will
-  begin with an existing Vault character, location and world date without a
-  prepared quest.
+- **Enter Your World** opens **Set the Stage**, with no prepared quest needed.
+  Choose a Vault character or name a new provisional one, then a Vault place
+  or a new **Starting place**. Optionally pick a world date from your Vault
+  calendar. Decide how it begins: open exploration, a particular scene you
+  describe, or a plausible local situation. Choose **Review starting context**
+  to see the Vault records that ground the opening, then **Start playing**.
 
 A rumour is a lead, **not an assigned quest**. You may ignore it, investigate
 it, or pursue something else. GM notes are hidden by default in the generator
