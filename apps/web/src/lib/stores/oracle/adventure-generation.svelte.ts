@@ -53,6 +53,18 @@ function forwardWorkerCancellation(
   return removeCancellation;
 }
 
+/** Advance remote conversation history only after a local adventure save. */
+export function confirmDefaultGenerationInteraction(
+  sessionId: string,
+  revision?: number,
+) {
+  return oracleBridge.isReady
+    ? oracleBridge.confirmAdventureInteraction(sessionId, revision)
+    : Promise.resolve(
+        adventureTurnGenerationService.confirmInteraction(sessionId, revision),
+      );
+}
+
 export function clearDefaultGenerationInteraction(sessionId: string) {
   return oracleBridge.isReady
     ? oracleBridge.clearAdventureInteraction(sessionId)

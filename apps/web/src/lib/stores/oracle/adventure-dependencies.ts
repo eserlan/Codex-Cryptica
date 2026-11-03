@@ -20,11 +20,16 @@ import { systemIdGenerator } from "#lib/utils/runtime-deps.js";
 import {
   defaultGenerationService,
   clearDefaultGenerationInteraction,
+  confirmDefaultGenerationInteraction,
 } from "./adventure-generation.svelte";
 export interface AdventureManagerDependencies {
   repository?: AdventureSessionRepository;
   generation?: Pick<AdventureTurnGenerationService, "generate">;
   clearGenerationInteraction?: (sessionId: string) => Promise<void>;
+  confirmGenerationInteraction?: (
+    sessionId: string,
+    revision?: number,
+  ) => Promise<void>;
   context?: AdventureContextService;
   authority?: AdventureControlAuthority;
   coordinator?: AdventureControlCoordinator;
@@ -37,6 +42,7 @@ export function resolveAdventureDependencies({
   repository = adventureSessionRepository,
   generation = defaultGenerationService(),
   clearGenerationInteraction = clearDefaultGenerationInteraction,
+  confirmGenerationInteraction = confirmDefaultGenerationInteraction,
   context = adventureContextService,
   authority = adventureControlAuthority,
   coordinator = adventureControlCoordinator,
@@ -48,6 +54,7 @@ export function resolveAdventureDependencies({
     repository,
     generation,
     clearGenerationInteraction,
+    confirmGenerationInteraction,
     context,
     authority,
     coordinator,

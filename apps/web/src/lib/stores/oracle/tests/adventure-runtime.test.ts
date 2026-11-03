@@ -60,11 +60,15 @@ describe("AdventureRuntime", () => {
     const { runtime, state, deps } = createAdventureRuntime();
     const verify = vi.spyOn(deps.authority, "verify");
     const save = vi.spyOn(deps.repository, "save");
+    const confirm = vi
+      .spyOn(deps, "confirmGenerationInteraction")
+      .mockResolvedValue();
     const original = state.session!;
     const next = { ...original, revision: 1 };
     expect(await runtime.saveTurn(original, next)).toBe(next);
     expect(verify).toHaveBeenCalledWith(state.lease);
     expect(save).toHaveBeenCalledWith(0, next);
+    expect(confirm).toHaveBeenCalledWith(original.id, 1);
     expect(state.session).toBe(original);
     expect(runtime.rollMetadata("existing-input")).toMatchObject({
       inputId: "existing-input",
@@ -92,6 +96,43 @@ describe("AdventureRuntime", () => {
     await expect(
       owner.saveTurn(owned.session!, owned.session!),
     ).rejects.toThrow("disk-full");
+  });
+
+  it("does not advance remote memory on a failed save, and clears it on rejected generation", async () => {
+    const { runtime, state, deps } = createAdventureRuntime();
+    const confirm = vi
+      .spyOn(deps, "confirmGenerationInteraction")
+      .mockResolvedValue();
+    const clear = vi
+      .spyOn(deps, "clearGenerationInteraction")
+      .mockResolvedValue();
+    vi.spyOn(deps.repository, "save").mockResolvedValue({
+      ok: false,
+      error: new Error("storage-failed"),
+    } as any);
+    await expect(
+      runtime.saveTurn(state.session!, state.session!),
+    ).rejects.toThrow("storage-failed");
+    expect(confirm).not.toHaveBeenCalled();
+    await runtime.runTurnGeneration(async () => {
+      throw new Error("turn-rejected");
+    }, "ready");
+    expect(clear).toHaveBeenCalledWith(state.session!.id);
+    expect(state.errorMessage).toBe("turn-rejected");
+  });
+
+  it("keeps an already saved turn when remote confirmation fails", async () => {
+    const { runtime, state, deps } = createAdventureRuntime();
+    vi.spyOn(deps, "confirmGenerationInteraction").mockRejectedValue(
+      new Error("worker-disconnected"),
+    );
+    const clear = vi
+      .spyOn(deps, "clearGenerationInteraction")
+      .mockResolvedValue();
+    const previous = state.session!;
+    const next = { ...previous, revision: 1 };
+    await expect(runtime.saveTurn(previous, next)).resolves.toBe(next);
+    expect(clear).toHaveBeenCalledWith(previous.id);
   });
 
   it("ignores stale narration and does not clear a newer generation controller", () => {

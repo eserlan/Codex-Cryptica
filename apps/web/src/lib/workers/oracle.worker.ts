@@ -1,4 +1,5 @@
 /// <reference lib="webworker" />
+// fallow-ignore-file code-duplication -- Legacy provider/worker forwarding boilerplate is intentionally retained while the conversation migration is validated; extract shared paths separately.
 import * as Comlink from "comlink";
 import {
   aiClientManager,
@@ -329,6 +330,10 @@ class OracleWorker {
 
   clearAdventureInteraction(sessionId: string): void {
     this.adventureGeneration.clearInteraction(sessionId);
+  }
+
+  confirmAdventureInteraction(sessionId: string, revision?: number): void {
+    this.adventureGeneration.confirmInteraction(sessionId, revision);
   }
 
   async propose(

@@ -80,6 +80,19 @@ export class AdventureRuntime {
     const saved = await this.deps.repository.save(previous.revision, next);
     if (!saved.ok) throw saved.error;
     this.assertCurrentSession(previous);
+    // A provider reply is provisional until the OPFS write has succeeded.
+    // A failed acknowledgement cannot undo a saved turn; discard the remote
+    // optimization and reconstruct from saved local state on the next action.
+    try {
+      await this.deps.confirmGenerationInteraction(
+        saved.session.id,
+        saved.session.revision,
+      );
+    } catch {
+      await this.deps
+        .clearGenerationInteraction(saved.session.id)
+        .catch(() => {});
+    }
     return saved.session;
   }
 
@@ -125,6 +138,19 @@ export class AdventureRuntime {
     try {
       await generate(signal);
     } catch (cause) {
+      // Discard any uncommitted remote response after a rejected patch,
+      // cancelled generation, lost lease or failed local save.
+      // An older cancelled turn may settle after a newer one has started.
+      // Never clear the newer turn's provider context from that stale catch.
+      if (
+        !signal.aborted &&
+        this.generationController?.signal === signal &&
+        this.state.session
+      ) {
+        await this.deps
+          .clearGenerationInteraction(this.state.session.id)
+          .catch(() => {});
+      }
       this.recordTurnGenerationError(cause, signal, retryPhase);
     } finally {
       this.endTurnGeneration(signal);

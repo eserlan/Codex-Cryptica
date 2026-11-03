@@ -106,13 +106,16 @@ describe("AdventureTurnGenerationService", () => {
         throw new Error("buffered interactions must not run while streaming");
       },
     });
-    const result = await service.generate({
-      session,
-      phase: "action",
-      anchors: [],
-      relevant: [],
-      onNarration: (text) => previews.push(text),
-    });
+    const result = await service.generate(
+      {
+        session,
+        phase: "action",
+        anchors: [],
+        relevant: [],
+        onNarration: (text) => previews.push(text),
+      },
+      { apiKey: "direct-test-key" },
+    );
     expect(result.kind).toBe("complete");
     expect(previews).toContain("The gate");
     expect(previews.at(-1)).toBe("The road opens.");
@@ -239,14 +242,17 @@ describe("AdventureTurnGenerationService", () => {
       },
     });
 
-    const result = await service.generate({
-      session: longSession,
-      phase: "action",
-      playerAction: "Continue after many turns",
-      anchors: [],
-      relevant: [],
-      onNarration: (text) => previews.push(text),
-    });
+    const result = await service.generate(
+      {
+        session: longSession,
+        phase: "action",
+        playerAction: "Continue after many turns",
+        anchors: [],
+        relevant: [],
+        onNarration: (text) => previews.push(text),
+      },
+      { apiKey: "direct-test-key" },
+    );
 
     expect(result).toMatchObject({
       kind: "complete",
@@ -526,7 +532,7 @@ describe("AdventureTurnGenerationService", () => {
     ).rejects.toThrow("invalid-adventure-response");
   });
 
-  it("starts each interaction with fresh sources instead of retained history", async () => {
+  it("keeps a provider conversation for 25 turns, sending only changed state and RAG", async () => {
     const calls: any[] = [];
     const service = new AdventureTurnGenerationService({
       async getModel() {
@@ -545,47 +551,193 @@ describe("AdventureTurnGenerationService", () => {
         role: "anchor" as const,
       },
     ];
-
-    await service.generate({
-      session,
-      phase: "opening",
-      anchors,
-      relevant: [],
-    });
-    await service.generate({
-      session,
-      phase: "action",
-      playerAction: "Approach the hill.",
-      anchors,
-      relevant: [],
-    });
-
-    expect(calls[0].previousInteractionId).toBeNull();
-    expect(calls[1].previousInteractionId).toBeNull();
-    expect(JSON.parse(calls[0].input).anchors).toHaveLength(1);
-    expect(JSON.parse(calls[1].input).anchors).toHaveLength(1);
-    expect(JSON.parse(calls[1].input).retainedSourceIds).toBeUndefined();
-
-    for (let turn = 0; turn < 19; turn += 1) {
+    for (let turn = 0; turn < 25; turn += 1) {
       await service.generate({
-        session,
-        phase: "action",
-        playerAction: `Continue ${turn}`,
+        session: { ...session, revision: turn },
+        phase: turn === 0 ? "opening" : "action",
+        playerAction: `Choice ${turn}`,
         anchors,
         relevant: [],
       });
+      // The test simulates the successful local save, which alone advances
+      // the provider continuation pointer.
+      service.confirmInteraction(session.id);
     }
-    expect(JSON.parse(calls.at(-1)?.input ?? "{}").anchors).toHaveLength(1);
+    expect(calls).toHaveLength(25);
+    expect(calls[0].previousInteractionId).toBeNull();
+    expect(calls[1].previousInteractionId).toBe("response-1");
+    expect(JSON.parse(calls[0].input).anchors).toHaveLength(1);
+    expect(JSON.parse(calls[1].input).anchors).toHaveLength(0);
+    expect(JSON.parse(calls[1].input).retainedSourceIds).toEqual(["barrow"]);
+    expect(JSON.parse(calls[1].input).state).toBeUndefined();
+    expect(JSON.parse(calls[1].input).transcript).toBeUndefined();
+    expect(JSON.parse(calls[1].input).stateDelta).toEqual({});
+    // A long-running scene keeps its provider conversation beyond turn 20.
+    expect(calls[20].previousInteractionId).toBe("response-20");
+    expect(JSON.parse(calls[20].input).anchors).toHaveLength(0);
+    expect(calls[21].previousInteractionId).toBe("response-21");
+  });
+
+  it("restarts a provider conversation when canonical lore changes", async () => {
+    const calls: any[] = [];
+    const service = new AdventureTurnGenerationService({
+      async getModel() {
+        throw new Error("unexpected stateless");
+      },
+      async sendInteraction(params) {
+        calls.push(params);
+        return { id: `reply-${calls.length}`, text: completeResponse };
+      },
+    });
+    const source = (content: string) => [
+      {
+        recordId: "town",
+        displayName: "Town",
+        role: "anchor" as const,
+        content,
+      },
+    ];
     await service.generate({
       session,
+      phase: "opening",
+      anchors: source("Old town"),
+      relevant: [],
+    });
+    service.confirmInteraction(session.id);
+    await service.generate({
+      session: { ...session, revision: 1 },
       phase: "action",
-      playerAction: "Leave the hill",
+      anchors: source("Old town"),
+      relevant: [],
+    });
+    service.confirmInteraction(session.id);
+    await service.generate({
+      session: { ...session, revision: 2 },
+      phase: "action",
+      anchors: source("Town was burned down"),
+      relevant: [],
+    });
+    expect(calls[1].previousInteractionId).toBe("reply-1");
+    expect(calls[2].previousInteractionId).toBeNull();
+    expect(JSON.parse(calls[2].input).anchors[0].content).toBe(
+      "Town was burned down",
+    );
+  });
+
+  it("never resumes an unsaved, cancelled or rejected proposal", async () => {
+    const calls: any[] = [];
+    const service = new AdventureTurnGenerationService({
+      async getModel() {
+        throw new Error("unexpected stateless");
+      },
+      async sendInteraction(params) {
+        calls.push(params);
+        return { id: `reply-${calls.length}`, text: completeResponse };
+      },
+    });
+    await service.generate({
+      session,
+      phase: "opening",
       anchors: [],
       relevant: [],
     });
-    expect(calls.at(-1).previousInteractionId).toBeNull();
-    expect(calls.at(-1).input).not.toContain("A sealed tomb.");
-    expect(calls.at(-1).input).not.toContain("barrow");
+    // No confirmInteraction call: an uncommitted response must not become history.
+    await service.generate({
+      session,
+      phase: "opening",
+      anchors: [],
+      relevant: [],
+    });
+    expect(calls[1].previousInteractionId).toBeNull();
+    service.confirmInteraction(session.id);
+    await service.generate({
+      session: { ...session, revision: 1 },
+      phase: "action",
+      anchors: [],
+      relevant: [],
+    });
+    expect(calls[2].previousInteractionId).toBe("reply-2");
+    service.clearInteraction(session.id);
+    await service.generate({
+      session: { ...session, revision: 1 },
+      phase: "action",
+      anchors: [],
+      relevant: [],
+    });
+    expect(calls[3].previousInteractionId).toBeNull();
+  });
+
+  it("continues after deterministic local dice outcome saves without discarding the provider thread", async () => {
+    const calls: any[] = [];
+    const service = new AdventureTurnGenerationService({
+      async getModel() {
+        throw new Error("unexpected stateless generation");
+      },
+      async sendInteraction(params) {
+        calls.push(params);
+        return { id: `reply-${calls.length}`, text: completeResponse };
+      },
+    });
+    await service.generate({
+      session,
+      phase: "opening",
+      anchors: [],
+      relevant: [],
+    });
+    service.confirmInteraction(session.id, 1);
+    // Deterministic dice outcome save: no generation, only the local
+    // revision changes. The next structured turn carries a state delta.
+    service.confirmInteraction(session.id, 2);
+    await service.generate({
+      session: { ...session, revision: 2 },
+      phase: "roll-resolution",
+      anchors: [],
+      relevant: [],
+    });
+    expect(calls[1].previousInteractionId).toBe("reply-1");
+    expect(JSON.parse(calls[1].input)).toHaveProperty("stateDelta");
+    expect(JSON.parse(calls[1].input)).not.toHaveProperty("transcript");
+  });
+
+  it("streams only player-facing narration while retaining provider history", async () => {
+    const previews: string[] = [];
+    const calls: any[] = [];
+    const service = new AdventureTurnGenerationService({
+      async getModel() {
+        throw new Error("stateless streaming should not run");
+      },
+      async *sendInteractionStream(params) {
+        calls.push(params);
+        yield { type: "started" as const };
+        yield {
+          type: "delta" as const,
+          text: '{"kind":"complete","narration":"The road',
+        };
+        yield {
+          type: "complete" as const,
+          text: completeResponse,
+          id: `stream-${calls.length}`,
+        };
+      },
+    });
+    await service.generate({
+      session,
+      phase: "opening",
+      anchors: [],
+      relevant: [],
+      onNarration: (text) => previews.push(text),
+    });
+    service.confirmInteraction(session.id);
+    await service.generate({
+      session: { ...session, revision: 1 },
+      phase: "action",
+      anchors: [],
+      relevant: [],
+      onNarration: (text) => previews.push(text),
+    });
+    expect(calls[1].previousInteractionId).toBe("stream-1");
+    expect(previews).toContain("The road");
+    expect(previews.at(-1)).toBe("The road opens.");
   });
 
   it("repairs one malformed retained-conversation response before failing", async () => {
@@ -616,7 +768,7 @@ describe("AdventureTurnGenerationService", () => {
       JSON.parse(calls[0].input).state,
     );
     expect(JSON.parse(calls[1].input).responseRepair).toContain(
-      "previous response was invalid",
+      "Previous JSON failed validation",
     );
   });
 

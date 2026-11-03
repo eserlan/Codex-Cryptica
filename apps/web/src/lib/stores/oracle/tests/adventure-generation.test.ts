@@ -5,6 +5,7 @@ import {
   abortReason,
   defaultGenerationService,
   clearDefaultGenerationInteraction,
+  confirmDefaultGenerationInteraction,
 } from "../adventure-generation.svelte";
 import { completeProposal } from "./adventure-fixtures";
 
@@ -18,12 +19,14 @@ vi.mock("#lib/cloud-bridge/oracle-bridge.js", () => ({
     generateAdventureTurn: vi.fn(),
     cancelAdventureTurn: vi.fn(async () => undefined),
     clearAdventureInteraction: vi.fn(),
+    confirmAdventureInteraction: vi.fn(),
   },
 }));
 vi.mock("@codex/ai-engine", () => ({
   adventureTurnGenerationService: {
     generate: vi.fn(),
     clearInteraction: vi.fn(),
+    confirmInteraction: vi.fn(),
   },
 }));
 
@@ -49,6 +52,10 @@ describe("adventure generation adapter", () => {
     expect(
       adventureTurnGenerationService.clearInteraction,
     ).toHaveBeenCalledWith("session");
+    await confirmDefaultGenerationInteraction("session", 1);
+    expect(
+      adventureTurnGenerationService.confirmInteraction,
+    ).toHaveBeenCalledWith("session", 1);
   });
 
   it("keeps callbacks and signals outside the cloneable worker request and forwards cancellation", async () => {
@@ -79,6 +86,11 @@ describe("adventure generation adapter", () => {
     await clearDefaultGenerationInteraction("session");
     expect(oracleBridge.clearAdventureInteraction).toHaveBeenCalledWith(
       "session",
+    );
+    await confirmDefaultGenerationInteraction("session", 1);
+    expect(oracleBridge.confirmAdventureInteraction).toHaveBeenCalledWith(
+      "session",
+      1,
     );
   });
 
