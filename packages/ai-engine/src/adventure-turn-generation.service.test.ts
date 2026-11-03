@@ -386,7 +386,13 @@ describe("AdventureTurnGenerationService", () => {
     });
 
     const generation = service.generate(
-      { session, phase: "action", anchors: [], relevant: [] },
+      {
+        session,
+        phase: "action",
+        anchors: [],
+        relevant: [],
+        onNarration: () => {},
+      },
       { signal: controller.signal },
     );
     await retryStartedPromise;
