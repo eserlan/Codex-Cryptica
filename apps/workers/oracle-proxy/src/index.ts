@@ -17,6 +17,7 @@ import {
   handleLlmOperationStreamRequest,
 } from "./llm/handle-operation-request";
 import { handleInteraction } from "./llm/interaction-handler";
+import { handleInteractionStream } from "./llm/interaction-stream";
 import { handleSessionRequest, enforceLlmSession } from "./session-guard";
 import { handleHelpAsk } from "./help";
 import { handleTemplateDirectoryRoutes } from "./template-directory-routes";
@@ -341,7 +342,9 @@ export default {
 
       // Interactions API path: server-side conversation state.
       if (body.input !== undefined) {
-        return await handleInteraction(body, request, env);
+        return body.stream === true
+          ? await handleInteractionStream(body, request, env)
+          : await handleInteraction(body, request, env);
       }
 
       // Validate required fields
