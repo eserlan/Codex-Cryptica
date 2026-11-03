@@ -8,6 +8,7 @@ test.describe("Visual Styling Templates", () => {
         // The Activity Bar (including the map/explorer buttons this spec
         // checks) is hidden in Guided Mode, which is on by default.
         localStorage.setItem("codex_guided_mode_active", "false");
+        localStorage.setItem("codex_goal_invitation", "dismissed");
         localStorage.setItem(
           "codex-cryptica-help-state",
           JSON.stringify({ completedTours: ["initial-onboarding"] }),
