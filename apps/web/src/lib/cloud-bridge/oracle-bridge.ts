@@ -102,6 +102,11 @@ export class OracleBridge {
     return this.api.clearAdventureInteraction(sessionId);
   }
 
+  public confirmAdventureInteraction(sessionId: string): Promise<void> {
+    if (!this.api) throw new Error("[OracleBridge] Worker not initialized");
+    return this.api.confirmAdventureInteraction(sessionId);
+  }
+
   public terminate() {
     if (this.api) {
       this.api[Comlink.releaseProxy]();
