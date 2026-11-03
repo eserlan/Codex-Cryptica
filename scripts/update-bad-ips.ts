@@ -183,6 +183,26 @@ export function filterKnownGood(
   });
 }
 
+export function formatCandidateReport(
+  candidates: Candidate[],
+  limit = 50,
+): string {
+  const sorted = [...candidates].sort(
+    (a, b) => b.totalRequests - a.totalRequests,
+  );
+  const lines = sorted
+    .slice(0, limit)
+    .map(
+      (c) =>
+        `  ${c.ip}  requests=${c.totalRequests} probeHits=${c.probeHits} distinctProbePaths=${c.probePaths.length}`,
+    );
+  const total = sorted.reduce((sum, c) => sum + c.totalRequests, 0);
+  return [
+    `Bad actor traffic: ${sorted.length} IP(s), ${total} total request(s).`,
+    ...lines,
+  ].join("\n");
+}
+
 // fallow-ignore-next-line complexity -- range aggregation and ASN suggestion thresholds are unit-tested in update-bad-ips.test.ts.
 export function aggregateRanges(
   candidates: Candidate[],
@@ -681,6 +701,8 @@ export async function run(argv = process.argv.slice(2)): Promise<void> {
   const vetted = filterKnownGood(candidates, enrichment);
   const dropped = candidates.length - vetted.length;
   if (dropped > 0) console.log(`Dropped ${dropped} known-good actor(s).`);
+
+  if (vetted.length > 0) console.log(formatCandidateReport(vetted));
 
   const { entries, suggestedAsns } = aggregateRanges(vetted);
   for (const s of suggestedAsns) {
