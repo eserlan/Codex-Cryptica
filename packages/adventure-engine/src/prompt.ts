@@ -1,6 +1,7 @@
 import { allocatePromptBudget } from "./context-budget";
 import { playerScenarioProjection } from "./scenario-state";
 import { ensureScenarioSecrets } from "./hidden-state";
+import { worldEntryPacing } from "./world-entry-pacing";
 import type {
   AdventureSession,
   ResolvedSourceExcerpt,
@@ -27,29 +28,7 @@ export function buildAdventurePrompt(input: AdventurePromptInput) {
         : "This is an action turn. Resolve the player's submitted action and return a complete or roll-required proposal.";
   const behavior = [
     "Act as the adventure GM.",
-    ...(worldEntry
-      ? [
-          "This is an open-ended World Entry scene in an existing Vault, not a pre-written quest. Establish the selected place as a lived-in environment; include ordinary sensory details, plausible actors and immediately available interactions, and stop for the player to choose an action.",
-          "Do not force a villain, danger, quest, investigation, reward, objective, climax or timed twist merely to make the start exciting. An uneventful scene or a quiet conversation is valid.",
-          "GM-only world-entry seed threads are background possibilities, NOT rumours the player already knows or canonical Vault facts. Respect established sources, date and location; leave any incompatible seed dormant rather than contradicting canon.",
-          "When the player meaningfully explores, asks locals for news or follows an NPC's concerns, naturally reveal at most one plausible lead, clue or hearsay from a relevant hidden seed. Do not dump every rumour, assign quests or turn every mundane interaction into an ominous event.",
-          "Avoid endlessly substituting unrelated chores when the player actively pursues an emerging lead. Show observable consequences and actionable choices, but let quiet interactions remain quiet.",
-          "Keep each seeded secret's original GM truth unchanged. Update an existing gmThreads entry through hiddenPatch.gmThreads only when committed player actions or explicit in-world time passage justify a change; otherwise leave it dormant. Never escalate merely because another chat turn passed.",
-          "Use only period-appropriate established sources as current facts. Sources tagged historical are prior history, not present actors; undated/uncertain sources are not guaranteed to exist then; never project future events backward or invent precision.",
-          "The selected start date is in-world time, not device time. Keep the world date and location consistent across turns unless committed in-world actions change them.",
-          ...(worldEntry.intent === "scene"
-            ? [
-                "Respect the player's scene request as a setup, without determining their response.",
-              ]
-            : worldEntry.intent === "opportunity"
-              ? [
-                  "Offer one plausible local situation that the player may ignore. No quest is accepted automatically.",
-                ]
-              : [
-                  "Begin with open exploration and routine local activity, not an obligatory plot hook.",
-                ]),
-        ]
-      : []),
+    ...(worldEntry ? worldEntryBehavior(worldEntry, input.session) : []),
     phaseInstruction,
     "Never choose the player character's voluntary actions, dialogue, decisions, thoughts, or feelings.",
     "Canonical source records outrank provisional session material.",
@@ -128,4 +107,41 @@ export function buildAdventurePrompt(input: AdventurePromptInput) {
       })),
     ),
   });
+}
+
+function worldEntryBehavior(
+  worldEntry: NonNullable<AdventureSession["worldEntry"]>,
+  session: AdventureSession,
+): string[] {
+  const pacing = worldEntryPacing(session);
+  return [
+    "This is an open-ended World Entry scene in an existing Vault, not a pre-written quest. Establish the selected place as a lived-in environment; include ordinary sensory details, plausible actors and immediately available interactions, and stop for the player to choose an action.",
+    "Do not force a villain, danger, quest, investigation, reward, objective, climax or timed twist merely to make the start exciting. An uneventful scene or a quiet conversation is valid.",
+    "GM-only world-entry seed threads are situations already unfolding in the world, NOT rumours the player already knows or canonical Vault facts. Respect established sources, date and location; leave any incompatible seed unnoticed rather than contradicting canon.",
+    "A seed can surface in many ways, not only through conversation: physical traces, locals behaving differently, objects or notices, consequences such as closures, shortages, price changes or extra guards, people affected by it, or overheard talk. Choose whatever fits the current scene and the seed's hidden truth.",
+    "Signs are small, observable and deniable: show what can be seen or heard, never the GM truth, and never frame a sign as a quest, objective or obligation. The player may ignore it.",
+    "Track each seed's visibility in its gmThreads entry by updating its Stage through hiddenPatch.gmThreads: unnoticed, then signs shown, then noticed (the player interacted with a sign), then engaged (the player is pursuing it). Move a seed forward at most one stage per turn.",
+    "When the player explores, asks around or investigates a sign, naturally reveal at most one further plausible lead, clue or hearsay from the relevant seed. Do not dump every seed, assign quests or turn every mundane interaction into an ominous event.",
+    "Avoid endlessly substituting unrelated chores when the player actively pursues an emerging lead. Show observable consequences and actionable choices. A quiet conversation may stay quiet, but the surrounding world should still feel lived in.",
+    "Keep each seeded secret's original GM truth unchanged. A seed's underlying situation develops only when committed player actions or explicit in-world time passage justify it; otherwise only its visibility changes. Never raise a situation's stakes merely because another chat turn passed.",
+    "When a sign is present in the scene, one suggestedAction may invite a closer look at it, phrased as an option, never as accepting a quest.",
+    ...(pacing?.signDue
+      ? [
+          `PACING: At least ${pacing.quietTurns} turns have passed without any world-entry seed surfacing. In this turn, weave one small background sign from a fitting unnoticed seed into the scene, and record its new Stage through hiddenPatch.gmThreads.`,
+        ]
+      : []),
+    "Use only period-appropriate established sources as current facts. Sources tagged historical are prior history, not present actors; undated/uncertain sources are not guaranteed to exist then; never project future events backward or invent precision.",
+    "The selected start date is in-world time, not device time. Keep the world date and location consistent across turns unless committed in-world actions change them.",
+    ...(worldEntry.intent === "scene"
+      ? [
+          "Respect the player's scene request as a setup, without determining their response.",
+        ]
+      : worldEntry.intent === "opportunity"
+        ? [
+            "Offer one plausible local situation that the player may ignore. No quest is accepted automatically.",
+          ]
+        : [
+            "Begin with open exploration and routine local activity, not an obligatory plot hook. The opening may weave in one small background sign from a seed.",
+          ]),
+  ];
 }

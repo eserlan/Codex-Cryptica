@@ -33,7 +33,7 @@ describe("AdventureManager", () => {
     expect(generateRumours).toHaveBeenCalledOnce();
     expect(manager.session?.hiddenState.gmThreads).toHaveLength(3);
     expect(manager.session?.hiddenState.gmThreads[0]?.text).toContain(
-      "DORMANT, NOT YET HEARD",
+      "UNFOLDING, UNNOTICED",
     );
   });
 
@@ -62,9 +62,7 @@ describe("AdventureManager", () => {
     expect(opening.session.hiddenState.secrets).toHaveLength(6);
     expect(manager.session?.hiddenState.gmThreads).toHaveLength(3);
     expect(manager.session?.turns).toHaveLength(1);
-    expect(manager.transcript?.turns[0]?.narration).not.toContain(
-      "NOT YET HEARD",
-    );
+    expect(manager.transcript?.turns[0]?.narration).not.toContain("UNNOTICED");
 
     await manager.submitAction("Ask the innkeeper what is happening nearby");
     const action = generate.mock.calls[1]?.[0] as any;

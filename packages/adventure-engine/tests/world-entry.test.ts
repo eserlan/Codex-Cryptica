@@ -96,6 +96,9 @@ describe("world entry session and GM contract", () => {
     expect(prompt.behavior).toContain("not a pre-written quest");
     expect(prompt.behavior).toContain("undated/uncertain sources");
     expect(prompt.behavior).toContain("Begin with open exploration");
+    expect(prompt.behavior).toContain(
+      "The opening may weave in one small background sign",
+    );
     expect(JSON.parse(prompt.state).worldEntry.at.year).toBe(618);
   });
 

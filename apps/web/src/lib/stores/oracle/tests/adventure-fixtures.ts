@@ -67,6 +67,8 @@ export function dependencies() {
         return completeProposal;
       },
     },
+    clearGenerationInteraction: async () => {},
+    confirmGenerationInteraction: async () => {},
     context: {
       async resolveAnchors() {
         return [];

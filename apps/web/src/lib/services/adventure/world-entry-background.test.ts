@@ -34,7 +34,13 @@ describe("world entry background situations", () => {
     expect(seeded.hiddenState.secrets[1]?.text).not.toContain(
       "If investigated:",
     );
-    expect(seeded.hiddenState.gmThreads[0]?.text).toContain("NOT YET HEARD");
+    expect(seeded.hiddenState.gmThreads[0]?.text).toContain("UNNOTICED");
+    expect(seeded.hiddenState.gmThreads[0]?.text).toContain(
+      "Stage: unnoticed.",
+    );
+    expect(seeded.hiddenState.gmThreads[0]?.text).toContain(
+      "traces, changed behaviour, notices, consequences or talk",
+    );
 
     const prompt = buildAdventurePrompt({
       session: seeded,
@@ -42,7 +48,7 @@ describe("world entry background situations", () => {
       anchors: [],
       relevant: [],
     });
-    expect(prompt.state).toContain("NOT YET HEARD");
+    expect(prompt.state).toContain("UNNOTICED");
     expect(prompt.behavior).toContain("reveal at most one");
   });
 
@@ -97,7 +103,7 @@ describe("world entry background situations", () => {
       sameCategory,
     );
     const realities = seededFromOneCategory.hiddenState.gmThreads.map(
-      (thread) => thread.text.match(/— (.*?); DORMANT/)?.[1],
+      (thread) => thread.text.match(/— (.*?); UNFOLDING/)?.[1],
     );
     expect(realities).toEqual([
       "essentially true",
