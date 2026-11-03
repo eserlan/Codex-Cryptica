@@ -774,13 +774,16 @@ export class AdventureTurnGenerationService {
       options.modelName ?? "luna-fast",
       systemInstruction,
     );
-    const result = await model.generateContent({
-      contents: [{ role: "user", parts: [{ text: prompt.serialized }] }],
-      generationConfig: {
-        responseMimeType: "application/json",
-        responseSchema: adventureTurnResponseSchema,
+    const result = await model.generateContent(
+      {
+        contents: [{ role: "user", parts: [{ text: prompt.serialized }] }],
+        generationConfig: {
+          responseMimeType: "application/json",
+          responseSchema: adventureTurnResponseSchema,
+        },
       },
-    });
+      { signal: options.signal ?? request.signal },
+    );
     streamAborted(options.signal ?? request.signal);
     return parseAdventureResponse(result.response.text());
   }
