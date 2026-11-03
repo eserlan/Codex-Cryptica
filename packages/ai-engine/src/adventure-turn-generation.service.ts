@@ -91,7 +91,10 @@ function stateDelta(
   return delta;
 }
 
-const CONTEXT_REFRESH_TURNS = 20;
+// Continue long stories across many turns; refresh from local state before
+// retained provider history becomes excessively large. Expiry and invalid IDs
+// independently trigger a fresh conversation at any time.
+const CONTEXT_REFRESH_TURNS = 80;
 
 function parseAdventureResponse(text: string): AdventureTurnProposal {
   try {
