@@ -45,14 +45,15 @@ describe("AdventureComposer", () => {
     const send = screen.getByRole("button", { name: "Submit action" });
     expect(dock.className).toContain("overflow-hidden");
     expect(extras.className).toContain("overflow-y-auto");
-    expect(extras.contains(screen.getByTestId("adventure-suggested-actions"))).toBe(true);
+    const suggestions = screen.getByTestId("adventure-suggested-actions");
+    expect(extras.contains(suggestions)).toBe(true);
     expect(extras.contains(field)).toBe(false);
     expect(extras.contains(send)).toBe(false);
     expect(dock.contains(field)).toBe(true);
     expect(dock.contains(send)).toBe(true);
   });
 
-  it("hides suggestions while the phone textarea is focused, without unmounting them", async () => {
+  it("hides phone suggestions while typing", async () => {
     const m = manager("ready");
     m.suggestedActions = ["Ask the innkeeper"];
     render(AdventureComposer, { props: { manager: m, phone: true } });
@@ -68,13 +69,14 @@ describe("AdventureComposer", () => {
     expect(suggestions.className).not.toBe("hidden");
   });
 
-  it("hides suggestions when a phone keyboard is open even if focus moves", () => {
+  it("hides suggestions with a phone keyboard open", () => {
     const m = manager("ready");
     m.suggestedActions = ["Ask the innkeeper"];
     render(AdventureComposer, {
       props: { manager: m, phone: true, keyboardOpen: true },
     });
-    expect(screen.getByTestId("adventure-suggested-actions").className).toBe("hidden");
+    const suggestions = screen.getByTestId("adventure-suggested-actions");
+    expect(suggestions.className).toBe("hidden");
     expect(screen.getByLabelText("What do you do?")).toBeTruthy();
   });
 
