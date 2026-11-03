@@ -213,27 +213,35 @@ describe("fetchListItems", () => {
 describe("waitForBulkOperation", () => {
   function stubFetch(status: string) {
     const original = globalThis.fetch;
-    globalThis.fetch = (async () =>
-      Response.json({
+    const urls: string[] = [];
+    globalThis.fetch = (async (input: RequestInfo | URL) => {
+      urls.push(String(input));
+      return Response.json({
         success: true,
         result: { status, error: "boom" },
-      })) as typeof fetch;
-    return () => {
-      globalThis.fetch = original;
+      });
+    }) as typeof fetch;
+    return {
+      urls,
+      restore: () => {
+        globalThis.fetch = original;
+      },
     };
   }
 
   it("resolves when the operation completes", async () => {
-    const restore = stubFetch("completed");
+    const { urls, restore } = stubFetch("completed");
     try {
       await waitForBulkOperation("t", "acct", "op-1", 1_000, 1);
+      expect(urls[0]).toContain("/rules/lists/bulk_operations/op-1");
+      expect(urls[0]).not.toContain("bulk-operations");
     } finally {
       restore();
     }
   });
 
   it("rejects when the operation fails", async () => {
-    const restore = stubFetch("failed");
+    const { restore } = stubFetch("failed");
     try {
       await expect(
         waitForBulkOperation("t", "acct", "op-2", 1_000, 1),
@@ -244,7 +252,7 @@ describe("waitForBulkOperation", () => {
   });
 
   it("rejects when the operation never completes in time", async () => {
-    const restore = stubFetch("running");
+    const { restore } = stubFetch("running");
     try {
       await expect(
         waitForBulkOperation("t", "acct", "op-3", 5, 1),

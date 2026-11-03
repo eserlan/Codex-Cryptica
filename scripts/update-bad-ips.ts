@@ -540,7 +540,7 @@ export async function waitForBulkOperation(
   for (;;) {
     const result = (await cfFetch(
       token,
-      `/accounts/${accountId}/rules/lists/bulk-operations/${operationId}`,
+      `/accounts/${accountId}/rules/lists/bulk_operations/${operationId}`,
     )) as { status?: string; error?: string };
     if (result.status === "completed") return;
     if (result.status === "failed") {
