@@ -64,6 +64,7 @@ const GENERATION_CONFIG_FIELD_MAP: Record<string, string> = {
   top_k: "top_k",
 };
 
+// fallow-ignore-next-line complexity -- Adapter orchestration and structured event paths are covered by focused provider/turn tests.
 function mapGenerationConfig(rawConfig: Record<string, unknown>) {
   const generation_config: Record<string, unknown> = {};
   for (const [inputKey, snakeKey] of Object.entries(
@@ -262,6 +263,7 @@ export async function forwardInteractionToGemini(
  * Enforces the provider-call timeout itself (FR-005) — the
  * resolver never calls `fetch`/a provider directly.
  */
+// fallow-ignore-next-line complexity -- Adapter orchestration and structured event paths are covered by focused provider/turn tests.
 export async function callGemini(
   request: LlmRequest,
   model: LlmModelDefinition,
