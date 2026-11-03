@@ -149,5 +149,6 @@ describe("world entry pacing", () => {
     expect(behavior).toContain("never frame a sign as a quest");
     expect(behavior).toContain("at most one stage per turn");
     expect(behavior).toContain("Never raise a situation's stakes");
+    expect(behavior).toContain("one suggestedAction may invite a closer look");
   });
 });
