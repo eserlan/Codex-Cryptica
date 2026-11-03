@@ -81,6 +81,11 @@ intake → spec → build → gate → review → approve, one PR per issue. Sta
 `factory/checks.sh`. Dashboard: `cd factory && python3 -m http.server`, then
 open http://localhost:8000/dashboard.html.
 
+The factory never merges. After review the approver's decision is posted on the
+PR, the PR is marked ready and the issue is labeled `factory:needs-human`; the
+review-and-fix loop and a person take it from there. Merging the PR on GitHub
+finishes the job.
+
 Each job works in its own git worktree, a full checkout of the repo at
 `.worktrees/<job-id>` (gitignored). A tool run from the repo root that doesn't
 read `.gitignore` sees those copies too; exclude `.worktrees/` in its config
