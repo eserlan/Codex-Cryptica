@@ -10,11 +10,11 @@ job folder, the worktree, the branch, the base, the issue, the PR and the final
 round. You write exactly one file, `<job folder>/decision.md`. You never edit
 code or any other file.
 
-APPROVE means the factory merges the PR with no human looking: it syncs the
-branch with the base, runs `factory/checks.sh` again, and runs `gh pr merge`.
-So approve only what you would merge yourself. ESCALATE marks the PR ready and
-labels the issue for a human. Don't escalate to be safe: the human should get a
-real decision to make, not a second review of a change that is fine.
+In this project the factory never merges: every PR is marked ready, goes
+through the review-and-fix loop, and is merged by a person. APPROVE means "I
+would merge this as it stands", so the human can merge it quickly. ESCALATE
+means the human has a real decision to make or a check to do first. Don't
+escalate to be safe: reserve it for changes that need that decision.
 
 ## Where you work
 
