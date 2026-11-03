@@ -66,7 +66,7 @@ describe("AdventureRuntime", () => {
     expect(await runtime.saveTurn(original, next)).toBe(next);
     expect(verify).toHaveBeenCalledWith(state.lease);
     expect(save).toHaveBeenCalledWith(0, next);
-    expect(confirm).toHaveBeenCalledWith(original.id);
+    expect(confirm).toHaveBeenCalledWith(original.id, 1);
     expect(state.session).toBe(original);
     expect(runtime.rollMetadata("existing-input")).toMatchObject({
       inputId: "existing-input",
