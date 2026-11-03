@@ -48,7 +48,7 @@ export const howDoYouMakeASingleEnemyBossFightInteresting: AnswerConfigInput = {
         },
       ],
       outro:
-        "Optional Dungeons and Dragons (D&D) 5e example: legendary actions printed for a creature are the published form of this idea, and some stat blocks add lair actions (chiefly in 2014-era books) or mythic actions (from Mythic Odysseys of Theros). Use the ones printed for that creature, within their stated limits for the edition you run, rather than adding a second or third full turn. A legendary action that repositions the boss or changes the arena often creates more decisions than one that simply repeats its best attack.",
+        "Optional Dungeons and Dragons (D&D) 5e example: in the 2014 rules, legendary actions let a creature act outside its turn, while lair actions resolve at initiative count 20; see the [2014 Monster rules](https://www.dndbeyond.com/sources/dnd/basic-rules-2014/monsters). The [2024 creature rules](https://www.dndbeyond.com/sources/dnd/br-2024/creature-stat-blocks) also describe legendary actions, with their own stated use limits. Mythic actions are a separate feature used by specific monsters in [Mythic Odysseys of Theros](https://www.dndbeyond.com/sources/dnd/moot). These are distinct rules, not interchangeable extra turns. Use a creature's printed options and limits for the edition and source you are running. A legendary action that repositions the boss or changes the arena often creates more decisions than one that simply repeats its best attack.",
     },
     {
       kind: "list",
