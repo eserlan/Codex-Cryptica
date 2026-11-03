@@ -1,3 +1,11 @@
+import { initialSession } from "./adventure-session";
+export { hasCommittedOpening } from "./adventure-session";
+import {
+  defaultGenerationService,
+  clearDefaultGenerationInteraction,
+  abortReason,
+} from "./adventure-generation.svelte";
+import { AdventureBackground } from "./adventure-background";
 import {
   addDicePreset,
   addResourceCounter,
@@ -41,16 +49,9 @@ import {
   adventureContextService,
   type AdventureContextService,
 } from "#lib/services/adventure/adventure-context-service.js";
-import { adventureTurnGenerationService } from "@codex/ai-engine";
-import { oracleBridge } from "#lib/cloud-bridge/oracle-bridge.js";
 import { diceEngine as defaultDiceEngine, diceParser } from "dice-engine";
 import { systemIdGenerator } from "#lib/utils/runtime-deps.js";
 import type { AdventureStartFailure } from "#lib/services/adventure/adventure-start-failure.js";
-import {
-  needsWorldEntryBackground,
-  seedWorldEntryBackground,
-} from "#lib/services/adventure/world-entry-background.js";
-import type { RumourSelectionInput } from "generator-engine";
 
 export interface AdventureManagerDependencies {
   repository?: AdventureSessionRepository;
@@ -103,139 +104,6 @@ function classifyOpeningFailure(cause: unknown): AdventureStartFailure {
   return storageFailure(cause) ?? "opening-failed";
 }
 
-/** An opening is committed once it has a turn or a pending opening roll. */
-export function hasCommittedOpening(
-  session: AdventureSession | null | undefined,
-): boolean {
-  return Boolean(session && (session.turns.length > 0 || session.pendingRoll));
-}
-
-function initialSession(input: {
-  vaultId: string;
-  title: string;
-  premise: string;
-  playerCharacter: PlayerCharacter;
-  sourceRecords?: AdventureSession["sourceRecords"];
-  scenarioSeed?: ScenarioState;
-  worldEntry?: WorldEntryContext;
-  now: string;
-  idGenerator: () => string;
-}): AdventureSession {
-  return {
-    schemaVersion: 2,
-    id: input.idGenerator(),
-    vaultId: input.vaultId,
-    title: input.title,
-    status: "active",
-    createdAt: input.now,
-    updatedAt: input.now,
-    lastPlayedAt: input.now,
-    revision: 0,
-    playerCharacter: input.playerCharacter,
-    premise: input.premise,
-    sourceRecords: input.sourceRecords ?? [],
-    ...(input.scenarioSeed
-      ? { scenarioState: structuredClone(input.scenarioSeed) }
-      : {}),
-    ...(input.worldEntry
-      ? { worldEntry: structuredClone(input.worldEntry) }
-      : {}),
-    visibleState: {
-      ...(input.worldEntry
-        ? {
-            location: {
-              id: input.idGenerator(),
-              text: input.worldEntry.location.name,
-              source:
-                input.worldEntry.location.kind === "canonical"
-                  ? ("canonical" as const)
-                  : ("provisional" as const),
-              ...(input.worldEntry.location.kind === "canonical"
-                ? { sourceRecordId: input.worldEntry.location.recordId }
-                : {}),
-            },
-          }
-        : {}),
-      objectives: [],
-      activeCharacters: [],
-      knownFacts: [],
-      relationships: [],
-    },
-    hiddenState: {
-      secrets: input.scenarioSeed
-        ? [
-            {
-              id: input.idGenerator(),
-              text: input.scenarioSeed.gmOnly.truth,
-              status: "hidden",
-              revealCondition: "Reveal after in-world discovery.",
-            },
-          ]
-        : [],
-      gmThreads: [],
-    },
-    provisionalFacts: [],
-    turns: [],
-    pendingRoll: null,
-    dicePresets: [],
-    resourceCounters: [],
-  };
-}
-
-let nextAdventureTurnRequestId = 0;
-
-function defaultGenerationService(): Pick<
-  AdventureTurnGenerationService,
-  "generate"
-> {
-  return {
-    generate: (request: any, options?: any) => {
-      if (!oracleBridge.isReady) {
-        return adventureTurnGenerationService.generate(request, options);
-      }
-      // AbortSignal is not structured-cloneable and must not cross Comlink.
-      const signal = options?.signal ?? request.signal;
-      const { signal: _signal, ...workerOptions } = options ?? {};
-      // Comlink cannot structured-clone functions nested inside the request.
-      // Progress is a separate proxied argument at the bridge boundary.
-      const {
-        onNarration,
-        signal: _requestSignal,
-        ...cloneableRequest
-      } = request;
-      const workerRequest = $state.snapshot(cloneableRequest);
-      const requestId = String(++nextAdventureTurnRequestId);
-      const cancelWorkerRequest = () => {
-        if (!oracleBridge.isReady) return;
-        void oracleBridge.cancelAdventureTurn(requestId).catch(() => {});
-      };
-      signal?.addEventListener("abort", cancelWorkerRequest, { once: true });
-      if (signal?.aborted) {
-        signal.removeEventListener("abort", cancelWorkerRequest);
-        throw new DOMException("Cancelled", "AbortError");
-      }
-      return oracleBridge
-        .generateAdventureTurn(
-          workerRequest,
-          requestId,
-          workerOptions,
-          onNarration,
-        )
-        .finally(() => {
-          signal?.removeEventListener("abort", cancelWorkerRequest);
-        }) as any;
-    },
-  };
-}
-
-function clearDefaultGenerationInteraction(sessionId: string) {
-  return oracleBridge.isReady
-    ? oracleBridge.clearAdventureInteraction(sessionId)
-    : Promise.resolve(
-        adventureTurnGenerationService.clearInteraction(sessionId),
-      );
-}
-
 /** All reducers share this discriminated success/error contract. */
 function acceptedSession(
   result: {
@@ -247,17 +115,6 @@ function acceptedSession(
 ): AdventureSession {
   if (result.ok && result.value) return result.value;
   throw new Error(result.errors?.[0]?.message ?? fallback);
-}
-
-function isAbort(cause: unknown, signal?: AbortSignal): boolean {
-  return Boolean(
-    signal?.aborted ||
-    (cause instanceof DOMException && cause.name === "AbortError"),
-  );
-}
-
-function abortReason(signal: AbortSignal): unknown {
-  return signal.reason ?? new DOMException("Cancelled", "AbortError");
 }
 
 export class AdventureManager {
@@ -305,52 +162,14 @@ export class AdventureManager {
 
   private readonly deps: Required<AdventureManagerDependencies>;
   private generationController: AbortController | null = null;
-  private worldEntryRumourGenerator:
-    | ((
-        session: AdventureSession,
-        signal?: AbortSignal,
-      ) => Promise<RumourSelectionInput>)
-    | undefined;
+  private readonly background: AdventureBackground;
 
   setWorldEntryRumourGenerator(
-    generator: (
-      session: AdventureSession,
-      signal?: AbortSignal,
-    ) => Promise<RumourSelectionInput>,
+    generator: Parameters<AdventureBackground["setGenerator"]>[0],
   ): void {
-    this.worldEntryRumourGenerator = generator;
+    this.background.setGenerator(generator);
   }
 
-  private async prepareWorldEntryBackground(
-    session: AdventureSession,
-    signal?: AbortSignal,
-  ): Promise<AdventureSession> {
-    if (!needsWorldEntryBackground(session)) return session;
-    const batch = await this.generateWorldEntryRumourBatch(session, signal);
-    if (signal?.aborted) throw abortReason(signal);
-    try {
-      return seedWorldEntryBackground(session, this.deps.idGenerator, batch);
-    } catch {
-      return seedWorldEntryBackground(session, this.deps.idGenerator);
-    }
-  }
-
-  private async generateWorldEntryRumourBatch(
-    session: AdventureSession,
-    signal?: AbortSignal,
-  ): Promise<RumourSelectionInput | undefined> {
-    if (!this.worldEntryRumourGenerator) return undefined;
-    if (signal?.aborted) throw abortReason(signal);
-    try {
-      const batch = await this.worldEntryRumourGenerator(session, signal);
-      if (signal?.aborted) throw abortReason(signal);
-      return batch;
-    } catch (cause) {
-      if (isAbort(cause, signal)) throw cause;
-      // A failed background generation must not interrupt an active adventure.
-      return undefined;
-    }
-  }
   private activeRestoreRequest = 0;
 
   private async verifyControl(): Promise<void> {
@@ -370,6 +189,7 @@ export class AdventureManager {
     dice = defaultDiceEngine,
     idGenerator = systemIdGenerator.uuid,
   }: AdventureManagerDependencies = {}) {
+    this.background = new AdventureBackground(idGenerator);
     this.deps = {
       repository,
       generation,
@@ -585,7 +405,7 @@ export class AdventureManager {
     const relevant = await this.deps.context.resolveOpeningRelevant(session);
     // Commit the background together with the opening turn, not as a
     // half-created separate save if Oracle fails.
-    const prepared = await this.prepareWorldEntryBackground(session);
+    const prepared = await this.background.prepare(session);
     const proposal = await this.deps.generation.generate({
       session: prepared,
       phase: "opening",
@@ -920,7 +740,7 @@ export class AdventureManager {
     // Older World Entry sessions began without background situations.
     // Seed on their next committed action too, without mutating the persisted
     // session until the same optimistic-concurrency save succeeds.
-    const prepared = await this.prepareWorldEntryBackground(session, signal);
+    const prepared = await this.background.prepare(session, signal);
     if (signal.aborted) throw abortReason(signal);
     const proposal = await this.deps.generation.generate(
       {
