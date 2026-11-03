@@ -206,7 +206,20 @@ export function buildGeminiInteractionPayload(
     const rawConfig = {
       ...(body.generation_config || body.generationConfig || {}),
     } as Record<string, unknown>;
-    payload.generation_config = mapGenerationConfig(rawConfig);
+    const generationConfig = mapGenerationConfig(rawConfig);
+    // Gemini Interactions API removed response_mime_type from generation_config
+    // in its June 2026 schema revision. Keep JSON mode in response_format.
+    const mimeType = generationConfig.response_mime_type;
+    delete generationConfig.response_mime_type;
+    if (mimeType === "application/json") {
+      payload.response_format = {
+        type: "text",
+        mime_type: "application/json",
+      };
+    }
+    if (Object.keys(generationConfig).length > 0) {
+      payload.generation_config = generationConfig;
+    }
   }
 
   return payload;
