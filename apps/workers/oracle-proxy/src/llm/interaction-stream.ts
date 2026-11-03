@@ -49,6 +49,7 @@ function upstreamRequest(
 }
 
 /** Normalize one upstream JSON event, keeping only player-facing model output. */
+// fallow-ignore-next-line complexity
 export function normalizeInteractionStreamEvent(
   provider: Provider,
   raw: Record<string, any>,
@@ -102,6 +103,7 @@ export function normalizeInteractionStreamEvent(
   return null;
 }
 
+// fallow-ignore-next-line complexity
 export async function handleInteractionStream(
   body: Record<string, any>,
   request: Request,
