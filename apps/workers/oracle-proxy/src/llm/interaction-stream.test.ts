@@ -113,8 +113,8 @@ describe("Solo Adventure provider conversation SSE", () => {
         { event_type: "interaction.created", interaction: { id: "v1_reply" } },
         { event_type: "step.start", index: 0, step: { type: "thought" } },
         { event_type: "step.delta", index: 0, delta: { type: "text", text: "secret reasoning" } },
-        { event_type: "step.start", index: 1, step: { type: "model_output" } },
-        { event_type: "step.delta", index: 1, delta: { type: "text", text: '{"kind":"complete"}' } },
+        { event_type: "step.start", index: 1, step: { type: "model_output", content: [{ type: "text", text: '{"kind":' }] } },
+        { event_type: "step.delta", index: 1, delta: { type: "text", text: '"complete"}' } },
         { event_type: "interaction.completed", interaction: { id: "v1_reply" } },
       ]),
     );
