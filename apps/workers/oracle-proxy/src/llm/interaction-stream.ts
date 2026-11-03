@@ -112,7 +112,7 @@ export async function handleInteractionStream(
   // registry key is allowed to fall back to Gemini only for a new thread.
   const isGeminiId =
     typeof body.previous_interaction_id === "string" &&
-    /^(?:v1_|interactions\\/)/.test(body.previous_interaction_id);
+    /^(?:v1_|interactions\/)/.test(body.previous_interaction_id);
   if (isGeminiId || (provider === "openai" && !env.OPENAI_API_KEY)) provider = "gemini";
   const fallbackModel =
     getModel("gemini-flash-lite")?.modelId ?? "gemini-3.5-flash-lite";
