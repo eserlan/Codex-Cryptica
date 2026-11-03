@@ -333,20 +333,11 @@ export interface OpenAiInteractionResult {
  * already thread a `previousInteractionId` through get server-side turn state
  * on OpenAI models for free, just by naming an OpenAI registry key as `model`.
  */
-export async function forwardInteractionToOpenAi(
+/** Shared buffered/streaming payload mapping: both paths must have identical continuation semantics. */
+export function buildOpenAiInteractionPayload(
   body: Record<string, any>,
   modelId: string,
-  env: OpenAiEnv,
-  fetcher: typeof fetch = fetch,
-): Promise<OpenAiInteractionResult> {
-  if (!env.OPENAI_API_KEY) {
-    return {
-      ok: false,
-      status: 500,
-      data: { error: { message: "missing-openai-api-key" } },
-    };
-  }
-
+): Record<string, unknown> {
   const instructions: string | undefined =
     typeof body.system_instruction === "string"
       ? body.system_instruction
@@ -407,6 +398,25 @@ export async function forwardInteractionToOpenAi(
     // explicit value (see callOpenAi above) and every OpenAI registry entry
     // today is in that family.
   }
+
+  return payload;
+}
+
+export async function forwardInteractionToOpenAi(
+  body: Record<string, any>,
+  modelId: string,
+  env: OpenAiEnv,
+  fetcher: typeof fetch = fetch,
+): Promise<OpenAiInteractionResult> {
+  if (!env.OPENAI_API_KEY) {
+    return {
+      ok: false,
+      status: 500,
+      data: { error: { message: "missing-openai-api-key" } },
+    };
+  }
+
+  const payload = buildOpenAiInteractionPayload(body, modelId);
 
   let upstream: Response;
   try {
