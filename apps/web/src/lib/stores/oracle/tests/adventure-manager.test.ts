@@ -385,7 +385,7 @@ describe("AdventureManager", () => {
         role: "turn-source",
       },
     ];
-    deps.context.resolveOpeningRelevant = async () => relevant;
+    deps.context.resolveOpeningRelevant = vi.fn(async () => relevant);
     const generate = vi.fn().mockResolvedValue(completeProposal);
     deps.generation = { generate };
     const manager = new AdventureManager(deps);
@@ -404,6 +404,7 @@ describe("AdventureManager", () => {
     expect(generate).toHaveBeenCalledWith(
       expect.objectContaining({ phase: "opening", relevant }),
     );
+    expect(deps.context.resolveOpeningRelevant).toHaveBeenCalledOnce();
   });
 
   it("keeps a typed action local when offline", async () => {
@@ -576,11 +577,25 @@ describe("AdventureManager", () => {
       },
     });
 
+    const relevant = [
+      {
+        recordId: "bridge-npc",
+        displayName: "Bridge Keeper",
+        content: "The bridge is closed at dusk.",
+        role: "turn-source",
+      },
+    ];
+    deps.context.resolveActionRelevant = vi.fn(async () => relevant);
     await manager.submitAction("Cross the bridge");
     await manager.recordRollOutcome({ kind: "numeric", value: 16 });
 
+    expect(deps.context.resolveActionRelevant).toHaveBeenLastCalledWith(
+      expect.anything(),
+      "Cross the bridge",
+    );
+    expect(deps.context.resolveActionRelevant).toHaveBeenCalledTimes(2);
     expect(generate).toHaveBeenCalledWith(
-      expect.objectContaining({ phase: "roll-resolution" }),
+      expect.objectContaining({ phase: "roll-resolution", relevant }),
       expect.anything(),
     );
     expect(manager.session?.pendingRoll).toBeNull();
@@ -1283,4 +1298,110 @@ describe("AdventureManager Phase 2 tools", () => {
       expect(manager.starting).toBe(false);
     });
   });
+});
+
+it("keeps an incomplete opening after a lookup failure and retries the same record", async () => {
+  const deps: any = dependencies();
+  const retrieve = vi
+    .fn()
+    .mockRejectedValue(new Error("private lookup failure"));
+  deps.context.resolveOpeningRelevant = retrieve;
+  const archive = vi.spyOn(deps.repository, "archive");
+  const generate = vi.fn(async () => completeProposal);
+  deps.generation = { generate };
+  const manager = new AdventureManager(deps);
+  await manager.start({
+    vaultId: "vault-1",
+    title: "Road",
+    premise: "Find the road",
+    playerCharacter: {
+      kind: "provisional",
+      name: "Mara",
+      description: "Guide",
+    },
+  });
+  const initialId = manager.session?.id;
+  expect(initialId).toBeTruthy();
+  expect(manager.session?.revision).toBe(0);
+  expect(archive).not.toHaveBeenCalled();
+  expect(generate).not.toHaveBeenCalled();
+  expect(manager.errorMessage).not.toContain("private lookup failure");
+  retrieve.mockResolvedValue([]);
+  await manager.retryOpening();
+  expect(manager.session?.id).toBe(initialId);
+  expect(manager.session?.turns).toHaveLength(1);
+  expect(generate).toHaveBeenCalledOnce();
+});
+
+it("preserves a recorded dice outcome through failed retrieval and retry", async () => {
+  const deps: any = dependencies();
+  const generate = vi.fn(async (request: any) =>
+    request.phase === "action" ? rollProposal : completeProposal,
+  );
+  deps.generation = { generate };
+  deps.dice = { evaluate: vi.fn() };
+  const manager = new AdventureManager(deps);
+  await manager.start({
+    vaultId: "vault-1",
+    title: "Road",
+    premise: "Find the road",
+    playerCharacter: {
+      kind: "provisional",
+      name: "Mara",
+      description: "Guide",
+    },
+  });
+  await manager.submitAction("Cross the bridge");
+  deps.context.resolveActionRelevant = vi
+    .fn()
+    .mockRejectedValue(new Error("lookup failure"));
+  const calls = generate.mock.calls.length;
+  await manager.recordRollOutcome({ kind: "numeric", value: 16 });
+  expect(manager.session?.pendingRoll?.inputId).toBeTruthy();
+  expect(manager.session?.pendingRoll?.suppliedOutcome).toEqual({
+    kind: "numeric",
+    value: 16,
+  });
+  expect(generate).toHaveBeenCalledTimes(calls);
+  deps.context.resolveActionRelevant.mockResolvedValue([]);
+  await manager.resolveRoll();
+  expect(deps.context.resolveActionRelevant).toHaveBeenLastCalledWith(
+    expect.anything(),
+    "Cross the bridge",
+  );
+  expect(manager.session?.pendingRoll).toBeNull();
+  expect(
+    manager.session?.turns.filter(
+      (turn) =>
+        turn.playerAction === "Cross the bridge" &&
+        turn.rollOutcome?.value === 16,
+    ),
+  ).toHaveLength(1);
+  expect(deps.dice.evaluate).not.toHaveBeenCalled();
+});
+
+it("does not dispatch when lookup is superseded by the same session ID in another Vault", async () => {
+  const deps: any = dependencies();
+  const generate = vi.fn(async () => completeProposal);
+  deps.generation = { generate };
+  const manager = new AdventureManager(deps);
+  await manager.start({
+    vaultId: "vault-1",
+    title: "Road",
+    premise: "Find the road",
+    playerCharacter: {
+      kind: "provisional",
+      name: "Mara",
+      description: "Guide",
+    },
+  });
+  const calls = generate.mock.calls.length;
+  deps.context.resolveActionRelevant = async () => {
+    manager.session = { ...manager.session!, vaultId: "vault-2" };
+    return [];
+  };
+  await manager.submitAction("Ask a local");
+  expect(generate).toHaveBeenCalledTimes(calls);
+  expect(manager.session?.vaultId).toBe("vault-2");
+  expect(manager.session?.turns).toHaveLength(1);
 });

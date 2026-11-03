@@ -206,3 +206,33 @@ describe("AdventureTools", () => {
     expect(state.session).toBe(original);
   });
 });
+
+describe("AdventureRuntime scope checks", () => {
+  it("rejects a Vault change during lease verification before saving", async () => {
+    const { runtime, state, deps } = createAdventureRuntime();
+    const original = state.session!;
+    const save = vi.spyOn(deps.repository, "save");
+    vi.spyOn(deps.authority, "verify").mockImplementation(async () => {
+      state.session = { ...original, vaultId: "another-vault" };
+      return true;
+    });
+    await expect(
+      runtime.saveTurn(original, { ...original, revision: 1 }),
+    ).rejects.toThrow("stale-adventure-context");
+    expect(save).not.toHaveBeenCalled();
+  });
+
+  it("rejects a late saved result after the view has closed", async () => {
+    const { runtime, state, deps } = createAdventureRuntime();
+    const original = state.session!;
+    const next = { ...original, revision: 1 };
+    vi.spyOn(deps.repository, "save").mockImplementation(async () => {
+      state.session = null;
+      return { ok: true, session: next } as any;
+    });
+    await expect(runtime.saveTurn(original, next)).rejects.toThrow(
+      "stale-adventure-context",
+    );
+    expect(state.session).toBeNull();
+  });
+});

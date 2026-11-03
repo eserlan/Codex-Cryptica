@@ -7,6 +7,7 @@
   let action = $derived(manager.draft);
   let disabled = $derived(
     manager.readOnly ||
+      (manager.session?.turns.length === 0 && !manager.session.pendingRoll) ||
       manager.phase === "generating" ||
       manager.phase === "offline" ||
       manager.phase === "awaiting-roll" ||
@@ -151,5 +152,13 @@
     <p class="text-sm text-theme-danger" role="alert">
       {manager.errorMessage}
     </p>
+  {/if}
+  {#if !manager.readOnly && manager.session?.turns.length === 0 && !manager.session.pendingRoll}
+    <button
+      type="button"
+      class="min-h-11 rounded-lg border border-theme-border px-3 py-2 text-sm text-theme-text disabled:opacity-50"
+      disabled={manager.phase === "generating"}
+      onclick={() => void manager.retryOpening()}>Retry opening</button
+    >
   {/if}
 </div>

@@ -1,3 +1,4 @@
+import { AdventureGroundingError } from "#lib/services/adventure/adventure-grounding-service.js";
 import {
   parseAdventureSession,
   type AdventureSession,
@@ -82,6 +83,20 @@ export class AdventureOpening {
     } finally {
       this.state.starting = false;
     }
+  }
+
+  async retryOpening(): Promise<void> {
+    const session = this.state.session;
+    if (
+      !session ||
+      session.turns.length ||
+      session.pendingRoll ||
+      this.state.readOnly ||
+      this.state.phase === "generating"
+    )
+      return;
+    this.state.errorMessage = null;
+    await this.startOpeningIfOnline(session);
   }
 
   private async ensureStartAvailable(vaultId: string): Promise<void> {
@@ -195,16 +210,25 @@ export class AdventureOpening {
       !(await this.runtime.deps.authority.verify(this.state.lease))
     )
       return;
-    this.state.phase = "generating";
+    const signal = this.runtime.startTurnGeneration();
     try {
-      await this.persistOpeningTurn(session);
+      await this.persistOpeningTurn(session, signal);
     } catch (cause) {
-      await this.handleFailedOpening(session, cause);
+      if (!signal.aborted) await this.handleFailedOpening(session, cause);
+    } finally {
+      this.runtime.endTurnGeneration(signal);
     }
   }
 
-  private async persistOpeningTurn(session: AdventureSession): Promise<void> {
-    const { prepared, proposal } = await this.generateOpeningProposal(session);
+  private async persistOpeningTurn(
+    session: AdventureSession,
+    signal: AbortSignal,
+  ): Promise<void> {
+    const { prepared, proposal } = await this.generateOpeningProposal(
+      session,
+      signal,
+    );
+    signal.throwIfAborted();
     if (this.state.session?.id !== session.id) return;
     const saved = await this.saveOpening(
       session,
@@ -216,19 +240,20 @@ export class AdventureOpening {
     this.state.phase = saved.pendingRoll ? "awaiting-roll" : "ready";
   }
 
-  private async generateOpeningProposal(session: AdventureSession) {
-    const anchors = await this.runtime.deps.context.resolveAnchors(session);
-    const relevant =
-      await this.runtime.deps.context.resolveOpeningRelevant(session);
+  private async generateOpeningProposal(
+    session: AdventureSession,
+    signal: AbortSignal,
+  ) {
     // Commit the background together with the opening turn, not as a
     // half-created separate save if Oracle fails.
-    const prepared = await this.runtime.background.prepare(session);
+    const prepared = await this.runtime.background.prepare(session, signal);
     const proposal = await this.runtime.deps.generation.generate({
       session: prepared,
       phase: "opening",
-      anchors,
-      relevant,
-      onNarration: this.runtime.narrationPreview(session.id),
+      anchors: [],
+      relevant: [],
+      signal,
+      onNarration: this.runtime.narrationPreview(session.id, signal),
     });
     return { prepared, proposal };
   }
@@ -272,6 +297,28 @@ export class AdventureOpening {
   }
 
   private async handleFailedOpening(
+    session: AdventureSession,
+    cause: unknown,
+  ): Promise<void> {
+    if (cause instanceof AdventureGroundingError) {
+      this.retainIncompleteOpening(session, cause);
+      return;
+    }
+    await this.archiveFailedOpening(session, cause);
+  }
+
+  private retainIncompleteOpening(
+    session: AdventureSession,
+    cause: AdventureGroundingError,
+  ): void {
+    if (this.state.session?.id !== session.id) return;
+    this.state.errorMessage = cause.message;
+    this.state.streamedNarration = "";
+    this.state.errorCause = "opening-failed";
+    this.state.phase = "error";
+  }
+
+  private async archiveFailedOpening(
     session: AdventureSession,
     cause: unknown,
   ): Promise<void> {

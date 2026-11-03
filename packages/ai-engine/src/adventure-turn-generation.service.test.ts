@@ -291,7 +291,7 @@ describe("AdventureTurnGenerationService", () => {
     ).rejects.toThrow("invalid-adventure-response");
   });
 
-  it("retains Luna context and only sends new sources until the refresh turn", async () => {
+  it("starts each interaction with fresh sources instead of retained history", async () => {
     const calls: any[] = [];
     const service = new AdventureTurnGenerationService({
       async getModel() {
@@ -326,10 +326,10 @@ describe("AdventureTurnGenerationService", () => {
     });
 
     expect(calls[0].previousInteractionId).toBeNull();
-    expect(calls[1].previousInteractionId).toBe("response-1");
+    expect(calls[1].previousInteractionId).toBeNull();
     expect(JSON.parse(calls[0].input).anchors).toHaveLength(1);
-    expect(JSON.parse(calls[1].input).anchors).toEqual([]);
-    expect(JSON.parse(calls[1].input).retainedSourceIds).toEqual(["barrow"]);
+    expect(JSON.parse(calls[1].input).anchors).toHaveLength(1);
+    expect(JSON.parse(calls[1].input).retainedSourceIds).toBeUndefined();
 
     for (let turn = 0; turn < 19; turn += 1) {
       await service.generate({
@@ -341,6 +341,16 @@ describe("AdventureTurnGenerationService", () => {
       });
     }
     expect(JSON.parse(calls.at(-1)?.input ?? "{}").anchors).toHaveLength(1);
+    await service.generate({
+      session,
+      phase: "action",
+      playerAction: "Leave the hill",
+      anchors: [],
+      relevant: [],
+    });
+    expect(calls.at(-1).previousInteractionId).toBeNull();
+    expect(calls.at(-1).input).not.toContain("A sealed tomb.");
+    expect(calls.at(-1).input).not.toContain("barrow");
   });
 
   it("repairs one malformed retained-conversation response before failing", async () => {
@@ -367,6 +377,9 @@ describe("AdventureTurnGenerationService", () => {
       }),
     ).resolves.toMatchObject({ kind: "complete" });
     expect(calls).toHaveLength(2);
+    expect(JSON.parse(calls[1].input).state).toEqual(
+      JSON.parse(calls[0].input).state,
+    );
     expect(JSON.parse(calls[1].input).responseRepair).toContain(
       "previous response was invalid",
     );

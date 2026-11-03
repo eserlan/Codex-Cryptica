@@ -62,7 +62,7 @@
             name: characterName,
             description: characterDescription || characterName,
           },
-      // The context service resolves anchors only from sourceRecords, so a
+      // The source list records explicit anchor provenance, so a
       // chosen Vault character must be listed to reach Oracle as canonical text.
       ...(canonical
         ? {
