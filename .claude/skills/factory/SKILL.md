@@ -178,8 +178,11 @@ stopped. For a `resume` job, run its stage's step again: `intake` and `spec`
 respawn their agent; `build` spawns a new builder told it is resuming (it reads
 `build.md` and `git log` to see how far the last one got); `gate` runs the
 gate; `review` spawns only the reviewers whose `review-<r>.md` is missing in
-the current round; `approve` respawns the approver; `merging` runs
-`factory/bin/job merge <id>`. A `needs-info` job the author has answered shows
+the current round; `approve` respawns the approver. For a legacy `merging` job,
+check whether its PR is already merged: if so, run
+`factory/bin/job advance <id> merged`; otherwise run
+`factory/bin/job advance <id> needs-human`. Do not run `factory/bin/job merge`
+when resuming a `merging` job. A `needs-info` job the author has answered shows
 as `resume`: run `factory/bin/job advance <id> intake` and go to **intake**.
 
 ## /factory run <n>
