@@ -38,6 +38,12 @@ describe("isProbePath", () => {
 });
 
 describe("formatCandidateReport", () => {
+  it("reports zero traffic when there are no vetted candidates", () => {
+    expect(formatCandidateReport([])).toBe(
+      "Bad actor traffic: 0 IP(s), 0 total request(s).",
+    );
+  });
+
   it("totals requests and sorts busiest first", () => {
     const candidates = findCandidates([
       ...eventsFor("185.177.72.49", probes),

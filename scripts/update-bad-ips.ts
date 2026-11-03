@@ -702,7 +702,7 @@ export async function run(argv = process.argv.slice(2)): Promise<void> {
   const dropped = candidates.length - vetted.length;
   if (dropped > 0) console.log(`Dropped ${dropped} known-good actor(s).`);
 
-  if (vetted.length > 0) console.log(formatCandidateReport(vetted));
+  console.log(formatCandidateReport(vetted));
 
   const { entries, suggestedAsns } = aggregateRanges(vetted);
   for (const s of suggestedAsns) {
