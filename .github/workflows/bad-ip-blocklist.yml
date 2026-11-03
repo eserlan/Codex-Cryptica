@@ -9,8 +9,8 @@ name: Bad IP Blocklist
 
 on:
   schedule:
-    # 04:00 UTC daily, before the 05:00 crawler access check.
-    - cron: "0 4 * * *"
+    # 01:00 UTC daily (GitHub cron is always UTC; 02:00 CET / 03:00 CEST local).
+    - cron: "0 1 * * *"
   workflow_dispatch:
     inputs:
       apply:
