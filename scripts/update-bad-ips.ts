@@ -328,12 +328,17 @@ export function mergeListItems(
 
 const CF_API = "https://api.cloudflare.com/client/v4";
 
+interface CfEnvelope {
+  result?: unknown;
+  result_info?: { cursors?: { after?: string | null } };
+}
+
 // fallow-ignore-next-line complexity -- thin Cloudflare API wrapper; decision logic is extracted and unit-tested.
-async function cfFetch(
+async function cfFetchEnvelope(
   token: string,
   path: string,
   init: RequestInit = {},
-): Promise<unknown> {
+): Promise<CfEnvelope> {
   const res = await fetch(`${CF_API}${path}`, {
     ...init,
     headers: {
@@ -346,13 +351,22 @@ async function cfFetch(
     success?: boolean;
     errors?: unknown;
     result?: unknown;
+    result_info?: CfEnvelope["result_info"];
   } | null;
   if (!res.ok || !body?.success) {
     throw new Error(
       `Cloudflare API ${path} failed (${res.status}): ${JSON.stringify(body?.errors ?? body)}`,
     );
   }
-  return body.result;
+  return body;
+}
+
+async function cfFetch(
+  token: string,
+  path: string,
+  init: RequestInit = {},
+): Promise<unknown> {
+  return (await cfFetchEnvelope(token, path, init)).result;
 }
 
 export interface TrafficGroup {
@@ -489,18 +503,27 @@ export async function fetchListItems(
       `No Cloudflare list named "${listName}" on this account. Create it first (Manage account -> Configurations -> Lists).`,
     );
   }
+  // List items paginate by opaque cursor (result_info.cursors.after),
+  // not page numbers; per_page is capped at 500 by the API.
   const items: ListItem[] = [];
-  let page = 1;
-  for (;;) {
-    const result = (await cfFetch(
+  let cursor: string | null = null;
+  for (let guard = 0; guard < 100; guard++) {
+    const query = cursor
+      ? `?per_page=500&cursor=${encodeURIComponent(cursor)}`
+      : "?per_page=500";
+    const envelope = await cfFetchEnvelope(
       token,
-      `/accounts/${accountId}/rules/lists/${list.id}/items?page=${page}&per_page=1000`,
-    )) as { ip?: string; comment?: string }[];
+      `/accounts/${accountId}/rules/lists/${list.id}/items${query}`,
+    );
+    const result = (envelope.result ?? []) as {
+      ip?: string;
+      comment?: string;
+    }[];
     for (const item of result) {
       if (item.ip) items.push({ ip: item.ip, comment: item.comment });
     }
-    if (result.length < 1000) break;
-    page += 1;
+    cursor = envelope.result_info?.cursors?.after ?? null;
+    if (!cursor || result.length === 0) break;
   }
   return { listId: list.id, items };
 }
