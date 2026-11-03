@@ -1,3 +1,6 @@
+import { applyCompletedTurn, applyRollRequest } from "@codex/adventure-engine";
+import type { CommitMetadata } from "@codex/adventure-engine";
+import { diceParser } from "dice-engine";
 import type {
   AdventureSession,
   PlayerCharacter,
@@ -42,44 +45,95 @@ export function initialSession(input: {
     ...(input.worldEntry
       ? { worldEntry: structuredClone(input.worldEntry) }
       : {}),
-    visibleState: {
-      ...(input.worldEntry
-        ? {
-            location: {
-              id: input.idGenerator(),
-              text: input.worldEntry.location.name,
-              source:
-                input.worldEntry.location.kind === "canonical"
-                  ? ("canonical" as const)
-                  : ("provisional" as const),
-              ...(input.worldEntry.location.kind === "canonical"
-                ? { sourceRecordId: input.worldEntry.location.recordId }
-                : {}),
-            },
-          }
-        : {}),
-      objectives: [],
-      activeCharacters: [],
-      knownFacts: [],
-      relationships: [],
-    },
-    hiddenState: {
-      secrets: input.scenarioSeed
-        ? [
-            {
-              id: input.idGenerator(),
-              text: input.scenarioSeed.gmOnly.truth,
-              status: "hidden",
-              revealCondition: "Reveal after in-world discovery.",
-            },
-          ]
-        : [],
-      gmThreads: [],
-    },
+    visibleState: initialVisibleState(input.worldEntry, input.idGenerator),
+    hiddenState: initialHiddenState(input.scenarioSeed, input.idGenerator),
     provisionalFacts: [],
     turns: [],
     pendingRoll: null,
     dicePresets: [],
     resourceCounters: [],
+  };
+}
+
+export function validateRollExpression(proposal: {
+  kind: string;
+  dice?: { expression: string };
+}): void {
+  if (proposal.kind === "roll-required" && proposal.dice) {
+    diceParser.parse(proposal.dice.expression);
+  }
+}
+
+/** All reducers share this discriminated success/error contract. */
+export function acceptedSession(
+  result: {
+    ok: boolean;
+    value?: AdventureSession;
+    errors?: { message: string }[];
+  },
+  fallback: string,
+): AdventureSession {
+  if (result.ok && result.value) return result.value;
+  throw new Error(result.errors?.[0]?.message ?? fallback);
+}
+
+export function proposedSession(
+  session: AdventureSession,
+  proposal:
+    | Parameters<typeof applyCompletedTurn>[1]
+    | Parameters<typeof applyRollRequest>[1],
+  meta: CommitMetadata,
+  errorLabel: string,
+): AdventureSession {
+  const result =
+    proposal.kind === "roll-required"
+      ? applyRollRequest(session, proposal, meta)
+      : applyCompletedTurn(session, proposal, meta);
+  return acceptedSession(result, errorLabel);
+}
+
+function initialVisibleState(
+  worldEntry: WorldEntryContext | undefined,
+  idGenerator: () => string,
+): AdventureSession["visibleState"] {
+  return {
+    ...(worldEntry
+      ? {
+          location: {
+            id: idGenerator(),
+            text: worldEntry.location.name,
+            source:
+              worldEntry.location.kind === "canonical"
+                ? ("canonical" as const)
+                : ("provisional" as const),
+            ...(worldEntry.location.kind === "canonical"
+              ? { sourceRecordId: worldEntry.location.recordId }
+              : {}),
+          },
+        }
+      : {}),
+    objectives: [],
+    activeCharacters: [],
+    knownFacts: [],
+    relationships: [],
+  };
+}
+
+function initialHiddenState(
+  scenarioSeed: ScenarioState | undefined,
+  idGenerator: () => string,
+): AdventureSession["hiddenState"] {
+  return {
+    secrets: scenarioSeed
+      ? [
+          {
+            id: idGenerator(),
+            text: scenarioSeed.gmOnly.truth,
+            status: "hidden",
+            revealCondition: "Reveal after in-world discovery.",
+          },
+        ]
+      : [],
+    gmThreads: [],
   };
 }

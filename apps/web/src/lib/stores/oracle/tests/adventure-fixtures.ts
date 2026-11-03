@@ -1,3 +1,11 @@
+import { AdventureRuntime } from "../adventure-runtime";
+import { AdventureState } from "../adventure-state.svelte";
+import {
+  resolveAdventureDependencies,
+  type AdventureManagerDependencies,
+} from "../adventure-dependencies";
+import { initialSession } from "../adventure-session";
+
 export const now = "2026-08-16T12:00:00.000Z";
 export const completeProposal = {
   kind: "complete" as const,
@@ -110,3 +118,28 @@ export const startInput = {
     description: "Guide",
   },
 };
+
+/** A committed-state harness for testing each injected workflow directly. */
+export function createAdventureRuntime() {
+  let id = 0;
+  const deps = resolveAdventureDependencies({
+    ...dependencies(),
+    clearGenerationInteraction: async () => {},
+    idGenerator: () => `id-${++id}`,
+  } as unknown as AdventureManagerDependencies);
+  const state = new AdventureState();
+  state.session = initialSession({
+    ...startInput,
+    now,
+    idGenerator: deps.idGenerator,
+  });
+  state.phase = "ready";
+  state.lease = {
+    vaultId: startInput.vaultId,
+    sessionId: state.session.id,
+    ownerId: "owner",
+    fencingToken: 1,
+    expiresAt: Date.now() + 10_000,
+  };
+  return { state, deps, runtime: new AdventureRuntime(state, deps) };
+}
