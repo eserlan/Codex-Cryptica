@@ -5,6 +5,7 @@ import {
   filterKnownGood,
   findCandidates,
   isProbePath,
+  fetchListItems,
   mapTrafficGroups,
   mergeListItems,
   parseArgs,
@@ -164,6 +165,48 @@ describe("subnet and CIDR helpers", () => {
     expect(cidrContainsIp("185.177.72.0/24", "185.177.73.1")).toBe(false);
     expect(cidrContainsIp("185.177.72.49", "185.177.72.49")).toBe(true);
     expect(cidrContainsIp("not-a-cidr", "185.177.72.49")).toBe(false);
+  });
+});
+
+describe("fetchListItems", () => {
+  it("follows cursor pagination and never sends a page parameter", async () => {
+    const original = globalThis.fetch;
+    const urls: string[] = [];
+    globalThis.fetch = (async (input: RequestInfo | URL) => {
+      const url = String(input);
+      urls.push(url);
+      if (url.includes("/rules/lists?")) {
+        return Response.json({
+          success: true,
+          result: [{ id: "list-1", name: "bad_ips" }],
+        });
+      }
+      if (url.includes("cursor=c2")) {
+        return Response.json({
+          success: true,
+          result: [{ ip: "2.2.2.2" }],
+          result_info: { cursors: { after: null } },
+        });
+      }
+      return Response.json({
+        success: true,
+        result: [{ ip: "1.1.1.1", comment: "bad ip" }],
+        result_info: { cursors: { after: "c2" } },
+      });
+    }) as typeof fetch;
+    try {
+      const { listId, items } = await fetchListItems("t", "acct", "bad_ips");
+      expect(listId).toBe("list-1");
+      expect(items).toEqual([
+        { ip: "1.1.1.1", comment: "bad ip" },
+        { ip: "2.2.2.2", comment: undefined },
+      ]);
+      expect(urls.some((u) => u.includes("cursor=c2"))).toBe(true);
+      expect(urls.every((u) => !/[?&]page=/.test(u))).toBe(true);
+      expect(urls.every((u) => !u.includes("per_page=1000"))).toBe(true);
+    } finally {
+      globalThis.fetch = original;
+    }
   });
 });
 
