@@ -31,7 +31,10 @@ export interface AdventureAIClient {
     modelName: string,
     systemInstruction?: string,
   ): Promise<{
-    generateContent(input: unknown): Promise<{ response: { text(): string } }>;
+    generateContent(
+      input: unknown,
+      requestOptions?: { signal?: AbortSignal },
+    ): Promise<{ response: { text(): string } }>;
   }>;
   sendInteraction?: (params: {
     model: string;
@@ -590,8 +593,10 @@ export class AdventureTurnGenerationService {
     prompt: ReturnType<typeof buildAdventurePrompt>,
     systemInstruction: string,
     options: { apiKey?: string; modelName?: string; signal?: AbortSignal },
+    forceStructuredOutput = false,
   ): Promise<AdventureTurnProposal> {
-    if (this.aiClient.sendInteraction) {
+    streamAborted(options.signal ?? request.signal);
+    if (this.aiClient.sendInteraction && !forceStructuredOutput) {
       return this.generateViaInteraction(
         request,
         prompt,
@@ -604,15 +609,56 @@ export class AdventureTurnGenerationService {
       options.modelName ?? "luna-fast",
       systemInstruction,
     );
-    const result = await model.generateContent({
-      contents: [{ role: "user", parts: [{ text: prompt.serialized }] }],
-      generationConfig: {
-        responseMimeType: "application/json",
-        responseSchema: adventureTurnResponseSchema,
+    const result = await model.generateContent(
+      {
+        contents: [{ role: "user", parts: [{ text: prompt.serialized }] }],
+        generationConfig: {
+          responseMimeType: "application/json",
+          responseSchema: adventureTurnResponseSchema,
+        },
       },
-    });
+      { signal: options.signal ?? request.signal },
+    );
     streamAborted(options.signal ?? request.signal);
     return parseAdventureResponse(result.response.text());
+  }
+
+  private async generateStreamingOrRetry(
+    request: AdventureTurnGenerationRequest,
+    prompt: ReturnType<typeof buildAdventurePrompt>,
+    systemInstruction: string,
+    options: { apiKey?: string; modelName?: string; signal?: AbortSignal },
+  ): Promise<AdventureTurnProposal | null> {
+    try {
+      return await this.generateViaStream(
+        request,
+        prompt,
+        systemInstruction,
+        options,
+      );
+    } catch (error) {
+      // A complete stream can still contain malformed JSON or a response
+      // that violates the turn schema. Retry once with the provider's
+      // structured output constraint; never retry transport or abort errors.
+      if (
+        !(error instanceof Error) ||
+        error.message !== "invalid-adventure-response"
+      ) {
+        throw error;
+      }
+      streamAborted(options.signal ?? request.signal);
+      // The preview was never committed and may differ from the repaired
+      // result. Withdraw it before trying again.
+      request.onNarration?.("");
+      return this.generateBuffered(
+        request,
+        prompt,
+        systemInstruction +
+          "\n\nThe preceding response was invalid. Regenerate the turn as one complete JSON object matching the supplied schema. Do not include markdown.",
+        options,
+        true,
+      );
+    }
   }
 
   async generate(
@@ -634,7 +680,7 @@ export class AdventureTurnGenerationService {
       JSON.stringify(adventureTurnResponseSchema);
 
     if (request.onNarration) {
-      const streamed = await this.generateViaStream(
+      const streamed = await this.generateStreamingOrRetry(
         request,
         prompt,
         systemInstruction,
