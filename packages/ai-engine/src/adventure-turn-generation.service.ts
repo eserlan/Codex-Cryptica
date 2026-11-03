@@ -40,13 +40,53 @@ export interface AdventureAIClient {
     previousInteractionId?: string | null;
     storeConversation?: boolean;
     generationConfig?: Record<string, unknown>;
+    signal?: AbortSignal;
   }) => Promise<{ id: string; text: string }>;
+  sendInteractionStream?: (params: {
+    model: string;
+    input: string;
+    systemInstruction?: string;
+    previousInteractionId?: string | null;
+    generationConfig?: Record<string, unknown>;
+    signal?: AbortSignal;
+  }) => AsyncIterable<
+    | { type: "started" }
+    | { type: "delta"; text: string }
+    | { type: "complete"; text: string; id: string }
+    | { type: "error"; error: string }
+  >;
 }
 
 interface AdventureInteraction {
+  /** Only acknowledged after the local OPFS session commits this proposal. */
   previousInteractionId: string | null;
   tracker: LoreDeltaTracker;
   successfulTurns: number;
+  revision: number | null;
+  stateSnapshot: Record<string, unknown> | null;
+  sourceHashes: Map<string, string>;
+  /** A validated model reply is not necessarily a committed adventure turn. */
+  pending: {
+    id: string;
+    revision: number;
+    state: Record<string, unknown>;
+    sourceEntries: Array<{ id: string; snippet: string; hash: string }>;
+  } | null;
+}
+
+/** Only changes to the state snapshot are sent while provider history is valid.
+ * A null represents removal of an optional top-level field. */
+function stateDelta(
+  previous: Record<string, unknown>,
+  current: Record<string, unknown>,
+): Record<string, unknown> {
+  const delta: Record<string, unknown> = {};
+  for (const key of new Set([...Object.keys(previous), ...Object.keys(current)])) {
+    if (JSON.stringify(previous[key]) !== JSON.stringify(current[key])) {
+      delta[key] = key in current ? current[key] : null;
+    }
+  }
+  return delta;
 }
 
 const CONTEXT_REFRESH_TURNS = 20;
@@ -400,6 +440,10 @@ export class AdventureTurnGenerationService {
         previousInteractionId: null,
         tracker: new LoreDeltaTracker(),
         successfulTurns: 0,
+        revision: null,
+        stateSnapshot: null,
+        sourceHashes: new Map(),
+        pending: null,
       };
       this.interactions.set(sessionId, interaction);
     }
