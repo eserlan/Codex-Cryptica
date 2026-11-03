@@ -127,6 +127,7 @@ export const howDoYouMakeABossFightMemorableInATabletopRpg: AnswerConfigInput =
       "how-do-i-upgrade-a-player-characters-weapon-without-replacing-it",
       "how-do-i-combine-multiple-enemies-into-one-squad-in-an-rpg",
       "how-do-i-balance-one-powerful-enemy-against-many-weaker-enemies",
+      "how-do-you-make-a-single-enemy-boss-fight-interesting",
     ],
     discovery: {
       parentCluster: "encounter-balance",
@@ -136,7 +137,6 @@ export const howDoYouMakeABossFightMemorableInATabletopRpg: AnswerConfigInput =
         "how to make a dnd boss fight epic",
         "tabletop rpg final boss fight ideas",
         "how to design a climactic rpg encounter",
-        "how to make a boss encounter interesting",
         "rpg boss fight design",
         "memorable final boss encounter",
       ],
@@ -147,6 +147,11 @@ export const howDoYouMakeABossFightMemorableInATabletopRpg: AnswerConfigInput =
           with: "answer-encounter-balance",
           reason:
             "Combat balance covers the maths and mechanics of a fair fight; boss fights cover making encounters narratively payoff campaign investment. Both apply to the same encounter but answer different questions.",
+        },
+        {
+          with: "answer-how-do-you-make-a-single-enemy-boss-fight-interesting",
+          reason:
+            "This page covers making a boss fight a campaign payoff; the single-enemy answer covers round-by-round tactical engagement against one enemy, including off-turn activity, positioning, telegraphs and phases. The same fight can use both, but they answer different questions.",
         },
       ],
       relatedIntents: [

@@ -192,6 +192,7 @@ export const howDoIBalanceOnePowerfulEnemyAgainstManyWeakerEnemies: AnswerConfig
       "how-do-i-combine-multiple-enemies-into-one-squad-in-an-rpg",
       "how-do-i-make-combat-faster-without-making-it-less-exciting",
       "how-do-i-track-monsters-initiative-and-hit-points-in-dnd-combat",
+      "how-do-you-make-a-single-enemy-boss-fight-interesting",
     ],
     discovery: {
       id: "answer-balance-one-powerful-vs-many-weaker",
@@ -232,6 +233,11 @@ export const howDoIBalanceOnePowerfulEnemyAgainstManyWeakerEnemies: AnswerConfig
           with: "answer-combine-enemies-into-squad",
           reason:
             "The squad answer covers mechanically combining several similar enemies into one tracked unit; this page covers choosing between enemy compositions and only points to squads as one way to reduce bookkeeping for a large group.",
+        },
+        {
+          with: "answer-how-do-you-make-a-single-enemy-boss-fight-interesting",
+          reason:
+            "This page compares enemy compositions by effective actions and difficulty; the single-enemy answer assumes one boss and covers how to make its rounds interactive through telegraphs, positioning, phases and secondary objectives.",
         },
       ],
     },
