@@ -65,6 +65,8 @@ export default tseslint.config(
       "**/test-results/**",
       "**/android/**",
       "**/ios/**",
+      // Software factory job worktrees: full repo copies.
+      ".worktrees/**",
     ],
   },
 );

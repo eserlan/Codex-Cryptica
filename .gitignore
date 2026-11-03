@@ -84,6 +84,7 @@ blogPics/
 .eslintcache
 .claude/*
 !.claude/skills/
+!.claude/agents/
 
 # Playwright Smart E2E Cache
 apps/web/.e2e-success.json
@@ -118,3 +119,7 @@ _worker.bundle*
 
 # Generated contextual-help knowledge bundle (built at deploy; see #3427)
 packages/help-engine/dist/
+
+# Software factory runtime state and per-job worktrees
+/factory/jobs/
+/.worktrees/
