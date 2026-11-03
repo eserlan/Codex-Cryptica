@@ -52,10 +52,10 @@ describe("adventure generation adapter", () => {
     expect(
       adventureTurnGenerationService.clearInteraction,
     ).toHaveBeenCalledWith("session");
-    await confirmDefaultGenerationInteraction("session");
+    await confirmDefaultGenerationInteraction("session", 1);
     expect(
       adventureTurnGenerationService.confirmInteraction,
-    ).toHaveBeenCalledWith("session");
+    ).toHaveBeenCalledWith("session", 1);
   });
 
   it("keeps callbacks and signals outside the cloneable worker request and forwards cancellation", async () => {
@@ -87,9 +87,9 @@ describe("adventure generation adapter", () => {
     expect(oracleBridge.clearAdventureInteraction).toHaveBeenCalledWith(
       "session",
     );
-    await confirmDefaultGenerationInteraction("session");
+    await confirmDefaultGenerationInteraction("session", 1);
     expect(oracleBridge.confirmAdventureInteraction).toHaveBeenCalledWith(
-      "session",
+      "session", 1,
     );
   });
 
