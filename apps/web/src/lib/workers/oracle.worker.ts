@@ -331,8 +331,8 @@ class OracleWorker {
     this.adventureGeneration.clearInteraction(sessionId);
   }
 
-  confirmAdventureInteraction(sessionId: string): void {
-    this.adventureGeneration.confirmInteraction(sessionId);
+  confirmAdventureInteraction(sessionId: string, revision?: number): void {
+    this.adventureGeneration.confirmInteraction(sessionId, revision);
   }
 
   async propose(
