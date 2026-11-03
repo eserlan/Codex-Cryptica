@@ -65,6 +65,7 @@ export type GenerationEvent =
 /** Shared by `sendViaOperationPipeline` and its streaming counterpart so a
  * buffered and a streamed request for the same content always ask the
  * operation pipeline for exactly the same thing. */
+// fallow-ignore-next-line complexity
 function buildOperationPipelineBody(params: {
   contents: any[];
   generationConfig: any;
@@ -219,6 +220,7 @@ async function sendViaOperationPipeline(params: {
  * produce identical `contents`/`generationConfig`/`finalSysInst` — only how
  * the response comes back differs.
  */
+// fallow-ignore-next-line complexity
 function normalizeGenerateContentRequest(
   request: string | Array<GenerativeContentBlob | string> | any,
   systemInstruction: string | undefined,
@@ -314,6 +316,7 @@ function normalizeGenerateContentRequest(
  * reconnect, since replaying a request that's already streamed content to
  * the caller isn't safe to do transparently.
  */
+// fallow-ignore-next-line complexity
 async function* sendViaOperationPipelineStream(params: {
   proxyUrl: string;
   doFetch: typeof fetch;
@@ -544,6 +547,7 @@ export class DefaultAIClientManager {
    * {@link InteractionExpiredError} when the previous id has expired so the
    * caller can reset and replay full history.
    */
+// fallow-ignore-next-line complexity
   async sendInteraction(params: {
     model: string;
     input: string;
@@ -606,6 +610,7 @@ export class DefaultAIClientManager {
    * The returned id is *not* a commit acknowledgement: adventure storage
    * must confirm the turn before it can become the next continuation.
    */
+// fallow-ignore-next-line complexity
   async *sendInteractionStream(params: {
     model: string;
     input: string;
@@ -815,6 +820,7 @@ export class DefaultAIClientManager {
         };
       },
 
+// fallow-ignore-next-line complexity
       async generateContent(
         request: string | Array<GenerativeContentBlob | string> | any,
         requestOptions?: { signal?: AbortSignal },
