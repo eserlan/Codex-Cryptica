@@ -5,6 +5,7 @@ import {
   filterKnownGood,
   findCandidates,
   isProbePath,
+  mapTrafficGroups,
   mergeListItems,
   parseArgs,
   subnet24,
@@ -31,6 +32,51 @@ describe("isProbePath", () => {
     expect(isProbePath("/xaws")).toBe(false);
     expect(isProbePath("/xsvn")).toBe(false);
     expect(isProbePath("/.environment-guide")).toBe(false);
+  });
+});
+
+describe("mapTrafficGroups", () => {
+  it("maps paid-plan fields, numeric ASN and verified bots", () => {
+    const [event] = mapTrafficGroups([
+      {
+        count: 4,
+        dimensions: {
+          clientIP: "185.177.72.49",
+          clientRequestPath: "/.env",
+          clientAsn: 211590,
+          edgeResponseStatus: 404,
+          botManagementDecision: "verified_bot",
+        },
+      },
+    ]);
+    expect(event).toEqual({
+      ip: "185.177.72.49",
+      path: "/.env",
+      status: 404,
+      count: 4,
+      asn: "211590",
+      verifiedBot: true,
+    });
+  });
+
+  it("maps the free-plan shape: no ASN, verifiedBotCategory as bot signal", () => {
+    const [bot, human] = mapTrafficGroups([
+      {
+        count: 1,
+        dimensions: {
+          clientIP: "66.249.66.1",
+          clientRequestPath: "/",
+          verifiedBotCategory: "Search Engine Crawler",
+        },
+      },
+      {
+        count: 1,
+        dimensions: { clientIP: "203.0.113.9", clientRequestPath: "/" },
+      },
+    ]);
+    expect(bot.verifiedBot).toBe(true);
+    expect(bot.asn).toBeUndefined();
+    expect(human.verifiedBot).toBe(false);
   });
 });
 
