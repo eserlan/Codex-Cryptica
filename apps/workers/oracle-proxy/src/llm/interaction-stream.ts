@@ -182,6 +182,7 @@ export async function handleInteractionStream(
   const encoder = new TextEncoder();
   const reader = upstream.body.getReader();
   const stream = new ReadableStream<Uint8Array>({
+// fallow-ignore-next-line complexity -- Adapter orchestration and structured event paths are covered by focused provider/turn tests.
     async start(controller) {
       const emit = (event: NormalizedEvent) =>
         controller.enqueue(
