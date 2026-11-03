@@ -1,0 +1,32 @@
+name: Temporary Final Solo Format
+on:
+  push:
+    branches:
+      - feat/solo-adventure-conversation-continuity
+permissions:
+  contents: write
+jobs:
+  format:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: true
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+      - run: bun install --frozen-lockfile
+      - name: Format final two files
+        run: |
+          bunx prettier --write apps/workers/oracle-proxy/src/llm/interaction-stream.ts packages/ai-engine/src/client-manager.ts
+      - name: Commit formatted files
+        run: |
+          if ! git diff --quiet; then
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git add -- apps/workers/oracle-proxy/src/llm/interaction-stream.ts packages/ai-engine/src/client-manager.ts
+            git commit -m '🎨 style(solo): format final Fallow annotations'
+            git push origin HEAD:feat/solo-adventure-conversation-continuity
+          fi
