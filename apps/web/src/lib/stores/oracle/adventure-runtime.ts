@@ -135,7 +135,13 @@ export class AdventureRuntime {
     } catch (cause) {
       // Discard any uncommitted remote response after a rejected patch,
       // cancelled generation, lost lease or failed local save.
-      if (this.state.session) {
+      // An older cancelled turn may settle after a newer one has started.
+      // Never clear the newer turn's provider context from that stale catch.
+      if (
+        !signal.aborted &&
+        this.generationController?.signal === signal &&
+        this.state.session
+      ) {
         await this.deps
           .clearGenerationInteraction(this.state.session.id)
           .catch(() => {});
