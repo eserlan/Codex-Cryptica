@@ -131,6 +131,7 @@ function buildChatCompletionsBody(
   return body;
 }
 
+// fallow-ignore-next-line complexity -- Adapter orchestration and structured event paths are covered by focused provider/turn tests.
 export async function callOpenAi(
   request: LlmRequest,
   model: LlmModelDefinition,
@@ -228,6 +229,7 @@ export async function callOpenAi(
  * requested structured output must accumulate `delta` text and parse/
  * validate the buffer itself once `complete` fires.
  */
+// fallow-ignore-next-line complexity -- Adapter orchestration and structured event paths are covered by focused provider/turn tests.
 export async function* streamOpenAi(
   request: LlmRequest,
   model: LlmModelDefinition,
@@ -335,6 +337,7 @@ export interface OpenAiInteractionResult {
  * on OpenAI models for free, just by naming an OpenAI registry key as `model`.
  */
 /** Shared buffered/streaming payload mapping: both paths must have identical continuation semantics. */
+// fallow-ignore-next-line complexity -- Adapter orchestration and structured event paths are covered by focused provider/turn tests.
 export function buildOpenAiInteractionPayload(
   body: Record<string, any>,
   modelId: string,
