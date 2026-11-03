@@ -397,6 +397,18 @@ describe("AdventureFocusPlay", () => {
       outside.remove();
     });
 
+    it("uses visualViewport height even when the change is too small for keyboard detection", async () => {
+      render(AdventureFocusPlay, { props: props() });
+      const surface = screen.getByTestId("adventure-play-surface");
+      viewport.height = window.innerHeight - 80;
+      viewport.offsetTop = 12;
+      viewport.dispatchEvent(new Event("resize"));
+      await waitFor(() => {
+        expect(surface.style.top).toBe("12px");
+        expect(surface.style.height).toBe(window.innerHeight - 80 + "px");
+      });
+    });
+
     it("pins to the visible viewport when the keyboard reduces it", async () => {
       render(AdventureFocusPlay, { props: props() });
       const surface = screen.getByTestId("adventure-play-surface");

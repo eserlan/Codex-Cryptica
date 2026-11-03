@@ -34,6 +34,52 @@ describe("AdventureComposer", () => {
     await waitFor(() => expect(textarea.style.height).not.toBe(""));
   });
 
+  it("keeps the composer and Send outside the scrollable extras", () => {
+    const m = manager("ready");
+    m.suggestedActions = ["Ask the innkeeper"];
+    render(AdventureComposer, { props: { manager: m } });
+
+    const dock = screen.getByTestId("adventure-action-dock");
+    const extras = screen.getByTestId("adventure-dock-extras");
+    const field = screen.getByLabelText("What do you do?");
+    const send = screen.getByRole("button", { name: "Submit action" });
+    expect(dock.className).toContain("overflow-hidden");
+    expect(extras.className).toContain("overflow-y-auto");
+    const suggestions = screen.getByTestId("adventure-suggested-actions");
+    expect(extras.contains(suggestions)).toBe(true);
+    expect(extras.contains(field)).toBe(false);
+    expect(extras.contains(send)).toBe(false);
+    expect(dock.contains(field)).toBe(true);
+    expect(dock.contains(send)).toBe(true);
+  });
+
+  it("hides phone suggestions while typing", async () => {
+    const m = manager("ready");
+    m.suggestedActions = ["Ask the innkeeper"];
+    render(AdventureComposer, { props: { manager: m, phone: true } });
+    const suggestions = screen.getByTestId("adventure-suggested-actions");
+    const field = screen.getByLabelText("What do you do?");
+    expect(suggestions.className).not.toBe("hidden");
+
+    await fireEvent.focus(field);
+    expect(suggestions.className).toBe("hidden");
+    expect(screen.getByRole("button", { name: "Submit action" })).toBeTruthy();
+
+    await fireEvent.blur(field);
+    expect(suggestions.className).not.toBe("hidden");
+  });
+
+  it("hides suggestions with a phone keyboard open", () => {
+    const m = manager("ready");
+    m.suggestedActions = ["Ask the innkeeper"];
+    render(AdventureComposer, {
+      props: { manager: m, phone: true, keyboardOpen: true },
+    });
+    const suggestions = screen.getByTestId("adventure-suggested-actions");
+    expect(suggestions.className).toBe("hidden");
+    expect(screen.getByLabelText("What do you do?")).toBeTruthy();
+  });
+
   it("keeps free action visible beside a compact dropdown of suggested actions", () => {
     const m = manager("ready");
     m.suggestedActions = [

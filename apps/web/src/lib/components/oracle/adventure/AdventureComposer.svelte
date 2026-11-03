@@ -3,7 +3,15 @@
   import type { AdventureManager } from "#lib/stores/oracle/adventure-manager.svelte.js";
   import AdventureSuggestedActions from "./AdventureSuggestedActions.svelte";
 
-  let { manager }: { manager: AdventureManager } = $props();
+  let {
+    manager,
+    phone = false,
+    keyboardOpen = false,
+  }: {
+    manager: AdventureManager;
+    phone?: boolean;
+    keyboardOpen?: boolean;
+  } = $props();
   let action = $derived(manager.draft);
   let disabled = $derived(
     manager.readOnly ||
@@ -16,6 +24,7 @@
   let retryingControl = $state(false);
   let controlRetryMessage = $state<string | null>(null);
   let textarea = $state<HTMLTextAreaElement>();
+  let typing = $state(false);
 
   // Keep the action field compact for one line, then grow as the player types.
   // Long prose scrolls inside the field so it never pushes the dock offscreen.
@@ -58,36 +67,63 @@
       manager.phase !== "awaiting-roll" &&
       manager.phase !== "ready-to-resolve",
   );
+  // Suggestions are optional while typing: the free-action row must remain
+  // reachable when an on-screen keyboard reduces the available height.
+  let suggestionsVisible = $derived(
+    actionControlsVisible && !(phone && (keyboardOpen || typing)),
+  );
 </script>
 
 <div
-  class="z-10 min-h-0 max-h-[55%] shrink-0 space-y-2 overflow-y-auto border-t border-theme-border bg-theme-surface px-3 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] sm:px-4 sm:pt-3"
+  class="z-10 flex min-h-0 max-h-[55%] shrink-0 flex-col gap-2 overflow-hidden border-t border-theme-border bg-theme-surface px-3 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] sm:px-4 sm:pt-3"
   data-testid="adventure-action-dock"
 >
-  {#if manager.readOnly && manager.session?.status === "active"}
-    <div
-      class="rounded-lg border border-theme-border bg-theme-bg p-3 text-sm text-theme-text"
-      role="status"
-    >
-      <p>
-        Another tab may be controlling this adventure. Leave it there or close
-        that tab, then try again here. Your progress is saved.
+  <!-- Only optional controls scroll. Never put the textarea/Send row in this
+       container: it must remain fixed at the bottom when the keyboard opens. -->
+  <div class="min-h-0 overflow-y-auto" data-testid="adventure-dock-extras">
+    {#if manager.readOnly && manager.session?.status === "active"}
+      <div
+        class="rounded-lg border border-theme-border bg-theme-bg p-3 text-sm text-theme-text"
+        role="status"
+      >
+        <p>
+          Another tab may be controlling this adventure. Leave it there or close
+          that tab, then try again here. Your progress is saved.
+        </p>
+        <button
+          type="button"
+          class="mt-2 min-h-11 rounded-lg border border-theme-border px-3 py-2 font-medium transition hover:bg-theme-primary/10 disabled:opacity-50"
+          disabled={retryingControl}
+          onclick={() => void retryControl()}
+        >
+          {retryingControl ? "Checking…" : "Try to take control"}
+        </button>
+        {#if controlRetryMessage}
+          <p class="mt-2 text-theme-text">{controlRetryMessage}</p>
+        {/if}
+      </div>
+    {/if}
+    <AdventureSuggestedActions
+      {manager}
+      {disabled}
+      visible={suggestionsVisible}
+    />
+    {#if manager.errorMessage}
+      <p class="text-sm text-theme-danger" role="alert">
+        {manager.errorMessage}
       </p>
+    {/if}
+    {#if !manager.readOnly && manager.session?.turns.length === 0 && !manager.session.pendingRoll}
       <button
         type="button"
-        class="mt-2 min-h-11 rounded-lg border border-theme-border px-3 py-2 font-medium transition hover:bg-theme-primary/10 disabled:opacity-50"
-        disabled={retryingControl}
-        onclick={() => void retryControl()}
+        class="min-h-11 rounded-lg border border-theme-border px-3 py-2 text-sm text-theme-text disabled:opacity-50"
+        disabled={manager.phase === "generating"}
+        onclick={() => void manager.retryOpening()}>Retry opening</button
       >
-        {retryingControl ? "Checking…" : "Try to take control"}
-      </button>
-      {#if controlRetryMessage}
-        <p class="mt-2 text-theme-text">{controlRetryMessage}</p>
-      {/if}
-    </div>
-  {/if}
+    {/if}
+  </div>
   <form
-    class="space-y-2"
+    class="shrink-0 space-y-2"
     onsubmit={(event) => {
       event.preventDefault();
       void manager.submitAction(action);
@@ -118,11 +154,6 @@
         onclick={() => manager.cancel()}>Cancel</button
       >
     </div>
-    <AdventureSuggestedActions
-      {manager}
-      {disabled}
-      visible={actionControlsVisible}
-    />
     <div
       class={actionControlsVisible ? "flex items-end gap-2" : "hidden"}
       data-testid="adventure-free-action"
@@ -134,6 +165,8 @@
         rows="1"
         class="min-h-11 min-w-0 flex-1 resize-none rounded-lg border border-theme-border bg-theme-bg px-3 py-2 text-base leading-relaxed text-theme-text placeholder:text-theme-muted"
         bind:value={manager.draft}
+        onfocus={() => (typing = true)}
+        onblur={() => (typing = false)}
         {disabled}
         placeholder="What do you do?"
       ></textarea>
@@ -148,17 +181,4 @@
       </button>
     </div>
   </form>
-  {#if manager.errorMessage}
-    <p class="text-sm text-theme-danger" role="alert">
-      {manager.errorMessage}
-    </p>
-  {/if}
-  {#if !manager.readOnly && manager.session?.turns.length === 0 && !manager.session.pendingRoll}
-    <button
-      type="button"
-      class="min-h-11 rounded-lg border border-theme-border px-3 py-2 text-sm text-theme-text disabled:opacity-50"
-      disabled={manager.phase === "generating"}
-      onclick={() => void manager.retryOpening()}>Retry opening</button
-    >
-  {/if}
 </div>
