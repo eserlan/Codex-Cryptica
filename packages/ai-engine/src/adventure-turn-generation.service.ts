@@ -65,10 +65,12 @@ interface AdventureInteraction {
   revision: number | null;
   stateSnapshot: Record<string, unknown> | null;
   sourceHashes: Map<string, string>;
+  modelName: string | null;
   /** A validated model reply is not necessarily a committed adventure turn. */
   pending: {
     id: string;
     revision: number;
+    modelName: string;
     state: Record<string, unknown>;
     sourceEntries: Array<{ id: string; snippet: string; hash: string }>;
   } | null;
@@ -443,6 +445,7 @@ export class AdventureTurnGenerationService {
         revision: null,
         stateSnapshot: null,
         sourceHashes: new Map(),
+        modelName: null,
         pending: null,
       };
       this.interactions.set(sessionId, interaction);
@@ -462,6 +465,7 @@ export class AdventureTurnGenerationService {
     const pending = interaction?.pending;
     if (!interaction || !pending) return;
     interaction.previousInteractionId = pending.id;
+    interaction.modelName = pending.modelName;
     interaction.revision = pending.revision + 1;
     interaction.stateSnapshot = pending.state;
     interaction.tracker.commit(pending.sourceEntries);
@@ -531,6 +535,8 @@ export class AdventureTurnGenerationService {
     // a failed save, or a cancelled turn: rebuild from authoritative OPFS.
     if (
       interaction.pending ||
+      (interaction.modelName !== null &&
+        interaction.modelName !== (options.modelName ?? "luna-fast")) ||
       (interaction.revision !== null &&
         interaction.revision !== request.session.revision) ||
       interaction.successfulTurns >= CONTEXT_REFRESH_TURNS
@@ -647,7 +653,7 @@ export class AdventureTurnGenerationService {
         // conversation ID; never chain from an invalid model response.
         result = await send(
           "Previous JSON failed validation. Return a complete corrected JSON proposal with all required fields.",
-          false,
+          !sendInteraction,
         );
         proposal = parseAdventureResponse(result.text);
       }
@@ -656,6 +662,7 @@ export class AdventureTurnGenerationService {
       interaction.pending = {
         id: result.id,
         revision: request.session.revision,
+        modelName: options.modelName ?? "luna-fast",
         state: result.state,
         sourceEntries: result.sourceEntries,
       };
