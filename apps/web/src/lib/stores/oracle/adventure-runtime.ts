@@ -84,7 +84,7 @@ export class AdventureRuntime {
     // A failed acknowledgement cannot undo a saved turn; discard the remote
     // optimization and reconstruct from saved local state on the next action.
     try {
-      await this.deps.confirmGenerationInteraction(saved.session.id);
+      await this.deps.confirmGenerationInteraction(saved.session.id, saved.session.revision);
     } catch {
       await this.deps.clearGenerationInteraction(saved.session.id).catch(() => {});
     }
