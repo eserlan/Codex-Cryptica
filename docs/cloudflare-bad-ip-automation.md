@@ -76,6 +76,10 @@ CLOUDFLARE_ACCOUNT_ID=… CLOUDFLARE_BAD_IPS_TOKEN=… CLOUDFLARE_ZONE_ID=… \
   run, or not at all.
 - `httpRequestsAdaptiveGroups` is adaptively sampled on some plans, so
   counts are approximate. Thresholds are set well above sampling noise.
+- ASN and bot-management fields are plan-gated. On plans without them
+  (including Free) the script degrades automatically: it retries without
+  `clientAsn`/`botManagementDecision`, uses `verifiedBotCategory` as the
+  verified-bot signal, and simply makes no ASN-block suggestions.
 
 ## Rollback
 

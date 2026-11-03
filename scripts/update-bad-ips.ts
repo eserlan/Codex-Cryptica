@@ -355,21 +355,70 @@ async function cfFetch(
   return body.result;
 }
 
+export interface TrafficGroup {
+  count: number;
+  dimensions: {
+    clientIP: string;
+    clientRequestPath: string;
+    clientAsn?: string | number;
+    edgeResponseStatus?: number;
+    botManagementDecision?: string;
+    verifiedBotCategory?: string;
+  };
+}
+
+export function mapTrafficGroups(groups: TrafficGroup[]): RawEvent[] {
+  return groups.map((g) => ({
+    ip: g.dimensions.clientIP,
+    path: g.dimensions.clientRequestPath,
+    status: g.dimensions.edgeResponseStatus,
+    count: g.count,
+    asn:
+      g.dimensions.clientAsn != null
+        ? String(g.dimensions.clientAsn)
+        : undefined,
+    verifiedBot:
+      g.dimensions.botManagementDecision === "verified_bot" ||
+      Boolean(g.dimensions.verifiedBotCategory),
+  }));
+}
+
+// Optional dimensions are plan-gated (clientAsn and botManagementDecision
+// need a paid Bot Management plan; verifiedBotCategory is the free-plan
+// signal). Try richest first and degrade on field-access errors only.
+const TRAFFIC_FIELD_VARIANTS: string[][] = [
+  ["clientAsn", "botManagementDecision"],
+  ["botManagementDecision"],
+  ["verifiedBotCategory"],
+  [],
+];
+
+// fallow-ignore-next-line complexity -- plan-field degradation loop; response mapping is extracted into mapTrafficGroups and unit-tested.
 export async function fetchTrafficEvents(
   token: string,
   zoneId: string,
   days: number,
 ): Promise<RawEvent[]> {
-  try {
-    return await queryTrafficGroups(token, zoneId, days, true);
-  } catch (err) {
-    // Some plans do not expose botManagementDecision; verified-bot
-    // exclusion then falls back to NEVER_BLOCK_CIDRS and GreyNoise RIOT.
-    if (String(err).includes("botManagementDecision")) {
-      return queryTrafficGroups(token, zoneId, days, false);
+  let lastError: unknown;
+  for (const [index, extraFields] of TRAFFIC_FIELD_VARIANTS.entries()) {
+    try {
+      return await queryTrafficGroups(token, zoneId, days, extraFields);
+    } catch (err) {
+      lastError = err;
+      const message = String(err).toLowerCase();
+      const isFieldAccessError =
+        message.includes("field") ||
+        message.includes("does not have access") ||
+        message.includes("authz");
+      if (!isFieldAccessError || index === TRAFFIC_FIELD_VARIANTS.length - 1) {
+        throw err;
+      }
+      console.warn(
+        `Traffic fields [${extraFields.join(", ")}] unavailable on this plan; retrying with fewer fields.`,
+      );
     }
-    throw err;
   }
+  throw lastError;
 }
 
 // fallow-ignore-next-line complexity -- GraphQL query construction and response mapping; detection logic is extracted and unit-tested.
@@ -377,7 +426,7 @@ async function queryTrafficGroups(
   token: string,
   zoneId: string,
   days: number,
-  withBotDecision: boolean,
+  extraFields: string[],
 ): Promise<RawEvent[]> {
   const since = new Date(Date.now() - days * 86_400_000).toISOString();
   const query = `query {
@@ -391,9 +440,8 @@ async function queryTrafficGroups(
         dimensions {
           clientIP
           clientRequestPath
-          clientAsn
           edgeResponseStatus
-          ${withBotDecision ? "botManagementDecision" : ""}
+          ${extraFields.join("\n          ")}
         }
       }
     } }
@@ -410,18 +458,7 @@ async function queryTrafficGroups(
   const body = (await res.json()) as {
     data?: {
       viewer?: {
-        zones?: {
-          httpRequestsAdaptiveGroups?: {
-            count: number;
-            dimensions: {
-              clientIP: string;
-              clientRequestPath: string;
-              clientAsn?: string;
-              edgeResponseStatus?: number;
-              botManagementDecision?: string;
-            };
-          }[];
-        }[];
+        zones?: { httpRequestsAdaptiveGroups?: TrafficGroup[] }[];
       };
     };
     errors?: unknown;
@@ -431,16 +468,9 @@ async function queryTrafficGroups(
       `Cloudflare GraphQL errors: ${JSON.stringify(body.errors)}`,
     );
   }
-  const groups =
-    body.data?.viewer?.zones?.[0]?.httpRequestsAdaptiveGroups ?? [];
-  return groups.map((g) => ({
-    ip: g.dimensions.clientIP,
-    path: g.dimensions.clientRequestPath,
-    status: g.dimensions.edgeResponseStatus,
-    count: g.count,
-    asn: g.dimensions.clientAsn,
-    verifiedBot: g.dimensions.botManagementDecision === "verified_bot",
-  }));
+  return mapTrafficGroups(
+    body.data?.viewer?.zones?.[0]?.httpRequestsAdaptiveGroups ?? [],
+  );
 }
 
 // fallow-ignore-next-line complexity -- paginated list fetch wrapper; merge logic is extracted and unit-tested.
