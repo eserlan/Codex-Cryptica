@@ -9,3 +9,10 @@ pnpm-lock.yaml
 .turbo/
 # Workspace extras
 *.generated.json
+
+# Software factory: job worktrees, runtime state, and files vendored from
+# zazencodes-season-3 (kept close to upstream so updates diff cleanly)
+.worktrees/
+factory/
+.claude/agents/
+.claude/skills/factory/

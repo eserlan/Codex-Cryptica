@@ -67,6 +67,25 @@ This file is the Codex-facing instruction layer for this repository.
   4. The changes pass the `codex-review` specialist review.
   5. `bun scripts/discovery-audit.mjs` passes, if the PR touches a public discovery page.
 
+## Setup, Dev Server and Validation
+
+- **Fresh checkout**: `bun install --frozen-lockfile` at the repo root (this also runs `svelte-kit sync`). No env file is required; `apps/web/.env.example` lists only optional keys.
+- **Dev server on a given port**: `cd apps/web && bunx vite dev --port <port> --strictPort`.
+- **Validation** (what `factory/checks.sh` runs, against `origin/staging`): `bun scripts/lint-changed.mjs --base origin/staging`; `bunx svelte-check --tsconfig ./tsconfig.json --threshold error` in `apps/web` when `web` is affected (`bun scripts/affected-workspaces.mjs --base origin/staging`); `bun scripts/test-changed.mjs --base origin/staging`; and the Fallow audit gate.
+
+## Software factory
+
+`/factory run` builds every open GitHub issue labeled `factory` through
+intake → spec → build → gate → review → approve, one PR per issue. State is in
+`factory/jobs/` (gitignored); `factory/bin/job` is its only writer. Checks:
+`factory/checks.sh`. Dashboard: `cd factory && python3 -m http.server`, then
+open http://localhost:8000/dashboard.html.
+
+Each job works in its own git worktree, a full checkout of the repo at
+`.worktrees/<job-id>` (gitignored). A tool run from the repo root that doesn't
+read `.gitignore` sees those copies too; exclude `.worktrees/` in its config
+(ESLint, Prettier and Fallow already do).
+
 ## Maintenance Rule
 
 - If Speckit command behavior changes, update the command files in [`.gemini/commands`](./.gemini/commands) first, then refresh the Codex mirror at [`.codex/commands`](./.codex/commands).
