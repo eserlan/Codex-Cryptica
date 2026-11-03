@@ -24,7 +24,10 @@ shared by several failing tests, so the suite gets greener every day.
    - screenshot diffs;
    - setup or environment failures.
 2. Pick the cluster that fixes the most tests with the smallest, safest change. Skip clusters a
-   recent Vigil PR already addressed.
+   recent Vigil PR already addressed, and clusters you may not fix here: screenshot baselines,
+   external AI or network services, and changes that need a product decision. Then take the
+   next largest fixable cluster, even if it is a single test. A skipped cluster is never a
+   reason to stop.
 3. Decide whether the **test** or the **app** is wrong. Use the git history of the spec and of the
    components it touches. A test that lags behind an intentional UI change gets updated. A
    regression in the app gets fixed in the app, with a unit test where the repository requires
@@ -52,10 +55,11 @@ shared by several failing tests, so the suite gets greener every day.
 
 ## When not to change anything
 
-If the failures are systemic or environmental, finish without a change and write the cause as
-your no-op reason. Examples: the dev server or build fails for every test, the CI runner broke,
-or an external service or secret is missing. Also finish without a change if every remaining
-cluster needs a product decision.
+Finish without a change only when no cluster is fixable, and write the cause as your no-op
+reason. That means the failures are systemic or environmental (the dev server or build fails for
+every test, the CI runner broke, an external service or secret is missing), or every remaining
+cluster is one you must skip. Failures spread across unrelated causes are not systemic: fix one
+of them.
 
 ## Boundaries
 
@@ -69,7 +73,8 @@ cluster needs a product decision.
 **Root cause:** what actually broke, and whether the test or the app was wrong.
 **Fix:** what changed.
 **Verification:** the Playwright commands you ran and their results.
-**Remaining:** other clusters you saw but left for later runs.
+**Remaining:** other clusters you saw but left for later runs. Name each skipped cluster and
+why (for example, screenshot baselines that need a CI-side update) so a human can act on it.
 
 ## Journal
 
