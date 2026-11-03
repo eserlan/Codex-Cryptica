@@ -33,6 +33,68 @@ describe("DefaultAIClientManager", () => {
     vi.clearAllMocks();
   });
 
+  describe("sendInteractionStream", () => {
+    it("forwards conversation id and structured JSON config, yielding live output", async () => {
+      const events = [
+        { type: "started" },
+        { type: "delta", text: '{"kind":' },
+        { type: "complete", id: "new-1", text: '{"kind":"complete"}' },
+      ];
+      vi.mocked(fetch).mockResolvedValue(
+        new Response(
+          events.map((event) => `data: ${JSON.stringify(event)}\n\n`).join(""),
+          { headers: { "Content-Type": "text/event-stream" } },
+        ),
+      );
+      const signal = new AbortController().signal;
+      const seen = [];
+      for await (const event of manager.sendInteractionStream({
+        model: "luna-fast",
+        input: "Continue the adventure",
+        previousInteractionId: "prev-1",
+        generationConfig: { responseMimeType: "application/json" },
+        signal,
+      })) {
+        seen.push(event);
+      }
+      expect(seen).toEqual(events);
+      const args = vi.mocked(fetch).mock.calls[0][1] as RequestInit;
+      expect(args.signal).toBe(signal);
+      expect(JSON.parse(args.body as string)).toMatchObject({
+        model: "luna-fast",
+        previous_interaction_id: "prev-1",
+        store: true,
+        stream: true,
+        generationConfig: { responseMimeType: "application/json" },
+      });
+    });
+
+    it("rejects expired ids and old proxies that cannot stream", async () => {
+      vi.mocked(fetch).mockResolvedValueOnce(
+        new Response('{"error":{"code":"INTERACTION_NOT_FOUND"}}', { status: 409 }),
+      );
+      const expired = manager.sendInteractionStream({
+        model: "luna-fast",
+        input: "Continue",
+        previousInteractionId: "expired",
+      });
+      await expect(expired.next()).rejects.toThrow("Interaction expired");
+
+      vi.mocked(fetch).mockResolvedValueOnce(
+        new Response('{"id":"old-proxy","text":"buffered"}', {
+          headers: { "Content-Type": "application/json" },
+        }),
+      );
+      const unsupported = manager.sendInteractionStream({
+        model: "luna-fast",
+        input: "Continue",
+      });
+      await expect(unsupported.next()).rejects.toThrow(
+        "interaction-stream-unavailable",
+      );
+    });
+  });
+
   describe("getModel", () => {
     it("should return proxy model when no API key provided", async () => {
       const model = await manager.getModel("", "gemini-1.5-pro");
