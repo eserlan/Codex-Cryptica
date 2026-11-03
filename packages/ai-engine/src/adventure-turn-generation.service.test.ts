@@ -510,9 +510,9 @@ describe("AdventureTurnGenerationService", () => {
     expect(JSON.parse(calls[1].input).state).toBeUndefined();
     expect(JSON.parse(calls[1].input).transcript).toBeUndefined();
     expect(JSON.parse(calls[1].input).stateDelta).toEqual({});
-    // Prevent unbounded provider context growth: one clean checkpoint every 20 turns.
-    expect(calls[20].previousInteractionId).toBeNull();
-    expect(JSON.parse(calls[20].input).anchors).toHaveLength(1);
+    // A long-running scene keeps its provider conversation beyond turn 20.
+    expect(calls[20].previousInteractionId).toBe("response-20");
+    expect(JSON.parse(calls[20].input).anchors).toHaveLength(0);
     expect(calls[21].previousInteractionId).toBe("response-21");
   });
 
