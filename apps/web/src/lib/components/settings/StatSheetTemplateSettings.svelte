@@ -1,4 +1,8 @@
 <script lang="ts">
+  import StatSheetTemplatePreview from "./StatSheetTemplatePreview.svelte";
+  import StatSheetTemplateToggle from "./StatSheetTemplateToggle.svelte";
+  import { StatSheetTemplateFieldOrder } from "./stat-sheet-template-field-order.svelte.js";
+  const order = new StatSheetTemplateFieldOrder();
   import { resolve } from "$app/paths";
   import type { StatSheetTemplate } from "schema";
   import { statSheetTemplates } from "#lib/stores/stat-sheet-templates.svelte.js";
@@ -231,9 +235,6 @@
     expandedIds = next;
   };
 
-  let draggedFieldKey = $state<string | null>(null);
-  let dragOverFieldKey = $state<string | null>(null);
-  let selectedTemplateFieldKey = $state<string | null>(null);
   let selectedPublishTemplateIds = $state<string[]>([]);
   let publishingTemplates = $state<StatSheetTemplate[]>([]);
   let savingBuiltInTemplateIds = $state<string[]>([]);
@@ -250,250 +251,7 @@
       selectedPublishTemplateIds.includes(template.id),
     );
   }
-
-  function handleFieldDragStart(
-    e: DragEvent,
-    templateId: string,
-    index: number,
-  ) {
-    draggedFieldKey = `${templateId}-${index}`;
-    const fieldId = statSheetTemplates.allTemplates.find(
-      (t) => t.id === templateId,
-    )?.fields[index]?.id;
-    if (fieldId) selectedTemplateFieldKey = `${templateId}-${fieldId}`;
-    if (e.dataTransfer) {
-      e.dataTransfer.effectAllowed = "move";
-      e.dataTransfer.setData("text/plain", `${templateId}:${index}`);
-    }
-  }
-
-  function handleFieldDragOver(
-    e: DragEvent,
-    templateId: string,
-    index: number,
-  ) {
-    e.preventDefault();
-    if (e.dataTransfer) {
-      e.dataTransfer.dropEffect = "move";
-    }
-    const key = `${templateId}-${index}`;
-    if (dragOverFieldKey !== key) {
-      dragOverFieldKey = key;
-    }
-  }
-
-  async function handleFieldDrop(
-    e: DragEvent,
-    template: StatSheetTemplate,
-    targetIndex: number,
-  ) {
-    e.preventDefault();
-    if (!draggedFieldKey || !draggedFieldKey.startsWith(`${template.id}-`)) {
-      draggedFieldKey = null;
-      dragOverFieldKey = null;
-      return;
-    }
-
-    const sourceIndex = Number(draggedFieldKey.split("-").pop());
-    if (isNaN(sourceIndex) || sourceIndex === targetIndex) {
-      draggedFieldKey = null;
-      dragOverFieldKey = null;
-      return;
-    }
-
-    const nextFields = [...template.fields];
-    const [moved] = nextFields.splice(sourceIndex, 1);
-    nextFields.splice(targetIndex, 0, moved);
-
-    draggedFieldKey = null;
-    dragOverFieldKey = null;
-    selectedTemplateFieldKey = `${template.id}-${moved.id}`;
-    await statSheetTemplates.updateTemplateFields(template.id, nextFields);
-  }
-
-  function handleFieldDragEnd() {
-    draggedFieldKey = null;
-    dragOverFieldKey = null;
-  }
-
-  async function moveTemplateField(
-    template: StatSheetTemplate,
-    index: number,
-    direction: -1 | 1,
-  ) {
-    const target = index + direction;
-    if (target < 0 || target >= template.fields.length) return;
-    const movedId = template.fields[index].id;
-    selectedTemplateFieldKey = `${template.id}-${movedId}`;
-    const nextFields = [...template.fields];
-    [nextFields[index], nextFields[target]] = [
-      nextFields[target],
-      nextFields[index],
-    ];
-    await statSheetTemplates.updateTemplateFields(template.id, nextFields);
-
-    requestAnimationFrame(() => {
-      const handle = document.querySelector<HTMLElement>(
-        `[data-template-field-id="${template.id}-${movedId}"] [data-testid="stat-sheet-template-drag-handle"]`,
-      );
-      handle?.focus();
-    });
-  }
-
-  function handleTemplateFieldKeyDown(
-    e: KeyboardEvent,
-    template: StatSheetTemplate,
-    index: number,
-  ) {
-    if ((e.altKey || e.ctrlKey) && e.key === "ArrowUp") {
-      e.preventDefault();
-      e.stopPropagation();
-      void moveTemplateField(template, index, -1);
-    } else if ((e.altKey || e.ctrlKey) && e.key === "ArrowDown") {
-      e.preventDefault();
-      e.stopPropagation();
-      void moveTemplateField(template, index, 1);
-    }
-  }
-
-  function handleTemplateContainerKeyDown(
-    e: KeyboardEvent,
-    template: StatSheetTemplate,
-  ) {
-    if (
-      (e.altKey || e.ctrlKey) &&
-      (e.key === "ArrowUp" || e.key === "ArrowDown")
-    ) {
-      if (
-        !selectedTemplateFieldKey ||
-        !selectedTemplateFieldKey.startsWith(`${template.id}-`)
-      )
-        return;
-      const fieldId = selectedTemplateFieldKey.slice(template.id.length + 1);
-      const index = template.fields.findIndex((f) => f.id === fieldId);
-      if (index === -1) return;
-      e.preventDefault();
-      e.stopPropagation();
-      void moveTemplateField(template, index, e.key === "ArrowUp" ? -1 : 1);
-    }
-  }
-
-  const FIELD_TYPE_LABELS: Record<string, string> = {
-    counter: "Counter",
-    number: "Number",
-    text: "Text",
-    longtext: "Long Text",
-    heading: "Section",
-    dice: "Dice",
-  };
 </script>
-
-{#snippet fieldPreview(template: StatSheetTemplate)}
-  <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
-  <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-  <ul
-    class="mt-2 space-y-1 border-t border-theme-border pt-2 outline-none"
-    tabindex="0"
-    onkeydown={(e) => handleTemplateContainerKeyDown(e, template)}
-    data-testid="stat-sheet-template-preview"
-  >
-    {#each template.fields as field, index (field.id)}
-      <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-      <li
-        class="flex items-center justify-between gap-2 rounded px-1.5 py-1 text-meta transition-colors {!template.isBuiltIn &&
-        draggedFieldKey === `${template.id}-${index}`
-          ? 'opacity-40 border-dashed border-theme-primary'
-          : !template.isBuiltIn &&
-              dragOverFieldKey === `${template.id}-${index}`
-            ? 'border-theme-primary bg-theme-primary/10'
-            : selectedTemplateFieldKey === `${template.id}-${field.id}`
-              ? 'border-theme-primary bg-theme-primary/10 ring-2 ring-theme-primary/40'
-              : ''} {field.type === 'heading'
-          ? 'mt-1 font-bold uppercase tracking-wide text-theme-muted'
-          : 'text-theme-text'}"
-        draggable={!template.isBuiltIn}
-        ondragstart={(e) => handleFieldDragStart(e, template.id, index)}
-        ondragover={(e) => handleFieldDragOver(e, template.id, index)}
-        ondragleave={() => (dragOverFieldKey = null)}
-        ondrop={(e) => handleFieldDrop(e, template, index)}
-        ondragend={handleFieldDragEnd}
-        onkeydown={(e) => handleTemplateFieldKeyDown(e, template, index)}
-        onfocusin={() =>
-          (selectedTemplateFieldKey = `${template.id}-${field.id}`)}
-        onclick={() =>
-          (selectedTemplateFieldKey = `${template.id}-${field.id}`)}
-        data-template-field-id={`${template.id}-${field.id}`}
-        data-selected={selectedTemplateFieldKey === `${template.id}-${field.id}`
-          ? "true"
-          : "false"}
-        data-testid="stat-sheet-template-field-item"
-      >
-        <div class="flex items-center gap-1.5 min-w-0">
-          {#if !template.isBuiltIn}
-            <button
-              type="button"
-              class="flex items-center cursor-grab active:cursor-grabbing text-theme-muted hover:text-theme-primary p-0.5 shrink-0 rounded focus:outline-none focus:ring-1 focus:ring-theme-primary"
-              title="Drag or use Alt/Ctrl+Up/Down to reorder field"
-              aria-label={`Drag or press Alt/Ctrl Up or Alt/Ctrl Down to reorder ${field.label}`}
-              data-testid="stat-sheet-template-drag-handle"
-            >
-              <span
-                class="icon-[lucide--grip-vertical] h-3.5 w-3.5"
-                aria-hidden="true"
-              ></span>
-            </button>
-          {/if}
-          <span class="truncate">{field.label}</span>
-        </div>
-
-        <div class="flex items-center gap-1.5 shrink-0">
-          {#if field.type !== "heading"}
-            <span
-              class="rounded border border-theme-border px-1.5 py-0.5 text-nano font-bold uppercase tracking-wide text-theme-muted"
-            >
-              {FIELD_TYPE_LABELS[field.type] ?? field.type}
-              {#if field.type === "dice" && field.formula}
-                · {field.formula}
-              {:else if field.type === "counter" && (field.min !== undefined || field.max !== undefined)}
-                · {field.min ?? 0}–{field.max ?? "∞"}
-              {/if}
-            </span>
-          {/if}
-          {#if !template.isBuiltIn}
-            <div class="flex items-center gap-0.5">
-              <button
-                type="button"
-                class="flex h-5 w-5 items-center justify-center rounded border border-theme-border text-theme-muted hover:border-theme-primary hover:text-theme-primary disabled:opacity-30"
-                onclick={() => moveTemplateField(template, index, -1)}
-                disabled={index === 0}
-                aria-label={`Move ${field.label} up`}
-              >
-                <span
-                  class="icon-[lucide--chevron-up] h-3 w-3"
-                  aria-hidden="true"
-                ></span>
-              </button>
-              <button
-                type="button"
-                class="flex h-5 w-5 items-center justify-center rounded border border-theme-border text-theme-muted hover:border-theme-primary hover:text-theme-primary disabled:opacity-30"
-                onclick={() => moveTemplateField(template, index, 1)}
-                disabled={index === template.fields.length - 1}
-                aria-label={`Move ${field.label} down`}
-              >
-                <span
-                  class="icon-[lucide--chevron-down] h-3 w-3"
-                  aria-hidden="true"
-                ></span>
-              </button>
-            </div>
-          {/if}
-        </div>
-      </li>
-    {:else}
-      <li class="text-micro text-theme-muted">No fields.</li>
-    {/each}
-  </ul>
-{/snippet}
 
 <div class="space-y-6">
   <div class="p-4 bg-theme-primary/5 border border-theme-primary/20 rounded-lg">
@@ -600,34 +358,7 @@
                 {/if}
               </div>
             </button>
-            <button
-              type="button"
-              class="flex items-center gap-1.5 rounded border px-2 py-1 text-micro font-bold uppercase tracking-wide transition-colors shrink-0 {statSheetTemplates.isTemplateEnabled(
-                template.id,
-              )
-                ? 'border-theme-primary/40 bg-theme-primary/10 text-theme-primary'
-                : 'border-theme-border bg-theme-bg text-theme-muted hover:text-theme-text'}"
-              onclick={(e) => {
-                e.stopPropagation();
-                statSheetTemplates.toggleTemplateEnabled(template.id);
-              }}
-              data-testid="stat-sheet-toggle-enabled"
-              title={statSheetTemplates.isTemplateEnabled(template.id)
-                ? "Disable for this Vault"
-                : "Enable for this Vault"}
-            >
-              <span
-                class="icon-[lucide--check] h-3 w-3 {statSheetTemplates.isTemplateEnabled(
-                  template.id,
-                )
-                  ? 'opacity-100'
-                  : 'opacity-0'}"
-                aria-hidden="true"
-              ></span>
-              {statSheetTemplates.isTemplateEnabled(template.id)
-                ? "Applicable"
-                : "Hidden"}
-            </button>
+            <StatSheetTemplateToggle templateId={template.id} />
             <button
               type="button"
               class="inline-flex items-center gap-1.5 rounded border border-theme-primary/40 px-2 py-1 text-micro font-bold uppercase tracking-wide text-theme-primary transition-colors hover:border-theme-primary hover:bg-theme-primary/10"
@@ -648,7 +379,7 @@
             </button>
           </div>
           {#if expandedIds.has(template.id)}
-            {@render fieldPreview(template)}
+            <StatSheetTemplatePreview {template} {order} />
           {/if}
         </div>
       {/each}
@@ -758,34 +489,7 @@
               {/if}
             </div>
 
-            <button
-              type="button"
-              class="flex items-center gap-1.5 rounded border px-2 py-1 text-micro font-bold uppercase tracking-wide transition-colors shrink-0 {statSheetTemplates.isTemplateEnabled(
-                template.id,
-              )
-                ? 'border-theme-primary/40 bg-theme-primary/10 text-theme-primary'
-                : 'border-theme-border bg-theme-bg text-theme-muted hover:text-theme-text'}"
-              onclick={(e) => {
-                e.stopPropagation();
-                statSheetTemplates.toggleTemplateEnabled(template.id);
-              }}
-              data-testid="stat-sheet-toggle-enabled"
-              title={statSheetTemplates.isTemplateEnabled(template.id)
-                ? "Disable for this Vault"
-                : "Enable for this Vault"}
-            >
-              <span
-                class="icon-[lucide--check] h-3 w-3 {statSheetTemplates.isTemplateEnabled(
-                  template.id,
-                )
-                  ? 'opacity-100'
-                  : 'opacity-0'}"
-                aria-hidden="true"
-              ></span>
-              {statSheetTemplates.isTemplateEnabled(template.id)
-                ? "Applicable"
-                : "Hidden"}
-            </button>
+            <StatSheetTemplateToggle templateId={template.id} />
 
             {#if editingId !== template.id}
               <div
@@ -819,7 +523,7 @@
             {/if}
           </div>
           {#if editingId !== template.id && expandedIds.has(template.id)}
-            {@render fieldPreview(template)}
+            <StatSheetTemplatePreview {template} {order} />
           {/if}
         </div>
       {:else}
