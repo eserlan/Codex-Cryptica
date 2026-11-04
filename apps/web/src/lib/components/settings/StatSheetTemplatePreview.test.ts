@@ -77,4 +77,19 @@ describe("StatSheetTemplatePreview", () => {
     expect(order.isSelected("sheet", "hp")).toBe(true);
     expect(updateTemplateFields).not.toHaveBeenCalled();
   });
+  it("renders a Dice Pool badge with configured default pool size and die", () => {
+    setup({
+      ...template,
+      fields: [
+        {
+          id: "pool",
+          label: "Action Pool",
+          type: "dice-pool",
+          startValue: 4,
+          formula: "d10",
+        },
+      ],
+    });
+    expect(screen.getByText(/Dice Pool/).textContent).toContain("4d10");
+  });
 });

@@ -51,6 +51,7 @@ import {
   applyTypedFormula,
   computeAdjustedCounterValue,
   rollStatSheetDiceField,
+  rollStatSheetDicePoolField,
 } from "./stat-sheet-field-actions";
 import { diceEngine } from "dice-engine";
 
@@ -463,5 +464,109 @@ describe("rollStatSheetDiceField", () => {
     await rollStatSheetDiceField(diceField({ formula: "1d100", value: 10 }));
 
     expect(notify).toHaveBeenCalledWith("Attack: 1d100 = 17", "info");
+  });
+});
+
+describe("rollStatSheetDicePoolField", () => {
+  beforeEach(() => {
+    addResult.mockClear();
+    notify.mockClear();
+    sendResolvedRollMessage.mockClear();
+    mapSessionState.vttEnabled = true;
+  });
+
+  function poolField(overrides: Partial<StatSheetField> = {}): StatSheetField {
+    return {
+      id: "pool-prowl",
+      label: "Prowl",
+      type: "dice-pool",
+      value: 3,
+      formula: "d6",
+      ...overrides,
+    } as StatSheetField;
+  }
+
+  it("rolls NdS derived from current pool count and die type and records to history", async () => {
+    const display = await rollStatSheetDicePoolField(
+      poolField({ value: 4, formula: "d6" }),
+    );
+
+    expect(display).toEqual({
+      text: "= 17 (Sum)",
+      isError: false,
+      total: 17,
+      roll: { total: 17, parts: [] },
+    });
+    expect(addResult).toHaveBeenCalledWith(
+      expect.objectContaining({ total: 17 }),
+      "modal",
+      { label: "Prowl" },
+    );
+    expect(sendResolvedRollMessage).toHaveBeenCalledWith(
+      "Prowl: 4d6",
+      expect.objectContaining({ total: 17 }),
+    );
+  });
+
+  it("falls back to d6 if die formula is missing or clean notation without 'd' prefix", async () => {
+    await rollStatSheetDicePoolField(
+      poolField({ value: 2, formula: undefined }),
+    );
+    expect(sendResolvedRollMessage).toHaveBeenCalledWith(
+      "Prowl: 2d6",
+      expect.anything(),
+    );
+
+    sendResolvedRollMessage.mockClear();
+    await rollStatSheetDicePoolField(poolField({ value: 3, formula: "8" }));
+    expect(sendResolvedRollMessage).toHaveBeenCalledWith(
+      "Prowl: 3d8",
+      expect.anything(),
+    );
+  });
+
+  it("notifies via toast when VTT is disabled with (Sum) label", async () => {
+    mapSessionState.vttEnabled = false;
+    vi.mocked(diceEngine.execute).mockReturnValueOnce({
+      total: 12,
+      formula: "3d6",
+      timestamp: 0,
+      parts: [{ type: "dice", sides: 6, rolls: [3, 4, 5], value: 12 }],
+    } as never);
+
+    await rollStatSheetDicePoolField(poolField({ value: 3, formula: "d6" }));
+
+    expect(notify).toHaveBeenCalledWith(
+      "Prowl: 3d6 = 12 (Sum) ([3, 4, 5])",
+      "success",
+    );
+  });
+
+  it("rejects roll and returns an error display when pool count is 0 or negative", async () => {
+    const zeroDisplay = await rollStatSheetDicePoolField(
+      poolField({ value: 0 }),
+    );
+    expect(zeroDisplay).toEqual({
+      text: "No dice in pool to roll",
+      isError: true,
+    });
+    expect(addResult).not.toHaveBeenCalled();
+    expect(sendResolvedRollMessage).not.toHaveBeenCalled();
+    expect(notify).not.toHaveBeenCalled();
+
+    const negDisplay = await rollStatSheetDicePoolField(
+      poolField({ value: -1 }),
+    );
+    expect(negDisplay.isError).toBe(true);
+    expect(addResult).not.toHaveBeenCalled();
+  });
+
+  it("rejects roll when count is undefined or not a number", async () => {
+    const display = await rollStatSheetDicePoolField(
+      poolField({ value: undefined }),
+    );
+    expect(display.isError).toBe(true);
+    expect(display.text).toBe("No dice in pool to roll");
+    expect(addResult).not.toHaveBeenCalled();
   });
 });

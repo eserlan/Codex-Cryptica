@@ -847,4 +847,91 @@ describe("StatSheetEditor field keys (#3180)", () => {
       }),
     );
   });
+
+  describe("dice-pool field configuration", () => {
+    it("initializes defaults when switching a field type to dice-pool", async () => {
+      const entity = buildEntity({
+        statSheet: {
+          fields: [{ id: "f1", label: "Skill", type: "text" }],
+        },
+      });
+      render(StatSheetEditor, { entity });
+      updateEntity.mockClear();
+
+      const typeSelect = screen.getByLabelText("Field type");
+      await fireEvent.change(typeSelect, { target: { value: "dice-pool" } });
+
+      expect(updateEntity).toHaveBeenCalledWith(
+        "goblin-1",
+        expect.objectContaining({
+          statSheet: expect.objectContaining({
+            fields: [
+              expect.objectContaining({
+                id: "f1",
+                type: "dice-pool",
+                value: 3,
+                formula: "d6",
+                min: 0,
+                step: 1,
+                allowDieChange: true,
+              }),
+            ],
+          }),
+        }),
+      );
+    });
+
+    it("renders dice-pool configuration inputs and updates properties", async () => {
+      const entity = buildEntity({
+        statSheet: {
+          fields: [
+            {
+              id: "f1",
+              label: "Action Pool",
+              type: "dice-pool",
+              value: 3,
+              formula: "d6",
+              min: 1,
+              max: 10,
+              step: 1,
+              allowDieChange: true,
+            },
+          ],
+        },
+      });
+      render(StatSheetEditor, { entity });
+      updateEntity.mockClear();
+
+      expect(screen.getByTestId("stat-sheet-editor-dice-pool")).toBeTruthy();
+
+      const dieSelect = screen.getByLabelText("Die type for Action Pool");
+      await fireEvent.change(dieSelect, { target: { value: "d10" } });
+
+      expect(updateEntity).toHaveBeenCalledWith(
+        "goblin-1",
+        expect.objectContaining({
+          statSheet: expect.objectContaining({
+            fields: [expect.objectContaining({ id: "f1", formula: "d10" })],
+          }),
+        }),
+      );
+
+      updateEntity.mockClear();
+      const allowChange = screen.getByLabelText(
+        "Allow player to change die type for Action Pool",
+      );
+      await fireEvent.click(allowChange);
+
+      expect(updateEntity).toHaveBeenCalledWith(
+        "goblin-1",
+        expect.objectContaining({
+          statSheet: expect.objectContaining({
+            fields: [
+              expect.objectContaining({ id: "f1", allowDieChange: false }),
+            ],
+          }),
+        }),
+      );
+    });
+  });
 });

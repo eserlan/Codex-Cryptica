@@ -36,6 +36,7 @@
     { value: "longtext", label: "Long Text" },
     { value: "heading", label: "Section Heading" },
     { value: "dice", label: "Dice Roll" },
+    { value: "dice-pool", label: "Dice Pool" },
     { value: "item-table", label: "Repeatable Table" },
   ];
 
@@ -139,6 +140,12 @@
     const updates: Partial<StatSheetField> = { type: newType };
     if (newType === "item-table" && !field.columns) {
       updates.columns = DEFAULT_ITEM_TABLE_COLUMNS.map((c) => ({ ...c }));
+    } else if (newType === "dice-pool") {
+      if (typeof field.value !== "number") updates.value = 3;
+      if (!field.formula) updates.formula = "d6";
+      if (field.min === undefined) updates.min = 0;
+      if (field.step === undefined) updates.step = 1;
+      if (field.allowDieChange === undefined) updates.allowDieChange = true;
     }
     updateField(field.id, updates);
   }
@@ -527,6 +534,104 @@
                 })}
               onchange={() => persist(applyTypedFormula(fields, field.id))}
             />
+          </label>
+        </div>
+      {:else if field.type === "dice-pool"}
+        <div
+          class="flex flex-wrap items-center gap-3 text-micro text-theme-text"
+          data-testid="stat-sheet-editor-dice-pool"
+        >
+          <label class="flex items-center gap-1">
+            Count
+            <input
+              type="number"
+              aria-label={`Default pool count for ${field.label}`}
+              class="w-16 rounded border border-theme-border bg-theme-bg px-1.5 py-0.5 text-xs text-theme-text"
+              value={typeof field.value === "number" ? field.value : 3}
+              oninput={(e) => {
+                const val = Number((e.target as HTMLInputElement).value) || 0;
+                updateField(field.id, {
+                  value: val,
+                  startValue: val,
+                });
+              }}
+              onchange={() => clampCounterToBounds(field.id)}
+            />
+          </label>
+          <label class="flex items-center gap-1">
+            Die
+            <select
+              aria-label={`Die type for ${field.label}`}
+              class="rounded border border-theme-border bg-theme-bg px-1.5 py-0.5 text-xs text-theme-text"
+              value={field.formula || "d6"}
+              onchange={(e) =>
+                updateField(field.id, {
+                  formula: (e.target as HTMLSelectElement).value,
+                })}
+            >
+              {#each ["d4", "d6", "d8", "d10", "d12", "d20", "d100"] as d}
+                <option value={d}>{d}</option>
+              {/each}
+            </select>
+          </label>
+          <label class="flex items-center gap-1">
+            Min
+            <input
+              type="number"
+              aria-label={`Min pool count for ${field.label}`}
+              class="w-14 rounded border border-theme-border bg-theme-bg px-1 py-0.5 text-xs text-theme-text"
+              value={field.min ?? 0}
+              oninput={(e) =>
+                updateField(field.id, {
+                  min:
+                    (e.target as HTMLInputElement).value === ""
+                      ? undefined
+                      : Number((e.target as HTMLInputElement).value),
+                })}
+              onchange={() => clampCounterToBounds(field.id)}
+            />
+          </label>
+          <label class="flex items-center gap-1">
+            Max
+            <input
+              type="number"
+              aria-label={`Max pool count for ${field.label}`}
+              class="w-14 rounded border border-theme-border bg-theme-bg px-1 py-0.5 text-xs text-theme-text"
+              value={field.max ?? ""}
+              oninput={(e) =>
+                updateField(field.id, {
+                  max:
+                    (e.target as HTMLInputElement).value === ""
+                      ? undefined
+                      : Number((e.target as HTMLInputElement).value),
+                })}
+              onchange={() => clampCounterToBounds(field.id)}
+            />
+          </label>
+          <label class="flex items-center gap-1">
+            Step
+            <input
+              type="number"
+              aria-label={`Step size for ${field.label}`}
+              class="w-14 rounded border border-theme-border bg-theme-bg px-1 py-0.5 text-xs text-theme-text"
+              value={field.step ?? 1}
+              oninput={(e) =>
+                updateField(field.id, {
+                  step: Number((e.target as HTMLInputElement).value) || 1,
+                })}
+            />
+          </label>
+          <label class="flex items-center gap-1.5">
+            <input
+              type="checkbox"
+              aria-label={`Allow player to change die type for ${field.label}`}
+              checked={field.allowDieChange ?? true}
+              onchange={(e) =>
+                updateField(field.id, {
+                  allowDieChange: (e.target as HTMLInputElement).checked,
+                })}
+            />
+            Selectable die
           </label>
         </div>
       {:else if field.type === "item-table"}

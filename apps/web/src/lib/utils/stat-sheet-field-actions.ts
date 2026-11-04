@@ -111,6 +111,60 @@ export async function rollStatSheetDiceField(
   }
 }
 
+/**
+ * Normalises a die formula string (e.g. "d6", "6", or undefined) into standard
+ * die notation like "d6". Defaults to "d6" when absent or invalid.
+ */
+export function normaliseDieType(dieNotation?: string): string {
+  if (!dieNotation) return "d6";
+  const trimmed = dieNotation.trim();
+  if (/^d\d+$/i.test(trimmed)) return trimmed.toLowerCase();
+  if (/^\d+$/.test(trimmed)) return `d${trimmed}`;
+  return "d6";
+}
+
+/**
+ * Roll a dice pool field (Phase 1): derives NdS from field.value (count) and
+ * field.formula (die type, defaulting to d6). Rejects zero or negative count.
+ * Displays the arithmetic sum explicitly marked as (Sum), preserving individual
+ * faces in the result roll trace.
+ */
+export async function rollStatSheetDicePoolField(
+  field: StatSheetField,
+): Promise<DiceRollDisplay> {
+  const count = typeof field.value === "number" ? field.value : 0;
+  if (count <= 0) {
+    return { text: "No dice in pool to roll", isError: true };
+  }
+
+  const die = normaliseDieType(field.formula);
+  const formula = `${count}${die}`;
+
+  try {
+    const command = diceParser.parse(formula);
+    const result = diceEngine.execute(command);
+    await diceHistory.addResult(result, "modal", { label: field.label });
+
+    if (mapSession.vttEnabled) {
+      mapSession.sendResolvedRollMessage(`${field.label}: ${formula}`, result);
+    } else {
+      notificationStore.notify(
+        `${field.label}: ${formula} = ${result.total} (Sum)${describeDice(result)}`,
+        "success",
+      );
+    }
+
+    return {
+      text: `= ${result.total} (Sum)`,
+      isError: false,
+      total: result.total,
+      roll: result,
+    };
+  } catch (e: any) {
+    return { text: e?.message ?? "Invalid dice pool", isError: true };
+  }
+}
+
 export function computeAdjustedCounterValue(
   field: StatSheetField,
   direction: 1 | -1,
