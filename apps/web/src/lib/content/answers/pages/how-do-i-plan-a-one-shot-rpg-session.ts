@@ -233,7 +233,7 @@ export const howDoIPlanAOneShotRpgSession: AnswerConfigInput = {
       kind: "prose",
       heading: "The final readiness check",
       paragraphs: [
-        "On the day, sort everything into three piles. Shared with players: the premise brief, character sheets or creation limits, and any handout they start with. Open on your screen or table: the one-page run sheet, the essential stats, the map, and your fallback. Droppable without regret: the optional scene, the extra lore, and any encounter whose only job was to fill time. If those three piles exist and you know your first spoken prompt, you are ready. From the first decision onward, the work changes from planning to running the session at the table; keep the run sheet in front of you and let the prepared options, alternate routes and endings do their work there. [How do I run a one-shot RPG session?](/answers/how-do-i-run-a-one-shot-rpg-session) takes over from that first prompt, covering the opening contract, live decisions and the ending at the table.",
+        "On the day, sort everything into three piles. Shared with players: the premise brief, character sheets or creation limits, and any handout they start with. Open on your screen or table: the one-page run sheet, the essential stats, the map, and your fallback. Droppable without regret: the optional scene, the extra lore, and any encounter whose only job was to fill time. If those three piles exist and you know your first spoken prompt, you are ready. From the first decision onward, the work changes from planning to running the session at the table; keep the run sheet in front of you and let the prepared options, alternate routes and endings do their work there. [How do I pace an RPG one-shot?](/answers/how-do-i-pace-an-rpg-one-shot) takes over from that first prompt, covering how to keep the session moving toward its ending.",
       ],
     },
     {
@@ -280,7 +280,6 @@ export const howDoIPlanAOneShotRpgSession: AnswerConfigInput = {
     },
   ],
   relatedAnswers: [
-    "how-do-i-run-a-one-shot-rpg-session",
     "how-do-you-write-a-one-shot-adventure",
     "how-do-i-pace-an-rpg-one-shot",
     "how-do-i-prepare-an-rpg-session-step-by-step",
