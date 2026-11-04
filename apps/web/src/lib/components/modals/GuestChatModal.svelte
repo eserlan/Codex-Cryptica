@@ -11,15 +11,20 @@
 </script>
 
 {#if guestChatStore.showChatModal}
-  <!-- svelte-ignore a11y_click_events_have_key_events -->
-  <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
-    class="fixed inset-0 z-[100] flex items-center justify-center p-0 md:p-8 bg-black/80 backdrop-blur-md"
+    class="fixed inset-0 z-[100] flex items-center justify-center p-0 md:p-8"
     transition:fade={{ duration: 300 }}
-    onclick={handleClose}
     onkeydown={(e) => e.key === "Escape" && handleClose()}
     data-testid="guest-chat-modal"
   >
+    <button
+      type="button"
+      class="absolute inset-0 w-full h-full bg-black/80 backdrop-blur-md focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-theme-primary cursor-default"
+      aria-label="Close dialog"
+      onclick={handleClose}
+      onpointerdown={(e) => e.preventDefault()}
+      tabindex="-1"
+    ></button>
     <div
       class="w-full md:max-w-5xl h-full md:h-[80vh] shadow-2xl overflow-hidden relative rounded-2xl flex flex-col"
       style:box-shadow="var(--theme-glow)"

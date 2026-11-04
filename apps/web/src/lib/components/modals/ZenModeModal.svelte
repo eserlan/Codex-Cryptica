@@ -118,16 +118,21 @@
 </script>
 
 {#if modalUIStore.showZenMode && entityId}
-  <!-- svelte-ignore a11y_click_events_have_key_events -->
-  <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
-    class="fixed inset-0 z-[100] flex items-center justify-center p-0 md:p-8 bg-black/90 backdrop-blur-md"
+    class="fixed inset-0 z-[100] flex items-center justify-center p-0 md:p-8"
     transition:fade={{ duration: 500 }}
-    onclick={handleBackdropClick}
     data-testid="zen-mode-modal"
   >
+    <button
+      type="button"
+      class="absolute inset-0 w-full h-full bg-black/90 backdrop-blur-md focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-theme-primary cursor-default"
+      aria-label="Close dialog"
+      onclick={handleBackdropClick}
+      onpointerdown={(e) => e.preventDefault()}
+      tabindex="-1"
+    ></button>
     <div
-      class="w-full md:max-w-6xl h-full md:h-[90vh] shadow-2xl overflow-hidden"
+      class="w-full md:max-w-6xl h-full md:h-[90vh] shadow-2xl overflow-hidden relative z-10"
       style:box-shadow="var(--theme-glow)"
       transition:fly={{ y: 50, duration: 550, easing: quintOut }}
       onclick={(e) => e.stopPropagation()}

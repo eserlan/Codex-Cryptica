@@ -134,24 +134,26 @@
 </script>
 
 {#if modalUIStore.readModeNodeId}
-  <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
   <div
-    class="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
-    onclick={(event) => {
-      if (event.target === event.currentTarget) close();
-    }}
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="read-mode-title"
-    tabindex="-1"
-    use:focusTrap
+    class="fixed inset-0 z-[60] flex items-center justify-center p-4"
     onkeydown={(e) => e.key === "Escape" && close()}
   >
-    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <button
+      type="button"
+      class="absolute inset-0 w-full h-full bg-black/80 backdrop-blur-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-theme-primary cursor-default"
+      aria-label="Close dialog"
+      onclick={() => close()}
+      onpointerdown={(e) => e.preventDefault()}
+      tabindex="-1"
+    ></button>
     <div
-      class="bg-[#0c0c0c] border border-green-900/50 w-full max-w-3xl h-[85vh] flex flex-col shadow-2xl relative rounded-sm"
+      class="bg-[#0c0c0c] border border-green-900/50 w-full max-w-3xl h-[85vh] flex flex-col shadow-2xl relative rounded-sm z-10"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="read-mode-title"
+      tabindex="-1"
+      use:focusTrap
       onclick={(e) => e.stopPropagation()}
-      role="document"
     >
       <!-- Header -->
       <div
