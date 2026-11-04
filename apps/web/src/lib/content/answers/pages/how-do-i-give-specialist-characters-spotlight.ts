@@ -168,6 +168,7 @@ export const howDoIGiveSpecialistCharactersSpotlight: AnswerConfigInput = {
     "how-do-i-make-roleplay-more-engaging",
     "how-do-i-run-a-stealth-mission-in-a-tabletop-rpg",
     "does-an-rpg-party-need-balanced-roles",
+    "how-do-i-run-a-one-shot-rpg-session",
   ],
   discovery: {
     id: "answer-specialist-character-spotlight",

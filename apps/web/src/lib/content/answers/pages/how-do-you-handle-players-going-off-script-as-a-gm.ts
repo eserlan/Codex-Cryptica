@@ -137,6 +137,7 @@ export const howDoYouHandlePlayersGoingOffScriptAsAGm: AnswerConfigInput = {
     "how-do-you-handle-players-reaching-the-wrong-conclusion-in-an-rpg-mystery",
     "how-to-adapt-a-video-game-into-a-tabletop-rpg",
     "stop-players-investigating-every-detail",
+    "how-do-i-run-a-one-shot-rpg-session",
   ],
   discovery: {
     id: "answer-players-going-off-script",

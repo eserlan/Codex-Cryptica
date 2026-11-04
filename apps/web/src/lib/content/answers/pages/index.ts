@@ -53,6 +53,7 @@ import { howDoIRunACampaignWhereThePlayersOwnABusiness } from "./how-do-i-run-a-
 import { howDoIRunADiplomatNobleOrCourtierInAnRpg } from "./how-do-i-run-a-diplomat-noble-or-courtier-in-an-rpg";
 import { howDoIRunAJournalistOrMediaCharacterInAnRpg } from "./how-do-i-run-a-journalist-or-media-character-in-an-rpg";
 import { howDoIRunALargeBattleWhenThePlayerCharactersArePartOfAnArmy } from "./how-do-i-run-a-large-battle-when-the-player-characters-are-part-of-an-army";
+import { howDoIRunAOneShotRpgSession } from "./how-do-i-run-a-one-shot-rpg-session";
 import { howDoIRunAPirateCampaignFocusedOnExploration } from "./how-do-i-run-a-pirate-campaign-focused-on-exploration";
 import { howDoIRunARogueOrScoutWithoutSplittingTheParty } from "./how-do-i-run-a-rogue-or-scout-without-splitting-the-party";
 import { howDoIRunAStealthMissionInATabletopRpg } from "./how-do-i-run-a-stealth-mission-in-a-tabletop-rpg";
@@ -251,6 +252,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIRunADiplomatNobleOrCourtierInAnRpg,
     howDoIRunAJournalistOrMediaCharacterInAnRpg,
     howDoIRunALargeBattleWhenThePlayerCharactersArePartOfAnArmy,
+    howDoIRunAOneShotRpgSession,
     howDoIRunAPirateCampaignFocusedOnExploration,
     howDoIRunARogueOrScoutWithoutSplittingTheParty,
     howDoIRunAStealthMissionInATabletopRpg,
