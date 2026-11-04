@@ -363,7 +363,7 @@ export class StatSheetTemplateStore {
           ? { value: f.startValue ?? f.max }
           : null),
         ...(f.type === "dice-pool"
-          ? { value: f.startValue ?? f.value ?? 1 }
+          ? { value: f.startValue ?? f.value ?? 3 }
           : null),
       };
     });

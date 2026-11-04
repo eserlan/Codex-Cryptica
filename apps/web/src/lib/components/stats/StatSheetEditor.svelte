@@ -142,6 +142,7 @@
       updates.columns = DEFAULT_ITEM_TABLE_COLUMNS.map((c) => ({ ...c }));
     } else if (newType === "dice-pool") {
       if (typeof field.value !== "number") updates.value = 3;
+      if (typeof field.startValue !== "number") updates.startValue = 3;
       if (!field.formula) updates.formula = "d6";
       if (field.min === undefined) updates.min = 0;
       if (field.step === undefined) updates.step = 1;
@@ -494,12 +495,17 @@
             Step
             <input
               type="number"
+              min="1"
               class="w-16 rounded border border-theme-border bg-theme-bg px-1 py-0.5 text-xs text-theme-text"
               value={field.step ?? 1}
-              oninput={(e) =>
-                updateField(field.id, {
-                  step: Number((e.target as HTMLInputElement).value) || 1,
-                })}
+              oninput={(e) => {
+                const raw = (e.target as HTMLInputElement).value;
+                const step =
+                  raw === ""
+                    ? 1
+                    : Math.max(1, Math.floor(Math.abs(Number(raw) || 1)));
+                updateField(field.id, { step });
+              }}
             />
           </label>
         </div>
@@ -547,9 +553,19 @@
               type="number"
               aria-label={`Default pool count for ${field.label}`}
               class="w-16 rounded border border-theme-border bg-theme-bg px-1.5 py-0.5 text-xs text-theme-text"
-              value={typeof field.value === "number" ? field.value : 3}
+              min="0"
+              max="1000"
+              value={typeof field.startValue === "number"
+                ? field.startValue
+                : typeof field.value === "number"
+                  ? field.value
+                  : 3}
               oninput={(e) => {
-                const val = Number((e.target as HTMLInputElement).value) || 0;
+                const raw = (e.target as HTMLInputElement).value;
+                const val =
+                  raw === ""
+                    ? 0
+                    : Math.max(0, Math.min(1000, Number(raw) || 0));
                 updateField(field.id, {
                   value: val,
                   startValue: val,
@@ -612,13 +628,19 @@
             Step
             <input
               type="number"
+              min="1"
+              max="1000"
               aria-label={`Step size for ${field.label}`}
               class="w-14 rounded border border-theme-border bg-theme-bg px-1 py-0.5 text-xs text-theme-text"
               value={field.step ?? 1}
-              oninput={(e) =>
-                updateField(field.id, {
-                  step: Number((e.target as HTMLInputElement).value) || 1,
-                })}
+              oninput={(e) => {
+                const raw = (e.target as HTMLInputElement).value;
+                const step =
+                  raw === ""
+                    ? 1
+                    : Math.max(1, Math.floor(Math.abs(Number(raw) || 1)));
+                updateField(field.id, { step });
+              }}
             />
           </label>
           <label class="flex items-center gap-1.5">

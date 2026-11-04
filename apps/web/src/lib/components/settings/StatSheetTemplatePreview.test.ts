@@ -92,4 +92,18 @@ describe("StatSheetTemplatePreview", () => {
     });
     expect(screen.getByText(/Dice Pool/).textContent).toContain("4d10");
   });
+
+  it("renders default 3d6 when dice-pool template field omits startValue and formula", () => {
+    setup({
+      ...template,
+      fields: [
+        {
+          id: "pool",
+          label: "Action Pool",
+          type: "dice-pool",
+        },
+      ],
+    });
+    expect(screen.getByText(/Dice Pool/).textContent).toContain("3d6");
+  });
 });

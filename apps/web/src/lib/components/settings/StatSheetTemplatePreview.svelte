@@ -26,7 +26,7 @@
       {#if field.type === "dice" && field.formula}
         · {field.formula}
       {:else if field.type === "dice-pool"}
-        · {field.startValue ?? 1}{field.formula ?? "d6"}
+        · {field.startValue ?? 3}{field.formula ?? "d6"}
       {:else if field.type === "counter" && (field.min !== undefined || field.max !== undefined)}
         · {field.min ?? 0}–{field.max ?? "∞"}
       {/if}

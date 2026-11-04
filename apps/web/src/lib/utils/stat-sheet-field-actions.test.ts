@@ -50,8 +50,10 @@ import {
   applyDerivedModifiers,
   applyTypedFormula,
   computeAdjustedCounterValue,
+  normaliseDieType,
   rollStatSheetDiceField,
   rollStatSheetDicePoolField,
+  MAX_DICE_POOL_COUNT,
 } from "./stat-sheet-field-actions";
 import { diceEngine } from "dice-engine";
 
@@ -568,5 +570,46 @@ describe("rollStatSheetDicePoolField", () => {
     expect(display.isError).toBe(true);
     expect(display.text).toBe("No dice in pool to roll");
     expect(addResult).not.toHaveBeenCalled();
+  });
+
+  it("rejects roll when count exceeds MAX_DICE_POOL_COUNT limit", async () => {
+    const display = await rollStatSheetDicePoolField(
+      poolField({ value: MAX_DICE_POOL_COUNT + 1 }),
+    );
+    expect(display.isError).toBe(true);
+    expect(display.text).toContain(
+      `Dice pool cannot exceed ${MAX_DICE_POOL_COUNT} dice`,
+    );
+    expect(addResult).not.toHaveBeenCalled();
+  });
+
+  it("normaliseDieType supports only standard dice and falls back to d6", () => {
+    expect(normaliseDieType("d4")).toBe("d4");
+    expect(normaliseDieType("d6")).toBe("d6");
+    expect(normaliseDieType("d8")).toBe("d8");
+    expect(normaliseDieType("d10")).toBe("d10");
+    expect(normaliseDieType("d12")).toBe("d12");
+    expect(normaliseDieType("d20")).toBe("d20");
+    expect(normaliseDieType("d100")).toBe("d100");
+    expect(normaliseDieType("D10")).toBe("d10");
+    expect(normaliseDieType("12")).toBe("d12");
+
+    // Unsupported, zero, or out-of-range notations fall back to d6
+    expect(normaliseDieType("d0")).toBe("d6");
+    expect(normaliseDieType("0")).toBe("d6");
+    expect(normaliseDieType("d999")).toBe("d6");
+    expect(normaliseDieType("d7")).toBe("d6");
+    expect(normaliseDieType("invalid")).toBe("d6");
+    expect(normaliseDieType("")).toBe("d6");
+    expect(normaliseDieType(undefined)).toBe("d6");
+  });
+
+  it("computeAdjustedCounterValue normalises negative step and bounds dice pool at 1000", () => {
+    const pool = poolField({ value: 5, step: -2 });
+    expect(computeAdjustedCounterValue(pool, 1)).toBe(7);
+    expect(computeAdjustedCounterValue(pool, -1)).toBe(3);
+
+    const nearLimitPool = poolField({ value: 999, step: 5 });
+    expect(computeAdjustedCounterValue(nearLimitPool, 1)).toBe(1000);
   });
 });

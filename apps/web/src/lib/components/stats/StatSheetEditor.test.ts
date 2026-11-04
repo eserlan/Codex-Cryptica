@@ -870,6 +870,7 @@ describe("StatSheetEditor field keys (#3180)", () => {
                 id: "f1",
                 type: "dice-pool",
                 value: 3,
+                startValue: 3,
                 formula: "d6",
                 min: 0,
                 step: 1,
@@ -929,6 +930,34 @@ describe("StatSheetEditor field keys (#3180)", () => {
             fields: [
               expect.objectContaining({ id: "f1", allowDieChange: false }),
             ],
+          }),
+        }),
+      );
+
+      updateEntity.mockClear();
+      const countInput = screen.getByLabelText(
+        "Default pool count for Action Pool",
+      );
+      await fireEvent.input(countInput, { target: { value: "5" } });
+      expect(updateEntity).toHaveBeenCalledWith(
+        "goblin-1",
+        expect.objectContaining({
+          statSheet: expect.objectContaining({
+            fields: [
+              expect.objectContaining({ id: "f1", value: 5, startValue: 5 }),
+            ],
+          }),
+        }),
+      );
+
+      updateEntity.mockClear();
+      const stepInput = screen.getByLabelText("Step size for Action Pool");
+      await fireEvent.input(stepInput, { target: { value: "-2" } });
+      expect(updateEntity).toHaveBeenCalledWith(
+        "goblin-1",
+        expect.objectContaining({
+          statSheet: expect.objectContaining({
+            fields: [expect.objectContaining({ id: "f1", step: 2 })],
           }),
         }),
       );
