@@ -32,14 +32,19 @@
 <svelte:window onkeydown={handleKeydown} />
 
 {#if modalUIStore.soundBite?.show && entity}
-  <!-- Backdrop -->
-  <!-- svelte-ignore a11y_click_events_have_key_events -->
-  <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
-    class="fixed inset-0 z-[110] flex items-end md:items-center justify-center bg-black/60 backdrop-blur-sm"
+    class="fixed inset-0 z-[110] flex items-end md:items-center justify-center"
     transition:fade={{ duration: 150 }}
-    onclick={handleBackdropClick}
   >
+    <!-- Backdrop -->
+    <button
+      type="button"
+      class="absolute inset-0 w-full h-full bg-black/60 backdrop-blur-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-theme-primary cursor-default"
+      aria-label="Close dialog"
+      onclick={handleBackdropClick}
+      onpointerdown={(e) => e.preventDefault()}
+      tabindex="-1"
+    ></button>
     <!-- Modal card — explicit background so theme alpha vars don't bleed through -->
     <div
       role="dialog"
