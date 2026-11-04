@@ -1,5 +1,6 @@
 import { detectHiddenLeakage, ensureScenarioSecrets } from "./hidden-state";
 import { applyTimeAdvance } from "./world-time";
+import { systemIdGenerator } from "@codex/runtime";
 import {
   MAX_SERIALIZED_STATE_CHARS,
   parseTurnProposal,
@@ -230,7 +231,7 @@ export function applyCompletedTurn(
   proposalInput: AdventureTurnProposal,
   meta: CommitMetadata,
   now = meta.now,
-  createId: IdFactory = () => crypto.randomUUID(),
+  createId: IdFactory = () => systemIdGenerator.uuid(),
 ): Result<AdventureSession, AdventureValidationError[]> {
   // Scenario GM text must be registered so it can be guarded and revealed.
   const session = ensureScenarioSecrets(sessionInput);
