@@ -202,6 +202,7 @@ export const howDoIPaceAnRpgOneShot: AnswerConfigInput = {
     "what-are-the-pros-and-cons-of-becoming-a-dungeon-master",
     "stop-players-investigating-every-detail",
     "what-are-the-classic-must-play-tabletop-rpg-adventures",
+    "how-do-i-plan-a-one-shot-rpg-session",
   ],
   discovery: {
     id: "answer-pace-rpg-one-shot",

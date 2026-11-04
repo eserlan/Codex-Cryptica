@@ -175,6 +175,7 @@ export const howMuchPrepDoYouNeedForAnRpgSession: AnswerConfigInput = {
     "how-do-i-prepare-a-dnd-session",
     "how-do-i-start-a-dnd-campaign",
     "what-are-the-pros-and-cons-of-becoming-a-dungeon-master",
+    "how-do-i-plan-a-one-shot-rpg-session",
   ],
   discovery: {
     id: "answer-session-prep",

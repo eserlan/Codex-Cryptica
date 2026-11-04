@@ -175,13 +175,13 @@ export const howDoYouWriteAOneShotAdventure: AnswerConfigInput = {
     "how-do-i-write-a-good-call-of-cthulhu-one-shot",
     "how-do-i-pace-an-rpg-one-shot",
     "what-are-the-classic-must-play-tabletop-rpg-adventures",
+    "how-do-i-plan-a-one-shot-rpg-session",
   ],
   discovery: {
     id: "answer-write-one-shot-adventure",
     parentCluster: "adventure-mapping",
     primaryIntent: "how to write a one shot adventure",
     intentAliases: [
-      "how to prep a one-shot rpg",
       "writing a one shot dnd adventure",
       "one shot adventure structure",
       "designing a single session tabletop adventure",

@@ -231,6 +231,7 @@ export const howDoIRunMyFirstOnlineTabletopRpgSession: AnswerConfigInput = {
     "how-do-i-find-a-tabletop-rpg-group-to-play-with",
     "how-do-you-make-a-tabletop-rpg-session-more-engaging",
     "how-can-i-make-free-custom-maps-for-online-tabletop-rpgs",
+    "how-do-i-plan-a-one-shot-rpg-session",
   ],
   discovery: {
     id: "answer-first-online-tabletop-rpg-session",
