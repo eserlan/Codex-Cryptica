@@ -19,7 +19,7 @@
 {#snippet fieldBadge(field: StatSheetTemplate["fields"][number])}
   {#if field.type !== "heading"}
     <span
-      class="rounded border border-theme-border px-1.5 py-0.5 text-nano font-bold uppercase tracking-wide text-theme-muted"
+      class="rounded border border-theme-border px-1.5 py-0.5 text-nano font-bold uppercase tracking-wide text-theme-text"
     >
       {FIELD_TYPE_LABELS[field.type] ?? field.type}
       {#if field.type === "dice" && field.formula}
@@ -46,7 +46,7 @@
         template,
         index,
       )} {field.type === 'heading'
-        ? 'mt-1 font-bold uppercase tracking-wide text-theme-muted'
+        ? 'mt-1 font-bold uppercase tracking-wide text-theme-text'
         : 'text-theme-text'}"
       draggable={!template.isBuiltIn}
       ondragstart={(e) => order.handleFieldDragStart(e, template.id, index)}
@@ -70,7 +70,7 @@
         {#if !template.isBuiltIn}
           <button
             type="button"
-            class="flex items-center cursor-grab active:cursor-grabbing text-theme-muted hover:text-theme-primary p-0.5 shrink-0 rounded focus:outline-none focus:ring-1 focus:ring-theme-primary"
+            class="flex items-center cursor-grab active:cursor-grabbing text-theme-text hover:text-theme-primary p-0.5 shrink-0 rounded focus:outline-none focus:ring-1 focus:ring-theme-primary"
             title="Drag or use Alt/Ctrl+Up/Down to reorder field"
             aria-label={`Drag or press Alt/Ctrl Up or Alt/Ctrl Down to reorder ${field.label}`}
             data-testid="stat-sheet-template-drag-handle"
@@ -90,7 +90,7 @@
           <div class="flex items-center gap-0.5">
             <button
               type="button"
-              class="flex h-5 w-5 items-center justify-center rounded border border-theme-border text-theme-muted hover:border-theme-primary hover:text-theme-primary disabled:opacity-30"
+              class="flex h-5 w-5 items-center justify-center rounded border border-theme-border text-theme-text hover:border-theme-primary hover:text-theme-primary disabled:opacity-30"
               onclick={() => order.moveTemplateField(template, index, -1)}
               disabled={index === 0}
               aria-label={`Move ${field.label} up`}
@@ -100,7 +100,7 @@
             </button>
             <button
               type="button"
-              class="flex h-5 w-5 items-center justify-center rounded border border-theme-border text-theme-muted hover:border-theme-primary hover:text-theme-primary disabled:opacity-30"
+              class="flex h-5 w-5 items-center justify-center rounded border border-theme-border text-theme-text hover:border-theme-primary hover:text-theme-primary disabled:opacity-30"
               onclick={() => order.moveTemplateField(template, index, 1)}
               disabled={index === template.fields.length - 1}
               aria-label={`Move ${field.label} down`}
@@ -115,6 +115,6 @@
       </div>
     </li>
   {:else}
-    <li class="text-micro text-theme-muted">No fields.</li>
+    <li class="text-micro text-theme-text">No fields.</li>
   {/each}
 </ul>

@@ -58,7 +58,7 @@
 
 <div class="p-4 bg-theme-primary/5 border border-theme-primary/20 rounded-lg">
   <h4
-    class="text-xs font-bold text-theme-primary uppercase font-header tracking-[0.2em] mb-4"
+    class="text-xs font-bold text-theme-text uppercase font-header tracking-[0.2em] mb-4"
   >
     Built-In Templates
   </h4>
@@ -96,7 +96,7 @@
                 >{template.name}</span
               >
               {#if template.description}
-                <span class="text-micro text-theme-muted truncate block"
+                <span class="text-micro text-theme-text truncate block"
                   >{template.description}</span
                 >
               {/if}
@@ -105,7 +105,7 @@
           <StatSheetTemplateToggle templateId={template.id} />
           <button
             type="button"
-            class="inline-flex items-center gap-1.5 rounded border border-theme-primary/40 px-2 py-1 text-micro font-bold uppercase tracking-wide text-theme-primary transition-colors hover:border-theme-primary hover:bg-theme-primary/10"
+            class="inline-flex items-center gap-1.5 rounded border border-theme-primary/40 px-2 py-1 text-micro font-bold uppercase tracking-wide text-theme-text transition-colors hover:border-theme-primary hover:bg-theme-primary/10"
             onclick={() => saveBuiltInAsVaultTemplate(template)}
             title="Save an editable vault copy of this template"
             aria-label="Save a vault copy of {template.name} template"

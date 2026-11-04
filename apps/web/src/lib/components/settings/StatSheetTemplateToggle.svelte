@@ -8,8 +8,8 @@
   class="flex items-center gap-1.5 rounded border px-2 py-1 text-micro font-bold uppercase tracking-wide transition-colors shrink-0 {statSheetTemplates.isTemplateEnabled(
     templateId,
   )
-    ? 'border-theme-primary/40 bg-theme-primary/10 text-theme-primary'
-    : 'border-theme-border bg-theme-bg text-theme-muted hover:text-theme-text'}"
+    ? 'border-theme-primary/40 bg-theme-primary/10 text-theme-text'
+    : 'border-theme-border bg-theme-bg text-theme-text hover:text-theme-text'}"
   onclick={(e) => {
     e.stopPropagation();
     statSheetTemplates.toggleTemplateEnabled(templateId);

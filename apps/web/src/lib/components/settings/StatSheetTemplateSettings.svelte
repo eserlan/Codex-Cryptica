@@ -24,12 +24,12 @@
     <div class="mb-4">
       <div>
         <h4
-          class="text-xs font-bold text-theme-primary uppercase font-header tracking-[0.2em]"
+          class="text-xs font-bold text-theme-text uppercase font-header tracking-[0.2em]"
         >
           Applicable Templates for Vault ({vaultRegistry.vaultName})
         </h4>
 
-        <p class="text-micro text-theme-muted mt-1 leading-relaxed">
+        <p class="text-micro text-theme-text mt-1 leading-relaxed">
           Select which stat sheet templates apply to this campaign/vault.
           Disabled templates will be hidden from entity template pickers.
         </p>

@@ -80,13 +80,13 @@
         />
         <button
           onclick={handleRename}
-          class="px-3 py-1 bg-theme-primary text-theme-bg text-meta font-bold rounded uppercase font-header transition-colors"
+          class="px-3 py-1 bg-theme-primary text-theme-on-primary text-meta font-bold rounded uppercase font-header transition-colors"
         >
           Save
         </button>
         <button
           onclick={() => (editingId = null)}
-          class="px-3 py-1 border border-theme-border text-theme-muted text-meta font-bold rounded uppercase font-header hover:text-theme-text transition-colors"
+          class="px-3 py-1 border border-theme-border text-theme-text text-meta font-bold rounded uppercase font-header hover:text-theme-text transition-colors"
         >
           Cancel
         </button>
@@ -122,13 +122,13 @@
 <div class="p-4 bg-theme-primary/5 border border-theme-primary/20 rounded-lg">
   <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
     <h4
-      class="text-xs font-bold text-theme-primary uppercase font-header tracking-[0.2em]"
+      class="text-xs font-bold text-theme-text uppercase font-header tracking-[0.2em]"
     >
       Vault Templates
     </h4>
     <a
       href={resolve("/(app)/templates")}
-      class="inline-flex items-center gap-1.5 rounded border border-theme-primary/40 px-2.5 py-1.5 text-micro font-bold uppercase tracking-wide text-theme-primary transition-colors hover:border-theme-primary hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
+      class="inline-flex items-center gap-1.5 rounded border border-theme-primary/40 px-2.5 py-1.5 text-micro font-bold uppercase tracking-wide text-theme-text transition-colors hover:border-theme-primary hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
       data-testid="browse-community-stat-sheet-templates"
     >
       <span class="icon-[lucide--users-round] h-3.5 w-3.5" aria-hidden="true"
@@ -137,7 +137,7 @@
     </a>
     <button
       type="button"
-      class="inline-flex items-center gap-1.5 rounded bg-theme-primary px-2.5 py-1.5 text-micro font-bold uppercase tracking-wide text-theme-bg transition-colors hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+      class="inline-flex items-center gap-1.5 rounded bg-theme-primary px-2.5 py-1.5 text-micro font-bold uppercase tracking-wide text-theme-on-primary transition-colors hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
       disabled={selectedPublishCount === 0}
       onclick={openPublishSelection}
       data-testid="publish-selected-stat-sheet-templates"
@@ -155,7 +155,7 @@
       >
         <div class="flex items-center justify-between gap-3">
           <label
-            class="flex shrink-0 items-center gap-2 text-xs text-theme-muted"
+            class="flex shrink-0 items-center gap-2 text-xs text-theme-text"
           >
             <input
               type="checkbox"
@@ -181,7 +181,7 @@
               <button
                 type="button"
                 onclick={() => startRename(template.id, template.name)}
-                class="p-2 text-theme-muted hover:text-theme-primary transition-colors"
+                class="p-2 text-theme-text hover:text-theme-primary transition-colors"
                 title="Rename Template"
                 aria-label="Rename {template.name} template"
               >
@@ -212,13 +212,13 @@
         class="text-center py-12 border border-dashed border-theme-border rounded"
       >
         <div
-          class="icon-[lucide--list-checks] w-8 h-8 text-theme-muted/20 mx-auto mb-3"
+          class="icon-[lucide--list-checks] w-8 h-8 text-theme-text mx-auto mb-3"
           aria-hidden="true"
         ></div>
-        <p class="text-xs text-theme-muted uppercase font-mono tracking-widest">
+        <p class="text-xs text-theme-text uppercase font-mono tracking-widest">
           No vault templates saved yet
         </p>
-        <p class="text-micro text-theme-muted/70 mt-2 max-w-sm mx-auto">
+        <p class="text-micro text-theme-text mt-2 max-w-sm mx-auto">
           Save a stat sheet layout as a template from an entity's Stats tab to
           see it here.
         </p>

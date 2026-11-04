@@ -85,18 +85,18 @@
   <div class="flex items-center justify-between gap-3 mb-2">
     <div>
       <h4
-        class="text-xs font-bold text-theme-primary uppercase font-header tracking-[0.2em]"
+        class="text-xs font-bold text-theme-text uppercase font-header tracking-[0.2em]"
       >
         Presentation Layout Templates
       </h4>
-      <p class="text-micro text-theme-muted mt-1 leading-relaxed">
+      <p class="text-micro text-theme-text mt-1 leading-relaxed">
         Custom card, grid, and table layouts for stat sheets.
       </p>
     </div>
     <div class="flex items-center gap-2 shrink-0">
       <button
         type="button"
-        class="rounded border border-theme-border px-3 py-1 text-xs font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary transition-colors"
+        class="rounded border border-theme-border px-3 py-1 text-xs font-bold uppercase tracking-wide text-theme-text hover:border-theme-primary hover:text-theme-primary transition-colors"
         onclick={triggerPresentationImport}
         data-testid="presentation-manager-import"
       >
@@ -111,7 +111,7 @@
       />
       <button
         type="button"
-        class="rounded bg-theme-primary px-3 py-1 text-xs font-bold uppercase tracking-wide text-theme-bg hover:opacity-90 transition-colors"
+        class="rounded bg-theme-primary px-3 py-1 text-xs font-bold uppercase tracking-wide text-theme-on-primary hover:opacity-90 transition-colors"
         onclick={() => openPresentation()}
         data-testid="presentation-manager-new"
       >
@@ -157,21 +157,21 @@
             </span>
             {#if t.id === schemaDefaultPresentationId}
               <span
-                class="rounded bg-theme-primary/10 border border-theme-primary/30 px-1.5 py-0.5 text-nano font-bold text-theme-primary uppercase tracking-wider"
+                class="rounded bg-theme-primary/10 border border-theme-primary/30 px-1.5 py-0.5 text-nano font-bold text-theme-text uppercase tracking-wider"
               >
                 Default
               </span>
             {/if}
             {#if t.isBuiltIn}
               <span
-                class="rounded bg-theme-surface border border-theme-border px-1.5 py-0.5 text-nano font-bold text-theme-muted uppercase tracking-wider"
+                class="rounded bg-theme-surface border border-theme-border px-1.5 py-0.5 text-nano font-bold text-theme-text uppercase tracking-wider"
               >
                 Built-in
               </span>
             {/if}
           </div>
           {#if t.description}
-            <span class="text-micro text-theme-muted truncate mt-0.5"
+            <span class="text-micro text-theme-text truncate mt-0.5"
               >{t.description}</span
             >
           {/if}
@@ -180,7 +180,7 @@
         <div class="flex items-center gap-2 shrink-0">
           <button
             type="button"
-            class="rounded border border-theme-border px-2.5 py-1 text-micro font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary transition-colors"
+            class="rounded border border-theme-border px-2.5 py-1 text-micro font-bold uppercase tracking-wide text-theme-text hover:border-theme-primary hover:text-theme-primary transition-colors"
             onclick={() => {
               presentationTemplates.exportTemplate(t);
               notificationStore.notify(`Exported "${t.name}"`, "info");
@@ -193,7 +193,7 @@
           {#if t.isBuiltIn}
             <button
               type="button"
-              class="rounded border border-theme-border px-2.5 py-1 text-micro font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary transition-colors"
+              class="rounded border border-theme-border px-2.5 py-1 text-micro font-bold uppercase tracking-wide text-theme-text hover:border-theme-primary hover:text-theme-primary transition-colors"
               onclick={() => openPresentation(t, true)}
               data-testid="presentation-manager-duplicate"
             >
@@ -202,7 +202,7 @@
           {:else}
             <button
               type="button"
-              class="rounded border border-theme-border px-2.5 py-1 text-micro font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary transition-colors"
+              class="rounded border border-theme-border px-2.5 py-1 text-micro font-bold uppercase tracking-wide text-theme-text hover:border-theme-primary hover:text-theme-primary transition-colors"
               onclick={() => openPresentation(t)}
               data-testid="presentation-manager-edit"
             >
@@ -210,7 +210,7 @@
             </button>
             <button
               type="button"
-              class="rounded border border-theme-border px-2.5 py-1 text-micro font-bold uppercase tracking-wide text-theme-muted hover:border-red-500 hover:text-red-500 transition-colors"
+              class="rounded border border-theme-border px-2.5 py-1 text-micro font-bold uppercase tracking-wide text-theme-text hover:border-red-500 hover:text-red-500 transition-colors"
               onclick={() => deletePresentationTemplate(t)}
               data-testid="presentation-manager-delete"
             >
@@ -223,7 +223,7 @@
       <div
         class="p-6 text-center border border-dashed border-theme-border rounded bg-theme-surface/50"
       >
-        <p class="text-xs text-theme-muted">
+        <p class="text-xs text-theme-text">
           No layout templates found for this schema.
         </p>
       </div>

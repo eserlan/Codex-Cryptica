@@ -8,12 +8,12 @@
 
 <div class="p-4 bg-theme-primary/5 border border-theme-primary/20 rounded-lg">
   <h4
-    class="text-xs font-bold text-theme-primary uppercase font-header tracking-[0.2em] mb-4"
+    class="text-xs font-bold text-theme-text uppercase font-header tracking-[0.2em] mb-4"
   >
     Default Template by Category
   </h4>
 
-  <p class="text-micro text-theme-muted mb-4 leading-relaxed">
+  <p class="text-micro text-theme-text mb-4 leading-relaxed">
     When set, new entities of that category automatically start with this
     template's fields already applied. Leave as "None" for categories that
     shouldn't get stats by default.
