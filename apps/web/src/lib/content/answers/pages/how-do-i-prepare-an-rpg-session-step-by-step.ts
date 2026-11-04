@@ -313,6 +313,7 @@ export const howDoIPrepareAnRpgSessionStepByStep: AnswerConfigInput = {
     "how-do-i-start-a-dnd-campaign",
     "how-do-i-plan-story-arcs-for-an-rpg-campaign",
     "how-do-i-run-my-first-online-tabletop-rpg-session",
+    "how-do-i-plan-a-one-shot-rpg-session",
   ],
   discovery: {
     id: "answer-prepare-session-step-by-step",
