@@ -13,6 +13,13 @@ import {
 } from "@codex/adventure-engine";
 import { LoreDeltaTracker, entityContentHash } from "@codex/oracle-engine";
 
+/** Stream failures that are safe to retry once as a buffered Interaction. */
+const BUFFERED_FALLBACK_ERRORS = new Set([
+  "interaction-stream-unavailable",
+  "interaction-stream-incomplete",
+  "interaction-stream-read-error",
+]);
+
 export interface AdventureTurnGenerationRequest {
   session: AdventureSession;
   phase: "opening" | "action" | "roll-resolution";
@@ -637,12 +644,15 @@ export class AdventureTurnGenerationService {
         } catch (error) {
           if (
             !(error instanceof Error) ||
-            error.message !== "interaction-stream-unavailable" ||
+            !BUFFERED_FALLBACK_ERRORS.has(error.message) ||
             !sendInteraction
           )
             throw error;
-          // Old proxy / provider does not support conversation SSE yet.
-          // Buffered Interactions still preserve continuity and JSON mode.
+          streamAborted(signal);
+          // Old proxy / provider does not support conversation SSE yet, or the
+          // stream ended before a completed turn (nothing was committed, so
+          // the same continuation id is still valid). Buffered Interactions
+          // still preserve continuity and JSON mode.
         }
       }
       if (!sendInteraction) throw new Error("interaction-client-unavailable");

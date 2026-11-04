@@ -740,6 +740,97 @@ describe("AdventureTurnGenerationService", () => {
     expect(previews.at(-1)).toBe("The road opens.");
   });
 
+  it("recovers a stream that ended early with one buffered request on the same conversation", async () => {
+    for (const reason of [
+      "interaction-stream-incomplete",
+      "interaction-stream-read-error",
+    ]) {
+      const buffered: any[] = [];
+      const streamed: any[] = [];
+      const service = new AdventureTurnGenerationService({
+        async getModel() {
+          throw new Error("stateless generation should not run");
+        },
+        async *sendInteractionStream(params) {
+          streamed.push(params);
+          yield {
+            type: "delta" as const,
+            text: '{"kind":"complete","narration":"The road',
+          };
+          throw new Error(reason);
+        },
+        async sendInteraction(params) {
+          buffered.push(params);
+          return { id: "buffered-1", text: completeResponse };
+        },
+      });
+      const proposal = await service.generate({
+        session,
+        phase: "action",
+        anchors: [],
+        relevant: [],
+        onNarration: () => {},
+      });
+      expect(proposal.kind).toBe("complete");
+      expect(streamed).toHaveLength(1);
+      expect(buffered).toHaveLength(1);
+      expect(buffered[0].previousInteractionId).toBe(
+        streamed[0].previousInteractionId,
+      );
+    }
+  });
+
+  it("does not fall back to a buffered request for other stream errors or after cancellation", async () => {
+    let buffered = 0;
+    const base = {
+      async getModel(): Promise<never> {
+        throw new Error("stateless generation should not run");
+      },
+      async sendInteraction() {
+        buffered += 1;
+        return { id: "buffered-1", text: completeResponse };
+      },
+    };
+    const failing = new AdventureTurnGenerationService({
+      ...base,
+      async *sendInteractionStream() {
+        yield { type: "error" as const, error: "interaction-output-too-long" };
+      },
+    });
+    await expect(
+      failing.generate({
+        session,
+        phase: "action",
+        anchors: [],
+        relevant: [],
+        onNarration: () => {},
+      }),
+    ).rejects.toThrow("interaction-output-too-long");
+
+    const controller = new AbortController();
+    const cancelled = new AdventureTurnGenerationService({
+      ...base,
+      async *sendInteractionStream() {
+        yield { type: "started" as const };
+        controller.abort();
+        throw new Error("interaction-stream-incomplete");
+      },
+    });
+    await expect(
+      cancelled.generate(
+        {
+          session,
+          phase: "action",
+          anchors: [],
+          relevant: [],
+          onNarration: () => {},
+        },
+        { signal: controller.signal },
+      ),
+    ).rejects.toThrow();
+    expect(buffered).toBe(0);
+  });
+
   it("repairs one malformed retained-conversation response before failing", async () => {
     const calls: any[] = [];
     const service = new AdventureTurnGenerationService({
