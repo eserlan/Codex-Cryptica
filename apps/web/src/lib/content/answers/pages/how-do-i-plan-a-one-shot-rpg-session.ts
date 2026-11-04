@@ -13,7 +13,7 @@ export const howDoIPlanAOneShotRpgSession: AnswerConfigInput = {
       kind: "prose",
       heading: "Start with the actual slot, not the ideal one",
       paragraphs: [
-        "Write down the constraints before you touch the adventure: the hard stop when people must leave or log off, how many players are coming, how well they know the system, where you are playing, which tools that venue needs, the game system, and the tone everyone expects. These six facts decide how much material you can honestly prepare.",
+        "Write down the constraints before you touch the adventure: the hard stop when people must leave or log off, how many players are coming, how well they know the system, where you are playing, which tools that venue needs, the game system, and the tone everyone expects. These constraints decide how much material you can honestly prepare.",
         "They change the plan in concrete ways. A three-hour convention game for beginners favours pre-generated characters (pregens, covered below) when character creation or rules teaching would consume a substantial part of the slot; it also needs printed or pre-loaded sheets and an opening that starts in the middle of the problem. A five-hour home game with experienced friends can allow character creation at the table, a slower opening, and one more location. Neither plan is the better game; they are answers to different slots. If a fact is still unknown, plan for the harder version: fewer players who know the system, less usable time, and a venue you have not tested.",
       ],
     },
@@ -82,7 +82,7 @@ export const howDoIPlanAOneShotRpgSession: AnswerConfigInput = {
         },
         {
           term: "Fast character creation on the night",
-          text: "Works when creation is quick in your system or is part of the game's intended format. Set a firm time limit, provide partly built characters or templates, and build connections between characters as part of creation: each player states one reason their character trusts or needs another. Without connections, the first hour leaks away on introductions the adventure then ignores.",
+          text: "Works when creation is quick in your system or is part of the game's intended format. Set a firm time limit, provide partly built characters or templates, and build connections between characters as part of creation: each player states one reason their character trusts or needs another. Without connections, introductions may take time without giving the adventure a reason to use them.",
         },
         {
           term: "Characters brought from home",
