@@ -173,6 +173,7 @@
       "name": "@codex/adventure-engine",
       "version": "0.0.0",
       "dependencies": {
+        "@codex/runtime": "workspace:*",
         "zod": "^4.4.3",
       },
       "devDependencies": {
