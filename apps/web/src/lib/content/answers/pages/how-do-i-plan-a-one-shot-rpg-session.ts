@@ -167,8 +167,8 @@ export const howDoIPlanAOneShotRpgSession: AnswerConfigInput = {
           text: "For each fact the ending depends on, note a second place it can surface: a different witness, a physical trace at the scene the players did choose, or the opposition revealing it by acting on it.",
         },
         {
-          term: "An escalation for stalls",
-          text: "Write one event that advances the situation when the players stall or delay: the weather worsens, the opposition starts its plan, a deadline arrives early. The situation moving is kinder than telling players to hurry.",
+          term: "An escalation tied to fictional time",
+          text: "Write one event with a cause already established in the fiction, a trigger tied to elapsed fictional time, and a warning the characters can see or hear in time to act on it. If play pauses because the players are unsure what their characters know or what options they have, stop and clarify the situation, restate the choices as their characters understand them, or talk briefly about the table time left. Do not treat confusion at the table as delay in the fiction, and do not advance a deadline the characters had no way to anticipate.",
         },
         {
           term: "The minimum ending",
@@ -197,15 +197,15 @@ export const howDoIPlanAOneShotRpgSession: AnswerConfigInput = {
         },
         {
           term: "One-page run sheet",
-          text: "Open: cliff stair in rain, bridge ropes cut or storm-torn, lamp dark. Core conflict: keeper Ansa Vale is trapped with a broken leg while the tide cuts the lower path. People: Ansa (wants the logbook saved as much as herself), her assistant Pell (hiding that he panicked and dropped the lamp oil). Places: stair, flooded store room, lamp room. Essential information: the bridge was already rotten (stair posts, Pell, the logbook), and the tide turns at midnight (harbour bell, rising water on the stair). Opposition: weather and the building, plus stats for a fall and for cold water copied onto the page. Resolution: getting Ansa down is success; saving Ansa but losing the logbook and lamp is partial; the party retreating without her, or being cut off themselves, is failure with consequences stated, not a stalemate.",
+          text: "Open: cliff stair in rain, bridge ropes hanging loose, lamp dark. Core conflict: keeper Ansa Vale is trapped with a broken leg while the tide rises toward the lower stair. People: Ansa, who wants the tower logbook carried out with her; Pell, her assistant, who is hiding that he panicked and dropped the lamp oil. The logbook matters because it is the only record that Ansa reported the rotten bridge posts twice and requested lamp oil before the storm; without it, the harbour board can blame her for the dark lamp, withhold her pay and close the tower. Places: stair, flooded store room, lamp room. Essential information: the bridge was already rotten (stair posts, Pell, the logbook), and the tide is rising (rising water on named steps, the harbour bell). Tide track: six marks, set out where every player can see them. Advance one mark after each substantial fictional effort, such as crossing to the tower, searching a room, or attempting the carry, and say aloud which named step the water has reached. At three marks the lowest steps are under water, which warns the characters the descent is closing; at six marks the lower stair is impassable until the tide drops after dawn. Opposition: weather and the building, plus stats for a fall and for cold water copied onto the page. Resolution: full success means Ansa is below the lower stair before the sixth mark with the logbook, so she is treated that night and her reports are proved. A compromised rescue means Ansa gets out alive but the logbook is lost or soaked beyond use, so she faces the harbour board inquiry without her evidence and the lamp stays dark that night. Retreat or being cut off means Ansa is not carried out that night: a retreating party withdraws before the sixth mark and leaves her in the tower, while a cut-off party shelters with her in the lamp room. Either way she spends the night untreated with a broken leg, the lamp stays dark for shipping, and no second rescue can reach her until after dawn.",
         },
         {
           term: "Pre-flight checklist for this game",
-          text: "Read the climbing and falling rules and note the difficulties on the run sheet. Print the tower sketch and one spare. Test that the shared tide track (a simple count of marks anyone can move) is visible to all players. Put spare dice and name tents in the game bag. Fallback: the whole game runs from the printed sheet and sketch if the shared screen fails.",
+          text: "Read the climbing and falling rules and note the difficulties on the run sheet. Print the tower sketch, the tide track and one spare of each. Check every player can see the tide track and can follow which mark the water has reached. Put spare dice and name tents in the game bag. Fallback: the whole game runs from the printed sheet, sketch and track if the shared screen fails.",
         },
         {
           term: "Optional material and alternate delivery",
-          text: "Optional: a flooded store room with salvage and Pell's dropped oil flask; drop it first if the stair scenes run long. Alternate route: if nobody questions Pell, the rotten bridge posts and the logbook entry about them carry the same fact. Escalation if the players stall: the lower stair goes under, and the choice becomes the climb or nothing.",
+          text: "Optional: a flooded store room with salvage and Pell's dropped oil flask; drop it first if the stair scenes run long. Alternate route: if nobody questions Pell, the rotten bridge posts and the logbook entry about them carry the same fact. If the tide reaches the sixth mark, the lower stair floods and that descent closes. The party can still try the cliff climb, lower Ansa on a rope from the lamp room, or shelter with her in the lamp room until the tide drops; flooding changes which approaches are available, at what risk, rather than leaving one approved solution.",
         },
         {
           term: "First line",
@@ -217,7 +217,7 @@ export const howDoIPlanAOneShotRpgSession: AnswerConfigInput = {
       kind: "prose",
       heading: "The final readiness check",
       paragraphs: [
-        "On the day, sort everything into three piles. Shared with players: the premise brief, character sheets or creation limits, and any handout they start with. Open on your screen or table: the one-page run sheet, the essential stats, the map, and your fallback. Droppable without regret: the optional scene, the extra lore, and any encounter whose only job was to fill time. If those three piles exist and you know your first spoken prompt, you are ready. What happens once the players start making decisions is a running problem, not a planning one.",
+        "On the day, sort everything into three piles. Shared with players: the premise brief, character sheets or creation limits, and any handout they start with. Open on your screen or table: the one-page run sheet, the essential stats, the map, and your fallback. Droppable without regret: the optional scene, the extra lore, and any encounter whose only job was to fill time. If those three piles exist and you know your first spoken prompt, you are ready. From the first decision onward, the work changes from planning to running the session at the table; keep the run sheet in front of you and let the prepared options, alternate routes and endings do their work there.",
       ],
     },
     {
@@ -236,7 +236,7 @@ export const howDoIPlanAOneShotRpgSession: AnswerConfigInput = {
         "Expected decision points: the three to five choices I am ready for, without assuming which way they go.",
         "People and places: one line each, with names, wants and the numbers I would otherwise look up.",
         "Supporting assets tested: maps, tokens, handouts, links, permissions, dice and a low-tech fallback.",
-        "Optional content: the scene I will drop first, and the escalation I will use if the players stall.",
+        "Optional content: the scene I will drop first, and the escalation tied to fictional time, with its warning sign.",
         "Fail-forward and ending: what happens on success, partial success and failure, and the minimum that must happen to end the session honestly.",
       ],
     },
@@ -244,7 +244,7 @@ export const howDoIPlanAOneShotRpgSession: AnswerConfigInput = {
   codexConnection: {
     heading: "Turning the plan into a run sheet in Codex Cryptica",
     paragraphs: [
-      "If one field of the checklist is empty, such as an expected decision point or a reserve complication, the Session Prep Builder in Codex Cryptica drafts that field from your hook and leaves the fields you have already settled alone. The result is a one-page run sheet in the same shape as the checklist above, which you can keep with the pregens and scenario notes for the evening.",
+      "The Session Prep Builder in Codex Cryptica prepares the situation, people, places, information and consequences portion of the plan. Working from your hook, it drafts the Start, Pressure, People, Places, Information, Complications, Consequences and Reserve sections you leave empty, and leaves the sections you have already settled alone. Keep its run sheet alongside your own slot notes, pregens and asset checks, because logistics, character preparation and the pre-flight tests stay in your planning notes rather than in the Builder output.",
     ],
     linkText: "Open the Session Prep Builder",
     href: "/tools/session-prep-builder",
@@ -253,7 +253,7 @@ export const howDoIPlanAOneShotRpgSession: AnswerConfigInput = {
     {
       title: "Session Prep Builder",
       description:
-        "Turn your hook into a one-page run sheet, drafting only the fields you leave empty.",
+        "Build the Start, Pressure, People, Places, Information, Complications, Consequences and Reserve sections of a run sheet from your hook.",
       href: "/tools/session-prep-builder",
     },
     {
