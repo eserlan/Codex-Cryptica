@@ -71,6 +71,7 @@
     <button
       type="submit"
       disabled={!draft.trim() || pending}
+      aria-busy={pending}
       class="touch-target rounded bg-chrome-accent px-3 py-2 text-meta font-bold uppercase tracking-wider text-chrome-bg transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-chrome-accent"
     >
       Ask
