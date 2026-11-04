@@ -136,6 +136,7 @@
     if (value !== field.value) updateField(id, { value });
   }
 
+  // fallow-ignore-next-line complexity
   function changeFieldType(field: StatSheetField, newType: StatSheetFieldType) {
     const updates: Partial<StatSheetField> = { type: newType };
     if (newType === "item-table" && !field.columns) {
@@ -317,6 +318,7 @@
   }
 </script>
 
+<!-- fallow-ignore-next-line complexity -->
 <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div

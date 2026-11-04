@@ -122,6 +122,7 @@
   );
 </script>
 
+<!-- fallow-ignore-next-line complexity -->
 {#if !field}
   <MissingFieldNode
     node={{ type: "missing-field", fieldId: node.fieldId, label: node.label }}

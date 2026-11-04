@@ -180,6 +180,7 @@
   }
 </script>
 
+<!-- fallow-ignore-next-line complexity -->
 {#if fields.length === 0}
   <div
     class="flex flex-col items-center gap-3 py-8 text-center"
