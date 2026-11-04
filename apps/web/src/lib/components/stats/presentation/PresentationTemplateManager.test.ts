@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import { fireEvent, render, screen } from "@testing-library/svelte";
+import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { StatSheetTemplate } from "schema";
 
@@ -309,5 +309,53 @@ describe("PresentationTemplateManager", () => {
       expect.stringContaining('Imported template "Imported Presentation"'),
       "info",
     );
+  });
+  it("imports through the shared workflow and reports success", async () => {
+    saveTemplate.mockResolvedValueOnce({ name: "Imported Layout" });
+    const { container } = render(PresentationTemplateManager, { schema });
+    const input = container.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+    await fireEvent.change(input, {
+      target: {
+        files: [
+          {
+            text: async () =>
+              JSON.stringify({
+                name: "Imported Layout",
+                schemaTemplateId: schema.id,
+                source: "{{stat.hp}}",
+                formatVersion: 1,
+              }),
+          },
+        ],
+      },
+    });
+    await waitFor(() =>
+      expect(notify).toHaveBeenCalledWith(
+        'Imported template "Imported Layout"',
+        "success",
+      ),
+    );
+    expect(saveTemplate).toHaveBeenCalledWith(
+      expect.objectContaining({ schemaTemplateId: schema.id }),
+    );
+    expect(input.value).toBe("");
+  });
+
+  it("shows invalid import feedback without saving", async () => {
+    const { container } = render(PresentationTemplateManager, { schema });
+    const input = container.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+    await fireEvent.change(input, {
+      target: { files: [{ text: async () => "{" }] },
+    });
+    await waitFor(() =>
+      expect(
+        screen.getByText("This file isn't a valid presentation template."),
+      ).toBeTruthy(),
+    );
+    expect(saveTemplate).not.toHaveBeenCalled();
   });
 });

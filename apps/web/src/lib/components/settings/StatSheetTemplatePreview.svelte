@@ -53,7 +53,7 @@
       ondragover={(e) => order.handleFieldDragOver(e, template.id, index)}
       ondragleave={() => (order.dragOverFieldKey = null)}
       ondrop={(e) => order.handleFieldDrop(e, template, index)}
-      ondragend={order.handleFieldDragEnd}
+      ondragend={() => order.handleFieldDragEnd()}
       onkeydown={(e) => order.handleTemplateFieldKeyDown(e, template, index)}
       onfocusin={() =>
         (order.selectedTemplateFieldKey = `${template.id}-${field.id}`)}

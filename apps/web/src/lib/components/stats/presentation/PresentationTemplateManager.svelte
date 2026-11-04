@@ -3,10 +3,8 @@
   import { presentationTemplates } from "#lib/stores/presentation-templates.svelte.js";
   import { statSheetTemplates } from "#lib/stores/stat-sheet-templates.svelte.js";
   import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
-  import {
-    analyzePresentationCompatibility,
-    importPresentationTemplatePackage,
-  } from "@codex/stat-sheet-engine";
+  import { analyzePresentationCompatibility } from "@codex/stat-sheet-engine";
+  import { importPresentationFile } from "./presentation-template-import.js";
   import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
 
   let {
@@ -166,48 +164,8 @@
     input.value = "";
     if (!file) return;
     importError = "";
-    try {
-      const text = await file.text();
-      const json = JSON.parse(text);
-      const availableSchemaIds = [schema.id];
-      const result = importPresentationTemplatePackage(
-        json,
-        availableSchemaIds,
-        schema,
-      );
-      if (!result.ok) {
-        importError = result.message;
-        return;
-      }
-      const saved = await presentationTemplates.saveTemplate({
-        schemaTemplateId: result.package.schemaTemplateId,
-        name: presentationTemplates.uniqueNameForSchema(
-          result.package.name,
-          schema.id,
-        ),
-        description: result.package.description ?? null,
-        source: result.package.source,
-        formatVersion: result.package.formatVersion,
-      });
-      if (!saved) {
-        importError = "Failed to import template.";
-        return;
-      }
-      const unmappedNotice =
-        result.unmappedFields && result.unmappedFields.length > 0
-          ? ` (Note: unmapped fields: ${result.unmappedFields.join(", ")})`
-          : "";
-      const strippedNotice =
-        result.removedFragments.length > 0
-          ? ` (${result.removedFragments.length} disallowed item${result.removedFragments.length === 1 ? "" : "s"} removed)`
-          : "";
-      notificationStore.notify(
-        `Imported template "${saved.name}"${strippedNotice}${unmappedNotice}`,
-        unmappedNotice ? "info" : "success",
-      );
-    } catch {
-      importError = "This file isn't a valid presentation template.";
-    }
+    const error = await importPresentationFile(file, () => schema);
+    if (error !== null) importError = error;
   }
 </script>
 

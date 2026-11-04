@@ -65,4 +65,16 @@ describe("StatSheetTemplatePreview", () => {
     expect(screen.getByText("No fields.")).toBeTruthy();
     expect(screen.queryByTestId("stat-sheet-template-field-item")).toBeNull();
   });
+  it("clears drag state on the DOM drag-end event without changing selection", async () => {
+    const { order, updateTemplateFields } = setup();
+    const row = screen.getAllByTestId("stat-sheet-template-field-item")[0];
+    await fireEvent.dragStart(row);
+    await fireEvent.dragOver(row);
+    expect(order.draggedFieldKey).toBe("sheet-0");
+    await fireEvent.dragEnd(row);
+    expect(order.draggedFieldKey).toBeNull();
+    expect(order.dragOverFieldKey).toBeNull();
+    expect(order.isSelected("sheet", "hp")).toBe(true);
+    expect(updateTemplateFields).not.toHaveBeenCalled();
+  });
 });
