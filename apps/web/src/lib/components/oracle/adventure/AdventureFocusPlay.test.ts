@@ -409,6 +409,41 @@ describe("AdventureFocusPlay", () => {
       });
     });
 
+    it("leaves sizing to the browser when it resizes the page for the keyboard", async () => {
+      render(AdventureFocusPlay, { props: props() });
+      const surface = screen.getByTestId("adventure-play-surface");
+      // interactive-widget=resizes-content: layout and visual viewports shrink
+      // together, so there is no gap and no measured height to apply.
+      const original = Object.getOwnPropertyDescriptor(window, "innerHeight");
+      Object.defineProperty(window, "innerHeight", {
+        configurable: true,
+        value: 400,
+      });
+      try {
+        viewport.height = 400;
+        viewport.offsetTop = 0;
+        viewport.dispatchEvent(new Event("resize"));
+        await waitFor(() =>
+          expect(surface.getAttribute("style") ?? "").toBe(""),
+        );
+      } finally {
+        if (original) Object.defineProperty(window, "innerHeight", original);
+      }
+    });
+
+    it("drops the pinned height once the keyboard gap closes", async () => {
+      render(AdventureFocusPlay, { props: props() });
+      const surface = screen.getByTestId("adventure-play-surface");
+      viewport.height = window.innerHeight - 300;
+      viewport.dispatchEvent(new Event("resize"));
+      await waitFor(() =>
+        expect(surface.style.height).toBe(window.innerHeight - 300 + "px"),
+      );
+      viewport.height = window.innerHeight;
+      viewport.dispatchEvent(new Event("resize"));
+      await waitFor(() => expect(surface.style.height).toBe(""));
+    });
+
     it("pins to the visible viewport when the keyboard reduces it", async () => {
       render(AdventureFocusPlay, { props: props() });
       const surface = screen.getByTestId("adventure-play-surface");

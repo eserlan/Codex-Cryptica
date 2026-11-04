@@ -59,11 +59,15 @@
     if (!phone) return;
     return keyboard.start();
   });
-  // Even a sub-threshold viewport change can place the composer behind the
-  // Android keyboard toolbar. Use the measured visible area whenever possible,
-  // rather than falling back to 100dvh until a 120px gap is detected.
+  // Android Chrome resizes the page for the keyboard itself
+  // (`interactive-widget=resizes-content` in app.html), so `100dvh` already
+  // ends above the keyboard and its toolbar and there is no gap to correct.
+  // Browsers that still overlay the keyboard (iOS Safari) leave a gap between
+  // the layout and visual viewports; pin to the visible area only then, even
+  // when the gap is too small to count as a keyboard. Never apply a measured
+  // height without a gap: a stale measurement would override the browser.
   const keyboardStyle = $derived(
-    phone && keyboard.visibleHeight > 0
+    phone && keyboard.visibleHeight > 0 && keyboard.inset > 0
       ? `top: ${keyboard.offsetTop}px; height: ${keyboard.visibleHeight}px; bottom: auto;`
       : undefined,
   );
