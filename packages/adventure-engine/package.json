@@ -14,6 +14,7 @@
     "lint": "eslint \"src/**/*.ts\""
   },
   "dependencies": {
+    "@codex/runtime": "workspace:*",
     "zod": "^4.4.3"
   },
   "devDependencies": {
