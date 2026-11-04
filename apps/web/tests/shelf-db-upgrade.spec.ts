@@ -237,7 +237,7 @@ test.describe("Shelf — IndexedDB v22 to v23 upgrade", () => {
 
     const after = await inspectDatabase(page);
 
-    expect(after.version).toBe(24);
+    expect(after.version).toBe(26);
     expect(after.vault?.entityCount).toBe(37);
     expect(
       errors.filter((message) => /IndexedDB|object store/i.test(message)),
