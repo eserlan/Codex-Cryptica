@@ -14,7 +14,7 @@ export const howDoIPlanAOneShotRpgSession: AnswerConfigInput = {
       heading: "Start with the actual slot, not the ideal one",
       paragraphs: [
         "Write down the constraints before you touch the adventure: the hard stop when people must leave or log off, how many players are coming, how well they know the system, where you are playing, which tools that venue needs, the game system, and the tone everyone expects. These six facts decide how much material you can honestly prepare.",
-        "They change the plan in concrete ways. A three-hour convention game for beginners needs pre-generated characters (pregens, covered below), printed or pre-loaded sheets, and an opening that starts in the middle of the problem, because teaching the rules will take part of the slot. A five-hour home game with experienced friends can allow character creation at the table, a slower opening, and one more location. Neither plan is the better game; they are answers to different slots. If a fact is still unknown, plan for the harder version: fewer players who know the system, less usable time, and a venue you have not tested.",
+        "They change the plan in concrete ways. A three-hour convention game for beginners favours pre-generated characters (pregens, covered below) when character creation or rules teaching would consume a substantial part of the slot; it also needs printed or pre-loaded sheets and an opening that starts in the middle of the problem. A five-hour home game with experienced friends can allow character creation at the table, a slower opening, and one more location. Neither plan is the better game; they are answers to different slots. If a fact is still unknown, plan for the harder version: fewer players who know the system, less usable time, and a venue you have not tested.",
       ],
     },
     {
@@ -78,7 +78,7 @@ export const howDoIPlanAOneShotRpgSession: AnswerConfigInput = {
       items: [
         {
           term: "Pre-generated characters (pregens)",
-          text: "Default for beginners, convention games and any slot under four hours. Give each pregen an immediate motivation tied to tonight's situation, one simple connection to another character, and highlight the procedures that character is likely to use tonight, with any signature ability explained in plain language on the sheet. Keep the complete sheet or rules reference to hand, so a player can still choose an option you did not predict. Offer more pregens than players so the last person still chooses.",
+          text: "Favour pregens for beginners, convention games and any slot under four hours, where creation or rules teaching would otherwise take a substantial share of the session. Where creation is quick or part of the intended format, use the next option instead. Give each pregen an immediate motivation tied to tonight's situation, one simple connection to another character, and highlight the procedures that character is likely to use tonight, with any signature ability explained in plain language on the sheet. Keep the complete sheet or rules reference to hand, so a player can still choose an option you did not predict. Offer more pregens than players so the last person still chooses.",
         },
         {
           term: "Fast character creation on the night",
@@ -196,8 +196,24 @@ export const howDoIPlanAOneShotRpgSession: AnswerConfigInput = {
           text: "How to reach the tower now the rope bridge is down; whether to spend time securing the stair or push on as the tide rises; who is carried out first if the keeper and the keeper's records cannot both be moved quickly; and whether to relight the lamp or abandon the tower before the storm peaks.",
         },
         {
-          term: "One-page run sheet",
-          text: "Open: cliff stair in rain, bridge ropes hanging loose, lamp dark. Core conflict: keeper Ansa Vale is trapped with a broken leg while the tide rises toward the lower stair. People: Ansa, who wants the tower logbook carried out with her; Pell, her assistant, who is hiding that he panicked and dropped the lamp oil. The logbook matters because it is the only record that Ansa reported the rotten bridge posts twice and requested lamp oil before the storm; without it, the harbour board can blame her for the dark lamp, withhold her pay and close the tower. Places: stair, flooded store room, lamp room. Essential information: the bridge was already rotten (stair posts, Pell, the logbook), and the tide is rising (rising water on named steps, the harbour bell). Tide track: six marks, set out where every player can see them. Advance one mark after each substantial fictional effort, such as crossing to the tower, searching a room, or attempting the carry, and say aloud which named step the water has reached. At three marks the lowest steps are under water, which warns the characters the descent is closing; at six marks the lower stair is impassable until the tide drops after dawn. Opposition: weather and the building, plus stats for a fall and for cold water copied onto the page. Outcomes, judged separately by what the party actually does: Ansa reaches treatment that night if she is carried below the lower stair before the sixth mark, or brought down by another route after it floods; she reaches treatment after dawn if the party shelters with her and carries her out when the tide drops; she goes without rescue only if the party withdraws without her or abandons the carry. The logbook counts as evidence only if it is carried out dry; leaving it behind or soaking it loses that evidence, whichever way Ansa herself gets out. The lamp is relit only if the party relights it with usable oil; it stays dark if they do not, whichever way the rescue and the logbook turn out. So a party that lowers Ansa on a rope after the stair floods has still rescued her that night, even if it left the logbook in the lamp room and did not relight the lamp: she is treated, she faces the inquiry without evidence, and the lamp stays dark, each for its own reason.",
+          term: "Run sheet: opening",
+          text: "Cliff stair in rain, bridge ropes hanging loose, lamp dark. First prompt is listed at the end of this example.",
+        },
+        {
+          term: "Run sheet: people",
+          text: "Ansa Vale, keeper, broken leg, wants the tower logbook carried out with her. Pell, her assistant, is hiding that he panicked and dropped a flask of lamp oil in the store room.",
+        },
+        {
+          term: "Run sheet: places and facts",
+          text: "Stair, lamp room, and an optional flooded store room (marked droppable below). Facts: the bridge posts were already rotten (visible on the stair, from Pell, in the logbook). The lamp room holds a sealed spare oil can by the lamp. The logbook is the only record that Ansa reported the posts and requested oil; carried out dry, it clears her at the harbour board inquiry.",
+        },
+        {
+          term: "Run sheet: tide trigger",
+          text: "Six marks where every player can see them. Advance one after each substantial fictional effort (crossing to the tower, searching a room, attempting the carry) and say aloud which named step the water has reached. Three marks: lowest steps under water. Six marks: lower stair impassable until the tide drops after dawn. Opposition: weather and the building; fall and cold-water numbers copied onto the sheet.",
+        },
+        {
+          term: "Run sheet: independent outcomes",
+          text: "Keeper: treated that night if carried below the lower stair before the sixth mark, or brought down by another route after it floods; treated after dawn if the party shelters with her until the tide drops; without rescue only if the party withdraws without her or abandons the carry. Logbook: evidence only if carried out dry, whichever way the keeper gets out. Lamp: relit only if the party uses the lamp room spare oil to relight it, whichever way the other two turn out. So lowering Ansa on a rope after the flood still rescues her that night even if the logbook is left behind and the lamp stays dark; each result stands for its own reason.",
         },
         {
           term: "Pre-flight checklist for this game",
@@ -205,7 +221,7 @@ export const howDoIPlanAOneShotRpgSession: AnswerConfigInput = {
         },
         {
           term: "Optional material and alternate delivery",
-          text: "Optional: a flooded store room with salvage and Pell's dropped oil flask; drop it first if the stair scenes run long. Alternate route: if nobody questions Pell, the rotten bridge posts and the logbook entry about them carry the same fact. If the tide reaches the sixth mark, the lower stair floods and that descent closes. The party can still try the cliff climb, lower Ansa on a rope from the lamp room, or shelter with her in the lamp room until the tide drops; flooding changes which approaches are available, at what risk, rather than leaving one approved solution.",
+          text: "Optional: a flooded store room holding salvage and Pell's dropped oil flask. Drop it first if the stair scenes run long; dropping it loses only the salvage and Pell's confession scene, because the lamp room spare oil keeps relighting available either way. Alternate route: if nobody questions Pell, the rotten bridge posts and the logbook entry carry the same fact. If the tide reaches the sixth mark, that descent closes; the party can still try the cliff climb, lower Ansa on a rope from the lamp room, or shelter with her until the tide drops.",
         },
         {
           term: "First line",
