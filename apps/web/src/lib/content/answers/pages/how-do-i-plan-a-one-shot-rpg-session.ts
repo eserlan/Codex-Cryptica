@@ -280,6 +280,7 @@ export const howDoIPlanAOneShotRpgSession: AnswerConfigInput = {
     },
   ],
   relatedAnswers: [
+    "how-do-i-run-a-one-shot-rpg-session",
     "how-do-you-write-a-one-shot-adventure",
     "how-do-i-pace-an-rpg-one-shot",
     "how-do-i-prepare-an-rpg-session-step-by-step",
@@ -319,6 +320,11 @@ export const howDoIPlanAOneShotRpgSession: AnswerConfigInput = {
         with: "answer-prepare-session-step-by-step",
         reason:
           "That Answer gives a general step-by-step prep method for any session, including ongoing campaigns; this one applies pre-session planning specifically to a single self-contained evening with a hard stop and no follow-up session.",
+      },
+      {
+        with: "answer-run-one-shot-rpg-session",
+        reason:
+          "This Answer prepares a one-shot before play with a premise brief, pregens and a run sheet; the run answer starts at the table and covers live facilitation through the epilogue.",
       },
       {
         with: "answer-session-zero",
