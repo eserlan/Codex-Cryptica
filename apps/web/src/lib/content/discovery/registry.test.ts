@@ -585,6 +585,30 @@ describe("the committed registry", () => {
     });
   });
 
+  it("records both sides of the one-shot planning, pacing, writing and preparation overlaps", () => {
+    const runOneShot = registry.find(
+      (entry) => entry.id === "answer-run-one-shot-rpg-session",
+    );
+
+    for (const id of [
+      "answer-plan-one-shot-rpg-session",
+      "answer-pace-rpg-one-shot",
+      "answer-write-one-shot-adventure",
+      "answer-prepare-session-step-by-step",
+    ]) {
+      expect(runOneShot?.acknowledgedOverlap).toContainEqual({
+        with: id,
+        reason: expect.any(String),
+      });
+      expect(
+        registry.find((entry) => entry.id === id)?.acknowledgedOverlap,
+      ).toContainEqual({
+        with: "answer-run-one-shot-rpg-session",
+        reason: expect.any(String),
+      });
+    }
+  });
+
   it("keeps the judgement warnings to a reviewable number", () => {
     // Not a quality bar — a tripwire. If this climbs, the overlap heuristic has
     // started reporting noise and needs tightening rather than muting.

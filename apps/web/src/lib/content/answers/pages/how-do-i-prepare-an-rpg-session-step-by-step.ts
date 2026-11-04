@@ -363,6 +363,11 @@ export const howDoIPrepareAnRpgSessionStepByStep: AnswerConfigInput = {
           "That page develops a premise into a playable adventure situation; this one turns a hook or current situation into material for the next single session.",
       },
       {
+        with: "answer-run-one-shot-rpg-session",
+        reason:
+          "This answer is a general preparation procedure for an upcoming session; the run answer begins when the one-shot starts and handles live choices through its epilogue.",
+      },
+      {
         with: "answer-in-person-gm-notes",
         reason:
           "That page covers how to organise notes and reference material at the table; this one covers what to prepare before the session.",

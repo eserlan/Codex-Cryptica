@@ -322,6 +322,11 @@ export const howDoIPlanAOneShotRpgSession: AnswerConfigInput = {
           "That Answer gives a general step-by-step prep method for any session, including ongoing campaigns; this one applies pre-session planning specifically to a single self-contained evening with a hard stop and no follow-up session.",
       },
       {
+        with: "answer-run-one-shot-rpg-session",
+        reason:
+          "This Answer prepares a one-shot before play with a premise brief, pregens and a run sheet; the run answer starts at the table and covers live facilitation through the epilogue.",
+      },
+      {
         with: "answer-session-zero",
         reason:
           "That Answer covers the full expectations and boundaries conversation for a group; this one covers the short premise brief and comfort check a one-shot needs before play.",

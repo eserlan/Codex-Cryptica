@@ -247,6 +247,11 @@ export const howDoIPaceAnRpgOneShot: AnswerConfigInput = {
         reason:
           "This answer teaches how to pace content within a fixed single-session slot; the session-length answer compares general booked lengths across play contexts.",
       },
+      {
+        with: "answer-run-one-shot-rpg-session",
+        reason:
+          "This answer budgets table time and gives a cutting order; the run answer covers live facilitation, rulings and the ending without repeating those pacing tools.",
+      },
     ],
     relatedIntents: [
       "answer-write-one-shot-adventure",

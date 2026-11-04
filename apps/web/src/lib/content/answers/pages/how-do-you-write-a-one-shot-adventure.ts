@@ -206,6 +206,11 @@ export const howDoYouWriteAOneShotAdventure: AnswerConfigInput = {
         reason:
           "Mystery addresses non-linear clue distribution, whereas one-shot covers pacing and time management across a full session.",
       },
+      {
+        with: "answer-run-one-shot-rpg-session",
+        reason:
+          "This answer designs the scenario and its four-beat structure before play; the run answer assumes a scenario exists and explains how to facilitate it live.",
+      },
     ],
     relatedIntents: [
       "answer-prep-weekly-session-quickly",
