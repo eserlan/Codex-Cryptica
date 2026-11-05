@@ -10,6 +10,8 @@
   import { sessionJournalStore } from "#lib/stores/session-journal.svelte.js";
   import { vault } from "#lib/stores/vault.svelte.js";
   import { characterChoices } from "#lib/services/solo-characters.js";
+  import { adventureSessionRepository } from "#lib/services/adventure/adventure-session-repository.js";
+  import { configureAdventureRepository } from "#lib/services/adventure/configure-adventure-repository.js";
   import SoloThreadsMenu from "./SoloThreadsMenu.svelte";
 
   let setupOpen = $state(false);
@@ -21,6 +23,33 @@
   );
   const journalState = $derived(sessionJournalStore.controlState);
   const characters = $derived(characterChoices(vault.entities));
+
+  // Read-only lookup (no lease is taken) so the hub can offer to resume an
+  // Oracle adventure instead of presenting it as something to start.
+  let activeAdventure = $state<{ id: string; title: string } | null>(null);
+  $effect(() => {
+    const vaultId = vault.activeVaultId;
+    let cancelled = false;
+    activeAdventure = null;
+    if (!vaultId || isGuest || discoveryPolicyStore.aiDisabled) return;
+    configureAdventureRepository(vault);
+    void adventureSessionRepository
+      .list(vaultId)
+      .then(({ effectiveActiveId, entries }) => {
+        if (cancelled) return;
+        const entry = entries.find((item) => item.id === effectiveActiveId);
+        activeAdventure =
+          entry && entry.status === "active"
+            ? { id: entry.id, title: entry.title }
+            : null;
+      })
+      .catch(() => {
+        if (!cancelled) activeAdventure = null;
+      });
+    return () => {
+      cancelled = true;
+    };
+  });
 </script>
 
 <svelte:head>
@@ -100,13 +129,22 @@
         class="block rounded-lg border border-theme-border p-4 hover:border-theme-primary/60"
         data-testid="play-adventure-mode"
       >
-        <span class="font-header text-base text-theme-text"
-          >Let the Oracle run the game</span
-        >
-        <span class="mt-1 block text-sm text-theme-muted">
-          Optional. Adventure Mode uses the Oracle as game master. Solo sessions
-          do not need it.
-        </span>
+        {#if activeAdventure}
+          <span class="font-header text-base text-theme-text"
+            >Resume your adventure</span
+          >
+          <span class="mt-1 block text-sm text-theme-text">
+            Pick up “{activeAdventure.title}” where you left off.
+          </span>
+        {:else}
+          <span class="font-header text-base text-theme-text"
+            >Let the Oracle run the game</span
+          >
+          <span class="mt-1 block text-sm text-theme-text">
+            Optional. Adventure Mode uses the Oracle as game master. Solo
+            sessions do not need it.
+          </span>
+        {/if}
       </a>
     {/if}
   {/if}

@@ -47,7 +47,7 @@
     <div>
       <h3
         id="adventure-situations-heading"
-        class="font-semibold text-theme-primary"
+        class="font-semibold text-theme-text"
       >
         Situations
       </h3>
