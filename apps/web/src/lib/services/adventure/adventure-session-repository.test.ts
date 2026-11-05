@@ -332,3 +332,46 @@ describe("AdventureSessionRepository v3 persistence", () => {
     });
   });
 });
+
+describe("AdventureSessionRepository.list with several active adventures", () => {
+  it("keeps every active adventure playable and picks the most recent", async () => {
+    const repository = new AdventureSessionRepository(async () => {
+      throw new Error("not used");
+    });
+    const sessions: Record<string, any> = {
+      old: {
+        id: "old",
+        title: "Old",
+        status: "active",
+        updatedAt: "2026-01-01T00:00:00.000Z",
+        revision: 1,
+        premise: "p",
+      },
+      recent: {
+        id: "recent",
+        title: "Recent",
+        status: "active",
+        updatedAt: "2026-02-01T00:00:00.000Z",
+        revision: 1,
+        premise: "p",
+      },
+    };
+    (repository as any).adventuresDirectory = vi.fn(async () => ({
+      async *entries() {
+        for (const id of Object.keys(sessions))
+          yield [`${id}.json`, { kind: "file" }];
+      },
+    }));
+    (repository as any).readFile = vi.fn(async (_v: string, id: string) => ({
+      mode: "writable",
+      session: sessions[id],
+    }));
+
+    const result = await repository.list("vault-1");
+    expect(result.effectiveActiveId).toBe("recent");
+    expect(result.entries.map((e) => e.loadCondition)).toEqual([
+      "normal",
+      "normal",
+    ]);
+  });
+});

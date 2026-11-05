@@ -270,7 +270,12 @@
           {isFullscreen ? "Fullscreen active" : "Fullscreen"}
         </span>
       </button>
-      <AdventureManagementMenu {manager} />
+      <AdventureManagementMenu
+        {manager}
+        {repository}
+        {vaultId}
+        onSwitch={onResume}
+      />
     </div>
   </header>
 

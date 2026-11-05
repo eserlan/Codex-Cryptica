@@ -75,7 +75,6 @@ export class AdventureOpening {
       this.state.phase = "starting";
       this.state.errorMessage = null;
       this.state.errorCause = null;
-      await this.ensureStartAvailable(input.vaultId);
       const saved = await this.persistNewAdventure(created);
       await this.takeControlOfNewAdventure(saved);
       await this.startOpeningIfOnline(saved);
@@ -97,53 +96,6 @@ export class AdventureOpening {
       return;
     this.state.errorMessage = null;
     await this.startOpeningIfOnline(session);
-  }
-
-  private async ensureStartAvailable(vaultId: string): Promise<void> {
-    const current = await this.runtime.deps.repository.list(vaultId);
-    if (!current.effectiveActiveId) return;
-    const existing = await this.runtime.deps.repository.load(
-      vaultId,
-      current.effectiveActiveId,
-    );
-    if (
-      existing.condition !== "unreadable" &&
-      existing.session.status === "active" &&
-      existing.session.turns.length === 0
-    ) {
-      await this.archiveIncompleteStart(vaultId, existing.session);
-      return;
-    }
-    this.state.phase = "ready";
-    throw new Error("active-adventure-exists");
-  }
-
-  private async archiveIncompleteStart(
-    vaultId: string,
-    existing: AdventureSession,
-  ): Promise<void> {
-    const recovery = await this.runtime.deps.authority.acquire({
-      vaultId,
-      sessionId: existing.id,
-    });
-    if (!recovery.ok) {
-      this.state.phase = "ready";
-      throw new Error("active-adventure-exists");
-    }
-    try {
-      const archived = await this.runtime.deps.repository.archive(
-        vaultId,
-        existing.id,
-        existing.revision,
-      );
-      if (!archived.ok) {
-        this.state.phase = "error";
-        this.state.errorMessage = archived.error.message;
-        throw archived.error;
-      }
-    } finally {
-      await this.runtime.deps.authority.release(recovery.lease);
-    }
   }
 
   private validatedNewSession(input: {

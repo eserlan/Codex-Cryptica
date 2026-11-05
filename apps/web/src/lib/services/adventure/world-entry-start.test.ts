@@ -100,12 +100,6 @@ describe("createWorldEntryStart", () => {
     ).toContain("selected world date");
     expect(
       describeWorldEntryStartFailure(
-        new Error("active-adventure-exists"),
-        "launch",
-      ),
-    ).toContain("already active");
-    expect(
-      describeWorldEntryStartFailure(
         new Error("private source content here"),
         "launch",
       ),

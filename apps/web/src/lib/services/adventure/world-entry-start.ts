@@ -114,9 +114,6 @@ export function describeWorldEntryStartFailure(
   stage: "setup" | "launch",
 ): string {
   const message = cause instanceof Error ? cause.message : "";
-  if (message === "active-adventure-exists") {
-    return "An adventure is already active. Continue or archive it first.";
-  }
   if (message === "vault-not-open") {
     return "Reopen the selected Vault and retry. Your setup has been preserved.";
   }

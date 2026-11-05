@@ -109,14 +109,7 @@ export class AdventureSessionRepository {
           exportDocument: read.exportDocument,
         };
       }
-      const list = await this.list(vaultId);
-      return {
-        condition:
-          session.status === "active" && list.effectiveActiveId !== session.id
-            ? "duplicate-active-conflict"
-            : "normal",
-        session,
-      };
+      return { condition: "normal", session };
     } catch (cause) {
       return {
         condition: "unreadable",
@@ -167,12 +160,8 @@ export class AdventureSessionRepository {
     const active = entries
       .filter((entry) => entry.status === "active" && entry.updatedAt)
       .sort((a, b) => b.updatedAt!.localeCompare(a.updatedAt!));
+    // Several adventures can be active at once; this is the most recently played.
     const effectiveActiveId = active[0]?.id ?? null;
-    for (const entry of entries) {
-      if (entry.status === "active" && entry.id !== effectiveActiveId) {
-        entry.loadCondition = "duplicate-active-conflict";
-      }
-    }
     entries.sort((a, b) =>
       (b.updatedAt ?? "").localeCompare(a.updatedAt ?? ""),
     );
