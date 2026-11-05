@@ -104,17 +104,17 @@ describe("adventure schemas", () => {
         createdAt: "2026-08-16T12:00:00.000Z",
       },
     });
-    expect(session.schemaVersion).toBe(2);
+    expect(session.schemaVersion).toBe(3);
     expect(session.dicePresets).toEqual([]);
     expect(session.resourceCounters).toEqual([]);
   });
 
   it("rejects unknown future versions without mutating the stored document", () => {
-    const future = { schemaVersion: 3, title: "Future adventure" };
+    const future = { schemaVersion: 4, title: "Future adventure" };
     expect(() => migrateAdventureSession(future)).toThrow(
       "incompatible-version",
     );
-    expect(future).toEqual({ schemaVersion: 3, title: "Future adventure" });
+    expect(future).toEqual({ schemaVersion: 4, title: "Future adventure" });
   });
 
   it("allows an opening completed turn with no player action", () => {

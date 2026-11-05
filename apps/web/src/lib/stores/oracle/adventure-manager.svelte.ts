@@ -9,6 +9,7 @@ import { AdventureLifecycle } from "./adventure-lifecycle";
 import { AdventureActions } from "./adventure-actions";
 import { AdventureRolls } from "./adventure-rolls";
 import { AdventureTools } from "./adventure-tools";
+import type { AdventureScenarios } from "./adventure-scenarios";
 export type { AdventureManagerDependencies } from "./adventure-dependencies";
 export { hasCommittedOpening } from "./adventure-session";
 
@@ -20,6 +21,7 @@ export class AdventureManager extends AdventureState {
   private readonly actions: AdventureActions;
   private readonly rolls: AdventureRolls;
   private readonly tools: AdventureTools;
+  private readonly scenarios: AdventureScenarios;
 
   constructor(dependencies: AdventureManagerDependencies = {}) {
     super();
@@ -34,6 +36,7 @@ export class AdventureManager extends AdventureState {
     );
     this.actions = new AdventureActions(this.runtime);
     this.tools = new AdventureTools(this.runtime);
+    this.scenarios = this.runtime.scenarios;
   }
 
   setWorldEntryRumourGenerator(
@@ -176,6 +179,18 @@ export class AdventureManager extends AdventureState {
     ...args: Parameters<AdventureTools["removeResourceCounter"]>
   ): ReturnType<AdventureTools["removeResourceCounter"]> {
     return this.tools.removeResourceCounter(...args);
+  }
+
+  addScenario(...args: Parameters<AdventureScenarios["add"]>) {
+    return this.scenarios.add(...args);
+  }
+
+  focusScenario(...args: Parameters<AdventureScenarios["focus"]>) {
+    return this.scenarios.focus(...args);
+  }
+
+  setScenarioStatus(...args: Parameters<AdventureScenarios["status"]>) {
+    return this.scenarios.status(...args);
   }
 }
 

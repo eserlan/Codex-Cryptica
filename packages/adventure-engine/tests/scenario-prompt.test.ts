@@ -27,13 +27,15 @@ const meta = {
 
 function withGmEvent(): AdventureSession {
   const base = session();
-  base.scenarioState!.events.push({
+  const item = base.scenarioCollection!.items[0]!;
+  item.events.push({
     id: "event-7",
     kind: "consequence",
     visibility: "gm",
     text: gmEventText,
     at: now,
   });
+  item.secretBindings.eventIds["event-7"] = scenarioEventSecretId("event-7");
   return base;
 }
 
@@ -112,9 +114,9 @@ describe("scenario-aware Oracle GM", () => {
       relevant: [],
     });
     const state = JSON.parse(prompt.state);
-    expect(state.playerScenario.playerVisible.lead).toBe("Old Mill");
-    expect(JSON.stringify(state.playerScenario)).not.toContain(truth);
-    expect(state["GM-ONLY scenario"].baselineTruth.truth).toBe(truth);
+    expect(state.playerScenarios.items[0].playerVisible.lead).toBe("Old Mill");
+    expect(JSON.stringify(state.playerScenarios)).not.toContain(truth);
+    expect(state["GM-ONLY scenarios"][0].baselineTruth.truth).toBe(truth);
     expect(prompt.behavior).toContain("Never rewrite");
     expect(prompt.behavior).toContain("not need to become an adventure");
     expect(prompt.behavior).toContain("ignore, abandon, revisit or resolve");
@@ -135,12 +137,15 @@ describe("scenario-aware Oracle GM", () => {
       status: "hidden",
     });
     expect(
-      detectHiddenLeakage(withSecret, proposal(truth, ["truth-1"])),
+      detectHiddenLeakage(
+        withSecret,
+        proposal(truth, ["truth-1", "scenario-baseline-truth"]),
+      ),
     ).toEqual([]);
   });
 
   it("does not change the prompt for an ordinary premise-only adventure", () => {
-    const { scenarioState: _scenarioState, ...ordinary } = session();
+    const { scenarioCollection: _scenarioCollection, ...ordinary } = session();
     const prompt = buildAdventurePrompt({
       session: ordinary,
       phase: "opening",
@@ -148,8 +153,8 @@ describe("scenario-aware Oracle GM", () => {
       relevant: [],
     });
     const state = JSON.parse(prompt.state);
-    expect(state.playerScenario).toBeUndefined();
-    expect(state["GM-ONLY scenario"]).toBeUndefined();
+    expect(state.playerScenarios.items).toEqual([]);
+    expect(state["GM-ONLY scenarios"]).toEqual([]);
     expect(prompt.behavior).not.toContain("A rumour may be exaggerated");
   });
 
@@ -222,11 +227,14 @@ describe("scenario-aware Oracle GM", () => {
     const ids = ensureScenarioSecrets(restored).hiddenState.secrets.map(
       (secret) => secret.id,
     );
-    expect(ids).toEqual([
-      SCENARIO_TRUTH_SECRET_ID,
-      SCENARIO_IF_INVESTIGATED_SECRET_ID,
-      scenarioEventSecretId("event-7"),
-    ]);
+    expect(ids).toEqual([]);
+    expect(restored.scenarioCollection?.items[0]?.secretBindings).toMatchObject(
+      {
+        truth: SCENARIO_TRUTH_SECRET_ID,
+        ifInvestigated: SCENARIO_IF_INVESTIGATED_SECRET_ID,
+        eventIds: { "event-7": scenarioEventSecretId("event-7") },
+      },
+    );
     const prompt = JSON.parse(
       buildAdventurePrompt({
         session: restored,
@@ -235,9 +243,9 @@ describe("scenario-aware Oracle GM", () => {
         relevant: [],
       }).state,
     );
-    expect(
-      prompt["GM-ONLY state"].secrets.map((s: { id: string }) => s.id),
-    ).toContain(SCENARIO_TRUTH_SECRET_ID);
+    expect(prompt["GM-ONLY scenarios"][0].secretBindings.truth).toBe(
+      SCENARIO_TRUTH_SECRET_ID,
+    );
 
     const revealed = applyCompletedTurn(
       restored,
@@ -246,10 +254,9 @@ describe("scenario-aware Oracle GM", () => {
     );
     expect(revealed.ok).toBe(true);
     if (!revealed.ok) return;
-    const secret = revealed.value.hiddenState.secrets.find(
-      (entry) => entry.id === SCENARIO_TRUTH_SECRET_ID,
-    );
-    expect(secret?.status).toBe("revealed");
+    expect(
+      revealed.value.scenarioCollection?.items[0]?.revealedSecretIds,
+    ).toContain(SCENARIO_TRUTH_SECRET_ID);
     expect(ensureScenarioSecrets(revealed.value)).toBe(revealed.value);
   });
 });

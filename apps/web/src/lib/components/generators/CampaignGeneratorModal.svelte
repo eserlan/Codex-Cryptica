@@ -148,6 +148,7 @@
     requestBuilder: campaignGeneratorRequestBuilder,
     publishGeneratedCapture,
     clock: systemClock,
+    idGenerator: () => crypto.randomUUID(),
   });
 
   function openPlotTwistFromQuestHook() {
@@ -203,6 +204,8 @@
     const selected = selectRumourForPlay(
       { title: draft.title, content: draft.content, lore: draft.lore },
       index,
+      undefined,
+      draft.rumourBatchId,
     );
     rumourAdventureHandoff.prepare(
       vaultId,

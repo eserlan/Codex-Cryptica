@@ -19,6 +19,7 @@
   import AdventureRollHistory from "./AdventureRollHistory.svelte";
   import AdventureRollPrompt from "./AdventureRollPrompt.svelte";
   import AdventureStateSummary from "./AdventureStateSummary.svelte";
+  import AdventureScenarioControls from "./AdventureScenarioControls.svelte";
   import {
     exitAdventureFullscreen,
     requestAdventureFullscreen,
@@ -280,6 +281,7 @@
     >
       <div class="mx-auto max-w-3xl space-y-4">
         <AdventureStateSummary {manager} />
+        <AdventureScenarioControls {manager} />
         <AdventurePlay {manager} showComposer={false} />
         <AdventureRollPrompt {manager} />
       </div>

@@ -18,6 +18,7 @@ export const surfaceEnv = $state({
     setWorldEntryRumourGenerator: vi.fn(),
     openActive: vi.fn(async () => false),
     start: vi.fn(async (_input: unknown) => undefined as unknown),
+    addScenario: vi.fn(async (_scenario: unknown) => undefined as unknown),
     end: vi.fn(),
     close: vi.fn(),
     open: vi.fn(),

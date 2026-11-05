@@ -293,6 +293,7 @@ export class AdventureContextService {
     const { records, policy } = await this.searchSources(session, [
       action,
       session.visibleState.location?.text,
+      ...scenarioSearchTerms(session),
     ]);
     const searched = withoutAnchored(session, records)
       .slice(0, this.remainingRecords(session))
@@ -313,9 +314,16 @@ export class AdventureContextService {
             Math.min(14, this.remainingRecords(session) - records.length),
           )
         : [];
+    const scenarioAnchors = await this.resolveScenarioAnchorReferences(
+      session,
+      searched.length + neighbors.length,
+    );
     return [
       ...new Map(
-        [...searched, ...neighbors].map((source) => [source.recordId, source]),
+        [...searched, ...neighbors, ...scenarioAnchors].map((source) => [
+          source.recordId,
+          source,
+        ]),
       ).values(),
     ];
   }
@@ -417,7 +425,18 @@ export class AdventureContextService {
   async resolveOpeningRelevant(
     session: AdventureSession,
   ): Promise<ResolvedSourceExcerpt[]> {
-    if (session.worldEntry) return this.resolveWorldEntryOpening(session);
+    if (session.worldEntry) {
+      const world = await this.resolveWorldEntryOpening(session);
+      const anchors = await this.resolveScenarioAnchorReferences(
+        session,
+        world.length,
+      );
+      return [
+        ...new Map(
+          [...world, ...anchors].map((source) => [source.recordId, source]),
+        ).values(),
+      ];
+    }
     if (this.remainingRecords(session) === 0) return [];
     const playerCharacter = session.playerCharacter;
     const characterContext =
@@ -428,8 +447,9 @@ export class AdventureContextService {
       session.title,
       session.premise,
       characterContext,
+      ...scenarioSearchTerms(session),
     ]);
-    return withoutAnchored(session, records)
+    const relevant = withoutAnchored(session, records)
       .slice(0, this.remainingRecords(session))
       .map((record) => ({
         recordId: record.id,
@@ -437,7 +457,59 @@ export class AdventureContextService {
         ...this.excerpt(record, policy, 4_000),
         role: "turn-source" as const,
       }));
+    const scenarioAnchors = await this.resolveScenarioAnchorReferences(
+      session,
+      relevant.length,
+    );
+    return [
+      ...new Map(
+        [...relevant, ...scenarioAnchors].map((source) => [
+          source.recordId,
+          source,
+        ]),
+      ).values(),
+    ];
   }
+
+  private async resolveScenarioAnchorReferences(
+    session: AdventureSession,
+    alreadySelected: number,
+  ): Promise<ResolvedSourceExcerpt[]> {
+    const limit = Math.max(0, this.remainingRecords(session) - alreadySelected);
+    if (!limit) return [];
+    const seen = new Set<string>();
+    const ids = (session.scenarioCollection?.items ?? [])
+      .flatMap((item) => item.anchorRefs)
+      .filter((id) => !seen.has(id) && Boolean(seen.add(id)))
+      .slice(0, limit);
+    const policy = await this.periodPolicy(session);
+    const resolved = await Promise.all(
+      ids.map(async (id) => {
+        const record = await this.resolver.getById(session.vaultId, id);
+        if (!record) return null;
+        const { content, lore } = this.excerpt(record, policy, 4_000);
+        return {
+          recordId: record.id,
+          displayName: record.title,
+          content,
+          lore,
+          role: "anchor" as const,
+        };
+      }),
+    );
+    return resolved.filter(
+      (source): source is NonNullable<typeof source> => source !== null,
+    );
+  }
+}
+
+function scenarioSearchTerms(session: AdventureSession): string[] {
+  return (session.scenarioCollection?.items ?? []).flatMap((item) => [
+    item.playerVisible.rumour,
+    item.playerVisible.lead,
+    item.gmOnly.truth,
+    ...(item.gmOnly.ifInvestigated ? [item.gmOnly.ifInvestigated] : []),
+  ]);
 }
 
 export const adventureContextService = new AdventureContextService({

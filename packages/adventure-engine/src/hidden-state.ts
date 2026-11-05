@@ -31,63 +31,57 @@ export function scenarioEventSecretId(eventId: string): string {
 
 function scenarioSecretSources(
   session: AdventureSession,
-): Array<{ id: string; text: string }> {
-  const scenario = session.scenarioState;
-  if (!scenario) return [];
-  return [
-    { id: SCENARIO_TRUTH_SECRET_ID, text: scenario.gmOnly.truth },
-    ...(scenario.gmOnly.ifInvestigated?.trim()
-      ? [
-          {
-            id: SCENARIO_IF_INVESTIGATED_SECRET_ID,
-            text: scenario.gmOnly.ifInvestigated,
-          },
-        ]
-      : []),
-    ...scenario.events
-      .filter((event) => event.visibility === "gm")
-      .map((event) => ({
-        id: scenarioEventSecretId(event.id),
-        text: event.text,
-      })),
-  ].filter((source) => source.text.trim().length > 0);
+): Array<{ id: string; text: string; revealed: boolean }> {
+  const items = session.scenarioCollection?.items ?? [];
+  return items
+    .flatMap((scenario) => [
+      {
+        id: scenario.secretBindings.truth,
+        text: scenario.gmOnly.truth,
+        revealed: scenario.revealedSecretIds.includes(
+          scenario.secretBindings.truth,
+        ),
+      },
+      ...(scenario.gmOnly.ifInvestigated?.trim() &&
+      scenario.secretBindings.ifInvestigated
+        ? [
+            {
+              id: scenario.secretBindings.ifInvestigated,
+              text: scenario.gmOnly.ifInvestigated,
+              revealed: scenario.revealedSecretIds.includes(
+                scenario.secretBindings.ifInvestigated,
+              ),
+            },
+          ]
+        : []),
+      ...scenario.events
+        .filter((event) => event.visibility === "gm")
+        .flatMap((event) => {
+          const id = Object.hasOwn(scenario.secretBindings.eventIds, event.id)
+            ? scenario.secretBindings.eventIds[event.id]
+            : undefined;
+          return id
+            ? [
+                {
+                  id,
+                  text: event.text,
+                  revealed: scenario.revealedSecretIds.includes(id),
+                },
+              ]
+            : [];
+        }),
+    ])
+    .filter((source) => source.text.trim().length > 0);
 }
 
 /**
- * Register every GM-only scenario text (truth, "if investigated" notes and
- * GM-visible events) as an ordinary hidden secret. A source already covered by
- * a secret with the same text keeps that secret and its reveal status, so
- * sessions created before this registration existed stay compatible. Returns
- * the same object when nothing needs registering.
+ * Structured scenario secrets live in the collection and are projected into
+ * the guard. They are not duplicated into the capped legacy secret array.
  */
 export function ensureScenarioSecrets(
   session: AdventureSession,
 ): AdventureSession {
-  const secrets = session.hiddenState.secrets;
-  const missing = scenarioSecretSources(session).filter(
-    (source) =>
-      !secrets.some(
-        (secret) =>
-          secret.id === source.id ||
-          normalize(secret.text) === normalize(source.text),
-      ),
-  );
-  if (missing.length === 0) return session;
-  return {
-    ...session,
-    hiddenState: {
-      ...session.hiddenState,
-      secrets: [
-        ...secrets,
-        ...missing.map((source) => ({
-          id: source.id,
-          text: source.text,
-          status: "hidden" as const,
-          revealCondition: "Reveal after in-world discovery.",
-        })),
-      ],
-    },
-  };
+  return session;
 }
 
 /**
@@ -130,7 +124,18 @@ function detectHiddenTextFields(
   fields: Array<[string, string]>,
   revealed: Set<string>,
 ): HiddenLeakageFinding[] {
-  const hidden = session.hiddenState.secrets.filter(
+  const structuredSecrets = scenarioSecretSources(session).map((secret) => ({
+    id: secret.id,
+    text: secret.text,
+    status: secret.revealed ? ("revealed" as const) : ("hidden" as const),
+  }));
+  const hiddenById = new Map(
+    [...session.hiddenState.secrets, ...structuredSecrets].map((secret) => [
+      secret.id,
+      secret,
+    ]),
+  );
+  const hidden = [...hiddenById.values()].filter(
     (secret) => secret.status === "hidden" && !revealed.has(secret.id),
   );
   const findings: HiddenLeakageFinding[] = [];
@@ -150,6 +155,9 @@ export function revealedSecretIds(
   session: AdventureSession,
   ids: string[],
 ): string[] {
-  const known = new Set(session.hiddenState.secrets.map((secret) => secret.id));
+  const known = new Set([
+    ...session.hiddenState.secrets.map((secret) => secret.id),
+    ...scenarioSecretSources(session).map((secret) => secret.id),
+  ]);
   return ids.filter((id) => known.has(id));
 }

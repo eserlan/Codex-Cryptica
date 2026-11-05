@@ -5,6 +5,7 @@ import {
   startInput,
 } from "#lib/stores/oracle/tests/adventure-fixtures.js";
 import { initialSession } from "#lib/stores/oracle/adventure-session.js";
+import { createScenarioState } from "@codex/adventure-engine";
 
 const session = () =>
   initialSession({
@@ -145,6 +146,64 @@ describe("AdventureGroundingService", () => {
       anchors: [expect.objectContaining({ recordId: "anchor" })],
     });
     expect(result.sessionKnowledge).toContain("provisionalFacts");
+  });
+
+  it("grounds the whole scenario collection while keeping unheard details out of the player projection", async () => {
+    const current = session();
+    const known = createScenarioState({
+      id: "known",
+      origin: {
+        kind: "rumour",
+        batchId: "batch-a",
+        batchTitle: "Town",
+        index: 1,
+      },
+      playerVisible: { rumour: "A bridge is closed", lead: "The north bridge" },
+      gmOnly: { truth: "The bridge keeper is hiding a forged order" },
+    });
+    const unheard = createScenarioState({
+      id: "unheard-private-id",
+      origin: {
+        kind: "rumour",
+        batchId: "batch-b",
+        batchTitle: "Town",
+        index: 2,
+      },
+      playerVisible: { rumour: "A sealed room", lead: "The cellar" },
+      gmOnly: { truth: "A prisoner waits below" },
+    });
+    current.scenarioCollection = {
+      version: 1,
+      focusedScenarioId: "known",
+      items: [
+        {
+          ...known,
+          knowledge: "heard",
+          anchorRefs: [],
+          revealedSecretIds: [],
+          secretBindings: { truth: "truth-known", eventIds: {} },
+        },
+        {
+          ...unheard,
+          knowledge: "unheard",
+          anchorRefs: [],
+          revealedSecretIds: [],
+          secretBindings: { truth: "truth-unheard", eventIds: {} },
+        },
+      ],
+    };
+    const result = await new AdventureGroundingService(context()).prepare({
+      session: current,
+      purpose: "opening",
+    });
+    const prepared = JSON.parse(result.sessionKnowledge);
+    expect(prepared.playerScenarios.items).toHaveLength(1);
+    expect(JSON.stringify(prepared.playerScenarios)).not.toContain(
+      "unheard-private-id",
+    );
+    expect(JSON.stringify(prepared["GM-ONLY scenarios"])).toContain(
+      "A prisoner waits below",
+    );
   });
 });
 

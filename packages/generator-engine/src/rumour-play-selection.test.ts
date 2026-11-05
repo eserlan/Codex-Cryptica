@@ -68,6 +68,16 @@ describe("selectRumourForPlay", () => {
     expect(selectRumourForPlay(result, 4).origin.index).toBe(4);
   });
 
+  it("carries a stable batch identity independently of titles", () => {
+    const first = selectRumourForPlay(local, 2, undefined, "batch-1");
+    const retry = selectRumourForPlay(local, 2, undefined, "batch-1");
+    const sameTitleAgain = selectRumourForPlay(local, 2, undefined, "batch-2");
+    expect(first.origin).toEqual(retry.origin);
+    expect(first.origin.batchId).toBe("batch-1");
+    expect(sameTitleAgain.origin.batchTitle).toBe(first.origin.batchTitle);
+    expect(sameTitleAgain.origin.batchId).not.toBe(first.origin.batchId);
+  });
+
   it.each([0, 7, -1, 1.5, NaN])("rejects invalid index %s", (index) => {
     expect(() => selectRumourForPlay(local, index)).toThrow(
       RumourSelectionError,

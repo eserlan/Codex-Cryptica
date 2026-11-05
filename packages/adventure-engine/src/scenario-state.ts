@@ -1,6 +1,7 @@
 import type {
   AdventureSession,
   ScenarioEvent,
+  ScenarioItem,
   ScenarioSeed,
   ScenarioState,
   ScenarioStatus,
@@ -24,7 +25,11 @@ export function createScenarioState(seed: ScenarioSeed): ScenarioState {
 }
 
 /** Only explicitly observable events and lead text cross the UI boundary. */
-export function playerScenarioProjection(scenario: ScenarioState) {
+export function playerScenarioProjection(
+  scenario: ScenarioState | ScenarioItem,
+) {
+  if ("knowledge" in scenario && scenario.knowledge !== "heard")
+    return undefined;
   return {
     version: scenario.version,
     id: scenario.id,
@@ -43,6 +48,22 @@ export function playerScenarioProjection(scenario: ScenarioState) {
         at,
         turnId,
       })),
+  };
+}
+
+export function playerScenarioCollectionProjection(session: AdventureSession) {
+  const collection = session.scenarioCollection;
+  if (!collection) return { items: [], focusedScenarioId: null };
+  const items = collection.items
+    .filter((item) => item.knowledge === "heard")
+    .map((item) => playerScenarioProjection(item));
+  return {
+    items,
+    focusedScenarioId: items.some(
+      (item) => item?.id === collection.focusedScenarioId,
+    )
+      ? collection.focusedScenarioId
+      : null,
   };
 }
 
@@ -68,11 +89,16 @@ export function commitScenarioEvent(
   event: ScenarioEvent,
   nextStatus: ScenarioStatus,
   expectedRevision: number,
+  secretBindingId?: string,
 ): ScenarioCommitResult {
-  if (!session.scenarioState) return { ok: false, reason: "no-scenario" };
+  const focusedId = session.scenarioCollection?.focusedScenarioId;
+  const scenario = session.scenarioCollection?.items.find(
+    (item) => item.id === focusedId,
+  );
+  if (!scenario) return { ok: false, reason: "no-scenario" };
   if (session.revision !== expectedRevision)
     return { ok: false, reason: "stale-revision" };
-  if (session.status !== "active" || session.scenarioState.status !== "open") {
+  if (session.status !== "active" || scenario.status !== "open") {
     return { ok: false, reason: "invalid-transition" };
   }
   if (
@@ -89,16 +115,35 @@ export function commitScenarioEvent(
     return { ok: false, reason: "invalid-event" };
   }
   const canonicalEvent = parsedEvent.data as ScenarioEvent;
+  if (canonicalEvent.visibility === "gm" && !secretBindingId) {
+    return { ok: false, reason: "invalid-event" };
+  }
   if (
-    session.scenarioState.events.some(
-      (item) => item.id.trim() === canonicalEvent.id,
+    session.scenarioCollection!.items.some((item) =>
+      item.events.some((item) => item.id.trim() === canonicalEvent.id),
     )
   ) {
     return { ok: false, reason: "duplicate-event" };
   }
   const candidate = structuredClone(session);
-  candidate.scenarioState!.events.push(structuredClone(canonicalEvent));
-  candidate.scenarioState!.status = nextStatus;
+  const candidateScenario = candidate.scenarioCollection!.items.find(
+    (item) => item.id === focusedId,
+  )!;
+  candidateScenario.events.push(structuredClone(canonicalEvent));
+  if (secretBindingId)
+    Object.defineProperty(
+      candidateScenario.secretBindings.eventIds,
+      canonicalEvent.id,
+      {
+        value: secretBindingId,
+        enumerable: true,
+        configurable: true,
+        writable: true,
+      },
+    );
+  candidateScenario.status = nextStatus;
+  if (nextStatus !== "open")
+    candidate.scenarioCollection!.focusedScenarioId = null;
   candidate.revision += 1;
   candidate.updatedAt = canonicalEvent.at;
   candidate.lastPlayedAt = canonicalEvent.at;

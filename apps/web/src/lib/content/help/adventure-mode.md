@@ -41,13 +41,17 @@ navigation menu. If you have no active adventure, choose a starting approach:
 
 A rumour is a lead, **not an assigned quest**. You may ignore it, investigate
 it, or pursue something else. GM notes are hidden by default in the generator
-review unless you choose to reveal them.
+review unless you choose to reveal them. When another Adventure is active, you
+can add the selected lead to it as a known situation, continue the current
+Adventure, cancel and return to the six rumours, or explicitly archive before
+starting a separate Adventure.
 
-If the vault already has an active Adventure, continue it or explicitly
-archive it before starting the selected rumour; no active progress is replaced
-automatically. You need an online Oracle connection to begin. The selected
-GM notes remain stored within the Adventure session but are not encrypted
-from the vault owner.
+Use the **Known situations** control during play to focus or clear attention,
+resolve a lead, or leave it behind. Focusing is optional; ordinary free action
+continues without a selected lead. New world-entry rumours are introduced as
+play makes them relevant rather than presented as a scenario-selection list.
+You need an online Oracle connection for AI turns. The selected GM notes remain
+stored within the Adventure session but are not encrypted from the vault owner.
 
 ## Start an adventure
 

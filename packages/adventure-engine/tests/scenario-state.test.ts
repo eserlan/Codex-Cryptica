@@ -68,14 +68,18 @@ describe("Adventure scenario state", () => {
     const restored = parseAdventureSession(
       JSON.parse(JSON.stringify(exampleSession())),
     );
-    expect(restored.scenarioState?.origin.index).toBe(4);
-    expect(restored.scenarioState?.gmOnly.truth).toBe(seed.gmOnly.truth);
-    expect(restored.schemaVersion).toBe(2);
+    expect(restored.scenarioCollection?.items[0]?.origin.index).toBe(4);
+    expect(restored.scenarioCollection?.items[0]?.gmOnly.truth).toBe(
+      seed.gmOnly.truth,
+    );
+    expect(restored.schemaVersion).toBe(3);
   });
 
   it("keeps GM truth out of the player projection and observed events", () => {
     const session = exampleSession();
-    const projection = playerScenarioProjection(session.scenarioState!);
+    const projection = playerScenarioProjection(
+      session.scenarioCollection!.items[0]!,
+    );
     expect(JSON.stringify(projection)).not.toContain("grain under the mill");
     expect(JSON.stringify(projection)).not.toContain("secret-note");
     expect(JSON.stringify(projection)).toContain("The miller has vanished");
@@ -98,10 +102,11 @@ describe("Adventure scenario state", () => {
     );
     expect(first.ok).toBe(true);
     if (!first.ok) return;
-    expect(original.scenarioState?.events).toEqual([]);
+    expect(original.scenarioCollection?.items[0]?.events).toEqual([]);
     expect(first.session.revision).toBe(2);
     expect(
-      playerScenarioProjection(first.session.scenarioState!).events,
+      playerScenarioProjection(first.session.scenarioCollection!.items[0]!)
+        .events,
     ).toHaveLength(1);
     expect(
       commitScenarioEvent(
@@ -142,12 +147,19 @@ describe("Adventure scenario state", () => {
       },
       "resolved",
       2,
+      "event-2-secret",
     );
     expect(second.ok).toBe(true);
     if (second.ok) {
-      expect(second.session.scenarioState?.status).toBe("resolved");
+      expect(second.session.scenarioCollection?.items[0]?.status).toBe(
+        "resolved",
+      );
       expect(
-        JSON.stringify(playerScenarioProjection(second.session.scenarioState!)),
+        JSON.stringify(
+          playerScenarioProjection(
+            second.session.scenarioCollection!.items[0]!,
+          ),
+        ),
       ).not.toContain("Smugglers");
       expect(
         commitScenarioEvent(
@@ -162,15 +174,16 @@ describe("Adventure scenario state", () => {
           "open",
           3,
         ),
-      ).toEqual({ ok: false, reason: "invalid-transition" });
+      ).toEqual({ ok: false, reason: "no-scenario" });
     }
   });
 
   it("loads ordinary Adventure Mode sessions without a scenario", () => {
-    const { scenarioState: _scenarioState, ...legacy } = exampleSession();
+    const { scenarioCollection: _scenarioCollection, ...legacy } =
+      exampleSession();
     const restored = parseAdventureSession(legacy);
-    expect(restored.scenarioState).toBeUndefined();
-    expect(restored.schemaVersion).toBe(2);
+    expect(restored.scenarioCollection).toBeUndefined();
+    expect(restored.schemaVersion).toBe(3);
   });
 
   it("rejects malformed hidden state and oversized histories on load", () => {
@@ -178,21 +191,26 @@ describe("Adventure scenario state", () => {
     expect(() =>
       parseAdventureSession({
         ...session,
-        scenarioState: { ...session.scenarioState, version: 10 },
+        scenarioCollection: { ...session.scenarioCollection!, version: 10 },
       }),
     ).toThrow();
     expect(() =>
       parseAdventureSession({
         ...session,
-        scenarioState: {
-          ...session.scenarioState,
-          events: Array.from({ length: 101 }, (_, i) => ({
-            id: "event-" + i,
-            kind: "discovery",
-            visibility: "player",
-            text: "Clue",
-            at,
-          })),
+        scenarioCollection: {
+          ...session.scenarioCollection!,
+          items: [
+            {
+              ...session.scenarioCollection!.items[0]!,
+              events: Array.from({ length: 101 }, (_, i) => ({
+                id: "event-" + i,
+                kind: "discovery",
+                visibility: "player",
+                text: "Clue",
+                at,
+              })),
+            },
+          ],
         },
       }),
     ).toThrow();
@@ -213,7 +231,9 @@ describe("Adventure scenario state", () => {
     );
     expect(first.ok).toBe(true);
     if (!first.ok) return;
-    expect(first.session.scenarioState?.events[0]?.id).toBe("event-1");
+    expect(first.session.scenarioCollection?.items[0]?.events[0]?.id).toBe(
+      "event-1",
+    );
     for (const replayId of [" event-1 ", "event-1", "event-1  "]) {
       expect(
         commitScenarioEvent(

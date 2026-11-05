@@ -241,7 +241,7 @@ describe("AdventureSurface rumour handoff", () => {
     rumourAdventureHandoff.prepare("vault-1", selected, scenario);
     surfaceEnv.adventure.session = {
       id: "adventure-new",
-      scenarioState: { id: "scenario-1" },
+      scenarioCollection: { items: [{ id: "scenario-1" }] },
     };
     render(AdventureSurface);
     await screen.findByTestId("adventure-play-surface");
@@ -250,11 +250,35 @@ describe("AdventureSurface rumour handoff", () => {
 
   it("still offers the archive choice for a different active adventure", async () => {
     rumourAdventureHandoff.prepare("vault-1", selected, scenario);
-    surfaceEnv.adventure.session = { id: "older", scenarioState: undefined };
+    surfaceEnv.adventure.session = {
+      id: "older",
+      scenarioCollection: undefined,
+    };
     render(AdventureSurface);
     expect(
       await screen.findByTestId("existing-adventure-rumour-choice"),
     ).toBeTruthy();
+  });
+
+  it("keeps a rumour after a failed add and shows fixed recovery copy", async () => {
+    rumourAdventureHandoff.prepare("vault-1", selected, scenario);
+    surfaceEnv.adventure.session = {
+      id: "older",
+      scenarioCollection: undefined,
+      pendingRoll: null,
+    };
+    surfaceEnv.adventure.addScenario.mockRejectedValueOnce(
+      new Error("state-budget-exceeded"),
+    );
+    render(AdventureSurface);
+
+    await fireEvent.click(
+      await screen.findByRole("button", { name: "Add to current adventure" }),
+    );
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toContain("The adventure is unchanged.");
+    expect(alert.textContent).not.toContain("state-budget-exceeded");
+    expect(rumourAdventureHandoff.forVault("vault-1")).not.toBeNull();
   });
 
   it("returns to the unchanged rumour batch when the start is cancelled", async () => {

@@ -54,6 +54,59 @@ describe("AdventureContextService", () => {
 
     await expect(service.resolveOpeningRelevant(session)).resolves.toEqual([]);
   });
+
+  it("resolves explicit scenario anchors through the existing bounded grounding selection", async () => {
+    const getById = vi.fn(async (_vaultId: string, id: string) => ({
+      id,
+      title: "Hidden archive",
+      type: "location",
+      visibility: "hidden" as const,
+      text: "The archive's real passage is behind the altar.",
+      lore: "Secret source detail",
+    }));
+    const current = {
+      ...session,
+      sourceRecords: [],
+      visibleState: {
+        objectives: [],
+        activeCharacters: [],
+        knownFacts: [],
+        relationships: [],
+      },
+      scenarioCollection: {
+        version: 1,
+        focusedScenarioId: null,
+        items: [
+          {
+            id: "scenario-1",
+            origin: { kind: "manual" as const, manualId: "manual-1" },
+            playerVisible: { rumour: "A rumour", lead: "A lead" },
+            gmOnly: { truth: "The truth", secretBindings: {} },
+            status: "open" as const,
+            knowledge: "unheard" as const,
+            anchorRefs: ["archive-1"],
+            events: [],
+            secretBindings: { truth: "secret-1", eventIds: {} },
+            revealedSecretIds: [],
+          },
+        ],
+      },
+    };
+    const service = new AdventureContextService({
+      getById,
+      search: vi.fn().mockResolvedValue([]),
+    });
+    const result = await service.resolveOpeningRelevant(current);
+    expect(result).toEqual([
+      expect.objectContaining({
+        recordId: "archive-1",
+        content: expect.stringContaining(
+          "existence and identity are not player knowledge",
+        ),
+        lore: expect.stringContaining("Secret source detail"),
+      }),
+    ]);
+  });
   it("uses the live Vault graph/calendar adapter for a bounded temporal lookup", async () => {
     const make = (
       id: string,
