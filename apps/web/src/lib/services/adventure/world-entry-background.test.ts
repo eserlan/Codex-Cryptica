@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildAdventurePrompt,
   detectHiddenLeakage,
+  ensureScenarioSecrets,
   type AdventureSession,
 } from "@codex/adventure-engine";
 import { generateRumourLocal } from "generator-engine";
@@ -21,26 +22,22 @@ function session(): AdventureSession {
 }
 
 describe("world entry background situations", () => {
-  it("establishes paired hidden rumours without leaking them", () => {
+  it("establishes three structured unheard situations without leaking them", () => {
     let n = 0;
     const seeded = seedWorldEntryBackground(session(), () => `seed-${++n}`);
-    expect(seeded.hiddenState.secrets).toHaveLength(6);
-    expect(seeded.hiddenState.gmThreads).toHaveLength(3);
-    expect(seeded.hiddenState.secrets[0]?.status).toBe("hidden");
-    expect(seeded.hiddenState.gmThreads[0]?.status).toBe("hidden");
-    expect(seeded.hiddenState.secrets[0]?.text).not.toContain(
-      "World-entry seed",
-    );
-    expect(seeded.hiddenState.secrets[1]?.text).not.toContain(
-      "If investigated:",
-    );
-    expect(seeded.hiddenState.gmThreads[0]?.text).toContain("UNNOTICED");
-    expect(seeded.hiddenState.gmThreads[0]?.text).toContain(
-      "Stage: unnoticed.",
-    );
-    expect(seeded.hiddenState.gmThreads[0]?.text).toContain(
-      "traces, changed behaviour, notices, consequences or talk",
-    );
+    expect(seeded.scenarioCollection?.items).toHaveLength(3);
+    expect(
+      seeded.scenarioCollection?.items.every(
+        (item) => item.knowledge === "unheard",
+      ),
+    ).toBe(true);
+    expect(seeded.hiddenState.gmThreads).toEqual([]);
+    expect(ensureScenarioSecrets(seeded).hiddenState.secrets).toHaveLength(0);
+    expect(
+      seeded.scenarioCollection?.items.every(
+        (item) => item.secretBindings.truth,
+      ),
+    ).toBe(true);
 
     const prompt = buildAdventurePrompt({
       session: seeded,
@@ -48,7 +45,8 @@ describe("world entry background situations", () => {
       anchors: [],
       relevant: [],
     });
-    expect(prompt.state).toContain("UNNOTICED");
+    expect(JSON.parse(prompt.state).playerScenarios.items).toEqual([]);
+    expect(JSON.parse(prompt.state)["GM-ONLY scenarios"]).toHaveLength(3);
     expect(prompt.behavior).toContain("reveal at most one");
   });
 
@@ -56,7 +54,7 @@ describe("world entry background situations", () => {
     const older = session();
     older.turns = [{ id: "old-turn" } as AdventureSession["turns"][number]];
     const seeded = seedWorldEntryBackground(older, () => "new-id");
-    expect(seeded.hiddenState.gmThreads).toHaveLength(3);
+    expect(seeded.scenarioCollection?.items).toHaveLength(3);
     expect(seedWorldEntryBackground(seeded, () => "extra")).toBe(seeded);
   });
 
@@ -65,7 +63,7 @@ describe("world entry background situations", () => {
     const first = seedWorldEntryBackground(session(), () => `id-${++n}`);
     n = 0;
     const second = seedWorldEntryBackground(session(), () => `id-${++n}`);
-    expect(first.hiddenState).toEqual(second.hiddenState);
+    expect(first.scenarioCollection).toEqual(second.scenarioCollection);
     const ordinary = session();
     delete ordinary.worldEntry;
     expect(seedWorldEntryBackground(ordinary, () => "id")).toBe(ordinary);
@@ -75,7 +73,12 @@ describe("world entry background situations", () => {
     const seeded = seedWorldEntryBackground(session(), () =>
       crypto.randomUUID(),
     );
-    const secret = seeded.hiddenState.secrets[0]!;
+    const scenario = seeded.scenarioCollection?.items[0];
+    if (!scenario) throw new Error("expected a seeded scenario");
+    const secret = {
+      id: scenario.secretBindings.truth,
+      text: scenario.gmOnly.truth,
+    };
     const findings = detectHiddenLeakage(seeded, {
       kind: "complete",
       narration: secret.text,
@@ -102,8 +105,8 @@ describe("world entry background situations", () => {
       () => crypto.randomUUID(),
       sameCategory,
     );
-    const realities = seededFromOneCategory.hiddenState.gmThreads.map(
-      (thread) => thread.text.match(/— (.*?); UNFOLDING/)?.[1],
+    const realities = seededFromOneCategory.scenarioCollection?.items.map(
+      (item) => item.gmOnly.truth.split(":")[0],
     );
     expect(realities).toEqual([
       "essentially true",
@@ -123,15 +126,15 @@ describe("world entry background situations", () => {
       () => crypto.randomUUID(),
       oversized,
     );
-    expect(seededFromOversized.hiddenState.secrets).toHaveLength(6);
+    expect(seededFromOversized.scenarioCollection?.items).toHaveLength(3);
     expect(
-      seededFromOversized.hiddenState.secrets.every(
-        (secret) => secret.text.length <= 600,
+      seededFromOversized.scenarioCollection?.items.every(
+        (item) => item.gmOnly.truth.length <= 600,
       ),
     ).toBe(true);
     expect(
-      seededFromOversized.hiddenState.secrets.some((secret) =>
-        secret.text.startsWith("x".repeat(100)),
+      seededFromOversized.scenarioCollection?.items.some((item) =>
+        item.gmOnly.truth.startsWith("x".repeat(100)),
       ),
     ).toBe(false);
   });

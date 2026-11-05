@@ -8,16 +8,14 @@ import type { AdventureSession } from "@codex/adventure-engine";
 
 /**
  * Prepare GM-only background situations from the existing Rumour Generator.
- * Each seed is a situation already unfolding; the rumour is one of several
- * ways it may surface. No seed becomes player knowledge or Vault canon simply
- * by being seeded.
+ * No rumour becomes player knowledge or Vault canon simply by being seeded.
  * The local-generator fallback invents provisional details; Oracle must
  * reconcile them against date-aware Vault sources before using them in play.
  */
 export function needsWorldEntryBackground(session: AdventureSession): boolean {
   return Boolean(
     session.worldEntry &&
-    !session.scenarioState &&
+    !session.scenarioCollection?.items.length &&
     session.hiddenState.secrets.length === 0 &&
     session.hiddenState.gmThreads.length === 0,
   );
@@ -40,38 +38,37 @@ export function seedWorldEntryBackground(
     );
   if (!chosen) return session;
 
+  const batchId = allocateId();
+  const items = chosen.map((selected) => {
+    const itemId = allocateId();
+    return {
+      version: 1 as const,
+      id: itemId,
+      origin: { ...selected.origin, batchId },
+      playerVisible: selected.playerVisible,
+      gmOnly: {
+        truth: `${selected.gmOnly.reality}: ${selected.gmOnly.whatsActuallyHappening}`,
+        ifInvestigated: selected.gmOnly.ifInvestigated,
+      },
+      knowledge: "unheard" as const,
+      status: "open" as const,
+      events: [],
+      anchorRefs: [],
+      revealedSecretIds: [],
+      secretBindings: {
+        truth: allocateId(),
+        ifInvestigated: allocateId(),
+        eventIds: {},
+      },
+    };
+  });
+
   return {
     ...session,
-    hiddenState: {
-      secrets: [
-        ...session.hiddenState.secrets,
-        ...chosen.flatMap((item) => [
-          {
-            id: allocateId(),
-            text: item.gmOnly.whatsActuallyHappening,
-            status: "hidden" as const,
-            revealCondition:
-              "Reveal only after justified discovery; never leak GM truth.",
-          },
-          {
-            id: allocateId(),
-            text: item.gmOnly.ifInvestigated,
-            status: "hidden" as const,
-            revealCondition:
-              "Reveal only after justified discovery; never leak GM truth.",
-          },
-        ]),
-      ],
-      gmThreads: [
-        ...session.hiddenState.gmThreads,
-        ...chosen.map((item) => ({
-          id: allocateId(),
-          text: seedThreadText(item),
-          status: "hidden" as const,
-          revealCondition:
-            "Player notices a sign, overhears talk or discovers evidence.",
-        })),
-      ],
+    scenarioCollection: {
+      version: 1,
+      items: [...(session.scenarioCollection?.items ?? []), ...items],
+      focusedScenarioId: session.scenarioCollection?.focusedScenarioId ?? null,
     },
   };
 }
@@ -102,28 +99,11 @@ function selectCompleteSet(
   }
 }
 
-/**
- * A seed is a situation already unfolding in the world. The rumour is only
- * one way it can surface; the GM tracks how visible it is via `Stage`.
- */
-function seedThreadText(item: SelectedRumourForPlay): string {
-  return [
-    `World-entry seed ${item.index} — ${item.gmOnly.reality}; UNFOLDING, UNNOTICED.`,
-    "Already happening; its paired secrets hold the truth.",
-    `Possible hearsay: "${item.playerVisible.rumour}"`,
-    `Lead: ${item.playerVisible.lead}.`,
-    `Source: ${item.playerVisible.source}.`,
-    "Stage: unnoticed.",
-    "May surface as traces, changed behaviour, notices, consequences or talk.",
-    "Treat as provisional until reconciled with Vault canon and date.",
-  ].join(" ");
-}
-
 function fitsPersistedFields(item: SelectedRumourForPlay): boolean {
   return [
     item.gmOnly.whatsActuallyHappening,
     item.gmOnly.ifInvestigated,
-    seedThreadText(item),
+    `${item.gmOnly.reality}: ${item.gmOnly.whatsActuallyHappening}`,
   ].every(
     (value) =>
       value.trim().length > 0 && value.trim().length <= MAX_HIDDEN_TEXT_CHARS,

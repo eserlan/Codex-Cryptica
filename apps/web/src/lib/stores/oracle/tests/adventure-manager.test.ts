@@ -31,10 +31,12 @@ describe("AdventureManager", () => {
       },
     });
     expect(generateRumours).toHaveBeenCalledOnce();
-    expect(manager.session?.hiddenState.gmThreads).toHaveLength(3);
-    expect(manager.session?.hiddenState.gmThreads[0]?.text).toContain(
-      "UNFOLDING, UNNOTICED",
-    );
+    expect(manager.session?.scenarioCollection?.items).toHaveLength(3);
+    expect(
+      manager.session?.scenarioCollection?.items.every(
+        (item) => item.knowledge === "unheard",
+      ),
+    ).toBe(true);
   });
 
   it("persists world-entry situations across actions", async () => {
@@ -58,16 +60,18 @@ describe("AdventureManager", () => {
       },
     });
     const opening = generate.mock.calls[0]?.[0] as any;
-    expect(opening.session.hiddenState.gmThreads).toHaveLength(3);
-    expect(opening.session.hiddenState.secrets).toHaveLength(6);
-    expect(manager.session?.hiddenState.gmThreads).toHaveLength(3);
+    expect(opening.session.scenarioCollection?.items).toHaveLength(3);
+    expect(opening.session.hiddenState.secrets).toHaveLength(0);
+    expect(manager.session?.scenarioCollection?.items).toHaveLength(3);
     expect(manager.session?.turns).toHaveLength(1);
-    expect(manager.transcript?.turns[0]?.narration).not.toContain("UNNOTICED");
+    expect(manager.transcript?.turns[0]?.narration).not.toContain(
+      "NOT YET HEARD",
+    );
 
     await manager.submitAction("Ask the innkeeper what is happening nearby");
     const action = generate.mock.calls[1]?.[0] as any;
     expect(action.session.hiddenState).toEqual(manager.session?.hiddenState);
-    expect(manager.session?.hiddenState.gmThreads).toHaveLength(3);
+    expect(manager.session?.scenarioCollection?.items).toHaveLength(3);
   });
 
   it("cancels pending rumour preparation before starting turn generation", async () => {
@@ -1131,7 +1135,12 @@ describe("AdventureManager Phase 2 tools", () => {
     const seed = (truth: string) => ({
       version: 1 as const,
       id: "scenario-1",
-      origin: { kind: "rumour" as const, batchTitle: "Town", index: 1 },
+      origin: {
+        kind: "rumour" as const,
+        batchId: "batch-1",
+        batchTitle: "Town",
+        index: 1,
+      },
       playerVisible: { rumour: "A rumour", lead: "A lead" },
       gmOnly: { truth },
       status: "open" as const,
@@ -1172,7 +1181,7 @@ describe("AdventureManager Phase 2 tools", () => {
         ...startInput,
         scenarioSeed: seed("The miller hides grain."),
       });
-      expect(manager.session?.scenarioState?.gmOnly.truth).toBe(
+      expect(manager.session?.scenarioCollection?.items[0]?.gmOnly.truth).toBe(
         "The miller hides grain.",
       );
       const { parseAdventureSession } = await import("@codex/adventure-engine");
