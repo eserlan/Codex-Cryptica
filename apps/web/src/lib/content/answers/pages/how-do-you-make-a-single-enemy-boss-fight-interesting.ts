@@ -198,6 +198,7 @@ export const howDoYouMakeASingleEnemyBossFightInteresting: AnswerConfigInput = {
   relatedAnswers: [
     "how-do-you-make-a-boss-fight-memorable-in-a-tabletop-rpg",
     "how-do-i-balance-one-powerful-enemy-against-many-weaker-enemies",
+    "how-do-i-save-my-party-from-an-overpowered-encounter",
   ],
   discovery: {
     parentCluster: "encounter-balance",

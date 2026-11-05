@@ -193,6 +193,7 @@ export const howDoIBalanceOnePowerfulEnemyAgainstManyWeakerEnemies: AnswerConfig
       "how-do-i-make-combat-faster-without-making-it-less-exciting",
       "how-do-i-track-monsters-initiative-and-hit-points-in-dnd-combat",
       "how-do-you-make-a-single-enemy-boss-fight-interesting",
+      "how-do-i-save-my-party-from-an-overpowered-encounter",
     ],
     discovery: {
       id: "answer-balance-one-powerful-vs-many-weaker",
