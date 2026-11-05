@@ -128,6 +128,7 @@ export const howDoYouMakeABossFightMemorableInATabletopRpg: AnswerConfigInput =
       "how-do-i-combine-multiple-enemies-into-one-squad-in-an-rpg",
       "how-do-i-balance-one-powerful-enemy-against-many-weaker-enemies",
       "how-do-you-make-a-single-enemy-boss-fight-interesting",
+      "how-do-i-save-my-party-from-an-overpowered-encounter",
     ],
     discovery: {
       parentCluster: "encounter-balance",

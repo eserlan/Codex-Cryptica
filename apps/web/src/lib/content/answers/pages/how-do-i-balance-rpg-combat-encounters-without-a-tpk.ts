@@ -150,6 +150,7 @@ export const howDoIBalanceRpgCombatEncountersWithoutATpk: AnswerConfigInput = {
     "how-do-i-track-monsters-initiative-and-hit-points-in-dnd-combat",
     "does-an-rpg-party-need-balanced-roles",
     "how-do-i-balance-one-powerful-enemy-against-many-weaker-enemies",
+    "how-do-i-save-my-party-from-an-overpowered-encounter",
   ],
   discovery: {
     id: "answer-encounter-balance",

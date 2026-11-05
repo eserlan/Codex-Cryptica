@@ -131,6 +131,7 @@ export const howDoYouHandleCharacterDeathInATabletopRpg: AnswerConfigInput = {
     "how-do-i-run-a-large-battle-when-the-player-characters-are-part-of-an-army",
     "what-are-the-best-classless-fantasy-rpgs-with-skill-based-progression",
     "how-to-keep-character-death-meaningful-with-resurrection",
+    "how-do-i-save-my-party-from-an-overpowered-encounter",
   ],
   discovery: {
     id: "answer-handle-character-death",
