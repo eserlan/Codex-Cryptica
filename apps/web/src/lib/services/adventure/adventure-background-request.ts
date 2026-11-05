@@ -1,6 +1,7 @@
-import type {
-  AdventureSession,
-  GroundingContext,
+import {
+  currentLocationContext,
+  type AdventureSession,
+  type GroundingContext,
 } from "@codex/adventure-engine";
 import type { GeneratorRunRequest } from "generator-engine";
 
@@ -11,9 +12,9 @@ export function createAdventureBackgroundRequest(
   useAI: boolean,
   themeId = "workspace",
 ): GeneratorRunRequest {
-  const entry = session.worldEntry;
+  const location = currentLocationContext(session);
   if (
-    !entry ||
+    !location ||
     context.purpose !== "background" ||
     context.sessionId !== session.id ||
     context.vaultId !== session.vaultId ||
@@ -25,9 +26,9 @@ export function createAdventureBackgroundRequest(
     generatorId: "rumour",
     themeId,
     useAI,
-    options: { locationContext: entry.location.name },
+    options: { locationContext: location.name },
     instructions: [
-      `Create local rumours for ${entry.location.name} as hidden preparation.`,
+      `Create local rumours for ${location.name} as hidden preparation.`,
       "Canonical sources outrank provisional session knowledge. Preserve source period applicability, uncertainty and contradictions. Never treat future facts as current.",
       "Source lore and GM-only session knowledge are hidden: never encode their actual secrets in player-visible rumours. Mix mundane, misleading and substantial situations without assigning quests.",
       "Committed Adventure knowledge (GM-only sections remain hidden):",
@@ -35,7 +36,9 @@ export function createAdventureBackgroundRequest(
     ].join("\n"),
     vaultContext: {
       themeId,
-      currentDate: entry.at ? String(entry.at.year) : undefined,
+      currentDate: session.worldEntry?.at
+        ? String(session.worldEntry.at.year)
+        : undefined,
       categoryLabels: [],
       applyTemplate: false,
       neighbors: [],

@@ -53,9 +53,31 @@ describe("AdventureSituationSettings", () => {
     expect(m.setScenarioStatus).toHaveBeenLastCalledWith("b", "open");
   });
 
-  it("renders nothing when no lead has been heard", () => {
+  it("renders Look for local rumours when no lead has been heard yet, but no situation items", async () => {
+    const onAction = vi.fn();
+    const m = manager([lead("hidden", "open", "unheard")], {
+      submitAction: vi.fn(async () => {}),
+    });
+    render(AdventureSituationSettings, {
+      props: { manager: m, onAction },
+    });
+    const section = screen.getByTestId("adventure-situation-settings");
+    expect(section.querySelectorAll("li")).toHaveLength(0);
+    const lookBtn = screen.getByRole("button", {
+      name: "Look for local rumours",
+    });
+    expect(lookBtn).toBeDefined();
+
+    await fireEvent.click(lookBtn);
+    expect(m.submitAction).toHaveBeenCalledWith(
+      "Ask around for local rumours and news.",
+    );
+    expect(onAction).toHaveBeenCalled();
+  });
+
+  it("renders nothing when there is no active session", () => {
     const { container } = render(AdventureSituationSettings, {
-      props: { manager: manager([lead("hidden", "open", "unheard")]) },
+      props: { manager: { session: null, readOnly: false } as any },
     });
     expect(container.querySelector("section")).toBeNull();
   });

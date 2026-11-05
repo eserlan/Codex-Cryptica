@@ -4,7 +4,13 @@ import {
   type RumourSelectionInput,
   type SelectedRumourForPlay,
 } from "generator-engine";
-import type { AdventureSession } from "@codex/adventure-engine";
+import {
+  currentLocationContext,
+  needsContextualRumours,
+  pruneUnheardScenariosForNewBatch,
+  type AdventureSession,
+  type LocationContext,
+} from "@codex/adventure-engine";
 
 /**
  * Prepare GM-only background situations from the existing Rumour Generator.
@@ -12,40 +18,73 @@ import type { AdventureSession } from "@codex/adventure-engine";
  * The local-generator fallback invents provisional details; Oracle must
  * reconcile them against date-aware Vault sources before using them in play.
  */
-export function needsWorldEntryBackground(session: AdventureSession): boolean {
-  return Boolean(
-    session.worldEntry &&
-    !session.scenarioCollection?.items.length &&
-    session.hiddenState.secrets.length === 0 &&
-    session.hiddenState.gmThreads.length === 0,
-  );
+export function needsWorldEntryBackground(
+  session: AdventureSession,
+  location?: LocationContext | null,
+): boolean {
+  return needsContextualRumours(session, location);
 }
 
 export function seedWorldEntryBackground(
   session: AdventureSession,
   allocateId: () => string,
   generatedBatch?: RumourSelectionInput,
+  locationOverride?: LocationContext | null,
 ): AdventureSession {
-  if (!needsWorldEntryBackground(session)) return session;
+  if (!needsWorldEntryBackground(session, locationOverride)) return session;
 
-  const locationContext = session.worldEntry!.location.name.slice(0, 80);
+  const location = locationOverride ?? currentLocationContext(session);
+  if (!location) return session;
+
+  const locationContext = location.name.slice(0, 80);
   // Prefer the standard Vault-grounded generator. Incomplete categories or
   // text that cannot fit the persisted schema use the deterministic local set.
   const chosen =
     selectCompleteSet(generatedBatch) ??
     selectCompleteSet(
-      generateRumourLocal({ locationContext }, seededRandom(session.id)),
+      generateRumourLocal(
+        { locationContext },
+        seededRandom(`${session.id}:${location.name}`),
+      ),
     );
   if (!chosen) return session;
 
   const batchId = allocateId();
-  const items = chosen.map((selected) => {
+  const existingItems = session.scenarioCollection?.items ?? [];
+  const existingLeads = new Set(
+    existingItems.map((item) => item.playerVisible.lead.trim().toLowerCase()),
+  );
+
+  // Filter out any candidates that duplicate existing leads in the session
+  const nonDuplicate = chosen.filter(
+    (selected) =>
+      !existingLeads.has(selected.playerVisible.lead.trim().toLowerCase()),
+  );
+  if (nonDuplicate.length === 0) return session;
+
+  // Prune older unheard scenarios from other locations if adding these would exceed max 8
+  const prunedExisting = pruneUnheardScenariosForNewBatch(
+    existingItems,
+    nonDuplicate.length,
+    location,
+  );
+
+  const items = nonDuplicate.map((selected) => {
     const itemId = allocateId();
     return {
       version: 1 as const,
       id: itemId,
-      origin: { ...selected.origin, batchId },
-      playerVisible: selected.playerVisible,
+      origin: {
+        ...selected.origin,
+        batchId,
+        batchTitle: `Rumours in ${location.name}`,
+        ...(location.recordId ? { sourceRecordId: location.recordId } : {}),
+      },
+      playerVisible: {
+        ...selected.playerVisible,
+        source:
+          selected.playerVisible.source || `Local talk in ${location.name}`,
+      },
       gmOnly: {
         truth: `${selected.gmOnly.reality}: ${selected.gmOnly.whatsActuallyHappening}`,
         ifInvestigated: selected.gmOnly.ifInvestigated,
@@ -53,7 +92,7 @@ export function seedWorldEntryBackground(
       knowledge: "unheard" as const,
       status: "open" as const,
       events: [],
-      anchorRefs: [],
+      anchorRefs: location.recordId ? [location.recordId] : [],
       revealedSecretIds: [],
       secretBindings: {
         truth: allocateId(),
@@ -67,7 +106,7 @@ export function seedWorldEntryBackground(
     ...session,
     scenarioCollection: {
       version: 1,
-      items: [...(session.scenarioCollection?.items ?? []), ...items],
+      items: [...prunedExisting, ...items],
       focusedScenarioId: session.scenarioCollection?.focusedScenarioId ?? null,
     },
   };

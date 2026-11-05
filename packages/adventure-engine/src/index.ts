@@ -13,5 +13,6 @@ export * from "./scenario-migration";
 export * from "./scenario-collection";
 export * from "./world-time";
 export * from "./world-entry-pacing";
+export * from "./contextual-rumours";
 
 export * from "./grounding";
