@@ -8,6 +8,7 @@ import {
   currentLocationContext,
   needsContextualRumours,
   pruneUnheardScenariosForNewBatch,
+  MAX_SCENARIO_COLLECTION_ITEMS,
   type AdventureSession,
   type LocationContext,
 } from "@codex/adventure-engine";
@@ -69,7 +70,15 @@ export function seedWorldEntryBackground(
     location,
   );
 
-  const items = nonDuplicate.map((selected) => {
+  const availableSlots = Math.max(
+    0,
+    MAX_SCENARIO_COLLECTION_ITEMS - prunedExisting.length,
+  );
+  if (availableSlots === 0) return session;
+
+  const itemsToSeed = nonDuplicate.slice(0, availableSlots);
+
+  const items = itemsToSeed.map((selected) => {
     const itemId = allocateId();
     return {
       version: 1 as const,

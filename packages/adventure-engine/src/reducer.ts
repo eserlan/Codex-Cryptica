@@ -1,6 +1,7 @@
 import { detectHiddenLeakage, ensureScenarioSecrets } from "./hidden-state";
 import { applyTimeAdvance } from "./world-time";
 import { systemIdGenerator } from "@codex/runtime";
+import { validateRevealedScenarioLocation } from "./contextual-rumours";
 import {
   MAX_SERIALIZED_STATE_CHARS,
   parseTurnProposal,
@@ -305,6 +306,37 @@ function scenarioSecretBindingIds(
   ];
 }
 
+function revealScenarioIfUnheard(
+  candidate: AdventureSession,
+  scenarioId: string,
+  turn: CommittedAdventureTurn,
+  createId: IdFactory,
+): string | null {
+  const scenario = candidate.scenarioCollection?.items.find(
+    (item) => item.id === scenarioId,
+  );
+  if (!scenario) return `Unknown scenario: ${scenarioId}`;
+  if (scenario.knowledge !== "unheard") return null;
+
+  const locationError = validateRevealedScenarioLocation(candidate, scenario);
+  if (locationError) return locationError;
+
+  const id = allocateId(existingIds(candidate), createId);
+  if (!id || scenario.events.length >= 100) {
+    return "Unable to record scenario discovery";
+  }
+  scenario.events.push({
+    id,
+    kind: "discovery",
+    visibility: "player",
+    text: scenario.playerVisible.lead,
+    at: turn.committedAt,
+    turnId: turn.id,
+  });
+  scenario.knowledge = "heard";
+  return null;
+}
+
 function markRevealedScenarios(
   candidate: AdventureSession,
   scenarioIds: string[] | undefined,
@@ -312,24 +344,8 @@ function markRevealedScenarios(
   createId: IdFactory,
 ): string | null {
   for (const scenarioId of scenarioIds ?? []) {
-    const scenario = candidate.scenarioCollection?.items.find(
-      (item) => item.id === scenarioId,
-    );
-    if (!scenario) return `Unknown scenario: ${scenarioId}`;
-    if (scenario.knowledge === "unheard") {
-      const id = allocateId(existingIds(candidate), createId);
-      if (!id || scenario.events.length >= 100)
-        return "Unable to record scenario discovery";
-      scenario.events.push({
-        id,
-        kind: "discovery",
-        visibility: "player",
-        text: scenario.playerVisible.lead,
-        at: turn.committedAt,
-        turnId: turn.id,
-      });
-      scenario.knowledge = "heard";
-    }
+    const err = revealScenarioIfUnheard(candidate, scenarioId, turn, createId);
+    if (err) return err;
   }
   return null;
 }

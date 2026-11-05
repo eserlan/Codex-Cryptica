@@ -18,7 +18,10 @@
     ) ?? [],
   );
   const locked = $derived(
-    manager.readOnly || !!manager.session?.pendingRoll || busyId !== null,
+    manager.readOnly ||
+      manager.phase === "generating" ||
+      !!manager.session?.pendingRoll ||
+      busyId !== null,
   );
 
   const STATUS_LABEL = {
@@ -45,7 +48,9 @@
     error = null;
     try {
       await manager.submitAction("Ask around for local rumours and news.");
-      onAction?.();
+      if (manager.phase === "generating") {
+        onAction?.();
+      }
     } catch (cause) {
       error = describeScenarioMutationError(cause);
     }

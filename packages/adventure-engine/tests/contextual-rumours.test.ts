@@ -267,4 +267,102 @@ describe("contextual rumours domain pipeline", () => {
       needsContextualRumours(session, { name: "Mining Colony Ceres" }),
     ).toBe(true);
   });
+
+  it("returns false from needsContextualRumours when heard scenarios have exhausted collection capacity", () => {
+    const heard = Array.from({ length: 8 }, (_, i) =>
+      mockScenario(`h${i}`, "heard", "Town", "loc-town"),
+    );
+    const session = mockSession({
+      scenarioCollection: {
+        version: 1,
+        items: heard,
+        focusedScenarioId: null,
+      },
+    });
+
+    expect(needsContextualRumours(session, { name: "New Settlement" })).toBe(
+      false,
+    );
+  });
+
+  it("excludes unheard scenarios from other locations in buildAdventurePrompt", () => {
+    const s1 = mockScenario("s1", "heard", "Oakhaven", "loc-oakhaven");
+    const s2 = mockScenario("s2", "unheard", "Oakhaven", "loc-oakhaven");
+    const s3 = mockScenario("s3", "unheard", "Distant City", "loc-distant");
+
+    const session = mockSession({
+      scenarioCollection: {
+        version: 1,
+        items: [s1, s2, s3],
+        focusedScenarioId: null,
+      },
+    });
+
+    const prompt = JSON.parse(
+      import.meta.require("../src").buildAdventurePrompt({
+        session,
+        phase: "action",
+        playerAction: "Ask around",
+        anchors: [],
+        relevant: [],
+      }).state,
+    );
+
+    const gmScenarios = prompt["GM-ONLY scenarios"];
+    // s1 (heard) and s2 (unheard Oakhaven) are present; s3 (Distant City) is excluded
+    expect(
+      gmScenarios.map((s: { origin: { batchId: string } }) => s.origin.batchId),
+    ).toEqual(["batch-Oakhaven", "batch-Oakhaven"]);
+  });
+
+  it("rejects proposal that attempts to reveal an unheard scenario from another location", () => {
+    const sOther = mockScenario(
+      "s-other",
+      "unheard",
+      "Distant City",
+      "loc-distant",
+    );
+    const session = mockSession({
+      scenarioCollection: {
+        version: 1,
+        items: [sOther],
+        focusedScenarioId: null,
+      },
+    });
+
+    const { applyCompletedTurn } = import.meta.require("../src");
+    const result = applyCompletedTurn(
+      session,
+      {
+        kind: "complete",
+        narration: "A revelation occurs.",
+        visiblePatch: {
+          objectives: { add: [], update: [], removeIds: [] },
+          activeCharacters: { add: [], update: [], removeIds: [] },
+          knownFacts: { add: [], update: [], removeIds: [] },
+          relationships: { add: [], update: [], removeIds: [] },
+        },
+        hiddenPatch: {
+          secrets: { add: [], update: [], removeIds: [] },
+          gmThreads: { add: [], update: [], removeIds: [] },
+        },
+        revealSecretIds: [],
+        provisionalFacts: [],
+        sourceRecordIds: [],
+        suggestedActions: ["One", "Two", "Three"],
+        revealScenarioIds: ["s-other"],
+      },
+      {
+        turnId: "turn-1",
+        inputId: "input-1",
+        playerAction: "Look around",
+        now: "2026-11-05T12:00:00Z",
+      },
+    );
+
+    expect(result.ok).toBe(false);
+    expect(result.errors[0]?.message).toContain(
+      "does not match active location",
+    );
+  });
 });

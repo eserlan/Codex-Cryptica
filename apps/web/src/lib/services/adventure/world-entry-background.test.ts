@@ -205,4 +205,46 @@ describe("world entry background situations", () => {
         ?.knowledge,
     ).toBe("heard");
   });
+
+  it("caps added candidate rumours when heard scenarios leave limited capacity to respect max 8", () => {
+    let idCounter = 0;
+    const allocate = () => `id-${++idCounter}`;
+
+    const base = session();
+    // 6 heard scenarios
+    const heard = Array.from({ length: 6 }, (_, i) => ({
+      version: 1 as const,
+      id: `h-${i}`,
+      origin: { kind: "rumour" as const, index: 1, batchId: `b-${i}` },
+      playerVisible: { rumour: `R-${i}`, lead: `L-${i}` },
+      gmOnly: { truth: `T-${i}` },
+      knowledge: "heard" as const,
+      status: "open" as const,
+      events: [],
+      anchorRefs: [],
+      revealedSecretIds: [],
+      secretBindings: { truth: `st-${i}`, eventIds: {} },
+    }));
+
+    base.scenarioCollection = {
+      version: 1,
+      items: heard,
+      focusedScenarioId: null,
+    };
+    base.visibleState = {
+      location: {
+        id: "loc-fact-new",
+        text: "New Outpost",
+        source: "provisional",
+      },
+      objectives: [],
+      activeCharacters: [],
+      knownFacts: [],
+      relationships: [],
+    };
+
+    const seeded = seedWorldEntryBackground(base, allocate);
+    // Capacity was 8 - 6 = 2 slots, so exactly 2 items added, total = 8
+    expect(seeded.scenarioCollection?.items).toHaveLength(8);
+  });
 });
