@@ -951,6 +951,19 @@ describe("StatSheetEditor field keys (#3180)", () => {
       );
 
       updateEntity.mockClear();
+      await fireEvent.input(countInput, { target: { value: "2.5" } });
+      expect(updateEntity).toHaveBeenCalledWith(
+        "goblin-1",
+        expect.objectContaining({
+          statSheet: expect.objectContaining({
+            fields: [
+              expect.objectContaining({ id: "f1", value: 2, startValue: 2 }),
+            ],
+          }),
+        }),
+      );
+
+      updateEntity.mockClear();
       const stepInput = screen.getByLabelText("Step size for Action Pool");
       await fireEvent.input(stepInput, { target: { value: "-2" } });
       expect(updateEntity).toHaveBeenCalledWith(

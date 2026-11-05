@@ -150,6 +150,9 @@ export async function rollStatSheetDicePoolField(
   if (count <= 0) {
     return { text: "No dice in pool to roll", isError: true };
   }
+  if (!Number.isInteger(count)) {
+    return { text: "Dice pool count must be a whole number", isError: true };
+  }
   if (count > MAX_DICE_POOL_COUNT) {
     return {
       text: `Dice pool cannot exceed ${MAX_DICE_POOL_COUNT} dice`,
@@ -190,16 +193,20 @@ export function computeAdjustedCounterValue(
   direction: 1 | -1,
 ): number {
   const step = Math.max(1, Math.floor(Math.abs(field.step ?? 1)));
-  const current = typeof field.value === "number" ? field.value : 0;
+  const current = typeof field.value === "number" ? Math.floor(field.value) : 0;
   let next = current + step * direction;
   const max =
     field.type === "dice-pool"
       ? field.max !== undefined
-        ? Math.min(field.max, MAX_DICE_POOL_COUNT)
+        ? Math.min(Math.floor(field.max), MAX_DICE_POOL_COUNT)
         : MAX_DICE_POOL_COUNT
       : field.max;
+  const min =
+    field.type === "dice-pool" && field.min !== undefined
+      ? Math.floor(field.min)
+      : field.min;
   if (max !== undefined) next = Math.min(max, next);
-  if (field.min !== undefined) next = Math.max(field.min, next);
+  if (min !== undefined) next = Math.max(min, next);
   return next;
 }
 

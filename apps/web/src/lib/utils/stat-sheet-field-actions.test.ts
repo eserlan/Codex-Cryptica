@@ -572,6 +572,13 @@ describe("rollStatSheetDicePoolField", () => {
     expect(addResult).not.toHaveBeenCalled();
   });
 
+  it("rejects roll when count is not an integer", async () => {
+    const display = await rollStatSheetDicePoolField(poolField({ value: 2.5 }));
+    expect(display.isError).toBe(true);
+    expect(display.text).toBe("Dice pool count must be a whole number");
+    expect(addResult).not.toHaveBeenCalled();
+  });
+
   it("rejects roll when count exceeds MAX_DICE_POOL_COUNT limit", async () => {
     const display = await rollStatSheetDicePoolField(
       poolField({ value: MAX_DICE_POOL_COUNT + 1 }),

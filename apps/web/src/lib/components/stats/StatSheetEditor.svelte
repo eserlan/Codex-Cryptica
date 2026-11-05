@@ -553,6 +553,7 @@
             Count
             <input
               type="number"
+              step="1"
               aria-label={`Default pool count for ${field.label}`}
               class="w-16 rounded border border-theme-border bg-theme-bg px-1.5 py-0.5 text-xs text-theme-text"
               min="0"
@@ -567,7 +568,7 @@
                 const val =
                   raw === ""
                     ? 0
-                    : Math.max(0, Math.min(1000, Number(raw) || 0));
+                    : Math.max(0, Math.min(1000, Math.floor(Number(raw)) || 0));
                 updateField(field.id, {
                   value: val,
                   startValue: val,
@@ -596,6 +597,7 @@
             Min
             <input
               type="number"
+              step="1"
               aria-label={`Min pool count for ${field.label}`}
               class="w-14 rounded border border-theme-border bg-theme-bg px-1 py-0.5 text-xs text-theme-text"
               value={field.min ?? 0}
@@ -604,7 +606,9 @@
                   min:
                     (e.target as HTMLInputElement).value === ""
                       ? undefined
-                      : Number((e.target as HTMLInputElement).value),
+                      : Math.floor(
+                          Number((e.target as HTMLInputElement).value),
+                        ),
                 })}
               onchange={() => clampCounterToBounds(field.id)}
             />
@@ -613,6 +617,7 @@
             Max
             <input
               type="number"
+              step="1"
               aria-label={`Max pool count for ${field.label}`}
               class="w-14 rounded border border-theme-border bg-theme-bg px-1 py-0.5 text-xs text-theme-text"
               value={field.max ?? ""}
@@ -621,7 +626,9 @@
                   max:
                     (e.target as HTMLInputElement).value === ""
                       ? undefined
-                      : Number((e.target as HTMLInputElement).value),
+                      : Math.floor(
+                          Number((e.target as HTMLInputElement).value),
+                        ),
                 })}
               onchange={() => clampCounterToBounds(field.id)}
             />
