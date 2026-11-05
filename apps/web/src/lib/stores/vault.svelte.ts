@@ -633,9 +633,6 @@ export class VaultStore {
   // --- Entity Management (Delegated) ---
 
   loadEntityContent(id: string): Promise<void> {
-    if (sessionModeStore.isGuestMode) {
-      return Promise.resolve();
-    }
     return this.entityStore.loadEntityContent(id);
   }
 
@@ -647,6 +644,11 @@ export class VaultStore {
   isContentLoaded(id: string): boolean {
     if (sessionModeStore.isGuestMode) return true;
     return this.entityStore.isContentLoaded(id);
+  }
+
+  /** Whether an entity's full body has been checked against its source. */
+  isContentVerified(id: string): boolean {
+    return this.entityStore.isContentVerified(id);
   }
 
   /**
