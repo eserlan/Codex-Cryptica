@@ -65,6 +65,59 @@ function session(items: ScenarioItem[]): AdventureSession {
 }
 
 describe("scenario player projection and disclosure", () => {
+  it("keeps shared legacy and scenario reveal bindings consistent after reload", () => {
+    const truth = "The miller hides grain beneath the mill.";
+    const { scenarioCollection: _collection, ...legacy } = session([]);
+    const current = parseAdventureSession({
+      ...legacy,
+      schemaVersion: 2,
+      scenarioState: createScenarioState({
+        id: "legacy",
+        origin: { kind: "rumour", batchTitle: "Town", index: 1 },
+        playerVisible: { rumour: "The miller vanished.", lead: "Old mill" },
+        gmOnly: { truth },
+      }),
+      hiddenState: {
+        secrets: [{ id: "secret-legacy", text: truth, status: "hidden" }],
+        gmThreads: [],
+      },
+    });
+    const patch = () => ({ add: [], update: [], removeIds: [] });
+    const proposal = {
+      kind: "complete" as const,
+      narration: truth,
+      visiblePatch: {
+        objectives: patch(),
+        activeCharacters: patch(),
+        knownFacts: patch(),
+        relationships: patch(),
+      },
+      hiddenPatch: { secrets: patch(), gmThreads: patch() },
+      revealSecretIds: ["secret-legacy"],
+      provisionalFacts: [],
+      sourceRecordIds: [],
+    };
+    const meta = { turnId: "reveal-turn", inputId: "reveal-input", now: at };
+    expect(
+      applyCompletedTurn(current, { ...proposal, revealSecretIds: [] }, meta),
+    ).toMatchObject({ ok: false });
+    const committed = applyCompletedTurn(current, proposal, meta);
+    expect(committed.ok).toBe(true);
+    if (!committed.ok) return;
+    const restored = parseAdventureSession(
+      JSON.parse(JSON.stringify(committed.value)),
+    );
+    expect(restored.hiddenState.secrets[0]?.status).toBe("revealed");
+    expect(restored.scenarioCollection?.items[0]?.revealedSecretIds).toEqual([
+      "secret-legacy",
+    ]);
+    expect(
+      detectHiddenLeakage(restored, { ...proposal, revealSecretIds: [] }),
+    ).toEqual([]);
+    expect(current.hiddenState.secrets[0]?.status).toBe("hidden");
+    expect(current.scenarioCollection?.items[0]?.revealedSecretIds).toEqual([]);
+  });
+
   it("omits all unheard identities, content and counts from player output", () => {
     const projected = playerScenarioCollectionProjection(
       session([

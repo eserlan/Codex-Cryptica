@@ -276,12 +276,14 @@ function applySecretReveals(
     if (secret) {
       secret.status = "revealed";
       secret.revealedOnTurnId = turnId;
-      continue;
     }
     const target = candidate.scenarioCollection?.items.find((item) =>
       scenarioSecretBindingIds(item).includes(secretId),
     );
-    if (!target) return `Unknown secret: ${secretId}`;
+    if (!target) {
+      if (secret) continue;
+      return `Unknown secret: ${secretId}`;
+    }
     target.revealedSecretIds = [
       ...new Set([...target.revealedSecretIds, secretId]),
     ];
