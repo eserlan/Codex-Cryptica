@@ -299,6 +299,12 @@ function hasSessionIdentity(session: AdventureSession, id: string): boolean {
   );
 }
 
+const STATUS_EVENT_PREFIX: Record<ScenarioStatus, string> = {
+  open: "Reopened",
+  resolved: "Resolved",
+  abandoned: "Abandoned",
+};
+
 export function setScenarioStatus(
   session: AdventureSession,
   scenarioId: string,
@@ -313,9 +319,13 @@ export function setScenarioStatus(
   if (!item) return { ok: false, reason: "unknown-scenario" };
   if (item.knowledge !== "heard")
     return { ok: false, reason: "scenario-not-heard" };
-  if (item.status !== "open" || !["resolved", "abandoned"].includes(status)) {
-    return { ok: false, reason: "invalid-transition" };
-  }
+  // An open lead can be concluded or left behind; a closed one can only be
+  // reopened (so a mistaken click is recoverable). No closed-to-closed moves.
+  const allowed =
+    item.status === "open"
+      ? status === "resolved" || status === "abandoned"
+      : status === "open";
+  if (!allowed) return { ok: false, reason: "invalid-transition" };
   if (event) {
     const parsed = scenarioEventSchema.safeParse(event);
     if (
@@ -354,7 +364,7 @@ export function setScenarioStatus(
         const parsed = scenarioEventSchema.parse(event);
         target.events.push({
           ...parsed,
-          text: `${status === "resolved" ? "Resolved" : "Abandoned"}: ${parsed.text}`,
+          text: `${STATUS_EVENT_PREFIX[status]}: ${parsed.text}`,
         });
       }
       if (candidate.scenarioCollection!.focusedScenarioId === scenarioId) {

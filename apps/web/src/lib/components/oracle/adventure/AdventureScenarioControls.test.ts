@@ -41,7 +41,7 @@ const unheard = {
 };
 
 describe("AdventureScenarioControls", () => {
-  it("shows only heard leads and exposes focus, clear, resolve and abandon controls", async () => {
+  it("shows only heard leads and exposes focus and clear, but no status buttons", async () => {
     const m = manager([heard, resolved, unheard], "known-1");
     render(AdventureScenarioControls, { props: { manager: m } });
     const focus = screen.getByRole("combobox", {
@@ -58,13 +58,14 @@ describe("AdventureScenarioControls", () => {
     expect(details.textContent).not.toContain("Secret rumour");
     await fireEvent.change(focus, { target: { value: "" } });
     expect(m.focusScenario).toHaveBeenCalledWith(null);
-    await fireEvent.click(screen.getByRole("button", { name: "Resolve" }));
-    expect(m.setScenarioStatus).toHaveBeenCalledWith("known-1", "resolved");
-    await fireEvent.click(screen.getByRole("button", { name: "Abandon" }));
-    expect(m.setScenarioStatus).toHaveBeenCalledWith("known-1", "abandoned");
+    // Closing a lead is a deliberate act in Adventure tools, not a main-row click.
+    for (const name of ["Resolve", "Abandon", "Reopen"]) {
+      expect(screen.queryByRole("button", { name })).toBeNull();
+    }
+    expect(m.setScenarioStatus).not.toHaveBeenCalled();
   });
 
-  it("does not expose unheard counts and disables mutations while a roll is pending", () => {
+  it("does not expose unheard counts and disables focus while a roll is pending", () => {
     const m = manager([unheard], null);
     const { container } = render(AdventureScenarioControls, {
       props: { manager: m },
@@ -78,9 +79,6 @@ describe("AdventureScenarioControls", () => {
       screen
         .getByRole("combobox", { name: "Focused situation" })
         .hasAttribute("disabled"),
-    ).toBe(true);
-    expect(
-      screen.getByRole("button", { name: "Resolve" }).hasAttribute("disabled"),
     ).toBe(true);
   });
 

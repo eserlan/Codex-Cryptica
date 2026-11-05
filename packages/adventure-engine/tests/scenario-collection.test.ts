@@ -114,6 +114,76 @@ describe("scenario collection commands", () => {
     expect(initial.scenarioCollection?.items[0]?.status).toBe("open");
   });
 
+  it("reopens a closed lead with a player-visible event, without restoring focus", () => {
+    const event = (id: string) => ({
+      id,
+      kind: "status-change" as const,
+      visibility: "player" as const,
+      text: "The player changed this situation.",
+      at,
+    });
+    const closed = setScenarioStatus(
+      session(),
+      "one",
+      "resolved",
+      4,
+      event("evt-close"),
+    );
+    expect(closed.ok).toBe(true);
+    if (!closed.ok) return;
+    const reopened = setScenarioStatus(
+      closed.session,
+      "one",
+      "open",
+      closed.session.revision,
+      event("evt-reopen"),
+    );
+    expect(reopened.ok).toBe(true);
+    if (!reopened.ok) return;
+    const target = reopened.session.scenarioCollection!.items[0];
+    expect(target.status).toBe("open");
+    expect(target.events.map((e) => e.text)).toEqual([
+      "Resolved: The player changed this situation.",
+      "Reopened: The player changed this situation.",
+    ]);
+    expect(reopened.session.scenarioCollection?.focusedScenarioId).toBeNull();
+    // The abandoned path reopens the same way.
+    const left = setScenarioStatus(session(), "one", "abandoned", 4);
+    expect(left.ok).toBe(true);
+    if (left.ok)
+      expect(
+        setScenarioStatus(left.session, "one", "open", left.session.revision),
+      ).toMatchObject({ ok: true });
+  });
+
+  it("rejects transitions that are not open-to-closed or closed-to-open", () => {
+    const base = session();
+    // open -> open and open -> unknown value
+    expect(setScenarioStatus(base, "one", "open", 4)).toMatchObject({
+      ok: false,
+      reason: "invalid-transition",
+    });
+    expect(setScenarioStatus(base, "one", "paused" as never, 4)).toMatchObject({
+      ok: false,
+      reason: "invalid-transition",
+    });
+    const closed = setScenarioStatus(base, "one", "resolved", 4);
+    expect(closed.ok).toBe(true);
+    if (!closed.ok) return;
+    const rev = closed.session.revision;
+    // closed -> closed, in both directions
+    expect(
+      setScenarioStatus(closed.session, "one", "abandoned", rev),
+    ).toMatchObject({ ok: false, reason: "invalid-transition" });
+    expect(
+      setScenarioStatus(closed.session, "one", "resolved", rev),
+    ).toMatchObject({ ok: false, reason: "invalid-transition" });
+    // a stale revision and an unheard lead still cannot reopen or close
+    expect(
+      setScenarioStatus(closed.session, "one", "open", rev - 1),
+    ).toMatchObject({ ok: false, reason: "stale-revision" });
+  });
+
   it("does not change state for stale, pending-roll or overflowing commands", () => {
     const original = session();
     expect(

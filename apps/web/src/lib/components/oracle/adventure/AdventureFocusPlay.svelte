@@ -18,6 +18,7 @@
   import AdventureResourceCounters from "./AdventureResourceCounters.svelte";
   import AdventureRollHistory from "./AdventureRollHistory.svelte";
   import AdventureRollPrompt from "./AdventureRollPrompt.svelte";
+  import AdventureSituationSettings from "./AdventureSituationSettings.svelte";
   import AdventureStateSummary from "./AdventureStateSummary.svelte";
   import AdventureScenarioControls from "./AdventureScenarioControls.svelte";
   import {
@@ -168,6 +169,7 @@
 />
 
 {#snippet utilities()}
+  <AdventureSituationSettings {manager} />
   <AdventureCorrectionForm {manager} />
   <AdventureRollHistory {manager} />
   <AdventureResourceCounters {manager} />
