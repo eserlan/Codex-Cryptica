@@ -47,6 +47,7 @@ beforeEach(() => {
   discoveryPolicyStore.aiDisabled = false;
   sessionModeStore.isGuestMode = false;
   vi.spyOn(vault, "activeVaultId", "get").mockReturnValue("vault-1");
+  vi.spyOn(vault, "isInitialized", "get").mockReturnValue(true);
   adventures.list.mockReset();
   adventures.list.mockResolvedValue({ effectiveActiveId: null, entries: [] });
 });
@@ -173,6 +174,13 @@ describe("PlayPage", () => {
       await vi.waitFor(() =>
         expect(configure.configureAdventureRepository).toHaveBeenCalled(),
       );
+      expect(adventures.list).not.toHaveBeenCalled();
+      expect(screen.getByText("Let the Oracle run the game")).toBeTruthy();
+    });
+
+    it("waits for the Vault to finish loading before looking anything up", () => {
+      vi.spyOn(vault, "isInitialized", "get").mockReturnValue(false);
+      render(PlayPage);
       expect(adventures.list).not.toHaveBeenCalled();
       expect(screen.getByText("Let the Oracle run the game")).toBeTruthy();
     });

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { untrack } from "svelte";
   import { oracle } from "#lib/stores/oracle.svelte.js";
   import { calendarStore } from "#lib/stores/calendar.svelte.js";
   import AdventureArchive from "./AdventureArchive.svelte";
@@ -359,10 +360,16 @@
 
   $effect(() => {
     const currentVaultId = vaultId;
+    // On a reload the Vault's storage handle does not exist until it has
+    // finished initialising; an earlier lookup reports "no adventures" and the
+    // start screen would win. Wait, then this effect re-runs.
+    const vaultReady = oracle.vault.isInitialized;
     const request = ++activeRestoreRequest;
     restoringActiveAdventure = true;
-    void oracle.adventure
-      .openActive(currentVaultId)
+    if (!vaultReady) return;
+    // untrack: openActive reads the live session. Tracking it would re-run this
+    // effect when the player leaves an adventure and reopen it straight away.
+    void untrack(() => oracle.adventure.openActive(currentVaultId))
       .catch((error) => {
         notificationStore.notify(
           error instanceof Error
@@ -411,7 +418,7 @@
         onAddProvisionalFact={addProvisionalFact}
         repository={adventureSessionRepository}
         {vaultId}
-        onResume={(sessionId) => oracle.adventure.open(vaultId, sessionId)}
+        onResume={(sessionId) => oracle.adventure.switchTo(vaultId, sessionId)}
         onResumeArchived={async (sessionId) => {
           await oracle.adventure.resumeArchived(vaultId, sessionId);
         }}

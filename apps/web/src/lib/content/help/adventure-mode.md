@@ -41,10 +41,15 @@ navigation menu. If you have no active adventure, choose a starting approach:
 
 A rumour is a lead, **not an assigned quest**. You may ignore it, investigate
 it, or pursue something else. GM notes are hidden by default in the generator
-review unless you choose to reveal them. When another Adventure is active, you
+review unless you choose to reveal them. When you already have an Adventure open, you
 can add the selected lead to it as a known situation, continue the current
-Adventure, cancel and return to the six rumours, or explicitly archive before
+Adventure, cancel and return to the six rumours, or archive it before
 starting a separate Adventure.
+
+You can keep several Adventures going in one Vault. Opening Adventure Mode
+takes you straight back into the one you played most recently. To change to
+another, open the **⋮ menu → Switch to…**, or choose **Leave adventure** to see
+all of them and start a new one.
 
 Use the **Known situations** control during play to focus or clear attention.
 Focusing is optional; ordinary free action continues without a selected lead.

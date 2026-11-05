@@ -93,8 +93,6 @@
 
   function describeStartFailure(cause: unknown): string {
     const message = cause instanceof Error ? cause.message : "";
-    if (message === "active-adventure-exists")
-      return "An adventure is already active in this Vault. Continue or archive it before starting another.";
     if (message === "invalid-adventure-setup")
       return "Some details are too long or invalid. Shorten them and retry. Your choices are preserved.";
     return "Could not start this adventure. Your choices are preserved.";

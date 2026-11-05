@@ -73,6 +73,12 @@ export class AdventureManager extends AdventureState {
     return this.lifecycle.openActive(...args);
   }
 
+  switchTo(
+    ...args: Parameters<AdventureLifecycle["switchTo"]>
+  ): ReturnType<AdventureLifecycle["switchTo"]> {
+    return this.lifecycle.switchTo(...args);
+  }
+
   end(
     ...args: Parameters<AdventureLifecycle["end"]>
   ): ReturnType<AdventureLifecycle["end"]> {

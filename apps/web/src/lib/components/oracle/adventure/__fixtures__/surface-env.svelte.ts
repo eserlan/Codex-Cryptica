@@ -3,6 +3,7 @@ import { vi } from "vitest";
 /** Reactive stand-in for the oracle store, so tests can change the Vault. */
 export const surfaceEnv = $state({
   vault: {
+    isInitialized: true,
     activeVaultId: "vault-1" as string | null,
     entities: {} as Record<string, unknown>,
     allEntities: [] as Array<Record<string, unknown>>,
