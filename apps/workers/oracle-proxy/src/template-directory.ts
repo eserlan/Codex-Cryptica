@@ -81,6 +81,10 @@ function projectResult(
 export async function handleCreateTemplateListing(
   request: Request,
   env: TemplateDirectoryEnv,
+  deps: { uuid: () => string; now: () => string } = {
+    uuid: () => crypto.randomUUID(),
+    now: () => new Date().toISOString(),
+  },
 ): Promise<Response> {
   if (!env.BUCKET)
     return json(
@@ -94,9 +98,9 @@ export async function handleCreateTemplateListing(
       metadata?: Record<string, unknown>;
     };
     const pkg = PublicTemplatePackageSchema.parse(body.package);
-    const now = new Date().toISOString();
-    const listingId = crypto.randomUUID();
-    const token = crypto.randomUUID();
+    const now = deps.now();
+    const listingId = deps.uuid();
+    const token = deps.uuid();
     const metadata = body.metadata ?? {};
     if (metadata.rightsAcknowledged !== true) {
       return json(
