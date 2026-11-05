@@ -1429,7 +1429,7 @@ export function rumourGroundingRule(request: GeneratorRunRequest): string {
     lines.push(`- ${record.title} (${record.type})`);
   }
   if (!lines.length) return "";
-  return `\n[WORLD GROUNDING — overrides the scenario concept above]\nThese places, people and factions already exist in this world:\n${lines.join("\n")}\nAt least four of the six rumours must have a Lead that is one of these named entities, using the exact name. The others may introduce new named leads, but each must connect to something listed above. Set every rumour in this world; do not invent a generic settlement.\n`;
+  return `\n[WORLD GROUNDING — overrides the scenario concept above]\nThese places, people and factions already exist in this world:\n${lines.join("\n")}\nAt least ${Math.min(4, lines.length)} of the six rumours must have a Lead that is one of these named entities, using the exact name, and no single entity may be the Lead of more than two rumours. The others may introduce new named leads, but each must connect to something listed above. Set every rumour in this world; do not invent a generic settlement.\n`;
 }
 
 function rumourPrompt(request: GeneratorRunRequest): string {

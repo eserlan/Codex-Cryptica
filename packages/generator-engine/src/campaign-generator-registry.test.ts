@@ -2035,7 +2035,27 @@ describe("rumourGroundingRule", () => {
     expect(rule).toContain("- Saltmere Harbour (location)");
     expect(rule).toContain("- Marrow Vane (character)");
     expect(rule.match(/The Tidewardens/g)).toHaveLength(1);
-    expect(rule).toContain("At least four of the six rumours");
+    expect(rule).toContain("At least 3 of the six rumours");
+    expect(rule).toContain("no single entity may be the Lead of more than two");
+  });
+
+  it("caps the required lead count at four and scales it down for short lists", () => {
+    const many = Array.from({ length: 6 }, (_, i) =>
+      record(`id${i}`, `Entity ${i}`, "location"),
+    );
+    expect(
+      rumourGroundingRule({
+        vaultContext: ctx({
+          sourceEntity: many[0],
+          worldSample: many.slice(1),
+        }),
+      } as never),
+    ).toContain("At least 4 of the six rumours");
+    expect(
+      rumourGroundingRule({
+        vaultContext: ctx({ sourceEntity: many[0] }),
+      } as never),
+    ).toContain("At least 1 of the six rumours");
   });
 
   it("adds nothing when there is no vault context or no entities", () => {
