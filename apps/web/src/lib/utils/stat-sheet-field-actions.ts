@@ -111,15 +111,115 @@ export async function rollStatSheetDiceField(
   }
 }
 
+export const MAX_DICE_POOL_COUNT = 1000;
+
+const SUPPORTED_DICE_POOL_TYPES = new Set([
+  "d4",
+  "d6",
+  "d8",
+  "d10",
+  "d12",
+  "d20",
+  "d100",
+]);
+
+/**
+ * Normalises a die formula string (e.g. "d6", "6", or undefined) into standard
+ * die notation like "d6". Defaults to "d6" when absent, unsupported, or invalid.
+ */
+export function normaliseDieType(dieNotation?: string): string {
+  if (!dieNotation) return "d6";
+  const trimmed = dieNotation.trim().toLowerCase();
+  const formatted = trimmed.startsWith("d") ? trimmed : `d${trimmed}`;
+  if (SUPPORTED_DICE_POOL_TYPES.has(formatted)) {
+    return formatted;
+  }
+  return "d6";
+}
+
+/**
+ * Roll a dice pool field (Phase 1): derives NdS from field.value (count) and
+ * field.formula (die type, defaulting to d6). Rejects zero, negative, or oversized count.
+ * Displays the arithmetic sum explicitly marked as (Sum), preserving individual
+ * faces in the result roll trace.
+ */
+export async function rollStatSheetDicePoolField(
+  field: StatSheetField,
+): Promise<DiceRollDisplay> {
+  const count = typeof field.value === "number" ? field.value : 0;
+  if (count <= 0) {
+    return { text: "No dice in pool to roll", isError: true };
+  }
+  if (!Number.isInteger(count)) {
+    return { text: "Dice pool count must be a whole number", isError: true };
+  }
+  if (count > MAX_DICE_POOL_COUNT) {
+    return {
+      text: `Dice pool cannot exceed ${MAX_DICE_POOL_COUNT} dice`,
+      isError: true,
+    };
+  }
+
+  const die = normaliseDieType(field.formula);
+  const formula = `${count}${die}`;
+
+  try {
+    const command = diceParser.parse(formula);
+    const result = diceEngine.execute(command);
+    await diceHistory.addResult(result, "modal", { label: field.label });
+
+    if (mapSession.vttEnabled) {
+      mapSession.sendResolvedRollMessage(`${field.label}: ${formula}`, result);
+    } else {
+      notificationStore.notify(
+        `${field.label}: ${formula} = ${result.total} (Sum)${describeDice(result)}`,
+        "success",
+      );
+    }
+
+    return {
+      text: `= ${result.total} (Sum)`,
+      isError: false,
+      total: result.total,
+      roll: result,
+    };
+  } catch (e: any) {
+    return { text: e?.message ?? "Invalid dice pool", isError: true };
+  }
+}
+
 export function computeAdjustedCounterValue(
   field: StatSheetField,
   direction: 1 | -1,
 ): number {
-  const step = field.step ?? 1;
-  const current = typeof field.value === "number" ? field.value : 0;
+  const isDicePool = field.type === "dice-pool";
+  const step = isDicePool
+    ? Math.max(1, Math.floor(Math.abs(field.step ?? 1)))
+    : (field.step ?? 1);
+  const current =
+    typeof field.value === "number"
+      ? isDicePool
+        ? Math.floor(field.value)
+        : field.value
+      : 0;
   let next = current + step * direction;
-  if (field.max !== undefined) next = Math.min(field.max, next);
-  if (field.min !== undefined) next = Math.max(field.min, next);
+  const rawMax = isDicePool
+    ? field.max !== undefined
+      ? Math.min(Math.floor(field.max), MAX_DICE_POOL_COUNT)
+      : MAX_DICE_POOL_COUNT
+    : field.max;
+  const rawMin =
+    isDicePool && field.min !== undefined ? Math.floor(field.min) : field.min;
+
+  // Normalise contradictory bounds so min never exceeds max:
+  const min =
+    rawMin !== undefined && rawMax !== undefined && rawMin > rawMax
+      ? rawMax
+      : rawMin;
+  const max = rawMax;
+
+  if (min !== undefined) next = Math.max(min, next);
+  if (max !== undefined) next = Math.min(max, next);
   return next;
 }
 

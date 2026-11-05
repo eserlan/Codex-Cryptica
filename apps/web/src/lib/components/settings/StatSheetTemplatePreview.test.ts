@@ -77,4 +77,33 @@ describe("StatSheetTemplatePreview", () => {
     expect(order.isSelected("sheet", "hp")).toBe(true);
     expect(updateTemplateFields).not.toHaveBeenCalled();
   });
+  it("renders a Dice Pool badge with configured default pool size and die", () => {
+    setup({
+      ...template,
+      fields: [
+        {
+          id: "pool",
+          label: "Action Pool",
+          type: "dice-pool",
+          startValue: 4,
+          formula: "d10",
+        },
+      ],
+    });
+    expect(screen.getByText(/Dice Pool/).textContent).toContain("4d10");
+  });
+
+  it("renders default 3d6 when dice-pool template field omits startValue and formula", () => {
+    setup({
+      ...template,
+      fields: [
+        {
+          id: "pool",
+          label: "Action Pool",
+          type: "dice-pool",
+        },
+      ],
+    });
+    expect(screen.getByText(/Dice Pool/).textContent).toContain("3d6");
+  });
 });

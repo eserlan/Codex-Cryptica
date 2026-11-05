@@ -634,4 +634,177 @@ describe("StatSheetView", () => {
       vaultState.isGuest = false;
     }
   });
+
+  describe("dice-pool fields", () => {
+    it("renders stepper, die selector, count, and roll button", () => {
+      const entity = buildEntity({
+        statSheet: {
+          fields: [
+            {
+              id: "pool-prowl",
+              label: "Prowl",
+              type: "dice-pool",
+              value: 3,
+              formula: "d6",
+              min: 0,
+              max: 10,
+            },
+          ],
+        },
+      });
+      render(StatSheetView, { entity });
+
+      expect(screen.getByTestId("stat-sheet-dice-pool")).toBeTruthy();
+      expect(
+        screen.getByTestId("stat-sheet-dice-pool-count").textContent?.trim(),
+      ).toBe("3");
+      expect(screen.getByTestId("stat-sheet-dice-pool-decrease")).toBeTruthy();
+      expect(screen.getByTestId("stat-sheet-dice-pool-increase")).toBeTruthy();
+      expect(
+        screen.getByTestId("stat-sheet-dice-pool-die-select"),
+      ).toBeTruthy();
+      expect(screen.getByTestId("stat-sheet-dice-pool-roll")).toBeTruthy();
+    });
+
+    it("adjusts pool count with stepper and persists to entity", async () => {
+      const entity = buildEntity({
+        statSheet: {
+          fields: [
+            {
+              id: "pool-prowl",
+              label: "Prowl",
+              type: "dice-pool",
+              value: 3,
+              formula: "d6",
+            },
+          ],
+        },
+      });
+      render(StatSheetView, { entity });
+
+      await fireEvent.click(
+        screen.getByTestId("stat-sheet-dice-pool-increase"),
+      );
+      expect(updateEntity).toHaveBeenCalledWith(
+        "goblin-1",
+        expect.objectContaining({
+          statSheet: expect.objectContaining({
+            fields: [expect.objectContaining({ id: "pool-prowl", value: 4 })],
+          }),
+        }),
+      );
+    });
+
+    it("updates die type when selecting a different die", async () => {
+      const entity = buildEntity({
+        statSheet: {
+          fields: [
+            {
+              id: "pool-prowl",
+              label: "Prowl",
+              type: "dice-pool",
+              value: 3,
+              formula: "d6",
+            },
+          ],
+        },
+      });
+      render(StatSheetView, { entity });
+
+      const select = screen.getByTestId("stat-sheet-dice-pool-die-select");
+      await fireEvent.change(select, { target: { value: "d8" } });
+
+      expect(updateEntity).toHaveBeenCalledWith(
+        "goblin-1",
+        expect.objectContaining({
+          statSheet: expect.objectContaining({
+            fields: [
+              expect.objectContaining({ id: "pool-prowl", formula: "d8" }),
+            ],
+          }),
+        }),
+      );
+    });
+
+    it("renders non-editable die badge when allowDieChange is false", () => {
+      const entity = buildEntity({
+        statSheet: {
+          fields: [
+            {
+              id: "pool-prowl",
+              label: "Prowl",
+              type: "dice-pool",
+              value: 3,
+              formula: "d6",
+              allowDieChange: false,
+            },
+          ],
+        },
+      });
+      render(StatSheetView, { entity });
+
+      expect(
+        screen.queryByTestId("stat-sheet-dice-pool-die-select"),
+      ).toBeNull();
+      expect(
+        screen
+          .getByTestId("stat-sheet-dice-pool-die-badge")
+          .textContent?.trim(),
+      ).toBe("d6");
+    });
+
+    it("disables roll button when pool count is 0", () => {
+      const entity = buildEntity({
+        statSheet: {
+          fields: [
+            {
+              id: "pool-prowl",
+              label: "Prowl",
+              type: "dice-pool",
+              value: 0,
+              formula: "d6",
+            },
+          ],
+        },
+      });
+      render(StatSheetView, { entity });
+
+      const rollBtn = screen.getByTestId(
+        "stat-sheet-dice-pool-roll",
+      ) as HTMLButtonElement;
+      expect(rollBtn.disabled).toBe(true);
+      expect(rollBtn.getAttribute("aria-label")).toContain("pool count is 0");
+      expect(rollBtn.getAttribute("title")).toBe(
+        "Dice pool count must be greater than zero to roll",
+      );
+    });
+
+    it("rolls active dice pool, displaying sum result and breakdown disclosure", async () => {
+      const entity = buildEntity({
+        statSheet: {
+          fields: [
+            {
+              id: "pool-prowl",
+              label: "Prowl",
+              type: "dice-pool",
+              value: 3,
+              formula: "d6",
+            },
+          ],
+        },
+      });
+      render(StatSheetView, { entity });
+
+      const rollBtn = screen.getByTestId("stat-sheet-dice-pool-roll");
+      await fireEvent.click(rollBtn);
+
+      expect(sendResolvedRollMessage).toHaveBeenCalledWith(
+        "Prowl: 3d6",
+        expect.anything(),
+      );
+      expect(
+        screen.getByTestId("stat-sheet-dice-pool-result-text"),
+      ).toBeTruthy();
+    });
+  });
 });

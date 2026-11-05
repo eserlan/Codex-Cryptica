@@ -13,6 +13,7 @@
     longtext: "Long Text",
     heading: "Section",
     dice: "Dice",
+    "dice-pool": "Dice Pool",
   };
 </script>
 
@@ -24,6 +25,8 @@
       {FIELD_TYPE_LABELS[field.type] ?? field.type}
       {#if field.type === "dice" && field.formula}
         · {field.formula}
+      {:else if field.type === "dice-pool"}
+        · {field.startValue ?? 3}{field.formula ?? "d6"}
       {:else if field.type === "counter" && (field.min !== undefined || field.max !== undefined)}
         · {field.min ?? 0}–{field.max ?? "∞"}
       {/if}

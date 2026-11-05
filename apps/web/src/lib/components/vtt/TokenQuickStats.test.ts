@@ -320,4 +320,82 @@ describe("TokenQuickStats", () => {
     expect(screen.queryByTestId("token-tov-doom")).toBeNull();
     expect(screen.getByTestId("token-quick-stats-empty")).toBeTruthy();
   });
+
+  describe("favorited dice-pool fields", () => {
+    it("renders quick dice-pool stepper, count, and roll button", () => {
+      const entity = buildEntity({
+        statSheet: {
+          fields: [
+            {
+              id: "pool-prowl",
+              label: "Prowl",
+              type: "dice-pool",
+              value: 3,
+              formula: "d6",
+              favorite: true,
+            },
+          ],
+        },
+      });
+      render(TokenQuickStats, { entity });
+
+      expect(screen.getByTestId("token-quick-stats-dice-pool")).toBeTruthy();
+      expect(
+        screen.getByTestId("token-quick-stats-pool-count").textContent?.trim(),
+      ).toBe("3");
+      expect(screen.getByTestId("token-quick-stats-pool-roll")).toBeTruthy();
+    });
+
+    it("adjusts count and persists to entity", async () => {
+      const entity = buildEntity({
+        statSheet: {
+          fields: [
+            {
+              id: "pool-prowl",
+              label: "Prowl",
+              type: "dice-pool",
+              value: 3,
+              formula: "d6",
+              favorite: true,
+            },
+          ],
+        },
+      });
+      render(TokenQuickStats, { entity });
+
+      await fireEvent.click(screen.getByLabelText("Increase Prowl"));
+      expect(updateEntity).toHaveBeenCalledWith(
+        "goblin-1",
+        expect.objectContaining({
+          statSheet: expect.objectContaining({
+            fields: [expect.objectContaining({ id: "pool-prowl", value: 4 })],
+          }),
+        }),
+      );
+    });
+
+    it("rolls pool from quick stats", async () => {
+      const entity = buildEntity({
+        statSheet: {
+          fields: [
+            {
+              id: "pool-prowl",
+              label: "Prowl",
+              type: "dice-pool",
+              value: 3,
+              formula: "d6",
+              favorite: true,
+            },
+          ],
+        },
+      });
+      render(TokenQuickStats, { entity });
+
+      await fireEvent.click(screen.getByTestId("token-quick-stats-pool-roll"));
+      expect(sendResolvedRollMessage).toHaveBeenCalledWith(
+        "Prowl: 3d6",
+        expect.anything(),
+      );
+    });
+  });
 });

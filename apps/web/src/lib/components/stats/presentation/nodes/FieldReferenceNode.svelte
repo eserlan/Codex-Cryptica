@@ -4,7 +4,11 @@
   import MissingFieldNode from "./MissingFieldNode.svelte";
   import ItemTableNode from "./ItemTableNode.svelte";
 
-  import { rollStatSheetDiceField } from "#lib/utils/stat-sheet-field-actions.js";
+  import {
+    computeAdjustedCounterValue,
+    rollStatSheetDiceField,
+    rollStatSheetDicePoolField,
+  } from "#lib/utils/stat-sheet-field-actions.js";
   import DiceBreakdownDisclosure from "#lib/components/dice/DiceBreakdownDisclosure.svelte";
   import type { RollResult } from "dice-engine";
 
@@ -35,6 +39,19 @@
       text: res.text,
       isError: res.isError,
       success: res.success,
+      total: res.total,
+      roll: res.roll,
+    };
+  }
+
+  async function handlePoolRoll() {
+    if (!field || field.type !== "dice-pool" || rollState.rolling) return;
+    rollState.rolling = true;
+    const res = await rollStatSheetDicePoolField(field);
+    rollState = {
+      rolling: false,
+      text: res.text,
+      isError: res.isError,
       total: res.total,
       roll: res.roll,
     };
@@ -105,6 +122,7 @@
   );
 </script>
 
+<!-- fallow-ignore-next-line complexity -->
 {#if !field}
   <MissingFieldNode
     node={{ type: "missing-field", fieldId: node.fieldId, label: node.label }}
@@ -327,6 +345,139 @@
           {field.formula ?? "1d20"}
         </span>
       {/if}
+    </span>
+  {/if}
+{:else if field.type === "dice-pool"}
+  {#if context.mode === "view"}
+    <span
+      class="inline-flex flex-col items-start gap-1"
+      data-testid="presentation-field-dice-pool"
+    >
+      <div
+        class="inline-flex items-center gap-1.5 rounded border border-theme-border bg-theme-bg/50 px-2 py-1 text-xs"
+      >
+        {#if label}<span class="font-medium text-theme-text mr-1">{label}</span
+          >{/if}
+        <button
+          type="button"
+          class="flex h-5 w-5 items-center justify-center rounded border border-theme-border text-theme-text hover:border-theme-primary hover:text-theme-primary disabled:opacity-40"
+          onclick={() =>
+            context.onUpdateFieldValue(
+              field.id,
+              computeAdjustedCounterValue(field, -1),
+            )}
+          disabled={controlsDisabled ||
+            (field.min !== undefined &&
+              (typeof field.value === "number" ? field.value : 0) <= field.min)}
+          aria-label={`Decrease ${label || field.label} pool size`}
+          data-testid="presentation-dice-pool-decrease"
+        >
+          <span class="icon-[lucide--minus] h-2.5 w-2.5" aria-hidden="true"
+          ></span>
+        </button>
+        <span
+          class="min-w-[1.25rem] text-center font-bold text-theme-text text-xs"
+          data-testid="presentation-dice-pool-count"
+        >
+          {typeof field.value === "number" ? field.value : 0}
+        </span>
+        <button
+          type="button"
+          class="flex h-5 w-5 items-center justify-center rounded border border-theme-border text-theme-text hover:border-theme-primary hover:text-theme-primary disabled:opacity-40"
+          onclick={() =>
+            context.onUpdateFieldValue(
+              field.id,
+              computeAdjustedCounterValue(field, 1),
+            )}
+          disabled={controlsDisabled ||
+            (field.max !== undefined &&
+              (typeof field.value === "number" ? field.value : 0) >= field.max)}
+          aria-label={`Increase ${label || field.label} pool size`}
+          data-testid="presentation-dice-pool-increase"
+        >
+          <span class="icon-[lucide--plus] h-2.5 w-2.5" aria-hidden="true"
+          ></span>
+        </button>
+
+        {#if field.allowDieChange !== false}
+          <select
+            aria-label={`Die type for ${label || field.label}`}
+            class="rounded border border-theme-border bg-theme-bg px-1 py-0.5 font-mono text-meta text-theme-text disabled:opacity-40"
+            disabled={controlsDisabled}
+            value={field.formula || "d6"}
+            onchange={(e) =>
+              context.onUpdateField(field.id, {
+                formula: (e.target as HTMLSelectElement).value,
+              })}
+            data-testid="presentation-dice-pool-die-select"
+          >
+            {#each ["d4", "d6", "d8", "d10", "d12", "d20", "d100"] as d}
+              <option value={d}>{d}</option>
+            {/each}
+          </select>
+        {:else}
+          <span
+            class="rounded bg-theme-bg px-1 py-0.5 font-mono text-meta text-theme-text"
+            data-testid="presentation-dice-pool-die-badge"
+          >
+            {field.formula || "d6"}
+          </span>
+        {/if}
+
+        <button
+          type="button"
+          class="inline-flex items-center gap-1 rounded border border-theme-border px-1.5 py-0.5 text-xs text-theme-text transition-colors hover:border-theme-primary hover:text-theme-primary disabled:opacity-40"
+          disabled={controlsDisabled ||
+            rollState.rolling ||
+            (typeof field.value === "number" ? field.value : 0) <= 0}
+          onclick={handlePoolRoll}
+          aria-label={(typeof field.value === "number" ? field.value : 0) <= 0
+            ? `Cannot roll ${label || field.label}: pool count is 0`
+            : `Roll ${label || field.label} dice pool`}
+          title={(typeof field.value === "number" ? field.value : 0) <= 0
+            ? "Dice pool count must be greater than zero to roll"
+            : undefined}
+          data-testid="presentation-field-dice-pool-roll"
+        >
+          <span
+            class="icon-[lucide--dices] h-3.5 w-3.5 text-theme-primary"
+            aria-hidden="true"
+          ></span>
+          <span class="font-medium">Roll</span>
+        </button>
+
+        {#if rollState.text}
+          <span
+            class="font-bold text-xs {rollState.isError
+              ? 'text-theme-danger'
+              : 'text-theme-text'}"
+            data-testid="presentation-field-dice-pool-outcome"
+          >
+            {rollState.text}
+          </span>
+        {/if}
+      </div>
+
+      <DiceBreakdownDisclosure
+        parts={rollState.roll?.parts}
+        total={rollState.roll?.total ?? 0}
+        formula={rollState.roll?.formula}
+      />
+    </span>
+  {:else}
+    <span
+      class="inline-flex items-center gap-1.5 text-xs text-theme-text opacity-75"
+      data-testid="presentation-field-dice-pool-preview"
+    >
+      <span
+        class="icon-[lucide--dices] h-3.5 w-3.5 text-theme-muted"
+        aria-hidden="true"
+      ></span>
+      {#if label}<span class="font-medium">{label}</span>{/if}
+      <span class="rounded bg-theme-bg px-1 py-0.5 font-mono text-meta">
+        {typeof field.value === "number" ? field.value : 1}{field.formula ||
+          "d6"}
+      </span>
     </span>
   {/if}
 {:else}

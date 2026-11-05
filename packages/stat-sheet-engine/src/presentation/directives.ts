@@ -76,6 +76,10 @@ export const DISPLAY_MODES_BY_FIELD_TYPE: Record<
     // adds editing controls, so the GM can preview it without changing data.
     allowed: ["table", "plain", "catalogue"],
   },
+  "dice-pool": {
+    default: "plain",
+    allowed: ["plain", "prominent"],
+  },
 };
 
 /** Resolves the effective display mode for a field reference: the
