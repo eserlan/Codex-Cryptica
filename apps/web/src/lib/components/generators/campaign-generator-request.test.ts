@@ -46,6 +46,7 @@ function setup() {
       getActiveFolderHandle: vi.fn(async () => null),
       getActiveVaultHandle: vi.fn(async () => null),
       loadEntityContent: vi.fn(async (_id: string) => {}),
+      isContentVerified: vi.fn((_id: string) => true),
     },
     categories: { list: [{ id: "location", label: "Location" }] },
     themeStore: {
@@ -191,10 +192,17 @@ describe("campaign generator request", () => {
     );
   });
 
-  it("does not dispatch an AI request when selected rumour lore cannot be loaded", async () => {
+  it("does not dispatch when a selected rumour record failed to load, even if another has prose", async () => {
     const { builder, deps } = setup();
-    deps.vault.loadEntityContent.mockRejectedValue(
-      new Error("storage unavailable"),
+    deps.vault.loadEntityContent.mockImplementation(async (id: string) => {
+      if (id === "inbound") {
+        deps.vault.entities.inbound.content = "Loaded neighbour lore.";
+      }
+    });
+    // The production loader catches storage errors and resolves, leaving the
+    // affected record unverified. Other selected records may still load.
+    deps.vault.isContentVerified.mockImplementation(
+      (id: string) => id !== "outbound",
     );
     await expect(
       builder.build(
@@ -202,7 +210,7 @@ describe("campaign generator request", () => {
         null,
         () => policy,
       ),
-    ).rejects.toThrow("storage unavailable");
+    ).rejects.toThrow("Could not load rumour context for outbound");
     expect(deps.generatorSessionManager.prepare).not.toHaveBeenCalled();
   });
 

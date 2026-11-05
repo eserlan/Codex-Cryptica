@@ -249,6 +249,11 @@ export class CampaignGeneratorRequestBuilder {
     ]);
     await Promise.all([...ids].map((id) => vault.loadEntityContent(id)));
     assertCurrentWorld();
+    const failedId = [...ids].find((id) => !vault.isContentVerified(id));
+    if (failedId)
+      throw new Error(
+        `Could not load rumour context for ${failedId}. Please retry.`,
+      );
     const hydrated = buildVaultContext({
       ...contextOptions,
       allEntities: vault.entities,

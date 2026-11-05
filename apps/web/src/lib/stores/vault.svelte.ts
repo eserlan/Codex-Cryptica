@@ -649,6 +649,12 @@ export class VaultStore {
     return this.entityStore.isContentLoaded(id);
   }
 
+  /** Whether an entity's full body has been checked against its source. */
+  isContentVerified(id: string): boolean {
+    if (sessionModeStore.isGuestMode) return true;
+    return this.entityStore.isContentVerified(id);
+  }
+
   /**
    * Reads an entity with its full body without writing it into the store.
    * For whole-vault snapshots; see `EntityContentLoader.readFullEntity`.
