@@ -477,28 +477,25 @@ describe("AdventureManager", () => {
     expect(manager.session?.turns).toHaveLength(1);
   });
 
-  it("recovers a stale zero-turn active session before starting", async () => {
+  it("starts a new adventure alongside one that is already active", async () => {
     const deps: any = dependencies();
-    const stale = {
-      id: "stale-session",
+    const existing = {
+      id: "existing-session",
       vaultId: "vault-1",
       status: "active",
       turns: [],
       revision: 0,
     } as any;
-    let archivedId: string | null = null;
     deps.repository.list = async () => ({
-      effectiveActiveId: stale.id,
+      effectiveActiveId: existing.id,
       entries: [],
     });
     deps.repository.load = async () => ({
       condition: "normal",
-      session: stale,
+      session: existing,
     });
-    deps.repository.archive = async (_vaultId: string, sessionId: string) => {
-      archivedId = sessionId;
-      return { ok: true, session: { ...stale, status: "archived" } };
-    };
+    const archive = vi.fn();
+    deps.repository.archive = archive;
 
     const manager = new AdventureManager(deps);
     await manager.start({
@@ -512,51 +509,9 @@ describe("AdventureManager", () => {
       },
     });
 
-    expect(archivedId).toBe("stale-session");
+    expect(archive).not.toHaveBeenCalled();
+    expect(manager.session?.id).not.toBe("existing-session");
     expect(manager.session?.turns).toHaveLength(1);
-  });
-
-  it("releases the recovery lease when archiving a stale start fails", async () => {
-    const deps: any = dependencies();
-    const stale = {
-      id: "stale-session",
-      vaultId: "vault-1",
-      status: "active",
-      turns: [],
-      revision: 0,
-    };
-    deps.repository.list = vi.fn(async () => ({
-      effectiveActiveId: stale.id,
-      entries: [],
-    }));
-    deps.repository.load = vi.fn(async () => ({
-      condition: "normal",
-      session: stale,
-    }));
-    deps.repository.archive = vi.fn(async () => ({
-      ok: false,
-      error: new Error("archive-failed"),
-    }));
-    deps.authority.release = vi.fn(async () => undefined);
-    const manager = new AdventureManager(deps);
-
-    await expect(
-      manager.start({
-        vaultId: "vault-1",
-        title: "Road",
-        premise: "Investigate the road",
-        playerCharacter: {
-          kind: "provisional",
-          name: "Mara",
-          description: "Guide",
-        },
-      }),
-    ).rejects.toThrow("archive-failed");
-
-    expect(deps.authority.release).toHaveBeenCalledTimes(1);
-    expect(manager.phase).toBe("error");
-    expect(manager.errorMessage).toBe("archive-failed");
-    expect(manager.session).toBeNull();
   });
 
   it("resolves a recorded outcome immediately without a confirmation step", async () => {
@@ -1014,17 +969,56 @@ describe("AdventureManager Phase 2 tools", () => {
     expect(manager.session?.status).toBe("active");
   });
 
-  it("refuses to resume when an adventure is already active", async () => {
+  it("resumes an archived adventure while another one is open and releases the first", async () => {
     const deps: any = dependencies();
-    deps.repository.list = async () => ({
-      effectiveActiveId: "already-active",
-      entries: [],
-    });
     const manager = new AdventureManager(deps);
+    await manager.start({
+      vaultId: "vault-1",
+      title: "Road",
+      premise: "Find the road",
+      playerCharacter: { kind: "provisional", name: "Mara", description: "G" },
+    });
+    const firstId = manager.session!.id;
+    const firstLease = manager.lease;
+    const archived: any = {
+      id: "archived-1",
+      vaultId: "vault-1",
+      status: "archived",
+      revision: 2,
+      turns: [],
+      pendingRoll: null,
+    };
+    let current = archived;
+    deps.repository.load = async (_v: string, id: string) => ({
+      condition: "normal",
+      session: id === "archived-1" ? current : manager.session,
+    });
+    deps.repository.save = async (_rev: number, session: any) => {
+      current = session;
+      return { ok: true, session };
+    };
+    deps.authority.release = vi.fn(async () => undefined);
 
-    await expect(
-      manager.resumeArchived("vault-1", "archived-1"),
-    ).rejects.toThrow("active-adventure-exists");
+    const resumed = await manager.resumeArchived("vault-1", "archived-1");
+
+    expect(resumed.status).toBe("active");
+    expect(manager.session?.id).toBe("archived-1");
+    expect(manager.session?.id).not.toBe(firstId);
+    expect(deps.authority.release).toHaveBeenCalledWith(firstLease);
+  });
+
+  it("switchTo is a no-op for the adventure already being played", async () => {
+    const deps: any = dependencies();
+    const manager = new AdventureManager(deps);
+    await manager.start({
+      vaultId: "vault-1",
+      title: "Road",
+      premise: "Find the road",
+      playerCharacter: { kind: "provisional", name: "Mara", description: "G" },
+    });
+    const load = vi.spyOn(deps.repository, "load");
+    await manager.switchTo("vault-1", manager.session!.id);
+    expect(load).not.toHaveBeenCalled();
   });
 
   it("forceEnd archives a stuck read-only session and clears it back to idle", async () => {
@@ -1195,10 +1189,10 @@ describe("AdventureManager Phase 2 tools", () => {
       const deps: any = dependencies();
       let release!: () => void;
       const gate = new Promise<void>((resolve) => (release = resolve));
-      const listed = deps.repository.list;
-      deps.repository.list = vi.fn(async (...args: any[]) => {
+      const saved = deps.repository.save;
+      deps.repository.save = vi.fn(async (...args: any[]) => {
         await gate;
-        return listed(...args);
+        return saved(...args);
       });
       const manager = new AdventureManager(deps);
       const first = manager.start(startInput);
@@ -1209,7 +1203,6 @@ describe("AdventureManager Phase 2 tools", () => {
       release();
       await first;
       expect(manager.starting).toBe(false);
-      expect(deps.repository.list).toHaveBeenCalledTimes(1);
     });
 
     it.each([
@@ -1273,36 +1266,6 @@ describe("AdventureManager Phase 2 tools", () => {
       fail = false;
       await manager.start(startInput);
       expect(manager.errorCause).toBeNull();
-    });
-
-    it("releases the recovery lease and saves nothing when archiving rejects", async () => {
-      const deps: any = dependencies();
-      const stale = {
-        id: "stale-session",
-        vaultId: "vault-1",
-        status: "active",
-        turns: [],
-        revision: 0,
-      };
-      deps.repository.list = vi.fn(async () => ({
-        effectiveActiveId: stale.id,
-        entries: [],
-      }));
-      deps.repository.load = vi.fn(async () => ({
-        condition: "normal",
-        session: stale,
-      }));
-      deps.repository.archive = vi.fn(async () => {
-        throw new Error("disk-gone");
-      });
-      deps.repository.save = vi.fn();
-      deps.authority.release = vi.fn(async () => undefined);
-      const manager = new AdventureManager(deps);
-
-      await expect(manager.start(startInput)).rejects.toThrow("disk-gone");
-      expect(deps.authority.release).toHaveBeenCalledTimes(1);
-      expect(deps.repository.save).not.toHaveBeenCalled();
-      expect(manager.starting).toBe(false);
     });
   });
 });

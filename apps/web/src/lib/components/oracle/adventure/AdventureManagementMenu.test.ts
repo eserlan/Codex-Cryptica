@@ -96,4 +96,75 @@ describe("AdventureManagementMenu", () => {
       expect(document.activeElement).toBe(trigger);
     });
   });
+
+  describe("switching adventures", () => {
+    const entry = (
+      id: string,
+      title: string,
+      over: Record<string, unknown> = {},
+    ) => ({
+      id,
+      title,
+      status: "active",
+      loadCondition: "normal",
+      ...over,
+    });
+
+    it("lists the other playable adventures and switches to the chosen one", async () => {
+      const list = vi.fn(async () => ({
+        effectiveActiveId: "a",
+        entries: [
+          entry("a", "The Drowned March"),
+          entry("b", "The Salt Road"),
+          entry("c", "Old Tale", { status: "archived" }),
+          entry("d", "Broken", { loadCondition: "unreadable" }),
+        ],
+      }));
+      const onSwitch = vi.fn(async () => {});
+      render(AdventureManagementMenu, {
+        props: {
+          manager: manager({
+            session: { id: "a", title: "The Drowned March" },
+          }),
+          repository: { list } as any,
+          vaultId: "vault-1",
+          onSwitch,
+        },
+      });
+      await fireEvent.click(
+        screen.getByTestId("adventure-management-menu-button"),
+      );
+      const item = await screen.findByRole("menuitem", {
+        name: /switch to the salt road/i,
+      });
+      expect(
+        screen.queryByRole("menuitem", { name: /old tale|broken/i }),
+      ).toBeNull();
+      expect(
+        screen.queryByRole("menuitem", {
+          name: /switch to the drowned march/i,
+        }),
+      ).toBeNull();
+      await fireEvent.click(item);
+      expect(onSwitch).toHaveBeenCalledWith("b");
+    });
+
+    it("shows no switch entries when the lookup fails", async () => {
+      render(AdventureManagementMenu, {
+        props: {
+          manager: manager({ session: { id: "a", title: "T" } }),
+          repository: {
+            list: vi.fn(async () => Promise.reject(new Error("x"))),
+          } as any,
+          vaultId: "vault-1",
+          onSwitch: vi.fn(),
+        },
+      });
+      await fireEvent.click(
+        screen.getByTestId("adventure-management-menu-button"),
+      );
+      await screen.findByRole("menuitem", { name: /leave adventure/i });
+      expect(screen.queryByRole("menuitem", { name: /switch to/i })).toBeNull();
+    });
+  });
 });

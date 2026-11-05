@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { untrack } from "svelte";
   import { oracle } from "#lib/stores/oracle.svelte.js";
   import { calendarStore } from "#lib/stores/calendar.svelte.js";
   import AdventureArchive from "./AdventureArchive.svelte";
@@ -366,8 +367,9 @@
     const request = ++activeRestoreRequest;
     restoringActiveAdventure = true;
     if (!vaultReady) return;
-    void oracle.adventure
-      .openActive(currentVaultId)
+    // untrack: openActive reads the live session. Tracking it would re-run this
+    // effect when the player leaves an adventure and reopen it straight away.
+    void untrack(() => oracle.adventure.openActive(currentVaultId))
       .catch((error) => {
         notificationStore.notify(
           error instanceof Error
@@ -416,7 +418,7 @@
         onAddProvisionalFact={addProvisionalFact}
         repository={adventureSessionRepository}
         {vaultId}
-        onResume={(sessionId) => oracle.adventure.open(vaultId, sessionId)}
+        onResume={(sessionId) => oracle.adventure.switchTo(vaultId, sessionId)}
         onResumeArchived={async (sessionId) => {
           await oracle.adventure.resumeArchived(vaultId, sessionId);
         }}

@@ -99,9 +99,9 @@ describe("AdventureStart", () => {
     ).toBe("The Lantern Road");
   });
 
-  it("shows active-session errors even when the manager does not set errorMessage", async () => {
+  it("shows fixed failure copy even when the manager does not set errorMessage", async () => {
     const start = vi.fn(async () => {
-      throw new Error("active-adventure-exists");
+      throw new Error("private storage detail");
     });
     render(AdventureStart, {
       props: { manager: manager(start), vaultId: "vault-1" },
@@ -114,8 +114,9 @@ describe("AdventureStart", () => {
 
     expect(start).toHaveBeenCalledTimes(1);
     expect(screen.getByRole("alert").textContent).toMatch(
-      /adventure is already active/i,
+      /could not start this adventure/i,
     );
+    expect(screen.getByRole("alert").textContent).not.toContain("private");
     expect(
       (screen.getByLabelText("Adventure title") as HTMLInputElement).value,
     ).toBe("The Lantern Road");

@@ -236,6 +236,26 @@ describe("AdventureSurface world entry launch", () => {
   });
 });
 
+describe("AdventureSurface leaving an adventure", () => {
+  it("does not reopen the adventure after the player leaves it", async () => {
+    // openActive reads the live session synchronously, as the real one does.
+    const openActive = vi.fn(async () => {
+      void surfaceEnv.adventure.session;
+      return false;
+    });
+    surfaceEnv.adventure.openActive = openActive;
+    surfaceEnv.adventure.session = { id: "adventure-1" };
+    render(AdventureSurface);
+    await screen.findByTestId("adventure-play-surface");
+    expect(openActive).toHaveBeenCalledTimes(1);
+
+    surfaceEnv.adventure.session = null;
+    await screen.findByTestId("adventure-enter-world");
+
+    expect(openActive).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe("AdventureSurface rumour handoff", () => {
   it("does not offer to archive the adventure that is being created from the rumour", async () => {
     rumourAdventureHandoff.prepare("vault-1", selected, scenario);

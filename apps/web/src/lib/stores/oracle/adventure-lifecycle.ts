@@ -204,6 +204,21 @@ export class AdventureLifecycle {
     return true;
   }
 
+  /**
+   * Moves from the adventure being played to another one: releases control of
+   * the current adventure first, so its lease and coordinator do not leak.
+   */
+  async switchTo(vaultId: string, sessionId: string): Promise<void> {
+    if (
+      this.state.session?.vaultId === vaultId &&
+      this.state.session.id === sessionId
+    ) {
+      return;
+    }
+    if (this.state.session) await this.close();
+    await this.open(vaultId, sessionId);
+  }
+
   async openActive(vaultId: string): Promise<boolean> {
     const request = ++this.runtime.activeRestoreRequest;
     const isCurrent = () => request === this.runtime.activeRestoreRequest;
@@ -293,19 +308,13 @@ export class AdventureLifecycle {
   }
 
   /**
-   * Resumes an archived (or freshly duplicated) adventure as the vault's
-   * active adventure. Throws `active-adventure-exists` under the same rule
-   * `start()` already enforces — the caller must end or continue the
-   * current active adventure first (FR-005).
+   * Resumes an archived (or freshly duplicated) adventure. A Vault may hold
+   * several active adventures; this one simply becomes active again.
    */
   async resumeArchived(
     vaultId: string,
     sessionId: string,
   ): Promise<AdventureSession> {
-    const current = await this.runtime.deps.repository.list(vaultId);
-    if (current.effectiveActiveId) {
-      throw new Error("active-adventure-exists");
-    }
     const loaded = await this.runtime.deps.repository.load(vaultId, sessionId);
     if (loaded.condition === "unreadable") throw loaded.error;
     const now = this.runtime.deps.now();
@@ -321,7 +330,7 @@ export class AdventureLifecycle {
       resumed,
     );
     if (!saved.ok) throw saved.error;
-    await this.open(vaultId, sessionId);
+    await this.switchTo(vaultId, sessionId);
     if (!this.state.session) throw new Error("resume-failed");
     return this.state.session;
   }
