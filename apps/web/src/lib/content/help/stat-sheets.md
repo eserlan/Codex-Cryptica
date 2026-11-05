@@ -19,6 +19,7 @@ Stat Sheets give any entity — a character, NPC, ship, or settlement — a smal
 - **Long Text** — a multiline note, for traits, abilities, or free-form details.
 - **Heading** — a collapsible section divider to group related fields and save screen space during a session.
 - **Dice** — a rollable expression (e.g. `1d20+5`) with a one-tap roll button.
+- **Dice Pool** — an adjustable pool of dice (e.g. `3d6`) with `-`/`+` stepper controls, an optional die-face selector (`d4` through `d100`), configurable bounds, and one-tap rolling with expandable face breakdowns. Ideal for pool-based systems like Vampire/Storyteller, Year Zero Engine, or Shadowrun.
 
 Codex Cryptica doesn't enforce any particular game system — there's no automatic modifier math or damage calculation. You decide what each field means.
 
@@ -81,6 +82,8 @@ In **Settings → Templates → Stat sheets**, the **Default Template by Categor
 ## Rolling dice
 
 Tap the roll button on a Dice field to roll it in Codex Cryptica's dice engine. If you're in an active VTT session, the result is also sent to the shared session log automatically.
+
+For **Dice Pool** fields, use the `−` and `+` buttons to adjust the number of dice before rolling. If die selection is enabled in the template, you can switch die types (such as `d6`, `d8`, or `d10`) via the dropdown next to the count. Tap **Roll** to roll the pool; the total sum is displayed alongside an expandable breakdown showing individual rolled faces. When the dice count is zero, the Roll button is disabled until you add dice to the pool.
 
 ## Where it's stored
 

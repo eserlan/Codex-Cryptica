@@ -431,7 +431,12 @@
             rollState.rolling ||
             (typeof field.value === "number" ? field.value : 0) <= 0}
           onclick={handlePoolRoll}
-          aria-label={`Roll ${label || field.label} dice pool`}
+          aria-label={(typeof field.value === "number" ? field.value : 0) <= 0
+            ? `Cannot roll ${label || field.label}: pool count is 0`
+            : `Roll ${label || field.label} dice pool`}
+          title={(typeof field.value === "number" ? field.value : 0) <= 0
+            ? "Dice pool count must be greater than zero to roll"
+            : undefined}
           data-testid="presentation-field-dice-pool-roll"
         >
           <span

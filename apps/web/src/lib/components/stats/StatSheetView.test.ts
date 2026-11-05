@@ -773,6 +773,10 @@ describe("StatSheetView", () => {
         "stat-sheet-dice-pool-roll",
       ) as HTMLButtonElement;
       expect(rollBtn.disabled).toBe(true);
+      expect(rollBtn.getAttribute("aria-label")).toContain("pool count is 0");
+      expect(rollBtn.getAttribute("title")).toBe(
+        "Dice pool count must be greater than zero to roll",
+      );
     });
 
     it("rolls active dice pool, displaying sum result and breakdown disclosure", async () => {

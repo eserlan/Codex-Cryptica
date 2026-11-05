@@ -215,7 +215,13 @@
               onclick={() => rollStatSheetDicePoolField(field)}
               disabled={(typeof field.value === "number" ? field.value : 0) <=
                 0}
-              aria-label={`Roll ${field.label}`}
+              aria-label={(typeof field.value === "number" ? field.value : 0) <=
+              0
+                ? `Cannot roll ${field.label}: pool count is 0`
+                : `Roll ${field.label}`}
+              title={(typeof field.value === "number" ? field.value : 0) <= 0
+                ? "Dice pool count must be greater than zero to roll"
+                : undefined}
               data-testid="token-quick-stats-pool-roll"
             >
               <span class="icon-[lucide--dices] h-3.5 w-3.5" aria-hidden="true"

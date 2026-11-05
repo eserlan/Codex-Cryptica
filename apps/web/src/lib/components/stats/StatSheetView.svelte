@@ -618,7 +618,15 @@
                   disabled={(typeof field.value === "number"
                     ? field.value
                     : 0) <= 0}
-                  aria-label={`Roll ${field.label} dice pool`}
+                  aria-label={(typeof field.value === "number"
+                    ? field.value
+                    : 0) <= 0
+                    ? `Cannot roll ${field.label}: pool count is 0`
+                    : `Roll ${field.label} dice pool`}
+                  title={(typeof field.value === "number" ? field.value : 0) <=
+                  0
+                    ? "Dice pool count must be greater than zero to roll"
+                    : undefined}
                   data-testid="stat-sheet-dice-pool-roll"
                 >
                   <span class="icon-[lucide--dices] h-4 w-4" aria-hidden="true"

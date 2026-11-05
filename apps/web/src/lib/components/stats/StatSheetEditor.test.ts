@@ -975,5 +975,46 @@ describe("StatSheetEditor field keys (#3180)", () => {
         }),
       );
     });
+
+    it("normalises non-integer values when converting an existing field to dice-pool", async () => {
+      const entity = buildEntity({
+        statSheet: {
+          fields: [
+            {
+              id: "f1",
+              label: "Mana Pool",
+              type: "counter",
+              value: 2.5,
+              min: 0.5,
+              max: 10.8,
+              step: 0.5,
+            },
+          ],
+        },
+      });
+      render(StatSheetEditor, { entity });
+
+      const typeSelect = screen.getByLabelText("Field type");
+      await fireEvent.change(typeSelect, { target: { value: "dice-pool" } });
+
+      expect(updateEntity).toHaveBeenCalledWith(
+        "goblin-1",
+        expect.objectContaining({
+          statSheet: expect.objectContaining({
+            fields: [
+              expect.objectContaining({
+                id: "f1",
+                type: "dice-pool",
+                value: 2,
+                startValue: 2,
+                min: 0,
+                max: 10,
+                step: 1,
+              }),
+            ],
+          }),
+        }),
+      );
+    });
   });
 });

@@ -142,11 +142,19 @@
     if (newType === "item-table" && !field.columns) {
       updates.columns = DEFAULT_ITEM_TABLE_COLUMNS.map((c) => ({ ...c }));
     } else if (newType === "dice-pool") {
-      if (typeof field.value !== "number") updates.value = 3;
-      if (typeof field.startValue !== "number") updates.startValue = 3;
+      const rawVal =
+        typeof field.value === "number" && !isNaN(field.value)
+          ? Math.max(0, Math.min(1000, Math.floor(field.value)))
+          : 3;
+      updates.value = rawVal;
+      updates.startValue = rawVal;
       if (!field.formula) updates.formula = "d6";
       if (field.min === undefined) updates.min = 0;
+      else updates.min = Math.max(0, Math.floor(field.min));
+      if (field.max !== undefined)
+        updates.max = Math.min(1000, Math.floor(field.max));
       if (field.step === undefined) updates.step = 1;
+      else updates.step = Math.max(1, Math.floor(Math.abs(field.step)));
       if (field.allowDieChange === undefined) updates.allowDieChange = true;
     }
     updateField(field.id, updates);
