@@ -497,17 +497,12 @@
             Step
             <input
               type="number"
-              min="1"
               class="w-16 rounded border border-theme-border bg-theme-bg px-1 py-0.5 text-xs text-theme-text"
               value={field.step ?? 1}
-              oninput={(e) => {
-                const raw = (e.target as HTMLInputElement).value;
-                const step =
-                  raw === ""
-                    ? 1
-                    : Math.max(1, Math.floor(Math.abs(Number(raw) || 1)));
-                updateField(field.id, { step });
-              }}
+              oninput={(e) =>
+                updateField(field.id, {
+                  step: Number((e.target as HTMLInputElement).value) || 1,
+                })}
             />
           </label>
         </div>

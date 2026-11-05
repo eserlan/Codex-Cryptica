@@ -343,6 +343,18 @@ describe("computeAdjustedCounterValue", () => {
     } as any;
     expect(computeAdjustedCounterValue(field, -1)).toBe(0);
   });
+
+  it("preserves fractional step and value on non-dice-pool counters", () => {
+    const field = {
+      id: "mana",
+      label: "Mana",
+      type: "counter",
+      value: 2.5,
+      step: 0.5,
+    } as any;
+    expect(computeAdjustedCounterValue(field, 1)).toBe(3.0);
+    expect(computeAdjustedCounterValue(field, -1)).toBe(2.0);
+  });
 });
 
 describe("rollStatSheetDiceField", () => {

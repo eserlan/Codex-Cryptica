@@ -192,19 +192,24 @@ export function computeAdjustedCounterValue(
   field: StatSheetField,
   direction: 1 | -1,
 ): number {
-  const step = Math.max(1, Math.floor(Math.abs(field.step ?? 1)));
-  const current = typeof field.value === "number" ? Math.floor(field.value) : 0;
+  const isDicePool = field.type === "dice-pool";
+  const step = isDicePool
+    ? Math.max(1, Math.floor(Math.abs(field.step ?? 1)))
+    : (field.step ?? 1);
+  const current =
+    typeof field.value === "number"
+      ? isDicePool
+        ? Math.floor(field.value)
+        : field.value
+      : 0;
   let next = current + step * direction;
-  const max =
-    field.type === "dice-pool"
-      ? field.max !== undefined
-        ? Math.min(Math.floor(field.max), MAX_DICE_POOL_COUNT)
-        : MAX_DICE_POOL_COUNT
-      : field.max;
+  const max = isDicePool
+    ? field.max !== undefined
+      ? Math.min(Math.floor(field.max), MAX_DICE_POOL_COUNT)
+      : MAX_DICE_POOL_COUNT
+    : field.max;
   const min =
-    field.type === "dice-pool" && field.min !== undefined
-      ? Math.floor(field.min)
-      : field.min;
+    isDicePool && field.min !== undefined ? Math.floor(field.min) : field.min;
   if (max !== undefined) next = Math.min(max, next);
   if (min !== undefined) next = Math.max(min, next);
   return next;
