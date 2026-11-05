@@ -215,3 +215,10 @@ describe("parseRumourResponse", () => {
     expect(out.title).toBe("Word Around Town");
   });
 });
+
+describe("buildRumourPrompt schema", () => {
+  it("asks for a summary so the response passes the generic parser", () => {
+    const { userMessage } = buildRumourPrompt({});
+    expect(userMessage).toContain('"summary":');
+  });
+});
