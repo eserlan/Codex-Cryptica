@@ -2,6 +2,30 @@ import { z } from "zod";
 
 const id = z.string().trim().min(1).max(160);
 const text = z.string().trim().min(1).max(600);
+const eventSecretBindings = z.unknown().transform((value, context) => {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    context.addIssue({
+      code: "custom",
+      message: "invalid-event-secret-bindings",
+    });
+    return {};
+  }
+
+  const entries: Array<[string, string]> = [];
+  for (const [eventId, secretId] of Object.entries(value)) {
+    const parsedEventId = id.safeParse(eventId);
+    const parsedSecretId = id.safeParse(secretId);
+    if (!parsedEventId.success || !parsedSecretId.success) {
+      context.addIssue({
+        code: "custom",
+        message: "invalid-event-secret-binding",
+      });
+      continue;
+    }
+    entries.push([parsedEventId.data, parsedSecretId.data]);
+  }
+  return Object.fromEntries(entries);
+});
 
 function hasStableOriginIdentity(value: {
   kind: "rumour" | "manual";
@@ -96,7 +120,7 @@ export const scenarioItemSchema = z
       .object({
         truth: id,
         ifInvestigated: id.optional(),
-        eventIds: z.record(id, id),
+        eventIds: eventSecretBindings,
       })
       .strict(),
   })
@@ -112,7 +136,8 @@ export const scenarioItemSchema = z
     if (
       item.events.some(
         (entry) =>
-          entry.visibility === "gm" && !item.secretBindings.eventIds[entry.id],
+          entry.visibility === "gm" &&
+          !Object.hasOwn(item.secretBindings.eventIds, entry.id),
       )
     ) {
       context.addIssue({

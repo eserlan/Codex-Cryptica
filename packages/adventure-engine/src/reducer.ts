@@ -244,7 +244,9 @@ function immutableScenarioSecretTexts(
           ]
         : []),
       ...item.events.flatMap((event) => {
-        const secretId = item.secretBindings.eventIds[event.id];
+        const secretId = Object.hasOwn(item.secretBindings.eventIds, event.id)
+          ? item.secretBindings.eventIds[event.id]
+          : undefined;
         return event.visibility === "gm" && secretId
           ? [[secretId, event.text] as const]
           : [];

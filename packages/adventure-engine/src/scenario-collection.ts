@@ -237,7 +237,12 @@ export function appendScenarioEvent(
     item.events.push(parsed.data);
     if (parsed.data.visibility === "player") item.knowledge = "heard";
     if (secretBindingId)
-      item.secretBindings.eventIds[parsed.data.id] = secretBindingId;
+      Object.defineProperty(item.secretBindings.eventIds, parsed.data.id, {
+        value: secretBindingId,
+        enumerable: true,
+        configurable: true,
+        writable: true,
+      });
   });
 }
 

@@ -57,7 +57,9 @@ function scenarioSecretSources(
       ...scenario.events
         .filter((event) => event.visibility === "gm")
         .flatMap((event) => {
-          const id = scenario.secretBindings.eventIds[event.id];
+          const id = Object.hasOwn(scenario.secretBindings.eventIds, event.id)
+            ? scenario.secretBindings.eventIds[event.id]
+            : undefined;
           return id
             ? [
                 {

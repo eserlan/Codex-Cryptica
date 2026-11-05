@@ -529,7 +529,9 @@ function scenarioSecretSourceText(
         ]
       : []),
     ...item.events.flatMap((event) => {
-      const id = item.secretBindings.eventIds[event.id];
+      const id = Object.hasOwn(item.secretBindings.eventIds, event.id)
+        ? item.secretBindings.eventIds[event.id]
+        : undefined;
       return event.visibility === "gm" && id
         ? [[id, event.text] as [string, string]]
         : [];

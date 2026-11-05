@@ -164,10 +164,15 @@ function mapEventBindings(
       continue;
     const candidate = `scenario-event-${value.id}`;
     const fallback = `legacy-event-${Object.keys(bindings).length}`;
-    bindings[value.id] = bindSecret(
-      candidate.length <= 160 ? candidate : fallback,
-      typeof value.text === "string" ? value.text : "",
-    );
+    Object.defineProperty(bindings, value.id, {
+      value: bindSecret(
+        candidate.length <= 160 ? candidate : fallback,
+        typeof value.text === "string" ? value.text : "",
+      ),
+      enumerable: true,
+      configurable: true,
+      writable: true,
+    });
   }
   return bindings;
 }

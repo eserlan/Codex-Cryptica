@@ -163,6 +163,41 @@ describe("scenario v3 migration", () => {
     expect(input.schemaVersion).toBe(2);
   });
 
+  it("preserves a revealed legacy GM event named __proto__", () => {
+    const eventText = "The archivist burned the ledger.";
+    const input = legacy(2, {
+      ...oldScenario,
+      events: [
+        {
+          id: "__proto__",
+          kind: "consequence",
+          visibility: "gm",
+          text: eventText,
+          at,
+        },
+      ],
+    }) as Record<string, any>;
+    input.hiddenState.secrets = [
+      { id: "scenario-event-__proto__", text: eventText, status: "revealed" },
+    ];
+
+    const migrated = parseAdventureSession(input);
+    const scenario = migrated.scenarioCollection?.items[0];
+    const bindings = scenario?.secretBindings.eventIds;
+
+    expect(bindings && Object.hasOwn(bindings, "__proto__")).toBe(true);
+    expect(bindings?.["__proto__"]).toBe("scenario-event-__proto__");
+    expect(scenario?.revealedSecretIds).toContain("scenario-event-__proto__");
+
+    const missingBinding = structuredClone(migrated);
+    delete missingBinding.scenarioCollection!.items[0]!.secretBindings.eventIds[
+      "__proto__"
+    ];
+    expect(() => parseAdventureSession(missingBinding)).toThrow(
+      "missing-gm-event-secret-binding",
+    );
+  });
+
   it("rejects mixed representations and unknown future versions", () => {
     expect(() =>
       parseAdventureSession({

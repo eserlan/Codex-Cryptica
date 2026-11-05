@@ -131,8 +131,16 @@ export function commitScenarioEvent(
   )!;
   candidateScenario.events.push(structuredClone(canonicalEvent));
   if (secretBindingId)
-    candidateScenario.secretBindings.eventIds[canonicalEvent.id] =
-      secretBindingId;
+    Object.defineProperty(
+      candidateScenario.secretBindings.eventIds,
+      canonicalEvent.id,
+      {
+        value: secretBindingId,
+        enumerable: true,
+        configurable: true,
+        writable: true,
+      },
+    );
   candidateScenario.status = nextStatus;
   if (nextStatus !== "open")
     candidate.scenarioCollection!.focusedScenarioId = null;
