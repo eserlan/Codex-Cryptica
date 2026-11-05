@@ -136,17 +136,9 @@ function detectHiddenTextFields(
   const hidden = [...hiddenById.values()].filter(
     (secret) => secret.status === "hidden" && !revealed.has(secret.id),
   );
-  const revealedText = new Set(
-    [...session.hiddenState.secrets, ...structuredSecrets]
-      .filter((secret) => revealed.has(secret.id))
-      .map((secret) => normalize(secret.text)),
-  );
   const findings: HiddenLeakageFinding[] = [];
   for (const secret of hidden) {
     const needle = normalize(secret.text);
-    // An explicit ID-bound reveal of identical text must not be rejected
-    // because another independent scenario happens to use the same wording.
-    if (revealedText.has(needle)) continue;
     if (needle.length < 4) continue;
     for (const [field, value] of fields) {
       if (normalize(value).includes(needle)) {

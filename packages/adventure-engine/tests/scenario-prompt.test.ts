@@ -137,7 +137,10 @@ describe("scenario-aware Oracle GM", () => {
       status: "hidden",
     });
     expect(
-      detectHiddenLeakage(withSecret, proposal(truth, ["truth-1"])),
+      detectHiddenLeakage(
+        withSecret,
+        proposal(truth, ["truth-1", "scenario-baseline-truth"]),
+      ),
     ).toEqual([]);
   });
 

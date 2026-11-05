@@ -120,17 +120,17 @@ function worldEntryBehavior(
   return [
     "This is an open-ended World Entry scene in an existing Vault, not a pre-written quest. Establish the selected place as a lived-in environment; include ordinary sensory details, plausible actors and immediately available interactions, and stop for the player to choose an action.",
     "Do not force a villain, danger, quest, investigation, reward, objective, climax or timed twist merely to make the start exciting. An uneventful scene or a quiet conversation is valid.",
-    "GM-only world-entry seed threads are situations already unfolding in the world, NOT rumours the player already knows or canonical Vault facts. Respect established sources, date and location; leave any incompatible seed unnoticed rather than contradicting canon.",
+    "GM-only world-entry scenarios are situations already unfolding in the world, NOT rumours the player already knows or canonical Vault facts. Respect established sources, date and location; leave any incompatible seed unnoticed rather than contradicting canon.",
     "A seed can surface in many ways, not only through conversation: physical traces, locals behaving differently, objects or notices, consequences such as closures, shortages, price changes or extra guards, people affected by it, or overheard talk. Choose whatever fits the current scene and the seed's hidden truth.",
     "Signs are small, observable and deniable: show what can be seen or heard, never the GM truth, and never frame a sign as a quest, objective or obligation. The player may ignore it.",
-    "Track each seed's visibility in its gmThreads entry by updating its Stage through hiddenPatch.gmThreads: unnoticed, then signs shown, then noticed (the player interacted with a sign), then engaged (the player is pursuing it). Move a seed forward at most one stage per turn.",
+    "For scenarioCollection seeds, knowledge=unheard means unnoticed. When a player-visible sign or hearsay surfaces, include its scenario ID in revealScenarioIds; this atomically marks it heard and records a discovery event. This reveals only the lead, never its GM truth. Advance at most one stage per turn. Legacy gmThreads alone use hiddenPatch.gmThreads for visibility updates.",
     "When the player explores, asks around or investigates a sign, naturally reveal at most one further plausible lead, clue or hearsay from the relevant seed. Do not dump every seed, assign quests or turn every mundane interaction into an ominous event.",
     "Avoid endlessly substituting unrelated chores when the player actively pursues an emerging lead. Show observable consequences and actionable choices. A quiet conversation may stay quiet, but the surrounding world should still feel lived in.",
     "Keep each seeded secret's original GM truth unchanged. A seed's underlying situation develops only when committed player actions or explicit in-world time passage justify it; otherwise only its visibility changes. Never raise a situation's stakes merely because another chat turn passed.",
     "When a sign is present in the scene, one suggestedAction may invite a closer look at it, phrased as an option, never as accepting a quest.",
     ...(pacing?.signDue
       ? [
-          `PACING: At least ${pacing.quietTurns} turns have passed without any world-entry seed surfacing. In this turn, weave one small background sign from a fitting unnoticed seed into the scene, and record its new Stage through hiddenPatch.gmThreads.`,
+          `PACING: At least ${pacing.quietTurns} turns have passed without any world-entry seed surfacing. In this turn, weave one small background sign from a fitting unnoticed seed into the scene, and include its scenario ID in revealScenarioIds to record the discovery; for legacy gmThreads use hiddenPatch.gmThreads.`,
         ]
       : []),
     "Use only period-appropriate established sources as current facts. Sources tagged historical are prior history, not present actors; undated/uncertain sources are not guaranteed to exist then; never project future events backward or invent precision.",

@@ -33,10 +33,22 @@ export function worldEntryPacing(
   const hasHiddenThread = session.hiddenState.gmThreads.some(
     (thread) => thread.status === "hidden",
   );
-  if (!hasHiddenThread) return undefined;
+  const unheard = session.scenarioCollection?.items.some(
+    (item) => item.status === "open" && item.knowledge === "unheard",
+  );
+  if (!hasHiddenThread && !unheard) return undefined;
+  const activityTurns = new Set(
+    session.scenarioCollection?.items.flatMap((item) =>
+      item.events.map((event) => event.turnId),
+    ) ?? [],
+  );
   let quietTurns = 0;
   for (let i = session.turns.length - 1; i >= 0; i -= 1) {
-    if (hadSeedActivity(session.turns[i]!)) break;
+    if (
+      hadSeedActivity(session.turns[i]!) ||
+      activityTurns.has(session.turns[i]!.id)
+    )
+      break;
     quietTurns += 1;
     if (quietTurns >= WORLD_ENTRY_QUIET_TURN_LIMIT) break;
   }

@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   applyCompletedTurn,
+  worldEntryPacing,
+  buildAdventurePrompt,
   createScenarioState,
   detectHiddenLeakage,
   parseAdventureSession,
@@ -76,30 +78,12 @@ describe("scenario player projection and disclosure", () => {
     expect(JSON.stringify(projected)).not.toContain("Unknown secret truth");
   });
 
-  it("allows an ID-bound reveal of one equal-text secret without revealing the other", () => {
+  it("blocks equal-text disclosure while an independent scenario remains unrevealed", () => {
     const current = session([
       item("a", "heard", "The same hidden sentence."),
       item("b", "heard", "The same hidden sentence."),
     ]);
-    const revealed = {
-      ...current,
-      hiddenState: {
-        ...current.hiddenState,
-        secrets: [
-          {
-            id: "secret-a",
-            text: "The same hidden sentence.",
-            status: "hidden" as const,
-          },
-          {
-            id: "secret-b",
-            text: "The same hidden sentence.",
-            status: "hidden" as const,
-          },
-        ],
-      },
-    };
-    const findings = detectHiddenLeakage(revealed, {
+    const findings = detectHiddenLeakage(current, {
       kind: "complete",
       narration: "The same hidden sentence.",
       revealSecretIds: ["secret-a"],
@@ -116,14 +100,34 @@ describe("scenario player projection and disclosure", () => {
       provisionalFacts: [],
       sourceRecordIds: [],
     });
-    expect(findings).toEqual([]);
-    expect(revealed.hiddenState.secrets[1]?.status).toBe("hidden");
+    expect(findings).toContainEqual({
+      field: "root.narration",
+      secretId: "secret-b",
+    });
+    expect(current.scenarioCollection?.items[1]?.revealedSecretIds).toEqual([]);
   });
 
   it("commits a heard transition in the same turn and rejects an unknown target atomically", () => {
     const current = session([
       item("new-lead", "unheard", "A hidden baseline."),
     ]);
+    current.worldEntry = {
+      version: 1,
+      location: { kind: "provisional", name: "Town" },
+      intent: "explore",
+    };
+    expect(worldEntryPacing(current)).toEqual({
+      quietTurns: 0,
+      signDue: false,
+    });
+    expect(
+      buildAdventurePrompt({
+        session: current,
+        phase: "action",
+        anchors: [],
+        relevant: [],
+      }).behavior,
+    ).toContain("revealScenarioIds");
     const proposal = {
       kind: "complete" as const,
       narration: "A local points out the old cellar.",
@@ -149,6 +153,46 @@ describe("scenario player projection and disclosure", () => {
     });
     expect(committed.ok).toBe(true);
     if (committed.ok) {
+      expect(
+        committed.value.scenarioCollection?.items[0]?.events[0],
+      ).toMatchObject({
+        kind: "discovery",
+        turnId: "turn-1",
+        visibility: "player",
+      });
+      expect(worldEntryPacing(committed.value)).toBeUndefined();
+      const waiting = {
+        ...committed.value,
+        scenarioCollection: {
+          ...committed.value.scenarioCollection!,
+          items: [
+            ...committed.value.scenarioCollection!.items,
+            item("still-hidden", "unheard", "Another truth"),
+          ],
+        },
+        turns: [
+          ...committed.value.turns,
+          ...Array.from({ length: 3 }, (_, i) => ({
+            ...committed.value.turns[0]!,
+            id: `quiet-${i}`,
+            revealedSecretIds: [],
+            hiddenPatch: proposal.hiddenPatch,
+          })),
+        ],
+      };
+      expect(worldEntryPacing(waiting)).toEqual({
+        quietTurns: 3,
+        signDue: true,
+      });
+      expect(
+        buildAdventurePrompt({
+          session: waiting,
+          phase: "action",
+          anchors: [],
+          relevant: [],
+        }).behavior,
+      ).toContain("PACING:");
+
       expect(committed.value.turns[0]?.id).toBe("turn-1");
       expect(committed.value.scenarioCollection?.items[0]?.knowledge).toBe(
         "heard",

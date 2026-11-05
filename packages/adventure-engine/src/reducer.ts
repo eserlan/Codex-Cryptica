@@ -304,13 +304,28 @@ function scenarioSecretBindingIds(
 function markRevealedScenarios(
   candidate: AdventureSession,
   scenarioIds: string[] | undefined,
+  turn: CommittedAdventureTurn,
+  createId: IdFactory,
 ): string | null {
   for (const scenarioId of scenarioIds ?? []) {
     const scenario = candidate.scenarioCollection?.items.find(
       (item) => item.id === scenarioId,
     );
     if (!scenario) return `Unknown scenario: ${scenarioId}`;
-    scenario.knowledge = "heard";
+    if (scenario.knowledge === "unheard") {
+      const id = allocateId(existingIds(candidate), createId);
+      if (!id || scenario.events.length >= 100)
+        return "Unable to record scenario discovery";
+      scenario.events.push({
+        id,
+        kind: "discovery",
+        visibility: "player",
+        text: scenario.playerVisible.lead,
+        at: turn.committedAt,
+        turnId: turn.id,
+      });
+      scenario.knowledge = "heard";
+    }
   }
   return null;
 }
@@ -491,6 +506,8 @@ export function applyCompletedTurn(
   const scenarioError = markRevealedScenarios(
     candidate,
     proposal.revealScenarioIds,
+    turn,
+    createId,
   );
   if (scenarioError) return error("unknown-fact", scenarioError);
   candidate.revision += 1;
