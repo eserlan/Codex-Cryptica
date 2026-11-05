@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onDestroy } from "svelte";
   import { vault } from "#lib/stores/vault.svelte.js";
   import { fly, fade } from "svelte/transition";
   import { quintOut } from "svelte/easing";
@@ -36,6 +37,11 @@
   let entity = $derived(entityId ? vault.entities[entityId] : null);
 
   let zenViewComponent: ReturnType<typeof ZenView> | undefined = $state();
+  let closeFallbackTimer: ReturnType<typeof setTimeout> | undefined;
+
+  onDestroy(() => {
+    if (closeFallbackTimer) clearTimeout(closeFallbackTimer);
+  });
 
   // Close Zen Mode if the entity being viewed is deleted
   $effect(() => {
@@ -53,7 +59,7 @@
       // would strand the user on a blank entity page. Try to close, then fall
       // back to leaving the standalone entity view.
       window.close();
-      setTimeout(() => {
+      closeFallbackTimer = setTimeout(() => {
         if (typeof window !== "undefined" && window.closed) return;
         modalUIStore.closeZenMode();
         void goto(modalUIStore.lastAppPath ?? lastAppPath ?? resolve("/(app)"));
@@ -126,7 +132,7 @@
     <button
       type="button"
       class="absolute inset-0 w-full h-full bg-black/90 backdrop-blur-md focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-theme-primary cursor-default"
-      aria-label="Close dialog"
+      aria-label="Dismiss dialog using backdrop"
       onclick={handleBackdropClick}
       onpointerdown={(e) => e.preventDefault()}
       tabindex="-1"
