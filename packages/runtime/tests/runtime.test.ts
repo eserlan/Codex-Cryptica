@@ -33,14 +33,15 @@ describe("systemIdGenerator", () => {
     );
   });
 
-  it("falls back to a generated id when crypto.randomUUID is unavailable", () => {
+  it("falls back to a UUID v4 when crypto.randomUUID is unavailable", () => {
     const original = globalThis.crypto.randomUUID;
     // @ts-expect-error - simulating an environment without randomUUID
     delete globalThis.crypto.randomUUID;
     try {
       const id = systemIdGenerator.uuid();
-      expect(typeof id).toBe("string");
-      expect(id.length).toBeGreaterThan(0);
+      expect(id).toMatch(
+        /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+      );
     } finally {
       globalThis.crypto.randomUUID = original;
     }
