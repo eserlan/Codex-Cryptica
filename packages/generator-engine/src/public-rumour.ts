@@ -142,6 +142,7 @@ If the subject focus is not "Balanced Mix", bias most (not all) of the six rumou
 You must return a valid JSON object matching the following structure exactly:
 {
   "title": "A short evocative title for this batch of rumours (e.g. a place or night it was overheard)",
+  "summary": "One sentence describing this batch of rumours and where it was overheard",
   "content": "Player-facing markdown using exactly six '### Rumour 1' through '### Rumour 6' headings in order. Under each heading include three bullets: '- **Rumour**: ...' (the read-aloud gossip line), '- **Lead**: ...' (the concrete named site/NPC/faction/item to pursue), and '- **Source**: ...' (who or where it was heard, drawn from tavern regulars, market traders, shrine pilgrims, guards, children, caravaners, dockworkers, drunks, minor nobles, or guild members). Never mention truth status here.",
   "lore": "GM-only markdown starting with '### At a Glance' (genre, tone, danger level bullets), then exactly six '### GM Notes — Rumour 1' through '### GM Notes — Rumour 6' headings matching the content numbering, each with three bullets: '- **Reality**: essentially true | exaggeration | dangerous misconception', '- **What's Actually Happening**: 1-2 concise sentences', and '- **If Investigated**: a lightweight discovery, complication, or consequence'. Do not add objectives, rewards, antagonist stat blocks, or encounter beats — keep this lighter than a full quest.",
   "labels": ["rumour-generator", "local-rumours", "imported-draft"]

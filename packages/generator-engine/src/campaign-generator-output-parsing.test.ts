@@ -71,4 +71,26 @@ describe("parseGenericGeneratorOutput", () => {
       ),
     ).toBeNull();
   });
+
+  it("accepts rumour output without a summary instead of discarding it", () => {
+    const raw = JSON.stringify({
+      title: "Quayside Whispers",
+      content: "### Rumour 1",
+      lore: "### GM Notes — Rumour 1",
+      labels: ["rumour-generator"],
+    });
+    expect(parseGenericGeneratorOutput(raw, "rumour")).toMatchObject({
+      title: "Quayside Whispers",
+      summary: "",
+      content: "### Rumour 1",
+    });
+  });
+
+  it("still rejects a missing or non-string summary for other generators and rumours", () => {
+    const missing = JSON.stringify({ title: "T", lore: "l" });
+    expect(parseGenericGeneratorOutput(missing, "npc")).toBeNull();
+    const wrongType = JSON.stringify({ title: "T", summary: 3, lore: "l" });
+    expect(parseGenericGeneratorOutput(wrongType, "rumour")).toBeNull();
+    expect(parseGenericGeneratorOutput("not json", "rumour")).toBeNull();
+  });
 });
