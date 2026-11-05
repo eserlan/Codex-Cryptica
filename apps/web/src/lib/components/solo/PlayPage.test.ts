@@ -28,6 +28,12 @@ vi.mock("#lib/services/adventure/adventure-session-repository.js", () => ({
   adventureSessionRepository: adventures,
 }));
 
+const configure = vi.hoisted(() => ({ configureAdventureRepository: vi.fn() }));
+vi.mock(
+  "#lib/services/adventure/configure-adventure-repository.js",
+  () => configure,
+);
+
 import PlayPage from "./PlayPage.svelte";
 import { discoveryPolicyStore } from "#lib/stores/ui/discovery-policy.svelte.js";
 import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
@@ -138,7 +144,7 @@ describe("PlayPage", () => {
       expect(card.textContent).not.toContain("Let the Oracle run the game");
       expect(card.getAttribute("href")).toMatch(/\/adventure$/);
       // The repository must be pointed at the open Vault before it is read.
-      expect(adventures.setRootResolver).toHaveBeenCalled();
+      expect(configure.configureAdventureRepository).toHaveBeenCalled();
     });
 
     it("keeps the normal Adventure Mode card when the only adventure is archived", async () => {
@@ -156,6 +162,18 @@ describe("PlayPage", () => {
       adventures.list.mockRejectedValue(new Error("opfs unavailable"));
       render(PlayPage);
       await vi.waitFor(() => expect(adventures.list).toHaveBeenCalled());
+      expect(screen.getByText("Let the Oracle run the game")).toBeTruthy();
+    });
+
+    it("falls back to the normal card when the vault storage is not open", async () => {
+      configure.configureAdventureRepository.mockImplementationOnce(() => {
+        throw new Error("vault-not-open");
+      });
+      render(PlayPage);
+      await vi.waitFor(() =>
+        expect(configure.configureAdventureRepository).toHaveBeenCalled(),
+      );
+      expect(adventures.list).not.toHaveBeenCalled();
       expect(screen.getByText("Let the Oracle run the game")).toBeTruthy();
     });
 

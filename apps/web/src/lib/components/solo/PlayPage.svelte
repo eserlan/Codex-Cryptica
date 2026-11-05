@@ -32,9 +32,11 @@
     let cancelled = false;
     activeAdventure = null;
     if (!vaultId || isGuest || discoveryPolicyStore.aiDisabled) return;
-    configureAdventureRepository(vault);
-    void adventureSessionRepository
-      .list(vaultId)
+    void Promise.resolve()
+      .then(() => {
+        configureAdventureRepository(vault);
+        return adventureSessionRepository.list(vaultId);
+      })
       .then(({ effectiveActiveId, entries }) => {
         if (cancelled) return;
         const entry = entries.find((item) => item.id === effectiveActiveId);
