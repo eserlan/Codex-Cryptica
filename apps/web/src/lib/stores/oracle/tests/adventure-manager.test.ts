@@ -1,110 +1,133 @@
 import { describe, expect, it, vi } from "vitest";
 import { AdventureManager } from "../adventure-manager.svelte";
 
-const now = "2026-08-16T12:00:00.000Z";
-const completeProposal = {
-  kind: "complete" as const,
-  narration: "A lantern flickers at the road's end.",
-  visiblePatch: {
-    situation: {
-      text: "A lantern flickers",
-      source: "provisional" as const,
-    },
-    objectives: { add: [], update: [], removeIds: [] },
-    activeCharacters: { add: [], update: [], removeIds: [] },
-    knownFacts: { add: [], update: [], removeIds: [] },
-    relationships: { add: [], update: [], removeIds: [] },
-  },
-  hiddenPatch: {
-    secrets: { add: [], update: [], removeIds: [] },
-    gmThreads: { add: [], update: [], removeIds: [] },
-  },
-  revealSecretIds: [],
-  provisionalFacts: [],
-  sourceRecordIds: [],
-};
-
-const rollProposal = {
-  kind: "roll-required" as const,
-  setupNarration: "The bridge groans beneath Mara's feet.",
-  uncertainty: "Can Mara cross before the span breaks?",
-  stakes: "A fall would carry Mara into the flooded ravine.",
-  dice: {
-    expression: "1d20",
-    outcomeBands: [
-      { id: "result", label: "The result determines the crossing." },
-    ],
-  },
-  sourceRecordIds: [],
-};
-
-function dependencies() {
-  let current: any = null;
-  return {
-    repository: {
-      async list() {
-        return { effectiveActiveId: null, entries: [] };
-      },
-      async save(_revision: number | null, session: any) {
-        current = session;
-        return { ok: true, session };
-      },
-      async load() {
-        return { condition: "normal", session: current };
-      },
-      async archive() {
-        current = { ...current, status: "archived" };
-        return { ok: true, session: current };
-      },
-    },
-    generation: {
-      async generate() {
-        return completeProposal;
-      },
-    },
-    context: {
-      async resolveAnchors() {
-        return [];
-      },
-      async resolveActionRelevant() {
-        return [];
-      },
-      async resolveOpeningRelevant() {
-        return [];
-      },
-    },
-    authority: {
-      async acquire(key: any) {
-        return {
-          ok: true,
-          lease: {
-            ...key,
-            ownerId: "owner",
-            fencingToken: 1,
-            expiresAt: Date.now() + 10_000,
-          },
-        };
-      },
-      async verify() {
-        return true;
-      },
-      async renew(lease: any) {
-        return { ok: true, lease };
-      },
-      async release() {},
-    },
-    coordinator: {
-      start() {},
-      async stop() {},
-      subscribe() {
-        return () => {};
-      },
-    },
-    now: () => now,
-  };
-}
+import {
+  completeProposal,
+  rollProposal,
+  dependencies,
+} from "./adventure-fixtures";
 
 describe("AdventureManager", () => {
+  it("uses the paired output of the normal Rumour Generator", async () => {
+    const { generateRumourLocal } = await import("generator-engine");
+    const deps: any = dependencies();
+    const batch = generateRumourLocal({ locationContext: "Northbrook" });
+    const manager = new AdventureManager(deps);
+    const generateRumours = vi.fn(async () => batch);
+    manager.setWorldEntryRumourGenerator(generateRumours);
+    await manager.start({
+      vaultId: "vault-1",
+      title: "Northbrook",
+      premise: "Explore Northbrook",
+      playerCharacter: {
+        kind: "provisional",
+        name: "Mara",
+        description: "Guide",
+      },
+      worldEntry: {
+        version: 1,
+        location: { kind: "provisional", name: "Northbrook" },
+        intent: "explore",
+      },
+    });
+    expect(generateRumours).toHaveBeenCalledOnce();
+    expect(manager.session?.scenarioCollection?.items).toHaveLength(3);
+    expect(
+      manager.session?.scenarioCollection?.items.every(
+        (item) => item.knowledge === "unheard",
+      ),
+    ).toBe(true);
+  });
+
+  it("persists world-entry situations across actions", async () => {
+    const deps: any = dependencies();
+    const generate = vi.fn(async (_request: any) => completeProposal);
+    deps.generation = { generate };
+    const manager = new AdventureManager(deps);
+    await manager.start({
+      vaultId: "vault-1",
+      title: "Lira in Northbrook",
+      premise: "Enter Northbrook",
+      playerCharacter: {
+        kind: "provisional",
+        name: "Lira",
+        description: "Traveller",
+      },
+      worldEntry: {
+        version: 1,
+        location: { kind: "provisional", name: "Northbrook" },
+        intent: "explore",
+      },
+    });
+    const opening = generate.mock.calls[0]?.[0] as any;
+    expect(opening.session.scenarioCollection?.items).toHaveLength(3);
+    expect(opening.session.hiddenState.secrets).toHaveLength(0);
+    expect(manager.session?.scenarioCollection?.items).toHaveLength(3);
+    expect(manager.session?.turns).toHaveLength(1);
+    expect(manager.transcript?.turns[0]?.narration).not.toContain(
+      "NOT YET HEARD",
+    );
+
+    await manager.submitAction("Ask the innkeeper what is happening nearby");
+    const action = generate.mock.calls[1]?.[0] as any;
+    expect(action.session.hiddenState).toEqual(manager.session?.hiddenState);
+    expect(manager.session?.scenarioCollection?.items).toHaveLength(3);
+  });
+
+  it("cancels pending rumour preparation before starting turn generation", async () => {
+    const deps: any = dependencies();
+    const generate = vi.fn(async () => completeProposal);
+    deps.generation = { generate };
+    const manager = new AdventureManager(deps);
+    await manager.start({
+      vaultId: "vault-1",
+      title: "Northbrook",
+      premise: "Explore Northbrook",
+      playerCharacter: {
+        kind: "provisional",
+        name: "Mara",
+        description: "Guide",
+      },
+    });
+    manager.session = {
+      ...manager.session!,
+      worldEntry: {
+        version: 1,
+        location: { kind: "provisional", name: "Northbrook" },
+        intent: "explore",
+      },
+    };
+
+    let observedSignal: AbortSignal | undefined;
+    let signalPreparationStarted!: () => void;
+    const preparationStarted = new Promise<void>((resolve) => {
+      signalPreparationStarted = resolve;
+    });
+    manager.setWorldEntryRumourGenerator(
+      (_session, signal) =>
+        new Promise((_, reject) => {
+          observedSignal = signal;
+          signalPreparationStarted();
+          signal?.addEventListener(
+            "abort",
+            () =>
+              reject(
+                signal.reason ?? new DOMException("Cancelled", "AbortError"),
+              ),
+            { once: true },
+          );
+        }),
+    );
+
+    const action = manager.submitAction("Ask what is happening nearby");
+    await preparationStarted;
+    manager.cancel();
+    await action;
+
+    expect(observedSignal?.aborted).toBe(true);
+    expect(generate).toHaveBeenCalledTimes(1);
+  });
+
   it("preserves the opening and commits a grounded action through the repository", async () => {
     const manager = new AdventureManager(dependencies() as any);
     await manager.start({
@@ -125,6 +148,235 @@ describe("AdventureManager", () => {
     );
   });
 
+  it("retries a read-only lease without stealing control or losing the draft", async () => {
+    const deps: any = dependencies();
+    const manager = new AdventureManager(deps);
+    await manager.start({
+      vaultId: "vault-1",
+      title: "Road",
+      premise: "Find the road",
+      playerCharacter: {
+        kind: "provisional",
+        name: "Mara",
+        description: "Guide",
+      },
+    });
+
+    manager.readOnly = true;
+    manager.lease = null;
+    manager.draft = "Ask about the shutter";
+    const lease = {
+      vaultId: "vault-1",
+      sessionId: manager.session!.id,
+      ownerId: "new-owner",
+      fencingToken: 2,
+      expiresAt: Date.now() + 10_000,
+    };
+    deps.authority.acquire = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: false, reason: "held" })
+      .mockResolvedValueOnce({ ok: true, lease });
+
+    expect(await manager.tryTakeControl()).toBe(false);
+    expect(manager.readOnly).toBe(true);
+    expect(manager.session?.turns).toHaveLength(1);
+
+    expect(await manager.tryTakeControl()).toBe(true);
+    expect(manager.readOnly).toBe(false);
+    expect(manager.lease).toMatchObject({ ownerId: "new-owner" });
+    expect(manager.session?.turns).toHaveLength(1);
+    expect(manager.draft).toBe("Ask about the shutter");
+    expect(deps.authority.acquire).toHaveBeenCalledTimes(2);
+  });
+
+  it("reloads the session after acquiring a retry lease", async () => {
+    const deps: any = dependencies();
+    const manager = new AdventureManager(deps);
+    await manager.start({
+      vaultId: "vault-1",
+      title: "Road",
+      premise: "Find the road",
+      playerCharacter: {
+        kind: "provisional",
+        name: "Mara",
+        description: "Guide",
+      },
+    });
+
+    manager.readOnly = true;
+    manager.lease = null;
+    let resolveAcquire!: (result: any) => void;
+    let signalAcquireStarted!: () => void;
+    const acquireStarted = new Promise<void>((resolve) => {
+      signalAcquireStarted = resolve;
+    });
+    deps.authority.acquire = vi.fn(
+      () =>
+        new Promise((resolve) => {
+          resolveAcquire = resolve;
+          signalAcquireStarted();
+        }),
+    );
+
+    const retry = manager.tryTakeControl();
+    await acquireStarted;
+    const stale = manager.session!;
+    const latest = { ...stale, revision: stale.revision + 1 };
+    await deps.repository.save(stale.revision, latest);
+    const lease = {
+      vaultId: "vault-1",
+      sessionId: stale.id,
+      ownerId: "retry-owner",
+      fencingToken: 2,
+      expiresAt: Date.now() + 10_000,
+    };
+    resolveAcquire({ ok: true, lease });
+
+    expect(await retry).toBe(true);
+    expect(manager.session?.revision).toBe(latest.revision);
+    expect(manager.readOnly).toBe(false);
+    expect(manager.lease).toEqual(lease);
+  });
+
+  it("releases a retry lease when refreshing the session fails", async () => {
+    const deps: any = dependencies();
+    const manager = new AdventureManager(deps);
+    await manager.start({
+      vaultId: "vault-1",
+      title: "Road",
+      premise: "Find the road",
+      playerCharacter: {
+        kind: "provisional",
+        name: "Mara",
+        description: "Guide",
+      },
+    });
+
+    manager.readOnly = true;
+    manager.lease = null;
+    const loadedSession = manager.session!;
+    const lease = {
+      vaultId: "vault-1",
+      sessionId: loadedSession.id,
+      ownerId: "retry-owner",
+      fencingToken: 2,
+      expiresAt: Date.now() + 10_000,
+    };
+    const load = deps.repository.load;
+    deps.repository.load = vi
+      .fn()
+      .mockImplementationOnce(load)
+      .mockResolvedValueOnce({
+        condition: "unreadable",
+        error: new Error("session-unreadable"),
+      });
+    deps.authority.release = vi.fn(async () => undefined);
+    deps.authority.acquire = vi.fn().mockResolvedValue({ ok: true, lease });
+
+    await expect(manager.tryTakeControl()).rejects.toThrow(
+      "session-unreadable",
+    );
+    expect(deps.authority.release).toHaveBeenCalledWith(lease);
+    expect(manager.session).toBe(loadedSession);
+    expect(manager.readOnly).toBe(true);
+  });
+
+  it("releases a retry lease acquired after the adventure closes", async () => {
+    const deps: any = dependencies();
+    const manager = new AdventureManager(deps);
+    await manager.start({
+      vaultId: "vault-1",
+      title: "Road",
+      premise: "Find the road",
+      playerCharacter: {
+        kind: "provisional",
+        name: "Mara",
+        description: "Guide",
+      },
+    });
+
+    manager.readOnly = true;
+    manager.lease = null;
+    const lease = {
+      vaultId: "vault-1",
+      sessionId: manager.session!.id,
+      ownerId: "retry-owner",
+      fencingToken: 2,
+      expiresAt: Date.now() + 10_000,
+    };
+    let resolveAcquire!: (result: any) => void;
+    let signalAcquireStarted!: () => void;
+    const acquireStarted = new Promise<void>((resolve) => {
+      signalAcquireStarted = resolve;
+    });
+    deps.authority.acquire = vi.fn(
+      () =>
+        new Promise((resolve) => {
+          resolveAcquire = resolve;
+          signalAcquireStarted();
+        }),
+    );
+    deps.authority.release = vi.fn(async () => undefined);
+
+    const retry = manager.tryTakeControl();
+    await acquireStarted;
+    await manager.close();
+    resolveAcquire({ ok: true, lease });
+
+    expect(await retry).toBe(false);
+    expect(manager.session).toBeNull();
+    expect(manager.readOnly).toBe(false);
+    expect(deps.authority.release).toHaveBeenCalledWith(lease);
+  });
+
+  it("plays a suggested action and clears the preserved draft after commit", async () => {
+    const manager = new AdventureManager(dependencies() as any);
+    await manager.start({
+      vaultId: "vault-1",
+      title: "Road",
+      premise: "Find the road",
+      playerCharacter: {
+        kind: "provisional",
+        name: "Mara",
+        description: "Guide",
+      },
+    });
+
+    await manager.submitSuggestedAction("Search the wreckage");
+
+    expect(manager.session?.turns[1]?.playerAction).toBe("Search the wreckage");
+    expect(manager.draft).toBe("");
+    expect(manager.phase).toBe("ready");
+  });
+
+  it("keeps a failed suggested action in the composer for an editable retry", async () => {
+    const deps: any = dependencies();
+    deps.generation = {
+      async generate(request: any) {
+        if (request.phase === "opening") return completeProposal;
+        throw new Error("provider-unavailable");
+      },
+    };
+    const manager = new AdventureManager(deps);
+    await manager.start({
+      vaultId: "vault-1",
+      title: "Road",
+      premise: "Find the road",
+      playerCharacter: {
+        kind: "provisional",
+        name: "Mara",
+        description: "Guide",
+      },
+    });
+
+    await manager.submitSuggestedAction("Search the wreckage");
+
+    expect(manager.errorMessage).toBe("provider-unavailable");
+    expect(manager.phase).toBe("error");
+    expect(manager.draft).toBe("Search the wreckage");
+    expect(manager.session?.turns).toHaveLength(1);
+  });
+
   it("supplies ranked vault records with the opening request", async () => {
     const deps: any = dependencies();
     const relevant = [
@@ -135,7 +387,7 @@ describe("AdventureManager", () => {
         role: "turn-source",
       },
     ];
-    deps.context.resolveOpeningRelevant = async () => relevant;
+    deps.context.resolveOpeningRelevant = vi.fn(async () => relevant);
     const generate = vi.fn().mockResolvedValue(completeProposal);
     deps.generation = { generate };
     const manager = new AdventureManager(deps);
@@ -154,6 +406,7 @@ describe("AdventureManager", () => {
     expect(generate).toHaveBeenCalledWith(
       expect.objectContaining({ phase: "opening", relevant }),
     );
+    expect(deps.context.resolveOpeningRelevant).toHaveBeenCalledOnce();
   });
 
   it("keeps a typed action local when offline", async () => {
@@ -224,28 +477,25 @@ describe("AdventureManager", () => {
     expect(manager.session?.turns).toHaveLength(1);
   });
 
-  it("recovers a stale zero-turn active session before starting", async () => {
+  it("starts a new adventure alongside one that is already active", async () => {
     const deps: any = dependencies();
-    const stale = {
-      id: "stale-session",
+    const existing = {
+      id: "existing-session",
       vaultId: "vault-1",
       status: "active",
       turns: [],
       revision: 0,
     } as any;
-    let archivedId: string | null = null;
     deps.repository.list = async () => ({
-      effectiveActiveId: stale.id,
+      effectiveActiveId: existing.id,
       entries: [],
     });
     deps.repository.load = async () => ({
       condition: "normal",
-      session: stale,
+      session: existing,
     });
-    deps.repository.archive = async (_vaultId: string, sessionId: string) => {
-      archivedId = sessionId;
-      return { ok: true, session: { ...stale, status: "archived" } };
-    };
+    const archive = vi.fn();
+    deps.repository.archive = archive;
 
     const manager = new AdventureManager(deps);
     await manager.start({
@@ -259,7 +509,8 @@ describe("AdventureManager", () => {
       },
     });
 
-    expect(archivedId).toBe("stale-session");
+    expect(archive).not.toHaveBeenCalled();
+    expect(manager.session?.id).not.toBe("existing-session");
     expect(manager.session?.turns).toHaveLength(1);
   });
 
@@ -283,11 +534,25 @@ describe("AdventureManager", () => {
       },
     });
 
+    const relevant = [
+      {
+        recordId: "bridge-npc",
+        displayName: "Bridge Keeper",
+        content: "The bridge is closed at dusk.",
+        role: "turn-source",
+      },
+    ];
+    deps.context.resolveActionRelevant = vi.fn(async () => relevant);
     await manager.submitAction("Cross the bridge");
     await manager.recordRollOutcome({ kind: "numeric", value: 16 });
 
+    expect(deps.context.resolveActionRelevant).toHaveBeenLastCalledWith(
+      expect.anything(),
+      "Cross the bridge",
+    );
+    expect(deps.context.resolveActionRelevant).toHaveBeenCalledTimes(2);
     expect(generate).toHaveBeenCalledWith(
-      expect.objectContaining({ phase: "roll-resolution" }),
+      expect.objectContaining({ phase: "roll-resolution", relevant }),
       expect.anything(),
     );
     expect(manager.session?.pendingRoll).toBeNull();
@@ -704,17 +969,56 @@ describe("AdventureManager Phase 2 tools", () => {
     expect(manager.session?.status).toBe("active");
   });
 
-  it("refuses to resume when an adventure is already active", async () => {
+  it("resumes an archived adventure while another one is open and releases the first", async () => {
     const deps: any = dependencies();
-    deps.repository.list = async () => ({
-      effectiveActiveId: "already-active",
-      entries: [],
-    });
     const manager = new AdventureManager(deps);
+    await manager.start({
+      vaultId: "vault-1",
+      title: "Road",
+      premise: "Find the road",
+      playerCharacter: { kind: "provisional", name: "Mara", description: "G" },
+    });
+    const firstId = manager.session!.id;
+    const firstLease = manager.lease;
+    const archived: any = {
+      id: "archived-1",
+      vaultId: "vault-1",
+      status: "archived",
+      revision: 2,
+      turns: [],
+      pendingRoll: null,
+    };
+    let current = archived;
+    deps.repository.load = async (_v: string, id: string) => ({
+      condition: "normal",
+      session: id === "archived-1" ? current : manager.session,
+    });
+    deps.repository.save = async (_rev: number, session: any) => {
+      current = session;
+      return { ok: true, session };
+    };
+    deps.authority.release = vi.fn(async () => undefined);
 
-    await expect(
-      manager.resumeArchived("vault-1", "archived-1"),
-    ).rejects.toThrow("active-adventure-exists");
+    const resumed = await manager.resumeArchived("vault-1", "archived-1");
+
+    expect(resumed.status).toBe("active");
+    expect(manager.session?.id).toBe("archived-1");
+    expect(manager.session?.id).not.toBe(firstId);
+    expect(deps.authority.release).toHaveBeenCalledWith(firstLease);
+  });
+
+  it("switchTo is a no-op for the adventure already being played", async () => {
+    const deps: any = dependencies();
+    const manager = new AdventureManager(deps);
+    await manager.start({
+      vaultId: "vault-1",
+      title: "Road",
+      premise: "Find the road",
+      playerCharacter: { kind: "provisional", name: "Mara", description: "G" },
+    });
+    const load = vi.spyOn(deps.repository, "load");
+    await manager.switchTo("vault-1", manager.session!.id);
+    expect(load).not.toHaveBeenCalled();
   });
 
   it("forceEnd archives a stuck read-only session and clears it back to idle", async () => {
@@ -810,4 +1114,264 @@ describe("AdventureManager Phase 2 tools", () => {
     expect(clearGenerationInteraction).toHaveBeenCalledWith(sessionId);
     expect(archiveSpy).not.toHaveBeenCalled();
   });
+
+  describe("start safeguards", () => {
+    const startInput = {
+      vaultId: "vault-1",
+      title: "Road",
+      premise: "Find the road",
+      playerCharacter: {
+        kind: "provisional" as const,
+        name: "Mara",
+        description: "Guide",
+      },
+    };
+    const seed = (truth: string) => ({
+      version: 1 as const,
+      id: "scenario-1",
+      origin: {
+        kind: "rumour" as const,
+        batchId: "batch-1",
+        batchTitle: "Town",
+        index: 1,
+      },
+      playerVisible: { rumour: "A rumour", lead: "A lead" },
+      gmOnly: { truth },
+      status: "open" as const,
+      events: [],
+    });
+
+    function onlineNavigator() {
+      Object.defineProperty(globalThis, "navigator", {
+        configurable: true,
+        value: { onLine: true },
+      });
+    }
+
+    it("rejects an invalid seed before archiving or writing anything", async () => {
+      onlineNavigator();
+      const deps: any = dependencies();
+      deps.repository.list = vi.fn(async () => ({
+        effectiveActiveId: "stale",
+        entries: [],
+      }));
+      deps.repository.archive = vi.fn();
+      deps.repository.save = vi.fn();
+      const manager = new AdventureManager(deps);
+      await expect(
+        manager.start({ ...startInput, scenarioSeed: seed("x".repeat(601)) }),
+      ).rejects.toThrow("invalid-adventure-setup");
+      expect(deps.repository.list).not.toHaveBeenCalled();
+      expect(deps.repository.archive).not.toHaveBeenCalled();
+      expect(deps.repository.save).not.toHaveBeenCalled();
+      expect(manager.starting).toBe(false);
+    });
+
+    it("saves a valid seeded start that reloads through the same schema", async () => {
+      onlineNavigator();
+      const deps: any = dependencies();
+      const manager = new AdventureManager(deps);
+      await manager.start({
+        ...startInput,
+        scenarioSeed: seed("The miller hides grain."),
+      });
+      expect(manager.session?.scenarioCollection?.items[0]?.gmOnly.truth).toBe(
+        "The miller hides grain.",
+      );
+      const { parseAdventureSession } = await import("@codex/adventure-engine");
+      expect(() =>
+        parseAdventureSession(JSON.parse(JSON.stringify(manager.session))),
+      ).not.toThrow();
+    });
+
+    it("refuses a second start while the first is still in flight", async () => {
+      onlineNavigator();
+      const deps: any = dependencies();
+      let release!: () => void;
+      const gate = new Promise<void>((resolve) => (release = resolve));
+      const saved = deps.repository.save;
+      deps.repository.save = vi.fn(async (...args: any[]) => {
+        await gate;
+        return saved(...args);
+      });
+      const manager = new AdventureManager(deps);
+      const first = manager.start(startInput);
+      expect(manager.starting).toBe(true);
+      await expect(manager.start(startInput)).rejects.toThrow(
+        "start-in-progress",
+      );
+      release();
+      await first;
+      expect(manager.starting).toBe(false);
+    });
+
+    it.each([
+      [
+        "a provider failure",
+        () => Promise.reject(new Error("provider-unavailable")),
+        undefined,
+        "opening-failed",
+      ],
+      [
+        "an unusable opening",
+        async () => ({ ...completeProposal, kind: "nonsense" }),
+        undefined,
+        "opening-rejected",
+      ],
+      [
+        "a full disk while saving the opening",
+        async () => completeProposal,
+        Object.assign(new Error("quota"), { name: "QuotaExceededError" }),
+        "storage-full",
+      ],
+      [
+        "a failed opening write",
+        async () => completeProposal,
+        new Error("write failed"),
+        "save-failed",
+      ],
+    ])(
+      "records a typed cause for %s",
+      async (_label, generate, saveError, expected) => {
+        onlineNavigator();
+        const deps: any = dependencies();
+        deps.generation = { generate };
+        if (saveError) {
+          const save = deps.repository.save;
+          deps.repository.save = vi.fn(async (revision: any, session: any) =>
+            revision === null
+              ? save(revision, session)
+              : { ok: false, error: saveError },
+          );
+        }
+        const manager = new AdventureManager(deps);
+        await manager.start(startInput);
+        expect(manager.errorCause).toBe(expected);
+      },
+    );
+
+    it("clears the typed cause on the next start", async () => {
+      onlineNavigator();
+      const deps: any = dependencies();
+      let fail = true;
+      deps.generation = {
+        async generate() {
+          if (fail) throw new Error("provider-unavailable");
+          return completeProposal;
+        },
+      };
+      const manager = new AdventureManager(deps);
+      await manager.start(startInput);
+      expect(manager.errorCause).toBe("opening-failed");
+      fail = false;
+      await manager.start(startInput);
+      expect(manager.errorCause).toBeNull();
+    });
+  });
+});
+
+it("keeps an incomplete opening after a lookup failure and retries the same record", async () => {
+  const deps: any = dependencies();
+  const retrieve = vi
+    .fn()
+    .mockRejectedValue(new Error("private lookup failure"));
+  deps.context.resolveOpeningRelevant = retrieve;
+  const archive = vi.spyOn(deps.repository, "archive");
+  const generate = vi.fn(async () => completeProposal);
+  deps.generation = { generate };
+  const manager = new AdventureManager(deps);
+  await manager.start({
+    vaultId: "vault-1",
+    title: "Road",
+    premise: "Find the road",
+    playerCharacter: {
+      kind: "provisional",
+      name: "Mara",
+      description: "Guide",
+    },
+  });
+  const initialId = manager.session?.id;
+  expect(initialId).toBeTruthy();
+  expect(manager.session?.revision).toBe(0);
+  expect(archive).not.toHaveBeenCalled();
+  expect(generate).not.toHaveBeenCalled();
+  expect(manager.errorMessage).not.toContain("private lookup failure");
+  retrieve.mockResolvedValue([]);
+  await manager.retryOpening();
+  expect(manager.session?.id).toBe(initialId);
+  expect(manager.session?.turns).toHaveLength(1);
+  expect(generate).toHaveBeenCalledOnce();
+});
+
+it("preserves a recorded dice outcome through failed retrieval and retry", async () => {
+  const deps: any = dependencies();
+  const generate = vi.fn(async (request: any) =>
+    request.phase === "action" ? rollProposal : completeProposal,
+  );
+  deps.generation = { generate };
+  deps.dice = { evaluate: vi.fn() };
+  const manager = new AdventureManager(deps);
+  await manager.start({
+    vaultId: "vault-1",
+    title: "Road",
+    premise: "Find the road",
+    playerCharacter: {
+      kind: "provisional",
+      name: "Mara",
+      description: "Guide",
+    },
+  });
+  await manager.submitAction("Cross the bridge");
+  deps.context.resolveActionRelevant = vi
+    .fn()
+    .mockRejectedValue(new Error("lookup failure"));
+  const calls = generate.mock.calls.length;
+  await manager.recordRollOutcome({ kind: "numeric", value: 16 });
+  expect(manager.session?.pendingRoll?.inputId).toBeTruthy();
+  expect(manager.session?.pendingRoll?.suppliedOutcome).toEqual({
+    kind: "numeric",
+    value: 16,
+  });
+  expect(generate).toHaveBeenCalledTimes(calls);
+  deps.context.resolveActionRelevant.mockResolvedValue([]);
+  await manager.resolveRoll();
+  expect(deps.context.resolveActionRelevant).toHaveBeenLastCalledWith(
+    expect.anything(),
+    "Cross the bridge",
+  );
+  expect(manager.session?.pendingRoll).toBeNull();
+  expect(
+    manager.session?.turns.filter(
+      (turn) =>
+        turn.playerAction === "Cross the bridge" &&
+        turn.rollOutcome?.value === 16,
+    ),
+  ).toHaveLength(1);
+  expect(deps.dice.evaluate).not.toHaveBeenCalled();
+});
+
+it("does not dispatch when lookup is superseded by the same session ID in another Vault", async () => {
+  const deps: any = dependencies();
+  const generate = vi.fn(async () => completeProposal);
+  deps.generation = { generate };
+  const manager = new AdventureManager(deps);
+  await manager.start({
+    vaultId: "vault-1",
+    title: "Road",
+    premise: "Find the road",
+    playerCharacter: {
+      kind: "provisional",
+      name: "Mara",
+      description: "Guide",
+    },
+  });
+  const calls = generate.mock.calls.length;
+  deps.context.resolveActionRelevant = async () => {
+    manager.session = { ...manager.session!, vaultId: "vault-2" };
+    return [];
+  };
+  await manager.submitAction("Ask a local");
+  expect(generate).toHaveBeenCalledTimes(calls);
+  expect(manager.session?.vaultId).toBe("vault-2");
+  expect(manager.session?.turns).toHaveLength(1);
 });

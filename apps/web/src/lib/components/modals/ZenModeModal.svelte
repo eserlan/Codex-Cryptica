@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onDestroy } from "svelte";
   import { vault } from "#lib/stores/vault.svelte.js";
   import { fly, fade } from "svelte/transition";
   import { quintOut } from "svelte/easing";
@@ -36,6 +37,11 @@
   let entity = $derived(entityId ? vault.entities[entityId] : null);
 
   let zenViewComponent: ReturnType<typeof ZenView> | undefined = $state();
+  let closeFallbackTimer: ReturnType<typeof setTimeout> | undefined;
+
+  onDestroy(() => {
+    if (closeFallbackTimer) clearTimeout(closeFallbackTimer);
+  });
 
   // Close Zen Mode if the entity being viewed is deleted
   $effect(() => {
@@ -53,7 +59,7 @@
       // would strand the user on a blank entity page. Try to close, then fall
       // back to leaving the standalone entity view.
       window.close();
-      setTimeout(() => {
+      closeFallbackTimer = setTimeout(() => {
         if (typeof window !== "undefined" && window.closed) return;
         modalUIStore.closeZenMode();
         void goto(modalUIStore.lastAppPath ?? lastAppPath ?? resolve("/(app)"));
@@ -118,16 +124,21 @@
 </script>
 
 {#if modalUIStore.showZenMode && entityId}
-  <!-- svelte-ignore a11y_click_events_have_key_events -->
-  <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
-    class="fixed inset-0 z-[100] flex items-center justify-center p-0 md:p-8 bg-black/90 backdrop-blur-md"
+    class="fixed inset-0 z-[100] flex items-center justify-center p-0 md:p-8"
     transition:fade={{ duration: 500 }}
-    onclick={handleBackdropClick}
     data-testid="zen-mode-modal"
   >
+    <button
+      type="button"
+      class="absolute inset-0 w-full h-full bg-black/90 backdrop-blur-md focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-theme-primary cursor-default"
+      aria-label="Dismiss dialog using backdrop"
+      onclick={handleBackdropClick}
+      onpointerdown={(e) => e.preventDefault()}
+      tabindex="-1"
+    ></button>
     <div
-      class="w-full md:max-w-6xl h-full md:h-[90vh] shadow-2xl overflow-hidden"
+      class="w-full md:max-w-6xl h-full md:h-[90vh] shadow-2xl overflow-hidden relative z-10"
       style:box-shadow="var(--theme-glow)"
       transition:fly={{ y: 50, duration: 550, easing: quintOut }}
       onclick={(e) => e.stopPropagation()}

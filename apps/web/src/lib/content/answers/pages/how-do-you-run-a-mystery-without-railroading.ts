@@ -145,6 +145,7 @@ export const howDoYouRunAMysteryWithoutRailroading: AnswerConfigInput = {
     "how-do-i-run-secret-doors-in-dnd",
     "how-do-you-handle-players-reaching-the-wrong-conclusion-in-an-rpg-mystery",
     "stop-players-investigating-every-detail",
+    "what-are-the-classic-must-play-tabletop-rpg-adventures",
   ],
   discovery: {
     id: "answer-run-mystery-without-railroading",

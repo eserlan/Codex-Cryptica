@@ -81,6 +81,22 @@ describe("campaign generation lifecycle", () => {
     logger.mockRestore();
   });
 
+  it("assigns one rumour batch ID and preserves it through cancel and restore", async () => {
+    const rumourDraft = { ...draft, sourceGeneratorId: "rumour" as const };
+    const { state } = setup([{ type: "draft", draft: rumourDraft }]);
+    await state.generate({ ...request, generatorId: "rumour" }, null, policy);
+    const batchId = state.draft?.rumourBatchId;
+    expect(batchId).toBeTruthy();
+    const keptDraft = state.draft!;
+    state.cancel();
+    state.restoreDraft(keptDraft);
+    expect(state.draft?.rumourBatchId).toBe(batchId);
+    const restoredDraft = state.draft!;
+    state.cancel();
+    state.restoreDraft(restoredDraft);
+    expect(state.draft?.rumourBatchId).toBe(batchId);
+  });
+
   it("surfaces a fatal request error and permits resetting the workflow", async () => {
     const { state, deps } = setup();
     deps.requestBuilder.build.mockRejectedValueOnce("offline");

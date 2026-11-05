@@ -6,7 +6,10 @@
     applyDerivedModifiers,
     computeAdjustedCounterValue,
     rollStatSheetDiceField,
+    rollStatSheetDicePoolField,
+    type DiceRollDisplay,
   } from "#lib/utils/stat-sheet-field-actions.js";
+  import DiceBreakdownDisclosure from "#lib/components/dice/DiceBreakdownDisclosure.svelte";
   import {
     type IdGenerator,
     systemIdGenerator,
@@ -164,12 +167,20 @@
     return visible;
   });
 
+  let poolRollResults = $state<Record<string, DiceRollDisplay>>({});
+
   function rollDice(field: StatSheetField) {
     if (!field.formula) return;
     void rollStatSheetDiceField(field);
   }
+
+  async function rollDicePool(field: StatSheetField) {
+    const res = await rollStatSheetDicePoolField(field);
+    poolRollResults = { ...poolRollResults, [field.id]: res };
+  }
 </script>
 
+<!-- fallow-ignore-next-line complexity -->
 {#if fields.length === 0}
   <div
     class="flex flex-col items-center gap-3 py-8 text-center"
@@ -495,6 +506,143 @@
                 </button>
               </div>
             </div>
+          </div>
+        {:else if field.type === "dice-pool"}
+          <div
+            class="flex flex-col gap-1.5 rounded border border-theme-border px-2 py-1.5"
+            data-testid="stat-sheet-dice-pool"
+          >
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-xs font-medium text-theme-text truncate"
+                >{field.label}</span
+              >
+              {#if !readOnly}
+                <button
+                  type="button"
+                  class="flex h-6 w-6 items-center justify-center rounded border transition-colors {field.favorite
+                    ? 'border-theme-primary/30 bg-theme-primary/10 text-theme-text'
+                    : 'border-transparent text-theme-text hover:border-theme-primary/40 hover:text-theme-primary'}"
+                  onclick={() => toggleFavorite(field)}
+                  aria-label={field.favorite
+                    ? `Unpin ${field.label} from token quick stats`
+                    : `Pin ${field.label} to token quick stats`}
+                  aria-pressed={!!field.favorite}
+                  data-testid="stat-sheet-favorite-toggle"
+                >
+                  <span
+                    class="icon-[lucide--star] h-3.5 w-3.5"
+                    class:fill-theme-primary={field.favorite}
+                    aria-hidden="true"
+                  ></span>
+                </button>
+              {/if}
+            </div>
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div class="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  class="flex h-6 w-6 items-center justify-center rounded border border-theme-border text-theme-text hover:border-theme-primary hover:text-theme-primary disabled:opacity-40"
+                  onclick={() => adjustCounter(field, -1)}
+                  disabled={readOnly ||
+                    (field.min !== undefined &&
+                      (typeof field.value === "number" ? field.value : 0) <=
+                        field.min)}
+                  aria-label={`Decrease ${field.label} pool size`}
+                  data-testid="stat-sheet-dice-pool-decrease"
+                >
+                  <span class="icon-[lucide--minus] h-3 w-3" aria-hidden="true"
+                  ></span>
+                </button>
+                <span
+                  class="min-w-[1.75rem] text-center text-sm font-bold text-theme-text"
+                  data-testid="stat-sheet-dice-pool-count"
+                >
+                  {typeof field.value === "number" ? field.value : 0}
+                </span>
+                <button
+                  type="button"
+                  class="flex h-6 w-6 items-center justify-center rounded border border-theme-border text-theme-text hover:border-theme-primary hover:text-theme-primary disabled:opacity-40"
+                  onclick={() => adjustCounter(field, 1)}
+                  disabled={readOnly ||
+                    (field.max !== undefined &&
+                      (typeof field.value === "number" ? field.value : 0) >=
+                        field.max)}
+                  aria-label={`Increase ${field.label} pool size`}
+                  data-testid="stat-sheet-dice-pool-increase"
+                >
+                  <span class="icon-[lucide--plus] h-3 w-3" aria-hidden="true"
+                  ></span>
+                </button>
+
+                {#if field.allowDieChange !== false}
+                  <select
+                    aria-label={`Die type for ${field.label}`}
+                    class="rounded border border-theme-border bg-theme-bg px-1.5 py-0.5 text-xs font-mono text-theme-text disabled:opacity-40"
+                    disabled={readOnly}
+                    value={field.formula || "d6"}
+                    onchange={(e) =>
+                      updateField(field.id, {
+                        formula: (e.target as HTMLSelectElement).value,
+                      })}
+                    data-testid="stat-sheet-dice-pool-die-select"
+                  >
+                    {#each ["d4", "d6", "d8", "d10", "d12", "d20", "d100"] as d}
+                      <option value={d}>{d}</option>
+                    {/each}
+                  </select>
+                {:else}
+                  <span
+                    class="rounded border border-theme-border/60 bg-theme-bg px-1.5 py-0.5 font-mono text-xs text-theme-text"
+                    data-testid="stat-sheet-dice-pool-die-badge"
+                  >
+                    {field.formula || "d6"}
+                  </span>
+                {/if}
+              </div>
+
+              <div class="flex items-center gap-2">
+                {#if poolRollResults[field.id]}
+                  <span
+                    class="text-xs font-bold {poolRollResults[field.id].isError
+                      ? 'text-theme-danger'
+                      : 'text-theme-text'}"
+                    data-testid="stat-sheet-dice-pool-result-text"
+                  >
+                    {poolRollResults[field.id].text}
+                  </span>
+                {/if}
+                <button
+                  type="button"
+                  class="flex h-7 items-center gap-1.5 rounded border border-theme-border px-2 text-xs text-theme-text hover:border-theme-primary hover:text-theme-primary disabled:opacity-40"
+                  onclick={() => rollDicePool(field)}
+                  disabled={(typeof field.value === "number"
+                    ? field.value
+                    : 0) <= 0}
+                  aria-label={(typeof field.value === "number"
+                    ? field.value
+                    : 0) <= 0
+                    ? `Cannot roll ${field.label}: pool count is 0`
+                    : `Roll ${field.label} dice pool`}
+                  title={(typeof field.value === "number" ? field.value : 0) <=
+                  0
+                    ? "Dice pool count must be greater than zero to roll"
+                    : undefined}
+                  data-testid="stat-sheet-dice-pool-roll"
+                >
+                  <span class="icon-[lucide--dices] h-4 w-4" aria-hidden="true"
+                  ></span>
+                  <span class="font-medium">Roll</span>
+                </button>
+              </div>
+            </div>
+
+            {#if poolRollResults[field.id]?.roll?.parts}
+              <DiceBreakdownDisclosure
+                parts={poolRollResults[field.id].roll?.parts}
+                total={poolRollResults[field.id].roll?.total ?? 0}
+                formula={poolRollResults[field.id].roll?.formula}
+              />
+            {/if}
           </div>
         {:else if field.type === "item-table"}
           <ItemTableNode

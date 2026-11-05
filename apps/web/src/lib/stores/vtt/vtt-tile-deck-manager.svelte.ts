@@ -195,7 +195,10 @@ export class VTTTileDeckManager {
   draw(deckId: string, size = 150) {
     const deck = this.decks.find((candidate) => candidate.id === deckId);
     if (!deck || deck.tiles.length === 0) return null;
-    const tile = deck.tiles[Math.floor(Math.random() * deck.tiles.length)];
+    const tile =
+      deck.tiles[
+        Math.floor((this.deps.random ?? Math.random)() * deck.tiles.length)
+      ];
     return this.beginPlacement(deckId, tile, size, true);
   }
 
@@ -205,7 +208,8 @@ export class VTTTileDeckManager {
       deck.tiles.map((tile) => ({ deckId: deck.id, tile })),
     );
     if (pool.length === 0) return null;
-    const { deckId, tile } = pool[Math.floor(Math.random() * pool.length)];
+    const { deckId, tile } =
+      pool[Math.floor((this.deps.random ?? Math.random)() * pool.length)];
     return this.beginPlacement(deckId, tile, size, true);
   }
 

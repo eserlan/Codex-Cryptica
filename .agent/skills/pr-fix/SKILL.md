@@ -75,7 +75,7 @@ GIT_EDITOR=true git merge staging --no-edit
 
 If `git merge staging` reports conflicts (`git status` shows unmerged paths):
 
-1. **Journal / Binder Files (`.Jules/binder.md`, `.Jules/curator.md`)**:
+1. **Persona Journal Files (`.agents/journal/*.md`)**:
    - Keep entries from both `HEAD` and `staging` sequentially in chronological order under their respective date headings. Never delete or overwrite previous entries.
 2. **Code Files (`.ts`, `.svelte`)**:
    - Inspect both conflict sections (`<<<<<<< HEAD` vs `>>>>>>> staging`).

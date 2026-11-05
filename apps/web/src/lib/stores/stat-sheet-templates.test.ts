@@ -488,6 +488,75 @@ describe("StatSheetTemplateStore", () => {
     expect(cloned.find((f) => f.id === "doom")?.value).toBe(2);
   });
 
+  it("initializes dice-pool fields with startValue or defaults to 3 and isolates cloned values", () => {
+    const template: StatSheetTemplate = {
+      id: "pool-template",
+      name: "Pool Template",
+      fields: [
+        {
+          id: "action-pool",
+          label: "Action Pool",
+          type: "dice-pool",
+          startValue: 5,
+          formula: "d8",
+          min: 0,
+          max: 10,
+        },
+        {
+          id: "default-pool",
+          label: "Default Pool",
+          type: "dice-pool",
+          formula: "d6",
+        },
+      ],
+    };
+
+    const cloned = store.cloneTemplateFields(template);
+
+    const actionPool = cloned.find((f) => f.id === "action-pool");
+    expect(actionPool?.value).toBe(5);
+    expect(actionPool?.formula).toBe("d8");
+
+    const defaultPool = cloned.find((f) => f.id === "default-pool");
+    expect(defaultPool?.value).toBe(3);
+
+    // Verify mutating cloned instance value does not affect template definition
+    if (actionPool) actionPool.value = 1;
+    expect(template.fields[0].startValue).toBe(5);
+    expect(template.fields[0]).not.toHaveProperty("value");
+  });
+
+  it("preserves startValue and configuration when saving a template with a dice-pool", async () => {
+    const fields: StatSheetField[] = [
+      {
+        id: "prowl-pool",
+        label: "Prowl Pool",
+        type: "dice-pool",
+        value: 4,
+        startValue: 4,
+        formula: "d6",
+        min: 0,
+        max: 8,
+        step: 1,
+        allowDieChange: true,
+      },
+    ];
+
+    const saved = await store.saveAsTemplate("Blades Sheet", fields);
+    expect(saved).not.toBeNull();
+    const poolField = saved?.fields.find((f) => f.id === "prowl-pool");
+    expect(poolField?.startValue).toBe(4);
+    expect(poolField).not.toHaveProperty("value");
+    expect(poolField?.formula).toBe("d6");
+    expect(poolField?.allowDieChange).toBe(true);
+
+    // Cloning saved template initializes value from startValue
+    if (saved) {
+      const applied = store.cloneTemplateFields(saved);
+      expect(applied[0].value).toBe(4);
+    }
+  });
+
   it("preserves the template's own field ids when cloning — so presentation templates referencing e.g. 'hp'/'ac' keep resolving after the template is applied", () => {
     const dnd = BUILT_IN_STAT_SHEET_TEMPLATES.find(
       (t) => t.id === "builtin-dnd-character",

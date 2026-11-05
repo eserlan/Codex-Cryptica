@@ -4,6 +4,7 @@
   import {
     computeAdjustedCounterValue,
     rollStatSheetDiceField,
+    rollStatSheetDicePoolField,
   } from "#lib/utils/stat-sheet-field-actions.js";
   import TovLuckControl from "../stats/TovLuckControl.svelte";
   import TovDoomControl from "../stats/TovDoomControl.svelte";
@@ -156,6 +157,72 @@
               onclick={() => rollDice(field)}
               aria-label={`Roll ${field.label}`}
               data-testid="token-quick-stats-dice-roll"
+            >
+              <span class="icon-[lucide--dices] h-3.5 w-3.5" aria-hidden="true"
+              ></span>
+            </button>
+          </div>
+        </div>
+      {:else if field.type === "dice-pool"}
+        <div
+          class="flex items-center justify-between gap-2 text-xs"
+          data-testid="token-quick-stats-dice-pool"
+        >
+          <div class="flex items-center gap-1 min-w-0">
+            <span class="text-theme-text font-medium truncate"
+              >{field.label}</span
+            >
+            <button
+              type="button"
+              class="flex h-4 w-4 items-center justify-center rounded border border-theme-border text-theme-text hover:border-theme-primary hover:text-theme-primary disabled:opacity-40"
+              onclick={() => adjustCounter(field, -1)}
+              disabled={readOnly ||
+                (field.min !== undefined &&
+                  (typeof field.value === "number" ? field.value : 0) <=
+                    field.min)}
+              aria-label={`Decrease ${field.label}`}
+            >
+              <span class="icon-[lucide--minus] h-2.5 w-2.5" aria-hidden="true"
+              ></span>
+            </button>
+            <span
+              class="min-w-[1.25rem] text-center font-bold text-theme-text"
+              data-testid="token-quick-stats-pool-count"
+            >
+              {typeof field.value === "number" ? field.value : 0}
+            </span>
+            <button
+              type="button"
+              class="flex h-4 w-4 items-center justify-center rounded border border-theme-border text-theme-text hover:border-theme-primary hover:text-theme-primary disabled:opacity-40"
+              onclick={() => adjustCounter(field, 1)}
+              disabled={readOnly ||
+                (field.max !== undefined &&
+                  (typeof field.value === "number" ? field.value : 0) >=
+                    field.max)}
+              aria-label={`Increase ${field.label}`}
+            >
+              <span class="icon-[lucide--plus] h-2.5 w-2.5" aria-hidden="true"
+              ></span>
+            </button>
+            <span class="text-micro font-mono text-theme-text">
+              {field.formula || "d6"}
+            </span>
+          </div>
+          <div class="flex items-center gap-1.5 shrink-0">
+            <button
+              type="button"
+              class="flex h-6 w-6 items-center justify-center rounded border border-theme-border text-theme-text hover:border-theme-primary hover:text-theme-primary disabled:opacity-40"
+              onclick={() => rollStatSheetDicePoolField(field)}
+              disabled={(typeof field.value === "number" ? field.value : 0) <=
+                0}
+              aria-label={(typeof field.value === "number" ? field.value : 0) <=
+              0
+                ? `Cannot roll ${field.label}: pool count is 0`
+                : `Roll ${field.label}`}
+              title={(typeof field.value === "number" ? field.value : 0) <= 0
+                ? "Dice pool count must be greater than zero to roll"
+                : undefined}
+              data-testid="token-quick-stats-pool-roll"
             >
               <span class="icon-[lucide--dices] h-3.5 w-3.5" aria-hidden="true"
               ></span>

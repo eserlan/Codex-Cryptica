@@ -3,12 +3,20 @@
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import AdventureStart from "./AdventureStart.svelte";
+import { discoveryPolicyStore } from "#lib/stores/ui/discovery-policy.svelte.js";
 
 function manager(
   start: (...args: unknown[]) => Promise<unknown>,
   errorMessage: string | null = null,
 ) {
-  return { start, errorMessage } as any;
+  return { start, errorMessage, errorCause: null, session: null } as any;
+}
+
+/** A start that commits an opening turn, as the real manager does. */
+function committingStart(m: any) {
+  return vi.fn(async () => {
+    m.session = { turns: [{ id: "opening" }], pendingRoll: null };
+  });
 }
 
 async function fillForm() {
@@ -25,9 +33,11 @@ async function fillForm() {
 
 describe("AdventureStart", () => {
   it("clears the drafted fields after a successful start", async () => {
-    const start = vi.fn(async () => undefined);
+    const m = manager(async () => undefined);
+    const start = committingStart(m);
+    m.start = start;
     render(AdventureStart, {
-      props: { manager: manager(start), vaultId: "vault-1" },
+      props: { manager: m, vaultId: "vault-1" },
     });
 
     await fillForm();
@@ -89,6 +99,60 @@ describe("AdventureStart", () => {
     ).toBe("The Lantern Road");
   });
 
+  it("shows fixed failure copy even when the manager does not set errorMessage", async () => {
+    const start = vi.fn(async () => {
+      throw new Error("private storage detail");
+    });
+    render(AdventureStart, {
+      props: { manager: manager(start), vaultId: "vault-1" },
+    });
+
+    await fillForm();
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Start adventure" }),
+    );
+
+    expect(start).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("alert").textContent).toMatch(
+      /could not start this adventure/i,
+    );
+    expect(screen.getByRole("alert").textContent).not.toContain("private");
+    expect(
+      (screen.getByLabelText("Adventure title") as HTMLInputElement).value,
+    ).toBe("The Lantern Road");
+  });
+
+  it("refuses to create a blank Oracle session while offline and retains the form", async () => {
+    const previous = Object.getOwnPropertyDescriptor(navigator, "onLine");
+    Object.defineProperty(navigator, "onLine", {
+      configurable: true,
+      value: false,
+    });
+    try {
+      const start = vi.fn(async () => undefined);
+      render(AdventureStart, {
+        props: { manager: manager(start), vaultId: "vault-1" },
+      });
+
+      await fillForm();
+      await fireEvent.click(
+        screen.getByRole("button", { name: "Start adventure" }),
+      );
+
+      expect(start).not.toHaveBeenCalled();
+      expect(screen.getByRole("alert").textContent).toMatch(/internet/i);
+      expect(
+        (screen.getByLabelText("Premise") as HTMLTextAreaElement).value,
+      ).toContain("A lantern has gone dark");
+    } finally {
+      if (previous) {
+        Object.defineProperty(navigator, "onLine", previous);
+      } else {
+        Reflect.deleteProperty(navigator, "onLine");
+      }
+    }
+  });
+
   it("survives being torn down and remounted, given the same bound values", async () => {
     // Simulates what actually happens in AdventureSurface.svelte: a failed
     // start briefly creates then archives a session, which unmounts and
@@ -120,5 +184,131 @@ describe("AdventureStart", () => {
     expect(
       (screen.getByLabelText("Adventure title") as HTMLInputElement).value,
     ).toBe("The Lantern Road");
+  });
+
+  it("keeps the draft and shows fixed copy when the opening fails with a typed cause", async () => {
+    const m = manager(async () => undefined);
+    m.start = vi.fn(async () => {
+      m.errorMessage = "QuotaExceededError: PRIVATE_SENTINEL";
+      m.errorCause = "storage-full";
+    });
+    render(AdventureStart, { props: { manager: m, vaultId: "vault-1" } });
+    await fillForm();
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Start adventure" }),
+    );
+    const alert = screen.getByRole("alert").textContent ?? "";
+    expect(alert).toMatch(/storage is full/i);
+    expect(alert).not.toContain("PRIVATE_SENTINEL");
+    expect(
+      (screen.getByLabelText("Adventure title") as HTMLInputElement).value,
+    ).toBe("The Lantern Road");
+  });
+
+  it("keeps the draft and a rumour handoff when no opening was committed", async () => {
+    // e.g. connectivity dropped or control could not be acquired: start()
+    // resolves with neither an error nor an opening.
+    const m = manager(async () => undefined);
+    m.start = vi.fn(async () => {
+      m.session = { turns: [], pendingRoll: null };
+    });
+    const onScenarioStarted = vi.fn();
+    render(AdventureStart, {
+      props: {
+        manager: m,
+        vaultId: "vault-1",
+        scenarioSeed: {
+          id: "scenario-1",
+          playerVisible: { rumour: "A rumour", lead: "A lead" },
+        } as any,
+        onScenarioStarted,
+      },
+    });
+    await fillForm();
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Start adventure" }),
+    );
+    expect(onScenarioStarted).not.toHaveBeenCalled();
+    expect(screen.getByRole("alert").textContent).toMatch(/opening scene/i);
+    expect(
+      (screen.getByLabelText("Adventure title") as HTMLInputElement).value,
+    ).toBe("The Lantern Road");
+  });
+
+  it("counts a pending opening roll as a committed opening", async () => {
+    const m = manager(async () => undefined);
+    m.start = vi.fn(async () => {
+      m.session = { turns: [], pendingRoll: { id: "roll-1" } };
+    });
+    render(AdventureStart, { props: { manager: m, vaultId: "vault-1" } });
+    await fillForm();
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Start adventure" }),
+    );
+    expect(
+      (screen.getByLabelText("Adventure title") as HTMLInputElement).value,
+    ).toBe("");
+  });
+
+  it("does not start while AI Disabled is on, and keeps the form", async () => {
+    discoveryPolicyStore.aiDisabled = true;
+    try {
+      const start = vi.fn(async () => undefined);
+      render(AdventureStart, {
+        props: { manager: manager(start), vaultId: "vault-1" },
+      });
+      await fillForm();
+      await fireEvent.click(
+        screen.getByRole("button", { name: "Start adventure" }),
+      );
+      expect(start).not.toHaveBeenCalled();
+      expect(screen.getByRole("alert").textContent).toMatch(/AI Disabled/);
+      expect(
+        (screen.getByLabelText("Premise") as HTMLTextAreaElement).value,
+      ).toContain("A lantern has gone dark");
+    } finally {
+      discoveryPolicyStore.aiDisabled = false;
+    }
+  });
+
+  it("passes a chosen Vault character as a player-character source record", async () => {
+    const m = manager(async () => undefined);
+    const start = committingStart(m);
+    m.start = start;
+    render(AdventureStart, {
+      props: {
+        manager: m,
+        vaultId: "vault-1",
+        title: "The Lantern Road",
+        premise: "A lantern has gone dark at the edge of town.",
+        selectedCharacterId: "pc-1",
+        characters: [{ id: "pc-1", name: "Lira" }],
+      },
+    });
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Start adventure" }),
+    );
+    expect(start).toHaveBeenCalledWith(
+      expect.objectContaining({
+        playerCharacter: { kind: "canonical", name: "Lira", recordId: "pc-1" },
+        sourceRecords: [
+          expect.objectContaining({
+            recordId: "pc-1",
+            role: "player-character",
+          }),
+        ],
+      }),
+    );
+  });
+
+  it("does not start a second adventure while the manager is already starting", async () => {
+    const m = manager(vi.fn(async () => undefined));
+    m.starting = true;
+    render(AdventureStart, { props: { manager: m, vaultId: "vault-1" } });
+    await fillForm();
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Start adventure" }),
+    );
+    expect(m.start).not.toHaveBeenCalled();
   });
 });

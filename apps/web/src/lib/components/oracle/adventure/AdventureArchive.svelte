@@ -173,11 +173,9 @@
       await onResumeArchived(entry.id);
     } catch (cause) {
       resumeError =
-        cause instanceof Error && cause.message === "active-adventure-exists"
-          ? "Another adventure is already active. Continue or end it first."
-          : cause instanceof Error
-            ? cause.message
-            : "Unable to resume this adventure.";
+        cause instanceof Error
+          ? cause.message
+          : "Unable to resume this adventure.";
     } finally {
       resumingId = null;
     }

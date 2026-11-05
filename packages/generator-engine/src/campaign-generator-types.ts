@@ -278,6 +278,8 @@ export interface GeneratorRunRequest {
 
 /** A transient, reviewable result produced before save. */
 export interface GeneratedDraft {
+  /** Stable identity for one generated six-rumour batch, retained on restore. */
+  rumourBatchId?: string;
   title: string;
   entityType: string;
   summary: string;

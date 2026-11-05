@@ -3,7 +3,53 @@
   import type { AdventureManager } from "#lib/stores/oracle/adventure-manager.svelte.js";
   import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
 
-  let { manager }: { manager: AdventureManager } = $props();
+  import type {
+    AdventureArchiveEntry,
+    AdventureSessionRepository,
+  } from "#lib/services/adventure/adventure-session-repository.js";
+
+  let {
+    manager,
+    repository,
+    vaultId,
+    onSwitch,
+  }: {
+    manager: AdventureManager;
+    repository?: AdventureSessionRepository;
+    vaultId?: string;
+    onSwitch?: (sessionId: string) => Promise<void>;
+  } = $props();
+
+  // Other adventures in this Vault that can be played right now.
+  let others = $state<AdventureArchiveEntry[]>([]);
+  async function loadOthers() {
+    if (!repository || !vaultId) return;
+    const requested = vaultId;
+    try {
+      const { entries } = await repository.list(requested);
+      if (requested !== vaultId) return;
+      others = entries.filter(
+        (entry) =>
+          entry.status === "active" &&
+          entry.loadCondition === "normal" &&
+          entry.id !== manager.session?.id,
+      );
+    } catch {
+      others = [];
+    }
+  }
+  async function switchTo(id: string) {
+    try {
+      await onSwitch?.(id);
+    } catch (cause) {
+      notificationStore.notify(
+        cause instanceof Error
+          ? `Unable to switch adventure: ${cause.message}`
+          : "Unable to switch adventure.",
+        "error",
+      );
+    }
+  }
 
   let isOpen = $state(false);
   let triggerEl = $state<HTMLButtonElement | null>(null);
@@ -37,6 +83,7 @@
 
   const open = async (position?: "first" | "last") => {
     isOpen = true;
+    void loadOthers();
     if (!position) return;
     await tick();
     const items =
@@ -89,7 +136,7 @@
     <button
       bind:this={triggerEl}
       type="button"
-      class="flex min-h-12 min-w-12 items-center justify-center rounded-md border border-theme-border text-theme-primary transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
+      class="flex min-h-10 min-w-10 items-center justify-center rounded-md border sm:min-h-12 sm:min-w-12 border-theme-border text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
       onclick={() => (isOpen ? close() : void open())}
       onkeydown={handleTriggerKeydown}
       aria-haspopup="menu"
@@ -138,10 +185,23 @@
             ></span>End adventure
           </button>
         {/if}
+        {#each others as other (other.id)}
+          <button
+            type="button"
+            role="menuitem"
+            class="w-full rounded-md px-3 py-2 text-left text-sm text-theme-text hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-theme-primary"
+            onclick={() => run(() => void switchTo(other.id))}
+          >
+            <span
+              class="icon-[lucide--arrow-right-left] mr-2 inline-block h-3.5 w-3.5"
+              aria-hidden="true"
+            ></span>Switch to {other.title}
+          </button>
+        {/each}
         <button
           type="button"
           role="menuitem"
-          class="w-full rounded-md px-3 py-2 text-left text-sm text-theme-primary hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-theme-primary"
+          class="w-full rounded-md px-3 py-2 text-left text-sm text-theme-text hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-theme-primary"
           onclick={() => run(() => void manager.close())}
         >
           <span

@@ -156,6 +156,7 @@ export const howDoYouStartWorldbuildingFromScratch: AnswerConfigInput = {
     "how-do-i-start-a-dnd-campaign",
     "should-i-share-worldbuilding-notes-with-my-players",
     "where-do-worldbuilding-ideas-come-from",
+    "should-i-develop-my-characters-or-my-world-first",
   ],
   discovery: {
     id: "answer-worldbuilding-from-scratch",
@@ -186,6 +187,11 @@ export const howDoYouStartWorldbuildingFromScratch: AnswerConfigInput = {
         with: "answer-worldbuilding-ideas-inspiration",
         reason:
           "This answer develops a premise into a playable local sandbox for a GM, whereas the ideas answer helps creators find and test a spark before they have a premise to build.",
+      },
+      {
+        with: "answer-characters-or-world-first",
+        reason:
+          "This answer helps GMs build a playable local sandbox from a premise, whereas the characters-or-world answer covers what to develop first and how to connect existing ideas across projects.",
       },
     ],
     relatedIntents: [

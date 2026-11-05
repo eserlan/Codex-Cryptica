@@ -313,6 +313,8 @@ export const howDoIPrepareAnRpgSessionStepByStep: AnswerConfigInput = {
     "how-do-i-start-a-dnd-campaign",
     "how-do-i-plan-story-arcs-for-an-rpg-campaign",
     "how-do-i-run-my-first-online-tabletop-rpg-session",
+    "how-do-i-run-a-one-shot-rpg-session",
+    "how-do-i-plan-a-one-shot-rpg-session",
   ],
   discovery: {
     id: "answer-prepare-session-step-by-step",
@@ -359,6 +361,11 @@ export const howDoIPrepareAnRpgSessionStepByStep: AnswerConfigInput = {
         with: "answer-turn-rpg-idea-into-adventure",
         reason:
           "That page develops a premise into a playable adventure situation; this one turns a hook or current situation into material for the next single session.",
+      },
+      {
+        with: "answer-run-one-shot-rpg-session",
+        reason:
+          "This answer is a general preparation procedure for an upcoming session; the run answer begins when the one-shot starts and handles live choices through its epilogue.",
       },
       {
         with: "answer-in-person-gm-notes",

@@ -1,0 +1,97 @@
+name: Bad IP Blocklist
+
+# Keeps the Cloudflare `bad_ips` account list (consumed by the
+# "Block shady ips" WAF rule, `(ip.src in $bad_ips)`) populated from
+# observed probe traffic. See docs/cloudflare-bad-ip-automation.md.
+#
+# Scheduled runs apply changes. Manual runs default to a dry-run so the
+# diff can be reviewed in the job log before anything is written.
+
+on:
+  schedule:
+    # 01:00 UTC daily (GitHub cron is always UTC; 02:00 CET / 03:00 CEST local).
+    - cron: "0 1 * * *"
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: "Write changes to the Cloudflare list (off = dry-run)"
+        type: boolean
+        required: false
+        default: false
+      days:
+        description: "Traffic window in days"
+        required: false
+        default: "1"
+
+concurrency:
+  group: "bad-ip-blocklist"
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  update:
+    name: Update bad_ips list
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_BAD_IPS_TOKEN: ${{ secrets.CLOUDFLARE_BAD_IPS_TOKEN }}
+      CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+      ABUSEIPDB_API_KEY: ${{ secrets.ABUSEIPDB_API_KEY }}
+      GREYNOISE_API_KEY: ${{ secrets.GREYNOISE_API_KEY }}
+      DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Check configuration
+        id: config
+        run: |
+          if [ -z "$CLOUDFLARE_ACCOUNT_ID" ] || [ -z "$CLOUDFLARE_BAD_IPS_TOKEN" ] || [ -z "$CLOUDFLARE_ZONE_ID" ]; then
+            echo "::notice::Cloudflare secrets not configured yet (CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_BAD_IPS_TOKEN, CLOUDFLARE_ZONE_ID). Skipping. See docs/cloudflare-bad-ip-automation.md."
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Update bad_ips list
+        if: steps.config.outputs.configured == 'true'
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          APPLY_INPUT: ${{ inputs.apply }}
+          DAYS_INPUT: ${{ inputs.days || '1' }}
+        run: |
+          set -o pipefail
+          if ! [[ "$DAYS_INPUT" =~ ^[1-9][0-9]*$ ]]; then
+            echo "::error::days input must be a positive integer (got: $DAYS_INPUT)"
+            exit 1
+          fi
+          MODE="--dry-run"
+          if [ "$EVENT_NAME" = "schedule" ] || [ "$APPLY_INPUT" = "true" ]; then
+            MODE="--apply"
+          fi
+          echo "Running with $MODE"
+          bun scripts/update-bad-ips.ts "$MODE" --days "$DAYS_INPUT" | tee bad-ip-report.txt
+          {
+            echo "### Bad IP blocklist run"
+            echo ""
+            echo '```'
+            cat bad-ip-report.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload report
+        if: always() && steps.config.outputs.configured == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: bad-ip-report
+          path: bad-ip-report.txt
+          if-no-files-found: ignore
+          retention-days: 30

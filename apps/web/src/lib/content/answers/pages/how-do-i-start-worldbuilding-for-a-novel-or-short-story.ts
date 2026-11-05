@@ -185,6 +185,7 @@ export const howDoIStartWorldbuildingForANovelOrShortStory: AnswerConfigInput =
       "how-do-you-create-a-believable-fictional-religion",
       "how-do-you-create-a-fantasy-faction",
       "where-do-worldbuilding-ideas-come-from",
+      "should-i-develop-my-characters-or-my-world-first",
     ],
     discovery: {
       id: "answer-worldbuilding-for-fiction-writers",
@@ -211,6 +212,11 @@ export const howDoIStartWorldbuildingForANovelOrShortStory: AnswerConfigInput =
           with: "answer-worldbuilding-ideas-inspiration",
           reason:
             "This answer builds the setting needed for a story from an existing premise and viewpoint, whereas the ideas answer helps writers find and test a spark before choosing a story to develop.",
+        },
+        {
+          with: "answer-characters-or-world-first",
+          reason:
+            "This answer builds the minimum setting for a novel or short story, whereas the characters-or-world answer offers a cross-medium workflow for developing characters and setting together from ideas already in hand.",
         },
       ],
       relatedIntents: [

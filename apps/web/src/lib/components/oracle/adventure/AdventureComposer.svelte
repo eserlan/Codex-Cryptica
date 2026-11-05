@@ -1,34 +1,137 @@
 <script lang="ts">
+  import { tick } from "svelte";
   import type { AdventureManager } from "#lib/stores/oracle/adventure-manager.svelte.js";
-  let { manager }: { manager: AdventureManager } = $props();
+  import AdventureSuggestedActions from "./AdventureSuggestedActions.svelte";
+
+  let {
+    manager,
+    phone = false,
+    keyboardOpen = false,
+    suggestionChips = false,
+  }: {
+    manager: AdventureManager;
+    phone?: boolean;
+    keyboardOpen?: boolean;
+    suggestionChips?: boolean;
+  } = $props();
   let action = $derived(manager.draft);
   let disabled = $derived(
     manager.readOnly ||
+      (manager.session?.turns.length === 0 && !manager.session.pendingRoll) ||
       manager.phase === "generating" ||
       manager.phase === "offline" ||
       manager.phase === "awaiting-roll" ||
       manager.phase === "ready-to-resolve",
   );
-  // A pending roll is the current decision. Keep action controls mounted for
-  // fullscreen focus stability, but do not leave competing choices visible.
+  let retryingControl = $state(false);
+  let controlRetryMessage = $state<string | null>(null);
+  let textarea = $state<HTMLTextAreaElement>();
+  let typing = $state(false);
+
+  // Keep the action field compact for one line, then grow as the player types.
+  // Long prose scrolls inside the field so it never pushes the dock offscreen.
+  $effect(() => {
+    const content = manager.draft;
+    if (!textarea || typeof content !== "string") return;
+    void tick().then(() => {
+      if (!textarea) return;
+      textarea.style.height = "auto";
+      const visibleHeight = window.visualViewport?.height ?? window.innerHeight;
+      const maxHeight = Math.max(44, Math.min(192, visibleHeight * 0.3));
+      textarea.style.height = `${Math.min(textarea.scrollHeight, maxHeight)}px`;
+      textarea.style.overflowY =
+        textarea.scrollHeight > maxHeight ? "auto" : "hidden";
+    });
+  });
+
+  async function retryControl(): Promise<void> {
+    if (retryingControl) return;
+    retryingControl = true;
+    controlRetryMessage = null;
+    try {
+      if (!(await manager.tryTakeControl())) {
+        controlRetryMessage =
+          "This adventure is still in use elsewhere. Leave it in the other tab and try again.";
+      }
+    } catch (cause) {
+      controlRetryMessage =
+        cause instanceof Error
+          ? `Unable to take control: ${cause.message}`
+          : "Unable to take control of this adventure.";
+    } finally {
+      retryingControl = false;
+    }
+  }
+  // Preserve controls in the DOM during phase transitions. Unmounting a
+  // focused button can exit native fullscreen unexpectedly in Chrome.
   let actionControlsVisible = $derived(
     manager.phase !== "generating" &&
       manager.phase !== "awaiting-roll" &&
       manager.phase !== "ready-to-resolve",
   );
+  // Suggestions are optional while typing: the free-action row must remain
+  // reachable when an on-screen keyboard reduces the available height.
+  let suggestionsVisible = $derived(
+    actionControlsVisible && !(phone && (keyboardOpen || typing)),
+  );
 </script>
 
 <div
-  class="sticky bottom-0 z-10 space-y-2 border-t border-theme-border bg-theme-bg px-3 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:px-4"
+  class="z-10 flex min-h-0 max-h-[55%] shrink-0 flex-col gap-2 overflow-hidden border-t border-theme-border bg-theme-surface px-3 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] sm:px-4 sm:pt-3"
+  data-testid="adventure-action-dock"
 >
-  <!-- The form and its fields stay mounted across a generating/ready phase
-       change and are hidden/disabled with classes rather than an {#if} swap.
-       Destroying and recreating this subtree while one of its buttons (a
-       just-submitted suggested action, or the composer itself) still holds
-       focus makes Chrome silently exit native fullscreen — see Adventure
-       Mode's Fullscreen toggle in AdventureFocusPlay.svelte. -->
+  <!-- Only optional controls scroll. Never put the textarea/Send row in this
+       container: it must remain fixed at the bottom when the keyboard opens. -->
+  <div
+    class={suggestionChips
+      ? "mx-auto min-h-0 w-full max-w-6xl overflow-y-auto"
+      : "mx-auto min-h-0 w-full max-w-3xl overflow-y-auto"}
+    data-testid="adventure-dock-extras"
+  >
+    {#if manager.readOnly && manager.session?.status === "active"}
+      <div
+        class="rounded-lg border border-theme-border bg-theme-bg p-3 text-sm text-theme-text"
+        role="status"
+      >
+        <p>
+          Another tab may be controlling this adventure. Leave it there or close
+          that tab, then try again here. Your progress is saved.
+        </p>
+        <button
+          type="button"
+          class="mt-2 min-h-11 rounded-lg border border-theme-border px-3 py-2 font-medium transition hover:bg-theme-primary/10 disabled:opacity-50"
+          disabled={retryingControl}
+          onclick={() => void retryControl()}
+        >
+          {retryingControl ? "Checking…" : "Try to take control"}
+        </button>
+        {#if controlRetryMessage}
+          <p class="mt-2 text-theme-text">{controlRetryMessage}</p>
+        {/if}
+      </div>
+    {/if}
+    <AdventureSuggestedActions
+      {manager}
+      {disabled}
+      visible={suggestionsVisible}
+      chips={suggestionChips}
+    />
+    {#if manager.errorMessage}
+      <p class="text-sm text-theme-danger" role="alert">
+        {manager.errorMessage}
+      </p>
+    {/if}
+    {#if !manager.readOnly && manager.session?.turns.length === 0 && !manager.session.pendingRoll}
+      <button
+        type="button"
+        class="min-h-11 rounded-lg border border-theme-border px-3 py-2 text-sm text-theme-text disabled:opacity-50"
+        disabled={manager.phase === "generating"}
+        onclick={() => void manager.retryOpening()}>Retry opening</button
+      >
+    {/if}
+  </div>
   <form
-    class="space-y-2"
+    class="mx-auto w-full max-w-3xl shrink-0 space-y-2"
     onsubmit={(event) => {
       event.preventDefault();
       void manager.submitAction(action);
@@ -36,55 +139,54 @@
   >
     <div
       class={manager.phase === "generating"
-        ? "flex items-center justify-between gap-3"
+        ? "flex items-center justify-between gap-3 py-1"
         : "hidden"}
     >
-      <p class="text-sm text-theme-secondary">Waiting for the Oracle…</p>
+      <div class="min-w-0" role="status">
+        <p class="flex items-center gap-2 text-sm text-theme-text">
+          <span
+            class="icon-[lucide--sparkles] h-4 w-4 shrink-0 motion-safe:animate-pulse"
+            aria-hidden="true"
+          ></span>
+          Oracle is responding…
+        </p>
+        {#if manager.draft.trim()}
+          <p class="truncate text-xs text-theme-text" title={manager.draft}>
+            Playing: {manager.draft}
+          </p>
+        {/if}
+      </div>
       <button
-        class="min-h-12 rounded-md border border-theme-border px-4 py-2 text-theme-primary"
+        class="min-h-11 rounded-md border border-theme-border px-3 text-theme-text"
         type="button"
         onclick={() => manager.cancel()}>Cancel</button
       >
     </div>
-    {#if manager.suggestedActions.length > 0}
-      <div
-        class={actionControlsVisible ? "flex flex-wrap gap-2" : "hidden"}
-        aria-label="Suggested actions"
-        data-testid="adventure-suggested-actions"
-      >
-        {#each manager.suggestedActions as suggestion (suggestion)}
-          <button
-            class="rounded-md border border-theme-border px-3 py-2 text-sm text-theme-primary transition hover:bg-theme-primary/10"
-            type="button"
-            {disabled}
-            onclick={() => void manager.submitSuggestedAction(suggestion)}
-            >{suggestion}</button
-          >
-        {/each}
-      </div>
-    {/if}
     <div
-      class={actionControlsVisible ? "space-y-2" : "hidden"}
+      class={actionControlsVisible ? "flex items-end gap-2" : "hidden"}
       data-testid="adventure-free-action"
     >
-      <label class="block text-sm text-theme-primary" for="adventure-action"
-        >What do you do?</label
-      >
+      <label class="sr-only" for="adventure-action">What do you do?</label>
       <textarea
+        bind:this={textarea}
         id="adventure-action"
-        class="min-h-24 w-full rounded-md border border-theme-border bg-theme-surface px-3 py-2 text-theme-primary"
+        rows="1"
+        class="min-h-11 min-w-0 flex-1 resize-none rounded-lg border border-theme-border bg-theme-bg px-3 py-2 text-base leading-relaxed text-theme-text placeholder:text-theme-muted"
         bind:value={manager.draft}
+        onfocus={() => (typing = true)}
+        onblur={() => (typing = false)}
         {disabled}
-        placeholder="Describe your character's action"
+        placeholder="What do you do?"
       ></textarea>
       <button
-        class="min-h-12 rounded-md bg-theme-primary px-4 py-2 text-theme-on-primary disabled:opacity-50"
+        class="flex min-h-11 min-w-11 shrink-0 items-center justify-center gap-2 rounded-lg bg-theme-primary px-3 py-2 text-theme-on-primary disabled:opacity-50"
         type="submit"
-        disabled={disabled || !manager.draft.trim()}>Submit action</button
+        aria-label="Submit action"
+        disabled={disabled || !manager.draft.trim()}
       >
+        <span class="icon-[lucide--send] h-4 w-4" aria-hidden="true"></span>
+        <span class="hidden sm:inline">Send</span>
+      </button>
     </div>
   </form>
-  {#if manager.errorMessage}<p class="text-sm text-theme-danger" role="alert">
-      {manager.errorMessage}
-    </p>{/if}
 </div>

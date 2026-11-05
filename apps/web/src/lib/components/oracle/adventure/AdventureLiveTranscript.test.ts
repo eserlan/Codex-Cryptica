@@ -30,6 +30,29 @@ describe("AdventureLiveTranscript", () => {
     vi.useRealTimers();
   });
 
+  it("shows the opening narration without a blank player-action bubble", () => {
+    const m = manager({
+      transcript: {
+        sessionId: "session-1",
+        title: "The Drowned March",
+        turns: [
+          {
+            sequence: 0,
+            playerAction: "",
+            narration: "You arrive in the mountain village.",
+            committedAt: "2026-08-18T00:00:00.000Z",
+          },
+        ],
+      },
+    });
+    render(AdventureLiveTranscript, { props: { manager: m } });
+    expect(
+      screen.getByText("You arrive in the mountain village."),
+    ).toBeTruthy();
+    expect(screen.queryByText("You")).toBeNull();
+    expect(screen.getByText("Oracle")).toBeTruthy();
+  });
+
   it("renders a turn's player action and narration", () => {
     render(AdventureLiveTranscript, { props: { manager: manager() } });
 
@@ -140,6 +163,19 @@ describe("AdventureLiveTranscript", () => {
         .getByTestId("adventure-generating-status")
         .getAttribute("aria-live"),
     ).toBe("off");
+  });
+
+  it("shows only the ephemeral player-safe narration while generating", () => {
+    const m = manager({
+      phase: "generating",
+      streamedNarration: "The lantern gutters as you approach.",
+    });
+    render(AdventureLiveTranscript, { props: { manager: m } });
+    const preview = screen.getByTestId("adventure-stream-preview");
+    expect(preview.textContent).toContain(
+      "The lantern gutters as you approach.",
+    );
+    expect(screen.queryByTestId("adventure-generating-status")).toBeNull();
   });
 
   it("shows no generating indicator when the player can act", () => {

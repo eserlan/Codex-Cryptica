@@ -4,6 +4,26 @@ import type { StarSystemBody } from "./public-star-system";
 import type { GeneratorOutput } from "./campaign-generator-types";
 import { parseTovMechanics } from "./tov-mechanics-parser";
 
+/** Required fields for a generic AI response; see per-generator exceptions. */
+function hasValidGenericShape(
+  parsed: Record<string, unknown>,
+  generatorId: string,
+): boolean {
+  // The rumour prompt's schema historically had no `summary`; a model that
+  // follows it faithfully must not be discarded for the offline template.
+  const summaryOk =
+    typeof parsed.summary === "string" ||
+    (generatorId === "rumour" && parsed.summary === undefined);
+  if (typeof parsed.title !== "string" || !summaryOk) return false;
+  if (typeof parsed.lore !== "string") return false;
+  if (generatorId !== "secret-society") return true;
+  return (
+    parsed.lore.trim().length > 0 &&
+    typeof parsed.content === "string" &&
+    parsed.content.trim().length > 0
+  );
+}
+
 /**
  * Parses and validates a generic (non-dungeon/language/council-vote)
  * generator's raw AI response into a `GeneratorOutput`, shared by
@@ -26,16 +46,7 @@ export function parseGenericGeneratorOutput(
 
   if (generatorId === "holiday") normalizeHolidayGenericOutput(parsed);
 
-  const requiresCompleteSocietyDossier = generatorId === "secret-society";
-  const isValidShape =
-    typeof parsed.title === "string" &&
-    typeof parsed.summary === "string" &&
-    typeof parsed.lore === "string" &&
-    (!requiresCompleteSocietyDossier ||
-      (parsed.lore.trim().length > 0 &&
-        typeof parsed.content === "string" &&
-        parsed.content.trim().length > 0));
-  if (!isValidShape) return null;
+  if (!hasValidGenericShape(parsed, generatorId)) return null;
 
   const observanceFields = [
     "name",
@@ -61,7 +72,7 @@ export function parseGenericGeneratorOutput(
 
   return {
     title: parsed.title as string,
-    summary: parsed.summary as string,
+    summary: typeof parsed.summary === "string" ? parsed.summary : "",
     lore: parsed.lore as string,
     content: typeof parsed.content === "string" ? parsed.content : undefined,
     labels: Array.isArray(parsed.labels) ? parsed.labels : [],

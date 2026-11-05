@@ -1,5 +1,14 @@
 <script lang="ts">
   import { CampaignGeneration } from "./campaign-generation.svelte.js";
+  import { goto } from "$app/navigation";
+  import { resolve } from "$app/paths";
+  import { selectRumourForPlay } from "generator-engine";
+  import { systemIdGenerator } from "#lib/utils/runtime-deps.js";
+  import {
+    rumourAdventureHandoff,
+    buildRumourScenario,
+  } from "#lib/stores/oracle/rumour-adventure-handoff.svelte.js";
+  import RumourPlayActions from "./RumourPlayActions.svelte";
   import {
     campaignGeneratorSaver,
     type CampaignSaveOptions,
@@ -38,6 +47,7 @@
   } from "#lib/services/seo/generator-handoffs.js";
 
   import { oracle } from "#lib/stores/oracle.svelte.js";
+  import { discoveryPolicyStore } from "#lib/stores/ui/discovery-policy.svelte.js";
 
   import CampaignGeneratorConfigure from "./CampaignGeneratorConfigure.svelte";
   import CampaignGeneratorReview from "./CampaignGeneratorReview.svelte";
@@ -138,6 +148,7 @@
     requestBuilder: campaignGeneratorRequestBuilder,
     publishGeneratedCapture,
     clock: systemClock,
+    idGenerator: () => crypto.randomUUID(),
   });
 
   function openPlotTwistFromQuestHook() {
@@ -162,6 +173,14 @@
     modalUIStore.openIntentGeneratorWorkflow("npc", null, context);
   }
 
+  // Returning from a cancelled rumour start: show the same batch again.
+  $effect(() => {
+    const vaultId = oracle.vault.activeVaultId;
+    if (!vaultId || workflow.generatorId !== "rumour") return;
+    const kept = rumourAdventureHandoff.takeSourceDraft(vaultId);
+    if (kept) generation.restoreDraft(kept);
+  });
+
   function close(options: { preserveSession?: boolean } = {}) {
     generation.reset();
     modalUIStore.closeGeneratorWorkflow();
@@ -170,6 +189,38 @@
 
   function onGenerate(req: CampaignGenerateInput) {
     return generation.generate(req, workflow.sourceEntityId, () => aiPolicy);
+  }
+
+  async function playGeneratedRumour(index: number): Promise<void> {
+    const draft = generation.draft;
+    const vaultId = oracle.vault.activeVaultId;
+    if (!draft || draft.sourceGeneratorId !== "rumour" || !draft.content) {
+      throw new Error("missing-rumour-draft");
+    }
+    // Playing sends campaign and GM context to Oracle. `oracle.isEnabled` is
+    // always true; the privacy switch is the AI Disabled policy.
+    if (!vaultId || vault.isGuest) throw new Error("oracle-unavailable");
+    if (discoveryPolicyStore.aiDisabled) throw new Error("ai-disabled");
+    const selected = selectRumourForPlay(
+      { title: draft.title, content: draft.content, lore: draft.lore },
+      index,
+      undefined,
+      draft.rumourBatchId,
+    );
+    rumourAdventureHandoff.prepare(
+      vaultId,
+      selected,
+      buildRumourScenario(selected, systemIdGenerator.uuid()),
+      // Kept in memory so cancelling the start can return to this batch.
+      $state.snapshot(draft),
+    );
+    try {
+      await goto(resolve("/(app)/adventure"));
+      close({ preserveSession: true });
+    } catch (cause) {
+      rumourAdventureHandoff.clear();
+      throw cause;
+    }
   }
 
   async function onSave(
@@ -331,7 +382,8 @@
         {themeId}
         currentPhase={generation.currentPhase}
         streamedFields={generation.streamedFields}
-        spoilerShield={shouldShieldSpoilers(generatorId)}
+        spoilerShield={generatorId === "rumour" ||
+          shouldShieldSpoilers(generatorId)}
         oncancel={() => generation.cancel()}
       />
     {:else if (generation.stage === "review" || generation.stage === "saving") && generation.draft}
@@ -358,6 +410,14 @@
         onGeneratePlotTwist={plotTwistAction}
         onGenerateBoss={bossAction}
       />
+      {#if generation.draft.sourceGeneratorId === "rumour" && !vault.isGuest}
+        <RumourPlayActions
+          draft={generation.draft}
+          aiDisabled={discoveryPolicyStore.aiDisabled}
+          disabled={generation.stage === "saving"}
+          onplay={playGeneratedRumour}
+        />
+      {/if}
     {:else if generation.stage === "error"}
       <div class="py-4">
         <p class="mb-4 text-sm text-red-400">{generation.errorMsg}</p>

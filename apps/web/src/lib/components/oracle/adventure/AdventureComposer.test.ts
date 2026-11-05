@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import { fireEvent, render, screen } from "@testing-library/svelte";
+import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import AdventureComposer from "./AdventureComposer.svelte";
 
@@ -20,8 +20,99 @@ function manager(
 }
 
 describe("AdventureComposer", () => {
-  it("shows a Cancel affordance while generating, without removing the form", () => {
-    render(AdventureComposer, { props: { manager: manager("generating") } });
+  it("starts at one line and expands the composer without native resize", async () => {
+    render(AdventureComposer, { props: { manager: manager("ready") } });
+    const textarea = screen.getByLabelText(
+      "What do you do?",
+    ) as HTMLTextAreaElement;
+    expect(textarea.rows).toBe(1);
+    expect(textarea.className).toContain("resize-none");
+    expect(textarea.className).toContain("text-base");
+    expect(screen.getByTestId("adventure-action-dock").className).toContain(
+      "max-h-[55%]",
+    );
+    await waitFor(() => expect(textarea.style.height).not.toBe(""));
+  });
+
+  it("keeps the composer and Send outside the scrollable extras", () => {
+    const m = manager("ready");
+    m.suggestedActions = ["Ask the innkeeper"];
+    render(AdventureComposer, { props: { manager: m } });
+
+    const dock = screen.getByTestId("adventure-action-dock");
+    const extras = screen.getByTestId("adventure-dock-extras");
+    const field = screen.getByLabelText("What do you do?");
+    const send = screen.getByRole("button", { name: "Submit action" });
+    expect(dock.className).toContain("overflow-hidden");
+    expect(extras.className).toContain("overflow-y-auto");
+    const suggestions = screen.getByTestId("adventure-suggested-actions");
+    expect(extras.contains(suggestions)).toBe(true);
+    expect(extras.contains(field)).toBe(false);
+    expect(extras.contains(send)).toBe(false);
+    expect(dock.contains(field)).toBe(true);
+    expect(dock.contains(send)).toBe(true);
+  });
+
+  it("hides phone suggestions while typing", async () => {
+    const m = manager("ready");
+    m.suggestedActions = ["Ask the innkeeper"];
+    render(AdventureComposer, { props: { manager: m, phone: true } });
+    const suggestions = screen.getByTestId("adventure-suggested-actions");
+    const field = screen.getByLabelText("What do you do?");
+    expect(suggestions.className).not.toBe("hidden");
+
+    await fireEvent.focus(field);
+    expect(suggestions.className).toBe("hidden");
+    expect(screen.getByRole("button", { name: "Submit action" })).toBeTruthy();
+
+    await fireEvent.blur(field);
+    expect(suggestions.className).not.toBe("hidden");
+  });
+
+  it("hides suggestions with a phone keyboard open", () => {
+    const m = manager("ready");
+    m.suggestedActions = ["Ask the innkeeper"];
+    render(AdventureComposer, {
+      props: { manager: m, phone: true, keyboardOpen: true },
+    });
+    const suggestions = screen.getByTestId("adventure-suggested-actions");
+    expect(suggestions.className).toBe("hidden");
+    expect(screen.getByLabelText("What do you do?")).toBeTruthy();
+  });
+
+  it("keeps free action visible beside a compact dropdown of suggested actions", () => {
+    const m = manager("ready");
+    m.suggestedActions = [
+      "Steady the shutter as Sela lifts it.",
+      "Ask Sela something before helping.",
+      "Decline or turn your attention elsewhere.",
+    ];
+    render(AdventureComposer, { props: { manager: m } });
+
+    const suggestions = screen.getByTestId("adventure-suggested-actions");
+    expect(suggestions.tagName).toBe("DETAILS");
+    expect((suggestions as HTMLDetailsElement).open).toBe(false);
+    expect(suggestions.className).not.toContain("overflow-x-auto");
+    const actionButtons = suggestions.querySelectorAll("button");
+    expect(actionButtons).toHaveLength(3);
+    expect(actionButtons[0].className).toContain("w-full");
+    expect(actionButtons[0].className).not.toContain("line-clamp");
+    expect(actionButtons[0].parentElement?.className).toContain("max-h-36");
+    expect(actionButtons[0].parentElement?.className).toContain(
+      "overflow-y-auto",
+    );
+    expect(screen.getByLabelText("What do you do?")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Submit action" })).toBeTruthy();
+    expect(screen.getByTestId("adventure-action-dock")).toBeTruthy();
+  });
+
+  it("shows a Cancel affordance and the selected action while generating", () => {
+    const m = manager("generating");
+    render(AdventureComposer, { props: { manager: m } });
+
+    expect(
+      screen.getByText("Playing: Cross the flooded causeway"),
+    ).toBeTruthy();
 
     // The field stays mounted (just hidden) so a focused element is never
     // yanked out from under the user — see the comment in the component for
@@ -62,11 +153,40 @@ describe("AdventureComposer", () => {
     m.suggestedActions = ["Search the wreckage"];
     render(AdventureComposer, { props: { manager: m } });
 
+    const suggestions = screen.getByTestId(
+      "adventure-suggested-actions",
+    ) as HTMLDetailsElement;
+    await fireEvent.click(suggestions.querySelector("summary")!);
+    expect(suggestions.open).toBe(true);
+
     await fireEvent.click(
       screen.getByRole("button", { name: "Search the wreckage" }),
     );
 
+    expect(m.submitSuggestedAction).toHaveBeenCalledOnce();
     expect(m.submitSuggestedAction).toHaveBeenCalledWith("Search the wreckage");
+  });
+
+  it("shows a control retry without allowing read-only actions", async () => {
+    const m = manager("ready");
+    m.readOnly = true;
+    m.session = { status: "active" };
+    m.suggestedActions = ["Steady the shutter"];
+    m.tryTakeControl = vi.fn().mockResolvedValue(true);
+    render(AdventureComposer, { props: { manager: m } });
+
+    expect(screen.getByText(/Another tab may be controlling/)).toBeTruthy();
+    const submit = screen.getByRole("button", { name: "Submit action" });
+    expect(submit.hasAttribute("disabled")).toBe(true);
+    const suggested = screen.getByTestId("adventure-suggested-actions");
+    expect(
+      (suggested.querySelector("button") as HTMLButtonElement).disabled,
+    ).toBe(true);
+
+    const retry = screen.getByRole("button", { name: "Try to take control" });
+    await fireEvent.click(retry);
+    expect(m.tryTakeControl).toHaveBeenCalledOnce();
+    expect(m.submitSuggestedAction).not.toHaveBeenCalled();
   });
 
   it.each(["awaiting-roll", "ready-to-resolve"] as const)(
@@ -90,6 +210,11 @@ describe("AdventureComposer", () => {
     m.suggestedActions = ["Search the wreckage"];
     const { rerender } = render(AdventureComposer, { props: { manager: m } });
 
+    const summary = screen
+      .getByTestId("adventure-suggested-actions")
+      .querySelector("summary");
+    expect(summary).not.toBeNull();
+    await fireEvent.click(summary!);
     const button = screen.getByRole("button", { name: "Search the wreckage" });
     button.focus();
     expect(document.activeElement).toBe(button);
@@ -105,5 +230,120 @@ describe("AdventureComposer", () => {
     // The button must still exist in the DOM (merely disabled elsewhere),
     // not be torn out — see the component comment for why that matters.
     expect(document.body.contains(button)).toBe(true);
+  });
+});
+
+it("offers retry for an incomplete opening and invokes the existing manager", async () => {
+  const m = manager("ready");
+  m.session = { turns: [], pendingRoll: null };
+  m.errorMessage = "Unable to load world context. Please retry.";
+  m.retryOpening = vi.fn(async () => {});
+  render(AdventureComposer, { props: { manager: m } });
+  await fireEvent.click(screen.getByRole("button", { name: "Retry opening" }));
+  expect(m.retryOpening).toHaveBeenCalledOnce();
+});
+
+it("keeps an opening retry unavailable in read-only play", () => {
+  const m = manager("ready");
+  m.session = { turns: [], pendingRoll: null };
+  m.readOnly = true;
+  m.errorMessage = "Unable to load world context. Please retry.";
+  render(AdventureComposer, { props: { manager: m } });
+  expect(screen.queryByRole("button", { name: "Retry opening" })).toBeNull();
+});
+
+it("offers opening recovery after reload even without a stored error", () => {
+  const m = manager("ready");
+  m.session = { turns: [], pendingRoll: null };
+  m.retryOpening = vi.fn(async () => {});
+  render(AdventureComposer, { props: { manager: m } });
+  expect(
+    (screen.getByRole("button", { name: "Retry opening" }) as HTMLButtonElement)
+      .disabled,
+  ).toBe(false);
+  expect(
+    (screen.getByRole("button", { name: "Submit action" }) as HTMLButtonElement)
+      .disabled,
+  ).toBe(true);
+});
+
+describe("AdventureComposer layout and chips", () => {
+  it("aligns the composer with the story column", () => {
+    const m = manager("ready");
+    m.suggestedActions = ["Ask the innkeeper"];
+    render(AdventureComposer, { props: { manager: m } });
+    const extras = screen.getByTestId("adventure-dock-extras");
+    const form = screen.getByTestId("adventure-free-action").closest("form")!;
+    for (const el of [extras, form]) {
+      expect(el.className).toContain("max-w-3xl");
+      expect(el.className).toContain("mx-auto");
+    }
+  });
+
+  it("lets chips use the wider dock while the input stays on the story column", () => {
+    const m = manager("ready");
+    m.suggestedActions = ["Ask the innkeeper"];
+    render(AdventureComposer, { props: { manager: m, suggestionChips: true } });
+    expect(screen.getByTestId("adventure-dock-extras").className).toContain(
+      "max-w-6xl",
+    );
+    expect(
+      screen.getByTestId("adventure-free-action").closest("form")!.className,
+    ).toContain("max-w-3xl");
+  });
+
+  describe("suggestion chips", () => {
+    it("shows every suggestion as a visible chip, not a collapsed list", async () => {
+      const m = manager("ready");
+      m.suggestedActions = ["Search the wreckage", "Call out to the ferryman"];
+      render(AdventureComposer, {
+        props: { manager: m, suggestionChips: true },
+      });
+      const group = screen.getByTestId("adventure-suggested-actions");
+      expect(group.tagName).toBe("DIV");
+      expect(group.querySelector("summary")).toBeNull();
+      expect(group.className).not.toContain("hidden");
+      await fireEvent.click(
+        screen.getByRole("button", { name: "Call out to the ferryman" }),
+      );
+      expect(m.submitSuggestedAction).toHaveBeenCalledWith(
+        "Call out to the ferryman",
+      );
+    });
+
+    it("keeps the collapsed list on phones and for the default", () => {
+      const m = manager("ready");
+      m.suggestedActions = ["Search the wreckage"];
+      render(AdventureComposer, { props: { manager: m, phone: true } });
+      expect(screen.getByTestId("adventure-suggested-actions").tagName).toBe(
+        "DETAILS",
+      );
+    });
+
+    it("disables chips when read-only and hides them while a roll is pending", () => {
+      const readOnly = manager("ready");
+      readOnly.readOnly = true;
+      readOnly.suggestedActions = ["Search the wreckage"];
+      const { unmount } = render(AdventureComposer, {
+        props: { manager: readOnly, suggestionChips: true },
+      });
+      expect(
+        (
+          screen.getByRole("button", {
+            name: "Search the wreckage",
+          }) as HTMLButtonElement
+        ).disabled,
+      ).toBe(true);
+      unmount();
+
+      const rolling = manager("awaiting-roll");
+      rolling.suggestedActions = ["Search the wreckage"];
+      render(AdventureComposer, {
+        props: { manager: rolling, suggestionChips: true },
+      });
+      expect(screen.getByTestId("adventure-suggested-actions").className).toBe(
+        "hidden",
+      );
+    });
   });
 });

@@ -734,6 +734,45 @@ describe("StatSheetEditor field keys (#3180)", () => {
     );
   });
 
+  it("normalises contradictory bounds by raising max to meet min and clamping value", async () => {
+    render(StatSheetEditor, {
+      entity: buildEntity({
+        statSheet: {
+          fields: [
+            {
+              id: "hp",
+              label: "HP",
+              type: "counter",
+              min: 0,
+              max: 2,
+              value: 2,
+            },
+          ],
+        },
+      }),
+    });
+
+    const min = screen.getByLabelText("Min") as HTMLInputElement;
+    await fireEvent.input(min, { target: { value: "5" } });
+    await fireEvent.change(min);
+
+    expect(updateEntity).toHaveBeenLastCalledWith(
+      "goblin-1",
+      expect.objectContaining({
+        statSheet: expect.objectContaining({
+          fields: [
+            expect.objectContaining({
+              id: "hp",
+              min: 5,
+              max: 5,
+              value: 5,
+            }),
+          ],
+        }),
+      }),
+    );
+  });
+
   it("assigns a readable unique key to a new field", async () => {
     render(StatSheetEditor, { entity: buildEntity() });
 
@@ -846,5 +885,175 @@ describe("StatSheetEditor field keys (#3180)", () => {
         }),
       }),
     );
+  });
+
+  describe("dice-pool field configuration", () => {
+    it("initializes defaults when switching a field type to dice-pool", async () => {
+      const entity = buildEntity({
+        statSheet: {
+          fields: [{ id: "f1", label: "Skill", type: "text" }],
+        },
+      });
+      render(StatSheetEditor, { entity });
+      updateEntity.mockClear();
+
+      const typeSelect = screen.getByLabelText("Field type");
+      await fireEvent.change(typeSelect, { target: { value: "dice-pool" } });
+
+      expect(updateEntity).toHaveBeenCalledWith(
+        "goblin-1",
+        expect.objectContaining({
+          statSheet: expect.objectContaining({
+            fields: [
+              expect.objectContaining({
+                id: "f1",
+                type: "dice-pool",
+                value: 3,
+                startValue: 3,
+                formula: "d6",
+                min: 0,
+                step: 1,
+                allowDieChange: true,
+              }),
+            ],
+          }),
+        }),
+      );
+    });
+
+    it("renders dice-pool configuration inputs and updates properties", async () => {
+      const entity = buildEntity({
+        statSheet: {
+          fields: [
+            {
+              id: "f1",
+              label: "Action Pool",
+              type: "dice-pool",
+              value: 3,
+              formula: "d6",
+              min: 1,
+              max: 10,
+              step: 1,
+              allowDieChange: true,
+            },
+          ],
+        },
+      });
+      render(StatSheetEditor, { entity });
+      updateEntity.mockClear();
+
+      expect(screen.getByTestId("stat-sheet-editor-dice-pool")).toBeTruthy();
+
+      const dieSelect = screen.getByLabelText("Die type for Action Pool");
+      await fireEvent.change(dieSelect, { target: { value: "d10" } });
+
+      expect(updateEntity).toHaveBeenCalledWith(
+        "goblin-1",
+        expect.objectContaining({
+          statSheet: expect.objectContaining({
+            fields: [expect.objectContaining({ id: "f1", formula: "d10" })],
+          }),
+        }),
+      );
+
+      updateEntity.mockClear();
+      const allowChange = screen.getByLabelText(
+        "Allow player to change die type for Action Pool",
+      );
+      await fireEvent.click(allowChange);
+
+      expect(updateEntity).toHaveBeenCalledWith(
+        "goblin-1",
+        expect.objectContaining({
+          statSheet: expect.objectContaining({
+            fields: [
+              expect.objectContaining({ id: "f1", allowDieChange: false }),
+            ],
+          }),
+        }),
+      );
+
+      updateEntity.mockClear();
+      const countInput = screen.getByLabelText(
+        "Default pool count for Action Pool",
+      );
+      await fireEvent.input(countInput, { target: { value: "5" } });
+      expect(updateEntity).toHaveBeenCalledWith(
+        "goblin-1",
+        expect.objectContaining({
+          statSheet: expect.objectContaining({
+            fields: [
+              expect.objectContaining({ id: "f1", value: 5, startValue: 5 }),
+            ],
+          }),
+        }),
+      );
+
+      updateEntity.mockClear();
+      await fireEvent.input(countInput, { target: { value: "2.5" } });
+      expect(updateEntity).toHaveBeenCalledWith(
+        "goblin-1",
+        expect.objectContaining({
+          statSheet: expect.objectContaining({
+            fields: [
+              expect.objectContaining({ id: "f1", value: 2, startValue: 2 }),
+            ],
+          }),
+        }),
+      );
+
+      updateEntity.mockClear();
+      const stepInput = screen.getByLabelText("Step size for Action Pool");
+      await fireEvent.input(stepInput, { target: { value: "-2" } });
+      expect(updateEntity).toHaveBeenCalledWith(
+        "goblin-1",
+        expect.objectContaining({
+          statSheet: expect.objectContaining({
+            fields: [expect.objectContaining({ id: "f1", step: 2 })],
+          }),
+        }),
+      );
+    });
+
+    it("normalises non-integer values when converting an existing field to dice-pool", async () => {
+      const entity = buildEntity({
+        statSheet: {
+          fields: [
+            {
+              id: "f1",
+              label: "Mana Pool",
+              type: "counter",
+              value: 2.5,
+              min: 0.5,
+              max: 10.8,
+              step: 0.5,
+            },
+          ],
+        },
+      });
+      render(StatSheetEditor, { entity });
+
+      const typeSelect = screen.getByLabelText("Field type");
+      await fireEvent.change(typeSelect, { target: { value: "dice-pool" } });
+
+      expect(updateEntity).toHaveBeenCalledWith(
+        "goblin-1",
+        expect.objectContaining({
+          statSheet: expect.objectContaining({
+            fields: [
+              expect.objectContaining({
+                id: "f1",
+                type: "dice-pool",
+                value: 2,
+                startValue: 2,
+                min: 0,
+                max: 10,
+                step: 1,
+              }),
+            ],
+          }),
+        }),
+      );
+    });
   });
 });

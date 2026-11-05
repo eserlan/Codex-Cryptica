@@ -34,7 +34,8 @@ function manager() {
         knownFacts: [],
         relationships: [],
       },
-      pendingRoll: undefined,
+      turns: [],
+      pendingRoll: null,
       provisionalFacts: [],
       resourceCounters: [],
       dicePresets: [],
@@ -105,6 +106,26 @@ afterEach(() => {
 });
 
 describe("AdventureFocusPlay", () => {
+  it("uses a compact mobile shell with the action dock outside the narrative scroll", () => {
+    render(AdventureFocusPlay, { props: props() });
+
+    const surface = screen.getByTestId("adventure-play-surface");
+    const viewport = screen.getByTestId("adventure-play-viewport");
+    const dock = screen.getByTestId("adventure-action-dock");
+    const title = screen.getByRole("heading", { name: "The Drowned March" });
+
+    expect(surface.className).toContain("h-[100dvh]");
+    expect(surface.className).toContain("fixed");
+    expect(title.className).toContain("truncate");
+    expect(title.getAttribute("title")).toBe("The Drowned March");
+    expect(viewport.contains(dock)).toBe(false);
+    expect(surface.contains(dock)).toBe(true);
+    expect(
+      screen.getByRole("button", { name: "Adventure tools" }),
+    ).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Submit action" })).toBeTruthy();
+  });
+
   it("follows newly generated adventure events to the bottom", async () => {
     const scrollTo = vi.fn();
     Object.defineProperty(HTMLElement.prototype, "scrollTo", {
@@ -163,7 +184,7 @@ describe("AdventureFocusPlay", () => {
   it("shows the current situation without opening the tools panel", () => {
     render(AdventureFocusPlay, { props: props() });
 
-    expect(screen.getByText("The lantern road")).toBeTruthy();
+    expect(screen.getAllByText("The lantern road").length).toBeGreaterThan(0);
     expect(screen.getByText("The ward is failing")).toBeTruthy();
   });
 
@@ -196,7 +217,9 @@ describe("AdventureFocusPlay", () => {
     // why: a lg: viewport breakpoint still fires even when this surface is
     // hosted in the app's own narrow sidebar, so it can never rely on an
     // actual side-by-side split reading as usable.
-    expect(screen.queryByLabelText("Adventure tools")).toBeNull();
+    expect(
+      screen.queryByRole("complementary", { name: "Adventure tools" }),
+    ).toBeNull();
     expect(screen.queryByText("Dice presets")).toBeNull();
     expect(screen.queryByText("Resource trackers")).toBeNull();
 
@@ -204,7 +227,9 @@ describe("AdventureFocusPlay", () => {
       screen.getByRole("button", { name: "Adventure tools" }),
     );
 
-    expect(screen.getByLabelText("Adventure tools")).toBeTruthy();
+    expect(
+      screen.getByRole("complementary", { name: "Adventure tools" }),
+    ).toBeTruthy();
     expect(screen.getByText("Dice presets")).toBeTruthy();
     expect(screen.getByText("Resource trackers")).toBeTruthy();
   });
@@ -215,18 +240,26 @@ describe("AdventureFocusPlay", () => {
     await fireEvent.click(
       screen.getByRole("button", { name: "Adventure tools" }),
     );
-    expect(screen.getByLabelText("Adventure tools")).toBeTruthy();
+    expect(
+      screen.getByRole("complementary", { name: "Adventure tools" }),
+    ).toBeTruthy();
 
     await fireEvent.click(screen.getAllByLabelText("Close adventure tools")[0]);
-    expect(screen.queryByLabelText("Adventure tools")).toBeNull();
+    expect(
+      screen.queryByRole("complementary", { name: "Adventure tools" }),
+    ).toBeNull();
 
     await fireEvent.click(
       screen.getByRole("button", { name: "Adventure tools" }),
     );
-    expect(screen.getByLabelText("Adventure tools")).toBeTruthy();
+    expect(
+      screen.getByRole("complementary", { name: "Adventure tools" }),
+    ).toBeTruthy();
 
     await fireEvent.keyDown(window, { key: "Escape" });
-    expect(screen.queryByLabelText("Adventure tools")).toBeNull();
+    expect(
+      screen.queryByRole("complementary", { name: "Adventure tools" }),
+    ).toBeNull();
   });
 
   it("keeps the adventure surface visible when fullscreen is denied", async () => {
@@ -311,5 +344,169 @@ describe("AdventureFocusPlay", () => {
     await fireEvent.click(leaveButton);
 
     expect(m.close).toHaveBeenCalledOnce();
+  });
+
+  it("lists situation controls in Adventure tools, not the main window", async () => {
+    const m = manager();
+    m.session.scenarioCollection = {
+      focusedScenarioId: null,
+      items: [
+        {
+          id: "lead-1",
+          knowledge: "heard",
+          status: "open",
+          playerVisible: { rumour: "A drowned bell", lead: "The quay" },
+          events: [],
+        },
+      ],
+    };
+    render(AdventureFocusPlay, { props: props({ manager: m }) });
+    expect(screen.queryByTestId("adventure-situation-settings")).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Mark as concluded" }),
+    ).toBeNull();
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Adventure tools" }),
+    );
+    expect(screen.getByTestId("adventure-situation-settings")).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Mark as concluded" }),
+    ).toBeTruthy();
+  });
+
+  it("shows suggested actions as chips above phone width", () => {
+    const m = manager();
+    m.suggestedActions = ["Search the wreckage"];
+    render(AdventureFocusPlay, { props: props({ manager: m }) });
+    const suggestions = screen.getByTestId("adventure-suggested-actions");
+    expect(suggestions.tagName).toBe("DIV");
+    expect(suggestions.querySelector("summary")).toBeNull();
+  });
+
+  describe("at phone width", () => {
+    let viewport: EventTarget & { height: number; offsetTop: number };
+    const originalMatchMedia = window.matchMedia;
+    const originalViewport = Object.getOwnPropertyDescriptor(
+      window,
+      "visualViewport",
+    );
+
+    beforeEach(() => {
+      window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+        matches: query.includes("639px"),
+        media: query,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      })) as any;
+      viewport = Object.assign(new EventTarget(), {
+        height: window.innerHeight,
+        offsetTop: 0,
+      });
+      Object.defineProperty(window, "visualViewport", {
+        configurable: true,
+        value: viewport,
+      });
+    });
+
+    afterEach(() => {
+      window.matchMedia = originalMatchMedia;
+      if (originalViewport) {
+        Object.defineProperty(window, "visualViewport", originalViewport);
+      } else {
+        Reflect.deleteProperty(window, "visualViewport");
+      }
+    });
+
+    it("keeps suggested actions in the collapsed list", () => {
+      const m = manager();
+      m.suggestedActions = ["Search the wreckage"];
+      render(AdventureFocusPlay, { props: props({ manager: m }) });
+      expect(screen.getByTestId("adventure-suggested-actions").tagName).toBe(
+        "DETAILS",
+      );
+    });
+
+    it("renders as a modal dialog outside any transformed host and takes focus", async () => {
+      const outside = document.createElement("button");
+      document.body.appendChild(outside);
+      outside.focus();
+      const { unmount } = render(AdventureFocusPlay, { props: props() });
+      const surface = screen.getByTestId("adventure-play-surface");
+      expect(surface.parentElement).toBe(document.body);
+      expect(surface.getAttribute("role")).toBe("dialog");
+      expect(surface.getAttribute("aria-modal")).toBe("true");
+      await waitFor(() =>
+        expect(surface.contains(document.activeElement)).toBe(true),
+      );
+      unmount();
+      expect(document.activeElement).toBe(outside);
+      outside.remove();
+    });
+
+    it("uses visualViewport height even when the change is too small for keyboard detection", async () => {
+      render(AdventureFocusPlay, { props: props() });
+      const surface = screen.getByTestId("adventure-play-surface");
+      viewport.height = window.innerHeight - 80;
+      viewport.offsetTop = 12;
+      viewport.dispatchEvent(new Event("resize"));
+      await waitFor(() => {
+        expect(surface.style.top).toBe("12px");
+        expect(surface.style.height).toBe(window.innerHeight - 80 + "px");
+      });
+    });
+
+    it("leaves sizing to the browser when it resizes the page for the keyboard", async () => {
+      render(AdventureFocusPlay, { props: props() });
+      const surface = screen.getByTestId("adventure-play-surface");
+      // interactive-widget=resizes-content: layout and visual viewports shrink
+      // together, so there is no gap and no measured height to apply.
+      const original = Object.getOwnPropertyDescriptor(window, "innerHeight");
+      Object.defineProperty(window, "innerHeight", {
+        configurable: true,
+        value: 400,
+      });
+      try {
+        viewport.height = 400;
+        viewport.offsetTop = 0;
+        viewport.dispatchEvent(new Event("resize"));
+        await waitFor(() =>
+          expect(surface.getAttribute("style") ?? "").toBe(""),
+        );
+      } finally {
+        if (original) Object.defineProperty(window, "innerHeight", original);
+      }
+    });
+
+    it("drops the pinned height once the keyboard gap closes", async () => {
+      render(AdventureFocusPlay, { props: props() });
+      const surface = screen.getByTestId("adventure-play-surface");
+      viewport.height = window.innerHeight - 300;
+      viewport.dispatchEvent(new Event("resize"));
+      await waitFor(() =>
+        expect(surface.style.height).toBe(window.innerHeight - 300 + "px"),
+      );
+      viewport.height = window.innerHeight;
+      viewport.dispatchEvent(new Event("resize"));
+      await waitFor(() => expect(surface.style.height).toBe(""));
+    });
+
+    it("pins to the visible viewport when the keyboard reduces it", async () => {
+      render(AdventureFocusPlay, { props: props() });
+      const surface = screen.getByTestId("adventure-play-surface");
+      viewport.height = window.innerHeight - 300;
+      viewport.offsetTop = 40;
+      viewport.dispatchEvent(new Event("resize"));
+      await waitFor(() => {
+        expect(surface.style.top).toBe("40px");
+        expect(surface.style.height).toBe(window.innerHeight - 300 + "px");
+      });
+    });
+  });
+
+  it("is not a dialog and stays in place on wider screens", () => {
+    render(AdventureFocusPlay, { props: props() });
+    const surface = screen.getByTestId("adventure-play-surface");
+    expect(surface.getAttribute("role")).toBeNull();
+    expect(surface.parentElement).not.toBe(document.body);
   });
 });

@@ -1,203 +1,52 @@
 <script lang="ts">
-  import { tick } from "svelte";
   import { resolve } from "$app/paths";
   import { page } from "$app/state";
-  import { vault } from "#lib/stores/vault.svelte.js";
   import { categories } from "#lib/stores/categories.svelte.js";
+  import { vault } from "#lib/stores/vault.svelte.js";
   import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
   import { guestVault } from "#lib/stores/guest-vault.svelte.js";
-  import { getIconClass } from "#lib/utils/icon.js";
   import {
     filterEntities,
     countEntityTypes,
-    createEntityTextSearchRunner,
-    parseEntitySearchQuery,
-    evaluateEntityMissingFields,
-    type TableColumnFilters,
   } from "#lib/components/explorer/entityListFiltering.js";
+  import { EntityContentSearch } from "#lib/components/explorer/entity-content-search.svelte.js";
   import { searchService } from "@codex/search-orchestrator";
-  import type { SearchIndexProgress } from "@codex/search-engine";
   import EntityTable from "#lib/components/table/EntityTable.svelte";
-  import EntityTableSearch from "#lib/components/table/EntityTableSearch.svelte";
   import TableContextMenu from "#lib/components/table/TableContextMenu.svelte";
-  import TableViewPresets from "#lib/components/table/TableViewPresets.svelte";
-  import VaultAuditPanel from "#lib/components/table/VaultAuditPanel.svelte";
-  import {
-    computeVaultAuditCounts,
-    type VaultAuditPreset,
-  } from "#lib/components/table/vaultAudit.js";
-
-  import {
-    handleChangeType,
-    handleDeleteSelected,
-    openBulkReport,
-    openBulkLabels,
-    handleManageLabels,
-    withoutIds,
-  } from "#lib/components/table/table-bulk-actions.js";
+  import { computeVaultAuditCounts } from "#lib/components/table/vaultAudit.js";
   import { computeVaultDistribution } from "#lib/components/table/vaultDistribution.js";
-  import type { ViewPreset } from "#lib/stores/view-presets.js";
+  import { sortEntities } from "#lib/components/table/entityTableSort.js";
   import EmptyState from "#lib/components/ui/EmptyState.svelte";
   import {
-    sortEntities,
-    nextSortState,
-    type SortKey,
-    type SortState,
-    type ConnectionSummary,
-  } from "#lib/components/table/entityTableSort.js";
-  import { browserPerformanceRecorder } from "#lib/services/performance/browser-performance-capture.js";
-  import type {
-    PerformanceOperation,
-    PerformanceOperationHandle,
-  } from "@codex/performance-observability";
+    computeConnectionCounts,
+    countIncompleteEntities,
+  } from "./table-data.js";
+  import { TableFilters } from "./table-filters.svelte.js";
+  import { TableSelection } from "./table-selection.svelte.js";
+  import { TablePerformance } from "./table-performance.js";
+  import TableControls from "./TableControls.svelte";
+  import TableSelectionToolbar from "./TableSelectionToolbar.svelte";
 
   // Peer view (like /map, /timeline): reads the already-active vault from the store.
   const vaultId = $derived(vault.activeVaultId);
-
-  let searchQuery = $state("");
-  let typeFilters = $state<Set<string>>(new Set());
-  let labelFilters = $state<Set<string>>(new Set());
-  let showIncompleteOnly = $state(false);
-  let columnFilters = $state<TableColumnFilters>({});
-  let showAuditPanel = $state(false);
-  let activeAuditPresetId = $state<string | null>(null);
-  let auditPanelTab = $state<"findings" | "distribution">("findings");
-
-  $effect(() => {
-    const mode = page.url.searchParams.get("mode");
-    const audit = page.url.searchParams.get("audit");
-    if (mode === "audit" || audit === "true") {
-      showAuditPanel = true;
-      auditPanelTab = "findings";
-    } else if (mode === "overview") {
-      showAuditPanel = true;
-      auditPanelTab = "distribution";
-    } else {
-      showAuditPanel = false;
-      auditPanelTab = "findings";
-    }
-  });
-  let textMatchIds = $state<Set<string> | null>(null);
-  let textSearchPending = $state(false);
-  let textSearchUnavailable = $state(false);
-  let textSearchError = $state<string | null>(null);
-  let indexProgress = $state<SearchIndexProgress>(
-    searchService.getIndexProgress(),
-  );
-  let latestIndexStatus = searchService.getIndexProgress().status;
-  let indexStatusVersion = $state(0);
-  const parsedSearchQuery = $derived(parseEntitySearchQuery(searchQuery));
-  let sort = $state<SortState>({ key: "title", direction: "asc" });
-  let tableOpenRecorded = false;
-  const tableOpenSpan = browserPerformanceRecorder.start("table_open");
-
   const totalEntities = $derived(vault.allEntities.length);
-
-  const graphHref = $derived(
-    sessionModeStore.isGuestMode && guestVault.publishId
-      ? resolve("/(app)/guest/[publishId]", {
-          publishId: guestVault.publishId,
-        })
-      : resolve("/(app)"),
+  const performance: TablePerformance = new TablePerformance(() => ({
+    entityCount: totalEntities,
+    resultCount: rows.length,
+  }));
+  const filters = new TableFilters(performance.measure);
+  const contentSearch = new EntityContentSearch(() => searchService);
+  contentSearch.connect(
+    () => filters.searchQuery,
+    () => totalEntities,
   );
 
-  $effect(() => {
-    const unsubscribe = searchService.subscribeIndexProgress((progress) => {
-      if (progress.status !== latestIndexStatus) {
-        latestIndexStatus = progress.status;
-        indexStatusVersion += 1;
-      }
-      indexProgress = progress;
-    });
-    return unsubscribe;
-  });
-
-  $effect(() => {
-    const query = searchQuery;
-    const entityCount = vault.allEntities.length;
-    void indexStatusVersion;
-    const indexStatus = latestIndexStatus;
-    const { textQuery } = parsedSearchQuery;
-    if (!textQuery) {
-      textMatchIds = null;
-      textSearchPending = false;
-      textSearchUnavailable = false;
-      textSearchError = null;
-      return;
-    }
-
-    if (indexStatus === "idle") {
-      textMatchIds = null;
-      textSearchPending = false;
-      textSearchUnavailable = true;
-      textSearchError = null;
-      return;
-    }
-
-    textMatchIds = null;
-    textSearchPending = true;
-    textSearchUnavailable = false;
-    textSearchError = null;
-    const searchRunner = createEntityTextSearchRunner(searchService);
-    void searchRunner.search(query, entityCount).then((result) => {
-      if (!result) return;
-      textSearchPending = false;
-      textMatchIds = result.error ? null : result.matchIds;
-      textSearchUnavailable = result.error !== null;
-      textSearchError = result.error?.message ?? null;
-    });
-
-    return () => {
-      searchRunner.cancel();
-    };
-  });
-
-  const connectionCounts = $derived.by(() => {
-    const inboundConnections = vault.inboundConnections ?? {};
-
-    // ⚡ Bolt Optimization: Replace Object.fromEntries(vault.allEntities.map(...)) with an imperative loop.
-    // Also replaces entity.connections?.filter(...).length with an imperative loop
-    // to prevent intermediate array allocations and reduce GC overhead during reactive updates.
-    const result: Record<string, ConnectionSummary> = {};
-    const entities = vault.allEntities;
-    const len = entities.length;
-
-    for (let i = 0; i < len; i++) {
-      const entity = entities[i];
-      const inbound = inboundConnections[entity.id]?.length ?? 0;
-
-      let outbound = 0;
-      if (entity.connections) {
-        const connLen = entity.connections.length;
-        for (let j = 0; j < connLen; j++) {
-          if (entity.connections[j].target) {
-            outbound++;
-          }
-        }
-      }
-
-      result[entity.id] = { inbound, outbound, total: inbound + outbound };
-    }
-
-    return result;
-  });
-
-  const incompleteCount = $derived.by(() => {
-    let count = 0;
-    const entities = vault.allEntities;
-    for (let i = 0; i < entities.length; i++) {
-      if (
-        evaluateEntityMissingFields(
-          entities[i],
-          connectionCounts[entities[i].id],
-        ).isIncomplete
-      ) {
-        count++;
-      }
-    }
-    return count;
-  });
-
+  const connectionCounts = $derived(
+    computeConnectionCounts(vault.allEntities, vault.inboundConnections ?? {}),
+  );
+  const incompleteCount = $derived(
+    countIncompleteEntities(vault.allEntities, connectionCounts),
+  );
   const auditCounts = $derived(
     computeVaultAuditCounts(vault.allEntities, connectionCounts),
   );
@@ -207,413 +56,55 @@
       showDraftsOnly: false,
     }),
   );
-
   const filtered = $derived(
     filterEntities(vault.allEntities, {
-      searchQuery,
-      typeFilters,
-      labelFilters,
+      searchQuery: filters.searchQuery,
+      typeFilters: filters.typeFilters,
+      labelFilters: filters.labelFilters,
       allowedTypes: null,
       showDraftsOnly: false,
-      textMatchIds,
-      textSearchPending,
-      textSearchUnavailable,
-      showIncompleteOnly,
-      columnFilters,
+      textMatchIds: contentSearch.textMatchIds,
+      textSearchPending: contentSearch.textSearchPending,
+      textSearchUnavailable: contentSearch.textSearchUnavailable,
+      showIncompleteOnly: filters.showIncompleteOnly,
+      columnFilters: filters.columnFilters,
       connectionCounts,
     }),
   );
-
   const distributionSummary = $derived(
     computeVaultDistribution(vault.allEntities, filtered, categories.list),
   );
 
-  const searchStatusMessage = $derived(
-    textSearchPending
-      ? "Searching indexed content…"
-      : textSearchError
-        ? "Content search is temporarily unavailable; matching titles, aliases, and labels."
-        : indexProgress.isPartial && parsedSearchQuery.textQuery
-          ? "Search is still indexing; results will update as indexing finishes."
-          : null,
+  const rows = $derived(sortEntities(filtered, filters.sort, connectionCounts));
+  const selection = new TableSelection(() => rows);
+  const graphHref = $derived(
+    sessionModeStore.isGuestMode && guestVault.publishId
+      ? resolve("/(app)/guest/[publishId]", { publishId: guestVault.publishId })
+      : resolve("/(app)"),
   );
 
-  const rows = $derived(sortEntities(filtered, sort, connectionCounts));
-
-  async function completeAfterRender(span: PerformanceOperationHandle) {
-    await tick();
-    await new Promise<void>((resolve) =>
-      requestAnimationFrame(() => resolve()),
-    );
-    span.complete(() => ({
-      entityCount: totalEntities,
-      resultCount: rows.length,
-      domNodeCount: document.querySelectorAll("[data-testid=entity-table-row]")
-        .length,
-    }));
-  }
-
-  function measureTableOperation(
-    operation: PerformanceOperation,
-    update: () => void,
-  ) {
-    const span = browserPerformanceRecorder.start(operation);
-    update();
-    void completeAfterRender(span);
-  }
-
-  $effect(() => {
-    if (!tableOpenRecorded && vault.isInitialized && vaultId) {
-      tableOpenRecorded = true;
-      void completeAfterRender(tableOpenSpan);
-    }
-  });
-
-  // ─── Row selection + bulk actions ───────────────────────────────────────
-  let selectedIds = $state<Set<string>>(new Set());
-  let lastSelectedId = $state<string | null>(null);
-  let contextMenu = $state<{
-    x: number;
-    y: number;
-    targetIds: string[];
-  } | null>(null);
-  let isCommitting = $state(false);
-
-  // Selection respects the current filtered set: clear it whenever the filters
-  // change so we never act on rows the user can no longer see. (Sorting keeps
-  // the same set, so it doesn't clear.)
-  $effect(() => {
-    void searchQuery;
-    void typeFilters;
-    void labelFilters;
-    void showIncompleteOnly;
-    void columnFilters;
-    selectedIds = new Set();
-    lastSelectedId = null;
-    contextMenu = null;
-  });
-
-  const selectedVisible = $derived(rows.filter((e) => selectedIds.has(e.id)));
-  const allSelected = $derived(
-    rows.length > 0 && rows.every((e) => selectedIds.has(e.id)),
-  );
-  const someSelected = $derived(selectedVisible.length > 0 && !allSelected);
-
-  function toggleRow(
-    id: string,
-    options?: { shift?: boolean; ctrl?: boolean },
-  ) {
-    const next = new Set(selectedIds);
-    const isSelected = next.has(id);
-
-    if (options?.shift && lastSelectedId && lastSelectedId !== id) {
-      const currentIndex = rows.findIndex((e) => e.id === id);
-      const anchorIndex = rows.findIndex((e) => e.id === lastSelectedId);
-
-      if (currentIndex !== -1 && anchorIndex !== -1) {
-        const start = Math.min(currentIndex, anchorIndex);
-        const end = Math.max(currentIndex, anchorIndex);
-        const shouldSelect = selectedIds.has(lastSelectedId);
-
-        for (let i = start; i <= end; i++) {
-          const rowId = rows[i].id;
-          if (shouldSelect) {
-            next.add(rowId);
-          } else {
-            next.delete(rowId);
-          }
-        }
-      }
-    } else {
-      if (isSelected) {
-        next.delete(id);
-        if (lastSelectedId === id) lastSelectedId = null;
-      } else {
-        next.add(id);
-        lastSelectedId = id;
-      }
-    }
-    selectedIds = next;
-  }
-
-  function toggleAll() {
-    if (allSelected) {
-      selectedIds = new Set();
-      lastSelectedId = null;
-    } else {
-      selectedIds = new Set(rows.map((e) => e.id));
-      lastSelectedId = rows.length > 0 ? rows[0].id : null;
-    }
-  }
-
-  function clearSelection() {
-    selectedIds = new Set();
-    lastSelectedId = null;
-  }
-
-  function handleKeyDown(event: KeyboardEvent) {
-    if (event.key === "Escape") {
-      if (contextMenu) {
-        contextMenu = null;
-      } else {
-        clearSelection();
-      }
-    }
-  }
-
-  function handleRowContextMenu(id: string, x: number, y: number) {
-    const next = new Set(selectedIds);
-    if (!next.has(id)) {
-      next.clear();
-      next.add(id);
-      lastSelectedId = id;
-      selectedIds = next;
-    }
-    contextMenu = {
-      x,
-      y,
-      targetIds: Array.from(selectedIds),
-    };
-  }
-
-  function _handleManageLabels() {
-    if (!contextMenu) return;
-    handleManageLabels(contextMenu.targetIds);
-  }
-
-  function _handleChangeType(type: string) {
-    if (!contextMenu) return;
-    handleChangeType(type, contextMenu.targetIds, isCommitting, (c) => {
-      isCommitting = c;
-    });
-  }
-
-  function _handleDeleteSelected() {
-    if (!contextMenu) return;
-    handleDeleteSelected(
-      contextMenu.targetIds,
-      isCommitting,
-      (c) => {
-        isCommitting = c;
-      },
-      (succeededIds) => {
-        selectedIds = withoutIds(new Set(selectedIds), succeededIds);
-      },
-      clearSelection,
-    );
-  }
-
-  function _openBulkReport() {
-    openBulkReport(selectedVisible);
-  }
-
-  function _openBulkLabels() {
-    openBulkLabels(selectedVisible);
-  }
-
-  function handleSort(key: SortKey) {
-    measureTableOperation("table_sort", () => {
-      sort = nextSortState(sort, key);
-    });
-  }
-
-  function toggleType(type: string) {
-    measureTableOperation("table_filter", () => {
-      const next = new Set(typeFilters);
-      if (next.has(type)) {
-        next.delete(type);
-      } else {
-        next.add(type);
-      }
-      typeFilters = next;
-    });
-  }
-
-  function toggleLabel(label: string) {
-    measureTableOperation("table_filter", () => {
-      const next = new Set(labelFilters);
-      if (next.has(label)) {
-        next.delete(label);
-      } else {
-        next.add(label);
-      }
-      labelFilters = next;
-    });
-  }
-
-  function toggleIncompleteOnly() {
-    measureTableOperation("table_filter", () => {
-      showIncompleteOnly = !showIncompleteOnly;
-    });
-  }
-
-  function handleUpdateColumnFilters(newFilters: TableColumnFilters) {
-    measureTableOperation("table_filter", () => {
-      columnFilters = newFilters;
-    });
-  }
-
-  function toggleAuditPanel() {
-    showAuditPanel = !showAuditPanel;
-  }
-
-  function handleApplyAuditPreset(preset: VaultAuditPreset) {
-    measureTableOperation("table_filter", () => {
-      activeAuditPresetId = preset.id;
-      searchQuery = "";
-      labelFilters = new Set();
-      if (preset.typeFilter) {
-        typeFilters = new Set([preset.typeFilter]);
-      } else {
-        typeFilters = new Set();
-      }
-      showIncompleteOnly = preset.showIncompleteOnly ?? false;
-      columnFilters = preset.columnFilters ? { ...preset.columnFilters } : {};
-    });
-  }
-
-  function handleAuditDrillDown(
-    finding:
-      | "missing_images"
-      | "missing_descriptions"
-      | "zero_connections"
-      | "unlabelled"
-      | "incomplete",
-  ) {
-    measureTableOperation("table_filter", () => {
-      activeAuditPresetId = null;
-      searchQuery = "";
-      typeFilters = new Set();
-      labelFilters = new Set();
-
-      if (finding === "missing_images") {
-        showIncompleteOnly = false;
-        columnFilters = { imageMode: "missing_image" };
-      } else if (finding === "missing_descriptions") {
-        showIncompleteOnly = false;
-        columnFilters = { summaryMode: "missing_summary" };
-      } else if (finding === "zero_connections") {
-        showIncompleteOnly = false;
-        columnFilters = { connectionsMode: "zero" };
-      } else if (finding === "unlabelled") {
-        showIncompleteOnly = false;
-        columnFilters = { labelMode: "missing" };
-      } else if (finding === "incomplete") {
-        showIncompleteOnly = true;
-        columnFilters = {};
-      }
-    });
-  }
-
-  function handleSelectDistributionCategory(typeId: string) {
-    measureTableOperation("table_filter", () => {
-      activeAuditPresetId = null;
-      if (typeFilters.size === 1 && typeFilters.has(typeId)) {
-        typeFilters = new Set();
-      } else {
-        typeFilters = new Set([typeId]);
-      }
-    });
-  }
-
-  function handleSelectDistributionLabel(label: string) {
-    measureTableOperation("table_filter", () => {
-      activeAuditPresetId = null;
-      if (labelFilters.size === 1 && labelFilters.has(label)) {
-        labelFilters = new Set();
-      } else {
-        labelFilters = new Set([label]);
-      }
-    });
-  }
-
-  function handleSelectDistributionUnlabelled() {
-    measureTableOperation("table_filter", () => {
-      activeAuditPresetId = null;
-      labelFilters = new Set();
-      columnFilters = {
-        ...columnFilters,
-        labelMode: columnFilters.labelMode === "missing" ? "all" : "missing",
-      };
-    });
-  }
-
-  function clearFilters() {
-    measureTableOperation("table_filter", () => {
-      searchQuery = "";
-      typeFilters = new Set();
-      labelFilters = new Set();
-      showIncompleteOnly = false;
-      columnFilters = {};
-      activeAuditPresetId = null;
-    });
-  }
-
-  function setSearchQuery(value: string) {
-    measureTableOperation("table_filter", () => {
-      searchQuery = value;
-    });
-  }
-
-  let showMobileFilters = $state(false);
-  const hasActiveColumnFilters = $derived(
-    Boolean(
-      columnFilters.nameQuery ||
-      (columnFilters.imageMode && columnFilters.imageMode !== "all") ||
-      (columnFilters.typeValues && columnFilters.typeValues.size > 0) ||
-      (columnFilters.labelMode && columnFilters.labelMode !== "all") ||
-      (columnFilters.labelValues && columnFilters.labelValues.size > 0) ||
-      (columnFilters.connectionsMode &&
-        columnFilters.connectionsMode !== "all") ||
-      (columnFilters.summaryMode && columnFilters.summaryMode !== "all") ||
-      (columnFilters.createdMode && columnFilters.createdMode !== "all") ||
-      (columnFilters.modifiedMode && columnFilters.modifiedMode !== "all"),
+  $effect(() =>
+    filters.syncAuditMode(
+      page.url.searchParams.get("mode"),
+      page.url.searchParams.get("audit"),
     ),
   );
-  const activeFilterCount = $derived(
-    typeFilters.size +
-      labelFilters.size +
-      (showIncompleteOnly ? 1 : 0) +
-      (hasActiveColumnFilters ? 1 : 0),
-  );
-  const hasActiveFilters = $derived(
-    searchQuery.trim().length > 0 ||
-      typeFilters.size > 0 ||
-      labelFilters.size > 0 ||
-      showIncompleteOnly ||
-      hasActiveColumnFilters,
-  );
-
-  function handleApplyPreset(preset: ViewPreset) {
-    const s = preset.state;
-    activeAuditPresetId = null;
-    searchQuery = s.searchQuery ?? "";
-    typeFilters = new Set(s.activeCategories);
-    labelFilters = new Set(s.activeLabels);
-    showIncompleteOnly = s.showIncompleteOnly ?? false;
-    columnFilters = s.columnFilters ? { ...s.columnFilters } : {};
-    if (s.tableSort) {
-      sort = { ...s.tableSort };
-    }
-  }
-
-  function handleResetFilters() {
-    activeAuditPresetId = null;
-    searchQuery = "";
-    typeFilters = new Set();
-    labelFilters = new Set();
-    showIncompleteOnly = false;
-    columnFilters = {};
-    sort = { key: "title", direction: "asc" };
-  }
-
-  const hasFilterPanel = $derived(
-    typeCounts.size > 0 || labelFilters.size > 0 || hasActiveFilters,
-  );
+  $effect(() => {
+    if (vault.isInitialized && vaultId) performance.recordOpen();
+  });
+  // Filtering resets selection; sorting retains the same selected ids.
+  $effect(() => {
+    void filters.searchQuery;
+    void filters.typeFilters;
+    void filters.labelFilters;
+    void filters.showIncompleteOnly;
+    void filters.columnFilters;
+    selection.reset();
+  });
 </script>
 
 <svelte:head><title>Entity Table</title></svelte:head>
-<svelte:window onkeydown={handleKeyDown} />
+<svelte:window onkeydown={selection.handleKeyDown} />
 
 <div
   class="flex h-full flex-col gap-3 md:gap-4 bg-theme-bg p-3 sm:p-4 md:p-6"
@@ -666,252 +157,15 @@
       body="Create entities in this vault and they'll show up here as rows."
     />
   {:else}
-    <!-- Controls -->
-    <div class="flex flex-col gap-2.5 md:gap-3">
-      <div class="flex items-center gap-2 md:gap-3">
-        <EntityTableSearch
-          bind:searchQuery
-          bind:labelFilters
-          onSearchChange={setSearchQuery}
-        />
-
-        <!-- Mobile filters toggle button -->
-        <button
-          type="button"
-          onclick={() => (showMobileFilters = !showMobileFilters)}
-          aria-expanded={showMobileFilters}
-          aria-controls={hasFilterPanel
-            ? "entity-table-filter-panel"
-            : undefined}
-          data-testid="entity-table-mobile-filters-toggle"
-          class="inline-flex md:hidden items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent/40 shrink-0 {showMobileFilters ||
-          activeFilterCount > 0
-            ? 'border-theme-primary bg-theme-primary/10 text-theme-primary'
-            : 'border-theme-border bg-theme-surface text-theme-muted hover:text-theme-text'}"
-        >
-          <span class="icon-[lucide--filter] h-3.5 w-3.5" aria-hidden="true"
-          ></span>
-          <span>Filters</span>
-          {#if activeFilterCount > 0}
-            <span
-              class="rounded-full bg-theme-primary px-1.5 py-0.2 text-micro font-bold text-theme-bg"
-              data-testid="entity-table-active-filter-badge"
-            >
-              {activeFilterCount}
-            </span>
-          {/if}
-        </button>
-
-        <!-- Mobile Audit toggle button -->
-        <button
-          type="button"
-          onclick={toggleAuditPanel}
-          aria-pressed={showAuditPanel}
-          aria-expanded={showAuditPanel}
-          aria-controls={showAuditPanel ? "vault-audit-panel" : undefined}
-          data-testid="entity-table-mobile-audit-toggle"
-          class="inline-flex md:hidden items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent/40 shrink-0 {showAuditPanel
-            ? 'border-theme-primary bg-theme-primary/10 text-theme-primary'
-            : 'border-theme-border bg-theme-surface text-theme-muted hover:text-theme-text'}"
-        >
-          <span
-            class="icon-[lucide--clipboard-check] h-3.5 w-3.5"
-            aria-hidden="true"
-          ></span>
-          <span>Audit</span>
-        </button>
-
-        <!-- Desktop Incomplete only toggle -->
-        <button
-          type="button"
-          onclick={toggleIncompleteOnly}
-          aria-pressed={showIncompleteOnly}
-          data-testid="entity-table-incomplete-filter"
-          class="hidden md:inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent/40 {showIncompleteOnly
-            ? 'border-amber-500 bg-amber-500/15 text-amber-600 dark:text-amber-400'
-            : 'border-theme-border bg-theme-surface text-theme-muted hover:border-amber-500/50 hover:text-theme-text'}"
-        >
-          <span
-            class="icon-[lucide--alert-circle] h-3.5 w-3.5"
-            aria-hidden="true"
-          ></span>
-          Incomplete only
-          <span
-            class="rounded-full px-1.5 py-0.2 text-micro {showIncompleteOnly
-              ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400 font-bold'
-              : 'bg-theme-border text-theme-muted'}"
-          >
-            {incompleteCount}
-          </span>
-        </button>
-
-        <!-- Desktop Audit toggle -->
-        <button
-          type="button"
-          onclick={toggleAuditPanel}
-          aria-pressed={showAuditPanel}
-          aria-expanded={showAuditPanel}
-          aria-controls={showAuditPanel ? "vault-audit-panel" : undefined}
-          data-testid="entity-table-audit-toggle"
-          class="hidden md:inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent/40 {showAuditPanel
-            ? 'border-theme-primary bg-theme-primary/15 text-theme-primary'
-            : 'border-theme-border bg-theme-surface text-theme-muted hover:border-theme-primary/50 hover:text-theme-text'}"
-        >
-          <span
-            class="icon-[lucide--clipboard-check] h-3.5 w-3.5"
-            aria-hidden="true"
-          ></span>
-          Audit
-        </button>
-
-        <TableViewPresets
-          activeVaultId={vaultId}
-          currentFilterState={{
-            searchQuery,
-            typeFilters,
-            labelFilters,
-            showIncompleteOnly,
-            columnFilters,
-            sort,
-          }}
-          onApplyPreset={handleApplyPreset}
-          onResetFilters={handleResetFilters}
-        />
-      </div>
-
-      {#if showAuditPanel}
-        <VaultAuditPanel
-          counts={auditCounts}
-          {distributionSummary}
-          activeTypeFilter={typeFilters.size === 1
-            ? Array.from(typeFilters)[0]
-            : null}
-          activeLabelFilter={labelFilters.size === 1
-            ? Array.from(labelFilters)[0]
-            : null}
-          activeLabelMode={columnFilters.labelMode ?? null}
-          activeTab={auditPanelTab}
-          onTabChange={(tab) => (auditPanelTab = tab)}
-          onSelectCategory={handleSelectDistributionCategory}
-          onSelectLabel={handleSelectDistributionLabel}
-          onSelectUnlabelled={handleSelectDistributionUnlabelled}
-          activePresetId={activeAuditPresetId}
-          onApplyPreset={handleApplyAuditPreset}
-          onDrillDown={handleAuditDrillDown}
-          onClose={() => (showAuditPanel = false)}
-        />
-      {/if}
-
-      {#if searchStatusMessage}
-        <p class="text-micro text-theme-muted" aria-live="polite">
-          {searchStatusMessage}
-        </p>
-      {/if}
-
-      {#if hasFilterPanel}
-        <div
-          id="entity-table-filter-panel"
-          class="{showMobileFilters
-            ? 'flex'
-            : 'hidden'} md:flex flex-wrap items-center gap-1.5"
-        >
-          <!-- Mobile Incomplete filter chip in expanded drawer -->
-          <button
-            type="button"
-            onclick={toggleIncompleteOnly}
-            aria-pressed={showIncompleteOnly}
-            data-testid="entity-table-incomplete-filter-mobile"
-            class="inline-flex md:hidden items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent/40 {showIncompleteOnly
-              ? 'border-amber-500 bg-amber-500/15 text-amber-600 dark:text-amber-400'
-              : 'border-theme-border text-theme-muted hover:border-amber-500/50'}"
-          >
-            <span
-              class="icon-[lucide--alert-circle] h-3.5 w-3.5"
-              aria-hidden="true"
-            ></span>
-            Incomplete
-            <span class="text-theme-muted/60">{incompleteCount}</span>
-          </button>
-
-          {#each [...typeCounts.entries()].sort( (a, b) => (a[0] ?? "").localeCompare(b[0] ?? "") ) as [type, count] (type)}
-            {@const cat = categories.getCategory(type)}
-            {@const active = typeFilters.has(type)}
-            <button
-              type="button"
-              onclick={() => toggleType(type)}
-              aria-pressed={active}
-              data-testid="entity-table-type-filter"
-              class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent/40 {active
-                ? 'border-theme-primary bg-theme-primary/10 text-theme-primary'
-                : 'border-theme-border text-theme-muted hover:border-theme-primary/50'}"
-            >
-              {#if cat}
-                <span
-                  class="{getIconClass(cat.icon)} h-3.5 w-3.5"
-                  aria-hidden="true"
-                ></span>
-              {/if}
-              {cat?.label ?? type}
-              <span class="text-theme-muted/60">{count}</span>
-            </button>
-          {/each}
-          {#each [...labelFilters].sort() as label (label)}
-            <div
-              class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-theme-primary/10 border border-theme-primary/20 text-nano font-bold text-theme-primary uppercase tracking-wider"
-              data-testid="entity-table-label-filter"
-            >
-              <span>{label}</span>
-              <button
-                type="button"
-                onclick={() => toggleLabel(label)}
-                title="Remove {label} filter"
-                aria-label="Remove {label} filter"
-                class="hover:text-theme-text transition-colors flex items-center justify-center cursor-pointer"
-              >
-                <span aria-hidden="true" class="icon-[lucide--x] w-2.5 h-2.5"
-                ></span>
-              </button>
-            </div>
-          {/each}
-          {#if columnFilters.imageMode && columnFilters.imageMode !== "all"}
-            <div
-              class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-theme-primary/10 border border-theme-primary/20 text-nano font-bold text-theme-primary uppercase tracking-wider"
-              data-testid="entity-table-image-filter"
-            >
-              <span
-                >{columnFilters.imageMode === "missing_image"
-                  ? "Missing image"
-                  : "Has image"}</span
-              >
-              <button
-                type="button"
-                onclick={() => {
-                  const next = { ...columnFilters };
-                  delete next.imageMode;
-                  handleUpdateColumnFilters(next);
-                }}
-                title="Remove image filter"
-                aria-label="Remove image filter"
-                class="hover:text-theme-text transition-colors flex items-center justify-center cursor-pointer"
-              >
-                <span aria-hidden="true" class="icon-[lucide--x] w-2.5 h-2.5"
-                ></span>
-              </button>
-            </div>
-          {/if}
-          {#if hasActiveFilters}
-            <button
-              type="button"
-              onclick={clearFilters}
-              data-testid="entity-table-clear-filters"
-              class="ml-1 rounded text-xs text-theme-muted underline hover:text-theme-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent/40"
-            >
-              Clear all filters
-            </button>
-          {/if}
-        </div>
-      {/if}
-    </div>
+    <TableControls
+      {filters}
+      {vaultId}
+      {typeCounts}
+      {incompleteCount}
+      {auditCounts}
+      {distributionSummary}
+      searchStatusMessage={contentSearch.statusMessage}
+    />
 
     <!-- Results -->
     <div class="min-h-0 flex-1 overflow-auto">
@@ -921,96 +175,49 @@
           headline="No matching entities"
           body="Try a different search or clear your filters."
           cta="Clear filters"
-          onCta={clearFilters}
+          onCta={filters.clearFilters}
         />
       {:else}
-        {#if selectedVisible.length > 0}
-          <div
-            class="mb-2 flex flex-wrap items-center gap-3 rounded-lg border border-theme-primary/40 bg-theme-primary/10 px-3 py-2"
-            data-testid="entity-table-selection-toolbar"
-          >
-            <span
-              class="text-xs font-semibold text-theme-text"
-              data-testid="entity-table-selection-count"
-            >
-              {selectedVisible.length} selected
-            </span>
-            <button
-              type="button"
-              onclick={_openBulkLabels}
-              data-testid="entity-table-bulk-label"
-              class="inline-flex items-center gap-1.5 rounded-md border border-theme-primary/50 bg-theme-surface px-2.5 py-1 text-xs font-medium text-theme-primary transition-colors hover:bg-theme-primary/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent/40"
-            >
-              <span class="icon-[lucide--tags] h-3.5 w-3.5" aria-hidden="true"
-              ></span>
-              Add / remove labels
-            </button>
-            {#if !vault.isGuest && selectedVisible.length > 1}
-              <button
-                type="button"
-                onclick={_openBulkReport}
-                data-testid="entity-table-bulk-generate-report"
-                class="inline-flex items-center gap-1.5 rounded-md border border-theme-primary/50 bg-theme-surface px-2.5 py-1 text-xs font-medium text-theme-primary transition-colors hover:bg-theme-primary/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent/40"
-              >
-                <span
-                  class="icon-[lucide--file-text] h-3.5 w-3.5"
-                  aria-hidden="true"
-                ></span>
-                Generate report
-              </button>
-            {/if}
-            <button
-              type="button"
-              onclick={clearSelection}
-              data-testid="entity-table-selection-clear"
-              class="ml-auto rounded text-xs text-theme-muted underline hover:text-theme-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent/40"
-            >
-              Clear selection
-            </button>
-          </div>
-        {:else}
-          <p
-            class="mb-2 text-xs text-theme-muted"
-            data-testid="entity-table-count"
-          >
-            {rows.length}
-            {rows.length === 1 ? "entity" : "entities"}
-          </p>
-        {/if}
+        <TableSelectionToolbar
+          selectedCount={selection.selectedVisible.length}
+          resultCount={rows.length}
+          isGuest={vault.isGuest}
+          onLabels={selection.openBulkLabels}
+          onReport={selection.openBulkReport}
+          onClear={selection.clearSelection}
+        />
         <EntityTable
           entities={rows}
           {vaultId}
-          {sort}
+          sort={filters.sort}
           {connectionCounts}
-          {showIncompleteOnly}
-          {columnFilters}
-          activeLabels={labelFilters}
-          onUpdateColumnFilters={handleUpdateColumnFilters}
-          onSort={handleSort}
-          {selectedIds}
-          {allSelected}
-          {someSelected}
-          onToggleRow={toggleRow}
-          onToggleAll={toggleAll}
-          onFilterType={toggleType}
-          onFilterLabel={toggleLabel}
-          onRowContextMenu={handleRowContextMenu}
+          showIncompleteOnly={filters.showIncompleteOnly}
+          columnFilters={filters.columnFilters}
+          activeLabels={filters.labelFilters}
+          onUpdateColumnFilters={filters.handleUpdateColumnFilters}
+          onSort={filters.handleSort}
+          selectedIds={selection.selectedIds}
+          allSelected={selection.allSelected}
+          someSelected={selection.someSelected}
+          onToggleRow={selection.toggleRow}
+          onToggleAll={selection.toggleAll}
+          onFilterType={filters.toggleType}
+          onFilterLabel={filters.toggleLabel}
+          onRowContextMenu={selection.handleRowContextMenu}
         />
       {/if}
     </div>
   {/if}
 </div>
 
-{#if contextMenu}
+{#if selection.contextMenu}
   <TableContextMenu
-    x={contextMenu.x}
-    y={contextMenu.y}
-    selectedIds={contextMenu.targetIds}
-    onManageLabels={_handleManageLabels}
-    onChangeType={_handleChangeType}
-    onDelete={_handleDeleteSelected}
-    onClose={() => {
-      contextMenu = null;
-    }}
+    x={selection.contextMenu.x}
+    y={selection.contextMenu.y}
+    selectedIds={selection.contextMenu.targetIds}
+    onManageLabels={selection.handleManageLabels}
+    onChangeType={selection.handleChangeType}
+    onDelete={selection.handleDeleteSelected}
+    onClose={selection.closeContextMenu}
   />
 {/if}

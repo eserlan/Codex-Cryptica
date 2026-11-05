@@ -362,6 +362,9 @@ export class StatSheetTemplateStore {
         ...(f.type === "counter" && (f.startValue ?? f.max) !== undefined
           ? { value: f.startValue ?? f.max }
           : null),
+        ...(f.type === "dice-pool"
+          ? { value: f.startValue ?? f.value ?? 3 }
+          : null),
       };
     });
   }

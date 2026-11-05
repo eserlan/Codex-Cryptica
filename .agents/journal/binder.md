@@ -1,0 +1,388 @@
+# Binder journal
+
+Critical, codebase-specific lessons for the `binder` persona sweep. Merged from the Jules-era
+`.Jules/binder.md` and `.jules/binder.md` on 2026-11-02.
+
+## 2026-06-16 - Injecting Time and Crypto Dependencies
+
+**Learning:** Global browser APIs (`crypto.getRandomValues`) and time sources (`Date.now()`) create hidden side effects and testability issues, often requiring awkward global `vi.spyOn` mocks and manipulation of a class's internal state to ensure test stability.
+**Action:** Always wrap and inject `getRandomValues` and `now` as optional dependencies with production defaults. This simplifies tests by passing explicit mock dependencies when initializing the class, rather than mocking globals and reaching into encapsulated variables like `(engine as any).bufferIndex`.
+
+## 2026-06-18 - Time injection needs to evaluate on demand
+
+**Learning:** When injecting time dependencies (e.g., `Date.now()`), evaluating it once and storing it in a local variable before asynchronous operations (like `await`) will cause subsequent logic or events to use stale timestamps.
+**Action:** Always use a helper method (e.g., `getNow()`) to fetch the injected time exactly at the moment it is needed.
+
+## 2024-05-18 - CloudSyncMetadataService Clock Injection
+
+**Learning:** Hardcoded `Date.now()` inside business logic classes (like CloudSyncMetadataService) forces tests to use imprecise assertions like `toBeGreaterThanOrEqual` and relies on time-sensitive local variables.
+**Action:** Inject `now: () => number = Date.now` as an optional constructor dependency for stateful services, allowing tests to pass a frozen time function (`() => 150000`) and assert exact outcomes deterministically without global monkey-patching.
+
+## 2024-06-22 - Inject dependencies into createEncounterSession
+
+**Learning:** The `apps/web` application defines ambient runtime dependencies (e.g., `systemIdGenerator`, `systemClock`, `IdGenerator`, `Clock`) in `src/lib/utils/runtime-deps.ts`. These can be used as default parameter values to inject ID generation and time into session creation logic without breaking existing call sites.
+**Action:** When injecting time and id dependencies into `createEncounterSession`, add a `deps` parameter at the end to maintain backward compatibility with `id` and `name` positional arguments.
+
+## 2025-02-23 - Inject systemClock and systemIdGenerator into UndoRedoService
+
+**Learning:** `oracle-engine` uses a pattern of injecting `systemClock` and `systemIdGenerator` from `./runtime.ts` into constructors to allow faking time and randomness in tests.
+**Action:** When working in `oracle-engine`, ensure `Date.now()` and `crypto.randomUUID()` calls are replaced with injected dependencies from `./runtime.ts` using this pattern.
+
+## 2026-07-01 - Vitest vi.spyOn causes issues with timers
+
+**Learning:** `vi.spyOn(Date, "now")` and `vi.useRealTimers()` in Vitest tests can cause cross-module test pollution, crash the test runner, or throw ReferenceErrors (e.g., `vi.useRealTimers is not a function`).
+**Action:** For pure functions or standard exported functions relying on time, inject an explicit `Clock` interface (`{ now(): number }`) rather than mocking the global environment in Vitest.
+
+## 2025-06-28 - [Inject time dependencies to improve test isolation]
+
+**Learning:** Global monkey-patching of ambient runtime dependencies like `Date.now()` with `vi.spyOn(Date, "now")` can cause unexpected test suite crashes in some Vitest/Bun configurations, particularly when tests pollute each other across module boundaries or fail due to mismatched testing environments.
+**Action:** Inject ambient dependencies like time (`now()`) or ID generators directly into functions or service constructors as optional defaults (e.g., `now: () => number = Date.now`). This allows fakes to be explicitly passed in tests, isolating state, avoiding global mocks, and preserving production behavior.
+
+## 2026-06-29 - Update subclasses when injecting into BaseExecutor constructors
+
+**Learning:** When injecting time dependencies (or any dependencies) into the constructor of an abstract base class (`BaseExecutor`), all concrete subclasses (e.g. `PlotExecutor`, `ChatExecutor`, `ReviseExecutor`) must be updated to also accept that dependency (often as an optional parameter) and pass it to `super(clock)`. Otherwise, the dependency cannot actually be injected when instantiating the concrete classes, defeating the purpose of the test seam.
+**Action:** When modifying a base class constructor to inject dependencies, search for all occurrences of `extends BaseClass` and update their constructors accordingly.
+
+## 2024-07-04 - Default dependencies referencing undefined globals in tests
+
+**Learning:** When using Dependency Injection to inject a global dependency like `Date.now()`, importing the fallback object (`systemClock`) from another module might fail if that module (`$lib/utils/runtime-deps.ts`) does not exist or isn't accessible in tests, causing the entire build or test suite to fail.
+**Action:** Always ensure the module containing default dependencies is present, correctly exported, and successfully imported by the file being modified.
+
+## 2026-07-09 - Inject idGenerator into oracle engine executors
+
+**Learning:** When adding a new dependency (`IdGenerator`) to an abstract base class (`BaseExecutor`), we must remember to update _all_ subclasses that have their own constructors (e.g. `GuestChatExecutor`, `CreateExecutor`, etc.) to pass it through to `super()`. A quick test pass might not catch this if the subclasses don't define custom constructors, but some do.
+**Action:** Injected `idGenerator: IdGenerator = systemIdGenerator` into `BaseExecutor` and updated subclass constructors to pass it through. Replaced `crypto.randomUUID()` calls with `this.idGenerator.uuid()`.
+
+## 2024-07-10 - Replace hardcoded Date.now() with injected Clock
+
+**Learning:** Replacing hardcoded `Date.now()` calls within service methods with an injected `clock.now()` allows injecting a mock clock for exact validation in tests. By defaulting the injected parameter to a `systemClock` defined in `./runtime.ts`, we maintain standard production behavior safely.
+**Action:** Prioritize passing ambient dependencies like `Clock` (and `IdGenerator`) into class constructors using a default production parameter (e.g. `clock: Clock = systemClock`). This seamlessly adds test seams while avoiding broad global mocking strategies (like `vi.useFakeTimers()`) which often lead to side effects in complex suites.
+
+## 2024-03-24 - Injecting Clock into QuickNoteService
+
+**Learning:** Found a common pattern where global `Date.now()` is hard-coded into service methods for entity creation, making timestamp logic difficult to test deterministically. The repository has a standard `runtime-deps` module exposing a `Clock` interface and `systemClock` default that should be used for this.
+**Action:** When refactoring services that generate timestamps, always check for `../utils/runtime-deps` and use constructor injection for the `Clock`, allowing tests to safely use a mock clock without touching global scope.
+
+## 2024-07-24 - Injecting storage via runtime-deps
+
+**Learning:** Svelte stores heavily utilize `localStorage` on initialization (`init()`). Mocking this via `vi.hoisted` and `global.localStorage` is brittle and leaks across Vitest files. The repository already provides a generic `StorageLike` interface and `browserStorage` default in `$lib/utils/runtime-deps`.
+**Action:** When a store needs local persistence, inject `storage: StorageLike = browserStorage` into its constructor. Update its tests to pass a simple spy object (`{ getItem: vi.fn(), setItem: vi.fn(), removeItem: vi.fn() }`) to avoid global mocks.
+
+## 2026-07-20 - Inject Storage and ID Dependencies in SessionHubStore
+
+**Learning:** By replacing hard-coded `sessionStorage`, `crypto.randomUUID()`, and `Math.random()` calls in `SessionHubStore` with dependency injected properties, the test environment can fully decouple from the global browser APIs. This avoids leaking test state and allows using simple mocked objects instead of mutating the global `sessionStorage`.
+**Action:** When utilizing `localStorage`, `sessionStorage`, or `randomUUID` inside a Svelte store or service, inject them as optional constructor arguments with production-safe defaults (e.g., `browserSessionStorage`, `systemIdGenerator`) rather than calling them directly.
+
+## 2026-07-22 - Refactored P2P classes to use dependency injection for ID generation
+
+**Learning:** The p2p networking components in `apps/web/src/lib/cloud-bridge/p2p` (`PeerJSTransport`, `P2PHostService`, and `P2PClientAdapter`) previously used hard-coded `crypto.randomUUID()` calls to assign peer IDs and file request IDs, making tests dependent on the global crypto API.
+**Action:** We injected an `IdGenerator` dependency directly into their constructors with a fallback to `systemIdGenerator`, preserving behavior while creating clean testability seams.
+
+## 2026-07-23 - Injecting IdGenerator into createCanvasLogic
+
+**Learning:** Canvas logic in Svelte 5 (`use-canvas-logic.svelte.ts`) frequently hardcodes ID generation for dynamic nodes and edges using `crypto.randomUUID()`, which requires complex global mocking during component tests.
+**Action:** We modified `createCanvasLogic` to accept an optional `idGenerator: IdGenerator` parameter with a default of `systemIdGenerator`. This cleanly abstracts the infrastructure dependency (ID generation) while preserving the hook's standard production behavior, maintaining the established pattern of DI for ambient utilities in this repository.
+
+## 2026-07-25 - Injecting storage via StorageLike into guest-history
+
+**Learning:** Using `typeof window === "undefined"` checks alongside hardcoded `localStorage` calls makes testing complex and couples services to browser globals. The `browserStorage` from `$lib/utils/runtime-deps` already handles SSR safety implicitly.
+**Action:** Inject `storage: StorageLike = browserStorage` into service functions instead of hardcoding `localStorage`, and remove redundant `window` checks. Pass simple in-memory storage objects during testing.
+
+## 2025-02-22 - Injecting storage adapters in web components
+
+**Learning:** Found hardcoded `window.localStorage` usage in `front-page-prefs.ts` within `apps/web`. SvelteKit files may execute on the server during SSR where `window` is undefined. The repository uses `browserStorage` from `$lib/utils/runtime-deps` which handles SSR safely.
+**Action:** Replaced direct `window.localStorage` usage with explicit dependency injection of `StorageLike`, defaulting to `browserStorage`. Updated tests to use a fully implemented mock `StorageLike` to avoid Vitest/Bun global pollution.
+
+## 2026-07-29 - Inject Clock into DungeonDelveService
+
+**Learning:** Found hardcoded `Date.now()` usage in `DungeonDelveService` within `apps/web/src/lib/services/dungeon-delve-service.ts`. This creates a hidden dependency on the global system clock that makes testing ID generation brittle.
+**Action:** Replaced direct `Date.now()` usage with explicit dependency injection of `Clock`, defaulting to `systemClock` from `$lib/utils/runtime-deps`. Updated tests to pass a mock `Clock` in the constructor to avoid Vitest global pollution.
+
+## 2024-07-28 - Injecting Clock into DelveAreaEnhancementService
+
+**Learning:** Found a hardcoded `Date.now()` in `DelveAreaEnhancementService` which hindered deterministic testing. We can easily inject a `Clock` interface through the constructor utilizing `systemClock` from `$lib/utils/runtime-deps` as a default. This allows tests to precisely assert on timestamps without resorting to global mocks.
+**Action:** Use DI via constructor for ambient dependencies like `Clock` (and `IdGenerator`) using established patterns from `$lib/utils/runtime-deps`. Pass deterministic fake clocks in tests instead of global mocks.
+
+## 2026-07-31 - Injecting IdGenerator into StatSheet components
+
+**Learning:** Found hardcoded `crypto.randomUUID()` usage within the logic for adding and deduping fields in Svelte stat sheet components (`StatSheetEditor` and `StatSheetView`). While these are UI components, the logic for generating IDs makes testing these interactions brittle and dependent on global browser APIs.
+**Action:** Injected `idGenerator: IdGenerator` as an optional prop with a default of `systemIdGenerator` from `$lib/utils/runtime-deps`. This pattern allows Svelte components to seamlessly use the production default while enabling easy mocking in component tests without global overrides.
+
+## 2026-08-04 - Inject Clock into Canvas Workspace Helpers
+
+**Learning:** Found hardcoded `Date.now()` usage in `autoArrangeCanvasNodes` within `apps/web/src/lib/components/canvas/canvas-workspace-helpers.ts`. This creates a hidden dependency on the global system clock that makes testing timestamp generation brittle.
+**Action:** Replaced direct `Date.now()` and `new Date().toISOString()` usage with explicit dependency injection of `Clock`, defaulting to `systemClock` from `$lib/utils/runtime-deps`. Updated tests to pass a mock `Clock` in the `params` to avoid Vitest global pollution.
+
+## 2026-08-05 - Injecting Date.now for timer-based testing
+
+**Learning:** Testing debounce or interval logic (e.g. `handleVersionSkewReload` in `hooks.client.ts`) can fail non-deterministically if it relies on the global `Date.now()`. Bypassing this with `vi.spyOn(Date, 'now')` or `vi.useFakeTimers()` can cause widespread, subtle test pollution if not cleaned up properly, especially in concurrent runners like Vitest.
+**Action:** Extract the temporal dependency `Date.now` into an injectable function parameter (e.g. `getNow: () => number = Date.now`). This creates a clean boundary for tests to supply mock timestamp sequences without touching the global environment.
+
+## 2026-08-06 - Replace raw localStorage with browserStorage in marketing world directory
+
+**Learning:** The application provides a wrapper `browserStorage` from `$lib/utils/runtime-deps` that encapsulates `localStorage` access safely, handling SSR rendering and unavailable storage scenarios transparently. This removes the need for ad-hoc `typeof localStorage !== 'undefined'` checks in the UI.
+**Action:** Always use `browserStorage` or inject it as a dependency using the `StorageLike` interface in place of raw `localStorage`.
+
+## 2024-08-08 - Injecting Clock into DelveTopologyGenerator
+
+**Learning:** Found hardcoded `Date.now()` usage in `DelveTopologyGenerator` within `packages/generator-engine/src/dungeon/delve-topology-generator.ts`. This creates a hidden dependency on the global system clock that makes testing timestamp generation brittle.
+**Action:** Replaced direct `Date.now()` usage with explicit dependency injection of `Clock`, defaulting to `systemClock` from `@codex/runtime`. Updated tests to pass a mock `Clock` in the constructor to avoid Vitest global pollution.
+
+## 2024-05-18 - Isolated Storage Usage in Utilities
+
+**Learning:** SvelteKit utilities that access `localStorage` directly in functions (rather than inside components or classes) can be hard to test cleanly because they depend on the global object.
+
+**Action:** Extract global storage dependencies into a typed `StorageLike` interface parameter with a default to the production `browserStorage`. This provides a very clean DI seam that preserves runtime behavior while making unit testing trivial and avoiding cross-test pollution.
+
+## 2024-05-18 - Inject time into pure graph generators
+
+**Learning:** Pure graph generators (like `adventure-graph-generator.ts`) that assign creation timestamps or time-based IDs (e.g., `adv-canvas-${Date.now()}`) should inject a clock dependency (`systemClock` from `@codex/runtime`).
+
+**Action:** When implementing or refactoring generators that need to produce deterministic output in tests, inject `Clock` as an optional parameter with `systemClock` as the default to allow deterministic timestamp injection.
+
+## 2024-05-18 - Replacing hoisted global test mocks with explicit dependency injection
+
+**Learning:** When a module already supports dependency injection (e.g., `SearchStore` accepting a `StorageLike` argument), its corresponding test suite should avoid hoisted global mocks (like `vi.hoisted(() => { global.localStorage = ... })`). Hoisted mocks are brittle, prone to cross-test pollution, and hide the actual dependency usage.
+**Action:** Remove hoisted global mocks and create explicit mock objects to inject into constructors during test setup. Ensure the implementation actually uses the injected property (e.g., `this.storage.getItem()`) to safely evaluate behavior.
+
+## 2026-08-14 - Injecting Clock into GraphContextMenuController
+
+**Learning:** Found hardcoded `Date.now()` usage in `GraphContextMenuController` within `apps/web/src/lib/components/graph/graph-context-menu-controller.svelte.ts` which handles context menu gesture timing. This creates a hidden dependency on the global system clock that makes testing gesture logic brittle.
+**Action:** Replaced direct `Date.now()` usage with explicit dependency injection of `Clock`, defaulting to `systemClock` from `$lib/utils/runtime-deps`. Add `clock` to the `GraphContextMenuDependencies` interface to keep behavior deterministic without Vitest global pollution.
+
+## 2026-08-15 - Clock Interface Return Type
+
+**Learning:** The `Clock` interface from `@codex/runtime` defines `now()` as returning a `number` (milliseconds since epoch), identical to `Date.now()`. This allows seamless injection of `clock.now()` without altering timestamp type definitions downstream.
+
+**Action:** When injecting `systemClock` to replace `Date.now()`, safely use `clock.now()` directly without converting it to a Date object.
+
+## 2025-02-23 - Svelte 5 Component Prop Injection
+
+**Learning:** When applying Dependency Injection to Svelte 5 components to replace hardcoded globals (like `localStorage` with `browser` checks), simply importing an SSR-safe wrapper (`browserStorage` from `$lib/utils/runtime-deps`) is insufficient for testability.
+**Action:** The dependency must be explicitly exposed as an optional component prop using the `$props()` rune (e.g., `let { storage = browserStorage }: { storage?: StorageLike } = $props();`). This pattern preserves the safe production default while allowing Vitest tests to inject deterministic mock storage objects.
+
+## 2026-08-20 - Use functional defaults for DI seams instead of missing dependencies
+
+**Learning:** When refactoring a package (e.g. `random-source-engine`) to inject an ambient dependency like `Clock` or `Date.now()`, the package might not have `@codex/runtime` installed. Adding an external dependency purely for a testability seam creates unnecessary coupling.
+**Action:** Instead of importing `Clock` and `systemClock`, use a simple, native functional parameter (e.g., `private now: () => number = Date.now`) in the constructor. This creates a perfect test seam (allowing `() => mockTime` in tests) while preserving the natural production default seamlessly without new dependencies.
+
+## 2026-08-21 - Injected Clock dependency into Oracle adapter
+
+**Learning:** Extracted the hardcoded `Date.now()` dependency in `oracle-adapter.svelte.ts` by injecting `Clock` from `@codex/runtime` via the `/utils/runtime-deps` module. It is critical to note that the `Clock` interface returns a numeric timestamp (`number`), mirroring `Date.now()`, rather than a `Date` object. Always verify the signature of ambient runtime dependencies before injecting them.
+
+**Action:** When injecting time seams (e.g. `clock.now()`) to replace `Date.now()`, import `systemClock` and `Clock` from `/utils/runtime-deps` and default the parameter to `systemClock` to preserve production behavior while exposing the seam for tests.
+
+## 2024-05-18 - Inject IdGenerator into SourceWorkspace.svelte
+
+**Learning:** Svelte 5 components using `$props()` can safely accept dependency injection bounds using optional types and production defaults (e.g., `idGenerator = systemIdGenerator`). The runtime dependencies for this project (like `systemIdGenerator` and `IdGenerator`) are re-exported from `@codex/runtime` via `$lib/utils/runtime-deps.ts`, making them easily accessible without requiring new abstractions. Replacing `crypto.randomUUID()` with `idGenerator.uuid()` inside components creates a clean seam for unit testing, preventing flaky tests dependent on random UUID generation.
+
+**Action:** Continue replacing hardcoded `crypto.randomUUID()` calls within UI components by destructing optional dependency props (with `systemIdGenerator` as the default) from the `$props()` rune to improve testability.
+
+## 2026-09-25 - Injectable clock in AdventureSessionRepository
+
+**Learning:** `new Date().toISOString()` is a hidden, hard-coded time dependency that complicates testing file update tracking logic.
+**Action:** Expose time functions via optional parameters like `now: () => number = () => Date.now()` inside class constructors to allow precise test assertions without global mocking or relying on arbitrary timing tolerances.
+
+## 2026-09-25 - Inject UIPersistence into GeneratorPageContent
+
+**Learning:** Direct `localStorage.getItem` access inside large Svelte 5 page components (`GeneratorPageContent.svelte`) makes the initialization logic hard to test in isolation, as it assumes browser context or requires global mocking.
+
+**Action:** Prefer injecting a lightweight, typed adapter like `UIPersistence` (which handles SSR gracefully and encapsulates keys) via `$props()` with a sensible default (`persistence = new UIPersistence()`). This allows tests to easily inject a memory-backed persistence mock without touching `window.localStorage`.
+
+## 2026-09-06 - Inject storage into Svelte UI components
+
+**Learning:** UI components that rely on `localStorage` for visual state (like dismissing hints) should accept `storage` as an injected prop rather than hard-coding `localStorage`. This allows tests to simulate various state scenarios without wiping or leaking into the global `window.localStorage`.
+**Action:** When adding state persistence to a Svelte 5 component, use `$props()` to inject an optional `storage` dependency that defaults to `browserStorage` from `$lib/utils/runtime-deps`.
+
+## 2024-05-18 - System Clock Injection
+
+**Learning:** When injecting the shared runtime `Clock` interface (`@codex/runtime`), `clock.now()` correctly returns a UNIX epoch timestamp (a `number`, similar to `Date.now()`). To replace a hardcoded `new Date().toISOString()`, the correct pattern is `new Date(this.clock.now()).toISOString()` to format the injected timestamp properly.
+
+**Action:** When injecting `systemClock` into classes that generate string dates, always explicitly wrap the output of `clock.now()` in a `Date` object before calling `.toISOString()`.
+
+## 2026-09-25 - Inject IdGenerator into UI Components
+
+**Learning:** Svelte 5 components using `$props()` can accept dependency injection boundaries with optional typed dependencies and production defaults (like `systemIdGenerator` from `@codex/runtime` via `$lib/utils/runtime-deps.ts`). Relying heavily on hardcoded `crypto.randomUUID()` within UI components forces tests to implement flaky random UUID mocks. Injecting `idGenerator` avoids Vitest global pollution and creates a deterministic test boundary without requiring complicated DI framework constructs.
+
+**Action:** Continue identifying hardcoded `crypto.randomUUID()` in UI component logic. Use destructured optional dependency props (with `systemIdGenerator` as default) to safely replace it with `idGenerator.uuid()`.
+
+## 2024-05-18 - Replacing hardcoded global localStorage in UIPersistence
+
+**Learning:** When a class manages generic local UI persistence (like `UIPersistence` inside `$lib/stores/ui`), directly grabbing `window.localStorage` within its constructor severely limits testability and can cause SSR issues (if `window` isn't guarded properly, though it was guarded here). The repository provides `browserStorage` from `$lib/utils/runtime-deps` which gracefully falls back to memory or null objects on SSR, providing a clean dependency injection boundary that makes the global explicit and mockable during testing.
+
+**Action:** Look for UI or data storage classes that grab `window.localStorage` natively. Refactor them to accept a `storage` dependency in their constructor options, defaulting to `browserStorage` to provide an explicit, testable seam that maintains production behaviour.
+
+## 2024-03-22 - Inject ID Generator in Stores
+
+**Learning:** Hardcoded ID generation (`crypto.randomUUID()`) inside Svelte 5 store managers like `AdventureManager` couples them to the global environment and makes tests harder to control.
+**Action:** Inject `idGenerator` via a dependencies object, falling back to `systemIdGenerator.uuid` from `@codex/runtime` for a sensible default.
+
+## 2026-09-18 - DI on Importers
+
+**Learning:** Replaced a hard-coded infrastructure dependency (`crypto.randomUUID()`) inside `OracleAnalyzer` with an injected `IdGenerator`. By providing a default argument (`systemIdGenerator`), the refactoring was achieved safely, keeping production behavior the same.
+**Action:** Always verify if a dependency can be injected, especially those touching time, ids and browser-only globals. Make sure to define it as a class property to avoid TS compilation errors.
+
+## 2025-02-12 - Injected ID generation into DocxParser
+
+**Learning:** Hidden, hardcoded dependencies like `crypto.randomUUID()` in parsing layers (`DocxParser`) make it harder to deterministically test asset generation. This repository prefers using the `@codex/runtime` `systemIdGenerator` as a default parameter for classes.
+
+**Action:** Whenever introducing classes that generate IDs in this repository, inject an `IdGenerator` via the constructor with a default of `systemIdGenerator` to enable isolated testing without mocking globals.
+
+## 2026-09-21 - Injecting Clock for File Generation
+
+**Learning:** Hardcoded Date.now() in utility functions (like file name generation) prevents deterministic testing of the exact outputs.
+**Action:** Inject a Clock interface with a systemClock default to create a clean seam for deterministic assertions without changing production behavior.
+
+## 2026-09-23 - Scope DI injection properly
+
+**Learning:** When identifying targets for dependency injection (like `new Date()`), do not assume the target is within a class scope where `this` is accessible. Standalone helper functions often contain these hidden dependencies and must be patched to accept the dependency as a parameter rather than relying on class-level properties.
+
+**Action:** Always verify the lexical scope (using `grep` with context flags or `cat`) to determine if the target resides in a class method or a top-level standalone function before formulating an execution plan.
+
+## 2024-03-24 - Inject Clock into Store Events
+
+**Learning:** When a store emits events with timestamps (like `ShelfStore` announcing changes), injecting a `Clock` dependency makes the emitted timestamps predictable and testable.
+
+**Action:** Pass `clock: Clock = systemClock` into store dependencies instead of hardcoding `Date.now()` inside event generation methods.
+
+## 2026-09-25 - Replaced Date.now() with systemClock in GraphViewController
+
+**Learning:** Hardcoded `Date.now()` inside UI component logic (like debounce/throttle bounds in `GraphViewController`) makes timing interactions difficult to test.
+**Action:** Injected an optional `clock: Clock` via `GraphViewDependencies` (defaulting to `@codex/runtime` `systemClock`) to decouple the controller from global time.
+
+## 2026-09-26 - visual-card-parser DI
+
+**Learning:** Replaced hard-coded `Math.random()` for ID generation in `parseCardsFromSource` and `createVisualCard` with injected `idGenerator` property defaulting to `systemIdGenerator.uuid`. This reduces tight coupling to the ambient `Math` API and ensures tests can have predictable and deterministic ID structures by passing a mock ID generator.
+
+**Action:** Refactored `visual-card-parser.ts` and `visual-card-operations.ts` to use `idGenerator` seam passed down from `use-visual-layout.svelte.ts`.
+
+## 2026-09-27 - Inject systemIdGenerator instead of crypto.randomUUID()
+
+**Learning:** Found a hardcoded `crypto.randomUUID()` inside the constructor of `CloudBackupDirtyStore` used for generating versions of dirtied rows. Replaced with the app-standard `systemIdGenerator` from `@codex/runtime` via `$lib/utils/runtime-deps`.
+
+**Action:** When refactoring hardcoded crypto/ID logic for DI in stores, inject an `IdGenerator` (or its `uuid` method) with `systemIdGenerator` as the default.
+
+## 2024-05-18 - Avoid direct `localStorage` access for cloud backup
+
+**Learning:** Direct `localStorage` access in `apps/web/src/lib/stores/cloud-backup.svelte.ts` was hardcoded, making testing and environment overrides (like SSR) difficult.
+
+**Action:** Refactored `cloudBackupBrowserStorage` to accept a dependency-injected `storage: StorageLike` parameter, defaulting to `browserStorage` from `$lib/utils/runtime-deps`. Replaced all `localStorage` usages within the function with the injected `storage`. Uses `storage.length ?? 0` and `storage.key?.(i)` to handle optional properties in `StorageLike`.
+
+## 2024-05-18 - Replacing hardcoded global localStorage in CloudBackupStore
+
+**Learning:** When a class manages backup synchronization or caching (like `CloudBackupStore`), directly accessing `window.localStorage` limits testability and creates hidden dependencies. The repository pattern provides `browserStorage` from `$lib/utils/runtime-deps` which handles SSR gracefully and acts as a proper dependency boundary.
+
+**Action:** Refactored `CloudBackupStore`'s `hashCache` persistence to use a `storage: StorageLike` dependency through `CloudBackupDeps`, defaulting to `browserStorage`. Replaced `localStorage.getItem` and `localStorage.setItem` with the injected `storage` accessor.
+
+## 2024-10-24 - cloud-backup-payload.ts: Injecting clock for timestamp generation
+
+**Learning:** `cloud-backup-payload.ts` used a hardcoded `Date.now()` mixed with `performance.now()` in a local helper function `nowMs()`. This made stage timings for telemetry hard to test deterministically. The dependencies object `CloudBackupPayloadDeps` and `CloudBackupDeltaDeps` can be leveraged to inject a `Clock` which allows us to override time in tests, while preserving the use of `performance.now()` in production if the clock is the default `systemClock`.
+
+**Action:** Inject `Clock` via the dependencies payload in utility functions that perform timestamp generation, and create a seam inside the local timestamp helper to fall back to the injected clock's `now()` method when needed. Ensure proper typing using `@codex/runtime` and relative imports where necessary to avoid monorepo pathing issues in tests.
+
+## 2026-10-27 - Injecting Clock into standalone help functions
+
+**Learning:** Standalone utility functions that handle asynchronous waits or timeouts (like `waitFor` in `help-runtime.ts`) frequently rely on a hardcoded `Date.now()`. By injecting a `clock` parameter that defaults to `systemClock`, we maintain correct production functionality while exposing a clean seam for unit tests to control time progression deterministically.
+
+**Action:** When refactoring independent helper functions, append the `clock` dependency to the end of the argument list with a default value. In `waitFor`, compare elapsed time against `clock.now()` instead of `Date.now()`.
+
+## 2026-10-07 - Inject IdGenerator into CalendarEraSettings
+
+**Learning:** Svelte 5 components generating list items (like Calendar Eras) often hardcode `crypto.randomUUID()`. This makes testing deterministic ID generation difficult. Injecting `idGenerator` avoids Vitest global pollution and creates a clean test boundary.
+
+**Action:** Identified hardcoded `crypto.randomUUID()` in `CalendarEraSettings.svelte`. Used Svelte 5 `$props()` to inject an `idGenerator` with `systemIdGenerator` from `@codex/runtime` as the default.
+
+## 2024-10-07 - Injected Clock into Canvas Area Enhancement
+
+**Learning:** Extracted `Date.now()` into an injected `clock: Clock = systemClock` dependency in Svelte component hooks (`useCanvasAreaEnhancement`), avoiding hard-coded temporal state and making tests deterministic.
+
+**Action:** Look for `Date.now()` hidden in component hooks or metadata persistence logic, and inject a `Clock` parameter defaulting to `systemClock` from `@codex/runtime` (or `$lib/utils/runtime-deps`) to improve testability.
+
+## 2024-05-18 - Replacing hard-coded localStorage in SoloSessionBar component
+
+**Learning:** For simple preferences like a UI bar being minimized in a Svelte component, directly using `try { localStorage.getItem() } catch {}` makes it impossible to unit test deterministically without overriding globals.
+**Action:** Used the `storage` parameter prop approach `let { storage = browserStorage }: { storage?: StorageLike } = $props()` from `$lib/utils/runtime-deps`. The component remains simple, but the dependencies are clear and testable.
+
+## 2026-10-11 - Injecting Clock into standalone domain publish functions
+
+**Learning:** Standalone utility functions that publish domain events (like `publishSoloMapMove` in `solo-exploration-recorder.svelte.ts`) frequently rely on a hardcoded `Date.now()` for metadata timestamps. By injecting a `clock` parameter that defaults to `systemClock`, we maintain correct production functionality while exposing a clean seam for unit tests to control event timestamps deterministically.
+
+**Action:** When refactoring independent helper functions, append the `clock` dependency to the argument list with a default value of `systemClock`. Use `clock.now()` instead of `Date.now()`.
+
+## 2024-10-27 - Injecting IdGenerator into Svelte 5 component
+
+**Learning:** Svelte components that generate runtime IDs for logs or trades (e.g., `StockTradePanel.svelte`) occasionally hardcode `globalThis.crypto.randomUUID()`. This couples the component to the browser global, limiting testability.
+**Action:** Inject an `IdGenerator` prop via `$props()`, defaulting to `systemIdGenerator` from `$lib/utils/runtime-deps`, replacing hardcoded crypto calls with `idGenerator.uuid()`.
+
+## 2024-10-13 - Inject `systemIdGenerator.uuid()` instead of `crypto.randomUUID()` in default factories
+
+**Learning:** When defining default factory functions for dependencies like IDs, relying on browser globals like `crypto.randomUUID()` introduces a hidden hardcoded dependency that cannot be intercepted by standard testing mocks without polluting the global scope.
+
+**Action:** Always utilize centralized dependency injection utilities like `@codex/runtime`'s `systemIdGenerator` which defaults to `crypto.randomUUID()` but provides a testable seam to mock IDs deterministically across the codebase.
+
+## 2026-10-15 - Inject StorageLike to remove jsdom in preference tests
+
+**Learning:** When tests for simple preference utilities rely on `@vitest-environment jsdom` and global `localStorage` mocks, they become brittle and slow. In components like `zen-sidebar-preference`, direct `localStorage` usage hid the storage dependency.
+
+**Action:** Inject `StorageLike` (defaulting to `browserStorage`) into preference read/write functions. This allows tests to pass an isolated in-memory `Map`-backed fake, removing the need for jsdom and global prototype mocking.
+
+## 2026-10-16 - Inject StorageLike into Svelte components
+
+**Learning:** Svelte components testing global localStorage can be hard to mock robustly across environments.
+
+**Action:** Inject a custom `StorageLike` map-backed mock into the component during tests instead of spying on or clearing the global `window.localStorage`.
+
+## 2026-10-17 - Injecting Clock into ProposerStore
+
+**Learning:** Hardcoded systemClock usage inside ProposerStore hinders testability by making the current time global and untestable. Injecting a Clock dependency lazily at construction resolves this while keeping the production default.
+**Action:** When creating or refactoring stores that rely on timestamps, inject a `clock: Clock = systemClock` dependency into the constructor.
+
+## 2026-10-18 - Injecting Clock into DetailChatsTab.svelte
+
+**Learning:** Svelte components that mutate transcript or metadata timestamps (like `DetailChatsTab`) shouldn't hardcode `systemClock.now()`. Injecting an optional `clock: Clock` prop allows deterministic tests without global mocking.
+
+**Action:** Use `$props()` to inject `clock` and default to `systemClock` from `$lib/utils/runtime-deps`.
+
+## 2024-10-20 - Safe ID generation
+
+**Learning:** The `@codex/runtime` package exposes `systemIdGenerator` as a safe fallback when `crypto.randomUUID` is unavailable (e.g. in some SSR/worker contexts or older browsers). Using this ensures callers don't crash purely from a missing id function.
+
+**Action:** When a stable row ID is needed and `crypto.randomUUID` was directly used, replace it with `systemIdGenerator.uuid()` from `@codex/runtime` to safely handle unsupported environments.
+
+## 2024-10-21 - Inject window and document into SeoImportService
+
+**Learning:** When services like `SeoImportService` directly reference browser globals (`window.history`, `window.location`, `document.title`) and `localStorage` to strip UTM tracking from URLs or manage pending imports, testing them requires brittle, broad `vi.stubGlobal("window", ...)` stubs.
+**Action:** Inject `win` and `doc` (as well as `storage` for localStorage) directly into the service's constructor, defaulting to `typeof window !== "undefined" ? window : undefined` for production/SSR compatibility. This allows tests to pass in simple, tailored mock objects instead of patching global state.
+
+## 2026-10-25 - Dependency injection of idGenerator into oracle-proxy session
+
+**Learning:** The `mintSessionToken` function in `oracle-proxy` hard-coded `crypto.randomUUID()` for ID generation, missing an opportunity for testability. I successfully injected `idGenerator` into the signature, defaulting to `{ uuid: () => crypto.randomUUID() }`.
+
+**Action:** Use an explicitly injected `idGenerator` argument instead of global browser APIs for random ID generation when dealing with backend ID generation code to improve testability without altering existing functionality.
+
+## 2024-10-24 - Injecting Clock into AttributionStore
+
+**Learning:** Found `Date.now` directly used as a default fallback parameter in `AttributionStore` (analytics) despite being injectable. This bypassed the shared `systemClock` defined in `@codex/runtime`, leading to hardcoded dependency usage in production.
+**Action:** Replaced `Date.now` fallback with `() => systemClock.now()` to maintain consistent time generation behavior across the app through the ambient runtime dependency seams.
+
+## 2024-10-26 - Injecting Clock into ProposerService via ProposerStore
+
+**Learning:** Even when a store or class explicitly accepts a DI dependency (like `clock`) in its constructor, it must be carefully passed down to any instantiated internal services (like `ProposerService`) that also require that dependency. Failing to do so causes the internal service to fall back to hardcoded defaults (`Date.now`), breaking testability and deterministic timing.
+**Action:** Always verify that injected dependencies are propagated completely through the internal instantiation chain of the class.
+
+## 2026-10-28 - Inject ambient dependencies into internal locks
+
+**Learning:** In vault configuration updates, global lock fallback mechanisms (IndexedDB) hardcode `Date.now()` and `crypto.randomUUID()`, making time-based tests flakey and coupled to globals.
+**Action:** Add `clock` and `idGenerator` seams to the `VaultConfigDependencies` interface and pass them down into the `withIndexedDbLock` / `withBrowserLock` functions. This allows explicit mock time/ID generation in lock tests.
+
+## 2026-10-29 - Inject storage in HexCrawlLayer.svelte
+
+**Learning:** Svelte components tracking UI hints (like hex crawl AI and hint dismissals) should inject a `storage` dependency via `$props()` defaulting to `browserStorage` instead of hardcoding `window.localStorage`. This enables safe tests without polluting Vitest globals and cleanly handles SSR without manual `typeof window` checks.
+
+**Action:** Replace `typeof window !== "undefined" ? window.localStorage : null` with an optional `storage` property defaulting to `browserStorage` from `#lib/utils/runtime-deps.js`.
+
+## 2025-05-18 - AdventureSessionRepository dependency boundaries
+
+**Learning:** Replaced `generateId: () => string = () => crypto.randomUUID()` and `now: () => number = () => Date.now()` with explicit `IdGenerator` and `Clock` dependency objects (with defaults mapped to `systemIdGenerator` and `systemClock`). This standardizes the dependency pattern and makes instantiating mocks in test files cleaner by leveraging object shapes directly without needing positional arguments.
+
+**Action:** Standardized constructor pattern to `deps: { idGenerator?: IdGenerator; clock?: Clock } = {}` within the web application service `AdventureSessionRepository`, ensuring `Date.now()` and `crypto.randomUUID()` usage are managed via the dedicated DI interface `@codex/runtime` provides.

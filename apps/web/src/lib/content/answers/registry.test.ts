@@ -16,6 +16,7 @@ import {
 import { answers } from "./pages";
 import { findIntentOwner, getDiscoveryEntries } from "../discovery/registry";
 import { getAllLandingPageSlugs } from "../for/registry";
+import { getAllExampleSlugs } from "../examples/registry";
 import { HEIST_TOPIC_CONFIG } from "../topics/heists";
 import { PUZZLE_TOPIC_CONFIG } from "../topics/puzzles";
 import { PIRATE_TOPIC_CONFIG } from "../topics/pirates";
@@ -54,6 +55,42 @@ const mockRegistry: Record<string, AnswerConfig> = {
 };
 
 describe("answer registry", () => {
+  it("keeps character and world development overlap acknowledgements reciprocal", () => {
+    const characterAndWorld =
+      answers["should-i-develop-my-characters-or-my-world-first"];
+    const overlaps = [
+      [
+        "how-do-you-start-worldbuilding-from-scratch",
+        "answer-worldbuilding-from-scratch",
+      ],
+      [
+        "how-do-i-start-worldbuilding-for-a-novel-or-short-story",
+        "answer-worldbuilding-for-fiction-writers",
+      ],
+      [
+        "where-do-worldbuilding-ideas-come-from",
+        "answer-worldbuilding-ideas-inspiration",
+      ],
+    ] as const;
+
+    for (const [slug, intentId] of overlaps) {
+      const relatedAnswer = answers[slug];
+
+      expect(characterAndWorld.discovery?.acknowledgedOverlap).toContainEqual(
+        expect.objectContaining({
+          with: intentId,
+          reason: expect.any(String),
+        }),
+      );
+      expect(relatedAnswer.discovery?.acknowledgedOverlap).toContainEqual(
+        expect.objectContaining({
+          with: characterAndWorld.discovery?.id,
+          reason: expect.any(String),
+        }),
+      );
+    }
+  });
+
   it("keeps settlement geography overlap acknowledgements reciprocal", () => {
     const geography =
       answers["how-do-i-design-a-geographically-realistic-town-or-village"];
@@ -1116,6 +1153,7 @@ describe("published answers", () => {
     // hand-written href is the easiest thing on these pages to get wrong, so
     // it is checked against the same registries the routes are built from.
     const forSlugs = new Set(getAllLandingPageSlugs());
+    const exampleSlugs = new Set(getAllExampleSlugs());
     const topicPaths = new Set([
       HEIST_TOPIC_CONFIG.canonicalPath,
       PUZZLE_TOPIC_CONFIG.canonicalPath,
@@ -1138,6 +1176,7 @@ describe("published answers", () => {
 
     const sectionChecks: Record<string, (slug: string) => boolean> = {
       answers: (slug) => getAllAnswerSlugs().includes(slug),
+      examples: (slug) => exampleSlugs.has(slug),
       for: (slug) => forSlugs.has(slug),
       generators: (slug) => isGeneratorSlug(slug),
       tools: (slug) => toolPages.has(slug),

@@ -818,3 +818,73 @@ describe("template directory routes", () => {
     ).toBe(404);
   });
 });
+
+import { handleCreateTemplateListing } from "../template-directory";
+import { Bucket } from "./r2-memory-bucket";
+
+describe("handleCreateTemplateListing", () => {
+  it("uses injected dependencies for deterministic ID and date", async () => {
+    const env = { BUCKET: new Bucket() };
+    const request = new Request(
+      "https://oracle.test/api/template-directory/listings",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          package: {
+            schemaVersion: 1,
+            template: {
+              name: "Test Template",
+              description: "A test template",
+              system: "Test System",
+              category: "character",
+              labels: ["test"],
+              fields: [{ id: "f1", label: "Test Label", type: "text" }],
+            },
+          },
+          metadata: {
+            rightsAcknowledged: true,
+            ownerDisplayName: "Test Owner",
+          },
+        }),
+      },
+    );
+
+    let uuidCount = 0;
+    const deps = {
+      uuid: () => "test-uuid-" + ++uuidCount,
+      now: () => "2023-01-01T00:00:00.000Z",
+    };
+
+    const response = await handleCreateTemplateListing(
+      request,
+      env as any,
+      deps,
+    );
+
+    if (response.status !== 201) {
+      console.error(await response.text());
+    }
+    expect(response.status).toBe(201);
+    const body: any = await response.json();
+
+    expect(body.listing.listingId).toBe("test-uuid-1");
+    expect(body.ownerToken).toBe("test-uuid-2");
+    expect(body.listing.listingCreatedAt).toBe("2023-01-01T00:00:00.000Z");
+
+    const listingKey = "templates/listings/test-uuid-1/listing.json";
+    const packageKey = "templates/listings/test-uuid-1/package.json";
+
+    const listingObj = await env.BUCKET.get(listingKey);
+    const packageObj = await env.BUCKET.get(packageKey);
+
+    expect(listingObj).not.toBeNull();
+    expect(packageObj).not.toBeNull();
+
+    let decoded;
+    if (typeof packageObj?.body === "string") decoded = packageObj.body;
+    else decoded = new TextDecoder().decode(packageObj?.body as Uint8Array);
+
+    const parsedPackage = JSON.parse(decoded);
+    expect(parsedPackage.publishedAt).toBe("2023-01-01T00:00:00.000Z");
+  });
+});

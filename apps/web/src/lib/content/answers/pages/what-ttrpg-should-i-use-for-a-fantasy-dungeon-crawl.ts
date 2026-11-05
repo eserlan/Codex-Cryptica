@@ -179,6 +179,7 @@ export const whatTtrpgShouldIUseForAFantasyDungeonCrawl: AnswerConfigInput = {
     "how-do-i-run-exploration-in-a-huge-ruined-city",
     "what-ttrpg-should-i-play-for-a-pirate-campaign",
     "what-are-the-best-classless-fantasy-rpgs-with-skill-based-progression",
+    "what-are-the-classic-must-play-tabletop-rpg-adventures",
   ],
   discovery: {
     id: "answer-dungeon-crawl-system-selection",

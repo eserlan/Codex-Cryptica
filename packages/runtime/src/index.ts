@@ -21,9 +21,9 @@ export const systemClock: Clock = {
 
 /**
  * Production id generator backed by `crypto.randomUUID`, resolved lazily.
- * Falls back to a non-cryptographic id when `crypto.randomUUID` is
+ * Falls back to a non-cryptographic UUID v4 when `crypto.randomUUID` is
  * unavailable (older browsers, some SSR/worker contexts) so callers never
- * crash purely from missing an id.
+ * crash purely from missing an id and keep the `uuid()` output shape.
  */
 export const systemIdGenerator: IdGenerator = {
   uuid: () => {
@@ -33,6 +33,10 @@ export const systemIdGenerator: IdGenerator = {
     ) {
       return globalThis.crypto.randomUUID();
     }
-    return `id-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (char) => {
+      const random = Math.floor(Math.random() * 16);
+      const value = char === "x" ? random : (random & 0x3) | 0x8;
+      return value.toString(16);
+    });
   },
 };

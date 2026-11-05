@@ -10,6 +10,7 @@ import {
   type NavigatorLike,
 } from "feedback-engine";
 import { VERSION } from "#lib/config/index.js";
+import { systemIdGenerator } from "#lib/utils/runtime-deps.js";
 import {
   FeedbackSubmitError,
   feedbackReportService,
@@ -268,7 +269,7 @@ function pageContext(): FeedbackPageContext {
 export const feedbackDialog = new FeedbackDialogStore({
   service: feedbackReportService,
   appVersion: VERSION,
-  uuid: () => crypto.randomUUID(),
+  uuid: () => systemIdGenerator.uuid(),
   isOnline: () => (typeof navigator === "undefined" ? true : navigator.onLine),
   sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
   context: pageContext,

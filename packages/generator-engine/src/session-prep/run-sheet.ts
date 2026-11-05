@@ -86,11 +86,12 @@ function clueLine(
   return `- **${sentence(clue.fact)}**${tag}${routes ? ` Found by: ${routes}` : ""}`;
 }
 
-// A plain "- Label: text" line would be restyled as a label block by the
-// shared generator renderer, so bold the label like every other line.
+// The shared generator renderer turns both "- Label: text" and
+// "- **Label:** text" into stacked label blocks, breaking run-sheet lists.
+// Use an em dash to preserve a readable labelled note as an ordinary bullet.
 function noteLine(note: SessionPrep["reserve"][number]): string {
   const line = oneLine(note.text);
-  return line ? `- ${line.replace(/^([^:*]{1,60}): /, "**$1:** ")}` : "";
+  return line ? `- ${line.replace(/^([^:*]{1,60}): /, "**$1** — ")}` : "";
 }
 
 /** The table-facing view: only what the GM needs to see during play. */

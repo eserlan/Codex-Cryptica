@@ -1,0 +1,11 @@
+# Context data model
+
+No new persisted store or schema migration.
+
+- **GroundingIntent**: session snapshot, purpose (opening/action/roll-resolution/background), action when applicable, supplied roll outcome when applicable. Roll context derives the original action from the persisted pending-roll/turn model, not a UI draft.
+- **ContextEnvelope**: Vault ID, session ID/revision, purpose, location/date signature, sourced anchors/relevant excerpts and applicable committed scenario/provisional state. Each source retains record ID, role, disclosure and temporal classification. Structured-cloneable data only; callbacks and AbortSignal stay app-side.
+- **GroundingOutcome**: successful preparation returns the context envelope (zero sources allowed). Failed preparation throws AdventureGroundingError with a typed lookup/unavailable/budget code; cancellation and stale/control errors use the existing error lifecycle. Only successful preparation permits dispatch. No state mutation during resolution.
+- **Budgets**: Reuse `allocatePromptBudget` in `packages/adventure-engine/src/context-budget.ts` as the final prompt budget: anchors use up to 24,000 content and 8,000 lore characters, relevant sources up to 12,000 content and 6,000 lore characters, subject to the existing total serialized limit. Retrieval first limits candidate/body reads to 24 unique records, prioritising required anchors; deduplicate by source ID. If required anchors exceed that count or cannot be represented without trimming essential anchor text, report a recoverable budget error. The background generator must use a bounded projection under these same limits; do not implement a second independent text allocator.
+- **Freshness**: Fresh lookup per request. No vault-wide revision contract is established. Recheck current session/control and required source existence before dispatch, and clear retained provider history for each new interaction. Do not assert atomic Vault snapshot semantics; a concurrent edit during lookup is a documented limitation. Reuse the same prepared snapshot only for provider repair within that interaction.
+
+These are internal transient contracts, not new entity records. #4533 supplies richer provisional identities later.

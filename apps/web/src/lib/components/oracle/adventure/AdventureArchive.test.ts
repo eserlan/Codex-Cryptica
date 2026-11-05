@@ -280,10 +280,10 @@ describe("AdventureArchive", () => {
     expect(onResumeArchived).toHaveBeenCalledWith("session-1");
   });
 
-  it("surfaces a clear message when another adventure is already active", async () => {
+  it("shows why an archived adventure could not be resumed", async () => {
     const repo = repository();
     const onResumeArchived = vi.fn(async () => {
-      throw new Error("active-adventure-exists");
+      throw new Error("resume-failed");
     });
     render(AdventureArchive, {
       repository: repo as any,
@@ -298,7 +298,7 @@ describe("AdventureArchive", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByRole("alert").textContent).toContain("already active");
+      expect(screen.getByRole("alert").textContent).toContain("resume-failed");
     });
   });
 });

@@ -184,6 +184,27 @@ export interface ResolvedRollSnapshot {
   outcome: SuppliedRollOutcome;
 }
 
+/** Elapsed fictional time and up to three causal GM-only NPC/situation updates. */
+export interface TimeAdvanceProposal {
+  minutes: number;
+  cause: string;
+  developments: Array<{ threadId: string; text: string }>;
+}
+
+export interface WorldTimeState {
+  version: 1;
+  /** Minutes since the in-world scene began; no device clock arithmetic. */
+  elapsedMinutes: number;
+  /** Private event ledger. Never include in player transcript. */
+  events: Array<{
+    id: string;
+    turnId: string;
+    atMinute: number;
+    threadId: string;
+    text: string;
+  }>;
+}
+
 export interface CommittedAdventureTurn {
   id: string;
   sequence: number;
@@ -199,6 +220,8 @@ export interface CommittedAdventureTurn {
   sourceRecordIds: string[];
   provisionalFactIds: string[];
   committedAt: string;
+  /** Player-safe time interval; private developments live in worldTime. */
+  timeAdvance?: { minutes: number; cause: string };
   suggestedActions?: string[];
 }
 
@@ -219,8 +242,81 @@ export interface ResourceCounter {
   updatedAt: string;
 }
 
+/** A lightweight situation, never a mandatory quest or separate play session. */
+export type ScenarioStatus = "open" | "resolved" | "abandoned";
+
+export interface ScenarioSeed {
+  id: string;
+  origin: {
+    kind: "rumour" | "manual";
+    batchTitle?: string;
+    batchId?: string;
+    manualId?: string;
+    legacySessionId?: string;
+    legacyScenarioId?: string;
+    index?: number;
+    sourceRecordId?: string;
+    sourceFingerprint?: string;
+  };
+  playerVisible: { rumour: string; lead: string; source?: string };
+  gmOnly: { truth: string; ifInvestigated?: string };
+}
+
+export interface ScenarioEvent {
+  id: string;
+  kind: "discovery" | "consequence" | "status-change";
+  visibility: "player" | "gm";
+  text: string;
+  at: string;
+  turnId?: string;
+}
+
+export interface ScenarioState extends ScenarioSeed {
+  version: 1;
+  status: ScenarioStatus;
+  events: ScenarioEvent[];
+}
+
+export interface ScenarioItem extends ScenarioState {
+  knowledge: "unheard" | "heard";
+  anchorRefs: string[];
+  revealedSecretIds: string[];
+  secretBindings: {
+    truth: string;
+    ifInvestigated?: string;
+    eventIds: Record<string, string>;
+  };
+}
+
+export interface ScenarioCollection {
+  version: 1;
+  items: ScenarioItem[];
+  focusedScenarioId: string | null;
+}
+
+/** A canonical or provisional place for unscripted entry into a Vault. */
+export interface WorldEntryContext {
+  version: 1;
+  location:
+    | { kind: "canonical"; recordId: string; name: string }
+    | { kind: "provisional"; name: string };
+  /** Exact date precision is retained; an absent date is explicitly unspecified. */
+  at?: {
+    year: number;
+    month?: number;
+    day?: number;
+    precision?: "year" | "unit" | "day" | "anchor";
+    unitId?: string;
+    anchorId?: string;
+    calendarRevision?: number;
+    label?: string;
+  };
+  intent: "explore" | "scene" | "opportunity";
+  scenePrompt?: string;
+}
+
 export interface AdventureSession {
-  schemaVersion: 1 | 2;
+  schemaVersion: 3;
   id: string;
   vaultId: string;
   title: string;
@@ -232,6 +328,12 @@ export interface AdventureSession {
   playerCharacter: PlayerCharacter;
   premise: string;
   sourceRecords: SourceRecordReference[];
+  /** Optional structured situations; absent on ordinary adventures. */
+  scenarioCollection?: ScenarioCollection;
+  /** Additive world-entry setup; absent in old and ordinary adventures. */
+  worldEntry?: WorldEntryContext;
+  /** Optional for backwards-compatible local-first sessions. */
+  worldTime?: WorldTimeState;
   visibleState: VisibleAdventureState;
   hiddenState: HiddenAdventureState;
   provisionalFacts: ProvisionalFact[];
@@ -246,9 +348,12 @@ export interface AdventureSession {
 export interface CompletedTurnProposal {
   kind: "complete";
   narration: string;
+  timeAdvance?: TimeAdvanceProposal;
   visiblePatch: VisibleStateProposalPatch;
   hiddenPatch: HiddenStateProposalPatch;
   revealSecretIds: string[];
+  /** Scenario leads fictionally disclosed in this same committed turn. */
+  revealScenarioIds?: string[];
   provisionalFacts: NewProvisionalFact[];
   sourceRecordIds: string[];
   suggestedActions?: string[];

@@ -15,6 +15,9 @@
 
   let revealed = $state(false);
   const hideSpoilers = $derived(spoilerShield && !revealed);
+  const hideRumourGm = $derived(
+    draft.sourceGeneratorId === "rumour" && !revealed,
+  );
 
   const sections = $derived(
     [
@@ -31,7 +34,9 @@
       },
     ].filter(
       (section) =>
-        section.markdown && (section.label === "Summary" || !hideSpoilers),
+        section.markdown &&
+        (section.label === "Summary" || !hideSpoilers) &&
+        (section.label !== "GM Reference" || !hideRumourGm),
     ),
   );
 </script>
@@ -51,6 +56,20 @@
     </div>
   </div>
 {/each}
+
+{#if hideRumourGm && !hideSpoilers && draft.lore}
+  <div class="rounded border border-chrome-border px-3 py-3">
+    <p class="text-xs text-chrome-muted">
+      GM notes are hidden so you can play a rumour without seeing its truth.
+    </p>
+    <button
+      type="button"
+      class="mt-2 rounded border border-chrome-border px-3 py-1.5 text-xs text-chrome-text"
+      onclick={() => (revealed = true)}
+      data-testid="reveal-rumour-gm-notes">Reveal GM notes</button
+    >
+  </div>
+{/if}
 
 {#if hideSpoilers && (draft.content || draft.lore)}
   <div

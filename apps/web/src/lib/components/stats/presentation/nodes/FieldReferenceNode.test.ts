@@ -5,12 +5,23 @@ import { describe, expect, it, vi } from "vitest";
 import type { FieldReferenceNode as FieldReferenceNodeType } from "@codex/stat-sheet-engine";
 import type { PresentationRenderContext } from "../types";
 
-const { rollStatSheetDiceField } = vi.hoisted(() => ({
-  rollStatSheetDiceField: vi.fn(),
-}));
+const { rollStatSheetDiceField, rollStatSheetDicePoolField } = vi.hoisted(
+  () => ({
+    rollStatSheetDiceField: vi.fn(),
+    rollStatSheetDicePoolField: vi.fn().mockResolvedValue({
+      text: "= 14 (Sum)",
+      isError: false,
+      total: 14,
+      roll: { total: 14, parts: [] },
+    }),
+  }),
+);
 
 vi.mock("#lib/utils/stat-sheet-field-actions.js", () => ({
   rollStatSheetDiceField,
+  rollStatSheetDicePoolField,
+  computeAdjustedCounterValue: (field: any, dir: number) =>
+    (field.value ?? 0) + dir,
 }));
 
 import FieldReferenceNode from "./FieldReferenceNode.svelte";
@@ -372,5 +383,136 @@ describe("FieldReferenceNode", () => {
     expect(
       screen.getByTestId("presentation-missing-field").textContent,
     ).toContain("Archery (missing field)");
+  });
+
+  describe("dice-pool field references", () => {
+    it("renders stepper, die selector, count, and roll button in view mode", () => {
+      const node: FieldReferenceNodeType = {
+        type: "field-reference",
+        fieldId: "pool_prowl",
+        label: "Prowl",
+      };
+      const context = makeContext([
+        {
+          id: "pool_prowl",
+          label: "Prowl",
+          type: "dice-pool",
+          value: 3,
+          formula: "d6",
+        },
+      ]);
+
+      render(FieldReferenceNode, { props: { node, context } });
+
+      expect(screen.getByTestId("presentation-field-dice-pool")).toBeTruthy();
+      expect(
+        screen.getByTestId("presentation-dice-pool-count").textContent?.trim(),
+      ).toBe("3");
+      expect(
+        screen.getByTestId("presentation-dice-pool-die-select"),
+      ).toBeTruthy();
+      expect(
+        screen.getByTestId("presentation-field-dice-pool-roll"),
+      ).toBeTruthy();
+    });
+
+    it("triggers count adjustment and updates field value", async () => {
+      const node: FieldReferenceNodeType = {
+        type: "field-reference",
+        fieldId: "pool_prowl",
+        label: "Prowl",
+      };
+      const context = makeContext([
+        {
+          id: "pool_prowl",
+          label: "Prowl",
+          type: "dice-pool",
+          value: 3,
+          formula: "d6",
+        },
+      ]);
+
+      render(FieldReferenceNode, { props: { node, context } });
+
+      await fireEvent.click(
+        screen.getByTestId("presentation-dice-pool-increase"),
+      );
+      expect(context.onUpdateFieldValue).toHaveBeenCalledWith("pool_prowl", 4);
+    });
+
+    it("triggers die selection and updates field formula", async () => {
+      const node: FieldReferenceNodeType = {
+        type: "field-reference",
+        fieldId: "pool_prowl",
+        label: "Prowl",
+      };
+      const context = makeContext([
+        {
+          id: "pool_prowl",
+          label: "Prowl",
+          type: "dice-pool",
+          value: 3,
+          formula: "d6",
+        },
+      ]);
+
+      render(FieldReferenceNode, { props: { node, context } });
+
+      const select = screen.getByTestId("presentation-dice-pool-die-select");
+      await fireEvent.change(select, { target: { value: "d10" } });
+      expect(context.onUpdateField).toHaveBeenCalledWith("pool_prowl", {
+        formula: "d10",
+      });
+    });
+
+    it("executes roll on button click", async () => {
+      const node: FieldReferenceNodeType = {
+        type: "field-reference",
+        fieldId: "pool_prowl",
+        label: "Prowl",
+      };
+      const context = makeContext([
+        {
+          id: "pool_prowl",
+          label: "Prowl",
+          type: "dice-pool",
+          value: 3,
+          formula: "d6",
+        },
+      ]);
+
+      render(FieldReferenceNode, { props: { node, context } });
+
+      await fireEvent.click(
+        screen.getByTestId("presentation-field-dice-pool-roll"),
+      );
+      expect(rollStatSheetDicePoolField).toHaveBeenCalled();
+    });
+
+    it("renders compact preview in preview mode", () => {
+      const node: FieldReferenceNodeType = {
+        type: "field-reference",
+        fieldId: "pool_prowl",
+        label: "Prowl",
+      };
+      const context = {
+        ...makeContext([
+          {
+            id: "pool_prowl",
+            label: "Prowl",
+            type: "dice-pool",
+            value: 4,
+            formula: "d6",
+          },
+        ]),
+        mode: "preview" as const,
+      };
+
+      render(FieldReferenceNode, { props: { node, context } });
+
+      expect(
+        screen.getByTestId("presentation-field-dice-pool-preview").textContent,
+      ).toContain("4d6");
+    });
   });
 });

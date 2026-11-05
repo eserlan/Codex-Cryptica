@@ -1,0 +1,173 @@
+name: Update E2E Snapshots
+
+# Regenerates Playwright screenshot baselines on CI's Ubuntu runner and opens a
+# PR against staging that lists each image's size before and after.
+on:
+  workflow_dispatch:
+    inputs:
+      spec:
+        description: "Spec file, e.g. apps/web/tests/responsive-entity-panel.spec.ts"
+        required: true
+        type: string
+      grep:
+        description: "Optional Playwright --grep filter"
+        required: false
+        default: ""
+        type: string
+
+concurrency:
+  group: "update-e2e-snapshots"
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-snapshots:
+    name: Update E2E Snapshots
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      HUSKY: 0
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: staging
+
+      - name: Validate inputs
+        env:
+          SPEC: ${{ inputs.spec }}
+          GREP: ${{ inputs.grep }}
+        run: |
+          spec_re='^apps/web/tests/[A-Za-z0-9._/-]+\.spec\.ts$'
+          grep_re='^[A-Za-z0-9 _.:/()@-]+$'
+          if [[ ! "$SPEC" =~ $spec_re ]]; then
+            echo "::error::spec must be a path like apps/web/tests/<name>.spec.ts"
+            exit 1
+          fi
+          if [[ "$SPEC" == *..* ]]; then
+            echo "::error::spec must not contain '..'"
+            exit 1
+          fi
+          if [[ ! -f "$SPEC" ]]; then
+            echo "::error::spec does not exist on staging"
+            exit 1
+          fi
+          if [[ -n "$GREP" ]]; then
+            if (( ${#GREP} > 200 )); then
+              echo "::error::grep must be at most 200 characters"
+              exit 1
+            fi
+            if [[ ! "$GREP" =~ $grep_re ]]; then
+              echo "::error::grep may only contain letters, digits, spaces and _ . : / ( ) @ -"
+              exit 1
+            fi
+          fi
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Setup Bun cache
+        uses: actions/cache@v6
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: Install Dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Install Playwright Browsers
+        working-directory: apps/web
+        run: bunx playwright install --with-deps chromium
+
+      - name: Update snapshots
+        env:
+          VITE_GEMINI_API_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
+          VITE_SHARED_GEMINI_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
+          SPEC: ${{ inputs.spec }}
+          GREP: ${{ inputs.grep }}
+        working-directory: apps/web
+        run: |
+          args=("${SPEC#apps/web/}" --config=playwright.config.ts --reporter=list --update-snapshots)
+          if [[ -n "$GREP" ]]; then
+            args+=(--grep "$GREP")
+          fi
+          bunx playwright test "${args[@]}"
+
+      - name: Open snapshot PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SPEC: ${{ inputs.spec }}
+          BRANCH: ci/update-snapshots-${{ github.run_id }}-${{ github.run_attempt }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          snapshot_re='^apps/web/tests/([^/]+/)*[^/]+-snapshots/[^/]+\.png$'
+
+          git add -- ':(glob)apps/web/tests/**/*-snapshots/*.png'
+
+          mapfile -d '' -t staged < <(git diff --cached --name-only -z)
+          if [[ ${#staged[@]} -eq 0 ]]; then
+            echo "No snapshot changes"
+            exit 0
+          fi
+          for path in "${staged[@]}"; do
+            if [[ ! "$path" =~ $snapshot_re ]]; then
+              echo "::error::A staged file is outside the snapshot folders; refusing to commit"
+              exit 1
+            fi
+          done
+
+          # The checkout is staging, so HEAD holds the current baselines.
+          before_dir="$RUNNER_TEMP/snapshots-before"
+          pairs=()
+          for path in "${staged[@]}"; do
+            before="$before_dir/$path"
+            mkdir -p "$(dirname "$before")"
+            if git cat-file -e "HEAD:$path" 2> /dev/null; then
+              git show "HEAD:$path" > "$before"
+            fi
+            pairs+=("$before" "$path")
+          done
+          table="$(bun scripts/snapshot-size-report.ts "${pairs[@]}")"
+
+          body_file="$RUNNER_TEMP/pr-body.md"
+          {
+            echo "Screenshot baselines regenerated on CI for \`$SPEC\`."
+            echo
+            echo "$table"
+            echo
+            echo "Workflow run: $RUN_URL"
+            echo
+            echo "This PR was opened with \`GITHUB_TOKEN\`, so other workflows do not start on it. Re-run the checks by hand if needed."
+          } > "$body_file"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$BRANCH"
+          git commit -m "📸 test(e2e): update screenshot baselines"
+          git push -u origin "$BRANCH"
+
+          # This repo does not let Actions open pull requests, so creation can
+          # fail after the branch is pushed. Keep the branch and say how to
+          # open the PR rather than failing the run.
+          if ! gh pr create --base staging --head "$BRANCH" \
+            --title "📸 test(e2e): update screenshot baselines for $SPEC" \
+            --body-file "$body_file"; then
+            compare="https://github.com/$REPO/compare/staging...$BRANCH?expand=1"
+            echo "::notice::Branch $BRANCH was pushed but the PR could not be opened. Open it from $compare"
+            {
+              echo "### Snapshots updated on \`$BRANCH\`"
+              echo
+              echo "GitHub Actions could not open the pull request. [Open it here]($compare)."
+              echo
+              echo "$table"
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi

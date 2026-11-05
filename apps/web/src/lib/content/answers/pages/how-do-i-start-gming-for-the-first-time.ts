@@ -152,6 +152,7 @@ export const howDoIStartGmingForTheFirstTime: AnswerConfigInput = {
     "how-do-i-introduce-children-to-dnd-without-overwhelming-them",
     "how-can-i-practise-being-a-dungeon-master-without-a-group",
     "how-to-adapt-a-video-game-into-a-tabletop-rpg",
+    "how-do-i-run-a-one-shot-rpg-session",
   ],
   discovery: {
     id: "answer-first-time-gm-hub",

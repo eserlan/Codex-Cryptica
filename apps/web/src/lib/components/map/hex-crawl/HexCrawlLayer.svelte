@@ -27,6 +27,7 @@
   import HexJourneyControls from "./HexJourneyControls.svelte";
   import HexJourneyOverlay from "./HexJourneyOverlay.svelte";
   import type { NoticeStorage } from "./hex-discovery-notice";
+  import { browserStorage } from "#lib/utils/runtime-deps.js";
 
   let {
     services,
@@ -34,12 +35,14 @@
     isGM,
     isGuest,
     viewportSize,
+    storage = browserStorage,
   }: {
     services: HexCrawlServices;
     painter: MapFogPainter;
     isGM: boolean;
     isGuest: boolean;
     viewportSize: { width: number; height: number };
+    storage?: NoticeStorage;
   } = $props();
 
   const mapId = $derived(mapStore.activeMapId);
@@ -92,9 +95,6 @@
         })
       : null,
   );
-
-  const storage: NoticeStorage | null =
-    typeof window !== "undefined" ? window.localStorage : null;
 
   const offered = $derived(
     services.offer.current &&

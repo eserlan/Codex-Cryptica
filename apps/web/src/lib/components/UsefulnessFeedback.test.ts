@@ -98,7 +98,12 @@ describe("UsefulnessFeedback", () => {
 
     expect(screen.getByText("Thanks for the feedback!")).toBeTruthy();
     expect(onVote).not.toHaveBeenCalled();
-    expect(screen.queryByRole("button", { name: /^yes$/i })).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Yes, this was useful" }),
+    ).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "No, this was not useful" }),
+    ).toBeNull();
   });
 
   it("lets the reader change their vote, overwriting the stored value", async () => {
@@ -261,5 +266,19 @@ describe("UsefulnessFeedback", () => {
     await rerender({ voteKey: "b", persistence });
 
     expect(screen.getByText("Thanks for the feedback!")).toBeTruthy();
+  });
+
+  it("gives each vote button a full accessible name and matching title", () => {
+    render(UsefulnessFeedback, {
+      props: {
+        voteKey: "names",
+        persistence: new UIPersistence({ storage: fakeStorage() }),
+        onVote: vi.fn(),
+      },
+    });
+    const yes = screen.getByRole("button", { name: "Yes, this was useful" });
+    const no = screen.getByRole("button", { name: "No, this was not useful" });
+    expect(yes.getAttribute("title")).toBe("Yes, this was useful");
+    expect(no.getAttribute("title")).toBe("No, this was not useful");
   });
 });

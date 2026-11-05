@@ -150,8 +150,10 @@ describe("VTTTileDeckManager", () => {
     expect(persistDraft).toHaveBeenCalledOnce();
   });
 
-  it("draws from any deck, weighting every tile equally", () => {
-    const { manager } = createManager();
+  it("draws from any deck using the injected random source", () => {
+    const rolls = [0, 0.26, 0.51, 0.76];
+    let nextRoll = 0;
+    const { manager } = createManager({ random: () => rolls[nextRoll++] });
     manager.createDeck("Small", [{ name: "Only tile", imagePath: "only.png" }]);
     manager.createDeck("Big", [
       { name: "A", imagePath: "a.png" },
@@ -159,17 +161,13 @@ describe("VTTTileDeckManager", () => {
       { name: "C", imagePath: "c.png" },
     ])!;
 
-    const seen = new Set<string>();
-    for (let i = 0; i < 200; i++) {
+    const drawnTiles = rolls.map(() => {
       const tile = manager.drawAny();
       manager.cancelPendingPlacement();
-      seen.add(tile!.name);
-    }
+      return tile?.name;
+    });
 
-    // With 200 draws across 4 equally-weighted tiles, every tile should
-    // have come up at least once — flags a bug where drawAny always picks
-    // the same deck (which would starve the single-tile "Small" deck).
-    expect(seen).toEqual(new Set(["Only tile", "A", "B", "C"]));
+    expect(drawnTiles).toEqual(["Only tile", "A", "B", "C"]);
   });
 
   it("returns null from drawAny when no deck has tiles", () => {
@@ -420,11 +418,19 @@ describe("VTTTileDeckManager stocking", () => {
     const pinTileNote = vi.fn();
     const rollStockingTable = vi.fn(() => ({ name: "T", text: "something" }));
     const rolls = [0.1, 0.5, 0.9];
-    let next = 0;
+    let nextStockingRoll = 0;
+    let nextRollIsTileSelection = true;
     const { manager, deck } = stockedDeck({
       pinTileNote,
       rollStockingTable,
-      random: () => rolls[next++],
+      random: () => {
+        if (nextRollIsTileSelection) {
+          nextRollIsTileSelection = false;
+          return 0;
+        }
+        nextRollIsTileSelection = true;
+        return rolls[nextStockingRoll++];
+      },
       stocking: { mode: "table", tableId: "table-1", frequency: 3 },
     });
 

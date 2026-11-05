@@ -201,6 +201,9 @@ export const howDoIPaceAnRpgOneShot: AnswerConfigInput = {
     "how-long-should-a-ttrpg-session-be",
     "what-are-the-pros-and-cons-of-becoming-a-dungeon-master",
     "stop-players-investigating-every-detail",
+    "what-are-the-classic-must-play-tabletop-rpg-adventures",
+    "how-do-i-run-a-one-shot-rpg-session",
+    "how-do-i-plan-a-one-shot-rpg-session",
   ],
   discovery: {
     id: "answer-pace-rpg-one-shot",
@@ -243,6 +246,11 @@ export const howDoIPaceAnRpgOneShot: AnswerConfigInput = {
         with: "answer-ttrpg-session-length",
         reason:
           "This answer teaches how to pace content within a fixed single-session slot; the session-length answer compares general booked lengths across play contexts.",
+      },
+      {
+        with: "answer-run-one-shot-rpg-session",
+        reason:
+          "This answer budgets table time and gives a cutting order; the run answer covers live facilitation, rulings and the ending without repeating those pacing tools.",
       },
     ],
     relatedIntents: [

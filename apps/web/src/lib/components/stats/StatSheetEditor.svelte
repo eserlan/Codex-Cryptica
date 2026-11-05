@@ -36,6 +36,7 @@
     { value: "longtext", label: "Long Text" },
     { value: "heading", label: "Section Heading" },
     { value: "dice", label: "Dice Roll" },
+    { value: "dice-pool", label: "Dice Pool" },
     { value: "item-table", label: "Repeatable Table" },
   ];
 
@@ -126,19 +127,53 @@
   // Once a new minimum or maximum is committed, a current value outside it
   // moves inside, so the sheet never shows "100 / 12". Not per keystroke:
   // typing "12" passes through "1".
+  // Also normalises contradictory bounds where min > max.
+  // fallow-ignore-next-line complexity
   function clampCounterToBounds(id: string) {
     const field = fields.find((f) => f.id === id);
-    if (!field || typeof field.value !== "number") return;
-    let value = field.value;
-    if (field.max !== undefined) value = Math.min(field.max, value);
-    if (field.min !== undefined) value = Math.max(field.min, value);
-    if (value !== field.value) updateField(id, { value });
+    if (!field) return;
+    const updates: Partial<StatSheetField> = {};
+    let min = field.min;
+    let max = field.max;
+
+    if (min !== undefined && max !== undefined && min > max) {
+      // Contradictory bounds: raise max to match min
+      max = min;
+      updates.max = max;
+    }
+
+    if (typeof field.value === "number") {
+      let value = field.value;
+      if (min !== undefined) value = Math.max(min, value);
+      if (max !== undefined) value = Math.min(max, value);
+      if (value !== field.value) updates.value = value;
+    }
+
+    if (Object.keys(updates).length > 0) {
+      updateField(id, updates);
+    }
   }
 
+  // fallow-ignore-next-line complexity
   function changeFieldType(field: StatSheetField, newType: StatSheetFieldType) {
     const updates: Partial<StatSheetField> = { type: newType };
     if (newType === "item-table" && !field.columns) {
       updates.columns = DEFAULT_ITEM_TABLE_COLUMNS.map((c) => ({ ...c }));
+    } else if (newType === "dice-pool") {
+      const rawVal =
+        typeof field.value === "number" && !isNaN(field.value)
+          ? Math.max(0, Math.min(1000, Math.floor(field.value)))
+          : 3;
+      updates.value = rawVal;
+      updates.startValue = rawVal;
+      if (!field.formula) updates.formula = "d6";
+      if (field.min === undefined) updates.min = 0;
+      else updates.min = Math.max(0, Math.floor(field.min));
+      if (field.max !== undefined)
+        updates.max = Math.min(1000, Math.floor(field.max));
+      if (field.step === undefined) updates.step = 1;
+      else updates.step = Math.max(1, Math.floor(Math.abs(field.step)));
+      if (field.allowDieChange === undefined) updates.allowDieChange = true;
     }
     updateField(field.id, updates);
   }
@@ -309,6 +344,7 @@
   }
 </script>
 
+<!-- fallow-ignore-next-line complexity -->
 <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
@@ -527,6 +563,127 @@
                 })}
               onchange={() => persist(applyTypedFormula(fields, field.id))}
             />
+          </label>
+        </div>
+      {:else if field.type === "dice-pool"}
+        <div
+          class="flex flex-wrap items-center gap-3 text-micro text-theme-text"
+          data-testid="stat-sheet-editor-dice-pool"
+        >
+          <label class="flex items-center gap-1">
+            Count
+            <input
+              type="number"
+              step="1"
+              aria-label={`Default pool count for ${field.label}`}
+              class="w-16 rounded border border-theme-border bg-theme-bg px-1.5 py-0.5 text-xs text-theme-text"
+              min="0"
+              max="1000"
+              value={typeof field.startValue === "number"
+                ? field.startValue
+                : typeof field.value === "number"
+                  ? field.value
+                  : 3}
+              oninput={(e) => {
+                const raw = (e.target as HTMLInputElement).value;
+                const val =
+                  raw === ""
+                    ? 0
+                    : Math.max(0, Math.min(1000, Math.floor(Number(raw)) || 0));
+                updateField(field.id, {
+                  value: val,
+                  startValue: val,
+                });
+              }}
+              onchange={() => clampCounterToBounds(field.id)}
+            />
+          </label>
+          <label class="flex items-center gap-1">
+            Die
+            <select
+              aria-label={`Die type for ${field.label}`}
+              class="rounded border border-theme-border bg-theme-bg px-1.5 py-0.5 text-xs text-theme-text"
+              value={field.formula || "d6"}
+              onchange={(e) =>
+                updateField(field.id, {
+                  formula: (e.target as HTMLSelectElement).value,
+                })}
+            >
+              {#each ["d4", "d6", "d8", "d10", "d12", "d20", "d100"] as d}
+                <option value={d}>{d}</option>
+              {/each}
+            </select>
+          </label>
+          <label class="flex items-center gap-1">
+            Min
+            <input
+              type="number"
+              step="1"
+              aria-label={`Min pool count for ${field.label}`}
+              class="w-14 rounded border border-theme-border bg-theme-bg px-1 py-0.5 text-xs text-theme-text"
+              value={field.min ?? 0}
+              oninput={(e) =>
+                updateField(field.id, {
+                  min:
+                    (e.target as HTMLInputElement).value === ""
+                      ? undefined
+                      : Math.floor(
+                          Number((e.target as HTMLInputElement).value),
+                        ),
+                })}
+              onchange={() => clampCounterToBounds(field.id)}
+            />
+          </label>
+          <label class="flex items-center gap-1">
+            Max
+            <input
+              type="number"
+              step="1"
+              aria-label={`Max pool count for ${field.label}`}
+              class="w-14 rounded border border-theme-border bg-theme-bg px-1 py-0.5 text-xs text-theme-text"
+              value={field.max ?? ""}
+              oninput={(e) =>
+                updateField(field.id, {
+                  max:
+                    (e.target as HTMLInputElement).value === ""
+                      ? undefined
+                      : Math.floor(
+                          Number((e.target as HTMLInputElement).value),
+                        ),
+                })}
+              onchange={() => clampCounterToBounds(field.id)}
+            />
+          </label>
+          <label class="flex items-center gap-1">
+            Step
+            <input
+              type="number"
+              min="1"
+              max="1000"
+              aria-label={`Step size for ${field.label}`}
+              class="w-14 rounded border border-theme-border bg-theme-bg px-1 py-0.5 text-xs text-theme-text"
+              value={field.step ?? 1}
+              oninput={(e) => {
+                const raw = (e.target as HTMLInputElement).value;
+                const step =
+                  raw === ""
+                    ? 1
+                    : Math.max(1, Math.floor(Math.abs(Number(raw) || 1)));
+                updateField(field.id, { step });
+              }}
+            />
+          </label>
+          <label class="flex items-center gap-1.5">
+            <input
+              type="checkbox"
+              aria-label={`Allow player to change die type for ${field.label}`}
+              checked={field.allowDieChange ?? true}
+              onchange={(e) =>
+                updateField(field.id, {
+                  allowDieChange: (e.target as HTMLInputElement).checked,
+                })}
+            />
+            Selectable die
           </label>
         </div>
       {:else if field.type === "item-table"}

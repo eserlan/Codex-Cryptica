@@ -59,6 +59,11 @@ describe("HelpAssistantComposer", () => {
   it("does not send again while an answer is pending", async () => {
     const onAsk = vi.fn(async () => true);
     setup(onAsk, true);
+    const askButton = screen.getByRole("button", {
+      name: "Ask",
+    }) as HTMLButtonElement;
+    expect(askButton.disabled).toBe(true);
+    expect(askButton.getAttribute("aria-busy")).toBe("true");
     await type("another");
     await fireEvent.keyDown(box(), { key: "Enter" });
     expect(onAsk).not.toHaveBeenCalled();

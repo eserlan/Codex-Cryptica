@@ -26,6 +26,7 @@ import {
   type PointCrawlNode,
   type PointCrawlRoute,
 } from "./point-crawl-state";
+import { emphasisePointCrawlCues } from "./point-crawl-emphasis";
 
 export interface PointCrawlBatchSaveRelationship {
   title: string;
@@ -61,13 +62,13 @@ function buildLocationContent(node: PointCrawlNode): string {
   const roleLabel = pointCrawlNodeRoleLabel(node);
   return [
     `## Overview (${roleLabel})`,
-    node.summary,
+    emphasisePointCrawlCues(node.summary),
     "",
     "## Sights & Atmosphere",
-    node.sensoryDescription,
+    emphasisePointCrawlCues(node.sensoryDescription),
     "",
     "## Why Visit",
-    node.whyVisit,
+    emphasisePointCrawlCues(node.whyVisit),
   ]
     .join("\n")
     .trim();
@@ -80,10 +81,10 @@ function buildLocationLore(
 ): string {
   const lines: string[] = [
     "## Encounter & Complication",
-    node.encounterOrHazard,
+    emphasisePointCrawlCues(node.encounterOrHazard),
     "",
     "## Clues & Rewards",
-    node.clueOrReward,
+    emphasisePointCrawlCues(node.clueOrReward),
     "",
     "## Routes & Exits",
   ];

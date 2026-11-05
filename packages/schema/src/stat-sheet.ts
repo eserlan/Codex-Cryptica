@@ -8,6 +8,7 @@ export const StatSheetFieldTypeSchema = z.enum([
   "heading",
   "dice",
   "item-table",
+  "dice-pool",
 ]);
 
 export type StatSheetFieldType = z.infer<typeof StatSheetFieldTypeSchema>;
@@ -238,6 +239,10 @@ export const StatSheetFieldSchema = z.object({
   // applyDerivedModifiers (apps/web/.../stat-sheet-field-actions.ts)
   // whenever the sheet's fields are persisted.
   modifierSource: z.string().optional(),
+  // For "dice-pool" fields (#3159): whether the runtime player/sheet view
+  // may select a different die type (e.g. d6 vs d8) from the dropdown.
+  // Undefined defaults to true (selectable).
+  allowDieChange: z.boolean().optional(),
 });
 
 export type StatSheetField = z.infer<typeof StatSheetFieldSchema>;

@@ -118,9 +118,79 @@ describe("AssetManager", () => {
     it("should debounce concurrent resolutions for the same path", async () => {
       const p1 = assetManager.resolveImageUrl({} as any, "images/dual.png");
       const p2 = assetManager.resolveImageUrl({} as any, "images/dual.png");
-      expect(p1).toBe(p2);
-      await p1;
+      const [u1, u2] = await Promise.all([p1, p2]);
+      expect(u1).toBe("blob:mock-url");
+      expect(u2).toBe(u1);
       expect(mockIO.readOpfsBlob).toHaveBeenCalledTimes(1);
+      // Each consumer holds its own reference.
+      expect(
+        (assetManager as any).urlCache.entries.get("images/dual.png").refs,
+      ).toBe(2);
+      assetManager.releaseImageUrl("images/dual.png");
+      expect(URL.revokeObjectURL).not.toHaveBeenCalled();
+      assetManager.releaseImageUrl("images/dual.png");
+      expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:mock-url");
+    });
+
+    it("retains a URL published before the in-flight entry is removed", async () => {
+      const first = await assetManager.resolveImageUrl(
+        {} as any,
+        "images/gap.png",
+      );
+      // Simulate the gap: published, but the finally() has not yet run.
+      (assetManager as any).resolving.set(
+        "images/gap.png",
+        Promise.resolve(first),
+      );
+      const second = await assetManager.resolveImageUrl(
+        {} as any,
+        "images/gap.png",
+      );
+      expect(second).toBe(first);
+      assetManager.releaseImageUrl("images/gap.png");
+      expect(URL.revokeObjectURL).not.toHaveBeenCalled();
+    });
+
+    it("does not publish an old vault's image after clear() during resolution", async () => {
+      let finishRead!: (blob: Blob) => void;
+      mockIO.readOpfsBlob.mockImplementationOnce(
+        () => new Promise<Blob>((resolve) => (finishRead = resolve)),
+      );
+      (URL.createObjectURL as any).mockReturnValueOnce("blob:old-vault");
+      const stale = assetManager.resolveImageUrl({} as any, "images/a.png");
+      await waitFor(() => expect(finishRead).toBeTypeOf("function"));
+      assetManager.clear(); // vault switch
+      finishRead(new Blob(["old"]));
+      expect(await stale).toBe("");
+      expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:old-vault");
+      expect((assetManager as any).urlCache.has("images/a.png")).toBe(false);
+
+      // The new vault resolves its own image for the same path.
+      (URL.createObjectURL as any).mockReturnValueOnce("blob:new-vault");
+      expect(
+        await assetManager.resolveImageUrl({} as any, "images/a.png"),
+      ).toBe("blob:new-vault");
+    });
+
+    it("does not let a superseded resolution delete a newer in-flight entry", async () => {
+      let finishOld!: (blob: Blob) => void;
+      mockIO.readOpfsBlob.mockImplementationOnce(
+        () => new Promise<Blob>((resolve) => (finishOld = resolve)),
+      );
+      const old = assetManager.resolveImageUrl({} as any, "images/b.png");
+      await waitFor(() => expect(finishOld).toBeTypeOf("function"));
+      assetManager.clear();
+      let finishNew!: (blob: Blob) => void;
+      mockIO.readOpfsBlob.mockImplementationOnce(
+        () => new Promise<Blob>((resolve) => (finishNew = resolve)),
+      );
+      const fresh = assetManager.resolveImageUrl({} as any, "images/b.png");
+      finishOld(new Blob(["old"]));
+      await old;
+      expect((assetManager as any).resolving.has("images/b.png")).toBe(true);
+      await waitFor(() => expect(finishNew).toBeTypeOf("function"));
+      finishNew(new Blob(["new"]));
+      await fresh;
     });
 
     it("should increment ref count and reuse URL from cache", async () => {
@@ -205,7 +275,7 @@ describe("AssetManager", () => {
       const p1 = assetManager.resolveImageUrl({} as any, "images/race.png");
 
       // 2. Mock URL cache to have it already (simulating p2 finished while p1 was still in try block)
-      (assetManager as any).urlCache.set("images/race.png", {
+      (assetManager as any).urlCache.entries.set("images/race.png", {
         url: "blob:winner",
         refs: 5,
       });
@@ -213,9 +283,9 @@ describe("AssetManager", () => {
       const result = await p1;
       expect(result).toBe("blob:winner");
       expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:mock-url");
-      expect((assetManager as any).urlCache.get("images/race.png").refs).toBe(
-        6,
-      );
+      expect(
+        (assetManager as any).urlCache.entries.get("images/race.png").refs,
+      ).toBe(6);
     });
 
     describe("external URLs", () => {
@@ -1201,45 +1271,57 @@ describe("AssetManager", () => {
     });
 
     it("should decrement ref count and revoke URL when reaching zero", () => {
-      (assetManager as any).urlCache.set("test.png", {
+      (assetManager as any).urlCache.entries.set("test.png", {
         url: "blob:test",
         refs: 1,
       });
 
       assetManager.releaseImageUrl("test.png");
       expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:test");
-      expect((assetManager as any).urlCache.has("test.png")).toBe(false);
+      expect((assetManager as any).urlCache.entries.has("test.png")).toBe(
+        false,
+      );
     });
 
     it("should NOT revoke if refs still above zero", () => {
-      (assetManager as any).urlCache.set("test.png", {
+      (assetManager as any).urlCache.entries.set("test.png", {
         url: "blob:test",
         refs: 2,
       });
 
       assetManager.releaseImageUrl("test.png");
       expect(URL.revokeObjectURL).not.toHaveBeenCalled();
-      expect((assetManager as any).urlCache.get("test.png").refs).toBe(1);
+      expect((assetManager as any).urlCache.entries.get("test.png").refs).toBe(
+        1,
+      );
     });
   });
 
   describe("clear", () => {
     it("should revoke all cached URLs and clear map", () => {
-      (assetManager as any).urlCache.set("a.png", { url: "blob:a", refs: 1 });
-      (assetManager as any).urlCache.set("b.png", { url: "blob:b", refs: 1 });
-      (assetManager as any).deadExternal.add("https://example.com/dead.png");
-      (assetManager as any).failedExternal.set(
+      (assetManager as any).urlCache.entries.set("a.png", {
+        url: "blob:a",
+        refs: 1,
+      });
+      (assetManager as any).urlCache.entries.set("b.png", {
+        url: "blob:b",
+        refs: 1,
+      });
+      (assetManager as any).network.deadExternal.add(
+        "https://example.com/dead.png",
+      );
+      (assetManager as any).network.failedExternal.set(
         "https://example.com/fail.png",
         123,
       );
 
       assetManager.clear();
       expect(URL.revokeObjectURL).toHaveBeenCalledTimes(2);
-      expect((assetManager as any).urlCache.size).toBe(0);
+      expect((assetManager as any).urlCache.entries.size).toBe(0);
       expect(assetManager.isDeadExternal("https://example.com/dead.png")).toBe(
         false,
       );
-      expect((assetManager as any).failedExternal.size).toBe(0);
+      expect((assetManager as any).network.failedExternal.size).toBe(0);
     });
   });
 
@@ -1266,7 +1348,7 @@ describe("AssetManager", () => {
       });
 
       // Trick resolveImageUrl to return a blob URL
-      (assetManager as any).urlCache.set("images/source.png", {
+      (assetManager as any).urlCache.entries.set("images/source.png", {
         url: "blob:src",
         refs: 1,
       });
@@ -1304,7 +1386,7 @@ describe("AssetManager", () => {
     it("should handle fetch failure during blob migration", async () => {
       mockIO.readOpfsBlob.mockRejectedValueOnce(new Error("Missing"));
       (global.fetch as any).mockRejectedValueOnce(new Error("Network Error"));
-      (assetManager as any).urlCache.set("images/fail.png", {
+      (assetManager as any).urlCache.entries.set("images/fail.png", {
         url: "blob:fail",
         refs: 1,
       });

@@ -1,833 +1,202 @@
+import { AdventureState } from "./adventure-state.svelte";
+import { AdventureRuntime } from "./adventure-runtime";
 import {
-  addDicePreset,
-  addResourceCounter,
-  adjustResourceCounter,
-  applyCompletedTurn,
-  applyRollRequest,
-  applyStateCorrection,
-  buildAdventureRecap,
-  createPlayerTranscript,
-  dismissPendingRoll,
-  getRollHistory,
-  recordPendingRollOutcome,
-  removeDicePreset,
-  removeResourceCounter,
-  resolveRecordedRoll,
-  type AdventureSession,
-  type CommitMetadata,
-  type PlayerCharacter,
-  type StateCorrectionOutcome,
-  type SuppliedRollOutcome,
-  type VisibleStatePatch,
-} from "@codex/adventure-engine";
-import type { AdventureTurnGenerationService } from "@codex/ai-engine";
-import {
-  adventureControlAuthority,
-  type AdventureControlAuthority,
-  type AdventureControlLease,
-} from "#lib/services/adventure/adventure-control-lease.js";
-import {
-  adventureControlCoordinator,
-  type AdventureControlCoordinator,
-} from "#lib/services/adventure/adventure-control-coordinator.js";
-import {
-  adventureSessionRepository,
-  type AdventureSessionRepository,
-} from "#lib/services/adventure/adventure-session-repository.js";
-import {
-  adventureContextService,
-  type AdventureContextService,
-} from "#lib/services/adventure/adventure-context-service.js";
-import { adventureTurnGenerationService } from "@codex/ai-engine";
-import { oracleBridge } from "#lib/cloud-bridge/oracle-bridge.js";
-import { diceEngine as defaultDiceEngine, diceParser } from "dice-engine";
-import { systemIdGenerator } from "#lib/utils/runtime-deps.js";
+  resolveAdventureDependencies,
+  type AdventureManagerDependencies,
+} from "./adventure-dependencies";
+import { AdventureOpening } from "./adventure-opening";
+import { AdventureLifecycle } from "./adventure-lifecycle";
+import { AdventureActions } from "./adventure-actions";
+import { AdventureRolls } from "./adventure-rolls";
+import { AdventureTools } from "./adventure-tools";
+import type { AdventureScenarios } from "./adventure-scenarios";
+export type { AdventureManagerDependencies } from "./adventure-dependencies";
+export { hasCommittedOpening } from "./adventure-session";
 
-export interface AdventureManagerDependencies {
-  repository?: AdventureSessionRepository;
-  generation?: Pick<AdventureTurnGenerationService, "generate">;
-  clearGenerationInteraction?: (sessionId: string) => Promise<void>;
-  context?: AdventureContextService;
-  authority?: AdventureControlAuthority;
-  coordinator?: AdventureControlCoordinator;
-  now?: () => string;
-  dice?: Pick<typeof defaultDiceEngine, "evaluate">;
-  idGenerator?: () => string;
-}
+/** Compatibility facade: one reactive state, composed focused workflows. */
+export class AdventureManager extends AdventureState {
+  private readonly runtime: AdventureRuntime;
+  private readonly opening: AdventureOpening;
+  private readonly lifecycle: AdventureLifecycle;
+  private readonly actions: AdventureActions;
+  private readonly rolls: AdventureRolls;
+  private readonly tools: AdventureTools;
+  private readonly scenarios: AdventureScenarios;
 
-function validateRollExpression(proposal: {
-  kind: string;
-  dice?: { expression: string };
-}): void {
-  if (proposal.kind === "roll-required" && proposal.dice) {
-    diceParser.parse(proposal.dice.expression);
-  }
-}
-
-function initialSession(input: {
-  vaultId: string;
-  title: string;
-  premise: string;
-  playerCharacter: PlayerCharacter;
-  sourceRecords?: AdventureSession["sourceRecords"];
-  now: string;
-  idGenerator: () => string;
-}): AdventureSession {
-  return {
-    schemaVersion: 2,
-    id: input.idGenerator(),
-    vaultId: input.vaultId,
-    title: input.title,
-    status: "active",
-    createdAt: input.now,
-    updatedAt: input.now,
-    lastPlayedAt: input.now,
-    revision: 0,
-    playerCharacter: input.playerCharacter,
-    premise: input.premise,
-    sourceRecords: input.sourceRecords ?? [],
-    visibleState: {
-      objectives: [],
-      activeCharacters: [],
-      knownFacts: [],
-      relationships: [],
-    },
-    hiddenState: { secrets: [], gmThreads: [] },
-    provisionalFacts: [],
-    turns: [],
-    pendingRoll: null,
-    dicePresets: [],
-    resourceCounters: [],
-  };
-}
-
-export class AdventureManager {
-  session = $state.raw<AdventureSession | null>(null);
-  phase = $state<
-    | "idle"
-    | "starting"
-    | "ready"
-    | "generating"
-    | "awaiting-roll"
-    | "ready-to-resolve"
-    | "offline"
-    | "error"
-  >("idle");
-  draft = $state("");
-  errorMessage = $state<string | null>(null);
-  lastRollResult = $state<string | null>(null);
-  readOnly = $state(false);
-  lease = $state<AdventureControlLease | null>(null);
-
-  get transcript() {
-    return this.session ? createPlayerTranscript(this.session) : null;
-  }
-
-  get suggestedActions() {
-    if (!this.session) return [];
-    return (
-      this.session.pendingRoll?.suggestedActions ??
-      this.session.turns.at(-1)?.suggestedActions ??
-      []
+  constructor(dependencies: AdventureManagerDependencies = {}) {
+    super();
+    this.runtime = new AdventureRuntime(
+      this,
+      resolveAdventureDependencies(dependencies),
     );
-  }
-
-  private readonly deps: Required<AdventureManagerDependencies>;
-  private generationController: AbortController | null = null;
-  private activeRestoreRequest = 0;
-
-  private async verifyControl(): Promise<void> {
-    if (!this.lease || !(await this.deps.authority.verify(this.lease))) {
-      throw new Error("control-lost");
-    }
-  }
-
-  constructor(deps: AdventureManagerDependencies = {}) {
-    this.deps = {
-      repository: deps.repository ?? adventureSessionRepository,
-      generation: deps.generation ?? {
-        generate: (request: any, options?: any) => {
-          if (oracleBridge.isReady) {
-            // AbortSignal is not structured-cloneable and must not cross Comlink.
-            const { signal: _signal, ...workerOptions } = options ?? {};
-            const sanitizedRequest = $state.snapshot(request);
-            return oracleBridge.generateAdventureTurn(
-              sanitizedRequest,
-              workerOptions,
-            ) as any;
-          }
-          return adventureTurnGenerationService.generate(request, options);
-        },
-      },
-      clearGenerationInteraction:
-        deps.clearGenerationInteraction ??
-        ((sessionId) =>
-          oracleBridge.isReady
-            ? oracleBridge.clearAdventureInteraction(sessionId)
-            : Promise.resolve(
-                adventureTurnGenerationService.clearInteraction(sessionId),
-              )),
-      context: deps.context ?? adventureContextService,
-      authority: deps.authority ?? adventureControlAuthority,
-      coordinator: deps.coordinator ?? adventureControlCoordinator,
-      now: deps.now ?? (() => new Date().toISOString()),
-      dice: deps.dice ?? defaultDiceEngine,
-      idGenerator: deps.idGenerator ?? systemIdGenerator.uuid,
-    };
-  }
-
-  async start(input: {
-    vaultId: string;
-    title: string;
-    premise: string;
-    playerCharacter: PlayerCharacter;
-    sourceRecords?: AdventureSession["sourceRecords"];
-  }): Promise<AdventureSession> {
-    if (!input.premise.trim() || !input.title.trim())
-      throw new Error("premise-and-title-required");
-    this.activeRestoreRequest += 1;
-    this.phase = "starting";
-    this.errorMessage = null;
-    const current = await this.deps.repository.list(input.vaultId);
-    if (current.effectiveActiveId) {
-      const existing = await this.deps.repository.load(
-        input.vaultId,
-        current.effectiveActiveId,
-      );
-      const isIncompleteStart =
-        existing.condition !== "unreadable" &&
-        existing.session.status === "active" &&
-        existing.session.turns.length === 0;
-      if (isIncompleteStart) {
-        const recovery = await this.deps.authority.acquire({
-          vaultId: input.vaultId,
-          sessionId: existing.session.id,
-        });
-        if (recovery.ok) {
-          const archived = await this.deps.repository.archive(
-            input.vaultId,
-            existing.session.id,
-            existing.session.revision,
-          );
-          await this.deps.authority.release(recovery.lease);
-          if (!archived.ok) {
-            this.phase = "error";
-            this.errorMessage = archived.error.message;
-            throw archived.error;
-          }
-        } else {
-          this.phase = "ready";
-          throw new Error("active-adventure-exists");
-        }
-      } else {
-        this.phase = "ready";
-        throw new Error("active-adventure-exists");
-      }
-    }
-    const session = initialSession({
-      ...input,
-      now: this.deps.now(),
-      idGenerator: this.deps.idGenerator,
-    });
-    const saved = await this.deps.repository.save(null, session);
-    if (!saved.ok) {
-      this.phase = "error";
-      this.errorMessage = saved.error.message;
-      throw saved.error;
-    }
-    this.session = saved.session;
-    const acquired = await this.deps.authority.acquire({
-      vaultId: input.vaultId,
-      sessionId: saved.session.id,
-    });
-    if (acquired.ok) {
-      this.lease = acquired.lease;
-      this.deps.coordinator.start(acquired.lease);
-    } else {
-      this.readOnly = true;
-    }
-    this.phase = "ready";
-    if (
-      !this.readOnly &&
-      (typeof navigator === "undefined" || navigator.onLine)
-    ) {
-      await this.generateOpening(saved.session);
-    } else if (!this.readOnly) {
-      this.phase = "offline";
-    }
-    return this.session ?? saved.session;
-  }
-
-  private async generateOpening(session: AdventureSession): Promise<void> {
-    if (!this.lease || !(await this.deps.authority.verify(this.lease))) return;
-    this.phase = "generating";
-    try {
-      const anchors = await this.deps.context.resolveAnchors(session);
-      const relevant = await this.deps.context.resolveOpeningRelevant(session);
-      const proposal = await this.deps.generation.generate({
-        session,
-        phase: "opening",
-        anchors,
-        relevant,
-      });
-      if (this.session?.id !== session.id) return;
-      validateRollExpression(proposal);
-      const meta: CommitMetadata = {
-        turnId: this.deps.idGenerator(),
-        inputId: this.deps.idGenerator(),
-        playerAction: "",
-        now: this.deps.now(),
-      };
-      const result =
-        proposal.kind === "roll-required"
-          ? applyRollRequest(session, proposal, meta)
-          : applyCompletedTurn(session, proposal, meta);
-      if (!result.ok)
-        throw new Error(result.errors[0]?.message ?? "opening-rejected");
-      await this.verifyControl();
-      const saved = await this.deps.repository.save(
-        session.revision,
-        result.value,
-      );
-      if (!saved.ok) throw saved.error;
-      if (this.session?.id !== session.id) return;
-      this.session = saved.session;
-      this.phase = saved.session.pendingRoll ? "awaiting-roll" : "ready";
-    } catch (cause) {
-      const message = cause instanceof Error ? cause.message : String(cause);
-      const archived = await this.deps.repository.archive(
-        session.vaultId,
-        session.id,
-        session.revision,
-      );
-      if (this.session?.id !== session.id) {
-        if (archived.ok) void this.deps.clearGenerationInteraction(session.id);
-        return;
-      }
-      if (archived.ok) {
-        void this.deps.clearGenerationInteraction(session.id);
-        this.session = null;
-        this.readOnly = false;
-        await this.deps.coordinator.stop();
-        this.lease = null;
-      } else {
-        this.errorMessage = `${message}; failed to clean up the incomplete adventure: ${archived.error.message}`;
-      }
-      this.errorMessage ??= message;
-      this.phase = this.errorMessage === "offline" ? "offline" : "error";
-    }
-  }
-
-  async open(
-    vaultId: string,
-    sessionId: string,
-    isCurrent: () => boolean = () => true,
-  ): Promise<void> {
-    const loaded = await this.deps.repository.load(vaultId, sessionId);
-    if (loaded.condition === "unreadable") throw loaded.error;
-    if (!isCurrent()) return;
-    const nextReadOnly =
-      loaded.condition === "duplicate-active-conflict" ||
-      loaded.session.status === "archived";
-    let nextLease: AdventureControlLease | null = null;
-    let readOnly = nextReadOnly;
-    if (!readOnly && loaded.session.status === "active") {
-      const acquired = await this.deps.authority.acquire({
-        vaultId,
-        sessionId,
-      });
-      if (!isCurrent()) {
-        if (acquired.ok) await this.deps.authority.release(acquired.lease);
-        return;
-      }
-      if (!acquired.ok) {
-        readOnly = true;
-      } else {
-        nextLease = acquired.lease;
-      }
-    }
-    if (!isCurrent()) {
-      if (nextLease) await this.deps.authority.release(nextLease);
-      return;
-    }
-    this.session = loaded.session;
-    this.readOnly = readOnly;
-    if (nextLease) {
-      this.lease = nextLease;
-      this.deps.coordinator.start(nextLease);
-    }
-    this.phase = loaded.session.pendingRoll?.suppliedOutcome
-      ? "ready-to-resolve"
-      : loaded.session.pendingRoll
-        ? "awaiting-roll"
-        : "ready";
-    if (
-      !this.readOnly &&
-      loaded.session.pendingRoll?.suppliedOutcome &&
-      this.lease &&
-      isCurrent()
-    ) {
-      await this.resolveRoll();
-    }
-  }
-
-  async openActive(vaultId: string): Promise<boolean> {
-    const request = ++this.activeRestoreRequest;
-    const isCurrent = () => request === this.activeRestoreRequest;
-    if (this.session?.vaultId === vaultId && this.session.status === "active") {
-      return true;
-    }
-    if (this.session && this.session.vaultId !== vaultId) {
-      await this.destroy();
-      if (!isCurrent()) return false;
-      this.session = null;
-      this.readOnly = false;
-      this.draft = "";
-      this.errorMessage = null;
-      this.lastRollResult = null;
-      this.phase = "idle";
-    }
-    const { effectiveActiveId } = await this.deps.repository.list(vaultId);
-    if (!isCurrent()) return false;
-    if (!effectiveActiveId) return false;
-    await this.open(vaultId, effectiveActiveId, isCurrent);
-    return isCurrent() && this.session?.vaultId === vaultId;
-  }
-
-  async submitAction(action = this.draft, preserveDraft = true): Promise<void> {
-    if (
-      !this.session ||
-      this.readOnly ||
-      !action.trim() ||
-      this.phase === "generating"
-    )
-      return;
-    if (typeof navigator !== "undefined" && !navigator.onLine) {
-      if (preserveDraft) this.draft = action;
-      this.phase = "offline";
-      return;
-    }
-    const session = this.session;
-    if (preserveDraft) this.draft = action;
-    this.phase = "generating";
-    this.errorMessage = null;
-    this.generationController?.abort();
-    this.generationController = new AbortController();
-    const signal = this.generationController.signal;
-    try {
-      await this.verifyControl();
-      const anchors = await this.deps.context.resolveAnchors(session);
-      const relevant = await this.deps.context.resolveActionRelevant(
-        session,
-        action,
-      );
-      const proposal = await this.deps.generation.generate(
-        { session, phase: "action", playerAction: action, anchors, relevant },
-        { signal },
-      );
-      validateRollExpression(proposal);
-      if (signal.aborted) throw new DOMException("Cancelled", "AbortError");
-      const meta: CommitMetadata = {
-        turnId: this.deps.idGenerator(),
-        inputId: this.deps.idGenerator(),
-        playerAction: action,
-        now: this.deps.now(),
-      };
-      const result =
-        proposal.kind === "roll-required"
-          ? applyRollRequest(session, proposal, meta)
-          : applyCompletedTurn(session, proposal, meta);
-      if (!result.ok)
-        throw new Error(result.errors[0]?.message ?? "turn-rejected");
-      await this.verifyControl();
-      const saved = await this.deps.repository.save(
-        session.revision,
-        result.value,
-      );
-      if (!saved.ok) throw saved.error;
-      this.session = saved.session;
-      this.draft = "";
-      this.phase = saved.session.pendingRoll ? "awaiting-roll" : "ready";
-    } catch (cause) {
-      if (signal.aborted) return;
-      this.errorMessage =
-        cause instanceof Error ? cause.message : String(cause);
-      const cancelled =
-        cause instanceof DOMException && cause.name === "AbortError";
-      this.phase =
-        this.errorMessage === "offline"
-          ? "offline"
-          : cancelled || this.errorMessage === "cancelled"
-            ? "ready"
-            : "error";
-    } finally {
-      if (this.generationController?.signal === signal)
-        this.generationController = null;
-    }
-  }
-
-  async submitSuggestedAction(action: string): Promise<void> {
-    await this.submitAction(action, false);
-  }
-
-  async recordRollOutcome(outcome: SuppliedRollOutcome): Promise<void> {
-    if (!this.session?.pendingRoll || this.readOnly) return;
-    try {
-      await this.verifyControl();
-      const result = recordPendingRollOutcome(
-        this.session,
-        this.session.pendingRoll.inputId,
-        outcome,
-        {
-          turnId: this.deps.idGenerator(),
-          inputId: this.session.pendingRoll.inputId,
-          now: this.deps.now(),
-        },
-      );
-      if (!result.ok)
-        throw new Error(result.errors[0]?.message ?? "invalid-roll");
-      await this.verifyControl();
-      const saved = await this.deps.repository.save(
-        this.session.revision,
-        result.value,
-      );
-      if (!saved.ok) throw saved.error;
-      this.session = saved.session;
-      this.errorMessage = null;
-      this.phase = "ready-to-resolve";
-      await this.resolveRoll();
-    } catch (cause) {
-      this.errorMessage =
-        cause instanceof Error
-          ? cause.message
-          : "Unable to record the roll outcome.";
-    }
-  }
-
-  async rollCodexDice(): Promise<void> {
-    const expression = this.session?.pendingRoll?.dice?.expression;
-    if (!expression || this.session?.pendingRoll?.suppliedOutcome) return;
-    let result: ReturnType<typeof this.deps.dice.evaluate>;
-    try {
-      result = this.deps.dice.evaluate(expression);
-    } catch (cause) {
-      this.errorMessage =
-        cause instanceof Error
-          ? `Invalid roll expression: ${cause.message}`
-          : "Invalid roll expression.";
-      return;
-    }
-    this.lastRollResult = `${expression} = ${result.total}`;
-    await this.recordRollOutcome({
-      kind: "numeric",
-      value: result.total,
-      label: `${expression} = ${result.total}`,
-      // The dice as actually rolled, persisted with the outcome so the roll
-      // history can show them later without re-deriving anything (#3443).
-      parts: result.parts,
-    });
-  }
-
-  async resolveRoll(): Promise<void> {
-    const pendingRoll = this.session?.pendingRoll;
-    if (!pendingRoll?.suppliedOutcome || this.readOnly || !this.session) return;
-    this.phase = "generating";
-    const session = this.session;
-    this.generationController?.abort();
-    this.generationController = new AbortController();
-    const signal = this.generationController.signal;
-    try {
-      const anchors = await this.deps.context.resolveAnchors(session);
-      const proposal = await this.deps.generation.generate(
-        {
-          session,
-          phase: "roll-resolution",
-          rollResolution: pendingRoll.suppliedOutcome,
-          anchors,
-          relevant: [],
-        },
-        { signal },
-      );
-      if (signal.aborted) throw new DOMException("Cancelled", "AbortError");
-      if (proposal.kind !== "complete")
-        throw new Error("roll-resolution-requires-complete-turn");
-      const result = resolveRecordedRoll(session, proposal, {
-        turnId: this.deps.idGenerator(),
-        inputId: this.deps.idGenerator(),
-        now: this.deps.now(),
-        playerAction: pendingRoll.playerAction,
-      });
-      if (!result.ok)
-        throw new Error(result.errors[0]?.message ?? "roll-rejected");
-      await this.verifyControl();
-      const saved = await this.deps.repository.save(
-        session.revision,
-        result.value,
-      );
-      if (!saved.ok) throw saved.error;
-      this.session = saved.session;
-      this.phase = "ready";
-    } catch (cause) {
-      if (signal.aborted) return;
-      this.errorMessage =
-        cause instanceof Error ? cause.message : String(cause);
-      const cancelled =
-        cause instanceof DOMException && cause.name === "AbortError";
-      this.phase =
-        cancelled || this.errorMessage === "cancelled"
-          ? "ready-to-resolve"
-          : "error";
-    } finally {
-      if (this.generationController?.signal === signal)
-        this.generationController = null;
-    }
-  }
-
-  cancel(): void {
-    if (this.phase !== "generating") return;
-    this.generationController?.abort();
-    if (this.session)
-      void this.deps.clearGenerationInteraction(this.session.id);
-    this.generationController = null;
-    this.errorMessage = null;
-    this.phase = this.session?.pendingRoll?.suppliedOutcome
-      ? "ready-to-resolve"
-      : "ready";
-  }
-
-  async dismissRoll(): Promise<void> {
-    if (!this.session?.pendingRoll || this.readOnly) return;
-    const result = dismissPendingRoll(
-      this.session,
-      this.session.pendingRoll.inputId,
-      {
-        turnId: this.deps.idGenerator(),
-        inputId: this.session.pendingRoll.inputId,
-        now: this.deps.now(),
-      },
+    this.opening = new AdventureOpening(this.runtime);
+    this.rolls = new AdventureRolls(this.runtime);
+    this.lifecycle = new AdventureLifecycle(this.runtime, () =>
+      this.resolveRoll(),
     );
-    if (!result.ok)
-      throw new Error(result.errors[0]?.message ?? "invalid-roll");
-    const saved = await this.deps.repository.save(
-      this.session.revision,
-      result.value,
-    );
-    if (!saved.ok) throw saved.error;
-    this.session = saved.session;
-    this.phase = "ready";
+    this.actions = new AdventureActions(this.runtime);
+    this.tools = new AdventureTools(this.runtime);
+    this.scenarios = this.runtime.scenarios;
   }
 
-  async end(): Promise<void> {
-    if (!this.session || this.readOnly) return;
-    const result = await this.deps.repository.archive(
-      this.session.vaultId,
-      this.session.id,
-      this.session.revision,
-    );
-    if (!result.ok) throw result.error;
-    this.session = result.session;
-    void this.deps.clearGenerationInteraction(result.session.id);
-    this.readOnly = true;
-    await this.deps.coordinator.stop();
-    this.lease = null;
-    this.phase = "ready";
+  setWorldEntryRumourGenerator(
+    generator: Parameters<AdventureRuntime["background"]["setGenerator"]>[0],
+  ): void {
+    this.runtime.background.setGenerator(generator);
   }
 
-  /**
-   * Closes the active adventure view, releases the control lease, and returns
-   * the UI to the start/archive screen without archiving the adventure.
-   * Progress remains safely persisted in the repository.
-   */
-  async close(): Promise<void> {
-    this.generationController?.abort();
-    this.generationController = null;
-    if (this.session) {
-      void this.deps.clearGenerationInteraction(this.session.id);
-    }
-    await this.deps.coordinator.stop();
-    if (this.lease) {
-      await this.deps.authority.release(this.lease);
-      this.lease = null;
-    }
-    this.session = null;
-    this.readOnly = false;
-    this.draft = "";
-    this.errorMessage = null;
-    this.lastRollResult = null;
-    this.phase = "idle";
+  start(
+    ...args: Parameters<AdventureOpening["start"]>
+  ): ReturnType<AdventureOpening["start"]> {
+    return this.opening.start(...args);
   }
 
-  /**
-   * Archives the current session even when this tab never holds (or has
-   * lost) the control lease — recovers a session stuck read-only with no
-   * other tab actually able to advance it, e.g. one whose opening-turn
-   * generation failed and whose own cleanup archive also failed, leaving
-   * an orphaned lease that keeps renewing itself. Goes straight through
-   * the repository's revision check rather than `manager.end()`'s
-   * lease-based `readOnly` gate: if another tab is genuinely mid-turn, its
-   * next save will have moved the revision on, so this fails with
-   * `revision-conflict` instead of silently cutting it off.
-   */
-  async forceEnd(): Promise<void> {
-    if (!this.session) return;
-    const result = await this.deps.repository.archive(
-      this.session.vaultId,
-      this.session.id,
-      this.session.revision,
-    );
-    if (!result.ok) throw result.error;
-    void this.deps.clearGenerationInteraction(result.session.id);
-    await this.deps.coordinator.stop();
-    this.lease = null;
-    this.session = null;
-    this.readOnly = false;
-    this.errorMessage = null;
-    this.phase = "idle";
+  retryOpening(): Promise<void> {
+    return this.opening.retryOpening();
   }
 
-  /**
-   * Resumes an archived (or freshly duplicated) adventure as the vault's
-   * active adventure. Throws `active-adventure-exists` under the same rule
-   * `start()` already enforces — the caller must end or continue the
-   * current active adventure first (FR-005).
-   */
-  async resumeArchived(
-    vaultId: string,
-    sessionId: string,
-  ): Promise<AdventureSession> {
-    const current = await this.deps.repository.list(vaultId);
-    if (current.effectiveActiveId) {
-      throw new Error("active-adventure-exists");
-    }
-    const loaded = await this.deps.repository.load(vaultId, sessionId);
-    if (loaded.condition === "unreadable") throw loaded.error;
-    const now = this.deps.now();
-    const resumed: AdventureSession = {
-      ...loaded.session,
-      status: "active",
-      revision: loaded.session.revision + 1,
-      updatedAt: now,
-      lastPlayedAt: now,
-    };
-    const saved = await this.deps.repository.save(
-      loaded.session.revision,
-      resumed,
-    );
-    if (!saved.ok) throw saved.error;
-    await this.open(vaultId, sessionId);
-    if (!this.session) throw new Error("resume-failed");
-    return this.session;
+  open(
+    ...args: Parameters<AdventureLifecycle["open"]>
+  ): ReturnType<AdventureLifecycle["open"]> {
+    return this.lifecycle.open(...args);
   }
 
-  /** Deterministic, client-side recap — never draws on hidden state (FR-006). */
-  get recap() {
-    return this.session ? buildAdventureRecap(this.session) : null;
+  tryTakeControl(
+    ...args: Parameters<AdventureLifecycle["tryTakeControl"]>
+  ): ReturnType<AdventureLifecycle["tryTakeControl"]> {
+    return this.lifecycle.tryTakeControl(...args);
   }
 
-  /** Turns with a resolved roll, in commit order (FR-012). */
-  get rollHistory() {
-    return this.session ? getRollHistory(this.session) : [];
+  openActive(
+    ...args: Parameters<AdventureLifecycle["openActive"]>
+  ): ReturnType<AdventureLifecycle["openActive"]> {
+    return this.lifecycle.openActive(...args);
   }
 
-  private async persistLocalMutation(
-    next: AdventureSession,
-  ): Promise<AdventureSession> {
-    if (!this.session) throw new Error("no-active-session");
-    const saved = await this.deps.repository.save(this.session.revision, next);
-    if (!saved.ok) throw saved.error;
-    this.session = saved.session;
-    return saved.session;
+  switchTo(
+    ...args: Parameters<AdventureLifecycle["switchTo"]>
+  ): ReturnType<AdventureLifecycle["switchTo"]> {
+    return this.lifecycle.switchTo(...args);
   }
 
-  /**
-   * Applies an explicit, player-visible-state-only correction. Rejects with
-   * `stale-revision` rather than silently overwriting or being overwritten
-   * by a concurrently completing turn (FR-009, FR-010).
-   */
-  async submitCorrection(
-    patch: VisibleStatePatch,
-  ): Promise<StateCorrectionOutcome> {
-    if (!this.session || this.readOnly) throw new Error("no-active-session");
-    const result = applyStateCorrection(this.session, patch, this.deps.now());
-    if (!result.ok) {
-      throw new Error(result.errors[0]?.message ?? "invalid-correction");
-    }
-    const saved = await this.deps.repository.save(
-      this.session.revision,
-      result.value,
-    );
-    if (!saved.ok) {
-      if (saved.error.message === "revision-conflict") return "stale-revision";
-      throw saved.error;
-    }
-    this.session = saved.session;
-    return "applied";
+  end(
+    ...args: Parameters<AdventureLifecycle["end"]>
+  ): ReturnType<AdventureLifecycle["end"]> {
+    return this.lifecycle.end(...args);
   }
 
-  async addDicePreset(label: string, expression: string): Promise<void> {
-    if (!this.session || this.readOnly) throw new Error("no-active-session");
-    const result = addDicePreset(
-      this.session,
-      { id: this.deps.idGenerator(), label, expression },
-      this.deps.now(),
-    );
-    if (!result.ok) {
-      throw new Error(result.errors[0]?.message ?? "invalid-dice-preset");
-    }
-    await this.persistLocalMutation(result.value);
+  close(
+    ...args: Parameters<AdventureLifecycle["close"]>
+  ): ReturnType<AdventureLifecycle["close"]> {
+    return this.lifecycle.close(...args);
   }
 
-  async removeDicePreset(presetId: string): Promise<void> {
-    if (!this.session || this.readOnly) throw new Error("no-active-session");
-    const next = removeDicePreset(this.session, presetId, this.deps.now());
-    await this.persistLocalMutation(next);
+  forceEnd(
+    ...args: Parameters<AdventureLifecycle["forceEnd"]>
+  ): ReturnType<AdventureLifecycle["forceEnd"]> {
+    return this.lifecycle.forceEnd(...args);
   }
 
-  async addResourceCounter(label: string, initialValue: number): Promise<void> {
-    if (!this.session || this.readOnly) throw new Error("no-active-session");
-    const result = addResourceCounter(
-      this.session,
-      { id: this.deps.idGenerator(), label, value: initialValue },
-      this.deps.now(),
-    );
-    if (!result.ok) {
-      throw new Error(result.errors[0]?.message ?? "invalid-resource-counter");
-    }
-    await this.persistLocalMutation(result.value);
+  resumeArchived(
+    ...args: Parameters<AdventureLifecycle["resumeArchived"]>
+  ): ReturnType<AdventureLifecycle["resumeArchived"]> {
+    return this.lifecycle.resumeArchived(...args);
   }
 
-  async adjustResourceCounter(
-    counterId: string,
-    newValue: number,
-  ): Promise<void> {
-    if (!this.session || this.readOnly) throw new Error("no-active-session");
-    const result = adjustResourceCounter(
-      this.session,
-      counterId,
-      newValue,
-      this.deps.now(),
-    );
-    if (!result.ok) {
-      throw new Error(result.errors[0]?.message ?? "invalid-resource-counter");
-    }
-    await this.persistLocalMutation(result.value);
+  destroy(
+    ...args: Parameters<AdventureLifecycle["destroy"]>
+  ): ReturnType<AdventureLifecycle["destroy"]> {
+    return this.lifecycle.destroy(...args);
   }
 
-  async removeResourceCounter(counterId: string): Promise<void> {
-    if (!this.session || this.readOnly) throw new Error("no-active-session");
-    const next = removeResourceCounter(
-      this.session,
-      counterId,
-      this.deps.now(),
-    );
-    await this.persistLocalMutation(next);
+  submitAction(
+    ...args: Parameters<AdventureActions["submitAction"]>
+  ): ReturnType<AdventureActions["submitAction"]> {
+    return this.actions.submitAction(...args);
   }
 
-  async destroy(): Promise<void> {
-    this.generationController?.abort();
-    this.generationController = null;
-    await this.deps.coordinator.stop();
-    this.lease = null;
+  submitSuggestedAction(
+    ...args: Parameters<AdventureActions["submitSuggestedAction"]>
+  ): ReturnType<AdventureActions["submitSuggestedAction"]> {
+    return this.actions.submitSuggestedAction(...args);
+  }
+
+  recordRollOutcome(
+    ...args: Parameters<AdventureRolls["recordRollOutcome"]>
+  ): ReturnType<AdventureRolls["recordRollOutcome"]> {
+    return this.rolls.recordRollOutcome(...args);
+  }
+
+  rollCodexDice(
+    ...args: Parameters<AdventureRolls["rollCodexDice"]>
+  ): ReturnType<AdventureRolls["rollCodexDice"]> {
+    return this.rolls.rollCodexDice(...args);
+  }
+
+  resolveRoll(
+    ...args: Parameters<AdventureRolls["resolveRoll"]>
+  ): ReturnType<AdventureRolls["resolveRoll"]> {
+    return this.rolls.resolveRoll(...args);
+  }
+
+  cancel(
+    ...args: Parameters<AdventureRolls["cancel"]>
+  ): ReturnType<AdventureRolls["cancel"]> {
+    return this.rolls.cancel(...args);
+  }
+
+  dismissRoll(
+    ...args: Parameters<AdventureRolls["dismissRoll"]>
+  ): ReturnType<AdventureRolls["dismissRoll"]> {
+    return this.rolls.dismissRoll(...args);
+  }
+
+  submitCorrection(
+    ...args: Parameters<AdventureTools["submitCorrection"]>
+  ): ReturnType<AdventureTools["submitCorrection"]> {
+    return this.tools.submitCorrection(...args);
+  }
+
+  addDicePreset(
+    ...args: Parameters<AdventureTools["addDicePreset"]>
+  ): ReturnType<AdventureTools["addDicePreset"]> {
+    return this.tools.addDicePreset(...args);
+  }
+
+  removeDicePreset(
+    ...args: Parameters<AdventureTools["removeDicePreset"]>
+  ): ReturnType<AdventureTools["removeDicePreset"]> {
+    return this.tools.removeDicePreset(...args);
+  }
+
+  addResourceCounter(
+    ...args: Parameters<AdventureTools["addResourceCounter"]>
+  ): ReturnType<AdventureTools["addResourceCounter"]> {
+    return this.tools.addResourceCounter(...args);
+  }
+
+  adjustResourceCounter(
+    ...args: Parameters<AdventureTools["adjustResourceCounter"]>
+  ): ReturnType<AdventureTools["adjustResourceCounter"]> {
+    return this.tools.adjustResourceCounter(...args);
+  }
+
+  removeResourceCounter(
+    ...args: Parameters<AdventureTools["removeResourceCounter"]>
+  ): ReturnType<AdventureTools["removeResourceCounter"]> {
+    return this.tools.removeResourceCounter(...args);
+  }
+
+  addScenario(...args: Parameters<AdventureScenarios["add"]>) {
+    return this.scenarios.add(...args);
+  }
+
+  focusScenario(...args: Parameters<AdventureScenarios["focus"]>) {
+    return this.scenarios.focus(...args);
+  }
+
+  setScenarioStatus(...args: Parameters<AdventureScenarios["status"]>) {
+    return this.scenarios.status(...args);
   }
 }
 

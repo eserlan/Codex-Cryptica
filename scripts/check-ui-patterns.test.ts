@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it } from "bun:test";
+import { readFileSync } from "node:fs";
 import {
   basePathProblems,
   changedLines,
@@ -22,6 +23,27 @@ beforeAll(async () => {
 
 const rules = (source, file = "Component.svelte") =>
   checkSource(source, file, themes).map((problem) => problem.rule);
+
+describe("stat sheet template settings contrast", () => {
+  it.each([
+    "settings/StatSheetBuiltInTemplates.svelte",
+    "settings/StatSheetCategoryDefaults.svelte",
+    "settings/StatSheetPresentationSettings.svelte",
+    "settings/StatSheetTemplatePreview.svelte",
+    "settings/StatSheetTemplateSettings.svelte",
+    "settings/StatSheetTemplateToggle.svelte",
+    "settings/StatSheetVaultTemplates.svelte",
+    "stats/presentation/PresentationTemplateManager.svelte",
+  ])("keeps %s readable in every theme", (component) => {
+    const file = `apps/web/src/lib/components/${component}`;
+    const source = readFileSync(new URL(`../${file}`, import.meta.url), "utf8");
+    expect(
+      checkSource(source, file, themes).filter(
+        (problem) => problem.rule === "contrast",
+      ),
+    ).toEqual([]);
+  });
+});
 
 describe("colour maths", () => {
   it("parses hex and rgba", () => {

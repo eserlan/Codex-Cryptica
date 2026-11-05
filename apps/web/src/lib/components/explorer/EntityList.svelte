@@ -11,17 +11,12 @@
     flattenVisibleEntityTree,
     type TreeNode,
   } from "./entityTree";
-  import {
-    filterEntities,
-    countEntityTypes,
-    createEntityTextSearchRunner,
-    parseEntitySearchQuery,
-  } from "./entityListFiltering";
+  import { filterEntities, countEntityTypes } from "./entityListFiltering";
   import {
     searchService as defaultSearchService,
     type SearchService,
   } from "@codex/search-orchestrator";
-  import type { SearchIndexProgress } from "@codex/search-engine";
+  import { EntityContentSearch } from "./entity-content-search.svelte.js";
   import type { Entity } from "schema";
   import { explorerUIStore } from "#lib/stores/ui/explorer-ui.svelte.js";
   import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
@@ -68,80 +63,11 @@
 
   let searchQuery = $state("");
   let typeFilters = $state<Set<string>>(new Set());
-  let textMatchIds = $state<Set<string> | null>(null);
-  let textSearchPending = $state(false);
-  let textSearchUnavailable = $state(false);
-  let textSearchError = $state<string | null>(null);
-  let indexProgress = $state<SearchIndexProgress>({
-    status: "idle",
-    vaultId: null,
-    runId: null,
-    indexedCount: 0,
-    totalCount: null,
-    isPartial: false,
-    canRetry: false,
-    message: "Search is idle.",
-    error: null,
-  });
-  let latestIndexStatus: SearchIndexProgress["status"] = "idle";
-  let indexStatusVersion = $state(0);
-  const parsedSearchQuery = $derived(parseEntitySearchQuery(searchQuery));
-
-  $effect(() => {
-    const initialProgress = searchService.getIndexProgress();
-    latestIndexStatus = initialProgress.status;
-    indexProgress = initialProgress;
-    const unsubscribe = searchService.subscribeIndexProgress((progress) => {
-      if (progress.status !== latestIndexStatus) {
-        latestIndexStatus = progress.status;
-        indexStatusVersion += 1;
-      }
-      indexProgress = progress;
-    });
-    return unsubscribe;
-  });
-
-  $effect(() => {
-    const query = searchQuery;
-    const entityCount = vault.allEntities.length;
-    void indexStatusVersion;
-    const indexStatus = latestIndexStatus;
-    const { textQuery } = parsedSearchQuery;
-    if (!textQuery) {
-      textMatchIds = null;
-      textSearchPending = false;
-      textSearchUnavailable = false;
-      textSearchError = null;
-      return;
-    }
-
-    // An idle index has not been opened yet. Keep the UI responsive and use
-    // the metadata fallback until the lifecycle reports a usable index.
-    if (indexStatus === "idle") {
-      textMatchIds = null;
-      textSearchPending = false;
-      textSearchUnavailable = true;
-      textSearchError = null;
-      return;
-    }
-
-    textMatchIds = null;
-    textSearchPending = true;
-    textSearchUnavailable = false;
-    textSearchError = null;
-    const searchRunner = createEntityTextSearchRunner(searchService);
-    void searchRunner.search(query, entityCount).then((result) => {
-      if (!result) return;
-      textSearchPending = false;
-      textMatchIds = result.error ? null : result.matchIds;
-      textSearchUnavailable = result.error !== null;
-      textSearchError = result.error?.message ?? null;
-    });
-
-    return () => {
-      searchRunner.cancel();
-    };
-  });
+  const contentSearch = new EntityContentSearch(() => searchService);
+  contentSearch.connect(
+    () => searchQuery,
+    () => vault.allEntities.length,
+  );
 
   const activeVaultId = $derived(vault.activeVaultId);
   const labelFilters = $derived(explorerUIStore.labelFilters);
@@ -182,21 +108,13 @@
       labelFilters,
       allowedTypes,
       showDraftsOnly,
-      textMatchIds,
-      textSearchPending,
-      textSearchUnavailable,
+      textMatchIds: contentSearch.textMatchIds,
+      textSearchPending: contentSearch.textSearchPending,
+      textSearchUnavailable: contentSearch.textSearchUnavailable,
     }),
   );
 
-  const searchStatusMessage = $derived(
-    textSearchPending
-      ? "Searching indexed content…"
-      : textSearchError
-        ? "Content search is temporarily unavailable; matching titles, aliases, and labels."
-        : indexProgress.isPartial && parsedSearchQuery.textQuery
-          ? "Search is still indexing; results will update as indexing finishes."
-          : null,
-  );
+  const searchStatusMessage = $derived(contentSearch.statusMessage);
 
   const sortedEntities = $derived(
     sortExplorerEntities(filteredEntities, {

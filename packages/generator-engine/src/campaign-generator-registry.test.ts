@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import {
   contextChain,
+  rumourGroundingRule,
   getGenerator,
   getDefaultInstruction,
   isTitleBanned,
@@ -1999,5 +2000,82 @@ describe("story generator concept block", () => {
       run("adventure", { interaction: { input: "make it darker" } }),
     );
     expect(prompt).not.toContain("Concept constraints for this case");
+  });
+});
+
+describe("rumourGroundingRule", () => {
+  const record = (id: string, title: string, type: string) => ({
+    id,
+    title,
+    type,
+    contentExcerpt: "",
+  });
+  const ctx = (overrides: Record<string, unknown> = {}) =>
+    ({
+      categoryLabels: [],
+      neighbors: [],
+      worldSample: [],
+      existingTitles: [],
+      labelSuggestions: [],
+      includedContext: [],
+      ...overrides,
+    }) as never;
+
+  it("lists source, neighbour and world entities once each by exact name", () => {
+    const rule = rumourGroundingRule({
+      vaultContext: ctx({
+        sourceEntity: record("a", "Saltmere Harbour", "location"),
+        neighbors: [record("b", "The Tidewardens", "faction")],
+        worldSample: [
+          record("b", "The Tidewardens", "faction"),
+          record("c", "Marrow Vane", "character"),
+        ],
+      }),
+    } as never);
+    expect(rule).toContain("- Saltmere Harbour (location)");
+    expect(rule).toContain("- Marrow Vane (character)");
+    expect(rule.match(/The Tidewardens/g)).toHaveLength(1);
+    expect(rule).toContain("At least 3 of the six rumours");
+    expect(rule).toContain("no single entity may be the Lead of more than two");
+  });
+
+  it("caps the required lead count at four and scales it down for short lists", () => {
+    const many = Array.from({ length: 6 }, (_, i) =>
+      record(`id${i}`, `Entity ${i}`, "location"),
+    );
+    expect(
+      rumourGroundingRule({
+        vaultContext: ctx({
+          sourceEntity: many[0],
+          worldSample: many.slice(1),
+        }),
+      } as never),
+    ).toContain("At least 4 of the six rumours");
+    expect(
+      rumourGroundingRule({
+        vaultContext: ctx({ sourceEntity: many[0] }),
+      } as never),
+    ).toContain("At least 1 of the six rumours");
+  });
+
+  it("adds nothing when there is no vault context or no entities", () => {
+    expect(rumourGroundingRule({} as never)).toBe("");
+    expect(rumourGroundingRule({ vaultContext: ctx() } as never)).toBe("");
+  });
+
+  it("reaches the rumour prompt even when the soft world block is suppressed", () => {
+    const prompt = getGenerator("rumour").buildPrompt({
+      generatorId: "rumour",
+      themeId: "fantasy",
+      instructions: "",
+      options: {},
+      useAI: true,
+      interaction: { input: "x", store: true },
+      vaultContext: ctx({
+        sourceEntity: record("a", "Saltmere Harbour", "location"),
+      }),
+    } as never);
+    expect(prompt).toContain("[WORLD GROUNDING");
+    expect(prompt).toContain("- Saltmere Harbour (location)");
   });
 });

@@ -66,6 +66,23 @@ bun run test:e2e
 > [!IMPORTANT]
 > **Playwright E2E Process Hanging**: Always run E2E tests with the `--reporter=list` flag (e.g. `bun run test:e2e -- --reporter=list` or configure it directly in Playwright CLI args) to prevent the test execution process from hanging in Linux and continuous integration environments.
 
+### Updating screenshot baselines
+
+Screenshot baselines (`apps/web/tests/**/*-snapshots/*.png`) are rendered on CI's Ubuntu runner, so **never regenerate them locally**: fonts and anti-aliasing differ and the result will not match CI. When a layout change is intentional and a `toHaveScreenshot` test fails only because the image changed, regenerate on CI:
+
+```bash
+gh workflow run update-e2e-snapshots.yml \
+  -f spec=apps/web/tests/responsive-entity-panel.spec.ts
+# optionally narrow it to some tests:
+#   -f grep="1280px"
+```
+
+The workflow runs the spec with `--update-snapshots` on the same runner and Playwright setup as the daily E2E run, commits only the changed snapshot PNGs to a `ci/update-snapshots-<run id>-<attempt>` branch and opens a pull request against `staging` with each image's size before and after. Review the sizes and the images before merging, as you would any other change to a test baseline.
+
+- If the run cannot open the pull request (this repository does not let Actions create pull requests), the branch is still pushed and the run summary links to the page where you can open it.
+- A pull request opened with the workflow's token does not start the usual PR checks. Close and reopen it, or push an empty commit, to run them.
+- The `spec` input must be a `*.spec.ts` file under `apps/web/tests/` that exists on `staging`.
+
 ## Continuous Integration (CI)
 
 Our CI pipeline (GitHub Actions) runs linting, unit tests with coverage, and builds the application on every push and pull request.

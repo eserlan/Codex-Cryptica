@@ -242,6 +242,7 @@ export const howDoIPrepareADndSession: AnswerConfigInput = {
     "how-do-i-track-monsters-initiative-and-hit-points-in-dnd-combat",
     "how-do-i-run-secret-doors-in-dnd",
     "how-can-i-practise-being-a-dungeon-master-without-a-group",
+    "how-do-i-plan-a-one-shot-rpg-session",
   ],
   discovery: {
     id: "answer-prepare-dnd-session",

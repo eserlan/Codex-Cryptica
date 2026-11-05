@@ -5,13 +5,14 @@ import {
   systemClock,
 } from "#lib/utils/runtime-deps.js";
 import {
-  parseAdventureSession,
+  parseAdventureSessionForRecovery,
+  type AdventureSessionReadResult,
   type AdventureSession,
   type AdventureStatus,
 } from "@codex/adventure-engine";
 
 export type AdventureLoadCondition =
-  "normal" | "duplicate-active-conflict" | "unreadable";
+  "normal" | "duplicate-active-conflict" | "migration-recovery" | "unreadable";
 
 export interface AdventureArchiveEntry {
   id: string;
@@ -32,9 +33,16 @@ export interface AdventureListResult {
 export type AdventureLoadResult =
   | { condition: "normal"; session: AdventureSession }
   | { condition: "duplicate-active-conflict"; session: AdventureSession }
+  | {
+      condition: "migration-recovery";
+      session: AdventureSession;
+      exportDocument: unknown;
+    }
   | { condition: "unreadable"; entry: AdventureArchiveEntry; error: Error };
 
 export type AdventureSaveResult =
+  { ok: true; session: AdventureSession } | { ok: false; error: Error };
+type WritableSessionResult =
   { ok: true; session: AdventureSession } | { ok: false; error: Error };
 
 export type AdventureDeleteResult = { ok: true } | { ok: false; error: Error };
@@ -79,28 +87,29 @@ export class AdventureSessionRepository {
   private async readFile(
     vaultId: string,
     id: string,
-  ): Promise<AdventureSession> {
+  ): Promise<AdventureSessionReadResult> {
     if (!isSafeSessionId(id)) throw new Error("invalid-session-id");
     const directory = await this.adventuresDirectory(vaultId);
     const file = await directory.getFileHandle(`${id}.json`);
     const text = await (await file.getFile()).text();
-    const session = parseAdventureSession(JSON.parse(text));
-    if (session.id !== id || session.vaultId !== vaultId)
+    const session = parseAdventureSessionForRecovery(JSON.parse(text));
+    if (session.session.id !== id || session.session.vaultId !== vaultId)
       throw new Error("vault-or-id-mismatch");
     return session;
   }
 
   async load(vaultId: string, sessionId: string): Promise<AdventureLoadResult> {
     try {
-      const session = await this.readFile(vaultId, sessionId);
-      const list = await this.list(vaultId);
-      return {
-        condition:
-          session.status === "active" && list.effectiveActiveId !== session.id
-            ? "duplicate-active-conflict"
-            : "normal",
-        session,
-      };
+      const read = await this.readFile(vaultId, sessionId);
+      const session = read.session;
+      if (read.mode === "legacy-read-only-recovery") {
+        return {
+          condition: "migration-recovery",
+          session,
+          exportDocument: read.exportDocument,
+        };
+      }
+      return { condition: "normal", session };
     } catch (cause) {
       return {
         condition: "unreadable",
@@ -127,14 +136,16 @@ export class AdventureSessionRepository {
       if (!name.endsWith(".json") || handle.kind !== "file") continue;
       const id = name.slice(0, -5);
       try {
-        const session = await this.readFile(vaultId, id);
+        const read = await this.readFile(vaultId, id);
+        const session = read.session;
         entries.push({
           id: session.id,
           title: session.title,
           status: session.status,
           updatedAt: session.updatedAt,
           revision: session.revision,
-          loadCondition: "normal",
+          loadCondition:
+            read.mode === "writable" ? "normal" : "migration-recovery",
           premise: session.premise,
         });
       } catch {
@@ -149,12 +160,8 @@ export class AdventureSessionRepository {
     const active = entries
       .filter((entry) => entry.status === "active" && entry.updatedAt)
       .sort((a, b) => b.updatedAt!.localeCompare(a.updatedAt!));
+    // Several adventures can be active at once; this is the most recently played.
     const effectiveActiveId = active[0]?.id ?? null;
-    for (const entry of entries) {
-      if (entry.status === "active" && entry.id !== effectiveActiveId) {
-        entry.loadCondition = "duplicate-active-conflict";
-      }
-    }
     entries.sort((a, b) =>
       (b.updatedAt ?? "").localeCompare(a.updatedAt ?? ""),
     );
@@ -186,6 +193,9 @@ export class AdventureSessionRepository {
           };
         }
       }
+      if (current.condition === "migration-recovery") {
+        return { ok: false, error: new Error("migration-recovery-read-only") };
+      }
       if (
         expectedRevision !== null &&
         current.condition !== "unreadable" &&
@@ -216,16 +226,44 @@ export class AdventureSessionRepository {
     }
   }
 
+  private async loadWritableAtRevision(
+    vaultId: string,
+    sessionId: string,
+    expectedRevision: number,
+  ): Promise<WritableSessionResult> {
+    const loaded = await this.loadWritableSession(vaultId, sessionId);
+    if (!loaded.ok) return loaded;
+    if (loaded.session.revision !== expectedRevision) {
+      return { ok: false, error: new Error("revision-conflict") };
+    }
+    return loaded;
+  }
+
+  private async loadWritableSession(
+    vaultId: string,
+    sessionId: string,
+  ): Promise<WritableSessionResult> {
+    const loaded = await this.load(vaultId, sessionId);
+    if (loaded.condition === "unreadable") {
+      return { ok: false, error: loaded.error };
+    }
+    if (loaded.condition === "migration-recovery") {
+      return { ok: false, error: new Error("migration-recovery-read-only") };
+    }
+    return { ok: true, session: loaded.session };
+  }
+
   async archive(
     vaultId: string,
     sessionId: string,
     expectedRevision: number,
   ): Promise<AdventureSaveResult> {
-    const loaded = await this.load(vaultId, sessionId);
-    if (loaded.condition === "unreadable")
-      return { ok: false, error: loaded.error };
-    if (loaded.session.revision !== expectedRevision)
-      return { ok: false, error: new Error("revision-conflict") };
+    const loaded = await this.loadWritableAtRevision(
+      vaultId,
+      sessionId,
+      expectedRevision,
+    );
+    if (!loaded.ok) return { ok: false, error: loaded.error };
     const archived: AdventureSession = {
       ...loaded.session,
       status: "archived",
@@ -251,11 +289,12 @@ export class AdventureSessionRepository {
     if (trimmed.length === 0) {
       return { ok: false, error: new Error("title-required") };
     }
-    const loaded = await this.load(vaultId, sessionId);
-    if (loaded.condition === "unreadable")
-      return { ok: false, error: loaded.error };
-    if (loaded.session.revision !== expectedRevision)
-      return { ok: false, error: new Error("revision-conflict") };
+    const loaded = await this.loadWritableAtRevision(
+      vaultId,
+      sessionId,
+      expectedRevision,
+    );
+    if (!loaded.ok) return { ok: false, error: loaded.error };
     const renamed: AdventureSession = {
       ...loaded.session,
       title: trimmed,
@@ -278,6 +317,12 @@ export class AdventureSessionRepository {
     const loaded = await this.load(vaultId, sessionId);
     if (loaded.condition === "unreadable") {
       return { condition: "unreadable", error: loaded.error };
+    }
+    if (loaded.condition === "migration-recovery") {
+      return {
+        condition: "unreadable",
+        error: new Error("migration-recovery-read-only"),
+      };
     }
     const now = new Date(this.clock.now()).toISOString();
     const id = this.idGenerator.uuid();
@@ -304,10 +349,8 @@ export class AdventureSessionRepository {
     if (!isSafeSessionId(sessionId)) {
       return { ok: false, error: new Error("invalid-session-id") };
     }
-    const loaded = await this.load(vaultId, sessionId);
-    if (loaded.condition === "unreadable") {
-      return { ok: false, error: loaded.error };
-    }
+    const loaded = await this.loadWritableSession(vaultId, sessionId);
+    if (!loaded.ok) return { ok: false, error: loaded.error };
     if (loaded.session.status !== "archived") {
       return {
         ok: false,

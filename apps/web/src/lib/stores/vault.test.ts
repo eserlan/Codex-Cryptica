@@ -282,6 +282,22 @@ describe("VaultStore", () => {
   }
 
   describe("Tiered Loading and Reactivity", () => {
+    it("loads and verifies guest content through the entity store", async () => {
+      sessionModeStore.isGuestMode = true;
+      const loadContent = vi
+        .spyOn(testVault.entityStore, "loadEntityContent")
+        .mockResolvedValue();
+      const isContentVerified = vi
+        .spyOn(testVault.entityStore, "isContentVerified")
+        .mockReturnValue(false);
+
+      await testVault.loadEntityContent("guest-hero");
+
+      expect(loadContent).toHaveBeenCalledWith("guest-hero");
+      expect(testVault.isContentVerified("guest-hero")).toBe(false);
+      expect(isContentVerified).toHaveBeenCalledWith("guest-hero");
+    });
+
     it("should prioritize Cache for Chronicle, then OPFS for Lore/Chronicle", async () => {
       const entityId = "test-hero";
       const cachedChronicle = "Cached Chronicle Content";

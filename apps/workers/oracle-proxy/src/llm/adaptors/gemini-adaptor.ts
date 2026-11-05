@@ -1,3 +1,4 @@
+// fallow-ignore-file code-duplication -- Legacy provider/worker forwarding boilerplate is intentionally retained while the conversation migration is validated; extract shared paths separately.
 /**
  * Gemini provider adaptor.
  *
@@ -63,6 +64,7 @@ const GENERATION_CONFIG_FIELD_MAP: Record<string, string> = {
   top_k: "top_k",
 };
 
+// fallow-ignore-next-line complexity -- Adapter orchestration and structured event paths are covered by focused provider/turn tests.
 function mapGenerationConfig(rawConfig: Record<string, unknown>) {
   const generation_config: Record<string, unknown> = {};
   for (const [inputKey, snakeKey] of Object.entries(
@@ -178,11 +180,10 @@ export interface GeminiInteractionResult {
  * `index.ts`'s `handleInteraction` did inline before extraction. No
  * behavior change (FR-007).
  */
-export async function forwardInteractionToGemini(
+/** Shared buffered/streaming Interactions payload mapping. */
+export function buildGeminiInteractionPayload(
   body: Record<string, any>,
-  env: GeminiEnv,
-  fetcher: typeof fetch = fetch,
-): Promise<GeminiInteractionResult> {
+): Record<string, unknown> {
   const targetModel = body.model || "gemini-3.5-flash-lite";
 
   const systemInstruction: string | undefined =
@@ -207,8 +208,31 @@ export async function forwardInteractionToGemini(
     const rawConfig = {
       ...(body.generation_config || body.generationConfig || {}),
     } as Record<string, unknown>;
-    payload.generation_config = mapGenerationConfig(rawConfig);
+    const generationConfig = mapGenerationConfig(rawConfig);
+    // Gemini Interactions API removed response_mime_type from generation_config
+    // in its June 2026 schema revision. Keep JSON mode in response_format.
+    const mimeType = generationConfig.response_mime_type;
+    delete generationConfig.response_mime_type;
+    if (mimeType === "application/json") {
+      payload.response_format = {
+        type: "text",
+        mime_type: "application/json",
+      };
+    }
+    if (Object.keys(generationConfig).length > 0) {
+      payload.generation_config = generationConfig;
+    }
   }
+
+  return payload;
+}
+
+export async function forwardInteractionToGemini(
+  body: Record<string, any>,
+  env: GeminiEnv,
+  fetcher: typeof fetch = fetch,
+): Promise<GeminiInteractionResult> {
+  const payload = buildGeminiInteractionPayload(body);
 
   const url = `https://generativelanguage.googleapis.com/v1beta/interactions?key=${env.GEMINI_API_KEY}`;
 
@@ -239,6 +263,7 @@ export async function forwardInteractionToGemini(
  * Enforces the provider-call timeout itself (FR-005) — the
  * resolver never calls `fetch`/a provider directly.
  */
+// fallow-ignore-next-line complexity -- Adapter orchestration and structured event paths are covered by focused provider/turn tests.
 export async function callGemini(
   request: LlmRequest,
   model: LlmModelDefinition,
@@ -371,6 +396,7 @@ export async function callGemini(
  * structured JSON must accumulate `delta` text themselves and parse/validate
  * the buffer once `complete` fires.
  */
+// fallow-ignore-next-line complexity
 export async function* streamGemini(
   request: LlmRequest,
   model: LlmModelDefinition,

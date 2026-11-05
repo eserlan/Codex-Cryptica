@@ -11,11 +11,16 @@ import type {
   SuppliedRollOutcome,
   VisibleStatePatch,
 } from "./types";
+import {
+  scenarioCollectionSchema,
+  scenarioItemIdentityIds,
+} from "./scenario-schemas";
+import { migrateLegacyScenarioCollection } from "./scenario-migration";
 
 export const MAX_SERIALIZED_STATE_CHARS = 32_000;
 export const MAX_GENERATION_INPUT_CHARS = 96_000;
 export const MAX_TEXT_CHARS = 600;
-export const CURRENT_ADVENTURE_SCHEMA_VERSION = 2;
+export const CURRENT_ADVENTURE_SCHEMA_VERSION = 3;
 
 const text = z.string().trim().min(1).max(MAX_TEXT_CHARS);
 const narration = z.string().trim().min(1).max(2_000);
@@ -209,12 +214,40 @@ const persistedHiddenPatchSchema = z.object({
   gmThreads: persistedCollectionPatch(hiddenThreadSchema),
 });
 
+const worldTimeEventSchema = z
+  .object({
+    id,
+    turnId: id,
+    atMinute: z.number().int().nonnegative(),
+    threadId: id,
+    text,
+  })
+  .strict();
+
+const worldTimeSchema = z
+  .object({
+    version: z.literal(1),
+    elapsedMinutes: z.number().int().min(0).max(52_560_000),
+    events: z.array(worldTimeEventSchema).max(80),
+  })
+  .strict();
+
+const timeAdvanceSchema = z
+  .object({
+    minutes: z.number().int().min(1).max(43_200),
+    cause: text,
+    developments: z.array(z.object({ threadId: id, text }).strict()).max(3),
+  })
+  .strict();
+
 const completeProposalSchema = z.object({
   kind: z.literal("complete"),
   narration,
+  timeAdvance: timeAdvanceSchema.optional(),
   visiblePatch: visiblePatchSchema,
   hiddenPatch: hiddenPatchSchema,
   revealSecretIds: z.array(id),
+  revealScenarioIds: z.array(id).max(8).optional(),
   provisionalFacts: z.array(newProvisionalFactSchema),
   sourceRecordIds: z.array(id),
   suggestedActions: z.array(text).length(3).optional(),
@@ -240,50 +273,99 @@ export const turnProposalSchema = z.discriminatedUnion("kind", [
   rollProposalSchema,
 ]);
 
-export const adventureSessionSchema = z.object({
-  schemaVersion: z.literal(CURRENT_ADVENTURE_SCHEMA_VERSION),
-  id,
-  vaultId: id,
-  title: text,
-  status: z.enum(["active", "archived"]),
-  createdAt: timestamp,
-  updatedAt: timestamp,
-  lastPlayedAt: timestamp,
-  revision: z.number().int().nonnegative(),
-  playerCharacter: playerCharacterSchema,
-  premise: text,
-  sourceRecords: z.array(sourceSchema),
-  visibleState: visibleStateSchema,
-  hiddenState: hiddenStateSchema,
-  provisionalFacts: z.array(provisionalFactSchema).max(60),
-  turns: z.array(
-    z.object({
-      id,
-      sequence: z.number().int().nonnegative(),
-      inputId: id,
-      // The opening turn has no player action yet.
-      playerAction: z.string().max(MAX_TEXT_CHARS),
-      rollOutcome: outcomeSchema.optional(),
-      resolvedRoll: resolvedRollSchema.optional(),
-      narration,
-      visiblePatch: persistedVisiblePatchSchema,
-      hiddenPatch: persistedHiddenPatchSchema,
-      revealedSecretIds: z.array(id),
-      sourceRecordIds: z.array(id),
-      provisionalFactIds: z.array(id),
-      committedAt: timestamp,
-      suggestedActions: z.array(text).length(3).optional(),
-    }),
-  ),
-  pendingRoll: pendingRollSchema.nullable(),
-  // Phase 2, additive: absent on a schemaVersion 1 document, defaulted to [] on load.
-  dicePresets: z.array(dicePresetSchema).max(20).optional().default([]),
-  resourceCounters: z
-    .array(resourceCounterSchema)
-    .max(20)
-    .optional()
-    .default([]),
-});
+export const scenarioEventSchema = z
+  .object({
+    id,
+    kind: z.enum(["discovery", "consequence", "status-change"]),
+    visibility: z.enum(["player", "gm"]),
+    text,
+    at: timestamp,
+    turnId: id.optional(),
+  })
+  .strict();
+
+/** Optional, bounded world-entry setup. Old sessions remain compatible. */
+const worldEntrySchema = z
+  .object({
+    version: z.literal(1),
+    location: z.discriminatedUnion("kind", [
+      z
+        .object({ kind: z.literal("canonical"), recordId: id, name: text })
+        .strict(),
+      z.object({ kind: z.literal("provisional"), name: text }).strict(),
+    ]),
+    at: z
+      .object({
+        year: z.number().int().finite(),
+        // Calendar-specific upper bounds belong to calendarEngine.isValid():
+        // custom calendars may have 13+ months or 400-day months.
+        month: z.number().int().min(1).optional(),
+        day: z.number().int().min(1).optional(),
+        precision: z.enum(["year", "unit", "day", "anchor"]).optional(),
+        unitId: id.optional(),
+        anchorId: id.optional(),
+        calendarRevision: z.number().int().positive().optional(),
+        label: z.string().max(MAX_TEXT_CHARS).optional(),
+      })
+      .strict()
+      .optional(),
+    intent: z.enum(["explore", "scene", "opportunity"]),
+    scenePrompt: text.optional(),
+  })
+  .strict();
+
+export const adventureSessionSchema = z
+  .object({
+    schemaVersion: z.literal(CURRENT_ADVENTURE_SCHEMA_VERSION),
+    id,
+    vaultId: id,
+    title: text,
+    status: z.enum(["active", "archived"]),
+    createdAt: timestamp,
+    updatedAt: timestamp,
+    lastPlayedAt: timestamp,
+    revision: z.number().int().nonnegative(),
+    playerCharacter: playerCharacterSchema,
+    premise: text,
+    sourceRecords: z.array(sourceSchema),
+    scenarioCollection: scenarioCollectionSchema.optional(),
+    worldEntry: worldEntrySchema.optional(),
+    worldTime: worldTimeSchema.optional(),
+    visibleState: visibleStateSchema,
+    hiddenState: hiddenStateSchema,
+    provisionalFacts: z.array(provisionalFactSchema).max(60),
+    turns: z.array(
+      z.object({
+        id,
+        sequence: z.number().int().nonnegative(),
+        inputId: id,
+        // The opening turn has no player action yet.
+        playerAction: z.string().max(MAX_TEXT_CHARS),
+        rollOutcome: outcomeSchema.optional(),
+        resolvedRoll: resolvedRollSchema.optional(),
+        narration,
+        visiblePatch: persistedVisiblePatchSchema,
+        hiddenPatch: persistedHiddenPatchSchema,
+        revealedSecretIds: z.array(id),
+        sourceRecordIds: z.array(id),
+        provisionalFactIds: z.array(id),
+        committedAt: timestamp,
+        timeAdvance: timeAdvanceSchema
+          .pick({ minutes: true, cause: true })
+          .optional(),
+        suggestedActions: z.array(text).length(3).optional(),
+      }),
+    ),
+    pendingRoll: pendingRollSchema.nullable(),
+    // Phase 2, additive: absent on a schemaVersion 1 document, defaulted to [] on load.
+    dicePresets: z.array(dicePresetSchema).max(20).optional().default([]),
+    resourceCounters: z
+      .array(resourceCounterSchema)
+      .max(20)
+      .optional()
+      .default([]),
+  })
+  .strict();
 
 type RawAdventureSession = Record<string, unknown>;
 type AdventureSessionMigration = (
@@ -297,6 +379,7 @@ const sessionMigrations: Record<number, AdventureSessionMigration> = {
     dicePresets: session.dicePresets ?? [],
     resourceCounters: session.resourceCounters ?? [],
   }),
+  2: (session) => migrateLegacyScenarioCollection(session),
 };
 
 /**
@@ -337,15 +420,176 @@ export function migrateAdventureSession(input: unknown): unknown {
 
 export function parseAdventureSession(input: unknown): AdventureSession {
   const parsed = adventureSessionSchema.parse(migrateAdventureSession(input));
+  validateScenarioIdentitySpace(parsed as AdventureSession);
   const stateLength = JSON.stringify({
     visibleState: parsed.visibleState,
     hiddenState: parsed.hiddenState,
     provisionalFacts: parsed.provisionalFacts,
+    scenarioCollection: parsed.scenarioCollection,
+    worldEntry: parsed.worldEntry,
+    worldTime: parsed.worldTime,
   }).length;
   if (stateLength > MAX_SERIALIZED_STATE_CHARS) {
     throw new Error("state-budget-exceeded");
   }
   return parsed as AdventureSession;
+}
+
+function validateScenarioIdentitySpace(session: AdventureSession): void {
+  const collection = session.scenarioCollection;
+  if (!collection) return;
+  const occupiedIds = new Set([
+    session.id,
+    session.vaultId,
+    ...session.visibleState.objectives.map((entry) => entry.id),
+    ...session.visibleState.activeCharacters.map((entry) => entry.id),
+    ...session.visibleState.knownFacts.map((entry) => entry.id),
+    ...session.visibleState.relationships.map((entry) => entry.id),
+    ...(session.visibleState.location
+      ? [session.visibleState.location.id]
+      : []),
+    ...(session.visibleState.situation
+      ? [session.visibleState.situation.id]
+      : []),
+    ...session.hiddenState.secrets.map((entry) => entry.id),
+    ...session.hiddenState.gmThreads.map((entry) => entry.id),
+    ...session.provisionalFacts.map((entry) => entry.id),
+    ...session.turns.map((entry) => entry.id),
+    ...(session.pendingRoll ? [session.pendingRoll.id] : []),
+    ...session.dicePresets.map((entry) => entry.id),
+    ...session.resourceCounters.map((entry) => entry.id),
+    ...(session.worldTime?.events.map((entry) => entry.id) ?? []),
+  ]);
+  const scenarioIds = new Set<string>();
+  for (const item of collection.items) {
+    assertUniqueScenarioRecordIds(item, occupiedIds, scenarioIds);
+    assertUniqueScenarioSecretBindings(item, session, occupiedIds, scenarioIds);
+  }
+}
+
+type ScenarioCollectionItem = NonNullable<
+  AdventureSession["scenarioCollection"]
+>["items"][number];
+
+function assertUniqueScenarioRecordIds(
+  item: ScenarioCollectionItem,
+  occupiedIds: Set<string>,
+  scenarioIds: Set<string>,
+): void {
+  for (const id of [item.id, ...item.events.map((event) => event.id)]) {
+    if (occupiedIds.has(id) || scenarioIds.has(id)) {
+      throw new Error("scenario-id-collision");
+    }
+    scenarioIds.add(id);
+  }
+}
+
+function assertUniqueScenarioSecretBindings(
+  item: ScenarioCollectionItem,
+  session: AdventureSession,
+  occupiedIds: Set<string>,
+  scenarioIds: Set<string>,
+): void {
+  const sourceText = new Map(scenarioSecretSourceText(item));
+  const boundIds = scenarioItemIdentityIds(item).filter((id) =>
+    sourceText.has(id),
+  );
+  for (const secretId of boundIds) {
+    if (scenarioIds.has(secretId)) {
+      throw new Error("scenario-secret-id-collision");
+    }
+    const registered = session.hiddenState.secrets.find(
+      (entry) => entry.id === secretId,
+    );
+    if (registered) {
+      if (
+        normalizeIdentityText(registered.text) !==
+        normalizeIdentityText(sourceText.get(secretId) ?? "")
+      ) {
+        throw new Error("scenario-secret-id-collision");
+      }
+    } else if (occupiedIds.has(secretId)) {
+      throw new Error("scenario-secret-id-collision");
+    }
+    scenarioIds.add(secretId);
+  }
+}
+
+function scenarioSecretSourceText(
+  item: ScenarioCollectionItem,
+): Array<[string, string]> {
+  return [
+    [item.secretBindings.truth, item.gmOnly.truth],
+    ...(item.secretBindings.ifInvestigated
+      ? [
+          [
+            item.secretBindings.ifInvestigated,
+            item.gmOnly.ifInvestigated ?? "",
+          ] as [string, string],
+        ]
+      : []),
+    ...item.events.flatMap((event) => {
+      const id = Object.hasOwn(item.secretBindings.eventIds, event.id)
+        ? item.secretBindings.eventIds[event.id]
+        : undefined;
+      return event.visibility === "gm" && id
+        ? [[id, event.text] as [string, string]]
+        : [];
+    }),
+  ];
+}
+
+function normalizeIdentityText(value: string): string {
+  return value.toLocaleLowerCase().replace(/\s+/g, " ").trim();
+}
+
+export type AdventureSessionReadResult =
+  | { mode: "writable"; session: AdventureSession }
+  | {
+      mode: "legacy-read-only-recovery";
+      session: AdventureSession;
+      exportDocument: unknown;
+      reason: "migration-budget-exceeded";
+    };
+
+/** Keep valid legacy bytes inspectable if only additive v3 metadata breaks the state ceiling. */
+export function parseAdventureSessionForRecovery(
+  input: unknown,
+): AdventureSessionReadResult {
+  try {
+    return { mode: "writable", session: parseAdventureSession(input) };
+  } catch (cause) {
+    const version =
+      input && typeof input === "object" && !Array.isArray(input)
+        ? (input as Record<string, unknown>).schemaVersion
+        : undefined;
+    if (
+      !(cause instanceof Error) ||
+      cause.message !== "state-budget-exceeded" ||
+      typeof version !== "number" ||
+      version >= CURRENT_ADVENTURE_SCHEMA_VERSION
+    )
+      throw cause;
+    const migrated = migrateAdventureSession(input);
+    const parsed = adventureSessionSchema.parse(migrated) as AdventureSession;
+    validateScenarioIdentitySpace(parsed);
+    const original = input as Record<string, unknown>;
+    const legacyStateLength = JSON.stringify({
+      visibleState: parsed.visibleState,
+      hiddenState: parsed.hiddenState,
+      provisionalFacts: parsed.provisionalFacts,
+      scenarioState: original.scenarioState,
+      worldEntry: parsed.worldEntry,
+      worldTime: parsed.worldTime,
+    }).length;
+    if (legacyStateLength > MAX_SERIALIZED_STATE_CHARS) throw cause;
+    return {
+      mode: "legacy-read-only-recovery",
+      session: parsed,
+      exportDocument: structuredClone(input),
+      reason: "migration-budget-exceeded",
+    };
+  }
 }
 
 export function parseTurnProposal(input: unknown): AdventureTurnProposal {
@@ -358,6 +602,9 @@ export function validateStateBudget(session: AdventureSession): boolean {
       visibleState: session.visibleState,
       hiddenState: session.hiddenState,
       provisionalFacts: session.provisionalFacts,
+      scenarioCollection: session.scenarioCollection,
+      worldEntry: session.worldEntry,
+      worldTime: session.worldTime,
     }).length <= MAX_SERIALIZED_STATE_CHARS
   );
 }

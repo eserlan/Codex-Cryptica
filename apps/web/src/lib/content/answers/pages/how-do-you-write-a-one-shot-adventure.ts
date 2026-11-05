@@ -174,13 +174,15 @@ export const howDoYouWriteAOneShotAdventure: AnswerConfigInput = {
     "how-do-i-prepare-an-rpg-session-step-by-step",
     "how-do-i-write-a-good-call-of-cthulhu-one-shot",
     "how-do-i-pace-an-rpg-one-shot",
+    "what-are-the-classic-must-play-tabletop-rpg-adventures",
+    "how-do-i-run-a-one-shot-rpg-session",
+    "how-do-i-plan-a-one-shot-rpg-session",
   ],
   discovery: {
     id: "answer-write-one-shot-adventure",
     parentCluster: "adventure-mapping",
     primaryIntent: "how to write a one shot adventure",
     intentAliases: [
-      "how to prep a one-shot rpg",
       "writing a one shot dnd adventure",
       "one shot adventure structure",
       "designing a single session tabletop adventure",
@@ -203,6 +205,11 @@ export const howDoYouWriteAOneShotAdventure: AnswerConfigInput = {
         with: "answer-run-mystery-without-railroading",
         reason:
           "Mystery addresses non-linear clue distribution, whereas one-shot covers pacing and time management across a full session.",
+      },
+      {
+        with: "answer-run-one-shot-rpg-session",
+        reason:
+          "This answer designs the scenario and its four-beat structure before play; the run answer assumes a scenario exists and explains how to facilitate it live.",
       },
     ],
     relatedIntents: [

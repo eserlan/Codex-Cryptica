@@ -47,6 +47,7 @@
     "check:crawler-access": "bun scripts/crawler-access-check.mjs",
     "report:crawler-activity": "bun scripts/crawler-activity-report.ts",
     "update:crawler-ips": "bun scripts/update-crawler-ip-ranges.ts",
+    "update:bad-ips": "bun scripts/update-bad-ips.ts",
     "analyze:god-files": "bun scripts/god-file-analysis.ts",
     "fallow": "fallow",
     "fallow:audit": "fallow audit --base origin/staging",

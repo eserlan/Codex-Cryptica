@@ -330,7 +330,11 @@ export function buildPointCrawlTopology(
     }
   }
 
-  const goalNodeIds = nodes.filter((n) => n.role === "goal").map((n) => n.id);
+  // ⚡ Bolt Optimization: Replace chained .filter().map() with an imperative loop
+  const goalNodeIds: string[] = [];
+  for (const n of nodes) {
+    if (n.role === "goal") goalNodeIds.push(n.id);
+  }
 
   const network: PointCrawlNetwork = {
     title:
@@ -416,7 +420,11 @@ export function normalizePointCrawlTopology(
   if (!nodes.some((n) => n.role === "goal")) {
     nodes[nodes.length - 1].role = "goal";
   }
-  const goalNodeIds = nodes.filter((n) => n.role === "goal").map((n) => n.id);
+  // ⚡ Bolt Optimization: Replace chained .filter().map() with an imperative loop
+  const goalNodeIds: string[] = [];
+  for (const n of nodes) {
+    if (n.role === "goal") goalNodeIds.push(n.id);
+  }
 
   const nodeIds = new Set(nodes.map((n) => n.id));
   // Drop routes referencing non-existent nodes or self-loops
@@ -537,9 +545,13 @@ export function normalizePointCrawlTopology(
   }
 
   // 6. Enforce Key-Before-Lock invariant on ALL gated routes
-  const gatedIds = new Set(
-    validRoutes.filter((r) => Boolean(r.gate)).map((r) => r.id),
-  );
+  // ⚡ Bolt Optimization: Replace chained .filter().map() passed to Set with an imperative loop
+  const gatedIds = new Set<string>();
+  for (const r of validRoutes) {
+    if (r.gate) {
+      gatedIds.add(r.id);
+    }
+  }
   for (const route of validRoutes) {
     if (!route.gate) continue;
     // Nodes reachable without crossing THIS gated route (or other gated routes)

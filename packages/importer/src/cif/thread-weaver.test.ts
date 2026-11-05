@@ -101,4 +101,13 @@ describe("convertThreadWeaverJsonToCif", () => {
     expect(cif.entities).toHaveLength(1);
     expect(cif.entities[0].kind).toBe("character");
   });
+
+  it("uses the injected clock when exportedAt is missing", () => {
+    const cif = convertThreadWeaverJsonToCif(
+      { ...minimalExport(), exportedAt: "" },
+      { now: () => 150_000 },
+    );
+
+    expect(cif.source.exportedAt).toBe("1970-01-01T00:02:30.000Z");
+  });
 });

@@ -34,6 +34,12 @@ a concrete failure mode, and an appropriate focused validation or regression tes
   per-row or per-part buttons (landmark, encounter, hazard). A save that checks "is this part still
   pending?" and then awaits entity creation lets a double-click create two entities and two pins
   (PR #4152). Disable the part's actions while its save is in flight.
+- **Guard outlives the component**: A `$state` guard inside a child that can unmount (switching
+  approach, an error branch that remounts the form) resets to `false`, so back → reopen → submit
+  starts a second session (PR #4569). Put the guard in the store/manager that owns the operation,
+  or disable the navigation that unmounts the form while it is in flight. The same applies to
+  form state such as a selected record id: a remount after a failed start silently dropped it
+  (PR #4565). Keep it in the parent that survives.
 
 ### Captured State Written Back After an Await
 
@@ -51,6 +57,23 @@ a concrete failure mode, and an appropriate focused validation or regression tes
 
 - **Issue**: Initializing `$state` directly from a prop (`let x = $state(props.x)`) breaks reactivity if the prop changes.
 - **Pattern**: Use `$derived` if it should stay in sync, or explicitly document if a local copy is intended.
+
+### Deep `$state` Proxies Crossing a Clone Boundary
+
+- **Issue**: Deep `$state` values are Proxies. `structuredClone`, `postMessage` and IndexedDB
+  writes throw `DataCloneError` for them. In PR #4575, every dated start failed because
+  `setup.at` came from a `$state` draft.
+- **Pattern**: Pass `$state.snapshot(value)` to anything that clones, serialises or crosses a
+  worker or storage boundary. The test drives the real component state, not a plain object
+  literal.
+
+### Extracted Getters Lose `$derived` Memoisation
+
+- **Issue**: When a decomposition moves `$derived` fields into a helper class, `get x()` getters
+  rescan the rows on every read. One toolbar render repeated the full filter and allocation
+  (PR #4513).
+- **Pattern**: Keep derived aggregates as `$derived` class fields in the `.svelte.ts` helper so
+  consumers share one computation until the inputs change.
 
 ### Svelte 5 Runes in Non-compiled Modules
 
@@ -160,6 +183,9 @@ Luna finds these in almost every generator PR. Check each guard in the diff agai
   A broken-reference scan covers every free-text field the output renders, outcomes and
   reasoning included (PR #4350). Coverage counts only entries that passed validation, so one
   malformed route does not block repair of a valid one (PR #4341).
+- A parser that promises "reject the whole batch" and "fields in order" must validate every
+  entry, not only the selected one, and compare each field with the next expected label. A
+  membership check accepts any permutation (PR #4541).
 
 ### Heuristic Prose Checks (Regex Validators)
 
@@ -260,6 +286,10 @@ Luna finds these in almost every generator PR. Check each guard in the diff agai
 - **Provenance per item**: A batch-wide "made by AI" / "no AI used" note is wrong once the list
   mixes sources (pinned names kept from an earlier batch). Track the source per item and show a
   mixed-source notice when needed (PR #4403).
+- **AI Disabled is a separate gate**: `oracle.isEnabled` is always true. The privacy switch is
+  `discoveryPolicyStore.aiDisabled`. A launch control that checked only the former sent campaign
+  and GM context remotely with AI Disabled (PR #4565). Check the policy at the control and again
+  just before the request, keep the user's selection, and say how to enable AI.
 
 ### External Responses and Stored Documents
 
@@ -283,6 +313,43 @@ Luna finds these in almost every generator PR. Check each guard in the diff agai
 - **Player-facing parts of one output**: The same boundary applies inside a generated result. A
   "spoiler-safe" player handout must not append raw campaign context or any GM-only field
   (PR #4334: the handout could name the culprit). List what feeds each player-facing field.
+- **Before the final view**: A spoiler shield on the finished preview does not cover the
+  streaming progress view, which rendered GM lore as it arrived (PR #4565). Apply the shield to
+  every stage that renders the output.
+
+### Hidden-Truth Guards Cover Every Secret and Every Output Path
+
+- **Issue**: The Adventure leakage guard checked only `gmOnly.truth`, while `ifInvestigated` and
+  GM-only scenario events also reached the model. `roll-required` responses skipped
+  `detectHiddenLeakage` entirely, so a spoiler in roll copy was saved and shown (PRs #4543,
+  #4564; found twice). The fallback scan also covered the GM-only `hiddenPatch`, which rejected
+  safe turns, and a synthetic secret id that was never persisted could not be revealed.
+- **Pattern**: List every GM-only text the prompt receives and every response kind that can
+  commit player-visible text (narration, suggestions, roll setup, stakes, visible patches). Each
+  secret is registered with a stable, persisted id and goes through the reveal lifecycle. The
+  guard scans only player-facing fields. Test each source and each response kind, plus a permitted
+  reveal.
+
+### Date-Aware Context Projection (Temporal Spoilers)
+
+PR #4563 and PR #4575 drew eight findings. When context is filtered by an in-world date:
+
+- **Every retrieval path**: The date policy must apply to anchors, follow-up action searches and
+  roll resolution as well as the opening. Otherwise turn two receives the future facts that the
+  preview excluded (PR #4575).
+- **Exceptions stay narrow**: A "the user selected it" exception may admit `uncertain` records.
+  It must not admit `future` or `contradictory` ones (PR #4563). The UI labels every
+  classification, including `contradictory` (PR #4575).
+- **Existence is not safety**: A lifecycle date range says the entity exists. It does not make its
+  undated biography safe ("He dies in 620"). Keep unscoped prose GM-only (PR #4563).
+- **Do not traverse through withheld records**: Player reachability expands only through records
+  that are themselves player-safe (PR #4563).
+- **Keep precision and the calendar revision**: Do not widen a placed date to its whole year.
+  Reject dates whose `calendarRevision` needs repair rather than reinterpreting them under the
+  new month layout (PR #4563). One provisional root must not discard the date for the rest
+  (PR #4575).
+- **Hydrate what the decision reads**: Rehydrating only text and lore dropped the restored
+  visibility and dates. A hidden record could then be classified as player-safe (PR #4563).
 
 ## UI & Accessibility
 
@@ -315,6 +382,47 @@ Luna finds these in almost every generator PR. Check each guard in the diff agai
     <span class="shrink-0">(12)</span>
   </div>
   ```
+
+- **The full text stays reachable**: If a summary truncates a value, the expanded view or a
+  tooltip still shows it in full. A truncated location that "Scene details" never repeated was
+  unreadable on phones (PR #4582).
+
+### Fixed-Height Containers Need a Scroll Path
+
+- **Issue**: Content of unbounded length (three 600-character suggestions) inside a `shrink-0`
+  child of a fixed-height `overflow-hidden` surface pushes the input off-screen with no way to
+  scroll to it (PR #4585).
+- **Pattern**: Use the schema's maximum lengths to work out the worst case at phone height. Cap
+  the variable region and give it its own scroll so the primary control stays reachable.
+
+### Mobile Full-Screen Surfaces
+
+PR #4582 drew three findings for one `fixed inset-0` play surface:
+
+- **Transformed ancestors**: An ancestor with `transform` or `translate` (the centred
+  `OracleWindow`) becomes the containing block for `position: fixed`. The surface then inherits
+  the modal's offset and width. Mount it outside the transformed host, or remove the transform in
+  that mode.
+- **On-screen keyboard**: `100dvh` does not shrink for the keyboard on Android Chrome or iOS
+  Safari. Track the visual viewport with the existing `KeyboardInset` helper, with cleanup as in
+  `SidebarPanelHost.svelte`.
+- **Covered chrome is still focusable**: An opaque overlay is a dialog for keyboard users. Make
+  the covered siblings `inert`, contain focus, and restore both on exit (see Custom Dialog Focus).
+
+### Live Regions Must Contain the Announcement
+
+- **Issue**: `role="status"` was placed on the "Oracle is responding…" line, and the
+  "Playing: …" text was a sibling, so the selected action was never announced (PR #4585). Adding
+  a second status role also broke `getByRole("status")` in an existing test.
+- **Pattern**: Put the live region on the wrapper that holds all the text to be announced. Search
+  for existing `getByRole` queries that a new role makes ambiguous.
+
+### Truncated Option Lists Keep the Selection
+
+- **Issue**: A picker showed the first 80 matches. A record selected through search then dropped
+  out of the list when the search was cleared, but its id stayed in the draft. The launch used a
+  selection the UI no longer showed (PR #4575).
+- **Pattern**: Put selected rows first, then truncate.
 
 ### Pointer Click-Drag Drift Prevention
 
@@ -472,6 +580,46 @@ class FeatureStore {
   aborted, and dispose listeners, workers, object URLs, and subscriptions during teardown. Test a
   cancellation between meaningful phases, not only before the task starts.
 
+- **Default guards must not be always-true**: `open(…, isCurrent = () => true)` let a takeover
+  that finished after "Leave adventure" restore the closed session and restart its heartbeat
+  (PR #4583). Every caller that can be superseded passes a guard that close, teardown and
+  vault/session changes invalidate. Guard success, `catch` and `finally` alike: a stale `finally`
+  that clears busy state or a draft affects the newer request too (PR #4575).
+
+### Superseded Requests Release What They Acquired
+
+- **Issue**: A stale request returned early after acquiring a control lease, so the coordinator
+  never tracked it. Reopening was read-only until the lease expired (PR #4566). The same happens
+  with locks, object URLs, workers and subscriptions.
+- **Pattern**: At every early return after an acquisition, release the resource. When work loads
+  state and then acquires a lock, reload and revalidate after acquiring. The owner may have
+  committed in between, which leaves a writable copy with an old revision (PR #4583). Test
+  invalidation between acquisition and activation, and a rejection (not only `{ ok: false }`)
+  after acquisition.
+
+### Shared Object-URL Caches
+
+- **Issue**: Splitting URL creation from cache publication with an `await` let a vault switch
+  `clear()` the cache in between. The old URL was then published into the new vault's cache. A
+  consumer that arrived between publication and removal of the in-flight entry got the shared
+  promise without a retained reference, so the first release revoked an image still in use
+  (PR #4568).
+- **Pattern**: Capture the generation before resolving and discard or revoke stale results. Look
+  up and retain the published entry before reusing an in-flight promise. Guard the in-flight
+  cleanup so it cannot delete a newer request's entry.
+
+### Handoffs Keep the Source Until the Target Commits
+
+- **Issue**: Launching Adventure from a generator called `close()`, which reset the draft, so
+  cancelling could not return to the six rumours. The start form cleared the handoff when
+  `start()` returned without an error, even though no opening had been committed (lease failure,
+  offline). The new session also showed an "already active" conflict with itself (PR #4565).
+- **Pattern**: Keep the source state (in memory, scoped to the vault, never persisting GM
+  material) until the target confirms it committed. Define success as the committed result, not
+  "no error". Exclude the in-flight item from conflict checks. Check that a chosen record
+  actually reaches the consumer: setting `recordId` did not add the character to the context
+  sources (PR #4565).
+
 ### Debounce Timers & Async Invalidation Lifecycle
 
 - **Issue**: Introducing async delayed operations or debounce timers (e.g. `setTimeout(..., SHARPEN_DELAY_MS)`) without clearing the timeout on component destroy or when new operations supersede them. Uncancelled timers outlive the component lifecycle, cause memory leaks, or update stale DOM nodes. Furthermore, lack of fake-timer unit tests leaves rapid re-triggering and coarse-to-fine invalidations unverified.
@@ -538,6 +686,22 @@ class FeatureStore {
   transformation is necessary, and preserve unknown data unless a deliberate migration removes it.
   Test a legacy document, the new document, and an invalid document before changing persistence.
 
+- **Validate before the first write**: A type-correct seed with a 601-character field was saved
+  and then rejected as unreadable on reload by the 600-character schema (PRs #4542, #4564).
+  Parse the assembled record with the same schema the reader uses before any archive or save, and
+  test that an invalid input leaves existing records unchanged.
+- **Do not duplicate domain limits**: Fixed bounds in a Zod schema (month ≤ 12, day ≤ 31)
+  rejected dates the vault calendar allows, so setup accepted them and saving failed (PR #4575).
+  Keep structural checks in the schema and leave domain bounds to the domain validator.
+
+### Compare Canonical Values
+
+- **Issue**: A duplicate check compared the raw incoming id, but the schema trims ids on commit.
+  Replaying `" event-1 "` appended a second `event-1` (PRs #4542, #4543, #4564; found three
+  times).
+- **Pattern**: Dedupe, equality and replay checks use the same normalisation the schema applies
+  (trim, case, Unicode). Add a whitespace-variant replay test.
+
 ### Never Persist a Placeholder as Content
 
 - **Issue**: Warm start shows a truncated preview until the full Markdown is hydrated. A cloud
@@ -590,6 +754,10 @@ class FeatureStore {
 - **Pattern**: Compute the worst case from the supported settings (min zoom, min cell size, a
   large viewport), not a typical map. Iterate whichever is smaller (records or visible cells), and
   degrade visibly (aggregate, hide a layer with a notice) rather than silently truncating.
+
+- **Graph traversal**: A result cap does not bound discovery. Scanning connection arrays for each
+  neighbour, plus a second-hop search over all pairs, is quadratic, and it ran several times per
+  request (PR #4563). Build adjacency sets once and traverse them for every projection.
 
 ### Canvas 2D Hot-Path Compositing & 60 FPS Budgets
 
@@ -646,6 +814,16 @@ class FeatureStore {
   `browser` from `$app/environment`) instead of fragile user-agent parsing. Keep test-only behavior
   injected or explicitly configured rather than inferred from the runtime.
 
+### User-Facing Errors Come From Typed Causes
+
+- **Issue**: A prefix check (`message.startsWith("Choose a location")`) passed unknown error text
+  through verbatim, which could expose private vault content. Errors that the manager caught and
+  returned as `errorMessage` bypassed the mapper entirely (PR #4580). Every schema failure was
+  reported as `state-budget-exceeded` (PR #4542).
+- **Pattern**: Carry a typed code from the place the error happens and map codes to fixed copy.
+  Pass through only exact, known validation messages. Check every path that surfaces an error
+  (thrown and returned) and that each failure maps to the correct category.
+
 ### Explicit Button Types
 
 - **Issue**: `<button>` tags without a `type` attribute default to `type="submit"` in HTML, which can cause unwanted form submissions or page reloads when clicked.
@@ -682,7 +860,8 @@ class FeatureStore {
   looking") or states game rules from memory ("Legendary Actions trigger automatically",
   "spell circles" for ToV spell sources). The add-answer guidance forbids invented time costs, and
   rules claims were wrong against the official text (PRs #4107, #4169, #4172; the five-minute claim
-  survived one fix in another sentence).
+  survived one fix in another sentence). Product prices and availability ("free starter") must
+  match the linked page on the date the copy claims it was checked (PR #4567).
 - **Pattern**: Grep changed content for numbers with units of time or effort and remove any without
   a source. For each rules statement, check the publisher's own text (SRD, Kobold Press) and cite
   it in the PR. After removing a claim, grep for its other phrasings in the same file.
@@ -775,10 +954,17 @@ and name the test. These are the recurring ways the answer is "no" while the sui
   without route history because the whole plan is also in the prompt (PR #4127). Assert something
   only the changed code can produce.
 - **The values do not discriminate.** A timeout test that advances to 120,001 ms passes whether
-  the limit is 60s or 120s (PR #4114). Pick a value between the old and new behaviour.
+  the limit is 60s or 120s (PR #4114). Pick a value between the old and new behaviour. `/yes/i`
+  matches both the old and new accessible names (PR #4514), and checking that a GM note exists
+  passes even if the notes are paired with the wrong rumour (PR #4541). Assert the exact name or
+  the full pairing.
+- **The helper, not the UI.** A test of the pure helper left the Svelte preview → Start transition
+  that the issue was about untested (PR #4580). Test at the layer where the bug occurred.
 - **One of N.** The PR adds four legacy aliases, three buttons, two help articles, or a whole
   category map; the test checks one (PRs #4126, #4173, #4137, #4181). Use `it.each` over all of them.
-- **The wrong failure shape.** The mock rejects, but production resolves `false` (PR #4152).
+- **The wrong failure shape.** The mock rejects, but production resolves `false` (PR #4152). The
+  reverse also happens: a mock returning `{ ok: false }` took a path that already released the
+  lease, so the new `finally` went untested (PR #4566).
 - **The branch is unreached.** The test never hits the new branch (anchor cleared when deleted,
   confirm resolved `false`, `cancelledIds` present) (PR #4168).
 - **Content and presentation count.** Changed rules text, new copy, responsive classes, icons and

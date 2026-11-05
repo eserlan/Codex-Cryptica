@@ -1,9 +1,13 @@
-import { detectHiddenLeakage } from "./hidden-state";
+import { detectHiddenLeakage, ensureScenarioSecrets } from "./hidden-state";
+import { applyTimeAdvance } from "./world-time";
+import { systemIdGenerator } from "@codex/runtime";
+import { validateRevealedScenarioLocation } from "./contextual-rumours";
 import {
   MAX_SERIALIZED_STATE_CHARS,
   parseTurnProposal,
   validateStateBudget,
 } from "./schemas";
+import { scenarioItemIdentityIds } from "./scenario-schemas";
 import type {
   AdventureSession,
   AdventureTurnProposal,
@@ -43,6 +47,8 @@ function existingIds(session: AdventureSession): Set<string> {
     ...session.hiddenState.gmThreads.map((thread) => thread.id),
     ...session.provisionalFacts.map((fact) => fact.id),
     ...session.turns.map((turn) => turn.id),
+    ...(session.scenarioCollection?.items.flatMap(scenarioItemIdentityIds) ??
+      []),
   ]);
 }
 
@@ -224,31 +230,148 @@ function error(code: AdventureValidationError["code"], message: string) {
   return { ok: false as const, errors: [{ code, message }] };
 }
 
-export function applyCompletedTurn(
+function immutableScenarioSecretTexts(
   session: AdventureSession,
-  proposalInput: AdventureTurnProposal,
-  meta: CommitMetadata,
-  now = meta.now,
-  createId: IdFactory = () => crypto.randomUUID(),
-): Result<AdventureSession, AdventureValidationError[]> {
+): Map<string, string> {
+  return new Map(
+    (session.scenarioCollection?.items ?? []).flatMap((item) => [
+      [item.secretBindings.truth, item.gmOnly.truth] as const,
+      ...(item.secretBindings.ifInvestigated && item.gmOnly.ifInvestigated
+        ? [
+            [
+              item.secretBindings.ifInvestigated,
+              item.gmOnly.ifInvestigated,
+            ] as const,
+          ]
+        : []),
+      ...item.events.flatMap((event) => {
+        const secretId = Object.hasOwn(item.secretBindings.eventIds, event.id)
+          ? item.secretBindings.eventIds[event.id]
+          : undefined;
+        return event.visibility === "gm" && secretId
+          ? [[secretId, event.text] as const]
+          : [];
+      }),
+    ]),
+  );
+}
+
+function hasImmutableScenarioRewrite(
+  session: AdventureSession,
+  proposal: Extract<AdventureTurnProposal, { kind: "complete" }>,
+): boolean {
+  const immutableTexts = immutableScenarioSecretTexts(session);
+  return proposal.hiddenPatch.secrets.update.some(
+    (secret) =>
+      immutableTexts.has(secret.id) &&
+      secret.text !== immutableTexts.get(secret.id),
+  );
+}
+
+function applySecretReveals(
+  candidate: AdventureSession,
+  secrets: AdventureSession["hiddenState"]["secrets"],
+  revealIds: string[],
+  turnId: string,
+): string | null {
+  for (const secretId of new Set(revealIds)) {
+    const secret = secrets.find((entry) => entry.id === secretId);
+    if (secret) {
+      secret.status = "revealed";
+      secret.revealedOnTurnId = turnId;
+    }
+    const target = candidate.scenarioCollection?.items.find((item) =>
+      scenarioSecretBindingIds(item).includes(secretId),
+    );
+    if (!target) {
+      if (secret) continue;
+      return `Unknown secret: ${secretId}`;
+    }
+    target.revealedSecretIds = [
+      ...new Set([...target.revealedSecretIds, secretId]),
+    ];
+  }
+  return null;
+}
+
+function scenarioSecretBindingIds(
+  item: NonNullable<AdventureSession["scenarioCollection"]>["items"][number],
+): string[] {
+  return [
+    item.secretBindings.truth,
+    ...(item.secretBindings.ifInvestigated
+      ? [item.secretBindings.ifInvestigated]
+      : []),
+    ...Object.values(item.secretBindings.eventIds),
+  ];
+}
+
+function revealScenarioIfUnheard(
+  candidate: AdventureSession,
+  scenarioId: string,
+  turn: CommittedAdventureTurn,
+  createId: IdFactory,
+): string | null {
+  const scenario = candidate.scenarioCollection?.items.find(
+    (item) => item.id === scenarioId,
+  );
+  if (!scenario) return `Unknown scenario: ${scenarioId}`;
+  if (scenario.knowledge !== "unheard") return null;
+
+  const locationError = validateRevealedScenarioLocation(candidate, scenario);
+  if (locationError) return locationError;
+
+  const id = allocateId(existingIds(candidate), createId);
+  if (!id || scenario.events.length >= 100) {
+    return "Unable to record scenario discovery";
+  }
+  scenario.events.push({
+    id,
+    kind: "discovery",
+    visibility: "player",
+    text: scenario.playerVisible.lead,
+    at: turn.committedAt,
+    turnId: turn.id,
+  });
+  scenario.knowledge = "heard";
+  return null;
+}
+
+function markRevealedScenarios(
+  candidate: AdventureSession,
+  scenarioIds: string[] | undefined,
+  turn: CommittedAdventureTurn,
+  createId: IdFactory,
+): string | null {
+  for (const scenarioId of scenarioIds ?? []) {
+    const err = revealScenarioIfUnheard(candidate, scenarioId, turn, createId);
+    if (err) return err;
+  }
+  return null;
+}
+
+function completedTurnInputError(
+  session: AdventureSession,
+  inputId: string,
+): ReturnType<typeof error> | null {
   if (session.status !== "active" || session.pendingRoll) {
     return error(
       "invalid-transition",
       "The session is not ready for a completed turn.",
     );
   }
-  if (
-    meta.inputId.length === 0 ||
-    session.turns.some((turn) => turn.inputId === meta.inputId)
-  ) {
+  if (!inputId || session.turns.some((turn) => turn.inputId === inputId)) {
     return error("duplicate-input", "This action was already processed.");
   }
-  const proposal = parseTurnProposal(proposalInput);
-  if (proposal.kind !== "complete") {
-    return error(
-      "invalid-schema",
-      "A completed turn requires a complete proposal.",
-    );
+  return null;
+}
+
+function completedTurnProposalError(
+  session: AdventureSession,
+  proposal: Extract<AdventureTurnProposal, { kind: "complete" }>,
+): ReturnType<typeof error> | null {
+  if (hasImmutableScenarioRewrite(session, proposal)) {
+    return error("conflicting-patch", "Scenario baseline truth is immutable.");
   }
   if (detectHiddenLeakage(session, proposal).length > 0) {
     return error(
@@ -256,54 +379,126 @@ export function applyCompletedTurn(
       "The response contains unrevealed GM information.",
     );
   }
+  return null;
+}
+
+type MaterializedTurnState = {
+  visibleState: AdventureSession["visibleState"];
+  hiddenState: AdventureSession["hiddenState"];
+  provisionalFacts: ProvisionalFact[];
+  visiblePatch: VisibleStatePatch;
+  hiddenPatch: HiddenStatePatch;
+};
+
+function materializeTurnState(
+  session: AdventureSession,
+  proposal: Extract<AdventureTurnProposal, { kind: "complete" }>,
+  turnId: string,
+  createId: IdFactory,
+): MaterializedTurnState | { error: ReturnType<typeof error> } {
   const ids = existingIds(session);
   const visiblePatch = materializeVisiblePatch(
     proposal.visiblePatch,
     ids,
     createId,
   );
-  if (!visiblePatch.ok)
-    return error(
-      "id-allocation-failed",
-      "Could not allocate unique IDs for the generated state.",
-    );
+  if (!visiblePatch.ok) {
+    return {
+      error: error(
+        "id-allocation-failed",
+        "Could not allocate unique IDs for the generated state.",
+      ),
+    };
+  }
   const hiddenPatch = materializeHiddenPatch(
     proposal.hiddenPatch,
     ids,
     createId,
   );
-  if (!hiddenPatch.ok)
-    return error(
-      "id-allocation-failed",
-      "Could not allocate unique IDs for the generated state.",
-    );
+  if (!hiddenPatch.ok) {
+    return {
+      error: error(
+        "id-allocation-failed",
+        "Could not allocate unique IDs for the generated state.",
+      ),
+    };
+  }
   const provisionalFacts: ProvisionalFact[] = [];
   for (const fact of proposal.provisionalFacts) {
     const id = allocateId(ids, createId);
-    if (!id)
-      return error(
-        "id-allocation-failed",
-        "Could not allocate unique IDs for the generated state.",
-      );
-    provisionalFacts.push({ ...fact, id, introducedOnTurnId: meta.turnId });
+    if (!id) {
+      return {
+        error: error(
+          "id-allocation-failed",
+          "Could not allocate unique IDs for the generated state.",
+        ),
+      };
+    }
+    provisionalFacts.push({ ...fact, id, introducedOnTurnId: turnId });
   }
-  const visible = applyVisiblePatch(session.visibleState, visiblePatch.value);
-  if (!visible.ok) return error("conflicting-patch", visible.errors);
-  const hidden = applyHiddenPatch(session.hiddenState, hiddenPatch.value);
-  if (!hidden.ok) return error("conflicting-patch", hidden.errors);
-  const revealed = new Set(proposal.revealSecretIds);
-  for (const secretId of revealed) {
-    const secret = hidden.value.secrets.find((entry) => entry.id === secretId);
-    if (!secret) return error("unknown-secret", `Unknown secret: ${secretId}`);
-    secret.status = "revealed";
-    secret.revealedOnTurnId = meta.turnId;
+  const visibleState = applyVisiblePatch(
+    session.visibleState,
+    visiblePatch.value,
+  );
+  if (!visibleState.ok) {
+    return { error: error("conflicting-patch", visibleState.errors) };
   }
+  const hiddenState = applyHiddenPatch(session.hiddenState, hiddenPatch.value);
+  if (!hiddenState.ok) {
+    return { error: error("conflicting-patch", hiddenState.errors) };
+  }
+  return {
+    visibleState: visibleState.value,
+    hiddenState: hiddenState.value,
+    provisionalFacts,
+    visiblePatch: visiblePatch.value,
+    hiddenPatch: hiddenPatch.value,
+  };
+}
+
+export function applyCompletedTurn(
+  sessionInput: AdventureSession,
+  proposalInput: AdventureTurnProposal,
+  meta: CommitMetadata,
+  now = meta.now,
+  createId: IdFactory = () => systemIdGenerator.uuid(),
+): Result<AdventureSession, AdventureValidationError[]> {
+  // Scenario GM text must be registered so it can be guarded and revealed.
+  const session = ensureScenarioSecrets(sessionInput);
+  const inputError = completedTurnInputError(session, meta.inputId);
+  if (inputError) return inputError;
+  const proposal = parseTurnProposal(proposalInput);
+  if (proposal.kind !== "complete") {
+    return error(
+      "invalid-schema",
+      "A completed turn requires a complete proposal.",
+    );
+  }
+  const proposalError = completedTurnProposalError(session, proposal);
+  if (proposalError) return proposalError;
+  const materialized = materializeTurnState(
+    session,
+    proposal,
+    meta.turnId,
+    createId,
+  );
+  if ("error" in materialized) return materialized.error;
   const candidate = clone(session);
-  candidate.visibleState = visible.value;
-  candidate.hiddenState = hidden.value;
+  const revealError = applySecretReveals(
+    candidate,
+    materialized.hiddenState.secrets,
+    proposal.revealSecretIds,
+    meta.turnId,
+  );
+  if (revealError) return error("unknown-secret", revealError);
+  const time = applyTimeAdvance(session, proposal.timeAdvance, meta.turnId);
+  if (!time.ok) return error("invalid-transition", time.reason);
+  candidate.visibleState = materialized.visibleState;
+  candidate.hiddenState = materialized.hiddenState;
+  if (time.value) candidate.worldTime = time.value;
   candidate.provisionalFacts = [
     ...candidate.provisionalFacts,
-    ...provisionalFacts,
+    ...materialized.provisionalFacts,
   ];
   const turn: CommittedAdventureTurn = {
     id: meta.turnId,
@@ -311,15 +506,30 @@ export function applyCompletedTurn(
     inputId: meta.inputId,
     playerAction: meta.playerAction ?? "",
     narration: proposal.narration,
-    visiblePatch: visiblePatch.value,
-    hiddenPatch: hiddenPatch.value,
+    visiblePatch: materialized.visiblePatch,
+    hiddenPatch: materialized.hiddenPatch,
     revealedSecretIds: proposal.revealSecretIds,
     sourceRecordIds: proposal.sourceRecordIds,
-    provisionalFactIds: provisionalFacts.map((fact) => fact.id),
+    provisionalFactIds: materialized.provisionalFacts.map((fact) => fact.id),
     committedAt: now,
+    ...(proposal.timeAdvance
+      ? {
+          timeAdvance: {
+            minutes: proposal.timeAdvance.minutes,
+            cause: proposal.timeAdvance.cause,
+          },
+        }
+      : {}),
     suggestedActions: proposal.suggestedActions,
   };
   candidate.turns = [...candidate.turns, turn];
+  const scenarioError = markRevealedScenarios(
+    candidate,
+    proposal.revealScenarioIds,
+    turn,
+    createId,
+  );
+  if (scenarioError) return error("unknown-fact", scenarioError);
   candidate.revision += 1;
   candidate.updatedAt = now;
   candidate.lastPlayedAt = now;
@@ -346,6 +556,13 @@ export function applyRollRequest(
   const proposal = parseTurnProposal(proposalInput);
   if (proposal.kind !== "roll-required")
     return error("invalid-schema", "A roll is required.");
+  // Roll copy is shown to the player, so it gets the same secrecy guard.
+  if (detectHiddenLeakage(session, proposal).length > 0) {
+    return error(
+      "hidden-leakage",
+      "The response contains unrevealed GM information.",
+    );
+  }
   const candidate = clone(session);
   const pending: PendingRoll = {
     id: meta.turnId,
