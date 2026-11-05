@@ -10,6 +10,20 @@ export const howDoISaveMyPartyFromAnOverpoweredEncounter: AnswerConfigInput = {
     "Pause long enough to judge whether the fight is actually unwinnable, comparing what the enemies will do next with the progress the party can still make towards winning, escaping or ending the fight. Correct any rules mistake openly, and let the enemies act on goals they already have: guarding a place, finishing a ritual, taking a captive or protecting their own escape. Telegraph an opening, a negotiation or a retreat route the players can choose to use, and if the party still loses, give that defeat a consequence the campaign can continue from, such as capture, a lost relic or an unwanted bargain. If the numbers themselves are broken, say so briefly out of character and agree the fix with the table.",
   sections: [
     {
+      kind: "checklist",
+      heading: "At-the-table decision aid",
+      intro:
+        "Work through these in order and stop at the first step that changes your next action. You can pause for a transparent out-of-character discussion at any step, as soon as you spot a genuine preparation mistake or the table raises a concern.",
+      items: [
+        "Is this unwinnable? Compare the enemies' next turns with the progress the party can still make.",
+        "Was there a rules error? Correct it openly and restate the result.",
+        "What goal does each enemy already have? Show it through position, target or an action not spent attacking.",
+        "What opening, negotiation or retreat can you telegraph, at what visible cost? Let the players choose.",
+        "Put any GM-controlled ally on one supporting task and keep the decisive action with a player character.",
+        "If the party loses, apply the consequence that follows from the enemy goal and the agreed stakes.",
+      ],
+    },
+    {
       kind: "prose",
       heading: "Triage before you intervene",
       paragraphs: [
@@ -37,7 +51,7 @@ export const howDoISaveMyPartyFromAnOverpoweredEncounter: AnswerConfigInput = {
         },
         {
           term: "Enemy output, honestly counted",
-          text: "Count attacks or area abilities that can actually reach a target from current positions, not every attack printed on the stat blocks. Note whether last round's damage was typical or a spike: a critical hit doubles dice, so compare the ordinary damage range with what was rolled before treating the spike as the new normal.",
+          text: "Count attacks or area abilities that can actually reach a target from current positions, not every attack printed on the stat blocks. Note whether last round's damage was typical or a spike: check your system's critical-hit rule before treating a high roll as the new normal. In 2014 D&D, for example, a critical hit rolls all the attack's damage dice twice, so compare the ordinary damage range with what was rolled.",
         },
         {
           term: "Player experience and decision load",
@@ -50,7 +64,7 @@ export const howDoISaveMyPartyFromAnOverpoweredEncounter: AnswerConfigInput = {
       heading: "Correct actual mistakes first",
       paragraphs: [
         "Before changing the fiction, check the arithmetic and the rules you have already used. Re-read the enemy attacks, damage, resistances and vulnerabilities, saving throws, concentration requirements, conditions and how many actions each enemy actually gets. Confirm you applied character resistances, cover and disadvantage or advantage correctly, and that nobody has been charged twice for the same bonus. A surprising number of lethal rounds contain one ordinary error: an extra attack, a missed resistance, a condition that should have ended, or damage dice rolled one size too large.",
-        "If you find a mistake that matters, correct it openly and briefly. Say what was wrong, restate the corrected result, and play on. For example: that attack should have dealt half damage against resistance, so the character regains the difference. A transparent correction costs ten seconds. A covert adjustment that players later piece together costs trust in every future roll, and it teaches you nothing about whether the encounter itself was fair.",
+        "If you find a mistake that matters, correct it openly and briefly. Say what was wrong, restate the corrected result, and play on. For example: that attack should have dealt half damage against resistance, so the character regains the difference.",
       ],
     },
     {
@@ -94,7 +108,7 @@ export const howDoISaveMyPartyFromAnOverpoweredEncounter: AnswerConfigInput = {
       kind: "prose",
       heading: "Make retreat and surrender real options",
       paragraphs: [
-        "Many parties die standing still because retreat was never described as available, or because an earlier scene implied the only honourable choice was to fight on. If an exit exists, describe it, its cost and what threatens it: the corridor is open but the faster enemy will get one parting attack, the door can be barred behind them at the price of the treasure room, or the enemies will let them leave without the relic they came for. Costs make retreat a decision rather than a failure screen.",
+        "Many parties die standing still because retreat was never described as available, or because an earlier scene implied the only honourable choice was to fight on. If an exit exists, describe it, its cost and what threatens it: the corridor is open but leaving an enemy's reach may provoke a reaction attack unless a character uses whatever safe-withdrawal action your system provides, the door can be barred behind them at the price of the treasure room, or the enemies will let them leave without the relic they came for. Mention speed separately, as a pursuit concern once the party is clear, rather than as the reason a parting attack happens. Costs make retreat a decision rather than a failure screen.",
         "Do not retroactively block the exit once the party chooses it, invent a pursuer who cannot be escaped, or require a string of successes the fiction never signalled. Run pursuit, surrender or capture by the same goals you established for the enemies. If the villains wanted the party gone, they let them go and take the consequences of that choice into the next session. If surrender was offered, honour its terms or show the betrayal as the villain's decision with consequences the party can respond to later.",
       ],
     },
@@ -125,28 +139,28 @@ export const howDoISaveMyPartyFromAnOverpoweredEncounter: AnswerConfigInput = {
       rows: [
         [
           "Enemy changes behaviour",
-          "Follows a goal, order or fear already established, with a visible trigger",
-          "Enemy becomes careless or merciful at the exact moment the party needs help",
+          "Established goal, visible trigger",
+          "Sudden mercy when help is needed",
         ],
         [
           "New opening appears",
-          "Follows from the room, prior description or an enemy action, and players choose whether to use it",
-          "A rescuer, weakness or escape route appears with no prior basis and settles the fight",
+          "From the room as described; players choose",
+          "Unforeshadowed rescuer settles the fight",
         ],
         [
           "Rules mistake found",
-          "Corrected openly, with the corrected result restated",
-          "Dice or hit points quietly changed so the mistake cannot be seen",
+          "Corrected openly, result restated",
+          "Dice or hit points quietly changed",
         ],
         [
           "Party retreats or bargains",
-          "Costs and risks stated, choice honoured, consequences carried forward",
-          "Exit blocked after the party chooses it, or surrender terms imposed without a real refusal option",
+          "Costs stated, choice honoured",
+          "Exit blocked, or terms forced",
         ],
         [
           "Party loses",
-          "Loses something specific that follows from enemy goals and agreed stakes",
-          "Party survives unchanged because the GM decided death was not allowed",
+          "Specific loss, carried forward",
+          "Survives unchanged; death ruled out",
         ],
       ],
     },
@@ -156,7 +170,7 @@ export const howDoISaveMyPartyFromAnOverpoweredEncounter: AnswerConfigInput = {
       paragraphs: [
         "A new GM runs a short haunted manor adventure for three level 7 player characters in Dungeons and Dragons (D&D), a barbarian, a paladin and a druid, helped by a level 8 wizard the GM controls. They face a Dirge Master and an elf vampire whose full third-party stat blocks the GM has to hand. After one hit each, several characters are at roughly half HP. The players are inexperienced and taking a long time over each turn. This example uses the 2014 D&D rules and does not assume the vampire's Challenge Rating, HP total or weaknesses, because the outcome depends on the actual stat blocks and the party's remaining resources, not on the creature's name.",
         "Three facts are established before the branches diverge. The paladin attuned to the Sun Blade's hilt during a short rest earlier in the manor and set the hilt on a side table to examine a lock just before the fight, so the hilt in the room is already attuned to the paladin. The wizard carries the party's one potion of healing. The adventure has also established that the vampire wants intruders taken alive so it can question them about who sent them into the manor and who else knows where its resting place lies, and the Dirge Master follows that order.",
-        "Triage first. The GM checks what last round actually showed: whether those hits were critical hits or ordinary attacks, how much healing the druid and paladin still hold, who acts before each enemy, and what progress the party can still make. Half HP with healing unused and a reachable objective, exit or target is frightening. Half HP with healing spent, characters likely to fall before they can act, and no route to affect an enemy or leave is a different case. The branches below start from the second case, or from where the players' own choices take the fight.",
+        "Applied to this party, the check comes down to facts already on the table: the potion has not been used, the hilt is attuned and within reach on the side table, and the take-alive order gives the party a route besides damage to test. The branches below follow from those facts and from where the players' own choices take the fight.",
       ],
       items: [
         {
@@ -165,26 +179,12 @@ export const howDoISaveMyPartyFromAnOverpoweredEncounter: AnswerConfigInput = {
         },
         {
           term: "They escape or negotiate: the villains want living prisoners",
-          text: "Early in the fight, before anyone has fallen, the vampire states the established order aloud where the party can hear it: take them alive, because dead intruders cannot say who sent them. The Dirge Master moves to cover the door rather than pursuing the most wounded character, which shows the party both the intention and the obstacle. The vampire then offers terms from strength: drop your weapons, submit to questioning, and then leave the manor and do not return. If the party accepts, hold the vampire to those terms: the party is disarmed, questioned and then released from the manor as promised, losing their weapons and their errand for now, with no escape to plan afterwards. The party can instead bargain for better terms, or refuse and try to force past the Dirge Master to the corridor, knowing the faster enemy may get a parting attack and that refusal returns the fight to the victory branch at its current cost. The wizard can name the exit and that cost clearly, but the choice belongs to the players.",
+          text: "Early in the fight, before anyone has fallen, the vampire states the established order aloud where the party can hear it: take them alive, because dead intruders cannot say who sent them. The Dirge Master moves to cover the door rather than pursuing the most wounded character, which shows the party both the intention and the obstacle. The vampire then offers terms from strength: drop your weapons, submit to questioning, and then leave the manor and do not return. If the party accepts, hold the vampire to those terms: the party is disarmed, questioned and then released from the manor as promised, losing their weapons and their errand for now, with no escape to plan afterwards. The party can instead bargain for better terms, or refuse and try to force past the Dirge Master to the corridor. Under the 2014 rules, a character who leaves the Dirge Master's reach without first taking the Disengage action may provoke an opportunity attack if that enemy still has its reaction; taking the Disengage action prevents that attack but uses the character's action for the turn. Speed matters only afterwards, for whether the enemy can keep up in a pursuit. Refusal also returns the fight to the victory branch at its current cost. The wizard can name the exit and that cost clearly, but the choice belongs to the players.",
         },
         {
           term: "They lose, and the story continues",
           text: "This branch is for a party that refuses the offered terms, or never accepts them, and fights on: being knocked out is a different outcome from surrender under that bargain, and capture is not guaranteed. Under the 2014 rules, a melee attack, including a melee spell attack, can knock a creature unconscious and stable when it reduces them to 0 HP. Other damage normally leaves a surviving character unconscious, with death saves starting on their turn; check instant death and any specific creature effect first. So enemies acting on the take-alive order must use a qualifying melee attack and choose to knock out if they want a stable prisoner; otherwise survival depends on death saves, help from an ally or timely stabilisation. A character who has already died remains dead unless the table openly agrees to change that result. Only survivors forcibly captured in this way wake bound and awaiting questioning, with the wizard captured alongside them sharing the setback rather than freeing everyone alone, and confinement and an escape to plan. If you intend the vampire to break a promised release instead, present that as the vampire's betrayal and give the party a way to respond to it, rather than treating confinement as the bargain's normal ending. The GM checks this outcome against what the table has agreed about capture before using it, and states the consequence plainly rather than revealing that death was never possible.",
         },
-      ],
-    },
-    {
-      kind: "checklist",
-      heading: "At-the-table decision aid",
-      intro:
-        "Work through the questions in order, and stop at the first one that changes your next action. A transparent out-of-character discussion is available at any point in this sequence, as soon as you recognise a genuine preparation mistake or the table raises a concern, not only after every other option has failed.",
-      items: [
-        "Compare what the enemies will plausibly do next with the progress the party can still make towards winning, controlling an enemy, reaching an exit or forcing terms. No plausible progress route, likely falls before characters can act, or spent healing are warning signs to intervene. Mere endurance is not progress.",
-        "Re-check the stat blocks, damage, resistances, concentration and conditions. Correct any real mistake openly in one sentence and restate the result.",
-        "Name one goal each enemy already has, and show it through position, target choice or an action spent on that goal rather than on attacking.",
-        "Telegraph one opening, negotiation or retreat route with its visible cost, including any overlooked equipment described again in place. Let the players choose whether and how to use it.",
-        "Put any GM-controlled ally on one supporting task on that ally's turn: heal, hold, identify or delay. Keep the decisive action with a player character.",
-        "If the party loses, apply the consequence that follows from the enemy goal and the table's agreed stakes, and do not reverse a death that has already occurred without the table's open agreement.",
       ],
     },
     {
