@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const env = vi.hoisted(() => ({
   openIntentGeneratorWorkflow: vi.fn(),
+  vaultReady: true,
   openActive: vi.fn(async () => false),
   setWorldEntryRumourGenerator: vi.fn((callback: unknown) => {
     env.worldEntryRumourGenerator = callback;
@@ -30,6 +31,9 @@ const env = vi.hoisted(() => ({
 vi.mock("#lib/stores/oracle.svelte.js", () => ({
   oracle: {
     vault: {
+      get isInitialized() {
+        return env.vaultReady;
+      },
       activeVaultId: "vault-1",
       entities: {},
       allEntities: [],
@@ -92,6 +96,7 @@ import AdventureSurface from "./AdventureSurface.svelte";
 beforeEach(() => {
   env.openIntentGeneratorWorkflow.mockClear();
   env.openActive.mockClear();
+  env.vaultReady = true;
   env.setWorldEntryRumourGenerator.mockClear();
   env.worldEntryRumourGenerator = null;
   env.list.mockClear();
@@ -121,6 +126,14 @@ describe("AdventureSurface entry", () => {
     expect(env.openIntentGeneratorWorkflow).toHaveBeenCalledTimes(1);
     expect(env.openIntentGeneratorWorkflow).toHaveBeenCalledWith("rumour");
     expect(env.openActive).toHaveBeenCalledWith("vault-1");
+  });
+
+  it("does not look for an active adventure until the Vault has loaded", () => {
+    env.vaultReady = false;
+    render(AdventureSurface);
+    expect(env.openActive).not.toHaveBeenCalled();
+    expect(screen.getByText("Checking for an active adventure…")).toBeTruthy();
+    expect(screen.queryByTestId("adventure-entry-choices")).toBeNull();
   });
 
   it("opens the manual form and preserves its draft when choosing another approach", async () => {

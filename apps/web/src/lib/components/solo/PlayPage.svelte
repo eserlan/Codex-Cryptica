@@ -32,6 +32,8 @@
     let cancelled = false;
     activeAdventure = null;
     if (!vaultId || isGuest || discoveryPolicyStore.aiDisabled) return;
+    // The storage handle only exists once the Vault has finished loading.
+    if (!vault.isInitialized) return;
     void Promise.resolve()
       .then(() => {
         configureAdventureRepository(vault);

@@ -359,8 +359,13 @@
 
   $effect(() => {
     const currentVaultId = vaultId;
+    // On a reload the Vault's storage handle does not exist until it has
+    // finished initialising; an earlier lookup reports "no adventures" and the
+    // start screen would win. Wait, then this effect re-runs.
+    const vaultReady = oracle.vault.isInitialized;
     const request = ++activeRestoreRequest;
     restoringActiveAdventure = true;
+    if (!vaultReady) return;
     void oracle.adventure
       .openActive(currentVaultId)
       .catch((error) => {
