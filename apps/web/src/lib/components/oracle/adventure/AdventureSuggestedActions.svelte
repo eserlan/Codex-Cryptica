@@ -20,7 +20,7 @@
        disclosure below so the free-action composer stays reachable. -->
   <div
     class={visible
-      ? "flex max-h-36 flex-wrap gap-2 overflow-y-auto overscroll-contain pb-2"
+      ? "flex max-h-36 flex-wrap justify-center gap-2 overflow-y-auto overscroll-contain pb-2"
       : "hidden"}
     role="group"
     aria-label="Suggested actions"

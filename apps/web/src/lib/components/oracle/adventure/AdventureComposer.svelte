@@ -83,7 +83,9 @@
   <!-- Only optional controls scroll. Never put the textarea/Send row in this
        container: it must remain fixed at the bottom when the keyboard opens. -->
   <div
-    class="mx-auto min-h-0 w-full max-w-3xl overflow-y-auto"
+    class={suggestionChips
+      ? "mx-auto min-h-0 w-full max-w-6xl overflow-y-auto"
+      : "mx-auto min-h-0 w-full max-w-3xl overflow-y-auto"}
     data-testid="adventure-dock-extras"
   >
     {#if manager.readOnly && manager.session?.status === "active"}

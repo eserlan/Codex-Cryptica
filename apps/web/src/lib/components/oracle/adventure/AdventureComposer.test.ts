@@ -280,6 +280,18 @@ describe("AdventureComposer layout and chips", () => {
     }
   });
 
+  it("lets chips use the wider dock while the input stays on the story column", () => {
+    const m = manager("ready");
+    m.suggestedActions = ["Ask the innkeeper"];
+    render(AdventureComposer, { props: { manager: m, suggestionChips: true } });
+    expect(screen.getByTestId("adventure-dock-extras").className).toContain(
+      "max-w-6xl",
+    );
+    expect(
+      screen.getByTestId("adventure-free-action").closest("form")!.className,
+    ).toContain("max-w-3xl");
+  });
+
   describe("suggestion chips", () => {
     it("shows every suggestion as a visible chip, not a collapsed list", async () => {
       const m = manager("ready");
