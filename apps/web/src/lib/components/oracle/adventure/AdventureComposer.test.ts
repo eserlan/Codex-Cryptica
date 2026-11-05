@@ -266,3 +266,84 @@ it("offers opening recovery after reload even without a stored error", () => {
       .disabled,
   ).toBe(true);
 });
+
+describe("AdventureComposer layout and chips", () => {
+  it("aligns the composer with the story column", () => {
+    const m = manager("ready");
+    m.suggestedActions = ["Ask the innkeeper"];
+    render(AdventureComposer, { props: { manager: m } });
+    const extras = screen.getByTestId("adventure-dock-extras");
+    const form = screen.getByTestId("adventure-free-action").closest("form")!;
+    for (const el of [extras, form]) {
+      expect(el.className).toContain("max-w-3xl");
+      expect(el.className).toContain("mx-auto");
+    }
+  });
+
+  it("lets chips use the wider dock while the input stays on the story column", () => {
+    const m = manager("ready");
+    m.suggestedActions = ["Ask the innkeeper"];
+    render(AdventureComposer, { props: { manager: m, suggestionChips: true } });
+    expect(screen.getByTestId("adventure-dock-extras").className).toContain(
+      "max-w-6xl",
+    );
+    expect(
+      screen.getByTestId("adventure-free-action").closest("form")!.className,
+    ).toContain("max-w-3xl");
+  });
+
+  describe("suggestion chips", () => {
+    it("shows every suggestion as a visible chip, not a collapsed list", async () => {
+      const m = manager("ready");
+      m.suggestedActions = ["Search the wreckage", "Call out to the ferryman"];
+      render(AdventureComposer, {
+        props: { manager: m, suggestionChips: true },
+      });
+      const group = screen.getByTestId("adventure-suggested-actions");
+      expect(group.tagName).toBe("DIV");
+      expect(group.querySelector("summary")).toBeNull();
+      expect(group.className).not.toContain("hidden");
+      await fireEvent.click(
+        screen.getByRole("button", { name: "Call out to the ferryman" }),
+      );
+      expect(m.submitSuggestedAction).toHaveBeenCalledWith(
+        "Call out to the ferryman",
+      );
+    });
+
+    it("keeps the collapsed list on phones and for the default", () => {
+      const m = manager("ready");
+      m.suggestedActions = ["Search the wreckage"];
+      render(AdventureComposer, { props: { manager: m, phone: true } });
+      expect(screen.getByTestId("adventure-suggested-actions").tagName).toBe(
+        "DETAILS",
+      );
+    });
+
+    it("disables chips when read-only and hides them while a roll is pending", () => {
+      const readOnly = manager("ready");
+      readOnly.readOnly = true;
+      readOnly.suggestedActions = ["Search the wreckage"];
+      const { unmount } = render(AdventureComposer, {
+        props: { manager: readOnly, suggestionChips: true },
+      });
+      expect(
+        (
+          screen.getByRole("button", {
+            name: "Search the wreckage",
+          }) as HTMLButtonElement
+        ).disabled,
+      ).toBe(true);
+      unmount();
+
+      const rolling = manager("awaiting-roll");
+      rolling.suggestedActions = ["Search the wreckage"];
+      render(AdventureComposer, {
+        props: { manager: rolling, suggestionChips: true },
+      });
+      expect(screen.getByTestId("adventure-suggested-actions").className).toBe(
+        "hidden",
+      );
+    });
+  });
+});

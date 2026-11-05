@@ -41,7 +41,7 @@ const unheard = {
 };
 
 describe("AdventureScenarioControls", () => {
-  it("shows only heard leads and exposes focus, clear, resolve and abandon controls", async () => {
+  it("shows only heard leads and exposes focus and clear, but no status buttons", async () => {
     const m = manager([heard, resolved, unheard], "known-1");
     render(AdventureScenarioControls, { props: { manager: m } });
     const focus = screen.getByRole("combobox", {
@@ -53,18 +53,19 @@ describe("AdventureScenarioControls", () => {
       name: "Known situation details",
     });
     expect(details.textContent).toContain("A sealed letter");
-    expect(details.textContent).toContain("resolved");
+    expect(details.textContent).toContain("Resolved");
     expect(details.textContent).toContain("The letter was delivered.");
     expect(details.textContent).not.toContain("Secret rumour");
     await fireEvent.change(focus, { target: { value: "" } });
     expect(m.focusScenario).toHaveBeenCalledWith(null);
-    await fireEvent.click(screen.getByRole("button", { name: "Resolve" }));
-    expect(m.setScenarioStatus).toHaveBeenCalledWith("known-1", "resolved");
-    await fireEvent.click(screen.getByRole("button", { name: "Abandon" }));
-    expect(m.setScenarioStatus).toHaveBeenCalledWith("known-1", "abandoned");
+    // Closing a lead is a deliberate act in Adventure tools, not a main-row click.
+    for (const name of ["Resolve", "Abandon", "Reopen"]) {
+      expect(screen.queryByRole("button", { name })).toBeNull();
+    }
+    expect(m.setScenarioStatus).not.toHaveBeenCalled();
   });
 
-  it("does not expose unheard counts and disables mutations while a roll is pending", () => {
+  it("does not expose unheard counts and disables focus while a roll is pending", () => {
     const m = manager([unheard], null);
     const { container } = render(AdventureScenarioControls, {
       props: { manager: m },
@@ -78,9 +79,6 @@ describe("AdventureScenarioControls", () => {
       screen
         .getByRole("combobox", { name: "Focused situation" })
         .hasAttribute("disabled"),
-    ).toBe(true);
-    expect(
-      screen.getByRole("button", { name: "Resolve" }).hasAttribute("disabled"),
     ).toBe(true);
   });
 
@@ -98,5 +96,42 @@ describe("AdventureScenarioControls", () => {
     expect(screen.getByRole("alert").textContent).not.toContain(
       "state-budget-exceeded",
     );
+  });
+
+  it("labels each lead with a plain-language status badge and quotes the rumour", () => {
+    const abandoned = {
+      ...heard,
+      id: "known-3",
+      status: "abandoned",
+      playerVisible: { rumour: "A drowned bell", lead: "The quay" },
+    };
+    const m = manager([heard, resolved, abandoned], null);
+    render(AdventureScenarioControls, { props: { manager: m } });
+    const details = screen.getByRole("list", {
+      name: "Known situation details",
+    });
+    const cards = details.querySelectorAll(":scope > li");
+    expect(cards).toHaveLength(3);
+    expect(cards[0].textContent).toContain("Open");
+    expect(cards[1].textContent).toContain("Resolved");
+    expect(cards[2].textContent).toContain("Left behind");
+    expect(cards[0].querySelector("blockquote")?.textContent).toContain(
+      "The mill bell rang",
+    );
+    // Only resolved lead has player events; open one renders no empty list.
+    expect(cards[0].querySelector("ul")).toBeNull();
+    expect(cards[1].querySelector("ul")?.textContent).toContain(
+      "The letter was delivered.",
+    );
+  });
+
+  it("falls back to the open badge for an unknown status", () => {
+    const odd = { ...heard, status: "mystery" };
+    render(AdventureScenarioControls, {
+      props: { manager: manager([odd], null) },
+    });
+    expect(
+      screen.getByRole("list", { name: "Known situation details" }).textContent,
+    ).toContain("Open");
   });
 });

@@ -9,6 +9,12 @@ import type { AdventureSession } from "@codex/adventure-engine";
 import type { AdventureManagerDependencies } from "./adventure-dependencies";
 import type { AdventureState } from "./adventure-state.svelte";
 
+const STATUS_EVENT_TEXT: Record<ScenarioStatus, string> = {
+  open: "The player reopened this situation.",
+  resolved: "The player marked this situation resolved.",
+  abandoned: "The player chose to leave this situation behind.",
+};
+
 /** Local, AI-independent scenario commands using the Adventure lease/save boundary. */
 export class AdventureScenarios {
   constructor(
@@ -45,10 +51,7 @@ export class AdventureScenarios {
           id: this.deps.idGenerator(),
           kind: "status-change",
           visibility: "player",
-          text:
-            status === "resolved"
-              ? "The player marked this situation resolved."
-              : "The player chose to leave this situation behind.",
+          text: STATUS_EVENT_TEXT[status],
           at: this.deps.now(),
         },
         this.deps.now(),

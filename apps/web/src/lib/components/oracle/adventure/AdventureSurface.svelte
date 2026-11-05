@@ -27,6 +27,7 @@
   import { createCampaignGeneratorService } from "#lib/components/generators/campaign-generator-service.js";
   import { adventureContextService } from "#lib/services/adventure/adventure-context-service.js";
   import { adventureSessionRepository } from "#lib/services/adventure/adventure-session-repository.js";
+  import { configureAdventureRepository } from "#lib/services/adventure/configure-adventure-repository.js";
   import { createAdventureEntityDraft } from "#lib/services/adventure/adventure-provisional-fact-creator.js";
   import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
   import type { ProvisionalFact } from "@codex/adventure-engine";
@@ -246,11 +247,7 @@
   let existingEntityTitles = $derived(
     oracle.vault.allEntities.map((entity) => entity.title),
   );
-  adventureSessionRepository.setRootResolver(async (id) => {
-    const handle = await oracle.vault.getSpecificVaultHandle(id);
-    if (!handle) throw new Error("vault-not-open");
-    return handle;
-  });
+  configureAdventureRepository(oracle.vault);
   // Standard AI/Vault-grounded Rumour Generator, without the player-facing
   // review modal or a Vault write. Its existing local fallback remains usable.
   const rumourPolicy = () => ({

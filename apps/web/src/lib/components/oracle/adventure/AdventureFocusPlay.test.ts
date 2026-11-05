@@ -346,6 +346,43 @@ describe("AdventureFocusPlay", () => {
     expect(m.close).toHaveBeenCalledOnce();
   });
 
+  it("lists situation controls in Adventure tools, not the main window", async () => {
+    const m = manager();
+    m.session.scenarioCollection = {
+      focusedScenarioId: null,
+      items: [
+        {
+          id: "lead-1",
+          knowledge: "heard",
+          status: "open",
+          playerVisible: { rumour: "A drowned bell", lead: "The quay" },
+          events: [],
+        },
+      ],
+    };
+    render(AdventureFocusPlay, { props: props({ manager: m }) });
+    expect(screen.queryByTestId("adventure-situation-settings")).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Mark as concluded" }),
+    ).toBeNull();
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Adventure tools" }),
+    );
+    expect(screen.getByTestId("adventure-situation-settings")).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Mark as concluded" }),
+    ).toBeTruthy();
+  });
+
+  it("shows suggested actions as chips above phone width", () => {
+    const m = manager();
+    m.suggestedActions = ["Search the wreckage"];
+    render(AdventureFocusPlay, { props: props({ manager: m }) });
+    const suggestions = screen.getByTestId("adventure-suggested-actions");
+    expect(suggestions.tagName).toBe("DIV");
+    expect(suggestions.querySelector("summary")).toBeNull();
+  });
+
   describe("at phone width", () => {
     let viewport: EventTarget & { height: number; offsetTop: number };
     const originalMatchMedia = window.matchMedia;
@@ -378,6 +415,15 @@ describe("AdventureFocusPlay", () => {
       } else {
         Reflect.deleteProperty(window, "visualViewport");
       }
+    });
+
+    it("keeps suggested actions in the collapsed list", () => {
+      const m = manager();
+      m.suggestedActions = ["Search the wreckage"];
+      render(AdventureFocusPlay, { props: props({ manager: m }) });
+      expect(screen.getByTestId("adventure-suggested-actions").tagName).toBe(
+        "DETAILS",
+      );
     });
 
     it("renders as a modal dialog outside any transformed host and takes focus", async () => {
