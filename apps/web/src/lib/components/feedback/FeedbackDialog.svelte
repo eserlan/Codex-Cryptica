@@ -45,6 +45,7 @@
   labelledBy="feedback-title"
   describedBy="feedback-intro"
   maxWidthClass="max-w-md"
+  zIndexClass="z-[300]"
   class="rounded-lg border border-theme-border bg-theme-surface p-5 text-theme-text"
 >
   <div class="flex flex-col gap-4" aria-busy={sending}>

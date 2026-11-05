@@ -188,4 +188,10 @@ describe("FeedbackDialog", () => {
     unmount();
     opener.remove();
   });
+
+  it("renders with a high z-index overlay class to sit above application and generator modals", () => {
+    const { container } = openDialog(makeStore());
+    const fixedOverlay = container.querySelector(".fixed.inset-0.z-\\[300\\]");
+    expect(fixedOverlay).toBeTruthy();
+  });
 });
