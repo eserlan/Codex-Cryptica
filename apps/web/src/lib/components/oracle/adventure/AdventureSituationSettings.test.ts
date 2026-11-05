@@ -56,7 +56,10 @@ describe("AdventureSituationSettings", () => {
   it("renders Look for local rumours when no lead has been heard yet, but no situation items", async () => {
     const onAction = vi.fn();
     const m = manager([lead("hidden", "open", "unheard")], {
-      submitAction: vi.fn(async () => {}),
+      phase: "ready",
+      submitAction: vi.fn(async () => {
+        m.phase = "generating";
+      }),
     });
     render(AdventureSituationSettings, {
       props: { manager: m, onAction },
@@ -73,6 +76,35 @@ describe("AdventureSituationSettings", () => {
       "Ask around for local rumours and news.",
     );
     expect(onAction).toHaveBeenCalled();
+  });
+
+  it("disables Look for local rumours when generating", () => {
+    const m = manager([lead("hidden", "open", "unheard")], {
+      phase: "generating",
+    });
+    render(AdventureSituationSettings, {
+      props: { manager: m },
+    });
+    const lookBtn = screen.getByRole("button", {
+      name: "Look for local rumours",
+    }) as HTMLButtonElement;
+    expect(lookBtn.disabled).toBe(true);
+  });
+
+  it("does not call onAction if submitAction did not transition to generating", async () => {
+    const onAction = vi.fn();
+    const m = manager([lead("hidden", "open", "unheard")], {
+      phase: "ready",
+      submitAction: vi.fn(async () => {}),
+    });
+    render(AdventureSituationSettings, {
+      props: { manager: m, onAction },
+    });
+    const lookBtn = screen.getByRole("button", {
+      name: "Look for local rumours",
+    });
+    await fireEvent.click(lookBtn);
+    expect(onAction).not.toHaveBeenCalled();
   });
 
   it("renders nothing when there is no active session", () => {

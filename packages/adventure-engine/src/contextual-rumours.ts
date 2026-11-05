@@ -89,6 +89,9 @@ export function needsContextualRumours(
   if (!loc || !loc.name.trim()) return false;
 
   const items = session.scenarioCollection?.items ?? [];
+  const heardCount = items.filter((item) => item.knowledge === "heard").length;
+  if (heardCount >= MAX_SCENARIO_COLLECTION_ITEMS) return false;
+
   // If there are already unheard candidate rumours for this location, we don't need more
   const hasUnheardForLocation = items.some(
     (item) =>
@@ -150,4 +153,25 @@ export function pruneUnheardScenariosForNewBatch(
   }
 
   return result;
+}
+
+/**
+ * Validates that a scenario being revealed belongs to the session's current location,
+ * if the scenario is bound to a specific location.
+ * Returns an error string if mismatched, or null if valid.
+ */
+export function validateRevealedScenarioLocation(
+  candidate: AdventureSession,
+  scenario: ScenarioItem,
+): string | null {
+  const loc = currentLocationContext(candidate);
+  const isBound =
+    Boolean(scenario.origin.batchTitle?.startsWith("Rumours in ")) ||
+    Boolean(scenario.origin.sourceRecordId) ||
+    scenario.anchorRefs.length > 0;
+
+  if (loc && isBound && !matchesScenarioLocation(scenario, loc)) {
+    return `Scenario ${scenario.id} does not match active location ${loc.name}`;
+  }
+  return null;
 }
