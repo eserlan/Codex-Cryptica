@@ -20,10 +20,24 @@ const instance = vi.hoisted(() => ({
   },
 }));
 vi.mock("#lib/stores/solo-session-instance.js", () => instance);
+const adventures = vi.hoisted(() => ({
+  list: vi.fn(),
+  setRootResolver: vi.fn(),
+}));
+vi.mock("#lib/services/adventure/adventure-session-repository.js", () => ({
+  adventureSessionRepository: adventures,
+}));
+
+const configure = vi.hoisted(() => ({ configureAdventureRepository: vi.fn() }));
+vi.mock(
+  "#lib/services/adventure/configure-adventure-repository.js",
+  () => configure,
+);
 
 import PlayPage from "./PlayPage.svelte";
 import { discoveryPolicyStore } from "#lib/stores/ui/discovery-policy.svelte.js";
 import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
+import { vault } from "#lib/stores/vault.svelte.js";
 
 beforeEach(() => {
   instance.soloSessionStore.isActive = false;
@@ -32,6 +46,9 @@ beforeEach(() => {
   instance.soloPlayGuard.soloStartBlockedReason.mockReturnValue(null);
   discoveryPolicyStore.aiDisabled = false;
   sessionModeStore.isGuestMode = false;
+  vi.spyOn(vault, "activeVaultId", "get").mockReturnValue("vault-1");
+  adventures.list.mockReset();
+  adventures.list.mockResolvedValue({ effectiveActiveId: null, entries: [] });
 });
 
 describe("PlayPage", () => {
@@ -102,5 +119,72 @@ describe("PlayPage", () => {
     sessionModeStore.isGuestMode = true;
     render(PlayPage);
     expect(screen.queryByTestId("solo-threads-menu")).toBeNull();
+  });
+
+  describe("with an Oracle adventure already in progress", () => {
+    const entry = (over: Record<string, unknown> = {}) => ({
+      id: "adv-1",
+      title: "Rumour 2: Nella",
+      status: "active",
+      updatedAt: "2026-11-05T10:00:00.000Z",
+      loadCondition: "normal",
+      ...over,
+    });
+
+    it("offers to resume it instead of presenting Adventure Mode as a fresh start", async () => {
+      adventures.list.mockResolvedValue({
+        effectiveActiveId: "adv-1",
+        entries: [entry()],
+      });
+      render(PlayPage);
+      const link = await screen.findByText("Resume your adventure");
+      expect(link).toBeTruthy();
+      const card = screen.getByTestId("play-adventure-mode");
+      expect(card.textContent).toContain("Rumour 2: Nella");
+      expect(card.textContent).not.toContain("Let the Oracle run the game");
+      expect(card.getAttribute("href")).toMatch(/\/adventure$/);
+      // The repository must be pointed at the open Vault before it is read.
+      expect(configure.configureAdventureRepository).toHaveBeenCalled();
+    });
+
+    it("keeps the normal Adventure Mode card when the only adventure is archived", async () => {
+      adventures.list.mockResolvedValue({
+        effectiveActiveId: null,
+        entries: [entry({ status: "archived" })],
+      });
+      render(PlayPage);
+      await vi.waitFor(() => expect(adventures.list).toHaveBeenCalled());
+      expect(screen.getByText("Let the Oracle run the game")).toBeTruthy();
+      expect(screen.queryByText("Resume your adventure")).toBeNull();
+    });
+
+    it("falls back to the normal card when the lookup fails", async () => {
+      adventures.list.mockRejectedValue(new Error("opfs unavailable"));
+      render(PlayPage);
+      await vi.waitFor(() => expect(adventures.list).toHaveBeenCalled());
+      expect(screen.getByText("Let the Oracle run the game")).toBeTruthy();
+    });
+
+    it("falls back to the normal card when the vault storage is not open", async () => {
+      configure.configureAdventureRepository.mockImplementationOnce(() => {
+        throw new Error("vault-not-open");
+      });
+      render(PlayPage);
+      await vi.waitFor(() =>
+        expect(configure.configureAdventureRepository).toHaveBeenCalled(),
+      );
+      expect(adventures.list).not.toHaveBeenCalled();
+      expect(screen.getByText("Let the Oracle run the game")).toBeTruthy();
+    });
+
+    it("does not look anything up when AI is off or in guest mode", () => {
+      discoveryPolicyStore.aiDisabled = true;
+      const { unmount } = render(PlayPage);
+      unmount();
+      discoveryPolicyStore.aiDisabled = false;
+      sessionModeStore.isGuestMode = true;
+      render(PlayPage);
+      expect(adventures.list).not.toHaveBeenCalled();
+    });
   });
 });

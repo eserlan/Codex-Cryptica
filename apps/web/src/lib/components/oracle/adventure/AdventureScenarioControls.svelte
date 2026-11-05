@@ -26,10 +26,6 @@
       busy = false;
     }
   }
-
-  function setStatus(id: string, status: "resolved" | "abandoned") {
-    return run(() => manager.setScenarioStatus(id, status));
-  }
 </script>
 
 {#if scenarios.length > 0}
@@ -40,6 +36,9 @@
   >
     <AdventureKnownSituations {scenarios} />
     <div class="flex flex-wrap items-center gap-2">
+      <span class="text-xs font-medium text-theme-text" aria-hidden="true"
+        >Focus</span
+      >
       <label for="known-scenario-focus" class="sr-only">Focused situation</label
       >
       <select
@@ -58,20 +57,6 @@
           <option value={item.id}>{item.playerVisible.lead}</option>
         {/each}
       </select>
-      {#if focusedId}
-        <button
-          type="button"
-          class="min-h-10 rounded-md border border-theme-border px-2 text-xs text-theme-text disabled:opacity-50"
-          disabled={busy || manager.readOnly || !!manager.session?.pendingRoll}
-          onclick={() => void setStatus(focusedId, "resolved")}>Resolve</button
-        >
-        <button
-          type="button"
-          class="min-h-10 rounded-md border border-theme-border px-2 text-xs text-theme-text disabled:opacity-50"
-          disabled={busy || manager.readOnly || !!manager.session?.pendingRoll}
-          onclick={() => void setStatus(focusedId, "abandoned")}>Abandon</button
-        >
-      {/if}
       {#if error}<span role="alert" class="text-xs text-theme-danger"
           >{error}</span
         >{/if}

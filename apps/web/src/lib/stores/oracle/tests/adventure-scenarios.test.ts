@@ -111,4 +111,26 @@ describe("AdventureScenarios workflow", () => {
     expect(state.session?.scenarioCollection?.items).toHaveLength(1);
     expect(state.session?.revision).toBe(1);
   });
+
+  it("closes then reopens a lead, recording each change for the player", async () => {
+    const { state, runtime } = createAdventureRuntime();
+    await runtime.scenarios.add(item("one"));
+    await runtime.scenarios.status("one", "resolved");
+    const reopened = await runtime.scenarios.status("one", "open");
+    const target = reopened.scenarioCollection?.items[0];
+    expect(target?.status).toBe("open");
+    expect(target?.events.map((event) => event.text)).toEqual([
+      "Resolved: The player marked this situation resolved.",
+      "Reopened: The player reopened this situation.",
+    ]);
+    expect(state.session).toEqual(reopened);
+  });
+
+  it("refuses to reopen a lead that is already open", async () => {
+    const { runtime } = createAdventureRuntime();
+    await runtime.scenarios.add(item("one"));
+    await expect(runtime.scenarios.status("one", "open")).rejects.toThrow(
+      "invalid-transition",
+    );
+  });
 });

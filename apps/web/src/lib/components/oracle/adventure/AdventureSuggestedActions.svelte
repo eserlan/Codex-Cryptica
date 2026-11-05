@@ -5,14 +5,39 @@
     manager,
     disabled,
     visible,
+    chips = false,
   }: {
     manager: AdventureManager;
     disabled: boolean;
     visible: boolean;
+    /** Show suggestions as always-visible chips instead of a collapsed list. */
+    chips?: boolean;
   } = $props();
 </script>
 
-{#if manager.suggestedActions.length > 0}
+{#if manager.suggestedActions.length > 0 && chips}
+  <!-- Roomy screens: show the options up front. Phones keep the compact
+       disclosure below so the free-action composer stays reachable. -->
+  <div
+    class={visible
+      ? "flex max-h-36 flex-wrap justify-center gap-2 overflow-y-auto overscroll-contain pb-2"
+      : "hidden"}
+    role="group"
+    aria-label="Suggested actions"
+    data-testid="adventure-suggested-actions"
+  >
+    {#each manager.suggestedActions as suggestion (suggestion)}
+      <button
+        class="min-h-10 max-w-full rounded-2xl border border-theme-border bg-theme-bg px-3 py-1.5 text-left text-sm leading-snug whitespace-normal text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary disabled:opacity-50"
+        type="button"
+        {disabled}
+        onclick={() => void manager.submitSuggestedAction(suggestion)}
+      >
+        {suggestion}
+      </button>
+    {/each}
+  </div>
+{:else if manager.suggestedActions.length > 0}
   <!-- Compact by default so the free-action composer stays reachable on phones.
        Native details/summary supports keyboard and screen-reader disclosure. -->
   <details

@@ -18,6 +18,7 @@
   import AdventureResourceCounters from "./AdventureResourceCounters.svelte";
   import AdventureRollHistory from "./AdventureRollHistory.svelte";
   import AdventureRollPrompt from "./AdventureRollPrompt.svelte";
+  import AdventureSituationSettings from "./AdventureSituationSettings.svelte";
   import AdventureStateSummary from "./AdventureStateSummary.svelte";
   import AdventureScenarioControls from "./AdventureScenarioControls.svelte";
   import {
@@ -168,6 +169,7 @@
 />
 
 {#snippet utilities()}
+  <AdventureSituationSettings {manager} />
   <AdventureCorrectionForm {manager} />
   <AdventureRollHistory {manager} />
   <AdventureResourceCounters {manager} />
@@ -290,7 +292,12 @@
 
   <!-- The composer stays outside the story scroll, visible above the keyboard
        and mobile safe area. Never remount it across generation/roll phases. -->
-  <AdventureComposer {manager} {phone} keyboardOpen={keyboard.keyboardOpen} />
+  <AdventureComposer
+    {manager}
+    {phone}
+    keyboardOpen={keyboard.keyboardOpen}
+    suggestionChips={!phone}
+  />
 
   <!-- A bottom sheet rather than a side-by-side aside: this surface is often
        hosted in the app's own (already-narrow) sidebar panel, where a lg:
