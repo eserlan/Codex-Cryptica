@@ -1,3 +1,5 @@
+import { WorldServiceImplementation } from "@codex/vault-engine";
+import { entityDb } from "#lib/utils/entity-db.js";
 import { vault } from "#lib/stores/vault.svelte.js";
 import { categories } from "#lib/stores/categories.svelte.js";
 import { themeStore } from "#lib/stores/theme.svelte.js";
@@ -45,6 +47,7 @@ export function collectSourceConnections(
 }
 
 const defaultDeps = {
+  worldService: new WorldServiceImplementation({ db: entityDb }),
   vault,
   categories,
   themeStore,
@@ -161,6 +164,7 @@ export class CampaignGeneratorRequestBuilder {
     sourceEntityId: string | null,
   ): Promise<GeneratorVaultContext> {
     const { vault, categories } = this.deps;
+    const requestVaultId = vault.activeVaultId;
     const sourceEntity = sourceEntityId
       ? vault.entities[sourceEntityId]
       : undefined;
@@ -197,7 +201,7 @@ export class CampaignGeneratorRequestBuilder {
       targetEntityType,
     );
 
-    return buildVaultContext({
+    const contextOptions = {
       ...this.themeContext(),
       currentDate,
       sourceEntity,
@@ -213,7 +217,85 @@ export class CampaignGeneratorRequestBuilder {
       relevantIds,
       primaryLanguageId: req.primaryLanguageId,
       cultureNaming,
+    };
+    if (req.generatorId !== "rumour") return buildVaultContext(contextOptions);
+    return this.hydrateRumourContext(
+      contextOptions,
+      sourceEntityId,
+      requestVaultId,
+    );
+  }
+
+  private async hydrateRumourContext(
+    contextOptions: Parameters<typeof buildVaultContext>[0],
+    sourceEntityId: string | null,
+    requestVaultId: string | null,
+  ): Promise<GeneratorVaultContext> {
+    const { vault } = this.deps;
+    const context = buildVaultContext(contextOptions);
+    const assertCurrentWorld = () => {
+      if (vault.activeVaultId !== requestVaultId)
+        throw new Error(
+          "World changed during rumour preparation. Please retry.",
+        );
+    };
+    assertCurrentWorld();
+    // The index can contain only metadata. Hydrate exactly the bounded records
+    // chosen for this request, then rebuild their excerpts from loaded lore.
+    const ids = new Set([
+      ...(context.sourceEntity ? [context.sourceEntity.id] : []),
+      ...context.neighbors.map((record) => record.id),
+      ...context.worldSample.map((record) => record.id),
+    ]);
+    await Promise.all([...ids].map((id) => vault.loadEntityContent(id)));
+    assertCurrentWorld();
+    const hydrated = buildVaultContext({
+      ...contextOptions,
+      allEntities: vault.entities,
+      sourceEntity: sourceEntityId ? vault.entities[sourceEntityId] : undefined,
     });
+    return this.withWelcomeFallback(hydrated, assertCurrentWorld);
+  }
+
+  private async withWelcomeFallback(
+    hydrated: GeneratorVaultContext,
+    assertCurrentWorld: () => void,
+  ): Promise<GeneratorVaultContext> {
+    const { vault } = this.deps;
+    const hasWorldText = [
+      hydrated.sourceEntity,
+      ...hydrated.neighbors,
+      ...hydrated.worldSample,
+    ].some(
+      (record) => record?.contentExcerpt?.trim() || record?.loreExcerpt?.trim(),
+    );
+    if (hasWorldText || !vault.activeVaultId) return hydrated;
+    const vaultId = vault.activeVaultId;
+    const [metadata, page] = await Promise.all([
+      this.deps.worldService.getMetadata(vaultId),
+      this.deps.worldService.getFrontPageEntity(vaultId),
+    ]);
+    assertCurrentWorld();
+    const overview = [metadata.description, page?.chronicle || page?.content]
+      .filter(Boolean)
+      .join("\n\n")
+      .trim()
+      .slice(0, 4000);
+    if (!overview) return hydrated;
+    return {
+      ...hydrated,
+      worldSample: [
+        {
+          id: page?.id ?? vaultId,
+          title: metadata.name,
+          type: "world-overview",
+          contentExcerpt: overview,
+        },
+      ],
+      includedContext: [
+        ...new Set([...hydrated.includedContext, "world" as const]),
+      ],
+    };
   }
 
   async build(

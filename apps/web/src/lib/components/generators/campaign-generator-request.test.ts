@@ -28,11 +28,24 @@ function setup() {
     outbound: entity("outbound", "Far shore"),
   };
   const deps = {
+    worldService: {
+      getMetadata: vi.fn(async (_id: string) => ({
+        name: "Modern City",
+        description: "",
+      })),
+      getFrontPageEntity: vi.fn(
+        async (
+          _id: string,
+        ): Promise<{ id: string; chronicle: string; content: string } | null> =>
+          null,
+      ),
+    },
     vault: {
+      activeVaultId: "vault-1",
       entities,
       getActiveFolderHandle: vi.fn(async () => null),
       getActiveVaultHandle: vi.fn(async () => null),
-      loadEntityContent: vi.fn(async () => {}),
+      loadEntityContent: vi.fn(async (_id: string) => {}),
     },
     categories: { list: [{ id: "location", label: "Location" }] },
     themeStore: {
@@ -64,6 +77,135 @@ function setup() {
 const policy = { isEnabled: true, isAvailable: true };
 
 describe("campaign generator request", () => {
+  it("rejects a world switch during record hydration before preparing AI context", async () => {
+    const { builder, deps } = setup();
+    deps.vault.loadEntityContent.mockImplementation(async () => {
+      deps.vault.activeVaultId = "other-world";
+    });
+    await expect(
+      builder.build(
+        { generatorId: "rumour", options: {}, useAI: true },
+        null,
+        () => policy,
+      ),
+    ).rejects.toThrow("World changed");
+    expect(deps.generatorSessionManager.prepare).not.toHaveBeenCalled();
+    expect(deps.worldService.getFrontPageEntity).not.toHaveBeenCalled();
+  });
+
+  it("caps welcome-page prose and refuses a world switch during lookup", async () => {
+    const { builder, deps } = setup();
+    deps.worldService.getFrontPageEntity.mockResolvedValue({
+      id: "welcome",
+      chronicle: "City lore ".repeat(1000),
+      content: "",
+    });
+    const request = await builder.build(
+      { generatorId: "rumour", options: {}, useAI: true },
+      null,
+      () => policy,
+    );
+    expect(request.vaultContext?.worldSample[0]?.contentExcerpt).toHaveLength(
+      4000,
+    );
+    deps.worldService.getMetadata.mockImplementation(async () => {
+      deps.vault.activeVaultId = "other-world";
+      return { name: "Wrong world", description: "Wrong lore" };
+    });
+    await expect(
+      builder.build(
+        { generatorId: "rumour", options: {}, useAI: true },
+        null,
+        () => policy,
+      ),
+    ).rejects.toThrow("World changed");
+  });
+
+  it("falls back to the current world's welcome page when selected records have no prose", async () => {
+    const { builder, deps } = setup();
+    deps.worldService.getFrontPageEntity.mockResolvedValue({
+      id: "welcome",
+      chronicle: "A modern investigation setting with city detectives.",
+      content: "",
+    });
+    const request = await builder.build(
+      { generatorId: "rumour", options: {}, useAI: true },
+      null,
+      () => policy,
+    );
+    expect(deps.worldService.getFrontPageEntity).toHaveBeenCalledWith(
+      "vault-1",
+    );
+    expect(request.vaultContext?.worldSample).toEqual([
+      expect.objectContaining({
+        id: "welcome",
+        contentExcerpt: expect.stringContaining("modern investigation"),
+      }),
+    ]);
+  });
+
+  it("leaves context empty when the welcome page has no description", async () => {
+    const { builder } = setup();
+    const request = await builder.build(
+      { generatorId: "rumour", options: {}, useAI: true },
+      null,
+      () => policy,
+    );
+    expect(
+      request.vaultContext?.worldSample.every(
+        (record) => !record.contentExcerpt && !record.loreExcerpt,
+      ),
+    ).toBe(true);
+  });
+
+  it("hydrates bounded modern world records before preparing AI rumour context", async () => {
+    const { builder, deps } = setup();
+    deps.themeStore.worldThemeId = "modern";
+    deps.themeStore.activeTheme = {
+      name: "Modern",
+      description: "Contemporary investigation",
+    };
+    deps.vault.loadEntityContent.mockImplementation(async (id: string) => {
+      const record =
+        deps.vault.entities[id as keyof typeof deps.vault.entities];
+      record.content =
+        "Detective Mara investigates corruption at the city police station.";
+    });
+    const result = await builder.build(
+      { generatorId: "rumour", options: {}, useAI: true },
+      null,
+      () => policy,
+    );
+    expect(deps.worldService.getFrontPageEntity).not.toHaveBeenCalled();
+    expect(result.themeId).toBe("modern");
+    expect(result.vaultContext?.worldSample).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          contentExcerpt: expect.stringContaining("Detective Mara"),
+        }),
+      ]),
+    );
+    expect(deps.vault.loadEntityContent).toHaveBeenCalledTimes(3);
+    expect(deps.generatorSessionManager.prepare).toHaveBeenCalledWith(
+      expect.objectContaining({ vaultContext: result.vaultContext }),
+    );
+  });
+
+  it("does not dispatch an AI request when selected rumour lore cannot be loaded", async () => {
+    const { builder, deps } = setup();
+    deps.vault.loadEntityContent.mockRejectedValue(
+      new Error("storage unavailable"),
+    );
+    await expect(
+      builder.build(
+        { generatorId: "rumour", options: {}, useAI: true },
+        null,
+        () => policy,
+      ),
+    ).rejects.toThrow("storage unavailable");
+    expect(deps.generatorSessionManager.prepare).not.toHaveBeenCalled();
+  });
+
   it("collects inbound and outbound connections without including unrelated entities", () => {
     const { deps } = setup();
     expect([
