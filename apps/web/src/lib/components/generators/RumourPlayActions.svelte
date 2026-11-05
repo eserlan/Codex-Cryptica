@@ -25,6 +25,8 @@
         selectRumourForPlay(
           { title: draft.title, content: draft.content!, lore: draft.lore },
           i + 1,
+          undefined,
+          draft.rumourBatchId,
         ),
       );
     } catch {

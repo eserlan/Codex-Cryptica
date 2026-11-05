@@ -61,7 +61,7 @@ describe("grounded background generation", () => {
     const prepared = await background.prepare(current);
     expect(context.resolveOpeningRelevant).toHaveBeenCalledOnce();
     expect(generator).toHaveBeenCalledOnce();
-    expect(prepared.hiddenState.gmThreads.length).toBeGreaterThan(0);
+    expect(prepared.scenarioCollection?.items).toHaveLength(3);
     expect(current.hiddenState.gmThreads).toEqual([]);
   });
 
@@ -146,7 +146,7 @@ describe("AdventureBackground", () => {
     });
     const original = session();
     const prepared = await background.prepare(original);
-    expect(prepared.hiddenState.gmThreads).toHaveLength(3);
+    expect(prepared.scenarioCollection?.items).toHaveLength(3);
     expect(original.hiddenState.gmThreads).toHaveLength(0);
   });
 

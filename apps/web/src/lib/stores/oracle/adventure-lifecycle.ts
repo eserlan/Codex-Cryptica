@@ -3,6 +3,19 @@ import type { AdventureControlLease } from "#lib/services/adventure/adventure-co
 
 import type { AdventureRuntime } from "./adventure-runtime";
 
+function isReadOnlyLoad(
+  loaded: Exclude<
+    Awaited<ReturnType<AdventureRuntime["deps"]["repository"]["load"]>>,
+    { condition: "unreadable" }
+  >,
+): boolean {
+  return (
+    loaded.condition === "duplicate-active-conflict" ||
+    loaded.condition === "migration-recovery" ||
+    loaded.session.status === "archived"
+  );
+}
+
 export class AdventureLifecycle {
   private readonly state;
   constructor(
@@ -23,9 +36,7 @@ export class AdventureLifecycle {
     const loaded = await this.runtime.deps.repository.load(vaultId, sessionId);
     if (loaded.condition === "unreadable") throw loaded.error;
     if (!isRequestCurrent()) return;
-    const readOnly =
-      loaded.condition === "duplicate-active-conflict" ||
-      loaded.session.status === "archived";
+    const readOnly = isReadOnlyLoad(loaded);
     const opened = await this.acquireAndRefreshOpenedSession(
       vaultId,
       sessionId,

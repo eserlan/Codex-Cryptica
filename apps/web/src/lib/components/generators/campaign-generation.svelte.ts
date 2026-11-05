@@ -22,6 +22,7 @@ const defaultDeps = {
   requestBuilder: campaignGeneratorRequestBuilder,
   publishGeneratedCapture,
   clock: systemClock,
+  idGenerator: () => crypto.randomUUID(),
 };
 
 /** Per-modal generation lifecycle, including cancellation and progressive preview. */
@@ -62,14 +63,14 @@ export class CampaignGeneration {
   /** Show a previously generated draft again, without re-publishing it. */
   restoreDraft(draft: GeneratedDraft) {
     this.cancel();
-    this.draft = draft;
+    this.draft = this.withRumourBatchId(draft);
     this.errorMsg = null;
     this.stage = "review";
   }
 
   private receiveDraft(draft: GeneratedDraft) {
     // A final draft supersedes non-terminal errors (the engine falls back locally).
-    this.draft = draft;
+    this.draft = this.withRumourBatchId(draft);
     this.errorMsg = null;
     this.stage = "review";
     try {
@@ -86,6 +87,15 @@ export class CampaignGeneration {
     }
     if (import.meta.env.DEV)
       console.debug("[Generator stream] modal received final draft");
+  }
+
+  private withRumourBatchId(draft: GeneratedDraft): GeneratedDraft {
+    return draft.sourceGeneratorId === "rumour" && !draft.rumourBatchId
+      ? {
+          ...draft,
+          rumourBatchId: this.deps.idGenerator?.() ?? crypto.randomUUID(),
+        }
+      : draft;
   }
 
   private receiveDelta(text: string) {

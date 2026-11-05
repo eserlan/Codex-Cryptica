@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { parseAdventureSession } from "@codex/adventure-engine";
 import { AdventureSessionRepository } from "./adventure-session-repository";
 
 const archivedSession = {
@@ -47,6 +48,31 @@ describe("AdventureSessionRepository.deleteArchived", () => {
       }),
     });
     expect((repository as any).adventuresDirectory).not.toHaveBeenCalled();
+  });
+
+  it("refuses to delete an archived migration-recovery session", async () => {
+    const repository = new AdventureSessionRepository(async () => {
+      throw new Error("not used");
+    });
+    const removeEntry = vi.fn();
+    (repository as any).load = vi.fn(async () => ({
+      condition: "migration-recovery",
+      session: { ...archivedSession, status: "archived" },
+      exportDocument: {},
+    }));
+    (repository as any).adventuresDirectory = vi.fn(async () => ({
+      removeEntry,
+    }));
+
+    await expect(
+      repository.deleteArchived("vault-1", "session-1", 3),
+    ).resolves.toEqual({
+      ok: false,
+      error: expect.objectContaining({
+        message: "migration-recovery-read-only",
+      }),
+    });
+    expect(removeEntry).not.toHaveBeenCalled();
   });
 });
 
@@ -201,6 +227,108 @@ describe("AdventureSessionRepository.duplicate", () => {
     expect(result).toEqual({
       condition: "unreadable",
       error: expect.objectContaining({ message: "invalid-json" }),
+    });
+  });
+});
+
+describe("AdventureSessionRepository v3 persistence", () => {
+  it("round-trips the scenario collection through the stored session document", async () => {
+    const files = new Map<string, string>();
+    const directory = {
+      async getFileHandle(name: string, options?: { create?: boolean }) {
+        if (!options?.create && !files.has(name))
+          throw new Error("NotFoundError");
+        return {
+          kind: "file",
+          async getFile() {
+            return { text: async () => files.get(name) ?? "" };
+          },
+          async createWritable() {
+            let contents = "";
+            return {
+              write: async (text: string) => {
+                contents = text;
+              },
+              close: async () => {
+                files.set(name, contents);
+              },
+              abort: async () => undefined,
+            };
+          },
+        };
+      },
+      async getDirectoryHandle() {
+        return this;
+      },
+      async removeEntry(name: string) {
+        files.delete(name);
+      },
+      async *entries() {
+        for (const name of files.keys()) yield [name, { kind: "file" }];
+      },
+    };
+    const repository = new AdventureSessionRepository(
+      async () => directory as never,
+    );
+    const at = "2026-11-01T10:00:00.000Z";
+    const session = parseAdventureSession({
+      schemaVersion: 3,
+      id: "session-v3",
+      vaultId: "vault-1",
+      title: "World",
+      status: "active",
+      createdAt: at,
+      updatedAt: at,
+      lastPlayedAt: at,
+      revision: 0,
+      playerCharacter: { kind: "provisional", name: "A", description: "B" },
+      premise: "P",
+      sourceRecords: [],
+      visibleState: {
+        objectives: [],
+        activeCharacters: [],
+        knownFacts: [],
+        relationships: [],
+      },
+      hiddenState: { secrets: [], gmThreads: [] },
+      provisionalFacts: [],
+      turns: [],
+      pendingRoll: null,
+      dicePresets: [],
+      resourceCounters: [],
+      scenarioCollection: {
+        version: 1,
+        focusedScenarioId: null,
+        items: [
+          {
+            version: 1,
+            id: "scenario-1",
+            origin: { kind: "manual", manualId: "manual-1" },
+            playerVisible: { rumour: "A rumour", lead: "A lead" },
+            gmOnly: { truth: "Hidden truth" },
+            status: "open",
+            knowledge: "unheard",
+            events: [],
+            anchorRefs: [],
+            secretBindings: { truth: "secret-1", eventIds: {} },
+            revealedSecretIds: [],
+          },
+        ],
+      },
+    });
+
+    await expect(repository.save(null, session)).resolves.toMatchObject({
+      ok: true,
+    });
+    const loaded = await repository.load("vault-1", "session-v3");
+    expect(loaded).toMatchObject({
+      condition: "normal",
+      session: {
+        schemaVersion: 3,
+        scenarioCollection: {
+          items: [{ id: "scenario-1", knowledge: "unheard" }],
+        },
+      },
     });
   });
 });

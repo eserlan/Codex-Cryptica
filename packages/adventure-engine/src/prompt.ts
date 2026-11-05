@@ -1,5 +1,5 @@
 import { allocatePromptBudget } from "./context-budget";
-import { playerScenarioProjection } from "./scenario-state";
+import { playerScenarioCollectionProjection } from "./scenario-state";
 import { ensureScenarioSecrets } from "./hidden-state";
 import { worldEntryPacing } from "./world-entry-pacing";
 import type {
@@ -18,7 +18,8 @@ export interface AdventurePromptInput {
 }
 
 export function buildAdventurePrompt(input: AdventurePromptInput) {
-  const scenario = input.session.scenarioState;
+  const scenarios = input.session.scenarioCollection?.items ?? [];
+  const focusedScenarioId = input.session.scenarioCollection?.focusedScenarioId;
   const worldEntry = input.session.worldEntry;
   const phaseInstruction =
     input.phase === "opening"
@@ -32,7 +33,7 @@ export function buildAdventurePrompt(input: AdventurePromptInput) {
     phaseInstruction,
     "Never choose the player character's voluntary actions, dialogue, decisions, thoughts, or feelings.",
     "Canonical source records outrank provisional session material.",
-    ...(scenario
+    ...(scenarios.length
       ? [
           "For an active scenario, portray an evolving situation rather than an assigned quest; never force objectives, rewards, scripted beats or a climax.",
           "A rumour may be exaggerated, mistaken, harmless or mundane. It does not need to become an adventure.",
@@ -60,16 +61,18 @@ export function buildAdventurePrompt(input: AdventurePromptInput) {
   ].join(" ");
   const state = JSON.stringify({
     playerVisibleState: input.session.visibleState,
-    playerScenario: scenario ? playerScenarioProjection(scenario) : undefined,
-    "GM-ONLY scenario": scenario
-      ? {
-          origin: scenario.origin,
-          baselineTruth: scenario.gmOnly,
-          hiddenEvents: scenario.events.filter(
-            (event) => event.visibility === "gm",
-          ),
-        }
-      : undefined,
+    playerScenarios: playerScenarioCollectionProjection(input.session),
+    "GM-ONLY scenarios": scenarios.map((scenario) => ({
+      focused: scenario.id === focusedScenarioId,
+      knowledge: scenario.knowledge,
+      origin: scenario.origin,
+      baselineTruth: scenario.gmOnly,
+      hiddenEvents: scenario.events.filter(
+        (event) => event.visibility === "gm",
+      ),
+      secretBindings: scenario.secretBindings,
+      revealedSecretIds: scenario.revealedSecretIds,
+    })),
     // Includes registered scenario secrets so their IDs can be revealed.
     "GM-ONLY state": ensureScenarioSecrets(input.session).hiddenState,
     "GM-ONLY fictional time": input.session.worldTime,

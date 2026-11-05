@@ -19,6 +19,9 @@
     describeWorldEntryStartFailure,
   } from "#lib/services/adventure/world-entry-start.js";
   import AdventureFocusPlay from "./AdventureFocusPlay.svelte";
+  import AdventureRumourConflict from "./AdventureRumourConflict.svelte";
+  import type { ScenarioItem } from "@codex/adventure-engine";
+  import { describeScenarioMutationError } from "#lib/stores/oracle/adventure-scenarios.js";
   import { createAdventureBackgroundRequest } from "#lib/services/adventure/adventure-background-request.js";
   import { themeStore } from "#lib/stores/theme.svelte.js";
   import { createCampaignGeneratorService } from "#lib/components/generators/campaign-generator-service.js";
@@ -65,7 +68,7 @@
     isVaultReadyForGenerators(vault) && !vault.isGuest,
   );
   // The typed world-entry draft lives here so view transitions cannot erase it.
-  let worldSetup = $state(emptyWorldEntrySetup(vaultId));
+  let worldSetup = $state(emptyWorldEntrySetup("default"));
   let startApproach = $state<"choose" | "premise" | "world" | "preview">(
     "choose",
   );
@@ -96,6 +99,8 @@
   // Never carry an unsaved character or premise draft between vaults.
   $effect(() => {
     const currentVaultId = vaultId;
+    if (previousVaultId === null)
+      worldSetup = emptyWorldEntrySetup(currentVaultId);
     if (previousVaultId !== null && previousVaultId !== currentVaultId) {
       startApproach = "choose";
       startTitle = "";
@@ -202,6 +207,30 @@
         "The current adventure could not be archived. It has not been replaced.";
     } finally {
       archivingForRumour = false;
+    }
+  }
+
+  async function addRumourToCurrentAdventure(): Promise<void> {
+    const pending = selectedRumour;
+    if (!pending || !oracle.adventure.session || oracle.adventure.readOnly)
+      return;
+    sessionConflictError = null;
+    const item: ScenarioItem = {
+      ...structuredClone(pending.scenario),
+      knowledge: "heard",
+      anchorRefs: [],
+      revealedSecretIds: [],
+      secretBindings: {
+        truth: crypto.randomUUID(),
+        ifInvestigated: crypto.randomUUID(),
+        eventIds: {},
+      },
+    };
+    try {
+      await oracle.adventure.addScenario(item);
+      rumourAdventureHandoff.clear();
+    } catch (cause) {
+      sessionConflictError = `The rumour was not added. ${describeScenarioMutationError(cause)}`;
     }
   }
 
@@ -366,48 +395,17 @@
       Checking for an active adventure…
     </div>
   {:else if oracle.adventure.session}
-    {#if selectedRumour && oracle.adventure.session.scenarioState?.id !== selectedRumour.scenario.id}
-      <section
-        class="rounded-md border border-theme-border bg-theme-surface p-3"
-        data-testid="existing-adventure-rumour-choice"
-      >
-        <h3 class="text-sm font-semibold text-theme-text">
-          An adventure is already active
-        </h3>
-        <p class="mt-1 text-xs text-theme-text">
-          Keep playing your current adventure, or explicitly archive it before
-          beginning the selected rumour. Nothing will be replaced automatically.
-        </p>
-        <div class="mt-3 flex flex-wrap gap-2">
-          <button
-            type="button"
-            class="rounded-md border border-theme-border px-3 py-2 text-sm text-theme-text"
-            onclick={() => rumourAdventureHandoff.clear()}
-            >Continue current adventure</button
-          >
-          <button
-            type="button"
-            class="rounded-md border border-theme-border px-3 py-2 text-sm text-theme-text disabled:opacity-50"
-            disabled={archivingForRumour || oracle.adventure.readOnly}
-            onclick={() => void archiveCurrentForRumour()}
-            data-testid="archive-active-for-rumour"
-            >{archivingForRumour
-              ? "Archiving…"
-              : "Archive and start rumour"}</button
-          >
-        </div>
-        {#if oracle.adventure.readOnly}
-          <p class="mt-2 text-xs text-theme-text">
-            This tab is read-only. Switch to the controlling tab before
-            archiving.
-          </p>
-        {/if}
-        {#if sessionConflictError}
-          <p role="alert" class="mt-2 text-xs text-theme-danger">
-            {sessionConflictError}
-          </p>
-        {/if}
-      </section>
+    {#if selectedRumour && !oracle.adventure.session.scenarioCollection?.items.some((item) => item.id === selectedRumour.scenario.id)}
+      <AdventureRumourConflict
+        readOnly={oracle.adventure.readOnly}
+        pendingRoll={!!oracle.adventure.session.pendingRoll}
+        archiving={archivingForRumour}
+        error={sessionConflictError}
+        onAdd={() => void addRumourToCurrentAdventure()}
+        onContinue={() => rumourAdventureHandoff.clear()}
+        onCancel={cancelRumour}
+        onArchive={() => void archiveCurrentForRumour()}
+      />
     {/if}
     {#key oracle.adventure.session.id}
       <AdventureFocusPlay

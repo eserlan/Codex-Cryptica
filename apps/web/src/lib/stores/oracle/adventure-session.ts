@@ -27,7 +27,7 @@ export function initialSession(input: {
   idGenerator: () => string;
 }): AdventureSession {
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     id: input.idGenerator(),
     vaultId: input.vaultId,
     title: input.title,
@@ -40,7 +40,27 @@ export function initialSession(input: {
     premise: input.premise,
     sourceRecords: input.sourceRecords ?? [],
     ...(input.scenarioSeed
-      ? { scenarioState: structuredClone(input.scenarioSeed) }
+      ? {
+          scenarioCollection: {
+            version: 1 as const,
+            items: [
+              {
+                ...structuredClone(input.scenarioSeed),
+                knowledge: "heard" as const,
+                anchorRefs: [],
+                revealedSecretIds: [],
+                secretBindings: {
+                  truth: input.idGenerator(),
+                  ...(input.scenarioSeed.gmOnly.ifInvestigated
+                    ? { ifInvestigated: input.idGenerator() }
+                    : {}),
+                  eventIds: {},
+                },
+              },
+            ],
+            focusedScenarioId: input.scenarioSeed.id,
+          },
+        }
       : {}),
     ...(input.worldEntry
       ? { worldEntry: structuredClone(input.worldEntry) }
@@ -120,20 +140,11 @@ function initialVisibleState(
 }
 
 function initialHiddenState(
-  scenarioSeed: ScenarioState | undefined,
-  idGenerator: () => string,
+  _scenarioSeed: ScenarioState | undefined,
+  _idGenerator: () => string,
 ): AdventureSession["hiddenState"] {
   return {
-    secrets: scenarioSeed
-      ? [
-          {
-            id: idGenerator(),
-            text: scenarioSeed.gmOnly.truth,
-            status: "hidden",
-            revealCondition: "Reveal after in-world discovery.",
-          },
-        ]
-      : [],
+    secrets: [],
     gmThreads: [],
   };
 }

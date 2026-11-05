@@ -7,8 +7,10 @@ export interface SelectedRumourForPlay {
   origin: {
     kind: "rumour";
     batchTitle: string;
+    batchId?: string;
     index: number;
     sourceRecordId?: string;
+    sourceFingerprint?: string;
   };
   playerVisible: { rumour: string; lead: string; source: string };
   gmOnly: {
@@ -119,6 +121,8 @@ export function selectRumourForPlay(
   batch: RumourSelectionInput,
   index: number,
   sourceRecordId?: string,
+  batchId?: string,
+  sourceFingerprint?: string,
 ): SelectedRumourForPlay {
   if (!Number.isInteger(index) || index < 1 || index > 6) {
     throw new RumourSelectionError("invalid-index");
@@ -150,7 +154,9 @@ export function selectRumourForPlay(
       kind: "rumour",
       batchTitle,
       index,
+      ...(batchId ? { batchId } : {}),
       ...(sourceRecordId ? { sourceRecordId } : {}),
+      ...(sourceRecordId && sourceFingerprint ? { sourceFingerprint } : {}),
     },
     playerVisible: {
       rumour: p.get("Rumour")!,

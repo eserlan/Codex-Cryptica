@@ -3,12 +3,14 @@ import type { AdventureSession, CommitMetadata } from "@codex/adventure-engine";
 import type { AdventureManagerDependencies } from "./adventure-dependencies";
 import type { AdventureState } from "./adventure-state.svelte";
 import { AdventureBackground } from "./adventure-background";
+import { AdventureScenarios } from "./adventure-scenarios";
 
 /** Shared generation lifetime and persistence boundary for all workflows. */
 export class AdventureRuntime {
   activeRestoreRequest = 0;
   generationController: AbortController | null = null;
   readonly background: AdventureBackground;
+  readonly scenarios: AdventureScenarios;
   constructor(
     readonly state: AdventureState,
     readonly deps: Required<AdventureManagerDependencies>,
@@ -18,6 +20,9 @@ export class AdventureRuntime {
     );
     deps.generation = grounding.wrap(deps.generation);
     this.background = new AdventureBackground(deps.idGenerator, grounding);
+    this.scenarios = new AdventureScenarios(state, deps, (session) =>
+      this.verifySession(session),
+    );
   }
 
   async verifyControl(): Promise<void> {

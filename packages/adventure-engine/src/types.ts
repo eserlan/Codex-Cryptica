@@ -250,8 +250,13 @@ export interface ScenarioSeed {
   origin: {
     kind: "rumour" | "manual";
     batchTitle?: string;
+    batchId?: string;
+    manualId?: string;
+    legacySessionId?: string;
+    legacyScenarioId?: string;
     index?: number;
     sourceRecordId?: string;
+    sourceFingerprint?: string;
   };
   playerVisible: { rumour: string; lead: string; source?: string };
   gmOnly: { truth: string; ifInvestigated?: string };
@@ -270,6 +275,23 @@ export interface ScenarioState extends ScenarioSeed {
   version: 1;
   status: ScenarioStatus;
   events: ScenarioEvent[];
+}
+
+export interface ScenarioItem extends ScenarioState {
+  knowledge: "unheard" | "heard";
+  anchorRefs: string[];
+  revealedSecretIds: string[];
+  secretBindings: {
+    truth: string;
+    ifInvestigated?: string;
+    eventIds: Record<string, string>;
+  };
+}
+
+export interface ScenarioCollection {
+  version: 1;
+  items: ScenarioItem[];
+  focusedScenarioId: string | null;
 }
 
 /** A canonical or provisional place for unscripted entry into a Vault. */
@@ -294,7 +316,7 @@ export interface WorldEntryContext {
 }
 
 export interface AdventureSession {
-  schemaVersion: 1 | 2;
+  schemaVersion: 3;
   id: string;
   vaultId: string;
   title: string;
@@ -306,8 +328,8 @@ export interface AdventureSession {
   playerCharacter: PlayerCharacter;
   premise: string;
   sourceRecords: SourceRecordReference[];
-  /** Optional: ordinary and older adventures have no scenario context. */
-  scenarioState?: ScenarioState;
+  /** Optional structured situations; absent on ordinary adventures. */
+  scenarioCollection?: ScenarioCollection;
   /** Additive world-entry setup; absent in old and ordinary adventures. */
   worldEntry?: WorldEntryContext;
   /** Optional for backwards-compatible local-first sessions. */
@@ -330,6 +352,8 @@ export interface CompletedTurnProposal {
   visiblePatch: VisibleStateProposalPatch;
   hiddenPatch: HiddenStateProposalPatch;
   revealSecretIds: string[];
+  /** Scenario leads fictionally disclosed in this same committed turn. */
+  revealScenarioIds?: string[];
   provisionalFacts: NewProvisionalFact[];
   sourceRecordIds: string[];
   suggestedActions?: string[];
