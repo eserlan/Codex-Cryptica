@@ -7,10 +7,12 @@
     manager,
     phone = false,
     keyboardOpen = false,
+    suggestionChips = false,
   }: {
     manager: AdventureManager;
     phone?: boolean;
     keyboardOpen?: boolean;
+    suggestionChips?: boolean;
   } = $props();
   let action = $derived(manager.draft);
   let disabled = $derived(
@@ -80,7 +82,10 @@
 >
   <!-- Only optional controls scroll. Never put the textarea/Send row in this
        container: it must remain fixed at the bottom when the keyboard opens. -->
-  <div class="min-h-0 overflow-y-auto" data-testid="adventure-dock-extras">
+  <div
+    class="mx-auto min-h-0 w-full max-w-3xl overflow-y-auto"
+    data-testid="adventure-dock-extras"
+  >
     {#if manager.readOnly && manager.session?.status === "active"}
       <div
         class="rounded-lg border border-theme-border bg-theme-bg p-3 text-sm text-theme-text"
@@ -107,6 +112,7 @@
       {manager}
       {disabled}
       visible={suggestionsVisible}
+      chips={suggestionChips}
     />
     {#if manager.errorMessage}
       <p class="text-sm text-theme-danger" role="alert">
@@ -123,7 +129,7 @@
     {/if}
   </div>
   <form
-    class="shrink-0 space-y-2"
+    class="mx-auto w-full max-w-3xl shrink-0 space-y-2"
     onsubmit={(event) => {
       event.preventDefault();
       void manager.submitAction(action);

@@ -290,7 +290,12 @@
 
   <!-- The composer stays outside the story scroll, visible above the keyboard
        and mobile safe area. Never remount it across generation/roll phases. -->
-  <AdventureComposer {manager} {phone} keyboardOpen={keyboard.keyboardOpen} />
+  <AdventureComposer
+    {manager}
+    {phone}
+    keyboardOpen={keyboard.keyboardOpen}
+    suggestionChips={!phone}
+  />
 
   <!-- A bottom sheet rather than a side-by-side aside: this surface is often
        hosted in the app's own (already-narrow) sidebar panel, where a lg:

@@ -40,6 +40,9 @@
   >
     <AdventureKnownSituations {scenarios} />
     <div class="flex flex-wrap items-center gap-2">
+      <span class="text-xs font-medium text-theme-text" aria-hidden="true"
+        >Focus</span
+      >
       <label for="known-scenario-focus" class="sr-only">Focused situation</label
       >
       <select

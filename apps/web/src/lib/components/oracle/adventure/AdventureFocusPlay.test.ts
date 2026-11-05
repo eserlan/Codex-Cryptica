@@ -346,6 +346,15 @@ describe("AdventureFocusPlay", () => {
     expect(m.close).toHaveBeenCalledOnce();
   });
 
+  it("shows suggested actions as chips above phone width", () => {
+    const m = manager();
+    m.suggestedActions = ["Search the wreckage"];
+    render(AdventureFocusPlay, { props: props({ manager: m }) });
+    const suggestions = screen.getByTestId("adventure-suggested-actions");
+    expect(suggestions.tagName).toBe("DIV");
+    expect(suggestions.querySelector("summary")).toBeNull();
+  });
+
   describe("at phone width", () => {
     let viewport: EventTarget & { height: number; offsetTop: number };
     const originalMatchMedia = window.matchMedia;
@@ -378,6 +387,15 @@ describe("AdventureFocusPlay", () => {
       } else {
         Reflect.deleteProperty(window, "visualViewport");
       }
+    });
+
+    it("keeps suggested actions in the collapsed list", () => {
+      const m = manager();
+      m.suggestedActions = ["Search the wreckage"];
+      render(AdventureFocusPlay, { props: props({ manager: m }) });
+      expect(screen.getByTestId("adventure-suggested-actions").tagName).toBe(
+        "DETAILS",
+      );
     });
 
     it("renders as a modal dialog outside any transformed host and takes focus", async () => {
