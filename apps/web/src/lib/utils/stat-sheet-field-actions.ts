@@ -203,15 +203,23 @@ export function computeAdjustedCounterValue(
         : field.value
       : 0;
   let next = current + step * direction;
-  const max = isDicePool
+  const rawMax = isDicePool
     ? field.max !== undefined
       ? Math.min(Math.floor(field.max), MAX_DICE_POOL_COUNT)
       : MAX_DICE_POOL_COUNT
     : field.max;
-  const min =
+  const rawMin =
     isDicePool && field.min !== undefined ? Math.floor(field.min) : field.min;
-  if (max !== undefined) next = Math.min(max, next);
+
+  // Normalise contradictory bounds so min never exceeds max:
+  const min =
+    rawMin !== undefined && rawMax !== undefined && rawMin > rawMax
+      ? rawMax
+      : rawMin;
+  const max = rawMax;
+
   if (min !== undefined) next = Math.max(min, next);
+  if (max !== undefined) next = Math.min(max, next);
   return next;
 }
 

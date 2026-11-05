@@ -127,13 +127,31 @@
   // Once a new minimum or maximum is committed, a current value outside it
   // moves inside, so the sheet never shows "100 / 12". Not per keystroke:
   // typing "12" passes through "1".
+  // Also normalises contradictory bounds where min > max.
+  // fallow-ignore-next-line complexity
   function clampCounterToBounds(id: string) {
     const field = fields.find((f) => f.id === id);
-    if (!field || typeof field.value !== "number") return;
-    let value = field.value;
-    if (field.max !== undefined) value = Math.min(field.max, value);
-    if (field.min !== undefined) value = Math.max(field.min, value);
-    if (value !== field.value) updateField(id, { value });
+    if (!field) return;
+    const updates: Partial<StatSheetField> = {};
+    let min = field.min;
+    let max = field.max;
+
+    if (min !== undefined && max !== undefined && min > max) {
+      // Contradictory bounds: raise max to match min
+      max = min;
+      updates.max = max;
+    }
+
+    if (typeof field.value === "number") {
+      let value = field.value;
+      if (min !== undefined) value = Math.max(min, value);
+      if (max !== undefined) value = Math.min(max, value);
+      if (value !== field.value) updates.value = value;
+    }
+
+    if (Object.keys(updates).length > 0) {
+      updateField(id, updates);
+    }
   }
 
   // fallow-ignore-next-line complexity

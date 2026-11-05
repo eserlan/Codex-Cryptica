@@ -734,6 +734,45 @@ describe("StatSheetEditor field keys (#3180)", () => {
     );
   });
 
+  it("normalises contradictory bounds by raising max to meet min and clamping value", async () => {
+    render(StatSheetEditor, {
+      entity: buildEntity({
+        statSheet: {
+          fields: [
+            {
+              id: "hp",
+              label: "HP",
+              type: "counter",
+              min: 0,
+              max: 2,
+              value: 2,
+            },
+          ],
+        },
+      }),
+    });
+
+    const min = screen.getByLabelText("Min") as HTMLInputElement;
+    await fireEvent.input(min, { target: { value: "5" } });
+    await fireEvent.change(min);
+
+    expect(updateEntity).toHaveBeenLastCalledWith(
+      "goblin-1",
+      expect.objectContaining({
+        statSheet: expect.objectContaining({
+          fields: [
+            expect.objectContaining({
+              id: "hp",
+              min: 5,
+              max: 5,
+              value: 5,
+            }),
+          ],
+        }),
+      }),
+    );
+  });
+
   it("assigns a readable unique key to a new field", async () => {
     render(StatSheetEditor, { entity: buildEntity() });
 

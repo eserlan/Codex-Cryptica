@@ -355,6 +355,20 @@ describe("computeAdjustedCounterValue", () => {
     expect(computeAdjustedCounterValue(field, 1)).toBe(3.0);
     expect(computeAdjustedCounterValue(field, -1)).toBe(2.0);
   });
+
+  it("normalises contradictory bounds so adjustment cannot exceed maximum", () => {
+    const field = {
+      id: "pool",
+      label: "Pool",
+      type: "dice-pool",
+      value: 3,
+      min: 5,
+      max: 2,
+    } as any;
+    // With max: 2, next should not exceed 2 even though min: 5 is contradictory
+    expect(computeAdjustedCounterValue(field, 1)).toBe(2);
+    expect(computeAdjustedCounterValue(field, -1)).toBe(2);
+  });
 });
 
 describe("rollStatSheetDiceField", () => {
