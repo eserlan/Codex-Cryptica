@@ -259,4 +259,33 @@ describe("scenario-aware Oracle GM", () => {
     ).toContain(SCENARIO_TRUTH_SECRET_ID);
     expect(ensureScenarioSecrets(revealed.value)).toBe(revealed.value);
   });
+
+  it("instructs Oracle GM on contextual rumours when asking about local news without chore substitution", () => {
+    const s = session();
+    s.worldEntry = {
+      version: 1,
+      location: {
+        kind: "canonical",
+        recordId: "loc-oakhaven",
+        name: "Oakhaven",
+      },
+      intent: "explore",
+    };
+    const prompt = buildAdventurePrompt({
+      session: s,
+      phase: "action",
+      playerAction:
+        "Ask the innkeeper if there are any interesting rumours around town",
+      anchors: [],
+      relevant: [],
+    });
+
+    expect(prompt.behavior).toContain(
+      "Candidate rumours and leads are contextual to the player's current location",
+    );
+    expect(prompt.behavior).toContain(
+      "Avoid endlessly substituting unrelated chores",
+    );
+    expect(prompt.behavior).toContain("meaningful empty result");
+  });
 });

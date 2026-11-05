@@ -169,7 +169,7 @@
 />
 
 {#snippet utilities()}
-  <AdventureSituationSettings {manager} />
+  <AdventureSituationSettings {manager} onAction={closeTools} />
   <AdventureCorrectionForm {manager} />
   <AdventureRollHistory {manager} />
   <AdventureResourceCounters {manager} />

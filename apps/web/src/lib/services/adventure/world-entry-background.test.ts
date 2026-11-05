@@ -138,4 +138,71 @@ describe("world entry background situations", () => {
       ),
     ).toBe(false);
   });
+
+  it("seeds fresh candidates when moving to a new settlement and preserves heard rumours upon return", () => {
+    let idCounter = 0;
+    const allocate = () => `id-${++idCounter}`;
+
+    // 1. Initial start at Northbrook
+    const initial = seedWorldEntryBackground(session(), allocate);
+    expect(initial.scenarioCollection?.items).toHaveLength(3);
+    const initialIds = initial.scenarioCollection!.items.map((i) => i.id);
+
+    // Player hears one rumour at Northbrook
+    initial.scenarioCollection!.items[0]!.knowledge = "heard";
+
+    // 2. Player travels to Blackwood Outpost
+    const atBlackwood: AdventureSession = {
+      ...initial,
+      visibleState: {
+        location: {
+          id: "loc-fact-1",
+          text: "Blackwood Outpost",
+          source: "canonical",
+          sourceRecordId: "loc-blackwood",
+        },
+        objectives: [],
+        activeCharacters: [],
+        knownFacts: [],
+        relationships: [],
+      },
+    };
+
+    const seededBlackwood = seedWorldEntryBackground(atBlackwood, allocate);
+    // Should now have Northbrook's heard + unheard items + Blackwood's 3 items = 6 items
+    expect(seededBlackwood.scenarioCollection?.items).toHaveLength(6);
+    expect(
+      seededBlackwood.scenarioCollection?.items.find(
+        (i) => i.id === initialIds[0],
+      )?.knowledge,
+    ).toBe("heard");
+
+    // 3. Return to Northbrook
+    const returnedToNorthbrook: AdventureSession = {
+      ...seededBlackwood,
+      visibleState: {
+        location: {
+          id: "loc-fact-2",
+          text: "Northbrook",
+          source: "provisional",
+        },
+        objectives: [],
+        activeCharacters: [],
+        knownFacts: [],
+        relationships: [],
+      },
+    };
+
+    const afterReturn = seedWorldEntryBackground(
+      returnedToNorthbrook,
+      allocate,
+    );
+    // Northbrook already has candidates, so length doesn't change
+    expect(afterReturn.scenarioCollection?.items).toHaveLength(6);
+    // The heard rumour from Northbrook remains heard
+    expect(
+      afterReturn.scenarioCollection?.items.find((i) => i.id === initialIds[0])
+        ?.knowledge,
+    ).toBe("heard");
+  });
 });
