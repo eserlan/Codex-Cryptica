@@ -6,6 +6,7 @@ import {
 } from "generator-engine";
 import {
   currentLocationContext,
+  MAX_SCENARIO_COLLECTION_ITEMS,
   needsContextualRumours,
   pruneUnheardScenariosForNewBatch,
   type AdventureSession,
@@ -49,7 +50,6 @@ export function seedWorldEntryBackground(
     );
   if (!chosen) return session;
 
-  const batchId = allocateId();
   const existingItems = session.scenarioCollection?.items ?? [];
   const existingLeads = new Set(
     existingItems.map((item) => item.playerVisible.lead.trim().toLowerCase()),
@@ -68,6 +68,13 @@ export function seedWorldEntryBackground(
     nonDuplicate.length,
     location,
   );
+  if (
+    prunedExisting.length + nonDuplicate.length >
+    MAX_SCENARIO_COLLECTION_ITEMS
+  ) {
+    return session;
+  }
+  const batchId = allocateId();
 
   const items = nonDuplicate.map((selected) => {
     const itemId = allocateId();

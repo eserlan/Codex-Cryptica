@@ -205,4 +205,79 @@ describe("world entry background situations", () => {
         ?.knowledge,
     ).toBe("heard");
   });
+
+  it("skips a new batch when preserving heard scenarios would exceed the schema cap", () => {
+    let idCounter = 0;
+    const allocate = () => `id-${++idCounter}`;
+    const initial = seedWorldEntryBackground(session(), allocate);
+    const atBlackwood: AdventureSession = {
+      ...initial,
+      visibleState: {
+        location: {
+          id: "loc-blackwood-fact",
+          text: "Blackwood Outpost",
+          source: "canonical",
+          sourceRecordId: "loc-blackwood",
+        },
+        objectives: [],
+        activeCharacters: [],
+        knownFacts: [],
+        relationships: [],
+      },
+    };
+    const sixItems = seedWorldEntryBackground(atBlackwood, allocate);
+    for (const item of sixItems.scenarioCollection!.items) {
+      item.knowledge = "heard";
+    }
+    const atThirdSettlement: AdventureSession = {
+      ...sixItems,
+      visibleState: {
+        location: {
+          id: "loc-third-fact",
+          text: "Westmere",
+          source: "canonical",
+          sourceRecordId: "loc-westmere",
+        },
+        objectives: [],
+        activeCharacters: [],
+        knownFacts: [],
+        relationships: [],
+      },
+    };
+    const beforeAllocation = idCounter;
+
+    const result = seedWorldEntryBackground(atThirdSettlement, allocate);
+
+    expect(result).toBe(atThirdSettlement);
+    expect(result.scenarioCollection?.items).toHaveLength(6);
+    expect(idCounter).toBe(beforeAllocation);
+  });
+
+  it("sends only current-location unheard seeds in the GM prompt block", () => {
+    const seeded = seedWorldEntryBackground(session(), () =>
+      crypto.randomUUID(),
+    );
+    seeded.scenarioCollection!.items.push({
+      ...seeded.scenarioCollection!.items[0]!,
+      id: "other-location",
+      origin: {
+        ...seeded.scenarioCollection!.items[0]!.origin,
+        batchId: "other-batch",
+        batchTitle: "Rumours in Southport",
+        sourceRecordId: "loc-southport",
+      },
+      anchorRefs: ["loc-southport"],
+    });
+
+    const prompt = buildAdventurePrompt({
+      session: seeded,
+      phase: "action",
+      anchors: [],
+      relevant: [],
+    });
+
+    const promptScenarios = JSON.parse(prompt.state)["GM-ONLY scenarios"];
+    expect(promptScenarios).toHaveLength(3);
+    expect(prompt.state).not.toContain("other-location");
+  });
 });

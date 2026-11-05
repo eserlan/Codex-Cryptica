@@ -18,7 +18,10 @@
     ) ?? [],
   );
   const locked = $derived(
-    manager.readOnly || !!manager.session?.pendingRoll || busyId !== null,
+    manager.readOnly ||
+      !!manager.session?.pendingRoll ||
+      manager.phase === "generating" ||
+      busyId !== null,
   );
 
   const STATUS_LABEL = {

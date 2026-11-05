@@ -260,4 +260,47 @@ describe("scenario player projection and disclosure", () => {
     expect(current.scenarioCollection?.items[0]?.knowledge).toBe("unheard");
     expect(current.turns).toEqual([]);
   });
+
+  it("rejects revealing an unheard location-bound scenario from another location", () => {
+    const foreign = item("foreign", "unheard", "Foreign truth");
+    foreign.origin = {
+      ...foreign.origin,
+      batchTitle: "Rumours in Southport",
+      sourceRecordId: "loc-southport",
+    };
+    foreign.anchorRefs = ["loc-southport"];
+    const current = session([foreign]);
+    current.worldEntry = {
+      version: 1,
+      location: {
+        kind: "canonical",
+        recordId: "loc-northbrook",
+        name: "Northbrook",
+      },
+      intent: "explore",
+    };
+    const patch = () => ({ add: [], update: [], removeIds: [] });
+    const result = applyCompletedTurn(
+      current,
+      {
+        kind: "complete",
+        narration: "A local mentions a rumour.",
+        visiblePatch: {
+          objectives: patch(),
+          activeCharacters: patch(),
+          knownFacts: patch(),
+          relationships: patch(),
+        },
+        hiddenPatch: { secrets: patch(), gmThreads: patch() },
+        revealSecretIds: [],
+        revealScenarioIds: ["foreign"],
+        provisionalFacts: [],
+        sourceRecordIds: [],
+      },
+      { turnId: "turn-foreign", inputId: "input-foreign", now: at },
+    );
+
+    expect(result).toMatchObject({ ok: false, errors: expect.anything() });
+    expect(current.scenarioCollection?.items[0]?.knowledge).toBe("unheard");
+  });
 });

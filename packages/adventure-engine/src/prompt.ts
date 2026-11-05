@@ -1,6 +1,7 @@
 import { allocatePromptBudget } from "./context-budget";
 import { playerScenarioCollectionProjection } from "./scenario-state";
 import { ensureScenarioSecrets } from "./hidden-state";
+import { candidateScenariosForLocation } from "./contextual-rumours";
 import { worldEntryPacing } from "./world-entry-pacing";
 import type {
   AdventureSession,
@@ -18,7 +19,7 @@ export interface AdventurePromptInput {
 }
 
 export function buildAdventurePrompt(input: AdventurePromptInput) {
-  const scenarios = input.session.scenarioCollection?.items ?? [];
+  const scenarios = candidateScenariosForLocation(input.session);
   const focusedScenarioId = input.session.scenarioCollection?.focusedScenarioId;
   const worldEntry = input.session.worldEntry;
   const phaseInstruction =

@@ -3650,6 +3650,7 @@ Stat Sheets give any entity — a character, NPC, ship, or settlement — a smal
 - **Long Text** — a multiline note, for traits, abilities, or free-form details.
 - **Heading** — a collapsible section divider to group related fields and save screen space during a session.
 - **Dice** — a rollable expression (e.g. `1d20+5`) with a one-tap roll button.
+- **Dice Pool** — an adjustable pool of dice (e.g. `3d6`) with `-`/`+` stepper controls, an optional die-face selector (`d4` through `d100`), configurable bounds, and one-tap rolling with expandable face breakdowns. Ideal for pool-based systems like Vampire/Storyteller, Year Zero Engine, or Shadowrun.
 
 Codex Cryptica doesn't enforce any particular game system — there's no automatic modifier math or damage calculation. You decide what each field means.
 
@@ -3712,6 +3713,8 @@ In **Settings → Templates → Stat sheets**, the **Default Template by Categor
 ## Rolling dice
 
 Tap the roll button on a Dice field to roll it in Codex Cryptica's dice engine. If you're in an active VTT session, the result is also sent to the shared session log automatically.
+
+For **Dice Pool** fields, use the `−` and `+` buttons to adjust the number of dice before rolling. If die selection is enabled in the template, you can switch die types (such as `d6`, `d8`, or `d10`) via the dropdown next to the count. Tap **Roll** to roll the pool; the total sum is displayed alongside an expandable breakdown showing individual rolled faces. When the dice count is zero, the Roll button is disabled until you add dice to the pool.
 
 ## Where it's stored
 
@@ -4187,12 +4190,56 @@ GM notes are hidden from the play surface, but they are not encrypted from the
 vault owner. Material invented during play stays provisional and is not added to
 your canonical vault automatically.
 
+## Choose how to start
+
+Open **Play → Let the Oracle run the game**. On mobile, **Play** is in the
+navigation menu. If you have no active adventure, choose a starting approach:
+
+- **Discover an Adventure** immediately generates six rumours using the in-app
+  Rumour Generator's defaults. Choose **Play with Oracle** beside one lead,
+  or select **Customize** to change the generator options. Only that rumour
+  and its matching hidden GM preparation pass to Adventure Mode. Review the
+  prefilled premise, choose your character, and start.
+- **Create Your Own Premise** opens the usual adventure form. Enter a title,
+  starting situation and character yourself. You can return to the starting
+  choices without discarding an unsaved draft.
+- **Enter Your World** opens **Set the Stage**, with no prepared quest needed.
+  Choose a Vault character or name a new provisional one, then a Vault place
+  or a new **Starting place**. Optionally pick a world date from your Vault
+  calendar. Decide how it begins: open exploration, a particular scene you
+  describe, or a plausible local situation. Choose **Review starting context**
+  to see the Vault records that ground the opening, then **Start playing**.
+
+A rumour is a lead, **not an assigned quest**. You may ignore it, investigate
+it, or pursue something else. GM notes are hidden by default in the generator
+review unless you choose to reveal them. When you already have an Adventure open, you
+can add the selected lead to it as a known situation, continue the current
+Adventure, cancel and return to the six rumours, or archive it before
+starting a separate Adventure.
+
+You can keep several Adventures going in one Vault. Opening Adventure Mode
+takes you straight back into the one you played most recently. To change to
+another, open the **⋮ menu → Switch to…**, or choose **Leave adventure** to see
+all of them and start a new one.
+
+Use the **Known situations** control during play to focus or clear attention.
+Focusing is optional; ordinary free action continues without a selected lead.
+To finish a lead or leave it behind, open **Adventure tools → Situations** and
+choose **Mark as concluded** or **Leave it behind**. Either choice can be undone
+with **Reopen**. To ask about the current area, choose **Look for local rumours**
+in **Adventure tools → Situations**; this submits an in-world enquiry to the
+Oracle. New world-entry rumours are introduced as
+play makes them relevant rather than presented as a scenario-selection list.
+You need an online Oracle connection for AI turns. The selected GM notes remain
+stored within the Adventure session but are not encrypted from the vault owner.
+
 ## Start an adventure
 
-1. Open **Play** from the activity bar.
-2. Enter an **Adventure title**, a **Premise** and your **Player character** name.
-3. Optionally add a **Character description**.
-4. Choose **Start adventure**, then respond to the situations the Oracle presents.
+1. Open **Play → Let the Oracle run the game**.
+2. Choose **Create Your Own Premise**.
+3. Enter an **Adventure title**, a **Premise** and your **Player character** name.
+4. Optionally add a **Character description**.
+5. Choose **Start adventure**, then respond to the situations the Oracle presents.
 
 Starting and continuing AI turns needs an available Oracle connection. Your stored
 session remains readable offline; a pending action can be retried after reconnecting.
@@ -4200,6 +4247,14 @@ Opening Play checks for an active adventure in the current vault so you can cont
 that world’s session.
 
 Adventure Mode is now chosen from the Play page. Starting a solo session does not need it. See [Solo Sessions](/help#help/solo-session).
+
+## Playing in your existing world
+
+Before an opening, action, dice resolution or background rumour generation, Oracle looks up relevant local Vault records and combines them with your adventure's committed discoveries. Existing Vault facts take priority over provisional details. Dated exploration keeps future and uncertain information distinct, and GM notes remain hidden preparation rather than character knowledge. Oracle can still make mistakes; review discoveries before saving them to campaign canon.
+
+In **Enter Your World**, a few hidden situations are already unfolding around your character. They show up as small details, such as tracks, a closed shop, nervous locals, a posted notice or overheard talk, and you can ignore or follow any of them. If several turns pass quietly, Oracle adds one such detail to the scene. A detail never becomes a quest by itself; situations only develop through your actions or time passing in the story.
+
+If world information cannot be loaded, generation stops so you can retry. Your committed progress, action draft and any recorded dice result remain available. Restore a missing selected character, location or source record, or edit your selection, before retrying. If no opening has been committed, use **Retry opening**; this is also available after reopening the adventure. A successful lookup with no matches can continue with provisional details. Optional rumour generation can use a local fallback after its world lookup succeeds. AI generation needs an available, configured Oracle; inspecting existing play remains local.
 
 ---
 
@@ -4215,6 +4270,14 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** Yes, but a 30-minute session has to be designed as a short episode rather than a compressed version of a normal three to four hour session. Prepare one meaningful scene, problem, decision, or encounter that can produce a real change in about half an hour, start at the interesting moment instead of narrating the approach to it, and move levelling, shopping, and long rules discussion outside the slot when the group is willing. Combat can work if it's scoped for the window: fewer, more meaningful enemies, a clear objective, and a willingness to let a fight run into next time rather than forcing it to finish. Stop the session once something has genuinely changed.
 
+### [Does an RPG party need balanced roles?](https://codexcryptica.com/answers/does-an-rpg-party-need-balanced-roles)
+
+**Direct answer:** No. A tabletop RPG party does not need a set list of roles such as a frontline fighter, a healer and a damage dealer. What matters is what the characters can actually do together, what your chosen system expects them to handle, and whether the campaign gives their strengths room to matter while their gaps create interesting problems rather than repeated frustration. An unbalanced RPG party, including one with no healer, no tank or all spellcasters, can work well when the Game Master (GM) prepares situations around the party that exists instead of punishing it for not matching a template.
+
+### [How can I make free custom maps for online tabletop RPGs?](https://codexcryptica.com/answers/how-can-i-make-free-custom-maps-for-online-tabletop-rpgs)
+
+**Direct answer:** You do not need a paid map editor or finished artwork. For most online sessions, a blank grid with simple draw tools in a virtual tabletop (VTT) works like the whiteboard at a physical table: sketch walls and terrain as lines and shapes, drop on tokens, and play. Make the map in whatever free tool suits the job, then run it in the VTT; those are two separate jobs, and the second one is often just showing a grid or an imported image at the right scale.
+
 ### [How can I practise being a Dungeon Master without a group?](https://codexcryptica.com/answers/how-can-i-practise-being-a-dungeon-master-without-a-group)
 
 **Direct answer:** Practise the Dungeon Master's side of the table in short solo drills built around one repeatable loop: describe a situation, ask what a player character does, call for a roll only when the outcome is uncertain and failure would change something, then narrate the consequence and hand the next decision back. Write two or three plausible player choices in advance, run one obstacle, one short non-player character conversation and one combat round against the clock, and finish by noting where you hesitated. That rehearses scene framing, rulings, rule lookups and bookkeeping. It cannot reproduce real players surprising you or the social work of a live table, so treat it as preparation for a tiny first session rather than a replacement for one.
@@ -4226,6 +4289,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 ### [How do fantasy cities defend against flying creatures and teleportation?](https://codexcryptica.com/answers/how-do-fantasy-cities-defend-against-flying-creatures-and-teleportation)
 
 **Direct answer:** Fantasy cities keep their walls because walls still control ordinary movement, trade, taxation, and conventional siege, then add layered defences for the new vectors. Define how common, fast, heavy, and vulnerable your fliers and teleporters are, harden critical infrastructure such as granaries, wells, armouries, and command posts rather than every roof, and treat teleportation as access control through wards, registered arrival points, and compartmented layouts that carry clear costs and trade-offs.
+
+### [How do I balance one powerful enemy against many weaker enemies in a tabletop RPG?](https://codexcryptica.com/answers/how-do-i-balance-one-powerful-enemy-against-many-weaker-enemies)
+
+**Direct answer:** Compare effective actions per round, not Challenge Rating (CR) or level alone. A single powerful enemy concentrates its threat in one body, so the party can focus damage and disabling effects on it. Weaker enemies spread the same threat across more turns and positions. Start from your system's own encounter-building rules for the edition you run, then compare what each side can actually do from its starting positions, likely damage against the targets it can reach, and how its output changes as bodies fall or effects land.
 
 ### [How do I balance RPG combat encounters without causing a TPK?](https://codexcryptica.com/answers/how-do-i-balance-rpg-combat-encounters-without-a-tpk)
 
@@ -4367,6 +4434,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** Pace an RPG one-shot by budgeting backward from your hard stop: reserve the final 50 to 70 minutes of usable play for the climax and epilogue, place one explicit checkpoint at the halfway mark to test momentum, and prepare an elastic middle encounter that can expand or vanish entirely depending on the table clock.
 
+### [How do I plan a one-shot RPG session?](https://codexcryptica.com/answers/how-do-i-plan-a-one-shot-rpg-session)
+
+**Direct answer:** Plan a one-shot by working backward from the session you actually have: fix the hard stop, group size, system and tone, then scope one adventure to that slot, send players a short premise brief, prepare characters with a reason to act together, and reduce everything else to a one-page run sheet. Before the day, test the slow rules, maps, links and handouts, mark one scene you can drop and one alternate route for any essential fact, and decide your first spoken line. Design and pacing are separate jobs, covered by the linked Answers; this one ends with a game you can open and run tomorrow.
+
 ### [How do I plan story arcs for a long-running RPG campaign?](https://codexcryptica.com/answers/how-do-i-plan-story-arcs-for-an-rpg-campaign)
 
 **Direct answer:** Sketch the campaign's central tensions and possible direction, develop the current arc and a few future possibilities, but prepare only the next session in detail. Give each arc its own problem and resolution that changes the situation, and let player decisions decide what follows. A simple way to keep prep light is three horizons: a broad campaign horizon for threats and factions, an arc horizon for the current conflict and its stakes, and a session horizon for the locations, NPCs and choices you need next time you play.
@@ -4410,6 +4481,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 ### [How do I run a large battle when the player characters are part of an army?](https://codexcryptica.com/answers/how-do-i-run-a-large-battle-when-the-player-characters-are-part-of-an-army)
 
 **Direct answer:** Treat the wider battle as a changing environment that surrounds player-scale scenes, not as hundreds of combats to resolve one by one. Give the battle a trajectory of its own, then let the party's actions alter it where they have plausible leverage. Track a handful of visible states such as fronts, momentum or morale, and intercut updates with focused scenes so the war feels consequential whilst play stays at a scale the table can run.
+
+### [How do I run a one-shot RPG session?](https://codexcryptica.com/answers/how-do-i-run-a-one-shot-rpg-session)
+
+**Direct answer:** Run a one-shot by opening with a short table contract and a situation that needs a decision at once. Repeat one loop: describe what the characters can see, ask what they do, resolve it fairly, and narrate what changes. Share the spotlight deliberately, use plain temporary rulings rather than pausing for research, and let failed or unexpected attempts change the route. Bring the central problem to a conclusion within the agreed slot, leaving time for consequences and a closing beat for each character.
 
 ### [How do I run a pirate campaign that feels like exploration rather than a series of naval battles?](https://codexcryptica.com/answers/how-do-i-run-a-pirate-campaign-focused-on-exploration)
 
@@ -4474,6 +4549,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 ### [How do I run spies and infiltrators in an RPG?](https://codexcryptica.com/answers/how-do-i-run-spies-and-infiltrators-in-an-rpg)
 
 **Direct answer:** Make infiltration a team operation even when one character goes inside. Give the infiltrator a clear objective, then let the rest of the party create access, cover, distractions, surveillance, or an extraction plan under the same pressure. Reveal useful information while the group can still act on it, and prepare several viable routes with consequences for delay, partial success, and exposure.
+
+### [How do I save my party from an overpowered encounter?](https://codexcryptica.com/answers/how-do-i-save-my-party-from-an-overpowered-encounter)
+
+**Direct answer:** Pause long enough to judge whether the fight is actually unwinnable, comparing what the enemies will do next with the progress the party can still make towards winning, escaping or ending the fight. Correct any rules mistake openly, and let the enemies act on goals they already have: guarding a place, finishing a ritual, taking a captive or protecting their own escape. Telegraph an opening, a negotiation or a retreat route the players can choose to use, and if the party still loses, give that defeat a consequence the campaign can continue from, such as capture, a lost relic or an unwanted bargain. If the numbers themselves are broken, say so briefly out of character and agree the fix with the table.
 
 ### [How do I start a D&D campaign?](https://codexcryptica.com/answers/how-do-i-start-a-dnd-campaign)
 
@@ -4569,7 +4648,7 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 ### [How do you handle character death in a tabletop RPG?](https://codexcryptica.com/answers/how-do-you-handle-character-death-in-a-tabletop-rpg)
 
-**Direct answer:** Handle it in three steps: pause the table to confirm the result is final, give the dying character a last action or parting words, then take a short break before anyone touches a replacement sheet. Don't rush a dead character out of the room or slide a new one across the table in the same breath. Honouring the moment keeps the death feeling like a real story beat, and agreeing the process in advance stops it from turning into resentment.
+**Direct answer:** Handle it in three steps: pause the table to confirm the character has died under the rules that apply, then check what revival, if any, your campaign contract allows before treating the departure as permanent. Give the dying character a last action or parting words, then take a short break before anyone touches a replacement sheet. Don't rush a dead character out of the room or slide a new one across the table in the same breath. Honouring the moment keeps the death feeling like a real story beat, and agreeing the process in advance stops it from turning into resentment.
 
 ### [How do you handle players going off script as a GM?](https://codexcryptica.com/answers/how-do-you-handle-players-going-off-script-as-a-gm)
 
@@ -4606,6 +4685,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 ### [How do you make a boss fight memorable in a tabletop RPG?](https://codexcryptica.com/answers/how-do-you-make-a-boss-fight-memorable-in-a-tabletop-rpg)
 
 **Direct answer:** A memorable boss fight is a payoff encounter, not merely a harder combat encounter. Connect the fight to earlier campaign material, give the villain an objective beyond surviving, create multiple simultaneous problems for the party, let phase changes alter play rather than just refill the boss's HP, reward preparation and earlier player choices, and show visible consequences when the fight ends.
+
+### [How do you make a single-enemy boss fight interesting?](https://codexcryptica.com/answers/how-do-you-make-a-single-enemy-boss-fight-interesting)
+
+**Direct answer:** Give the party a changing tactical problem to solve together. Keep the boss active between player turns with limited, clearly triggered reactions, make position and terrain change what a character can safely do, telegraph its dangerous attacks so players can answer them, and let phases, damaged body parts and one secondary objective change the choices on offer. Two or three hooks that interact will hold attention longer than a large stack of unrelated abilities on one stat block.
 
 ### [How do you make a tabletop RPG session more engaging?](https://codexcryptica.com/answers/how-do-you-make-a-tabletop-rpg-session-more-engaging)
 
@@ -4745,7 +4828,7 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 ### [How much prep do you need for an RPG session?](https://codexcryptica.com/answers/how-much-prep-do-you-need-for-an-rpg-session)
 
-**Direct answer:** There is no time or page-count that applies to every GM, system or campaign, and chasing one is the wrong question. Prep only pays off when it creates choices at the table, so the useful measure is coverage, not hours: do you know the immediate situation, the people in it and what they want, a couple of places the party might go, a complication or two, and what happens if the players do nothing? If yes, you are ready, whether that took twenty minutes or two hours.
+**Direct answer:** You have enough prep when you can start the next session, respond to the likely player choices, and improvise or defer the rest without stalling the table. There is no time or page-count that applies to every GM, system or campaign: judge by coverage, not hours. If you know the immediate situation, the people in it and what they want, a couple of likely places, a complication or two, and what happens if the players do nothing, you are ready whether that took twenty minutes or two hours.
 
 ### [How much Rule of Cool should a DM allow?](https://codexcryptica.com/answers/how-much-rule-of-cool-should-a-dm-allow)
 
@@ -4775,9 +4858,17 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** Create fantasy-town rumours by tying each one to a named source, a local tension, and a consequence the party can discover or change. Write a small mix of true, distorted, and false reports, but make every one point towards a person, place, object, or event the players can pursue. The useful question is not whether a rumour is accurate, but why this speaker believes it and what changes if the party repeats, tests, or ignores it.
 
+### [How do you keep character death meaningful when resurrection is possible?](https://codexcryptica.com/answers/how-to-keep-character-death-meaningful-with-resurrection)
+
+**Direct answer:** When resurrection is available in an RPG, character death stays meaningful through what the death and the return change, not through whether the character stays dead. Agree in advance how revival works in your campaign, what it costs, and who can obtain it, then let missed time, spent resources, a witnessed sacrifice, and changed relationships carry the weight. A return that follows the agreed rules honours the players' abilities; a surprise penalty added afterwards to manufacture grief does not.
+
 ### [How do you write an in-world newspaper for an RPG?](https://codexcryptica.com/answers/how-to-write-an-in-world-newspaper-for-an-rpg)
 
 **Direct answer:** Write an in-world RPG newspaper as a playable handout: give it a local headline, two or three public facts, a recognisable editorial voice, one clear bias, a rumour marked by its source, and a hook the players can pursue. Keep the truth behind each item in your GM notes, then connect names, places and dates to the campaign so the paper changes when the world does.
+
+### [How Would a Realistic Adventurers' Guild Work?](https://codexcryptica.com/answers/how-would-a-realistic-adventurers-guild-work)
+
+**Direct answer:** Yes. An apprentice, journeyman and master ladder is a sound starting point for a fantasy monster hunters' guild, because historic craft guilds did train people in stages, judge competence and speak for a trade. Treat the finished guild as a chartered professional body that licenses practitioners, sets standards and bargains with rulers, rather than a universal employer or a noticeboard that hands work to anyone who walks in. Whether it also posts bounties, pays wages or fields its own teams depends on the charter you give it, and monster work then adds hazard, liability and emergency duties that ordinary crafts rarely faced.
 
 ### [Is my RPG campaign idea good?](https://codexcryptica.com/answers/is-my-rpg-campaign-idea-good)
 
@@ -4787,13 +4878,25 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** Use a point crawl when play is about choosing between known or rumoured destinations and routes, with each journey carrying a clear cost. Use a hex crawl when finding the landscape is itself the game: the party chooses a direction, exposes unknown ground, and manages time and supplies across a broad region. Neither is more open by default; they make different parts of exploration visible at the table.
 
+### [Should I develop my characters or my world first?](https://codexcryptica.com/answers/should-i-develop-my-characters-or-my-world-first)
+
+**Direct answer:** Start with whichever is clearest in your mind: a character, a place, a conflict or a premise. Write down what you already know about it, then develop characters and world together, letting each side raise questions for the other. Ask how a place shapes what a person wants and can do, then ask what that person reveals about the place. You do not need a finished map, history or cast before you begin, and gaps can stay open while you work.
+
 ### [Should I share worldbuilding notes and lore with my players?](https://codexcryptica.com/answers/should-i-share-worldbuilding-notes-with-my-players)
 
 **Direct answer:** Yes, selectively: share what the characters plausibly know, including attributed rumours and useful details about places and people, in a short primer they can skim. Keep unrevealed truths private, and treat the notes as an invitation to play rather than required reading. Anything the party needs to make a decision should also come up at the table, so play works for someone who never opened the document.
 
+### [How do I stop players from investigating every detail?](https://codexcryptica.com/answers/stop-players-investigating-every-detail)
+
+**Direct answer:** Keep the detail and change what your description asks players to do with it. Give atmosphere briefly and move on, make optional interactions easy to take or leave, and mark real leads with an anomaly, a stake, or someone who needs help. When players investigate background detail anyway, answer at the scale it earns: a sentence, a short summary, or a full scene if their interest and the consequences justify it.
+
 ### [What are the best classless fantasy RPGs with skill-based progression?](https://codexcryptica.com/answers/what-are-the-best-classless-fantasy-rpgs-with-skill-based-progression)
 
 **Direct answer:** For a group leaving Warhammer Fantasy Roleplay 4e, Mythras and GURPS are conditional candidates; neither is a verified winner. Mythras offers classless skill improvement and session-refreshing Luck that can downgrade a Major Wound, but its injury rules can still maim or kill. GURPS offers classless point-buy and a limited reroll, while injury, resurrection, and campaign pace depend on the chosen rules package. Verify those trade-offs against your group's own requirements before choosing. Dragonbane is a lighter, profession-framed option whose push rerolls cost a condition but do not protect a character from death. Savage Worlds has no fixed classes, but its Rank-based Advances gate Edges. Against the Darkmaster is a vocation-and-level mismatch.
+
+### [What are the classic must-play tabletop RPG adventures?](https://codexcryptica.com/answers/what-are-the-classic-must-play-tabletop-rpg-adventures)
+
+**Direct answer:** There is no single canon that every tabletop group has to play, but a small set of adventures is worth knowing because so many groups still reference them: The Keep on the Borderlands and Tomb of Horrors for early Dungeons and Dragons, Ravenloft for gothic horror, Lost Mine of Phandelver and The Delian Tomb as modern starters, Sailors on the Starless Sea as a funnel, and Masks of Nyarlathotep, The Enemy Within and Rise of the Runelords as long campaigns from different traditions. Treat the list as a menu by experience and time commitment, not as a duty. Some entries are historically influential rather than automatically the best choice for a new group today.
 
 ### [What are the pros and cons of becoming a Dungeon Master?](https://codexcryptica.com/answers/what-are-the-pros-and-cons-of-becoming-a-dungeon-master)
 
@@ -4801,7 +4904,7 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 ### [What can I do on my turn in D&D combat?](https://codexcryptica.com/answers/what-can-i-do-on-my-turn-in-dnd-combat)
 
-**Direct answer:** On your turn in D&D combat you can usually move up to your speed and take one action, and you sometimes have a bonus action if a class feature, spell, or piece of equipment gives you one. You can also interact briefly with something nearby and speak a few words. A reaction responds to a specific trigger, often on another creature's turn but sometimes on yours; after you use one, you cannot take another until the start of your next turn. Your class and features decide the interesting options inside those buckets, so describe what you want to accomplish and let the Dungeon Master tell you which action fits.
+**Direct answer:** On your turn in D&D combat, you can normally move up to your speed and take one action. You can also use a bonus action when a rule grants one. A reaction responds to a specific trigger and can happen on your turn or another creature's turn. You can usually interact once with a simple object as part of your movement or action, and speak a few words. A reaction is not a free extra choice: once used, it is unavailable again until the start of your next turn. Your class and features determine which options are available, so describe what you want to accomplish and let the Dungeon Master tell you which action fits.
 
 ### [What can players actually buy and sell in a fantasy settlement?](https://codexcryptica.com/answers/what-can-players-actually-buy-and-sell-in-a-fantasy-settlement)
 
@@ -4917,7 +5020,7 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 ### [Which dice do I roll in D&D, and when?](https://codexcryptica.com/answers/which-dice-do-i-roll-in-dnd-and-when)
 
-**Direct answer:** If you are trying something uncertain in D&D, you very often start with a twenty-sided die (d20) and add a modifier the Dungeon Master or your character sheet names. For an attack that requires an attack roll, the d20 decides whether it hits and you roll its listed damage on a hit. Other effects name their dice directly, so you do not need to memorise every one.
+**Direct answer:** Most D&D ability checks, attack rolls and saving throws use a d20 plus the relevant modifier. For an attack that requires an attack roll, a successful hit is followed by the listed damage dice. Healing and other effects name their own dice and do not always require a d20 first. Your character sheet, spell, item or Dungeon Master normally tells you what to roll.
 
 ### [Which tabletop RPGs have useful squad, unit and mass-battle rules?](https://codexcryptica.com/answers/which-tabletop-rpgs-have-squad-and-mass-battle-rules)
 
@@ -5051,6 +5154,12 @@ Curated raw or lightly edited output from the Codex Cryptica generators, indexed
 **Genre:** Classic Fantasy
 
 **Summary:** A high-stakes senate vote in the Republic of Karrow: provincial tax hoarding, grain syndicate corruption, and a five-seat council teetering on a simple majority.
+
+### [Classic Fantasy point crawl example: The Receding Tide Road](https://codexcryptica.com/examples/the-receding-tide-road-point-crawl)
+
+**Genre:** Classic Fantasy
+
+**Summary:** An interconnected 8-location coastal fantasy point crawl across tidal causeways, sea-caves, and ruined cliff-abbeys exposed only during the king-tide, featuring branching routes, hidden crawlspaces, and a clue-gated final ascent.
 
 
 ## Live In-Browser Generators

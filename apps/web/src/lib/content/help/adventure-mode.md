@@ -55,7 +55,9 @@ Use the **Known situations** control during play to focus or clear attention.
 Focusing is optional; ordinary free action continues without a selected lead.
 To finish a lead or leave it behind, open **Adventure tools → Situations** and
 choose **Mark as concluded** or **Leave it behind**. Either choice can be undone
-with **Reopen**. New world-entry rumours are introduced as
+with **Reopen**. To ask about the current area, choose **Look for local rumours**
+in **Adventure tools → Situations**; this submits an in-world enquiry to the
+Oracle. New world-entry rumours are introduced as
 play makes them relevant rather than presented as a scenario-selection list.
 You need an online Oracle connection for AI turns. The selected GM notes remain
 stored within the Adventure session but are not encrypted from the vault owner.

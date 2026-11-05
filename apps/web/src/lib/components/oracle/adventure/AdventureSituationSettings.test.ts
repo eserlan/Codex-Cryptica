@@ -101,6 +101,18 @@ describe("AdventureSituationSettings", () => {
     }
   });
 
+  it("disables local rumours while an Oracle turn is generating", () => {
+    const m = manager([], { phase: "generating" });
+    render(AdventureSituationSettings, { props: { manager: m } });
+    expect(
+      (
+        screen.getByRole("button", {
+          name: "Look for local rumours",
+        }) as HTMLButtonElement
+      ).disabled,
+    ).toBe(true);
+  });
+
   it("shows fixed recovery copy, not the raw error, when a change fails", async () => {
     const m = manager([lead("a", "open")]);
     m.setScenarioStatus.mockRejectedValue(new Error("invalid-transition"));

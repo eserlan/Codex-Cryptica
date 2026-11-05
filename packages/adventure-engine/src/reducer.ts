@@ -7,6 +7,7 @@ import {
   validateStateBudget,
 } from "./schemas";
 import { scenarioItemIdentityIds } from "./scenario-schemas";
+import { candidateScenariosForLocation } from "./contextual-rumours";
 import type {
   AdventureSession,
   AdventureTurnProposal,
@@ -311,12 +312,18 @@ function markRevealedScenarios(
   turn: CommittedAdventureTurn,
   createId: IdFactory,
 ): string | null {
+  const candidateIds = new Set(
+    candidateScenariosForLocation(candidate).map((item) => item.id),
+  );
   for (const scenarioId of scenarioIds ?? []) {
     const scenario = candidate.scenarioCollection?.items.find(
       (item) => item.id === scenarioId,
     );
     if (!scenario) return `Unknown scenario: ${scenarioId}`;
     if (scenario.knowledge === "unheard") {
+      if (!candidateIds.has(scenarioId)) {
+        return `Scenario is not available at the current location: ${scenarioId}`;
+      }
       const id = allocateId(existingIds(candidate), createId);
       if (!id || scenario.events.length >= 100)
         return "Unable to record scenario discovery";
