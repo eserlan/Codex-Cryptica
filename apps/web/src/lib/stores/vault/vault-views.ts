@@ -19,6 +19,7 @@ interface VaultViewDependencies {
   mode: { isGuestMode: boolean };
   guest: Pick<
     GuestVaultStore,
+    | "isInitialized"
     | "entities"
     | "entitiesMap"
     | "relationships"
@@ -38,6 +39,13 @@ interface VaultViewDependencies {
 /** Read models select the current host or guest data without caching reactive state. */
 export class VaultViews {
   constructor(private deps: VaultViewDependencies) {}
+  /** Published snapshots own readiness; host bootstrap and sync may still be loading. */
+  get isPublishedGuest() {
+    return this.deps.mode.isGuestMode && !!this.deps.guest.publishId;
+  }
+  get isGuestInitialized() {
+    return this.deps.guest.isInitialized;
+  }
   get entities() {
     if (this.deps.mode.isGuestMode) {
       return {

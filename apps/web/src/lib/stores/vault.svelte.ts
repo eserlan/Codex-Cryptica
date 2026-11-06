@@ -1,3 +1,8 @@
+import { getVaultSingleton } from "./vault/singleton";
+import { VaultAssetAccess } from "./vault/asset-access";
+import { composeVault } from "./vault/composition";
+import { VaultEntityEditing } from "./vault/entity-editing";
+import { VaultConnectionRouting } from "./vault/connection-routing";
 import { VaultViews } from "./vault/vault-views";
 import { VaultBootstrap } from "./vault/bootstrap";
 import { VaultTranscripts } from "./vault/transcripts";
@@ -5,35 +10,22 @@ import { PublishRegistryLoader } from "./vault/publish-registry-loader";
 import { vaultRegistry } from "./vault-registry.svelte";
 import { mapRegistry } from "./map-registry.svelte";
 import { canvasRegistry } from "./canvas-registry.svelte";
-import { themeStore } from "./theme.svelte";
-import { debugStore } from "./debug.svelte";
 import type { LocalEntity, BatchCreateInput } from "./vault/types";
-import {
-  linksNewExternalImage,
-  localizeExternalImage,
-} from "./vault/external-image-localizer";
 import type { Entity, GuestChatTranscript } from "schema";
 import type { BulkMutationResult } from "./vault/bulk-results";
 import { getDB } from "../utils/idb";
-import { VaultLifecycleManager } from "./vault/lifecycle";
-import { EntityStore } from "./vault/entity-store.svelte";
-import { EntityContentLoader } from "./vault/entity-content-loader.svelte";
-import { EntityPersistenceService } from "./vault/entity-persistence";
-import { EntityMutationService } from "./vault/entity-mutations";
+import type { VaultLifecycleManager } from "./vault/lifecycle";
+import type { EntityStore } from "./vault/entity-store.svelte";
 import {
   addFamilyLink as addFamilyLinkMutation,
   removeFamilyLink as removeFamilyLinkMutation,
 } from "./vault/family-mutations";
-import {
-  isFamilyType,
-  resolveFamilyAlias,
-  type FamilyConnectionType,
-} from "@codex/family-engine";
-import { SyncStore } from "./vault/sync-store.svelte";
-import { AssetStore } from "./vault/asset-store.svelte";
-import { FileStore } from "./vault/file-store.svelte";
-import { ServiceRegistry } from "./vault/service-registry";
-import { SearchStore } from "./vault/search-store.svelte";
+import type { FamilyConnectionType } from "@codex/family-engine";
+import type { SyncStore } from "./vault/sync-store.svelte";
+import type { AssetStore } from "./vault/asset-store.svelte";
+import type { FileStore } from "./vault/file-store.svelte";
+import type { ServiceRegistry } from "./vault/service-registry";
+import type { SearchStore } from "./vault/search-store.svelte";
 import {
   VaultRepository,
   SyncCoordinator,
@@ -45,30 +37,20 @@ import {
   fileIOAdapter,
   assetIOAdapter,
   imageProcessor,
-  createSyncEngine,
-  syncIOAdapter,
-  syncNotifier,
 } from "./vault/adapters.svelte";
 
-import { VaultMessenger } from "./vault/messenger";
-import { VaultStorageManager } from "./vault/storage";
-import { p2pGuestService } from "../cloud-bridge/p2p/guest-service";
+import type { VaultMessenger } from "./vault/messenger";
+import type { VaultStorageManager } from "./vault/storage";
 import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
 import { guestVault } from "./guest-vault.svelte";
 import { onboardingFunnel } from "#lib/app/onboarding/onboarding-funnel.js";
-import { statSheetTemplates } from "./stat-sheet-templates.svelte";
-import { DeadExternalImagePruner } from "./vault/dead-external-image-pruner";
-import { browserPerformanceRecorder } from "#lib/services/performance/browser-performance-capture.js";
+import type { DeadExternalImagePruner } from "./vault/dead-external-image-pruner";
 
 export class VaultStore {
   // Reactive State
   _isInitialized = $state(false);
   get isInitialized() {
-    if (sessionModeStore.isGuestMode && guestVault.publishId) {
-      // Viewing a published snapshot: don't let host-vault init leak through
-      // and trigger app effects before the snapshot has loaded.
-      return guestVault.isInitialized;
-    }
+    if (this.views.isPublishedGuest) return this.views.isGuestInitialized;
     return this._isInitialized;
   }
   set isInitialized(v: boolean) {
@@ -77,8 +59,6 @@ export class VaultStore {
   selectedEntityId = $state<string | null>(null);
   demoVaultName = $state<string | null>(null);
   migrationRequired = $state(false);
-  /** Serialises copies of newly linked external images; see updateEntity. */
-  private imageLocalization: Promise<unknown> = Promise.resolve();
   defaultVisibility = $state<"visible" | "hidden">("visible");
 
   // Callbacks
@@ -86,14 +66,14 @@ export class VaultStore {
   onEntityDelete?: (entityId: string) => void;
   onBatchUpdate?: (updates: Record<string, Partial<LocalEntity>>) => void;
 
-  // Services & Sub-stores
-  public entityStore: EntityStore;
-  public syncStore: SyncStore;
-  public assetStore: AssetStore;
-  public fileStore: FileStore;
-  public serviceRegistry: ServiceRegistry;
-  public searchStore: SearchStore;
-  public deadImagePruner: DeadExternalImagePruner;
+  // Public stores are initialized synchronously by composeVault.
+  public entityStore!: EntityStore;
+  public syncStore!: SyncStore;
+  public assetStore!: AssetStore;
+  public fileStore!: FileStore;
+  public serviceRegistry!: ServiceRegistry;
+  public searchStore!: SearchStore;
+  public deadImagePruner!: DeadExternalImagePruner;
   private lifecycleManager: VaultLifecycleManager;
   private storageManager: VaultStorageManager;
   private messenger: VaultMessenger;
@@ -118,11 +98,8 @@ export class VaultStore {
     return this.entityStore.allEntities.map((e) => e.title).join(", ");
   }
   get status() {
-    if (sessionModeStore.isGuestMode && guestVault.publishId) {
-      // Guest snapshots don't sync; the host syncStore may be stuck in
-      // "loading" from an interrupted bootstrap.
-      return guestVault.isInitialized ? "idle" : "loading";
-    }
+    if (this.views.isPublishedGuest)
+      return this.views.isGuestInitialized ? "idle" : "loading";
     return this.syncStore.status;
   }
   set status(
@@ -209,6 +186,13 @@ export class VaultStore {
   private publishRegistry = new PublishRegistryLoader();
   private bootstrap: VaultBootstrap;
   private transcripts = new VaultTranscripts(this);
+  private assetAccess = new VaultAssetAccess({
+    isGuest: () => this.isGuest,
+    resolveGuestImage: (path) => guestVault.resolveImageUrl(path),
+    assets: () => this.assetStore,
+  });
+  private entityEditing = new VaultEntityEditing(this);
+  private connectionRouting = new VaultConnectionRouting(this);
 
   registerPublishRegistryLoader(
     loader: (vId: string, handle: FileSystemDirectoryHandle) => Promise<void>,
@@ -222,167 +206,21 @@ export class VaultStore {
     private fileManager = new FileManager({ ioAdapter: assetIOAdapter }),
     public syncCoordinator: SyncCoordinator | null = null,
   ) {
-    this.serviceRegistry = new ServiceRegistry();
-    this.searchStore = new SearchStore(this.serviceRegistry);
-    this.storageManager = new VaultStorageManager({
-      getRootHandle: () =>
-        vaultRegistry.rootHandle as FileSystemDirectoryHandle | undefined,
-    });
-
-    const loader = new EntityContentLoader({
-      repository: this.repository,
-      activeVaultId: () => this.activeVaultId,
-      isGuest: () => this.isGuest,
-      getGuestFile: (path) => p2pGuestService.getFile(path),
-      getActiveVaultHandle: () => this.getActiveVaultHandle(),
-      getActiveFolderHandle: () => this.getActiveFolderHandle(),
-    });
-
-    this.syncStore = new SyncStore({
-      activeVaultId: () => this.activeVaultId,
-      activeVaultRecord: () => this.activeVaultRecord,
-      repository: this.repository,
-      getSyncCoordinator: async () => {
-        await this.serviceRegistry.ensureInitialized();
-        if (!this.syncCoordinator) {
-          const engine = await createSyncEngine();
-          this.syncCoordinator = new SyncCoordinator(
-            syncIOAdapter,
-            engine,
-            syncNotifier,
-          );
-        }
-        return this.syncCoordinator;
-      },
-      getActiveVaultHandle: () => this.getActiveVaultHandle(),
-      getActiveFolderHandle: () => this.getActiveFolderHandle(),
-      ensureServicesInitialized: async () => {
-        await this.serviceRegistry.ensureInitialized();
-      },
-      loadMaps: (vId) => mapRegistry.loadFromVault(vId),
-      loadCanvases: (vId) => canvasRegistry.loadFromVault(vId),
-      loadPublishRegistry: (vId, handle) =>
-        this.publishRegistry.load(vId, handle),
-      updateEntityCount: (vId, count) =>
-        vaultRegistry.updateEntityCount(vId, count),
-      flushPendingSaves: (timeoutMs) =>
-        this.entityStore?.flushPendingSaves(timeoutMs),
-    });
-
-    const persistence = new EntityPersistenceService({
-      repository: this.repository,
-      activeVaultId: () => this.activeVaultId,
-      isGuest: () => this.isGuest,
-      getSpecificVaultHandle: (vId) => this.getSpecificVaultHandle(vId),
-      setStatus: (s) => this.syncStore.setStatus(s),
-      status: () => this.syncStore.status,
-      setErrorMessage: (m) => this.syncStore.setErrorMessage(m),
-      onEntityUpdate: (entity) => this.onEntityUpdate?.(entity),
-      isContentLoaded: (id) => loader.isContentLoaded(id),
-      loadContent: (id) => loader.internalLoadContent(id),
-      markContentLoaded: (id) => loader.markContentLoaded(id),
-    });
-
-    const mutations = new EntityMutationService({
-      performanceRecorder: browserPerformanceRecorder,
-      repository: this.repository,
-      persistence,
-      loader,
-      activeVaultId: () => this.activeVaultId,
-      isGuest: () => this.isGuest,
-      getActiveVaultHandle: () => this.getActiveVaultHandle(),
-      getActiveFolderHandle: () => this.getActiveFolderHandle(),
-      getServices: () => this.services,
-      invalidateUrlCache: (path) => this.releaseImageUrl(path),
-      onEntityDelete: (id) => this.onEntityDelete?.(id),
-      onBatchUpdate: (updates) => this.onBatchUpdate?.(updates),
-      updateEntityCount: (vId, count) =>
-        vaultRegistry.updateEntityCount(vId, count),
-    });
-
-    this.entityStore = new EntityStore(
-      this.repository,
-      loader,
-      persistence,
-      mutations,
+    const { storage, lifecycle, messenger } = composeVault(
+      this,
+      this.assetManager,
+      this.fileManager,
+      this.publishRegistry,
     );
-
-    this.deadImagePruner = new DeadExternalImagePruner({
-      getEntities: () => this.entityStore.entities,
-      isWritable: () =>
-        !sessionModeStore.isGuestMode &&
-        !sessionModeStore.isDemoMode &&
-        !this.isGuest &&
-        !this.demoVaultName &&
-        !!this.activeVaultId,
-      updateEntities: (updates) => this.entityStore.batchUpdate(updates),
-    });
-
-    this.assetManager.setOnDeadExternalImage((url) => {
-      this.deadImagePruner.add(url);
-    });
-
-    this.assetStore = new AssetStore({
-      assetManager: this.assetManager,
-      getActiveVaultHandle: () => this.getActiveVaultHandle(),
-      getActiveFolderHandle: () => this.getActiveFolderHandle(),
-      isGuest: () => this.isGuest,
-    });
-    this.fileStore = new FileStore({
-      fileManager: this.fileManager,
-      getActiveVaultHandle: () => this.getActiveVaultHandle(),
-      isGuest: () => this.isGuest,
-    });
-
-    this.lifecycleManager = new VaultLifecycleManager({
-      syncStore: this.syncStore,
-      assetStore: this.assetStore,
-      repository: this.repository,
-      activeVaultId: () => this.activeVaultId,
-      getActiveVaultHandle: () => this.getActiveVaultHandle(),
-      getActiveFolderHandle: () => this.getActiveFolderHandle(),
-      loadFiles: (skipSync) => this.loadFiles(skipSync),
-      flushPendingSaves: () => this.entityStore.flushPendingSaves(),
-      ensureServicesInitialized: async () => {
-        await this.serviceRegistry.ensureInitialized();
-      },
-      clearStorageCache: () => this.storageManager.clearCache(),
-      getEntities: () => this.entityStore.entities,
-      setDemoVaultName: (n) => (this.demoVaultName = n),
-      setInitialized: (v) => (this.isInitialized = v),
-      rebuildEntityIndexes: () => {
-        this.entityStore.initializeInboundConnections();
-        this.entityStore.rebuildIndexes();
-      },
-      getServices: () => this.services,
-      setSelectedEntityId: (id) => (this.selectedEntityId = id),
-      vaultRegistry,
-      themeStore,
-      mapRegistry,
-      canvasRegistry,
-      ensureAssetPersisted: (path, handle) =>
-        this.ensureAssetPersisted(path, handle),
-    });
-
-    this.bootstrap = new VaultBootstrap(this, this.lifecycleManager);
-
-    this.messenger = new VaultMessenger({
-      activeVaultId: () => this.activeVaultId,
-      loadFiles: () => this.loadFiles(),
-      broadcastCallback: () => this.broadcastVaultUpdate(),
-    });
-
-    mapRegistry.init(this.repository.saveQueue);
-    canvasRegistry.init(this.repository.saveQueue);
+    this.storageManager = storage;
+    this.lifecycleManager = lifecycle;
+    this.messenger = messenger;
+    this.bootstrap = new VaultBootstrap(this, lifecycle);
   }
-
-  // --- Core Lifecycle ---
 
   async init() {
     return this.bootstrap.init();
   }
-
-  // --- External Folder Methods ---
 
   broadcastVaultUpdate() {
     this.messenger.broadcastVaultUpdate();
@@ -412,8 +250,6 @@ export class VaultStore {
   async checkForConflicts(signal?: AbortSignal) {
     return this.syncStore.checkForConflicts(signal);
   }
-
-  // --- Entity Management (Delegated) ---
 
   loadEntityContent(id: string): Promise<void> {
     return this.entityStore.loadEntityContent(id);
@@ -446,49 +282,10 @@ export class VaultStore {
     title: string,
     initialData: Partial<Entity> = {},
   ) {
-    // Auto-apply the vault's configured default stat sheet template for this
-    // category, unless the caller already supplied one (e.g. duplicating an
-    // entity, or an import that carries its own statSheet).
-    if (!initialData.statSheet) {
-      const defaultFields =
-        statSheetTemplates.getDefaultFieldsForCategory(type);
-      if (defaultFields) {
-        initialData = {
-          ...initialData,
-          statSheet: { templateId: null, fields: defaultFields },
-        };
-      }
-    }
-    return this.entityStore.createEntity(type, title, initialData);
+    return this.entityEditing.createEntity(type, title, initialData);
   }
   updateEntity(id: string, updates: Partial<LocalEntity>) {
-    const linkedImage = sessionModeStore.isGuestMode
-      ? null
-      : linksNewExternalImage(this.entities[id]?.image, updates);
-    const result = this.entityStore.updateEntity(id, updates);
-    if (linkedImage) {
-      // One at a time: a re-import can relink hundreds of images, and each
-      // copy converts to WebP on the main thread.
-      this.imageLocalization = this.imageLocalization
-        .then(() => result)
-        .then(() =>
-          localizeExternalImage(
-            {
-              getEntity: (entityId) => this.entities[entityId],
-              importExternalImage: (url, entityId) =>
-                this.assetStore.importExternalImage(url, entityId),
-              updateEntity: (entityId, patch) =>
-                this.entityStore.updateEntity(entityId, patch),
-            },
-            id,
-            linkedImage,
-          ),
-        ) // A failed save or copy must not stall the images queued after it.
-        .catch((error) =>
-          console.warn("[Vault] Could not copy linked image", error),
-        );
-    }
-    return result;
+    return this.entityEditing.updateEntity(id, updates);
   }
   batchUpdate(updates: Record<string, Partial<LocalEntity>>) {
     return this.entityStore.batchUpdate(updates);
@@ -504,14 +301,7 @@ export class VaultStore {
   bulkDelete(ids: string[]): Promise<BulkMutationResult> {
     return this.entityStore.bulkDelete(ids);
   }
-  /**
-   * Freeform relationship phrases like "Mother of" are redirected to a real
-   * family link (reciprocal write + cycle check) instead of a one-sided
-   * generic connection, so text typed outside the Family tab (Related Entity
-   * modal, AI-generated connections) still surfaces in Family/Lineage views.
-   * Only applies between two characters and when `type` isn't already a
-   * family type, so it can never re-trigger on the family link it writes.
-   */
+  /** Redirect character family phrases to reciprocal, cycle-checked links. */
   async addConnection(
     sId: string,
     tId: string,
@@ -519,41 +309,13 @@ export class VaultStore {
     label?: string,
     strength?: number,
   ) {
-    if (!isFamilyType(type) && label) {
-      const alias = resolveFamilyAlias(label);
-      if (
-        alias &&
-        this.entities[sId]?.type === "character" &&
-        this.entities[tId]?.type === "character"
-      ) {
-        const result = await this.addFamilyLink(sId, tId, alias.type);
-        if (!result.ok) return false;
-        // Best-effort: the family link itself is already written and
-        // correct at this point, so a failure to attach the display term
-        // (e.g. "Mother") must not report the whole redirect as failed.
-        try {
-          const labelled = await this.updateConnection(
-            sId,
-            tId,
-            alias.type,
-            alias.type,
-            alias.label,
-          );
-          if (labelled === false) {
-            console.warn(
-              `addConnection: family link ${sId}->${tId} (${alias.type}) created, but attaching its display label "${alias.label}" failed.`,
-            );
-          }
-        } catch (err) {
-          console.warn(
-            `addConnection: family link ${sId}->${tId} (${alias.type}) created, but attaching its display label "${alias.label}" threw.`,
-            err,
-          );
-        }
-        return true;
-      }
-    }
-    return this.entityStore.addConnection(sId, tId, type, label, strength);
+    return this.connectionRouting.addConnection(
+      sId,
+      tId,
+      type,
+      label,
+      strength,
+    );
   }
   setConnectionHidden(sId: string, tId: string, type: string, hidden: boolean) {
     return this.entityStore.setConnectionHidden(sId, tId, type, hidden);
@@ -607,36 +369,25 @@ export class VaultStore {
     return this.entityStore.batchCreateEntities(newEntitiesList);
   }
 
-  // --- Save Coordination ---
-
   scheduleSave(entity: LocalEntity | Entity) {
     return this.entityStore.scheduleSave(entity);
   }
-
-  // --- Asset Management (Delegated) ---
 
   resolveImageUrl(
     path: string,
     fetcher?: (path: string) => Promise<Blob>,
   ): Promise<string> {
-    if (sessionModeStore.isGuestMode) {
-      return Promise.resolve(guestVault.resolveImageUrl(path) || "");
-    }
-    return this.assetStore.resolveImageUrl(path, fetcher);
+    return this.assetAccess.resolveImageUrl(path, fetcher);
   }
   releaseImageUrl(path: string) {
-    this.assetStore.releaseImageUrl(path);
+    this.assetAccess.releaseImageUrl(path);
   }
   /** A small version of an image for dense views such as the graph. */
   resolveThumbnailUrl(path: string): Promise<string> {
-    if (sessionModeStore.isGuestMode) {
-      return Promise.resolve(guestVault.resolveImageUrl(path) || "");
-    }
-    return this.assetStore.resolveThumbnailUrl(path);
+    return this.assetAccess.resolveThumbnailUrl(path);
   }
   releaseThumbnailUrl(path: string) {
-    if (sessionModeStore.isGuestMode) return;
-    this.assetStore.releaseThumbnailUrl(path);
+    this.assetAccess.releaseThumbnailUrl(path);
   }
   saveImageToVault(blob: Blob | File, entityId: string, name?: string) {
     return this.assetStore.saveImageToVault(blob, entityId, name);
@@ -648,8 +399,6 @@ export class VaultStore {
     return this.assetStore.ensureAssetPersisted(path, handle);
   }
 
-  // --- Handle Management ---
-
   getActiveVaultHandle() {
     return this.storageManager.getActiveVaultHandle(this.activeVaultId);
   }
@@ -660,7 +409,6 @@ export class VaultStore {
     return this.storageManager.getSpecificVaultHandle(vaultId);
   }
 
-  // --- Map & Canvas Delegations ---
   saveMaps() {
     return mapRegistry.saveMaps().then(() => undefined);
   }
@@ -674,7 +422,6 @@ export class VaultStore {
     return canvasRegistry.saveCanvas(id, options);
   }
 
-  // --- Lifecycle Delegations ---
   importFromFolder(handle?: FileSystemDirectoryHandle) {
     return handle
       ? this.lifecycleManager.importFromFolder(handle)
@@ -731,18 +478,4 @@ export class VaultStore {
   }
 }
 
-const VAULT_KEY = "__codex_vault_instance__";
-
-export const vault: VaultStore =
-  (globalThis as any)[VAULT_KEY] ??
-  ((globalThis as any)[VAULT_KEY] = new VaultStore());
-
-if (
-  typeof window !== "undefined" &&
-  (import.meta.env.DEV ||
-    (globalThis as { __CODEX_PERFORMANCE_CAPTURE__?: boolean })
-      .__CODEX_PERFORMANCE_CAPTURE__ === true)
-) {
-  (window as any).vault = vault;
-  debugStore.log("[VaultStore] Module loaded, vault attached to window");
-}
+export const vault: VaultStore = getVaultSingleton(() => new VaultStore());

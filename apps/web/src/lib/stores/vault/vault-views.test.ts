@@ -36,6 +36,7 @@ function setup() {
     entityStore: () => host,
     mode: { isGuestMode: false },
     guest: {
+      isInitialized: false,
       entities: [guestHero],
       entitiesMap: { hero: guestHero },
       relationships: [
@@ -88,7 +89,12 @@ describe("VaultViews", () => {
 
   it("merges local extras while keeping guest graph and list entities authoritative", () => {
     const { views, deps, guestHero, localHero, extra } = setup();
+    expect(views.isPublishedGuest).toBe(false);
     deps.mode.isGuestMode = true;
+    expect(views.isPublishedGuest).toBe(true);
+    expect(views.isGuestInitialized).toBe(false);
+    deps.guest.isInitialized = true;
+    expect(views.isGuestInitialized).toBe(true);
     // The record historically allows local overrides; the list preserves snapshot identities.
     expect(views.entities.hero).toBe(localHero);
     expect(views.allEntities).toEqual([guestHero, extra]);
