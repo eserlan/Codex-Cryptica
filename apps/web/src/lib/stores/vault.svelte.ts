@@ -1,4 +1,7 @@
-import { asset } from "$app/paths";
+import { VaultViews } from "./vault/vault-views";
+import { VaultBootstrap } from "./vault/bootstrap";
+import { VaultTranscripts } from "./vault/transcripts";
+import { PublishRegistryLoader } from "./vault/publish-registry-loader";
 import { vaultRegistry } from "./vault-registry.svelte";
 import { mapRegistry } from "./map-registry.svelte";
 import { canvasRegistry } from "./canvas-registry.svelte";
@@ -11,12 +14,6 @@ import {
 } from "./vault/external-image-localizer";
 import type { Entity, GuestChatTranscript } from "schema";
 import type { BulkMutationResult } from "./vault/bulk-results";
-import {
-  saveTranscriptToDisk,
-  loadTranscriptsForCharacterFromDisk,
-  loadPublishRegistryFromDisk,
-} from "./vault/io";
-import { getPublishRegistry, savePublishRegistry } from "./vault/registry";
 import { getDB } from "../utils/idb";
 import { VaultLifecycleManager } from "./vault/lifecycle";
 import { EntityStore } from "./vault/entity-store.svelte";
@@ -52,7 +49,6 @@ import {
   syncIOAdapter,
   syncNotifier,
 } from "./vault/adapters.svelte";
-import { migrateStructure } from "./vault/migration";
 
 import { VaultMessenger } from "./vault/messenger";
 import { VaultStorageManager } from "./vault/storage";
@@ -61,8 +57,6 @@ import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
 import { guestVault } from "./guest-vault.svelte";
 import { onboardingFunnel } from "#lib/app/onboarding/onboarding-funnel.js";
 import { statSheetTemplates } from "./stat-sheet-templates.svelte";
-import { presentationTemplates } from "./presentation-templates.svelte";
-import { entityTemplateStore } from "./entity-templates/entity-template-store.svelte";
 import { DeadExternalImagePruner } from "./vault/dead-external-image-pruner";
 import { browserPerformanceRecorder } from "#lib/services/performance/browser-performance-capture.js";
 
@@ -106,74 +100,19 @@ export class VaultStore {
 
   // Delegated Getters
   get entities() {
-    if (sessionModeStore.isGuestMode) {
-      return { ...guestVault.entitiesMap, ...this.entityStore.entities };
-    }
-    return this.entityStore.entities;
+    return this.views.entities;
   }
   get allEntities() {
-    if (sessionModeStore.isGuestMode) {
-      const allEnts = this.entityStore.allEntities;
-      const extraEntities: typeof allEnts = [];
-      for (let i = 0; i < allEnts.length; i++) {
-        const e = allEnts[i];
-        if (!guestVault.entitiesMap[e.id]) extraEntities.push(e);
-      }
-      return guestVault.entities.concat(extraEntities);
-    }
-    return this.entityStore.allEntities;
+    return this.views.allEntities;
   }
   get graphEntities() {
-    if (sessionModeStore.isGuestMode) {
-      return guestVault.entities;
-    }
-    return this.entityStore.graphEntities;
+    return this.views.graphEntities;
   }
   get graphStructureVersion() {
-    if (sessionModeStore.isGuestMode) {
-      return guestVault.entities.length;
-    }
-    return this.entityStore.graphStructureVersion;
+    return this.views.graphStructureVersion;
   }
   get titleAndAliasIndex() {
-    if (sessionModeStore.isGuestMode) {
-      const result: Array<{
-        lowercaseText: string;
-        entityId: string;
-        actualTitle: string;
-        isAlias: boolean;
-        visibility?: string;
-        labels?: string[];
-        status: string;
-      }> = [];
-      for (const entity of guestVault.entities) {
-        result.push({
-          lowercaseText: entity.title.toLowerCase(),
-          entityId: entity.id,
-          actualTitle: entity.title,
-          isAlias: false,
-          visibility: entity.visibility,
-          labels: entity.labels,
-          status: entity.status || "active",
-        });
-        for (const alias of entity.aliases || []) {
-          if (!alias) continue;
-          result.push({
-            lowercaseText: alias.toLowerCase(),
-            entityId: entity.id,
-            actualTitle: entity.title,
-            isAlias: true,
-            visibility: entity.visibility,
-            labels: entity.labels,
-            status: entity.status || "active",
-          });
-        }
-      }
-      return result.sort(
-        (a, b) => b.lowercaseText.length - a.lowercaseText.length,
-      );
-    }
-    return this.entityStore.titleAndAliasIndex;
+    return this.views.titleAndAliasIndex;
   }
   get allTitlesString() {
     return this.entityStore.allEntities.map((e) => e.title).join(", ");
@@ -223,97 +162,31 @@ export class VaultStore {
     return this.syncStore.isDirty;
   }
   get inboundConnections() {
-    if (sessionModeStore.isGuestMode) {
-      const newInboundMap: Record<
-        string,
-        { sourceId: string; connection: any }[]
-      > = Object.create(null);
-      for (const rel of guestVault.relationships) {
-        if (!newInboundMap[rel.targetId]) {
-          newInboundMap[rel.targetId] = [];
-        }
-        newInboundMap[rel.targetId].push({
-          sourceId: rel.sourceId,
-          connection: {
-            target: rel.targetId,
-            type: rel.label || "neutral",
-            label: rel.label,
-          },
-        });
-      }
-      return newInboundMap;
-    }
-    return this.entityStore.inboundConnections;
+    return this.views.inboundConnections;
   }
   get labelIndex() {
-    if (sessionModeStore.isGuestMode) {
-      const labels = new Set<string>();
-      for (const e of guestVault.entities) {
-        if (e.labels) {
-          for (const l of e.labels) {
-            labels.add(l);
-          }
-        }
-      }
-      return Array.from(labels).sort();
-    }
-    return this.entityStore.labelIndex;
+    return this.views.labelIndex;
   }
   get labelCounts() {
-    if (sessionModeStore.isGuestMode) {
-      const counts: Record<string, number> = {};
-      for (const e of guestVault.entities) {
-        if (e.labels) {
-          const uniqueLabels = new Set(e.labels);
-          for (const l of uniqueLabels) {
-            counts[l] = (counts[l] || 0) + 1;
-          }
-        }
-      }
-      return counts;
-    }
-    return this.entityStore.labelCounts;
+    return this.views.labelCounts;
   }
   get maps() {
-    if (sessionModeStore.isGuestMode) {
-      const record: Record<string, any> = Object.create(null);
-      for (const m of guestVault.maps) {
-        record[m.id] = m;
-      }
-      return record;
-    }
-    return mapRegistry.maps;
+    return this.views.maps;
   }
   get allMaps() {
-    if (sessionModeStore.isGuestMode) {
-      return guestVault.maps;
-    }
-    return mapRegistry.allMaps;
+    return this.views.allMaps;
   }
   get canvases() {
-    if (sessionModeStore.isGuestMode) {
-      const record: Record<string, any> = Object.create(null);
-      for (const c of guestVault.canvases) {
-        record[c.id] = c;
-      }
-      return record;
-    }
-    return canvasRegistry.canvases;
+    return this.views.canvases;
   }
   get activeVaultId() {
-    if (sessionModeStore.isGuestMode) {
-      return guestVault.publishId;
-    }
-    return vaultRegistry.activeVaultId;
+    return this.views.activeVaultId;
   }
   get activeVaultRecord() {
-    return vaultRegistry.activeVaultRecord;
+    return this.views.activeVaultRecord;
   }
   get vaultName() {
-    if (sessionModeStore.isGuestMode) {
-      return guestVault.vaultTitle;
-    }
-    return vaultRegistry.vaultName;
+    return this.views.vaultName;
   }
   get saveQueue() {
     return this.repository.saveQueue;
@@ -325,17 +198,22 @@ export class VaultStore {
     return this.serviceRegistry.services;
   }
 
-  #publishRegistryLoaders = new Set<
-    (vId: string, handle: FileSystemDirectoryHandle) => Promise<void>
-  >();
+  private views = new VaultViews({
+    entityStore: () => this.entityStore,
+    mode: sessionModeStore,
+    guest: guestVault,
+    maps: mapRegistry,
+    canvases: canvasRegistry,
+    registry: vaultRegistry,
+  });
+  private publishRegistry = new PublishRegistryLoader();
+  private bootstrap: VaultBootstrap;
+  private transcripts = new VaultTranscripts(this);
 
   registerPublishRegistryLoader(
     loader: (vId: string, handle: FileSystemDirectoryHandle) => Promise<void>,
   ): () => void {
-    this.#publishRegistryLoaders.add(loader);
-    return () => {
-      this.#publishRegistryLoaders.delete(loader);
-    };
+    return this.publishRegistry.register(loader);
   }
 
   constructor(
@@ -383,32 +261,8 @@ export class VaultStore {
       },
       loadMaps: (vId) => mapRegistry.loadFromVault(vId),
       loadCanvases: (vId) => canvasRegistry.loadFromVault(vId),
-      loadPublishRegistry: async (vId, handle) => {
-        try {
-          const diskRegistry = await loadPublishRegistryFromDisk(handle);
-          if (diskRegistry) {
-            const idbRegistry = await getPublishRegistry(vId);
-            if (
-              !idbRegistry ||
-              diskRegistry.publishedAt > (idbRegistry.publishedAt ?? "")
-            ) {
-              await savePublishRegistry(diskRegistry);
-            }
-          }
-        } catch (e) {
-          console.error(
-            "[Vault] Failed to reconcile publish registry from disk:",
-            e,
-          );
-        }
-        for (const loader of this.#publishRegistryLoaders) {
-          try {
-            await loader(vId, handle);
-          } catch (e) {
-            console.error("[Vault] Publish registry loader failed:", e);
-          }
-        }
-      },
+      loadPublishRegistry: (vId, handle) =>
+        this.publishRegistry.load(vId, handle),
       updateEntityCount: (vId, count) =>
         vaultRegistry.updateEntityCount(vId, count),
       flushPendingSaves: (timeoutMs) =>
@@ -510,6 +364,8 @@ export class VaultStore {
         this.ensureAssetPersisted(path, handle),
     });
 
+    this.bootstrap = new VaultBootstrap(this, this.lifecycleManager);
+
     this.messenger = new VaultMessenger({
       activeVaultId: () => this.activeVaultId,
       loadFiles: () => this.loadFiles(),
@@ -523,80 +379,7 @@ export class VaultStore {
   // --- Core Lifecycle ---
 
   async init() {
-    // Guest popout tabs pre-populate the vault via applyGuestPayload before
-    // this runs — skip full init so loadFiles() doesn't overwrite that data.
-    if (sessionModeStore.isGuestMode) {
-      this.isInitialized = true;
-      return;
-    }
-
-    try {
-      await vaultRegistry.init();
-
-      const db = await getDB();
-      const pref = await db.get("settings", "defaultVisibility");
-      if (pref) this.defaultVisibility = pref as any;
-
-      if (sessionModeStore.isDemoMode) {
-        this.isInitialized = true;
-        return;
-      }
-
-      this.migrationRequired =
-        (await this.lifecycleManager.runMigration()) ?? false;
-
-      const opfsRoot = vaultRegistry.rootHandle;
-      if (opfsRoot) {
-        await migrateStructure(opfsRoot);
-      }
-
-      if (this.activeVaultId) {
-        const vaultId = this.activeVaultId;
-        // The graph is styled from the theme, so it is loaded first. Templates
-        // are not needed to show the vault and load alongside its files.
-        await themeStore.loadForVault(vaultId);
-        await Promise.all([
-          statSheetTemplates.loadForVault(vaultId),
-          presentationTemplates.loadForVault(vaultId),
-          this.lifecycleManager.loadEntityTemplates(vaultId),
-          this.loadFiles(),
-        ]);
-      }
-      if (typeof window !== "undefined" && this.activeVaultId) {
-        window.dispatchEvent(
-          new CustomEvent("vault-switched", {
-            detail: { id: this.activeVaultId },
-          }),
-        );
-      }
-      this.isInitialized = true;
-    } catch (err: any) {
-      debugStore.error("[VaultStore] Init failed", err);
-      console.warn("[VaultStore] Init failed, falling back to Guest Mode", err);
-
-      entityTemplateStore.clearForGuest();
-      sessionModeStore.isGuestMode = true;
-      this.status = "idle";
-      this.errorMessage =
-        err?.name === "QuotaExceededError"
-          ? "Storage full. Running in Guest Mode (changes will not be saved)."
-          : "Storage access denied. Running in Guest Mode.";
-
-      try {
-        const response = await fetch(asset("vault-samples/fantasy.json"));
-        if (!response.ok) {
-          console.warn("Failed to load fallback demo data");
-          return;
-        }
-        const data = await response.json();
-        await this.loadDemoData("Welcome", (data as any).entities || data);
-      } catch (fallbackErr) {
-        console.warn("Failed to load fallback demo data", fallbackErr);
-      } finally {
-        this.isInitialized = true;
-        this.status = "idle";
-      }
-    }
+    return this.bootstrap.init();
   }
 
   // --- External Folder Methods ---
@@ -915,36 +698,17 @@ export class VaultStore {
   }
 
   async saveTranscript(transcript: GuestChatTranscript) {
-    if (this.isGuest) return;
-    if (!this.activeVaultId) return;
-    const vaultHandle = await this.getActiveVaultHandle();
-    if (!vaultHandle) return;
-    await saveTranscriptToDisk(vaultHandle, this.activeVaultId, transcript);
+    return this.transcripts.saveTranscript(transcript);
   }
 
   async loadTranscriptsForCharacter(
     characterId: string,
   ): Promise<GuestChatTranscript[]> {
-    const vaultHandle = await this.getActiveVaultHandle();
-    if (!vaultHandle) return [];
-    return await loadTranscriptsForCharacterFromDisk(vaultHandle, characterId);
+    return this.transcripts.loadTranscriptsForCharacter(characterId);
   }
 
   async deleteTranscript(guestId: string, characterId: string) {
-    if (this.isGuest) return;
-    const vaultHandle = await this.getActiveVaultHandle();
-    if (!vaultHandle) return;
-    try {
-      const codexDir = await vaultHandle.getDirectoryHandle(".codex", {
-        create: true,
-      });
-      const transcriptsDir = await codexDir.getDirectoryHandle("transcripts", {
-        create: true,
-      });
-      await transcriptsDir.removeEntry(`${guestId}_${characterId}.json`);
-    } catch (err) {
-      console.warn("[VaultStore] Failed to delete transcript file:", err);
-    }
+    return this.transcripts.deleteTranscript(guestId, characterId);
   }
 
   async setDefaultVisibility(v: "visible" | "hidden") {
