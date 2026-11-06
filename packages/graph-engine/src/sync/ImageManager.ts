@@ -74,6 +74,7 @@ export class GraphImageManager {
   constructor(
     private cy: Core,
     private now: () => number = () => Date.now(),
+    private measureNow: () => number = () => performance.now(),
   ) {}
 
   sync(options: ImageManagerOptions) {
@@ -297,7 +298,7 @@ export class GraphImageManager {
       generation: number;
     },
   ) {
-    const start = performance.now();
+    const start = this.measureNow();
     const ready: ResolvedVisual[] = [];
     let applied = 0;
     let stopped = false;
@@ -369,7 +370,7 @@ export class GraphImageManager {
       scheduler.flushNow();
       if (!stopped) {
         options.onLog?.(
-          `[GraphImageManager] Resolved ${applied} node visuals in ${(performance.now() - start).toFixed(2)}ms`,
+          `[GraphImageManager] Resolved ${applied} node visuals in ${(this.measureNow() - start).toFixed(2)}ms`,
         );
       }
     } catch (err) {
