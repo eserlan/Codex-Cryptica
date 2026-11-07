@@ -11,7 +11,7 @@ export class FileSystemBackend implements ISyncBackend {
 
   async scan(_vaultId: string): Promise<{ files: FileMetadata[] }> {
     const results: FileMetadata[] = [];
-    const start = performance.now();
+    const start = this.clock.now();
     let scannedCount = 0;
 
     const getTs = () =>
@@ -66,7 +66,7 @@ export class FileSystemBackend implements ISyncBackend {
       }
     };
     await scan(this.handle);
-    const end = performance.now();
+    const end = this.clock.now();
     console.log(
       `[${getTs()}] [Sync] FileSystemBackend scan took ${(end - start).toFixed(2)}ms for ${results.length} files.`,
     );
