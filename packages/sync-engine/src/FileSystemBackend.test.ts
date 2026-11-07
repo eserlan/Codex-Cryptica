@@ -25,6 +25,23 @@ describe("FileSystemBackend", () => {
   });
 
   describe("scan", () => {
+    it("uses the injected clock for scan duration", async () => {
+      const log = vi.spyOn(console, "log").mockImplementation(() => {});
+      const times = [100, 200, 112.34];
+      const timedBackend = new FileSystemBackend(
+        mockRootHandle,
+        vi.fn().mockResolvedValue(undefined),
+        { now: () => times.shift() ?? 112.34 },
+      );
+
+      await timedBackend.scan("v1");
+
+      expect(log).toHaveBeenLastCalledWith(
+        expect.stringContaining("scan took 12.34ms for 0 files"),
+      );
+      log.mockRestore();
+    });
+
     it("should scan a flat directory", async () => {
       const mockFileEntry = {
         kind: "file",
