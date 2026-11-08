@@ -64,36 +64,22 @@
     >
       {#if !isImageLoaded}
         <div
-          class="absolute inset-0 flex flex-col items-center justify-center bg-theme-bg/40 animate-pulse text-theme-muted gap-2"
+          class="absolute inset-0 flex flex-col items-center justify-center bg-theme-bg/40 text-theme-text gap-2"
         >
           <span
             aria-hidden="true"
             class="icon-[lucide--image] w-8 h-8 opacity-30"
           ></span>
-          <span class="text-micro font-mono uppercase tracking-wider opacity-40"
+          <span class="text-micro font-mono uppercase tracking-wider"
             >Resolving Neural Visual...</span
           >
         </div>
       {/if}
       <!-- Image Preview -->
-      <!-- svelte-ignore a11y_click_events_have_key_events -->
-      <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-      <img
-        src={message.imageUrl}
-        alt={message.content}
-        loading="lazy"
-        decoding="async"
-        onload={() => {
-          isImageLoaded = true;
-        }}
-        onerror={() => {
-          isImageLoaded = true;
-        }}
-        class="w-full h-full object-contain cursor-zoom-in group-hover:scale-105 transition-all duration-300 mx-auto {isImageLoaded
-          ? 'opacity-90'
-          : 'opacity-0'}"
-        draggable="true"
-        ondragstart={handleDragStart}
+      <button
+        type="button"
+        aria-label="Open generated image: {message.content}"
+        class="absolute inset-0 flex h-full w-full items-center justify-center focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
         onclick={(e) => {
           const rect = e.currentTarget.getBoundingClientRect();
           modalUIStore.openLightbox(message.imageUrl!, message.content, {
@@ -103,14 +89,32 @@
             height: rect.height,
           });
         }}
-      />
+      >
+        <img
+          src={message.imageUrl}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          onload={() => {
+            isImageLoaded = true;
+          }}
+          onerror={() => {
+            isImageLoaded = true;
+          }}
+          class="w-full h-full object-contain cursor-zoom-in group-hover:scale-105 transition-all duration-300 mx-auto {isImageLoaded
+            ? 'opacity-90'
+            : 'opacity-0'}"
+          draggable="true"
+          ondragstart={handleDragStart}
+        />
+      </button>
 
       <!-- Overlay Info -->
       <div
         class="absolute bottom-2 left-2 right-2 flex justify-between items-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
       >
         <span
-          class="text-nano bg-theme-surface/80 text-theme-muted px-1.5 py-0.5 rounded backdrop-blur-sm border border-theme-border shadow-sm"
+          class="text-nano bg-theme-surface/80 text-theme-text px-1.5 py-0.5 rounded backdrop-blur-sm border border-theme-border shadow-sm"
         >
           DRAG TO ENTITY
         </span>
@@ -123,7 +127,7 @@
         <button
           onclick={handleSave}
           disabled={isArchiving}
-          class="flex items-center gap-1.5 px-3 py-1.5 rounded text-micro font-bold tracking-widest transition-all bg-theme-primary/10 text-theme-primary border border-theme-primary/30 hover:bg-theme-primary hover:text-black max-w-[250px] disabled:opacity-50"
+          class="flex items-center gap-1.5 px-3 py-1.5 rounded text-micro font-bold tracking-widest transition-all bg-theme-primary/10 text-theme-text border border-theme-primary/30 hover:bg-theme-primary hover:text-black max-w-[250px] disabled:opacity-50"
         >
           {#if isArchiving}
             <span
@@ -151,13 +155,13 @@
       <div class="relative">
         <span
           aria-hidden="true"
-          class="icon-[lucide--sparkles] w-8 h-8 text-theme-primary/50"
+          class="icon-[lucide--sparkles] w-8 h-8 text-theme-primary"
         ></span>
         <div
           class="absolute inset-0 bg-theme-primary/20 blur-xl rounded-full"
         ></div>
       </div>
-      <span class="text-micro font-mono text-theme-primary tracking-widest"
+      <span class="text-micro font-mono text-theme-text tracking-widest"
         >VISUALIZING...</span
       >
     </div>
