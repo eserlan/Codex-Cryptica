@@ -1,41 +1,27 @@
-import { finishBulkMutation } from "./entity-mutation-effects";
+import { EntityDeletionMutations } from "./entity-deletion-mutations";
 import { EntityBulkUpdate } from "./entity-bulk-update";
 import type { MutationDependencies } from "./entity-mutation-context";
 export type { MutationDependencies } from "./entity-mutation-context";
 import { EntityConnectionMutations } from "./entity-connection-mutations";
 import { EntityWriteMutations } from "./entity-write-mutations";
 import { EntityLabelMutations } from "./entity-label-mutations";
-import { vaultEventBus } from "./events.svelte";
-import * as vaultEntities from "./entities";
-import { debugStore } from "../debug.svelte";
-import { cacheService } from "../../services/cache.svelte";
 import type { LocalEntity, BatchCreateInput } from "./types";
 import type { Entity } from "schema";
-import {
-  summarizeBulkMutation,
-  runWithConcurrency,
-  type BulkMutationResult,
-  type BulkMutationItemResult,
-} from "./bulk-results";
-import type { ImmediateSaveEntry } from "./entity-persistence";
-import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
-import { updateLastInternalChange } from "./registry";
-import {
-  performanceRecorder,
-  type PerformanceRecorder,
-} from "@codex/performance-observability";
+import type { BulkMutationResult } from "./bulk-results";
+import { performanceRecorder } from "@codex/performance-observability";
 
 export class EntityMutationService {
-  private performanceRecorder: PerformanceRecorder;
   private writes: EntityWriteMutations;
   private bulkUpdates: EntityBulkUpdate;
+  private deletions: EntityDeletionMutations;
   private connections = new EntityConnectionMutations(this);
   private labels = new EntityLabelMutations(this);
 
   constructor(public deps: MutationDependencies) {
-    this.performanceRecorder = deps.performanceRecorder ?? performanceRecorder;
-    this.writes = new EntityWriteMutations(this, this.performanceRecorder);
-    this.bulkUpdates = new EntityBulkUpdate(this, this.performanceRecorder);
+    const recorder = deps.performanceRecorder ?? performanceRecorder;
+    this.writes = new EntityWriteMutations(this, recorder);
+    this.bulkUpdates = new EntityBulkUpdate(this, recorder);
+    this.deletions = new EntityDeletionMutations(this, recorder);
   }
 
   registerStoreCallbacks(
@@ -98,245 +84,11 @@ export class EntityMutationService {
   }
 
   async deleteEntity(id: string) {
-    if (this.deps.isGuest())
-      throw new Error("Cannot delete entities in Guest Mode");
-    if (sessionModeStore.isDemoMode) {
-      const updated = { ...this.entities };
-      delete updated[id];
-      this.entities = updated;
-      if (this.deps.onEntityDelete) this.deps.onEntityDelete(id);
-      return;
-    }
-
-    const lockKey = id;
-    return this.deps.repository.enqueueSave(lockKey, async () => {
-      const vaultHandle = await this.deps.getActiveVaultHandle();
-      const localHandle = await this.deps.getActiveFolderHandle();
-      const activeVaultId = this.deps.activeVaultId();
-
-      if (vaultHandle && activeVaultId) {
-        const entity = this.entities[id];
-        const path = entity?._path || [`${id}.md`];
-
-        const inboundConns = this.deps.getInboundConnections?.();
-        const parentToChildren = this.deps.getParentToChildren?.();
-        const childrenIds = parentToChildren
-          ? parentToChildren[id] || []
-          : undefined;
-
-        const { entities, deletedEntity, modifiedIds } =
-          await vaultEntities.deleteEntity(
-            vaultHandle,
-            this.entities,
-            id,
-            inboundConns,
-            childrenIds,
-          );
-
-        if (deletedEntity) {
-          this.entities = entities;
-          if (this.deps.onEntityDelete) this.deps.onEntityDelete(id);
-
-          await updateLastInternalChange(activeVaultId, {
-            kind: "entity",
-            ids: [id],
-            deleted: true,
-          });
-
-          modifiedIds.forEach((mId) => {
-            const modEntity = this.entities[mId];
-            if (modEntity) {
-              this.deps.persistence.scheduleSave(modEntity);
-            }
-          });
-
-          vaultEventBus.emit({
-            type: "ENTITY_DELETED",
-            vaultId: activeVaultId,
-            entityId: id,
-          });
-
-          await this.deps.updateEntityCount(
-            activeVaultId,
-            Object.keys(this.entities).length,
-          );
-
-          if (localHandle) {
-            try {
-              const permission = await localHandle.queryPermission({
-                mode: "readwrite",
-              });
-              if (permission === "granted") {
-                const fileName = path[path.length - 1];
-                const dirPath = path.slice(0, -1);
-                let targetDir: FileSystemDirectoryHandle | undefined =
-                  localHandle;
-
-                for (const part of dirPath) {
-                  targetDir = await targetDir
-                    ?.getDirectoryHandle(part, { create: false })
-                    .catch(() => undefined);
-                  if (!targetDir) break;
-                }
-
-                if (targetDir) {
-                  await targetDir.removeEntry(fileName, { recursive: true });
-                }
-              }
-            } catch (e) {
-              debugStore.warn(
-                `[EntityMutation] Failed to delete ${path.join("/")} from local filesystem`,
-                e,
-              );
-            }
-          }
-
-          await cacheService.remove(`${activeVaultId}:${path.join("/")}`);
-        }
-      }
-    });
+    return this.deletions.deleteEntity(id);
   }
 
   async bulkDelete(ids: string[]): Promise<BulkMutationResult> {
-    if (this.deps.isGuest()) {
-      throw new Error("Cannot delete entities in Guest Mode");
-    }
-
-    const requestedIds = [...new Set(ids)];
-    const span = this.performanceRecorder.start("vault_bulk_mutation");
-    if (sessionModeStore.isDemoMode) {
-      const next = { ...this.entities };
-      const items: BulkMutationItemResult[] = [];
-      for (const id of requestedIds) {
-        if (!next[id]) {
-          items.push({ id, status: "skipped" });
-          continue;
-        }
-        delete next[id];
-        this.deps.onEntityDelete?.(id);
-        items.push({ id, status: "success" });
-      }
-      this.entities = next;
-      const result = summarizeBulkMutation(requestedIds, items);
-      span.complete(() => ({ changedEntityCount: result.succeededIds.length }));
-      return result;
-    }
-
-    const vaultHandle = await this.deps.getActiveVaultHandle();
-    const localHandle = await this.deps.getActiveFolderHandle();
-    const vaultId = this.deps.activeVaultId();
-    if (!vaultHandle || !vaultId) {
-      const result = summarizeBulkMutation(
-        requestedIds,
-        requestedIds.map((id) => ({ id, status: "failed" as const })),
-      );
-      span.fail("unexpected", () => ({ changedEntityCount: 0 }));
-      return result;
-    }
-
-    const validIds = requestedIds.filter((id) => this.entities[id]);
-    const deletedPaths = new Map(
-      validIds.map((id) => [id, this.entities[id]._path || [`${id}.md`]]),
-    );
-    const items: BulkMutationItemResult[] = requestedIds
-      .filter((id) => !this.entities[id])
-      .map((id) => ({ id, status: "skipped" as const }));
-    const deleteTasks = validIds.map((id) => async () => {
-      const entity = this.entities[id];
-      if (!entity || this.deps.activeVaultId() !== vaultId) {
-        return { id, ok: false, cancelled: true };
-      }
-      try {
-        await this.deps.repository.enqueueSave(id, () =>
-          vaultEntities.deleteEntityFiles(vaultHandle, entity),
-        );
-        return { id, ok: true, cancelled: false };
-      } catch (error) {
-        return { id, ok: false, cancelled: false, error };
-      }
-    });
-    const deletedResults = await runWithConcurrency(deleteTasks, 4);
-    if (vaultId !== this.deps.activeVaultId()) {
-      const result = summarizeBulkMutation(
-        requestedIds,
-        deletedResults.map((item) => ({
-          id: item.id,
-          status: item.ok ? ("cancelled" as const) : ("failed" as const),
-          error: item.error,
-        })),
-      );
-      span.cancel(() => ({ changedEntityCount: 0 }));
-      return result;
-    }
-    const deletedIds = deletedResults
-      .filter((result) => result.ok)
-      .map((result) => result.id);
-
-    for (const result of deletedResults) {
-      items.push({
-        id: result.id,
-        status: result.cancelled
-          ? "cancelled"
-          : result.ok
-            ? "success"
-            : "failed",
-        error: result.error,
-      });
-    }
-
-    if (deletedIds.length > 0) {
-      const applied = vaultEntities.applyBatchDelete(
-        this.entities,
-        deletedIds,
-        this.deps.getInboundConnections?.(),
-        this.deps.getParentToChildren?.(),
-      );
-      const survivorEntries: ImmediateSaveEntry[] = Object.values(
-        applied.modified,
-      ).map((entity) => ({ entity }));
-      const survivorResults =
-        await this.deps.persistence.persistImmediately(survivorEntries);
-      const survivorSuccess = new Set(
-        survivorResults
-          .filter((result) => result.ok)
-          .map((result) => result.id),
-      );
-      const committed = { ...this.entities };
-      for (const id of deletedIds) {
-        delete committed[id];
-        this.deps.onEntityDelete?.(id);
-      }
-      for (const id of Object.keys(applied.modified)) {
-        committed[id] = applied.modified[id];
-        if (!survivorSuccess.has(id)) {
-          void this.deps.persistence.scheduleSave(applied.modified[id]);
-        }
-      }
-      this.entities = committed;
-
-      for (const id of deletedIds) {
-        vaultEventBus.emit({
-          type: "ENTITY_DELETED",
-          vaultId,
-          entityId: id,
-        });
-        const path = deletedPaths.get(id) || [`${id}.md`];
-        await cacheService.remove(`${vaultId}:${path.join("/")}`);
-        await removeLocalEntityFile(localHandle, path);
-      }
-      await updateLastInternalChange(vaultId, {
-        kind: "entity",
-        ids: [...deletedIds],
-        deleted: true,
-      });
-      await this.deps.updateEntityCount(
-        vaultId,
-        Object.keys(this.entities).length,
-      );
-    }
-
-    const result = summarizeBulkMutation(requestedIds, items);
-    return finishBulkMutation(span, result);
+    return this.deletions.bulkDelete(ids);
   }
 
   async addConnection(
@@ -419,32 +171,5 @@ export class EntityMutationService {
 
   async batchCreateEntities(newEntitiesList: BatchCreateInput[]) {
     return this.writes.batchCreateEntities(newEntitiesList);
-  }
-}
-
-async function removeLocalEntityFile(
-  localHandle: FileSystemDirectoryHandle | undefined,
-  path: string[],
-): Promise<void> {
-  if (!localHandle) return;
-  try {
-    const permission = await localHandle.queryPermission({ mode: "readwrite" });
-    if (permission !== "granted") return;
-
-    const fileName = path[path.length - 1];
-    const dirPath = path.slice(0, -1);
-    let targetDir: FileSystemDirectoryHandle | undefined = localHandle;
-    for (const part of dirPath) {
-      targetDir = await targetDir
-        ?.getDirectoryHandle(part, { create: false })
-        .catch(() => undefined);
-      if (!targetDir) return;
-    }
-    await targetDir?.removeEntry(fileName, { recursive: true });
-  } catch (error) {
-    debugStore.warn(
-      `[EntityMutation] Failed to delete ${path.join("/")} from local filesystem`,
-      error,
-    );
   }
 }
