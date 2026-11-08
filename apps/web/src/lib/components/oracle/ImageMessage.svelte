@@ -70,7 +70,7 @@
             aria-hidden="true"
             class="icon-[lucide--image] w-8 h-8 opacity-30"
           ></span>
-          <span class="text-micro font-mono uppercase tracking-wider opacity-40"
+          <span class="text-micro font-mono uppercase tracking-wider"
             >Resolving Neural Visual...</span
           >
         </div>
