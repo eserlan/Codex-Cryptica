@@ -1,13 +1,13 @@
+import type { MutationDependencies } from "./entity-mutation-context";
+export type { MutationDependencies } from "./entity-mutation-context";
+import { EntityConnectionMutations } from "./entity-connection-mutations";
+import { EntityLabelMutations } from "./entity-label-mutations";
 import { vaultEventBus } from "./events.svelte";
 import * as vaultEntities from "./entities";
 import { debugStore } from "../debug.svelte";
 import { cacheService } from "../../services/cache.svelte";
 import type { LocalEntity, BatchCreateInput } from "./types";
-import { VaultRepository } from "@codex/vault-engine";
 import type { Entity } from "schema";
-import type { EntityPersistenceService } from "./entity-persistence";
-import type { EntityContentLoader } from "./entity-content-loader.svelte";
-import type { IVaultServices } from "./service-registry";
 import {
   summarizeBulkMutation,
   runWithConcurrency,
@@ -23,49 +23,10 @@ import {
   type PerformanceRecorder,
 } from "@codex/performance-observability";
 
-export interface MutationDependencies {
-  performanceRecorder?: PerformanceRecorder;
-  repository: VaultRepository;
-  persistence: EntityPersistenceService;
-  loader: EntityContentLoader;
-  activeVaultId: () => string | null;
-  isGuest: () => boolean;
-  getActiveVaultHandle: () => Promise<FileSystemDirectoryHandle | undefined>;
-  getActiveFolderHandle: () => Promise<FileSystemDirectoryHandle | undefined>;
-  updateEntityCount: (vaultId: string, count: number) => Promise<void>;
-  invalidateUrlCache?: (path: string) => void;
-  getServices: () => IVaultServices | null;
-  onEntityDelete?: (entityId: string) => void;
-  onBatchUpdate?: (updates: Record<string, Partial<LocalEntity>>) => void;
-  onEntitiesUpdated?: (
-    oldEntities: Record<string, LocalEntity>,
-    newEntities: Record<string, LocalEntity>,
-  ) => void;
-  onConnectionAdded?: (
-    sourceId: string,
-    targetId: string,
-    connection: any,
-  ) => void;
-  onConnectionRemoved?: (
-    sourceId: string,
-    targetId: string,
-    connectionType: string,
-  ) => void;
-  onConnectionUpdated?: (
-    sourceId: string,
-    targetId: string,
-    oldType: string,
-    connection: any,
-  ) => void;
-  getInboundConnections?: () => Record<
-    string,
-    { sourceId: string; connection: any }[]
-  >;
-  getParentToChildren?: () => Record<string, string[]>;
-}
-
 export class EntityMutationService {
   private performanceRecorder: PerformanceRecorder;
+  private connections = new EntityConnectionMutations(this);
+  private labels = new EntityLabelMutations(this);
 
   constructor(public deps: MutationDependencies) {
     this.performanceRecorder = deps.performanceRecorder ?? performanceRecorder;
@@ -637,41 +598,13 @@ export class EntityMutationService {
     label?: string,
     strength: number = 1.0,
   ): Promise<boolean> {
-    if (!this.deps.loader.isContentLoaded(sourceId)) {
-      await this.deps.loader.loadEntityContent(sourceId);
-    }
-    const { entities, updatedSource } = vaultEntities.addConnection(
-      this.entities,
+    return this.connections.addConnection(
       sourceId,
       targetId,
       type,
       label,
       strength,
     );
-    if (updatedSource) {
-      this.entities = entities;
-      await this.deps.persistence.scheduleSave(updatedSource);
-
-      const newConn = updatedSource.connections.find(
-        (c) => c.target === targetId && c.type === type,
-      );
-      if (newConn && this.deps.onConnectionAdded) {
-        this.deps.onConnectionAdded(sourceId, targetId, newConn);
-      }
-
-      vaultEventBus.emit({
-        type: "CONNECTION_ADDED",
-        vaultId: this.deps.activeVaultId() || "unknown",
-        sourceId,
-        targetId,
-        connectionType: type,
-        label,
-        strength,
-      });
-
-      return true;
-    }
-    return false;
   }
 
   async updateConnection(
@@ -681,84 +614,27 @@ export class EntityMutationService {
     newType: string,
     newLabel?: string,
   ): Promise<boolean> {
-    if (!this.deps.loader.isContentLoaded(sourceId)) {
-      await this.deps.loader.loadEntityContent(sourceId);
-    }
-    const { entities, updatedSource } = vaultEntities.updateConnection(
-      this.entities,
+    return this.connections.updateConnection(
       sourceId,
       targetId,
       oldType,
       newType,
       newLabel,
     );
-    if (updatedSource) {
-      this.entities = entities;
-      await this.deps.persistence.scheduleSave(updatedSource);
-
-      const updatedConn = updatedSource.connections.find(
-        (c) => c.target === targetId && c.type === newType,
-      );
-      if (updatedConn && this.deps.onConnectionUpdated) {
-        this.deps.onConnectionUpdated(sourceId, targetId, oldType, updatedConn);
-      }
-
-      vaultEventBus.emit({
-        type: "CONNECTION_UPDATED",
-        vaultId: this.deps.activeVaultId() || "unknown",
-        sourceId,
-        targetId,
-        oldType,
-        newType,
-        newLabel,
-      });
-
-      return true;
-    }
-    return false;
   }
 
-  /**
-   * Hides or shows one connection everywhere it is drawn (graph, Connections
-   * diagram). The connection itself is kept and still listed on the entity.
-   */
   async setConnectionHidden(
     sourceId: string,
     targetId: string,
     type: string,
     hidden: boolean,
   ): Promise<boolean> {
-    if (!this.deps.loader.isContentLoaded(sourceId)) {
-      await this.deps.loader.loadEntityContent(sourceId);
-    }
-    const { entities, updatedSource, updatedConnection } =
-      vaultEntities.setConnectionHidden(
-        this.entities,
-        sourceId,
-        targetId,
-        type,
-        hidden,
-      );
-    if (!updatedSource || !updatedConnection) return false;
-
-    this.entities = entities;
-    await this.deps.persistence.scheduleSave(updatedSource);
-    this.deps.onConnectionUpdated?.(
+    return this.connections.setConnectionHidden(
       sourceId,
       targetId,
       type,
-      updatedConnection,
+      hidden,
     );
-    vaultEventBus.emit({
-      type: "CONNECTION_UPDATED",
-      vaultId: this.deps.activeVaultId() || "unknown",
-      sourceId,
-      targetId,
-      oldType: type,
-      newType: type,
-      newLabel: updatedConnection.label,
-    });
-    return true;
   }
 
   async removeConnection(
@@ -766,146 +642,31 @@ export class EntityMutationService {
     targetId: string,
     type: string,
   ): Promise<boolean> {
-    if (!this.deps.loader.isContentLoaded(sourceId)) {
-      await this.deps.loader.loadEntityContent(sourceId);
-    }
-    const { entities, updatedSource } = vaultEntities.removeConnection(
-      this.entities,
-      sourceId,
-      targetId,
-      type,
-    );
-    if (updatedSource) {
-      this.entities = entities;
-      await this.deps.persistence.scheduleSave(updatedSource);
-
-      if (this.deps.onConnectionRemoved) {
-        this.deps.onConnectionRemoved(sourceId, targetId, type);
-      }
-
-      // CONNECTION_REMOVED carries the full semantic; ENTITY_UPDATED with a
-      // connections-only patch was redundant and triggered unnecessary fan-out.
-      vaultEventBus.emit({
-        type: "CONNECTION_REMOVED",
-        vaultId: this.deps.activeVaultId() || "unknown",
-        sourceId,
-        targetId,
-        connectionType: type,
-      });
-      return true;
-    }
-    return false;
+    return this.connections.removeConnection(sourceId, targetId, type);
   }
 
   async addLabel(id: string, label: string): Promise<boolean> {
-    const { entities, updated } = vaultEntities.addLabel(
-      this.entities,
-      id,
-      label,
-    );
-    if (updated) {
-      this.entities = entities;
-      await this.deps.persistence.scheduleSave(updated);
-
-      vaultEventBus.emit({
-        type: "ENTITY_UPDATED",
-        vaultId: this.deps.activeVaultId() || "unknown",
-        entity: updated,
-        patch: { labels: updated.labels },
-      });
-
-      return true;
-    }
-    return false;
+    return this.labels.addLabel(id, label);
   }
 
   async removeLabel(id: string, label: string): Promise<boolean> {
-    const { entities, updated } = vaultEntities.removeLabel(
-      this.entities,
-      id,
-      label,
-    );
-    if (updated) {
-      this.entities = entities;
-      await this.deps.persistence.scheduleSave(updated);
-
-      vaultEventBus.emit({
-        type: "ENTITY_UPDATED",
-        vaultId: this.deps.activeVaultId() || "unknown",
-        entity: updated,
-        patch: { labels: updated.labels },
-      });
-
-      return true;
-    }
-    return false;
-  }
-
-  /**
-   * Saves the entities a label change touched and announces them once. Returns
-   * how many changed.
-   */
-  private async commitLabelChanges(
-    entities: Record<string, LocalEntity>,
-    modifiedIds: string[],
-  ): Promise<number> {
-    if (modifiedIds.length === 0) return 0;
-
-    this.entities = entities;
-    const changed: LocalEntity[] = [];
-    const savePromises: Promise<void>[] = [];
-    for (const id of modifiedIds) {
-      const entity = entities[id];
-      if (entity) {
-        savePromises.push(this.deps.persistence.scheduleSave(entity));
-        changed.push(entity);
-      }
-    }
-    await Promise.all(savePromises);
-    vaultEventBus.emit({
-      type: "BATCH_UPDATED",
-      vaultId: this.deps.activeVaultId() || "unknown",
-      entities: changed,
-    });
-    return modifiedIds.length;
+    return this.labels.removeLabel(id, label);
   }
 
   async bulkAddLabel(ids: string[], label: string): Promise<number> {
-    const { entities, modifiedIds } = vaultEntities.bulkAddLabel(
-      this.entities,
-      ids,
-      label,
-    );
-    return this.commitLabelChanges(entities, modifiedIds);
+    return this.labels.bulkAddLabel(ids, label);
   }
 
   async bulkRemoveLabel(ids: string[], label: string): Promise<number> {
-    const { entities, modifiedIds } = vaultEntities.bulkRemoveLabel(
-      this.entities,
-      ids,
-      label,
-    );
-    return this.commitLabelChanges(entities, modifiedIds);
+    return this.labels.bulkRemoveLabel(ids, label);
   }
 
-  /** Renames a label on every entity that has it. Returns how many changed. */
   async renameLabel(from: string, to: string): Promise<number> {
-    const { entities, modifiedIds } = vaultEntities.renameLabel(
-      this.entities,
-      from,
-      to,
-    );
-    return this.commitLabelChanges(entities, modifiedIds);
+    return this.labels.renameLabel(from, to);
   }
 
-  /** Removes a label from every entity that has it. Entities stay. */
   async deleteLabel(label: string): Promise<number> {
-    const { entities, modifiedIds } = vaultEntities.bulkRemoveLabel(
-      this.entities,
-      Object.keys(this.entities),
-      label,
-    );
-    return this.commitLabelChanges(entities, modifiedIds);
+    return this.labels.deleteLabel(label);
   }
 
   async batchCreateEntities(newEntitiesList: BatchCreateInput[]) {
