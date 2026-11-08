@@ -1,6 +1,9 @@
+import { finishBulkMutation } from "./entity-mutation-effects";
+import { EntityBulkUpdate } from "./entity-bulk-update";
 import type { MutationDependencies } from "./entity-mutation-context";
 export type { MutationDependencies } from "./entity-mutation-context";
 import { EntityConnectionMutations } from "./entity-connection-mutations";
+import { EntityWriteMutations } from "./entity-write-mutations";
 import { EntityLabelMutations } from "./entity-label-mutations";
 import { vaultEventBus } from "./events.svelte";
 import * as vaultEntities from "./entities";
@@ -17,7 +20,6 @@ import {
 import type { ImmediateSaveEntry } from "./entity-persistence";
 import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
 import { updateLastInternalChange } from "./registry";
-import { systemClock } from "#lib/utils/runtime-deps.js";
 import {
   performanceRecorder,
   type PerformanceRecorder,
@@ -25,11 +27,15 @@ import {
 
 export class EntityMutationService {
   private performanceRecorder: PerformanceRecorder;
+  private writes: EntityWriteMutations;
+  private bulkUpdates: EntityBulkUpdate;
   private connections = new EntityConnectionMutations(this);
   private labels = new EntityLabelMutations(this);
 
   constructor(public deps: MutationDependencies) {
     this.performanceRecorder = deps.performanceRecorder ?? performanceRecorder;
+    this.writes = new EntityWriteMutations(this, this.performanceRecorder);
+    this.bulkUpdates = new EntityBulkUpdate(this, this.performanceRecorder);
   }
 
   registerStoreCallbacks(
@@ -68,107 +74,14 @@ export class EntityMutationService {
     title: string,
     initialData: Partial<Entity> = {},
   ): Promise<string> {
-    const span = this.performanceRecorder.start("entity_save");
-    const newEntity = vaultEntities.createEntity(
-      title,
-      type,
-      initialData,
-      this.entities,
-    );
-    const updatedEntities = { ...this.entities };
-    updatedEntities[newEntity.id] = newEntity;
-    this.entities = updatedEntities;
-
-    this.deps.loader.markContentLoaded(newEntity.id);
-
-    const activeVaultId = this.deps.activeVaultId();
-    await this.deps.persistence.scheduleSave(newEntity, { immediate: true });
-
-    if (activeVaultId) {
-      await this.deps.updateEntityCount(
-        activeVaultId,
-        Object.keys(this.entities).length,
-      );
-    }
-
-    vaultEventBus.emit({
-      type: "BATCH_CREATED",
-      vaultId: activeVaultId || "unknown",
-      entities: [newEntity],
-    });
-
-    span.complete(() => ({ entityCount: Object.keys(this.entities).length }));
-    return newEntity.id;
+    return this.writes.createEntity(type, title, initialData);
   }
 
   async updateEntity(
     id: string,
     updates: Partial<LocalEntity>,
   ): Promise<boolean> {
-    const existing = this.entities[id];
-    if (!existing) return false;
-    const span = this.performanceRecorder.start("entity_save");
-
-    const safeUpdates = {
-      ...updates,
-      content:
-        updates.content !== undefined ? updates.content : existing.content,
-      lore: updates.lore !== undefined ? updates.lore : existing.lore,
-    };
-
-    const { entities, updated } = vaultEntities.updateEntity(
-      this.entities,
-      id,
-      safeUpdates,
-    );
-    if (!updated) return false;
-
-    this.entities = entities;
-
-    if (updates.content !== undefined || updates.lore !== undefined) {
-      this.deps.loader.markContentLoaded(id);
-      if (this.entities[id]) {
-        this.entities[id].contentLoaded = true;
-      }
-    }
-
-    if (updates.image && this.deps.invalidateUrlCache) {
-      this.deps.invalidateUrlCache(updates.image);
-    }
-
-    const services = this.deps.getServices();
-    if (
-      services?.ai &&
-      ["art style", "style", "visual aesthetic"].some((kw) =>
-        updated.title.toLowerCase().includes(kw),
-      )
-    ) {
-      services.ai.clearStyleCache();
-    }
-
-    const hasLongFormUpdate =
-      updates.content !== undefined || updates.lore !== undefined;
-
-    try {
-      await this.deps.persistence.scheduleSave(updated, {
-        immediate: hasLongFormUpdate,
-      });
-    } catch (error) {
-      span.fail("unexpected", () => ({
-        entityCount: Object.keys(this.entities).length,
-      }));
-      throw error;
-    }
-
-    vaultEventBus.emit({
-      type: "ENTITY_UPDATED",
-      vaultId: this.deps.activeVaultId() || "unknown",
-      entity: updated,
-      patch: updates,
-    });
-
-    span.complete(() => ({ entityCount: Object.keys(this.entities).length }));
-    return true;
+    return this.writes.updateEntity(id, updates);
   }
 
   async batchUpdate(
@@ -181,163 +94,7 @@ export class EntityMutationService {
   async bulkUpdate(
     updates: Record<string, Partial<LocalEntity>>,
   ): Promise<BulkMutationResult> {
-    const requestedIds = Object.keys(updates);
-    const span = this.performanceRecorder.start("vault_bulk_mutation");
-    const mutationVaultId = this.deps.activeVaultId();
-    const currentEntities = this.entities;
-    const stagedEntities = { ...currentEntities };
-    const appliedUpdates: Record<string, Partial<LocalEntity>> = {};
-    const entries: ImmediateSaveEntry[] = [];
-    const items: BulkMutationItemResult[] = [];
-
-    for (const [id, patch] of Object.entries(updates)) {
-      const current = currentEntities[id];
-      if (!current) {
-        items.push({ id, status: "skipped" });
-        continue;
-      }
-
-      const preserveGuestContent =
-        this.deps.isGuest() && patch.content === "" && !!current.content;
-      const merged = {
-        ...current,
-        ...patch,
-        metadata:
-          patch.metadata !== undefined
-            ? { ...(current.metadata ?? {}), ...patch.metadata }
-            : current.metadata,
-        content:
-          patch.content !== undefined
-            ? preserveGuestContent
-              ? current.content
-              : patch.content
-            : current.content,
-        lore: patch.lore !== undefined ? patch.lore : current.lore,
-        updatedAt: systemClock.now(),
-        modifiedAt: systemClock.now(),
-      } as LocalEntity;
-
-      for (const key of Object.keys(patch) as (keyof LocalEntity)[]) {
-        if (patch[key] === undefined) {
-          delete merged[key];
-        }
-      }
-
-      stagedEntities[id] = merged;
-      appliedUpdates[id] = patch;
-      if (patch.image && this.deps.invalidateUrlCache) {
-        this.deps.invalidateUrlCache(patch.image);
-      } else if (
-        Object.hasOwn(patch, "image") &&
-        patch.image === undefined &&
-        current.image &&
-        this.deps.invalidateUrlCache
-      ) {
-        this.deps.invalidateUrlCache(current.image);
-      }
-      entries.push({
-        entity: merged,
-        options: {
-          preserveCachedContent:
-            patch.content === undefined && patch.lore === undefined,
-        },
-      });
-    }
-
-    if (entries.length === 0) {
-      span.complete(() => ({ changedEntityCount: 0 }));
-      return summarizeBulkMutation(requestedIds, items);
-    }
-
-    if (sessionModeStore.isDemoMode || this.deps.isGuest()) {
-      this.entities = stagedEntities;
-      this.deps.onBatchUpdate?.(appliedUpdates);
-
-      // ⚡ Bolt Optimization: Replace Object.keys().map() with imperative loop
-      const entities = [];
-      for (const id in appliedUpdates) {
-        if (!Object.hasOwn(appliedUpdates, id)) continue;
-        items.push({ id, status: "success" });
-        entities.push(stagedEntities[id]);
-      }
-
-      vaultEventBus.emit({
-        type: "BATCH_UPDATED",
-        vaultId: this.deps.activeVaultId() || "unknown",
-        entities,
-        patches: appliedUpdates,
-      });
-    } else {
-      const persisted = await this.deps.persistence.persistImmediately(entries);
-      const persistedById = new Map(
-        persisted.map((result) => [result.id, result]),
-      );
-      const committedEntities = { ...currentEntities };
-      const committedUpdates: Record<string, Partial<LocalEntity>> = {};
-
-      if (mutationVaultId !== this.deps.activeVaultId()) {
-        for (const id of Object.keys(appliedUpdates)) {
-          items.push({
-            id,
-            status: "cancelled",
-          });
-        }
-        span.cancel(() => ({ changedEntityCount: 0 }));
-        return summarizeBulkMutation(requestedIds, items);
-      }
-
-      for (const id of Object.keys(appliedUpdates)) {
-        const result = persistedById.get(id);
-        if (result?.ok) {
-          committedEntities[id] = stagedEntities[id];
-          committedUpdates[id] = appliedUpdates[id];
-          if (
-            appliedUpdates[id].content !== undefined ||
-            appliedUpdates[id].lore !== undefined
-          ) {
-            this.deps.loader.markContentLoaded(id);
-            if (stagedEntities[id]) {
-              stagedEntities[id].contentLoaded = true;
-            }
-          }
-          items.push({ id, status: "success" });
-        } else {
-          items.push({ id, status: "failed", error: result?.error });
-        }
-      }
-
-      // ⚡ Bolt Optimization: Avoid Object.keys array allocation
-      let hasUpdates = false;
-      const updatedEntities: LocalEntity[] = [];
-      for (const id in committedUpdates) {
-        if (!Object.hasOwn(committedUpdates, id)) continue;
-        hasUpdates = true;
-        updatedEntities.push(committedEntities[id]);
-      }
-
-      if (hasUpdates) {
-        this.entities = committedEntities;
-        this.deps.onBatchUpdate?.(committedUpdates);
-        vaultEventBus.emit({
-          type: "BATCH_UPDATED",
-          vaultId: this.deps.activeVaultId() || "unknown",
-          entities: updatedEntities,
-          patches: committedUpdates,
-        });
-      }
-    }
-
-    const result = summarizeBulkMutation(requestedIds, items);
-    if (result.failedIds.length > 0 || result.cancelledIds.length > 0) {
-      span.fail("unexpected", () => ({
-        changedEntityCount: result.succeededIds.length,
-      }));
-    } else {
-      span.complete(() => ({
-        changedEntityCount: result.succeededIds.length,
-      }));
-    }
-    return result;
+    return this.bulkUpdates.bulkUpdate(updates);
   }
 
   async deleteEntity(id: string) {
@@ -579,16 +336,7 @@ export class EntityMutationService {
     }
 
     const result = summarizeBulkMutation(requestedIds, items);
-    if (result.failedIds.length > 0 || result.cancelledIds.length > 0) {
-      span.fail("unexpected", () => ({
-        changedEntityCount: result.succeededIds.length,
-      }));
-    } else {
-      span.complete(() => ({
-        changedEntityCount: result.succeededIds.length,
-      }));
-    }
-    return result;
+    return finishBulkMutation(span, result);
   }
 
   async addConnection(
@@ -670,32 +418,7 @@ export class EntityMutationService {
   }
 
   async batchCreateEntities(newEntitiesList: BatchCreateInput[]) {
-    const { entities, created } = vaultEntities.batchCreateEntities(
-      this.entities,
-      newEntitiesList,
-    );
-    this.entities = entities;
-
-    const savePromises = created.map(async (entity) => {
-      this.deps.loader.markContentLoaded(entity.id);
-      await this.deps.persistence.scheduleSave(entity);
-    });
-
-    const activeVaultId = this.deps.activeVaultId();
-    await Promise.all(savePromises);
-
-    if (activeVaultId) {
-      await this.deps.updateEntityCount(
-        activeVaultId,
-        Object.keys(this.entities).length,
-      );
-    }
-
-    vaultEventBus.emit({
-      type: "BATCH_CREATED",
-      vaultId: activeVaultId || "unknown",
-      entities: created,
-    });
+    return this.writes.batchCreateEntities(newEntitiesList);
   }
 }
 
