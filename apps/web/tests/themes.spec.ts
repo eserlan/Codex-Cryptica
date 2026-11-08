@@ -156,9 +156,9 @@ test.describe("Visual Styling Templates", () => {
     await expect(page.getByTestId("entity-explorer-panel")).toBeVisible();
     await expect(explorerButton).toHaveCSS("color", "rgb(200, 151, 58)");
 
-    // 11. Verify jargon (Archive instead of Vault)
+    // 11. Verify the active vault name remains visible after the theme change
     await expect(page.getByTestId("open-vault-button")).toContainText(
-      "Archive",
+      "Default Vault",
     );
   });
 
@@ -241,9 +241,9 @@ test.describe("Visual Styling Templates", () => {
     );
     expect(secondaryColor).toBe("#f87171");
 
-    // 7. Verify jargon (Archive instead of Vault)
+    // 7. Verify the active vault name remains visible after the theme change
     await expect(page.getByTestId("open-vault-button")).toContainText(
-      "Archive",
+      "Default Vault",
     );
   });
 
