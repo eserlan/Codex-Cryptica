@@ -64,7 +64,7 @@
     >
       {#if !isImageLoaded}
         <div
-          class="absolute inset-0 flex flex-col items-center justify-center bg-theme-bg/40 animate-pulse text-theme-text gap-2"
+          class="absolute inset-0 flex flex-col items-center justify-center bg-theme-bg/40 text-theme-text gap-2"
         >
           <span
             aria-hidden="true"
