@@ -29,7 +29,11 @@
   import { adventureContextService } from "#lib/services/adventure/adventure-context-service.js";
   import { adventureSessionRepository } from "#lib/services/adventure/adventure-session-repository.js";
   import { configureAdventureRepository } from "#lib/services/adventure/configure-adventure-repository.js";
-  import { createAdventureEntityDraft } from "#lib/services/adventure/adventure-provisional-fact-creator.js";
+  import {
+    batchFilterPromotableFacts,
+    createAdventureEntityDraft,
+  } from "#lib/services/adventure/adventure-provisional-fact-creator.js";
+  import { adventurePromotionSettings } from "#lib/stores/ui/adventure-promotion-settings.svelte.js";
   import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
   import type { ProvisionalFact } from "@codex/adventure-engine";
   import type { Entity } from "schema";
@@ -358,6 +362,101 @@
     notificationStore.notify(`Added ${draft.title} to Codex.`, "success");
   }
 
+  async function addAllProvisionalFacts(
+    facts: ProvisionalFact[],
+  ): Promise<void> {
+    const session = oracle.adventure.session;
+    if (!session) throw new Error("No active adventure.");
+    const originatingVaultId = oracle.vault.activeVaultId;
+    let addedCount = 0;
+    for (const fact of facts) {
+      if (
+        oracle.adventure.session !== session ||
+        oracle.vault.activeVaultId !== originatingVaultId
+      ) {
+        throw new Error(
+          "The active adventure changed. Add the remaining discoveries from that adventure.",
+        );
+      }
+      const draft = createAdventureEntityDraft(fact, session.title);
+      if (!draft) continue;
+      const existing = oracle.vault.allEntities.find(
+        (entity) =>
+          entity.title.trim().toLocaleLowerCase() ===
+          draft.title.trim().toLocaleLowerCase(),
+      );
+      if (existing) continue;
+      await oracle.vault.createEntity(
+        draft.type,
+        draft.title,
+        draft.initialData,
+      );
+      addedCount += 1;
+    }
+    if (addedCount > 0) {
+      notificationStore.notify(
+        `Added ${addedCount} ${addedCount === 1 ? "discovery" : "discoveries"} to Codex.`,
+        "success",
+      );
+    }
+  }
+
+  let autoPromoting = false;
+  const processedAutoPromoteFactIds = new Set<string>();
+
+  $effect(() => {
+    const session = oracle.adventure.session;
+    if (
+      !session ||
+      !adventurePromotionSettings.autoPromote ||
+      !oracle.vault.isInitialized
+    ) {
+      return;
+    }
+    const originatingVaultId = oracle.vault.activeVaultId;
+    const facts = session.provisionalFacts ?? [];
+    const pending = batchFilterPromotableFacts(
+      facts,
+      existingEntityTitles,
+      Array.from(processedAutoPromoteFactIds),
+    );
+    if (pending.length === 0 || autoPromoting) return;
+
+    autoPromoting = true;
+    void (async () => {
+      try {
+        let addedCount = 0;
+        for (const fact of pending) {
+          if (
+            oracle.adventure.session !== session ||
+            oracle.vault.activeVaultId !== originatingVaultId
+          ) {
+            break;
+          }
+          processedAutoPromoteFactIds.add(fact.id);
+          const draft = createAdventureEntityDraft(fact, session.title);
+          if (!draft) continue;
+          await oracle.vault.createEntity(
+            draft.type,
+            draft.title,
+            draft.initialData,
+          );
+          addedCount += 1;
+        }
+        if (addedCount > 0) {
+          notificationStore.notify(
+            `Auto-promoted ${addedCount} ${addedCount === 1 ? "discovery" : "discoveries"} to Codex.`,
+            "success",
+          );
+        }
+      } catch (err) {
+        console.error("Auto-promote error:", err);
+      } finally {
+        autoPromoting = false;
+      }
+    })();
+  });
+
   $effect(() => {
     const currentVaultId = vaultId;
     // On a reload the Vault's storage handle does not exist until it has
@@ -416,6 +515,7 @@
         manager={oracle.adventure}
         existingTitles={existingEntityTitles}
         onAddProvisionalFact={addProvisionalFact}
+        onAddAllProvisionalFacts={addAllProvisionalFacts}
         repository={adventureSessionRepository}
         {vaultId}
         onResume={(sessionId) => oracle.adventure.switchTo(vaultId, sessionId)}

@@ -58,6 +58,7 @@ vi.mock("#lib/services/solo-characters.js", () => ({
 import AdventureSurface from "./AdventureSurface.svelte";
 import { surfaceEnv } from "./__fixtures__/surface-env.svelte";
 import { rumourAdventureHandoff } from "#lib/stores/oracle/rumour-adventure-handoff.svelte.js";
+import { adventurePromotionSettings } from "#lib/stores/ui/adventure-promotion-settings.svelte.js";
 
 const selected = {
   batchTitle: "Word Around Town",
@@ -89,6 +90,8 @@ beforeEach(() => {
   env.openGeneratorWorkflow.mockClear();
   rumourAdventureHandoff.clear();
   surfaceEnv.vault.activeVaultId = "vault-1";
+  surfaceEnv.vault.createEntity = vi.fn(async () => "entity-id");
+  adventurePromotionSettings.setAutoPromote(false);
   surfaceEnv.vault.allEntities = [
     {
       id: "place-1",
@@ -257,6 +260,78 @@ describe("AdventureSurface leaving an adventure", () => {
   });
 });
 
+describe("AdventureSurface discovery promotion", () => {
+  it("stops batch promotion when the Vault changes during a save", async () => {
+    let finishFirstSave!: () => void;
+    surfaceEnv.vault.createEntity = vi.fn(
+      () =>
+        new Promise<string>((resolve) => {
+          finishFirstSave = () => resolve("first-entity");
+        }),
+    );
+    surfaceEnv.adventure.session = {
+      id: "adv-batch",
+      title: "The Haunted Moor",
+    };
+    render(AdventureSurface);
+
+    await fireEvent.click(
+      await screen.findByTestId("test-add-all-discoveries"),
+    );
+    await waitFor(() => {
+      expect(surfaceEnv.vault.createEntity).toHaveBeenCalledTimes(1);
+    });
+    surfaceEnv.vault.activeVaultId = "vault-2";
+    finishFirstSave();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(surfaceEnv.vault.createEntity).toHaveBeenCalledTimes(1);
+  });
+
+  it("stops auto-promotion when the Vault changes during a save", async () => {
+    let finishFirstSave!: () => void;
+    surfaceEnv.vault.createEntity = vi.fn(
+      () =>
+        new Promise<string>((resolve) => {
+          finishFirstSave = () => resolve("first-entity");
+        }),
+    );
+    adventurePromotionSettings.setAutoPromote(true);
+    surfaceEnv.vault.allEntities = [];
+    surfaceEnv.adventure.session = {
+      id: "adv-auto-switch",
+      title: "The Haunted Moor",
+      provisionalFacts: [
+        {
+          id: "fact-one",
+          kind: "person",
+          name: "First Discovery",
+          summary: "A person found in the adventure.",
+          introducedOnTurnId: "turn-one",
+          visibility: "player-visible",
+        },
+        {
+          id: "fact-two",
+          kind: "place",
+          name: "Second Discovery",
+          summary: "A place found in the adventure.",
+          introducedOnTurnId: "turn-one",
+          visibility: "player-visible",
+        },
+      ],
+    };
+    render(AdventureSurface);
+
+    await waitFor(() => {
+      expect(surfaceEnv.vault.createEntity).toHaveBeenCalledTimes(1);
+    });
+    surfaceEnv.vault.activeVaultId = "vault-2";
+    finishFirstSave();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(surfaceEnv.vault.createEntity).toHaveBeenCalledTimes(1);
+    adventurePromotionSettings.setAutoPromote(false);
+  });
+});
+
 describe("AdventureSurface rumour handoff", () => {
   it("does not offer to archive the adventure that is being created from the rumour", async () => {
     rumourAdventureHandoff.prepare("vault-1", selected, scenario);
@@ -312,5 +387,35 @@ describe("AdventureSurface rumour handoff", () => {
     expect(rumourAdventureHandoff.takeSourceDraft("vault-2")).toBeNull();
     expect(rumourAdventureHandoff.takeSourceDraft("vault-1")).toEqual(draft);
     expect(rumourAdventureHandoff.takeSourceDraft("vault-1")).toBeNull();
+  });
+
+  it("automatically promotes discoveries to Codex when autoPromote is enabled", async () => {
+    adventurePromotionSettings.setAutoPromote(true);
+    surfaceEnv.vault.allEntities = [];
+    surfaceEnv.adventure.session = {
+      id: "adv-auto",
+      title: "The Haunted Moor",
+      provisionalFacts: [
+        {
+          id: "fact-ghost",
+          kind: "person",
+          name: "The Wailing Spirit",
+          summary: "A restless phantom on the moors.",
+          visibility: "player-visible",
+        },
+      ],
+    };
+
+    render(AdventureSurface);
+    await waitFor(() => {
+      expect(surfaceEnv.vault.createEntity).toHaveBeenCalledWith(
+        "character",
+        "The Wailing Spirit",
+        expect.objectContaining({
+          content: expect.stringContaining("The Haunted Moor"),
+        }),
+      );
+    });
+    adventurePromotionSettings.setAutoPromote(false);
   });
 });

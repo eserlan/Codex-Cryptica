@@ -6,6 +6,7 @@ describe("UIPersistence", () => {
     expect(Object.values(UI_STORAGE_KEYS).sort()).toEqual([
       "codex-cryptica-active-theme",
       "codex_active_sidebar_tool",
+      "codex_adventure_auto_promote",
       "codex_ai_disabled",
       "codex_auto_archive",
       "codex_auto_fullscreen",

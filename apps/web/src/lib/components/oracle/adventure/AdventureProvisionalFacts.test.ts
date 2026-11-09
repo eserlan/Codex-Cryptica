@@ -3,6 +3,8 @@
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import AdventureProvisionalFacts from "./AdventureProvisionalFacts.svelte";
+import { AdventurePromotionSettings } from "#lib/stores/ui/adventure-promotion-settings.svelte.js";
+import { UIPersistence } from "#lib/stores/ui/persistence.js";
 
 const fact = {
   id: "barrow",
@@ -12,6 +14,28 @@ const fact = {
   introducedOnTurnId: "turn-1",
   visibility: "player-visible" as const,
 };
+
+const fact2 = {
+  id: "npc-elric",
+  kind: "person" as const,
+  name: "Elric the Wandering Hermit",
+  summary: "A lone survivor in the wetlands.",
+  introducedOnTurnId: "turn-2",
+  visibility: "player-visible" as const,
+};
+
+function makeMockStorage(initial: Record<string, string> = {}) {
+  const store = { ...initial };
+  return {
+    getItem: vi.fn((key: string) => (key in store ? store[key] : null)),
+    setItem: vi.fn((key: string, value: string) => {
+      store[key] = value;
+    }),
+    removeItem: vi.fn((key: string) => {
+      delete store[key];
+    }),
+  };
+}
 
 describe("AdventureProvisionalFacts", () => {
   async function showDiscoveries(): Promise<void> {
@@ -82,6 +106,81 @@ describe("AdventureProvisionalFacts", () => {
     });
 
     expect(screen.queryByText("Sunken Barrow")).toBeNull();
+  });
+
+  it("supports batch promotion of all discoveries via onAddAll", async () => {
+    const onAddAll = vi.fn().mockResolvedValue(undefined);
+    const onAdd = vi.fn().mockResolvedValue(undefined);
+    render(AdventureProvisionalFacts, {
+      props: {
+        facts: [fact, fact2],
+        existingTitles: [],
+        onAdd,
+        onAddAll,
+      },
+    });
+
+    await showDiscoveries();
+    const batchButton = screen.getByRole("button", {
+      name: "Add all discoveries to Codex",
+    });
+    expect(batchButton).toBeTruthy();
+    await fireEvent.click(batchButton);
+
+    expect(onAddAll).toHaveBeenCalledWith([fact, fact2]);
+    expect(screen.queryByText("Sunken Barrow")).toBeNull();
+    expect(screen.queryByText("Elric the Wandering Hermit")).toBeNull();
+  });
+
+  it("supports batch promotion fallback to sequential onAdd when onAddAll is omitted", async () => {
+    const onAdd = vi.fn().mockResolvedValue(undefined);
+    render(AdventureProvisionalFacts, {
+      props: {
+        facts: [fact, fact2],
+        existingTitles: [],
+        onAdd,
+      },
+    });
+
+    await showDiscoveries();
+    const batchButton = screen.getByRole("button", {
+      name: "Add all discoveries to Codex",
+    });
+    await fireEvent.click(batchButton);
+
+    expect(onAdd).toHaveBeenCalledTimes(2);
+    expect(onAdd).toHaveBeenCalledWith(fact);
+    expect(onAdd).toHaveBeenCalledWith(fact2);
+    expect(screen.queryByText("Sunken Barrow")).toBeNull();
+    expect(screen.queryByText("Elric the Wandering Hermit")).toBeNull();
+  });
+
+  it("toggles the auto-promote setting checkbox", async () => {
+    const storage = makeMockStorage();
+    const settings = new AdventurePromotionSettings(
+      new UIPersistence({ storage }),
+    );
+    render(AdventureProvisionalFacts, {
+      props: {
+        facts: [fact],
+        existingTitles: [],
+        onAdd: vi.fn(),
+        settings,
+      },
+    });
+
+    await showDiscoveries();
+    const checkbox = screen.getByRole("checkbox", {
+      name: /auto-promote discoveries to codex/i,
+    });
+    expect((checkbox as HTMLInputElement).checked).toBe(false);
+
+    await fireEvent.click(checkbox);
+    expect(settings.autoPromote).toBe(true);
+    expect(storage.setItem).toHaveBeenCalledWith(
+      "codex_adventure_auto_promote",
+      "true",
+    );
   });
 
   it("shows the scenario badge when a fact is linked to a scenario", async () => {
