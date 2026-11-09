@@ -2,9 +2,11 @@
 import type {
   GoogleGenerativeAI as GoogleGenerativeAIType,
   GenerativeModel,
-  GenerativeContentBlob,
 } from "@google/generative-ai";
-import { safeSnapshot } from "./text-generation-context";
+import {
+  buildOperationPipelineBody,
+  normalizeGenerateContentRequest,
+} from "./generation-request";
 import type { SessionTokenSource } from "./session-manager";
 
 /**
@@ -62,63 +64,6 @@ export type GenerationEvent =
       usage?: { promptTokens: number; completionTokens: number };
     }
   | { type: "error"; error: string };
-
-/** Shared by `sendViaOperationPipeline` and its streaming counterpart so a
- * buffered and a streamed request for the same content always ask the
- * operation pipeline for exactly the same thing. */
-// fallow-ignore-next-line complexity
-function buildOperationPipelineBody(params: {
-  contents: any[];
-  generationConfig: any;
-  finalSysInst?: string;
-}): Record<string, unknown> {
-  const { contents, generationConfig, finalSysInst } = params;
-
-  const messages: Array<{ role: string; content: string }> = [];
-  if (finalSysInst) {
-    messages.push({ role: "system", content: finalSysInst });
-  }
-  for (const c of contents) {
-    const text = (c.parts || [])
-      .map((p: any) => (typeof p?.text === "string" ? p.text : ""))
-      .join("");
-    messages.push({
-      role: c.role === "model" ? "assistant" : "user",
-      content: text,
-    });
-  }
-
-  const wantsJson =
-    generationConfig?.responseMimeType === "application/json" ||
-    generationConfig?.response_mime_type === "application/json";
-
-  const body: Record<string, unknown> = {
-    operation: wantsJson ? "structured-generation" : "freeform-generation",
-    messages,
-  };
-  const responseSchema =
-    generationConfig?.responseSchema ?? generationConfig?.response_schema;
-  if (responseSchema !== undefined) {
-    // Forwarding a schema does double duty: it lets oracle-proxy actually
-    // validate the parsed response shape (structuredOutputValid otherwise
-    // defaults to true with nothing to check), and for OpenAI-family models
-    // it switches them from json_object mode — which can only ever return a
-    // JSON *object* at the root, never a bare array — to json_schema mode,
-    // which can. Callers requesting a top-level array without a schema will
-    // silently get an object-shaped refusal from those providers.
-    body.schema = responseSchema;
-  }
-  if (generationConfig?.temperature !== undefined) {
-    body.temperature = generationConfig.temperature;
-  }
-  const topP = generationConfig?.topP ?? generationConfig?.top_p;
-  if (topP !== undefined) body.topP = topP;
-  const maxOutputTokens =
-    generationConfig?.maxOutputTokens ?? generationConfig?.max_output_tokens;
-  if (maxOutputTokens !== undefined) body.maxOutputTokens = maxOutputTokens;
-
-  return body;
-}
 
 // fallow-ignore-next-line complexity -- Adapter orchestration and structured event paths are covered by focused provider/turn tests.
 async function sendViaOperationPipeline(params: {
@@ -212,101 +157,6 @@ async function sendViaOperationPipeline(params: {
     },
     rawResponse: data,
   };
-}
-
-/**
- * Normalizes a `generateContent`/`generateContentStream` request (a bare
- * string, a parts array, a single content object, or a full request object)
- * into the shape both the operation pipeline and the legacy passthrough
- * expect. Shared so a streamed and a buffered call for the same input always
- * produce identical `contents`/`generationConfig`/`finalSysInst` — only how
- * the response comes back differs.
- */
-// fallow-ignore-next-line complexity
-function normalizeGenerateContentRequest(
-  request: string | Array<GenerativeContentBlob | string> | any,
-  systemInstruction: string | undefined,
-): {
-  contents: any[];
-  generationConfig: any;
-  finalSysInst: string | undefined;
-  isPlainTextRequest: boolean;
-} {
-  // Deep clone request data so any reactive proxies are removed before the
-  // payload is normalized and serialized.
-  const raw = safeSnapshot(request);
-
-  let contents: any[];
-  let generationConfig: any = {};
-
-  if (
-    raw &&
-    typeof raw === "object" &&
-    raw.contents &&
-    Array.isArray(raw.contents)
-  ) {
-    // It's a full request object
-    contents = raw.contents;
-    generationConfig = raw.generationConfig || raw.generation_config || {};
-  } else if (Array.isArray(raw)) {
-    // It's an array of parts
-    contents = [
-      {
-        role: "user",
-        parts: raw.map((p) => (typeof p === "string" ? { text: p } : p)),
-      },
-    ];
-  } else if (raw && typeof raw === "object" && raw.parts) {
-    // It's a single content object
-    contents = [raw];
-  } else {
-    // It's a simple string
-    contents = [{ role: "user", parts: [{ text: String(raw) }] }];
-  }
-
-  // Final sanitation of parts (crucial for scalar field error)
-  contents = contents.map((c) => ({
-    role: c.role || "user",
-    parts: (c.parts || []).map((p: any) => {
-      // Ensure part is an object, and if text is an object, extract its string
-      if (typeof p === "string") return { text: p };
-      if (p.text && typeof p.text !== "string") {
-        console.warn(
-          "[OracleProxy] Sanitizing object found in text field:",
-          p.text,
-        );
-        return { text: String(p.text) };
-      }
-      return p;
-    }),
-  }));
-
-  const requestSysInst = raw?.systemInstruction ?? raw?.system_instruction;
-  const finalSysInst =
-    systemInstruction ??
-    (typeof requestSysInst === "string"
-      ? requestSysInst
-      : requestSysInst?.parts?.[0]?.text);
-
-  // Non-text response modalities (e.g. inline image generation via Gemini's
-  // multimodal endpoint) and non-text input parts (e.g. an inlineData image
-  // sent as part of the prompt) have no equivalent in the operation-based
-  // pipeline, which only ever deals in plain text messages both directions.
-  // Those requests keep using the legacy passthrough; only plain-text
-  // requests route through the registry/resolver pipeline (streaming or not).
-  const modalities: string[] =
-    generationConfig?.responseModalities ??
-    generationConfig?.response_modalities ??
-    [];
-  const wantsNonTextOutput =
-    modalities.length > 0 &&
-    !(modalities.length === 1 && modalities[0] === "TEXT");
-  const hasNonTextInput = contents.some((c) =>
-    (c.parts || []).some((p: any) => !p || typeof p.text !== "string"),
-  );
-  const isPlainTextRequest = !wantsNonTextOutput && !hasNonTextInput;
-
-  return { contents, generationConfig, finalSysInst, isPlainTextRequest };
 }
 
 /**
@@ -825,7 +675,7 @@ export class DefaultAIClientManager {
 
       // fallow-ignore-next-line complexity
       async generateContent(
-        request: string | Array<GenerativeContentBlob | string> | any,
+        request: any,
         requestOptions?: { signal?: AbortSignal },
       ) {
         const { signal } = requestOptions ?? {};
@@ -934,7 +784,7 @@ export class DefaultAIClientManager {
        * safely rather than getting bytes that skip the pipeline entirely.
        */
       generateContentStream(
-        request: string | Array<GenerativeContentBlob | string> | any,
+        request: any,
         signal?: AbortSignal,
       ): AsyncGenerator<GenerationEvent> {
         const { contents, generationConfig, finalSysInst, isPlainTextRequest } =
