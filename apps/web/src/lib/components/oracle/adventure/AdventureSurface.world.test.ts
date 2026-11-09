@@ -89,6 +89,8 @@ beforeEach(() => {
   env.openGeneratorWorkflow.mockClear();
   rumourAdventureHandoff.clear();
   surfaceEnv.vault.activeVaultId = "vault-1";
+  surfaceEnv.vault.createEntity = vi.fn(async () => "entity-id");
+  adventurePromotionSettings.setAutoPromote(false);
   surfaceEnv.vault.allEntities = [
     {
       id: "place-1",
@@ -254,6 +256,78 @@ describe("AdventureSurface leaving an adventure", () => {
     await screen.findByTestId("adventure-enter-world");
 
     expect(openActive).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("AdventureSurface discovery promotion", () => {
+  it("stops batch promotion when the Vault changes during a save", async () => {
+    let finishFirstSave!: () => void;
+    surfaceEnv.vault.createEntity = vi.fn(
+      () =>
+        new Promise<string>((resolve) => {
+          finishFirstSave = () => resolve("first-entity");
+        }),
+    );
+    surfaceEnv.adventure.session = {
+      id: "adv-batch",
+      title: "The Haunted Moor",
+    };
+    render(AdventureSurface);
+
+    await fireEvent.click(
+      await screen.findByTestId("test-add-all-discoveries"),
+    );
+    await waitFor(() => {
+      expect(surfaceEnv.vault.createEntity).toHaveBeenCalledTimes(1);
+    });
+    surfaceEnv.vault.activeVaultId = "vault-2";
+    finishFirstSave();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(surfaceEnv.vault.createEntity).toHaveBeenCalledTimes(1);
+  });
+
+  it("stops auto-promotion when the Vault changes during a save", async () => {
+    let finishFirstSave!: () => void;
+    surfaceEnv.vault.createEntity = vi.fn(
+      () =>
+        new Promise<string>((resolve) => {
+          finishFirstSave = () => resolve("first-entity");
+        }),
+    );
+    adventurePromotionSettings.setAutoPromote(true);
+    surfaceEnv.vault.allEntities = [];
+    surfaceEnv.adventure.session = {
+      id: "adv-auto-switch",
+      title: "The Haunted Moor",
+      provisionalFacts: [
+        {
+          id: "fact-one",
+          kind: "person",
+          name: "First Discovery",
+          summary: "A person found in the adventure.",
+          introducedOnTurnId: "turn-one",
+          visibility: "player-visible",
+        },
+        {
+          id: "fact-two",
+          kind: "place",
+          name: "Second Discovery",
+          summary: "A place found in the adventure.",
+          introducedOnTurnId: "turn-one",
+          visibility: "player-visible",
+        },
+      ],
+    };
+    render(AdventureSurface);
+
+    await waitFor(() => {
+      expect(surfaceEnv.vault.createEntity).toHaveBeenCalledTimes(1);
+    });
+    surfaceEnv.vault.activeVaultId = "vault-2";
+    finishFirstSave();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(surfaceEnv.vault.createEntity).toHaveBeenCalledTimes(1);
+    adventurePromotionSettings.setAutoPromote(false);
   });
 });
 

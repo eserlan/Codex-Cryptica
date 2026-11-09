@@ -367,8 +367,17 @@
   ): Promise<void> {
     const session = oracle.adventure.session;
     if (!session) throw new Error("No active adventure.");
+    const originatingVaultId = oracle.vault.activeVaultId;
     let addedCount = 0;
     for (const fact of facts) {
+      if (
+        oracle.adventure.session !== session ||
+        oracle.vault.activeVaultId !== originatingVaultId
+      ) {
+        throw new Error(
+          "The active adventure changed. Add the remaining discoveries from that adventure.",
+        );
+      }
       const draft = createAdventureEntityDraft(fact, session.title);
       if (!draft) continue;
       const existing = oracle.vault.allEntities.find(
@@ -404,6 +413,7 @@
     ) {
       return;
     }
+    const originatingVaultId = oracle.vault.activeVaultId;
     const facts = session.provisionalFacts ?? [];
     const pending = batchFilterPromotableFacts(
       facts,
@@ -417,6 +427,12 @@
       try {
         let addedCount = 0;
         for (const fact of pending) {
+          if (
+            oracle.adventure.session !== session ||
+            oracle.vault.activeVaultId !== originatingVaultId
+          ) {
+            break;
+          }
           processedAutoPromoteFactIds.add(fact.id);
           const draft = createAdventureEntityDraft(fact, session.title);
           if (!draft) continue;

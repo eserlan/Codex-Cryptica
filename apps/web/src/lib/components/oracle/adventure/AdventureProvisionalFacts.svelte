@@ -98,19 +98,16 @@
   >
     <div class="flex items-center justify-between gap-3">
       <div>
-        <h3
-          id="adventure-new-entities"
-          class="font-semibold text-theme-primary"
-        >
+        <h3 id="adventure-new-entities" class="font-semibold text-theme-text">
           New to Codex
         </h3>
-        <p class="text-sm text-theme-secondary">
+        <p class="text-sm text-theme-text">
           {visibleFacts.length}
           {visibleFacts.length === 1 ? "discovery" : "discoveries"} to review
         </p>
       </div>
       <button
-        class="flex min-h-10 items-center gap-1 rounded-md border border-theme-border px-3 text-sm text-theme-primary hover:bg-theme-primary/10"
+        class="flex min-h-10 items-center gap-1 rounded-md border border-theme-border px-3 text-sm text-theme-text hover:bg-theme-primary/10"
         type="button"
         aria-expanded={expanded}
         aria-controls="adventure-new-entities-list"
@@ -177,26 +174,26 @@
             <span
               class={[
                 typePresentation[fact.kind].icon,
-                "mt-0.5 h-4 w-4 shrink-0 text-theme-primary",
+                "mt-0.5 h-4 w-4 shrink-0 text-theme-text",
               ]}
               aria-hidden="true"
             ></span>
             <div class="min-w-0 flex-1">
               <div class="flex items-baseline gap-2">
-                <p class="truncate font-medium text-theme-primary">
+                <p class="truncate font-medium text-theme-text">
                   {fact.name}
                 </p>
                 <span
-                  class="shrink-0 text-micro font-mono uppercase tracking-wider text-theme-secondary"
+                  class="shrink-0 text-micro font-mono uppercase tracking-wider text-theme-text"
                 >
                   {typePresentation[fact.kind].label}
                 </span>
               </div>
-              <p class="mt-1 text-sm text-theme-secondary">{fact.summary}</p>
+              <p class="mt-1 text-sm text-theme-text">{fact.summary}</p>
             </div>
             <div class="flex shrink-0 items-center gap-1">
               <button
-                class="rounded-md border border-theme-border px-2 py-1 text-xs text-theme-primary hover:border-theme-primary disabled:cursor-wait disabled:opacity-60"
+                class="rounded-md border border-theme-border px-2 py-1 text-xs text-theme-text hover:border-theme-primary disabled:cursor-wait disabled:opacity-60"
                 type="button"
                 disabled={savingId === fact.id || addingAll}
                 onclick={() => void add(fact)}
