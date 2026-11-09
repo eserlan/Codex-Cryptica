@@ -8,7 +8,10 @@ import type { StorageLike } from "#lib/utils/runtime-deps.js";
 export class CloudBackupMediaCache {
   hashes: Record<string, string> = {};
 
-  constructor(private storage: () => StorageLike) {}
+  constructor(
+    private storage: () => StorageLike,
+    private measureNow: () => number = () => performance.now(),
+  ) {}
 
   reset(vaultId: string): void {
     this.hashes = {};
@@ -28,12 +31,12 @@ export class CloudBackupMediaCache {
     skipAssetUploadIds: string[];
     freshHashes: Record<string, string>;
   }> {
-    const hashStartedAt = performance.now();
+    const hashStartedAt = this.measureNow();
     try {
       const plan = await planAssetUploads(assets, this.hashes);
       timing?.({
         stage: "hash",
-        durationMs: performance.now() - hashStartedAt,
+        durationMs: this.measureNow() - hashStartedAt,
         count: assets.length,
         bytes: assets.reduce((total, asset) => total + asset.bytes.length, 0),
       });

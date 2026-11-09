@@ -53,7 +53,12 @@ describe("backup media hash cache", () => {
   });
 
   it("plans unchanged uploads and reports hash timing without content", async () => {
-    const { cache } = harness();
+    const { storage } = harness();
+    const measureNow = vi
+      .fn()
+      .mockReturnValueOnce(150)
+      .mockReturnValueOnce(190);
+    const cache = new CloudBackupMediaCache(() => storage, measureNow);
     cache.hashes = { a: "old" };
     const assets = [
       { assetId: "a", bytes: new Uint8Array([1, 2]), mimeType: "image/png" },
@@ -73,7 +78,7 @@ describe("backup media hash cache", () => {
       stage: "hash",
       count: 1,
       bytes: 2,
-      durationMs: expect.any(Number),
+      durationMs: 40,
     });
   });
 
