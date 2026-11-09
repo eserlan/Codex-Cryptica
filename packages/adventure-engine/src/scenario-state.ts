@@ -20,6 +20,7 @@ export function createScenarioState(seed: ScenarioSeed): ScenarioState {
     playerVisible: structuredClone(seed.playerVisible),
     gmOnly: structuredClone(seed.gmOnly),
     status: "open",
+    stage: "hearsay",
     events: [],
   };
 }
@@ -38,6 +39,7 @@ export function playerScenarioProjection(
       // A source record may be GM-only; do not expose its ID or provenance.
     },
     playerVisible: structuredClone(scenario.playerVisible),
+    stage: scenario.stage ?? "hearsay",
     status: scenario.status,
     events: scenario.events
       .filter((event) => event.visibility === "player")

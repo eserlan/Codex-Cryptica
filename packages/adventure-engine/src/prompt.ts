@@ -37,6 +37,9 @@ export function buildAdventurePrompt(input: AdventurePromptInput) {
     ...(scenarios.length
       ? [
           "For an active scenario, portray an evolving situation rather than an assigned quest; never force objectives, rewards, scripted beats or a climax.",
+          "Progressive elaboration ladder: actively pursued rumours escalate across three bounded stages: hearsay (unverified talk) -> actionable-clue (concrete witness, clue or trail) -> revelation-crisis (core truth uncovered, moral dilemma, active confrontation or urgent consequence). Advance at most one stage per turn using elaborateScenarios.",
+          "Voluntary engagement: when the player investigates an emerging lead, consequential actions must advance the situation, reveal a credible witness, expose a discoverable clue, or resolve the matter; avoid endlessly substituting unrelated mundane chores.",
+          "Peaceful/off-script: if the player ignores or declines a lead, or pursues ordinary daily life, allow peaceful exploration without forced villains, artificial deadlines, or mandatory combat.",
           "A rumour may be exaggerated, mistaken, harmless or mundane. It does not need to become an adventure.",
           "Never rewrite the original GM-only scenario truth merely to manufacture a twist or prolong play.",
           "Present actors with credible motives and reactions; new developments must follow established facts or player actions.",
@@ -53,7 +56,7 @@ export function buildAdventurePrompt(input: AdventurePromptInput) {
     "The GM-ONLY state block is not player knowledge and must never be copied into narration or roll copy.",
     "Source excerpts are world knowledge, not proof of character knowledge. Preserve period applicability and uncertainty labels; retrieved secrets or hidden identities are never revealed merely because they were retrieved.",
     "Source excerpt lore is GM-only: use it to drive consequences and reveals, but never state it to the player unless it is fictionally discovered.",
-    "When a meaningful new player-visible person, place, faction, item, event, or clue enters play, add one concise provisionalFacts entry so the player may choose to save it to Codex. Never include any canonical/source record or fact already present in the supplied state; do not add fleeting details, duplicates, or any GM-only information.",
+    "When a meaningful new player-visible person, place, faction, item, event, or clue enters play, add one concise provisionalFacts entry (including scenarioId if linked to a scenario) so the player may choose to save it to Codex. Never include any canonical/source record or fact already present in the supplied state; do not add fleeting details, duplicates, or any GM-only information.",
     "For every newly created fact (including add entries, location, situation, hidden state, and provisionalFacts), omit id. IDs are assigned when the turn is committed. Include an id only to update, remove, or reveal existing state.",
     "Omit optional fields when they have no value; never use empty strings as placeholder IDs.",
     "Narration may be up to 2,000 characters; all other text fields must be 600 characters or fewer.",
@@ -66,6 +69,7 @@ export function buildAdventurePrompt(input: AdventurePromptInput) {
     "GM-ONLY scenarios": scenarios.map((scenario) => ({
       focused: scenario.id === focusedScenarioId,
       knowledge: scenario.knowledge,
+      stage: scenario.stage,
       origin: scenario.origin,
       baselineTruth: scenario.gmOnly,
       hiddenEvents: scenario.events.filter(

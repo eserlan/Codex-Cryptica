@@ -75,6 +75,7 @@ export interface ProvisionalFact {
   summary: string;
   introducedOnTurnId: string;
   visibility: "player-visible" | "gm-only";
+  scenarioId?: string;
 }
 
 /**
@@ -271,9 +272,14 @@ export interface ScenarioEvent {
   turnId?: string;
 }
 
+/** Progressive elaboration depth of a situation. */
+export type ScenarioElaborationStage =
+  "hearsay" | "actionable-clue" | "revelation-crisis";
+
 export interface ScenarioState extends ScenarioSeed {
   version: 1;
   status: ScenarioStatus;
+  stage: ScenarioElaborationStage;
   events: ScenarioEvent[];
 }
 
@@ -345,6 +351,12 @@ export interface AdventureSession {
   resourceCounters: ResourceCounter[];
 }
 
+export interface ScenarioElaborationProposal {
+  scenarioId: string;
+  stage: ScenarioElaborationStage;
+  discovery?: string;
+}
+
 export interface CompletedTurnProposal {
   kind: "complete";
   narration: string;
@@ -354,6 +366,8 @@ export interface CompletedTurnProposal {
   revealSecretIds: string[];
   /** Scenario leads fictionally disclosed in this same committed turn. */
   revealScenarioIds?: string[];
+  /** Scenarios escalated along the progressive elaboration ladder in this turn. */
+  elaborateScenarios?: ScenarioElaborationProposal[];
   provisionalFacts: NewProvisionalFact[];
   sourceRecordIds: string[];
   suggestedActions?: string[];

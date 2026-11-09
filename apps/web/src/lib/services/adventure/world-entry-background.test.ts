@@ -219,6 +219,7 @@ describe("world entry background situations", () => {
       playerVisible: { rumour: `R-${i}`, lead: `L-${i}` },
       gmOnly: { truth: `T-${i}` },
       knowledge: "heard" as const,
+      stage: "hearsay" as const,
       status: "open" as const,
       events: [],
       anchorRefs: [],

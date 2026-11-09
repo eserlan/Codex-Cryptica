@@ -1138,6 +1138,7 @@ describe("AdventureManager Phase 2 tools", () => {
       playerVisible: { rumour: "A rumour", lead: "A lead" },
       gmOnly: { truth },
       status: "open" as const,
+      stage: "hearsay" as const,
       events: [],
     });
 
