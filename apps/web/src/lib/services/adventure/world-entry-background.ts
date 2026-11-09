@@ -99,6 +99,7 @@ export function seedWorldEntryBackground(
         ifInvestigated: selected.gmOnly.ifInvestigated,
       },
       knowledge: "unheard" as const,
+      stage: "hearsay" as const,
       status: "open" as const,
       events: [],
       anchorRefs: location.recordId ? [location.recordId] : [],

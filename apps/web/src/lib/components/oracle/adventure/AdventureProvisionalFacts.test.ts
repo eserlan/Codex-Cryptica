@@ -83,4 +83,17 @@ describe("AdventureProvisionalFacts", () => {
 
     expect(screen.queryByText("Sunken Barrow")).toBeNull();
   });
+
+  it("shows the scenario badge when a fact is linked to a scenario", async () => {
+    render(AdventureProvisionalFacts, {
+      props: {
+        facts: [{ ...fact, scenarioId: "scen-1" }],
+        existingTitles: [],
+        onAdd: vi.fn(),
+      },
+    });
+
+    await showDiscoveries();
+    expect(screen.getByText("Scenario")).toBeTruthy();
+  });
 });

@@ -112,6 +112,9 @@ export const scenarioItemSchema = z
       .strict(),
     gmOnly: z.object({ truth: text, ifInvestigated: text.optional() }).strict(),
     knowledge: z.enum(["unheard", "heard"]),
+    stage: z
+      .enum(["hearsay", "actionable-clue", "revelation-crisis"])
+      .default("hearsay"),
     status: z.enum(["open", "resolved", "abandoned"]),
     events: z.array(event).max(100),
     anchorRefs: z.array(id).max(12),

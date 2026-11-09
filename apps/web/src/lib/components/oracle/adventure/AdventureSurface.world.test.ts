@@ -81,6 +81,7 @@ const scenario = {
   playerVisible: { rumour: "The miller vanished.", lead: "Old Mill" },
   gmOnly: { truth: "He is hiding grain." },
   status: "open" as const,
+  stage: "hearsay" as const,
   events: [],
 };
 

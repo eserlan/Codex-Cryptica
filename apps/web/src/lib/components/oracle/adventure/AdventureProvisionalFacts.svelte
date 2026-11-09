@@ -125,6 +125,13 @@
                 >
                   {typePresentation[fact.kind].label}
                 </span>
+                {#if fact.scenarioId}
+                  <span
+                    class="shrink-0 rounded bg-theme-primary/10 px-1 py-0.5 text-micro font-mono uppercase tracking-wider text-theme-text"
+                  >
+                    Scenario
+                  </span>
+                {/if}
               </div>
               <p class="mt-1 text-sm text-theme-secondary">{fact.summary}</p>
             </div>

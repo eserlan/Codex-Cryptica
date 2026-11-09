@@ -98,6 +98,7 @@ const provisionalFactSchema = z.object({
   summary: text,
   introducedOnTurnId: id,
   visibility: z.enum(["player-visible", "gm-only"]),
+  scenarioId: id.optional(),
 });
 const newProvisionalFactSchema = provisionalFactSchema
   .omit({ id: true, introducedOnTurnId: true })
@@ -240,6 +241,14 @@ const timeAdvanceSchema = z
   })
   .strict();
 
+const scenarioElaborationProposalSchema = z
+  .object({
+    scenarioId: id,
+    stage: z.enum(["hearsay", "actionable-clue", "revelation-crisis"]),
+    discovery: text.optional(),
+  })
+  .strict();
+
 const completeProposalSchema = z.object({
   kind: z.literal("complete"),
   narration,
@@ -248,6 +257,10 @@ const completeProposalSchema = z.object({
   hiddenPatch: hiddenPatchSchema,
   revealSecretIds: z.array(id),
   revealScenarioIds: z.array(id).max(8).optional(),
+  elaborateScenarios: z
+    .array(scenarioElaborationProposalSchema)
+    .max(8)
+    .optional(),
   provisionalFacts: z.array(newProvisionalFactSchema),
   sourceRecordIds: z.array(id),
   suggestedActions: z.array(text).length(3).optional(),

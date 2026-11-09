@@ -315,6 +315,20 @@ const newProvisionalFactSchema = {
     name: textSchema,
     summary: textSchema,
     visibility: provisionalFactSchema.properties.visibility,
+    scenarioId: idSchema,
+  },
+} as const;
+
+const scenarioElaborationSchema = {
+  type: "object",
+  required: ["scenarioId", "stage"],
+  properties: {
+    scenarioId: idSchema,
+    stage: {
+      type: "string",
+      enum: ["hearsay", "actionable-clue", "revelation-crisis"],
+    },
+    discovery: textSchema,
   },
 } as const;
 
@@ -406,6 +420,8 @@ const adventureTurnResponseSchema = {
           required: ["secrets", "gmThreads"],
         },
         revealSecretIds: { type: "array", items: { type: "string" } },
+        revealScenarioIds: { type: "array", items: idSchema },
+        elaborateScenarios: { type: "array", items: scenarioElaborationSchema },
         provisionalFacts: { type: "array", items: newProvisionalFactSchema },
         sourceRecordIds: { type: "array", items: idSchema },
         suggestedActions: {
