@@ -22,6 +22,7 @@ import type {
   Result,
   ScenarioElaborationProposal,
   ScenarioElaborationStage,
+  ScenarioItem,
   SuppliedRollOutcome,
   VisibleStatePatch,
   VisibleStateProposalPatch,
@@ -358,6 +359,102 @@ const ELABORATION_LADDER_ORDER: Record<ScenarioElaborationStage, number> = {
   "revelation-crisis": 2,
 };
 
+type ScenarioElaborationValidation =
+  { scenario: ScenarioItem } | { error: ReturnType<typeof error> };
+
+function validateScenarioAvailability(
+  candidate: AdventureSession,
+  elaboration: ScenarioElaborationProposal,
+  revealedThisTurn: Set<string>,
+): ScenarioElaborationValidation {
+  const scenario = candidate.scenarioCollection?.items.find(
+    (item) => item.id === elaboration.scenarioId,
+  );
+  if (!scenario) {
+    return {
+      error: error(
+        "unknown-fact",
+        `Unknown scenario: ${elaboration.scenarioId}`,
+      ),
+    };
+  }
+  if (scenario.status !== "open") {
+    return {
+      error: error(
+        "invalid-transition",
+        `Scenario ${elaboration.scenarioId} is not open`,
+      ),
+    };
+  }
+  if (revealedThisTurn.has(elaboration.scenarioId)) {
+    return {
+      error: error(
+        "invalid-transition",
+        `Cannot elaborate scenario ${elaboration.scenarioId} in the same turn it is discovered`,
+      ),
+    };
+  }
+  if (scenario.knowledge !== "heard") {
+    return {
+      error: error(
+        "invalid-transition",
+        `Scenario ${elaboration.scenarioId} must be heard before it can be elaborated`,
+      ),
+    };
+  }
+  return { scenario };
+}
+
+function validateElaborationStage(
+  scenario: ScenarioItem,
+  elaboration: ScenarioElaborationProposal,
+): ReturnType<typeof error> | null {
+  const currentStage = scenario.stage ?? "hearsay";
+  const currentLevel = ELABORATION_LADDER_ORDER[currentStage] ?? 0;
+  const targetLevel = ELABORATION_LADDER_ORDER[elaboration.stage] ?? 0;
+  if (targetLevel <= currentLevel) {
+    return error(
+      "invalid-transition",
+      `Cannot transition scenario ${elaboration.scenarioId} from ${currentStage} to ${elaboration.stage}`,
+    );
+  }
+  if (targetLevel - currentLevel > 1) {
+    return error(
+      "invalid-transition",
+      `Cannot skip elaboration stages for scenario ${elaboration.scenarioId} from ${currentStage} to ${elaboration.stage}`,
+    );
+  }
+  return null;
+}
+
+function recordScenarioElaborationDiscovery(
+  scenario: ScenarioItem,
+  elaboration: ScenarioElaborationProposal,
+  candidate: AdventureSession,
+  turn: CommittedAdventureTurn,
+  createId: IdFactory,
+): ReturnType<typeof error> | null {
+  const text = elaboration.discovery?.trim();
+  if (!text) return null;
+
+  const id = allocateId(existingIds(candidate), createId);
+  if (!id || scenario.events.length >= 100) {
+    return error(
+      "id-allocation-failed",
+      "Unable to record scenario elaboration discovery",
+    );
+  }
+  scenario.events.push({
+    id,
+    kind: "discovery",
+    visibility: "player",
+    text,
+    at: turn.committedAt,
+    turnId: turn.id,
+  });
+  return null;
+}
+
 function applyScenarioElaborations(
   candidate: AdventureSession,
   elaborations: ScenarioElaborationProposal[] | undefined,
@@ -369,68 +466,28 @@ function applyScenarioElaborations(
 
   const revealedThisTurn = new Set(revealedScenarioIds ?? []);
 
-  for (const elab of elaborations) {
-    const scenario = candidate.scenarioCollection?.items.find(
-      (item) => item.id === elab.scenarioId,
+  for (const elaboration of elaborations) {
+    const validation = validateScenarioAvailability(
+      candidate,
+      elaboration,
+      revealedThisTurn,
     );
-    if (!scenario) {
-      return error("unknown-fact", `Unknown scenario: ${elab.scenarioId}`);
-    }
-    if (scenario.status !== "open") {
-      return error(
-        "invalid-transition",
-        `Scenario ${elab.scenarioId} is not open`,
-      );
-    }
-    if (revealedThisTurn.has(elab.scenarioId)) {
-      return error(
-        "invalid-transition",
-        `Cannot elaborate scenario ${elab.scenarioId} in the same turn it is discovered`,
-      );
-    }
-    if (scenario.knowledge !== "heard") {
-      return error(
-        "invalid-transition",
-        `Scenario ${elab.scenarioId} must be heard before it can be elaborated`,
-      );
-    }
+    if ("error" in validation) return validation.error;
+    const stageError = validateElaborationStage(
+      validation.scenario,
+      elaboration,
+    );
+    if (stageError) return stageError;
 
-    const currentStage = scenario.stage ?? "hearsay";
-    const currentLevel = ELABORATION_LADDER_ORDER[currentStage] ?? 0;
-    const targetLevel = ELABORATION_LADDER_ORDER[elab.stage] ?? 0;
-
-    if (targetLevel <= currentLevel) {
-      return error(
-        "invalid-transition",
-        `Cannot transition scenario ${elab.scenarioId} from ${currentStage} to ${elab.stage}`,
-      );
-    }
-    if (targetLevel - currentLevel > 1) {
-      return error(
-        "invalid-transition",
-        `Cannot skip elaboration stages for scenario ${elab.scenarioId} from ${currentStage} to ${elab.stage}`,
-      );
-    }
-
-    scenario.stage = elab.stage;
-
-    if (elab.discovery && elab.discovery.trim().length > 0) {
-      const id = allocateId(existingIds(candidate), createId);
-      if (!id || scenario.events.length >= 100) {
-        return error(
-          "id-allocation-failed",
-          "Unable to record scenario elaboration discovery",
-        );
-      }
-      scenario.events.push({
-        id,
-        kind: "discovery",
-        visibility: "player",
-        text: elab.discovery.trim(),
-        at: turn.committedAt,
-        turnId: turn.id,
-      });
-    }
+    validation.scenario.stage = elaboration.stage;
+    const discoveryError = recordScenarioElaborationDiscovery(
+      validation.scenario,
+      elaboration,
+      candidate,
+      turn,
+      createId,
+    );
+    if (discoveryError) return discoveryError;
   }
 
   return null;
@@ -477,6 +534,112 @@ type MaterializedTurnState = {
   hiddenPatch: HiddenStatePatch;
 };
 
+type MaterializedProvisionalFacts = Pick<
+  MaterializedTurnState,
+  "provisionalFacts" | "updatedProvisionalFacts"
+>;
+
+function findMatchingProvisionalFact(
+  facts: ProvisionalFact[],
+  kind: ProvisionalFact["kind"],
+  normalizedName: string,
+): ProvisionalFact | undefined {
+  return facts.find(
+    (fact) =>
+      fact.kind === kind && fact.name.trim().toLowerCase() === normalizedName,
+  );
+}
+
+function updateMaterializedProvisionalFact(
+  existing: ProvisionalFact,
+  proposal:
+    typeof existing | Omit<ProvisionalFact, "id" | "introducedOnTurnId">,
+  updates: ProvisionalFact[],
+): void {
+  const updated: ProvisionalFact = {
+    ...existing,
+    summary: proposal.summary,
+    ...(proposal.scenarioId ? { scenarioId: proposal.scenarioId } : {}),
+  };
+  const index = updates.findIndex((fact) => fact.id === updated.id);
+  if (index === -1) {
+    updates.push(updated);
+  } else {
+    updates[index] = updated;
+  }
+}
+
+function updateDuplicateProposal(
+  facts: ProvisionalFact[],
+  proposal:
+    (typeof facts)[number] | Omit<ProvisionalFact, "id" | "introducedOnTurnId">,
+  normalizedName: string,
+): boolean {
+  const existing = findMatchingProvisionalFact(
+    facts,
+    proposal.kind,
+    normalizedName,
+  );
+  if (!existing) return false;
+
+  existing.summary = proposal.summary;
+  if (proposal.scenarioId) existing.scenarioId = proposal.scenarioId;
+  return true;
+}
+
+function materializeProvisionalFacts(
+  session: AdventureSession,
+  proposedFacts: Extract<
+    AdventureTurnProposal,
+    { kind: "complete" }
+  >["provisionalFacts"],
+  turnId: string,
+  ids: Set<string>,
+  createId: IdFactory,
+): MaterializedProvisionalFacts | { error: ReturnType<typeof error> } {
+  const provisionalFacts: ProvisionalFact[] = [];
+  const updatedProvisionalFacts: ProvisionalFact[] = [];
+  const canonicalNames = new Set(
+    session.sourceRecords.map((record) =>
+      record.displayName.trim().toLowerCase(),
+    ),
+  );
+
+  for (const fact of proposedFacts) {
+    const normName = fact.name.trim().toLowerCase();
+    if (canonicalNames.has(normName)) continue;
+
+    const existing = findMatchingProvisionalFact(
+      session.provisionalFacts,
+      fact.kind,
+      normName,
+    );
+    if (existing) {
+      updateMaterializedProvisionalFact(
+        existing,
+        fact,
+        updatedProvisionalFacts,
+      );
+      continue;
+    }
+
+    if (updateDuplicateProposal(provisionalFacts, fact, normName)) continue;
+
+    const id = allocateId(ids, createId);
+    if (!id) {
+      return {
+        error: error(
+          "id-allocation-failed",
+          "Could not allocate unique IDs for the generated state.",
+        ),
+      };
+    }
+    provisionalFacts.push({ ...fact, id, introducedOnTurnId: turnId });
+  }
+
+  return { provisionalFacts, updatedProvisionalFacts };
+}
+
 function materializeTurnState(
   session: AdventureSession,
   proposal: Extract<AdventureTurnProposal, { kind: "complete" }>,
@@ -510,65 +673,14 @@ function materializeTurnState(
       ),
     };
   }
-  const provisionalFacts: ProvisionalFact[] = [];
-  const updatedProvisionalFacts: ProvisionalFact[] = [];
-  const canonicalNames = new Set(
-    session.sourceRecords.map((r) => r.displayName.trim().toLowerCase()),
+  const materializedFacts = materializeProvisionalFacts(
+    session,
+    proposal.provisionalFacts,
+    turnId,
+    ids,
+    createId,
   );
-
-  for (const fact of proposal.provisionalFacts) {
-    const normName = fact.name.trim().toLowerCase();
-    // 1. Skip if matching an established canonical record by name
-    if (canonicalNames.has(normName)) {
-      continue;
-    }
-
-    // 2. Check if matching an existing provisional fact by kind and normalised name
-    const existingIndex = session.provisionalFacts.findIndex(
-      (existing) =>
-        existing.kind === fact.kind &&
-        existing.name.trim().toLowerCase() === normName,
-    );
-    if (existingIndex !== -1) {
-      const existing = session.provisionalFacts[existingIndex]!;
-      const updated: ProvisionalFact = {
-        ...existing,
-        summary: fact.summary,
-        ...(fact.scenarioId ? { scenarioId: fact.scenarioId } : {}),
-      };
-      const alreadyUpdatedIdx = updatedProvisionalFacts.findIndex(
-        (u) => u.id === updated.id,
-      );
-      if (alreadyUpdatedIdx !== -1) {
-        updatedProvisionalFacts[alreadyUpdatedIdx] = updated;
-      } else {
-        updatedProvisionalFacts.push(updated);
-      }
-      continue;
-    }
-
-    // 3. Deduplicate against facts already added in this same proposal
-    const newlyAdded = provisionalFacts.find(
-      (f) => f.kind === fact.kind && f.name.trim().toLowerCase() === normName,
-    );
-    if (newlyAdded) {
-      newlyAdded.summary = fact.summary;
-      if (fact.scenarioId) newlyAdded.scenarioId = fact.scenarioId;
-      continue;
-    }
-
-    // 4. Truly new provisional fact
-    const id = allocateId(ids, createId);
-    if (!id) {
-      return {
-        error: error(
-          "id-allocation-failed",
-          "Could not allocate unique IDs for the generated state.",
-        ),
-      };
-    }
-    provisionalFacts.push({ ...fact, id, introducedOnTurnId: turnId });
-  }
+  if ("error" in materializedFacts) return materializedFacts;
   const visibleState = applyVisiblePatch(
     session.visibleState,
     visiblePatch.value,
@@ -583,8 +695,8 @@ function materializeTurnState(
   return {
     visibleState: visibleState.value,
     hiddenState: hiddenState.value,
-    provisionalFacts,
-    updatedProvisionalFacts,
+    provisionalFacts: materializedFacts.provisionalFacts,
+    updatedProvisionalFacts: materializedFacts.updatedProvisionalFacts,
     visiblePatch: visiblePatch.value,
     hiddenPatch: hiddenPatch.value,
   };
