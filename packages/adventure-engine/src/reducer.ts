@@ -455,6 +455,17 @@ function recordScenarioElaborationDiscovery(
   return null;
 }
 
+function hasDuplicateScenarioElaborations(
+  elaborations: ScenarioElaborationProposal[],
+): boolean {
+  const scenarioIds = new Set<string>();
+  for (const elaboration of elaborations) {
+    if (scenarioIds.has(elaboration.scenarioId)) return true;
+    scenarioIds.add(elaboration.scenarioId);
+  }
+  return false;
+}
+
 function applyScenarioElaborations(
   candidate: AdventureSession,
   elaborations: ScenarioElaborationProposal[] | undefined,
@@ -463,6 +474,13 @@ function applyScenarioElaborations(
   createId: IdFactory,
 ): ReturnType<typeof error> | null {
   if (!elaborations || elaborations.length === 0) return null;
+
+  if (hasDuplicateScenarioElaborations(elaborations)) {
+    return error(
+      "invalid-transition",
+      "A scenario can only be elaborated once per turn",
+    );
+  }
 
   const revealedThisTurn = new Set(revealedScenarioIds ?? []);
 
@@ -559,6 +577,7 @@ function updateMaterializedProvisionalFact(
   const updated: ProvisionalFact = {
     ...existing,
     summary: proposal.summary,
+    ...(proposal.visibility === "gm-only" ? { visibility: "gm-only" } : {}),
     ...(proposal.scenarioId ? { scenarioId: proposal.scenarioId } : {}),
   };
   const index = updates.findIndex((fact) => fact.id === updated.id);
@@ -583,6 +602,7 @@ function updateDuplicateProposal(
   if (!existing) return false;
 
   existing.summary = proposal.summary;
+  if (proposal.visibility === "gm-only") existing.visibility = "gm-only";
   if (proposal.scenarioId) existing.scenarioId = proposal.scenarioId;
   return true;
 }

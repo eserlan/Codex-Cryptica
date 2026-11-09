@@ -229,6 +229,35 @@ describe("progressive scenario elaboration ladder", () => {
     );
   });
 
+  it("rejects elaborating the same scenario twice in one turn", () => {
+    const session = createSession([
+      createTestScenario("scen-1", "heard", "hearsay"),
+    ]);
+    const result = applyCompletedTurn(
+      session,
+      {
+        kind: "complete",
+        narration: "The lead deepens quickly.",
+        visiblePatch: emptyPatch(),
+        hiddenPatch: emptyHiddenPatch(),
+        revealSecretIds: [],
+        provisionalFacts: [],
+        sourceRecordIds: [],
+        elaborateScenarios: [
+          { scenarioId: "scen-1", stage: "actionable-clue" },
+          { scenarioId: "scen-1", stage: "revelation-crisis" },
+        ],
+      },
+      { turnId: "turn-repeat", inputId: "input-repeat", now },
+    );
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.errors.some((e) => e.code === "invalid-transition")).toBe(
+      true,
+    );
+  });
+
   it("rejects stage regression (e.g. actionable-clue back to hearsay)", () => {
     const session = createSession([
       createTestScenario("scen-1", "heard", "actionable-clue"),
@@ -390,5 +419,46 @@ describe("provisional facts deduplication and canonical authority", () => {
     expect(result.value.provisionalFacts[0]?.summary).toBe(
       "An old shepherd who accepted bribe money from smugglers.",
     );
+  });
+
+  it("keeps a matching GM-only summary out of player-visible provisional facts", () => {
+    const existingFact = {
+      id: "fact-1",
+      kind: "person" as const,
+      name: "Barnaby the Shepherd",
+      summary: "An old shepherd.",
+      introducedOnTurnId: "turn-0",
+      visibility: "player-visible" as const,
+    };
+    const session = createSession([], [], [existingFact]);
+
+    const result = applyCompletedTurn(
+      session,
+      {
+        kind: "complete",
+        narration: "You learn there is more to Barnaby's story.",
+        visiblePatch: emptyPatch(),
+        hiddenPatch: emptyHiddenPatch(),
+        revealSecretIds: [],
+        provisionalFacts: [
+          {
+            kind: "person",
+            name: "Barnaby the Shepherd",
+            summary: "He secretly arranged the smuggler's passage.",
+            visibility: "gm-only",
+          },
+        ],
+        sourceRecordIds: [],
+      },
+      { turnId: "turn-private", inputId: "input-private", now },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value.provisionalFacts).toHaveLength(1);
+    expect(result.value.provisionalFacts[0]?.summary).toBe(
+      "He secretly arranged the smuggler's passage.",
+    );
+    expect(result.value.provisionalFacts[0]?.visibility).toBe("gm-only");
   });
 });
