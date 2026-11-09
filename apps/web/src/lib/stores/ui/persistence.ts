@@ -45,6 +45,7 @@ export const UI_STORAGE_KEYS = {
   TILE_DECK_CATALOG_COLLAPSED: "codex_tile_deck_catalog_collapsed",
   TILE_DECK_GRID_EXPANDED: "codex_tile_deck_grid_expanded",
   VTT_SIDEBAR_WIDTH: "codex_vtt_sidebar_width",
+  ADVENTURE_AUTO_PROMOTE: "codex_adventure_auto_promote",
 } as const;
 
 export type UIStorageKey =
