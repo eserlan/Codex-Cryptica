@@ -1,3 +1,6 @@
+import { AuthenticatedProxy } from "./authenticated-proxy";
+import { ProxyInteractions } from "./proxy-interactions";
+import { formatErrorCode } from "./proxy-http";
 // fallow-ignore-file code-duplication -- Legacy provider/worker forwarding boilerplate is intentionally retained while the conversation migration is validated; extract shared paths separately.
 import type {
   GoogleGenerativeAI as GoogleGenerativeAIType,
@@ -9,35 +12,11 @@ import {
 } from "./generation-request";
 import type { SessionTokenSource } from "./session-manager";
 
-/**
- * Thrown when a `previous_interaction_id` is no longer valid (retention window
- * elapsed). The caller should reset interaction state and replay full history.
- */
-export class InteractionExpiredError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "InteractionExpiredError";
-  }
-}
-
-/**
- * Registry key used for server-side turn state (Interactions path).
- * oracle-proxy's `handleInteraction` resolves this via the model registry, so
- * it's provider-neutral on the wire — chat/revision/generator sessions all
- * thread this same key regardless of the caller's Gemini model-tier setting.
- */
-export const INTERACTION_MODEL_KEY = "luna-fast";
-
-/**
- * Named separately so generator callers can retain an explicit model choice
- * in their request shape while sharing the same Luna conversation route as
- * Oracle chat and entity revision.
- *
- * oracle-proxy's `handleInteraction` branches on the resolved model's
- * provider, so a Gemini key here routes to Gemini's Interactions API — the
- * original path, with the OpenAI Responses branch added alongside it later.
- */
-export const GENERATOR_INTERACTION_MODEL_KEY = INTERACTION_MODEL_KEY;
+export {
+  InteractionExpiredError,
+  INTERACTION_MODEL_KEY,
+  GENERATOR_INTERACTION_MODEL_KEY,
+} from "./proxy-interactions";
 
 /**
  * Sends a plain-text generateContent request through oracle-proxy's
@@ -293,27 +272,6 @@ async function* sendViaOperationPipelineStream(params: {
 }
 
 /**
- * Appends `(code: X)` to a thrown error message when the proxy supplied a
- * machine-readable error code, so `classifyApiError` can pattern-match on
- * it instead of the free-text message (which is prose meant for a human,
- * not a stable identifier).
- */
-function formatErrorCode(code: unknown): string {
-  return typeof code === "string" && code ? ` (code: ${code})` : "";
-}
-
-/** Adds `Authorization: Bearer <token>` without disturbing existing headers. */
-function withBearerToken(
-  init: RequestInit | undefined,
-  token: string | null,
-): RequestInit | undefined {
-  if (!token) return init;
-  const headers = new Headers(init?.headers);
-  headers.set("Authorization", `Bearer ${token}`);
-  return { ...init, headers };
-}
-
-/**
  * DefaultAIClientManager manages connections to Google's Generative AI service.
  */
 export class DefaultAIClientManager {
@@ -331,247 +289,34 @@ export class DefaultAIClientManager {
     );
   }
 
-  private sessionManager: SessionTokenSource | null = null;
+  private proxy: AuthenticatedProxy;
 
-  // Injected so tests can supply a fake without stubbing the global `fetch`.
-  // Default wraps the global lazily (resolved at call time, not construction).
   constructor(
-    private fetcher: typeof fetch = (input, init) => fetch(input, init),
+    fetcher: typeof fetch = (input, init) => fetch(input, init),
     sessionManager: SessionTokenSource | null = null,
   ) {
-    this.sessionManager = sessionManager;
+    this.proxy = new AuthenticatedProxy(fetcher, sessionManager);
   }
 
-  /**
-   * Attach the session manager that supplies anti-abuse capability tokens.
-   *
-   * Set after construction because solving a Turnstile challenge needs the
-   * DOM, which the shared `aiClientManager` singleton has no access to at
-   * module-init time — the web app wires this up during startup.
-   */
+  /** Wired at app startup, when the challenge solver has access to the DOM. */
   setSessionManager(sessionManager: SessionTokenSource | null): void {
-    this.sessionManager = sessionManager;
+    this.proxy.setSessionManager(sessionManager);
   }
 
-  /**
-   * The single choke point for every oracle-proxy call.
-   *
-   * All three proxy paths — the operation pipeline, `sendInteraction`, and the
-   * legacy passthrough — go through here, so capability tokens are attached in
-   * exactly one place. Adding token logic at any individual call site instead
-   * would guarantee one of them eventually gets missed.
-   *
-   * On any 401 — an expired token, a missing one (e.g. the Turnstile
-   * handshake failed, such as when an ad blocker blocks
-   * challenges.cloudflare.com), or a forged one — it re-handshakes and
-   * replays the request **once**. A second 401 is returned to the caller: a
-   * persistently rejected token means something is actually wrong, and
-   * retrying it in a loop would hammer both Turnstile and the proxy.
-   *
-   * An arrow property, not a method, because it is passed around as a bare
-   * `doFetch` callback and must stay bound.
-   */
-  private proxyFetch: typeof fetch = async (input, init) => {
-    const manager = this.sessionManager;
-    if (!manager) return this.fetcher(input, init);
-
-    const token = await manager.getToken();
-    const response = await this.fetcher(input, withBearerToken(init, token));
-
-    if (response.status !== 401) return response;
-    // Only string bodies can be replayed safely; a consumed stream cannot.
-    // Every proxy call site sends JSON strings, so this is a guard, not a
-    // limitation in practice.
-    if (init?.body !== undefined && typeof init.body !== "string") {
-      return response;
-    }
-
-    manager.invalidate();
-    const freshToken = await manager.getToken();
-    if (!freshToken) return response;
-
-    return this.fetcher(input, withBearerToken(init, freshToken));
-  };
-
-  /**
-   * Send a Gemini Interactions API turn through the proxy (server-side state).
-   * Returns the new interaction id plus the model's text. Throws
-   * {@link InteractionExpiredError} when the previous id has expired so the
-   * caller can reset and replay full history.
-   */
-  // fallow-ignore-next-line complexity
-  async sendInteraction(params: {
-    model: string;
-    input: string;
-    systemInstruction?: string;
-    previousInteractionId?: string | null;
-    storeConversation?: boolean;
-    generationConfig?: Record<string, unknown>;
-    /** Cancels the in-flight request (#2423) — e.g. a user cancelling a
-     * streaming generation whose interaction-degrade path routes here. */
-    signal?: AbortSignal;
-  }): Promise<{ id: string; text: string }> {
-    if (typeof navigator !== "undefined" && !navigator.onLine) {
-      throw new Error("You appear to be offline. Generation is unavailable.");
-    }
-
-    const body: Record<string, unknown> = {
-      model: params.model,
-      input: params.input,
-      store: params.storeConversation ?? true,
-    };
-    if (params.systemInstruction) {
-      body.system_instruction = params.systemInstruction;
-    }
-    if (params.previousInteractionId) {
-      body.previous_interaction_id = params.previousInteractionId;
-    }
-    if (params.generationConfig) {
-      body.generationConfig = params.generationConfig;
-    }
-
-    const response = await this.proxyFetch(DefaultAIClientManager.PROXY_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-      signal: params.signal,
-    });
-
-    const data = await response.json().catch(() => ({}) as any);
-
-    if (!response.ok) {
-      if (
-        response.status === 409 ||
-        data?.error?.code === "INTERACTION_NOT_FOUND"
-      ) {
-        throw new InteractionExpiredError(
-          data?.error?.message || "Interaction expired",
-        );
-      }
-      throw new Error(
-        `[OracleProxy] Interaction failed: ${data?.error?.message || "Unknown error"}${formatErrorCode(data?.error?.code)}`,
-      );
-    }
-
-    return { id: data.id as string, text: (data.text as string) || "" };
+  async sendInteraction(params: Parameters<ProxyInteractions["send"]>[0]) {
+    return new ProxyInteractions(
+      DefaultAIClientManager.PROXY_URL,
+      this.proxy.fetch,
+    ).send(params);
   }
 
-  /**
-   * Stream a provider-stored conversation turn through the same authenticated
-   * proxy as sendInteraction(). Only final model-output JSON is forwarded.
-   * The returned id is *not* a commit acknowledgement: adventure storage
-   * must confirm the turn before it can become the next continuation.
-   */
-  // fallow-ignore-next-line complexity
-  async *sendInteractionStream(params: {
-    model: string;
-    input: string;
-    systemInstruction?: string;
-    previousInteractionId?: string | null;
-    generationConfig?: Record<string, unknown>;
-    signal?: AbortSignal;
-  }): AsyncGenerator<
-    | { type: "started" }
-    | { type: "delta"; text: string }
-    | { type: "complete"; text: string; id: string }
-    | { type: "error"; error: string }
-  > {
-    const body: Record<string, unknown> = {
-      model: params.model,
-      input: params.input,
-      store: true,
-      stream: true,
-      ...(params.systemInstruction
-        ? { system_instruction: params.systemInstruction }
-        : {}),
-      ...(params.previousInteractionId
-        ? { previous_interaction_id: params.previousInteractionId }
-        : {}),
-      ...(params.generationConfig
-        ? { generationConfig: params.generationConfig }
-        : {}),
-    };
-    const response = await this.proxyFetch(DefaultAIClientManager.PROXY_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-      signal: params.signal,
-    });
-    if (response.status === 409) {
-      await response.body?.cancel();
-      throw new InteractionExpiredError("Interaction expired");
-    }
-    if (
-      !response.ok ||
-      !response.body ||
-      !response.headers.get("content-type")?.includes("text/event-stream")
-    ) {
-      await response.body?.cancel();
-      throw new Error("interaction-stream-unavailable");
-    }
-
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = "";
-    let completed = false;
-    // fallow-ignore-next-line complexity -- Adapter orchestration and structured event paths are covered by focused provider/turn tests.
-    function* parse(raw: string) {
-      for (const line of raw.split("\n")) {
-        if (!line.startsWith("data:")) continue;
-        let event: any;
-        try {
-          event = JSON.parse(line.slice(5).trim());
-        } catch {
-          continue;
-        }
-        if (event.type === "started") {
-          yield { type: "started" as const };
-        } else if (event.type === "delta" && typeof event.text === "string") {
-          yield { type: "delta" as const, text: event.text };
-        } else if (
-          event.type === "complete" &&
-          typeof event.id === "string" &&
-          typeof event.text === "string"
-        ) {
-          yield { type: "complete" as const, id: event.id, text: event.text };
-        } else if (event.type === "error") {
-          yield {
-            type: "error" as const,
-            error:
-              typeof event.error === "string"
-                ? event.error
-                : "interaction-stream-error",
-          };
-        }
-      }
-    }
-    try {
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-        let index: number;
-        while ((index = buffer.indexOf("\n\n")) >= 0) {
-          const raw = buffer.slice(0, index);
-          buffer = buffer.slice(index + 2);
-          for (const event of parse(raw)) {
-            if (event.type === "complete") completed = true;
-            yield event;
-            if (event.type === "error") return;
-          }
-        }
-      }
-      buffer += decoder.decode();
-      if (buffer.trim()) {
-        for (const event of parse(buffer)) {
-          if (event.type === "complete") completed = true;
-          yield event;
-        }
-      }
-      if (!completed) throw new Error("interaction-stream-incomplete");
-    } finally {
-      await reader.cancel().catch(() => {});
-    }
+  async *sendInteractionStream(
+    params: Parameters<ProxyInteractions["stream"]>[0],
+  ) {
+    yield* new ProxyInteractions(
+      DefaultAIClientManager.PROXY_URL,
+      this.proxy.fetch,
+    ).stream(params);
   }
 
   /**
@@ -628,7 +373,7 @@ export class DefaultAIClientManager {
     // The session-aware wrapper, not the raw fetcher: this callback is what
     // both the operation pipeline and the legacy passthrough below use to
     // reach the proxy, so it must carry the capability token.
-    const doFetch = this.proxyFetch;
+    const doFetch = this.proxy.fetch;
 
     return {
       model: modelName,
