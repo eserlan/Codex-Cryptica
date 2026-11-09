@@ -7,6 +7,7 @@ export const surfaceEnv = $state({
     activeVaultId: "vault-1" as string | null,
     entities: {} as Record<string, unknown>,
     allEntities: [] as Array<Record<string, unknown>>,
+    createEntity: vi.fn(async () => "entity-id"),
     getSpecificVaultHandle: vi.fn(),
     loadEntityContent: vi.fn(),
   },

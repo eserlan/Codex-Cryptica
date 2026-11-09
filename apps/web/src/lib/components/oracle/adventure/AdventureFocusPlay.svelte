@@ -30,6 +30,7 @@
     manager,
     existingTitles,
     onAddProvisionalFact,
+    onAddAllProvisionalFacts,
     repository,
     vaultId,
     onResume,
@@ -38,6 +39,7 @@
     manager: AdventureManager;
     existingTitles: string[];
     onAddProvisionalFact: (fact: ProvisionalFact) => Promise<void>;
+    onAddAllProvisionalFacts?: (facts: ProvisionalFact[]) => Promise<void>;
     repository: AdventureSessionRepository;
     vaultId: string;
     onResume: (sessionId: string) => Promise<void>;
@@ -177,6 +179,7 @@
     facts={manager.session?.provisionalFacts ?? []}
     {existingTitles}
     onAdd={onAddProvisionalFact}
+    onAddAll={onAddAllProvisionalFacts}
   />
   <AdventureArchive {repository} {vaultId} {onResume} {onResumeArchived} />
 {/snippet}

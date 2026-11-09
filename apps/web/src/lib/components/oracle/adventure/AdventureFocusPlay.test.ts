@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 
 import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
+import type { ComponentProps } from "svelte";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import AdventureFocusPlay from "./AdventureFocusPlay.svelte";
 
@@ -78,12 +79,13 @@ const originalFullscreenElement = Object.getOwnPropertyDescriptor(
 );
 
 function props(
-  overrides: Partial<{ manager: ReturnType<typeof manager> }> = {},
+  overrides: Partial<ComponentProps<typeof AdventureFocusPlay>> = {},
 ) {
   return {
     manager: manager(),
     existingTitles: [],
     onAddProvisionalFact: vi.fn(),
+    onAddAllProvisionalFacts: vi.fn(),
     repository,
     vaultId: "vault-1",
     onResume: vi.fn(),
@@ -508,5 +510,25 @@ describe("AdventureFocusPlay", () => {
     const surface = screen.getByTestId("adventure-play-surface");
     expect(surface.getAttribute("role")).toBeNull();
     expect(surface.parentElement).not.toBe(document.body);
+  });
+
+  it("surfaces provisional discoveries in the utilities panel", async () => {
+    const m = manager();
+    (m.session as any).provisionalFacts = [
+      {
+        id: "barrow-1",
+        kind: "place",
+        name: "Sunken Barrow",
+        summary: "Flooded crypts.",
+        introducedOnTurnId: "t1",
+        visibility: "player-visible",
+      },
+    ];
+    render(AdventureFocusPlay, { props: props({ manager: m }) });
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Adventure tools" }),
+    );
+    expect(screen.getByText("New to Codex")).toBeTruthy();
+    expect(screen.getByText("1 discovery to review")).toBeTruthy();
   });
 });

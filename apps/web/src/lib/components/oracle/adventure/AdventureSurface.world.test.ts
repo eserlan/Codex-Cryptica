@@ -58,6 +58,7 @@ vi.mock("#lib/services/solo-characters.js", () => ({
 import AdventureSurface from "./AdventureSurface.svelte";
 import { surfaceEnv } from "./__fixtures__/surface-env.svelte";
 import { rumourAdventureHandoff } from "#lib/stores/oracle/rumour-adventure-handoff.svelte.js";
+import { adventurePromotionSettings } from "#lib/stores/ui/adventure-promotion-settings.svelte.js";
 
 const selected = {
   batchTitle: "Word Around Town",
@@ -311,5 +312,35 @@ describe("AdventureSurface rumour handoff", () => {
     expect(rumourAdventureHandoff.takeSourceDraft("vault-2")).toBeNull();
     expect(rumourAdventureHandoff.takeSourceDraft("vault-1")).toEqual(draft);
     expect(rumourAdventureHandoff.takeSourceDraft("vault-1")).toBeNull();
+  });
+
+  it("automatically promotes discoveries to Codex when autoPromote is enabled", async () => {
+    adventurePromotionSettings.setAutoPromote(true);
+    surfaceEnv.vault.allEntities = [];
+    surfaceEnv.adventure.session = {
+      id: "adv-auto",
+      title: "The Haunted Moor",
+      provisionalFacts: [
+        {
+          id: "fact-ghost",
+          kind: "person",
+          name: "The Wailing Spirit",
+          summary: "A restless phantom on the moors.",
+          visibility: "player-visible",
+        },
+      ],
+    };
+
+    render(AdventureSurface);
+    await waitFor(() => {
+      expect(surfaceEnv.vault.createEntity).toHaveBeenCalledWith(
+        "character",
+        "The Wailing Spirit",
+        expect.objectContaining({
+          content: expect.stringContaining("The Haunted Moor"),
+        }),
+      );
+    });
+    adventurePromotionSettings.setAutoPromote(false);
   });
 });
