@@ -22,3 +22,22 @@ export function postProxyJson(
     signal,
   });
 }
+
+/** Buffered generation shares status logging and proxy error decoding. */
+export async function readProxyGenerationResponse(
+  response: Response,
+): Promise<any> {
+  console.log(
+    `[OracleProxy] Response status: ${response.status} ${response.statusText}`,
+  );
+  if (!response.ok) {
+    const error = await response
+      .json()
+      .catch(() => ({ error: { message: "Proxy request failed" } }));
+    console.error("[OracleProxy] Request failed:", error);
+    throw new Error(
+      `[OracleProxy] Request failed: ${error.error?.message || "Unknown error"}${formatErrorCode(error.error?.code)}`,
+    );
+  }
+  return response.json();
+}

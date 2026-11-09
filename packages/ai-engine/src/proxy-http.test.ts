@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
-import { formatErrorCode, postProxyJson } from "./proxy-http";
+import {
+  formatErrorCode,
+  postProxyJson,
+  readProxyGenerationResponse,
+} from "./proxy-http";
 
 describe("proxy HTTP helpers", () => {
   it("serialises JSON and forwards the abort signal and response unchanged", async () => {
@@ -40,5 +44,25 @@ describe("proxy HTTP helpers", () => {
     expect(formatErrorCode("SESSION_TOKEN_EXPIRED")).toBe(
       " (code: SESSION_TOKEN_EXPIRED)",
     );
+  });
+
+  it("reads successful generation responses", async () => {
+    expect(
+      await readProxyGenerationResponse(Response.json({ content: "hi" })),
+    ).toEqual({ content: "hi" });
+  });
+
+  it("uses a fallback error when a failed generation response is not JSON", async () => {
+    await expect(
+      readProxyGenerationResponse(new Response("not JSON", { status: 502 })),
+    ).rejects.toThrow("Proxy request failed");
+  });
+
+  it("keeps the unknown-error fallback and code when the proxy omits a message", async () => {
+    await expect(
+      readProxyGenerationResponse(
+        Response.json({ error: { code: "UNAVAILABLE" } }, { status: 503 }),
+      ),
+    ).rejects.toThrow("Unknown error (code: UNAVAILABLE)");
   });
 });
