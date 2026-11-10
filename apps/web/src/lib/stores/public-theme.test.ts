@@ -9,7 +9,9 @@ function session() {
   return {
     values,
     getItem: vi.fn((key: string) => values.get(key) ?? null),
-    setItem: vi.fn((key: string, value: string) => void values.set(key, value)),
+    setItem: vi.fn((key: string, value: string) =>
+      void values.set(key, value),
+    ),
     removeItem: vi.fn((key: string) => void values.delete(key)),
   };
 }
@@ -60,9 +62,15 @@ describe("public browsing theme", () => {
 
   it("degrades gracefully if sessionStorage is blocked", () => {
     const storage = {
-      getItem: () => { throw new Error("blocked"); },
-      setItem: () => { throw new Error("blocked"); },
-      removeItem: () => { throw new Error("blocked"); },
+      getItem: () => {
+        throw new Error("blocked");
+      },
+      setItem: () => {
+        throw new Error("blocked");
+      },
+      removeItem: () => {
+        throw new Error("blocked");
+      },
     };
     const store = new PublicThemeStore(storage);
     store.setTheme("cyberpunk");
