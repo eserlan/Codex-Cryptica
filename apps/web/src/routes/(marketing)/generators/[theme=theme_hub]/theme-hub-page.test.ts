@@ -56,7 +56,7 @@ describe("Generator Theme Hub Page", () => {
     await fireEvent.click(link);
 
     expect(link.getAttribute("href")).toBe("/generators/random");
-    expect(themeStore.currentThemeId).toBe("scifi");
+    expect(publicThemeStore.themeId).toBe("scifi");
     expect(hubContext.theme).toBe("sci-fi");
   });
 
