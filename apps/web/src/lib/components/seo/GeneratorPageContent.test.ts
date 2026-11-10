@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
 import { UIPersistence } from "#lib/stores/ui/persistence.js";
 import { hubContext } from "#lib/stores/hub-context.svelte.js";
+import { publicThemeStore } from "#lib/stores/public-theme.svelte.js";
 import GeneratorPageContent from "./GeneratorPageContent.svelte";
 
 const generateBusiness = vi.hoisted(() => vi.fn());
@@ -43,8 +44,16 @@ function renderBusiness() {
 }
 
 describe("generator page composition", () => {
+  it("inherits the public browsing genre in a generic generator form", () => {
+    publicThemeStore.setTheme("cyberpunk");
+    renderBusiness();
+    expect(screen.getByTestId("page-theme").textContent).toBe("Cyberpunk / Corporate");
+    expect((screen.getByRole("combobox", { name: "Genre / Setting" }) as HTMLSelectElement).value).toBe("Cyberpunk / Corporate");
+  });
+
   beforeEach(() => {
     hubContext.set(null);
+    publicThemeStore.clear();
     generateBusiness
       .mockReset()
       .mockResolvedValue({ ...draft, title: "Generated business" });
