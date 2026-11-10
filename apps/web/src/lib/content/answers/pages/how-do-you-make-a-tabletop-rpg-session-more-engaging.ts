@@ -177,6 +177,7 @@ export const howDoYouMakeATabletopRpgSessionMoreEngaging: AnswerConfigInput = {
     "how-do-i-start-a-dnd-campaign",
     "how-do-i-get-my-friends-interested-in-playing-dnd",
     "how-do-i-run-my-first-online-tabletop-rpg-session",
+    "how-do-i-enjoy-tabletop-rpgs-again",
   ],
   discovery: {
     id: "answer-session-engagement",
@@ -205,6 +206,11 @@ export const howDoYouMakeATabletopRpgSessionMoreEngaging: AnswerConfigInput = {
         with: "answer-player-engagement",
         reason:
           "That answer covers getting players invested in the setting, lore, and world; this answer covers making the session itself, moment to moment, engaging to play through, regardless of how invested players already are in the world.",
+      },
+      {
+        with: "answer-enjoy-rpgs-again",
+        reason:
+          "That answer helps a player decide whether their own loss of enjoyment comes from workload, playstyle fit, or a need for a break; this answer helps a GM improve scene purpose, pacing, spotlight, and consequences for the table.",
       },
       {
         with: "answer-first-time-gm-hub",

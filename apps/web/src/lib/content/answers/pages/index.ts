@@ -16,6 +16,7 @@ import { howDoICreateInterestingIslandsAndPortsForAPirateCampaign } from "./how-
 import { howDoIDecideWhatASettlementProducesImportsAndExports } from "./how-do-i-decide-what-a-settlement-produces-imports-and-exports";
 import { howDoIDesignAGeographicallyRealisticTownOrVillage } from "./how-do-i-design-a-geographically-realistic-town-or-village";
 import { howDoIEncouragePartyBondingDuringDowntime } from "./how-do-i-encourage-party-bonding-during-downtime";
+import { howDoIEnjoyTabletopRpgsAgain } from "./how-do-i-enjoy-tabletop-rpgs-again";
 import { howDoIExpandASimpleRpgCampaignIdea } from "./how-do-i-expand-a-simple-rpg-campaign-idea";
 import { howDoIFindATabletopRpgGroupToPlayWith } from "./how-do-i-find-a-tabletop-rpg-group-to-play-with";
 import { howDoIGetMyFriendsInterestedInPlayingDnd } from "./how-do-i-get-my-friends-interested-in-playing-dnd";
@@ -217,6 +218,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIDecideWhatASettlementProducesImportsAndExports,
     howDoIDesignAGeographicallyRealisticTownOrVillage,
     howDoIEncouragePartyBondingDuringDowntime,
+    howDoIEnjoyTabletopRpgsAgain,
     howDoIExpandASimpleRpgCampaignIdea,
     howDoIFindATabletopRpgGroupToPlayWith,
     howDoIGetMyFriendsInterestedInPlayingDnd,

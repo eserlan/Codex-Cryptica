@@ -189,6 +189,7 @@ export const howDoIRunASuccessfulSessionZero: AnswerConfigInput = {
     "does-an-rpg-party-need-balanced-roles",
     "how-to-keep-character-death-meaningful-with-resurrection",
     "how-do-i-plan-a-one-shot-rpg-session",
+    "how-do-i-enjoy-tabletop-rpgs-again",
   ],
   discovery: {
     id: "answer-session-zero",
