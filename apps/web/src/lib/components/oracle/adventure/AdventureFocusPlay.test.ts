@@ -512,7 +512,7 @@ describe("AdventureFocusPlay", () => {
     expect(surface.parentElement).not.toBe(document.body);
   });
 
-  it("surfaces provisional discoveries in the utilities panel", async () => {
+  it("opens provisional discovery review directly from the adventure header", async () => {
     const m = manager();
     (m.session as any).provisionalFacts = [
       {
@@ -525,10 +525,14 @@ describe("AdventureFocusPlay", () => {
       },
     ];
     render(AdventureFocusPlay, { props: props({ manager: m }) });
+    expect(screen.queryByText("Sunken Barrow")).toBeNull();
     await fireEvent.click(
-      screen.getByRole("button", { name: "Adventure tools" }),
+      screen.getByRole("button", { name: "Review 1 adventure discovery" }),
     );
-    expect(screen.getByText("New to Codex")).toBeTruthy();
-    expect(screen.getByText("1 discovery to review")).toBeTruthy();
+    expect(
+      screen.getByRole("dialog", { name: "Review discoveries" }),
+    ).toBeTruthy();
+    expect(screen.getByText("Sunken Barrow")).toBeTruthy();
+    expect(screen.getByText("1 discovery awaiting review")).toBeTruthy();
   });
 });
