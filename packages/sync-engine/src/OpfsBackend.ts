@@ -5,11 +5,13 @@ import {
 } from "./types";
 import { SyncRegistry } from "./SyncRegistry";
 import { hashBlob } from "./hash";
+import { type Clock } from "./runtime";
 
 export class OpfsBackend implements ISyncBackend {
   constructor(
     private handle: FileSystemDirectoryHandle,
     private registry: SyncRegistry,
+    private readonly clock: Clock = { now: () => performance.now() },
   ) {}
 
   /**
@@ -21,7 +23,7 @@ export class OpfsBackend implements ISyncBackend {
 
   async scan(vaultId: string): Promise<{ files: FileMetadata[] }> {
     const results: FileMetadata[] = [];
-    const start = performance.now();
+    const start = this.clock.now();
     const cachedEntries = await this.registry.getOpfsStatesByVault(vaultId);
     const cachedByPath = new Map(
       cachedEntries.map((entry) => [entry.filePath, entry]),
@@ -94,7 +96,7 @@ export class OpfsBackend implements ISyncBackend {
       await this.registry.putOpfsStates(refreshedEntries);
     }
 
-    const end = performance.now();
+    const end = this.clock.now();
     console.log(
       `[Sync] OpfsBackend scan took ${(end - start).toFixed(2)}ms for ${results.length} files (${refreshedEntries.length} hashed, ${results.length - refreshedEntries.length} cached).`,
     );
