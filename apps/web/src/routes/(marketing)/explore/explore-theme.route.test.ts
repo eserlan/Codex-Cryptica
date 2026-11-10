@@ -3,32 +3,32 @@
 import { render } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const previewTheme = vi.fn();
+const setPublicTheme = vi.fn();
 
 vi.mock("$app/paths", () => ({
   base: "",
   asset: (p: string) => p,
   resolve: (p: string) => p,
 }));
-vi.mock("#lib/stores/theme.svelte.js", () => ({
-  themeStore: {
-    previewTheme: (id: string | null) => previewTheme(id),
+vi.mock("#lib/stores/public-theme.svelte.js", () => ({
+  publicThemeStore: {
+    setTheme: (id: string) => setPublicTheme(id),
   },
 }));
 
 import Page from "./+page.svelte";
 
-describe("/explore label theme preview", () => {
+describe("/explore label browsing theme", () => {
   beforeEach(() => {
-    previewTheme.mockClear();
+    setPublicTheme.mockClear();
   });
 
-  it("previews the matching hub theme for a themed label", () => {
+  it("publishes the matching hub theme for a themed label", () => {
     render(Page, {
       props: { data: { label: "cyberpunk", results: [] } },
     });
 
-    expect(previewTheme).toHaveBeenCalledWith("cyberpunk");
+    expect(setPublicTheme).toHaveBeenCalledWith("cyberpunk");
   });
 
   it("does not theme a label with no matching hub", () => {
@@ -36,15 +36,15 @@ describe("/explore label theme preview", () => {
       props: { data: { label: "unknown-thing", results: [] } },
     });
 
-    expect(previewTheme).toHaveBeenCalledWith(null);
+    expect(setPublicTheme).not.toHaveBeenCalled();
   });
 
-  it("clears the preview when there is no label", () => {
+  it("keeps the browsing genre when there is no label", () => {
     render(Page, {
       props: { data: { label: "", results: [] } },
     });
 
-    expect(previewTheme).toHaveBeenCalledWith(null);
+    expect(setPublicTheme).not.toHaveBeenCalled();
   });
 
   it("never indexes the theme map with an inherited Object.prototype key", () => {
@@ -53,9 +53,9 @@ describe("/explore label theme preview", () => {
     // `__proto__`/`constructor`/`toString` to an inherited property instead
     // of `undefined`.
     for (const label of ["__proto__", "constructor", "toString"]) {
-      previewTheme.mockClear();
+      setPublicTheme.mockClear();
       render(Page, { props: { data: { label, results: [] } } });
-      expect(previewTheme).toHaveBeenCalledWith(null);
+      expect(setPublicTheme).not.toHaveBeenCalled();
     }
   });
 });
