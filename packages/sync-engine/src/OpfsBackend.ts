@@ -5,13 +5,13 @@ import {
 } from "./types";
 import { SyncRegistry } from "./SyncRegistry";
 import { hashBlob } from "./hash";
-import { type Clock, systemClock } from "./runtime";
+import { type Clock } from "./runtime";
 
 export class OpfsBackend implements ISyncBackend {
   constructor(
     private handle: FileSystemDirectoryHandle,
     private registry: SyncRegistry,
-    private readonly clock: Clock = systemClock,
+    private readonly clock: Clock = { now: () => performance.now() },
   ) {}
 
   /**
