@@ -49,7 +49,10 @@
     busyId = "world-clock";
     error = null;
     try {
-      await manager.advanceWorldTime(advanceMinutes, "Player advanced world time");
+      await manager.advanceWorldTime(
+        advanceMinutes,
+        "Player advanced world time",
+      );
     } catch (cause) {
       error = describeScenarioMutationError(cause);
     } finally {
@@ -107,13 +110,17 @@
     </div>
 
     <div class="space-y-2 border-t border-theme-border pt-3">
-      <h4 class="text-sm font-semibold text-theme-text">Advance fictional time</h4>
+      <h4 class="text-sm font-semibold text-theme-text">
+        Advance fictional time
+      </h4>
       <p class="text-xs text-theme-text">
-        Advances the local world clock once. Nothing progresses while the app is closed;
-        Oracle can consider elapsed time on your next action.
+        Advances the local world clock once. Nothing progresses while the app is
+        closed; Oracle can consider elapsed time on your next action.
       </p>
       <div class="flex flex-wrap items-center gap-2">
-        <label class="text-sm text-theme-text" for="adventure-time-step">Duration</label>
+        <label class="text-sm text-theme-text" for="adventure-time-step"
+          >Duration</label
+        >
         <select
           id="adventure-time-step"
           class={buttonClass}
@@ -125,7 +132,12 @@
           <option value={1440}>One day</option>
           <option value={10080}>One week</option>
         </select>
-        <button type="button" class={buttonClass} disabled={locked} onclick={() => void advanceTime()}>
+        <button
+          type="button"
+          class={buttonClass}
+          disabled={locked}
+          onclick={() => void advanceTime()}
+        >
           Advance time
         </button>
       </div>
