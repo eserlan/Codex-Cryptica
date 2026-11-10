@@ -34,6 +34,7 @@ import { worldGenreForHub } from "./generator-page-world-handoff";
 
 export function resolveInitialActiveTheme(opts: {
   urlHubTheme?: string | null;
+  publicThemeId?: string | null;
   slug: string;
   persistence?: UIPersistence;
   browser?: boolean;
@@ -44,6 +45,9 @@ export function resolveInitialActiveTheme(opts: {
   const browser = opts.browser ?? false;
   const effectiveStoredId =
     (urlHubTheme ? HUB_SLUG_TO_THEME_ID[urlHubTheme] : null) ??
+    (opts.publicThemeId && themeIdToLabel[opts.publicThemeId]
+      ? opts.publicThemeId
+      : null) ??
     (browser && SLUGS_USING_STORED_THEME.has(opts.slug)
       ? persistence.read(UI_STORAGE_KEYS.ACTIVE_THEME, (v) => v, null)
       : null);
@@ -152,6 +156,7 @@ export function getHubMountPatch(opts: {
   slug: string;
   hubTheme: string | null;
   urlHubTheme?: string | null;
+  publicThemeId?: string | null;
   persistence?: UIPersistence;
   browser?: boolean;
   currentState?: {
@@ -294,10 +299,12 @@ export function getHubMountPatch(opts: {
     return null;
   }
 
-  // Generic fallback: for slugs without a specific hub seeding, if visiting
-  // via a flat URL (no urlHubTheme) the component reads localStorage for the
-  // last active theme. Encode that as a patch so callers can apply it.
+  // Generic flat routes inherit the public session theme before considering
+  // the older localStorage preference. The former must not modify the latter.
   if (!urlHubTheme) {
+    if (opts.publicThemeId && themeIdToLabel[opts.publicThemeId]) {
+      return { activeTheme: themeIdToLabel[opts.publicThemeId] };
+    }
     const persistence = opts.persistence ?? new UIPersistence();
     const browser = opts.browser ?? false;
     if (browser) {
