@@ -41,7 +41,7 @@ export const howMuchLootAndHowManyMagicItemsShouldIGiveMyPlayers: AnswerConfigIn
           },
           {
             term: "If time were short",
-            text: "Suppose instead that the party wants the same certainty in two minutes, before leaving a doorway they cannot watch. The uncertain task is now speed with completeness, so call for a Wisdom (Perception) check against Difficulty Class (DC) 12 in D&D 5e terms: a twenty-sided die (d20) result of 7 plus a Perception modifier of +5 gives 7 + 5 = 12, which meets the DC and finishes in two minutes. On a total below 12, they must choose: leave at two minutes with the room only partly searched, or stay for the full ten minutes and accept whatever arrives or changes in that time. The check decides how fast they can be certain, never whether treasure appears.",
+            text: "Suppose the party wants the same certainty in two minutes, before leaving a doorway they cannot watch. As one optional ruling for this situation only, you choose Difficulty Class (DC) 12 and the two-minute and ten-minute times: call for a Wisdom (Perception) check in D&D 5e terms, where a twenty-sided die (d20) result of 7 plus a Perception modifier of +5 gives 7 + 5 = 12, which meets the DC and finishes in two minutes. On a total below 12, they choose: leave with the room only partly searched, or stay for the full ten minutes. The check decides how fast they can be certain, never whether treasure appears.",
           },
           {
             term: "Why this works",
@@ -53,7 +53,7 @@ export const howMuchLootAndHowManyMagicItemsShouldIGiveMyPlayers: AnswerConfigIn
         kind: "list",
         heading: "How much treasure should I award?",
         intro:
-          "Start from the campaign, not from the last encounter. Ask what money is for in this game: what the party can [buy and sell in a settlement](/answers/what-can-players-actually-buy-and-sell-in-a-fantasy-settlement), what travel, lodging, spell components, repairs, bribes or a base will cost them, and whether wealth is meant to stay tight or grow grand. Then place treasure in four broad kinds, which keeps routine finds separate from milestones:",
+          "Start from the campaign, not from the last encounter. Place treasure in four broad kinds, which keeps routine finds separate from milestones. The coin budget that follows then gives those kinds a value for the next adventure:",
         items: [
           {
             term: "Routine possessions",
@@ -76,6 +76,32 @@ export const howMuchLootAndHowManyMagicItemsShouldIGiveMyPlayers: AnswerConfigIn
           "Do not equate treasure with encounter difficulty. A deadly ooze has no pockets, a rich merchant's vault may be guarded by one ageing clerk, and the hardest fight in a tomb may protect a warning rather than gold. Difficulty decides danger. Ownership, habits and history decide treasure. If the party needs paying for hard work, use a patron, a bounty or a known cache, and let them learn where pay actually comes from in this campaign.",
       },
       {
+        kind: "list",
+        heading: "Putting a coin value on the next adventure",
+        intro:
+          "Turn the spending questions into a rough budget before you stock the adventure. This works in any system, using whatever coinage and prices that game gives you:",
+        items: [
+          {
+            term: "Estimate the spending ahead",
+            text: "List what the party is likely to pay for before the adventure ends: travel, lodging and food, spell components, repairs, hirelings, bribes and fees. Price the settlement goods and services they will actually use, using [what players can buy and sell in a fantasy settlement](/answers/what-can-players-actually-buy-and-sell-in-a-fantasy-settlement) as the guide to what is on offer.",
+          },
+          {
+            term: "Count funds already in hand",
+            text: "Note the shared purse and the coin characters would realistically spend. Leave out magic items and keepsakes they will not sell, so the budget reflects money available rather than total wealth on paper.",
+          },
+          {
+            term: "Choose the intended end point",
+            text: "Decide whether this stretch should leave the party short, breaking even, or saving towards a shared goal such as a base, a vessel or a costly commission. That choice, not encounter difficulty, sets whether wealth stays tight or grows during the adventure.",
+          },
+          {
+            term: "Distribute the difference",
+            text: "Subtract the funds in hand from the spending plus the intended saving, then spread the result across plausible sources from the four kinds above: a patron fee, a hoard, individual treasure and saleable goods. Round freely. The fiction decides where each part sits, so a source the party never reaches simply is not collected.",
+          },
+        ],
+        outro:
+          "Illustrative example only, with invented figures for one campaign: the party holds 50 gold pieces (gp) in a shared purse, expects 200 gp of travel, lodging and component costs during the next adventure, and wants to finish it with 300 gp saved towards a shared goal. Place about 200 + 300 - 50 = 450 gp in coin and saleable treasure: say a 300 gp completion fee from their patron, a 100 gp strongbox of coins and gems, and 50 gp spread as individual purses and saleable goods. If they bypass the strongbox, they take in 350 gp and, after the 200 gp costs, end with 50 + 350 - 200 = 200 gp saved. Treat the 450 gp as a preparation benchmark, not guaranteed compensation: do not move the strongbox into the next corridor because they missed it, and do not add a payout after the adventure to make up the shortfall their own route caused.",
+      },
+      {
         kind: "prose",
         heading: "When should I use random loot tables?",
         paragraphs: [
@@ -88,8 +114,8 @@ export const howMuchLootAndHowManyMagicItemsShouldIGiveMyPlayers: AnswerConfigIn
         kind: "prose",
         heading: "How often should players find magic items?",
         paragraphs: [
-          "At the pace your campaign agreed, which depends on the game, the edition, the tone you pitched, what the characters need and how fast they are progressing. State the expectation early, ideally when you agree the shape of the campaign: in a low-magic game a permanent item is a landmark the party may plan an expedition around, while in a high-magic game shops, patrons and rivals treat uncommon items as serious but ordinary goods. Neither pace is wrong. Disappointment usually comes from a mismatch, where the GM runs a low-magic pace inside a campaign the players thought would equip them like heroes of legend, or the reverse. If the setting itself is undecided, settle [how common magic should be in the world](/answers/how-common-should-magic-be-in-a-fantasy-world) first, then set the party's reward pace to match it.",
-          "There is no sound universal rate per combat, per session or per level that survives a change of system, party size or campaign length, and no combat creates an entitlement to a magic item. Most fights should produce no magic item at all. Consumables can arrive fairly often because they leave play when used. Permanent items, and especially items a character will use every round, deserve a slower, deliberate pace tied to milestones: a hoard found, a patron's gift, a crafted commission finished, a famous foe's gear taken up. Track what the party has actually received over the last few levels rather than judging one session at a time, and spread finds across characters and roles so one player does not collect every signature item.",
+          "At the pace your campaign agreed, which depends on the game, the edition, the tone you pitched, what the characters need and how fast they are progressing. State the expectation early, ideally when you agree the shape of the campaign: in a low-magic game a permanent item is a landmark the party may plan an expedition around, while in a high-magic game shops, patrons and rivals treat uncommon items as serious but ordinary goods. Neither pace is wrong. Disappointment usually comes from a mismatch, where the GM runs a low-magic pace inside a campaign the players thought would equip them like heroes of legend, or the reverse. If the setting itself is undecided, settle [how common magic should be in the world](/answers/how-common-should-magic-be-in-a-fantasy-world) first. Use that prevalence as context for where rewards plausibly come from and how people react to them: an exceptional adventuring party can still accumulate relics in a world where ordinary people rarely encounter magic, and it will draw notice precisely because it is exceptional.",
+          "There is no sound universal rate per combat, per session or per level that survives a change of system, party size or campaign length, and a fight need not produce a magic item. Set frequency by the game's progression assumptions and the table's expectations: a game that centres equipment rewards may hand out items often as part of advancement, while another expects finds to be rare milestones. Consumables can arrive fairly often because they leave play when used. Permanent items, and especially items a character will use every round, deserve a slower, deliberate pace tied to milestones in most campaigns: a hoard found, a patron's gift, a crafted commission finished, a famous foe's gear taken up. Track what the party has actually received over the last few levels rather than judging one session at a time, and spread finds across characters and roles so one player does not collect every signature item.",
           "D&D 5e gives benchmarks, provided you keep the editions apart. The 2024 DMG states plainly that characters and monsters are built to face each other without magic items, so items are prizes rather than requirements, and its [Magic Items Awarded by Level guidance](https://www.dndbeyond.com/sources/dnd/br-2024/magic-items) describes a party typically gaining one hundred items across a full campaign to 20th level, with the largest shares at common and uncommon rarity: a party-wide description of typical gains, not a quota to fill by a date. The 2014-era equivalent in Xanathar's Guide to Everything reaches the same total but counts them differently, as eighty minor items, mostly consumables and smaller finds, and twenty major, permanent items. Use whichever count matches the books on your table and do not add the two together.",
         ],
       },
