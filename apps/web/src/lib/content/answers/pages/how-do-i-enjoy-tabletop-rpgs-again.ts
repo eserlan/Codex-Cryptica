@@ -13,7 +13,7 @@ export const howDoIEnjoyTabletopRpgsAgain: AnswerConfigInput = {
       kind: "prose",
       heading: "Name what you actually miss",
       paragraphs: [
-        "Flat sessions blur together in memory, so begin with specific ones. Write down the last three sessions, in any system, where you lost track of time. Name what made each one work: untangling a plot with the group, a scene where your character genuinely stood to lose something, a hard tactical fight, finding something nobody expected, watching a character change, or simply an evening where the table laughed a lot. If the same element appears twice, that is the appetite you are shopping for now, and it is more useful than a vague wish to feel enthusiastic again.",
+        "Flat sessions blur together in memory, so begin with specific ones. Write down the last three sessions, in any system, where you lost track of time. Name what made each one work: untangling a plot with the group, a scene where your character genuinely stood to lose something, a hard tactical fight, finding something nobody expected, watching a character change, or simply an evening where the table laughed a lot. Elements that recur are clues worth testing at your next table, and a single striking session can matter more than a repeated one if it is the moment you keep returning to. Either is more useful than a vague wish to feel enthusiastic again.",
         "Separate that list from nostalgia. Missing one particular campaign, one group of friends, or a period of your life when you had more free evenings is not the same as missing role-playing games (RPGs) themselves. If your honest list is mostly about the people, the problem may be scheduling and company rather than the hobby. If the list is mostly about a style of play you no longer get, the problem is fit. If nothing at all comes to mind across several recent games, hold that thought until the section on taking a break below.",
       ],
     },
@@ -22,7 +22,7 @@ export const howDoIEnjoyTabletopRpgsAgain: AnswerConfigInput = {
       heading: "Stop collecting campaigns",
       paragraphs: [
         "Fear of missing out (FOMO) is a poor way to fill a calendar. A new campaign pitch, a one-shot invitation, and a friend starting a second table all look like opportunities, and each one quietly spends the same limited stock of evenings and attention. By the time you are playing in three campaigns and running a fourth, even a good session lands when you are tired, underprepared, and slightly resentful of the slot it occupies.",
-        "Count your standing commitments and the hours they take each week, including preparation if you run any of them. Keep one main game you protect properly, and treat everything else as occasional. A game you dread seeing in the calendar is information, not ingratitude: declining the next invitation, or finishing a commitment you have outgrown, often restores more enjoyment than any new system or setting could.",
+        "Count your standing commitments and the hours they take each week, including preparation if you run any of them. If that load leaves you tired before you sit down, try an experiment for a few weeks: treat one game as your main game and make the others occasional, then judge by how the evenings feel. Some readers sustain several light games happily, so treat the result of the experiment, not the number, as the evidence. A game you dread seeing in the calendar is information, not ingratitude: declining the next invitation, or finishing a commitment you have outgrown, often restores more enjoyment than any new system or setting could.",
       ],
     },
     {
@@ -37,12 +37,12 @@ export const howDoIEnjoyTabletopRpgsAgain: AnswerConfigInput = {
       kind: "example",
       heading: "Worked example: a Vampire chronicle in the wrong proportions",
       paragraphs: [
-        "Leila has played tabletop RPGs for years and usually runs them. She joins a Vampire: The Masquerade (VtM) chronicle run by an experienced Storyteller, the VtM term for the GM, whose players she likes and whose handling of the rules she trusts.",
+        "Leila has played tabletop RPGs for years and usually runs them. She joins a Vampire: The Masquerade, fifth edition (VtM V5) chronicle run by an experienced Storyteller, the VtM term for the GM, whose players she likes and whose handling of the rules she trusts.",
       ],
       items: [
         {
           term: "What she wanted",
-          text: "A mixture in roughly equal parts: Elysium intrigue, personal horror as her character's Hunger and old debts pressed in, and the occasional outright fight when a negotiation failed.",
+          text: "Intrigue and personal horror in roughly equal measure, as her character's Hunger and old debts pressed in, with the occasional outright fight when a negotiation failed.",
         },
         {
           term: "What the chronicle offered",
@@ -50,7 +50,7 @@ export const howDoIEnjoyTabletopRpgsAgain: AnswerConfigInput = {
         },
         {
           term: "What she noticed in play",
-          text: "She leaned forward for one feeding scene where her character risked a stain on her Humanity, then sat restless through two following sessions of pure debate. She caught herself drafting how she would have run the debate scene with a threat in the room, which told her the issue was emphasis, not competence.",
+          text: "She leaned forward for one feeding scene where her character risked a Stain on her Humanity, then sat restless through two following sessions of pure debate. She caught herself drafting how she would have run the debate scene with a threat in the room, which told her the issue was emphasis, not competence.",
         },
         {
           term: "What she did",
@@ -58,7 +58,7 @@ export const howDoIEnjoyTabletopRpgsAgain: AnswerConfigInput = {
         },
         {
           term: "How it ended",
-          text: "The three sessions stayed intrigue-led, so she left using the exit script below, thanked the table, and handed her character over as a non-player character (NPC) the Storyteller could keep using. Two of the players later invited her to a short, fight-heavy chronicle, which she enjoyed. Leaving the first chronicle cost her one seat, not the friendships.",
+          text: "The three sessions stayed intrigue-led, so she left using the exit script below, thanked the table, and handed her character over as a non-player character (NPC) the Storyteller could keep using. Two of the players later invited her to a short chronicle where Elysium intrigue regularly tipped into personal horror and the occasional fight, which she enjoyed. Leaving the first chronicle cost her one seat, not the friendships.",
         },
       ],
     },
@@ -82,7 +82,7 @@ export const howDoIEnjoyTabletopRpgsAgain: AnswerConfigInput = {
       kind: "prose",
       heading: "Leaving a campaign well",
       paragraphs: [
-        "When a mismatch has been named, discussed, and given a fair trial, leaving is a complete and respectable outcome. It is different from drifting away, missing sessions without explanation, or staying while visibly miserable, all of which cost the table more than a clean goodbye. Give whatever notice the group reasonably needs, finish or hand over anything your character was carrying for the plot, and keep the reason narrow and honest: the emphasis was not for you.",
+        "When the mismatch is clear, leaving is a complete and respectable outcome, whether or not you have discussed it or tried further sessions. You do not owe a trial period, extra sessions to prove the point, or handing over your character for the group to keep using. Offering notice or a handover is a courtesy you may choose, as Leila did, not a condition of leaving. Leaving is different from drifting away, missing sessions without explanation, or staying while visibly miserable, all of which cost the table more than a clean goodbye. If you do give notice, keep the reason narrow and honest: the emphasis was not for you.",
         "Leaving a campaign is not a verdict on the GM or the players, and saying so plainly helps it land that way. People routinely stay friends across this boundary, share other games, and invite each other to tables with a different mixture. When you are next [looking for a group](/answers/how-do-i-find-a-tabletop-rpg-group-to-play-with), state your preferred mixture in your first message. That one habit prevents more mismatches than any amount of hoping a listing will suit you.",
       ],
     },
@@ -115,14 +115,14 @@ export const howDoIEnjoyTabletopRpgsAgain: AnswerConfigInput = {
       heading:
         "A five-minute self-check before you sign up, speak up, or walk away",
       intro:
-        "Work through it in order. Each step points at a different next move, so stop when one clearly applies.",
+        "Use the sessions you listed in the first section and your current commitments as evidence, then follow the branch that fits. You do not need to work through the branches in order.",
       items: [
-        "Write down the last three sessions you genuinely enjoyed and name what made each one good: intrigue, emotional stakes, tactics, discovery, character growth, or the company. Whatever appears twice is what you are shopping for.",
-        "Count your current standing commitments, including any game you run, and the hours they take each week. If the total leaves you no evening you actually control, decline or finish one commitment before adding anything new.",
-        "For the table that feels flat, note separately whether it is run well and whether its emphasis matches the list from the first step. Well run plus wrong emphasis means a fit problem, and fit problems start with a conversation.",
-        "If you have never said what you are hoping for, adapt the conversation script above, ask what the campaign will emphasise, and agree a short trial, for example three sessions. Judge the trial by what was actually played, not by what was promised in the abstract.",
-        "If you have discussed the mismatch and a fair trial has not moved it, use the exit script and leave on good terms. Do not fade out between sessions and leave the table guessing.",
-        "If several different tables in different systems all feel flat, pause new sign-ups for a period you choose and spend those evenings elsewhere. Treat whatever you feel at the end of the pause as information about where your time belongs.",
+        "If your commitments leave you tired or with no evening you actually control, reduce them before adding anything new: decline, pause, or finish one, and see whether the remaining games recover.",
+        "If you mostly notice how you would have run each scene, try engaging differently for a few sessions: build your next choices around what this GM actually offers and set the redesigns aside for your own table.",
+        "If you are unsure whether the emphasis will change or suit you, discuss fit using the conversation script above and ask what the campaign is likely to emphasise.",
+        "Agree a short trial, for example three sessions, only when both you and the GM want one and a change in emphasis is genuinely plausible. Judge it by what was played, not by what was promised in the abstract.",
+        "If the mismatch is already clear, or you do not want further sessions, leave courteously using the exit script rather than arranging more sessions to earn the exit. Do not fade out and leave the table guessing.",
+        "If several different tables in different systems all feel flat over time, pause new sign-ups for a period you choose and spend those evenings elsewhere. Treat whatever you feel at the end of the pause as information about where your time belongs.",
       ],
     },
   ],
