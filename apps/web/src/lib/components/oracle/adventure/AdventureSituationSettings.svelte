@@ -11,6 +11,7 @@
   } = $props();
   let busyId = $state<string | null>(null);
   let error = $state<string | null>(null);
+  let advanceMinutes = $state(60);
 
   const scenarios = $derived(
     manager.session?.scenarioCollection?.items.filter(
@@ -36,6 +37,19 @@
     error = null;
     try {
       await manager.setScenarioStatus(id, status);
+    } catch (cause) {
+      error = describeScenarioMutationError(cause);
+    } finally {
+      busyId = null;
+    }
+  }
+
+  async function advanceTime() {
+    if (locked) return;
+    busyId = "world-clock";
+    error = null;
+    try {
+      await manager.advanceWorldTime(advanceMinutes, "Player advanced world time");
     } catch (cause) {
       error = describeScenarioMutationError(cause);
     } finally {
@@ -90,6 +104,31 @@
         ></span>
         Look for local rumours
       </button>
+    </div>
+
+    <div class="space-y-2 border-t border-theme-border pt-3">
+      <h4 class="text-sm font-semibold text-theme-text">Advance fictional time</h4>
+      <p class="text-xs text-theme-text">
+        Advances the local world clock once. Nothing progresses while the app is closed;
+        Oracle can consider elapsed time on your next action.
+      </p>
+      <div class="flex flex-wrap items-center gap-2">
+        <label class="text-sm text-theme-text" for="adventure-time-step">Duration</label>
+        <select
+          id="adventure-time-step"
+          class={buttonClass}
+          bind:value={advanceMinutes}
+          disabled={locked}
+        >
+          <option value={60}>One hour</option>
+          <option value={480}>Eight hours</option>
+          <option value={1440}>One day</option>
+          <option value={10080}>One week</option>
+        </select>
+        <button type="button" class={buttonClass} disabled={locked} onclick={() => void advanceTime()}>
+          Advance time
+        </button>
+      </div>
     </div>
 
     {#if scenarios.length > 0}
