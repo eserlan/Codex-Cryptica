@@ -171,9 +171,7 @@ test.describe("Campaign Date Picker E2E", () => {
     await expect(page.locator('button:has-text("5")').first()).toBeVisible();
   });
 
-  test("should allow manual year entry via keyboard toggle", async ({
-    page,
-  }) => {
+  test("should allow manual year entry via quick entry", async ({ page }) => {
     await openEntityForTest(page, "test-event");
     await page
       .locator(".hidden.md\\:flex")
@@ -187,20 +185,14 @@ test.describe("Campaign Date Picker E2E", () => {
       .click({ force: true });
     await page.locator("#manual-tab").click({ force: true });
 
-    // 1. Toggle manual entry
-    await page.getByLabel("Direct jump to Year").click({ force: true });
-    const manualInput = page.getByPlaceholder("Type...");
-    await manualInput.focus();
-    await expect(manualInput).toBeFocused();
-
-    // 2. Type a year
-    await manualInput.fill("2026");
-    await manualInput.press("Enter");
+    // Enter a year through the current quick-entry field.
+    const quickEntry = page.getByLabel("Quick Entry");
+    await quickEntry.fill("2026");
+    await expect(quickEntry).toHaveValue("2026");
     await page
       .getByTestId("apply-date-button")
       .evaluate((el) => (el as HTMLElement).click());
 
-    // 3. Verify
     await expect(page.locator('button:has-text("2026")').first()).toBeVisible();
   });
 });
