@@ -77,7 +77,7 @@
       {#if pending}
         <span
           aria-hidden="true"
-          class="icon-[lucide--loader-2] mr-1 inline-block h-4 w-4 animate-spin align-[-0.2em]"
+          class="icon-[lucide--loader-2] mr-1 inline-block h-4 w-4 animate-spin align-[-0.2em] motion-reduce:animate-none"
         ></span>
       {/if}
       Ask
