@@ -11,6 +11,7 @@ export * from "./scenario-state";
 export * from "./scenario-schemas";
 export * from "./scenario-migration";
 export * from "./scenario-collection";
+export * from "./cross-scenario-causality";
 export * from "./world-time";
 export * from "./world-entry-pacing";
 export * from "./contextual-rumours";
