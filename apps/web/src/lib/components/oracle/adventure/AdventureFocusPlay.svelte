@@ -175,12 +175,6 @@
   <AdventureCorrectionForm {manager} />
   <AdventureRollHistory {manager} />
   <AdventureResourceCounters {manager} />
-  <AdventureProvisionalFacts
-    facts={manager.session?.provisionalFacts ?? []}
-    {existingTitles}
-    onAdd={onAddProvisionalFact}
-    onAddAll={onAddAllProvisionalFacts}
-  />
   <AdventureArchive {repository} {vaultId} {onResume} {onResumeArchived} />
 {/snippet}
 
@@ -239,6 +233,12 @@
       </div>
     </div>
     <div class="flex shrink-0 items-center gap-1 sm:gap-2">
+      <AdventureProvisionalFacts
+        facts={manager.session?.provisionalFacts ?? []}
+        {existingTitles}
+        onAdd={onAddProvisionalFact}
+        onAddAll={onAddAllProvisionalFacts}
+      />
       <button
         bind:this={toolsButton}
         class="flex min-h-10 min-w-10 items-center justify-center rounded-md border border-theme-border px-2 text-theme-text transition sm:min-h-12 sm:px-3 hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
