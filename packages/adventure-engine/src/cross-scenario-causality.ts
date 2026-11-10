@@ -57,6 +57,8 @@ export function propagateKnownConsequence(
     !sourceEvent ||
     sourceEvent.visibility !== "player" ||
     sourceEvent.kind !== "consequence" ||
+    // Never route a previously propagated effect onward: one causal hop only.
+    sourceEvent.causedBy !== undefined ||
     !proposal.anchorRef ||
     !source.anchorRefs.includes(proposal.anchorRef) ||
     !target.anchorRefs.includes(proposal.anchorRef)
