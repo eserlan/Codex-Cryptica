@@ -91,6 +91,7 @@ export class AdventureScenarios {
 }
 
 const SCENARIO_ERROR_COPY: Record<string, string> = {
+  "invalid-fictional-time": "Invalid time advance. The world clock is unchanged.",
   "revision-conflict":
     "This adventure changed elsewhere. Reopen it before updating a situation.",
   "stale-revision":
