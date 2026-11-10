@@ -1,4 +1,7 @@
-import { appendScenarioEvent, type ScenarioCommandResult } from "./scenario-collection";
+import {
+  appendScenarioEvent,
+  type ScenarioCommandResult,
+} from "./scenario-collection";
 import type { AdventureSession } from "./types";
 
 /** A reviewed, committed consequence that should affect a related situation. */
@@ -30,8 +33,12 @@ export function propagateKnownConsequence(
     return { ok: false, reason: "invalid-scenario" };
   }
   const scenarios = session.scenarioCollection?.items ?? [];
-  const source = scenarios.find((item) => item.id === proposal.sourceScenarioId);
-  const target = scenarios.find((item) => item.id === proposal.targetScenarioId);
+  const source = scenarios.find(
+    (item) => item.id === proposal.sourceScenarioId,
+  );
+  const target = scenarios.find(
+    (item) => item.id === proposal.targetScenarioId,
+  );
   if (!source || !target) return { ok: false, reason: "unknown-scenario" };
   if (target.knowledge !== "heard") {
     return { ok: false, reason: "scenario-not-heard" };
