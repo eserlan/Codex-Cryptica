@@ -162,6 +162,53 @@ describe("30-turn emergent adventure regression", () => {
     ).toBe(truth);
   });
 
+  it("survives 60 turns with three independent situations, roundtrips, and no clock drift", () => {
+    let active = addConcurrentScenarios(baseline());
+    for (let turn = 0; turn < 60; turn += 1) {
+      active = playTurn(active, turn);
+      if (turn === 29 || turn === 59) {
+        active = parseAdventureSession(JSON.parse(JSON.stringify(active)));
+      }
+    }
+    expect(active.turns).toHaveLength(60);
+    expect(active.scenarioCollection?.items).toHaveLength(3);
+    expect(active.scenarioCollection?.items[0]?.status).toBe("open");
+    expect(active.scenarioCollection?.items[1]?.status).toBe("resolved");
+    expect(active.scenarioCollection?.items[2]?.knowledge).toBe("unheard");
+    expect(active.worldTime).toBeUndefined();
+
+    // A duplicate submit must be rejected without committing another turn.
+    const retry = applyCompletedTurn(active, ordinaryTurn(59), {
+      turnId: "duplicate-60",
+      inputId: "input-59",
+      now,
+    });
+    expect(retry.ok).toBe(false);
+    if (!retry.ok) {
+      expect(retry.errors.map((entry) => entry.code)).toContain(
+        "duplicate-input",
+      );
+    }
+    expect(active.turns).toHaveLength(60);
+
+    const transcript = createPlayerTranscript(active);
+    const state = buildAdventurePrompt({
+      session: active,
+      phase: "action",
+      playerAction: "Return to the village",
+      anchors: [],
+      relevant: [],
+    }).state;
+    expect(JSON.stringify(transcript)).not.toContain(truth);
+    expect(JSON.stringify(transcript)).not.toContain("Independent truth");
+    expect(JSON.stringify(JSON.parse(state).playerScenarios)).not.toContain(
+      "Independent truth",
+    );
+    expect(JSON.parse(state)["GM-ONLY scenarios"][0].baselineTruth.truth).toBe(
+      truth,
+    );
+  });
+
   it("rejects hidden truth, duplicates and stale replay without changing state", () => {
     const session = baseline();
     expect(
