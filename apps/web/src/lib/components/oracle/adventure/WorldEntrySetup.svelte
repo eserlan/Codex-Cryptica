@@ -45,22 +45,7 @@
   }
 </script>
 
-<!-- fallow-ignore-next-line complexity -->
-<form
-  data-testid="world-entry-setup"
-  class="mx-auto w-full max-w-3xl space-y-5 rounded-xl border border-theme-border bg-theme-surface p-4 sm:p-6"
-  onsubmit={(event) => {
-    event.preventDefault();
-    continueToPreview();
-  }}
->
-  <header class="space-y-2">
-    <h2 class="font-header text-xl text-theme-text">Set the Stage</h2>
-    <p class="text-sm text-theme-text">
-      Step into your world. No quest, villain or plot is required.
-    </p>
-  </header>
-
+{#snippet characterFieldset()}
   <fieldset class="space-y-2">
     <legend class="text-sm font-semibold text-theme-text"
       >1. Who are you playing?</legend
@@ -126,7 +111,9 @@
       </label>
     {/if}
   </fieldset>
+{/snippet}
 
+{#snippet locationFieldset()}
   <fieldset class="space-y-2">
     <legend class="text-sm font-semibold text-theme-text"
       >2. Where does the scene begin?</legend
@@ -181,6 +168,25 @@
       Only nearby, relevant world knowledge will be used.
     </p>
   </fieldset>
+{/snippet}
+
+<form
+  data-testid="world-entry-setup"
+  class="mx-auto w-full max-w-3xl space-y-5 rounded-xl border border-theme-border bg-theme-surface p-4 sm:p-6"
+  onsubmit={(event) => {
+    event.preventDefault();
+    continueToPreview();
+  }}
+>
+  <header class="space-y-2">
+    <h2 class="font-header text-xl text-theme-text">Set the Stage</h2>
+    <p class="text-sm text-theme-text">
+      Step into your world. No quest, villain or plot is required.
+    </p>
+  </header>
+
+  {@render characterFieldset()}
+  {@render locationFieldset()}
 
   <fieldset class="space-y-2">
     <legend class="text-sm font-semibold text-theme-text"
