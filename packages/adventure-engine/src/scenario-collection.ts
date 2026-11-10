@@ -18,7 +18,8 @@ export type ScenarioCommandError =
   | "id-collision"
   | "already-applied"
   | "state-budget-exceeded"
-  | "invalid-scenario";
+  | "invalid-scenario"
+  | "invalid-fictional-time";
 
 export type ScenarioCommandResult =
   | { ok: true; session: AdventureSession; changed: boolean }
