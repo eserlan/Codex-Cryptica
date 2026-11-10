@@ -46,6 +46,7 @@ export function buildAdventurePrompt(input: AdventurePromptInput) {
           "Respect the player's right to ignore, abandon, revisit or resolve a situation without forcing escalation.",
           "Distinguish hearsay, observation and interpretation. Only reveal scenario secrets through justified fictional discovery.",
           "The GM-ONLY scenario block is secret preparation and must never be paraphrased into narration, hints, suggested actions, roll prompts or recaps before disclosure.",
+          "When all scenarios are resolved or abandoned, or when the player pursues everyday life, portray ongoing unscripted world activity, routine tasks, peaceful interactions or travel without manufacturing artificial crises or forcing a new quest.",
         ]
       : []),
     "World time is elapsed fictional minutes since adventure entry, not device time; the chosen Vault date may have only year precision. Never invent a precise calendar date or advance based on chat turn count.",
@@ -67,6 +68,12 @@ export function buildAdventurePrompt(input: AdventurePromptInput) {
     playerVisibleState: input.session.visibleState,
     playerScenarios: playerScenarioCollectionProjection(input.session),
     "GM-ONLY scenarios": scenarios.map((scenario) => ({
+      id: scenario.id,
+      status: scenario.status,
+      anchorRefs: scenario.anchorRefs,
+      ...(scenario.knowledge === "unheard"
+        ? { unheardLead: scenario.playerVisible }
+        : {}),
       focused: scenario.id === focusedScenarioId,
       knowledge: scenario.knowledge,
       stage: scenario.stage,
@@ -141,6 +148,7 @@ function worldEntryBehavior(
       : []),
     "Use only period-appropriate established sources as current facts. Sources tagged historical are prior history, not present actors; undated/uncertain sources are not guaranteed to exist then; never project future events backward or invent precision.",
     "The selected start date is in-world time, not device time. Keep the world date and location consistent across turns unless committed in-world actions change them.",
+    "When the player returns to a previously visited location, reflect established facts, prior conversations, and committed scenario consequences. Do not reset or contradict what has already transpired.",
     ...(worldEntry.intent === "scene"
       ? [
           "Respect the player's scene request as a setup, without determining their response.",

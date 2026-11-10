@@ -260,4 +260,31 @@ describe("scenario player projection and disclosure", () => {
     expect(current.scenarioCollection?.items[0]?.knowledge).toBe("unheard");
     expect(current.turns).toEqual([]);
   });
+
+  it("preserves causedBy provenance on player-visible consequence events", () => {
+    const heardItem = item("heard-lead", "heard", "Some truth");
+    heardItem.events.push({
+      id: "event-consequence",
+      kind: "consequence",
+      visibility: "player",
+      text: "The road was washed out by flooding from the mill.",
+      at,
+      causedBy: {
+        scenarioId: "source-scenario",
+        eventId: "event-source",
+        anchorRef: "mill-anchor",
+      },
+    });
+    const projected = playerScenarioCollectionProjection(session([heardItem]));
+    expect(projected.items[0]?.events[0]).toMatchObject({
+      id: "event-consequence",
+      kind: "consequence",
+      text: "The road was washed out by flooding from the mill.",
+      causedBy: {
+        scenarioId: "source-scenario",
+        eventId: "event-source",
+        anchorRef: "mill-anchor",
+      },
+    });
+  });
 });

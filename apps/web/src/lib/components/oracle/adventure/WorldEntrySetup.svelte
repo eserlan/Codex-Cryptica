@@ -89,6 +89,11 @@
           <option value={character.id}>{character.name}</option>
         {/each}
       </select>
+    {:else}
+      <p class="text-xs text-theme-text">
+        No saved characters in this Vault yet. Name a provisional character
+        below to start playing.
+      </p>
     {/if}
     {#if !setup.characterId}
       <label class="block text-sm text-theme-text">
@@ -149,6 +154,11 @@
           <option value={location.id}>{location.name}</option>
         {/each}
       </select>
+    {:else}
+      <p class="text-xs text-theme-text">
+        No saved locations in this Vault yet. Name a starting place below to
+        begin exploring.
+      </p>
     {/if}
     {#if !setup.locationId}
       <label class="block text-sm text-theme-text">

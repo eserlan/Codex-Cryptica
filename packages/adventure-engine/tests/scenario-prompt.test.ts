@@ -288,4 +288,64 @@ describe("scenario-aware Oracle GM", () => {
     );
     expect(prompt.behavior).toContain("meaningful empty result");
   });
+
+  it("includes id, status, anchorRefs and unheardLead for unheard background scenarios in GM state", () => {
+    const s = session();
+    s.scenarioCollection!.items[0]!.knowledge = "unheard";
+    s.scenarioCollection!.items[0]!.anchorRefs = ["anchor-1"];
+    s.worldEntry = {
+      version: 1,
+      location: {
+        kind: "canonical",
+        recordId: "place-1",
+        name: "Northbrook",
+      },
+      intent: "explore",
+    };
+    const prompt = buildAdventurePrompt({
+      session: s,
+      phase: "action",
+      playerAction: "Explore the village",
+      anchors: [],
+      relevant: [],
+    });
+    const gmScenarios = JSON.parse(prompt.state)["GM-ONLY scenarios"];
+    expect(gmScenarios[0]).toMatchObject({
+      id: "rumour-4",
+      status: "open",
+      anchorRefs: ["anchor-1"],
+      knowledge: "unheard",
+      unheardLead: {
+        rumour: "The miller has vanished.",
+        lead: "Old Mill",
+      },
+    });
+  });
+
+  it("instructs Oracle on post-resolution open-world continuity and location-revisit memory", () => {
+    const s = session();
+    s.scenarioCollection!.items[0]!.status = "resolved";
+    s.worldEntry = {
+      version: 1,
+      location: {
+        kind: "canonical",
+        recordId: "place-1",
+        name: "Northbrook",
+      },
+      intent: "explore",
+    };
+    const prompt = buildAdventurePrompt({
+      session: s,
+      phase: "action",
+      playerAction: "Walk back to the village square",
+      anchors: [],
+      relevant: [],
+    });
+    expect(prompt.behavior).toContain(
+      "When all scenarios are resolved or abandoned, or when the player pursues everyday life, portray ongoing unscripted world activity",
+    );
+    expect(prompt.behavior).toContain(
+      "When the player returns to a previously visited location, reflect established facts, prior conversations, and committed scenario consequences",
+    );
+  });
 });
