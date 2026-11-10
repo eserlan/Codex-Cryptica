@@ -47,8 +47,16 @@ describe("generator page composition", () => {
   it("inherits the public browsing genre in a generic generator form", () => {
     publicThemeStore.setTheme("cyberpunk");
     renderBusiness();
-    expect(screen.getByTestId("page-theme").textContent).toBe("Cyberpunk / Corporate");
-    expect((screen.getByRole("combobox", { name: "Genre / Setting" }) as HTMLSelectElement).value).toBe("Cyberpunk / Corporate");
+    expect(screen.getByTestId("page-theme").textContent).toBe(
+      "Cyberpunk / Corporate",
+    );
+    expect(
+      (
+        screen.getByRole("combobox", {
+          name: "Genre / Setting",
+        }) as HTMLSelectElement
+      ).value,
+    ).toBe("Cyberpunk / Corporate");
   });
 
   beforeEach(() => {
