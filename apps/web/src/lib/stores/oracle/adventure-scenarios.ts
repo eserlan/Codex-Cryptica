@@ -64,7 +64,12 @@ export class AdventureScenarios {
     const eventId = this.deps.idGenerator();
     return this.mutate((session) =>
       advanceManualWorldTime(
-        session, minutes, cause, eventId, session.revision, this.deps.now(),
+        session,
+        minutes,
+        cause,
+        eventId,
+        session.revision,
+        this.deps.now(),
       ),
     );
   }
@@ -91,7 +96,8 @@ export class AdventureScenarios {
 }
 
 const SCENARIO_ERROR_COPY: Record<string, string> = {
-  "invalid-fictional-time": "Invalid time advance. The world clock is unchanged.",
+  "invalid-fictional-time":
+    "Invalid time advance. The world clock is unchanged.",
   "revision-conflict":
     "This adventure changed elsewhere. Reopen it before updating a situation.",
   "stale-revision":
