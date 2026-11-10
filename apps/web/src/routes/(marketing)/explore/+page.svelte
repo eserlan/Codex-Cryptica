@@ -62,7 +62,6 @@
     }
   });
 
-
   const cleanBase = basePath();
 
   const TITLE = "Explore Codex Cryptica";
