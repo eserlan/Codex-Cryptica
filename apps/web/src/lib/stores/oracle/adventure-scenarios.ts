@@ -1,5 +1,6 @@
 import {
   addScenario,
+  advanceManualWorldTime,
   setScenarioFocus,
   setScenarioStatus,
   type ScenarioItem,
@@ -59,6 +60,20 @@ export class AdventureScenarios {
     );
   }
 
+  advanceTime(minutes: number, cause: string): Promise<AdventureSession> {
+    const eventId = this.deps.idGenerator();
+    return this.mutate((session) =>
+      advanceManualWorldTime(
+        session,
+        minutes,
+        cause,
+        eventId,
+        session.revision,
+        this.deps.now(),
+      ),
+    );
+  }
+
   private async mutate(
     command: (session: AdventureSession) => ReturnType<typeof addScenario>,
   ): Promise<AdventureSession> {
@@ -81,6 +96,8 @@ export class AdventureScenarios {
 }
 
 const SCENARIO_ERROR_COPY: Record<string, string> = {
+  "invalid-fictional-time":
+    "Invalid time advance. The world clock is unchanged.",
   "revision-conflict":
     "This adventure changed elsewhere. Reopen it before updating a situation.",
   "stale-revision":

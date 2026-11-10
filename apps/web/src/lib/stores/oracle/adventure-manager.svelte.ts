@@ -198,6 +198,10 @@ export class AdventureManager extends AdventureState {
   setScenarioStatus(...args: Parameters<AdventureScenarios["status"]>) {
     return this.scenarios.status(...args);
   }
+
+  advanceWorldTime(...args: Parameters<AdventureScenarios["advanceTime"]>) {
+    return this.scenarios.advanceTime(...args);
+  }
 }
 
 export const adventureManager = new AdventureManager();
