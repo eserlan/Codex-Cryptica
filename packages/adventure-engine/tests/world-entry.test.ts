@@ -141,6 +141,7 @@ describe("world entry session and GM contract", () => {
     }
   });
 
+  // fallow-ignore-next-line complexity
   it("completes full free-exploration loop: mundane chat, rumour discovery, resolution, travel and revisit with memory", () => {
     let session = parseAdventureSession(rawSession());
     const grainTruth = "The storehouse roof leaked and ruined the flour.";

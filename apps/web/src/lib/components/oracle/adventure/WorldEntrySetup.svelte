@@ -45,6 +45,7 @@
   }
 </script>
 
+<!-- fallow-ignore-next-line complexity -->
 <form
   data-testid="world-entry-setup"
   class="mx-auto w-full max-w-3xl space-y-5 rounded-xl border border-theme-border bg-theme-surface p-4 sm:p-6"
