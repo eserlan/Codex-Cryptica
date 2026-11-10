@@ -23,11 +23,27 @@ function memoryPersistence(
 describe("resolveInitialActiveTheme", () => {
   it("prefers public tab genre to the persisted vault theme for flat generators", () => {
     const p = memoryPersistence({ "codex-cryptica-active-theme": "pirate" });
-    expect(resolveInitialActiveTheme({ slug: "npc", publicThemeId: "cyberpunk", persistence: p, browser: true, fallbackTheme: "Classic Fantasy" })).toBe("Cyberpunk / Corporate");
+    expect(
+      resolveInitialActiveTheme({
+        slug: "npc",
+        publicThemeId: "cyberpunk",
+        persistence: p,
+        browser: true,
+        fallbackTheme: "Classic Fantasy",
+      }),
+    ).toBe("Cyberpunk / Corporate");
   });
 
   it("still prefers an explicit themed URL to the inherited tab genre", () => {
-    expect(resolveInitialActiveTheme({ slug: "npc", urlHubTheme: "fantasy", publicThemeId: "cyberpunk", browser: true, fallbackTheme: "Classic Fantasy" })).toBe("Classic Fantasy");
+    expect(
+      resolveInitialActiveTheme({
+        slug: "npc",
+        urlHubTheme: "fantasy",
+        publicThemeId: "cyberpunk",
+        browser: true,
+        fallbackTheme: "Classic Fantasy",
+      }),
+    ).toBe("Classic Fantasy");
   });
 
   it("prefers themed URL world theme over stored theme", () => {
@@ -129,7 +145,15 @@ describe("resolveSupportedHubGenre", () => {
 
 describe("getHubMountPatch", () => {
   it("inherits the session theme for generic flat generators", () => {
-    const patch = getHubMountPatch({ slug: "quest", hubTheme: "cyberpunk", publicThemeId: "cyberpunk", browser: true, persistence: memoryPersistence({ "codex-cryptica-active-theme": "pirate" }) });
+    const patch = getHubMountPatch({
+      slug: "quest",
+      hubTheme: "cyberpunk",
+      publicThemeId: "cyberpunk",
+      browser: true,
+      persistence: memoryPersistence({
+        "codex-cryptica-active-theme": "pirate",
+      }),
+    });
     expect(patch?.activeTheme).toBe("Cyberpunk / Corporate");
   });
 
