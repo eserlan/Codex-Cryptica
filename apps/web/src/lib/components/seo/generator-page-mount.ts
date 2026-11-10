@@ -17,6 +17,7 @@ interface GeneratorMountOptions {
   slug: string;
   hubTheme: string | null;
   urlHubTheme?: string;
+  publicThemeId?: string | null;
   persistence: UIPersistence;
   browser: boolean;
   forms: MountForms;
@@ -71,7 +72,7 @@ function restoreStoredTheme(
   options: GeneratorMountOptions,
   patch: HubMountPatch | null,
 ): void {
-  if (options.urlHubTheme || patch?.activeTheme) return;
+  if (options.urlHubTheme || options.publicThemeId || patch?.activeTheme) return;
   const stored = options.persistence.read(
     UI_STORAGE_KEYS.ACTIVE_THEME,
     (value) => value,
