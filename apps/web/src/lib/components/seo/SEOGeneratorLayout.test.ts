@@ -90,6 +90,23 @@ describe("SEOGeneratorLayout Theming Sync", () => {
     expect(vaultThemeSpy).not.toHaveBeenCalled();
   });
 
+  it("does not overwrite the next public page's explicit theme on navigation", async () => {
+    render(SEOGeneratorLayout, {
+      props: {
+        theme: "Cyberpunk / Corporate",
+        isThemeCustomizable: true,
+        generate: vi.fn().mockResolvedValue({}),
+        formFields: noopSnippet,
+      },
+    });
+    expect(publicThemeStore.themeId).toBe("cyberpunk");
+
+    // The outgoing generator must not react to external context changes.
+    publicThemeStore.setTheme("pirate");
+    await tick();
+    expect(publicThemeStore.themeId).toBe("pirate");
+  });
+
   it("renders a page's lead content above the output only when given", () => {
     const outputLead = createRawSnippet(() => ({
       render: () => "<p>Lead content</p>",
