@@ -1,5 +1,6 @@
 import {
   addScenario,
+  advanceManualWorldTime,
   setScenarioFocus,
   setScenarioStatus,
   type ScenarioItem,
@@ -55,6 +56,15 @@ export class AdventureScenarios {
           at: this.deps.now(),
         },
         this.deps.now(),
+      ),
+    );
+  }
+
+  advanceTime(minutes: number, cause: string): Promise<AdventureSession> {
+    const eventId = this.deps.idGenerator();
+    return this.mutate((session) =>
+      advanceManualWorldTime(
+        session, minutes, cause, eventId, session.revision, this.deps.now(),
       ),
     );
   }
