@@ -28,6 +28,14 @@ function options(
 }
 
 describe("generator mount reconciliation", () => {
+  it("seeds a compatible generator from public context without reading vault theme", () => {
+    const opts = { ...options("settlement", "cyberpunk"), publicThemeId: "cyberpunk" };
+    mountGeneratorPage(opts);
+    expect(opts.forms.settlement.genre).toBe("Cyberpunk");
+    expect(opts.setActiveTheme).toHaveBeenCalledWith("Cyberpunk / Corporate");
+    expect(opts.getItem).not.toHaveBeenCalled();
+  });
+
   it("applies settlement choices without overwriting the user's context", () => {
     const opts = options("settlement", "lancer");
     opts.forms.settlement.campaignContext = "The frontier";
