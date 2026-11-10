@@ -116,7 +116,10 @@
   // A themed generator URL also establishes browsing context, even for a
   // generator whose own genre is fixed and not user-customizable.
   $effect(() => {
-    if (urlHubTheme && Object.prototype.hasOwnProperty.call(HUB_SLUG_TO_THEME_ID, urlHubTheme)) {
+    if (
+      urlHubTheme &&
+      Object.prototype.hasOwnProperty.call(HUB_SLUG_TO_THEME_ID, urlHubTheme)
+    ) {
       publicThemeStore.setTheme(HUB_SLUG_TO_THEME_ID[urlHubTheme]);
     }
   });
