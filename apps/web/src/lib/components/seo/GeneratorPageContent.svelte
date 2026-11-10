@@ -18,6 +18,7 @@
   import { browser } from "$app/env";
   import { page } from "$app/state";
   import { hubContext } from "#lib/stores/hub-context.svelte.js";
+  import { publicThemeStore } from "#lib/stores/public-theme.svelte.js";
   import { sessionHubStore } from "#lib/stores/session-hub.svelte.js";
   import { UIPersistence } from "#lib/stores/ui/persistence.js";
   import SEOGeneratorLayout from "./SEOGeneratorLayout.svelte";
@@ -55,6 +56,7 @@
   } from "./generator-page-handoffs";
   import {
     HUB_LABELS,
+    HUB_SLUG_TO_THEME_ID,
     SOCIAL_HUB_GENRE_TO_THEME,
     mapAlienRaceGenreToTheme,
     mapStarSystemGenreToTheme,
@@ -104,19 +106,44 @@
   // values (backHref, initialHubGenre) compute correctly on first render.
   const _initialSlug = untrack(() => slug);
   const _initialUrlHubTheme = untrack(() => urlHubTheme);
+  const _initialPublicThemeId = untrack(() => publicThemeStore.themeId);
+  const initialPublicHub = Object.entries(HUB_SLUG_TO_THEME_ID).find(
+    ([, id]) => id === _initialPublicThemeId,
+  )?.[0];
+  const initialHubTheme =
+    _initialUrlHubTheme ?? initialPublicHub ?? hubContext.theme;
+
+  // A themed generator URL also establishes browsing context, even for a
+  // generator whose own genre is fixed and not user-customizable.
+  $effect(() => {
+    if (
+      urlHubTheme &&
+      Object.prototype.hasOwnProperty.call(HUB_SLUG_TO_THEME_ID, urlHubTheme)
+    ) {
+      publicThemeStore.setTheme(HUB_SLUG_TO_THEME_ID[urlHubTheme]);
+    }
+  });
+
   if (_initialUrlHubTheme) {
     hubContext.set(_initialUrlHubTheme);
   }
 
+  const backHubTheme = $derived(
+    urlHubTheme ??
+      Object.entries(HUB_SLUG_TO_THEME_ID).find(
+        ([, id]) => id === publicThemeStore.themeId,
+      )?.[0] ??
+      hubContext.theme,
+  );
   const backHref = $derived(
-    hubContext.theme && HUB_LABELS[hubContext.theme]
-      ? `/generators/${hubContext.theme}`
+    backHubTheme && HUB_LABELS[backHubTheme]
+      ? `/generators/${backHubTheme}`
       : "/generators",
   );
   const backLabel = $derived(
-    (hubContext.theme && HUB_LABELS[hubContext.theme]) ?? "All generators",
+    (backHubTheme && HUB_LABELS[backHubTheme]) ?? "All generators",
   );
-  const initialHubGenre = resolveHubGeneratorGenre(hubContext.theme);
+  const initialHubGenre = resolveHubGeneratorGenre(initialHubTheme);
   const meta = $derived({ ...slugMeta[slug], ...(metaOverrides ?? {}) });
   const relatedLinks = $derived(
     withCategoryRelatedLinks(slug, meta.relatedLinks ?? []),
@@ -175,6 +202,7 @@
   let activeTheme = $state(
     resolveInitialActiveTheme({
       urlHubTheme: _initialUrlHubTheme,
+      publicThemeId: _initialPublicThemeId,
       slug: _initialSlug,
       persistence,
       browser: Boolean(browser),
@@ -240,8 +268,9 @@
 
     return mountGeneratorPage({
       slug,
-      hubTheme: hubContext.theme,
+      hubTheme: initialHubTheme,
       urlHubTheme,
+      publicThemeId: _initialPublicThemeId,
       persistence,
       browser: Boolean(browser),
       forms,

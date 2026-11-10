@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { onDestroy } from "svelte";
   import { browser } from "$app/env";
   import { basePath } from "#lib/utils/base-path.js";
   import { buildAbsoluteUrl } from "#lib/seo/site.js";
@@ -11,7 +10,7 @@
     LandingPageConfig,
     LandingPageSection,
   } from "#lib/content/for/schema.js";
-  import { themeStore } from "#lib/stores/theme.svelte.js";
+  import { publicThemeStore } from "#lib/stores/public-theme.svelte.js";
   import { hubThemeLabel, type HubThemeSlug } from "#lib/content/hub-themes.js";
   import LandingPageGraphPreview from "#lib/components/for/LandingPageGraphPreview.svelte";
   import { getLandingPageCanonicalUrl } from "#lib/content/for/canonical.js";
@@ -94,16 +93,10 @@
     config.seo.imageAlt ?? `${config.hero.title} — Codex Cryptica`,
   );
 
-  // Always assign, never only when a theme exists: SvelteKit reuses this
-  // component across /for/[slug] -> /for/[slug] navigations, so `onDestroy`
-  // does not run between packs. Skipping the call for a theme-less pack would
-  // leave the previous page's theme applied.
+  // Explicitly themed packs change the public browsing context. A genre-less
+  // page inherits the last theme; the shared marketing layout owns previews.
   $effect(() => {
-    themeStore.previewTheme(config.theme ?? null);
-  });
-
-  onDestroy(() => {
-    themeStore.previewTheme(null);
+    if (config.theme) publicThemeStore.setTheme(config.theme);
   });
 
   // See discovery-tracking.ts: this route reuses one component instance

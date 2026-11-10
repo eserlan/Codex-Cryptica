@@ -5,6 +5,7 @@ import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import { createRawSnippet, tick, type Snippet } from "svelte";
 import SEOGeneratorLayout from "./SEOGeneratorLayout.svelte";
 import { themeStore } from "#lib/stores/theme.svelte.js";
+import { publicThemeStore } from "#lib/stores/public-theme.svelte.js";
 import { runShellCtaHandler } from "./marketing-shell";
 
 const noopSnippet = (() => {}) as unknown as Snippet;
@@ -45,15 +46,12 @@ describe("SEOGeneratorLayout Theming Sync", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
+    publicThemeStore.clear();
   });
 
-  it("calls themeStore.setTheme when isThemeCustomizable is true and theme changes", async () => {
-    const setThemeSpy = vi
-      .spyOn(themeStore, "setTheme")
-      .mockResolvedValue(undefined);
-
-    // Set themeStore initial value
-    themeStore.currentThemeId = "workspace";
+  it("updates only public session theme when a generator genre changes", async () => {
+    const setThemeSpy = vi.spyOn(publicThemeStore, "setTheme");
+    const vaultThemeSpy = vi.spyOn(themeStore, "setTheme");
 
     // Set up a mock generate function
     const mockGenerate = vi.fn().mockResolvedValue({
@@ -75,7 +73,7 @@ describe("SEOGeneratorLayout Theming Sync", () => {
     });
 
     // Initial check: activeThemeId for "Classic Fantasy" is "fantasy"
-    // Since themeStore.worldThemeId was "workspace", it should trigger setTheme("fantasy")
+    // The public genre changes without persisting a new vault theme.
     expect(setThemeSpy).toHaveBeenCalledWith("fantasy");
 
     setThemeSpy.mockClear();
@@ -89,6 +87,24 @@ describe("SEOGeneratorLayout Theming Sync", () => {
     });
 
     expect(setThemeSpy).toHaveBeenCalledWith("cyberpunk");
+    expect(vaultThemeSpy).not.toHaveBeenCalled();
+  });
+
+  it("does not overwrite the next public page's explicit theme on navigation", async () => {
+    render(SEOGeneratorLayout, {
+      props: {
+        theme: "Cyberpunk / Corporate",
+        isThemeCustomizable: true,
+        generate: vi.fn().mockResolvedValue({}),
+        formFields: noopSnippet,
+      },
+    });
+    expect(publicThemeStore.themeId).toBe("cyberpunk");
+
+    // The outgoing generator must not react to external context changes.
+    publicThemeStore.setTheme("pirate");
+    await tick();
+    expect(publicThemeStore.themeId).toBe("pirate");
   });
 
   it("renders a page's lead content above the output only when given", () => {
@@ -287,11 +303,8 @@ describe("SEOGeneratorLayout Theming Sync", () => {
     expect(generate).not.toHaveBeenCalled();
   });
 
-  it("does NOT call themeStore.setTheme when isThemeCustomizable is false", async () => {
-    themeStore.currentThemeId = "workspace";
-    const setThemeSpy = vi
-      .spyOn(themeStore, "setTheme")
-      .mockResolvedValue(undefined);
+  it("does NOT change public genre when isThemeCustomizable is false", async () => {
+    const setThemeSpy = vi.spyOn(publicThemeStore, "setTheme");
 
     const mockGenerate = vi.fn().mockResolvedValue({});
 

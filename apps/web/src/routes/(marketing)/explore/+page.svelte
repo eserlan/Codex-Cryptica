@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onDestroy, onMount } from "svelte";
+  import { onMount } from "svelte";
   import { basePath } from "#lib/utils/base-path.js";
   import { page } from "$app/state";
   import { invalidateAll } from "$app/navigation";
@@ -9,7 +9,7 @@
   import ExploreSearch from "#lib/components/explore/ExploreSearch.svelte";
   import ExploreSectionList from "#lib/components/explore/ExploreSectionList.svelte";
   import { EXPLORE_SECTIONS } from "#lib/components/explore/explore-sections.js";
-  import { themeStore } from "#lib/stores/theme.svelte.js";
+  import { publicThemeStore } from "#lib/stores/public-theme.svelte.js";
   import { HUB_SLUG_TO_THEME_ID } from "#lib/components/seo/generator-theme-maps.js";
   import { isPublicLabel } from "#lib/content/labels.js";
   import type { PageData } from "./$types";
@@ -46,11 +46,10 @@
     );
   });
 
-  // Always assign, never only when a theme exists: this component is reused
-  // across /explore?label=a -> /explore?label=b navigations, so a themed
-  // label's palette must not linger once the visitor picks another label.
+  // A genre label becomes the browsing context. Clearing the filter does
+  // not discard that context, so linked public pages remain themed.
   $effect(() => {
-    themeStore.previewTheme(labelThemeId);
+    if (labelThemeId) publicThemeStore.setTheme(labelThemeId);
   });
 
   // On direct entry to /explore?label=... (hard navigation), SvelteKit serves
@@ -61,10 +60,6 @@
     if (queryLabel && queryLabel !== data.label) {
       void invalidateAll();
     }
-  });
-
-  onDestroy(() => {
-    themeStore.previewTheme(null);
   });
 
   const cleanBase = basePath();
