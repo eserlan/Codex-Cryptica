@@ -9,7 +9,7 @@ export const howMuchLootAndHowManyMagicItemsShouldIGiveMyPlayers: AnswerConfigIn
       "How much loot and how many magic items should I give my players?",
     kind: "how-to",
     shortAnswer:
-      "Give treasure where it makes sense in the fiction, pace magic items at campaign level rather than per fight, and reward curiosity with discoveries beyond coins and magic equipment. Empty rooms and empty pockets are normal results, so say so plainly when a search has been thorough. Place pocket-level treasure for what a creature actually carries, hoards for accumulated wealth, and signature magic items as deliberate milestones the party has earned or found. Reward curiosity, not compulsive searching.",
+      "Give treasure where it makes sense in the fiction and pace magic items at campaign level rather than per fight. A thorough search can honestly find nothing: say so plainly and let the party move on. Reward curiosity, not compulsive searching.",
     sections: [
       {
         kind: "prose",
@@ -22,26 +22,30 @@ export const howMuchLootAndHowManyMagicItemsShouldIGiveMyPlayers: AnswerConfigIn
       },
       {
         kind: "example",
-        heading: "Worked example: the guardroom with no hoard to find",
+        heading: "Worked example: the guardroom with nothing to find",
         paragraphs: [
-          "A party has just fought the guards of a toll fort and wants to search the guardroom and the fallen sergeant before moving on. There is no cache in this room, and the sergeant carries no magic item. The search still needs to produce a clear result.",
+          "A party has just fought the guards of a toll fort and wants to search the guardroom and the fallen sergeant before moving on. There is no cache in this room, the sergeant carries no coins and no magic item, and nothing hidden waits under the floor. The search still needs a clear result.",
         ],
         items: [
           {
             term: "What the players do",
-            text: "The rogue checks the sergeant while the fighter turns out the bunks and tests a loose flagstone. They have time and light, so you ask for one Wisdom (Perception) check from the rogue in D&D 5e terms, with the rogue leading the search: the twenty-sided die (d20) shows 12, the rogue adds a Perception modifier of +5, and 12 + 5 = 17 is the total. The roll decides how quick and complete the search is, not whether loot appears.",
+            text: "The rogue checks the sergeant while the fighter turns out the bunks and lifts a loose flagstone. They have time, light and no immediate pressure, so you do not call for a roll: a methodical search will find whatever is there, and there is nothing concealed to miss. Uncertainty, not habit, is what makes a check worth asking for.",
           },
           {
             term: "What is actually there",
-            text: "The sergeant has a serviceable spear, a belt pouch with 7 silver pieces and a folded duty roster. The bunks hold patched cloaks and a dice cup. Under the flagstone is an old hollow the guards use for gambling stakes, now holding wooden gambling tokens and chalk tallies. None of it is a hoard, and you do not invent one because the roll was good.",
+            text: "The sergeant has a serviceable spear and an empty belt pouch. The bunks hold patched cloaks and a dice cup. The flagstone lifts to packed earth. No coins, no hidden compartment and no magic item, and you do not add one to make the search feel worthwhile.",
           },
           {
             term: "What you say",
-            text: '"You have searched this room thoroughly. There is no coin cache and no hidden compartment beyond that hollow, and the sergeant carried nothing magical. The roster shows the next patrol is due at midnight, two hours from now." That closes the search, gives the party a timing fact they can plan around, and names the cost if they linger: the patrol.',
+            text: '"That takes about ten minutes. You have turned the room out: the sergeant carried nothing worth taking, the bunks and cupboard hold only bedding, cloaks and a dice cup, and there is nothing under the flagstone but packed earth. You have searched it thoroughly." No further discovery follows from searching the same room again.',
+          },
+          {
+            term: "If time were short",
+            text: "Suppose instead that the party wants the same certainty in two minutes, before leaving a doorway they cannot watch. The uncertain task is now speed with completeness, so call for a Wisdom (Perception) check against Difficulty Class (DC) 12 in D&D 5e terms: a twenty-sided die (d20) result of 7 plus a Perception modifier of +5 gives 7 + 5 = 12, which meets the DC and finishes in two minutes. On a total below 12, they must choose: leave at two minutes with the room only partly searched, or stay for the full ten minutes and accept whatever arrives or changes in that time. The check decides how fast they can be certain, never whether treasure appears.",
           },
           {
             term: "Why this works",
-            text: "Curiosity earned a clue and a timing fact the party can plan around, the fiction stayed consistent, and the conclusive wording stops the table from rolling again on the same cupboards. The next room can still hold a real hoard, and it will mean more because this one did not.",
+            text: "The party gets a conclusive answer it can trust, so nobody rolls again on the same cupboards, and the empty result needs no compensating clue or payout. The next room can still hold a real hoard, and it will mean more because this one did not.",
           },
         ],
       },
@@ -86,7 +90,7 @@ export const howMuchLootAndHowManyMagicItemsShouldIGiveMyPlayers: AnswerConfigIn
         paragraphs: [
           "At the pace your campaign agreed, which depends on the game, the edition, the tone you pitched, what the characters need and how fast they are progressing. State the expectation early, ideally when you agree the shape of the campaign: in a low-magic game a permanent item is a landmark the party may plan an expedition around, while in a high-magic game shops, patrons and rivals treat uncommon items as serious but ordinary goods. Neither pace is wrong. Disappointment usually comes from a mismatch, where the GM runs a low-magic pace inside a campaign the players thought would equip them like heroes of legend, or the reverse. If the setting itself is undecided, settle [how common magic should be in the world](/answers/how-common-should-magic-be-in-a-fantasy-world) first, then set the party's reward pace to match it.",
           "There is no sound universal rate per combat, per session or per level that survives a change of system, party size or campaign length, and no combat creates an entitlement to a magic item. Most fights should produce no magic item at all. Consumables can arrive fairly often because they leave play when used. Permanent items, and especially items a character will use every round, deserve a slower, deliberate pace tied to milestones: a hoard found, a patron's gift, a crafted commission finished, a famous foe's gear taken up. Track what the party has actually received over the last few levels rather than judging one session at a time, and spread finds across characters and roles so one player does not collect every signature item.",
-          "D&D 5e gives benchmarks, provided you keep the editions apart. The 2024 DMG states plainly that characters and monsters are built to face each other without magic items, so items are prizes rather than requirements, and its [Magic Items Awarded by Level guidance](https://www.dndbeyond.com/sources/dnd/br-2024/magic-items) describes a party typically gaining one hundred items across a full campaign to 20th level, with the largest shares at common and uncommon rarity. That is a description of typical gains across four tiers of play, counted for the whole party, not a quota to fill by a date. The 2014-era equivalent in Xanathar's Guide to Everything reaches the same total of one hundred party items by 20th level but counts them differently, as eighty minor items, mostly consumables and smaller finds, and twenty major, permanent items. Use whichever count matches the books on your table. Do not add the two together, and do not read either as a promise owed to an individual character.",
+          "D&D 5e gives benchmarks, provided you keep the editions apart. The 2024 DMG states plainly that characters and monsters are built to face each other without magic items, so items are prizes rather than requirements, and its [Magic Items Awarded by Level guidance](https://www.dndbeyond.com/sources/dnd/br-2024/magic-items) describes a party typically gaining one hundred items across a full campaign to 20th level, with the largest shares at common and uncommon rarity: a party-wide description of typical gains, not a quota to fill by a date. The 2014-era equivalent in Xanathar's Guide to Everything reaches the same total but counts them differently, as eighty minor items, mostly consumables and smaller finds, and twenty major, permanent items. Use whichever count matches the books on your table and do not add the two together.",
         ],
       },
       {
@@ -130,8 +134,8 @@ export const howMuchLootAndHowManyMagicItemsShouldIGiveMyPlayers: AnswerConfigIn
         heading: "Reading the bands, and a level 10 party",
         paragraphs: [
           "Treat the table as orientation, not as a schedule. It draws on two separate 5e sources that point the same way: the 2014 DMG rarity guidance, which suggests a character usually first finds rare items from about 5th level, very rare from about 11th and legendary from about 17th, and the 2024 Awarded by Level table, which distributes party gains by rarity across the same four bands. Rarity runs common, uncommon, rare, very rare and legendary, with artefacts beyond that scale. It is a rough measure of relative power and scarcity, not a guarantee of balance, as the next section shows. A common or uncommon consumable that solves one problem once is a different reward from an uncommon permanent item used in every fight, and the bands assume most finds are the smaller sort.",
-          "Consider a party of four at level 10, at the end of the 5 to 10 band. On the 2024 table, a party that has played from 1st level has typically gained forty-five items in total across the first two bands, and on the Xanathar count the same forty-five, of which eight were major, permanent items. Many of the forty-five were potions, scrolls and small finds already used, sold or lost. A plausible picture today is therefore modest: each character relies on one or two permanent items, such as a magic weapon, a piece of protective gear or an attunement item that suits their role, the party shares a bag of holding and a small stock of consumables, and one character may carry the single very rare item the whole band produced. That is an illustration of typical gains, not an entitlement to check against, and a party below it is not owed a correction payment.",
-          "The next meaningful reward for that party is one deliberate step, not a shower. A rare item that opens a choice is a good default: a weapon with a property the fighter must position to use, a staff that gives the healer a new decision, or a cloak that trades protection for an attunement slot someone must free. Reserve the band-closing very rare item for a hoard or climax the party can point to afterwards. Contrast two candidate finds at the same moment. A potion of superior healing or a 5th-level spell scroll, both rare, will decide one bad round and then leave play, so they can be given with little long-term risk. A wand of fireballs, also rare, returns with its charges each dawn and can shape most fights until the campaign ends. Same band, same rarity, very different weight on everything you design next.",
+          "Consider a party of four at level 10, at the end of the 5 to 10 band. On the 2024 table, a party that has played from 1st level has typically gained forty-five items in total across the first two bands, and on the Xanathar count the same forty-five, of which eight were major, permanent items. Many of the forty-five were potions, scrolls and small finds already used, sold or lost. A plausible picture today is therefore modest: each character relies on one or two permanent items, such as a magic weapon, a piece of protective gear or an attunement item that suits their role, the party shares a bag of holding and a small stock of consumables, and one character may carry the single very rare item the whole band produced.",
+          "The next meaningful reward for that party is one deliberate step, not a shower. A rare item that opens a choice is a good default: a weapon with a property the fighter must position to use, a staff that gives the healer a new decision, or a cloak that trades protection for an attunement slot someone must free. Contrast two candidate finds at the same moment. A potion of water breathing, an uncommon consumable, lets one character breathe underwater for one hour: enough to swim a flooded passage, reach a drowned vault and return by the same route, and then it is gone. A wand of fireballs, a rare item that requires attunement by a spellcaster, holds charges that return each dawn and can put a fireball into fight after fight until the campaign ends. The rarities differ, but repeatability is the decisive difference: the potion solves one specific problem once, while the wand adds a recurring combat option you must design around.",
         ],
       },
       {
@@ -146,7 +150,7 @@ export const howMuchLootAndHowManyMagicItemsShouldIGiveMyPlayers: AnswerConfigIn
           },
           {
             term: "Action economy",
-            text: "Count what the item lets its owner do with an action, a bonus action or a reaction, and whether it grants extra actions, movement or spells in a round. An item that adds a useful option the character would otherwise lack is stronger than one that merely improves an option they already had.",
+            text: "Count what the item lets its owner do with an action, a bonus action or a reaction, and whether it grants extra actions, movement or spells in a round. Either kind can be the stronger find: compare a new option with the character's existing best action, its activation cost and how often it can be used, and set that against the size and frequency of any improvement to an action they already rely on every round.",
           },
           {
             term: "Bounded accuracy",
@@ -180,7 +184,7 @@ export const howMuchLootAndHowManyMagicItemsShouldIGiveMyPlayers: AnswerConfigIn
           },
           {
             term: "Clues and secrets",
-            text: "A roster, a letter, a map margin note, evidence of who was here and what they feared. Information is often the most useful thing a search can find, as the guardroom example above shows.",
+            text: "A roster, a letter, a map margin note, evidence of who was here and what they feared. Information is often the most useful thing a search can find where the fiction has actually placed it.",
           },
           {
             term: "Useful ordinary equipment",
@@ -218,7 +222,7 @@ export const howMuchLootAndHowManyMagicItemsShouldIGiveMyPlayers: AnswerConfigIn
           "Does this session need a magic item at all, and if so, should it be a consumable that leaves play or a permanent item the campaign will feel for months?",
           "If this is D&D 5e, does the item's rarity fit the party's level band, and have you checked repeatability, action economy, attunement, stacking and obstacle bypass rather than trusting the rarity label?",
           "Whose character does this serve, and does the spread of finds across the party still look fair over the last few levels?",
-          "If the party searches and finds nothing, can you say so conclusively, name what their curiosity earned instead, and state the time or risk the search cost?",
+          "If the party searches and finds nothing, can you say so conclusively without inventing a compensating clue or payout, and state any time the search took?",
           "When the party tries to spend or sell this later, do you know which settlement, buyer or patron could actually handle it?",
         ],
       },
