@@ -116,3 +116,20 @@ function mergeProvisionalFact(
     ...(proposal.scenarioId ? { scenarioId: proposal.scenarioId } : {}),
   };
 }
+
+export function mergeProvisionalFacts(
+  current: ProvisionalFact[],
+  materialized: MaterializedProvisionalFacts,
+): ProvisionalFact[] {
+  const updatedIds = new Set(
+    materialized.updatedProvisionalFacts.map((fact) => fact.id),
+  );
+  return [
+    ...current.map((fact) =>
+      updatedIds.has(fact.id)
+        ? materialized.updatedProvisionalFacts.find((u) => u.id === fact.id)!
+        : fact,
+    ),
+    ...materialized.provisionalFacts,
+  ];
+}

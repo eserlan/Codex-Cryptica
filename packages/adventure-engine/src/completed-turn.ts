@@ -1,0 +1,166 @@
+import { mergeProvisionalFacts } from "./provisional-facts";
+import { systemIdGenerator } from "@codex/runtime";
+import { detectHiddenLeakage, ensureScenarioSecrets } from "./hidden-state";
+import { applyTimeAdvance } from "./world-time";
+import {
+  MAX_SERIALIZED_STATE_CHARS,
+  parseTurnProposal,
+  validateStateBudget,
+} from "./schemas";
+import type { IdFactory } from "./reducer-ids";
+import { error, updatedSession } from "./reducer-result";
+import {
+  hasImmutableScenarioRewrite,
+  applySecretReveals,
+} from "./scenario-secrets";
+import {
+  markRevealedScenarios,
+  applyScenarioElaborations,
+} from "./scenario-turns";
+import { materializeTurnState, type MaterializedTurnState } from "./turn-state";
+import type {
+  AdventureSession,
+  AdventureTurnProposal,
+  AdventureValidationError,
+  CommitMetadata,
+  CommittedAdventureTurn,
+  Result,
+} from "./types";
+
+function completedTurnInputError(
+  session: AdventureSession,
+  inputId: string,
+): ReturnType<typeof error> | null {
+  if (session.status !== "active" || session.pendingRoll) {
+    return error(
+      "invalid-transition",
+      "The session is not ready for a completed turn.",
+    );
+  }
+  if (!inputId || session.turns.some((turn) => turn.inputId === inputId)) {
+    return error("duplicate-input", "This action was already processed.");
+  }
+  return null;
+}
+
+function completedTurnProposalError(
+  session: AdventureSession,
+  proposal: Extract<AdventureTurnProposal, { kind: "complete" }>,
+): ReturnType<typeof error> | null {
+  if (hasImmutableScenarioRewrite(session, proposal)) {
+    return error("conflicting-patch", "Scenario baseline truth is immutable.");
+  }
+  if (detectHiddenLeakage(session, proposal).length > 0) {
+    return error(
+      "hidden-leakage",
+      "The response contains unrevealed GM information.",
+    );
+  }
+  return null;
+}
+
+export function applyCompletedTurn(
+  sessionInput: AdventureSession,
+  proposalInput: AdventureTurnProposal,
+  meta: CommitMetadata,
+  now = meta.now,
+  createId: IdFactory = () => systemIdGenerator.uuid(),
+): Result<AdventureSession, AdventureValidationError[]> {
+  // Scenario GM text must be registered so it can be guarded and revealed.
+  const session = ensureScenarioSecrets(sessionInput);
+  const inputError = completedTurnInputError(session, meta.inputId);
+  if (inputError) return inputError;
+  const proposal = parseTurnProposal(proposalInput);
+  if (proposal.kind !== "complete") {
+    return error(
+      "invalid-schema",
+      "A completed turn requires a complete proposal.",
+    );
+  }
+  const proposalError = completedTurnProposalError(session, proposal);
+  if (proposalError) return proposalError;
+  const materialized = materializeTurnState(
+    session,
+    proposal,
+    meta.turnId,
+    createId,
+  );
+  if ("error" in materialized) return materialized.error;
+  const candidate = structuredClone(session);
+  const revealError = applySecretReveals(
+    candidate,
+    materialized.hiddenState.secrets,
+    proposal.revealSecretIds,
+    meta.turnId,
+  );
+  if (revealError) return error("unknown-secret", revealError);
+  const time = applyTimeAdvance(session, proposal.timeAdvance, meta.turnId);
+  if (!time.ok) return error("invalid-transition", time.reason);
+  candidate.visibleState = materialized.visibleState;
+  candidate.hiddenState = materialized.hiddenState;
+  if (time.value) candidate.worldTime = time.value;
+  candidate.provisionalFacts = mergeProvisionalFacts(
+    candidate.provisionalFacts,
+    materialized,
+  );
+  const turn = createCommittedTurn(session, proposal, materialized, meta, now);
+  candidate.turns = [...candidate.turns, turn];
+  const scenarioError = markRevealedScenarios(
+    candidate,
+    proposal.revealScenarioIds,
+    turn,
+    createId,
+  );
+  if (scenarioError) return error("unknown-fact", scenarioError);
+  const elaborationError = applyScenarioElaborations(
+    candidate,
+    proposal.elaborateScenarios,
+    proposal.revealScenarioIds,
+    turn,
+    createId,
+  );
+  if (elaborationError) return elaborationError;
+  const result = updatedSession(candidate, now);
+  candidate.lastPlayedAt = now;
+  if (!validateStateBudget(candidate)) {
+    return error(
+      "state-budget-exceeded",
+      `The compact adventure state exceeds ${MAX_SERIALIZED_STATE_CHARS} characters.`,
+    );
+  }
+  return result;
+}
+
+function createCommittedTurn(
+  session: AdventureSession,
+  proposal: Extract<AdventureTurnProposal, { kind: "complete" }>,
+  materialized: MaterializedTurnState,
+  meta: CommitMetadata,
+  now: string,
+): CommittedAdventureTurn {
+  return {
+    id: meta.turnId,
+    sequence: session.turns.length,
+    inputId: meta.inputId,
+    playerAction: meta.playerAction ?? "",
+    narration: proposal.narration,
+    visiblePatch: materialized.visiblePatch,
+    hiddenPatch: materialized.hiddenPatch,
+    revealedSecretIds: proposal.revealSecretIds,
+    sourceRecordIds: proposal.sourceRecordIds,
+    provisionalFactIds: [
+      ...materialized.provisionalFacts.map((fact) => fact.id),
+      ...materialized.updatedProvisionalFacts.map((fact) => fact.id),
+    ],
+    committedAt: now,
+    ...(proposal.timeAdvance
+      ? {
+          timeAdvance: {
+            minutes: proposal.timeAdvance.minutes,
+            cause: proposal.timeAdvance.cause,
+          },
+        }
+      : {}),
+    suggestedActions: proposal.suggestedActions,
+  };
+}

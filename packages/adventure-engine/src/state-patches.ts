@@ -150,17 +150,12 @@ export function applyVisiblePatch(
   if (patch.location !== undefined) next.location = patch.location ?? undefined;
   if (patch.situation !== undefined)
     next.situation = patch.situation ?? undefined;
-  for (const key of [
+  return patchCollections(next, patch, [
     "objectives",
     "activeCharacters",
     "knownFacts",
     "relationships",
-  ] as const) {
-    const result = patchCollection(next[key], patch[key]);
-    if (!result.ok) return result;
-    next[key] = result.value as never;
-  }
-  return { ok: true, value: next };
+  ]);
 }
 
 export function applyHiddenPatch(
@@ -168,10 +163,21 @@ export function applyHiddenPatch(
   patch: HiddenStatePatch,
 ): Result<AdventureSession["hiddenState"], string> {
   const next = structuredClone(state);
-  for (const key of ["secrets", "gmThreads"] as const) {
-    const result = patchCollection(next[key], patch[key]);
+  return patchCollections(next, patch, ["secrets", "gmThreads"]);
+}
+
+function patchCollections<
+  K extends string,
+  T extends Record<K, { id: string }[]>,
+>(
+  current: T,
+  patch: { [P in K]: CollectionPatch<T[P][number]> },
+  keys: readonly K[],
+): Result<T, string> {
+  for (const key of keys) {
+    const result = patchCollection(current[key], patch[key]);
     if (!result.ok) return result;
-    next[key] = result.value as never;
+    current[key] = result.value as T[K];
   }
-  return { ok: true, value: next };
+  return { ok: true, value: current };
 }

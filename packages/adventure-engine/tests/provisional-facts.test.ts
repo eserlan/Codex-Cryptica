@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { materializeProvisionalFacts } from "../src/provisional-facts";
+import {
+  materializeProvisionalFacts,
+  mergeProvisionalFacts,
+} from "../src/provisional-facts";
 import { session } from "./reducer-fixtures";
 import type { NewProvisionalFact } from "../src/types";
 const person: NewProvisionalFact = {
@@ -116,4 +119,18 @@ describe("provisional fact materialisation", () => {
       },
     });
   });
+});
+
+it("merges fact updates and additions while retaining untouched facts in order", () => {
+  const first = { ...person, id: "first", introducedOnTurnId: "old" };
+  const second = { ...person, id: "second", introducedOnTurnId: "old" };
+  const updated = { ...second, summary: "Updated" };
+  const added = { ...person, id: "new", introducedOnTurnId: "new-turn" };
+  expect(
+    mergeProvisionalFacts([first, second], {
+      updatedProvisionalFacts: [updated],
+      provisionalFacts: [added],
+    }),
+  ).toEqual([first, updated, added]);
+  expect(second.summary).toBe("A guide");
 });
