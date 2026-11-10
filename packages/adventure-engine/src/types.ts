@@ -270,6 +270,12 @@ export interface ScenarioEvent {
   text: string;
   at: string;
   turnId?: string;
+  /** Provenance for an explicitly linked cross-scenario consequence. */
+  causedBy?: {
+    scenarioId: string;
+    eventId: string;
+    anchorRef: string;
+  };
 }
 
 /** Progressive elaboration depth of a situation. */

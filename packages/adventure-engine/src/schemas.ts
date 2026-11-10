@@ -294,6 +294,10 @@ export const scenarioEventSchema = z
     text,
     at: timestamp,
     turnId: id.optional(),
+    causedBy: z
+      .object({ scenarioId: id, eventId: id, anchorRef: id })
+      .strict()
+      .optional(),
   })
   .strict();
 
