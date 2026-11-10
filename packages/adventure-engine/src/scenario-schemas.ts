@@ -99,6 +99,14 @@ const event = z
     text,
     at: z.string().datetime({ offset: true }),
     turnId: id.optional(),
+    causedBy: z
+      .object({
+        scenarioId: id,
+        eventId: id,
+        anchorRef: id,
+      })
+      .strict()
+      .optional(),
   })
   .strict();
 
