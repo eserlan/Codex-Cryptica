@@ -11,7 +11,7 @@
     GENERATOR_CANVAS_CLASS,
     getGeneratorColumnClasses,
   } from "./generator-column-classes";
-  import { themeStore } from "#lib/stores/theme.svelte.js";
+  import { publicThemeStore } from "#lib/stores/public-theme.svelte.js";
   import { onlineStatus } from "#lib/stores/online.svelte.js";
   import { sessionHubStore } from "#lib/stores/session-hub.svelte.js";
   import { getContextSelection, type SessionEntity } from "generator-engine";
@@ -281,8 +281,10 @@
 
   $effect(() => {
     if (isThemeCustomizable && browser) {
-      if (themeStore.worldThemeId !== activeThemeId) {
-        void themeStore.setTheme(activeThemeId);
+      // Public generator genres drive the browsing theme, not the saved vault.
+      if (activeThemeId !== "workspace" &&
+          publicThemeStore.themeId !== activeThemeId) {
+        publicThemeStore.setTheme(activeThemeId);
       }
     }
   });
