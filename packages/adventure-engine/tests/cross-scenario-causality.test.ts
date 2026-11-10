@@ -123,6 +123,27 @@ describe("explicit cross-scenario causality", () => {
     expect(JSON.stringify(publicView)).not.toContain("grain-impact-1:secret");
   });
 
+  it("refuses to chain propagated consequences into an unrelated storyline", () => {
+    const original = session();
+    const first = propagateKnownConsequence(original, consequence, 2);
+    expect(first.ok).toBe(true);
+    if (!first.ok) return;
+    const second = propagateKnownConsequence(
+      first.session,
+      {
+        sourceScenarioId: "trader",
+        sourceEventId: "grain-impact-1",
+        targetScenarioId: "mill",
+        anchorRef: "grain",
+        eventId: "grain-backflow",
+        text: "The trader has affected the mill",
+        at,
+      },
+      first.session.revision,
+    );
+    expect(second).toMatchObject({ ok: false, reason: "invalid-scenario" });
+  });
+
   it("rejects unrelated, hidden, self-linked and stale cross-scenario effects", () => {
     const initial = session();
     expect(
