@@ -39,7 +39,7 @@ function makeMockStorage(initial: Record<string, string> = {}) {
 
 describe("AdventureProvisionalFacts", () => {
   async function showDiscoveries(): Promise<void> {
-    await fireEvent.click(screen.getByRole("button", { name: /review \d+ adventure discoveries/i }));
+    await fireEvent.click(screen.getByRole("button", { name: /review \d+ adventure discover(?:y|ies)/i }));
   }
 
   it("shows a typed player-visible suggestion and adds it on request", async () => {
