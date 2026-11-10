@@ -7,16 +7,21 @@ import {
   parseTurnProposal,
   validateStateBudget,
 } from "./schemas";
-import { scenarioItemIdentityIds } from "./scenario-schemas";
+import { allocateId, existingIds, type IdFactory } from "./reducer-ids";
+import {
+  applyHiddenPatch,
+  applyVisiblePatch,
+  materializeHiddenPatch,
+  materializeVisiblePatch,
+} from "./state-patches";
+export { applyVisiblePatch } from "./state-patches";
 import type {
   AdventureSession,
   AdventureTurnProposal,
   AdventureValidationError,
   CommitMetadata,
-  CollectionPatch,
   CommittedAdventureTurn,
   HiddenStatePatch,
-  HiddenStateProposalPatch,
   PendingRoll,
   ProvisionalFact,
   Result,
@@ -25,209 +30,7 @@ import type {
   ScenarioItem,
   SuppliedRollOutcome,
   VisibleStatePatch,
-  VisibleStateProposalPatch,
 } from "./types";
-
-type IdFactory = () => string;
-
-const MAX_ID_ALLOCATION_ATTEMPTS = 10;
-
-function existingIds(session: AdventureSession): Set<string> {
-  return new Set([
-    session.id,
-    ...session.sourceRecords.map((source) => source.recordId),
-    ...session.visibleState.objectives.map((fact) => fact.id),
-    ...session.visibleState.activeCharacters.map((fact) => fact.id),
-    ...session.visibleState.knownFacts.map((fact) => fact.id),
-    ...session.visibleState.relationships.map((fact) => fact.id),
-    ...(session.visibleState.location
-      ? [session.visibleState.location.id]
-      : []),
-    ...(session.visibleState.situation
-      ? [session.visibleState.situation.id]
-      : []),
-    ...session.hiddenState.secrets.map((secret) => secret.id),
-    ...session.hiddenState.gmThreads.map((thread) => thread.id),
-    ...session.provisionalFacts.map((fact) => fact.id),
-    ...session.turns.map((turn) => turn.id),
-    ...(session.scenarioCollection?.items.flatMap(scenarioItemIdentityIds) ??
-      []),
-  ]);
-}
-
-function allocateId(ids: Set<string>, createId: IdFactory): string | null {
-  for (let attempt = 0; attempt < MAX_ID_ALLOCATION_ATTEMPTS; attempt += 1) {
-    const id = createId();
-    if (id.trim().length > 0 && !ids.has(id)) {
-      ids.add(id);
-      return id;
-    }
-  }
-  return null;
-}
-
-function materializeCollectionPatch<T extends { id: string }, TNew>(
-  patch: { add: TNew[]; update: T[]; removeIds: string[] },
-  ids: Set<string>,
-  createId: IdFactory,
-): Result<CollectionPatch<T>, string> {
-  const add: T[] = [];
-  for (const entry of patch.add) {
-    const id = allocateId(ids, createId);
-    if (!id) return { ok: false, errors: "id-allocation-failed" };
-    add.push({ ...entry, id } as unknown as T);
-  }
-  return {
-    ok: true,
-    value: { add, update: patch.update, removeIds: patch.removeIds },
-  };
-}
-
-function materializeVisiblePatch(
-  patch: VisibleStateProposalPatch,
-  ids: Set<string>,
-  createId: IdFactory,
-): Result<VisibleStatePatch, string> {
-  const location =
-    patch.location === undefined || patch.location === null
-      ? patch.location
-      : (() => {
-          const id = allocateId(ids, createId);
-          return id ? { ...patch.location, id } : null;
-        })();
-  const situation =
-    patch.situation === undefined || patch.situation === null
-      ? patch.situation
-      : (() => {
-          const id = allocateId(ids, createId);
-          return id ? { ...patch.situation, id } : null;
-        })();
-  if ((patch.location && !location) || (patch.situation && !situation)) {
-    return { ok: false, errors: "id-allocation-failed" };
-  }
-  const objectives = materializeCollectionPatch(
-    patch.objectives,
-    ids,
-    createId,
-  );
-  const activeCharacters = materializeCollectionPatch(
-    patch.activeCharacters,
-    ids,
-    createId,
-  );
-  const knownFacts = materializeCollectionPatch(
-    patch.knownFacts,
-    ids,
-    createId,
-  );
-  const relationships = materializeCollectionPatch(
-    patch.relationships,
-    ids,
-    createId,
-  );
-  if (!objectives.ok) return objectives;
-  if (!activeCharacters.ok) return activeCharacters;
-  if (!knownFacts.ok) return knownFacts;
-  if (!relationships.ok) return relationships;
-  return {
-    ok: true,
-    value: {
-      location,
-      situation,
-      objectives: objectives.value,
-      activeCharacters: activeCharacters.value,
-      knownFacts: knownFacts.value,
-      relationships: relationships.value,
-    },
-  };
-}
-
-function materializeHiddenPatch(
-  patch: HiddenStateProposalPatch,
-  ids: Set<string>,
-  createId: IdFactory,
-): Result<HiddenStatePatch, string> {
-  const secrets = materializeCollectionPatch(patch.secrets, ids, createId);
-  const gmThreads = materializeCollectionPatch(patch.gmThreads, ids, createId);
-  if (!secrets.ok) return secrets;
-  if (!gmThreads.ok) return gmThreads;
-  return {
-    ok: true,
-    value: { secrets: secrets.value, gmThreads: gmThreads.value },
-  };
-}
-
-function clone<T>(value: T): T {
-  return structuredClone(value);
-}
-
-function patchCollection<T extends { id: string }>(
-  current: T[],
-  patch: CollectionPatch<T>,
-): Result<T[], string> {
-  const ids = new Set(current.map((entry) => entry.id));
-  const addIds = new Set<string>();
-  for (const entry of patch.add) {
-    if (ids.has(entry.id) || addIds.has(entry.id))
-      return { ok: false, errors: `duplicate:${entry.id}` };
-    addIds.add(entry.id);
-  }
-  for (const entry of patch.update) {
-    if (!ids.has(entry.id) || patch.removeIds.includes(entry.id)) {
-      return { ok: false, errors: `unknown-update:${entry.id}` };
-    }
-  }
-  if (new Set(patch.removeIds).size !== patch.removeIds.length) {
-    return { ok: false, errors: "duplicate-removal" };
-  }
-  const remove = new Set(patch.removeIds);
-  return {
-    ok: true,
-    value: [
-      ...current
-        .filter((entry) => !remove.has(entry.id))
-        .map(
-          (entry) =>
-            patch.update.find((updated) => updated.id === entry.id) ?? entry,
-        ),
-      ...patch.add,
-    ],
-  };
-}
-
-export function applyVisiblePatch(
-  state: AdventureSession["visibleState"],
-  patch: VisibleStatePatch,
-): Result<AdventureSession["visibleState"], string> {
-  const next = clone(state);
-  if (patch.location !== undefined) next.location = patch.location ?? undefined;
-  if (patch.situation !== undefined)
-    next.situation = patch.situation ?? undefined;
-  for (const key of [
-    "objectives",
-    "activeCharacters",
-    "knownFacts",
-    "relationships",
-  ] as const) {
-    const result = patchCollection(next[key], patch[key]);
-    if (!result.ok) return result;
-    next[key] = result.value as never;
-  }
-  return { ok: true, value: next };
-}
-
-function applyHiddenPatch(
-  state: AdventureSession["hiddenState"],
-  patch: HiddenStatePatch,
-): Result<AdventureSession["hiddenState"], string> {
-  const next = clone(state);
-  for (const key of ["secrets", "gmThreads"] as const) {
-    const result = patchCollection(next[key], patch[key]);
-    if (!result.ok) return result;
-    next[key] = result.value as never;
-  }
-  return { ok: true, value: next };
-}
 
 function error(code: AdventureValidationError["code"], message: string) {
   return { ok: false as const, errors: [{ code, message }] };
@@ -749,7 +552,7 @@ export function applyCompletedTurn(
     createId,
   );
   if ("error" in materialized) return materialized.error;
-  const candidate = clone(session);
+  const candidate = structuredClone(session);
   const revealError = applySecretReveals(
     candidate,
     materialized.hiddenState.secrets,
@@ -847,7 +650,7 @@ export function applyRollRequest(
       "The response contains unrevealed GM information.",
     );
   }
-  const candidate = clone(session);
+  const candidate = structuredClone(session);
   const pending: PendingRoll = {
     id: meta.turnId,
     inputId: meta.inputId,
@@ -886,7 +689,7 @@ export function recordPendingRollOutcome(
       "A result has already been recorded for this roll.",
     );
   }
-  const candidate = clone(session);
+  const candidate = structuredClone(session);
   candidate.pendingRoll = {
     ...candidate.pendingRoll!,
     suppliedOutcome: outcome,
@@ -909,7 +712,7 @@ export function dismissPendingRoll(
   if (session.pendingRoll.suppliedOutcome) {
     return error("invalid-roll", "A recorded result cannot be dismissed.");
   }
-  const candidate = clone(session);
+  const candidate = structuredClone(session);
   candidate.pendingRoll = null;
   candidate.revision += 1;
   candidate.updatedAt = meta.now;
