@@ -110,6 +110,19 @@ const event = z
   })
   .strict();
 
+export const scenarioPressureSchema = z
+  .object({
+    actor: text,
+    goal: text,
+    currentStance: text,
+    trigger: text,
+    progression: text,
+    expectedConsequence: text,
+    triggerAfterMinutes: z.number().int().min(1).max(52_560_000).optional(),
+    triggeredAtMinute: z.number().int().min(0).max(52_560_000).optional(),
+  })
+  .strict();
+
 export const scenarioItemSchema = z
   .object({
     version: z.literal(1),
@@ -119,6 +132,7 @@ export const scenarioItemSchema = z
       .object({ rumour: text, lead: text, source: text.optional() })
       .strict(),
     gmOnly: z.object({ truth: text, ifInvestigated: text.optional() }).strict(),
+    pressure: scenarioPressureSchema.optional(),
     knowledge: z.enum(["unheard", "heard"]),
     stage: z
       .enum(["hearsay", "actionable-clue", "revelation-crisis"])

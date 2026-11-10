@@ -1,7 +1,11 @@
 import { mergeProvisionalFacts } from "./provisional-facts";
 import { systemIdGenerator } from "@codex/runtime";
-import { detectHiddenLeakage, ensureScenarioSecrets } from "./hidden-state";
-import { applyTimeAdvance } from "./world-time";
+import {
+  detectHiddenLeakage,
+  ensureScenarioSecrets,
+  scenarioEventSecretId,
+} from "./hidden-state";
+import { applyScenarioTimePressures, applyTimeAdvance } from "./world-time";
 import {
   MAX_SERIALIZED_STATE_CHARS,
   parseTurnProposal,
@@ -25,6 +29,8 @@ import type {
   CommitMetadata,
   CommittedAdventureTurn,
   Result,
+  ScenarioItem,
+  WorldTimeState,
 } from "./types";
 
 function completedTurnInputError(
@@ -98,7 +104,21 @@ export function applyCompletedTurn(
   if (!time.ok) return error("invalid-transition", time.reason);
   candidate.visibleState = materialized.visibleState;
   candidate.hiddenState = materialized.hiddenState;
-  if (time.value) candidate.worldTime = time.value;
+  if (time.value) {
+    const pressureResult = applyTurnWorldTimeAndPressures(
+      candidate,
+      proposal,
+      time.value,
+      meta.turnId,
+      now,
+    );
+    if (!pressureResult.ok) {
+      return error(
+        "state-budget-exceeded",
+        "A scenario event history has reached its limit.",
+      );
+    }
+  }
   candidate.provisionalFacts = mergeProvisionalFacts(
     candidate.provisionalFacts,
     materialized,
@@ -129,6 +149,62 @@ export function applyCompletedTurn(
     );
   }
   return result;
+}
+
+function applyTurnWorldTimeAndPressures(
+  candidate: AdventureSession,
+  proposal: Extract<AdventureTurnProposal, { kind: "complete" }>,
+  timeValue: WorldTimeState,
+  turnId: string,
+  now: string,
+): { ok: true } | { ok: false } {
+  if (candidate.scenarioCollection && proposal.timeAdvance?.developments) {
+    for (const dev of proposal.timeAdvance.developments) {
+      const target: ScenarioItem | undefined =
+        candidate.scenarioCollection.items.find(
+          (item) => item.id === dev.threadId && item.status === "open",
+        );
+      if (target) {
+        const eventId = `${turnId.slice(0, 130)}:dev:${target.events.length + 1}`;
+        const secretId = scenarioEventSecretId(eventId);
+        target.events.push({
+          id: eventId,
+          kind: "consequence",
+          visibility: "gm",
+          text: dev.text.trim(),
+          at: now,
+          turnId,
+        });
+        target.secretBindings.eventIds[eventId] = secretId;
+      }
+    }
+  }
+
+  const elapsedMinutes = timeValue.elapsedMinutes;
+  candidate.worldTime = timeValue;
+  const triggered = applyScenarioTimePressures(
+    candidate,
+    elapsedMinutes,
+    turnId,
+    now,
+  );
+  if (!triggered.ok) return { ok: false };
+  if (triggered.events.length > 0) {
+    candidate.worldTime = {
+      ...timeValue,
+      events: [
+        ...timeValue.events,
+        ...triggered.events.map((item) => ({
+          id: `${turnId.slice(0, 120)}:world:pressure:${item.scenarioIndex}`,
+          turnId,
+          atMinute: elapsedMinutes,
+          threadId: item.scenarioId,
+          text: `Scenario pressure consequence: ${item.text}`,
+        })),
+      ].slice(-80),
+    };
+  }
+  return { ok: true };
 }
 
 function createCommittedTurn(

@@ -1,4 +1,4 @@
-import { applyTimeAdvance } from "./world-time";
+import { applyScenarioTimePressures, applyTimeAdvance } from "./world-time";
 import { parseAdventureSession } from "./schemas";
 import type { AdventureSession } from "./types";
 
@@ -74,19 +74,35 @@ export function advanceManualWorldTime(
   if (!advanced.ok || !advanced.value)
     return { ok: false, reason: "invalid-fictional-time" };
 
+  const timeValue = advanced.value;
+  const elapsedMinutes = timeValue.elapsedMinutes;
   const next = structuredClone(session);
+  const triggered = applyScenarioTimePressures(
+    next,
+    elapsedMinutes,
+    eventId,
+    now,
+  );
+  if (!triggered.ok) return { ok: false, reason: triggered.reason };
   next.worldTime = {
-    ...advanced.value,
+    ...timeValue,
     events: [
-      ...advanced.value.events,
+      ...timeValue.events,
       {
         id: eventId,
         // A manual clock action has an idempotency key, not a generated turn.
         turnId: eventId,
-        atMinute: advanced.value.elapsedMinutes,
+        atMinute: elapsedMinutes,
         threadId: "manual-world-time",
         text: eventText,
       },
+      ...triggered.events.map((item) => ({
+        id: `${eventId.slice(0, 120)}:world:pressure:${item.scenarioIndex}`,
+        turnId: eventId,
+        atMinute: elapsedMinutes,
+        threadId: item.scenarioId,
+        text: `Scenario pressure consequence: ${item.text}`,
+      })),
     ].slice(-80),
   };
   next.revision += 1;

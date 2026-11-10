@@ -166,4 +166,19 @@ describe("AdventureSituationSettings", () => {
     expect(m.setScenarioStatus).toHaveBeenCalledTimes(1);
     finish();
   });
+
+  it("displays elapsed fictional time and offline advancement guidance when world time has advanced", () => {
+    const m = manager([lead("a", "open")]);
+    m.session.worldTime = {
+      version: 1,
+      elapsedMinutes: 5760,
+      events: [],
+    };
+    render(AdventureSituationSettings, { props: { manager: m } });
+    const elapsedTime = screen.getByTestId("adventure-elapsed-time");
+    expect(elapsedTime.textContent).toContain("4d");
+    expect(
+      screen.getByTestId("adventure-situation-settings").textContent,
+    ).toContain("Advances the local world clock deterministically offline");
+  });
 });

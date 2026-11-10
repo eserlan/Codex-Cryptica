@@ -6,11 +6,15 @@ import {
   advanceManualWorldTime,
   buildAdventurePrompt,
   createPlayerTranscript,
+  detectHiddenLeakage,
   parseAdventureSession,
+  playerScenarioProjection,
   resolveRecordedRoll,
   recordPendingRollOutcome,
   type AdventureSession,
   type CompletedTurnProposal,
+  type ScenarioItem,
+  type ScenarioPressure,
 } from "../src";
 
 const now = "2026-11-02T12:00:00.000Z";
@@ -81,6 +85,33 @@ function proposal(): CompletedTurnProposal {
     revealSecretIds: [],
     provisionalFacts: [],
     sourceRecordIds: [],
+  };
+}
+
+function scenarioWithPressure(
+  id: string,
+  truthText: string,
+  pressure?: ScenarioPressure,
+): ScenarioItem {
+  return {
+    version: 1,
+    id,
+    origin: {
+      kind: "rumour",
+      batchTitle: "Northbrook",
+      batchId: `batch-${id}`,
+      index: 1,
+    },
+    playerVisible: { rumour: `Rumour ${id}`, lead: `Lead ${id}` },
+    gmOnly: { truth: truthText },
+    ...(pressure ? { pressure } : {}),
+    knowledge: "heard",
+    stage: "hearsay",
+    status: "open",
+    events: [],
+    anchorRefs: [],
+    revealedSecretIds: [],
+    secretBindings: { truth: `truth-${id}`, eventIds: {} },
   };
 }
 
@@ -300,5 +331,413 @@ describe("fictional world time", () => {
       now,
     });
     expect(resolved.ok && resolved.value.worldTime?.elapsedMinutes).toBe(60);
+  });
+
+  it("uses schema-valid pressure IDs for maximum-length scenario IDs", () => {
+    const longIdScenario = scenarioWithPressure(
+      "temporary-id",
+      "The miller hides in the cellar.",
+      {
+        actor: "Miller Eldon",
+        goal: "Hide the grain",
+        currentStance: "Waiting",
+        trigger: "Four days pass",
+        progression: "The cellar floods",
+        expectedConsequence: "The grain is ruined.",
+        triggerAfterMinutes: 60,
+      },
+    );
+    longIdScenario.id = "s".repeat(160);
+    longIdScenario.origin.batchId = "batch-id";
+    longIdScenario.secretBindings.truth = "truth-id";
+
+    const initial = session();
+    initial.scenarioCollection = {
+      version: 1,
+      items: [longIdScenario],
+      focusedScenarioId: longIdScenario.id,
+    };
+    const advanced = advanceManualWorldTime(
+      initial,
+      60,
+      "Wait an hour",
+      "manual-pressure-id",
+      0,
+      now,
+    );
+
+    expect(advanced.ok).toBe(true);
+    if (!advanced.ok) return;
+    const event = advanced.session.scenarioCollection!.items[0]!.events[0]!;
+    expect(event.id.length).toBeLessThanOrEqual(160);
+    expect(parseAdventureSession(advanced.session).scenarioCollection).toEqual(
+      advanced.session.scenarioCollection,
+    );
+  });
+
+  it("rejects a pressure trigger when the scenario event history is full", () => {
+    const fullScenario = scenarioWithPressure(
+      "full-scenario",
+      "A hidden truth.",
+      {
+        actor: "Miller Eldon",
+        goal: "Hide the grain",
+        currentStance: "Waiting",
+        trigger: "Four days pass",
+        progression: "The cellar floods",
+        expectedConsequence: "The grain is ruined.",
+        triggerAfterMinutes: 60,
+      },
+    );
+    fullScenario.events = Array.from({ length: 100 }, (_, index) => ({
+      id: `old-event-${index}`,
+      kind: "discovery" as const,
+      visibility: "player" as const,
+      text: `Old event ${index}`,
+      at: now,
+    }));
+    const initial = session();
+    initial.scenarioCollection = {
+      version: 1,
+      items: [fullScenario],
+      focusedScenarioId: fullScenario.id,
+    };
+
+    const advanced = advanceManualWorldTime(
+      initial,
+      60,
+      "Wait an hour",
+      "manual-full-pressure",
+      0,
+      now,
+    );
+
+    expect(advanced).toMatchObject({
+      ok: false,
+      reason: "state-budget-exceeded",
+    });
+    expect(initial.worldTime).toBeUndefined();
+    expect(initial.scenarioCollection?.items[0]?.events).toHaveLength(100);
+    expect(
+      initial.scenarioCollection?.items[0]?.pressure?.triggeredAtMinute,
+    ).toBeUndefined();
+  });
+
+  it("rejects a completed turn when its pressure consequence cannot be recorded", () => {
+    const fullScenario = scenarioWithPressure(
+      "full-scenario",
+      "A hidden truth.",
+      {
+        actor: "Miller Eldon",
+        goal: "Hide the grain",
+        currentStance: "Waiting",
+        trigger: "Four days pass",
+        progression: "The cellar floods",
+        expectedConsequence: "The grain is ruined.",
+        triggerAfterMinutes: 60,
+      },
+    );
+    fullScenario.events = Array.from({ length: 100 }, (_, index) => ({
+      id: `old-event-${index}`,
+      kind: "discovery" as const,
+      visibility: "player" as const,
+      text: `Old event ${index}`,
+      at: now,
+    }));
+    const initial = session();
+    initial.scenarioCollection = {
+      version: 1,
+      items: [fullScenario],
+      focusedScenarioId: fullScenario.id,
+    };
+    const turn = proposal();
+    turn.timeAdvance = {
+      minutes: 60,
+      cause: "Wait an hour",
+      developments: [],
+    };
+
+    const result = applyCompletedTurn(initial, turn, {
+      turnId: "full-pressure-turn",
+      inputId: "full-pressure-input",
+      now,
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.errors[0]?.code).toBe("state-budget-exceeded");
+    expect(initial.worldTime).toBeUndefined();
+    expect(initial.scenarioCollection?.items[0]?.events).toHaveLength(100);
+  });
+
+  // fallow-ignore-next-line complexity
+  it("triggers scenario pressure consequence at most once after four days travel, keeping it hidden until revealed upon return", () => {
+    const millerConsequence =
+      "The miller fled the cellar, abandoning damp and ruined grain bags.";
+    const miller = scenarioWithPressure(
+      "miller",
+      "The miller hides in the mill cellar.",
+      {
+        actor: "Miller Eldon",
+        goal: "Hide surplus grain bags under the cellar floorboards",
+        currentStance: "Lurking in cellar waiting out the search",
+        trigger: "Passage of 4 days without search",
+        progression: "Cellar dampness rots bags and rats gather",
+        expectedConsequence: millerConsequence,
+        triggerAfterMinutes: 5760,
+      },
+    );
+    const blacksmith = scenarioWithPressure(
+      "blacksmith",
+      "The blacksmith works secretly for the guild.",
+      {
+        actor: "Smith Torin",
+        goal: "Complete weapons shipment",
+        currentStance: "Working forge routinely",
+        trigger: "Iron ore supply cut off",
+        progression: "Forge fires cool",
+        expectedConsequence: "The forge shuts down.",
+      },
+    );
+    const caravan = scenarioWithPressure(
+      "caravan",
+      "The caravan carries illicit relics.",
+      {
+        actor: "Merchant Greta",
+        goal: "Cross eastern pass",
+        currentStance: "Camped near foothills",
+        trigger: "Passage of 7 days",
+        progression: "Rations deplete",
+        expectedConsequence: "Caravan abandons eastern pass route.",
+        triggerAfterMinutes: 10080,
+      },
+    );
+
+    const initial = session();
+    initial.scenarioCollection = {
+      version: 1,
+      items: [miller, blacksmith, caravan],
+      focusedScenarioId: "miller",
+    };
+
+    // Before traveling, expected consequence leakage is guarded against premature narration.
+    const prematureLeakTurn: CompletedTurnProposal = {
+      ...proposal(),
+      narration: `Word arrives that ${millerConsequence}`,
+    };
+    expect(detectHiddenLeakage(initial, prematureLeakTurn)).not.toHaveLength(0);
+
+    // Player travels for 4 fictional days (4 * 1440 = 5760 minutes) via AI-independent manual clock.
+    const advanceResult = advanceManualWorldTime(
+      initial,
+      5760,
+      "Travel four days across the valley",
+      "manual-travel-4d",
+      0,
+      now,
+    );
+    expect(advanceResult.ok).toBe(true);
+    if (!advanceResult.ok) return;
+    expect(advanceResult.changed).toBe(true);
+
+    const advancedSession = advanceResult.session;
+    expect(advancedSession.worldTime?.elapsedMinutes).toBe(5760);
+
+    const advancedMiller = advancedSession.scenarioCollection!.items.find(
+      (item) => item.id === "miller",
+    )!;
+    expect(advancedMiller.pressure?.triggeredAtMinute).toBe(5760);
+    expect(advancedMiller.events).toHaveLength(1);
+    expect(advancedMiller.events[0]?.kind).toBe("consequence");
+    expect(advancedMiller.events[0]?.visibility).toBe("gm");
+    expect(advancedMiller.events[0]?.text).toBe(millerConsequence);
+
+    // Secret binding exists for the consequence event.
+    const consequenceEventId = advancedMiller.events[0]!.id;
+    const consequenceSecretId =
+      advancedMiller.secretBindings.eventIds[consequenceEventId];
+    expect(consequenceSecretId).toBeDefined();
+
+    // Player cannot see it yet while away.
+    const playerTranscript = createPlayerTranscript(advancedSession);
+    expect(JSON.stringify(playerTranscript)).not.toContain(millerConsequence);
+    const playerProjection = playerScenarioProjection(advancedMiller);
+    expect(playerProjection?.events).toHaveLength(0);
+
+    // The other scenarios remain unaffected.
+    const advancedBlacksmith = advancedSession.scenarioCollection!.items.find(
+      (item) => item.id === "blacksmith",
+    )!;
+    expect(advancedBlacksmith.events).toHaveLength(0);
+    expect(advancedBlacksmith.pressure?.triggeredAtMinute).toBeUndefined();
+
+    const advancedCaravan = advancedSession.scenarioCollection!.items.find(
+      (item) => item.id === "caravan",
+    )!;
+    expect(advancedCaravan.events).toHaveLength(0);
+    expect(advancedCaravan.pressure?.triggeredAtMinute).toBeUndefined();
+
+    // Advancing more time (e.g. 2 more days = 2880m) does NOT trigger miller consequence a second time.
+    const secondAdvance = advanceManualWorldTime(
+      advancedSession,
+      2880,
+      "Travel two more days",
+      "manual-travel-2d",
+      advancedSession.revision,
+      now,
+    );
+    expect(secondAdvance.ok).toBe(true);
+    if (!secondAdvance.ok) return;
+    const secondMiller = secondAdvance.session.scenarioCollection!.items.find(
+      (item) => item.id === "miller",
+    )!;
+    expect(secondMiller.events).toHaveLength(1);
+    expect(secondMiller.pressure?.triggeredAtMinute).toBe(5760);
+
+    // Prompt includes scenario pressure and instructs GM on off-screen consequences.
+    const prompt = buildAdventurePrompt({
+      session: secondAdvance.session,
+      phase: "action",
+      playerAction: "Return to Northbrook and check the mill",
+      anchors: [],
+      relevant: [],
+    });
+    expect(prompt.state).toContain("Miller Eldon");
+    expect(prompt.state).toContain(millerConsequence);
+    expect(prompt.behavior).toContain("off-screen consequences");
+
+    // Returning to Northbrook and observing the consequence reveals the secret.
+    const returnProposal: CompletedTurnProposal = {
+      ...proposal(),
+      narration:
+        "You step into the mill cellar. The smell of dampness and rotting grain fills the air.",
+      revealSecretIds: [consequenceSecretId!],
+    };
+    const returnTurnResult = applyCompletedTurn(
+      secondAdvance.session,
+      returnProposal,
+      {
+        turnId: "return-turn-1",
+        inputId: "return-input-1",
+        playerAction: "Check the mill cellar",
+        now,
+      },
+    );
+    expect(returnTurnResult.ok).toBe(true);
+    if (!returnTurnResult.ok) return;
+
+    const returnedSession = returnTurnResult.value;
+    const returnedMiller = returnedSession.scenarioCollection!.items.find(
+      (item) => item.id === "miller",
+    )!;
+    expect(returnedMiller.revealedSecretIds).toContain(consequenceSecretId);
+
+    // Now playerScenarioProjection includes the revealed consequence event!
+    const returnedProjection = playerScenarioProjection(returnedMiller);
+    expect(returnedProjection?.events).toHaveLength(1);
+    expect(returnedProjection?.events[0]?.text).toBe(millerConsequence);
+
+    // Roundtrip serialization and parsing preserves everything.
+    const reloaded = parseAdventureSession(
+      JSON.parse(JSON.stringify(returnedSession)),
+    );
+    expect(
+      reloaded.scenarioCollection?.items.find((item) => item.id === "miller")
+        ?.pressure?.triggeredAtMinute,
+    ).toBe(5760);
+  });
+
+  // fallow-ignore-next-line complexity
+  it("applies turn-based timeAdvance developments directly to target scenarios as GM consequence events", () => {
+    const miller = scenarioWithPressure(
+      "miller",
+      "The miller hides in the mill cellar.",
+    );
+    const initial = session();
+    initial.scenarioCollection = {
+      version: 1,
+      items: [miller],
+      focusedScenarioId: "miller",
+    };
+
+    const turnWithTime: CompletedTurnProposal = {
+      ...proposal(),
+      narration: "A quiet day passes in the hills.",
+      timeAdvance: {
+        minutes: 1440,
+        cause: "Wait for nightfall",
+        developments: [
+          {
+            threadId: "miller",
+            text: "The cellar flooded after night rain.",
+          },
+          {
+            threadId: "mill",
+            text: "The mill refugees relocated to the shrine.",
+          },
+        ],
+      },
+    };
+
+    const turnResult = applyCompletedTurn(initial, turnWithTime, {
+      turnId: "time-turn-1",
+      inputId: "time-input-1",
+      playerAction: "Wait a day in the hills",
+      now,
+    });
+    expect(turnResult.ok).toBe(true);
+    if (!turnResult.ok) return;
+
+    const saved = turnResult.value;
+    expect(saved.worldTime?.elapsedMinutes).toBe(1440);
+    expect(saved.worldTime?.events).toHaveLength(2);
+
+    const savedMiller = saved.scenarioCollection!.items.find(
+      (item) => item.id === "miller",
+    )!;
+    expect(savedMiller.events).toHaveLength(1);
+    expect(savedMiller.events[0]?.text).toBe(
+      "The cellar flooded after night rain.",
+    );
+    expect(savedMiller.events[0]?.kind).toBe("consequence");
+    expect(savedMiller.events[0]?.visibility).toBe("gm");
+
+    const devSecretId =
+      savedMiller.secretBindings.eventIds[savedMiller.events[0]!.id];
+    expect(devSecretId).toBeDefined();
+
+    // Transcript does not expose the GM development.
+    expect(JSON.stringify(createPlayerTranscript(saved))).not.toContain(
+      "cellar flooded",
+    );
+  });
+
+  it("rejects timeAdvance developments targeting unknown or closed scenarios", () => {
+    const miller = scenarioWithPressure(
+      "miller",
+      "The miller hides in the mill cellar.",
+    );
+    miller.status = "resolved";
+    const initial = session();
+    initial.scenarioCollection = {
+      version: 1,
+      items: [miller],
+      focusedScenarioId: null,
+    };
+
+    const advance = {
+      minutes: 1440,
+      cause: "Wait a day",
+      developments: [
+        {
+          threadId: "miller", // resolved, not open!
+          text: "Something happened in the closed scenario",
+        },
+      ],
+    };
+    expect(applyTimeAdvance(initial, advance, "test-turn")).toEqual({
+      ok: false,
+      reason: "unknown-or-duplicate-background-thread",
+    });
   });
 });
