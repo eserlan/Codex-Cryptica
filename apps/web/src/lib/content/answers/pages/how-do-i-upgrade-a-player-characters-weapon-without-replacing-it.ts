@@ -246,6 +246,7 @@ export const howDoIUpgradeAPlayerCharactersWeaponWithoutReplacingIt: AnswerConfi
       "how-do-you-make-a-boss-fight-memorable-in-a-tabletop-rpg",
       "how-do-i-give-specialist-characters-spotlight",
       "how-do-i-make-a-player-base-matter-in-an-rpg-campaign",
+      "how-much-loot-and-how-many-magic-items-should-i-give-my-players",
     ],
     discovery: {
       id: "answer-upgrade-weapon-without-replacing",

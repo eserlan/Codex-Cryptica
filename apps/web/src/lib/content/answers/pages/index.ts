@@ -140,6 +140,7 @@ import { howLongShouldATtrpgSessionBe } from "./how-long-should-a-ttrpg-session-
 import { howManyNpcsDoesAnRpgTownNeed } from "./how-many-npcs-does-an-rpg-town-need";
 import { howManyRandomEncountersDuringRpgTravel } from "./how-many-random-encounters-during-rpg-travel";
 import { howMuchCampaignLoreShouldPlayersBeExpectedToRemember } from "./how-much-campaign-lore-should-players-be-expected-to-remember";
+import { howMuchLootAndHowManyMagicItemsShouldIGiveMyPlayers } from "./how-much-loot-and-how-many-magic-items-should-i-give-my-players";
 import { howMuchOfThePlotShouldADmPrepare } from "./how-much-of-the-plot-should-a-dm-prepare";
 import { howMuchPrepDoYouNeedForAnRpgSession } from "./how-much-prep-do-you-need-for-an-rpg-session";
 import { howMuchRuleOfCoolShouldADmAllow } from "./how-much-rule-of-cool-should-a-dm-allow";
@@ -342,6 +343,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howManyNpcsDoesAnRpgTownNeed,
     howManyRandomEncountersDuringRpgTravel,
     howMuchCampaignLoreShouldPlayersBeExpectedToRemember,
+    howMuchLootAndHowManyMagicItemsShouldIGiveMyPlayers,
     howMuchOfThePlotShouldADmPrepare,
     howMuchPrepDoYouNeedForAnRpgSession,
     howMuchRuleOfCoolShouldADmAllow,

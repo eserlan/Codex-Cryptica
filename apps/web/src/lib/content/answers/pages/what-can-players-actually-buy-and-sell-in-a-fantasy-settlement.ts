@@ -153,6 +153,7 @@ export const whatCanPlayersActuallyBuyAndSellInAFantasySettlement: AnswerConfigI
       "how-do-i-give-different-civilisations-distinct-strengths-and-weaknesses",
       "how-do-i-upgrade-a-player-characters-weapon-without-replacing-it",
       "how-should-a-fantasy-adventuring-guild-handle-wages-dues-and-shared-expenses",
+      "how-much-loot-and-how-many-magic-items-should-i-give-my-players",
     ],
     discovery: {
       id: "answer-settlement-market-buy-sell",
