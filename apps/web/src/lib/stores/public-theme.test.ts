@@ -9,10 +9,12 @@ function session() {
   return {
     values,
     getItem: vi.fn((key: string) => values.get(key) ?? null),
-    setItem: vi.fn((key: string, value: string) =>
-      void values.set(key, value),
-    ),
-    removeItem: vi.fn((key: string) => void values.delete(key)),
+    setItem: vi.fn((key: string, value: string) => {
+      values.set(key, value);
+    }),
+    removeItem: vi.fn((key: string) => {
+      values.delete(key);
+    }),
   };
 }
 
