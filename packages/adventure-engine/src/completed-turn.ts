@@ -105,13 +105,19 @@ export function applyCompletedTurn(
   candidate.visibleState = materialized.visibleState;
   candidate.hiddenState = materialized.hiddenState;
   if (time.value) {
-    applyTurnWorldTimeAndPressures(
+    const pressureResult = applyTurnWorldTimeAndPressures(
       candidate,
       proposal,
       time.value,
       meta.turnId,
       now,
     );
+    if (!pressureResult.ok) {
+      return error(
+        "state-budget-exceeded",
+        "A scenario event history has reached its limit.",
+      );
+    }
   }
   candidate.provisionalFacts = mergeProvisionalFacts(
     candidate.provisionalFacts,
@@ -151,7 +157,7 @@ function applyTurnWorldTimeAndPressures(
   timeValue: WorldTimeState,
   turnId: string,
   now: string,
-): void {
+): { ok: true } | { ok: false } {
   if (candidate.scenarioCollection && proposal.timeAdvance?.developments) {
     for (const dev of proposal.timeAdvance.developments) {
       const target: ScenarioItem | undefined =
@@ -182,13 +188,14 @@ function applyTurnWorldTimeAndPressures(
     turnId,
     now,
   );
-  if (triggered.length > 0) {
+  if (!triggered.ok) return { ok: false };
+  if (triggered.events.length > 0) {
     candidate.worldTime = {
       ...timeValue,
       events: [
         ...timeValue.events,
-        ...triggered.map((item) => ({
-          id: `${turnId.slice(0, 120)}:world:pressure:${item.scenarioId}`,
+        ...triggered.events.map((item) => ({
+          id: `${turnId.slice(0, 120)}:world:pressure:${item.scenarioIndex}`,
           turnId,
           atMinute: elapsedMinutes,
           threadId: item.scenarioId,
@@ -197,6 +204,7 @@ function applyTurnWorldTimeAndPressures(
       ].slice(-80),
     };
   }
+  return { ok: true };
 }
 
 function createCommittedTurn(

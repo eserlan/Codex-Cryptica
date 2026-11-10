@@ -83,6 +83,7 @@ export function advanceManualWorldTime(
     eventId,
     now,
   );
+  if (!triggered.ok) return { ok: false, reason: triggered.reason };
   next.worldTime = {
     ...timeValue,
     events: [
@@ -95,8 +96,8 @@ export function advanceManualWorldTime(
         threadId: "manual-world-time",
         text: eventText,
       },
-      ...triggered.map((item) => ({
-        id: `${eventId.slice(0, 120)}:world:pressure:${item.scenarioId}`,
+      ...triggered.events.map((item) => ({
+        id: `${eventId.slice(0, 120)}:world:pressure:${item.scenarioIndex}`,
         turnId: eventId,
         atMinute: elapsedMinutes,
         threadId: item.scenarioId,

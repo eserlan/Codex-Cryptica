@@ -333,6 +333,143 @@ describe("fictional world time", () => {
     expect(resolved.ok && resolved.value.worldTime?.elapsedMinutes).toBe(60);
   });
 
+  it("uses schema-valid pressure IDs for maximum-length scenario IDs", () => {
+    const longIdScenario = scenarioWithPressure(
+      "temporary-id",
+      "The miller hides in the cellar.",
+      {
+        actor: "Miller Eldon",
+        goal: "Hide the grain",
+        currentStance: "Waiting",
+        trigger: "Four days pass",
+        progression: "The cellar floods",
+        expectedConsequence: "The grain is ruined.",
+        triggerAfterMinutes: 60,
+      },
+    );
+    longIdScenario.id = "s".repeat(160);
+    longIdScenario.origin.batchId = "batch-id";
+    longIdScenario.secretBindings.truth = "truth-id";
+
+    const initial = session();
+    initial.scenarioCollection = {
+      version: 1,
+      items: [longIdScenario],
+      focusedScenarioId: longIdScenario.id,
+    };
+    const advanced = advanceManualWorldTime(
+      initial,
+      60,
+      "Wait an hour",
+      "manual-pressure-id",
+      0,
+      now,
+    );
+
+    expect(advanced.ok).toBe(true);
+    if (!advanced.ok) return;
+    const event = advanced.session.scenarioCollection!.items[0]!.events[0]!;
+    expect(event.id.length).toBeLessThanOrEqual(160);
+    expect(parseAdventureSession(advanced.session).scenarioCollection).toEqual(
+      advanced.session.scenarioCollection,
+    );
+  });
+
+  it("rejects a pressure trigger when the scenario event history is full", () => {
+    const fullScenario = scenarioWithPressure(
+      "full-scenario",
+      "A hidden truth.",
+      {
+        actor: "Miller Eldon",
+        goal: "Hide the grain",
+        currentStance: "Waiting",
+        trigger: "Four days pass",
+        progression: "The cellar floods",
+        expectedConsequence: "The grain is ruined.",
+        triggerAfterMinutes: 60,
+      },
+    );
+    fullScenario.events = Array.from({ length: 100 }, (_, index) => ({
+      id: `old-event-${index}`,
+      kind: "discovery" as const,
+      visibility: "player" as const,
+      text: `Old event ${index}`,
+      at: now,
+    }));
+    const initial = session();
+    initial.scenarioCollection = {
+      version: 1,
+      items: [fullScenario],
+      focusedScenarioId: fullScenario.id,
+    };
+
+    const advanced = advanceManualWorldTime(
+      initial,
+      60,
+      "Wait an hour",
+      "manual-full-pressure",
+      0,
+      now,
+    );
+
+    expect(advanced).toMatchObject({
+      ok: false,
+      reason: "state-budget-exceeded",
+    });
+    expect(initial.worldTime).toBeUndefined();
+    expect(initial.scenarioCollection?.items[0]?.events).toHaveLength(100);
+    expect(
+      initial.scenarioCollection?.items[0]?.pressure?.triggeredAtMinute,
+    ).toBeUndefined();
+  });
+
+  it("rejects a completed turn when its pressure consequence cannot be recorded", () => {
+    const fullScenario = scenarioWithPressure(
+      "full-scenario",
+      "A hidden truth.",
+      {
+        actor: "Miller Eldon",
+        goal: "Hide the grain",
+        currentStance: "Waiting",
+        trigger: "Four days pass",
+        progression: "The cellar floods",
+        expectedConsequence: "The grain is ruined.",
+        triggerAfterMinutes: 60,
+      },
+    );
+    fullScenario.events = Array.from({ length: 100 }, (_, index) => ({
+      id: `old-event-${index}`,
+      kind: "discovery" as const,
+      visibility: "player" as const,
+      text: `Old event ${index}`,
+      at: now,
+    }));
+    const initial = session();
+    initial.scenarioCollection = {
+      version: 1,
+      items: [fullScenario],
+      focusedScenarioId: fullScenario.id,
+    };
+    const turn = proposal();
+    turn.timeAdvance = {
+      minutes: 60,
+      cause: "Wait an hour",
+      developments: [],
+    };
+
+    const result = applyCompletedTurn(initial, turn, {
+      turnId: "full-pressure-turn",
+      inputId: "full-pressure-input",
+      now,
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.errors[0]?.code).toBe("state-budget-exceeded");
+    expect(initial.worldTime).toBeUndefined();
+    expect(initial.scenarioCollection?.items[0]?.events).toHaveLength(100);
+  });
+
   // fallow-ignore-next-line complexity
   it("triggers scenario pressure consequence at most once after four days travel, keeping it hidden until revealed upon return", () => {
     const millerConsequence =

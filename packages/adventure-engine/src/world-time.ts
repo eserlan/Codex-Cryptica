@@ -20,10 +20,15 @@ export function formatWorldElapsedMinutes(minutes: number): string {
 
 export interface TriggeredScenarioPressureEvent {
   scenarioId: string;
+  scenarioIndex: number;
   eventId: string;
   secretId: string;
   text: string;
 }
+
+export type ScenarioTimePressureResult =
+  | { ok: true; events: TriggeredScenarioPressureEvent[] }
+  | { ok: false; reason: "state-budget-exceeded" };
 
 /**
  * Deterministically trigger eligible open scenario pressures whose fictional
@@ -34,10 +39,22 @@ export function applyScenarioTimePressures(
   elapsedMinutes: number,
   turnOrEventId: string,
   now: string,
-): TriggeredScenarioPressureEvent[] {
-  const triggered: TriggeredScenarioPressureEvent[] = [];
+): ScenarioTimePressureResult {
   const items = session.scenarioCollection?.items ?? [];
-  for (const scenario of items) {
+  const eligible = items.flatMap((scenario, index) =>
+    scenario.status === "open" &&
+    scenario.pressure?.triggerAfterMinutes !== undefined &&
+    elapsedMinutes >= scenario.pressure.triggerAfterMinutes &&
+    scenario.pressure.triggeredAtMinute === undefined
+      ? [{ scenario, index }]
+      : [],
+  );
+  if (eligible.some(({ scenario }) => scenario.events.length >= 100)) {
+    return { ok: false, reason: "state-budget-exceeded" };
+  }
+
+  const triggered: TriggeredScenarioPressureEvent[] = [];
+  for (const { scenario, index } of eligible) {
     if (
       scenario.status === "open" &&
       scenario.pressure?.triggerAfterMinutes !== undefined &&
@@ -45,7 +62,7 @@ export function applyScenarioTimePressures(
       scenario.pressure.triggeredAtMinute === undefined
     ) {
       scenario.pressure.triggeredAtMinute = elapsedMinutes;
-      const eventId = `${turnOrEventId.slice(0, 130)}:pressure:${scenario.id}`;
+      const eventId = `${turnOrEventId.slice(0, 130)}:pressure:${index}`;
       const secretId = scenarioEventSecretId(eventId);
       scenario.events.push({
         id: eventId,
@@ -58,13 +75,14 @@ export function applyScenarioTimePressures(
       scenario.secretBindings.eventIds[eventId] = secretId;
       triggered.push({
         scenarioId: scenario.id,
+        scenarioIndex: index,
         eventId,
         secretId,
         text: scenario.pressure.expectedConsequence,
       });
     }
   }
-  return triggered;
+  return { ok: true, events: triggered };
 }
 
 /** Advance only from a committed fictional action, never the device clock. */
