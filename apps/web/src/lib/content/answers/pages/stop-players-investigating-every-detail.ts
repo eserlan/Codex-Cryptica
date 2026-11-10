@@ -173,6 +173,7 @@ export const stopPlayersInvestigatingEveryDetail: AnswerConfigInput = {
     "how-do-i-pace-an-rpg-one-shot",
     "how-many-npcs-does-an-rpg-town-need",
     "how-do-i-roleplay-npcs-if-im-not-good-at-acting",
+    "how-much-loot-and-how-many-magic-items-should-i-give-my-players",
   ],
   discovery: {
     id: "answer-stop-players-investigating-every-detail",
