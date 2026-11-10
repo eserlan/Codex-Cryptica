@@ -36,7 +36,9 @@
   }
 </script>
 
-<li class="space-y-2 rounded-lg border border-theme-border bg-theme-surface p-3">
+<li
+  class="space-y-2 rounded-lg border border-theme-border bg-theme-surface p-3"
+>
   <div class="flex items-start justify-between gap-3">
     <p class="min-w-0 text-sm font-semibold leading-snug text-theme-text">
       {item.playerVisible.lead}
