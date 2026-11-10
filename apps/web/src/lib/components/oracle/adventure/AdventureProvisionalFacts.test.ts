@@ -39,7 +39,11 @@ function makeMockStorage(initial: Record<string, string> = {}) {
 
 describe("AdventureProvisionalFacts", () => {
   async function showDiscoveries(): Promise<void> {
-    await fireEvent.click(screen.getByRole("button", { name: /review \d+ adventure discover(?:y|ies)/i }));
+    await fireEvent.click(
+      screen.getByRole("button", {
+        name: /review \d+ adventure discover(?:y|ies)/i,
+      }),
+    );
   }
 
   it("shows a typed player-visible suggestion and adds it on request", async () => {
@@ -91,7 +95,9 @@ describe("AdventureProvisionalFacts", () => {
 
     await showDiscoveries();
     expect(screen.getByText("Sunken Barrow")).toBeTruthy();
-    await fireEvent.click(screen.getByRole("button", { name: "Close discoveries" }));
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Close discoveries" }),
+    );
 
     expect(screen.queryByText("Sunken Barrow")).toBeNull();
   });
@@ -170,7 +176,9 @@ describe("AdventureProvisionalFacts", () => {
     });
 
     await showDiscoveries();
-    await fireEvent.click(screen.getByRole("button", { name: "Review preferences" }));
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Review preferences" }),
+    );
     const checkbox = screen.getByRole("checkbox", {
       name: /auto-promote discoveries to codex/i,
     });
@@ -215,13 +223,23 @@ describe("AdventureProvisionalFacts", () => {
     });
 
     await showDiscoveries();
-    await fireEvent.click(screen.getByRole("checkbox", { name: "Select Sunken Barrow" }));
-    await fireEvent.click(screen.getByRole("button", { name: "Add selected (1)" }));
+    await fireEvent.click(
+      screen.getByRole("checkbox", { name: "Select Sunken Barrow" }),
+    );
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Add selected (1)" }),
+    );
     expect(onAddAll).toHaveBeenCalledWith([fact]);
     expect(screen.queryByText("Sunken Barrow")).toBeNull();
 
-    await fireEvent.click(screen.getByRole("checkbox", { name: "Select Elric the Wandering Hermit" }));
-    await fireEvent.click(screen.getByRole("button", { name: "Dismiss selected" }));
+    await fireEvent.click(
+      screen.getByRole("checkbox", {
+        name: "Select Elric the Wandering Hermit",
+      }),
+    );
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Dismiss selected" }),
+    );
     expect(screen.queryByText("Elric the Wandering Hermit")).toBeNull();
   });
 
@@ -238,8 +256,12 @@ describe("AdventureProvisionalFacts", () => {
 
     await showDiscoveries();
     expect(screen.queryByText("Elric the Wandering Hermit")).toBeNull();
-    await fireEvent.click(screen.getByRole("checkbox", { name: "Select all filtered discoveries" }));
-    await fireEvent.click(screen.getByRole("button", { name: "Add selected (1)" }));
+    await fireEvent.click(
+      screen.getByRole("checkbox", { name: "Select all filtered discoveries" }),
+    );
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Add selected (1)" }),
+    );
     expect(onAddAll).toHaveBeenCalledWith([fact]);
   });
 
@@ -250,8 +272,13 @@ describe("AdventureProvisionalFacts", () => {
     });
 
     await showDiscoveries();
-    await fireEvent.click(screen.getByRole("button", { name: "Add Sunken Barrow to Codex" }));
-    expect(await screen.findByRole("alert")).toHaveProperty("textContent", "Storage unavailable");
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Add Sunken Barrow to Codex" }),
+    );
+    expect(await screen.findByRole("alert")).toHaveProperty(
+      "textContent",
+      "Storage unavailable",
+    );
     expect(screen.getByText("Sunken Barrow")).toBeTruthy();
   });
 
@@ -264,9 +291,15 @@ describe("AdventureProvisionalFacts", () => {
     });
 
     await showDiscoveries();
-    expect(screen.queryByRole("checkbox", { name: /auto-promote/i })).toBeNull();
-    await fireEvent.click(screen.getByRole("button", { name: "Review preferences" }));
-    expect(screen.getByRole("checkbox", { name: /auto-promote/i })).toBeTruthy();
+    expect(
+      screen.queryByRole("checkbox", { name: /auto-promote/i }),
+    ).toBeNull();
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Review preferences" }),
+    );
+    expect(
+      screen.getByRole("checkbox", { name: /auto-promote/i }),
+    ).toBeTruthy();
   });
 
   it("shows the scenario badge when a fact is linked to a scenario", async () => {

@@ -529,7 +529,9 @@ describe("AdventureFocusPlay", () => {
     await fireEvent.click(
       screen.getByRole("button", { name: "Review 1 adventure discovery" }),
     );
-    expect(screen.getByRole("dialog", { name: "Review discoveries" })).toBeTruthy();
+    expect(
+      screen.getByRole("dialog", { name: "Review discoveries" }),
+    ).toBeTruthy();
     expect(screen.getByText("Sunken Barrow")).toBeTruthy();
     expect(screen.getByText("1 discovery awaiting review")).toBeTruthy();
   });

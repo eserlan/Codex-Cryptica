@@ -182,7 +182,9 @@
     onclick={openReview}
   >
     <span class="icon-[lucide--sparkles] h-4 w-4" aria-hidden="true"></span>
-    <span class="rounded-full bg-theme-primary/10 px-1.5 py-0.5 tabular-nums">{visibleFacts.length}</span>
+    <span class="rounded-full bg-theme-primary/10 px-1.5 py-0.5 tabular-nums"
+      >{visibleFacts.length}</span
+    >
     <span class="hidden sm:inline">Discoveries</span>
   </button>
 {/if}
@@ -207,14 +209,20 @@
         if (reviewPanel) containTab(event, reviewPanel);
       }}
     >
-      <header class="shrink-0 space-y-3 border-b border-theme-border p-3 pt-[calc(0.75rem+env(safe-area-inset-top))] sm:p-4">
+      <header
+        class="shrink-0 space-y-3 border-b border-theme-border p-3 pt-[calc(0.75rem+env(safe-area-inset-top))] sm:p-4"
+      >
         <div class="flex items-center justify-between gap-2">
           <div class="min-w-0">
-            <h3 id="adventure-new-entities" class="font-header text-lg font-bold text-theme-text">
+            <h3
+              id="adventure-new-entities"
+              class="font-header text-lg font-bold text-theme-text"
+            >
               Review discoveries
             </h3>
             <p class="text-xs text-theme-text">
-              {visibleFacts.length} {visibleFacts.length === 1 ? "discovery" : "discoveries"} awaiting review
+              {visibleFacts.length}
+              {visibleFacts.length === 1 ? "discovery" : "discoveries"} awaiting review
             </p>
           </div>
           <div class="flex shrink-0 gap-1">
@@ -225,7 +233,8 @@
               aria-expanded={optionsOpen}
               onclick={() => (optionsOpen = !optionsOpen)}
             >
-              <span class="icon-[lucide--settings-2] h-4 w-4" aria-hidden="true"></span>
+              <span class="icon-[lucide--settings-2] h-4 w-4" aria-hidden="true"
+              ></span>
             </button>
             <button
               bind:this={closeButton}
@@ -239,18 +248,26 @@
           </div>
         </div>
         {#if optionsOpen}
-          <label class="flex min-h-10 items-center gap-2 rounded-md bg-theme-primary/5 px-3 text-sm text-theme-text">
+          <label
+            class="flex min-h-10 items-center gap-2 rounded-md bg-theme-primary/5 px-3 text-sm text-theme-text"
+          >
             <input
               type="checkbox"
               checked={settings.autoPromote}
-              onchange={(event) => settings.setAutoPromote(event.currentTarget.checked)}
+              onchange={(event) =>
+                settings.setAutoPromote(event.currentTarget.checked)}
               class="accent-theme-primary"
             />
             Auto-promote discoveries to Codex
           </label>
         {/if}
-        <label class="flex min-h-11 items-center gap-2 rounded-md border border-theme-border px-3 text-theme-text focus-within:border-theme-primary">
-          <span class="icon-[lucide--search] h-4 w-4 shrink-0" aria-hidden="true"></span>
+        <label
+          class="flex min-h-11 items-center gap-2 rounded-md border border-theme-border px-3 text-theme-text focus-within:border-theme-primary"
+        >
+          <span
+            class="icon-[lucide--search] h-4 w-4 shrink-0"
+            aria-hidden="true"
+          ></span>
           <input
             type="search"
             bind:value={search}
@@ -259,14 +276,20 @@
             class="min-w-0 flex-1 bg-transparent text-sm outline-none"
           />
         </label>
-        <div class="flex gap-1.5 overflow-x-auto pb-1" role="group" aria-label="Filter discoveries by type">
+        <div
+          class="flex gap-1.5 overflow-x-auto pb-1"
+          role="group"
+          aria-label="Filter discoveries by type"
+        >
           {#each kindFilters as filter (filter.kind)}
             <button
               type="button"
-              class={["min-h-9 shrink-0 rounded-md border px-3 text-xs font-medium transition",
+              class={[
+                "min-h-9 shrink-0 rounded-md border px-3 text-xs font-medium transition",
                 kind === filter.kind
                   ? "border-theme-primary bg-theme-primary/15 text-theme-text"
-                  : "border-theme-border text-theme-text hover:bg-theme-primary/10"]}
+                  : "border-theme-border text-theme-text hover:bg-theme-primary/10",
+              ]}
               aria-pressed={kind === filter.kind}
               onclick={() => (kind = filter.kind)}
             >
@@ -278,7 +301,9 @@
 
       <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain p-3 sm:p-4">
         {#if errorMessage}
-          <p class="mb-3 text-sm text-theme-danger" role="alert">{errorMessage}</p>
+          <p class="mb-3 text-sm text-theme-danger" role="alert">
+            {errorMessage}
+          </p>
         {/if}
         {#if filteredFacts.length > 0}
           <div class="mb-3 flex items-center justify-between gap-2">
@@ -286,14 +311,19 @@
               <input
                 type="checkbox"
                 aria-label="Select all filtered discoveries"
-                checked={filteredFacts.every((fact) => selectedIds.includes(fact.id))}
+                checked={filteredFacts.every((fact) =>
+                  selectedIds.includes(fact.id),
+                )}
                 disabled={busy}
-                onchange={(event) => toggleFilteredSelection(event.currentTarget.checked)}
+                onchange={(event) =>
+                  toggleFilteredSelection(event.currentTarget.checked)}
                 class="accent-theme-primary"
               />
               Select shown ({filteredFacts.length})
             </label>
-            <span class="text-xs text-theme-text">{selectedFacts.length} selected</span>
+            <span class="text-xs text-theme-text"
+              >{selectedFacts.length} selected</span
+            >
           </div>
           <ul class="space-y-2" id="adventure-new-entities-list">
             {#each filteredFacts as fact (fact.id)}
@@ -304,22 +334,42 @@
                     aria-label={`Select ${fact.name}`}
                     checked={selectedIds.includes(fact.id)}
                     disabled={busy}
-                    onchange={(event) => toggleSelection(fact.id, event.currentTarget.checked)}
+                    onchange={(event) =>
+                      toggleSelection(fact.id, event.currentTarget.checked)}
                     class="mt-1 shrink-0 accent-theme-primary"
                   />
-                  <span class={[typePresentation[fact.kind].icon, "mt-0.5 h-4 w-4 shrink-0 text-theme-text"]} aria-hidden="true"></span>
+                  <span
+                    class={[
+                      typePresentation[fact.kind].icon,
+                      "mt-0.5 h-4 w-4 shrink-0 text-theme-text",
+                    ]}
+                    aria-hidden="true"
+                  ></span>
                   <div class="min-w-0 flex-1">
-                    <p class="break-words font-medium text-theme-text">{fact.name}</p>
-                    <p class="mt-0.5 text-micro font-mono uppercase tracking-wider text-theme-text">
+                    <p class="break-words font-medium text-theme-text">
+                      {fact.name}
+                    </p>
+                    <p
+                      class="mt-0.5 text-micro font-mono uppercase tracking-wider text-theme-text"
+                    >
                       {typePresentation[fact.kind].label}
                       {#if fact.scenarioId}
-                        <span class="ml-2 rounded bg-theme-primary/10 px-1 py-0.5">Scenario</span>
+                        <span
+                          class="ml-2 rounded bg-theme-primary/10 px-1 py-0.5"
+                          >Scenario</span
+                        >
                       {/if}
                     </p>
                   </div>
                 </div>
-                <p class="mt-2 break-words text-sm leading-relaxed text-theme-text">{fact.summary}</p>
-                <div class="mt-3 flex items-center justify-end gap-2 border-t border-theme-border pt-2">
+                <p
+                  class="mt-2 break-words text-sm leading-relaxed text-theme-text"
+                >
+                  {fact.summary}
+                </p>
+                <div
+                  class="mt-3 flex items-center justify-end gap-2 border-t border-theme-border pt-2"
+                >
                   <button
                     type="button"
                     class="min-h-9 rounded-md px-2.5 text-xs text-theme-text hover:bg-theme-danger/10 hover:text-theme-danger disabled:opacity-50"
@@ -343,17 +393,24 @@
             {/each}
           </ul>
         {:else}
-          <p class="rounded-md border border-theme-border p-4 text-sm text-theme-text" role="status">
+          <p
+            class="rounded-md border border-theme-border p-4 text-sm text-theme-text"
+            role="status"
+          >
             {visibleFacts.length === 0
               ? "All discoveries reviewed. You can return to your adventure."
               : "No discoveries match your search or filter."}
           </p>
         {/if}
       </div>
-      <footer class="shrink-0 space-y-2 border-t border-theme-border bg-theme-surface p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:p-4">
+      <footer
+        class="shrink-0 space-y-2 border-t border-theme-border bg-theme-surface p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:p-4"
+      >
         {#if selectedFacts.length > 0}
           <div class="flex items-center justify-between gap-2">
-            <span class="text-xs text-theme-text">{selectedFacts.length} selected</span>
+            <span class="text-xs text-theme-text"
+              >{selectedFacts.length} selected</span
+            >
             <button
               type="button"
               class="min-h-9 px-2 text-xs text-theme-text hover:text-theme-danger disabled:opacity-50"
@@ -380,7 +437,9 @@
             disabled={busy}
             onclick={() => void addBatch([...visibleFacts])}
           >
-            {addingAll ? "Adding discoveries…" : `Add all ${visibleFacts.length} to Codex`}
+            {addingAll
+              ? "Adding discoveries…"
+              : `Add all ${visibleFacts.length} to Codex`}
           </button>
         {/if}
       </footer>
