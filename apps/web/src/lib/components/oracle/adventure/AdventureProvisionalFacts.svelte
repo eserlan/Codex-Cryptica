@@ -176,7 +176,7 @@
     bind:this={triggerButton}
     type="button"
     class="inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-md border border-theme-border px-2.5 text-xs font-medium text-theme-text transition hover:border-theme-primary hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary sm:gap-2 sm:px-3 sm:text-sm"
-    aria-label={`Review ${visibleFacts.length} adventure discoveries`}
+    aria-label={`Review ${visibleFacts.length} adventure ${visibleFacts.length === 1 ? "discovery" : "discoveries"}`}
     aria-expanded={expanded}
     aria-controls="adventure-discoveries-review"
     onclick={openReview}
@@ -344,7 +344,9 @@
           </ul>
         {:else}
           <p class="rounded-md border border-theme-border p-4 text-sm text-theme-text" role="status">
-            No discoveries match your search or filter.
+            {visibleFacts.length === 0
+              ? "All discoveries reviewed. You can return to your adventure."
+              : "No discoveries match your search or filter."}
           </p>
         {/if}
       </div>
@@ -362,7 +364,7 @@
             </button>
             <button
               type="button"
-              class="min-h-10 rounded-md bg-theme-primary px-3 text-xs font-semibold text-theme-bg disabled:opacity-50"
+              class="min-h-10 rounded-md bg-theme-primary px-3 text-xs font-semibold text-theme-on-primary disabled:opacity-50"
               disabled={busy}
               onclick={() => void addBatch([...selectedFacts])}
             >
