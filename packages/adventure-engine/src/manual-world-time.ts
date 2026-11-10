@@ -4,7 +4,16 @@ import type { AdventureSession } from "./types";
 
 export type ManualTimeAdvanceResult =
   | { ok: true; session: AdventureSession; changed: boolean }
-  | { ok: false; reason: "stale-revision" | "read-only-session" | "pending-roll" | "invalid-fictional-time" | "id-collision" | "state-budget-exceeded" };
+  | {
+      ok: false;
+      reason:
+        | "stale-revision"
+        | "read-only-session"
+        | "pending-roll"
+        | "invalid-fictional-time"
+        | "id-collision"
+        | "state-budget-exceeded";
+    };
 
 /**
  * A user-initiated, AI-independent fictional clock advancement. This is a
@@ -33,23 +42,29 @@ export function advanceManualWorldTime(
     text.length > 500 ||
     !eventId.trim() ||
     eventId.length > 160
-  ) return { ok: false, reason: "invalid-fictional-time" };
+  )
+    return { ok: false, reason: "invalid-fictional-time" };
 
   // A retried save/interaction must not repeat the time advance.
   const eventText = `Manual advance (${minutes}m): ${text}`;
-  const previous = session.worldTime?.events.find((entry) => entry.id === eventId);
+  const previous = session.worldTime?.events.find(
+    (entry) => entry.id === eventId,
+  );
   if (previous) {
-    return previous.threadId === "manual-world-time" && previous.text === eventText
+    return previous.threadId === "manual-world-time" &&
+      previous.text === eventText
       ? { ok: true, session, changed: false }
       : { ok: false, reason: "id-collision" };
   }
   if (
     session.turns.some((turn) => turn.id === eventId) ||
-    session.scenarioCollection?.items.some((item) =>
-      item.id === eventId ||
-      item.events.some((event) => event.id === eventId)
+    session.scenarioCollection?.items.some(
+      (item) =>
+        item.id === eventId ||
+        item.events.some((event) => event.id === eventId),
     )
-  ) return { ok: false, reason: "id-collision" };
+  )
+    return { ok: false, reason: "id-collision" };
 
   const advanced = applyTimeAdvance(
     session,
