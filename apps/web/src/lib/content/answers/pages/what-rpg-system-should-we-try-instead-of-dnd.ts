@@ -162,6 +162,7 @@ export const whatRpgSystemShouldWeTryInsteadOfDnd: AnswerConfigInput = {
     "what-rpg-works-for-political-intrigue-and-faction-play",
     "what-ttrpgs-let-you-build-and-upgrade-a-base",
     "what-are-the-best-classless-fantasy-rpgs-with-skill-based-progression",
+    "how-do-i-enjoy-tabletop-rpgs-again",
   ],
   discovery: {
     id: "answer-system-selection",

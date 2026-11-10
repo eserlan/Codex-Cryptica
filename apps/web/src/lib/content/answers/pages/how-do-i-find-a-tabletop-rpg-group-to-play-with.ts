@@ -155,6 +155,7 @@ export const howDoIFindATabletopRpgGroupToPlayWith: AnswerConfigInput = {
     "what-should-a-new-dnd-player-know-before-their-first-game",
     "how-do-i-get-my-friends-interested-in-playing-dnd",
     "how-do-i-run-my-first-online-tabletop-rpg-session",
+    "how-do-i-enjoy-tabletop-rpgs-again",
   ],
   discovery: {
     id: "answer-find-rpg-group",
