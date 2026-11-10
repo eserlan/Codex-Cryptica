@@ -87,7 +87,14 @@ function proposal(): CompletedTurnProposal {
 describe("fictional world time", () => {
   it("advances manually without AI and commits an idempotent local clock action", () => {
     const before = session();
-    const advanced = advanceManualWorldTime(before, 1440, "Rest a day", "manual-1", 0, now);
+    const advanced = advanceManualWorldTime(
+      before,
+      1440,
+      "Rest a day",
+      "manual-1",
+      0,
+      now,
+    );
     expect(advanced.ok).toBe(true);
     if (!advanced.ok) return;
     expect(advanced.changed).toBe(true);
@@ -95,8 +102,17 @@ describe("fictional world time", () => {
     expect(advanced.session.worldTime?.elapsedMinutes).toBe(1440);
     expect(before.worldTime).toBeUndefined();
     expect(advanced.session.turns).toHaveLength(0);
-    expect(advanced.session.worldTime?.events[0]?.threadId).toBe("manual-world-time");
-    const replay = advanceManualWorldTime(advanced.session, 1440, "Rest a day", "manual-1", 1, now);
+    expect(advanced.session.worldTime?.events[0]?.threadId).toBe(
+      "manual-world-time",
+    );
+    const replay = advanceManualWorldTime(
+      advanced.session,
+      1440,
+      "Rest a day",
+      "manual-1",
+      1,
+      now,
+    );
     expect(replay.ok && replay.changed).toBe(false);
     expect(replay.ok && replay.session.worldTime?.elapsedMinutes).toBe(1440);
     expect(createPlayerTranscript(advanced.session).turns).toEqual([]);
@@ -104,14 +120,30 @@ describe("fictional world time", () => {
 
   it("rejects stale, invalid and pending-roll manual clock commands", () => {
     const before = session();
-    expect(advanceManualWorldTime(before, 60, "Rest", "id", 1, now)).toMatchObject({
-      ok: false, reason: "stale-revision",
+    expect(
+      advanceManualWorldTime(before, 60, "Rest", "id", 1, now),
+    ).toMatchObject({
+      ok: false,
+      reason: "stale-revision",
     });
-    expect(advanceManualWorldTime(before, 0, "Rest", "id", 0, now)).toMatchObject({
-      ok: false, reason: "invalid-fictional-time",
+    expect(
+      advanceManualWorldTime(before, 0, "Rest", "id", 0, now),
+    ).toMatchObject({
+      ok: false,
+      reason: "invalid-fictional-time",
     });
-    expect(advanceManualWorldTime({ ...before, pendingRoll: { id: "roll" } as never }, 60, "Rest", "id", 0, now)).toMatchObject({
-      ok: false, reason: "pending-roll",
+    expect(
+      advanceManualWorldTime(
+        { ...before, pendingRoll: { id: "roll" } as never },
+        60,
+        "Rest",
+        "id",
+        0,
+        now,
+      ),
+    ).toMatchObject({
+      ok: false,
+      reason: "pending-roll",
     });
   });
 
