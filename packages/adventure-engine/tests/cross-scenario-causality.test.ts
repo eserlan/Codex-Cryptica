@@ -28,9 +28,18 @@ function scenario(
     anchorRefs: [anchorRef],
     revealedSecretIds: [],
     secretBindings: { truth: `secret-${id}`, eventIds: {} },
-    events: id === "mill"
-      ? [{ id: "shortage", kind: "consequence", visibility: "player", text: "The grain supply stopped", at }]
-      : [],
+    events:
+      id === "mill"
+        ? [
+            {
+              id: "shortage",
+              kind: "consequence",
+              visibility: "player",
+              text: "The grain supply stopped",
+              at,
+            },
+          ]
+        : [],
   };
 }
 
@@ -45,10 +54,19 @@ function session(): AdventureSession {
     updatedAt: at,
     lastPlayedAt: at,
     revision: 2,
-    playerCharacter: { kind: "provisional", name: "Mara", description: "Scout" },
+    playerCharacter: {
+      kind: "provisional",
+      name: "Mara",
+      description: "Scout",
+    },
     premise: "Explore",
     sourceRecords: [],
-    visibleState: { objectives: [], activeCharacters: [], knownFacts: [], relationships: [] },
+    visibleState: {
+      objectives: [],
+      activeCharacters: [],
+      knownFacts: [],
+      relationships: [],
+    },
     hiddenState: { secrets: [], gmThreads: [] },
     provisionalFacts: [],
     turns: [],
@@ -93,7 +111,9 @@ describe("explicit cross-scenario causality", () => {
       eventId: "shortage",
       anchorRef: "grain",
     });
-    expect(propagateKnownConsequence(first.session, consequence, 3)).toMatchObject({
+    expect(
+      propagateKnownConsequence(first.session, consequence, 3),
+    ).toMatchObject({
       ok: true,
       changed: false,
     });
@@ -105,30 +125,60 @@ describe("explicit cross-scenario causality", () => {
 
   it("rejects unrelated, hidden, self-linked and stale cross-scenario effects", () => {
     const initial = session();
-    expect(propagateKnownConsequence(initial, { ...consequence, targetScenarioId: "hill-lights" }, 2)).toMatchObject({
-      ok: false, reason: "invalid-scenario",
+    expect(
+      propagateKnownConsequence(
+        initial,
+        { ...consequence, targetScenarioId: "hill-lights" },
+        2,
+      ),
+    ).toMatchObject({
+      ok: false,
+      reason: "invalid-scenario",
     });
-    expect(propagateKnownConsequence(initial, { ...consequence, targetScenarioId: "secret" }, 2)).toMatchObject({
-      ok: false, reason: "scenario-not-heard",
+    expect(
+      propagateKnownConsequence(
+        initial,
+        { ...consequence, targetScenarioId: "secret" },
+        2,
+      ),
+    ).toMatchObject({
+      ok: false,
+      reason: "scenario-not-heard",
     });
-    expect(propagateKnownConsequence(initial, { ...consequence, targetScenarioId: "mill" }, 2)).toMatchObject({
-      ok: false, reason: "invalid-scenario",
+    expect(
+      propagateKnownConsequence(
+        initial,
+        { ...consequence, targetScenarioId: "mill" },
+        2,
+      ),
+    ).toMatchObject({
+      ok: false,
+      reason: "invalid-scenario",
     });
     expect(propagateKnownConsequence(initial, consequence, 1)).toMatchObject({
-      ok: false, reason: "stale-revision",
+      ok: false,
+      reason: "stale-revision",
     });
     expect(initial.scenarioCollection?.items[1]?.events).toEqual([]);
   });
 
   it("cannot propagate an unobserved event or overwrite a settled target", () => {
     const initial = session();
-    expect(propagateKnownConsequence(initial, { ...consequence, sourceEventId: "unknown" }, 2)).toMatchObject({
-      ok: false, reason: "invalid-scenario",
+    expect(
+      propagateKnownConsequence(
+        initial,
+        { ...consequence, sourceEventId: "unknown" },
+        2,
+      ),
+    ).toMatchObject({
+      ok: false,
+      reason: "invalid-scenario",
     });
     const settled = structuredClone(initial);
     settled.scenarioCollection!.items[1]!.status = "resolved";
     expect(propagateKnownConsequence(settled, consequence, 2)).toMatchObject({
-      ok: false, reason: "invalid-transition",
+      ok: false,
+      reason: "invalid-transition",
     });
   });
 });
