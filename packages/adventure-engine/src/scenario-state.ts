@@ -43,12 +43,13 @@ export function playerScenarioProjection(
     status: scenario.status,
     events: scenario.events
       .filter((event) => event.visibility === "player")
-      .map(({ id, kind, text, at, turnId }) => ({
+      .map(({ id, kind, text, at, turnId, causedBy }) => ({
         id,
         kind,
         text,
         at,
         turnId,
+        ...(causedBy ? { causedBy: structuredClone(causedBy) } : {}),
       })),
   };
 }
