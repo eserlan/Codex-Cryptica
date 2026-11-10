@@ -39,7 +39,7 @@ function makeMockStorage(initial: Record<string, string> = {}) {
 
 describe("AdventureProvisionalFacts", () => {
   async function showDiscoveries(): Promise<void> {
-    await fireEvent.click(screen.getByRole("button", { name: "Show" }));
+    await fireEvent.click(screen.getByRole("button", { name: /review \d+ adventure discoveries/i }));
   }
 
   it("shows a typed player-visible suggestion and adds it on request", async () => {
@@ -91,7 +91,7 @@ describe("AdventureProvisionalFacts", () => {
 
     await showDiscoveries();
     expect(screen.getByText("Sunken Barrow")).toBeTruthy();
-    await fireEvent.click(screen.getByRole("button", { name: "Hide" }));
+    await fireEvent.click(screen.getByRole("button", { name: "Close discoveries" }));
 
     expect(screen.queryByText("Sunken Barrow")).toBeNull();
   });
@@ -170,6 +170,7 @@ describe("AdventureProvisionalFacts", () => {
     });
 
     await showDiscoveries();
+    await fireEvent.click(screen.getByRole("button", { name: "Review preferences" }));
     const checkbox = screen.getByRole("checkbox", {
       name: /auto-promote discoveries to codex/i,
     });
@@ -181,6 +182,91 @@ describe("AdventureProvisionalFacts", () => {
       "codex_adventure_auto_promote",
       "true",
     );
+  });
+
+  it("searches and filters discoveries without squeezing the summary", async () => {
+    render(AdventureProvisionalFacts, {
+      props: { facts: [fact, fact2], existingTitles: [], onAdd: vi.fn() },
+    });
+
+    await showDiscoveries();
+    const searchInput = screen.getByRole("searchbox", {
+      name: "Search discoveries",
+    });
+    await fireEvent.input(searchInput, { target: { value: "hermit" } });
+    expect(screen.queryByText("Sunken Barrow")).toBeNull();
+    expect(screen.getByText("Elric the Wandering Hermit")).toBeTruthy();
+
+    await fireEvent.input(searchInput, { target: { value: "" } });
+    await fireEvent.click(screen.getByRole("button", { name: "People" }));
+    expect(screen.queryByText("Sunken Barrow")).toBeNull();
+    expect(screen.getByText("Elric the Wandering Hermit")).toBeTruthy();
+  });
+
+  it("supports selective batch review and dismissing selected suggestions", async () => {
+    const onAddAll = vi.fn().mockResolvedValue(undefined);
+    render(AdventureProvisionalFacts, {
+      props: {
+        facts: [fact, fact2],
+        existingTitles: [],
+        onAdd: vi.fn(),
+        onAddAll,
+      },
+    });
+
+    await showDiscoveries();
+    await fireEvent.click(screen.getByRole("checkbox", { name: "Select Sunken Barrow" }));
+    await fireEvent.click(screen.getByRole("button", { name: "Add selected (1)" }));
+    expect(onAddAll).toHaveBeenCalledWith([fact]);
+    expect(screen.queryByText("Sunken Barrow")).toBeNull();
+
+    await fireEvent.click(screen.getByRole("checkbox", { name: "Select Elric the Wandering Hermit" }));
+    await fireEvent.click(screen.getByRole("button", { name: "Dismiss selected" }));
+    expect(screen.queryByText("Elric the Wandering Hermit")).toBeNull();
+  });
+
+  it("filters GM-only discoveries out of bulk selection", async () => {
+    const onAddAll = vi.fn().mockResolvedValue(undefined);
+    render(AdventureProvisionalFacts, {
+      props: {
+        facts: [fact, { ...fact2, visibility: "gm-only" as const }],
+        existingTitles: [],
+        onAdd: vi.fn(),
+        onAddAll,
+      },
+    });
+
+    await showDiscoveries();
+    expect(screen.queryByText("Elric the Wandering Hermit")).toBeNull();
+    await fireEvent.click(screen.getByRole("checkbox", { name: "Select all filtered discoveries" }));
+    await fireEvent.click(screen.getByRole("button", { name: "Add selected (1)" }));
+    expect(onAddAll).toHaveBeenCalledWith([fact]);
+  });
+
+  it("shows a recoverable error if saving a discovery fails", async () => {
+    const onAdd = vi.fn().mockRejectedValue(new Error("Storage unavailable"));
+    render(AdventureProvisionalFacts, {
+      props: { facts: [fact], existingTitles: [], onAdd },
+    });
+
+    await showDiscoveries();
+    await fireEvent.click(screen.getByRole("button", { name: "Add Sunken Barrow to Codex" }));
+    expect(await screen.findByRole("alert")).toHaveProperty("textContent", "Storage unavailable");
+    expect(screen.getByText("Sunken Barrow")).toBeTruthy();
+  });
+
+  it("keeps auto-promote opt-in behind review preferences", async () => {
+    const settings = new AdventurePromotionSettings(
+      new UIPersistence({ storage: makeMockStorage() }),
+    );
+    render(AdventureProvisionalFacts, {
+      props: { facts: [fact], existingTitles: [], onAdd: vi.fn(), settings },
+    });
+
+    await showDiscoveries();
+    expect(screen.queryByRole("checkbox", { name: /auto-promote/i })).toBeNull();
+    await fireEvent.click(screen.getByRole("button", { name: "Review preferences" }));
+    expect(screen.getByRole("checkbox", { name: /auto-promote/i })).toBeTruthy();
   });
 
   it("shows the scenario badge when a fact is linked to a scenario", async () => {
