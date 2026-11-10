@@ -130,7 +130,7 @@ export const howDoIEnjoyTabletopRpgsAgain: AnswerConfigInput = {
     heading: "Keeping track of what actually worked",
     paragraphs: [
       "The self-check above runs on memory, and memory of flat sessions is unreliable. Two lines after each session are enough: what you enjoyed, and what left you flat. Over a month, that small record shows whether one table, one format, or everything is the problem, which is hard to judge accurately on the night you happen to be deciding.",
-      "Codex Cryptica keeps those notes beside the campaign itself, as session logs linked to the characters, factions, and places involved, so the pattern is easy to review before you commit to a new table. It will not choose your games for you. It just stops the evidence disappearing between sessions.",
+      "Codex Cryptica has a session journal for recording play and a campaign workspace for organising characters, factions, and places. You can turn a useful journal entry or section into an entity in your vault, giving it a lasting place in your campaign notes. It will not choose your games for you. It just stops the evidence disappearing between sessions.",
     ],
     linkText: "See the campaign manager",
     href: "/solutions/campaign-manager",

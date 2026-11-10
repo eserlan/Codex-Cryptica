@@ -208,6 +208,11 @@ export const howDoYouMakeATabletopRpgSessionMoreEngaging: AnswerConfigInput = {
           "That answer covers getting players invested in the setting, lore, and world; this answer covers making the session itself, moment to moment, engaging to play through, regardless of how invested players already are in the world.",
       },
       {
+        with: "answer-enjoy-rpgs-again",
+        reason:
+          "That answer helps a player decide whether their own loss of enjoyment comes from workload, playstyle fit, or a need for a break; this answer helps a GM improve scene purpose, pacing, spotlight, and consequences for the table.",
+      },
+      {
         with: "answer-first-time-gm-hub",
         reason:
           "The hub page is the beginner's entry point covering the whole first-session path; this answer is the deeper, narrower technique page on session engagement specifically, that the hub links out to rather than restates.",

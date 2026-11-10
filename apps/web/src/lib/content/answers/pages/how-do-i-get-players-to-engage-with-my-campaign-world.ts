@@ -135,6 +135,13 @@ export const howDoIGetPlayersToEngageWithMyCampaignWorld: AnswerConfigInput = {
     ],
     uniqueValue:
       "Reframes engagement as a mechanism problem, not a content problem: lore becomes interesting once it's a choice, a stake or a callback, and separates roleplaying from in-character performance so quieter players aren't judged as disengaged.",
+    acknowledgedOverlap: [
+      {
+        with: "answer-enjoy-rpgs-again",
+        reason:
+          "That answer addresses a player's own loss of enjoyment and whether a table fits their tastes; this answer gives the GM ways to make campaign lore matter through player choices, stakes, and callbacks.",
+      },
+    ],
     relatedIntents: [
       "answer-npc-relationships",
       "answer-campaign-notes",
