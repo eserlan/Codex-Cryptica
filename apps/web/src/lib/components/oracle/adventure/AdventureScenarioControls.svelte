@@ -34,7 +34,16 @@
     aria-label="Known situations"
     data-testid="adventure-scenario-controls"
   >
-    <AdventureKnownSituations {scenarios} />
+    <AdventureKnownSituations
+      {scenarios}
+      {focusedId}
+      disabled={busy ||
+        manager.readOnly ||
+        !!manager.session?.pendingRoll ||
+        manager.phase === "generating"}
+      onFollow={(scenarioId) =>
+        void run(() => manager.focusScenario(scenarioId))}
+    />
     <div class="flex flex-wrap items-center gap-2">
       <span class="text-xs font-medium text-theme-text" aria-hidden="true"
         >Focus</span

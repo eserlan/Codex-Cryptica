@@ -125,6 +125,57 @@ describe("AdventureScenarioControls", () => {
     );
   });
 
+  it("lets players follow or unfollow a known lead without exposing hidden leads", async () => {
+    const m = manager([heard, unheard], null);
+    render(AdventureScenarioControls, { props: { manager: m } });
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Follow The old mill" }),
+    );
+    expect(m.focusScenario).toHaveBeenCalledWith("known-1");
+    expect(
+      screen.queryByRole("button", { name: "Follow Secret lead" }),
+    ).toBeNull();
+  });
+
+  it("can unfollow the currently focused lead", async () => {
+    const m = manager([heard], "known-1");
+    render(AdventureScenarioControls, { props: { manager: m } });
+    const follow = screen.getByRole("button", {
+      name: "Unfollow The old mill",
+    });
+    expect(follow.getAttribute("aria-pressed")).toBe("true");
+    await fireEvent.click(follow);
+    expect(m.focusScenario).toHaveBeenCalledWith(null);
+  });
+
+  it("labels player-known developments without exposing private events", () => {
+    const item = {
+      ...heard,
+      events: [
+        {
+          id: "visible-1",
+          kind: "discovery",
+          visibility: "player",
+          text: "Found the missing grain",
+        },
+        {
+          id: "hidden-1",
+          kind: "consequence",
+          visibility: "gm",
+          text: "The culprit is the priest",
+        },
+      ],
+    };
+    const m = manager([item], null);
+    render(AdventureScenarioControls, { props: { manager: m } });
+    const details = screen.getByRole("list", {
+      name: "Known situation details",
+    });
+    expect(details.textContent).toContain("Observed");
+    expect(details.textContent).toContain("Found the missing grain");
+    expect(details.textContent).not.toContain("The culprit is the priest");
+  });
+
   it("falls back to the open badge for an unknown status", () => {
     const odd = { ...heard, status: "mystery" };
     render(AdventureScenarioControls, {
