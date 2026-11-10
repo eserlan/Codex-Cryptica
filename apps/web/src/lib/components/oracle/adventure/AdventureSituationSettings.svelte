@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { formatWorldElapsedMinutes } from "@codex/adventure-engine";
   import type { AdventureManager } from "#lib/stores/oracle/adventure-manager.svelte.js";
   import { describeScenarioMutationError } from "#lib/stores/oracle/adventure-scenarios.js";
 
@@ -113,9 +114,19 @@
       <h4 class="text-sm font-semibold text-theme-text">
         Advance fictional time
       </h4>
+      {#if manager.session.worldTime?.elapsedMinutes}
+        <p class="text-xs text-theme-text" data-testid="adventure-elapsed-time">
+          Elapsed fictional time: <span class="font-medium"
+            >{formatWorldElapsedMinutes(
+              manager.session.worldTime.elapsedMinutes,
+            )}</span
+          >
+        </p>
+      {/if}
       <p class="text-xs text-theme-text">
-        Advances the local world clock once. Nothing progresses while the app is
-        closed; Oracle can consider elapsed time on your next action.
+        Advances the local world clock deterministically offline. Off-screen
+        scenario pressures advance automatically without AI; qualitative NPC
+        reactions are woven in by Oracle on your next action.
       </p>
       <div class="flex flex-wrap items-center gap-2">
         <label class="text-sm text-theme-text" for="adventure-time-step"

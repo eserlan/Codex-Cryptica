@@ -246,6 +246,23 @@ export interface ResourceCounter {
 /** A lightweight situation, never a mandatory quest or separate play session. */
 export type ScenarioStatus = "open" | "resolved" | "abandoned";
 
+/**
+ * Speculative GM-only actor intention and progression model.
+ * Distinct from committed ScenarioEvent history.
+ */
+export interface ScenarioPressure {
+  actor: string;
+  goal: string;
+  currentStance: string;
+  trigger: string;
+  progression: string;
+  expectedConsequence: string;
+  /** Optional deterministic fictional elapsed minutes threshold for AI-off advancement. */
+  triggerAfterMinutes?: number;
+  /** Fictional minute when the expected consequence was triggered (at most once). */
+  triggeredAtMinute?: number;
+}
+
 export interface ScenarioSeed {
   id: string;
   origin: {
@@ -261,6 +278,7 @@ export interface ScenarioSeed {
   };
   playerVisible: { rumour: string; lead: string; source?: string };
   gmOnly: { truth: string; ifInvestigated?: string };
+  pressure?: ScenarioPressure;
 }
 
 export interface ScenarioEvent {

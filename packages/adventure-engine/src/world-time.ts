@@ -3,6 +3,7 @@ import type {
   TimeAdvanceProposal,
   WorldTimeState,
 } from "./types";
+import { scenarioEventSecretId } from "./hidden-state";
 
 /** Short, player-safe duration relative to the adventure's start. */
 export function formatWorldElapsedMinutes(minutes: number): string {
@@ -15,6 +16,55 @@ export function formatWorldElapsedMinutes(minutes: number): string {
     mins ? `${mins}m` : "",
   ];
   return parts.filter(Boolean).join(" ") || "0m";
+}
+
+export interface TriggeredScenarioPressureEvent {
+  scenarioId: string;
+  eventId: string;
+  secretId: string;
+  text: string;
+}
+
+/**
+ * Deterministically trigger eligible open scenario pressures whose fictional
+ * time threshold has arrived, firing at most once.
+ */
+export function applyScenarioTimePressures(
+  session: AdventureSession,
+  elapsedMinutes: number,
+  turnOrEventId: string,
+  now: string,
+): TriggeredScenarioPressureEvent[] {
+  const triggered: TriggeredScenarioPressureEvent[] = [];
+  const items = session.scenarioCollection?.items ?? [];
+  for (const scenario of items) {
+    if (
+      scenario.status === "open" &&
+      scenario.pressure?.triggerAfterMinutes !== undefined &&
+      elapsedMinutes >= scenario.pressure.triggerAfterMinutes &&
+      scenario.pressure.triggeredAtMinute === undefined
+    ) {
+      scenario.pressure.triggeredAtMinute = elapsedMinutes;
+      const eventId = `${turnOrEventId.slice(0, 130)}:pressure:${scenario.id}`;
+      const secretId = scenarioEventSecretId(eventId);
+      scenario.events.push({
+        id: eventId,
+        kind: "consequence",
+        visibility: "gm",
+        text: scenario.pressure.expectedConsequence,
+        at: now,
+        turnId: turnOrEventId,
+      });
+      scenario.secretBindings.eventIds[eventId] = secretId;
+      triggered.push({
+        scenarioId: scenario.id,
+        eventId,
+        secretId,
+        text: scenario.pressure.expectedConsequence,
+      });
+    }
+  }
+  return triggered;
 }
 
 /** Advance only from a committed fictional action, never the device clock. */
@@ -45,13 +95,21 @@ export function applyTimeAdvance(
   if (elapsedMinutes > 52_560_000) {
     return { ok: false, reason: "fictional-time-limit-exceeded" };
   }
-  const known = new Set(
+  const knownGmThreads = new Set(
     session.hiddenState.gmThreads.map((thread) => thread.id),
   );
+  const knownScenarios = new Set(
+    (session.scenarioCollection?.items ?? [])
+      .filter((item) => item.status === "open")
+      .map((item) => item.id),
+  );
+  const isKnownThread = (threadId: string) =>
+    knownGmThreads.has(threadId) || knownScenarios.has(threadId);
+
   const seen = new Set<string>();
   for (const change of advance.developments) {
     if (
-      !known.has(change.threadId) ||
+      !isKnownThread(change.threadId) ||
       seen.has(change.threadId) ||
       !change.text.trim() ||
       change.text.length > 600

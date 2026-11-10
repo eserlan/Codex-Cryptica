@@ -1,7 +1,11 @@
 import { mergeProvisionalFacts } from "./provisional-facts";
 import { systemIdGenerator } from "@codex/runtime";
-import { detectHiddenLeakage, ensureScenarioSecrets } from "./hidden-state";
-import { applyTimeAdvance } from "./world-time";
+import {
+  detectHiddenLeakage,
+  ensureScenarioSecrets,
+  scenarioEventSecretId,
+} from "./hidden-state";
+import { applyScenarioTimePressures, applyTimeAdvance } from "./world-time";
 import {
   MAX_SERIALIZED_STATE_CHARS,
   parseTurnProposal,
@@ -25,6 +29,7 @@ import type {
   CommitMetadata,
   CommittedAdventureTurn,
   Result,
+  ScenarioItem,
 } from "./types";
 
 function completedTurnInputError(
@@ -98,7 +103,53 @@ export function applyCompletedTurn(
   if (!time.ok) return error("invalid-transition", time.reason);
   candidate.visibleState = materialized.visibleState;
   candidate.hiddenState = materialized.hiddenState;
-  if (time.value) candidate.worldTime = time.value;
+  if (candidate.scenarioCollection && proposal.timeAdvance?.developments) {
+    for (const dev of proposal.timeAdvance.developments) {
+      const target: ScenarioItem | undefined =
+        candidate.scenarioCollection.items.find(
+          (item) => item.id === dev.threadId && item.status === "open",
+        );
+      if (target) {
+        const eventId = `${meta.turnId.slice(0, 130)}:dev:${target.events.length + 1}`;
+        const secretId = scenarioEventSecretId(eventId);
+        target.events.push({
+          id: eventId,
+          kind: "consequence",
+          visibility: "gm",
+          text: dev.text.trim(),
+          at: now,
+          turnId: meta.turnId,
+        });
+        target.secretBindings.eventIds[eventId] = secretId;
+      }
+    }
+  }
+  if (time.value) {
+    const timeValue = time.value;
+    const elapsedMinutes = timeValue.elapsedMinutes;
+    candidate.worldTime = timeValue;
+    const triggered = applyScenarioTimePressures(
+      candidate,
+      elapsedMinutes,
+      meta.turnId,
+      now,
+    );
+    if (triggered.length > 0) {
+      candidate.worldTime = {
+        ...timeValue,
+        events: [
+          ...timeValue.events,
+          ...triggered.map((item) => ({
+            id: `${meta.turnId.slice(0, 120)}:world:pressure:${item.scenarioId}`,
+            turnId: meta.turnId,
+            atMinute: elapsedMinutes,
+            threadId: item.scenarioId,
+            text: `Scenario pressure consequence: ${item.text}`,
+          })),
+        ].slice(-80),
+      };
+    }
+  }
   candidate.provisionalFacts = mergeProvisionalFacts(
     candidate.provisionalFacts,
     materialized,
