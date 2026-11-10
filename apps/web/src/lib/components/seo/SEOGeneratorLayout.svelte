@@ -282,8 +282,10 @@
   $effect(() => {
     if (isThemeCustomizable && browser) {
       // Public generator genres drive the browsing theme, not the saved vault.
-      if (activeThemeId !== "workspace" &&
-          publicThemeStore.themeId !== activeThemeId) {
+      if (
+        activeThemeId !== "workspace" &&
+        publicThemeStore.themeId !== activeThemeId
+      ) {
         publicThemeStore.setTheme(activeThemeId);
       }
     }
