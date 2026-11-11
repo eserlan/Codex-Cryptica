@@ -172,6 +172,8 @@ describe("scenario player projection and disclosure", () => {
     expect(worldEntryPacing(current)).toEqual({
       quietTurns: 0,
       signDue: false,
+      eligibleScenarioIds: ["new-lead"],
+      activeLeadIds: [],
     });
     expect(
       buildAdventurePrompt({
@@ -234,8 +236,10 @@ describe("scenario player projection and disclosure", () => {
         ],
       };
       expect(worldEntryPacing(waiting)).toEqual({
-        quietTurns: 3,
+        quietTurns: 1,
         signDue: true,
+        eligibleScenarioIds: ["still-hidden"],
+        activeLeadIds: ["new-lead"],
       });
       expect(
         buildAdventurePrompt({

@@ -450,3 +450,16 @@ export function scenarioEventTurnIds(session: AdventureSession): Set<string> {
   }
   return ids;
 }
+
+/** Ids of the turns that logged a player-visible scenario event (a lead surfacing or a stage advancing). */
+export function playerScenarioEventTurnIds(
+  session: AdventureSession,
+): Set<string> {
+  const ids = new Set<string>();
+  for (const item of session.scenarioCollection?.items ?? []) {
+    for (const event of item.events) {
+      if (event.turnId && event.visibility === "player") ids.add(event.turnId);
+    }
+  }
+  return ids;
+}

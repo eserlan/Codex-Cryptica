@@ -6,6 +6,7 @@ import {
   scenarioEventTurnIds,
   sceneStallPacing,
   unsummarisedTurns,
+  worldEntryDiscoveryMetrics,
 } from "@codex/adventure-engine";
 
 /**
@@ -155,7 +156,7 @@ export const DEFAULT_DIAGNOSTIC_RECENT_TURNS = 20;
 const DIAGNOSTIC_README = [
   "GM-only diagnostic snapshot of one solo adventure, written for an LLM to read.",
   "It contains hidden secrets and GM threads. Do not share with players.",
-  "summary: quick orientation. quietTurns: trailing turns that changed nothing in the world (0 when under 4 turns or a roll is pending). integrityChecks: precomputed consistency findings (empty arrays mean clean).",
+  "summary: quick orientation. quietTurns: trailing turns that changed nothing in the world (0 when under 4 turns or a roll is pending). timeToFirstSign: 1-based turn when the first scenario sign/discovery surfaced (null if none). timeToFirstActionableLead: 1-based turn when the first actionable lead was reached (null if none). integrityChecks: precomputed consistency findings (empty arrays mean clean).",
   "state: the current truth. storySoFar is the GM's rolling notes on turns older than the prompt window, written from player-visible text; summary.unsummarisedTurns counts older turns not yet folded in. places lists where the player has been; facts and characters carry a placeId, and ones with none apply everywhere. visibleState is what the player knows; hiddenState and scenarioCollection are GM-only.",
   "source 'provisional' means the Oracle invented it in play; it is not backed by a Vault record.",
   "turns: oldest first. Every turn, condensed or full, carries signals; a missing signal means false or 0: quiet (changed nothing in the world), locationChanged, and stateChanges (visible entries added, updated or removed). summary.longestQuietRun and summary.stalledScenes count quiet streaks, a stalled scene being every fourth quiet turn in a row. Turns marked detail 'condensed' keep only action, narration, time and signals; detail 'full' also keeps every state patch.",
@@ -320,6 +321,7 @@ function diagnosticSummary(
   cutoff: number,
   lastTurn: AdventureSession["turns"][number] | undefined,
 ) {
+  const discoveryMetrics = worldEntryDiscoveryMetrics(session);
   return {
     sessionId: session.id,
     title: session.title,
@@ -331,6 +333,8 @@ function diagnosticSummary(
     unsummarisedTurns: unsummarisedTurns(session).length,
     ...secretCounts(session),
     ...scenarioCounts(session.scenarioCollection),
+    timeToFirstSign: discoveryMetrics.timeToFirstSign,
+    timeToFirstActionableLead: discoveryMetrics.timeToFirstActionableLead,
     ...diagnosticTurnSummary(session, cutoff, lastTurn),
     lastPlayedAt: session.lastPlayedAt,
   };
