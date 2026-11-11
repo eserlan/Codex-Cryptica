@@ -469,7 +469,7 @@ describe("fictional clock and temporal precision", () => {
     at: { year: 618, month: 2, day: 3 },
   };
 
-  it("uses elapsed time to reclassify a coming event without mutating the start date", () => {
+  it("reclassifies upcoming events without changing the start date", () => {
     const before = resolveTemporalWorldContext(query);
     expect(
       before.gmOnly.find((r) => r.id === "festival")?.applicability,
@@ -507,7 +507,7 @@ describe("fictional clock and temporal precision", () => {
     expect(yearOnly.playerSafe.some((r) => r.id === "festival")).toBe(false);
   });
 
-  it("honours custom months, avoids wall-clock dates and rejects invalid elapsed minutes", () => {
+  it("uses custom months and rejects invalid clock values", () => {
     expect(classifyEntityAt(festival, query.at, shortCalendar)).toBe("future");
     expect(
       classifyEntityAt(festival, query.at, shortCalendar, 2 * 1_440),
