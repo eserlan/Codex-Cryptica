@@ -27,7 +27,17 @@ export interface HexRecord {
   explored?: boolean;
   exploredAt?: number;
   draft?: HexDiscoveryDraft;
+  /**
+   * Present only while the terrain was generated and not since edited by hand.
+   * Absent means hand-set, which is always protected from regeneration.
+   */
+  generated?: GeneratedTerrain;
   updatedAt: number;
+}
+
+export interface GeneratedTerrain {
+  seed: string;
+  rules: number;
 }
 
 export interface HexCrawlState {
@@ -51,6 +61,11 @@ const NotesSchema = z
   .string()
   .transform((value) => value.slice(0, NOTES_MAX_LENGTH));
 
+export const GeneratedTerrainSchema = z.object({
+  seed: z.string().min(1).max(32),
+  rules: z.number().int().positive(),
+});
+
 export const HexRecordSchema = z.object({
   terrain: TerrainSchema.optional(),
   notes: NotesSchema.optional(),
@@ -58,6 +73,8 @@ export const HexRecordSchema = z.object({
   explored: z.boolean().optional(),
   exploredAt: z.number().optional(),
   draft: HexDiscoveryDraftSchema.optional(),
+  /** A malformed value is dropped and the hex kept (never throws). */
+  generated: GeneratedTerrainSchema.optional().catch(undefined),
   /** Missing timestamps read as 0, so older or hand-edited data is still usable. */
   updatedAt: z.number().optional(),
 });
@@ -89,9 +106,12 @@ export function normalizeHexCrawlState(raw: unknown): HexCrawlState {
     if (!hex) continue;
     const parsed = HexRecordSchema.safeParse(value);
     if (!parsed.success) continue;
+    const data = { ...parsed.data };
+    // Provenance never outlives its terrain.
+    if (!data.terrain) delete data.generated;
     const pruned = pruneHexRecord({
-      ...parsed.data,
-      updatedAt: parsed.data.updatedAt ?? 0,
+      ...data,
+      updatedAt: data.updatedAt ?? 0,
     });
     if (pruned) state.hexes[toHexKey(hex)] = pruned;
   }
@@ -133,6 +153,12 @@ export function upsertHexRecord(
   const key = toHexKey(hex);
   const current = state.hexes[key];
   const merged: HexRecord = { ...current, ...patch, updatedAt: now };
+
+  // Editing terrain by hand makes it hand-set; generated terrain is only kept
+  // when the same patch says so, and never without terrain.
+  if (("terrain" in patch && !("generated" in patch)) || !merged.terrain) {
+    delete merged.generated;
+  }
 
   if (patch.explored === true) {
     if (!current?.explored) merged.exploredAt = now;

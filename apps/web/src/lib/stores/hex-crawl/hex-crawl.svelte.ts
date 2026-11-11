@@ -45,11 +45,13 @@ export interface SelectedHex {
  */
 export class HexCrawlStore {
   selectedHex = $state<SelectedHex | null>(null);
+  /** Goes up by one after every successful hex write on any map. */
+  revision = $state(0);
   private opener: HTMLElement | null = null;
 
   constructor(private readonly deps: HexCrawlStoreDeps) {}
 
-  private stateFor(mapId: string): HexCrawlState {
+  stateFor(mapId: string): HexCrawlState {
     return normalizeHexCrawlState(this.deps.getMap(mapId)?.hexCrawl);
   }
 
@@ -94,6 +96,18 @@ export class HexCrawlStore {
     return this.deps.isGM() && !this.deps.isGuest();
   }
 
+  /**
+   * Apply one change to a map's hex state and save it in a single write. GM
+   * only, never in guest vaults. If the save fails the previous state is
+   * restored and the error is rethrown. Returns false if nothing was written.
+   */
+  applyChange(
+    mapId: string,
+    change: (state: HexCrawlState) => HexCrawlState,
+  ): Promise<boolean> {
+    return this.commit(mapId, change);
+  }
+
   /** Apply one change to the map's hex state and save. Returns false if nothing was written. */
   private async commit(
     mapId: string,
@@ -117,6 +131,7 @@ export class HexCrawlStore {
       }
       throw error;
     }
+    this.revision++;
     return true;
   }
 

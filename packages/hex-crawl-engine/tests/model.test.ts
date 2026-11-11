@@ -145,3 +145,88 @@ describe("countHexRecords (T005)", () => {
     expect(countHexRecords(state)).toBe(1);
   });
 });
+
+describe("generated terrain provenance (FR-021, FR-022, FR-033)", () => {
+  const hex = { q: 1, r: 2 };
+  const forest = { kind: "preset", id: "forest" } as const;
+  const base = (record: unknown): HexCrawlState =>
+    normalizeHexCrawlState({ enabled: true, hexes: { "1,2": record } });
+
+  it("keeps a valid generated marker and reads old records as hand-set", () => {
+    const state = base({
+      terrain: forest,
+      generated: { seed: "K7Q2-9FXM", rules: 1 },
+    });
+    expect(getHexRecord(state, hex)?.generated).toEqual({
+      seed: "K7Q2-9FXM",
+      rules: 1,
+    });
+    expect(
+      getHexRecord(base({ terrain: forest }), hex)?.generated,
+    ).toBeUndefined();
+  });
+
+  it("drops a malformed marker but keeps the hex", () => {
+    for (const generated of [
+      { seed: "", rules: 1 },
+      { seed: "A", rules: 0 },
+      "x",
+      { seed: "A".repeat(33), rules: 1 },
+    ]) {
+      const record = getHexRecord(
+        base({ terrain: forest, notes: "n", generated }),
+        hex,
+      );
+      expect(record?.terrain).toEqual(forest);
+      expect(record?.notes).toBe("n");
+      expect(record?.generated).toBeUndefined();
+    }
+  });
+
+  it("drops a marker that has no terrain", () => {
+    const record = getHexRecord(
+      base({ notes: "n", generated: { seed: "A", rules: 1 } }),
+      hex,
+    );
+    expect(record?.generated).toBeUndefined();
+  });
+
+  it("clears the marker when terrain is set by hand and keeps it when the patch sets both", () => {
+    const generated = { seed: "A", rules: 1 };
+    const start = upsertHexRecord(
+      empty,
+      hex,
+      { terrain: forest, generated },
+      NOW,
+    );
+    expect(getHexRecord(start, hex)?.generated).toEqual(generated);
+    const edited = upsertHexRecord(
+      start,
+      hex,
+      { terrain: { kind: "preset", id: "hills" } },
+      NOW + 1,
+    );
+    expect(getHexRecord(edited, hex)?.generated).toBeUndefined();
+    const notesOnly = upsertHexRecord(start, hex, { notes: "x" }, NOW + 1);
+    expect(getHexRecord(notesOnly, hex)?.generated).toEqual(generated);
+  });
+
+  it("removes the marker when terrain is removed, and a marker alone keeps no record", () => {
+    const generated = { seed: "A", rules: 1 };
+    const start = upsertHexRecord(
+      empty,
+      hex,
+      { terrain: forest, generated, notes: "keep" },
+      NOW,
+    );
+    const cleared = upsertHexRecord(
+      start,
+      hex,
+      { terrain: undefined },
+      NOW + 1,
+    );
+    expect(getHexRecord(cleared, hex)?.generated).toBeUndefined();
+    expect(getHexRecord(cleared, hex)?.notes).toBe("keep");
+    expect(pruneHexRecord({ generated, updatedAt: NOW })).toBeNull();
+  });
+});

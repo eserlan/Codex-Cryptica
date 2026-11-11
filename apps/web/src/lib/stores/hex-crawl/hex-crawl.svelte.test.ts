@@ -267,3 +267,67 @@ describe("HexCrawlStore.updateHex (atomic multi-field write)", () => {
     expect(deps.saveMaps).not.toHaveBeenCalled();
   });
 });
+
+describe("HexCrawlStore.applyChange (region generation seam)", () => {
+  const change = (state: import("hex-crawl-engine").HexCrawlState) => ({
+    ...state,
+    enabled: true,
+    hexes: {
+      ...state.hexes,
+      "1,1": {
+        terrain: { kind: "preset" as const, id: "forest" as const },
+        updatedAt: NOW,
+      },
+    },
+  });
+
+  it("writes one change with a single save and raises revision by one", async () => {
+    const { store, maps, deps } = setup();
+    expect(store.revision).toBe(0);
+    expect(await store.applyChange(MAP_ID, change)).toBe(true);
+    expect(deps.saveMaps).toHaveBeenCalledTimes(1);
+    expect(store.revision).toBe(1);
+    expect(maps[MAP_ID].hexCrawl?.hexes["1,1"]).toBeDefined();
+  });
+
+  it("restores the previous state, rethrows and leaves revision alone when the save fails", async () => {
+    const { store, maps } = setup({
+      saveMaps: vi.fn(async () => {
+        throw new Error("disk full");
+      }),
+    });
+    await expect(store.applyChange(MAP_ID, change)).rejects.toThrow(
+      "disk full",
+    );
+    expect(maps[MAP_ID].hexCrawl).toBeUndefined();
+    expect(store.revision).toBe(0);
+  });
+
+  it("restores the previous state when the save returns false", async () => {
+    const { store, maps } = setup({ saveMaps: vi.fn(async () => false) });
+    await expect(store.applyChange(MAP_ID, change)).rejects.toThrow();
+    expect(maps[MAP_ID].hexCrawl).toBeUndefined();
+    expect(store.revision).toBe(0);
+  });
+
+  it("returns false and writes nothing for a non-GM or a guest vault", async () => {
+    for (const deny of [{ isGM: () => false }, { isGuest: () => true }]) {
+      const { store, maps, deps } = setup(deny);
+      expect(await store.applyChange(MAP_ID, change)).toBe(false);
+      expect(deps.saveMaps).not.toHaveBeenCalled();
+      expect(maps[MAP_ID].hexCrawl).toBeUndefined();
+      expect(store.revision).toBe(0);
+    }
+  });
+
+  it("makes the existing writers raise revision too", async () => {
+    const { store } = setup();
+    await store.setNotes(MAP_ID, { q: 0, r: 0 }, "x");
+    await store.setTerrain(
+      MAP_ID,
+      { q: 0, r: 0 },
+      { kind: "preset", id: "hills" },
+    );
+    expect(store.revision).toBe(2);
+  });
+});

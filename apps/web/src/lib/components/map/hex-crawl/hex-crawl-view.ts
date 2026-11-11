@@ -1,5 +1,6 @@
 import {
   formatHexLabel,
+  hexToPoint,
   type HexCoord,
   type HexGridConfig,
   type HexLabelConfig,
@@ -60,4 +61,24 @@ export function hexLabelFor(
     return formatHexLabel(hex, { style: "numeric" }, orientation);
   }
   return formatHexLabel(hex, labelConfig, orientation);
+}
+
+/**
+ * Whether a hex is on the map: its centre lies inside the map image. Used to
+ * keep generated terrain off the edge. With no hex grid nothing is on the map.
+ */
+export function hexOnMap(
+  dimensions: { width: number; height: number },
+  gridConfig: HexGridConfig | null,
+): (hex: HexCoord) => boolean {
+  if (!gridConfig) return () => false;
+  return (hex) => {
+    const point = hexToPoint(hex, gridConfig);
+    return (
+      point.x >= 0 &&
+      point.y >= 0 &&
+      point.x <= dimensions.width &&
+      point.y <= dimensions.height
+    );
+  };
 }

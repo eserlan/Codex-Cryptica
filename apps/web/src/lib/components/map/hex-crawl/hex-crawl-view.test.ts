@@ -3,6 +3,7 @@ import {
   canSeeHexCrawl,
   hexGridConfigFor,
   hexLabelFor,
+  hexOnMap,
   isHexGridType,
 } from "./hex-crawl-view";
 
@@ -72,5 +73,32 @@ describe("hexLabelFor", () => {
 
   it("falls back to the numeric format when no label config is set", () => {
     expect(hexLabelFor({ q: -1, r: 0 }, undefined, "pointy")).toBe("-01.00");
+  });
+});
+
+describe("hexOnMap (region generation bounds)", () => {
+  const config = {
+    orientation: "pointy" as const,
+    size: 40,
+    offsetX: 0,
+    offsetY: 0,
+  };
+  const dimensions = { width: 800, height: 600 };
+
+  it("is true for hexes whose centre is inside the map", () => {
+    const onMap = hexOnMap(dimensions, config);
+    expect(onMap({ q: 3, r: 3 })).toBe(true);
+  });
+
+  it("is false beyond each of the four edges", () => {
+    const onMap = hexOnMap(dimensions, config);
+    expect(onMap({ q: -5, r: 3 })).toBe(false); // left
+    expect(onMap({ q: 3, r: -5 })).toBe(false); // top
+    expect(onMap({ q: 40, r: 3 })).toBe(false); // right
+    expect(onMap({ q: 3, r: 40 })).toBe(false); // bottom
+  });
+
+  it("is false for every hex when the map has no hex grid", () => {
+    expect(hexOnMap(dimensions, null)({ q: 3, r: 3 })).toBe(false);
   });
 });
