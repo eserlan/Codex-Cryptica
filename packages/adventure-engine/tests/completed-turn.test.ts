@@ -78,6 +78,38 @@ describe("completed turn commits", () => {
     expect(current).toEqual(before);
   });
 
+  it("still rejects elaborating a closed scenario listed for reveal", () => {
+    const current = session();
+    const closedScenario = scenario();
+    closedScenario.knowledge = "heard";
+    closedScenario.status = "resolved";
+    current.scenarioCollection = {
+      version: 1,
+      items: [closedScenario],
+      focusedScenarioId: null,
+    };
+    const before = structuredClone(current);
+    const next = proposal();
+    next.revealScenarioIds = [closedScenario.id];
+    next.elaborateScenarios = [
+      {
+        scenarioId: closedScenario.id,
+        stage: "actionable-clue",
+      },
+    ];
+
+    const result = applyCompletedTurn(
+      current,
+      next,
+      meta,
+      now,
+      () => "event-1",
+    );
+
+    expect(!result.ok && result.errors[0]?.code).toBe("invalid-transition");
+    expect(current).toEqual(before);
+  });
+
   it("rejects a baseline truth rewrite before applying the hidden patch", () => {
     const current = session();
     current.scenarioCollection = {

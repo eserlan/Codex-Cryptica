@@ -134,17 +134,19 @@ export function applyCompletedTurn(
   );
   const turn = createCommittedTurn(session, proposal, materialized, meta, now);
   candidate.turns = [...candidate.turns, turn];
+  const newlyRevealedScenarioIds = new Set<string>();
   const scenarioError = markRevealedScenarios(
     candidate,
     proposal.revealScenarioIds,
     turn,
     createId,
+    newlyRevealedScenarioIds,
   );
   if (scenarioError) return error("unknown-fact", scenarioError);
   const elaborationError = applyScenarioElaborations(
     candidate,
     proposal.elaborateScenarios,
-    proposal.revealScenarioIds,
+    [...newlyRevealedScenarioIds],
     turn,
     createId,
   );

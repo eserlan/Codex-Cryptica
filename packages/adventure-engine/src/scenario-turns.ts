@@ -14,6 +14,7 @@ function revealScenarioIfUnheard(
   scenarioId: string,
   turn: CommittedAdventureTurn,
   createId: IdFactory,
+  newlyRevealedScenarioIds?: Set<string>,
 ): string | null {
   const scenario = candidate.scenarioCollection?.items.find(
     (item) => item.id === scenarioId,
@@ -36,6 +37,7 @@ function revealScenarioIfUnheard(
     return "Unable to record scenario discovery";
   }
   scenario.knowledge = "heard";
+  newlyRevealedScenarioIds?.add(scenarioId);
   return null;
 }
 
@@ -44,9 +46,16 @@ export function markRevealedScenarios(
   scenarioIds: string[] | undefined,
   turn: CommittedAdventureTurn,
   createId: IdFactory,
+  newlyRevealedScenarioIds?: Set<string>,
 ): string | null {
   for (const scenarioId of scenarioIds ?? []) {
-    const err = revealScenarioIfUnheard(candidate, scenarioId, turn, createId);
+    const err = revealScenarioIfUnheard(
+      candidate,
+      scenarioId,
+      turn,
+      createId,
+      newlyRevealedScenarioIds,
+    );
     if (err) return err;
   }
   return null;

@@ -181,18 +181,25 @@ describe("scenario turn progression", () => {
 
   it("skips an elaboration of a scenario revealed this turn, leaving it untouched", () => {
     const current = candidate();
-    Object.assign(current.scenarioCollection!.items[0]!, {
-      knowledge: "heard",
-    });
-    const before = structuredClone(current);
+    const newlyRevealedScenarioIds = new Set<string>();
+    expect(
+      markRevealedScenarios(
+        current,
+        ["scenario-1"],
+        turn,
+        () => "new-event",
+        newlyRevealedScenarioIds,
+      ),
+    ).toBeNull();
+    const beforeElaboration = structuredClone(current);
     const result = applyScenarioElaborations(
       current,
       [clue],
-      ["scenario-1"],
+      [...newlyRevealedScenarioIds],
       turn,
       () => "new-event",
     );
     expect(result).toBeNull();
-    expect(current).toEqual(before);
+    expect(current).toEqual(beforeElaboration);
   });
 });
