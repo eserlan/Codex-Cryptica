@@ -209,7 +209,7 @@ and a message addressed to the GM ("To dm…") is handled correctly only by luck
       `confirmInteraction` with the saved revision.
 - [x] **Task C5: Prompt and diagnostics** — `GM-ONLY story so far` in state; field in
       the diagnostic JSON.
-- [x] **Task C6: Replay check** — Load the reviewed session, play 10 turns, and
+- [ ] **Task C6: Replay check** — Load the reviewed session, play 10 turns, and
       confirm catch-up, prompt size under budget and no thread reset.
 - [x] **Task C7: Verification gate and PR.** (#4725)
 

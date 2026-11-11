@@ -38,8 +38,8 @@ export function isQuietTurn(
   return !(
     scenarioTurnIds.has(turn.id) ||
     turn.resolvedRoll ||
-    visible.location ||
-    visible.situation ||
+    visible.location !== undefined ||
+    visible.situation !== undefined ||
     patchHasChange(visible.objectives) ||
     patchHasChange(visible.activeCharacters) ||
     patchHasChange(visible.knownFacts) ||

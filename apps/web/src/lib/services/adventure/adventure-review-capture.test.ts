@@ -225,6 +225,32 @@ describe("Adventure diagnostic JSON for AI", () => {
     expect(out._readme).toContain("signals");
   });
 
+  it("counts location and situation clears as state changes, not quiet turns", () => {
+    const source = manyTurns(6);
+    const quietTurn = (i: number) => ({
+      ...source.turns[i]!,
+      timeAdvance: undefined,
+      revealedSecretIds: [],
+      provisionalFactIds: [],
+    });
+    source.turns = source.turns.map((_, i) => quietTurn(i));
+    source.turns[2] = {
+      ...quietTurn(2),
+      visiblePatch: { ...quietTurn(2).visiblePatch, location: null },
+    } as never;
+    source.turns[5] = {
+      ...quietTurn(5),
+      visiblePatch: { ...quietTurn(5).visiblePatch, situation: null },
+    } as never;
+
+    const out = JSON.parse(adventureDiagnosticJson(source, { recentTurns: 6 }));
+
+    expect(out.turns[2].signals).toEqual({ locationChanged: true });
+    expect(out.turns[5].signals).toEqual({});
+    expect(out.summary.longestQuietRun).toBe(2);
+    expect(out.summary.stalledScenes).toBe(0);
+  });
+
   it("reports where the player is and keeps place tags in the snapshot", () => {
     const source = manyTurns(2);
     source.places = [
