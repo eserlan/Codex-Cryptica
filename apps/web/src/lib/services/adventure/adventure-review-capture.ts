@@ -10,14 +10,13 @@ export function adventureReviewJson(session: AdventureSession): string {
 }
 
 function quote(text: string): string {
-  return text.split(/\r?\n/).map((line) => "> " + line).join("\n");
+  return text
+    .split(/\r?\n/)
+    .map((line) => "> " + line)
+    .join("\n");
 }
 
-function addJsonSection(
-  lines: string[],
-  heading: string,
-  data: unknown,
-): void {
+function addJsonSection(lines: string[], heading: string, data: unknown): void {
   lines.push(
     "## " + heading,
     "",
@@ -90,9 +89,7 @@ export function adventureReviewMarkdown(session: AdventureSession): string {
       );
     }
     if (turn.suggestedActions?.length) {
-      lines.push(
-        "- Suggested actions: " + turn.suggestedActions.join(" | "),
-      );
+      lines.push("- Suggested actions: " + turn.suggestedActions.join(" | "));
     }
     lines.push("- Committed at: " + turn.committedAt, "");
   }
@@ -113,7 +110,11 @@ export function adventureReviewMarkdown(session: AdventureSession): string {
     "World time and private event ledger (GM-only)",
     session.worldTime ?? null,
   );
-  addJsonSection(lines, "Provisional entities and facts", session.provisionalFacts);
+  addJsonSection(
+    lines,
+    "Provisional entities and facts",
+    session.provisionalFacts,
+  );
   addJsonSection(lines, "Source record references", session.sourceRecords);
   addJsonSection(
     lines,
