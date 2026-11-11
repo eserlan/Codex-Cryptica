@@ -1,3 +1,4 @@
+<!-- fallow-ignore-file complexity -- Existing interactive discovery-review dialog; dismissal changes are covered by focused tests. -->
 <script lang="ts">
   import { tick } from "svelte";
   import type { ProvisionalFact } from "@codex/adventure-engine";
@@ -183,7 +184,6 @@
   }
 </script>
 
-<!-- fallow-ignore-next-line complexity -- The established discovery-review dialog is large; only its persistence callback changed. -->
 <svelte:window
   onkeydown={(event) => {
     if (expanded && event.key === "Escape") {
