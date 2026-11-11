@@ -735,4 +735,51 @@ describe("dated Adventure grounding after time advances", () => {
     ).toBe(true);
     expect(entry.worldEntry.at).toEqual(at);
   });
+
+  describe("place records", () => {
+    const entities = [
+      { id: "r-1", title: "Nombe", type: "location", content: "x".repeat(500) },
+      { id: "r-2", title: "Orra", type: "character", content: "y" },
+    ];
+
+    it("lists only ids, titles and types from the in-memory index", async () => {
+      const getWorldSnapshot = vi.fn().mockResolvedValue({
+        entities,
+        calendar: DEFAULT_CALENDAR,
+      });
+      const service = new AdventureContextService({
+        getById: vi.fn(),
+        search: vi.fn(),
+        getWorldSnapshot,
+      });
+      await expect(service.listPlaceRecords("vault-1")).resolves.toEqual([
+        { id: "r-1", title: "Nombe", type: "location" },
+        { id: "r-2", title: "Orra", type: "character" },
+      ]);
+      expect(getWorldSnapshot).toHaveBeenCalledWith("vault-1");
+    });
+
+    it("says unknown, not empty, when there is no world snapshot", async () => {
+      const service = new AdventureContextService({
+        getById: vi.fn(),
+        search: vi.fn(),
+      });
+      await expect(
+        service.listPlaceRecords("vault-1"),
+      ).resolves.toBeUndefined();
+    });
+
+    it("lets a closed Vault's error through for the caller to handle", async () => {
+      const service = new AdventureContextService({
+        getById: vi.fn(),
+        search: vi.fn(),
+        getWorldSnapshot: vi
+          .fn()
+          .mockRejectedValue(new Error("vault-not-open")),
+      });
+      await expect(service.listPlaceRecords("vault-1")).rejects.toThrow(
+        "vault-not-open",
+      );
+    });
+  });
 });

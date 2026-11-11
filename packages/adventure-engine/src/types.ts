@@ -35,6 +35,8 @@ export interface Place {
   sourceRecordId?: string;
   /** How it relates to other places, in plain words, e.g. "below Tiny village". */
   relation?: string;
+  /** Other names the story has used for it, so a variant resolves to the same place. */
+  aliases?: string[];
 }
 
 /** The model's declaration that the player has changed place. Never needed for scene changes inside one place. */

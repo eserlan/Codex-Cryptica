@@ -2,6 +2,7 @@ import {
   addScenario,
   advanceManualWorldTime,
   dismissAdventureDiscoveries,
+  linkAdventurePlaceRecord,
   recordScenarioTheory,
   setScenarioFocus,
   setScenarioStatus,
@@ -81,6 +82,18 @@ export class AdventureScenarios {
       dismissAdventureDiscoveries(
         session,
         factIds,
+        session.revision,
+        this.deps.now(),
+      ),
+    );
+  }
+
+  linkPlaceRecord(name: string, recordId: string): Promise<AdventureSession> {
+    return this.mutate((session) =>
+      linkAdventurePlaceRecord(
+        session,
+        name,
+        recordId,
         session.revision,
         this.deps.now(),
       ),

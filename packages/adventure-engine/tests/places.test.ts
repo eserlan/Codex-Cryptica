@@ -231,6 +231,30 @@ describe("moving between places", () => {
     expect(recap.knownFacts.map((item) => item.id)).toEqual(["f-global"]);
   });
 
+  it("treats a longer variant of a known name as the same place and remembers it", () => {
+    const after = commit(
+      placedSession(),
+      turn({ moveTo: { name: "Tiny village in the high slopes of Nombe" } }),
+    );
+    expect(after.currentPlaceId).toBe("p-high");
+    expect(after.places).toHaveLength(2);
+    expect(after.places?.[0]?.aliases).toEqual([
+      "Tiny village in the high slopes of Nombe",
+    ]);
+    const second = applyCompletedTurn(
+      after,
+      turn({
+        moveTo: { name: "the tiny village in the high slopes of nombe" },
+      }),
+      { ...meta, turnId: "turn-2", inputId: "input-2" },
+      meta.now,
+      nextId,
+    );
+    if (!second.ok) throw new Error("Expected turn");
+    const again = second.value;
+    expect(again.places).toHaveLength(2);
+  });
+
   it("never reuses an existing place id for a new place", () => {
     const ids = ["p-high", "p-fresh"];
     const result = applyCompletedTurn(
@@ -316,6 +340,21 @@ describe("move proposal validation", () => {
 });
 
 describe("what the model and the player see", () => {
+  it("marks linked places canonical and lists their other names", () => {
+    const s = placedSession();
+    s.places![0] = {
+      ...s.places![0]!,
+      sourceRecordId: "r-1",
+      aliases: ["The high village"],
+    };
+    const view = projectVisibleState(s) as Record<string, any>;
+    expect(view.knownPlaces[0]).toMatchObject({
+      canonical: true,
+      aliases: ["The high village"],
+    });
+    expect(view.knownPlaces[1]).not.toHaveProperty("canonical");
+  });
+
   it("sends here-and-unplaced items in full and the rest as short notes by place", () => {
     const view = projectVisibleState(placedSession()) as Record<string, any>;
     expect(view.activeCharacters.map((c: any) => c.id)).toEqual([
@@ -368,6 +407,7 @@ describe("what the model and the player see", () => {
     expect(prompt.state).not.toContain('Mara the traveller","source');
     expect(prompt.behavior).toContain("set moveTo");
     expect(prompt.behavior).toContain("copied from knownPlaces");
+    expect(prompt.behavior).toContain("marked canonical");
   });
 
   it("limits the player's who-is-here list to the current place", () => {

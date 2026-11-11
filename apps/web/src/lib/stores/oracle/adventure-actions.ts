@@ -53,8 +53,10 @@ export class AdventureActions {
     // Older World Entry sessions began without background situations.
     // Seed on their next committed action too, without mutating the persisted
     // session until the same optimistic-concurrency save succeeds.
-    const prepared = this.runtime.summarizer.attach(
-      await this.runtime.background.prepare(session, signal),
+    const prepared = await this.runtime.placeLinker.link(
+      this.runtime.summarizer.attach(
+        await this.runtime.background.prepare(session, signal),
+      ),
     );
     if (signal.aborted) throw abortReason(signal);
     const proposal = await this.runtime.deps.generation.generate(

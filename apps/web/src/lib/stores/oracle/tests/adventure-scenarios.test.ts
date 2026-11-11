@@ -234,4 +234,24 @@ describe("AdventureScenarios workflow", () => {
     expect(state.session).toBe(before);
     expect(state.session?.dismissedProvisionalFactIds ?? []).toEqual([]);
   });
+
+  it("ties a saved place to its Vault record and keeps the link on a failed save", async () => {
+    const { state, deps, runtime } = createAdventureRuntime();
+    state.session!.places = [{ id: "place-1", name: "Bridge" }];
+    const linked = await runtime.scenarios.linkPlaceRecord("Bridge", "rec-9");
+    expect(linked.places?.[0]?.sourceRecordId).toBe("rec-9");
+    expect(linked.revision).toBe(state.session!.revision);
+
+    state.session!.places = [{ id: "place-2", name: "Mill" }];
+    const before = state.session;
+    vi.spyOn(deps.repository, "save").mockResolvedValueOnce({
+      ok: false,
+      error: new Error("revision-conflict"),
+    });
+    await expect(
+      runtime.scenarios.linkPlaceRecord("Mill", "rec-1"),
+    ).rejects.toThrow("revision-conflict");
+    expect(state.session).toBe(before);
+    expect(state.session?.places?.[0]?.sourceRecordId).toBeUndefined();
+  });
 });

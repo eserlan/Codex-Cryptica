@@ -1,4 +1,5 @@
 import { MAX_PLACES } from "./schemas";
+import { matchPlace, withAlias } from "./place-names";
 import { allocateId, existingIds, type IdFactory } from "./reducer-ids";
 import type {
   AdventureSession,
@@ -13,8 +14,6 @@ const MAX_PLACE_NAME = 120;
 export type PlaceStepResult = { ok: true } | { ok: false; message: string };
 
 const clean = (value: string) => value.replace(/\s+/g, " ").trim();
-const sameName = (a: string, b: string) =>
-  clean(a).toLowerCase() === clean(b).toLowerCase();
 
 /** The place the session starts in, from its world entry or its first known location text. */
 function seedPlaceName(
@@ -45,6 +44,39 @@ export function seedPlaces(
 
 type Resolved = { places: Place[]; currentId: string | undefined };
 
+/** The known place a name refers to; a longer variant of its name is remembered as an alias. */
+function resolveKnownName(places: Place[], name: string): Resolved | undefined {
+  const match = matchPlace(places, name);
+  if (!match) return undefined;
+  const renamed = match.extended ? withAlias(match.place, name) : match.place;
+  return {
+    places:
+      renamed === match.place
+        ? places
+        : places.map((place) => (place === match.place ? renamed : place)),
+    currentId: match.place.id,
+  };
+}
+
+function createPlace(
+  places: Place[],
+  name: string,
+  relation: string | undefined,
+  ids: Set<string>,
+  createId: IdFactory,
+): Resolved | { error: string } {
+  // A full registry never fails a turn: the player is simply unplaced for now.
+  if (places.length >= MAX_PLACES) return { places, currentId: undefined };
+  const id = allocateId(ids, createId);
+  if (!id) return { error: "id-allocation-failed" };
+  const place: Place = {
+    id,
+    name: name.slice(0, MAX_PLACE_NAME),
+    ...(relation ? { relation } : {}),
+  };
+  return { places: [...places, place], currentId: id };
+}
+
 function resolveMove(
   places: Place[],
   previousId: string | undefined,
@@ -61,18 +93,10 @@ function resolveMove(
   // one, otherwise the player stays where they were.
   const name = clean(move.name ?? "");
   if (!name) return { places, currentId: previousId };
-  const existing = places.find((place) => sameName(place.name, name));
-  if (existing) return { places, currentId: existing.id };
-  // A full registry never fails a turn: the player is simply unplaced for now.
-  if (places.length >= MAX_PLACES) return { places, currentId: undefined };
-  const id = allocateId(ids, createId);
-  if (!id) return { error: "id-allocation-failed" };
-  const place: Place = {
-    id,
-    name: name.slice(0, MAX_PLACE_NAME),
-    ...(move.relation ? { relation: move.relation } : {}),
-  };
-  return { places: [...places, place], currentId: id };
+  return (
+    resolveKnownName(places, name) ??
+    createPlace(places, name, move.relation, ids, createId)
+  );
 }
 
 function touchedIds(patch: {
