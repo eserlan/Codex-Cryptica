@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_CALENDAR } from "chronology-engine";
 import type { Entity } from "schema";
-import { resolveTemporalWorldContext } from "./temporal-world-context";
+import {
+  classifyEntityAt,
+  resolveTemporalWorldContext,
+} from "./temporal-world-context";
 
 const year = (n: number) => ({ year: n });
 function link(target: string, label: string) {
@@ -440,5 +443,86 @@ describe("resolveTemporalWorldContext", () => {
     });
     expect(performance.now() - started).toBeLessThan(1_000);
     expect(result.omitted).toBeGreaterThan(0);
+  });
+});
+
+describe("fictional clock and temporal precision", () => {
+  const shortCalendar = {
+    ...DEFAULT_CALENDAR,
+    useGregorian: false,
+    months: [
+      { id: "bloom", name: "Bloom", days: 2 },
+      { id: "frost", name: "Frost", days: 3 },
+    ],
+  };
+  const town = entity("town", "location", {
+    connections: [link("festival", "held in town")],
+  });
+  const festival = entity("festival", "event", {
+    date: { year: 619, month: 1, day: 1 },
+    content: "A festival is held on Bloom 1, 619.",
+  });
+  const query = {
+    entities: [town, festival],
+    calendar: shortCalendar,
+    locationId: "town",
+    at: { year: 618, month: 2, day: 3 },
+  };
+
+  it("reclassifies upcoming events without changing the start date", () => {
+    const before = resolveTemporalWorldContext(query);
+    expect(before.gmOnly.find((r) => r.id === "festival")?.applicability).toBe(
+      "future",
+    );
+    expect(before.playerSafe.some((r) => r.id === "festival")).toBe(false);
+    const after = resolveTemporalWorldContext({
+      ...query,
+      elapsedMinutes: 2 * 1_440,
+    });
+    expect(after.gmOnly.find((r) => r.id === "festival")?.applicability).toBe(
+      "historical",
+    );
+    expect(after.playerSafe.some((r) => r.id === "festival")).toBe(true);
+    expect(after.at).toEqual(query.at);
+    expect(query.at).toEqual({ year: 618, month: 2, day: 3 });
+  });
+
+  it("does not invent a start hour or day from an imprecise date", () => {
+    const partialDay = resolveTemporalWorldContext({
+      ...query,
+      elapsedMinutes: 60,
+    });
+    expect(
+      partialDay.gmOnly.find((r) => r.id === "festival")?.applicability,
+    ).toBe("uncertain");
+
+    const yearOnly = resolveTemporalWorldContext({
+      ...query,
+      at: { year: 618 },
+      elapsedMinutes: 2 * 1_440,
+    });
+    expect(
+      yearOnly.gmOnly.find((r) => r.id === "festival")?.applicability,
+    ).toBe("uncertain");
+    expect(yearOnly.playerSafe.some((r) => r.id === "festival")).toBe(false);
+  });
+
+  it("uses custom months and rejects invalid clock values", () => {
+    expect(classifyEntityAt(festival, query.at, shortCalendar)).toBe("future");
+    expect(classifyEntityAt(festival, query.at, shortCalendar, 2 * 1_440)).toBe(
+      "historical",
+    );
+    expect(() =>
+      resolveTemporalWorldContext({
+        ...query,
+        elapsedMinutes: -1,
+      }),
+    ).toThrow("temporal-world-invalid-date");
+    expect(() =>
+      resolveTemporalWorldContext({
+        ...query,
+        elapsedMinutes: 1.5,
+      }),
+    ).toThrow("temporal-world-invalid-date");
   });
 });
