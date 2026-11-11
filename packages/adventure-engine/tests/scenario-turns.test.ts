@@ -7,7 +7,6 @@ import type {
   CommittedAdventureTurn,
   ScenarioElaborationProposal,
   ScenarioItem,
-  AdventureValidationError,
 } from "../src/types";
 import {
   emptyHiddenPatch,
@@ -88,10 +87,18 @@ describe("scenario turn progression", () => {
     ).toBeNull();
   });
 
-  it("rejects missing, out-of-location, and unrecordable discoveries", () => {
+  it("skips missing and out-of-location reveals, and rejects unrecordable ones", () => {
+    const missing: string[] = [];
     expect(
-      markRevealedScenarios(candidate(), ["missing"], turn, () => "new"),
-    ).toBe("Unknown scenario: missing");
+      markRevealedScenarios(
+        candidate(),
+        ["missing"],
+        turn,
+        () => "new",
+        missing,
+      ),
+    ).toBeNull();
+    expect(missing).toEqual(["reveal: unknown scenario missing"]);
     const current = candidate();
     current.scenarioCollection!.items[0]!.anchorRefs = ["mill"];
     current.worldEntry = {
@@ -99,9 +106,18 @@ describe("scenario turn progression", () => {
       location: { kind: "provisional", name: "Distant town" },
       intent: "explore",
     };
+    const elsewhere: string[] = [];
     expect(
-      markRevealedScenarios(current, ["scenario-1"], turn, () => "new"),
-    ).not.toBeNull();
+      markRevealedScenarios(
+        current,
+        ["scenario-1"],
+        turn,
+        () => "new",
+        elsewhere,
+      ),
+    ).toBeNull();
+    expect(elsewhere).toHaveLength(1);
+    expect(current.scenarioCollection?.items[0]?.knowledge).toBe("unheard");
     delete current.worldEntry;
     expect(markRevealedScenarios(current, ["scenario-1"], turn, () => "")).toBe(
       "Unable to record scenario discovery",
@@ -109,41 +125,81 @@ describe("scenario turn progression", () => {
     expect(current.scenarioCollection?.items[0]?.knowledge).toBe("unheard");
   });
 
-  const failures: Array<{
+  type Case = {
     name: string;
     item?: Partial<ScenarioItem>;
     changes?: ScenarioElaborationProposal[];
-    revealed?: string[];
     id?: string;
-    code: AdventureValidationError["code"];
-  }> = [
+  };
+  const run = ({ item, changes, id }: Case) => {
+    const current = candidate();
+    Object.assign(
+      current.scenarioCollection!.items[0]!,
+      { knowledge: "heard" },
+      item,
+    );
+    const dropped: string[] = [];
+    const result = applyScenarioElaborations(
+      current,
+      changes ?? [clue],
+      [],
+      turn,
+      () => id ?? "new-event",
+      dropped,
+    );
+    return { result, dropped, scenario: current.scenarioCollection!.items[0]! };
+  };
+
+  const skipped: Array<Case & { reason: string; stage: string }> = [
     {
       name: "unknown",
       changes: [{ ...clue, scenarioId: "missing" }],
-      code: "unknown-fact",
+      reason: "Unknown scenario",
+      stage: "hearsay",
     },
     {
       name: "closed",
       item: { status: "resolved" },
-      code: "invalid-transition",
+      reason: "is not open",
+      stage: "hearsay",
     },
     {
       name: "unheard",
       item: { knowledge: "unheard" },
-      code: "invalid-transition",
+      reason: "must be heard",
+      stage: "hearsay",
     },
-    { name: "duplicate", changes: [clue, clue], code: "invalid-transition" },
+    {
+      name: "duplicate",
+      changes: [clue, clue],
+      reason: "repeated in one turn",
+      stage: "actionable-clue",
+    },
     {
       name: "skip",
       changes: [{ ...clue, stage: "revelation-crisis" }],
-      code: "invalid-transition",
+      reason: "Cannot skip elaboration stages",
+      stage: "hearsay",
     },
     {
       name: "regression",
       item: { stage: "actionable-clue" },
-      code: "invalid-transition",
+      reason: "Cannot transition scenario",
+      stage: "actionable-clue",
     },
-    { name: "allocation", id: "", code: "id-allocation-failed" },
+  ];
+  it.each(skipped)(
+    "skips and records an invalid elaboration ($name)",
+    (testCase) => {
+      const { result, dropped, scenario } = run(testCase);
+      expect(result).toBeNull();
+      expect(dropped).toEqual([expect.stringContaining(testCase.reason)]);
+      expect(scenario.stage).toBe(testCase.stage);
+    },
+  );
+
+  const failures: Case[] = [
+    { name: "allocation", id: "" },
     {
       name: "full",
       item: {
@@ -155,27 +211,15 @@ describe("scenario turn progression", () => {
           at: now,
         })),
       },
-      code: "id-allocation-failed",
     },
   ];
   it.each(failures)(
-    "rejects invalid elaboration ($name)",
-    ({ item, changes, revealed, id, code }) => {
-      const current = candidate();
-      Object.assign(
-        current.scenarioCollection!.items[0]!,
-        { knowledge: "heard" },
-        item,
-      );
-      const result = applyScenarioElaborations(
-        current,
-        changes ?? [clue],
-        revealed ?? [],
-        turn,
-        () => id ?? "new-event",
-      );
+    "still fails the turn when the discovery cannot be recorded ($name)",
+    (testCase) => {
+      const { result, dropped } = run(testCase);
       expect(result?.ok).toBe(false);
-      expect(result?.errors[0]?.code).toBe(code);
+      expect(result?.errors[0]?.code).toBe("id-allocation-failed");
+      expect(dropped).toEqual([]);
     },
   );
 

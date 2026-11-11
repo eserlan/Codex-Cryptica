@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { applyCompletedTurn } from "../src/completed-turn";
+import { parseAdventureSession } from "../src";
 import { meta, now, proposal, scenario, session } from "./reducer-fixtures";
 
 describe("completed turn commits", () => {
@@ -54,6 +55,33 @@ describe("completed turn commits", () => {
     });
   });
 
+  it("commits the good parts of a turn whose patch also had a bad update, and records the slip", () => {
+    const current = session();
+    const next = proposal();
+    next.visiblePatch.knownFacts.add = [
+      { text: "The bridge is out", source: "provisional" },
+    ];
+    next.visiblePatch.knownFacts.update = [
+      { id: "no-such-fact", text: "Stale", source: "provisional" },
+    ];
+    const result = applyCompletedTurn(current, next, meta, now, () => "fact-1");
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error("Expected turn");
+    expect(result.value.visibleState.knownFacts.map((f) => f.text)).toEqual([
+      "The bridge is out",
+    ]);
+    expect(result.value.turns[0]?.dropped).toEqual([
+      expect.stringContaining("no-such-fact"),
+    ]);
+    // The record survives a save and reload, and a clean turn carries none.
+    const reloaded = parseAdventureSession(
+      JSON.parse(JSON.stringify(result.value)),
+    );
+    expect(reloaded.turns[0]?.dropped).toHaveLength(1);
+    const clean = applyCompletedTurn(current, proposal(), meta, now);
+    expect(clean.ok && clean.value.turns[0]?.dropped).toBeUndefined();
+  });
+
   it("keeps the original session unchanged when a later scenario step fails", () => {
     const current = session();
     current.scenarioCollection = {
@@ -64,16 +92,9 @@ describe("completed turn commits", () => {
     const before = structuredClone(current);
     const next = proposal();
     next.revealScenarioIds = ["scenario-1"];
-    next.elaborateScenarios = [
-      { scenarioId: "missing", stage: "actionable-clue" },
-    ];
-    const result = applyCompletedTurn(
-      current,
-      next,
-      meta,
-      now,
-      () => "event-1",
-    );
+    // No id can be allocated for the discovery event, which would corrupt the
+    // scenario's history, so the whole turn is refused.
+    const result = applyCompletedTurn(current, next, meta, now, () => "");
     expect(!result.ok && result.errors[0]?.code).toBe("unknown-fact");
     expect(current).toEqual(before);
   });
