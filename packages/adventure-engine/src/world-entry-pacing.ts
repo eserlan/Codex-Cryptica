@@ -1,6 +1,10 @@
 import { candidateScenariosForLocation } from "./contextual-rumours";
 import { playerScenarioEventTurnIds } from "./scenario-collection";
-import type { AdventureSession, CommittedAdventureTurn } from "./types";
+import type {
+  AdventureSession,
+  CommittedAdventureTurn,
+  ScenarioItem,
+} from "./types";
 
 /** Committed turns without player-observable scenario progress before a background sign is due. */
 export const WORLD_ENTRY_QUIET_TURN_LIMIT = 1;
@@ -21,6 +25,22 @@ export interface WorldEntryDiscoveryMetrics {
   timeToFirstSign: number | null;
   /** 1-based turn number of the first actionable lead (heard scenario with concrete lead or actionable-clue stage), or null. */
   timeToFirstActionableLead: number | null;
+}
+
+function hasActionableDiscoveryOnTurn(
+  item: ScenarioItem,
+  turnId: string,
+): boolean {
+  const playerEvents = item.events.filter(
+    (event) => event.visibility === "player",
+  );
+  const eventIndex = playerEvents.findIndex((event) => event.turnId === turnId);
+  const stageIsActionable =
+    item.stage === "actionable-clue" || item.stage === "revelation-crisis";
+
+  if (!stageIsActionable) return false;
+  if (eventIndex === 0) return item.origin.kind === "manual";
+  return eventIndex > 0 && playerEvents[eventIndex]?.kind === "discovery";
 }
 
 function hadPlayerSeedActivity(
@@ -126,20 +146,7 @@ export function worldEntryDiscoveryMetrics(
 
     const hasActionableLead =
       session.scenarioCollection?.items.some((item) => {
-        const playerEvents = item.events.filter(
-          (e) => e.visibility === "player",
-        );
-        const eventIndex = playerEvents.findIndex((e) => e.turnId === turn.id);
-        if (eventIndex > 0) return true;
-        if (
-          eventIndex === 0 &&
-          item.origin.kind === "manual" &&
-          (item.stage === "actionable-clue" ||
-            item.stage === "revelation-crisis")
-        ) {
-          return true;
-        }
-        return false;
+        return hasActionableDiscoveryOnTurn(item, turn.id);
       }) ||
       session.provisionalFacts.some(
         (f) =>

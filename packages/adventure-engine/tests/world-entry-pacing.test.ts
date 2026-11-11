@@ -380,4 +380,42 @@ describe("world entry pacing", () => {
       timeToFirstActionableLead: null,
     });
   });
+
+  it.each(["status-change", "consequence"] as const)(
+    "does not treat a later %s event as an actionable lead",
+    (kind) => {
+      const rumour = scenarioItem("rumour-1", "heard");
+      rumour.events.push(
+        {
+          id: "ev-disc-1",
+          kind: "discovery",
+          visibility: "player",
+          text: "A rumour surfaced",
+          at: "2026-11-03T10:00:00.000Z",
+          turnId: "turn-2",
+        },
+        {
+          id: "ev-follow-up",
+          kind,
+          visibility: "player",
+          text: "A non-actionable scenario update",
+          at: "2026-11-03T10:05:00.000Z",
+          turnId: "turn-3",
+        },
+      );
+
+      const s = session([turn(1), turn(2), turn(3)], {
+        scenarioCollection: {
+          version: 1,
+          items: [rumour],
+          focusedScenarioId: null,
+        },
+      });
+
+      expect(worldEntryDiscoveryMetrics(s)).toEqual({
+        timeToFirstSign: 2,
+        timeToFirstActionableLead: null,
+      });
+    },
+  );
 });
