@@ -3,6 +3,7 @@ import { playerScenarioCollectionProjection } from "./scenario-state";
 import { ensureScenarioSecrets } from "./hidden-state";
 import { worldEntryPacing } from "./world-entry-pacing";
 import { projectVisibleState } from "./prompt-state";
+import { sceneStallPacing } from "./scene-pacing";
 import { candidateScenariosForLocation } from "./contextual-rumours";
 import type {
   AdventureSession,
@@ -30,6 +31,8 @@ export function buildAdventurePrompt(input: AdventurePromptInput) {
   const scenarios = candidateScenariosForLocation(input.session);
   const focusedScenarioId = input.session.scenarioCollection?.focusedScenarioId;
   const worldEntry = input.session.worldEntry;
+  const stalled = sceneStallPacing(input.session);
+  const stallDue = stalled?.stalled ? stalled : undefined;
   const phaseInstruction =
     input.phase === "opening"
       ? "This is the opening scene. No player action is expected yet; introduce an immediate situation and return a complete or roll-required proposal instead of asking the player for input."
@@ -47,6 +50,12 @@ export function buildAdventurePrompt(input: AdventurePromptInput) {
     "A character may not know something, but a reply must never be a dead end. Let the NPC offer a name, point to someone or somewhere that knows more, or let the player notice a visible clue. When the player repeats a question about the same unknown, someone present offers a concrete observable clue or safe lead; do not disclose GM-only truths, and reveal scenario secrets only through justified fictional discovery.",
     "Do not repeat the ambient detail (sounds, hearth, cups, weather) used in the previous turn; vary the sensory colour or leave it out. If the last few turns stayed in one scene without new information, change something: someone arrives or leaves, an object or sound draws attention, or an off-screen consequence reaches the scene. Never decide the player's response.",
     "Places: currentPlace is where the player is now and knownPlaces lists the places they have been to; people and facts listed under elsewhere are not here unless the story brings them back. When the player travels to a different place, set moveTo: use placeId for a known place, or name (with a short relation such as \"below Tiny village\") for a new one. Never set moveTo for movement inside the same place, and keep a place's recorded name instead of inventing a variant. People who should travel with the player must appear in this turn's activeCharacters patch.",
+    'Sometimes the player writes to you rather than to the character, for example a line starting "To dm" or "OOC", or a correction about where they are or who is present. Treat it as a correction to the fiction, not as something the character says: apply it to the state patch (location, characters present), then continue the scene briefly in the new situation. Do not narrate the player\'s out-of-character words as speech, and do not argue with the correction.',
+    ...(stallDue
+      ? [
+          `STALLED SCENE: the last ${stallDue.quietTurns} turns changed nothing in the world: no new fact, character, place or consequence. In this turn, change something concrete: someone arrives or leaves, an object or sound draws attention, or an off-screen consequence reaches the scene. Do not repeat any detail from the previous turns, and still never decide the player's response.`,
+        ]
+      : []),
     "Canonical source records outrank provisional session material.",
     ...(scenarios.length
       ? [

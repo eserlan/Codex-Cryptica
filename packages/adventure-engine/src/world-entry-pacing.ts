@@ -1,3 +1,4 @@
+import { scenarioEventTurnIds } from "./scenario-collection";
 import type { AdventureSession, CommittedAdventureTurn } from "./types";
 
 /** Committed turns without any seed activity before a background sign is due. */
@@ -37,11 +38,7 @@ export function worldEntryPacing(
     (item) => item.status === "open" && item.knowledge === "unheard",
   );
   if (!hasHiddenThread && !unheard) return undefined;
-  const activityTurns = new Set(
-    session.scenarioCollection?.items.flatMap((item) =>
-      item.events.map((event) => event.turnId),
-    ) ?? [],
-  );
+  const activityTurns = scenarioEventTurnIds(session);
   let quietTurns = 0;
   for (let i = session.turns.length - 1; i >= 0; i -= 1) {
     if (

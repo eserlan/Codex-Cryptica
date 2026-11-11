@@ -214,6 +214,7 @@ describe("Adventure diagnostic JSON for AI", () => {
       hiddenSecrets: 1,
       unheardScenarios: 1,
       pendingRoll: false,
+      quietTurns: expect.any(Number),
     });
     expect(out.turns.map((t: { detail: string }) => t.detail)).toEqual([
       "condensed",
