@@ -534,9 +534,12 @@ it("TEMP_FORMAT_PROBE", async () => {
   const original = await readFile(path, "utf8");
   const marker = '\nit("TEMP_FORMAT_PROBE"';
   const clean = original.slice(0, original.indexOf(marker));
+  const typescript = await import("prettier/plugins/typescript");
+  const estree = await import("prettier/plugins/estree");
   const formatted = await prettier.format(clean, {
     filepath: path,
     parser: "typescript",
+    plugins: [typescript, estree],
   });
   const fragment = formatted.slice(
     formatted.indexOf('describe("fictional clock and temporal precision"'),
