@@ -121,6 +121,7 @@ export class AdventureContextService {
     locationId?: string;
     at: TemporalMetadata | DateSelection;
     maxRecords?: number;
+    elapsedMinutes?: number;
   }): Promise<TemporalWorldContext> {
     if (!this.resolver.getWorldSnapshot) {
       throw new Error("temporal-world-not-configured");
@@ -177,6 +178,7 @@ export class AdventureContextService {
   ): Promise<PeriodPolicy | null> {
     const at = session.worldEntry?.at;
     if (!at) return null;
+    const elapsedMinutes = session.worldTime?.elapsedMinutes ?? 0;
     if (!this.resolver.getWorldSnapshot)
       throw new Error("temporal-world-not-configured");
     const snapshot = await this.resolver.getWorldSnapshot(session.vaultId);
@@ -201,7 +203,7 @@ export class AdventureContextService {
                 ]),
               ),
             } as unknown as Entity);
-        return classifyEntityAt(entity, at, snapshot.calendar);
+        return classifyEntityAt(entity, at, snapshot.calendar, elapsedMinutes);
       },
     };
   }
@@ -395,6 +397,7 @@ export class AdventureContextService {
               characterId,
               locationId,
               at: entry.at,
+              elapsedMinutes: session.worldTime?.elapsedMinutes ?? 0,
               maxRecords,
             })
           ).gmOnly
