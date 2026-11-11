@@ -113,6 +113,8 @@ describe("GuestExporter", () => {
             enabled: true,
             hexes: {
               "1,2": {
+                terrain: { kind: "preset", id: "hills" },
+                generated: { seed: "SECRET-SEEDX", rules: 1 },
                 notes: "GM secret: the ruin hides a cult",
                 aiNotes: "Hazard: sinkholes",
                 explored: true,
@@ -136,6 +138,7 @@ describe("GuestExporter", () => {
     expect("hexCrawl" in bundle.maps[0]).toBe(false);
     expect(JSON.stringify(bundle)).not.toContain("cult");
     expect(JSON.stringify(bundle)).not.toContain("sinkholes");
+    expect(JSON.stringify(bundle)).not.toContain("SECRET-SEEDX");
   });
 
   it("should sanitize maps and canvases based on player visibility and entity inclusion", () => {

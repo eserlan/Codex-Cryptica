@@ -37,6 +37,12 @@ function services(
     observer: {},
     controller: {},
     offer: { current: offerCurrent },
+    region: {
+      review: null,
+      message: null,
+      undoAvailable: false,
+      leave: vi.fn(),
+    },
     journey: {
       route,
       committedSteps: 0,

@@ -833,7 +833,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "hex-crawl-mode",
     title: "Hex Crawl mode",
     content:
-      "Click a hex with no pin or token to open its panel. Track its terrain, your notes and whether the party has explored it. Only you see this: players and guests never see hex notes, terrain, drafts or explored markers.",
+      "Click a hex with no pin or token to open its panel. Track its terrain, your notes and whether the party has explored it. Only you see this: players and guests never see hex notes, terrain, drafts or explored markers. Use Generate region in a hex panel to propose seeded, coherent terrain on your device with no AI, review it on the map, then accept or cancel.",
     icon: "icon-[lucide--hexagon]",
   },
   "biome-explorer": {

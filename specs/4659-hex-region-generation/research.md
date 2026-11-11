@@ -25,7 +25,7 @@ Read before designing, so that nothing is rebuilt:
 
 - Smooth noise gives clustering for free: nearby hexes have similar values, so they get similar terrain (FR-007, SC-004).
 - Plausible transitions fall out of the layout of nominal points: water, coast, lowland, hills and mountains sit in order along height, so hills appear between lowland and mountains without a special rule.
-- The value for a hex depends only on the seed, the settings, the hex's position and nearby fixed terrain. It does **not** depend on which other hexes are in the same request or the order they are processed. That is what makes multi-pass growth safe: a hex generated in pass two gets the value it would have had in pass one, and hexes committed earlier are anchors it must fit (FR-014, FR-016).
+- The value for a hex depends only on the seed, the settings, the hex's position and nearby fixed terrain. It does **not** depend on which other hexes are in the same request or the order they are processed. That is what makes multi-pass growth safe: a hex generated in pass two gets the value it would have had in pass one (except within 2 hexes of the seam, where it also fits the terrain committed in pass one), and hexes committed earlier are anchors it must fit (FR-014, FR-016).
 - Anchoring is what makes a proposal meet hand-set terrain without a hard edge (FR-008).
 
 "Height" and "wetness" are tuning dials for a plausible look. They are not elevation or rainfall data, are never stored and are never shown to the GM (FR-012).

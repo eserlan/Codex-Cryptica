@@ -26,6 +26,9 @@
   import HexExploreOffer from "./HexExploreOffer.svelte";
   import HexJourneyControls from "./HexJourneyControls.svelte";
   import HexJourneyOverlay from "./HexJourneyOverlay.svelte";
+  import RegionProposalOverlay from "./region/RegionProposalOverlay.svelte";
+  import RegionReviewBar from "./region/RegionReviewBar.svelte";
+  import RegionUndoBar from "./region/RegionUndoBar.svelte";
   import type { NoticeStorage } from "./hex-discovery-notice";
   import { browserStorage } from "#lib/utils/runtime-deps.js";
 
@@ -156,7 +159,24 @@
       services.offer.current = null;
     }
   });
-  onDestroy(() => services.journey.dispose());
+  let regionPick = $state<string | null>(null);
+  const review = $derived(
+    services.region.review && services.region.review.mapId === mapId
+      ? services.region.review
+      : null,
+  );
+  $effect(() => {
+    // Leaving the map or turning the mode off drops the preview and the undo.
+    const active = visible ? mapId : null;
+    if (services.region.review && services.region.review.mapId !== active) {
+      services.region.leave();
+    }
+    if (!services.region.review) regionPick = null;
+  });
+  onDestroy(() => {
+    services.journey.dispose();
+    services.region.leave();
+  });
 </script>
 
 {#if visible && config}
@@ -179,6 +199,21 @@
     viewport={viewportSize}
     visible={journeyVisible}
   />
+
+  {#if review}
+    <RegionProposalOverlay
+      proposal={review.proposal}
+      adjustments={review.adjustments}
+      gridConfig={config}
+      {project}
+      {zoom}
+      selectedKey={regionPick}
+      onPick={(key) => (regionPick = key)}
+    />
+    <RegionReviewBar store={services.region} selectedKey={regionPick} />
+  {:else}
+    <RegionUndoBar store={services.region} />
+  {/if}
 
   <div
     class="pointer-events-auto absolute left-2 top-2 z-20 flex flex-wrap items-center gap-2"
@@ -226,6 +261,7 @@
       {entities}
       {discovery}
       {storage}
+      region={isGM && !isGuest ? services.region : undefined}
     />
   {/if}
 {/if}
