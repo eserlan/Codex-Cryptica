@@ -1,5 +1,8 @@
 import type { AdventureSession } from "@codex/adventure-engine";
-import { formatWorldElapsedMinutes } from "@codex/adventure-engine";
+import {
+  formatWorldElapsedMinutes,
+  sceneStallPacing,
+} from "@codex/adventure-engine";
 
 /**
  * On-demand, local-only GM review snapshot. Both formats include hidden state
@@ -148,7 +151,7 @@ export const DEFAULT_DIAGNOSTIC_RECENT_TURNS = 20;
 const DIAGNOSTIC_README = [
   "GM-only diagnostic snapshot of one solo adventure, written for an LLM to read.",
   "It contains hidden secrets and GM threads. Do not share with players.",
-  "summary: quick orientation. integrityChecks: precomputed consistency findings (empty arrays mean clean).",
+  "summary: quick orientation. quietTurns: trailing turns that changed nothing in the world (0 when under 4 turns or a roll is pending). integrityChecks: precomputed consistency findings (empty arrays mean clean).",
   "state: the current truth. visibleState is what the player knows; hiddenState and scenarioCollection are GM-only.",
   "source 'provisional' means the Oracle invented it in play; it is not backed by a Vault record.",
   "turns: oldest first. Turns marked detail 'condensed' keep only action, narration and time; detail 'full' also keeps every state patch.",
@@ -251,6 +254,7 @@ export function adventureDiagnosticJson(
           (item) => item.knowledge === "unheard",
         ).length,
         pendingRoll: session.pendingRoll != null,
+        quietTurns: sceneStallPacing(session)?.quietTurns ?? 0,
         lastPlayerAction: lastTurn?.playerAction ?? null,
         lastPlayedAt: session.lastPlayedAt,
       },
