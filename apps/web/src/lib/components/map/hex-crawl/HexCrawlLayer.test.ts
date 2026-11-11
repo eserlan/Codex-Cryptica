@@ -186,16 +186,21 @@ describe("HexCrawlLayer region review", () => {
   it("drops the undo and message when the active map changes after an accept", async () => {
     const { svc, region } = await withReview();
     region.open("map-1", "area", { q: 0, r: 0 }, 1);
-    const view = render(HexCrawlLayer, props(svc));
+    render(HexCrawlLayer, props(svc));
     await fireEvent.click(screen.getByRole("button", { name: "Accept" }));
     expect(await screen.findByRole("button", { name: "Undo" })).toBeTruthy();
+    expect(region.undoAvailable).toBe(true);
+    // A layer that sees another active map (the first stays mounted, so
+    // unmounting cannot be what clears the state).
     mapMock.activeMapId = "map-2";
-    view.unmount();
-    render(HexCrawlLayer, props(svc));
-    mapMock.activeMapId = "map-1";
+    try {
+      render(HexCrawlLayer, props(svc));
+      await vi.waitFor(() => expect(region.mapId).toBeNull());
+    } finally {
+      mapMock.activeMapId = "map-1";
+    }
     expect(region.undoAvailable).toBe(false);
     expect(region.message).toBeNull();
-    expect(region.mapId).toBeNull();
   });
 
   it("drops the review when the layer unmounts", async () => {

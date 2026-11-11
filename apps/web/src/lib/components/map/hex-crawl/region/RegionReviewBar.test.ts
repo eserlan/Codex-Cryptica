@@ -62,6 +62,15 @@ describe("RegionReviewBar", () => {
     expect(map.hexCrawl).toBeUndefined();
   });
 
+  it("Escape inside a field keeps the review open", async () => {
+    const { store } = open();
+    render(RegionReviewBar, { store, selectedKey: null });
+    await fireEvent.keyDown(screen.getByLabelText("Hex label"), {
+      key: "Escape",
+    });
+    expect(store.review).not.toBeNull();
+  });
+
   it("Accept saves, and is disabled while saving", async () => {
     const { store, map } = open();
     render(RegionReviewBar, { store, selectedKey: null });
