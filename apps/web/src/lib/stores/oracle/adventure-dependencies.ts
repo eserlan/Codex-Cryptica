@@ -1,4 +1,7 @@
-import type { AdventureTurnGenerationService } from "@codex/ai-engine";
+import type {
+  AdventureSummaryService,
+  AdventureTurnGenerationService,
+} from "@codex/ai-engine";
 import {
   adventureControlAuthority,
   type AdventureControlAuthority,
@@ -19,12 +22,15 @@ import { diceEngine as defaultDiceEngine } from "dice-engine";
 import { systemIdGenerator } from "#lib/utils/runtime-deps.js";
 import {
   defaultGenerationService,
+  defaultSummaryService,
   clearDefaultGenerationInteraction,
   confirmDefaultGenerationInteraction,
 } from "./adventure-generation.svelte";
 export interface AdventureManagerDependencies {
   repository?: AdventureSessionRepository;
   generation?: Pick<AdventureTurnGenerationService, "generate">;
+  /** Folds older turns into the rolling story notes. */
+  summary?: Pick<AdventureSummaryService, "summarize">;
   clearGenerationInteraction?: (sessionId: string) => Promise<void>;
   confirmGenerationInteraction?: (
     sessionId: string,
@@ -41,6 +47,7 @@ export interface AdventureManagerDependencies {
 export function resolveAdventureDependencies({
   repository = adventureSessionRepository,
   generation = defaultGenerationService(),
+  summary = defaultSummaryService(),
   clearGenerationInteraction = clearDefaultGenerationInteraction,
   confirmGenerationInteraction = confirmDefaultGenerationInteraction,
   context = adventureContextService,
@@ -53,6 +60,7 @@ export function resolveAdventureDependencies({
   return {
     repository,
     generation,
+    summary,
     clearGenerationInteraction,
     confirmGenerationInteraction,
     context,

@@ -9,6 +9,7 @@ import type { AdventureManagerDependencies } from "./adventure-dependencies";
 import type { AdventureState } from "./adventure-state.svelte";
 import { AdventureBackground } from "./adventure-background";
 import { AdventureScenarios } from "./adventure-scenarios";
+import { AdventureSummarizer } from "./adventure-summary";
 
 /** Shared generation lifetime and persistence boundary for all workflows. */
 export class AdventureRuntime {
@@ -16,6 +17,7 @@ export class AdventureRuntime {
   generationController: AbortController | null = null;
   readonly background: AdventureBackground;
   readonly scenarios: AdventureScenarios;
+  readonly summarizer: AdventureSummarizer;
   constructor(
     readonly state: AdventureState,
     readonly deps: Required<AdventureManagerDependencies>,
@@ -29,6 +31,7 @@ export class AdventureRuntime {
     this.background = new AdventureBackground(deps.idGenerator, grounding, () =>
       genreForTheme(themeStore.worldThemeId),
     );
+    this.summarizer = new AdventureSummarizer(state, deps);
     this.scenarios = new AdventureScenarios(state, deps, (session) =>
       this.verifySession(session),
     );
@@ -107,6 +110,8 @@ export class AdventureRuntime {
         .clearGenerationInteraction(saved.session.id)
         .catch(() => {});
     }
+    // Fold older turns into the story notes while the player reads.
+    this.summarizer.schedule(saved.session);
     return saved.session;
   }
 

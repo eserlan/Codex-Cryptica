@@ -2,6 +2,7 @@ import type { AdventureSession } from "@codex/adventure-engine";
 import {
   formatWorldElapsedMinutes,
   sceneStallPacing,
+  unsummarisedTurns,
 } from "@codex/adventure-engine";
 
 /**
@@ -152,7 +153,7 @@ const DIAGNOSTIC_README = [
   "GM-only diagnostic snapshot of one solo adventure, written for an LLM to read.",
   "It contains hidden secrets and GM threads. Do not share with players.",
   "summary: quick orientation. quietTurns: trailing turns that changed nothing in the world (0 when under 4 turns or a roll is pending). integrityChecks: precomputed consistency findings (empty arrays mean clean).",
-  "state: the current truth. places lists where the player has been; facts and characters carry a placeId, and ones with none apply everywhere. visibleState is what the player knows; hiddenState and scenarioCollection are GM-only.",
+  "state: the current truth. storySoFar is the GM's rolling notes on turns older than the prompt window, written from player-visible text; summary.unsummarisedTurns counts older turns not yet folded in. places lists where the player has been; facts and characters carry a placeId, and ones with none apply everywhere. visibleState is what the player knows; hiddenState and scenarioCollection are GM-only.",
   "source 'provisional' means the Oracle invented it in play; it is not backed by a Vault record.",
   "turns: oldest first. Turns marked detail 'condensed' keep only action, narration and time; detail 'full' also keeps every state patch.",
   "timeAdvance is null when a turn did not move the fictional clock. Time is in minutes.",
@@ -269,6 +270,7 @@ function diagnosticSummary(
     status: session.status,
     elapsedMinutes: session.worldTime?.elapsedMinutes ?? 0,
     ...diagnosticPlaceSummary(session),
+    unsummarisedTurns: unsummarisedTurns(session).length,
     ...secretCounts(session),
     ...scenarioCounts(session.scenarioCollection),
     ...diagnosticTurnSummary(session, cutoff, lastTurn),
@@ -287,6 +289,7 @@ function diagnosticState(session: AdventureSession) {
     worldTime: session.worldTime ?? null,
     places: session.places ?? [],
     currentPlaceId: session.currentPlaceId ?? null,
+    storySoFar: session.storySoFar ?? null,
     provisionalFacts: session.provisionalFacts,
     sourceRecords: session.sourceRecords,
     pendingRoll: session.pendingRoll ?? null,

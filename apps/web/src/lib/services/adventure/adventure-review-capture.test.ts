@@ -198,6 +198,17 @@ describe("Adventure diagnostic JSON for AI", () => {
     expect(out.state.visibleState.knownFacts[0].placeId).toBe("p-1");
     const legacy = JSON.parse(adventureDiagnosticJson(manyTurns(2)));
     expect(legacy.summary.currentPlace).toBeNull();
+    expect(legacy.state.storySoFar).toBeNull();
+    expect(legacy.summary.unsummarisedTurns).toBe(0);
+    const noted = manyTurns(30);
+    noted.storySoFar = {
+      text: "Notes.",
+      throughSequence: 9,
+      updatedAt: "2026-11-11T10:00:00.000Z",
+    };
+    const withNotes = JSON.parse(adventureDiagnosticJson(noted));
+    expect(withNotes.state.storySoFar.text).toBe("Notes.");
+    expect(withNotes.summary.unsummarisedTurns).toBe(12);
     expect(legacy.state.places).toEqual([]);
   });
 

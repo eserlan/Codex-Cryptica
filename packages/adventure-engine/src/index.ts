@@ -21,3 +21,4 @@ export * from "./contextual-rumours";
 export * from "./grounding";
 export * from "./places";
 export * from "./prompt-state";
+export * from "./story-summary";
