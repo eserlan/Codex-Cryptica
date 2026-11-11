@@ -310,4 +310,31 @@ describe("RegionGenerationStore", () => {
     await undoing;
     expect(ctx.store.message).toBeNull();
   });
+
+  it.each([
+    ["not an object", "[]"],
+    ["a number", "5"],
+    ["no seed", JSON.stringify({ settings: { preset: "arid" } })],
+    ["an empty seed", JSON.stringify({ seed: "  " })],
+    ["a seed over 32 characters", JSON.stringify({ seed: "X".repeat(33) })],
+    ["a seed that is not text", JSON.stringify({ seed: 12 })],
+  ])("ignores remembered data that is %s", (_name, raw) => {
+    const { store, data } = setup();
+    data.set(`${REGION_STORAGE_PREFIX}${MAP_ID}`, raw);
+    expect(store.remembered(MAP_ID)).toBeNull();
+    expect(store.open(MAP_ID, "area", CENTRE, 1)).toBe(true);
+    expect(store.review?.seed).toBe("AAAA-BBBB");
+  });
+
+  it("keeps a valid remembered seed and falls back to Temperate for unknown settings", () => {
+    const { store, data } = setup();
+    data.set(
+      `${REGION_STORAGE_PREFIX}${MAP_ID}`,
+      JSON.stringify({ seed: "abcd-1234", settings: { preset: "lava" } }),
+    );
+    expect(store.remembered(MAP_ID)).toEqual({
+      seed: "ABCD-1234",
+      settings: { preset: "temperate", levels: {} },
+    });
+  });
 });
