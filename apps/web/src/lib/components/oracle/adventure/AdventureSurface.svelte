@@ -496,6 +496,7 @@
   });
 </script>
 
+<!-- fallow-ignore-next-line complexity -- Existing adventure entry and restoration view, with additive dismissal filtering. -->
 <!-- fallow-ignore-next-line css-broken-reference -->
 <div class="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4">
   {#if restoringActiveAdventure}
