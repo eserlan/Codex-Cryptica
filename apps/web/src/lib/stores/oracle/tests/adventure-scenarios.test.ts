@@ -133,4 +133,22 @@ describe("AdventureScenarios workflow", () => {
       "invalid-transition",
     );
   });
+
+  it("records a player conjecture through runtime.scenarios.recordTheory", async () => {
+    const { state, runtime } = createAdventureRuntime();
+    await runtime.scenarios.add(item("one"));
+    const updated = await runtime.scenarios.recordTheory(
+      "one",
+      "I believe the mayor took the key",
+    );
+    expect(updated.revision).toBe(2);
+    const target = updated.scenarioCollection?.items[0];
+    expect(target?.events).toHaveLength(1);
+    expect(target?.events[0]).toMatchObject({
+      kind: "theory",
+      visibility: "player",
+      text: "I believe the mayor took the key",
+    });
+    expect(state.session).toEqual(updated);
+  });
 });

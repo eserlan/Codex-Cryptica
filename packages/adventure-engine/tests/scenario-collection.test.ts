@@ -2,8 +2,11 @@ import { describe, expect, it } from "vitest";
 import {
   addScenario,
   appendScenarioEvent,
+  buildAdventureRecap,
   createScenarioState,
   parseAdventureSession,
+  playerScenarioCollectionProjection,
+  recordScenarioTheory,
   setScenarioFocus,
   setScenarioStatus,
 } from "../src";
@@ -281,5 +284,125 @@ describe("scenario collection commands", () => {
       ),
     ).toMatchObject({ ok: false, reason: "id-collision" });
     expect(original.scenarioCollection?.items[0]?.events).toEqual([]);
+  });
+
+  it("records a player conjecture/theory on heard scenarios and rejects unheard scenarios or blanks", () => {
+    const heardSession = session();
+    const unheardResult = addScenario(
+      heardSession,
+      item(seed("two", "batch-two"), "unheard"),
+      4,
+    );
+    expect(unheardResult.ok).toBe(true);
+    if (!unheardResult.ok) return;
+
+    // Reject on unheard scenario
+    const rejectUnheard = recordScenarioTheory(
+      unheardResult.session,
+      "two",
+      "The priest is covering something up",
+      "theory-1",
+      unheardResult.session.revision,
+    );
+    expect(rejectUnheard).toMatchObject({
+      ok: false,
+      reason: "scenario-not-heard",
+    });
+
+    // Reject on empty or whitespace conjecture
+    const rejectBlank = recordScenarioTheory(
+      unheardResult.session,
+      "one",
+      "   ",
+      "theory-2",
+      unheardResult.session.revision,
+    );
+    expect(rejectBlank).toMatchObject({
+      ok: false,
+      reason: "invalid-scenario",
+    });
+
+    // Successfully records theory on heard scenario
+    const accepted = recordScenarioTheory(
+      unheardResult.session,
+      "one",
+      "The miller was seen leaving before dawn",
+      "theory-3",
+      unheardResult.session.revision,
+      at,
+    );
+    expect(accepted.ok).toBe(true);
+    if (!accepted.ok) return;
+
+    const targetItem = accepted.session.scenarioCollection?.items.find(
+      (entry) => entry.id === "one",
+    );
+    expect(targetItem?.events).toHaveLength(1);
+    expect(targetItem?.events[0]).toMatchObject({
+      id: "theory-3",
+      kind: "theory",
+      visibility: "player",
+      text: "The miller was seen leaving before dawn",
+      at,
+    });
+
+    // Visible in player projection
+    const projected = playerScenarioCollectionProjection(accepted.session);
+    const projectedItem = projected.items.find((entry) => entry?.id === "one");
+    expect(projectedItem?.events[0]).toMatchObject({
+      id: "theory-3",
+      kind: "theory",
+      text: "The miller was seen leaving before dawn",
+    });
+  });
+
+  it("includes player-safe knownLeads and elapsedTimeLabel in buildAdventureRecap without leaking secrets", () => {
+    let s = session();
+    s = {
+      ...s,
+      worldTime: {
+        version: 1,
+        elapsedMinutes: 150,
+        events: [
+          {
+            id: "private-evt",
+            turnId: "turn-1",
+            atMinute: 60,
+            threadId: "gm-thread",
+            text: "Private GM update",
+          },
+        ],
+      },
+    };
+    const addUnheard = addScenario(
+      s,
+      item(seed("unheard-lead", "batch-u", "Secret Truth 99"), "unheard"),
+      s.revision,
+    );
+    expect(addUnheard.ok).toBe(true);
+    if (!addUnheard.ok) return;
+    s = addUnheard.session;
+
+    const focused = setScenarioFocus(s, "one", s.revision);
+    expect(focused.ok).toBe(true);
+    if (!focused.ok) return;
+    s = focused.session;
+
+    const recap = buildAdventureRecap(s);
+    expect(recap.elapsedTimeLabel).toBe("2h 30m");
+    expect(recap.knownLeads).toHaveLength(1);
+    expect(recap.knownLeads?.[0]).toEqual({
+      id: "one",
+      lead: "Lead one",
+      status: "open",
+      focused: true,
+      lastUpdate: undefined,
+    });
+
+    // Verify no private GM data leaked
+    const serialised = JSON.stringify(recap);
+    expect(serialised).not.toContain("unheard-lead");
+    expect(serialised).not.toContain("Secret Truth 99");
+    expect(serialised).not.toContain("Private GM update");
   });
 });

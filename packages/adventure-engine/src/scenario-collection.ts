@@ -300,6 +300,36 @@ function hasSessionIdentity(session: AdventureSession, id: string): boolean {
   );
 }
 
+export function recordScenarioTheory(
+  session: AdventureSession,
+  scenarioId: string,
+  text: string,
+  eventId: string,
+  expectedRevision: number,
+  now = session.updatedAt,
+): ScenarioCommandResult {
+  const target = session.scenarioCollection?.items.find(
+    (item) => item.id === scenarioId,
+  );
+  if (!target) return { ok: false, reason: "unknown-scenario" };
+  if (target.knowledge !== "heard") {
+    return { ok: false, reason: "scenario-not-heard" };
+  }
+  return appendScenarioEvent(
+    session,
+    scenarioId,
+    {
+      id: eventId,
+      kind: "theory",
+      visibility: "player",
+      text: text.trim(),
+      at: now,
+    },
+    expectedRevision,
+    now,
+  );
+}
+
 const STATUS_EVENT_PREFIX: Record<ScenarioStatus, string> = {
   open: "Reopened",
   resolved: "Resolved",

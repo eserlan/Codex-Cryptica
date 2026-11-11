@@ -1,6 +1,7 @@
 import {
   addScenario,
   advanceManualWorldTime,
+  recordScenarioTheory,
   setScenarioFocus,
   setScenarioStatus,
   type ScenarioItem,
@@ -67,6 +68,20 @@ export class AdventureScenarios {
         session,
         minutes,
         cause,
+        eventId,
+        session.revision,
+        this.deps.now(),
+      ),
+    );
+  }
+
+  recordTheory(scenarioId: string, text: string): Promise<AdventureSession> {
+    const eventId = this.deps.idGenerator();
+    return this.mutate((session) =>
+      recordScenarioTheory(
+        session,
+        scenarioId,
+        text,
         eventId,
         session.revision,
         this.deps.now(),

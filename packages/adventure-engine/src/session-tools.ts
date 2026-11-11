@@ -6,11 +6,14 @@
  */
 import { applyVisiblePatch } from "./reducer";
 import { validateStateBudget } from "./schemas";
+import { playerScenarioCollectionProjection } from "./scenario-state";
+import { formatWorldElapsedMinutes } from "./world-time";
 import type {
   AdventureRecap,
   AdventureSession,
   AdventureValidationError,
   DicePreset,
+  KnownLeadRecap,
   ResourceCounter,
   Result,
   RollHistoryEntry,
@@ -53,6 +56,20 @@ export function buildAdventureRecap(
           source: "provisional" as const,
         }
       : undefined);
+  const projectedScenarios = playerScenarioCollectionProjection(session);
+  const knownLeads: KnownLeadRecap[] = projectedScenarios.items
+    .filter((item): item is NonNullable<typeof item> => Boolean(item))
+    .map((item) => ({
+      id: item.id,
+      lead: item.playerVisible.lead,
+      status: item.status,
+      focused: projectedScenarios.focusedScenarioId === item.id,
+      lastUpdate: item.events.at(-1)?.text,
+    }));
+  const elapsedTimeLabel =
+    session.worldTime && session.worldTime.elapsedMinutes > 0
+      ? formatWorldElapsedMinutes(session.worldTime.elapsedMinutes)
+      : undefined;
   return {
     location: session.visibleState.location,
     situation,
@@ -60,6 +77,8 @@ export function buildAdventureRecap(
     activeCharacters: session.visibleState.activeCharacters,
     knownFacts: session.visibleState.knownFacts,
     recentTurnSummaries: recentTurns.map((turn) => turn.narration),
+    ...(knownLeads.length > 0 ? { knownLeads } : {}),
+    ...(elapsedTimeLabel ? { elapsedTimeLabel } : {}),
   };
 }
 
