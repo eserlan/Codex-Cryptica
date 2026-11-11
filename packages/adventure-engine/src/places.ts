@@ -52,12 +52,13 @@ function resolveMove(
   ids: Set<string>,
   createId: IdFactory,
 ): Resolved | { error: string } {
-  if (move.placeId) {
-    const known = places.find((place) => place.id === move.placeId);
-    return known
-      ? { places, currentId: known.id }
-      : { error: `unknown-place:${move.placeId}` };
-  }
+  const known = move.placeId
+    ? places.find((place) => place.id === move.placeId)
+    : undefined;
+  if (known) return { places, currentId: known.id };
+  // An id the model got wrong (invented, or copied from another kind of record)
+  // is ignored rather than failing the player's turn: use the name if there is
+  // one, otherwise the player stays where they were.
   const name = clean(move.name ?? "");
   if (!name) return { places, currentId: previousId };
   const existing = places.find((place) => sameName(place.name, name));
