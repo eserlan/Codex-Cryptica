@@ -1,3 +1,5 @@
+import type { StorageLike } from "#lib/utils/runtime-deps.js";
+
 /**
  * Position/size math for a draggable and/or resizable floating window,
  * persisted to `localStorage` under a caller-chosen key. Framework-free and
@@ -112,7 +114,7 @@ export function getCenteredBounds(
 
 export function loadSavedBounds(
   key: string,
-  storage: Storage | null = typeof window !== "undefined"
+  storage: StorageLike | null = typeof window !== "undefined"
     ? window.localStorage
     : null,
   viewport: ViewportSize = getViewportSize(),
@@ -167,7 +169,7 @@ export function resizePointerDelta(
 export function saveBounds(
   key: string,
   bounds: WindowBounds,
-  storage: Storage | null = typeof window !== "undefined"
+  storage: StorageLike | null = typeof window !== "undefined"
     ? window.localStorage
     : null,
 ): void {

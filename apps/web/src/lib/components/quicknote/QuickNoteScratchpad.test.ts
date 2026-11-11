@@ -41,9 +41,22 @@ vi.mock("./NoteHistory.svelte", () => ({
 
 import QuickNoteScratchpad from "./QuickNoteScratchpad.svelte";
 import { quickNoteStore } from "#lib/stores/quicknote.svelte.js";
+import type { StorageLike } from "#lib/utils/runtime-deps.js";
+
+function memoryStorage(): StorageLike {
+  const values = new Map<string, string>();
+  return {
+    getItem: (key) => values.get(key) ?? null,
+    setItem: (key, value) => void values.set(key, value),
+    removeItem: (key) => void values.delete(key),
+  };
+}
+
+let storage: StorageLike;
 
 describe("QuickNoteScratchpad tabs", () => {
   beforeEach(() => {
+    storage = memoryStorage();
     quickNoteStore.currentNote = {
       id: 1,
       vaultId: "vault-1",
@@ -63,14 +76,14 @@ describe("QuickNoteScratchpad tabs", () => {
 
   it("renders the journal view when the store's tab is journal", () => {
     quickNoteStore.activeTab = "journal";
-    render(QuickNoteScratchpad);
+    render(QuickNoteScratchpad, { props: { storage } });
 
     expect(screen.getByTestId("quicknote-journal-panel")).toBeTruthy();
     expect(screen.queryByTestId("note-history-stub")).toBeNull();
   });
 
   it("writes tab clicks back to the store", async () => {
-    render(QuickNoteScratchpad);
+    render(QuickNoteScratchpad, { props: { storage } });
     expect(screen.getByTestId("note-history-stub")).toBeTruthy();
 
     await fireEvent.click(screen.getByTestId("quicknote-tab-journal"));
@@ -82,7 +95,7 @@ describe("QuickNoteScratchpad tabs", () => {
   });
 
   it("still shows the notes tab by default and leaves the journal hidden (FR-023)", () => {
-    render(QuickNoteScratchpad);
+    render(QuickNoteScratchpad, { props: { storage } });
 
     expect(screen.getByTestId("note-history-stub")).toBeTruthy();
     expect(screen.queryByTestId("quicknote-journal-panel")).toBeNull();
@@ -91,7 +104,7 @@ describe("QuickNoteScratchpad tabs", () => {
 
 describe("QuickNoteScratchpad — resizing (#3490)", () => {
   beforeEach(() => {
-    window.localStorage.clear();
+    storage = memoryStorage();
     quickNoteStore.currentNote = null;
     quickNoteStore.activeTab = "notes";
     quickNoteStore.isOpen = true;
@@ -102,7 +115,7 @@ describe("QuickNoteScratchpad — resizing (#3490)", () => {
   });
 
   it("grows the card, centred, when the resize handle is dragged outward", async () => {
-    render(QuickNoteScratchpad);
+    render(QuickNoteScratchpad, { props: { storage } });
 
     const card = screen.getByTestId("quicknote-scratchpad");
     const startWidth = parseInt(card.style.width, 10);
@@ -128,19 +141,19 @@ describe("QuickNoteScratchpad — resizing (#3490)", () => {
     expect(parseInt(card.style.height, 10)).toBe(startHeight + 60);
 
     const saved = JSON.parse(
-      window.localStorage.getItem("codex_quicknote_scratchpad_size") || "{}",
+      storage.getItem("codex_quicknote_scratchpad_size") || "{}",
     );
     expect(saved.width).toBe(startWidth + 80);
     expect(saved.height).toBe(startHeight + 60);
   });
 
   it("restores a previously saved size on reopen", () => {
-    window.localStorage.setItem(
+    storage.setItem(
       "codex_quicknote_scratchpad_size",
       JSON.stringify({ x: 100, y: 100, width: 900, height: 600 }),
     );
 
-    render(QuickNoteScratchpad);
+    render(QuickNoteScratchpad, { props: { storage } });
 
     const card = screen.getByTestId("quicknote-scratchpad");
     expect(card.style.width).toBe("900px");
@@ -148,10 +161,9 @@ describe("QuickNoteScratchpad — resizing (#3490)", () => {
   });
 
   it("does not write to storage on a resize-handle click without movement (negative)", async () => {
-    render(QuickNoteScratchpad);
+    render(QuickNoteScratchpad, { props: { storage } });
 
-    const setItemSpy = vi.spyOn(window.localStorage, "setItem");
-    setItemSpy.mockClear();
+    const setItemSpy = vi.spyOn(storage, "setItem");
 
     const handle = screen.getByTestId("quicknote-scratchpad-resize-handle");
     await fireEvent.pointerDown(handle, {
@@ -167,7 +179,7 @@ describe("QuickNoteScratchpad — resizing (#3490)", () => {
   });
 
   it("resizes with arrow keys and persists the keyboard-selected size", async () => {
-    render(QuickNoteScratchpad);
+    render(QuickNoteScratchpad, { props: { storage } });
 
     const card = screen.getByTestId("quicknote-scratchpad");
     const startWidth = parseInt(card.style.width, 10);
@@ -182,7 +194,7 @@ describe("QuickNoteScratchpad — resizing (#3490)", () => {
     expect(parseInt(card.style.height, 10)).toBe(startHeight + 24);
 
     const saved = JSON.parse(
-      window.localStorage.getItem("codex_quicknote_scratchpad_size") || "{}",
+      storage.getItem("codex_quicknote_scratchpad_size") || "{}",
     );
     expect(saved.width).toBe(startWidth + 24);
     expect(saved.height).toBe(startHeight + 24);
