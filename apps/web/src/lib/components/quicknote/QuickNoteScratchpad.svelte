@@ -404,10 +404,10 @@
   <button
     type="button"
     onclick={() => (quickNoteStore.activeTab = tab)}
-    class="flex items-center gap-1.5 rounded px-2 py-1 font-header text-xs font-bold uppercase tracking-wider transition-colors {activeTab ===
+    class="flex items-center gap-1.5 rounded border-b-2 border-transparent px-2 py-1 font-header text-xs font-bold uppercase tracking-wider text-theme-text transition-colors {activeTab ===
     tab
-      ? 'text-theme-text'
-      : 'text-theme-text hover:text-theme-text'}"
+      ? 'border-theme-primary'
+      : 'hover:text-theme-text'}"
     data-testid={testId}
   >
     <span
