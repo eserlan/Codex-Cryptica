@@ -146,7 +146,9 @@ function effectiveTargetInterval(
     !Number.isSafeInteger(elapsedMinutes) ||
     elapsedMinutes < 0 ||
     elapsedMinutes > 52_560_000
-  ) return null;
+  ) {
+    return null;
+  }
   const start = interval(date, calendar);
   if (!start) return null;
   const wholeDays = Math.floor(elapsedMinutes / 1_440);
@@ -443,11 +445,7 @@ export function resolveTemporalWorldContext(
 ): TemporalWorldContext {
   const byId = new Map(query.entities.map((entity) => [entity.id, entity]));
   const roots = contextSeeds(query, byId);
-  const at = effectiveTargetInterval(
-    query.at,
-    query.calendar,
-    query.elapsedMinutes,
-  );
+  const at = effectiveTargetInterval(query.at, query.calendar, query.elapsedMinutes);
   if (!at) throw new Error("temporal-world-invalid-date");
 
   const applicability = new Map<string, TemporalApplicability>();
