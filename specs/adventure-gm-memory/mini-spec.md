@@ -194,26 +194,45 @@ and a message addressed to the GM ("To dm…") is handled correctly only by luck
 
 ### PR C — story so far
 
-- [ ] **Task C0: Proxy check** — Confirm the system proxy and the custom-key path
+- [x] **Task C0: Proxy check** — Confirm the system proxy and the custom-key path
       both accept a plain-text summary call with the existing client. Stop and
       report if a worker change is needed.
-- [ ] **Task C1: Tests** — `tests/story-summary.test.ts`: trigger at 8 pending turns;
+- [x] **Task C1: Tests** — `tests/story-summary.test.ts`: trigger at 8 pending turns;
       chunk capped at 16; reducer rejects over-length text and a stale
       `throughSequence`; prompt includes the summary. Service test: failure and
       abort leave the session untouched. Store test: a result arriving mid-turn is
       applied after the commit; the provider thread is not reset.
-- [ ] **Task C2: Engine** — `story-summary.ts` and the schema field.
-- [ ] **Task C3: AI service** — `adventure-summary.service.ts` with constructor-injected
+- [x] **Task C2: Engine** — `story-summary.ts` and the schema field.
+- [x] **Task C3: AI service** — `adventure-summary.service.ts` with constructor-injected
       client and abort support.
-- [ ] **Task C4: Store wiring** — Trigger after commit, apply when idle, call
+- [x] **Task C4: Store wiring** — Trigger after commit, apply when idle, call
       `confirmInteraction` with the saved revision.
-- [ ] **Task C5: Prompt and diagnostics** — `GM-ONLY story so far` in state; field in
+- [x] **Task C5: Prompt and diagnostics** — `GM-ONLY story so far` in state; field in
       the diagnostic JSON.
 - [ ] **Task C6: Replay check** — Load the reviewed session, play 10 turns, and
       confirm catch-up, prompt size under budget and no thread reset.
-- [ ] **Task C7: Verification gate and PR.**
+- [x] **Task C7: Verification gate and PR.** (#4725)
 
 ---
+
+### Built differently from the draft
+
+- The summary is not saved on its own. It waits in memory and is attached to the
+  session the next turn is generated from, so that turn's own save persists it: no
+  extra revision, no race with the player's next action, no provider-thread reset.
+  `attachStorySummary` replaces the planned `applyStorySummary` and does not bump
+  the revision.
+- Not attached on roll-resolution turns; the next ordinary action attaches it.
+- Task C6 (replay of the reviewed session) was not run; it needs a live model.
+
+### Follow-up: diagnostic export
+
+- Every turn in the diagnostic JSON, condensed or full, now carries `signals`
+  (`quiet`, `locationChanged`, `stateChanges`, defaults omitted), and the summary has
+  `longestQuietRun` and `stalledScenes`.
+- Still missing, because it is not recorded on the turn: the place a turn took place
+  in, and per-turn model, stateful or stateless path, thread resets and prompt size.
+  Adding them means persisting generation metadata at commit time.
 
 ## 4. Verification Gate
 

@@ -1,6 +1,9 @@
 import type { AdventureSession } from "@codex/adventure-engine";
 import {
   formatWorldElapsedMinutes,
+  isQuietTurn,
+  SCENE_STALL_TURN_LIMIT,
+  scenarioEventTurnIds,
   sceneStallPacing,
   unsummarisedTurns,
 } from "@codex/adventure-engine";
@@ -155,7 +158,7 @@ const DIAGNOSTIC_README = [
   "summary: quick orientation. quietTurns: trailing turns that changed nothing in the world (0 when under 4 turns or a roll is pending). integrityChecks: precomputed consistency findings (empty arrays mean clean).",
   "state: the current truth. storySoFar is the GM's rolling notes on turns older than the prompt window, written from player-visible text; summary.unsummarisedTurns counts older turns not yet folded in. places lists where the player has been; facts and characters carry a placeId, and ones with none apply everywhere. visibleState is what the player knows; hiddenState and scenarioCollection are GM-only.",
   "source 'provisional' means the Oracle invented it in play; it is not backed by a Vault record.",
-  "turns: oldest first. Turns marked detail 'condensed' keep only action, narration and time; detail 'full' also keeps every state patch.",
+  "turns: oldest first. Every turn, condensed or full, carries signals; a missing signal means false or 0: quiet (changed nothing in the world), locationChanged, and stateChanges (visible entries added, updated or removed). summary.longestQuietRun and summary.stalledScenes count quiet streaks, a stalled scene being every fourth quiet turn in a row. Turns marked detail 'condensed' keep only action, narration, time and signals; detail 'full' also keeps every state patch.",
   "timeAdvance is null when a turn did not move the fictional clock. Time is in minutes.",
 ].join(" ");
 
@@ -195,10 +198,49 @@ function integrityChecks(session: AdventureSession) {
   };
 }
 
+type CommittedTurn = AdventureSession["turns"][number];
+
+function changeCount(patch: {
+  add: unknown[];
+  update: unknown[];
+  removeIds: unknown[];
+}): number {
+  return patch.add.length + patch.update.length + patch.removeIds.length;
+}
+
+/**
+ * Per-turn signals worked out from each turn's own patches, so older turns
+ * (which are condensed and lose their patches) can still be scored:
+ * `quiet` is a turn that changed nothing in the world, `locationChanged` is a
+ * rewritten location line, and `stateChanges` counts visible state entries
+ * added, updated or removed.
+ */
+function turnSignals(turn: CommittedTurn, scenarioTurnIds: Set<string>) {
+  const visible = turn.visiblePatch;
+  const stateChanges =
+    changeCount(visible.objectives) +
+    changeCount(visible.activeCharacters) +
+    changeCount(visible.knownFacts) +
+    changeCount(visible.relationships);
+  // Defaults are left out to keep long sessions compact; see the readme.
+  return {
+    ...(isQuietTurn(turn, scenarioTurnIds) ? { quiet: true } : {}),
+    ...(visible.location !== undefined ? { locationChanged: true } : {}),
+    ...(stateChanges > 0 ? { stateChanges } : {}),
+  };
+}
+
 function diagnosticTurns(session: AdventureSession, cutoff: number) {
+  const scenarioTurnIds = scenarioEventTurnIds(session);
   return session.turns.map((turn, index) => {
+    const signals = turnSignals(turn, scenarioTurnIds);
     if (index >= cutoff) {
-      return { detail: "full", ...turn, timeAdvance: turn.timeAdvance ?? null };
+      return {
+        detail: "full",
+        ...turn,
+        timeAdvance: turn.timeAdvance ?? null,
+        signals,
+      };
     }
     return {
       detail: "condensed",
@@ -208,8 +250,23 @@ function diagnosticTurns(session: AdventureSession, cutoff: number) {
       narration: turn.narration,
       timeAdvance: turn.timeAdvance ?? null,
       committedAt: turn.committedAt,
+      signals,
     };
   });
+}
+
+/** Longest run of consecutive quiet turns, and how many runs reached the stall limit. */
+function quietRuns(session: AdventureSession) {
+  const scenarioTurnIds = scenarioEventTurnIds(session);
+  let run = 0;
+  let longest = 0;
+  let stalls = 0;
+  for (const turn of session.turns) {
+    run = isQuietTurn(turn, scenarioTurnIds) ? run + 1 : 0;
+    longest = Math.max(longest, run);
+    if (run > 0 && run % SCENE_STALL_TURN_LIMIT === 0) stalls += 1;
+  }
+  return { longestQuietRun: longest, stalledScenes: stalls };
 }
 
 function secretCounts(session: AdventureSession) {
@@ -253,6 +310,7 @@ function diagnosticTurnSummary(
     turnsCondensed: cutoff,
     pendingRoll: session.pendingRoll != null,
     quietTurns: sceneStallPacing(session)?.quietTurns ?? 0,
+    ...quietRuns(session),
     lastPlayerAction: lastTurn?.playerAction ?? null,
   };
 }
