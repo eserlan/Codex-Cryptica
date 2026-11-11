@@ -32,8 +32,12 @@ function exampleSession(): AdventureSession {
       relationships: [],
     },
     hiddenState: {
-      secrets: [{ id: "secret-1", text: "The miller is missing.", status: "hidden" }],
-      gmThreads: [{ id: "thread-1", text: "A caravan is approaching.", status: "hidden" }],
+      secrets: [
+        { id: "secret-1", text: "The miller is missing.", status: "hidden" },
+      ],
+      gmThreads: [
+        { id: "thread-1", text: "A caravan is approaching.", status: "hidden" },
+      ],
     },
     scenarioCollection: {
       version: 1,
@@ -107,7 +111,11 @@ function exampleSession(): AdventureSession {
         sourceRecordIds: [],
         provisionalFactIds: ["fact-1"],
         timeAdvance: { minutes: 1440, cause: "Rested overnight" },
-        suggestedActions: ["Visit the market", "Ask about the mill", "Leave town"],
+        suggestedActions: [
+          "Visit the market",
+          "Ask about the mill",
+          "Leave town",
+        ],
         committedAt: "2026-11-11T10:05:00.000Z",
       },
     ],
