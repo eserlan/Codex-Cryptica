@@ -209,7 +209,9 @@ export class AdventureManager extends AdventureState {
     return this.scenarios.recordTheory(...args);
   }
 
-  dismissDiscoveries(...args: Parameters<AdventureScenarios["dismissDiscoveries"]>) {
+  dismissDiscoveries(
+    ...args: Parameters<AdventureScenarios["dismissDiscoveries"]>
+  ) {
     return this.scenarios.dismissDiscoveries(...args);
   }
 }
