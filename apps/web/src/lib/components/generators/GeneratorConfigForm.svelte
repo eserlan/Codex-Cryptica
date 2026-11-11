@@ -1,25 +1,18 @@
 <script lang="ts">
-  import {
-    adventureArchetypesForTheme,
-    adventureConfig,
-    adventureTonesForTheme,
-    dungeonConfig,
-    factionTypesForTheme,
-    forDungeonGenre,
-    getGenerator,
-    listGenerators,
-    getVillainThreatScales,
-    npcRacesForTheme,
-    npcRolesForTheme,
-    settlementTypesForTheme,
-    themeIdToLabel,
-    villainConfig,
-    worldConfig,
-  } from "generator-engine";
+  import { listGenerators } from "generator-engine";
   import type { AIPolicy, GeneratorRunRequest } from "generator-engine";
   import type { GeneratorId } from "generator-engine";
   import GeneratorPicker from "./GeneratorPicker.svelte";
-  import SelectWithCustomOption from "#lib/components/forms/SelectWithCustomOption.svelte";
+  import GeneratorOptions from "./GeneratorOptions.svelte";
+  import GeneratorLanguagePicker from "./GeneratorLanguagePicker.svelte";
+  import GeneratorRunControls from "./GeneratorRunControls.svelte";
+  import {
+    getNextOptionValues,
+    getThemedChoices,
+    reconcileOptionValues,
+    stringOptionValue,
+    updateOptionValues,
+  } from "./generator-option-rules";
   import type { DetectedVaultLanguage } from "#lib/services/generators/generator-vault-context.js";
   import {
     GeneratorFavoritesStore,
@@ -64,14 +57,6 @@
     !!(aiPolicy?.isEnabled && aiPolicy?.isAvailable),
   );
 
-  const aiUnavailableReason = $derived(
-    aiPolicy && (!aiPolicy.isEnabled || !aiPolicy.isAvailable)
-      ? !aiPolicy.isEnabled
-        ? "AI generation is disabled. Content will be generated locally."
-        : "AI generation requires an account. Content will be generated locally."
-      : null,
-  );
-
   let selectedId = $state<GeneratorId>(listGenerators()[0].id);
   let useAI = $state(true);
   let instructions = $state("");
@@ -79,235 +64,38 @@
   let optionValues = $state<Record<string, unknown>>({});
   let lastOptionsGeneratorId = $state<GeneratorId | null>(null);
 
-  const selectedGenerator = $derived(getGenerator(selectedId));
   const supportsPrimaryLanguage = $derived(
     ["npc", "faction", "settlement", "ship"].includes(selectedId),
   );
-  const suggestedLanguage = $derived(
-    languages.find((language) => language.id === suggestedLanguageId),
-  );
-  const availableAdventureArchetypes = $derived(
-    adventureArchetypesForTheme(themeId),
-  );
-  const availableAdventureTones = $derived(adventureTonesForTheme(themeId));
-  const dungeonGenre = $derived(themeIdToLabel[themeId] ?? "Classic Fantasy");
-  const availableDungeonPurposes = $derived(
-    forDungeonGenre(dungeonConfig.purposesByGenre, dungeonGenre),
-  );
-  const availableDungeonStates = $derived(
-    forDungeonGenre(dungeonConfig.currentStatesByGenre, dungeonGenre),
-  );
-  const villainGenre = $derived(
-    stringValue("genre") || themeIdToLabel[themeId] || "Classic Fantasy",
-  );
-  const availableVillainThreatScales = $derived(
-    getVillainThreatScales(villainGenre),
-  );
-  const knownVillainThreatScales = $derived(
-    Array.from(
-      new Set([
-        ...villainConfig.threatScales,
-        ...Object.values(villainConfig.threatScalesByTheme).flat(),
-      ]),
-    ),
-  );
-  const visibleOptions = $derived(
-    selectedGenerator.options.filter((option) => {
-      if (!option.visibleWhen) return true;
-      const currentValue = stringValue(option.visibleWhen.optionId);
-      if (
-        option.visibleWhen.values &&
-        !option.visibleWhen.values.includes(currentValue)
-      ) {
-        return false;
-      }
-      if (option.visibleWhen.notValues?.includes(currentValue)) return false;
-      return true;
-    }),
-  );
-
-  // Options whose choices follow the vault's theme (or another option),
-  // keyed "generator:option".
-  const themedChoices = $derived<Record<string, readonly string[]>>({
-    "world:campaignPressure":
-      stringValue("genre") === "Lancer"
-        ? worldConfig.lancerConflicts
-        : worldConfig.campaignPressures,
-    "npc:race": npcRacesForTheme(themeId),
-    "npc:role": npcRolesForTheme(themeId),
-    "faction:type": factionTypesForTheme(themeId),
-    "settlement:type": settlementTypesForTheme(themeId),
-    "adventure:archetype": availableAdventureArchetypes,
-    "adventure:tone": availableAdventureTones,
-    "villain:threatScale": availableVillainThreatScales,
-    "dungeon:purpose": availableDungeonPurposes,
-    "dungeon:currentState": availableDungeonStates,
-  });
-
-  function choicesForOption(option: {
-    id: string;
-    choices?: Array<{ value: string; label: string }>;
-  }): Array<{ value: string; label: string }> {
-    const themed = themedChoices[`${selectedId}:${option.id}`];
-    if (themed) return themed.map((value) => ({ value, label: value }));
-    return option.choices ?? [];
-  }
-
   $effect(() => {
     if (generatorId) selectedId = generatorId;
   });
 
-  function getNextOptionValues(
-    id: GeneratorId,
-    previousValues: Record<string, unknown>,
-  ): Record<string, unknown> {
-    const definition = getGenerator(id);
-    const nextValues: Record<string, unknown> = {};
-    for (const option of definition.options) {
-      const existingValue = previousValues[option.id];
-      if (typeof existingValue !== "undefined") {
-        nextValues[option.id] = existingValue;
-        continue;
-      }
-      nextValues[option.id] = defaultOptionValue(option, definition.defaults);
-    }
-    return nextValues;
-  }
-
-  function defaultOptionValue(
-    option: { id: string; defaultValue?: unknown },
-    defaults: Record<string, unknown>,
-  ): unknown {
-    if (option.id !== "gameSystem") {
-      return defaults[option.id] ?? option.defaultValue ?? "";
-    }
-    const isTovVault =
-      systemProfileStore.vaultSystemId === "tales-of-the-valiant" ||
-      systemProfileStore.isTalesOfTheValiant;
-    return isTovVault
-      ? "tales-of-the-valiant"
-      : (defaults[option.id] ?? "system-neutral");
-  }
-
   $effect(() => {
     if (lastOptionsGeneratorId === selectedId) return;
     lastOptionsGeneratorId = selectedId;
-    optionValues = getNextOptionValues(selectedId, optionValues);
+    const isTovVault =
+      systemProfileStore.vaultSystemId === "tales-of-the-valiant" ||
+      systemProfileStore.isTalesOfTheValiant;
+    optionValues = getNextOptionValues(selectedId, optionValues, isTovVault);
   });
+
   $effect(() => {
-    if (selectedId !== "dungeon") return;
-    const nextValues = { ...optionValues };
-    let changed = false;
-    const purpose = nextValues.purpose;
-    if (
-      typeof purpose === "string" &&
-      dungeonConfig.purposes.includes(purpose) &&
-      !availableDungeonPurposes.includes(purpose)
-    ) {
-      nextValues.purpose = availableDungeonPurposes[0] ?? "";
-      changed = true;
-    }
-    const currentState = nextValues.currentState;
-    if (
-      typeof currentState === "string" &&
-      dungeonConfig.currentStates.includes(currentState) &&
-      !availableDungeonStates.includes(currentState)
-    ) {
-      nextValues.currentState = availableDungeonStates[0] ?? "";
-      changed = true;
-    }
-    if (changed) optionValues = nextValues;
+    optionValues = reconcileOptionValues(
+      selectedId,
+      optionValues,
+      getThemedChoices(themeId, optionValues),
+    );
   });
-  // The default type (or one picked under another theme) may not exist in this
-  // theme's list; fall back to its first entry rather than a stale value.
-  $effect(() => {
-    if (selectedId !== "adventure") return;
-    const nextValues = { ...optionValues };
-    let changed = false;
-    const archetype = nextValues.archetype;
-    if (
-      typeof archetype === "string" &&
-      adventureConfig.archetypes.includes(archetype) &&
-      !availableAdventureArchetypes.includes(archetype)
-    ) {
-      nextValues.archetype = availableAdventureArchetypes[0] ?? "";
-      changed = true;
-    }
-    const tone = nextValues.tone;
-    if (
-      typeof tone === "string" &&
-      adventureConfig.tones.includes(tone) &&
-      !availableAdventureTones.includes(tone)
-    ) {
-      nextValues.tone = "";
-      changed = true;
-    }
-    if (changed) optionValues = nextValues;
-  });
-  $effect(() => {
-    if (selectedId !== "villain") return;
-    const currentScale = stringValue("threatScale");
-    if (
-      currentScale &&
-      knownVillainThreatScales.includes(currentScale) &&
-      !availableVillainThreatScales.includes(currentScale)
-    ) {
-      optionValues = {
-        ...optionValues,
-        threatScale: availableVillainThreatScales[0] ?? "",
-      };
-    }
-  });
+
   function updateOptionValue(optionId: string, value: unknown) {
-    const nextValues = {
-      ...optionValues,
-      [optionId]: value,
-    };
-    if (selectedId === "world" && optionId === "genre") {
-      const availablePressures: readonly string[] =
-        value === "Lancer"
-          ? worldConfig.lancerConflicts
-          : worldConfig.campaignPressures;
-      const currentPressure = optionValues.campaignPressure;
-      const knownPressures: readonly string[] = [
-        ...worldConfig.campaignPressures,
-        ...worldConfig.lancerConflicts,
-      ];
-      if (
-        typeof currentPressure !== "string" ||
-        (knownPressures.includes(currentPressure) &&
-          !availablePressures.includes(currentPressure))
-      ) {
-        nextValues.campaignPressure = availablePressures[0] ?? "";
-      }
-    }
-    if (selectedId === "villain" && optionId === "genre") {
-      const genre =
-        typeof value === "string" && value
-          ? value
-          : themeIdToLabel[themeId] || "Classic Fantasy";
-      const availableScales = getVillainThreatScales(genre);
-      const currentScale = optionValues.threatScale;
-      if (
-        typeof currentScale !== "string" ||
-        !currentScale ||
-        (knownVillainThreatScales.includes(currentScale) &&
-          !availableScales.includes(currentScale))
-      ) {
-        nextValues.threatScale = availableScales[0] ?? "";
-      }
-    }
-    optionValues = nextValues;
-  }
-
-  function stringValue(optionId: string): string {
-    const value = optionValues[optionId];
-    return typeof value === "string" ? value : "";
-  }
-
-  function numberValue(optionId: string): number | undefined {
-    const value = optionValues[optionId];
-    return typeof value === "number" ? value : undefined;
+    optionValues = updateOptionValues(
+      selectedId,
+      optionValues,
+      optionId,
+      value,
+      themeId,
+    );
   }
 
   function handleSubmit(e: SubmitEvent) {
@@ -326,7 +114,6 @@
   }
 </script>
 
-<!-- fallow-ignore-next-line complexity -->
 <form onsubmit={handleSubmit} class="flex flex-col gap-4">
   <GeneratorPicker
     bind:selectedId
@@ -337,210 +124,30 @@
     {disabled}
   />
 
-  {#snippet generatorOptions()}
-    {#if visibleOptions.length > 0}
-      <fieldset class="flex flex-col gap-3">
-        <legend
-          class="mb-1 text-micro font-bold uppercase tracking-wider text-chrome-muted"
-        >
-          Generator options
-        </legend>
-        {#each visibleOptions as option (option.id)}
-          {@const inputId = `generator-option-${option.id}`}
-          {#if option.control === "select" && option.choices}
-            <SelectWithCustomOption
-              id={inputId}
-              name={option.id}
-              label={option.label}
-              value={stringValue(option.id)}
-              onvaluechange={(nextValue) =>
-                updateOptionValue(option.id, nextValue)}
-              choices={choicesForOption(option)}
-              {disabled}
-              className="flex flex-col gap-1.5"
-              labelClass="text-micro font-bold uppercase tracking-wider text-chrome-muted"
-              inputClass="w-full rounded border border-chrome-border bg-chrome-bg/50 px-3 py-2 text-sm leading-relaxed text-chrome-text outline-none transition focus:border-chrome-accent focus:ring-1 focus:ring-chrome-accent disabled:opacity-50"
-              customPlaceholder={`Enter a custom ${option.label.toLowerCase()}`}
-            />
-          {:else if option.control === "checkbox"}
-            <label class="flex cursor-pointer items-center gap-2">
-              <input
-                id={inputId}
-                type="checkbox"
-                checked={Boolean(optionValues[option.id])}
-                onchange={(event) =>
-                  updateOptionValue(
-                    option.id,
-                    (event.currentTarget as HTMLInputElement).checked,
-                  )}
-                {disabled}
-                class="accent-chrome-accent"
-              />
-              <span class="text-sm text-chrome-text">{option.label}</span>
-            </label>
-          {:else if option.control === "textarea"}
-            <div class="flex flex-col gap-1">
-              <label
-                for={inputId}
-                class="text-micro font-bold uppercase tracking-wider text-chrome-muted"
-              >
-                {option.label}
-              </label>
-              <textarea
-                id={inputId}
-                rows={3}
-                value={stringValue(option.id)}
-                oninput={(event) =>
-                  updateOptionValue(
-                    option.id,
-                    (event.currentTarget as HTMLTextAreaElement).value,
-                  )}
-                {disabled}
-                class="w-full resize-y rounded border border-chrome-border bg-chrome-bg/50 px-3 py-2 text-sm leading-relaxed text-chrome-text outline-none transition focus:border-chrome-accent focus:ring-1 focus:ring-chrome-accent disabled:opacity-50"
-              ></textarea>
-            </div>
-          {:else if option.control === "number"}
-            <div class="flex flex-col gap-1">
-              <label
-                for={inputId}
-                class="text-micro font-bold uppercase tracking-wider text-chrome-muted"
-              >
-                {option.label}
-              </label>
-              <input
-                id={inputId}
-                type="number"
-                min={option.min}
-                max={option.max}
-                step={option.step}
-                value={numberValue(option.id)}
-                oninput={(event) => {
-                  const rawValue = (event.currentTarget as HTMLInputElement)
-                    .value;
-                  updateOptionValue(
-                    option.id,
-                    rawValue === "" ? "" : Number(rawValue),
-                  );
-                }}
-                {disabled}
-                class="w-full rounded border border-chrome-border bg-chrome-bg/50 px-3 py-2 text-sm leading-relaxed text-chrome-text outline-none transition focus:border-chrome-accent focus:ring-1 focus:ring-chrome-accent disabled:opacity-50"
-              />
-            </div>
-          {:else}
-            <div class="flex flex-col gap-1">
-              <label
-                for={inputId}
-                class="text-micro font-bold uppercase tracking-wider text-chrome-muted"
-              >
-                {option.label}
-              </label>
-              <input
-                id={inputId}
-                type="text"
-                value={stringValue(option.id)}
-                oninput={(event) =>
-                  updateOptionValue(
-                    option.id,
-                    (event.currentTarget as HTMLInputElement).value,
-                  )}
-                {disabled}
-                class="w-full rounded border border-chrome-border bg-chrome-bg/50 px-3 py-2 text-sm leading-relaxed text-chrome-text outline-none transition focus:border-chrome-accent focus:ring-1 focus:ring-chrome-accent disabled:opacity-50"
-              />
-            </div>
-          {/if}
-        {/each}
-      </fieldset>
-    {/if}
-  {/snippet}
-  {@render generatorOptions()}
+  <GeneratorOptions
+    generatorId={selectedId}
+    {optionValues}
+    {themeId}
+    {disabled}
+    onvaluechange={updateOptionValue}
+  />
 
-  {#if supportsPrimaryLanguage && languages.length}
-    <div class="flex flex-col gap-1.5">
-      <label
-        for="generator-primary-language"
-        class="text-micro font-bold uppercase tracking-wider text-chrome-muted"
-      >
-        Naming language
-      </label>
-      <select
-        id="generator-primary-language"
-        name="primaryLanguageId"
-        bind:value={primaryLanguageId}
-        aria-describedby="generator-primary-language-help"
-        {disabled}
-        class="min-h-12 w-full rounded border border-chrome-border bg-chrome-bg/50 px-3 py-2 text-base leading-relaxed text-chrome-text outline-none transition focus:border-chrome-accent focus:ring-1 focus:ring-chrome-accent disabled:opacity-50"
-      >
-        <option value="">No saved language</option>
-        {#each languages as language (language.id)}
-          <option value={language.id}>
-            {language.title}{language.legacy ? " (legacy notes)" : ""}
-          </option>
-        {/each}
-      </select>
-      <p
-        id="generator-primary-language-help"
-        class="text-xs leading-relaxed text-chrome-muted"
-      >
-        {#if suggestedLanguage && !primaryLanguageId}
-          Suggested from the source relationship: {suggestedLanguage.title}.
-          Select it above to apply its rules.
-        {:else if primaryLanguageId}
-          Only this language supplies authoritative naming and terminology
-          rules.
-        {:else}
-          No saved language rules will be applied.
-        {/if}
-      </p>
-    </div>
-  {/if}
+  <GeneratorLanguagePicker
+    bind:primaryLanguageId
+    {supportsPrimaryLanguage}
+    {languages}
+    {suggestedLanguageId}
+    {disabled}
+  />
 
-  <div class="flex flex-col gap-1">
-    <label
-      for="gen-instructions"
-      class="text-micro font-bold uppercase tracking-wider text-chrome-muted"
-    >
-      Instructions <span class="normal-case font-normal">(optional)</span>
-    </label>
-    <textarea
-      id="gen-instructions"
-      bind:value={instructions}
-      {disabled}
-      rows={3}
-      placeholder="e.g. Make them a spy working for the Thieves Guild, female, morally grey…"
-      class="w-full resize-none rounded border border-chrome-border bg-chrome-bg/50 px-3 py-2 text-sm leading-relaxed text-chrome-text outline-none transition placeholder:text-chrome-muted/60 focus:border-chrome-accent focus:ring-1 focus:ring-chrome-accent disabled:opacity-50"
-    ></textarea>
-  </div>
-
-  {#if aiAvailable}
-    <label class="flex cursor-pointer items-center gap-2">
-      <input
-        type="checkbox"
-        bind:checked={useAI}
-        {disabled}
-        class="accent-chrome-accent"
-        data-testid="use-ai-toggle"
-      />
-      <span class="text-sm text-chrome-text">Use AI generation</span>
-    </label>
-  {:else if aiUnavailableReason}
-    <div class="flex flex-col gap-2">
-      <p
-        class="rounded border border-amber-800/40 bg-amber-950/30 px-3 py-2 text-xs text-amber-400"
-        data-testid="ai-unavailable-notice"
-      >
-        {aiUnavailableReason}
-      </p>
-      {#if stringValue("gameSystem") === "tales-of-the-valiant"}
-        <p
-          class="rounded border border-amber-800/30 bg-amber-950/20 px-3 py-2 text-micro leading-relaxed text-amber-300"
-          data-testid="tov-offline-notice"
-        >
-          Tales of the Valiant mechanics require AI Lore generation. Content
-          will be generated using neutral lore tables.
-        </p>
-      {/if}
-    </div>
-  {/if}
+  <GeneratorRunControls
+    bind:instructions
+    bind:useAI
+    {aiAvailable}
+    {aiPolicy}
+    gameSystem={stringOptionValue(optionValues, "gameSystem")}
+    {disabled}
+  />
 
   <div class="flex justify-end border-t border-chrome-border pt-4">
     <button
