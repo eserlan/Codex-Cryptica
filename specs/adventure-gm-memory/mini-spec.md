@@ -277,3 +277,7 @@ Saving a place discovery to Codex (single, bulk or auto-promote), or finding it 
 ## Follow-up: forgiving turns
 
 A model slip no longer fails the player's turn when it corrupts nothing. The engine drops that part of the reply, commits the rest, and records what it left out in an optional `dropped` list on the turn (shown in the diagnostic export, with `summary.droppedParts`). Dropped: an update to an entry that is not there, a repeated removal, a time advance the clock cannot take, a reveal of an unknown or out-of-place rumour, and any elaboration that is not allowed (unknown, closed, unheard, repeated, wrong stage). Still fatal: hidden-information leakage, a baseline-truth rewrite, a secret reveal of an unknown id, a duplicate input, an invalid roll, the state budget, and a failure to allocate an id for a recorded event.
+
+### Forgiving turns, part 2: one retry and plain copy
+
+When the engine still refuses the GM's reply (leakage, a baseline rewrite, an invalid roll), the turn is regenerated once with a `CORRECTION:` line giving the reason (capped at 300 characters), after the provider thread is reset so the refused reply is not remembered. A second refusal shows "The GM lost the thread on that one. Your action is still in the box; try again." and the reason goes to the console only. Generation failures (offline, provider, cancelled) are never retried. Applies to action turns and roll resolutions; the opening keeps its own start-failure copy.

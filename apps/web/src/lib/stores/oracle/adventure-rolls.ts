@@ -6,6 +6,7 @@ import {
   type SuppliedRollOutcome,
 } from "@codex/adventure-engine";
 import { acceptedSession } from "./adventure-session";
+import { generateAcceptedTurn } from "./adventure-turn-retry";
 
 import type { AdventureRuntime } from "./adventure-runtime";
 
@@ -77,13 +78,22 @@ export class AdventureRolls {
   ): Promise<void> {
     const pendingRoll = session.pendingRoll;
     if (!pendingRoll?.suppliedOutcome) return;
-    const proposal = await this.generateRollResolution(session, signal);
-    const result = resolveRecordedRoll(
-      session,
-      proposal,
-      this.runtime.newTurnMetadata(pendingRoll.playerAction),
-    );
-    const next = acceptedSession(result, "roll-rejected");
+    const next = await generateAcceptedTurn({
+      generate: (correction) =>
+        this.generateRollResolution(session, signal, correction),
+      apply: (proposal) =>
+        acceptedSession(
+          resolveRecordedRoll(
+            session,
+            proposal,
+            this.runtime.newTurnMetadata(pendingRoll.playerAction),
+          ),
+          "roll-rejected",
+        ),
+      signal,
+      resetProviderContext: () =>
+        this.runtime.deps.clearGenerationInteraction(session.id),
+    });
     this.state.session = await this.runtime.saveTurn(session, next);
     this.state.streamedNarration = "";
     this.state.phase = "ready";
@@ -92,6 +102,7 @@ export class AdventureRolls {
   private async generateRollResolution(
     session: AdventureSession,
     signal: AbortSignal,
+    correction?: string,
   ) {
     const pendingRoll = session.pendingRoll!;
     const proposal = await this.runtime.deps.generation.generate(
@@ -101,6 +112,7 @@ export class AdventureRolls {
         rollResolution: pendingRoll.suppliedOutcome,
         anchors: [],
         relevant: [],
+        ...(correction ? { correction } : {}),
         onNarration: this.runtime.narrationPreview(session.id, signal),
       },
       { signal },
