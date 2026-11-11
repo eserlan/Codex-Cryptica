@@ -24,11 +24,19 @@ function patchHasChange(patch: {
 
 /**
  * A turn is quiet when it changed no visible or hidden state, revealed nothing,
- * added no provisional fact and moved no time. Talk and scenery alone are quiet.
+ * added no provisional fact, moved no time and resolved no roll. Talk and
+ * scenery alone are quiet. `scenarioTurnIds` holds the turns that logged a
+ * scenario event (a lead surfacing or a stage advancing), which can happen with
+ * empty patches.
  */
-export function isQuietTurn(turn: CommittedAdventureTurn): boolean {
+export function isQuietTurn(
+  turn: CommittedAdventureTurn,
+  scenarioTurnIds: ReadonlySet<string> = new Set(),
+): boolean {
   const visible = turn.visiblePatch;
   return !(
+    scenarioTurnIds.has(turn.id) ||
+    turn.resolvedRoll ||
     visible.location ||
     visible.situation ||
     patchHasChange(visible.objectives) ||
@@ -54,9 +62,14 @@ export function sceneStallPacing(
 ): SceneStallPacing | undefined {
   if (session.pendingRoll || session.turns.length < SCENE_STALL_TURN_LIMIT)
     return undefined;
+  const scenarioTurnIds = new Set(
+    session.scenarioCollection?.items.flatMap((item) =>
+      item.events.map((event) => event.turnId),
+    ) ?? [],
+  );
   let quietTurns = 0;
   for (let i = session.turns.length - 1; i >= 0; i -= 1) {
-    if (!isQuietTurn(session.turns[i]!)) break;
+    if (!isQuietTurn(session.turns[i]!, scenarioTurnIds)) break;
     quietTurns += 1;
   }
   return {

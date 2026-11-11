@@ -133,6 +133,24 @@ describe("scene stall pacing", () => {
     },
   );
 
+  it("a resolved roll is not quiet", () => {
+    const rolled = turn(1);
+    rolled.resolvedRoll = { id: "roll-1" } as never;
+    expect(isQuietTurn(rolled)).toBe(false);
+  });
+
+  it("a turn that logged a scenario event is not quiet even with empty patches", () => {
+    const s = session([...quiet(5), ...quiet(2, 6)], {
+      scenarioCollection: {
+        version: 1,
+        items: [{ events: [{ turnId: "turn-6" }] }],
+      } as never,
+    });
+    expect(sceneStallPacing(s)).toEqual({ quietTurns: 1, stalled: false });
+    expect(isQuietTurn(turn(6), new Set(["turn-6"]))).toBe(false);
+    expect(isQuietTurn(turn(6))).toBe(true);
+  });
+
   it("stays silent while a roll is pending", () => {
     const s = session(quiet(SCENE_STALL_TURN_LIMIT), {
       pendingRoll: { id: "roll-1" } as never,
