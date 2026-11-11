@@ -16,7 +16,8 @@ import type { AdventureState } from "./adventure-state.svelte";
 export class AdventureSummarizer {
   private ready: { sessionId: string; result: StorySummaryResult } | null =
     null;
-  private inFlight = false;
+  private request: AbortController | null = null;
+  private generation = 0;
 
   constructor(
     private readonly state: AdventureState,
@@ -36,18 +37,32 @@ export class AdventureSummarizer {
     return attached.ok ? attached.value : session;
   }
 
+  /** Abort and invalidate work when its session leaves the active view. */
+  cancel(): void {
+    this.generation += 1;
+    this.request?.abort();
+    this.request = null;
+    this.ready = null;
+  }
+
   /** Start a summary call if one is due. Never throws and never blocks play. */
   schedule(session: AdventureSession): void {
-    if (this.inFlight || this.state.readOnly) return;
+    if (this.request || this.state.readOnly) return;
     if (typeof navigator !== "undefined" && !navigator.onLine) return;
     const request = buildStorySummaryRequest(session);
     if (!request) return;
-    this.inFlight = true;
+    const controller = new AbortController();
+    const generation = ++this.generation;
+    this.request = controller;
     void this.deps.summary
-      .summarize(request)
+      .summarize(request, { signal: controller.signal })
       .then((result) => {
-        // The session may have been switched or ended while the call ran.
-        if (this.state.session?.id === session.id) {
+        // Lifecycle invalidation also rejects a late result after reopening the same session.
+        if (
+          this.request === controller &&
+          this.generation === generation &&
+          this.state.session?.id === session.id
+        ) {
           this.ready = { sessionId: session.id, result };
         }
       })
@@ -55,7 +70,7 @@ export class AdventureSummarizer {
         // Optional and retried at the next trigger; the player never sees it.
       })
       .finally(() => {
-        this.inFlight = false;
+        if (this.request === controller) this.request = null;
       });
   }
 }

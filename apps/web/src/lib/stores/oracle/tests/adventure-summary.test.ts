@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import type { AdventureSession } from "@codex/adventure-engine";
 import { AdventureActions } from "../adventure-actions";
-import { AdventureSummarizer } from "../adventure-summary";
+import { AdventureLifecycle } from "../adventure-lifecycle";
 import {
   completeProposal,
   createAdventureRuntime,
@@ -40,17 +40,22 @@ const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 function harness(turns = 24) {
   const { state, deps, runtime } = createAdventureRuntime();
   state.session = sessionWithTurns(state.session!, turns);
-  const summarize = vi.fn(async (request: { throughSequence: number }) => ({
-    text: "The party left town.",
-    throughSequence: request.throughSequence,
-  }));
+  const summarize = vi.fn(
+    async (
+      request: { throughSequence: number },
+      _options?: { signal?: AbortSignal },
+    ) => ({
+      text: "The party left town.",
+      throughSequence: request.throughSequence,
+    }),
+  );
   deps.summary = { summarize } as never;
   return {
     state,
     deps,
     runtime,
     summarize,
-    summarizer: new AdventureSummarizer(state, deps),
+    summarizer: runtime.summarizer,
   };
 }
 
@@ -95,6 +100,45 @@ describe("story summarizer", () => {
     h.state.session = { ...first, id: "another-session" } as AdventureSession;
     await flush();
     expect(h.summarizer.attach(first)).toBe(first);
+  });
+
+  it("aborts and invalidates a result when the same session is reopened after close", async () => {
+    const h = harness();
+    const first = h.state.session!;
+    let resolveSummary!: (result: {
+      text: string;
+      throughSequence: number;
+    }) => void;
+    let signal: AbortSignal | undefined;
+    h.summarize.mockImplementationOnce((_request, options) => {
+      signal = options?.signal;
+      return new Promise((resolve) => {
+        resolveSummary = resolve;
+      });
+    });
+    h.summarizer.schedule(first);
+
+    await new AdventureLifecycle(h.runtime).close();
+    h.state.session = first;
+    resolveSummary({ text: "Late notes.", throughSequence: 15 });
+    await flush();
+
+    expect(signal?.aborted).toBe(true);
+    expect(h.summarizer.attach(first)).toBe(first);
+  });
+
+  it("aborts a pending result when the adventure ends", async () => {
+    const h = harness();
+    let signal: AbortSignal | undefined;
+    h.summarize.mockImplementationOnce((_request, options) => {
+      signal = options?.signal;
+      return new Promise(() => {});
+    });
+    h.summarizer.schedule(h.state.session!);
+
+    await new AdventureLifecycle(h.runtime).end();
+
+    expect(signal?.aborted).toBe(true);
   });
 
   it("drops notes that no longer fit the session's turns", async () => {

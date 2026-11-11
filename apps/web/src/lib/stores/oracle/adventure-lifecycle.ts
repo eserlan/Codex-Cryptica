@@ -277,6 +277,7 @@ export class AdventureLifecycle {
 
   async end(): Promise<void> {
     if (!this.state.session || this.state.readOnly) return;
+    this.runtime.summarizer.cancel();
     const archived = await this.archiveSession(this.state.session);
     this.state.session = archived;
     void this.runtime.deps.clearGenerationInteraction(archived.id);
@@ -293,6 +294,7 @@ export class AdventureLifecycle {
    */
   async close(): Promise<void> {
     this.runtime.activeRestoreRequest += 1;
+    this.runtime.summarizer.cancel();
     this.runtime.generationController?.abort();
     this.runtime.generationController = null;
     if (this.state.session) {
@@ -324,6 +326,7 @@ export class AdventureLifecycle {
    */
   async forceEnd(): Promise<void> {
     if (!this.state.session) return;
+    this.runtime.summarizer.cancel();
     const archived = await this.archiveSession(this.state.session);
     void this.runtime.deps.clearGenerationInteraction(archived.id);
     await this.runtime.deps.coordinator.stop();
@@ -364,6 +367,7 @@ export class AdventureLifecycle {
 
   async destroy(isCurrent?: () => boolean): Promise<void> {
     if (!isCurrent) this.runtime.activeRestoreRequest += 1;
+    this.runtime.summarizer.cancel();
     this.runtime.generationController?.abort();
     this.runtime.generationController = null;
     await this.runtime.deps.coordinator.stop();
