@@ -5,6 +5,7 @@
  * established in Phase 1. See specs/2306-adventure-phase-2-play-tools/.
  */
 import { applyVisiblePatch } from "./reducer";
+import { isHere } from "./places";
 import { validateStateBudget } from "./schemas";
 import { playerScenarioCollectionProjection } from "./scenario-state";
 import { formatWorldElapsedMinutes } from "./world-time";
@@ -74,8 +75,12 @@ export function buildAdventureRecap(
     location: session.visibleState.location,
     situation,
     objectives: session.visibleState.objectives,
-    activeCharacters: session.visibleState.activeCharacters,
-    knownFacts: session.visibleState.knownFacts,
+    activeCharacters: session.visibleState.activeCharacters.filter((fact) =>
+      isHere(fact, session),
+    ),
+    knownFacts: session.visibleState.knownFacts.filter((fact) =>
+      isHere(fact, session),
+    ),
     recentTurnSummaries: recentTurns.map((turn) => turn.narration),
     ...(knownLeads.length > 0 ? { knownLeads } : {}),
     ...(elapsedTimeLabel ? { elapsedTimeLabel } : {}),

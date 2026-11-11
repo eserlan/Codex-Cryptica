@@ -21,6 +21,7 @@ import {
   markRevealedScenarios,
   applyScenarioElaborations,
 } from "./scenario-turns";
+import { applyPlaces } from "./places";
 import { materializeTurnState, type MaterializedTurnState } from "./turn-state";
 import type {
   AdventureSession,
@@ -104,6 +105,14 @@ export function applyCompletedTurn(
   if (!time.ok) return error("invalid-transition", time.reason);
   candidate.visibleState = materialized.visibleState;
   candidate.hiddenState = materialized.hiddenState;
+  const placeStep = applyPlaces(
+    candidate,
+    session,
+    proposal.moveTo,
+    materialized.visiblePatch,
+    createId,
+  );
+  if (!placeStep.ok) return error("conflicting-patch", placeStep.message);
   if (time.value) {
     const pressureResult = applyTurnWorldTimeAndPressures(
       candidate,

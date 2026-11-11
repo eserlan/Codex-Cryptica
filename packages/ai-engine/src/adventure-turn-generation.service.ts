@@ -394,6 +394,14 @@ const adventureTurnResponseSchema = {
             },
           },
         },
+        moveTo: {
+          type: "object",
+          properties: {
+            placeId: idSchema,
+            name: { ...textSchema, maxLength: 120 },
+            relation: textSchema,
+          },
+        },
         visiblePatch: {
           type: "object",
           properties: {

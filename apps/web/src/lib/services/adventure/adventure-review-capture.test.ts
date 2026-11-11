@@ -181,6 +181,26 @@ describe("Adventure diagnostic JSON for AI", () => {
     return base;
   }
 
+  it("reports where the player is and keeps place tags in the snapshot", () => {
+    const source = manyTurns(2);
+    source.places = [
+      { id: "p-1", name: "Tiny village" },
+      { id: "p-2", name: "Lower village", relation: "below Tiny village" },
+    ];
+    source.currentPlaceId = "p-2";
+    source.visibleState.knownFacts = [
+      { id: "f-1", text: "Sela bakes", source: "provisional", placeId: "p-1" },
+    ];
+    const out = JSON.parse(adventureDiagnosticJson(source));
+    expect(out.summary.currentPlace).toBe("Lower village");
+    expect(out.state.currentPlaceId).toBe("p-2");
+    expect(out.state.places).toHaveLength(2);
+    expect(out.state.visibleState.knownFacts[0].placeId).toBe("p-1");
+    const legacy = JSON.parse(adventureDiagnosticJson(manyTurns(2)));
+    expect(legacy.summary.currentPlace).toBeNull();
+    expect(legacy.state.places).toEqual([]);
+  });
+
   it("condenses older turns, keeps recent ones in full and makes time advance explicit", () => {
     const source = manyTurns(5);
     const before = structuredClone(source);

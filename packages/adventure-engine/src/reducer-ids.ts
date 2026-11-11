@@ -23,6 +23,7 @@ export function existingIds(session: AdventureSession): Set<string> {
     ...session.hiddenState.gmThreads.map((thread) => thread.id),
     ...session.provisionalFacts.map((fact) => fact.id),
     ...session.turns.map((turn) => turn.id),
+    ...(session.places?.map((place) => place.id) ?? []),
     ...(session.scenarioCollection?.items.flatMap(scenarioItemIdentityIds) ??
       []),
   ]);

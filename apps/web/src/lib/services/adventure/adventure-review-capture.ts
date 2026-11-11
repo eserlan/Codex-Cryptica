@@ -149,7 +149,7 @@ const DIAGNOSTIC_README = [
   "GM-only diagnostic snapshot of one solo adventure, written for an LLM to read.",
   "It contains hidden secrets and GM threads. Do not share with players.",
   "summary: quick orientation. integrityChecks: precomputed consistency findings (empty arrays mean clean).",
-  "state: the current truth. visibleState is what the player knows; hiddenState and scenarioCollection are GM-only.",
+  "state: the current truth. places lists where the player has been; facts and characters carry a placeId, and ones with none apply everywhere. visibleState is what the player knows; hiddenState and scenarioCollection are GM-only.",
   "source 'provisional' means the Oracle invented it in play; it is not backed by a Vault record.",
   "turns: oldest first. Turns marked detail 'condensed' keep only action, narration and time; detail 'full' also keeps every state patch.",
   "timeAdvance is null when a turn did not move the fictional clock. Time is in minutes.",
@@ -238,6 +238,9 @@ export function adventureDiagnosticJson(
         turnsCondensed: cutoff,
         elapsedMinutes: session.worldTime?.elapsedMinutes ?? 0,
         currentLocation: session.visibleState.location?.text ?? null,
+        currentPlace:
+          session.places?.find((place) => place.id === session.currentPlaceId)
+            ?.name ?? null,
         currentSituation: session.visibleState.situation?.text ?? null,
         hiddenSecrets: session.hiddenState.secrets.filter(
           (secret) => secret.status === "hidden",
@@ -263,6 +266,8 @@ export function adventureDiagnosticJson(
         hiddenState: session.hiddenState,
         scenarioCollection: session.scenarioCollection ?? null,
         worldTime: session.worldTime ?? null,
+        places: session.places ?? [],
+        currentPlaceId: session.currentPlaceId ?? null,
         provisionalFacts: session.provisionalFacts,
         sourceRecords: session.sourceRecords,
         pendingRoll: session.pendingRoll ?? null,
