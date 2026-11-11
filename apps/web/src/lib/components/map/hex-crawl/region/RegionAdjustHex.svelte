@@ -20,7 +20,7 @@
 </script>
 
 <div class="space-y-2">
-  <h3 class="text-micro font-bold uppercase tracking-widest text-theme-muted">
+  <h3 class="text-micro font-bold uppercase tracking-widest text-theme-text">
     Adjust a hex
   </h3>
   {#if selectedKey && current}
@@ -34,13 +34,13 @@
     {#if store.review && selectedKey in store.review.adjustments}
       <button
         type="button"
-        class="min-h-11 text-xs text-theme-muted underline"
+        class="min-h-11 text-xs text-theme-text underline"
         onclick={() => store.adjust(selectedKey, null)}
         >Put back the proposed terrain</button
       >
     {/if}
   {:else}
-    <p class="text-xs text-theme-muted">
+    <p class="text-xs text-theme-text">
       Tap a proposed hex on the map to change it.
     </p>
   {/if}

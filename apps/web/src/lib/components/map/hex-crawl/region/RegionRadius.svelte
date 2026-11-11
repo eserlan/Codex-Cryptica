@@ -8,7 +8,7 @@
 </script>
 
 <label class="block space-y-1">
-  <span class="text-micro font-bold uppercase tracking-widest text-theme-muted"
+  <span class="text-micro font-bold uppercase tracking-widest text-theme-text"
     >Radius: {radius}</span
   >
   <input

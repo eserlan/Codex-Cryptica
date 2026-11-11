@@ -35,8 +35,7 @@
 
 <div class="flex items-end gap-2">
   <label class="min-w-0 flex-1 space-y-1">
-    <span
-      class="text-micro font-bold uppercase tracking-widest text-theme-muted"
+    <span class="text-micro font-bold uppercase tracking-widest text-theme-text"
       >Seed</span
     >
     <input

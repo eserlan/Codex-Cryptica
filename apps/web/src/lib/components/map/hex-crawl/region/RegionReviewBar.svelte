@@ -46,7 +46,7 @@
       </h2>
       <button
         type="button"
-        class="min-h-11 min-w-11 rounded-lg text-theme-muted hover:text-theme-text"
+        class="min-h-11 min-w-11 rounded-lg text-theme-text hover:text-theme-text"
         aria-expanded={!collapsed}
         aria-label={collapsed ? "Expand review" : "Collapse review"}
         onclick={() => (collapsed = !collapsed)}
@@ -60,14 +60,14 @@
       </button>
     </div>
 
-    <p class="text-xs text-theme-muted">
+    <p class="text-xs text-theme-text">
       {count} hexes proposed{review.proposal.protected > 0
         ? `, ${review.proposal.protected} left as they are`
         : ""}{adjusted > 0 ? `, ${adjusted} changed by you` : ""}.
     </p>
     <p
       data-testid="region-ai-off"
-      class="mt-1 flex items-center gap-1 text-xs text-theme-muted"
+      class="mt-1 flex items-center gap-1 text-xs text-theme-text"
     >
       <span class="icon-[lucide--cpu] h-3.5 w-3.5" aria-hidden="true"></span>
       Generated on this device. No AI is used.

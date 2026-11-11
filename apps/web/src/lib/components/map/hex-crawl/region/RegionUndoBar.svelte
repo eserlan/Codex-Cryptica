@@ -43,13 +43,13 @@
     {#if store.undoAvailable}
       <button
         type="button"
-        class="min-h-11 rounded-lg px-3 font-bold text-theme-primary"
+        class="min-h-11 rounded-lg px-3 font-bold text-theme-text"
         onclick={() => store.undo()}>Undo</button
       >
     {/if}
     <button
       type="button"
-      class="min-h-11 min-w-11 rounded-lg text-theme-muted"
+      class="min-h-11 min-w-11 rounded-lg text-theme-text"
       aria-label="Dismiss"
       onclick={() => store.dismissMessage()}
     >

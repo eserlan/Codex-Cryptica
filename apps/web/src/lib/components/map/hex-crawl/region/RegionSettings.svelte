@@ -38,8 +38,7 @@
 
 <div class="space-y-3" data-testid="region-settings">
   <label class="block space-y-1">
-    <span
-      class="text-micro font-bold uppercase tracking-widest text-theme-muted"
+    <span class="text-micro font-bold uppercase tracking-widest text-theme-text"
       >Landscape</span
     >
     <select

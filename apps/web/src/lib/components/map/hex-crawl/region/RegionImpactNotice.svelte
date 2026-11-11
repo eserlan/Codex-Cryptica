@@ -8,7 +8,7 @@
   const explored = $derived(proposal.exploredChanges.length);
 </script>
 
-<p class="mt-2 text-xs text-theme-muted">
+<p class="mt-2 text-xs text-theme-text">
   {proposal.changes.length} of {total} hexes would change. Hexes you set by hand are
   never replaced.
 </p>

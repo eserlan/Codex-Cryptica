@@ -39,7 +39,7 @@
 
   <button
     type="button"
-    class="mt-2 min-h-11 text-xs font-bold uppercase tracking-widest text-theme-muted"
+    class="mt-2 min-h-11 text-xs font-bold uppercase tracking-widest text-theme-text"
     aria-expanded={showSettings}
     onclick={() => (showSettings = !showSettings)}
   >

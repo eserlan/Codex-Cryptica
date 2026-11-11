@@ -36,7 +36,7 @@
 </script>
 
 <div class="space-y-2" data-testid="region-generate-menu">
-  <h3 class="text-micro font-bold uppercase tracking-widest text-theme-muted">
+  <h3 class="text-micro font-bold uppercase tracking-widest text-theme-text">
     Generate region
   </h3>
   <div class="grid gap-1.5">
@@ -47,7 +47,7 @@
         onclick={() => store.open(mapId, entry.operation, hex)}
       >
         <span class="block text-sm font-bold">{entry.label}</span>
-        <span class="block text-xs text-theme-muted">{entry.hint}</span>
+        <span class="block text-xs text-theme-text">{entry.hint}</span>
       </button>
     {/each}
   </div>
