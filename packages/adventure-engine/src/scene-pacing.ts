@@ -1,3 +1,4 @@
+import { scenarioEventTurnIds } from "./scenario-collection";
 import type { AdventureSession, CommittedAdventureTurn } from "./types";
 
 /** Quiet turns in a row before the GM is nudged to change the scene. */
@@ -62,11 +63,7 @@ export function sceneStallPacing(
 ): SceneStallPacing | undefined {
   if (session.pendingRoll || session.turns.length < SCENE_STALL_TURN_LIMIT)
     return undefined;
-  const scenarioTurnIds = new Set(
-    session.scenarioCollection?.items.flatMap((item) =>
-      item.events.map((event) => event.turnId),
-    ) ?? [],
-  );
+  const scenarioTurnIds = scenarioEventTurnIds(session);
   let quietTurns = 0;
   for (let i = session.turns.length - 1; i >= 0; i -= 1) {
     if (!isQuietTurn(session.turns[i]!, scenarioTurnIds)) break;

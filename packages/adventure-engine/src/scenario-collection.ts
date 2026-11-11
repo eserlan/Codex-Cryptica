@@ -439,3 +439,14 @@ export function setScenarioStatus(
     return { ok: false, reason: "invalid-scenario" };
   }
 }
+
+/** Ids of the turns that logged a scenario event (a lead surfacing or a stage advancing). */
+export function scenarioEventTurnIds(session: AdventureSession): Set<string> {
+  const ids = new Set<string>();
+  for (const item of session.scenarioCollection?.items ?? []) {
+    for (const event of item.events) {
+      if (event.turnId) ids.add(event.turnId);
+    }
+  }
+  return ids;
+}
