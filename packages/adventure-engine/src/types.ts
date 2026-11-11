@@ -246,6 +246,14 @@ export interface ResourceCounter {
 /** A lightweight situation, never a mandatory quest or separate play session. */
 export type ScenarioStatus = "open" | "resolved" | "abandoned";
 
+export interface KnownLeadRecap {
+  id: string;
+  lead: string;
+  status: ScenarioStatus;
+  focused: boolean;
+  lastUpdate?: string;
+}
+
 /**
  * Speculative GM-only actor intention and progression model.
  * Distinct from committed ScenarioEvent history.
@@ -283,7 +291,7 @@ export interface ScenarioSeed {
 
 export interface ScenarioEvent {
   id: string;
-  kind: "discovery" | "consequence" | "status-change";
+  kind: "discovery" | "consequence" | "status-change" | "theory";
   visibility: "player" | "gm";
   text: string;
   at: string;
@@ -470,6 +478,8 @@ export interface AdventureRecap {
   activeCharacters: StateFact[];
   knownFacts: StateFact[];
   recentTurnSummaries: string[];
+  elapsedTimeLabel?: string;
+  knownLeads?: KnownLeadRecap[];
 }
 
 /** A roll history entry: a committed turn paired with the roll it resolved. */

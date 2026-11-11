@@ -289,7 +289,7 @@ export const turnProposalSchema = z.discriminatedUnion("kind", [
 export const scenarioEventSchema = z
   .object({
     id,
-    kind: z.enum(["discovery", "consequence", "status-change"]),
+    kind: z.enum(["discovery", "consequence", "status-change", "theory"]),
     visibility: z.enum(["player", "gm"]),
     text,
     at: timestamp,

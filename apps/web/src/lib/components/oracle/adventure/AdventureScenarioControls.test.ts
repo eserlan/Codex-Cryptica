@@ -13,6 +13,7 @@ function manager(
     readOnly: false,
     focusScenario: vi.fn(async () => {}),
     setScenarioStatus: vi.fn(async () => {}),
+    recordScenarioTheory: vi.fn(async () => {}),
   } as any;
 }
 
@@ -184,5 +185,192 @@ describe("AdventureScenarioControls", () => {
     expect(
       screen.getByRole("list", { name: "Known situation details" }).textContent,
     ).toContain("Open");
+  });
+
+  it("distinguishes rumour, observed fact, consequence, and player conjecture across multiple leads", () => {
+    const lead1 = {
+      ...heard,
+      id: "lead-1",
+      playerVisible: { rumour: "A lost lantern", lead: "Lantern trail" },
+      events: [
+        {
+          id: "obs-1",
+          kind: "discovery",
+          visibility: "player",
+          text: "Found oil spill on the rocks",
+        },
+        {
+          id: "theory-1",
+          kind: "theory",
+          visibility: "player",
+          text: "Someone dropped it running away",
+        },
+      ],
+    };
+    const lead2 = {
+      ...resolved,
+      id: "lead-2",
+      playerVisible: { rumour: "The bridge toll", lead: "Old toll bridge" },
+      events: [
+        {
+          id: "cq-1",
+          kind: "consequence",
+          visibility: "player",
+          text: "The bridge collapsed in the rain",
+        },
+      ],
+    };
+    const m = manager([lead1, lead2], "lead-1");
+    render(AdventureScenarioControls, { props: { manager: m } });
+
+    const details = screen.getByRole("list", {
+      name: "Known situation details",
+    });
+    // Unverified rumour disclaimer
+    expect(details.textContent).toContain("Reported rumour · not yet verified");
+    // Distinction of labels
+    expect(details.textContent).toContain(
+      "Observed: Found oil spill on the rocks",
+    );
+    expect(details.textContent).toContain(
+      "Conjecture: Someone dropped it running away",
+    );
+    expect(details.textContent).toContain(
+      "Consequence: The bridge collapsed in the rain",
+    );
+  });
+
+  it("submits a conjecture for an open heard lead", async () => {
+    const m = manager([heard], null);
+    render(AdventureScenarioControls, { props: { manager: m } });
+
+    const input = screen.getByRole("textbox", {
+      name: "Record conjecture for The old mill",
+    });
+    const saveButton = screen.getByRole("button", { name: "Save conjecture" });
+
+    await fireEvent.input(input, {
+      target: { value: "The miller fled to the mountains" },
+    });
+    await fireEvent.click(saveButton);
+
+    expect(m.recordScenarioTheory).toHaveBeenCalledWith(
+      "known-1",
+      "The miller fled to the mountains",
+    );
+  });
+
+  it("offers conjecture forms for resolved and abandoned heard leads", () => {
+    const abandoned = {
+      ...heard,
+      id: "known-3",
+      status: "abandoned",
+      playerVisible: { rumour: "A drowned bell", lead: "The quay" },
+    };
+    const m = manager([resolved, abandoned], null);
+    render(AdventureScenarioControls, { props: { manager: m } });
+
+    expect(
+      screen.getByRole("textbox", {
+        name: "Record conjecture for The north gate",
+      }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("textbox", {
+        name: "Record conjecture for The quay",
+      }),
+    ).toBeTruthy();
+  });
+
+  it("renders Vault entity badges and Solo Thread status, and allows saving to Solo Threads without duplicates", async () => {
+    const { soloThreads } =
+      await import("#lib/stores/solo-session-instance.js");
+    const { vault } = await import("#lib/stores/vault.svelte.js");
+
+    const entity1 = {
+      id: "ent-1",
+      title: "The Old Mill",
+      visibility: "player" as const,
+    };
+    const entity2 = {
+      id: "ent-2",
+      title: "Hidden Cellar",
+      visibility: "hidden" as const,
+    };
+    vi.spyOn(vault, "allEntities", "get").mockReturnValue([
+      entity1,
+      entity2,
+    ] as any);
+    vi.spyOn(soloThreads, "editable", "get").mockReturnValue(true);
+    vi.spyOn(soloThreads, "threads", "get").mockReturnValue([]);
+
+    const addSpy = vi.spyOn(soloThreads, "add").mockReturnValue({
+      ok: true,
+      thread: {
+        id: "th-new",
+        title: "The old mill",
+        kind: "lead",
+        status: "open",
+        entityIds: [],
+      },
+    } as any);
+    const linkSpy = vi
+      .spyOn(soloThreads, "link")
+      .mockReturnValue({ ok: true } as any);
+
+    const itemWithAnchors = {
+      ...heard,
+      id: "known-anchors",
+      playerVisible: { rumour: "The mill bell rang", lead: "The old mill" },
+      anchorRefs: ["ent-1", "ent-2"],
+    };
+
+    const m = manager([itemWithAnchors], null);
+    render(AdventureScenarioControls, { props: { manager: m } });
+
+    // Renders player-visible entity badge, but NOT hidden entity
+    expect(screen.getByText("The Old Mill")).toBeTruthy();
+    expect(screen.queryByText("Hidden Cellar")).toBeNull();
+
+    // Renders Save to Solo Threads button
+    const saveThreadBtn = screen.getByRole("button", {
+      name: "Save to Solo Threads",
+    });
+    await fireEvent.click(saveThreadBtn);
+
+    expect(addSpy).toHaveBeenCalledWith({
+      title: "The old mill",
+      kind: "lead",
+      note: "The mill bell rang",
+    });
+    // Links the player-visible entity
+    expect(linkSpy).toHaveBeenCalledWith("th-new", "ent-1");
+    // Does not link hidden entity
+    expect(linkSpy).not.toHaveBeenCalledWith("th-new", "ent-2");
+  });
+
+  it("displays existing Solo Thread badge instead of save button and does not create duplicate", async () => {
+    const { soloThreads } =
+      await import("#lib/stores/solo-session-instance.js");
+    const existingThread = {
+      id: "th-existing",
+      title: "The old mill",
+      kind: "lead" as const,
+      status: "open" as const,
+      entityIds: [],
+    };
+    vi.spyOn(soloThreads, "threads", "get").mockReturnValue([
+      existingThread,
+    ] as any);
+    const addSpy = vi.spyOn(soloThreads, "add");
+
+    const m = manager([heard], null);
+    render(AdventureScenarioControls, { props: { manager: m } });
+
+    expect(screen.getByText("Solo Thread · Open")).toBeTruthy();
+    expect(
+      screen.queryByRole("button", { name: "Save to Solo Threads" }),
+    ).toBeNull();
+    expect(addSpy).not.toHaveBeenCalled();
   });
 });
