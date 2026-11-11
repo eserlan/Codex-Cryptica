@@ -401,4 +401,64 @@ test.describe("Quickstart scenarios 2 and 4 to 9, live (AI disabled)", () => {
     for (const name of ["Copy seed", "Reroll", "Accept", "Cancel"])
       expect([...reached].some((n) => n.startsWith(name))).toBe(true);
   });
+
+  test("1. typing a noted seed brings back the same proposal, and Reroll changes it", async ({
+    page,
+  }) => {
+    const b = await baseHex(page);
+    await start(page, b, /Generate area/);
+    const seedField = page.getByRole("textbox", { name: "Seed" });
+    const seed = await seedField.inputValue();
+    const first = await proposed(page);
+    await page.getByRole("button", { name: "Reroll" }).click();
+    await expect(seedField).not.toHaveValue(seed);
+    expect(await proposed(page)).not.toEqual(first);
+    await seedField.fill(seed.toLowerCase());
+    await seedField.press("Enter");
+    await seedField.blur();
+    await expect(seedField).toHaveValue(seed);
+    expect(await proposed(page)).toEqual(first);
+  });
+
+  test("3. notes, a saved discovery, its pin and an explored hex are untouched, and the explored hex gains terrain", async ({
+    page,
+  }) => {
+    const b = await baseHex(page);
+    // A note and a saved discovery (with its pin) on the hand-set hex.
+    await goTo(page, b);
+    await page.getByLabel("Your notes").fill("Old road through the trees.");
+    await page.getByRole("button", { name: "Explore", exact: true }).click();
+    await page.getByRole("button", { name: "Save as location" }).click();
+    await page.waitForTimeout(500);
+    // An explored hex with no terrain.
+    const next = { q: b.q + 1, r: b.r };
+    await goTo(page, next);
+    await page.getByRole("button", { name: "Mark explored" }).click();
+    await page.waitForTimeout(300);
+
+    const snapshot = () =>
+      page.evaluate(() => {
+        const map = (Object.values((window as any).vault.maps) as any[]).find(
+          (m) => m.hexCrawl,
+        );
+        return JSON.parse(
+          JSON.stringify({ hexes: map.hexCrawl.hexes, pins: map.pins }),
+        );
+      });
+    const before = await snapshot();
+    expect(before.hexes[key(b)].notes).toContain("Old road");
+    expect(before.hexes[key(next)].explored).toBe(true);
+    expect(before.hexes[key(next)].terrain).toBeUndefined();
+
+    await start(page, b, /Generate area/);
+    expect(Object.keys(await proposed(page))).not.toContain(key(b));
+    await accept(page);
+    const after = await snapshot();
+
+    expect(after.hexes[key(b)]).toEqual(before.hexes[key(b)]);
+    expect(after.pins).toEqual(before.pins);
+    expect(after.hexes[key(next)].explored).toBe(true);
+    expect(after.hexes[key(next)].terrain).toBeDefined();
+    expect(after.hexes[key(next)].generated).toBeDefined();
+  });
 });
