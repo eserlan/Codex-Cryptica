@@ -5,13 +5,22 @@
   let {
     turn,
     roll,
+    testId,
   }: {
-    turn: NonNullable<AdventureManager["transcript"]>["turns"][number];
+    /** A committed turn, or the in-progress one (same layout, so no jump). */
+    turn: Pick<
+      NonNullable<AdventureManager["transcript"]>["turns"][number],
+      "playerAction" | "narration"
+    >;
+    testId?: string;
     roll?: AdventureManager["rollHistory"][number]["resolvedRoll"];
   } = $props();
 </script>
 
-<article class="space-y-3 border-b border-theme-border/40 pb-5 last:border-0">
+<article
+  class="space-y-3 border-b border-theme-border/40 pb-5 last:border-0"
+  data-testid={testId}
+>
   {#if turn.playerAction.trim()}
     <div
       class="ml-auto max-w-[90%] rounded-2xl rounded-br-sm bg-theme-primary/10 px-3 py-2"
