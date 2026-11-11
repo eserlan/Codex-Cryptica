@@ -535,8 +535,8 @@ it("TEMP_FORMAT_PROBE", async () => {
   const marker = '\nit("TEMP_FORMAT_PROBE"';
   const clean = original.slice(0, original.indexOf(marker));
   const formatted = await prettier.format(clean, {
-    ...(await prettier.resolveConfig(path)),
     filepath: path,
+    parser: "typescript",
   });
   const fragment = formatted.slice(
     formatted.indexOf('describe("fictional clock and temporal precision"'),
