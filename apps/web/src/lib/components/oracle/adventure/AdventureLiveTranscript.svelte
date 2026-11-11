@@ -47,7 +47,8 @@
     <AdventureNarrativeTurn
       testId="adventure-stream-preview"
       turn={{
-        playerAction: manager.draft ?? "",
+        playerAction:
+          manager.session?.pendingRoll?.playerAction ?? manager.draft ?? "",
         narration: manager.streamedNarration,
       }}
     />
