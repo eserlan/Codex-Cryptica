@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { AdventureSession } from "@codex/adventure-engine";
 import {
+  adventureDiagnosticJson,
   adventureReviewJson,
   adventureReviewMarkdown,
 } from "./adventure-review-capture";
@@ -160,5 +161,86 @@ describe("GM-only Adventure review capture", () => {
     expect(report).toContain("No committed turns yet.");
     expect(report).toContain("Scenarios: 0");
     expect(report).toContain("Elapsed fictional time: 0m");
+  });
+});
+
+describe("Adventure diagnostic JSON for AI", () => {
+  function manyTurns(count: number): AdventureSession {
+    const base = exampleSession();
+    const template = base.turns[0];
+    base.turns = Array.from({ length: count }, (_, index) => ({
+      ...template,
+      id: "turn-" + index,
+      sequence: index,
+      timeAdvance: index === 0 ? template.timeAdvance : undefined,
+    }));
+    base.provisionalFacts = base.provisionalFacts.map((fact) => ({
+      ...fact,
+      introducedOnTurnId: "turn-0",
+    }));
+    return base;
+  }
+
+  it("condenses older turns, keeps recent ones in full and makes time advance explicit", () => {
+    const source = manyTurns(5);
+    const before = structuredClone(source);
+    const out = JSON.parse(adventureDiagnosticJson(source, { recentTurns: 2 }));
+    expect(source).toEqual(before);
+    expect(out._readme).toContain("GM-only");
+    expect(out.summary).toMatchObject({
+      turnsTotal: 5,
+      turnsFull: 2,
+      turnsCondensed: 3,
+      hiddenSecrets: 1,
+      unheardScenarios: 1,
+      pendingRoll: false,
+    });
+    expect(out.turns.map((t: { detail: string }) => t.detail)).toEqual([
+      "condensed",
+      "condensed",
+      "condensed",
+      "full",
+      "full",
+    ]);
+    expect(out.turns[1]).not.toHaveProperty("visiblePatch");
+    expect(out.turns[4]).toHaveProperty("visiblePatch");
+    expect(out.turns[0].timeAdvance).toEqual({
+      minutes: 1440,
+      cause: "Rested overnight",
+    });
+    expect(out.turns[1].timeAdvance).toBeNull();
+    expect(out.turns[4].timeAdvance).toBeNull();
+    expect(out.state.hiddenState.secrets[0].text).toContain("miller");
+    expect(Object.values(out.integrityChecks).flat()).toEqual([]);
+  });
+
+  it("is smaller than the full copy for long sessions", () => {
+    const source = manyTurns(60);
+    expect(adventureDiagnosticJson(source).length).toBeLessThan(
+      adventureReviewJson(source).length,
+    );
+  });
+
+  it("reports broken references instead of hiding them", () => {
+    const source = manyTurns(2);
+    source.provisionalFacts[0].introducedOnTurnId = "gone";
+    source.turns[1].revealedSecretIds = ["nope"];
+    source.turns[1].sequence = 7;
+    source.hiddenState.secrets[0].status = "revealed";
+    const checks = JSON.parse(adventureDiagnosticJson(source)).integrityChecks;
+    expect(checks.factsIntroducedOnMissingTurn).toEqual([
+      source.provisionalFacts[0].id,
+    ]);
+    expect(checks.turnsRevealingUnknownSecrets).toEqual(["turn-1"]);
+    expect(checks.nonContiguousTurnSequences).toEqual(["turn-1"]);
+    expect(checks.secretsMarkedRevealedWithoutTurn).toEqual(["secret-1"]);
+  });
+
+  it("handles a session with no turns", () => {
+    const source = exampleSession();
+    source.turns = [];
+    const out = JSON.parse(adventureDiagnosticJson(source));
+    expect(out.turns).toEqual([]);
+    expect(out.summary.lastPlayerAction).toBeNull();
   });
 });
