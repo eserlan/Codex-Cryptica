@@ -43,7 +43,7 @@
   </button>
   {#if retryingControl}
     <p class="mt-2 text-theme-text" data-testid="control-retry-waiting">
-      Waiting for the other tab to let go. This can take up to 10 seconds.
+      Waiting for the other tab to let go. This may take around 11 seconds.
     </p>
   {/if}
   {#if controlRetryMessage}

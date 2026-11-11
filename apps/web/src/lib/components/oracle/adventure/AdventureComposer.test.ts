@@ -202,7 +202,9 @@ describe("AdventureComposer", () => {
     await fireEvent.click(
       screen.getByRole("button", { name: "Try to take control" }),
     );
-    expect(screen.getByTestId("control-retry-waiting")).toBeTruthy();
+    expect(screen.getByTestId("control-retry-waiting").textContent).toContain(
+      "This may take around 11 seconds.",
+    );
     const busy = screen.getByRole("button", { name: "Checking…" });
     expect(busy.hasAttribute("disabled")).toBe(true);
     await fireEvent.click(busy);
