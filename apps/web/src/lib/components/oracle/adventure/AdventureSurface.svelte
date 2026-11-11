@@ -425,14 +425,10 @@
     }
     const originatingVaultId = oracle.vault.activeVaultId;
     const facts = session.provisionalFacts ?? [];
-    const pending = batchFilterPromotableFacts(
-      facts,
-      existingEntityTitles,
-      [
-        ...processedAutoPromoteFactIds,
-        ...(session.dismissedProvisionalFactIds ?? []),
-      ],
-    );
+    const pending = batchFilterPromotableFacts(facts, existingEntityTitles, [
+      ...processedAutoPromoteFactIds,
+      ...(session.dismissedProvisionalFactIds ?? []),
+    ]);
     if (pending.length === 0 || autoPromoting) return;
 
     autoPromoting = true;
