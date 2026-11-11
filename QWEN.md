@@ -272,6 +272,9 @@ The application builds as a **static site** deployed to GitHub Pages. The Oracle
 
 ## Active Technologies
 
+- TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + Existing `hex-crawl-engine` (extended with `region/`), `map-engine` (`getHexNeighbors`, `getHexRange`, `hexDistance`, `hexToPoint`, `getHexCorners`), `zod`, the existing `HexCrawlStore`, `HexTerrainPicker`, Tailwind 4 semantic tokens, Iconify classes. No new third-party dependency. (4659-hex-region-generation)
+- One optional additive field, `generated`, on existing hex records in `.codex/maps.json` (synced, backed up and exported with maps; removed from guest exports with the rest of `hexCrawl`). One device-local `localStorage` key, `codex-hex-region:<mapId>`. No IndexedDB, OPFS layout or migration change. (4659-hex-region-generation)
+
 - TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14; Cloudflare Workers runtime for `apps/workers/oracle-proxy` (179-in-app-feedback)
 
 - TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + Existing `map-engine` (hex maths; + `parseHexLabel`), `random-source-engine` (offline rolling), `session-journal-engine` (+ `formatHexExplored`), `schema` (`MapSchema` + optional `grid`, `hexCrawl`), `vault-engine` `GuestExporter` (strips `hexCrawl`), `@codex/ai-engine` (`aiClientManager`), `generator-engine` `formatCampaignContextBlock`, the exported `extractJsonObject`, `@codex/events` (`JOURNAL:CAPTURE`), Floating UI, `zod`, Tailwind 4 semantic tokens, Iconify classes. New internal package `packages/hex-crawl-engine`. No new third-party dependency. (178-hex-crawl-mode)
