@@ -351,6 +351,7 @@ export const adventureSessionSchema = z
     visibleState: visibleStateSchema,
     hiddenState: hiddenStateSchema,
     provisionalFacts: z.array(provisionalFactSchema).max(60),
+    dismissedProvisionalFactIds: z.array(id).max(60).optional().default([]),
     turns: z.array(
       z.object({
         id,
@@ -442,6 +443,7 @@ export function parseAdventureSession(input: unknown): AdventureSession {
     visibleState: parsed.visibleState,
     hiddenState: parsed.hiddenState,
     provisionalFacts: parsed.provisionalFacts,
+    dismissedProvisionalFactIds: parsed.dismissedProvisionalFactIds,
     scenarioCollection: parsed.scenarioCollection,
     worldEntry: parsed.worldEntry,
     worldTime: parsed.worldTime,
@@ -619,6 +621,7 @@ export function validateStateBudget(session: AdventureSession): boolean {
       visibleState: session.visibleState,
       hiddenState: session.hiddenState,
       provisionalFacts: session.provisionalFacts,
+      dismissedProvisionalFactIds: session.dismissedProvisionalFactIds,
       scenarioCollection: session.scenarioCollection,
       worldEntry: session.worldEntry,
       worldTime: session.worldTime,
