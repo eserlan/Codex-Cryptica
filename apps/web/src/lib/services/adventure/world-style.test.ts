@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { worldStyleForTheme } from "./world-style";
+import { genreForTheme, worldStyleForTheme } from "./world-style";
 
 describe("worldStyleForTheme", () => {
   it("maps a genre theme to its name and description", () => {
@@ -25,4 +25,20 @@ describe("worldStyleForTheme", () => {
     expect(worldStyleForTheme("constructor")).toBeUndefined();
     expect(worldStyleForTheme("__proto__")).toBeUndefined();
   });
+});
+
+describe("genreForTheme", () => {
+  it("resolves a genre label under every appearance suffix", () => {
+    for (const id of ["starwars", "starwars_dark", "fallout_light", "horror"]) {
+      expect(genreForTheme(id)).toBeTruthy();
+    }
+    expect(genreForTheme("cyberpunk_dark")).toBe("Cyberpunk / Corporate");
+  });
+
+  it.each([undefined, null, "", "workspace", "nope", "constructor"])(
+    "returns no genre for %s",
+    (id) => {
+      expect(genreForTheme(id)).toBeUndefined();
+    },
+  );
 });

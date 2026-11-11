@@ -486,7 +486,7 @@ export const factionConfig = {
   ],
 };
 
-export const themeIdToLabel: Record<string, string> = {
+const themeIdToLabelBase: Record<string, string> = {
   fantasy: "Classic Fantasy",
   fantasy_dark: "Classic Fantasy",
   pirate: "Pirate",
@@ -524,6 +524,18 @@ export const themeIdToLabel: Record<string, string> = {
   fallout: "Post-Apocalyptic",
   fallout_light: "Post-Apocalyptic",
 };
+
+/**
+ * Theme ids carry an optional `_light` or `_dark` appearance suffix. Every
+ * genre resolves under either suffix so a Vault's theme never silently falls
+ * back to the default genre.
+ */
+export const themeIdToLabel: Record<string, string> = Object.fromEntries(
+  Object.entries(themeIdToLabelBase).flatMap(([id, label]) => {
+    const base = id.replace(/_(light|dark)$/, "");
+    return [base, `${base}_light`, `${base}_dark`].map((key) => [key, label]);
+  }),
+);
 
 export const vampireConfig = {
   archetypes: [

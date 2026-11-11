@@ -15,6 +15,7 @@ export class AdventureBackground {
   constructor(
     private readonly idGenerator: () => string,
     private readonly grounding = new AdventureGroundingService(),
+    private readonly getGenre: () => string | undefined = () => undefined,
   ) {}
   private worldEntryRumourGenerator:
     | ((
@@ -42,9 +43,21 @@ export class AdventureBackground {
     const batch = await this.generateWorldEntryRumourBatch(session, signal);
     if (signal?.aborted) throw abortReason(signal);
     try {
-      return seedWorldEntryBackground(session, this.idGenerator, batch);
+      return seedWorldEntryBackground(
+        session,
+        this.idGenerator,
+        batch,
+        undefined,
+        this.getGenre(),
+      );
     } catch {
-      return seedWorldEntryBackground(session, this.idGenerator);
+      return seedWorldEntryBackground(
+        session,
+        this.idGenerator,
+        undefined,
+        undefined,
+        this.getGenre(),
+      );
     }
   }
 
