@@ -314,4 +314,104 @@ describe("AdventureProvisionalFacts", () => {
     await showDiscoveries();
     expect(screen.getByText("Scenario")).toBeTruthy();
   });
+
+  it("remembers a dismissed discovery after remounting the panel from saved session state", async () => {
+    const dismissedIds: string[] = [];
+    const onDismiss = vi.fn(async (ids: string[]) => {
+      dismissedIds.push(...ids);
+    });
+    const { unmount } = render(AdventureProvisionalFacts, {
+      props: {
+        facts: [fact, fact2],
+        existingTitles: [],
+        dismissedIds: [],
+        onDismiss,
+        onAdd: vi.fn(),
+      },
+    });
+    await showDiscoveries();
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Discard Sunken Barrow suggestion" }),
+    );
+    expect(onDismiss).toHaveBeenCalledWith(["barrow"]);
+    expect(screen.queryByText("Sunken Barrow")).toBeNull();
+    unmount();
+
+    render(AdventureProvisionalFacts, {
+      props: {
+        facts: [fact, fact2],
+        existingTitles: [],
+        dismissedIds,
+        onDismiss,
+        onAdd: vi.fn(),
+      },
+    });
+    expect(
+      screen.getByRole("button", { name: "Review 1 adventure discovery" }),
+    ).toBeTruthy();
+    await showDiscoveries();
+    expect(screen.queryByText("Sunken Barrow")).toBeNull();
+    expect(screen.getByText("Elric the Wandering Hermit")).toBeTruthy();
+  });
+
+  it("persists bulk dismissal as one operation and removes only selected facts", async () => {
+    const onDismiss = vi.fn().mockResolvedValue(undefined);
+    render(AdventureProvisionalFacts, {
+      props: {
+        facts: [fact, fact2],
+        existingTitles: [],
+        dismissedIds: [],
+        onDismiss,
+        onAdd: vi.fn(),
+      },
+    });
+    await showDiscoveries();
+    await fireEvent.click(
+      screen.getByRole("checkbox", { name: "Select Sunken Barrow" }),
+    );
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Dismiss selected" }),
+    );
+    expect(onDismiss).toHaveBeenCalledWith(["barrow"]);
+    expect(screen.queryByText("Sunken Barrow")).toBeNull();
+    expect(screen.getByText("Elric the Wandering Hermit")).toBeTruthy();
+  });
+
+  it("does not hide a discovery if its dismissal cannot be saved", async () => {
+    render(AdventureProvisionalFacts, {
+      props: {
+        facts: [fact],
+        existingTitles: [],
+        dismissedIds: [],
+        onDismiss: vi.fn().mockRejectedValue(new Error("internal secret")),
+        onAdd: vi.fn(),
+      },
+    });
+    await showDiscoveries();
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Discard Sunken Barrow suggestion" }),
+    );
+    expect(screen.getByText("Sunken Barrow")).toBeTruthy();
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toContain("Could not save dismissed discoveries");
+    expect(alert.textContent).not.toContain("internal secret");
+  });
+
+  it("disables dismissing while the session is read-only or generating", async () => {
+    render(AdventureProvisionalFacts, {
+      props: {
+        facts: [fact],
+        existingTitles: [],
+        dismissedIds: [],
+        onDismiss: vi.fn(),
+        onAdd: vi.fn(),
+        canDismiss: false,
+      },
+    });
+    await showDiscoveries();
+    const button = screen.getByRole("button", {
+      name: "Discard Sunken Barrow suggestion",
+    }) as HTMLButtonElement;
+    expect(button.disabled).toBe(true);
+  });
 });

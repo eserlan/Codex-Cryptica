@@ -151,4 +151,87 @@ describe("AdventureScenarios workflow", () => {
     });
     expect(state.session).toEqual(updated);
   });
+
+  it("persists dismissed player discoveries through reload without changing history", async () => {
+    const { state, runtime } = createAdventureRuntime();
+    const session = state.session!;
+    session.provisionalFacts = [
+      {
+        id: "fact-1",
+        kind: "person",
+        name: "The Miller",
+        summary: "Met in the village",
+        introducedOnTurnId: "turn-1",
+        visibility: "player-visible",
+      },
+      {
+        id: "secret-1",
+        kind: "clue",
+        name: "The hidden motive",
+        summary: "GM-only",
+        introducedOnTurnId: "turn-1",
+        visibility: "gm-only",
+      },
+    ];
+    const beforeFacts = structuredClone(session.provisionalFacts);
+    const dismissed = await runtime.scenarios.dismissDiscoveries(["fact-1"]);
+    expect(dismissed.dismissedProvisionalFactIds).toEqual(["fact-1"]);
+    expect(dismissed.provisionalFacts).toEqual(beforeFacts);
+    expect(dismissed.turns).toEqual(session.turns);
+    expect(dismissed.revision).toBe(session.revision + 1);
+
+    // The saved JSON is the source of truth, not the component's local state.
+    state.session = parseAdventureSession(
+      JSON.parse(JSON.stringify(dismissed)),
+    );
+    expect(state.session.dismissedProvisionalFactIds).toEqual(["fact-1"]);
+    const again = await runtime.scenarios.dismissDiscoveries(["fact-1"]);
+    expect(again.revision).toBe(dismissed.revision);
+    expect(again.dismissedProvisionalFactIds).toEqual(["fact-1"]);
+  });
+
+  it("rejects attempts to dismiss GM-only or unknown facts", async () => {
+    const { state, runtime } = createAdventureRuntime();
+    state.session!.provisionalFacts = [
+      {
+        id: "gm-only",
+        kind: "clue",
+        name: "Hidden plan",
+        summary: "secret",
+        introducedOnTurnId: "turn-1",
+        visibility: "gm-only",
+      },
+    ];
+    await expect(
+      runtime.scenarios.dismissDiscoveries(["gm-only"]),
+    ).rejects.toThrow("unknown-discovery");
+    await expect(
+      runtime.scenarios.dismissDiscoveries(["missing"]),
+    ).rejects.toThrow("unknown-discovery");
+    expect(state.session?.dismissedProvisionalFactIds ?? []).toEqual([]);
+  });
+
+  it("keeps a dismissed discovery available when the save fails", async () => {
+    const { state, deps, runtime } = createAdventureRuntime();
+    state.session!.provisionalFacts = [
+      {
+        id: "fact-1",
+        kind: "place",
+        name: "Bridge",
+        summary: "Old bridge",
+        introducedOnTurnId: "turn-1",
+        visibility: "player-visible",
+      },
+    ];
+    const before = state.session;
+    vi.spyOn(deps.repository, "save").mockResolvedValueOnce({
+      ok: false,
+      error: new Error("revision-conflict"),
+    });
+    await expect(
+      runtime.scenarios.dismissDiscoveries(["fact-1"]),
+    ).rejects.toThrow("revision-conflict");
+    expect(state.session).toBe(before);
+    expect(state.session?.dismissedProvisionalFactIds ?? []).toEqual([]);
+  });
 });

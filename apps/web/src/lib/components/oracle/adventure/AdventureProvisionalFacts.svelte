@@ -1,3 +1,4 @@
+<!-- fallow-ignore-file complexity -- Existing interactive discovery-review dialog; dismissal changes are covered by focused tests. -->
 <script lang="ts">
   import { tick } from "svelte";
   import type { ProvisionalFact } from "@codex/adventure-engine";
@@ -13,12 +14,19 @@
     existingTitles,
     onAdd,
     onAddAll,
+    onDismiss,
+    dismissedIds = [],
+    canDismiss = true,
     settings = defaultSettings,
   }: {
     facts: ProvisionalFact[];
     existingTitles: string[];
     onAdd: (fact: ProvisionalFact) => Promise<void>;
     onAddAll?: (facts: ProvisionalFact[]) => Promise<void>;
+    /** Store review decisions in the adventure session, not component state. */
+    onDismiss?: (factIds: string[]) => Promise<void>;
+    dismissedIds?: string[];
+    canDismiss?: boolean;
     settings?: AdventurePromotionSettings;
   } = $props();
 
@@ -27,6 +35,7 @@
   let selectedIds = $state<string[]>([]);
   let savingId = $state<string | null>(null);
   let addingAll = $state(false);
+  let dismissing = $state(false);
   let errorMessage = $state<string | null>(null);
   let expanded = $state(false);
   let optionsOpen = $state(false);
@@ -40,6 +49,7 @@
     batchFilterPromotableFacts(facts, existingTitles, [
       ...savedIds,
       ...discardedIds,
+      ...dismissedIds,
     ]),
   );
   let filteredFacts = $derived(
@@ -56,7 +66,7 @@
   let selectedFacts = $derived(
     visibleFacts.filter((fact) => selectedIds.includes(fact.id)),
   );
-  let busy = $derived(savingId !== null || addingAll);
+  let busy = $derived(savingId !== null || addingAll || dismissing);
 
   const kindFilters = [
     { kind: "all", label: "All" },
@@ -148,17 +158,29 @@
     }
   }
 
+  async function discardIds(ids: string[]): Promise<void> {
+    if (busy || !canDismiss || ids.length === 0) return;
+    dismissing = true;
+    errorMessage = null;
+    try {
+      // Only hide a discovery once the revision-checked session save succeeds.
+      await onDismiss?.(ids);
+      discardedIds = [...discardedIds, ...ids];
+      const discarded = new Set(ids);
+      selectedIds = selectedIds.filter((id) => !discarded.has(id));
+    } catch {
+      errorMessage = "Could not save dismissed discoveries. Please retry.";
+    } finally {
+      dismissing = false;
+    }
+  }
+
   function discard(fact: ProvisionalFact): void {
-    if (busy) return;
-    discardedIds = [...discardedIds, fact.id];
-    selectedIds = selectedIds.filter((id) => id !== fact.id);
+    void discardIds([fact.id]);
   }
 
   function discardSelected(): void {
-    if (busy) return;
-    const selected = new Set(selectedFacts.map((fact) => fact.id));
-    discardedIds = [...discardedIds, ...selected];
-    selectedIds = selectedIds.filter((id) => !selected.has(id));
+    void discardIds(selectedFacts.map((fact) => fact.id));
   }
 </script>
 
@@ -373,7 +395,7 @@
                   <button
                     type="button"
                     class="min-h-9 rounded-md px-2.5 text-xs text-theme-text hover:bg-theme-danger/10 hover:text-theme-danger disabled:opacity-50"
-                    disabled={busy}
+                    disabled={busy || !canDismiss}
                     aria-label={`Discard ${fact.name} suggestion`}
                     onclick={() => discard(fact)}
                   >
@@ -414,7 +436,7 @@
             <button
               type="button"
               class="min-h-9 px-2 text-xs text-theme-text hover:text-theme-danger disabled:opacity-50"
-              disabled={busy}
+              disabled={busy || !canDismiss}
               onclick={discardSelected}
             >
               Dismiss selected

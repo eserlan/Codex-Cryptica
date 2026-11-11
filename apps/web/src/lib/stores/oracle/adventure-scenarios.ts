@@ -1,6 +1,7 @@
 import {
   addScenario,
   advanceManualWorldTime,
+  dismissAdventureDiscoveries,
   recordScenarioTheory,
   setScenarioFocus,
   setScenarioStatus,
@@ -75,6 +76,17 @@ export class AdventureScenarios {
     );
   }
 
+  dismissDiscoveries(factIds: string[]): Promise<AdventureSession> {
+    return this.mutate((session) =>
+      dismissAdventureDiscoveries(
+        session,
+        factIds,
+        session.revision,
+        this.deps.now(),
+      ),
+    );
+  }
+
   recordTheory(scenarioId: string, text: string): Promise<AdventureSession> {
     const eventId = this.deps.idGenerator();
     return this.mutate((session) =>
@@ -121,6 +133,7 @@ const SCENARIO_ERROR_COPY: Record<string, string> = {
     "Resolve or dismiss the pending roll before changing a situation.",
   "read-only-adventure": "This adventure is read-only in this tab.",
   "unknown-scenario": "That situation is no longer available.",
+  "unknown-discovery": "That discovery is no longer available to dismiss.",
   "scenario-not-heard": "That situation has not been discovered yet.",
   "invalid-transition": "That situation can no longer be changed.",
   "origin-conflict":

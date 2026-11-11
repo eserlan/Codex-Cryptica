@@ -19,7 +19,8 @@ export type ScenarioCommandError =
   | "already-applied"
   | "state-budget-exceeded"
   | "invalid-scenario"
-  | "invalid-fictional-time";
+  | "invalid-fictional-time"
+  | "unknown-discovery";
 
 export type ScenarioCommandResult =
   | { ok: true; session: AdventureSession; changed: boolean }
@@ -108,6 +109,38 @@ function commit(
   } catch {
     return { ok: false, reason: "state-budget-exceeded" };
   }
+}
+
+/**
+ * Persist player review decisions alongside the adventure without touching
+ * committed turn history or the underlying provisional facts. Idempotent on
+ * repeated dismissal and validated against player-visible discoveries only.
+ */
+export function dismissAdventureDiscoveries(
+  session: AdventureSession,
+  factIds: string[],
+  expectedRevision: number,
+  now = session.updatedAt,
+): ScenarioCommandResult {
+  if (session.revision !== expectedRevision)
+    return { ok: false, reason: "stale-revision" };
+  if (session.status !== "active")
+    return { ok: false, reason: "read-only-session" };
+  if (session.pendingRoll) return { ok: false, reason: "pending-roll" };
+  const available = new Set(
+    session.provisionalFacts
+      .filter((fact) => fact.visibility === "player-visible")
+      .map((fact) => fact.id),
+  );
+  const unique = [...new Set(factIds)];
+  if (unique.some((id) => !available.has(id)))
+    return { ok: false, reason: "unknown-discovery" };
+  const dismissed = session.dismissedProvisionalFactIds ?? [];
+  const toAdd = unique.filter((id) => !dismissed.includes(id));
+  if (!toAdd.length) return { ok: true, session, changed: false };
+  return commit(session, expectedRevision, now, (copy) => {
+    copy.dismissedProvisionalFactIds = [...dismissed, ...toAdd];
+  });
 }
 
 export function addScenario(

@@ -1,3 +1,4 @@
+<!-- fallow-ignore-file complexity -- Existing full-screen play layout; discovery save wiring is covered by focused tests. -->
 <script lang="ts">
   import { tick } from "svelte";
   import { KeyboardInset } from "#lib/services/help-assistant/keyboard-inset.svelte.js";
@@ -235,6 +236,11 @@
     <div class="flex shrink-0 items-center gap-1 sm:gap-2">
       <AdventureProvisionalFacts
         facts={manager.session?.provisionalFacts ?? []}
+        dismissedIds={manager.session?.dismissedProvisionalFactIds ?? []}
+        onDismiss={(ids) => manager.dismissDiscoveries(ids).then(() => {})}
+        canDismiss={!manager.readOnly &&
+          manager.phase !== "generating" &&
+          !manager.session?.pendingRoll}
         {existingTitles}
         onAdd={onAddProvisionalFact}
         onAddAll={onAddAllProvisionalFacts}

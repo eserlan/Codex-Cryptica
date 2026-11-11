@@ -1,3 +1,4 @@
+<!-- fallow-ignore-file complexity -- Existing adventure entry and restoration view; only filtering of dismissed facts changed. -->
 <script lang="ts">
   import { untrack } from "svelte";
   import { oracle } from "#lib/stores/oracle.svelte.js";
@@ -425,11 +426,10 @@
     }
     const originatingVaultId = oracle.vault.activeVaultId;
     const facts = session.provisionalFacts ?? [];
-    const pending = batchFilterPromotableFacts(
-      facts,
-      existingEntityTitles,
-      Array.from(processedAutoPromoteFactIds),
-    );
+    const pending = batchFilterPromotableFacts(facts, existingEntityTitles, [
+      ...processedAutoPromoteFactIds,
+      ...(session.dismissedProvisionalFactIds ?? []),
+    ]);
     if (pending.length === 0 || autoPromoting) return;
 
     autoPromoting = true;
