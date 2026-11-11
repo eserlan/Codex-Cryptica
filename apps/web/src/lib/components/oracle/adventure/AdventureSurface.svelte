@@ -355,6 +355,19 @@
     },
   });
 
+  /** Best effort: a place the player saves (or finds already saved) is tied to its Vault record. */
+  async function linkPlaceToRecord(
+    fact: ProvisionalFact,
+    recordId: string,
+  ): Promise<void> {
+    if (fact.kind !== "place") return;
+    try {
+      await oracle.adventure.linkPlaceRecord(fact.name, recordId);
+    } catch {
+      // The title match at the next turn links it instead.
+    }
+  }
+
   async function addProvisionalFact(fact: ProvisionalFact): Promise<void> {
     const session = oracle.adventure.session;
     if (!session) throw new Error("No active adventure.");
@@ -366,10 +379,16 @@
         draft.title.toLocaleLowerCase(),
     );
     if (existing) {
+      await linkPlaceToRecord(fact, existing.id);
       notificationStore.notify(`${draft.title} is already in Codex.`, "info");
       return;
     }
-    await oracle.vault.createEntity(draft.type, draft.title, draft.initialData);
+    const recordId = await oracle.vault.createEntity(
+      draft.type,
+      draft.title,
+      draft.initialData,
+    );
+    await linkPlaceToRecord(fact, recordId);
     notificationStore.notify(`Added ${draft.title} to Codex.`, "success");
   }
 
@@ -396,12 +415,16 @@
           entity.title.trim().toLocaleLowerCase() ===
           draft.title.trim().toLocaleLowerCase(),
       );
-      if (existing) continue;
-      await oracle.vault.createEntity(
+      if (existing) {
+        await linkPlaceToRecord(fact, existing.id);
+        continue;
+      }
+      const recordId = await oracle.vault.createEntity(
         draft.type,
         draft.title,
         draft.initialData,
       );
+      await linkPlaceToRecord(fact, recordId);
       addedCount += 1;
     }
     if (addedCount > 0) {
@@ -446,11 +469,12 @@
           processedAutoPromoteFactIds.add(fact.id);
           const draft = createAdventureEntityDraft(fact, session.title);
           if (!draft) continue;
-          await oracle.vault.createEntity(
+          const recordId = await oracle.vault.createEntity(
             draft.type,
             draft.title,
             draft.initialData,
           );
+          await linkPlaceToRecord(fact, recordId);
           addedCount += 1;
         }
         if (addedCount > 0) {
