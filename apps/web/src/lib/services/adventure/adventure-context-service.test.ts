@@ -651,8 +651,8 @@ it("keeps relevant future and hidden opening sources in labelled GM context", as
   expect(hidden?.lore).toContain("betrayal");
 });
 
-describe("dated Adventure grounding after committed world-time advances", () => {
-  it("refreshes opening, action and scenario context as fictional days pass", async () => {
+describe("dated Adventure grounding after time advances", () => {
+  it("refreshes opening and action context after fictional days pass", async () => {
     const calendar = {
       ...DEFAULT_CALENDAR,
       useGregorian: false,
@@ -720,9 +720,7 @@ describe("dated Adventure grounding after committed world-time advances", () => 
       "Return for the festival",
     );
     for (const relevant of [laterOpening, laterAction]) {
-      const record = relevant.find(
-        (source) => source.recordId === "festival",
-      );
+      const record = relevant.find((source) => source.recordId === "festival");
       expect(record?.content).toContain("Period applicability: historical");
       expect(record?.content).toContain("begins at Bloom");
     }
